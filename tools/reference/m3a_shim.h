@@ -104,3 +104,10 @@ boolean P_TryMove(mobj_t* m,fixed_t x,fixed_t y) { int i=try_count++;boolean ok;
 boolean PIT_CheckLine(line_t* l) { if(candidate_count>=4096)abort();candidates[candidate_count++]=(int)(l-lines); return Ref_CheckLine(l); }
 boolean PIT_CheckThing(mobj_t* m) { if(thing_count>=4096)abort();things_seen[thing_count++]=m->id;return Ref_CheckThing(m); }
 void P_HitSlideLine(line_t* l) { if(slide_count>=4096)abort();slides_seen[slide_count++]=(int)(l-lines);Ref_HitSlideLine(l); }
+/* Explicit ABI/compiler-profile assumptions, rather than host C defaults. */
+typedef char int_is_32[(sizeof(int)==4)?1:-1];
+typedef char short_is_16[(sizeof(short)==2)?1:-1];
+typedef char byte_is_8[(CHAR_BIT==8)?1:-1];
+typedef char long_long_is_64[(sizeof(long long)==8)?1:-1];
+typedef char arithmetic_shift[((-2>>1)==-1)?1:-1];
+typedef char binary64[(DBL_MANT_DIG==53 && FLT_RADIX==2)?1:-1];

@@ -29,8 +29,8 @@
   },
   "adapter_sha256": {
     "generate.py": "e80beb09a686c030a6229599f5e0c9e9fd9b109ecebdcb9dd474a2a78e01d6cf",
-    "generate_m3a.py": "37f23aa948e4b6e165151a1b5cfbedece09e0585378e09c1f349273295f55376",
-    "m3a_shim.h": "373f77c54876a136d562f8af08ba640d240080a712c12ac01ad5b2f3bd71b1e5"
+    "generate_m3a.py": "97a6bb6117329ee3fbbb942c1f17af14c0f16f264ecda1d298e791e0bd09f725",
+    "m3a_shim.h": "655551230fd832cb155139e1efcb80509e5703af5bb3f184b46ae385fa914d9a"
   },
   "assumptions": [
     "one flat sector; one-sided clockwise room, optional angled bevel; source BLOCKMAP head links",
@@ -38,6 +38,6 @@
     "source bodies unchanged except explicit unsigned negative angleturn shift",
     "enlarged intercept storage; cases stay within original 128-intercept capacity",
     "abs(INT_MIN), overflowing position differences and unsupported gameplay effects excluded; GNU signed shifts/narrowing profile",
-    "18 explicit setups, each 12 tics; action case17: blocker momentum at tic2, unlink at tic3, replacement at tic4; inputs and results in CSV; no full engine or private assets"
+    "21 explicit setups, each 12 tics; action case17: blocker momentum at tic2, unlink at tic3, replacement at tic4; inputs and results in CSV; no full engine or private assets"
   ]
 }

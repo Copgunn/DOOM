@@ -13,3 +13,7 @@
 *.[dD][eE][mM][oO]
 *.[pP][kK]3
 *.[pP][kK]7
+
+# Local Python reference tooling caches
+__pycache__/
+*.py[cod]

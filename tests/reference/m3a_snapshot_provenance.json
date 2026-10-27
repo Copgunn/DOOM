@@ -1,0 +1,15 @@
+{
+  "schema": "DSIM-v2",
+  "scope": "explicit one-solid-player clockwise room, twelve C coasting tics; not a reference engine savegame",
+  "inputs_sha256": {
+    "tests/reference/m3a_movement.csv": "45b36a3e8f4469cb64dc3fe5bc18613543edea559594e02b711f15fd3907c3b7",
+    "fuzz/corpus/map/classic_square": "8d3f63a56a68b137351751a7a61919be93ad917b4d77bdb26644aa02c4672d9b",
+    "tests/support/mod.rs": "64bbb06a7931b0c9311e67174687fc5f57583a745bc501e72cf22947b48a9038",
+    "tools/reference/snapshot_goldens.py": "61908a1aa82bf01dae8a5409747f977f52cfef779a675ce65df1b75546584891",
+    "tools/reference/m3a_snapshot_goldens.py": "2f41c33ec64f8f51308072d4b9fff632aa7d23fed4cc7320fe80915413baf32e"
+  },
+  "outputs_sha256": {
+    "tests/reference/m3a_coast_first.bin": "2cf988e34cdd7fbbb759d91ff9c0f603d02847f1ee944acdf56eccdd2ec490a1",
+    "tests/reference/m3a_snapshots.csv": "ca48c9d1795c0ae438c05b1201eff357d14a79e53daeb941e9ffaa14b0b7de75"
+  }
+}
