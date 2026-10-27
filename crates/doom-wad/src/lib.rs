@@ -1,7 +1,12 @@
-//! WAD format vocabulary for the Rust rewrite.
+//! Bounded, borrowing IWAD/PWAD reader. Parsing performs no filesystem I/O.
 //!
-//! M0 recognizes only the four-byte archive signature and represents raw lump
-//! metadata. There is no archive reader, bounds validation, or lump lookup yet.
+//! [`Wad`] retains directory order and exact names. [`WadSet`] searches archives
+//! in reverse load order. Lookup folds ASCII case and ignores bytes after NUL;
+//! raw [`LumpName`] equality remains byte equality. Overlapping ranges are legal.
+
+mod archive;
+
+pub use archive::{Limits, Lump, LumpLocation, Wad, WadError, WadSet};
 
 use doom_types::LumpName;
 

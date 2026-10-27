@@ -1,6 +1,6 @@
 [package]
 name = "doom-wad"
-description = "WAD format vocabulary; archive parsing is planned for M1"
+description = "Safe, bounded IWAD/PWAD parsing and ordered resource lookup"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
