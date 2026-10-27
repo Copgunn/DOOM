@@ -569,3 +569,20 @@ The final exact SHA and fresh CI are checked on PR #5 before leaving draft; the
 initial successful run does not substitute for that verification. M3b remains
 open/unmerged for owner review. No full-engine, DOS, private-IWAD or complete
 player-state result is claimed.
+
+
+## M3b reviewed-head finalization
+
+Final reviewed head: `792af48ec446f7b543c310cb0c7ef422d6ae24cf`.
+[Reviewed-head CI 40602352397](https://github.com/Copgunn/DOOM/actions/runs/40602352397)
+passed all four jobs on that exact commit. The live PR was compared with the
+reviewed SHA before finalization; no intervening changes were found. Engineering
+review found no demonstrated blocking defect within the documented M3b scope.
+The owner conditionally authorized a regular merge after correcting this evidence,
+the general profile field description for values 1/2/3, and milestone status.
+
+The documentation-only correction must pass all required workspace/release/MSRV,
+C-reference and independent golden checks, plus fresh exact-head GitHub Actions.
+Its SHA/run are recorded on PR #5 before merging; earlier success is not a
+substitute. Existing DSIM-v1/v2/v3 fixtures and runtime semantics are unchanged.
+M3c requires separate owner approval and must remain open/unmerged.

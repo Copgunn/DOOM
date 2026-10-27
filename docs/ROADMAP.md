@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a implemented, validated and merged; M3b implemented/tested for review**.
+Status: **M3a implemented, validated and merged; M3b implemented/validated and conditionally accepted for merge**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -108,7 +108,7 @@ M3 as a whole remains incomplete.
 | Phase | Scope | Status |
 | --- | --- | --- |
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
-| M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented/tested; owner review pending |
+| M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented/validated; conditional merge authorized |
 | M3c | Actor states, type-driven spawning and death | Next planned phase |
 | M3d | Weapons, projectiles, damage, monsters and combat | Planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
@@ -141,8 +141,8 @@ player thinking, gameplay synchronization, demo playback or DOS compatibility.
 ### M3b acceptance and review boundary
 
 Branch: `feat/m3b-multisector-vertical-physics`, [PR #5](https://github.com/Copgunn/DOOM/pull/5).
-Leave its PR open/unmerged for
-separate owner review; M3a merge authorization does not cover M3b.
+The owner conditionally authorized its regular merge after documentation
+corrections and fresh checks. M3c requires its own owner-review gate.
 
 - [x] Source findings before runtime changes; immutable original C and separate provenance.
 - [x] Iterative original BSP side/child/leaf semantics, bounded topology validation.
@@ -159,7 +159,7 @@ separate owner review; M3a merge authorization does not cover M3b.
 - [x] Required local workspace/release/Rust 1.85 checks; parser fuzz targets compile.
 - [x] Initial Linux/Windows/macOS debug/release and Rust 1.85 CI passed on
   `975e2b9`; final exact-head checks are verified on PR #5 before review readiness.
-- [ ] Owner review; do not merge or enable auto-merge.
+- [x] Owner review and conditional regular-merge authorization; fresh correction-head checks remain required.
 
 See [M3B_REFERENCE.md](M3B_REFERENCE.md) and [STATE_FORMAT.md](STATE_FORMAT.md).
 M3b is static-sector physical motion, not dynamic doors/lifts, actor state machines,
