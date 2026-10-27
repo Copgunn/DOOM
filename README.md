@@ -11,7 +11,8 @@ This is an idiomatic rewrite with explicit ownership, not an official id Softwar
 M0 foundation is implemented, validated, and merged ([PR #1](https://github.com/Copgunn/DOOM/pull/1)).
 M1 resource/map parsing is implemented, validated, and merged
 ([PR #2](https://github.com/Copgunn/DOOM/pull/2)). M2 implements and validates
-deterministic headless foundations within the profile below
+deterministic headless foundations, accepted for the conditional regular merge
+within the profile below
 ([PR #3](https://github.com/Copgunn/DOOM/pull/3)). Acceptance and delivery
 evidence are in the [roadmap](docs/ROADMAP.md#m2--deterministic-simulation-core) and
 [validation notes](docs/VALIDATION.md). A playable client is future work.
@@ -184,7 +185,7 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | --- | --- | --- |
 | M0 | Workspace, CI, documentation, repository guidance | Implemented, validated, merged |
 | M1 | Bounded WAD and classic map parsing, regression tests, fuzzing | Implemented, validated, merged |
-| M2 | Fixed arithmetic, RNG, ordered thinkers, narrow movement, snapshots | Implemented and validated; evidence in PR #3 |
+| M2 | Fixed arithmetic, RNG, ordered thinkers, narrow movement, snapshots | Implemented, validated; owner-authorized merge after fresh checks |
 | M3 | Vanilla player/monster behavior, weapons, interactions, specials | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, software diagnostics, Vulkan | Planned |

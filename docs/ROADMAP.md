@@ -73,9 +73,10 @@ Acceptance:
 
 ## M2 — Deterministic simulation core
 
-Status: **foundations implemented and validated** on
-`feat/m2-deterministic-simulation-core`. [PR #3](https://github.com/Copgunn/DOOM/pull/3)
-remains open for owner review; M2 merge requires separate approval.
+Status: **foundations implemented, validated and accepted for merge**.
+[PR #3](https://github.com/Copgunn/DOOM/pull/3) has conditional owner authorization
+for a regular merge after documentation corrections and fresh local/remote checks.
+The corrected-head and merge evidence is recorded in validation notes.
 
 - [x] Source investigation before implementation; defined policies for C ambiguities.
 - [x] i32 16.16 arithmetic, original division guard/double helper, extreme-value policy.

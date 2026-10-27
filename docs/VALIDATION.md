@@ -254,11 +254,16 @@ passed [CI run 40591405059](https://github.com/Copgunn/DOOM/actions/runs/4059140
 | Stable / macos-latest | Format, Clippy, build, debug/release recorded-vector/golden tests, examples and docs passed |
 | Minimum Rust / 1.85.0 | Workspace tests/doctest passed |
 
-The following documentation commit links this evidence without changing runtime,
-reference fixtures, generated tables or CI. Final-head SHA/checks are recorded on
-PR #3; they must pass before leaving draft. M2 remains open and unmerged for owner
-review. Cross-platform golden equality is verified for the supported scenarios,
-not for complete vanilla gameplay.
+The final reviewed head is `941e613bd9b8da57513c5ef29b0a233e0e2946d5`.
+[Reviewed-head CI 40591968061](https://github.com/Copgunn/DOOM/actions/runs/40591968061)
+passed all four jobs on that exact commit, including debug/release recorded-vector
+and independent golden comparisons across Linux, Windows and macOS. PR #3 was
+rechecked against that SHA before finalization; no intervening changes were found.
+The owner found no blocking defect within the declared scope and authorized a
+regular merge after documentation corrections and fresh local/remote checks.
+The correction SHA and fresh CI must be verified on PR #3 before merging; this
+historical green run does not substitute for checking the corrected head.
+M3a requires its own owner-review gate and must remain unmerged.
 
 The supported profile excludes complete players, sliding, solid actor collisions,
 Z/gravity, portals/sector transitions, state machines, monsters/weapons, specials,
