@@ -99,14 +99,15 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a implemented and validated; owner-review gate pending**.
+Status: **M3a implemented, validated and accepted for conditional regular merge**.
 Delivery: [PR #4](https://github.com/Copgunn/DOOM/pull/4).
-Branch: `feat/m3a-player-movement-collision`. Never merge without separate approval.
+Branch: `feat/m3a-player-movement-collision`. The owner authorized a regular
+merge after documentation corrections and fresh local/remote checks.
 M3 as a whole remains incomplete.
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| M3a | Grounded player XY, wall sliding, solid actor collision | Implemented/validated; owner review pending |
+| M3a | Grounded player XY, wall sliding, solid actor collision | Implemented/validated; conditional merge authorized |
 | M3b | Multi-sector movement, portals, Z and gravity | Next planned phase |
 | M3c | Actor states, type-driven spawning and death | Planned |
 | M3d | Weapons, projectiles, damage, monsters and combat | Planned |
@@ -130,7 +131,8 @@ M3a acceptance evidence:
 - [x] Local workspace, release, Rust 1.85 and parser fuzz checks passed.
 - [x] Initial cross-platform debug/release and Rust 1.85 CI passed on `c6b63f5`;
   final exact-head CI is verified on PR #4 before review readiness.
-- [ ] Owner review; merge is not authorized by the M2 approval.
+- [x] Owner review and conditional M3a regular merge authorization; fresh
+  correction-head checks remain required before merging.
 
 See [M3a scope and safe policies](M3A_REFERENCE.md), [state schema](STATE_FORMAT.md)
 and [validation](VALIDATION.md). A flat static movement subset is not full vanilla

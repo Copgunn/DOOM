@@ -396,3 +396,21 @@ The final SHA and fresh CI must be checked on PR #4 before marking ready; the
 initial green run is not a substitute for that verification. M3a remains open
 and unmerged pending owner review. No complete gameplay/demo compatibility or
 private-asset test result is claimed.
+
+
+## M3a reviewed-head finalization
+
+Final reviewed SHA: `9e22cf55232575f4d42ad9ee50d6e54161b4a03e`.
+[Reviewed-head CI 40596932128](https://github.com/Copgunn/DOOM/actions/runs/40596932128)
+passed all four jobs on that exact commit. PR #4 was compared with the reviewed
+SHA before finalization; no intervening behavioral or documentation changes were
+found. Engineering review found no blocking defect in the documented scope.
+The owner conditionally authorized a regular merge after correcting this evidence,
+explicit DSIM-v1/v2 header documentation and transient milestone wording.
+
+The correction head must pass fresh workspace, release, MSRV, all original C
+comparisons and both independent golden encoders locally and in GitHub Actions.
+Its exact SHA/run are recorded on PR #4 before merging; prior green runs do not
+substitute for checking the correction head. Original v1/v2 fixtures, reference
+vectors and runtime behavior are unchanged. M3b requires a separate owner-review
+gate and must remain open/unmerged.

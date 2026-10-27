@@ -10,7 +10,8 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 version `1`, u64 field count. Each ordered field is
+Header: ASCII `DSIM`, u32 schema version (`1` for M2 or `2` for M3a),
+u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
 u64 on supported Linux/Windows/macOS hosts. No native usize bytes are emitted.

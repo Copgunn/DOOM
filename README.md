@@ -14,7 +14,8 @@ M1 resource/map parsing is implemented, validated, and merged
 foundations are implemented, validated and merged
 ([PR #3](https://github.com/Copgunn/DOOM/pull/3), merge `10a1106`). M3a adds
 reference-tested grounded player XY movement, wall sliding and solid actor
-collision in [PR #4](https://github.com/Copgunn/DOOM/pull/4), pending owner review.
+collision in [PR #4](https://github.com/Copgunn/DOOM/pull/4), accepted for the
+owner-authorized regular merge after correction-head checks.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 
@@ -210,7 +211,7 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M0 | Workspace, CI, documentation, repository guidance | Implemented, validated, merged |
 | M1 | Bounded WAD and classic map parsing, regression tests, fuzzing | Implemented, validated, merged |
 | M2 | Fixed arithmetic, RNG, ordered thinkers, narrow movement, snapshots | Implemented, validated, merged |
-| M3a | Grounded player XY, wall sliding, solid actor collision | Implemented/tested; pending owner review |
+| M3a | Grounded player XY, wall sliding, solid actor collision | Implemented/validated; authorized merge after fresh checks |
 | M3b–M3e | Multi-sector/Z, states, combat, interactions and specials | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, software diagnostics, Vulkan | Planned |
