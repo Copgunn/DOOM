@@ -118,3 +118,22 @@ heights/list ordering, explicit BLOCKMAP policy and ordered opening/vertical
 observations. Keep v1/v2 fields/fixtures unchanged in their original profiles.
 Independent Python goldens and field-level first divergence supplement C traces;
 neither establishes full vanilla engine, DOS demo or enhanced visual-portal support.
+
+
+## Observed implementation evidence
+
+Local Rust matches all 696 C physical tics, 261 destination checks, 1280 BSP
+lookups, 512 side predicates and 20 openings. Per-attempt constraints/counts,
+ordered candidates/openings, chronological slide/attempt order and sector-head
+membership also match. Fixtures use representable multiplication to define fixed
+coordinates instead of reproducing negative signed shifts in the historical loader.
+No mismatch remains in recorded comparisons; this is not a full-engine test.
+
+Independent Python encodes 96 DSIM-v3 states and five full step/transition/drop/
+landing/fall snapshots without reading Rust output. Tests compare fields/bytes,
+not only hashes. Long streams visit all three sectors, exercise gravity/landing,
+RNG, pause and lifecycle, and match presentation schedules. Reserved heap capacity
+does not affect complete state. Distinct generation/RNG histories intentionally
+change canonical metadata while normalized physical trajectories remain equal.
+The headless example asserts six scenarios/144 C tics without a display or assets.
+Exact local and remote evidence is in [VALIDATION.md](VALIDATION.md).

@@ -8,7 +8,8 @@ Initial target: **Linux DOOM 1.10**, preserved in `linuxdoom-1.10/`, upstream
 M1 parses IWAD/PWAD bytes and structurally validates classic maps. M2 implements
 a narrow headless simulation with isolated C arithmetic, RNG, scheduling, geometry,
 XY and thrust comparisons. M3a separately implements bounded grounded player
-sliding and solid actor collisions with original C comparisons. Rendering, demo playback, full gameplay synchronization
+sliding and solid actor collisions with original C comparisons. M3b adds an
+explicit static multi-sector/vertical profile with independent C traces. Rendering, demo playback, full gameplay synchronization
 and authentic IWAD validation remain unverified.
 
 DOS DOOM 1.9 is a separate future target. The released Linux source is not a
@@ -199,6 +200,65 @@ terminate according to Rust's process-level policy. No per-tic full-state clone.
 Complete player state/view/animation, portals/steps/dropoffs, vertical movement,
 gravity, combat/monsters/weapons, specials/respawn, demos and rendering remain
 unsupported. No commercial assets were provisioned or tested.
+
+## M3b static-sector/vertical profile
+
+`Simulation::multisector` / `with_multisector_limit` select profile 3 and DSIM-v3.
+Older profiles and golden fixtures remain unchanged. The new profile implements
+original BSP lookup (last-node root, stored children, exact side rules, first-seg
+leaf sector), not generic polygon containment. Lookup is iterative and bounded.
+Structural validity does not prove that BSP partitions or block lists match a
+node builder's intended geometry.
+
+Two-sided openings use min ceilings, max floors and min dropoff floor. Crossing
+boxes accumulate constraints in original things-before-lines, X-outer/Y-inner
+candidate order. One-sided walls and ML_BLOCKING block; ML_BLOCKMONSTERS blocks
+ordinary non-players. Source TryMove checks interval fit, headroom, >24-unit step,
+then >24-unit dropoff without MF_DROPOFF. Exact clearance and 24-unit equality
+pass. Player binding and dropoff permission are independent. The slide traverser
+uses its original opening/height rules, including its asymmetry with line flags
+and dropoff; final movement still performs full TryMove checks.
+
+Successful XY attempts update constraints and BSP membership, then relink cell and
+sector heads even inside the same cell/sector. The contacted floor can be higher
+than the center sector while straddling a portal. XY precedes Z for each thinker.
+Airborne input changes angle but adds no thrust; z>floor skips ground friction.
+Z adds momz, clips at floor, applies normal gravity above floor (zero momz first
+becomes -2 units; otherwise subtract one), then clips ceiling and resets positive
+momz there. MF_NOGRAVITY is supported alone, not full MF_FLOAT/flying mechanics.
+No terminal velocity is invented. Ordinary solid collision remains the source
+XY-only overlap rule even for actors separated vertically.
+
+M3b explicitly trusts supplied structurally valid BLOCKMAP lists. M3a's
+conservative bbox coverage rejects legitimate diagonal layouts because not all
+bbox cells intersect the line. M3b reports conservative omissions, preserves
+source candidate order and never rebuilds missing data. A deliberately omitted
+wall permits movement just as C does; acceptance is not a spatial-correctness
+guarantee. Old M3a strict behavior is preserved. Sparse and incomplete layouts,
+reverse traversal, diagonal openings and multiple adjacent openings are tested.
+
+Bounds: 128 lines/sectors, 4096 BLOCKMAP cells/nodes/leaves, 65536 words, 1024
+logical actors. Reject degenerate lines, inconsistent two-sided flags, specials,
+inverted sectors and a global vertical span that overflows signed fixed-point
+subtraction. Zero-height openings are valid blockers. Actors must fit their spawn
+sector; floor/ceiling/absolute initial Z and explicit momentum are supported.
+M1 rejects invalid references/cycles before simulation. Raw coordinate/Z overflow
+uses explicit safe wrapping policies outside the defined C comparison domain.
+
+Observed isolated C evidence: 696 physical tics, 261 destination probes, 1280 BSP
+lookups, 512 side predicates and 20 opening records. Both movement results and
+ordered constraints/candidates/slide events/sector lists match. Separate Python
+encoding verifies 96 DSIM-v3 digests and five full states across steps, transitions,
+drop, gravity and landing. C fixture conversion uses representable multiplication
+instead of negative signed loader shifts; ABI/compiler assumptions and unsupported
+branches are explicit in `m3b_provenance.json`. No Rust output generates vectors.
+
+Actor/player state transitions, view/bob/landing-camera feedback, sound, damage,
+missiles/skulls/corpses/floating monsters, pickups, teleportation/no-clip, dynamic
+heights/doors/lifts, specials, enhanced stacked-sector/visual portals, demos and
+rendering remain unsupported. C view side effects execute only in the isolated
+adapter; comparisons cover physical state, not complete P_PlayerThink. Reference
+matches and deterministic project tests do not establish full-engine or DOS sync.
 
 ## Determinism objectives
 

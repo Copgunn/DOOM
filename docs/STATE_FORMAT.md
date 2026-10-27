@@ -1,6 +1,6 @@
-# Canonical simulation state, DSIM versions 1 and 2
+# Canonical simulation state, DSIM versions 1, 2 and 3
 
-This is a diagnostic/replay comparison format for explicit M2 and M3a profiles,
+This is a diagnostic/replay comparison format for explicit M2, M3a and M3b profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2 or `2` for M3a),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -121,6 +121,57 @@ state from Python v1 encoding rules, source C XY values, and explicit clockwise
 synthetic map records. It reads no Rust output. `m3a_snapshot_provenance.json`
 records input/encoder/output SHA-256 hashes. New first-tic bytes and twelve digests
 are versioned separately; they are project schema goldens, not reference saves.
+
+## DSIM-v3 and static-sector state
+
+M3b constructors explicitly select header version/profile 3. V1/v2 constructors,
+fields, framing and fixtures remain available unchanged; there is no savegame
+migration/loader. Reinitialize a selected profile and replay its commands, retaining
+versioned expectations. Cross-version comparison reports `schema.version`.
+
+V3 retains v2 field order with these exact changes/additions:
+
+- Occupied `actor.N.flags` is u32 combination of MF_SOLID=2, MF_NOGRAVITY=512 and
+  MF_DROPOFF=1024; no other bits are supported. After it: `.momz` i32 raw fixed,
+  `.subsector` u16, `.sector` u16. Existing `.z`, `.floor`, `.ceiling` retain their
+  positions; constraints can differ from the actor center's sector heights.
+- After `spatial.link_order`, before player fields: `world.blockmap_policy` u8=1
+  (supplied reference lists); `world.conservative_omissions` u32 diagnostic bbox
+  cell-pair count; `sectors.count` u32.
+- For each runtime sector in numeric order: `sector.N.floor` i32 raw fixed,
+  `.ceiling` i32 raw fixed, `.actors` concatenated 12-byte identities in current
+  sector-head order. The sector vector is distinct from static map definitions;
+  M3b exposes no runtime-height mutation API. Removal marks exclude list membership
+  immediately even while actor slot storage remains occupied.
+- Spatial order includes all live actors, including off-grid centers; filtering
+  by source BSP membership reconstructs sector-head lists. Derived topology,
+  line bounds/slopes and compiled cell caches are reproducible and omitted.
+
+New events (all integers little endian):
+
+| Tag | Payload |
+| --- | --- |
+| 10, sector movement | The complete tag-8 payload without its tag byte, followed by u16 proposed subsector, u16 sector, i32 floor/ceiling/dropoff, u8 floatok, u8 first failure, u32 opening count; each opening is u16 line + i32 top/bottom/range/lowfloor |
+| 11, Z update | 12-byte actor; i32 before Z/momz, after Z/momz, floor/ceiling (six i32s); u8 floor-contact, ceiling-contact, gravity-applied booleans |
+
+Failure values: 0 allowed, 1 actor, 2 line, 3 interval fit, 4 headroom, 5 step,
+6 dropoff. They follow source evaluation order. `fits` in the tag-8 subpayload is
+false only after an evaluated interval-fit failure; an earlier actor/line blocker
+leaves it true (not evaluated). `floatok` becomes true after interval fit passes.
+Opening records include only actual crossing two-sided candidates evaluated before
+rejection, preserving order. SectorMovement emits for each attempted destination,
+including slide retries/fallback; tag 9 slide projections retain v2 encoding and
+appear at their original chronological position. Z emits only when its source
+guard (z!=floor or nonzero momz) runs, after that actor's XY events. No camera,
+viewheight, audio or state-machine data is implied.
+
+`m3b_snapshot_goldens.py` independently encodes 96 states from explicit setup,
+synthetic map bytes, C per-attempt counts/order and physical XY/Z results. It reads
+no Rust output. Contact bits derive from pre-Z C values and original predicates.
+Five complete byte fixtures cover first fall, step-up clipping, center-sector
+transition, airborne drop and landing; tests compare named fields as well as full
+bytes. Input/encoder/output hashes are in `m3b_snapshot_provenance.json`. These are
+project schema goldens with independent physical evidence, not engine saves.
 
 ## Digests, comparison, and evidence
 

@@ -99,17 +99,17 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a implemented, validated and accepted for conditional regular merge**.
-Delivery: [PR #4](https://github.com/Copgunn/DOOM/pull/4).
-Branch: `feat/m3a-player-movement-collision`. The owner authorized a regular
-merge after documentation corrections and fresh local/remote checks.
+Status: **M3a implemented, validated and merged; M3b implemented/tested for review**.
+M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
+regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
+passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
 M3 as a whole remains incomplete.
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| M3a | Grounded player XY, wall sliding, solid actor collision | Implemented/validated; conditional merge authorized |
-| M3b | Multi-sector movement, portals, Z and gravity | Next planned phase |
-| M3c | Actor states, type-driven spawning and death | Planned |
+| M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
+| M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented/tested; owner review pending |
+| M3c | Actor states, type-driven spawning and death | Next planned phase |
 | M3d | Weapons, projectiles, damage, monsters and combat | Planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
 
@@ -131,12 +131,37 @@ M3a acceptance evidence:
 - [x] Local workspace, release, Rust 1.85 and parser fuzz checks passed.
 - [x] Initial cross-platform debug/release and Rust 1.85 CI passed on `c6b63f5`;
   final exact-head CI is verified on PR #4 before review readiness.
-- [x] Owner review and conditional M3a regular merge authorization; fresh
-  correction-head checks remain required before merging.
+- [x] Owner authorization, correction-head checks and verified regular merge;
+  post-merge CI passed on `764dd96`.
 
 See [M3a scope and safe policies](M3A_REFERENCE.md), [state schema](STATE_FORMAT.md)
 and [validation](VALIDATION.md). A flat static movement subset is not full vanilla
 player thinking, gameplay synchronization, demo playback or DOS compatibility.
+
+### M3b acceptance and review boundary
+
+Branch: `feat/m3b-multisector-vertical-physics`. Leave its PR open/unmerged for
+separate owner review; M3a merge authorization does not cover M3b.
+
+- [x] Source findings before runtime changes; immutable original C and separate provenance.
+- [x] Iterative original BSP side/child/leaf semantics, bounded topology validation.
+- [x] Two-sided openings, blocking/player flags, exact clearance/step/dropoff order.
+- [x] Per-actor XY then Z, source gravity impulse, floor/ceiling contact, airborne rules.
+- [x] Explicit gravity/dropoff setup, sector membership and head ordering, safe reuse.
+- [x] Investigated reference-list BLOCKMAP policy, sparse/missing-data C comparisons.
+- [x] Preserve old profiles and DSIM-v1/v2 expectations; add explicit DSIM-v3.
+- [x] 696 C tics, 261 probes, 1280 BSP lookups, 512 side predicates, 20 openings.
+- [x] Independent 96-state v3 digests plus five complete transition/landing snapshots.
+- [x] Six-scenario headless demo with 144 C assertions and debug/release equality.
+- [x] Deep/invalid BSP, height/flag/coverage bounds, extremes, lifecycle/atomicity tests.
+- [x] Long multi-sector/gravity/pause/RNG/read-schedule traces; capacity/history checks.
+- [x] Required local workspace/release/Rust 1.85 checks; parser fuzz targets compile.
+- [ ] Verify final exact-head Linux/Windows/macOS CI and record evidence on the PR.
+- [ ] Owner review; do not merge or enable auto-merge.
+
+See [M3B_REFERENCE.md](M3B_REFERENCE.md) and [STATE_FORMAT.md](STATE_FORMAT.md).
+M3b is static-sector physical motion, not dynamic doors/lifts, actor state machines,
+complete player view/thinking, combat, enhanced portals, demos or rendering.
 
 ## M4 — Demo compatibility
 
@@ -152,7 +177,6 @@ DOS 1.9 evidence separately from Linux 1.10/demo version 110.
 Status: planned.
 
 Acceptance: renderer abstraction, presentation loop, per-tic input assignment,
-audio events/playback, software/headless diagnostic backend, and Vulkan hardware
-renderer. Verify Linux/Windows/macOS presentation where supported by the selected
+audio events/playback, software/headless diagnostic backend, and custom wgpu hardware renderer, with Vulkan preferred where supported. Verify Linux/Windows/macOS presentation where supported by the selected
 Vulkan platform path; document prerequisites and gaps. Replay tests must prove
 presentation frame rate and renderer choice do not alter simulation results.

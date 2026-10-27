@@ -3,7 +3,8 @@
 An independent, Rust-native rewrite of the original DOOM engine, maintained in
 [Copgunn/DOOM](https://github.com/Copgunn/DOOM). The goal is deterministic vanilla
 simulation, original WAD/map compatibility, reproducible demo playback, and
-cross-platform presentation with Vulkan as the primary hardware renderer.
+cross-platform presentation through a custom wgpu renderer, with Vulkan preferred
+on supported platforms. Rendering remains future work.
 This is an idiomatic rewrite with explicit ownership, not an official id Software project.
 
 ## Current status
@@ -14,8 +15,9 @@ M1 resource/map parsing is implemented, validated, and merged
 foundations are implemented, validated and merged
 ([PR #3](https://github.com/Copgunn/DOOM/pull/3), merge `10a1106`). M3a adds
 reference-tested grounded player XY movement, wall sliding and solid actor
-collision in [PR #4](https://github.com/Copgunn/DOOM/pull/4), accepted for the
-owner-authorized regular merge after correction-head checks.
+collision, merged in [PR #4](https://github.com/Copgunn/DOOM/pull/4) as `764dd96`.
+M3b implements and locally validates static multi-sector movement and vertical
+physics on `feat/m3b-multisector-vertical-physics`, pending owner review.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 
@@ -37,21 +39,31 @@ Implemented:
 - Explicit M3a profile: player-specific ground friction and blocking response,
   three-corner wall tracing, axis/angled slides, solid actor collision and
   cell-head ordering, DSIM-v2 snapshots, and an asserted headless arena.
+- Explicit M3b profile: iterative original BSP lookup, two-sided openings,
+  step/dropoff/clearance rules, XY/Z order, gravity/landing/ceiling contact,
+  sector-head membership/order, reference-list BLOCKMAP policy and DSIM-v3.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
-Both profiles support one static sector, one-sided lines, no line/sector specials,
-and grounded XY movement. `Simulation::new` preserves the M2 non-solid/non-player
-response and DSIM-v1. `Simulation::player_collision` enables M3a: bound actors use
-player sliding/friction, unbound actors use ordinary blocking, and solidity is
-independent of input binding. Its bounded profile requires conservative BLOCKMAP
-coverage; see [source findings and restrictions](docs/M3A_REFERENCE.md).
+Choose the compatibility profile explicitly:
 
-Complete player thinking, Z/gravity, portals/sector transitions, actor animation,
-weapons, monsters, specials and gameplay respawn remain incomplete. Unsupported
-profiles/buttons fail explicitly. M3b–M3e continue gameplay, M4 covers demo
-playback, and M5 covers presentation/input/audio and Vulkan. Authentic IWAD
-compatibility, full synchronization and DOS 1.9 behavior are not established.
-Read the precise [compatibility limits](docs/COMPATIBILITY.md).
+| Constructor | Schema | Supported subset |
+| --- | --- | --- |
+| `Simulation::new` | DSIM-v1 | M2 one-sector non-solid/non-player XY response |
+| `Simulation::player_collision` | DSIM-v2 | M3a grounded player slides and solid collision, conservative coverage |
+| `Simulation::multisector` | DSIM-v3 | M3b static classic sectors, BSP/openings, step/dropoff and XY/Z/gravity |
+
+M3b consumes supplied BLOCKMAP lists in reference order. Conservative omissions
+are diagnostic, not automatic rebuilds or proof of broken geometry. Missing
+collision data can allow source-compatible movement through omitted walls; see
+[the investigated policy](docs/M3B_REFERENCE.md). Older profiles remain unchanged.
+Classic two-sided lines are gameplay openings, not stacked sectors, room-over-room
+or enhanced visual portals.
+
+Complete player thinking/view/animation, state machines, weapons, monsters,
+combat, moving doors/lifts, specials and respawn remain incomplete. M3c–M3e
+continue gameplay; M4 covers demos; M5 covers presentation/input/audio and the
+custom wgpu renderer. Authentic IWAD compatibility, full synchronization and DOS
+1.9 behavior are unverified. Read the [compatibility limits](docs/COMPATIBILITY.md).
 
 ## Build and test
 
@@ -67,6 +79,7 @@ cargo doc --workspace --no-deps --locked
 cargo run -p doom-map --example parse_map --locked
 cargo run -p doom-sim --example headless --locked -- 12
 cargo run -p doom-sim --example player_arena --locked
+cargo run -p doom-sim --example multisector_arena --locked
 ```
 
 `rust-toolchain.toml` selects stable with rustfmt and Clippy. The minimum compiler
@@ -108,36 +121,62 @@ safety is stricter than the original C loader; see [compatibility](docs/COMPATIB
 
 ## Headless simulation APIs
 
-Run `cargo run -p doom-sim --example player_arena --locked` for a clockwise
-synthetic room with an angled northeast wall, two solid blockers, and twelve
-reproducible commands. It asserts every XY/momentum/angle result against isolated
-C vectors, then reports four actor blocks, four wall blocks and four slide
-projections. No display, audio, timer, renderer or commercial data is needed.
-`python tools/reference/check_headless.py` compares debug/release output.
+Run the current demonstration:
 
-The original `headless -- 12` example still exercises M2 coasting and DSIM-v1.
-For M3a, initialize from an already validated `Map`:
+```sh
+cargo run -p doom-sim --example multisector_arena --locked
+```
+
+It runs six synthetic connected-sector scenarios (144 asserted C-derived tics):
+a 24-unit step, rejected 25-unit step, exact 56-unit doorway, blocked 55-unit
+doorway, allowed drop/gravity/landing, and movement through three sectors. Output
+shows logical tic, raw fixed XYZ/momentum, sector and canonical digest. It requires
+no window, renderer, audio, wall clock or commercial assets.
+
+The original `headless -- 12` and `player_arena` examples preserve M2 coasting and
+M3a angled/solid collision evidence. `python tools/reference/check_headless.py`
+compares all three examples' debug/release output byte-for-byte.
+
+Initialize M3b from a validated `Map`:
 
 ```rust
 use doom_map::Map;
-use doom_sim::{ActorSpec, SimError, Simulation, Snapshot, Solidity, TicCommand};
+use doom_sim::{ActorSpec, SimError, Simulation, Snapshot, Solidity, TicCommand, VerticalSpec};
 
 fn one_tic(map: Map) -> Result<Snapshot, SimError> {
-    let mut sim = Simulation::player_collision(map)?;
-    let player = sim.spawn_with_solidity(ActorSpec::default(), Solidity::Solid)?;
+    let mut sim = Simulation::multisector(map)?;
+    let player = sim.spawn_vertical(
+        ActorSpec::default(),
+        Solidity::Solid,
+        VerticalSpec { allow_dropoff: true, ..Default::default() },
+    )?;
     sim.bind_player(0, player)?;
     let mut commands = [TicCommand::default(); 4];
     commands[0].forward = 25;
-    sim.step(commands) // exactly one logical tic, with no elapsed-time argument
+    sim.step(commands) // one logical 35 Hz tic; no elapsed-time argument
 }
 ```
 
-`spawn` creates a non-solid mover; `spawn_with_solidity` also supports `Solid`.
-Like original parameterized spawning, setup may place actors overlapping; use
-`check_actor_position` for an observational occupancy check. Non-solid movers
-still collide with solid candidates. Removal unlinks spatially immediately and
-retires thinker storage later. Successful moves reinsert at cell head, including
-within the same cell; slot reuse never determines collision order.
+`VerticalSpec` selects floor/ceiling/absolute spawn Z, initial vertical momentum,
+normal gravity or `Gravity::None` (MF_NOGRAVITY), and MF_DROPOFF permission. Player
+binding does not silently add dropoff flags. Airborne actors turn but receive no
+forward/side thrust; airborne XY skips ground friction. XY runs before Z for each
+thinker. There is no jump/crouch/freelook, flying-monster or arbitrary-flag API.
+
+`world().locate(position)` returns source BSP membership. `actor.location()` and
+`actor.constraints()` distinguish the center's sector from contacted floor/ceiling
+constraints while straddling a line. `sectors()` exposes read-only runtime heights;
+`sector_actor_order`, `line_opening` and `check_multisector_position` expose
+observational ordering/opening/destination decisions. Legacy flat collision and
+dimension helpers reject M3b calls that lack actor/sector context.
+
+`spawn` creates a non-solid mover and `spawn_with_solidity` selects zero/MF_SOLID;
+in M3b these use default floor-Z setup. Setup may overlap actors like the source.
+Non-solid movers still collide with solid candidates; supported ordinary actor
+collision uses the original XY-only overlap predicate even when Z differs.
+Removal unlinks spatial/sector membership immediately; thinker storage retires
+later. Every successful move reinserts at both heads, including within a cell or
+sector. Identity, thinker order and spatial/sector order remain separate.
 
 Recoverable `step` errors preserve commands, actors, RNG, events and time.
 Geometry/actor invariants are validated before stepping; allocation exhaustion
@@ -148,15 +187,15 @@ uses Rust's process-level policy. No full simulation clone is made each tic.
 mismatching tic/field. Rendering can read snapshots/events without draining or
 changing simulation. Hash equality alone is not proof of gameplay equivalence.
 See [STATE_FORMAT.md](docs/STATE_FORMAT.md) for field widths/order and
-[M2_REFERENCE.md](docs/M2_REFERENCE.md) and [M3A_REFERENCE.md](docs/M3A_REFERENCE.md)
-for source findings, safe policies and excluded C cases.
+[M2_REFERENCE.md](docs/M2_REFERENCE.md), [M3A_REFERENCE.md](docs/M3A_REFERENCE.md),
+and [M3B_REFERENCE.md](docs/M3B_REFERENCE.md) for source findings and safe policies.
 
 `doom-types::Fixed` uses explicit wrapping arithmetic and the reference's guarded
 double division; `DoomRng` owns both original RNG indexes. `ThinkerStore` separates
 slot/generation identity from append order, detects stale handles, defers retirement,
 and permits same-traversal spawning through restricted callbacks. The current
-simulation's built-in thinkers perform only the supported XY update; full mobj
-state transitions and type-driven spawning are M3 work.
+simulation's built-in thinkers perform the selected XY or XY/Z subset; full mobj
+state transitions and type-driven spawning remain M3c work.
 
 ## Optional private IWAD directory
 
@@ -211,10 +250,11 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M0 | Workspace, CI, documentation, repository guidance | Implemented, validated, merged |
 | M1 | Bounded WAD and classic map parsing, regression tests, fuzzing | Implemented, validated, merged |
 | M2 | Fixed arithmetic, RNG, ordered thinkers, narrow movement, snapshots | Implemented, validated, merged |
-| M3a | Grounded player XY, wall sliding, solid actor collision | Implemented/validated; authorized merge after fresh checks |
-| M3b–M3e | Multi-sector/Z, states, combat, interactions and specials | Planned |
+| M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
+| M3b | Static sectors/BSP, openings, step/dropoff and XY/Z/gravity | Implemented/tested; owner review pending |
+| M3c–M3e | Actor states, combat, interactions and specials | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
-| M5 | Presentation, input/audio, software diagnostics, Vulkan | Planned |
+| M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
 
 The initial behavioral reference is **Linux DOOM 1.10**, from
 [id-Software/DOOM](https://github.com/id-Software/DOOM) at

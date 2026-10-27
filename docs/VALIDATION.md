@@ -354,8 +354,9 @@ observed. Only synthetic seeds and generated mutations were used.
 
 ## M3a delivery gate and limitations
 
-The feature PR targets verified master `10a1106` and must remain open/unmerged
-for owner review. Exact final head and fresh remote checks are recorded on that
+At initial M3a delivery the feature PR targeted verified master `10a1106` and
+remained open/unmerged for owner review; its subsequent authorized merge is
+recorded below. Exact final head and fresh remote checks are recorded on that
 PR after completion; local results alone do not establish cross-platform success.
 M2's merge authorization does not authorize M3a merge or auto-merge.
 
@@ -414,3 +415,136 @@ Its exact SHA/run are recorded on PR #4 before merging; prior green runs do not
 substitute for checking the correction head. Original v1/v2 fixtures, reference
 vectors and runtime behavior are unchanged. M3b requires a separate owner-review
 gate and must remain open/unmerged.
+
+## M3a finalization and verified merge
+
+PR #4 was rechecked at reviewed `9e22cf55232575f4d42ad9ee50d6e54161b4a03e`
+without intervening changes. Documentation-only correction
+`b87b4e564bd769b559eac751e69d3b415661fdf4` records exact reviewed CI, explicit
+DSIM-v1/v2 header framing and corrected status. All required workspace, release,
+Rust 1.85, C/reference/golden and headless equality checks passed again.
+[Fresh corrected-head CI 40598257184](https://github.com/Copgunn/DOOM/actions/runs/40598257184)
+passed all four jobs on that exact correction head before the authorized merge.
+
+PR #4 is merged/closed. Regular merge `764dd9605fa3af3befc133287e9949930981f469`
+has parents `10a1106cecfaec85026f0724dee13a3bf6174560` and
+`b87b4e564bd769b559eac751e69d3b415661fdf4`. Master/parents were independently
+verified; the merge tree exactly matches the tested correction head.
+[Post-merge CI 40598823726](https://github.com/Copgunn/DOOM/actions/runs/40598823726)
+passed Linux, Windows, macOS stable and Rust 1.85 before creating the M3b branch.
+All 165 upstream files matched byte-for-byte. Public visibility, GPL-2.0-only,
+original attribution/license/history and commercial-asset exclusions were checked.
+No private game repository or private IWAD was accessed, copied or tested.
+
+## M3b implementation and local validation
+
+Branch: `feat/m3b-multisector-vertical-physics`, based on verified master `764dd96`.
+The explicit profile 3 implements static multi-sector BSP/opening/step/dropoff and
+XY/Z/gravity behavior. Earlier profiles and all original v1/v2 vectors, goldens,
+adapters and provenance remain unchanged. No stable dependency, unsafe code,
+renderer, audio, clock or general physics library was added. Investigation and
+limitations are in [M3B_REFERENCE.md](M3B_REFERENCE.md).
+
+Linux x86_64, Rust/Cargo 1.99.1, GNU C `cc (Debian 14.2.0-19) 14.2.0`:
+
+| Check | Observed result |
+| --- | --- |
+| Required workspace build, formatting (including fuzz), Clippy with warnings denied | Passed |
+| Workspace tests | 78 unit/integration + 1 doctest passed; 2 private tests ignored |
+| Rustdoc with warnings denied | Passed |
+| Rust 1.85.0 workspace tests | Same 79 total passes; 2 private tests ignored |
+| Release doom-sim/doom-types tests | 55 passed |
+| Three headless examples | Debug/release stdout identical byte-for-byte |
+| All three C/reference generators and independent golden encoders | Reproduced successfully |
+| Existing nightly WAD/map fuzz targets | Both rebuilt successfully |
+
+## M3b original C evidence
+
+The independent generator emits twenty original synthetic classic maps and 29
+explicit actor/input setups. The preserved C BSP/opening/collision/slide/XY/Z/input
+functions produce:
+
+| Comparison | Observed result |
+| --- | --- |
+| Multi-tic physical movement | 696 tics matched XYZ, momenta, angle, constraints and membership |
+| Destination probes | 261 matched clearance, step/dropoff, line/actor results and floatok |
+| BSP leaf/sector lookups | 1280 matched, including zero-node and diagonal fixtures |
+| Original partition-side predicates | 512 matched axis reversals, sign paths and boundaries |
+| Two-sided opening records | 20 matched top/bottom/range/lowfloor |
+| Ordered motion evidence | Per-attempt counts/constraints, line/thing/opening order, slide choices, chronological attempts/slides and sector heads matched |
+
+Compiler flags remain GNU89/O0, `-fwrapv -fno-strict-aliasing -ffp-contract=off
+-fexcess-precision=standard -fsigned-char`, with ABI/right-shift/binary64 assertions.
+`m3b_provenance.json` hashes source, adapters, generated maps/inputs/results. Fixture
+fixed coordinates use representable multiplication instead of undefined negative
+signed loader shifts. Undefined overflowing coordinates/abs(INT_MIN), unsupported
+flags/effects and complete actor-state processing are excluded. The C motion
+adapter calls XY then Z with source guards; it executes view fields internally but
+compares physical results, without audio output. No recorded mismatch remains.
+
+BLOCKMAP policy is explicitly reference-list behavior in profile 3: sparse
+legitimate diagonal layouts and deliberately omitted-wall data match C candidate
+order and decisions. Incomplete data can permit passage through omitted collision;
+no correctness guarantee or automatic rebuilding is implied. M3a's conservative
+profile stays reproducible. Geometry/BSP structural validity is not a node-builder
+or spatial-coverage proof.
+
+## M3b independent state and deterministic regressions
+
+The new Python encoder reads C values, per-attempt counts/order, explicit setup and
+synthetic map bytes, never Rust output. It reproduces 96 DSIM-v3 digests plus five
+complete states covering first fall, step-up clipping, center-sector transition,
+airborne drop and landing. Tests compare named fields and complete bytes as well
+as digests. Its manifest records input/encoder/output SHA-256 values. Existing
+v1/v2 full-byte/digest goldens are unchanged.
+
+New 768-call streams (767 advancing, one paused) visit all three sectors, including
+step/drop/gravity/landing, blockers, removal/reuse, RNG wrap and different
+presentation read schedules. Full canonical equality passes; injected drift first
+reports tic 400 / `rng.gameplay`. Extra heap reservations leave complete state
+and results identical. Distinct retired-slot/RNG/tic histories deliberately differ
+canonically while normalized physical trajectories match.
+
+Boundary/property checks cover seven raw i32 XY/Z/momz extremes over twelve tics,
+128 generated three-actor setups over twelve tics, 4096-node iterative lookup and
+4097-node rejection, invalid/cyclic references, inconsistent flags, degeneracy,
+inverted/overflowing sector spans, zero/low openings, raw step/clearance boundaries,
+sector-head relinking, stale reuse, query observation and full-state atomic errors.
+All old M0–M3a suites remain green. Raw undefined-C extremes test safe Rust policies,
+not reference equivalence. Recoverable errors remain pre-mutation without full-
+state cloning per tic; allocation exhaustion is process-level as documented.
+
+The display-free multisector arena asserts six connected-sector variants over
+144 C-derived tics: permitted 24-unit step, rejected 25-unit step, exact 56-unit
+opening, blocked 55-unit opening, allowed drop/gravity/landing and continued
+three-sector travel. Local debug/release output is identical for all three
+headless examples. No commercial assets, graphical presentation or audio are used.
+
+Both existing parser fuzz targets compiled with the established nightly setup.
+No new parser fuzz campaign or physics libFuzzer target was run for M3b; new
+physics uses bounded generated regressions. The prior managed ptrace limitation
+on LeakSanitizer remains; no new leak-detection result is claimed.
+
+## M3b delivery gate and remaining scope
+
+The feature PR targets verified master `764dd96` and must remain open/unmerged
+pending owner review. Exact final head and fresh CI are recorded on that PR after
+verification, before review readiness. Local results alone do not establish
+cross-platform success. M3a authorization does not authorize M3b merge or auto-merge.
+
+M3b supports static classic sectors, consistent two-sided flags and the declared
+bounded topology/geometry/actor profile. No moving heights/doors/lifts, sector
+specials, complete player view/thinking, actor state machines/type-driven spawning,
+combat/weapons/monsters, pickups, missiles/skulls/corpses/floating monsters,
+teleport/no-clip, enhanced visual/stacked portals, demos or renderer are implemented.
+Authentic IWAD and DOS/full-game synchronization remain unverified. No unresolved
+blocking defect is known in the recorded scoped comparisons; broader compatibility
+is not established. Recommended next phase: M3c actor states and spawning/death
+foundations with new source traces, without combat or dynamic-sector scope creep.
+
+README, architecture, roadmap, compatibility, testing, validation, schema,
+M3b investigation, AGENTS and contributor guidance are maintained. Future custom
+wgpu/Vulkan-preferred presentation remains separate from simulation. All original
+source/history/license/attribution and public visibility remain preserved. Private
+repositories/assets were not involved. M0/M1/M2/M3a merged branches are cleanup
+candidates after historical links use immutable references; none is deleted here.
