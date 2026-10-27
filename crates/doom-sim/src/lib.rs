@@ -1,12 +1,14 @@
 //! Deterministic, headless Linux DOOM simulation foundations.
 //!
 //! Each [`Simulation::step`] is one logical 35 Hz tic, never elapsed wall time.
-//! Supported movement is grounded non-player XY motion in a static one-sector
-//! map. Command thrust is a separately verified player-input foundation, not
-//! complete player movement/sliding or vanilla gameplay synchronization.
+//! Explicit profiles preserve M2 foundations and add M3a grounded player sliding
+//! and solid actor collision in a static one-sector map. Neither implements full
+//! player thinking or establishes complete vanilla gameplay synchronization.
 
 mod actor;
 mod geometry;
+mod movement;
+pub use movement::{ActorMoveAttempt, Solidity};
 mod snapshot;
 mod store;
 include!("fine_sine.rs");
@@ -19,6 +21,15 @@ pub use snapshot::{Divergence, Snapshot, StateField, compare_traces};
 use std::{error::Error, fmt, sync::Arc};
 pub use store::{ActorId, StoreError, ThinkerContext, ThinkerStore, Visit};
 
+/// Explicit behavior/schema profile; M2 remains frozen for regression consumers.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Profile {
+    /// M2 non-solid non-player response, command foundations, DSIM-v1.
+    Foundation,
+    /// M3a grounded player sliding and zero/MF_SOLID actors, DSIM-v2.
+    PlayerCollision,
+}
+
 /// Deterministic stepping/setup failure. Unsupported gameplay is explicit.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SimError {
@@ -28,7 +39,7 @@ pub enum SimError {
     Geometry(GeometryError),
     /// Input slot is outside 0..4 or duplicates an existing binding.
     InvalidPlayer,
-    /// Button behavior is not implemented in M2.
+    /// Button behavior is not implemented in either profile.
     UnsupportedButtons,
     /// Logical u64 tic counter exhausted; no state is advanced.
     TicOverflow,
@@ -92,6 +103,20 @@ pub enum Event {
     },
     /// Explicit gameplay random request, separate from implicit spawn lastlook.
     GameplayRandom(u8),
+    /// M3a things-before-lines destination attempt.
+    ActorMovement {
+        /// Moving actor.
+        actor: ActorId,
+        /// Ordered collision evidence.
+        attempt: ActorMoveAttempt,
+    },
+    /// M3a selected wall projection, in slide retry order.
+    Slide {
+        /// Sliding player.
+        actor: ActorId,
+        /// Selected linedef.
+        line: u16,
+    },
 }
 
 /// Ground thrust/angle part of P_MovePlayer, using exact original sine data.
@@ -125,6 +150,8 @@ pub fn command_thrust(
 /// Owned deterministic state. Map data is immutable and all runtime state is explicit.
 #[derive(Clone, Debug)]
 pub struct Simulation {
+    pub(crate) profile: Profile,
+    pub(crate) spatial: movement::SpatialIndex,
     pub(crate) world: StaticWorld,
     pub(crate) actors: ThinkerStore<Actor>,
     pub(crate) rng: DoomRng,
@@ -144,9 +171,28 @@ impl Simulation {
     }
     /// Creates a fresh world with an explicit maximum of 65536 logical slots.
     pub fn with_actor_limit(map: Map, max_actors: u32) -> Result<Self, SimError> {
-        let world = StaticWorld::new(map)?;
+        Self::create(map, max_actors, Profile::Foundation)
+    }
+    /// M3a static grounded player/solid collision profile (DSIM-v2), 1024 slots.
+    pub fn player_collision(map: Map) -> Result<Self, SimError> {
+        Self::with_player_collision_limit(map, 1024)
+    }
+    /// M3a profile with at most 1024 logical slots and bounded geometry.
+    pub fn with_player_collision_limit(map: Map, max_actors: u32) -> Result<Self, SimError> {
+        if max_actors > 1024 {
+            return Err(StoreError::InvalidLimit.into());
+        }
+        Self::create(map, max_actors, Profile::PlayerCollision)
+    }
+    fn create(map: Map, max_actors: u32, profile: Profile) -> Result<Self, SimError> {
+        let mut world = StaticWorld::new(map)?;
+        if profile == Profile::PlayerCollision {
+            movement::validate_profile(&mut world)?;
+        }
         let map_fields = Arc::new(snapshot::map_fields(world.map()));
         Ok(Self {
+            profile,
+            spatial: movement::SpatialIndex::default(),
             world,
             actors: ThinkerStore::new(max_actors)?,
             rng: DoomRng::default(),
@@ -158,6 +204,36 @@ impl Simulation {
             pending: Vec::new(),
             map_fields,
         })
+    }
+    /// Selected behavior and canonical schema profile.
+    pub const fn profile(&self) -> Profile {
+        self.profile
+    }
+    /// Most-recent spatial link order in M3a, including off-map live actors.
+    pub fn spatial_order(&self) -> &[ActorId] {
+        &self.spatial.order
+    }
+    /// Read-only M3a collision query at a destination; no occupancy side effects.
+    pub fn check_actor_position(
+        &self,
+        id: ActorId,
+        target: [Fixed; 2],
+    ) -> Result<ActorMoveAttempt, SimError> {
+        if self.profile != Profile::PlayerCollision {
+            return Err(GeometryError::Unsupported("requires M3a profile").into());
+        }
+        if self.actors.is_pending(id) != Some(false) {
+            return Err(StoreError::InvalidHandle.into());
+        }
+        let actor = self.actors.get(id).ok_or(StoreError::InvalidHandle)?;
+        Ok(movement::check(
+            &self.world,
+            id,
+            actor,
+            target,
+            &self.spatial,
+            &|id| self.actors.get(id).copied(),
+        ))
     }
     /// Static immutable geometry.
     pub const fn world(&self) -> &StaticWorld {
@@ -200,25 +276,46 @@ impl Simulation {
     /// Spawns a parameterized grounded mover, consuming exactly one P_Random for
     /// lastlook after storage succeeds. Full P_SpawnMobj type/state setup is absent.
     pub fn spawn(&mut self, spec: ActorSpec) -> Result<ActorId, SimError> {
+        self.spawn_with_solidity(spec, Solidity::NonSolid)
+    }
+    /// Parameterized setup with zero/MF_SOLID flags in M3a. Like P_SpawnMobj,
+    /// overlapping initial placements are allowed; query occupancy explicitly.
+    /// Validation/capacity errors preserve logical state, index order and RNG.
+    pub fn spawn_with_solidity(
+        &mut self,
+        spec: ActorSpec,
+        solidity: Solidity,
+    ) -> Result<ActorId, SimError> {
         self.world.validate_actor(spec.radius, spec.height)?;
+        if self.profile == Profile::Foundation && solidity != Solidity::NonSolid {
+            return Err(GeometryError::Unsupported("solid actors require M3a profile").into());
+        }
+        if self.profile == Profile::PlayerCollision {
+            self.spatial.reserve_spawn()?;
+        }
         let actor = Actor {
             spec,
             floor: self.world.floor(),
             ceiling: self.world.ceiling(),
             z: self.world.floor(),
             lastlook: 0,
+            solidity,
         };
         let id = self.actors.spawn(actor)?;
         self.actors
             .get_mut(id)
-            .ok_or(StoreError::InvalidHandle)?
+            .expect("newly spawned actor handle")
             .lastlook = self.rng.p_random() % 4;
+        if self.profile == Profile::PlayerCollision {
+            self.spatial.link(id);
+        }
         self.pending.push(Event::Spawned(id));
         Ok(id)
     }
     /// Marks removal and unbinds input slots immediately. Storage retires at traversal.
     pub fn mark_remove(&mut self, id: ActorId) -> Result<(), SimError> {
         if self.actors.mark_remove(id)? {
+            self.spatial.unlink(id);
             self.pending.push(Event::RemovalMarked(id));
         }
         for binding in &mut self.bindings {
@@ -241,7 +338,8 @@ impl Simulation {
         Ok(())
     }
     /// Binds one of four ordered command slots. Controlled movers keep the
-    /// supported non-player collision response; this is not full player spawning.
+    /// M2 non-player response or M3a player XY response, according to the profile.
+    /// This does not implement full type/state-driven player spawning.
     pub fn bind_player(&mut self, slot: usize, id: ActorId) -> Result<(), SimError> {
         if slot >= 4
             || self
@@ -259,7 +357,10 @@ impl Simulation {
         Ok(())
     }
     /// Advances exactly one 35 Hz logical tic. No wall-clock/frame-time parameter.
-    /// Unsupported buttons and tic exhaustion are rejected before mutation.
+    /// Recoverable errors (unsupported buttons/tic exhaustion) preserve all state.
+    /// Actor/map invariants are validated by setup, so movement has no late
+    /// recoverable error path. Allocation exhaustion is the process-level Rust
+    /// policy, not SimError. Internal invariant assertions indicate engine bugs.
     pub fn step(&mut self, commands: [TicCommand; 4]) -> Result<Snapshot, SimError> {
         if self.paused {
             return Ok(self.snapshot());
@@ -279,9 +380,10 @@ impl Simulation {
                     self.bindings[slot] = None;
                     continue;
                 }
-                let actor = self.actors.get_mut(id).ok_or(StoreError::InvalidHandle)?;
+                let actor = self.actors.get_mut(id).expect("validated active binding");
                 let (angle, momentum) =
-                    command_thrust(actor.spec.angle, actor.spec.momentum, command)?;
+                    command_thrust(actor.spec.angle, actor.spec.momentum, command)
+                        .expect("buttons prevalidated");
                 actor.spec.angle = angle;
                 actor.spec.momentum = momentum;
                 self.events.push(Event::Player {
@@ -293,30 +395,53 @@ impl Simulation {
         self.events.push(Event::Phase(Phase::Thinkers));
         let world = &self.world;
         let events = &mut self.events;
-        let mut failure = None;
-        // Built-in updates never spawn; max_slots therefore bounds all visits.
-        self.actors.run(
-            self.actors.max_slots as usize,
-            |visit, context| match visit {
-                Visit::Retired(id) => events.push(Event::Retired(id)),
-                Visit::Think(id) => {
-                    events.push(Event::Think(id));
-                    if let Some(actor) = context.get_mut(id) {
-                        match world.move_xy(actor) {
-                            Ok(attempts) => events.extend(
-                                attempts
+        let profile = self.profile;
+        let bindings = self.bindings;
+        let spatial = &mut self.spatial;
+        // Built-in callbacks cannot spawn, alter links or request removal.
+        self.actors
+            .run(
+                self.actors.max_slots as usize,
+                |visit, context| match visit {
+                    Visit::Retired(id) => events.push(Event::Retired(id)),
+                    Visit::Think(id) => {
+                        events.push(Event::Think(id));
+                        let mut actor = *context.get(id).expect("live thinker handle");
+                        if profile == Profile::Foundation {
+                            events.extend(
+                                world
+                                    .move_xy(&mut actor)
                                     .into_iter()
                                     .map(|attempt| Event::Movement { actor: id, attempt }),
-                            ),
-                            Err(error) => failure = Some(error),
+                            );
+                        } else {
+                            let command = bindings
+                                .iter()
+                                .position(|binding| *binding == Some(id))
+                                .map(|slot| commands[slot]);
+                            for event in movement::move_xy(
+                                world,
+                                id,
+                                &mut actor,
+                                spatial,
+                                |id| context.get(id).copied(),
+                                command,
+                            ) {
+                                events.push(match event {
+                                    movement::MotionEvent::Attempt(attempt) => {
+                                        Event::ActorMovement { actor: id, attempt }
+                                    }
+                                    movement::MotionEvent::Slide(line) => {
+                                        Event::Slide { actor: id, line }
+                                    }
+                                });
+                            }
                         }
+                        *context.get_mut(id).expect("same live thinker handle") = actor;
                     }
-                }
-            },
-        )?;
-        if let Some(error) = failure {
-            return Err(error.into());
-        }
+                },
+            )
+            .expect("built-in traversal preserves links and is bounded by max slots");
         self.events.push(Event::Phase(Phase::Specials));
         self.events.push(Event::Phase(Phase::Respawn));
         self.tic += 1;
@@ -350,14 +475,16 @@ mod tests {
         )
         .unwrap();
         let map = doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default()).unwrap();
-        let mut simulation = super::Simulation::new(map).unwrap();
-        simulation.tic = u64::MAX;
-        let before = simulation.snapshot();
-        assert_eq!(
-            simulation.step([super::TicCommand::default(); 4]),
-            Err(super::SimError::TicOverflow)
-        );
-        assert_eq!(simulation.snapshot(), before);
+        for profile in [super::Profile::Foundation, super::Profile::PlayerCollision] {
+            let mut simulation = super::Simulation::create(map.clone(), 1024, profile).unwrap();
+            simulation.tic = u64::MAX;
+            let before = simulation.snapshot();
+            assert_eq!(
+                simulation.step([super::TicCommand::default(); 4]),
+                Err(super::SimError::TicOverflow)
+            );
+            assert_eq!(simulation.snapshot(), before);
+        }
     }
     #[test]
     fn command_button_rejection_is_explicit() {
