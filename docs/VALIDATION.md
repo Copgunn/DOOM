@@ -71,6 +71,13 @@ verified implementation commit `b967999ab23e814c0c0eb155eff7235bf0a2cd60`:
 | Stable / macos-latest | All formatting, Clippy, build, test, and documentation steps passed |
 | Minimum Rust / 1.85.0 | Workspace tests passed |
 
-The follow-up documentation commit records these observations without changing
-Rust code or CI. Final-head check results are available on the PR; verify them
-before review. Owner approval is required before merge; no merge is authorized.
+The final reviewed M0 commit is `be19228f0e576e70c131c67bc1a35b7cac1154ed`.
+[Final reviewed-head run 40577452367](https://github.com/Copgunn/DOOM/actions/runs/40577452367)
+passed all four jobs above on that exact commit. Engineering review found no
+blocking defects.
+
+The owner authorized a regular merge of PR #1 after documentation corrections,
+fresh required local checks, and successful fresh CI, provided no blocking
+regression or unexpected change is found. The correction commit and its new CI
+result are recorded on PR #1; the earlier green checks do not substitute for
+checking that new head. M1 requires a separate PR and owner merge approval.

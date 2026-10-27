@@ -6,8 +6,8 @@ merge remain separate gates. See [validation evidence](VALIDATION.md).
 
 ## M0 — Foundation
 
-Status: **foundation implemented and verified; owner review pending**.
-Delivery: [PR #1](https://github.com/Copgunn/DOOM/pull/1), targeting `master`.
+Status: **foundation implemented and validated**.
+Historical implementation and CI evidence: [PR #1](https://github.com/Copgunn/DOOM/pull/1).
 No later milestone is complete.
 
 Acceptance:
