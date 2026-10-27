@@ -1,0 +1,34 @@
+[package]
+name = "doom-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+license = "GPL-2.0-only"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+doom-wad = { path = "../crates/doom-wad" }
+doom-map = { path = "../crates/doom-map" }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[[bin]]
+name = "wad"
+path = "fuzz_targets/wad.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "map"
+path = "fuzz_targets/map.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]
+members = ["."]
