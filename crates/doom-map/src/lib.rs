@@ -1,16 +1,15 @@
-//! Classic binary map vocabulary for the Rust rewrite.
+//! Immutable classic DOOM maps decoded from bounded [`doom_wad`] archives.
 //!
-//! M0 provides only a vertex value type. Map decoding, reference validation,
-//! BSP interpretation, and map loading are M1 work.
+//! Validates structural references, BSP acyclicity, REJECT coverage and BLOCKMAP
+//! lists. Does not spawn actors, resolve textures, or prove geometric correctness
+//! of a node builder. Unsupported extended formats are rejected.
 
-/// A classic map vertex in signed map units, before fixed-point conversion.
-///
-/// This is a value representation, not a packed on-disk structure. Decode
-/// little-endian fields explicitly rather than casting input bytes to structs.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct Vertex {
-    /// Horizontal map coordinate.
-    pub x: i16,
-    /// Vertical map coordinate.
-    pub y: i16,
-}
+mod error;
+mod parse;
+mod types;
+
+pub use error::{ErrorKind, MapError};
+pub use parse::{Map, MapLimits, is_map_marker};
+pub use types::{
+    Blockmap, BspChild, LineDef, Node, Sector, Seg, SideDef, Subsector, Thing, Vertex,
+};

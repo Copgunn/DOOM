@@ -1,0 +1,9 @@
+/target/
+/artifacts/
+/coverage/
+# Evolving fuzz corpora stay local; only reproducible original seeds are tracked.
+/corpus/wad/*
+!/corpus/wad/empty_iwad
+!/corpus/wad/duplicates
+/corpus/map/*
+!/corpus/map/classic_square

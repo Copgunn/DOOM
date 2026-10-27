@@ -10,7 +10,8 @@ as the behavioral reference. Use idiomatic Rust rather than mechanical C transla
 Install rustup, clone this repository, and work from its root. The checked-in
 toolchain file installs stable with rustfmt/Clippy; Rust 1.85 is the minimum
 supported compiler. No commercial data, C compiler, Vulkan SDK, or additional
-libraries are required for the M0 Rust workspace.
+libraries are required for the stable Rust workspace. Optional fuzzing requires
+nightly, cargo-fuzz, and a host C++ compiler; see `docs/TESTING.md`.
 
 ```sh
 git switch master

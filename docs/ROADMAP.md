@@ -8,7 +8,8 @@ merge remain separate gates. See [validation evidence](VALIDATION.md).
 
 Status: **foundation implemented and validated**.
 Historical implementation and CI evidence: [PR #1](https://github.com/Copgunn/DOOM/pull/1).
-No later milestone is complete.
+Merged by owner-authorized regular merge commit
+`50a8f64ccc71cdd5e52a7e491aff985dd56d2902` after fresh correction-head CI.
 
 Acceptance:
 
@@ -19,14 +20,34 @@ Acceptance:
 - [x] Unit/integration structure and generated/invalid-signature fixtures.
 - [x] Record successful compilation, formatting, Clippy, tests, and documentation.
 - [x] Verify Linux/Windows/macOS stable and Rust 1.85.0 CI; evidence in validation notes.
-- [x] Push focused commits and link an open PR against `master` for owner review.
+- [x] Deliver focused commits through PR #1 and the authorized regular merge.
 - [x] Record preservation of upstream source, attribution, license, and history.
 
 ## M1 — WAD and map parsing
 
-Status: planned. Recommended next assignment: implement bounded archive reading
-and classic binary map decoding in the existing crates, without simulation or
-rendering scope.
+Status: **implemented and validated on `feat/m1-wad-map-parsing`**.
+Delivery: [PR #2](https://github.com/Copgunn/DOOM/pull/2). Engineering review found
+no blocking defects; the owner authorized a regular merge after documentation
+corrections pass fresh checks on the exact corrected head.
+No simulation, rendering, audio, or gameplay is included. The delivery PR and
+exact remote checks are recorded in [validation evidence](VALIDATION.md).
+
+Implementation checklist:
+
+- [x] Bounded IWAD/PWAD reader, typed errors, configurable resource limits.
+- [x] Raw names/order, ASCII-insensitive last-match lookup and archive overrides.
+- [x] Empty/shared/overlapping lump policies and safe indexed byte retrieval.
+- [x] All ten classic map lumps, markers, immutable records and validated references.
+- [x] Bounded BSP/subsector/BLOCKMAP checks, REJECT coverage, unsupported formats.
+- [x] Generated complete map, malformed-input and adversarial-work regressions.
+- [x] Runnable WAD/map fuzz targets, original seed provenance and smoke runs.
+- [x] Stable and Rust 1.85 local checks, API example and documentation updates.
+- [x] Verify remote Linux/Windows/macOS and Rust 1.85 checks; evidence in validation notes.
+
+The acceptance requirements below describe scope; evidence and documented
+limitations are in validation, compatibility, and testing notes. Public CI is
+independent of proprietary assets and nightly. Real IWAD tests remain opt-in and
+unrun in this cloud environment.
 
 Acceptance:
 
