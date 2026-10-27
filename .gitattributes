@@ -1,0 +1,9 @@
+# Canonical reference fixtures and generated code must survive checkout unchanged.
+/tests/reference/*.csv text eol=lf
+/tests/reference/*.txt text eol=lf
+/tests/reference/*.json text eol=lf
+/tests/reference/*.bin -text
+/tools/reference/*.py text eol=lf
+/tools/reference/*.h text eol=lf
+/crates/doom-sim/src/fine_sine.rs text eol=lf
+/crates/doom-types/src/rng_table.rs text eol=lf

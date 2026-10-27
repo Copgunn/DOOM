@@ -39,6 +39,8 @@ fn complete_minimal_map_preserves_numeric_semantics_and_all_tables() {
     assert_eq!(map.sectors()[0].tag, 7);
     assert_eq!(map.blockmap().origin().x, -128);
     assert_eq!(map.blockmap().dimensions(), [2, 2]);
+    assert_eq!(map.blockmap().words().len(), 14);
+    assert_eq!(map.blockmap().cell_ranges(), &[8..13, 8..13, 8..13, 8..13]);
     assert_eq!(
         map.blockmap().cell_lines(1, 1).unwrap().collect::<Vec<_>>(),
         [0, 0, 1, 2, 3]

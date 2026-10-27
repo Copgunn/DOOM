@@ -1,0 +1,334 @@
+use crate::Actor;
+use doom_map::Map;
+use doom_types::Fixed;
+use std::{error::Error, fmt};
+
+/// Geometry/profile validation failure.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum GeometryError {
+    /// M2 does not implement this map/runtime feature.
+    Unsupported(&'static str),
+    /// A reference line delta or sector span is not representable as signed i32.
+    CoordinateOverflow,
+    /// Caller supplied out-of-profile dimensions or grounded state.
+    InvalidActor,
+    /// An invariant index does not address validated geometry.
+    InvalidReference,
+}
+impl fmt::Display for GeometryError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "simulation geometry: {self:?}")
+    }
+}
+impl Error for GeometryError {}
+
+/// Predecoded fixed-point line with original slope and bbox semantics.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct LineGeometry {
+    start: [Fixed; 2],
+    delta: [Fixed; 2],
+    bounds: [Fixed; 4],
+    slope: u8,
+}
+fn bbox(position: [Fixed; 2], radius: Fixed) -> [Fixed; 4] {
+    [
+        position[1] + radius,
+        position[1] - radius,
+        position[0] - radius,
+        position[0] + radius,
+    ]
+}
+impl LineGeometry {
+    /// Constructs a reference-compatible line, rejecting overflowing endpoint deltas.
+    pub fn new(start: [Fixed; 2], end: [Fixed; 2]) -> Result<Self, GeometryError> {
+        let dx = end[0]
+            .bits()
+            .checked_sub(start[0].bits())
+            .ok_or(GeometryError::CoordinateOverflow)?;
+        let dy = end[1]
+            .bits()
+            .checked_sub(start[1].bits())
+            .ok_or(GeometryError::CoordinateOverflow)?;
+        let delta = [Fixed::from_bits(dx), Fixed::from_bits(dy)];
+        let slope = if dx == 0 {
+            1
+        } else if dy == 0 {
+            0
+        } else if (delta[1] / delta[0]).bits() > 0 {
+            2
+        } else {
+            3
+        };
+        Ok(Self {
+            start,
+            delta,
+            bounds: [
+                start[1].max(end[1]),
+                start[1].min(end[1]),
+                start[0].min(end[0]),
+                start[0].max(end[0]),
+            ],
+            slope,
+        })
+    }
+    /// P_PointOnLineSide with exact axis ties and shifted FixedMul predicates.
+    /// Subtraction wraps deliberately where the C operation would overflow.
+    pub fn point_side(&self, point: [Fixed; 2]) -> u8 {
+        let [dx, dy] = self.delta;
+        if dx == Fixed::ZERO {
+            return u8::from(if point[0] <= self.start[0] {
+                dy > Fixed::ZERO
+            } else {
+                dy < Fixed::ZERO
+            });
+        }
+        if dy == Fixed::ZERO {
+            return u8::from(if point[1] <= self.start[1] {
+                dx < Fixed::ZERO
+            } else {
+                dx > Fixed::ZERO
+            });
+        }
+        let left = Fixed::from_bits(dy.bits() >> 16) * (point[0] - self.start[0]);
+        let right = (point[1] - self.start[1]) * Fixed::from_bits(dx.bits() >> 16);
+        u8::from(right >= left)
+    }
+    /// P_BoxOnLineSide: 0/1 for one side and -1 for crossing an infinite line.
+    pub fn box_side(&self, position: [Fixed; 2], radius: Fixed) -> i8 {
+        self.box_side_bounds(bbox(position, radius))
+    }
+    fn box_side_bounds(&self, b: [Fixed; 4]) -> i8 {
+        let (a, c) = match self.slope {
+            0 => (
+                u8::from(b[0] > self.start[1]) ^ u8::from(self.delta[0] < Fixed::ZERO),
+                u8::from(b[1] > self.start[1]) ^ u8::from(self.delta[0] < Fixed::ZERO),
+            ),
+            1 => (
+                u8::from(b[3] < self.start[0]) ^ u8::from(self.delta[1] < Fixed::ZERO),
+                u8::from(b[2] < self.start[0]) ^ u8::from(self.delta[1] < Fixed::ZERO),
+            ),
+            2 => (self.point_side([b[2], b[0]]), self.point_side([b[3], b[1]])),
+            _ => (self.point_side([b[3], b[0]]), self.point_side([b[2], b[1]])),
+        };
+        if a == c { a as i8 } else { -1 }
+    }
+    fn crosses(&self, b: [Fixed; 4]) -> bool {
+        !(b[3] <= self.bounds[2]
+            || b[2] >= self.bounds[3]
+            || b[0] <= self.bounds[1]
+            || b[1] >= self.bounds[0])
+            && self.box_side_bounds(b) == -1
+    }
+}
+
+/// A single destination check, in exact first-encounter BLOCKMAP order.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Collision {
+    /// First crossed blocking linedef, if any.
+    pub blocked_by: Option<u16>,
+    /// Whether the actor fits the static floor/ceiling interval.
+    pub fits: bool,
+    /// Deduplicated visited linedefs, stopping at the first blocker.
+    pub candidates: Vec<u16>,
+}
+impl Collision {
+    /// Reference one-sector try-move result.
+    pub const fn allowed(&self) -> bool {
+        self.fits && self.blocked_by.is_none()
+    }
+}
+
+/// One P_XYMovement substep observation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MoveAttempt {
+    /// Attempted XY destination.
+    pub target: [Fixed; 2],
+    /// Checked line/fit result.
+    pub collision: Collision,
+}
+
+/// Validated M2 static profile: one sector, one-sided lines, no line/sector specials.
+#[derive(Clone, Debug)]
+pub struct StaticWorld {
+    pub(crate) map: Map,
+    lines: Vec<LineGeometry>,
+    floor: Fixed,
+    ceiling: Fixed,
+}
+impl StaticWorld {
+    /// Rejects unsupported geometry before any simulation mutation.
+    pub fn new(map: Map) -> Result<Self, GeometryError> {
+        if map.sectors().len() != 1 {
+            return Err(GeometryError::Unsupported("multiple sectors/portals"));
+        }
+        if map.sectors()[0].special != 0 || map.linedefs().iter().any(|l| l.special != 0) {
+            return Err(GeometryError::Unsupported("map specials"));
+        }
+        if map
+            .linedefs()
+            .iter()
+            .any(|l| l.sides[1].is_some() || l.flags & 4 != 0)
+        {
+            return Err(GeometryError::Unsupported("two-sided lines"));
+        }
+        let floor = Fixed::from_map_units(map.sectors()[0].heights[0]);
+        let ceiling = Fixed::from_map_units(map.sectors()[0].heights[1]);
+        if ceiling
+            .bits()
+            .checked_sub(floor.bits())
+            .is_none_or(|span| span <= 0)
+        {
+            return Err(GeometryError::CoordinateOverflow);
+        }
+        let mut lines = Vec::new();
+        for line in map.linedefs() {
+            let a = map
+                .vertices()
+                .get(usize::from(line.vertices[0]))
+                .ok_or(GeometryError::InvalidReference)?;
+            let b = map
+                .vertices()
+                .get(usize::from(line.vertices[1]))
+                .ok_or(GeometryError::InvalidReference)?;
+            lines.push(LineGeometry::new(
+                [Fixed::from_map_units(a.x), Fixed::from_map_units(a.y)],
+                [Fixed::from_map_units(b.x), Fixed::from_map_units(b.y)],
+            )?);
+        }
+        Ok(Self {
+            map,
+            lines,
+            floor,
+            ceiling,
+        })
+    }
+    /// Immutable validated source map; no runtime state is stored in it.
+    pub const fn map(&self) -> &Map {
+        &self.map
+    }
+    /// Static floor height.
+    pub const fn floor(&self) -> Fixed {
+        self.floor
+    }
+    /// Static ceiling height.
+    pub const fn ceiling(&self) -> Fixed {
+        self.ceiling
+    }
+    /// Validates actor dimensions in this supported profile.
+    pub fn validate_actor(&self, radius: Fixed, height: Fixed) -> Result<(), GeometryError> {
+        if radius < Fixed::ZERO
+            || radius > Fixed::from_map_units(32)
+            || height <= Fixed::ZERO
+            || height > self.ceiling - self.floor
+        {
+            return Err(GeometryError::InvalidActor);
+        }
+        Ok(())
+    }
+    /// Exact static line collision foundation. This is destination-box collision,
+    /// not a swept test and not actor/portal/step/dropoff/sliding simulation.
+    pub fn check_position(
+        &self,
+        position: [Fixed; 2],
+        radius: Fixed,
+        height: Fixed,
+    ) -> Result<Collision, GeometryError> {
+        if radius < Fixed::ZERO || radius > Fixed::from_map_units(32) || height <= Fixed::ZERO {
+            return Err(GeometryError::InvalidActor);
+        }
+        let b = bbox(position, radius);
+        let origin = self.map.blockmap().origin();
+        let ox = Fixed::from_map_units(origin.x);
+        let oy = Fixed::from_map_units(origin.y);
+        let xl = ((b[2] - ox).bits() >> 23).max(0);
+        let xh = ((b[3] - ox).bits() >> 23).min(i32::from(self.map.blockmap().dimensions()[0]) - 1);
+        let yl = ((b[1] - oy).bits() >> 23).max(0);
+        let yh = ((b[0] - oy).bits() >> 23).min(i32::from(self.map.blockmap().dimensions()[1]) - 1);
+        let mut result = Collision {
+            blocked_by: None,
+            fits: height <= self.ceiling - self.floor,
+            candidates: Vec::new(),
+        };
+        let mut seen = vec![false; self.lines.len()];
+        for x in xl..=xh {
+            for y in yl..=yh {
+                let list = self
+                    .map
+                    .blockmap()
+                    .cell_lines(x as usize, y as usize)
+                    .ok_or(GeometryError::InvalidReference)?;
+                for index in list {
+                    let mark = seen
+                        .get_mut(usize::from(index))
+                        .ok_or(GeometryError::InvalidReference)?;
+                    if *mark {
+                        continue;
+                    }
+                    *mark = true;
+                    result.candidates.push(index);
+                    if self
+                        .lines
+                        .get(usize::from(index))
+                        .ok_or(GeometryError::InvalidReference)?
+                        .crosses(b)
+                    {
+                        result.blocked_by = Some(index);
+                        return Ok(result);
+                    }
+                }
+            }
+        }
+        Ok(result)
+    }
+    pub(crate) fn move_xy(&self, actor: &mut Actor) -> Result<Vec<MoveAttempt>, GeometryError> {
+        let mut attempts = Vec::new();
+        if actor.spec.momentum == [Fixed::ZERO; 2] {
+            return Ok(attempts);
+        }
+        let max = 30 * 65536;
+        for value in &mut actor.spec.momentum {
+            *value = Fixed::from_bits(value.bits().clamp(-max, max));
+        }
+        let [mut xmove, mut ymove] = actor.spec.momentum.map(Fixed::bits);
+        loop {
+            let delta = if xmove > max / 2 || ymove > max / 2 {
+                let d = [xmove / 2, ymove / 2];
+                xmove >>= 1;
+                ymove >>= 1;
+                d
+            } else {
+                let d = [xmove, ymove];
+                xmove = 0;
+                ymove = 0;
+                d
+            };
+            let target = [
+                actor.spec.position[0] + Fixed::from_bits(delta[0]),
+                actor.spec.position[1] + Fixed::from_bits(delta[1]),
+            ];
+            let collision = self.check_position(target, actor.spec.radius, actor.spec.height)?;
+            if collision.allowed() {
+                actor.spec.position = target;
+            } else {
+                actor.spec.momentum = [Fixed::ZERO; 2];
+            }
+            attempts.push(MoveAttempt { target, collision });
+            if xmove == 0 && ymove == 0 {
+                break;
+            }
+        }
+        if actor
+            .spec
+            .momentum
+            .iter()
+            .all(|m| m.bits() > -0x1000 && m.bits() < 0x1000)
+        {
+            actor.spec.momentum = [Fixed::ZERO; 2];
+        } else {
+            for m in &mut actor.spec.momentum {
+                *m = *m * Fixed::from_bits(0xe800);
+            }
+        }
+        Ok(attempts)
+    }
+}

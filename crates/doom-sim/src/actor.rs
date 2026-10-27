@@ -1,0 +1,81 @@
+use doom_types::Fixed;
+
+/// Signed per-tic movement command; buttons are reserved for later gameplay.
+#[derive(Clone, Copy, Default, Debug, Eq, PartialEq)]
+pub struct TicCommand {
+    /// Signed forward thrust units, multiplied by 2048 as in P_MovePlayer.
+    pub forward: i8,
+    /// Signed sideways thrust units, relative to angle minus 90 degrees.
+    pub side: i8,
+    /// Signed angle delta in units of 1/65536 revolution.
+    pub angle_turn: i16,
+    /// Currently must be zero; unsupported actions are rejected, not ignored.
+    pub buttons: u8,
+}
+
+/// Explicit parameters for a grounded, non-solid non-player mover, not a full
+/// mobj type. Mobj flags are implicitly zero in this supported profile.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ActorSpec {
+    /// Horizontal position in raw 16.16 coordinates.
+    pub position: [Fixed; 2],
+    /// Horizontal momentum before per-tic clamping/friction.
+    pub momentum: [Fixed; 2],
+    /// Radius, from zero through 32 map units in the supported profile.
+    pub radius: Fixed,
+    /// Positive height that fits the static sector.
+    pub height: Fixed,
+    /// Unsigned binary angle, modulo one revolution.
+    pub angle: u32,
+}
+impl Default for ActorSpec {
+    fn default() -> Self {
+        Self {
+            position: [Fixed::ZERO; 2],
+            momentum: [Fixed::ZERO; 2],
+            radius: Fixed::from_map_units(8),
+            height: Fixed::from_map_units(56),
+            angle: 0,
+        }
+    }
+}
+
+/// Owned runtime state. Read-only public access prevents unsupported mutations.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Actor {
+    pub(crate) spec: ActorSpec,
+    pub(crate) floor: Fixed,
+    pub(crate) ceiling: Fixed,
+    pub(crate) z: Fixed,
+    pub(crate) lastlook: u8,
+}
+impl Actor {
+    /// Current XY position.
+    pub const fn position(&self) -> [Fixed; 2] {
+        self.spec.position
+    }
+    /// Current XY momentum.
+    pub const fn momentum(&self) -> [Fixed; 2] {
+        self.spec.momentum
+    }
+    /// Unsigned binary angle.
+    pub const fn angle(&self) -> u32 {
+        self.spec.angle
+    }
+    /// Grounded vertical coordinate; vertical simulation is not implemented.
+    pub const fn z(&self) -> Fixed {
+        self.z
+    }
+    /// Radius used for destination-box collision.
+    pub const fn radius(&self) -> Fixed {
+        self.spec.radius
+    }
+    /// Collision height.
+    pub const fn height(&self) -> Fixed {
+        self.spec.height
+    }
+    /// Spawn's gameplay RNG lookup modulo four, matching the reference foundation.
+    pub const fn lastlook(&self) -> u8 {
+        self.lastlook
+    }
+}

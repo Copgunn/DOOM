@@ -5,9 +5,10 @@
 Initial target: **Linux DOOM 1.10**, preserved in `linuxdoom-1.10/`, upstream
 [id-Software/DOOM](https://github.com/id-Software/DOOM) commit
 `a77dfb96cb91780ca334d0d4cfd86957558007e0`.
-M1 parses IWAD/PWAD bytes and structurally validates classic binary maps using
-synthetic fixtures. It does not simulate, render, play demos, or compare reference
-states. Commercial IWAD validation and gameplay compatibility are not established.
+M1 parses IWAD/PWAD bytes and structurally validates classic maps. M2 implements
+a narrow headless simulation with isolated C arithmetic, RNG, scheduling, geometry,
+XY and thrust comparisons. Rendering, demo playback, full gameplay synchronization
+and authentic IWAD validation remain unverified.
 
 DOS DOOM 1.9 is a separate future target. The released Linux source is not a
 complete DOS specification. Linux's `VERSION = 110` and matching demo header
@@ -80,6 +81,70 @@ Applications can lower limits; raising them cannot enable unsupported formats.
 All caller-provided input bytes must already have been acquired within the
 application's own I/O and memory limits.
 
+## Implemented M2 behavior and evidence limits
+
+Source findings recorded before implementation are in [M2_REFERENCE.md](M2_REFERENCE.md).
+Reproduction, adapters and compiler/source hashes are under `tools/reference/`
+and `tests/reference/provenance.json`.
+
+- `Fixed` is signed i32 16.16. Add/sub/negate and narrowed multiplication wrap
+  explicitly; widened i64 multiplication uses arithmetic shift. Division retains
+  the original `abs(a)>>14 >= abs(b)` guard and active binary64 divide, scale by
+  65536 and toward-zero conversion. The conservative guard can saturate before
+  a mathematically representable quotient; this is tested, not replaced.
+- Safe policies use unsigned INT_MIN magnitude, arithmetic negative shifts and
+  low-bit narrowing. Guarded zero division saturates by sign, including 0/0 ->
+  MAX. Direct `div2_checked` returns errors for zero/range failure, replacing
+  fatal/undefined conversions. Map conversion and angle shifts wrap explicitly.
+- The GNU C profile compares 1,303 arithmetic results, excluding abs(INT_MIN)
+  guard inputs and zero-divisor direct helper calls. Rust extremes have separate
+  policy assertions. Recorded valid double-helper samples also match an integer
+  experiment; this is not exhaustive proof or justification to replace the
+  active double path. GNU narrowing/right-shift assumptions and the unsigned
+  angle-shift adapter are explicit in the provenance.
+- Exact RNG table values and both indexes match 512 C lookups, including wrapping.
+  Reset, restore and stream separation are tested. Parameterized spawning consumes
+  one gameplay draw for lastlook modulo four as observed in P_SpawnMobj; complete
+  type/state-driven spawning is not implemented.
+- Thinkers append, including same-traversal tail spawning. Current/already-visited
+  marks wait until a later traversal; unvisited marked thinkers retire without
+  updating. Rust saves links before retirement; the C adapter retains storage to
+  avoid the original read-after-free. Generation checks, deterministic lowest-slot
+  reuse, exhaustion retirement, clear, empty scheduling and exact order are tested.
+  Explicit callback visit-budget failure retains completed updates; this safe
+  bound is a project policy. Handles are store-scoped, not global identifiers.
+- Each step is one 35 Hz logical tic: ordered command slots, thinkers, then
+  Specials/Respawn markers and tic increment. Specials/respawn gameplay is absent.
+  Pause freezes commands/RNG/events/time. u64 tic exhaustion rejects before mutation.
+- Supported worlds have one static sector, one-sided lines, no line/sector
+  specials and grounded non-player movers. Other profiles fail explicitly. Line
+  predicates match 162 C cases; XY state/substeps/candidates match two 96-step
+  layouts, including distinct cell lists proving x-outer/y-inner BLOCKMAP order.
+  Deduplication follows first encounter including dummy linedef zero, without
+  depending on a wrapping global validcount.
+- XY preserves ±30-unit clamping, positive-only >15-unit splitting, toward-zero
+  half displacement versus arithmetic-shift remainder, destination-box collision,
+  non-player blocked momentum clearing, strict stop thresholds and `0xe800`
+  friction. It is not a swept or circular collision approximation.
+- Ground angle/thrust matches 112 C-adapter cases using exact source sine/cosine
+  data. Binding commands does not make movers complete vanilla players: blocking
+  and friction use the non-player profile. Sliding, actor collisions, Z/gravity,
+  portals/steps/dropoffs, view/weapon state, monsters, specials and respawn remain
+  incomplete. Nonzero buttons fail explicitly rather than doing invented work.
+- [DSIM-v1 state](STATE_FORMAT.md) includes static map data, slot/generation/links,
+  processing order, actors, commands, RNG and events. Independent Python encoding
+  of C-derived coasting values checks full first-tic bytes and twelve per-tic
+  goldens. Longer 768-call traces test lifecycle, pause, wrapping, presentation
+  independence and first divergence. Project consistency and hashes are not
+  full-engine synchronization evidence.
+
+Initial C provenance: Linux x86_64, GCC 14.2.0, GNU89/O0, explicit signed char,
+wrapping arithmetic, disabled FP contraction and standard excess-precision flags.
+Recorded compiler behavior and adapters define the comparison boundary. Portable
+C undefined behavior, old x87 builds, DOS 1.9, authentic assets and geometric/spatial
+correctness beyond M1 structural validation are not thereby established. Traces
+made from private assets must never become public fixtures or logs.
+
 ## Determinism objectives
 
 - Exactly 35 logical tics per second; rendering rate and platform clocks cannot
@@ -90,16 +155,15 @@ application's own I/O and memory limits.
 - Keep input, filesystem work, audio, and rendering outside gameplay authority.
 - Never use unordered containers or parallel scheduling to determine gameplay order.
 
-## Verification to introduce
+## Extending verification
 
 M1 tests generated archives/maps, malformed bounds/references, patch precedence,
 adversarial sharing and iterative deep BSP validation. Separate WAD/map fuzz
 targets use only synthetic seeds. Bounded smoke testing is not exhaustive proof
-of compatibility or absence of defects. M2 introduces
-canonical per-tic state encoding and repeatability checks in debug/release and
-across platforms. Include RNG indices, actor identity/order, positions/momenta,
-player state, sector/special state, and pending commands/events as appropriate;
-exclude pointers, padding, GPU objects, and wall clocks.
+of compatibility or absence of defects. M2 runs canonical state and repeatability
+checks in debug/release across supported platforms. Extend that schema as player,
+sector/special and other gameplay state becomes implemented; retain ordered RNG,
+actor and command/event coverage, excluding pointers, padding, GPU objects and clocks.
 
 M3 compares per-tic traces against a pinned, reproducibly built reference using
 legal fixtures. Capture reference commit, build settings, data hashes, commands,

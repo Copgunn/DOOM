@@ -1,7 +1,13 @@
 //! Shared leaf types for the Rust rewrite.
 //!
-//! Arithmetic, RNG, and simulation state are future work. This crate performs
-//! no I/O and has no dependencies.
+//! Explicit fixed-point arithmetic, owned vanilla RNG and raw resource names.
+//! This crate performs no I/O and has no dependencies.
+
+mod fixed;
+mod rng;
+
+pub use fixed::{Fixed, FixedDivError};
+pub use rng::DoomRng;
 
 /// Logical simulation tics per second, from Linux DOOM 1.10's `TICRATE`.
 pub const TIC_RATE: u32 = 35;

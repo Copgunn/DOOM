@@ -25,10 +25,9 @@ Acceptance:
 
 ## M1 — WAD and map parsing
 
-Status: **implemented and validated on `feat/m1-wad-map-parsing`**.
-Delivery: [PR #2](https://github.com/Copgunn/DOOM/pull/2). Engineering review found
-no blocking defects; the owner authorized a regular merge after documentation
-corrections pass fresh checks on the exact corrected head.
+Status: **implemented, validated and merged**.
+Historical delivery: [PR #2](https://github.com/Copgunn/DOOM/pull/2), regular merge
+`de78b72ee0a005ee737fb126abbf656db7639812`. Corrected-head and post-merge CI passed.
 No simulation, rendering, audio, or gameplay is included. The delivery PR and
 exact remote checks are recorded in [validation evidence](VALIDATION.md).
 
@@ -74,14 +73,28 @@ Acceptance:
 
 ## M2 — Deterministic simulation core
 
-Status: planned.
+Status: **foundations implemented, validated and accepted for merge**.
+[PR #3](https://github.com/Copgunn/DOOM/pull/3) has conditional owner authorization
+for a regular merge after documentation corrections and fresh local/remote checks.
+The corrected-head and merge evidence is recorded in validation notes.
 
-Acceptance: explicit vanilla fixed-point semantics and edge tests; reference RNG
-table/sequence/reset tests; validated actor handles and deterministic thinker
-insertion/removal scheduling; movement and collision with fixtures; canonical
-per-tic state comparisons. Identical input must repeat across debug/release,
-supported platforms, and differing presentation schedules. Record ambiguous C
-semantics and safe deviations.
+- [x] Source investigation before implementation; defined policies for C ambiguities.
+- [x] i32 16.16 arithmetic, original division guard/double helper, extreme-value policy.
+- [x] Exact owned RNG streams with full-cycle/reset/separation reference tests.
+- [x] Safe store-scoped generational actors, deterministic reuse and separate order.
+- [x] Append-sensitive scheduling, deferred retirement, pause and phase-order tests.
+- [x] One-sector grounded non-player XY subset, original line/BLOCKMAP predicates.
+- [x] Source-table ground thrust/angle foundations; unsupported buttons fail.
+- [x] Canonical DSIM-v1 fields, hashes and first-divergence diagnostics.
+- [x] Headless runner, C vectors, independent snapshot goldens and 768-call regressions.
+- [x] Local debug/release/Rust 1.85 checks, parser regressions and fuzz smoke reruns.
+- [x] README, architecture, compatibility, format, test and validation documentation.
+- [x] Verify Linux/Windows/macOS debug/release CI and Rust 1.85; evidence in validation notes.
+
+Full players, sliding, actor collisions, vertical motion, portals/sector changes,
+state machines, monsters/weapons/specials and gameplay respawn remain M3 work.
+This scoped foundation does not establish complete vanilla or DOS synchronization.
+Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 

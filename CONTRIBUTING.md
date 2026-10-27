@@ -21,6 +21,7 @@ cargo build --workspace --locked
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
+cargo test -p doom-sim -p doom-types --release --locked
 cargo doc --workspace --no-deps --locked
 ```
 
@@ -66,3 +67,13 @@ attribution, source notices, `README.TXT`, and `LICENSE.TXT`. Do not commit
 proprietary IWADs/assets, credentials, generated build output, or private repository
 content. This project is separate from `Copgunn/UZDoom`: never access, copy from,
 modify, publish, or otherwise involve that repository.
+
+## Simulation and reference changes
+
+Run arithmetic/simulation tests in debug and release. Compare C-derived vectors
+separately from project consistency checks. `tools/reference/generate.py --check`
+requires a supported GNU C host; all platforms can run the committed-vector Rust
+tests. `snapshot_goldens.py --check` independently verifies DSIM-v1 encoding.
+Regenerate fixtures deliberately, retaining compiler/source/adapter provenance.
+Explain changed policies or schema versions; never overwrite expectations merely
+to make a regression pass. See `docs/M2_REFERENCE.md` and `docs/STATE_FORMAT.md`.
