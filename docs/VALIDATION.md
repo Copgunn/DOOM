@@ -158,3 +158,101 @@ The corrected SHA and fresh CI are recorded on PR #2; earlier green checks are
 not a substitute. M2 requires separate owner merge approval.
 Private IWADs were not provisioned, downloaded, extracted, or used; no real-asset
 integration result is claimed.
+
+
+## M1 finalization and verified merge
+
+PR #2 remained at reviewed head `88d32fddd74c7d79adf4d800fb93a4b117310fb0`
+until the requested documentation-only correction
+`ff74ac5c644f8d72b01eb2c1f33e22216def8ef1`. Required local checks and Rust 1.85
+passed again. [Fresh correction-head CI 40583893483](https://github.com/Copgunn/DOOM/actions/runs/40583893483)
+passed all four jobs on that exact head, before the owner-authorized regular merge.
+
+PR #2 is merged/closed. Merge commit `de78b72ee0a005ee737fb126abbf656db7639812`
+has parents `50a8f64ccc71cdd5e52a7e491aff985dd56d2902` and
+`ff74ac5c644f8d72b01eb2c1f33e22216def8ef1`. Remote `master`, local fast-forward
+state and ancestry were verified. [Post-merge CI 40584099015](https://github.com/Copgunn/DOOM/actions/runs/40584099015)
+passed all four jobs before branching M2. All 165 upstream files matched the
+baseline byte-for-byte; no proprietary WAD/demo assets were tracked. Authentic
+commercial IWAD validation remains unperformed and was not a merge prerequisite.
+
+## M2 implementation and local verification
+
+Branch: `feat/m2-deterministic-simulation-core`, based on the verified M1 merge.
+The fourth active crate, `doom-sim`, implements one-tic stepping, owned actor/RNG
+state, safe append-sensitive scheduling, a supported static movement profile,
+headless command execution, canonical snapshots and first-divergence diagnostics.
+No third-party dependencies were added to the stable workspace; unsafe remains
+forbidden. See [scope/source findings](M2_REFERENCE.md) and
+[canonical state format](STATE_FORMAT.md).
+
+Linux x86_64, Rust 1.99.1 / Cargo 1.99.1:
+
+| Check | Observed result |
+| --- | --- |
+| Workspace build, formatting, Clippy with warnings denied | Passed |
+| Workspace tests | 49 unit/integration tests + 1 doctest passed; 2 private tests ignored |
+| Rustdoc with warnings denied | Passed |
+| Rust 1.85.0 workspace tests | Same 50 total passes; 2 private tests ignored |
+| Release tests for doom-sim and doom-types | 26 passed |
+| Headless example, 12 tics | Debug/release output identical byte-for-byte |
+| C/table regeneration and independent snapshot-golden checks | Passed |
+
+The tests include all existing WAD/map regressions. Longer deterministic scenarios
+make 768 step calls (767 advancing tics plus a paused call), with ordered commands,
+RNG wrapping, spawn/removal/reuse, different presentation read schedules and an
+injected extra gameplay draw. Exact field/byte equality passes; divergence reports
+the expected first tic and RNG field. This is project consistency evidence,
+separate from isolated C comparisons.
+
+## M2 reference comparison evidence
+
+The standalone harness uses the preserved source revision and GNU C flags recorded
+in `tests/reference/provenance.json`, including source and adapter SHA-256 hashes.
+Initial compiler: `cc (Debian 14.2.0-19) 14.2.0`, Linux x86_64, GNU89, O0,
+`-fwrapv -fno-strict-aliasing -ffp-contract=off -fexcess-precision=standard -fsigned-char`.
+
+| Reference family | Observed comparison |
+| --- | --- |
+| FixedMul / FixedDiv / active FixedDiv2 | 1,303 recorded arithmetic cases matched |
+| P_Random / M_Random | 512 lookups matched, including full cycles and index wraps |
+| Point/box line predicates | 162 cases matched |
+| Grounded non-player XY | 96 steps in each of two BLOCKMAP layouts matched position, momentum, substep count and candidate order |
+| Ground angle/thrust | 112 cases matched using source sine/cosine values |
+| Thinkers | Five scenarios over two traversals matched update order, including self/other marks, current-tail append and reuse-independent order |
+| DSIM-v1 coasting goldens | Full first-tic bytes plus twelve per-tic digests/fields matched independent Python encoding of explicit setup and C-derived XY values |
+
+C undefined/implementation-defined cases and adapters are not hidden: abs(INT_MIN)
+is excluded from C guarded division; zero divisors are excluded from its direct
+helper; Rust safe policies have separate tests. Negative angle shifts are made
+unsigned explicitly. Retired thinker storage is retained in the C adapter instead
+of reproducing use-after-free. GNU arithmetic shifts/narrowing and controlled FP
+settings define the recorded compiler profile. No complete reference-engine game,
+DOS 1.9 synchronization or authentic IWAD run is claimed.
+
+## M2 parser fuzz rerun
+
+Both existing nightly parser targets rebuilt and each completed 100,000 inputs
+with seed 1, 1 MiB maximum input, 1024 MiB RSS bound and 10-second input timeout.
+Tooling remains cargo-fuzz 0.13.2, libfuzzer-sys 0.4.13, nightly 1.101.0
+(16d1ffac1 2026-10-26). AddressSanitizer stayed enabled. As documented for M1,
+`ASAN_OPTIONS=detect_leaks=0` avoids unsupported ptrace-dependent LeakSanitizer;
+leak detection remains unverified. Synthetic seeds/mutations only; no parser
+crash was observed. This smoke coverage is not exhaustive proof.
+
+## M2 delivery gate and remaining scope
+
+The M2 PR requires final exact-head stable Linux/Windows/macOS debug/release checks
+and Rust 1.85 tests. Linux additionally reproduces C vectors and independent
+goldens; Windows/macOS read the recorded vectors without requiring a C harness.
+Remote evidence and the exact final SHA will be recorded on the PR after push.
+Keep the PR draft until checks pass, then leave it open and unmerged for owner review.
+
+The supported profile excludes complete players, sliding, solid actor collisions,
+Z/gravity, portals/sector transitions, state machines, monsters/weapons, specials,
+respawn gameplay, audio, rendering and demo replay. Specials/Respawn events are
+phase markers only. Command-controlled movers retain the non-player response.
+Geometry/BLOCKMAP spatial correctness beyond M1's structural checks is unproven;
+coordinate overflow outside the C comparison domain follows documented policies.
+Canonical hashes are noncryptographic and are not full gameplay-equivalence proof.
+No private assets were copied, provisioned or used, and no such test result is claimed.

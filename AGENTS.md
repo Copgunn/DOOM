@@ -76,6 +76,13 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - Update `docs/ROADMAP.md` with milestone progress and verifiable acceptance evidence.
 - Document important compatibility findings in `docs/COMPATIBILITY.md`.
 - Include relevant documentation updates in feature PRs. Keep planned and
-  implemented functionality explicit. M1 parses resources/maps; there is still
-  no playable engine, simulation, demo replay, or renderer. Preserve the tested
-  validation policies in `docs/COMPATIBILITY.md` when changing parsers.
+  implemented functionality explicit. M1 parses resources/maps; M2 provides a
+  narrow headless simulation profile. Full players/monsters, sliding, actor/Z
+  collision, sector transitions, demo replay and rendering remain incomplete.
+  Preserve tested policies in `docs/COMPATIBILITY.md` and the versioned canonical
+  format in `docs/STATE_FORMAT.md`. Read source findings in `docs/M2_REFERENCE.md`.
+- Keep C-derived vectors separate from project regression consistency. Never
+  claim complete vanilla/DOS synchronization from isolated comparisons or hashes.
+  Run deterministic arithmetic/simulation tests in debug and release; preserve
+  cross-platform golden checks. Intentional reference/schema changes require
+  updated provenance, documented decisions, and reviewed fixture regeneration.

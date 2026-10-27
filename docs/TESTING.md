@@ -33,7 +33,47 @@ OS ordering. Static fixtures need provenance, license, purpose, and regeneration
 instructions. Never use commercial or extracted proprietary data. Promote
 minimized fuzz failures into ordinary stable regressions.
 
-## Fuzzing
+## M2 reference and deterministic checks
+
+```sh
+cargo test -p doom-types -p doom-sim --locked
+cargo test -p doom-types -p doom-sim --release --locked
+cargo run -p doom-sim --example headless --locked -- 12
+python3 tools/reference/generate.py --check
+python3 tools/reference/snapshot_goldens.py --check
+```
+
+The Python commands need a supported C compiler for isolated vector regeneration;
+ordinary Rust tests read committed vectors and need no C toolchain. Linux CI
+reproduces vectors/goldens; all three stable platforms run recorded comparisons
+and debug/release deterministic checks. Rust 1.85 runs the workspace suite.
+
+`doom-types/tests/reference.rs` checks 1,303 arithmetic cases, 512 C RNG lookups,
+safe extreme policies and reset/wrap/separation. `doom-sim/tests/reference.rs`
+checks 162 geometry predicates, two 96-step movement layouts (including different
+cell-list ordering), 112 command-thrust cases and thinker update-order traces.
+Reference compiler flags, source/adapter hashes and exclusions are committed.
+See [tools/reference/README.md](../tools/reference/README.md) and
+[source findings](M2_REFERENCE.md); these comparisons do not run the whole engine.
+
+`snapshot_goldens.py` reads no Rust output: it encodes explicit setup state and
+C-derived coasting values into DSIM-v1 bytes. Tests compare the complete first
+snapshot and twelve per-tic digests plus decoded position/momentum fields.
+`doom-sim/tests/determinism.rs` also checks exact phase/actor order, pause, atomic
+input rejection, unsupported profiles, capacity failures without RNG drift, stale
+handles/reuse, and 768-call command/lifecycle streams. Fresh worlds and different
+presentation read schedules must match all fields/bytes, not merely counts/hashes.
+An injected extra RNG draw must report the first divergent tic and named field.
+Store tests cover callback append/removal, empty/clear, slot reuse, generation
+exhaustion and visit budgets. [STATE_FORMAT.md](STATE_FORMAT.md) defines widths,
+field order, pending observations and the noncryptographic digest.
+
+Golden regeneration is intentional: run the generators without `--check`, inspect
+the complete diff, retain provenance, and explain changed compatibility/schema
+decisions. Never replace expected values with current Rust output to hide a failure.
+Long-run project consistency is distinguished from C-derived reference vectors.
+
+## Parser fuzzing
 
 `fuzz/` is an independent Cargo workspace, with its own committed lockfile and
 `libfuzzer-sys` dependency. It does not affect the dependency-free stable workspace.
@@ -80,8 +120,8 @@ A successful synthetic exercise of this test is not evidence of real-IWAD testin
 
 ## Future verification
 
-M2 adds canonical per-tic state records and ordered command streams. Compare
-repeat runs, debug/release, and platforms; perturb presentation schedules without
-changing commands. M3/M4 add pinned reference builds and version-specific demo
+Extend M2 per-tic state/command regressions as gameplay grows, preserving
+repeatability across profiles/platforms and presentation schedules. M3/M4 add
+pinned full reference builds and version-specific demo
 replays, recording legal data hashes and first divergent tic/field. Performance
 checks must state environment, profile, workload, and a correctness baseline.

@@ -2,9 +2,11 @@
 
 ## Scope and decisions
 
-M0 establishes three library crates alongside the untouched original source.
-M1 adds bounded archive/map parsing and runnable synthetic examples. There is
-no playable engine, runtime simulation, or renderer.
+M0 establishes the workspace alongside untouched original source. M1 implements
+bounded archive/map parsing. M2 introduces the fourth crate, `doom-sim`, with a
+functioning headless deterministic foundation. A playable client and renderer
+remain future work. Source findings were recorded before implementation in
+[M2_REFERENCE.md](M2_REFERENCE.md).
 The C source is an authoritative behavioral reference, not a Rust design template.
 
 Current Cargo dependency edges (arrows mean “depends on”):
@@ -12,11 +14,12 @@ Current Cargo dependency edges (arrows mean “depends on”):
 ```text
 doom-wad -> doom-types
 doom-map -> doom-wad, doom-types
+doom-sim -> doom-map, doom-types (doom-wad is a test/example dependency only)
 ```
 
-- `doom-types`: 35 Hz constant and lossless raw `LumpName`. Keep this a small
-  shared leaf with no I/O. Fixed-point arithmetic belongs in M2, with explicit
-  integer width, overflow, shift, rounding, and division behavior.
+- `doom-types`: 35 Hz constant, lossless `LumpName`, signed 16.16 `Fixed`, and
+  owned exact-table `DoomRng`. No I/O or third-party dependencies. Arithmetic
+  width, wrap, shift, division guard, binary64 helper and rounding are explicit.
 - `doom-wad`: `Wad<'a>` borrows immutable caller-owned bytes and owns validated
   directory metadata. `Lump` ranges are private; `data(index)` checks indexes.
   `WadSet` borrows archives in load order and returns archive/directory locations,
@@ -31,6 +34,33 @@ doom-map -> doom-wad, doom-types
 - External byte acquisition belongs to the caller/future client. Ignored tests
   read from `DOOM_IWAD_DIR` without printing private names/paths. Provisioning
   private assets into a cloud environment requires separate destination consent.
+- `doom-sim`: owns `StaticWorld`, `ThinkerStore<Actor>`, RNG, four ordered command
+  slots, logical tic/pause state, and deterministic observations. `Simulation::step`
+  takes commands only. No OS clock, renderer, audio, filesystem, or GPU dependency
+  participates. `StaticWorld` rejects unsupported multi-sector/portal/special
+  profiles and compiles fixed line predicates from validated M1 records.
+
+Actor identities are store-scoped u32 slot + u64 generation. Lowest reusable
+slots are chosen deterministically; generation exhaustion retires slots. Safe
+linked handles define append order independently of physical slots. Marked
+storage remains readable until its visit; retirement saves the next handle
+before unlinking. Callback contexts allow append/mark/value updates but not
+reentrant traversal or clear. Retirement observers are read-only. Generic
+traversal has an explicit visit budget and retains completed callbacks on budget
+failure; built-in XY thinkers never spawn, so the actor bound covers each step.
+
+Players/input foundations precede thinkers, then Specials/Respawn phase markers
+and tic increment. Full player/special/respawn logic is not implemented. Controlled
+movers use the non-player ground response. Pause freezes the whole step before
+commands/RNG/events/time; invalid buttons/tic exhaustion reject before mutation.
+Setup spawn/mark/random observations queue for the next unpaused tic. Presentation
+reads immutable snapshots/events without draining them.
+
+Canonical state includes every logical slot/generation/link, actor parameters,
+processing order, commands/bindings, RNG, tic/pause, last/pending events and static
+map tables. Immutable map fields are shared internally, with no addresses in the
+encoding. Read-only BLOCKMAP word/range views let snapshots encode shared lists
+once in linear space. See [STATE_FORMAT.md](STATE_FORMAT.md).
 
 The stable workspace has no third-party dependencies. The separate `fuzz/`
 package uses `libfuzzer-sys` solely for instrumented parser testing; its lockfile
@@ -44,7 +74,7 @@ Do not add empty crates for the future components below.
 
 | Future component | Owns | May consume |
 | --- | --- | --- |
-| `doom-sim` | Per-tic gameplay state, fixed-point rules, RNG, ordered thinkers | `doom-types`, validated `doom-map` data |
+| `doom-sim` (M2 foundation exists) | Per-tic state, ordered thinkers; fuller gameplay in M3 | `doom-types`, validated `doom-map` data |
 | `doom-demo` | Versioned demo command decoding/encoding and replay | `doom-types`; replay drives `doom-sim` through commands |
 | `doom-render` | Presentation snapshots and renderer interface | Immutable simulation output and resource views |
 | `doom-render-software` | Minimal diagnostic software/headless path | Renderer interface |
