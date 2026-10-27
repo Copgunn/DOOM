@@ -49,8 +49,34 @@ pub struct Actor {
     pub(crate) z: Fixed,
     pub(crate) lastlook: u8,
     pub(crate) solidity: crate::Solidity,
+    pub(crate) momz: Fixed,
+    pub(crate) gravity: crate::Gravity,
+    pub(crate) allow_dropoff: bool,
+    pub(crate) location: Option<crate::Location>,
 }
 impl Actor {
+    /// Vertical momentum in the M3b profile.
+    pub const fn vertical_momentum(&self) -> Fixed {
+        self.momz
+    }
+    /// Current source BSP membership; None in older profiles.
+    pub const fn location(&self) -> Option<crate::Location> {
+        self.location
+    }
+    /// Current contacted floor/ceiling constraints, which can differ from the
+    /// center sector while straddling an opening.
+    pub const fn constraints(&self) -> [Fixed; 2] {
+        [self.floor, self.ceiling]
+    }
+    /// Supported gravity exception.
+    pub const fn gravity(&self) -> crate::Gravity {
+        self.gravity
+    }
+    /// MF_DROPOFF permission independent of player binding.
+    pub const fn allows_dropoff(&self) -> bool {
+        self.allow_dropoff
+    }
+
     /// Explicit collision participation, independent of input binding.
     pub const fn solidity(&self) -> crate::Solidity {
         self.solidity
@@ -67,7 +93,7 @@ impl Actor {
     pub const fn angle(&self) -> u32 {
         self.spec.angle
     }
-    /// Grounded vertical coordinate; vertical simulation is not implemented.
+    /// Vertical coordinate; grounded-only in older profiles, simulated in M3b.
     pub const fn z(&self) -> Fixed {
         self.z
     }

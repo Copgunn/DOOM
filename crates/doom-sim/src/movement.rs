@@ -54,19 +54,31 @@ impl SpatialIndex {
 }
 
 pub(crate) fn validate_profile(world: &mut StaticWorld) -> Result<(), GeometryError> {
+    prepare_cells(world, true)
+}
+pub(crate) fn prepare_reference_profile(world: &mut StaticWorld) -> Result<(), GeometryError> {
+    prepare_cells(world, false)
+}
+fn prepare_cells(world: &mut StaticWorld, conservative: bool) -> Result<(), GeometryError> {
     let map = world.map();
     let [w, h] = map.blockmap().dimensions().map(usize::from);
     if world.lines.len() > 128 || w * h > 4096 || map.blockmap().words().len() > 65536 {
-        return Err(GeometryError::Unsupported("M3a geometry work limit"));
+        return Err(GeometryError::Unsupported(if conservative {
+            "M3a geometry work limit"
+        } else {
+            "M3b geometry work limit"
+        }));
     }
     let origin = map.blockmap().origin();
-    for v in map.vertices() {
-        if i64::from(v.x) < i64::from(origin.x)
-            || i64::from(v.y) < i64::from(origin.y)
-            || i64::from(v.x) >= i64::from(origin.x) + w as i64 * 128
-            || i64::from(v.y) >= i64::from(origin.y) + h as i64 * 128
-        {
-            return Err(GeometryError::Unsupported("M3a vertices outside BLOCKMAP"));
+    if conservative {
+        for v in map.vertices() {
+            if i64::from(v.x) < i64::from(origin.x)
+                || i64::from(v.y) < i64::from(origin.y)
+                || i64::from(v.x) >= i64::from(origin.x) + w as i64 * 128
+                || i64::from(v.y) >= i64::from(origin.y) + h as i64 * 128
+            {
+                return Err(GeometryError::Unsupported("M3a vertices outside BLOCKMAP"));
+            }
         }
     }
     // Compile first-occurrence order for each requested suffix in bounded work.
@@ -108,7 +120,14 @@ pub(crate) fn validate_profile(world: &mut StaticWorld) -> Result<(), GeometryEr
         .collect::<Vec<_>>();
     for (i, line) in world.lines.iter().enumerate() {
         if line.delta == [Fixed::ZERO; 2] {
-            return Err(GeometryError::Unsupported("M3a degenerate line"));
+            return Err(GeometryError::Unsupported(if conservative {
+                "M3a degenerate line"
+            } else {
+                "M3b degenerate line"
+            }));
+        }
+        if !conservative {
+            continue;
         }
         let xl = ((i64::from(line.bounds[2].bits()) - (i64::from(origin.x) << 16)) >> 23) as usize;
         let xh = ((i64::from(line.bounds[3].bits()) - (i64::from(origin.x) << 16)) >> 23) as usize;
@@ -137,6 +156,21 @@ fn cell(world: &StaticWorld, position: [Fixed; 2]) -> [i32; 2] {
 }
 
 pub(crate) fn check(
+    world: &StaticWorld,
+    id: ActorId,
+    actor: &Actor,
+    target: [Fixed; 2],
+    spatial: &SpatialIndex,
+    get: &impl Fn(ActorId) -> Option<Actor>,
+) -> ActorMoveAttempt {
+    let mut result = check_things(world, id, actor, target, spatial, get);
+    if result.blocked_by_actor.is_none() {
+        result.lines = world.check_validated_position(target, actor.spec.radius, actor.spec.height);
+    }
+    result
+}
+
+pub(crate) fn check_things(
     world: &StaticWorld,
     id: ActorId,
     actor: &Actor,
@@ -187,7 +221,6 @@ pub(crate) fn check(
             }
         }
     }
-    result.lines = world.check_validated_position(target, actor.spec.radius, actor.spec.height);
     result
 }
 
@@ -381,6 +414,7 @@ fn project(line: &LineGeometry, position: [Fixed; 2], motion: [Fixed; 2]) -> [Fi
 pub(crate) enum MotionEvent {
     Attempt(ActorMoveAttempt),
     Slide(u16),
+    Sector(crate::SectorMoveAttempt),
 }
 struct Mover<'a, F> {
     world: &'a StaticWorld,
@@ -389,6 +423,7 @@ struct Mover<'a, F> {
     spatial: &'a mut SpatialIndex,
     get: F,
     events: Vec<MotionEvent>,
+    profile: MotionProfile<'a>,
 }
 impl<F: Fn(ActorId) -> Option<Actor>> Mover<'_, F> {
     fn attempt(&mut self, delta: [Fixed; 2]) -> bool {
@@ -396,6 +431,27 @@ impl<F: Fn(ActorId) -> Option<Actor>> Mover<'_, F> {
             self.actor.spec.position[0] + delta[0],
             self.actor.spec.position[1] + delta[1],
         ];
+        if let Some(sectors) = self.profile.sectors {
+            let attempt = crate::multisector::check_move(
+                (self.world, sectors),
+                self.id,
+                self.actor,
+                target,
+                self.spatial,
+                &self.get,
+                self.profile.command.is_some(),
+            );
+            let allowed = attempt.allowed();
+            if allowed {
+                self.actor.spec.position = target;
+                self.actor.floor = attempt.floor;
+                self.actor.ceiling = attempt.ceiling;
+                self.actor.location = Some(attempt.location);
+                self.spatial.link(self.id);
+            }
+            self.events.push(MotionEvent::Sector(attempt));
+            return allowed;
+        }
         let attempt = check(
             self.world,
             self.id,
@@ -453,7 +509,12 @@ impl<F: Fn(ActorId) -> Option<Actor>> Mover<'_, F> {
                     if frac > Fixed::ONE {
                         break;
                     }
-                    if self.world.lines[i].point_side(pos) == 1 {
+                    let blocks = if let Some(sectors) = self.profile.sectors {
+                        crate::multisector::slide_blocks(self.world, sectors, i, self.actor)
+                    } else {
+                        self.world.lines[i].point_side(pos) == 0
+                    };
+                    if !blocks {
                         continue;
                     }
                     if frac < best {
@@ -499,6 +560,52 @@ pub(crate) fn move_xy(
     get: impl Fn(ActorId) -> Option<Actor>,
     command: Option<TicCommand>,
 ) -> Vec<MotionEvent> {
+    move_xy_profile(
+        world,
+        id,
+        actor,
+        spatial,
+        get,
+        MotionProfile {
+            command,
+            sectors: None,
+        },
+    )
+}
+pub(crate) fn move_xy_multisector(
+    world: &StaticWorld,
+    id: ActorId,
+    actor: &mut Actor,
+    spatial: &mut SpatialIndex,
+    get: impl Fn(ActorId) -> Option<Actor>,
+    command: Option<TicCommand>,
+    sectors: &[crate::SectorState],
+) -> Vec<MotionEvent> {
+    move_xy_profile(
+        world,
+        id,
+        actor,
+        spatial,
+        get,
+        MotionProfile {
+            command,
+            sectors: Some(sectors),
+        },
+    )
+}
+struct MotionProfile<'a> {
+    command: Option<TicCommand>,
+    sectors: Option<&'a [crate::SectorState]>,
+}
+fn move_xy_profile(
+    world: &StaticWorld,
+    id: ActorId,
+    actor: &mut Actor,
+    spatial: &mut SpatialIndex,
+    get: impl Fn(ActorId) -> Option<Actor>,
+    profile: MotionProfile<'_>,
+) -> Vec<MotionEvent> {
+    let command = profile.command;
     let mut mover = Mover {
         world,
         id,
@@ -506,6 +613,7 @@ pub(crate) fn move_xy(
         spatial,
         get,
         events: Vec::new(),
+        profile,
     };
     if mover.actor.spec.momentum == [Fixed::ZERO; 2] {
         return mover.events;
@@ -536,6 +644,9 @@ pub(crate) fn move_xy(
         if x == 0 && y == 0 {
             break;
         }
+    }
+    if mover.profile.sectors.is_some() && mover.actor.z > mover.actor.floor {
+        return mover.events;
     }
     if mover
         .actor

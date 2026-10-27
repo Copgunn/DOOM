@@ -47,7 +47,7 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Canonical schema version: 1 for M2, 2 for M3a.
+    /// Canonical schema version: 1 for M2, 2 for M3a, 3 for M3b.
     pub const fn version(&self) -> u32 {
         self.version
     }
@@ -176,6 +176,24 @@ pub fn compare_traces(expected: &[Snapshot], actual: &[Snapshot]) -> Option<Dive
     None
 }
 
+fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMoveAttempt) {
+    b.extend(id(actor));
+    for v in attempt.target {
+        b.extend(v.bits().to_le_bytes());
+    }
+    b.extend(optional_id(attempt.blocked_by_actor));
+    b.extend((attempt.actors.len() as u32).to_le_bytes());
+    for a in &attempt.actors {
+        b.extend(id(*a));
+    }
+    b.extend(attempt.lines.blocked_by.unwrap_or(u16::MAX).to_le_bytes());
+    b.push(u8::from(attempt.lines.fits));
+    b.extend((attempt.lines.candidates.len() as u32).to_le_bytes());
+    for line in &attempt.lines.candidates {
+        b.extend(line.to_le_bytes());
+    }
+}
+
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
@@ -230,21 +248,46 @@ fn event_bytes(event: &Event) -> Vec<u8> {
         Event::GameplayRandom(v) => b.extend([7, *v]),
         Event::ActorMovement { actor, attempt } => {
             b.push(8);
+            actor_attempt_bytes(&mut b, *actor, attempt);
+        }
+        Event::SectorMovement { actor, attempt } => {
+            b.push(10);
+            actor_attempt_bytes(&mut b, *actor, &attempt.movement);
+            b.extend(attempt.location.subsector.to_le_bytes());
+            b.extend(attempt.location.sector.to_le_bytes());
+            for value in [attempt.floor, attempt.ceiling, attempt.dropoff] {
+                b.extend(value.bits().to_le_bytes());
+            }
+            b.extend([u8::from(attempt.float_ok), attempt.failure as u8]);
+            b.extend((attempt.openings.len() as u32).to_le_bytes());
+            for visit in &attempt.openings {
+                b.extend(visit.line.to_le_bytes());
+                for value in [
+                    visit.opening.top,
+                    visit.opening.bottom,
+                    visit.opening.range,
+                    visit.opening.low_floor,
+                ] {
+                    b.extend(value.bits().to_le_bytes());
+                }
+            }
+        }
+        Event::Vertical { actor, update } => {
+            b.push(11);
             b.extend(id(*actor));
-            for v in attempt.target {
-                b.extend(v.bits().to_le_bytes());
+            for value in update
+                .before
+                .into_iter()
+                .chain(update.after)
+                .chain(update.constraints)
+            {
+                b.extend(value.bits().to_le_bytes());
             }
-            b.extend(optional_id(attempt.blocked_by_actor));
-            b.extend((attempt.actors.len() as u32).to_le_bytes());
-            for a in &attempt.actors {
-                b.extend(id(*a));
-            }
-            b.extend(attempt.lines.blocked_by.unwrap_or(u16::MAX).to_le_bytes());
-            b.push(u8::from(attempt.lines.fits));
-            b.extend((attempt.lines.candidates.len() as u32).to_le_bytes());
-            for line in &attempt.lines.candidates {
-                b.extend(line.to_le_bytes());
-            }
+            b.extend([
+                u8::from(update.floor_contact),
+                u8::from(update.ceiling_contact),
+                u8::from(update.gravity_applied),
+            ]);
         }
         Event::Slide { actor, line } => {
             b.push(9);
@@ -259,10 +302,10 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     let mut fields = Vec::new();
     field(&mut fields, "tic", sim.tic.to_le_bytes());
     field(&mut fields, "tic_rate", doom_types::TIC_RATE.to_le_bytes());
-    let version = if sim.profile == crate::Profile::Foundation {
-        1_u32
-    } else {
-        2
+    let version = match sim.profile {
+        crate::Profile::Foundation => 1_u32,
+        crate::Profile::PlayerCollision => 2,
+        crate::Profile::MultiSector => 3,
     };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
@@ -336,21 +379,34 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 a.spec.angle.to_le_bytes(),
             );
             field(&mut fields, format!("{prefix}.lastlook"), [a.lastlook]);
-            if version == 2 {
+            if version >= 2 {
                 field(
                     &mut fields,
                     format!("{prefix}.flags"),
-                    (if a.solidity == crate::Solidity::Solid {
-                        2_u32
-                    } else {
-                        0
-                    })
-                    .to_le_bytes(),
+                    crate::multisector::flags(a).to_le_bytes(),
+                );
+            }
+            if version == 3 {
+                let location = a.location.expect("M3b actor location");
+                field(
+                    &mut fields,
+                    format!("{prefix}.momz"),
+                    a.momz.bits().to_le_bytes(),
+                );
+                field(
+                    &mut fields,
+                    format!("{prefix}.subsector"),
+                    location.subsector.to_le_bytes(),
+                );
+                field(
+                    &mut fields,
+                    format!("{prefix}.sector"),
+                    location.sector.to_le_bytes(),
                 );
             }
         }
     }
-    if version == 2 {
+    if version >= 2 {
         field(
             &mut fields,
             "spatial.link_order",
@@ -361,6 +417,51 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .flat_map(id)
                 .collect::<Vec<_>>(),
         );
+    }
+    if version == 3 {
+        field(&mut fields, "world.blockmap_policy", [1]);
+        field(
+            &mut fields,
+            "world.conservative_omissions",
+            sim.world
+                .conservative_omissions()
+                .expect("M3b policy")
+                .to_le_bytes(),
+        );
+        field(
+            &mut fields,
+            "sectors.count",
+            (sim.sectors.len() as u32).to_le_bytes(),
+        );
+        for (i, sector) in sim.sectors.iter().enumerate() {
+            field(
+                &mut fields,
+                format!("sector.{i}.floor"),
+                sector.floor.bits().to_le_bytes(),
+            );
+            field(
+                &mut fields,
+                format!("sector.{i}.ceiling"),
+                sector.ceiling.bits().to_le_bytes(),
+            );
+            let order = sim
+                .spatial
+                .order
+                .iter()
+                .copied()
+                .filter(|id| {
+                    sim.actors
+                        .get(*id)
+                        .expect("live spatial identity")
+                        .location
+                        .expect("M3b location")
+                        .sector
+                        == i as u16
+                })
+                .flat_map(id)
+                .collect::<Vec<_>>();
+            field(&mut fields, format!("sector.{i}.actors"), order);
+        }
     }
     for i in 0..4 {
         field(
