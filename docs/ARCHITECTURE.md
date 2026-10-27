@@ -51,7 +51,8 @@ traversal has an explicit visit budget and retains completed callbacks on budget
 failure; built-in XY thinkers never spawn, so the actor bound covers each step.
 
 Players/input foundations precede thinkers, then Specials/Respawn phase markers
-and tic increment. Full player/special/respawn logic is not implemented. M2 controlled movers use the non-player ground response. In M3a bindings select
+and tic increment. Full player/special/respawn logic is not implemented. M2
+controlled movers use the non-player ground response. In M3a bindings select
 player-specific XY sliding/friction; solidity remains independent. Full player
 thinking and state machinery remain absent. Pause freezes the whole step before
 commands/RNG/events/time; invalid buttons/tic exhaustion reject before mutation.

@@ -14,7 +14,7 @@ M1 resource/map parsing is implemented, validated, and merged
 foundations are implemented, validated and merged
 ([PR #3](https://github.com/Copgunn/DOOM/pull/3), merge `10a1106`). M3a adds
 reference-tested grounded player XY movement, wall sliding and solid actor
-collision on `feat/m3a-player-movement-collision`, pending owner review.
+collision in [PR #4](https://github.com/Copgunn/DOOM/pull/4), pending owner review.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 

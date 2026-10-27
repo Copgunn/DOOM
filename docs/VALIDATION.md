@@ -372,3 +372,27 @@ Original source, history, attribution/license and public visibility remain
 preserved. No commercial IWAD was provisioned or used. Completed M0/M1/M2 branches
 are cleanup candidates after historical links use immutable commit references;
 no branch is deleted by this delivery.
+
+
+## M3a observed remote checks and final-head gate
+
+[PR #4](https://github.com/Copgunn/DOOM/pull/4) targets verified master `10a1106`.
+Initial implementation/documentation head
+`c6b63f5eee7a0d07fe0ffcee74346db8df553423` passed
+[CI run 40596702186](https://github.com/Copgunn/DOOM/actions/runs/40596702186):
+
+| Job | Observed result |
+| --- | --- |
+| Stable / ubuntu-latest | Workspace build/fmt/Clippy/debug/release tests, both C reproductions and both golden encoders, examples/debug-release stdout equality, docs passed |
+| Stable / windows-latest | Workspace checks, debug/release recorded C vectors and both golden schemas, examples/stdout equality, docs passed |
+| Stable / macos-latest | Same stable checks, debug/release vectors/goldens, examples/stdout equality and docs passed |
+| Minimum Rust / 1.85.0 | All 61 tests including doctest passed; 2 private tests ignored |
+
+The subsequent C-adapter correction makes unsupported fatal paths abort directly,
+removing an inherited unused jump-buffer assumption. Regeneration produced exactly
+the same vectors, tables and snapshot bytes. The final documentation commit links
+this observed evidence and the delivery PR without changing simulation behavior.
+The final SHA and fresh CI must be checked on PR #4 before marking ready; the
+initial green run is not a substitute for that verification. M3a remains open
+and unmerged pending owner review. No complete gameplay/demo compatibility or
+private-asset test result is claimed.
