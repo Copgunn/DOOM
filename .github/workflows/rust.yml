@@ -43,8 +43,17 @@ jobs:
         run: cargo +stable build --workspace --locked
       - name: Test
         run: cargo +stable test --workspace --locked
+      - name: Release deterministic checks
+        run: cargo +stable test -p doom-sim -p doom-types --release --locked
+      - name: Reproduce isolated reference vectors and snapshot goldens
+        if: runner.os == 'Linux'
+        run: |
+          python3 tools/reference/generate.py --check
+          python3 tools/reference/snapshot_goldens.py --check
       - name: Synthetic map example
         run: cargo +stable run -p doom-map --example parse_map --locked
+      - name: Headless simulation example
+        run: cargo +stable run -p doom-sim --example headless --locked -- 12
       - name: Documentation
         run: cargo +stable doc --workspace --no-deps --locked
 

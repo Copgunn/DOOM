@@ -111,6 +111,16 @@ pub struct Blockmap {
     pub(crate) ranges: Vec<Range<usize>>,
 }
 impl Blockmap {
+    /// Immutable decoded storage, including header, cell table and unused words.
+    /// Referenced lists are validated; unused words need not be valid line indexes.
+    pub fn words(&self) -> &[u16] {
+        &self.words
+    }
+    /// Validated row-major cell ranges into `words`, excluding terminators.
+    /// Shared ranges are retained for linear canonicalization without list copies.
+    pub fn cell_ranges(&self) -> &[Range<usize>] {
+        &self.ranges
+    }
     /// Signed grid origin.
     pub const fn origin(&self) -> Vertex {
         self.origin
