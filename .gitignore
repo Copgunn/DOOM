@@ -1,0 +1,15 @@
+/target/
+
+# Local game data and private test output must never enter the public repository.
+/iwads/
+/local-assets/
+/private-assets/
+/private-fixtures/
+/private-test-output/
+.env
+.env.*
+*.[wW][aA][dD]
+*.[lL][mM][pP]
+*.[dD][eE][mM][oO]
+*.[pP][kK]3
+*.[pP][kK]7

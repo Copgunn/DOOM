@@ -1,0 +1,18 @@
+[workspace]
+members = ["crates/doom-types", "crates/doom-wad", "crates/doom-map"]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "GPL-2.0-only"
+repository = "https://github.com/Copgunn/DOOM"
+publish = false
+
+[workspace.dependencies]
+doom-types = { path = "crates/doom-types" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
