@@ -1,14 +1,19 @@
 //! Deterministic, headless Linux DOOM simulation foundations.
 //!
 //! Each [`Simulation::step`] is one logical 35 Hz tic, never elapsed wall time.
-//! Explicit profiles preserve M2 foundations and add M3a grounded player sliding
-//! and solid actor collision in a static one-sector map. Neither implements full
+//! Explicit profiles preserve M2 foundations and M3a grounded player collision,
+//! and add M3b static-sector BSP/openings and XY/Z/gravity. None implements full
 //! player thinking or establishes complete vanilla gameplay synchronization.
 
 mod actor;
 mod geometry;
 mod movement;
+mod multisector;
 pub use movement::{ActorMoveAttempt, Solidity};
+pub use multisector::{
+    Gravity, Location, MoveFailure, Opening, OpeningVisit, SectorMoveAttempt, SectorState,
+    SpawnHeight, VerticalEvent, VerticalSpec,
+};
 mod snapshot;
 mod store;
 include!("fine_sine.rs");
@@ -28,6 +33,8 @@ pub enum Profile {
     Foundation,
     /// M3a grounded player sliding and zero/MF_SOLID actors, DSIM-v2.
     PlayerCollision,
+    /// M3b static connected sectors, BSP/XY/Z/gravity and reference lists, DSIM-v3.
+    MultiSector,
 }
 
 /// Deterministic stepping/setup failure. Unsupported gameplay is explicit.
@@ -110,7 +117,21 @@ pub enum Event {
         /// Ordered collision evidence.
         attempt: ActorMoveAttempt,
     },
-    /// M3a selected wall projection, in slide retry order.
+    /// M3b destination and opening/clearance decision.
+    SectorMovement {
+        /// Moving actor.
+        actor: ActorId,
+        /// Ordered collision/height evidence.
+        attempt: SectorMoveAttempt,
+    },
+    /// M3b Z update after this actor's XY movement.
+    Vertical {
+        /// Updated actor.
+        actor: ActorId,
+        /// Physical floor/ceiling/gravity observation.
+        update: VerticalEvent,
+    },
+    /// Selected wall projection, in slide retry order.
     Slide {
         /// Sliding player.
         actor: ActorId,
@@ -152,6 +173,7 @@ pub fn command_thrust(
 pub struct Simulation {
     pub(crate) profile: Profile,
     pub(crate) spatial: movement::SpatialIndex,
+    pub(crate) sectors: Vec<SectorState>,
     pub(crate) world: StaticWorld,
     pub(crate) actors: ThinkerStore<Actor>,
     pub(crate) rng: DoomRng,
@@ -184,14 +206,49 @@ impl Simulation {
         }
         Self::create(map, max_actors, Profile::PlayerCollision)
     }
+    /// Explicit M3b static multi-sector and XY/Z profile (DSIM-v3). Supplied
+    /// BLOCKMAP lists define collision candidates; missing spatial coverage is
+    /// diagnosed conservatively, never silently rebuilt.
+    pub fn multisector(map: Map) -> Result<Self, SimError> {
+        Self::with_multisector_limit(map, 1024)
+    }
+    /// M3b profile with an explicit maximum of 1024 logical actor slots.
+    pub fn with_multisector_limit(map: Map, max_actors: u32) -> Result<Self, SimError> {
+        if max_actors > 1024 {
+            return Err(StoreError::InvalidLimit.into());
+        }
+        Self::create(map, max_actors, Profile::MultiSector)
+    }
     fn create(map: Map, max_actors: u32, profile: Profile) -> Result<Self, SimError> {
-        let mut world = StaticWorld::new(map)?;
+        let mut world = if profile == Profile::MultiSector {
+            StaticWorld::new_multisector(map)?
+        } else {
+            StaticWorld::new(map)?
+        };
         if profile == Profile::PlayerCollision {
             movement::validate_profile(&mut world)?;
         }
+        if profile == Profile::MultiSector {
+            movement::prepare_reference_profile(&mut world)?;
+            world.topology = Some(multisector::Topology::new(&world)?);
+        }
+        let sectors = if profile == Profile::MultiSector {
+            world
+                .map()
+                .sectors()
+                .iter()
+                .map(|s| SectorState {
+                    floor: Fixed::from_map_units(s.heights[0]),
+                    ceiling: Fixed::from_map_units(s.heights[1]),
+                })
+                .collect()
+        } else {
+            Vec::new()
+        };
         let map_fields = Arc::new(snapshot::map_fields(world.map()));
         Ok(Self {
             profile,
+            sectors,
             spatial: movement::SpatialIndex::default(),
             world,
             actors: ThinkerStore::new(max_actors)?,
@@ -233,6 +290,68 @@ impl Simulation {
             target,
             &self.spatial,
             &|id| self.actors.get(id).copied(),
+        ))
+    }
+    /// Current read-only runtime sector state (empty in older profiles).
+    pub fn sectors(&self) -> &[SectorState] {
+        &self.sectors
+    }
+    /// Current sector-head ordering, independent of thinker or handle order.
+    pub fn sector_actor_order(&self, sector: u16) -> Result<Vec<ActorId>, SimError> {
+        if self.profile != Profile::MultiSector {
+            return Err(GeometryError::Unsupported("sector order requires M3b profile").into());
+        }
+        if usize::from(sector) >= self.sectors.len() {
+            return Err(GeometryError::InvalidReference.into());
+        }
+        Ok(self
+            .spatial
+            .order
+            .iter()
+            .copied()
+            .filter(|id| {
+                self.actors
+                    .get(*id)
+                    .expect("live spatial handle")
+                    .location
+                    .expect("M3b membership")
+                    .sector
+                    == sector
+            })
+            .collect())
+    }
+    /// P_LineOpening calculation from current runtime heights. One-sided lines
+    /// return None; unsupported profile/index errors have no state effects.
+    pub fn line_opening(&self, index: usize) -> Result<Option<Opening>, SimError> {
+        if self.profile != Profile::MultiSector {
+            return Err(GeometryError::Unsupported("openings require M3b profile").into());
+        }
+        if index >= self.world.lines.len() {
+            return Err(GeometryError::InvalidReference.into());
+        }
+        Ok(multisector::opening(&self.world, &self.sectors, index))
+    }
+    /// Read-only source TryMove decision, including step/dropoff/headroom checks.
+    pub fn check_multisector_position(
+        &self,
+        id: ActorId,
+        target: [Fixed; 2],
+    ) -> Result<SectorMoveAttempt, SimError> {
+        if self.profile != Profile::MultiSector {
+            return Err(GeometryError::Unsupported("sector collision requires M3b profile").into());
+        }
+        if self.actors.is_pending(id) != Some(false) {
+            return Err(StoreError::InvalidHandle.into());
+        }
+        let actor = self.actors.get(id).ok_or(StoreError::InvalidHandle)?;
+        Ok(multisector::check_move(
+            (&self.world, &self.sectors),
+            id,
+            actor,
+            target,
+            &self.spatial,
+            &|id| self.actors.get(id).copied(),
+            self.bindings.contains(&Some(id)),
         ))
     }
     /// Static immutable geometry.
@@ -286,6 +405,9 @@ impl Simulation {
         spec: ActorSpec,
         solidity: Solidity,
     ) -> Result<ActorId, SimError> {
+        if self.profile == Profile::MultiSector {
+            return self.spawn_vertical(spec, solidity, VerticalSpec::default());
+        }
         self.world.validate_actor(spec.radius, spec.height)?;
         if self.profile == Profile::Foundation && solidity != Solidity::NonSolid {
             return Err(GeometryError::Unsupported("solid actors require M3a profile").into());
@@ -300,6 +422,10 @@ impl Simulation {
             z: self.world.floor(),
             lastlook: 0,
             solidity,
+            momz: Fixed::ZERO,
+            gravity: Gravity::Normal,
+            allow_dropoff: false,
+            location: None,
         };
         let id = self.actors.spawn(actor)?;
         self.actors
@@ -311,6 +437,67 @@ impl Simulation {
         }
         self.pending.push(Event::Spawned(id));
         Ok(id)
+    }
+    /// M3b parameterized spawn with source floor/ceiling/absolute Z, vertical
+    /// momentum and explicit MF_NOGRAVITY/MF_DROPOFF exceptions. No state/type,
+    /// teleport, floating monster or collision-side-effect spawning is implied.
+    pub fn spawn_vertical(
+        &mut self,
+        spec: ActorSpec,
+        solidity: Solidity,
+        vertical: VerticalSpec,
+    ) -> Result<ActorId, SimError> {
+        if self.profile != Profile::MultiSector {
+            return Err(GeometryError::Unsupported("vertical spawn requires M3b profile").into());
+        }
+        let location = self.world.locate_validated(spec.position);
+        let sector = self.sectors[usize::from(location.sector)];
+        if spec.radius < Fixed::ZERO
+            || spec.radius > Fixed::from_map_units(32)
+            || spec.height <= Fixed::ZERO
+            || spec.height > sector.ceiling - sector.floor
+        {
+            return Err(GeometryError::InvalidActor.into());
+        }
+        let z = match vertical.height {
+            SpawnHeight::Floor => sector.floor,
+            SpawnHeight::Ceiling => sector.ceiling - spec.height,
+            SpawnHeight::Absolute(z) => z,
+        };
+        self.spatial.reserve_spawn()?;
+        let actor = Actor {
+            spec,
+            floor: sector.floor,
+            ceiling: sector.ceiling,
+            z,
+            lastlook: 0,
+            solidity,
+            momz: vertical.momentum,
+            gravity: vertical.gravity,
+            allow_dropoff: vertical.allow_dropoff,
+            location: Some(location),
+        };
+        let id = self.actors.spawn(actor)?;
+        self.actors.get_mut(id).expect("new M3b handle").lastlook = self.rng.p_random() % 4;
+        self.spatial.link(id);
+        self.pending.push(Event::Spawned(id));
+        Ok(id)
+    }
+    /// Changes M3b vertical momentum between tics; invalid/profile errors preserve state.
+    pub fn set_vertical_momentum(&mut self, id: ActorId, momentum: Fixed) -> Result<(), SimError> {
+        if self.profile != Profile::MultiSector {
+            return Err(
+                GeometryError::Unsupported("vertical momentum requires M3b profile").into(),
+            );
+        }
+        if self.actors.is_pending(id) != Some(false) {
+            return Err(StoreError::InvalidHandle.into());
+        }
+        self.actors
+            .get_mut(id)
+            .expect("validated active actor")
+            .momz = momentum;
+        Ok(())
     }
     /// Marks removal and unbinds input slots immediately. Storage retires at traversal.
     pub fn mark_remove(&mut self, id: ActorId) -> Result<(), SimError> {
@@ -381,8 +568,18 @@ impl Simulation {
                     continue;
                 }
                 let actor = self.actors.get_mut(id).expect("validated active binding");
+                let physical_command =
+                    if self.profile == Profile::MultiSector && actor.z > actor.floor {
+                        TicCommand {
+                            forward: 0,
+                            side: 0,
+                            ..command
+                        }
+                    } else {
+                        command
+                    };
                 let (angle, momentum) =
-                    command_thrust(actor.spec.angle, actor.spec.momentum, command)
+                    command_thrust(actor.spec.angle, actor.spec.momentum, physical_command)
                         .expect("buttons prevalidated");
                 actor.spec.angle = angle;
                 actor.spec.momentum = momentum;
@@ -398,6 +595,7 @@ impl Simulation {
         let profile = self.profile;
         let bindings = self.bindings;
         let spatial = &mut self.spatial;
+        let sectors = &self.sectors;
         // Built-in callbacks cannot spawn, alter links or request removal.
         self.actors
             .run(
@@ -419,14 +617,27 @@ impl Simulation {
                                 .iter()
                                 .position(|binding| *binding == Some(id))
                                 .map(|slot| commands[slot]);
-                            for event in movement::move_xy(
-                                world,
-                                id,
-                                &mut actor,
-                                spatial,
-                                |id| context.get(id).copied(),
-                                command,
-                            ) {
+                            let motion = if profile == Profile::MultiSector {
+                                movement::move_xy_multisector(
+                                    world,
+                                    id,
+                                    &mut actor,
+                                    spatial,
+                                    |id| context.get(id).copied(),
+                                    command,
+                                    sectors,
+                                )
+                            } else {
+                                movement::move_xy(
+                                    world,
+                                    id,
+                                    &mut actor,
+                                    spatial,
+                                    |id| context.get(id).copied(),
+                                    command,
+                                )
+                            };
+                            for event in motion {
                                 events.push(match event {
                                     movement::MotionEvent::Attempt(attempt) => {
                                         Event::ActorMovement { actor: id, attempt }
@@ -434,7 +645,15 @@ impl Simulation {
                                     movement::MotionEvent::Slide(line) => {
                                         Event::Slide { actor: id, line }
                                     }
+                                    movement::MotionEvent::Sector(attempt) => {
+                                        Event::SectorMovement { actor: id, attempt }
+                                    }
                                 });
+                            }
+                        }
+                        if profile == Profile::MultiSector {
+                            if let Some(update) = multisector::move_z(&mut actor) {
+                                events.push(Event::Vertical { actor: id, update });
                             }
                         }
                         *context.get_mut(id).expect("same live thinker handle") = actor;
@@ -475,7 +694,11 @@ mod tests {
         )
         .unwrap();
         let map = doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default()).unwrap();
-        for profile in [super::Profile::Foundation, super::Profile::PlayerCollision] {
+        for profile in [
+            super::Profile::Foundation,
+            super::Profile::PlayerCollision,
+            super::Profile::MultiSector,
+        ] {
             let mut simulation = super::Simulation::create(map.clone(), 1024, profile).unwrap();
             simulation.tic = u64::MAX;
             let before = simulation.snapshot();
@@ -499,5 +722,36 @@ mod tests {
             ),
             Err(super::SimError::UnsupportedButtons)
         );
+    }
+    #[test]
+    fn allocator_capacity_does_not_change_multisector_state_or_results() {
+        let wad = doom_wad::Wad::parse(
+            include_bytes!("../../../tests/reference/m3b_map_2.bin"),
+            doom_wad::Limits::default(),
+        )
+        .unwrap();
+        let map = doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default()).unwrap();
+        let mut expected = super::Simulation::multisector(map).unwrap();
+        let id = expected.spawn(super::ActorSpec::default()).unwrap();
+        expected.bind_player(0, id).unwrap();
+        let mut actual = expected.clone();
+        actual.actors.slots.try_reserve(257).unwrap();
+        actual.spatial.order.try_reserve(131).unwrap();
+        actual.pending.try_reserve(127).unwrap();
+        actual.events.try_reserve(255).unwrap();
+        actual.sectors.try_reserve(127).unwrap();
+        actual.world.lines.try_reserve(127).unwrap();
+        for cell in actual.world.collision_cells.as_mut().unwrap() {
+            cell.try_reserve(127).unwrap();
+        }
+        assert_eq!(expected.snapshot(), actual.snapshot());
+        for _ in 0..64 {
+            let mut command = [super::TicCommand::default(); 4];
+            command[0].forward = 50;
+            assert_eq!(
+                expected.step(command).unwrap(),
+                actual.step(command).unwrap()
+            );
+        }
     }
 }

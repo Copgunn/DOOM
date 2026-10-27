@@ -77,10 +77,11 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - Document important compatibility findings in `docs/COMPATIBILITY.md`.
 - Include relevant documentation updates in feature PRs. Keep planned and
   implemented functionality explicit. M1 parses resources/maps; M2 provides a
-  narrow headless simulation profile; M3a adds an explicit player/solid XY
-  profile. Full players/monsters, Z/sector transitions, combat, specials, demo
-  replay and rendering remain incomplete. Preserve both M2/DSIM-v1 and M3a/v2
-  acceptance suites; read `docs/M3A_REFERENCE.md` before changing movement.
+  narrow headless simulation profile; M3a adds player/solid XY and M3b adds
+  static-sector BSP/openings/XY/Z. Complete player/view/actor states, dynamic
+  sectors, combat, specials, demos and rendering remain incomplete. Preserve
+  all M2/v1, M3a/v2 and M3b/v3 suites; read their source investigations before
+  changing movement.
   Preserve tested policies in `docs/COMPATIBILITY.md` and the versioned canonical
   format in `docs/STATE_FORMAT.md`. Read source findings in `docs/M2_REFERENCE.md`.
 - Keep C-derived vectors separate from project regression consistency. Never
@@ -94,6 +95,12 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   user thinker budgets have a separate documented nontransactional contract.
 - Actor identity, thinker order and spatial order are separate. Never sort handles
   to choose blockers; successful same-cell moves reinsert at spatial cell head.
-- Run both reference generators and both independent golden encoders on Linux;
+- Run all three reference generators and independent golden encoders on Linux;
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
-- M3a stops at owner review. M2 merge authorization does not authorize M3a merge.
+- M3b stops at owner review. M3a merge authorization does not authorize M3b merge.
+
+- M3b consumes supplied BLOCKMAP lists without rebuilding them; conservative
+  omissions are diagnostic, not proof of spatial correctness. Keep older profiles
+  unchanged. Sector-head and cell-head order derive from explicit relinking.
+- Keep future custom wgpu rendering separate, preferring Vulkan where supported.
+  No renderer, Bevy, audio or general physics dependency enters authoritative tics.

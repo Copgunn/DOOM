@@ -2,7 +2,7 @@
 """Compare synthetic example stdout between debug/release on every CI OS."""
 import subprocess
 
-for example,args in [('headless',['--','12']),('player_arena',[])]:
+for example,args in [('headless',['--','12']),('player_arena',[]),('multisector_arena',[])]:
     base=['cargo','+stable','run','-p','doom-sim','--example',example,'--locked']
     debug=subprocess.check_output(base+args)
     release=subprocess.check_output(base+['--release']+args)

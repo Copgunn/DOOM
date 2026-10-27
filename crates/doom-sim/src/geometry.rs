@@ -30,7 +30,7 @@ pub struct LineGeometry {
     pub(crate) bounds: [Fixed; 4],
     pub(crate) slope: u8,
 }
-fn bbox(position: [Fixed; 2], radius: Fixed) -> [Fixed; 4] {
+pub(crate) fn bbox(position: [Fixed; 2], radius: Fixed) -> [Fixed; 4] {
     [
         position[1] + radius,
         position[1] - radius,
@@ -112,7 +112,7 @@ impl LineGeometry {
         };
         if a == c { a as i8 } else { -1 }
     }
-    fn crosses(&self, b: [Fixed; 4]) -> bool {
+    pub(crate) fn crosses(&self, b: [Fixed; 4]) -> bool {
         !(b[3] <= self.bounds[2]
             || b[2] >= self.bounds[3]
             || b[0] <= self.bounds[1]
@@ -147,37 +147,49 @@ pub struct MoveAttempt {
     pub collision: Collision,
 }
 
-/// Validated M2 static profile: one sector, one-sided lines, no line/sector specials.
+/// Compiled immutable static geometry. Standalone construction uses the M2
+/// subset; Simulation builds additional validated M3a/M3b profiles.
 #[derive(Clone, Debug)]
 pub struct StaticWorld {
     pub(crate) map: Map,
     pub(crate) lines: Vec<LineGeometry>,
     pub(crate) collision_cells: Option<Vec<Vec<u16>>>,
+    pub(crate) topology: Option<crate::multisector::Topology>,
     floor: Fixed,
     ceiling: Fixed,
 }
 impl StaticWorld {
     /// Rejects unsupported geometry before any simulation mutation.
     pub fn new(map: Map) -> Result<Self, GeometryError> {
-        if map.sectors().len() != 1 {
+        Self::build(map, false)
+    }
+    pub(crate) fn new_multisector(map: Map) -> Result<Self, GeometryError> {
+        Self::build(map, true)
+    }
+    fn build(map: Map, multi: bool) -> Result<Self, GeometryError> {
+        if !multi && map.sectors().len() != 1 {
             return Err(GeometryError::Unsupported("multiple sectors/portals"));
         }
-        if map.sectors()[0].special != 0 || map.linedefs().iter().any(|l| l.special != 0) {
+        if map.sectors().iter().any(|s| s.special != 0)
+            || map.linedefs().iter().any(|l| l.special != 0)
+        {
             return Err(GeometryError::Unsupported("map specials"));
         }
-        if map
-            .linedefs()
-            .iter()
-            .any(|l| l.sides[1].is_some() || l.flags & 4 != 0)
+        if !multi
+            && map
+                .linedefs()
+                .iter()
+                .any(|l| l.sides[1].is_some() || l.flags & 4 != 0)
         {
             return Err(GeometryError::Unsupported("two-sided lines"));
         }
         let floor = Fixed::from_map_units(map.sectors()[0].heights[0]);
         let ceiling = Fixed::from_map_units(map.sectors()[0].heights[1]);
-        if ceiling
-            .bits()
-            .checked_sub(floor.bits())
-            .is_none_or(|span| span <= 0)
+        if !multi
+            && ceiling
+                .bits()
+                .checked_sub(floor.bits())
+                .is_none_or(|span| span <= 0)
         {
             return Err(GeometryError::CoordinateOverflow);
         }
@@ -200,9 +212,28 @@ impl StaticWorld {
             map,
             lines,
             collision_cells: None,
+            topology: None,
             floor,
             ceiling,
         })
+    }
+    /// Source BSP location in the explicit M3b profile, independent of rendering.
+    pub fn locate(&self, position: [Fixed; 2]) -> Result<crate::Location, GeometryError> {
+        let topology = self.topology.as_ref().ok_or(GeometryError::Unsupported(
+            "BSP lookup requires M3b profile",
+        ))?;
+        Ok(topology.locate(self, position))
+    }
+    pub(crate) fn locate_validated(&self, position: [Fixed; 2]) -> crate::Location {
+        self.topology
+            .as_ref()
+            .expect("M3b topology initialized")
+            .locate(self, position)
+    }
+    /// Bbox-cell omissions under M3b reference-list policy. This conservative
+    /// diagnostic is not a proof of missing true line coverage.
+    pub fn conservative_omissions(&self) -> Option<u32> {
+        self.topology.as_ref().map(|t| t.conservative_omissions)
     }
     pub(crate) fn line_candidates(&self, x: usize, y: usize) -> impl Iterator<Item = u16> + '_ {
         let row = y * usize::from(self.map.blockmap().dimensions()[0]) + x;
@@ -217,16 +248,22 @@ impl StaticWorld {
     pub const fn map(&self) -> &Map {
         &self.map
     }
-    /// Static floor height.
+    /// First-sector floor height for the legacy flat profile. M3b callers use
+    /// runtime sectors or the actor's current constraints.
     pub const fn floor(&self) -> Fixed {
         self.floor
     }
-    /// Static ceiling height.
+    /// First-sector ceiling height for the legacy flat profile.
     pub const fn ceiling(&self) -> Fixed {
         self.ceiling
     }
     /// Validates actor dimensions in this supported profile.
     pub fn validate_actor(&self, radius: Fixed, height: Fixed) -> Result<(), GeometryError> {
+        if self.topology.is_some() {
+            return Err(GeometryError::Unsupported(
+                "M3b dimensions require spawn-sector context",
+            ));
+        }
         if radius < Fixed::ZERO
             || radius > Fixed::from_map_units(32)
             || height <= Fixed::ZERO
@@ -244,6 +281,11 @@ impl StaticWorld {
         radius: Fixed,
         height: Fixed,
     ) -> Result<Collision, GeometryError> {
+        if self.topology.is_some() {
+            return Err(GeometryError::Unsupported(
+                "M3b collision requires actor/sector context",
+            ));
+        }
         if radius < Fixed::ZERO || radius > Fixed::from_map_units(32) || height <= Fixed::ZERO {
             return Err(GeometryError::InvalidActor);
         }

@@ -168,3 +168,46 @@ The headless bevel arena uses original synthetic data and fixed commands. Its
 asserted trace matches C case 19 and records four solid-actor blocks, four wall
 blocks and four angled-wall projections. This establishes the scoped mechanics,
 not a playable port or complete P_PlayerThink. No private IWAD is required.
+
+
+## M3b static multi-sector and vertical checks
+
+```sh
+cargo test -p doom-sim --test m3b --test m3b_reference --locked
+python3 tools/reference/generate_m3b.py --check
+python3 tools/reference/m3b_snapshot_goldens.py --check
+cargo run -p doom-sim --example multisector_arena --locked
+python tools/reference/check_headless.py
+```
+
+The independent generator emits twenty synthetic classic maps and 29 actor/input
+setups. Its preserved C bodies produce 696 XY/Z tics, 261 destination probes,
+1280 BSP lookups, 512 original side predicates and 20 two-sided opening results.
+Tests compare complete physical fields and every attempted target/constraint/
+allow decision, per-attempt candidate counts, ordered line/thing/opening lists,
+slide choices, chronological attempt/slide order and sector-head membership.
+First failures identify case/tic/observable field. Fixture/provenance generation
+never reads Rust output or changes historical C. Zero-node, axis reversals,
+diagonals, boundary ties, sparse lists and deliberately missing walls are explicit.
+
+New independent v3 encoding checks 96 digests and five complete snapshots, with
+named-field comparisons across step-up, sector transition, fall, drop and landing.
+V1/v2 goldens stay unchanged. All stable OS jobs run debug/release vectors and
+all three schemas; Linux additionally regenerates C/independent goldens. All three
+headless examples must have byte-identical debug/release stdout on each OS.
+
+Long 768-call streams visit three sectors and exercise landing, step/drop physics,
+solid blockers, removal/reuse, pause, RNG wrapping and presentation read schedules.
+Injected RNG drift reports tic 400 / `rng.gameplay`. Different reserved capacities
+produce identical complete state; differing retired-slot/RNG/tic histories test
+normalized physical trajectories rather than falsely equating canonical metadata.
+
+Adversarial checks cover raw i32 XY/Z/momz extremes (7 setups × 12 tics), 128
+three-actor generated setups × 12 tics, 4096-node iterative traversal and 4097-node
+rejection, cyclic/invalid-sector input, inverted/extreme heights, inconsistent flags,
+zero/low openings, strict raw thresholds, sector-head ordering, stale reuse,
+read-only queries and full-state error atomicity. Raw-overflow cases test safe Rust
+policies, not undefined C equivalence. Parser fuzz targets still compile with
+nightly AddressSanitizer instrumentation; no new parser fuzz campaign or leak-
+detection result is claimed for M3b. Physics uses these bounded property-style
+regressions rather than a new libFuzzer target.

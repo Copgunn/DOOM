@@ -71,3 +71,37 @@ manifest hashes inputs, encoders and outputs. Neither golden encoder reads Rust
 output. The final script compares actual headless stdout across debug/release on
 all CI operating systems. No complete engine, DOS, commercial data or demo run is
 claimed by these isolated fixtures.
+
+
+## M3b extension (independent physical traces and DSIM-v3)
+
+```sh
+python3 tools/reference/generate_m3b.py --check
+python3 tools/reference/m3b_snapshot_goldens.py --check
+```
+
+The separate generator creates twenty original synthetic classic maps, exact input
+CSV and standalone C setup. It extracts source R_PointOnSide/R_PointInSubsector,
+P_LineOpening, collision/slide/XY/Z/input bodies without modifying original files.
+Twenty-nine setups run 24 tics each; 696 motion rows include constraints, all try
+results, per-attempt candidate counts, chronological slide/attempt order and sector
+heads. Additional outputs contain 261 probes, 1280 leaf lookups, 512 side predicates
+and 20 openings. Input bytes, source/adapter/compiler/flags and output hashes are
+recorded in `m3b_provenance.json`. `--check` reproduces without replacing host data.
+
+The adapter calls XY then Z with P_MobjThinker's original guards, omitting state
+machines. It executes source player-view fields internally but records physical
+state; sound output is suppressed. Supported flags are zero, MF_SOLID, MF_DROPOFF
+and MF_NOGRAVITY. Setup fixed coordinates use representable multiplication rather
+than reproducing negative signed loader shifts. Undefined overflowing positions,
+abs(INT_MIN), unsupported effects and full-engine/demo behavior are excluded.
+Reference-list policy includes valid sparse diagonal and intentionally omitted-wall
+fixtures; no spatial rebuilding occurs. C outputs are never generated from Rust.
+
+The v3 encoder consumes exact C physical/attempt/order data, explicit schema/setup
+and synthetic map bytes. It independently emits 96 digests and five full snapshots
+for steps, transitions, falling and landing; source contact predicates determine
+contact bits from recorded pre-Z values. A separate manifest hashes its inputs,
+encoder and outputs. Both older encoders/vectors/provenance remain unchanged.
+These are independent physical comparisons and project-state encodings, not
+complete engine savegames or vanilla synchronization proof.

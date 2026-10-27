@@ -85,3 +85,13 @@ Read `docs/M3A_REFERENCE.md` before changing collision or slide semantics. Prese
 M2 profile/v1 expectations, explicit M3a/v2 selection, independent spatial order,
 and failed-step atomicity. Reproduction requires no commercial assets. M3 phases
 are independently reviewed; stop at the current feature PR's owner-review gate.
+
+
+For M3b, run `generate_m3b.py --check` and `m3b_snapshot_goldens.py --check` in
+addition to earlier checks. Read `docs/M3B_REFERENCE.md`: profile-specific BSP,
+opening, gravity/dropoff, BLOCKMAP and source-undefined policies are contracts.
+Preserve v1/v2 fixtures and test all three schemas. Include per-field/per-tic
+reference diagnostics, immutable map versus runtime-sector separation, and
+atomic setup/step failures. Static two-sided gameplay openings do not establish
+enhanced geometry or full player/actor-state behavior. M3b merge requires its own
+owner approval. Renderer work remains a separate custom wgpu subsystem.

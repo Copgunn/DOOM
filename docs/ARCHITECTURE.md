@@ -5,7 +5,8 @@
 M0 establishes the workspace alongside untouched original source. M1 implements
 bounded archive/map parsing. M2 introduces the fourth crate, `doom-sim`, with a
 functioning headless deterministic foundation. M3a adds an explicit player/solid
-collision profile, documented in [M3A_REFERENCE.md](M3A_REFERENCE.md). A playable client and renderer
+collision profile, documented in [M3A_REFERENCE.md](M3A_REFERENCE.md). M3b adds
+static-sector topology and XY/Z physics; see [M3B_REFERENCE.md](M3B_REFERENCE.md). A playable client and renderer
 remain future work. Source findings were recorded before implementation in
 [M2_REFERENCE.md](M2_REFERENCE.md).
 The C source is an authoritative behavioral reference, not a Rust design template.
@@ -48,7 +49,7 @@ storage remains readable until its visit; retirement saves the next handle
 before unlinking. Callback contexts allow append/mark/value updates but not
 reentrant traversal or clear. Retirement observers are read-only. Generic
 traversal has an explicit visit budget and retains completed callbacks on budget
-failure; built-in XY thinkers never spawn, so the actor bound covers each step.
+failure; built-in motion thinkers never spawn, so the actor bound covers each step.
 
 Players/input foundations precede thinkers, then Specials/Respawn phase markers
 and tic increment. Full player/special/respawn logic is not implemented. M2
@@ -84,11 +85,46 @@ traces, at most two projections and a stair-step fallback. No mutable C globals
 or graphics dependencies are introduced.
 
 The error audit found no public path to M2's apparent late movement errors.
-Private immutable map/actor invariants make validated movement infallible; both
+Private immutable map/actor invariants make validated movement infallible; all
 profiles check recoverable step failures before mutation. Setup failures preserve
 logical state. Internal assertions identify implementation invariant defects;
 allocation exhaustion is process-level, not a recoverable simulation error.
 Generic user thinker callback budgets remain explicitly nontransactional.
+
+M3b adds compiled leaf-to-sector topology and an independent runtime sector-height
+vector. The public sector view is read-only; there is no moving-sector/height-
+mutation API in this milestone. Iterative BSP traversal follows original child
+ordering and side predicates, bounded by validated node count. Location is not
+polygon containment; M1 reference/cycle validation is distinct from proving a
+node builder's geometry. M3b caps sectors at 128 and nodes/leaves at 4096, retains
+the M3a line/grid/actor bounds, and rejects inverted or globally overflowing height
+spans. Zero-clearance sectors can block openings but cannot host an actor too tall.
+
+Each destination starts constraints at its BSP center, checks things then ordered
+lines, accumulates two-sided floor/ceiling/dropoff values and evaluates exact
+TryMove restrictions. Success changes XY/constraints and relinks both spatial and
+sector lists, without changing Z until the actor's later Z phase. Global logical
+link order reconstructs source cell heads and sector heads by filtering current
+membership, including sector-only off-map actors. Removal excludes both immediately.
+Generational identities and thinker append order remain independent.
+
+Player command turning always applies; airborne thrust is suppressed. Each thinker
+runs supported XY first, skips airborne ground friction, then conditionally runs
+Z/gravity/clipping. MF_DROPOFF and MF_NOGRAVITY are explicit setup choices. Supported
+ordinary collision is the source XY-only predicate, not modern Z-stacked actors.
+View/animation/audio side effects and full actor/player state logic remain absent.
+
+M3b intentionally uses supplied BLOCKMAP lists with the same compiled first-
+occurrence order. Conservative bbox omissions are reported, not rejected or
+rebuilt: legitimate sparse diagonals and deliberately missing walls are compared
+with original C. This is explicit profile-3 behavior, not a change to M3a's strict
+profile. The diagnostic does not prove spatial correctness. Prepared membership
+masks keep omission counting bounded without rescanning shared raw lists.
+
+DSIM-v3 includes momz, flags, sector/leaf references, runtime heights/list order,
+BLOCKMAP policy and ordered opening/vertical observations. Old schemas remain
+byte-identical. Recoverable failures stay pre-mutation; no full-state clone occurs
+per tic. Legacy flat query helpers reject M3b requests lacking sector/actor context.
 
 The stable workspace has no third-party dependencies. The separate `fuzz/`
 package uses `libfuzzer-sys` solely for instrumented parser testing; its lockfile
@@ -106,7 +142,7 @@ Do not add empty crates for the future components below.
 | `doom-demo` | Versioned demo command decoding/encoding and replay | `doom-types`; replay drives `doom-sim` through commands |
 | `doom-render` | Presentation snapshots and renderer interface | Immutable simulation output and resource views |
 | `doom-render-software` | Minimal diagnostic software/headless path | Renderer interface |
-| `doom-render-vulkan` | Primary hardware presentation, GPU resources | Renderer interface; platform surface |
+| `doom-render-wgpu` | Custom hardware presentation/GPU resources, Vulkan preferred | Renderer interface; platform surface |
 | `doom-platform` | OS events, clocks, windows, input acquisition | Platform libraries, no gameplay authority |
 | `doom-audio` | Playback and mixing | Ordered sound events and resources |
 | `doom-client` | Composition, startup, resource loading, scheduling | All required boundaries through explicit APIs |
@@ -122,7 +158,7 @@ windowing, filesystem, or audio objects in gameplay data.
 ```text
 archive bytes -> bounded WAD view -> decoded/validated map -> simulation state
 OS input or demo -> ordered per-tic commands -> simulation.step -> snapshots/events
-snapshots -> software/headless or Vulkan presentation
+snapshots -> software/headless or wgpu presentation
 events -> audio; recorded commands/state -> replay diagnostics
 ```
 
@@ -139,8 +175,8 @@ ordering; stable identifiers alone do not guarantee stable iteration. Use
 explicit ordered storage. Never depend on randomized hash iteration, pointer
 addresses, thread scheduling, or unordered parallel reductions in gameplay.
 Rendering can interpolate immutable snapshots but cannot mutate simulation or
-consume its RNG. Vulkan is the eventual primary hardware backend; a minimal
-software or headless path must support automated verification.
+consume its RNG. A custom wgpu renderer is planned, preferring Vulkan on supported
+platforms; a minimal software or headless path must support automated verification.
 
 ## Ownership and input safety
 
@@ -177,7 +213,7 @@ document safe deviations. See [compatibility](COMPATIBILITY.md) and
 
 ## Future presentation direction
 
-Vulkan remains the planned primary renderer. GPU-driven rendering, clustered
+A custom wgpu renderer is planned, with Vulkan preferred on supported platforms. GPU-driven rendering, clustered
 Forward+ lighting, colored dynamic lights, selective shadows, emissive materials,
 and optional atmospheric/volumetric effects are design candidates, not implemented
 features or performance results. Presentation consumes immutable state/events and
