@@ -73,8 +73,9 @@ Acceptance:
 
 ## M2 — Deterministic simulation core
 
-Status: **foundations implemented; local validation passed; delivery CI pending**
-on `feat/m2-deterministic-simulation-core`. M2 merge requires separate owner approval.
+Status: **foundations implemented and validated** on
+`feat/m2-deterministic-simulation-core`. [PR #3](https://github.com/Copgunn/DOOM/pull/3)
+remains open for owner review; M2 merge requires separate approval.
 
 - [x] Source investigation before implementation; defined policies for C ambiguities.
 - [x] i32 16.16 arithmetic, original division guard/double helper, extreme-value policy.
@@ -87,7 +88,7 @@ on `feat/m2-deterministic-simulation-core`. M2 merge requires separate owner app
 - [x] Headless runner, C vectors, independent snapshot goldens and 768-call regressions.
 - [x] Local debug/release/Rust 1.85 checks, parser regressions and fuzz smoke reruns.
 - [x] README, architecture, compatibility, format, test and validation documentation.
-- [ ] Verify final Linux/Windows/macOS debug/release CI and Rust 1.85; open review gate.
+- [x] Verify Linux/Windows/macOS debug/release CI and Rust 1.85; evidence in validation notes.
 
 Full players, sliding, actor collisions, vertical motion, portals/sector changes,
 state machines, monsters/weapons/specials and gameplay respawn remain M3 work.

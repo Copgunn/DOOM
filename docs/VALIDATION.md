@@ -242,11 +242,23 @@ crash was observed. This smoke coverage is not exhaustive proof.
 
 ## M2 delivery gate and remaining scope
 
-The M2 PR requires final exact-head stable Linux/Windows/macOS debug/release checks
-and Rust 1.85 tests. Linux additionally reproduces C vectors and independent
-goldens; Windows/macOS read the recorded vectors without requiring a C harness.
-Remote evidence and the exact final SHA will be recorded on the PR after push.
-Keep the PR draft until checks pass, then leave it open and unmerged for owner review.
+[PR #3](https://github.com/Copgunn/DOOM/pull/3), from
+`feat/m2-deterministic-simulation-core`, targets the verified M1 merge on `master`.
+Implementation/documentation head `802b6fb5b7beae30d70d94e10fc175e8afef34a4`
+passed [CI run 40591405059](https://github.com/Copgunn/DOOM/actions/runs/40591405059):
+
+| Job | Observed result |
+| --- | --- |
+| Stable / ubuntu-latest | Format, Clippy, build, debug/release tests, C vector/golden reproduction, examples and docs passed |
+| Stable / windows-latest | Format, Clippy, build, debug/release recorded-vector/golden tests, examples and docs passed |
+| Stable / macos-latest | Format, Clippy, build, debug/release recorded-vector/golden tests, examples and docs passed |
+| Minimum Rust / 1.85.0 | Workspace tests/doctest passed |
+
+The following documentation commit links this evidence without changing runtime,
+reference fixtures, generated tables or CI. Final-head SHA/checks are recorded on
+PR #3; they must pass before leaving draft. M2 remains open and unmerged for owner
+review. Cross-platform golden equality is verified for the supported scenarios,
+not for complete vanilla gameplay.
 
 The supported profile excludes complete players, sliding, solid actor collisions,
 Z/gravity, portals/sector transitions, state machines, monsters/weapons, specials,
