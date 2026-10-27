@@ -165,6 +165,12 @@ fn setup_and_step_errors_preserve_rng_pending_events_and_all_v3_state() {
     sim.bind_player(0, id).unwrap();
     sim.gameplay_random();
     let before = sim.snapshot();
+    assert!(
+        sim.world()
+            .check_position([Fixed::ZERO; 2], Fixed::ONE, Fixed::ONE)
+            .is_err()
+    );
+    assert!(sim.world().validate_actor(Fixed::ONE, Fixed::ONE).is_err());
     assert_eq!(
         sim.spawn(spec(0, 0)),
         Err(SimError::Store(StoreError::Capacity))

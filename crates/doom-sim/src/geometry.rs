@@ -147,7 +147,8 @@ pub struct MoveAttempt {
     pub collision: Collision,
 }
 
-/// Validated M2 static profile: one sector, one-sided lines, no line/sector specials.
+/// Compiled immutable static geometry. Standalone construction uses the M2
+/// subset; Simulation builds additional validated M3a/M3b profiles.
 #[derive(Clone, Debug)]
 pub struct StaticWorld {
     pub(crate) map: Map,
@@ -247,16 +248,22 @@ impl StaticWorld {
     pub const fn map(&self) -> &Map {
         &self.map
     }
-    /// Static floor height.
+    /// First-sector floor height for the legacy flat profile. M3b callers use
+    /// runtime sectors or the actor's current constraints.
     pub const fn floor(&self) -> Fixed {
         self.floor
     }
-    /// Static ceiling height.
+    /// First-sector ceiling height for the legacy flat profile.
     pub const fn ceiling(&self) -> Fixed {
         self.ceiling
     }
     /// Validates actor dimensions in this supported profile.
     pub fn validate_actor(&self, radius: Fixed, height: Fixed) -> Result<(), GeometryError> {
+        if self.topology.is_some() {
+            return Err(GeometryError::Unsupported(
+                "M3b dimensions require spawn-sector context",
+            ));
+        }
         if radius < Fixed::ZERO
             || radius > Fixed::from_map_units(32)
             || height <= Fixed::ZERO
@@ -274,6 +281,11 @@ impl StaticWorld {
         radius: Fixed,
         height: Fixed,
     ) -> Result<Collision, GeometryError> {
+        if self.topology.is_some() {
+            return Err(GeometryError::Unsupported(
+                "M3b collision requires actor/sector context",
+            ));
+        }
         if radius < Fixed::ZERO || radius > Fixed::from_map_units(32) || height <= Fixed::ZERO {
             return Err(GeometryError::InvalidActor);
         }

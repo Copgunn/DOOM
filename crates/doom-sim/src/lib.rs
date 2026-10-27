@@ -1,8 +1,8 @@
 //! Deterministic, headless Linux DOOM simulation foundations.
 //!
 //! Each [`Simulation::step`] is one logical 35 Hz tic, never elapsed wall time.
-//! Explicit profiles preserve M2 foundations and add M3a grounded player sliding
-//! and solid actor collision in a static one-sector map. Neither implements full
+//! Explicit profiles preserve M2 foundations and M3a grounded player collision,
+//! and add M3b static-sector BSP/openings and XY/Z/gravity. None implements full
 //! player thinking or establishes complete vanilla gameplay synchronization.
 
 mod actor;
