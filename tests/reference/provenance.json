@@ -1,0 +1,37 @@
+{
+  "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "machine": "x86_64",
+  "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fwrapv",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char"
+  ],
+  "source_sha256": {
+    "m_fixed.c": "a4472841bc8890c5d5a41b325ecf56d10d7026a7489967aa29100b5dee759fea",
+    "m_fixed.h": "67aa3925a905d448fb947fb7358093a39367f534c3e26e3f8b06228f553227ef",
+    "m_random.c": "8d89f5cfcbbd0170e46b55538c4c272b3cf5b5d7dce91023b8aa8d9b922b21ee",
+    "p_map.c": "752c7873c81fe6b10b77a08b7ef5716fe49c3103f6caa02097ed299e6e04736c",
+    "p_maputl.c": "4d93e06d11160fb935e94750babbdcc9a4469d96f593764872db87cefd37c0a1",
+    "p_mobj.c": "21a39bdbd746d6fba38660500203216052f0723b8e0ab033ce2a650ada2b403f",
+    "p_tick.c": "21a638b7b1ae4fcb6b6892a731cd27d20f44e2df12dd3325c8215ca4c9aee22f",
+    "p_user.c": "ecb5bab44ab9326c9c0d14bd607bc49c669bf048eecda27f7dc4634023a6c4a4",
+    "tables.c": "db8759f4311654c63785dcffb8f73a00a61cfe2713e4284c238dea420b6e5f89"
+  },
+  "adapters": [
+    "Z_Free retains storage until traversal completes",
+    "negative angleturn shift uses explicit uint32_t wrap",
+    "single static sector, no other actors, unsupported gameplay paths abort",
+    "FixedDiv excludes abs(INT_MIN); direct FixedDiv2 excludes divisor zero",
+    "GNU arithmetic right shift and low-bit signed narrowing are compiler-profile assumptions"
+  ],
+  "adapter_sha256": {
+    "generate.py": "e80beb09a686c030a6229599f5e0c9e9fd9b109ecebdcb9dd474a2a78e01d6cf",
+    "shim.h": "8475098da22363d9a97fb339fec784431a5690e9c9eb0511b89f87619c1b65ab"
+  }
+}
