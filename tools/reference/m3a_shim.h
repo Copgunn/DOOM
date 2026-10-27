@@ -64,8 +64,7 @@ fixed_t bmaporgx=-128*FRACUNIT,bmaporgy=-128*FRACUNIT;
 short blockstorage[]={-128,-128,2,2,8,8,8,8,0,0,1,2,3,-1};
 short *blockmaplump=blockstorage,*blockmap=blockstorage+4;
 int attempts,candidate_count,candidates[4096];
-jmp_buf div_failure;
-void I_Error(char* message,...) { (void)message; longjmp(div_failure,1); }
+void I_Error(char* message,...) { (void)message; abort(); }
 /* Retain storage: avoid the original traversal's read-after-free. */
 void Z_Free(void* p) { (void)p; }
 void P_SetMobjState(mobj_t* m,int state) { (void)m;(void)state; abort(); }

@@ -30,7 +30,7 @@
   "adapter_sha256": {
     "generate.py": "e80beb09a686c030a6229599f5e0c9e9fd9b109ecebdcb9dd474a2a78e01d6cf",
     "generate_m3a.py": "97a6bb6117329ee3fbbb942c1f17af14c0f16f264ecda1d298e791e0bd09f725",
-    "m3a_shim.h": "655551230fd832cb155139e1efcb80509e5703af5bb3f184b46ae385fa914d9a"
+    "m3a_shim.h": "9c3160dd7e8bf28211d3550d1d32b743350303c946434995a950705f1cc9b13d"
   },
   "assumptions": [
     "one flat sector; one-sided clockwise room, optional angled bevel; source BLOCKMAP head links",
