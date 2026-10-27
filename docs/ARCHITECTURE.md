@@ -175,8 +175,8 @@ ordering; stable identifiers alone do not guarantee stable iteration. Use
 explicit ordered storage. Never depend on randomized hash iteration, pointer
 addresses, thread scheduling, or unordered parallel reductions in gameplay.
 Rendering can interpolate immutable snapshots but cannot mutate simulation or
-consume its RNG. A custom wgpu renderer is planned, preferring Vulkan on supported platforms; a minimal
-software or headless path must support automated verification.
+consume its RNG. A custom wgpu renderer is planned, preferring Vulkan on supported
+platforms; a minimal software or headless path must support automated verification.
 
 ## Ownership and input safety
 

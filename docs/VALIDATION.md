@@ -548,3 +548,24 @@ wgpu/Vulkan-preferred presentation remains separate from simulation. All origina
 source/history/license/attribution and public visibility remain preserved. Private
 repositories/assets were not involved. M0/M1/M2/M3a merged branches are cleanup
 candidates after historical links use immutable references; none is deleted here.
+
+
+## M3b observed remote validation and final-head gate
+
+[PR #5](https://github.com/Copgunn/DOOM/pull/5) targets verified master `764dd96`.
+Implementation/documentation head `975e2b9f1b194aea53488b907c11a414b4182e53`
+passed [CI run 40602021495](https://github.com/Copgunn/DOOM/actions/runs/40602021495):
+
+| Job | Observed result |
+| --- | --- |
+| Stable / ubuntu-latest | Workspace build/fmt/Clippy, debug/release tests/all three schemas, all C/golden reproductions, examples/stdout equality and docs passed |
+| Stable / windows-latest | Workspace checks, debug/release recorded vectors/all schemas, three examples/stdout equality and docs passed |
+| Stable / macos-latest | Same stable checks, debug/release vectors/goldens, three examples/stdout equality and docs passed |
+| Minimum Rust / 1.85.0 | All 79 checks including doctest passed; 2 private tests ignored |
+
+The following documentation-only commit links the delivery PR and observed CI;
+it changes no simulation behavior, reference inputs/results, goldens or workflow.
+The final exact SHA and fresh CI are checked on PR #5 before leaving draft; the
+initial successful run does not substitute for that verification. M3b remains
+open/unmerged for owner review. No full-engine, DOS, private-IWAD or complete
+player-state result is claimed.

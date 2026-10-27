@@ -17,7 +17,7 @@ foundations are implemented, validated and merged
 reference-tested grounded player XY movement, wall sliding and solid actor
 collision, merged in [PR #4](https://github.com/Copgunn/DOOM/pull/4) as `764dd96`.
 M3b implements and locally validates static multi-sector movement and vertical
-physics on `feat/m3b-multisector-vertical-physics`, pending owner review.
+physics in [PR #5](https://github.com/Copgunn/DOOM/pull/5), pending owner review.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 

@@ -140,7 +140,8 @@ player thinking, gameplay synchronization, demo playback or DOS compatibility.
 
 ### M3b acceptance and review boundary
 
-Branch: `feat/m3b-multisector-vertical-physics`. Leave its PR open/unmerged for
+Branch: `feat/m3b-multisector-vertical-physics`, [PR #5](https://github.com/Copgunn/DOOM/pull/5).
+Leave its PR open/unmerged for
 separate owner review; M3a merge authorization does not cover M3b.
 
 - [x] Source findings before runtime changes; immutable original C and separate provenance.
@@ -156,7 +157,8 @@ separate owner review; M3a merge authorization does not cover M3b.
 - [x] Deep/invalid BSP, height/flag/coverage bounds, extremes, lifecycle/atomicity tests.
 - [x] Long multi-sector/gravity/pause/RNG/read-schedule traces; capacity/history checks.
 - [x] Required local workspace/release/Rust 1.85 checks; parser fuzz targets compile.
-- [ ] Verify final exact-head Linux/Windows/macOS CI and record evidence on the PR.
+- [x] Initial Linux/Windows/macOS debug/release and Rust 1.85 CI passed on
+  `975e2b9`; final exact-head checks are verified on PR #5 before review readiness.
 - [ ] Owner review; do not merge or enable auto-merge.
 
 See [M3B_REFERENCE.md](M3B_REFERENCE.md) and [STATE_FORMAT.md](STATE_FORMAT.md).
