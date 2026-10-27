@@ -30,8 +30,8 @@
   "adapter_sha256": {
     "generate.py": "e80beb09a686c030a6229599f5e0c9e9fd9b109ecebdcb9dd474a2a78e01d6cf",
     "generate_m3a.py": "97a6bb6117329ee3fbbb942c1f17af14c0f16f264ecda1d298e791e0bd09f725",
-    "generate_m3b.py": "0002a973de9eea97336c1b191ca2b1d274258d8858033c86b9311ffd3e7d3836",
-    "m3b_shim.h": "e906212655a4bb8147634602586cd443ae46548ec394a7ccf5fabd5740f5bcbb"
+    "generate_m3b.py": "613aeb1563573f1990314414c0e1086d1645c3afd4764c2316c8e7d4e828a374",
+    "m3b_shim.h": "8fbcd6f3db2cc3610dd0b528a37c80a393bb2ba033a1175e2008a5d962d0cd8b"
   },
   "outputs_sha256": {
     "tests/reference/m3b_map_0.bin": "87cd9edd4dbf542225c1538b0e52560f45277fe1cd2696801e1f62ec1cddebfe",
@@ -53,12 +53,14 @@
     "tests/reference/m3b_map_16.bin": "77599c8d125304eaaab7cc3c9ec8b88af503b18a4eac7dd1c11b5ceef1bedf53",
     "tests/reference/m3b_map_17.bin": "1141d3aa75225e7beed71a0b9f2d41825291f8ee81b7652ba690e22759aede27",
     "tests/reference/m3b_map_18.bin": "42c0742dea878e5f9f95d3d198b6350cc1c4e673322b4b5a37fd46b34f3603e3",
-    "tests/reference/m3b_maps.rs": "f0466c6a055065ce5aa1258d7321dd12f8b98f72d0c10162452c3e39022b6e19",
-    "tests/reference/m3b_cases.csv": "2bdc169eefb4f65271f63d532106a1276029c9d97cd2b4f617e0a8fdc5d33480",
-    "tests/reference/m3b_movement.csv": "dc3001b1929b8f5341bba182a89a93dfe7d17da3dc4257e31efeab79d5dd83db",
-    "tests/reference/m3b_probes.csv": "071e8ea78892b2ee59c9cce853867f73593fbf9947d927f772a4e01f4cdd3f94",
-    "tests/reference/m3b_bsp.csv": "d87b37884a340265272dc9cbd14e60ac22a989007df1c6c3d3e2826a410890df",
-    "tests/reference/m3b_openings.csv": "fe3671479ba9e0b57a164b3d809c18560ed6b92d78081f2d023cf5933879a474"
+    "tests/reference/m3b_map_19.bin": "848d3b831f04dc38f8df27d8dd85998834ecb4a9407bdc4424f4d30e3fbcb2d9",
+    "tests/reference/m3b_maps.rs": "e6a2d36a1e9d906eab8b56dfe5722d1d5576771ed33306c634f1dea2fd72f74b",
+    "tests/reference/m3b_cases.csv": "37dbc2055270c11761c7b727b60b5a0cd5386fe05d1c89d8e083cd538f49cd1a",
+    "tests/reference/m3b_movement.csv": "3f6c5233f565361d59b15dfd4ab34362d09d203d0727b6a0fdf6e30afd8335ae",
+    "tests/reference/m3b_probes.csv": "3b58dc7f49fb2677066957b9ee436c1d80b658cacc5784ca80fa5bd150852bff",
+    "tests/reference/m3b_bsp.csv": "3c03ad67088b1285f0300f0a71741e602d6a198fe1adf03418e312b2f6027a08",
+    "tests/reference/m3b_openings.csv": "fe3671479ba9e0b57a164b3d809c18560ed6b92d78081f2d023cf5933879a474",
+    "tests/reference/m3b_sides.csv": "83cbfa840676c1b233d1ef2c5d3ff99c7ae60f107f66ecad3985ae2a72a64980"
   },
   "compiler": "cc (Debian 14.2.0-19) 14.2.0",
   "platform": "Linux-6.18.55-x86_64-with-glibc2.41",

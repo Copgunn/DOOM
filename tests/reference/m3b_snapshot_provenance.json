@@ -1,0 +1,20 @@
+{
+  "schema": "DSIM-v3",
+  "scope": "96 physical C-trace states: step/transition, drop/gravity/landing, vertical fall, airborne input; project schema, not engine saves",
+  "inputs_sha256": {
+    "tools/reference/m3b_snapshot_goldens.py": "8f67edf889f7380e7635732073755473a276f5e29727d3fe485d0514caa06e5c",
+    "tests/reference/m3b_cases.csv": "37dbc2055270c11761c7b727b60b5a0cd5386fe05d1c89d8e083cd538f49cd1a",
+    "tests/reference/m3b_movement.csv": "3f6c5233f565361d59b15dfd4ab34362d09d203d0727b6a0fdf6e30afd8335ae",
+    "tests/reference/m3b_map_0.bin": "87cd9edd4dbf542225c1538b0e52560f45277fe1cd2696801e1f62ec1cddebfe",
+    "tests/reference/m3b_map_2.bin": "0114ccc025e7eddc7f09b0cfab3b365f87fd4a387aeee9648529b99416c74b7a",
+    "tests/reference/m3b_map_9.bin": "743ffc33f0c14fe0199d8f1b709e612b669abc312af3cf877492694de595e376"
+  },
+  "outputs_sha256": {
+    "tests/reference/m3b_step.bin": "37061d436278beb5a8f7ab3715f1afa58a372b6e801df93d5a6e5a8a720030d3",
+    "tests/reference/m3b_transition.bin": "3183435427719c9e13116f55248e57d4aad40b81b0a7e5f300537a7529b50c36",
+    "tests/reference/m3b_drop_air.bin": "92ead116e9a29145c9bd702fe1509b375b813466000f8479dfd27ce3b0a92660",
+    "tests/reference/m3b_landing.bin": "7fe9db65caec4d8be4e39109e828361ef6234a6aa7da3db687ddbcb4aa4ff40c",
+    "tests/reference/m3b_fall_first.bin": "463ec11566a7b01717236a3bf217624395fd99e1227297b7ec457f5b476ad2f4",
+    "tests/reference/m3b_snapshots.csv": "eef8686b4d8a8016a52323cb960bc1c82fe75bbfb07fc3abe65191680e1591f1"
+  }
+}

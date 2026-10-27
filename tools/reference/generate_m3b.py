@@ -29,7 +29,7 @@ def wad(lumps):
 
 
 def fixture(heights,diagonal=False,sparse=False,omit=False,portal_flags=4):
-    n=len(heights);xs=[-128,0,128] if n==2 else [-128,0,64,128]
+    n=len(heights);xs=[-128,128] if n==1 else [-128,0,128] if n==2 else [-128,0,64,128]
     vertices=[]
     for i,x in enumerate(xs):
         vertices.extend([(x if not(diagonal and i==1) else -32,-64),(x if not(diagonal and i==1) else 96,64)])
@@ -84,12 +84,12 @@ MAPS=[
  fixture([(0,128),(24,112),(0,128)]),fixture([(0,128),(0,0)]),
  fixture([(0,128),(72,100)]),fixture([(0,128),(0,128)],omit=True),
  fixture([(0,128),(0,128)],portal_flags=6),fixture([(0,128),(0,128)],portal_flags=5),
- fixture([(-64,64),(-32,64)]),
+ fixture([(-64,64),(-32,64)]),fixture([(0,128)]),
 ]
 
 def case(label,map_id,player=1,flags=1026,x=-24,y=0,z=0,mx=6,my=0,mz=0,f=25,s=0,turn=0,obstacle=0):
     return dict(label=label,map=map_id,player=player,flags=flags,x=x*U,y=y*U,z=z*U,momx=mx*U,momy=my*U,momz=mz*U,forward=f,side=s,turn=turn,obstacle=obstacle)
-CASES=[case('equal',0),case('small_step',1),case('step_24',2),case('step_25',3),case('door_55',4),case('door_56',5),case('headroom',6,z=40),case('drop_24',7,flags=2),case('drop_restricted',8,player=0,flags=2),case('drop_allowed',9),case('reverse',2,x=24,z=24,mx=-6,f=-25),case('diagonal',10,x=-24,y=-16,mx=8,my=2),case('sparse_diagonal',11,x=-24,y=-16,mx=8,my=2),case('adjacent',12,mx=20),case('fall',0,x=-64,z=32,mx=0,f=0),case('ceiling',0,x=-64,z=64,mx=0,mz=16,f=0),case('negative_floor',18,x=-64,z=-16,mx=0,mz=-1,f=0),case('no_gravity',0,flags=514,x=-64,z=32,mx=0,f=0),case('exact_ceiling',0,x=-64,z=72,mx=0,f=0),case('no_gravity_ceiling',0,flags=514,x=-64,z=64,mx=0,mz=8,f=0),case('omitted_wall',15,player=0,flags=2,x=120,mx=20,f=0),case('block_monsters_player',16),case('block_monsters_actor',16,player=0,flags=2),case('blocking',17),case('zero_opening',13),case('narrow_opening',14),case('air_xy',0,z=64,mx=4,f=50),case('boundary',1,x=0,mx=1),case('solid_z_independent',0,obstacle=1)]
+CASES=[case('equal',0),case('small_step',1),case('step_24',2),case('step_25',3),case('door_55',4),case('door_56',5),case('headroom',6,z=40),case('drop_24',7,flags=2),case('drop_restricted',8,player=0,flags=2),case('drop_allowed',9),case('reverse',2,x=24,z=24,mx=-6,f=-25),case('diagonal',10,x=-24,y=-16,mx=8,my=2),case('sparse_diagonal',11,x=-24,y=-16,mx=8,my=2),case('adjacent',12,mx=20),case('fall',0,x=-64,z=32,mx=0,f=0),case('ceiling',0,x=-64,z=64,mx=0,mz=16,f=0),case('negative_floor',18,x=-64,z=-16,mx=0,mz=-1,f=0),case('no_gravity',0,flags=514,x=-64,z=32,mx=0,f=0),case('exact_ceiling',0,x=-64,z=72,mx=0,f=0),case('no_gravity_ceiling',0,flags=514,x=-64,z=64,mx=0,mz=8,f=0),case('omitted_wall',15,player=0,flags=2,x=120,mx=20,f=0),case('block_monsters_player',16),case('block_monsters_actor',16,player=0,flags=2),case('blocking',17),case('zero_opening',13),case('narrow_opening',14),case('air_xy',0,z=64,mx=4,f=50,turn=512),case('boundary',1,x=0,mx=1),case('solid_z_independent',0,obstacle=1)]
 
 
 def c_maps():
@@ -113,41 +113,42 @@ void ints(int* data,int n){int i;if(!n)putchar('-');for(i=0;i<n;i++)printf("%s%d
 void init_actor(mobj_t* m,int id,int flags,int x,int y,int z){memset(m,0,sizeof(*m));m->id=id;m->flags=flags;m->x=x;m->y=y;m->z=z;m->radius=8*FRACUNIT;m->height=56*FRACUNIT;m->state=&states[7];P_SetThingPosition(m);m->floorz=m->subsector->sector->floorheight;m->ceilingz=m->subsector->sector->ceilingheight;}
 void movement(void){
  int c,t,i,j;player_t p;mobj_t m,other;
- puts("case,tic,x,y,z,momx,momy,momz,floor,ceiling,subsector,sector,angle,tries,lines,things,slides,openings,members,vertical");
+ puts("case,tic,x,y,z,momx,momy,momz,floor,ceiling,subsector,sector,angle,tries,lines,things,slides,openings,members,vertical,motion_order");
  for(c=0;c<CASE_COUNT;c++){
   load_world(input[c][0]);memset(&p,0,sizeof(p));
-  if(input[c][12])init_actor(&other,1,MF_SOLID,8*FRACUNIT,0,80*FRACUNIT);
+  if(input[c][12])init_actor(&other,1,MF_SOLID|MF_NOGRAVITY,8*FRACUNIT,0,64*FRACUNIT);
   init_actor(&m,0,input[c][2],input[c][3],input[c][4],input[c][5]);
   m.momx=input[c][6];m.momy=input[c][7];m.momz=input[c][8];
   if(input[c][1]){m.player=&p;p.mo=&m;p.viewheight=41*FRACUNIT;}
   for(t=0;t<24;t++){
    p.cmd.forwardmove=input[c][9];p.cmd.sidemove=input[c][10];p.cmd.angleturn=input[c][11];
-   try_count=candidate_count=thing_count=slide_count=opening_count=0;vertical_called=0;
+   try_count=candidate_count=thing_count=slide_count=opening_count=motion_count=0;vertical_called=0;
    if(m.player)P_MovePlayer(&p);
    if(m.momx||m.momy)P_XYMovement(&m);
    if(m.z!=m.floorz||m.momz){vertical_called=1;before_z=m.z;before_momz=m.momz;P_ZMovement(&m);}
    printf("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld,%ld,%u,",c,t,m.x,m.y,m.z,m.momx,m.momy,m.momz,m.floorz,m.ceilingz,(long)(m.subsector-subsectors),(long)(m.subsector->sector-sectors),m.angle);
-   if(!try_count)putchar('-');for(i=0;i<try_count;i++){printf("%s",i?";":"");for(j=0;j<12;j++)printf("%s%d",j?":":"",try_data[i][j]);}putchar(',');
+   if(!try_count)putchar('-');for(i=0;i<try_count;i++){printf("%s",i?";":"");for(j=0;j<15;j++)printf("%s%d",j?":":"",try_data[i][j]);}putchar(',');
    ints(candidates,candidate_count);putchar(',');ints(things_seen,thing_count);putchar(',');ints(slides_seen,slide_count);putchar(',');
    if(!opening_count)putchar('-');for(i=0;i<opening_count;i++)for(j=0;j<5;j++)printf("%s%d",j?":":i?";":"",opening_data[i][j]);putchar(',');
    for(i=0;i<numsectors;i++){mobj_t* scan=sectors[i].thinglist;int found=0;printf("%s",i?"|":"");while(scan){printf("%s%d",found?":":"",scan->id);found++;scan=scan->snext;}if(!found)putchar('-');}putchar(',');
-   if(vertical_called)printf("%d:%d",before_z,before_momz);else putchar('-');putchar('\n');
+   if(vertical_called)printf("%d:%d",before_z,before_momz);else putchar('-');putchar(',');if(!motion_count)putchar('-');for(i=0;i<motion_count;i++)printf("%s%c%d",i?";":"",motion_kind[i]?'S':'T',motion_value[i]);putchar('\n');
   }
  }
 }
 void probes(void){
  int c,i;player_t p;mobj_t m;int points[][2]={{-4,0},{4,0},{-8,0},{8,0},{-1,-1},{0,0},{32,0},{40,16},{124,0}};
- puts("case,x,y,allowed,floor,ceiling,dropoff,floatok,reason,subsector,sector,line,actor");
+ puts("case,x,y,allowed,floor,ceiling,dropoff,floatok,reason,subsector,sector,line,actor,line_count,actor_count,opening_count");
  for(c=0;c<CASE_COUNT;c++)for(i=0;i<9;i++){
   load_world(input[c][0]);memset(&p,0,sizeof(p));init_actor(&m,0,input[c][2],input[c][3],input[c][4],input[c][5]);if(input[c][1]){m.player=&p;p.mo=&m;}
-  try_count=candidate_count=thing_count=slide_count=opening_count=0;
+  try_count=candidate_count=thing_count=slide_count=opening_count=motion_count=0;
   P_TryMove(&m,points[i][0]*FRACUNIT,points[i][1]*FRACUNIT);
-  printf("%d",c);{int j;for(j=0;j<12;j++)printf(",%d",try_data[0][j]);}putchar('\n');
+  printf("%d",c);{int j;for(j=0;j<15;j++)printf(",%d",try_data[0][j]);}putchar('\n');
  }
 }
 void bsp(void){int map,x,y;fixed_t p[]={-128*FRACUNIT,-64*FRACUNIT,-1,0,1,32*FRACUNIT,64*FRACUNIT,128*FRACUNIT};puts("map,x,y,subsector,sector");for(map=0;map<MAP_COUNT;map++){load_world(map);for(x=0;x<8;x++)for(y=0;y<8;y++){subsector_t* s=R_PointInSubsector(p[x],p[y]);printf("%d,%d,%d,%ld,%ld\n",map,p[x],p[y],(long)(s-subsectors),(long)(s->sector-sectors));}}}
 void openings(void){int map,i;puts("map,line,top,bottom,range,lowfloor");for(map=0;map<MAP_COUNT;map++){load_world(map);for(i=0;i<line_count;i++)if(lines[i].backsector){Ref_LineOpening(&lines[i]);printf("%d,%d,%d,%d,%d,%d\n",map,i,opentop,openbottom,openrange,lowfloor);}}}
-int main(int argc,char** argv){if(argc!=2)return 2;if(!strcmp(argv[1],"movement"))movement();else if(!strcmp(argv[1],"probes"))probes();else if(!strcmp(argv[1],"bsp"))bsp();else if(!strcmp(argv[1],"openings"))openings();else return 2;return 0;}
+void sides(void){int d[][2]={{0,128},{0,-128},{128,0},{-128,0},{128,128},{128,-128},{-128,128},{-128,-128}};fixed_t p[]={-128*FRACUNIT,-64*FRACUNIT,-1,0,1,32*FRACUNIT,64*FRACUNIT,128*FRACUNIT};int i,x,y;node_t node;memset(&node,0,sizeof(node));puts("dx,dy,x,y,side");for(i=0;i<8;i++){node.dx=d[i][0]*FRACUNIT;node.dy=d[i][1]*FRACUNIT;for(x=0;x<8;x++)for(y=0;y<8;y++)printf("%d,%d,%d,%d,%d\n",node.dx,node.dy,p[x],p[y],R_PointOnSide(p[x],p[y],&node));}}
+int main(int argc,char** argv){if(argc!=2)return 2;if(!strcmp(argv[1],"sides"))sides();else if(!strcmp(argv[1],"movement"))movement();else if(!strcmp(argv[1],"probes"))probes();else if(!strcmp(argv[1],"bsp"))bsp();else if(!strcmp(argv[1],"openings"))openings();else return 2;return 0;}
 '''
 
 FUNCTIONS=[('r_main.c','R_PointOnSide','int',None),('r_main.c','R_PointInSubsector','subsector_t*',None)]+[(f,n,r,('Ref_LineOpening' if n=='P_LineOpening' else rename)) for f,n,r,rename in m3a.FUNCTIONS]+[('p_maputl.c','P_LineOpening','void','Ref_LineOpening'),('p_mobj.c','P_ZMovement','void',None)]
@@ -168,7 +169,7 @@ def run(check):
     with tempfile.TemporaryDirectory(prefix='doom-m3b-reference-') as tmp:
         src=Path(tmp)/'reference.c';src.write_text('\n'.join(fragments));binary=Path(tmp)/'reference'
         subprocess.run(['cc',*FLAGS,'-I'+str(SOURCE),'-I'+str(ROOT/'tools/reference'),str(src),str(SOURCE/'m_fixed.c'),str(SOURCE/'m_random.c'),'-o',str(binary)],check=True)
-        for mode in ['movement','probes','bsp','openings']:outputs[f'tests/reference/m3b_{mode}.csv']=subprocess.check_output([str(binary),mode])
+        for mode in ['movement','probes','bsp','openings','sides']:outputs[f'tests/reference/m3b_{mode}.csv']=subprocess.check_output([str(binary),mode])
     manifest=ROOT/'tests/reference/m3b_provenance.json'
     sources=sorted({'m_fixed.c','m_fixed.h','m_random.c','p_setup.c','p_local.h','r_defs.h','doomdata.h','p_tick.c','p_mobj.h','d_player.h'}|{f for f,_,_,_ in FUNCTIONS})
     adapters=['generate.py','generate_m3a.py','generate_m3b.py','m3b_shim.h']

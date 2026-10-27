@@ -107,7 +107,9 @@ boolean P_BlockLinesIterator(int,int,boolean(*)(line_t*));
 void P_DamageMobj(mobj_t* a,mobj_t* b,mobj_t* c,int n) { abort(); }
 void P_TouchSpecialThing(mobj_t* a,mobj_t* b) { abort(); }
 boolean PIT_AddThingIntercepts(mobj_t* a) { abort(); return false; }
-void P_HitSlideLine(line_t* l) { if(slide_count>=4096)abort();slides_seen[slide_count++]=(int)(l-lines);Ref_HitSlideLine(l); }
+int motion_count,motion_kind[256],motion_value[256];
+void record_motion(int kind,int value){int i=motion_count++;if(i>=256)abort();motion_kind[i]=kind;motion_value[i]=value;}
+void P_HitSlideLine(line_t* l) { record_motion(1,(int)(l-lines)); if(slide_count>=4096)abort();slides_seen[slide_count++]=(int)(l-lines);Ref_HitSlideLine(l); }
 /* Explicit ABI/compiler-profile assumptions, rather than host C defaults. */
 typedef char int_is_32[(sizeof(int)==4)?1:-1];
 typedef char short_is_16[(sizeof(short)==2)?1:-1];
@@ -118,13 +120,13 @@ typedef char binary64[(DBL_MANT_DIG==53 && FLT_RADIX==2)?1:-1];
 
 subsector_t* R_PointInSubsector(fixed_t,fixed_t);
 void Ref_LineOpening(line_t*);
-int try_data[128][12],checking,blocked_line=-1,blocked_actor=-1;
+int try_data[128][15],checking,blocked_line=-1,blocked_actor=-1;
 int opening_count,opening_data[4096][5];
 int vertical_called,before_z,before_momz,sound_count;
 void S_StartSound(mobj_t* m,int n){(void)m;(void)n;sound_count++;}
 void P_LineOpening(line_t* l){int i;Ref_LineOpening(l);if(checking){i=opening_count++;if(i>=4096)abort();opening_data[i][0]=(int)(l-lines);opening_data[i][1]=opentop;opening_data[i][2]=openbottom;opening_data[i][3]=openrange;opening_data[i][4]=lowfloor;}}
-boolean P_TryMove(mobj_t* m,fixed_t x,fixed_t y){int i=try_count++,ok,reason=0;subsector_t* ss;if(i>=128)abort();blocked_line=blocked_actor=-1;checking=1;ok=Ref_TryMove(m,x,y);checking=0;ss=R_PointInSubsector(x,y);
+boolean P_TryMove(mobj_t* m,fixed_t x,fixed_t y){int i=try_count++,ok,reason=0,lc=candidate_count,tc=thing_count,oc=opening_count;subsector_t* ss;if(i>=128)abort();record_motion(0,i);blocked_line=blocked_actor=-1;checking=1;ok=Ref_TryMove(m,x,y);checking=0;ss=R_PointInSubsector(x,y);
 if(!ok){if(blocked_actor>=0)reason=1;else if(blocked_line>=0)reason=2;else if(tmceilingz-tmfloorz<m->height)reason=3;else if(tmceilingz-m->z<m->height)reason=4;else if(tmfloorz-m->z>24*FRACUNIT)reason=5;else reason=6;}
-try_data[i][0]=x;try_data[i][1]=y;try_data[i][2]=ok;try_data[i][3]=tmfloorz;try_data[i][4]=tmceilingz;try_data[i][5]=tmdropoffz;try_data[i][6]=floatok;try_data[i][7]=reason;try_data[i][8]=(int)(ss-subsectors);try_data[i][9]=(int)(ss->sector-sectors);try_data[i][10]=blocked_line;try_data[i][11]=blocked_actor;return ok;}
+try_data[i][0]=x;try_data[i][1]=y;try_data[i][2]=ok;try_data[i][3]=tmfloorz;try_data[i][4]=tmceilingz;try_data[i][5]=tmdropoffz;try_data[i][6]=floatok;try_data[i][7]=reason;try_data[i][8]=(int)(ss-subsectors);try_data[i][9]=(int)(ss->sector-sectors);try_data[i][10]=blocked_line;try_data[i][11]=blocked_actor;try_data[i][12]=candidate_count-lc;try_data[i][13]=thing_count-tc;try_data[i][14]=opening_count-oc;return ok;}
 boolean PIT_CheckLine(line_t* l){int ok;if(candidate_count>=4096)abort();candidates[candidate_count++]=(int)(l-lines);ok=Ref_CheckLine(l);if(!ok)blocked_line=(int)(l-lines);return ok;}
 boolean PIT_CheckThing(mobj_t* m){int ok;if(thing_count>=4096)abort();things_seen[thing_count++]=m->id;ok=Ref_CheckThing(m);if(!ok)blocked_actor=m->id;return ok;}

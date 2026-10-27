@@ -20,4 +20,5 @@ pub const MAP_BYTES: &[&[u8]] = &[
     include_bytes!("m3b_map_16.bin"),
     include_bytes!("m3b_map_17.bin"),
     include_bytes!("m3b_map_18.bin"),
+    include_bytes!("m3b_map_19.bin"),
 ];
