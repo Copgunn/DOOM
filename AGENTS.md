@@ -76,4 +76,6 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - Update `docs/ROADMAP.md` with milestone progress and verifiable acceptance evidence.
 - Document important compatibility findings in `docs/COMPATIBILITY.md`.
 - Include relevant documentation updates in feature PRs. Keep planned and
-  implemented functionality explicit; M0 is not a playable engine or WAD parser.
+  implemented functionality explicit. M1 parses resources/maps; there is still
+  no playable engine, simulation, demo replay, or renderer. Preserve the tested
+  validation policies in `docs/COMPATIBILITY.md` when changing parsers.

@@ -5,9 +5,9 @@
 Initial target: **Linux DOOM 1.10**, preserved in `linuxdoom-1.10/`, upstream
 [id-Software/DOOM](https://github.com/id-Software/DOOM) commit
 `a77dfb96cb91780ca334d0d4cfd86957558007e0`.
-The Rust implementation currently contains only foundational vocabulary and WAD
-signature recognition. It cannot load archives/maps, simulate, render, play
-demos, or compare reference states. No gameplay compatibility is established.
+M1 parses IWAD/PWAD bytes and structurally validates classic binary maps using
+synthetic fixtures. It does not simulate, render, play demos, or compare reference
+states. Commercial IWAD validation and gameplay compatibility are not established.
 
 DOS DOOM 1.9 is a separate future target. The released Linux source is not a
 complete DOS specification. Linux's `VERSION = 110` and matching demo header
@@ -25,9 +25,60 @@ acceptance do not establish DOS 1.9 replay or synchronization compatibility.
 | `doomdata.h`, `p_setup.c` | Ordered classic map lumps, binary records, inter-record references | Decode explicit little-endian layouts and validate before use |
 | `g_game.c` (`G_BeginRecording`, `G_DoPlayDemo`) | Writes version 110 and rejects a different demo version | Test version-specific headers separately from complete demo compatibility |
 
-`LumpName` equality in M0 is byte equality, not archive name lookup. M1 must
-define lookup normalization from the actual reference paths, including unusual
-case/padding bytes, and test duplicate names both within and across archives.
+## Implemented M1 policies and deviations
+
+- Signed little-endian WAD counts/offsets/lengths must be nonnegative and in
+  bounds. Checked arithmetic and configurable limits precede access/allocation.
+  Empty lumps at offsets zero through EOF are accepted; past-EOF empty markers
+  are rejected. Shared/overlapping ranges, including header/directory overlap,
+  are allowed when bounded. Directories need not be at the end of the file.
+- Names retain all eight original bytes. Lookup truncates/pads queries to eight
+  bytes, stops at NUL and folds ASCII case on both stored names and queries.
+  `W_AddFile` uses `strncpy` (padding after NUL), while `W_CheckNumForName`
+  uppercases only the query and scans backward. Symmetric folding extends lookup
+  to lowercase directory names as requested; strict lowercase-directory bug
+  emulation is not claimed. Non-ASCII bytes are not locale-folded. Raw
+  `LumpName` equality remains exact byte equality.
+- Later matching entries and later archives win. Maps select the last marker,
+  then require THINGS through BLOCKMAP in reference order within one archive.
+  Groups cannot spill across archives or borrow independently overridden lumps.
+  A malformed overriding map errors instead of silently falling back.
+- E#M# and MAP## markers are recognized. TEXTMAP identifies UDMF; BEHAVIOR
+  immediately after the classic group identifies Hexen. Known XNOD/ZNOD,
+  XGLN/ZGLN and xNd4/xNd5 node signatures are explicitly unsupported. No format
+  inference can reliably distinguish arbitrary unmarked alternative layouts.
+- Fixed records must have exact widths: things 10, lines 14, sides 30, vertices
+  4, segs 12, subsectors 4, nodes 28, sectors 26 bytes. Essential geometry tables
+  cannot be empty. Ordinary references follow signed nonnegative Linux 1.10
+  shorts, limiting tables to 32768 entries; extended unsigned-index maps are
+  unsupported. Only sidedef -1 is a sentinel, mapped to None; front sides and
+  two-sided back sides must exist. Seg side selectors must address existing sides.
+- Every subsector has a nonempty bounded seg range with one front sector. BSP
+  children address valid nodes/leaves, all cycles are rejected, and partition
+  deltas cannot both be zero. A node-free map requires exactly one subsector.
+  Shared/unreachable acyclic nodes/leaves and overlapping subsector ranges are
+  permitted; node ordering need not be topological. The last node is the root.
+- REJECT must contain at least ceil(sectors²/8) bytes; trailing bytes are retained.
+  Short-table overreads/emulation are intentionally rejected.
+- BLOCKMAP uses signed positive dimensions, signed nonnegative word offsets,
+  offsets beyond the complete cell table, leading zero list words, validated
+  linedef references and -1 terminators. Shared lists/suffixes are allowed;
+  unused trailing words are harmless. The exposed list includes the leading
+  zero as linedef 0, as `P_BlockLinesIterator` does. Large unsigned/extended
+  BLOCKMAP encodings and malformed-list recovery are unsupported.
+
+These checks reject unsafe input the C implementation may overread, divide by
+zero on, or traverse indefinitely. They establish structural safety, not that a
+node builder's partitions/bounds match geometry, that a BLOCKMAP covers every
+intersecting line, or that textures/thing types resolve. Those semantic and
+runtime questions require later verification.
+
+Default archive limits: 512 MiB input, 1,000,000 lumps, 128 MiB per lump.
+Default map limits: 64 MiB per lump, 32768 records per table, 262144 BLOCKMAP
+cells, 4194304 BLOCKMAP words, 128 MiB cumulative decoded/scratch allocation.
+Applications can lower limits; raising them cannot enable unsupported formats.
+All caller-provided input bytes must already have been acquired within the
+application's own I/O and memory limits.
 
 ## Determinism objectives
 
@@ -41,8 +92,10 @@ case/padding bytes, and test duplicate names both within and across archives.
 
 ## Verification to introduce
 
-M1 tests generated archives/maps, malformed bounds and references, and patch
-precedence; add parser fuzz targets and preserve minimized failures. M2 introduces
+M1 tests generated archives/maps, malformed bounds/references, patch precedence,
+adversarial sharing and iterative deep BSP validation. Separate WAD/map fuzz
+targets use only synthetic seeds. Bounded smoke testing is not exhaustive proof
+of compatibility or absence of defects. M2 introduces
 canonical per-tic state encoding and repeatability checks in debug/release and
 across platforms. Include RNG indices, actor identity/order, positions/momenta,
 player state, sector/special state, and pending commands/events as appropriate;

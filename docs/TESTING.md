@@ -1,62 +1,87 @@
 # Testing and fixture guide
 
-Run the commands in [README](../README.md#build-and-test) before opening a PR.
-CI runs them on stable Linux, Windows, and macOS, and runs tests on Rust 1.85.0.
-Documentation builds also deny rustdoc warnings in CI. No proprietary data or
-original C build is required.
+Run the required commands in [README](../README.md#build-and-test). Stable CI
+covers Linux, Windows, macOS, and Rust 1.85.0, denying Clippy/rustdoc warnings.
+It needs no proprietary IWAD, C engine build, nightly toolchain, or fuzz package.
 
-## Current coverage
+## Coverage and fixtures
 
-- `crates/doom-types/src/lib.rs`: unit regressions for lossless eight-byte lump
-  names, non-text bytes, and distinction between raw equality and lookup policy.
-- `crates/doom-wad/tests/signature.rs`: public-API integration tests for exact
-  IWAD/PWAD magic and invalid signatures using generated empty-WAD bytes.
-- `crates/doom-wad/tests/common/mod.rs`: fixture helper, deliberately below
-  `tests/common/` so Cargo does not create a separate empty test binary for it.
-- `doom-map`: value vocabulary only; no parser behavior to test yet.
-- `crates/doom-wad/tests/private_iwad.rs`: ignored-by-default, read-only external
-  IWAD signature probe using `DOOM_IWAD_DIR`. It is excluded from public CI and
-  does not establish archive validity, authenticity, or compatibility.
+- `doom-types` unit tests preserve raw eight-byte names, including non-text bytes.
+- `doom-wad/tests/archive.rs` covers both archive kinds, empty archives, directory
+  bounds/signed fields, exact and mixed-case names, duplicate/patch precedence,
+  zero markers, shared/overlapping ranges, resource limits, mutations/truncations.
+- `doom-map/tests/parsing.rs` decodes a complete square map and tests every fixed
+  record width, required geometry, references/sentinels, BSP cycles and 20,000-node
+  depth, subsectors, REJECT, BLOCKMAP, map grouping/overrides, unsupported formats,
+  all policy limits, and structured mutations with valid archive containers.
+- Adversarial sharing tests cover 20,000 cells sharing a 32,000-word list and
+  20,000 overlapping subsectors over 32,767 segs, without timing-sensitive asserts.
+- Unit boundary tests exercise allocation/range overflow before any allocation.
+- `tests/support/mod.rs` creates original synthetic bytes with explicit little-endian
+  fields. `cargo run -p doom-map --example parse_map --locked` exercises the public
+  API on a committed synthetic seed. The WAD API also has an executable doctest.
 
-The fixture helper emits a complete 12-byte empty archive layout, but current
-tests inspect only its magic. Directory bounds, truncated headers, malformed
-offsets, map records, simulation, and replay are **not tested or implemented**.
-Do not describe these tests as a WAD parser suite. See M1 for that acceptance gate.
+Assertions check actual decoded values and error categories. Mutation/truncation
+loops call parser entry points directly: a panic fails the test. Allocation-failure
+paths cannot be forced portably without allocator injection; bounds/overflow/limit
+checks are tested. Structural validity does not prove a BSP's geometric accuracy,
+BLOCKMAP spatial completeness, gameplay compatibility, or exhaustive error coverage.
 
-## Extending the suite
+Put narrow tests next to implementation and public-API regressions under each
+crate's `tests/`. Keep fixture builders deterministic, small, and independent of
+OS ordering. Static fixtures need provenance, license, purpose, and regeneration
+instructions. Never use commercial or extracted proprietary data. Promote
+minimized fuzz failures into ordinary stable regressions.
 
-Put narrow invariant/edge tests next to implementation in `#[cfg(test)]` modules.
-Place public API and cross-crate workflows under the consuming crate's `tests/`.
-Generate small byte fixtures with explicit little-endian writes; extend the WAD
-helper with directory/lump builders when the parser exists. Pair each malformed
-case with the relevant error class and ensure the public API returns an error
-without panic. Keep regressions independent of local file paths and OS ordering.
+## Fuzzing
 
-Prefer generated fixtures over checked-in binaries. Any static fixture needs a
-nearby provenance record with creator/source, license, purpose, expected behavior,
-and hash where appropriate. Never copy commercial IWADs or extracted assets.
-There are no placeholder fixture directories, fuzz targets, replay tests, or
-benchmark results in M0.
+`fuzz/` is an independent Cargo workspace, with its own committed lockfile and
+`libfuzzer-sys` dependency. It does not affect the dependency-free stable workspace.
+Install a supported host C++ compiler, then from repository root:
 
-For separately authorized private testing, set `DOOM_IWAD_DIR` in a private shell
-to an external directory and run `cargo test -p doom-wad --test private_iwad --
---ignored`. Provision assets only into an explicitly authorized environment;
-connected storage access alone does not authorize cloud copying. Keep originals
-unchanged. Do not print private filenames, paths, links, contents, or credentials
-in public output, and do not upload private fixtures or results as CI artifacts.
-Future parser/replay suites should keep private tests opt-in and public fixtures
-synthetic/redistributable. The ignored probe must not be reported as a successful
-real-asset test unless it was actually run with authorized assets.
+```sh
+rustup toolchain install nightly --profile minimal
+cargo install cargo-fuzz --version 0.13.2 --locked
+cargo run -p doom-map --example generate_fuzz_seeds --locked
+cargo +nightly fuzz build
+cargo +nightly fuzz run wad -- -runs=100000 -seed=1 -max_len=1048576 -rss_limit_mb=1024 -timeout=10
+cargo +nightly fuzz run map -- -runs=100000 -seed=1 -max_len=1048576 -rss_limit_mb=1024 -timeout=10
+```
 
-M1 adds parser fuzz targets in a dedicated `fuzz/` package kept out of the stable
-workspace when its tooling requires nightly. Bound allocations and execution,
-record reproducible invocations and seeds, and promote minimized failures to
-ordinary unit/integration tests. Stable CI must remain useful without fuzz tools.
+Use a clean checkout/copy of the committed seeds for a reproducible initial corpus;
+fuzzing adds ignored generated corpus entries. Seed provenance is in
+[fuzz/corpus/README.md](../fuzz/corpus/README.md). Targets limit archive input to
+1 MiB/4096 entries; the map target further caps records, cells, words, and allocation.
+It tries MAP01 and E1M1. This bounded smoke campaign is not an exhaustive run or a
+coverage guarantee; schedule longer campaigns separately when requested.
 
-M2 adds ordered command streams and canonical per-tic state records. Compare
-repeat runs, debug/release, and platforms; perturb rendering schedules without
+In managed environments where LeakSanitizer cannot inspect threads because of
+ptrace restrictions, prefix the two run commands with `ASAN_OPTIONS=detect_leaks=0`.
+AddressSanitizer remains enabled; leak detection is then **not verified**. Do not
+change host ptrace/security settings to run tests. Record the exact tool versions,
+commands, corpus, run count, and any sanitizer limitations in validation notes.
+Public CI runs stable mutation/adversarial smoke tests and the synthetic API
+example; it deliberately does not install nightly or run cargo-fuzz.
+
+## Private assets
+
+Private signature/archive/map tests are ignored by default. Set `DOOM_IWAD_DIR`
+only in a private shell after separate authorization for the destination, then:
+
+```sh
+cargo test -p doom-map --test private_iwad -- --ignored
+```
+
+The test opens external assets read-only, bounds file input, validates archives
+and recognized maps, and suppresses private names, paths, and contents in failures.
+Do not print or upload private results, links, assets, snapshots, or credentials.
+Storage access alone does not authorize cloud copying. Preserve source originals.
+A successful synthetic exercise of this test is not evidence of real-IWAD testing.
+
+## Future verification
+
+M2 adds canonical per-tic state records and ordered command streams. Compare
+repeat runs, debug/release, and platforms; perturb presentation schedules without
 changing commands. M3/M4 add pinned reference builds and version-specific demo
-replays, recording data hashes and the first differing tic/field. Comparison
-fixtures and reference setup must be legally distributable and reproducible.
-Avoid timing-sensitive assertions; later performance tests must state environment,
-build profile, workload, and correctness baseline.
+replays, recording legal data hashes and first divergent tic/field. Performance
+checks must state environment, profile, workload, and a correctness baseline.

@@ -3,30 +3,38 @@
 ## Scope and decisions
 
 M0 establishes three library crates alongside the untouched original source.
-It contains no executable, archive loader, map parser, simulation, or renderer.
+M1 adds bounded archive/map parsing and runnable synthetic examples. There is
+no playable engine, runtime simulation, or renderer.
 The C source is an authoritative behavioral reference, not a Rust design template.
 
 Current Cargo dependency edges (arrows mean “depends on”):
 
 ```text
 doom-wad -> doom-types
-doom-map (standalone until decoding needs shared types)
+doom-map -> doom-wad, doom-types
 ```
 
 - `doom-types`: 35 Hz constant and lossless raw `LumpName`. Keep this a small
   shared leaf with no I/O. Fixed-point arithmetic belongs in M2, with explicit
   integer width, overflow, shift, rounding, and division behavior.
-- `doom-wad`: exact IWAD/PWAD magic recognition and unvalidated signed directory
-  metadata. In M1, own archive bytes, bound directory/lump access, and define
-  ordered archive lookup. Do not treat `LumpInfo` construction as validation.
-  An ignored integration probe reads signatures from `DOOM_IWAD_DIR`; this is
-  test configuration only. M1 archive loading and the future client must accept
-  externally supplied paths without bundling assets or embedding private paths.
-- `doom-map`: signed classic `Vertex` value representation. In M1, decode map
-  records and validate all references before exposing a usable map. Rust struct
-  layout is never the disk format; decode little-endian bytes explicitly.
+- `doom-wad`: `Wad<'a>` borrows immutable caller-owned bytes and owns validated
+  directory metadata. `Lump` ranges are private; `data(index)` checks indexes.
+  `WadSet` borrows archives in load order and returns archive/directory locations,
+  preserving original entries and last-match precedence without hash ordering.
+  The old `LumpInfo` remains explicitly unvalidated vocabulary; it cannot grant
+  access to archive bytes. Parsing itself performs no file I/O.
+- `doom-map`: `Map::load` selects the overriding marker and decodes its contiguous
+  classic lump group within that archive. It owns immutable geometry and exposes
+  slices, keeping validated references intact. Signed coordinates, heights,
+  offsets and numeric bit patterns are retained without floating-point conversion.
+  Every binary field is decoded explicitly; Rust struct layout is not disk layout.
+- External byte acquisition belongs to the caller/future client. Ignored tests
+  read from `DOOM_IWAD_DIR` without printing private names/paths. Provisioning
+  private assets into a cloud environment requires separate destination consent.
 
-There are no third-party dependencies. Add dependencies only for a concrete need,
+The stable workspace has no third-party dependencies. The separate `fuzz/`
+package uses `libfuzzer-sys` solely for instrumented parser testing; its lockfile
+does not affect stable builds. Add dependencies only for a concrete need,
 with rationale, license review, platform impact, and determinism implications.
 Use stable Rust, edition 2024, minimum 1.85, and Cargo resolver 3. Workspace
 lints currently forbid unsafe code and warn on undocumented public APIs.
@@ -46,8 +54,7 @@ Do not add empty crates for the future components below.
 | `doom-client` | Composition, startup, resource loading, scheduling | All required boundaries through explicit APIs |
 | `doom-compat` | Reference profiles, state comparisons, diagnostics | Simulation/replay public APIs and legal test data |
 
-M1 may add `doom-map -> doom-wad` and `doom-map -> doom-types` where decoding
-actually needs them. Keep dependencies acyclic. Resource bytes belong to the
+Keep dependencies acyclic. Resource bytes belong to the
 archive/resource layer; validated map structures belong to the map layer;
 runtime actors and mutable sector state belong to simulation. Do not embed GPU,
 windowing, filesystem, or audio objects in gameplay data.
@@ -61,7 +68,7 @@ snapshots -> software/headless or Vulkan presentation
 events -> audio; recorded commands/state -> replay diagnostics
 ```
 
-The client scheduler accrues time and executes exactly **35 logical tics per
+The future client scheduler accrues time and executes exactly **35 logical tics per
 second**. A simulation step accepts explicit commands, never frame duration or a
 wall clock. Rendering frame rate, interpolation, audio timing, and I/O completion
 must not affect tic outcomes. Catch-up policy and command assignment must be
@@ -89,9 +96,20 @@ Treat archive and demo data as untrusted. Validate signed fields before unsigned
 conversion, checked offset/size arithmetic before slicing, record widths before
 decoding, allocation limits before allocating, and every index/cross-reference
 before traversal. Reject malformed input with structured errors, without panic,
-out-of-bounds access, or attacker-controlled unbounded allocation. Define the
-permitted behavior of zero-size marker lumps and overlapping/shared ranges in
-M1 rather than assuming all unusual layouts are invalid.
+out-of-bounds access, or attacker-controlled unbounded allocation.
+
+`Limits` bounds archive/lump bytes and directory entries before allocation;
+`MapLimits` bounds map lump bytes, record counts, BLOCKMAP words/cells, and total
+requested decoded plus scratch bytes. Vectors use fallible reservation. Caller
+input acquisition and caller-initiated clones are outside parse allocation policy.
+Defaults and intentional strictness are listed in [compatibility](COMPATIBILITY.md).
+
+Validation is linear in input records/words/cells. Iterative three-color BSP
+traversal checks every node, including unreachable cycles, without recursion.
+Subsector sector-consistency checks use a prefix transition count, so overlapping
+ranges cannot multiply work. BLOCKMAP suffix validation is memoized once per
+word, so shared offsets neither multiply validation work nor duplicate lists.
+No geometry traversal occurs until all indexes and ranges are validated.
 
 Compatibility is an observable behavior contract, not permission to reproduce C
 undefined behavior. Specify ambiguous behavior with pinned reference evidence;
