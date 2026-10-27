@@ -26,8 +26,9 @@ Acceptance:
 ## M1 — WAD and map parsing
 
 Status: **implemented and validated on `feat/m1-wad-map-parsing`**.
-Delivery: [PR #2](https://github.com/Copgunn/DOOM/pull/2), open for owner review;
-M1 merge is not authorized.
+Delivery: [PR #2](https://github.com/Copgunn/DOOM/pull/2). Engineering review found
+no blocking defects; the owner authorized a regular merge after documentation
+corrections pass fresh checks on the exact corrected head.
 No simulation, rendering, audio, or gameplay is included. The delivery PR and
 exact remote checks are recorded in [validation evidence](VALIDATION.md).
 

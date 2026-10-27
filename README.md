@@ -128,7 +128,7 @@ outcomes. See [architecture](docs/ARCHITECTURE.md) for boundaries and ownership.
 | Milestone | Scope | Status |
 | --- | --- | --- |
 | M0 | Workspace, CI, documentation, repository guidance | Implemented, validated, merged |
-| M1 | Bounded WAD and classic map parsing, regression tests, fuzzing | Implemented and validated; PR #2 open |
+| M1 | Bounded WAD and classic map parsing, regression tests, fuzzing | Implemented and validated; evidence in PR #2 |
 | M2 | Fixed-point arithmetic, RNG, ordered thinkers, movement/collision | Planned |
 | M3 | Vanilla player/monster behavior, weapons, interactions, specials | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |

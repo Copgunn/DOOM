@@ -148,8 +148,13 @@ were changed. Reproduction commands and corpus provenance are in the test guide.
 | Stable / macos-latest | Format (including fuzz sources), Clippy, build, tests, synthetic example and rustdoc passed |
 | Minimum Rust / 1.85.0 | Workspace tests and doctest passed |
 
-The follow-up documentation commit links these observations without changing
-parser code, seeds, or CI. Final-head checks are recorded on PR #2 and must pass
-before it leaves draft state. M1 remains open and unmerged for owner review.
+The final reviewed M1 commit is `88d32fddd74c7d79adf4d800fb93a4b117310fb0`.
+[Final reviewed-head run 40581963478](https://github.com/Copgunn/DOOM/actions/runs/40581963478)
+passed all four jobs on that exact commit. The current PR head was compared to
+the reviewed head before finalization; no unreviewed changes were found.
+Engineering review identified no blocking defects. The owner authorized a regular
+merge after these documentation corrections pass fresh local checks and CI.
+The corrected SHA and fresh CI are recorded on PR #2; earlier green checks are
+not a substitute. M2 requires separate owner merge approval.
 Private IWADs were not provisioned, downloaded, extracted, or used; no real-asset
 integration result is claimed.
