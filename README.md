@@ -10,12 +10,13 @@ This is an idiomatic rewrite with explicit ownership, not an official id Softwar
 
 M0 foundation is implemented, validated, and merged ([PR #1](https://github.com/Copgunn/DOOM/pull/1)).
 M1 resource/map parsing is implemented, validated, and merged
-([PR #2](https://github.com/Copgunn/DOOM/pull/2)). M2 implements and validates
-deterministic headless foundations, accepted for the conditional regular merge
-within the profile below
-([PR #3](https://github.com/Copgunn/DOOM/pull/3)). Acceptance and delivery
-evidence are in the [roadmap](docs/ROADMAP.md#m2--deterministic-simulation-core) and
-[validation notes](docs/VALIDATION.md). A playable client is future work.
+([PR #2](https://github.com/Copgunn/DOOM/pull/2)). M2 deterministic headless
+foundations are implemented, validated and merged
+([PR #3](https://github.com/Copgunn/DOOM/pull/3), merge `10a1106`). M3a adds
+reference-tested grounded player XY movement, wall sliding and solid actor
+collision on `feat/m3a-player-movement-collision`, pending owner review.
+Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
+and [validation notes](docs/VALIDATION.md). A playable client is future work.
 
 Implemented:
 
@@ -32,18 +33,24 @@ Implemented:
 - Grounded non-player XY motion, original line predicates and ordered BLOCKMAP
   collision, command-thrust foundations, canonical snapshots and first-divergence
   diagnostics, compared with isolated C vectors and independent encoding goldens.
+- Explicit M3a profile: player-specific ground friction and blocking response,
+  three-corner wall tracing, axis/angled slides, solid actor collision and
+  cell-head ordering, DSIM-v2 snapshots, and an asserted headless arena.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
-M2 supports one static sector, one-sided lines, no line/sector specials, and
-grounded non-solid non-player movers. Input bindings apply verified ground thrust before
-thinkers; they do not turn movers into complete vanilla players. Sliding, actor
-collisions, vertical movement, sector transitions, state machines, weapons, and
-monster gameplay remain incomplete. Unsupported map profiles/buttons fail explicitly.
+Both profiles support one static sector, one-sided lines, no line/sector specials,
+and grounded XY movement. `Simulation::new` preserves the M2 non-solid/non-player
+response and DSIM-v1. `Simulation::player_collision` enables M3a: bound actors use
+player sliding/friction, unbound actors use ordinary blocking, and solidity is
+independent of input binding. Its bounded profile requires conservative BLOCKMAP
+coverage; see [source findings and restrictions](docs/M3A_REFERENCE.md).
 
-M3 covers vanilla gameplay, M4 demo playback, and M5 rendering, input/audio and
-Vulkan. Authentic IWAD compatibility, geometric correctness of BSP builders, full
-engine synchronization, and DOS 1.9 behavior are not established. Read the precise
-[compatibility policies and evidence limits](docs/COMPATIBILITY.md).
+Complete player thinking, Z/gravity, portals/sector transitions, actor animation,
+weapons, monsters, specials and gameplay respawn remain incomplete. Unsupported
+profiles/buttons fail explicitly. M3b–M3e continue gameplay, M4 covers demo
+playback, and M5 covers presentation/input/audio and Vulkan. Authentic IWAD
+compatibility, full synchronization and DOS 1.9 behavior are not established.
+Read the precise [compatibility limits](docs/COMPATIBILITY.md).
 
 ## Build and test
 
@@ -58,6 +65,7 @@ cargo test -p doom-sim -p doom-types --release --locked
 cargo doc --workspace --no-deps --locked
 cargo run -p doom-map --example parse_map --locked
 cargo run -p doom-sim --example headless --locked -- 12
+cargo run -p doom-sim --example player_arena --locked
 ```
 
 `rust-toolchain.toml` selects stable with rustfmt and Clippy. The minimum compiler
@@ -99,32 +107,48 @@ safety is stricter than the original C loader; see [compatibility](docs/COMPATIB
 
 ## Headless simulation APIs
 
-`cargo run -p doom-sim --example headless --locked -- 12` initializes the synthetic
-square, spawns a coasting grounded mover, and prints a canonical digest per tic.
-It requires no display, audio device, timer, proprietary data, or renderer.
-The twelve coasting states match C-derived positions and independently encoded
-goldens. An application can initialize from its already validated `Map`:
+Run `cargo run -p doom-sim --example player_arena --locked` for a clockwise
+synthetic room with an angled northeast wall, two solid blockers, and twelve
+reproducible commands. It asserts every XY/momentum/angle result against isolated
+C vectors, then reports four actor blocks, four wall blocks and four slide
+projections. No display, audio, timer, renderer or commercial data is needed.
+`python tools/reference/check_headless.py` compares debug/release output.
+
+The original `headless -- 12` example still exercises M2 coasting and DSIM-v1.
+For M3a, initialize from an already validated `Map`:
 
 ```rust
 use doom_map::Map;
-use doom_sim::{ActorSpec, SimError, Simulation, Snapshot, TicCommand};
+use doom_sim::{ActorSpec, SimError, Simulation, Snapshot, Solidity, TicCommand};
 
 fn one_tic(map: Map) -> Result<Snapshot, SimError> {
-    let mut sim = Simulation::new(map)?;
-    let actor = sim.spawn(ActorSpec::default())?;
-    sim.bind_player(0, actor)?; // command foundation; non-player collision response
+    let mut sim = Simulation::player_collision(map)?;
+    let player = sim.spawn_with_solidity(ActorSpec::default(), Solidity::Solid)?;
+    sim.bind_player(0, player)?;
     let mut commands = [TicCommand::default(); 4];
     commands[0].forward = 25;
     sim.step(commands) // exactly one logical tic, with no elapsed-time argument
 }
 ```
 
+`spawn` creates a non-solid mover; `spawn_with_solidity` also supports `Solid`.
+Like original parameterized spawning, setup may place actors overlapping; use
+`check_actor_position` for an observational occupancy check. Non-solid movers
+still collide with solid candidates. Removal unlinks spatially immediately and
+retires thinker storage later. Successful moves reinsert at cell head, including
+within the same cell; slot reuse never determines collision order.
+
+Recoverable `step` errors preserve commands, actors, RNG, events and time.
+Geometry/actor invariants are validated before stepping; allocation exhaustion
+uses Rust's process-level policy. No full simulation clone is made each tic.
+
 `run_commands` records whole command streams; `Snapshot::canonical_bytes()` and
 `digest()` encode explicit state, while `compare_traces` reports the first
 mismatching tic/field. Rendering can read snapshots/events without draining or
 changing simulation. Hash equality alone is not proof of gameplay equivalence.
 See [STATE_FORMAT.md](docs/STATE_FORMAT.md) for field widths/order and
-[M2_REFERENCE.md](docs/M2_REFERENCE.md) for source findings and safe policies.
+[M2_REFERENCE.md](docs/M2_REFERENCE.md) and [M3A_REFERENCE.md](docs/M3A_REFERENCE.md)
+for source findings, safe policies and excluded C cases.
 
 `doom-types::Fixed` uses explicit wrapping arithmetic and the reference's guarded
 double division; `DoomRng` owns both original RNG indexes. `ThinkerStore` separates
@@ -185,8 +209,9 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | --- | --- | --- |
 | M0 | Workspace, CI, documentation, repository guidance | Implemented, validated, merged |
 | M1 | Bounded WAD and classic map parsing, regression tests, fuzzing | Implemented, validated, merged |
-| M2 | Fixed arithmetic, RNG, ordered thinkers, narrow movement, snapshots | Implemented, validated; owner-authorized merge after fresh checks |
-| M3 | Vanilla player/monster behavior, weapons, interactions, specials | Planned |
+| M2 | Fixed arithmetic, RNG, ordered thinkers, narrow movement, snapshots | Implemented, validated, merged |
+| M3a | Grounded player XY, wall sliding, solid actor collision | Implemented/tested; pending owner review |
+| M3b–M3e | Multi-sector/Z, states, combat, interactions and specials | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, software diagnostics, Vulkan | Planned |
 

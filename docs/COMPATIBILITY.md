@@ -7,7 +7,8 @@ Initial target: **Linux DOOM 1.10**, preserved in `linuxdoom-1.10/`, upstream
 `a77dfb96cb91780ca334d0d4cfd86957558007e0`.
 M1 parses IWAD/PWAD bytes and structurally validates classic maps. M2 implements
 a narrow headless simulation with isolated C arithmetic, RNG, scheduling, geometry,
-XY and thrust comparisons. Rendering, demo playback, full gameplay synchronization
+XY and thrust comparisons. M3a separately implements bounded grounded player
+sliding and solid actor collisions with original C comparisons. Rendering, demo playback, full gameplay synchronization
 and authentic IWAD validation remain unverified.
 
 DOS DOOM 1.9 is a separate future target. The released Linux source is not a
@@ -144,6 +145,60 @@ Recorded compiler behavior and adapters define the comparison boundary. Portable
 C undefined behavior, old x87 builds, DOS 1.9, authentic assets and geometric/spatial
 correctness beyond M1 structural validation are not thereby established. Traces
 made from private assets must never become public fixtures or logs.
+
+## M3a grounded player and actor collision profile
+
+`Simulation::player_collision` selects profile 2 and DSIM-v2; `new` and
+`with_actor_limit` retain M2 profile 1 and byte-identical v1 fixtures. Binding a
+player in profile 2 enables original grounded player XY response, not complete
+P_PlayerThink. Solidity is an independent zero/MF_SOLID-only choice. No arbitrary
+flag bits can silently enable missiles, pickups, shootable/Z or teleport mechanics.
+
+Player blocking invokes original three-corner sliding, fixed DDA/intercept math,
+source fine/tangent tables, stable equal-fraction ordering, 0x800 approach fudge,
+two retries and Y-first/X-second fallback. Axis/angled walls, corners, endpoints,
+negative momentum and reordered collision ties are compared. The stop threshold
+requires zero forward/side input for a player; angle-only input still permits
+stopping. Non-players retain blocked momentum clearing.
+
+Things precede lines, using X-outer/Y-inner cells expanded by MAXRADIUS=32. Strict
+axis-square overlap excludes self and permits exact radius-sum contact. Non-solid
+movers still block against solid candidates. Same-cell successful moves reinsert
+at head. Spatial removal is immediate even while thinker storage remains pending;
+slot reuse appends to thinker order and independently prepends to spatial order.
+Setup spawning permits overlap, as P_SpawnMobj does, rather than inventing an
+occupancy-rejection rule. No pickups mean no removal side effects during collision
+traversal; generic thinker removal scheduling remains covered by M2 tests.
+
+The bounded profile rejects multi-sector/two-sided/special geometry, degenerate
+lines, overflowing deltas, vertices outside BLOCKMAP, over-limit data (128 lines,
+4096 cells, 65536 words, 1024 actor slots), and incomplete conservative coverage.
+Coverage requires all line-bbox cells to list the line; this can reject valid
+vanilla diagonal blockmaps. M1's parser and M2's source-list behavior are unchanged.
+Duplicate/shared lists preserve first-encounter order and have bounded compilation.
+Malformed/unsupported setup errors are distinct from normal collision blocking.
+
+Rust actor-overlap differences widen before absolute value; signed-overflow and
+abs(INT_MIN) cases have safe tested policies, not C-equivalence claims. Other
+fixed operations explicitly wrap/narrow/shift. Dynamic intercept storage replaces
+unchecked C buffer writes; stable ordering and bounded traversal are preserved.
+The reference adapter excludes undefined position-difference/absolute-value cases,
+uses explicit unsigned angle shifts, keeps original C files unchanged and aborts
+unsupported gameplay paths. See [investigation](M3A_REFERENCE.md) and the separate
+`tests/reference/m3a_provenance.json`; M2 provenance remains unchanged.
+
+Observed local evidence: 252 C tics match XY, momentum, angle, ordered attempts,
+line/actor candidates and chosen slide walls. Independently encoded DSIM-v2
+coasting bytes/digests match twelve tics. Long player-wall/actor/lifecycle traces
+match across independent instances and presentation read schedules, and detect
+an injected RNG divergence at the first field/tic. These are scoped comparisons
+and project consistency checks, not complete vanilla gameplay synchronization.
+Recoverable failed steps preserve full canonical state; allocations can still
+terminate according to Rust's process-level policy. No per-tic full-state clone.
+
+Complete player state/view/animation, portals/steps/dropoffs, vertical movement,
+gravity, combat/monsters/weapons, specials/respawn, demos and rendering remain
+unsupported. No commercial assets were provisioned or tested.
 
 ## Determinism objectives
 

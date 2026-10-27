@@ -1,6 +1,6 @@
-# Canonical simulation state, DSIM version 1
+# Canonical simulation state, DSIM versions 1 and 2
 
-This is a diagnostic/replay comparison format for the implemented M2 profile,
+This is a diagnostic/replay comparison format for explicit M2 and M3a profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -75,6 +75,51 @@ are all decoded u16 words, including header/table/unused words; row-major cell
 ranges are u32 start/end word indexes, excluding terminators. Shared lists are
 stored once, so canonicalization is linear rather than expanding every cell list.
 Derived line slopes/bboxes are reproducible from these fields and profile 1.
+
+## DSIM-v2 and migration
+
+`Simulation::new` / `with_actor_limit` remain profile 1, version 1, with unchanged
+framing, fields, events and committed v1 expectations above. Select M3a explicitly
+with `player_collision` / `with_player_collision_limit`; its header version and
+`profile` value are both 2. `Snapshot::version()` exposes the version;
+first-difference reports `schema.version` before comparing incompatible schemas.
+There is no savegame loader or automatic migration. Re-run the same setup/commands
+under the chosen profile, retaining version-specific expected traces. Do not
+replace v1 regression expectations with v2 bytes.
+
+V2 retains v1 field order with these precise additions:
+
+- Immediately after each occupied `actor.N.lastlook`: `actor.N.flags`, u32 0 or
+  MF_SOLID=2. No other actor flags are supported. Vacant slots omit this field.
+- After all logical actor slots and before `player.0.actor`: `spatial.link_order`,
+  concatenated 12-byte identities, most recent link first. Includes off-map live
+  actors; excludes removal-marked actors. Filtering by center cell reconstructs
+  cell-head order. This order can differ from thinker/slot order and is required
+  state. Allocation capacity is excluded.
+- Existing player bindings and last commands encode all implemented player XY
+  state. Ground Z/floor/ceiling are already explicit; no hidden player timers,
+  view/animation/weapon state is implemented. Movement candidates are observations,
+  not persistent pointer relationships.
+
+Two new event tags use the same individually framed event fields:
+
+| Tag | Payload, in order |
+| --- | --- |
+| 8, actor movement | 12-byte mover; i32 target X/Y; 13-byte optional blocking actor; u32 actor-candidate count; ordered 12-byte candidate IDs; u16 blocking line or 65535; u8 fits; u32 line-candidate count; ordered u16 line IDs |
+| 9, slide projection | 12-byte mover; u16 selected linedef |
+
+Profile 2 emits tag 8 instead of tag 6, including ordinary non-player moves.
+Actor candidates include self/non-solid observations and stop at the first solid
+blocker. A thing blocker leaves the line-candidate list empty. Tag 9 occurs when
+P_HitSlideLine projects remaining motion; a failed flush or pure stair fallback
+has no projection event. All phase/spawn/removal/RNG tags retain v1 encodings.
+Static map fields are identical in layout; derived cell/line caches are omitted.
+
+`m3a_snapshot_goldens.py` independently constructs explicit profile-2 coasting
+state from Python v1 encoding rules, source C XY values, and explicit clockwise
+synthetic map records. It reads no Rust output. `m3a_snapshot_provenance.json`
+records input/encoder/output SHA-256 hashes. New first-tic bytes and twelve digests
+are versioned separately; they are project schema goldens, not reference saves.
 
 ## Digests, comparison, and evidence
 

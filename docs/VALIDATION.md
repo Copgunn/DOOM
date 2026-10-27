@@ -273,3 +273,102 @@ Geometry/BLOCKMAP spatial correctness beyond M1's structural checks is unproven;
 coordinate overflow outside the C comparison domain follows documented policies.
 Canonical hashes are noncryptographic and are not full gameplay-equivalence proof.
 No private assets were copied, provisioned or used, and no such test result is claimed.
+
+## M2 finalization and verified merge
+
+PR #3 remained at reviewed `941e613bd9b8da57513c5ef29b0a233e0e2946d5` until the
+requested README/roadmap/validation-only correction
+`79fd3fc053f79d22a8f0d2e6e07f39f57640cd43`. Required workspace, release, Rust 1.85,
+C/table and independent golden checks passed again, without runtime scope changes.
+[Fresh corrected-head CI 40593994113](https://github.com/Copgunn/DOOM/actions/runs/40593994113)
+passed all four jobs on that exact head before the owner-authorized regular merge.
+
+PR #3 is merged/closed. Merge commit `10a1106cecfaec85026f0724dee13a3bf6174560`
+has parents `de78b72ee0a005ee737fb126abbf656db7639812` and
+`79fd3fc053f79d22a8f0d2e6e07f39f57640cd43`. Remote/local master and merge parents
+were verified; its tree exactly matches the tested correction head.
+[Post-merge CI 40594208008](https://github.com/Copgunn/DOOM/actions/runs/40594208008)
+passed Linux, Windows, macOS stable and Rust 1.85 before creating the M3a branch.
+All 165 original files matched byte-for-byte. Public visibility, GPL-2.0-only
+workspace metadata, preserved license/attribution and asset exclusions were checked.
+No private assets or private repositories were accessed, copied or tested.
+
+## M3a local implementation and evidence
+
+Branch: `feat/m3a-player-movement-collision`, based on verified master `10a1106`.
+The profile is deliberately bounded and separate from M2: explicit player/solid
+XY behavior with DSIM-v2; M2 constructors and all original v1 vectors/goldens remain
+unchanged. Source findings and error audit: [M3A_REFERENCE.md](M3A_REFERENCE.md).
+No third-party dependencies or unsafe code were added.
+
+Linux x86_64, Rust/Cargo 1.99.1, GNU C `cc (Debian 14.2.0-19) 14.2.0`:
+
+| Check | Observed result |
+| --- | --- |
+| Required workspace build, fmt (including fuzz), Clippy with warnings denied | Passed |
+| Workspace tests | 60 unit/integration + 1 doctest passed; 2 private tests ignored |
+| Rustdoc with warnings denied | Passed |
+| Rust 1.85.0 tests | Same 61 total passes; 2 private tests ignored |
+| Release doom-sim/doom-types tests | 37 passed |
+| Both headless examples | Debug/release stdout identical |
+| Both C/table generators and both independent golden encoders | Reproduced successfully |
+
+M3a reference: 21 setups × 12 tics = 252 matching C tics. Comparisons check initial
+and resulting XY/momentum, angle, all attempted targets/results, line/actor
+candidate order and slide wall selection. They cover axis/angled walls, corners,
+endpoints, negative motion, reordered equal-fraction ties, active-command stop
+thresholds, solid/non-solid candidates, player/non-player blocking, same-cell
+relinking, immediate spatial removal and replacement spawning. Compiler flags,
+source/adapter hashes and exclusions are in `m3a_provenance.json`; M2 provenance
+and all prior vectors remain unchanged. No divergence remains in recorded cases.
+
+Independent Python DSIM-v2 encoding matches complete first-tic bytes and twelve
+coasting digests. `m3a_snapshot_provenance.json` hashes inputs/encoders/outputs;
+no Rust output is input. Both v1 and v2 goldens run in stable tests. M3a's longer
+768-call traces (767 advancing plus one paused call) match independent instances
+and different presentation read schedules across wall/actor blocks, slides,
+lifecycle/reuse and RNG wrap. Injected RNG drift reports tic 400, field
+`rng.gameplay`. These are project consistency checks, distinct from C evidence.
+
+New policies/regressions cover radius-sum contact, square overlap, negative and
+off-map cells, cell order versus recency/handle order, stale reuse, immediate
+unlink, duplicate references, incomplete coverage, degeneracy/overflow/work bounds,
+and full-state preservation on recoverable step/setup failures. Bounded generated
+coverage includes nine raw-coordinate extremes × five extreme commands and 128
+four-actor setups × twelve tics. A shared 60,000-word list across 4096 cells verifies
+bounded compilation without repeated raw-list scans. No panic was observed.
+
+The asserted synthetic bevel arena matches C case 19 for twelve commands and
+records four actor blocks, four wall blocks and four angled-wall projections.
+Both example stdout streams compare byte-for-byte across local debug/release.
+No graphical presentation or complete player-state machinery is implemented.
+
+## M3a parser fuzz rerun
+
+Both existing nightly parser targets rebuilt, then each completed 100,000 inputs
+(seed 1, 1 MiB input, 1024 MiB RSS, 10-second timeout). Toolchain remains
+cargo-fuzz 0.13.2, libfuzzer-sys 0.4.13, rustc 1.101.0-nightly (16d1ffac1).
+AddressSanitizer stayed enabled; `ASAN_OPTIONS=detect_leaks=0` retains the prior
+managed ptrace workaround. Leak detection remains unverified. No crash was
+observed. Only synthetic seeds and generated mutations were used.
+
+## M3a delivery gate and limitations
+
+The feature PR targets verified master `10a1106` and must remain open/unmerged
+for owner review. Exact final head and fresh remote checks are recorded on that
+PR after completion; local results alone do not establish cross-platform success.
+M2's merge authorization does not authorize M3a merge or auto-merge.
+
+The supported subset remains one flat sector, one-sided non-special geometry,
+grounded XY, zero/MF_SOLID actors and live movement-only player input. Conservative
+BLOCKMAP coverage can reject valid vanilla diagonal blockmaps; the limit is
+explicit. Complete P_PlayerThink/view/animation, multi-sector portals, Z/gravity,
+state machines, weapons, monsters, combat, pickups, teleportation, interactions,
+special/respawn gameplay, demos, rendering and DOS compatibility remain unsupported.
+The independent C comparisons are isolated, not full gameplay synchronization.
+Recommended next phase: M3b source investigation and bounded portal/Z movement.
+
+Original source, history, attribution/license and public visibility remain
+preserved. No commercial IWAD was provisioned or used. Completed M0/M1/M2 branches
+are cleanup candidates after historical links use immutable commit references;
+no branch is deleted by this delivery.

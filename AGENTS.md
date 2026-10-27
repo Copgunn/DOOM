@@ -5,7 +5,7 @@ These rules apply to this repository and future Codex development sessions.
 ## Scope, safety, and compatibility
 
 - This is the public `Copgunn/DOOM` independent Rust rewrite. Never access,
-  copy from, modify, publish, or otherwise involve private `Copgunn/UZDoom`.
+  copy from, modify, publish, or otherwise involve private `Copgunn/UZDoom` or `Copgunn/Gallowmark`.
 - Preserve upstream history, original source/attribution, `README.TXT`, and
   `LICENSE.TXT`. Use Linux DOOM 1.10 at the documented upstream commit as the
   authoritative behavioral reference; do not mechanically translate C architecture.
@@ -77,8 +77,10 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - Document important compatibility findings in `docs/COMPATIBILITY.md`.
 - Include relevant documentation updates in feature PRs. Keep planned and
   implemented functionality explicit. M1 parses resources/maps; M2 provides a
-  narrow headless simulation profile. Full players/monsters, sliding, actor/Z
-  collision, sector transitions, demo replay and rendering remain incomplete.
+  narrow headless simulation profile; M3a adds an explicit player/solid XY
+  profile. Full players/monsters, Z/sector transitions, combat, specials, demo
+  replay and rendering remain incomplete. Preserve both M2/DSIM-v1 and M3a/v2
+  acceptance suites; read `docs/M3A_REFERENCE.md` before changing movement.
   Preserve tested policies in `docs/COMPATIBILITY.md` and the versioned canonical
   format in `docs/STATE_FORMAT.md`. Read source findings in `docs/M2_REFERENCE.md`.
 - Keep C-derived vectors separate from project regression consistency. Never
@@ -86,3 +88,12 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   Run deterministic arithmetic/simulation tests in debug and release; preserve
   cross-platform golden checks. Intentional reference/schema changes require
   updated provenance, documented decisions, and reviewed fixture regeneration.
+
+- Simulation recoverable step errors must preserve full canonical state. Validate
+  setup invariants before mutation; no automatic full-state clone per tic. Generic
+  user thinker budgets have a separate documented nontransactional contract.
+- Actor identity, thinker order and spatial order are separate. Never sort handles
+  to choose blockers; successful same-cell moves reinsert at spatial cell head.
+- Run both reference generators and both independent golden encoders on Linux;
+  cross-platform CI compares recorded vectors/goldens and debug/release examples.
+- M3a stops at owner review. M2 merge authorization does not authorize M3a merge.

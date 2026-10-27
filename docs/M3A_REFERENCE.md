@@ -53,12 +53,14 @@ player-collision profile uses DSIM-v2. Bound players get player XY behavior;
 unbound actors retain non-player response. Solidity is independent of binding.
 All movers are grounded in one static sector with one-sided, non-special walls.
 
-The M3a profile caps lines at 128, BLOCKMAP cells at 4096 and logical actors at
-1024. It conservatively requires every cell overlapped by a line's bounding box
+The M3a profile caps lines at 128, BLOCKMAP cells at 4096, raw BLOCKMAP words at
+65536 and logical actors at 1024. It conservatively requires every cell overlapped by a line's bounding box
 to list that line and requires vertices within BLOCKMAP coverage. Missing spatial
 coverage is a setup error, not a normal blocked movement. This may reject usable
 vanilla diagonal blockmaps; it is a declared profile restriction, not a parser
-change. Duplicate references retain first-encounter behavior. Degenerate lines
+change. Duplicate references retain first-encounter behavior. Reverse next-occurrence
+compilation prepares unique per-cell line order without repeatedly scanning
+shared/overlapping long lists; these derived caches are not canonical state. Degenerate lines
 and overflowing deltas are rejected before stepping.
 
 A small-profile spatial index maintains global most-recent-link order and filters
@@ -103,3 +105,17 @@ compiler flags, inputs and results accompany vectors. Existing M2 provenance and
 fixtures remain unchanged. Independent Python encodes versioned project-state
 goldens without reading Rust output. Successful isolated comparisons do not
 establish complete vanilla gameplay synchronization.
+
+
+## Observed implementation evidence
+
+All 252 C tics (21 setups) match Rust XY, momentum, angle, attempted destinations,
+allow/block decisions, ordered line/actor candidates and slide wall selections.
+Reordering complete cell lists in the corner case changes the equal-fraction
+wall choice as in the source. M2 vectors/provenance and v1 bytes remain unchanged.
+DSIM-v2 independent full first-tic bytes and twelve coasting digests match; new
+768-call wall/actor/lifecycle traces match independent instances and presentation
+schedules, with a deliberate RNG draw locating first divergence. The headless
+bevel arena matches twelve C-command results and asserts four actor blocks, four
+wall blocks and four angled projections. Exact local/remote evidence and limits
+are in [VALIDATION.md](VALIDATION.md).

@@ -125,3 +125,46 @@ repeatability across profiles/platforms and presentation schedules. M3/M4 add
 pinned full reference builds and version-specific demo
 replays, recording legal data hashes and first divergent tic/field. Performance
 checks must state environment, profile, workload, and a correctness baseline.
+
+
+## M3a player/collision checks
+
+```sh
+cargo test -p doom-sim --test m3a --test m3a_reference --locked
+python3 tools/reference/generate_m3a.py --check
+python3 tools/reference/m3a_snapshot_goldens.py --check
+cargo run -p doom-sim --example player_arena --locked
+python tools/reference/check_headless.py
+```
+
+The M3a C adapter compares 21 setups over 12 tics (252 total), including axis and
+angled walls, negative momentum, endpoints/corners, equal-fraction ties under
+reordered lists, player/non-player response, active-command stop thresholds,
+solid/non-solid candidates, same-cell reinsertion, immediate spatial removal and
+replacement spawning. Tests compare initial/result XY and momentum, binary angle,
+every attempted destination/result, line/actor candidate order and slide lines.
+Failures identify the first case/tic/observable field. Compiler/source/adapter
+hashes and unsafe exclusions are in `m3a_provenance.json`; existing M2 evidence is
+unchanged. C regeneration is Linux-only; Rust recorded comparisons run everywhere.
+
+Independent DSIM-v2 first-tic bytes and twelve coasting goldens have separate
+encoder/input/output hashes. M2 v1 expectations remain unchanged. New 768-call
+traces (767 advancing plus pause) include wall and actor blocks, slides, lifecycle
+reuse, RNG wrapping and presentation reads. An extra RNG draw must identify tic
+400 and `rng.gameplay`. Every stable OS runs these in debug/release, both schema
+goldens, and byte-identical debug/release stdout checks for both headless examples.
+
+Bounded generated tests use nine extreme-coordinate setups with five extreme
+commands and 128 four-actor setups over twelve tics. They test safe raw i32
+policies and reproducibility, not undefined-C equivalence. Additional regressions
+cover strict radius-sum contact, square versus circular overlap, negative cells,
+off-map centers, actor-order ties, removal/reuse/stale handles, duplicate lists,
+missing coverage, degenerate/overflow/over-limit geometry, failed setup/step
+atomicity, both profiles' tic exhaustion, and shared 60,000-word lists across
+4096 cells. The simulation has no side-effecting collision callbacks; generic
+thinker removal-during-traversal remains covered by the existing store suite.
+
+The headless bevel arena uses original synthetic data and fixed commands. Its
+asserted trace matches C case 19 and records four solid-actor blocks, four wall
+blocks and four angled-wall projections. This establishes the scoped mechanics,
+not a playable port or complete P_PlayerThink. No private IWAD is required.
