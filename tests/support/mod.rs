@@ -79,3 +79,30 @@ pub fn classic_map(marker: &str) -> Vec<Lump> {
         ),
     ]
 }
+
+/// Clockwise room with optional northeast bevel, used only by M3a fixtures.
+pub fn collision_arena(angled: bool) -> Vec<Lump> {
+    let mut lumps = classic_map("MAP01");
+    let vertices: &[[i16; 2]] = if angled {
+        &[[-64, -64], [-64, 64], [16, 64], [64, 16], [64, -64]]
+    } else {
+        &[[-64, -64], [-64, 64], [64, 64], [64, -64]]
+    };
+    lumps[4].1 = vertices.iter().flat_map(|v| words(v)).collect();
+    let side = lumps[3].1[..30].to_vec();
+    lumps[2].1.clear();
+    lumps[3].1.clear();
+    lumps[5].1.clear();
+    for i in 0..vertices.len() as i16 {
+        let next = (i + 1) % vertices.len() as i16;
+        lumps[2].1.extend(words(&[i, next, 1, 0, 0, i, -1]));
+        lumps[3].1.extend(&side);
+        lumps[5].1.extend(words(&[i, next, 0, i, 0, 0]));
+    }
+    lumps[6].1 = words(&[vertices.len() as i16, 0]);
+    let mut block = vec![-128, -128, 2, 2, 8, 8, 8, 8, 0];
+    block.extend(0..vertices.len() as i16);
+    block.push(-1);
+    lumps[10].1 = words(&block);
+    lumps
+}

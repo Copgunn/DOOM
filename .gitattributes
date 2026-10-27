@@ -7,3 +7,4 @@
 /tools/reference/*.h text eol=lf
 /crates/doom-sim/src/fine_sine.rs text eol=lf
 /crates/doom-types/src/rng_table.rs text eol=lf
+/crates/doom-sim/src/tan_to_angle.rs text eol=lf

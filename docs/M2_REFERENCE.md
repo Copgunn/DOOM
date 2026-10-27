@@ -1,5 +1,9 @@
 # M2 source investigation and scope
 
+Historical M2 profile investigation. M3a adds a separate opt-in profile; see
+[M3A_REFERENCE.md](M3A_REFERENCE.md). M2 constructors, behaviors, reference vectors
+and DSIM-v1 expectations remain preserved.
+
 Recorded before implementation. Authority: preserved Linux DOOM 1.10 at
 `a77dfb96cb91780ca334d0d4cfd86957558007e0`. This document distinguishes observed
 source behavior, defined Rust policies, and unimplemented mechanics.

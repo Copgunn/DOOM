@@ -65,8 +65,8 @@ Never claim unrun tests, unverified benchmarks, or planned features as implement
 Contributions to the rewrite are GPL-2.0-only. Preserve upstream history,
 attribution, source notices, `README.TXT`, and `LICENSE.TXT`. Do not commit
 proprietary IWADs/assets, credentials, generated build output, or private repository
-content. This project is separate from `Copgunn/UZDoom`: never access, copy from,
-modify, publish, or otherwise involve that repository.
+content. This project is separate from private `Copgunn/UZDoom` and `Copgunn/Gallowmark`:
+never access, copy from, modify, publish, or otherwise involve those repositories.
 
 ## Simulation and reference changes
 
@@ -77,3 +77,11 @@ tests. `snapshot_goldens.py --check` independently verifies DSIM-v1 encoding.
 Regenerate fixtures deliberately, retaining compiler/source/adapter provenance.
 Explain changed policies or schema versions; never overwrite expectations merely
 to make a regression pass. See `docs/M2_REFERENCE.md` and `docs/STATE_FORMAT.md`.
+
+
+For M3a, also run `generate_m3a.py --check`,
+`m3a_snapshot_goldens.py --check` and `check_headless.py` under `tools/reference/`.
+Read `docs/M3A_REFERENCE.md` before changing collision or slide semantics. Preserve
+M2 profile/v1 expectations, explicit M3a/v2 selection, independent spatial order,
+and failed-step atomicity. Reproduction requires no commercial assets. M3 phases
+are independently reviewed; stop at the current feature PR's owner-review gate.

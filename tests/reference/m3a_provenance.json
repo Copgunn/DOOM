@@ -1,0 +1,43 @@
+{
+  "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fwrapv",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char"
+  ],
+  "source_sha256": {
+    "d_player.h": "9c9a342ab7c3661ab02d32890bd0d74ede94a0745ae0d622de83a9ae11046ffb",
+    "m_fixed.c": "a4472841bc8890c5d5a41b325ecf56d10d7026a7489967aa29100b5dee759fea",
+    "m_fixed.h": "67aa3925a905d448fb947fb7358093a39367f534c3e26e3f8b06228f553227ef",
+    "m_random.c": "8d89f5cfcbbd0170e46b55538c4c272b3cf5b5d7dce91023b8aa8d9b922b21ee",
+    "p_local.h": "8d71f591ed5f26580042d991558c89d674b683f9cd1c2801ac7714de04b0185f",
+    "p_map.c": "752c7873c81fe6b10b77a08b7ef5716fe49c3103f6caa02097ed299e6e04736c",
+    "p_maputl.c": "4d93e06d11160fb935e94750babbdcc9a4469d96f593764872db87cefd37c0a1",
+    "p_mobj.c": "21a39bdbd746d6fba38660500203216052f0723b8e0ab033ce2a650ada2b403f",
+    "p_mobj.h": "85be6ea83fc4b5f95df666c68c8999f7fe5745a5f503d3a441afd66b5f7e5db0",
+    "p_user.c": "ecb5bab44ab9326c9c0d14bd607bc49c669bf048eecda27f7dc4634023a6c4a4",
+    "r_defs.h": "d8856503bea02282f5f338f3533885e87c6c430ce4f11511d6a04b5fc040db31",
+    "r_main.c": "2aae43cf807929a8758f71ed0205fc08017556541ba8df2ea9167c003d0dec5a",
+    "tables.c": "db8759f4311654c63785dcffb8f73a00a61cfe2713e4284c238dea420b6e5f89",
+    "tables.h": "54e366ed33a0bd65e5cad6c5b6f7df77573909e5974b8af296fdb1503c77fcf2"
+  },
+  "adapter_sha256": {
+    "generate.py": "e80beb09a686c030a6229599f5e0c9e9fd9b109ecebdcb9dd474a2a78e01d6cf",
+    "generate_m3a.py": "97a6bb6117329ee3fbbb942c1f17af14c0f16f264ecda1d298e791e0bd09f725",
+    "m3a_shim.h": "9c3160dd7e8bf28211d3550d1d32b743350303c946434995a950705f1cc9b13d"
+  },
+  "assumptions": [
+    "one flat sector; one-sided clockwise room, optional angled bevel; source BLOCKMAP head links",
+    "zero/MF_SOLID flags; live grounded players, no cheats/reactiontime/buttons; state 7 avoids animation transitions",
+    "source bodies unchanged except explicit unsigned negative angleturn shift",
+    "enlarged intercept storage; cases stay within original 128-intercept capacity",
+    "abs(INT_MIN), overflowing position differences and unsupported gameplay effects excluded; GNU signed shifts/narrowing profile",
+    "21 explicit setups, each 12 tics; action case17: blocker momentum at tic2, unlink at tic3, replacement at tic4; inputs and results in CSV; no full engine or private assets"
+  ]
+}

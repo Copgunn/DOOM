@@ -50,10 +50,14 @@ jobs:
         run: |
           python3 tools/reference/generate.py --check
           python3 tools/reference/snapshot_goldens.py --check
+          python3 tools/reference/generate_m3a.py --check
+          python3 tools/reference/m3a_snapshot_goldens.py --check
       - name: Synthetic map example
         run: cargo +stable run -p doom-map --example parse_map --locked
       - name: Headless simulation example
         run: cargo +stable run -p doom-sim --example headless --locked -- 12
+      - name: Headless debug/release equality
+        run: python tools/reference/check_headless.py
       - name: Documentation
         run: cargo +stable doc --workspace --no-deps --locked
 

@@ -73,10 +73,10 @@ Acceptance:
 
 ## M2 — Deterministic simulation core
 
-Status: **foundations implemented, validated and accepted for merge**.
-[PR #3](https://github.com/Copgunn/DOOM/pull/3) has conditional owner authorization
-for a regular merge after documentation corrections and fresh local/remote checks.
-The corrected-head and merge evidence is recorded in validation notes.
+Status: **foundations implemented, validated and merged**.
+[PR #3](https://github.com/Copgunn/DOOM/pull/3) merged by owner-authorized regular
+commit `10a1106cecfaec85026f0724dee13a3bf6174560`. Fresh correction-head and
+post-merge CI passed; exact evidence is in [validation notes](VALIDATION.md).
 
 - [x] Source investigation before implementation; defined policies for C ambiguities.
 - [x] i32 16.16 arithmetic, original division guard/double helper, extreme-value policy.
@@ -91,19 +91,52 @@ The corrected-head and merge evidence is recorded in validation notes.
 - [x] README, architecture, compatibility, format, test and validation documentation.
 - [x] Verify Linux/Windows/macOS debug/release CI and Rust 1.85; evidence in validation notes.
 
-Full players, sliding, actor collisions, vertical motion, portals/sector changes,
-state machines, monsters/weapons/specials and gameplay respawn remain M3 work.
+M2 excludes full players, sliding, actor collisions, vertical motion, portals/sector
+changes, state machines, monsters/weapons/specials and gameplay respawn. M3a
+adds the explicit player-collision profile below while preserving M2 regressions.
 This scoped foundation does not establish complete vanilla or DOS synchronization.
 Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: planned.
+Status: **M3a implemented, validated and accepted for conditional regular merge**.
+Delivery: [PR #4](https://github.com/Copgunn/DOOM/pull/4).
+Branch: `feat/m3a-player-movement-collision`. The owner authorized a regular
+merge after documentation corrections and fresh local/remote checks.
+M3 as a whole remains incomplete.
 
-Acceptance: player and monster behavior, weapons, interactions, and map specials
-with focused regression fixtures; deterministic reference comparisons covering
-each behavior; field-level first-divergence diagnostics. Document tested scenarios
-and remaining gaps rather than claiming all vanilla behavior from a smoke test.
+| Phase | Scope | Status |
+| --- | --- | --- |
+| M3a | Grounded player XY, wall sliding, solid actor collision | Implemented/validated; conditional merge authorized |
+| M3b | Multi-sector movement, portals, Z and gravity | Next planned phase |
+| M3c | Actor states, type-driven spawning and death | Planned |
+| M3d | Weapons, projectiles, damage, monsters and combat | Planned |
+| M3e | Doors, lifts, triggers, sector specials and integration | Planned |
+
+M3a acceptance evidence:
+
+- [x] Source investigation before runtime changes; isolated C adapter/provenance.
+- [x] Explicit player/non-player response and zero/MF_SOLID participants.
+- [x] Original three-corner traces, fixed DDA/intercepts, angled projection,
+  source tie ordering, retry bounds and Y-before-X fallback.
+- [x] Things-before-lines collision, strict square overlap, cell-head relinking,
+  immediate spatial removal and generation-safe reuse.
+- [x] Validate invariant setup; recoverable failed steps preserve canonical state.
+- [x] Bounded geometry, coverage/degenerate rejection, shared-list stress, raw
+  extremes, duplicate references, overlap and lifecycle regressions.
+- [x] Preserve M1/M2 acceptance tests and all original M2 reference/golden fixtures.
+- [x] DSIM-v2 alongside frozen v1, independent encoding goldens, 768-call traces.
+- [x] 252 original C-reference tics compare results and ordered collision evidence.
+- [x] Asserted headless bevel/solid arena; debug/release stdout equality.
+- [x] Local workspace, release, Rust 1.85 and parser fuzz checks passed.
+- [x] Initial cross-platform debug/release and Rust 1.85 CI passed on `c6b63f5`;
+  final exact-head CI is verified on PR #4 before review readiness.
+- [x] Owner review and conditional M3a regular merge authorization; fresh
+  correction-head checks remain required before merging.
+
+See [M3a scope and safe policies](M3A_REFERENCE.md), [state schema](STATE_FORMAT.md)
+and [validation](VALIDATION.md). A flat static movement subset is not full vanilla
+player thinking, gameplay synchronization, demo playback or DOS compatibility.
 
 ## M4 — Demo compatibility
 

@@ -6,7 +6,7 @@ use std::{error::Error, fmt};
 /// Geometry/profile validation failure.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GeometryError {
-    /// M2 does not implement this map/runtime feature.
+    /// The selected simulation profile does not implement this feature.
     Unsupported(&'static str),
     /// A reference line delta or sector span is not representable as signed i32.
     CoordinateOverflow,
@@ -25,10 +25,10 @@ impl Error for GeometryError {}
 /// Predecoded fixed-point line with original slope and bbox semantics.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct LineGeometry {
-    start: [Fixed; 2],
-    delta: [Fixed; 2],
-    bounds: [Fixed; 4],
-    slope: u8,
+    pub(crate) start: [Fixed; 2],
+    pub(crate) delta: [Fixed; 2],
+    pub(crate) bounds: [Fixed; 4],
+    pub(crate) slope: u8,
 }
 fn bbox(position: [Fixed; 2], radius: Fixed) -> [Fixed; 4] {
     [
@@ -151,7 +151,8 @@ pub struct MoveAttempt {
 #[derive(Clone, Debug)]
 pub struct StaticWorld {
     pub(crate) map: Map,
-    lines: Vec<LineGeometry>,
+    pub(crate) lines: Vec<LineGeometry>,
+    pub(crate) collision_cells: Option<Vec<Vec<u16>>>,
     floor: Fixed,
     ceiling: Fixed,
 }
@@ -198,9 +199,19 @@ impl StaticWorld {
         Ok(Self {
             map,
             lines,
+            collision_cells: None,
             floor,
             ceiling,
         })
+    }
+    pub(crate) fn line_candidates(&self, x: usize, y: usize) -> impl Iterator<Item = u16> + '_ {
+        let row = y * usize::from(self.map.blockmap().dimensions()[0]) + x;
+        let words = if let Some(cells) = &self.collision_cells {
+            cells[row].as_slice()
+        } else {
+            &self.map.blockmap().words()[self.map.blockmap().cell_ranges()[row].clone()]
+        };
+        words.iter().copied()
     }
     /// Immutable validated source map; no runtime state is stored in it.
     pub const fn map(&self) -> &Map {
@@ -236,6 +247,14 @@ impl StaticWorld {
         if radius < Fixed::ZERO || radius > Fixed::from_map_units(32) || height <= Fixed::ZERO {
             return Err(GeometryError::InvalidActor);
         }
+        Ok(self.check_validated_position(position, radius, height))
+    }
+    pub(crate) fn check_validated_position(
+        &self,
+        position: [Fixed; 2],
+        radius: Fixed,
+        height: Fixed,
+    ) -> Collision {
         let b = bbox(position, radius);
         let origin = self.map.blockmap().origin();
         let ox = Fixed::from_map_units(origin.x);
@@ -252,15 +271,11 @@ impl StaticWorld {
         let mut seen = vec![false; self.lines.len()];
         for x in xl..=xh {
             for y in yl..=yh {
-                let list = self
-                    .map
-                    .blockmap()
-                    .cell_lines(x as usize, y as usize)
-                    .ok_or(GeometryError::InvalidReference)?;
+                let list = self.line_candidates(x as usize, y as usize);
                 for index in list {
                     let mark = seen
                         .get_mut(usize::from(index))
-                        .ok_or(GeometryError::InvalidReference)?;
+                        .expect("validated immutable linedef index");
                     if *mark {
                         continue;
                     }
@@ -269,21 +284,21 @@ impl StaticWorld {
                     if self
                         .lines
                         .get(usize::from(index))
-                        .ok_or(GeometryError::InvalidReference)?
+                        .expect("validated immutable linedef geometry")
                         .crosses(b)
                     {
                         result.blocked_by = Some(index);
-                        return Ok(result);
+                        return result;
                     }
                 }
             }
         }
-        Ok(result)
+        result
     }
-    pub(crate) fn move_xy(&self, actor: &mut Actor) -> Result<Vec<MoveAttempt>, GeometryError> {
+    pub(crate) fn move_xy(&self, actor: &mut Actor) -> Vec<MoveAttempt> {
         let mut attempts = Vec::new();
         if actor.spec.momentum == [Fixed::ZERO; 2] {
-            return Ok(attempts);
+            return attempts;
         }
         let max = 30 * 65536;
         for value in &mut actor.spec.momentum {
@@ -306,7 +321,8 @@ impl StaticWorld {
                 actor.spec.position[0] + Fixed::from_bits(delta[0]),
                 actor.spec.position[1] + Fixed::from_bits(delta[1]),
             ];
-            let collision = self.check_position(target, actor.spec.radius, actor.spec.height)?;
+            let collision =
+                self.check_validated_position(target, actor.spec.radius, actor.spec.height);
             if collision.allowed() {
                 actor.spec.position = target;
             } else {
@@ -329,6 +345,6 @@ impl StaticWorld {
                 *m = *m * Fixed::from_bits(0xe800);
             }
         }
-        Ok(attempts)
+        attempts
     }
 }

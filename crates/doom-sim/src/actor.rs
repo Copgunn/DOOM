@@ -13,8 +13,8 @@ pub struct TicCommand {
     pub buttons: u8,
 }
 
-/// Explicit parameters for a grounded, non-solid non-player mover, not a full
-/// mobj type. Mobj flags are implicitly zero in this supported profile.
+/// Explicit grounded XY parameters, not a full mobj type. Solidity is supplied
+/// separately at spawn; player response follows the selected profile/binding.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ActorSpec {
     /// Horizontal position in raw 16.16 coordinates.
@@ -48,8 +48,13 @@ pub struct Actor {
     pub(crate) ceiling: Fixed,
     pub(crate) z: Fixed,
     pub(crate) lastlook: u8,
+    pub(crate) solidity: crate::Solidity,
 }
 impl Actor {
+    /// Explicit collision participation, independent of input binding.
+    pub const fn solidity(&self) -> crate::Solidity {
+        self.solidity
+    }
     /// Current XY position.
     pub const fn position(&self) -> [Fixed; 2] {
         self.spec.position

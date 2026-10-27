@@ -4,7 +4,8 @@
 
 M0 establishes the workspace alongside untouched original source. M1 implements
 bounded archive/map parsing. M2 introduces the fourth crate, `doom-sim`, with a
-functioning headless deterministic foundation. A playable client and renderer
+functioning headless deterministic foundation. M3a adds an explicit player/solid
+collision profile, documented in [M3A_REFERENCE.md](M3A_REFERENCE.md). A playable client and renderer
 remain future work. Source findings were recorded before implementation in
 [M2_REFERENCE.md](M2_REFERENCE.md).
 The C source is an authoritative behavioral reference, not a Rust design template.
@@ -50,8 +51,10 @@ traversal has an explicit visit budget and retains completed callbacks on budget
 failure; built-in XY thinkers never spawn, so the actor bound covers each step.
 
 Players/input foundations precede thinkers, then Specials/Respawn phase markers
-and tic increment. Full player/special/respawn logic is not implemented. Controlled
-movers use the non-player ground response. Pause freezes the whole step before
+and tic increment. Full player/special/respawn logic is not implemented. M2
+controlled movers use the non-player ground response. In M3a bindings select
+player-specific XY sliding/friction; solidity remains independent. Full player
+thinking and state machinery remain absent. Pause freezes the whole step before
 commands/RNG/events/time; invalid buttons/tic exhaustion reject before mutation.
 Setup spawn/mark/random observations queue for the next unpaused tic. Presentation
 reads immutable snapshots/events without draining them.
@@ -61,6 +64,31 @@ processing order, commands/bindings, RNG, tic/pause, last/pending events and sta
 map tables. Immutable map fields are shared internally, with no addresses in the
 encoding. Read-only BLOCKMAP word/range views let snapshots encode shared lists
 once in linear space. See [STATE_FORMAT.md](STATE_FORMAT.md).
+
+M3a's small-profile spatial index keeps most-recent-link order, filtered by center
+cell in X-outer/Y-inner queries. This reproduces independent cell-head lists even
+when actors move within a cell. It uses validated generation handles, not pointers,
+handle sorting or timestamps. All live actors, including off-map centers, retain
+logical link order; queries exclude out-of-map cells. Spawn reserves index capacity
+before actor/RNG mutation, removal unlinks immediately, and relinking does not
+allocate. Thinker append order and spatial order are independent state.
+
+The M3a profile caps 128 lines, 4096 cells, 65536 raw BLOCKMAP words and 1024
+logical actor slots. Reverse next-occurrence compilation handles shared/overlapping
+cell lists without repeated raw-list scans, preserving first occurrence order.
+Derived lists and geometry are reproducible from map fields/profile and are not
+additional canonical state. Coverage checks conservatively require line bounding
+boxes in cells; valid vanilla diagonal lists can fail this declared restriction.
+Sliding uses a bounded 64-iteration fixed DDA, stable intercept ties, three corner
+traces, at most two projections and a stair-step fallback. No mutable C globals
+or graphics dependencies are introduced.
+
+The error audit found no public path to M2's apparent late movement errors.
+Private immutable map/actor invariants make validated movement infallible; both
+profiles check recoverable step failures before mutation. Setup failures preserve
+logical state. Internal assertions identify implementation invariant defects;
+allocation exhaustion is process-level, not a recoverable simulation error.
+Generic user thinker callback budgets remain explicitly nontransactional.
 
 The stable workspace has no third-party dependencies. The separate `fuzz/`
 package uses `libfuzzer-sys` solely for instrumented parser testing; its lockfile
@@ -74,7 +102,7 @@ Do not add empty crates for the future components below.
 
 | Future component | Owns | May consume |
 | --- | --- | --- |
-| `doom-sim` (M2 foundation exists) | Per-tic state, ordered thinkers; fuller gameplay in M3 | `doom-types`, validated `doom-map` data |
+| `doom-sim` (M2/M3a subsets exist) | Per-tic state, ordered thinkers; fuller gameplay in M3 | `doom-types`, validated `doom-map` data |
 | `doom-demo` | Versioned demo command decoding/encoding and replay | `doom-types`; replay drives `doom-sim` through commands |
 | `doom-render` | Presentation snapshots and renderer interface | Immutable simulation output and resource views |
 | `doom-render-software` | Minimal diagnostic software/headless path | Renderer interface |
@@ -145,3 +173,12 @@ Compatibility is an observable behavior contract, not permission to reproduce C
 undefined behavior. Specify ambiguous behavior with pinned reference evidence;
 document safe deviations. See [compatibility](COMPATIBILITY.md) and
 [test extension rules](TESTING.md).
+
+
+## Future presentation direction
+
+Vulkan remains the planned primary renderer. GPU-driven rendering, clustered
+Forward+ lighting, colored dynamic lights, selective shadows, emissive materials,
+and optional atmospheric/volumetric effects are design candidates, not implemented
+features or performance results. Presentation consumes immutable state/events and
+must not influence RNG, collision or tic order. No graphics work is part of M3a.
