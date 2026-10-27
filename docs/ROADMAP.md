@@ -25,7 +25,9 @@ Acceptance:
 
 ## M1 — WAD and map parsing
 
-Status: **implemented on `feat/m1-wad-map-parsing`; delivery CI pending**.
+Status: **implemented and validated on `feat/m1-wad-map-parsing`**.
+Delivery: [PR #2](https://github.com/Copgunn/DOOM/pull/2), open for owner review;
+M1 merge is not authorized.
 No simulation, rendering, audio, or gameplay is included. The delivery PR and
 exact remote checks are recorded in [validation evidence](VALIDATION.md).
 
@@ -39,7 +41,7 @@ Implementation checklist:
 - [x] Generated complete map, malformed-input and adversarial-work regressions.
 - [x] Runnable WAD/map fuzz targets, original seed provenance and smoke runs.
 - [x] Stable and Rust 1.85 local checks, API example and documentation updates.
-- [ ] Verify final remote Linux/Windows/macOS and Rust 1.85 checks; open review gate.
+- [x] Verify remote Linux/Windows/macOS and Rust 1.85 checks; evidence in validation notes.
 
 The acceptance requirements below describe scope; evidence and documented
 limitations are in validation, compatibility, and testing notes. Public CI is

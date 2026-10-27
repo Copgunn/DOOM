@@ -9,8 +9,9 @@ This is an idiomatic rewrite with explicit ownership, not an official id Softwar
 ## Current status
 
 M0 foundation is implemented, validated, and merged ([PR #1](https://github.com/Copgunn/DOOM/pull/1)).
-M1 implements bounded IWAD/PWAD parsing and classic binary map decoding; delivery
-checks are tracked in the [roadmap](docs/ROADMAP.md#m1--wad-and-map-parsing) and
+M1 implements and validates bounded IWAD/PWAD parsing and classic binary map
+decoding ([PR #2](https://github.com/Copgunn/DOOM/pull/2)). Acceptance evidence is
+tracked in the [roadmap](docs/ROADMAP.md#m1--wad-and-map-parsing) and
 [validation evidence](docs/VALIDATION.md). The Rust workspace provides libraries
 and synthetic examples. It does not run a game.
 
@@ -127,7 +128,7 @@ outcomes. See [architecture](docs/ARCHITECTURE.md) for boundaries and ownership.
 | Milestone | Scope | Status |
 | --- | --- | --- |
 | M0 | Workspace, CI, documentation, repository guidance | Implemented, validated, merged |
-| M1 | Bounded WAD and classic map parsing, regression tests, fuzzing | Implemented; delivery checks in roadmap |
+| M1 | Bounded WAD and classic map parsing, regression tests, fuzzing | Implemented and validated; PR #2 open |
 | M2 | Fixed-point arithmetic, RNG, ordered thinkers, movement/collision | Planned |
 | M3 | Vanilla player/monster behavior, weapons, interactions, specials | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |

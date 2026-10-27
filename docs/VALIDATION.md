@@ -136,8 +136,20 @@ were changed. Reproduction commands and corpus provenance are in the test guide.
 
 ## M1 delivery gate
 
-The implementation branch requires a separate PR targeting the merged `master`.
-Its exact head and final cross-platform CI evidence will be recorded on that PR.
-Keep it draft until those checks pass, then leave it open and unmerged for owner
-review. Private IWADs were not provisioned, downloaded, extracted, or used; no
-real-asset integration result is claimed.
+[PR #2](https://github.com/Copgunn/DOOM/pull/2) targets the merged `master`, from
+`feat/m1-wad-map-parsing`. Implementation/documentation head
+`4a3f5b1669bc122adaab975f73c3caebf3f61801` passed
+[CI run 40581557493](https://github.com/Copgunn/DOOM/actions/runs/40581557493):
+
+| Job | Observed result |
+| --- | --- |
+| Stable / ubuntu-latest | Format (including fuzz sources), Clippy, build, tests, synthetic example and rustdoc passed |
+| Stable / windows-latest | Format (including fuzz sources), Clippy, build, tests, synthetic example and rustdoc passed |
+| Stable / macos-latest | Format (including fuzz sources), Clippy, build, tests, synthetic example and rustdoc passed |
+| Minimum Rust / 1.85.0 | Workspace tests and doctest passed |
+
+The follow-up documentation commit links these observations without changing
+parser code, seeds, or CI. Final-head checks are recorded on PR #2 and must pass
+before it leaves draft state. M1 remains open and unmerged for owner review.
+Private IWADs were not provisioned, downloaded, extracted, or used; no real-asset
+integration result is claimed.
