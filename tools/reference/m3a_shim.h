@@ -1,0 +1,106 @@
+/* Isolated Linux DOOM reference adapter, GPL-2.0-only. Not an engine port.
+ * Bodies are extracted from preserved sources by generate.py. Unsupported
+ * gameplay branches abort; single-sector grounded XY vectors, with player/solid collision in M3a. */
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <limits.h>
+#include <float.h>
+#include <string.h>
+#include <setjmp.h>
+#include "m_fixed.h"
+#include "m_random.h"
+typedef uint32_t angle_t;
+#define MAXMOVE (30*FRACUNIT)
+#define MAXRADIUS (32*FRACUNIT)
+#define MAPBLOCKSHIFT 23
+#define ANGLETOFINESHIFT 19
+#define MAPBLOCKSIZE (128*FRACUNIT)
+#define MAPBTOFRAC 7
+#define PT_ADDLINES 1
+#define PT_ADDTHINGS 2
+#define PT_EARLYOUT 4
+#define ANG180 0x80000000u
+#define ANG270 0xc0000000u
+#define SLOPERANGE 2048
+#define ANG90 0x40000000u
+#define STOPSPEED 0x1000
+#define FRICTION 0xe800
+enum { BOXTOP, BOXBOTTOM, BOXLEFT, BOXRIGHT };
+enum { ST_HORIZONTAL, ST_VERTICAL, ST_POSITIVE, ST_NEGATIVE };
+enum { MF_SPECIAL=1, MF_SOLID=2, MF_SHOOTABLE=4, MF_NOSECTOR=8, MF_NOBLOCKMAP=16, MF_PICKUP=0x800,
+       MT_KNIGHT=1, MT_BRUISER=2, MT_PLAYER=0,
+       MF_MISSILE=0x10000, MF_SKULLFLY=0x1000000, MF_CORPSE=0x100000,
+       MF_NOCLIP=0x1000, MF_TELEPORT=0x8000, MF_DROPOFF=0x400, MF_FLOAT=0x4000,
+       ML_TWOSIDED=4, ML_BLOCKING=1, ML_BLOCKMONSTERS=2, CF_NOMOMENTUM=4, S_PLAY=0, S_PLAY_RUN1=1 };
+typedef struct { int dummy; } state_t;
+typedef struct { fixed_t x,y; } vertex_t;
+typedef struct { fixed_t floorheight,ceilingheight; int ceilingpic; struct mobj_s* thinglist; } sector_t;
+typedef struct { sector_t* sector; } subsector_t;
+typedef struct { vertex_t *v1,*v2; fixed_t dx,dy,bbox[4]; int slopetype,flags,special,validcount; sector_t *frontsector,*backsector; } line_t;
+typedef struct { signed char forwardmove,sidemove; short angleturn; unsigned char buttons; } ticcmd_t;
+struct mobj_s;
+typedef struct { struct mobj_s* mo; ticcmd_t cmd; int cheats; } player_t;
+typedef struct { int spawnstate,damage; } mobjinfo_t;
+typedef struct mobj_s { fixed_t x,y,z,momx,momy,momz,floorz,ceilingz,radius,height; int flags; angle_t angle; player_t* player; mobjinfo_t* info; subsector_t* subsector; state_t* state; struct mobj_s *bnext,*bprev,*snext,*sprev,*target; int type,id; } mobj_t;
+typedef void (*actionf_v)(void);
+typedef void (*actionf_p1)(void*);
+typedef union { actionf_v acv; actionf_p1 acp1; } actionf_t;
+typedef struct thinker_s { struct thinker_s *prev,*next; actionf_t function; } thinker_t;
+thinker_t thinkercap;
+state_t states[8];
+int onground,skyflatnum;
+fixed_t tmfloorz,tmdropoffz,tmceilingz,tmx,tmy,opentop,openbottom,lowfloor;
+mobj_t* tmthing;
+int tmflags,floatok,validcount,numspechit;
+fixed_t tmbbox[4];
+line_t lines[8],*ceilingline,*spechit[8];
+vertex_t vertices[8];
+sector_t sector={-16*FRACUNIT,128*FRACUNIT,0};
+subsector_t subsector={&sector};
+int bmapwidth=2,bmapheight=2;
+fixed_t bmaporgx=-128*FRACUNIT,bmaporgy=-128*FRACUNIT;
+short blockstorage[]={-128,-128,2,2,8,8,8,8,0,0,1,2,3,-1};
+short *blockmaplump=blockstorage,*blockmap=blockstorage+4;
+int attempts,candidate_count,candidates[4096];
+jmp_buf div_failure;
+void I_Error(char* message,...) { (void)message; longjmp(div_failure,1); }
+/* Retain storage: avoid the original traversal's read-after-free. */
+void Z_Free(void* p) { (void)p; }
+void P_SetMobjState(mobj_t* m,int state) { (void)m;(void)state; abort(); }
+void P_RemoveMobj(mobj_t* m) { (void)m; abort(); }
+void P_ExplodeMissile(mobj_t* m) { (void)m; abort(); }
+void P_LineOpening(line_t* l) { (void)l; abort(); }
+void P_CrossSpecialLine(int n,int side,mobj_t* m) { (void)n;(void)side;(void)m; abort(); }
+subsector_t* R_PointInSubsector(fixed_t x,fixed_t y) { (void)x;(void)y; return &subsector; }
+typedef struct { fixed_t x,y,dx,dy; } divline_t;
+typedef struct { fixed_t frac; int isaline; union { line_t* line; mobj_t* thing; } d; } intercept_t;
+typedef boolean (*traverser_t)(intercept_t*);
+intercept_t intercepts[4096],*intercept_p;
+divline_t trace;
+boolean earlyout;
+int ptflags;
+mobj_t* blocklinks[4];
+fixed_t bestslidefrac,secondslidefrac,tmxmove,tmymove,openrange;
+line_t *bestslideline,*secondslideline;
+mobj_t* slidemo;
+fixed_t viewx,viewy;
+int thing_count,things_seen[4096],slide_count,slides_seen[4096];
+int try_count,try_x[128],try_y[128],try_allowed[128];
+boolean Ref_TryMove(mobj_t*,fixed_t,fixed_t);
+boolean Ref_CheckLine(line_t*);
+boolean Ref_CheckThing(mobj_t*);
+void Ref_HitSlideLine(line_t*);
+void P_SlideMove(mobj_t*);
+void P_UnsetThingPosition(mobj_t*);
+void P_SetThingPosition(mobj_t*);
+boolean P_BlockThingsIterator(int,int,boolean(*)(mobj_t*));
+boolean P_BlockLinesIterator(int,int,boolean(*)(line_t*));
+void P_DamageMobj(mobj_t* a,mobj_t* b,mobj_t* c,int n) { abort(); }
+void P_TouchSpecialThing(mobj_t* a,mobj_t* b) { abort(); }
+boolean PIT_AddThingIntercepts(mobj_t* a) { abort(); return false; }
+boolean P_TryMove(mobj_t* m,fixed_t x,fixed_t y) { int i=try_count++;boolean ok; if(i>=128)abort();try_x[i]=x;try_y[i]=y;ok=Ref_TryMove(m,x,y);try_allowed[i]=ok;return ok; }
+boolean PIT_CheckLine(line_t* l) { if(candidate_count>=4096)abort();candidates[candidate_count++]=(int)(l-lines); return Ref_CheckLine(l); }
+boolean PIT_CheckThing(mobj_t* m) { if(thing_count>=4096)abort();things_seen[thing_count++]=m->id;return Ref_CheckThing(m); }
+void P_HitSlideLine(line_t* l) { if(slide_count>=4096)abort();slides_seen[slide_count++]=(int)(l-lines);Ref_HitSlideLine(l); }
