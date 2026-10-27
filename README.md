@@ -10,8 +10,9 @@ It is not an official id Software project.
 
 ## Current status
 
-**M0 foundation is implemented on the development branch; delivery verification
-and owner review are tracked in the [roadmap](docs/ROADMAP.md#m0--foundation).**
+**M0 foundation is implemented and verified; [PR #1](https://github.com/Copgunn/DOOM/pull/1)
+awaits owner review.** See the [roadmap](docs/ROADMAP.md#m0--foundation) and
+[validation evidence](docs/VALIDATION.md).
 The Rust workspace builds libraries only. It does not run a game.
 
 Implemented:
@@ -92,7 +93,7 @@ snapshots; they cannot change gameplay state. See [architecture](docs/ARCHITECTU
 
 | Milestone | Scope | Status |
 | --- | --- | --- |
-| M0 | Workspace, CI, engineering and repository guidance | Implemented; verification/review tracked in roadmap |
+| M0 | Workspace, CI, engineering and repository guidance | Verified foundation; PR #1 awaits owner review |
 | M1 | Bounded IWAD/PWAD and classic map decoding, validation, fuzzing | Planned |
 | M2 | Fixed-point arithmetic, RNG, ordered thinkers, movement/collision | Planned |
 | M3 | Vanilla player/monster behavior, weapons, interactions, specials | Planned |

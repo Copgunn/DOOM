@@ -6,8 +6,9 @@ merge remain separate gates. See [validation evidence](VALIDATION.md).
 
 ## M0 — Foundation
 
-Status: **implemented; verification and owner review pending**. Delivery PR will
-be linked here after creation. No later milestone is complete.
+Status: **foundation implemented and verified; owner review pending**.
+Delivery: [PR #1](https://github.com/Copgunn/DOOM/pull/1), targeting `master`.
+No later milestone is complete.
 
 Acceptance:
 
@@ -17,9 +18,9 @@ Acceptance:
 - [x] README, architecture, compatibility, testing, contribution, and agent guidance.
 - [x] Unit/integration structure and generated/invalid-signature fixtures.
 - [x] Record successful compilation, formatting, Clippy, tests, and documentation.
-- [ ] Verify CI on the delivered commit, or record the exact external limitation.
-- [ ] Push focused commits and link an open PR against `master` for owner review.
-- [ ] Record preservation of upstream source, attribution, license, and history.
+- [x] Verify Linux/Windows/macOS stable and Rust 1.85.0 CI; evidence in validation notes.
+- [x] Push focused commits and link an open PR against `master` for owner review.
+- [x] Record preservation of upstream source, attribution, license, and history.
 
 ## M1 — WAD and map parsing
 

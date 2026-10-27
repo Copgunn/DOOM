@@ -12,7 +12,8 @@ The original `README.TXT`, `LICENSE.TXT`, Linux 1.10 headers/source, WAD lookup,
 fixed-point, RNG, thinker, map layout, and demo version paths were inspected.
 Behavioral findings are recorded in [COMPATIBILITY.md](COMPATIBILITY.md).
 M0 adds files only; original tracked files, their attribution, and upstream
-history must remain unchanged. Verify before delivery with:
+history are preserved. All 165 original files were compared byte-for-byte to
+the baseline and matched. The preservation checks also passed. Reproduce with:
 
 ```sh
 git merge-base --is-ancestor a77dfb96cb91780ca334d0d4cfd86957558007e0 HEAD
@@ -57,6 +58,19 @@ CI is configured for stable Linux, Windows, and macOS, plus Linux Rust 1.85.0.
 The workflow uses read-only contents permission, disables persisted checkout
 credentials, and does not download assets or upload artifacts.
 
-Remote execution evidence and the delivery PR will be linked after the branch
-is pushed. Keep the PR draft until CI has been verified; owner approval is
-required before merge. Local Linux success is not a claim of remote CI success.
+Delivery: [PR #1](https://github.com/Copgunn/DOOM/pull/1), branch
+`feat/m0-rust-workspace-bootstrap`, targeting `master`.
+
+[Rust CI run 40577156572](https://github.com/Copgunn/DOOM/actions/runs/40577156572)
+verified implementation commit `b967999ab23e814c0c0eb155eff7235bf0a2cd60`:
+
+| Job | Observed result |
+| --- | --- |
+| Stable / ubuntu-latest | All formatting, Clippy, build, test, and documentation steps passed |
+| Stable / windows-latest | All formatting, Clippy, build, test, and documentation steps passed |
+| Stable / macos-latest | All formatting, Clippy, build, test, and documentation steps passed |
+| Minimum Rust / 1.85.0 | Workspace tests passed |
+
+The follow-up documentation commit records these observations without changing
+Rust code or CI. Final-head check results are available on the PR; verify them
+before review. Owner approval is required before merge; no merge is authorized.
