@@ -47,7 +47,7 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2, 7=M3d2b, 8=M3d3a, 9=M3d3b.
+    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2, 7=M3d2b, 8=M3d3a, 9=M3d3b, 10=M3d3c.
     pub const fn version(&self) -> u32 {
         self.version
     }
@@ -197,6 +197,10 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        Event::Monster(event) => {
+            b.push(18);
+            crate::monsters::event_bytes(&mut b, event);
+        }
         Event::Pursuit(event) => {
             b.push(17);
             crate::pursuit::event_bytes(&mut b, event);
@@ -381,6 +385,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::Projectiles => 7,
         crate::Profile::Perception => 8,
         crate::Profile::Pursuit => 9,
+        crate::Profile::MonsterAttacks => 10,
     };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
@@ -484,7 +489,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                     a.life.unwrap().threshold.to_le_bytes(),
                 );
             }
-            if version == 9 {
+            if version >= 9 {
                 field(
                     &mut fields,
                     format!("{prefix}.movedir"),
@@ -574,7 +579,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .flat_map(id)
                 .collect::<Vec<_>>();
             field(&mut fields, format!("sector.{i}.actors"), order);
-            if matches!(version, 6 | 8 | 9) {
+            if matches!(version, 6 | 8..=10) {
                 field(
                     &mut fields,
                     format!("sector.{i}.soundtarget"),
@@ -603,7 +608,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(version, 8 | 9) {
+    if matches!(version, 8..=10) {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,
@@ -1149,6 +1154,28 @@ fn weapon_bytes(b: &mut Vec<u8>, event: &crate::WeaponEvent) {
         Random { kind, value } => b.extend([8, *kind, *value]),
     }
 }
+/// Source aim evidence, reusing the combat trace representation.
+pub(crate) fn aim_bytes(b: &mut Vec<u8>, a: &crate::AimResult) {
+    let result = crate::AttackResult {
+        trace: a.trace.clone(),
+        hit: a.stopped,
+        position: None,
+        traversed: a.traversed,
+        effect: None,
+        damage: None,
+    };
+    combat_bytes(
+        b,
+        &crate::CombatEvent::Trace {
+            result: Box::new(result),
+        },
+    );
+    b.extend(optional_id(a.target));
+    for v in [a.slope, a.window[0], a.window[1]] {
+        b.extend(v.bits().to_le_bytes());
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

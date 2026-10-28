@@ -268,11 +268,7 @@ pub(crate) fn scan(
                         ];
                         let angle = movement::point_angle(delta).wrapping_sub(observer.angle());
                         let rear = angle > 0x40000000 && angle < 0xc0000000;
-                        let distance = rear.then(|| {
-                            let x = delta[0].bits().unsigned_abs() as i32;
-                            let y = delta[1].bits().unsigned_abs() as i32;
-                            Fixed::from_bits(x + y - (x.min(y) >> 1))
-                        });
+                        let distance = rear.then(|| movement::approx_distance(delta));
                         accepted = distance.is_none_or(|d| d <= Fixed::from_map_units(64));
                         perception_event(
                             &mut plan.events,
@@ -325,6 +321,9 @@ impl Simulation {
         let a = self.perception_actor(id)?;
         let life = a.life.unwrap();
         let registry = self.registry.as_deref().unwrap();
+        if self.profile == Profile::MonsterAttacks {
+            return self.monster_reference(id);
+        }
         let fixture = [19, 21, 136].contains(&life.actor_type.0)
             && registry.actor_type(life.actor_type).unwrap().states()[..2]
                 == [StateId(1), StateId(2)];
@@ -373,7 +372,9 @@ impl Simulation {
         threshold: i32,
     ) -> Result<(), SimError> {
         self.perception_actor(id)?;
-        if self.profile == Profile::Pursuit && threshold == i32::MIN {
+        if matches!(self.profile, Profile::Pursuit | Profile::MonsterAttacks)
+            && threshold == i32::MIN
+        {
             return Err(PursuitError::Arithmetic.into());
         }
         let a = self.actors.get_mut(id).unwrap();
@@ -652,6 +653,8 @@ impl Simulation {
 pub(crate) struct PerceptionInputs<'a> {
     pub players: &'a [PerceptionPlayer; 4],
     pub pursuit: bool,
+    pub monsters: bool,
+    pub shot: Option<&'a crate::monsters::MonsterShotPlan>,
     pub sound_targets: &'a [Option<ActorId>],
 }
 /// The original A_Look body, reached only after complete admission/preflight.
@@ -754,6 +757,9 @@ pub(crate) fn look<A: crate::lifecycle::ActorAccess>(
 }
 impl Simulation {
     pub(crate) fn validate_perception_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
+        if self.profile == Profile::MonsterAttacks {
+            return self.validate_monster_type(ty);
+        }
         if self.profile == Profile::Pursuit {
             return self.validate_pursuit_type(ty);
         }
@@ -764,6 +770,9 @@ impl Simulation {
         Ok(())
     }
     fn preflight_perception_look(&self, id: ActorId) -> Result<(), SimError> {
+        if self.profile == Profile::MonsterAttacks {
+            return self.preflight_monster_callback(id);
+        }
         if self.profile == Profile::Pursuit {
             self.preflight_pursuit_callback(id)?;
         }
@@ -819,7 +828,9 @@ impl Simulation {
         self.preflight_perception_look(id)?;
         Ok(crate::lifecycle::LifeHost {
             perception: Some(PerceptionInputs {
-                pursuit: self.profile == Profile::Pursuit,
+                pursuit: matches!(self.profile, Profile::Pursuit | Profile::MonsterAttacks),
+                monsters: self.profile == Profile::MonsterAttacks,
+                shot: None,
                 players: &self.perception_players,
                 sound_targets: &self.sound_targets,
             }),

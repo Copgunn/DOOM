@@ -413,3 +413,33 @@ nonshootable targets take the source scan/spawn path; stale generations reject.
 The registry comparison clone happens only at construction; tics use bounded local
 records/queries, never a full Simulation/Map clone. v6 weapons, v7 missiles,
 player damage, doors, floating AI and attacks remain separate.
+
+## M3d3c attack composition
+
+Profile 10 adds no attack scheduler or persistent decision cache. `monsters.rs`
+provides bounded range/selection/facing actions; Chase calls its selection at the
+original point, then uses the existing LifeHost for immediate state entry. The
+same positive 10/8/8 animation progresses in normal thinker order after XY/Z.
+Melee metadata uses a labelled inert marker, not an unimplemented damage callback.
+
+Combat preparation is separated from execution. M3d1's original trace/damage
+planning stays read-only on Simulation. Its authoritative impact/damage code now
+executes generically through LifeHost/ActorAccess, shared by older explicit combat
+APIs and the native attack callback. Existing effects, pain/death, target, spatial
+and thinker ownership are reused, with source events/RNG preserved.
+
+One unshootable floor-standing native owner is always thinker head and has no
+physical momentum. This proves that its pose and RNG are unchanged before a
+planned delayed PosAttack. Preflight copies only owner/RNG, computes exact facing,
+aim, spread and damage, prepares the existing trace/damage plan and reserves real
+impact capacity. Positive attack durations prevent selection from immediately
+firing. The action performs source RNG/sounds/effects; damaged targets and appended
+impacts then run later in the same source thinker pass. Direct entry/actions use
+the same preparation. No whole Simulation/Map/store clone occurs per tic.
+
+Only native type 136 executes PosAttack; isolated native source type identities exercise
+probability branches without enabling those monsters. Dummy type 135 source body states
+cannot recursively chase/attack. Active/sound/current attack references use stable
+non-removing roles; effect identities may retire/reuse. Bound-player protection,
+separate roster health and earlier profile semantics remain intact. Complete
+monster closures, advanced attacks and dynamic-world services remain deferred.

@@ -103,6 +103,9 @@ impl Simulation {
         } else {
             self.registry_required()?.validate_type(ty, &self.sectors)?;
         }
+        if self.profile == Profile::MonsterAttacks {
+            self.preflight_monster_spawn(ty, position, height)?;
+        }
         self.reserve_actor_spawns(1)?;
         Ok(LifeHost {
             perception: None,
@@ -120,7 +123,9 @@ impl Simulation {
     }
     pub(crate) fn validate_entry(&self, state: StateId) -> Result<(), SimError> {
         let registry = self.registry_required()?;
-        if self.profile == Profile::Pursuit {
+        if self.profile == Profile::MonsterAttacks {
+            registry.validate_state_monsters(state)?;
+        } else if self.profile == Profile::Pursuit {
             registry.validate_state_pursuit(state)?;
         } else if self.profile.uses_perception() {
             registry.validate_state_perception(state)?;
@@ -141,9 +146,19 @@ impl Simulation {
         Ok(())
     }
     pub(crate) fn enter_validated(&mut self, id: ActorId, state: StateId) {
+        self.enter_monster_planned(id, state, None);
+    }
+    pub(crate) fn enter_monster_planned(
+        &mut self,
+        id: ActorId,
+        state: StateId,
+        shot: Option<&crate::monsters::MonsterShotPlan>,
+    ) {
         let perception =
             (self.profile.uses_perception()).then_some(crate::perception::PerceptionInputs {
-                pursuit: self.profile == Profile::Pursuit,
+                pursuit: matches!(self.profile, Profile::Pursuit | Profile::MonsterAttacks),
+                monsters: self.profile == Profile::MonsterAttacks,
+                shot,
                 players: &self.perception_players,
                 sound_targets: &self.sound_targets,
             });
@@ -166,6 +181,9 @@ impl Simulation {
     pub fn enter_actor_state(&mut self, id: ActorId, state: StateId) -> Result<(), SimError> {
         let life = self.active_typed(id)?;
         self.projectile_control(id)?;
+        if self.profile == Profile::MonsterAttacks {
+            return self.enter_monster_state(id, state);
+        }
         if self.profile == Profile::Pursuit {
             self.preflight_pursuit_entry(id, state)?;
         } else if self.profile.uses_perception() {
@@ -217,7 +235,7 @@ impl Simulation {
     ) -> Result<(), SimError> {
         self.active_typed(id)?;
         self.projectile_control(id)?;
-        if self.profile == Profile::Pursuit {
+        if matches!(self.profile, Profile::Pursuit | Profile::MonsterAttacks) {
             if let Some(t) = target {
                 self.validate_perception_reference(t)?;
             }

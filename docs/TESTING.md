@@ -454,3 +454,40 @@ Linux CI reproduces all nine C/encoder pairs; stable Linux/Windows/macOS run
 recorded comparisons, release, nine example equality checks and rustdoc, with
 Rust 1.85 workspace coverage. The ninth example asserts four complete pursuit/
 loss/reacquisition traces and final digest `8c7fd6adfe73112d`.
+
+## M3d3c attack checks
+
+```sh
+python3 tools/reference/generate_m3d3c.py --check
+python3 tools/reference/m3d3c_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3d3c_reference --test m3d3c_policies --locked
+cargo run -p doom-sim --example monster_attacks --locked
+python3 tools/reference/check_monster_attacks.py
+cargo +nightly fuzz build
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run monster_attacks -- -runs=10000 -seed=1 -max_len=65 -rss_limit_mb=2048 -timeout=20
+```
+
+Reproduce all ten historical/new source/encoder pairs and all ten asserted
+examples; preserve every older helper and fixture. Linux CI regenerates evidence;
+Windows/macOS compare checked-in source vectors and canonical bytes. Stable and
+Rust 1.85 run the complete suite. No proprietary assets or devices are needed.
+
+The new C harness tracks 64 genuine bodies across 158 scenarios and 18 synthetic
+maps. Rust compares 178,178 live actor fields, 2,430 raw gameplay draws and complete
+state/event captures through the independent v10 encoder (1290 captures,72 full
+streams with first-field diagnostics). Pure melee additionally compares source
+sight visits/results without mutating canonical state. Direct aim/shot trace
+candidates/intercepts/window/impact and damage events are included in v10 bytes.
+
+Seven safety-policy tests cover capacity before direct/delayed actions, unsupported
+roles/states/callbacks, immutable impact definitions, player protection, pending/
+stale/reused generations, removable references, arithmetic, null/pure queries,
+pause, independent instances and presentation reads. These are Rust policies,
+not C behavior for undefined or unsupported inputs. `monster_attacks` checks
+acquisition/walking/rejection/selection/face/sound/RNG/effects/return/retirement;
+final 110-tic independently encoded digest is 245e71d4a9c4023e.
+
+The recorded ASan campaign used six public synthetic 65-byte seeds, at most eight
+operations per input and 10,000 executions. All nine fuzz targets built. No finding
+occurred; detect_leaks=0 means LeakSanitizer coverage is not claimed. Corpus,
+mutations and sanitizer output remain local ignored/temporary files.

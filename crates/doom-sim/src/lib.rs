@@ -10,6 +10,7 @@
 //! Profile 7 adds explicit original plasma launch, flight, direct impact and removal.
 //! Profile 8 adds source sight, player-slot scanning, noise awareness and admitted A_Look.
 //! Profile 9 adds non-attacking native fixture pursuit through source direction decisions.
+//! Profile 10 adds native attack selection/facing and bounded PosAttack through shared combat.
 
 #[cfg(test)]
 extern crate self as doom_sim;
@@ -17,8 +18,10 @@ extern crate self as doom_sim;
 mod actor;
 mod direction;
 pub use direction::MoveDirection;
+mod monsters;
 mod perception;
 mod pursuit;
+pub use monsters::{MonsterError, MonsterEvent, RangeDecision};
 pub use pursuit::{PursuitError, PursuitEvent, PursuitOperation, PursuitSetup};
 mod sight;
 pub use perception::{PerceptionError, PerceptionEvent, PerceptionPlayer};
@@ -82,11 +85,16 @@ pub enum Profile {
     Perception,
     /// M3d3b non-attacking monster pursuit, DSIM-v9.
     Pursuit,
+    /// M3d3c bounded monster attack selection/actions, DSIM-v10.
+    MonsterAttacks,
 }
 
 impl Profile {
     pub(crate) const fn uses_perception(self) -> bool {
-        matches!(self, Self::Perception | Self::Pursuit)
+        matches!(
+            self,
+            Self::Perception | Self::Pursuit | Self::MonsterAttacks
+        )
     }
     pub(crate) fn uses_sectors(self) -> bool {
         matches!(
@@ -98,6 +106,7 @@ impl Profile {
                 | Self::Projectiles
                 | Self::Perception
                 | Self::Pursuit
+                | Self::MonsterAttacks
         )
     }
 }
@@ -119,6 +128,8 @@ pub enum SimError {
     Perception(PerceptionError),
     /// Pursuit admission, target or arithmetic failure.
     Pursuit(PursuitError),
+    /// Monster admission, ownership or attack preflight rejection.
+    Monster(MonsterError),
     /// Unsupported or invalid map/profile.
     Geometry(GeometryError),
     /// Input slot is outside 0..4 or duplicates an existing binding.
@@ -134,6 +145,11 @@ impl fmt::Display for SimError {
     }
 }
 impl Error for SimError {}
+impl From<MonsterError> for SimError {
+    fn from(e: MonsterError) -> Self {
+        Self::Monster(e)
+    }
+}
 impl From<PursuitError> for SimError {
     fn from(e: PursuitError) -> Self {
         Self::Pursuit(e)
@@ -191,6 +207,8 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
+    /// Ordered profile-10 attack observations.
+    Monster(MonsterEvent),
     /// Ordered original pursuit operations in profile 9.
     Pursuit(PursuitEvent),
     /// Source perception decisions in profile 8.
@@ -647,6 +665,12 @@ impl Simulation {
             return Err(StoreError::InvalidHandle.into());
         }
         self.projectile_control(id)?;
+        if self.profile == Profile::MonsterAttacks
+            && self.monster_is_owner(id)
+            && momentum != Fixed::ZERO
+        {
+            return Err(MonsterError::Ownership.into());
+        }
         if self.profile.uses_perception() && momentum.bits().unsigned_abs() > 64 * 65536 {
             return Err(PerceptionError::Arithmetic.into());
         }
@@ -675,6 +699,12 @@ impl Simulation {
             return Err(StoreError::InvalidHandle.into());
         }
         self.projectile_control(id)?;
+        if self.profile == Profile::MonsterAttacks
+            && self.monster_is_owner(id)
+            && momentum != [Fixed::ZERO; 2]
+        {
+            return Err(MonsterError::Ownership.into());
+        }
         if self.profile.uses_perception()
             && momentum
                 .iter()
@@ -740,9 +770,14 @@ impl Simulation {
         if self.profile == Profile::Projectiles {
             self.preflight_projectile_step()?;
         }
+        let monster_shot = if self.profile == Profile::MonsterAttacks {
+            self.preflight_monster_step()?
+        } else {
+            None
+        };
         if self.profile == Profile::Pursuit {
             self.preflight_pursuit_step()?;
-        } else if self.profile.uses_perception() {
+        } else if self.profile == Profile::Perception {
             self.preflight_perception_step()?;
         }
         self.preflight_actor_step()?;
@@ -787,7 +822,9 @@ impl Simulation {
         } else {
             let perception_inputs =
                 (self.profile.uses_perception()).then_some(perception::PerceptionInputs {
-                    pursuit: self.profile == Profile::Pursuit,
+                    pursuit: matches!(self.profile, Profile::Pursuit | Profile::MonsterAttacks),
+                    monsters: self.profile == Profile::MonsterAttacks,
+                    shot: monster_shot.as_ref(),
                     players: &self.perception_players,
                     sound_targets: &self.sound_targets,
                 });

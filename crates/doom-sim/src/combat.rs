@@ -1,6 +1,6 @@
 //! Explicit unbound-actor combat services on the accepted state/lifecycle host.
 use crate::{
-    lifecycle::{Demand, LifeHost},
+    lifecycle::{ActorAccess, Demand, LifeHost},
     *,
 };
 use std::{error::Error, fmt};
@@ -177,7 +177,7 @@ pub enum CombatEvent {
     /// Source ignored target; no gameplay RNG/health/momentum changed.
     Ignored(ActorId),
 }
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 struct DamagePlan {
     request: DamageRequest,
     health: [i32; 2],
@@ -186,6 +186,18 @@ struct DamagePlan {
     state: StateId,
     demand: Demand,
     ignored: bool,
+}
+#[derive(Clone, Debug)]
+pub(crate) struct PreparedAttack {
+    shooter: ActorId,
+    attack: LineAttack,
+    pub result: AttackResult,
+    plan: Option<DamagePlan>,
+}
+impl PreparedAttack {
+    pub fn spawn_count(&self) -> usize {
+        usize::from(self.result.hit.is_some()) + self.plan.map_or(0, |p| p.demand.spawns)
+    }
 }
 impl Simulation {
     /// Profile 5 using recognized source definitions; no THINGS spawned implicitly.
@@ -218,6 +230,9 @@ impl Simulation {
     }
     pub(crate) fn validate_combat_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
         let registry = self.registry.as_deref().ok_or(CombatError::Profile)?;
+        if self.profile == Profile::MonsterAttacks {
+            return self.validate_monster_type(ty);
+        }
         if self.profile == Profile::Projectiles {
             self.validate_projectile_type(ty)?;
         } else {
@@ -251,7 +266,10 @@ impl Simulation {
     fn combat_actor_with(&self, id: ActorId, shooter: Option<ActorId>) -> Result<Actor, SimError> {
         if !matches!(
             self.profile,
-            Profile::Combat | Profile::PlayerWeapons | Profile::Projectiles
+            Profile::Combat
+                | Profile::PlayerWeapons
+                | Profile::Projectiles
+                | Profile::MonsterAttacks
         ) {
             return Err(CombatError::Profile.into());
         }
@@ -272,6 +290,9 @@ impl Simulation {
         angle: u32,
         range: Fixed,
     ) -> Result<AimResult, SimError> {
+        if self.profile == Profile::MonsterAttacks {
+            return Err(CombatError::Profile.into());
+        }
         self.combat_actor(shooter)?;
         Ok(crate::combat_trace::aim(self, shooter, angle, range)?)
     }
@@ -351,8 +372,102 @@ impl Simulation {
         }
         Ok(plan)
     }
+    /// Atomic supported P_DamageMobj operation. No full-simulation clone is used.
+    pub fn damage_actor(&mut self, request: DamageRequest) -> Result<DamageResult, SimError> {
+        if self.profile == Profile::MonsterAttacks {
+            return Err(CombatError::Profile.into());
+        }
+        let plan = self.plan_damage(request)?;
+        self.reserve_actor_spawns(plan.demand.spawns)?;
+        Ok(self.combat_host().apply_damage(plan))
+    }
+    /// Explicit supported P_LineAttack. Impact thinkers/RNG precede damage;
+    /// zero damage still creates the source impact. Errors preserve canonical state.
+    pub fn line_attack(
+        &mut self,
+        shooter: ActorId,
+        attack: LineAttack,
+    ) -> Result<AttackResult, SimError> {
+        if self.profile == Profile::MonsterAttacks {
+            return Err(CombatError::Profile.into());
+        }
+        self.line_attack_with(shooter, attack, None)
+    }
+    pub(crate) fn weapon_line_attack(
+        &mut self,
+        shooter: ActorId,
+        attack: LineAttack,
+    ) -> Result<AttackResult, SimError> {
+        self.line_attack_with(shooter, attack, Some(shooter))
+    }
+    fn line_attack_with(
+        &mut self,
+        shooter: ActorId,
+        attack: LineAttack,
+        permit: Option<ActorId>,
+    ) -> Result<AttackResult, SimError> {
+        let prepared = self.prepare_attack(shooter, attack, permit)?;
+        self.reserve_actor_spawns(prepared.spawn_count())?;
+        Ok(self.combat_host().execute_attack(prepared))
+    }
+    pub(crate) fn prepare_attack(
+        &self,
+        shooter: ActorId,
+        attack: LineAttack,
+        permit: Option<ActorId>,
+    ) -> Result<PreparedAttack, SimError> {
+        self.combat_actor_with(shooter, permit)?;
+        if !(0..=1000).contains(&attack.damage) {
+            return Err(CombatError::Damage.into());
+        }
+        let trace = crate::combat_trace::collect(self, shooter, attack.angle, attack.range)?;
+        let (hit, position, traversed) =
+            crate::combat_trace::hit(self, shooter, &trace, attack.range, attack.slope);
+        let plan = match hit {
+            Some(TraceObject::Actor(target)) if attack.damage != 0 => Some(self.plan_damage_with(
+                DamageRequest {
+                    target,
+                    inflictor: Some(shooter),
+                    source: Some(shooter),
+                    amount: attack.damage,
+                },
+                permit,
+            )?),
+            _ => None,
+        };
+
+        Ok(PreparedAttack {
+            shooter,
+            attack,
+            plan,
+            result: AttackResult {
+                trace,
+                hit,
+                position,
+                traversed,
+                effect: None,
+                damage: None,
+            },
+        })
+    }
+    fn combat_host(&mut self) -> LifeHost<'_, &mut ThinkerStore<Actor>> {
+        LifeHost {
+            perception: None,
+            access: &mut self.actors,
+            registry: self.registry.as_deref().unwrap(),
+            world: &self.world,
+            sectors: &self.sectors,
+            options: self.actor_options,
+            rng: &mut self.rng,
+            spatial: &mut self.spatial,
+            bindings: &mut self.bindings,
+            events: &mut self.pending,
+        }
+    }
+}
+impl<A: ActorAccess> LifeHost<'_, A> {
     fn combat_event(&mut self, event: CombatEvent) {
-        self.pending.push(Event::Combat(event));
+        self.events.push(Event::Combat(event));
     }
     fn combat_random(&mut self, kind: u8) -> u8 {
         let value = self.rng.p_random();
@@ -382,17 +497,11 @@ impl Simulation {
             self.combat_event(CombatEvent::Ignored(id));
             return result;
         }
-        let old = *self.actor(id).unwrap();
+        let old = *self.access.get(id).unwrap();
         let life = old.life.unwrap();
-        let info = self
-            .registry
-            .as_deref()
-            .unwrap()
-            .actor_type(life.actor_type)
-            .unwrap()
-            .clone();
+        let info = self.registry.actor_type(life.actor_type).unwrap().clone();
         if let Some(inflictor) = request.inflictor {
-            let origin = *self.actor(inflictor).unwrap();
+            let origin = *self.access.get(inflictor).unwrap();
             let delta = [
                 old.position()[0] - origin.position()[0],
                 old.position()[1] - origin.position()[1],
@@ -409,7 +518,7 @@ impl Simulation {
             }
             let thrust = Fixed::from_bits(thrust);
             let phase = (angle >> 19) as usize;
-            let a = self.actors.get_mut(id).unwrap();
+            let a = self.access.get_mut(id).unwrap();
             a.spec.momentum[0] =
                 a.spec.momentum[0] + thrust * Fixed::from_bits(FINE_SINE[phase + 2048]);
             a.spec.momentum[1] = a.spec.momentum[1] + thrust * Fixed::from_bits(FINE_SINE[phase]);
@@ -421,7 +530,7 @@ impl Simulation {
                 momentum,
             });
         }
-        self.actors
+        self.access
             .get_mut(id)
             .unwrap()
             .life
@@ -433,7 +542,7 @@ impl Simulation {
             values: health,
         });
         if killed {
-            let a = self.actors.get_mut(id).unwrap();
+            let a = self.access.get_mut(id).unwrap();
             let life = a.life.as_mut().unwrap();
             life.flags &= !(4 | 16384 | 16777216);
             if !lifecycle::source_type_is(life.actor_type, "MT_SKULL") {
@@ -452,9 +561,9 @@ impl Simulation {
                 state,
                 extreme,
             });
-            self.enter_validated(id, state);
+            self.enter(id, state);
             let random = self.combat_random(2);
-            let life = self.actors.get_mut(id).unwrap().life.as_mut().unwrap();
+            let life = self.access.get_mut(id).unwrap().life.as_mut().unwrap();
             life.tics = (life.tics - i32::from(random & 3)).max(1);
             let tics = life.tics;
             self.combat_event(CombatEvent::DeathTimer { target: id, tics });
@@ -463,7 +572,7 @@ impl Simulation {
         let random = self.combat_random(1);
         if i32::from(random) < info.pain_chance() {
             result.pain = true;
-            self.actors
+            self.access
                 .get_mut(id)
                 .unwrap()
                 .life
@@ -474,9 +583,9 @@ impl Simulation {
                 target: id,
                 state: info.states()[2],
             });
-            self.enter_validated(id, info.states()[2]);
+            self.enter(id, info.states()[2]);
         }
-        self.actors
+        self.access
             .get_mut(id)
             .unwrap()
             .life
@@ -485,26 +594,14 @@ impl Simulation {
             .reaction_time = 0;
         self.combat_event(CombatEvent::Reaction(id));
         if let Some(source) = request.source {
-            let current = self.actor(id).unwrap().life.unwrap();
-            let source_type = self.actor(source).unwrap().life.unwrap().actor_type;
+            let current = self.access.get(id).unwrap().life.unwrap();
+            let source_type = self.access.get(source).unwrap().life.unwrap().actor_type;
             if (current.threshold == 0 || lifecycle::source_type_is(current.actor_type, "MT_VILE"))
                 && source != id
                 && !lifecycle::source_type_is(source_type, "MT_VILE")
             {
-                LifeHost {
-                    perception: None,
-                    access: &mut self.actors,
-                    registry: self.registry.as_deref().unwrap(),
-                    world: &self.world,
-                    sectors: &self.sectors,
-                    options: self.actor_options,
-                    rng: &mut self.rng,
-                    spatial: &mut self.spatial,
-                    bindings: &mut self.bindings,
-                    events: &mut self.pending,
-                }
-                .target(id, Some(source));
-                self.actors
+                self.target(id, Some(source));
+                self.access
                     .get_mut(id)
                     .unwrap()
                     .life
@@ -512,104 +609,44 @@ impl Simulation {
                     .unwrap()
                     .threshold = 100;
                 self.combat_event(CombatEvent::Retarget { target: id, source });
-                if self.actor(id).unwrap().life.unwrap().state == Some(info.states()[0])
+                if self.access.get(id).unwrap().life.unwrap().state == Some(info.states()[0])
                     && info.states()[1].0 != 0
                 {
-                    self.enter_validated(id, info.states()[1]);
+                    self.enter(id, info.states()[1]);
                 }
             }
         }
         result
     }
-    /// Atomic supported P_DamageMobj operation. No full-simulation clone is used.
-    pub fn damage_actor(&mut self, request: DamageRequest) -> Result<DamageResult, SimError> {
-        let plan = self.plan_damage(request)?;
-        self.reserve_actor_spawns(plan.demand.spawns)?;
-        Ok(self.apply_damage(plan))
-    }
-    /// Explicit supported P_LineAttack. Impact thinkers/RNG precede damage;
-    /// zero damage still creates the source impact. Errors preserve canonical state.
-    pub fn line_attack(
-        &mut self,
-        shooter: ActorId,
-        attack: LineAttack,
-    ) -> Result<AttackResult, SimError> {
-        self.line_attack_with(shooter, attack, None)
-    }
-    pub(crate) fn weapon_line_attack(
-        &mut self,
-        shooter: ActorId,
-        attack: LineAttack,
-    ) -> Result<AttackResult, SimError> {
-        self.line_attack_with(shooter, attack, Some(shooter))
-    }
-    fn line_attack_with(
-        &mut self,
-        shooter: ActorId,
-        attack: LineAttack,
-        permit: Option<ActorId>,
-    ) -> Result<AttackResult, SimError> {
-        self.combat_actor_with(shooter, permit)?;
-        if !(0..=1000).contains(&attack.damage) {
-            return Err(CombatError::Damage.into());
-        }
-        let trace = crate::combat_trace::collect(self, shooter, attack.angle, attack.range)?;
-        let (hit, position, traversed) =
-            crate::combat_trace::hit(self, shooter, &trace, attack.range, attack.slope);
-        let plan = match hit {
-            Some(TraceObject::Actor(target)) if attack.damage != 0 => Some(self.plan_damage_with(
-                DamageRequest {
-                    target,
-                    inflictor: Some(shooter),
-                    source: Some(shooter),
-                    amount: attack.damage,
-                },
-                permit,
-            )?),
-            _ => None,
-        };
-        let count = usize::from(hit.is_some()) + plan.map_or(0, |p| p.demand.spawns);
-        self.reserve_actor_spawns(count)?;
-        let mut result = AttackResult {
-            trace,
-            hit,
-            position,
-            traversed,
-            effect: None,
-            damage: None,
-        };
+    fn execute_attack(&mut self, prepared: PreparedAttack) -> AttackResult {
+        let PreparedAttack {
+            shooter,
+            attack,
+            mut result,
+            plan,
+        } = prepared;
+        let hit = result.hit;
+        let position = result.position;
         self.combat_event(CombatEvent::Attack { shooter, attack });
         self.combat_event(CombatEvent::Trace {
             result: Box::new(result.clone()),
         });
         if let Some(mut position) = position {
-            let blood = matches!(hit,Some(TraceObject::Actor(id)) if self.actor(id).unwrap().life.unwrap().flags&524288==0);
+            let blood = matches!(hit,Some(TraceObject::Actor(id)) if self.access.get(id).unwrap().life.unwrap().flags&524288==0);
             let first = self.combat_random(3);
             let second = self.combat_random(4);
             position[2] =
                 position[2] + Fixed::from_bits((i32::from(first) - i32::from(second)) * 1024);
             let ty = lifecycle::source_type_id(if blood { "MT_BLOOD" } else { "MT_PUFF" }).unwrap();
-            let id = LifeHost {
-                perception: None,
-                access: &mut self.actors,
-                registry: self.registry.as_deref().unwrap(),
-                world: &self.world,
-                sectors: &self.sectors,
-                options: self.actor_options,
-                rng: &mut self.rng,
-                spatial: &mut self.spatial,
-                bindings: &mut self.bindings,
-                events: &mut self.pending,
-            }
-            .spawn(
+            let id = self.spawn(
                 ty,
                 [position[0], position[1]],
                 SpawnHeight::Absolute(position[2]),
             );
-            self.actors.get_mut(id).unwrap().momz =
+            self.access.get_mut(id).unwrap().momz =
                 Fixed::from_map_units(if blood { 2 } else { 1 });
             let random = self.combat_random(5);
-            let life = self.actors.get_mut(id).unwrap().life.as_mut().unwrap();
+            let life = self.access.get_mut(id).unwrap().life.as_mut().unwrap();
             life.tics = (life.tics - i32::from(random & 3)).max(1);
             let state = if blood && attack.damage < 9 {
                 Some("S_BLOOD3")
@@ -621,7 +658,7 @@ impl Simulation {
                 None
             };
             if let Some(name) = state {
-                self.enter_validated(id, lifecycle::source_state_id(name).unwrap());
+                self.enter(id, lifecycle::source_state_id(name).unwrap());
             }
             self.combat_event(CombatEvent::Impact { actor: id });
             result.effect = Some(id);
@@ -629,6 +666,12 @@ impl Simulation {
         if let Some(plan) = plan {
             result.damage = Some(self.apply_damage(plan));
         }
-        Ok(result)
+        result
     }
+}
+pub(crate) fn execute_attack<A: ActorAccess>(
+    host: &mut LifeHost<'_, A>,
+    prepared: PreparedAttack,
+) -> AttackResult {
+    host.execute_attack(prepared)
 }

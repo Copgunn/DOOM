@@ -45,6 +45,7 @@ historical milestone records, not claims that the entire original game works.
 | M3d2b — plasma projectile foundations | [M3D2B_REFERENCE](M3D2B_REFERENCE.md) |
 | M3d3a — monster sight, perception and target selection | [M3D3A_REFERENCE](M3D3A_REFERENCE.md) |
 | M3d3b — monster pursuit and movement decisions | [M3D3B_REFERENCE](M3D3B_REFERENCE.md) |
+| M3d3c — attack selection and bounded actions | [M3D3C_REFERENCE](M3D3C_REFERENCE.md) |
 
 For later milestones, find their source notes through the
 [roadmap](ROADMAP.md). Do not treat a future subphase as implemented merely

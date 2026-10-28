@@ -238,3 +238,30 @@ captures and 49 complete streams, including transient pursuit/perception/geometr
 events. Named-field diagnostics precede bytes/digests. The ninth asserted example
 and eighth fuzz target preserve every historical helper. All old v1-v8 reference
 code/fixtures/encoders remain byte-identical; this README update is prose only.
+
+## M3d3c
+
+```sh
+python3 tools/reference/generate_m3d3c.py --check
+python3 tools/reference/m3d3c_snapshot_goldens.py --check
+python3 tools/reference/check_monster_attacks.py
+```
+
+The new generator/shim compiles 64 tracked original bodies, adding genuine melee/
+missile checks, FaceTarget and PosAttack to the earlier sight/Chase/trace/damage/
+state/thinker closure. Original structs, info, tables and fixed helpers are used;
+source/header/function/adapter/input/output hashes and GNU C flags/ABI are recorded.
+Ordered multiplication defines historical signed shadow/spread/jitter shifts;
+unsupported services abort only outside the admitted scenarios.158 cases on 18
+public synthetic maps isolate named source-player-body fixture roles and source
+type probability branches without admitting complete original monsters.
+
+The independent v10 encoder reads C rows and public schema/inputs only. It covers
+1290 captures/72 full streams, transient decision/face/aim/combat events, raw source
+RNG, real effects and generation reuse. Rust first-field/byte/digest checks and
+178178 source actor-field comparisons are distinct from seven safety-policy tests.
+The tenth asserted example and ninth bounded fuzz target preserve all older
+helpers. Historical v1-v9 reference code and fixtures remain byte-identical;
+this README is the sole intentionally updated historical reference path.
+See [M3D3C_REFERENCE](../../docs/M3D3C_REFERENCE.md) and
+[VALIDATION](../../docs/VALIDATION.md) for exact scope and observed gates.
