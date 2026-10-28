@@ -1993,8 +1993,23 @@ local mandatory checks ran directly on the implemented source. This explicitly
 records head-associated CI/source-tree equality rather than a detached feature
 checkout claim.
 
-This ledger pins that observed immutable implementation result. The final review
-revision and its completed checks are recorded on [PR #17](https://github.com/Copgunn/DOOM/pull/17)
-after verification. Every final revision must pass all four jobs before readiness.
-PR #17 remains open/unmerged without auto-merge for separate owner review; no
-M3d3g merge or later gameplay milestone is authorized.
+## M3d3g reviewed final head and conditional finalization
+
+Reviewed head **2a0ad59e563e433b69bd50c6cb900edbd156a3fc** passed all four jobs in
+[CI 40772397051](https://github.com/Copgunn/DOOM/actions/runs/40772397051), completed
+2026-10-28 21:36:01 UTC: Linux, Windows, native Intel macOS and Rust 1.85.0.
+Native macOS job 123112770628 executed on macos-26-intel. The PR checkout was
+test merge `883c319fa1e4720b4d8edddea3ba351b02e93efb`, with ordered parents
+`75b2a2bc9a28401de358859f0499fe4c81dfa0a2` and the reviewed head. Its tree
+`53c16312712753d120f75a0e6d523aad1cf2411e` equals the reviewed feature-head tree.
+Linux regenerated all fourteen original-C/independent-encoder pairs; the stable
+platforms passed recorded comparisons and fourteen debug/release examples.
+
+The M3d3h mission conditionally authorizes a regular merge of
+[PR #17](https://github.com/Copgunn/DOOM/pull/17) after this documentation
+correction, fresh mandatory local checks, successful four-job corrected-head CI
+and live review/blocker verification. The reviewed green run does not replace
+those fresh checks. Record the correction/merge evidence on PR #17, verify the
+ordered merge parents/tree/master and successful exact-merge post-merge CI before
+M3d3h runtime work. Runtime, DSIM-v1 through DSIM-v14 and reference evidence stay
+unchanged by this correction. No squash, history rewrite, CI bypass or auto-merge.

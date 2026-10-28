@@ -587,13 +587,18 @@ precedes runtime. See [M3D3G_REFERENCE](M3D3G_REFERENCE.md).
 - [x] [PR #17](https://github.com/Copgunn/DOOM/pull/17) opened for separate owner
   review; remains OPEN/UNMERGED without auto-merge.
 
-The immutable implementation result is recorded in [VALIDATION](VALIDATION.md).
-The exact final review revision and completed matrix are recorded on PR #17 after
-verification; readiness requires that final matrix and mandatory checks to pass.
+Reviewed final head `2a0ad59e563e433b69bd50c6cb900edbd156a3fc` passed all four jobs
+in [CI 40772397051](https://github.com/Copgunn/DOOM/actions/runs/40772397051).
+The M3d3h mission conditionally authorizes PR #17's regular merge after this
+documentation correction, fresh mandatory local/four-job corrected-head checks
+and live blocker verification. Verify the merge parents/tree/master and successful
+exact-merge post-merge CI before M3d3h runtime. See [VALIDATION](VALIDATION.md).
+Keep auto-merge disabled; the new M3d3h PR requires separate owner review.
 
 COUNTKILL/global statistics, full original stand/run actor execution, Spectre,
 other autonomous monsters/cross-profile projectiles, raise/resurrection, real
 players, dynamic sectors/specials, multiplayer and demos remain excluded. These
 are explicit admission boundaries, not silently successful callbacks. A separate
-next investigation could cover original SARG stand/run animation closure; it is
-not authorized for implementation in this milestone.
+next investigation and implementation covers original SARG stand/run animation
+closure in M3d3h, only after PR #17's correction/merge/post-merge gates. It does
+not expand M3d3g's declared runtime scope.
