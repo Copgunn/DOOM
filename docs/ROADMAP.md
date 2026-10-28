@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 reviewed; authorized merge gated on fresh checks**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 under development**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -200,8 +200,8 @@ repository. Custom wgpu rendering with Vulkan preferred remains later work.
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Reviewed; regular merge conditionally authorized |
-| M3d2 | Player weapons, psprites, ammo and projectile foundations | Planned |
+| M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Merged as c924f18 after fresh and post-merge CI |
+| M3d2 | Player weapons, psprites and ammo; projectiles deferred | Under development |
 | M3d3 | Monster targeting/perception, movement, attacks and AI | Planned |
 | M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
 
@@ -249,7 +249,7 @@ presentation frame rate and renderer choice do not alter simulation results.
   reviewed final `f17e793` also passed
   [CI 40618036910](https://github.com/Copgunn/DOOM/actions/runs/40618036910).
 - [x] Owner engineering review and conditional regular-merge authorization.
-- [ ] Final documentation correction, fresh exact-head CI, regular merge and
+- [x] Final documentation correction, fresh exact-head CI, regular merge and
   post-merge verification before M3d2 implementation.
 
 M3d2 should implement source weapon/psprite/ammo/button timing and spread/damage

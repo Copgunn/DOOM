@@ -810,3 +810,23 @@ are cleanup candidates only; none was deleted. No active M3d1 branch is eligible
 for cleanup. Continue with separately reviewed M3d2 weapon/psprite/ammo/button
 work after the authorized M3d1 merge and post-merge verification. No M3d2 or
 later subphase merge is authorized.
+
+
+## M3d1 completed finalization for M3d2
+
+Reviewed head `f17e7937d2ffd4eba1ae8db3eee954909d129153` received the required
+documentation-only correction `838b401444e94c3c03348687aad6c502e19f2f53`.
+Required local checks passed again: 110 workspace/MSRV checks (two private tests
+ignored), 86 release tests, build/fmt/Clippy/docs, all five original C generators
+and independent encoders, and five-example debug/release equality.
+[Fresh CI 40619300366](https://github.com/Copgunn/DOOM/actions/runs/40619300366)
+passed all four jobs on that exact correction before regular merge.
+
+PR #7 is merged/closed as `c924f18424a7a58f892fc8b6a7c2b5011db05c5b`, with parents
+`4dbb0a51325119e5578705126f97bdc5d9723049` and
+`838b401444e94c3c03348687aad6c502e19f2f53`. Its tree equals the correction head.
+Remote/local master match the merge. [Post-merge CI 40619889131](https://github.com/Copgunn/DOOM/actions/runs/40619889131)
+passed all four jobs on that merge before creating the M3d2 branch. All 165 original
+files, history/attribution, public GPL-2.0-only status and asset protections were
+verified. No private repository or commercial asset was accessed. No branch was
+deleted. M3d2 has no merge authorization.
