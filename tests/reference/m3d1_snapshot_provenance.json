@@ -1,0 +1,46 @@
+{
+  "schema": "DSIM-v5",
+  "captures": 63,
+  "inputs_sha256": {
+    "tools/reference/m3d1_snapshot_goldens.py": "ae81ed2f0406e069a4b1c8fd2a93c7d9c7ab3087d5201766a75a2b15b381a0f1",
+    "tools/reference/m3c_snapshot_goldens.py": "95eac9b3e9f416eea16bb2ace5bb12a3aa401d9942069046dca05e0edc3a123c",
+    "tests/reference/m3d1_cases.csv": "caacbff1fd1c916144cf99aed6792676ba7c1f37390c886bfe4c85fdd539fd8e",
+    "tests/reference/m3d1_trace.csv": "7ed8e87b2fe960a4ce6ebda84f9def375c8ff9dcd6993c857c63b54b80fd52ea",
+    "tests/reference/m3c_states.csv": "a1b5fe2eb3eee7cb06b922a2140b7583b1cc220dde04d36b78ede59dfd3f5e92",
+    "tests/reference/m3c_types.csv": "9a24fad17a6ce0041bd06a7e751d5b20854496846a7cf4aee65b78756dfcbb9c",
+    "tests/reference/m3d1_map_0.bin": "848d3b831f04dc38f8df27d8dd85998834ecb4a9407bdc4424f4d30e3fbcb2d9",
+    "tests/reference/m3d1_map_1.bin": "87cd9edd4dbf542225c1538b0e52560f45277fe1cd2696801e1f62ec1cddebfe",
+    "tests/reference/m3d1_map_2.bin": "ab4a06edfdf5ad0fb6dbaaf2910e21abbbf8f8af1faa55fa64a4ccb10533ab07",
+    "tests/reference/m3d1_map_3.bin": "420e12dd792f9abdc2ce05bb5c1a341189209578cc16b509e39a8b21e18b1340",
+    "tests/reference/m3d1_map_4.bin": "14746cbdff32d06f70580584f04b555d63fea37752be6b29e17a4d7f9a79e72c",
+    "tests/reference/m3d1_map_5.bin": "1141d3aa75225e7beed71a0b9f2d41825291f8ee81b7652ba690e22759aede27",
+    "tests/reference/m3d1_map_6.bin": "0114ccc025e7eddc7f09b0cfab3b365f87fd4a387aeee9648529b99416c74b7a",
+    "tests/reference/m3d1_map_7.bin": "743ffc33f0c14fe0199d8f1b709e612b669abc312af3cf877492694de595e376",
+    "tests/reference/m3d1_map_8.bin": "ef0be4b1fe13dfb958d08805a04df73ca9f23ad4ecdb47764469d09aac9e1247"
+  },
+  "outputs_sha256": {
+    "tests/reference/m3d1_state_0_0.bin": "90ba92774a799533c546a14d51b6f0722bcef35f3374a36c4bbce53c87fb3eb5",
+    "tests/reference/m3d1_state_0_1.bin": "744fb74da3520b931669ae6b2049b5dea16678e482a276768147d6c01a16bd83",
+    "tests/reference/m3d1_state_1_1.bin": "26e2f65850d5aab5eec0ce82c66583c9599c47582fb0cc835f031b2544a32636",
+    "tests/reference/m3d1_state_2_1.bin": "f5f88ba62cb2bab17a8952eb2ad301b4953609d987369e8886628d96eb72f0bf",
+    "tests/reference/m3d1_state_3_1.bin": "feb1a0ecba72c68d8adb0ff600edc6befc339efca40185b9608e34b18b6de95b",
+    "tests/reference/m3d1_state_4_1.bin": "f1a08604cc31b378f039e6248f3202cc51ffa471f883817b81b0df43c3e0c1fc",
+    "tests/reference/m3d1_state_5_1.bin": "7b7a64dc2e7219a0ba01b41e97a80528c4c2c7cbb030e1e9713e34331b889181",
+    "tests/reference/m3d1_state_5_76.bin": "d1075de4e444da1799e1b8a63345e24af417bd48126f0d1a5207f9c1d3894f2d",
+    "tests/reference/m3d1_state_6_1.bin": "05bdc741da3abd4a32ae0ce0893ff7955fa81634dfad0a4ec4193849ec35389c",
+    "tests/reference/m3d1_state_7_1.bin": "dd587ea1822a183fbc7b916024ecb062fbba2650a6ca309bb70c8ef71399c6e5",
+    "tests/reference/m3d1_state_7_76.bin": "0ca336f00558c668cc2eb1544cf74c813757d22cbfb5b6a8f2a02ce210b84088",
+    "tests/reference/m3d1_state_10_1.bin": "b75780f88d87ce9def1f424e5fa5d7a36d5405e158571ce07f96c00bf463d890",
+    "tests/reference/m3d1_state_13_1.bin": "a23239d995e8810fd805b4234d705483d705f526f677921169109994eefb346e",
+    "tests/reference/m3d1_state_14_1.bin": "511e8e21297b000f6362f2433dacb6493d1683cbd019fa48d762426d6c0dd3e7",
+    "tests/reference/m3d1_state_38_0.bin": "90ba92774a799533c546a14d51b6f0722bcef35f3374a36c4bbce53c87fb3eb5",
+    "tests/reference/m3d1_state_38_1.bin": "091538a898f4c1730c6be15cc474d3518137a2dcea591e012daf7e97910aa3b9",
+    "tests/reference/m3d1_state_38_81.bin": "911144ec9c9147acb63295f1e6341ac76dec3edebe4a498f1788c2676affbb4e",
+    "tests/reference/m3d1_snapshots.csv": "8771c5abca0c281fd681f0a4c2a54d125625ef5ddc5d010319c3e5113aa033b7"
+  },
+  "assumptions": [
+    "all setups; selected due-east damage/hitscan API events projected explicitly from source branches and C rows",
+    "settled final captures have phases and Think events only; source relinking/removal records reconstruct spatial and storage order",
+    "no Rust output read; trace geometry, cells, candidates, intercepts and hit positions come from original C"
+  ]
+}

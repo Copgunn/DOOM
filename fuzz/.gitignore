@@ -10,3 +10,6 @@
 
 /corpus/actor_states/*
 !/corpus/actor_states/native_chain
+
+/corpus/combat/*
+!/corpus/combat/bounded_attacks
