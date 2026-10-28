@@ -233,7 +233,8 @@ C/encoder/example families remain preserved.
 The nine-scenario asserted example independently compares repeated instances,
 nonpain/Look/pain/Chase/lethal chronology, exact delayed sounds/Fall, reduced-height
 and corpse movement, terminal persistence and generation reuse. Its independently
-encoded70-tic pain/death digest is eecc4b4dcc4fbca5. Sanitizer/local/CI results
-belong in VALIDATION after execution. Full original Demon/Spectre, raise, scoring,
+encoded70-tic pain/death digest is eecc4b4dcc4fbca5. Observed local, sanitizer and immutable implementation CI
+are recorded in [VALIDATION](VALIDATION.md); the exact final review revision/checks
+are recorded on [PR #17](https://github.com/Copgunn/DOOM/pull/17) after verification. Full original Demon/Spectre, raise, scoring,
 real players, other autonomous monsters, cross-profile projectiles, dynamic sectors,
 multiplayer and demos remain unsupported; the new PR stays open/unmerged.

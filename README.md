@@ -477,7 +477,7 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d3d | Source shotgunner three-pellet foundations | Merged as 31b4830 |
 | M3d3e | Source chaingunner attack/refire foundations | Merged as 5b91824 |
 | M3d3f | Source Demon melee foundations | Regularly merged as 75b2a2bc after correction and post-merge CI |
-| M3d3g | Demon pain, ordinary death and corpse foundations | Implemented bounded profile 14; separate owner review after validation |
+| M3d3g | Demon pain, ordinary death and corpse foundations | Implemented and validated; separate owner review in PR #17 |
 | Later M3d3–M3e | Remaining attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
@@ -686,4 +686,5 @@ No IWAD, GPU, audio device or network is needed. See the
 [source investigation](docs/M3D3G_REFERENCE.md), [compatibility](docs/COMPATIBILITY.md),
 [state format](docs/STATE_FORMAT.md), [testing](docs/TESTING.md) and
 [validation ledger](docs/VALIDATION.md). All thirteen earlier profiles/fixtures
-remain preserved. M3d3g requires separate owner review; its PR stays unmerged.
+remain preserved. [PR #17](https://github.com/Copgunn/DOOM/pull/17) requires separate owner review
+and stays open/unmerged without auto-merge.

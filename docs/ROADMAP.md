@@ -582,8 +582,14 @@ precedes runtime. See [M3D3G_REFERENCE](M3D3G_REFERENCE.md).
 - [x] Bounded lifecycle ASan: 10,000 executions in 1,002.9 seconds without findings;
   twelve fresh public 65-byte seeds, capacity setup, max_len 65/RSS 2048 MiB/timeout 20s;
   leak detection disabled.
-- [ ] Verify exact implementation/final-head Linux/Windows/native macOS/MSRV CI.
-- [ ] New M3d3g PR ready for separate owner review; OPEN/UNMERGED/no auto-merge.
+- [x] Implementation e56bea449a06ddcdf93dd85c94345a1faa45dab5 passed all four
+  jobs in [CI 40771202408](https://github.com/Copgunn/DOOM/actions/runs/40771202408).
+- [x] [PR #17](https://github.com/Copgunn/DOOM/pull/17) opened for separate owner
+  review; remains OPEN/UNMERGED without auto-merge.
+
+The immutable implementation result is recorded in [VALIDATION](VALIDATION.md).
+The exact final review revision and completed matrix are recorded on PR #17 after
+verification; readiness requires that final matrix and mandatory checks to pass.
 
 COUNTKILL/global statistics, full original stand/run actor execution, Spectre,
 other autonomous monsters/cross-profile projectiles, raise/resurrection, real

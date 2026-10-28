@@ -1972,4 +1972,29 @@ complete canonical state. The exact seed recipe is in fuzz/corpus/README.md.
 `ASAN_OPTIONS=detect_leaks=0` explicitly disables leak detection: no
 LeakSanitizer coverage is claimed. This bounded campaign does not establish
 complete branch coverage. No private repository or commercial asset was involved.
-Remote CI is recorded by immutable head/run after successful execution.
+## M3d3g immutable implementation CI
+
+Implementation **e56bea449a06ddcdf93dd85c94345a1faa45dab5** passed all four required
+jobs in [CI 40771202408](https://github.com/Copgunn/DOOM/actions/runs/40771202408),
+completed **2026-10-28 21:28:34 UTC**. Linux stable, Windows stable, native Intel
+macOS 26 stable and Rust 1.85.0 succeeded. Linux reproduced all fourteen original-C/
+independent-encoder pairs; stable platforms compared recorded fields/full bytes/
+digests and all fourteen asserted debug/release examples. Formatting, Clippy,
+build, workspace/release tests and warnings-denied rustdoc passed.
+
+Native macOS job **123108557804** ran on **macos-26-intel**, GitHub Actions
+1000000395, 21:21:04–21:24:41 UTC, actually executing every applicable step.
+Original-C regeneration remained Linux-only under the unchanged condition.
+The existing PR workflow checked GitHub test merge
+`c9bbda9164641528af3744740a2aff15be59011b`, ordered parents master
+`75b2a2bc9a28401de358859f0499fe4c81dfa0a2` and the implementation head. Its tree
+**0e954755dd1914ef8ad848870050fa193df5d9c7** equals the implementation tree;
+local mandatory checks ran directly on the implemented source. This explicitly
+records head-associated CI/source-tree equality rather than a detached feature
+checkout claim.
+
+This ledger pins that observed immutable implementation result. The final review
+revision and its completed checks are recorded on [PR #17](https://github.com/Copgunn/DOOM/pull/17)
+after verification. Every final revision must pass all four jobs before readiness.
+PR #17 remains open/unmerged without auto-merge for separate owner review; no
+M3d3g merge or later gameplay milestone is authorized.
