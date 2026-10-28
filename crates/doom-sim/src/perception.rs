@@ -543,3 +543,14 @@ pub(crate) fn event_bytes(b: &mut Vec<u8>, e: &PerceptionEvent) {
         }
     }
 }
+
+impl Simulation {
+    /// Original P_NoiseAlert(target, emitter), sharing profile-6 propagation.
+    /// This does not fire a weapon or require the target to be a roster player.
+    pub fn noise_alert(&mut self, target: ActorId, emitter: ActorId) -> Result<(), SimError> {
+        self.validate_perception_reference(target)?;
+        self.perception_actor(emitter)?;
+        self.emit_noise(target, emitter);
+        Ok(())
+    }
+}

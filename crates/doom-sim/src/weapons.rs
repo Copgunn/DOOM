@@ -954,7 +954,10 @@ impl Simulation {
         value
     }
     fn weapon_noise(&mut self, target: ActorId) {
-        let sector = self.actor(target).unwrap().location.unwrap().sector;
+        self.emit_noise(target, target);
+    }
+    pub(crate) fn emit_noise(&mut self, target: ActorId, emitter: ActorId) {
+        let sector = self.actor(emitter).unwrap().location.unwrap().sector;
         let mut visited = vec![u8::MAX; self.sectors.len()];
         let mut stack = vec![(sector, 0_u8)];
         while let Some((sector, blocks)) = stack.pop() {
