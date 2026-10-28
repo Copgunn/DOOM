@@ -676,3 +676,45 @@ Full MT_CHAINGUY/type 10, original pain/death/raise/full run/drop gameplay,
 SpidRefire, other attacks, player pointers/damage, specials, demos and presentation
 remain excluded. V1-v11 bytes and accepted PosAttack/SPosAttack behavior stay intact;
 no full Linux/DOS synchronization or commercial-map validation is claimed.
+
+## M3d3f Demon melee profile (DSIM-v13)
+
+`MT_SERGEANT` is original Demon/type 12; `MT_SHADOWS` is Spectre/type 13. Source
+metadata includes health 150, speed 10, radius 30, height 56, mass 400, reaction 8,
+painchance 180 and attacksound 52. The native owner explicitly adapts source player
+body metadata, including health/mass, to isolate attack services; its unshootable
+first-owner role excludes scoring and full original monster pain/death/raise.
+
+| Definition/branch | Status in profile 13 |
+| --- | --- |
+| Original Demon 12/Spectre 13 definitions | Recognized; executable spawning rejected |
+| Named native 136 Look/Chase | Existing source scanning, static walking and selection |
+| Exact SARG 4/5/6 | Sprite 39, frames 4/5/6, normal 8/8/8; Face/Face/Sarg; return 2 |
+| Unbound source-body 135 | Existing direct damage, thrust, pain/death, reaction/retargeting |
+| Actual player binding/damage, armor/scoring | Rejected; no public protection bypass |
+| Other attacks, original blood/puff spawning | Rejected here; direct Sarg creates no impact |
+| Fast/Nightmare initialization | Rejected; source halves SARG_RUN1..PAIN2 timers |
+| Complete Demon/Spectre run/pain/death/raise/gameplay | Deferred |
+
+SargAttack checks target presence, then FaceTarget, approximate-distance/info-
+radius threshold and original REJECT/BSP sight. Strict equality rejects. No modern
+health/shootability check is added before its one `(R%10+1)*4` draw; downstream
+source damage ignores already-dead/nonshootable targets. Roster health is distinct.
+All three animation faces and their two SHADOW draws execute at separate times.
+Melee sound belongs to Chase selection; execution 16 tics later rechecks current
+position/sight and may miss without damage RNG. Actual damage has no LineAttack,
+impact, ammo or invented attack-sound dependency.
+
+Limits remain 64 actors, map coordinates within +/-512, actor queries within
++/-1024 and 8192 work units per sight query, with the existing coordinate, owner
+and counter guards. These remain Rust policies. Every recoverable operation/tic failure
+preserves full canonical state. Invalid references/pending removal never alias
+recycled generations. The late private bound-target tests deliberately inject an
+invalid setup, distinct from original-C gameplay and public binding admission.
+
+The 104 genuine-C scenarios exercise all 20 supplied maps and the admitted normal
+slice; the separate 36 component vectors compare metadata radius against differing
+collision radius. Scripted remove/retire/respawn and extra-strike inputs are
+explicit driver actions, not autonomous Demon resurrection. The GNU ABI/defined
+signed-arithmetic adapters and test scope limit equivalence; neither DSIM bytes
+nor compiled-body inventory proves complete vanilla/DOS/demo synchronization.

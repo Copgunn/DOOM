@@ -217,6 +217,23 @@ builds and bounded chaingunner ASan. The original LUT cannot produce 40: disting
 real-table gameplay cases from the controlled-dependency C boundary probe and Rust
 safety tests. Keep all v1-v11 expectations/helpers and player restrictions intact.
 Use the documentation review checklist and record only observed immutable CI.
-PR #15 has conditional regular-merge authorization in the M3d3f mission after
-documentation correction and fresh gates. Verify its post-merge CI before M3d3f;
-the new feature PR stays open/unmerged for separate owner review, no auto-merge.
+PR #15 completed its authorized regular merge as 5b918247 after documentation/CI
+corrections and successful exact-head/post-merge gates. M3d3f started from that
+verified baseline; its new PR stays open/unmerged for review without auto-merge.
+
+## M3d3f Demon melee changes
+
+Read [M3D3F_REFERENCE](docs/M3D3F_REFERENCE.md) and DSIM-v13. Preserve exact SARG
+8/8/8 and frames, three source facing callbacks, selection-only attack sound,
+separate current range/sight decisions and actual gameplay RNG chronology.
+Use shared DamagePlan/LifeHost services; direct melee needs no blood/puff or
+conservative hitscan reservation. The small preflight must reject before real
+Face even when a later damage dependency is invalid; test complete call/tic state.
+
+Reproduce all thirteen C/encoder pairs, thirteen asserted debug/release examples,
+twelve ASan fuzz builds and bounded Demon fuzzing. Report gameplay/map coverage,
+36 radius component vectors, independent schema evidence and Rust-only policies
+separately. Do not change historical v1-v12 bytes/helpers or claim full original
+Demon/Spectre/player support. Normal timing excludes Nightmare initialization.
+PR #15's regular merge/post-merge gates completed as `5b918247` after macOS
+recovery; the M3d3f PR still requires separate owner review and stays unmerged.

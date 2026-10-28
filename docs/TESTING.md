@@ -575,3 +575,52 @@ All eleven fuzz targets built with ASan. The new campaign completed 10,000
 executions in 211 seconds, seed 1, max_len 65, at most eight operations, 2048 MiB
 RSS, 20-second timeout, six public seeds, with no findings. Leak detection was
 explicitly disabled with `ASAN_OPTIONS=detect_leaks=0`; LeakSanitizer is unverified.
+
+## M3d3f Demon melee checks
+
+```sh
+python3 tools/reference/generate_m3d3f.py --check
+python3 tools/reference/m3d3f_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3d3f_reference --test m3d3f_policies --lib --locked
+cargo run -p doom-sim --example demon_melee --locked
+python3 tools/reference/check_demon_melee.py
+cargo +nightly fuzz build --sanitizer address
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run demon_melee /tmp/doom-demon-melee-corpus -- -runs=10000 -seed=1 -max_len=65 -rss_limit_mb=2048 -timeout=20
+```
+
+First create a fresh corpus using [the public seed recipe](../fuzz/corpus/README.md).
+Use all thirteen historical/new original-C generators and independent encoders,
+all thirteen asserted examples, mandatory workspace/release/MSRV/Clippy/rustdoc,
+fuzz formatting, whitespace/links and integrity checks. Linux CI regenerates all
+thirteen pairs; all stable platforms compare recorded vectors/goldens and examples.
+The macOS logical check name is retained while the documented supported Intel
+macOS 26 pool executes the same steps. Do not infer arm64 recovery from its pass.
+
+New source comparisons cover 104 cases across all 20 maps (asserted by generator
+and Rust test),170,118 live actor fields,5,060 raw draws including setup/discards,
+and 27,039 ordered instrumentation rows represented by canonical events/visits.
+The 36 separate range-component vectors use actual original structs/info and
+P_CheckMeleeRange/P_CheckSight with info radius different from current radius;
+private Rust actor copies vary collision radius without a production override.
+These are component evidence, not extra gameplay/canonical captures.
+
+The independent encoder checks 1,309 v13 captures and 169 complete byte fixtures,
+including 8/8/8 progression, misses, target death and real slot/generation reuse.
+The example asserts nine C-backed scenarios and independent cycle digest
+`b6c312bf5fbcc7dc`, actual pursuit/acquisition, selection sound, three faces,
+current misses, direct health/knockback/pain/death and Chase return.
+
+Nine public policy tests cover capacity (including a delayed strike), exact timing,
+miss/null/dead behavior, all ten damage values, roles/players, stale/pending/reused
+IDs, immutable metadata, normal-only skill, work/arithmetic, pause and instance/
+presentation independence. Three private tests cover 36 C range components and
+late player-damage rejection before real shadow facing in direct/expiring-tic
+paths; both assert complete canonical equality. These policy tests are distinct
+from source-equivalence claims.
+
+The twelfth fuzz target uses six reproducible 65-byte seeds, at most eight API
+operations and 24 individual tics, plus at most eight public-map byte mutations.
+Every failed API operation/individual tic checks complete canonical equality.
+All twelve fuzz executables must build. Record actual ASan executions, findings,
+timeout/RSS and leak settings in VALIDATION; disabled leak detection establishes
+no LeakSanitizer coverage. All previous expected fixtures/helpers remain frozen.

@@ -499,3 +499,41 @@ One hit reserves its real impact slot before sound/draws. Null/miss/refire can
 succeed at capacity; pending retirement supplies no credit for a hit. Actual
 player binding/damage stays protected. New tag 20 records only the refire branch;
 existing actor/state/RNG/sight/combat events carry the remaining chronology.
+
+## M3d3f direct melee and bounded damage planning
+
+Profile 13 composes existing awareness/pursuit, source state dispatch and direct
+damage. It adds no physics, scheduler, hitscan path, impact actor or persistent
+attack counter. Exact positive SARG entries 4/5/6 have 8/8/8 tics; their source
+actor fields already represent animation progress. Source Look/Chase state 1/2
+remain positive bounded fixture loops. Original type 12 is metadata, while the
+labelled native 136 owner and source-body target 135 declare executable roles.
+
+The only damage refactor is internal visibility of DamagePlan/plan_damage and
+LifeHost apply_damage plus an actual spawn-demand accessor. The algorithm and
+public combat/player protection boundaries are unchanged. The original damage
+call uses owner as both inflictor and source, retaining thrust, pain/death and
+retargeting through the same host as earlier combat profiles.
+
+Before a direct call, state entry 6 or state 5 expiration, validate owner/roster/
+retained references/state closure and copy the small owner/RNG record. Preview
+internal shadow draws, current pure range/sight, the damage draw only if accepted,
+then the existing damage plan. Reserve actual state demand, zero for these exact
+body closures. The ephemeral plan stores owner, initial RNG, accepted boolean and
+optional amount/DamagePlan; it never clones the store, world or simulation.
+
+Authoritative execution returns on null, otherwise faces, repeats the existing
+melee query against the current host, asserts preview agreement, records source
+sight/range order, draws once and applies shared damage immediately. Sight/range
+ignore facing angle/AMBUSH. First-owner/zero-physical-momentum and positive state
+closure mean no earlier thinker/input can invalidate the preview. Each sight
+query retains its existing 8192 work bound. Target thrust applies before that
+body's later thinker; existing XY clamping to 30 preserves the 994 margin.
+
+Chase's earlier melee selection emits metadata sound 52 before entry 4 and returns
+before movement/active sound. A later miss retains that selection sound. Return
+from state 6 executes real Chase/Look and may select another positive attack state;
+no cached range or skipped callback substitutes for original behavior. Source
+fast/Nightmare global timing transformation stays outside profile 13. DSIM-v13
+uses existing event layouts and fields; expected bytes come from original-C rows
+and independent encoding, as described in [the investigation](M3D3F_REFERENCE.md).

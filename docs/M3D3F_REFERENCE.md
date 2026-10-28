@@ -36,7 +36,7 @@ Raw info.c:621 defines SPR_SARG (39), without fullbright attack bits:
 | --- | ---: | ---: | --- | --- |
 | ATK1 | 4 | 8 | FaceTarget | ATK2 |
 | ATK2 | 5 | 8 | FaceTarget | ATK3 |
-| ATK3 | 6 | 8 | SargAttack | RUN1 |
+| ATK3 | 6 | 8 | SargAttack | RUN 1 |
 
 Two separate facing entries precede the actual strike by 16 tics. SargAttack
 faces a third time. Each non-null SHADOW target consumes two actual gameplay draws
@@ -71,9 +71,9 @@ negative coordinates and source short-circuit order; no Euclidean replacement.
 Sight does not depend on facing angle/AMBUSH, so a pure preview can validate it
 before real FaceTarget while preserving authoritative observation order.
 
-Successful damage is 4,8,12,16,20,24,28,32,36 or40 from the actual original LUT.
-The LUT's absent value40 is irrelevant to DAMAGE40: a raw draw149, for example,
-produces40. Null uses no facing/range/damage RNG. A miss still faces (and draws
+Successful damage is 4,8,12,16,20,24,28,32,36 or 40 from the actual original LUT.
+The LUT's absent value 40 is irrelevant to damage 40: a raw draw 149, for example,
+produces 40. Null uses no facing/range/damage RNG. A miss still faces (and draws
 shadow jitter), but does not draw damage. In-range dead/nonshootable targets still
 draw damage and call P_DamageMobj, whose original early return ignores them.
 Perception roster health is never a replacement for mobj health or shootability.
@@ -96,13 +96,13 @@ spawn scenario may exercise real generations, but is not autonomous Demon respaw
 
 ## Admission and failure-atomic design
 
-Use explicit profile13 / DSIM-v13, labelled native136 FIXTURE_DEMON_MELEE_136,
-positive looping SARG Look/Chase states1/2 and exact copied attack states4/5/6,
-next5/6/2. The owner's labelled source-player-body definition explicitly adapts
-Demon health150/mass400, normal defaults speed10/radius30/height56, melee4,
-missile0 and attacksound52. Supported unbound target135 keeps its source-body
-pain/death/see closure and mass100. Original metadata outside these adaptations
-stays immutable. Original Demon12/Spectre13 are recognized but not executable.
+Use explicit profile 13 / DSIM-v13, labelled native 136 FIXTURE_DEMON_MELEE_136,
+positive looping SARG Look/Chase states 1/2 and exact copied attack states 4/5/6,
+next 5/6/2. The owner's labelled source-player-body definition explicitly adapts
+Demon health 150/mass 400, normal defaults speed 10/radius 30/height 56, melee 4,
+missile 0 and attacksound 52. Supported unbound target 135 keeps its source-body
+pain/death/see closure and mass 100. Original metadata outside these adaptations
+stays immutable. Original Demon 12/Spectre 13 are recognized but not executable.
 
 | Capability | Admitted status |
 | --- | --- |
@@ -117,7 +117,7 @@ stays immutable. Original Demon12/Spectre13 are recognized but not executable.
 
 Keep one unshootable first thinker-head owner, floor-standing with zero physical
 momentum; direct walking remains supported. Preserve maps +/-512, queries +/-1024,
-8192 sight work, 64 actors, owner direct/tic margins1008/978, non-owner tic XY994,
+8192 sight work, 64 actors, owner direct/tic margins 1008/978, non-owner tic XY 994,
 existing Z/height/momentum and nested reaction-counter guards. Unsupported callbacks
 must reject, never no-op. New damage cannot recursively invoke attack callbacks.
 
@@ -133,14 +133,14 @@ facing angle/AMBUSH, and no intervening thinker can change geometry or targets.
 Both preview and actual queries retain the existing per-query work bound. This
 keeps actual query chronology explicit without caching a sight trace across tics.
 Null returns need no plan. Step preflight prepares only
-state5 expiry into strike6; direct entry6 and direct calls share that preparation.
+state 5 expiry into strike 6; direct entry 6 and direct calls share that preparation.
 No cross-tic cached result or full Simulation/map/store clone is required.
 
 Owner first/zero physical momentum means no earlier player/thinker can invalidate
 the prepared action. New target damage changes momentum before its later thinker;
-existing source XY clamps to30 before movement, retaining the established994
-margin. Damage<=40 and target mass100 keep integer thrust bounded; fall-forward
-requires damage<40 and has at most18 units of thrust. Fixed additions retain the
+existing source XY clamps to 30 before movement, retaining the established 994
+margin. Damage<=40 and target mass 100 keep integer thrust bounded; fall-forward
+requires damage<40 and has at most 18 units of thrust. Fixed additions retain the
 existing explicit wrapping semantics. Immediate Chase/Look paths remain bounded
 by positive tics, with no immediate recursive Sarg action after return to Chase.
 
@@ -157,7 +157,7 @@ Main cases will cover all ten actual-LUT damage values, null/miss/hit/dead and
 nonshootable targets, strict raw radius boundaries, blocked/REJECT sight, source
 selection sound, all three shadow faces, selection-versus-strike changes, direct
 knockback/pain/death/extreme/fall-forward target effects, repeated cycles and RNG
-wrap. Use the inherited public20-map inventory and report actual exercised maps.
+wrap. Use the inherited public 20-map inventory and report actual exercised maps.
 A scripted lifecycle case compares source retirement against real lowest-free
 slot/generation reuse without claiming that direct melee spawns an effect.
 
@@ -181,3 +181,38 @@ all twelve fuzz targets and run bounded Demon ASan with explicit leak settings.
 Record observed counts and exact CI only after completion. The new PR stays
 open/unmerged for owner review; complete Demon/Spectre and later gameplay remain
 outside this milestone.
+
+## Implemented result and evidence families
+
+The implemented profile follows this investigation. The private specialized-action
+enum extends admission without granting Sarg to earlier profiles. Existing shared
+melee/Face and LifeHost damage services execute the action; only internal damage
+planning visibility and spawn-demand access changed. The actual range query runs
+after real facing, and its accepted result agrees with the small preflight plan.
+
+The exact owner adapts source player body fields with Demon health 150/mass 400,
+melee 4/missile 0/attacksound 52. It is deliberately unshootable and omits full source
+COUNTKILL/scoring and original Demon pain/death/raise behavior. Targets retain
+unbound source player-body states; their pain/death does not establish full Demon
+pain/death. Normal default Look/Chase timers 10/2 may vary 1..35 only in these named
+fixture loops. Attack 8/8/8 and frames 4/5/6 cannot vary. Public combat/binding and
+other attack callbacks remain excluded in profile 13.
+
+The harness compiles 68 original bodies and executes 104 gameplay/driver scenarios
+on all 20 supplied maps, enforced by generator and Rust assertions. The main
+comparison covers 170,118 actor fields and 5,060 raw RNG draws including setup and
+discards. Its 27,039 ordered instrumentation rows contribute to independently
+encoded observations/visits; not every raw row maps one-to-one to a DSIM event.
+There is no injected gameplay RNG, no LineAttack and no impact birth. Separate
+36 component vectors exercise info-radius/current-radius divergence with genuine
+original range/sight bodies; these do not add to gameplay/canonical totals.
+
+The independent encoder produced 1,309 v13 captures and 169 complete byte streams
+before Rust comparison. Every capture matches, with named-field diagnostics for
+full streams. The nine-scenario asserted example matches source pursuit, selection
+sound, timing/facing/hit/miss/death/retirement and independent digest
+`b6c312bf5fbcc7dc`. Nine public policy tests and three private component/late-error
+tests separately prove the declared resource/reference/player/atomicity policies.
+All historical v1-v12 source/expected files and eleven helpers are preserved.
+Full local/fuzz/CI results and immutable reviewed heads are recorded in
+[VALIDATION](VALIDATION.md) after execution. The new PR remains open/unmerged.

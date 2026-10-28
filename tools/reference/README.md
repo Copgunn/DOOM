@@ -325,3 +325,42 @@ v1-v11 reference code/fixtures/encoders remain byte-identical; only this histori
 README's prose is updated. C behavior, independent DSIM and Rust policy tests remain
 separate claims. See [M3D3E_REFERENCE](../../docs/M3D3E_REFERENCE.md) and
 [VALIDATION](../../docs/VALIDATION.md).
+
+## M3d3f
+
+```sh
+python3 tools/reference/generate_m3d3f.py --check
+python3 tools/reference/m3d3f_snapshot_goldens.py --check
+python3 tools/reference/check_demon_melee.py
+```
+
+The new harness compiles 68 genuine original bodies, including actual SargAttack,
+FaceTarget, melee range, sight, Chase, damage/kill/state/thinker/fixed/RNG services.
+Compiled inventory is not branch coverage; inherited hitscan bodies may be linked
+but direct melee does not execute LineAttack or spawn its blood/puff. Provenance
+records function/header/source/adapter/input/output hashes, GNU flags, compiler,
+ABI assumptions and a C-derived evidence inventory. No expected result reads Rust.
+
+The 104 main scenarios actually exercise all 20 supplied synthetic maps; generation
+and Rust comparison assert that coverage. Raw fixed threshold edges, all ten
+actual-LUT damage values, three shadow faces, selection sound, current moving/
+occluded/dead/null target decisions, direct thrust/pain/death/retargeting and
+repeated source pursuit/state/RNG are included. Explicit driver inputs supply
+an extra strike during animation and remove/retire/body-spawn reuse; they do not
+claim autonomous resurrection or direct-melee effects. Source fixed arithmetic
+and left-before-right shadow draws retain the documented defined adapter intent.
+
+The separate 36 radius vectors call original melee/sight on original structs/info,
+with metadata radii 0/4/16/32, current collision radii 0/4/32 and raw threshold
+neighbors-1/0/+1. Private Rust actor-copy tests compare those results without a
+production radius setter. They are component evidence, excluded from the 104
+main scenarios and independent canonical capture totals.
+
+Rust explicitly checks 170,118 actor fields and 5,060 raw gameplay draws including
+setup/discards;27,039 chronological C instrumentation rows feed the independent
+ordered canonical observations/visits (not a one-row/one-event mapping). The
+independent v13 encoder checks 1,309 captures/169 full streams, complete source
+state/events and real generation reuse. The asserted thirteenth example ends at
+`b6c312bf5fbcc7dc`; twelve prior examples and eleven historical Rust helpers are
+unchanged. Source-equivalence, canonical-schema checks and Rust safety policies
+remain distinct. Source findings/limits are in [M3D3F_REFERENCE](../../docs/M3D3F_REFERENCE.md).
