@@ -1,0 +1,583 @@
+{
+  "evidence_inventory": {
+    "scenarios": 390,
+    "compiled_original_bodies": 68,
+    "supplied_maps": 21,
+    "exercised_maps": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "actor_fields": 935012,
+    "raw_gameplay_draws_including_setup": 38579,
+    "ordered_instrumentation_rows": 151507,
+    "pain_boundary_dependency_vectors": 3
+  },
+  "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "functions": [
+    [
+      "r_main.c",
+      "R_PointOnSide",
+      "int"
+    ],
+    [
+      "r_main.c",
+      "R_PointInSubsector",
+      "subsector_t*"
+    ],
+    [
+      "r_main.c",
+      "R_PointToAngle",
+      "angle_t"
+    ],
+    [
+      "r_main.c",
+      "R_PointToAngle2",
+      "angle_t"
+    ],
+    [
+      "p_maputl.c",
+      "P_AproxDistance",
+      "fixed_t"
+    ],
+    [
+      "p_maputl.c",
+      "P_PointOnLineSide",
+      "int"
+    ],
+    [
+      "p_maputl.c",
+      "P_BoxOnLineSide",
+      "int"
+    ],
+    [
+      "p_maputl.c",
+      "P_PointOnDivlineSide",
+      "int"
+    ],
+    [
+      "p_maputl.c",
+      "P_MakeDivline",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_InterceptVector",
+      "fixed_t"
+    ],
+    [
+      "p_maputl.c",
+      "P_LineOpening",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_SetThingPosition",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_UnsetThingPosition",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_BlockLinesIterator",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "P_BlockThingsIterator",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "PIT_AddLineIntercepts",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "PIT_AddThingIntercepts",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "P_TraverseIntercepts",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "P_PathTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PIT_CheckLine",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PIT_CheckThing",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_CheckPosition",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_TryMove",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PTR_AimTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PTR_ShootTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_AimLineAttack",
+      "fixed_t"
+    ],
+    [
+      "p_map.c",
+      "P_LineAttack",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_InitThinkers",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_AddThinker",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_RemoveThinker",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_RunThinkers",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SetMobjState",
+      "boolean"
+    ],
+    [
+      "p_mobj.c",
+      "P_MobjThinker",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnMobj",
+      "mobj_t*"
+    ],
+    [
+      "p_mobj.c",
+      "P_RemoveMobj",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnPuff",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnBlood",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_XYMovement",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_ZMovement",
+      "void"
+    ],
+    [
+      "p_inter.c",
+      "P_KillMobj",
+      "void"
+    ],
+    [
+      "p_inter.c",
+      "P_DamageMobj",
+      "void"
+    ],
+    [
+      "p_sight.c",
+      "P_DivlineSide",
+      "int"
+    ],
+    [
+      "p_sight.c",
+      "P_InterceptVector2",
+      "fixed_t"
+    ],
+    [
+      "p_sight.c",
+      "P_CrossSubsector",
+      "boolean"
+    ],
+    [
+      "p_sight.c",
+      "P_CrossBSPNode",
+      "boolean"
+    ],
+    [
+      "p_sight.c",
+      "P_CheckSight",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_LookForPlayers",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "A_Look",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_RecursiveSound",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_NoiseAlert",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_Move",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_TryWalk",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_NewChaseDir",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Chase",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_CheckMeleeRange",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_CheckMissileRange",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "A_FaceTarget",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_PosAttack",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_SPosAttack",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_CPosAttack",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_CPosRefire",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_SargAttack",
+      "void"
+    ],
+    [
+      "m_random.c",
+      "P_Random",
+      "int"
+    ],
+    [
+      "p_enemy.c",
+      "A_Fall",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Pain",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Scream",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_XScream",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_PlayerScream",
+      "void"
+    ]
+  ],
+  "function_sha256": {
+    "r_main.c:R_PointOnSide": "4f5f2ca961cd290f3cc4e8e4aa9e0a84be85a75b8889918b2b17447d4c79a4af",
+    "r_main.c:R_PointInSubsector": "efc1ba17a5f2ffcb33d65ff061302adf0b7d48feb3d98c6bc9ce294f267d8b40",
+    "r_main.c:R_PointToAngle": "d82e2502adbba8cfbaa28876fc5c542e6483f9992ccc6f4408ed3144814c9d25",
+    "r_main.c:R_PointToAngle2": "f3c68fd85a77ef30f2390850a0e19e2f03f0b79bb0b2300f9cb6126a062b13d2",
+    "p_maputl.c:P_AproxDistance": "7c7a32306847770af6bfed66215d0ced91858eaeba7dd26231d3ab9158e66699",
+    "p_maputl.c:P_PointOnLineSide": "80712b3f421e4e3c91469e81695dbb4d515e29e819b225d5c6e1d4f2a0dd0e7e",
+    "p_maputl.c:P_BoxOnLineSide": "e91cd38e2d63537354524e96d5acc8287047291283b8561cee29aa6391e51c5d",
+    "p_maputl.c:P_PointOnDivlineSide": "523954c4c38d483ed6495387ac0f01a1f3ea2952cb0031e397762584e4a212d1",
+    "p_maputl.c:P_MakeDivline": "1d57f3a4e7c76678251cb67104d09195bc97ef65ca0117842e74b013ae52d453",
+    "p_maputl.c:P_InterceptVector": "b6fc71a4f2bea94b66a1a9d3e435f8f81656b47aa67d4b8a8e5cd441e6394ae3",
+    "p_maputl.c:P_LineOpening": "7ed95f9a3b9b611c72cd2e902728a8bae5a4658c5158b0824508d2c66b01a1ea",
+    "p_maputl.c:P_SetThingPosition": "c510796c4d41345c4af93a38dc5f0770b62fe12d9866e6a68a558c10f5b2de95",
+    "p_maputl.c:P_UnsetThingPosition": "4fdd013d952f301b4f87336eff6573d8c9a2f829d5f44fa954f6272ec28b9077",
+    "p_maputl.c:P_BlockLinesIterator": "8fb540c7f31511f9ccfb94e0168e76b18121f30350d2f325aca92da395c0b9ab",
+    "p_maputl.c:P_BlockThingsIterator": "6693ae5ff21b3e51d80b8ac5d10e452c4aafe80e6480672d61392c7d1a96859e",
+    "p_maputl.c:PIT_AddLineIntercepts": "55508a517cc3eb75de233466cbcaf09439eae2e1e203c0d608f84e93124ab7fd",
+    "p_maputl.c:PIT_AddThingIntercepts": "6bb442a05c0603ad53fbc0aa90bbc6746699dfe039af99fabe6495523bc7465d",
+    "p_maputl.c:P_TraverseIntercepts": "6d5e33e5066e43bc8a13e2d9b4534b6ec9526f73e3819aee4667875589b47171",
+    "p_maputl.c:P_PathTraverse": "a9acbda97d08b7bb435d53ba0bde2144a6108c7803b6fb6936b8fde565650de2",
+    "p_map.c:PIT_CheckLine": "66f2e08a7bdd1aa4364f60d29d926596100be7f9a78bf236d3266f770402af07",
+    "p_map.c:PIT_CheckThing": "15704a9f9849d993e4824878ff081569391acc372705c1e0211897da189734da",
+    "p_map.c:P_CheckPosition": "f509cc5252588b4d61c00242d54ff463e0c85c677edf691b1231be1ca5ad6bb5",
+    "p_map.c:P_TryMove": "220c77b687eee9e2912db23c9b0939fc3962e127e42487b340f4b8eb0034a4f3",
+    "p_map.c:PTR_AimTraverse": "a1f88990bff5cf347cfb636905d5e31024a7919941fd8d0a1066a1c25a56dd76",
+    "p_map.c:PTR_ShootTraverse": "3852294e57eca72f905cf1ab1bd16b5aa1180c525a76c85748ccf4d0a662da15",
+    "p_map.c:P_AimLineAttack": "edfe5a41eaf633408f1f2f38000b5a4d75a0c23a06b9b14abf8b0fde0a67ec71",
+    "p_map.c:P_LineAttack": "f12e880fc3569b2b9fc70006d481447c13dc7a61658e24e85098100c060c16e4",
+    "p_tick.c:P_InitThinkers": "65f448147f953e5f1f5459509ee9eb98322235fff30b29ae51551071ff84639b",
+    "p_tick.c:P_AddThinker": "c30567602c4ec6095303697a3875aa7f54f78f885974eb2b81425ab0c3742cfb",
+    "p_tick.c:P_RemoveThinker": "15d836b3ea687ee911ae5a84f67bcdc671c852084624336fca31da80f58ab0d5",
+    "p_tick.c:P_RunThinkers": "a6db3d89282e7228b23af1bf5da3b0b854c468970b4e11dfd725c2400255b1ab",
+    "p_mobj.c:P_SetMobjState": "d804d2f4fc2abf96cb59ee86d70225767f204c9570dbd1b63596017b53123707",
+    "p_mobj.c:P_MobjThinker": "d5b34a5e05ad8c76f6a8a3ab650e58ee6012f36552f89767f787fcf25c4bbc80",
+    "p_mobj.c:P_SpawnMobj": "ecec71c4d5d54e85ad0bcb99392726c8d970453e13e256aa9aa81a0908a533a7",
+    "p_mobj.c:P_RemoveMobj": "fb68b1ffe5140b8d4deda823d9ff875119df0c1289874ee26f898cf8e6d2964b",
+    "p_mobj.c:P_SpawnPuff": "b1a7762c3f8394b48ca3c807063cae2b11401250f95dae96c8c8df61b738b660",
+    "p_mobj.c:P_SpawnBlood": "2632a614e9e158b24ecb6024ac47d23f7fbdce865fddf603b7c7dff5d4915645",
+    "p_mobj.c:P_XYMovement": "c4b15dbc1653705a802dd73bbe6a35c9a090d2461c9e3fe17f20686877adf7ee",
+    "p_mobj.c:P_ZMovement": "3d64d9840cd386f1ec7904005f468589b772602e11baa2d12288eedfb7eea427",
+    "p_inter.c:P_KillMobj": "b10e5409e5f1a0057dcb08aaaa306f52a971490a3d1b4028b1be39ea5ef8a345",
+    "p_inter.c:P_DamageMobj": "fbca76ffdc30ef82bf3eea5f3f15f64159a13a0fcab4d20fa9fd905fc0bd8d4c",
+    "p_sight.c:P_DivlineSide": "c55a6505c1c40dba5fc16e194c89c07e1ec97000115c3326d62ff72d0e4b6f25",
+    "p_sight.c:P_InterceptVector2": "590ec7f8a464c70f743c9c69c3a9fcf0b6d6fb9087aa012db232b5217c632593",
+    "p_sight.c:P_CrossSubsector": "67345d18cf2adaf4471af8afa056d690b9b6ab1ae60364d3be4b72875025405c",
+    "p_sight.c:P_CrossBSPNode": "cfd3bb823051b6c98fdae1e1d54b072b1796d32425c77eb9276e6cca6c0938a3",
+    "p_sight.c:P_CheckSight": "4b5a5b18c10d91522210eff8007202c927a4d1f5205b32889e78a7104d76ac01",
+    "p_enemy.c:P_LookForPlayers": "91ea2f9761160efc377edec95e4c754728d7c6a857134e4eaec04efb4c6404e2",
+    "p_enemy.c:A_Look": "88762afe30f3ea7b512fdab5ba9dd08acd05858dd16fb2172ec7a196629f115b",
+    "p_enemy.c:P_RecursiveSound": "742edd56f80fa252fe1252c7d15bba19eb3001bd60a6238343c3308c3d93e615",
+    "p_enemy.c:P_NoiseAlert": "a915335edf5c5731e18f49aec57599015ad06263bd3b858a9cb6d2286f593f3f",
+    "p_enemy.c:P_Move": "e581789dbdc4841e70cf96c89f8e1e3228943e99525f9712ec536e8c8ea1923f",
+    "p_enemy.c:P_TryWalk": "6f5ec5355cd1aaf11f5db3bf4f23b50acaf07f2c88ab4dcbe81bd58314f63438",
+    "p_enemy.c:P_NewChaseDir": "a6120963a5e80662ae4cfbdfcf2d4be84f082c5b95ae6f7e83c42233561b97a2",
+    "p_enemy.c:A_Chase": "e29c1764ba4328eb52e5ac8a60e361929d246e374064df1011b07ac9c5d88883",
+    "p_enemy.c:P_CheckMeleeRange": "6479f57374f3beb0742f460112e784dee76d0bef7ce8048383fe58fb2e9a294e",
+    "p_enemy.c:P_CheckMissileRange": "e2f2cbc7e4f6b5f7448b737fda8aa492c3215f6864e20ded05a6bf4323e8d901",
+    "p_enemy.c:A_FaceTarget": "2aada2930edc5031b189779e518370dda33bf18620323426f76a2ef1999f0481",
+    "p_enemy.c:A_PosAttack": "46f2b16bba94f90f2dec2a3c23c6c3999e0e74efe64cd76a6b707e08abd59d41",
+    "p_enemy.c:A_SPosAttack": "14b5a9f4db584085efba73ff2702088df74a9f90dfb1326e66bd2b6a2afb952f",
+    "p_enemy.c:A_CPosAttack": "97b51612228504176e1f24f2ec8680a28110697a9b8756a570fb44fc006d3c89",
+    "p_enemy.c:A_CPosRefire": "235db87a1934bc3bb6fc4fdcf4735383c0812b1af6854af081fd112d51062a4d",
+    "p_enemy.c:A_SargAttack": "74a750f03dc05d8435b65f464c32a02cc66de289120346b1329d2df4bd53b9a9",
+    "m_random.c:P_Random": "4bd1e4245f1c27c7a9c1cde25e85ad445f8ba7a38033217a183eae0b4928c2e4",
+    "p_enemy.c:A_Fall": "11723ecad24d8c31b4ede008a358c21c68212365f97b439520128b1b7185d4ff",
+    "p_enemy.c:A_Pain": "14c9d7e928acd41a3a311dcf9f88c868a8808c9327fd57ff3d613f3bfdfd49ac",
+    "p_enemy.c:A_Scream": "7501d046588e5c12c923d670a81a40b5e02023d898e006e13adbd34be75e053c",
+    "p_enemy.c:A_XScream": "85616509193c15210d33751425d92790b71593a7420b403b5bcf201d60db4e65",
+    "p_enemy.c:A_PlayerScream": "c2d6c04d42fe8a620a1bde77e9c6055522e2208957b3d2fa9460e6dffe5557cd"
+  },
+  "direction_tables_sha256": "c14d937b723833743a573ed17d5b2fbf9fa0b74efc7cae9bfdd397703771de37",
+  "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fwrapv",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char"
+  ],
+  "source_sha256": {
+    "am_map.h": "75c3671cbc7f003e16cc50abe98fe824e595f1c3bf66c2c722e8597a015e40ed",
+    "d_englsh.h": "b018968e3aef65e0009d6ec676d40c8731b33e2882758640d3028c530c87a789",
+    "d_event.h": "24ba8629e157f4f76c4da0821a9f1bf71c34c2aec5cbc1ee4ec5898751225d22",
+    "d_french.h": "018e635134bb064b6c559407221629bc27bc400769d9074dc742510ac7d88086",
+    "d_items.h": "322a73acb345703c9f00ae7528900daa3a49bd27c670d5acee4196c1ded74bda",
+    "d_main.h": "adb0988d417528bdb689f5249cc650360f5a81936c797346d8390b80af0c4ca9",
+    "d_net.h": "54d77e10fe98e7ad640c711e7146f1440e4bd3f73e46d27905f9c19b8117ac3d",
+    "d_player.h": "9c9a342ab7c3661ab02d32890bd0d74ede94a0745ae0d622de83a9ae11046ffb",
+    "d_textur.h": "fac8baf1195a1a1a00f872271c7e159ad8b66a3632385128403ed99f99cf5ba1",
+    "d_think.h": "a8d3d4943495c729cd33b67eff1b56d801f1cf8cd0db74fb5d63b613c4eabddc",
+    "d_ticcmd.h": "2f70caa7c187365850e467254d8b0a31c07ea304d59339c68fde63d05274d146",
+    "doomdata.h": "f0504fd3926491ee56c61c8e9c732f0bf7e74306cba482eb267beda5022accca",
+    "doomdef.h": "643daca966fb762fa86f39ce9a1779355117578527bf2e295163647f9ad0d74e",
+    "doomstat.h": "c8b9eb311ec529a371c1c49dbd9a571ee07976dfd1bdc83d26b77ff6ba163355",
+    "doomtype.h": "e2b8da9ed44c6686a282af8e14a53b605ecc781d05ccd78579fcf57c720297e6",
+    "dstrings.h": "de1d24709df885ac93ddc5c1b86dbc2e0baad1027dde01ea09076d9e28778bc0",
+    "f_finale.h": "ee5cb17f104a894de9fed452dfad04df3e070a7bc70e65d9d336421f7dee9359",
+    "f_wipe.h": "fff2fb466d978eb4d482464899302830a377e305b0d31c9524072ec569cfaff0",
+    "g_game.h": "ab47e29d7506cda9a702073c451d6e533204e49a064a0ccc6e98ae4c5e9faa60",
+    "hu_lib.h": "611143caa98ef13992845fde571be9a9c3d944fa850ee2f2d8b0406aae9ed02e",
+    "hu_stuff.h": "09a1c0ef0434b0b46e9ea3b43232898b7b939b07bf18f302458227948d98579c",
+    "i_net.h": "0c32e01a687cda4e8db3f87ec38db53b7c4c9826e69a128f6dc7a2121a622f5a",
+    "i_sound.h": "7a4171979ac20b40c02969be19d404cbc77e4493aa69bb22c0eeaf1f9b8c519b",
+    "i_system.h": "426ccb2f2b29facaa80e0a43165bb62395ceda6dbb8ed27d0a3cfc99a91a6abc",
+    "i_video.h": "d9af47ac4d55f1acb0dd1060b663b8d2c085688a39807b101a9ff082800b4e42",
+    "info.c": "e09631527669ee528bdae20a47be79e1cb33972b39964c33ac4814e1701a0949",
+    "info.h": "3e68ee6cc13323e69cbcf208e9a0af7b13867bead49e66d765abefa5d914b0dd",
+    "m_argv.h": "388205a8bda230f472caafac172a42621c72693f018e66c7c71389e4ea24c7b4",
+    "m_bbox.h": "fc041f774ff1f7b2b05d5bd8dd35a9496cf4dd4ca2a0a2df2420ac6f827b0b5d",
+    "m_cheat.h": "92f43c6df575a07bc394981f1beb1b901889f84bce67b557b8274f0379f0ae88",
+    "m_fixed.c": "a4472841bc8890c5d5a41b325ecf56d10d7026a7489967aa29100b5dee759fea",
+    "m_fixed.h": "67aa3925a905d448fb947fb7358093a39367f534c3e26e3f8b06228f553227ef",
+    "m_menu.h": "ccfc1f2abe50cbb78e83d2ec35eb3812003945f2d668e69551b5b2d56bfc4dfa",
+    "m_misc.h": "5cf237e545bd93d01a59f3696afa02073beedf8131ea23f30924fd5cc3891c7b",
+    "m_random.c": "8d89f5cfcbbd0170e46b55538c4c272b3cf5b5d7dce91023b8aa8d9b922b21ee",
+    "m_random.h": "31ec17387c9b7148f8e9762b71cccebaa199bffece76e1103bdb64f0ae615caa",
+    "m_swap.h": "04e76b9143f1d78a8f5cbb11b8d5022b2d5b0f18f644615384fa793f741ffd19",
+    "p_enemy.c": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0",
+    "p_inter.c": "72e9bbabe560ef548c2f2522494786347d5c831b0e1f0ecb5cb29d8d8e682356",
+    "p_inter.h": "348edaf0dbbac0b455e54823d3e8bdab72ac210bf22cd17cffc519596661fa2a",
+    "p_local.h": "8d71f591ed5f26580042d991558c89d674b683f9cd1c2801ac7714de04b0185f",
+    "p_map.c": "752c7873c81fe6b10b77a08b7ef5716fe49c3103f6caa02097ed299e6e04736c",
+    "p_maputl.c": "4d93e06d11160fb935e94750babbdcc9a4469d96f593764872db87cefd37c0a1",
+    "p_mobj.c": "21a39bdbd746d6fba38660500203216052f0723b8e0ab033ce2a650ada2b403f",
+    "p_mobj.h": "85be6ea83fc4b5f95df666c68c8999f7fe5745a5f503d3a441afd66b5f7e5db0",
+    "p_pspr.h": "21b95a0eb8b901287be5077b780b809e5e4e296393cb63c8e02970646a8f8e67",
+    "p_saveg.h": "31457a112b24c4bd91df919c9e2c81add41019194492d320f81f2d837ed00bac",
+    "p_setup.h": "ffffe92a94edde836ca5d2d5db311d003ce03e1dcfe542d948ee8094f1637be0",
+    "p_sight.c": "81014a71e4155db6da0af21e6ecf14687daf18075fb75322b63bdc254ce11120",
+    "p_spec.h": "95d93e2e3b803126b0ecf6ea42de41d2bce7b2d09ea701e03992f0cc6dae22a3",
+    "p_tick.c": "21a638b7b1ae4fcb6b6892a731cd27d20f44e2df12dd3325c8215ca4c9aee22f",
+    "p_tick.h": "a0512fd19e760d5d43e477bfe4fabf686542bc21bc27daa87108cb703fc562a7",
+    "r_bsp.h": "08ca429757b65ac35798cf9f47ef9dea072e27a5b856fdf300c9fc2fcba5fac6",
+    "r_data.h": "4dbb1515b2e1be1e2496018365ebd37507f001ae449a181a54a894a70141ed1b",
+    "r_defs.h": "d8856503bea02282f5f338f3533885e87c6c430ce4f11511d6a04b5fc040db31",
+    "r_draw.h": "4ab1c0bbf7dba3712db71ba0ba7901184b2a35a8b6132db40bd0f6c87b74ccfe",
+    "r_local.h": "b92f15cbc8620b38de46512166244ba9f357de4fc8ef32be2f35088bc1cfd443",
+    "r_main.c": "2aae43cf807929a8758f71ed0205fc08017556541ba8df2ea9167c003d0dec5a",
+    "r_main.h": "9576bf120653af7127dcfd754f50e294b76be38bacb3b43f8686111a2dcd501b",
+    "r_plane.h": "abc99d0fc7845c8e9e73057b14a886b138046d5e432303c87fa5c34879f5903e",
+    "r_segs.h": "9343a51c57d93f13098118cfbc23377487b4063ec0dbf447c6aee8a7d0fd68ce",
+    "r_sky.h": "2c4a650afa36997ccb8ff97b7e1a5a0b25c1090a17c9e39b3d66e1d53ea9391e",
+    "r_state.h": "35a0d8f2e6a8f88ff100625708e54a6f04d22506319bef1c08033293e3ca22bd",
+    "r_things.h": "7e7a985f29f971e7e5c14c93c79f8d3462f4a42f5544d4c298a90df00561cf50",
+    "s_sound.h": "d747126bc8105ef540dee2f6f7e9f17db047dabb2c03a740ddc1bb9f98746b83",
+    "sounds.h": "fa5a6c19c689eeb6e4a2df08b1d4efe5c445b3d0cb4081dc3a7d28fdadfd39f8",
+    "st_lib.h": "8ae86cf219785672579e6dd75ce3a5abae2e9991c44af647d59f6bec384307c2",
+    "st_stuff.h": "0e2aad8828e13314e754c370da0c8cb61f08006c349fb1587ad28ea789ba4d85",
+    "tables.c": "db8759f4311654c63785dcffb8f73a00a61cfe2713e4284c238dea420b6e5f89",
+    "tables.h": "54e366ed33a0bd65e5cad6c5b6f7df77573909e5974b8af296fdb1503c77fcf2",
+    "v_video.h": "728500c3b693d1baff1a43c5df6d0c6d55d1ec343247becd7db33c1be747635b",
+    "w_wad.h": "1c5f7a0f6ba41f1f6ce22440fb020596d0ea7b16742f9f2a044e9bc7d66e8abb",
+    "wi_stuff.h": "57ab19c222d6e54158b3fff8ea6ea23d23e7646925aab830b06cf8cfc1e84f5e",
+    "z_zone.h": "46498575b14b5f5538d0d93f3d7c8325941b76f0e36b435bb895ecaac6f54cca"
+  },
+  "adapter_sha256": {
+    "generate.py": "e80beb09a686c030a6229599f5e0c9e9fd9b109ecebdcb9dd474a2a78e01d6cf",
+    "generate_m3b.py": "613aeb1563573f1990314414c0e1086d1645c3afd4764c2316c8e7d4e828a374",
+    "generate_m3c.py": "caca6c42d0856c87878f22e65380bf9ef50d8070e721f2edbb2d6ad656667d64",
+    "generate_m3d1.py": "a2abea47bea8ace07c0091e87dcd2edc159b3e17abb8a52204e569cd53b23ce9",
+    "generate_m3d3a.py": "e44b12d5eaa820241ec91c5915e9a859fcabcd4161a878d834aa64f3c29507ff",
+    "generate_m3d3b.py": "2aa9c0b3651d8b3e9eadcd429b1f8fe10f1f14aa6cca2bde8d3d34754b6f9fcc",
+    "generate_m3d3c.py": "b4b679350f9586b83a126bee04371bd046c6a525422fc856e1251a2ae6e4beaf",
+    "generate_m3d3h.py": "561c0a6c9db03a031225ccb6764c63f76ce65086a52dc3f7ffede6117216abd5",
+    "m3d3h_shim.h": "8562850b12ff35343c2e4b221a6427d88eb2ee1bbe169a1277c19f30003b3567"
+  },
+  "outputs_sha256": {
+    "tests/reference/m3d3h_map_0.bin": "848d3b831f04dc38f8df27d8dd85998834ecb4a9407bdc4424f4d30e3fbcb2d9",
+    "tests/reference/m3d3h_map_1.bin": "87cd9edd4dbf542225c1538b0e52560f45277fe1cd2696801e1f62ec1cddebfe",
+    "tests/reference/m3d3h_map_2.bin": "0114ccc025e7eddc7f09b0cfab3b365f87fd4a387aeee9648529b99416c74b7a",
+    "tests/reference/m3d3h_map_3.bin": "7bcebb0523cd75210c8799d98dc4e833c8f16b0f34bcc5acee3ac169e53a1d25",
+    "tests/reference/m3d3h_map_4.bin": "cc7c5760e16c7ee03c371ea7dd85bc5f37662d687efe56e0b00e81dee4fd42e8",
+    "tests/reference/m3d3h_map_5.bin": "a4f357c9e2e572e6936a33f413f96495b2e8a2dfcac85acd75aa4c39e1ce8a63",
+    "tests/reference/m3d3h_map_6.bin": "f32f2816820bf16527165ed6bbd65e90bacd99b54375d0c11dc9efb4fbe41b57",
+    "tests/reference/m3d3h_map_7.bin": "f99e0777671943e1f9f18492cf8b9691ad36d66a43ed231d3c31747751b5ae1d",
+    "tests/reference/m3d3h_map_8.bin": "420e12dd792f9abdc2ce05bb5c1a341189209578cc16b509e39a8b21e18b1340",
+    "tests/reference/m3d3h_map_9.bin": "1141d3aa75225e7beed71a0b9f2d41825291f8ee81b7652ba690e22759aede27",
+    "tests/reference/m3d3h_map_10.bin": "77599c8d125304eaaab7cc3c9ec8b88af503b18a4eac7dd1c11b5ceef1bedf53",
+    "tests/reference/m3d3h_map_11.bin": "c33d39bbfa134609a348024cfc611ce49379fd33f363522f713bcdee56c525f1",
+    "tests/reference/m3d3h_map_12.bin": "8375b8fcad1b67d557f668d94e46223dccca322bcb23e83f80e1593b3f1fc920",
+    "tests/reference/m3d3h_map_13.bin": "b58242c7565c71699f567146551bfebe274bb8a50fdfb91ae98cf6f72dcb011e",
+    "tests/reference/m3d3h_map_14.bin": "3880425504b6a491c0e68f09b4f6b727a8d0d77ae43af3454a1a1dfaf785dc8c",
+    "tests/reference/m3d3h_map_15.bin": "35def2af8976e8d86c8757c2a0969e5e1ae3baaad4571f8401aba347d228c0a7",
+    "tests/reference/m3d3h_map_16.bin": "e97f91f728c51eabdfd56e81479faceb0c8ef8aa061b2b18dfc1cb4d23bb8384",
+    "tests/reference/m3d3h_map_17.bin": "39310b061ccf7bb6b21b70e8c4952b2af60310f2d3260da79351729c59d772f6",
+    "tests/reference/m3d3h_map_18.bin": "4c89e58051e79f6c653a4dab66bddc5115a489b53c4d04d3b669fd1a675cb763",
+    "tests/reference/m3d3h_map_19.bin": "f420b5d886d299bfe641d23e9729caff7515b75b5cbe941f6ffda1977e47d615",
+    "tests/reference/m3d3h_map_20.bin": "14a9dfc1da2a0754f0c08d47f7cf651c470bfaafcc1656d05ed4560e523f4997",
+    "tests/reference/m3d3h_pain_boundary.csv": "d4ed176acda0aaab3bbed2aac2fd32b17f1055d56bce07cacfc3916756551b07",
+    "tests/reference/m3d3h_trace.csv": "087a7c3577c3470dd4e9019d29e4097f67f066f6db886f8a7aa23a302b23ec36",
+    "tests/reference/m3d3h_cases.csv": "cfe02b8dda91d9525e4c37635295c77c46e40267a6bd8e6c4393f5ed8cf21b9d"
+  },
+  "assumptions": [
+    "real original structs/info and 32-bit fixed/int, 64-bit pointer/function-union ABI",
+    "exact sight horizontal x==node.y quirk, shifts/division and BSP order retained",
+    "labelled native136 copies source Demon metadata except explicit original stand/run/attack/pain/death state aliases, COUNTKILL removed and raise disabled; native135 remains unbound source player-body fixture; genuine damage/pain/death/corpse and Sarg/look/chase/hitscan/physics; full Demon/Spectre/player/scoring/raise services excluded",
+    "empty fallback roster, stale identities and unsafe extremes excluded from original-C execution and tested as declared Rust safety policies",
+    "source retired memory retained solely for observation; no Rust expected values or proprietary data read",
+    "left-before-right shadow/spread/jitter draws and representable multiplication define historical unspecified operand order and signed-shift intent",
+    "gameplay uses actual original LUT; three separate original-C pain-boundary dependency probes inject179/180/181, never counted as gameplay scenarios/captures/draws",
+    "source stand475/476 and run477..484 copied into fixture1/3 and2/15..21; script loss/wake/sound/final-hit inputs are synthetic setup, callbacks remain original",
+    "unsigned BAM movedir shift adapter defines original signed-shift intent, preserving 32-bit two-complement delta; countdowns avoid INT_MIN and abs overflow"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41"
+}
