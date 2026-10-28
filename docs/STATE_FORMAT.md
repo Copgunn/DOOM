@@ -1,6 +1,6 @@
-# Canonical simulation state, DSIM versions 1 through 5
+# Canonical simulation state, DSIM versions 1 through 6
 
-This is a diagnostic/replay comparison format for explicit M2 through M3d1 profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3d2 profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -21,7 +21,7 @@ Runtime fields precede static map fields. Runtime order:
 | Field/group | Value encoding |
 | --- | --- |
 | `tic` | u64 completed logical tics |
-| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), or 4 (M3c typed actor lifecycle); profile-specific additions are specified below |
+| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), or 6 (M3d2 player weapons/psprites); profile-specific additions are specified below |
 | `paused` | u8 boolean |
 | `rng.gameplay`, `rng.miscellaneous` | u8 indexes, in that order |
 | `store.max_slots`, `store.slot_count` | u32 capacity policy; u64 logical allocated slot count |
@@ -286,3 +286,56 @@ intercept/hit rows. Settled final snapshots assert no movement/actions and encod
 phase/thinker events; C link/removal observations reconstruct spatial/store order.
 Field comparison precedes digest comparison for stored byte fixtures. Digests are
 noncryptographic schema diagnostics, not proof of complete gameplay equivalence.
+
+## DSIM-v6 and player weapons/psprites
+
+`player_weapons` / `with_weapon_registry` explicitly select version/profile 6.
+Versions 1..5 retain their exact field order, bytes and goldens. V6 retains v5
+actor fields, including threshold, and adds the following ordered runtime fields:
+
+- Immediately after each `sector.N.actors`: `sector.N.soundtarget`, the existing
+  13-byte optional actor identity. Per-call sound traversal caches are derived.
+- After all four player command groups, before events: `weapons.player.present`
+  u8. When present, append fields under `weapons.player.` in this order:
+  `slot` u8, `actor` 12-byte ID, `health` i32, `ready` u8, `pending` u8 (10 means
+  source wp_nochange; 9 is NUMWEAPONS), `owned` u16, `ammo` four i32s, `max_ammo`
+  four i32s, `attack_down` u8, `refire` i32, `bob` raw fixed i32, `extra_light` i32.
+- Then `weapons.player.psprite.N.state` u16 (65535 null), `.tics` i32, `.x`/`.y`
+  raw fixed i32, for N=0 weapon then N=1 flash. Sprite/frame derive from the
+  immutable registry state; no ordinary thinker identity is invented for psprites.
+
+The profile invariant admits only one LIVE player with protected health. Inventory
+setup is explicit; no armor/power/pickup state or attack queue is invented. Slot,
+body generation, source ownership/ammo, timers/positions, light, commands, RNG,
+actor effects and sound targets capture all implemented persistent consequences.
+
+Event tag 14 adds a u8 weapon subtag. All integer values use explicit little-endian
+widths. ID below is 12-byte slot/generation; action IDs reuse the source symbolic
+registry table, but dispatch eligibility is separate from actor actions.
+
+| Subtag | Ordered payload |
+| --- | --- |
+| 0 Entered | slot u8, psprite u8, state u16 (zero records null entry) |
+| 1 Action | slot u8, psprite u8, action u16 |
+| 2 Ammo | slot u8, ammo u8, before/after i32 |
+| 3 Light | slot u8, value i32 |
+| 4 Fire | slot u8, weapon u8, refire i32 |
+| 5 Bullet | actor ID, angle u32, slope/damage i32 |
+| 6 Noise | sector u16, blocking-lines-crossed u8, target ID |
+| 7 Initialized | slot u8, actor ID |
+| 8 Random | kind u8 (damage=0, spread left=1, spread right=2), value u8 |
+
+Source weapon sounds use existing tag-12 Sound observations; combat retains tag
+13 exactly. Entries/actions/effects appear in chronological order. Setup queues
+initialization/psprite events, which prefix the first completed tic just like actor
+spawns. Read-only queries never drain observations or consume RNG.
+
+`m3d2_snapshot_goldens.py` reads C/setup/schema inputs only and reuses historical
+v5 field assembly without editing it. It explicitly adds v6 fields/events, source
+player bindings/commands/color angles and sector sound targets. Selected states
+are initial, raise/ready/attack-start and settled captures with no shot effects or
+motion on that tic; their complete source weapon/lifecycle events are encoded.
+Single-burst captures avoid slot reuse assumptions; the per-tic C test separately
+checks reused identities and transient firing fields/order. 69 captures and 24 byte
+fixtures have independent input/encoder/output hashes and first-field diagnostics.
+Hashes remain noncryptographic schema evidence, not full gameplay synchronization.

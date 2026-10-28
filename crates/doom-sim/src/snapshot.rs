@@ -47,7 +47,7 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1.
+    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2.
     pub const fn version(&self) -> u32 {
         self.version
     }
@@ -197,6 +197,10 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        Event::Weapon(event) => {
+            b.push(14);
+            weapon_bytes(&mut b, event);
+        }
         Event::Combat(event) => {
             b.push(13);
             combat_bytes(&mut b, event);
@@ -316,6 +320,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::MultiSector => 3,
         crate::Profile::ActorStates => 4,
         crate::Profile::Combat => 5,
+        crate::Profile::PlayerWeapons => 6,
     };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
@@ -412,7 +417,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             if version >= 4 {
                 life_fields(&mut fields, &prefix, a.life.expect("typed profile"));
             }
-            if version == 5 {
+            if version >= 5 {
                 field(
                     &mut fields,
                     format!("{prefix}.threshold"),
@@ -497,6 +502,13 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .flat_map(id)
                 .collect::<Vec<_>>();
             field(&mut fields, format!("sector.{i}.actors"), order);
+            if version == 6 {
+                field(
+                    &mut fields,
+                    format!("sector.{i}.soundtarget"),
+                    optional_id(sim.sound_targets[i]),
+                );
+            }
         }
     }
     for i in 0..4 {
@@ -518,6 +530,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             c.angle_turn.to_le_bytes(),
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
+    }
+    if version == 6 {
+        weapon_fields(&mut fields, sim.weapon_player.as_ref());
     }
     for (prefix, events) in [
         ("events.last", &sim.events),
@@ -905,6 +920,144 @@ fn combat_bytes(b: &mut Vec<u8>, event: &crate::CombatEvent) {
     }
 }
 
+fn weapon_fields(fields: &mut Vec<StateField>, player: Option<&crate::WeaponPlayer>) {
+    field(
+        fields,
+        "weapons.player.present",
+        [u8::from(player.is_some())],
+    );
+    let Some(p) = player else { return };
+    field(fields, "weapons.player.slot", [p.slot]);
+    field(fields, "weapons.player.actor", id(p.actor));
+    field(fields, "weapons.player.health", p.health.to_le_bytes());
+    field(fields, "weapons.player.ready", [p.ready as u8]);
+    field(
+        fields,
+        "weapons.player.pending",
+        [p.pending.map_or(10, |w| w as u8)],
+    );
+    field(fields, "weapons.player.owned", p.owned.to_le_bytes());
+    field(
+        fields,
+        "weapons.player.ammo",
+        p.ammo
+            .into_iter()
+            .flat_map(i32::to_le_bytes)
+            .collect::<Vec<_>>(),
+    );
+    field(
+        fields,
+        "weapons.player.max_ammo",
+        p.max_ammo
+            .into_iter()
+            .flat_map(i32::to_le_bytes)
+            .collect::<Vec<_>>(),
+    );
+    field(
+        fields,
+        "weapons.player.attack_down",
+        [u8::from(p.attack_down)],
+    );
+    field(fields, "weapons.player.refire", p.refire.to_le_bytes());
+    field(fields, "weapons.player.bob", p.bob.bits().to_le_bytes());
+    field(
+        fields,
+        "weapons.player.extra_light",
+        p.extra_light.to_le_bytes(),
+    );
+    for (i, ps) in p.psprites.iter().enumerate() {
+        field(
+            fields,
+            format!("weapons.player.psprite.{i}.state"),
+            ps.state.map_or(u16::MAX, |s| s.0).to_le_bytes(),
+        );
+        field(
+            fields,
+            format!("weapons.player.psprite.{i}.tics"),
+            ps.tics.to_le_bytes(),
+        );
+        field(
+            fields,
+            format!("weapons.player.psprite.{i}.x"),
+            ps.position[0].bits().to_le_bytes(),
+        );
+        field(
+            fields,
+            format!("weapons.player.psprite.{i}.y"),
+            ps.position[1].bits().to_le_bytes(),
+        );
+    }
+}
+fn weapon_bytes(b: &mut Vec<u8>, event: &crate::WeaponEvent) {
+    use crate::WeaponEvent::*;
+    match event {
+        Entered {
+            slot,
+            position,
+            state,
+        } => {
+            b.extend([0, *slot, *position]);
+            b.extend(state.0.to_le_bytes());
+        }
+        Action {
+            slot,
+            position,
+            action,
+        } => {
+            b.extend([1, *slot, *position]);
+            b.extend(action.0.to_le_bytes());
+        }
+        Ammo {
+            slot,
+            ammo,
+            before,
+            after,
+        } => {
+            b.extend([2, *slot, *ammo]);
+            b.extend(before.to_le_bytes());
+            b.extend(after.to_le_bytes());
+        }
+        Light { slot, value } => {
+            b.extend([3, *slot]);
+            b.extend(value.to_le_bytes());
+        }
+        Fire {
+            slot,
+            weapon,
+            refire,
+        } => {
+            b.extend([4, *slot, *weapon as u8]);
+            b.extend(refire.to_le_bytes());
+        }
+        Bullet {
+            actor,
+            angle,
+            slope,
+            damage,
+        } => {
+            b.push(5);
+            b.extend(id(*actor));
+            b.extend(angle.to_le_bytes());
+            b.extend(slope.bits().to_le_bytes());
+            b.extend(damage.to_le_bytes());
+        }
+        Noise {
+            sector,
+            blocks,
+            target,
+        } => {
+            b.push(6);
+            b.extend(sector.to_le_bytes());
+            b.push(*blocks);
+            b.extend(id(*target));
+        }
+        Initialized { slot, actor } => {
+            b.extend([7, *slot]);
+            b.extend(id(*actor));
+        }
+        Random { kind, value } => b.extend([8, *kind, *value]),
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;

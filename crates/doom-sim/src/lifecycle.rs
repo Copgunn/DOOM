@@ -201,6 +201,15 @@ pub(crate) fn source_type_id(name: &str) -> Option<ActorTypeId> {
         .position(|(n, _)| *n == name)
         .map(|i| ActorTypeId(i as u16))
 }
+pub(crate) fn source_player_states() -> [StateId; 8] {
+    [1, 3, 7, 10, 11, 12, 13, 22].map(|i| StateId(SOURCE_TYPES[0].1[i] as u16))
+}
+pub(crate) fn source_sound(name: &str) -> Option<u16> {
+    SOURCE_SOUNDS
+        .iter()
+        .position(|n| *n == name)
+        .map(|i| i as u16)
+}
 pub(crate) fn source_state_id(name: &str) -> Option<StateId> {
     SOURCE_STATES
         .iter()

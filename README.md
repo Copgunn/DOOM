@@ -22,9 +22,10 @@ owner-authorized correction-head and post-merge CI. M3c adds typed actor states,
 spawning and controlled death in [PR #6](https://github.com/Copgunn/DOOM/pull/6),
 merged as `4dbb0a5` after correction-head and post-merge CI. M3d1 damage/hitscan
 foundations are implemented in [PR #7](https://github.com/Copgunn/DOOM/pull/7)
-on `feat/m3d1-damage-hitscan`; engineering review found no blocking defect within
-the declared scope. Final documentation correction and fresh checks precede the
-owner-authorized regular merge.
+merged as `c924f18` after fresh correction-head and post-merge CI. M3d2 player
+weapons and psprites are implemented in [PR #8](https://github.com/Copgunn/DOOM/pull/8)
+on `feat/m3d2-player-weapons-psprites`; engineering review gave a conditional GO.
+Final corrections and fresh checks precede the owner-authorized regular merge.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 
@@ -54,6 +55,8 @@ Implemented:
   targets and DSIM-v4. Metadata recognition does not imply monster gameplay.
 - Explicit M3d1 profile: bounded unbound-actor damage, source autoaim/hitscan,
   pain/knockback/kill/corpses, real puff/blood thinkers and DSIM-v5.
+- Explicit M3d2 profile: command-driven pistol/shotgun/chaingun, unpowered fallback
+  fist, source psprites/ammo/refire/switching, sector noise targets and DSIM-v6.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
 Choose the compatibility profile explicitly:
@@ -65,6 +68,7 @@ Choose the compatibility profile explicitly:
 | `Simulation::multisector` | DSIM-v3 | M3b static classic sectors, BSP/openings, step/dropoff and XY/Z/gravity |
 | `Simulation::actor_states` | DSIM-v4 | M3c typed actors and supported state/action lifecycle on static-sector physics |
 | `Simulation::combat` | DSIM-v5 | M3d1 explicit damage/aim/hitscan for admitted unbound actors |
+| `Simulation::player_weapons` | DSIM-v6 | M3d2 one live weapon player, source pistol/shotgun/chaingun and fallback fist |
 
 M3b consumes supplied BLOCKMAP lists in reference order. Conservative omissions
 are diagnostic, not automatic rebuilds or proof of broken geometry. Missing
@@ -150,7 +154,7 @@ no window, renderer, audio, wall clock or commercial assets.
 
 The original `headless -- 12` and `player_arena` examples preserve M2 coasting and
 M3a angled/solid collision evidence. `python tools/reference/check_headless.py`
-compares all five examples' debug/release output byte-for-byte.
+compares all six examples' debug/release output byte-for-byte.
 
 Initialize M3b from a validated `Map`:
 
@@ -237,6 +241,39 @@ does not establish monster execution. Bound-player armor/inventory/death,
 weapons/buttons/ammo/psprites, AI, item drops/scoring, missiles, radius attacks,
 sky/special effects and full vanilla synchronization remain future work.
 See [source findings and exact limits](docs/M3D1_REFERENCE.md).
+
+## Player weapon foundations
+
+```sh
+cargo run -p doom-sim --example player_weapons --locked
+```
+
+The asserted example checks every player/psprite/ammo/RNG capture against original
+C for pistol, seven-pellet shotgun, chaingun, held fire, switching, wall hits and
+deaths. Its final independent DSIM-v6 digest is `1cc5a89450da5585`.
+
+Choose `Simulation::player_weapons(map)`, spawn an original `ActorTypeId(0)` pawn,
+then call `initialize_weapon_player(slot, pawn, WeaponInventory::default())`.
+The source spawn subset is LIVE/health 100, owned fist+pistol, 50 clips, original
+ammo capacities and attack-down true. Setup enters the raise action immediately,
+so initial weapon Y is 122 units. One initialized player may occupy any of four
+ordered slots; capacity is at most 64 actors. `with_weapon_registry` admits exact
+source states and a narrowly labelled player-state fixture type for testing.
+
+Supply `TicCommand.buttons = BT_ATTACK` to fire through the actual psprite timing.
+Release with zero. Change using `BT_CHANGE | ((weapon as u8) << 3)`; supported
+selections are fist, pistol, shotgun and chaingun. Valid unowned selections are
+ignored as in the source. Explicit `WeaponInventory` setup can grant admitted
+weapons/ammo for level/testing setup; it is not a pickup system. Source fallback
+can select the fully supported unpowered fist when firearm ammo is exhausted.
+
+Weapon/flash psprites, ammo, light, refire and sector noise targets are authoritative
+state. Real impacts and damage use the existing combat pipeline. Direct combat
+APIs still reject bound players; a private firing route admits only the initialized
+shooter as source/inflictor. Player damage, armor, powers, full camera/spawn/respawn,
+pickups, chainsaw, supershotgun, rockets/plasma/BFG and projectile actors remain
+unsupported. Recoverable command/preflight errors preserve the entire snapshot.
+See [source findings and policies](docs/M3D2_REFERENCE.md).
 
 ## Typed actor lifecycle (M3c)
 
@@ -333,8 +370,9 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static sectors/BSP, openings, step/dropoff and XY/Z/gravity | Implemented, validated, merged |
 | M3c | Actor states, spawning and controlled death | Implemented, validated and merged |
-| M3d1 | Bounded damage/hitscan/kill foundations | Reviewed; authorized merge gated on fresh checks |
-| M3d2–M3e | Weapons, AI, integrated combat, interactions and moving sectors | Planned |
+| M3d1 | Bounded damage/hitscan/kill foundations | Merged as c924f18 |
+| M3d2 | Player weapons, psprites and ammo | Reviewed; authorized merge gated on fresh checks |
+| M3d3–M3e | AI, integrated combat, projectiles, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
 

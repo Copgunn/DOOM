@@ -79,9 +79,10 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   implemented functionality explicit. M1 parses resources/maps; M2 provides a
   narrow headless simulation profile; M3a adds player/solid XY and M3b adds
   static-sector BSP/openings/XY/Z. M3c adds typed actor lifecycle in profile 4; M3d1 adds bounded explicit unbound
-  damage/aim/hitscan in profile 5. Complete player/view, dynamic
+  damage/aim/hitscan in profile 5; M3d2 adds bounded player weapons/psprites
+  in profile 6. Complete player/view, dynamic
   sectors, combat, specials, demos and rendering remain incomplete. Preserve
-  all M2/v1, M3a/v2, M3b/v3, M3c/v4 and M3d1/v5 suites; read their source investigations before
+  all M2/v1, M3a/v2, M3b/v3, M3c/v4 and M3d1/v5 and M3d2/v6 suites; read their source investigations before
   changing movement.
   Preserve tested policies in `docs/COMPATIBILITY.md` and the versioned canonical
   format in `docs/STATE_FORMAT.md`. Read source findings in `docs/M2_REFERENCE.md`.
@@ -96,12 +97,13 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   user thinker budgets have a separate documented nontransactional contract.
 - Actor identity, thinker order and spatial order are separate. Never sort handles
   to choose blockers; successful same-cell moves reinsert at spatial cell head.
-- Run all five reference generators and independent golden encoders on Linux;
+- Run all six reference generators and independent golden encoders on Linux;
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
 - M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
-  correction-head and post-merge CI. M3d1 received conditional regular-merge authorization in the M3d2 mission,
-  after final correction and fresh checks. M3d2 must stop at owner review; no
-  M3d2 or later subphase merge is authorized.
+  correction-head and post-merge CI. M3d1 was regularly merged as c924f18 after fresh correction-head and
+  post-merge CI in the M3d2 mission. M3d2 received conditional regular-merge authorization in the M3d2b mission,
+  subject to final corrections and fresh checks. M3d2b must stop at owner review;
+  no M3d2b or later subphase merge is authorized.
 
 - M3b consumes supplied BLOCKMAP lists without rebuilding them; conservative
   omissions are diagnostic, not proof of spatial correctness. Keep older profiles
@@ -120,3 +122,16 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - Run `generate_m3d1.py --check`, `m3d1_snapshot_goldens.py --check`, all five
   debug/release examples and the bounded combat fuzz target for relevant changes.
   Preserve all historical generators, fixtures and the original shared builder.
+
+- Read `docs/M3D2_REFERENCE.md` before weapon/player changes. Keep actor and
+  psprite dispatch separate. Preserve original active-slot/player-before-thinker,
+  weapon-before-flash, real impact-before-damage and per-pellet RNG order.
+- Profile 6 admits one LIVE weapon player and at most 64 actors. Preserve exact
+  source state admission, bounded source pawn fixtures, protected bound targets
+  and the private shooter-only combat route. No global player-damage enablement.
+- Weapon preflight copies only the small player/RNG/pawn record and overlays
+  actually touched targets. Preserve all canonical fields on recoverable errors;
+  no full Simulation/Map/store clone per tic. Unsupported actions never no-op.
+- Run `generate_m3d2.py --check`, `m3d2_snapshot_goldens.py --check`, all six
+  debug/release examples and bounded weapon fuzzing, alongside every older suite.
+  All v1-v5 schemas and historical helpers/fixtures/encoders remain unchanged.

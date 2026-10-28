@@ -283,3 +283,52 @@ handles, damage, angles/range/slope and step timing; recoverable errors must lea
 all snapshot fields unchanged. ASan with `detect_leaks=0` does not verify leaks.
 Record the observed run count/toolchain and report any crash honestly. Fuzz
 corpora/artifacts/builds stay ignored; minimized failures become stable tests.
+
+## M3d2 player weapons
+
+```sh
+python3 tools/reference/generate_m3d2.py --check
+python3 tools/reference/m3d2_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3d2 --test m3d2_reference --test m3d2_snapshots --locked
+cargo run -p doom-sim --example player_weapons --locked
+python3 tools/reference/check_headless.py
+cargo +nightly fuzz build
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_weapons -- -runs=10000 -max_len=129
+```
+
+Run all earlier generators/encoders and required stable/release/MSRV checks too.
+Linux CI reproduces six reference profiles and encoders. All stable CI platforms
+run recorded comparisons, independent v1-v6 goldens and six-example stdout equality.
+Public tests require no proprietary data, device or C compiler; reproduction needs
+GNU C. Five fuzz targets compile separately under nightly.
+
+`m3d2_reference` compares 38 original-body scenarios, 4,890 captures and 422,943
+player/actor field values, plus angles, noise targets and combined event order.
+C allocation ordinals map independently to observed Rust generations so slot reuse
+is checked without treating addresses or C allocation order as canonical storage.
+Cases cover all four input slots, held/released/repressed attack, raise timing,
+switches during raise/ready/fire, ammo zero/last rounds, two-target shotgun order,
+source body/bob timing, walls/vertical/side aim, deaths and sound-block propagation.
+RNG wrapper counts show 323 draws in held shotgun and 268 in the long pistol case,
+including wrap. Older source comparison/golden fixtures remain unchanged.
+
+The separate v6 encoder uses C rows and explicit schema/setup only. Its 69 captures
+and 24 complete byte states cover initial/raise/ready/attack-start and settled
+outcomes. Full named-field comparisons precede digest comparisons. Transient shot
+state is compared per tic by the C reference test; no full transient-shot v6 byte
+fixture claim is made. The example asserts each player capture, pellet counts,
+ammo, switching, walls and deaths, ending at independent digest `1cc5a89450da5585`.
+
+Nine API policy tests and two internal interpreter tests cover unsupported commands
+in all slots, setup/ownership/actions, atomic seven-impact capacity rejection,
+protected bound targets, pending/stale/reused identities, pause/read schedules,
+512-tic repeated streams, earliest ammo-field divergence, extreme bob momentum,
+zero/null/infinite/coordinate psprite semantics and bounded pathological chains.
+Only the isolated internal interpreter tests use modified psprite definitions;
+public profile admission rejects them before mutation.
+
+The bounded weapon fuzz target uses at most 32 commands after raising, three
+admitted loadouts and whole-snapshot checks on every recoverable error. It adds
+no stable dependency. Evolving corpora, sanitizer outputs and builds remain ignored;
+only a tiny original synthetic seed is tracked. ASan with leak detection disabled
+provides no LeakSanitizer evidence. Report observed counts and any failures.

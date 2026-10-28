@@ -84,7 +84,7 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
-        if self.profile == Profile::Combat {
+        if matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
             self.validate_combat_type(ty)?;
         } else {
             self.registry_required()?.validate_type(ty, &self.sectors)?;
@@ -107,7 +107,7 @@ impl Simulation {
         let registry = self.registry_required()?;
         registry.validate_state(state)?;
         for ty in registry.spawn_dependencies(state)? {
-            if self.profile == Profile::Combat {
+            if matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
                 registry.validate_type_combat(ty, &self.sectors)?;
             } else {
                 registry.validate_type(ty, &self.sectors)?;
@@ -252,12 +252,12 @@ impl Simulation {
                 report.filtered += 1;
                 continue;
             }
-            if self.profile == Profile::Combat {
+            if matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
                 registry.validate_type_combat(ty, &self.sectors)?;
             } else {
                 registry.validate_type(ty, &self.sectors)?;
             }
-            if self.profile == Profile::Combat {
+            if matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
                 self.validate_combat_type(ty)?;
             }
             selected.push((*thing, ty));

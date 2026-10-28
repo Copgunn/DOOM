@@ -382,3 +382,64 @@ evaluates left then right RNG and multiplies by 1024, documented in provenance.
 C-undefined extremes are tested as Rust safety policies. Long repeated runs and
 fuzzing are project consistency evidence. None establishes full vanilla/DOS demo
 synchronization, authentic IWAD validation or a playable game.
+
+## M3d2 / explicit profile 6
+
+Pistol, shotgun and optional chaingun now execute through source player commands
+and psprites. Unpowered fist is included for exact exhausted-ammo fallback.
+Source LIVE initialization uses health 100, fist+pistol ownership, 50 clips,
+maxammo [200,50,300,50] and attackdown true. Initialization immediately executes
+Raise, producing weapon Y=122. One player can occupy any slot 0..3; the profile
+admits at most 64 actors. Full P_SpawnPlayer/HUD/camera/intermission/respawn parity
+is excluded. Weapon bob and PLAY/RUN/ATK state timing are implemented; complete
+player view/landing effects remain outside the verified weapon slice.
+
+ATTACK=1 and CHANGE=4 with selection bits 3..5 are supported. Reject USE, SPECIAL,
+unknown bits, selections without CHANGE, deferred weapons and active weapon buttons
+in inactive slots before mutation. Valid unowned selections are ignored. Weapon
+changes wait for source ready/refire/lower states; attack during raise/animations,
+held fire, release/repress and last/zero rounds follow source timing. wp_nochange
+is **10**, after NUMWEAPONS=9. No reload mechanic is invented for these weapons.
+
+Source psprite null entry retains tics/coordinates; zero states chain, -1 persists,
+misc1 gates both coordinates, and current state/tics after recursive actions govern
+continuation. Flash updates on its creation tic. A_WeaponReady, Lower, Raise,
+ReFire, FirePistol, FireShotgun, FireCGun, Light0/1/2 and unpowered Punch execute
+in the separate psprite dispatcher. A_GunFlash was investigated but is not reached
+by these admitted weapons; rocket/BFG paths requiring it remain excluded.
+
+BulletSlope probes base/+/-2^26 at range 1024 without changing actual shot angle.
+Pistol first fire is accurate, refire spreads; shotgun aims once and fires seven
+sequential pellets. Damage draw precedes spread draws, then real impact/RNG and
+actor damage complete before the next pellet. Chaingun has two firing states,
+source flash offset and a sound-before-zero-ammo return. Fist uses its original
+unpowered damage/spread/aim, hit sound and target-facing turn. Berserk is excluded.
+Source spread's undefined negative shift/evaluation order is adapted to ordered
+left/right draws and multiplication, as recorded in provenance.
+
+P_FireWeapon's unconditional P_NoiseAlert is implemented, including source sector
+line order, openings, at most one SOUNDBLOCK crossing and persistent sound targets.
+It does not execute monster perception/AI. Target handles retain generations after
+removal and never alias reused slots. Rendering remains independent.
+
+Only exact original state tables/source types and the explicit player-state fixture
+variation are admitted. Shootable types are unbound source player pawns or the
+validated type-136 fixture; source pain/see/death closures are preserved. Native
+combat probes, AI/callback spawning/removal, scoring/drop types and unsupported
+weapon actions cannot enter this profile. The private firing route admits the
+initialized bound shooter, while direct combat and target damage remain protected.
+Capacity reserves an impact for every requested bullet, even a predicted miss,
+so a full store can conservatively reject a source request that would spawn fewer
+effects. Pending retirement supplies no capacity credit. Trace/coordinate limits,
+work and invalid setup errors preserve
+all canonical state. Source-undefined extreme player bob momentum rejects safely.
+
+38 original-body C scenarios compare 4,890 player captures, 132,030 player fields,
+290,913 live actor fields, actor angles, sector sound targets and combined weapon/
+lifecycle event order. Repeated firing covers RNG wrap, sequential targets and
+complete pain/death progression. Independent v6 encoding checks 69 captures and
+24 full byte fixtures, including initialization/raising/attack-start and settled
+results; per-tic C comparisons cover transient firing states separately. Eleven
+additional unit/policy tests and fuzzing are project consistency evidence.
+No complete players, multiplayer gameplay, inventory/powers, chainsaw/supershotgun,
+projectiles, demos, authentic IWAD or full vanilla/DOS synchronization is claimed.

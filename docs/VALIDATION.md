@@ -810,3 +810,117 @@ are cleanup candidates only; none was deleted. No active M3d1 branch is eligible
 for cleanup. Continue with separately reviewed M3d2 weapon/psprite/ammo/button
 work after the authorized M3d1 merge and post-merge verification. No M3d2 or
 later subphase merge is authorized.
+
+
+## M3d1 completed finalization for M3d2
+
+Reviewed head `f17e7937d2ffd4eba1ae8db3eee954909d129153` received the required
+documentation-only correction `838b401444e94c3c03348687aad6c502e19f2f53`.
+Required local checks passed again: 110 workspace/MSRV checks (two private tests
+ignored), 86 release tests, build/fmt/Clippy/docs, all five original C generators
+and independent encoders, and five-example debug/release equality.
+[Fresh CI 40619300366](https://github.com/Copgunn/DOOM/actions/runs/40619300366)
+passed all four jobs on that exact correction before regular merge.
+
+PR #7 is merged/closed as `c924f18424a7a58f892fc8b6a7c2b5011db05c5b`, with parents
+`4dbb0a51325119e5578705126f97bdc5d9723049` and
+`838b401444e94c3c03348687aad6c502e19f2f53`. Its tree equals the correction head.
+Remote/local master match the merge. [Post-merge CI 40619889131](https://github.com/Copgunn/DOOM/actions/runs/40619889131)
+passed all four jobs on that merge before creating the M3d2 branch. All 165 original
+files, history/attribution, public GPL-2.0-only status and asset protections were
+verified. No private repository or commercial asset was accessed. No branch was
+deleted. M3d2 has no merge authorization.
+
+## M3d2 local delivery evidence
+
+Branch `feat/m3d2-player-weapons-psprites` starts from verified M3d1 merge `c924f18`.
+Source investigation `41d89e5` preceded runtime changes; `19785b5` implements the
+weapon/psprite interpreter and private combat integration, and `7e4c0be` records
+independent source evidence/tests. This milestone must remain open and unmerged
+for separate owner review. No projectile or full-player acceptance is implied.
+
+Observed local results (stable Rust 1.99.1 and compiler floor 1.85.0):
+
+| Check | Observed result |
+| --- | --- |
+| Workspace build, root/fuzz fmt, Clippy `-D warnings` | Passed |
+| Workspace tests | 123 passed including one doctest; two private tests ignored |
+| Release doom-sim + doom-types | 99 passed |
+| Rust 1.85 workspace | 123 passed including doctest; two private tests ignored |
+| Rustdoc `-D warnings` | Passed |
+| All six C generators and independent encoders | Passed reproduction |
+| Six asserted examples, debug/release stdout equality | Passed |
+| All five nightly fuzz targets | Built |
+| Player-weapon ASan smoke | 10,000 runs, no crash, 420 seconds; leak detection disabled |
+
+38 original-body C scenarios compare 4,890 captures, 132,030 player fields and
+290,913 live actor fields (422,943 total), plus actor angles, sector sound targets
+and combined source weapon/lifecycle event order. Source RNG counts include 323
+held-shotgun draws and 268 long-pistol draws, covering wrap. Pistol, seven-pellet
+shotgun, optional chaingun and unpowered fallback fist are verified through actual
+player commands, psprites, effects/damage and complete supported death progression.
+Cases cover all four slots, movement/bob/stop, positive/negative turn, early-held
+attack, raise/ready/fire switches, ammo exhaustion, second chaingun flash/last round,
+successive shotgun targets, vertical/wall/side aim and one/two sound blockers.
+
+Independent v6 encoding passes 69 captures and 24 full byte states, with named-field
+diagnostics. Captures cover setup/raising/ready/attack-start and settled results;
+transient firing fields/order and generational slot reuse have separate per-tic C
+comparisons. Older v1-v5 fields, bytes, fixtures, helpers and encoders are unchanged.
+Nine API policies and two internal interpreter tests separately verify atomic
+errors, capacity, stale/pending/reused handles, protected bound targets, pause,
+512-tic deterministic streams, field divergence and pathological psprite bounds.
+Those tests and fuzzing are project consistency evidence, not additional C parity.
+
+`player_weapons` asserts every C player capture in nine scenarios, pellet counts,
+ammo, refire/switching, walls and deaths. Final independent digest:
+`1cc5a89450da5585`. No graphics, sound device, private data or network is needed.
+
+ASan used nightly 1.101.0/cargo-fuzz 0.13.2, a temporary 12-seed synthetic corpus,
+129-byte input limit and at most 32 commands after raising. This is bounded smoke
+evidence, not exhaustive fuzzing or LeakSanitizer verification. No optimization
+superiority claim is made. Full player damage/view/respawn, armor/powers/pickups,
+chainsaw/supershotgun, projectile weapons/actors, AI, moving specials and demos
+remain outside this slice. Authentic IWAD/full vanilla/DOS synchronization is untested.
+
+All 165 upstream files remain byte-identical to `a77dfb9`; history, attribution,
+GPL-2.0-only workspace/fuzz metadata, public visibility/default master and asset
+exclusions are preserved. No commercial assets or private repositories were
+accessed. No branches were deleted. Exact-head remote CI is verified separately
+before owner-review readiness; local checks alone do not establish cross-platform
+success.
+
+
+### M3d2 GitHub delivery
+
+[PR #8](https://github.com/Copgunn/DOOM/pull/8), **M3d2: Implement Vanilla Player
+Weapons, Psprites and Ammo**, targets verified `master` from
+`feat/m3d2-player-weapons-psprites`. Implemented head
+`75f2c72306c57798aa62699bb34d2a1ad8c99e2c` passed all four jobs in
+[CI 40623977578](https://github.com/Copgunn/DOOM/actions/runs/40623977578): stable
+Linux, Windows, macOS and Rust 1.85. Stable jobs include recorded C comparisons,
+independent goldens, release tests, six-example debug/release equality and docs;
+Linux additionally reproduces all six generators/encoders.
+
+Reviewed final head `0e94091c858624abed3c31ae3eaa3271f504fe47` passed all four
+jobs in [CI 40624283411](https://github.com/Copgunn/DOOM/actions/runs/40624283411).
+The live PR matches that head and base `c924f18424a7a58f892fc8b6a7c2b5011db05c5b`;
+no intervening changes, reviews or comments were found. Engineering review gave
+a conditional GO with no demonstrated blocker within the declared scope.
+
+The M3d2b mission conditionally authorizes a regular merge of PR #8 after this
+final documentation correction and fresh mandatory local/exact-head CI checks.
+This correction records profile 5/6 in the general schema table and final review
+evidence; runtime, source fixtures and DSIM-v1-v6 expectations are unchanged.
+Fresh correction-head CI must pass before merge, followed by merge-parent/master
+and post-merge CI verification before M3d2b implementation. M3d2b itself must remain
+open and unmerged for separate owner review.
+
+Known conservative policy: capacity reserves one impact per requested bullet,
+including predicted misses. A full store may therefore reject a valid source
+request that would produce fewer effects. The declared 64-slot/single-live-player
+profile and exact state admission are compatibility bounds, not complete gameplay.
+Historical local M0-M3d1 merged branches and preserved remote milestone references
+are cleanup candidates only; none was deleted. The active M3d2 branch stays intact.
+M3d2 has conditional regular-merge authorization; no M3d2b or later milestone
+merge is authorized.

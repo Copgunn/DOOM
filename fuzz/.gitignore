@@ -13,3 +13,6 @@
 
 /corpus/combat/*
 !/corpus/combat/bounded_attacks
+
+/corpus/player_weapons/*
+!/corpus/player_weapons/held_trigger

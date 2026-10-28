@@ -1,5 +1,5 @@
 //! Bounded source BLOCKMAP/intercept tracing; no gameplay mutation.
-use crate::{ActorId, CombatError, Fixed, Simulation};
+use crate::{Actor, ActorId, CombatError, Fixed, Simulation};
 /// A stable line or generation-aware actor identity in a trace.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TraceObject {
@@ -303,8 +303,17 @@ pub(crate) fn aim(
     angle: u32,
     range: Fixed,
 ) -> Result<AimResult, CombatError> {
+    aim_with(sim, shooter, angle, range, &|id| sim.actor(id).copied())
+}
+pub(crate) fn aim_with(
+    sim: &Simulation,
+    shooter: ActorId,
+    angle: u32,
+    range: Fixed,
+    lookup: &impl Fn(ActorId) -> Option<Actor>,
+) -> Result<AimResult, CombatError> {
     let trace = collect(sim, shooter, angle, range)?;
-    let a = sim.actor(shooter).unwrap();
+    let a = lookup(shooter).unwrap();
     let z = a.z() + Fixed::from_bits(a.height().bits() >> 1) + Fixed::from_map_units(8);
     let mut result = AimResult {
         trace,
@@ -346,7 +355,7 @@ pub(crate) fn aim(
                 if id == shooter {
                     continue;
                 }
-                let actor = sim.actor(id).unwrap();
+                let actor = lookup(id).unwrap();
                 if actor.life().unwrap().flags & 4 == 0 {
                     continue;
                 }
@@ -372,7 +381,19 @@ pub(crate) fn hit(
     range: Fixed,
     slope: Fixed,
 ) -> (Option<TraceObject>, Option<[Fixed; 3]>, u32) {
-    let a = sim.actor(shooter).unwrap();
+    hit_with(sim, shooter, trace, range, slope, &|id| {
+        sim.actor(id).copied()
+    })
+}
+pub(crate) fn hit_with(
+    sim: &Simulation,
+    shooter: ActorId,
+    trace: &HitscanTrace,
+    range: Fixed,
+    slope: Fixed,
+    lookup: &impl Fn(ActorId) -> Option<Actor>,
+) -> (Option<TraceObject>, Option<[Fixed; 3]>, u32) {
+    let a = lookup(shooter).unwrap();
     let z = a.z() + Fixed::from_bits(a.height().bits() >> 1) + Fixed::from_map_units(8);
     let mut visited = 0;
     for intercept in &trace.intercepts {
@@ -396,7 +417,7 @@ pub(crate) fn hit(
                 if id == shooter {
                     false
                 } else {
-                    let a = sim.actor(id).unwrap();
+                    let a = lookup(id).unwrap();
                     a.life().unwrap().flags & 4 != 0
                         && (a.z() + a.height() - z) / dist >= slope
                         && (a.z() - z) / dist <= slope
