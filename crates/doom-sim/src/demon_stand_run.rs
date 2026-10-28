@@ -49,3 +49,7 @@ impl Simulation {
         Self::with_demon_lifecycle_profile(map, limit, registry, options, Profile::DemonStandRun)
     }
 }
+
+#[cfg(test)]
+#[path = "demon_stand_run_tests.rs"]
+mod tests;
