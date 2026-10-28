@@ -714,6 +714,11 @@ pub struct ActorLife {
     pub reaction_time: i32,
     /// Source retarget threshold; damage sets 100, A_Chase countdown remains later.
     pub threshold: i32,
+    /// Source direction: E, NE, N, NW, W, SW, S, SE, NODIR (0..8).
+    /// Initialized to EAST by source zeroed spawn; serialized only in profile 9.
+    pub movedir: u8,
+    /// Source walking countdown, initialized to zero; profile 9 only.
+    pub movecount: i32,
     /// Full admitted source flags.
     pub flags: u32,
     /// Validated assigned identity, retained even after target retirement.
@@ -865,6 +870,8 @@ pub(crate) fn make_actor(
             },
             flags,
             threshold: 0,
+            movedir: 0,
+            movecount: 0,
             target: None,
             death_requested: false,
             spawnpoint: None,

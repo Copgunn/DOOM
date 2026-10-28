@@ -14,6 +14,8 @@
 extern crate self as doom_sim;
 
 mod actor;
+mod direction;
+pub use direction::MoveDirection;
 mod perception;
 mod sight;
 pub use perception::{PerceptionError, PerceptionEvent, PerceptionPlayer};
