@@ -84,6 +84,12 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
+        if self.profile == Profile::Perception
+            && (position.iter().any(|v| !crate::sight::within(*v, 1024))
+                || matches!(height,SpawnHeight::Absolute(z) if !crate::sight::within(z,1024)))
+        {
+            return Err(PerceptionError::Arithmetic.into());
+        }
         if self.profile == Profile::Projectiles {
             if ty == ActorTypeId(34) {
                 return Err(ProjectileError::Controlled.into());

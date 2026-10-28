@@ -38,7 +38,7 @@ MAPS += [maps.fixture([(0,128),(0,128)],omit=True),replace_lumps(maps.fixture([(
 
 def case(label,mode=0,map=0,ox=-64,oy=0,oz=0,angle=0,otype=None,flags=6,sound_id=POSIT,skip=0,allaround=0,sound=-1,emitter=1,tics=1,obsheight=56,stand=3,threshold=100,flip_slot=-1,flip_health=100,players=None):
  if players is None:players=[(64,0,0,1,100),(-32,16,0,0,100),(-32,-16,0,0,100),(-96,32,0,0,100)]
- c=dict(label=label,mode=mode,map=map,ox=ox*U,oy=oy*U,oz=oz*U,angle=angle,otype=(0 if mode==0 else 136) if otype is None else otype,flags=flags,sound_id=sound_id,skip=skip,allaround=allaround,sound=sound,emitter=emitter,tics=tics,obsheight=obsheight*U,stand=stand,threshold=0 if mode==0 else threshold,flip_slot=flip_slot,flip_health=flip_health)
+ c=dict(label=label,mode=mode,map=map,ox=ox*U,oy=oy*U,oz=oz*U,angle=angle,otype=(0 if mode<2 else 136) if otype is None else otype,flags=flags,sound_id=sound_id,skip=skip,allaround=allaround,sound=sound,emitter=emitter,tics=tics,obsheight=obsheight*U,stand=stand,threshold=0 if mode==0 else threshold,flip_slot=flip_slot,flip_health=flip_health)
  for i,p in enumerate(players):
   for key,value in zip(['x','y','z','active','health'],p):c[f'p{i}{key}']=value*U if key in ['x','y','z'] else value
  return c
@@ -57,7 +57,7 @@ if(argc!=2)return 2;if(!strcmp(argv[1],"sides")){side_vectors();return 0;}if(!st
 original_states[0]=states[1];original_states[1]=states[2];for(i=0;i<3;i++)original_types[i]=mobjinfo[ids[i]];
 for(c=0;c<CASE_COUNT;c++){int* v=input[c];for(i=0;i<owned_count;i++)free(owned[i]);owned_count=0;memset(alive,0,sizeof(alive));memset(players,0,sizeof(players));memset(playeringame,0,sizeof(playeringame));scenario=c;operation=0;prndindex=0;query_index=-1;P_InitThinkers();load_perception_world(v[V_MAP]);
 states[1]=original_states[0];states[2]=original_states[1];for(i=0;i<3;i++)mobjinfo[ids[i]]=original_types[i];
-if(v[V_MODE]!=0){memset(&states[1],0,sizeof(state_t));memset(&states[2],0,sizeof(state_t));states[1].sprite=SPR_POSS;states[1].tics=v[V_STAND];states[1].action.acp1=(actionf_p1)A_Look;states[1].nextstate=1;states[2].sprite=SPR_POSS;states[2].frame=1;states[2].tics=-1;
+if(v[V_MODE]>=2){memset(&states[1],0,sizeof(state_t));memset(&states[2],0,sizeof(state_t));states[1].sprite=SPR_POSS;states[1].tics=v[V_STAND];states[1].action.acp1=(actionf_p1)A_Look;states[1].nextstate=1;states[2].sprite=SPR_POSS;states[2].frame=1;states[2].tics=-1;
 for(i=0;i<3;i++){mobjinfo[ids[i]]=mobjinfo[MT_PLAYER];mobjinfo[ids[i]].doomednum=-1;mobjinfo[ids[i]].spawnstate=1;mobjinfo[ids[i]].seestate=2;mobjinfo[ids[i]].seesound=v[V_SOUND_ID];mobjinfo[ids[i]].reactiontime=8;mobjinfo[ids[i]].flags=v[V_FLAGS];mobjinfo[ids[i]].height=v[V_OBSHEIGHT];}}
 for(i=0;i<v[V_SKIP];i++){int draw=P_Random();observe(9,-1,draw);}
 observer=P_SpawnMobj(v[V_OX],v[V_OY],v[V_OZ],v[V_OTYPE]);observer->angle=(angle_t)v[V_ANGLE];observer->threshold=v[V_THRESHOLD];

@@ -28,3 +28,34 @@ fn original_reject_bsp_segs_clipping_and_quirks_match_c() {
     assert_eq!(cases, 21);
     println!("C sight: {cases} scenarios, {visits} ordered visits");
 }
+#[test]
+fn original_player_scans_preserve_slot_health_lastlook_and_fov_order() {
+    let mut totals = [0; 7];
+    for (which, c) in fixtures::cases().iter().enumerate() {
+        if c.n(0) != 1 {
+            continue;
+        }
+        let mut sim = fixtures::sight_setup(c);
+        let mut trace = fixtures::Trace::default();
+        trace.check(&sim, which, 0, sim.pending_events());
+        for op in 1..=c.n(13) as usize {
+            fixtures::flip(&mut sim, c, op);
+            let pending = sim.pending_events().len();
+            sim.look_for_players(ActorId::from_parts(0, 1), c.n(10) != 0)
+                .unwrap();
+            trace.check(&sim, which, op, &sim.pending_events()[pending..]);
+        }
+        for (a, b) in totals.iter_mut().zip([
+            trace.actor_fields,
+            trace.events,
+            trace.queries,
+            trace.visits,
+            trace.slots,
+            trace.draws,
+            trace.roster_fields,
+        ]) {
+            *a += b;
+        }
+    }
+    println!("C scans: {totals:?}");
+}

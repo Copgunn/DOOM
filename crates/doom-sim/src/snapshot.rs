@@ -197,6 +197,10 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        Event::Perception(event) => {
+            b.push(16);
+            crate::perception::event_bytes(&mut b, event);
+        }
         Event::Projectile(event) => {
             use crate::{ProjectileAim, ProjectileEvent};
             b.push(15);
@@ -553,7 +557,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .flat_map(id)
                 .collect::<Vec<_>>();
             field(&mut fields, format!("sector.{i}.actors"), order);
-            if version == 6 {
+            if matches!(version, 6 | 8) {
                 field(
                     &mut fields,
                     format!("sector.{i}.soundtarget"),
@@ -581,6 +585,25 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             c.angle_turn.to_le_bytes(),
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
+    }
+    if version == 8 {
+        for (i, p) in sim.perception_players.iter().enumerate() {
+            field(
+                &mut fields,
+                format!("perception.player.{i}.active"),
+                [u8::from(p.active)],
+            );
+            field(
+                &mut fields,
+                format!("perception.player.{i}.health"),
+                p.health.to_le_bytes(),
+            );
+            field(
+                &mut fields,
+                format!("perception.player.{i}.actor"),
+                optional_id(p.actor),
+            );
+        }
     }
     if version == 6 {
         weapon_fields(&mut fields, sim.weapon_player.as_ref());

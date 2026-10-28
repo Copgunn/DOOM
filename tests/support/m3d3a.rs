@@ -54,6 +54,9 @@ pub fn map(index: usize) -> doom_map::Map {
 }
 pub fn sight_setup(c: &Case) -> Simulation {
     let mut sim = Simulation::monster_perception(map(c.n(1) as usize)).unwrap();
+    for _ in 0..c.n(9) {
+        sim.gameplay_random();
+    }
     sim.spawn_type(
         ActorTypeId(0),
         [c.f(2), c.f(3)],
@@ -68,7 +71,31 @@ pub fn sight_setup(c: &Case) -> Simulation {
         )
         .unwrap();
     }
+    configure(&mut sim, c);
     sim
+}
+pub fn configure(sim: &mut Simulation, c: &Case) {
+    sim.configure_perception_observer(ActorId::from_parts(0, 1), c.n(5) as u32, c.n(16))
+        .unwrap();
+    for i in 0..4 {
+        sim.set_perception_player(
+            i,
+            PerceptionPlayer {
+                active: c.n(22 + i * 5) != 0,
+                health: c.n(23 + i * 5),
+                actor: Some(ActorId::from_parts(i as u32 + 1, 1)),
+            },
+        )
+        .unwrap();
+    }
+}
+pub fn flip(sim: &mut Simulation, c: &Case, op: usize) {
+    if op == 2 && c.n(17) >= 0 {
+        let slot = c.n(17) as usize;
+        let mut p = sim.perception_players()[slot];
+        p.health = c.n(18);
+        sim.set_perception_player(slot, p).unwrap();
+    }
 }
 pub type Row = (String, Vec<i64>);
 pub fn rows(which: usize, op: usize) -> Vec<Row> {
@@ -177,4 +204,268 @@ pub fn assert_sight(result: &SightResult, rows: &[Row], query: i64, observer: i6
         end.1[1..],
         "sight final interval query {query}"
     );
+}
+#[derive(Default)]
+pub struct Trace {
+    pub actor_fields: usize,
+    pub events: usize,
+    pub queries: usize,
+    pub visits: usize,
+    pub slots: usize,
+    pub draws: usize,
+    pub noise: usize,
+    pub roster_fields: usize,
+    pub sound_fields: usize,
+    rng: doom_types::DoomRng,
+}
+fn ordinal(id: ActorId) -> i64 {
+    assert_eq!(id.generation(), 1);
+    i64::from(id.slot())
+}
+impl Trace {
+    pub fn check(&mut self, sim: &Simulation, which: usize, op: usize, events: &[Event]) {
+        let rows = rows(which, op);
+        for (_, c) in rows.iter().filter(|(tag, c)| tag == "E" && c[0] == 8) {
+            assert_eq!(
+                i64::from(self.rng.p_random()),
+                c[2],
+                "case {which} op {op} RNG draw"
+            );
+            self.draws += 1;
+        }
+        assert_eq!(sim.rng().indices(), self.rng.indices());
+        let mut out = Vec::<Row>::new();
+        let mut query = 0_i64;
+        for e in events {
+            let value = match e {
+                Event::GameplayRandom(v) => Some(("E", vec![9, -1, i64::from(*v)])),
+                Event::Think(id) => Some(("E", vec![0, ordinal(*id), 0])),
+                Event::RemovalMarked(id) => Some(("E", vec![2, ordinal(*id), 0])),
+                Event::Retired(id) => Some(("E", vec![3, ordinal(*id), 0])),
+                Event::ActorState(s) => match s {
+                    ActorStateEvent::Initialized { actor, actor_type } => {
+                        Some(("E", vec![1, ordinal(*actor), i64::from(actor_type.0)]))
+                    }
+                    ActorStateEvent::Entered { actor, state } => {
+                        Some(("E", vec![4, ordinal(*actor), i64::from(state.0)]))
+                    }
+                    ActorStateEvent::Action {
+                        actor,
+                        action: ActorAction::Original(action),
+                    } => Some(("E", vec![5, ordinal(*actor), i64::from(action.0)])),
+                    ActorStateEvent::Target { actor, target } => {
+                        Some(("E", vec![6, ordinal(*actor), target.map_or(-1, ordinal)]))
+                    }
+                    ActorStateEvent::Sound { actor, sound } => {
+                        Some(("E", vec![7, actor.map_or(-1, ordinal), i64::from(*sound)]))
+                    }
+                    _ => None,
+                },
+                Event::Perception(p) => match p {
+                    PerceptionEvent::ScanStart {
+                        actor,
+                        allaround,
+                        lastlook,
+                        stop,
+                    } => Some((
+                        "K",
+                        vec![
+                            2,
+                            ordinal(*actor),
+                            i64::from(*allaround),
+                            i64::from(*lastlook),
+                            i64::from(*stop),
+                        ],
+                    )),
+                    PerceptionEvent::Slot {
+                        actor,
+                        slot,
+                        active,
+                        count,
+                    } => {
+                        self.slots += 1;
+                        Some((
+                            "K",
+                            vec![
+                                3,
+                                ordinal(*actor),
+                                i64::from(*slot),
+                                i64::from(*active),
+                                i64::from(*count),
+                            ],
+                        ))
+                    }
+                    PerceptionEvent::Health {
+                        actor,
+                        slot,
+                        health,
+                    } => Some((
+                        "K",
+                        vec![4, ordinal(*actor), i64::from(*slot), i64::from(*health)],
+                    )),
+                    PerceptionEvent::Facing {
+                        actor,
+                        slot,
+                        angle,
+                        distance,
+                        accepted,
+                    } => Some((
+                        "K",
+                        vec![
+                            5,
+                            ordinal(*actor),
+                            i64::from(*slot),
+                            i64::from(*angle),
+                            i64::from(distance.is_some()),
+                            distance.map_or(0, |d| i64::from(d.bits())),
+                            i64::from(*accepted),
+                        ],
+                    )),
+                    PerceptionEvent::ScanEnd {
+                        actor,
+                        found,
+                        lastlook,
+                    } => Some((
+                        "K",
+                        vec![7, ordinal(*actor), i64::from(*found), i64::from(*lastlook)],
+                    )),
+                    PerceptionEvent::EmptyRoster(_) => {
+                        panic!("nonterminating original roster is a separate safety test")
+                    }
+                    PerceptionEvent::Sight {
+                        observer,
+                        target,
+                        result: r,
+                    } => {
+                        assert_sight(r, &rows, query, ordinal(*observer), ordinal(*target));
+                        out.push((
+                            "V".into(),
+                            vec![
+                                query,
+                                0,
+                                ordinal(*observer),
+                                ordinal(*target),
+                                i64::from(r.reject_index),
+                                i64::from(r.rejected),
+                            ],
+                        ));
+                        for v in sight_visits(r) {
+                            let mut c = vec![query];
+                            c.extend(v);
+                            out.push(("V".into(), c));
+                        }
+                        out.push((
+                            "Q".into(),
+                            vec![
+                                query,
+                                i64::from(r.visible),
+                                r.eye.map_or(0, |v| i64::from(v.bits())),
+                                r.slopes.map_or(0, |s| i64::from(s[0].bits())),
+                                r.slopes.map_or(0, |s| i64::from(s[1].bits())),
+                            ],
+                        ));
+                        query += 1;
+                        self.queries += 1;
+                        self.visits += r.visits.len();
+                        None
+                    }
+                },
+                Event::Weapon(WeaponEvent::Noise {
+                    sector,
+                    blocks,
+                    target,
+                }) => {
+                    self.noise += 1;
+                    Some((
+                        "N",
+                        vec![i64::from(*sector), i64::from(*blocks), ordinal(*target)],
+                    ))
+                }
+                _ => None,
+            };
+            if let Some((tag, v)) = value {
+                out.push((tag.into(), v));
+            }
+        }
+        let expected = rows
+            .iter()
+            .filter(|(tag, c)| {
+                matches!(tag.as_str(), "E" | "K" | "V" | "Q" | "N") && !(tag == "E" && c[0] == 8)
+            })
+            .cloned()
+            .collect::<Vec<_>>();
+        assert_eq!(out, expected, "case {which} op {op} ordered decisions");
+        self.events += out.len();
+        for (_, c) in rows.iter().filter(|(tag, _)| tag == "A") {
+            let id = ActorId::from_parts(c[0] as u32, 1);
+            let a = sim.actor(id);
+            assert_eq!(a.is_some(), c[1] != 0);
+            if let Some(a) = a {
+                let l = a.life().unwrap();
+                let p = a.position();
+                let m = a.momentum();
+                let h = a.constraints();
+                let got = vec![
+                    i64::from(l.actor_type.0),
+                    i64::from(p[0].bits()),
+                    i64::from(p[1].bits()),
+                    i64::from(a.z().bits()),
+                    i64::from(m[0].bits()),
+                    i64::from(m[1].bits()),
+                    i64::from(a.vertical_momentum().bits()),
+                    i64::from(l.health),
+                    l.state.map_or(-1, |s| i64::from(s.0)),
+                    i64::from(l.tics),
+                    i64::from(l.flags),
+                    i64::from(a.height().bits()),
+                    i64::from(a.radius().bits()),
+                    i64::from(l.reaction_time),
+                    i64::from(l.threshold),
+                    l.target.map_or(-1, ordinal),
+                    i64::from(a.lastlook()),
+                    i64::from(h[0].bits()),
+                    i64::from(h[1].bits()),
+                    i64::from(a.location().unwrap().subsector),
+                    i64::from(sim.rng().indices()[0]),
+                    i64::from(a.angle()),
+                    i64::from(l.sprite),
+                    i64::from(l.frame),
+                ];
+                assert_eq!(got, c[2..], "case {which} op {op} actor {}", c[0]);
+                self.actor_fields += got.len();
+            }
+        }
+        for (_, c) in rows.iter().filter(|(tag, _)| tag == "R") {
+            let p = sim.perception_players()[c[0] as usize];
+            assert_eq!(
+                [
+                    i64::from(p.active),
+                    i64::from(p.health),
+                    p.actor.map_or(-1, ordinal)
+                ],
+                c[1..],
+                "case {which} op {op} player record"
+            );
+            self.roster_fields += 3;
+        }
+        for (_, c) in rows.iter().filter(|(tag, _)| tag == "S") {
+            let p = sim.snapshot();
+            let field = p
+                .fields()
+                .find(|f| f.path() == format!("sector.{}.soundtarget", c[0]))
+                .unwrap();
+            let mut expected = vec![0; 13];
+            if c[1] >= 0 {
+                expected[0] = 1;
+                expected[1..5].copy_from_slice(&(c[1] as u32).to_le_bytes());
+                expected[5..13].copy_from_slice(&1_u64.to_le_bytes());
+            }
+            assert_eq!(
+                field.value(),
+                expected,
+                "case {which} op {op} sector sound target"
+            );
+            self.sound_fields += 1;
+        }
+    }
 }
