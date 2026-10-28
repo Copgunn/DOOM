@@ -476,7 +476,8 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d3c | Attack selection and bounded source hitscan action | Merged as 9b8fde8 |
 | M3d3d | Source shotgunner three-pellet foundations | Merged as 31b4830 |
 | M3d3e | Source chaingunner attack/refire foundations | Merged as 5b91824 |
-| M3d3f | Source Demon melee foundations | Reviewed in PR #16; conditional M3d3g correction/merge gates |
+| M3d3f | Source Demon melee foundations | Regularly merged as 75b2a2bc after correction and post-merge CI |
+| M3d3g | Demon pain, ordinary death and corpse foundations | Implemented bounded profile 14; separate owner review after validation |
 | Later M3d3–M3e | Remaining attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
@@ -655,3 +656,34 @@ pain/death/raise gameplay, player damage or a playable engine. See the
 [validation ledger](docs/VALIDATION.md). The M3d3g mission conditionally authorizes
 [PR #16](https://github.com/Copgunn/DOOM/pull/16) regular merge after documentation
 corrections, fresh mandatory checks and post-merge verification before new runtime work.
+
+## M3d3g Demon pain, death and corpses
+
+Explicit `ActorRegistry::demon_lifecycle_fixture()` and
+`Simulation::with_demon_lifecycle_registry(...)` extend the named SARG fixture
+with shootability, original pain chance 180, 2/2 pain states, 8/8/4/4/4/-1 ordinary
+death states and original sound actions. Pain sound 26 waits for PAIN2; death
+sound 64 waits for DIE2. Kill initialization quarters height and sets corpse/
+dropoff flags while retaining solidity; A_Fall clears solidity later at DIE4.
+The terminal corpse retains its identity, physics and spatial membership.
+
+The profile reuses shared damage/hitscan, lifecycle, movement and thinker services.
+Direct damage supports declared unbound body/self/environment sources; explicit
+hitscan is restricted to synthetic source-body shooters. It preserves knockback,
+retargeting, RNG and post-physics melee evaluation without a full-state tic clone.
+Metadata copies source Demon fields with named state aliases, simplified stand/run
+loops, no COUNTKILL/scoring and no raise state. Original Demon/Spectre types remain
+recognized but non-executable. Full monsters, resurrection, player damage,
+projectile integration, dynamic sectors and demo synchronization remain deferred.
+
+```sh
+cargo run -p doom-sim --example demon_lifecycle --locked
+```
+
+The asserted public synthetic example compares nine scenarios with original C and
+independent DSIM-v14, including the 70-tic pain/death digest `eecc4b4dcc4fbca5`.
+No IWAD, GPU, audio device or network is needed. See the
+[source investigation](docs/M3D3G_REFERENCE.md), [compatibility](docs/COMPATIBILITY.md),
+[state format](docs/STATE_FORMAT.md), [testing](docs/TESTING.md) and
+[validation ledger](docs/VALIDATION.md). All thirteen earlier profiles/fixtures
+remain preserved. M3d3g requires separate owner review; its PR stays unmerged.

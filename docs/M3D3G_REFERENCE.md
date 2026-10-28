@@ -198,3 +198,42 @@ pause/read independence and debug/release/repeated-instance determinism. Preserv
 all thirteen older C/encoder/example sets. Add asserted `demon_lifecycle`, bounded
 fuzz/ASan with actual counts/leak settings, all fuzz builds and native four-job CI.
 The new M3d3g PR must stay open/unmerged without auto-merge for owner review.
+
+## M3d3g implemented slice and independent evidence
+
+Investigation`2500650d` precedes metadata `da5becb8`, runtime `8739e753` and action-context/
+unsupported-attack correction `61a242e`. The implemented constructor uses strict
+`ActorRegistry::demon_lifecycle_fixture()`: native 136 copies all MT_SERGEANT
+properties except Doom number -1, aliases 1/2/4..14, removed COUNTKILL and disabled
+raise. See/active sounds 41/77 are copied as well as pain26/death64. Native135
+copies unbound source player-body metadata with health 1000/pain 0/radius 16/flags 6;
+its player pointer remains absent. Explicit setup may adjust admitted current
+health/counters/flags; native health is1..150 and a corpse cannot be restored.
+
+Incoming direct damage uses existing DamagePlan and LifeHost with real Chase
+context. Synthetic type 135 hitscan preserves real impact/RNG-before-damage;
+public Demon hitscan/Pos/SPos/CPos/missile callbacks reject. Existing map/query/
+work/64 actor bounds remain. The first owner may now move in XY/Z before Sarg;
+preflight prepares potential damage with copied RNG, not cached acceptance.
+Actual range follows physical motion/facing; admitted XY/Z consumes no gameplay
+RNG and no earlier thinker can change health. Dead owners' sealed death graph
+never reads retained targets, so old generations remain safely unresolved.
+
+The genuine-C harness executes331 source scenarios across all 21 supplied synthetic
+maps, with 517,192 actor fields/36,316 raw draws including setup and 103,942 ordered
+instrumentation rows. The68-body inventory is not branch coverage. All source
+fields, actual RNG progression and independent observations/bytes match Rust.
+Three separately injected pain-boundary components compare the scalar decision,
+not full real-LUT gameplay at unreachable179/180. Independent v14 contains3,972
+captures/727 complete byte fixtures. Eleven public Rust policy tests and three
+private fault-injection tests separately establish safety/atomicity. The fourth
+private test compares the injected C scalar component. All thirteen historical
+C/encoder/example families remain preserved.
+
+The nine-scenario asserted example independently compares repeated instances,
+nonpain/Look/pain/Chase/lethal chronology, exact delayed sounds/Fall, reduced-height
+and corpse movement, terminal persistence and generation reuse. Its independently
+encoded70-tic pain/death digest is eecc4b4dcc4fbca5. Sanitizer/local/CI results
+belong in VALIDATION after execution. Full original Demon/Spectre, raise, scoring,
+real players, other autonomous monsters, cross-profile projectiles, dynamic sectors,
+multiplayer and demos remain unsupported; the new PR stays open/unmerged.

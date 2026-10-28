@@ -1920,3 +1920,56 @@ auto-merge or protection bypass is authorized.
 Documentation-only corrected head `63efb2a585b9aa09032964cb1c4eae3dce1fae21` passed all four jobs in [CI 40761281692](https://github.com/Copgunn/DOOM/actions/runs/40761281692), completed 2026-10-28 20:19:29 UTC, and fresh local 205 workspace/205 MSRV/181 release, thirteen reference pairs/examples, build/format/Clippy/rustdoc, links and source/history checks. The seven Markdown corrections changed no runtime/CI/reference/DSIM content.
 
 Authorized regular merge `75b2a2bc9a28401de358859f0499fe4c81dfa0a2` has ordered parents `5b9182472123b8ec86b48cf6a4076426a7856f70` and that correction. Tree `cfeafd09f1649cfc5c4d8c8037af14fcc6af6abb` equals corrected head. PR #16 is closed/merged; local/remote master agree. Exact [merge push CI 40762344038](https://github.com/Copgunn/DOOM/actions/runs/40762344038) passed Linux/Windows/native macos-26-intel/Rust1.85, completed 2026-10-28 20:26:10 UTC, before M3d3g branch/investigation/runtime. All 165 original files, 940 historical reference/tool/support paths, original ancestry/attribution/licenses/locks are unchanged. No private assets/repositories, squash, force push, history rewrite, auto-merge or protection change. M3d3g requires separate owner review and stays unmerged.
+
+## M3d3g independent source and canonical evidence
+
+Branch feat/m3d3g-demon-pain-death starts at verified `75b2a2bc` after PR #16 gates
+above. Source investigation `2500650d` precedes definitions `da5becb8` and runtime
+`8739e753`; `61a242e` closes direct action-context/unsupported-attack guards. See
+[M3D3G_REFERENCE](M3D3G_REFERENCE.md) for source chronology and proof boundaries.
+
+| Evidence family | Observed result |
+| --- | --- |
+| Genuine original C inventory |68 compiled bodies; not branch coverage |
+| Main scenarios/maps |331 actually exercising all 21 supplied synthetic maps |
+| Live actor fields |517,192 |
+| Actual raw gameplay draws |36,316 including setup/discards |
+| Ordered C instrumentation |103,942 rows reconciled through independent observations; not one raw row per event |
+| Separate scalar source components |3 injected 179/180/181 pain-boundary probes; not gameplay RNG/captures |
+| Independent DSIM-v14 |3,972 captures/727 full byte fixtures; fields/bytes/digests match |
+| Rust safety policies |11 public tests plus 3 private fault-injection tests |
+| Private component comparison |One scalar comparison against injected C boundary rows |
+| Asserted example |9 C-backed/repeated-instance scenarios; 70-tic pain/death digest eecc4b4dcc4fbca5 |
+| Fuzz builds |All 13 AddressSanitizer target executables built and verified |
+
+C scenarios include actual-LUT pain/no-pain and wrapping, immediate non-pain
+Chase/Look wake, pain/death/sound timers, all first-death durations, ignored corpse
+damage, Fall/height/collision/terminal persistence, knockback/fall-forward/portals/
+ledges, self melee, retarget/threshold and scripted generation reuse. Whole-tic
+original fields and independently encoded existing events are compared. Canonical
+consistency and Rust resource/identity/player protections are distinct from source
+behavior. Original source, history, licensing and v1-v13 evidence stay protected.
+
+Fresh Linux local checks completed on the implemented source: workspace build,
+workspace/fuzz formatting, all-target Clippy and rustdoc with warnings denied;
+**221 workspace tests and 221 Rust 1.85 tests** (one doctest included, two private
+probes ignored each), **197 release tests**, all fourteen original-C/independent-
+encoder pairs with --check and all fourteen asserted debug/release example
+comparisons. All 13 ASan targets built and executables were verified. Stable
+Rust 1.99.1, MSRV 1.85.0, nightly 1.101.0-nightly, cargo-fuzz 0.13.2, GCC 14.2.
+
+## M3d3g bounded sanitizer evidence
+
+All thirteen fuzz targets built with AddressSanitizer and executables were
+verified. The final lifecycle target completed **10,000 executions in 1,002.9
+seconds without findings** (libFuzzer reports 1,002 whole seconds), seed 1,
+max_len 65, RSS 2048 MiB, timeout 20 seconds. Twelve fresh public synthetic
+65-byte seeds select eight source-backed setup families; four start at the
+64-actor capacity. Inputs admit at most eight operations/32 individually checked
+tics and eight synthetic-map byte mutations. Failed operations/tics compare
+complete canonical state. The exact seed recipe is in fuzz/corpus/README.md.
+
+`ASAN_OPTIONS=detect_leaks=0` explicitly disables leak detection: no
+LeakSanitizer coverage is claimed. This bounded campaign does not establish
+complete branch coverage. No private repository or commercial asset was involved.
+Remote CI is recorded by immutable head/run after successful execution.

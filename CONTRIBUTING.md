@@ -240,3 +240,20 @@ PR #15's regular merge/post-merge gates completed as `5b918247` after macOS
 recovery. The M3d3g mission conditionally authorizes PR #16 regular merge after
 its documentation corrections and fresh mandatory local/four-job CI. Verify the
 merge and successful post-merge matrix before M3d3g runtime; no auto-merge.
+
+## M3d3g Demon lifecycle changes
+
+Read [M3D3G_REFERENCE](docs/M3D3G_REFERENCE.md) and DSIM-v14 before extending
+shootability or pain/death admission. Profile14 keeps source sound/state timing,
+kill initialization separate from Fall, terminal corpses, shared damage and
+post-physics melee evaluation. Preserve preflight atomicity, source RNG and
+identity/spatial ordering; no second damage engine or per-tic world clone.
+
+Run all fourteen original-C/independent-encoder pairs and fourteen example
+equality checks, the stable/release/MSRV gates, all thirteen fuzz builds and
+bounded lifecycle ASan. Report real source gameplay, separately injected pain
+boundary components, canonical evidence and Rust safety policies separately.
+Keep v1-v13 and twelve historical Rust helpers byte-identical. Do not grant full
+Demon/Spectre, scoring, player damage, raise states or other monster attacks.
+PR #16 completed its authorized regular merge/post-merge gates as `75b2a2bc`;
+M3d3g requires separate owner review and remains unmerged without auto-merge.

@@ -311,3 +311,37 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   corrections, fresh mandatory local/four-job CI and live blocker review. Verify
   ordered merge parents/tree/master and post-merge CI before M3d3g runtime. No
   auto-merge; M3d3g needs separate owner review. No full vanilla sync is established.
+
+## M3d3g Demon lifecycle changes
+
+- Read [M3D3G_REFERENCE](docs/M3D3G_REFERENCE.md) before damage/state/corpse changes.
+  PR #16 regularly merged as `75b2a2bc` after documentation correction `63efb2a5`,
+  fresh four-job CI 40761281692 and exact post-merge CI 40762344038. Source
+  investigation `2500650d` precedes metadata `da5becb8` and runtime `8739e753`.
+- Profile14 copies source Demon metadata into named native 136 with state aliases,
+  one first owner, flags SOLID|SHOOTABLE, no COUNTKILL/raise/xdeath/missile. Full
+  original types 12/13, player/scoring, resurrection and cross-profile projectiles
+  stay rejected. Synthetic hitscan shooters are type 135; never grant Pos/SPos/CPos.
+- Preserve pain chance 180 and actual LUT, 2/2, delayed A_Pain sound 26, ordinary
+  8/8/4/4/4/-1, randomized first timer 5..8, delayed A_Scream sound 64, immediate
+  corpse/dropoff/quarter height and later A_Fall solidity clearing. Terminal -1
+  retains identity/physics/spatial lists. Do not add a redundant corpse field.
+- Use shared DamagePlan/LifeHost, existing physics/spatial/store. Incoming damage
+  may immediately enter Chase. XY/Z before strike consumes no RNG in this strict
+  unbound closure; prepare potential damage with small copied RNG, then execute
+  the actual range query after physics/facing. Never cache pre-physics acceptance.
+- Keep existing64 actor/map/query/work/counter bounds, owner 978/1008 and other XY 994
+  margins. Preflight identities/roles/bindings/all closures/capacity before mutation.
+  Direct damage needs zero slots; hitscan still reserves its real impact. Corpse
+  targets retain generations; no stale reference may alias a reused slot. Public
+  setup/state APIs must not restore a corpse to live native states.
+- Preserve all v1-v13 bytes/generators/encoders/evidence and twelve older Rust
+  helpers. Reproduce fourteen C/encoder pairs and fourteen asserted debug/release
+  examples; build all thirteen fuzz targets and report actual ASan/leak settings.
+  Distinguish331 C gameplay scenarios on 21 exercised maps, 68 compiled bodies,
+  three separately injected boundary components, independent canonical bytes and
+  Rust-only policies. Body inventory is not branch coverage.
+- The real LUT lacks179/180. Never count injected boundary values as gameplay
+  draws or captures. Preserve the scalar component's explicit provenance.
+- Keep verified native macos-26-intel and all four CI jobs/steps. New M3d3g PR
+  stays OPEN/UNMERGED without auto-merge for owner review. Do not begin later work.

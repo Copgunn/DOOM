@@ -364,3 +364,32 @@ state/events and real generation reuse. The asserted thirteenth example ends at
 `b6c312bf5fbcc7dc`; twelve prior examples and eleven historical Rust helpers are
 unchanged. Source-equivalence, canonical-schema checks and Rust safety policies
 remain distinct. Source findings/limits are in [M3D3F_REFERENCE](../../docs/M3D3F_REFERENCE.md).
+
+## M3d3g Demon lifecycle tools
+
+```sh
+python3 tools/reference/generate_m3d3g.py --check
+python3 tools/reference/m3d3g_snapshot_goldens.py --check
+python3 tools/reference/check_demon_lifecycle.py
+```
+
+The new generator/shim compile68 genuine original bodies, including Damage/Kill,
+Pain/Scream/Fall/SetMobjState/MobjThinker/RunThinkers and relevant collision/RNG,
+with original structures/info/state tables. Explicit alias/native metadata setup
+and inert sound observations are adapters; unsupported services abort. Provenance
+records source/header/body/adapter hashes, exact outputs/inputs, compiler/ABI/flags
+and established signed arithmetic/ordered-shadow assumptions. No Rust output is
+used as expected source data. Original files and historical builders stay frozen.
+
+331 source scenarios actually exercise all 21 maps and compare 517,192 actor fields,
+36,316 actual raw draws (including setup/discards) and 103,942 ordered instrumentation
+rows. These are not branch-coverage counts or one raw row per event. Three separate
+controlled-dependency pain probes at179/180/181 (missing179/180 in the actual LUT)
+are recorded in m3d3g_pain_boundary.csv, not gameplay/scenario/capture totals.
+
+The independent encoder composes existing schema/event families from C and public
+setup: 3,972 v14 captures/727 full bytes, with per-tic digests and first-field
+comparison. The example checks nine C-backed/repeated-instance trajectories and
+70-tic pain/death digest eecc4b4dcc4fbca5. Full Demon/Spectre/statistics/player/
+raise/projectile gameplay remains outside the declared fixture. Canonical-state
+consistency and Rust safety tests are distinct from original-C equivalence.

@@ -626,3 +626,52 @@ Every failed API operation/individual tic checks complete canonical equality.
 All twelve fuzz executables must build. Record actual ASan executions, findings,
 timeout/RSS and leak settings in VALIDATION; disabled leak detection establishes
 no LeakSanitizer coverage. All previous expected fixtures/helpers remain frozen.
+
+## M3d3g lifecycle evidence and reproduction
+
+```sh
+python3 tools/reference/generate_m3d3g.py --check
+python3 tools/reference/m3d3g_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3d3g_reference --test m3d3g_policies --locked
+python3 tools/reference/check_demon_lifecycle.py
+cargo run -p doom-sim --example demon_lifecycle --locked
+cargo +nightly fuzz build --sanitizer address
+```
+
+Run these alongside all thirteen older C/encoder pairs and example helpers, all
+workspace/release/MSRV/build/format/Clippy/rustdoc gates and native four-job CI.
+The workflow preserves every earlier requirement and adds only the new pair and
+asserted example. Recorded comparisons run on every stable platform; genuine C
+regeneration remains Linux-only. Public CI needs no proprietary data.
+
+The C inventory has68 compiled original bodies and 331 gameplay/driver scenarios,
+actually exercising all 21 supplied maps (asserted in generator/Rust). They compare
+517,192 live actor fields, 36,316 actual raw draws including setup/discards, and
+103,942 ordered instrumentation rows reconciled through independent observations.
+Body inventory is not branch coverage, and rows are not one raw row per event.
+The twenty earlier synthetic maps are reused as separate new public fixtures;
+map20 adds an80/0-floor setup to exercise lethal low-damage fall-forward branches.
+Pain sweeps cover every real LUT index; three separately injected 179/180/181
+component vectors do not add to gameplay scenarios/draws/captures.
+
+The independent encoder reads C traces, source metadata/public inputs and the
+schema, never Rust output: 3,972 DSIM-v14 captures and 727 complete byte fixtures,
+with named-field/full-byte/digest comparisons. Source cases include nonpain/pain,
+2/2 timing/sound/Chase, randomized ordinary death, ignored damage during/after
+death, Fall/collision/quarter height, terminal persistence, knockback/ledge/portal,
+self melee, relationships/retarget/threshold, Look wake, RNG wrap and real scripted
+retirement/reuse. The nine-scenario asserted example repeats independent instances
+and checks chronology against C; 70-tic pain/death digest is eecc4b4dcc4fbca5.
+
+Eleven public Rust policy tests plus three private fault-injection tests cover
+capacity, players/roles/unsupported actions/scoring/raise, pending/stale sources,
+resurrection rejection, timers, pause/reads/instances and full error-state equality.
+One additional private scalar component compares the three injected C pain
+boundary outcomes; it is separate from full real-RNG gameplay equivalence.
+
+The new fuzz target admits at most eight operations/32 individually checked tics,
+64-slot setup variants and eight public-map byte mutations. It tests direct/
+hitscan damage, lifecycle states, identities, roster/noise, setup and unsupported
+attacks; each failed operation/tic compares full canonical state. See the public
+[seed recipe](../fuzz/corpus/README.md). Report observed ASan executions, input
+bounds and leak setting; bounded runs do not establish complete branch coverage.
