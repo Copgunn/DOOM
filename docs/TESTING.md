@@ -532,3 +532,46 @@ in 211 seconds, seed 1,max_len 65,timeout 20 seconds,RSS limit 2048 MiB, at most
 operations per input, from six public synthetic seeds, with no findings.
 `ASAN_OPTIONS=detect_leaks=0` disables leak detection; no LeakSanitizer claim is made.
 Generated corpus/mutations/logs remain temporary or ignored local outputs.
+
+## M3d3e chaingunner checks
+
+```sh
+python3 tools/reference/generate_m3d3e.py --check
+python3 tools/reference/m3d3e_snapshot_goldens.py --check
+cargo test -p doom-sim --lib --test m3d3e_reference --test m3d3e_policies --locked
+cargo run -p doom-sim --example chaingunner_attacks --locked
+python3 tools/reference/check_chaingunner_attacks.py
+cargo +nightly fuzz build
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run chaingunner_attacks fuzz/corpus/chaingunner_attacks -- -runs=10000 -seed=1 -max_len=65 -rss_limit_mb=2048 -timeout=20
+```
+
+Prepare the six public byte seeds using [the corpus guide](../fuzz/corpus/README.md).
+Run all twelve original-C/independent-encoder pairs and all twelve example equality
+checks; preserve every earlier helper and expected byte. Linux reproduces C;
+all stable platforms compare recorded vectors/bytes and examples. Rust 1.85 runs
+the workspace. Private/commercial assets, devices and network are unnecessary.
+
+The C harness compiles 67 genuine original bodies and executes 153 cases on all
+20 supplied maps (18 inherited plus two new REJECT fixtures). Rust compares
+268,606 live actor fields, 63,308 ordered observations and 10,697 raw gameplay
+draws, including fixture setup/discard draws. Original refire returns, sight,
+source state actions, independent aim, hits/misses, damage, effects, movement and
+166 retirements are observed. The independent encoder checks 1,544 captures/110
+complete byte streams with field/byte/digest diagnostics, using C/public inputs
+only. The asserted example ends at `54ac5f9c158c8e29` after 150 tics.
+
+The original LUT has no 40. Authentic gameplay cases exercise 39/41 and adjacent
+available values, including shadow draws first. The separate 2,048-row original
+CPosRefire dependency probe injects all byte values, uses recording FaceTarget/
+state-entry doubles and scripted sight, and records dependency-call order.
+Its Rust helper test covers exact 40 and short-circuit behavior;
+these rows do not inflate original-LUT gameplay scenario or RNG totals.
+
+Ten policy tests cover current/delayed/pending capacity, misses/null/refire at
+capacity, CPOS timing/fullbright and closure, lazy health/sight versus roster,
+immediate nested Look/Chase movement and reaction bounds, independent aiming,
+roles/players/stale generations, arithmetic, canonical errors, pause and reads.
+All eleven fuzz targets built with ASan. The new campaign completed 10,000
+executions in 211 seconds, seed 1, max_len 65, at most eight operations, 2048 MiB
+RSS, 20-second timeout, six public seeds, with no findings. Leak detection was
+explicitly disabled with `ASAN_OPTIONS=detect_leaks=0`; LeakSanitizer is unverified.

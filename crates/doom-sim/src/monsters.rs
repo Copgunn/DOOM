@@ -7,7 +7,7 @@ use std::{error::Error, fmt};
 const OWNERS: [u16; 6] = [3, 5, 18, 19, 21, 136];
 const OWNER_FLAGS: u32 = 2 | 32 | 64 | 128 | 1024 | 2048 | 2097152 | 33554432;
 const TARGET_FLAGS: u32 = 2 | 4 | 32 | 64 | 1024 | 2048 | 262144 | 524288 | 1048576 | 33554432;
-/// Profile-10 rejection, always before authoritative action effects.
+/// Bounded monster-action rejection, before authoritative action effects.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MonsterError {
     /// Requires the explicit bounded attack profile.
@@ -54,7 +54,7 @@ pub enum MonsterEvent {
         /// Source result.
         decision: RangeDecision,
     },
-    /// Ordered gameplay draw: 0/1=shadow,2/3=spread,4=damage,5=missile chance.
+    /// Ordered gameplay draw: 0/1=shadow,2/3=spread,4=damage,5=missile chance,6=refire.
     Random {
         /// Owner.
         actor: ActorId,
@@ -90,7 +90,7 @@ pub enum MonsterEvent {
         /// Resulting source flags.
         flags: u32,
     },
-    /// Pure source aim result before pistol sound and spread draws.
+    /// Pure source aim completion, before spread draws (sound order is action-specific).
     Aim {
         /// Owner.
         actor: ActorId,

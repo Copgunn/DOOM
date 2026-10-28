@@ -12,6 +12,7 @@
 //! Profile 9 adds non-attacking native fixture pursuit through source direction decisions.
 //! Profile 10 adds native attack selection/facing and bounded PosAttack through shared combat.
 //! Profile 11 adds exact SPOS timing and three sequential SPosAttack pellets through shared combat.
+//! Profile 12 adds separately aimed CPOS shots and immediate source refire/Chase handoffs.
 
 #[cfg(test)]
 extern crate self as doom_sim;

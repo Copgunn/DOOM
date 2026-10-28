@@ -97,7 +97,7 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   user thinker budgets have a separate documented nontransactional contract.
 - Actor identity, thinker order and spatial order are separate. Never sort handles
   to choose blockers; successful same-cell moves reinsert at spatial cell head.
-- Run all eleven reference generators and independent golden encoders on Linux;
+- Run all twelve reference generators and independent golden encoders on Linux;
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
 - M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
   correction-head and post-merge CI. M3d1 was regularly merged as c924f18 after fresh correction-head and
@@ -105,6 +105,7 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   CI in the M3d3a mission. M3d3a completed its regular merge as 839fbab after fresh/post-merge CI;
   M3d3b regularly merged as 0007af1 and documentation PR #12 separately as
   876662d after exact-head and post-merge CI. M3d3c regularly merged as 9b8fde8
+  after its correction/fresh/post-merge gates; M3d3d regularly merged as 31b4830
   after its correction/fresh/post-merge gates; later merges require separate approval.
 
 - M3b consumes supplied BLOCKMAP lists without rebuilding them; conservative
@@ -223,8 +224,8 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - Reproduce all ten C/encoder pairs, ten asserted examples, nine fuzz builds and
   bounded attack ASan; report actual counts and disabled leak detection. Use
   `docs/DOC_REVIEW_CHECKLIST.md`; PR #13 completed its regular merge and
-  exact post-merge CI before M3d3d. The M3d3e mission conditionally authorizes
-  PR #14’s regular merge after corrections and fresh gates; no auto-merge.
+  exact post-merge CI before M3d3d. PR #14 subsequently completed its authorized
+  regular merge and post-merge gates before M3d3e; no auto-merge.
 
 - Read `docs/M3D3D_REFERENCE.md` before shotgunner/shared planning changes. Profile 11
   separately admits labelled native136 SPOS Look/Chase/Face/SPos with exact source
@@ -246,6 +247,28 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   builds and bounded shotgunner ASan. Record actual executions/leak settings,
   source-exercised maps separately from map inventory, and compiled bodies
   separately from branch coverage. Preserve every v1-v10 reference byte/helper.
-  Use the docs checklist; PR #14 has conditional regular-merge authorization
-  after corrections/fresh local and remote checks. Verify post-merge CI before
-  M3d3e runtime work; its new PR stays open/unmerged for separate owner review.
+  Use the docs checklist; PR #14 completed its regular merge and exact post-merge
+  CI before M3d3e. PR #15 stays open/unmerged for separate owner review.
+
+- Read `docs/M3D3E_REFERENCE.md` before CPOS/refire/shared combat changes. Profile 12
+  separately admits exact labelled native 136, CPOS states 4/5/6/7 with sprite 38,
+  frames 4/32773/32772/5 and 10/4/4/1. Preserve all historical v1-v11 bytes/helpers.
+- Keep shotgun sound before internal facing, one fresh aim per CPosAttack and
+  spread-left/right, damage, real impact and immediate damage RNG in source order.
+  A null shot returns without sound/RNG. Never batch shots across tics or cache aim.
+- Refire faces (including shadow draws) BEFORE its own draw. Below 40 preserves
+  the natural loop; higher draws short-circuit null, mobj health, then original
+  sight. Roster health is separate. Preserve immediate see/Chase/Look actions,
+  source movement and genuinely reachable new ATK1 selection; never insert a no-op.
+- The strict positive-duration closure and existing map/owner/reference/counter
+  invariants make refire's sight/movement/state services infallible after read-only
+  preflight. It allocates no actors. Keep first floor-owner/zero momentum, 1008/978
+  owner margins, 994/1018 impact bounds, pending/stale checks and nested reaction
+  guard. Single shots use the shared prepared combat path and reserve real impacts.
+- The original LUT has 39/41 and no 40. Never manufacture gameplay-RNG coverage;
+  label the isolated original-C injected-dependency boundary probe separately.
+  Report body inventories, actually exercised maps and C/DSIM/policy families precisely.
+- Reproduce all twelve source/encoder pairs and twelve asserted examples, build
+  all eleven fuzz targets and run bounded chaingunner ASan with actual counts and
+  leak settings. Keep full original type 10/drops, SpidRefire, other attacks and
+  player damage/binding excluded. PR #15 remains open/unmerged, no auto-merge.

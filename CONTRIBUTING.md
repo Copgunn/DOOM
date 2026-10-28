@@ -163,7 +163,8 @@ expected bytes. Keep source decisions, project canonical bytes and ownership
 policies distinct. Fixture-based non-attacking pursuit does not admit complete
 original monsters. No attack, door or float behavior may execute silently; no
 new collision engine or AI scheduler is permitted. M3d3b completed its regular merge and documentation PR #12 separately merged as
-876662d after post-merge CI; leave M3d3c open/unmerged.
+876662d after post-merge CI; M3d3c subsequently merged as 9b8fde8 after its
+separate correction and fresh/post-merge gates.
 
 ## M3d3c attack changes
 
@@ -180,8 +181,8 @@ nine fuzz builds and bounded attack ASan. Preserve old bytes and helpers. Keep
 C behavior, independent schema and Rust policies distinct. Use the
 [documentation review checklist](docs/DOC_REVIEW_CHECKLIST.md); report exact
 commit/CI and observed sanitizer settings. PR #13 completed its authorized regular
-merge as 9b8fde8 and exact post-merge CI before M3d3d; leave its new PR unmerged
-with auto-merge disabled.
+merge as 9b8fde8 and exact post-merge CI before M3d3d. Later milestones require
+separate owner merge authorization; keep auto-merge disabled.
 
 ## M3d3d shotgunner changes
 
@@ -197,6 +198,21 @@ ten fuzz builds; record actual shotgunner ASan executions and leak configuration
 Keep historical v1-v10 bytes/helpers intact. Report exercised maps and compiled
 body inventories precisely; distinguish C behavior, project canonical bytes and
 Rust policy tests. Update the documentation index and use its review checklist.
-The M3d3e mission conditionally authorizes PR #14’s regular merge after a prose
-correction and fresh local/exact-head CI gates. Verify its post-merge CI before
-M3d3e runtime work; the new M3d3e PR stays open/unmerged, auto-merge disabled.
+PR #14 completed its authorized regular merge as 31b4830 after a prose correction,
+fresh local/exact-head CI and verified post-merge CI before M3d3e runtime work.
+The new M3d3e PR stays open/unmerged, auto-merge disabled.
+
+## M3d3e chaingunner changes
+
+Read [M3D3E_REFERENCE](docs/M3D3E_REFERENCE.md) and DSIM-v12. Preserve exact CPOS
+10/4/4/1/fullbright, sound/facing/independent aim, per-shot RNG/effects and lazy
+refire ordering. Below 40 continues naturally. Use mobj health, source sight and
+immediate genuine see/Chase/Look handoffs. Preserve the documented owner, movement,
+work and nested-counter proof before mutation; no world clone or attack scheduler.
+
+Run twelve C/independent encoder pairs, twelve example comparisons, eleven fuzz
+builds and bounded chaingunner ASan. The original LUT cannot produce 40: distinguish
+real-table gameplay cases from the controlled-dependency C boundary probe and Rust
+safety tests. Keep all v1-v11 expectations/helpers and player restrictions intact.
+Use the documentation review checklist and record only observed immutable CI.
+Leave PR #15 open/unmerged for separate owner review, auto-merge disabled.

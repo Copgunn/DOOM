@@ -117,7 +117,9 @@ Cover actual 39/41 draws, early null/dead returns, high-roll null/dead exits,
 visible/blocked/REJECT sight, shadow ordering and nested handoffs with the genuine
 original RNG. Separately compile an isolated original CPosRefire dependency probe
 with an explicitly injected return value 40 (and boundary neighbours), preserving
-the original decision body. Compare its short-circuit outcome with the runtime's
+the original decision body. This isolated probe uses recording FaceTarget/state-
+entry doubles and scripted sight; the main gameplay harness uses the genuine
+services. Compare its short-circuit outcome with the runtime's
 pure decision helper. Label this controlled-dependency boundary evidence; it is
 not an original-LUT gameplay trace and must not inflate gameplay comparison counts.
 Do not add a production RNG override or modify original tables to manufacture 40.
@@ -146,3 +148,28 @@ eleventh fuzz target must exercise the declared closure. Record only observed
 counts, sanitizer settings, local checks and exact-head CI in VALIDATION and the
 new PR, which stays open/unmerged for owner review. This establishes a bounded
 action/fixture closure, not complete Chaingunner or vanilla/demo compatibility.
+
+## Implemented result and observed evidence
+
+Implemented the strict profile 12 and complete admitted action/return closure.
+Current shots reuse the shared plan/executor; refire needs only read-only invariant
+validation because its admitted sight/movement/state services are infallible and
+its positive-duration nested path cannot fire immediately. No full state clone,
+production RNG override or persistent attack plan was introduced. Null/miss/refire
+can succeed at capacity; hits reserve their real impact before sound or draws.
+
+The original-body harness compiles 67 bodies and executes 153 cases exercising all
+20 supplied maps, including two new REJECT fixtures. Rust compares 268,606 actor
+fields, 63,308 ordered observations and 10,697 raw RNG draws, including setup.
+All five refire branches occur: 22 early, 10 null, 12 dead, 5 blocked and 109 visible
+continuations. Source traces exercise immediate two-Chase/Look movement, independent
+shots, target changes, pain/death, real impacts, RNG wrap and 166 retirements.
+The controlled-dependency boundary probe separately covers 2,048 combinations;
+original-LUT gameplay cannot produce 40. Its expected control flow is C-derived.
+
+Independent v12 encoding checks all 1,544 captures and 110 full byte fixtures;
+the eight-scenario asserted example ends at `54ac5f9c158c8e29`. Ten Rust policy
+tests, 192 workspace/MSRV checks each, 168 release tests, twelve example comparisons,
+eleven fuzz builds and the 10,000-execution ASan campaign passed; leaks were disabled.
+Exact observed CI and preservation records belong in [VALIDATION](VALIDATION.md).
+No complete original Chaingunner/vanilla/demo compatibility follows.
