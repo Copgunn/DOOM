@@ -282,6 +282,7 @@ impl Simulation {
                 | Profile::Chaingunner
                 | Profile::DemonMelee
                 | Profile::DemonLifecycle
+                | Profile::DemonStandRun
         ) {
             return Err(CombatError::Profile.into());
         }
@@ -302,11 +303,11 @@ impl Simulation {
         angle: u32,
         range: Fixed,
     ) -> Result<AimResult, SimError> {
-        if self.profile.uses_monsters() && self.profile != Profile::DemonLifecycle {
+        if self.profile.uses_monsters() && !self.profile.uses_demon_lifecycle() {
             return Err(CombatError::Profile.into());
         }
         self.combat_actor(shooter)?;
-        if self.profile == Profile::DemonLifecycle
+        if self.profile.uses_demon_lifecycle()
             && self.actor(shooter).unwrap().life.unwrap().actor_type != ActorTypeId(135)
         {
             return Err(MonsterError::Definition.into());
@@ -407,10 +408,10 @@ impl Simulation {
     }
     /// Atomic supported P_DamageMobj operation. No full-simulation clone is used.
     pub fn damage_actor(&mut self, request: DamageRequest) -> Result<DamageResult, SimError> {
-        if self.profile.uses_monsters() && self.profile != Profile::DemonLifecycle {
+        if self.profile.uses_monsters() && !self.profile.uses_demon_lifecycle() {
             return Err(CombatError::Profile.into());
         }
-        if self.profile == Profile::DemonLifecycle {
+        if self.profile.uses_demon_lifecycle() {
             self.preflight_lifecycle_combat(&[
                 Some(request.target),
                 request.source,
@@ -428,7 +429,7 @@ impl Simulation {
         shooter: ActorId,
         attack: LineAttack,
     ) -> Result<AttackResult, SimError> {
-        if self.profile.uses_monsters() && self.profile != Profile::DemonLifecycle {
+        if self.profile.uses_monsters() && !self.profile.uses_demon_lifecycle() {
             return Err(CombatError::Profile.into());
         }
         self.line_attack_with(shooter, attack, None)
@@ -446,7 +447,7 @@ impl Simulation {
         attack: LineAttack,
         permit: Option<ActorId>,
     ) -> Result<AttackResult, SimError> {
-        if self.profile == Profile::DemonLifecycle {
+        if self.profile.uses_demon_lifecycle() {
             self.preflight_lifecycle_combat(&[Some(shooter)])?;
             if self.actor(shooter).unwrap().life.unwrap().actor_type != ActorTypeId(135) {
                 return Err(MonsterError::Definition.into());
@@ -518,7 +519,7 @@ impl Simulation {
         })
     }
     fn combat_host(&mut self) -> LifeHost<'_, &mut ThinkerStore<Actor>> {
-        if self.profile == Profile::DemonLifecycle {
+        if self.profile.uses_demon_lifecycle() {
             return self.monster_host(None);
         }
         LifeHost {

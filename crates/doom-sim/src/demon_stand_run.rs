@@ -36,3 +36,16 @@ impl ActorRegistry {
         Self::new(states, types).expect("original SARG state closure")
     }
 }
+
+impl Simulation {
+    /// Profile15: source normal SARG stand/run and the admitted melee/lifecycle.
+    /// Full Demon/Spectre, scoring, fast timing and raise remain unsupported.
+    pub fn with_demon_stand_run_registry(
+        map: Map,
+        limit: u32,
+        registry: ActorRegistry,
+        options: ActorOptions,
+    ) -> Result<Self, SimError> {
+        Self::with_demon_lifecycle_profile(map, limit, registry, options, Profile::DemonStandRun)
+    }
+}

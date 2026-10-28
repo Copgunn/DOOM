@@ -81,6 +81,15 @@ impl Simulation {
         registry: ActorRegistry,
         options: ActorOptions,
     ) -> Result<Self, SimError> {
+        Self::with_demon_lifecycle_profile(map, limit, registry, options, Profile::DemonLifecycle)
+    }
+    pub(crate) fn with_demon_lifecycle_profile(
+        map: Map,
+        limit: u32,
+        registry: ActorRegistry,
+        options: ActorOptions,
+        profile: Profile,
+    ) -> Result<Self, SimError> {
         if limit > 64 {
             return Err(PerceptionError::WorkLimit.into());
         }
@@ -93,12 +102,16 @@ impl Simulation {
             return Err(PursuitError::Specials.into());
         }
         crate::sight::validate_map(&map)?;
-        let expected = ActorRegistry::demon_lifecycle_fixture();
+        let expected = if profile == Profile::DemonStandRun {
+            ActorRegistry::demon_stand_run_fixture()
+        } else {
+            ActorRegistry::demon_lifecycle_fixture()
+        };
         if registry.states() != expected.states() || registry.types() != expected.types() {
             return Err(MonsterError::Definition.into());
         }
         let mut sim = Self::with_combat_registry(map, limit, registry, options)?;
-        sim.profile = Profile::DemonLifecycle;
+        sim.profile = profile;
         sim.sound_targets = vec![None; sim.sectors.len()];
         Ok(sim)
     }
@@ -118,6 +131,7 @@ impl Simulation {
         state: StateId,
     ) -> Result<(), SimError> {
         let valid = match ty.0 {
+            136 if self.profile == Profile::DemonStandRun => (1..=21).contains(&state.0),
             136 => [1, 2].contains(&state.0) || (4..=14).contains(&state.0),
             135 => (149..=173).contains(&state.0),
             37 | 38 => (90..=96).contains(&state.0),

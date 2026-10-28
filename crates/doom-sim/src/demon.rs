@@ -110,7 +110,7 @@ impl Simulation {
         // range after physics/facing controls the draw. Physics consumes no RNG
         // in this unbound, non-missile closure, and no earlier thinker can alter
         // target health. The plan contains no cached post-physics range result.
-        let damage = if accepted || self.profile == Profile::DemonLifecycle {
+        let damage = if accepted || self.profile.uses_demon_lifecycle() {
             let amount = (i32::from(preview.p_random()) % 10 + 1) * 4;
             let plan = self.plan_damage(DamageRequest {
                 target,
@@ -126,7 +126,7 @@ impl Simulation {
         Ok(Some(MeleePlan {
             owner: id,
             initial,
-            accepted: (self.profile != Profile::DemonLifecycle).then_some(accepted),
+            accepted: (!self.profile.uses_demon_lifecycle()).then_some(accepted),
             damage,
         }))
     }
@@ -159,9 +159,12 @@ impl Simulation {
     ) -> Result<(), SimError> {
         let actor = self.monster_actor(id, 1008)?;
         self.monster_state_role(actor.life.unwrap().actor_type, state)?;
-        if self.profile == Profile::DemonLifecycle
+        if self.profile.uses_demon_lifecycle()
             && actor.life.unwrap().actor_type.0 == 136
-            && (actor.life.unwrap().health <= 0 || ![1, 2, 4, 5, 6].contains(&state.0))
+            && (actor.life.unwrap().health <= 0
+                || !([1, 2, 4, 5, 6].contains(&state.0)
+                    || self.profile == Profile::DemonStandRun
+                        && (state.0 == 3 || (15..=21).contains(&state.0))))
         {
             return Err(MonsterError::Definition.into());
         }

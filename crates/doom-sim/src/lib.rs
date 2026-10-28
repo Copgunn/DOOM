@@ -104,11 +104,19 @@ pub enum Profile {
     DemonMelee,
     /// M3d3g normal Demon pain/death/corpse fixtures, DSIM-v14.
     DemonLifecycle,
+    /// M3d3h original normal Demon stand/run closure, DSIM-v15.
+    DemonStandRun,
 }
 
 impl Profile {
+    pub(crate) const fn uses_demon_lifecycle(self) -> bool {
+        matches!(self, Self::DemonLifecycle | Self::DemonStandRun)
+    }
     pub(crate) const fn uses_demon(self) -> bool {
-        matches!(self, Self::DemonMelee | Self::DemonLifecycle)
+        matches!(
+            self,
+            Self::DemonMelee | Self::DemonLifecycle | Self::DemonStandRun
+        )
     }
     pub(crate) const fn uses_monsters(self) -> bool {
         matches!(
@@ -118,6 +126,7 @@ impl Profile {
                 | Self::Chaingunner
                 | Self::DemonMelee
                 | Self::DemonLifecycle
+                | Self::DemonStandRun
         )
     }
     pub(crate) const fn uses_perception(self) -> bool {
@@ -130,6 +139,7 @@ impl Profile {
                 | Self::Chaingunner
                 | Self::DemonMelee
                 | Self::DemonLifecycle
+                | Self::DemonStandRun
         )
     }
     pub(crate) fn uses_sectors(self) -> bool {
@@ -147,6 +157,7 @@ impl Profile {
                 | Self::Chaingunner
                 | Self::DemonMelee
                 | Self::DemonLifecycle
+                | Self::DemonStandRun
         )
     }
 }
@@ -741,7 +752,7 @@ impl Simulation {
         }
         self.projectile_control(id)?;
         if self.profile.uses_monsters()
-            && self.profile != Profile::DemonLifecycle
+            && !self.profile.uses_demon_lifecycle()
             && self.monster_is_owner(id)
             && momentum != [Fixed::ZERO; 2]
         {
