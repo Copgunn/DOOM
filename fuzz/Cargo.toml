@@ -90,3 +90,10 @@ path = "fuzz_targets/shotgunner_attacks.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "chaingunner_attacks"
+path = "fuzz_targets/chaingunner_attacks.rs"
+test = false
+doc = false
+bench = false
