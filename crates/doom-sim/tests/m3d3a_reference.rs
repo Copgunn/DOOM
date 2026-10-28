@@ -25,7 +25,7 @@ fn original_reject_bsp_segs_clipping_and_quirks_match_c() {
         visits += result.visits.len();
         cases += 1;
     }
-    assert_eq!(cases, 21);
+    assert_eq!(cases, 24);
     println!("C sight: {cases} scenarios, {visits} ordered visits");
 }
 #[test]
@@ -97,4 +97,50 @@ fn existing_noise_propagation_handles_distinct_emitter_and_sound_blocks() {
             .collect::<Vec<_>>();
         assert_eq!(got, expected, "noise source case {which}");
     }
+}
+#[test]
+fn original_a_look_sound_ambush_wake_rng_and_thinker_handoff_match_c() {
+    let mut totals = [0; 9];
+    let mut count = 0;
+    for (which, c) in fixtures::cases().iter().enumerate() {
+        if c.n(0) < 2 {
+            continue;
+        }
+        count += 1;
+        let mut sim = fixtures::setup(c);
+        let mut trace = fixtures::Trace::default();
+        trace.check(&sim, which, 0, sim.pending_events());
+        for op in 1..=c.n(13) as usize {
+            fixtures::flip(&mut sim, c, op);
+            let pending = sim.pending_events().len();
+            if op == 1 && c.n(11) >= 0 {
+                sim.noise_alert(
+                    ActorId::from_parts(c.n(11) as u32, 1),
+                    ActorId::from_parts(c.n(12) as u32, 1),
+                )
+                .unwrap();
+            }
+            if c.n(0) == 2 {
+                sim.look(ActorId::from_parts(0, 1)).unwrap();
+                trace.check(&sim, which, op, &sim.pending_events()[pending..]);
+            } else {
+                sim.step([TicCommand::default(); 4]).unwrap();
+                trace.check(&sim, which, op, &sim.events()[pending..]);
+            }
+        }
+        for (a, b) in totals.iter_mut().zip([
+            trace.actor_fields,
+            trace.events,
+            trace.queries,
+            trace.visits,
+            trace.slots,
+            trace.draws,
+            trace.noise,
+            trace.roster_fields,
+            trace.sound_fields,
+        ]) {
+            *a += b;
+        }
+    }
+    println!("C A_Look: {count} scenarios, {totals:?}");
 }

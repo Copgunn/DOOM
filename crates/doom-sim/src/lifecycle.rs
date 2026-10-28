@@ -222,6 +222,11 @@ pub(crate) fn source_type_is(ty: ActorTypeId, name: &str) -> bool {
         .is_some_and(|(original, _)| *original == name)
 }
 const ALLOWED_FLAGS: u32 = 2 | 4 | 8 | 16 | 32 | 256 | 512 | 1024 | 2048 | 262144 | 33554432;
+#[derive(Clone, Copy)]
+struct Admission {
+    flags: u32,
+    look: bool,
+}
 const ENTRY_LIMIT: usize = 128;
 const STEP_LIMIT: usize = 8192;
 impl ActorRegistry {
@@ -346,7 +351,8 @@ impl ActorRegistry {
     pub fn action_name(&self, id: ActionId) -> Option<&'static str> {
         SOURCE_ACTIONS.get(usize::from(id.0)).copied()
     }
-    /// Whether a source callback has implemented, reference-testable semantics.
+    /// Whether a callback is admitted by the baseline lifecycle profiles.
+    /// Profile 8 separately admits A_Look with validated perception inputs.
     pub fn action_supported(&self, id: ActionId) -> bool {
         matches!(
             self.action_name(id),
@@ -355,6 +361,12 @@ impl ActorRegistry {
     }
     /// Validate an executable state closure without changing simulation state.
     pub fn validate_state(&self, state: StateId) -> Result<(), ActorError> {
+        self.validate_state_with(state, false)
+    }
+    pub(crate) fn validate_state_perception(&self, state: StateId) -> Result<(), ActorError> {
+        self.validate_state_with(state, true)
+    }
+    fn validate_state_with(&self, state: StateId, look: bool) -> Result<(), ActorError> {
         let mut seen = BTreeSet::new();
         let mut pending = vec![state];
         while let Some(id) = pending.pop() {
@@ -366,7 +378,9 @@ impl ActorRegistry {
                 continue;
             }
             if let ActorAction::Original(action) = s.action {
-                if !self.action_supported(action) {
+                if !self.action_supported(action)
+                    && !(look && self.action_name(action) == Some("A_Look"))
+                {
                     return Err(ActorError::UnsupportedAction(action));
                 }
             }
@@ -473,7 +487,10 @@ impl ActorRegistry {
             &mut BTreeSet::new(),
             &mut BTreeSet::new(),
             &mut 0,
-            ALLOWED_FLAGS,
+            Admission {
+                flags: ALLOWED_FLAGS,
+                look: false,
+            },
         )
     }
     fn admit_type(
@@ -483,7 +500,7 @@ impl ActorRegistry {
         path: &mut BTreeSet<ActorTypeId>,
         done: &mut BTreeSet<ActorTypeId>,
         work: &mut usize,
-        allowed_flags: u32,
+        admission: Admission,
     ) -> Result<(), ActorError> {
         if done.contains(&ty) {
             return Ok(());
@@ -496,8 +513,8 @@ impl ActorRegistry {
             return Err(ActorError::SpawnCycle);
         }
         let t = self.actor_type(ty).ok_or(ActorError::InvalidType)?;
-        if t.flags() & !allowed_flags != 0 {
-            return Err(ActorError::UnsupportedFlags(t.flags() & !allowed_flags));
+        if t.flags() & !admission.flags != 0 {
+            return Err(ActorError::UnsupportedFlags(t.flags() & !admission.flags));
         }
         if t.radius() < Fixed::ZERO
             || t.radius() > Fixed::from_map_units(32)
@@ -507,7 +524,7 @@ impl ActorRegistry {
             return Err(ActorError::Dimensions);
         }
         for root in [t.states()[0], t.states()[5]] {
-            self.validate_state(root)?;
+            self.validate_state_with(root, admission.look)?;
             let mut seen = BTreeSet::new();
             let mut todo = vec![root];
             while let Some(id) = todo.pop() {
@@ -523,7 +540,7 @@ impl ActorRegistry {
                 match s.action {
                     ActorAction::Probe(ProbeAction::Enter(next)) => todo.push(next),
                     ActorAction::Probe(ProbeAction::SpawnTarget(child)) => {
-                        self.admit_type(child, sectors, path, done, work, allowed_flags)?
+                        self.admit_type(child, sectors, path, done, work, admission)?
                     }
                     _ => {}
                 }
@@ -544,7 +561,10 @@ impl ActorRegistry {
             &mut BTreeSet::new(),
             &mut BTreeSet::new(),
             &mut 0,
-            ALLOWED_FLAGS | 524288,
+            Admission {
+                flags: ALLOWED_FLAGS | 524288,
+                look: false,
+            },
         )
     }
     pub(crate) fn validate_type_projectile(
@@ -558,7 +578,34 @@ impl ActorRegistry {
             &mut BTreeSet::new(),
             &mut BTreeSet::new(),
             &mut 0,
-            ALLOWED_FLAGS | 524288 | if ty.0 == 34 { 65536 } else { 0 },
+            Admission {
+                flags: ALLOWED_FLAGS | 524288 | if ty.0 == 34 { 65536 } else { 0 },
+                look: false,
+            },
+        )
+    }
+    pub(crate) fn validate_type_perception(
+        &self,
+        ty: ActorTypeId,
+        sectors: &[SectorState],
+    ) -> Result<(), ActorError> {
+        let info = self.actor_type(ty).ok_or(ActorError::InvalidType)?;
+        // A_Look's see-state action runs immediately. It must never call Look,
+        // Chase, probes or any unsupported callback recursively.
+        self.validate_state(info.states()[1])?;
+        if self.demand(info.states()[1], 0)?.work >= ENTRY_LIMIT {
+            return Err(ActorError::WorkLimit);
+        }
+        self.admit_type(
+            ty,
+            sectors,
+            &mut BTreeSet::new(),
+            &mut BTreeSet::new(),
+            &mut 0,
+            Admission {
+                flags: ALLOWED_FLAGS,
+                look: true,
+            },
         )
     }
     pub(crate) fn validate_impact_source(&self) -> Result<(), crate::CombatError> {
@@ -825,6 +872,7 @@ pub(crate) fn make_actor(
     }
 }
 pub(crate) struct LifeHost<'a, A> {
+    pub perception: Option<crate::perception::PerceptionInputs<'a>>,
     pub access: A,
     pub registry: &'a ActorRegistry,
     pub world: &'a StaticWorld,
@@ -888,8 +936,18 @@ impl<A: ActorAccess> LifeHost<'_, A> {
         self.observe(ActorStateEvent::Random { actor: id, value });
         value
     }
-    fn sound(&mut self, actor: Option<ActorId>, sound: u16) {
+    pub(crate) fn sound(&mut self, actor: Option<ActorId>, sound: u16) {
         self.observe(ActorStateEvent::Sound { actor, sound });
+    }
+    pub(crate) fn enter_counted(&mut self, id: ActorId, state: StateId, work: &mut usize) {
+        self.enter_inner(id, state, work);
+    }
+    pub(crate) fn invoke_look(&mut self, id: ActorId) -> bool {
+        self.observe(ActorStateEvent::Action {
+            actor: id,
+            action: ActorAction::Original(source_action_id("A_Look")),
+        });
+        crate::perception::look(self, id, &mut 0)
     }
     pub fn enter(&mut self, id: ActorId, state: StateId) {
         self.enter_inner(id, state, &mut 0);
@@ -963,6 +1021,9 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                         .expect("original sound") as u16
                 };
                 match self.registry.action_name(action).expect("original action") {
+                    "A_Look" => {
+                        crate::perception::look(self, id, work);
+                    }
                     "A_Fall" => {
                         let actor = self.access.get_mut(id).unwrap();
                         actor.life.as_mut().unwrap().flags &= !2;
@@ -1056,4 +1117,19 @@ pub(crate) fn blocks_cell_index(actor: &Actor) -> bool {
 }
 pub(crate) fn in_sector_list(actor: &Actor) -> bool {
     actor.life.is_none_or(|life| life.flags & 8 == 0)
+}
+
+pub(crate) fn source_sound_id(name: &str) -> u16 {
+    SOURCE_SOUNDS
+        .iter()
+        .position(|s| *s == name)
+        .expect("source sound") as u16
+}
+pub(crate) fn source_action_id(name: &str) -> ActionId {
+    ActionId(
+        SOURCE_ACTIONS
+            .iter()
+            .position(|s| *s == name)
+            .expect("source action") as u16,
+    )
 }

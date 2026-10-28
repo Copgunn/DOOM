@@ -492,6 +492,7 @@ impl Simulation {
                 && !lifecycle::source_type_is(source_type, "MT_VILE")
             {
                 LifeHost {
+                    perception: None,
                     access: &mut self.actors,
                     registry: self.registry.as_deref().unwrap(),
                     world: &self.world,
@@ -589,6 +590,7 @@ impl Simulation {
                 position[2] + Fixed::from_bits((i32::from(first) - i32::from(second)) * 1024);
             let ty = lifecycle::source_type_id(if blood { "MT_BLOOD" } else { "MT_PUFF" }).unwrap();
             let id = LifeHost {
+                perception: None,
                 access: &mut self.actors,
                 registry: self.registry.as_deref().unwrap(),
                 world: &self.world,

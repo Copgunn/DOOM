@@ -762,6 +762,11 @@ impl Simulation {
         if self.profile == Profile::Projectiles {
             self.projectile_thinkers_with(|_, _| {});
         } else {
+            let perception_inputs =
+                (self.profile == Profile::Perception).then_some(perception::PerceptionInputs {
+                    players: &self.perception_players,
+                    sound_targets: &self.sound_targets,
+                });
             let world = &self.world;
             let events = &mut self.events;
             let profile = self.profile;
@@ -847,6 +852,7 @@ impl Simulation {
                                     let play = lifecycle::source_state_id("S_PLAY").unwrap();
                                     *context.get_mut(id).unwrap() = actor;
                                     lifecycle::LifeHost {
+                                        perception: perception_inputs,
                                         access: &mut *context,
                                         registry: registry.as_deref().unwrap(),
                                         world,
@@ -869,6 +875,7 @@ impl Simulation {
                             *context.get_mut(id).expect("same live thinker handle") = actor;
                             if let Some(registry) = registry {
                                 lifecycle::LifeHost {
+                                    perception: perception_inputs,
                                     access: context,
                                     registry,
                                     world,

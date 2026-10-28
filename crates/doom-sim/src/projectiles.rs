@@ -303,6 +303,7 @@ impl Simulation {
         self.pending
             .push(Event::Projectile(ProjectileEvent::Launch(request)));
         let id = LifeHost {
+            perception: None,
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),
             world: &self.world,
@@ -665,6 +666,7 @@ impl Simulation {
                     }
                     if self.actors.is_pending(id) == Some(false) {
                         LifeHost {
+                            perception: None,
                             access: &mut self.actors,
                             registry: self.registry.as_deref().unwrap(),
                             world: &self.world,

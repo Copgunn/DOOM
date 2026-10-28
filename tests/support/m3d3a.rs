@@ -47,18 +47,67 @@ pub fn map(index: usize) -> doom_map::Map {
         14 => include_bytes!("../reference/m3d3a_map_14.bin"),
         15 => include_bytes!("../reference/m3d3a_map_15.bin"),
         16 => include_bytes!("../reference/m3d3a_map_16.bin"),
+        17 => include_bytes!("../reference/m3d3a_map_17.bin"),
         _ => panic!("fixture map"),
     };
     let wad = doom_wad::Wad::parse(bytes, doom_wad::Limits::default()).unwrap();
     doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default()).unwrap()
 }
+pub fn registry(c: &Case) -> ActorRegistry {
+    let r = ActorRegistry::vanilla();
+    if c.n(0) < 2 {
+        return r;
+    }
+    let mut states = r.states().to_vec();
+    states[1] = ActorStateDef {
+        name: "FIXTURE_LOOK".into(),
+        sprite: 29,
+        frame: 0,
+        tics: c.n(15),
+        action: ActorAction::Original(ActionId(43)),
+        next: StateId(1),
+        misc: [0, 0],
+    };
+    states[2] = ActorStateDef {
+        name: "FIXTURE_SEE".into(),
+        sprite: 29,
+        frame: 1,
+        tics: -1,
+        action: ActorAction::None,
+        next: StateId(0),
+        misc: [0, 0],
+    };
+    let mut types = r.types().to_vec();
+    for i in [19, 21, 136] {
+        let mut t = types[0].clone();
+        t.name = format!("FIXTURE_LOOKER_{i}");
+        t.properties[0] = -1;
+        t.properties[1] = 1;
+        t.properties[3] = 2;
+        t.properties[4] = c.n(8);
+        t.properties[5] = 8;
+        t.properties[17] = c.n(14);
+        t.properties[21] = c.n(7);
+        types[i] = t;
+    }
+    ActorRegistry::new(states, types).unwrap()
+}
 pub fn sight_setup(c: &Case) -> Simulation {
-    let mut sim = Simulation::monster_perception(map(c.n(1) as usize)).unwrap();
+    setup(c)
+}
+pub fn setup(c: &Case) -> Simulation {
+    let mut sim = Simulation::with_perception_registry(
+        map(c.n(1) as usize),
+        64,
+        registry(c),
+        ActorOptions::default(),
+    )
+    .unwrap();
     for _ in 0..c.n(9) {
         sim.gameplay_random();
     }
     sim.spawn_type(
-        ActorTypeId(0),
+        ActorTypeId(c.n(6) as u16),
         [c.f(2), c.f(3)],
         SpawnHeight::Absolute(c.f(4)),
     )
@@ -262,6 +311,30 @@ impl Trace {
                     _ => None,
                 },
                 Event::Perception(p) => match p {
+                    PerceptionEvent::LookStart { actor, threshold } => {
+                        Some(("K", vec![0, ordinal(*actor), i64::from(*threshold)]))
+                    }
+                    PerceptionEvent::LookSound {
+                        actor,
+                        target,
+                        shootable,
+                        ambush,
+                    } => Some((
+                        "K",
+                        vec![
+                            1,
+                            ordinal(*actor),
+                            target.map_or(-1, ordinal),
+                            i64::from(*shootable),
+                            i64::from(*ambush),
+                        ],
+                    )),
+                    PerceptionEvent::Wake { actor, state } => {
+                        Some(("K", vec![8, ordinal(*actor), i64::from(state.0)]))
+                    }
+                    PerceptionEvent::Random { actor, value } => {
+                        Some(("K", vec![9, ordinal(*actor), i64::from(*value)]))
+                    }
                     PerceptionEvent::ScanStart {
                         actor,
                         allaround,

@@ -42,9 +42,7 @@ impl Simulation {
         }
         crate::sight::validate_map(&map)?;
         let source = ActorRegistry::vanilla();
-        if registry.states() != source.states() || registry.types() != source.types() {
-            return Err(PerceptionError::Definition.into());
-        }
+        validate_registry(&registry, &source)?;
         let mut sim = Self::with_actor_registry(map, limit, registry, options)?;
         sim.profile = Profile::Perception;
         sim.sound_targets = vec![None; sim.sectors.len()];
@@ -87,6 +85,38 @@ pub struct PerceptionPlayer {
 /// Source perception decisions, in the order actually evaluated.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PerceptionEvent {
+    /// Before the source threshold reset.
+    LookStart {
+        /// Observer.
+        actor: ActorId,
+        /// Previous threshold.
+        threshold: i32,
+    },
+    /// Source sound target before assignment, ambush sight or player fallback.
+    LookSound {
+        /// Observer.
+        actor: ActorId,
+        /// Retained sector target.
+        target: Option<ActorId>,
+        /// Current shootability bit.
+        shootable: bool,
+        /// Source AMBUSH bit.
+        ambush: bool,
+    },
+    /// Source wake sound RNG, after detection and before sound/state entry.
+    Random {
+        /// Observer.
+        actor: ActorId,
+        /// Original lookup result.
+        value: u8,
+    },
+    /// Immediately before the validated see-state entry.
+    Wake {
+        /// Observer.
+        actor: ActorId,
+        /// Metadata see state.
+        state: StateId,
+    },
     /// Start at current lastlook; no nearest-target sorting.
     ScanStart {
         /// Observer.
@@ -362,6 +392,7 @@ impl Simulation {
         );
         Ok(commit_scan(
             &mut crate::lifecycle::LifeHost {
+                perception: None,
                 access: &mut self.actors,
                 registry: self.registry.as_deref().unwrap(),
                 world: &self.world,
@@ -378,11 +409,29 @@ impl Simulation {
     }
     pub(crate) fn preflight_perception_step(&self) -> Result<(), SimError> {
         self.preflight_perception_roster()?;
+        if self.bindings.iter().any(Option::is_some) || self.weapon_player.is_some() {
+            return Err(PerceptionError::Roster.into());
+        }
         for id in self.actors.order() {
             if self.actors.is_pending(id) != Some(false) {
                 continue;
             }
             let a = self.actor(id).unwrap();
+            self.validate_perception_type(a.life.unwrap().actor_type)?;
+            let mut state = a.life.unwrap().state.unwrap();
+            let mut seen = std::collections::BTreeSet::new();
+            let mut looking = false;
+            while state.0 != 0 && seen.insert(state) {
+                let def = self.registry.as_deref().unwrap().state(state).unwrap();
+                looking |= matches!(def.action,ActorAction::Original(action) if self.registry.as_deref().unwrap().action_name(action)==Some("A_Look"));
+                if def.tics == -1 {
+                    break;
+                }
+                state = def.next;
+            }
+            if looking {
+                self.preflight_perception_look(id)?;
+            }
             crate::sight::actor_bounds(a)?;
             for axis in 0..2 {
                 if a.momentum()[axis] != Fixed::ZERO
@@ -405,6 +454,37 @@ fn identity(b: &mut Vec<u8>, id: ActorId) {
 }
 pub(crate) fn event_bytes(b: &mut Vec<u8>, e: &PerceptionEvent) {
     match e {
+        PerceptionEvent::LookStart { actor, threshold } => {
+            b.push(0);
+            identity(b, *actor);
+            b.extend(threshold.to_le_bytes());
+        }
+        PerceptionEvent::LookSound {
+            actor,
+            target,
+            shootable,
+            ambush,
+        } => {
+            b.push(1);
+            identity(b, *actor);
+            if let Some(t) = target {
+                b.push(1);
+                identity(b, *t);
+            } else {
+                b.extend([0; 13]);
+            }
+            b.extend([u8::from(*shootable), u8::from(*ambush)]);
+        }
+        PerceptionEvent::Wake { actor, state } => {
+            b.push(8);
+            identity(b, *actor);
+            b.extend(state.0.to_le_bytes());
+        }
+        PerceptionEvent::Random { actor, value } => {
+            b.push(9);
+            identity(b, *actor);
+            b.push(*value);
+        }
         PerceptionEvent::ScanStart {
             actor,
             allaround,
@@ -553,4 +633,242 @@ impl Simulation {
         self.emit_noise(target, emitter);
         Ok(())
     }
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct PerceptionInputs<'a> {
+    pub players: &'a [PerceptionPlayer; 4],
+    pub sound_targets: &'a [Option<ActorId>],
+}
+/// The original A_Look body, reached only after complete admission/preflight.
+pub(crate) fn look<A: crate::lifecycle::ActorAccess>(
+    host: &mut crate::lifecycle::LifeHost<'_, A>,
+    id: ActorId,
+    work: &mut usize,
+) -> bool {
+    let input = host.perception.expect("profile-8 perception context");
+    let observer = *host.access.get(id).unwrap();
+    let life = observer.life.unwrap();
+    host.events
+        .push(Event::Perception(PerceptionEvent::LookStart {
+            actor: id,
+            threshold: life.threshold,
+        }));
+    host.access
+        .get_mut(id)
+        .unwrap()
+        .life
+        .as_mut()
+        .unwrap()
+        .threshold = 0;
+    let sound = input.sound_targets[usize::from(observer.location.unwrap().sector)];
+    let shootable = sound.is_some_and(|t| host.access.get(t).unwrap().life.unwrap().flags & 4 != 0);
+    let ambush = life.flags & 32 != 0;
+    host.events
+        .push(Event::Perception(PerceptionEvent::LookSound {
+            actor: id,
+            target: sound,
+            shootable,
+            ambush,
+        }));
+    let mut heard = false;
+    if shootable {
+        let target = sound.unwrap();
+        host.target(id, Some(target));
+        if ambush {
+            let result = crate::sight::query(
+                host.world,
+                host.sectors,
+                observer,
+                *host.access.get(target).unwrap(),
+            );
+            heard = result.visible;
+            host.events.push(Event::Perception(PerceptionEvent::Sight {
+                observer: id,
+                target,
+                result,
+            }));
+        } else {
+            heard = true
+        }
+    }
+    if !heard {
+        let plan = scan(
+            host.world,
+            host.sectors,
+            input.players,
+            &|id| host.access.get(id).copied(),
+            id,
+            false,
+        );
+        if !commit_scan(host, id, plan) {
+            return false;
+        }
+    }
+    let info = host.registry.actor_type(life.actor_type).unwrap();
+    let state = info.states()[1];
+    let sound = info.sounds()[0];
+    if sound != 0 {
+        let posit = crate::lifecycle::source_sound_id("sfx_posit1");
+        let bgsit = crate::lifecycle::source_sound_id("sfx_bgsit1");
+        let group = if (posit..=posit + 2).contains(&sound) {
+            Some((posit, 3))
+        } else if (bgsit..=bgsit + 1).contains(&sound) {
+            Some((bgsit, 2))
+        } else {
+            None
+        };
+        let chosen = if let Some((base, modulus)) = group {
+            let value = host.rng.p_random();
+            host.events.push(Event::Perception(PerceptionEvent::Random {
+                actor: id,
+                value,
+            }));
+            base + u16::from(value % modulus)
+        } else {
+            sound
+        };
+        let global = [19, 21].contains(&life.actor_type.0);
+        host.sound(if global { None } else { Some(id) }, chosen);
+    }
+    host.events.push(Event::Perception(PerceptionEvent::Wake {
+        actor: id,
+        state,
+    }));
+    host.enter_counted(id, state, work);
+    true
+}
+impl Simulation {
+    pub(crate) fn validate_perception_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
+        self.registry
+            .as_deref()
+            .unwrap()
+            .validate_type_perception(ty, &self.sectors)?;
+        Ok(())
+    }
+    fn preflight_perception_look(&self, id: ActorId) -> Result<(), SimError> {
+        let a = self.perception_actor(id)?;
+        let ty = a.life.unwrap().actor_type;
+        let info = self.registry.as_deref().unwrap().actor_type(ty).unwrap();
+        if ![19, 21, 136].contains(&ty.0) || info.states()[..2] != [StateId(1), StateId(2)] {
+            return Err(PerceptionError::Definition.into());
+        }
+        self.validate_perception_type(ty)?;
+        self.preflight_perception_roster()?;
+        if let Some(target) = self.sound_targets[usize::from(a.location.unwrap().sector)] {
+            self.validate_perception_reference(target)
+                .map_err(|_| PerceptionError::SoundTarget)?;
+        }
+        Ok(())
+    }
+    pub(crate) fn preflight_perception_entry(
+        &self,
+        id: ActorId,
+        state: StateId,
+    ) -> Result<(), SimError> {
+        self.perception_actor(id)?;
+        self.preflight_perception_roster()?;
+        let registry = self.registry.as_deref().unwrap();
+        let mut cursor = state;
+        let mut seen = std::collections::BTreeSet::new();
+        while cursor.0 != 0 && seen.insert(cursor) {
+            let def = registry.state(cursor).ok_or(ActorError::InvalidState)?;
+            if matches!(def.action,ActorAction::Original(a) if registry.action_name(a)==Some("A_Look"))
+            {
+                self.preflight_perception_look(id)?;
+            }
+            cursor = def.next;
+        }
+        let referenced = self
+            .perception_players
+            .iter()
+            .any(|p| p.active && p.actor == Some(id))
+            || self.sound_targets.contains(&Some(id));
+        if referenced {
+            let a = self.actor(id).unwrap();
+            let fixture = a.life.unwrap().actor_type != ActorTypeId(0);
+            if !(149..=173).contains(&state.0) && !(fixture && [1, 2].contains(&state.0)) {
+                return Err(PerceptionError::Roster.into());
+            }
+        }
+        Ok(())
+    }
+    /// Execute admitted original A_Look between tics. Ok(false) is a normal
+    /// no-wake decision and may still change threshold/target/lastlook/events.
+    pub fn look(&mut self, id: ActorId) -> Result<bool, SimError> {
+        self.preflight_perception_look(id)?;
+        Ok(crate::lifecycle::LifeHost {
+            perception: Some(PerceptionInputs {
+                players: &self.perception_players,
+                sound_targets: &self.sound_targets,
+            }),
+            access: &mut self.actors,
+            registry: self.registry.as_deref().unwrap(),
+            world: &self.world,
+            sectors: &self.sectors,
+            options: self.actor_options,
+            rng: &mut self.rng,
+            spatial: &mut self.spatial,
+            bindings: &mut self.bindings,
+            events: &mut self.pending,
+        }
+        .invoke_look(id))
+    }
+}
+
+fn validate_registry(r: &ActorRegistry, source: &ActorRegistry) -> Result<(), SimError> {
+    if r.states() == source.states() && r.types() == source.types() {
+        return Ok(());
+    }
+    if r.states().len() != source.states().len() || r.types().len() != source.types().len() {
+        return Err(PerceptionError::Definition.into());
+    }
+    for (i, s) in r.states().iter().enumerate() {
+        if (i > 2 || i == 0) && s != &source.states()[i] {
+            return Err(PerceptionError::Definition.into());
+        }
+    }
+    let a = &r.states()[1];
+    let b = &r.states()[2];
+    if a.name != "FIXTURE_LOOK"
+        || a.sprite != 29
+        || a.frame != 0
+        || !(1..=35).contains(&a.tics)
+        || a.action != ActorAction::Original(crate::lifecycle::source_action_id("A_Look"))
+        || a.next != StateId(1)
+        || a.misc != [0, 0]
+        || b.name != "FIXTURE_SEE"
+        || b.sprite != 29
+        || b.frame != 1
+        || b.tics != -1
+        || b.action != ActorAction::None
+        || b.next != StateId(0)
+        || b.misc != [0, 0]
+    {
+        return Err(PerceptionError::Definition.into());
+    }
+    for (i, t) in r.types().iter().enumerate() {
+        if ![19, 21, 136].contains(&i) {
+            if t != &source.types()[i] {
+                return Err(PerceptionError::Definition.into());
+            }
+            continue;
+        }
+        if t.name != format!("FIXTURE_LOOKER_{i}")
+            || t.properties[0] != -1
+            || t.properties[1] != 1
+            || t.properties[3] != 2
+            || t.properties[5] != 8
+        {
+            return Err(PerceptionError::Definition.into());
+        }
+        for j in 0..23 {
+            if ![0, 1, 3, 4, 5, 17, 21].contains(&j)
+                && t.properties[j] != source.types()[0].properties[j]
+            {
+                return Err(PerceptionError::Definition.into());
+            }
+        }
+    }
+    Ok(())
 }

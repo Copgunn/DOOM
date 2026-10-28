@@ -372,7 +372,7 @@
     "generate_m3b.py": "613aeb1563573f1990314414c0e1086d1645c3afd4764c2316c8e7d4e828a374",
     "generate_m3c.py": "caca6c42d0856c87878f22e65380bf9ef50d8070e721f2edbb2d6ad656667d64",
     "generate_m3d1.py": "a2abea47bea8ace07c0091e87dcd2edc159b3e17abb8a52204e569cd53b23ce9",
-    "generate_m3d3a.py": "f906608b6440a097a0d84d837a5d18035357f0ff6239a2ed162775d0a567d260",
+    "generate_m3d3a.py": "e44b12d5eaa820241ec91c5915e9a859fcabcd4161a878d834aa64f3c29507ff",
     "m3d3a_shim.h": "0639fbe6251ca5b9cbb6f20013bdf322fbeecb664df7d5a3f04578a8308aaade"
   },
   "outputs_sha256": {
@@ -393,10 +393,11 @@
     "tests/reference/m3d3a_map_14.bin": "04a82ef1bbab456ce0dfdb18cf38abb2b8dc9df006c626fb8fb3f9376c2ecdd3",
     "tests/reference/m3d3a_map_15.bin": "b2884c1c70032968896dfa46dfe71cba629c00edf71ee22ba274fba6cf9e1c41",
     "tests/reference/m3d3a_map_16.bin": "51567cc8196ddfca05a6d8e772b17c2da349f758b18a96b9ae7eafc7e246ac1a",
-    "tests/reference/m3d3a_trace.csv": "cbc0a6972cd176d2e8ed30190b2abe16c5736b64d74668dd35bffa2b88fda952",
+    "tests/reference/m3d3a_map_17.bin": "1141d3aa75225e7beed71a0b9f2d41825291f8ee81b7652ba690e22759aede27",
+    "tests/reference/m3d3a_trace.csv": "4a2de7c09c3b6583f332424953bb0257007947867a04d55f7bd1b1843b699718",
     "tests/reference/m3d3a_sides.csv": "a0ed4a499b2b220c75f85bd9f996d2ade1be5a2a013f7a4fb918906447e6190e",
     "tests/reference/m3d3a_fractions.csv": "b0497ce0ccd1d7fa257f6c4bd546ec4c5bd824d2851e729c85edcaa4760a1080",
-    "tests/reference/m3d3a_cases.csv": "59c3be27ef1312b90bb2013cc53fa0f1e9f25d80a93333943b4398dce2801d4c"
+    "tests/reference/m3d3a_cases.csv": "3c44bd19929aadd8a8f7d46b825547ee48b4baa4fa59a25dadcb746a01973be0"
   },
   "assumptions": [
     "real original structs/info and 32-bit fixed/int, 64-bit pointer/function-union ABI",
