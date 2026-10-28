@@ -267,3 +267,7 @@ fn validate_registry(r: &ActorRegistry) -> Result<(), SimError> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "demon_tests.rs"]
+mod tests;
