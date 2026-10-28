@@ -80,7 +80,7 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   narrow headless simulation profile; M3a adds player/solid XY and M3b adds
   static-sector BSP/openings/XY/Z. M3c adds typed actor lifecycle in profile 4; M3d1 adds bounded explicit unbound
   damage/aim/hitscan in profile 5; M3d2 adds bounded player weapons/psprites
-  in profile 6. Complete player/view, dynamic
+  in profile 6; M3d2b adds original plasma foundations in profile 7. Complete player/view, dynamic
   sectors, combat, specials, demos and rendering remain incomplete. Preserve
   all M2/v1, M3a/v2, M3b/v3, M3c/v4 and M3d1/v5 and M3d2/v6 suites; read their source investigations before
   changing movement.
@@ -97,7 +97,7 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   user thinker budgets have a separate documented nontransactional contract.
 - Actor identity, thinker order and spatial order are separate. Never sort handles
   to choose blockers; successful same-cell moves reinsert at spatial cell head.
-- Run all six reference generators and independent golden encoders on Linux;
+- Run all seven reference generators and independent golden encoders on Linux;
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
 - M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
   correction-head and post-merge CI. M3d1 was regularly merged as c924f18 after fresh correction-head and
@@ -134,3 +134,18 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - Run `generate_m3d2.py --check`, `m3d2_snapshot_goldens.py --check`, all six
   debug/release examples and bounded weapon fuzzing, alongside every older suite.
   All v1-v5 schemas and historical helpers/fixtures/encoders remain unchanged.
+
+- Read `docs/M3D2B_REFERENCE.md` before projectile changes. Profile 7 admits only
+  exact MT_PLASMA missiles, original immutable states/types and labelled bounded
+  player-state fixtures. Reuse ThinkerStore/cursor, M3b thing/line queries, LifeHost
+  and M3d1 damage; no second physics, scheduler or damage implementation.
+- Preserve owner generations, source half-step-before-relink, things-before-lines,
+  positive-only XY subdivision and residual movement after explosion. Live owners
+  must remain active; exploded missiles may retain unresolved old identities.
+  Bound players and actual player damage remain rejected. No full-state tic clone.
+- Run `generate_m3d2b.py --check`, `m3d2b_snapshot_goldens.py --check`, both
+  `check_headless.py` and `check_projectiles.py`, all six fuzz builds and bounded
+  projectile ASan smoke tests. Preserve every v1-v6 schema, fixture, generator,
+  encoder and historical helper unchanged. New projectile observations use tag 15.
+- M3d2b stops at owner review. Never merge it or enable auto-merge without separate
+  explicit owner authorization. M3d3/M3d4/M3e remain later milestones.

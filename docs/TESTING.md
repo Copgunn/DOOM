@@ -332,3 +332,46 @@ admitted loadouts and whole-snapshot checks on every recoverable error. It adds
 no stable dependency. Evolving corpora, sanitizer outputs and builds remain ignored;
 only a tiny original synthetic seed is tracked. ASan with leak detection disabled
 provides no LeakSanitizer evidence. Report observed counts and any failures.
+
+## M3d2b projectile checks
+
+```sh
+python3 tools/reference/generate_m3d2b.py --check
+python3 tools/reference/m3d2b_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3d2b_reference --locked -- --nocapture
+cargo test -p doom-sim --lib projectiles --locked -- --nocapture
+cargo run -p doom-sim --example projectiles --locked
+python3 tools/reference/check_headless.py
+python3 tools/reference/check_projectiles.py
+cargo +nightly fuzz build --fuzz-dir fuzz
+```
+
+Run every older generator/encoder and normal workspace/release/MSRV/docs checks
+as well. Recorded Rust comparisons need no C compiler, Python, IWAD or device.
+The seventh example helper leaves the six-example historical helper unchanged.
+CI reproduces all seven reference pairs on Linux, and recorded comparisons,
+release tests, seven-example equality and warning-free docs on all stable OS jobs.
+
+41 C scenarios compare actual actor fields, source/inflictor identities, RNG draws,
+collision candidates/openings and ordered lifecycle/movement/impact observations.
+The synthetic same-pass scenario lives in the unit suite to access the private
+shared traversal cursor without exposing a callback scripting API. V7 checks 129
+independent snapshots/35 full streams with named-field diagnostics; all older
+versions are preserved. Error-policy, boundary and read-independence tests are
+project consistency evidence; full vanilla/DOS behavior remains unverified.
+
+`projectiles` fuzzing executes at most 12 three-byte operations against nine
+public fixture setups. It varies launch handles/aims, removals, momentum, bindings,
+typed spawn and stepping; every recoverable error compares complete snapshots.
+A representative bounded campaign uses a temporary synthetic corpus:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run projectiles --fuzz-dir fuzz \
+  /tmp/projectile-corpus -- -runs=2000 -max_len=37 -seed=7
+```
+
+Populate that external directory with redistributable byte inputs first. Never
+point fuzzing at private IWADs. Report actual executions and sanitizer findings;
+`detect_leaks=0` means this does not verify LeakSanitizer. See validation for the
+observed campaign and compiler versions. No test fixture is generated from Rust
+expected results and no commercial asset enters public CI.

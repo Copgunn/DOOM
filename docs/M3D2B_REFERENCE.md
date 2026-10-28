@@ -165,3 +165,96 @@ addition. Original arithmetic right shift and toward-zero division are explicit
 Rust operations. Record compiler/flags/ABI, source/function/header/adapter/input/
 output hashes and excluded C-undefined extremes. Retain retired C bytes solely
 for observation. Record observed evidence later; nothing planned here is a pass.
+
+## Delivered profile 7 admission and observed evidence
+
+The preceding investigation was recorded before implementation; the following
+contracts describe the delivered runtime and verified comparisons.
+
+| Area | Executable admission |
+| --- | --- |
+| Missile | Exact original MT_PLASMA 34 only; metadata/states unchanged |
+| Launch | Explicit Actor(destination) or PlayerAutoAim from an active unbound source |
+| Missile flags | Initial 67088; explosion clears only MISSILE, retaining 1552 |
+| Source/target actors | Admitted ordinary original nonshootable types, unbound MT_PLAYER, or labelled player-state fixtures 15/17/136 |
+| Native fixtures | Copy source player properties/closures; only name/doomednum, health, reaction, pain chance, mass, radius/height and admitted flags may vary; health 1..1000, mass >=10, pain 0..256 |
+| Dimensions/flags | Existing map-wide positive-height/radius <=32 admission; baseline lifecycle flags plus NOBLOOD, with MISSILE added only for exact type 34; SPECIAL/pickup, NOCLIP, skull charge/AI and unsupported actions reject |
+| World | Existing static-sector/BLOCKMAP bounds (128 lines/sectors, 4096 cells/BSP work, 65536 words); no sky or specials |
+| Arithmetic | Map vertices, sector heights, BLOCKMAP origin and BSP node origin/delta within +/-4096 map units; setup actor XYZ within +/-4096 |
+| Runtime arithmetic | Step active XYZ and XY momenta within +/-8192, Z momentum within +/-1024; setup momentum setters cap XY +/-4096 and Z +/-64; launch source/destination XYZ within +/-4096 and derived momz within +/-64 |
+| Work | At most 64 actor slots; original state work bounds; no callback spawning/removal during impact |
+| Relationships | Existing generation-aware target field retains owner. Intended destination is validated at launch only; no tracer field |
+| Player behavior | No bindings or weapon-player initialization in profile 7; actual player damage remains rejected |
+
+Changing missile state/death/target/momentum through setup setters rejects;
+use launch/impact/lifecycle services. Ordinary explicit actor setup remains
+available. A failed launch (invalid/stale/pending identity, unsupported type,
+unsafe slope/arithmetic or full capacity) preserves full canonical state. Live
+missile owner removal makes the next unpaused step reject before mutation; remove
+the missile too before retiring its owner. Explosion frames can safely retain a
+stale owner. A removed intended victim does not invalidate a missile's launch
+intent because no victim/tracer reference is stored.
+
+Admission proves source direct damage cannot fail after its RNG draw: every
+shootable target uses admitted player see/pain/death closures, has bounded positive
+metadata, cannot be bound, cannot drop items or score, and cannot spawn/remove
+actors during a damage callback. Current geometry/handle/arithmetic and state
+work are checked before gameplay mutation. Storage reservation changes allocator
+capacity only, which is deliberately absent from canonical state. No per-tic
+Simulation, map or store clone is used.
+
+### Original-C execution and comparisons
+
+`generate_m3d2b.py` compiles 51 listed extracted original function bodies,
+including the five admitted source actions, with real original headers/info,
+m_fixed.c and tables.c. The fixture loader, allocation retention, observations
+and synthetic launch wrapper are adapters. Unsupported original services abort
+if reached. Source, all headers, adapters, inputs/outputs and compiler/ABI are
+hashed in `m3d2b_provenance.json`. Compiler observed: Debian GCC 14.2.0,
+GNU89/O0/fwrapv/no-strict-aliasing, contraction off, standard excess precision,
+signed char, 32-bit int/fixed and 64-bit pointer/function-union host ABI.
+Retaining retired C memory defines observation/traversal without dereferencing
+freed storage; Rust retires generations normally. Ordered shadow/jitter draws
+replace undefined signed negative shifts with multiplication. Wrapping BAM and
+source shift/division distinctions are explicit. Extreme undefined arithmetic
+outside the admission slice is rejected rather than claimed equivalent.
+
+41 scenarios independently compare **157,872 live actor fields**, **13,189 ordered
+observations**, **1,194 movement decisions**, **6,229 candidate callbacks**,
+**16 openings** and **549 raw gameplay RNG draws**. The 40 explicit API scenarios
+account for 155,352/12,991/1,151/6,013/16/542 respectively. One synthetic wrapper
+launching during an original thinker accounts for 2,520/198/43/216/0/7; it proves
+same-pass append scheduling without claiming an original monster firing action.
+Damage request observations compare actual source/inflictor/target handles and
+amounts, alongside health, momentum, pain/death states and RNG.
+
+Scenarios include actor/player-helper launch and +/- autoaim probes, shadow
+spread, initial wall/actor obstruction, positive/negative/diagonal movement,
+clear flight, valid/narrow/closed/exact-eight-unit openings, blocking flags,
+floor/ceiling impact/equality, zero-momentum floor skimming, nonshootable
+solid/nonsolid contacts, source/same-species/player/baron-knight distinctions,
+vertical pass-over, things before walls, equal-contact head order, nonsolid
+shootable residual motion, lethal/pain transitions, two missiles, both 50-missile
+batches crossing RNG wrap and reusing retired slots, omission BLOCKMAP behavior,
+explosion progression, null unlink and next-pass retirement.
+
+`m3d2b_snapshot_goldens.py` produces **129 independent DSIM-v7 captures and 35
+full byte streams**, entirely from C rows, synthetic inputs and explicit schema.
+It covers every setup, complete clear-wall/dropoff lifecycles, settled lethal
+state and first/second-batch generations. Transient damage event bytes are not
+independently encoded here; their semantic ordering/actor results are checked
+against C and the established v5 damage tests. Project schema goldens are distinct
+from source equivalence. Named-field comparison precedes complete-byte/hash checks.
+
+Seven additional unit/policy tests cover invalid/pending/stale/reused identities,
+owner retention, capacity, setup/arithmetic/state/action guards, exact XY/Z touch
+predicates, bound-player protection, pause, independent simulations and repeated
+presentation reads. These are consistency/contract evidence, apart from the
+explicit C scheduling comparison in the same unit suite.
+
+The asserted `projectiles` example checks four C-derived full lifecycles including
+portal passage, wall collision, lethal direct hit and complete explosion/removal.
+Its independently encoded final digest is **e060071ebbb323f7**. All six older
+examples and v1-v6 schemas/fixtures/generators/encoders/helpers remain unchanged.
+No complete plasma-rifle, rocket, BFG, other missile, splash, AI, armor/player
+injury, renderer, demo or authentic-IWAD synchronization claim is made.

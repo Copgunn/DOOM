@@ -25,7 +25,8 @@ foundations are implemented in [PR #7](https://github.com/Copgunn/DOOM/pull/7)
 merged as `c924f18` after fresh correction-head and post-merge CI. M3d2 player
 weapons and psprites are implemented in [PR #8](https://github.com/Copgunn/DOOM/pull/8)
 merged as `955f690` after fresh correction-head and post-merge CI. M3d2b projectile
-foundations are under development on a separate branch.
+foundations implement bounded original plasma spawning, flight, direct impact,
+explosion and removal in profile 7; the feature PR awaits owner review.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 
@@ -57,6 +58,8 @@ Implemented:
   pain/knockback/kill/corpses, real puff/blood thinkers and DSIM-v5.
 - Explicit M3d2 profile: command-driven pistol/shotgun/chaingun, unpowered fallback
   fist, source psprites/ammo/refire/switching, sector noise targets and DSIM-v6.
+- Explicit M3d2b profile: source MT_PLASMA launch/autoaim, missile collision, shared
+  direct damage and complete explosion/removal, with DSIM-v7.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
 Choose the compatibility profile explicitly:
@@ -69,6 +72,7 @@ Choose the compatibility profile explicitly:
 | `Simulation::actor_states` | DSIM-v4 | M3c typed actors and supported state/action lifecycle on static-sector physics |
 | `Simulation::combat` | DSIM-v5 | M3d1 explicit damage/aim/hitscan for admitted unbound actors |
 | `Simulation::player_weapons` | DSIM-v6 | M3d2 one live weapon player, source pistol/shotgun/chaingun and fallback fist |
+| `Simulation::projectiles` | DSIM-v7 | M3d2b explicit original plasma launch, flight, direct impact and explosion/removal for unbound actors |
 
 M3b consumes supplied BLOCKMAP lists in reference order. Conservative omissions
 are diagnostic, not automatic rebuilds or proof of broken geometry. Missing
@@ -99,6 +103,9 @@ cargo run -p doom-sim --example headless --locked -- 12
 cargo run -p doom-sim --example player_arena --locked
 cargo run -p doom-sim --example multisector_arena --locked
 cargo run -p doom-sim --example actor_states --locked
+cargo run -p doom-sim --example combat_arena --locked
+cargo run -p doom-sim --example player_weapons --locked
+cargo run -p doom-sim --example projectiles --locked
 ```
 
 `rust-toolchain.toml` selects stable with rustfmt and Clippy. The minimum compiler
@@ -404,3 +411,23 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md), [AGENTS.md](AGENTS.md), and the
 and relevant documentation, and open a PR against `master`. Correctness,
 determinism, safety, and reviewable changes take priority over optimization.
 Merging requires explicit owner approval.
+
+## Projectile foundations
+
+`Simulation::projectiles(map)` selects profile 7 with at most 64 actors. Spawn an
+admitted unbound source/target using `spawn_type`, then call
+`launch_projectile(ProjectileRequest { source, actor_type: ActorTypeId(34),
+aim: ProjectileAim::Actor(target) })`; `PlayerAutoAim` selects the original
+player-missile helper without enabling player damage or a plasma-rifle command.
+The launch API derives source Z+32 and velocity from original metadata. A blocked
+initial check returns a real explosion actor. Advance with `step` until the
+registered explosion reaches null and the next thinker pass retires storage.
+
+Only MT_PLASMA is executable as a missile. Live missiles require an active owner
+generation; remove the missile before retiring its owner, or stepping rejects
+atomically. Explosion frames retain the old identity safely. Custom projectile
+metadata, splash, rockets/BFG, monster firing/AI, bound players and full weapon
+integration remain unsupported. See the exact [admission and arithmetic bounds](docs/M3D2B_REFERENCE.md),
+[player-damage dependency plan](docs/M3D2B_REFERENCE.md#actual-player-damage-dependencies-and-future-acceptance-plan)
+and [validation evidence](docs/VALIDATION.md). All examples use public synthetic
+fixtures; no private game data is required or accessed.

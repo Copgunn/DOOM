@@ -116,8 +116,7 @@ examples in debug/release, and the combat fuzz target. No C compiler is required
 for recorded Rust comparisons. Preserve v1-v4 bytes and unsupported-branch
 rejection; new native definitions must not bypass action or effect admission.
 `request_actor_death` keeps its M3c contract; actual damage uses `damage_actor`.
-M3d1 was regularly merged as `c924f18` after final correction and fresh/post-merge CI. M3d2 has conditional regular-merge authorization in the M3d2b mission, subject
-to final correction and fresh checks. M3d2b requires separate owner review.
+M3d1 was regularly merged as `c924f18` after final correction and fresh/post-merge CI. M3d2 was regularly merged as `955f690` after correction-head and post-merge CI. M3d2b requires separate owner review.
 
 ## M3d2 weapon changes
 
@@ -127,4 +126,15 @@ six-example debug/release equality, and build all five fuzz targets. Keep the
 public combat API's bound-player protection, immutable source-state admission,
 small preview/target-overlay preflight, explicit setup inventory and typed action
 boundaries. Changes to timings/RNG require independent source evidence, not new
-expectations copied from Rust. M3d2 received conditional merge authorization; M3d2b remains unmerged for owner review.
+expectations copied from Rust. M3d2 is merged; M3d2b remains unmerged for owner review.
+
+## M3d2b projectile changes
+
+Read [M3D2B_REFERENCE.md](docs/M3D2B_REFERENCE.md). Reproduce all seven C
+generators/independent encoders, both example-equality scripts and all six fuzz
+builds. Preserve historical v1-v6 bytes/helpers. New comparisons must derive from
+original C and explicit synthetic inputs, never Rust-generated expected traces.
+Keep plasma, owner lifetime and arithmetic admission explicit, preflight failures
+before mutation and reuse existing actor/damage services. Player damage is a
+dependency investigation only. Record actual ASan runs and whether leak detection
+was disabled. Leave the new PR open for owner review without auto-merge.
