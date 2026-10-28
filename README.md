@@ -19,7 +19,7 @@ collision, merged in [PR #4](https://github.com/Copgunn/DOOM/pull/4) as `764dd96
 M3b implements and validates static multi-sector movement and vertical physics
 in [PR #5](https://github.com/Copgunn/DOOM/pull/5), merged as `c791ef8` after
 owner-authorized correction-head and post-merge CI. M3c adds typed actor states,
-spawning and controlled death on its review branch; it remains unmerged.
+spawning and controlled death on its review branch in [PR #6](https://github.com/Copgunn/DOOM/pull/6); it remains unmerged.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 
@@ -217,7 +217,7 @@ and fog null-state removal followed by retirement. It is a headless test scenari
 `ActorRegistry::vanilla()` recognizes all 137 original types, 967 states and 74
 non-null action identities. `Simulation::actor_states(map)` selects profile 4;
 `spawn_type(type_id, xy, SpawnHeight::Floor)` validates an executable type before
-initializing it. `actor_registry().find_type("MT_PLAYER")` resolves symbolic names.
+initializing it. The registry method `find_type("MT_PLAYER")` resolves symbolic names.
 Spawning assigns the initial state directly without calling its action. Subsequent
 state entry/countdowns run at 35 Hz, after each actor's XY/Z motion. State zero is
 explicit removal; infinite states persist. Unsupported callbacks reject before

@@ -662,4 +662,25 @@ dependency was introduced. Full player initialization/view/animation, combat/AI,
 weapons/projectiles/pickups/resurrection/respawn, moving sectors/specials, scripts,
 demos, rendering and authentic IWAD/DOS/full-vanilla validation remain unsupported.
 Private assets were neither provisioned nor accessed. M3c is not merged.
-Remote exact-head CI and review PR evidence will be recorded after verification.
+
+## M3c observed remote validation and final-head gate
+
+[PR #6](https://github.com/Copgunn/DOOM/pull/6) targets verified master `c791ef8`.
+Implementation/documentation head `abaa818d64ee269df12e97f4b20e21255bb7c739`
+passed [CI run 40609352627](https://github.com/Copgunn/DOOM/actions/runs/40609352627):
+
+| Job | Observed result |
+| --- | --- |
+| Stable / ubuntu-latest | Build/fmt/Clippy, 96 workspace checks, 72 release tests, all four schemas, C/golden reproductions, four-example stdout equality and docs passed |
+| Stable / windows-latest | Same recorded comparisons, debug/release tests, four-example equality, build/fmt/Clippy and docs passed |
+| Stable / macos-latest | Same recorded comparisons, debug/release tests, four-example equality, build/fmt/Clippy and docs passed |
+| Minimum Rust / 1.85.0 | All 96 workspace checks passed; 2 private tests ignored |
+
+This final documentation-only commit records the PR and observed CI evidence.
+Runtime, reference vectors/goldens, tests and workflow are unchanged. Fresh CI on
+the exact resulting head must pass before review readiness; the verified final
+SHA/run are recorded on PR #6 and in the owner delivery report. PR #6 remains
+open/unmerged; neither M3c nor any sub-PR merge is authorized. Public visibility,
+GPL-2.0-only licensing, all 165 originals and all previous fixtures were rechecked.
+Merged M0–M3b feature branches are cleanup candidates after preserving immutable
+historical references; no branches have been deleted.

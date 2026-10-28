@@ -168,7 +168,8 @@ complete player view/thinking, combat, enhanced portals, demos or rendering.
 
 ### M3c acceptance and review boundary
 
-Branch: `feat/m3c-actor-states-spawning`, based on verified M3b merge `c791ef8`.
+Branch: `feat/m3c-actor-states-spawning`, [PR #6](https://github.com/Copgunn/DOOM/pull/6),
+based on verified M3b merge `c791ef8`.
 Implemented scope is recorded below; final delivery SHA/CI and PR are in
 [validation evidence](VALIDATION.md). No M3c merge is authorized.
 
@@ -183,8 +184,8 @@ Implemented scope is recorded below; final delivery SHA/CI and PR are in
 - [x] Bounded metadata/closure/preflight work and recoverable failure atomicity.
 - [x] DSIM-v4, 99 independent digests and 24 full byte states; older formats preserved.
 - [x] Asserted asset-free headless example; native probes clearly separated from vanilla.
-- [ ] Final local, sanitizer, MSRV and cross-platform exact-head delivery evidence.
-- [ ] Open, unmerged PR ready for owner review.
+- [x] Local, sanitizer, MSRV and cross-platform CI evidence; final-head CI recorded on PR #6.
+- [x] Open, unmerged review PR; readiness gated on final-head CI.
 
 M3d is weapons/projectiles/damage/monster combat. M3e is moving sectors, doors,
 lifts, switches and map specials. Full player thinking, scripts, demos and rendering
