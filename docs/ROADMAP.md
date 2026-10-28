@@ -381,7 +381,9 @@ Bounded subphase of M3d3 on `feat/m3d3b-monster-pursuit`, from verified `839fbab
 - [x] Asserted ninth headless example;162 workspace/MSRV and 138 release tests,
   nine source/encoder pairs, nine example equality checks, eight fuzz builds,
   2000 ASan executions without findings (leak detection disabled).
-- [ ] Exact final Linux/Windows/macOS/MSRV CI, recorded at PR delivery.
+- [x] [PR #11](https://github.com/Copgunn/DOOM/pull/11); [CI 40642802778](https://github.com/Copgunn/DOOM/actions/runs/40642802778)
+  passed Linux/Windows/macOS/MSRV on exact implementation head
+  `14efb10ff02f27d5e15f21ae7c5695b417c0352e`. Final delivery head/CI is pinned in the PR.
 - [ ] Owner review and separate merge authorization; leave M3d3b open/unmerged.
 
 Next focused work is later M3d3 attack selection/action admission, subject to

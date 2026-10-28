@@ -1230,6 +1230,32 @@ arithmetic/admission and full failed-operation atomicity; no full-state tic clon
 The ninth asserted example covers 20 tics acquiring/pursuing, 40 tics on a blocked
 route with alternate directions, 12 tics losing a target and 15 tics reacquiring.
 Final digest `8c7fd6adfe73112d` is identical in debug/release. This is project
-canonical determinism evidence, not a vanilla demo hash. Exact remote delivery
-head/CI is recorded after verification. M3d3b must remain open and unmerged;
+canonical determinism evidence, not a vanilla demo hash. Remote delivery
+evidence follows. M3d3b must remain open and unmerged;
 no private assets or projects were accessed.
+
+
+## M3d3b remote delivery evidence
+
+[PR #11](https://github.com/Copgunn/DOOM/pull/11) targets verified master
+`839fbabf6eae984e1832f7ab7307851c4adb7a3f` from
+`feat/m3d3b-monster-pursuit`. Implementation/documentation head
+`14efb10ff02f27d5e15f21ae7c5695b417c0352e` passed
+[CI 40642802778](https://github.com/Copgunn/DOOM/actions/runs/40642802778):
+Linux, Windows, macOS and Rust 1.85 succeeded on that exact SHA. Linux also
+reproduced all nine C generator/encoder pairs; stable jobs passed recorded
+C/golden comparisons, release tests, nine-example equality and rustdoc.
+
+Follow-up `3fa1523a924704644cfe089a7c7b499012a1e098` removes one extra blank line at the end of the new C adapter
+and refreshes its provenance hash. Original-C generation and --check pass again;
+source trace and all golden bytes are unchanged. The following delivery-record
+commit changes prose only. Its exact final SHA and fresh successful CI are pinned
+in PR #11 after verification; the PR remains draft until those final gates pass.
+
+All 165 original files and 296 historical reference code/fixture files remain
+byte-identical, excluding only the requested prose update to the reference README.
+Public GPL-2.0-only licensing, original attribution/history and asset safeguards
+remain intact. No private projects or commercial IWADs were accessed and no active
+branch was deleted. Local/remote master remain at the authorized PR #10 merge.
+M3d3b must stay open/unmerged without auto-merge. Separately reviewed M3d3 attack
+selection/action admission is the next focused boundary.

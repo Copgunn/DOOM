@@ -31,9 +31,12 @@ merged as `e109ee1` after final corrections and fresh/post-merge CI. M3d3a
 perception and target acquisition in [PR #10](https://github.com/Copgunn/DOOM/pull/10)
 merged as `839fbab` after final correction and successful correction/post-merge CI.
 M3d3b implements non-attacking source pursuit and movement decisions in profile 9
-on a separate branch for owner review. Full original monster execution and attack
+in [PR #11](https://github.com/Copgunn/DOOM/pull/11) for owner review. Full original monster execution and attack
 actions remain future work. Acceptance and exact evidence are in the
 [roadmap](docs/ROADMAP.md) and [validation notes](docs/VALIDATION.md).
+[CI 40642802778](https://github.com/Copgunn/DOOM/actions/runs/40642802778) passed
+Linux, Windows, macOS and Rust 1.85 on implementation/documentation head
+`14efb10ff02f27d5e15f21ae7c5695b417c0352e`. PR #11 remains open and unmerged.
 A playable client is future work.
 
 Implemented:
