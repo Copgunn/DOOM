@@ -47,7 +47,7 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1.
+    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2.
     pub const fn version(&self) -> u32 {
         self.version
     }

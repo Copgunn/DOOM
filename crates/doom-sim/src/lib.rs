@@ -6,6 +6,7 @@
 //! player thinking or establishes complete vanilla gameplay synchronization.
 //! Profile 4 adds admitted source actor states, spawning and controlled death.
 //! Profile 5 adds bounded unbound-actor damage, autoaim and hitscan combat.
+//! Profile 6 adds command-driven player weapons, ammo and source psprites.
 
 #[cfg(test)]
 extern crate self as doom_sim;

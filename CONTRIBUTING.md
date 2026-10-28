@@ -116,6 +116,15 @@ examples in debug/release, and the combat fuzz target. No C compiler is required
 for recorded Rust comparisons. Preserve v1-v4 bytes and unsupported-branch
 rejection; new native definitions must not bypass action or effect admission.
 `request_actor_death` keeps its M3c contract; actual damage uses `damage_actor`.
-M3d1 received conditional regular-merge authorization in the M3d2 mission,
-subject to final correction and fresh checks. M3d2 requires separate owner review
+M3d1 was regularly merged as `c924f18` after final correction and fresh/post-merge CI. M3d2 requires separate owner review
 and must remain unmerged.
+
+## M3d2 weapon changes
+
+Read [M3D2_REFERENCE.md](docs/M3D2_REFERENCE.md). Reproduce both M3d2 tools with
+`--check`, preserve all earlier references/goldens, run `player_weapons` and
+six-example debug/release equality, and build all five fuzz targets. Keep the
+public combat API's bound-player protection, immutable source-state admission,
+small preview/target-overlay preflight, explicit setup inventory and typed action
+boundaries. Changes to timings/RNG require independent source evidence, not new
+expectations copied from Rust. M3d2 remains open/unmerged for owner review.

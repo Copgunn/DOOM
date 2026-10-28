@@ -283,3 +283,43 @@ persistent consequences. Presentation can observe these records at any frequency
 without consuming RNG or altering gameplay. Custom wgpu/Vulkan, native resources
 and future scripting adapters remain separate planned systems; no graphics,
 physics, scripting or third-party runtime dependency was introduced.
+
+## M3d2 player weapons
+
+Explicit profile 6 owns one `WeaponPlayer` record bound to any of the four ordered
+input slots, two source psprites and persistent generation-safe sector sound targets.
+Psprites share validated source state metadata with actors but use a separate typed
+weapon action interpreter; they are never thinkers. Source states/types remain
+immutable except the declared type-136 player-state fixture properties. Actor action
+admission remains separate and unchanged in older profiles.
+
+The interpreter runs after reaction-time/motion/bob and command selection, before
+actor thinkers. It updates weapon then flash, copying overlay positions last.
+Body PLAY/RUN/ATK transitions use the existing lifecycle host. Friction restores
+PLAY through that same host. Source weapon sounds reuse inert actor sound events.
+Noise propagation visits source-ordered sector lines, allows at most one blocking
+line and persists only soundtarget handles; per-call traversal caches are derived.
+
+Recoverable weapon failures are preflighted on only a small copied player record,
+preview pawn, two RNG indexes and an overlay of at most seven touched targets.
+The same pure combat trace functions accept a read-only actor lookup for predicted
+kill flags/height. Exact source pawn first pain/death frames have no immediate
+callbacks; preflight accounts for their pain/kill/forward-fall draws and four real
+impact draws per hit. No full simulation, map or actor-store clone is used. Runtime
+replays the admitted interpreter and existing combat pipeline; a discrepancy is
+an invariant bug, not a safe partly committed tic error.
+
+Capacity is at most 64 actors, with conservative reservation of one impact per
+bullet (seven per shotgun group), no pending-retirement credit, 128 psprite entries
+per operation, and the inherited 8192-entry thinker budget. At most seven shots
+and three autoaim probes run per firing group; each trace retains the 64-cell/
+128-intercept limits and source ordering. Original actor states cannot spawn/remove
+through native probes in profile 6. Sector noise visits each sector at most twice
+with at most 128 ordered line checks per visit. There is no optimization superiority
+claim. Source spread RNG is sequential within each pellet and its effects/damage.
+
+The private weapon combat route admits only the initialized shooter as bound
+source/inflictor. Public direct APIs and damage targets retain bound-player
+protection. Setup ownership/ammo is explicit and validated; full inventory/pickup,
+player damage/powers/camera/respawn, AI and projectile systems remain separate work.
+Renderer/audio/scripting cannot advance or alter player weapon state.

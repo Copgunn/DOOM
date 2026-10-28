@@ -830,3 +830,62 @@ passed all four jobs on that merge before creating the M3d2 branch. All 165 orig
 files, history/attribution, public GPL-2.0-only status and asset protections were
 verified. No private repository or commercial asset was accessed. No branch was
 deleted. M3d2 has no merge authorization.
+
+## M3d2 local delivery evidence
+
+Branch `feat/m3d2-player-weapons-psprites` starts from verified M3d1 merge `c924f18`.
+Source investigation `41d89e5` preceded runtime changes; `19785b5` implements the
+weapon/psprite interpreter and private combat integration, and `7e4c0be` records
+independent source evidence/tests. This milestone must remain open and unmerged
+for separate owner review. No projectile or full-player acceptance is implied.
+
+Observed local results (stable Rust 1.99.1 and compiler floor 1.85.0):
+
+| Check | Observed result |
+| --- | --- |
+| Workspace build, root/fuzz fmt, Clippy `-D warnings` | Passed |
+| Workspace tests | 123 passed including one doctest; two private tests ignored |
+| Release doom-sim + doom-types | 99 passed |
+| Rust 1.85 workspace | 123 passed including doctest; two private tests ignored |
+| Rustdoc `-D warnings` | Passed |
+| All six C generators and independent encoders | Passed reproduction |
+| Six asserted examples, debug/release stdout equality | Passed |
+| All five nightly fuzz targets | Built |
+| Player-weapon ASan smoke | 10,000 runs, no crash, 420 seconds; leak detection disabled |
+
+38 original-body C scenarios compare 4,890 captures, 132,030 player fields and
+290,913 live actor fields (422,943 total), plus actor angles, sector sound targets
+and combined source weapon/lifecycle event order. Source RNG counts include 323
+held-shotgun draws and 268 long-pistol draws, covering wrap. Pistol, seven-pellet
+shotgun, optional chaingun and unpowered fallback fist are verified through actual
+player commands, psprites, effects/damage and complete supported death progression.
+Cases cover all four slots, movement/bob/stop, positive/negative turn, early-held
+attack, raise/ready/fire switches, ammo exhaustion, second chaingun flash/last round,
+successive shotgun targets, vertical/wall/side aim and one/two sound blockers.
+
+Independent v6 encoding passes 69 captures and 24 full byte states, with named-field
+diagnostics. Captures cover setup/raising/ready/attack-start and settled results;
+transient firing fields/order and generational slot reuse have separate per-tic C
+comparisons. Older v1-v5 fields, bytes, fixtures, helpers and encoders are unchanged.
+Nine API policies and two internal interpreter tests separately verify atomic
+errors, capacity, stale/pending/reused handles, protected bound targets, pause,
+512-tic deterministic streams, field divergence and pathological psprite bounds.
+Those tests and fuzzing are project consistency evidence, not additional C parity.
+
+`player_weapons` asserts every C player capture in nine scenarios, pellet counts,
+ammo, refire/switching, walls and deaths. Final independent digest:
+`1cc5a89450da5585`. No graphics, sound device, private data or network is needed.
+
+ASan used nightly 1.101.0/cargo-fuzz 0.13.2, a temporary 12-seed synthetic corpus,
+129-byte input limit and at most 32 commands after raising. This is bounded smoke
+evidence, not exhaustive fuzzing or LeakSanitizer verification. No optimization
+superiority claim is made. Full player damage/view/respawn, armor/powers/pickups,
+chainsaw/supershotgun, projectile weapons/actors, AI, moving specials and demos
+remain outside this slice. Authentic IWAD/full vanilla/DOS synchronization is untested.
+
+All 165 upstream files remain byte-identical to `a77dfb9`; history, attribution,
+GPL-2.0-only workspace/fuzz metadata, public visibility/default master and asset
+exclusions are preserved. No commercial assets or private repositories were
+accessed. No branches were deleted. Exact-head remote CI is verified separately
+before owner-review readiness; local checks alone do not establish cross-platform
+success.

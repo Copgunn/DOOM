@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 under development**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 implemented; owner review pending**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -110,7 +110,7 @@ M3 as a whole remains incomplete.
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented, validated and merged |
 | M3c | Actor states, type-driven spawning and death | Implemented, validated and merged |
-| M3d | Combat subphases below | M3d1 implemented; later subphases planned |
+| M3d | Combat subphases below | M3d1 merged; M3d2 implemented; later work planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
 
 M3a acceptance evidence:
@@ -201,14 +201,14 @@ repository. Custom wgpu rendering with Vulkan preferred remains later work.
 | Phase | Scope | Status |
 | --- | --- | --- |
 | M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Merged as c924f18 after fresh and post-merge CI |
-| M3d2 | Player weapons, psprites and ammo; projectiles deferred | Under development |
+| M3d2 | Player weapons, psprites and ammo; projectiles deferred | Implemented; owner review pending |
 | M3d3 | Monster targeting/perception, movement, attacks and AI | Planned |
 | M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
 
 M3d1 branch: `feat/m3d1-damage-hitscan`, based on verified M3c merge `4dbb0a5`.
 Source findings precede runtime work in [M3D1_REFERENCE.md](M3D1_REFERENCE.md).
 Each subphase needs independent evidence and owner merge authorization. M3d1
-regular merge is conditionally authorized after correction and fresh CI; no
+was regularly merged as `c924f18` after correction and fresh/post-merge CI; no
 weapon/AI/full-combat acceptance is implied by this slice.
 
 ## M4 — Demo compatibility
@@ -257,3 +257,32 @@ RNG, followed by independently tested projectile foundations. Actual player dama
 requires armor/inventory/immunity/death/scoring integration before admission.
 M3d3 remains perception/AI, M3d4 integrated combat/explosions. No renderer or
 scripting implementation is part of M3d1.
+
+
+### M3d2 acceptance evidence
+
+Branch `feat/m3d2-player-weapons-psprites` starts from verified master `c924f18`.
+Source investigation was recorded as `41d89e5` before runtime implementation.
+
+- [x] M3d1 authorized regular merge and exact post-merge CI verified.
+- [x] Explicit LIVE player setup, ownership/ammo, ready/pending weapons and slots.
+- [x] Source two-slot psprites, immediate raise, zero/null/infinite semantics,
+  typed actions, weapon-before-flash updates, body state and bob timing.
+- [x] Command-driven pistol and seven-pellet shotgun; source spread/damage/impact RNG.
+- [x] Optional chaingun independently verified, including second flash/last round.
+- [x] Unpowered fist preserves exhausted-ammo fallback; deferred weapons reject.
+- [x] M3d1 combat reused through private shooter eligibility; bound targets protected.
+- [x] Source sector noise propagation, including one/two sound-blocking lines.
+- [x] Small-record/RNG/target-overlay preflight and atomic capacity/error regressions.
+- [x] 38 C scenarios, 4,890 captures, 422,943 player/actor field comparisons and
+  combined source weapon/lifecycle action order; historical regressions preserved.
+- [x] DSIM-v6: 69 independent captures, 24 full byte fixtures; v1-v5 unchanged.
+- [x] Asserted `player_weapons` example and six-example debug/release equality.
+- [x] Local workspace/release/MSRV/docs/reference checks; evidence in validation.
+- [ ] Exact final-head Linux/Windows/macOS and Rust 1.85 CI verified.
+- [ ] Owner review and separate merge authorization (PR must remain unmerged).
+
+Projectiles remain deferred. Next work should extend source-verified player damage
+prerequisites and projectile foundations separately, then M3d3 perception/monster
+AI and M3d4 integrated combat. Current weapon support does not establish complete
+players, pickups, armor/powers, demos or full vanilla/DOS synchronization.

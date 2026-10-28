@@ -34,7 +34,7 @@ armor/inventory, intermission and pickups are excluded.
 ## Psprites
 
 P_SetupPsprites clears two state pointers, makes pending=ready and calls BringUp.
-BringUp substitutes ready when pending is nochange (source value 9), clears pending,
+BringUp substitutes ready when pending is nochange (source value 10), clears pending,
 sets weapon Y=128 units, then enters upstate. A_Raise runs immediately, subtracting
 6 units: initial Y is 122, not 128. Later raising reaches/clamps 32 and recursively
 enters ready; readiness/attack can therefore run on that same tic.
@@ -84,7 +84,7 @@ is found; it adjusts the slope, not the actual firing angle.
 A_FireCGun sounds BEFORE its zero-ammo return; otherwise it consumes one clip,
 selects flashstate+(currentState-S_CHAIN1), aims and fires like pistol. Its two
 four-tic firing states precede a zero-tic ReFire state. Support requires independent
-last-round/zero-ammo/flash/refire cases. A_GunFlash sets body ATK2 and flash;
+last-round/zero-ammo/flash/refire cases. A_GunFlash (not required by the admitted firearms) sets body ATK2 and flash;
 Light0/1/2 change persistent extralight. A_Punch (if admitted for fallback) draws
 2*(random%10+1), two spread draws, aims/shoots at range 64, and on actor hit emits
 punch sound and turns toward the target. Berserk remains excluded.
@@ -114,10 +114,14 @@ spawn/remove combat probes and AI; hit eligibility can only disappear through
 kill flags during a multi-pellet burst, leaving trace geometry unchanged. Source
 impact thinkers are NOBLOCKMAP. No second bound damageable target is admitted.
 
-Preflight the weapon interpreter on a copy of only the small player record and
-one preview pawn. Validate every possible spread fine-angle trace, the three aim
-probes, all potential target damage prerequisites and worst-case impact capacity
-before committing. No authoritative RNG is consumed by preflight. Reserve up to
+Preflight the weapon interpreter on a copy of only the small player record,
+one preview pawn and the two RNG indexes. Replay prospective source draws and
+keep an overlay only for targets actually damaged (health/shootability/height),
+using the same pure aim/hit traversal with an actor lookup. Source pawn pain/death
+entry frames have no immediate actions; their one pain/kill draw plus optional
+forward-fall and four impact draws can therefore be proven before committing.
+Validate every actual prospective trace/damage prerequisite and conservative
+impact capacity. No authoritative RNG is consumed by preflight. Reserve up to
 seven impacts for one firing group; pending retirement supplies no credit. Bound
 state entry/recursion, traversal/intercepts and actor capacity. A conservative
 64-slot profile keeps aggregate state work bounded. Runtime replay uses admitted
@@ -149,3 +153,43 @@ No complete player damage, armor, powers, pickups, projectiles, AI, moving secto
 demos, rendering, audio playback or scripting is implied. Private assets and
 private repositories remain outside this assignment. Evidence and implemented
 bounds will be updated after observation, without claiming planned checks passed.
+
+
+## Observed implementation and evidence
+
+Implemented profile 6 admits pistol, shotgun, chaingun and unpowered fallback fist,
+one LIVE weapon player in any slot, and at most 64 actors. Source tables/types
+remain exact except the labelled type-136 player-state fixtures. Player damage,
+armor/powers/pickups/full view/spawn/respawn and projectile weapons remain excluded.
+The private shooter route preserves direct APIs' bound-player restrictions.
+
+38 original-body C scenarios pass 4,890 captures: 132,030 player and 290,913 live
+actor fields (422,943 total), plus actor angles, sector noise targets and combined
+source weapon/lifecycle event order. Cases include all slots, movement/bob/stop,
+positive/negative turn, raising/ready/refire/switching, zero/last ammo, held fire,
+sequential shotgun targets, source effects/deaths, and one/two sound blockers.
+Held shotgun consumes 323 source RNG draws; long pistol consumes 268, covering wrap.
+The source nochange sentinel is 10 (NUMWEAPONS itself occupies enum value 9).
+
+The independent v6 encoder passes 69 captures and 24 full byte fixtures. The
+asserted example checks nine C scenarios per tic and ends at independent digest
+`1cc5a89450da5585`. Eleven unit/policy tests separately check safe errors, capacity,
+identity reuse, recursion/timing edges and deterministic read schedules. Public
+admission excludes native psprite/actor probes; internal tests isolate malformed
+interpreter graphs without claiming original-C compatibility for them.
+
+`generate_m3d2.py` lists each original extracted function and hashes all source/
+headers, adapters and outputs. It compiles real G_PlayerReborn, P_PlayerThink,
+psprite/ammo/fire actions, BulletSlope/GunShot, noise propagation, M3d1 damage/
+hitscan/effects/physics/state/thinker functions, info.c, d_items.c and original
+fixed/trig/RNG tables. Fixture inventory grants are explicit after source rebirth.
+A driver supplies the source active-slot/player-before-thinker ordering and static
+special/respawn exclusions; no weapon behavior under test is stubbed. Sliding and
+unsupported player/power/use/AI/projectile/special paths abort if reached; no fixture
+reaches them. Player camera bookkeeping runs in C but is not claimed as Rust player
+parity. C retirement retains memory only for observations. C allocation ordinals
+map independently to generational Rust identities in the reference test.
+
+Reproduce with `generate_m3d2.py --check` and `m3d2_snapshot_goldens.py --check`.
+All earlier generators/encoders remain unchanged. Refer to TESTING/VALIDATION for
+actual toolchain results and sanitizer limitations; no optimization is claimed.

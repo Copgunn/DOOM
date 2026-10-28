@@ -137,3 +137,14 @@ The v5 encoder reads C rows and explicit source/fixture metadata, never Rust.
 See [M3D1_REFERENCE.md](../../docs/M3D1_REFERENCE.md) for scope, exact comparison
 counts, undefined-C exclusions and provenance. The old generators/fixtures stay
 unchanged. `check_headless.py` now compares all five examples on every stable CI OS.
+
+## M3d2
+
+Run `generate_m3d2.py --check` and `m3d2_snapshot_goldens.py --check` alongside
+all earlier tools. The separate shim uses original player/psprite/weapon, combat,
+effect, noise and thinker bodies. 38 explicit command scenarios produce 4,890
+captures and 422,943 player/actor field comparisons, with combined event order.
+The v6 encoder reads only C/setup/schema data: 69 captures and 24 byte fixtures.
+See [M3D2_REFERENCE.md](../../docs/M3D2_REFERENCE.md) for exact functions, adapters,
+ABI/undefined-C exclusions, supported source paths and generation mapping.
+`check_headless.py` compares all six asserted examples in debug/release on each OS.
