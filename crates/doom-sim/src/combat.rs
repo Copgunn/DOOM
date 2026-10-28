@@ -230,6 +230,9 @@ impl Simulation {
     }
     pub(crate) fn validate_combat_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
         let registry = self.registry.as_deref().ok_or(CombatError::Profile)?;
+        if self.profile == Profile::MonsterAttacks {
+            return self.validate_monster_type(ty);
+        }
         if self.profile == Profile::Projectiles {
             self.validate_projectile_type(ty)?;
         } else {
@@ -266,6 +269,7 @@ impl Simulation {
             Profile::Combat
                 | Profile::PlayerWeapons
                 | Profile::Projectiles
+                | Profile::MonsterAttacks
         ) {
             return Err(CombatError::Profile.into());
         }
@@ -286,6 +290,9 @@ impl Simulation {
         angle: u32,
         range: Fixed,
     ) -> Result<AimResult, SimError> {
+        if self.profile == Profile::MonsterAttacks {
+            return Err(CombatError::Profile.into());
+        }
         self.combat_actor(shooter)?;
         Ok(crate::combat_trace::aim(self, shooter, angle, range)?)
     }
@@ -367,6 +374,9 @@ impl Simulation {
     }
     /// Atomic supported P_DamageMobj operation. No full-simulation clone is used.
     pub fn damage_actor(&mut self, request: DamageRequest) -> Result<DamageResult, SimError> {
+        if self.profile == Profile::MonsterAttacks {
+            return Err(CombatError::Profile.into());
+        }
         let plan = self.plan_damage(request)?;
         self.reserve_actor_spawns(plan.demand.spawns)?;
         Ok(self.combat_host().apply_damage(plan))
@@ -378,6 +388,9 @@ impl Simulation {
         shooter: ActorId,
         attack: LineAttack,
     ) -> Result<AttackResult, SimError> {
+        if self.profile == Profile::MonsterAttacks {
+            return Err(CombatError::Profile.into());
+        }
         self.line_attack_with(shooter, attack, None)
     }
     pub(crate) fn weapon_line_attack(

@@ -54,7 +54,10 @@ fn chase_body<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId, work: &mut u
         }
         return;
     }
-    // Both attack states are absent in the admitted native metadata. netgame=false.
+    if h.perception.is_some_and(|p| p.monsters) && crate::monsters::select(h, id, work) {
+        return;
+    }
+    // netgame=false. Historical profile 9 has no attack metadata.
     let l = h.access.get_mut(id).unwrap().life.as_mut().unwrap();
     l.movecount -= 1;
     if l.movecount < 0 || !move_actor(h, id) {

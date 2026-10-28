@@ -258,6 +258,9 @@ impl Simulation {
         Ok(())
     }
     fn pursuit_actor(&self, id: ActorId, margin: u32) -> Result<Actor, SimError> {
+        if self.profile == Profile::MonsterAttacks {
+            return self.monster_actor(id, margin);
+        }
         if self.profile != Profile::Pursuit {
             return Err(PursuitError::Profile.into());
         }
@@ -289,7 +292,9 @@ impl Simulation {
     }
     fn native_pursuer(&self, id: ActorId) -> Result<Actor, SimError> {
         let a = self.pursuit_actor(id, 1008)?;
-        if a.life.unwrap().actor_type == ActorTypeId(0) {
+        if a.life.unwrap().actor_type == ActorTypeId(0)
+            || self.profile == Profile::MonsterAttacks && !self.monster_is_owner(id)
+        {
             return Err(PursuitError::Definition.into());
         }
         Ok(a)
@@ -299,6 +304,9 @@ impl Simulation {
         self.pursuit_dependencies(id)
     }
     fn pursuit_dependencies(&self, id: ActorId) -> Result<(), SimError> {
+        if self.profile == Profile::MonsterAttacks {
+            return self.preflight_monster_callback(id);
+        }
         self.preflight_perception_roster()?;
         if let Some(target) = self.actor(id).unwrap().life.unwrap().target {
             self.validate_perception_reference(target)
@@ -316,6 +324,9 @@ impl Simulation {
         id: ActorId,
         setup: PursuitSetup,
     ) -> Result<(), SimError> {
+        if self.profile == Profile::MonsterAttacks {
+            return self.configure_monster_actor(id, setup);
+        }
         if self.profile != Profile::Pursuit {
             return Err(PursuitError::Profile.into());
         }
@@ -389,6 +400,8 @@ impl Simulation {
                 players: &self.perception_players,
                 sound_targets: &self.sound_targets,
                 pursuit: true,
+                monsters: self.profile == Profile::MonsterAttacks,
+                shot: None,
             }),
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),

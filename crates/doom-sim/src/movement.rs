@@ -707,3 +707,10 @@ fn move_xy_profile(
     }
     mover.events
 }
+
+/// Original P_AproxDistance within the admitted signed coordinate bounds.
+pub(crate) fn approx_distance(delta: [Fixed; 2]) -> Fixed {
+    let x = delta[0].bits().abs();
+    let y = delta[1].bits().abs();
+    Fixed::from_bits(x + y - (x.min(y) >> 1))
+}

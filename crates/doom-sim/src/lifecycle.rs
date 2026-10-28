@@ -227,6 +227,7 @@ struct Admission {
     flags: u32,
     look: bool,
     chase: bool,
+    attacks: bool,
 }
 const ENTRY_LIMIT: usize = 128;
 const STEP_LIMIT: usize = 8192;
@@ -362,16 +363,17 @@ impl ActorRegistry {
     }
     /// Validate an executable state closure without changing simulation state.
     pub fn validate_state(&self, state: StateId) -> Result<(), ActorError> {
-        self.validate_state_with(state, false, false)
+        self.validate_state_with(state, false, false, false)
     }
     pub(crate) fn validate_state_perception(&self, state: StateId) -> Result<(), ActorError> {
-        self.validate_state_with(state, true, false)
+        self.validate_state_with(state, true, false, false)
     }
     fn validate_state_with(
         &self,
         state: StateId,
         look: bool,
         chase: bool,
+        attacks: bool,
     ) -> Result<(), ActorError> {
         let mut seen = BTreeSet::new();
         let mut pending = vec![state];
@@ -387,6 +389,11 @@ impl ActorRegistry {
                 if !self.action_supported(action)
                     && !(look && self.action_name(action) == Some("A_Look"))
                     && !(chase && self.action_name(action) == Some("A_Chase"))
+                    && !(attacks
+                        && matches!(
+                            self.action_name(action),
+                            Some("A_FaceTarget" | "A_PosAttack")
+                        ))
                 {
                     return Err(ActorError::UnsupportedAction(action));
                 }
@@ -498,6 +505,7 @@ impl ActorRegistry {
                 flags: ALLOWED_FLAGS,
                 look: false,
                 chase: false,
+                attacks: false,
             },
         )
     }
@@ -532,7 +540,7 @@ impl ActorRegistry {
             return Err(ActorError::Dimensions);
         }
         for root in [t.states()[0], t.states()[5]] {
-            self.validate_state_with(root, admission.look, admission.chase)?;
+            self.validate_state_with(root, admission.look, admission.chase, admission.attacks)?;
             let mut seen = BTreeSet::new();
             let mut todo = vec![root];
             while let Some(id) = todo.pop() {
@@ -573,6 +581,7 @@ impl ActorRegistry {
                 flags: ALLOWED_FLAGS | 524288,
                 look: false,
                 chase: false,
+                attacks: false,
             },
         )
     }
@@ -591,6 +600,7 @@ impl ActorRegistry {
                 flags: ALLOWED_FLAGS | 524288 | if ty.0 == 34 { 65536 } else { 0 },
                 look: false,
                 chase: false,
+                attacks: false,
             },
         )
     }
@@ -616,11 +626,12 @@ impl ActorRegistry {
                 flags: ALLOWED_FLAGS,
                 look: true,
                 chase: false,
+                attacks: false,
             },
         )
     }
     pub(crate) fn validate_state_pursuit(&self, state: StateId) -> Result<(), ActorError> {
-        self.validate_state_with(state, true, true)
+        self.validate_state_with(state, true, true, false)
     }
     pub(crate) fn validate_type_pursuit(
         &self,
@@ -639,8 +650,35 @@ impl ActorRegistry {
                 flags: ALLOWED_FLAGS | 128 | 2097152,
                 look: true,
                 chase: true,
+                attacks: false,
             },
         )
+    }
+    pub(crate) fn validate_state_monsters(&self, state: StateId) -> Result<(), ActorError> {
+        self.validate_state_with(state, true, true, true)
+    }
+    pub(crate) fn validate_type_monsters(
+        &self,
+        ty: ActorTypeId,
+        sectors: &[SectorState],
+    ) -> Result<(), ActorError> {
+        self.admit_type(
+            ty,
+            sectors,
+            &mut BTreeSet::new(),
+            &mut BTreeSet::new(),
+            &mut 0,
+            Admission {
+                flags: ALLOWED_FLAGS | 64 | 128 | 524288 | 2097152,
+                look: true,
+                chase: true,
+                attacks: true,
+            },
+        )?;
+        for state in self.actor_type(ty).unwrap().states() {
+            self.validate_state_monsters(state)?;
+        }
+        Ok(())
     }
     pub(crate) fn validate_impact_source(&self) -> Result<(), crate::CombatError> {
         let mut todo = Vec::new();
@@ -1069,6 +1107,14 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                         .expect("original sound") as u16
                 };
                 match self.registry.action_name(action).expect("original action") {
+                    "A_FaceTarget" => {
+                        assert!(self.perception.is_some_and(|p| p.monsters));
+                        crate::monsters::face(self, id);
+                    }
+                    "A_PosAttack" => {
+                        assert!(self.perception.is_some_and(|p| p.monsters));
+                        crate::monsters::pos_attack(self, id);
+                    }
                     "A_Chase" => {
                         assert!(self.perception.is_some_and(|p| p.pursuit));
                         crate::pursuit::chase::chase(self, id, work);
