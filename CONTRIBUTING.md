@@ -126,7 +126,7 @@ six-example debug/release equality, and build all five fuzz targets. Keep the
 public combat API's bound-player protection, immutable source-state admission,
 small preview/target-overlay preflight, explicit setup inventory and typed action
 boundaries. Changes to timings/RNG require independent source evidence, not new
-expectations copied from Rust. M3d2 is merged; M3d2b remains unmerged for owner review.
+expectations copied from Rust. M3d2 is merged; M3d2b has conditional regular-merge authorization in the M3d3a mission.
 
 ## M3d2b projectile changes
 
@@ -137,4 +137,5 @@ original C and explicit synthetic inputs, never Rust-generated expected traces.
 Keep plasma, owner lifetime and arithmetic admission explicit, preflight failures
 before mutation and reuse existing actor/damage services. Player damage is a
 dependency investigation only. Record actual ASan runs and whether leak detection
-was disabled. Leave the new PR open for owner review without auto-merge.
+was disabled. M3d2b has conditional regular-merge authorization after its finalization gates;
+leave M3d3a open for owner review without auto-merge.

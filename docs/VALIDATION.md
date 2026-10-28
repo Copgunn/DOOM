@@ -1003,8 +1003,30 @@ stable Linux, Windows, macOS and Rust 1.85. The run metadata matches that exact
 head; Linux also reproduced all seven C generator/encoder pairs. Stable jobs
 passed recorded C/golden comparisons, release tests, seven-example equality and
 warning-free docs. [PR #9](https://github.com/Copgunn/DOOM/pull/9) records the
-subsequent final review-head SHA and its own fresh CI before readiness.
-The PR remains open/unmerged with auto-merge disabled; master stays at
-the authorized M3d2 merge. M3d3 perception/target acquisition is the recommended
+reviewed final head `062647ddd4e2e44edeb176cfd3b4e3577481a249`, which passed
+all four jobs in [CI 40630368867](https://github.com/Copgunn/DOOM/actions/runs/40630368867).
+That reviewed commit changed runtime speed/damage lookup to admitted original
+metadata as well as delivery wording; it was not documentation-only.
+At that review PR #9 remained open/unmerged with auto-merge disabled and master
+at the authorized M3d2 merge. The M3d3a mission now authorizes finalization through
+the gates below. M3d3 perception/target acquisition is the recommended
 next bounded milestone. Player health/armor/immunity/attacker/feedback/death and
 weapon-lowering dependencies remain a documented future acceptance plan only.
+
+## M3d2b authorized finalization for M3d3a
+
+The M3d3a mission reviewed PR #9 at
+`062647ddd4e2e44edeb176cfd3b4e3577481a249`, base
+`955f690d141ccc6a9074a8a8017f78833854af6f`. Live PR/local/remote refs match;
+no intervening commits, reviews, threads or comments were found. Reviewed
+[CI 40630368867](https://github.com/Copgunn/DOOM/actions/runs/40630368867)
+passed Linux, Windows, macOS and Rust 1.85 on that exact head. Engineering review
+found no demonstrated blocking defect within the declared projectile slice.
+
+The owner authorizes a regular merge only after this validation-record correction
+passes fresh local mandatory checks and exact-head CI. The reviewed runtime change
+reads speed/damage from admitted metadata; this new correction changes prose only.
+All v1-v7 canonical bytes, reference fixtures, generators and helpers are preserved.
+Merge-parent/master and exact post-merge CI verification must precede M3d3a runtime
+work. No squash, force push, history rewrite, auto-merge or branch deletion is
+authorized. M3d3a itself must remain open and unmerged for separate owner review.
