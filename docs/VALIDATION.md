@@ -684,3 +684,13 @@ open/unmerged; neither M3c nor any sub-PR merge is authorized. Public visibility
 GPL-2.0-only licensing, all 165 originals and all previous fixtures were rechecked.
 Merged M0–M3b feature branches are cleanup candidates after preserving immutable
 historical references; no branches have been deleted.
+
+
+The documentation-only head `66d3cc02a563f709ae2b967566f0ed4e3afd8661` also passed
+[all four CI jobs, run 40609645543](https://github.com/Copgunn/DOOM/actions/runs/40609645543).
+Final review then aligned the native-registry nomonsters skull check with the
+source's type-ID comparison, independently of display-name changes (boss sound
+origins use the same ID helper). The existing placement regression now covers
+renaming/reflagging that source ID without consuming RNG. Source fixtures and
+all counts remain unchanged. Required local checks passed again for this correction;
+fresh exact-head CI is verified before readiness, with its SHA/run recorded on PR #6.

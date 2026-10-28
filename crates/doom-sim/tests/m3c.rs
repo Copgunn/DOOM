@@ -155,6 +155,31 @@ fn step_and_external_entry_capacity_errors_are_atomic() {
 }
 #[test]
 fn batch_map_failure_is_atomic_and_filters_precede_admission() {
+    // P_SpawnMapThing compares the source type identity, not its display name.
+    let original = ActorRegistry::vanilla();
+    let skull = original.find_type("MT_SKULL").unwrap();
+    let mut types = original.types().to_vec();
+    let info = &mut types[usize::from(skull.0)];
+    info.name = "RENAMED_SKULL".into();
+    info.properties[21] = 0;
+    info.properties[1] = 149;
+    info.properties[12] = 0;
+    let registry = ActorRegistry::new(original.states().to_vec(), types).unwrap();
+    let mut identity = Simulation::with_actor_registry(
+        fixtures::map(&[[0, 0, 0, 3006, 7]]),
+        4,
+        registry,
+        ActorOptions {
+            no_monsters: true,
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    let report = identity.spawn_map_things().unwrap();
+    assert!(report.spawned.is_empty());
+    assert_eq!(report.filtered, 1);
+    assert_eq!(identity.rng().indices(), [0, 0]);
+
     let things = [[0, 0, 0, 44, 7], [0, 0, 0, 3004, 7]];
     let mut sim = Simulation::actor_states(fixtures::map(&things)).unwrap();
     let before = sim.snapshot();

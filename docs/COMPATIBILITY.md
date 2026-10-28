@@ -332,3 +332,5 @@ observations are in [M3C_REFERENCE.md](M3C_REFERENCE.md). Independent v4 encodin
 checks 99 digests and 24 complete states. All v1/v2/v3 evidence remains unchanged.
 These comparisons establish only the declared Linux 1.10 subset, not a playable
 game, authentic IWAD validation, full vanilla synchronization or DOS 1.9 behavior.
+
+Source-special skull/boss checks use type IDs, independently of native display names.

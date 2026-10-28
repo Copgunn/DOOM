@@ -239,7 +239,7 @@ impl Simulation {
                 .ok_or(ActorError::InvalidType)?;
             let info = registry.actor_type(ty).unwrap();
             if self.actor_options.no_monsters
-                && (info.flags() & 4194304 != 0 || info.name == "MT_SKULL")
+                && (info.flags() & 4194304 != 0 || lifecycle::source_type_is(ty, "MT_SKULL"))
             {
                 report.filtered += 1;
                 continue;

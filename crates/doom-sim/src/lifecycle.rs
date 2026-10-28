@@ -195,6 +195,11 @@ pub struct ActorRegistry {
     pub(crate) states: Vec<ActorStateDef>,
     pub(crate) types: Vec<ActorTypeDef>,
 }
+pub(crate) fn source_type_is(ty: ActorTypeId, name: &str) -> bool {
+    SOURCE_TYPES
+        .get(usize::from(ty.0))
+        .is_some_and(|(original, _)| *original == name)
+}
 const ALLOWED_FLAGS: u32 = 2 | 4 | 8 | 16 | 32 | 256 | 512 | 1024 | 2048 | 262144 | 33554432;
 const ENTRY_LIMIT: usize = 128;
 const STEP_LIMIT: usize = 8192;
@@ -893,9 +898,8 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                         if sound == 0 {
                             return;
                         }
-                        let global = SOURCE_TYPES
-                            .get(usize::from(life.actor_type.0))
-                            .is_some_and(|(name, _)| matches!(*name, "MT_SPIDER" | "MT_CYBORG"));
+                        let global = source_type_is(life.actor_type, "MT_SPIDER")
+                            || source_type_is(life.actor_type, "MT_CYBORG");
                         let pod = sound_id("sfx_podth1");
                         let bg = sound_id("sfx_bgdth1");
                         let chosen = if (pod..=pod + 2).contains(&sound) {
