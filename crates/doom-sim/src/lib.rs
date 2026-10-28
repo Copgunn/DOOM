@@ -13,6 +13,10 @@
 extern crate self as doom_sim;
 
 mod actor;
+mod perception;
+mod sight;
+pub use perception::PerceptionError;
+pub use sight::{SightResult, SightVisit};
 mod projectiles;
 pub use projectiles::{ProjectileAim, ProjectileError, ProjectileEvent, ProjectileRequest};
 mod weapons;
@@ -68,6 +72,8 @@ pub enum Profile {
     PlayerWeapons,
     /// M3d2b bounded original plasma projectiles, DSIM-v7.
     Projectiles,
+    /// M3d3a sight, player scanning and source awareness, DSIM-v8.
+    Perception,
 }
 
 impl Profile {
@@ -79,6 +85,7 @@ impl Profile {
                 | Self::Combat
                 | Self::PlayerWeapons
                 | Self::Projectiles
+                | Self::Perception
         )
     }
 }
@@ -96,6 +103,8 @@ pub enum SimError {
     Weapon(WeaponError),
     /// Projectile admission, ownership or arithmetic failure.
     Projectile(ProjectileError),
+    /// Perception profile, identity, metadata or bounded-work rejection.
+    Perception(PerceptionError),
     /// Unsupported or invalid map/profile.
     Geometry(GeometryError),
     /// Input slot is outside 0..4 or duplicates an existing binding.
@@ -111,6 +120,11 @@ impl fmt::Display for SimError {
     }
 }
 impl Error for SimError {}
+impl From<PerceptionError> for SimError {
+    fn from(e: PerceptionError) -> Self {
+        Self::Perception(e)
+    }
+}
 impl From<ProjectileError> for SimError {
     fn from(e: ProjectileError) -> Self {
         Self::Projectile(e)

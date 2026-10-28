@@ -371,6 +371,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::Combat => 5,
         crate::Profile::PlayerWeapons => 6,
         crate::Profile::Projectiles => 7,
+        crate::Profile::Perception => 8,
     };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
