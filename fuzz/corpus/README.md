@@ -85,3 +85,44 @@ The low seven bits still select the same public fixture.
 The new target and seed recipe contain no game assets. Evolving local corpus,
 coverage and crash output stay ignored or outside the checkout. Report actual
 ASan execution counts and leak-detection configuration after running the campaign.
+
+## M3d3g Demon lifecycle seeds
+
+Twelve fresh public synthetic 65-byte seeds select eight source-backed setup
+families: pain, ordinary death, corpse collision, hitscan, moving melee, ledge,
+fall-forward and self-melee. Four seeds set the high selector bit and pre-fill
+64 slots. Each input admits at most eight API operations and 32 individually
+checked tics, plus eight mutations to public map bytes for constructor validation.
+Every failed operation/tic checks full canonical equality. This is bounded safety
+fuzzing, not a complete branch-coverage or original-C-equivalence claim.
+
+Create the same fresh seed corpus from repository root:
+
+```sh
+DOOM_LIFECYCLE_CORPUS=$(mktemp -d)
+export DOOM_LIFECYCLE_CORPUS
+python3 - <<'PYSEED'
+from pathlib import Path
+import os
+p = Path(os.environ['DOOM_LIFECYCLE_CORPUS'])
+step = bytes([13,0,1,0,0,0,0,3])
+hit = bytes([0,0,1,150,0,0,0,1])
+move = bytes([11,1,1,0,0,252,255,3])
+for i in range(12):
+    selector = (i % 8) | (0x80 if i >= 8 else 0)
+    ops = [step] * 8
+    if i % 8 == 0:
+        ops[0] = hit
+    if i % 8 == 2:
+        ops = [move,step,step,step,step,step,move,step]
+    (p / f'public_seed_{i}').write_bytes(bytes([selector]) + b''.join(ops))
+PYSEED
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run --sanitizer address \
+  demon_lifecycle "$DOOM_LIFECYCLE_CORPUS" -- \
+  -runs=10000 -seed=1 -max_len=65 -timeout=20 -rss_limit_mb=2048
+```
+
+The recipe mirrors the reported fresh-corpus campaign; mutations and crash output
+stay ignored or outside the checkout. No proprietary assets are involved.
+`detect_leaks=0` disables leak detection: do not claim LeakSanitizer coverage.
+Record actual campaign completion/counts/findings in the validation ledger.

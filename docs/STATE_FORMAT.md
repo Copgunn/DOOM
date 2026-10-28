@@ -1,6 +1,6 @@
-# Canonical simulation state, DSIM versions 1 through 13
+# Canonical simulation state, DSIM versions 1 through 14
 
-This is a diagnostic/replay comparison format for explicit M2 through M3d3f profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3d3g profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -662,3 +662,35 @@ pain/death/RNG and real lowest-free-slot generation reuse. First-field diagnosti
 complement full bytes and digests. The 36 radius component vectors are outside
 these capture totals. DSIM remains a project diagnostic, not a vanilla savegame,
 network format or demo; hashes do not establish complete game compatibility.
+
+## M3d3g DSIM-v14: Demon pain, death and corpse foundations
+
+Version/profile 14 composes the same field families as v13, with explicit native
+Demon lifecycle metadata and copied state aliases. All earlier headers, field
+order, encoders and expected bytes remain frozen. The existing version 8+ roster
+and sector sound fields are present; root profile and DSIM header both encode 14.
+No persistent corpse boolean, pain result or duplicate death timer is added.
+
+Native136 copies source Demon properties with aliases: 1 Look, 2 Chase, 4/5/6 SARG
+attack, 7/8 pain, 9..14 ordinary death. PAIN2 returns to fixture Chase 2; DIE6 remains
+-1 with next0. Doom number is-1, flags 6 omit COUNTKILL, raise/xdeath/missile are0.
+All source pain/death sounds, mass, height, chance and other copied fields remain
+visible in canonical registry records. Native135 and original blood/puff records
+retain their explicit source-body/effect identities; full types 12/13 stay blocked.
+
+Health, flags, height, XY/Z momentum/location, state/tics/sprite/frame, target,
+reaction/threshold, generations, thinker/spatial/sector order and RNG already
+encode all persistent outcomes. Kill sets CORPSE/DROPOFF and height 14 while SOLID
+remains; Fall later clears SOLID; terminal state 14 has tics -1 and retains storage.
+Old target identities may remain unresolved after retirement and never alias reuse.
+
+Existing transient tags suffice: ActorState12 Entered/Action/Sound; Combat13
+Damage/Random/Knockback/Health/Pain/Kill/DeathTimer/Reaction/Retarget/Impact/Ignored;
+existing Monster/Perception/Sight and movement observations retain chronology.
+No new event tag is needed to diagnose pain, scream, Fall or terminal entry.
+
+`m3d3g_snapshot_goldens.py` independently derives3,972 captures and 727 complete
+byte streams from C/public inputs/schema, including per-tic digests and first-field
+comparison paths. The three injected pain-boundary components are excluded from
+canonical gameplay captures. DSIM remains project diagnostic data, not a vanilla
+savegame, network protocol or proof of full demo synchronization.

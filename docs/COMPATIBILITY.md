@@ -718,3 +718,46 @@ collision radius. Scripted remove/retire/respawn and extra-strike inputs are
 explicit driver actions, not autonomous Demon resurrection. The GNU ABI/defined
 signed-arithmetic adapters and test scope limit equivalence; neither DSIM bytes
 nor compiled-body inventory proves complete vanilla/DOS/demo synchronization.
+
+## M3d3g bounded Demon pain, death and corpses
+
+The admitted normal Demon fixture has health 150, mass 400, radius 30, height 56,
+pain chance 180 and source see/attack/pain/death/active sounds 41/52/26/64/77.
+Native136 copies MT_SERGEANT metadata except its labelled state aliases,
+stand/run loops, Doom number -1, removed COUNTKILL and disabled raise. Native135 is
+an unbound source player-body fixture, not an actual player. Original Demon 12 and
+Spectre13 remain recognized/non-executable. Raw fast/Nightmare rewriting is not
+admitted; the constructor rejects Nightmare.
+
+Nonlethal damage draws pain RNG after health/thrust, sets JUSTHIT and enters
+2-tic PAIN on success. PAIN2 emits pain sound 26 two updates later, then returns
+to Chase after two more. Reaction reset and threshold/source retarget order use
+shared source behavior, including immediate see entry after some non-pain hits.
+Self, null and distinct source/inflictor requests are explicitly exercised.
+The real LUT lacks179/180: three separate controlled-dependency C probes at
+179/180/181 compare the Rust scalar decision and are not gameplay RNG evidence.
+
+Lethal damage clears shootability, sets corpse/dropoff and quarters height to14,
+retaining SOLID. Demon has no xdeath: admitted very large damage still chooses
+ordinary death. First DIE1 timer is8-(P_Random()&3), here5..8; subsequent states
+are8/4/4/4/-1. Scream 64 is on DIE2 entry; Fall clears SOLID on DIE4 entry.
+Ordinary XY collision still blocks before Fall, regardless of reduced height.
+Afterward the corpse remains linked, obeys existing floor/ceiling/ledge physics,
+keeps its thinker/target identity and never automatically disappears at -1.
+
+Direct damage 0..1000 and synthetic type 135 hitscan reuse accepted services;
+source/inflictor may be absent or admitted unbound identities. No second damage
+engine, global player-damage enablement or new attack callback is introduced.
+Zero damage can still cause pain, as source does. Corpse damage is ignored with
+valid identities; invalid/pending/stale identities reject atomically. Retired
+source references on a dead closed graph retain their old generations without
+redirecting to new storage. Capacity64 direct damage succeeds; real hitscan
+reservation may fail before any effect/RNG/health mutation.
+
+Original kill-count accounting needs source player/players[0]/netgame statistics.
+The fixture deliberately omits COUNTKILL and has no player pointer; no statistic
+is fabricated. Demon has no item-drop branch. Unsupported scoring/player, raise,
+other monster actions, cross-profile plasma/projectiles, generalized infighting,
+map specials/dynamic sectors and full monster execution remain excluded. Existing
+bounds and safe counter/arithmetic/reference policies remain explicit. Independent
+C comparisons establish this declared slice, not full vanilla/demo synchronization.

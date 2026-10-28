@@ -553,3 +553,52 @@ Full Demon/Spectre pain/death/raise closure, real player damage/scoring, other
 attacks, dynamic sectors, demos and rendering remain deferred. A subsequent
 bounded Demon pain/death-state investigation is assigned by M3d3g, after the
 PR #16 correction/merge/post-merge gates; it is not implemented by M3d3f.
+
+## M3d3g — Demon pain, death and corpse-state foundations
+
+Starts from verified master`75b2a2bc` after PR #16 correction `63efb2a5`, successful
+CI 40761281692 and exact post-merge CI 40762344038. Source investigation `2500650d`
+precedes runtime. See [M3D3G_REFERENCE](M3D3G_REFERENCE.md).
+
+- [x] Explicit profile 14, named shootable native 136, copied source Demon pain/death
+  metadata and declared source-body/effect roles; original full types 12/13 blocked.
+- [x] Pain180 with real LUT, 2/2 and delayed sound 26, reaction/JUSTHIT/retarget/Chase.
+- [x] Ordinary8/8/4/4/4/-1, first timer 5..8, delayed scream64, immediate corpse/
+  dropoff/quarter height, later Fall, stable terminal storage/physics/spatial lists.
+- [x] Shared direct/hitscan damage, knockback, null/self/distinct relationships,
+  current post-physics melee, thinker/spatial ordering and generation-safe targets.
+- [x] Atomic failures, capacity, unsupported players/scoring/raise/other attacks;
+  no new damage engine or per-tic full-state clone.
+- [x] Genuine original-C331 scenarios/21 exercised maps/68 compiled bodies;
+  517,192 actor fields/36,316 raw draws/103,942 ordered rows; separate3 boundary probes.
+- [x] Independent v14: 3,972 captures/727 full bytes, field/byte/digest diagnostics;
+  v1-v13 expected data and twelve historical Rust helpers frozen.
+- [x] Eleven public safety tests plus 3 private fault-injection tests; separate
+  private scalar-C comparison. Nine-scenario asserted debug/release example,
+  independently derived pain/death digest eecc4b4dcc4fbca5.
+- [x] All 13 ASan fuzz targets build; bounded new lifecycle target/seed recipe.
+- [x] Fresh local workspace/MSRV 221 each, release 197, all fourteen reference pairs/
+  example comparisons, build/format/Clippy/rustdoc and source preservation.
+- [x] Bounded lifecycle ASan: 10,000 executions in 1,002.9 seconds without findings;
+  twelve fresh public 65-byte seeds, capacity setup, max_len 65/RSS 2048 MiB/timeout 20s;
+  leak detection disabled.
+- [x] Implementation e56bea449a06ddcdf93dd85c94345a1faa45dab5 passed all four
+  jobs in [CI 40771202408](https://github.com/Copgunn/DOOM/actions/runs/40771202408).
+- [x] [PR #17](https://github.com/Copgunn/DOOM/pull/17) opened for separate owner
+  review; remains OPEN/UNMERGED without auto-merge.
+
+Reviewed final head `2a0ad59e563e433b69bd50c6cb900edbd156a3fc` passed all four jobs
+in [CI 40772397051](https://github.com/Copgunn/DOOM/actions/runs/40772397051).
+The M3d3h mission conditionally authorizes PR #17's regular merge after this
+documentation correction, fresh mandatory local/four-job corrected-head checks
+and live blocker verification. Verify the merge parents/tree/master and successful
+exact-merge post-merge CI before M3d3h runtime. See [VALIDATION](VALIDATION.md).
+Keep auto-merge disabled; the new M3d3h PR requires separate owner review.
+
+COUNTKILL/global statistics, full original stand/run actor execution, Spectre,
+other autonomous monsters/cross-profile projectiles, raise/resurrection, real
+players, dynamic sectors/specials, multiplayer and demos remain excluded. These
+are explicit admission boundaries, not silently successful callbacks. A separate
+next investigation and implementation covers original SARG stand/run animation
+closure in M3d3h, only after PR #17's correction/merge/post-merge gates. It does
+not expand M3d3g's declared runtime scope.

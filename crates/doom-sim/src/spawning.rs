@@ -123,7 +123,7 @@ impl Simulation {
     }
     pub(crate) fn validate_entry(&self, state: StateId) -> Result<(), SimError> {
         let registry = self.registry_required()?;
-        if self.profile == Profile::DemonMelee {
+        if self.profile.uses_demon() {
             registry.validate_state_demon_melee(state)?;
         } else if self.profile == Profile::Chaingunner {
             registry.validate_state_chaingunner(state)?;
@@ -175,7 +175,7 @@ impl Simulation {
                 monsters: self.profile.uses_monsters(),
                 shotgunner: self.profile == Profile::Shotgunner,
                 chaingunner: self.profile == Profile::Chaingunner,
-                demon: self.profile == Profile::DemonMelee,
+                demon: self.profile.uses_demon(),
                 melee: None,
                 shotgun,
                 shot,
@@ -221,6 +221,9 @@ impl Simulation {
     /// Controlled death-state entry for an unbound actor. This does not apply
     /// damage, alter health/height, set corpse flags, award kills or drop items.
     pub fn request_actor_death(&mut self, id: ActorId) -> Result<(), SimError> {
+        if self.profile == Profile::DemonLifecycle {
+            return Err(MonsterError::Profile.into());
+        }
         let life = self.active_typed(id)?;
         self.projectile_control(id)?;
         if self.bindings.contains(&Some(id)) {

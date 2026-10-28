@@ -7,7 +7,7 @@ use crate::{
 pub(crate) struct MeleePlan {
     owner: ActorId,
     initial: DoomRng,
-    accepted: bool,
+    accepted: Option<bool>,
     damage: Option<(i32, crate::combat::DamagePlan)>,
 }
 pub(crate) fn strike<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) {
@@ -26,9 +26,10 @@ pub(crate) fn strike<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) {
     // The actual source query follows facing. Its pure preview proved all later
     // dependencies; facing cannot change this angle-independent sight/range result.
     let accepted = crate::monsters::melee_host(host, id);
-    assert_eq!(accepted, plan.accepted);
-    if let Some((amount, damage)) = plan.damage {
-        assert!(accepted);
+    if let Some(preview) = plan.accepted {
+        assert_eq!(accepted, preview);
+    }
+    if let Some((amount, damage)) = plan.damage.filter(|_| accepted) {
         let actual = (i32::from(crate::monsters::draw(host, id, 4)) % 10 + 1) * 4;
         assert_eq!(actual, amount);
         host.apply_damage(damage);
@@ -104,7 +105,12 @@ impl Simulation {
         let mut preview = initial;
         let _ = crate::monsters::face_angle(actor, *self.actor(target).unwrap(), &mut preview);
         let accepted = self.check_melee_range(id)?.accepted;
-        let damage = if accepted {
+        // Lifecycle owners can move in XY/Z before their first thinker action.
+        // Prepare potential damage even when the current preview misses; actual
+        // range after physics/facing controls the draw. Physics consumes no RNG
+        // in this unbound, non-missile closure, and no earlier thinker can alter
+        // target health. The plan contains no cached post-physics range result.
+        let damage = if accepted || self.profile == Profile::DemonLifecycle {
             let amount = (i32::from(preview.p_random()) % 10 + 1) * 4;
             let plan = self.plan_damage(DamageRequest {
                 target,
@@ -120,7 +126,7 @@ impl Simulation {
         Ok(Some(MeleePlan {
             owner: id,
             initial,
-            accepted,
+            accepted: (self.profile != Profile::DemonLifecycle).then_some(accepted),
             damage,
         }))
     }
@@ -133,7 +139,7 @@ impl Simulation {
     /// Atomic original A_SargAttack: Face, current range/sight, one damage draw,
     /// shared direct damage. No attack sound or hitscan impact is invented.
     pub fn demon_melee_attack(&mut self, id: ActorId) -> Result<(), SimError> {
-        if self.profile != Profile::DemonMelee {
+        if !self.profile.uses_demon() {
             return Err(MonsterError::Profile.into());
         }
         let plan = self.prepare_demon_melee(id)?;
@@ -152,7 +158,13 @@ impl Simulation {
         state: StateId,
     ) -> Result<(), SimError> {
         let actor = self.monster_actor(id, 1008)?;
-        self.demon_state_role(actor.life.unwrap().actor_type, state)?;
+        self.monster_state_role(actor.life.unwrap().actor_type, state)?;
+        if self.profile == Profile::DemonLifecycle
+            && actor.life.unwrap().actor_type.0 == 136
+            && (actor.life.unwrap().health <= 0 || ![1, 2, 4, 5, 6].contains(&state.0))
+        {
+            return Err(MonsterError::Definition.into());
+        }
         if self.monster_is_owner(id) {
             self.preflight_monster_callback(id)?;
         }

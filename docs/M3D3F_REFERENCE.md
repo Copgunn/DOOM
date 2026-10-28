@@ -267,4 +267,5 @@ sound, timing/facing/hit/miss/death/retirement and independent digest
 tests separately prove the declared resource/reference/player/atomicity policies.
 All historical v1-v12 source/expected files and eleven helpers are preserved.
 Full local/fuzz/CI results and immutable reviewed heads are recorded in
-[VALIDATION](VALIDATION.md) after execution. The new PR remains open/unmerged.
+[VALIDATION](VALIDATION.md) after execution. PR #16 completed its authorized regular merge and successful post-merge gates;
+see the immutable finalization record in VALIDATION.

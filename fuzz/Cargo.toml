@@ -104,3 +104,10 @@ path = "fuzz_targets/demon_melee.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "demon_lifecycle"
+path = "fuzz_targets/demon_lifecycle.rs"
+test = false
+doc = false
+bench = false

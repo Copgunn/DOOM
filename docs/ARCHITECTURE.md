@@ -537,3 +537,34 @@ no cached range or skipped callback substitutes for original behavior. Source
 fast/Nightmare global timing transformation stays outside profile 13. DSIM-v13
 uses existing event layouts and fields; expected bytes come from original-C rows
 and independent encoding, as described in [the investigation](M3D3F_REFERENCE.md).
+
+## M3d3g damageable Demon fixture and corpse lifecycle
+
+Profile14 composes existing LifeHost, DamagePlan, M3b physics, spatial lists and
+ThinkerStore. Native136 copies original MT_SERGEANT metadata but remaps spawn/
+see/attack/pain/death into named aliases, removes COUNTKILL and disables raise.
+Look/Chase are explicit positive stand/run loops. Source-body135 supplies unbound
+sources/targets; original blood/puff definitions serve explicit synthetic hitscan.
+Full original types 12/13 and second autonomous owners are not admitted.
+
+Incoming damage runs the shared pipeline with perception/Chase host context.
+Strict complete state closure, reference/roster/sound/binding checks and existing
+work/movement bounds make immediate non-pain spawn-to-Chase and later pain return
+infallible after preflight. Pain/death/Fall allocate no actors; hitscan preserves
+impact-before-damage RNG and real reservation. No new damage/state scheduler.
+
+Unlike profile 13, a living lifecycle owner may have knockback and source XY/Z
+motion. It remains first, with the existing978 tic/1008 callback bounds. The small
+melee plan validates potential damage even if its current pure preview misses;
+after physics and real facing, the authoritative query decides whether to draw
+and apply damage. Ordinary unbound XY/Z consumes no RNG, and no earlier thinker
+can change the target's health. No stale geometry acceptance or full-store clone
+is carried into execution. Profile13 retains its exact earlier behavior.
+
+Kill changes flags/height/dropoff/gravity through the existing executor. Solidity
+persists until A_Fall. Corpse physics, friction and relinking use the same movement
+path, including ledge and reduced-height portal behavior. Terminal -1 stops state
+advancement only. Dead owners' closed action-free/sound/Fall graph does not read
+retained targets; their unresolved generations remain stored without aliasing.
+Living callbacks still reject stale dependencies. Public state/setup cannot
+resurrect the owner. Canonical fields/events already represent every transition.
