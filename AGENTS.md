@@ -274,7 +274,8 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   leak settings. Keep full original type 10/drops, SpidRefire, other attacks and
   player damage/binding excluded. PR #15 completed its authorized regular merge
   as 5b918247 after macOS recovery and fresh exact-head/post-merge checks.
-  M3d3f started only after those gates; its new PR stays open/unmerged.
+  M3d3f started only after those gates; PR #16 finalization follows the separately
+  authorized M3d3g correction/fresh-check/regular-merge/post-merge gates.
 
 ## M3d3f Demon melee changes
 
@@ -306,5 +307,7 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   comparisons. Build all twelve fuzz targets; report actual Demon ASan executions,
   corpus/limits and leak settings. Preserve every v1-v12 fixture/generator/encoder
   and eleven historical Rust helpers; reference README prose may change.
-- The M3d3f PR must stay OPEN/UNMERGED without auto-merge at owner review. Do not
-  implement later gameplay or assume this fixture establishes full vanilla sync.
+- The M3d3g mission conditionally authorizes PR #16 regular merge after its prose
+  corrections, fresh mandatory local/four-job CI and live blocker review. Verify
+  ordered merge parents/tree/master and post-merge CI before M3d3g runtime. No
+  auto-merge; M3d3g needs separate owner review. No full vanilla sync is established.

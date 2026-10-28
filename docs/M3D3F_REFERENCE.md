@@ -228,8 +228,10 @@ unsupported metadata/callbacks, arithmetic/work and full failed-operation/tic
 canonical equality. A thirteenth asserted example must prove pursuit, sound,
 three faces, hit/miss, damage and return against C and independent bytes. Build
 all twelve fuzz targets and run bounded Demon ASan with explicit leak settings.
-Record observed counts and exact CI only after completion. The new PR stays
-open/unmerged for owner review; complete Demon/Spectre and later gameplay remain
+Record observed counts and exact CI only after completion. PR #16 completed
+separate owner review; its M3d3g conditional regular-merge authorization requires
+prose corrections and fresh local/four-job CI, then post-merge checks before new
+runtime work. Auto-merge stays disabled. Complete Demon/Spectre gameplay remains
 outside this milestone.
 
 ## Implemented result and evidence families

@@ -1817,9 +1817,8 @@ target tests confirm full canonical direct-call/tic equality on a damage rejecti
 reached after successful range preview. Rust identity/resource policies are
 separate from C equivalence; DSIM is a project diagnostic, not a vanilla format.
 
-Fresh full local gates and bounded ASan have now completed as recorded below.
-Exact implementation/final-head CI is recorded only after successful execution;
-no pending remote pass is implied.
+Fresh full local gates and bounded ASan completed as recorded below. The reviewed
+final-head CI result is recorded directly in the finalization section below.
 
 ## M3d3f initial bounded sanitizer evidence
 
@@ -1859,8 +1858,9 @@ attribution/licenses and GPL-2.0-only stable workspace remain intact. No stable
 dependency, private-repository or commercial-asset access was introduced. Requested
 README/AGENTS/CONTRIBUTING, architecture/roadmap/compatibility/testing/validation/
 schema/source note/index/reference guide and public fuzz-seed documentation are
-updated. The new PR remains open/unmerged without auto-merge; remote exact-head
-validation and immutable CI records follow after execution.
+updated. Reviewed exact-head CI passed as recorded below; the M3d3g mission
+conditionally authorizes PR #16 finalization after documentation corrections,
+fresh mandatory local/remote checks and live blocker review.
 
 ## M3d3f immutable implementation CI
 
@@ -1887,7 +1887,30 @@ explicitly disabled; no LeakSanitizer coverage is claimed.
 
 The first 10,000/227.6-second campaign remains historical evidence for its earlier
 model. The two campaigns are separate, not extra C scenarios or canonical capture
-counts. Final exact-head CI must still pass before readiness. The exact final SHA
-and completed matrix are recorded on [PR #16](https://github.com/Copgunn/DOOM/pull/16)
-after execution because this commit cannot embed its own eventual SHA/result.
-The PR stays open/unmerged without auto-merge; no M3d3f merge is authorized.
+counts. The reviewed final SHA and completed matrix are recorded below.
+
+## M3d3f reviewed final head and conditional finalization
+
+Reviewed head **16c3ef91df81e99fc56339e6b722816fbbe2bb5d** passed all four jobs in
+[CI 40745375088](https://github.com/Copgunn/DOOM/actions/runs/40745375088), completed
+2026-10-28 18:34:54 UTC: Linux stable, Windows stable, native Intel macOS 26 stable
+and Rust 1.85.0. Native macOS job 123017630212 actually executed checkout, toolchain,
+formatting, Clippy, build, workspace/release tests, recorded reference/golden
+comparisons, asserted examples and documentation. Original-C regeneration remained
+Linux-only; all thirteen original-C/encoder pairs passed there.
+
+The existing PR workflow checked out GitHub test merge
+`58418111da708d6e6435a92e60c27a74f2ad6036`, with ordered parents reviewed master
+`5b9182472123b8ec86b48cf6a4076426a7856f70` and the reviewed head. Its tree
+`82f85eb4b0ea4e9ac8a2d406aa81c4f6dbe99054` equals the reviewed head tree. Local
+mandatory checks ran directly at that head. This distinguishes head-associated
+CI with identical source bytes from a checkout detached at the feature commit.
+
+The M3d3g mission authorizes a regular merge of PR #16 only after this prose
+correction and fresh mandatory local/four-job CI checks pass, provided live refs
+and reviews reveal no new blocking defect or unexpected behavior. The correction
+changes documentation only; all DSIM-v1 through v13 bytes, encoders, fixtures and
+reference evidence remain unchanged. The corrected SHA and observed fresh CI belong
+on the PR after verification. Verify ordered merge parents/tree/master and all four
+post-merge jobs before M3d3g runtime work. No squash, force push, history rewrite,
+auto-merge or protection bypass is authorized.

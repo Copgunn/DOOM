@@ -219,7 +219,8 @@ safety tests. Keep all v1-v11 expectations/helpers and player restrictions intac
 Use the documentation review checklist and record only observed immutable CI.
 PR #15 completed its authorized regular merge as 5b918247 after documentation/CI
 corrections and successful exact-head/post-merge gates. M3d3f started from that
-verified baseline; its new PR stays open/unmerged for review without auto-merge.
+verified baseline; PR #16 finalization follows the separately authorized M3d3g
+correction/fresh-check/regular-merge/post-merge gates without auto-merge.
 
 ## M3d3f Demon melee changes
 
@@ -236,4 +237,6 @@ twelve ASan fuzz builds and bounded Demon fuzzing. Report gameplay/map coverage,
 separately. Do not change historical v1-v12 bytes/helpers or claim full original
 Demon/Spectre/player support. Normal timing excludes Nightmare initialization.
 PR #15's regular merge/post-merge gates completed as `5b918247` after macOS
-recovery; the M3d3f PR still requires separate owner review and stays unmerged.
+recovery. The M3d3g mission conditionally authorizes PR #16 regular merge after
+its documentation corrections and fresh mandatory local/four-job CI. Verify the
+merge and successful post-merge matrix before M3d3g runtime; no auto-merge.

@@ -1,4 +1,4 @@
-# Canonical simulation state, DSIM versions 1 through 12
+# Canonical simulation state, DSIM versions 1 through 13
 
 This is a diagnostic/replay comparison format for explicit M2 through M3d3f profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an

@@ -506,7 +506,8 @@ requires a separate source investigation and authorization.
 Branch `feat/m3d3f-demon-melee` starts at verified merged master `5b918247`.
 [Investigation](M3D3F_REFERENCE.md) commit
 `3fac94715e8e22a55bf3f3448155c4b6129dfd4d` precedes runtime `e140b3bd`.
-The new PR must remain open/unmerged without auto-merge for separate owner review.
+The separate owner review completed; the M3d3g mission conditionally authorizes
+PR #16 regular merge through the correction/fresh-check/post-merge gates below.
 
 - [x] PR #15 recovery, regular merge, parents/tree/master/integrity and exact
   successful Linux/Windows/macOS/MSRV post-merge gates completed first.
@@ -541,11 +542,14 @@ The new PR must remain open/unmerged without auto-merge for separate owner revie
 - [x] Capacity-aware fuzz setup reaches all 64 slots before mutational operations;
   final ASan result is recorded in [VALIDATION](VALIDATION.md).
 
-The exact final-head SHA/completed four-job matrix and readiness are recorded on
-PR #16 after execution. A commit cannot embed its own eventual CI result. Mark
-ready only after that matrix passes; leave the PR open/unmerged without auto-merge.
+Reviewed head `16c3ef91df81e99fc56339e6b722816fbbe2bb5d` passed all four jobs in
+[CI 40745375088](https://github.com/Copgunn/DOOM/actions/runs/40745375088). The
+M3d3g mission conditionally authorizes PR #16 regular merge after documentation
+corrections and fresh mandatory local/exact-head CI, followed by verified merge
+and four-job post-merge CI. See [VALIDATION](VALIDATION.md); no auto-merge.
 
 Normal timing only: source global fast/Nightmare SARG timing is not admitted.
 Full Demon/Spectre pain/death/raise closure, real player damage/scoring, other
 attacks, dynamic sectors, demos and rendering remain deferred. A subsequent
-bounded Demon pain/death-state investigation would require separate authorization.
+bounded Demon pain/death-state investigation is assigned by M3d3g, after the
+PR #16 correction/merge/post-merge gates; it is not implemented by M3d3f.
