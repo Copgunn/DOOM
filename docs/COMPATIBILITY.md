@@ -9,7 +9,9 @@ M1 parses IWAD/PWAD bytes and structurally validates classic maps. M2 implements
 a narrow headless simulation with isolated C arithmetic, RNG, scheduling, geometry,
 XY and thrust comparisons. M3a separately implements bounded grounded player
 sliding and solid actor collisions with original C comparisons. M3b adds an
-explicit static multi-sector/vertical profile with independent C traces. Rendering, demo playback, full gameplay synchronization
+explicit static multi-sector/vertical profile with independent C traces. M3c adds
+validated typed actors and a bounded state/action subset with separate C traces.
+Rendering, demo playback, full gameplay synchronization
 and authentic IWAD validation remain unverified.
 
 DOS DOOM 1.9 is a separate future target. The released Linux source is not a
@@ -298,3 +300,35 @@ redistributable data with provenance and license recorded. Never commit commerci
 IWADs, extracted proprietary assets, or private repository content. Locally
 available reference-engine helpers are environment-specific and are not evidence
 of Rust compatibility unless a comparison was actually performed.
+
+## M3c actor-state profile
+
+`Simulation::actor_states` / `with_actor_registry` select profile 4 and DSIM-v4.
+All 137 types/967 states/74 action identities are recognized. Only admitted
+spawn/death closures execute: 67 types fit the flat 128-unit reference fixture,
+with five source actions (Fall/Pain/Scream/XScream/PlayerScream). Source actions
+emit inert sound observations, never audio. Recognition is not monster support.
+
+Direct spawning skips state actions/zero chaining; thinker countdown/entry runs
+after XY/Z. Entered zero chains execute all actions; -1 persists; null entry
+preserves old presentation/timer fields while unlinking and marking removal.
+Native probe scenarios verify recursive entry, RNG, child append/same-pass think,
+mutual targets and deferred retirement against extracted source bodies. Retained
+IDs resolve unavailable after retirement; original C dangling dereferences have
+no safe compatibility meaning. No eager reference-clearing rule is invented.
+
+Map placement supports single-player DOOM II, five skills, nomonsters, original
+DoomEd lookup/order, positive-tic RNG randomization, signed angle quantization and
+ambush. Player starts and bounded deathmatch starts are reported without full
+player creation. Other modes and unsupported selected types reject explicitly;
+whole-batch validation is a deliberate safe departure from fatal partial C setup.
+Controlled death enters the registered death state only. Health, height, kill
+flags/scoring/drop processing and randomized combat timers are untouched; terminal
+objects can persist. Full players, combat/AI/weapons/projectiles/pickups, corpse
+physics, resurrection, respawn, moving specials, scripts and demos remain later.
+
+The exact bounds, flags, adapter assumptions, admitted set and 393 actor/444 event
+observations are in [M3C_REFERENCE.md](M3C_REFERENCE.md). Independent v4 encoding
+checks 99 digests and 24 complete states. All v1/v2/v3 evidence remains unchanged.
+These comparisons establish only the declared Linux 1.10 subset, not a playable
+game, authentic IWAD validation, full vanilla synchronization or DOS 1.9 behavior.

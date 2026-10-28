@@ -1,6 +1,6 @@
-# Canonical simulation state, DSIM versions 1, 2 and 3
+# Canonical simulation state, DSIM versions 1, 2, 3 and 4
 
-This is a diagnostic/replay comparison format for explicit M2, M3a and M3b profiles,
+This is a diagnostic/replay comparison format for explicit M2, M3a, M3b and M3c profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -21,7 +21,7 @@ Runtime fields precede static map fields. Runtime order:
 | Field/group | Value encoding |
 | --- | --- |
 | `tic` | u64 completed logical tics |
-| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), or 3 (M3b static-sector XY/Z); profile-specific additions are specified below |
+| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), or 4 (M3c typed actor lifecycle); profile-specific additions are specified below |
 | `paused` | u8 boolean |
 | `rng.gameplay`, `rng.miscellaneous` | u8 indexes, in that order |
 | `store.max_slots`, `store.slot_count` | u32 capacity policy; u64 logical allocated slot count |
@@ -193,3 +193,47 @@ Both kinds run in debug/release CI across supported platforms.
 Snapshots include map/resource bytes. Traces made with private assets must remain
 private and must never become public fixtures, logs, artifacts, or screenshots.
 All current fixtures and CI scenarios use only original synthetic map data.
+
+## DSIM-v4 and typed actor state
+
+Profile 4 extends v3 with the following explicitly ordered fields. Older profiles
+retain their original bytes and fixtures. Registry definitions/options are immutable.
+All integers use little-endian widths; booleans are u8 0/1. Optional actor IDs use
+the existing 13-byte presence/u32-slot/u64-generation representation.
+
+- After `rng.miscellaneous`: `actors.options` = skill u8 (baby=0 through nightmare=4),
+  mode u8 (only single-player=0 admitted), nomonsters u8.
+- Existing per-actor `flags` now records the full admitted source u32 flags.
+- After actor flags, before v3 momz/subsector/sector: `type` u16, `state` u16
+  (65535 = entered null pointer; zero = direct `&states[0]` spawn assignment),
+  `tics`, `health`, `reaction_time` i32 each, `sprite` u16, `frame` u32, `target`
+  optional ID, `death_requested` u8, `spawnpoint` presence u8 followed, when present,
+  by signed x/y/angle/type i16 and options u16 (10 bytes). Prefix remains `actor.N.`.
+- Spatial link order retains all logical relinks. Block queries filter NOBLOCKMAP;
+  sector list fields filter NOSECTOR. Immediate removal excludes both lists.
+- After immutable map fields: `registry.states.count` u64, then `registry.state.N`;
+  `registry.types.count` u64, then `registry.type.N`. State payload is name length
+  u8/name UTF-8 bytes, sprite u16, frame u32, tics i32, action encoding below,
+  next u16, misc1/misc2 i32. Type payload is name length/name followed by the 23
+  source-order i32 properties documented by ActorTypeDef and m3c_types.csv.
+
+Action payload: None = tag 0; original = tag 1/u16 action ID; probe = tag 2/u8
+probe ID (Random=0, Enter=1, SpawnTarget=2, RemoveSelf=3, RemoveTarget=4,
+TargetSelf=5). Enter/SpawnTarget additionally carry a u16 state/type operand.
+Original IDs follow the generated symbolic table: zero None, remaining 74 names
+in lexicographic order. Sprite/sound IDs follow original source enum order.
+
+Event tag 12 introduces actor-state observations. Its second u8 is Initialized=0
+(actor ID/type u16), Entered=1 (actor/state u16), Action=2 (actor/action payload),
+Sound=3 (optional actor/sound u16), Target=4 (actor/optional target), Death=5
+(actor), TargetUnavailable=6 (actor), Random=7 (actor/value u8). Actor IDs here
+are the existing nonoptional 12-byte slot/generation encoding unless specified.
+Last/pending observations include these events in execution order. Initialized
+records direct assignment without invoking an action; Death records the explicit
+controlled request, not damage processing. No sound channel/device state exists.
+
+`m3c_snapshot_goldens.py` independently encodes C values and explicit setups:
+99 captures and 24 full states cover death, null/retirement, map placement,
+recursive callbacks/targets/spawning, five actions and initial zero-tic behavior.
+Names and immutable definitions are serialized so different native registries
+cannot accidentally produce equal canonical bytes merely by sharing indexes.

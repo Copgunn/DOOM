@@ -95,3 +95,14 @@ reference diagnostics, immutable map versus runtime-sector separation, and
 atomic setup/step failures. Static two-sided gameplay openings do not establish
 enhanced geometry or full player/actor-state behavior. M3b merge requires its own
 owner approval. Renderer work remains a separate custom wgpu subsystem.
+
+## M3c actor changes
+
+Run `generate_m3c.py --check` and `m3c_snapshot_goldens.py --check` in addition to
+all older generators/encoders. Run `actor_states`, all four debug/release examples,
+and the actor-state fuzz target when changing admission/transitions. Preserve all
+v1/v2/v3 fixtures. Record recognized metadata, admitted types, source actions and
+synthetic probe capabilities separately. State entry is not damage processing;
+map player starts do not imply complete player initialization. See
+[the investigation](docs/M3C_REFERENCE.md) and [schema](docs/STATE_FORMAT.md).
+M3c remains unmerged until separate owner authorization, including any sub-PRs.

@@ -211,3 +211,31 @@ policies, not undefined C equivalence. Parser fuzz targets still compile with
 nightly AddressSanitizer instrumentation; no new parser fuzz campaign or leak-
 detection result is claimed for M3b. Physics uses these bounded property-style
 regressions rather than a new libFuzzer target.
+
+## M3c actor states and spawning
+
+```sh
+python3 tools/reference/generate_m3c.py --check
+python3 tools/reference/m3c_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3c --test m3c_reference --locked
+cargo run -p doom-sim --example actor_states --locked
+python tools/reference/check_headless.py
+cargo +nightly fuzz build
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run actor_states -- -runs=10000 -max_len=24
+```
+
+Keep all six older generator/encoder commands. C metadata comparisons cover all
+source properties; traces compare countdown/state/actions/health/flags/targets,
+RNG and thinker/lifecycle order. The sweep checks 67 types at three spawn heights.
+Independent v4 fixtures compare 99 digests and 24 full byte streams; failures name
+the first mismatching field. The asserted 80-tic example finishes with digest
+`3dcbad5257374b3e`. All four example stdout streams must match debug/release.
+
+Policy regressions cover every type state/sound reference, bad action indexes,
+zero/callback/spawn cycles, long entry chains, aggregate tic work, exhausted
+capacity, whole-batch placement atomicity, pause, unsupported modes/types, immediate
+unlinking, targets retained across retirement/reuse, self/mutual relationships,
+XY-before-Z-before-state order, terminal persistence and null timer preservation.
+256 bounded generated graphs exercise deterministic accepted/error behavior;
+a separate actor_states fuzz target mutates native graphs with no private data.
+Sanitizer run outcomes and environment limits are recorded in VALIDATION.md.

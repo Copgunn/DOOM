@@ -17,8 +17,9 @@ foundations are implemented, validated and merged
 reference-tested grounded player XY movement, wall sliding and solid actor
 collision, merged in [PR #4](https://github.com/Copgunn/DOOM/pull/4) as `764dd96`.
 M3b implements and validates static multi-sector movement and vertical physics
-in [PR #5](https://github.com/Copgunn/DOOM/pull/5), accepted for the conditional
-owner-authorized regular merge after fresh correction-head checks.
+in [PR #5](https://github.com/Copgunn/DOOM/pull/5), merged as `c791ef8` after
+owner-authorized correction-head and post-merge CI. M3c adds typed actor states,
+spawning and controlled death on its review branch; it remains unmerged.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 
@@ -43,6 +44,9 @@ Implemented:
 - Explicit M3b profile: iterative original BSP lookup, two-sided openings,
   step/dropoff/clearance rules, XY/Z order, gravity/landing/ceiling contact,
   sector-head membership/order, reference-list BLOCKMAP policy and DSIM-v3.
+- Explicit M3c profile: complete original actor metadata, validated executable
+  subsets, ordered state actions, typed/map spawning, controlled death, safe
+  targets and DSIM-v4. Metadata recognition does not imply monster gameplay.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
 Choose the compatibility profile explicitly:
@@ -52,6 +56,7 @@ Choose the compatibility profile explicitly:
 | `Simulation::new` | DSIM-v1 | M2 one-sector non-solid/non-player XY response |
 | `Simulation::player_collision` | DSIM-v2 | M3a grounded player slides and solid collision, conservative coverage |
 | `Simulation::multisector` | DSIM-v3 | M3b static classic sectors, BSP/openings, step/dropoff and XY/Z/gravity |
+| `Simulation::actor_states` | DSIM-v4 | M3c typed actors and supported state/action lifecycle on static-sector physics |
 
 M3b consumes supplied BLOCKMAP lists in reference order. Conservative omissions
 are diagnostic, not automatic rebuilds or proof of broken geometry. Missing
@@ -60,8 +65,8 @@ collision data can allow source-compatible movement through omitted walls; see
 Classic two-sided lines are gameplay openings, not stacked sectors, room-over-room
 or enhanced visual portals.
 
-Complete player thinking/view/animation, state machines, weapons, monsters,
-combat, moving doors/lifts, specials and respawn remain incomplete. M3c–M3e
+Complete player thinking/view/animation, weapons, monster AI,
+combat, moving doors/lifts, specials and respawn remain incomplete. M3d–M3e
 continue gameplay; M4 covers demos; M5 covers presentation/input/audio and the
 custom wgpu renderer. Authentic IWAD compatibility, full synchronization and DOS
 1.9 behavior are unverified. Read the [compatibility limits](docs/COMPATIBILITY.md).
@@ -81,6 +86,7 @@ cargo run -p doom-map --example parse_map --locked
 cargo run -p doom-sim --example headless --locked -- 12
 cargo run -p doom-sim --example player_arena --locked
 cargo run -p doom-sim --example multisector_arena --locked
+cargo run -p doom-sim --example actor_states --locked
 ```
 
 `rust-toolchain.toml` selects stable with rustfmt and Clippy. The minimum compiler
@@ -136,7 +142,7 @@ no window, renderer, audio, wall clock or commercial assets.
 
 The original `headless -- 12` and `player_arena` examples preserve M2 coasting and
 M3a angled/solid collision evidence. `python tools/reference/check_headless.py`
-compares all three examples' debug/release output byte-for-byte.
+compares all four examples' debug/release output byte-for-byte.
 
 Initialize M3b from a validated `Map`:
 
@@ -195,8 +201,47 @@ and [M3B_REFERENCE.md](docs/M3B_REFERENCE.md) for source findings and safe polic
 double division; `DoomRng` owns both original RNG indexes. `ThinkerStore` separates
 slot/generation identity from append order, detects stale handles, defers retirement,
 and permits same-traversal spawning through restricted callbacks. The current
-simulation's built-in thinkers perform the selected XY or XY/Z subset; full mobj
-state transitions and type-driven spawning remain M3c work.
+simulation's built-in thinkers perform the selected profile's motion and, in
+profile 4, admitted actor state/action processing after XY/Z.
+
+## Typed actor lifecycle (M3c)
+
+```sh
+cargo run -p doom-sim --example actor_states --locked
+```
+
+This asset-free example checks 80 tics against independently encoded C results:
+19 state entries, two supported actions, a persistent terminal player-type object,
+and fog null-state removal followed by retirement. It is a headless test scenario.
+
+`ActorRegistry::vanilla()` recognizes all 137 original types, 967 states and 74
+non-null action identities. `Simulation::actor_states(map)` selects profile 4;
+`spawn_type(type_id, xy, SpawnHeight::Floor)` validates an executable type before
+initializing it. `actor_registry().find_type("MT_PLAYER")` resolves symbolic names.
+Spawning assigns the initial state directly without calling its action. Subsequent
+state entry/countdowns run at 35 Hz, after each actor's XY/Z motion. State zero is
+explicit removal; infinite states persist. Unsupported callbacks reject before
+mutation. Bounds include 1024 actors, 2048 states, 256 types and 4096 map THINGS.
+
+In a flat 128-unit sector, 67 source types are admitted: player-type pawns, inert
+props, fog and a few animation-only effects. Actual admission checks dimensions
+against every sector and validates spawn/death closures. The five original actions
+are `A_Fall`, `A_Pain`, `A_Scream`, `A_XScream` and `A_PlayerScream`; sound requests
+are inert events. See the [admission matrix and policies](docs/M3C_REFERENCE.md).
+
+`spawn_map_things()` performs single-player DOOM II skill/nomonsters filtering,
+DoomEd lookup, source-order spawning, positive-tic randomization, angle quantization
+and ambush flags. It reports player/deathmatch starts explicitly; full player setup
+and multiplayer modes remain unsupported. A bad selected type rejects the batch
+without partial spawning or RNG drift.
+
+`request_actor_death(id)` enters an unbound actor's registered death state. It
+implements no damage, kill scoring, drops, corpse flags, height change or randomized
+kill timer. `A_Fall` clears solidity; a terminal object can persist. Targets retain
+generation-aware identities through removal and resolve unavailable after retirement.
+`enter_actor_state` validates explicit state requests before effects. A separate
+`ProbeAction` namespace tests scheduler/service capabilities; those callbacks are
+synthetic probes, not vanilla AI or a modding language.
 
 ## Optional private IWAD directory
 
@@ -252,8 +297,9 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M1 | Bounded WAD and classic map parsing, regression tests, fuzzing | Implemented, validated, merged |
 | M2 | Fixed arithmetic, RNG, ordered thinkers, narrow movement, snapshots | Implemented, validated, merged |
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
-| M3b | Static sectors/BSP, openings, step/dropoff and XY/Z/gravity | Implemented/validated; conditional merge authorized |
-| M3c–M3e | Actor states, combat, interactions and specials | Planned |
+| M3b | Static sectors/BSP, openings, step/dropoff and XY/Z/gravity | Implemented, validated, merged |
+| M3c | Actor states, spawning and controlled death | Implemented on review branch; unmerged |
+| M3d–M3e | Combat, interactions and moving sector specials | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
 

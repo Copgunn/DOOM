@@ -105,3 +105,24 @@ contact bits from recorded pre-Z values. A separate manifest hashes its inputs,
 encoder and outputs. Both older encoders/vectors/provenance remain unchanged.
 These are independent physical comparisons and project-state encodings, not
 complete engine savegames or vanilla synchronization proof.
+
+## M3c actor metadata and lifecycle
+
+```sh
+python3 tools/reference/generate_m3c.py --check
+python3 tools/reference/m3c_snapshot_goldens.py --check
+```
+
+The first tool compiles preserved `info.c` and extracted state/spawn/map/thinker
+and five action bodies using `m3c_driver.c`. It emits source tables plus 393 actor
+and 444 event observations, including the independent 67-type/201-height spawn
+sweep. Source/headers/adapters/outputs, compiler and flags are pinned in
+`m3c_provenance.json`. All unsupported source actions abort; motion/player setup
+and retained-free adapters are documented in `docs/M3C_REFERENCE.md`. Synthetic
+probe actions are visibly distinct from source actions and imply no monster AI.
+
+The second tool reads C rows and explicit synthetic setup/schema rules, never
+Rust output. It produces 99 DSIM-v4 digests and 24 full byte streams, including
+immutable original/native registries and ordered action events. Separate snapshot
+provenance pins all inputs/outputs. Older generators and authoritative fixtures
+remain unchanged. Rust tests/example consume recorded outputs without Python or C.
