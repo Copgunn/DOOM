@@ -1,8 +1,9 @@
 //! Rust safety and source timing probes; independent C evidence is separate.
-#[path = "../../../tests/support/m3d3f.rs"]
-mod old;
+#[path = "../../../tests/support/m3d3h.rs"]
+mod live_fixture;
 use doom_sim::*;
 use doom_types::Fixed;
+use live_fixture as old;
 fn id(n: u32) -> ActorId {
     ActorId::from_parts(n, 1)
 }
@@ -400,8 +401,6 @@ fn added_live_entries_are_separate_from_old_profile_and_death_entry() {
         reject(&mut current, |s| s.enter_actor_state(id(0), StateId(state)));
     }
 }
-#[path = "../../../tests/support/m3d3h.rs"]
-mod live_fixture;
 #[test]
 fn pause_presentation_and_independent_instances_preserve_live_stand_run_lifecycle() {
     let c = live_fixture::cases()
