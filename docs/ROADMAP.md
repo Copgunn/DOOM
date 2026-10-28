@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 reviewed; authorized merge gated on fresh checks**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b reviewed and conditionally authorized for regular merge**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -110,7 +110,7 @@ M3 as a whole remains incomplete.
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented, validated and merged |
 | M3c | Actor states, type-driven spawning and death | Implemented, validated and merged |
-| M3d | Combat subphases below | M3d1 merged; M3d2 implemented; later work planned |
+| M3d | Combat subphases below | M3d1/M3d2 merged; M3d2b implemented for review; later work planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
 
 M3a acceptance evidence:
@@ -201,7 +201,8 @@ repository. Custom wgpu rendering with Vulkan preferred remains later work.
 | Phase | Scope | Status |
 | --- | --- | --- |
 | M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Merged as c924f18 after fresh and post-merge CI |
-| M3d2 | Player weapons, psprites and ammo; projectiles deferred | Reviewed; regular merge conditionally authorized |
+| M3d2 | Player weapons, psprites and ammo | Merged as 955f690 after fresh/post-merge CI |
+| M3d2b | Bounded original projectile foundations | Reviewed; final correction/merge gates pending |
 | M3d3 | Monster targeting/perception, movement, attacks and AI | Planned |
 | M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
 
@@ -284,9 +285,42 @@ Source investigation was recorded as `41d89e5` before runtime implementation.
   reviewed final `0e94091` also passed
   [CI 40624283411](https://github.com/Copgunn/DOOM/actions/runs/40624283411).
 - [x] Owner engineering review and conditional regular-merge authorization.
-- [ ] Final correction, fresh CI, regular merge and post-merge verification before M3d2b.
+- [x] Final correction, fresh CI, regular merge and post-merge verification before M3d2b.
 
-Projectiles remain deferred. Next work should extend source-verified player damage
-prerequisites and projectile foundations separately, then M3d3 perception/monster
-AI and M3d4 integrated combat. Current weapon support does not establish complete
+Projectiles remain deferred in profile 6; profile 7 below adds the bounded
+projectile foundation separately. Player damage remains future work, followed
+by M3d3 perception/monster AI and M3d4 integrated combat. Current weapon support does not establish complete
 players, pickups, armor/powers, demos or full vanilla/DOS synchronization.
+
+## M3d2b — Projectile foundations
+
+[PR #9](https://github.com/Copgunn/DOOM/pull/9), branch
+`feat/m3d2b-projectile-foundations`, starts from verified master `955f690`.
+The source investigation was committed before runtime work. Original MT_PLASMA
+(type 34) has action-free flight/explosion states and needs no splash or AI.
+
+- [x] Authorized M3d2 correction, regular merge and exact post-merge CI.
+- [x] Source launch/autoaim, velocity, shadow RNG and initial half-step/check.
+- [x] Missile XY/Z, candidate/opening order, source/species immunity and boundaries.
+- [x] Existing direct damage, pain/death, impact sound/state/timer and full removal.
+- [x] Generation-aware owners, spatial/thinker order and synthetic same-pass spawn.
+- [x] Explicit unsupported-type/action/player/sky/special/arithmetic/work rejection.
+- [x] Atomic failed setup/launch/step, capacity, stale/reused handles and read independence.
+- [x] All v1-v6 historical bytes/tools preserved; independent v7 bytes and diagnostics.
+- [x] 41 C scenarios, 129 independent snapshots, asserted seventh headless example.
+- [x] Local build/fmt/Clippy/docs, 131 workspace/MSRV checks, 107 release tests,
+  all seven C generators/encoders and seven-example debug/release equality.
+- [x] All six fuzz targets build; bounded projectile ASan campaign recorded in validation.
+- [x] Future player-damage prerequisites documented without enabling damage.
+- [x] All 165 upstream files, public GPL licensing and private-asset safeguards preserved.
+- [x] Linux/Windows/macOS/Rust 1.85 CI on implemented head `5108034`
+  ([CI 40629886585](https://github.com/Copgunn/DOOM/actions/runs/40629886585));
+  final review-head SHA/run are verified in PR #9 before readiness.
+- [x] Owner engineering review and conditional regular-merge authorization in M3d3a mission.
+- [ ] Final correction-head CI, regular merge and exact post-merge verification.
+
+No full plasma rifle, rocket/BFG/splash, monster attacks, armor/player damage,
+renderer, scripting or engine-limit expansion is included. Recommended next
+bounded work is M3d3 source perception/target acquisition before attack callbacks;
+actual player damage requires its separately specified acceptance gate. M3d4
+remains integrated/advanced combat, and M3e remains moving sectors/map specials.

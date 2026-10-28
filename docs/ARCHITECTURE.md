@@ -9,7 +9,8 @@ collision profile, documented in [M3A_REFERENCE.md](M3A_REFERENCE.md). M3b adds
 static-sector topology and XY/Z physics; see [M3B_REFERENCE.md](M3B_REFERENCE.md).
 M3c adds admitted typed actor lifecycle; see [M3C_REFERENCE.md](M3C_REFERENCE.md).
 M3d1 adds bounded explicit damage/hitscan; see [M3D1_REFERENCE.md](M3D1_REFERENCE.md).
-A playable client and renderer
+M3d2 adds player weapons/psprites; M3d2b composes explicit plasma launches,
+missile collision and shared damage in profile 7. A playable client and renderer
 remain future work. Source findings were recorded before implementation in
 [M2_REFERENCE.md](M2_REFERENCE.md).
 The C source is an authoritative behavioral reference, not a Rust design template.
@@ -323,3 +324,29 @@ source/inflictor. Public direct APIs and damage targets retain bound-player
 protection. Setup ownership/ammo is explicit and validated; full inventory/pickup,
 player damage/powers/camera/respawn, AI and projectile systems remain separate work.
 Renderer/audio/scripting cannot advance or alter player weapon state.
+
+## M3d2b projectile composition
+
+`projectiles.rs` owns source-specific launch, missile contact predicates and impact
+sequencing. Actors remain ordinary typed ThinkerStore entries. A shared internal
+cursor implements the same append/retirement semantics as public `run`, allowing
+an actor thinker to call existing damage services without aliasing a callback's
+mutable store borrow. The synthetic same-pass test invokes the launch API during
+a source thinker; no monster/weapon firing action is admitted.
+
+M3b's cell/head iterator and line/opening/fit kernel are shared. Profile 7 supplies
+the original missile thing predicate and ignores BLOCKING/BLOCKMONSTERS only
+while MISSILE remains set. It applies the resulting direct hit through M3d1 before
+recording the move decision and invoking explosion. LifeHost handles spawn, state
+entry/countdown, immediate spatial unlink and deferred retirement. Source
+NOBLOCKMAP missiles retain sector membership but never enter thing candidates.
+
+Exact original states/types plus bounded native player-state fixtures establish
+that impact actions cannot spawn/remove actors, call unsupported combat, award
+scores or drop items. Launch validates all prerequisites and reserves one slot
+before authoritative effects. Step validates handles, current arithmetic bounds
+and existing state demand before mutation. There is no automatic Simulation, Map
+or arena clone per tic. ActorLife.target is the source owner; the intended victim
+is not persistent. DSIM-v7 composes v5 persistent fields and event tag 15, without
+v6-only player/noise fields or redundant missile state. See the reference and
+schema for precise admission and ownership policies.

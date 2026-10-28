@@ -65,6 +65,11 @@ pub(crate) struct Slot<T> {
     pub entry: Option<Entry<T>>,
 }
 
+pub(crate) struct ThinkerCursor {
+    next: Option<ActorId>,
+    previous: Option<ActorId>,
+    remaining: usize,
+}
 /// Owned generational arena plus a separate safe linked processing order.
 #[derive(Clone, Debug)]
 pub struct ThinkerStore<T> {
@@ -202,6 +207,35 @@ impl<T> ThinkerStore<T> {
         }
         Ok(next)
     }
+    pub(crate) fn cursor(&self, budget: usize) -> ThinkerCursor {
+        ThinkerCursor {
+            next: self.head,
+            previous: None,
+            remaining: budget,
+        }
+    }
+    pub(crate) fn next_visit(
+        &mut self,
+        cursor: &mut ThinkerCursor,
+    ) -> Result<Option<Visit>, StoreError> {
+        if let Some(previous) = cursor.previous.take() {
+            cursor.next = self.entry(previous).ok_or(StoreError::InvalidHandle)?.next;
+        }
+        let Some(id) = cursor.next else {
+            return Ok(None);
+        };
+        if cursor.remaining == 0 {
+            return Err(StoreError::VisitLimit);
+        }
+        cursor.remaining -= 1;
+        if self.entry(id).ok_or(StoreError::InvalidHandle)?.pending {
+            cursor.next = self.retire(id)?;
+            Ok(Some(Visit::Retired(id)))
+        } else {
+            cursor.previous = Some(id);
+            Ok(Some(Visit::Think(id)))
+        }
+    }
     /// Runs append-sensitive traversal with a finite visit budget. Self-removal
     /// and removal of already-visited thinkers take effect on the next traversal.
     /// Context capabilities prevent recursive traversal/clear during callbacks.
@@ -210,32 +244,16 @@ impl<T> ThinkerStore<T> {
         budget: usize,
         mut callback: impl FnMut(Visit, &mut ThinkerContext<'_, T>),
     ) -> Result<(), StoreError> {
-        let mut cursor = self.head;
-        let mut visited = 0;
-        while let Some(id) = cursor {
-            if visited == budget {
-                return Err(StoreError::VisitLimit);
-            }
-            visited += 1;
-            if self.entry(id).ok_or(StoreError::InvalidHandle)?.pending {
-                cursor = self.retire(id)?;
-                callback(
-                    Visit::Retired(id),
-                    &mut ThinkerContext {
-                        store: self,
-                        writable: false,
-                    },
-                );
-            } else {
-                callback(
-                    Visit::Think(id),
-                    &mut ThinkerContext {
-                        store: self,
-                        writable: true,
-                    },
-                );
-                cursor = self.entry(id).ok_or(StoreError::InvalidHandle)?.next;
-            }
+        let mut cursor = self.cursor(budget);
+        while let Some(visit) = self.next_visit(&mut cursor)? {
+            let writable = matches!(visit, Visit::Think(_));
+            callback(
+                visit,
+                &mut ThinkerContext {
+                    store: self,
+                    writable,
+                },
+            );
         }
         Ok(())
     }

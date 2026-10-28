@@ -904,16 +904,15 @@ Linux additionally reproduces all six generators/encoders.
 
 Reviewed final head `0e94091c858624abed3c31ae3eaa3271f504fe47` passed all four
 jobs in [CI 40624283411](https://github.com/Copgunn/DOOM/actions/runs/40624283411).
-The live PR matches that head and base `c924f18424a7a58f892fc8b6a7c2b5011db05c5b`;
+At final review the live PR matched that head and base `c924f18424a7a58f892fc8b6a7c2b5011db05c5b`;
 no intervening changes, reviews or comments were found. Engineering review gave
 a conditional GO with no demonstrated blocker within the declared scope.
 
-The M3d2b mission conditionally authorizes a regular merge of PR #8 after this
-final documentation correction and fresh mandatory local/exact-head CI checks.
-This correction records profile 5/6 in the general schema table and final review
-evidence; runtime, source fixtures and DSIM-v1-v6 expectations are unchanged.
-Fresh correction-head CI must pass before merge, followed by merge-parent/master
-and post-merge CI verification before M3d2b implementation. M3d2b itself must remain
+The M3d2b mission authorized a regular merge of PR #8 after final documentation
+correction and fresh mandatory local/exact-head CI checks. The correction added
+profiles 5/6 to the general schema table without changing runtime or v1-v6
+expectations. Correction-head CI, regular merge and post-merge verification are
+completed and recorded below. M3d2b itself must remain
 open and unmerged for separate owner review.
 
 Known conservative policy: capacity reserves one impact per requested bullet,
@@ -922,5 +921,112 @@ request that would produce fewer effects. The declared 64-slot/single-live-playe
 profile and exact state admission are compatibility bounds, not complete gameplay.
 Historical local M0-M3d1 merged branches and preserved remote milestone references
 are cleanup candidates only; none was deleted. The active M3d2 branch stays intact.
-M3d2 has conditional regular-merge authorization; no M3d2b or later milestone
+M3d2 completed its authorized regular merge; no M3d2b or later milestone
 merge is authorized.
+
+
+## M3d2 completed finalization for M3d2b
+
+Reviewed final `0e94091c858624abed3c31ae3eaa3271f504fe47` received the requested
+documentation-only correction `7007daeb0d986c57d313f48a405992a89dd39f89`, including
+the general profile 5/6 schema table. Local mandatory checks passed again: 123
+workspace/MSRV checks (two private ignored), 99 release tests, build/fmt/Clippy/docs,
+all six source generators/independent encoders and six-example debug/release equality.
+[Fresh CI 40625682243](https://github.com/Copgunn/DOOM/actions/runs/40625682243)
+passed all four jobs on that exact correction before the authorized regular merge.
+
+PR #8 is merged/closed at `955f690d141ccc6a9074a8a8017f78833854af6f`, with parents
+`c924f18424a7a58f892fc8b6a7c2b5011db05c5b` and
+`7007daeb0d986c57d313f48a405992a89dd39f89`; the merge tree equals the correction.
+Remote/local master match. [Post-merge CI 40626027970](https://github.com/Copgunn/DOOM/actions/runs/40626027970)
+passed all four jobs on the exact merge before creating the M3d2b branch. All 165
+original files, history/attribution, public GPL-2.0-only status and asset safeguards
+were verified. No private assets/repositories were accessed; no branches deleted.
+M3d2b has no merge authorization.
+
+## M3d2b local delivery evidence
+
+Branch `feat/m3d2b-projectile-foundations` starts from verified master `955f690`.
+The source/player-damage investigation was committed as `ba0e077` before runtime
+changes. Selected missile: exact original MT_PLASMA (34), flags 67088, source
+launch/autoaim/half-step, missile XY/Z/contact, shared direct damage, complete
+registered explosion/null removal and deferred retirement. Admission/safe bounds
+and unsupported mechanics are specified in [M3D2B_REFERENCE.md](M3D2B_REFERENCE.md).
+
+Local validation observed stable 1.99.1 and Rust 1.85.0:
+
+| Check | Actual result |
+| --- | --- |
+| Build, root/fuzz formatting, Clippy all targets with warnings denied | Passed |
+| Workspace tests including one doctest | 131 passed; two private asset tests ignored |
+| doom-sim/doom-types release | 107 passed |
+| Rust 1.85 workspace | 131 passed; two private asset tests ignored |
+| Rustdoc with warnings denied | Passed |
+| All seven original-C generators and independent encoders, `--check` | Passed |
+| All seven asserted examples, debug/release stdout equality | Passed |
+| All six fuzz targets, nightly ASan build | Passed |
+| Projectile ASan smoke | 2,000 executions, no finding; leak detection disabled |
+
+Original-C evidence: 41 scenarios, 157,872 actor fields, 13,189 ordered semantic
+observations, 1,194 moves, 6,229 candidate callbacks, 16 openings and 549 raw RNG
+draws. Forty API cases compare 155,352/12,991/1,151/6,013/16/542; the synthetic
+same-pass launch adds 2,520/198/43/216/0/7. All actor angles/sprites/frames, owner/
+target identities, constraints, states, flags, health and RNG indexes are checked.
+Actual damage requests compare target, missile inflictor, source and amount.
+C candidate/line/opening order and state/damage/explosion timing are independent
+of Rust. The scheduling wrapper is synthetic; original AI firing is unimplemented.
+
+Independent DSIM-v7 checks: 129 captures, 35 full byte fixtures, including every
+setup, wall/dropoff flight through removal, settled lethal state and slot reuse
+in the second 50-missile batch. Named fields precede full-byte/digest assertions.
+Canonical encoding is project schema evidence, distinct from C equivalence.
+Transient damage bytes are not independently encoded in v7; semantic C tests and
+historical v5 damage tests cover that path. Seven unit/policy tests additionally
+exercise failure atomicity, stale/retired generations, capacity, unsafe setup,
+protected players, exact boundaries, pause and presentation independence.
+
+The asserted `projectiles` example checks clear-wall, portal, dropoff and lethal
+lifecycles. Its independent final digest is `e060071ebbb323f7`. Older six examples,
+all v1-v6 fixtures/schemas/generators/encoders/helpers and all 165 original source
+files remain unchanged. No private assets or private repositories were accessed.
+Public visibility, GPL-2.0-only licensing, external IWAD handling and ignored
+proprietary asset paths remain protected. No branch was deleted.
+
+The ASan campaign used nightly 1.101.0/cargo-fuzz 0.13.2, 18 temporary synthetic
+seeds, 37-byte maximum input and at most 12 API operations. Leak detection was
+explicitly disabled; this is bounded AddressSanitizer smoke evidence, not
+LeakSanitizer coverage or exhaustive fuzzing. No benchmark superiority is claimed.
+
+Implemented head `51080344e5b2688e0ab89984df0114bbc443290e` passed all four jobs
+in [CI 40629886585](https://github.com/Copgunn/DOOM/actions/runs/40629886585):
+stable Linux, Windows, macOS and Rust 1.85. The run metadata matches that exact
+head; Linux also reproduced all seven C generator/encoder pairs. Stable jobs
+passed recorded C/golden comparisons, release tests, seven-example equality and
+warning-free docs. [PR #9](https://github.com/Copgunn/DOOM/pull/9) records the
+reviewed final head `062647ddd4e2e44edeb176cfd3b4e3577481a249`, which passed
+all four jobs in [CI 40630368867](https://github.com/Copgunn/DOOM/actions/runs/40630368867).
+That reviewed commit changed runtime speed/damage lookup to admitted original
+metadata as well as delivery wording; it was not documentation-only.
+At that review PR #9 remained open/unmerged with auto-merge disabled and master
+at the authorized M3d2 merge. The M3d3a mission now authorizes finalization through
+the gates below. M3d3 perception/target acquisition is the recommended
+next bounded milestone. Player health/armor/immunity/attacker/feedback/death and
+weapon-lowering dependencies remain a documented future acceptance plan only.
+
+## M3d2b authorized finalization for M3d3a
+
+The M3d3a mission reviewed PR #9 at
+`062647ddd4e2e44edeb176cfd3b4e3577481a249`, base
+`955f690d141ccc6a9074a8a8017f78833854af6f`. Live PR/local/remote refs match;
+no intervening commits, reviews, threads or comments were found. Reviewed
+[CI 40630368867](https://github.com/Copgunn/DOOM/actions/runs/40630368867)
+passed Linux, Windows, macOS and Rust 1.85 on that exact head. Engineering review
+found no demonstrated blocking defect within the declared projectile slice.
+
+The owner authorizes a regular merge only after this validation-record correction
+passes fresh local mandatory checks and exact-head CI. The reviewed runtime change
+reads speed/damage from admitted metadata; this new correction changes prose only.
+All v1-v7 canonical bytes, reference fixtures, generators and helpers are preserved.
+Merge-parent/master and exact post-merge CI verification must precede M3d3a runtime
+work. No squash, force push, history rewrite, auto-merge or branch deletion is
+authorized. M3d3a itself must remain open and unmerged for separate owner review.

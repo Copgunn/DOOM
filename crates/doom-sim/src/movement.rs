@@ -178,10 +178,6 @@ pub(crate) fn check_things(
     spatial: &SpatialIndex,
     get: &impl Fn(ActorId) -> Option<Actor>,
 ) -> ActorMoveAttempt {
-    let margin = actor.spec.radius + Fixed::from_map_units(32);
-    let [xl, yl] = cell(world, [target[0] - margin, target[1] - margin]);
-    let [xh, yh] = cell(world, [target[0] + margin, target[1] + margin]);
-    let [w, h] = world.map().blockmap().dimensions().map(i32::from);
     let mut result = ActorMoveAttempt {
         target,
         lines: Collision {
@@ -192,38 +188,65 @@ pub(crate) fn check_things(
         actors: Vec::new(),
         blocked_by_actor: None,
     };
+    for_things(
+        world,
+        id,
+        actor,
+        target,
+        spatial,
+        get,
+        |candidate, other| {
+            result.actors.push(candidate);
+            if other.solidity == Solidity::NonSolid || candidate == id {
+                return true;
+            }
+            let distance =
+                i64::from(actor.spec.radius.bits()) + i64::from(other.spec.radius.bits());
+            if (i64::from(other.spec.position[0].bits()) - i64::from(target[0].bits())).abs()
+                < distance
+                && (i64::from(other.spec.position[1].bits()) - i64::from(target[1].bits())).abs()
+                    < distance
+            {
+                result.blocked_by_actor = Some(candidate);
+                return false;
+            }
+            true
+        },
+    );
+    result
+}
+pub(crate) fn for_things(
+    world: &StaticWorld,
+    id: ActorId,
+    actor: &Actor,
+    target: [Fixed; 2],
+    spatial: &SpatialIndex,
+    get: &impl Fn(ActorId) -> Option<Actor>,
+    mut visit: impl FnMut(ActorId, Actor) -> bool,
+) {
+    let margin = actor.spec.radius + Fixed::from_map_units(32);
+    let [xl, yl] = cell(world, [target[0] - margin, target[1] - margin]);
+    let [xh, yh] = cell(world, [target[0] + margin, target[1] + margin]);
+    let [w, h] = world.map().blockmap().dimensions().map(i32::from);
     for x in xl.max(0)..=xh.min(w - 1) {
         for y in yl.max(0)..=yh.min(h - 1) {
             for candidate in &spatial.order {
                 let other = if *candidate == id {
                     *actor
                 } else {
-                    get(*candidate).expect("spatial entries own valid live handles")
+                    get(*candidate).expect("valid spatial handle")
                 };
                 if !crate::lifecycle::blocks_cell_index(&other)
                     || cell(world, other.spec.position) != [x, y]
                 {
                     continue;
                 }
-                result.actors.push(*candidate);
-                if other.solidity == Solidity::NonSolid || *candidate == id {
-                    continue;
-                }
-                let distance =
-                    i64::from(actor.spec.radius.bits()) + i64::from(other.spec.radius.bits());
-                if (i64::from(other.spec.position[0].bits()) - i64::from(target[0].bits())).abs()
-                    < distance
-                    && (i64::from(other.spec.position[1].bits()) - i64::from(target[1].bits()))
-                        .abs()
-                        < distance
-                {
-                    result.blocked_by_actor = Some(*candidate);
-                    return result;
+                if !visit(*candidate, other) {
+                    return;
                 }
             }
         }
     }
-    result
 }
 
 #[derive(Clone, Copy)]

@@ -443,3 +443,38 @@ results; per-tic C comparisons cover transient firing states separately. Eleven
 additional unit/policy tests and fuzzing are project consistency evidence.
 No complete players, multiplayer gameplay, inventory/powers, chainsaw/supershotgun,
 projectiles, demos, authentic IWAD or full vanilla/DOS synchronization is claimed.
+
+## M3d2b projectile profile (DSIM-v7)
+
+Only original MT_PLASMA (34) executes as a missile: flags 67088, speed 25, radius
+13, height 8, damage multiplier 5, states 107/108 then explosion 109..113/null.
+Recognizing other source metadata does not admit other missiles. Explicit launch
+selects P_SpawnMissile or P_SpawnPlayerMissile semantics; no firing action, ammo
+consumption or actual player initialization/damage is added. Unbound MT_PLAYER
+objects and labelled player-state fixtures 15/17/136 isolate damage/species rules;
+the latter do not establish baron/knight/monster gameplay.
+
+41 original-body C scenarios compare 157,872 actor fields, 13,189 ordered
+observations, 1,194 movement attempts, 6,229 candidate visits, 16 openings and
+549 RNG draws. This includes a synthetic launch wrapper inside original
+P_RunThinkers. Original spawn/physics/state/damage bodies execute; the wrapper
+is scheduling evidence, not original AI. Independent v7 encoding covers 129
+captures/35 byte streams, including full wall/dropoff lifecycles, lethal settled
+state and second-batch slot generations. Project-only policy tests cover errors,
+unsafe setup, protected players, presentation independence and boundary predicates.
+
+Live missiles require an active, generation-valid owner. Pending/retired owners
+reject a step before mutation; callers may remove the missile first. Explosion
+frames retain the original owner identity without dereferencing it. Intended aim
+targets are not retained as tracers. Source half-step-before-relink, positive-only
+subdivision, residual XY after explosion, strict XY/vertical-touch distinctions,
+no missile friction and source supplied BLOCKMAP lists are preserved. Missing
+line coverage is diagnostic; the omission fixture deliberately retains the
+required zero word and omits other lines.
+
+Exact arithmetic/setup/admission bounds are in [M3D2B_REFERENCE.md](M3D2B_REFERENCE.md).
+Outside them, rejection is an explicit safe departure, not emulation of C overflow
+or dangling pointers. All sky/special maps remain rejected. There is no splash,
+rocket/BFG/other fireball, monster perception/attacks, inventory, armor/player
+damage, demos, real-IWAD/full vanilla or DOS synchronization claim. Earlier
+profiles/schemas/fixtures and their behavioral contracts remain unchanged.

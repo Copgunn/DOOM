@@ -1,6 +1,6 @@
-# Canonical simulation state, DSIM versions 1 through 6
+# Canonical simulation state, DSIM versions 1 through 7
 
-This is a diagnostic/replay comparison format for explicit M2 through M3d2 profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3d2b profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -21,7 +21,7 @@ Runtime fields precede static map fields. Runtime order:
 | Field/group | Value encoding |
 | --- | --- |
 | `tic` | u64 completed logical tics |
-| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), or 6 (M3d2 player weapons/psprites); profile-specific additions are specified below |
+| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), 6 (M3d2 player weapons/psprites), or 7 (M3d2b projectiles); profile-specific additions are specified below |
 | `paused` | u8 boolean |
 | `rng.gameplay`, `rng.miscellaneous` | u8 indexes, in that order |
 | `store.max_slots`, `store.slot_count` | u32 capacity policy; u64 logical allocated slot count |
@@ -339,3 +339,42 @@ Single-burst captures avoid slot reuse assumptions; the per-tic C test separatel
 checks reused identities and transient firing fields/order. 69 captures and 24 byte
 fixtures have independent input/encoder/output hashes and first-field diagnostics.
 Hashes remain noncryptographic schema evidence, not full gameplay synchronization.
+
+## DSIM-v7 — Projectile Foundations
+
+Profile/version 7 explicitly selects `Simulation::projectiles` or
+`with_projectile_registry`. It composes **v5** field order: typed actor fields,
+threshold, XYZ/momentum, generation/link/membership, sector geometry and immutable
+registry already represent every persistent plasma property. `ActorLife.target`
+is the source owner. Intended launch victim/aim is transient; no tracer or runtime
+damage multiplier is introduced. Registry type 34 contains immutable damage/speed
+and state definitions; flags/state/tics encode flight versus explosion.
+
+V6-only `sector.N.soundtarget` and `weapons.player` fields are absent in v7. V6 is
+a separate player-weapon profile, not a required schema prefix. No implicit profile
+conversion or savegame migration exists. Versions 1..6 retain their exact old
+fields/bytes/helpers. First comparison across versions reports `schema.version`.
+
+Shared state, combat, sector-movement and Z events retain tags 12, 13, 10 and 11.
+New event tag **15** is followed by one u8 discriminator:
+
+| Discriminator | Payload in order |
+| --- | --- |
+| 0 explosion starts | 12-byte missile identity, before momentum/state changes |
+| 1 launch velocity | missile identity; u32 BAM angle; three i32 raw momenta XYZ |
+| 2 projectile RNG | u8 kind (0 spawn tics, 1/2 shadow left/right, 3 contact damage, 4 explosion timer); u8 result |
+| 4 initial half-step | missile identity; three i32 raw XYZ; i32 randomized spawn tics |
+| 5 launch request | source identity; u8 aim mode (0 actor, 1 autoaim); destination identity only for mode 0; u16 projectile type |
+
+Discriminator 3 is unused/reserved and is never emitted. Launch state is queued
+between tics; successful effects retain source order. Damage precedes movement
+result/explosion; in-thinker explosion precedes the same actor's state countdown.
+Actor and candidate references retain their original generation after retirement.
+
+`m3d2b_snapshot_goldens.py` independently encodes 129 C/setup-derived captures
+and stores 35 full streams. It covers all 41 setups, complete wall/dropoff
+flight/explosion/removal, settled lethal state and both RNG-wrap batches with
+slot reuse. No Rust output is read. Transient damage fields/order are tested
+against C separately; canonical bytes are project schema evidence, not DOOM
+savegames or full synchronization. Rust checks named fields before full bytes
+and digest, preserving first-field divergence diagnostics.

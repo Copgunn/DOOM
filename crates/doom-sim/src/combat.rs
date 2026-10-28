@@ -218,7 +218,11 @@ impl Simulation {
     }
     pub(crate) fn validate_combat_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
         let registry = self.registry.as_deref().ok_or(CombatError::Profile)?;
-        registry.validate_type_combat(ty, &self.sectors)?;
+        if self.profile == Profile::Projectiles {
+            self.validate_projectile_type(ty)?;
+        } else {
+            registry.validate_type_combat(ty, &self.sectors)?;
+        }
         let info = registry.actor_type(ty).ok_or(ActorError::InvalidType)?;
         if self.profile == Profile::PlayerWeapons {
             self.validate_weapon_type(ty)?;
@@ -245,7 +249,10 @@ impl Simulation {
         self.combat_actor_with(id, None)
     }
     fn combat_actor_with(&self, id: ActorId, shooter: Option<ActorId>) -> Result<Actor, SimError> {
-        if !matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
+        if !matches!(
+            self.profile,
+            Profile::Combat | Profile::PlayerWeapons | Profile::Projectiles
+        ) {
             return Err(CombatError::Profile.into());
         }
         if self.actors.is_pending(id) != Some(false) {

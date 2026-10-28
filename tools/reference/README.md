@@ -148,3 +148,36 @@ The v6 encoder reads only C/setup/schema data: 69 captures and 24 byte fixtures.
 See [M3D2_REFERENCE.md](../../docs/M3D2_REFERENCE.md) for exact functions, adapters,
 ABI/undefined-C exclusions, supported source paths and generation mapping.
 `check_headless.py` compares all six asserted examples in debug/release on each OS.
+
+## M3d2b
+
+```sh
+python3 tools/reference/generate_m3d2b.py --check
+python3 tools/reference/m3d2b_snapshot_goldens.py --check
+python3 tools/reference/check_projectiles.py
+```
+
+The new shim compiles original plasma spawn/check/explode, XY/Z, collision,
+damage, state/thinker and RNG bodies plus real source metadata/headers. Its 41
+synthetic scenarios compare 157,872 actor fields, 13,189 ordered observations,
+1,194 moves, 6,229 candidates, 16 openings and 549 raw RNG draws. One scenario
+uses a visibly synthetic wrapper to launch during an original thinker pass;
+it does not establish monster AI. The omitted-coverage map retains the required
+BLOCKMAP zero word and omits other walls. All unsupported paths abort rather
+than silently returning a successful no-op.
+
+The trace distinguishes A actor captures, E source lifecycle/raw RNG, P projectile
+observations, D damage requests, C candidates, O openings, M move results, Z
+vertical results and L source relinks. Original allocation ordinals are mapped
+to generation-aware Rust handles; two 50-missile batches exercise reuse and wrap.
+`m3d2b_provenance.json` pins source including p_enemy actions, every original
+header, adapters, compiler/ABI, inputs and outputs. See
+[M3D2B_REFERENCE.md](../../docs/M3D2B_REFERENCE.md) for complete source/admission/
+undefined-C policies and actual-player-damage dependencies.
+
+The independent v7 encoder reads C rows/public inputs/schema only, producing 129
+captures and 35 full streams. It covers all setups, full wall/dropoff lifecycles,
+settled lethal state and both batches' generations. It does not encode transient
+damage event bytes; those semantic results have separate C comparisons. No Rust
+output or private asset is read. The new seventh-example equality helper leaves
+all historical generators/encoders/helpers unchanged.

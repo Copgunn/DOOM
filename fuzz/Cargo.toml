@@ -55,3 +55,10 @@ path = "fuzz_targets/player_weapons.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "projectiles"
+path = "fuzz_targets/projectiles.rs"
+test = false
+doc = false
+bench = false
