@@ -59,7 +59,7 @@ impl Simulation {
             .as_deref()
             .ok_or(ActorError::UnsupportedMode.into())
     }
-    fn active_typed(&self, id: ActorId) -> Result<ActorLife, SimError> {
+    pub(crate) fn active_typed(&self, id: ActorId) -> Result<ActorLife, SimError> {
         self.registry_required()?;
         if self.actors.is_pending(id) != Some(false) {
             return Err(StoreError::InvalidHandle.into());
@@ -68,7 +68,7 @@ impl Simulation {
             .and_then(Actor::life)
             .ok_or(ActorError::InvalidType.into())
     }
-    fn reserve_actor_spawns(&mut self, count: usize) -> Result<(), SimError> {
+    pub(crate) fn reserve_actor_spawns(&mut self, count: usize) -> Result<(), SimError> {
         self.actors.reserve_spawns(count)?;
         self.spatial
             .order
@@ -84,7 +84,11 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
-        self.registry_required()?.validate_type(ty, &self.sectors)?;
+        if self.profile == Profile::Combat {
+            self.validate_combat_type(ty)?;
+        } else {
+            self.registry_required()?.validate_type(ty, &self.sectors)?;
+        }
         self.reserve_actor_spawns(1)?;
         Ok(LifeHost {
             access: &mut self.actors,
@@ -99,15 +103,19 @@ impl Simulation {
         }
         .spawn(ty, position, height))
     }
-    fn validate_entry(&self, state: StateId) -> Result<(), SimError> {
+    pub(crate) fn validate_entry(&self, state: StateId) -> Result<(), SimError> {
         let registry = self.registry_required()?;
         registry.validate_state(state)?;
         for ty in registry.spawn_dependencies(state)? {
-            registry.validate_type(ty, &self.sectors)?;
+            if self.profile == Profile::Combat {
+                registry.validate_type_combat(ty, &self.sectors)?;
+            } else {
+                registry.validate_type(ty, &self.sectors)?;
+            }
         }
         Ok(())
     }
-    fn enter_validated(&mut self, id: ActorId, state: StateId) {
+    pub(crate) fn enter_validated(&mut self, id: ActorId, state: StateId) {
         LifeHost {
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),
@@ -244,7 +252,14 @@ impl Simulation {
                 report.filtered += 1;
                 continue;
             }
-            registry.validate_type(ty, &self.sectors)?;
+            if self.profile == Profile::Combat {
+                registry.validate_type_combat(ty, &self.sectors)?;
+            } else {
+                registry.validate_type(ty, &self.sectors)?;
+            }
+            if self.profile == Profile::Combat {
+                self.validate_combat_type(ty)?;
+            }
             selected.push((*thing, ty));
         }
         self.reserve_actor_spawns(selected.len())?;

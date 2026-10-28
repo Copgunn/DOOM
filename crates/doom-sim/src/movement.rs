@@ -365,7 +365,7 @@ fn slope_div(num: u32, den: u32) -> usize {
     }
     ((num.wrapping_shl(3) / (den >> 8)).min(2048)) as usize
 }
-fn point_angle(delta: [Fixed; 2]) -> u32 {
+pub(crate) fn point_angle(delta: [Fixed; 2]) -> u32 {
     let [x, y] = delta.map(Fixed::bits);
     if x == 0 && y == 0 {
         return 0;
@@ -649,6 +649,24 @@ fn move_xy_profile(
     }
     if mover.profile.sectors.is_some() && mover.actor.z > mover.actor.floor {
         return mover.events;
+    }
+    if mover
+        .actor
+        .life
+        .is_some_and(|life| life.flags & 1048576 != 0)
+        && mover
+            .actor
+            .spec
+            .momentum
+            .iter()
+            .any(|m| m.bits() > 16384 || m.bits() < -16384)
+    {
+        if let Some(sectors) = mover.profile.sectors {
+            if mover.actor.floor != sectors[usize::from(mover.actor.location.unwrap().sector)].floor
+            {
+                return mover.events;
+            }
+        }
     }
     if mover
         .actor
