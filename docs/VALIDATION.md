@@ -661,7 +661,8 @@ All stable dependencies remain local; no renderer/audio/platform or scripting
 dependency was introduced. Full player initialization/view/animation, combat/AI,
 weapons/projectiles/pickups/resurrection/respawn, moving sectors/specials, scripts,
 demos, rendering and authentic IWAD/DOS/full-vanilla validation remain unsupported.
-Private assets were neither provisioned nor accessed. M3c is not merged.
+Private assets were neither provisioned nor accessed. M3c was delivered for owner
+review; subsequent merge authorization is recorded below.
 
 ## M3c observed remote validation and final-head gate
 
@@ -680,7 +681,7 @@ This final documentation-only commit records the PR and observed CI evidence.
 Runtime, reference vectors/goldens, tests and workflow are unchanged. Fresh CI on
 the exact resulting head must pass before review readiness; the verified final
 SHA/run are recorded on PR #6 and in the owner delivery report. PR #6 remains
-open/unmerged; neither M3c nor any sub-PR merge is authorized. Public visibility,
+open/unmerged at delivery; subsequent conditional owner authorization is below. Public visibility,
 GPL-2.0-only licensing, all 165 originals and all previous fixtures were rechecked.
 Merged M0–M3b feature branches are cleanup candidates after preserving immutable
 historical references; no branches have been deleted.
@@ -694,3 +695,20 @@ origins use the same ID helper). The existing placement regression now covers
 renaming/reflagging that source ID without consuming RNG. Source fixtures and
 all counts remain unchanged. Required local checks passed again for this correction;
 fresh exact-head CI is verified before readiness, with its SHA/run recorded on PR #6.
+
+
+## M3c reviewed final head and conditional finalization
+
+The owner reviewed exact head `fdeb900aa496ad593a325aebaf9cb733ef37b89d` and
+[successful CI run 40610005879](https://github.com/Copgunn/DOOM/actions/runs/40610005879).
+All four jobs passed: Linux, Windows and macOS stable plus Rust 1.85.0. The
+reviewed head and live PR #6 head matched without intervening changes. No blocking
+defect was reported within the declared M3c scope.
+
+The M3d1 mission conditionally authorizes a regular merge of PR #6 after final
+documentation corrections and fresh required checks. This correction records the
+reviewed SHA/run directly and updates provisional delivery wording; runtime,
+DSIM-v1/v2/v3/v4 fixtures and reference comparisons remain unchanged. Fresh
+correction-head CI must pass before merging, followed by merge-parent/master and
+post-merge CI verification before M3d1 development begins. M3d1 remains subject to
+its own owner-review gate and must not be merged without separate authorization.

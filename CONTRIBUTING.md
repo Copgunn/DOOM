@@ -105,4 +105,6 @@ v1/v2/v3 fixtures. Record recognized metadata, admitted types, source actions an
 synthetic probe capabilities separately. State entry is not damage processing;
 map player starts do not imply complete player initialization. See
 [the investigation](docs/M3C_REFERENCE.md) and [schema](docs/STATE_FORMAT.md).
-M3c remains unmerged until separate owner authorization, including any sub-PRs.
+M3c received conditional regular-merge authorization in the M3d1 mission, subject
+to final corrections and fresh CI. Each M3d subphase still needs separate owner
+review and merge authorization.

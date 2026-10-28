@@ -19,7 +19,9 @@ collision, merged in [PR #4](https://github.com/Copgunn/DOOM/pull/4) as `764dd96
 M3b implements and validates static multi-sector movement and vertical physics
 in [PR #5](https://github.com/Copgunn/DOOM/pull/5), merged as `c791ef8` after
 owner-authorized correction-head and post-merge CI. M3c adds typed actor states,
-spawning and controlled death on its review branch in [PR #6](https://github.com/Copgunn/DOOM/pull/6); it remains unmerged.
+spawning and controlled death in [PR #6](https://github.com/Copgunn/DOOM/pull/6),
+reviewed and conditionally authorized for regular merge after final corrections
+and fresh CI. M3d1 damage/hitscan foundations are the next implementation phase.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 
@@ -298,7 +300,7 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M2 | Fixed arithmetic, RNG, ordered thinkers, narrow movement, snapshots | Implemented, validated, merged |
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static sectors/BSP, openings, step/dropoff and XY/Z/gravity | Implemented, validated, merged |
-| M3c | Actor states, spawning and controlled death | Implemented on review branch; unmerged |
+| M3c | Actor states, spawning and controlled death | Implemented/validated; conditional regular merge authorized |
 | M3d–M3e | Combat, interactions and moving sector specials | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |

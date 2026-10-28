@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented on its review branch**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented/validated and conditionally accepted for regular merge**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -109,7 +109,7 @@ M3 as a whole remains incomplete.
 | --- | --- | --- |
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented, validated and merged |
-| M3c | Actor states, type-driven spawning and death | Implemented on review branch; unmerged |
+| M3c | Actor states, type-driven spawning and death | Implemented/validated; conditional regular merge authorized |
 | M3d | Weapons, projectiles, damage, monsters and combat | Planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
 
@@ -171,7 +171,9 @@ complete player view/thinking, combat, enhanced portals, demos or rendering.
 Branch: `feat/m3c-actor-states-spawning`, [PR #6](https://github.com/Copgunn/DOOM/pull/6),
 based on verified M3b merge `c791ef8`.
 Implemented scope is recorded below; final delivery SHA/CI and PR are in
-[validation evidence](VALIDATION.md). No M3c merge is authorized.
+[validation evidence](VALIDATION.md). The owner reviewed `fdeb900` and conditionally
+authorized a regular merge after final documentation corrections and fresh CI.
+M3d1 requires its own owner-review and merge authorization.
 
 - [x] Original source findings recorded before runtime implementation.
 - [x] All 137 types/967 states/74 action identities; validated executable subset.
@@ -185,7 +187,8 @@ Implemented scope is recorded below; final delivery SHA/CI and PR are in
 - [x] DSIM-v4, 99 independent digests and 24 full byte states; older formats preserved.
 - [x] Asserted asset-free headless example; native probes clearly separated from vanilla.
 - [x] Local, sanitizer, MSRV and cross-platform CI evidence; final-head CI recorded on PR #6.
-- [x] Open, unmerged review PR; readiness gated on final-head CI.
+- [x] Owner engineering review and conditional regular-merge authorization.
+- [ ] Fresh correction-head CI, regular merge and verified post-merge baseline.
 
 M3d is weapons/projectiles/damage/monster combat. M3e is moving sectors, doors,
 lifts, switches and map specials. Full player thinking, scripts, demos and rendering
