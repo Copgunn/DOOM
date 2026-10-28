@@ -609,3 +609,36 @@ see source notes/provenance for ABI assumptions and excluded branches. Independe
 v10 bytes and seven Rust safety tests are separate evidence. Full original
 monsters, other attacks/melee damage, floating/doors/specials, actual players,
 commercial-map validation and DOS/Linux demos remain unimplemented/unverified.
+
+## M3d3d shotgunner profile (DSIM-v11)
+
+The admitted native136 fixture copies SPOS attack states with sprite 30, frames
+4/32773/4 and 10/10/10 tics, returning to labelled supported Chase. It preserves
+A_Look/A_Chase selection and both A_FaceTarget calls. A_SPosAttack returns on null,
+otherwise sounds sfx_shotgn BEFORE internal facing, saves the base angle, aims
+once at 2048 and performs three sequential original LineAttacks. Each pellet draws
+spread left/right then ((R%5)+1)*3 damage, completes real impact/damage RNG and
+state changes before the next pellet. No noise-alert/ammo/psprite behavior is added.
+
+Earlier damage can remove shootability, quarter height, change momentum/health/
+pain/death/reaction/threshold/target, and redirect later hits to another actor or
+wall. Later aim is not recomputed. Shared trace/damage services consume updated
+projected body state; exact NOBLOCKMAP blood/puff do not alter later collection.
+Real effects are appended in pellet order and processed through existing thinker
+traversal, with normal deferred retirement and generation reuse.
+
+Rust policies retain one unshootable first floor-owner with zero physical
+momentum, unbound dummy135 source-body targets and exact impact definitions.
+Full source type 2, player pointers/damage, PosAttack in 11, unrelated callbacks,
+drops/scoring, floating/specials/doors, multiplayer, demos and rendering remain
+excluded. A non-null blast requires three available slots before mutation even
+on an eventual miss; no pending-removal credit. Null returns require none. This
+conservative capacity policy is not source allocator equivalence. Existing map/
+query/work/intercept/actor and 1008/978/994/1018 movement/impact bounds stay fixed.
+
+105 executed C scenarios exercise all 18 supplied maps, including source-attainable
+spread extremes, BAM wrap, shared aim, true misses, multiple targets, pain and
+kill on pellet 1/2, ordinary/extreme death and fall-forward RNG. Compiled original
+body inventory65 is not a claim that every branch of those bodies executes.
+Independent v11 bytes and nine Rust safety tests are distinct evidence. V1-v10
+expected bytes and accepted one-bullet PosAttack behavior remain unchanged.

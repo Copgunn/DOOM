@@ -103,7 +103,7 @@ impl Simulation {
         } else {
             self.registry_required()?.validate_type(ty, &self.sectors)?;
         }
-        if self.profile == Profile::MonsterAttacks {
+        if self.profile.uses_monsters() {
             self.preflight_monster_spawn(ty, position, height)?;
         }
         self.reserve_actor_spawns(1)?;
@@ -123,7 +123,9 @@ impl Simulation {
     }
     pub(crate) fn validate_entry(&self, state: StateId) -> Result<(), SimError> {
         let registry = self.registry_required()?;
-        if self.profile == Profile::MonsterAttacks {
+        if self.profile == Profile::Shotgunner {
+            registry.validate_state_shotgunner(state)?;
+        } else if self.profile.uses_monsters() {
             registry.validate_state_monsters(state)?;
         } else if self.profile == Profile::Pursuit {
             registry.validate_state_pursuit(state)?;
@@ -154,10 +156,21 @@ impl Simulation {
         state: StateId,
         shot: Option<&crate::monsters::MonsterShotPlan>,
     ) {
+        self.enter_attack_planned(id, state, shot, None);
+    }
+    pub(crate) fn enter_attack_planned(
+        &mut self,
+        id: ActorId,
+        state: StateId,
+        shot: Option<&crate::monsters::MonsterShotPlan>,
+        shotgun: Option<&crate::shotgunner::ShotgunPlan>,
+    ) {
         let perception =
             (self.profile.uses_perception()).then_some(crate::perception::PerceptionInputs {
-                pursuit: matches!(self.profile, Profile::Pursuit | Profile::MonsterAttacks),
-                monsters: self.profile == Profile::MonsterAttacks,
+                pursuit: (self.profile == Profile::Pursuit || self.profile.uses_monsters()),
+                monsters: self.profile.uses_monsters(),
+                shotgunner: self.profile == Profile::Shotgunner,
+                shotgun,
                 shot,
                 players: &self.perception_players,
                 sound_targets: &self.sound_targets,
@@ -181,7 +194,10 @@ impl Simulation {
     pub fn enter_actor_state(&mut self, id: ActorId, state: StateId) -> Result<(), SimError> {
         let life = self.active_typed(id)?;
         self.projectile_control(id)?;
-        if self.profile == Profile::MonsterAttacks {
+        if self.profile == Profile::Shotgunner {
+            return self.enter_shotgun_state(id, state);
+        }
+        if self.profile.uses_monsters() {
             return self.enter_monster_state(id, state);
         }
         if self.profile == Profile::Pursuit {
@@ -235,7 +251,7 @@ impl Simulation {
     ) -> Result<(), SimError> {
         self.active_typed(id)?;
         self.projectile_control(id)?;
-        if matches!(self.profile, Profile::Pursuit | Profile::MonsterAttacks) {
+        if self.profile == Profile::Pursuit || self.profile.uses_monsters() {
             if let Some(t) = target {
                 self.validate_perception_reference(t)?;
             }

@@ -252,8 +252,8 @@ missile checks, FaceTarget and PosAttack to the earlier sight/Chase/trace/damage
 state/thinker closure. Original structs, info, tables and fixed helpers are used;
 source/header/function/adapter/input/output hashes and GNU C flags/ABI are recorded.
 Ordered multiplication defines historical signed shadow/spread/jitter shifts;
-unsupported services abort only outside the admitted scenarios.158 cases on 18
-public synthetic maps isolate named source-player-body fixture roles and source
+unsupported services abort only outside the admitted scenarios.158 cases use
+four maps from 18 supplied public synthetic fixtures and isolate named source-player-body fixture roles and source
 type probability branches without admitting complete original monsters.
 
 The independent v10 encoder reads C rows and public schema/inputs only. It covers
@@ -265,3 +265,29 @@ helpers. Historical v1-v9 reference code and fixtures remain byte-identical;
 this README is the sole intentionally updated historical reference path.
 See [M3D3C_REFERENCE](../../docs/M3D3C_REFERENCE.md) and
 [VALIDATION](../../docs/VALIDATION.md) for exact scope and observed gates.
+
+## M3d3d
+
+```sh
+python3 tools/reference/generate_m3d3d.py --check
+python3 tools/reference/m3d3d_snapshot_goldens.py --check
+python3 tools/reference/check_shotgunner_attacks.py
+```
+
+The new generator/shim compiles 65 genuine original bodies including SPosAttack
+with original structs/info/tables/fixed helpers. It preserves actual three-pellet
+source control flow, interleaved impact/damage and both facing calls; explicit
+ordered multiplication defines historical spread/shadow/jitter intent. Compiler,
+GNU C flags/ABI and source/header/function/adapter/input/output hashes are recorded.
+105 executed scenarios exercise all 18 supplied maps. Body inventory is distinct
+from branch coverage; unsupported services abort only outside admitted paths.
+
+The independent v11 encoder consumes C rows/public schema/inputs only, with
+separate trace scopes per pellet, exact RNG boundaries and real generation reuse.
+It produces 949 captures/92 full streams; 147,940 actor fields and 34,350 ordered C
+observations are checked. The eleventh asserted example and tenth fuzz target
+preserve every earlier helper. All v1-v10 reference code/fixtures/encoders remain
+byte-identical; only this historical README's prose changes. C equivalence,
+independent project bytes and nine Rust policy tests are separate evidence.
+See [M3D3D_REFERENCE](../../docs/M3D3D_REFERENCE.md) and
+[VALIDATION](../../docs/VALIDATION.md) for the ownership proof and observed gates.

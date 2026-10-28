@@ -1,6 +1,6 @@
-# Canonical simulation state, DSIM versions 1 through 10
+# Canonical simulation state, DSIM versions 1 through 11
 
-This is a diagnostic/replay comparison format for explicit M2 through M3d3c profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3d3d profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -21,7 +21,7 @@ Runtime fields precede static map fields. Runtime order:
 | Field/group | Value encoding |
 | --- | --- |
 | `tic` | u64 completed logical tics |
-| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), 6 (M3d2 player weapons/psprites), 7 (M3d2b projectiles), 8 (M3d3a perception), 9 (M3d3b pursuit), or 10 (M3d3c bounded attacks); profile-specific additions are specified below |
+| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), 6 (M3d2 player weapons/psprites), 7 (M3d2b projectiles), 8 (M3d3a perception), 9 (M3d3b pursuit), 10 (M3d3c bounded attacks), or 11 (M3d3d shotgunner attacks); profile-specific additions are specified below |
 | `paused` | u8 boolean |
 | `rng.gameplay`, `rng.miscellaneous` | u8 indexes, in that order |
 | `store.max_slots`, `store.slot_count` | u32 capacity policy; u64 logical allocated slot count |
@@ -543,3 +543,44 @@ generation, retaining old references after retirement, and reproduces full event
 and canonical link order.1290 captures and 72 full streams include retirement and
 reuse; first differing named field precedes full bytes/digest checks. DSIM remains
 a project diagnostic format, not a vanilla demo, savegame or network protocol.
+
+## DSIM-v11 — Shotgunner Multi-Pellet Attack Foundations
+
+Version/profile 11 composes the accepted v10 actor, health/state/frame/timer/flags,
+target/generation, reaction/threshold/movedir/movecount, geometry, thinker/spatial/
+sector links, sound targets and four-slot perception roster. Exact labelled SPOS
+registry adaptations replace the fixture animation in this separate profile.
+No weapon-player record or persistent pellet/cache/plan is added. V1-v10 fields,
+expected bytes and helper schemas remain unchanged; a higher profile number does
+not grant all previous gameplay capabilities.
+
+Existing tags 10/11/12/13/14/16/17/18 keep their layouts. Source body state/action,
+shotgun sound, facing/shared aim/RNG and real combat/effect events retain their
+existing chronological forms. New tag 19 is u8 variant, 12-byte actor identity
+(u32 slot,u64 generation), then:
+
+| Variant | Remaining payload |
+| --- | --- |
+|0 Begin |None; emitted only after the source non-null check, before sound |
+|1 PelletStart |u8 source ordinal 1..3, before its three attack RNG draws |
+|2 Pellet |u8 ordinal,u32 BAM angle,i32 shared slope,i32 independent damage |
+|3 PelletDone |u8 ordinal,u8 gameplay RNG index,13-byte optional real effect ID |
+|4 Completed |u8 final gameplay RNG index |
+
+Optional IDs retain presence+u32 slot+u64 generation, zeros when absent. All
+integers are explicitly little-endian. A true miss has no effect; null emits no
+shotgun event (the existing action-entry observation still records invocation).
+
+Each pellet's tag 18 spread/damage draws precede its tag 19 parameters and existing
+tag 13 Attack/Trace/impact/damage. PelletDone follows all those effects and records
+the exact source RNG index before the next PelletStart. Shared aim appears once
+before the loop. Earlier standalone FaceTarget and internal facing remain separate
+observations; internal facing does not invent an extra state-action entry.
+
+The independent Python encoder reads C/public inputs and documented schema only.
+Aim and each of three line traces have distinct scopes, including identical miss
+results, so candidates/intercepts cannot accidentally be mixed across pellets.
+C birth ordinals map to lowest-free slots/current generations; full thinker and
+spatial order, effects, retirements and old identities are encoded. 949 captures
+and 92 full streams are compared with first-field diagnostics and byte/digest
+checks. DSIM is a project diagnostic, not a DOOM savegame/demo/network protocol.

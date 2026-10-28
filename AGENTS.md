@@ -97,16 +97,15 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   user thinker budgets have a separate documented nontransactional contract.
 - Actor identity, thinker order and spatial order are separate. Never sort handles
   to choose blockers; successful same-cell moves reinsert at spatial cell head.
-- Run all ten reference generators and independent golden encoders on Linux;
+- Run all eleven reference generators and independent golden encoders on Linux;
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
 - M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
   correction-head and post-merge CI. M3d1 was regularly merged as c924f18 after fresh correction-head and
   post-merge CI in the M3d2 mission. M3d2 was regularly merged as 955f690 after final corrections and fresh/post-merge CI. M3d2b was regularly merged as e109ee1 after final correction and fresh/post-merge
   CI in the M3d3a mission. M3d3a completed its regular merge as 839fbab after fresh/post-merge CI;
   M3d3b regularly merged as 0007af1 and documentation PR #12 separately as
-  876662d after exact-head and post-merge CI. The M3d3d mission conditionally
-  authorizes PR #13’s regular merge after corrections/fresh checks; later merges
-  require separate approval.
+  876662d after exact-head and post-merge CI. M3d3c regularly merged as 9b8fde8
+  after its correction/fresh/post-merge gates; later merges require separate approval.
 
 - M3b consumes supplied BLOCKMAP lists without rebuilding them; conservative
   omissions are diagnostic, not proof of spatial correctness. Keep older profiles
@@ -223,6 +222,30 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   without new proof. Preserve canonical state on every recoverable error.
 - Reproduce all ten C/encoder pairs, ten asserted examples, nine fuzz builds and
   bounded attack ASan; report actual counts and disabled leak detection. Use
-  `docs/DOC_REVIEW_CHECKLIST.md`; PR #13 has conditional regular-merge
-  authorization after fresh correction gates; verify its post-merge CI before
-  M3d3d. The new M3d3d PR stays open/unmerged, no auto-merge.
+  `docs/DOC_REVIEW_CHECKLIST.md`; PR #13 completed its regular merge and
+  exact post-merge CI before M3d3d. The M3d3e mission conditionally authorizes
+  PR #14’s regular merge after corrections and fresh gates; no auto-merge.
+
+- Read `docs/M3D3D_REFERENCE.md` before shotgunner/shared planning changes. Profile 11
+  separately admits labelled native136 SPOS Look/Chase/Face/SPos with exact source
+  10/10/10 timing, sprite 30 and fullbright frame 32773. Do not grant SPos to v10,
+  Pos to v11, full original type 2, drops or actual player damage.
+- Preserve shotgun sound BEFORE internal facing, both facing calls, one shared aim,
+  saved base angle, three independent spread/damage draws per pellet and complete
+  effect/damage RNG BEFORE the next pellet. No aggregate damage or nine-draw batch.
+- Sequential preflight reads a small overlay of at most three touched bodies and
+  three projected impacts, using the existing generic LifeHost combat executor.
+  Update hit/damage decisions after each projection. Position/radius/index flags
+  stay fixed inside this strict closure; real impacts are NOBLOCKMAP. Document
+  that proof rather than freezing health/shootability or copying the full store.
+- Reserve three real slots for any non-null blast before mutation, even a miss;
+  no pending-retirement credit. Null needs no reservation. Predict lowest-free
+  IDs/current generations without storage cloning. Retain all existing coordinate,
+  work and one-first-floor-owner bounds; every recoverable failure stays canonical.
+- Reproduce all eleven source/encoder pairs, eleven asserted examples, ten fuzz
+  builds and bounded shotgunner ASan. Record actual executions/leak settings,
+  source-exercised maps separately from map inventory, and compiled bodies
+  separately from branch coverage. Preserve every v1-v10 reference byte/helper.
+  Use the docs checklist; PR #14 has conditional regular-merge authorization
+  after corrections/fresh local and remote checks. Verify post-merge CI before
+  M3d3e runtime work; its new PR stays open/unmerged for separate owner review.

@@ -321,7 +321,7 @@ impl Simulation {
         let a = self.perception_actor(id)?;
         let life = a.life.unwrap();
         let registry = self.registry.as_deref().unwrap();
-        if self.profile == Profile::MonsterAttacks {
+        if self.profile.uses_monsters() {
             return self.monster_reference(id);
         }
         let fixture = [19, 21, 136].contains(&life.actor_type.0)
@@ -372,7 +372,7 @@ impl Simulation {
         threshold: i32,
     ) -> Result<(), SimError> {
         self.perception_actor(id)?;
-        if matches!(self.profile, Profile::Pursuit | Profile::MonsterAttacks)
+        if (self.profile == Profile::Pursuit || self.profile.uses_monsters())
             && threshold == i32::MIN
         {
             return Err(PursuitError::Arithmetic.into());
@@ -654,6 +654,8 @@ pub(crate) struct PerceptionInputs<'a> {
     pub players: &'a [PerceptionPlayer; 4],
     pub pursuit: bool,
     pub monsters: bool,
+    pub shotgunner: bool,
+    pub shotgun: Option<&'a crate::shotgunner::ShotgunPlan>,
     pub shot: Option<&'a crate::monsters::MonsterShotPlan>,
     pub sound_targets: &'a [Option<ActorId>],
 }
@@ -757,7 +759,7 @@ pub(crate) fn look<A: crate::lifecycle::ActorAccess>(
 }
 impl Simulation {
     pub(crate) fn validate_perception_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
-        if self.profile == Profile::MonsterAttacks {
+        if self.profile.uses_monsters() {
             return self.validate_monster_type(ty);
         }
         if self.profile == Profile::Pursuit {
@@ -770,7 +772,7 @@ impl Simulation {
         Ok(())
     }
     fn preflight_perception_look(&self, id: ActorId) -> Result<(), SimError> {
-        if self.profile == Profile::MonsterAttacks {
+        if self.profile.uses_monsters() {
             return self.preflight_monster_callback(id);
         }
         if self.profile == Profile::Pursuit {
@@ -828,8 +830,10 @@ impl Simulation {
         self.preflight_perception_look(id)?;
         Ok(crate::lifecycle::LifeHost {
             perception: Some(PerceptionInputs {
-                pursuit: matches!(self.profile, Profile::Pursuit | Profile::MonsterAttacks),
-                monsters: self.profile == Profile::MonsterAttacks,
+                pursuit: (self.profile == Profile::Pursuit || self.profile.uses_monsters()),
+                monsters: self.profile.uses_monsters(),
+                shotgunner: self.profile == Profile::Shotgunner,
+                shotgun: None,
                 shot: None,
                 players: &self.perception_players,
                 sound_targets: &self.sound_targets,

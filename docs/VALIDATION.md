@@ -1356,8 +1356,8 @@ matrix and dependency proof in [M3D3C_REFERENCE](M3D3C_REFERENCE.md).
 
 | Evidence | Observed result |
 | --- | --- |
-| Genuine original bodies |64, with original structs/info/tables/fixed helpers |
-| Scenarios/maps |158/18, including exact fixed-bit radius boundaries and open far-range geometry |
+| Compiled original bodies |64, with original structs/info/tables/fixed helpers; this inventory is not a branch-coverage claim |
+| Scenarios/exercised maps |158/4 (maps 0/2/8/17 from 18 supplied fixtures), including exact fixed-bit radius boundaries and open far-range geometry |
 | Live actor-field comparisons |178178 |
 | Ordered original-C observations |20785 |
 | Raw gameplay RNG draws |2430, including source wrap inside shadow/spread attacks |
@@ -1425,3 +1425,132 @@ pass before the authorized regular merge. Then verify both parents/tree, local/
 remote master, source/reference/license protections and post-merge CI before
 M3d3d runtime implementation. No squash, force-push, history rewrite, branch
 deletion, auto-merge or new M3d3d merge is authorized.
+
+## PR #13 completed finalization
+
+The documentation-only correction head was
+`bc67dce17601c0f590b2cb8a32ca3a138bfe4965`. Fresh mandatory local build,
+workspace/fuzz formatting, Clippy, rustdoc, workspace/release/MSRV checks,
+all ten C/encoder pairs and ten debug/release examples passed: 170 workspace
+and MSRV checks including one doctest, 146 release tests, two private probes
+ignored. Exact [correction-head CI 40652266967](https://github.com/Copgunn/DOOM/actions/runs/40652266967)
+passed all four jobs before the authorized regular merge.
+
+Merge commit `9b8fde85f64651f12a5643324e2ab93a9e4937d8` has parents
+`876662d31a79cc9be3307932e83e32faa8bf09f7` and
+`bc67dce17601c0f590b2cb8a32ca3a138bfe4965`. Its tree
+`5a603b328ddee84c6388c79311096ea810ad960a` equals the correction head's tree.
+PR #13 is closed/merged; local master and remote master were verified at that
+merge. Exact [post-merge CI 40653006957](https://github.com/Copgunn/DOOM/actions/runs/40653006957)
+passed Linux, Windows, macOS and Rust 1.85 before branching or implementing
+M3d3d. All 165 original files and 471 existing reference paths were unchanged
+by finalization. No branch was deleted or history rewritten.
+
+The M3d3d evidence audit also corrects earlier M3d3c prose: 18 maps are supplied,
+but those 158 cases actually select four. The frozen reference data, 178,178
+actor comparisons, 20,785 observations and 2,430 draws are unchanged. Compiled
+body inventories throughout these notes do not establish full branch coverage.
+
+## M3d3d implementation and independent evidence
+
+[PR #14](https://github.com/Copgunn/DOOM/pull/14), branch
+`feat/m3d3d-shotgunner-attacks`, starts at the verified PR #13 merge above.
+Investigation commit `51a2636cd7e4384f768c638886d559fce8727c6a` precedes runtime
+changes. Implementation head `1d4ffc8ddcc35b1ed081b763c642b0ef69719323` passed
+all four jobs of [CI 40656926875](https://github.com/Copgunn/DOOM/actions/runs/40656926875).
+Reviewed final head `dd1450ba3525ec75db0d7c740d387ca5e8d0cf98` passed all four
+jobs of [CI 40659174203](https://github.com/Copgunn/DOOM/actions/runs/40659174203).
+This directly records the completed reviewed-head result; the correction head and
+its fresh CI are recorded separately on PR #14 after verification.
+
+Profile 11 admits labelled native type 136 as `FIXTURE_SHOTGUNNER_136`, positive
+Look/Chase fixture states, copied SPOS attack states 4/5/6, unbound dummy type
+135 and exact original blood/puff. SPOS preserves sprite 30, frames 4/32773/4,
+10/10/10 tics and FaceTarget/SPosAttack/return actions. Both facing calls remain;
+shotgun sound precedes internal facing, then one shared aim feeds three separate
+spread/damage rolls and sequential traces. Each real impact and immediate damage
+finishes before the next pellet draws RNG. Source v10 PosAttack remains unchanged.
+
+Preflight copies RNG, at most three touched bodies and three projected impacts,
+and uses the existing shared combat executor between pellet plans. Updated
+health, flags, height, momentum, pain/death, reaction and target state inform
+later shots. No full simulation/map/store clone or separate damage model is used.
+Conservatively requiring three free slots for every non-null blast, including
+misses, is a Rust capacity policy; pending retirement gives no credit. Null needs
+no reservation. These restrictions and atomic failure tests are separate from
+source behavior comparisons. See [M3D3D_REFERENCE](M3D3D_REFERENCE.md).
+
+| Evidence family | Observed result |
+| --- | --- |
+| Original C | 65 compiled original bodies, original structs/info/tables/fixed helpers; 105 scenarios exercising all 18 supplied synthetic maps |
+| C actor-field comparisons | 147,940 |
+| Ordered C observations | 34,350 |
+| Raw gameplay RNG draws | 3,894, including exact RNG indices after every pellet's impact/damage |
+| Sequential source execution | 109 non-null blasts / 327 pellets; early pain/death, later targets after death, fall-forward draws and 49 retirements |
+| Independent DSIM-v11 | 949 captures / 92 complete byte fixtures, named-field/byte/digest checks |
+| Rust policy tests | Nine; capacity, delayed/pending removal, roles/players, exact states, generations, arithmetic, sequential damage and independence |
+| Asserted example | Pellet 2 kill followed by pellet 3 hitting another target; acquisition/pursuit and repeated cycles; final digest `eb5b7166a162544e` |
+
+The new original-C provenance records source bodies, adapters, public inputs,
+outputs, GNU C flags and ABI. Explicit left-before-right RNG and multiplication
+define historical negative signed-shift/unspecified evaluation intent. Retired
+C storage is retained until reset. The independent encoder consumes C rows,
+public setup and schema only, never Rust output; separate trace scopes isolate
+the shared aim and three pellets, while births map to real slots/generations.
+DSIM is a project diagnostic format, not a vanilla demo or savegame.
+
+## M3d3d local verification
+
+Linux x86-64, stable Rust 1.99.1, minimum Rust 1.85.0, nightly
+1.101.0-nightly, cargo-fuzz 0.13.2 and GCC 14.2:
+
+| Check | Observed result |
+| --- | --- |
+| Workspace build / format / fuzz format | Passed |
+| All-target Clippy and rustdoc, warnings denied | Passed |
+| Workspace tests | 180 passed including one doctest; two private probes ignored |
+| Rust 1.85 workspace tests | Same 180 passes; two private probes ignored |
+| Release doom-sim / doom-types | 156 passed |
+| All eleven original-C generator / independent encoder pairs | Passed with `--check` |
+| All eleven asserted debug/release examples | Identical stdout |
+| All ten nightly fuzz targets | Built with AddressSanitizer |
+| New shotgunner ASan campaign | 10,000 executions, seed 1, max_len 65, RSS 2048 MiB, timeout 20 seconds; no findings |
+
+The campaign completed in 211 seconds from six public synthetic seeds, with at
+most eight operations per input. `ASAN_OPTIONS=detect_leaks=0` was explicit;
+LeakSanitizer coverage is not claimed. Corpus mutations and build outputs remain
+temporary or ignored. The nine policy tests, source comparisons and independent
+bytes pass without changing historical expectations.
+
+All 165 upstream files remain byte-identical to the original baseline. All 470
+historical reference code/fixture paths at the PR #13 merge remain byte-identical;
+the reference README is intentionally updated prose. Historical Rust helpers,
+v1-v10 fixtures, encoders and generators are preserved. No stable dependency,
+license, visibility or private-asset policy changes were made; no private IWAD
+or private repository was accessed. Public CI remains independent of proprietary
+assets. All requested milestone documentation and the index are updated.
+
+PR #14 originally stopped open/unmerged for owner review. The M3d3e mission
+conditionally authorizes its regular merge after documentation correction and
+fresh local/exact-head remote checks; auto-merge stays disabled.
+Complete original Shotgun Guy/type 2, drops, other attacks, actual player damage,
+dynamic sectors, demos and rendering remain unsupported. A recommended next
+bounded milestone is the original chaingunner attack/refire decision closure,
+with a new source investigation and explicit target-loss/death/refire RNG
+evidence before any runtime expansion. That recommendation authorizes no work.
+
+## M3d3d reviewed-head finalization for M3d3e
+
+Live PR #14 matches reviewed head `dd1450ba3525ec75db0d7c740d387ca5e8d0cf98`
+and base `9b8fde85f64651f12a5643324e2ab93a9e4937d8`, with no intervening commits,
+discussion comments, reviews or inline threads. Reviewed
+[CI 40659174203](https://github.com/Copgunn/DOOM/actions/runs/40659174203)
+passed Linux, Windows, macOS and Rust 1.85 on that exact head. No demonstrated
+blocking defect or unexpected runtime change was found within the declared slice.
+
+This correction changes Markdown prose only: reviewed SHA/CI and the mission's
+conditional merge gates replace provisional readiness wording. Fresh mandatory
+local checks and exact correction-head CI must pass before the authorized regular
+merge. Verify ordered parents/tree, local/remote master, original/reference/license
+protections and exact post-merge CI before M3d3e runtime work. No squash, force-push,
+history rewrite, auto-merge, branch deletion or new M3d3e merge is authorized.

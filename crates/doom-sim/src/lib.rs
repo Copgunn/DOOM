@@ -11,6 +11,7 @@
 //! Profile 8 adds source sight, player-slot scanning, noise awareness and admitted A_Look.
 //! Profile 9 adds non-attacking native fixture pursuit through source direction decisions.
 //! Profile 10 adds native attack selection/facing and bounded PosAttack through shared combat.
+//! Profile 11 adds exact SPOS timing and three sequential SPosAttack pellets through shared combat.
 
 #[cfg(test)]
 extern crate self as doom_sim;
@@ -19,6 +20,8 @@ mod actor;
 mod direction;
 pub use direction::MoveDirection;
 mod monsters;
+mod shotgunner;
+pub use shotgunner::ShotgunEvent;
 mod perception;
 mod pursuit;
 pub use monsters::{MonsterError, MonsterEvent, RangeDecision};
@@ -87,13 +90,18 @@ pub enum Profile {
     Pursuit,
     /// M3d3c bounded monster attack selection/actions, DSIM-v10.
     MonsterAttacks,
+    /// M3d3d sequential native shotgunner attacks, DSIM-v11.
+    Shotgunner,
 }
 
 impl Profile {
+    pub(crate) const fn uses_monsters(self) -> bool {
+        matches!(self, Self::MonsterAttacks | Self::Shotgunner)
+    }
     pub(crate) const fn uses_perception(self) -> bool {
         matches!(
             self,
-            Self::Perception | Self::Pursuit | Self::MonsterAttacks
+            Self::Perception | Self::Pursuit | Self::MonsterAttacks | Self::Shotgunner
         )
     }
     pub(crate) fn uses_sectors(self) -> bool {
@@ -107,6 +115,7 @@ impl Profile {
                 | Self::Perception
                 | Self::Pursuit
                 | Self::MonsterAttacks
+                | Self::Shotgunner
         )
     }
 }
@@ -207,6 +216,8 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
+    /// Ordered profile-11 shotgun boundaries and per-pellet observations.
+    Shotgun(ShotgunEvent),
     /// Ordered profile-10 attack observations.
     Monster(MonsterEvent),
     /// Ordered original pursuit operations in profile 9.
@@ -665,10 +676,7 @@ impl Simulation {
             return Err(StoreError::InvalidHandle.into());
         }
         self.projectile_control(id)?;
-        if self.profile == Profile::MonsterAttacks
-            && self.monster_is_owner(id)
-            && momentum != Fixed::ZERO
-        {
+        if self.profile.uses_monsters() && self.monster_is_owner(id) && momentum != Fixed::ZERO {
             return Err(MonsterError::Ownership.into());
         }
         if self.profile.uses_perception() && momentum.bits().unsigned_abs() > 64 * 65536 {
@@ -699,9 +707,7 @@ impl Simulation {
             return Err(StoreError::InvalidHandle.into());
         }
         self.projectile_control(id)?;
-        if self.profile == Profile::MonsterAttacks
-            && self.monster_is_owner(id)
-            && momentum != [Fixed::ZERO; 2]
+        if self.profile.uses_monsters() && self.monster_is_owner(id) && momentum != [Fixed::ZERO; 2]
         {
             return Err(MonsterError::Ownership.into());
         }
@@ -775,6 +781,11 @@ impl Simulation {
         } else {
             None
         };
+        let shotgun_blast = if self.profile == Profile::Shotgunner {
+            self.preflight_shotgun_step()?
+        } else {
+            None
+        };
         if self.profile == Profile::Pursuit {
             self.preflight_pursuit_step()?;
         } else if self.profile == Profile::Perception {
@@ -822,8 +833,10 @@ impl Simulation {
         } else {
             let perception_inputs =
                 (self.profile.uses_perception()).then_some(perception::PerceptionInputs {
-                    pursuit: matches!(self.profile, Profile::Pursuit | Profile::MonsterAttacks),
-                    monsters: self.profile == Profile::MonsterAttacks,
+                    pursuit: self.profile == Profile::Pursuit || self.profile.uses_monsters(),
+                    monsters: self.profile.uses_monsters(),
+                    shotgunner: self.profile == Profile::Shotgunner,
+                    shotgun: shotgun_blast.as_ref(),
                     shot: monster_shot.as_ref(),
                     players: &self.perception_players,
                     sound_targets: &self.sound_targets,

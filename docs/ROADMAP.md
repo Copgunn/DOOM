@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b merged; M3d3a merged; M3d3b merged; M3d3c bounded attacks implemented for review**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b merged; M3d3a merged; M3d3b merged; M3d3c merged; M3d3d shotgunner foundations implemented for review**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -110,7 +110,7 @@ M3 as a whole remains incomplete.
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented, validated and merged |
 | M3c | Actor states, type-driven spawning and death | Implemented, validated and merged |
-| M3d | Combat subphases below | M3d1/M3d2/M3d2b merged; M3d3a merged; M3d3b merged; M3d3c implemented for review; later work planned |
+| M3d | Combat subphases below | M3d1/M3d2/M3d2b merged; M3d3a merged; M3d3b merged; M3d3c merged; M3d3d implemented for review; later work planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
 
 M3a acceptance evidence:
@@ -203,7 +203,7 @@ repository. Custom wgpu rendering with Vulkan preferred remains later work.
 | M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Merged as c924f18 after fresh and post-merge CI |
 | M3d2 | Player weapons, psprites and ammo | Merged as 955f690 after fresh/post-merge CI |
 | M3d2b | Bounded original projectile foundations | Implemented, validated and merged |
-| M3d3 | Monster targeting/perception, movement, attacks and AI | M3d3a merged; M3d3b merged; M3d3c bounded attacks implemented for review |
+| M3d3 | Monster targeting/perception, movement, attacks and AI | M3d3a merged; M3d3b merged; M3d3c merged; M3d3d shotgunner foundations implemented for review |
 | M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
 
 M3d1 branch: `feat/m3d1-damage-hitscan`, based on verified M3c merge `4dbb0a5`.
@@ -398,8 +398,8 @@ not authorize beginning those tasks or claim full original monster gameplay.
 
 Branch `feat/m3d3c-monster-attack-selection` starts at verified combined master
 `876662d`. [Investigation](M3D3C_REFERENCE.md) commit `0d57c07` precedes runtime.
-[PR #13](https://github.com/Copgunn/DOOM/pull/13) has conditional regular-merge
-authorization in the M3d3d mission, after its correction and fresh validation gates.
+[PR #13](https://github.com/Copgunn/DOOM/pull/13) completed its authorized regular
+merge as `9b8fde8` after correction/fresh checks and exact post-merge CI.
 
 - [x] Separately finalize PRs #11/#12, verify both regular merges and post-merge CI.
 - [x] Source melee/missile decisions, radius/strict bounds, sight/flag/reaction/type/
@@ -408,7 +408,8 @@ authorization in the M3d3d mission, after its correction and fresh validation ga
   including both facing actions, shared aim/impact/damage and real effect lifecycle.
 - [x] Explicit selection-only markers; unsupported closures and actual player
   damage reject. Recoverable failures are canonical-state atomic without tic clones.
-- [x] 64 original C bodies,158 scenarios/18 maps,178178 actor-field comparisons,
+- [x] 64 compiled original C bodies,158 scenarios on 4 exercised maps (18 supplied),
+  178178 actor-field comparisons,
   2430 RNG draws and 20,785 ordered observations. Full v1-v9 preservation.
 - [x] Independent v10:1290 captures/72 complete byte fixtures; asserted tenth example.
 - [x]170 workspace/MSRV checks,146 release tests,ten example equality checks,
@@ -417,9 +418,43 @@ authorization in the M3d3d mission, after its correction and fresh validation ga
   [CI 40649024287](https://github.com/Copgunn/DOOM/actions/runs/40649024287).
   Final documentation-head SHA and fresh CI are pinned in PR #13 after verification.
 - [x] Conditional owner regular-merge authorization in the M3d3d mission.
-- [ ] Correction-head local/remote checks, regular merge and verified post-merge CI.
+- [x] Correction `bc67dce`, fresh CI 40652266967, regular merge 9b8fde8 and
+  exact post-merge CI 40653006957 verified before M3d3d.
 
 Acceptance means this declared source/fixture slice, not complete original monster
 combat or a playable engine. Next focused work requires source investigation and
 separate authorization for another bounded attack/monster closure. M3d4 advanced
 combat, M3e dynamic sectors, M4 demos and M5 rendering remain deferred.
+
+## M3d3d — Shotgunner multi-pellet foundations
+
+Branch `feat/m3d3d-shotgunner-attacks` starts at verified master `9b8fde8`.
+[Investigation](M3D3D_REFERENCE.md) commit `51a2636` precedes runtime.
+[PR #14](https://github.com/Copgunn/DOOM/pull/14) has conditional regular-merge
+authorization in the M3d3e mission after its correction and fresh validation gates.
+
+- [x] PR #13 correction, fresh local/remote checks, regular merge, parents/tree,
+  master and exact post-merge CI verified before runtime work.
+- [x] Exact SPOS 10/10/10, fullbright 32773, both faces, sound-before-internal-face,
+  one shared aim and three source-order spread/damage/impact/health sequences.
+- [x] Updated touched-body/effect projection using shared combat; conservative
+  three-slot preflight and complete failed-operation canonical atomicity.
+- [x] Source early pain/death, later targets after pellet 1/2 kill, blood/puff,
+  fall-forward/RNG wrap, same-pass effects, retirement and generation reuse.
+- [x] 65 compiled original bodies, 105 scenarios exercising all 18 supplied maps;
+  147940 actor fields, 34,350 ordered observations and 3,894 raw RNG draws compared.
+- [x] Independent v11:949 captures/92 full byte fixtures; eleventh asserted example.
+- [x] Nine policy tests;180 workspace/MSRV checks,156 release tests; ten fuzz builds
+  and 10,000 ASan executions without findings (leak detection disabled).
+- [x] Implementation `1d4ffc8ddcc35b1ed081b763c642b0ef69719323` passed all four
+  jobs of [CI 40656926875](https://github.com/Copgunn/DOOM/actions/runs/40656926875).
+- [x] Reviewed final `dd1450ba3525ec75db0d7c740d387ca5e8d0cf98` passed
+  [CI 40659174203](https://github.com/Copgunn/DOOM/actions/runs/40659174203).
+  Record the correction head and its fresh CI on PR #14 after verification.
+- [x] Conditional owner authorization for a regular merge in the M3d3e mission.
+- [ ] Correction-head local/remote checks, regular merge and verified post-merge CI.
+
+This accepts the declared action/fixture closure only. Full original Shotgun Guy,
+drops, other attacks, actual player damage, dynamic sectors and demo compatibility
+remain deferred. The next bounded attack/actor closure requires its own source
+investigation and owner scope; no further gameplay is authorized by this milestone.
