@@ -2013,3 +2013,29 @@ those fresh checks. Record the correction/merge evidence on PR #17, verify the
 ordered merge parents/tree/master and successful exact-merge post-merge CI before
 M3d3h runtime work. Runtime, DSIM-v1 through DSIM-v14 and reference evidence stay
 unchanged by this correction. No squash, history rewrite, CI bypass or auto-merge.
+
+## M3d3g correction, regular merge and verified baseline
+
+Documentation-only correction `9d48f6d47c1a8c21f68cd66f6d56cb67f09bc8b3`
+passed fresh 221 workspace/221 Rust1.85/197 release tests, all fourteen reference/
+encoder pairs and asserted examples, mandatory build/format/Clippy/rustdoc,
+229 relative links/two anchors and source/fixture/Git integrity. [Corrected-head
+CI 40780721974](https://github.com/Copgunn/DOOM/actions/runs/40780721974) passed all
+four jobs, completed2026-10-28 22:37:28UTC. Native macOS job123141432984 executed
+on macos-26-intel; PR testmerge2322d4eda6855f2d3f51d1936bac93fce7fb435a tree
+4ed21d4d63ce376a7d5599b5b0f3c5416415edaa equals the corrected head.
+
+PR17 is closed/merged as `f44828d5ad3169fe77c116bdebb30c74d1b5feb2` through the
+owner-authorized regular merge. Ordered parents are
+`75b2a2bc9a28401de358859f0499fe4c81dfa0a2` and
+`9d48f6d47c1a8c21f68cd66f6d56cb67f09bc8b3`. Tree
+`4ed21d4d63ce376a7d5599b5b0f3c5416415edaa` equals the tested correction.
+Local/remote master agree. Exact [post-merge CI40781481835](https://github.com/Copgunn/DOOM/actions/runs/40781481835)
+passed Linux/Windows/native macos-26-intel/Rust1.85, completed2026-10-28
+22:45:23UTC before M3d3h branch/source commit/runtime. Native Mac job123143980119
+actually checked out that merge SHA and executed applicable steps. All165 source
+files and1699 baseline reference/tool/support paths, v1–v14 bytes, history,
+attribution, original licenses and locks remain unchanged. No private repositories
+or commercial IWADs were accessed; repository stays public/GPL-2.0-only. No CI
+bypass, squash, force-push, history rewrite or auto-merge. M3d3h has its own review
+gate and its new PR must remain open/unmerged without auto-merge.

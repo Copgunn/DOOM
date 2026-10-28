@@ -126,3 +126,4 @@ authorization. Historical upstream code, [original release notes](../README.TXT)
 and [license](../LICENSE.TXT) must remain untouched.
 
 - [M3d3g Demon pain/death investigation](M3D3G_REFERENCE.md): source timing, RNG, corpse collision and admission proof obligations.
+| [M3D3H_REFERENCE.md](M3D3H_REFERENCE.md) | Original Demon stand/run state closure, source timing and explicit admission plan |

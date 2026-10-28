@@ -584,8 +584,9 @@ precedes runtime. See [M3D3G_REFERENCE](M3D3G_REFERENCE.md).
   leak detection disabled.
 - [x] Implementation e56bea449a06ddcdf93dd85c94345a1faa45dab5 passed all four
   jobs in [CI 40771202408](https://github.com/Copgunn/DOOM/actions/runs/40771202408).
-- [x] [PR #17](https://github.com/Copgunn/DOOM/pull/17) opened for separate owner
-  review; remains OPEN/UNMERGED without auto-merge.
+- [x] [PR #17](https://github.com/Copgunn/DOOM/pull/17) completed its authorized
+  regular merge as `f44828d5` after correction/fresh checks and successful exact
+  post-merge CI40781481835; see [VALIDATION](VALIDATION.md).
 
 Reviewed final head `2a0ad59e563e433b69bd50c6cb900edbd156a3fc` passed all four jobs
 in [CI 40772397051](https://github.com/Copgunn/DOOM/actions/runs/40772397051).
