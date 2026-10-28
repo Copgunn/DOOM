@@ -248,7 +248,8 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   source-exercised maps separately from map inventory, and compiled bodies
   separately from branch coverage. Preserve every v1-v10 reference byte/helper.
   Use the docs checklist; PR #14 completed its regular merge and exact post-merge
-  CI before M3d3e. PR #15 stays open/unmerged for separate owner review.
+  CI before M3d3e. The M3d3f mission conditionally authorizes PR #15’s regular
+  merge after its documentation correction and fresh checks; no auto-merge.
 
 - Read `docs/M3D3E_REFERENCE.md` before CPOS/refire/shared combat changes. Profile 12
   separately admits exact labelled native 136, CPOS states 4/5/6/7 with sprite 38,
@@ -271,4 +272,6 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - Reproduce all twelve source/encoder pairs and twelve asserted examples, build
   all eleven fuzz targets and run bounded chaingunner ASan with actual counts and
   leak settings. Keep full original type 10/drops, SpidRefire, other attacks and
-  player damage/binding excluded. PR #15 remains open/unmerged, no auto-merge.
+  player damage/binding excluded. PR #15 has conditional regular-merge
+  authorization after corrections/fresh local and exact-head remote checks.
+  Verify post-merge CI before M3d3f runtime; its new PR stays open/unmerged.

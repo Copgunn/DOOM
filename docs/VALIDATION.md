@@ -1586,8 +1586,10 @@ occurred. Public/GPL-2.0 licensing and private-asset safeguards were preserved.
 Investigation `b9855f4cd723ee827d3e525e1c13adc440c5f3a9` precedes runtime.
 Implementation head `e160f89979f6f8eebcf14869ebf1aaf0beedcc7e` passed all four
 jobs of [CI 40667321344](https://github.com/Copgunn/DOOM/actions/runs/40667321344).
-The final documentation head and fresh exact-head CI are pinned on PR #15 after
-verification; the implementation run does not substitute for that gate.
+Reviewed final head `ae78d76cae69b4f36811110009454df479a33cc6` passed all four
+jobs of [CI 40668964558](https://github.com/Copgunn/DOOM/actions/runs/40668964558).
+This directly records the completed reviewed-head result; the correction head and
+its fresh exact-head CI are recorded separately on PR #15 after verification.
 
 Profile 12 admits labelled native type 136, CPOS Look/Chase states 1/2, copied
 attack states 4/5/6/7, source-body dummy 135 and original blood/puff. It preserves
@@ -1665,9 +1667,28 @@ public visibility and GPL-2.0-only stable workspace remain intact. No stable
 dependency, proprietary-asset or private-repository access was introduced.
 All requested milestone documentation and navigation are updated.
 
-PR #15 stays open/unmerged, auto-merge disabled, for separate owner review. Full
+PR #15 originally stopped open/unmerged for owner review. The M3d3f mission
+conditionally authorizes its regular merge after a documentation correction and
+fresh local/exact-head remote checks; auto-merge stays disabled. Full
 original type 10 pain/death/raise/drop/run gameplay, SpidRefire, other attacks,
 actual player damage, dynamic sectors, demos and rendering remain excluded.
 Recommended next focused milestone: original A_SargAttack melee action with a
 separate source investigation and independent range/damage/state/RNG evidence.
 That recommendation authorizes no additional implementation.
+
+## M3d3e reviewed-head finalization for M3d3f
+
+Live PR #15 matches reviewed head `ae78d76cae69b4f36811110009454df479a33cc6`
+and base `31b4830945a60c837065c0e3c29d10494e84f20e`. No intervening commits,
+comments, reviews or inline threads were found. Reviewed
+[CI 40668964558](https://github.com/Copgunn/DOOM/actions/runs/40668964558)
+passed Linux, Windows, macOS and Rust 1.85 on that exact head. No demonstrated
+blocking defect or unexpected runtime change was found within the declared slice.
+
+This correction changes Markdown prose only: reviewed SHA/CI and the mission's
+conditional regular-merge gates replace provisional review-readiness language.
+Fresh mandatory local checks and exact correction-head CI must pass before the
+authorized regular merge. Verify ordered parents/tree, local/remote master,
+original/reference/license protections and exact post-merge CI before M3d3f
+runtime. No squash, force-push, history rewrite, auto-merge, branch deletion or
+new M3d3f merge is authorized.

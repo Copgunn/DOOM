@@ -464,7 +464,8 @@ investigation and owner scope; no further gameplay is authorized by this milesto
 
 Branch `feat/m3d3e-chaingunner-refire` starts at verified master `31b4830`.
 [Investigation](M3D3E_REFERENCE.md) commit `b9855f4` precedes runtime.
-[PR #15](https://github.com/Copgunn/DOOM/pull/15) stays open/unmerged for owner review.
+[PR #15](https://github.com/Copgunn/DOOM/pull/15) has conditional regular-merge
+authorization in the M3d3f mission after its correction and fresh validation gates.
 
 - [x] PR #14 corrected, fresh local/exact-head checks passed, regular merge with
   verified parents/tree/master and successful exact post-merge CI before runtime.
@@ -484,9 +485,11 @@ Branch `feat/m3d3e-chaingunner-refire` starts at verified master `31b4830`.
   eleven fuzz builds and 10,000 ASan executions without findings, leaks disabled.
 - [x] Implementation `e160f89979f6f8eebcf14869ebf1aaf0beedcc7e` passed all four
   jobs of [CI 40667321344](https://github.com/Copgunn/DOOM/actions/runs/40667321344).
-  Pin the final documentation head and its fresh exact-head CI on PR #15 before
-  requesting review; implementation CI is not a substitute for that gate.
-- [ ] Separate owner authorization for a future merge, outside this mission.
+- [x] Reviewed final `ae78d76cae69b4f36811110009454df479a33cc6` passed
+  [CI 40668964558](https://github.com/Copgunn/DOOM/actions/runs/40668964558).
+  Record the correction head and its fresh CI on PR #15 after verification.
+- [x] Conditional owner authorization for a regular merge in the M3d3f mission.
+- [ ] Correction-head local/remote checks, regular merge and exact post-merge CI.
 
 Acceptance covers this bounded fixture/action closure. Full Chaingunner/type 10,
 drops/pain/death/raise gameplay, SpidRefire, other attacks, actual player damage,

@@ -200,7 +200,9 @@ body inventories precisely; distinguish C behavior, project canonical bytes and
 Rust policy tests. Update the documentation index and use its review checklist.
 PR #14 completed its authorized regular merge as 31b4830 after a prose correction,
 fresh local/exact-head CI and verified post-merge CI before M3d3e runtime work.
-The new M3d3e PR stays open/unmerged, auto-merge disabled.
+The M3d3f mission conditionally authorizes PR #15’s regular merge after its
+correction and fresh local/exact-head CI, with post-merge verification before
+M3d3f runtime. Auto-merge remains disabled.
 
 ## M3d3e chaingunner changes
 
@@ -215,4 +217,6 @@ builds and bounded chaingunner ASan. The original LUT cannot produce 40: disting
 real-table gameplay cases from the controlled-dependency C boundary probe and Rust
 safety tests. Keep all v1-v11 expectations/helpers and player restrictions intact.
 Use the documentation review checklist and record only observed immutable CI.
-Leave PR #15 open/unmerged for separate owner review, auto-merge disabled.
+PR #15 has conditional regular-merge authorization in the M3d3f mission after
+documentation correction and fresh gates. Verify its post-merge CI before M3d3f;
+the new feature PR stays open/unmerged for separate owner review, no auto-merge.

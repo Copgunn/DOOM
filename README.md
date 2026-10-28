@@ -41,7 +41,8 @@ M3d3d adds bounded source shotgunner multi-pellet attacks in profile 11 in
 [PR #14](https://github.com/Copgunn/DOOM/pull/14), regularly merged as `31b4830`
 after correction and fresh/post-merge CI. M3d3e adds bounded chaingunner attack/
 refire in profile 12 in [PR #15](https://github.com/Copgunn/DOOM/pull/15),
-open/unmerged for owner review.
+reviewed; the M3d3f mission conditionally authorizes its regular merge after
+documentation correction and fresh local/remote checks.
 Complete original monsters,
 actual player damage and a playable client remain future work. Exact gates and
 limitations are in the [roadmap](docs/ROADMAP.md) and
@@ -470,7 +471,7 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d3b | Source pursuit and movement decisions | Merged as 0007af1 |
 | M3d3c | Attack selection and bounded source hitscan action | Merged as 9b8fde8 |
 | M3d3d | Source shotgunner three-pellet foundations | Merged as 31b4830 |
-| M3d3e | Source chaingunner attack/refire foundations | Implemented; PR #15 open for owner review |
+| M3d3e | Source chaingunner attack/refire foundations | Reviewed; conditional regular merge after fresh gates |
 | Later M3d3–M3e | Remaining attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
