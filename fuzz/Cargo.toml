@@ -83,3 +83,10 @@ path = "fuzz_targets/monster_attacks.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "shotgunner_attacks"
+path = "fuzz_targets/shotgunner_attacks.rs"
+test = false
+doc = false
+bench = false
