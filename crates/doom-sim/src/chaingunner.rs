@@ -291,3 +291,63 @@ fn validate_registry(r: &ActorRegistry) -> Result<(), SimError> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn controlled_c_dependency_probe_covers_40_and_short_circuit_boundaries() {
+        let rows = include_str!("../../../tests/reference/m3d3e_refire_boundary.csv");
+        let mut count = 0;
+        for row in rows.lines().skip(1) {
+            let c = row
+                .split(',')
+                .map(|v| v.parse::<u32>().unwrap())
+                .collect::<Vec<_>>();
+            let mut target_checks = 0;
+            let mut sight_checks = 0;
+            let (decision, _) = decide(
+                c[0] as u8,
+                || {
+                    target_checks += 1;
+                    match c[1] {
+                        0 => None,
+                        1 => Some(0),
+                        2 => Some(-1),
+                        3 => Some(1),
+                        _ => unreachable!(),
+                    }
+                },
+                || {
+                    sight_checks += 1;
+                    SightResult {
+                        visible: c[2] != 0,
+                        reject_index: 0,
+                        rejected: false,
+                        eye: None,
+                        slopes: None,
+                        visits: Vec::new(),
+                    }
+                },
+            );
+            // Derive the expected branch from the original body's observed
+            // dependency order, not a second handwritten threshold predicate.
+            let expected = match c[7] {
+                12 => RefireDecision::EarlyContinue,
+                124 if c[1] == 0 => RefireDecision::NoTarget,
+                124 => RefireDecision::DeadTarget,
+                1234 => RefireDecision::NotVisible,
+                123 => RefireDecision::VisibleContinue,
+                _ => panic!("unexpected original dependency chronology"),
+            };
+            assert_eq!(decision, expected, "controlled C row {row}");
+            assert_eq!(target_checks, u32::from(c[7] != 12));
+            assert_eq!(sight_checks, c[5]);
+            assert_eq!(u32::from(decision.exits()), c[6]);
+            assert_eq!(&c[3..5], &[1, 1]);
+            count += 1;
+        }
+        assert_eq!(count, 2048);
+    }
+}
