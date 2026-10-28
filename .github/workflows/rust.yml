@@ -58,6 +58,8 @@ jobs:
           python3 tools/reference/m3c_snapshot_goldens.py --check
           python3 tools/reference/generate_m3d1.py --check
           python3 tools/reference/m3d1_snapshot_goldens.py --check
+          python3 tools/reference/generate_m3d2.py --check
+          python3 tools/reference/m3d2_snapshot_goldens.py --check
       - name: Synthetic map example
         run: cargo +stable run -p doom-map --example parse_map --locked
       - name: Headless simulation example

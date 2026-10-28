@@ -48,3 +48,10 @@ path = "fuzz_targets/combat.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_weapons"
+path = "fuzz_targets/player_weapons.rs"
+test = false
+doc = false
+bench = false
