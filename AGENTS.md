@@ -104,7 +104,9 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   post-merge CI in the M3d2 mission. M3d2 was regularly merged as 955f690 after final corrections and fresh/post-merge CI. M3d2b was regularly merged as e109ee1 after final correction and fresh/post-merge
   CI in the M3d3a mission. M3d3a completed its regular merge as 839fbab after fresh/post-merge CI;
   M3d3b regularly merged as 0007af1 and documentation PR #12 separately as
-  876662d after exact-head and post-merge CI. M3d3c or later merges require separate approval.
+  876662d after exact-head and post-merge CI. The M3d3d mission conditionally
+  authorizes PR #13’s regular merge after corrections/fresh checks; later merges
+  require separate approval.
 
 - M3b consumes supplied BLOCKMAP lists without rebuilding them; conservative
   omissions are diagnostic, not proof of spatial correctness. Keep older profiles
@@ -221,4 +223,6 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   without new proof. Preserve canonical state on every recoverable error.
 - Reproduce all ten C/encoder pairs, ten asserted examples, nine fuzz builds and
   bounded attack ASan; report actual counts and disabled leak detection. Use
-  `docs/DOC_REVIEW_CHECKLIST.md`; PR #13 stays open/unmerged, no auto-merge.
+  `docs/DOC_REVIEW_CHECKLIST.md`; PR #13 has conditional regular-merge
+  authorization after fresh correction gates; verify its post-merge CI before
+  M3d3d. The new M3d3d PR stays open/unmerged, no auto-merge.

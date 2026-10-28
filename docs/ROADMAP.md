@@ -398,7 +398,8 @@ not authorize beginning those tasks or claim full original monster gameplay.
 
 Branch `feat/m3d3c-monster-attack-selection` starts at verified combined master
 `876662d`. [Investigation](M3D3C_REFERENCE.md) commit `0d57c07` precedes runtime.
-[PR #13](https://github.com/Copgunn/DOOM/pull/13) stays open/unmerged for owner review.
+[PR #13](https://github.com/Copgunn/DOOM/pull/13) has conditional regular-merge
+authorization in the M3d3d mission, after its correction and fresh validation gates.
 
 - [x] Separately finalize PRs #11/#12, verify both regular merges and post-merge CI.
 - [x] Source melee/missile decisions, radius/strict bounds, sight/flag/reaction/type/
@@ -415,7 +416,8 @@ Branch `feat/m3d3c-monster-attack-selection` starts at verified combined master
 - [x] Implementation head `bf4bb89` passes Linux/Windows/macOS/MSRV
   [CI 40649024287](https://github.com/Copgunn/DOOM/actions/runs/40649024287).
   Final documentation-head SHA and fresh CI are pinned in PR #13 after verification.
-- [ ] Separate owner authorization for a future merge (not part of this mission).
+- [x] Conditional owner regular-merge authorization in the M3d3d mission.
+- [ ] Correction-head local/remote checks, regular merge and verified post-merge CI.
 
 Acceptance means this declared source/fixture slice, not complete original monster
 combat or a playable engine. Next focused work requires source investigation and

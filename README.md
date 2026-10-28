@@ -36,7 +36,8 @@ M3d3b pursuit in [PR #11](https://github.com/Copgunn/DOOM/pull/11) merged as
 combined-master CI passed before M3d3c started. M3d3c implements bounded source
 attack selection and a complete admitted A_PosAttack animation in profile 10,
 on labelled synthetic actors, in [PR #13](https://github.com/Copgunn/DOOM/pull/13).
-It remains open and unmerged for owner review. Complete original monsters,
+The M3d3d mission conditionally authorizes its regular merge after a documentation
+correction and fresh local/remote gates. Complete original monsters,
 actual player damage and a playable client remain future work. Exact gates and
 limitations are in the [roadmap](docs/ROADMAP.md) and
 [validation notes](docs/VALIDATION.md).
@@ -456,7 +457,7 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d2b | Original plasma foundations | Merged as e109ee1 |
 | M3d3a | Monster perception and target acquisition | Merged as 839fbab |
 | M3d3b | Source pursuit and movement decisions | Merged as 0007af1 |
-| M3d3c | Attack selection and bounded source hitscan action | Implemented; PR #13 open for owner review |
+| M3d3c | Attack selection and bounded source hitscan action | Reviewed; conditional regular merge after fresh gates |
 | Later M3d3–M3e | Remaining attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |

@@ -1340,8 +1340,10 @@ commercial/private asset access occurred during either finalization.
 `0d57c07` precedes runtime changes. Verified implementation head
 `bf4bb8925ae62303b2e950acd95593c1dde64095` passes all four jobs of
 [CI 40649024287](https://github.com/Copgunn/DOOM/actions/runs/40649024287).
-Final documentation-head SHA/fresh CI are pinned in the PR after verification;
-no commit attempts to embed its own eventual SHA.
+Reviewed final head `c5c291abb96a06601213e9442bcc3b027df81161` passed all four jobs of
+[CI 40650046270](https://github.com/Copgunn/DOOM/actions/runs/40650046270).
+This directly records the completed reviewed-head result; the correction head and
+its fresh CI are recorded separately in PR #13 after verification.
 
 The declared source slice implements P_CheckMeleeRange, P_CheckMissileRange,
 attack-related A_Chase priority/skill/movecount/JUSTHIT/JUSTATTACKED, source sound/
@@ -1402,6 +1404,24 @@ code/fixture paths (excluding the intentionally updated reference README prose)
 remain byte-identical to combined master. GPL-2.0-only Cargo licensing, original
 license/attribution/history, public repository and private-asset safeguards remain
 intact. No IWAD/private-repository access, redistribution or presentation/dependency
-expansion occurred. PR #13 stays open/unmerged with auto-merge disabled. This is
-review readiness for the declared fixture slice, not complete vanilla/DOS sync,
+expansion occurred. The M3d3d mission conditionally authorizes PR #13’s regular
+merge after this prose correction passes fresh local and exact-head remote checks.
+Auto-merge remains disabled. This evidence covers the declared fixture slice, not complete vanilla/DOS sync,
 commercial-map validation, a playable client or authorization for later gameplay.
+
+## M3d3c finalization for M3d3d
+
+Live PR #13 matches reviewed head `c5c291abb96a06601213e9442bcc3b027df81161`
+and base `876662d31a79cc9be3307932e83e32faa8bf09f7`; no intervening commits,
+review submissions or discussion comments were found. Reviewed
+[CI 40650046270](https://github.com/Copgunn/DOOM/actions/runs/40650046270)
+passes Linux, Windows, macOS and Rust 1.85. No new blocking runtime defect or
+unexpected behavioral change was found within the declared slice.
+
+This correction changes documentation only, directly recording reviewed SHA/CI
+and replacing provisional owner-review wording with the mission's conditional
+regular-merge gates. Fresh mandatory local checks and correction-head CI must
+pass before the authorized regular merge. Then verify both parents/tree, local/
+remote master, source/reference/license protections and post-merge CI before
+M3d3d runtime implementation. No squash, force-push, history rewrite, branch
+deletion, auto-merge or new M3d3d merge is authorized.

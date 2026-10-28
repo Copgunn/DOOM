@@ -179,5 +179,6 @@ Run all ten reference generator/independent encoder pairs, ten example checks,
 nine fuzz builds and bounded attack ASan. Preserve old bytes and helpers. Keep
 C behavior, independent schema and Rust policies distinct. Use the
 [documentation review checklist](docs/DOC_REVIEW_CHECKLIST.md); report exact
-commit/CI and observed sanitizer settings. PR #13 requires separate owner merge
-authorization; keep it open with auto-merge disabled.
+commit/CI and observed sanitizer settings. The M3d3d mission conditionally
+authorizes PR #13’s regular merge after corrections/fresh local and remote gates.
+Verify post-merge CI before M3d3d; leave its new PR unmerged with auto-merge disabled.
