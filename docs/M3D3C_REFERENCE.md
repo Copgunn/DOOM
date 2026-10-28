@@ -75,9 +75,9 @@ their original-C generators, encoders, fixtures and helpers remain frozen.
 
 Use labelled native definitions copied from unbound source player bodies,
 without player_t. Native owner IDs3/5/18/19/21/136 isolate missile type branches;
-only136 may select the executable PosAttack animation. States1/2 provide
+only type 136 may select the executable PosAttack animation. States1/2 provide
 positive-duration Look/Chase, state3 is an explicit action-free melee marker,
-states4/5/6 copy the three POSS attack states with native next indexes5/6/2,
+states 4/5/6 copy the three POSS attack states with native next indexes5/6/2,
 and state7 is an action-free missile marker. Markers prove selection/state entry
 only, never melee damage or a source attack. Unchanged original metadata stays
 authoritative outside these exact, named fixture adaptations.
@@ -87,14 +87,14 @@ authoritative outside these exact, named fixture adaptations.
 | Original monster metadata | Recognized, complete gameplay rejected |
 | Labelled native Look/Chase | Selection and existing walking |
 | Labelled melee/missile markers | Entry only; no damage action |
-| Copied POSS three-state animation on native136 | FaceTarget, PosAttack, return to Chase |
-| Unbound dummy135 with source player body states | Shared non-player damage/pain/death |
+| Copied POSS three-state animation on native type 136 | FaceTarget, PosAttack, return to Chase |
+| Unbound dummy type 135 with source player body states | Shared non-player damage/pain/death |
 | Original puff/blood types and states | Exact existing impact lifecycle |
 | Other original callbacks, probes or transitions | Reject before mutation |
 
 Bounded ownership: one unshootable native owner, spawned first and remaining
 thinker head, with zero physical momentum; direct source walking still runs.
-Other admitted shootable actors are unbound dummy135; original body-state
+Other admitted shootable actors are unbound dummy type 135; original body-state
 closures cannot chase or recursively attack. Exact impact actors may retire.
 Retained target/roster/sound references exclude removable impacts. Actual player
 binding, armor, health mirroring and damage remain unsupported and protected.
@@ -142,3 +142,21 @@ and first-field diagnostics complement behavioral comparisons. Rust-only tests
 cover recoverable-error atomicity and unsupported/extreme inputs; those are not
 C-equivalence evidence. Final counts, reproduction and acceptance status belong
 in [VALIDATION.md](VALIDATION.md) after actual verification, not this plan.
+
+## Implemented result and observed evidence
+
+The declared ownership/action closure is implemented. Public profile 10 direct
+combat services remain rejected; PosAttack privately prepares and executes the
+shared M3d1 services through LifeHost. Owner floor placement is required before
+spawn; prepared impacts also require 994 XY/1018 Z. Original source metadata by
+itself cannot spawn under reserved native IDs: exact fixture labels/roots are
+required. Seven Rust policy tests exercise these restrictions separately.
+
+The generator executes 64 original bodies for 158 cases on 18 maps, including
+exact fixed-bit melee neighbors, all missile types/cap boundaries, both source
+facing calls, all five damage values, true miss/wall/blood/puff, pain/ordinary/
+extreme death, repeated cycles, RNG wrap and real effect retirement/slot reuse.
+Rust compares 178,178 actor fields, 2,430 RNG draws and 20,785 ordered C observations;
+1290 independent v10 captures include 72 full byte fixtures. The asserted example
+ends at 245e71d4a9c4023e. Full source/fixture and final CI evidence is recorded in
+[VALIDATION.md](VALIDATION.md); these counts establish only the declared slice.

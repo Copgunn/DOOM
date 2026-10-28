@@ -1,6 +1,6 @@
-# Canonical simulation state, DSIM versions 1 through 9
+# Canonical simulation state, DSIM versions 1 through 10
 
-This is a diagnostic/replay comparison format for explicit M2 through M3d3b profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3d3c profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -21,7 +21,7 @@ Runtime fields precede static map fields. Runtime order:
 | Field/group | Value encoding |
 | --- | --- |
 | `tic` | u64 completed logical tics |
-| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), 6 (M3d2 player weapons/psprites), 7 (M3d2b projectiles), 8 (M3d3a perception), or 9 (M3d3b pursuit); profile-specific additions are specified below |
+| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), 6 (M3d2 player weapons/psprites), 7 (M3d2b projectiles), 8 (M3d3a perception), 9 (M3d3b pursuit), or 10 (M3d3c bounded attacks); profile-specific additions are specified below |
 | `paused` | u8 boolean |
 | `rng.gameplay`, `rng.miscellaneous` | u8 indexes, in that order |
 | `store.max_slots`, `store.slot_count` | u32 capacity policy; u64 logical allocated slot count |
@@ -500,3 +500,46 @@ source thinker phases, counter/angle/target changes, relinking and RNG wrap. C
 ordinals map to generation 1 in these source cases; retirement/reuse is separately
 verified by Rust policy tests. This is a project diagnostic comparison schema,
 not a DOOM savegame/demo or evidence of complete vanilla synchronization.
+
+## DSIM-v10 — Monster Attack Selection and Bounded Actions
+
+Schema/profile 10 composes v9 fields in the same order: typed actors, health,
+states/tics/flags, source target generations, threshold/movedir/movecount, physical
+geometry, thinker/spatial/sector links, sound targets and distinct four-slot roster.
+It includes shared damage/impact state and exact named registry adaptations. No
+new persistent attack result, queue or cached shot plan is serialized. Every
+v1-v9 schema/fixture byte remains unchanged. fastparm/netgame stay fixed false.
+
+Existing event tags 10/11/12/13/14/16/17 retain their layouts. New tag 18 has a u8
+variant and 12-byte actor identity (u32 slot,u64 generation), followed by:
+
+| Variant | Payload after actor identity |
+| --- | --- |
+|0 Range |u8 kind (0 melee,1 missile),u8 accepted,u8 reason,optional i32 distance,optional i32 threshold |
+|1 Random |u8 kind,u8 lookup value |
+|2 Face |13-byte optional target,u32 old/new angle,u32 old/new flags |
+|3 Selection |u8 kind (0 melee,1 missile),u16 state |
+|4 JustAttacked |u32 resulting flags |
+|5 Aim |shared combat Trace payload beginning with its variant1 byte,optional target,i32 slope,i32 bottom/top window |
+
+Optional range integers use a presence byte followed by i32 only when present.
+Melee distance/threshold are raw 16.16; missile distance is signed integer map
+units after the reached adjustments (final capped value when probability runs).
+Reasons 0 accepted,1 null,2 melee distance,3 sight,4 JUSTHIT,5 reaction,6 VILE far,
+7 UNDEAD near,8 random rejection. Random kinds 0/1 shadow,2/3 spread,4 damage,
+5 missile probability. Source sight uses tag 16 before range; pure public melee
+returns evidence without adding events. Selection precedes melee sound/state;
+JustAttacked follows missile state actions. Internal PosAttack facing has its own
+Face/Random observations without inventing another state-action event.
+
+Aim's reused Trace layout contains origin/delta, ordered cells/candidates, stable
+fraction-sorted intercepts, optional stopped object, absent position and traversed
+count, then aim target/slope/window. PosAttack uses existing tag 13 Attack/Trace,
+real effect and damage observations in source order. No observation drives AI.
+
+The independent Python encoder reads C traces, public inputs, original metadata
+and this schema. It maps source birth ordinals to the lowest free slot/current
+generation, retaining old references after retirement, and reproduces full events
+and canonical link order.1290 captures and 72 full streams include retirement and
+reuse; first differing named field precedes full bytes/digest checks. DSIM remains
+a project diagnostic format, not a vanilla demo, savegame or network protocol.

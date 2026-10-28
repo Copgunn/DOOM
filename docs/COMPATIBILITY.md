@@ -571,3 +571,41 @@ original signed-shift intent without changing its decisions. Twelve ownership/
 atomicity tests and independent DSIM-v9 bytes are project evidence, separately
 identified. None establishes complete original monster AI, DOS/Linux demo sync,
 commercial-map compatibility or a DOOM savegame format.
+
+## M3d3c bounded attack profile (DSIM-v10)
+
+The source-equivalent subset is Linux DOOM 1.10 range and Chase attack selection plus
+FaceTarget and one fully admitted PosAttack animation on labelled native type 136.
+Melee uses metadata radius and strict approximate-distance rejection before sight.
+Missile sight precedes JUSTHIT clearing, reaction delay, signed distance/type
+adjustments/caps and its final random comparison. Ordinary skills require zero
+movecount; nightmare bypasses that gate. fastparm/netgame are fixed false.
+Melee sound precedes state entry; missile JUSTATTACKED follows entry/actions.
+
+Native3/5/18/19/21 arithmetic fixtures do not admit original Arch-vile, Revenant,
+Lost Soul, Spider or Cyberdemon behavior. Action-free melee/missile markers prove
+selection only. Exact named states 4/5/6 reproduce POSS 10/8/8 animation, both facing
+calls, shadow/spread order, ((R%5)+1)*3 damage and return to native Chase. Existing
+M3d1 aim/intercepts, real blood/puffs, thrust, health, pain/death and source target
+relationships are shared, not replaced with presentation events.
+
+Rust policy restricts one unshootable first thinker on its floor, with zero
+physical momentum and speed1..16 direct walking; other shootable actors are
+unbound dummy type 135 source-body fixtures. No player_t, binding/damage, armor or roster
+health mirroring is introduced. Public direct combat remains in its earlier
+profiles. Unsupported callbacks, pending/stale attack dependencies, removable
+effect references, capacity and unsafe geometry/arithmetic reject atomically.
+Map/query/sight/intercept/actor limits remain +/-512,+/-1024,8192,128,64. Owner
+margins stay1008 direct/978 per tic; other live XY is within 994 for a tic. Effects
+are prepared within 994 XY and 1018 Z, covering jitter and newborn vertical motion.
+
+Source C comparisons include exact fixed-unit melee boundaries, type/cap and
+short-circuit decisions, ordinary/nightmare gates, double shadow facing, all five
+damage values, hit/wall/true miss, pain/lethal/extreme death, repeated tics,
+retirement/reuse and RNG wrap. The open far-distance fixture uses real two-sided
+self-referencing boundary geometry and original sight, without raising limits.
+Ordered multiplication defines the historical negative-shift/call-order intent;
+see source notes/provenance for ABI assumptions and excluded branches. Independent
+v10 bytes and seven Rust safety tests are separate evidence. Full original
+monsters, other attacks/melee damage, floating/doors/specials, actual players,
+commercial-map validation and DOS/Linux demos remain unimplemented/unverified.

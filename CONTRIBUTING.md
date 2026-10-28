@@ -138,7 +138,7 @@ Keep plasma, owner lifetime and arithmetic admission explicit, preflight failure
 before mutation and reuse existing actor/damage services. Player damage is a
 dependency investigation only. Record actual ASan runs and whether leak detection
 was disabled. M3d2b completed its authorized regular merge and post-merge gates;
-M3d3a completed its authorized gates; finalize M3d3b through its authorized regular-merge gates without auto-merge.
+M3d3a completed its authorized gates; M3d3b completed its authorized regular-merge/post-merge gates without auto-merge.
 
 ## M3d3a perception changes
 
@@ -151,7 +151,7 @@ lookers isolate genuine original A_Look with a supported see handoff; source
 monster metadata with immediate A_Chase must reject before mutation. No full
 monster AI, pursuit or attacks are admitted. Preserve every v1-v7 fixture and
 historical helper. M3d3a completed its authorized merge/post-merge gates;
-M3d3b has conditional regular-merge authorization after fresh checks.
+M3d3b completed its authorized regular merge as 0007af1.
 
 ## M3d3b pursuit changes
 
@@ -162,5 +162,22 @@ leak detection is disabled. Preserve all historical helpers and v1-v8 definition
 expected bytes. Keep source decisions, project canonical bytes and ownership
 policies distinct. Fixture-based non-attacking pursuit does not admit complete
 original monsters. No attack, door or float behavior may execute silently; no
-new collision engine or AI scheduler is permitted. M3d3b has conditional
-regular-merge authorization in the M3d3c mission; leave M3d3c open/unmerged.
+new collision engine or AI scheduler is permitted. M3d3b completed its regular merge and documentation PR #12 separately merged as
+876662d after post-merge CI; leave M3d3c open/unmerged.
+
+## M3d3c attack changes
+
+Read [M3D3C_REFERENCE.md](docs/M3D3C_REFERENCE.md) and DSIM-v10 before modifying
+attack admission, ranges, state selection or facing. Keep exact source branch,
+RNG, sound and state timing. Named markers demonstrate selection only; native type 136's
+copied POSS animation executes PosAttack through existing combat/LifeHost services.
+One unshootable first owner and unbound dummy targets are deliberate ownership
+policies, not full monster or player gameplay. Validate the complete reachable
+closure, bounded trace/damage/effect capacity and references before mutation.
+
+Run all ten reference generator/independent encoder pairs, ten example checks,
+nine fuzz builds and bounded attack ASan. Preserve old bytes and helpers. Keep
+C behavior, independent schema and Rust policies distinct. Use the
+[documentation review checklist](docs/DOC_REVIEW_CHECKLIST.md); report exact
+commit/CI and observed sanitizer settings. PR #13 requires separate owner merge
+authorization; keep it open with auto-merge disabled.

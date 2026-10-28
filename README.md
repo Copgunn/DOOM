@@ -30,15 +30,16 @@ explosion and removal in profile 7; [PR #9](https://github.com/Copgunn/DOOM/pull
 merged as `e109ee1` after final corrections and fresh/post-merge CI. M3d3a
 perception and target acquisition in [PR #10](https://github.com/Copgunn/DOOM/pull/10)
 merged as `839fbab` after final correction and successful correction/post-merge CI.
-M3d3b implements non-attacking source pursuit and movement decisions in profile 9
-in [PR #11](https://github.com/Copgunn/DOOM/pull/11) for owner review. Full original monster execution and attack
-actions remain future work. Acceptance and exact evidence are in the
-[roadmap](docs/ROADMAP.md) and [validation notes](docs/VALIDATION.md).
-[CI 40642802778](https://github.com/Copgunn/DOOM/actions/runs/40642802778) passed
-Linux, Windows, macOS and Rust 1.85 on implementation/documentation head
-`14efb10ff02f27d5e15f21ae7c5695b417c0352e`. The M3d3c mission conditionally authorizes PR #11’s regular merge after final
-corrections and fresh local/remote checks.
-A playable client is future work.
+M3d3b pursuit in [PR #11](https://github.com/Copgunn/DOOM/pull/11) merged as
+`0007af1` after correction-head and post-merge CI. Documentation
+[PR #12](https://github.com/Copgunn/DOOM/pull/12) separately merged as `876662d`;
+combined-master CI passed before M3d3c started. M3d3c implements bounded source
+attack selection and a complete admitted A_PosAttack animation in profile 10,
+on labelled synthetic actors, in [PR #13](https://github.com/Copgunn/DOOM/pull/13).
+It remains open and unmerged for owner review. Complete original monsters,
+actual player damage and a playable client remain future work. Exact gates and
+limitations are in the [roadmap](docs/ROADMAP.md) and
+[validation notes](docs/VALIDATION.md).
 
 Implemented:
 
@@ -74,6 +75,8 @@ Implemented:
   shared sector noise, ambush decisions and admitted A_Look with DSIM-v8.
 - Explicit M3d3b profile: original walking directions, P_Move/TryWalk/NewChaseDir,
   non-attacking A_Chase, target reacquisition and DSIM-v9.
+- Explicit M3d3c profile: source melee/missile range and Chase attack selection,
+  FaceTarget, bounded PosAttack with shared real impacts/damage, and DSIM-v10.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
 Choose the compatibility profile explicitly:
@@ -89,6 +92,7 @@ Choose the compatibility profile explicitly:
 | `Simulation::projectiles` | DSIM-v7 | M3d2b explicit original plasma launch, flight, direct impact and explosion/removal for unbound actors |
 | `Simulation::monster_perception` | DSIM-v8 | M3d3a pure sight, four-slot perception roster, target scanning and shared noise; labelled fixture A_Look only |
 | `Simulation::monster_pursuit` | DSIM-v9 | M3d3b perception plus non-attacking pursuit on labelled native look/chase fixtures; grounded static-map movement |
+| `Simulation::with_monster_attack_registry` | DSIM-v10 | M3d3c explicit fixture registry: one native attacker, source range/selection/facing, bounded PosAttack and unbound damage targets |
 
 M3b consumes supplied BLOCKMAP lists in reference order. Conservative omissions
 are diagnostic, not automatic rebuilds or proof of broken geometry. Missing
@@ -451,8 +455,9 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d2 | Player weapons, psprites and ammo | Merged as 955f690 |
 | M3d2b | Original plasma foundations | Merged as e109ee1 |
 | M3d3a | Monster perception and target acquisition | Merged as 839fbab |
-| M3d3b | Source pursuit and movement decisions | Reviewed; conditional regular merge gated on fresh checks |
-| Later M3d3–M3e | Attacks, integrated combat, interactions and moving sectors | Planned |
+| M3d3b | Source pursuit and movement decisions | Merged as 0007af1 |
+| M3d3c | Attack selection and bounded source hitscan action | Implemented; PR #13 open for owner review |
+| Later M3d3–M3e | Remaining attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
 
@@ -504,3 +509,34 @@ integration remain unsupported. See the exact [admission and arithmetic bounds](
 [player-damage dependency plan](docs/M3D2B_REFERENCE.md#actual-player-damage-dependencies-and-future-acceptance-plan)
 and [validation evidence](docs/VALIDATION.md). All examples use public synthetic
 fixtures; no private game data is required or accessed.
+
+## Bounded monster attacks (M3d3c)
+
+```sh
+cargo run -p doom-sim --example monster_attacks --locked
+python3 tools/reference/check_monster_attacks.py
+```
+
+The asserted synthetic demonstration acquires targets, walks, rejects an attack,
+selects the copied source attack animation, faces twice at the original times,
+aims/fires with source sound/spread/damage RNG, creates real impacts, applies
+admitted unbound damage and returns to pursuit. C traces and independent v10
+bytes verify every capture. The final 110-tic digest is `245e71d4a9c4023e`.
+All nine earlier examples remain available; no IWAD or presentation device is used.
+
+`with_monster_attack_registry(map, limit, registry, options)` admits exact named
+fixture adaptations described in [M3D3C_REFERENCE](docs/M3D3C_REFERENCE.md) and
+reproduced in the example's public fixture builder. Use `check_melee_range` for
+pure range evidence, `check_missile_range` for the source flag/RNG decision,
+`chase` for source selection, and `face_target`/`pos_attack` for bounded direct
+callbacks. The same actions run through ordinary thinker/state countdowns.
+Action-free melee/missile markers prove selection only. Only native type 136 admits
+PosAttack; original monster metadata recognition does not grant execution.
+
+One unshootable owner must be spawned first, remain thinker head and have zero
+physical momentum on its floor. It still performs direct source walking. Native
+135 targets use source player body states without player_t; roster health remains
+separate from actor damage. Exact original blood/puff thinkers may retire/reuse
+slots. Actual player binding/damage and profile 10 public direct-combat APIs reject.
+This is a complete tested action closure within a narrow fixture slice, not
+complete Zombieman/monster gameplay, melee damage, demos or a playable game.
