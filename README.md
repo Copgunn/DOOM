@@ -26,7 +26,8 @@ merged as `c924f18` after fresh correction-head and post-merge CI. M3d2 player
 weapons and psprites are implemented in [PR #8](https://github.com/Copgunn/DOOM/pull/8)
 merged as `955f690` after fresh correction-head and post-merge CI. M3d2b projectile
 foundations implement bounded original plasma spawning, flight, direct impact,
-explosion and removal in profile 7; the feature PR awaits owner review.
+explosion and removal in profile 7; [PR #9](https://github.com/Copgunn/DOOM/pull/9)
+awaits owner review and remains unmerged.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 

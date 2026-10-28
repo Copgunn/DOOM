@@ -997,8 +997,14 @@ seeds, 37-byte maximum input and at most 12 API operations. Leak detection was
 explicitly disabled; this is bounded AddressSanitizer smoke evidence, not
 LeakSanitizer coverage or exhaustive fuzzing. No benchmark superiority is claimed.
 
-Final remote CI and PR readiness are recorded after exact-head verification.
-The new PR must remain open/unmerged with auto-merge disabled; master stays at
+Implemented head `51080344e5b2688e0ab89984df0114bbc443290e` passed all four jobs
+in [CI 40629886585](https://github.com/Copgunn/DOOM/actions/runs/40629886585):
+stable Linux, Windows, macOS and Rust 1.85. The run metadata matches that exact
+head; Linux also reproduced all seven C generator/encoder pairs. Stable jobs
+passed recorded C/golden comparisons, release tests, seven-example equality and
+warning-free docs. [PR #9](https://github.com/Copgunn/DOOM/pull/9) records the
+subsequent final documentation-head SHA and its own fresh CI before readiness.
+The PR remains open/unmerged with auto-merge disabled; master stays at
 the authorized M3d2 merge. M3d3 perception/target acquisition is the recommended
 next bounded milestone. Player health/armor/immunity/attacker/feedback/death and
 weapon-lowering dependencies remain a documented future acceptance plan only.
