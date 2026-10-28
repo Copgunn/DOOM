@@ -1,0 +1,410 @@
+{
+  "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "functions": [
+    [
+      "r_main.c",
+      "R_PointOnSide",
+      "int"
+    ],
+    [
+      "r_main.c",
+      "R_PointInSubsector",
+      "subsector_t*"
+    ],
+    [
+      "r_main.c",
+      "R_PointToAngle",
+      "angle_t"
+    ],
+    [
+      "r_main.c",
+      "R_PointToAngle2",
+      "angle_t"
+    ],
+    [
+      "p_maputl.c",
+      "P_AproxDistance",
+      "fixed_t"
+    ],
+    [
+      "p_maputl.c",
+      "P_PointOnLineSide",
+      "int"
+    ],
+    [
+      "p_maputl.c",
+      "P_BoxOnLineSide",
+      "int"
+    ],
+    [
+      "p_maputl.c",
+      "P_PointOnDivlineSide",
+      "int"
+    ],
+    [
+      "p_maputl.c",
+      "P_MakeDivline",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_InterceptVector",
+      "fixed_t"
+    ],
+    [
+      "p_maputl.c",
+      "P_LineOpening",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_SetThingPosition",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_UnsetThingPosition",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_BlockLinesIterator",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "P_BlockThingsIterator",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "PIT_AddLineIntercepts",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "PIT_AddThingIntercepts",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "P_TraverseIntercepts",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "P_PathTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PIT_CheckLine",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PIT_CheckThing",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_CheckPosition",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_TryMove",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PTR_AimTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PTR_ShootTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_AimLineAttack",
+      "fixed_t"
+    ],
+    [
+      "p_map.c",
+      "P_LineAttack",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_InitThinkers",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_AddThinker",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_RemoveThinker",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_RunThinkers",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SetMobjState",
+      "boolean"
+    ],
+    [
+      "p_mobj.c",
+      "P_MobjThinker",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnMobj",
+      "mobj_t*"
+    ],
+    [
+      "p_mobj.c",
+      "P_RemoveMobj",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnPuff",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnBlood",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_XYMovement",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_ZMovement",
+      "void"
+    ],
+    [
+      "p_inter.c",
+      "P_KillMobj",
+      "void"
+    ],
+    [
+      "p_inter.c",
+      "P_DamageMobj",
+      "void"
+    ],
+    [
+      "p_sight.c",
+      "P_DivlineSide",
+      "int"
+    ],
+    [
+      "p_sight.c",
+      "P_InterceptVector2",
+      "fixed_t"
+    ],
+    [
+      "p_sight.c",
+      "P_CrossSubsector",
+      "boolean"
+    ],
+    [
+      "p_sight.c",
+      "P_CrossBSPNode",
+      "boolean"
+    ],
+    [
+      "p_sight.c",
+      "P_CheckSight",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_LookForPlayers",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "A_Look",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_RecursiveSound",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_NoiseAlert",
+      "void"
+    ],
+    [
+      "m_random.c",
+      "P_Random",
+      "int"
+    ],
+    [
+      "p_enemy.c",
+      "A_Fall",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Pain",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Scream",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_XScream",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_PlayerScream",
+      "void"
+    ]
+  ],
+  "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fwrapv",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char"
+  ],
+  "source_sha256": {
+    "am_map.h": "75c3671cbc7f003e16cc50abe98fe824e595f1c3bf66c2c722e8597a015e40ed",
+    "d_englsh.h": "b018968e3aef65e0009d6ec676d40c8731b33e2882758640d3028c530c87a789",
+    "d_event.h": "24ba8629e157f4f76c4da0821a9f1bf71c34c2aec5cbc1ee4ec5898751225d22",
+    "d_french.h": "018e635134bb064b6c559407221629bc27bc400769d9074dc742510ac7d88086",
+    "d_items.h": "322a73acb345703c9f00ae7528900daa3a49bd27c670d5acee4196c1ded74bda",
+    "d_main.h": "adb0988d417528bdb689f5249cc650360f5a81936c797346d8390b80af0c4ca9",
+    "d_net.h": "54d77e10fe98e7ad640c711e7146f1440e4bd3f73e46d27905f9c19b8117ac3d",
+    "d_player.h": "9c9a342ab7c3661ab02d32890bd0d74ede94a0745ae0d622de83a9ae11046ffb",
+    "d_textur.h": "fac8baf1195a1a1a00f872271c7e159ad8b66a3632385128403ed99f99cf5ba1",
+    "d_think.h": "a8d3d4943495c729cd33b67eff1b56d801f1cf8cd0db74fb5d63b613c4eabddc",
+    "d_ticcmd.h": "2f70caa7c187365850e467254d8b0a31c07ea304d59339c68fde63d05274d146",
+    "doomdata.h": "f0504fd3926491ee56c61c8e9c732f0bf7e74306cba482eb267beda5022accca",
+    "doomdef.h": "643daca966fb762fa86f39ce9a1779355117578527bf2e295163647f9ad0d74e",
+    "doomstat.h": "c8b9eb311ec529a371c1c49dbd9a571ee07976dfd1bdc83d26b77ff6ba163355",
+    "doomtype.h": "e2b8da9ed44c6686a282af8e14a53b605ecc781d05ccd78579fcf57c720297e6",
+    "dstrings.h": "de1d24709df885ac93ddc5c1b86dbc2e0baad1027dde01ea09076d9e28778bc0",
+    "f_finale.h": "ee5cb17f104a894de9fed452dfad04df3e070a7bc70e65d9d336421f7dee9359",
+    "f_wipe.h": "fff2fb466d978eb4d482464899302830a377e305b0d31c9524072ec569cfaff0",
+    "g_game.h": "ab47e29d7506cda9a702073c451d6e533204e49a064a0ccc6e98ae4c5e9faa60",
+    "hu_lib.h": "611143caa98ef13992845fde571be9a9c3d944fa850ee2f2d8b0406aae9ed02e",
+    "hu_stuff.h": "09a1c0ef0434b0b46e9ea3b43232898b7b939b07bf18f302458227948d98579c",
+    "i_net.h": "0c32e01a687cda4e8db3f87ec38db53b7c4c9826e69a128f6dc7a2121a622f5a",
+    "i_sound.h": "7a4171979ac20b40c02969be19d404cbc77e4493aa69bb22c0eeaf1f9b8c519b",
+    "i_system.h": "426ccb2f2b29facaa80e0a43165bb62395ceda6dbb8ed27d0a3cfc99a91a6abc",
+    "i_video.h": "d9af47ac4d55f1acb0dd1060b663b8d2c085688a39807b101a9ff082800b4e42",
+    "info.c": "e09631527669ee528bdae20a47be79e1cb33972b39964c33ac4814e1701a0949",
+    "info.h": "3e68ee6cc13323e69cbcf208e9a0af7b13867bead49e66d765abefa5d914b0dd",
+    "m_argv.h": "388205a8bda230f472caafac172a42621c72693f018e66c7c71389e4ea24c7b4",
+    "m_bbox.h": "fc041f774ff1f7b2b05d5bd8dd35a9496cf4dd4ca2a0a2df2420ac6f827b0b5d",
+    "m_cheat.h": "92f43c6df575a07bc394981f1beb1b901889f84bce67b557b8274f0379f0ae88",
+    "m_fixed.c": "a4472841bc8890c5d5a41b325ecf56d10d7026a7489967aa29100b5dee759fea",
+    "m_fixed.h": "67aa3925a905d448fb947fb7358093a39367f534c3e26e3f8b06228f553227ef",
+    "m_menu.h": "ccfc1f2abe50cbb78e83d2ec35eb3812003945f2d668e69551b5b2d56bfc4dfa",
+    "m_misc.h": "5cf237e545bd93d01a59f3696afa02073beedf8131ea23f30924fd5cc3891c7b",
+    "m_random.c": "8d89f5cfcbbd0170e46b55538c4c272b3cf5b5d7dce91023b8aa8d9b922b21ee",
+    "m_random.h": "31ec17387c9b7148f8e9762b71cccebaa199bffece76e1103bdb64f0ae615caa",
+    "m_swap.h": "04e76b9143f1d78a8f5cbb11b8d5022b2d5b0f18f644615384fa793f741ffd19",
+    "p_enemy.c": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0",
+    "p_inter.c": "72e9bbabe560ef548c2f2522494786347d5c831b0e1f0ecb5cb29d8d8e682356",
+    "p_inter.h": "348edaf0dbbac0b455e54823d3e8bdab72ac210bf22cd17cffc519596661fa2a",
+    "p_local.h": "8d71f591ed5f26580042d991558c89d674b683f9cd1c2801ac7714de04b0185f",
+    "p_map.c": "752c7873c81fe6b10b77a08b7ef5716fe49c3103f6caa02097ed299e6e04736c",
+    "p_maputl.c": "4d93e06d11160fb935e94750babbdcc9a4469d96f593764872db87cefd37c0a1",
+    "p_mobj.c": "21a39bdbd746d6fba38660500203216052f0723b8e0ab033ce2a650ada2b403f",
+    "p_mobj.h": "85be6ea83fc4b5f95df666c68c8999f7fe5745a5f503d3a441afd66b5f7e5db0",
+    "p_pspr.h": "21b95a0eb8b901287be5077b780b809e5e4e296393cb63c8e02970646a8f8e67",
+    "p_saveg.h": "31457a112b24c4bd91df919c9e2c81add41019194492d320f81f2d837ed00bac",
+    "p_setup.h": "ffffe92a94edde836ca5d2d5db311d003ce03e1dcfe542d948ee8094f1637be0",
+    "p_sight.c": "81014a71e4155db6da0af21e6ecf14687daf18075fb75322b63bdc254ce11120",
+    "p_spec.h": "95d93e2e3b803126b0ecf6ea42de41d2bce7b2d09ea701e03992f0cc6dae22a3",
+    "p_tick.c": "21a638b7b1ae4fcb6b6892a731cd27d20f44e2df12dd3325c8215ca4c9aee22f",
+    "p_tick.h": "a0512fd19e760d5d43e477bfe4fabf686542bc21bc27daa87108cb703fc562a7",
+    "r_bsp.h": "08ca429757b65ac35798cf9f47ef9dea072e27a5b856fdf300c9fc2fcba5fac6",
+    "r_data.h": "4dbb1515b2e1be1e2496018365ebd37507f001ae449a181a54a894a70141ed1b",
+    "r_defs.h": "d8856503bea02282f5f338f3533885e87c6c430ce4f11511d6a04b5fc040db31",
+    "r_draw.h": "4ab1c0bbf7dba3712db71ba0ba7901184b2a35a8b6132db40bd0f6c87b74ccfe",
+    "r_local.h": "b92f15cbc8620b38de46512166244ba9f357de4fc8ef32be2f35088bc1cfd443",
+    "r_main.c": "2aae43cf807929a8758f71ed0205fc08017556541ba8df2ea9167c003d0dec5a",
+    "r_main.h": "9576bf120653af7127dcfd754f50e294b76be38bacb3b43f8686111a2dcd501b",
+    "r_plane.h": "abc99d0fc7845c8e9e73057b14a886b138046d5e432303c87fa5c34879f5903e",
+    "r_segs.h": "9343a51c57d93f13098118cfbc23377487b4063ec0dbf447c6aee8a7d0fd68ce",
+    "r_sky.h": "2c4a650afa36997ccb8ff97b7e1a5a0b25c1090a17c9e39b3d66e1d53ea9391e",
+    "r_state.h": "35a0d8f2e6a8f88ff100625708e54a6f04d22506319bef1c08033293e3ca22bd",
+    "r_things.h": "7e7a985f29f971e7e5c14c93c79f8d3462f4a42f5544d4c298a90df00561cf50",
+    "s_sound.h": "d747126bc8105ef540dee2f6f7e9f17db047dabb2c03a740ddc1bb9f98746b83",
+    "sounds.h": "fa5a6c19c689eeb6e4a2df08b1d4efe5c445b3d0cb4081dc3a7d28fdadfd39f8",
+    "st_lib.h": "8ae86cf219785672579e6dd75ce3a5abae2e9991c44af647d59f6bec384307c2",
+    "st_stuff.h": "0e2aad8828e13314e754c370da0c8cb61f08006c349fb1587ad28ea789ba4d85",
+    "tables.c": "db8759f4311654c63785dcffb8f73a00a61cfe2713e4284c238dea420b6e5f89",
+    "tables.h": "54e366ed33a0bd65e5cad6c5b6f7df77573909e5974b8af296fdb1503c77fcf2",
+    "v_video.h": "728500c3b693d1baff1a43c5df6d0c6d55d1ec343247becd7db33c1be747635b",
+    "w_wad.h": "1c5f7a0f6ba41f1f6ce22440fb020596d0ea7b16742f9f2a044e9bc7d66e8abb",
+    "wi_stuff.h": "57ab19c222d6e54158b3fff8ea6ea23d23e7646925aab830b06cf8cfc1e84f5e",
+    "z_zone.h": "46498575b14b5f5538d0d93f3d7c8325941b76f0e36b435bb895ecaac6f54cca"
+  },
+  "adapter_sha256": {
+    "generate.py": "e80beb09a686c030a6229599f5e0c9e9fd9b109ecebdcb9dd474a2a78e01d6cf",
+    "generate_m3b.py": "613aeb1563573f1990314414c0e1086d1645c3afd4764c2316c8e7d4e828a374",
+    "generate_m3c.py": "caca6c42d0856c87878f22e65380bf9ef50d8070e721f2edbb2d6ad656667d64",
+    "generate_m3d1.py": "a2abea47bea8ace07c0091e87dcd2edc159b3e17abb8a52204e569cd53b23ce9",
+    "generate_m3d3a.py": "371029b67a52bf713353a9530bae6a9f6235ed1f8a70a7056f7581f8c1b98cf9",
+    "m3d3a_shim.h": "0639fbe6251ca5b9cbb6f20013bdf322fbeecb664df7d5a3f04578a8308aaade"
+  },
+  "outputs_sha256": {
+    "tests/reference/m3d3a_map_0.bin": "848d3b831f04dc38f8df27d8dd85998834ecb4a9407bdc4424f4d30e3fbcb2d9",
+    "tests/reference/m3d3a_map_1.bin": "87cd9edd4dbf542225c1538b0e52560f45277fe1cd2696801e1f62ec1cddebfe",
+    "tests/reference/m3d3a_map_2.bin": "6461c9d8c7e87ee733e06e2a8de55eba1e620391f4459bcf2111d0e553fc7edd",
+    "tests/reference/m3d3a_map_3.bin": "420e12dd792f9abdc2ce05bb5c1a341189209578cc16b509e39a8b21e18b1340",
+    "tests/reference/m3d3a_map_4.bin": "19332987fbd3d95217aba8d5ea0f376ebf390bdde216447074a8ba9e37135a87",
+    "tests/reference/m3d3a_map_5.bin": "02cd832cbb20877cd17678122ea1a1e9db67eaf62fd81a51489f5a66c1f770e3",
+    "tests/reference/m3d3a_map_6.bin": "4ab636d73db62d2f93761bcc831ccd5716d3bdeecc686564825ca729d9ea05c8",
+    "tests/reference/m3d3a_map_7.bin": "78393a156a11811b80b8106bbf9f66fb6d0d57a040bee242053ea871e4002a54",
+    "tests/reference/m3d3a_map_8.bin": "4c89e58051e79f6c653a4dab66bddc5115a489b53c4d04d3b669fd1a675cb763",
+    "tests/reference/m3d3a_map_9.bin": "f420b5d886d299bfe641d23e9729caff7515b75b5cbe941f6ffda1977e47d615",
+    "tests/reference/m3d3a_map_10.bin": "e97f91f728c51eabdfd56e81479faceb0c8ef8aa061b2b18dfc1cb4d23bb8384",
+    "tests/reference/m3d3a_map_11.bin": "f6c99cac34b6314cee09060c44ff8283de953b96c237a88342f5de7075ec8abe",
+    "tests/reference/m3d3a_map_12.bin": "7dd4bf539dc0880c2dcb85288e15e5e7d35dc873b36da367485f8eb432c92c00",
+    "tests/reference/m3d3a_map_13.bin": "2c4da41ed00552a165e7492aaa58af5cd95b9a9be32020a0c2800ffa0bd0c064",
+    "tests/reference/m3d3a_map_14.bin": "04a82ef1bbab456ce0dfdb18cf38abb2b8dc9df006c626fb8fb3f9376c2ecdd3",
+    "tests/reference/m3d3a_map_15.bin": "b2884c1c70032968896dfa46dfe71cba629c00edf71ee22ba274fba6cf9e1c41",
+    "tests/reference/m3d3a_map_16.bin": "51567cc8196ddfca05a6d8e772b17c2da349f758b18a96b9ae7eafc7e246ac1a",
+    "tests/reference/m3d3a_trace.csv": "5b3a1527f000283cd7f4b2b7bdc475fe2c232b30bac8d2968c2d8d55eeb7ca55",
+    "tests/reference/m3d3a_sides.csv": "a0ed4a499b2b220c75f85bd9f996d2ade1be5a2a013f7a4fb918906447e6190e",
+    "tests/reference/m3d3a_fractions.csv": "b0497ce0ccd1d7fa257f6c4bd546ec4c5bd824d2851e729c85edcaa4760a1080",
+    "tests/reference/m3d3a_cases.csv": "b9fb6673c618668c809060367f6f647ca7c44e1c657d6732963356fb9c1d3d1b"
+  },
+  "assumptions": [
+    "real original structs/info and 32-bit fixed/int, 64-bit pointer/function-union ABI",
+    "exact sight horizontal x==node.y quirk, shifts/division and BSP order retained",
+    "native states 1/2 and types 19/21/136 explicitly isolate A_Look with action-free see handoff; no chase/attacks/player damage",
+    "empty fallback roster, stale identities and unsafe extremes excluded from original-C execution and tested as declared Rust safety policies",
+    "source retired memory retained solely for observation; no Rust expected values or proprietary data read"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41"
+}
