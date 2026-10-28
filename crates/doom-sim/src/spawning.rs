@@ -84,13 +84,13 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
-        if self.profile == Profile::Perception
+        if self.profile.uses_perception()
             && (position.iter().any(|v| !crate::sight::within(*v, 1024))
                 || matches!(height,SpawnHeight::Absolute(z) if !crate::sight::within(z,1024)))
         {
             return Err(PerceptionError::Arithmetic.into());
         }
-        if self.profile == Profile::Perception {
+        if self.profile.uses_perception() {
             self.validate_perception_type(ty)?;
         } else if self.profile == Profile::Projectiles {
             if ty == ActorTypeId(34) {
@@ -120,13 +120,15 @@ impl Simulation {
     }
     pub(crate) fn validate_entry(&self, state: StateId) -> Result<(), SimError> {
         let registry = self.registry_required()?;
-        if self.profile == Profile::Perception {
+        if self.profile == Profile::Pursuit {
+            registry.validate_state_pursuit(state)?;
+        } else if self.profile.uses_perception() {
             registry.validate_state_perception(state)?;
         } else {
             registry.validate_state(state)?;
         }
         for ty in registry.spawn_dependencies(state)? {
-            if self.profile == Profile::Perception {
+            if self.profile.uses_perception() {
                 self.validate_perception_type(ty)?;
             } else if self.profile == Profile::Projectiles {
                 registry.validate_type_projectile(ty, &self.sectors)?;
@@ -140,7 +142,8 @@ impl Simulation {
     }
     pub(crate) fn enter_validated(&mut self, id: ActorId, state: StateId) {
         let perception =
-            (self.profile == Profile::Perception).then_some(crate::perception::PerceptionInputs {
+            (self.profile.uses_perception()).then_some(crate::perception::PerceptionInputs {
+                pursuit: self.profile == Profile::Pursuit,
                 players: &self.perception_players,
                 sound_targets: &self.sound_targets,
             });
@@ -163,7 +166,9 @@ impl Simulation {
     pub fn enter_actor_state(&mut self, id: ActorId, state: StateId) -> Result<(), SimError> {
         let life = self.active_typed(id)?;
         self.projectile_control(id)?;
-        if self.profile == Profile::Perception {
+        if self.profile == Profile::Pursuit {
+            self.preflight_pursuit_entry(id, state)?;
+        } else if self.profile.uses_perception() {
             self.preflight_perception_entry(id, state)?;
         }
         self.validate_entry(state)?;
@@ -212,6 +217,11 @@ impl Simulation {
     ) -> Result<(), SimError> {
         self.active_typed(id)?;
         self.projectile_control(id)?;
+        if self.profile == Profile::Pursuit {
+            if let Some(t) = target {
+                self.validate_perception_reference(t)?;
+            }
+        }
         if target.is_some_and(|target| self.actor(target).is_none()) {
             return Err(StoreError::InvalidHandle.into());
         }
@@ -287,7 +297,7 @@ impl Simulation {
                 report.filtered += 1;
                 continue;
             }
-            if self.profile == Profile::Perception {
+            if self.profile.uses_perception() {
                 if [thing.position.x, thing.position.y]
                     .iter()
                     .any(|v| v.unsigned_abs() > 1024)
