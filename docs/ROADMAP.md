@@ -603,3 +603,38 @@ are explicit admission boundaries, not silently successful callbacks. A separate
 next investigation and implementation covers original SARG stand/run animation
 closure in M3d3h, only after PR #17's correction/merge/post-merge gates. It does
 not expand M3d3g's declared runtime scope.
+
+## M3d3h — Original Demon Stand/Run State Closure
+
+Starts from verified master `f44828d5` after PR17 correction/regular merge and
+successful exact post-merge CI40781481835. [Source investigation](M3D3H_REFERENCE.md)
+was committed before runtime.
+
+- [x] Separate profile 15; complete original two-state stand and eight-state run
+  closure with mapped IDs, source sprite/frame/tics/actions/next links.
+- [x] Source spawn/entry timing, immediate nested Look/Chase/melee handoffs and
+  separate repeated-frame actions; no new AI scheduler or pathfinder.
+- [x] Existing perception/noise, source movement/RNG, melee, pain/death/corpse,
+  thinker/spatial ordering and generation identities composed.
+- [x] Explicit fixture admission; full Demon/Spectre/player/scoring/raise/fast/
+  projectile/special branches remain rejected.
+- [x] Bounded preflight and complete recoverable-error atomicity, including new
+  stand/future-run action closure and public lifecycle shortcut protections.
+- [x] Original-C 390 scenarios/68 compiled bodies/all 21 exercised maps;
+  935,012 actor fields/38,578 raw draws/151,474 ordered rows; separate3 components.
+- [x] Independent DSIM-v15:7,186 captures/1,395 full bytes; historicalv1–v14 frozen.
+- [x] Fourteen public/five private safety tests plus one scalar-C component;
+  ten-scenario asserted example and digest `51463158173610c5`, debug/release equal.
+- [x] All fourteen ASan fuzz targets build; bounded source-backed stand/run target.
+- [x] Fresh workspace/MSRV242 each and release218, all18 core commands and
+  fifteen asserted debug/release examples passed.
+- [ ] All fifteen historical/new C/independent-encoder pairs reproduced.
+- [ ] Bounded ASan campaign completed with actual executions/findings recorded.
+- [ ] Exact implementation/final-head Linux/Windows/native macOS/Rust 1.85 CI.
+- [ ] New PR ready for separate owner review; leave open/unmerged/no auto-merge.
+
+Full actor/map-spawn admission, fast/Nightmare, scoring/global statistics,
+resurrection, player damage, other attacks/projectiles, dynamic sectors/specials,
+multiplayer, demos and rendering remain deferred. Recommended next separate
+investigation: original Demon map-spawn/full-admission prerequisites and their
+remaining ownership/statistics dependencies. No additional milestone is implemented.

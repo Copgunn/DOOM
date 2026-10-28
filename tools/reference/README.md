@@ -393,3 +393,40 @@ comparison. The example checks nine C-backed/repeated-instance trajectories and
 70-tic pain/death digest eecc4b4dcc4fbca5. Full Demon/Spectre/statistics/player/
 raise/projectile gameplay remains outside the declared fixture. Canonical-state
 consistency and Rust safety tests are distinct from original-C equivalence.
+
+## M3d3h original Demon stand/run tools
+
+```sh
+python3 tools/reference/generate_m3d3h.py --check
+python3 tools/reference/m3d3h_snapshot_goldens.py --check
+python3 tools/reference/check_demon_stand_run.py
+```
+
+The generator compiles 68 genuine Linux 1.10 bodies, original structures/info/state
+tables, collision/RNG helpers and instrumented action/state/thinker order. It
+copies the original two stand/eight run states into declared aliases, rather
+than approximating actions. Its390 scenarios actually exercise all 21 synthetic
+maps (IDs0–20), including active run on each. Compare 935,012 live actor fields,
+38,578 raw RNG draws including setup/discards and151,474 ordered instrumentation
+rows. Inventory is not branch coverage; rows are not one row per event. Three
+separate pain boundary injections179/180/181 retain explicit provenance and are
+not counted as gameplay captures. C idle scenarios retain an active dead roster
+slot; all-inactive/stale/unsupported extremes are labelled Rust policies.
+
+`m3d3h_shim.h`, cases/maps/traces and provenance record exact inputs/outputs,
+source/body/header/adapter hashes, compiler/ABI/flags and arithmetic assumptions.
+Scripted loss/wake/noise/damage operations are declared fixture inputs; source
+callbacks remain genuine. Original retired memory is retained for observation,
+while Rust demonstrates real generation reuse. Unsupported C services abort.
+No proprietary data or Rust-generated expected outputs are read.
+
+The independent Python encoder reads C/public inputs/schema, copies original
+metadata into the same documented aliases, and checks7,186 DSIM-v15 captures/
+1,395 complete byte streams with per-tic digests/first-field diagnostics. Full
+fixtures include idle/run loops, nested wake/lifecycle, target loss/reacquisition
+and observed RNG-wrap boundaries. The asserted ten-scenario example checks the
+same C fields/bytes and 130-tic digest `51463158173610c5` across repeated instances.
+Keep all fourteen older pairs/examples, v1–v14 definitions and thirteen historical
+Rust helpers byte-identical; this README's prose may evolve. See
+[M3D3H_REFERENCE](../../docs/M3D3H_REFERENCE.md) and
+[validation](../../docs/VALIDATION.md) for acceptance evidence and limits.

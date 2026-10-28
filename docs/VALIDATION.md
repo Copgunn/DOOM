@@ -2039,3 +2039,50 @@ attribution, original licenses and locks remain unchanged. No private repositori
 or commercial IWADs were accessed; repository stays public/GPL-2.0-only. No CI
 bypass, squash, force-push, history rewrite or auto-merge. M3d3h has its own review
 gate and its new PR must remain open/unmerged without auto-merge.
+
+## M3d3h independent original-C, canonical and policy evidence
+
+Source investigation `4aec917becbde5348fcbe402fb935d0a16fa6b67` was committed after
+the verified PR17 merge/post-merge gate and before metadata `b073f648` or runtime
+integration `d35a67af`. Explicit profile 15 preserves profile 14's existing loops.
+See [M3D3H_REFERENCE](M3D3H_REFERENCE.md) for source states, mapping and limits.
+
+| Evidence family | Observed result |
+| --- | --- |
+| Compiled original C | 68 genuine bodies, original structs/info/state tables; inventory is not branch coverage |
+| Main scenarios / maps | 390; all 21 supplied synthetic maps actually exercised, including active run on every map |
+| Live actor fields | 935,012 comparisons |
+| Raw gameplay RNG | 38,578, including setup/discards and actual LUT wrap |
+| Ordered instrumentation | 151,474 reconciled rows; not one row per event |
+| Separate C components | Three injected179/180/181 pain probes; excluded from gameplay scenarios/captures/draws |
+| Independent DSIM-v15 | 7,186 captures and 1,395 full byte fixtures, all field/byte/digest comparisons passed |
+| Rust-specific safety | 14 public and 5 private tests; separate sixth private scalar-C comparison |
+| Asserted example | Ten C-backed/repeated-instance scenarios;130-tic digest `51463158173610c5`; debug/release equal |
+| Fuzz builds | All fourteen ASan target executables built and verified |
+
+The C suite includes genuine Look/Chase/Move/TryWalk/NewChaseDir/sight/melee/
+damage/state/thinker bodies. It exercises idle, all eight run states and repeated
+frames, nested sight/noise/ambush wake, target loss/reacquisition, original movement,
+stand1-versus-stand2 damage, melee/pain/death/corpse, all 21 geometries, actual RNG
+wrap and generational retirement/reuse. Source/body/header/adapter/input/output
+hashes, compiler/ABI/flags and historical arithmetic assumptions are recorded.
+Canonical expected values read C/public inputs/schema only, never Rust output.
+
+A Rust-only regression found the new profile initially missing the existing
+public death-request guard. The guard now includes both lifecycle profiles;
+all safety tests passed, and historical 14 behavior is unchanged. This is separate
+from the source-C gameplay comparisons. Controlled damage before a thinker
+consumes its first state tic in that same update: the example's tic 45 pain hit
+sounds at 46 and returns to Chase at 48, directly verified by original-C traces.
+
+Fresh workspace/MSRV tests passed242 each, release218. All18 core commands
+passed: build, workspace/fuzz formatting, all-target Clippy and rustdoc with
+warnings denied, tests/MSRV/release and all fifteen debug/release examples.
+The final historical/new reference reproduction run is finishing its last encoder.
+All165 upstream files and1699 historical reference/tool/support paths, ancestry,
+licenses, attribution and dependency locks were reverified unchanged. All243
+relative Markdown links/two anchors resolve.
+The new bounded ASan campaign is running; no completed execution count or finding
+is claimed until observed. Exact remote results and final SHA are recorded on the
+M3d3h PR after verification. The PR stays draft while gates are pending and must
+remain open/unmerged without auto-merge for separate owner review.

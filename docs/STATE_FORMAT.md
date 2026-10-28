@@ -1,6 +1,6 @@
-# Canonical simulation state, DSIM versions 1 through 14
+# Canonical simulation state, DSIM versions 1 through 15
 
-This is a diagnostic/replay comparison format for explicit M2 through M3d3g profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3d3h profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -694,3 +694,27 @@ byte streams from C/public inputs/schema, including per-tic digests and first-fi
 comparison paths. The three injected pain-boundary components are excluded from
 canonical gameplay captures. DSIM remains project diagnostic data, not a vanilla
 savegame, network protocol or proof of full demo synchronization.
+
+## DSIM-v15 — Original Demon Stand/Run State Closure
+
+Profile 15 composes the v14 persistent layout and observation tags. Header schema
+and profile numbers are15; every v1–v14 encoder/fixture byte remains unchanged.
+No additional persistent actor flag, AI clock or redundant corpse state is added.
+Actor state/tics/sprite/frame, original metadata, health/flags/height/momentum,
+identity/target, reaction/threshold/directions, thinker/spatial/sector/roster/sound
+membership and RNG already describe this behavior.
+
+The immutable fixture registry copies source states 475/476 into1/3, and477–484
+into2/15–21. Sprite39, frames0/1 and10/10 stand timing, frames0/0/1/1/2/2/3/3 and
+2-tic run timing, actions/misc and every mapped next-state link are retained.
+Native 136 is named FIXTURE_DEMON_STAND_RUN_136. Its property aliases, excluded
+COUNTKILL/raise and admitted body/effects match the documented restricted slice.
+Attack4–6 and pain7–8 return to RUN1/2; death9–14 preserves terminal-1.
+
+Existing Entered/Action/Sound, perception/sight/movement and combat observations
+record immediate nested chronology. Repeated frames still have different state
+IDs and separate Chase actions. No transient tag is added merely to label a frame.
+`m3d3h_snapshot_goldens.py` independently derives 7,186 captures and 1,395 complete
+byte fixtures from original-C traces/public inputs/schema, including all loop,
+wake/combat/lifecycle transitions and C-observed RNG-wrap boundaries. It never
+reads Rust output. DSIM is project diagnostic data, not a DOOM savegame or demo.

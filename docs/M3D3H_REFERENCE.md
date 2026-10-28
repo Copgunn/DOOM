@@ -8,9 +8,9 @@ The authorized regular merge has ordered parents
 `75b2a2bc9a28401de358859f0499fe4c81dfa0a2` and that correction; tree
 `4ed21d4d63ce376a7d5599b5b0f3c5416415edaa` equals the tested correction tree.
 Exact merge [push CI 40781481835](https://github.com/Copgunn/DOOM/actions/runs/40781481835)
-passed Linux, Windows, native macos-26-intel and Rust1.85, completed
+passed Linux, Windows, native macos-26-intel and Rust 1.85, completed
 2026-10-28 22:45:23 UTC before this branch or runtime work. PR17 is closed/merged;
-local/remote master agree. All165 original files and1699 historical reference/
+local/remote master agree. All 165 original files and 1699 historical reference/
 tool/support paths, ancestry, attribution, licensing and locks remain preserved.
 No private repository or commercial IWAD was accessed. This source investigation
 is planning material; implementation and independent validation are required.
@@ -93,7 +93,7 @@ flags SOLID|SHOOTABLE|COUNTKILL, raise496. Type13 Spectre adds SHADOW and remain
 outside executable admission. Normal raw timing only: G_InitNew rewrites the
 inclusive RUN1..PAIN2 timers for fast/Nightmare, which this profile rejects.
 
-Continue the explicitly labelled native136 fixture: copy source properties,
+Continue the explicitly labelled native 136 fixture: copy source properties,
 retain DoomNum-1 and alias spawn/see/melee/pain/death, omit COUNTKILL and raise
 because source player/global scoring and resurrection dependencies are absent.
 Keep unbound type135 body fixtures and admitted blood/puff roles. Original actor
@@ -120,8 +120,8 @@ in both stand states instead of broadening this pointer-equality condition.
 
 ## Admission and recoverable failures
 
-Create separate profile15, `ActorRegistry::demon_stand_run_fixture` and
-`Simulation::with_demon_stand_run_registry`; profile14 retains its simplified
+Create separate profile 15, `ActorRegistry::demon_stand_run_fixture` and
+`Simulation::with_demon_stand_run_registry`; profile 14 retains its simplified
 loops and every historical canonical byte. Require exact immutable fixture
 definitions. Preserve the existing first single native owner,64 actors, map
 and coordinate margins, sight work, positive timers and counter bounds.
@@ -166,3 +166,39 @@ tags; no redundant state or corpse flag. Produce complete byte fixtures, digests
 and first-field divergence diagnostics. DSIM is a project diagnostic format,
 not an original DOOM savegame/demo. Keep original-C equivalence, independent
 canonical consistency and Rust-only safety tests separate in all reporting.
+
+## Implemented slice and independent observations
+
+Investigation commit `4aec917b` precedes metadata `b073f648` and integration
+`d35a67af`. The implemented separate Profile::DemonStandRun uses the mapped ten
+source states and existing lifecycle/combat/preflight services. Profile 14 keeps
+its exact original fixture loops. Public controlled death requests are excluded
+from both lifecycle profiles; no gameplay callback or damage engine was added.
+
+Original-C 390 scenarios actually execute all 21 synthetic maps, including active
+run on each. The declared68-body inventory includes inherited compiled functions
+and is not branch coverage. Matching live actor-field comparisons total 935,012,
+raw gameplay draws 38,578 (including setup/discards) and independently reconciled
+ordered instrumentation rows 151,474. The three injected pain-boundary components
+remain separate from actual gameplay/canonical captures.
+
+Independent DSIM-v15 encoding yields 7,186 captures and 1,395 full byte fixtures.
+Rust matches source fields/actions/RNG and canonical fields/bytes/digests, with
+first-field diagnostics. Fourteen public/five private safety-policy tests and
+one separate scalar-C comparison exercise admission, unsupported future actions,
+capacity/counters/bindings/identities, pause/read independence and atomicity.
+The ten-scenario asserted example has independently derived130-tic digest
+`51463158173610c5` and identical debug/release output.
+
+The combined example is intentionally driven by real source RNG (skip1), not a
+forced pain decision. Spawning leaves STND1; first Look can fail and STND2 persist
+until the next source entry. The tic45 nonlethal hit enters PAIN; that same
+thinker update consumes its first tic, so A_Pain sounds at46 and return enters
+RUN1/Chase at48 (which can immediately enter melee). Lethal damage at75 enters
+ordinary death, with delayed Scream/Fall and terminal state at101. The corpse
+persists through130. The full trace records nested RUN1 entry even when the final
+state of that call is ATK1. Do not infer action chronology solely from end states.
+
+Full mandatory/regression, sanitizer and remote acceptance results are recorded
+in [VALIDATION](VALIDATION.md) after observation. Runtime scope remains the
+explicit restricted normal-timing fixture, not complete Demon/Spectre admission.

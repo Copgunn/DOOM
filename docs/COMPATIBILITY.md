@@ -761,3 +761,29 @@ other monster actions, cross-profile plasma/projectiles, generalized infighting,
 map specials/dynamic sectors and full monster execution remain excluded. Existing
 bounds and safe counter/arithmetic/reference policies remain explicit. Independent
 C comparisons establish this declared slice, not full vanilla/demo synchronization.
+
+## M3d3h original Demon stand/run slice
+
+Separate profile 15 copies Linux 1.10 SARG_STND/STND2 (frame0/1,10tics,A_Look) and
+RUN1–8 (frames0/0/1/1/2/2/3/3,2tics,A_Chase). Source sprite39 and every next-state
+link are preserved through documented aliases. A 16-tic run cycle has eight
+Chase entries. Spawn does not invoke Look; ordinary entry invokes it immediately.
+Wake, reacquisition and attack/pain handoffs preserve nested entry chronology,
+source movement/RNG/sounds and existing thinker ordering. Nonlethal no-pain damage
+can immediately enter see only from the exact spawn state, not STND2.
+
+The declared fixture retains health150/mass400/radius30/height56, original sounds,
+SARG8/8/8 melee, pain180/2/2 and ordinary death8/8/4/4/4/-1, delayed sounds/Fall,
+quarter corpse height and persistent linked terminal corpses. Source Shootable/
+Solid flags are copied, COUNTKILL and raise omitted. It does not automatically
+admit original MT_SERGEANT or Spectre, source map spawning, fast/Nightmare,
+scoring/global statistics, player damage, generalized infighting/projectiles,
+resurrection, dynamic sectors/specials, multiplayer or demos. Source sound timing
+is headless origin/ID evidence, not mixer/hardware/pitch compatibility.
+
+Independent C comparisons exercise390 scenarios, including active run scenarios
+on all 21 public synthetic maps. Empty-roster bounded termination, rejected stale
+references/unsupported callbacks/capacity and canonical failure preservation are
+Rust safety policies, not proof of complete source-engine behavior. C idle cases
+retain an active dead roster entry to avoid the original all-inactive scan loop.
+All historical profiles and v1–v14 expectations remain preserved.
