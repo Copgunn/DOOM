@@ -47,7 +47,7 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Canonical schema version: 1 for M2, 2 for M3a, 3 for M3b.
+    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1.
     pub const fn version(&self) -> u32 {
         self.version
     }
@@ -197,6 +197,10 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        Event::Combat(event) => {
+            b.push(13);
+            combat_bytes(&mut b, event);
+        }
         Event::ActorState(event) => {
             b.push(12);
             state_event_bytes(&mut b, event);
@@ -311,13 +315,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::PlayerCollision => 2,
         crate::Profile::MultiSector => 3,
         crate::Profile::ActorStates => 4,
+        crate::Profile::Combat => 5,
     };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
     let [p, m] = sim.rng.indices();
     field(&mut fields, "rng.gameplay", [p]);
     field(&mut fields, "rng.miscellaneous", [m]);
-    if version == 4 {
+    if version >= 4 {
         field(
             &mut fields,
             "actors.options",
@@ -404,8 +409,15 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                         .to_le_bytes(),
                 );
             }
-            if version == 4 {
+            if version >= 4 {
                 life_fields(&mut fields, &prefix, a.life.expect("typed profile"));
+            }
+            if version == 5 {
+                field(
+                    &mut fields,
+                    format!("{prefix}.threshold"),
+                    a.life.unwrap().threshold.to_le_bytes(),
+                );
             }
             if version >= 3 {
                 let location = a.location.expect("M3b actor location");
@@ -763,6 +775,133 @@ pub(crate) fn registry_fields(fields: &mut Vec<StateField>, registry: &crate::Ac
             b.extend(v.to_le_bytes());
         }
         field(fields, format!("registry.type.{i}"), b);
+    }
+}
+
+fn combat_bytes(b: &mut Vec<u8>, event: &crate::CombatEvent) {
+    use crate::CombatEvent::*;
+    fn object(b: &mut Vec<u8>, o: crate::TraceObject) {
+        match o {
+            crate::TraceObject::Line(i) => {
+                b.push(0);
+                b.extend(i.to_le_bytes());
+            }
+            crate::TraceObject::Actor(i) => {
+                b.push(1);
+                b.extend(id(i));
+            }
+        }
+    }
+    fn fixed(b: &mut Vec<u8>, v: doom_types::Fixed) {
+        b.extend(v.bits().to_le_bytes());
+    }
+    match event {
+        Attack { shooter, attack } => {
+            b.push(0);
+            b.extend(id(*shooter));
+            b.extend(attack.angle.to_le_bytes());
+            fixed(b, attack.range);
+            fixed(b, attack.slope);
+            b.extend(attack.damage.to_le_bytes());
+        }
+        Trace { result } => {
+            b.push(1);
+            for v in result.trace.origin.into_iter().chain(result.trace.delta) {
+                fixed(b, v);
+            }
+            b.extend((result.trace.cells.len() as u32).to_le_bytes());
+            for cell in &result.trace.cells {
+                for v in cell {
+                    b.extend(v.to_le_bytes());
+                }
+            }
+            b.extend((result.trace.candidates.len() as u32).to_le_bytes());
+            for o in &result.trace.candidates {
+                object(b, *o);
+            }
+            b.extend((result.trace.intercepts.len() as u32).to_le_bytes());
+            for i in &result.trace.intercepts {
+                fixed(b, i.fraction);
+                object(b, i.object);
+            }
+            b.push(u8::from(result.hit.is_some()));
+            if let Some(hit) = result.hit {
+                object(b, hit);
+            }
+            b.push(u8::from(result.position.is_some()));
+            if let Some(p) = result.position {
+                for v in p {
+                    fixed(b, v);
+                }
+            }
+            b.extend(result.traversed.to_le_bytes());
+        }
+        Damage(r) => {
+            b.push(2);
+            b.extend(id(r.target));
+            b.extend(optional_id(r.inflictor));
+            b.extend(optional_id(r.source));
+            b.extend(r.amount.to_le_bytes());
+        }
+        Random { kind, value } => b.extend([3, *kind, *value]),
+        Knockback {
+            target,
+            angle,
+            thrust,
+            momentum,
+        } => {
+            b.push(4);
+            b.extend(id(*target));
+            b.extend(angle.to_le_bytes());
+            fixed(b, *thrust);
+            for v in momentum {
+                fixed(b, *v);
+            }
+        }
+        Health { target, values } => {
+            b.push(5);
+            b.extend(id(*target));
+            for v in values {
+                b.extend(v.to_le_bytes());
+            }
+        }
+        Pain { target, state } => {
+            b.push(6);
+            b.extend(id(*target));
+            b.extend(state.0.to_le_bytes());
+        }
+        Kill {
+            target,
+            state,
+            extreme,
+        } => {
+            b.push(7);
+            b.extend(id(*target));
+            b.extend(state.0.to_le_bytes());
+            b.push(u8::from(*extreme));
+        }
+        DeathTimer { target, tics } => {
+            b.push(8);
+            b.extend(id(*target));
+            b.extend(tics.to_le_bytes());
+        }
+        Reaction(target) => {
+            b.push(9);
+            b.extend(id(*target));
+        }
+        Retarget { target, source } => {
+            b.push(10);
+            b.extend(id(*target));
+            b.extend(id(*source));
+        }
+        Impact { actor } => {
+            b.push(11);
+            b.extend(id(*actor));
+        }
+        Ignored(actor) => {
+            b.push(12);
+            b.extend(id(*actor));
+        }
     }
 }
 

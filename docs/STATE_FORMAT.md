@@ -1,6 +1,6 @@
-# Canonical simulation state, DSIM versions 1, 2, 3 and 4
+# Canonical simulation state, DSIM versions 1 through 5
 
-This is a diagnostic/replay comparison format for explicit M2, M3a, M3b and M3c profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3d1 profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -237,3 +237,52 @@ controlled request, not damage processing. No sound channel/device state exists.
 recursive callbacks/targets/spawning, five actions and initial zero-tic behavior.
 Names and immutable definitions are serialized so different native registries
 cannot accidentally produce equal canonical bytes merely by sharing indexes.
+
+## DSIM-v5 and bounded combat
+
+`Simulation::combat` / `with_combat_registry` select header version/profile 5.
+Versions 1 through 4 remain byte-for-byte unchanged; no savegame migration exists.
+V5 retains v4 field order and adds `actor.N.threshold` (i32) immediately after
+`.spawnpoint` and before `.momz`. All other implemented persistent combat state
+already has explicit fields: health, flags, current state/timer, momentum, height,
+reaction, targets, slot generations, linked orders and gameplay RNG. No persistent
+inflictor, weapon state, attack queue or artificial combat counter is added.
+
+Event tag 13 adds a combat subtag u8. `ID` below means the existing 12-byte actor
+identity, `OptID` the 13-byte optional identity. Fixed values are raw i32 16.16;
+all counts/integers have explicit little-endian encoding.
+
+| Subtag | Ordered payload |
+| --- | --- |
+| 0 Attack | shooter ID, angle u32, range/slope/damage i32 |
+| 1 Trace | origin X/Y then delta X/Y i32; u32 cell count then i32 X/Y pairs; u32 candidate count then objects; u32 intercept count then (fraction i32, object); hit presence u8 then optional object; position presence u8 then optional X/Y/Z i32; traversed count u32 |
+| 2 Damage | target ID, inflictor OptID, source OptID, amount i32 |
+| 3 Random | kind u8, value u8 |
+| 4 Knockback | target ID, angle u32, thrust i32, resulting momx/momy i32 |
+| 5 Health | target ID, before/after i32 |
+| 6 Pain | target ID, state u16 |
+| 7 Kill | target ID, state u16, extreme u8 |
+| 8 DeathTimer | target ID, tics i32 |
+| 9 Reaction | target ID |
+| 10 Retarget | target ID, source ID |
+| 11 Impact | actor ID |
+| 12 Ignored | target ID |
+
+Trace object = tag 0 + line u16, or tag 1 + actor ID. Intercepts are stable sorted
+by signed fraction, preserving candidate insertion ties; candidates remain in
+source callback order. Trace records precede impact/damage and include no later
+result.effect/result.damage fields. Random kinds: 0 forward-fall, 1 pain, 2 kill
+timer, 3/4 impact Z left/right, 5 impact timer. P_SpawnMobj lastlook remains an
+implicit draw, observable in actor/RNG state and initialization order. Actor-state
+entries/actions/targets still use tag 12 at their actual chronological positions.
+There is no sound device, renderer state or memory address in these records.
+
+`m3d1_snapshot_goldens.py` reads C captures, explicit inputs and source metadata,
+never Rust output. It encodes 48 initial, nine damage API, three shot API and three
+settled death captures (63 total), with 17 full byte fixtures and provenance hashes.
+The selected due-east damage events use source branch predicates, C RNG/momentum/
+state rows and original input thrust; complete shot traces use C geometry/cell/
+intercept/hit rows. Settled final snapshots assert no movement/actions and encode
+phase/thinker events; C link/removal observations reconstruct spatial/store order.
+Field comparison precedes digest comparison for stored byte fixtures. Digests are
+noncryptographic schema diagnostics, not proof of complete gameplay equivalence.

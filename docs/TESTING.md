@@ -239,3 +239,47 @@ XY-before-Z-before-state order, terminal persistence and null timer preservation
 256 bounded generated graphs exercise deterministic accepted/error behavior;
 a separate actor_states fuzz target mutates native graphs with no private data.
 Sanitizer run outcomes and environment limits are recorded in VALIDATION.md.
+
+## M3d1 combat evidence and regressions
+
+```sh
+python3 tools/reference/generate_m3d1.py --check
+python3 tools/reference/m3d1_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3d1 --test m3d1_reference --test m3d1_snapshots --locked
+cargo run -p doom-sim --example combat_arena --locked
+python3 tools/reference/check_headless.py
+cargo +nightly fuzz build
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run combat -- -runs=10000 -max_len=256
+```
+
+Run all earlier generators/encoders too. Linux CI regenerates all five source
+profiles/encoders; each stable OS checks recorded comparisons, independent v1-v5
+goldens and five-example debug/release equality. Rust 1.85 checks the workspace.
+No proprietary data or graphics device is required.
+
+The separate `tests/support/m3d1.rs` uses nine original synthetic maps and explicit
+fixture metadata. The historical shared builder and old fixtures are preserved.
+`m3d1_reference` checks 48 C scenarios and 431 captures: 38,052 live actor fields,
+RNG indexes, source candidate/intercept/fraction/traversal order, hit/aim decisions,
+and ordered lifecycle/action observations across full attack/death sequences.
+Cases include opening/wall/height/range/tie/negative/diagonal/list-order boundaries,
+forward-fall parity, damage zero, pain 0/256, strict gib thresholds, corpse edges,
+threshold target lock and 100 impacts wrapping RNG followed by 35 thinker tics.
+Retired C storage is retained only for observation; Rust compares unavailability.
+
+`m3d1_snapshots` compares 63 independently encoded captures and 17 full byte states,
+with first-field diagnostics. Selected shot API states include the complete trace
+and ordered effect/damage events; final states include settled ordinary/extreme
+corpses and effect retirement. `combat_arena` asserts successful/wall-blocked shots,
+pain, death/actions and final C-derived digest `8906eb60707d089e` after 80 tics.
+The 12 separate policy tests cover atomic errors, stale/pending/reused handles,
+spatial tie order after reuse, invalid metadata/flags/impact changes, player/drop/
+sky/clearance exclusions, capacity, recursive pain removal/spawning, extreme
+coordinates, intercept overflow, zero-damage impacts and a repeated 160-tic stream.
+Those policy checks are project evidence, not new original-C equivalence claims.
+
+The combat fuzz target accepts at most 32 operations on eight slots, varying
+handles, damage, angles/range/slope and step timing; recoverable errors must leave
+all snapshot fields unchanged. ASan with `detect_leaks=0` does not verify leaks.
+Record the observed run count/toolchain and report any crash honestly. Fuzz
+corpora/artifacts/builds stay ignored; minimized failures become stable tests.

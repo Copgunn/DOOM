@@ -78,9 +78,10 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - Include relevant documentation updates in feature PRs. Keep planned and
   implemented functionality explicit. M1 parses resources/maps; M2 provides a
   narrow headless simulation profile; M3a adds player/solid XY and M3b adds
-  static-sector BSP/openings/XY/Z. M3c adds typed actor lifecycle in profile 4. Complete player/view, dynamic
+  static-sector BSP/openings/XY/Z. M3c adds typed actor lifecycle in profile 4; M3d1 adds bounded explicit unbound
+  damage/aim/hitscan in profile 5. Complete player/view, dynamic
   sectors, combat, specials, demos and rendering remain incomplete. Preserve
-  all M2/v1, M3a/v2, M3b/v3 and M3c/v4 suites; read their source investigations before
+  all M2/v1, M3a/v2, M3b/v3, M3c/v4 and M3d1/v5 suites; read their source investigations before
   changing movement.
   Preserve tested policies in `docs/COMPATIBILITY.md` and the versioned canonical
   format in `docs/STATE_FORMAT.md`. Read source findings in `docs/M2_REFERENCE.md`.
@@ -95,11 +96,12 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   user thinker budgets have a separate documented nontransactional contract.
 - Actor identity, thinker order and spatial order are separate. Never sort handles
   to choose blockers; successful same-cell moves reinsert at spatial cell head.
-- Run all four reference generators and independent golden encoders on Linux;
+- Run all five reference generators and independent golden encoders on Linux;
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
-- M3c PR #6 has conditional owner authorization for a regular merge after final
-  corrections, fresh required CI and baseline verification. M3d1 stops at owner
-  review; no M3d1 or later M3d subphase merge is authorized.
+- M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
+  correction-head and post-merge CI. M3d1 received conditional regular-merge authorization in the M3d2 mission,
+  after final correction and fresh checks. M3d2 must stop at owner review; no
+  M3d2 or later subphase merge is authorized.
 
 - M3b consumes supplied BLOCKMAP lists without rebuilding them; conservative
   omissions are diagnostic, not proof of spatial correctness. Keep older profiles
@@ -110,3 +112,11 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   same-pass append order and immediate spatial/deferred storage removal.
 - Keep future custom wgpu rendering separate, preferring Vulkan where supported.
   No renderer, Bevy, audio or general physics dependency enters authoritative tics.
+
+- Read `docs/M3D1_REFERENCE.md` before combat changes. Preserve original effect
+  thinkers and RNG-before-damage order, pure aim queries, conservative capacity
+  preflight and complete failed-operation atomicity. Combat cannot recursively
+  invoke combat from state probes; future weapon/AI work needs separate evidence.
+- Run `generate_m3d1.py --check`, `m3d1_snapshot_goldens.py --check`, all five
+  debug/release examples and the bounded combat fuzz target for relevant changes.
+  Preserve all historical generators, fixtures and the original shared builder.

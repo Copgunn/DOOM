@@ -5,8 +5,13 @@
 //! and add M3b static-sector BSP/openings and XY/Z/gravity. None implements full
 //! player thinking or establishes complete vanilla gameplay synchronization.
 //! Profile 4 adds admitted source actor states, spawning and controlled death.
+//! Profile 5 adds bounded unbound-actor damage, autoaim and hitscan combat.
 
 mod actor;
+mod combat;
+mod combat_trace;
+pub use combat::{AttackResult, CombatError, CombatEvent, DamageRequest, DamageResult, LineAttack};
+pub use combat_trace::{AimResult, HitscanTrace, Intercept, TraceObject};
 mod lifecycle;
 mod spawning;
 pub use lifecycle::{
@@ -45,11 +50,13 @@ pub enum Profile {
     MultiSector,
     /// M3c typed actor lifecycle on static-sector physics, DSIM-v4.
     ActorStates,
+    /// M3d1 unbound actor damage/hitscan subset, DSIM-v5.
+    Combat,
 }
 
 impl Profile {
     pub(crate) fn uses_sectors(self) -> bool {
-        matches!(self, Self::MultiSector | Self::ActorStates)
+        matches!(self, Self::MultiSector | Self::ActorStates | Self::Combat)
     }
 }
 
@@ -60,6 +67,8 @@ pub enum SimError {
     Store(StoreError),
     /// Actor definition, action admission or bounded preflight failure.
     Actor(ActorError),
+    /// Bounded combat validation failure, before mutation.
+    Combat(CombatError),
     /// Unsupported or invalid map/profile.
     Geometry(GeometryError),
     /// Input slot is outside 0..4 or duplicates an existing binding.
@@ -75,6 +84,11 @@ impl fmt::Display for SimError {
     }
 }
 impl Error for SimError {}
+impl From<CombatError> for SimError {
+    fn from(e: CombatError) -> Self {
+        Self::Combat(e)
+    }
+}
 impl From<ActorError> for SimError {
     fn from(e: ActorError) -> Self {
         Self::Actor(e)
@@ -107,7 +121,9 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
-    /// Profile-4 state/action/lifecycle evidence in execution order.
+    /// Profile-5 combat evidence in source side-effect order.
+    Combat(CombatEvent),
+    /// Typed state/action/lifecycle evidence in execution order.
     ActorState(ActorStateEvent),
     /// Phase boundary.
     Phase(Phase),
@@ -415,6 +431,11 @@ impl Simulation {
     /// Last completed tic's events; never drained by presentation.
     pub fn events(&self) -> &[Event] {
         &self.events
+    }
+    /// Read-only observations from explicit operations since the last tic.
+    /// These are retained in the next completed tic and in canonical pending state.
+    pub fn pending_events(&self) -> &[Event] {
+        &self.pending
     }
     /// Explicit deterministic gameplay draw, queued as an observation for next tic.
     pub fn gameplay_random(&mut self) -> u8 {

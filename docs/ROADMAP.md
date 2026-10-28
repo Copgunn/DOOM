@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented/validated and conditionally accepted for regular merge**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 reviewed; authorized merge gated on fresh checks**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -109,8 +109,8 @@ M3 as a whole remains incomplete.
 | --- | --- | --- |
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented, validated and merged |
-| M3c | Actor states, type-driven spawning and death | Implemented/validated; conditional regular merge authorized |
-| M3d | Weapons, projectiles, damage, monsters and combat | Planned |
+| M3c | Actor states, type-driven spawning and death | Implemented, validated and merged |
+| M3d | Combat subphases below | M3d1 implemented; later subphases planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
 
 M3a acceptance evidence:
@@ -188,13 +188,28 @@ M3d1 requires its own owner-review and merge authorization.
 - [x] Asserted asset-free headless example; native probes clearly separated from vanilla.
 - [x] Local, sanitizer, MSRV and cross-platform CI evidence; final-head CI recorded on PR #6.
 - [x] Owner engineering review and conditional regular-merge authorization.
-- [ ] Fresh correction-head CI, regular merge and verified post-merge baseline.
+- [x] Fresh correction-head CI, regular merge `4dbb0a5` and post-merge CI verified.
 
 M3d is weapons/projectiles/damage/monster combat. M3e is moving sectors, doors,
 lifts, switches and map specials. Full player thinking, scripts, demos and rendering
 remain outside M3c. Future DECORATE-like/ACS/ZScript interfaces require independent
 implementation and licensing review; no GPLv3 GZDoom code enters this GPL-2.0-only
 repository. Custom wgpu rendering with Vulkan preferred remains later work.
+
+### M3d combat subphases
+
+| Phase | Scope | Status |
+| --- | --- | --- |
+| M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Reviewed; regular merge conditionally authorized |
+| M3d2 | Player weapons, psprites, ammo and projectile foundations | Planned |
+| M3d3 | Monster targeting/perception, movement, attacks and AI | Planned |
+| M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
+
+M3d1 branch: `feat/m3d1-damage-hitscan`, based on verified M3c merge `4dbb0a5`.
+Source findings precede runtime work in [M3D1_REFERENCE.md](M3D1_REFERENCE.md).
+Each subphase needs independent evidence and owner merge authorization. M3d1
+regular merge is conditionally authorized after correction and fresh CI; no
+weapon/AI/full-combat acceptance is implied by this slice.
 
 ## M4 — Demo compatibility
 
@@ -213,3 +228,32 @@ Acceptance: renderer abstraction, presentation loop, per-tic input assignment,
 audio events/playback, software/headless diagnostic backend, and custom wgpu hardware renderer, with Vulkan preferred where supported. Verify Linux/Windows/macOS presentation where supported by the selected
 Vulkan platform path; document prerequisites and gaps. Replay tests must prove
 presentation frame rate and renderer choice do not alter simulation results.
+
+### M3d1 acceptance evidence
+
+- [x] M3c correction-head regular merge and post-merge CI verified before branching.
+- [x] Source investigation precedes runtime; original source preserved.
+- [x] Bounded unbound damage, shootability, impulse, pain/reaction/retarget,
+  strict extreme-death threshold, kill flags/height/actions/timer and corpse physics.
+- [x] Source BLOCKMAP DDA/candidates/intercepts/ties, aim window, wall/opening and
+  first-hit rules; original impact thinkers and RNG order.
+- [x] Existing state host, safe generations, conservative spawn preflight,
+  atomic error regressions and bounded combat fuzzing.
+- [x] 48 original-C scenarios, 431 captures, 38,052 live actor-field comparisons;
+  complete supported death tics and RNG wraparound.
+- [x] DSIM-v1-v4 retained; v5 has 63 independent captures and 17 byte fixtures.
+- [x] Asserted combat arena: hit, wall, pain, lethal hit, 80 tics, corpse and digest.
+- [x] Required local stable/release/MSRV/reference/docs checks; exact results in validation.
+- [x] Linux/Windows/macOS and Rust 1.85 CI passed on implemented head `10de49e`
+  ([run 40617772778](https://github.com/Copgunn/DOOM/actions/runs/40617772778));
+  reviewed final `f17e793` also passed
+  [CI 40618036910](https://github.com/Copgunn/DOOM/actions/runs/40618036910).
+- [x] Owner engineering review and conditional regular-merge authorization.
+- [ ] Final documentation correction, fresh exact-head CI, regular merge and
+  post-merge verification before M3d2 implementation.
+
+M3d2 should implement source weapon/psprite/ammo/button timing and spread/damage
+RNG, followed by independently tested projectile foundations. Actual player damage
+requires armor/inventory/immunity/death/scoring integration before admission.
+M3d3 remains perception/AI, M3d4 integrated combat/explosions. No renderer or
+scripting implementation is part of M3d1.

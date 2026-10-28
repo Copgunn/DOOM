@@ -20,8 +20,11 @@ M3b implements and validates static multi-sector movement and vertical physics
 in [PR #5](https://github.com/Copgunn/DOOM/pull/5), merged as `c791ef8` after
 owner-authorized correction-head and post-merge CI. M3c adds typed actor states,
 spawning and controlled death in [PR #6](https://github.com/Copgunn/DOOM/pull/6),
-reviewed and conditionally authorized for regular merge after final corrections
-and fresh CI. M3d1 damage/hitscan foundations are the next implementation phase.
+merged as `4dbb0a5` after correction-head and post-merge CI. M3d1 damage/hitscan
+foundations are implemented in [PR #7](https://github.com/Copgunn/DOOM/pull/7)
+on `feat/m3d1-damage-hitscan`; engineering review found no blocking defect within
+the declared scope. Final documentation correction and fresh checks precede the
+owner-authorized regular merge.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 
@@ -49,6 +52,8 @@ Implemented:
 - Explicit M3c profile: complete original actor metadata, validated executable
   subsets, ordered state actions, typed/map spawning, controlled death, safe
   targets and DSIM-v4. Metadata recognition does not imply monster gameplay.
+- Explicit M3d1 profile: bounded unbound-actor damage, source autoaim/hitscan,
+  pain/knockback/kill/corpses, real puff/blood thinkers and DSIM-v5.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
 Choose the compatibility profile explicitly:
@@ -59,6 +64,7 @@ Choose the compatibility profile explicitly:
 | `Simulation::player_collision` | DSIM-v2 | M3a grounded player slides and solid collision, conservative coverage |
 | `Simulation::multisector` | DSIM-v3 | M3b static classic sectors, BSP/openings, step/dropoff and XY/Z/gravity |
 | `Simulation::actor_states` | DSIM-v4 | M3c typed actors and supported state/action lifecycle on static-sector physics |
+| `Simulation::combat` | DSIM-v5 | M3d1 explicit damage/aim/hitscan for admitted unbound actors |
 
 M3b consumes supplied BLOCKMAP lists in reference order. Conservative omissions
 are diagnostic, not automatic rebuilds or proof of broken geometry. Missing
@@ -144,7 +150,7 @@ no window, renderer, audio, wall clock or commercial assets.
 
 The original `headless -- 12` and `player_arena` examples preserve M2 coasting and
 M3a angled/solid collision evidence. `python tools/reference/check_headless.py`
-compares all four examples' debug/release output byte-for-byte.
+compares all five examples' debug/release output byte-for-byte.
 
 Initialize M3b from a validated `Map`:
 
@@ -205,6 +211,32 @@ slot/generation identity from append order, detects stale handles, defers retire
 and permits same-traversal spawning through restricted callbacks. The current
 simulation's built-in thinkers perform the selected profile's motion and, in
 profile 4, admitted actor state/action processing after XY/Z.
+
+## Headless combat foundations
+
+```sh
+cargo run -p doom-sim --example combat_arena --locked
+```
+
+This asserted synthetic arena checks a successful hitscan, a blocking wall, pain,
+a lethal hit and 80 tics of death progression against original C evidence and
+independent DSIM-v5 bytes. It ends with a persistent corpse and digest
+`8906eb60707d089e`; the impact thinker has retired.
+
+Select `Simulation::combat(map)` or `with_combat_registry` explicitly. The pure
+`aim_line_attack` query returns the source target/slope window; `line_attack`
+applies supplied angle/range/slope/damage, and `damage_actor(DamageRequest)`
+applies direct damage with separate optional source and inflictor identities.
+Recoverable combat errors preserve full canonical state, events and RNG.
+Damage is bounded to 0..=1000; range is positive and at most 2048 fixed map units.
+
+Only admitted unbound actors with supported state/action closures can receive
+this damage. The arena uses source player-state pawns without a `player_t`,
+including an explicitly labelled fixture definition. Monster metadata recognition
+does not establish monster execution. Bound-player armor/inventory/death,
+weapons/buttons/ammo/psprites, AI, item drops/scoring, missiles, radius attacks,
+sky/special effects and full vanilla synchronization remain future work.
+See [source findings and exact limits](docs/M3D1_REFERENCE.md).
 
 ## Typed actor lifecycle (M3c)
 
@@ -300,8 +332,9 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M2 | Fixed arithmetic, RNG, ordered thinkers, narrow movement, snapshots | Implemented, validated, merged |
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static sectors/BSP, openings, step/dropoff and XY/Z/gravity | Implemented, validated, merged |
-| M3c | Actor states, spawning and controlled death | Implemented/validated; conditional regular merge authorized |
-| M3d–M3e | Combat, interactions and moving sector specials | Planned |
+| M3c | Actor states, spawning and controlled death | Implemented, validated and merged |
+| M3d1 | Bounded damage/hitscan/kill foundations | Reviewed; authorized merge gated on fresh checks |
+| M3d2–M3e | Weapons, AI, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
 

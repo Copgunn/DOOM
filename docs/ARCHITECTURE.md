@@ -8,6 +8,7 @@ functioning headless deterministic foundation. M3a adds an explicit player/solid
 collision profile, documented in [M3A_REFERENCE.md](M3A_REFERENCE.md). M3b adds
 static-sector topology and XY/Z physics; see [M3B_REFERENCE.md](M3B_REFERENCE.md).
 M3c adds admitted typed actor lifecycle; see [M3C_REFERENCE.md](M3C_REFERENCE.md).
+M3d1 adds bounded explicit damage/hitscan; see [M3D1_REFERENCE.md](M3D1_REFERENCE.md).
 A playable client and renderer
 remain future work. Source findings were recorded before implementation in
 [M2_REFERENCE.md](M2_REFERENCE.md).
@@ -244,3 +245,41 @@ slot. Full tracing/owner/projectile relationships remain later work. Definition
 and native service boundaries can support future compatibility adapters, but no
 DECORATE/ACS/ZScript or PK3 implementation is present. Enhanced behavior needs an
 explicit profile and licensing review. See [M3C_REFERENCE.md](M3C_REFERENCE.md).
+
+## M3d1 combat services
+
+Explicit profile 5 composes the accepted typed lifecycle and static-sector world.
+`combat_trace` performs pure original fixed-point path collection, source cell/
+line/thing ordering, stable fraction sorting, aim-window clipping and shot hit
+selection. `combat` validates identities/admission, plans damage/state demand,
+reserves effect/callback slots, then applies source-ordered mutations through the
+existing `LifeHost`. Source and inflictor are independent optional handles.
+Neither service invents a weapon damage generator, persistent attack queue or
+player weapon state. `step` still takes only tic commands; attack buttons remain
+M3d2. Callers issue explicit APIs between logical tics in deterministic order.
+
+Damage planning conservatively sums possible pain and see callbacks without
+advancing RNG. Kill planning chooses the source threshold/state in advance.
+Tracing and all recoverable validation complete before events, RNG or physical
+mutation. Real blood/puff types and reachable states must retain source metadata;
+the constructor validates their map-wide dimensional admission. LifeHost then
+spawns the actual thinker before damage. `pending_events()` exposes observations
+read-only. Failed supported API calls preserve the entire canonical state.
+No full Simulation/Map clone is used per attack or tic; bounded result/trace
+copies preserve independent API/event observations.
+
+Bounds compose prior limits: 128 lines/sectors, 1024 actors, 4096 map cells,
+65536 BLOCKMAP words, 64 DDA visits, 128 intercepts, positive range <=2048 fixed
+units, damage 0..=1000, 128 entries per closure and 8192 entries per built-in
+step. Per trace, at most 64*(128+1024) candidate observations and 64*1024 ordered
+actor scans are permitted. Handles resolve by slot/generation in O(1); stable
+sorting is O(128 log 128). Pending removal does not supply preflight capacity.
+Conservative preflight may reject a branch that would not actually draw pain;
+this is an explicit safety policy. There is no optimization superiority claim.
+
+DSIM-v5 adds source threshold and structured combat observations. Existing
+health/flags/momentum/state/targets, storage, spatial order and RNG already cover
+persistent consequences. Presentation can observe these records at any frequency
+without consuming RNG or altering gameplay. Custom wgpu/Vulkan, native resources
+and future scripting adapters remain separate planned systems; no graphics,
+physics, scripting or third-party runtime dependency was introduced.

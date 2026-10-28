@@ -143,7 +143,7 @@ pub enum ActorError {
     NoDeathState,
     /// Full bound-player death/respawn is not implemented here.
     BoundDeath,
-    /// Operation requires profile 4 or unsupported game mode.
+    /// Operation requires a typed profile, or the game mode is unsupported.
     UnsupportedMode,
 }
 impl fmt::Display for ActorError {
@@ -194,6 +194,18 @@ pub struct ActorOptions {
 pub struct ActorRegistry {
     pub(crate) states: Vec<ActorStateDef>,
     pub(crate) types: Vec<ActorTypeDef>,
+}
+pub(crate) fn source_type_id(name: &str) -> Option<ActorTypeId> {
+    SOURCE_TYPES
+        .iter()
+        .position(|(n, _)| *n == name)
+        .map(|i| ActorTypeId(i as u16))
+}
+pub(crate) fn source_state_id(name: &str) -> Option<StateId> {
+    SOURCE_STATES
+        .iter()
+        .position(|(n, _)| *n == name)
+        .map(|i| StateId(i as u16))
 }
 pub(crate) fn source_type_is(ty: ActorTypeId, name: &str) -> bool {
     SOURCE_TYPES
@@ -452,6 +464,7 @@ impl ActorRegistry {
             &mut BTreeSet::new(),
             &mut BTreeSet::new(),
             &mut 0,
+            ALLOWED_FLAGS,
         )
     }
     fn admit_type(
@@ -461,6 +474,7 @@ impl ActorRegistry {
         path: &mut BTreeSet<ActorTypeId>,
         done: &mut BTreeSet<ActorTypeId>,
         work: &mut usize,
+        allowed_flags: u32,
     ) -> Result<(), ActorError> {
         if done.contains(&ty) {
             return Ok(());
@@ -473,8 +487,8 @@ impl ActorRegistry {
             return Err(ActorError::SpawnCycle);
         }
         let t = self.actor_type(ty).ok_or(ActorError::InvalidType)?;
-        if t.flags() & !ALLOWED_FLAGS != 0 {
-            return Err(ActorError::UnsupportedFlags(t.flags() & !ALLOWED_FLAGS));
+        if t.flags() & !allowed_flags != 0 {
+            return Err(ActorError::UnsupportedFlags(t.flags() & !allowed_flags));
         }
         if t.radius() < Fixed::ZERO
             || t.radius() > Fixed::from_map_units(32)
@@ -500,7 +514,7 @@ impl ActorRegistry {
                 match s.action {
                     ActorAction::Probe(ProbeAction::Enter(next)) => todo.push(next),
                     ActorAction::Probe(ProbeAction::SpawnTarget(child)) => {
-                        self.admit_type(child, sectors, path, done, work)?
+                        self.admit_type(child, sectors, path, done, work, allowed_flags)?
                     }
                     _ => {}
                 }
@@ -508,6 +522,56 @@ impl ActorRegistry {
         }
         path.remove(&ty);
         done.insert(ty);
+        Ok(())
+    }
+    pub(crate) fn validate_type_combat(
+        &self,
+        ty: ActorTypeId,
+        sectors: &[SectorState],
+    ) -> Result<(), ActorError> {
+        self.admit_type(
+            ty,
+            sectors,
+            &mut BTreeSet::new(),
+            &mut BTreeSet::new(),
+            &mut 0,
+            ALLOWED_FLAGS | 524288,
+        )
+    }
+    pub(crate) fn validate_impact_source(&self) -> Result<(), crate::CombatError> {
+        let mut todo = Vec::new();
+        let mut seen = BTreeSet::new();
+        for name in ["MT_PUFF", "MT_BLOOD"] {
+            let id = source_type_id(name).unwrap();
+            let info = self
+                .actor_type(id)
+                .ok_or(crate::CombatError::ImpactDefinition)?;
+            if info.properties != SOURCE_TYPES[usize::from(id.0)].1 {
+                return Err(crate::CombatError::ImpactDefinition);
+            }
+            todo.push(info.states()[0]);
+        }
+        for name in ["S_PUFF3", "S_BLOOD2", "S_BLOOD3"] {
+            todo.push(source_state_id(name).unwrap());
+        }
+        while let Some(id) = todo.pop() {
+            if id.0 == 0 || !seen.insert(id) {
+                continue;
+            }
+            let state = self.state(id).ok_or(crate::CombatError::ImpactDefinition)?;
+            let expected = SOURCE_STATES[usize::from(id.0)].1;
+            if state.sprite != expected[0] as u16
+                || state.frame != expected[1] as u32
+                || state.tics != expected[2]
+                || state.action != ActorAction::None
+                || expected[3] != 0
+                || state.next.0 != expected[4] as u16
+                || state.misc != [expected[5], expected[6]]
+            {
+                return Err(crate::CombatError::ImpactDefinition);
+            }
+            todo.push(state.next);
+        }
         Ok(())
     }
     pub(crate) fn demand(&self, state: StateId, tics: i32) -> Result<Demand, ActorError> {
@@ -578,6 +642,8 @@ pub struct ActorLife {
     pub health: i32,
     /// Initialized reaction time; no unsupported AI timer service.
     pub reaction_time: i32,
+    /// Source retarget threshold; damage sets 100, A_Chase countdown remains later.
+    pub threshold: i32,
     /// Full admitted source flags.
     pub flags: u32,
     /// Validated assigned identity, retained even after target retirement.
@@ -728,6 +794,7 @@ pub(crate) fn make_actor(
                 info.reaction_time()
             },
             flags,
+            threshold: 0,
             target: None,
             death_requested: false,
             spawnpoint: None,
