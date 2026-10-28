@@ -19,3 +19,6 @@
 
 # Reproducible chaingunner seeds are documented; mutations remain local.
 /corpus/chaingunner_attacks/
+
+# Public Demon seeds are reproducible; evolving corpus stays local.
+/corpus/demon_melee/

@@ -354,6 +354,8 @@ impl Simulation {
                 monsters: true,
                 shotgunner: true,
                 chaingunner: false,
+                demon: false,
+                melee: None,
                 shotgun: plan.as_ref(),
                 shot: None,
             }),

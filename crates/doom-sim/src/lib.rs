@@ -21,6 +21,7 @@ mod actor;
 mod direction;
 pub use direction::MoveDirection;
 mod chaingunner;
+mod demon;
 mod monsters;
 mod shotgunner;
 pub use chaingunner::{RefireDecision, RefireEvent};
@@ -97,13 +98,15 @@ pub enum Profile {
     Shotgunner,
     /// M3d3e separately aimed chaingunner shots and source refire, DSIM-v12.
     Chaingunner,
+    /// M3d3f bounded normal-timing Demon melee fixtures, DSIM-v13.
+    DemonMelee,
 }
 
 impl Profile {
     pub(crate) const fn uses_monsters(self) -> bool {
         matches!(
             self,
-            Self::MonsterAttacks | Self::Shotgunner | Self::Chaingunner
+            Self::MonsterAttacks | Self::Shotgunner | Self::Chaingunner | Self::DemonMelee
         )
     }
     pub(crate) const fn uses_perception(self) -> bool {
@@ -114,6 +117,7 @@ impl Profile {
                 | Self::MonsterAttacks
                 | Self::Shotgunner
                 | Self::Chaingunner
+                | Self::DemonMelee
         )
     }
     pub(crate) fn uses_sectors(self) -> bool {
@@ -129,6 +133,7 @@ impl Profile {
                 | Self::MonsterAttacks
                 | Self::Shotgunner
                 | Self::Chaingunner
+                | Self::DemonMelee
         )
     }
 }
@@ -807,6 +812,11 @@ impl Simulation {
         } else if self.profile == Profile::Perception {
             self.preflight_perception_step()?;
         }
+        let demon_melee = if self.profile == Profile::DemonMelee {
+            self.preflight_demon_step()?
+        } else {
+            None
+        };
         self.preflight_actor_step()?;
         self.events = std::mem::take(&mut self.pending);
         self.commands = commands;
@@ -853,6 +863,8 @@ impl Simulation {
                     monsters: self.profile.uses_monsters(),
                     shotgunner: self.profile == Profile::Shotgunner,
                     chaingunner: self.profile == Profile::Chaingunner,
+                    demon: self.profile == Profile::DemonMelee,
+                    melee: demon_melee.as_ref(),
                     shotgun: shotgun_blast.as_ref(),
                     shot: monster_shot.as_ref(),
                     players: &self.perception_players,

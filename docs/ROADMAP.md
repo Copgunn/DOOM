@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b merged; M3d3a merged; M3d3b merged; M3d3c merged; M3d3d merged; M3d3e chaingunner foundations implemented for review**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b merged; M3d3a merged; M3d3b merged; M3d3c merged; M3d3d merged; M3d3e merged; M3d3f Demon melee implemented for separate review**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -110,7 +110,7 @@ M3 as a whole remains incomplete.
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented, validated and merged |
 | M3c | Actor states, type-driven spawning and death | Implemented, validated and merged |
-| M3d | Combat subphases below | M3d1/M3d2/M3d2b merged; M3d3a merged; M3d3b merged; M3d3c merged; M3d3d merged; M3d3e implemented for review; later work planned |
+| M3d | Combat subphases below | M3d1/M3d2/M3d2b merged; M3d3a merged; M3d3b merged; M3d3c merged; M3d3d merged; M3d3e merged; M3d3f implemented for review; later work planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
 
 M3a acceptance evidence:
@@ -203,7 +203,7 @@ repository. Custom wgpu rendering with Vulkan preferred remains later work.
 | M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Merged as c924f18 after fresh and post-merge CI |
 | M3d2 | Player weapons, psprites and ammo | Merged as 955f690 after fresh/post-merge CI |
 | M3d2b | Bounded original projectile foundations | Implemented, validated and merged |
-| M3d3 | Monster targeting/perception, movement, attacks and AI | M3d3a merged; M3d3b merged; M3d3c merged; M3d3d merged; M3d3e chaingunner foundations implemented for review |
+| M3d3 | Monster targeting/perception, movement, attacks and AI | M3d3a merged; M3d3b merged; M3d3c merged; M3d3d merged; M3d3e merged; M3d3f Demon melee implemented for separate review |
 | M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
 
 M3d1 branch: `feat/m3d1-damage-hitscan`, based on verified M3c merge `4dbb0a5`.
@@ -464,8 +464,9 @@ investigation and owner scope; no further gameplay is authorized by this milesto
 
 Branch `feat/m3d3e-chaingunner-refire` starts at verified master `31b4830`.
 [Investigation](M3D3E_REFERENCE.md) commit `b9855f4` precedes runtime.
-[PR #15](https://github.com/Copgunn/DOOM/pull/15) has conditional regular-merge
-authorization in the M3d3f mission after its correction and fresh validation gates.
+[PR #15](https://github.com/Copgunn/DOOM/pull/15) completed its authorized regular
+merge as `5b9182472123b8ec86b48cf6a4076426a7856f70` after the documented macOS
+recovery and fresh exact-head/post-merge gates.
 
 - [x] PR #14 corrected, fresh local/exact-head checks passed, regular merge with
   verified parents/tree/master and successful exact post-merge CI before runtime.
@@ -487,11 +488,68 @@ authorization in the M3d3f mission after its correction and fresh validation gat
   jobs of [CI 40667321344](https://github.com/Copgunn/DOOM/actions/runs/40667321344).
 - [x] Reviewed final `ae78d76cae69b4f36811110009454df479a33cc6` passed
   [CI 40668964558](https://github.com/Copgunn/DOOM/actions/runs/40668964558).
-  Record the correction head and its fresh CI on PR #15 after verification.
+  Documentation correction and CI-recovery evidence are recorded below and on PR #15.
 - [x] Conditional owner authorization for a regular merge in the M3d3f mission.
-- [ ] Correction-head local/remote checks, regular merge and exact post-merge CI.
+- [x] Documentation correction `d1150956`, justified CI-only recovery `08e27f72`,
+  fresh local checks and all-four [CI 40733786524](https://github.com/Copgunn/DOOM/actions/runs/40733786524).
+- [x] Regular merge `5b918247`, ordered parents/tree/master verified; all-four
+  [post-merge CI 40735017337](https://github.com/Copgunn/DOOM/actions/runs/40735017337)
+  passed before the M3d3f branch, investigation commit or runtime.
 
 Acceptance covers this bounded fixture/action closure. Full Chaingunner/type 10,
 drops/pain/death/raise gameplay, SpidRefire, other attacks, actual player damage,
 dynamic sectors, demos and rendering remain deferred. The next focused milestone
 requires a separate source investigation and authorization.
+
+## M3d3f — Demon melee attack foundations
+
+Branch `feat/m3d3f-demon-melee` starts at verified merged master `5b918247`.
+[Investigation](M3D3F_REFERENCE.md) commit
+`3fac94715e8e22a55bf3f3448155c4b6129dfd4d` precedes runtime `e140b3bd`.
+The separate owner review completed; the M3d3g mission conditionally authorizes
+PR #16 regular merge through the correction/fresh-check/post-merge gates below.
+
+- [x] PR #15 recovery, regular merge, parents/tree/master/integrity and exact
+  successful Linux/Windows/macOS/MSRV post-merge gates completed first.
+- [x] Explicit profile 13: labelled unshootable first native 136 owner and unbound
+  target 135; original Demon/Spectre metadata recognized, full types excluded.
+- [x] Source SARG sprite 39/frames 4,5,6 without fullbright; exact 8/8/8;
+  three distinct faces; Chase selection sound 52 before entry; return to Chase.
+- [x] Separate selection/strike checks, strict metadata-radius boundary and real
+  REJECT/BSP sight, source shadow draws and `(R%10+1)*4` direct damage.
+- [x] Existing damage/lifecycle services preserve thrust, pain/death, reaction,
+  retargeting/threshold and original RNG; no invented hitscan impact or slot demand.
+- [x] Bounded copied-RNG preflight plus actual post-Face range query; complete
+  canonical rejection, including late damage dependency failures and expiring tics.
+- [x] 68 compiled original bodies; 104 scenarios actually exercise all 20 supplied
+  synthetic maps. 170,118 actor fields, 5,060 raw RNG draws including setup and
+  27,039 ordered instrumentation rows; compiled inventory is not branch coverage.
+- [x] Separate 36 original-C radius-divergence component vectors; no public mutable
+  collision-radius override and no inclusion in gameplay/canonical capture totals.
+- [x] Independent DSIM-v13: 1,309 captures/169 complete byte fixtures; all v1-v12
+  expected bytes, generators, encoders and historical Rust helpers preserved.
+- [x] Nine public Rust policy tests and three private component/error tests;
+  nine-scenario asserted example with independent digest `b6c312bf5fbcc7dc`.
+- [x] All twelve ASan fuzz targets build; Demon fuzz uses public synthetic maps,
+  at most eight operations/24 individual tics and per-error canonical equality.
+- [x] Final capacity-aware Demon ASan: 10,000 executions in 921.9 seconds without findings;
+  six public seeds, max_len 65, RSS 2048 MiB, timeout 20s; leak detection disabled.
+- [x] Fresh workspace/MSRV 205 each, release 181, thirteen C/encoder pairs and
+  thirteen asserted debug/release examples; build/format/Clippy/rustdoc/integrity.
+- [x] Implementation b3d5aa555f73b69633cf31d6a3f509295dc692f6 passed all four
+  jobs in [CI 40741692813](https://github.com/Copgunn/DOOM/actions/runs/40741692813).
+- [x] [PR #16](https://github.com/Copgunn/DOOM/pull/16) opened draft on the verified base.
+- [x] Capacity-aware fuzz setup reaches all 64 slots before mutational operations;
+  final ASan result is recorded in [VALIDATION](VALIDATION.md).
+
+Reviewed head `16c3ef91df81e99fc56339e6b722816fbbe2bb5d` passed all four jobs in
+[CI 40745375088](https://github.com/Copgunn/DOOM/actions/runs/40745375088). The
+M3d3g mission conditionally authorizes PR #16 regular merge after documentation
+corrections and fresh mandatory local/exact-head CI, followed by verified merge
+and four-job post-merge CI. See [VALIDATION](VALIDATION.md); no auto-merge.
+
+Normal timing only: source global fast/Nightmare SARG timing is not admitted.
+Full Demon/Spectre pain/death/raise closure, real player damage/scoring, other
+attacks, dynamic sectors, demos and rendering remain deferred. A subsequent
+bounded Demon pain/death-state investigation is assigned by M3d3g, after the
+PR #16 correction/merge/post-merge gates; it is not implemented by M3d3f.

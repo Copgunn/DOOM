@@ -48,6 +48,7 @@ historical milestone records, not claims that the entire original game works.
 | M3d3c — attack selection and bounded actions | [M3D3C_REFERENCE](M3D3C_REFERENCE.md) |
 | M3d3d — sequential shotgunner attacks | [M3D3D_REFERENCE](M3D3D_REFERENCE.md) |
 | M3d3e — chaingunner attack and refire | [M3D3E_REFERENCE](M3D3E_REFERENCE.md) |
+| M3d3f — Demon melee foundations | [M3D3F_REFERENCE](M3D3F_REFERENCE.md) |
 
 For later milestones, find their source notes through the
 [roadmap](ROADMAP.md). Do not treat a future subphase as implemented merely

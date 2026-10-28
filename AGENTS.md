@@ -97,7 +97,7 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   user thinker budgets have a separate documented nontransactional contract.
 - Actor identity, thinker order and spatial order are separate. Never sort handles
   to choose blockers; successful same-cell moves reinsert at spatial cell head.
-- Run all twelve reference generators and independent golden encoders on Linux;
+- Run all thirteen reference generators and independent golden encoders on Linux;
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
 - M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
   correction-head and post-merge CI. M3d1 was regularly merged as c924f18 after fresh correction-head and
@@ -272,6 +272,42 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - Reproduce all twelve source/encoder pairs and twelve asserted examples, build
   all eleven fuzz targets and run bounded chaingunner ASan with actual counts and
   leak settings. Keep full original type 10/drops, SpidRefire, other attacks and
-  player damage/binding excluded. PR #15 has conditional regular-merge
-  authorization after corrections/fresh local and exact-head remote checks.
-  Verify post-merge CI before M3d3f runtime; its new PR stays open/unmerged.
+  player damage/binding excluded. PR #15 completed its authorized regular merge
+  as 5b918247 after macOS recovery and fresh exact-head/post-merge checks.
+  M3d3f started only after those gates; PR #16 finalization follows the separately
+  authorized M3d3g correction/fresh-check/regular-merge/post-merge gates.
+
+## M3d3f Demon melee changes
+
+- Read [M3D3F_REFERENCE](docs/M3D3F_REFERENCE.md) before SARG/shared damage changes.
+  PR #15 regularly merged as `5b918247` after documented hosted arm64 acquisition
+  failures, supported Intel macOS recovery and successful exact-head/post-merge CI.
+  Keep the existing required macOS check name and all steps; do not infer arm64
+  coverage from the explicitly selected `macos-26-intel` execution.
+- Profile 13 admits only exact labelled native 136 SARG Look/Chase/4/5/6 and
+  unbound target 135 source-body states. Keep source Demon health 150/mass 400
+  adaptation explicit; original types 12/13 remain recognized/non-executable.
+- Preserve raw normal 8/8/8, frames 4/5/6, all three faces and shadow draws.
+  Nightmare's global SARG timer rewrite is rejected. Melee-selection sound 52 is
+  before ATK1; SargAttack adds no duplicate attack sound or hitscan effect.
+- Null returns before Face/range/RNG; misses still face but draw no damage.
+  Use target info radius, strict approximate-distance boundary and original sight;
+  selection and strike queries are separate. Dead/nonshootable current targets
+  still reach the damage draw and shared ignored-damage branch when in range.
+- Preflight copied owner/RNG, current range and shared DamagePlan before real
+  facing/flags/RNG/events. Actual execution repeats range/sight after real Face,
+  then one `(R%10+1)*4` draw and shared direct damage with source=inflictor=owner.
+  Preserve actual demand (zero), capacity success and complete failed-call/tic
+  canonical equality. No full store/world clone or second damage implementation.
+- Retain first floor owner/zero physical momentum,64 actors,1008/978 owner margins,
+ 994 other XY,+/-512 maps,+/-1024 queries and 8192 work per sight query. New public
+  combat/binding bypasses, mutable radius overrides, other attacks and full monsters
+  remain excluded. Private invalid-bound-target tests are Rust safety evidence.
+- Reproduce all thirteen C/independent-encoder pairs and thirteen asserted example
+  comparisons. Build all twelve fuzz targets; report actual Demon ASan executions,
+  corpus/limits and leak settings. Preserve every v1-v12 fixture/generator/encoder
+  and eleven historical Rust helpers; reference README prose may change.
+- The M3d3g mission conditionally authorizes PR #16 regular merge after its prose
+  corrections, fresh mandatory local/four-job CI and live blocker review. Verify
+  ordered merge parents/tree/master and post-merge CI before M3d3g runtime. No
+  auto-merge; M3d3g needs separate owner review. No full vanilla sync is established.

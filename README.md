@@ -41,8 +41,9 @@ M3d3d adds bounded source shotgunner multi-pellet attacks in profile 11 in
 [PR #14](https://github.com/Copgunn/DOOM/pull/14), regularly merged as `31b4830`
 after correction and fresh/post-merge CI. M3d3e adds bounded chaingunner attack/
 refire in profile 12 in [PR #15](https://github.com/Copgunn/DOOM/pull/15),
-reviewed; the M3d3f mission conditionally authorizes its regular merge after
-documentation correction and fresh local/remote checks.
+regularly merged as `5b91824` after documentation correction, macOS hosted-runner
+recovery and successful exact-head/post-merge checks. M3d3f adds bounded normal-
+timing Demon melee in profile 13 on `feat/m3d3f-demon-melee`, for separate review.
 Complete original monsters,
 actual player damage and a playable client remain future work. Exact gates and
 limitations are in the [roadmap](docs/ROADMAP.md) and
@@ -88,6 +89,8 @@ Implemented:
   exact SPOS 10/10/10 timing/fullbright, bounded preflight and DSIM-v11.
 - Explicit M3d3e profile: original CPOS 10/4/4/1, separately aimed shots, source
   refire short-circuit decisions, immediate see/Chase and DSIM-v12.
+- Explicit M3d3f profile: normal SARG 8/8/8, three separate faces, source selection
+  sound/current melee range and shared direct damage through DSIM-v13.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
 Choose the compatibility profile explicitly:
@@ -106,6 +109,7 @@ Choose the compatibility profile explicitly:
 | `Simulation::with_monster_attack_registry` | DSIM-v10 | M3d3c explicit fixture registry: one native attacker, source range/selection/facing, bounded PosAttack and unbound damage targets |
 | `Simulation::with_shotgunner_registry` | DSIM-v11 | M3d3d explicit SPOS fixture: source Look/Chase/facing, shared aim, three sequential hitscan pellets and real unbound damage/effects |
 | `Simulation::with_chaingunner_registry` | DSIM-v12 | M3d3e explicit CPOS fixture: independently aimed single shots, source refire and immediate see/Chase handoffs |
+| `Simulation::with_demon_melee_registry` | DSIM-v13 | M3d3f normal-timing SARG fixture: Look/Chase, 8/8/8, selection sound, three faces and shared direct melee damage |
 
 M3b consumes supplied BLOCKMAP lists in reference order. Conservative omissions
 are diagnostic, not automatic rebuilds or proof of broken geometry. Missing
@@ -471,7 +475,8 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d3b | Source pursuit and movement decisions | Merged as 0007af1 |
 | M3d3c | Attack selection and bounded source hitscan action | Merged as 9b8fde8 |
 | M3d3d | Source shotgunner three-pellet foundations | Merged as 31b4830 |
-| M3d3e | Source chaingunner attack/refire foundations | Reviewed; conditional regular merge after fresh gates |
+| M3d3e | Source chaingunner attack/refire foundations | Merged as 5b91824 |
+| M3d3f | Source Demon melee foundations | Reviewed in PR #16; conditional M3d3g correction/merge gates |
 | Later M3d3–M3e | Remaining attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
@@ -616,3 +621,37 @@ first owner, unbound dummy bodies, validated references and existing work/moveme
 bounds retain preflight atomicity. Hits reserve their one impact slot; misses,
 null actions and refire need no impact allocation. Full Chaingunner, drops, other
 attacks, actual player damage and complete vanilla/demo compatibility stay deferred.
+
+## Demon melee foundations (M3d3f)
+
+```sh
+cargo run -p doom-sim --example demon_melee --locked
+python3 tools/reference/check_demon_melee.py
+```
+
+This asserted headless example uses public synthetic fixtures and compares every
+capture with original C and independent DSIM-v13. It demonstrates source pursuit,
+selection sound, 8/8/8 timing, three separate facing calls, hit/pain/death,
+moving/occluded misses, return to Chase and real generation reuse. Its independent
+150-tic digest is `b6c312bf5fbcc7dc`; all twelve older examples remain unchanged.
+
+`with_demon_melee_registry(map, limit, registry, options)` admits the named native
+`FIXTURE_DEMON_MELEE_136` and unbound source-body target 135. Original
+`MT_SERGEANT` means Demon/type 12, not Shotgun Guy. The fixture explicitly adapts
+health 150/mass 400 and default speed/radius/height 10/30/56; it executes source
+Look/Chase and copied SARG attack states. `demon_melee_attack(actor)` performs
+original FaceTarget, current melee range/sight and `(R%10+1)*4` direct damage
+through shared combat. Attack sound 52 belongs to Chase selection; the later
+strike adds no duplicate attack sound or hitscan blood/puff. A miss still faces
+but draws no damage. Selection does not guarantee a hit 16 tics later.
+
+Normal raw 8/8/8 timing is explicit; Nightmare's global timer rewrite is rejected.
+The one unshootable first owner, zero physical momentum/floor placement, 64-actor,
+map/query/work bounds and actual-player protections remain enforced. This is a
+bounded fixture, with source-body target pain/death, not complete Demon/Spectre
+pain/death/raise gameplay, player damage or a playable engine. See the
+[source investigation](docs/M3D3F_REFERENCE.md),
+[compatibility](docs/COMPATIBILITY.md), [schema](docs/STATE_FORMAT.md) and
+[validation ledger](docs/VALIDATION.md). The M3d3g mission conditionally authorizes
+[PR #16](https://github.com/Copgunn/DOOM/pull/16) regular merge after documentation
+corrections, fresh mandatory checks and post-merge verification before new runtime work.

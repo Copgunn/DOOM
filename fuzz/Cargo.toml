@@ -97,3 +97,10 @@ path = "fuzz_targets/chaingunner_attacks.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "demon_melee"
+path = "fuzz_targets/demon_melee.rs"
+test = false
+doc = false
+bench = false

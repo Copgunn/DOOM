@@ -1742,3 +1742,175 @@ runner, dependency, gameplay change or protection change is introduced. This
 validates Intel macOS; it does not claim recovered arm64 availability or coverage.
 All four jobs must pass again on the exact changed head before regular merge,
 and again on the exact merge commit before M3d3f runtime work.
+
+## M3d3e recovered finalization and verified merge
+
+Reviewed head `ae78d76cae69b4f36811110009454df479a33cc6` and reviewed CI
+40668964558 were reverified. Documentation correction
+`d1150956a1ad55609a6849ba9a54c06d09a2f4ef` passed local 192 workspace/MSRV each,
+168 release, twelve C/encoder pairs and twelve asserted debug/release examples.
+Its CI 40724946213 passed Linux/Windows/MSRV, but macOS attempts1/2 were cancelled
+without runner allocation/steps after approximately 15 minutes. The public job
+annotations identify hosted acquisition failure/internal server error and arm64
+capacity warnings; account limits/administration remain inaccessible. The third
+unchanged-head retry was accepted, remained unassigned for about eight minutes,
+and was superseded by the correction push through ordinary concurrency. It is
+not counted as a third completed acquisition timeout.
+
+CI-only recovery `08e27f72ee039e7dc0e20c26777f0ad09d9c3391` changes only runner
+selection and the investigation above. Supported native `macos-26-intel` replaces
+the constrained arm64 pool while retaining required check name/matrix/every step,
+permissions/timeout. Actual x86_64-apple-darwin execution passed checkout, Rust,
+format/Clippy/build, workspace/recorded vectors/goldens, release, asserted examples
+and rustdoc. [Recovery CI 40733786524](https://github.com/Copgunn/DOOM/actions/runs/40733786524)
+passed all four required jobs on that exact head. Mandatory local checks were
+repeated after commit; counts remain192/192/168, twelve pairs/examples.
+
+The authorized regular merge is `5b9182472123b8ec86b48cf6a4076426a7856f70`.
+Ordered parents: `31b4830945a60c837065c0e3c29d10494e84f20e` and
+`08e27f72ee039e7dc0e20c26777f0ad09d9c3391`. Tree
+`4daf89e7f287430e3a852edf82cb80ceb577d02d` exactly equals the recovery head tree.
+PR15 is closed/merged; local/remote master and origin/master matched. All 165
+original files and 730 then-existing reference paths matched byte-for-byte;
+original history/attribution/license and public GPL-2.0 status were preserved.
+No squash, force-push, rebase rewrite, auto-merge or branch deletion occurred.
+
+Exact [post-merge CI 40735017337](https://github.com/Copgunn/DOOM/actions/runs/40735017337)
+passed Linux/Windows/macOS/Rust1.85 on that merge, completing 2026-10-28 17:27:58UTC,
+before the M3d3f branch, source investigation commit or runtime. Native Intel
+macOS executed again; no recovered arm64 coverage or complete internal service
+root cause is claimed. No private repositories, Drive IWADs or commercial assets
+were accessed.
+
+## M3d3f implementation and independent evidence
+
+Branch `feat/m3d3f-demon-melee` starts at verified merge above. Investigation
+`3fac94715e8e22a55bf3f3448155c4b6129dfd4d` precedes runtime
+`e140b3bd0a2ee57b40a97ea8091eacca51ca94f9`. Exact source/dependency/admission and
+error proofs are in [M3D3F_REFERENCE](M3D3F_REFERENCE.md).
+
+| Evidence family | Observed result |
+| --- | --- |
+| Original C inventory | 68 compiled original bodies; inventory is not branch coverage |
+| Main source scenarios/maps | 104 actually exercising all 20 supplied public maps; coverage asserted |
+| Actor-field comparisons | 170,118 |
+| Raw gameplay RNG | 5,060 including setup/discard draws; no injected gameplay RNG |
+| Ordered C instrumentation | 27,039 rows reconciled through independent encoded observations/visits; not one row per event |
+| Radius components | Separate 36 original melee/sight vectors with metadata/current collision radii different |
+| Independent DSIM-v13 | 1,309 captures/169 complete byte fixtures, matching fields/bytes/digests |
+| Rust-specific tests | Nine public policy tests; three private component/late-damage-error tests |
+| Asserted example | Nine C-backed scenarios; independent 150-tic digest b6c312bf5fbcc7dc |
+| Fuzz builds | All twelve ASan fuzz executables built and executable presence verified |
+
+Source covers exact SARG 8/8/8 and frames, selection sound, separate range/sight at
+strike, all three shadow faces, actual-LUT damage4..40, direct knockback/pain/death/
+retarget/threshold/reaction, source movement/order, RNG wrap and explicit scripted
+body retirement/reuse. No hitscan impact actor is invented. Native owner health 150/
+mass 400 and target source-body adaptation are explicit; full original Demon 12/
+Spectre 13 and fast/Nightmare initialization, actual player damage, other attacks,
+dynamic sectors, demos/rendering remain excluded.
+
+The per-operation small copied-RNG preview validates shared damage before any real
+Face/flags/RNG/events; actual query repeats after Face. Strict body state demand
+is zero, so hits/misses/null/expiry can succeed at capacity. Private invalid-bound-
+target tests confirm full canonical direct-call/tic equality on a damage rejection
+reached after successful range preview. Rust identity/resource policies are
+separate from C equivalence; DSIM is a project diagnostic, not a vanilla format.
+
+Fresh full local gates and bounded ASan completed as recorded below. The reviewed
+final-head CI result is recorded directly in the finalization section below.
+
+## M3d3f initial bounded sanitizer evidence
+
+Nightly 1.101.0-nightly / cargo-fuzz 0.13.2 built all twelve targets with
+AddressSanitizer; each executable was verified present. A fresh temporary corpus
+contained six public synthetic 65-byte seeds. Demon ASan completed **10,000
+executions in 227.6 seconds** without findings (libFuzzer reports 227 whole seconds),
+seed 1, max_len 65, RSS 2048 MiB, timeout 20 seconds. Inputs admit at most eight API
+operations/24 individual tics and eight synthetic-map byte mutations. Every
+failed operation/tic checks complete canonical equality. The explicit
+`ASAN_OPTIONS=detect_leaks=0` setting disables leak detection; **LeakSanitizer
+coverage is not claimed**. No private data or commercial asset was involved.
+
+## M3d3f full local verification
+
+Linux x86-64; stable Rust 1.99.1 / Cargo 1.99.1, MSRV 1.85.0, GCC 14.2, nightly
+1.101.0-nightly and cargo-fuzz 0.13.2. Observed fresh checks:
+
+| Check | Result |
+| --- | --- |
+| Workspace build, workspace/fuzz formatting | Passed |
+| All-target Clippy / rustdoc with warnings denied | Passed |
+| Workspace tests | **205 passed**, including one doctest; two private probes ignored |
+| Rust 1.85.0 workspace | **205 passed**, same ignored probes |
+| Release doom-sim/doom-types | **181 passed** |
+| All thirteen original-C/independent-encoder pairs | Passed --check |
+| All thirteen asserted debug/release examples | Identical stdout |
+| Twelve fuzz targets | All AddressSanitizer builds/executables verified |
+| Initial Demon ASan target | 10,000 executions / 227.6 seconds without findings; leaks disabled; final capacity model below |
+| Whitespace, Markdown links and source/history preservation | Passed |
+
+All **165 original upstream files**, **729 frozen historical reference paths**
+(excluding intentionally updated reference README prose), and **eleven historical
+Rust helpers** remain byte-identical to verified baseline 5b918247. DSIM-v1 through
+v12 expected bytes/code/fixtures/encoders are preserved. Original history,
+attribution/licenses and GPL-2.0-only stable workspace remain intact. No stable
+dependency, private-repository or commercial-asset access was introduced. Requested
+README/AGENTS/CONTRIBUTING, architecture/roadmap/compatibility/testing/validation/
+schema/source note/index/reference guide and public fuzz-seed documentation are
+updated. Reviewed exact-head CI passed as recorded below; the M3d3g mission
+conditionally authorizes PR #16 finalization after documentation corrections,
+fresh mandatory local/remote checks and live blocker review.
+
+## M3d3f immutable implementation CI
+
+Implementation head **b3d5aa555f73b69633cf31d6a3f509295dc692f6** passed all four
+jobs in [CI 40741692813](https://github.com/Copgunn/DOOM/actions/runs/40741692813):
+Linux stable, Windows stable, native Intel macOS 26 stable and Rust 1.85.0.
+The run completed 2026-10-28 18:10:43 UTC. Linux independently reproduced all
+thirteen original-C/encoder pairs; stable platforms compared recorded fields,
+bytes/digests and all thirteen asserted examples. All required formatting,
+Clippy, build/test/release and warnings-denied rustdoc steps passed.
+
+A subsequent test-only coverage review found the eight-operation fuzz sequence
+could not fill 64 slots by spawning alone. The high selector bit now creates a
+bounded full-capacity setup before mutational operations; low seven bits still
+select the same six source fixtures. The source/body/state/range/damage runtime
+and C/DSIM expectations are unchanged. All twelve fuzz executables were rebuilt.
+The final capacity-aware ASan campaign then completed **10,000 executions in
+921.9 seconds without findings** (libFuzzer reports 921 whole seconds), using six
+fresh public synthetic 65-byte seeds, seed 1, max_len 65, RSS 2048 MiB and timeout
+20 seconds. Three initial seeds set the high bit and begin at 64 actors. At most
+eight mutational operations/24 separately checked tics run after bounded setup;
+every failed operation/tic preserves canonical state. Leak detection remained
+explicitly disabled; no LeakSanitizer coverage is claimed.
+
+The first 10,000/227.6-second campaign remains historical evidence for its earlier
+model. The two campaigns are separate, not extra C scenarios or canonical capture
+counts. The reviewed final SHA and completed matrix are recorded below.
+
+## M3d3f reviewed final head and conditional finalization
+
+Reviewed head **16c3ef91df81e99fc56339e6b722816fbbe2bb5d** passed all four jobs in
+[CI 40745375088](https://github.com/Copgunn/DOOM/actions/runs/40745375088), completed
+2026-10-28 18:34:54 UTC: Linux stable, Windows stable, native Intel macOS 26 stable
+and Rust 1.85.0. Native macOS job 123017630212 actually executed checkout, toolchain,
+formatting, Clippy, build, workspace/release tests, recorded reference/golden
+comparisons, asserted examples and documentation. Original-C regeneration remained
+Linux-only; all thirteen original-C/encoder pairs passed there.
+
+The existing PR workflow checked out GitHub test merge
+`58418111da708d6e6435a92e60c27a74f2ad6036`, with ordered parents reviewed master
+`5b9182472123b8ec86b48cf6a4076426a7856f70` and the reviewed head. Its tree
+`82f85eb4b0ea4e9ac8a2d406aa81c4f6dbe99054` equals the reviewed head tree. Local
+mandatory checks ran directly at that head. This distinguishes head-associated
+CI with identical source bytes from a checkout detached at the feature commit.
+
+The M3d3g mission authorizes a regular merge of PR #16 only after this prose
+correction and fresh mandatory local/four-job CI checks pass, provided live refs
+and reviews reveal no new blocking defect or unexpected behavior. The correction
+changes documentation only; all DSIM-v1 through v13 bytes, encoders, fixtures and
+reference evidence remain unchanged. The corrected SHA and observed fresh CI belong
+on the PR after verification. Verify ordered merge parents/tree/master and all four
+post-merge jobs before M3d3g runtime work. No squash, force push, history rewrite,
+auto-merge or protection bypass is authorized.

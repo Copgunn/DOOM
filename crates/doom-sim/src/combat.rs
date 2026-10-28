@@ -178,7 +178,7 @@ pub enum CombatEvent {
     Ignored(ActorId),
 }
 #[derive(Clone, Copy, Debug)]
-struct DamagePlan {
+pub(crate) struct DamagePlan {
     request: DamageRequest,
     health: [i32; 2],
     killed: bool,
@@ -193,6 +193,11 @@ pub(crate) struct PreparedAttack {
     attack: LineAttack,
     pub result: AttackResult,
     plan: Option<DamagePlan>,
+}
+impl DamagePlan {
+    pub(crate) fn spawn_count(self) -> usize {
+        self.demand.spawns
+    }
 }
 impl PreparedAttack {
     pub fn parameters(&self) -> LineAttack {
@@ -275,6 +280,7 @@ impl Simulation {
                 | Profile::MonsterAttacks
                 | Profile::Shotgunner
                 | Profile::Chaingunner
+                | Profile::DemonMelee
         ) {
             return Err(CombatError::Profile.into());
         }
@@ -301,7 +307,7 @@ impl Simulation {
         self.combat_actor(shooter)?;
         Ok(crate::combat_trace::aim(self, shooter, angle, range)?)
     }
-    fn plan_damage(&self, request: DamageRequest) -> Result<DamagePlan, SimError> {
+    pub(crate) fn plan_damage(&self, request: DamageRequest) -> Result<DamagePlan, SimError> {
         self.plan_damage_with(request, None)
     }
     pub(crate) fn plan_weapon_damage(
@@ -516,7 +522,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
         self.combat_event(CombatEvent::Random { kind, value });
         value
     }
-    fn apply_damage(&mut self, plan: DamagePlan) -> DamageResult {
+    pub(crate) fn apply_damage(&mut self, plan: DamagePlan) -> DamageResult {
         let DamagePlan {
             request,
             health,

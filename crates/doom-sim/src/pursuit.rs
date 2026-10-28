@@ -403,6 +403,8 @@ impl Simulation {
                 monsters: self.profile.uses_monsters(),
                 shotgunner: self.profile == Profile::Shotgunner,
                 chaingunner: self.profile == Profile::Chaingunner,
+                demon: self.profile == Profile::DemonMelee,
+                melee: None,
                 shotgun: None,
                 shot: None,
             }),
