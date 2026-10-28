@@ -325,6 +325,13 @@ pub(crate) fn face<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
     );
 }
 pub(crate) fn pos_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
+    single_attack(h, id, false);
+}
+pub(crate) fn single_attack<A: ActorAccess>(
+    h: &mut LifeHost<'_, A>,
+    id: ActorId,
+    sound_before_face: bool,
+) {
     if h.access.get(id).unwrap().life.unwrap().target.is_none() {
         return;
     }
@@ -336,6 +343,9 @@ pub(crate) fn pos_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
         .clone();
     assert_eq!(plan.owner, id);
     assert_eq!(plan.rng, *h.rng);
+    if sound_before_face {
+        h.sound(Some(id), lifecycle::source_sound("sfx_shotgn").unwrap());
+    }
     face(h, id);
     observe(
         h,
@@ -344,7 +354,9 @@ pub(crate) fn pos_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
             result: Box::new(plan.aim.clone()),
         },
     );
-    h.sound(Some(id), lifecycle::source_sound("sfx_pistol").unwrap());
+    if !sound_before_face {
+        h.sound(Some(id), lifecycle::source_sound("sfx_pistol").unwrap());
+    }
     draw(h, id, 2);
     draw(h, id, 3);
     draw(h, id, 4);
@@ -580,7 +592,10 @@ impl Simulation {
         }
         Ok(shot_owner)
     }
-    fn prepare_monster_shot(&mut self, id: ActorId) -> Result<Option<MonsterShotPlan>, SimError> {
+    pub(crate) fn prepare_monster_shot(
+        &mut self,
+        id: ActorId,
+    ) -> Result<Option<MonsterShotPlan>, SimError> {
         self.preflight_monster_callback(id)?;
         let a = *self.actor(id).unwrap();
         let Some(target) = a.life.unwrap().target else {
@@ -697,7 +712,7 @@ impl Simulation {
         }
         Ok(())
     }
-    fn monster_host<'a>(
+    pub(crate) fn monster_host<'a>(
         &'a mut self,
         shot: Option<&'a MonsterShotPlan>,
     ) -> LifeHost<'a, &'a mut ThinkerStore<Actor>> {
