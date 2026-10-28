@@ -22,6 +22,7 @@ mod direction;
 pub use direction::MoveDirection;
 mod chaingunner;
 mod demon;
+mod demon_lifecycle;
 mod monsters;
 mod shotgunner;
 pub use chaingunner::{RefireDecision, RefireEvent};
