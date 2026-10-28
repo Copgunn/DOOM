@@ -31,6 +31,8 @@ name = "doom-fuzz"
 version = "0.0.0"
 dependencies = [
  "doom-map",
+ "doom-sim",
+ "doom-types",
  "doom-wad",
  "libfuzzer-sys",
 ]
@@ -41,6 +43,14 @@ version = "0.1.0"
 dependencies = [
  "doom-types",
  "doom-wad",
+]
+
+[[package]]
+name = "doom-sim"
+version = "0.1.0"
+dependencies = [
+ "doom-map",
+ "doom-types",
 ]
 
 [[package]]

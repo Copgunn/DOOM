@@ -12,6 +12,8 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 doom-wad = { path = "../crates/doom-wad" }
 doom-map = { path = "../crates/doom-map" }
+doom-sim = { path = "../crates/doom-sim" }
+doom-types = { path = "../crates/doom-types" }
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -32,3 +34,10 @@ bench = false
 
 [workspace]
 members = ["."]
+
+[[bin]]
+name = "actor_states"
+path = "fuzz_targets/actor_states.rs"
+test = false
+doc = false
+bench = false
