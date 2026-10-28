@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b merged; M3d3a perception implemented for owner review**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b merged; M3d3a merged; M3d3b pursuit implemented for owner review**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -110,7 +110,7 @@ M3 as a whole remains incomplete.
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented, validated and merged |
 | M3c | Actor states, type-driven spawning and death | Implemented, validated and merged |
-| M3d | Combat subphases below | M3d1/M3d2/M3d2b merged; M3d3a implemented for review; later work planned |
+| M3d | Combat subphases below | M3d1/M3d2/M3d2b merged; M3d3a merged; M3d3b implemented for review; later work planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
 
 M3a acceptance evidence:
@@ -203,7 +203,7 @@ repository. Custom wgpu rendering with Vulkan preferred remains later work.
 | M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Merged as c924f18 after fresh and post-merge CI |
 | M3d2 | Player weapons, psprites and ammo | Merged as 955f690 after fresh/post-merge CI |
 | M3d2b | Bounded original projectile foundations | Implemented, validated and merged |
-| M3d3 | Monster targeting/perception, movement, attacks and AI | M3d3a implemented for review; pursuit/attacks planned |
+| M3d3 | Monster targeting/perception, movement, attacks and AI | M3d3a merged; M3d3b pursuit implemented for review; attacks planned |
 | M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
 
 M3d1 branch: `feat/m3d1-damage-hitscan`, based on verified M3c merge `4dbb0a5`.
@@ -351,7 +351,8 @@ merge and post-merge CI.
 - [x] [PR #10](https://github.com/Copgunn/DOOM/pull/10); [CI 40637618358](https://github.com/Copgunn/DOOM/actions/runs/40637618358)
   passed Linux/Windows/macOS/MSRV on exact head `4e7720f0ba28781e72e3abe08c269389f582ad31`.
 - [x] Owner engineering review and conditional regular-merge authorization in M3d3b mission.
-- [ ] Final correction, fresh local/remote checks, regular merge and post-merge CI.
+- [x] Final correction, fresh local/remote checks, regular merge as `839fbab` and
+  [post-merge CI 40640215475](https://github.com/Copgunn/DOOM/actions/runs/40640215475).
 
 M3d3b remains source-compatible monster pursuit and movement decisions. Later
 M3d3 work adds attack selection/actions; M3d4 integrates combat/advanced attacks,
@@ -359,3 +360,31 @@ M3e moving sectors/map specials, M4 demos and M5 renderer/platform integration.
 These boundaries confer no authorization to begin them. Full original monster
 execution, vanilla/DOS demo synchronization and private-IWAD validation remain
 unverified.
+
+## M3d3b — Monster pursuit and movement decisions
+
+Bounded subphase of M3d3 on `feat/m3d3b-monster-pursuit`, from verified `839fbab`.
+[Source investigation](M3D3B_REFERENCE.md) commit `685f2ed` precedes runtime work.
+[Validation](VALIDATION.md) records PR #10 correction/merge/post-merge gates.
+
+- [x] Correct source EAST/zero spawn fields and eight exact fixed direction vectors.
+- [x] P_Move/TryWalk using existing ordered collision/relinking and floor placement.
+- [x] NewChaseDir diagonal/axis/old/reverse-search/turnaround priorities and RNG.
+- [x] Native non-attacking A_Chase in thinker/state order, reaction/threshold,
+  quantized turning, JUSTATTACKED, direct movement and active sounds.
+- [x] Source target retention, allaround reacquisition and immediate spawn/Look return.
+- [x] Attack/door/float rejection, stable generations, bounded work/arithmetic and
+  canonical-state atomicity on recoverable errors, without a full-state tic clone.
+- [x] 96 original-C scenarios/17 maps; 108,992 actor fields, 2401 move attempts,
+  11,458 candidates, 2103 direction assignments and 1380 RNG draws compared.
+- [x] Independent DSIM-v9:835 captures/49 full streams; all v1-v8 bytes preserved.
+- [x] Asserted ninth headless example;162 workspace/MSRV and 138 release tests,
+  nine source/encoder pairs, nine example equality checks, eight fuzz builds,
+  2000 ASan executions without findings (leak detection disabled).
+- [ ] Exact final Linux/Windows/macOS/MSRV CI, recorded at PR delivery.
+- [ ] Owner review and separate merge authorization; leave M3d3b open/unmerged.
+
+Next focused work is later M3d3 attack selection/action admission, subject to
+separate review (a bounded M3d3c). M3d4 remains integrated/advanced combat, M3e
+moving sectors/map specials, M4 demos and M5 rendering/platform work. This does
+not authorize beginning those tasks or claim full original monster gameplay.

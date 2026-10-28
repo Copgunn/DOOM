@@ -158,3 +158,68 @@ Python bytes/digests must come only from C rows, public setup and documented
 schema, with named-field first-divergence and selected complete byte fixtures.
 All v1-v8 code fixtures/generators/encoders and expected bytes remain unchanged.
 No implementation or test-count claim is made in this pre-runtime plan.
+
+## Delivered admission and source evidence
+
+The plan above was committed as `685f2ed` before runtime. Delivered profile 9 uses
+exact original direction tables/components and initializes movedir/count to 0.
+P_Move/TryWalk share M3b collision; NewChaseDir and Chase live in separate modules
+and execute through the existing LifeHost/thinker path. Both melee and missile
+states are absent on native types 19/21/136; the C harness exposed the copied
+player's S_PLAY_ATK1 reference, which is explicitly removed and validated. Source
+player bodies retain their inert animation metadata and cannot execute Chase.
+Native states are FIXTURE_LOOK (1, original A_Look) and FIXTURE_CHASE (2, original
+A_Chase), each duration 1..35 with its own positive-duration loop. Remaining
+metadata must equal source player fields except labelled bounded overrides.
+
+Final native speed 1..16 and radius 0..32 apply; heights must fit each sector.
+Allowed current flags are SOLID, SHOOTABLE, AMBUSH, JUSTHIT, JUSTATTACKED, DROPOFF,
+PICKUP, INFLOAT and NOTDMATCH. All line/sector specials must be 0. FLOAT, NOCLIP,
+TELEPORT, special pickups, attacks and respawning behavior are excluded. Original
+monster metadata is recognized but not admitted. Source skills are supported
+with fastparm=false/netgame=false; nightmare's JUSTATTACKED branch is compared.
+
+Every profile 9 actor is a source player body or labelled native type, in stable
+player states 149..173 or native 1/2. That proves references cannot auto-remove
+mid-tic. Current targets, active roster and all retained sector sound IDs must
+resolve before chase effects. Stale/pending IDs reject, never aliasing slot reuse;
+inactive old roster identities remain encoded. Pure sight remains independent
+of unrelated pursuit dependencies. Missing/nonshootable current targets follow
+source reacquisition and immediate spawn/Look entry. Shootable targets with
+nonpositive actor health can still be pursued; player health is a separate record.
+
+Final bounds are 64 actors, +/-512 map values, +/-1024 query XYZ and 8192 expanded
+sight work. Callback XY margin 1008 and tic margin 978 prove 16 direct and 30 physical
+units. At most one direct move succeeds per callback chain; nested target loss
+can run Chase twice, so reaction INT_MIN+1 is rejected along with INT_MIN.
+Threshold/count INT_MIN also reject. A native registry comparison clone occurs
+only at construction; no full simulation/map clone occurs per tic. Every
+recoverable error preserves complete canonical state, including pending events.
+
+The isolated harness compiles 60 tracked genuine original bodies plus original
+fixed/table helpers, and extracts the original direction definitions. Individual
+function/header/file, direction table, adapter and input/output hashes are
+recorded with compiler flags and ABI in the new provenance. The movedir BAM
+shift uses an explicit unsigned cast to define original signed-shift intent;
+ordered spawn-jitter adaptation remains documented. No original decision body
+is replaced by handwritten movement, scan or chase logic. Unsupported attack/
+door/range services abort only on branches made unreachable by admitted metadata.
+Unsafe/dangling/infinite/overflow cases are separate Rust policy tests.
+
+96 scenarios on 17 maps match 108,992 actor fields, 29,416 ordered observations,
+2401 moves, 11,458 candidate callbacks, 2103 direction assignments, 1380 raw RNG
+draws, 13 sight queries/158 visits and 116 player slots. Tests assert aggregate
+counts and first differing case/operation/observation or named actor field.
+The corpus exercises blocked routes, source priorities and turnaround, step/
+dropoff/headroom, actor/spatial ordering, counters/turning/skill/targets/sounds,
+whole thinker tics and RNG wrap. Type admission rejects doors/float/attack
+configurations before any state or allocation effect.
+
+Independent v9 encoding reads C rows/public setup/schema only:835 captures and 49
+full streams, including transient events. Twelve separate Rust policy tests cover
+safe departures and atomicity. Local 162 workspace/MSRV and 138 release tests pass;
+nine reference/encoder pairs and nine examples reproduce. Eight fuzz targets
+build; pursuit ASan completed 2000 executions in 24 seconds without findings,
+leak detection disabled. Headless final digest is `8c7fd6adfe73112d`.
+[VALIDATION.md](VALIDATION.md) records full delivery evidence. Later M3d3 attack
+selection/actions needs separate review; no full original monster AI is claimed.

@@ -380,3 +380,36 @@ sound identity when a looker could run, covering sector changes before dispatch.
 Failure precedes movement, target/lastlook/threshold changes, events and RNG.
 Only bounded records, traversal stacks and plans are used; no full-state tic clone.
 See [the final admission contract](M3D3A_REFERENCE.md) and [v8 encoding](STATE_FORMAT.md).
+
+## M3d3b pursuit composition
+
+Profile 9 composes profile 8 perception/noise with a constrained non-attacking
+walking actor profile. `direction.rs` represents source dirtype_t and exact fixed
+components. `pursuit.rs` implements P_Move/TryWalk, labelled registry admission,
+small setup/preflight services and ordered observations; `pursuit/directions.rs`
+and `pursuit/chase.rs` contain finite source direction search and A_Chase.
+
+LifeHost uses a read-only perception context derived from the selected profile
+to permit native Chase callbacks. A_Look can enter the Chase see state immediately;
+Chase target loss can enter Look through the same recursive state-entry host.
+Native positive-duration states and stable body references bound that callback
+chain. No alternate allocator, scheduler or collision engine is introduced.
+
+A direct walk calls the existing M3b check_move with current ActorAccess/spatial
+order and immutable geometry/sectors. Success changes XY/floor/ceiling/location,
+relinks even in the same cell, clears INFLOAT and snaps Z to the contacted floor.
+The shared movement/vertical events retain their layouts. Ordinary momentum XY/Z
+still precedes state countdown/actions; direct walking is an immediate positional
+effect inside the action. Sector membership derives from the existing relink order.
+
+Constructor validation rejects specials, float/attack metadata and unbounded work.
+Only exact source player bodies or labelled native types 19/21/136 execute in this
+profile. Native copies explicitly clear the source player's missile-animation
+reference. Runtime state admission confines bodies to non-removing player/native
+states, so earlier thinkers cannot retire a referenced actor during a tic. Preflight
+proves counters and margins for 30 units physical+16 direct movement and validates
+active roster, retained sounds and current targets before side effects. Missing/
+nonshootable targets take the source scan/spawn path; stale generations reject.
+The registry comparison clone happens only at construction; tics use bounded local
+records/queries, never a full Simulation/Map clone. v6 weapons, v7 missiles,
+player damage, doors, floating AI and attacks remain separate.

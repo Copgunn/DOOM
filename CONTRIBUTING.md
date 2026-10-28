@@ -116,7 +116,7 @@ examples in debug/release, and the combat fuzz target. No C compiler is required
 for recorded Rust comparisons. Preserve v1-v4 bytes and unsupported-branch
 rejection; new native definitions must not bypass action or effect admission.
 `request_actor_death` keeps its M3c contract; actual damage uses `damage_actor`.
-M3d1 was regularly merged as `c924f18` after final correction and fresh/post-merge CI. M3d2 was regularly merged as `955f690` after correction-head and post-merge CI. M3d2b was regularly merged as `e109ee1` after correction-head and post-merge CI. M3d3a has conditional regular-merge authorization after finalization gates.
+M3d1 was regularly merged as `c924f18` after final correction and fresh/post-merge CI. M3d2 was regularly merged as `955f690` after correction-head and post-merge CI. M3d2b was regularly merged as `e109ee1` after correction-head and post-merge CI. M3d3a completed its authorized regular merge as `839fbab` with fresh/post-merge CI.
 
 ## M3d2 weapon changes
 
@@ -138,7 +138,7 @@ Keep plasma, owner lifetime and arithmetic admission explicit, preflight failure
 before mutation and reuse existing actor/damage services. Player damage is a
 dependency investigation only. Record actual ASan runs and whether leak detection
 was disabled. M3d2b completed its authorized regular merge and post-merge gates;
-finalize M3d3a through its authorized gates; leave M3d3b open without auto-merge.
+M3d3a completed its authorized gates; leave M3d3b open without auto-merge.
 
 ## M3d3a perception changes
 
@@ -150,5 +150,16 @@ independent canonical bytes and project-only policy tests distinct. Fixture
 lookers isolate genuine original A_Look with a supported see handoff; source
 monster metadata with immediate A_Chase must reject before mutation. No full
 monster AI, pursuit or attacks are admitted. Preserve every v1-v7 fixture and
-historical helper. M3d3a has conditional regular-merge authorization in the M3d3b
-mission; leave M3d3b open/unmerged without auto-merge.
+historical helper. M3d3a completed its authorized merge/post-merge gates;
+leave M3d3b open/unmerged without auto-merge.
+
+## M3d3b pursuit changes
+
+Read [M3D3B_REFERENCE.md](docs/M3D3B_REFERENCE.md) and the v9 schema. Reproduce
+all nine C generator/independent encoder pairs and nine asserted examples. Build
+the eight fuzz targets and record actual pursuit ASan executions, including whether
+leak detection is disabled. Preserve all historical helpers and v1-v8 definitions/
+expected bytes. Keep source decisions, project canonical bytes and ownership
+policies distinct. Fixture-based non-attacking pursuit does not admit complete
+original monsters. No attack, door or float behavior may execute silently; no
+new collision engine or AI scheduler is permitted. Leave M3d3b open/unmerged.

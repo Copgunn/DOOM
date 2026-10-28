@@ -1,6 +1,6 @@
 # Canonical simulation state, DSIM versions 1 through 7
 
-This is a diagnostic/replay comparison format for explicit M2 through M3d3a profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3d3b profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -21,7 +21,7 @@ Runtime fields precede static map fields. Runtime order:
 | Field/group | Value encoding |
 | --- | --- |
 | `tic` | u64 completed logical tics |
-| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), 6 (M3d2 player weapons/psprites), 7 (M3d2b projectiles), or 8 (M3d3a perception); profile-specific additions are specified below |
+| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), 6 (M3d2 player weapons/psprites), 7 (M3d2b projectiles), 8 (M3d3a perception), or 9 (M3d3b pursuit); profile-specific additions are specified below |
 | `paused` | u8 boolean |
 | `rng.gameplay`, `rng.miscellaneous` | u8 indexes, in that order |
 | `store.max_slots`, `store.slot_count` | u32 capacity policy; u64 logical allocated slot count |
@@ -449,3 +449,54 @@ thinker phases and RNG wrap. Named fields, full bytes and FNV-1a64 digest are
 compared by Rust. Native fixture registry edits are encoded explicitly. This
 schema is a project comparison format, not an original DOOM savegame or evidence
 of complete vanilla/demo synchronization.
+
+## DSIM-v9 — Monster Pursuit and Movement Decisions
+
+Schema/profile 9 composes v8 typed actor/static-sector state, sector sound targets,
+legacy absent/zero player bindings and the distinct perception roster. It adds
+only two persistent actor fields immediately after `actor.N.threshold` and before
+`actor.N.momz`, for each occupied typed actor:
+
+| Path | Value |
+| --- | --- |
+| `actor.N.movedir` | u8 source direction 0..7 or NODIR (8); spawn initializes EAST (0) |
+| `actor.N.movecount` | signed i32 little-endian; spawn initializes 0 |
+
+Existing angle, flags, health, target, reactiontime, threshold, state/tics and
+spatial/sector order are reused. Native registry edits (including missile-state
+removal, integer speed, radius, sounds and positive Chase duration) are explicitly
+encoded in existing immutable registry fields. Source skills use the existing
+actors.options field. fastparm/netgame remain fixed false; no hidden option is
+added. v6 weapon player, v7 projectile events/API and player damage are absent.
+All schemas 1..8 retain their original fields/expected bytes/encoders.
+
+Temporary axis candidates, movement results, query stamps and local plans are
+not persistent authority. Existing events 10 (ordered sector movement),11 (Z),12
+(actor state/action/target/sound),14/6 (shared noise) and 16 (perception) retain
+their exact layouts. Observations do not become gameplay inputs.
+
+New event tag 17 has a u8 discriminator, then 12-byte actor ID (u32 slot, u64
+generation) and payload below, all integers little-endian:
+
+| Discriminator | Remaining payload |
+| --- | --- |
+| 0 Start | u8 operation |
+| 1 Return | u8 operation, u8 boolean result |
+| 2 Direction | u8 assigned movedir |
+| 3 Random | u8 kind, u8 original lookup value |
+
+Operation 0=Move, 1=TryWalk, 2=NewChaseDir, 3=Chase. Void operations encode false in
+Return; this does not invent a source result. Random kind 0=successful walk count,
+1=axis priority, 2=fallback ordering, 3=active sound. Source call nesting, assignments,
+query results, RNG, state/sound events and returns retain chronological order.
+Move NODIR has no collision event. Failed direct moves leave actor constraints/
+links untouched. Successful walking relinks immediately before its movement
+observation; ordinary momentum XY/Z still precedes the state action.
+
+`m3d3b_snapshot_goldens.py` independently encodes 835 C/setup-derived captures and
+stores 49 full byte streams. All captures compare digests; selected streams first
+compare named fields, then bytes. Captures include pending/transient callbacks,
+source thinker phases, counter/angle/target changes, relinking and RNG wrap. C
+ordinals map to generation 1 in these source cases; retirement/reuse is separately
+verified by Rust policy tests. This is a project diagnostic comparison schema,
+not a DOOM savegame/demo or evidence of complete vanilla synchronization.

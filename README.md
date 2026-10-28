@@ -28,15 +28,12 @@ merged as `955f690` after fresh correction-head and post-merge CI. M3d2b project
 foundations implement bounded original plasma spawning, flight, direct impact,
 explosion and removal in profile 7; [PR #9](https://github.com/Copgunn/DOOM/pull/9)
 merged as `e109ee1` after final corrections and fresh/post-merge CI. M3d3a
-perception and target acquisition is implemented in [PR #10](https://github.com/Copgunn/DOOM/pull/10)
-with source REJECT/BSP sight, player-slot scanning, sound/ambush decisions
-and a bounded fixture-only A_Look handoff. Full monster pursuit and attacks remain
-future work.
-Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
-and [validation notes](docs/VALIDATION.md). [CI 40637618358](https://github.com/Copgunn/DOOM/actions/runs/40637618358)
-passed Linux, Windows, macOS and Rust 1.85 on implementation/documentation head
-`4e7720f0ba28781e72e3abe08c269389f582ad31`. The M3d3b mission conditionally authorizes its regular merge after final corrections
-and fresh local/remote checks.
+perception and target acquisition in [PR #10](https://github.com/Copgunn/DOOM/pull/10)
+merged as `839fbab` after final correction and successful correction/post-merge CI.
+M3d3b implements non-attacking source pursuit and movement decisions in profile 9
+on a separate branch for owner review. Full original monster execution and attack
+actions remain future work. Acceptance and exact evidence are in the
+[roadmap](docs/ROADMAP.md) and [validation notes](docs/VALIDATION.md).
 A playable client is future work.
 
 Implemented:
@@ -71,6 +68,8 @@ Implemented:
   direct damage and complete explosion/removal, with DSIM-v7.
 - Explicit M3d3a profile: original REJECT/BSP sight and player target acquisition,
   shared sector noise, ambush decisions and admitted A_Look with DSIM-v8.
+- Explicit M3d3b profile: original walking directions, P_Move/TryWalk/NewChaseDir,
+  non-attacking A_Chase, target reacquisition and DSIM-v9.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
 Choose the compatibility profile explicitly:
@@ -85,6 +84,7 @@ Choose the compatibility profile explicitly:
 | `Simulation::player_weapons` | DSIM-v6 | M3d2 one live weapon player, source pistol/shotgun/chaingun and fallback fist |
 | `Simulation::projectiles` | DSIM-v7 | M3d2b explicit original plasma launch, flight, direct impact and explosion/removal for unbound actors |
 | `Simulation::monster_perception` | DSIM-v8 | M3d3a pure sight, four-slot perception roster, target scanning and shared noise; labelled fixture A_Look only |
+| `Simulation::monster_pursuit` | DSIM-v9 | M3d3b perception plus non-attacking pursuit on labelled native look/chase fixtures; grounded static-map movement |
 
 M3b consumes supplied BLOCKMAP lists in reference order. Conservative omissions
 are diagnostic, not automatic rebuilds or proof of broken geometry. Missing
@@ -123,6 +123,35 @@ uses REJECT and BSP/seg traversal independently of weapon BLOCKMAP tracing.
 empty roster and rejecting stale identities. See [validation](docs/VALIDATION.md)
 for counts and [DSIM-v8](docs/STATE_FORMAT.md) for schema evidence. No proprietary
 assets are needed.
+
+## Monster pursuit example
+
+```sh
+cargo run -p doom-sim --example monster_pursuit --locked
+python3 tools/reference/check_monster_pursuit.py
+```
+
+This asserted synthetic demonstration covers perception-to-chase entry, direct
+walking, a blocking wall and alternate directions, repeated pursuit, target loss
+and reacquisition. Its final DSIM-v9 digest is `8c7fd6adfe73112d` in debug/release.
+`with_pursuit_registry` admits labelled native fixtures whose see action is genuine
+A_Chase and whose melee/missile states are absent. Copying source player metadata
+requires explicitly clearing its missile-animation state. Full original monsters
+remain unadmitted. All eight earlier examples remain available.
+
+`move_pursuer`, `try_walk`, `new_chase_direction` and `chase` expose the supported
+original routines; thinker state entry calls the same implementations. Walking
+moves position immediately through the existing collision service. It does not
+become momentum. Eight source direction vectors, source RNG/fallback priorities,
+counters, turning, target reacquisition and active sounds are preserved. Pending
+or stale target identities reject before mutation; missing/nonshootable targets
+use the source scan/spawn path. A dead shootable target can still be pursued.
+
+Profile 9 supports static maps without line/sector specials, non-floating bodies,
+a separate four-slot perception roster and at most 64 actors. Weapons, missiles,
+player damage, doors, floating AI and attacks remain separate. See
+[source findings/admission](docs/M3D3B_REFERENCE.md), [v9 schema](docs/STATE_FORMAT.md)
+and [validation](docs/VALIDATION.md) for C equivalence versus project policy evidence.
 
 ## Build and test
 
@@ -417,8 +446,9 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d1 | Bounded damage/hitscan/kill foundations | Merged as c924f18 |
 | M3d2 | Player weapons, psprites and ammo | Merged as 955f690 |
 | M3d2b | Original plasma foundations | Merged as e109ee1 |
-| M3d3a | Monster perception and target acquisition | Reviewed; conditional regular merge gated on fresh checks |
-| M3d3b–M3e | Pursuit, attacks, integrated combat, interactions and moving sectors | Planned |
+| M3d3a | Monster perception and target acquisition | Merged as 839fbab |
+| M3d3b | Source pursuit and movement decisions | Implemented for owner review; open and unmerged |
+| Later M3d3–M3e | Attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
 

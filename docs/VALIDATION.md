@@ -1169,3 +1169,67 @@ was created. All 165 upstream files and 297 historical reference files were
 verified byte-identical; public GPL-2.0-only licensing, attribution/history and
 asset protections remain intact. No private asset/project was accessed, no branch
 deleted. M3d3b has no merge authorization.
+
+## M3d3b local implementation evidence
+
+Branch `feat/m3d3b-monster-pursuit` starts at verified master `839fbab` after the
+completed PR #10 gates above. Investigation commit `685f2ed` precedes runtime
+changes. Native Look/Chase fixtures explicitly remove attack states; complete
+original monster execution, attacks, floating AI and doors remain excluded.
+
+| Local check | Observed result |
+| --- | --- |
+| Locked build, root/fuzz fmt, all-target Clippy with warnings denied | Passed |
+| Workspace tests including one doctest | 162 passed; two private tests ignored |
+| doom-sim/doom-types release | 138 passed |
+| Rust 1.85.0 workspace | 162 passed; two private tests ignored |
+| Rustdoc with warnings denied | Passed |
+| Nine original-C generator/independent encoder pairs, --check | Passed |
+| Nine asserted debug/release example outputs | Identical |
+| All eight nightly fuzz targets | Built |
+| Pursuit ASan, seed 17/max input 65,24 synthetic initial seeds | 2000 executions in 24 seconds, no finding; leak detection disabled |
+
+The new original-C harness compiles 60 tracked source bodies plus original fixed/
+table helpers and direction definitions. Individual original function bodies,
+files/headers, direction tables, adapters and inputs/outputs are hashed in
+`tests/reference/m3d3b_provenance.json`, with GCC 14.2.0 flags and ABI assumptions.
+The unsigned BAM movedir-shift adapter makes the original signed-shift intent
+defined; source decision bodies remain genuine. Unreachable attack/door services
+abort in C, and Rust admission rejects their metadata before mutation.
+
+Across 96 scenarios/17 maps, the comparison suite asserts:
+
+| Original-C comparison | Count |
+| --- | ---: |
+| Actor fields, including direction/count, position/angle/momentum and lifecycle | 108992 |
+| Normalized ordered observations | 29416 |
+| Movement attempts with source constraints/results | 2401 |
+| Ordered thing/line candidates | 11458 |
+| Direction assignments | 2103 |
+| Raw gameplay RNG draws | 1380 |
+| Sight queries/ordered visits during perception/reacquisition | 13 / 158 |
+| Player-slot observations / roster fields | 116 / 10020 |
+
+Cases cover cardinal/diagonal/NODIR and exact +/-10 thresholds, blocked axes,
+old retries, forward/reverse fallback, turnaround, trapped actors, 24/25 steps,
+restricted/allowed dropoffs, opening/headroom boundaries, actor collisions,
+spatial/sector links, source counter/angle/JUSTATTACKED skill paths, dead shootable
+retention, nonshootable/missing target reacquisition and spawn return, active-sound
+silent/audible draws, repeated state/thinker order and RNG wrap. The reference
+player-shaped native fixture explicitly clears source S_PLAY_ATK1; it is not a
+fully executable original monster. Source player record health and mobj health
+remain independently observed.
+
+Independent Python DSIM-v9 evidence is 835 captures/49 complete byte fixtures,
+including transient ordered observations and full multi-tic states. It reads no
+Rust output. Named-field comparisons precede bytes/digests. All v1-v8 expected
+bytes/code fixtures/generators/encoders remain unchanged. Twelve Rust-only policy
+tests separately cover unsafe/nonterminating C exclusions, generations, work/
+arithmetic/admission and full failed-operation atomicity; no full-state tic clone.
+
+The ninth asserted example covers 20 tics acquiring/pursuing, 40 tics on a blocked
+route with alternate directions, 12 tics losing a target and 15 tics reacquiring.
+Final digest `8c7fd6adfe73112d` is identical in debug/release. This is project
+canonical determinism evidence, not a vanilla demo hash. Exact remote delivery
+head/CI is recorded after verification. M3d3b must remain open and unmerged;
+no private assets or projects were accessed.

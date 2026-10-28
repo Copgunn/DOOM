@@ -353,7 +353,7 @@ impl ActorRegistry {
         SOURCE_ACTIONS.get(usize::from(id.0)).copied()
     }
     /// Whether a callback is admitted by the baseline lifecycle profiles.
-    /// Profile 8 separately admits A_Look with validated perception inputs.
+    /// Profile 8 separately admits A_Look; profile 9 adds constrained A_Chase.
     pub fn action_supported(&self, id: ActionId) -> bool {
         matches!(
             self.action_name(id),
@@ -746,7 +746,7 @@ pub struct ActorLife {
     pub health: i32,
     /// Initialized reaction time; no unsupported AI timer service.
     pub reaction_time: i32,
-    /// Source retarget threshold; damage sets 100, A_Chase countdown remains later.
+    /// Source retarget threshold; damage sets 100, profile 9 admits A_Chase countdown.
     pub threshold: i32,
     /// Source direction: E, NE, N, NW, W, SW, S, SE, NODIR (0..8).
     /// Initialized to EAST by source zeroed spawn; serialized only in profile 9.
