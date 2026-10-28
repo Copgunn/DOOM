@@ -306,6 +306,11 @@ impl Simulation {
             return Err(CombatError::Profile.into());
         }
         self.combat_actor(shooter)?;
+        if self.profile == Profile::DemonLifecycle
+            && self.actor(shooter).unwrap().life.unwrap().actor_type != ActorTypeId(135)
+        {
+            return Err(MonsterError::Definition.into());
+        }
         Ok(crate::combat_trace::aim(self, shooter, angle, range)?)
     }
     pub(crate) fn plan_damage(&self, request: DamageRequest) -> Result<DamagePlan, SimError> {
@@ -530,6 +535,9 @@ impl Simulation {
         }
     }
 }
+pub(crate) fn pain_decision(draw: u8, chance: i32) -> bool {
+    i32::from(draw) < chance
+}
 impl<A: ActorAccess> LifeHost<'_, A> {
     fn combat_event(&mut self, event: CombatEvent) {
         self.events.push(Event::Combat(event));
@@ -635,7 +643,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             return result;
         }
         let random = self.combat_random(1);
-        if i32::from(random) < info.pain_chance() {
+        if pain_decision(random, info.pain_chance()) {
             result.pain = true;
             self.access
                 .get_mut(id)

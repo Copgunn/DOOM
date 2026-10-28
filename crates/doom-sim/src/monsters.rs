@@ -738,7 +738,7 @@ impl Simulation {
     }
     /// Original P_CheckMissileRange, including JUSTHIT clearing and ordered RNG.
     pub fn check_missile_range(&mut self, id: ActorId) -> Result<bool, SimError> {
-        if self.profile == Profile::DemonMelee {
+        if self.profile.uses_demon() {
             return Err(MonsterError::Profile.into());
         }
         self.preflight_monster_callback(id)?;
@@ -759,7 +759,10 @@ impl Simulation {
         if pos
             && matches!(
                 self.profile,
-                Profile::Shotgunner | Profile::Chaingunner | Profile::DemonMelee
+                Profile::Shotgunner
+                    | Profile::Chaingunner
+                    | Profile::DemonMelee
+                    | Profile::DemonLifecycle
             )
         {
             return Err(MonsterError::Definition.into());
@@ -801,7 +804,7 @@ impl Simulation {
                 monsters: true,
                 shotgunner: self.profile == Profile::Shotgunner,
                 chaingunner: self.profile == Profile::Chaingunner,
-                demon: self.profile == Profile::DemonMelee,
+                demon: self.profile.uses_demon(),
                 melee: None,
                 shotgun: None,
                 shot,

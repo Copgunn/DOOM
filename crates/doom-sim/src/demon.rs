@@ -105,6 +105,11 @@ impl Simulation {
         let mut preview = initial;
         let _ = crate::monsters::face_angle(actor, *self.actor(target).unwrap(), &mut preview);
         let accepted = self.check_melee_range(id)?.accepted;
+        // Lifecycle owners can move in XY/Z before their first thinker action.
+        // Prepare potential damage even when the current preview misses; actual
+        // range after physics/facing controls the draw. Physics consumes no RNG
+        // in this unbound, non-missile closure, and no earlier thinker can alter
+        // target health. The plan contains no cached post-physics range result.
         let damage = if accepted || self.profile == Profile::DemonLifecycle {
             let amount = (i32::from(preview.p_random()) % 10 + 1) * 4;
             let plan = self.plan_damage(DamageRequest {
