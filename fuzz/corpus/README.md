@@ -72,10 +72,15 @@ step = [13,0,1,0,0,0,0,2]
 for selector in range(6):
     first = [5,0,1,0,0,0,0,4] if selector == 1 else [1,0,1,0,0,0,0,0]
     ops = [step]*8 if selector == 4 else [first]+[step]*7
+    selector_byte = selector | (0x80 if selector in [0,1,4] else 0)
     (p / f'public_seed_{selector}').write_bytes(
-        bytes([selector]) + b''.join(bytes(op) for op in ops))
+        bytes([selector_byte]) + b''.join(bytes(op) for op in ops))
 PYSEED
 ```
+
+The high selector bit pre-fills the bounded fixture to 64 actors before the
+eight mutational operations, covering capacity hits, misses and spawn errors.
+The low seven bits still select the same public fixture.
 
 The new target and seed recipe contain no game assets. Evolving local corpus,
 coverage and crash output stay ignored or outside the checkout. Report actual

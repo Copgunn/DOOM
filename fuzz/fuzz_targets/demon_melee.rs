@@ -21,11 +21,11 @@ fuzz_target!(|data: &[u8]| {
     ];
     let c = cases
         .iter()
-        .find(|c| c.label == labels[usize::from(first % 6)])
+        .find(|c| c.label == labels[usize::from((first & 0x7f) % 6)])
         .unwrap();
     // Mutate only public synthetic map bytes. Constructor rejection is separate
     // from authoritative operation atomicity; no production geometry override.
-    let mut map_bytes = fixtures::map_bytes(usize::from(first % 20)).to_vec();
+    let mut map_bytes = fixtures::map_bytes(usize::from((first & 0x7f) % 20)).to_vec();
     for (i, byte) in rest.iter().take(8).enumerate() {
         let offset = (usize::from(*byte) + i * 17) % map_bytes.len();
         map_bytes[offset] ^= *byte;
@@ -41,6 +41,18 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     let mut s = fixtures::setup(c);
+    // High selector bit adds a bounded capacity setup. Mutational operations
+    // can now exercise zero-demand melee and rejected spawns at all 64 slots.
+    if first & 0x80 != 0 {
+        while s.actor_order().count() < 64 {
+            s.spawn_type(
+                ActorTypeId(135),
+                [Fixed::from_map_units(-200), Fixed::from_map_units(-96)],
+                SpawnHeight::Floor,
+            )
+            .unwrap();
+        }
+    }
     let initial = PursuitSetup::from_actor(s.actor(ActorId::from_parts(0, 1)).unwrap()).unwrap();
     for c in rest.chunks_exact(8).take(8) {
         let a = ActorId::from_parts(u32::from(c[1] % 8), u64::from(c[2] % 3));
