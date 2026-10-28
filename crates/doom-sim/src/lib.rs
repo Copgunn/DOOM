@@ -101,13 +101,22 @@ pub enum Profile {
     Chaingunner,
     /// M3d3f bounded normal-timing Demon melee fixtures, DSIM-v13.
     DemonMelee,
+    /// M3d3g normal Demon pain/death/corpse fixtures, DSIM-v14.
+    DemonLifecycle,
 }
 
 impl Profile {
+    pub(crate) const fn uses_demon(self) -> bool {
+        matches!(self, Self::DemonMelee | Self::DemonLifecycle)
+    }
     pub(crate) const fn uses_monsters(self) -> bool {
         matches!(
             self,
-            Self::MonsterAttacks | Self::Shotgunner | Self::Chaingunner | Self::DemonMelee
+            Self::MonsterAttacks
+                | Self::Shotgunner
+                | Self::Chaingunner
+                | Self::DemonMelee
+                | Self::DemonLifecycle
         )
     }
     pub(crate) const fn uses_perception(self) -> bool {
@@ -119,6 +128,7 @@ impl Profile {
                 | Self::Shotgunner
                 | Self::Chaingunner
                 | Self::DemonMelee
+                | Self::DemonLifecycle
         )
     }
     pub(crate) fn uses_sectors(self) -> bool {
@@ -135,6 +145,7 @@ impl Profile {
                 | Self::Shotgunner
                 | Self::Chaingunner
                 | Self::DemonMelee
+                | Self::DemonLifecycle
         )
     }
 }
@@ -728,7 +739,10 @@ impl Simulation {
             return Err(StoreError::InvalidHandle.into());
         }
         self.projectile_control(id)?;
-        if self.profile.uses_monsters() && self.monster_is_owner(id) && momentum != [Fixed::ZERO; 2]
+        if self.profile.uses_monsters()
+            && self.profile != Profile::DemonLifecycle
+            && self.monster_is_owner(id)
+            && momentum != [Fixed::ZERO; 2]
         {
             return Err(MonsterError::Ownership.into());
         }
@@ -813,7 +827,7 @@ impl Simulation {
         } else if self.profile == Profile::Perception {
             self.preflight_perception_step()?;
         }
-        let demon_melee = if self.profile == Profile::DemonMelee {
+        let demon_melee = if self.profile.uses_demon() {
             self.preflight_demon_step()?
         } else {
             None
@@ -864,7 +878,7 @@ impl Simulation {
                     monsters: self.profile.uses_monsters(),
                     shotgunner: self.profile == Profile::Shotgunner,
                     chaingunner: self.profile == Profile::Chaingunner,
-                    demon: self.profile == Profile::DemonMelee,
+                    demon: self.profile.uses_demon(),
                     melee: demon_melee.as_ref(),
                     shotgun: shotgun_blast.as_ref(),
                     shot: monster_shot.as_ref(),

@@ -392,6 +392,9 @@ impl Simulation {
             .is_some_and(|l| OWNERS.contains(&l.actor_type.0))
     }
     pub(crate) fn validate_monster_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
+        if self.profile == Profile::DemonLifecycle {
+            return self.validate_demon_lifecycle_type(ty);
+        }
         if self.profile == Profile::DemonMelee {
             return self.validate_demon_type(ty);
         }
@@ -437,10 +440,16 @@ impl Simulation {
             return Err(MonsterError::Arithmetic.into());
         }
         if OWNERS.contains(&l.actor_type.0) {
-            if l.flags & !OWNER_FLAGS != 0
-                || a.momentum() != [Fixed::ZERO; 2]
-                || a.momz != Fixed::ZERO
-                || a.z != a.floor
+            if l.flags
+                & !(OWNER_FLAGS
+                    | if self.profile == Profile::DemonLifecycle {
+                        4 | 1048576
+                    } else {
+                        0
+                    })
+                != 0
+                || self.profile != Profile::DemonLifecycle
+                    && (a.momentum() != [Fixed::ZERO; 2] || a.momz != Fixed::ZERO || a.z != a.floor)
                 || self.actors.order().next() != Some(id)
             {
                 return Err(MonsterError::Ownership.into());
@@ -454,6 +463,9 @@ impl Simulation {
         } else if l.actor_type.0 == 135 && l.flags & !TARGET_FLAGS != 0 {
             return Err(MonsterError::Definition.into());
         }
+        if self.profile == Profile::DemonLifecycle && l.actor_type.0 == 136 {
+            self.lifecycle_owner(a)?;
+        }
         self.monster_state_role(l.actor_type, l.state.ok_or(MonsterError::Definition)?)?;
         Ok(a)
     }
@@ -462,6 +474,9 @@ impl Simulation {
         ty: ActorTypeId,
         state: StateId,
     ) -> Result<(), SimError> {
+        if self.profile == Profile::DemonLifecycle {
+            return self.lifecycle_state_role(ty, state);
+        }
         if self.profile == Profile::DemonMelee {
             return self.demon_state_role(ty, state);
         }
@@ -497,6 +512,9 @@ impl Simulation {
             return Err(MonsterError::Ownership.into());
         }
         let a = self.monster_actor(id, 1008)?;
+        if self.profile == Profile::DemonLifecycle && a.life.unwrap().health <= 0 {
+            return Err(MonsterError::Ownership.into());
+        }
         self.preflight_perception_roster()?;
         for t in a
             .life
@@ -555,7 +573,30 @@ impl Simulation {
         {
             return Err(MonsterError::Arithmetic.into());
         }
-        if p.flags & !(if owner { OWNER_FLAGS } else { TARGET_FLAGS }) != 0 {
+        if self.profile == Profile::DemonLifecycle {
+            let current = self.actor(id).unwrap().life.unwrap();
+            if current.flags & 1048576 != 0
+                || owner
+                    && (!(1..=150).contains(&p.health)
+                        || p.flags & !(6 | 32 | 64 | 128) != 0
+                        || p.flags & 6 != 6)
+            {
+                return Err(MonsterError::Definition.into());
+            }
+        }
+        if p.flags
+            & !(if owner {
+                OWNER_FLAGS
+                    | if self.profile == Profile::DemonLifecycle {
+                        4
+                    } else {
+                        0
+                    }
+            } else {
+                TARGET_FLAGS
+            })
+            != 0
+        {
             return Err(MonsterError::Definition.into());
         }
         let a = self.actors.get_mut(id).unwrap();
@@ -590,11 +631,13 @@ impl Simulation {
             }
             let a = self.monster_actor(id, 978)?;
             let l = a.life.unwrap();
-            if self.monster_is_owner(id) {
+            if self.monster_is_owner(id)
+                && !(self.profile == Profile::DemonLifecycle && l.health <= 0)
+            {
                 self.preflight_monster_callback(id)?;
                 if l.tics == 1
                     && l.state.is_some_and(|s| {
-                        if self.profile == Profile::DemonMelee {
+                        if self.profile.uses_demon() {
                             s.0 == 5
                         } else if self.profile == Profile::Chaingunner {
                             [4, 5, 7].contains(&s.0)
@@ -662,7 +705,7 @@ impl Simulation {
         id: ActorId,
         state: StateId,
     ) -> Result<(), SimError> {
-        if self.profile == Profile::DemonMelee {
+        if self.profile.uses_demon() {
             return self.enter_demon_state(id, state);
         }
         let a = self.monster_actor(id, 1008)?;

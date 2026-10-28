@@ -71,3 +71,85 @@ impl ActorRegistry {
         Self::new(states, types).expect("source-derived fixture definitions")
     }
 }
+
+impl Simulation {
+    /// Profile 14: explicit normal SARG melee, pain, ordinary death and corpses.
+    /// No player damage, scoring, resurrection or complete monster admission.
+    pub fn with_demon_lifecycle_registry(
+        map: Map,
+        limit: u32,
+        registry: ActorRegistry,
+        options: ActorOptions,
+    ) -> Result<Self, SimError> {
+        if limit > 64 {
+            return Err(PerceptionError::WorkLimit.into());
+        }
+        if options.skill == Skill::Nightmare {
+            return Err(MonsterError::Definition.into());
+        }
+        if map.linedefs().iter().any(|l| l.special != 0)
+            || map.sectors().iter().any(|s| s.special != 0)
+        {
+            return Err(PursuitError::Specials.into());
+        }
+        crate::sight::validate_map(&map)?;
+        let expected = ActorRegistry::demon_lifecycle_fixture();
+        if registry.states() != expected.states() || registry.types() != expected.types() {
+            return Err(MonsterError::Definition.into());
+        }
+        let mut sim = Self::with_combat_registry(map, limit, registry, options)?;
+        sim.profile = Profile::DemonLifecycle;
+        sim.sound_targets = vec![None; sim.sectors.len()];
+        Ok(sim)
+    }
+    pub(crate) fn validate_demon_lifecycle_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
+        if ![37, 38, 135, 136].contains(&ty.0) {
+            return Err(MonsterError::Definition.into());
+        }
+        self.registry
+            .as_deref()
+            .unwrap()
+            .validate_type_demon_melee(ty, &self.sectors)?;
+        Ok(())
+    }
+    pub(crate) fn lifecycle_state_role(
+        &self,
+        ty: ActorTypeId,
+        state: StateId,
+    ) -> Result<(), SimError> {
+        let valid = match ty.0 {
+            136 => [1, 2].contains(&state.0) || (4..=14).contains(&state.0),
+            135 => (149..=173).contains(&state.0),
+            37 | 38 => (90..=96).contains(&state.0),
+            _ => false,
+        };
+        if !valid {
+            return Err(MonsterError::Definition.into());
+        }
+        Ok(())
+    }
+    pub(crate) fn lifecycle_owner(&self, a: Actor) -> Result<(), SimError> {
+        let l = a.life.unwrap();
+        let state = l.state.ok_or(MonsterError::Definition)?.0;
+        let dead = l.health <= 0;
+        if dead != (9..=14).contains(&state)
+            || (l.flags & 1048576 != 0) != dead
+            || (l.flags & 4 != 0) == dead
+            || a.height() != Fixed::from_map_units(if dead { 14 } else { 56 })
+            || dead && ((l.flags & 2 != 0) != (state < 12) || l.flags & 1024 == 0)
+        {
+            return Err(MonsterError::Definition.into());
+        }
+        Ok(())
+    }
+    pub(crate) fn preflight_lifecycle_combat(
+        &self,
+        ids: &[Option<ActorId>],
+    ) -> Result<(), SimError> {
+        self.preflight_monster_owner()?;
+        for id in ids.iter().flatten() {
+            self.monster_reference(*id)?;
+        }
+        Ok(())
+    }
+}
