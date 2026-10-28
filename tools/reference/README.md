@@ -126,3 +126,14 @@ Rust output. It produces 99 DSIM-v4 digests and 24 full byte streams, including
 immutable original/native registries and ordered action events. Separate snapshot
 provenance pins all inputs/outputs. Older generators and authoritative fixtures
 remain unchanged. Rust tests/example consume recorded outputs without Python or C.
+
+## M3d1
+
+Run `generate_m3d1.py --check` and `m3d1_snapshot_goldens.py --check` in addition
+to all earlier generators/encoders. `m3d1_shim.h` uses original structs/info and
+extracted source bodies; unsupported services abort. 48 cases, nine public
+synthetic maps and 431 captures cover damage/kill/hitscan/effects/death progressions.
+The v5 encoder reads C rows and explicit source/fixture metadata, never Rust.
+See [M3D1_REFERENCE.md](../../docs/M3D1_REFERENCE.md) for scope, exact comparison
+counts, undefined-C exclusions and provenance. The old generators/fixtures stay
+unchanged. `check_headless.py` now compares all five examples on every stable CI OS.

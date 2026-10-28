@@ -81,7 +81,7 @@ remain M3d2; A_PosAttack and other perception/AI attack actions remain M3d3.
 
 Corpses use the existing XY/Z thinker. P_XYMovement has a CORPSE friction exception:
 when either XY momentum exceeds +/-FRACUNIT/4 and contacted floor differs from the
-center sector floor, skip friction. Death may clear gravity and dropoff flags or
+center sector floor, skip friction. Death changes gravity/dropoff flags and
 later A_Fall may clear solidity; synchronize their physical projections immediately.
 
 ## Declared implementation slice and safe policies
@@ -104,8 +104,8 @@ puff spawning; JUSTHIT/CORPSE are source runtime outcomes, not silent AI support
 
 Use nonnegative bounded damage, positive mass/spawn health and checked health
 subtraction. Reserve conservative callback/effect spawn capacity before any event,
-health, momentum, flag or RNG mutation. Preview branch RNG on a copy of DoomRng;
-validate all possible selected state closures and conservative service demand.
+health, momentum, flag or RNG mutation. Validate all possible selected state closures and conservative service demand
+without consuming RNG; no branch needs a speculative authoritative draw.
 Do not clone the full Simulation/Map. Pending or stale combat handles reject
 before mutation. Existing retained target identities still resolve generation-
 safely; removal does not eagerly clear references. State callbacks can reenter,
@@ -122,22 +122,47 @@ Effects use the same real typed store and source RNG order before damage.
 
 ## C evidence and exclusions
 
-Evidence is pending implementation of the separate original-body harness. Its
-adapter must not replace damage, hitscan, effect, state, corpse movement or RNG
-behavior under test. Planned comparisons cover complete attack/death tics plus
-geometry/range/tie/height cases, branch inputs, exact intermediates, RNG/indexes,
-links/thinker order and failure boundaries. Native fixture definitions must be
-recorded separately from original actor metadata. Unsupported services may abort
-only on demonstrably unreachable paths.
+`generate_m3d1.py` compiles original damage/kill, path/intercept/aim/shoot,
+impact, state/thinker, XY/Z/collision/link/BSP/angle functions and five action
+bodies with original structs, info.c, tables.c and m_fixed.c. The explicit
+FUNCTIONS list and harness record extraction points. Unsupported player, weapon,
+AI, special and drop services abort; tested paths never enter them.
+
+48 scenarios on nine synthetic maps produce 431 captures, 4,569 actor rows,
+809 candidate callbacks, 402 intercept insertions and 260 traversals. The Rust
+reference test compares 38,052 live actor fields, exact cells/geometry/fractions,
+selection/window/impact positions, RNG indexes and ordered lifecycle/actions.
+Complete ordinary/extreme deaths, corpse step/drop edges, 100 zero-damage impacts
+with RNG wrap and 35 subsequent tics are included. Original source type 136 is
+replaced only inside the fixture by player metadata with recorded input overrides;
+it is named FIXTURE_PAWN in Rust and has no player_t. No general monster admission
+claim follows. C retired storage is retained until scenario reset, never treated
+as a live Rust identity.
+
+The independent Python v5 encoder verifies 63 captures and 17 complete byte
+fixtures, including shot trace/effect/damage events and final corpse/retirement.
+The asserted combat arena final digest is `8906eb60707d089e` after 80 tics.
+Twelve adversarial policy tests and the bounded combat fuzz target separately
+check safe errors/recursion/reuse/determinism; they are not C behavioral evidence.
 
 The original jitter expressions left-shift negative signed differences and leave
-operand call evaluation order unspecified. The adapter will use explicit ordered
+operand call evaluation order unspecified. The adapter uses explicit ordered
 RNG calls and representable multiplication for this defined profile, recording
 that substitution. GNU pointer-union/sentinel, arithmetic-shift/narrowing assumptions,
-retained retirement storage and source/header/adapter/input/output hashes will be
+retained retirement storage and source/header/adapter/input/output hashes are
 recorded. Original 165 files remain unchanged; no Rust results define C expected
 outputs. C-undefined extremes test safe Rust rejection, not C compatibility.
 
 Full armor/immunity/player death, scoring/drops, AI, missiles, radius attacks,
 boss specials, resurrection/nightmare respawn, moving sectors, demos and scripts
 remain unsupported. Rendering/audio/IWAD data stay outside authoritative tics.
+
+
+Reproduction: `python3 tools/reference/generate_m3d1.py --check` and
+`python3 tools/reference/m3d1_snapshot_goldens.py --check`. Provenance manifests
+record source/header/adapter/input/output SHA-256, GNU C flags, compiler/platform
+and ABI assumptions. Source arithmetic shifts and representable narrowing use
+GNU C on the recorded x86-64 host; function-pointer unions and thinker sentinel
+layout follow the original headers. The flags include the earlier infrastructure's
+explicit wrap/alias policies. Intercept overflow and abs(INT_MIN) are excluded
+from C comparisons and tested as safe Rust rejection. No original file changed.

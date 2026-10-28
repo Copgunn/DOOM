@@ -105,6 +105,15 @@ v1/v2/v3 fixtures. Record recognized metadata, admitted types, source actions an
 synthetic probe capabilities separately. State entry is not damage processing;
 map player starts do not imply complete player initialization. See
 [the investigation](docs/M3C_REFERENCE.md) and [schema](docs/STATE_FORMAT.md).
-M3c received conditional regular-merge authorization in the M3d1 mission, subject
-to final corrections and fresh CI. Each M3d subphase still needs separate owner
+M3c was regularly merged as `4dbb0a5` after final corrections and fresh CI. Each M3d subphase still needs separate owner
 review and merge authorization.
+
+## M3d1 combat changes
+
+Read [M3D1_REFERENCE.md](docs/M3D1_REFERENCE.md). Run the M3d1 C generator and
+independent snapshot encoder with `--check` alongside all earlier tools, all five
+examples in debug/release, and the combat fuzz target. No C compiler is required
+for recorded Rust comparisons. Preserve v1-v4 bytes and unsupported-branch
+rejection; new native definitions must not bypass action or effect admission.
+`request_actor_death` keeps its M3c contract; actual damage uses `damage_actor`.
+M3d1 is delivered unmerged and requires separate owner merge authorization.

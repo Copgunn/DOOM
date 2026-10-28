@@ -334,3 +334,51 @@ These comparisons establish only the declared Linux 1.10 subset, not a playable
 game, authentic IWAD validation, full vanilla synchronization or DOS 1.9 behavior.
 
 Source-special skull/boss checks use type IDs, independently of native display names.
+
+## M3d1 / explicit profile 5
+
+This profile adds a verified Linux 1.10 subset to M3c; profile 4 controlled death
+retains the contract above. `damage_actor` implements the unbound, non-player-
+pointer branch: early ignored nonshootable/dead targets; source angle/thrust and
+forward-fall random branch; health subtraction; nonlethal pain draw/JUSTHIT/state,
+reaction reset, target/threshold and conditional see entry; lethal kill flags,
+quarter height, strict extreme-death threshold, action-before-randomized-timer
+order, persistent corpse and source corpse friction exception. Gravity/dropoff
+and solidity projections track the resulting source flags/actions.
+
+`aim_line_attack` consumes no RNG/events. It implements source autoaim rather than
+general P_CheckSight or monster perception. `line_attack` accepts supplied damage
+and slope, preserves original DDA start nudge, BLOCKMAP callback order, box-diagonal
+thing fractions, stable equal fractions, inclusive vertical/range boundaries and
+source four/ten-unit hit backoff. Two-sided flags do not substitute for opening
+rules. Real source blood/puff spawning consumes jitter, lastlook and timer draws
+BEFORE damage; zero damage still spawns effects. These actors participate in
+movement, state countdown and retirement.
+
+Admission recognizes all source metadata but executes only validated state/action
+closures and flags. Five original sound/fall actions remain the only supported
+original callbacks. Profile 5 additionally admits NOBLOOD; source runtime JUSTHIT
+and CORPSE are consequences, not permission to execute AI. Tests use unbound
+MT_PLAYER and type 136 `FIXTURE_PAWN`, copied from source player metadata with
+explicit health/pain/mass/flags/reaction/height overrides, never a real player_t.
+Native fixtures isolate mechanics and do not establish vanilla monster support.
+
+Bound damage participants/shooters, unsupported flags/actions, COUNTKILL/scoring,
+four item-drop identities, sky ceilings, line specials, resurrection/nightmare
+respawn, inventory/armor/immunity, weapons/psprites/ammo, AI, projectiles, radius
+attacks and advanced effects reject or remain outside the available API. All
+selected damage closures and effect dimensions are prevalidated. Native registry
+changes to source impact types/states reject. Damage 0..=1000, positive mass and
+spawn health, pain chance 0..=256 and positive range <=2048 define this slice.
+Unsafe coordinate setup, >128 intercepts, incomplete 64-cell DDA or insufficient
+conservative spawn/action capacity reject before canonical mutation. These safe
+errors do not reproduce original memory overflow or fatal partial setup.
+
+48 C scenarios compare 431 captures, 38,052 live actor-field values, candidate/
+intercept/callback order and full supported multi-tic death/RNG sequences. 63
+independent v5 captures include 17 byte fixtures. Original C jitter has negative
+signed shifts and unspecified operand evaluation: the isolated adapter explicitly
+evaluates left then right RNG and multiplies by 1024, documented in provenance.
+C-undefined extremes are tested as Rust safety policies. Long repeated runs and
+fuzzing are project consistency evidence. None establishes full vanilla/DOS demo
+synchronization, authentic IWAD validation or a playable game.

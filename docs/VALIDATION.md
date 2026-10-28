@@ -732,3 +732,51 @@ fixtures and asset exclusions were reverified. No private content was accessed.
 Local merged M0-M3c milestone branches and remote merged M3b/M3c branches are
 cleanup candidates after preserving immutable historical references; none was deleted.
 M3d1 has no merge authorization.
+
+## M3d1 local delivery evidence
+
+Branch `feat/m3d1-damage-hitscan` starts from verified M3c merge `4dbb0a5`.
+The source investigation was committed as `276a37e` before combat runtime work.
+This branch implements only bounded unbound-actor damage/aim/hitscan/kill services;
+weapons, actual player damage, AI and integrated combat remain future subphases.
+M3d1 must remain open and unmerged for separate owner review.
+
+Observed local checks (stable Rust 1.99.1, Rust 1.85.0 compiler floor):
+
+| Check | Observed result |
+| --- | --- |
+| Build, root/fuzz formatting, Clippy `-D warnings` | Passed |
+| Workspace | 110 passed including one doctest; two private-asset tests ignored |
+| Release doom-sim + doom-types | 86 passed |
+| Rust 1.85 workspace | 110 passed including doctest; two private tests ignored |
+| Rustdoc `-D warnings` | Passed |
+| All five original C generators and independent encoders | Passed reproduction |
+| All five examples, debug/release stdout equality | Passed |
+| Four nightly fuzz targets | Built |
+| Combat ASan smoke | 10,000 runs, no crash, 112 seconds; leak detection disabled |
+
+Original-C evidence: 48 scenarios on nine synthetic maps, 431 captures, 38,052
+live actor-field comparisons, all 809 candidates, 402 inserted intercepts and 260
+traversed callbacks. Source trace geometry and all 281 DDA cells also match.
+Complete supported attack/death/corpse sequences and RNG wraparound match source
+state/RNG/lifecycle observations. Independent v5 encoding checks 63 captures and
+17 full byte fixtures, including complete shot event ordering. Earlier source,
+fixture, encoder and canonical version 1 through 4 expectations are unchanged.
+Twelve policy tests separately cover safety/atomicity/recursive state probes and
+a repeated 160-tic run; they do not enlarge the C-verified domain.
+
+The asserted `combat_arena` verifies successful/wall-blocked hits, pain, lethal
+damage, two death actions over 80 tics, persistent corpse and retired impact.
+Independent final DSIM-v5 digest: `8906eb60707d089e`.
+
+ASan used nightly 1.101.0 and cargo-fuzz 0.13.2, a temporary 32-seed synthetic
+corpus, at most 256 input bytes and 10,000 runs. This is bounded smoke evidence,
+not exhaustive fuzzing or LeakSanitizer verification. No benchmark superiority
+claim is made. Authentic IWAD and full vanilla/DOS synchronization remain untested.
+
+All 165 original upstream files compare byte-for-byte with `a77dfb9`. Public
+visibility, GPL-2.0-only workspace/fuzz metadata, master default, disabled auto-merge,
+licensing/attribution and `.gitignore` asset protections were reverified. No private
+assets were accessed or provisioned, and no private repository was accessed.
+Exact final-head remote CI and the PR are recorded in the delivery section below
+once observed; local results do not establish cross-platform CI success.
