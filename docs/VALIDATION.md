@@ -712,3 +712,23 @@ DSIM-v1/v2/v3/v4 fixtures and reference comparisons remain unchanged. Fresh
 correction-head CI must pass before merging, followed by merge-parent/master and
 post-merge CI verification before M3d1 development begins. M3d1 remains subject to
 its own owner-review gate and must not be merged without separate authorization.
+
+
+## M3c completed finalization for M3d1
+
+Corrected final head `b4f9bfbcaa4953901d4b38ca24066a7165c5e735` passed all required
+local checks: 96 workspace checks (2 private ignored), 72 release tests, Rust 1.85,
+all four C generators/independent encoders, docs and four-example debug/release
+equality. [Fresh CI 40613240261](https://github.com/Copgunn/DOOM/actions/runs/40613240261)
+passed all four jobs on that exact documentation-only correction.
+
+PR #6 is merged/closed at `4dbb0a51325119e5578705126f97bdc5d9723049`, with parents
+`c791ef81d9cdb5d42638e4806762b8fe32793f3f` and
+`b4f9bfbcaa4953901d4b38ca24066a7165c5e735`. The merge tree equals the corrected head.
+Remote/local master match the merge. [Post-merge CI 40613453371](https://github.com/Copgunn/DOOM/actions/runs/40613453371)
+passed all four jobs on that merge before creating `feat/m3d1-damage-hitscan`.
+All 165 original files, public GPL-2.0-only status, licensing/attribution, historical
+fixtures and asset exclusions were reverified. No private content was accessed.
+Local merged M0-M3c milestone branches and remote merged M3b/M3c branches are
+cleanup candidates after preserving immutable historical references; none was deleted.
+M3d1 has no merge authorization.

@@ -97,9 +97,9 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   to choose blockers; successful same-cell moves reinsert at spatial cell head.
 - Run all four reference generators and independent golden encoders on Linux;
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
-- M3c PR #6 has conditional owner authorization for a regular merge after final
-  corrections, fresh required CI and baseline verification. M3d1 stops at owner
-  review; no M3d1 or later M3d subphase merge is authorized.
+- M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
+  correction-head and post-merge CI. M3d1 stops at owner review; no M3d1 or later
+  M3d subphase merge is authorized.
 
 - M3b consumes supplied BLOCKMAP lists without rebuilding them; conservative
   omissions are diagnostic, not proof of spatial correctness. Keep older profiles

@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented/validated and conditionally accepted for regular merge**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 under development**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -109,7 +109,7 @@ M3 as a whole remains incomplete.
 | --- | --- | --- |
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented, validated and merged |
-| M3c | Actor states, type-driven spawning and death | Implemented/validated; conditional regular merge authorized |
+| M3c | Actor states, type-driven spawning and death | Implemented, validated and merged |
 | M3d | Weapons, projectiles, damage, monsters and combat | Planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
 
@@ -188,13 +188,27 @@ M3d1 requires its own owner-review and merge authorization.
 - [x] Asserted asset-free headless example; native probes clearly separated from vanilla.
 - [x] Local, sanitizer, MSRV and cross-platform CI evidence; final-head CI recorded on PR #6.
 - [x] Owner engineering review and conditional regular-merge authorization.
-- [ ] Fresh correction-head CI, regular merge and verified post-merge baseline.
+- [x] Fresh correction-head CI, regular merge `4dbb0a5` and post-merge CI verified.
 
 M3d is weapons/projectiles/damage/monster combat. M3e is moving sectors, doors,
 lifts, switches and map specials. Full player thinking, scripts, demos and rendering
 remain outside M3c. Future DECORATE-like/ACS/ZScript interfaces require independent
 implementation and licensing review; no GPLv3 GZDoom code enters this GPL-2.0-only
 repository. Custom wgpu rendering with Vulkan preferred remains later work.
+
+### M3d combat subphases
+
+| Phase | Scope | Status |
+| --- | --- | --- |
+| M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Under development; separate owner review required |
+| M3d2 | Player weapons, psprites, ammo and projectile foundations | Planned |
+| M3d3 | Monster targeting/perception, movement, attacks and AI | Planned |
+| M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
+
+M3d1 branch: `feat/m3d1-damage-hitscan`, based on verified M3c merge `4dbb0a5`.
+Source findings precede runtime work in [M3D1_REFERENCE.md](M3D1_REFERENCE.md).
+Each subphase needs independent evidence and owner merge authorization. M3d1
+remains unmerged; no weapon/AI/full-combat acceptance is implied by this slice.
 
 ## M4 — Demo compatibility
 
