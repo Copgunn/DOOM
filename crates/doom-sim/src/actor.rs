@@ -53,8 +53,13 @@ pub struct Actor {
     pub(crate) gravity: crate::Gravity,
     pub(crate) allow_dropoff: bool,
     pub(crate) location: Option<crate::Location>,
+    pub(crate) life: Option<crate::ActorLife>,
 }
 impl Actor {
+    /// Typed actor-state data, absent in earlier physics-only profiles.
+    pub const fn life(&self) -> Option<crate::ActorLife> {
+        self.life
+    }
     /// Vertical momentum in the M3b profile.
     pub const fn vertical_momentum(&self) -> Fixed {
         self.momz

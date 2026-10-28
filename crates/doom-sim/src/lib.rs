@@ -4,8 +4,16 @@
 //! Explicit profiles preserve M2 foundations and M3a grounded player collision,
 //! and add M3b static-sector BSP/openings and XY/Z/gravity. None implements full
 //! player thinking or establishes complete vanilla gameplay synchronization.
+//! Profile 4 adds admitted source actor states, spawning and controlled death.
 
 mod actor;
+mod lifecycle;
+mod spawning;
+pub use lifecycle::{
+    ActionId, ActorAction, ActorError, ActorGameMode, ActorLife, ActorOptions, ActorRegistry,
+    ActorStateDef, ActorStateEvent, ActorTypeDef, ActorTypeId, ProbeAction, Skill, StateId,
+};
+pub use spawning::MapSpawnReport;
 mod geometry;
 mod movement;
 mod multisector;
@@ -35,6 +43,14 @@ pub enum Profile {
     PlayerCollision,
     /// M3b static connected sectors, BSP/XY/Z/gravity and reference lists, DSIM-v3.
     MultiSector,
+    /// M3c typed actor lifecycle on static-sector physics, DSIM-v4.
+    ActorStates,
+}
+
+impl Profile {
+    pub(crate) fn uses_sectors(self) -> bool {
+        matches!(self, Self::MultiSector | Self::ActorStates)
+    }
 }
 
 /// Deterministic stepping/setup failure. Unsupported gameplay is explicit.
@@ -42,6 +58,8 @@ pub enum Profile {
 pub enum SimError {
     /// Actor storage/scheduling failure.
     Store(StoreError),
+    /// Actor definition, action admission or bounded preflight failure.
+    Actor(ActorError),
     /// Unsupported or invalid map/profile.
     Geometry(GeometryError),
     /// Input slot is outside 0..4 or duplicates an existing binding.
@@ -57,6 +75,11 @@ impl fmt::Display for SimError {
     }
 }
 impl Error for SimError {}
+impl From<ActorError> for SimError {
+    fn from(e: ActorError) -> Self {
+        Self::Actor(e)
+    }
+}
 impl From<StoreError> for SimError {
     fn from(e: StoreError) -> Self {
         Self::Store(e)
@@ -84,6 +107,8 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
+    /// Profile-4 state/action/lifecycle evidence in execution order.
+    ActorState(ActorStateEvent),
     /// Phase boundary.
     Phase(Phase),
     /// Actor appended, after its initial lastlook RNG draw.
@@ -172,6 +197,8 @@ pub fn command_thrust(
 #[derive(Clone, Debug)]
 pub struct Simulation {
     pub(crate) profile: Profile,
+    pub(crate) registry: Option<Arc<ActorRegistry>>,
+    pub(crate) actor_options: ActorOptions,
     pub(crate) spatial: movement::SpatialIndex,
     pub(crate) sectors: Vec<SectorState>,
     pub(crate) world: StaticWorld,
@@ -220,7 +247,7 @@ impl Simulation {
         Self::create(map, max_actors, Profile::MultiSector)
     }
     fn create(map: Map, max_actors: u32, profile: Profile) -> Result<Self, SimError> {
-        let mut world = if profile == Profile::MultiSector {
+        let mut world = if profile.uses_sectors() {
             StaticWorld::new_multisector(map)?
         } else {
             StaticWorld::new(map)?
@@ -228,11 +255,11 @@ impl Simulation {
         if profile == Profile::PlayerCollision {
             movement::validate_profile(&mut world)?;
         }
-        if profile == Profile::MultiSector {
+        if profile.uses_sectors() {
             movement::prepare_reference_profile(&mut world)?;
             world.topology = Some(multisector::Topology::new(&world)?);
         }
-        let sectors = if profile == Profile::MultiSector {
+        let sectors = if profile.uses_sectors() {
             world
                 .map()
                 .sectors()
@@ -248,6 +275,8 @@ impl Simulation {
         let map_fields = Arc::new(snapshot::map_fields(world.map()));
         Ok(Self {
             profile,
+            registry: None,
+            actor_options: ActorOptions::default(),
             sectors,
             spatial: movement::SpatialIndex::default(),
             world,
@@ -298,7 +327,7 @@ impl Simulation {
     }
     /// Current sector-head ordering, independent of thinker or handle order.
     pub fn sector_actor_order(&self, sector: u16) -> Result<Vec<ActorId>, SimError> {
-        if self.profile != Profile::MultiSector {
+        if !self.profile.uses_sectors() {
             return Err(GeometryError::Unsupported("sector order requires M3b profile").into());
         }
         if usize::from(sector) >= self.sectors.len() {
@@ -309,6 +338,7 @@ impl Simulation {
             .order
             .iter()
             .copied()
+            .filter(|id| lifecycle::in_sector_list(self.actors.get(*id).expect("linked actor")))
             .filter(|id| {
                 self.actors
                     .get(*id)
@@ -323,7 +353,7 @@ impl Simulation {
     /// P_LineOpening calculation from current runtime heights. One-sided lines
     /// return None; unsupported profile/index errors have no state effects.
     pub fn line_opening(&self, index: usize) -> Result<Option<Opening>, SimError> {
-        if self.profile != Profile::MultiSector {
+        if !self.profile.uses_sectors() {
             return Err(GeometryError::Unsupported("openings require M3b profile").into());
         }
         if index >= self.world.lines.len() {
@@ -337,7 +367,7 @@ impl Simulation {
         id: ActorId,
         target: [Fixed; 2],
     ) -> Result<SectorMoveAttempt, SimError> {
-        if self.profile != Profile::MultiSector {
+        if !self.profile.uses_sectors() {
             return Err(GeometryError::Unsupported("sector collision requires M3b profile").into());
         }
         if self.actors.is_pending(id) != Some(false) {
@@ -405,7 +435,10 @@ impl Simulation {
         spec: ActorSpec,
         solidity: Solidity,
     ) -> Result<ActorId, SimError> {
-        if self.profile == Profile::MultiSector {
+        if self.profile == Profile::ActorStates {
+            return Err(ActorError::UnsupportedMode.into());
+        }
+        if self.profile.uses_sectors() {
             return self.spawn_vertical(spec, solidity, VerticalSpec::default());
         }
         self.world.validate_actor(spec.radius, spec.height)?;
@@ -426,6 +459,7 @@ impl Simulation {
             gravity: Gravity::Normal,
             allow_dropoff: false,
             location: None,
+            life: None,
         };
         let id = self.actors.spawn(actor)?;
         self.actors
@@ -448,7 +482,10 @@ impl Simulation {
         vertical: VerticalSpec,
     ) -> Result<ActorId, SimError> {
         if self.profile != Profile::MultiSector {
-            return Err(GeometryError::Unsupported("vertical spawn requires M3b profile").into());
+            return Err(GeometryError::Unsupported(
+                "parameterized vertical spawn requires M3b profile",
+            )
+            .into());
         }
         let location = self.world.locate_validated(spec.position);
         let sector = self.sectors[usize::from(location.sector)];
@@ -476,6 +513,7 @@ impl Simulation {
             gravity: vertical.gravity,
             allow_dropoff: vertical.allow_dropoff,
             location: Some(location),
+            life: None,
         };
         let id = self.actors.spawn(actor)?;
         self.actors.get_mut(id).expect("new M3b handle").lastlook = self.rng.p_random() % 4;
@@ -485,7 +523,7 @@ impl Simulation {
     }
     /// Changes M3b vertical momentum between tics; invalid/profile errors preserve state.
     pub fn set_vertical_momentum(&mut self, id: ActorId, momentum: Fixed) -> Result<(), SimError> {
-        if self.profile != Profile::MultiSector {
+        if !self.profile.uses_sectors() {
             return Err(
                 GeometryError::Unsupported("vertical momentum requires M3b profile").into(),
             );
@@ -558,6 +596,7 @@ impl Simulation {
         if commands.iter().any(|c| c.buttons != 0) {
             return Err(SimError::UnsupportedButtons);
         }
+        self.preflight_actor_step()?;
         self.events = std::mem::take(&mut self.pending);
         self.commands = commands;
         self.events.push(Event::Phase(Phase::Players));
@@ -568,16 +607,15 @@ impl Simulation {
                     continue;
                 }
                 let actor = self.actors.get_mut(id).expect("validated active binding");
-                let physical_command =
-                    if self.profile == Profile::MultiSector && actor.z > actor.floor {
-                        TicCommand {
-                            forward: 0,
-                            side: 0,
-                            ..command
-                        }
-                    } else {
-                        command
-                    };
+                let physical_command = if self.profile.uses_sectors() && actor.z > actor.floor {
+                    TicCommand {
+                        forward: 0,
+                        side: 0,
+                        ..command
+                    }
+                } else {
+                    command
+                };
                 let (angle, momentum) =
                     command_thrust(actor.spec.angle, actor.spec.momentum, physical_command)
                         .expect("buttons prevalidated");
@@ -594,9 +632,13 @@ impl Simulation {
         let events = &mut self.events;
         let profile = self.profile;
         let bindings = self.bindings;
+        let live_bindings = &mut self.bindings;
+        let registry = &self.registry;
+        let options = self.actor_options;
+        let rng = &mut self.rng;
         let spatial = &mut self.spatial;
         let sectors = &self.sectors;
-        // Built-in callbacks cannot spawn, alter links or request removal.
+        // Profile 4 preflights all bounded action work and same-pass child allocation.
         self.actors
             .run(
                 self.actors.max_slots as usize,
@@ -617,7 +659,7 @@ impl Simulation {
                                 .iter()
                                 .position(|binding| *binding == Some(id))
                                 .map(|slot| commands[slot]);
-                            let motion = if profile == Profile::MultiSector {
+                            let motion = if profile.uses_sectors() {
                                 movement::move_xy_multisector(
                                     world,
                                     id,
@@ -651,12 +693,26 @@ impl Simulation {
                                 });
                             }
                         }
-                        if profile == Profile::MultiSector {
+                        if profile.uses_sectors() {
                             if let Some(update) = multisector::move_z(&mut actor) {
                                 events.push(Event::Vertical { actor: id, update });
                             }
                         }
                         *context.get_mut(id).expect("same live thinker handle") = actor;
+                        if let Some(registry) = registry {
+                            lifecycle::LifeHost {
+                                access: context,
+                                registry,
+                                world,
+                                sectors,
+                                options,
+                                rng,
+                                spatial,
+                                bindings: live_bindings,
+                                events,
+                            }
+                            .tick(id);
+                        }
                     }
                 },
             )
