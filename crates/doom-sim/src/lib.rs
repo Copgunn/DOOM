@@ -10,6 +10,7 @@
 //! Profile 7 adds explicit original plasma launch, flight, direct impact and removal.
 //! Profile 8 adds source sight, player-slot scanning, noise awareness and admitted A_Look.
 //! Profile 9 adds non-attacking native fixture pursuit through source direction decisions.
+//! Profile 10 adds native attack selection/facing and bounded PosAttack through shared combat.
 
 #[cfg(test)]
 extern crate self as doom_sim;

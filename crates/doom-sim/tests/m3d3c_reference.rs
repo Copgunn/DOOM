@@ -3,6 +3,7 @@
 mod fixtures;
 #[test]
 fn original_attack_decisions_actions_and_complete_tics_match_c() {
+    assert_eq!(fixtures::cases().len(), 158);
     let mut totals = [0; 3];
     for (which, c) in fixtures::cases().iter().enumerate() {
         let mut sim = fixtures::setup(c);
@@ -28,5 +29,6 @@ fn original_attack_decisions_actions_and_complete_tics_match_c() {
             *sum += value;
         }
     }
+    assert_eq!(totals, [178178, 2430, 20785]);
     println!("Original C attack comparisons: {totals:?}");
 }
