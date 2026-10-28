@@ -36,7 +36,8 @@ actions remain future work. Acceptance and exact evidence are in the
 [roadmap](docs/ROADMAP.md) and [validation notes](docs/VALIDATION.md).
 [CI 40642802778](https://github.com/Copgunn/DOOM/actions/runs/40642802778) passed
 Linux, Windows, macOS and Rust 1.85 on implementation/documentation head
-`14efb10ff02f27d5e15f21ae7c5695b417c0352e`. PR #11 remains open and unmerged.
+`14efb10ff02f27d5e15f21ae7c5695b417c0352e`. The M3d3c mission conditionally authorizes PR #11’s regular merge after final
+corrections and fresh local/remote checks.
 A playable client is future work.
 
 Implemented:
@@ -450,7 +451,7 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d2 | Player weapons, psprites and ammo | Merged as 955f690 |
 | M3d2b | Original plasma foundations | Merged as e109ee1 |
 | M3d3a | Monster perception and target acquisition | Merged as 839fbab |
-| M3d3b | Source pursuit and movement decisions | Implemented for owner review; open and unmerged |
+| M3d3b | Source pursuit and movement decisions | Reviewed; conditional regular merge gated on fresh checks |
 | Later M3d3–M3e | Attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |

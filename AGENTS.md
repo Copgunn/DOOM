@@ -103,7 +103,8 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   correction-head and post-merge CI. M3d1 was regularly merged as c924f18 after fresh correction-head and
   post-merge CI in the M3d2 mission. M3d2 was regularly merged as 955f690 after final corrections and fresh/post-merge CI. M3d2b was regularly merged as e109ee1 after final correction and fresh/post-merge
   CI in the M3d3a mission. M3d3a completed its regular merge as 839fbab after fresh/post-merge CI;
-  M3d3b or later merges require separate authorization.
+  M3d3b and documentation PR #12 have separate conditional regular-merge
+  authorization in the M3d3c mission; M3d3c or later merges require separate approval.
 
 - M3b consumes supplied BLOCKMAP lists without rebuilding them; conservative
   omissions are diagnostic, not proof of spatial correctness. Keep older profiles
@@ -198,5 +199,6 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   source reacquisition; pending/stale IDs reject and never alias slot reuse.
 - Run all nine source/encoder pairs, nine example equality checks, all eight fuzz
   builds and bounded pursuit ASan. Distinguish C equivalence, independent project
-  schema bytes and Rust-only safety policies. M3d3b stops at owner review, open
-  and unmerged with auto-merge disabled. Attacks require separate authorization.
+  schema bytes and Rust-only safety policies. M3d3b has conditional regular-merge
+  authorization after fresh checks. M3d3c is separately authorized only after PRs
+  #11/#12 finish their gates; auto-merge remains disabled.

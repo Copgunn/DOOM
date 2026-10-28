@@ -138,7 +138,7 @@ Keep plasma, owner lifetime and arithmetic admission explicit, preflight failure
 before mutation and reuse existing actor/damage services. Player damage is a
 dependency investigation only. Record actual ASan runs and whether leak detection
 was disabled. M3d2b completed its authorized regular merge and post-merge gates;
-M3d3a completed its authorized gates; leave M3d3b open without auto-merge.
+M3d3a completed its authorized gates; finalize M3d3b through its authorized regular-merge gates without auto-merge.
 
 ## M3d3a perception changes
 
@@ -151,7 +151,7 @@ lookers isolate genuine original A_Look with a supported see handoff; source
 monster metadata with immediate A_Chase must reject before mutation. No full
 monster AI, pursuit or attacks are admitted. Preserve every v1-v7 fixture and
 historical helper. M3d3a completed its authorized merge/post-merge gates;
-leave M3d3b open/unmerged without auto-merge.
+M3d3b has conditional regular-merge authorization after fresh checks.
 
 ## M3d3b pursuit changes
 
@@ -162,4 +162,5 @@ leak detection is disabled. Preserve all historical helpers and v1-v8 definition
 expected bytes. Keep source decisions, project canonical bytes and ownership
 policies distinct. Fixture-based non-attacking pursuit does not admit complete
 original monsters. No attack, door or float behavior may execute silently; no
-new collision engine or AI scheduler is permitted. Leave M3d3b open/unmerged.
+new collision engine or AI scheduler is permitted. M3d3b has conditional
+regular-merge authorization in the M3d3c mission; leave M3d3c open/unmerged.

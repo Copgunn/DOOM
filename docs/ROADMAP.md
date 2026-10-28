@@ -384,7 +384,8 @@ Bounded subphase of M3d3 on `feat/m3d3b-monster-pursuit`, from verified `839fbab
 - [x] [PR #11](https://github.com/Copgunn/DOOM/pull/11); [CI 40642802778](https://github.com/Copgunn/DOOM/actions/runs/40642802778)
   passed Linux/Windows/macOS/MSRV on exact implementation head
   `14efb10ff02f27d5e15f21ae7c5695b417c0352e`. Final delivery head/CI is pinned in the PR.
-- [ ] Owner review and separate merge authorization; leave M3d3b open/unmerged.
+- [x] Owner engineering review and conditional regular-merge authorization in M3d3c mission.
+- [ ] Final correction, fresh checks, regular merge and post-merge verification.
 
 Next focused work is later M3d3 attack selection/action admission, subject to
 separate review (a bounded M3d3c). M3d4 remains integrated/advanced combat, M3e

@@ -1248,14 +1248,37 @@ C/golden comparisons, release tests, nine-example equality and rustdoc.
 
 Follow-up `3fa1523a924704644cfe089a7c7b499012a1e098` removes one extra blank line at the end of the new C adapter
 and refreshes its provenance hash. Original-C generation and --check pass again;
-source trace and all golden bytes are unchanged. The following delivery-record
-commit changes prose only. Its exact final SHA and fresh successful CI are pinned
-in PR #11 after verification; the PR remains draft until those final gates pass.
+source trace and all golden bytes are unchanged. The prose-only delivery-record commit is reviewed head
+`68e9fd2c2d5225c7e34a591d7b164e461b3079fb`.
+[Final reviewed CI 40643155681](https://github.com/Copgunn/DOOM/actions/runs/40643155681)
+passed Linux, Windows, macOS and Rust 1.85 on that exact SHA. The M3d3c mission
+conditionally authorizes a regular merge after this correction passes fresh
+mandatory local and remote checks.
 
 All 165 original files and 296 historical reference code/fixture files remain
 byte-identical, excluding only the requested prose update to the reference README.
 Public GPL-2.0-only licensing, original attribution/history and asset safeguards
 remain intact. No private projects or commercial IWADs were accessed and no active
 branch was deleted. Local/remote master remain at the authorized PR #10 merge.
-M3d3b must stay open/unmerged without auto-merge. Separately reviewed M3d3 attack
-selection/action admission is the next focused boundary.
+M3d3b originally stopped at owner review; its later conditional regular-merge
+authorization is recorded below. M3d3c attack selection/action admission follows
+only after PR #11 and documentation PR #12 complete their separate gates.
+
+
+## M3d3b authorized finalization for M3d3c
+
+Reviewed PR #11 head `68e9fd2c2d5225c7e34a591d7b164e461b3079fb`, base
+`839fbabf6eae984e1832f7ab7307851c4adb7a3f`, and successful reviewed
+[CI 40643155681](https://github.com/Copgunn/DOOM/actions/runs/40643155681)
+are recorded directly. Live references match with no intervening commits,
+comments, reviews or threads. No demonstrated blocking defect was found within
+the declared pursuit slice. This correction changes prose only, including the
+state-format heading's scope from versions1..7 to1..9; no gameplay, source
+reference or canonical bytes change.
+
+The owner conditionally authorizes a regular merge after fresh mandatory local
+and exact-head remote checks. Verify merge parents/tree, master and post-merge
+CI before independently integrating documentation PR #12. Both PRs must finish
+their gates before M3d3c implementation. No squash, history rewrite, force-push,
+auto-merge or branch deletion is authorized. M3d3c remains open/unmerged for
+separate owner review.
