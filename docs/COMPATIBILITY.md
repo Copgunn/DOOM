@@ -428,7 +428,10 @@ validated type-136 fixture; source pain/see/death closures are preserved. Native
 combat probes, AI/callback spawning/removal, scoring/drop types and unsupported
 weapon actions cannot enter this profile. The private firing route admits the
 initialized bound shooter, while direct combat and target damage remain protected.
-Conservative capacity, trace/coordinate limits, work and invalid setup errors preserve
+Capacity reserves an impact for every requested bullet, even a predicted miss,
+so a full store can conservatively reject a source request that would spawn fewer
+effects. Pending retirement supplies no capacity credit. Trace/coordinate limits,
+work and invalid setup errors preserve
 all canonical state. Source-undefined extreme player bob momentum rejects safely.
 
 38 original-body C scenarios compare 4,890 player captures, 132,030 player fields,

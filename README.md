@@ -23,8 +23,8 @@ spawning and controlled death in [PR #6](https://github.com/Copgunn/DOOM/pull/6)
 merged as `4dbb0a5` after correction-head and post-merge CI. M3d1 damage/hitscan
 foundations are implemented in [PR #7](https://github.com/Copgunn/DOOM/pull/7)
 merged as `c924f18` after fresh correction-head and post-merge CI. M3d2 player
-weapons and psprites are implemented on `feat/m3d2-player-weapons-psprites`,
-awaiting separate owner review and merge authorization.
+weapons and psprites are implemented in [PR #8](https://github.com/Copgunn/DOOM/pull/8)
+on `feat/m3d2-player-weapons-psprites`, awaiting separate owner review and merge authorization.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 

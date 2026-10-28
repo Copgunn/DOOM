@@ -889,3 +889,30 @@ exclusions are preserved. No commercial assets or private repositories were
 accessed. No branches were deleted. Exact-head remote CI is verified separately
 before owner-review readiness; local checks alone do not establish cross-platform
 success.
+
+
+### M3d2 GitHub delivery
+
+[PR #8](https://github.com/Copgunn/DOOM/pull/8), **M3d2: Implement Vanilla Player
+Weapons, Psprites and Ammo**, targets verified `master` from
+`feat/m3d2-player-weapons-psprites`. Implemented head
+`75f2c72306c57798aa62699bb34d2a1ad8c99e2c` passed all four jobs in
+[CI 40623977578](https://github.com/Copgunn/DOOM/actions/runs/40623977578): stable
+Linux, Windows, macOS and Rust 1.85. Stable jobs include recorded C comparisons,
+independent goldens, release tests, six-example debug/release equality and docs;
+Linux additionally reproduces all six generators/encoders.
+
+This subsequent delivery record changes documentation only. The final immutable
+head and its fresh exact-head CI link are recorded in PR #8, avoiding a commit
+attempting to contain its own hash. Readiness requires observing that fresh run;
+no earlier green run substitutes for it. PR #8 must remain open and unmerged with
+auto-merge disabled. Master remains at M3d1 merge
+`c924f18424a7a58f892fc8b6a7c2b5011db05c5b`.
+
+Known conservative policy: capacity reserves one impact per requested bullet,
+including predicted misses. A full store may therefore reject a valid source
+request that would produce fewer effects. The declared 64-slot/single-live-player
+profile and exact state admission are compatibility bounds, not complete gameplay.
+Historical local M0-M3d1 merged branches and preserved remote milestone references
+are cleanup candidates only; none was deleted. The active M3d2 branch stays intact.
+No M3d2 or later milestone merge is authorized.

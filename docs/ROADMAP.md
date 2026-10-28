@@ -279,7 +279,9 @@ Source investigation was recorded as `41d89e5` before runtime implementation.
 - [x] DSIM-v6: 69 independent captures, 24 full byte fixtures; v1-v5 unchanged.
 - [x] Asserted `player_weapons` example and six-example debug/release equality.
 - [x] Local workspace/release/MSRV/docs/reference checks; evidence in validation.
-- [ ] Exact final-head Linux/Windows/macOS and Rust 1.85 CI verified.
+- [x] Linux/Windows/macOS and Rust 1.85 CI passed on implemented head `75f2c72`
+  ([CI 40623977578](https://github.com/Copgunn/DOOM/actions/runs/40623977578));
+  the final delivery-record head and fresh exact-head CI are recorded in PR #8.
 - [ ] Owner review and separate merge authorization (PR must remain unmerged).
 
 Projectiles remain deferred. Next work should extend source-verified player damage
