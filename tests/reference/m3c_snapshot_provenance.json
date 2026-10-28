@@ -1,0 +1,42 @@
+{
+  "schema": "DSIM-v4",
+  "captures": 99,
+  "scope": "Explicit static setups, C state/action/RNG/order values, project schema; never Rust expected output",
+  "inputs_sha256": {
+    "tools/reference/m3c_snapshot_goldens.py": "95eac9b3e9f416eea16bb2ace5bb12a3aa401d9942069046dca05e0edc3a123c",
+    "tools/reference/generate_m3c.py": "caca6c42d0856c87878f22e65380bf9ef50d8070e721f2edbb2d6ad656667d64",
+    "tools/reference/m3c_driver.c": "0376ce30cd32c6b646aa04cca3996dfe8a6deca5a90e7920d8d8f71f19131999",
+    "tools/reference/m3b_snapshot_goldens.py": "8f67edf889f7380e7635732073755473a276f5e29727d3fe485d0514caa06e5c",
+    "tests/reference/m3c_trace.csv": "f15cd765eb54670f5b56830313265583afdd3008b70659c7b1e8195c71bd9d94",
+    "tests/reference/m3c_states.csv": "a1b5fe2eb3eee7cb06b922a2140b7583b1cc220dde04d36b78ede59dfd3f5e92",
+    "tests/reference/m3c_types.csv": "9a24fad17a6ce0041bd06a7e751d5b20854496846a7cf4aee65b78756dfcbb9c",
+    "tests/reference/m3b_map_19.bin": "848d3b831f04dc38f8df27d8dd85998834ecb4a9407bdc4424f4d30e3fbcb2d9"
+  },
+  "outputs_sha256": {
+    "tests/reference/m3c_state_0_0.bin": "0539faf06237e5bf4eb54d8cdbeae52ae1f6ca32c1ed4d6ab8272851b8e7a305",
+    "tests/reference/m3c_state_0_10.bin": "bf225e7424a2f2486e6dfe0a795e547dee8e1d334a48cc9cf3691e011592c318",
+    "tests/reference/m3c_state_0_20.bin": "9fd6736595a7b6aada7c44c45660ff558521ca16232c50f745fbb7c560a9baa2",
+    "tests/reference/m3c_state_0_60.bin": "a186804d698ddbdcab939189dfe9931f721f589c0dc775612c8a13c8d2681022",
+    "tests/reference/m3c_state_0_72.bin": "cbda5086de409e60b9c30ac20fc99f0434b8c1709133d75e505a1d36377d655c",
+    "tests/reference/m3c_state_0_73.bin": "a81c488dee81990b556c097a792743491a64f399ba7c9865fd73c785b51ddb78",
+    "tests/reference/m3c_state_1_0.bin": "55b0196846bc983b482b42ef3ca47df1db6207e892df5801746e164167b7405a",
+    "tests/reference/m3c_state_2_0.bin": "6f7bc0c0baeed2d779e818b5e297c5970a8c9de73ce7b316d225321a8a3da437",
+    "tests/reference/m3c_state_3_0.bin": "f9a6c0bb0c32b1c841ba6529cc01b403ed21b755ef97c6d54dfef0ce8342e40c",
+    "tests/reference/m3c_state_4_0.bin": "5f33a8830f5000e6bfde2bd612a23034c56f2719813752bcb25622b4da1b59af",
+    "tests/reference/m3c_state_5_0.bin": "9669813424de187c767cdb8cd10c3c71c60fbfa6d2a5e72c796bab9c6d45c31c",
+    "tests/reference/m3c_state_6_0.bin": "052d7dcb82cee9a856e2e1462b61bf464b3bda8da9fa3ee9e3e5a3809ac5d80f",
+    "tests/reference/m3c_state_6_1.bin": "229eb59fe1ee89ed0ede2c6a4a1b85d2515a23b8740aa73f26e3f7632d83fdec",
+    "tests/reference/m3c_state_6_2.bin": "9e0c557e23240cfb04039c68422748e432ae506c2d7f6da2fff63db208e2d0d6",
+    "tests/reference/m3c_state_6_3.bin": "6a528053256be7384c83eb976d2d085913f8a15dcf8a385559750737441b06e7",
+    "tests/reference/m3c_state_7_0.bin": "e8d7bd4b78d960b6f6d33613d8e7c9c741020a9b56ccf598bda0734170aec4b1",
+    "tests/reference/m3c_state_7_1.bin": "554f328f1a236005b75144849870e66ecc0a20298923ebb388cdeb26fd07fa61",
+    "tests/reference/m3c_state_7_2.bin": "bce1ad92c251b11d0ac16fe2636350c537f3c2b26655007e6d19eae4af09032c",
+    "tests/reference/m3c_state_7_3.bin": "37158ab5261c0289390b2e09f6a6a95572ff7426ba46d83282e74e7c49d3b3db",
+    "tests/reference/m3c_state_7_4.bin": "18dac2d11639349e3048c0691111ef75bfc8a097063673eedb17a93d014145ec",
+    "tests/reference/m3c_state_7_5.bin": "ab77dc07ce698ea3ace904ec159030115a2bbef5fe4d9d2cf8c9c6121fa4e605",
+    "tests/reference/m3c_state_8_0.bin": "329e1af44a9347aed18eae3af71d36dbb63c7badcdab2386a4f8dbbd777a58ed",
+    "tests/reference/m3c_state_8_1.bin": "8cd62b862f572c1ae2907d3c0ff962d4ba1200d56f0b649cd62fcb550f33b37b",
+    "tests/reference/m3c_state_8_2.bin": "0d8594531b41b7be12b859aed00c9913e32164686874649528fb8ef7bd1c2fbd",
+    "tests/reference/m3c_snapshots.csv": "81c549a089b2ad1a5918becd4c9926c47a427a075be83de21dbf2d86ab83f5fb"
+  }
+}
