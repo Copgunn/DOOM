@@ -250,6 +250,14 @@ impl Simulation {
         self.preflight_projectile_step()?;
         let source = self.projectile_source(request.source)?;
         self.validate_projectile_type(PLASMA)?;
+        let speed = Fixed::from_bits(
+            self.registry
+                .as_deref()
+                .unwrap()
+                .actor_type(PLASMA)
+                .unwrap()
+                .speed(),
+        );
         let (mut angle, momz, shadow) = match request.aim {
             ProjectileAim::Actor(id) => {
                 let dest = self.projectile_source(id)?;
@@ -261,7 +269,7 @@ impl Simulation {
                 let x = delta[0].bits().unsigned_abs() as i32;
                 let y = delta[1].bits().unsigned_abs() as i32;
                 let dist = x + y - x.min(y) / 2;
-                let time = (dist / (25 * 65536)).max(1);
+                let time = (dist / speed.bits()).max(1);
                 (
                     angle,
                     Fixed::from_bits((dest.z - source.z).bits() / time),
@@ -285,7 +293,7 @@ impl Simulation {
                         break;
                     }
                 }
-                (chosen, Fixed::from_map_units(25) * slope, false)
+                (chosen, speed * slope, false)
             }
         };
         if !within(momz, 64) {
@@ -336,7 +344,6 @@ impl Simulation {
             angle = angle.wrapping_add(((i32::from(left) - i32::from(right)) * 1048576) as u32);
         }
         let phase = (angle >> 19) as usize;
-        let speed = Fixed::from_map_units(25);
         let momentum = [
             speed * Fixed::from_bits(FINE_SINE[phase + 2048]),
             speed * Fixed::from_bits(FINE_SINE[phase]),
@@ -501,7 +508,14 @@ impl Simulation {
     fn try_projectile_move(&mut self, id: ActorId, target: [Fixed; 2]) -> bool {
         let (attempt, damage) = self.query_projectile_move(id, target);
         if let Some(target) = damage {
-            let amount = (i32::from(self.projectile_random(3) % 8) + 1) * 5;
+            let damage = self
+                .registry
+                .as_deref()
+                .unwrap()
+                .actor_type(self.actor(id).unwrap().life.unwrap().actor_type)
+                .unwrap()
+                .damage();
+            let amount = (i32::from(self.projectile_random(3) % 8) + 1) * damage;
             let owner = self.actor(id).unwrap().life.unwrap().target;
             self.damage_actor(DamageRequest {
                 target,

@@ -1003,7 +1003,7 @@ stable Linux, Windows, macOS and Rust 1.85. The run metadata matches that exact
 head; Linux also reproduced all seven C generator/encoder pairs. Stable jobs
 passed recorded C/golden comparisons, release tests, seven-example equality and
 warning-free docs. [PR #9](https://github.com/Copgunn/DOOM/pull/9) records the
-subsequent final documentation-head SHA and its own fresh CI before readiness.
+subsequent final review-head SHA and its own fresh CI before readiness.
 The PR remains open/unmerged with auto-merge disabled; master stays at
 the authorized M3d2 merge. M3d3 perception/target acquisition is the recommended
 next bounded milestone. Player health/armor/immunity/attacker/feedback/death and

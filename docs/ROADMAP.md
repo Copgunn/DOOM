@@ -315,7 +315,7 @@ The source investigation was committed before runtime work. Original MT_PLASMA
 - [x] All 165 upstream files, public GPL licensing and private-asset safeguards preserved.
 - [x] Linux/Windows/macOS/Rust 1.85 CI on implemented head `5108034`
   ([CI 40629886585](https://github.com/Copgunn/DOOM/actions/runs/40629886585));
-  final documentation-head SHA/run are verified in PR #9 before readiness.
+  final review-head SHA/run are verified in PR #9 before readiness.
 - [ ] Owner review/acceptance; PR must remain open and unmerged.
 
 No full plasma rifle, rocket/BFG/splash, monster attacks, armor/player damage,
