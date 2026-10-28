@@ -75,7 +75,7 @@ impl Simulation {
 /// Perception-only player record; activity, health and actor identity are distinct.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct PerceptionPlayer {
-    /// Corresponds to playeringame[slot], not a network connection.
+    /// Corresponds to `playeringame[slot]`, not a network connection.
     pub active: bool,
     /// Source player.health used by scanning, independent of mobj health.
     pub health: i32,
@@ -412,6 +412,7 @@ impl Simulation {
         if self.bindings.iter().any(Option::is_some) || self.weapon_player.is_some() {
             return Err(PerceptionError::Roster.into());
         }
+        let mut has_looker = false;
         for id in self.actors.order() {
             if self.actors.is_pending(id) != Some(false) {
                 continue;
@@ -430,6 +431,7 @@ impl Simulation {
                 state = def.next;
             }
             if looking {
+                has_looker = true;
                 self.preflight_perception_look(id)?;
             }
             crate::sight::actor_bounds(a)?;
@@ -442,6 +444,14 @@ impl Simulation {
             }
             if !crate::sight::within(a.momz, 64) || !crate::sight::within(a.z + a.momz, 1024) {
                 return Err(PerceptionError::Arithmetic.into());
+            }
+        }
+        // XY can change a looker's sector before its action. Validate every
+        // retained sound identity before the tic, not just the old sector.
+        if has_looker {
+            for target in self.sound_targets.iter().flatten() {
+                self.validate_perception_reference(*target)
+                    .map_err(|_| PerceptionError::SoundTarget)?;
             }
         }
         Ok(())
@@ -872,3 +882,7 @@ fn validate_registry(r: &ActorRegistry, source: &ActorRegistry) -> Result<(), Si
     }
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "perception_tests.rs"]
+mod tests;

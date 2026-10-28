@@ -5,18 +5,29 @@ use doom_sim::*;
 #[test]
 fn original_reject_bsp_segs_clipping_and_quirks_match_c() {
     let mut visits = 0;
+    let mut setup = [0; 3];
     let mut cases = 0;
     for (which, c) in fixtures::cases().iter().enumerate() {
         if c.n(0) != 0 {
             continue;
         }
         let sim = fixtures::sight_setup(c);
+        let mut trace = fixtures::Trace::default();
+        trace.check(&sim, which, 0, sim.pending_events());
+        for (a, b) in setup
+            .iter_mut()
+            .zip([trace.actor_fields, trace.events, trace.draws])
+        {
+            *a += b;
+        }
+        fixtures::assert_golden(&sim, which, 0);
         let before = sim.snapshot();
         let result = sim
             .check_sight(ActorId::from_parts(0, 1), ActorId::from_parts(1, 1))
             .unwrap();
-        fixtures::assert_sight(&result, &fixtures::rows(which, 1), 0, 0, 1);
+        fixtures::assert_sight(&result, &fixtures::rows(which, 1), 0, 0, 1, (which, 1));
         assert_eq!(sim.snapshot(), before);
+        fixtures::assert_golden(&sim, which, 1);
         assert_eq!(
             sim.check_sight(ActorId::from_parts(0, 1), ActorId::from_parts(1, 1))
                 .unwrap(),
@@ -26,6 +37,8 @@ fn original_reject_bsp_segs_clipping_and_quirks_match_c() {
         cases += 1;
     }
     assert_eq!(cases, 24);
+    assert_eq!(visits, 243);
+    assert_eq!(setup, [2880, 120, 120]);
     println!("C sight: {cases} scenarios, {visits} ordered visits");
 }
 #[test]
@@ -38,12 +51,14 @@ fn original_player_scans_preserve_slot_health_lastlook_and_fov_order() {
         let mut sim = fixtures::sight_setup(c);
         let mut trace = fixtures::Trace::default();
         trace.check(&sim, which, 0, sim.pending_events());
+        fixtures::assert_golden(&sim, which, 0);
         for op in 1..=c.n(13) as usize {
             fixtures::flip(&mut sim, c, op);
             let pending = sim.pending_events().len();
             sim.look_for_players(ActorId::from_parts(0, 1), c.n(10) != 0)
                 .unwrap();
             trace.check(&sim, which, op, &sim.pending_events()[pending..]);
+            fixtures::assert_golden(&sim, which, op);
         }
         for (a, b) in totals.iter_mut().zip([
             trace.actor_fields,
@@ -57,6 +72,7 @@ fn original_player_scans_preserve_slot_health_lastlook_and_fov_order() {
             *a += b;
         }
     }
+    assert_eq!(totals, [5040, 635, 27, 295, 64, 110, 504]);
     println!("C scans: {totals:?}");
 }
 #[test]
@@ -110,6 +126,7 @@ fn original_a_look_sound_ambush_wake_rng_and_thinker_handoff_match_c() {
         let mut sim = fixtures::setup(c);
         let mut trace = fixtures::Trace::default();
         trace.check(&sim, which, 0, sim.pending_events());
+        fixtures::assert_golden(&sim, which, 0);
         for op in 1..=c.n(13) as usize {
             fixtures::flip(&mut sim, c, op);
             let pending = sim.pending_events().len();
@@ -123,9 +140,11 @@ fn original_a_look_sound_ambush_wake_rng_and_thinker_handoff_match_c() {
             if c.n(0) == 2 {
                 sim.look(ActorId::from_parts(0, 1)).unwrap();
                 trace.check(&sim, which, op, &sim.pending_events()[pending..]);
+                fixtures::assert_golden(&sim, which, op);
             } else {
                 sim.step([TicCommand::default(); 4]).unwrap();
                 trace.check(&sim, which, op, &sim.events()[pending..]);
+                fixtures::assert_golden(&sim, which, op);
             }
         }
         for (a, b) in totals.iter_mut().zip([
@@ -142,5 +161,7 @@ fn original_a_look_sound_ambush_wake_rng_and_thinker_handoff_match_c() {
             *a += b;
         }
     }
+    assert_eq!(count, 24);
+    assert_eq!(totals, [39600, 8150, 314, 3417, 396, 395, 19, 3960, 346]);
     println!("C A_Look: {count} scenarios, {totals:?}");
 }

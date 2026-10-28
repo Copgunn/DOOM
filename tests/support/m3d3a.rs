@@ -215,7 +215,15 @@ pub fn sight_visits(result: &SightResult) -> Vec<Vec<i64>> {
         })
         .collect()
 }
-pub fn assert_sight(result: &SightResult, rows: &[Row], query: i64, observer: i64, target: i64) {
+pub fn assert_sight(
+    result: &SightResult,
+    rows: &[Row],
+    query: i64,
+    observer: i64,
+    target: i64,
+    context: (usize, usize),
+) {
+    let (which, op) = context;
     let start = rows
         .iter()
         .find(|(tag, c)| tag == "V" && c[0] == query && c[1] == 0)
@@ -227,18 +235,26 @@ pub fn assert_sight(result: &SightResult, rows: &[Row], query: i64, observer: i6
             i64::from(result.reject_index),
             i64::from(result.rejected)
         ],
-        start.1[2..]
+        start.1[2..],
+        "case {which} op {op} sight {query} REJECT"
     );
     let expected = rows
         .iter()
         .filter(|(tag, c)| tag == "V" && c[0] == query && c[1] != 0)
         .map(|(_, c)| c[1..].to_vec())
         .collect::<Vec<_>>();
+    let actual = sight_visits(result);
     assert_eq!(
-        sight_visits(result),
-        expected,
-        "sight candidate/decision order query {query}"
+        actual.len(),
+        expected.len(),
+        "case {which} op {op} sight {query} visit count"
     );
+    for (index, (got, want)) in actual.iter().zip(&expected).enumerate() {
+        assert_eq!(
+            got, want,
+            "case {which} op {op} sight {query} visit {index}"
+        );
+    }
     let end = rows
         .iter()
         .find(|(tag, c)| tag == "Q" && c[0] == query)
@@ -251,7 +267,7 @@ pub fn assert_sight(result: &SightResult, rows: &[Row], query: i64, observer: i6
             result.slopes.map_or(0, |s| i64::from(s[1].bits()))
         ],
         end.1[1..],
-        "sight final interval query {query}"
+        "case {which} op {op} sight {query} final interval"
     );
 }
 #[derive(Default)]
@@ -410,7 +426,14 @@ impl Trace {
                         target,
                         result: r,
                     } => {
-                        assert_sight(r, &rows, query, ordinal(*observer), ordinal(*target));
+                        assert_sight(
+                            r,
+                            &rows,
+                            query,
+                            ordinal(*observer),
+                            ordinal(*target),
+                            (which, op),
+                        );
                         out.push((
                             "V".into(),
                             vec![
@@ -541,4 +564,60 @@ impl Trace {
             self.sound_fields += 1;
         }
     }
+}
+
+pub fn assert_golden(sim: &Simulation, which: usize, op: usize) {
+    let row = include_str!("../reference/m3d3a_snapshots.csv")
+        .lines()
+        .skip(1)
+        .find(|r| {
+            let c = r.split(',').collect::<Vec<_>>();
+            c[0].parse::<usize>().unwrap() == which && c[1].parse::<usize>().unwrap() == op
+        })
+        .unwrap();
+    let c = row.split(',').collect::<Vec<_>>();
+    let snapshot = sim.snapshot();
+    if c[4] != "-" {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/reference")
+            .join(c[4]);
+        let bytes = std::fs::read(path).unwrap();
+        let count = u64::from_le_bytes(bytes[8..16].try_into().unwrap()) as usize;
+        assert_eq!(
+            snapshot.fields().count(),
+            count,
+            "case {which} op {op} field count"
+        );
+        let mut offset = 16;
+        for f in snapshot.fields() {
+            let size = u32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap()) as usize;
+            offset += 4;
+            let name = std::str::from_utf8(&bytes[offset..offset + size]).unwrap();
+            offset += size;
+            let size = u64::from_le_bytes(bytes[offset..offset + 8].try_into().unwrap()) as usize;
+            offset += 8;
+            assert_eq!(f.path(), name, "case {which} op {op}");
+            assert_eq!(
+                f.value(),
+                &bytes[offset..offset + size],
+                "case {which} op {op} {name}"
+            );
+            offset += size;
+        }
+        assert_eq!(snapshot.canonical_bytes(), bytes);
+    }
+    assert_eq!(
+        format!("{:016x}", snapshot.digest()),
+        c[3],
+        "case {which} op {op}"
+    );
+}
+pub fn has_golden(which: usize, op: usize) -> bool {
+    include_str!("../reference/m3d3a_snapshots.csv")
+        .lines()
+        .skip(1)
+        .any(|r| {
+            let c = r.split(',').collect::<Vec<_>>();
+            c[0].parse::<usize>().unwrap() == which && c[1].parse::<usize>().unwrap() == op
+        })
 }
