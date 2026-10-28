@@ -230,6 +230,13 @@ struct Admission {
     attacks: bool,
     shotgun: bool,
     chaingun: bool,
+    demon: bool,
+}
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum SpecialActions {
+    None,
+    Chaingunner,
+    Demon,
 }
 const ENTRY_LIMIT: usize = 128;
 const STEP_LIMIT: usize = 8192;
@@ -365,10 +372,10 @@ impl ActorRegistry {
     }
     /// Validate an executable state closure without changing simulation state.
     pub fn validate_state(&self, state: StateId) -> Result<(), ActorError> {
-        self.validate_state_with(state, false, false, false, false, false)
+        self.validate_state_with(state, false, false, false, false, SpecialActions::None)
     }
     pub(crate) fn validate_state_perception(&self, state: StateId) -> Result<(), ActorError> {
-        self.validate_state_with(state, true, false, false, false, false)
+        self.validate_state_with(state, true, false, false, false, SpecialActions::None)
     }
     fn validate_state_with(
         &self,
@@ -377,7 +384,7 @@ impl ActorRegistry {
         chase: bool,
         attacks: bool,
         shotgun: bool,
-        chaingun: bool,
+        specialized: SpecialActions,
     ) -> Result<(), ActorError> {
         let mut seen = BTreeSet::new();
         let mut pending = vec![state];
@@ -393,7 +400,12 @@ impl ActorRegistry {
                 if !self.action_supported(action)
                     && !(look && self.action_name(action) == Some("A_Look"))
                     && !(chase && self.action_name(action) == Some("A_Chase"))
-                    && !(chaingun
+                    && !(specialized == SpecialActions::Demon
+                        && matches!(
+                            self.action_name(action),
+                            Some("A_FaceTarget" | "A_SargAttack")
+                        ))
+                    && !(specialized == SpecialActions::Chaingunner
                         && matches!(
                             self.action_name(action),
                             Some("A_FaceTarget" | "A_CPosAttack" | "A_CPosRefire")
@@ -522,6 +534,7 @@ impl ActorRegistry {
                 attacks: false,
                 shotgun: false,
                 chaingun: false,
+                demon: false,
             },
         )
     }
@@ -562,7 +575,13 @@ impl ActorRegistry {
                 admission.chase,
                 admission.attacks,
                 admission.shotgun,
-                admission.chaingun,
+                if admission.demon {
+                    SpecialActions::Demon
+                } else if admission.chaingun {
+                    SpecialActions::Chaingunner
+                } else {
+                    SpecialActions::None
+                },
             )?;
             let mut seen = BTreeSet::new();
             let mut todo = vec![root];
@@ -607,6 +626,7 @@ impl ActorRegistry {
                 attacks: false,
                 shotgun: false,
                 chaingun: false,
+                demon: false,
             },
         )
     }
@@ -628,6 +648,7 @@ impl ActorRegistry {
                 attacks: false,
                 shotgun: false,
                 chaingun: false,
+                demon: false,
             },
         )
     }
@@ -656,11 +677,12 @@ impl ActorRegistry {
                 attacks: false,
                 shotgun: false,
                 chaingun: false,
+                demon: false,
             },
         )
     }
     pub(crate) fn validate_state_pursuit(&self, state: StateId) -> Result<(), ActorError> {
-        self.validate_state_with(state, true, true, false, false, false)
+        self.validate_state_with(state, true, true, false, false, SpecialActions::None)
     }
     pub(crate) fn validate_type_pursuit(
         &self,
@@ -682,11 +704,12 @@ impl ActorRegistry {
                 attacks: false,
                 shotgun: false,
                 chaingun: false,
+                demon: false,
             },
         )
     }
     pub(crate) fn validate_state_monsters(&self, state: StateId) -> Result<(), ActorError> {
-        self.validate_state_with(state, true, true, true, false, false)
+        self.validate_state_with(state, true, true, true, false, SpecialActions::None)
     }
     pub(crate) fn validate_type_monsters(
         &self,
@@ -706,6 +729,7 @@ impl ActorRegistry {
                 attacks: true,
                 shotgun: false,
                 chaingun: false,
+                demon: false,
             },
         )?;
         for state in self.actor_type(ty).unwrap().states() {
@@ -714,7 +738,7 @@ impl ActorRegistry {
         Ok(())
     }
     pub(crate) fn validate_state_shotgunner(&self, state: StateId) -> Result<(), ActorError> {
-        self.validate_state_with(state, true, true, false, true, false)
+        self.validate_state_with(state, true, true, false, true, SpecialActions::None)
     }
     pub(crate) fn validate_type_shotgunner(
         &self,
@@ -734,6 +758,7 @@ impl ActorRegistry {
                 attacks: false,
                 shotgun: true,
                 chaingun: false,
+                demon: false,
             },
         )?;
         for state in self.actor_type(ty).unwrap().states() {
@@ -742,7 +767,7 @@ impl ActorRegistry {
         Ok(())
     }
     pub(crate) fn validate_state_chaingunner(&self, state: StateId) -> Result<(), ActorError> {
-        self.validate_state_with(state, true, true, false, false, true)
+        self.validate_state_with(state, true, true, false, false, SpecialActions::Chaingunner)
     }
     pub(crate) fn validate_type_chaingunner(
         &self,
@@ -762,10 +787,40 @@ impl ActorRegistry {
                 attacks: false,
                 shotgun: false,
                 chaingun: true,
+                demon: false,
             },
         )?;
         for state in self.actor_type(ty).unwrap().states() {
             self.validate_state_chaingunner(state)?;
+        }
+        Ok(())
+    }
+    pub(crate) fn validate_state_demon_melee(&self, state: StateId) -> Result<(), ActorError> {
+        self.validate_state_with(state, true, true, false, false, SpecialActions::Demon)
+    }
+    pub(crate) fn validate_type_demon_melee(
+        &self,
+        ty: ActorTypeId,
+        sectors: &[SectorState],
+    ) -> Result<(), ActorError> {
+        self.admit_type(
+            ty,
+            sectors,
+            &mut BTreeSet::new(),
+            &mut BTreeSet::new(),
+            &mut 0,
+            Admission {
+                flags: ALLOWED_FLAGS | 64 | 128 | 524288 | 2097152,
+                look: true,
+                chase: true,
+                attacks: false,
+                shotgun: false,
+                chaingun: false,
+                demon: true,
+            },
+        )?;
+        for state in self.actor_type(ty).unwrap().states() {
+            self.validate_state_demon_melee(state)?;
         }
         Ok(())
     }
@@ -1199,6 +1254,10 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                     "A_FaceTarget" => {
                         assert!(self.perception.is_some_and(|p| p.monsters));
                         crate::monsters::face(self, id);
+                    }
+                    "A_SargAttack" => {
+                        assert!(self.perception.is_some_and(|p| p.demon));
+                        crate::demon::strike(self, id);
                     }
                     "A_CPosAttack" => {
                         assert!(self.perception.is_some_and(|p| p.chaingunner));

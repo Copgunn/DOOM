@@ -130,7 +130,7 @@ fn approx(a: Actor, b: Actor) -> i32 {
     .bits()
 }
 
-fn melee(
+pub(crate) fn melee(
     world: &StaticWorld,
     sectors: &[SectorState],
     r: &ActorRegistry,
@@ -182,7 +182,7 @@ fn range_observation<A: ActorAccess>(
     );
     accepted
 }
-fn melee_host<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -> bool {
+pub(crate) fn melee_host<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -> bool {
     let a = *h.access.get(id).unwrap();
     let target = a.life.unwrap().target.map(|t| *h.access.get(t).unwrap());
     let d = melee(h.world, h.sectors, h.registry, a, target);
@@ -392,6 +392,9 @@ impl Simulation {
             .is_some_and(|l| OWNERS.contains(&l.actor_type.0))
     }
     pub(crate) fn validate_monster_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
+        if self.profile == Profile::DemonMelee {
+            return self.validate_demon_type(ty);
+        }
         if self.profile == Profile::Chaingunner {
             return self.validate_chaingun_type(ty);
         }
@@ -459,6 +462,9 @@ impl Simulation {
         ty: ActorTypeId,
         state: StateId,
     ) -> Result<(), SimError> {
+        if self.profile == Profile::DemonMelee {
+            return self.demon_state_role(ty, state);
+        }
         if self.profile == Profile::Chaingunner {
             return self.chaingun_state_role(ty, state);
         }
@@ -588,7 +594,9 @@ impl Simulation {
                 self.preflight_monster_callback(id)?;
                 if l.tics == 1
                     && l.state.is_some_and(|s| {
-                        if self.profile == Profile::Chaingunner {
+                        if self.profile == Profile::DemonMelee {
+                            s.0 == 5
+                        } else if self.profile == Profile::Chaingunner {
                             [4, 5, 7].contains(&s.0)
                         } else {
                             s.0 == 4
@@ -654,6 +662,9 @@ impl Simulation {
         id: ActorId,
         state: StateId,
     ) -> Result<(), SimError> {
+        if self.profile == Profile::DemonMelee {
+            return self.enter_demon_state(id, state);
+        }
         let a = self.monster_actor(id, 1008)?;
         self.monster_state_role(a.life.unwrap().actor_type, state)?;
         if self.monster_is_owner(id) {
@@ -684,6 +695,9 @@ impl Simulation {
     }
     /// Original P_CheckMissileRange, including JUSTHIT clearing and ordered RNG.
     pub fn check_missile_range(&mut self, id: ActorId) -> Result<bool, SimError> {
+        if self.profile == Profile::DemonMelee {
+            return Err(MonsterError::Profile.into());
+        }
         self.preflight_monster_callback(id)?;
         if self.actor(id).unwrap().life.unwrap().target.is_none() {
             return Err(MonsterError::Target.into());
@@ -699,7 +713,12 @@ impl Simulation {
         self.monster_action(id, true)
     }
     fn monster_action(&mut self, id: ActorId, pos: bool) -> Result<(), SimError> {
-        if pos && matches!(self.profile, Profile::Shotgunner | Profile::Chaingunner) {
+        if pos
+            && matches!(
+                self.profile,
+                Profile::Shotgunner | Profile::Chaingunner | Profile::DemonMelee
+            )
+        {
             return Err(MonsterError::Definition.into());
         }
         self.preflight_monster_callback(id)?;
@@ -739,6 +758,8 @@ impl Simulation {
                 monsters: true,
                 shotgunner: self.profile == Profile::Shotgunner,
                 chaingunner: self.profile == Profile::Chaingunner,
+                demon: self.profile == Profile::DemonMelee,
+                melee: None,
                 shotgun: None,
                 shot,
             }),
