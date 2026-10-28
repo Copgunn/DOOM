@@ -87,10 +87,12 @@ Direct calls and direct entry into 5/6/7 need the same preparation.
 
 Each shot can reuse the existing single-shot MonsterShotPlan and trace/damage
 reservation. Prepare only this action against current state, never future tics.
-Refire copies only owner/RNG and prepares facing, the roll and the reached pure
-sight query. All recoverable errors must precede sound, draws, state and movement.
-Actual dispatch checks copied RNG boundaries and emits observations in source
-order; the plan is ephemeral and never serialized.
+Refire needs only the existing read-only callback/entry validation: its facing,
+draw, short-circuit sight and nested movement/state services are infallible once
+the shared invariants below hold. It allocates no effects and needs no speculative
+RNG or world projection. Health and sight are evaluated lazily after the threshold
+test. All recoverable errors precede draws, state and movement; shot plans remain
+ephemeral and no cross-tic plan is serialized.
 
 Nested see -> Chase can reacquire and return, enter Look, or move/select ATK1.
 Look resets threshold; an admitted Look -> see handoff can invoke Chase again.

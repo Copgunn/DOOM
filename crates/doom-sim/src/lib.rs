@@ -19,8 +19,10 @@ extern crate self as doom_sim;
 mod actor;
 mod direction;
 pub use direction::MoveDirection;
+mod chaingunner;
 mod monsters;
 mod shotgunner;
+pub use chaingunner::{RefireDecision, RefireEvent};
 pub use shotgunner::ShotgunEvent;
 mod perception;
 mod pursuit;
@@ -92,16 +94,25 @@ pub enum Profile {
     MonsterAttacks,
     /// M3d3d sequential native shotgunner attacks, DSIM-v11.
     Shotgunner,
+    /// M3d3e separately aimed chaingunner shots and source refire, DSIM-v12.
+    Chaingunner,
 }
 
 impl Profile {
     pub(crate) const fn uses_monsters(self) -> bool {
-        matches!(self, Self::MonsterAttacks | Self::Shotgunner)
+        matches!(
+            self,
+            Self::MonsterAttacks | Self::Shotgunner | Self::Chaingunner
+        )
     }
     pub(crate) const fn uses_perception(self) -> bool {
         matches!(
             self,
-            Self::Perception | Self::Pursuit | Self::MonsterAttacks | Self::Shotgunner
+            Self::Perception
+                | Self::Pursuit
+                | Self::MonsterAttacks
+                | Self::Shotgunner
+                | Self::Chaingunner
         )
     }
     pub(crate) fn uses_sectors(self) -> bool {
@@ -116,6 +127,7 @@ impl Profile {
                 | Self::Pursuit
                 | Self::MonsterAttacks
                 | Self::Shotgunner
+                | Self::Chaingunner
         )
     }
 }
@@ -218,6 +230,8 @@ pub enum Phase {
 pub enum Event {
     /// Ordered profile-11 shotgun boundaries and per-pellet observations.
     Shotgun(ShotgunEvent),
+    /// Source profile-12 refire decision before immediate see-state entry.
+    Refire(RefireEvent),
     /// Ordered profile-10 attack observations.
     Monster(MonsterEvent),
     /// Ordered original pursuit operations in profile 9.
@@ -776,7 +790,8 @@ impl Simulation {
         if self.profile == Profile::Projectiles {
             self.preflight_projectile_step()?;
         }
-        let monster_shot = if self.profile == Profile::MonsterAttacks {
+        let monster_shot = if matches!(self.profile, Profile::MonsterAttacks | Profile::Chaingunner)
+        {
             self.preflight_monster_step()?
         } else {
             None
@@ -836,6 +851,7 @@ impl Simulation {
                     pursuit: self.profile == Profile::Pursuit || self.profile.uses_monsters(),
                     monsters: self.profile.uses_monsters(),
                     shotgunner: self.profile == Profile::Shotgunner,
+                    chaingunner: self.profile == Profile::Chaingunner,
                     shotgun: shotgun_blast.as_ref(),
                     shot: monster_shot.as_ref(),
                     players: &self.perception_players,

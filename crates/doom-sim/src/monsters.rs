@@ -392,6 +392,9 @@ impl Simulation {
             .is_some_and(|l| OWNERS.contains(&l.actor_type.0))
     }
     pub(crate) fn validate_monster_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
+        if self.profile == Profile::Chaingunner {
+            return self.validate_chaingun_type(ty);
+        }
         if self.profile == Profile::Shotgunner {
             return self.validate_shotgun_type(ty);
         }
@@ -456,6 +459,9 @@ impl Simulation {
         ty: ActorTypeId,
         state: StateId,
     ) -> Result<(), SimError> {
+        if self.profile == Profile::Chaingunner {
+            return self.chaingun_state_role(ty, state);
+        }
         if self.profile == Profile::Shotgunner {
             return self.shotgun_state_role(ty, state);
         }
@@ -580,7 +586,15 @@ impl Simulation {
             let l = a.life.unwrap();
             if self.monster_is_owner(id) {
                 self.preflight_monster_callback(id)?;
-                if l.tics == 1 && l.state == Some(StateId(4)) {
+                if l.tics == 1
+                    && l.state.is_some_and(|s| {
+                        if self.profile == Profile::Chaingunner {
+                            [4, 5, 7].contains(&s.0)
+                        } else {
+                            s.0 == 4
+                        }
+                    })
+                {
                     shot_owner = Some(id);
                 }
             } else if a.position().iter().any(|v| !crate::sight::within(*v, 994)) {
@@ -646,11 +660,12 @@ impl Simulation {
             self.preflight_monster_callback(id)?;
         }
         self.validate_entry(state)?;
-        let plan = if state == StateId(5) {
-            self.prepare_monster_shot(id)?
-        } else {
-            None
-        };
+        let plan =
+            if state == StateId(5) || self.profile == Profile::Chaingunner && state == StateId(6) {
+                self.prepare_monster_shot(id)?
+            } else {
+                None
+            };
         self.enter_monster_planned(id, state, plan.as_ref());
         Ok(())
     }
@@ -684,7 +699,7 @@ impl Simulation {
         self.monster_action(id, true)
     }
     fn monster_action(&mut self, id: ActorId, pos: bool) -> Result<(), SimError> {
-        if pos && self.profile == Profile::Shotgunner {
+        if pos && matches!(self.profile, Profile::Shotgunner | Profile::Chaingunner) {
             return Err(MonsterError::Definition.into());
         }
         self.preflight_monster_callback(id)?;
@@ -723,6 +738,7 @@ impl Simulation {
                 pursuit: true,
                 monsters: true,
                 shotgunner: self.profile == Profile::Shotgunner,
+                chaingunner: self.profile == Profile::Chaingunner,
                 shotgun: None,
                 shot,
             }),

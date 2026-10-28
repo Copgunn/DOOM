@@ -402,6 +402,7 @@ impl Simulation {
                 pursuit: true,
                 monsters: self.profile.uses_monsters(),
                 shotgunner: self.profile == Profile::Shotgunner,
+                chaingunner: self.profile == Profile::Chaingunner,
                 shotgun: None,
                 shot: None,
             }),

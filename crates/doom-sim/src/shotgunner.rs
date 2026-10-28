@@ -353,6 +353,7 @@ impl Simulation {
                 pursuit: true,
                 monsters: true,
                 shotgunner: true,
+                chaingunner: false,
                 shotgun: plan.as_ref(),
                 shot: None,
             }),

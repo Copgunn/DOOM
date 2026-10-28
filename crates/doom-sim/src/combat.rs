@@ -274,6 +274,7 @@ impl Simulation {
                 | Profile::Projectiles
                 | Profile::MonsterAttacks
                 | Profile::Shotgunner
+                | Profile::Chaingunner
         ) {
             return Err(CombatError::Profile.into());
         }

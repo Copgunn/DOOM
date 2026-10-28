@@ -197,6 +197,11 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        Event::Refire(event) => {
+            b.extend([20, event.decision.code()]);
+            b.extend(event.actor.slot().to_le_bytes());
+            b.extend(event.actor.generation().to_le_bytes());
+        }
         Event::Shotgun(event) => {
             b.push(19);
             crate::shotgunner::event_bytes(&mut b, event);
@@ -391,6 +396,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::Pursuit => 9,
         crate::Profile::MonsterAttacks => 10,
         crate::Profile::Shotgunner => 11,
+        crate::Profile::Chaingunner => 12,
     };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
@@ -584,7 +590,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .flat_map(id)
                 .collect::<Vec<_>>();
             field(&mut fields, format!("sector.{i}.actors"), order);
-            if matches!(version, 6 | 8..=11) {
+            if matches!(version, 6 | 8..=12) {
                 field(
                     &mut fields,
                     format!("sector.{i}.soundtarget"),
@@ -613,7 +619,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(version, 8..=11) {
+    if matches!(version, 8..=12) {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,
