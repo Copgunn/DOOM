@@ -101,8 +101,8 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
 - M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
   correction-head and post-merge CI. M3d1 was regularly merged as c924f18 after fresh correction-head and
-  post-merge CI in the M3d2 mission. M3d2 was regularly merged as 955f690 after final corrections and fresh/post-merge CI. M3d2b has conditional regular-merge authorization in the M3d3a mission after
-  final correction and fresh/post-merge checks. No M3d3a or later merge is authorized.
+  post-merge CI in the M3d2 mission. M3d2 was regularly merged as 955f690 after final corrections and fresh/post-merge CI. M3d2b was regularly merged as e109ee1 after final correction and fresh/post-merge
+  CI in the M3d3a mission. No M3d3a or later merge is authorized.
 
 - M3b consumes supplied BLOCKMAP lists without rebuilding them; conservative
   omissions are diagnostic, not proof of spatial correctness. Keep older profiles
@@ -147,6 +147,6 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   `check_headless.py` and `check_projectiles.py`, all six fuzz builds and bounded
   projectile ASan smoke tests. Preserve every v1-v6 schema, fixture, generator,
   encoder and historical helper unchanged. New projectile observations use tag 15.
-- M3d2b PR #9 may receive the owner-authorized regular merge only after the
-  M3d3a mission gates pass; never enable auto-merge. M3d3a stops at owner review.
+- M3d2b PR #9 completed its owner-authorized regular merge and post-merge gates;
+  never enable auto-merge. M3d3a stops at owner review.
   Pursuit, attacks, M3d4 and M3e remain later milestones.

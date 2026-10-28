@@ -27,8 +27,8 @@ weapons and psprites are implemented in [PR #8](https://github.com/Copgunn/DOOM/
 merged as `955f690` after fresh correction-head and post-merge CI. M3d2b projectile
 foundations implement bounded original plasma spawning, flight, direct impact,
 explosion and removal in profile 7; [PR #9](https://github.com/Copgunn/DOOM/pull/9)
-completed engineering review; the M3d3a mission authorizes its regular merge
-after final corrections and fresh checks.
+merged as `e109ee1` after final corrections and fresh/post-merge CI. M3d3a
+perception and target acquisition is under development on a separate branch.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 

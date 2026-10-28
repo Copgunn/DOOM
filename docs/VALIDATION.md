@@ -1030,3 +1030,23 @@ All v1-v7 canonical bytes, reference fixtures, generators and helpers are preser
 Merge-parent/master and exact post-merge CI verification must precede M3d3a runtime
 work. No squash, force push, history rewrite, auto-merge or branch deletion is
 authorized. M3d3a itself must remain open and unmerged for separate owner review.
+
+## M3d2b completed finalization for M3d3a
+
+Prose correction `f2705598f382cd7c3e308f3edfbe3756f694c598` directly records
+reviewed runtime head `062647ddd4e2e44edeb176cfd3b4e3577481a249` and reviewed
+CI 40630368867. Required local checks passed again: 131 workspace/MSRV checks
+(two private ignored), 107 release tests, build/fmt/Clippy/rustdoc, all seven
+reference pairs and seven-example debug/release equality.
+[Fresh CI 40631701968](https://github.com/Copgunn/DOOM/actions/runs/40631701968)
+passed all four jobs on the exact correction before the authorized regular merge.
+
+PR #9 is merged/closed as `e109ee193bcce6077f5c8d90802c97edc89a55a6`, parents
+`955f690d141ccc6a9074a8a8017f78833854af6f` and
+`f2705598f382cd7c3e308f3edfbe3756f694c598`. The merge tree equals the corrected
+head; local/remote master agree.
+[Post-merge CI 40632182190](https://github.com/Copgunn/DOOM/actions/runs/40632182190)
+passed Linux, Windows, macOS and Rust 1.85 on that exact merge before the M3d3a
+branch was created. All 165 original files, public GPL-2.0-only licensing,
+attribution/history and asset safeguards were verified unchanged. No private
+assets/repositories were accessed or branches deleted. M3d3a has no merge authorization.

@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b reviewed and conditionally authorized for regular merge**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b merged; M3d3a perception under development**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -202,7 +202,7 @@ repository. Custom wgpu rendering with Vulkan preferred remains later work.
 | --- | --- | --- |
 | M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Merged as c924f18 after fresh and post-merge CI |
 | M3d2 | Player weapons, psprites and ammo | Merged as 955f690 after fresh/post-merge CI |
-| M3d2b | Bounded original projectile foundations | Reviewed; final correction/merge gates pending |
+| M3d2b | Bounded original projectile foundations | Implemented, validated and merged |
 | M3d3 | Monster targeting/perception, movement, attacks and AI | Planned |
 | M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
 
@@ -317,7 +317,7 @@ The source investigation was committed before runtime work. Original MT_PLASMA
   ([CI 40629886585](https://github.com/Copgunn/DOOM/actions/runs/40629886585));
   final review-head SHA/run are verified in PR #9 before readiness.
 - [x] Owner engineering review and conditional regular-merge authorization in M3d3a mission.
-- [ ] Final correction-head CI, regular merge and exact post-merge verification.
+- [x] Final correction-head CI, regular merge `e109ee1` and exact post-merge CI.
 
 No full plasma rifle, rocket/BFG/splash, monster attacks, armor/player damage,
 renderer, scripting or engine-limit expansion is included. Recommended next
