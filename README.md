@@ -22,7 +22,9 @@ owner-authorized correction-head and post-merge CI. M3c adds typed actor states,
 spawning and controlled death in [PR #6](https://github.com/Copgunn/DOOM/pull/6),
 merged as `4dbb0a5` after correction-head and post-merge CI. M3d1 damage/hitscan
 foundations are implemented in [PR #7](https://github.com/Copgunn/DOOM/pull/7)
-on `feat/m3d1-damage-hitscan` and remain unmerged for owner review.
+on `feat/m3d1-damage-hitscan`; engineering review found no blocking defect within
+the declared scope. Final documentation correction and fresh checks precede the
+owner-authorized regular merge.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 
@@ -331,7 +333,7 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static sectors/BSP, openings, step/dropoff and XY/Z/gravity | Implemented, validated, merged |
 | M3c | Actor states, spawning and controlled death | Implemented, validated and merged |
-| M3d1 | Bounded damage/hitscan/kill foundations | Implemented; owner review pending |
+| M3d1 | Bounded damage/hitscan/kill foundations | Reviewed; authorized merge gated on fresh checks |
 | M3d2–M3e | Weapons, AI, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |

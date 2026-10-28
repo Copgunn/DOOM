@@ -792,14 +792,21 @@ Linux, Windows, macOS and Rust 1.85. The three stable jobs include recorded C an
 independent goldens, release tests, five-example debug/release equality and docs;
 Linux also reproduces all reference generators/encoders.
 
-This subsequent delivery record changes documentation and Rust doc comments only.
-The final immutable head and its fresh exact-head CI link are recorded in PR #7,
-so a commit does not attempt to contain its own hash. Owner-review readiness is
-gated on observing that fresh run; no historical green run substitutes for it.
-PR #7 must remain open and unmerged, with auto-merge disabled. Master stays at
-M3c merge `4dbb0a51325119e5578705126f97bdc5d9723049`.
+Reviewed final head `f17e7937d2ffd4eba1ae8db3eee954909d129153` passed all four
+jobs in [CI 40618036910](https://github.com/Copgunn/DOOM/actions/runs/40618036910).
+The live PR still matches that head and base `4dbb0a51325119e5578705126f97bdc5d9723049`;
+no intervening changes, review blockers or comments were found. Owner engineering
+review found no demonstrated blocking defect within the declared scope.
+
+The M3d2 mission conditionally authorizes a regular merge of PR #7 after this
+final documentation correction and fresh required local/exact-head CI checks.
+Runtime, source fixtures and DSIM-v1-v5 expectations remain unchanged. Fresh
+correction-head CI must pass before merging; verify both merge parents, master
+and successful post-merge CI before starting M3d2 implementation. M3d2 itself
+must remain open and unmerged for separate owner review.
 
 Historical merged local M0-M3c branches and preserved remote M3b/M3c references
 are cleanup candidates only; none was deleted. No active M3d1 branch is eligible
 for cleanup. Continue with separately reviewed M3d2 weapon/psprite/ammo/button
-work after owner review; no M3d1 or later subphase merge is authorized here.
+work after the authorized M3d1 merge and post-merge verification. No M3d2 or
+later subphase merge is authorized.

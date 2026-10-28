@@ -116,4 +116,6 @@ examples in debug/release, and the combat fuzz target. No C compiler is required
 for recorded Rust comparisons. Preserve v1-v4 bytes and unsupported-branch
 rejection; new native definitions must not bypass action or effect admission.
 `request_actor_death` keeps its M3c contract; actual damage uses `damage_actor`.
-M3d1 is delivered unmerged and requires separate owner merge authorization.
+M3d1 received conditional regular-merge authorization in the M3d2 mission,
+subject to final correction and fresh checks. M3d2 requires separate owner review
+and must remain unmerged.

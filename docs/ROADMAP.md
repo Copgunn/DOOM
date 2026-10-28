@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 implemented; owner review pending**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 reviewed; authorized merge gated on fresh checks**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -200,7 +200,7 @@ repository. Custom wgpu rendering with Vulkan preferred remains later work.
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Implemented; separate owner review required |
+| M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Reviewed; regular merge conditionally authorized |
 | M3d2 | Player weapons, psprites, ammo and projectile foundations | Planned |
 | M3d3 | Monster targeting/perception, movement, attacks and AI | Planned |
 | M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
@@ -208,7 +208,8 @@ repository. Custom wgpu rendering with Vulkan preferred remains later work.
 M3d1 branch: `feat/m3d1-damage-hitscan`, based on verified M3c merge `4dbb0a5`.
 Source findings precede runtime work in [M3D1_REFERENCE.md](M3D1_REFERENCE.md).
 Each subphase needs independent evidence and owner merge authorization. M3d1
-remains unmerged; no weapon/AI/full-combat acceptance is implied by this slice.
+regular merge is conditionally authorized after correction and fresh CI; no
+weapon/AI/full-combat acceptance is implied by this slice.
 
 ## M4 — Demo compatibility
 
@@ -245,8 +246,11 @@ presentation frame rate and renderer choice do not alter simulation results.
 - [x] Required local stable/release/MSRV/reference/docs checks; exact results in validation.
 - [x] Linux/Windows/macOS and Rust 1.85 CI passed on implemented head `10de49e`
   ([run 40617772778](https://github.com/Copgunn/DOOM/actions/runs/40617772778));
-  final delivery-record commit/CI evidence is recorded in PR #7.
-- [ ] Owner review and separate merge authorization (PR must remain unmerged).
+  reviewed final `f17e793` also passed
+  [CI 40618036910](https://github.com/Copgunn/DOOM/actions/runs/40618036910).
+- [x] Owner engineering review and conditional regular-merge authorization.
+- [ ] Final documentation correction, fresh exact-head CI, regular merge and
+  post-merge verification before M3d2 implementation.
 
 M3d2 should implement source weapon/psprite/ammo/button timing and spread/damage
 RNG, followed by independently tested projectile foundations. Actual player damage
