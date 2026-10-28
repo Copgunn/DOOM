@@ -111,3 +111,10 @@ path = "fuzz_targets/demon_lifecycle.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "demon_stand_run"
+path = "fuzz_targets/demon_stand_run.rs"
+test = false
+doc = false
+bench = false
