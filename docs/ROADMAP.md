@@ -531,11 +531,19 @@ The new PR must remain open/unmerged without auto-merge for separate owner revie
   nine-scenario asserted example with independent digest `b6c312bf5fbcc7dc`.
 - [x] All twelve ASan fuzz targets build; Demon fuzz uses public synthetic maps,
   at most eight operations/24 individual tics and per-error canonical equality.
-- [x] Bounded Demon ASan: 10,000 executions in 227.6 seconds without findings;
+- [x] Final capacity-aware Demon ASan: 10,000 executions in 921.9 seconds without findings;
   six public seeds, max_len 65, RSS 2048 MiB, timeout 20s; leak detection disabled.
 - [x] Fresh workspace/MSRV 205 each, release 181, thirteen C/encoder pairs and
   thirteen asserted debug/release examples; build/format/Clippy/rustdoc/integrity.
-- [ ] Exact final-head Linux/Windows/macOS/Rust 1.85 CI and owner-review handoff.
+- [x] Implementation b3d5aa555f73b69633cf31d6a3f509295dc692f6 passed all four
+  jobs in [CI 40741692813](https://github.com/Copgunn/DOOM/actions/runs/40741692813).
+- [x] [PR #16](https://github.com/Copgunn/DOOM/pull/16) opened draft on the verified base.
+- [x] Capacity-aware fuzz setup reaches all 64 slots before mutational operations;
+  final ASan result is recorded in [VALIDATION](VALIDATION.md).
+
+The exact final-head SHA/completed four-job matrix and readiness are recorded on
+PR #16 after execution. A commit cannot embed its own eventual CI result. Mark
+ready only after that matrix passes; leave the PR open/unmerged without auto-merge.
 
 Normal timing only: source global fast/Nightmare SARG timing is not admitted.
 Full Demon/Spectre pain/death/raise closure, real player damage/scoring, other

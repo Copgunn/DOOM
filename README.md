@@ -476,7 +476,7 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d3c | Attack selection and bounded source hitscan action | Merged as 9b8fde8 |
 | M3d3d | Source shotgunner three-pellet foundations | Merged as 31b4830 |
 | M3d3e | Source chaingunner attack/refire foundations | Merged as 5b91824 |
-| M3d3f | Source Demon melee foundations | Implemented; final validation/review gates recorded below |
+| M3d3f | Source Demon melee foundations | Implemented and validated; separate owner review in PR #16 |
 | Later M3d3–M3e | Remaining attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
@@ -652,4 +652,4 @@ bounded fixture, with source-body target pain/death, not complete Demon/Spectre
 pain/death/raise gameplay, player damage or a playable engine. See the
 [source investigation](docs/M3D3F_REFERENCE.md),
 [compatibility](docs/COMPATIBILITY.md), [schema](docs/STATE_FORMAT.md) and
-[validation ledger](docs/VALIDATION.md). The new PR stays open/unmerged for review.
+[validation ledger](docs/VALIDATION.md). [PR #16](https://github.com/Copgunn/DOOM/pull/16) stays open/unmerged for separate review.

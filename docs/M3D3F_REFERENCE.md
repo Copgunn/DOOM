@@ -51,7 +51,57 @@ initialization is outside the admitted fixture; reject Skill::Nightmare here
 rather than imply complete original Nightmare Demon behavior. Older profiles and
 skills remain unchanged. Full source run/pain/death/raise animation is not admitted.
 
+## Original metadata and adjacent state dependencies
+
+The preserved [info.c](../linuxdoom-1.10/info.c) and the independent original
+metadata vectors identify the complete raw normal table below. These are source
+findings, not additional executable admission in profile 13.
+
+| Original states/IDs | Raw timing/actions and dependency |
+| --- | --- |
+| STND/STND2 475/476 | 10/10, frames 0/1, A_Look, loop between both states |
+| RUN1..RUN8 477..484 | Eight 2-tic A_Chase states, frames 0,0,1,1,2,2,3,3, loop to RUN1 |
+| ATK1..ATK3 485..487 | 8/8/8, frames 4/5/6, Face/Face/Sarg, then RUN1 |
+| PAIN/PAIN2 488/489 | 2/2, frame 7, none/A_Pain, then RUN1; metadata pain chance 180/sound 26 |
+| DIE1..DIE6 490..495 | 8/8/4/4/4/-1, frames 8..13; A_Scream at DIE2, A_Fall at DIE4, final next S_NULL |
+| RAISE1..RAISE6 496..501 | Six 5-tic action-free frames 13..8, then RUN1; resurrection service is a separate dependency |
+
+Demon has no missile state or extreme-death state, direct metadata damage 0,
+see/attack/pain/death/active sounds 41/52/26/64/77, flags 4194310
+(SOLID|SHOOTABLE|COUNTKILL) and Doom number 3002. Spectre uses the same state/type
+properties with Doom number 58 and SHADOW added (flags 4456454). Original
+[g_game.c](../linuxdoom-1.10/g_game.c) applies the fast/Nightmare timer rewrite
+through RUN1..PAIN2; profile 13 rejects that global mode.
+
+The executable native fixture is deliberately narrower: one labelled Look loop
+and one Chase loop, silent see/active sounds by default (both remain admitted
+fixture inputs), unshootable owner flags without COUNTKILL, and source player-body
+pain/death metadata. Only the copied SARG attack trio and explicitly documented
+Demon fields are adapted. Target 135's source-body pain/death/extreme state closure
+is not the original Demon table above. Animation-only raise metadata does not
+admit corpse resurrection, Arch-vile AI or full source monster execution.
+
 ## Exact action, range and sound order
+
+Original body from preserved [p_enemy.c](../linuxdoom-1.10/p_enemy.c), with trailing
+whitespace omitted in this documentation excerpt:
+
+```c
+void A_SargAttack (mobj_t* actor)
+{
+    int		damage;
+
+    if (!actor->target)
+	return;
+
+    A_FaceTarget (actor);
+    if (P_CheckMeleeRange (actor))
+    {
+	damage = ((P_Random()%10)+1)*4;
+	P_DamageMobj (actor->target, actor, actor, damage);
+    }
+}
+```
 
 The real p_enemy.c:935 body returns immediately on null; otherwise FaceTarget,
 P_CheckMeleeRange, then only on success ((P_Random()%10)+1)*4 followed immediately

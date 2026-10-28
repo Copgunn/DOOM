@@ -1821,7 +1821,7 @@ Fresh full local gates and bounded ASan have now completed as recorded below.
 Exact implementation/final-head CI is recorded only after successful execution;
 no pending remote pass is implied.
 
-## M3d3f bounded sanitizer evidence
+## M3d3f initial bounded sanitizer evidence
 
 Nightly 1.101.0-nightly / cargo-fuzz 0.13.2 built all twelve targets with
 AddressSanitizer; each executable was verified present. A fresh temporary corpus
@@ -1848,7 +1848,7 @@ Linux x86-64; stable Rust 1.99.1 / Cargo 1.99.1, MSRV 1.85.0, GCC 14.2, nightly
 | All thirteen original-C/independent-encoder pairs | Passed --check |
 | All thirteen asserted debug/release examples | Identical stdout |
 | Twelve fuzz targets | All AddressSanitizer builds/executables verified |
-| Demon ASan | 10,000 executions / 227.6 seconds without findings; leaks disabled |
+| Initial Demon ASan target | 10,000 executions / 227.6 seconds without findings; leaks disabled; final capacity model below |
 | Whitespace, Markdown links and source/history preservation | Passed |
 
 All **165 original upstream files**, **729 frozen historical reference paths**
@@ -1861,3 +1861,33 @@ README/AGENTS/CONTRIBUTING, architecture/roadmap/compatibility/testing/validatio
 schema/source note/index/reference guide and public fuzz-seed documentation are
 updated. The new PR remains open/unmerged without auto-merge; remote exact-head
 validation and immutable CI records follow after execution.
+
+## M3d3f immutable implementation CI
+
+Implementation head **b3d5aa555f73b69633cf31d6a3f509295dc692f6** passed all four
+jobs in [CI 40741692813](https://github.com/Copgunn/DOOM/actions/runs/40741692813):
+Linux stable, Windows stable, native Intel macOS 26 stable and Rust 1.85.0.
+The run completed 2026-10-28 18:10:43 UTC. Linux independently reproduced all
+thirteen original-C/encoder pairs; stable platforms compared recorded fields,
+bytes/digests and all thirteen asserted examples. All required formatting,
+Clippy, build/test/release and warnings-denied rustdoc steps passed.
+
+A subsequent test-only coverage review found the eight-operation fuzz sequence
+could not fill 64 slots by spawning alone. The high selector bit now creates a
+bounded full-capacity setup before mutational operations; low seven bits still
+select the same six source fixtures. The source/body/state/range/damage runtime
+and C/DSIM expectations are unchanged. All twelve fuzz executables were rebuilt.
+The final capacity-aware ASan campaign then completed **10,000 executions in
+921.9 seconds without findings** (libFuzzer reports 921 whole seconds), using six
+fresh public synthetic 65-byte seeds, seed 1, max_len 65, RSS 2048 MiB and timeout
+20 seconds. Three initial seeds set the high bit and begin at 64 actors. At most
+eight mutational operations/24 separately checked tics run after bounded setup;
+every failed operation/tic preserves canonical state. Leak detection remained
+explicitly disabled; no LeakSanitizer coverage is claimed.
+
+The first 10,000/227.6-second campaign remains historical evidence for its earlier
+model. The two campaigns are separate, not extra C scenarios or canonical capture
+counts. Final exact-head CI must still pass before readiness. The exact final SHA
+and completed matrix are recorded on [PR #16](https://github.com/Copgunn/DOOM/pull/16)
+after execution because this commit cannot embed its own eventual SHA/result.
+The PR stays open/unmerged without auto-merge; no M3d3f merge is authorized.

@@ -618,8 +618,10 @@ late player-damage rejection before real shadow facing in direct/expiring-tic
 paths; both assert complete canonical equality. These policy tests are distinct
 from source-equivalence claims.
 
-The twelfth fuzz target uses six reproducible 65-byte seeds, at most eight API
-operations and 24 individual tics, plus at most eight public-map byte mutations.
+The twelfth fuzz target uses six reproducible 65-byte seeds, at most eight
+mutational API operations and 24 individual tics, plus eight public-map byte
+mutations. The high selector bit pre-fills the bounded setup to 64 actors; low
+seven bits select the public fixture.
 Every failed API operation/individual tic checks complete canonical equality.
 All twelve fuzz executables must build. Record actual ASan executions, findings,
 timeout/RSS and leak settings in VALIDATION; disabled leak detection establishes
