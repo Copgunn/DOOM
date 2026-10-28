@@ -1074,7 +1074,7 @@ lookers isolate genuine original A_Look with an action-free see state.
 C evidence is distinct from schema/policy evidence. The new harness compiles 56
 original function bodies with GCC 14.2.0 and genuine original structs/metadata;
 source/adapter/input/output hashes, flags and ABI are recorded in
-`tests/reference/m3d3a_provenance.json`. It covers 68 scenarios and 1536 side plus131
+`tests/reference/m3d3a_provenance.json`. It covers 68 scenarios and 1536 side plus 131
 fraction vectors. Structured comparisons observed:
 
 | C scenario group | Actor fields | Raw RNG draws | Sight queries | Ordered sight visits | Player slots |
@@ -1085,7 +1085,7 @@ fraction vectors. Structured comparisons observed:
 | Total | 47520 | 625 | 365 | 3955 | 460 |
 
 The scan group additionally compares 635 normalized ordered observations and 504
-roster fields; A_Look compares 8150 observations,3960 roster fields,346 sector
+roster fields; A_Look compares 8150 observations, 3960 roster fields, 346 sector
 sound fields and 19 propagation visits. Pure setups compare 120 observations and 288
 roster fields. Five additional shared-noise probes repeat selected cases and are
 not double-counted. Counts are asserted in the suite. REJECT/BSP traversal, slope
@@ -1093,7 +1093,7 @@ intervals, source horizontal ties, active/dead filtering, lastlook wrap/count,
 strict FOV bounds/approximate distance 64, ordinary/ambush fallback, sound groups,
 RNG wrap, global origins and immediate thinker/state order are source compared.
 
-Independent Python DSIM-v8 encoding covers 420 captures with45 complete streams,
+Independent Python DSIM-v8 encoding covers 420 captures with 45 complete streams,
 including transient events, and reads no Rust output. All captures are checked;
 named-field diagnostics precede byte/digest comparison. Existing v1-v7 tools and
 bytes remain unchanged. Twelve Rust-only policy tests cover declared empty-roster,
@@ -1104,5 +1104,29 @@ The asserted eighth example demonstrates slot 3 wrapping to 0 (including the sou
 horizontal-side quirk), ordinary sound through a wall, blocked/visible ambush and
 an eight-tic dead-to-live candidate change. Final digest `30721bdec7a0d47e` is equal
 in debug/release. This is project determinism evidence, not a DOOM demo hash.
-Public CI and exact delivery commits are recorded after remote verification.
+Public CI and delivery evidence follow.
 M3d3a must remain open/unmerged. No private asset/repository was accessed.
+
+## M3d3a remote delivery evidence
+
+[PR #10](https://github.com/Copgunn/DOOM/pull/10) targets master
+`e109ee193bcce6077f5c8d90802c97edc89a55a6` from
+`feat/m3d3a-monster-perception`. Implementation/documentation head
+`4e7720f0ba28781e72e3abe08c269389f582ad31` passed
+[CI 40637618358](https://github.com/Copgunn/DOOM/actions/runs/40637618358):
+Linux, Windows, macOS and Rust 1.85 all succeeded on that exact commit. Linux
+also reproduced all eight C generator/encoder pairs; stable jobs passed recorded
+reference/golden checks, release tests, eight-example equality and rustdoc.
+
+The following delivery-record commit changes prose only, recording this verified
+implementation head and CI. Its final SHA and fresh successful CI are pinned in
+the PR description after verification. PR #10 remains open/unmerged without
+auto-merge; master remains at the authorized PR #9 merge. All 165 original
+upstream files and 222 historical reference code/fixture files (excluding the
+requested reference README update) are byte-identical. Repository visibility is
+public, licensing is GPL-2.0-only, attribution/history are preserved, and no
+private repository or commercial asset was accessed. No branch was deleted.
+
+Recommended next focused work is M3d3b source-compatible pursuit and movement
+decisions after separate owner authorization. Full original monster admission,
+attacks and demo synchronization remain deferred.

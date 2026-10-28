@@ -226,8 +226,8 @@ identities are normalized to spawn ordinals, and C allocation bytes are retained
 for observation rather than reused unsafely. Spawn jitter's ordered negative-shift
 adapter and compiler/ABI assumptions are recorded in hashed provenance.
 
-GCC 14.2.0 produced68 scenarios over18 public synthetic maps:24 sight,20 scan and 24
-explicit/thinker A_Look, plus1536 side and 131 fraction vectors. Maps include same-
+GCC 14.2.0 produced68 scenarios over18 public synthetic maps:24 sight, 20 scan and 24
+explicit/thinker A_Look, plus 1536 side and 131 fraction vectors. Maps include same-
 sector and cross-byte REJECT bits, multi-node/rotated BSPs, duplicate seg/lines,
 one-sided/equal/closed/partial openings, floor/ceiling clipping, negative heights,
 diagonal ties and omitted BLOCKMAP walls. Scan cases cover inactive/dead records,
@@ -236,8 +236,8 @@ distances64/65. Sound cases cover one/two blockers, closed openings, distinct
 emitter/target, unregistered/dead-record/nonshootable targets, ambush failed
 fallback with retained assignment, wake sound groups/global origins and RNG wrap.
 
-Across these cases Rust compares 47,520 actor fields,625 raw RNG draws,365 sight
-queries/3955 ordered sight visits,460 slot observations and 4752 roster fields.
+Across these cases Rust compares 47,520 actor fields, 625 raw RNG draws, 365 sight
+queries/3955 ordered sight visits, 460 slot observations and 4752 roster fields.
 A_Look also compares 346 sector sound fields and 19 source noise visits. Detailed
 per-group ordered-observation counts and local check results are in
 [VALIDATION.md](VALIDATION.md); counts are asserted rather than inferred from

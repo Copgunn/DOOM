@@ -28,12 +28,15 @@ merged as `955f690` after fresh correction-head and post-merge CI. M3d2b project
 foundations implement bounded original plasma spawning, flight, direct impact,
 explosion and removal in profile 7; [PR #9](https://github.com/Copgunn/DOOM/pull/9)
 merged as `e109ee1` after final corrections and fresh/post-merge CI. M3d3a
-perception and target acquisition is implemented on a separate branch for owner
-review, with source REJECT/BSP sight, player-slot scanning, sound/ambush decisions
+perception and target acquisition is implemented in [PR #10](https://github.com/Copgunn/DOOM/pull/10)
+for owner review, with source REJECT/BSP sight, player-slot scanning, sound/ambush decisions
 and a bounded fixture-only A_Look handoff. Full monster pursuit and attacks remain
 future work.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
-and [validation notes](docs/VALIDATION.md). A playable client is future work.
+and [validation notes](docs/VALIDATION.md). [CI 40637618358](https://github.com/Copgunn/DOOM/actions/runs/40637618358)
+passed Linux, Windows, macOS and Rust 1.85 on implementation/documentation head
+`4e7720f0ba28781e72e3abe08c269389f582ad31`. PR #10 remains open and unmerged.
+A playable client is future work.
 
 Implemented:
 

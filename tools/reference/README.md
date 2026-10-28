@@ -198,7 +198,7 @@ target/state/RNG and thinker outcomes. Original structs, info, tables and fixed
 helpers remain authoritative. Clearly labelled native states/types isolate real
 A_Look from an action-free see handoff; unreachable chase/attack callbacks abort.
 
-The public synthetic corpus has68 cases/18 maps,1536 side vectors and 131 fraction
+The public synthetic corpus has68 cases/18 maps, 1536 side vectors and 131 fraction
 vectors. Hashed provenance records upstream source/header/function, adapters,
 inputs/outputs, GCC flags and ABI, including the ordered spawn-jitter negative
 shift adapter. Retained C allocation bytes permit observation; Rust generation

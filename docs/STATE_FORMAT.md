@@ -389,8 +389,8 @@ actor lastlook, target, threshold, reaction time, state, tics, health and angle
 already encode perception consequences; no duplicate fields are added.
 
 In field order, add `sector.N.soundtarget` immediately after each `sector.N.actors`
-using the existing fixed13-byte optional generation identity (u8 presence, u32
-slot, u64 generation; absent is13 zero bytes). Legacy `player.N` bindings/commands
+using the existing fixed 13-byte optional generation identity (u8 presence, u32
+slot, u64 generation; absent is 13 zero bytes). Legacy `player.N` bindings/commands
 remain absent/zero. Immediately after those four legacy slot groups and before
 events, write for N=0..3:
 
@@ -398,7 +398,7 @@ events, write for N=0..3:
 | --- | --- |
 | `perception.player.N.active` | u8 boolean |
 | `perception.player.N.health` | signed i32 little-endian player-record health |
-| `perception.player.N.actor` | fixed13-byte optional generation identity |
+| `perception.player.N.actor` | fixed 13-byte optional generation identity |
 
 Inactive retained IDs remain encoded even after retirement; active IDs must pass
 preflight. Sound targets persist independently of assignment/wake. Local REJECT
@@ -408,9 +408,9 @@ observations of completed operations and do not become inputs to later detection
 Pure sight queries append no events and preserve the entire snapshot.
 
 Existing event tags/phases retain their layouts. Shared noise uses only tag 14,
-discriminator 6 (u16 sector, u8 blocks,12-byte target); other weapon events are not
+discriminator 6 (u16 sector, u8 blocks, 12-byte target); other weapon events are not
 admitted. New tag 16 is followed by the u8 discriminator below. All integers are
-little-endian. `ID` is u32 slot+u64 generation; `OptID` is the fixed13-byte form.
+little-endian. `ID` is u32 slot+u64 generation; `OptID` is the fixed 13-byte form.
 
 | Discriminator | Payload in order |
 | --- | --- |
@@ -426,13 +426,22 @@ little-endian. `ID` is u32 slot+u64 generation; `OptID` is the fixed13-byte form
 | 9 Random | ID actor, u8 gameplay result |
 | 10 Sight | ID observer, ID target, u8 visible, u32 REJECT pair, u8 rejected, u8 geometry-present; if present i32 eye/bottom/top; u32 visit count then visits |
 
-Each sight visit starts with u8 code:1 NodeStart(u16 node,u8 raw side),2 NodeEnd
-(same),3 Subsector(u16),4 Seg(u16 subsector,u32 seg,u16 line,u8 duplicate),5 Sides
-(u16 line,u8 stage,u8 side0,u8 side1),6 Opening(u16 line,i32 top,i32 bottom),7 Clip
-(u16 line,i32 fraction,i32 bottom,i32 top),8 Blocked(u16 line,u8 reason:0 one-sided,
-1 closed opening,2 closed slopes). Geometry is absent on REJECT rather than
-serializing stale C global scratch. Node side2 is recorded before normalization.
-Action/target/sound/state-entry observations still use established tag 12.
+Each sight visit starts with a u8 code:
+
+| Code | Payload in order |
+| --- | --- |
+| 1 NodeStart | u16 node, u8 raw side |
+| 2 NodeEnd | u16 node, u8 raw side |
+| 3 Subsector | u16 subsector |
+| 4 Seg | u16 subsector, u32 seg, u16 line, u8 duplicate |
+| 5 Sides | u16 line, u8 stage, u8 side0, u8 side1 |
+| 6 Opening | u16 line, i32 top, i32 bottom |
+| 7 Clip | u16 line, i32 fraction, i32 bottom, i32 top |
+| 8 Blocked | u16 line, u8 reason (0 one-sided, 1 closed opening, 2 closed slopes) |
+
+Geometry is absent on REJECT rather than serializing stale C global scratch.
+Node side 2 is recorded before normalization. Action/target/sound/state-entry
+observations still use established tag 12.
 
 `m3d3a_snapshot_goldens.py` independently encodes 420 C/setup-derived captures and
 45 full streams, including pending/transient sight/scan/A_Look/noise, source
