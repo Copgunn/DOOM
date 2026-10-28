@@ -7,7 +7,15 @@
 //! Profile 4 adds admitted source actor states, spawning and controlled death.
 //! Profile 5 adds bounded unbound-actor damage, autoaim and hitscan combat.
 
+#[cfg(test)]
+extern crate self as doom_sim;
+
 mod actor;
+mod weapons;
+pub use weapons::{
+    BT_ATTACK, BT_CHANGE, BT_WEAPONMASK, Psprite, Weapon, WeaponError, WeaponEvent,
+    WeaponInventory, WeaponPlayer,
+};
 mod combat;
 mod combat_trace;
 pub use combat::{AttackResult, CombatError, CombatEvent, DamageRequest, DamageResult, LineAttack};
@@ -52,11 +60,16 @@ pub enum Profile {
     ActorStates,
     /// M3d1 unbound actor damage/hitscan subset, DSIM-v5.
     Combat,
+    /// M3d2 player weapons and psprites, DSIM-v6.
+    PlayerWeapons,
 }
 
 impl Profile {
     pub(crate) fn uses_sectors(self) -> bool {
-        matches!(self, Self::MultiSector | Self::ActorStates | Self::Combat)
+        matches!(
+            self,
+            Self::MultiSector | Self::ActorStates | Self::Combat | Self::PlayerWeapons
+        )
     }
 }
 
@@ -69,6 +82,8 @@ pub enum SimError {
     Actor(ActorError),
     /// Bounded combat validation failure, before mutation.
     Combat(CombatError),
+    /// Weapon profile, command, admission or preflight failure.
+    Weapon(WeaponError),
     /// Unsupported or invalid map/profile.
     Geometry(GeometryError),
     /// Input slot is outside 0..4 or duplicates an existing binding.
@@ -84,6 +99,11 @@ impl fmt::Display for SimError {
     }
 }
 impl Error for SimError {}
+impl From<WeaponError> for SimError {
+    fn from(e: WeaponError) -> Self {
+        Self::Weapon(e)
+    }
+}
 impl From<CombatError> for SimError {
     fn from(e: CombatError) -> Self {
         Self::Combat(e)
@@ -121,6 +141,8 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
+    /// Ordered profile-6 player weapon observations.
+    Weapon(WeaponEvent),
     /// Profile-5 combat evidence in source side-effect order.
     Combat(CombatEvent),
     /// Typed state/action/lifecycle evidence in execution order.
@@ -214,6 +236,8 @@ pub fn command_thrust(
 pub struct Simulation {
     pub(crate) profile: Profile,
     pub(crate) registry: Option<Arc<ActorRegistry>>,
+    pub(crate) weapon_player: Option<WeaponPlayer>,
+    pub(crate) sound_targets: Vec<Option<ActorId>>,
     pub(crate) actor_options: ActorOptions,
     pub(crate) spatial: movement::SpatialIndex,
     pub(crate) sectors: Vec<SectorState>,
@@ -292,6 +316,8 @@ impl Simulation {
         Ok(Self {
             profile,
             registry: None,
+            weapon_player: None,
+            sound_targets: Vec::new(),
             actor_options: ActorOptions::default(),
             sectors,
             spatial: movement::SpatialIndex::default(),
@@ -587,6 +613,9 @@ impl Simulation {
     /// M2 non-player response or M3a player XY response, according to the profile.
     /// This does not implement full type/state-driven player spawning.
     pub fn bind_player(&mut self, slot: usize, id: ActorId) -> Result<(), SimError> {
+        if self.profile == Profile::PlayerWeapons {
+            return Err(WeaponError::Player.into());
+        }
         if slot >= 4
             || self
                 .bindings
@@ -614,38 +643,45 @@ impl Simulation {
         if self.tic == u64::MAX {
             return Err(SimError::TicOverflow);
         }
-        if commands.iter().any(|c| c.buttons != 0) {
+        if self.profile == Profile::PlayerWeapons {
+            self.preflight_weapon_step(&commands)?;
+        } else if commands.iter().any(|c| c.buttons != 0) {
             return Err(SimError::UnsupportedButtons);
         }
         self.preflight_actor_step()?;
         self.events = std::mem::take(&mut self.pending);
         self.commands = commands;
         self.events.push(Event::Phase(Phase::Players));
-        for (slot, command) in commands.into_iter().enumerate() {
-            if let Some(id) = self.bindings[slot] {
-                if self.actors.is_pending(id) != Some(false) {
-                    self.bindings[slot] = None;
-                    continue;
-                }
-                let actor = self.actors.get_mut(id).expect("validated active binding");
-                let physical_command = if self.profile.uses_sectors() && actor.z > actor.floor {
-                    TicCommand {
-                        forward: 0,
-                        side: 0,
-                        ..command
+        if self.profile == Profile::PlayerWeapons {
+            self.weapon_tick(commands);
+            self.events.append(&mut self.pending);
+        } else {
+            for (slot, command) in commands.into_iter().enumerate() {
+                if let Some(id) = self.bindings[slot] {
+                    if self.actors.is_pending(id) != Some(false) {
+                        self.bindings[slot] = None;
+                        continue;
                     }
-                } else {
-                    command
-                };
-                let (angle, momentum) =
-                    command_thrust(actor.spec.angle, actor.spec.momentum, physical_command)
-                        .expect("buttons prevalidated");
-                actor.spec.angle = angle;
-                actor.spec.momentum = momentum;
-                self.events.push(Event::Player {
-                    slot: slot as u8,
-                    actor: id,
-                });
+                    let actor = self.actors.get_mut(id).expect("validated active binding");
+                    let physical_command = if self.profile.uses_sectors() && actor.z > actor.floor {
+                        TicCommand {
+                            forward: 0,
+                            side: 0,
+                            ..command
+                        }
+                    } else {
+                        command
+                    };
+                    let (angle, momentum) =
+                        command_thrust(actor.spec.angle, actor.spec.momentum, physical_command)
+                            .expect("buttons prevalidated");
+                    actor.spec.angle = angle;
+                    actor.spec.momentum = momentum;
+                    self.events.push(Event::Player {
+                        slot: slot as u8,
+                        actor: id,
+                    });
+                }
             }
         }
         self.events.push(Event::Phase(Phase::Thinkers));
@@ -668,6 +704,7 @@ impl Simulation {
                     Visit::Think(id) => {
                         events.push(Event::Think(id));
                         let mut actor = *context.get(id).expect("live thinker handle");
+                        let had_xy_momentum = actor.momentum().iter().any(|m| *m != Fixed::ZERO);
                         if profile == Profile::Foundation {
                             events.extend(
                                 world
@@ -712,6 +749,41 @@ impl Simulation {
                                         Event::SectorMovement { actor: id, attempt }
                                     }
                                 });
+                            }
+                        }
+                        if profile == Profile::PlayerWeapons
+                            && had_xy_momentum
+                            && actor.z <= actor.floor
+                            && actor.momentum() == [Fixed::ZERO; 2]
+                            && bindings
+                                .iter()
+                                .position(|b| *b == Some(id))
+                                .is_some_and(|slot| {
+                                    commands[slot].forward == 0 && commands[slot].side == 0
+                                })
+                        {
+                            let run = lifecycle::source_state_id("S_PLAY_RUN1").unwrap().0;
+                            if actor
+                                .life
+                                .unwrap()
+                                .state
+                                .is_some_and(|s| s.0.wrapping_sub(run) < 4)
+                            {
+                                let play = lifecycle::source_state_id("S_PLAY").unwrap();
+                                *context.get_mut(id).unwrap() = actor;
+                                lifecycle::LifeHost {
+                                    access: &mut *context,
+                                    registry: registry.as_deref().unwrap(),
+                                    world,
+                                    sectors,
+                                    options,
+                                    rng,
+                                    spatial,
+                                    bindings: live_bindings,
+                                    events,
+                                }
+                                .enter(id, play);
+                                actor = *context.get(id).unwrap();
                             }
                         }
                         if profile.uses_sectors() {

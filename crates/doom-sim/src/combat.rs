@@ -220,6 +220,9 @@ impl Simulation {
         let registry = self.registry.as_deref().ok_or(CombatError::Profile)?;
         registry.validate_type_combat(ty, &self.sectors)?;
         let info = registry.actor_type(ty).ok_or(ActorError::InvalidType)?;
+        if self.profile == Profile::PlayerWeapons {
+            self.validate_weapon_type(ty)?;
+        }
         if info.flags() & 4 != 0 {
             if info.mass() <= 0
                 || info.spawn_health() <= 0
@@ -239,13 +242,18 @@ impl Simulation {
         Ok(())
     }
     fn combat_actor(&self, id: ActorId) -> Result<Actor, SimError> {
-        if self.profile != Profile::Combat {
+        self.combat_actor_with(id, None)
+    }
+    fn combat_actor_with(&self, id: ActorId, shooter: Option<ActorId>) -> Result<Actor, SimError> {
+        if !matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
             return Err(CombatError::Profile.into());
         }
         if self.actors.is_pending(id) != Some(false) {
             return Err(CombatError::Reference.into());
         }
-        if self.bindings.contains(&Some(id)) {
+        if self.bindings.contains(&Some(id))
+            && !(self.profile == Profile::PlayerWeapons && shooter == Some(id))
+        {
             return Err(CombatError::Player.into());
         }
         self.actor(id).copied().ok_or(CombatError::Reference.into())
@@ -261,9 +269,23 @@ impl Simulation {
         Ok(crate::combat_trace::aim(self, shooter, angle, range)?)
     }
     fn plan_damage(&self, request: DamageRequest) -> Result<DamagePlan, SimError> {
+        self.plan_damage_with(request, None)
+    }
+    pub(crate) fn plan_weapon_damage(
+        &self,
+        request: DamageRequest,
+        shooter: ActorId,
+    ) -> Result<(), SimError> {
+        self.plan_damage_with(request, Some(shooter)).map(|_| ())
+    }
+    fn plan_damage_with(
+        &self,
+        request: DamageRequest,
+        shooter: Option<ActorId>,
+    ) -> Result<DamagePlan, SimError> {
         let actor = self.combat_actor(request.target)?;
         for id in [request.inflictor, request.source].into_iter().flatten() {
-            self.combat_actor(id)?;
+            self.combat_actor_with(id, shooter)?;
         }
         if !(0..=1000).contains(&request.amount) {
             return Err(CombatError::Damage.into());
@@ -504,7 +526,22 @@ impl Simulation {
         shooter: ActorId,
         attack: LineAttack,
     ) -> Result<AttackResult, SimError> {
-        self.combat_actor(shooter)?;
+        self.line_attack_with(shooter, attack, None)
+    }
+    pub(crate) fn weapon_line_attack(
+        &mut self,
+        shooter: ActorId,
+        attack: LineAttack,
+    ) -> Result<AttackResult, SimError> {
+        self.line_attack_with(shooter, attack, Some(shooter))
+    }
+    fn line_attack_with(
+        &mut self,
+        shooter: ActorId,
+        attack: LineAttack,
+        permit: Option<ActorId>,
+    ) -> Result<AttackResult, SimError> {
+        self.combat_actor_with(shooter, permit)?;
         if !(0..=1000).contains(&attack.damage) {
             return Err(CombatError::Damage.into());
         }
@@ -512,14 +549,15 @@ impl Simulation {
         let (hit, position, traversed) =
             crate::combat_trace::hit(self, shooter, &trace, attack.range, attack.slope);
         let plan = match hit {
-            Some(TraceObject::Actor(target)) if attack.damage != 0 => {
-                Some(self.plan_damage(DamageRequest {
+            Some(TraceObject::Actor(target)) if attack.damage != 0 => Some(self.plan_damage_with(
+                DamageRequest {
                     target,
                     inflictor: Some(shooter),
                     source: Some(shooter),
                     amount: attack.damage,
-                })?)
-            }
+                },
+                permit,
+            )?),
             _ => None,
         };
         let count = usize::from(hit.is_some()) + plan.map_or(0, |p| p.demand.spawns);
