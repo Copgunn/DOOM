@@ -457,7 +457,7 @@
     "generate_m3d1.py": "a2abea47bea8ace07c0091e87dcd2edc159b3e17abb8a52204e569cd53b23ce9",
     "generate_m3d3a.py": "e44b12d5eaa820241ec91c5915e9a859fcabcd4161a878d834aa64f3c29507ff",
     "generate_m3d3b.py": "2aa9c0b3651d8b3e9eadcd429b1f8fe10f1f14aa6cca2bde8d3d34754b6f9fcc",
-    "m3d3b_shim.h": "e66e212c9a1dfbffb3ec8488fe4bf93a4b8695a19316d3922aa4901bb3212057"
+    "m3d3b_shim.h": "0d7f9f8a40d59024492e9f65c1c86ecb64edf003617593f5ba65d03678ca72fa"
   },
   "outputs_sha256": {
     "tests/reference/m3d3b_map_0.bin": "848d3b831f04dc38f8df27d8dd85998834ecb4a9407bdc4424f4d30e3fbcb2d9",

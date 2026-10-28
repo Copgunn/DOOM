@@ -119,4 +119,3 @@ static void pursuit_direction(mobj_t* a){printf("H,%d,%d,2,%d,%d\n",scenario,ope
 static int pursuit_random(mobj_t* a,int kind){int v=P_Random();printf("H,%d,%d,3,%d,%d,%d\n",scenario,operation,ident(a),kind,v);return v;}
 #define CHASE_ACTION 15
 /* SOURCE_BODIES */
-
