@@ -107,10 +107,7 @@ static int attempt=-1,block_actor=-1,block_line=-1,move_failure=0;
 static void pcand(int line,int index){printf("C,%d,%d,%d,%d,%d\n",scenario,operation,attempt,line,index);}
 static int block_result(int result,mobj_t* p){if(!result){block_actor=ident(p);move_failure=1;}return result;}
 static void record_move(mobj_t* p,int x,int y,int ok){subsector_t* s=R_PointInSubsector(x,y);printf("M,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld,%ld,%d,%d\n",scenario,operation,attempt,ident(p),x,y,ok,tmfloorz,tmceilingz,tmdropoffz,floatok,move_failure,(long)(s-subsectors),(long)(s->sector-sectors),block_line,block_actor);}
-typedef enum {DI_EAST,DI_NORTHEAST,DI_NORTH,DI_NORTHWEST,DI_WEST,DI_SOUTHWEST,DI_SOUTH,DI_SOUTHEAST,DI_NODIR,NUMDIRS} dirtype_t;
-dirtype_t opposite[]={4,5,6,7,0,1,2,3,8},diags[]={3,1,5,7};
-fixed_t xspeed[]={65536,47000,0,-47000,-65536,-47000,0,47000};
-fixed_t yspeed[]={0,47000,65536,47000,0,-47000,-65536,-47000};
+/* PURSUIT_DIRECTION_TABLES */
 boolean fastparm=false;
 boolean P_UseSpecialLine(mobj_t* a,line_t* l,int side){(void)a;(void)l;(void)side;abort();return false;}
 boolean P_Move(mobj_t*);boolean P_TryWalk(mobj_t*);void P_NewChaseDir(mobj_t*);
