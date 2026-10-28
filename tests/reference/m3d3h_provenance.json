@@ -27,8 +27,8 @@
       20
     ],
     "actor_fields": 935012,
-    "raw_gameplay_draws_including_setup": 38579,
-    "ordered_instrumentation_rows": 151507,
+    "raw_gameplay_draws_including_setup": 38578,
+    "ordered_instrumentation_rows": 151474,
     "pain_boundary_dependency_vectors": 3
   },
   "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
@@ -538,7 +538,7 @@
     "generate_m3d3a.py": "e44b12d5eaa820241ec91c5915e9a859fcabcd4161a878d834aa64f3c29507ff",
     "generate_m3d3b.py": "2aa9c0b3651d8b3e9eadcd429b1f8fe10f1f14aa6cca2bde8d3d34754b6f9fcc",
     "generate_m3d3c.py": "b4b679350f9586b83a126bee04371bd046c6a525422fc856e1251a2ae6e4beaf",
-    "generate_m3d3h.py": "561c0a6c9db03a031225ccb6764c63f76ce65086a52dc3f7ffede6117216abd5",
+    "generate_m3d3h.py": "3419858a229589fb981db06f1ef233c6613265980966e3c40673f60dc8cfba5d",
     "m3d3h_shim.h": "8562850b12ff35343c2e4b221a6427d88eb2ee1bbe169a1277c19f30003b3567"
   },
   "outputs_sha256": {
@@ -564,8 +564,8 @@
     "tests/reference/m3d3h_map_19.bin": "f420b5d886d299bfe641d23e9729caff7515b75b5cbe941f6ffda1977e47d615",
     "tests/reference/m3d3h_map_20.bin": "14a9dfc1da2a0754f0c08d47f7cf651c470bfaafcc1656d05ed4560e523f4997",
     "tests/reference/m3d3h_pain_boundary.csv": "d4ed176acda0aaab3bbed2aac2fd32b17f1055d56bce07cacfc3916756551b07",
-    "tests/reference/m3d3h_trace.csv": "087a7c3577c3470dd4e9019d29e4097f67f066f6db886f8a7aa23a302b23ec36",
-    "tests/reference/m3d3h_cases.csv": "cfe02b8dda91d9525e4c37635295c77c46e40267a6bd8e6c4393f5ed8cf21b9d"
+    "tests/reference/m3d3h_trace.csv": "936238b2340fc3ee663ce93d966022e9a244cc7e8b475e20833a9a8ad1e098c9",
+    "tests/reference/m3d3h_cases.csv": "a62836aa027216a0ea65d07b17e9ece5f0998e993cd3d4cb2b038379a5dd439e"
   },
   "assumptions": [
     "real original structs/info and 32-bit fixed/int, 64-bit pointer/function-union ABI",

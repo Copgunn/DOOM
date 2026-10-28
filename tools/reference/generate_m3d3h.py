@@ -95,7 +95,7 @@ CASES += [
  stand_run_case('death_stand1',enter=0,target=-1,players=idle,initial_damage=150),
  stand_run_case('death_stand2',enter=3,target=-1,players=idle,initial_damage=150),
  stand_run_case('death_melee2',enter=5,initial_damage=150),
- stand_run_case('stand_run_lifecycle',enter=0,target=-1,repeat_tick=45,repeat_damage=1,final_hit_tick=75,tics=130),
+ stand_run_case('stand_run_lifecycle',skip=1,enter=0,target=-1,repeat_tick=45,repeat_damage=1,final_hit_tick=75,tics=130),
 ]
 for state in [2,15,16,17,18,19,20,21]:
  CASES.append(stand_run_case(f'entry_run_{state}',enter=state,tics=8))
