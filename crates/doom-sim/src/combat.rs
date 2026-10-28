@@ -311,7 +311,19 @@ impl Simulation {
         request: DamageRequest,
         shooter: Option<ActorId>,
     ) -> Result<DamagePlan, SimError> {
-        let actor = self.combat_actor(request.target)?;
+        self.plan_damage_lookup(request, shooter, None)
+    }
+    fn plan_damage_lookup(
+        &self,
+        request: DamageRequest,
+        shooter: Option<ActorId>,
+        lookup: Option<&dyn Fn(ActorId) -> Option<Actor>>,
+    ) -> Result<DamagePlan, SimError> {
+        let base = self.combat_actor(request.target)?;
+        let actor = match lookup {
+            Some(f) => f(request.target).ok_or(CombatError::Reference)?,
+            None => base,
+        };
         for id in [request.inflictor, request.source].into_iter().flatten() {
             self.combat_actor_with(id, shooter)?;
         }
@@ -340,7 +352,11 @@ impl Simulation {
             .ok_or(CombatError::Metadata)?;
         plan.killed = plan.health[1] <= 0;
         if let Some(inflictor) = request.inflictor {
-            let from = self.actor(inflictor).unwrap().position();
+            let from = match lookup {
+                Some(f) => f(inflictor).ok_or(CombatError::Reference)?,
+                None => *self.actor(inflictor).unwrap(),
+            }
+            .position();
             for (a, b) in actor.position().into_iter().zip(from) {
                 let delta = a
                     .bits()
@@ -416,23 +432,44 @@ impl Simulation {
         attack: LineAttack,
         permit: Option<ActorId>,
     ) -> Result<PreparedAttack, SimError> {
+        self.prepare_attack_lookup(shooter, attack, permit, None)
+    }
+    pub(crate) fn prepare_attack_lookup(
+        &self,
+        shooter: ActorId,
+        attack: LineAttack,
+        permit: Option<ActorId>,
+        lookup: Option<&dyn Fn(ActorId) -> Option<Actor>>,
+    ) -> Result<PreparedAttack, SimError> {
         self.combat_actor_with(shooter, permit)?;
         if !(0..=1000).contains(&attack.damage) {
             return Err(CombatError::Damage.into());
         }
         let trace = crate::combat_trace::collect(self, shooter, attack.angle, attack.range)?;
-        let (hit, position, traversed) =
-            crate::combat_trace::hit(self, shooter, &trace, attack.range, attack.slope);
+        let (hit, position, traversed) = match lookup {
+            Some(f) => crate::combat_trace::hit_with(
+                self,
+                shooter,
+                &trace,
+                attack.range,
+                attack.slope,
+                &|id| f(id),
+            ),
+            None => crate::combat_trace::hit(self, shooter, &trace, attack.range, attack.slope),
+        };
         let plan = match hit {
-            Some(TraceObject::Actor(target)) if attack.damage != 0 => Some(self.plan_damage_with(
-                DamageRequest {
-                    target,
-                    inflictor: Some(shooter),
-                    source: Some(shooter),
-                    amount: attack.damage,
-                },
-                permit,
-            )?),
+            Some(TraceObject::Actor(target)) if attack.damage != 0 => {
+                Some(self.plan_damage_lookup(
+                    DamageRequest {
+                        target,
+                        inflictor: Some(shooter),
+                        source: Some(shooter),
+                        amount: attack.damage,
+                    },
+                    permit,
+                    lookup,
+                )?)
+            }
             _ => None,
         };
 
