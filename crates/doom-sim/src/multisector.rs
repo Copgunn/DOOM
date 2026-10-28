@@ -296,9 +296,19 @@ pub(crate) fn check_move(
     get: &impl Fn(ActorId) -> Option<Actor>,
     player: bool,
 ) -> SectorMoveAttempt {
+    let movement = movement::check_things(world, id, actor, target, spatial, get);
+    check_move_from_things((world, sectors), actor, target, movement, player, false)
+}
+pub(crate) fn check_move_from_things(
+    (world, sectors): (&StaticWorld, &[SectorState]),
+    actor: &Actor,
+    target: [Fixed; 2],
+    movement: ActorMoveAttempt,
+    player: bool,
+    missile: bool,
+) -> SectorMoveAttempt {
     let location = world.locate_validated(target);
     let sector = sectors[usize::from(location.sector)];
-    let movement = movement::check_things(world, id, actor, target, spatial, get);
     let mut result = SectorMoveAttempt {
         movement,
         location,
@@ -337,8 +347,7 @@ pub(crate) fn check_move(
                 }
                 let line = &world.map().linedefs()[i];
                 if line.sides[1].is_none()
-                    || line.flags & 1 != 0
-                    || (!player && line.flags & 2 != 0)
+                    || (!missile && (line.flags & 1 != 0 || (!player && line.flags & 2 != 0)))
                 {
                     result.movement.lines.blocked_by = Some(index);
                     result.failure = MoveFailure::Line;

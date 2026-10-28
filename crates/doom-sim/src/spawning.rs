@@ -84,7 +84,13 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
-        if matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
+        if self.profile == Profile::Projectiles {
+            if ty == ActorTypeId(34) {
+                return Err(ProjectileError::Controlled.into());
+            }
+            self.projectile_setup_position(position, height)?;
+            self.validate_combat_type(ty)?;
+        } else if matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
             self.validate_combat_type(ty)?;
         } else {
             self.registry_required()?.validate_type(ty, &self.sectors)?;
@@ -107,7 +113,9 @@ impl Simulation {
         let registry = self.registry_required()?;
         registry.validate_state(state)?;
         for ty in registry.spawn_dependencies(state)? {
-            if matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
+            if self.profile == Profile::Projectiles {
+                registry.validate_type_projectile(ty, &self.sectors)?;
+            } else if matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
                 registry.validate_type_combat(ty, &self.sectors)?;
             } else {
                 registry.validate_type(ty, &self.sectors)?;
@@ -133,6 +141,7 @@ impl Simulation {
     /// and child capacity are checked before any callback or gameplay RNG draw.
     pub fn enter_actor_state(&mut self, id: ActorId, state: StateId) -> Result<(), SimError> {
         let life = self.active_typed(id)?;
+        self.projectile_control(id)?;
         self.validate_entry(state)?;
         let demand = self.registry_required()?.demand(state, life.tics)?;
         self.reserve_actor_spawns(demand.spawns)?;
@@ -143,6 +152,7 @@ impl Simulation {
     /// damage, alter health/height, set corpse flags, award kills or drop items.
     pub fn request_actor_death(&mut self, id: ActorId) -> Result<(), SimError> {
         let life = self.active_typed(id)?;
+        self.projectile_control(id)?;
         if self.bindings.contains(&Some(id)) {
             return Err(ActorError::BoundDeath.into());
         }
@@ -177,6 +187,7 @@ impl Simulation {
         target: Option<ActorId>,
     ) -> Result<(), SimError> {
         self.active_typed(id)?;
+        self.projectile_control(id)?;
         if target.is_some_and(|target| self.actor(target).is_none()) {
             return Err(StoreError::InvalidHandle.into());
         }
@@ -252,7 +263,19 @@ impl Simulation {
                 report.filtered += 1;
                 continue;
             }
-            if matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
+            if self.profile == Profile::Projectiles {
+                if ty == ActorTypeId(34) {
+                    return Err(ProjectileError::Controlled.into());
+                }
+                self.projectile_setup_position(
+                    [
+                        Fixed::from_map_units(thing.position.x),
+                        Fixed::from_map_units(thing.position.y),
+                    ],
+                    SpawnHeight::Floor,
+                )?;
+                self.validate_combat_type(ty)?;
+            } else if matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
                 registry.validate_type_combat(ty, &self.sectors)?;
             } else {
                 registry.validate_type(ty, &self.sectors)?;

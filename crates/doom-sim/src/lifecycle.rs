@@ -547,6 +547,20 @@ impl ActorRegistry {
             ALLOWED_FLAGS | 524288,
         )
     }
+    pub(crate) fn validate_type_projectile(
+        &self,
+        ty: ActorTypeId,
+        sectors: &[SectorState],
+    ) -> Result<(), ActorError> {
+        self.admit_type(
+            ty,
+            sectors,
+            &mut BTreeSet::new(),
+            &mut BTreeSet::new(),
+            &mut 0,
+            ALLOWED_FLAGS | 524288 | if ty.0 == 34 { 65536 } else { 0 },
+        )
+    }
     pub(crate) fn validate_impact_source(&self) -> Result<(), crate::CombatError> {
         let mut todo = Vec::new();
         let mut seen = BTreeSet::new();

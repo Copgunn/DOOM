@@ -7,11 +7,14 @@
 //! Profile 4 adds admitted source actor states, spawning and controlled death.
 //! Profile 5 adds bounded unbound-actor damage, autoaim and hitscan combat.
 //! Profile 6 adds command-driven player weapons, ammo and source psprites.
+//! Profile 7 adds explicit original plasma launch, flight, direct impact and removal.
 
 #[cfg(test)]
 extern crate self as doom_sim;
 
 mod actor;
+mod projectiles;
+pub use projectiles::{ProjectileAim, ProjectileError, ProjectileEvent, ProjectileRequest};
 mod weapons;
 pub use weapons::{
     BT_ATTACK, BT_CHANGE, BT_WEAPONMASK, Psprite, Weapon, WeaponError, WeaponEvent,
@@ -63,13 +66,19 @@ pub enum Profile {
     Combat,
     /// M3d2 player weapons and psprites, DSIM-v6.
     PlayerWeapons,
+    /// M3d2b bounded original plasma projectiles, DSIM-v7.
+    Projectiles,
 }
 
 impl Profile {
     pub(crate) fn uses_sectors(self) -> bool {
         matches!(
             self,
-            Self::MultiSector | Self::ActorStates | Self::Combat | Self::PlayerWeapons
+            Self::MultiSector
+                | Self::ActorStates
+                | Self::Combat
+                | Self::PlayerWeapons
+                | Self::Projectiles
         )
     }
 }
@@ -85,6 +94,8 @@ pub enum SimError {
     Combat(CombatError),
     /// Weapon profile, command, admission or preflight failure.
     Weapon(WeaponError),
+    /// Projectile admission, ownership or arithmetic failure.
+    Projectile(ProjectileError),
     /// Unsupported or invalid map/profile.
     Geometry(GeometryError),
     /// Input slot is outside 0..4 or duplicates an existing binding.
@@ -100,6 +111,11 @@ impl fmt::Display for SimError {
     }
 }
 impl Error for SimError {}
+impl From<ProjectileError> for SimError {
+    fn from(e: ProjectileError) -> Self {
+        Self::Projectile(e)
+    }
+}
 impl From<WeaponError> for SimError {
     fn from(e: WeaponError) -> Self {
         Self::Weapon(e)
@@ -142,6 +158,8 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
+    /// Ordered source projectile observations in profile 7.
+    Projectile(ProjectileEvent),
     /// Ordered profile-6 player weapon observations.
     Weapon(WeaponEvent),
     /// Profile-5 combat evidence in source side-effect order.
@@ -416,6 +434,16 @@ impl Simulation {
         if self.actors.is_pending(id) != Some(false) {
             return Err(StoreError::InvalidHandle.into());
         }
+        if self.profile == Profile::Projectiles {
+            self.preflight_projectile_step()?;
+            if target
+                .iter()
+                .any(|v| v.bits().unsigned_abs() > 8192 * 65536)
+            {
+                return Err(ProjectileError::Arithmetic.into());
+            }
+            return Ok(self.query_projectile_move(id, target).0);
+        }
         let actor = self.actors.get(id).ok_or(StoreError::InvalidHandle)?;
         Ok(multisector::check_move(
             (&self.world, &self.sectors),
@@ -579,10 +607,11 @@ impl Simulation {
         if self.actors.is_pending(id) != Some(false) {
             return Err(StoreError::InvalidHandle.into());
         }
-        self.actors
-            .get_mut(id)
-            .expect("validated active actor")
-            .momz = momentum;
+        self.projectile_control(id)?;
+        if self.profile == Profile::Projectiles && momentum.bits().unsigned_abs() > 64 * 65536 {
+            return Err(ProjectileError::Arithmetic.into());
+        }
+        self.actors.get_mut(id).unwrap().momz = momentum;
         Ok(())
     }
     /// Marks removal and unbinds input slots immediately. Storage retires at traversal.
@@ -603,17 +632,24 @@ impl Simulation {
         if self.actors.is_pending(id) != Some(false) {
             return Err(StoreError::InvalidHandle.into());
         }
-        self.actors
-            .get_mut(id)
-            .ok_or(StoreError::InvalidHandle)?
-            .spec
-            .momentum = momentum;
+        self.projectile_control(id)?;
+        if self.profile == Profile::Projectiles
+            && momentum
+                .iter()
+                .any(|v| v.bits().unsigned_abs() > 4096 * 65536)
+        {
+            return Err(ProjectileError::Arithmetic.into());
+        }
+        self.actors.get_mut(id).unwrap().spec.momentum = momentum;
         Ok(())
     }
     /// Binds one of four ordered command slots. Controlled movers keep the
     /// M2 non-player response or M3a player XY response, according to the profile.
     /// This does not implement full type/state-driven player spawning.
     pub fn bind_player(&mut self, slot: usize, id: ActorId) -> Result<(), SimError> {
+        if self.profile == Profile::Projectiles {
+            return Err(ProjectileError::Player.into());
+        }
         if self.profile == Profile::PlayerWeapons {
             return Err(WeaponError::Player.into());
         }
@@ -648,6 +684,9 @@ impl Simulation {
             self.preflight_weapon_step(&commands)?;
         } else if commands.iter().any(|c| c.buttons != 0) {
             return Err(SimError::UnsupportedButtons);
+        }
+        if self.profile == Profile::Projectiles {
+            self.preflight_projectile_step()?;
         }
         self.preflight_actor_step()?;
         self.events = std::mem::take(&mut self.pending);
@@ -686,95 +725,118 @@ impl Simulation {
             }
         }
         self.events.push(Event::Phase(Phase::Thinkers));
-        let world = &self.world;
-        let events = &mut self.events;
-        let profile = self.profile;
-        let bindings = self.bindings;
-        let live_bindings = &mut self.bindings;
-        let registry = &self.registry;
-        let options = self.actor_options;
-        let rng = &mut self.rng;
-        let spatial = &mut self.spatial;
-        let sectors = &self.sectors;
-        // Profile 4 preflights all bounded action work and same-pass child allocation.
-        self.actors
-            .run(
-                self.actors.max_slots as usize,
-                |visit, context| match visit {
-                    Visit::Retired(id) => events.push(Event::Retired(id)),
-                    Visit::Think(id) => {
-                        events.push(Event::Think(id));
-                        let mut actor = *context.get(id).expect("live thinker handle");
-                        let had_xy_momentum = actor.momentum().iter().any(|m| *m != Fixed::ZERO);
-                        if profile == Profile::Foundation {
-                            events.extend(
-                                world
-                                    .move_xy(&mut actor)
-                                    .into_iter()
-                                    .map(|attempt| Event::Movement { actor: id, attempt }),
-                            );
-                        } else {
-                            let command = bindings
-                                .iter()
-                                .position(|binding| *binding == Some(id))
-                                .map(|slot| commands[slot]);
-                            let motion = if profile.uses_sectors() {
-                                movement::move_xy_multisector(
-                                    world,
-                                    id,
-                                    &mut actor,
-                                    spatial,
-                                    |id| context.get(id).copied(),
-                                    command,
-                                    sectors,
-                                )
+        if self.profile == Profile::Projectiles {
+            self.projectile_thinkers_with(|_, _| {});
+        } else {
+            let world = &self.world;
+            let events = &mut self.events;
+            let profile = self.profile;
+            let bindings = self.bindings;
+            let live_bindings = &mut self.bindings;
+            let registry = &self.registry;
+            let options = self.actor_options;
+            let rng = &mut self.rng;
+            let spatial = &mut self.spatial;
+            let sectors = &self.sectors;
+            // Profile 4 preflights all bounded action work and same-pass child allocation.
+            self.actors
+                .run(
+                    self.actors.max_slots as usize,
+                    |visit, context| match visit {
+                        Visit::Retired(id) => events.push(Event::Retired(id)),
+                        Visit::Think(id) => {
+                            events.push(Event::Think(id));
+                            let mut actor = *context.get(id).expect("live thinker handle");
+                            let had_xy_momentum =
+                                actor.momentum().iter().any(|m| *m != Fixed::ZERO);
+                            if profile == Profile::Foundation {
+                                events.extend(
+                                    world
+                                        .move_xy(&mut actor)
+                                        .into_iter()
+                                        .map(|attempt| Event::Movement { actor: id, attempt }),
+                                );
                             } else {
-                                movement::move_xy(
-                                    world,
-                                    id,
-                                    &mut actor,
-                                    spatial,
-                                    |id| context.get(id).copied(),
-                                    command,
-                                )
-                            };
-                            for event in motion {
-                                events.push(match event {
-                                    movement::MotionEvent::Attempt(attempt) => {
-                                        Event::ActorMovement { actor: id, attempt }
-                                    }
-                                    movement::MotionEvent::Slide(line) => {
-                                        Event::Slide { actor: id, line }
-                                    }
-                                    movement::MotionEvent::Sector(attempt) => {
-                                        Event::SectorMovement { actor: id, attempt }
-                                    }
-                                });
+                                let command = bindings
+                                    .iter()
+                                    .position(|binding| *binding == Some(id))
+                                    .map(|slot| commands[slot]);
+                                let motion = if profile.uses_sectors() {
+                                    movement::move_xy_multisector(
+                                        world,
+                                        id,
+                                        &mut actor,
+                                        spatial,
+                                        |id| context.get(id).copied(),
+                                        command,
+                                        sectors,
+                                    )
+                                } else {
+                                    movement::move_xy(
+                                        world,
+                                        id,
+                                        &mut actor,
+                                        spatial,
+                                        |id| context.get(id).copied(),
+                                        command,
+                                    )
+                                };
+                                for event in motion {
+                                    events.push(match event {
+                                        movement::MotionEvent::Attempt(attempt) => {
+                                            Event::ActorMovement { actor: id, attempt }
+                                        }
+                                        movement::MotionEvent::Slide(line) => {
+                                            Event::Slide { actor: id, line }
+                                        }
+                                        movement::MotionEvent::Sector(attempt) => {
+                                            Event::SectorMovement { actor: id, attempt }
+                                        }
+                                    });
+                                }
                             }
-                        }
-                        if profile == Profile::PlayerWeapons
-                            && had_xy_momentum
-                            && actor.z <= actor.floor
-                            && actor.momentum() == [Fixed::ZERO; 2]
-                            && bindings
-                                .iter()
-                                .position(|b| *b == Some(id))
-                                .is_some_and(|slot| {
-                                    commands[slot].forward == 0 && commands[slot].side == 0
-                                })
-                        {
-                            let run = lifecycle::source_state_id("S_PLAY_RUN1").unwrap().0;
-                            if actor
-                                .life
-                                .unwrap()
-                                .state
-                                .is_some_and(|s| s.0.wrapping_sub(run) < 4)
+                            if profile == Profile::PlayerWeapons
+                                && had_xy_momentum
+                                && actor.z <= actor.floor
+                                && actor.momentum() == [Fixed::ZERO; 2]
+                                && bindings.iter().position(|b| *b == Some(id)).is_some_and(
+                                    |slot| commands[slot].forward == 0 && commands[slot].side == 0,
+                                )
                             {
-                                let play = lifecycle::source_state_id("S_PLAY").unwrap();
-                                *context.get_mut(id).unwrap() = actor;
+                                let run = lifecycle::source_state_id("S_PLAY_RUN1").unwrap().0;
+                                if actor
+                                    .life
+                                    .unwrap()
+                                    .state
+                                    .is_some_and(|s| s.0.wrapping_sub(run) < 4)
+                                {
+                                    let play = lifecycle::source_state_id("S_PLAY").unwrap();
+                                    *context.get_mut(id).unwrap() = actor;
+                                    lifecycle::LifeHost {
+                                        access: &mut *context,
+                                        registry: registry.as_deref().unwrap(),
+                                        world,
+                                        sectors,
+                                        options,
+                                        rng,
+                                        spatial,
+                                        bindings: live_bindings,
+                                        events,
+                                    }
+                                    .enter(id, play);
+                                    actor = *context.get(id).unwrap();
+                                }
+                            }
+                            if profile.uses_sectors() {
+                                if let Some(update) = multisector::move_z(&mut actor) {
+                                    events.push(Event::Vertical { actor: id, update });
+                                }
+                            }
+                            *context.get_mut(id).expect("same live thinker handle") = actor;
+                            if let Some(registry) = registry {
                                 lifecycle::LifeHost {
-                                    access: &mut *context,
-                                    registry: registry.as_deref().unwrap(),
+                                    access: context,
+                                    registry,
                                     world,
                                     sectors,
                                     options,
@@ -783,34 +845,13 @@ impl Simulation {
                                     bindings: live_bindings,
                                     events,
                                 }
-                                .enter(id, play);
-                                actor = *context.get(id).unwrap();
+                                .tick(id);
                             }
                         }
-                        if profile.uses_sectors() {
-                            if let Some(update) = multisector::move_z(&mut actor) {
-                                events.push(Event::Vertical { actor: id, update });
-                            }
-                        }
-                        *context.get_mut(id).expect("same live thinker handle") = actor;
-                        if let Some(registry) = registry {
-                            lifecycle::LifeHost {
-                                access: context,
-                                registry,
-                                world,
-                                sectors,
-                                options,
-                                rng,
-                                spatial,
-                                bindings: live_bindings,
-                                events,
-                            }
-                            .tick(id);
-                        }
-                    }
-                },
-            )
-            .expect("built-in traversal preserves links and is bounded by max slots");
+                    },
+                )
+                .expect("built-in traversal preserves links and is bounded by max slots");
+        }
         self.events.push(Event::Phase(Phase::Specials));
         self.events.push(Event::Phase(Phase::Respawn));
         self.tic += 1;

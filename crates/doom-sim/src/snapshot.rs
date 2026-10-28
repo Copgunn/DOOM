@@ -47,7 +47,7 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2.
+    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2, 7=M3d2b.
     pub const fn version(&self) -> u32 {
         self.version
     }
@@ -197,6 +197,55 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        Event::Projectile(event) => {
+            use crate::{ProjectileAim, ProjectileEvent};
+            b.push(15);
+            match event {
+                ProjectileEvent::Exploded(actor) => {
+                    b.push(0);
+                    b.extend(id(*actor));
+                }
+                ProjectileEvent::Velocity {
+                    actor,
+                    angle,
+                    momentum,
+                } => {
+                    b.push(1);
+                    b.extend(id(*actor));
+                    b.extend(angle.to_le_bytes());
+                    for m in momentum {
+                        b.extend(m.bits().to_le_bytes());
+                    }
+                }
+                ProjectileEvent::Random { kind, value } => {
+                    b.extend([2, *kind, *value]);
+                }
+                ProjectileEvent::HalfStep {
+                    actor,
+                    position,
+                    tics,
+                } => {
+                    b.push(4);
+                    b.extend(id(*actor));
+                    for p in position {
+                        b.extend(p.bits().to_le_bytes());
+                    }
+                    b.extend(tics.to_le_bytes());
+                }
+                ProjectileEvent::Launch(request) => {
+                    b.push(5);
+                    b.extend(id(request.source));
+                    match request.aim {
+                        ProjectileAim::Actor(target) => {
+                            b.push(0);
+                            b.extend(id(target));
+                        }
+                        ProjectileAim::PlayerAutoAim => b.push(1),
+                    }
+                    b.extend(request.actor_type.0.to_le_bytes());
+                }
+            }
+        }
         Event::Weapon(event) => {
             b.push(14);
             weapon_bytes(&mut b, event);
@@ -321,6 +370,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::ActorStates => 4,
         crate::Profile::Combat => 5,
         crate::Profile::PlayerWeapons => 6,
+        crate::Profile::Projectiles => 7,
     };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
