@@ -143,7 +143,7 @@ pub enum ActorError {
     NoDeathState,
     /// Full bound-player death/respawn is not implemented here.
     BoundDeath,
-    /// Operation requires profile 4 or unsupported game mode.
+    /// Operation requires a typed profile, or the game mode is unsupported.
     UnsupportedMode,
 }
 impl fmt::Display for ActorError {

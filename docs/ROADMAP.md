@@ -243,7 +243,9 @@ presentation frame rate and renderer choice do not alter simulation results.
 - [x] DSIM-v1-v4 retained; v5 has 63 independent captures and 17 byte fixtures.
 - [x] Asserted combat arena: hit, wall, pain, lethal hit, 80 tics, corpse and digest.
 - [x] Required local stable/release/MSRV/reference/docs checks; exact results in validation.
-- [ ] Exact final-head Linux/Windows/macOS and Rust 1.85 CI verified.
+- [x] Linux/Windows/macOS and Rust 1.85 CI passed on implemented head `10de49e`
+  ([run 40617772778](https://github.com/Copgunn/DOOM/actions/runs/40617772778));
+  final delivery-record commit/CI evidence is recorded in PR #7.
 - [ ] Owner review and separate merge authorization (PR must remain unmerged).
 
 M3d2 should implement source weapon/psprite/ammo/button timing and spread/damage

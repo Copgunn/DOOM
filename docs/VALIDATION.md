@@ -778,5 +778,28 @@ All 165 original upstream files compare byte-for-byte with `a77dfb9`. Public
 visibility, GPL-2.0-only workspace/fuzz metadata, master default, disabled auto-merge,
 licensing/attribution and `.gitignore` asset protections were reverified. No private
 assets were accessed or provisioned, and no private repository was accessed.
-Exact final-head remote CI and the PR are recorded in the delivery section below
-once observed; local results do not establish cross-platform CI success.
+Remote CI and exact-head evidence are recorded below separately from local results.
+
+
+### M3d1 GitHub delivery
+
+[PR #7](https://github.com/Copgunn/DOOM/pull/7), **M3d1: Implement Vanilla Damage
+and Hitscan Combat Foundations**, targets `master` from
+`feat/m3d1-damage-hitscan`. Implemented head
+`10de49e90d8fe65a3cc4ec52971186ecc275fa5a` passed all four jobs in
+[CI 40617772778](https://github.com/Copgunn/DOOM/actions/runs/40617772778): stable
+Linux, Windows, macOS and Rust 1.85. The three stable jobs include recorded C and
+independent goldens, release tests, five-example debug/release equality and docs;
+Linux also reproduces all reference generators/encoders.
+
+This subsequent delivery record changes documentation and Rust doc comments only.
+The final immutable head and its fresh exact-head CI link are recorded in PR #7,
+so a commit does not attempt to contain its own hash. Owner-review readiness is
+gated on observing that fresh run; no historical green run substitutes for it.
+PR #7 must remain open and unmerged, with auto-merge disabled. Master stays at
+M3c merge `4dbb0a51325119e5578705126f97bdc5d9723049`.
+
+Historical merged local M0-M3c branches and preserved remote M3b/M3c references
+are cleanup candidates only; none was deleted. No active M3d1 branch is eligible
+for cleanup. Continue with separately reviewed M3d2 weapon/psprite/ammo/button
+work after owner review; no M3d1 or later subphase merge is authorized here.

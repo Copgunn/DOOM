@@ -5,6 +5,7 @@
 //! and add M3b static-sector BSP/openings and XY/Z/gravity. None implements full
 //! player thinking or establishes complete vanilla gameplay synchronization.
 //! Profile 4 adds admitted source actor states, spawning and controlled death.
+//! Profile 5 adds bounded unbound-actor damage, autoaim and hitscan combat.
 
 mod actor;
 mod combat;
@@ -122,7 +123,7 @@ pub enum Phase {
 pub enum Event {
     /// Profile-5 combat evidence in source side-effect order.
     Combat(CombatEvent),
-    /// Profile-4 state/action/lifecycle evidence in execution order.
+    /// Typed state/action/lifecycle evidence in execution order.
     ActorState(ActorStateEvent),
     /// Phase boundary.
     Phase(Phase),
