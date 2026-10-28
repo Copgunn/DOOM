@@ -501,7 +501,7 @@
     "generate_m3d3a.py": "e44b12d5eaa820241ec91c5915e9a859fcabcd4161a878d834aa64f3c29507ff",
     "generate_m3d3b.py": "2aa9c0b3651d8b3e9eadcd429b1f8fe10f1f14aa6cca2bde8d3d34754b6f9fcc",
     "generate_m3d3c.py": "b4b679350f9586b83a126bee04371bd046c6a525422fc856e1251a2ae6e4beaf",
-    "generate_m3d3e.py": "f59ac5b116e9f04561c199d7e2e89e3d5d5407e2eba7c9f261f9b50f5c00b439",
+    "generate_m3d3e.py": "1e6b74ecc2abac75469e499d4a10019474f0df0453c667154461808c6acfc273",
     "m3d3e_shim.h": "6c3e1b63b2906036f4717a6fe4fbcd3ae46aa1b42290f50b111eedbffe64f752"
   },
   "outputs_sha256": {
@@ -523,9 +523,11 @@
     "tests/reference/m3d3e_map_15.bin": "35def2af8976e8d86c8757c2a0969e5e1ae3baaad4571f8401aba347d228c0a7",
     "tests/reference/m3d3e_map_16.bin": "e97f91f728c51eabdfd56e81479faceb0c8ef8aa061b2b18dfc1cb4d23bb8384",
     "tests/reference/m3d3e_map_17.bin": "39310b061ccf7bb6b21b70e8c4952b2af60310f2d3260da79351729c59d772f6",
+    "tests/reference/m3d3e_map_18.bin": "4c89e58051e79f6c653a4dab66bddc5115a489b53c4d04d3b669fd1a675cb763",
+    "tests/reference/m3d3e_map_19.bin": "f420b5d886d299bfe641d23e9729caff7515b75b5cbe941f6ffda1977e47d615",
     "tests/reference/m3d3e_refire_boundary.csv": "a413ddcd7ac5e473543109dfc77f69e930ea9a92e87b54c7c394ce0f26ec28d5",
-    "tests/reference/m3d3e_trace.csv": "e7fbde37b6def875a2a36b5a5c0bda203443037a9f37811cd9e4e19dee8dfbc4",
-    "tests/reference/m3d3e_cases.csv": "7e660a4cf8c9fa6fa60410cf775f6af8e557144a984d883c8abd561eeb66fa76"
+    "tests/reference/m3d3e_trace.csv": "286229398c47f838aef115ced8fbe78d6388554bb866fafd740e283af2272fcf",
+    "tests/reference/m3d3e_cases.csv": "ac427c69c050eeff8e790fb6b632f0fda7540da9373df97be90ba0d82945f934"
   },
   "assumptions": [
     "real original structs/info and 32-bit fixed/int, 64-bit pointer/function-union ABI",

@@ -24,11 +24,11 @@ def case(label,mode=2,map=0,ox=-64,oy=0,oz=0,players=None,direction=8,count=0,re
  c.update(direction=direction,count=count,reaction=reaction,target=target,speed=speed,radius=radius*U,active_sound=active_sound,see=see,skill=skill,enter=enter,mx=mx*U,my=my*U,mz=mz*U,target_health=target_health,target_flags=target_flags,flip_tick=flip_tick,flip_flags=flip_flags,flip_actorhealth=flip_actorhealth,flip_target=flip_target,other=other)
  return c
 import generate_m3d3c as previous
-MAPS=previous.MAPS
+MAPS=previous.MAPS+[sight.replace_lumps(maps.fixture([(0,128)]*2),{"REJECT":bytes([2])}),sight.replace_lumps(maps.fixture([(0,128)]),{"REJECT":bytes([1])})]
 BASE_CASE=case
-def shot_case(label,mode=5,pain=128,spawn_health=100,target_radius=16,target_height=56,secondary_health=100,target_mx=0,target_my=0,flip_tick=9999,**kw):
+def shot_case(label,mode=5,pain=128,spawn_health=100,target_radius=16,target_height=56,secondary_health=100,secondary_flags=-1,target_mx=0,target_my=0,flip_tick=9999,**kw):
  c=BASE_CASE(label,mode=mode,flags=kw.pop('flags',2),reaction=kw.pop('reaction',0),radius=kw.pop('radius',20),flip_tick=flip_tick,**kw)
- c.update(melee=0,missile=4,attacksound=0,pain=pain,spawn_health=spawn_health,target_radius=target_radius*U,target_height=target_height*U,secondary_health=secondary_health,target_mx=target_mx*U,target_my=target_my*U)
+ c.update(melee=0,missile=4,attacksound=0,pain=pain,spawn_health=spawn_health,target_radius=target_radius*U,target_height=target_height*U,secondary_health=secondary_health,secondary_flags=secondary_flags,target_mx=target_mx*U,target_my=target_my*U)
  return c
 # Original-LUT threshold neighbours; value 40 is absent and has a separate probe.
 table=base.table('m_random.c',r'unsigned char\s+rndtable\[256\]')
@@ -52,11 +52,12 @@ for i,m in enumerate(MAPS):
  ps=[(32,0,floor,1,100),*roster()[1:]]
  CASES += [shot_case(f'geometry_{i}',map=i,ox=-16,players=ps),refire_case(f'refire_geometry_{i}',map=i,ox=-16,players=ps)]
 CASES += [
+ refire_case('refire_wall_occluded',players=roster(160)),
  refire_case('refire_body_alive_roster_dead',players=roster(96,health=0)),
  refire_case('refire_dead_justattacked',target_health=0,flags=130,count=2,direction=0),
  refire_case('refire_dead_nightmare',target_health=0,flags=130,skill=4),
  refire_case('refire_null_sound_reacquire',target=-1,sound=1,emitter=0,players=roster(96,health=0),sound_id=36),
- refire_case('refire_dead_sound_reacquire',target_health=0,target_flags=2,sound=2,emitter=0,players=roster(96,health=0),sound_id=36),
+ refire_case('refire_dead_sound_reacquire',target_health=0,target_flags=2,secondary_flags=6,count=2,direction=0,reaction=3,sound=2,emitter=0,players=roster(96,health=0),sound_id=36),
  shot_case('chase_select',mode=3),shot_case('nightmare_count',mode=3,skill=4,count=3),shot_case('ordinary_count',mode=3,count=3),
  shot_case('thinker_cycles',mode=4,target=-1,tics=150,spawn_health=1000,target_health=1000,pain=0,speed=2,stand=2,see=3),
  shot_case('thinker_shadow',mode=4,target=-1,tics=100,target_flags=262150,pain=256,stand=3,see=3),
@@ -98,7 +99,7 @@ for(i=0;i<v[V_SKIP];i++){int draw=P_Random();observe(9,-1,draw);}
 observer=P_SpawnMobj(v[V_OX],v[V_OY],v[V_OZ],v[V_OTYPE]);
 for(i=0;i<4;i++){players[i].mo=P_SpawnMobj(v[V_P0X+5*i],v[V_P0Y+5*i],v[V_P0Z+5*i],135);playeringame[i]=v[V_P0ACTIVE+5*i];players[i].health=v[V_P0HEALTH+5*i];}
 if(v[V_MODE]!=6){observer->angle=(angle_t)v[V_ANGLE];observer->threshold=v[V_THRESHOLD];observer->reactiontime=v[V_REACTION];observer->movedir=v[V_DIRECTION];observer->movecount=v[V_COUNT];observer->momx=v[V_MX];observer->momy=v[V_MY];observer->momz=v[V_MZ];players[0].mo->health=v[V_TARGET_HEALTH];players[0].mo->flags=v[V_TARGET_FLAGS];if(v[V_TARGET]>=0){observer->target=owned[v[V_TARGET]];observe(6,ident(observer),v[V_TARGET]);}}
-for(i=1;i<4;i++)players[i].mo->health=v[V_SECONDARY_HEALTH];players[0].mo->momx=v[V_TARGET_MX];players[0].mo->momy=v[V_TARGET_MY];
+for(i=1;i<4;i++){players[i].mo->health=v[V_SECONDARY_HEALTH];if(v[V_SECONDARY_FLAGS]>=0)players[i].mo->flags=v[V_SECONDARY_FLAGS];}players[0].mo->momx=v[V_TARGET_MX];players[0].mo->momy=v[V_TARGET_MY];
 if(v[V_OTHER])P_SpawnMobj(-64*FRACUNIT,32*FRACUNIT,0,136);
 if(v[V_ENTER])P_SetMobjState(observer,v[V_ENTER]);capture();
 for(t=1;t<=v[V_TICS];t++){operation=t;query_index=-1;attempt=-1;
