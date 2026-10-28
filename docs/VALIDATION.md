@@ -1030,3 +1030,122 @@ All v1-v7 canonical bytes, reference fixtures, generators and helpers are preser
 Merge-parent/master and exact post-merge CI verification must precede M3d3a runtime
 work. No squash, force push, history rewrite, auto-merge or branch deletion is
 authorized. M3d3a itself must remain open and unmerged for separate owner review.
+
+## M3d2b completed finalization for M3d3a
+
+Prose correction `f2705598f382cd7c3e308f3edfbe3756f694c598` directly records
+reviewed runtime head `062647ddd4e2e44edeb176cfd3b4e3577481a249` and reviewed
+CI 40630368867. Required local checks passed again: 131 workspace/MSRV checks
+(two private ignored), 107 release tests, build/fmt/Clippy/rustdoc, all seven
+reference pairs and seven-example debug/release equality.
+[Fresh CI 40631701968](https://github.com/Copgunn/DOOM/actions/runs/40631701968)
+passed all four jobs on the exact correction before the authorized regular merge.
+
+PR #9 is merged/closed as `e109ee193bcce6077f5c8d90802c97edc89a55a6`, parents
+`955f690d141ccc6a9074a8a8017f78833854af6f` and
+`f2705598f382cd7c3e308f3edfbe3756f694c598`. The merge tree equals the corrected
+head; local/remote master agree.
+[Post-merge CI 40632182190](https://github.com/Copgunn/DOOM/actions/runs/40632182190)
+passed Linux, Windows, macOS and Rust 1.85 on that exact merge before the M3d3a
+branch was created. All 165 original files, public GPL-2.0-only licensing,
+attribution/history and asset safeguards were verified unchanged. No private
+assets/repositories were accessed or branches deleted. M3d3a has no merge authorization.
+
+## M3d3a local implementation evidence
+
+Branch `feat/m3d3a-monster-perception` starts at verified `e109ee1` after the
+completed PR #9 gates above. Source investigation commit `fec0d24` precedes all
+runtime work. No pursuit, attack callback, damage extension or renderer was added.
+Original monster see actions requiring A_Chase remain rejected; native fixture
+lookers isolate genuine original A_Look with an action-free see state.
+
+| Local check | Observed result |
+| --- | --- |
+| Locked workspace build, root/fuzz fmt and all-target Clippy with warnings denied | Passed |
+| Workspace tests including one doctest | 149 passed; two private tests ignored |
+| doom-sim/doom-types release tests | 125 passed |
+| Rust 1.85.0 workspace | 149 passed; two private tests ignored |
+| Rustdoc with warnings denied | Passed |
+| Eight original-C generator and independent encoder pairs, `--check` | Passed |
+| Eight asserted debug/release examples | Identical stdout |
+| All seven nightly fuzz target builds | Passed |
+| Perception ASan, max input 49, seed 13 | 2000 completed executions, 38 seconds, no finding; leak detection disabled |
+
+C evidence is distinct from schema/policy evidence. The new harness compiles 56
+original function bodies with GCC 14.2.0 and genuine original structs/metadata;
+source/adapter/input/output hashes, flags and ABI are recorded in
+`tests/reference/m3d3a_provenance.json`. It covers 68 scenarios and 1536 side plus 131
+fraction vectors. Structured comparisons observed:
+
+| C scenario group | Actor fields | Raw RNG draws | Sight queries | Ordered sight visits | Player slots |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 24 pure sight setups/queries | 2880 | 120 | 24 | 243 | 0 |
+| 20 explicit player scans | 5040 | 110 | 27 | 295 | 64 |
+| 24 explicit/thinker A_Look | 39600 | 395 | 314 | 3417 | 396 |
+| Total | 47520 | 625 | 365 | 3955 | 460 |
+
+The scan group additionally compares 635 normalized ordered observations and 504
+roster fields; A_Look compares 8150 observations, 3960 roster fields, 346 sector
+sound fields and 19 propagation visits. Pure setups compare 120 observations and 288
+roster fields. Five additional shared-noise probes repeat selected cases and are
+not double-counted. Counts are asserted in the suite. REJECT/BSP traversal, slope
+intervals, source horizontal ties, active/dead filtering, lastlook wrap/count,
+strict FOV bounds/approximate distance 64, ordinary/ambush fallback, sound groups,
+RNG wrap, global origins and immediate thinker/state order are source compared.
+
+Independent Python DSIM-v8 encoding covers 420 captures with 45 complete streams,
+including transient events, and reads no Rust output. All captures are checked;
+named-field diagnostics precede byte/digest comparison. Existing v1-v7 tools and
+bytes remain unchanged. Twelve Rust-only policy tests cover declared empty-roster,
+identity, generation reuse, work/arithmetic and atomicity guarantees, including
+movement into a sector retaining a stale sound target.
+
+The asserted eighth example demonstrates slot 3 wrapping to 0 (including the source
+horizontal-side quirk), ordinary sound through a wall, blocked/visible ambush and
+an eight-tic dead-to-live candidate change. Final digest `30721bdec7a0d47e` is equal
+in debug/release. This is project determinism evidence, not a DOOM demo hash.
+Public CI and delivery evidence follow.
+M3d3a delivery originally stopped at owner review; its later conditional
+finalization authorization is recorded below. No private asset/repository was accessed.
+
+## M3d3a remote delivery evidence
+
+[PR #10](https://github.com/Copgunn/DOOM/pull/10) targets master
+`e109ee193bcce6077f5c8d90802c97edc89a55a6` from
+`feat/m3d3a-monster-perception`. Implementation/documentation head
+`4e7720f0ba28781e72e3abe08c269389f582ad31` passed
+[CI 40637618358](https://github.com/Copgunn/DOOM/actions/runs/40637618358):
+Linux, Windows, macOS and Rust 1.85 all succeeded on that exact commit. Linux
+also reproduced all eight C generator/encoder pairs; stable jobs passed recorded
+reference/golden checks, release tests, eight-example equality and rustdoc.
+
+The prose-only delivery-record commit is reviewed head
+`3ca419ed3b9a788ae61c3c5bff54587c1ca4b4a6`.
+[Final reviewed CI 40637859502](https://github.com/Copgunn/DOOM/actions/runs/40637859502)
+passed Linux, Windows, macOS and Rust 1.85 on that exact SHA. The M3d3b mission
+conditionally authorizes a regular merge after this final correction passes fresh
+local and remote checks; master remains at the authorized PR #9 merge until then. All 165 original
+upstream files and 222 historical reference code/fixture files (excluding the
+requested reference README update) are byte-identical. Repository visibility is
+public, licensing is GPL-2.0-only, attribution/history are preserved, and no
+private repository or commercial asset was accessed. No branch was deleted.
+
+Recommended next focused work is M3d3b source-compatible pursuit and movement
+decisions after separate owner authorization. Full original monster admission,
+attacks and demo synchronization remain deferred.
+
+## M3d3a authorized finalization for M3d3b
+
+The owner reviewed PR #10 at `3ca419ed3b9a788ae61c3c5bff54587c1ca4b4a6`,
+base `e109ee193bcce6077f5c8d90802c97edc89a55a6`, with successful reviewed
+[CI 40637859502](https://github.com/Copgunn/DOOM/actions/runs/40637859502).
+Live PR/local/remote references match and there are no intervening commits,
+comments, reviews or threads. No demonstrated blocking defect was identified
+within the declared perception slice. This correction changes documentation only;
+all v1-v8 canonical bytes and historical reference code/fixtures remain unchanged.
+
+The owner authorizes a regular merge only after the correction passes fresh
+mandatory local checks and exact-head CI. Verify both merge parents, local/remote
+master and successful post-merge CI before M3d3b runtime work. No squash, force
+push, history rewrite, auto-merge or branch deletion is authorized. M3d3b itself
+must remain open and unmerged for separate owner review.

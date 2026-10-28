@@ -8,11 +8,16 @@
 //! Profile 5 adds bounded unbound-actor damage, autoaim and hitscan combat.
 //! Profile 6 adds command-driven player weapons, ammo and source psprites.
 //! Profile 7 adds explicit original plasma launch, flight, direct impact and removal.
+//! Profile 8 adds source sight, player-slot scanning, noise awareness and admitted A_Look.
 
 #[cfg(test)]
 extern crate self as doom_sim;
 
 mod actor;
+mod perception;
+mod sight;
+pub use perception::{PerceptionError, PerceptionEvent, PerceptionPlayer};
+pub use sight::{SightResult, SightVisit};
 mod projectiles;
 pub use projectiles::{ProjectileAim, ProjectileError, ProjectileEvent, ProjectileRequest};
 mod weapons;
@@ -68,6 +73,8 @@ pub enum Profile {
     PlayerWeapons,
     /// M3d2b bounded original plasma projectiles, DSIM-v7.
     Projectiles,
+    /// M3d3a sight, player scanning and source awareness, DSIM-v8.
+    Perception,
 }
 
 impl Profile {
@@ -79,6 +86,7 @@ impl Profile {
                 | Self::Combat
                 | Self::PlayerWeapons
                 | Self::Projectiles
+                | Self::Perception
         )
     }
 }
@@ -96,6 +104,8 @@ pub enum SimError {
     Weapon(WeaponError),
     /// Projectile admission, ownership or arithmetic failure.
     Projectile(ProjectileError),
+    /// Perception profile, identity, metadata or bounded-work rejection.
+    Perception(PerceptionError),
     /// Unsupported or invalid map/profile.
     Geometry(GeometryError),
     /// Input slot is outside 0..4 or duplicates an existing binding.
@@ -111,6 +121,11 @@ impl fmt::Display for SimError {
     }
 }
 impl Error for SimError {}
+impl From<PerceptionError> for SimError {
+    fn from(e: PerceptionError) -> Self {
+        Self::Perception(e)
+    }
+}
 impl From<ProjectileError> for SimError {
     fn from(e: ProjectileError) -> Self {
         Self::Projectile(e)
@@ -158,6 +173,8 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
+    /// Source perception decisions in profile 8.
+    Perception(PerceptionEvent),
     /// Ordered source projectile observations in profile 7.
     Projectile(ProjectileEvent),
     /// Ordered profile-6 player weapon observations.
@@ -254,6 +271,7 @@ pub fn command_thrust(
 #[derive(Clone, Debug)]
 pub struct Simulation {
     pub(crate) profile: Profile,
+    pub(crate) perception_players: [PerceptionPlayer; 4],
     pub(crate) registry: Option<Arc<ActorRegistry>>,
     pub(crate) weapon_player: Option<WeaponPlayer>,
     pub(crate) sound_targets: Vec<Option<ActorId>>,
@@ -334,6 +352,7 @@ impl Simulation {
         let map_fields = Arc::new(snapshot::map_fields(world.map()));
         Ok(Self {
             profile,
+            perception_players: [PerceptionPlayer::default(); 4],
             registry: None,
             weapon_player: None,
             sound_targets: Vec::new(),
@@ -608,6 +627,9 @@ impl Simulation {
             return Err(StoreError::InvalidHandle.into());
         }
         self.projectile_control(id)?;
+        if self.profile == Profile::Perception && momentum.bits().unsigned_abs() > 64 * 65536 {
+            return Err(PerceptionError::Arithmetic.into());
+        }
         if self.profile == Profile::Projectiles && momentum.bits().unsigned_abs() > 64 * 65536 {
             return Err(ProjectileError::Arithmetic.into());
         }
@@ -633,6 +655,13 @@ impl Simulation {
             return Err(StoreError::InvalidHandle.into());
         }
         self.projectile_control(id)?;
+        if self.profile == Profile::Perception
+            && momentum
+                .iter()
+                .any(|v| v.bits().unsigned_abs() > 4096 * 65536)
+        {
+            return Err(PerceptionError::Arithmetic.into());
+        }
         if self.profile == Profile::Projectiles
             && momentum
                 .iter()
@@ -647,6 +676,9 @@ impl Simulation {
     /// M2 non-player response or M3a player XY response, according to the profile.
     /// This does not implement full type/state-driven player spawning.
     pub fn bind_player(&mut self, slot: usize, id: ActorId) -> Result<(), SimError> {
+        if self.profile == Profile::Perception {
+            return Err(PerceptionError::Roster.into());
+        }
         if self.profile == Profile::Projectiles {
             return Err(ProjectileError::Player.into());
         }
@@ -688,6 +720,9 @@ impl Simulation {
         if self.profile == Profile::Projectiles {
             self.preflight_projectile_step()?;
         }
+        if self.profile == Profile::Perception {
+            self.preflight_perception_step()?;
+        }
         self.preflight_actor_step()?;
         self.events = std::mem::take(&mut self.pending);
         self.commands = commands;
@@ -728,6 +763,11 @@ impl Simulation {
         if self.profile == Profile::Projectiles {
             self.projectile_thinkers_with(|_, _| {});
         } else {
+            let perception_inputs =
+                (self.profile == Profile::Perception).then_some(perception::PerceptionInputs {
+                    players: &self.perception_players,
+                    sound_targets: &self.sound_targets,
+                });
             let world = &self.world;
             let events = &mut self.events;
             let profile = self.profile;
@@ -813,6 +853,7 @@ impl Simulation {
                                     let play = lifecycle::source_state_id("S_PLAY").unwrap();
                                     *context.get_mut(id).unwrap() = actor;
                                     lifecycle::LifeHost {
+                                        perception: perception_inputs,
                                         access: &mut *context,
                                         registry: registry.as_deref().unwrap(),
                                         world,
@@ -835,6 +876,7 @@ impl Simulation {
                             *context.get_mut(id).expect("same live thinker handle") = actor;
                             if let Some(registry) = registry {
                                 lifecycle::LifeHost {
+                                    perception: perception_inputs,
                                     access: context,
                                     registry,
                                     world,

@@ -1,6 +1,6 @@
 # Canonical simulation state, DSIM versions 1 through 7
 
-This is a diagnostic/replay comparison format for explicit M2 through M3d2b profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3d3a profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -21,7 +21,7 @@ Runtime fields precede static map fields. Runtime order:
 | Field/group | Value encoding |
 | --- | --- |
 | `tic` | u64 completed logical tics |
-| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), 6 (M3d2 player weapons/psprites), or 7 (M3d2b projectiles); profile-specific additions are specified below |
+| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), 6 (M3d2 player weapons/psprites), 7 (M3d2b projectiles), or 8 (M3d3a perception); profile-specific additions are specified below |
 | `paused` | u8 boolean |
 | `rng.gameplay`, `rng.miscellaneous` | u8 indexes, in that order |
 | `store.max_slots`, `store.slot_count` | u32 capacity policy; u64 logical allocated slot count |
@@ -378,3 +378,74 @@ slot reuse. No Rust output is read. Transient damage fields/order are tested
 against C separately; canonical bytes are project schema evidence, not DOOM
 savegames or full synchronization. Rust checks named fields before full bytes
 and digest, preserving first-field divergence diagnostics.
+
+## DSIM-v8 — Monster Perception and Target Acquisition
+
+Schema/profile 8 deliberately composes v5 persistent typed actors/static-sector
+state, the existing sector sound-target representation and a separate minimal
+perception roster. It has no v6 weapon player/psprites or v7 projectile API/event15.
+Old schemas 1..7 and their expected bytes/encoders remain unchanged. Existing
+actor lastlook, target, threshold, reaction time, state, tics, health and angle
+already encode perception consequences; no duplicate fields are added.
+
+In field order, add `sector.N.soundtarget` immediately after each `sector.N.actors`
+using the existing fixed 13-byte optional generation identity (u8 presence, u32
+slot, u64 generation; absent is 13 zero bytes). Legacy `player.N` bindings/commands
+remain absent/zero. Immediately after those four legacy slot groups and before
+events, write for N=0..3:
+
+| Path | Value |
+| --- | --- |
+| `perception.player.N.active` | u8 boolean |
+| `perception.player.N.health` | signed i32 little-endian player-record health |
+| `perception.player.N.actor` | fixed 13-byte optional generation identity |
+
+Inactive retained IDs remain encoded even after retirement; active IDs must pass
+preflight. Sound targets persist independently of assignment/wake. Local REJECT
+indices, slope scratch, traversal stack, duplicate masks, validcount, sightcounts
+and scan plans are not authoritative persistent fields. Diagnostic events carry
+observations of completed operations and do not become inputs to later detection.
+Pure sight queries append no events and preserve the entire snapshot.
+
+Existing event tags/phases retain their layouts. Shared noise uses only tag 14,
+discriminator 6 (u16 sector, u8 blocks, 12-byte target); other weapon events are not
+admitted. New tag 16 is followed by the u8 discriminator below. All integers are
+little-endian. `ID` is u32 slot+u64 generation; `OptID` is the fixed 13-byte form.
+
+| Discriminator | Payload in order |
+| --- | --- |
+| 0 LookStart | ID actor, i32 threshold before reset |
+| 1 LookSound | ID actor, OptID sound target, u8 shootable, u8 ambush |
+| 2 ScanStart | ID actor, u8 allaround, u8 lastlook, u8 stop |
+| 3 Slot | ID actor, u8 slot, u8 active, u8 prior active count |
+| 4 Health | ID actor, u8 slot, i32 player-record health |
+| 5 Facing | ID actor, u8 slot, u32 relative BAM angle, u8 distance-present, i32 distance only if present, u8 accepted |
+| 6 EmptyRoster | ID actor; explicit Rust safety-policy observation |
+| 7 ScanEnd | ID actor, u8 found, u8 final lastlook |
+| 8 Wake | ID actor, u16 see state |
+| 9 Random | ID actor, u8 gameplay result |
+| 10 Sight | ID observer, ID target, u8 visible, u32 REJECT pair, u8 rejected, u8 geometry-present; if present i32 eye/bottom/top; u32 visit count then visits |
+
+Each sight visit starts with a u8 code:
+
+| Code | Payload in order |
+| --- | --- |
+| 1 NodeStart | u16 node, u8 raw side |
+| 2 NodeEnd | u16 node, u8 raw side |
+| 3 Subsector | u16 subsector |
+| 4 Seg | u16 subsector, u32 seg, u16 line, u8 duplicate |
+| 5 Sides | u16 line, u8 stage, u8 side0, u8 side1 |
+| 6 Opening | u16 line, i32 top, i32 bottom |
+| 7 Clip | u16 line, i32 fraction, i32 bottom, i32 top |
+| 8 Blocked | u16 line, u8 reason (0 one-sided, 1 closed opening, 2 closed slopes) |
+
+Geometry is absent on REJECT rather than serializing stale C global scratch.
+Node side 2 is recorded before normalization. Action/target/sound/state-entry
+observations still use established tag 12.
+
+`m3d3a_snapshot_goldens.py` independently encodes 420 C/setup-derived captures and
+45 full streams, including pending/transient sight/scan/A_Look/noise, source
+thinker phases and RNG wrap. Named fields, full bytes and FNV-1a64 digest are
+compared by Rust. Native fixture registry edits are encoded explicitly. This
+schema is a project comparison format, not an original DOOM savegame or evidence
+of complete vanilla/demo synchronization.

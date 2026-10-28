@@ -47,7 +47,7 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2, 7=M3d2b.
+    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2, 7=M3d2b, 8=M3d3a.
     pub const fn version(&self) -> u32 {
         self.version
     }
@@ -197,6 +197,10 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        Event::Perception(event) => {
+            b.push(16);
+            crate::perception::event_bytes(&mut b, event);
+        }
         Event::Projectile(event) => {
             use crate::{ProjectileAim, ProjectileEvent};
             b.push(15);
@@ -371,6 +375,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::Combat => 5,
         crate::Profile::PlayerWeapons => 6,
         crate::Profile::Projectiles => 7,
+        crate::Profile::Perception => 8,
     };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
@@ -552,7 +557,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .flat_map(id)
                 .collect::<Vec<_>>();
             field(&mut fields, format!("sector.{i}.actors"), order);
-            if version == 6 {
+            if matches!(version, 6 | 8) {
                 field(
                     &mut fields,
                     format!("sector.{i}.soundtarget"),
@@ -580,6 +585,25 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             c.angle_turn.to_le_bytes(),
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
+    }
+    if version == 8 {
+        for (i, p) in sim.perception_players.iter().enumerate() {
+            field(
+                &mut fields,
+                format!("perception.player.{i}.active"),
+                [u8::from(p.active)],
+            );
+            field(
+                &mut fields,
+                format!("perception.player.{i}.health"),
+                p.health.to_le_bytes(),
+            );
+            field(
+                &mut fields,
+                format!("perception.player.{i}.actor"),
+                optional_id(p.actor),
+            );
+        }
     }
     if version == 6 {
         weapon_fields(&mut fields, sim.weapon_player.as_ref());

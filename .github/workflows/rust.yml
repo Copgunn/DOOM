@@ -62,6 +62,8 @@ jobs:
           python3 tools/reference/m3d2_snapshot_goldens.py --check
           python3 tools/reference/generate_m3d2b.py --check
           python3 tools/reference/m3d2b_snapshot_goldens.py --check
+          python3 tools/reference/generate_m3d3a.py --check
+          python3 tools/reference/m3d3a_snapshot_goldens.py --check
       - name: Synthetic map example
         run: cargo +stable run -p doom-map --example parse_map --locked
       - name: Headless simulation example
@@ -70,6 +72,7 @@ jobs:
         run: |
           python tools/reference/check_headless.py
           python tools/reference/check_projectiles.py
+          python tools/reference/check_monster_perception.py
       - name: Documentation
         run: cargo +stable doc --workspace --no-deps --locked
 

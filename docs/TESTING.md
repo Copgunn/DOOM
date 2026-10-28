@@ -375,3 +375,40 @@ point fuzzing at private IWADs. Report actual executions and sanitizer findings;
 `detect_leaks=0` means this does not verify LeakSanitizer. See validation for the
 observed campaign and compiler versions. No test fixture is generated from Rust
 expected results and no commercial asset enters public CI.
+
+## M3d3a perception checks
+
+```sh
+python3 tools/reference/generate_m3d3a.py --check
+python3 tools/reference/m3d3a_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3d3a_reference --locked -- --nocapture
+cargo run -p doom-sim --example monster_perception --locked
+python3 tools/reference/check_monster_perception.py
+cargo +nightly fuzz build --fuzz-dir fuzz
+cargo +nightly fuzz run monster_perception --fuzz-dir fuzz -- -runs=2000 -max_len=49 -seed=13
+```
+
+Run alongside all seven older reference pairs/helpers and required workspace,
+release, MSRV and warning-free rustdoc checks. The C suite compares 24 pure sight,
+20 scan and 24 A_Look cases (68 total), 1536 side vectors and 131 intercept vectors.
+It checks ordered source observations, full actor fields, all raw gameplay RNG
+draws, roster/sector fields and sight decisions. Rejected pure queries are checked
+for state/RNG purity. Case/operation/query/visit diagnostics identify the first
+sight difference; named canonical fields precede full-byte/digest comparisons.
+
+The independent v8 encoder uses C rows, public setup and explicit schema, never
+Rust output: 420 captures and 45 complete streams, including transient scan,
+sight, wake/noise events and RNG wrap. Twelve project-only policy tests separately
+cover empty-roster termination, invalid/pending/reused IDs, ambush assignment with
+failed empty fallback, stale sound before movement, unsupported chase/handoffs,
+protected reference states, independent player health, arithmetic/capacity/work
+bounds, malformed cycles/shared DAGs, pause, separate instances and query cadence.
+
+The seventh fuzz target generates bounded perception operations over synthetic
+fixtures. Recoverable errors compare complete snapshots; it exercises sight,
+scan/look/noise, roster edits, stale generations, removal/reuse, state/step/setup
+and pause. The recorded campaign used ASan with `ASAN_OPTIONS=detect_leaks=0`;
+leak detection is not claimed. All seven fuzz targets build. Public CI uses no
+private fixtures: Linux reproduces all eight C/encoder pairs; stable Linux,
+Windows and macOS compare recorded fixtures, release tests and eight example
+outputs. Rust 1.85 runs the workspace suite.

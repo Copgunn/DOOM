@@ -84,7 +84,15 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
-        if self.profile == Profile::Projectiles {
+        if self.profile == Profile::Perception
+            && (position.iter().any(|v| !crate::sight::within(*v, 1024))
+                || matches!(height,SpawnHeight::Absolute(z) if !crate::sight::within(z,1024)))
+        {
+            return Err(PerceptionError::Arithmetic.into());
+        }
+        if self.profile == Profile::Perception {
+            self.validate_perception_type(ty)?;
+        } else if self.profile == Profile::Projectiles {
             if ty == ActorTypeId(34) {
                 return Err(ProjectileError::Controlled.into());
             }
@@ -97,6 +105,7 @@ impl Simulation {
         }
         self.reserve_actor_spawns(1)?;
         Ok(LifeHost {
+            perception: None,
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),
             world: &self.world,
@@ -111,9 +120,15 @@ impl Simulation {
     }
     pub(crate) fn validate_entry(&self, state: StateId) -> Result<(), SimError> {
         let registry = self.registry_required()?;
-        registry.validate_state(state)?;
+        if self.profile == Profile::Perception {
+            registry.validate_state_perception(state)?;
+        } else {
+            registry.validate_state(state)?;
+        }
         for ty in registry.spawn_dependencies(state)? {
-            if self.profile == Profile::Projectiles {
+            if self.profile == Profile::Perception {
+                self.validate_perception_type(ty)?;
+            } else if self.profile == Profile::Projectiles {
                 registry.validate_type_projectile(ty, &self.sectors)?;
             } else if matches!(self.profile, Profile::Combat | Profile::PlayerWeapons) {
                 registry.validate_type_combat(ty, &self.sectors)?;
@@ -124,7 +139,13 @@ impl Simulation {
         Ok(())
     }
     pub(crate) fn enter_validated(&mut self, id: ActorId, state: StateId) {
+        let perception =
+            (self.profile == Profile::Perception).then_some(crate::perception::PerceptionInputs {
+                players: &self.perception_players,
+                sound_targets: &self.sound_targets,
+            });
         LifeHost {
+            perception,
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),
             world: &self.world,
@@ -142,6 +163,9 @@ impl Simulation {
     pub fn enter_actor_state(&mut self, id: ActorId, state: StateId) -> Result<(), SimError> {
         let life = self.active_typed(id)?;
         self.projectile_control(id)?;
+        if self.profile == Profile::Perception {
+            self.preflight_perception_entry(id, state)?;
+        }
         self.validate_entry(state)?;
         let demand = self.registry_required()?.demand(state, life.tics)?;
         self.reserve_actor_spawns(demand.spawns)?;
@@ -263,7 +287,15 @@ impl Simulation {
                 report.filtered += 1;
                 continue;
             }
-            if self.profile == Profile::Projectiles {
+            if self.profile == Profile::Perception {
+                if [thing.position.x, thing.position.y]
+                    .iter()
+                    .any(|v| v.unsigned_abs() > 1024)
+                {
+                    return Err(PerceptionError::Arithmetic.into());
+                }
+                self.validate_perception_type(ty)?;
+            } else if self.profile == Profile::Projectiles {
                 if ty == ActorTypeId(34) {
                     return Err(ProjectileError::Controlled.into());
                 }
@@ -296,6 +328,7 @@ impl Simulation {
                 SpawnHeight::Floor
             };
             let id = LifeHost {
+                perception: None,
                 access: &mut self.actors,
                 registry: self.registry.as_deref().unwrap(),
                 world: &self.world,

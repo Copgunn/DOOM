@@ -350,3 +350,33 @@ or arena clone per tic. ActorLife.target is the source owner; the intended victi
 is not persistent. DSIM-v7 composes v5 persistent fields and event tag 15, without
 v6-only player/noise fields or redundant missile state. See the reference and
 schema for precise admission and ownership policies.
+
+## M3d3a perception composition
+
+Profile 8 composes the v5 typed lifecycle and M3b static-sector XY/Z services with
+pure sight, a minimal perception roster and the existing v6 noise service. It
+admits no weapon player, projectile API or player damage. Schema versions are
+explicit profiles rather than successive feature supersets.
+
+`sight.rs` consumes immutable validated geometry, current sectors and copied actor
+records. A local stack reproduces P_CrossBSPNode continuations and seg order;
+a local linedef mask replaces source stamps. REJECT returns before eye/slope
+initialization. No renderer, BLOCKMAP hitscan, geometry rebuild or persistent
+sight cache participates. Expanded traversal cost is proved at construction,
+including repeated DAG leaves/segs; actor arithmetic is preflighted before use.
+
+`perception.rs` owns the four active/health/optional-ID records and source scan
+planning. Successful target writes use LifeHost; read-only sight stays independent
+of roster/sound validity. A read-only `PerceptionInputs` view lets the existing
+thinker/state host execute the same A_Look as explicit `look`. There is no second
+scheduler or allocator. Noise accepts distinct target/emitter inputs through the
+shared source propagation implementation; old weapon calls pass the shooter twice.
+
+Registry validation proves see-state actions and whole spawn/death closures before
+admission. Labelled native lookers isolate A_Look from unsupported immediate
+A_Chase. Stable referenced actor states cannot remove themselves mid-tic. Step
+preflight checks active references, future position bounds and every retained
+sound identity when a looker could run, covering sector changes before dispatch.
+Failure precedes movement, target/lastlook/threshold changes, events and RNG.
+Only bounded records, traversal stacks and plans are used; no full-state tic clone.
+See [the final admission contract](M3D3A_REFERENCE.md) and [v8 encoding](STATE_FORMAT.md).

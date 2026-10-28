@@ -478,3 +478,42 @@ or dangling pointers. All sky/special maps remain rejected. There is no splash,
 rocket/BFG/other fireball, monster perception/attacks, inventory, armor/player
 damage, demos, real-IWAD/full vanilla or DOS synchronization claim. Earlier
 profiles/schemas/fixtures and their behavioral contracts remain unchanged.
+
+## M3d3a perception profile (DSIM-v8)
+
+The admitted slice matches original Linux 1.10 P_CheckSight and P_LookForPlayers
+on synthetic classic maps: REJECT sector-pair bits, BSP start-child-first order,
+seg-side openings, line duplicate stamps, fixed intercepts/slopes, four-slot
+active/health order, lastlook stop/count rules and unsigned FOV/close-range tests.
+The source horizontal P_DivlineSide `x==node.y` equality quirk is retained. The
+ML_BLOCKING flag and omitted BLOCKMAP walls do not replace sight geometry.
+
+A_Look resets threshold, assigns a shootable sound target before ambush sight,
+and falls back to player scanning after failed ambush confirmation. Failed
+fallback may leave that target assigned without waking. Source wake RNG groups,
+global SPIDER/CYBORG sounds and immediate state-entry timing are compared to C.
+The native fixture types 19/21/136 copy player-shaped metadata with labelled
+states 1/2 and action-free see. These are not executable original monsters;
+original A_Chase handoffs reject before mutation.
+
+The perception roster's active flag, signed player health and generation ID are
+separate from actor health, source MT_PLAYER metadata and full player bindings.
+Active IDs must resolve even with nonpositive health. References are limited to
+admitted stable player body states or the native look/see states so no earlier
+thinker can invalidate them mid-tic. Inactive retained IDs cannot alias slot reuse.
+Pending/stale sound IDs reject; a tic with a possible looker conservatively checks
+all retained sector sound IDs because movement may change the observed sector.
+Pure sight does not depend on these unrelated roster/cache invariants.
+
+Rust-only policies terminate the original all-inactive infinite scan with false
+and unchanged lastlook, reject unsafe identities and bound map coordinates/node
+deltas/sector heights to +/-512, actor XYZ to +/-1024, expanded sight work to 8192
+and actors to 64. Nonzero XY motion requires current coordinate within +/-994;
+Z momentum is at most64 and next pre-gravity Z must fit +/-1024. These are explicit
+admission restrictions, not limit-removing compatibility. Query/scan/action/step
+rejections preserve the full canonical state. See [reference findings](M3D3A_REFERENCE.md).
+
+68 original-C cases and helper vectors are source equivalence evidence within
+this slice; v8 goldens validate a project schema, and 12 policy tests validate
+Rust ownership/atomicity. Neither implies full monster AI, pursuit/attacks,
+commercial-map admission, Linux/DOS demo synchronization or savegame compatibility.
