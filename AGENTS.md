@@ -223,7 +223,8 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - Reproduce all ten C/encoder pairs, ten asserted examples, nine fuzz builds and
   bounded attack ASan; report actual counts and disabled leak detection. Use
   `docs/DOC_REVIEW_CHECKLIST.md`; PR #13 completed its regular merge and
-  exact post-merge CI before M3d3d. The M3d3d PR stays open/unmerged, no auto-merge.
+  exact post-merge CI before M3d3d. The M3d3e mission conditionally authorizes
+  PR #14’s regular merge after corrections and fresh gates; no auto-merge.
 
 - Read `docs/M3D3D_REFERENCE.md` before shotgunner/shared planning changes. Profile 11
   separately admits labelled native136 SPOS Look/Chase/Face/SPos with exact source
@@ -245,4 +246,6 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   builds and bounded shotgunner ASan. Record actual executions/leak settings,
   source-exercised maps separately from map inventory, and compiled bodies
   separately from branch coverage. Preserve every v1-v10 reference byte/helper.
-  Use the docs checklist; PR #14 requires separate owner authorization to merge.
+  Use the docs checklist; PR #14 has conditional regular-merge authorization
+  after corrections/fresh local and remote checks. Verify post-merge CI before
+  M3d3e runtime work; its new PR stays open/unmerged for separate owner review.

@@ -430,7 +430,8 @@ combat, M3e dynamic sectors, M4 demos and M5 rendering remain deferred.
 
 Branch `feat/m3d3d-shotgunner-attacks` starts at verified master `9b8fde8`.
 [Investigation](M3D3D_REFERENCE.md) commit `51a2636` precedes runtime.
-[PR #14](https://github.com/Copgunn/DOOM/pull/14) stays open/unmerged for owner review.
+[PR #14](https://github.com/Copgunn/DOOM/pull/14) has conditional regular-merge
+authorization in the M3d3e mission after its correction and fresh validation gates.
 
 - [x] PR #13 correction, fresh local/remote checks, regular merge, parents/tree,
   master and exact post-merge CI verified before runtime work.
@@ -447,9 +448,11 @@ Branch `feat/m3d3d-shotgunner-attacks` starts at verified master `9b8fde8`.
   and 10,000 ASan executions without findings (leak detection disabled).
 - [x] Implementation `1d4ffc8ddcc35b1ed081b763c642b0ef69719323` passed all four
   jobs of [CI 40656926875](https://github.com/Copgunn/DOOM/actions/runs/40656926875).
-  Pin the final documentation head and its fresh exact-head CI on PR #14 before
-  requesting review; implementation CI is not a substitute for that gate.
-- [ ] Separate owner authorization for a future merge (outside this mission).
+- [x] Reviewed final `dd1450ba3525ec75db0d7c740d387ca5e8d0cf98` passed
+  [CI 40659174203](https://github.com/Copgunn/DOOM/actions/runs/40659174203).
+  Record the correction head and its fresh CI on PR #14 after verification.
+- [x] Conditional owner authorization for a regular merge in the M3d3e mission.
+- [ ] Correction-head local/remote checks, regular merge and verified post-merge CI.
 
 This accepts the declared action/fixture closure only. Full original Shotgun Guy,
 drops, other attacks, actual player damage, dynamic sectors and demo compatibility

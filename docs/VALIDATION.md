@@ -1458,8 +1458,10 @@ body inventories throughout these notes do not establish full branch coverage.
 Investigation commit `51a2636cd7e4384f768c638886d559fce8727c6a` precedes runtime
 changes. Implementation head `1d4ffc8ddcc35b1ed081b763c642b0ef69719323` passed
 all four jobs of [CI 40656926875](https://github.com/Copgunn/DOOM/actions/runs/40656926875).
-The final documentation head and its fresh exact-head CI are recorded on PR #14
-after verification; the implementation run does not substitute for that gate.
+Reviewed final head `dd1450ba3525ec75db0d7c740d387ca5e8d0cf98` passed all four
+jobs of [CI 40659174203](https://github.com/Copgunn/DOOM/actions/runs/40659174203).
+This directly records the completed reviewed-head result; the correction head and
+its fresh CI are recorded separately on PR #14 after verification.
 
 Profile 11 admits labelled native type 136 as `FIXTURE_SHOTGUNNER_136`, positive
 Look/Chase fixture states, copied SPOS attack states 4/5/6, unbound dummy type
@@ -1528,9 +1530,27 @@ license, visibility or private-asset policy changes were made; no private IWAD
 or private repository was accessed. Public CI remains independent of proprietary
 assets. All requested milestone documentation and the index are updated.
 
-PR #14 remains open/unmerged with auto-merge disabled for separate owner review.
+PR #14 originally stopped open/unmerged for owner review. The M3d3e mission
+conditionally authorizes its regular merge after documentation correction and
+fresh local/exact-head remote checks; auto-merge stays disabled.
 Complete original Shotgun Guy/type 2, drops, other attacks, actual player damage,
 dynamic sectors, demos and rendering remain unsupported. A recommended next
 bounded milestone is the original chaingunner attack/refire decision closure,
 with a new source investigation and explicit target-loss/death/refire RNG
 evidence before any runtime expansion. That recommendation authorizes no work.
+
+## M3d3d reviewed-head finalization for M3d3e
+
+Live PR #14 matches reviewed head `dd1450ba3525ec75db0d7c740d387ca5e8d0cf98`
+and base `9b8fde85f64651f12a5643324e2ab93a9e4937d8`, with no intervening commits,
+discussion comments, reviews or inline threads. Reviewed
+[CI 40659174203](https://github.com/Copgunn/DOOM/actions/runs/40659174203)
+passed Linux, Windows, macOS and Rust 1.85 on that exact head. No demonstrated
+blocking defect or unexpected runtime change was found within the declared slice.
+
+This correction changes Markdown prose only: reviewed SHA/CI and the mission's
+conditional merge gates replace provisional readiness wording. Fresh mandatory
+local checks and exact correction-head CI must pass before the authorized regular
+merge. Verify ordered parents/tree, local/remote master, original/reference/license
+protections and exact post-merge CI before M3d3e runtime work. No squash, force-push,
+history rewrite, auto-merge, branch deletion or new M3d3e merge is authorized.

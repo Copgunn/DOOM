@@ -197,4 +197,6 @@ ten fuzz builds; record actual shotgunner ASan executions and leak configuration
 Keep historical v1-v10 bytes/helpers intact. Report exercised maps and compiled
 body inventories precisely; distinguish C behavior, project canonical bytes and
 Rust policy tests. Update the documentation index and use its review checklist.
-PR #14 stays open/unmerged with auto-merge disabled pending separate owner approval.
+The M3d3e mission conditionally authorizes PR #14’s regular merge after a prose
+correction and fresh local/exact-head CI gates. Verify its post-merge CI before
+M3d3e runtime work; the new M3d3e PR stays open/unmerged, auto-merge disabled.
