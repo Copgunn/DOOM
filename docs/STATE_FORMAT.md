@@ -1,6 +1,6 @@
-# Canonical simulation state, DSIM versions 1 through 11
+# Canonical simulation state, DSIM versions 1 through 12
 
-This is a diagnostic/replay comparison format for explicit M2 through M3d3d profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3d3e profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d, `12` for M3d3e),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -21,7 +21,7 @@ Runtime fields precede static map fields. Runtime order:
 | Field/group | Value encoding |
 | --- | --- |
 | `tic` | u64 completed logical tics |
-| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), 6 (M3d2 player weapons/psprites), 7 (M3d2b projectiles), 8 (M3d3a perception), 9 (M3d3b pursuit), 10 (M3d3c bounded attacks), or 11 (M3d3d shotgunner attacks); profile-specific additions are specified below |
+| `tic_rate`, `profile` | u32 35; u32 profile 1 (M2 flat non-player XY), 2 (M3a player/solid XY), 3 (M3b static-sector XY/Z), 4 (M3c typed actor lifecycle), 5 (M3d1 bounded damage/hitscan), 6 (M3d2 player weapons/psprites), 7 (M3d2b projectiles), 8 (M3d3a perception), 9 (M3d3b pursuit), 10 (M3d3c bounded attacks), 11 (M3d3d shotgunner attacks), or 12 (M3d3e chaingunner attack/refire); profile-specific additions are specified below |
 | `paused` | u8 boolean |
 | `rng.gameplay`, `rng.miscellaneous` | u8 indexes, in that order |
 | `store.max_slots`, `store.slot_count` | u32 capacity policy; u64 logical allocated slot count |
@@ -584,3 +584,40 @@ C birth ordinals map to lowest-free slots/current generations; full thinker and
 spatial order, effects, retirements and old identities are encoded. 949 captures
 and 92 full streams are compared with first-field diagnostics and byte/digest
 checks. DSIM is a project diagnostic, not a DOOM savegame/demo/network protocol.
+
+## DSIM-v12 — Chaingunner Attack and Refire Foundations
+
+Version/profile 12 composes the v11 field order: actor state/tics/sprite/frame,
+health/flags/target generations, movedir/movecount/reaction/threshold, RNG, geometry,
+thinker/spatial/sector order, roster health and sound targets. Exact labelled CPOS
+states replace the attack fixtures in this distinct profile. No persistent firing
+counter, aim cache or preflight plan is serialized. V1-v11 formats and expected
+bytes remain unchanged; profile numbers do not grant cumulative gameplay support.
+
+Existing tags and layouts are retained. Actor-state tag 12 records CPosAttack/
+CPosRefire entries using original action IDs 13/14, shotgun sound, immediate see/
+Chase/Look actions and physical state changes. Tag 18 retains facing, fresh aim,
+spread/damage draws and range selection; its Random kind 6 adds the refire draw
+(0/1 shadow, 2/3 spread, 4 damage, 5 missile chance stay unchanged). Tag 16 carries
+only reached source sight queries, and tag 13 carries actual shot/damage/effects.
+
+New tag 20 is u8 decision followed by a 12-byte actor ID (u32 slot,u64 generation):
+
+| Decision | Meaning |
+| --- | --- |
+| 0 | Random below 40: early continuation without target/health/sight evaluation |
+| 1 | Null target: immediate see-state handoff |
+| 2 | Mobj health <=0: handoff without refire sight |
+| 3 | Healthy target failed original sight: handoff |
+| 4 | Healthy visible target: natural continuation |
+
+Chronology is action entry, facing/shadow RNG, refire draw, optional sight, decision,
+then any immediate see/Chase/Look actions. Nested queries after a handoff remain
+separately observable. CPOS's 10/4/4/1 phase is already represented by state/timer;
+shots execute on distinct entries with current aim and source RNG.
+
+The independent encoder consumes original-C rows/public setup/schema only and
+checks 1,544 captures/110 full streams, real lowest-free-slot/generation mapping,
+retirement, fields, bytes and digests. The separate injected-40 dependency probe
+is not a gameplay capture and adds no schema field. DSIM remains a project
+diagnostic, not a DOOM savegame/demo/network protocol.

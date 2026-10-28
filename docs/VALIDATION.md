@@ -1554,3 +1554,191 @@ local checks and exact correction-head CI must pass before the authorized regula
 merge. Verify ordered parents/tree, local/remote master, original/reference/license
 protections and exact post-merge CI before M3d3e runtime work. No squash, force-push,
 history rewrite, auto-merge, branch deletion or new M3d3e merge is authorized.
+
+## PR #14 completed finalization
+
+Reviewed head `dd1450ba3525ec75db0d7c740d387ca5e8d0cf98` and base
+`9b8fde85f64651f12a5643324e2ab93a9e4937d8` matched live state with no intervening
+commits, comments, reviews or inline threads. The five-Markdown-file correction
+was `64cf9a920ee21669945cb9537c1cd43076aa37ec`. Fresh required local build,
+workspace/fuzz format, Clippy, rustdoc, workspace/MSRV checks (180 each, including
+one doctest; two private probes ignored), 156 release tests, all eleven source/
+encoder pairs and all eleven debug/release examples passed. Exact
+[correction-head CI 40661503550](https://github.com/Copgunn/DOOM/actions/runs/40661503550)
+passed Linux, Windows, macOS and Rust 1.85 before the authorized regular merge.
+
+The merge is `31b4830945a60c837065c0e3c29d10494e84f20e`, ordered parents
+`9b8fde85f64651f12a5643324e2ab93a9e4937d8` and
+`64cf9a920ee21669945cb9537c1cd43076aa37ec`. Tree
+`26f37668dfb5ce50d14b99ee72d8da0a88e539c6` equals the corrected head's tree.
+PR #14 is closed/merged; local master, remote master and origin/master were
+verified at that merge. Exact
+[post-merge CI 40662401302](https://github.com/Copgunn/DOOM/actions/runs/40662401302)
+passed all four jobs before the M3d3e branch, investigation or runtime changes.
+All 165 original files and 590 existing reference paths were unchanged by
+finalization. No squash, history rewrite, force-push, auto-merge or branch deletion
+occurred. Public/GPL-2.0 licensing and private-asset safeguards were preserved.
+
+## M3d3e implementation and independent evidence
+
+[PR #15](https://github.com/Copgunn/DOOM/pull/15), branch
+`feat/m3d3e-chaingunner-refire`, starts at the verified merge above.
+Investigation `b9855f4cd723ee827d3e525e1c13adc440c5f3a9` precedes runtime.
+Implementation head `e160f89979f6f8eebcf14869ebf1aaf0beedcc7e` passed all four
+jobs of [CI 40667321344](https://github.com/Copgunn/DOOM/actions/runs/40667321344).
+Reviewed final head `ae78d76cae69b4f36811110009454df479a33cc6` passed all four
+jobs of [CI 40668964558](https://github.com/Copgunn/DOOM/actions/runs/40668964558).
+This directly records the completed reviewed-head result; the correction head and
+its fresh exact-head CI are recorded separately on PR #15 after verification.
+
+Profile 12 admits labelled native type 136, CPOS Look/Chase states 1/2, copied
+attack states 4/5/6/7, source-body dummy 135 and original blood/puff. It preserves
+sprite 38, frames 4/32773/32772/5 and 10/4/4/1 tics. Every CPosAttack sounds
+shotgun before internal facing, aims independently, draws spread-left/right then
+damage and completes real impact/damage effects. Refire faces before its draw;
+below 40 continues naturally without checking target/health/sight. Other draws
+short-circuit null, mobj health, then original sight, with immediate see/Chase/Look
+actions on a stop. Roster health remains separate.
+
+Each current shot reuses the existing plan/executor and reserves its actual
+impact demand. Refire requires only read-only owner/reference/map/state/counter
+validation: its strict positive-duration nested state closure cannot immediately
+fire, allocate, or produce a late recoverable movement/sight error. Source traces
+exercise the two-Chase/Look movement path; policy tests exercise the extra reaction
+guard and complete rejection atomicity. No persistent counter/aim plan, full
+world clone, duplicate damage engine or production RNG override was introduced.
+
+| Evidence family | Observed result |
+| --- | --- |
+| Original C | 67 compiled original bodies, original structs/info/tables/fixed helpers; 153 gameplay scenarios exercising all 20 supplied maps |
+| Map provenance | 18 inherited public synthetic maps plus two new REJECT fixtures; all 20 actually exercised |
+| Live C actor-field comparisons | 268,606 |
+| Ordered C observations | 63,308 |
+| Raw gameplay RNG comparisons | 10,697, including fixture setup/discard draws and source wraps |
+| Refire decisions | 158: 22 early, 10 null, 12 dead, 5 blocked, 109 visible continuations |
+| Real effect lifecycle | Pain/death, same-pass appends, source movement and 166 retirements with generation reuse |
+| Independent DSIM-v12 | 1,544 captures / 110 complete byte fixtures, fields/bytes/digests |
+| Controlled-dependency boundary probe | 2,048 combinations, kept separate from original-LUT gameplay scenarios and RNG totals |
+| Rust safety-policy tests | Ten, covering allocation, delayed/pending state, exact states/roles/players, references, arithmetic, nested movement, fresh aim and independence |
+| Asserted example | Eight C-backed scenarios; hit/miss permutations, moving target, source pursuit, continued/dead/occluded refire; final 150-tic digest `54ac5f9c158c8e29` |
+
+The original table contains 39 and 41 but never 40. Main gameplay scenarios use
+the real table, including shadow draws before the refire roll. The separate probe
+compiles the unchanged original CPosRefire decision body with controlled RNG,
+recording FaceTarget/state-entry doubles and scripted sight. Its observed call
+order defines helper expectations for every byte value, including 40. These
+controlled dependencies are not original gameplay/Chase/facing equivalence;
+those services are independently exercised by the main original-body harness.
+
+New provenance records source/header/function/adapter/input/output hashes, compiler,
+GNU C flags and ABI. Explicit ordered multiplication defines historical shadow/
+spread/jitter shifts and unspecified operand order. C retirement retains memory
+until reset for observation. The independent encoder consumes only C/public inputs
+and schema, maps births to real lowest-free slots/generations, and groups source
+operations without inspecting Rust output. Compiled inventory is not full branch
+coverage; DSIM bytes are project diagnostics, not vanilla savegames or demos.
+
+## M3d3e local verification
+
+Linux x86-64, Rust 1.99.1 / Cargo 1.99.1, MSRV 1.85.0, nightly
+1.101.0-nightly, cargo-fuzz 0.13.2, GCC 14.2:
+
+| Check | Observed result |
+| --- | --- |
+| Workspace build / workspace format / fuzz format | Passed |
+| All-target Clippy and rustdoc, warnings denied | Passed |
+| Workspace tests | 192 passed including one doctest; two private probes ignored |
+| Rust 1.85 workspace tests | Same 192 passes; two private probes ignored |
+| Release doom-sim / doom-types | 168 passed |
+| All twelve C generator / independent encoder pairs | Passed with `--check` |
+| All twelve asserted debug/release examples | Identical stdout |
+| All eleven nightly fuzz targets | Built with ASan; all eleven executables verified |
+| Chaingunner ASan campaign | 10,000 executions in 211 seconds, seed 1, max_len 65, RSS 2048 MiB, timeout 20 seconds; no findings |
+
+The campaign used six fresh public synthetic 65-byte seeds and at most eight API
+operations per input. `ASAN_OPTIONS=detect_leaks=0` was explicit; LeakSanitizer
+coverage is not claimed. Evolving corpus/logs/artifacts remain temporary or ignored.
+
+All 165 original files and 589 frozen historical reference code/fixture paths
+(excluding the intentionally updated reference README prose) remain byte-identical
+to the verified baseline; all ten historical Rust helpers are preserved. V1-v11
+canonical expectations/generators/encoders, original history/attribution/license,
+public visibility and GPL-2.0-only stable workspace remain intact. No stable
+dependency, proprietary-asset or private-repository access was introduced.
+All requested milestone documentation and navigation are updated.
+
+PR #15 originally stopped open/unmerged for owner review. The M3d3f mission
+conditionally authorizes its regular merge after a documentation correction and
+fresh local/exact-head remote checks; auto-merge stays disabled. Full
+original type 10 pain/death/raise/drop/run gameplay, SpidRefire, other attacks,
+actual player damage, dynamic sectors, demos and rendering remain excluded.
+Recommended next focused milestone: original A_SargAttack melee action with a
+separate source investigation and independent range/damage/state/RNG evidence.
+That recommendation authorizes no additional implementation.
+
+## M3d3e reviewed-head finalization for M3d3f
+
+Live PR #15 matches reviewed head `ae78d76cae69b4f36811110009454df479a33cc6`
+and base `31b4830945a60c837065c0e3c29d10494e84f20e`. No intervening commits,
+comments, reviews or inline threads were found. Reviewed
+[CI 40668964558](https://github.com/Copgunn/DOOM/actions/runs/40668964558)
+passed Linux, Windows, macOS and Rust 1.85 on that exact head. No demonstrated
+blocking defect or unexpected runtime change was found within the declared slice.
+
+This correction changes Markdown prose only: reviewed SHA/CI and the mission's
+conditional regular-merge gates replace provisional review-readiness language.
+Fresh mandatory local checks and exact correction-head CI must pass before the
+authorized regular merge. Verify ordered parents/tree, local/remote master,
+original/reference/license protections and exact post-merge CI before M3d3f
+runtime. No squash, force-push, history rewrite, auto-merge, branch deletion or
+new M3d3f merge is authorized.
+
+## M3d3e macOS CI recovery investigation
+
+Correction `d1150956a1ad55609a6849ba9a54c06d09a2f4ef` passed fresh local
+checks (192 workspace/MSRV each, 168 release, twelve C/encoder pairs and twelve
+asserted debug/release examples). In
+[run 40724946213](https://github.com/Copgunn/DOOM/actions/runs/40724946213),
+Linux, Windows and Rust 1.85 passed; macOS attempts 1/2 were cancelled after
+approximately 15 minutes each, with empty runner identities and zero steps.
+Neither reached checkout, compilation, dependency installation or tests.
+
+The public [attempt-2 job annotations](https://github.com/Copgunn/DOOM/actions/runs/40724946213/job/122959366390)
+report "The job was not acquired by Runner of type hosted even after multiple
+attempts", an internal server error with correlation ID
+`29e29c93-f51f-4bda-b567-bdf9a244f663`, and three warnings: "Due to capacity
+constraints, jobs targeting macOS arm64 runners may experience longer queue
+times." This establishes a hosted-runner acquisition failure with an explicit
+arm64 capacity warning; deeper service/billing causes are not independently known.
+The unchanged-head job was retried separately as attempt 3 before any CI change.
+It remained queued/unassigned while the correction was prepared and local checks
+were refreshed. A correction push may supersede that pending retry through normal
+workflow/ref concurrency; that is separate from the earlier completed acquisition
+failures. Its observed conclusion and subsequent exact-head validation belong in
+the PR description after completion; no successful recovery is claimed here.
+
+The only active run for this PR was this run. The workflow's concurrency group
+includes workflow/ref; no newer competing run explained the earlier cancellations.
+Fail-fast is disabled. Workflow contents permission remains read-only and
+checkout does not persist credentials. Repository Actions administration is not
+exposed by the connector; branch-protection reads return integration HTTP 403.
+The accessible repository ruleset list is empty. Account Actions limits, billing,
+and private service-health details are inaccessible; no quota diagnosis is claimed.
+The public [GitHub status page](https://www.githubstatus.com/) reported Actions
+operational and no unresolved incidents when checked on 2026-10-28; that global
+status does not establish availability of the affected macOS pool. The official
+[hosted-runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories)
+lists Intel macOS labels among standard public-repository runners, whose usage
+is free and unlimited. This does not expose this account's actual limits/settings.
+
+The [official runner catalog at commit 09456acd](https://github.com/actions/runner-images/blob/09456acd2718d935451373231c236286f861fd9c/README.md#available-images)
+lists `macos-latest` as macOS 26 arm64 and `macos-26-intel` as supported macOS 26
+x64. The CI-only recovery maps the existing logical macOS matrix entry to that
+GitHub-hosted Intel label, retaining its required check name and every existing
+checkout/toolchain/format/Clippy/build/test/release/example/rustdoc step. Recorded
+reference/golden comparisons run through the workspace tests; original-C
+regeneration remains Linux-only. No optional check, alternate OS, self-hosted
+runner, dependency, gameplay change or protection change is introduced. This
+validates Intel macOS; it does not claim recovered arm64 availability or coverage.
+All four jobs must pass again on the exact changed head before regular merge,
+and again on the exact merge commit before M3d3f runtime work.

@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b merged; M3d3a merged; M3d3b merged; M3d3c merged; M3d3d shotgunner foundations implemented for review**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b merged; M3d3a merged; M3d3b merged; M3d3c merged; M3d3d merged; M3d3e chaingunner foundations implemented for review**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -110,7 +110,7 @@ M3 as a whole remains incomplete.
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented, validated and merged |
 | M3c | Actor states, type-driven spawning and death | Implemented, validated and merged |
-| M3d | Combat subphases below | M3d1/M3d2/M3d2b merged; M3d3a merged; M3d3b merged; M3d3c merged; M3d3d implemented for review; later work planned |
+| M3d | Combat subphases below | M3d1/M3d2/M3d2b merged; M3d3a merged; M3d3b merged; M3d3c merged; M3d3d merged; M3d3e implemented for review; later work planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
 
 M3a acceptance evidence:
@@ -203,7 +203,7 @@ repository. Custom wgpu rendering with Vulkan preferred remains later work.
 | M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Merged as c924f18 after fresh and post-merge CI |
 | M3d2 | Player weapons, psprites and ammo | Merged as 955f690 after fresh/post-merge CI |
 | M3d2b | Bounded original projectile foundations | Implemented, validated and merged |
-| M3d3 | Monster targeting/perception, movement, attacks and AI | M3d3a merged; M3d3b merged; M3d3c merged; M3d3d shotgunner foundations implemented for review |
+| M3d3 | Monster targeting/perception, movement, attacks and AI | M3d3a merged; M3d3b merged; M3d3c merged; M3d3d merged; M3d3e chaingunner foundations implemented for review |
 | M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
 
 M3d1 branch: `feat/m3d1-damage-hitscan`, based on verified M3c merge `4dbb0a5`.
@@ -430,8 +430,8 @@ combat, M3e dynamic sectors, M4 demos and M5 rendering remain deferred.
 
 Branch `feat/m3d3d-shotgunner-attacks` starts at verified master `9b8fde8`.
 [Investigation](M3D3D_REFERENCE.md) commit `51a2636` precedes runtime.
-[PR #14](https://github.com/Copgunn/DOOM/pull/14) has conditional regular-merge
-authorization in the M3d3e mission after its correction and fresh validation gates.
+[PR #14](https://github.com/Copgunn/DOOM/pull/14) completed its authorized regular
+merge as `31b4830` after correction/fresh checks and exact post-merge CI.
 
 - [x] PR #13 correction, fresh local/remote checks, regular merge, parents/tree,
   master and exact post-merge CI verified before runtime work.
@@ -450,11 +450,48 @@ authorization in the M3d3e mission after its correction and fresh validation gat
   jobs of [CI 40656926875](https://github.com/Copgunn/DOOM/actions/runs/40656926875).
 - [x] Reviewed final `dd1450ba3525ec75db0d7c740d387ca5e8d0cf98` passed
   [CI 40659174203](https://github.com/Copgunn/DOOM/actions/runs/40659174203).
-  Record the correction head and its fresh CI on PR #14 after verification.
+  Correction/merge evidence is recorded in VALIDATION and on PR #14.
 - [x] Conditional owner authorization for a regular merge in the M3d3e mission.
-- [ ] Correction-head local/remote checks, regular merge and verified post-merge CI.
+- [x] Correction `64cf9a9`, fresh CI 40661503550, regular merge `31b4830` and
+  exact post-merge CI 40662401302 verified before M3d3e.
 
 This accepts the declared action/fixture closure only. Full original Shotgun Guy,
 drops, other attacks, actual player damage, dynamic sectors and demo compatibility
 remain deferred. The next bounded attack/actor closure requires its own source
 investigation and owner scope; no further gameplay is authorized by this milestone.
+
+## M3d3e — Chaingunner attack and refire foundations
+
+Branch `feat/m3d3e-chaingunner-refire` starts at verified master `31b4830`.
+[Investigation](M3D3E_REFERENCE.md) commit `b9855f4` precedes runtime.
+[PR #15](https://github.com/Copgunn/DOOM/pull/15) has conditional regular-merge
+authorization in the M3d3f mission after its correction and fresh validation gates.
+
+- [x] PR #14 corrected, fresh local/exact-head checks passed, regular merge with
+  verified parents/tree/master and successful exact post-merge CI before runtime.
+- [x] Exact CPOS 10/4/4/1, sprite 38/fullbright frames, independent shots, shotgun
+  sound before internal facing, source spread/damage/impact/RNG and live re-aiming.
+- [x] Genuine refire: facing before RNG, below-40 continuation, lazy null/mobj-
+  health/sight checks and immediate see/Chase/Look movement/state actions.
+- [x] Strict owner/state/reference/coordinate/work/counter preflight; canonical
+  error atomicity; current-shot planning without persistent cache or world clone.
+- [x] 67 compiled original bodies, 153 scenarios exercising all 20 supplied maps;
+  268,606 actor fields, 63,308 ordered observations and 10,697 raw RNG draws.
+- [x] Separate 2,048-case controlled-dependency C boundary probe, including 40,
+  which is absent from the authentic gameplay LUT; no production RNG override.
+- [x] Independent v12: 1,544 captures/110 full byte fixtures; asserted twelfth
+  example with digest `54ac5f9c158c8e29`; all historical v1-v11 suites preserved.
+- [x] Ten policy tests; 192 workspace/MSRV checks each, 168 release tests; all
+  eleven fuzz builds and 10,000 ASan executions without findings, leaks disabled.
+- [x] Implementation `e160f89979f6f8eebcf14869ebf1aaf0beedcc7e` passed all four
+  jobs of [CI 40667321344](https://github.com/Copgunn/DOOM/actions/runs/40667321344).
+- [x] Reviewed final `ae78d76cae69b4f36811110009454df479a33cc6` passed
+  [CI 40668964558](https://github.com/Copgunn/DOOM/actions/runs/40668964558).
+  Record the correction head and its fresh CI on PR #15 after verification.
+- [x] Conditional owner authorization for a regular merge in the M3d3f mission.
+- [ ] Correction-head local/remote checks, regular merge and exact post-merge CI.
+
+Acceptance covers this bounded fixture/action closure. Full Chaingunner/type 10,
+drops/pain/death/raise gameplay, SpidRefire, other attacks, actual player damage,
+dynamic sectors, demos and rendering remain deferred. The next focused milestone
+requires a separate source investigation and authorization.

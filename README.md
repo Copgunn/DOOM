@@ -38,8 +38,11 @@ attack selection and a complete admitted A_PosAttack animation in profile 10,
 on labelled synthetic actors, in [PR #13](https://github.com/Copgunn/DOOM/pull/13).
 It merged regularly as `9b8fde8` after correction and fresh local/remote gates.
 M3d3d adds bounded source shotgunner multi-pellet attacks in profile 11 in
-[PR #14](https://github.com/Copgunn/DOOM/pull/14). The M3d3e mission conditionally
-authorizes its regular merge after documentation correction and fresh checks.
+[PR #14](https://github.com/Copgunn/DOOM/pull/14), regularly merged as `31b4830`
+after correction and fresh/post-merge CI. M3d3e adds bounded chaingunner attack/
+refire in profile 12 in [PR #15](https://github.com/Copgunn/DOOM/pull/15),
+reviewed; the M3d3f mission conditionally authorizes its regular merge after
+documentation correction and fresh local/remote checks.
 Complete original monsters,
 actual player damage and a playable client remain future work. Exact gates and
 limitations are in the [roadmap](docs/ROADMAP.md) and
@@ -83,6 +86,8 @@ Implemented:
   FaceTarget, bounded PosAttack with shared real impacts/damage, and DSIM-v10.
 - Explicit M3d3d profile: one shared aim and three sequential SPosAttack pellets,
   exact SPOS 10/10/10 timing/fullbright, bounded preflight and DSIM-v11.
+- Explicit M3d3e profile: original CPOS 10/4/4/1, separately aimed shots, source
+  refire short-circuit decisions, immediate see/Chase and DSIM-v12.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
 Choose the compatibility profile explicitly:
@@ -100,6 +105,7 @@ Choose the compatibility profile explicitly:
 | `Simulation::monster_pursuit` | DSIM-v9 | M3d3b perception plus non-attacking pursuit on labelled native look/chase fixtures; grounded static-map movement |
 | `Simulation::with_monster_attack_registry` | DSIM-v10 | M3d3c explicit fixture registry: one native attacker, source range/selection/facing, bounded PosAttack and unbound damage targets |
 | `Simulation::with_shotgunner_registry` | DSIM-v11 | M3d3d explicit SPOS fixture: source Look/Chase/facing, shared aim, three sequential hitscan pellets and real unbound damage/effects |
+| `Simulation::with_chaingunner_registry` | DSIM-v12 | M3d3e explicit CPOS fixture: independently aimed single shots, source refire and immediate see/Chase handoffs |
 
 M3b consumes supplied BLOCKMAP lists in reference order. Conservative omissions
 are diagnostic, not automatic rebuilds or proof of broken geometry. Missing
@@ -464,7 +470,8 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d3a | Monster perception and target acquisition | Merged as 839fbab |
 | M3d3b | Source pursuit and movement decisions | Merged as 0007af1 |
 | M3d3c | Attack selection and bounded source hitscan action | Merged as 9b8fde8 |
-| M3d3d | Source shotgunner three-pellet foundations | Reviewed; conditional regular merge after fresh gates |
+| M3d3d | Source shotgunner three-pellet foundations | Merged as 31b4830 |
+| M3d3e | Source chaingunner attack/refire foundations | Reviewed; conditional regular merge after fresh gates |
 | Later M3d3–M3e | Remaining attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
@@ -579,3 +586,33 @@ per tic. A non-null blast conservatively requires three free actor slots even
 when the prospective shots miss; pending removals give no capacity credit. Null
 returns need no slots. Complete Shotgun Guy, drops, other attacks, actual player
 damage and full vanilla/demo compatibility remain outside this slice.
+
+## Chaingunner attacks and refire (M3d3e)
+
+```sh
+cargo run -p doom-sim --example chaingunner_attacks --locked
+python3 tools/reference/check_chaingunner_attacks.py
+```
+
+The asserted example compares eight public synthetic scenarios with original C
+and independent v12 bytes at every capture. It covers hit/miss permutations,
+a moving target and fresh aim, acquisition/pursuit, shotgun sound before internal
+facing, real impacts/damage, dead/occluded refire exits with immediate Chase, and
+repeated firing pairs. The 150-tic cycle ends at `54ac5f9c158c8e29`. All eleven
+earlier examples remain available; no assets, network or devices are needed.
+
+`with_chaingunner_registry(map, limit, registry, options)` accepts the exact named
+fixture adaptations in [M3D3E_REFERENCE](docs/M3D3E_REFERENCE.md) and the example.
+`chaingunner_attack(actor)` performs one original CPosAttack;
+`chaingunner_refire(actor)` performs the original decision and immediate handoff.
+Normal state entry/countdown uses the same services. CPOS preserves sprite 38,
+frames 4/32773/32772/5 and 10/4/4/1 tics; every shot has its own facing, aim and
+spread/damage/effect draws. Refire faces before its draw: below 40 retains the
+loop, otherwise null/dead mobj/failed source sight returns immediately to see.
+
+The original RNG never returns 40. Actual table values 39/41 are tested, with a
+separate controlled-dependency C probe for the exact threshold. One stationary
+first owner, unbound dummy bodies, validated references and existing work/movement
+bounds retain preflight atomicity. Hits reserve their one impact slot; misses,
+null actions and refire need no impact allocation. Full Chaingunner, drops, other
+attacks, actual player damage and complete vanilla/demo compatibility stay deferred.

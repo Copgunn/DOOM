@@ -16,3 +16,6 @@
 
 /corpus/player_weapons/*
 !/corpus/player_weapons/held_trigger
+
+# Reproducible chaingunner seeds are documented; mutations remain local.
+/corpus/chaingunner_attacks/

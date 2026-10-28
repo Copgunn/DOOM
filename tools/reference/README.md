@@ -291,3 +291,37 @@ byte-identical; only this historical README's prose changes. C equivalence,
 independent project bytes and nine Rust policy tests are separate evidence.
 See [M3D3D_REFERENCE](../../docs/M3D3D_REFERENCE.md) and
 [VALIDATION](../../docs/VALIDATION.md) for the ownership proof and observed gates.
+
+## M3d3e
+
+```sh
+python3 tools/reference/generate_m3d3e.py --check
+python3 tools/reference/m3d3e_snapshot_goldens.py --check
+python3 tools/reference/check_chaingunner_attacks.py
+```
+
+The new generator/shim compiles genuine original CPosAttack/CPosRefire alongside
+the 65 earlier bodies, retaining original structs/info/tables/fixed helpers and
+actual short-circuit/nested Chase control flow. Instrumentation records state/
+function actions, shotgun sound before face, independent aim, original spread/
+damage/effects, refire RNG, reached sight and immediate movement/reacquisition.
+Ordered multiplication defines historical shadow/spread/jitter intent. Source/
+header/function/adapter/input/output hashes, GNU C flags, compiler and ABI are
+recorded. The inventory of 67 bodies is not a branch-coverage claim.
+
+153 gameplay scenarios exercise all 20 supplied maps, including two new REJECT
+fixtures. Rust compares 268,606 actor fields, 63,308 ordered observations and
+10,697 raw draws including setup. All refire branches and source effect retirement
+occur. Original LUT values 39/41 bound the threshold; value 40 is absent. A separate
+2,048-row controlled-dependency probe compiles the original refire body with injected
+RNG, recording FaceTarget/state-entry doubles and scripted sight. It records call
+order and is not original-LUT gameplay evidence; the main harness uses real services.
+
+The independent v12 encoder consumes C rows/public inputs/schema only, with cached
+immutable metadata and grouped source operations. It checks 1,544 captures/110 full
+byte streams, real actor generations and event chronology. The twelfth asserted
+example and eleventh bounded fuzz target retain all earlier helpers. Historical
+v1-v11 reference code/fixtures/encoders remain byte-identical; only this historical
+README's prose is updated. C behavior, independent DSIM and Rust policy tests remain
+separate claims. See [M3D3E_REFERENCE](../../docs/M3D3E_REFERENCE.md) and
+[VALIDATION](../../docs/VALIDATION.md).

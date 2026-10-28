@@ -642,3 +642,37 @@ kill on pellet 1/2, ordinary/extreme death and fall-forward RNG. Compiled origin
 body inventory65 is not a claim that every branch of those bodies executes.
 Independent v11 bytes and nine Rust safety tests are distinct evidence. V1-v10
 expected bytes and accepted one-bullet PosAttack behavior remain unchanged.
+
+## M3d3e chaingunner profile (DSIM-v12)
+
+Exact labelled CPOS states preserve sprite 38, frames 4/32773/32772/5 and 10/4/4/1
+tics. CPosAttack returns on null; otherwise shotgun sound precedes internal facing,
+fresh aim, left/right spread and ((R%5)+1)*3 damage through real hitscan/effects.
+Each subsequent state invocation observes current target position, health, flags,
+momentum and RNG. The initial animation face and refire face remain independent.
+
+Refire faces before its draw. Values below 40 retain the natural attack loop
+without checking target/health/sight. Higher values short-circuit null, mobj health
+<=0 and original REJECT/BSP sight; roster health is separate. A stop immediately
+enters see, executing source Chase/Look/reacquisition/JUSTATTACKED/movement and any
+reachable new ATK1. Later nested queries are distinct from refire-condition sight.
+No cross-tic aim or firing cache, ammo model or batched callback loop is introduced.
+
+Rust admission keeps one unshootable first floor-owner with zero physical momentum,
+source-body dummy 135 targets, real blood/puff, fixed state roles and existing map/
+work/counter/generation guards. Hits reserve one real impact; null/miss/refire need
+none. Pending retirement provides no allocation credit. Refire's positive-state
+closure and bounded shared services require no world clone or speculative RNG.
+Ten policy tests separately verify resource/identity/atomicity boundaries.
+
+153 actual original-C scenarios exercise all 20 supplied synthetic maps, including
+REJECT, wall occlusion, target changes, immediate nested Chase movement and repeated
+loops. The 67-body compiled inventory is not full branch coverage. Original RNG
+contains 39 and 41 but no 40. The separate 2,048-case controlled-RNG dependency probe
+checks the original decision body at 40 and other boundaries; it is not authentic
+LUT gameplay evidence. Independent v12 bytes are a third, project-format claim.
+
+Full MT_CHAINGUY/type 10, original pain/death/raise/full run/drop gameplay,
+SpidRefire, other attacks, player pointers/damage, specials, demos and presentation
+remain excluded. V1-v11 bytes and accepted PosAttack/SPosAttack behavior stay intact;
+no full Linux/DOS synchronization or commercial-map validation is claimed.

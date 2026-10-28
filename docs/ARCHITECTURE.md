@@ -475,3 +475,27 @@ order matches appended real impacts, without processing them early or crediting
 pending retirement. Real thinker traversal later processes bodies/effects in its
 existing same-pass order. Null returns need no capacity. All projection/trace/
 coordinate/admission errors precede authoritative sound, state, health or RNG.
+
+## M3d3e cross-tic CPOS and immediate refire handoffs
+
+Profile 12 adds no scheduler or persistent firing counter. Exact positive CPOS
+states 4/5/6/7 encode the 10/4/4/1 loop. Every CPosAttack uses the shared single-shot
+plan and executor; an explicit sound-order parameter preserves source PosAttack's
+old order and CPosAttack's shotgun-before-face order. Only the current callback
+is prepared. State 4/5/7 expiry prepares a shot from current authoritative bodies,
+so moving, shadowed, damaged or dead targets are observed anew on the next shot.
+
+Refire uses a pure lazy decision helper after source facing and RNG. Health and
+sight closures execute only when the earlier conditions reach them. Its event
+precedes immediate LifeHost see-state entry, which executes source Chase/Look,
+reacquisition, JUSTATTACKED, movement, relinking and any new ATK1 in the same call.
+Read-only owner/reference/map/state/counter preflight establishes that the strict
+closure's existing sight/movement services cannot recoverably fail. Positive tics
+prevent immediate nested shooting; refire needs no allocation, copied world or
+speculative RNG plan. The accepted two-Chase/one-successful-walk bound and reaction
+guard are exercised by source traces and separate arithmetic policy tests.
+
+One hit reserves its real impact slot before sound/draws. Null/miss/refire can
+succeed at capacity; pending retirement supplies no credit for a hit. Actual
+player binding/damage stays protected. New tag 20 records only the refire branch;
+existing actor/state/RNG/sight/combat events carry the remaining chronology.

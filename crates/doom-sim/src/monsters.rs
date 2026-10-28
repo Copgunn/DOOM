@@ -7,7 +7,7 @@ use std::{error::Error, fmt};
 const OWNERS: [u16; 6] = [3, 5, 18, 19, 21, 136];
 const OWNER_FLAGS: u32 = 2 | 32 | 64 | 128 | 1024 | 2048 | 2097152 | 33554432;
 const TARGET_FLAGS: u32 = 2 | 4 | 32 | 64 | 1024 | 2048 | 262144 | 524288 | 1048576 | 33554432;
-/// Profile-10 rejection, always before authoritative action effects.
+/// Bounded monster-action rejection, before authoritative action effects.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MonsterError {
     /// Requires the explicit bounded attack profile.
@@ -54,7 +54,7 @@ pub enum MonsterEvent {
         /// Source result.
         decision: RangeDecision,
     },
-    /// Ordered gameplay draw: 0/1=shadow,2/3=spread,4=damage,5=missile chance.
+    /// Ordered gameplay draw: 0/1=shadow,2/3=spread,4=damage,5=missile chance,6=refire.
     Random {
         /// Owner.
         actor: ActorId,
@@ -90,7 +90,7 @@ pub enum MonsterEvent {
         /// Resulting source flags.
         flags: u32,
     },
-    /// Pure source aim result before pistol sound and spread draws.
+    /// Pure source aim completion, before spread draws (sound order is action-specific).
     Aim {
         /// Owner.
         actor: ActorId,
@@ -325,6 +325,13 @@ pub(crate) fn face<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
     );
 }
 pub(crate) fn pos_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
+    single_attack(h, id, false);
+}
+pub(crate) fn single_attack<A: ActorAccess>(
+    h: &mut LifeHost<'_, A>,
+    id: ActorId,
+    sound_before_face: bool,
+) {
     if h.access.get(id).unwrap().life.unwrap().target.is_none() {
         return;
     }
@@ -336,6 +343,9 @@ pub(crate) fn pos_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
         .clone();
     assert_eq!(plan.owner, id);
     assert_eq!(plan.rng, *h.rng);
+    if sound_before_face {
+        h.sound(Some(id), lifecycle::source_sound("sfx_shotgn").unwrap());
+    }
     face(h, id);
     observe(
         h,
@@ -344,7 +354,9 @@ pub(crate) fn pos_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
             result: Box::new(plan.aim.clone()),
         },
     );
-    h.sound(Some(id), lifecycle::source_sound("sfx_pistol").unwrap());
+    if !sound_before_face {
+        h.sound(Some(id), lifecycle::source_sound("sfx_pistol").unwrap());
+    }
     draw(h, id, 2);
     draw(h, id, 3);
     draw(h, id, 4);
@@ -380,6 +392,9 @@ impl Simulation {
             .is_some_and(|l| OWNERS.contains(&l.actor_type.0))
     }
     pub(crate) fn validate_monster_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
+        if self.profile == Profile::Chaingunner {
+            return self.validate_chaingun_type(ty);
+        }
         if self.profile == Profile::Shotgunner {
             return self.validate_shotgun_type(ty);
         }
@@ -444,6 +459,9 @@ impl Simulation {
         ty: ActorTypeId,
         state: StateId,
     ) -> Result<(), SimError> {
+        if self.profile == Profile::Chaingunner {
+            return self.chaingun_state_role(ty, state);
+        }
         if self.profile == Profile::Shotgunner {
             return self.shotgun_state_role(ty, state);
         }
@@ -568,7 +586,15 @@ impl Simulation {
             let l = a.life.unwrap();
             if self.monster_is_owner(id) {
                 self.preflight_monster_callback(id)?;
-                if l.tics == 1 && l.state == Some(StateId(4)) {
+                if l.tics == 1
+                    && l.state.is_some_and(|s| {
+                        if self.profile == Profile::Chaingunner {
+                            [4, 5, 7].contains(&s.0)
+                        } else {
+                            s.0 == 4
+                        }
+                    })
+                {
                     shot_owner = Some(id);
                 }
             } else if a.position().iter().any(|v| !crate::sight::within(*v, 994)) {
@@ -580,7 +606,10 @@ impl Simulation {
         }
         Ok(shot_owner)
     }
-    fn prepare_monster_shot(&mut self, id: ActorId) -> Result<Option<MonsterShotPlan>, SimError> {
+    pub(crate) fn prepare_monster_shot(
+        &mut self,
+        id: ActorId,
+    ) -> Result<Option<MonsterShotPlan>, SimError> {
         self.preflight_monster_callback(id)?;
         let a = *self.actor(id).unwrap();
         let Some(target) = a.life.unwrap().target else {
@@ -631,11 +660,12 @@ impl Simulation {
             self.preflight_monster_callback(id)?;
         }
         self.validate_entry(state)?;
-        let plan = if state == StateId(5) {
-            self.prepare_monster_shot(id)?
-        } else {
-            None
-        };
+        let plan =
+            if state == StateId(5) || self.profile == Profile::Chaingunner && state == StateId(6) {
+                self.prepare_monster_shot(id)?
+            } else {
+                None
+            };
         self.enter_monster_planned(id, state, plan.as_ref());
         Ok(())
     }
@@ -669,7 +699,7 @@ impl Simulation {
         self.monster_action(id, true)
     }
     fn monster_action(&mut self, id: ActorId, pos: bool) -> Result<(), SimError> {
-        if pos && self.profile == Profile::Shotgunner {
+        if pos && matches!(self.profile, Profile::Shotgunner | Profile::Chaingunner) {
             return Err(MonsterError::Definition.into());
         }
         self.preflight_monster_callback(id)?;
@@ -697,7 +727,7 @@ impl Simulation {
         }
         Ok(())
     }
-    fn monster_host<'a>(
+    pub(crate) fn monster_host<'a>(
         &'a mut self,
         shot: Option<&'a MonsterShotPlan>,
     ) -> LifeHost<'a, &'a mut ThinkerStore<Actor>> {
@@ -708,6 +738,7 @@ impl Simulation {
                 pursuit: true,
                 monsters: true,
                 shotgunner: self.profile == Profile::Shotgunner,
+                chaingunner: self.profile == Profile::Chaingunner,
                 shotgun: None,
                 shot,
             }),

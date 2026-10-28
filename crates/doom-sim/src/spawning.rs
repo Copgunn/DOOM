@@ -123,7 +123,9 @@ impl Simulation {
     }
     pub(crate) fn validate_entry(&self, state: StateId) -> Result<(), SimError> {
         let registry = self.registry_required()?;
-        if self.profile == Profile::Shotgunner {
+        if self.profile == Profile::Chaingunner {
+            registry.validate_state_chaingunner(state)?;
+        } else if self.profile == Profile::Shotgunner {
             registry.validate_state_shotgunner(state)?;
         } else if self.profile.uses_monsters() {
             registry.validate_state_monsters(state)?;
@@ -170,6 +172,7 @@ impl Simulation {
                 pursuit: (self.profile == Profile::Pursuit || self.profile.uses_monsters()),
                 monsters: self.profile.uses_monsters(),
                 shotgunner: self.profile == Profile::Shotgunner,
+                chaingunner: self.profile == Profile::Chaingunner,
                 shotgun,
                 shot,
                 players: &self.perception_players,
