@@ -1692,3 +1692,53 @@ authorized regular merge. Verify ordered parents/tree, local/remote master,
 original/reference/license protections and exact post-merge CI before M3d3f
 runtime. No squash, force-push, history rewrite, auto-merge, branch deletion or
 new M3d3f merge is authorized.
+
+## M3d3e macOS CI recovery investigation
+
+Correction `d1150956a1ad55609a6849ba9a54c06d09a2f4ef` passed fresh local
+checks (192 workspace/MSRV each, 168 release, twelve C/encoder pairs and twelve
+asserted debug/release examples). In
+[run 40724946213](https://github.com/Copgunn/DOOM/actions/runs/40724946213),
+Linux, Windows and Rust 1.85 passed; macOS attempts 1/2 were cancelled after
+approximately 15 minutes each, with empty runner identities and zero steps.
+Neither reached checkout, compilation, dependency installation or tests.
+
+The public [attempt-2 job annotations](https://github.com/Copgunn/DOOM/actions/runs/40724946213/job/122959366390)
+report "The job was not acquired by Runner of type hosted even after multiple
+attempts", an internal server error with correlation ID
+`29e29c93-f51f-4bda-b567-bdf9a244f663`, and three warnings: "Due to capacity
+constraints, jobs targeting macOS arm64 runners may experience longer queue
+times." This establishes a hosted-runner acquisition failure with an explicit
+arm64 capacity warning; deeper service/billing causes are not independently known.
+The unchanged-head job was retried separately as attempt 3 before any CI change.
+It remained queued/unassigned while the correction was prepared and local checks
+were refreshed. A correction push may supersede that pending retry through normal
+workflow/ref concurrency; that is separate from the earlier completed acquisition
+failures. Its observed conclusion and subsequent exact-head validation belong in
+the PR description after completion; no successful recovery is claimed here.
+
+The only active run for this PR was this run. The workflow's concurrency group
+includes workflow/ref; no newer competing run explained the earlier cancellations.
+Fail-fast is disabled. Workflow contents permission remains read-only and
+checkout does not persist credentials. Repository Actions administration is not
+exposed by the connector; branch-protection reads return integration HTTP 403.
+The accessible repository ruleset list is empty. Account Actions limits, billing,
+and private service-health details are inaccessible; no quota diagnosis is claimed.
+The public [GitHub status page](https://www.githubstatus.com/) reported Actions
+operational and no unresolved incidents when checked on 2026-10-28; that global
+status does not establish availability of the affected macOS pool. The official
+[hosted-runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories)
+lists Intel macOS labels among standard public-repository runners, whose usage
+is free and unlimited. This does not expose this account's actual limits/settings.
+
+The [official runner catalog at commit 09456acd](https://github.com/actions/runner-images/blob/09456acd2718d935451373231c236286f861fd9c/README.md#available-images)
+lists `macos-latest` as macOS 26 arm64 and `macos-26-intel` as supported macOS 26
+x64. The CI-only recovery maps the existing logical macOS matrix entry to that
+GitHub-hosted Intel label, retaining its required check name and every existing
+checkout/toolchain/format/Clippy/build/test/release/example/rustdoc step. Recorded
+reference/golden comparisons run through the workspace tests; original-C
+regeneration remains Linux-only. No optional check, alternate OS, self-hosted
+runner, dependency, gameplay change or protection change is introduced. This
+validates Intel macOS; it does not claim recovered arm64 availability or coverage.
+All four jobs must pass again on the exact changed head before regular merge,
+and again on the exact merge commit before M3d3f runtime work.
