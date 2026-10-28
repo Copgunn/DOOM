@@ -7,3 +7,6 @@
 !/corpus/wad/duplicates
 /corpus/map/*
 !/corpus/map/classic_square
+
+/corpus/actor_states/*
+!/corpus/actor_states/native_chain

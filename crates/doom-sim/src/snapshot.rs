@@ -197,6 +197,10 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        Event::ActorState(event) => {
+            b.push(12);
+            state_event_bytes(&mut b, event);
+        }
         Event::Phase(p) => b.extend([
             0,
             match p {
@@ -306,12 +310,24 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::Foundation => 1_u32,
         crate::Profile::PlayerCollision => 2,
         crate::Profile::MultiSector => 3,
+        crate::Profile::ActorStates => 4,
     };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
     let [p, m] = sim.rng.indices();
     field(&mut fields, "rng.gameplay", [p]);
     field(&mut fields, "rng.miscellaneous", [m]);
+    if version == 4 {
+        field(
+            &mut fields,
+            "actors.options",
+            [
+                sim.actor_options.skill as u8,
+                0,
+                u8::from(sim.actor_options.no_monsters),
+            ],
+        );
+    }
     field(
         &mut fields,
         "store.max_slots",
@@ -383,10 +399,15 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 field(
                     &mut fields,
                     format!("{prefix}.flags"),
-                    crate::multisector::flags(a).to_le_bytes(),
+                    a.life
+                        .map_or_else(|| crate::multisector::flags(a), |life| life.flags)
+                        .to_le_bytes(),
                 );
             }
-            if version == 3 {
+            if version == 4 {
+                life_fields(&mut fields, &prefix, a.life.expect("typed profile"));
+            }
+            if version >= 3 {
                 let location = a.location.expect("M3b actor location");
                 field(
                     &mut fields,
@@ -418,7 +439,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .collect::<Vec<_>>(),
         );
     }
-    if version == 3 {
+    if version >= 3 {
         field(&mut fields, "world.blockmap_policy", [1]);
         field(
             &mut fields,
@@ -449,6 +470,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .order
                 .iter()
                 .copied()
+                .filter(|id| {
+                    crate::lifecycle::in_sector_list(sim.actors.get(*id).expect("linked actor"))
+                })
                 .filter(|id| {
                     sim.actors
                         .get(*id)
@@ -604,6 +628,142 @@ pub(crate) fn map_fields(map: &Map) -> Vec<StateField> {
     }
     field(&mut fields, "map.blockmap.cell_ranges", b);
     fields
+}
+
+// Explicit profile-4 encoding. Older versions never call these helpers.
+fn action_bytes(b: &mut Vec<u8>, action: crate::ActorAction) {
+    use crate::{ActorAction::*, ProbeAction};
+    match action {
+        None => b.push(0),
+        Original(id) => {
+            b.push(1);
+            b.extend(id.0.to_le_bytes());
+        }
+        Probe(probe) => {
+            b.push(2);
+            match probe {
+                ProbeAction::Random => b.push(0),
+                ProbeAction::Enter(state) => {
+                    b.push(1);
+                    b.extend(state.0.to_le_bytes());
+                }
+                ProbeAction::SpawnTarget(ty) => {
+                    b.push(2);
+                    b.extend(ty.0.to_le_bytes());
+                }
+                ProbeAction::RemoveSelf => b.push(3),
+                ProbeAction::RemoveTarget => b.push(4),
+                ProbeAction::TargetSelf => b.push(5),
+            }
+        }
+    }
+}
+fn state_event_bytes(b: &mut Vec<u8>, event: &crate::ActorStateEvent) {
+    use crate::ActorStateEvent::*;
+    match event {
+        Initialized { actor, actor_type } => {
+            b.push(0);
+            b.extend(id(*actor));
+            b.extend(actor_type.0.to_le_bytes());
+        }
+        Entered { actor, state } => {
+            b.push(1);
+            b.extend(id(*actor));
+            b.extend(state.0.to_le_bytes());
+        }
+        Action { actor, action } => {
+            b.push(2);
+            b.extend(id(*actor));
+            action_bytes(b, *action);
+        }
+        Sound { actor, sound } => {
+            b.push(3);
+            b.extend(optional_id(*actor));
+            b.extend(sound.to_le_bytes());
+        }
+        Target { actor, target } => {
+            b.push(4);
+            b.extend(id(*actor));
+            b.extend(optional_id(*target));
+        }
+        Death(actor) => {
+            b.push(5);
+            b.extend(id(*actor));
+        }
+        TargetUnavailable(actor) => {
+            b.push(6);
+            b.extend(id(*actor));
+        }
+        Random { actor, value } => {
+            b.push(7);
+            b.extend(id(*actor));
+            b.push(*value);
+        }
+    }
+}
+fn life_fields(fields: &mut Vec<StateField>, prefix: &str, life: crate::ActorLife) {
+    field(
+        fields,
+        format!("{prefix}.type"),
+        life.actor_type.0.to_le_bytes(),
+    );
+    field(
+        fields,
+        format!("{prefix}.state"),
+        life.state.map_or(u16::MAX, |id| id.0).to_le_bytes(),
+    );
+    for (label, value) in [
+        ("tics", life.tics),
+        ("health", life.health),
+        ("reaction_time", life.reaction_time),
+    ] {
+        field(fields, format!("{prefix}.{label}"), value.to_le_bytes());
+    }
+    field(
+        fields,
+        format!("{prefix}.sprite"),
+        life.sprite.to_le_bytes(),
+    );
+    field(fields, format!("{prefix}.frame"), life.frame.to_le_bytes());
+    field(fields, format!("{prefix}.target"), optional_id(life.target));
+    field(
+        fields,
+        format!("{prefix}.death_requested"),
+        [u8::from(life.death_requested)],
+    );
+    let mut b = vec![u8::from(life.spawnpoint.is_some())];
+    if let Some(t) = life.spawnpoint {
+        for v in [t.position.x, t.position.y, t.angle, t.kind] {
+            b.extend(v.to_le_bytes());
+        }
+        b.extend(t.options.to_le_bytes());
+    }
+    field(fields, format!("{prefix}.spawnpoint"), b);
+}
+pub(crate) fn registry_fields(fields: &mut Vec<StateField>, registry: &crate::ActorRegistry) {
+    count(fields, "registry.states.count", registry.states.len());
+    for (i, state) in registry.states.iter().enumerate() {
+        let mut b = vec![state.name.len() as u8];
+        b.extend(state.name.as_bytes());
+        b.extend(state.sprite.to_le_bytes());
+        b.extend(state.frame.to_le_bytes());
+        b.extend(state.tics.to_le_bytes());
+        action_bytes(&mut b, state.action);
+        b.extend(state.next.0.to_le_bytes());
+        for value in state.misc {
+            b.extend(value.to_le_bytes());
+        }
+        field(fields, format!("registry.state.{i}"), b);
+    }
+    count(fields, "registry.types.count", registry.types.len());
+    for (i, ty) in registry.types.iter().enumerate() {
+        let mut b = vec![ty.name.len() as u8];
+        b.extend(ty.name.as_bytes());
+        for v in ty.properties {
+            b.extend(v.to_le_bytes());
+        }
+        field(fields, format!("registry.type.{i}"), b);
+    }
 }
 
 #[cfg(test)]

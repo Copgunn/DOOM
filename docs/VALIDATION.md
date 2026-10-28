@@ -586,3 +586,129 @@ C-reference and independent golden checks, plus fresh exact-head GitHub Actions.
 Its SHA/run are recorded on PR #5 before merging; earlier success is not a
 substitute. Existing DSIM-v1/v2/v3 fixtures and runtime semantics are unchanged.
 M3c requires separate owner approval and must remain open/unmerged.
+
+## M3b completed finalization (M3c mission)
+
+The live PR #5 head matched reviewed `792af48ec446f7b543c310cb0c7ef422d6ae24cf`
+and reviewed [CI 40602352397](https://github.com/Copgunn/DOOM/actions/runs/40602352397).
+Documentation-only correction `0b4e9480d22989a39645dd9a7873a786f63e53a3` corrected
+the general profile field and delivery status. Mandatory local build/fmt/Clippy,
+79 workspace checks, 55 release tests, Rust 1.85, all C/golden reproductions and
+three-example stdout equality passed without changing v1/v2/v3 fixtures.
+[Fresh correction-head CI 40603814067](https://github.com/Copgunn/DOOM/actions/runs/40603814067)
+passed all four jobs on that exact head before the authorized regular merge.
+
+[PR #5](https://github.com/Copgunn/DOOM/pull/5) is merged/closed. Merge and verified
+remote/local master HEAD: `c791ef81d9cdb5d42638e4806762b8fe32793f3f`. Parents:
+
+1. `764dd9605fa3af3befc133287e9949930981f469`
+2. `0b4e9480d22989a39645dd9a7873a786f63e53a3`
+
+Merge tree equals the corrected head.
+[Post-merge CI 40604227758](https://github.com/Copgunn/DOOM/actions/runs/40604227758)
+passed all four jobs on the exact merge before creating the M3c branch. All 165
+original files remained byte-identical. Public visibility, default master,
+GPL-2.0-only package licensing, attribution and asset exclusions were verified.
+No private repository or commercial data was accessed. No branch was deleted.
+This finalization supersedes the earlier pending M3b review/merge gate above.
+
+## M3c observed local validation (2026-10-28)
+
+Branch: `feat/m3c-actor-states-spawning`, based on verified `c791ef8`.
+Stable rustc 1.99.1 and minimum rustc 1.85.0 on Linux x86_64:
+
+| Check | Observed result |
+| --- | --- |
+| Workspace build, format including fuzz, Clippy `-D warnings` | Passed |
+| Workspace tests | 95 unit/integration + 1 doctest passed; 2 private tests ignored |
+| Release doom-sim/doom-types | 72 passed |
+| Rust 1.85 workspace tests | Same 96 checks passed; 2 private tests ignored |
+| rustdoc `-D warnings` | Passed |
+| All four C generators and four independent golden encoders | Reproduced |
+| Headless debug/release stdout | Identical for all four examples |
+| Actor-state demonstration | 80 asserted tics, 19 entries, 2 actions; final `3dcbad5257374b3e` |
+
+New evidence includes all 967 state and 137 type metadata rows, 393 C actor
+observations and 444 ordered event observations. A separate C admission predicate
+selects all 67 types fitting the flat 128-unit fixture, with 201 three-height
+initialization comparisons. The state scenarios cover countdown/infinite/zero
+initialization, five original actions, controlled death/persistent terminal state,
+null removal/deferred retirement, all five placement skills and nomonsters,
+positive-tic randomization, signed angles/ambush, recursive callbacks, gameplay RNG,
+same-pass child spawning and mutual target/removal order. Independent Python
+encodes 99 v4 digests and 24 full states; full bytes and named fields match.
+All old fixtures/generators/encoders/tables and original fixture helper are preserved.
+
+The 17 new tests include reference comparisons and bounded policy regressions:
+invalid state/sound/type/action references, zero/callback/spawn cycles, entry/step
+work limits, exhausted capacity/whole-batch atomicity, targets across retirement
+and generation reuse, self/mutual targets, XY/Z/state order, no-sector/no-block
+membership, controlled death and null timer preservation. Repeated 300-tic traces
+and 256 generated graphs check determinism and error preservation. These safe
+policy tests are separate from original-C behavioral evidence.
+
+Nightly `1.101.0-nightly (16d1ffac1)` with cargo-fuzz 0.13.2 built all three fuzz
+targets. AddressSanitizer smoke runs completed 10000 actor_states executions
+(max_len 24), 10000 wad executions (max_len 4096) and 10000 map executions
+(max_len 8192), with no sanitizer findings/crashes. The actor campaign took 78
+seconds; it reached 2183 coverage counters/4277 features and about 456 MiB RSS.
+Leak detection was explicitly disabled (`ASAN_OPTIONS=detect_leaks=0`) because
+LeakSanitizer needs tracing unsupported in this managed environment. No leak-
+detection result is claimed. Evolving corpora/artifacts remain ignored; only an
+original reproducible native graph seed is committed. No proprietary data is used.
+
+All stable dependencies remain local; no renderer/audio/platform or scripting
+dependency was introduced. Full player initialization/view/animation, combat/AI,
+weapons/projectiles/pickups/resurrection/respawn, moving sectors/specials, scripts,
+demos, rendering and authentic IWAD/DOS/full-vanilla validation remain unsupported.
+Private assets were neither provisioned nor accessed. M3c was delivered for owner
+review; subsequent merge authorization is recorded below.
+
+## M3c observed remote validation and final-head gate
+
+[PR #6](https://github.com/Copgunn/DOOM/pull/6) targets verified master `c791ef8`.
+Implementation/documentation head `abaa818d64ee269df12e97f4b20e21255bb7c739`
+passed [CI run 40609352627](https://github.com/Copgunn/DOOM/actions/runs/40609352627):
+
+| Job | Observed result |
+| --- | --- |
+| Stable / ubuntu-latest | Build/fmt/Clippy, 96 workspace checks, 72 release tests, all four schemas, C/golden reproductions, four-example stdout equality and docs passed |
+| Stable / windows-latest | Same recorded comparisons, debug/release tests, four-example equality, build/fmt/Clippy and docs passed |
+| Stable / macos-latest | Same recorded comparisons, debug/release tests, four-example equality, build/fmt/Clippy and docs passed |
+| Minimum Rust / 1.85.0 | All 96 workspace checks passed; 2 private tests ignored |
+
+This final documentation-only commit records the PR and observed CI evidence.
+Runtime, reference vectors/goldens, tests and workflow are unchanged. Fresh CI on
+the exact resulting head must pass before review readiness; the verified final
+SHA/run are recorded on PR #6 and in the owner delivery report. PR #6 remains
+open/unmerged at delivery; subsequent conditional owner authorization is below. Public visibility,
+GPL-2.0-only licensing, all 165 originals and all previous fixtures were rechecked.
+Merged M0–M3b feature branches are cleanup candidates after preserving immutable
+historical references; no branches have been deleted.
+
+
+The documentation-only head `66d3cc02a563f709ae2b967566f0ed4e3afd8661` also passed
+[all four CI jobs, run 40609645543](https://github.com/Copgunn/DOOM/actions/runs/40609645543).
+Final review then aligned the native-registry nomonsters skull check with the
+source's type-ID comparison, independently of display-name changes (boss sound
+origins use the same ID helper). The existing placement regression now covers
+renaming/reflagging that source ID without consuming RNG. Source fixtures and
+all counts remain unchanged. Required local checks passed again for this correction;
+fresh exact-head CI is verified before readiness, with its SHA/run recorded on PR #6.
+
+
+## M3c reviewed final head and conditional finalization
+
+The owner reviewed exact head `fdeb900aa496ad593a325aebaf9cb733ef37b89d` and
+[successful CI run 40610005879](https://github.com/Copgunn/DOOM/actions/runs/40610005879).
+All four jobs passed: Linux, Windows and macOS stable plus Rust 1.85.0. The
+reviewed head and live PR #6 head matched without intervening changes. No blocking
+defect was reported within the declared M3c scope.
+
+The M3d1 mission conditionally authorizes a regular merge of PR #6 after final
+documentation corrections and fresh required checks. This correction records the
+reviewed SHA/run directly and updates provisional delivery wording; runtime,
+DSIM-v1/v2/v3/v4 fixtures and reference comparisons remain unchanged. Fresh
+correction-head CI must pass before merging, followed by merge-parent/master and
+post-merge CI verification before M3d1 development begins. M3d1 remains subject to
+its own owner-review gate and must not be merged without separate authorization.

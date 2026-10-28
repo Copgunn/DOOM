@@ -6,7 +6,9 @@ M0 establishes the workspace alongside untouched original source. M1 implements
 bounded archive/map parsing. M2 introduces the fourth crate, `doom-sim`, with a
 functioning headless deterministic foundation. M3a adds an explicit player/solid
 collision profile, documented in [M3A_REFERENCE.md](M3A_REFERENCE.md). M3b adds
-static-sector topology and XY/Z physics; see [M3B_REFERENCE.md](M3B_REFERENCE.md). A playable client and renderer
+static-sector topology and XY/Z physics; see [M3B_REFERENCE.md](M3B_REFERENCE.md).
+M3c adds admitted typed actor lifecycle; see [M3C_REFERENCE.md](M3C_REFERENCE.md).
+A playable client and renderer
 remain future work. Source findings were recorded before implementation in
 [M2_REFERENCE.md](M2_REFERENCE.md).
 The C source is an authoritative behavioral reference, not a Rust design template.
@@ -218,3 +220,27 @@ Forward+ lighting, colored dynamic lights, selective shadows, emissive materials
 and optional atmospheric/volumetric effects are design candidates, not implemented
 features or performance results. Presentation consumes immutable state/events and
 must not influence RNG, collision or tic order. No graphics work is part of M3a.
+
+## M3c typed actor lifecycle
+
+Profile 4 composes the static M3b physics with immutable `ActorRegistry` metadata
+and per-actor `ActorLife`. Registry definitions, action IDs and service dispatch
+are separate. Complete source tables remain recognizable; type admission walks
+spawn/death closures and rejects unavailable actions, unsupported flags and
+map-wide dimension failures. Native `ProbeAction` capabilities test the same
+restricted store context, with no raw pointers, global state or parallel scheduling.
+
+Before players or physics, a bounded state-only pass calculates conservative
+entry/spawn demand and reserves storage. It makes no full simulation/map clone.
+Recoverable graph/capacity/work failures preserve canonical state and RNG. For
+admitted tics, each actor runs XY, Z, countdown and state actions in order. Actions
+may recursively enter states or append/mark actors through a restricted host.
+Appended children can think in that traversal; removal immediately unlinks and
+unbinds input, while storage retirement follows linked thinker scheduling.
+
+Targets use generational IDs. Pending storage remains resolvable; retirement
+invalidates resolution without eagerly clearing references or aliasing a reused
+slot. Full tracing/owner/projectile relationships remain later work. Definition
+and native service boundaries can support future compatibility adapters, but no
+DECORATE/ACS/ZScript or PK3 implementation is present. Enhanced behavior needs an
+explicit profile and licensing review. See [M3C_REFERENCE.md](M3C_REFERENCE.md).

@@ -200,7 +200,9 @@ pub(crate) fn check_things(
                 } else {
                     get(*candidate).expect("spatial entries own valid live handles")
                 };
-                if cell(world, other.spec.position) != [x, y] {
+                if !crate::lifecycle::blocks_cell_index(&other)
+                    || cell(world, other.spec.position) != [x, y]
+                {
                     continue;
                 }
                 result.actors.push(*candidate);

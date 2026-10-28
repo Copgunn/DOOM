@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a implemented, validated and merged; M3b implemented/validated and conditionally accepted for merge**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented/validated and conditionally accepted for regular merge**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -108,8 +108,8 @@ M3 as a whole remains incomplete.
 | Phase | Scope | Status |
 | --- | --- | --- |
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
-| M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented/validated; conditional merge authorized |
-| M3c | Actor states, type-driven spawning and death | Next planned phase |
+| M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented, validated and merged |
+| M3c | Actor states, type-driven spawning and death | Implemented/validated; conditional regular merge authorized |
 | M3d | Weapons, projectiles, damage, monsters and combat | Planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
 
@@ -141,8 +141,9 @@ player thinking, gameplay synchronization, demo playback or DOS compatibility.
 ### M3b acceptance and review boundary
 
 Branch: `feat/m3b-multisector-vertical-physics`, [PR #5](https://github.com/Copgunn/DOOM/pull/5).
-The owner conditionally authorized its regular merge after documentation
-corrections and fresh checks. M3c requires its own owner-review gate.
+Merged by owner-authorized regular commit `c791ef81d9cdb5d42638e4806762b8fe32793f3f`
+after corrected-head CI. Post-merge CI passed before the M3c branch was created.
+M3c requires its own owner-review gate.
 
 - [x] Source findings before runtime changes; immutable original C and separate provenance.
 - [x] Iterative original BSP side/child/leaf semantics, bounded topology validation.
@@ -159,11 +160,41 @@ corrections and fresh checks. M3c requires its own owner-review gate.
 - [x] Required local workspace/release/Rust 1.85 checks; parser fuzz targets compile.
 - [x] Initial Linux/Windows/macOS debug/release and Rust 1.85 CI passed on
   `975e2b9`; final exact-head checks are verified on PR #5 before review readiness.
-- [x] Owner review and conditional regular-merge authorization; fresh correction-head checks remain required.
+- [x] Owner-authorized regular merge; correction-head and post-merge CI passed.
 
 See [M3B_REFERENCE.md](M3B_REFERENCE.md) and [STATE_FORMAT.md](STATE_FORMAT.md).
 M3b is static-sector physical motion, not dynamic doors/lifts, actor state machines,
 complete player view/thinking, combat, enhanced portals, demos or rendering.
+
+### M3c acceptance and review boundary
+
+Branch: `feat/m3c-actor-states-spawning`, [PR #6](https://github.com/Copgunn/DOOM/pull/6),
+based on verified M3b merge `c791ef8`.
+Implemented scope is recorded below; final delivery SHA/CI and PR are in
+[validation evidence](VALIDATION.md). The owner reviewed `fdeb900` and conditionally
+authorized a regular merge after final documentation corrections and fresh CI.
+M3d1 requires its own owner-review and merge authorization.
+
+- [x] Original source findings recorded before runtime implementation.
+- [x] All 137 types/967 states/74 action identities; validated executable subset.
+- [x] Direct spawn, countdown, zero/infinite/null entry, recursive actions and ordering.
+- [x] Five supported source actions; unsupported actions reject before mutation.
+- [x] Typed source spawning; 67 admitted source types at three heights compared to C.
+- [x] Single-player THINGS filtering, RNG, angle, ambush; deferred starts explicit.
+- [x] Controlled death, terminal persistence/null removal and safe retained targets.
+- [x] Append-sensitive callbacks, same-pass child update, deferred retirement.
+- [x] Bounded metadata/closure/preflight work and recoverable failure atomicity.
+- [x] DSIM-v4, 99 independent digests and 24 full byte states; older formats preserved.
+- [x] Asserted asset-free headless example; native probes clearly separated from vanilla.
+- [x] Local, sanitizer, MSRV and cross-platform CI evidence; final-head CI recorded on PR #6.
+- [x] Owner engineering review and conditional regular-merge authorization.
+- [ ] Fresh correction-head CI, regular merge and verified post-merge baseline.
+
+M3d is weapons/projectiles/damage/monster combat. M3e is moving sectors, doors,
+lifts, switches and map specials. Full player thinking, scripts, demos and rendering
+remain outside M3c. Future DECORATE-like/ACS/ZScript interfaces require independent
+implementation and licensing review; no GPLv3 GZDoom code enters this GPL-2.0-only
+repository. Custom wgpu rendering with Vulkan preferred remains later work.
 
 ## M4 — Demo compatibility
 

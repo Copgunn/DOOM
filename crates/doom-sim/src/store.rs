@@ -112,6 +112,21 @@ impl<T> ThinkerStore<T> {
     pub fn is_pending(&self, id: ActorId) -> Option<bool> {
         Some(self.entry(id)?.pending)
     }
+    pub(crate) fn reserve_spawns(&mut self, count: usize) -> Result<(), StoreError> {
+        let available = self
+            .slots
+            .iter()
+            .filter(|s| s.entry.is_none() && !s.retired)
+            .count()
+            + self.max_slots as usize
+            - self.slots.len();
+        if count > available {
+            return Err(StoreError::Capacity);
+        }
+        self.slots
+            .try_reserve(count.min(self.max_slots as usize - self.slots.len()))
+            .map_err(|_| StoreError::Capacity)
+    }
     /// Appends to processing order, choosing the lowest nonretired reusable slot.
     pub fn spawn(&mut self, value: T) -> Result<ActorId, StoreError> {
         let index = if let Some(i) = self
