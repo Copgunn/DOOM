@@ -49,7 +49,7 @@ impl Simulation {
         Ok(sim)
     }
     pub(crate) fn perception_actor(&self, id: ActorId) -> Result<Actor, SimError> {
-        if self.profile != Profile::Perception {
+        if !self.profile.uses_perception() {
             return Err(PerceptionError::Profile.into());
         }
         if self.actors.is_pending(id) != Some(false) {
@@ -321,7 +321,7 @@ impl Simulation {
     pub fn perception_players(&self) -> &[PerceptionPlayer; 4] {
         &self.perception_players
     }
-    fn validate_perception_reference(&self, id: ActorId) -> Result<Actor, SimError> {
+    pub(crate) fn validate_perception_reference(&self, id: ActorId) -> Result<Actor, SimError> {
         let a = self.perception_actor(id)?;
         let life = a.life.unwrap();
         let registry = self.registry.as_deref().unwrap();
@@ -353,7 +353,7 @@ impl Simulation {
         slot: usize,
         p: PerceptionPlayer,
     ) -> Result<(), SimError> {
-        if self.profile != Profile::Perception {
+        if !self.profile.uses_perception() {
             return Err(PerceptionError::Profile.into());
         }
         if slot >= 4 || p.active && p.actor.is_none() {
@@ -373,6 +373,9 @@ impl Simulation {
         threshold: i32,
     ) -> Result<(), SimError> {
         self.perception_actor(id)?;
+        if self.profile == Profile::Pursuit && threshold == i32::MIN {
+            return Err(PursuitError::Arithmetic.into());
+        }
         let a = self.actors.get_mut(id).unwrap();
         a.spec.angle = angle;
         a.life.as_mut().unwrap().threshold = threshold;
@@ -648,6 +651,7 @@ impl Simulation {
 #[derive(Clone, Copy)]
 pub(crate) struct PerceptionInputs<'a> {
     pub players: &'a [PerceptionPlayer; 4],
+    pub pursuit: bool,
     pub sound_targets: &'a [Option<ActorId>],
 }
 /// The original A_Look body, reached only after complete admission/preflight.
@@ -750,6 +754,9 @@ pub(crate) fn look<A: crate::lifecycle::ActorAccess>(
 }
 impl Simulation {
     pub(crate) fn validate_perception_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
+        if self.profile == Profile::Pursuit {
+            return self.validate_pursuit_type(ty);
+        }
         self.registry
             .as_deref()
             .unwrap()
@@ -757,6 +764,9 @@ impl Simulation {
         Ok(())
     }
     fn preflight_perception_look(&self, id: ActorId) -> Result<(), SimError> {
+        if self.profile == Profile::Pursuit {
+            self.preflight_pursuit_callback(id)?;
+        }
         let a = self.perception_actor(id)?;
         let ty = a.life.unwrap().actor_type;
         let info = self.registry.as_deref().unwrap().actor_type(ty).unwrap();
@@ -809,6 +819,7 @@ impl Simulation {
         self.preflight_perception_look(id)?;
         Ok(crate::lifecycle::LifeHost {
             perception: Some(PerceptionInputs {
+                pursuit: self.profile == Profile::Pursuit,
                 players: &self.perception_players,
                 sound_targets: &self.sound_targets,
             }),
@@ -826,7 +837,7 @@ impl Simulation {
     }
 }
 
-fn validate_registry(r: &ActorRegistry, source: &ActorRegistry) -> Result<(), SimError> {
+pub(crate) fn validate_registry(r: &ActorRegistry, source: &ActorRegistry) -> Result<(), SimError> {
     if r.states() == source.states() && r.types() == source.types() {
         return Ok(());
     }

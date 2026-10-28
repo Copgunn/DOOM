@@ -509,7 +509,7 @@ Rust-only policies terminate the original all-inactive infinite scan with false
 and unchanged lastlook, reject unsafe identities and bound map coordinates/node
 deltas/sector heights to +/-512, actor XYZ to +/-1024, expanded sight work to 8192
 and actors to 64. Nonzero XY motion requires current coordinate within +/-994;
-Z momentum is at most64 and next pre-gravity Z must fit +/-1024. These are explicit
+Z momentum is at most 64 and next pre-gravity Z must fit +/-1024. These are explicit
 admission restrictions, not limit-removing compatibility. Query/scan/action/step
 rejections preserve the full canonical state. See [reference findings](M3D3A_REFERENCE.md).
 
@@ -517,3 +517,57 @@ rejections preserve the full canonical state. See [reference findings](M3D3A_REF
 this slice; v8 goldens validate a project schema, and 12 policy tests validate
 Rust ownership/atomicity. Neither implies full monster AI, pursuit/attacks,
 commercial-map admission, Linux/DOS demo synchronization or savegame compatibility.
+
+## M3d3b pursuit profile (DSIM-v9)
+
+The source slice implements P_Move, P_TryWalk, P_NewChaseDir and non-attacking
+A_Chase on synthetic classic maps. Eight source directions use 65536 cardinal and
+47000 diagonal components times integer metadata speed. Spawn starts EAST/zero;
+NODIR returns false without a query. Successful P_Move directly updates position,
+constraints, links and floor Z; it clears INFLOAT. A blocked move leaves them
+unchanged. TryWalk draws count&15 only after success. NewChaseDir retains strict
++/-10 thresholds, diagonal attempt, unconditional axis-priority draw, old direction
+retry, random forward/reverse scan and turnaround last. No modern pathfinding.
+
+A_Chase countdown/turning precedes target checks. Dead-but-shootable actors can
+remain targets while their health clears threshold. Missing/nonshootable targets
+use allaround player-record scanning; failure enters spawn/Look immediately and
+can leave the old nonshootable identity stored. Reacquisition returns before
+walking/active sound. JUSTATTACKED clears and picks a new direction except on
+nightmare (fastparm=false). Normal predecrement movecount short-circuits P_Move
+when negative. Nonzero active-sound metadata draws even if it selects silence.
+
+Only labelled native look/chase fixtures have executable Chase. Their original
+player-shaped metadata has melee/missile states explicitly removed, including
+S_PLAY_ATK1. Source player bodies retain original inert animation metadata and
+never execute Chase. Native speeds 1..16, radii 0..32, positive fitting heights and
+state durations 1..35 are admitted. Original monster attack closures reject before
+mutation; no attack check/action, float adjustment or door opening is stubbed.
+Single-player source skills are supported with fastparm=false/netgame=false.
+
+Maps must have line/sector specials 0, preserve supplied BLOCKMAP lists and satisfy
+inherited M3b and sight bounds (+/-512 map values, 8192 expanded sight work).
+Native current flags admit SOLID/SHOOTABLE/AMBUSH/JUSTHIT/JUSTATTACKED/DROPOFF/
+PICKUP/INFLOAT/NOTDMATCH; no FLOAT, NOCLIP, TELEPORT, SPECIAL or respawning monsters.
+PICKUP cannot reach a pickup callback because no admitted body has SPECIAL.
+Source thing collision is Z-independent for walking, including unbound player
+metadata; ML_BLOCKMONSTERS applies. A 55-unit opening test uses two individually
+fitting sectors whose overlap is 55, so the height-fit failure is independently
+exercised without violating type admission.
+
+At most 64 actors; direct callback XY must fit+/-1008, tic XY+/-978. This proves
+at most 30 physical+16 direct units within the +/-1024 sight/query slice. Source
+counter INT_MIN rejects; reaction also rejects INT_MIN+1 because nested loss->
+Look->Chase can decrement twice. Target/active roster/retained sound IDs must
+resolve to active stable generations before chase effects; pending/stale IDs
+reject rather than emulate dangling C pointers. Inactive old roster IDs remain
+encoded without aliasing reuse. Empty-roster termination remains a Rust policy.
+These restrictions can conservatively reject operations whose actual branch would
+not use every dependency. Recoverable failures preserve full canonical state.
+
+C equivalence covers 96 scenarios, including full thinker tics, under documented
+ABI/arithmetic assumptions. The unsigned movedir BAM shift adapter defines the
+original signed-shift intent without changing its decisions. Twelve ownership/
+atomicity tests and independent DSIM-v9 bytes are project evidence, separately
+identified. None establishes complete original monster AI, DOS/Linux demo sync,
+commercial-map compatibility or a DOOM savegame format.

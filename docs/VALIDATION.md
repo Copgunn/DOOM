@@ -1149,3 +1149,136 @@ mandatory local checks and exact-head CI. Verify both merge parents, local/remot
 master and successful post-merge CI before M3d3b runtime work. No squash, force
 push, history rewrite, auto-merge or branch deletion is authorized. M3d3b itself
 must remain open and unmerged for separate owner review.
+
+## M3d3a completed finalization for M3d3b
+
+Reviewed head `3ca419ed3b9a788ae61c3c5bff54587c1ca4b4a6` and reviewed CI
+40637859502 were recorded directly in prose correction
+`856d25f2a537b2c5c785e2bc6ac1731d7980585b`. Fresh local checks passed:
+149 workspace/MSRV checks (two private ignored), 125 release tests, locked build,
+root/fuzz fmt, Clippy/rustdoc, eight C/encoder pairs and eight-example equality.
+[Correction CI 40639972632](https://github.com/Copgunn/DOOM/actions/runs/40639972632)
+passed all four jobs on that exact correction before the authorized regular merge.
+
+PR #10 is merged/closed as `839fbabf6eae984e1832f7ab7307851c4adb7a3f`, parents
+`e109ee193bcce6077f5c8d90802c97edc89a55a6` and
+`856d25f2a537b2c5c785e2bc6ac1731d7980585b`. The merge tree equals the correction;
+local/remote master agree. [Post-merge CI 40640215475](https://github.com/Copgunn/DOOM/actions/runs/40640215475)
+passed Linux, Windows, macOS and Rust 1.85 on the exact merge before this branch
+was created. All 165 upstream files and 297 historical reference files were
+verified byte-identical; public GPL-2.0-only licensing, attribution/history and
+asset protections remain intact. No private asset/project was accessed, no branch
+deleted. M3d3b has no merge authorization.
+
+## M3d3b local implementation evidence
+
+Branch `feat/m3d3b-monster-pursuit` starts at verified master `839fbab` after the
+completed PR #10 gates above. Investigation commit `685f2ed` precedes runtime
+changes. Native Look/Chase fixtures explicitly remove attack states; complete
+original monster execution, attacks, floating AI and doors remain excluded.
+
+| Local check | Observed result |
+| --- | --- |
+| Locked build, root/fuzz fmt, all-target Clippy with warnings denied | Passed |
+| Workspace tests including one doctest | 162 passed; two private tests ignored |
+| doom-sim/doom-types release | 138 passed |
+| Rust 1.85.0 workspace | 162 passed; two private tests ignored |
+| Rustdoc with warnings denied | Passed |
+| Nine original-C generator/independent encoder pairs, --check | Passed |
+| Nine asserted debug/release example outputs | Identical |
+| All eight nightly fuzz targets | Built |
+| Pursuit ASan, seed 17/max input 65,24 synthetic initial seeds | 2000 executions in 24 seconds, no finding; leak detection disabled |
+
+The new original-C harness compiles 60 tracked source bodies plus original fixed/
+table helpers and direction definitions. Individual original function bodies,
+files/headers, direction tables, adapters and inputs/outputs are hashed in
+`tests/reference/m3d3b_provenance.json`, with GCC 14.2.0 flags and ABI assumptions.
+The unsigned BAM movedir-shift adapter makes the original signed-shift intent
+defined; source decision bodies remain genuine. Unreachable attack/door services
+abort in C, and Rust admission rejects their metadata before mutation.
+
+Across 96 scenarios/17 maps, the comparison suite asserts:
+
+| Original-C comparison | Count |
+| --- | ---: |
+| Actor fields, including direction/count, position/angle/momentum and lifecycle | 108992 |
+| Normalized ordered observations | 29416 |
+| Movement attempts with source constraints/results | 2401 |
+| Ordered thing/line candidates | 11458 |
+| Direction assignments | 2103 |
+| Raw gameplay RNG draws | 1380 |
+| Sight queries/ordered visits during perception/reacquisition | 13 / 158 |
+| Player-slot observations / roster fields | 116 / 10020 |
+
+Cases cover cardinal/diagonal/NODIR and exact +/-10 thresholds, blocked axes,
+old retries, forward/reverse fallback, turnaround, trapped actors, 24/25 steps,
+restricted/allowed dropoffs, opening/headroom boundaries, actor collisions,
+spatial/sector links, source counter/angle/JUSTATTACKED skill paths, dead shootable
+retention, nonshootable/missing target reacquisition and spawn return, active-sound
+silent/audible draws, repeated state/thinker order and RNG wrap. The reference
+player-shaped native fixture explicitly clears source S_PLAY_ATK1; it is not a
+fully executable original monster. Source player record health and mobj health
+remain independently observed.
+
+Independent Python DSIM-v9 evidence is 835 captures/49 complete byte fixtures,
+including transient ordered observations and full multi-tic states. It reads no
+Rust output. Named-field comparisons precede bytes/digests. All v1-v8 expected
+bytes/code fixtures/generators/encoders remain unchanged. Twelve Rust-only policy
+tests separately cover unsafe/nonterminating C exclusions, generations, work/
+arithmetic/admission and full failed-operation atomicity; no full-state tic clone.
+
+The ninth asserted example covers 20 tics acquiring/pursuing, 40 tics on a blocked
+route with alternate directions, 12 tics losing a target and 15 tics reacquiring.
+Final digest `8c7fd6adfe73112d` is identical in debug/release. This is project
+canonical determinism evidence, not a vanilla demo hash. Remote delivery
+evidence follows. M3d3b must remain open and unmerged;
+no private assets or projects were accessed.
+
+
+## M3d3b remote delivery evidence
+
+[PR #11](https://github.com/Copgunn/DOOM/pull/11) targets verified master
+`839fbabf6eae984e1832f7ab7307851c4adb7a3f` from
+`feat/m3d3b-monster-pursuit`. Implementation/documentation head
+`14efb10ff02f27d5e15f21ae7c5695b417c0352e` passed
+[CI 40642802778](https://github.com/Copgunn/DOOM/actions/runs/40642802778):
+Linux, Windows, macOS and Rust 1.85 succeeded on that exact SHA. Linux also
+reproduced all nine C generator/encoder pairs; stable jobs passed recorded
+C/golden comparisons, release tests, nine-example equality and rustdoc.
+
+Follow-up `3fa1523a924704644cfe089a7c7b499012a1e098` removes one extra blank line at the end of the new C adapter
+and refreshes its provenance hash. Original-C generation and --check pass again;
+source trace and all golden bytes are unchanged. The prose-only delivery-record commit is reviewed head
+`68e9fd2c2d5225c7e34a591d7b164e461b3079fb`.
+[Final reviewed CI 40643155681](https://github.com/Copgunn/DOOM/actions/runs/40643155681)
+passed Linux, Windows, macOS and Rust 1.85 on that exact SHA. The M3d3c mission
+conditionally authorizes a regular merge after this correction passes fresh
+mandatory local and remote checks.
+
+All 165 original files and 296 historical reference code/fixture files remain
+byte-identical, excluding only the requested prose update to the reference README.
+Public GPL-2.0-only licensing, original attribution/history and asset safeguards
+remain intact. No private projects or commercial IWADs were accessed and no active
+branch was deleted. Local/remote master remain at the authorized PR #10 merge.
+M3d3b originally stopped at owner review; its later conditional regular-merge
+authorization is recorded below. M3d3c attack selection/action admission follows
+only after PR #11 and documentation PR #12 complete their separate gates.
+
+
+## M3d3b authorized finalization for M3d3c
+
+Reviewed PR #11 head `68e9fd2c2d5225c7e34a591d7b164e461b3079fb`, base
+`839fbabf6eae984e1832f7ab7307851c4adb7a3f`, and successful reviewed
+[CI 40643155681](https://github.com/Copgunn/DOOM/actions/runs/40643155681)
+are recorded directly. Live references match with no intervening commits,
+comments, reviews or threads. No demonstrated blocking defect was found within
+the declared pursuit slice. This correction changes prose only, including the
+state-format heading's scope from versions1..7 to1..9; no gameplay, source
+reference or canonical bytes change.
+
+The owner conditionally authorizes a regular merge after fresh mandatory local
+and exact-head remote checks. Verify merge parents/tree, master and post-merge
+CI before independently integrating documentation PR #12. Both PRs must finish
+their gates before M3d3c implementation. No squash, history rewrite, force-push,
+auto-merge or branch deletion is authorized. M3d3c remains open/unmerged for
+separate owner review.
