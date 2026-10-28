@@ -153,3 +153,7 @@ impl Simulation {
         Ok(())
     }
 }
+
+#[cfg(test)]
+#[path = "demon_lifecycle_tests.rs"]
+mod tests;
