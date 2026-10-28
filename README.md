@@ -43,7 +43,10 @@ after correction and fresh/post-merge CI. M3d3e adds bounded chaingunner attack/
 refire in profile 12 in [PR #15](https://github.com/Copgunn/DOOM/pull/15),
 regularly merged as `5b91824` after documentation correction, macOS hosted-runner
 recovery and successful exact-head/post-merge checks. M3d3f adds bounded normal-
-timing Demon melee in profile 13 on `feat/m3d3f-demon-melee`, for separate review.
+timing Demon melee in profile 13, regularly merged as `75b2a2bc`. M3d3g adds
+Demon pain/death/corpses in profile 14, regularly merged as `f44828d5`. M3d3h
+adds original stand/run closure in profile 15 in [PR #18](https://github.com/Copgunn/DOOM/pull/18),
+for separate owner review.
 Complete original monsters,
 actual player damage and a playable client remain future work. Exact gates and
 limitations are in the [roadmap](docs/ROADMAP.md) and
@@ -91,6 +94,10 @@ Implemented:
   refire short-circuit decisions, immediate see/Chase and DSIM-v12.
 - Explicit M3d3f profile: normal SARG 8/8/8, three separate faces, source selection
   sound/current melee range and shared direct damage through DSIM-v13.
+- Explicit M3d3g profile: original Demon pain/death, delayed sounds, A_Fall and
+  persistent corpses through DSIM-v14.
+- Explicit M3d3h profile: original two-state stand/eight-state run, immediate
+  Look/Chase actions and composed melee/lifecycle through DSIM-v15.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
 Choose the compatibility profile explicitly:
@@ -480,7 +487,7 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d3e | Source chaingunner attack/refire foundations | Merged as 5b91824 |
 | M3d3f | Source Demon melee foundations | Regularly merged as 75b2a2bc after correction and post-merge CI |
 | M3d3g | Demon pain, ordinary death and corpse foundations | Regularly merged as f44828d5 after correction and post-merge CI |
-| M3d3h | Original Demon stand/run state closure | Implemented; final validation and separate owner-review gate |
+| M3d3h | Original Demon stand/run state closure | Implemented and validated; separate owner review in PR #18 |
 | Later M3d3–M3e | Remaining attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |

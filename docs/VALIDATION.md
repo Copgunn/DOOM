@@ -2056,7 +2056,7 @@ See [M3D3H_REFERENCE](M3D3H_REFERENCE.md) for source states, mapping and limits.
 | Ordered instrumentation | 151,474 reconciled rows; not one row per event |
 | Separate C components | Three injected179/180/181 pain probes; excluded from gameplay scenarios/captures/draws |
 | Independent DSIM-v15 | 7,186 captures and 1,395 full byte fixtures, all field/byte/digest comparisons passed |
-| Rust-specific safety | 14 public and 5 private tests; separate sixth private scalar-C comparison |
+| Rust regressions/policies | 14 public and 5 private tests; separate sixth private scalar-C comparison |
 | Asserted example | Ten C-backed/repeated-instance scenarios;130-tic digest `51463158173610c5`; debug/release equal |
 | Fuzz builds | All fourteen ASan target executables built and verified |
 
@@ -2075,14 +2075,51 @@ from the source-C gameplay comparisons. Controlled damage before a thinker
 consumes its first state tic in that same update: the example's tic 45 pain hit
 sounds at 46 and returns to Chase at 48, directly verified by original-C traces.
 
-Fresh workspace/MSRV tests passed242 each, release218. All18 core commands
-passed: build, workspace/fuzz formatting, all-target Clippy and rustdoc with
-warnings denied, tests/MSRV/release and all fifteen debug/release examples.
-The final historical/new reference reproduction run is finishing its last encoder.
-All165 upstream files and1699 historical reference/tool/support paths, ancestry,
-licenses, attribution and dependency locks were reverified unchanged. All243
-relative Markdown links/two anchors resolve.
-The new bounded ASan campaign is running; no completed execution count or finding
-is claimed until observed. Exact remote results and final SHA are recorded on the
-M3d3h PR after verification. The PR stays draft while gates are pending and must
-remain open/unmerged without auto-merge for separate owner review.
+Fresh workspace/MSRV tests passed **242 each**, release **218**. All eighteen
+core commands passed: build, workspace/fuzz formatting, all-target Clippy and
+rustdoc with warnings denied, tests/MSRV/release and all fifteen asserted
+debug/release examples. All thirty reference commands (fifteen original-C/
+independent-encoder pairs) passed with --check. All 165 upstream files and 1,699
+historical reference/tool/support paths, ancestry, licenses, attribution and
+dependency locks were reverified unchanged. All 243 relative Markdown links and
+two anchors resolved before this final prose correction.
+
+## M3d3h bounded sanitizer evidence
+
+All fourteen ASan fuzz targets built and their executables were verified. The new
+stand/run campaign completed **10,000 executions in 1,220.9 seconds without
+findings**, exit 0, using twelve fresh public 65-byte seeds, four capacity setups,
+seed 1, max_len 65, RSS 2048 MiB and a 20-second input timeout. Each input has at most
+eight operations/32 individually checked tics and eight public-map byte mutations.
+Actual main gameplay setups use maps 0/19; constructor mutations can select 21 maps.
+All 21-map source-C coverage is a separate evidence claim.
+
+**ASAN_OPTIONS=detect_leaks=0** disabled leak detection. No LeakSanitizer or complete
+branch-coverage claim is made. The public seed recipe and precise setup/operation
+bounds are in fuzz/corpus/README.md. Runtime and fuzz-model code did not change
+after the final ASan build/campaign launch; subsequent edits were tests or prose.
+
+## M3d3h immutable implementation CI
+
+Implementation **e3f52f47a686fccdb532f66f8dc3c347b4ef2528** passed all four required
+jobs in [CI40784721289](https://github.com/Copgunn/DOOM/actions/runs/40784721289),
+completed **2026-10-28 23:13:05 UTC**. Linux, Windows, native Intel macOS and Rust 1.85 passed.
+Linux reproduced all fifteen original-C/independent-encoder pairs; stable systems
+passed recorded source fields/full bytes/digests and fifteen asserted examples.
+Formatting, Clippy, build, workspace/release tests and warnings-denied docs passed.
+
+Native macOS job **123154923686** ran on **macos-26-intel**, GitHub Actions
+1000000410, 23:04:39–23:08:41UTC, with every applicable step actually executed.
+The existing workflow's PR checkout was test merge
+`39ebdf2b5899da78b75d39fd2863945369a16305`, ordered parents verified master
+`f44828d5ad3169fe77c116bdebb30c74d1b5feb2` and the implementation head. Its tree
+**ce50da49317305e9602cd9fadcc2a33e5046f9db** equals the implementation tree.
+This records head-associated CI and source-tree equality, not a detached-head
+checkout claim. Original-C regeneration remained Linux-only under its existing
+condition; recorded comparisons ran on all stable platforms.
+
+[PR18](https://github.com/Copgunn/DOOM/pull/18) is the separate M3d3h owner-review
+handoff. This ledger pins the observed immutable implementation result. Every
+final documentation revision must pass fresh four-job CI before readiness; its
+exact final SHA/result are recorded on PR18 after verification. Keep PR18 open,
+unmerged and without auto-merge. No later gameplay milestone is authorized.

@@ -343,8 +343,9 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   Rust-only policies. Body inventory is not branch coverage.
 - The real LUT lacks179/180. Never count injected boundary values as gameplay
   draws or captures. Preserve the scalar component's explicit provenance.
-- Keep verified native macos-26-intel and all four CI jobs/steps. New M3d3g PR
-  stays OPEN/UNMERGED without auto-merge for owner review. Do not begin later work.
+- Keep verified native macos-26-intel and all four CI jobs/steps. M3d3g PR17
+  completed its authorized regular merge as f44828d5 after correction and exact
+  post-merge gates. M3d3h has a separate owner-review gate without auto-merge.
 
 ## M3d3h original Demon stand/run changes
 

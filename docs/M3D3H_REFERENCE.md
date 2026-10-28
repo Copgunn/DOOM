@@ -202,3 +202,20 @@ state of that call is ATK1. Do not infer action chronology solely from end state
 Full mandatory/regression, sanitizer and remote acceptance results are recorded
 in [VALIDATION](VALIDATION.md) after observation. Runtime scope remains the
 explicit restricted normal-timing fixture, not complete Demon/Spectre admission.
+
+## Observed acceptance checks
+
+Fresh local build/format/Clippy/rustdoc, workspace 242/MSRV 242/release 218 tests,
+all fifteen reference/independent-encoder pairs and fifteen asserted debug/release
+examples passed. All fourteen ASan targets built; the stand/run campaign completed
+10,000 executions in 1,220.9 seconds without findings, with leak detection
+disabled. This is not LeakSanitizer or exhaustive branch coverage.
+
+Implementation e3f52f47a686fccdb532f66f8dc3c347b4ef2528 passed all four jobs in
+[CI40784721289](https://github.com/Copgunn/DOOM/actions/runs/40784721289), including
+actual native macos-26-intel execution. Source-tree/checkout proof and precise
+local/sanitizer limits are recorded in the validation ledger. PR18 requires fresh
+final-head CI before owner-review readiness and stays open/unmerged without
+auto-merge. All original 165 files, 1699 historical reference/tool/support paths,
+v1–v14 schemas/fixtures/encoders, source history, attribution, licenses and locks
+remain preserved. No private repository or commercial IWAD was accessed.

@@ -256,7 +256,8 @@ boundary components, canonical evidence and Rust safety policies separately.
 Keep v1-v13 and twelve historical Rust helpers byte-identical. Do not grant full
 Demon/Spectre, scoring, player damage, raise states or other monster attacks.
 PR #16 completed its authorized regular merge/post-merge gates as `75b2a2bc`;
-M3d3g requires separate owner review and remains unmerged without auto-merge.
+M3d3g PR17 completed its authorized regular merge/post-merge gates as
+`f44828d5`; M3d3h has a separate owner-review gate without auto-merge.
 
 ## M3d3h stand/run changes
 

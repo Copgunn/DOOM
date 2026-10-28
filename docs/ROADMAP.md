@@ -626,12 +626,17 @@ was committed before runtime.
 - [x] Fourteen public/five private safety tests plus one scalar-C component;
   ten-scenario asserted example and digest `51463158173610c5`, debug/release equal.
 - [x] All fourteen ASan fuzz targets build; bounded source-backed stand/run target.
-- [x] Fresh workspace/MSRV242 each and release218, all18 core commands and
+- [x] Fresh workspace/MSRV 242 each and release 218, all 18 core commands and
   fifteen asserted debug/release examples passed.
-- [ ] All fifteen historical/new C/independent-encoder pairs reproduced.
-- [ ] Bounded ASan campaign completed with actual executions/findings recorded.
-- [ ] Exact implementation/final-head Linux/Windows/native macOS/Rust 1.85 CI.
-- [ ] New PR ready for separate owner review; leave open/unmerged/no auto-merge.
+- [x] All fifteen historical/new C/independent-encoder pairs reproduced.
+- [x] Bounded ASan:10,000 executions in 1,220.9 seconds without findings;
+  leak detection disabled, no LeakSanitizer claim.
+- [x] Immutable implementation e3f52f47a686fccdb532f66f8dc3c347b4ef2528 passed
+  Linux/Windows/native macOS/Rust 1.85 in
+  [CI40784721289](https://github.com/Copgunn/DOOM/actions/runs/40784721289).
+- [x] [PR18](https://github.com/Copgunn/DOOM/pull/18) opened for separate owner
+  review; leave open/unmerged without auto-merge. Final documentation revisions
+  require fresh four-job CI, recorded on PR18 before readiness.
 
 Full actor/map-spawn admission, fast/Nightmare, scoring/global statistics,
 resurrection, player damage, other attacks/projectiles, dynamic sectors/specials,
