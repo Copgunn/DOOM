@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b merged; M3d3a perception under development**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 merged; M3d2b merged; M3d3a perception implemented for owner review**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -110,7 +110,7 @@ M3 as a whole remains incomplete.
 | M3a | Grounded player XY, wall sliding, solid actor collision | Implemented, validated, merged |
 | M3b | Static multi-sector openings, BSP, XY/Z and gravity | Implemented, validated and merged |
 | M3c | Actor states, type-driven spawning and death | Implemented, validated and merged |
-| M3d | Combat subphases below | M3d1/M3d2 merged; M3d2b implemented for review; later work planned |
+| M3d | Combat subphases below | M3d1/M3d2/M3d2b merged; M3d3a implemented for review; later work planned |
 | M3e | Doors, lifts, triggers, sector specials and integration | Planned |
 
 M3a acceptance evidence:
@@ -203,7 +203,7 @@ repository. Custom wgpu rendering with Vulkan preferred remains later work.
 | M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Merged as c924f18 after fresh and post-merge CI |
 | M3d2 | Player weapons, psprites and ammo | Merged as 955f690 after fresh/post-merge CI |
 | M3d2b | Bounded original projectile foundations | Implemented, validated and merged |
-| M3d3 | Monster targeting/perception, movement, attacks and AI | Planned |
+| M3d3 | Monster targeting/perception, movement, attacks and AI | M3d3a implemented for review; pursuit/attacks planned |
 | M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
 
 M3d1 branch: `feat/m3d1-damage-hitscan`, based on verified M3c merge `4dbb0a5`.
@@ -324,3 +324,35 @@ renderer, scripting or engine-limit expansion is included. Recommended next
 bounded work is M3d3 source perception/target acquisition before attack callbacks;
 actual player damage requires its separately specified acceptance gate. M3d4
 remains integrated/advanced combat, and M3e remains moving sectors/map specials.
+
+## M3d3a — Monster perception and target acquisition
+
+Bounded subphase of M3d3, on `feat/m3d3a-monster-perception` from verified merge
+`e109ee1`. [Source investigation](M3D3A_REFERENCE.md) was committed as `fec0d24`
+before runtime changes; [validation](VALIDATION.md) records the completed PR #9
+merge and post-merge CI.
+
+- [x] Pure original REJECT/BSP sight: three-way sides, source traversal, seg order,
+  duplicate suppression, one/two-sided openings, intercepts and slope narrowing.
+- [x] Source four-slot scanning, player-record health, lastlook, candidate limit,
+  unsigned angle/FOV and approximate close-range exception.
+- [x] Shared source sector noise with distinct target/emitter; sound awareness,
+  ordinary/ambush assignment and fallback, wake sound/RNG and state-entry order.
+- [x] Genuine A_Look isolated with labelled native lookers and action-free see;
+  original monster A_Chase handoffs reject before mutation.
+- [x] Generation-safe roster/targets, bounded empty-roster policy, arithmetic/work
+  admission and full canonical-state atomicity on recoverable failure.
+- [x] 68 C scenarios, 1536 side/131 fraction vectors, 365 queries/3955 sight visits,
+  460 slot observations, 47,520 actor fields and 625 raw RNG draws compared.
+- [x] Independent v8 encoder: 420 captures, 45 complete byte fixtures; all v1-v7
+  bytes and historical reference code/fixtures preserved.
+- [x] 149 workspace/MSRV checks, 125 release tests, eight reference pairs and
+  eight example equality checks; seven fuzz builds and 2000 ASan executions.
+- [ ] Owner review and separate merge authorization; leave M3d3a open/unmerged.
+
+M3d3b remains source-compatible monster pursuit and movement decisions. Later
+M3d3 work adds attack selection/actions; M3d4 integrates combat/advanced attacks,
+M3e moving sectors/map specials, M4 demos and M5 renderer/platform integration.
+These boundaries confer no authorization to begin them. Full original monster
+execution, vanilla/DOS demo synchronization and private-IWAD validation remain
+unverified.

@@ -82,7 +82,7 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   damage/aim/hitscan in profile 5; M3d2 adds bounded player weapons/psprites
   in profile 6; M3d2b adds original plasma foundations in profile 7. Complete player/view, dynamic
   sectors, combat, specials, demos and rendering remain incomplete. Preserve
-  all M2/v1, M3a/v2, M3b/v3, M3c/v4 and M3d1/v5 and M3d2/v6 suites; read their source investigations before
+  all M2/v1, M3a/v2, M3b/v3, M3c/v4, M3d1/v5, M3d2/v6 and M3d2b/v7 suites; read their source investigations before
   changing movement.
   Preserve tested policies in `docs/COMPATIBILITY.md` and the versioned canonical
   format in `docs/STATE_FORMAT.md`. Read source findings in `docs/M2_REFERENCE.md`.
@@ -97,7 +97,7 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   user thinker budgets have a separate documented nontransactional contract.
 - Actor identity, thinker order and spatial order are separate. Never sort handles
   to choose blockers; successful same-cell moves reinsert at spatial cell head.
-- Run all seven reference generators and independent golden encoders on Linux;
+- Run all eight reference generators and independent golden encoders on Linux;
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
 - M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
   correction-head and post-merge CI. M3d1 was regularly merged as c924f18 after fresh correction-head and
@@ -150,3 +150,25 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - M3d2b PR #9 completed its owner-authorized regular merge and post-merge gates;
   never enable auto-merge. M3d3a stops at owner review.
   Pursuit, attacks, M3d4 and M3e remain later milestones.
+
+- Read `docs/M3D3A_REFERENCE.md` before perception changes. Profile 8 composes
+  static-sector typed lifecycle, pure REJECT/BSP sight, a distinct four-slot
+  active/health/generation roster and shared noise; v6 weapon players, v7 missiles,
+  player damage and full monster execution remain separate.
+- Preserve source three-way sight arithmetic (including horizontal x==node.y),
+  seg/duplicate order, scan stopping/lastlook, sound assignment before ambush
+  confirmation/fallback, threshold reset and wake RNG/state-entry order.
+- A_Look executes only labelled native fixture lookers with fully admitted
+  action-free see handoffs. Reject original A_Chase and unsupported reachable
+  actions before allocation/mutation. No chase no-op, pursuit or attack scheduler.
+- Active roster/sound references must stay valid and non-removing during a tic.
+  Validate every retained sound identity before a tic with a possible looker,
+  since movement can change its sector. Empty-roster termination and stale-ID
+  rejection are Rust safety policies, never C-equivalence claims. Keep all failed
+  operations canonical-state atomic without a full Simulation/Map clone.
+- Preserve +/-512 map, +/-1024 actor-query, 8192 expanded sight work, 64 actor and
+  documented movement bounds. Run `generate_m3d3a.py --check`, independent
+  `m3d3a_snapshot_goldens.py --check`, the eighth example equality helper, all seven
+  fuzz builds and bounded perception ASan. Preserve every historical v1-v7 code
+  fixture/generator/encoder/helper. M3d3a remains open for separate owner review;
+  no auto-merge or pursuit/attack implementation is authorized.

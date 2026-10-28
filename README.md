@@ -28,7 +28,10 @@ merged as `955f690` after fresh correction-head and post-merge CI. M3d2b project
 foundations implement bounded original plasma spawning, flight, direct impact,
 explosion and removal in profile 7; [PR #9](https://github.com/Copgunn/DOOM/pull/9)
 merged as `e109ee1` after final corrections and fresh/post-merge CI. M3d3a
-perception and target acquisition is under development on a separate branch.
+perception and target acquisition is implemented on a separate branch for owner
+review, with source REJECT/BSP sight, player-slot scanning, sound/ambush decisions
+and a bounded fixture-only A_Look handoff. Full monster pursuit and attacks remain
+future work.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 
@@ -62,6 +65,8 @@ Implemented:
   fist, source psprites/ammo/refire/switching, sector noise targets and DSIM-v6.
 - Explicit M3d2b profile: source MT_PLASMA launch/autoaim, missile collision, shared
   direct damage and complete explosion/removal, with DSIM-v7.
+- Explicit M3d3a profile: original REJECT/BSP sight and player target acquisition,
+  shared sector noise, ambush decisions and admitted A_Look with DSIM-v8.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
 Choose the compatibility profile explicitly:
@@ -75,6 +80,7 @@ Choose the compatibility profile explicitly:
 | `Simulation::combat` | DSIM-v5 | M3d1 explicit damage/aim/hitscan for admitted unbound actors |
 | `Simulation::player_weapons` | DSIM-v6 | M3d2 one live weapon player, source pistol/shotgun/chaingun and fallback fist |
 | `Simulation::projectiles` | DSIM-v7 | M3d2b explicit original plasma launch, flight, direct impact and explosion/removal for unbound actors |
+| `Simulation::monster_perception` | DSIM-v8 | M3d3a pure sight, four-slot perception roster, target scanning and shared noise; labelled fixture A_Look only |
 
 M3b consumes supplied BLOCKMAP lists in reference order. Conservative omissions
 are diagnostic, not automatic rebuilds or proof of broken geometry. Missing
@@ -88,6 +94,31 @@ combat, moving doors/lifts, specials and respawn remain incomplete. M3d–M3e
 continue gameplay; M4 covers demos; M5 covers presentation/input/audio and the
 custom wgpu renderer. Authentic IWAD compatibility, full synchronization and DOS
 1.9 behavior are unverified. Read the [compatibility limits](docs/COMPATIBILITY.md).
+
+## Monster perception example
+
+```sh
+cargo run -p doom-sim --example monster_perception --locked
+python3 tools/reference/check_monster_perception.py
+```
+
+The asserted synthetic example covers slot-3 wraparound, ordinary hearing through
+an occluding wall, blocked/visible ambush listeners and an eight-tic candidate
+change. Its final DSIM-v8 digest is `30721bdec7a0d47e` in debug and release.
+`check_sight(observer, target)` is read-only; `look_for_players` uses the separate
+four-slot `PerceptionPlayer { active, health, actor }` roster. `noise_alert` accepts
+a distinct target and emitter. Configure labelled fixture lookers with
+`with_perception_registry` to execute `look` or the same A_Look in thinker order.
+Original monsters whose see states immediately call A_Chase are rejected before
+mutation. The profile does not enable weapon players, missiles or player damage.
+
+The original horizontal sight classifier's `x==node.y` quirk is preserved; sight
+uses REJECT and BSP/seg traversal independently of weapon BLOCKMAP tracing.
+[Source findings and admission bounds](docs/M3D3A_REFERENCE.md) distinguish
+68 C-equivalence scenarios from Rust safety policies, including terminating an
+empty roster and rejecting stale identities. See [validation](docs/VALIDATION.md)
+for counts and [DSIM-v8](docs/STATE_FORMAT.md) for schema evidence. No proprietary
+assets are needed.
 
 ## Build and test
 
@@ -380,8 +411,10 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3b | Static sectors/BSP, openings, step/dropoff and XY/Z/gravity | Implemented, validated, merged |
 | M3c | Actor states, spawning and controlled death | Implemented, validated and merged |
 | M3d1 | Bounded damage/hitscan/kill foundations | Merged as c924f18 |
-| M3d2 | Player weapons, psprites and ammo | Reviewed; authorized merge gated on fresh checks |
-| M3d3–M3e | AI, integrated combat, projectiles, interactions and moving sectors | Planned |
+| M3d2 | Player weapons, psprites and ammo | Merged as 955f690 |
+| M3d2b | Original plasma foundations | Merged as e109ee1 |
+| M3d3a | Monster perception and target acquisition | Implemented for owner review; open and unmerged |
+| M3d3b–M3e | Pursuit, attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
 

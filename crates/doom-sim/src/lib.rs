@@ -8,6 +8,7 @@
 //! Profile 5 adds bounded unbound-actor damage, autoaim and hitscan combat.
 //! Profile 6 adds command-driven player weapons, ammo and source psprites.
 //! Profile 7 adds explicit original plasma launch, flight, direct impact and removal.
+//! Profile 8 adds source sight, player-slot scanning, noise awareness and admitted A_Look.
 
 #[cfg(test)]
 extern crate self as doom_sim;

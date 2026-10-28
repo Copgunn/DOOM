@@ -177,4 +177,80 @@ Compose v5 persistent typed fields plus sector sound targets and the roster;
 existing lastlook/target/state/threshold fields already represent actor results.
 Add explicit perception events without changing v1-v7 encoders or bytes. Do not
 serialize local sight stacks, masks, temporary stamps, counters or rendering data.
-No implementation, test count or planned coverage is claimed passed in this file.
+The preceding plan was committed before implementation. Delivered behavior and
+measured evidence follow; planned language above records that initial boundary.
+
+## Delivered admission and failure policy
+
+The plan above is implemented in `sight.rs`, `perception.rs` and the shared
+LifeHost/noise services. `monster_perception` selects profile 8; the explicit
+registry constructor admits either exact original metadata or only the labelled
+native overrides described above. Fixture look tics are1..35; see is stable-1.
+Only fixture types 19/21/136 execute A_Look. Entire see/spawn/death closures are
+prevalidated; original monsters with A_Chase reject before allocation/mutation.
+The original registry still supports pure sight/scanning over admitted actors.
+
+Final map bounds are +/-512 for vertices, node origin/delta and sector heights;
+actor query XYZ is +/-1024. At most64 actors and inherited static-map limits
+apply. Expanded traversal costs leaf=1+seg_count, node=2+both child costs, including
+repeated DAG paths, and must fit 8192. Traversal is iterative with local masks.
+Before a tic, nonzero XY momentum requires each moving coordinate within +/-994
+(the original30-unit clamp margin); momZ is at most64 and z+momZ must fit +/-1024.
+Bounds reject before state/position/RNG changes rather than relying on C overflow.
+
+Roster active, signed player health and optional generation ID remain distinct.
+Each active slot, even health<=0, must resolve to an active stable source player
+body state 149..173 or native look/see state 1/2 with admitted metadata. Setup also
+validates any supplied inactive identity; a later inactive retained old generation
+may remain encoded and cannot alias reuse. Referenced actors cannot enter removing
+states. This proves that earlier thinkers cannot invalidate a later looker's
+roster/sound dependencies inside the tic. No full Simulation/Map clone is used.
+
+Explicit A_Look preflights its current sound target; a tic containing any possible
+looker preflights **all retained sector sound IDs** because XY can change sectors
+before the action. This conservative check can reject a stale cache in a sector
+that is not ultimately read. Pending/stale IDs reject before threshold, targets,
+lastlook, movement, sounds, events or RNG. Pure sight only validates its two actors
+and remains independent of invalid roster/cache state. Empty-roster false with
+unchanged lastlook is a separately tested safe departure from nonterminating C.
+
+## Delivered original-C evidence
+
+The isolated harness compiles 56 original bodies, including all five p_sight
+functions, P_LookForPlayers, A_Look and shared noise, plus their source movement,
+angle, lifecycle, thinker, spawn and RNG dependencies. It uses original structs,
+info/tables and source fixed helpers. Query/decision logging wraps or instruments
+source statements without replacing their decisions. Native fixture metadata
+isolates genuine A_Look; unreachable unsupported callbacks abort. Source pointer
+identities are normalized to spawn ordinals, and C allocation bytes are retained
+for observation rather than reused unsafely. Spawn jitter's ordered negative-shift
+adapter and compiler/ABI assumptions are recorded in hashed provenance.
+
+GCC 14.2.0 produced68 scenarios over18 public synthetic maps:24 sight,20 scan and 24
+explicit/thinker A_Look, plus1536 side and 131 fraction vectors. Maps include same-
+sector and cross-byte REJECT bits, multi-node/rotated BSPs, duplicate seg/lines,
+one-sided/equal/closed/partial openings, floor/ceiling clipping, negative heights,
+diagonal ties and omitted BLOCKMAP walls. Scan cases cover inactive/dead records,
+slot 3 wrap, candidate/stop limits, FOV boundaries, allaround and approximate rear
+distances64/65. Sound cases cover one/two blockers, closed openings, distinct
+emitter/target, unregistered/dead-record/nonshootable targets, ambush failed
+fallback with retained assignment, wake sound groups/global origins and RNG wrap.
+
+Across these cases Rust compares 47,520 actor fields,625 raw RNG draws,365 sight
+queries/3955 ordered sight visits,460 slot observations and 4752 roster fields.
+A_Look also compares 346 sector sound fields and 19 source noise visits. Detailed
+per-group ordered-observation counts and local check results are in
+[VALIDATION.md](VALIDATION.md); counts are asserted rather than inferred from
+fixture size. Five extra noise probes repeat cases without inflating totals.
+Pure queries preserve snapshots/RNG. Twelve separate Rust policy tests exercise
+unsafe/nonterminating-C exclusions, identity reuse, unsupported handoffs and
+failure atomicity. No dangling/infinite/overflow reference case is run or claimed
+as equivalence.
+
+The independent v8 Python encoder reads only C rows, public inputs and schema:
+420 captures/45 complete byte fixtures, including transient perception events.
+The eighth asserted headless example ends at `30721bdec7a0d47e`. These are project
+schema/determinism evidence, not original savegames/demo synchronization. All
+historical generators/encoders/code fixtures and v1-v7 bytes remain unchanged.
+M3d3b pursuit/movement decisions requires a separate source investigation; attacks
+remain later. No original monster A_Chase execution is claimed.

@@ -181,3 +181,34 @@ settled lethal state and both batches' generations. It does not encode transient
 damage event bytes; those semantic results have separate C comparisons. No Rust
 output or private asset is read. The new seventh-example equality helper leaves
 all historical generators/encoders/helpers unchanged.
+
+## M3d3a
+
+```sh
+python3 tools/reference/generate_m3d3a.py --check
+python3 tools/reference/m3d3a_snapshot_goldens.py --check
+python3 tools/reference/check_monster_perception.py
+```
+
+The new isolated generator/shim extracts56 genuine original function bodies,
+including all five sight functions, P_LookForPlayers, A_Look and both shared noise
+functions. It does not substitute handwritten sight/scan decisions. Observational
+hooks record exact source-order REJECT/BSP/seg, slopes, slot/health/FOV, sound,
+target/state/RNG and thinker outcomes. Original structs, info, tables and fixed
+helpers remain authoritative. Clearly labelled native states/types isolate real
+A_Look from an action-free see handoff; unreachable chase/attack callbacks abort.
+
+The public synthetic corpus has68 cases/18 maps,1536 side vectors and 131 fraction
+vectors. Hashed provenance records upstream source/header/function, adapters,
+inputs/outputs, GCC flags and ABI, including the ordered spawn-jitter negative
+shift adapter. Retained C allocation bytes permit observation; Rust generation
+and empty-roster/unsafe-input policies are separately tested, never mislabeled
+as C equivalence. See [M3D3A_REFERENCE.md](../../docs/M3D3A_REFERENCE.md) for exact
+admission and [VALIDATION.md](../../docs/VALIDATION.md) for asserted counts.
+
+The new independent v8 encoder reads C rows/public setup/schema only. It produces
+420 captures and 45 full byte streams, including transient sight/scan/noise/wake
+events and RNG wrap. No Rust output or proprietary asset is read. The eighth
+example helper preserves both historical equality helpers; all seven older
+reference generators, encoders and code fixtures remain byte-identical. Linux
+CI reproduces all eight pairs; every stable OS compares recorded evidence.

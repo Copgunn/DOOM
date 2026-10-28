@@ -116,7 +116,7 @@ examples in debug/release, and the combat fuzz target. No C compiler is required
 for recorded Rust comparisons. Preserve v1-v4 bytes and unsupported-branch
 rejection; new native definitions must not bypass action or effect admission.
 `request_actor_death` keeps its M3c contract; actual damage uses `damage_actor`.
-M3d1 was regularly merged as `c924f18` after final correction and fresh/post-merge CI. M3d2 was regularly merged as `955f690` after correction-head and post-merge CI. M3d2b requires separate owner review.
+M3d1 was regularly merged as `c924f18` after final correction and fresh/post-merge CI. M3d2 was regularly merged as `955f690` after correction-head and post-merge CI. M3d2b was regularly merged as `e109ee1` after correction-head and post-merge CI. M3d3a requires separate owner review.
 
 ## M3d2 weapon changes
 
@@ -126,7 +126,7 @@ six-example debug/release equality, and build all five fuzz targets. Keep the
 public combat API's bound-player protection, immutable source-state admission,
 small preview/target-overlay preflight, explicit setup inventory and typed action
 boundaries. Changes to timings/RNG require independent source evidence, not new
-expectations copied from Rust. M3d2 is merged; M3d2b has conditional regular-merge authorization in the M3d3a mission.
+expectations copied from Rust. M3d2 and M3d2b have completed their authorized merges.
 
 ## M3d2b projectile changes
 
@@ -137,5 +137,17 @@ original C and explicit synthetic inputs, never Rust-generated expected traces.
 Keep plasma, owner lifetime and arithmetic admission explicit, preflight failures
 before mutation and reuse existing actor/damage services. Player damage is a
 dependency investigation only. Record actual ASan runs and whether leak detection
-was disabled. M3d2b has conditional regular-merge authorization after its finalization gates;
+was disabled. M3d2b completed its authorized regular merge and post-merge gates;
 leave M3d3a open for owner review without auto-merge.
+
+## M3d3a perception changes
+
+Read [M3D3A_REFERENCE.md](docs/M3D3A_REFERENCE.md) and the v8 schema before changing
+sight, roster or A_Look. Reproduce all eight reference/encoder pairs and eight
+asserted examples. Run the seven fuzz builds and bounded perception ASan; record
+actual executions and sanitizer configuration. Keep C-equivalence evidence,
+independent canonical bytes and project-only policy tests distinct. Fixture
+lookers isolate genuine original A_Look with a supported see handoff; source
+monster metadata with immediate A_Chase must reject before mutation. No full
+monster AI, pursuit or attacks are admitted. Preserve every v1-v7 fixture and
+historical helper; leave M3d3a open/unmerged without auto-merge.

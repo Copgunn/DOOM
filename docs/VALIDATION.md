@@ -1050,3 +1050,59 @@ passed Linux, Windows, macOS and Rust 1.85 on that exact merge before the M3d3a
 branch was created. All 165 original files, public GPL-2.0-only licensing,
 attribution/history and asset safeguards were verified unchanged. No private
 assets/repositories were accessed or branches deleted. M3d3a has no merge authorization.
+
+## M3d3a local implementation evidence
+
+Branch `feat/m3d3a-monster-perception` starts at verified `e109ee1` after the
+completed PR #9 gates above. Source investigation commit `fec0d24` precedes all
+runtime work. No pursuit, attack callback, damage extension or renderer was added.
+Original monster see actions requiring A_Chase remain rejected; native fixture
+lookers isolate genuine original A_Look with an action-free see state.
+
+| Local check | Observed result |
+| --- | --- |
+| Locked workspace build, root/fuzz fmt and all-target Clippy with warnings denied | Passed |
+| Workspace tests including one doctest | 149 passed; two private tests ignored |
+| doom-sim/doom-types release tests | 125 passed |
+| Rust 1.85.0 workspace | 149 passed; two private tests ignored |
+| Rustdoc with warnings denied | Passed |
+| Eight original-C generator and independent encoder pairs, `--check` | Passed |
+| Eight asserted debug/release examples | Identical stdout |
+| All seven nightly fuzz target builds | Passed |
+| Perception ASan, max input 49, seed 13 | 2000 completed executions, 38 seconds, no finding; leak detection disabled |
+
+C evidence is distinct from schema/policy evidence. The new harness compiles 56
+original function bodies with GCC 14.2.0 and genuine original structs/metadata;
+source/adapter/input/output hashes, flags and ABI are recorded in
+`tests/reference/m3d3a_provenance.json`. It covers 68 scenarios and 1536 side plus131
+fraction vectors. Structured comparisons observed:
+
+| C scenario group | Actor fields | Raw RNG draws | Sight queries | Ordered sight visits | Player slots |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 24 pure sight setups/queries | 2880 | 120 | 24 | 243 | 0 |
+| 20 explicit player scans | 5040 | 110 | 27 | 295 | 64 |
+| 24 explicit/thinker A_Look | 39600 | 395 | 314 | 3417 | 396 |
+| Total | 47520 | 625 | 365 | 3955 | 460 |
+
+The scan group additionally compares 635 normalized ordered observations and 504
+roster fields; A_Look compares 8150 observations,3960 roster fields,346 sector
+sound fields and 19 propagation visits. Pure setups compare 120 observations and 288
+roster fields. Five additional shared-noise probes repeat selected cases and are
+not double-counted. Counts are asserted in the suite. REJECT/BSP traversal, slope
+intervals, source horizontal ties, active/dead filtering, lastlook wrap/count,
+strict FOV bounds/approximate distance 64, ordinary/ambush fallback, sound groups,
+RNG wrap, global origins and immediate thinker/state order are source compared.
+
+Independent Python DSIM-v8 encoding covers 420 captures with45 complete streams,
+including transient events, and reads no Rust output. All captures are checked;
+named-field diagnostics precede byte/digest comparison. Existing v1-v7 tools and
+bytes remain unchanged. Twelve Rust-only policy tests cover declared empty-roster,
+identity, generation reuse, work/arithmetic and atomicity guarantees, including
+movement into a sector retaining a stale sound target.
+
+The asserted eighth example demonstrates slot 3 wrapping to 0 (including the source
+horizontal-side quirk), ordinary sound through a wall, blocked/visible ambush and
+an eight-tic dead-to-live candidate change. Final digest `30721bdec7a0d47e` is equal
+in debug/release. This is project determinism evidence, not a DOOM demo hash.
+Public CI and exact delivery commits are recorded after remote verification.
+M3d3a must remain open/unmerged. No private asset/repository was accessed.
