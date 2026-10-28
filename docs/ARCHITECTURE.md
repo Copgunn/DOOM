@@ -443,3 +443,35 @@ cannot recursively chase/attack. Active/sound/current attack references use stab
 non-removing roles; effect identities may retire/reuse. Bound-player protection,
 separate roster health and earlier profile semantics remain intact. Complete
 monster closures, advanced attacks and dynamic-world services remain deferred.
+
+## M3d3d sequential preflight and SPOS execution
+
+Profile 11 reuses reserved native136 in a distinct exact registry adaptation, with
+SPOS 10/10/10 states 4/5/6, fullbright 32773 and native Look/Chase handoffs. It adds
+no AI scheduler, actor registry expansion or persistent shot cache. Existing
+positive state timing and first stationary floor-owner proof determine exactly
+which delayed burst must be prepared before a tic or direct state entry.
+
+Shared combat planning now accepts an optional actor lookup. Existing callers use
+base actors with unchanged semantics. Shotgunner preparation instead reads an
+overlay holding only touched targets (at most three) and projected impacts (at
+most three), plus copied RNG and scratch events/links. Each prepared pellet runs
+through the EXISTING LifeHost combat executor against that private overlay before
+planning the next. Thus health, flags, height, momentum, pain/death state, timers,
+reaction and retargeting are projected by the same implementation as the commit.
+No independent damage/RNG model or full Simulation/map/store clone is introduced.
+
+The strict body closure cannot move/relink, change radius/index participation,
+remove a body immediately or recursively attack during the burst. Exact impacts
+are NOBLOCKMAP. Existing base collection geometry therefore remains valid; hit
+eligibility and damage read UPDATED projected bodies. Actual execution draws each
+pellet's spread/damage, commits its effects/damage and only then advances to the
+next pellet, checking planned RNG boundaries. Aim is computed once. Sound occurs
+before internal facing; the separate earlier animation face still executes.
+
+Three real slots are reserved conservatively for every non-null burst; predicted
+lowest-free identities honor current generations/exhausted slots. Scratch spawn
+order matches appended real impacts, without processing them early or crediting
+pending retirement. Real thinker traversal later processes bodies/effects in its
+existing same-pass order. Null returns need no capacity. All projection/trace/
+coordinate/admission errors precede authoritative sound, state, health or RNG.

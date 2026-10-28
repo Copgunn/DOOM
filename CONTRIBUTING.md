@@ -179,6 +179,22 @@ Run all ten reference generator/independent encoder pairs, ten example checks,
 nine fuzz builds and bounded attack ASan. Preserve old bytes and helpers. Keep
 C behavior, independent schema and Rust policies distinct. Use the
 [documentation review checklist](docs/DOC_REVIEW_CHECKLIST.md); report exact
-commit/CI and observed sanitizer settings. The M3d3d mission conditionally
-authorizes PR #13’s regular merge after corrections/fresh local and remote gates.
-Verify post-merge CI before M3d3d; leave its new PR unmerged with auto-merge disabled.
+commit/CI and observed sanitizer settings. PR #13 completed its authorized regular
+merge as 9b8fde8 and exact post-merge CI before M3d3d; leave its new PR unmerged
+with auto-merge disabled.
+
+## M3d3d shotgunner changes
+
+Read [M3D3D_REFERENCE](docs/M3D3D_REFERENCE.md) and DSIM-v11. Preserve source
+SPOS 10/10/10/fullbright and sound-before-face order, shared aim and individual
+pellet spread/damage/effect processing. Use shared combat with updated touched-
+actor projection between pellets; no full-state tic clone, aggregate attack,
+separate scheduler or unsupported callback no-op. Keep strict native/dummy roles,
+player protection and conservative three-slot reservation explicit.
+
+Reproduce all eleven C/independent-encoder pairs, eleven asserted examples and
+ten fuzz builds; record actual shotgunner ASan executions and leak configuration.
+Keep historical v1-v10 bytes/helpers intact. Report exercised maps and compiled
+body inventories precisely; distinguish C behavior, project canonical bytes and
+Rust policy tests. Update the documentation index and use its review checklist.
+PR #14 stays open/unmerged with auto-merge disabled pending separate owner approval.

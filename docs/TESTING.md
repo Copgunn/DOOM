@@ -472,8 +472,8 @@ examples; preserve every older helper and fixture. Linux CI regenerates evidence
 Windows/macOS compare checked-in source vectors and canonical bytes. Stable and
 Rust 1.85 run the complete suite. No proprietary assets or devices are needed.
 
-The new C harness tracks 64 genuine bodies across 158 scenarios and 18 synthetic
-maps. Rust compares 178,178 live actor fields, 2,430 raw gameplay draws and complete
+The new C harness compiles 64 genuine bodies across 158 scenarios on 4 exercised synthetic
+maps, from 18 supplied fixture files. Rust compares 178,178 live actor fields, 2,430 raw gameplay draws and complete
 state/event captures through the independent v10 encoder (1290 captures,72 full
 streams with first-field diagnostics). Pure melee additionally compares source
 sight visits/results without mutating canonical state. Direct aim/shot trace
@@ -491,3 +491,44 @@ The recorded ASan campaign used six public synthetic 65-byte seeds, at most eigh
 operations per input and 10,000 executions. All nine fuzz targets built. No finding
 occurred; detect_leaks=0 means LeakSanitizer coverage is not claimed. Corpus,
 mutations and sanitizer output remain local ignored/temporary files.
+
+## M3d3d shotgunner checks
+
+```sh
+python3 tools/reference/generate_m3d3d.py --check
+python3 tools/reference/m3d3d_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3d3d_reference --test m3d3d_policies --locked
+cargo run -p doom-sim --example shotgunner_attacks --locked
+python3 tools/reference/check_shotgunner_attacks.py
+cargo +nightly fuzz build
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run shotgunner_attacks -- -runs=10000 -seed=1 -max_len=65 -rss_limit_mb=2048 -timeout=20
+```
+
+Run all eleven source/encoder pairs and all eleven example comparisons; preserve
+all historical code, fixture bytes and helpers. Linux CI reproduces original C;
+all stable platforms compare recorded vectors/canonical bytes. Rust 1.85 exercises
+the workspace. No private/commercial assets, devices or network are needed locally.
+
+The C harness compiles 65 tracked source bodies and executes 105 cases across all 18
+supplied maps. Rust compares 147,940 actor fields, 34,350 ordered observations and 3,894
+raw draws, including each pellet's exact post-effect/damage RNG index. V11's
+independent encoder produces 949 captures/92 complete streams with named-field and
+full-byte checks. Distinct per-pellet trace scopes prevent mixing three line
+attacks in one operation. Spread-extreme inputs derive from adjacent original
+RNG LUT values, never Rust output. The example verifies a pellet 2 kill followed
+by pellet 3 hitting another body and repeated state cycles; final 130-tic digest
+is `eb5b7166a162544e`.
+
+Nine policy tests separately cover zero/one/two free slots, delayed-action and
+pending-retirement capacity, conservative misses/null exception, role/player/Pos
+rejection, exact timing/fullbright/closure, stale/pending/reused IDs, unsupported
+metadata/flags/arithmetic, sequential health/retargeted hit, pause/instances/reads
+and first-field diagnostics. Those are Rust safety claims, not C behavior for
+undefined inputs. The declared closure uses at most three touched bodies/three
+projected effects and never clones full simulation/map/store state per tic.
+
+All ten fuzz targets built with ASan. The new campaign completed 10,000 executions
+in 211 seconds, seed 1,max_len 65,timeout 20 seconds,RSS limit 2048 MiB, at most eight
+operations per input, from six public synthetic seeds, with no findings.
+`ASAN_OPTIONS=detect_leaks=0` disables leak detection; no LeakSanitizer claim is made.
+Generated corpus/mutations/logs remain temporary or ignored local outputs.

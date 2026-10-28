@@ -152,7 +152,8 @@ spawn; prepared impacts also require 994 XY/1018 Z. Original source metadata by
 itself cannot spawn under reserved native IDs: exact fixture labels/roots are
 required. Seven Rust policy tests exercise these restrictions separately.
 
-The generator executes 64 original bodies for 158 cases on 18 maps, including
+The generator compiles 64 original bodies for 158 cases exercising maps 0/2/8/17
+from an inventory of 18 supplied fixture maps, including
 exact fixed-bit melee neighbors, all missile types/cap boundaries, both source
 facing calls, all five damage values, true miss/wall/blood/puff, pain/ordinary/
 extreme death, repeated cycles, RNG wrap and real effect retirement/slot reuse.

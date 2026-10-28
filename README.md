@@ -36,8 +36,10 @@ M3d3b pursuit in [PR #11](https://github.com/Copgunn/DOOM/pull/11) merged as
 combined-master CI passed before M3d3c started. M3d3c implements bounded source
 attack selection and a complete admitted A_PosAttack animation in profile 10,
 on labelled synthetic actors, in [PR #13](https://github.com/Copgunn/DOOM/pull/13).
-The M3d3d mission conditionally authorizes its regular merge after a documentation
-correction and fresh local/remote gates. Complete original monsters,
+It merged regularly as `9b8fde8` after correction and fresh local/remote gates.
+M3d3d adds bounded source shotgunner multi-pellet attacks in profile 11 in
+[PR #14](https://github.com/Copgunn/DOOM/pull/14), open/unmerged for owner review.
+Complete original monsters,
 actual player damage and a playable client remain future work. Exact gates and
 limitations are in the [roadmap](docs/ROADMAP.md) and
 [validation notes](docs/VALIDATION.md).
@@ -78,6 +80,8 @@ Implemented:
   non-attacking A_Chase, target reacquisition and DSIM-v9.
 - Explicit M3d3c profile: source melee/missile range and Chase attack selection,
   FaceTarget, bounded PosAttack with shared real impacts/damage, and DSIM-v10.
+- Explicit M3d3d profile: one shared aim and three sequential SPosAttack pellets,
+  exact SPOS 10/10/10 timing/fullbright, bounded preflight and DSIM-v11.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
 Choose the compatibility profile explicitly:
@@ -94,6 +98,7 @@ Choose the compatibility profile explicitly:
 | `Simulation::monster_perception` | DSIM-v8 | M3d3a pure sight, four-slot perception roster, target scanning and shared noise; labelled fixture A_Look only |
 | `Simulation::monster_pursuit` | DSIM-v9 | M3d3b perception plus non-attacking pursuit on labelled native look/chase fixtures; grounded static-map movement |
 | `Simulation::with_monster_attack_registry` | DSIM-v10 | M3d3c explicit fixture registry: one native attacker, source range/selection/facing, bounded PosAttack and unbound damage targets |
+| `Simulation::with_shotgunner_registry` | DSIM-v11 | M3d3d explicit SPOS fixture: source Look/Chase/facing, shared aim, three sequential hitscan pellets and real unbound damage/effects |
 
 M3b consumes supplied BLOCKMAP lists in reference order. Conservative omissions
 are diagnostic, not automatic rebuilds or proof of broken geometry. Missing
@@ -457,7 +462,8 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d2b | Original plasma foundations | Merged as e109ee1 |
 | M3d3a | Monster perception and target acquisition | Merged as 839fbab |
 | M3d3b | Source pursuit and movement decisions | Merged as 0007af1 |
-| M3d3c | Attack selection and bounded source hitscan action | Reviewed; conditional regular merge after fresh gates |
+| M3d3c | Attack selection and bounded source hitscan action | Merged as 9b8fde8 |
+| M3d3d | Source shotgunner three-pellet foundations | Implemented; PR #14 open for owner review |
 | Later M3d3–M3e | Remaining attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
@@ -541,3 +547,34 @@ separate from actor damage. Exact original blood/puff thinkers may retire/reuse
 slots. Actual player binding/damage and profile 10 public direct-combat APIs reject.
 This is a complete tested action closure within a narrow fixture slice, not
 complete Zombieman/monster gameplay, melee damage, demos or a playable game.
+
+## Shotgunner attacks (M3d3d)
+
+```sh
+cargo run -p doom-sim --example shotgunner_attacks --locked
+python3 tools/reference/check_shotgunner_attacks.py
+```
+
+The asserted public synthetic example verifies a front target killed by pellet 2,
+then a different target damaged by pellet 3; acquisition/pursuit; two original
+facing calls; shotgun sound before internal facing; one shared aim and three
+independent spread/damage rolls; real blood/puff effects; pain/death; return and
+repeated state cycles. Every capture matches original-C evidence and independent
+v11 bytes. The final 130-tic digest is `eb5b7166a162544e`. All ten previous examples
+remain available; no asset, network, renderer or audio device is required.
+
+Use `with_shotgunner_registry(map, limit, registry, options)` with the exact named
+public fixture adaptations in [M3D3D_REFERENCE](docs/M3D3D_REFERENCE.md) and the
+example fixture builder. `shotgun_attack(actor)` executes the direct action;
+ordinary state entry/countdown executes the same closure. SPOS states preserve
+10/10/10 tics and the second state's fullbright frame 32773. This differs from
+PosAttack's 10/8/8 animation and sound order, whose v10 behavior remains unchanged.
+
+The profile retains one unshootable first owner with zero physical momentum on
+its floor, unbound dummy135 bodies and exact real impacts. Three sequential plans
+use a small overlay and the shared combat executor, so prior health/flags/height/
+state/momentum/RNG changes affect later pellets. No full world/store clone occurs
+per tic. A non-null blast conservatively requires three free actor slots even
+when the prospective shots miss; pending removals give no capacity credit. Null
+returns need no slots. Complete Shotgun Guy, drops, other attacks, actual player
+damage and full vanilla/demo compatibility remain outside this slice.
