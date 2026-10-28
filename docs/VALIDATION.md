@@ -924,3 +924,23 @@ Historical local M0-M3d1 merged branches and preserved remote milestone referenc
 are cleanup candidates only; none was deleted. The active M3d2 branch stays intact.
 M3d2 has conditional regular-merge authorization; no M3d2b or later milestone
 merge is authorized.
+
+
+## M3d2 completed finalization for M3d2b
+
+Reviewed final `0e94091c858624abed3c31ae3eaa3271f504fe47` received the requested
+documentation-only correction `7007daeb0d986c57d313f48a405992a89dd39f89`, including
+the general profile 5/6 schema table. Local mandatory checks passed again: 123
+workspace/MSRV checks (two private ignored), 99 release tests, build/fmt/Clippy/docs,
+all six source generators/independent encoders and six-example debug/release equality.
+[Fresh CI 40625682243](https://github.com/Copgunn/DOOM/actions/runs/40625682243)
+passed all four jobs on that exact correction before the authorized regular merge.
+
+PR #8 is merged/closed at `955f690d141ccc6a9074a8a8017f78833854af6f`, with parents
+`c924f18424a7a58f892fc8b6a7c2b5011db05c5b` and
+`7007daeb0d986c57d313f48a405992a89dd39f89`; the merge tree equals the correction.
+Remote/local master match. [Post-merge CI 40626027970](https://github.com/Copgunn/DOOM/actions/runs/40626027970)
+passed all four jobs on the exact merge before creating the M3d2b branch. All 165
+original files, history/attribution, public GPL-2.0-only status and asset safeguards
+were verified. No private assets/repositories were accessed; no branches deleted.
+M3d2b has no merge authorization.

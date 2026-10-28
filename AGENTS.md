@@ -101,8 +101,7 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
 - M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
   correction-head and post-merge CI. M3d1 was regularly merged as c924f18 after fresh correction-head and
-  post-merge CI in the M3d2 mission. M3d2 received conditional regular-merge authorization in the M3d2b mission,
-  subject to final corrections and fresh checks. M3d2b must stop at owner review;
+  post-merge CI in the M3d2 mission. M3d2 was regularly merged as 955f690 after final corrections and fresh/post-merge CI. M3d2b must stop at owner review;
   no M3d2b or later subphase merge is authorized.
 
 - M3b consumes supplied BLOCKMAP lists without rebuilding them; conservative
