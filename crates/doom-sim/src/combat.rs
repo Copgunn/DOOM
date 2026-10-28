@@ -195,6 +195,9 @@ pub(crate) struct PreparedAttack {
     plan: Option<DamagePlan>,
 }
 impl PreparedAttack {
+    pub fn parameters(&self) -> LineAttack {
+        self.attack
+    }
     pub fn spawn_count(&self) -> usize {
         usize::from(self.result.hit.is_some()) + self.plan.map_or(0, |p| p.demand.spawns)
     }
@@ -230,7 +233,7 @@ impl Simulation {
     }
     pub(crate) fn validate_combat_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
         let registry = self.registry.as_deref().ok_or(CombatError::Profile)?;
-        if self.profile == Profile::MonsterAttacks {
+        if self.profile.uses_monsters() {
             return self.validate_monster_type(ty);
         }
         if self.profile == Profile::Projectiles {
@@ -270,6 +273,7 @@ impl Simulation {
                 | Profile::PlayerWeapons
                 | Profile::Projectiles
                 | Profile::MonsterAttacks
+                | Profile::Shotgunner
         ) {
             return Err(CombatError::Profile.into());
         }
@@ -290,7 +294,7 @@ impl Simulation {
         angle: u32,
         range: Fixed,
     ) -> Result<AimResult, SimError> {
-        if self.profile == Profile::MonsterAttacks {
+        if self.profile.uses_monsters() {
             return Err(CombatError::Profile.into());
         }
         self.combat_actor(shooter)?;
@@ -390,7 +394,7 @@ impl Simulation {
     }
     /// Atomic supported P_DamageMobj operation. No full-simulation clone is used.
     pub fn damage_actor(&mut self, request: DamageRequest) -> Result<DamageResult, SimError> {
-        if self.profile == Profile::MonsterAttacks {
+        if self.profile.uses_monsters() {
             return Err(CombatError::Profile.into());
         }
         let plan = self.plan_damage(request)?;
@@ -404,7 +408,7 @@ impl Simulation {
         shooter: ActorId,
         attack: LineAttack,
     ) -> Result<AttackResult, SimError> {
-        if self.profile == Profile::MonsterAttacks {
+        if self.profile.uses_monsters() {
             return Err(CombatError::Profile.into());
         }
         self.line_attack_with(shooter, attack, None)

@@ -108,7 +108,7 @@ pub(crate) struct MonsterShotPlan {
 fn observe<A: ActorAccess>(h: &mut LifeHost<'_, A>, e: MonsterEvent) {
     h.events.push(Event::Monster(e));
 }
-fn draw<A: ActorAccess>(h: &mut LifeHost<'_, A>, actor: ActorId, kind: u8) -> u8 {
+pub(crate) fn draw<A: ActorAccess>(h: &mut LifeHost<'_, A>, actor: ActorId, kind: u8) -> u8 {
     let value = h.rng.p_random();
     observe(h, MonsterEvent::Random { actor, kind, value });
     value
@@ -283,7 +283,7 @@ pub(crate) fn select<A: ActorAccess>(
     }
     false
 }
-fn face_angle(a: Actor, t: Actor, rng: &mut DoomRng) -> u32 {
+pub(crate) fn face_angle(a: Actor, t: Actor, rng: &mut DoomRng) -> u32 {
     let angle = movement::point_angle([
         t.position()[0] - a.position()[0],
         t.position()[1] - a.position()[1],
@@ -380,6 +380,9 @@ impl Simulation {
             .is_some_and(|l| OWNERS.contains(&l.actor_type.0))
     }
     pub(crate) fn validate_monster_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
+        if self.profile == Profile::Shotgunner {
+            return self.validate_shotgun_type(ty);
+        }
         if !OWNERS.contains(&ty.0) && ![37, 38, 135].contains(&ty.0) {
             return Err(MonsterError::Definition.into());
         }
@@ -403,7 +406,7 @@ impl Simulation {
         Ok(())
     }
     pub(crate) fn monster_actor(&self, id: ActorId, margin: u32) -> Result<Actor, SimError> {
-        if self.profile != Profile::MonsterAttacks {
+        if !self.profile.uses_monsters() {
             return Err(MonsterError::Profile.into());
         }
         let a = self.perception_actor(id)?;
@@ -436,7 +439,14 @@ impl Simulation {
         self.monster_state_role(l.actor_type, l.state.ok_or(MonsterError::Definition)?)?;
         Ok(a)
     }
-    fn monster_state_role(&self, ty: ActorTypeId, state: StateId) -> Result<(), SimError> {
+    pub(crate) fn monster_state_role(
+        &self,
+        ty: ActorTypeId,
+        state: StateId,
+    ) -> Result<(), SimError> {
+        if self.profile == Profile::Shotgunner {
+            return self.shotgun_state_role(ty, state);
+        }
         let valid = if OWNERS.contains(&ty.0) {
             (149..=173).contains(&state.0)
                 || [1, 2, 3, 7].contains(&state.0)
@@ -542,6 +552,12 @@ impl Simulation {
         Ok(())
     }
     pub(crate) fn preflight_monster_step(&mut self) -> Result<Option<MonsterShotPlan>, SimError> {
+        self.preflight_monster_owner()?
+            .map(|id| self.prepare_monster_shot(id))
+            .transpose()
+            .map(Option::flatten)
+    }
+    pub(crate) fn preflight_monster_owner(&self) -> Result<Option<ActorId>, SimError> {
         self.preflight_perception_roster()?;
         let mut shot_owner = None;
         for id in self.actors.order() {
@@ -562,10 +578,7 @@ impl Simulation {
                 return Err(MonsterError::Arithmetic.into());
             }
         }
-        shot_owner
-            .map(|id| self.prepare_monster_shot(id))
-            .transpose()
-            .map(Option::flatten)
+        Ok(shot_owner)
     }
     fn prepare_monster_shot(&mut self, id: ActorId) -> Result<Option<MonsterShotPlan>, SimError> {
         self.preflight_monster_callback(id)?;
@@ -656,6 +669,9 @@ impl Simulation {
         self.monster_action(id, true)
     }
     fn monster_action(&mut self, id: ActorId, pos: bool) -> Result<(), SimError> {
+        if pos && self.profile == Profile::Shotgunner {
+            return Err(MonsterError::Definition.into());
+        }
         self.preflight_monster_callback(id)?;
         if pos && self.actor(id).unwrap().life.unwrap().actor_type.0 != 136 {
             return Err(MonsterError::Definition.into());
@@ -691,6 +707,8 @@ impl Simulation {
                 sound_targets: &self.sound_targets,
                 pursuit: true,
                 monsters: true,
+                shotgunner: self.profile == Profile::Shotgunner,
+                shotgun: None,
                 shot,
             }),
             access: &mut self.actors,
