@@ -25,7 +25,9 @@ then sight. P_CheckMissileRange first checks sight, then JUSTHIT clear/early tru
 reaction delay, approximate distance minus64 (minus128 without melee), source
 type-specific VILE/UNDEAD/CYBORG/SPIDER/SKULL adjustments/caps and a gameplay RNG
 comparison. M3d3b will not execute either branch: admitted pursuit metadata must
-have both melee and missile states absent. All original monster attack handoffs
+have both melee and missile states absent. Source MT_PLAYER itself has a
+S_PLAY_ATK1 missile animation reference: the native copy must explicitly clear
+that reference; unbound source player bodies never execute A_Chase. All original monster attack handoffs
 remain rejected before mutation. Recognition of original types is not execution.
 
 ## Direction state and direct walking

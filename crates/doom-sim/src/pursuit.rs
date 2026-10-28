@@ -6,7 +6,7 @@ pub(crate) mod chase;
 mod directions;
 use directions::new_direction;
 const NODIR: u8 = 8;
-const FLAGS: u32 = 2 | 4 | 32 | 64 | 128 | 1024 | 2097152 | 33554432;
+const FLAGS: u32 = 2 | 4 | 32 | 64 | 128 | 1024 | 2097152 | 2048 | 33554432;
 /// Pursuit admission or preflight rejection, before authoritative mutation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PursuitError {
@@ -246,7 +246,9 @@ impl Simulation {
         }
         let r = self.registry.as_deref().unwrap();
         let info = r.actor_type(ty).ok_or(PursuitError::Definition)?;
-        if info.states()[3..5] != [StateId(0); 2] || info.flags() & !FLAGS != 0 {
+        if (ty != ActorTypeId(0) && info.states()[3..5] != [StateId(0); 2])
+            || info.flags() & !FLAGS != 0
+        {
             return Err(PursuitError::Definition.into());
         }
         if ty != ActorTypeId(0) && info.states()[..2] != [StateId(1), StateId(2)] {
@@ -456,6 +458,9 @@ fn validate_registry(r: &ActorRegistry) -> Result<(), SimError> {
     projected.states[2].action = ActorAction::None;
     for i in [19, 21, 136] {
         let t = &r.types()[i];
+        if t.states()[3..5] != [StateId(0); 2] {
+            return Err(PursuitError::Definition.into());
+        }
         if !(1..=16).contains(&t.speed())
             || t.radius() < Fixed::ZERO
             || t.radius() > Fixed::from_map_units(32)
@@ -463,7 +468,7 @@ fn validate_registry(r: &ActorRegistry) -> Result<(), SimError> {
         {
             return Err(PursuitError::Definition.into());
         }
-        for j in [15, 16, 20] {
+        for j in [11, 15, 16, 20] {
             projected.types[i].properties[j] = source.types()[0].properties[j];
         }
     }
