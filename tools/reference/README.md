@@ -212,3 +212,29 @@ events and RNG wrap. No Rust output or proprietary asset is read. The eighth
 example helper preserves both historical equality helpers; all seven older
 reference generators, encoders and code fixtures remain byte-identical. Linux
 CI reproduces all eight pairs; every stable OS compares recorded evidence.
+
+## M3d3b
+
+```sh
+python3 tools/reference/generate_m3d3b.py --check
+python3 tools/reference/m3d3b_snapshot_goldens.py --check
+python3 tools/reference/check_monster_pursuit.py
+```
+
+The isolated generator/shim compiles 60 tracked genuine original bodies, including
+P_Move/P_TryWalk/P_NewChaseDir/A_Chase and original perception, movement, structs,
+metadata, states/thinkers and RNG. Original direction definitions are extracted.
+Source bodies/functions, files/headers, tables, adapters and synthetic inputs/
+outputs are hashed; compiler flags/ABI and the unsigned BAM shift adapter are
+explicit. Native fixtures remove both attack states (including the source player
+missile animation); attack/range/door services abort only when unreachable.
+
+96 scenarios/17 legal synthetic maps compare exact direction/movement/candidate/
+counter/target/state/sound/RNG and whole thinker order. No Rust expected output
+is read. See [M3D3B_REFERENCE.md](../../docs/M3D3B_REFERENCE.md) and
+[validation counts](../../docs/VALIDATION.md). Unsafe/nonterminating C cases are
+separately labelled Rust safety policies. The independent v9 encoder produces 835
+captures and 49 complete streams, including transient pursuit/perception/geometry
+events. Named-field diagnostics precede bytes/digests. The ninth asserted example
+and eighth fuzz target preserve every historical helper. All old v1-v8 reference
+code/fixtures/encoders remain byte-identical; this README update is prose only.

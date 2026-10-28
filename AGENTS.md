@@ -97,13 +97,14 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   user thinker budgets have a separate documented nontransactional contract.
 - Actor identity, thinker order and spatial order are separate. Never sort handles
   to choose blockers; successful same-cell moves reinsert at spatial cell head.
-- Run all eight reference generators and independent golden encoders on Linux;
+- Run all nine reference generators and independent golden encoders on Linux;
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
 - M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
   correction-head and post-merge CI. M3d1 was regularly merged as c924f18 after fresh correction-head and
   post-merge CI in the M3d2 mission. M3d2 was regularly merged as 955f690 after final corrections and fresh/post-merge CI. M3d2b was regularly merged as e109ee1 after final correction and fresh/post-merge
-  CI in the M3d3a mission. M3d3a has conditional regular-merge authorization in the M3d3b mission;
-  M3d3b or later merges require separate authorization.
+  CI in the M3d3a mission. M3d3a completed its regular merge as 839fbab after fresh/post-merge CI;
+  M3d3b and documentation PR #12 have separate conditional regular-merge
+  authorization in the M3d3c mission; M3d3c or later merges require separate approval.
 
 - M3b consumes supplied BLOCKMAP lists without rebuilding them; conservative
   omissions are diagnostic, not proof of spatial correctness. Keep older profiles
@@ -149,8 +150,8 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   projectile ASan smoke tests. Preserve every v1-v6 schema, fixture, generator,
   encoder and historical helper unchanged. New projectile observations use tag 15.
 - M3d2b PR #9 completed its owner-authorized regular merge and post-merge gates;
-  never enable auto-merge. M3d3a has conditional regular-merge authorization after finalization gates.
-  Pursuit, attacks, M3d4 and M3e remain later milestones.
+  never enable auto-merge. M3d3a completed its authorized regular merge and post-merge gates.
+  Pursuit is admitted only in profile 9; attacks, M3d4 and M3e remain later work.
 
 - Read `docs/M3D3A_REFERENCE.md` before perception changes. Profile 8 composes
   static-sector typed lifecycle, pure REJECT/BSP sight, a distinct four-slot
@@ -159,7 +160,7 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - Preserve source three-way sight arithmetic (including horizontal x==node.y),
   seg/duplicate order, scan stopping/lastlook, sound assignment before ambush
   confirmation/fallback, threshold reset and wake RNG/state-entry order.
-- A_Look executes only labelled native fixture lookers with fully admitted
+- Profile 8 A_Look executes only labelled native fixture lookers with fully admitted
   action-free see handoffs. Reject original A_Chase and unsupported reachable
   actions before allocation/mutation. No chase no-op, pursuit or attack scheduler.
 - Active roster/sound references must stay valid and non-removing during a tic.
@@ -171,5 +172,33 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   documented movement bounds. Run `generate_m3d3a.py --check`, independent
   `m3d3a_snapshot_goldens.py --check`, the eighth example equality helper, all seven
   fuzz builds and bounded perception ASan. Preserve every historical v1-v7 code
-  fixture/generator/encoder/helper. M3d3a has conditional regular-merge authorization after fresh checks.
+  fixture/generator/encoder/helper. M3d3a completed its regular merge as 839fbab after fresh/post-merge checks.
   M3d3b pursuit is separately authorized; attacks and auto-merge remain excluded.
+
+- Read `docs/M3D3B_REFERENCE.md` before pursuit changes. Profile 9 composes the
+  perception roster/noise with non-attacking native look/chase fixtures. Keep all
+  v1-v8 bytes/fixtures/generators/encoders and historical helpers unchanged.
+- Source spawn initializes movedir=EAST and movecount=0. Preserve exact eight
+  fixed vectors, immediate P_TryMove, spatial relinking/floor snap, successful-only
+  TryWalk count draw, NewChaseDir retry/fallback/turnaround order and RNG.
+- A_Chase executes through LifeHost and existing thinker order after XY/Z updates.
+  Preserve reaction/threshold countdown, signed BAM turning, target health versus
+  shootability, allaround reacquisition, spawn return, JUSTATTACKED and active-sound
+  draws. Do not add a scheduler or convert direct walking into momentum.
+- Native fixtures explicitly remove source player missile-animation metadata and
+  have no melee/missile states. Reject attacks, FLOAT/NOCLIP/TELEPORT, line/sector
+  specials, original monster action closures and unsupported flags before mutation.
+  No door/float/attack stub may fabricate success. Single-player, fastparm=false.
+- At most 64 actors, speed 1..16, +/-512 maps, +/-1024 queries, 8192 expanded sight
+  work. Direct callback XY margin is 1008; tic margin 978 proves 30 physical+16 direct
+  units. Validate all retained sound/current target/active roster IDs before chase
+  effects. Stable actor-state admission prevents mid-tic target removal. Preserve
+  full canonical state on recoverable rejection without a full-state tic clone.
+- Countdowns reject INT_MIN; reaction also rejects INT_MIN+1 because a loss->Look
+  handoff may immediately invoke Chase twice. Missing/nonshootable targets use
+  source reacquisition; pending/stale IDs reject and never alias slot reuse.
+- Run all nine source/encoder pairs, nine example equality checks, all eight fuzz
+  builds and bounded pursuit ASan. Distinguish C equivalence, independent project
+  schema bytes and Rust-only safety policies. M3d3b has conditional regular-merge
+  authorization after fresh checks. M3d3c is separately authorized only after PRs
+  #11/#12 finish their gates; auto-merge remains disabled.

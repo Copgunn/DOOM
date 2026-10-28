@@ -412,3 +412,45 @@ leak detection is not claimed. All seven fuzz targets build. Public CI uses no
 private fixtures: Linux reproduces all eight C/encoder pairs; stable Linux,
 Windows and macOS compare recorded fixtures, release tests and eight example
 outputs. Rust 1.85 runs the workspace suite.
+
+## M3d3b pursuit checks
+
+```sh
+python3 tools/reference/generate_m3d3b.py --check
+python3 tools/reference/m3d3b_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3d3b_reference --locked -- --nocapture
+cargo test -p doom-sim --test m3d3b_policies --locked
+cargo run -p doom-sim --example monster_pursuit --locked
+python3 tools/reference/check_monster_pursuit.py
+cargo +nightly fuzz build --fuzz-dir fuzz
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run monster_pursuit --fuzz-dir fuzz -- -runs=2000 -max_len=65 -seed=17
+```
+
+Run alongside every historical pair/helper and mandatory workspace/release/MSRV/
+rustdoc checks. The new C harness compiles 60 tracked original bodies plus source
+fixed/table helpers and extracts the original direction tables. It covers 96 cases
+on 17 synthetic maps: all directions/NODIR, +/-10 ties, diagonal/axis/old/search/
+turnaround attempts, strict actor overlap, steps 24/25, dropoffs, height/headroom,
+blocked/omitted lines, corridors/traps, skill/counter/turning, reacquisition, active
+sound, RNG wrap and whole state/thinker/spatial order. Per-case/op/observation and
+named actor-field diagnostics stop at the first difference. Exact aggregate
+counts are asserted. All raw gameplay draws are compared, not only final indices.
+
+The independent Python v9 encoder reads C captures/public setup/schema only:
+835 captures, 49 full byte streams, including transient movement/vertical/sight/
+scan/Look/Chase/noise events. Rust compares named fields, complete bytes and
+per-operation/per-tic digests. This is project schema evidence, not a DOOM format.
+Twelve separate policy tests cover invalid input, attacks/float/specials, empty
+roster, pending/retired/reused IDs, stale sounds, immediate callback bounds, the
+two-decrement reaction edge, capacity, pause/independent instances and read-only
+presentation. Unsafe/nonterminating C cases are not executed as equivalence tests.
+
+The eighth fuzz target uses bounded synthetic operation sequences, including
+walking, direction/chase/look/state calls, roster/health/flag/counter edits,
+removal/reuse and momentum. Every recoverable error compares full snapshots.
+The recorded ASan campaign completed 2000 executions (seed 17,max input 65,24 initial
+synthetic seeds), no finding, leak detection disabled. All eight targets build.
+Linux CI reproduces all nine C/encoder pairs; stable Linux/Windows/macOS run
+recorded comparisons, release, nine example equality checks and rustdoc, with
+Rust 1.85 workspace coverage. The ninth example asserts four complete pursuit/
+loss/reacquisition traces and final digest `8c7fd6adfe73112d`.
