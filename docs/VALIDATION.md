@@ -1105,7 +1105,8 @@ horizontal-side quirk), ordinary sound through a wall, blocked/visible ambush an
 an eight-tic dead-to-live candidate change. Final digest `30721bdec7a0d47e` is equal
 in debug/release. This is project determinism evidence, not a DOOM demo hash.
 Public CI and delivery evidence follow.
-M3d3a must remain open/unmerged. No private asset/repository was accessed.
+M3d3a delivery originally stopped at owner review; its later conditional
+finalization authorization is recorded below. No private asset/repository was accessed.
 
 ## M3d3a remote delivery evidence
 
@@ -1118,10 +1119,12 @@ Linux, Windows, macOS and Rust 1.85 all succeeded on that exact commit. Linux
 also reproduced all eight C generator/encoder pairs; stable jobs passed recorded
 reference/golden checks, release tests, eight-example equality and rustdoc.
 
-The following delivery-record commit changes prose only, recording this verified
-implementation head and CI. Its final SHA and fresh successful CI are pinned in
-the PR description after verification. PR #10 remains open/unmerged without
-auto-merge; master remains at the authorized PR #9 merge. All 165 original
+The prose-only delivery-record commit is reviewed head
+`3ca419ed3b9a788ae61c3c5bff54587c1ca4b4a6`.
+[Final reviewed CI 40637859502](https://github.com/Copgunn/DOOM/actions/runs/40637859502)
+passed Linux, Windows, macOS and Rust 1.85 on that exact SHA. The M3d3b mission
+conditionally authorizes a regular merge after this final correction passes fresh
+local and remote checks; master remains at the authorized PR #9 merge until then. All 165 original
 upstream files and 222 historical reference code/fixture files (excluding the
 requested reference README update) are byte-identical. Repository visibility is
 public, licensing is GPL-2.0-only, attribution/history are preserved, and no
@@ -1130,3 +1133,19 @@ private repository or commercial asset was accessed. No branch was deleted.
 Recommended next focused work is M3d3b source-compatible pursuit and movement
 decisions after separate owner authorization. Full original monster admission,
 attacks and demo synchronization remain deferred.
+
+## M3d3a authorized finalization for M3d3b
+
+The owner reviewed PR #10 at `3ca419ed3b9a788ae61c3c5bff54587c1ca4b4a6`,
+base `e109ee193bcce6077f5c8d90802c97edc89a55a6`, with successful reviewed
+[CI 40637859502](https://github.com/Copgunn/DOOM/actions/runs/40637859502).
+Live PR/local/remote references match and there are no intervening commits,
+comments, reviews or threads. No demonstrated blocking defect was identified
+within the declared perception slice. This correction changes documentation only;
+all v1-v8 canonical bytes and historical reference code/fixtures remain unchanged.
+
+The owner authorizes a regular merge only after the correction passes fresh
+mandatory local checks and exact-head CI. Verify both merge parents, local/remote
+master and successful post-merge CI before M3d3b runtime work. No squash, force
+push, history rewrite, auto-merge or branch deletion is authorized. M3d3b itself
+must remain open and unmerged for separate owner review.

@@ -102,7 +102,8 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 - M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
   correction-head and post-merge CI. M3d1 was regularly merged as c924f18 after fresh correction-head and
   post-merge CI in the M3d2 mission. M3d2 was regularly merged as 955f690 after final corrections and fresh/post-merge CI. M3d2b was regularly merged as e109ee1 after final correction and fresh/post-merge
-  CI in the M3d3a mission. No M3d3a or later merge is authorized.
+  CI in the M3d3a mission. M3d3a has conditional regular-merge authorization in the M3d3b mission;
+  M3d3b or later merges require separate authorization.
 
 - M3b consumes supplied BLOCKMAP lists without rebuilding them; conservative
   omissions are diagnostic, not proof of spatial correctness. Keep older profiles
@@ -148,7 +149,7 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   projectile ASan smoke tests. Preserve every v1-v6 schema, fixture, generator,
   encoder and historical helper unchanged. New projectile observations use tag 15.
 - M3d2b PR #9 completed its owner-authorized regular merge and post-merge gates;
-  never enable auto-merge. M3d3a stops at owner review.
+  never enable auto-merge. M3d3a has conditional regular-merge authorization after finalization gates.
   Pursuit, attacks, M3d4 and M3e remain later milestones.
 
 - Read `docs/M3D3A_REFERENCE.md` before perception changes. Profile 8 composes
@@ -170,5 +171,5 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   documented movement bounds. Run `generate_m3d3a.py --check`, independent
   `m3d3a_snapshot_goldens.py --check`, the eighth example equality helper, all seven
   fuzz builds and bounded perception ASan. Preserve every historical v1-v7 code
-  fixture/generator/encoder/helper. M3d3a remains open for separate owner review;
-  no auto-merge or pursuit/attack implementation is authorized.
+  fixture/generator/encoder/helper. M3d3a has conditional regular-merge authorization after fresh checks.
+  M3d3b pursuit is separately authorized; attacks and auto-merge remain excluded.

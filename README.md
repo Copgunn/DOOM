@@ -29,13 +29,14 @@ foundations implement bounded original plasma spawning, flight, direct impact,
 explosion and removal in profile 7; [PR #9](https://github.com/Copgunn/DOOM/pull/9)
 merged as `e109ee1` after final corrections and fresh/post-merge CI. M3d3a
 perception and target acquisition is implemented in [PR #10](https://github.com/Copgunn/DOOM/pull/10)
-for owner review, with source REJECT/BSP sight, player-slot scanning, sound/ambush decisions
+with source REJECT/BSP sight, player-slot scanning, sound/ambush decisions
 and a bounded fixture-only A_Look handoff. Full monster pursuit and attacks remain
 future work.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). [CI 40637618358](https://github.com/Copgunn/DOOM/actions/runs/40637618358)
 passed Linux, Windows, macOS and Rust 1.85 on implementation/documentation head
-`4e7720f0ba28781e72e3abe08c269389f582ad31`. PR #10 remains open and unmerged.
+`4e7720f0ba28781e72e3abe08c269389f582ad31`. The M3d3b mission conditionally authorizes its regular merge after final corrections
+and fresh local/remote checks.
 A playable client is future work.
 
 Implemented:
@@ -416,7 +417,7 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d1 | Bounded damage/hitscan/kill foundations | Merged as c924f18 |
 | M3d2 | Player weapons, psprites and ammo | Merged as 955f690 |
 | M3d2b | Original plasma foundations | Merged as e109ee1 |
-| M3d3a | Monster perception and target acquisition | Implemented for owner review; open and unmerged |
+| M3d3a | Monster perception and target acquisition | Reviewed; conditional regular merge gated on fresh checks |
 | M3d3b–M3e | Pursuit, attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |

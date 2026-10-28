@@ -350,7 +350,8 @@ merge and post-merge CI.
   eight example equality checks; seven fuzz builds and 2000 ASan executions.
 - [x] [PR #10](https://github.com/Copgunn/DOOM/pull/10); [CI 40637618358](https://github.com/Copgunn/DOOM/actions/runs/40637618358)
   passed Linux/Windows/macOS/MSRV on exact head `4e7720f0ba28781e72e3abe08c269389f582ad31`.
-- [ ] Owner review and separate merge authorization; leave M3d3a open/unmerged.
+- [x] Owner engineering review and conditional regular-merge authorization in M3d3b mission.
+- [ ] Final correction, fresh local/remote checks, regular merge and post-merge CI.
 
 M3d3b remains source-compatible monster pursuit and movement decisions. Later
 M3d3 work adds attack selection/actions; M3d4 integrates combat/advanced attacks,
