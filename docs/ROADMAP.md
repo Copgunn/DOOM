@@ -634,12 +634,19 @@ was committed before runtime.
 - [x] Immutable implementation e3f52f47a686fccdb532f66f8dc3c347b4ef2528 passed
   Linux/Windows/native macOS/Rust 1.85 in
   [CI40784721289](https://github.com/Copgunn/DOOM/actions/runs/40784721289).
-- [x] [PR18](https://github.com/Copgunn/DOOM/pull/18) opened for separate owner
-  review; leave open/unmerged without auto-merge. Final documentation revisions
-  require fresh four-job CI, recorded on PR18 before readiness.
+- [x] Reviewed final head `29824fbb9e098bcd0403f0dc7de2ab918e0bc9bc` passed all
+  four jobs in [CI40786196192](https://github.com/Copgunn/DOOM/actions/runs/40786196192).
+- [x] [PR18](https://github.com/Copgunn/DOOM/pull/18) received conditional GO.
+  The M3d3i mission authorizes its regular merge after this documentation
+  correction, fresh mandatory local/four-job corrected-head checks and live
+  blocker verification. Verify merge parents/tree/master and successful exact
+  post-merge CI before M3d3i runtime. See [VALIDATION](VALIDATION.md).
+  Keep auto-merge disabled; the new M3d3i PR requires separate owner review.
 
 Full actor/map-spawn admission, fast/Nightmare, scoring/global statistics,
 resurrection, player damage, other attacks/projectiles, dynamic sectors/specials,
 multiplayer, demos and rendering remain deferred. Recommended next separate
-investigation: original Demon map-spawn/full-admission prerequisites and their
-remaining ownership/statistics dependencies. No additional milestone is implemented.
+investigation and implementation is assigned to M3d3i: bounded original Demon
+map spawning, subject to PR18's verified correction/merge/post-merge gates and
+explicit remaining ownership/statistics restrictions. It does not expand
+M3d3h's declared runtime scope.

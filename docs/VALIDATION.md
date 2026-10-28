@@ -2118,8 +2118,24 @@ This records head-associated CI and source-tree equality, not a detached-head
 checkout claim. Original-C regeneration remained Linux-only under its existing
 condition; recorded comparisons ran on all stable platforms.
 
-[PR18](https://github.com/Copgunn/DOOM/pull/18) is the separate M3d3h owner-review
-handoff. This ledger pins the observed immutable implementation result. Every
-final documentation revision must pass fresh four-job CI before readiness; its
-exact final SHA/result are recorded on PR18 after verification. Keep PR18 open,
-unmerged and without auto-merge. No later gameplay milestone is authorized.
+## M3d3h reviewed final head and conditional finalization
+
+Reviewed head **29824fbb9e098bcd0403f0dc7de2ab918e0bc9bc** passed all four required
+jobs in [CI40786196192](https://github.com/Copgunn/DOOM/actions/runs/40786196192),
+completed2026-10-28 23:26:30UTC: Linux, Windows, native macOS and Rust1.85.
+Native macOS job123159872174 executed on macos-26-intel, runner1000000415.
+The PR checkout was test merge `ff111936837df4205494b4fd5409a9d712e05a42`, with
+ordered parents `f44828d5ad3169fe77c116bdebb30c74d1b5feb2` and the reviewed head.
+Its tree `6a198980579e6e119511771754584a1d42a742a7` equals the feature-head tree.
+Linux regenerated all fifteen original-C/independent-encoder pairs; stable
+platforms passed recorded comparisons and fifteen debug/release examples.
+
+The M3d3i mission conditionally authorizes a regular merge of
+[PR18](https://github.com/Copgunn/DOOM/pull/18) after this documentation-only
+correction, fresh mandatory local checks, successful four-job corrected-head CI
+and live blocker/review verification. The reviewed green run does not substitute
+for those fresh checks. Record corrected head/CI and merge evidence on PR18;
+verify ordered merge parents, tree, master and successful exact-merge post-merge
+CI before M3d3i runtime. Runtime, DSIM-v1 through DSIM-v15 and historical reference
+evidence remain unchanged by this correction. No squash, force push, history
+rewrite, CI bypass or auto-merge.
