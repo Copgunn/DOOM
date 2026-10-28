@@ -124,3 +124,5 @@ Keep focused documentation changes on their own branch and PR, especially while
 a gameplay milestone is active. Do not merge or rewrite history without owner
 authorization. Historical upstream code, [original release notes](../README.TXT)
 and [license](../LICENSE.TXT) must remain untouched.
+
+- [M3d3g Demon pain/death investigation](M3D3G_REFERENCE.md): source timing, RNG, corpse collision and admission proof obligations.

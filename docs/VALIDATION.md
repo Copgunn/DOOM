@@ -1914,3 +1914,9 @@ reference evidence remain unchanged. The corrected SHA and observed fresh CI bel
 on the PR after verification. Verify ordered merge parents/tree/master and all four
 post-merge jobs before M3d3g runtime work. No squash, force push, history rewrite,
 auto-merge or protection bypass is authorized.
+
+## PR #16 completed finalization
+
+Documentation-only corrected head `63efb2a585b9aa09032964cb1c4eae3dce1fae21` passed all four jobs in [CI 40761281692](https://github.com/Copgunn/DOOM/actions/runs/40761281692), completed 2026-10-28 20:19:29 UTC, and fresh local 205 workspace/205 MSRV/181 release, thirteen reference pairs/examples, build/format/Clippy/rustdoc, links and source/history checks. The seven Markdown corrections changed no runtime/CI/reference/DSIM content.
+
+Authorized regular merge `75b2a2bc9a28401de358859f0499fe4c81dfa0a2` has ordered parents `5b9182472123b8ec86b48cf6a4076426a7856f70` and that correction. Tree `cfeafd09f1649cfc5c4d8c8037af14fcc6af6abb` equals corrected head. PR #16 is closed/merged; local/remote master agree. Exact [merge push CI 40762344038](https://github.com/Copgunn/DOOM/actions/runs/40762344038) passed Linux/Windows/native macos-26-intel/Rust1.85, completed 2026-10-28 20:26:10 UTC, before M3d3g branch/investigation/runtime. All 165 original files, 940 historical reference/tool/support paths, original ancestry/attribution/licenses/locks are unchanged. No private assets/repositories, squash, force push, history rewrite, auto-merge or protection change. M3d3g requires separate owner review and stays unmerged.
