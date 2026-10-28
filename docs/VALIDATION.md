@@ -902,12 +902,19 @@ Linux, Windows, macOS and Rust 1.85. Stable jobs include recorded C comparisons,
 independent goldens, release tests, six-example debug/release equality and docs;
 Linux additionally reproduces all six generators/encoders.
 
-This subsequent delivery record changes documentation only. The final immutable
-head and its fresh exact-head CI link are recorded in PR #8, avoiding a commit
-attempting to contain its own hash. Readiness requires observing that fresh run;
-no earlier green run substitutes for it. PR #8 must remain open and unmerged with
-auto-merge disabled. Master remains at M3d1 merge
-`c924f18424a7a58f892fc8b6a7c2b5011db05c5b`.
+Reviewed final head `0e94091c858624abed3c31ae3eaa3271f504fe47` passed all four
+jobs in [CI 40624283411](https://github.com/Copgunn/DOOM/actions/runs/40624283411).
+The live PR matches that head and base `c924f18424a7a58f892fc8b6a7c2b5011db05c5b`;
+no intervening changes, reviews or comments were found. Engineering review gave
+a conditional GO with no demonstrated blocker within the declared scope.
+
+The M3d2b mission conditionally authorizes a regular merge of PR #8 after this
+final documentation correction and fresh mandatory local/exact-head CI checks.
+This correction records profile 5/6 in the general schema table and final review
+evidence; runtime, source fixtures and DSIM-v1-v6 expectations are unchanged.
+Fresh correction-head CI must pass before merge, followed by merge-parent/master
+and post-merge CI verification before M3d2b implementation. M3d2b itself must remain
+open and unmerged for separate owner review.
 
 Known conservative policy: capacity reserves one impact per requested bullet,
 including predicted misses. A full store may therefore reject a valid source
@@ -915,4 +922,5 @@ request that would produce fewer effects. The declared 64-slot/single-live-playe
 profile and exact state admission are compatibility bounds, not complete gameplay.
 Historical local M0-M3d1 merged branches and preserved remote milestone references
 are cleanup candidates only; none was deleted. The active M3d2 branch stays intact.
-No M3d2 or later milestone merge is authorized.
+M3d2 has conditional regular-merge authorization; no M3d2b or later milestone
+merge is authorized.

@@ -99,7 +99,7 @@ Evidence boundaries and remaining mechanics are explicit in compatibility notes.
 
 ## M3 — Vanilla gameplay
 
-Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 implemented; owner review pending**.
+Status: **M3a/M3b implemented, validated and merged; M3c implemented, validated and merged; M3d1 merged; M3d2 reviewed; authorized merge gated on fresh checks**.
 M3a [PR #4](https://github.com/Copgunn/DOOM/pull/4) merged by owner-authorized
 regular commit `764dd9605fa3af3befc133287e9949930981f469`; fresh and post-merge CI
 passed before branching M3b. Exact evidence is in [validation](VALIDATION.md).
@@ -201,7 +201,7 @@ repository. Custom wgpu rendering with Vulkan preferred remains later work.
 | Phase | Scope | Status |
 | --- | --- | --- |
 | M3d1 | Damage, targeting, hitscan tracing and kill/death foundations | Merged as c924f18 after fresh and post-merge CI |
-| M3d2 | Player weapons, psprites and ammo; projectiles deferred | Implemented; owner review pending |
+| M3d2 | Player weapons, psprites and ammo; projectiles deferred | Reviewed; regular merge conditionally authorized |
 | M3d3 | Monster targeting/perception, movement, attacks and AI | Planned |
 | M3d4 | Integrated combat, explosions, advanced attacks and regressions | Planned |
 
@@ -281,8 +281,10 @@ Source investigation was recorded as `41d89e5` before runtime implementation.
 - [x] Local workspace/release/MSRV/docs/reference checks; evidence in validation.
 - [x] Linux/Windows/macOS and Rust 1.85 CI passed on implemented head `75f2c72`
   ([CI 40623977578](https://github.com/Copgunn/DOOM/actions/runs/40623977578));
-  the final delivery-record head and fresh exact-head CI are recorded in PR #8.
-- [ ] Owner review and separate merge authorization (PR must remain unmerged).
+  reviewed final `0e94091` also passed
+  [CI 40624283411](https://github.com/Copgunn/DOOM/actions/runs/40624283411).
+- [x] Owner engineering review and conditional regular-merge authorization.
+- [ ] Final correction, fresh CI, regular merge and post-merge verification before M3d2b.
 
 Projectiles remain deferred. Next work should extend source-verified player damage
 prerequisites and projectile foundations separately, then M3d3 perception/monster

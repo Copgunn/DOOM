@@ -24,7 +24,8 @@ merged as `4dbb0a5` after correction-head and post-merge CI. M3d1 damage/hitscan
 foundations are implemented in [PR #7](https://github.com/Copgunn/DOOM/pull/7)
 merged as `c924f18` after fresh correction-head and post-merge CI. M3d2 player
 weapons and psprites are implemented in [PR #8](https://github.com/Copgunn/DOOM/pull/8)
-on `feat/m3d2-player-weapons-psprites`, awaiting separate owner review and merge authorization.
+on `feat/m3d2-player-weapons-psprites`; engineering review gave a conditional GO.
+Final corrections and fresh checks precede the owner-authorized regular merge.
 Acceptance and exact delivery evidence are in the [roadmap](docs/ROADMAP.md)
 and [validation notes](docs/VALIDATION.md). A playable client is future work.
 
@@ -370,7 +371,7 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3b | Static sectors/BSP, openings, step/dropoff and XY/Z/gravity | Implemented, validated, merged |
 | M3c | Actor states, spawning and controlled death | Implemented, validated and merged |
 | M3d1 | Bounded damage/hitscan/kill foundations | Merged as c924f18 |
-| M3d2 | Player weapons, psprites and ammo | Implemented; separate owner review pending |
+| M3d2 | Player weapons, psprites and ammo | Reviewed; authorized merge gated on fresh checks |
 | M3d3–M3e | AI, integrated combat, projectiles, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
