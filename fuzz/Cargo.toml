@@ -62,3 +62,10 @@ path = "fuzz_targets/projectiles.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "monster_perception"
+path = "fuzz_targets/monster_perception.rs"
+test = false
+doc = false
+bench = false
