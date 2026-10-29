@@ -11,5 +11,6 @@ for index in [20,27]:
     for mutation in range(10):seeds[f'mutate-{index}-{mutation}']=bytes([index,mutation,128])+operations
 for index in [7,20,27]:seeds[f'extreme-{index}']=bytes([index,0,0,132,0,0,1,0,0,64,0,4,0,0,0])
 seeds['rng-wrap']=bytes([7,0,0])+bytes([8,0,31,0])*8
+seeds['source-undefined-clip']=bytes([255,0,0])+bytes([3,0,1,0])*8
 for name,data in seeds.items():(args.directory/name).write_bytes(data)
 print(f'{len(seeds)} synthetic seeds; max35 bytes/eight operations/eight tics/four actor slots.')

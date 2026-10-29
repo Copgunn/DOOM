@@ -240,6 +240,7 @@ pub(crate) fn query(
         Vec::new(),
         Vec::new(),
     )
+    .expect("historical sight retains defined Rust numeric policy")
 }
 pub(crate) fn try_extent_query(
     world: &StaticWorld,
@@ -257,7 +258,7 @@ pub(crate) fn try_extent_query(
         )?;
         tasks = crate::line_work::reserved(2 * world.map().nodes().len() + 1)?;
     }
-    Ok(query_prepared(
+    query_prepared(
         world,
         sectors,
         observer,
@@ -265,7 +266,7 @@ pub(crate) fn try_extent_query(
         world.extent_sight_work.expect("extent expansion proved"),
         visits,
         tasks,
-    ))
+    )
 }
 fn query_prepared(
     world: &StaticWorld,
@@ -275,7 +276,7 @@ fn query_prepared(
     work_limit: usize,
     visits: Vec<SightVisit>,
     mut tasks: Vec<Task>,
-) -> SightResult {
+) -> Result<SightResult, SimError> {
     let map = world.map();
     let pair = usize::from(observer.location.unwrap().sector) * sectors.len()
         + usize::from(target.location.unwrap().sector);
@@ -289,7 +290,7 @@ fn query_prepared(
         visits,
     };
     if rejected {
-        return out;
+        return Ok(out);
     }
     let eye = observer.z + observer.height() - Fixed::from_bits(observer.height().bits() >> 2);
     let mut slopes = [target.z - eye, target.z + target.height() - eye];
@@ -409,6 +410,14 @@ fn query_prepared(
                         break 'walk;
                     }
                     let frac = fraction(ray, div);
+                    // The source intercept guard can saturate to INT_MIN even
+                    // inside the coordinate envelope (quantized side tests).
+                    // Original FixedDiv then evaluates abs(INT_MIN) on its
+                    // divisor. Reject that undefined C branch in profile19;
+                    // historical profiles retain their explicit Rust policy.
+                    if world.extent_sight_work.is_some() && frac == Fixed::MIN {
+                        return Err(PerceptionError::Arithmetic.into());
+                    }
                     if front.floor != back.floor {
                         slopes[0] = slopes[0].max((bottom - eye) / frac);
                     }
@@ -433,7 +442,7 @@ fn query_prepared(
         }
     }
     out.slopes = Some(slopes);
-    out
+    Ok(out)
 }
 
 #[cfg(test)]

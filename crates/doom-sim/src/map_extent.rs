@@ -209,5 +209,37 @@ mod tests {
             assert_eq!(i32::from(sight::side(line(4).start, line(0))), n[9]);
             assert_eq!(i32::from(sight::side(line(4).start, line(10))), n[14]);
         }
+        // A defined original intercept result whose later C clipping divisor
+        // would invoke abs(INT_MIN). This component does not execute that UB.
+        let row = include_str!("../../../tests/reference/m3f2_boundary.csv")
+            .lines()
+            .nth(1)
+            .unwrap();
+        let n: Vec<i32> = row.split(',').map(|v| v.parse().unwrap()).collect();
+        let line = sight::Divline {
+            start: [Fixed::from_bits(n[0]), Fixed::from_bits(n[1])],
+            delta: [Fixed::from_bits(n[2]), Fixed::from_bits(n[3])],
+        };
+        let ray = sight::Divline {
+            start: [Fixed::from_bits(n[4]), Fixed::from_bits(n[5])],
+            delta: [Fixed::from_bits(n[6]), Fixed::from_bits(n[7])],
+        };
+        assert_eq!(i32::from(sight::side(line.start, ray)), n[8]);
+        assert_eq!(
+            i32::from(sight::side(
+                [line.start[0] + line.delta[0], line.start[1] + line.delta[1]],
+                ray
+            )),
+            n[9]
+        );
+        assert_eq!(i32::from(sight::side(ray.start, line)), n[10]);
+        assert_eq!(
+            i32::from(sight::side(
+                [ray.start[0] + ray.delta[0], ray.start[1] + ray.delta[1]],
+                line
+            )),
+            n[11]
+        );
+        assert_eq!(sight::fraction(ray, line).bits(), n[12]);
     }
 }

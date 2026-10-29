@@ -523,3 +523,40 @@ fn new_geometry_profile_rejects_player_typed_combat_ai_and_map_spawning() {
     assert!(sim.step(invalid).is_err());
     assert_eq!(before, sim.snapshot());
 }
+
+#[test]
+fn source_int_min_fraction_rejects_before_undefined_c_clip_without_mutation() {
+    let n: Vec<i32> = include_str!("../../../tests/reference/m3f2_boundary.csv")
+        .lines()
+        .nth(1)
+        .unwrap()
+        .split(',')
+        .map(|v| v.parse().unwrap())
+        .collect();
+    assert_eq!(&n[8..], [1, 0, 1, 0, i32::MIN]);
+    let map = fixtures::source_clip_boundary_map();
+    let mut sim = Simulation::map_extent(map.clone()).unwrap();
+    let spec = |x, y| ActorSpec {
+        position: [Fixed::from_bits(x), Fixed::from_bits(y)],
+        height: u(16),
+        ..Default::default()
+    };
+    let observer = sim.spawn(spec(n[4], n[5])).unwrap();
+    let target = sim.spawn(spec(n[4] + n[6], n[5] + n[7])).unwrap();
+    let before = sim.snapshot();
+    assert_eq!(
+        sim.check_sight(observer, target),
+        Err(doom_sim::SimError::Perception(
+            doom_sim::PerceptionError::Arithmetic
+        ))
+    );
+    assert_eq!(before, sim.snapshot());
+    // Historical Rust numeric policy is unchanged; no C-equivalence claim is
+    // made for the excluded original abs(INT_MIN) operation.
+    let mut old = Simulation::map_scale(map).unwrap();
+    let a = old.spawn(spec(n[4], n[5])).unwrap();
+    let b = old.spawn(spec(n[4] + n[6], n[5] + n[7])).unwrap();
+    let before = old.snapshot();
+    assert!(old.check_sight(a, b).is_ok());
+    assert_eq!(before, old.snapshot());
+}

@@ -152,6 +152,36 @@ pub fn decode(lumps: &[base::Lump]) -> Result<Map, doom_map::MapError> {
     Map::from_wad(&wad, "MAP01", MapLimits::default())
 }
 
+/// Rust-only map for a defined C intercept whose later source clip is undefined.
+pub fn source_clip_boundary_map() -> Map {
+    let mut data = lumps(0);
+    for (offset, value) in [(0, 0), (2, 0), (4, 90), (6, 234)] {
+        set_word(&mut data[4].1, offset, value);
+    }
+    let mut sector = data[8].1[..26].to_vec();
+    set_word(&mut sector, 0, 24);
+    data[8].1.extend(sector);
+    let side_index = (data[3].1.len() / 30) as i16;
+    let mut side = data[3].1[..30].to_vec();
+    set_word(&mut side, 28, 1);
+    data[3].1.extend(side);
+    set_word(&mut data[2].1, 4, 4);
+    set_word(&mut data[2].1, 12, side_index);
+    set_word(&mut data[6].1, 0, 1);
+    decode(&data).unwrap()
+}
+/// Exact observer/target inputs from the original-C boundary component.
+pub fn source_clip_boundary_positions() -> [[Fixed; 2]; 2] {
+    let n: Vec<i32> = include_str!("../reference/m3f2_boundary.csv")
+        .lines()
+        .nth(1)
+        .unwrap()
+        .split(',')
+        .map(|v| v.parse().unwrap())
+        .collect();
+    [[raw(n[4]), raw(n[5])], [raw(n[4] + n[6]), raw(n[5] + n[7])]]
+}
+
 /// Compare independently encoded expected fields, identifying the first divergence.
 pub fn assert_canonical(expected: &[u8], actual: &doom_sim::Snapshot) {
     fn take<'a>(bytes: &mut &'a [u8], n: usize) -> &'a [u8] {

@@ -24,7 +24,9 @@ fn operation(sim: &mut Simulation, ids: &mut Vec<doom_sim::ActorId>, c: &[u8]) {
         2 => sim
             .check_multisector_position(id, [raw(coordinate(2)), raw(coordinate(3))])
             .map(|_| ()),
-        3 => sim.check_sight(id, ids[0]).map(|_| ()),
+        3 => sim
+            .check_sight(id, ids[usize::from(c[2]) % ids.len()])
+            .map(|_| ()),
         4 => sim.step([TicCommand::default(); 4]).map(|_| ()),
         5 => sim.mark_remove(id),
         6 => sim
@@ -58,6 +60,7 @@ fuzz_target!(|data: &[u8]| {
     if data.len() < 3 || data.len() > 35 {
         return;
     }
+    let boundary = data[0] == 255;
     let mut lumps = fixtures::lumps(usize::from(data[0]) % fixtures::map_count());
     match data[1] % 10 {
         1 => fixtures::set_word(&mut lumps[2].1, 0, 32767),
@@ -95,9 +98,12 @@ fuzz_target!(|data: &[u8]| {
             .resize(2 * (65536 + usize::from(data[2] & 1)), 255),
         _ => (),
     }
-    let Ok(map) = fixtures::decode(&lumps) else {
+    let Ok(mut map) = fixtures::decode(&lumps) else {
         return;
     };
+    if boundary {
+        map = fixtures::source_clip_boundary_map();
+    }
     let limits = MapExtentLimits {
         max_actors: 4,
         max_prepared_references: if data[1] % 10 == 4 {
@@ -137,9 +143,13 @@ fuzz_target!(|data: &[u8]| {
     };
     let mut ids = Vec::new();
     let mut other_ids = Vec::new();
-    for delta in [-24, 24] {
+    for (i, delta) in [-24, 24].into_iter().enumerate() {
         let spec = ActorSpec {
-            position: [raw((x + delta) * 65536), raw(y * 65536)],
+            position: if boundary {
+                fixtures::source_clip_boundary_positions()[i]
+            } else {
+                [raw((x + delta) * 65536), raw(y * 65536)]
+            },
             height: Fixed::from_map_units(16),
             ..Default::default()
         };
