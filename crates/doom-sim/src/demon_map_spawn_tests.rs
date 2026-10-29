@@ -75,6 +75,7 @@ fn native_after_target_suffix_and_removable_target_reject() {
     let mut s = setup();
     let registry = s.registry.as_deref().unwrap();
     lifecycle::LifeHost {
+        statistics: None,
         perception: None,
         access: &mut s.actors,
         registry,

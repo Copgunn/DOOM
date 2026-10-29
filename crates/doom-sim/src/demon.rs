@@ -100,7 +100,7 @@ impl Simulation {
         id: ActorId,
     ) -> Result<Option<MeleePlan>, SimError> {
         self.preflight_monster_callback(id)?;
-        if self.profile == Profile::DemonMapSpawn {
+        if self.profile.uses_demon_map() {
             return Ok(None);
         }
         let actor = *self.actor(id).unwrap();
@@ -138,7 +138,7 @@ impl Simulation {
     }
     pub(crate) fn preflight_demon_step(&mut self) -> Result<Option<MeleePlan>, SimError> {
         let owner = self.preflight_monster_owner()?;
-        if self.profile == Profile::DemonMapSpawn {
+        if self.profile.uses_demon_map() {
             return Ok(None);
         }
         owner

@@ -1,9 +1,6 @@
 # M3d1 investigation: bounded damage and hitscan combat
 
-Recorded before combat runtime changes. Authority: untouched id Software Linux
-DOOM 1.10, baseline `a77dfb96cb91780ca334d0d4cfd86957558007e0`. M3c was regularly
-merged at `4dbb0a51325119e5578705126f97bdc5d9723049`; correction-head CI
-40613240261 and post-merge CI 40613453371 passed before this branch.
+Historical delivery accounts are retained in the [complete original investigation](validation/archive/pre-m3d3j-m3d1_reference.md); the source findings below retain their technical scope.
 
 ## Original source findings
 

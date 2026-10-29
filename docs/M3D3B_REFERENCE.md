@@ -1,11 +1,6 @@
 # M3d3b source investigation: pursuit and movement decisions
 
-Written before runtime changes. Authority is untouched Linux DOOM 1.10 at
-`a77dfb96cb91780ca334d0d4cfd86957558007e0`. M3d3a reviewed `3ca419e`,
-corrected `856d25f`, regularly merged PR #10 as
-`839fbabf6eae984e1832f7ab7307851c4adb7a3f`. Exact merge/CI evidence is in
-[VALIDATION.md](VALIDATION.md). The runtime work starts only after its successful
-post-merge gate.
+Historical delivery accounts are retained in the [complete original investigation](validation/archive/pre-m3d3j-m3d3b_reference.md); the source findings below retain their technical scope.
 
 ## Dependencies and execution boundary
 

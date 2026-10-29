@@ -321,7 +321,7 @@ impl Simulation {
         let a = self.perception_actor(id)?;
         let life = a.life.unwrap();
         let registry = self.registry.as_deref().unwrap();
-        if self.profile == Profile::DemonMapSpawn && life.actor_type != ActorTypeId(135) {
+        if self.profile.uses_demon_map() && life.actor_type != ActorTypeId(135) {
             return Err(MapSpawnError::Target.into());
         }
         if self.profile.uses_monsters() {
@@ -399,6 +399,7 @@ impl Simulation {
         );
         Ok(commit_scan(
             &mut crate::lifecycle::LifeHost {
+                statistics: self.statistics.as_mut(),
                 perception: None,
                 access: &mut self.actors,
                 registry: self.registry.as_deref().unwrap(),
@@ -836,13 +837,14 @@ impl Simulation {
     pub fn look(&mut self, id: ActorId) -> Result<bool, SimError> {
         self.preflight_perception_look(id)?;
         Ok(crate::lifecycle::LifeHost {
+            statistics: self.statistics.as_mut(),
             perception: Some(PerceptionInputs {
                 pursuit: (self.profile == Profile::Pursuit || self.profile.uses_monsters()),
                 monsters: self.profile.uses_monsters(),
                 shotgunner: self.profile == Profile::Shotgunner,
                 chaingunner: self.profile == Profile::Chaingunner,
                 demon: self.profile.uses_demon(),
-                map_demons: self.profile == Profile::DemonMapSpawn,
+                map_demons: self.profile.uses_demon_map(),
                 melee: None,
                 shotgun: None,
                 shot: None,

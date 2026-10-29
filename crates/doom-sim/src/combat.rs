@@ -186,6 +186,7 @@ pub(crate) struct DamagePlan {
     state: StateId,
     demand: Demand,
     ignored: bool,
+    credit: bool,
 }
 #[derive(Clone, Debug)]
 pub(crate) struct PreparedAttack {
@@ -240,6 +241,7 @@ impl DamagePlan {
         let mut plan = Self {
             request,
             health: [life.health; 2],
+            credit: false,
             killed: false,
             extreme: false,
             state: StateId(0),
@@ -345,6 +347,7 @@ impl Simulation {
                 | Profile::DemonLifecycle
                 | Profile::DemonStandRun
                 | Profile::DemonMapSpawn
+                | Profile::DemonMapContext
         ) {
             return Err(CombatError::Profile.into());
         }
@@ -415,6 +418,7 @@ impl Simulation {
         let mut plan = DamagePlan {
             request,
             health: [life.health; 2],
+            credit: false,
             killed: false,
             extreme: false,
             state: StateId(0),
@@ -431,6 +435,15 @@ impl Simulation {
             .checked_sub(request.amount)
             .ok_or(CombatError::Metadata)?;
         plan.killed = plan.health[1] <= 0;
+        if life.flags & 4194304 != 0 && plan.killed {
+            let stats = self.statistics.ok_or(CombatError::KillBranch)?;
+            stats
+                .single_player_kill_count
+                .checked_add(1)
+                .ok_or(MapSpawnError::StatisticsOverflow)?;
+            plan.credit = true;
+        }
+
         if let Some(inflictor) = request.inflictor {
             let from = match lookup {
                 Some(f) => f(inflictor).ok_or(CombatError::Reference)?,
@@ -565,6 +578,7 @@ impl Simulation {
             return self.monster_host(None);
         }
         LifeHost {
+            statistics: self.statistics.as_mut(),
             perception: None,
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),
@@ -672,6 +686,18 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             } else {
                 Gravity::Normal
             };
+            if plan.credit {
+                let stats = self
+                    .statistics
+                    .as_mut()
+                    .expect("preflight admitted fallback credit");
+                stats.single_player_kill_count += 1;
+                self.events
+                    .push(Event::Statistics(StatisticsEvent::SinglePlayerKill {
+                        actor: id,
+                        total: stats.single_player_kill_count,
+                    }));
+            }
             self.combat_event(CombatEvent::Kill {
                 target: id,
                 state,

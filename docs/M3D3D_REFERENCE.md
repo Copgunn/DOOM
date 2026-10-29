@@ -1,9 +1,6 @@
 # M3d3d source investigation: sequential shotgunner attacks
 
-Recorded before runtime changes. Authority is untouched Linux DOOM 1.10 at
-`a77dfb96cb91780ca334d0d4cfd86957558007e0`. The feature branch starts from
-verified PR #13 regular merge `9b8fde85f64651f12a5643324e2ab93a9e4937d8`;
-correction and exact-head/post-merge CI evidence is in [VALIDATION](VALIDATION.md).
+Historical delivery accounts are retained in the [complete original investigation](validation/archive/pre-m3d3j-m3d3d_reference.md); the source findings below retain their technical scope.
 
 ## Original source and timing
 

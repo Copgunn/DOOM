@@ -84,7 +84,7 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
-        if self.profile == Profile::DemonMapSpawn && ty == ActorTypeId(136) {
+        if self.profile.uses_demon_map() && ty == ActorTypeId(136) {
             return Err(MapSpawnError::DirectSpawn.into());
         }
         if self.profile.uses_perception()
@@ -111,6 +111,7 @@ impl Simulation {
         }
         self.reserve_actor_spawns(1)?;
         Ok(LifeHost {
+            statistics: self.statistics.as_mut(),
             perception: None,
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),
@@ -179,7 +180,7 @@ impl Simulation {
                 shotgunner: self.profile == Profile::Shotgunner,
                 chaingunner: self.profile == Profile::Chaingunner,
                 demon: self.profile.uses_demon(),
-                map_demons: self.profile == Profile::DemonMapSpawn,
+                map_demons: self.profile.uses_demon_map(),
                 melee: None,
                 shotgun,
                 shot,
@@ -187,6 +188,7 @@ impl Simulation {
                 sound_targets: &self.sound_targets,
             });
         LifeHost {
+            statistics: self.statistics.as_mut(),
             perception,
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),
@@ -315,7 +317,7 @@ impl Simulation {
     /// enabled types; see `with_demon_map_spawn_registry` for its admission.
     pub fn spawn_map_things(&mut self) -> Result<MapSpawnReport, SimError> {
         let registry = self.registry_required()?;
-        let map_demons = self.profile == Profile::DemonMapSpawn;
+        let map_demons = self.profile.uses_demon_map();
         if map_demons && (self.tic != 0 || !self.actors.slots.is_empty()) {
             return Err(MapSpawnError::Setup.into());
         }
@@ -401,6 +403,14 @@ impl Simulation {
             }
             selected.push((*thing, ty));
         }
+        if let Some(stats) = self.statistics {
+            let count =
+                i32::try_from(selected.len()).map_err(|_| MapSpawnError::StatisticsOverflow)?;
+            stats
+                .total_kills
+                .checked_add(count)
+                .ok_or(MapSpawnError::StatisticsOverflow)?;
+        }
         self.reserve_actor_spawns(selected.len())?;
         // No recoverable operation follows reservation: all selected definitions
         // were validated together. This preserves batch failure atomicity.
@@ -412,6 +422,7 @@ impl Simulation {
                 SpawnHeight::Floor
             };
             let id = LifeHost {
+                statistics: self.statistics.as_mut(),
                 perception: None,
                 access: &mut self.actors,
                 registry: self.registry.as_deref().unwrap(),
@@ -436,6 +447,15 @@ impl Simulation {
             life.spawnpoint = Some(thing);
             if life.tics > 0 {
                 life.tics = 1 + i32::from(self.rng.p_random()) % life.tics;
+            }
+            if let Some(stats) = self.statistics.as_mut() {
+                // Entire batch addition was proved before allocation or RNG.
+                stats.total_kills += 1;
+                self.pending
+                    .push(Event::Statistics(StatisticsEvent::MapKillTotal {
+                        actor: id,
+                        total: stats.total_kills,
+                    }));
             }
             actor.spec.angle = ((i32::from(thing.angle) / 45) as u32).wrapping_mul(0x20000000_u32);
             if thing.options & 8 != 0 {

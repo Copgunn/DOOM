@@ -9,6 +9,12 @@ pub const MAX_MAP_DEMONS: usize = 4;
 /// Map-spawn input or explicit actor-admission restriction, before mutation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MapSpawnError {
+    /// Requested source respawn behavior is not admitted.
+    Respawn,
+    /// Operation requires the explicit map-context profile.
+    Context,
+    /// Checked source statistics would exceed signed 32-bit range.
+    StatisticsOverflow,
     /// Batch setup requires tic zero and a never-allocated actor store.
     Setup,
     /// The bounded record or Demon count would be exceeded.
@@ -54,7 +60,7 @@ impl Simulation {
     /// No recursion into owner callbacks: this bounded global proof also runs
     /// for direct calls before any action, state, RNG, movement or sound change.
     pub(crate) fn preflight_map_demons(&self) -> Result<(), SimError> {
-        if self.profile != Profile::DemonMapSpawn {
+        if !self.profile.uses_demon_map() {
             return Ok(());
         }
         if self.bindings.iter().any(Option::is_some) || self.weapon_player.is_some() {
@@ -102,7 +108,7 @@ impl Simulation {
         Ok(())
     }
     pub(crate) fn preflight_map_damage(&self, request: DamageRequest) -> Result<(), SimError> {
-        if self.profile != Profile::DemonMapSpawn {
+        if !self.profile.uses_demon_map() {
             return Ok(());
         }
         if self
@@ -117,7 +123,14 @@ impl Simulation {
                         .is_some_and(|l| l.actor_type == ActorTypeId(136))
             })
         {
-            return Err(MapSpawnError::Infighting.into());
+            let target = self.actor(request.target).unwrap().life.unwrap();
+            // Lethal/ignored damage returns before source retargeting. Only this
+            // narrow synthetic branch is admitted; nonlethal infighting rejects.
+            if self.profile != Profile::DemonMapContext
+                || target.flags & 4 != 0 && target.health > 0 && request.amount < target.health
+            {
+                return Err(MapSpawnError::Infighting.into());
+            }
         }
         Ok(())
     }

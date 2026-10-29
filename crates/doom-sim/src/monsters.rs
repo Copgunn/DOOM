@@ -442,6 +442,11 @@ impl Simulation {
         if OWNERS.contains(&l.actor_type.0) {
             if l.flags
                 & !(OWNER_FLAGS
+                    | if self.profile == Profile::DemonMapContext {
+                        4194304
+                    } else {
+                        0
+                    }
                     | if self.profile.uses_demon_lifecycle() {
                         4 | 1048576
                     } else {
@@ -450,7 +455,7 @@ impl Simulation {
                 != 0
                 || !self.profile.uses_demon_lifecycle()
                     && (a.momentum() != [Fixed::ZERO; 2] || a.momz != Fixed::ZERO || a.z != a.floor)
-                || self.profile != Profile::DemonMapSpawn && self.actors.order().next() != Some(id)
+                || !self.profile.uses_demon_map() && self.actors.order().next() != Some(id)
             {
                 return Err(MonsterError::Ownership.into());
             }
@@ -579,7 +584,20 @@ impl Simulation {
             if current.flags & 1048576 != 0
                 || owner
                     && (!(1..=150).contains(&p.health)
-                        || p.flags & !(6 | 32 | 64 | 128) != 0
+                        || p.flags
+                            & !(6
+                                | 32
+                                | 64
+                                | 128
+                                | if self.profile == Profile::DemonMapContext {
+                                    4194304
+                                } else {
+                                    0
+                                })
+                            != 0
+                        || self.profile == Profile::DemonMapContext
+                            && owner
+                            && p.flags & 4194304 == 0
                         || p.flags & 6 != 6)
             {
                 return Err(MonsterError::Definition.into());
@@ -588,6 +606,11 @@ impl Simulation {
         if p.flags
             & !(if owner {
                 OWNER_FLAGS
+                    | if self.profile == Profile::DemonMapContext {
+                        4194304
+                    } else {
+                        0
+                    }
                     | if self.profile.uses_demon_lifecycle() {
                         4
                     } else {
@@ -766,6 +789,7 @@ impl Simulation {
                     | Profile::DemonLifecycle
                     | Profile::DemonStandRun
                     | Profile::DemonMapSpawn
+                    | Profile::DemonMapContext
             )
         {
             return Err(MonsterError::Definition.into());
@@ -800,6 +824,7 @@ impl Simulation {
         shot: Option<&'a MonsterShotPlan>,
     ) -> LifeHost<'a, &'a mut ThinkerStore<Actor>> {
         LifeHost {
+            statistics: self.statistics.as_mut(),
             perception: Some(crate::perception::PerceptionInputs {
                 players: &self.perception_players,
                 sound_targets: &self.sound_targets,
@@ -808,7 +833,7 @@ impl Simulation {
                 shotgunner: self.profile == Profile::Shotgunner,
                 chaingunner: self.profile == Profile::Chaingunner,
                 demon: self.profile.uses_demon(),
-                map_demons: self.profile == Profile::DemonMapSpawn,
+                map_demons: self.profile.uses_demon_map(),
                 melee: None,
                 shotgun: None,
                 shot,

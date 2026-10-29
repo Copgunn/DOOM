@@ -1,12 +1,6 @@
 # M3d3e source investigation: chaingunner attack and refire
 
-Recorded before runtime changes. Authority is untouched Linux DOOM 1.10 at
-`a77dfb96cb91780ca334d0d4cfd86957558007e0`. This branch starts from PR #14's
-verified regular merge `31b4830945a60c837065c0e3c29d10494e84f20e`, ordered parents
-`9b8fde85f64651f12a5643324e2ab93a9e4937d8` and
-`64cf9a920ee21669945cb9537c1cd43076aa37ec`, tree
-`26f37668dfb5ce50d14b99ee72d8da0a88e539c6`. Correction-head CI 40661503550 and
-exact post-merge CI 40662401302 passed all four jobs before this investigation.
+Historical delivery accounts are retained in the [complete original investigation](validation/archive/pre-m3d3j-m3d3e_reference.md); the source findings below retain their technical scope.
 
 ## Source and dependencies
 

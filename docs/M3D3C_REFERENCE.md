@@ -1,9 +1,6 @@
 # M3d3c source investigation: attack selection and bounded actions
 
-Recorded before runtime modifications. Authority: original Linux DOOM 1.10,
-baseline `a77dfb96cb91780ca334d0d4cfd86957558007e0`. Work starts from verified
-combined master `876662d31a79cc9be3307932e83e32faa8bf09f7`, after separately
-authorized regular merges of PRs #11 and #12 and their post-merge CI.
+Historical delivery accounts are retained in the [complete original investigation](validation/archive/pre-m3d3j-m3d3c_reference.md); the source findings below retain their technical scope.
 
 ## Source and dependency investigation
 

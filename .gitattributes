@@ -9,3 +9,7 @@
 /crates/doom-types/src/rng_table.rs text eol=lf
 /crates/doom-sim/src/tan_to_angle.rs text eol=lf
 /tests/reference/m3b_maps.rs text eol=lf
+# Historical documentation evidence is hashed byte-for-byte on every CI host.
+/docs/validation/archive/*.txt -text
+/docs/validation/archive/*.md text eol=lf
+/docs/validation/archive/manifest.json text eol=lf

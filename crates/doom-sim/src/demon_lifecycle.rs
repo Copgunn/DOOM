@@ -102,7 +102,9 @@ impl Simulation {
             return Err(PursuitError::Specials.into());
         }
         crate::sight::validate_map(&map)?;
-        let expected = if profile.uses_demon_stand_run() {
+        let expected = if profile == Profile::DemonMapContext {
+            ActorRegistry::demon_map_context_fixture()
+        } else if profile.uses_demon_stand_run() {
             ActorRegistry::demon_stand_run_fixture()
         } else {
             ActorRegistry::demon_lifecycle_fixture()
@@ -122,7 +124,11 @@ impl Simulation {
         self.registry
             .as_deref()
             .unwrap()
-            .validate_type_demon_melee(ty, &self.sectors)?;
+            .validate_type_demon_context(
+                ty,
+                &self.sectors,
+                self.profile == Profile::DemonMapContext,
+            )?;
         Ok(())
     }
     pub(crate) fn lifecycle_state_role(
@@ -146,7 +152,8 @@ impl Simulation {
         let l = a.life.unwrap();
         let state = l.state.ok_or(MonsterError::Definition)?.0;
         let dead = l.health <= 0;
-        if dead != (9..=14).contains(&state)
+        if self.profile == Profile::DemonMapContext && l.flags & 4194304 == 0
+            || dead != (9..=14).contains(&state)
             || (l.flags & 1048576 != 0) != dead
             || (l.flags & 4 != 0) == dead
             || a.height() != Fixed::from_map_units(if dead { 14 } else { 56 })

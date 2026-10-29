@@ -1,9 +1,6 @@
 # M3d2b source investigation: bounded projectile foundations
 
-Recorded before runtime changes. Authority: untouched Linux DOOM 1.10 at
-`a77dfb96cb91780ca334d0d4cfd86957558007e0`. M3d2 correction `7007dae` passed
-CI 40625682243, was regularly merged as `955f690d141ccc6a9074a8a8017f78833854af6f`,
-and post-merge CI 40626027970 passed before this branch was created.
+Historical delivery accounts are retained in the [complete original investigation](validation/archive/pre-m3d3j-m3d2b_reference.md); the source findings below retain their technical scope.
 
 ## Original functions and selected type
 

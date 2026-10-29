@@ -7,22 +7,7 @@ Inspected `p_mobj.c/h`, `p_setup.c`, `p_tick.c`, `p_enemy.c`, `p_inter.c`,
 `doomdata.h`, `r_main.c` and `m_random.c`, alongside the accepted M3d3a–h
 source investigations and existing parser, spawn, combat and lifecycle services.
 
-Verified starting master: `cae36bedc9de4f0ec14b571e1730fbc041ea5ba3`.
-PR18 correction `f5d1bc830ed04fac1ab75b1bf52a6df26336e610` changed only the two
-required documentation files and passed fresh local 242 workspace/242 MSRV/218
-release tests, fifteen C/encoder pairs and fifteen debug/release examples.
-[Correction CI 40791592122](https://github.com/Copgunn/DOOM/actions/runs/40791592122)
-passed all four jobs. The authorized regular merge has ordered parents
-`f44828d5ad3169fe77c116bdebb30c74d1b5feb2` and the correction, tree
-`588735801e1f72dbffc26e86f2c7be346c4edf1a`, equal to the correction tree.
-PR18 is closed/merged; local and remote master agree. Exact merge
-[push CI 40792730511](https://github.com/Copgunn/DOOM/actions/runs/40792730511)
-passed Linux, Windows, native macos-26-intel and Rust 1.85, completed
-2026-10-29 00:24:09 UTC before this branch or runtime work. Native Mac checkout
-confirmed that merge SHA. All 165 original files and 3126 historical reference/
-tool/support paths, history, attribution and GPL-2.0-only licensing are preserved.
-The repository remains public. No private repository or commercial IWAD was
-accessed. This investigation records a plan, not completed runtime evidence.
+Historical delivery accounts are retained in the [complete original investigation](validation/archive/pre-m3d3j-m3d3i_reference.md); the source findings below retain their technical scope.
 
 ## Original input and filter chronology
 
