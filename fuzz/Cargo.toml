@@ -139,3 +139,10 @@ path = "fuzz_targets/map_scale.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "map_extent"
+path = "fuzz_targets/map_extent.rs"
+test = false
+doc = false
+bench = false
