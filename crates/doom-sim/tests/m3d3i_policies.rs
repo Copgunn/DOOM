@@ -273,3 +273,183 @@ fn live_native_targets_roster_sound_and_cross_native_damage_reject_atomically() 
     assert!(s.enter_actor_state(id(0), StateId(496)).is_err());
     assert_eq!(s.snapshot(), before);
 }
+
+#[test]
+fn isolated_original_c_filter_components_and_explicit_rust_exclusions() {
+    let mut compared = 0;
+    let mut policies = 0;
+    for row in include_str!("../../../tests/reference/m3d3i_components.csv")
+        .lines()
+        .skip(1)
+    {
+        let v = row
+            .split(',')
+            .map(|s| s.parse::<i32>().unwrap())
+            .collect::<Vec<_>>();
+        let skill = [
+            Skill::Baby,
+            Skill::Easy,
+            Skill::Medium,
+            Skill::Hard,
+            Skill::Nightmare,
+        ][v[0] as usize];
+        let mode = [
+            ActorGameMode::SinglePlayer,
+            ActorGameMode::Cooperative,
+            ActorGameMode::Deathmatch,
+        ][v[3] as usize];
+        let things = [[-32, 0, -91, v[2] as i16, v[1] as i16]];
+        let result = Simulation::with_demon_map_spawn_registry(
+            maps::map(&things),
+            64,
+            ActorRegistry::demon_stand_run_fixture(),
+            ActorOptions {
+                skill,
+                mode,
+                ..ActorOptions::default()
+            },
+        );
+        if skill == Skill::Nightmare || mode != ActorGameMode::SinglePlayer {
+            assert!(result.is_err());
+            policies += 1;
+            continue;
+        }
+        let mut s = result.unwrap();
+        let before = s.snapshot();
+        let report = s.spawn_map_things();
+        if v[5] != 0 || v[6] != 0 && v[2] != 3002 {
+            assert!(report.is_err());
+            assert_eq!(s.snapshot(), before);
+            policies += 1;
+            continue;
+        }
+        let report = report.unwrap();
+        assert_eq!(report.spawned.len(), v[6] as usize);
+        assert_eq!(s.rng().indices()[0], v[7] as u8);
+        if let Some(id) = report.spawned.first() {
+            let a = s.actor(*id).unwrap();
+            let l = a.life().unwrap();
+            assert_eq!(l.reaction_time, v[9]);
+            assert_eq!(l.state, Some(StateId(1)));
+            assert_eq!(v[10], 475);
+            assert_eq!(l.flags, v[11] as u32 & !4194304);
+        }
+        compared += 1;
+    }
+    println!(
+        "Isolated C source filter/initial fields {compared}; Rust-only unsupported/fatal admission policies {policies}"
+    );
+    assert_eq!(compared + policies, 123);
+    assert!(compared > 40);
+}
+
+#[test]
+fn nomonsters_skips_recognized_other_monsters_but_not_unknown_types() {
+    let options = ActorOptions {
+        no_monsters: true,
+        ..ActorOptions::default()
+    };
+    let mut s = empty(&[[0, 0, 0, 3001, 7], [0, 0, 0, 3006, 7]], 64, options);
+    let report = s.spawn_map_things().unwrap();
+    assert_eq!(report.filtered, 2);
+    assert!(report.spawned.is_empty());
+    let mut s = empty(&[[0, 0, 0, 32000, 7]], 64, options);
+    let before = s.snapshot();
+    assert!(s.spawn_map_things().is_err());
+    assert_eq!(s.snapshot(), before);
+}
+#[test]
+fn parsed_signed_coordinates_angles_and_all_option_bits_are_retained() {
+    let mut s = empty(
+        &[[-128, -64, -32768, 3002, -32753]],
+        64,
+        ActorOptions::default(),
+    );
+    let report = s.spawn_map_things().unwrap();
+    let a = s.actor(report.spawned[0]).unwrap();
+    let point = a.life().unwrap().spawnpoint.unwrap();
+    assert_eq!(point.options, 0x800f);
+    assert_eq!(point.angle, -32768);
+    assert_eq!(
+        a.position(),
+        [Fixed::from_map_units(-128), Fixed::from_map_units(-64)]
+    );
+    assert_eq!(
+        a.angle(),
+        0u32.wrapping_sub(728u32.wrapping_mul(0x20000000))
+    );
+    assert_ne!(a.life().unwrap().flags & 32, 0);
+}
+#[test]
+fn pause_presentation_and_independent_instances_preserve_map_gameplay() {
+    let things = [[-80, -80, 0, 3002, 7], [80, -80, 180, 3002, 7]];
+    let mut a = empty(&things, 64, ActorOptions::default());
+    let mut b = empty(&things, 64, ActorOptions::default());
+    assert_eq!(a.spawn_map_things(), b.spawn_map_things());
+    for s in [&mut a, &mut b] {
+        let target = body(s);
+        s.set_perception_player(
+            0,
+            PerceptionPlayer {
+                active: true,
+                health: 100,
+                actor: Some(target),
+            },
+        )
+        .unwrap();
+    }
+    a.set_paused(true);
+    let before = a.snapshot();
+    a.step([TicCommand::default(); 4]).unwrap();
+    assert_eq!(a.snapshot(), before);
+    a.set_paused(false);
+    for _ in 0..80 {
+        let before = a.snapshot();
+        let _ = a.actor_order().collect::<Vec<_>>();
+        let _ = a.events();
+        let _ = a.pending_events();
+        let _ = a.check_sight(id(0), id(1));
+        assert_eq!(a.snapshot(), before);
+        a.step([TicCommand::default(); 4]).unwrap();
+        b.step([TicCommand::default(); 4]).unwrap();
+        assert_eq!(a.snapshot(), b.snapshot());
+    }
+}
+#[test]
+fn shared_damage_and_hitscan_admit_map_demons_and_reserve_real_effects() {
+    let mut s = empty(
+        &[[-64, 0, 0, 3002, 7], [32, 0, 180, 3002, 7]],
+        64,
+        ActorOptions::default(),
+    );
+    s.spawn_map_things().unwrap();
+    let shooter = s
+        .spawn_type(
+            ActorTypeId(135),
+            [Fixed::from_map_units(96), Fixed::ZERO],
+            SpawnHeight::Floor,
+        )
+        .unwrap();
+    let result = s
+        .line_attack(
+            shooter,
+            LineAttack {
+                angle: 0x80000000,
+                range: Fixed::from_map_units(512),
+                slope: Fixed::ZERO,
+                damage: 150,
+            },
+        )
+        .unwrap();
+    assert_eq!(result.hit, Some(TraceObject::Actor(id(1))));
+    assert!(result.effect.is_some());
+    assert!(result.damage.unwrap().killed);
+    assert!(s.actor(id(1)).unwrap().life().unwrap().health <= 0);
+    for _ in 0..40 {
+        s.step([TicCommand::default(); 4]).unwrap();
+    }
+    assert_eq!(
+        s.actor(id(1)).unwrap().life().unwrap().state,
+        Some(StateId(14))
+    );
+}

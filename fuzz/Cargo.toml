@@ -118,3 +118,10 @@ path = "fuzz_targets/demon_stand_run.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "demon_map_spawn"
+path = "fuzz_targets/demon_map_spawn.rs"
+test = false
+doc = false
+bench = false

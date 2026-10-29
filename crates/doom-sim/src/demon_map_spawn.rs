@@ -122,3 +122,7 @@ impl Simulation {
         Ok(())
     }
 }
+
+#[cfg(test)]
+#[path = "demon_map_spawn_tests.rs"]
+mod tests;
