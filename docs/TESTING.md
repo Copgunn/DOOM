@@ -145,6 +145,16 @@ The overflow check recompiles genuine C with signed-overflow, integer-division a
 float-cast sanitization and requires identical outputs. It does not claim portable
 ISO-C negative shifts or exhaustive undefined-behavior coverage; the GNU source
 setup-shift contract is declared in [source findings](M3F2_REFERENCE.md).
+To reproduce the separately excluded original C failure on GNU/Linux:
+
+```sh
+python3 tools/reference/m3f2_reference.py --check --probe-undefined-clip
+```
+
+The tool expects the original abs(INT_MIN) sanitizer failure and prints it. This
+is evidence for profile19's recoverable rejection, not a passing original-C full
+sight comparison. Standard reference modes never enter the undefined continuation.
+
 The source/encoder names deliberately stay outside historical `generate*.py`
 discovery; frozen aggregators/helpers remain unchanged.
 

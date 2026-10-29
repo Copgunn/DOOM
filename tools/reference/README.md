@@ -114,3 +114,10 @@ identity reuse and atomic rejection remain separately labeled Rust policies.
 [M3F2_REFERENCE](../../docs/M3F2_REFERENCE.md) owns the arithmetic design, and
 [the evidence record](../../docs/validation/M3F2.md) owns observations and limitations.
 All earlier tools, discovery inventories, encoders, helpers and fixtures stay intact.
+
+The separate boundary component retains a defined original intercept of INT_MIN
+and its source side decisions. It has no full-sight expected result: the next
+original clipping division invokes abs(INT_MIN). Profile19 rejects that query
+atomically; old profiles retain their numeric policy. The optional expected-failure
+probe explicitly demonstrates the excluded source operation. Standard checked modes
+and the independent encoder do not silently invent a result for undefined C.

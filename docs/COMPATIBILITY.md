@@ -251,6 +251,12 @@ head insertion and thinker order remain authoritative. Conventional empty cells
 still contain the required zero word and therefore visit line0. Unused grid padding
 need not fit world coordinates; runtime queries cannot leave their proven domain.
 
+Coordinate bounds are necessary, but not sufficient for every source sight input.
+Quantized side tests can produce an intercept saturated to `INT_MIN`; original
+FixedDiv would then evaluate undefined `abs(INT_MIN)` during clipping. Profile19
+returns a recoverable arithmetic error before that division, preserving canonical
+state. Historical profiles retain their existing explicit Rust numeric policy.
+
 Sight caches a proved full-root expansion cost; query execution uses that same
 bound and fallibly reserves bounded tasks/observations. REJECT returns before BSP
 work or scratch reservation. No query consumes RNG or changes canonical state.

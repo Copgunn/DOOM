@@ -120,7 +120,11 @@ actor margins and momentum have separate checks. Those checks make overflow in
 reachable original arithmetic unnecessary; wider temporaries are not used to
 invent results for overflowing C. Existing wrapping numeric primitives retain
 historical contracts. Original FixedDiv guard/rounding, BSP ties and XY/Z action
-order remain unchanged.
+order remain unchanged. A per-query check additionally rejects a saturated
+INT_MIN intercept before the original clipping division could evaluate abs(INT_MIN).
+The source-side quantization trigger is recorded as a defined C component; its
+undefined continuation has no fabricated equivalence result. Historical numeric
+policies remain unchanged.
 
 Setup conservatively charges native-size preparation requests and a collision
 work proof before constructing a simulation. Supplied BLOCKMAP cells still compile
