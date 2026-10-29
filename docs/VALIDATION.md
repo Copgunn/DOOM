@@ -32,6 +32,9 @@ LeakSanitizer coverage; no bounded campaign is exhaustive.
 
 ## Detailed records
 
+- [M3f6 runtime identity audit and boundary](validation/M3F6.md), reusing independent
+  C observations without claiming new capture or gameplay coverage.
+
 - [M3f5 canonical Demon execution binding](validation/M3F5.md), including raw
   canonical C observations and separately projected DSIM-v20 comparisons.
 - [M3f4 canonical identity metadata](validation/M3F4.md).

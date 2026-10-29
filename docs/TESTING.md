@@ -318,3 +318,33 @@ finally:
     Path.glob = original
 PY
 ```
+
+## Native runtime identity boundary
+
+Run the complete historical suite and M3f4/M3f5 C/encoder checks above, plus:
+
+```sh
+cargo test -p doom-sim --test m3f6_reference --test m3f6_policies --locked -- --nocapture
+python3 tools/reference/check_runtime_identity.py
+cargo run -p doom-sim --example runtime_identity --locked
+python3 tools/seed_runtime_identity_fuzz.py fuzz/corpus/runtime_identity
+cargo +nightly fuzz build --sanitizer address
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run runtime_identity fuzz/corpus/runtime_identity --sanitizer address -- -runs=4096 -max_len=35 -seed=1 -timeout=20 -rss_limit_mb=2048
+python3 tools/measure_demon_expanded_map.py
+python3 tools/measure_canonical_demon.py
+```
+
+The new source comparison reuses immutable M3f5 raw C observations and independent
+snapshots/event fields; it does not generate another capture or claim new C input
+coverage. Policy tests exhaust all u16 native candidates, canonical/native
+collisions, direct-entry restrictions, purity, replay and stale/reused ownership;
+private corruption tests ensure canonical ordinals in native storage reject
+atomically. The new example runs in debug/release against existing C-derived output.
+
+The fuzz model uses two instances, bounded native/canonical requests and at most
+eight operations; corpus seeds include valid native slots, source ordinals and
+sentinels. Build-all and campaign counts are separate. Leak detection is disabled
+by the documented setting; no leak coverage or exhaustive proof is implied.
+Retain matched before/after three-sample legacy and canonical-API workloads and
+all outliers. No new canonical-storage workload exists because no storage migration
+is admitted. [M3f6 observations](validation/M3F6.md) own actual results.

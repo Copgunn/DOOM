@@ -143,3 +143,45 @@ compatibility is claimed. The [C observer](M3F5_REFERENCE.md) runs pristine
 type12/states475–495 throughout gameplay. Comparisons distinguish physical source
 fields, this definition projection, independently projected DSIM bytes and
 Rust-only rejection policy.
+
+## Native runtime identity boundary
+
+M3f6's [consumer audit and design](M3F6_REFERENCE.md) retains native runtime
+storage. No actor or state ID becomes canonical in ActorLife, events or DSIM.
+`NativeDemonType` and `NativeDemonState` are sealed transient execution views,
+produced by the validated Profile20 binding. They carry no second authoritative
+identity or live-owner permission. Existing raw registry APIs remain unchanged.
+
+```rust
+use doom_sim::{ActorRegistry, DemonExecutionBinding, StateId, identity::OriginalState};
+let registry = ActorRegistry::demon_map_context_fixture();
+let binding = DemonExecutionBinding::admit(&registry).unwrap();
+let native = binding.native_state(OriginalState::S_SARG_STND).unwrap();
+assert_eq!(native.runtime(), StateId(1));
+assert_eq!(native.original(), OriginalState::S_SARG_STND);
+assert!(binding.check_native_state(StateId(475)).is_err());
+```
+
+`native_type(original)` / `native_state(original)` explicitly project canonical
+values. `check_native_type(candidate)` / `check_native_state(candidate)` validate
+native slots before wrapping. Neither raw number ranges nor shared descriptors
+grant a type/state binding: native136 means the bound Demon role, whereas original
+136 is MT_MISC86; native1 represents S_SARG_STND, whereas original1 is S_LIGHTDONE.
+There is no implicit conversion between these namespaces. Values remain meaningful
+only in the binding's declared representation; another registry still needs its
+own admission. S_NULL and raise have no native state value.
+
+`Simulation::native_demon_identity(actor)` returns checked raw storage views for
+a current Profile20 owner; pending records remain readable until retirement,
+while stale/reused/foreign handles reject. Its `.runtime()` values equal the actual
+ActorLife fields. `.original()` names the corresponding source definitions.
+The existing `original_demon_identity` delegates through this explicit boundary.
+Queries do not change state, RNG, actor order or captures.
+
+Profile20 direct-entry and corpse guards classify named original states through
+the single native mapping. Stand/run/attack remain the only direct entries;
+pain/death remain damage-controlled, and the corpse's pre-Fall solidity boundary
+is unchanged. Earlier profiles keep their narrower fixture-specific guards and
+all native identities. Source raise metadata remains represented without execution.
+A future direct-storage migration requires an explicit profile/registry/schema
+boundary; it must not reinterpret historical v20 data or globally renumber136.

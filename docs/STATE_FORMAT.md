@@ -886,3 +886,13 @@ slots before invoking the unchanged independent DSIM encoder. Its provenance lis
 every mapping and input/output hash. The raw C files are retained separately.
 This is source-derived projected evidence, not a claim that native IDs equal
 original ordinals. Historical captures remain unchanged.
+
+## Typed native identity observations
+
+M3f6 changes no DSIM version, profile tag, registry metadata, field path, width,
+value or event encoding. NativeDemonType/NativeDemonState are derived views, excluded
+from serialization. ActorLife.actor_type/state and state-bearing events retain the v20
+native slots. No original-ID DSIM-v21 stream or decoder is introduced. Historical
+encoders/readers and fixtures keep their existing interpretation. The
+[runtime audit](M3F6_REFERENCE.md) identifies the exact observable fields that a
+future opt-in migration must version rather than silently reinterpret.

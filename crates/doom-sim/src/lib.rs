@@ -21,6 +21,8 @@ mod actor;
 mod direction;
 pub use direction::MoveDirection;
 mod canonical_demon;
+mod native_demon;
+pub use native_demon::{NativeDemonState, NativeDemonType};
 mod chaingunner;
 mod demon;
 pub use canonical_demon::{CanonicalDemonError, DemonExecutionBinding};

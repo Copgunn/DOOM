@@ -179,12 +179,16 @@ impl Simulation {
     ) -> Result<(), SimError> {
         let actor = self.monster_actor(id, 1008)?;
         self.monster_state_role(actor.life.unwrap().actor_type, state)?;
+        let direct_entry = if self.profile == Profile::DemonExpandedMap {
+            NativeDemonState::checked(state).is_some_and(NativeDemonState::allows_direct_entry)
+        } else {
+            [1, 2, 4, 5, 6].contains(&state.0)
+                || self.profile.uses_demon_stand_run()
+                    && (state.0 == 3 || (15..=21).contains(&state.0))
+        };
         if self.profile.uses_demon_lifecycle()
             && actor.life.unwrap().actor_type.0 == 136
-            && (actor.life.unwrap().health <= 0
-                || !([1, 2, 4, 5, 6].contains(&state.0)
-                    || self.profile.uses_demon_stand_run()
-                        && (state.0 == 3 || (15..=21).contains(&state.0))))
+            && (actor.life.unwrap().health <= 0 || !direct_entry)
         {
             return Err(MonsterError::Definition.into());
         }
