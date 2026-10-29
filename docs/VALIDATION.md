@@ -2013,3 +2013,129 @@ those fresh checks. Record the correction/merge evidence on PR #17, verify the
 ordered merge parents/tree/master and successful exact-merge post-merge CI before
 M3d3h runtime work. Runtime, DSIM-v1 through DSIM-v14 and reference evidence stay
 unchanged by this correction. No squash, history rewrite, CI bypass or auto-merge.
+
+## M3d3g correction, regular merge and verified baseline
+
+Documentation-only correction `9d48f6d47c1a8c21f68cd66f6d56cb67f09bc8b3`
+passed fresh 221 workspace/221 Rust1.85/197 release tests, all fourteen reference/
+encoder pairs and asserted examples, mandatory build/format/Clippy/rustdoc,
+229 relative links/two anchors and source/fixture/Git integrity. [Corrected-head
+CI 40780721974](https://github.com/Copgunn/DOOM/actions/runs/40780721974) passed all
+four jobs, completed2026-10-28 22:37:28UTC. Native macOS job123141432984 executed
+on macos-26-intel; PR testmerge2322d4eda6855f2d3f51d1936bac93fce7fb435a tree
+4ed21d4d63ce376a7d5599b5b0f3c5416415edaa equals the corrected head.
+
+PR17 is closed/merged as `f44828d5ad3169fe77c116bdebb30c74d1b5feb2` through the
+owner-authorized regular merge. Ordered parents are
+`75b2a2bc9a28401de358859f0499fe4c81dfa0a2` and
+`9d48f6d47c1a8c21f68cd66f6d56cb67f09bc8b3`. Tree
+`4ed21d4d63ce376a7d5599b5b0f3c5416415edaa` equals the tested correction.
+Local/remote master agree. Exact [post-merge CI40781481835](https://github.com/Copgunn/DOOM/actions/runs/40781481835)
+passed Linux/Windows/native macos-26-intel/Rust1.85, completed2026-10-28
+22:45:23UTC before M3d3h branch/source commit/runtime. Native Mac job123143980119
+actually checked out that merge SHA and executed applicable steps. All165 source
+files and1699 baseline reference/tool/support paths, v1–v14 bytes, history,
+attribution, original licenses and locks remain unchanged. No private repositories
+or commercial IWADs were accessed; repository stays public/GPL-2.0-only. No CI
+bypass, squash, force-push, history rewrite or auto-merge. M3d3h has its own review
+gate and its new PR must remain open/unmerged without auto-merge.
+
+## M3d3h independent original-C, canonical and policy evidence
+
+Source investigation `4aec917becbde5348fcbe402fb935d0a16fa6b67` was committed after
+the verified PR17 merge/post-merge gate and before metadata `b073f648` or runtime
+integration `d35a67af`. Explicit profile 15 preserves profile 14's existing loops.
+See [M3D3H_REFERENCE](M3D3H_REFERENCE.md) for source states, mapping and limits.
+
+| Evidence family | Observed result |
+| --- | --- |
+| Compiled original C | 68 genuine bodies, original structs/info/state tables; inventory is not branch coverage |
+| Main scenarios / maps | 390; all 21 supplied synthetic maps actually exercised, including active run on every map |
+| Live actor fields | 935,012 comparisons |
+| Raw gameplay RNG | 38,578, including setup/discards and actual LUT wrap |
+| Ordered instrumentation | 151,474 reconciled rows; not one row per event |
+| Separate C components | Three injected179/180/181 pain probes; excluded from gameplay scenarios/captures/draws |
+| Independent DSIM-v15 | 7,186 captures and 1,395 full byte fixtures, all field/byte/digest comparisons passed |
+| Rust regressions/policies | 14 public and 5 private tests; separate sixth private scalar-C comparison |
+| Asserted example | Ten C-backed/repeated-instance scenarios;130-tic digest `51463158173610c5`; debug/release equal |
+| Fuzz builds | All fourteen ASan target executables built and verified |
+
+The C suite includes genuine Look/Chase/Move/TryWalk/NewChaseDir/sight/melee/
+damage/state/thinker bodies. It exercises idle, all eight run states and repeated
+frames, nested sight/noise/ambush wake, target loss/reacquisition, original movement,
+stand1-versus-stand2 damage, melee/pain/death/corpse, all 21 geometries, actual RNG
+wrap and generational retirement/reuse. Source/body/header/adapter/input/output
+hashes, compiler/ABI/flags and historical arithmetic assumptions are recorded.
+Canonical expected values read C/public inputs/schema only, never Rust output.
+
+A Rust-only regression found the new profile initially missing the existing
+public death-request guard. The guard now includes both lifecycle profiles;
+all safety tests passed, and historical 14 behavior is unchanged. This is separate
+from the source-C gameplay comparisons. Controlled damage before a thinker
+consumes its first state tic in that same update: the example's tic 45 pain hit
+sounds at 46 and returns to Chase at 48, directly verified by original-C traces.
+
+Fresh workspace/MSRV tests passed **242 each**, release **218**. All eighteen
+core commands passed: build, workspace/fuzz formatting, all-target Clippy and
+rustdoc with warnings denied, tests/MSRV/release and all fifteen asserted
+debug/release examples. All thirty reference commands (fifteen original-C/
+independent-encoder pairs) passed with --check. All 165 upstream files and 1,699
+historical reference/tool/support paths, ancestry, licenses, attribution and
+dependency locks were reverified unchanged. All 243 relative Markdown links and
+two anchors resolved before this final prose correction.
+
+## M3d3h bounded sanitizer evidence
+
+All fourteen ASan fuzz targets built and their executables were verified. The new
+stand/run campaign completed **10,000 executions in 1,220.9 seconds without
+findings**, exit 0, using twelve fresh public 65-byte seeds, four capacity setups,
+seed 1, max_len 65, RSS 2048 MiB and a 20-second input timeout. Each input has at most
+eight operations/32 individually checked tics and eight public-map byte mutations.
+Actual main gameplay setups use maps 0/19; constructor mutations can select 21 maps.
+All 21-map source-C coverage is a separate evidence claim.
+
+**ASAN_OPTIONS=detect_leaks=0** disabled leak detection. No LeakSanitizer or complete
+branch-coverage claim is made. The public seed recipe and precise setup/operation
+bounds are in fuzz/corpus/README.md. Runtime and fuzz-model code did not change
+after the final ASan build/campaign launch; subsequent edits were tests or prose.
+
+## M3d3h immutable implementation CI
+
+Implementation **e3f52f47a686fccdb532f66f8dc3c347b4ef2528** passed all four required
+jobs in [CI40784721289](https://github.com/Copgunn/DOOM/actions/runs/40784721289),
+completed **2026-10-28 23:13:05 UTC**. Linux, Windows, native Intel macOS and Rust 1.85 passed.
+Linux reproduced all fifteen original-C/independent-encoder pairs; stable systems
+passed recorded source fields/full bytes/digests and fifteen asserted examples.
+Formatting, Clippy, build, workspace/release tests and warnings-denied docs passed.
+
+Native macOS job **123154923686** ran on **macos-26-intel**, GitHub Actions
+1000000410, 23:04:39–23:08:41UTC, with every applicable step actually executed.
+The existing workflow's PR checkout was test merge
+`39ebdf2b5899da78b75d39fd2863945369a16305`, ordered parents verified master
+`f44828d5ad3169fe77c116bdebb30c74d1b5feb2` and the implementation head. Its tree
+**ce50da49317305e9602cd9fadcc2a33e5046f9db** equals the implementation tree.
+This records head-associated CI and source-tree equality, not a detached-head
+checkout claim. Original-C regeneration remained Linux-only under its existing
+condition; recorded comparisons ran on all stable platforms.
+
+## M3d3h reviewed final head and conditional finalization
+
+Reviewed head **29824fbb9e098bcd0403f0dc7de2ab918e0bc9bc** passed all four required
+jobs in [CI40786196192](https://github.com/Copgunn/DOOM/actions/runs/40786196192),
+completed2026-10-28 23:26:30UTC: Linux, Windows, native macOS and Rust1.85.
+Native macOS job123159872174 executed on macos-26-intel, runner1000000415.
+The PR checkout was test merge `ff111936837df4205494b4fd5409a9d712e05a42`, with
+ordered parents `f44828d5ad3169fe77c116bdebb30c74d1b5feb2` and the reviewed head.
+Its tree `6a198980579e6e119511771754584a1d42a742a7` equals the feature-head tree.
+Linux regenerated all fifteen original-C/independent-encoder pairs; stable
+platforms passed recorded comparisons and fifteen debug/release examples.
+
+The M3d3i mission conditionally authorizes a regular merge of
+[PR18](https://github.com/Copgunn/DOOM/pull/18) after this documentation-only
+correction, fresh mandatory local checks, successful four-job corrected-head CI
+and live blocker/review verification. The reviewed green run does not substitute
+for those fresh checks. Record corrected head/CI and merge evidence on PR18;
+verify ordered merge parents, tree, master and successful exact-merge post-merge
+CI before M3d3i runtime. Runtime, DSIM-v1 through DSIM-v15 and historical reference
+evidence remain unchanged by this correction. No squash, force push, history
+rewrite, CI bypass or auto-merge.

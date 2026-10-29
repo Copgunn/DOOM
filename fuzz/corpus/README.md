@@ -126,3 +126,29 @@ The recipe mirrors the reported fresh-corpus campaign; mutations and crash outpu
 stay ignored or outside the checkout. No proprietary assets are involved.
 `detect_leaks=0` disables leak detection: do not claim LeakSanitizer coverage.
 Record actual campaign completion/counts/findings in the validation ledger.
+
+## M3d3h Demon stand/run campaign
+
+`demon_stand_run` uses profile 15 and public C-backed idle, run, nested wake,
+sound, REJECT-run, lifecycle, pain and corpse setups. Its operation state IDs
+include both stand states and all eight run states, alongside intentionally
+unsupported pain/death/raise entries. It checks full snapshot equality after
+recoverable failures. Each tic has its own atomicity check; an operation can
+perform four tics, with eight operations/32 tics per input. The high selector bit
+fills all 64 slots with admitted dummy actors before mutations. Public map-byte
+constructor mutations select the 21 supplied maps; actual main fuzz gameplay
+setups use maps 0 and 19. This is distinct from all 21 maps exercised by the C suite.
+
+Build all fourteen targets with `cargo +nightly fuzz build --sanitizer address`.
+A fresh public 65-byte seed has one selector followed by eight 8-byte operations.
+Use 12 selectors `(i % 8) | (128 if i >= 8 else 0)`, including four capacity setups.
+Ordinary step bytes are `[13,0,1,0,0,0,0,3]`; for selectors 0/8 replace the first
+operation with `[0,0,1,150,0,0,0,1]`. For selectors 2/10 replace operations 0 and 6 with body momentum
+`[11,1,1,0,0,252,255,3]`; leave all other operations as steps. All other seeds use eight steps.
+These are synthetic inputs, not IWAD or recorded demo data.
+
+Run a bounded campaign with seed 1, 10,000 runs, max_len 65, RSS 2048 MiB and a 20-second
+input timeout. Record the observed execution count and findings. Set
+`ASAN_OPTIONS=detect_leaks=0` where the managed environment requires the documented
+ptrace workaround; this disables LeakSanitizer and must never be reported as
+leak coverage. No exhaustive branch coverage is implied.

@@ -43,7 +43,10 @@ after correction and fresh/post-merge CI. M3d3e adds bounded chaingunner attack/
 refire in profile 12 in [PR #15](https://github.com/Copgunn/DOOM/pull/15),
 regularly merged as `5b91824` after documentation correction, macOS hosted-runner
 recovery and successful exact-head/post-merge checks. M3d3f adds bounded normal-
-timing Demon melee in profile 13 on `feat/m3d3f-demon-melee`, for separate review.
+timing Demon melee in profile 13, regularly merged as `75b2a2bc`. M3d3g adds
+Demon pain/death/corpses in profile 14, regularly merged as `f44828d5`. M3d3h
+adds original stand/run closure in profile 15 in [PR #18](https://github.com/Copgunn/DOOM/pull/18),
+for separate owner review.
 Complete original monsters,
 actual player damage and a playable client remain future work. Exact gates and
 limitations are in the [roadmap](docs/ROADMAP.md) and
@@ -91,6 +94,10 @@ Implemented:
   refire short-circuit decisions, immediate see/Chase and DSIM-v12.
 - Explicit M3d3f profile: normal SARG 8/8/8, three separate faces, source selection
   sound/current melee range and shared direct damage through DSIM-v13.
+- Explicit M3d3g profile: original Demon pain/death, delayed sounds, A_Fall and
+  persistent corpses through DSIM-v14.
+- Explicit M3d3h profile: original two-state stand/eight-state run, immediate
+  Look/Chase actions and composed melee/lifecycle through DSIM-v15.
 - Stable debug/release Linux/Windows/macOS CI, Rust 1.85 tests, and engineering guidance.
 
 Choose the compatibility profile explicitly:
@@ -110,6 +117,8 @@ Choose the compatibility profile explicitly:
 | `Simulation::with_shotgunner_registry` | DSIM-v11 | M3d3d explicit SPOS fixture: source Look/Chase/facing, shared aim, three sequential hitscan pellets and real unbound damage/effects |
 | `Simulation::with_chaingunner_registry` | DSIM-v12 | M3d3e explicit CPOS fixture: independently aimed single shots, source refire and immediate see/Chase handoffs |
 | `Simulation::with_demon_melee_registry` | DSIM-v13 | M3d3f normal-timing SARG fixture: Look/Chase, 8/8/8, selection sound, three faces and shared direct melee damage |
+| `Simulation::with_demon_lifecycle_registry` | DSIM-v14 | Restricted Demon pain, ordinary death, delayed sounds and persistent corpse fixture |
+| `Simulation::with_demon_stand_run_registry` | DSIM-v15 | Original two-state stand and eight-state run closure, composed with the admitted Demon melee/pain/death/corpse slice |
 
 M3b consumes supplied BLOCKMAP lists in reference order. Conservative omissions
 are diagnostic, not automatic rebuilds or proof of broken geometry. Missing
@@ -477,7 +486,8 @@ I/O cannot influence its outcomes. See [architecture](docs/ARCHITECTURE.md).
 | M3d3d | Source shotgunner three-pellet foundations | Merged as 31b4830 |
 | M3d3e | Source chaingunner attack/refire foundations | Merged as 5b91824 |
 | M3d3f | Source Demon melee foundations | Regularly merged as 75b2a2bc after correction and post-merge CI |
-| M3d3g | Demon pain, ordinary death and corpse foundations | Implemented and validated; separate owner review in PR #17 |
+| M3d3g | Demon pain, ordinary death and corpse foundations | Regularly merged as f44828d5 after correction and post-merge CI |
+| M3d3h | Original Demon stand/run state closure | Implemented and validated; separate owner review in PR #18 |
 | Later M3d3–M3e | Remaining attacks, integrated combat, interactions and moving sectors | Planned |
 | M4 | Version-specific demo replay and desynchronization diagnostics | Planned |
 | M5 | Presentation, input/audio, custom wgpu renderer; Vulkan preferred | Planned |
@@ -688,3 +698,32 @@ No IWAD, GPU, audio device or network is needed. See the
 [validation ledger](docs/VALIDATION.md). All thirteen earlier profiles/fixtures
 remain preserved. [PR #17](https://github.com/Copgunn/DOOM/pull/17) requires separate owner review
 and stays open/unmerged without auto-merge.
+
+## M3d3h original Demon stand/run closure
+
+Profile 15 separately copies both original SARG stand states (10/10 tics, frames
+0/1, A_Look) and all eight run states (2 tics each, frames0/0/1/1/2/2/3/3,
+A_Chase). Repeated frames retain distinct source entries and gameplay actions.
+A 16-tic run cycle contains eight Chase entries; gameplay does not depend on
+rendering. Source spawn installs STND1 without executing its action; later
+Look entries can immediately enter Chase and melee in the same call.
+
+Use `ActorRegistry::demon_stand_run_fixture()` with
+`Simulation::with_demon_stand_run_registry`. It reuses perception/noise, movement,
+shared melee/damage, pain/death and persistent corpses. Profile 14's simplified
+stand/Chase fixture and every v1–v14 byte remain preserved. Native 136 remains a
+labelled fixture: source metadata with mapped states, no original map spawning,
+COUNTKILL/scoring or raise. Full Demon/Spectre, fast/Nightmare, player damage,
+other attacks/projectiles, specials and demo synchronization are not admitted.
+
+```sh
+cargo run -p doom-sim --example demon_stand_run --locked
+python3 tools/reference/check_demon_stand_run.py
+```
+
+The asserted example checks ten original-C-backed scenarios and repeated
+instances, including idle/run loops, nested wake, target loss, pain/death and a
+persistent corpse. Its independently encoded 130-tic DSIM-v15 digest is
+`51463158173610c5`. No IWAD, GPU, audio device or network service is needed.
+See [source investigation](docs/M3D3H_REFERENCE.md),
+[validation](docs/VALIDATION.md) and [state format](docs/STATE_FORMAT.md).

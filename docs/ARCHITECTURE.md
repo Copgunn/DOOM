@@ -568,3 +568,27 @@ advancement only. Dead owners' closed action-free/sound/Fall graph does not read
 retained targets; their unresolved generations remain stored without aliasing.
 Living callbacks still reject stale dependencies. Public state/setup cannot
 resurrect the owner. Canonical fields/events already represent every transition.
+
+## M3d3h original stand/run composition
+
+`demon_stand_run` defines immutable source-state aliases and the explicit profile 15
+constructor. It copies complete source state records into the fixture registry;
+only identity/name/next-state aliases change. Both stand states and every run
+state retain their own timers and actions. Existing LifeHost entry executes
+nested Look→Chase→melee, and attack/pain returns execute the first Chase
+immediately. No AI scheduler or movement implementation is added.
+
+The shared lifecycle constructor selects the exact registry for profile 14 or15.
+The profile helper grants existing damageable-owner physics/combat/preflight only
+to those two explicit profiles;13 and all older contracts stay separate. Native
+state roles extend to1–21 only in15. Public live entry permits stand/run/melee;
+pain/death enter through shared damage. Public death-request shortcuts and corpse
+revival remain rejected. Strict positive/infinite closure keeps existing nested
+counter,978-tic/1008-callback movement and64-actor proofs. Unsupported future
+callbacks are validated before movement/RNG/sound, including the second stand
+state and future run states. There is no whole-world clone per tic.
+
+Canonical state15 uses existing actor/state/registry/identity/spatial/roster/RNG
+fields and observations; no redundant persistent state or new observation tag is
+needed. Profile 14 retains its simplified loops byte-for-byte. C adapters and
+independent encoders remain tooling, separate from native Rust simulation.

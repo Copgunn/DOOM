@@ -221,7 +221,7 @@ impl Simulation {
     /// Controlled death-state entry for an unbound actor. This does not apply
     /// damage, alter health/height, set corpse flags, award kills or drop items.
     pub fn request_actor_death(&mut self, id: ActorId) -> Result<(), SimError> {
-        if self.profile == Profile::DemonLifecycle {
+        if self.profile.uses_demon_lifecycle() {
             return Err(MonsterError::Profile.into());
         }
         let life = self.active_typed(id)?;

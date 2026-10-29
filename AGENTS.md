@@ -97,7 +97,7 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   user thinker budgets have a separate documented nontransactional contract.
 - Actor identity, thinker order and spatial order are separate. Never sort handles
   to choose blockers; successful same-cell moves reinsert at spatial cell head.
-- Run all thirteen reference generators and independent golden encoders on Linux;
+- Run all fifteen reference generators and independent golden encoders on Linux;
   cross-platform CI compares recorded vectors/goldens and debug/release examples.
 - M3c PR #6 was owner-authorized and regularly merged as 4dbb0a5 after fresh
   correction-head and post-merge CI. M3d1 was regularly merged as c924f18 after fresh correction-head and
@@ -343,5 +343,36 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   Rust-only policies. Body inventory is not branch coverage.
 - The real LUT lacks179/180. Never count injected boundary values as gameplay
   draws or captures. Preserve the scalar component's explicit provenance.
-- Keep verified native macos-26-intel and all four CI jobs/steps. New M3d3g PR
-  stays OPEN/UNMERGED without auto-merge for owner review. Do not begin later work.
+- Keep verified native macos-26-intel and all four CI jobs/steps. M3d3g PR17
+  completed its authorized regular merge as f44828d5 after correction and exact
+  post-merge gates. M3d3h has a separate owner-review gate without auto-merge.
+
+## M3d3h original Demon stand/run changes
+
+- Read [M3D3H_REFERENCE](docs/M3D3H_REFERENCE.md) before stand/run admission or
+  state scheduling changes. PR17 regularly merged as `f44828d5` after correction
+  `9d48f6d4`, fresh CI40780721974 and exact post-merge CI40781481835. Investigation
+  `4aec917b` precedes metadata `b073f648` and integration `d35a67af`.
+- Profile 15 uses exact original STND/STND2 and all eight RUN states, remapped to
+  1/3 and2/15–21. Keep sprite39, frames,10/10 and2-tic timings, every Look/Chase
+  entry and immediate nested handoffs. Do not merge repeated frames or run AI
+  every presentation frame. Direct spawn installs state without its action.
+- Reuse shared Look/Chase, movement, DamagePlan/LifeHost and lifecycle preflight.
+  Normal source melee/pain/death/corpses remain composed. Preserve the exact
+  spawn-state-only damage-to-see check; STND2 is not spawnstate. No new scheduler,
+  pathfinder, damage engine or per-tic world clone. Keep existing 64-actor,
+  coordinate/work/counter bounds and complete failed-operation atomicity.
+- Preserve generations and source thinker/spatial order. Public death requests,
+  corpse revival, raise, scoring/player branches, other actions and full original
+  Demon/Spectre remain rejected. Profile 14 and its loops stay unchanged.
+- Reproduce all fifteen original-C/independent-encoder pairs and fifteen asserted
+  debug/release examples; build fourteen ASan fuzz targets and record bounded
+  stand/run sanitizer executions and leak configuration. Freeze v1–v14 fixtures,
+  encoders, provenance and thirteen historical Rust helpers; only reference README
+  prose may change. Never derive expected data from Rust output.
+- Report source comparisons (390 scenarios, all 21 maps), compiled-body inventory,
+  independent DSIM-v15 bytes and Rust-only ownership/atomicity tests separately.
+  The three injected C pain components are not gameplay draws or captures.
+- Native macos-26-intel and all four CI jobs/steps remain required. Keep the new
+  M3d3h PR draft while validation is pending, then ready/open/unmerged without
+  auto-merge for owner review. No later gameplay milestone is authorized.

@@ -256,4 +256,21 @@ boundary components, canonical evidence and Rust safety policies separately.
 Keep v1-v13 and twelve historical Rust helpers byte-identical. Do not grant full
 Demon/Spectre, scoring, player damage, raise states or other monster attacks.
 PR #16 completed its authorized regular merge/post-merge gates as `75b2a2bc`;
-M3d3g requires separate owner review and remains unmerged without auto-merge.
+M3d3g PR17 completed its authorized regular merge/post-merge gates as
+`f44828d5`; M3d3h has a separate owner-review gate without auto-merge.
+
+## M3d3h stand/run changes
+
+Read [M3D3H_REFERENCE](docs/M3D3H_REFERENCE.md) and DSIM-v15. Preserve all ten
+original stand/run states, immediate actions and source spawn-versus-entry
+semantics. The separate profile composes existing perception, pursuit, melee
+and lifecycle services; full actor admission remains restricted. Keep profile 14
+behavior and all v1–v14 bytes/helpers unchanged. Do not stub unsupported actions.
+
+Reproduce all fifteen C/encoder pairs and fifteen example comparisons, stable/
+release/MSRV checks, fourteen fuzz builds and bounded stand/run ASan. Record
+actual executions and disabled leak detection accurately. Use the documentation
+review checklist, retain source/canonical/policy evidence distinctions and wait
+for exact-head Linux/Windows/native macOS/Rust 1.85 CI before review readiness.
+PR17 completed its authorized regular merge/post-merge gates as `f44828d5`.
+M3d3h remains a separate owner-review PR, open/unmerged without auto-merge.

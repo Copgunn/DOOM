@@ -675,3 +675,38 @@ hitscan damage, lifecycle states, identities, roster/noise, setup and unsupporte
 attacks; each failed operation/tic compares full canonical state. See the public
 [seed recipe](../fuzz/corpus/README.md). Report observed ASan executions, input
 bounds and leak setting; bounded runs do not establish complete branch coverage.
+
+## M3d3h stand/run reproduction
+
+```sh
+python3 tools/reference/generate_m3d3h.py --check
+python3 tools/reference/m3d3h_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3d3h_reference --locked
+cargo test -p doom-sim --test m3d3h_policies --locked
+cargo test -p doom-sim --lib demon_stand_run --locked
+cargo run -p doom-sim --example demon_stand_run --locked
+python3 tools/reference/check_demon_stand_run.py
+cargo +nightly fuzz build --sanitizer address
+```
+
+Also run the workspace build/fmt/Clippy/tests/rustdoc, release doom-sim/doom-types,
+Rust 1.85.0, all fourteen earlier C/encoder pairs and asserted examples, fuzz
+formatting and source/history/fixture integrity. CI adds the fifteenth pair on
+Linux and the fifteenth asserted example on all stable platforms; native macOS
+and MSRV remain required. Public CI needs no private assets or runtime C compiler
+for the recorded Rust comparisons. No earlier check is removed.
+
+The new reference test asserts390 cases/all 21 maps and935,012 actor-field,
+38,578 raw RNG and151,474 ordered-instrumentation comparisons. Raw draws include
+setup/discards; instrumentation rows are independently reconciled and are not
+one row per event. Independent encoding verifies 7,186 captures/1,395 full byte
+fixtures with field/byte/digest diagnostics. Fourteen public and five private
+Rust safety tests are distinct from the sixth private scalar-C component test.
+The C component uses separately injected179/180/181; these are absent from main
+canonical gameplay captures (the actual LUT lacks179/180).
+
+The example asserts ten C-backed/repeated-instance sequences and 130-tic digest
+`51463158173610c5`. The bounded fuzz target covers both stand/eight run entries,
+perception, damage/corpse setup, generational IDs and complete failed-operation
+state. See [public seed recipe](../fuzz/corpus/README.md); report actual sanitizer
+executions and leak configuration in [VALIDATION](VALIDATION.md).
