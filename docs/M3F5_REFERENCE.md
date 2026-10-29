@@ -108,6 +108,10 @@ Keep source behavior, projection, canonical encoding and Rust-only rejection
 results separate. Existing Profiles1–20 and all historical fixtures/tools remain
 unchanged. Actual counts and conclusions belong in the [measured evidence record](validation/M3F5.md).
 
+New provenance JSON sorts object keys independently of temporary-directory file
+enumeration. Ordered C record/state lists and all capture bytes retain their
+original ordering; manifest formatting grants no gameplay compatibility.
+
 ## Exact source dependencies and observation boundary
 
 The source inventory and per-body digests are retained in

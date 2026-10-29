@@ -83,7 +83,8 @@ def run(check):
               'inputs_sha256':{p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in inputs},
               'outputs_sha256':{p:hashlib.sha256(b).hexdigest() for p,b in outputs.items()},
               'scope':'Raw canonical C observations independently projected into frozen native Profile20 identity representation, then encoded by unchanged independent encoder. No Rust inputs/outputs. No new DSIM schema or capacity fixture.'}
-    outputs['tests/reference/m3f5_snapshot_provenance.json']=(json.dumps(manifest,indent=2)+'\n').encode()
+    # File discovery order must not affect provenance bytes across hosts.
+    outputs['tests/reference/m3f5_snapshot_provenance.json']=(json.dumps(manifest,indent=2,sort_keys=True)+'\n').encode()
     for name,data in outputs.items():
         if check: assert (ROOT/name).read_bytes()==data,name
         else: (ROOT/name).write_bytes(data)

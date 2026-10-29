@@ -295,3 +295,26 @@ disabled in the documented managed-host campaign; no leak coverage is claimed.
 The legacy benchmark supplies matching before/after workloads. The new canonical
 API workload includes explicit validation/query costs and is reported separately;
 it has no pre-M3f5 API baseline. Timing output is observational, never an assertion.
+
+To exercise cross-filesystem provenance reproducibility without changing source
+observations, reverse file discovery in both new publishers. This checks whole
+publisher output bytes, separately from gameplay comparisons:
+
+```sh
+python3 - <<'PY'
+import sys
+from pathlib import Path
+sys.path.insert(0, 'tools/reference')
+import m3f5_reference as source
+import m3f5_snapshot_goldens as encoder
+raw = source.capture(list(source.main.legacy.base.FLAGS))
+source.capture = lambda flags: dict(reversed(list(raw.items())))
+source.run(True, False)
+original = Path.glob
+try:
+    Path.glob = lambda path, pattern: iter(reversed(list(original(path, pattern))))
+    encoder.run(True)
+finally:
+    Path.glob = original
+PY
+```

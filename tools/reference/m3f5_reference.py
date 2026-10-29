@@ -99,7 +99,9 @@ def run(check, overflow, address=False):
                                'Normal source-defined THING angles, no Nightmare/Fast/respawn/raise, Spectre or Shotgun Guy execution. No Rust output or proprietary assets.',
                                'Raw canonical source protocol is separately versioned; DSIM-v20 comparison requires an explicitly declared independent identity projection.'],
                 'outputs_sha256':{p:hashlib.sha256(b).hexdigest() for p,b in outputs.items()}}
-    outputs['tests/reference/m3f5_provenance.json'] = (json.dumps(manifest,indent=2)+'\n').encode()
+    # Temporary-directory enumeration differs across filesystems. Object-key
+    # order carries no source identity meaning; ordered record lists stay intact.
+    outputs['tests/reference/m3f5_provenance.json'] = (json.dumps(manifest,indent=2,sort_keys=True)+'\n').encode()
     for path,data in outputs.items():
         target = ROOT/path
         if check:
