@@ -911,6 +911,7 @@ impl Simulation {
                     shotgunner: self.profile == Profile::Shotgunner,
                     chaingunner: self.profile == Profile::Chaingunner,
                     demon: self.profile.uses_demon(),
+                    map_demons: self.profile == Profile::DemonMapSpawn,
                     melee: demon_melee.as_ref(),
                     shotgun: shotgun_blast.as_ref(),
                     shot: monster_shot.as_ref(),

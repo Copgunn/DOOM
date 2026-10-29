@@ -450,7 +450,7 @@ impl Simulation {
                 != 0
                 || !self.profile.uses_demon_lifecycle()
                     && (a.momentum() != [Fixed::ZERO; 2] || a.momz != Fixed::ZERO || a.z != a.floor)
-                || self.actors.order().next() != Some(id)
+                || self.profile != Profile::DemonMapSpawn && self.actors.order().next() != Some(id)
             {
                 return Err(MonsterError::Ownership.into());
             }
@@ -508,6 +508,7 @@ impl Simulation {
         Ok(a)
     }
     pub(crate) fn preflight_monster_callback(&self, id: ActorId) -> Result<(), SimError> {
+        self.preflight_map_demons()?;
         if !self.monster_is_owner(id) {
             return Err(MonsterError::Ownership.into());
         }
@@ -623,6 +624,7 @@ impl Simulation {
             .map(Option::flatten)
     }
     pub(crate) fn preflight_monster_owner(&self) -> Result<Option<ActorId>, SimError> {
+        self.preflight_map_demons()?;
         self.preflight_perception_roster()?;
         let mut shot_owner = None;
         for id in self.actors.order() {
@@ -806,6 +808,7 @@ impl Simulation {
                 shotgunner: self.profile == Profile::Shotgunner,
                 chaingunner: self.profile == Profile::Chaingunner,
                 demon: self.profile.uses_demon(),
+                map_demons: self.profile == Profile::DemonMapSpawn,
                 melee: None,
                 shotgun: None,
                 shot,
