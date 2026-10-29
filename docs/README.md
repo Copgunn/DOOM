@@ -64,6 +64,7 @@ for present status. Historical review statements are not new claims that work is
 | Demon map totals and bounded credit | [M3d3j](M3D3J_REFERENCE.md) |
 | Bounded larger static geometry | [M3f1](M3F1_REFERENCE.md), [measured evidence](validation/M3F1.md) |
 | Expanded coordinates and spatial work | [M3f2](M3F2_REFERENCE.md), [measured evidence](validation/M3F2.md) |
+| Demon gameplay on larger static maps | [M3f3](M3F3_REFERENCE.md), [measured evidence](validation/M3F3.md) |
 
 [Reference tooling](../tools/reference/README.md) describes harness layout and
 provenance. [Historical records](validation/archive/README.md) retain complete

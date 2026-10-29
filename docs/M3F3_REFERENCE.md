@@ -150,3 +150,21 @@ explicit typed/statistics schema. Keep full bytes, per-tic digests and first-fie
 diagnostics. Generation-reuse, capacity, overflow, bounds, unsupported actions and
 failure atomicity are separately labeled Rust safety policies. Historical
 profiles, schemas, encoders, fixtures and helpers remain byte-identical.
+
+## Implemented composition and additional source probes
+
+The implementation follows the bounded actor-plan design above. Current exact
+limits belong to [COMPATIBILITY](COMPATIBILITY.md#expanded-map-demon-profile);
+actual comparisons and their exclusions belong to [measured evidence](validation/M3F3.md).
+The source adapter retains the established explicit unsigned A_Chase direction
+shift, representable negative spawn multiplication and left-before-right implicit
+draw ordering under the recorded GNU ABI. Its strict audit is not a claim of
+portable unmodified ISO C or exhaustive shift-undefined-behavior coverage.
+
+Additional independent source inputs use non-cardinal AI rays so the original
+horizontal-side quirk cannot skip the changed opening. They execute real slope
+clipping and a closed opening in larger geometry. Another sparse shared-list
+input places a native Demon in a real BLOCKMAP cell above the old 4,096-cell
+ceiling. These extend the combined evidence without altering historical helpers
+or the bounded fuzz catalog. Counts and per-case observations stay in the evidence
+record, not this investigation.

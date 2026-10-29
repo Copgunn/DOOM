@@ -146,6 +146,46 @@ Historical profile selection keeps its old limits, and the new untyped canonical
 tag cannot implicitly enable gameplay fields. Allocation exhaustion for existing
 tic diagnostics/snapshots retains its documented process-level policy.
 
+## Expanded-map Demon composition
+
+Profile 20 selects the existing geometry preparation and the native map-context
+Demon registry together. Capability helpers express map statistics, expanded
+geometry and the established perception/monster/lifecycle closures. Numeric
+profile order never selects these services implicitly. The constructor validates
+their arithmetic intersection and complete registry before returning an instance;
+[COMPATIBILITY](COMPATIBILITY.md#expanded-map-demon-profile) owns the exact bounds.
+
+There is one authoritative actor store and one scheduler. The original built-in
+thinker pass is shared in `thinkers.rs`; both historical execution and the new
+profile call the same movement and LifeHost services in the same linked order.
+A new operation stages at most 64 slot records (including generations and links),
+64 spatial handles, RNG, statistics, bindings and new observations. It borrows the
+immutable world, sectors, registry, roster, sound references and canonical cache.
+It does not copy a Simulation, large geometry or previous event queues.
+
+This small actor-state plan runs once and commits only after success. The same
+ThinkerStore type supplies traversal and retirement within the temporary plan;
+there is no second persistent arena or AI scheduler. Later native strikes plan
+against the current staged target health/RNG, including earlier owners' damage.
+Public direct Look, Chase, state entry, facing, melee and damage share the boundary.
+Damage needs it because source retargeting can enter Chase immediately after a
+failed pain decision. Pure player scanning gathers checked results before mutation.
+
+Every new AI sight path uses fallible expanded sight, including the INT_MIN guard.
+A transient error latch unwinds void source-style callbacks and stops later work;
+it is always checked before commit. No fabricated false visibility result is
+committed. A later actor's failure discards staged movement, RNG, retirement,
+damage, counters and observations. Original commands and both event queues remain
+untouched. Layout 20 serializes actual typed state/statistics, not the plan, latch,
+query budget or derived preparation data.
+
+Batch spawning still resolves original DoomEd metadata before the native identity
+adaptation and appends actors in THING order. Spatial heads remain most-recent-link
+order; generational identity never selects a blocker. Restart remains a setup-time
+new-instance operation, retaining RNG and rebuilding through the validated constructor.
+[The investigation](M3F3_REFERENCE.md) records arithmetic/closure assumptions and
+[the evidence](validation/M3F3.md) records their independently exercised limits.
+
 ## Rendering direction
 
 A custom Vulkan-first presentation architecture is planned. No renderer or

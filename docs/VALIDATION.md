@@ -32,6 +32,8 @@ LeakSanitizer coverage; no bounded campaign is exhaustive.
 
 ## Detailed records
 
+- [M3f3 combined Demon/expanded-map evidence](validation/M3F3.md).
+
 - [M3f2 expanded-coordinate/spatial-work evidence](validation/M3F2.md).
 - [M3f1 map-scale source comparisons and host measurements](validation/M3F1.md).
 

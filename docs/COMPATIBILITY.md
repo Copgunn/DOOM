@@ -44,6 +44,8 @@ Historical profile behavior and DSIM bytes remain frozen. New behavior is opt-in
 | 16 | Bounded classic Demon THING spawning, retaining the prior fixture flags |
 | 17 | Map kill totals, original COUNTKILL flags and bounded death-credit context |
 | 18 | Expanded bounded static geometry, unbound XY/Z and read-only original sight |
+| 19 | Checked larger coordinate envelope and spatial work for unbound static actors |
+| 20 | Explicit intersection of larger static geometry and adapted Demon gameplay |
 
 These are separate contracts, not modes that automatically admit all original
 actors or map features. Detailed older limits remain available in the complete
@@ -268,6 +270,55 @@ Original 64-cell `P_PathTraverse` and 128-intercept behavior is unchanged.
 [Source analysis](M3F2_REFERENCE.md) owns the arithmetic derivation;
 [observations](validation/M3F2.md) distinguish genuine C comparisons, independent
 canonical encoding, Rust safety tests and host measurements.
+
+## Expanded-map Demon profile
+
+`Simulation::with_demon_expanded_map_registry` selects **Profile 20**. Supply the
+existing `ActorRegistry::demon_map_context_fixture`, explicit actor options and
+map context; then call `spawn_map_things` before installing unbound targets.
+This composes the admitted Demon closure with expanded static preparation. It
+retains native type 136/state aliases and does not admit complete MT_SERGEANT.
+
+| Area | Profile 20 limit or behavior |
+| --- | --- |
+| Tables | 1,024 lines, 256 static sectors; 4,096 nodes and subsectors each |
+| Geometry | Vertex, node origin/delta and BLOCKMAP-origin components within ±2,048 units |
+| Heights and line deltas | Sector heights within ±512, noninverted; linedef `abs(dx)+abs(dy) <= 1536` |
+| Collision preparation | 8,192 cells, 65,536 raw words, 262,144 prepared references; separate conservative 4 MiB preparation-request ceiling |
+| Collision work | Existing 16,384-unit setup proof; source list order, leading zero, duplicates and suffix semantics retained |
+| Sight | 16,384 fully expanded node/leaf/seg work; checked scratch allocation and original INT_MIN clipping exclusion |
+| Per-operation sight budget | At most 64 action queries and 1,048,576 conservatively charged diagnostic work units, including reserved extra per-line observations |
+| Actor count | At most 64 slots; at most four native Demon owners before the stable unbound suffix |
+| Actor coordinates | Read-only actor XY/Z within ±1,024; pre-tic owner XY within ±978 and suffix XY within ±994; callback/spawn XY within ±1,008, map Demons within ±978 |
+| Vertical setup | Explicit absolute spawn Z within ±1,018; pre-tic vertical momentum within ±64 and Z plus momentum within ±1,024 |
+| Momentum and dimensions | XY momentum within ±64 in the new profile; original XY clamp 30 and Demon Chase speed 10. Demon radius/height 30/56; body target radius/height 16/56; exact registry/effect dimensions must fit static sectors |
+| THINGS | At most 256 records; original lookup/filter/nomonsters order, DoomEd 3002 only after filtering; source raw state, floor/BSP, spawnpoint, RNG and insertion order |
+| Selected THING angles | Truncated `angle/45` in `[-4,3]`, encoded degrees `[-224,179]`. Outside values reject atomically because the original signed ANG45 product overflows. All eight BAM octants can use signed equivalent encodings |
+| Gameplay | Original normal stand/run, Look/hearing/roster, Chase/movement, melee, shared direct damage, pain/death/Fall and persistent corpses |
+| Targets and sources | Stable unbound body 135 for live AI/sound/roster targets; existing effect lifecycles 37/38 remain distinct. No real player pointers or native infighting beyond the inherited synthetic lethal/ignored slice |
+| Statistics/restart | Separate available map kills and single-player fallback credit; retained COUNTKILL, disabled respawn; fresh restart resets level state and continues RNG |
+
+Geometry admission is broader than actor admission. This does not allow Demon
+execution at ±2,048 actor coordinates. The line-norm and signed-angle restrictions
+also mean this is not an unconditional superset of older profiles. Historical
+Profiles 17 and 19 retain their contracts and byte fixtures.
+
+Direct hitscan/autoaim, other attacks, player bindings/damage, multiplayer,
+Fast/Nightmare, resurrection, dynamic sectors and specials reject. The source's
+64-cell path-traversal and 128-intercept limits are unchanged. Unsupported types
+never become generic actors; unknown enabled types remain recoverable batch errors.
+
+Whole-tic and nested direct actions use a bounded actor-state plan. Any recoverable
+error preserves actors, identities, RNG, lists, statistics, commands and both event
+queues. Checked reservations/work limits are distinct from inherited process-level
+Rust allocation failure for ordinary observation/snapshot vectors. Preparation
+accounting excludes parsed Map storage, canonical caches, the small actor plan,
+observations and allocator overhead; it is not a process RSS limit.
+
+[Source findings](M3F3_REFERENCE.md) explain the arithmetic and original signed-angle
+failure. [Architecture](ARCHITECTURE.md#expanded-map-demon-composition) explains
+planning; [evidence](validation/M3F3.md) separates genuine C, independent canonical
+encoding, safety policies and host measurements.
 
 ## Demon runtime restrictions
 
