@@ -15,20 +15,17 @@ The merged baseline provides:
 - Demon stand/run, melee, pain/death and persistent corpses.
 - Bounded classic THING spawning (M3d3i, merged), independently checked against
   original C and versioned simulation snapshots.
+- Demon map context and statistics (M3d3j): original kill-count flags, separate
+  map and credited-kill totals, and fresh level reset with RNG continuity.
+  See the [source investigation](M3D3J_REFERENCE.md) and
+  [observed tests](validation/M3D3J.md) for technical evidence.
 
 These foundations support controlled headless tests, not a complete playable game.
 Earlier findings and milestones are retained in the [historical records](validation/archive/README.md).
 
 ## Next
 
-### Complete M3d3j: Demon map context and statistics
-
-The implementation is in [PR #20](https://github.com/Copgunn/DOOM/pull/20), which is
-open and not merged into master. It adds original kill-count flags, separate map
-and credited-kill totals, and fresh level reset with RNG continuity. Completion
-and owner review remain pending; live review and merge gates are authoritative
-in that PR. See the [source investigation](M3D3J_REFERENCE.md)
-and [observed tests](validation/M3D3J.md) for technical evidence.
+### Remaining Demon admission
 
 Next, investigate original Demon actor/state identity and remaining game-context
 dependencies. The [support matrix](COMPATIBILITY.md#demon-support-remaining-dependencies)
