@@ -51,6 +51,8 @@ mod combat;
 mod combat_trace;
 pub use combat::{AttackResult, CombatError, CombatEvent, DamageRequest, DamageResult, LineAttack};
 pub use combat_trace::{AimResult, HitscanTrace, Intercept, TraceObject};
+/// Canonical original metadata identities, distinct from executable registry slots.
+pub mod identity;
 mod lifecycle;
 mod spawning;
 pub use lifecycle::{

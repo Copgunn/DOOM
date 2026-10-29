@@ -15,6 +15,7 @@ status tables, test-count lists, commit histories or schema definitions.
 | Current milestone summary and planned work | [ROADMAP](ROADMAP.md) |
 | Exact supported behavior and runtime/parser limits | [COMPATIBILITY](COMPATIBILITY.md) |
 | Architecture and subsystem ownership | [ARCHITECTURE](ARCHITECTURE.md) |
+| Original actor/state identity mapping | [ACTOR_IDENTITIES](ACTOR_IDENTITIES.md) |
 | Canonical simulation snapshot schemas | [STATE_FORMAT](STATE_FORMAT.md) |
 | Build, test and reproduction commands | [TESTING](TESTING.md) |
 | Validation methodology and evidence navigation | [VALIDATION](VALIDATION.md) |
@@ -65,6 +66,7 @@ for present status. Historical review statements are not new claims that work is
 | Bounded larger static geometry | [M3f1](M3F1_REFERENCE.md), [measured evidence](validation/M3F1.md) |
 | Expanded coordinates and spatial work | [M3f2](M3F2_REFERENCE.md), [measured evidence](validation/M3F2.md) |
 | Demon gameplay on larger static maps | [M3f3](M3F3_REFERENCE.md), [measured evidence](validation/M3F3.md) |
+| Canonical actor/state identity | [M3f4](M3F4_REFERENCE.md), [mapping](ACTOR_IDENTITIES.md), [observations](validation/M3F4.md) |
 
 [Reference tooling](../tools/reference/README.md) describes harness layout and
 provenance. [Historical records](validation/archive/README.md) retain complete

@@ -347,3 +347,22 @@ and adapter-defined evaluation order are recorded separately.
 
 Read [M3D3J_REFERENCE](M3D3J_REFERENCE.md) for exact statistics chronology,
 [STATE_FORMAT](STATE_FORMAT.md) for schemas, and [TESTING](TESTING.md) to reproduce.
+
+## Original identity metadata
+
+M3f4 represents all 137 original actor, 967 state and 138 sprite identities and
+all original actor/state descriptor records. The [mapping guide](ACTOR_IDENTITIES.md)
+defines checked conversions and named properties. This is complete metadata
+recognition, not complete actor/state execution. No new gameplay profile or
+executable behavior is admitted. Existing original decorative/effect/lifecycle
+slices retain their existing checks; the focused integration uses MT_TFOG through
+the same typed owner, raw spawn, state entry and thinker services.
+
+Canonical-to-registry resolution compares only the requested complete record at
+its original ordinal. It does not certify every referenced state or live actor
+context. Returned slots must still pass existing action/flag/role/map checks.
+Altered records, reordered names and fixture replacements reject. Native Demon
+136 and state aliases remain explicit fixture adaptations. Original MT_SERGEANT,
+MT_SHADOWS, players, raise states and every other unimplemented dependency remain
+recognized metadata without new gameplay permission. Spectre gameplay, real
+players, infighting, resurrection and Nightmare/respawn remain deferred.

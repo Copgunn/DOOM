@@ -28,3 +28,6 @@
 
 # New public composition seeds are reproducible from tools; mutations stay local.
 /corpus/demon_expanded_map/
+
+# Canonical identity seeds are reproducible; mutations stay local.
+/corpus/original_identity/

@@ -64,3 +64,7 @@ entry points. ROADMAP owns the development summary; GitHub PRs/Actions own exact
 review commits, statuses and CI history. Source investigations and frozen archives
 describe their original observation context. Follow the
 [authority map](README.md#documentation-authority) rather than copying those facts.
+
+M3f4 adds a separate compiled-C [identity metadata observer](M3F4_REFERENCE.md),
+without changing historical DSIM captures. [Measured observations](validation/M3F4.md)
+separate complete metadata recognition from unchanged executable admission.

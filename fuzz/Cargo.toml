@@ -153,3 +153,10 @@ path = "fuzz_targets/demon_expanded_map.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "original_identity"
+path = "fuzz_targets/original_identity.rs"
+test = false
+doc = false
+bench = false

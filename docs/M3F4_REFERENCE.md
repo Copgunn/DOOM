@@ -1,8 +1,8 @@
 # M3f4 investigation: original actor and state identity
 
 Authority is preserved id Software Linux DOOM 1.10 at
-`a77dfb96cb91780ca334d0d4cfd86957558007e0`. This investigation precedes the
-identity implementation. [Compatibility](COMPATIBILITY.md) owns admission;
+`a77dfb96cb91780ca334d0d4cfd86957558007e0`. The initial investigation preceded
+the identity implementation. [Compatibility](COMPATIBILITY.md) owns admission;
 [testing](TESTING.md) owns commands; [evidence](validation/M3F4.md) owns observations.
 
 ## Original-C facts
@@ -14,6 +14,12 @@ The terminal counts are not identities. `info.c` defines positional tables with
 is 13. They share SARG state references but remain distinct types with different
 flags. Sprite identity is an enum ordinal; its four-character resource name is
 separate metadata, not loaded pixels.
+
+Ordering is also used by code: g_game.c changes tics over the inclusive
+S_SARG_RUN1 through S_SARG_PAIN2 range for Fast/Nightmare, and changes three
+projectile speeds. Those runtime mutations do not change enum identities. The
+canonical descriptors here represent pristine info.c initializers, not a snapshot
+of a Fast/Nightmare-mutated C table. Those gameplay modes remain excluded.
 
 A state contains sprite, frame, tics, action union, nextstate and misc1/misc2.
 Frame includes the 32768 fullbright bit. Original frame/tics/misc fields are C

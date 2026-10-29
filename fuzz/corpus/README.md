@@ -169,3 +169,13 @@ the first operation with `[0,0,1,150,0,0,0,1]`; for selector2 use
 `[11,1,1,0,0,252,255,3]` at operations0/6. Corpus/output remains temporary; no
 fuzzer-generated crash/corpus or build output is committed. Actual campaign result
 and ASan/leak settings belong in [VALIDATION](../../docs/VALIDATION.md).
+
+## Original identity seeds
+
+The [identity seed recipe](../../tools/seed_original_identity_fuzz.py) creates
+synthetic ordinal/signed boundaries, exact and unsupported symbolic names, and
+invalid UTF-8. The target reads at most 68 bytes, resolves immutable source/native
+metadata and tests bounded property mutations. It loads no game assets and does
+not admit new gameplay. The evolving corpus remains ignored. See
+[reproduction commands](../../docs/TESTING.md#original-actorstate-identity-metadata)
+and [observations](../../docs/validation/M3F4.md) for the actual sanitizer campaign.

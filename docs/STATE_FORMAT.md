@@ -859,3 +859,13 @@ first-byte diagnostics. Event projections are separate from full DSIM fixtures.
 Per-tic FNV digests provide compact checks. DSIM is not a vanilla
 savegame/demo. [Evidence](validation/M3F3.md) distinguishes C-derived captures from
 separate independently specified Rust-only capacity states.
+
+## Original identity metadata observations
+
+M3f4 changes no DSIM version, profile, field or historical fixture. Canonical
+identity views are read-only metadata, not additional simulation state. Existing
+registry-local identifiers remain encoded exactly as before. The separate
+`DOOM-IDENTITY-v1` text observer begins with its schema tag and counts, followed
+by ordered type/state/sprite records; it is not a DSIM capture or demo format.
+The [mapping guide](ACTOR_IDENTITIES.md) documents interpretation, and the
+[source observer](../tools/reference/m3f4_reference.py) defines emitted columns.

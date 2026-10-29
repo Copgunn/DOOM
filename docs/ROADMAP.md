@@ -27,25 +27,32 @@ The merged baseline provides:
   bounded collision preparation and fallible sight. See [source findings](M3F2_REFERENCE.md)
   and [observations](validation/M3F2.md).
 
+- M3f3 expanded-map Demon composition is merged. Its opt-in profile reuses
+  larger static geometry with bounded map-spawned Demon perception, pursuit,
+  melee and lifecycle. See [support](COMPATIBILITY.md#expanded-map-demon-profile),
+  [source findings](M3F3_REFERENCE.md) and [observations](validation/M3F3.md).
+
 These foundations support controlled headless tests, not a complete playable game.
 Earlier findings and milestones are retained in the [historical records](validation/archive/README.md).
 
 ## Next
 
-### M3f3: Demon gameplay on larger static maps
+### M3f4: Original actor/state identity admission
 
-M3f3 is the current implementation and review milestone. Its opt-in profile
-composes map-spawned Demon perception, pursuit, melee and lifecycle
-with larger geometry while retaining explicit actor, arithmetic and action limits.
-See the [support boundary](COMPATIBILITY.md#expanded-map-demon-profile),
-[source investigation](M3F3_REFERENCE.md) and [measured evidence](validation/M3F3.md).
-This is a step toward real-map readiness, not complete original actor or game loading.
+M3f4 establishes checked original actor/state/sprite identities and read-only
+named descriptors, with explicit validation when crossing into an owned registry.
+All source metadata is represented; existing profiles and executable behaviors
+remain unchanged. See [mapping](ACTOR_IDENTITIES.md),
+[source investigation](M3F4_REFERENCE.md) and [observations](validation/M3F4.md).
 
 ### Remaining Demon admission
 
-Next, investigate original Demon actor/state identity and remaining game-context
-dependencies. The [support matrix](COMPATIBILITY.md#demon-support-remaining-dependencies)
-explains why the current test adaptation does not establish full Demon/Spectre support.
+The next narrow recommendation is a separate original MT_SERGEANT/state execution
+profile investigation: replace fixture identity projection only after auditing
+role checks, chronology, source type tests and independent canonical encoding.
+Retain player, Spectre, scoring expansion, raise and respawn exclusions.
+The [support matrix](COMPATIBILITY.md#demon-support-remaining-dependencies)
+explains the remaining adaptations. This recommendation is future work.
 
 ### Map Scale, Limits, and Real-Map Readiness
 
