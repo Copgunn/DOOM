@@ -61,12 +61,20 @@ impl Simulation {
     }
     /// Original read-only REJECT/BSP sight, independent of roster/RNG/presentation.
     pub fn check_sight(&self, observer: ActorId, target: ActorId) -> Result<SightResult, SimError> {
-        if self.profile == Profile::MapExtent {
+        if matches!(self.profile, Profile::MapExtent | Profile::DemonExpandedMap) {
             return crate::sight::try_extent_query(
                 &self.world,
                 &self.sectors,
-                self.map_extent_sight_actor(observer)?,
-                self.map_extent_sight_actor(target)?,
+                if self.profile.uses_perception() {
+                    self.perception_actor(observer)?
+                } else {
+                    self.map_extent_sight_actor(observer)?
+                },
+                if self.profile.uses_perception() {
+                    self.perception_actor(target)?
+                } else {
+                    self.map_extent_sight_actor(target)?
+                },
             );
         }
         let (observer, target) = if self.profile == Profile::MapScale {
@@ -214,7 +222,8 @@ pub(crate) fn scan(
     get: &impl Fn(ActorId) -> Option<Actor>,
     id: ActorId,
     allaround: bool,
-) -> ScanPlan {
+    checked: Option<&crate::demon_expanded_map::SightControl>,
+) -> Result<ScanPlan, SimError> {
     let observer = get(id).expect("preflight observer");
     let mut lastlook = observer.lastlook;
     let stop = lastlook.wrapping_sub(1) & 3;
@@ -234,7 +243,7 @@ pub(crate) fn scan(
     );
     if !roster.iter().any(|p| p.active) {
         perception_event(&mut plan.events, PerceptionEvent::EmptyRoster(id));
-        return plan;
+        return Ok(plan);
     }
     let mut count = 0_u8;
     for _ in 0..12 {
@@ -253,7 +262,7 @@ pub(crate) fn scan(
             count += 1;
             if prior == 2 || lastlook == stop {
                 plan.lastlook = lastlook;
-                return plan;
+                return Ok(plan);
             }
             perception_event(
                 &mut plan.events,
@@ -266,7 +275,8 @@ pub(crate) fn scan(
             if p.health > 0 {
                 let target = p.actor.expect("preflight active roster");
                 let a = get(target).expect("preflight stable target");
-                let result = crate::sight::query(world, sectors, observer, a);
+                let result =
+                    crate::demon_expanded_map::action_sight(checked, world, sectors, observer, a)?;
                 let visible = result.visible;
                 perception_event(
                     &mut plan.events,
@@ -301,7 +311,7 @@ pub(crate) fn scan(
                     if accepted {
                         plan.lastlook = lastlook;
                         plan.target = Some(target);
-                        return plan;
+                        return Ok(plan);
                     }
                 }
             }
@@ -413,7 +423,8 @@ impl Simulation {
             &|id| self.actor(id).copied(),
             id,
             allaround,
-        );
+            None,
+        )?;
         Ok(commit_scan(
             &mut crate::lifecycle::LifeHost {
                 statistics: self.statistics.as_mut(),
@@ -672,6 +683,7 @@ impl Simulation {
 
 #[derive(Clone, Copy)]
 pub(crate) struct PerceptionInputs<'a> {
+    pub checked: Option<&'a crate::demon_expanded_map::SightControl>,
     pub players: &'a [PerceptionPlayer; 4],
     pub pursuit: bool,
     pub monsters: bool,
@@ -720,12 +732,19 @@ pub(crate) fn look<A: crate::lifecycle::ActorAccess>(
         let target = sound.unwrap();
         host.target(id, Some(target));
         if ambush {
-            let result = crate::sight::query(
+            let result = match crate::demon_expanded_map::action_sight(
+                input.checked,
                 host.world,
                 host.sectors,
                 observer,
                 *host.access.get(target).unwrap(),
-            );
+            ) {
+                Ok(result) => result,
+                Err(error) => {
+                    host.fail_sight(error);
+                    return false;
+                }
+            };
             heard = result.visible;
             host.events.push(Event::Perception(PerceptionEvent::Sight {
                 observer: id,
@@ -744,7 +763,15 @@ pub(crate) fn look<A: crate::lifecycle::ActorAccess>(
             &|id| host.access.get(id).copied(),
             id,
             false,
+            input.checked,
         );
+        let plan = match plan {
+            Ok(plan) => plan,
+            Err(error) => {
+                host.fail_sight(error);
+                return false;
+            }
+        };
         if !commit_scan(host, id, plan) {
             return false;
         }
@@ -853,6 +880,9 @@ impl Simulation {
     /// no-wake decision and may still change threshold/target/lastlook/events.
     pub fn look(&mut self, id: ActorId) -> Result<bool, SimError> {
         self.preflight_perception_look(id)?;
+        if self.profile == Profile::DemonExpandedMap {
+            return self.checked_demon_operation(|host| host.invoke_look(id));
+        }
         Ok(crate::lifecycle::LifeHost {
             statistics: self.statistics.as_mut(),
             perception: Some(PerceptionInputs {
@@ -862,6 +892,7 @@ impl Simulation {
                 chaingunner: self.profile == Profile::Chaingunner,
                 demon: self.profile.uses_demon(),
                 map_demons: self.profile.uses_demon_map(),
+                checked: None,
                 melee: None,
                 shotgun: None,
                 shot: None,

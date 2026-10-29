@@ -181,6 +181,7 @@ impl Simulation {
                 chaingunner: self.profile == Profile::Chaingunner,
                 demon: self.profile.uses_demon(),
                 map_demons: self.profile.uses_demon_map(),
+                checked: None,
                 melee: None,
                 shotgun,
                 shot,
@@ -361,6 +362,11 @@ impl Simulation {
                 // before the explicit executable fixture adaptation.
                 if ty != ActorTypeId(12) {
                     return Err(MapSpawnError::UnsupportedType(thing.kind).into());
+                }
+                if self.profile == Profile::DemonExpandedMap
+                    && !(-4..=3).contains(&(thing.angle / 45))
+                {
+                    return Err(MapSpawnError::Angle(thing.angle).into());
                 }
                 if selected.len() == MAX_MAP_DEMONS {
                     return Err(MapSpawnError::WorkLimit.into());

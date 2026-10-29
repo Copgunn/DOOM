@@ -152,6 +152,16 @@ impl Simulation {
         if !self.profile.uses_demon() {
             return Err(MonsterError::Profile.into());
         }
+        if self.profile == Profile::DemonExpandedMap {
+            self.preflight_monster_callback(id)?;
+            return self.checked_demon_operation(|host| {
+                host.events.push(Event::ActorState(ActorStateEvent::Action {
+                    actor: id,
+                    action: ActorAction::Original(lifecycle::source_action_id("A_SargAttack")),
+                }));
+                strike(host, id);
+            });
+        }
         let plan = self.prepare_demon_melee(id)?;
         let mut host = self.monster_host(None);
         host.perception.as_mut().unwrap().melee = plan.as_ref();
@@ -182,6 +192,9 @@ impl Simulation {
             self.preflight_monster_callback(id)?;
         }
         self.validate_entry(state)?;
+        if self.profile == Profile::DemonExpandedMap {
+            return self.checked_demon_operation(|host| host.enter(id, state));
+        }
         let plan = if state == StateId(6) {
             self.prepare_demon_melee(id)?
         } else {

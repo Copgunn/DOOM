@@ -395,6 +395,20 @@ impl Simulation {
         if op == PursuitOperation::Chase {
             self.pursuit_dependencies(id)?;
         }
+        if self.profile == Profile::DemonExpandedMap {
+            return self.checked_demon_operation(|host| match op {
+                PursuitOperation::Move => move_actor(host, id),
+                PursuitOperation::TryWalk => try_walk(host, id),
+                PursuitOperation::NewChaseDir => {
+                    new_direction(host, id);
+                    false
+                }
+                PursuitOperation::Chase => {
+                    host.invoke_chase(id);
+                    false
+                }
+            });
+        }
         let mut host = LifeHost {
             statistics: self.statistics.as_mut(),
             perception: Some(crate::perception::PerceptionInputs {
@@ -406,6 +420,7 @@ impl Simulation {
                 chaingunner: self.profile == Profile::Chaingunner,
                 demon: self.profile.uses_demon(),
                 map_demons: self.profile.uses_demon_map(),
+                checked: None,
                 melee: None,
                 shotgun: None,
                 shot: None,

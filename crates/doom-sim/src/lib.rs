@@ -22,6 +22,7 @@ mod direction;
 pub use direction::MoveDirection;
 mod chaingunner;
 mod demon;
+mod demon_expanded_map;
 mod demon_lifecycle;
 mod demon_map_context;
 mod demon_map_spawn;
@@ -78,6 +79,7 @@ pub use multisector::{
 };
 mod snapshot;
 mod store;
+mod thinkers;
 include!("fine_sine.rs");
 
 pub use actor::{Actor, ActorSpec, TicCommand};
@@ -129,86 +131,52 @@ pub enum Profile {
     MapScale,
     /// M3f2 checked expanded static extents and spatial work, DSIM-v19.
     MapExtent,
+    /// M3f3 bounded expanded static maps with native Demon gameplay, DSIM-v20.
+    DemonExpandedMap,
 }
 
 impl Profile {
+    pub(crate) const fn uses_map_statistics(self) -> bool {
+        matches!(self, Self::DemonMapContext | Self::DemonExpandedMap)
+    }
+    pub(crate) const fn uses_expanded_geometry(self) -> bool {
+        matches!(
+            self,
+            Self::MapScale | Self::MapExtent | Self::DemonExpandedMap
+        )
+    }
     pub(crate) const fn uses_demon_map(self) -> bool {
-        matches!(self, Self::DemonMapSpawn | Self::DemonMapContext)
+        matches!(self, Self::DemonMapSpawn) || self.uses_map_statistics()
     }
     pub(crate) const fn uses_demon_stand_run(self) -> bool {
-        matches!(
-            self,
-            Self::DemonStandRun | Self::DemonMapSpawn | Self::DemonMapContext
-        )
+        matches!(self, Self::DemonStandRun) || self.uses_demon_map()
     }
     pub(crate) const fn uses_demon_lifecycle(self) -> bool {
-        matches!(
-            self,
-            Self::DemonLifecycle
-                | Self::DemonStandRun
-                | Self::DemonMapSpawn
-                | Self::DemonMapContext
-        )
+        matches!(self, Self::DemonLifecycle) || self.uses_demon_stand_run()
     }
     pub(crate) const fn uses_demon(self) -> bool {
-        matches!(
-            self,
-            Self::DemonMelee
-                | Self::DemonLifecycle
-                | Self::DemonStandRun
-                | Self::DemonMapSpawn
-                | Self::DemonMapContext
-        )
+        matches!(self, Self::DemonMelee) || self.uses_demon_lifecycle()
     }
     pub(crate) const fn uses_monsters(self) -> bool {
         matches!(
             self,
-            Self::MonsterAttacks
-                | Self::Shotgunner
-                | Self::Chaingunner
-                | Self::DemonMelee
-                | Self::DemonLifecycle
-                | Self::DemonStandRun
-                | Self::DemonMapSpawn
-                | Self::DemonMapContext
-        )
+            Self::MonsterAttacks | Self::Shotgunner | Self::Chaingunner
+        ) || self.uses_demon()
     }
     pub(crate) const fn uses_perception(self) -> bool {
-        matches!(
-            self,
-            Self::Perception
-                | Self::Pursuit
-                | Self::MonsterAttacks
-                | Self::Shotgunner
-                | Self::Chaingunner
-                | Self::DemonMelee
-                | Self::DemonLifecycle
-                | Self::DemonStandRun
-                | Self::DemonMapSpawn
-                | Self::DemonMapContext
-        )
+        matches!(self, Self::Perception | Self::Pursuit) || self.uses_monsters()
     }
-    pub(crate) fn uses_sectors(self) -> bool {
-        matches!(
-            self,
-            Self::MapScale
-                | Self::MapExtent
-                | Self::MultiSector
-                | Self::ActorStates
-                | Self::Combat
-                | Self::PlayerWeapons
-                | Self::Projectiles
-                | Self::Perception
-                | Self::Pursuit
-                | Self::MonsterAttacks
-                | Self::Shotgunner
-                | Self::Chaingunner
-                | Self::DemonMelee
-                | Self::DemonLifecycle
-                | Self::DemonStandRun
-                | Self::DemonMapSpawn
-                | Self::DemonMapContext
-        )
+    pub(crate) const fn uses_sectors(self) -> bool {
+        self.uses_perception()
+            || self.uses_expanded_geometry()
+            || matches!(
+                self,
+                Self::MultiSector
+                    | Self::ActorStates
+                    | Self::Combat
+                    | Self::PlayerWeapons
+                    | Self::Projectiles
+            )
     }
 }
 
@@ -506,8 +474,8 @@ impl Simulation {
             movement::validate_profile(&mut world)?;
         }
         if profile.uses_sectors() {
-            if matches!(profile, Profile::MapScale | Profile::MapExtent) {
-                if profile == Profile::MapExtent {
+            if profile.uses_expanded_geometry() {
+                if profile != Profile::MapScale {
                     movement::prepare_map_extent(&mut world, reference_budget)?;
                 } else {
                     movement::prepare_map_scale(&mut world, reference_budget)?;
@@ -647,8 +615,11 @@ impl Simulation {
             }
             return Ok(self.query_projectile_move(id, target).0);
         }
-        if self.profile == Profile::MapScale {
+        if matches!(self.profile, Profile::MapScale | Profile::DemonExpandedMap) {
             map_scale::bounded(target, 1024)?;
+            if self.profile == Profile::DemonExpandedMap {
+                self.perception_actor(id)?;
+            }
         }
         if self.profile == Profile::MapExtent {
             map_extent::position(target, map_extent::QUERY_UNITS)?;
@@ -856,6 +827,9 @@ impl Simulation {
     }
     /// Changes explicit momentum between tics; next update clamps it like the reference.
     pub fn set_momentum(&mut self, id: ActorId, momentum: [Fixed; 2]) -> Result<(), SimError> {
+        if self.profile == Profile::DemonExpandedMap {
+            map_scale::bounded(momentum, 64)?;
+        }
         if matches!(self.profile, Profile::MapScale | Profile::MapExtent) {
             map_scale::bounded(momentum, 64)?;
         }
@@ -935,6 +909,9 @@ impl Simulation {
         } else if commands.iter().any(|c| c.buttons != 0) {
             return Err(SimError::UnsupportedButtons);
         }
+        if self.profile == Profile::DemonExpandedMap {
+            return self.step_expanded_demons(commands);
+        }
         if self.profile == Profile::Projectiles {
             self.preflight_projectile_step()?;
         }
@@ -1013,140 +990,31 @@ impl Simulation {
                     chaingunner: self.profile == Profile::Chaingunner,
                     demon: self.profile.uses_demon(),
                     map_demons: self.profile.uses_demon_map(),
+                    checked: None,
                     melee: demon_melee.as_ref(),
                     shotgun: shotgun_blast.as_ref(),
                     shot: monster_shot.as_ref(),
                     players: &self.perception_players,
                     sound_targets: &self.sound_targets,
                 });
-            let world = &self.world;
-            let events = &mut self.events;
-            let profile = self.profile;
-            let bindings = self.bindings;
-            let live_bindings = &mut self.bindings;
-            let registry = &self.registry;
-            let options = self.actor_options;
-            let statistics = &mut self.statistics;
-            let rng = &mut self.rng;
-            let spatial = &mut self.spatial;
-            let sectors = &self.sectors;
-            // Profile 4 preflights all bounded action work and same-pass child allocation.
-            self.actors
-                .run(
-                    self.actors.max_slots as usize,
-                    |visit, context| match visit {
-                        Visit::Retired(id) => events.push(Event::Retired(id)),
-                        Visit::Think(id) => {
-                            events.push(Event::Think(id));
-                            let mut actor = *context.get(id).expect("live thinker handle");
-                            let had_xy_momentum =
-                                actor.momentum().iter().any(|m| *m != Fixed::ZERO);
-                            if profile == Profile::Foundation {
-                                events.extend(
-                                    world
-                                        .move_xy(&mut actor)
-                                        .into_iter()
-                                        .map(|attempt| Event::Movement { actor: id, attempt }),
-                                );
-                            } else {
-                                let command = bindings
-                                    .iter()
-                                    .position(|binding| *binding == Some(id))
-                                    .map(|slot| commands[slot]);
-                                let motion = if profile.uses_sectors() {
-                                    movement::move_xy_multisector(
-                                        world,
-                                        id,
-                                        &mut actor,
-                                        spatial,
-                                        |id| context.get(id).copied(),
-                                        command,
-                                        sectors,
-                                    )
-                                } else {
-                                    movement::move_xy(
-                                        world,
-                                        id,
-                                        &mut actor,
-                                        spatial,
-                                        |id| context.get(id).copied(),
-                                        command,
-                                    )
-                                };
-                                for event in motion {
-                                    events.push(match event {
-                                        movement::MotionEvent::Attempt(attempt) => {
-                                            Event::ActorMovement { actor: id, attempt }
-                                        }
-                                        movement::MotionEvent::Slide(line) => {
-                                            Event::Slide { actor: id, line }
-                                        }
-                                        movement::MotionEvent::Sector(attempt) => {
-                                            Event::SectorMovement { actor: id, attempt }
-                                        }
-                                    });
-                                }
-                            }
-                            if profile == Profile::PlayerWeapons
-                                && had_xy_momentum
-                                && actor.z <= actor.floor
-                                && actor.momentum() == [Fixed::ZERO; 2]
-                                && bindings.iter().position(|b| *b == Some(id)).is_some_and(
-                                    |slot| commands[slot].forward == 0 && commands[slot].side == 0,
-                                )
-                            {
-                                let run = lifecycle::source_state_id("S_PLAY_RUN1").unwrap().0;
-                                if actor
-                                    .life
-                                    .unwrap()
-                                    .state
-                                    .is_some_and(|s| s.0.wrapping_sub(run) < 4)
-                                {
-                                    let play = lifecycle::source_state_id("S_PLAY").unwrap();
-                                    *context.get_mut(id).unwrap() = actor;
-                                    lifecycle::LifeHost {
-                                        statistics: statistics.as_mut(),
-                                        perception: perception_inputs,
-                                        access: &mut *context,
-                                        registry: registry.as_deref().unwrap(),
-                                        world,
-                                        sectors,
-                                        options,
-                                        rng,
-                                        spatial,
-                                        bindings: live_bindings,
-                                        events,
-                                    }
-                                    .enter(id, play);
-                                    actor = *context.get(id).unwrap();
-                                }
-                            }
-                            if profile.uses_sectors() {
-                                if let Some(update) = multisector::move_z(&mut actor) {
-                                    events.push(Event::Vertical { actor: id, update });
-                                }
-                            }
-                            *context.get_mut(id).expect("same live thinker handle") = actor;
-                            if let Some(registry) = registry {
-                                lifecycle::LifeHost {
-                                    statistics: statistics.as_mut(),
-                                    perception: perception_inputs,
-                                    access: context,
-                                    registry,
-                                    world,
-                                    sectors,
-                                    options,
-                                    rng,
-                                    spatial,
-                                    bindings: live_bindings,
-                                    events,
-                                }
-                                .tick(id);
-                            }
-                        }
-                    },
-                )
-                .expect("built-in traversal preserves links and is bounded by max slots");
+            thinkers::run(
+                &mut self.actors,
+                thinkers::Inputs {
+                    world: &self.world,
+                    sectors: &self.sectors,
+                    profile: self.profile,
+                    bindings: self.bindings,
+                    live_bindings: &mut self.bindings,
+                    registry: &self.registry,
+                    options: self.actor_options,
+                    statistics: &mut self.statistics,
+                    rng: &mut self.rng,
+                    spatial: &mut self.spatial,
+                    events: &mut self.events,
+                    commands,
+                    perception_inputs,
+                },
+            );
         }
         self.events.push(Event::Phase(Phase::Specials));
         self.events.push(Event::Phase(Phase::Respawn));
