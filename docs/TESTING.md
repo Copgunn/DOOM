@@ -200,6 +200,10 @@ python3 tools/reference/check_demon_expanded_map.py
 python3 tools/measure_demon_expanded_map.py
 ```
 
+Every capture compares complete ordered event-field bytes, in addition to full
+snapshot fixtures and per-tic digests. Event projections come from the independent
+C encoder and include named-field/first-byte divergence diagnostics.
+
 The extra adapter explicitly executes non-cardinal AI rays through differing
 openings and source slope clipping on larger maps. Both use the same genuine
 source bodies. The strict audit excludes the original signed ANG45 overflow; the

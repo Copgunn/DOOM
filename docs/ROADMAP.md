@@ -34,8 +34,8 @@ Earlier findings and milestones are retained in the [historical records](validat
 
 ### M3f3: Demon gameplay on larger static maps
 
-The opt-in implementation on this feature branch is the current owner-review
-milestone. It composes map-spawned Demon perception, pursuit, melee and lifecycle
+M3f3 is the current implementation and review milestone. Its opt-in profile
+composes map-spawned Demon perception, pursuit, melee and lifecycle
 with larger geometry while retaining explicit actor, arithmetic and action limits.
 See the [support boundary](COMPATIBILITY.md#expanded-map-demon-profile),
 [source investigation](M3F3_REFERENCE.md) and [measured evidence](validation/M3F3.md).

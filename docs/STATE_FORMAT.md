@@ -854,6 +854,8 @@ The [main independent encoder](../tools/reference/m3f3_snapshot_goldens.py) and
 [additional clipping encoder](../tools/reference/m3f3_clipping_snapshot_goldens.py)
 use genuine C rows, public input bytes and documented native identity/state
 projection. Expected bytes never come from Rust. Full fixtures diagnose the first
-named field; per-tic FNV digests provide compact checks. DSIM is not a vanilla
+named field; every capture also compares complete ordered event-field bytes with
+first-byte diagnostics. Event projections are separate from full DSIM fixtures.
+Per-tic FNV digests provide compact checks. DSIM is not a vanilla
 savegame/demo. [Evidence](validation/M3F3.md) distinguishes C-derived captures from
 separate independently specified Rust-only capacity states.

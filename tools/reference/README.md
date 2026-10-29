@@ -142,7 +142,9 @@ expression verbatim and demonstrates its excluded overflow. The independent
 DSIM-v20 encoders consume C rows/public bytes/schema only; the main adapter's
 Rust-only capacity bytes are counted separately. Each encoder also writes an
 `*_events.bin` projection: all ordered event fields for every capture, compared
-byte-for-byte with named-field diagnostics. This is distinct from sampled full
+byte-for-byte with named-field diagnostics. Its `EV20` header is followed by
+repeated u32 case/operation/field counts and the documented DSIM name/value
+records, including both event-count fields. This is distinct from sampled full
 DSIM streams and recorded C row counts. Source visits, raw C draws, Rust
 events/indexes and statistics are qualified in the evidence.
 

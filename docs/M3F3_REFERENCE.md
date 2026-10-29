@@ -2,9 +2,11 @@
 
 This investigation was committed before runtime implementation. Behavioral authority is
 preserved Linux DOOM 1.10 at `a77dfb96cb91780ca334d0d4cfd86957558007e0`.
-This document owns source findings and design assumptions. COMPATIBILITY will
-own executable limits, STATE_FORMAT the schema, TESTING reproduction commands,
-and validation/M3F3 measured evidence. DSIM is a diagnostic format.
+This document owns source findings and design assumptions.
+[COMPATIBILITY](COMPATIBILITY.md) owns executable limits,
+[STATE_FORMAT](STATE_FORMAT.md) the schema, [TESTING](TESTING.md) reproduction
+commands, and [the evidence record](validation/M3F3.md) measured results.
+DSIM is a diagnostic format.
 
 ## Inspected dependencies
 
@@ -32,8 +34,8 @@ A_FaceTarget/A_SargAttack, P_DamageMobj/P_KillMobj and A_Pain/A_Scream/A_Fall.
 | Spawn | THING loop order; filter before allocation/RNG | Demon-only batch, native136 adaptation | No typed spawning | Preserve batch preflight, original lookup before adaptation, two draws, floor/BSP, angle, spawnpoint and totals. Compare genuine loader/spawner and separate unadapted type12 observations. |
 | Raw state | P_SpawnMobj installs state without action | Correct raw state/countdown | Untyped terminal state | Preserve raw stand initialization; first Look at later entry. Compare state/timer/draw chronology. |
 | State entry | P_SetMobjState actions immediate, nested transition allowed | SARG stand10/10, run eight times2, attack8/8/8 | No typed action closure | Reuse exact registry and state-entry service, aliases unchanged; no new scheduler or modern AI. Compare repeated-frame and nested action order. |
-| Identity/order | Append thinkers, prepend sector/BLOCKMAP links | Four owner prefix then stable unbound suffix | Existing unbound arena and list ordering | Same store and scheduler; at most64 slots, four native owners. Preserve retirement/generation and source candidate order. Source identities are explicitly projected; Rust stale-handle policies separate. |
-| Sight | REJECT then ordered BSP/seg traversal, whole-unit side tests | Infallible historical path, actor coordinates1024 | Fallible allocation/traversal with INT_MIN clipping rejection | All new-profile AI and direct queries must use checked sight. Propagate errors through bounded operation/tic plans before commit; no false visibility result for an unsupported continuation. Compare complete sight visit order. |
+| Identity/order | Append thinkers, prepend sector/BLOCKMAP links | Four owner prefix then stable unbound suffix | Existing unbound arena and list ordering | Same store and scheduler; at most 64 slots, four native owners. Preserve retirement/generation and source candidate order. Source identities are explicitly projected; Rust stale-handle policies separate. |
+| Sight | REJECT then ordered BSP/seg traversal, whole-unit side tests | Infallible historical path, actor coordinates 1024 | Fallible allocation/traversal with INT_MIN clipping rejection | All new-profile AI and direct queries must use checked sight. Propagate errors through bounded operation/tic plans before commit; no false visibility result for an unsupported continuation. Compare complete sight visit order. |
 | Look/hearing | Sound target, ambush sight, four-slot scan, immediate see entry | Existing Look/scanning/noise services | Read-only sight only | Reuse roster/lastlook/targets and source sound-line order. All references and eventual sectors validated before operation. Compare sight and sound wake-up with immediate first Chase. Empty active roster remains explicit Rust termination policy. |
 | Pursuit | Target delta, angle turn, ordered direction attempts, speed 10 and P_Random | Existing source movement/Chase | XY/Z only | Retain historical owner 978/pre-tic and target994 margins, read-only 1,024. Source clamp of 30 plus possible Chase of 10 stays within 1,024. Compare moves across many real sector boundaries and 24/25-unit steps. |
 | Melee | Fresh source range and sight, Face, one damage draw and immediate damage | Existing shared current-body plans for sequential owners | Unsupported | Same late per-owner shared damage service; earlier owner health/RNG changes observed. No stale cached strike plan. Compare shared-target lethal/ignored strike order. |
@@ -45,20 +47,21 @@ A_FaceTarget/A_SargAttack, P_DamageMobj/P_KillMobj and A_Pain/A_Scream/A_Fall.
 
 ## Arithmetic intersection and restrictions
 
-The first composition should increase structural capacity, not assume the entire
-2048-unit unbound domain is safe for every monster action. Proposed map vertices,
+The initial design increases structural capacity while retaining a separately
+proved actor domain. Map vertices,
 node origins/deltas and BLOCKMAP origins use the proven extent envelope of 2,048 units;
 sector heights stay within 512.
-Extent's line L1 norm remains at most1536. Actor callbacks retain existing1024
+Extent's line L1 norm remains at most 1,536. Actor callbacks retain existing 1,024
 coordinate/Z admission, owner 978 and unbound 994 pre-tic XY margins, momentum 64,
 and source XY clamp of 30. Owner speed 10, radius 30 and height 56 come from the exact
-source-derived registry; target 135 radius16/height 56/mass100 remain explicit
+source-derived registry; target 135 radius 16/height 56/mass 100 remain explicit
 adaptations. Supported effects must retain their existing source closures.
 
-The independent source prototype also executes pursuit, melee and a complete
-pain/death/corpse sequence in a 256-sector map spanning -2048 to 2,048 while actor
-positions remain inside the conservative gameplay bounds. This establishes a
-coherent research input, not a completed Rust implementation.
+During investigation, the independent source prototype executed pursuit, melee
+and a complete pain/death/corpse sequence in a 256-sector map spanning -2048 to 2,048 while actor
+positions remain inside the conservative gameplay bounds. That established a
+coherent research input before implementation. Subsequent Rust comparisons are
+reported in [the evidence record](validation/M3F3.md).
 
 Within this intersection, actor pairwise XY differences are at most 2,048 units;
 approximate distance is at most 3,072 units and fits signed 16.16. Point-angle
@@ -91,7 +94,7 @@ ANG45*(mthing->angle/45) overflows at quotient 4 (positive 180 degrees), even th
 the final angle_t destination is unsigned. The legacy GNU wrap contract defines
 that behavior for older profiles; it is not well-defined portable signed C.
 
-The new profile should admit only selected Demon THING angles whose truncated
+The new profile admits only selected Demon THING angles whose truncated
 quotient is in [-4, 3], equivalently encoded degrees [-224, 179]. The quotient -4
 product is representable INT_MIN; negative 180 has the same intended BAM bits as
 positive 180 without an overflowing product. Reject outside this interval before
