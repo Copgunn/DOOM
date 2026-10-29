@@ -1,0 +1,28 @@
+{
+  "schema": "DSIM-v20",
+  "captures": 213,
+  "ordered_event_fields": 2672,
+  "rust_policy_byte_fixtures": 0,
+  "inputs_sha256": {
+    "tools/reference/m3f3_clipping_snapshot_goldens.py": "da1caaad894fe153d1e521bb0fee28c79782d04233b33026c860f48e7fe11791",
+    "tools/reference/m3c_snapshot_goldens.py": "95eac9b3e9f416eea16bb2ace5bb12a3aa401d9942069046dca05e0edc3a123c",
+    "tests/reference/m3f3_clipping_cases.csv": "d7ee9efe694bc3aead80d2760ccc98a24723336b3eb5eddfa29b450509128aef",
+    "tests/reference/m3f3_clipping_trace.csv": "0042d3ed9efe024e00abf33d8a20c3dc9001938add5cc07bfeb38d56e38770f7",
+    "tests/reference/m3c_states.csv": "a1b5fe2eb3eee7cb06b922a2140b7583b1cc220dde04d36b78ede59dfd3f5e92",
+    "tests/reference/m3c_types.csv": "9a24fad17a6ce0041bd06a7e751d5b20854496846a7cf4aee65b78756dfcbb9c",
+    "tests/reference/m3f3_clipping_map_0.bin": "37ebf1ceba79135405d69952d863c9753c55025087c56e358cfc0a5befa30f73",
+    "tests/reference/m3f3_clipping_map_1.bin": "d393490d5a2c85d678fa76cc23dcb24c0b8d3d75679c342db11ebf8789ab82dc",
+    "tests/reference/m3f3_clipping_map_2.bin": "dbb7bac7ef58814c468bde4e4b2d39e92e0f1703ccdc9bfa25c0cb578cb605a6"
+  },
+  "outputs_sha256": {
+    "tests/reference/m3f3_clipping_state_0_0.bin": "21ea8026b6730d168bdd6c7be194ae78797988360176fc57b6ae2e87467f4f93",
+    "tests/reference/m3f3_clipping_state_0_80.bin": "1852bd475f00f3620f37d0b545a194e8c00cb893a3780c0bab6ea6fb55ccbafb",
+    "tests/reference/m3f3_clipping_state_1_0.bin": "c37a2800b6c5abae1e1190c235044811b5da7f496bba5b593cae6348cc576c49",
+    "tests/reference/m3f3_clipping_state_1_50.bin": "70798183c2aabb36b0119c3df571453aae8869ae05833a2226884df9d6edafde",
+    "tests/reference/m3f3_clipping_state_2_0.bin": "5922eccebbf54c1af4dadd790ebb36acba51c3970d5b7c97d4102a295948adcf",
+    "tests/reference/m3f3_clipping_state_2_80.bin": "8846459529bc41428b3d3d13f22cc6fade2edb7e2569de6e4de15858a48bc619",
+    "tests/reference/m3f3_clipping_events.bin": "dee95433358502ffd438594bce3530fae7b37b04ac549443b6d547fbdc1fb54e",
+    "tests/reference/m3f3_clipping_snapshots.csv": "00606e0e6b9632e4f4d014870248efc00c9297f0249e8db51530e308cd08f074"
+  },
+  "scope": "C-derived Profile20 typed actors, statistics and larger geometry. All scenarios/maps actually executed; raw spawn separated from adapted native136 gameplay; source-defined THING angles only. Per-tic fields/events, collision/sight, RNG, lifecycle, kill totals and explicit identity projection; no Rust output. All fixtures in this additional adapter are C-derived."
+}

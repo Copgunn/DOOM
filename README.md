@@ -32,7 +32,7 @@ See [compatibility](docs/COMPATIBILITY.md) for the exact boundary.
 - Static-sector movement, collision, actor states and selected combat services.
 - Original-C comparisons, independently encoded canonical snapshots, and safety
   tests for rejection, stale references and recoverable-error atomicity.
-- Opt-in larger static geometry and coordinate ranges; see [supported limits](docs/COMPATIBILITY.md#map-extent-profile).
+- Opt-in larger static geometry, including bounded Demon gameplay composition; see [supported limits](docs/COMPATIBILITY.md#expanded-map-demon-profile).
 - Synthetic examples that run without commercial game data or presentation devices.
 
 ## What does not work yet
@@ -56,7 +56,7 @@ cargo test --workspace --locked
 ## Running a headless example
 
 ```sh
-cargo run -p doom-sim --example map_extent --locked
+cargo run -p doom-sim --example demon_expanded_map --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked
@@ -65,7 +65,8 @@ cargo run -p doom-map --example parse_map --locked
 
 Examples use synthetic public maps, assert expected behavior and print diagnostic
 results. They require no commercial IWAD, GPU, audio device or network service.
-`map_extent` demonstrates expanded coordinates, ordered sector movement and larger spatial work.
+`demon_expanded_map` runs source-tested Demon gameplay on larger synthetic maps.
+`map_extent` separately demonstrates expanded unbound coordinates and spatial work.
 See [testing](docs/TESTING.md) for all examples and reproduction commands.
 
 ## Architecture

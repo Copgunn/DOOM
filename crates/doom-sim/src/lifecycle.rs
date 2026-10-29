@@ -1125,6 +1125,19 @@ pub(crate) struct LifeHost<'a, A> {
     pub events: &'a mut Vec<crate::Event>,
 }
 impl<A: ActorAccess> LifeHost<'_, A> {
+    pub(crate) fn sight_failed(&self) -> bool {
+        self.perception
+            .and_then(|p| p.checked)
+            .is_some_and(|c| c.failure.get().is_some())
+    }
+    pub(crate) fn fail_sight(&self, error: crate::SimError) {
+        self.perception
+            .and_then(|p| p.checked)
+            .expect("fallible source actions require a bounded operation plan")
+            .failure
+            .set(Some(error));
+    }
+
     fn observe(&mut self, event: ActorStateEvent) {
         self.events.push(crate::Event::ActorState(event));
     }
@@ -1202,6 +1215,9 @@ impl<A: ActorAccess> LifeHost<'_, A> {
     }
     fn enter_inner(&mut self, id: ActorId, mut state: StateId, work: &mut usize) {
         loop {
+            if self.sight_failed() {
+                return;
+            }
             *work += 1;
             assert!(*work <= ENTRY_LIMIT, "validated state-entry bound");
             self.observe(ActorStateEvent::Entered { actor: id, state });

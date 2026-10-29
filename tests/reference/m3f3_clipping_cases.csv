@@ -1,0 +1,4 @@
+case,label,map,skill,no_monsters,skip,tics,mode,enter_all,body_health,damage_tick,damage,kill_tick,kill,sound_tick,retire_tick,p0x,p0y,p0z,p0active,p0health,p1x,p1y,p1z,p1active,p1health,p2x,p2y,p2z,p2active,p2health,p3x,p3y,p3z,p3active,p3health,seed,continue_rng,source_kind,inflictor_kind,kill_all,remove_corpse,hitscan
+0,clipped_sight_step,0,2,0,0,80,4,0,1000,30,1,55,150,-1,-1,6291456,1048576,0,1,100,-13107200,-6291456,0,0,100,-13107200,-6291456,0,0,100,-13107200,-6291456,0,0,100,0,0,1,0,0,-1,0
+1,closed_sight,1,2,0,0,50,4,0,1000,-1,1,-1,150,-1,-1,6291456,1048576,0,1,100,-13107200,-6291456,0,0,100,-13107200,-6291456,0,0,100,-13107200,-6291456,0,0,100,0,0,1,0,0,-1,0
+2,high_cell_demon,2,2,0,0,80,4,0,1000,-1,1,-1,150,-1,-1,58982400,0,0,1,100,-13107200,-6291456,0,0,100,-13107200,-6291456,0,0,100,-13107200,-6291456,0,0,100,0,0,1,0,0,-1,0

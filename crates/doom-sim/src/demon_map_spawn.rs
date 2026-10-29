@@ -9,6 +9,8 @@ pub const MAX_MAP_DEMONS: usize = 4;
 /// Map-spawn input or explicit actor-admission restriction, before mutation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MapSpawnError {
+    /// New combined profile excludes an overflowing original signed BAM product.
+    Angle(i16),
     /// Requested source respawn behavior is not admitted.
     Respawn,
     /// Operation requires the explicit map-context profile.
@@ -126,7 +128,7 @@ impl Simulation {
             let target = self.actor(request.target).unwrap().life.unwrap();
             // Lethal/ignored damage returns before source retargeting. Only this
             // narrow synthetic branch is admitted; nonlethal infighting rejects.
-            if self.profile != Profile::DemonMapContext
+            if !self.profile.uses_map_statistics()
                 || target.flags & 4 != 0 && target.health > 0 && request.amount < target.health
             {
                 return Err(MapSpawnError::Infighting.into());

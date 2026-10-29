@@ -121,3 +121,33 @@ original clipping division invokes abs(INT_MIN). Profile19 rejects that query
 atomically; old profiles retain their numeric policy. The optional expected-failure
 probe explicitly demonstrates the excluded source operation. Standard checked modes
 and the independent encoder do not silently invent a result for undefined C.
+
+## M3f3 composed Demon gameplay
+
+The main M3f3 writer reuses unchanged original-body extraction and instrumentation
+inside a temporary directory, with a separately hashed table/geometry adapter.
+Only new paths are published. Historical `generate*.py` discovery and expected
+bytes remain frozen. The clipping adapter uses the same genuine bodies with
+additional non-cardinal opening/closed-sight inputs; do not count those bodies as
+another set of unique source functions.
+
+Both compile real actor structures, metadata, THING/spawn, thinker, AI, movement,
+sight, damage and lifecycle bodies. Named-field geometry, native136/state aliases,
+unbound135 roster projection and two setup fragments remain explicit adaptations.
+This is not full original level/player setup or function/branch coverage.
+
+The new profile's source-defined signed-angle interval is separate from older
+GNU-wrap observations. The expected-failure angle component copies the original
+expression verbatim and demonstrates its excluded overflow. The independent
+DSIM-v20 encoders consume C rows/public bytes/schema only; the main adapter's
+Rust-only capacity bytes are counted separately. Each encoder also writes an
+`*_events.bin` projection: all ordered event fields for every capture, compared
+byte-for-byte with named-field diagnostics. Its `EV20` header is followed by
+repeated u32 case/operation/field counts and the documented DSIM name/value
+records, including both event-count fields. This is distinct from sampled full
+DSIM streams and recorded C row counts. Source visits, raw C draws, Rust
+events/indexes and statistics are qualified in the evidence.
+
+[TESTING](../../docs/TESTING.md#expanded-map-demon-gameplay-composition) owns commands;
+[source findings](../../docs/M3F3_REFERENCE.md) own the composition proof;
+[observed evidence](../../docs/validation/M3F3.md) owns counts/results.

@@ -137,8 +137,19 @@ pub(crate) fn melee(
     a: Actor,
     target: Option<Actor>,
 ) -> RangeDecision {
+    checked_melee(world, sectors, r, a, target, None)
+        .expect("historical melee has an admitted infallible sight domain")
+}
+fn checked_melee(
+    world: &StaticWorld,
+    sectors: &[SectorState],
+    r: &ActorRegistry,
+    a: Actor,
+    target: Option<Actor>,
+    checked: Option<&crate::demon_expanded_map::SightControl>,
+) -> Result<RangeDecision, SimError> {
     let Some(t) = target else {
-        return decision(false, 1);
+        return Ok(decision(false, 1));
     };
     let distance = approx(a, t);
     let threshold = 44 * 65536
@@ -150,13 +161,13 @@ pub(crate) fn melee(
     d.distance = Some(distance);
     d.threshold = Some(threshold);
     if distance >= threshold {
-        return d;
+        return Ok(d);
     }
-    let sight = crate::sight::query(world, sectors, a, t);
+    let sight = crate::demon_expanded_map::action_sight(checked, world, sectors, a, t)?;
     d.accepted = sight.visible;
     d.reason = if d.accepted { 0 } else { 3 };
     d.sight = Some(sight);
-    d
+    Ok(d)
 }
 fn range_observation<A: ActorAccess>(
     h: &mut LifeHost<'_, A>,
@@ -185,7 +196,20 @@ fn range_observation<A: ActorAccess>(
 pub(crate) fn melee_host<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -> bool {
     let a = *h.access.get(id).unwrap();
     let target = a.life.unwrap().target.map(|t| *h.access.get(t).unwrap());
-    let d = melee(h.world, h.sectors, h.registry, a, target);
+    let d = match checked_melee(
+        h.world,
+        h.sectors,
+        h.registry,
+        a,
+        target,
+        h.perception.and_then(|p| p.checked),
+    ) {
+        Ok(d) => d,
+        Err(error) => {
+            h.fail_sight(error);
+            return false;
+        }
+    };
     range_observation(h, id, 0, d)
 }
 fn missile<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -> bool {
@@ -442,7 +466,7 @@ impl Simulation {
         if OWNERS.contains(&l.actor_type.0) {
             if l.flags
                 & !(OWNER_FLAGS
-                    | if self.profile == Profile::DemonMapContext {
+                    | if self.profile.uses_map_statistics() {
                         4194304
                     } else {
                         0
@@ -589,15 +613,13 @@ impl Simulation {
                                 | 32
                                 | 64
                                 | 128
-                                | if self.profile == Profile::DemonMapContext {
+                                | if self.profile.uses_map_statistics() {
                                     4194304
                                 } else {
                                     0
                                 })
                             != 0
-                        || self.profile == Profile::DemonMapContext
-                            && owner
-                            && p.flags & 4194304 == 0
+                        || self.profile.uses_map_statistics() && owner && p.flags & 4194304 == 0
                         || p.flags & 6 != 6)
             {
                 return Err(MonsterError::Definition.into());
@@ -606,7 +628,7 @@ impl Simulation {
         if p.flags
             & !(if owner {
                 OWNER_FLAGS
-                    | if self.profile == Profile::DemonMapContext {
+                    | if self.profile.uses_map_statistics() {
                         4194304
                     } else {
                         0
@@ -752,13 +774,23 @@ impl Simulation {
         self.preflight_monster_callback(id)?;
         let a = *self.actor(id).unwrap();
         let t = a.life.unwrap().target.map(|t| *self.actor(t).unwrap());
-        Ok(melee(
+        if self.profile != Profile::DemonExpandedMap {
+            return Ok(melee(
+                &self.world,
+                &self.sectors,
+                self.registry.as_deref().unwrap(),
+                a,
+                t,
+            ));
+        }
+        checked_melee(
             &self.world,
             &self.sectors,
             self.registry.as_deref().unwrap(),
             a,
             t,
-        ))
+            None,
+        )
     }
     /// Original P_CheckMissileRange, including JUSTHIT clearing and ordered RNG.
     pub fn check_missile_range(&mut self, id: ActorId) -> Result<bool, SimError> {
@@ -790,6 +822,7 @@ impl Simulation {
                     | Profile::DemonStandRun
                     | Profile::DemonMapSpawn
                     | Profile::DemonMapContext
+                    | Profile::DemonExpandedMap
             )
         {
             return Err(MonsterError::Definition.into());
@@ -797,6 +830,15 @@ impl Simulation {
         self.preflight_monster_callback(id)?;
         if pos && self.actor(id).unwrap().life.unwrap().actor_type.0 != 136 {
             return Err(MonsterError::Definition.into());
+        }
+        if self.profile == Profile::DemonExpandedMap {
+            return self.checked_demon_operation(|host| {
+                host.events.push(Event::ActorState(ActorStateEvent::Action {
+                    actor: id,
+                    action: ActorAction::Original(lifecycle::source_action_id("A_FaceTarget")),
+                }));
+                face(host, id);
+            });
         }
         let plan = if pos {
             self.prepare_monster_shot(id)?
@@ -834,6 +876,7 @@ impl Simulation {
                 chaingunner: self.profile == Profile::Chaingunner,
                 demon: self.profile.uses_demon(),
                 map_demons: self.profile.uses_demon_map(),
+                checked: None,
                 melee: None,
                 shotgun: None,
                 shot,

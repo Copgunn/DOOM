@@ -39,7 +39,15 @@ fn chase_body<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId, work: &mut u
             &|id| h.access.get(id).copied(),
             id,
             true,
+            inputs.checked,
         );
+        let plan = match plan {
+            Ok(plan) => plan,
+            Err(error) => {
+                h.fail_sight(error);
+                return;
+            }
+        };
         if crate::perception::commit_scan(h, id, plan) {
             return;
         }
@@ -54,7 +62,9 @@ fn chase_body<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId, work: &mut u
         }
         return;
     }
-    if h.perception.is_some_and(|p| p.monsters) && crate::monsters::select(h, id, work) {
+    if (h.perception.is_some_and(|p| p.monsters) && crate::monsters::select(h, id, work))
+        || h.sight_failed()
+    {
         return;
     }
     // netgame=false. Historical profile 9 has no attack metadata.

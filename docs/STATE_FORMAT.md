@@ -1,6 +1,6 @@
-# Canonical diagnostic state format: DSIM versions 1–19
+# Canonical diagnostic state format: DSIM versions 1–20
 
-This is a diagnostic/replay comparison format for explicit M2 through M3f2 profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3f3 profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d, `12` for M3d3e, `13` for M3d3f, `14` for M3d3g, `15` for M3d3h, `16` for M3d3i, `17` for M3d3j, `18` for M3f1, `19` for M3f2),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d, `12` for M3d3e, `13` for M3d3f, `14` for M3d3g, `15` for M3d3h, `16` for M3d3i, `17` for M3d3j, `18` for M3f1, `19` for M3f2, `20` for M3f3),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -829,3 +829,33 @@ expected snapshots are never generated from Rust. Full fixtures identify the fir
 different named field; per-tic FNV digests are diagnostics, not vanilla savegames,
 demos or independent proof of complete source equivalence. Coverage and exclusions
 belong in [the evidence record](validation/M3F2.md).
+
+## DSIM-v20 — Expanded-Map Demon Gameplay Composition
+
+Header version and the `profile` u32 are both 20. This explicitly selects the
+v17 typed actor, perception, lifecycle and statistics field layout with the new
+profile's admitted larger classic-map tables. It does not inherit v19's untyped
+layout, nor add redundant copies of geometry, actors, targets or counters.
+
+Field order remains: tic/rate/profile/pause/RNG; actor options and level counters;
+store/slot/actor/thinker state; spatial and static-sector state with ordered sector
+actors/sound targets; command bindings/commands and perception roster; last and
+pending events; original map tables and registry metadata. Existing v17 widths,
+optional identity encoding, spawnpoints, state/tics/sprite/frame, health/flags,
+threshold/reaction/movement, XYZ/momentum and statistics/event tags are unchanged.
+Sector/line capacities change admitted field counts, not integer wire widths.
+
+No new persistent field or event tag is introduced. The actor execution plan,
+transient sight failure/query budgets, root-expansion cache, prepared allocations
+and timing/RSS observations are excluded. Failed operations commit no diagnostic
+state. All v1–v19 schemas, encoders, helper bytes and expectations remain frozen.
+
+The [main independent encoder](../tools/reference/m3f3_snapshot_goldens.py) and
+[additional clipping encoder](../tools/reference/m3f3_clipping_snapshot_goldens.py)
+use genuine C rows, public input bytes and documented native identity/state
+projection. Expected bytes never come from Rust. Full fixtures diagnose the first
+named field; every capture also compares complete ordered event-field bytes with
+first-byte diagnostics. Event projections are separate from full DSIM fixtures.
+Per-tic FNV digests provide compact checks. DSIM is not a vanilla
+savegame/demo. [Evidence](validation/M3F3.md) distinguishes C-derived captures from
+separate independently specified Rust-only capacity states.

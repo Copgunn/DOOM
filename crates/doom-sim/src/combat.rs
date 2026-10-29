@@ -348,6 +348,7 @@ impl Simulation {
                 | Profile::DemonStandRun
                 | Profile::DemonMapSpawn
                 | Profile::DemonMapContext
+                | Profile::DemonExpandedMap
         ) {
             return Err(CombatError::Profile.into());
         }
@@ -368,6 +369,9 @@ impl Simulation {
         angle: u32,
         range: Fixed,
     ) -> Result<AimResult, SimError> {
+        if self.profile == Profile::DemonExpandedMap {
+            return Err(CombatError::Profile.into());
+        }
         if self.profile.uses_monsters() && !self.profile.uses_demon_lifecycle() {
             return Err(CombatError::Profile.into());
         }
@@ -474,6 +478,12 @@ impl Simulation {
             ])?;
         }
         let plan = self.plan_damage(request)?;
+        if self.profile == Profile::DemonExpandedMap {
+            if plan.spawn_count() != 0 {
+                return Err(CombatError::WorkLimit.into());
+            }
+            return self.checked_demon_operation(|host| host.apply_damage(plan));
+        }
         self.reserve_actor_spawns(plan.demand.spawns)?;
         Ok(self.combat_host().apply_damage(plan))
     }
@@ -484,6 +494,9 @@ impl Simulation {
         shooter: ActorId,
         attack: LineAttack,
     ) -> Result<AttackResult, SimError> {
+        if self.profile == Profile::DemonExpandedMap {
+            return Err(CombatError::Profile.into());
+        }
         if self.profile.uses_monsters() && !self.profile.uses_demon_lifecycle() {
             return Err(CombatError::Profile.into());
         }

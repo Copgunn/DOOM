@@ -268,6 +268,20 @@ pub(crate) fn try_extent_query(
         tasks,
     )
 }
+/// Shared checked dispatch. Expanded-map AI must never call the historical
+/// infallible wrapper; a source-undefined clipping continuation is an error.
+pub(crate) fn checked_query(
+    world: &StaticWorld,
+    sectors: &[SectorState],
+    observer: Actor,
+    target: Actor,
+) -> Result<SightResult, SimError> {
+    if world.extent_sight_work.is_some() {
+        try_extent_query(world, sectors, observer, target)
+    } else {
+        Ok(query(world, sectors, observer, target))
+    }
+}
 fn query_prepared(
     world: &StaticWorld,
     sectors: &[SectorState],

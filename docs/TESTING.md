@@ -184,3 +184,52 @@ volumes and cannot establish like-for-like regressions. Parsing and full prepara
 are timed separately; preparation includes geometry/sight validation, BLOCKMAP and
 topology work and canonical-cache construction, not isolated subsystem timers.
 [Measured observations](validation/M3F2.md) own results, memory scope and limitations.
+
+## Expanded-map Demon gameplay composition
+
+Run both M3f3 source/encoder adapters alongside all historical pairs:
+
+```sh
+python3 tools/reference/m3f3_reference.py --check --overflow-check --probe-undefined-angle
+python3 tools/reference/m3f3_snapshot_goldens.py --check
+python3 tools/reference/m3f3_clipping_reference.py --check --overflow-check
+python3 tools/reference/m3f3_clipping_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3f3_reference --test m3f3_clipping_reference --locked
+cargo run -p doom-sim --example demon_expanded_map --locked
+python3 tools/reference/check_demon_expanded_map.py
+python3 tools/measure_demon_expanded_map.py
+```
+
+Every capture compares complete ordered event-field bytes, in addition to full
+snapshot fixtures and per-tic digests. Event projections come from the independent
+C encoder and include named-field/first-byte divergence diagnostics.
+
+The extra adapter explicitly executes non-cardinal AI rays through differing
+openings and source slope clipping on larger maps. Both use the same genuine
+source bodies. The strict audit excludes the original signed ANG45 overflow; the
+optional expected-failure component extracts the exact original expression and
+requires its positive-180-degree sanitizer diagnostic. That finding proves the
+new angle rejection policy, not a successful full spawn after undefined behavior.
+Signed-shift/GNU ABI assumptions remain declared. Rust ASan and C arithmetic
+sanitization are separate evidence families.
+
+```sh
+python3 tools/seed_demon_expanded_map_fuzz.py fuzz/corpus/demon_expanded_map
+cargo +nightly fuzz build --sanitizer address
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run demon_expanded_map fuzz/corpus/demon_expanded_map --sanitizer address -- -runs=4096 -max_len=35 -seed=1 -timeout=20 -rss_limit_mb=2048
+```
+
+The bounded model uses two instances, at most eight four-byte operations and
+64 tic calls per instance. It mutates public geometry/THING admission, roles,
+identities, actions, damage, sight and setup/operation atomicity. Its exact MIN
+seed exercises read-only rejection; nested AI rejection is separately injected in
+Rust safety tests. The evolving corpus stays ignored. Disabled leak detection is
+not LeakSanitizer coverage. Actual executions and timings belong in
+[M3f3 observations](validation/M3F3.md).
+
+Measurements use separate release processes and source-backed inputs; only the
+same small input under profiles 17/20 is a direct gameplay comparison. Larger-map
+unbound and typed workloads have different behavior and observation volumes.
+The tool records construction/spawn/query/Chase/step/snapshot timings and native
+peak RSS. It defines no performance threshold; raw samples and caveats belong in
+the evidence record.

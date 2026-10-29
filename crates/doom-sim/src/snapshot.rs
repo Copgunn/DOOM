@@ -47,7 +47,8 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2, 7=M3d2b, 8=M3d3a, 9=M3d3b, 10=M3d3c, 11=M3d3d, 12=M3d3e, 13=M3d3f, 14=M3d3g, 15=M3d3h, 16=M3d3i, 17=M3d3j, 18=M3f1.
+    /// Explicit diagnostic schema version (1–20); field layouts are selected per profile.
+    /// See the repository STATE_FORMAT guide for widths and composition.
     pub const fn version(&self) -> u32 {
         self.version
     }
@@ -413,10 +414,13 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::DemonMapContext => 17,
         crate::Profile::MapScale => 18,
         crate::Profile::MapExtent => 19,
+        crate::Profile::DemonExpandedMap => 20,
     };
     // Versions18/19 explicitly compose the untyped static-sector field layout.
     let layout = if matches!(version, 18 | 19) {
         3
+    } else if version == 20 {
+        17
     } else {
         version
     };

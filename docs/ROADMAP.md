@@ -23,20 +23,23 @@ The merged baseline provides:
   collision and read-only sight preparation. See [source findings](M3F1_REFERENCE.md)
   and [observations](validation/M3F1.md).
 
+- M3f2 expanded coordinates and spatial work, regularly merged: checked arithmetic,
+  bounded collision preparation and fallible sight. See [source findings](M3F2_REFERENCE.md)
+  and [observations](validation/M3F2.md).
+
 These foundations support controlled headless tests, not a complete playable game.
 Earlier findings and milestones are retained in the [historical records](validation/archive/README.md).
 
 ## Next
 
-### M3f2: Expanded map coordinates and spatial work
+### M3f3: Demon gameplay on larger static maps
 
-The opt-in implementation on this feature branch awaits separate owner review.
-It extends bounded coordinate admission and collision/sight work through checked
-arithmetic and setup proofs, using the same unbound static-sector services.
-See the [support boundary](COMPATIBILITY.md#map-extent-profile),
-[source investigation](M3F2_REFERENCE.md) and [measured evidence](validation/M3F2.md).
-It does not establish unrestricted classic maps, complete player/monster admission
-or a playable game.
+M3f3 is the current implementation and review milestone. Its opt-in profile
+composes map-spawned Demon perception, pursuit, melee and lifecycle
+with larger geometry while retaining explicit actor, arithmetic and action limits.
+See the [support boundary](COMPATIBILITY.md#expanded-map-demon-profile),
+[source investigation](M3F3_REFERENCE.md) and [measured evidence](validation/M3F3.md).
+This is a step toward real-map readiness, not complete original actor or game loading.
 
 ### Remaining Demon admission
 
@@ -47,7 +50,8 @@ explains why the current test adaptation does not establish full Demon/Spectre s
 ### Map Scale, Limits, and Real-Map Readiness
 
 **Broader readiness remains planned.** M3f1 supplies the merged line/sector
-foundation; M3f2 addresses bounded coordinates and spatial work. Further stages
+foundation; M3f2 supplies bounded coordinates/work and M3f3 composes a controlled
+Demon gameplay subset. Further stages
 require separate owner direction. The longer-term
 purpose is practical support for increasingly complex classic maps,
 not unlimited geometry or arbitrarily larger constants.

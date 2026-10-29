@@ -89,10 +89,15 @@ impl Simulation {
     /// Handles are scoped to their simulation. Targets/roster are reinstalled
     /// explicitly; complete player starts and game reload are unsupported.
     pub fn restart_demon_map_context(&self) -> Result<Self, SimError> {
-        if self.profile != Profile::DemonMapContext {
+        if !self.profile.uses_map_statistics() {
             return Err(MapSpawnError::Context.into());
         }
-        let mut fresh = Self::with_demon_map_context_registry(
+        let constructor = if self.profile == Profile::DemonExpandedMap {
+            Self::with_demon_expanded_map_registry
+        } else {
+            Self::with_demon_map_context_registry
+        };
+        let mut fresh = constructor(
             self.world.map().clone(),
             self.actors.max_slots,
             self.registry.as_deref().unwrap().clone(),

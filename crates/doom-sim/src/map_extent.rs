@@ -40,7 +40,7 @@ impl Default for MapExtentLimits {
     }
 }
 
-fn validate(map: &Map, limits: MapExtentLimits) -> Result<usize, SimError> {
+pub(crate) fn validate(map: &Map, limits: MapExtentLimits) -> Result<usize, SimError> {
     let cells = map.blockmap().cell_ranges().len();
     if limits.max_actors > 64
         || limits.max_prepared_references > MAP_SCALE_MAX_REFERENCES
