@@ -396,6 +396,7 @@ impl Simulation {
             self.pursuit_dependencies(id)?;
         }
         let mut host = LifeHost {
+            statistics: self.statistics.as_mut(),
             perception: Some(crate::perception::PerceptionInputs {
                 players: &self.perception_players,
                 sound_targets: &self.sound_targets,
@@ -404,7 +405,7 @@ impl Simulation {
                 shotgunner: self.profile == Profile::Shotgunner,
                 chaingunner: self.profile == Profile::Chaingunner,
                 demon: self.profile.uses_demon(),
-                map_demons: self.profile == Profile::DemonMapSpawn,
+                map_demons: self.profile.uses_demon_map(),
                 melee: None,
                 shotgun: None,
                 shot: None,

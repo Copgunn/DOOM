@@ -803,6 +803,14 @@ impl ActorRegistry {
         ty: ActorTypeId,
         sectors: &[SectorState],
     ) -> Result<(), ActorError> {
+        self.validate_type_demon_context(ty, sectors, false)
+    }
+    pub(crate) fn validate_type_demon_context(
+        &self,
+        ty: ActorTypeId,
+        sectors: &[SectorState],
+        count_kill: bool,
+    ) -> Result<(), ActorError> {
         self.admit_type(
             ty,
             sectors,
@@ -810,7 +818,16 @@ impl ActorRegistry {
             &mut BTreeSet::new(),
             &mut 0,
             Admission {
-                flags: ALLOWED_FLAGS | 64 | 128 | 524288 | 2097152,
+                flags: ALLOWED_FLAGS
+                    | 64
+                    | 128
+                    | 524288
+                    | 2097152
+                    | if count_kill && ty == ActorTypeId(136) {
+                        4194304
+                    } else {
+                        0
+                    },
                 look: true,
                 chase: true,
                 attacks: false,
@@ -1095,6 +1112,7 @@ pub(crate) fn make_actor(
     }
 }
 pub(crate) struct LifeHost<'a, A> {
+    pub statistics: Option<&'a mut crate::LevelStatistics>,
     pub perception: Option<crate::perception::PerceptionInputs<'a>>,
     pub access: A,
     pub registry: &'a ActorRegistry,

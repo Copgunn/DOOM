@@ -327,6 +327,15 @@ fn event_bytes(event: &Event) -> Vec<u8> {
                 b.extend(c.to_le_bytes());
             }
         }
+        Event::Statistics(event) => {
+            let (kind, actor, total) = match event {
+                crate::StatisticsEvent::MapKillTotal { actor, total } => (0, *actor, *total),
+                crate::StatisticsEvent::SinglePlayerKill { actor, total } => (1, *actor, *total),
+            };
+            b.extend([21, kind]);
+            b.extend(id(actor));
+            b.extend(total.to_le_bytes());
+        }
         Event::GameplayRandom(v) => b.extend([7, *v]),
         Event::ActorMovement { actor, attempt } => {
             b.push(8);
@@ -401,6 +410,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::DemonLifecycle => 14,
         crate::Profile::DemonStandRun => 15,
         crate::Profile::DemonMapSpawn => 16,
+        crate::Profile::DemonMapContext => 17,
     };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
@@ -417,6 +427,19 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 u8::from(sim.actor_options.no_monsters),
             ],
         );
+    }
+    if let Some(stats) = sim.statistics {
+        for (name, value) in [
+            ("level.total_kills", stats.total_kills),
+            ("level.total_items", stats.total_items),
+            ("level.total_secrets", stats.total_secrets),
+            (
+                "level.single_player_kill_count",
+                stats.single_player_kill_count,
+            ),
+        ] {
+            field(&mut fields, name, value.to_le_bytes());
+        }
     }
     field(
         &mut fields,
@@ -594,7 +617,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .flat_map(id)
                 .collect::<Vec<_>>();
             field(&mut fields, format!("sector.{i}.actors"), order);
-            if matches!(version, 6 | 8..=16) {
+            if matches!(version, 6 | 8..=17) {
                 field(
                     &mut fields,
                     format!("sector.{i}.soundtarget"),
@@ -623,7 +646,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(version, 8..=16) {
+    if matches!(version, 8..=17) {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,

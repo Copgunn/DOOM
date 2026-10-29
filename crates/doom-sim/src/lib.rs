@@ -23,7 +23,9 @@ pub use direction::MoveDirection;
 mod chaingunner;
 mod demon;
 mod demon_lifecycle;
+mod demon_map_context;
 mod demon_map_spawn;
+pub use demon_map_context::{LevelStatistics, MapContextOptions, StatisticsEvent};
 mod demon_stand_run;
 pub use demon_map_spawn::{MAX_DEMON_MAP_THINGS, MAX_MAP_DEMONS, MapSpawnError};
 mod monsters;
@@ -110,22 +112,37 @@ pub enum Profile {
     DemonStandRun,
     /// M3d3i bounded classic THING Demon admission, DSIM-v16.
     DemonMapSpawn,
+    /// M3d3j original map totals and single-player fallback credit, DSIM-v17.
+    DemonMapContext,
 }
 
 impl Profile {
+    pub(crate) const fn uses_demon_map(self) -> bool {
+        matches!(self, Self::DemonMapSpawn | Self::DemonMapContext)
+    }
     pub(crate) const fn uses_demon_stand_run(self) -> bool {
-        matches!(self, Self::DemonStandRun | Self::DemonMapSpawn)
+        matches!(
+            self,
+            Self::DemonStandRun | Self::DemonMapSpawn | Self::DemonMapContext
+        )
     }
     pub(crate) const fn uses_demon_lifecycle(self) -> bool {
         matches!(
             self,
-            Self::DemonLifecycle | Self::DemonStandRun | Self::DemonMapSpawn
+            Self::DemonLifecycle
+                | Self::DemonStandRun
+                | Self::DemonMapSpawn
+                | Self::DemonMapContext
         )
     }
     pub(crate) const fn uses_demon(self) -> bool {
         matches!(
             self,
-            Self::DemonMelee | Self::DemonLifecycle | Self::DemonStandRun | Self::DemonMapSpawn
+            Self::DemonMelee
+                | Self::DemonLifecycle
+                | Self::DemonStandRun
+                | Self::DemonMapSpawn
+                | Self::DemonMapContext
         )
     }
     pub(crate) const fn uses_monsters(self) -> bool {
@@ -138,6 +155,7 @@ impl Profile {
                 | Self::DemonLifecycle
                 | Self::DemonStandRun
                 | Self::DemonMapSpawn
+                | Self::DemonMapContext
         )
     }
     pub(crate) const fn uses_perception(self) -> bool {
@@ -152,6 +170,7 @@ impl Profile {
                 | Self::DemonLifecycle
                 | Self::DemonStandRun
                 | Self::DemonMapSpawn
+                | Self::DemonMapContext
         )
     }
     pub(crate) fn uses_sectors(self) -> bool {
@@ -171,6 +190,7 @@ impl Profile {
                 | Self::DemonLifecycle
                 | Self::DemonStandRun
                 | Self::DemonMapSpawn
+                | Self::DemonMapContext
         )
     }
 }
@@ -296,6 +316,8 @@ pub enum Event {
     Combat(CombatEvent),
     /// Typed state/action/lifecycle evidence in execution order.
     ActorState(ActorStateEvent),
+    /// Admitted source map totals or fallback death credit.
+    Statistics(StatisticsEvent),
     /// Phase boundary.
     Phase(Phase),
     /// Actor appended, after its initial lastlook RNG draw.
@@ -389,6 +411,7 @@ pub struct Simulation {
     pub(crate) weapon_player: Option<WeaponPlayer>,
     pub(crate) sound_targets: Vec<Option<ActorId>>,
     pub(crate) actor_options: ActorOptions,
+    pub(crate) statistics: Option<LevelStatistics>,
     pub(crate) spatial: movement::SpatialIndex,
     pub(crate) sectors: Vec<SectorState>,
     pub(crate) world: StaticWorld,
@@ -470,6 +493,7 @@ impl Simulation {
             weapon_player: None,
             sound_targets: Vec::new(),
             actor_options: ActorOptions::default(),
+            statistics: None,
             sectors,
             spatial: movement::SpatialIndex::default(),
             world,
@@ -911,7 +935,7 @@ impl Simulation {
                     shotgunner: self.profile == Profile::Shotgunner,
                     chaingunner: self.profile == Profile::Chaingunner,
                     demon: self.profile.uses_demon(),
-                    map_demons: self.profile == Profile::DemonMapSpawn,
+                    map_demons: self.profile.uses_demon_map(),
                     melee: demon_melee.as_ref(),
                     shotgun: shotgun_blast.as_ref(),
                     shot: monster_shot.as_ref(),
@@ -925,6 +949,7 @@ impl Simulation {
             let live_bindings = &mut self.bindings;
             let registry = &self.registry;
             let options = self.actor_options;
+            let statistics = &mut self.statistics;
             let rng = &mut self.rng;
             let spatial = &mut self.spatial;
             let sectors = &self.sectors;
@@ -1003,6 +1028,7 @@ impl Simulation {
                                     let play = lifecycle::source_state_id("S_PLAY").unwrap();
                                     *context.get_mut(id).unwrap() = actor;
                                     lifecycle::LifeHost {
+                                        statistics: statistics.as_mut(),
                                         perception: perception_inputs,
                                         access: &mut *context,
                                         registry: registry.as_deref().unwrap(),
@@ -1026,6 +1052,7 @@ impl Simulation {
                             *context.get_mut(id).expect("same live thinker handle") = actor;
                             if let Some(registry) = registry {
                                 lifecycle::LifeHost {
+                                    statistics: statistics.as_mut(),
                                     perception: perception_inputs,
                                     access: context,
                                     registry,

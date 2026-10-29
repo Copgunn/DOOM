@@ -313,6 +313,7 @@ impl Simulation {
                 return Err(MonsterError::Arithmetic.into());
             }
             let mut host = LifeHost {
+                statistics: self.statistics.as_mut(),
                 perception: None,
                 access: &mut projection,
                 registry: self.registry.as_deref().unwrap(),
@@ -347,6 +348,7 @@ impl Simulation {
         }
         let plan = self.prepare_shotgun(id)?;
         let mut host = LifeHost {
+            statistics: self.statistics.as_mut(),
             perception: Some(crate::perception::PerceptionInputs {
                 players: &self.perception_players,
                 sound_targets: &self.sound_targets,
