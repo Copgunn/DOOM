@@ -650,3 +650,34 @@ investigation and implementation is assigned to M3d3i: bounded original Demon
 map spawning, subject to PR18's verified correction/merge/post-merge gates and
 explicit remaining ownership/statistics restrictions. It does not expand
 M3d3h's declared runtime scope.
+
+## M3d3i — Original Demon Map-Spawn and Actor Admission Foundations
+
+PR18 finalized as regular merge `cae36bed` after correction/fresh CI and successful
+exact post-merge CI40792730511 before this branch/investigation/runtime. Full
+ordered-parent/tree/master evidence is in [VALIDATION](VALIDATION.md).
+
+- [x] Source investigation committed before runtime; separate profile16/feature branch.
+- [x] Existing validated classic THINGS/parser, original type3002 resolution and
+  source filter/RNG/order/raw-state initialization with explicit native adaptation.
+- [x] Signed coordinates, truncating BAM angle, BSP floors, thinker append and
+  spatial heads; no premature Look or second store/scheduler.
+- [x] Bounded multi-Demon perception/pursuit/melee/pain/death/corpse composition,
+  current shared-target/RNG planning and complete preflight before mutation.
+- [x] Unsupported types/modes/starts/player/scoring/raise/infighting reject.
+- [x] Original-C70 bodies/334 scripts/53 maps/all21 geometry bases; separate raw
+  original spawn and123 isolated filter components, evidence families distinguished.
+- [x] Independent DSIM-v16:3,440 captures/784 complete bytes; asserted eleven-scenario
+  example with135-tic digest `e327c3fbf88cb132`.
+- [x] Focused Rust admission/fault/atomicity/identity/capacity/pause/read tests.
+- [ ] Fresh complete workspace/release/MSRV, all sixteen pairs/examples, preservation.
+- [ ] Bounded ASan campaign completed and actual executions/findings/leak limits recorded.
+- [ ] Exact final-head Linux/Windows/native macOS/Rust1.85 CI passed.
+- [ ] New M3d3i PR ready/open/unmerged without auto-merge for owner review.
+
+Full original flags/scoring/counts, original actor admission and complete map/game
+initialization remain deferred; source comparisons use the explicitly documented
+fixture projection. No complete Demon/Spectre, starts, multiplayer, fast/Nightmare,
+resurrection, player damage, dynamic sectors/specials, demos or rendering claim.
+Recommended next separate investigation: source map-context/statistics and full
+Demon admission prerequisites, after owner review; no next milestone implemented.

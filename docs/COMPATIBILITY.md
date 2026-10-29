@@ -787,3 +787,43 @@ references/unsupported callbacks/capacity and canonical failure preservation are
 Rust safety policies, not proof of complete source-engine behavior. C idle cases
 retain an active dead roster entry to avoid the original all-inactive scan loop.
 All historical profiles and v1–v14 expectations remain preserved.
+
+## M3d3i — Bounded original Demon THING admission
+
+Profile16 fixes the source context to commercial DOOM II, single-player,
+non-deathmatch, normal timing. A map marker does not select a different game mode.
+It consumes validated classic THINGS in lump order; no complete map-loader/game
+initialization is implied. Original noncommercial P_LoadThings stops the loop on
+specific DOOM II types; that context is excluded, not approximated as a skip.
+
+Source filters: bit16 skips single-player placements; Baby/Easy use bit1,
+Medium bit2, Hard/Nightmare bit4. Runtime Nightmare/fast execution and multiplayer
+reject. Original type lookup precedes nomonsters; original COUNTKILL/MT_SKULL
+metadata determines that skip before executable adaptation. Ordinary filtered
+unknown/unsupported types can skip; enabled unknown is a recoverable Rust error
+(source I_Error is fatal), enabled recognized non-Demon types reject. Starts1–4/11
+and nonpositive kinds always reject here. The source nonpositive player-index
+branch is unsafe and is never used as C-equivalence evidence.
+
+DoomEd3002 resolves to MT_SERGEANT12. Reuse the exact labelled H native136 fixture:
+source health150/radius30/height56/mass400/speed10/reaction8/sounds/actions/timing,
+with state aliases, DoomEd-1, COUNTKILL omitted and raise disabled. Therefore source
+original flags/statistics are compared only under an explicit projection; full
+Demon/Spectre admission and source totals/scoring remain unsupported. No global
+kill count is invented. A separate unadapted C pass records the original fields
+and totals before any gameplay adaptation.
+
+Raw spawn performs no Look, draws lastlook then positive initial timer, uses
+signed x/y fixed conversion, source BSP floor/ceiling and truncating/wrapping
+ANG45 conversion. Z follows the actual floor. THING order, thinker append, spatial
+head insertion and generational identity are preserved. Existing stand/run,
+perception/noise, pursuit/melee and pain/death/corpses are composed.
+
+Rust bounds: fresh tic0/never-allocated batch,256 THINGS/four natives/64 actors,
+existing map512/query1024/sight8192, native978 tic/1008 callback/other994 margins,
+body initial XY momentum64. Native thinkers precede unbound135 targets/effects;
+live targets/active roster/sound targets must be135. Cross-native damage sources,
+actual players, other attacks/projectiles, dynamic sectors/specials, resurrection,
+full map loading/types/starts, multiplayer, fast/Nightmare, demos and rendering
+remain excluded. Unsupported callbacks never silently no-op. Atomic errors and
+bounded all-inactive scan termination are Rust policies, not original C limits.

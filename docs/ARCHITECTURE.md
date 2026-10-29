@@ -592,3 +592,35 @@ Canonical state15 uses existing actor/state/registry/identity/spatial/roster/RNG
 fields and observations; no redundant persistent state or new observation tag is
 needed. Profile 14 retains its simplified loops byte-for-byte. C adapters and
 independent encoders remain tooling, separate from native Rust simulation.
+
+## M3d3i bounded map-spawn composition
+
+Profile16 reuses doom-map THINGS, the exact profile15 fixture registry, LifeHost
+spawn, actor storage, source spatial head insertion and thinker append. Original
+metadata resolves/filter DoomEd3002 before the declared12→136 executable mapping.
+The bounded setup plan validates every selected record and reserves once; only
+then does existing spawn install raw state/link/lastlook, followed by spawnpoint,
+timer randomization, angle and ambush. No persistent "level spawned" flag is
+needed: tic0/allocated-slot state defines admission. All-filtered setup may repeat
+without canonical changes; any allocated/retired store or later tic rejects.
+
+Up to four native thinkers form a prefix before unbound135 bodies and effects.
+Live native targets and active perception/sound references are stable135 bodies;
+unsupported infighting and real players reject. This ensures an earlier native
+cannot damage another native or retire/move its target before that target's later
+thinker. Native corpses keep their existing closed lifecycle and identity.
+
+A bounded global preflight checks all roles/future closures/references/bindings/
+coordinates/counters before any thinker mutates. Four maximum40-damage strikes
+can add under80 fixed units of body thrust even with fall-forward; initial body
+XY momentum is bounded64 and existing physical clamping remains source-derived.
+Target health positive subtraction fits; already-dead/nonshootable bodies follow
+shared ignored damage. Pain/death states allocate zero and do not remove bodies.
+
+At actual A_SargAttack, a small current owner/body/copied-RNG plan uses the shared
+DamagePlan completion logic. Actual Face/range/RNG/apply_damage services remain
+unique. Later owners therefore see earlier owners' real health/RNG effects.
+The transient host flag selects this admitted proof; no canonical duplicate state,
+attack queue, new scheduler, damage engine or per-tic full-state clone is added.
+Profile13–15 retain their earlier plan and exact bytes. Source C adapters and the
+independent canonical encoder remain external validation tools.

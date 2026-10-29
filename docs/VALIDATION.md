@@ -2139,3 +2139,56 @@ verify ordered merge parents, tree, master and successful exact-merge post-merge
 CI before M3d3i runtime. Runtime, DSIM-v1 through DSIM-v15 and historical reference
 evidence remain unchanged by this correction. No squash, force push, history
 rewrite, CI bypass or auto-merge.
+
+## M3d3i mission: PR18 finalization and verified baseline
+
+Reviewed PR18 head `29824fbb9e098bcd0403f0dc7de2ab918e0bc9bc` and base
+`f44828d5ad3169fe77c116bdebb30c74d1b5feb2` matched live metadata, with no intervening
+changes/comments/reviews/threads or auto-merge. Documentation-only correction
+`f5d1bc830ed04fac1ab75b1bf52a6df26336e610` directly recorded the reviewed SHA/CI
+and conditional gate. Fresh mandatory local checks passed242 workspace/242
+Rust1.85/218 release tests, all fifteen C/encoder pairs and fifteen debug/release
+examples, build/fmt/Clippy/rustdoc and244 relative links/two anchors.
+[Fresh CI40791592122](https://github.com/Copgunn/DOOM/actions/runs/40791592122)
+passed all four jobs, completed2026-10-29 00:11:30 UTC. Mac job123177882930 executed
+all applicable steps on macos-26-intel, runner1000000419. The PR testmerge
+`1f7c27b8a8b622e985991b97b1d74a4acaddca02` had ordered parents base/correction and
+tree `588735801e1f72dbffc26e86f2c7be346c4edf1a`, equal to corrected head.
+
+The owner-authorized regular merge is `cae36bedc9de4f0ec14b571e1730fbc041ea5ba3`,
+ordered parents `f44828d5ad3169fe77c116bdebb30c74d1b5feb2` and
+`f5d1bc830ed04fac1ab75b1bf52a6df26336e610`, with that same tree. PR18 is closed/
+merged; local/remote master agreed. Exact merge
+[push CI40792730511](https://github.com/Copgunn/DOOM/actions/runs/40792730511)
+passed Linux, Windows, native macOS and Rust1.85, completed2026-10-29 00:24:09 UTC.
+Native Mac job123181641665, runner1000000423, checked out the exact merge and
+executed every applicable step. All165 original files/3126 historical reference,
+tool and support paths, ancestry/licenses/attribution/locks and fsck passed after
+merge. Repository public/GPL-2.0-only. No private repository or IWAD was accessed.
+
+Only then was feat/m3d3i-demon-map-spawning created. Investigation `ab755838`
+precedes runtime. No squash, forced history, CI bypass or auto-merge was used.
+
+## M3d3i focused independent evidence
+
+- Genuine original C:70 compiled bodies,334 scripts with separate unadapted spawn
+  and admitted gameplay passes;53 exercised maps/all21 geometry bases.
+- Admitted gameplay:585,936 actor fields,38,944 raw draws including setup/discards,
+  131,946 reconciled instrumentation rows. Body inventory is not branch coverage.
+- Unadapted original spawn:10,868 fields under explicit type/state/COUNTKILL
+  projection,37,437 raw draws including discards, plus source spawnpoint/input
+  checks. Original totals are recorded only, not implemented global statistics.
+- Isolated source filter components123:73 admitted source filter/initialization
+  comparisons and50 explicit Rust admission/fatal-error policies. They are not
+  gameplay/canonical captures or full Nightmare/multiplayer compatibility.
+- Independent DSIM-v16:3,440 captures/784 complete byte fixtures, fields/bytes/
+  digests with first-field diagnostics. No Rust-generated expected values.
+- Asserted eleven-scenario example and repeated instances:135-tic lifecycle digest
+  `e327c3fbf88cb132`, including delayed Look, pain/death sounds and corpse persistence.
+- Rust policies are separate from C claims: bounded admission/whole-pass atomicity,
+  stale/pending generations, capacity, bindings/unsupported actions/modes/raise/
+  infighting, pause/presentation independence and existing shared hitscan integration.
+
+Full mandatory, historical, final-head CI and ASan acceptance remain pending until
+observed below. All fifteen ASan targets built; the bounded new campaign is running
+with leak detection disabled. A running campaign is not a successful result.

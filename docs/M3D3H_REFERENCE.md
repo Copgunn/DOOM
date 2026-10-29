@@ -219,3 +219,11 @@ final-head CI before owner-review readiness and stays open/unmerged without
 auto-merge. All original 165 files, 1699 historical reference/tool/support paths,
 v1–v14 schemas/fixtures/encoders, source history, attribution, licenses and locks
 remain preserved. No private repository or commercial IWAD was accessed.
+
+## Subsequent M3d3i finalization
+
+PR18 subsequently completed its owner-authorized documentation correction, fresh
+four-job gate, regular merge and exact post-merge gate as `cae36bed`. See the
+[validation ledger](VALIDATION.md) for immutable SHAs/parents/tree/runs. The earlier
+owner-review wording above records the historical M3d3h delivery, not its live PR
+status. M3d3i is a separate profile and does not alter v15 behavior/fixtures.

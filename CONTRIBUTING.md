@@ -274,3 +274,18 @@ review checklist, retain source/canonical/policy evidence distinctions and wait
 for exact-head Linux/Windows/native macOS/Rust 1.85 CI before review readiness.
 PR17 completed its authorized regular merge/post-merge gates as `f44828d5`.
 M3d3h remains a separate owner-review PR, open/unmerged without auto-merge.
+
+## M3d3i map-spawn changes
+
+Read [M3D3I_REFERENCE](docs/M3D3I_REFERENCE.md), the v16 schema and admission limits.
+Preserve raw spawn versus entered-state timing and original filter/RNG/THING order.
+Source type12 and the executable native136 adaptation are distinct. New owners
+share existing thinker/geometry/damage services; bounded preflight and small
+current strike plans replace neither scheduling nor combat. Keep every historical
+profile/fixture/helper unchanged and unsupported modes/types/actions explicit.
+
+Run sixteen C/encoder pairs/examples, stable/release/MSRV, all fifteen fuzz builds
+and bounded map-spawn ASan. Record actual source, canonical and policy results
+separately, including disabled leak detection. PR18 regularly merged and passed
+exact post-merge gates as `cae36bed`; the separate M3d3i PR remains unmerged and
+without auto-merge for owner review. Use the documentation review checklist.

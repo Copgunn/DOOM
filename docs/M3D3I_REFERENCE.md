@@ -171,3 +171,40 @@ Unsupported: full map loading/all THING types/player starts, noncommercial map
 loader behavior, multiplayer/deathmatch, full Demon/Spectre/monster interactions,
 actual player damage, global scoring/counts, fast/Nightmare execution, resurrection,
 dynamic sectors/specials, demos, rendering, scripting and new asset formats.
+
+## Implemented slice and observed focused evidence
+
+Investigation `ab755838` precedes batch admission `8cc0192` and runtime/preflight
+integration `8084cf1`. The accepted H registry is reused exactly. Batch execution
+uses existing validated parser, immutable geometry, storage/spatial linking and
+LifeHost initialization; no original upstream file changed. The profile fixes
+commercial single-player context independently of the map marker.
+
+Global preflight and late shared planning have focused private fault tests for
+later unsupported death callbacks, bound actors, invalid states/counters/targets,
+unsafe body momentum, owner suffix and removable/pending targets. They reject
+before the earlier owner's action/RNG/movement. All earlier profiles retain their
+own planning path. The maximum four body-directed native attacks may share a
+body; the C shared-target case proves earlier kill then later draw/ignored damage.
+
+Genuine C70-body inventory:334 scripts, each with unadapted original spawn and
+separate admitted native gameplay;53 actually exercised synthetic maps spanning
+all21 geometry bases. Admitted field comparisons585,936, raw draws38,944 including
+setup/discards, ordered rows131,946. Original spawn fields10,868 under explicit
+12→136/475→1/COUNTKILL projection, draws37,437 including discards. Source raw
+COUNTKILL totals are observed but excluded from Rust gameplay compatibility.
+Isolated source filters123 are separate:73 admitted source comparisons and50
+Rust exclusions/fatal-error policies, including Nightmare and unsupported modes.
+
+Independent v16 evidence is3,440 captures/784 complete bytes with per-tic digests/
+first-field diagnostics. No expected values come from Rust. The eleven-scenario
+headless example matches source and repeated instances; its135-tic lifecycle digest
+is `e327c3fbf88cb132`. Source pain decision45 sounds46, returns Chase48; lethal75
+has delayed Scream81/Fall93/terminal101 and remains a corpse through135.
+
+The shared-target example initially exposed a coverage gap: its first synthetic
+target position made both attacks miss. Before committing evidence, the public
+input was corrected to the origin and C/independent fixtures regenerated. The
+asserted example now requires actual ignored damage after the earlier kill.
+Runtime behavior did not need a workaround. Mandatory/regression/sanitizer/CI
+acceptance is recorded in [VALIDATION](VALIDATION.md) after actual observation.

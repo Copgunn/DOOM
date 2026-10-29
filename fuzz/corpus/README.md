@@ -152,3 +152,20 @@ input timeout. Record the observed execution count and findings. Set
 `ASAN_OPTIONS=detect_leaks=0` where the managed environment requires the documented
 ptrace workaround; this disables LeakSanitizer and must never be reported as
 leak coverage. No exhaustive branch coverage is implied.
+
+## Public M3d3i map-spawn seeds
+
+`demon_map_spawn` selects eight public one/multi-Demon, shared-target, lifecycle,
+source-reuse and floor fixtures. It mutates up to eight public map bytes, validates
+WAD/map input and checks failed THING batches atomically, then at most eight
+8-byte operations/32 individually checked tics. A high selector bit fills64 slots
+with admitted unbound bodies. Operations cover damage/hitscan, live callbacks,
+state/target/roster/counter/flags/identity changes, repeated batches, removal,
+spawn/capacity, momentum, pause and explicit unsupported attacks.
+
+A reproducible fresh corpus uses twelve65-byte seeds: selector i%8 (plus0x80 for
+seeds8–11), then eight `[13,0,1,0,0,0,0,3]` tic operations. For selector0 replace
+the first operation with `[0,0,1,150,0,0,0,1]`; for selector2 use
+`[11,1,1,0,0,252,255,3]` at operations0/6. Corpus/output remains temporary; no
+fuzzer-generated crash/corpus or build output is committed. Actual campaign result
+and ASan/leak settings belong in [VALIDATION](../../docs/VALIDATION.md).
