@@ -9,7 +9,7 @@ paths=sorted(set(paths));errors=[];links=anchors=0
 
 def prose(path):
     fence=None;out=[]
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         marker=re.match(r'^\s*(`{3,}|~{3,})',line)
         if marker:
             token=marker.group(1)[0]
@@ -41,7 +41,7 @@ for name in paths:
         if u.fragment:
             anchors+=1
             if not dest.is_file() or unquote(u.fragment) not in slugs(dest):errors.append(f'{name}: missing anchor {target}')
-archive=root/'docs/validation/archive';manifest=json.loads((archive/'manifest.json').read_text())
+archive=root/'docs/validation/archive';manifest=json.loads((archive/'manifest.json').read_text(encoding="utf-8"))
 for source,record in manifest.items():
     raw=(archive/record['exact_copy']).read_bytes()
     if len(raw)!=record['bytes'] or hashlib.sha256(raw).hexdigest()!=record['sha256']:errors.append('Changed archived original: '+source)
