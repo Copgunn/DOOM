@@ -39,7 +39,7 @@
     "generate_m3a.py": "97a6bb6117329ee3fbbb942c1f17af14c0f16f264ecda1d298e791e0bd09f725",
     "generate_m3b.py": "613aeb1563573f1990314414c0e1086d1645c3afd4764c2316c8e7d4e828a374",
     "m3f1_reference.py": "9ba2e71746621c42dd2775a2af1fd2776d6ea5358636827138dcb59e42541f27",
-    "m3f2_reference.py": "b29d26e208091cc72a162988b27e27bd0f80251433d2d5645b0a2b9cd9972c60",
+    "m3f2_reference.py": "bdffbb17cdeb4bcb1a043a8542d6827dd6db0a6d42a890e1f5763da8635309aa",
     "m3f2_shim.h": "368025c8bd70a49168cf1b9a103e85a9723d782d792f9aec407ee1a682bedaed"
   },
   "functions": [
@@ -125,7 +125,8 @@
     "tests/reference/m3f2_bsp.csv": "f298204638557c20853ff7c869c372551bce6ea4ba80636a5d257433803bd413",
     "tests/reference/m3f2_openings.csv": "3413fd7785ba450fe64bb61bbd6502ecf4db073fb8608cbd5d722acd7f4d5c6f",
     "tests/reference/m3f2_sight.csv": "70415d805e76889e22cf7397c1db9d4bb49e1f16c0f8164aa5b356491216312e",
-    "tests/reference/m3f2_arithmetic.csv": "525387eab897b12daba501fe031444576bcafd3b354646a82c7adc8422c1fdf7"
+    "tests/reference/m3f2_arithmetic.csv": "525387eab897b12daba501fe031444576bcafd3b354646a82c7adc8422c1fdf7",
+    "tests/reference/m3f2_boundary.csv": "07486539dedcd7e86080015b0dcb8b7328863c01917bee176c21bdc44a52e339"
   },
   "compiler": "cc (Debian 14.2.0-19) 14.2.0",
   "platform": "Linux-6.18.55-x86_64-with-glibc2.41",

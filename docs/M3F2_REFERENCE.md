@@ -80,7 +80,8 @@ Actor-to-actor and actor-to-map differences are consequently at most 4,096 units
 Bbox+MAXRADIUS adds 64; origin subtraction is at most 4,160 units, only 272,629,760
 raw. P_DivlineSide whole-unit products are at most 4,096 squared, below 2^24;
 R_PointOnSide and P_PointOnLineSide shifted products are smaller. No i32 add/sub,
-absolute-value INT_MIN, line-delta conversion or long-long product overflows.
+line-delta conversion or long-long product overflows. The later clipping divisor
+needs the additional per-query guard below; bounded num/den alone is insufficient.
 Largest FixedMul operand product is far below signed 64-bit. Source divisions retain
 their documented saturation guard; this is not a new clamp. Intermediate eye,
 height, opening, clipping-numerator and gravity arithmetic stays within i32.
@@ -98,6 +99,38 @@ negative-coordinate setup shifts and signed right shifts are pinned adapter/ABI
 assumptions, not portable ISO-C claims. New signed arithmetic overflow is not
 accepted as equivalence. Original files remain byte-identical; no wider Rust
 temporary is used to invent the result of overflowing original arithmetic.
+
+## Quantized intercepts and the clipping divisor
+
+Additional probing of genuine P_DivlineSide/P_InterceptVector2 exposed a separate
+source dependency inside this small, representable geometry. The committed
+[C component](../tests/reference/m3f2_boundary.csv) has these exact raw inputs:
+
+| Input | Raw fixed-point values |
+| --- | --- |
+| Line start / delta | `(0, 0)` / `(5898240, 15335424)` (90,234 map units) |
+| Observer | `(-4394478, -11489288)` |
+| Target minus observer | `(3686402, 9584642)` |
+| Line-endpoint sides / actor sides | `(1,0)` / `(1,0)` |
+| Original intercept result | `-2147483648` (`INT_MIN`) |
+
+The original whole-unit side tests admit this nearly parallel case, and the
+original FixedDiv guard returns a defined saturated negative intercept. A later
+opening-height division would pass that intercept as its divisor. In original
+[m_fixed.c](../linuxdoom-1.10/m_fixed.c), `abs(b)` cannot represent `abs(INT_MIN)`.
+An isolated genuine-source call `FixedDiv(12*65536, INT_MIN)` under the declared
+signed-overflow audit reports negation of -2147483648 at source line62. This is
+an intentionally excluded C failure, not a compatible full-sight result.
+
+Profile19 checks the computed intercept before either clipping division and
+returns an arithmetic error for this case. The query is read-only, so failure
+preserves every canonical field. It does not clamp the fraction or substitute a
+wide-integer answer. Existing profile1–18 behavior and the generic Fixed numeric
+policy stay unchanged. The independent C component compares four side results
+and the defined intercept only; Rust safety tests/fuzzing verify the subsequent
+rejection. No full C boolean/state expectation is invented for the undefined branch.
+[TESTING](TESTING.md#expanded-map-extents-and-spatial-work) provides the separately
+labeled expected-failure probe command.
 
 ## Work and allocation design
 

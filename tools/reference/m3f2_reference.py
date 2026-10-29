@@ -140,10 +140,16 @@ line.x=x*512*FRACUNIT;line.y=y*512*FRACUNIT;line.dx=delta[dx][0]*flip*FRACUNIT;l
 ray.x=-2048*FRACUNIT+1;ray.y=2048*FRACUNIT-1;ray.dx=4096*FRACUNIT-2;ray.dy=-4096*FRACUNIT+2;
 node.x=x*2048*FRACUNIT;node.y=y*2048*FRACUNIT;node.dx=flip*2048*FRACUNIT;node.dy=2048*FRACUNIT;
 printf("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",line.x,line.y,line.dx,line.dy,ray.x,ray.y,ray.dx,ray.dy,P_InterceptVector2(&ray,&line),P_DivlineSide(ray.x,ray.y,&line),node.x,node.y,node.dx,node.dy,P_DivlineSide(ray.x,ray.y,(divline_t*)&node),R_PointOnSide(ray.x,ray.y,&node));}}
+void boundary(void){divline_t line={0,0,5898240,15335424},ray={-4394478,-11489288,3686402,9584642};
+puts("lx,ly,dx,dy,rx,ry,rdx,rdy,line_start_side,line_end_side,observer_side,target_side,fraction");
+printf("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",line.x,line.y,line.dx,line.dy,ray.x,ray.y,ray.dx,ray.dy,P_DivlineSide(line.x,line.y,&ray),P_DivlineSide(line.x+line.dx,line.y+line.dy,&ray),P_DivlineSide(ray.x,ray.y,&line),P_DivlineSide(ray.x+ray.dx,ray.y+ray.dy,&line),P_InterceptVector2(&ray,&line));
+/* Do not call source FixedDiv with that fraction: abs(INT_MIN) is undefined.
+ * This component records the trigger, not a fabricated whole-sight result. */}
+void undefined_clip(void){divline_t line={0,0,5898240,15335424},ray={-4394478,-11489288,3686402,9584642};fixed_t frac=P_InterceptVector2(&ray,&line);printf("excluded source fraction=%d\n",frac);fflush(stdout);printf("%d\n",FixedDiv(12*FRACUNIT,frac));}
 '''+text[b:]
-    return text.replace('if(!strcmp(argv[1],"sight"))','if(!strcmp(argv[1],"arithmetic"))arithmetic();else if(!strcmp(argv[1],"sight"))')
+    return text.replace('if(!strcmp(argv[1],"sight"))','if(!strcmp(argv[1],"undefined-clip"))undefined_clip();else if(!strcmp(argv[1],"boundary"))boundary();else if(!strcmp(argv[1],"arithmetic"))arithmetic();else if(!strcmp(argv[1],"sight"))')
 
-def run(check, overflow):
+def run(check, overflow, probe=False):
     outputs={f'tests/reference/m3f2_map_{i}.bin':m['bytes'] for i,m in enumerate(MAPS)}
     outputs['tests/reference/m3f2_maps.rs']=('// Generated synthetic classic maps; GPL-2.0-only.\npub const MAP_BYTES: &[&[u8]] = &[\n'+''.join(f'    include_bytes!("m3f2_map_{i}.bin"),\n' for i in range(len(MAPS)))+'];\n').encode()
     stream=io.StringIO();w=csv.writer(stream,lineterminator='\n');w.writerow(['case',*CASES[0]]);w.writerows([[i,*c.values()] for i,c in enumerate(CASES)]);outputs['tests/reference/m3f2_cases.csv']=stream.getvalue().encode()
@@ -153,16 +159,20 @@ def run(check, overflow):
         if n=='P_MovePlayer':body=body.replace('(cmd->angleturn<<16)','((uint32_t)(int32_t)cmd->angleturn << 16)')
         parts.append(sight_body(body,n))
     parts.extend([loader(),f'#define CASE_COUNT {len(CASES)}\n#define MAP_COUNT {len(MAPS)}',main()])
-    modes=['movement','probes','bsp','openings','sight','arithmetic']
+    modes=['movement','probes','bsp','openings','sight','arithmetic','boundary']
     audit_flags=['-fno-wrapv','-fsanitize=signed-integer-overflow,integer-divide-by-zero,float-cast-overflow','-fno-sanitize-recover=all']
     with tempfile.TemporaryDirectory(prefix='doom-m3f2-c-') as directory:
         src=Path(directory)/'reference.c';src.write_text('\n'.join(parts));binary=Path(directory)/'reference'
         command=['cc',*FLAGS,'-I'+str(SOURCE),'-I'+str(ROOT/'tools/reference'),str(src),str(SOURCE/'m_fixed.c'),str(SOURCE/'m_random.c'),'-o',str(binary)]
         subprocess.run(command,check=True)
         for mode in modes:outputs[f'tests/reference/m3f2_{mode}.csv']=subprocess.check_output([str(binary),mode])
-        if overflow:
+        if overflow or probe:
             subprocess.run([*command,*audit_flags],check=True)
             for mode in modes:assert subprocess.check_output([str(binary),mode])==outputs[f'tests/reference/m3f2_{mode}.csv'],mode
+        if probe:
+            result=subprocess.run([str(binary),'undefined-clip'],capture_output=True,text=True)
+            assert result.returncode!=0 and 'negation of -2147483648' in result.stderr
+            print('Expected failure in excluded original-C clip: '+result.stderr.strip().replace(str(SOURCE)+'/',''))
     sources=sorted({f for f,_,_,_ in FUNCTIONS}|{'m_fixed.c','m_fixed.h','m_random.c','m_random.h','tables.c','doomtype.h','p_mobj.h','p_local.h','doomdata.h','r_defs.h'})
     adapters=['generate.py','generate_m3a.py','generate_m3b.py','m3f1_reference.py','m3f2_reference.py','m3f2_shim.h']
     hashes=lambda paths,parent:{p:hashlib.sha256((parent/p).read_bytes()).hexdigest() for p in paths}
@@ -178,4 +188,4 @@ def run(check, overflow):
         else:(ROOT/n).write_bytes(data)
     print(f'{"Checked" if check else "Generated"} M3f2: {len(FUNCTIONS)} genuine bodies, {len(CASES)} scripts, {len(MAPS)} maps, {len(CASES)*TICS} tics; overflow audit={overflow}.')
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');parser.add_argument('--overflow-check',action='store_true');args=parser.parse_args();run(args.check,args.overflow_check)
+    parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');parser.add_argument('--overflow-check',action='store_true');parser.add_argument('--probe-undefined-clip',action='store_true',help='expect original abs(INT_MIN) sanitizer failure outside the admitted slice');args=parser.parse_args();run(args.check,args.overflow_check,args.probe_undefined_clip)
