@@ -28,7 +28,8 @@ jobs:
     # Keep the required check name; use supported Intel macOS while arm64
     # hosted-runner acquisition is capacity constrained (see VALIDATION.md).
     runs-on: ${{ matrix.os == 'macos-latest' && 'macos-26-intel' || matrix.os }}
-    timeout-minutes: 15
+    # Preserve the complete growing reference/encoder suite on Linux.
+    timeout-minutes: ${{ matrix.os == 'ubuntu-latest' && 30 || 15 }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -82,6 +83,8 @@ jobs:
           python3 tools/reference/m3d3h_snapshot_goldens.py --check
           python3 tools/reference/generate_m3d3i.py --check
           python3 tools/reference/m3d3i_snapshot_goldens.py --check
+          python3 tools/reference/generate_m3d3j.py --check
+          python3 tools/reference/m3d3j_snapshot_goldens.py --check
       - name: Synthetic map example
         run: cargo +stable run -p doom-map --example parse_map --locked
       - name: Headless simulation example
@@ -99,6 +102,9 @@ jobs:
           python tools/reference/check_demon_lifecycle.py
           python tools/reference/check_demon_stand_run.py
           python tools/reference/check_demon_map_spawn.py
+          python tools/reference/check_demon_map_context.py
+      - name: Documentation links and archive integrity
+        run: python tools/check_docs.py
       - name: Documentation
         run: cargo +stable doc --workspace --no-deps --locked
 

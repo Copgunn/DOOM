@@ -1,9 +1,6 @@
 # M3d2 source investigation: player weapons and psprites
 
-Recorded before runtime changes. Authority: untouched Linux DOOM 1.10 at
-`a77dfb96cb91780ca334d0d4cfd86957558007e0`. M3d1 corrected head `838b401` passed
-CI 40619300366 and was regularly merged as `c924f18424a7a58f892fc8b6a7c2b5011db05c5b`.
-Post-merge CI 40619889131 passed all four jobs before this branch was created.
+Historical delivery accounts are retained in the [complete original investigation](validation/archive/pre-m3d3j-m3d2_reference.md); the source findings below retain their technical scope.
 
 ## Source dependencies and ordering
 

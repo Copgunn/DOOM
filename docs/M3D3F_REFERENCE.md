@@ -1,19 +1,6 @@
 # M3d3f source investigation: Demon melee
 
-Recorded before runtime changes. Authority is untouched Linux DOOM 1.10 at
-`a77dfb96cb91780ca334d0d4cfd86957558007e0`. Revalidated against merged master
-`5b9182472123b8ec86b48cf6a4076426a7856f70`, after PR #15's authorized regular
-merge. Ordered parents are `31b4830945a60c837065c0e3c29d10494e84f20e` and
-`08e27f72ee039e7dc0e20c26777f0ad09d9c3391`; tree
-`4daf89e7f287430e3a852edf82cb80ceb577d02d` equals the recovered head tree.
-[Recovery CI 40733786524](https://github.com/Copgunn/DOOM/actions/runs/40733786524)
-and exact [post-merge CI 40735017337](https://github.com/Copgunn/DOOM/actions/runs/40735017337)
-passed Linux/Windows/macOS/Rust 1.85 before this branch or runtime changes.
-The macOS jobs executed on supported Intel macOS 26 after documented arm64
-hosted acquisition/capacity failures. All 165 original files, 730 existing
-reference paths and original history were verified unchanged; the repository
-remains public/GPL-2.0-only. No private repositories or IWADs were accessed.
-The bounded implementation and evidence below are a plan until validated.
+Historical delivery accounts are retained in the [complete original investigation](validation/archive/pre-m3d3j-m3d3f_reference.md); the source findings below retain their technical scope.
 
 ## Source identity and animation
 

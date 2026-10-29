@@ -1,26 +1,14 @@
 # M3d3h source investigation: original Demon stand/run closure
 
-Recorded and committed before runtime changes. This branch starts from verified
-master `f44828d5ad3169fe77c116bdebb30c74d1b5feb2`. PR #17's documentation-only
-correction `9d48f6d47c1a8c21f68cd66f6d56cb67f09bc8b3` passed fresh local checks
-and [CI 40780721974](https://github.com/Copgunn/DOOM/actions/runs/40780721974).
-The authorized regular merge has ordered parents
-`75b2a2bc9a28401de358859f0499fe4c81dfa0a2` and that correction; tree
-`4ed21d4d63ce376a7d5599b5b0f3c5416415edaa` equals the tested correction tree.
-Exact merge [push CI 40781481835](https://github.com/Copgunn/DOOM/actions/runs/40781481835)
-passed Linux, Windows, native macos-26-intel and Rust 1.85, completed
-2026-10-28 22:45:23 UTC before this branch or runtime work. PR17 is closed/merged;
-local/remote master agree. All 165 original files and 1699 historical reference/
-tool/support paths, ancestry, attribution, licensing and locks remain preserved.
-No private repository or commercial IWAD was accessed. This source investigation
-is planning material; implementation and independent validation are required.
-
 Behavioral authority: preserved original id Software Linux DOOM 1.10 at
 `a77dfb96cb91780ca334d0d4cfd86957558007e0`. Inspected `info.c/h`, `p_enemy.c`,
 `p_mobj.c`, `p_tick.c`, `p_inter.c`, `p_map.c`, `p_maputl.c`, `p_sight.c`,
 `m_random.c`, `r_main.c`, `s_sound.c` and the sound tables. Reuse the accepted
 M3d3a–M3d3g perception, pursuit, melee and lifecycle services, not a new AI,
 movement, damage or thinker scheduler.
+
+
+Historical delivery accounts are retained in the [complete original investigation](validation/archive/pre-m3d3j-m3d3h_reference.md); the source findings below retain their technical scope.
 
 ## Source states and proposed explicit aliases
 

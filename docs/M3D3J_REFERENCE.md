@@ -153,3 +153,31 @@ recoverable rejection of unsupported game context are separate safety policies.
 The public API must not allow arbitrary mutation of canonical statistics or
 removal of COUNTKILL from the admitted native fixture. Source type12 remains
 recognized metadata; executable native136 and remapped state IDs remain labelled.
+
+## Implemented admission and evidence boundaries
+
+Profile17 restores source COUNTKILL flags4194310 to the labeled native136 Demon
+fixture. Source type12/state identities and disabled raise remain explicit
+adaptations. Available map kills, initialized items/secrets and the genuine
+single-player players[0] fallback kill counter are distinct canonical fields.
+Only the admitted source branch is implemented; real player-pointer scoring,
+frags, multiplayer and complete intermission are excluded.
+
+Setup/reset reuses existing validated constructors and THING batches. Statistics
+are initialized before world construction; no geometry callback or RNG draw can
+observe partial setup. Fresh restart returns a new instance retaining both RNG
+streams. It does not clone the entire simulation per tic or implement full reload.
+
+Synthetic cross-native lethal/ignored damage is admitted only because it returns
+before retargeting. Nonlethal cross-native damage and autonomous native targeting
+remain rejected. Existing shared DamagePlan/LifeHost services prove/update death
+credit between corpse initialization and death-state entry. Respawn mode rejects.
+
+The genuine C harness compiles70 whole bodies and hashes two verbatim setup
+fragments separately. Dirty setup counters, partime/maxfrags and all four players'
+kill/item/secret counts are observed in a separate source component, together with
+retained RNG indexes211/87. This is not execution of complete P_SetupLevel.
+Separate source filter/player-pointer/network components do not expand runtime
+admission. Source and adapter provenance and final qualified counts are linked
+from [the evidence record](validation/M3D3J.md). Independent v17 gameplay captures
+and additional schema-derived Rust atomicity states are distinguished there.

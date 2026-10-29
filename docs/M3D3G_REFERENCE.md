@@ -1,24 +1,12 @@
 # M3d3g source investigation: Demon pain, death and corpse states
 
-Recorded before runtime changes. Behavioral authority is the preserved Linux
-DOOM 1.10 source at `a77dfb96cb91780ca334d0d4cfd86957558007e0`. This branch starts
-at verified master **75b2a2bc9a28401de358859f0499fe4c81dfa0a2**. PR #16 was
-regularly merged after documentation-only correction
-`63efb2a585b9aa09032964cb1c4eae3dce1fae21` and successful
-[correction CI 40761281692](https://github.com/Copgunn/DOOM/actions/runs/40761281692).
-Ordered merge parents are `5b9182472123b8ec86b48cf6a4076426a7856f70` and that
-correction; tree `cfeafd09f1649cfc5c4d8c8037af14fcc6af6abb` equals corrected head.
-Exact merge [push CI 40762344038](https://github.com/Copgunn/DOOM/actions/runs/40762344038)
-passed Linux, Windows, native Intel macOS 26 and Rust 1.85, completed
-2026-10-28 20:26:10 UTC, before this branch or new runtime work. Local/remote
-master, original 165 files, 940 historical reference/tool/support paths, original
-ancestry, attribution, licenses and dependency locks were verified. No restricted
-repository or commercial IWAD was accessed. Repository remains public/GPL-2.0-only.
-
 This note records source findings and an implementation/evidence plan. Acceptance
 requires independent comparisons and fresh checks; a plan is not implementation.
 Reuse [M3d1 damage](M3D1_REFERENCE.md), [M3c lifecycle](M3C_REFERENCE.md),
 [M3d3f melee](M3D3F_REFERENCE.md), [M3b movement](M3B_REFERENCE.md) and their bounds.
+
+
+Historical delivery accounts are retained in the [complete original investigation](validation/archive/pre-m3d3j-m3d3g_reference.md); the source findings below retain their technical scope.
 
 ## Inspected source and metadata
 

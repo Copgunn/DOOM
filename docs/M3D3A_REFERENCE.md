@@ -1,12 +1,6 @@
 # M3d3a source investigation: perception and target acquisition
 
-Recorded before runtime changes. Authority is untouched Linux DOOM 1.10 at
-`a77dfb96cb91780ca334d0d4cfd86957558007e0`. M3d2b reviewed head `062647d`
-received prose-only finalization `f2705598f382cd7c3e308f3edfbe3756f694c598`.
-Fresh CI 40631701968 passed before regular PR #9 merge
-`e109ee193bcce6077f5c8d90802c97edc89a55a6`, parents
-`955f690d141ccc6a9074a8a8017f78833854af6f` and `f2705598f382cd7c3e308f3edfbe3756f694c598`.
-Post-merge CI 40632182190 passed all four jobs before this branch was created.
+Historical delivery accounts are retained in the [complete original investigation](validation/archive/pre-m3d3j-m3d3a_reference.md); the source findings below retain their technical scope.
 
 ## Source and dependency boundary
 

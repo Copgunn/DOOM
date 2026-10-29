@@ -1,4 +1,4 @@
-# Canonical simulation state, DSIM versions 1 through 16
+# Canonical diagnostic state format: DSIM versions 1–17
 
 This is a diagnostic/replay comparison format for explicit M2 through M3d3i profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
@@ -742,3 +742,42 @@ angles/floors, source RNG wrap, ordered shared-target strikes and spawn-to-corps
 Rust checks full field order/value/bytes and per-tic FNV1a64, with first-field
 errors. The asserted 135-tic lifecycle digest is `e327c3fbf88cb132`. DSIM remains
 project diagnostic evidence, not a vanilla savegame/demo or full synchronization.
+
+## DSIM-v17 — Demon Map Context and Statistics
+
+Profile17 composes v16 fields/ordering with a distinct registry name and source
+COUNTKILL flags. Schemas1–16, their encoders, fixtures and Rust helpers remain
+byte-identical. This is project diagnostic state, not an original savegame/demo.
+
+Immediately after `actors.options`, before `store.max_slots`, encode four named
+fields, each signed32-bit little-endian:
+
+| Field | Meaning |
+| --- | --- |
+| `level.total_kills` | Available admitted map COUNTKILL placements |
+| `level.total_items` | Source initialized item total; remains0 in this slice |
+| `level.total_secrets` | Source initialized secret total; remains0 in this slice |
+| `level.single_player_kill_count` | Genuine unbound single-player players[0] fallback credit |
+
+All counters begin0. Spawn total increments after timer RNG and before angle/
+ambush assignment; death credit occurs after corpse flags/quarter height and
+before death-state entry/timer RNG. Neither death nor removal decrements available
+kills. No redundant corpse, respawn-disabled or initial-seed field is serialized:
+actor flags/state and actual owned RNG indexes already represent admitted state.
+Profile17 fixes single-player normal timing and respawn disabled by admission.
+
+Transient event tag21 has a one-byte subtype:0 map available-kill update,1 fallback
+death credit. Both then encode actor identity (u32 slot,u64 generation) and signed
+32-bit updated total. Events observe the source positions above. They are not
+additional persistent statistics. Existing event tags/order retain their meanings.
+Head-actor retirement is inside the thinker phase, before any later live Think.
+
+Fresh restart constructs a new instance through the same validated setup path,
+clears counters/tic/actors and retains actual RNG streams. Handles remain scoped
+to their instance. Checked overflow and recoverable rejection are Rust policies;
+unsupported player scoring, respawn, raise and full game setup reject explicitly.
+
+The [independent encoder](../tools/reference/m3d3j_snapshot_goldens.py) derives
+complete bytes/digests from C rows and documented schema, never Rust output.
+See [source findings](M3D3J_REFERENCE.md), [validation](validation/M3D3J.md) and
+[reproduction](TESTING.md).
