@@ -102,7 +102,7 @@ impl Simulation {
             return Err(PursuitError::Specials.into());
         }
         crate::sight::validate_map(&map)?;
-        let expected = if profile == Profile::DemonStandRun {
+        let expected = if profile.uses_demon_stand_run() {
             ActorRegistry::demon_stand_run_fixture()
         } else {
             ActorRegistry::demon_lifecycle_fixture()
@@ -131,7 +131,7 @@ impl Simulation {
         state: StateId,
     ) -> Result<(), SimError> {
         let valid = match ty.0 {
-            136 if self.profile == Profile::DemonStandRun => (1..=21).contains(&state.0),
+            136 if self.profile.uses_demon_stand_run() => (1..=21).contains(&state.0),
             136 => [1, 2].contains(&state.0) || (4..=14).contains(&state.0),
             135 => (149..=173).contains(&state.0),
             37 | 38 => (90..=96).contains(&state.0),

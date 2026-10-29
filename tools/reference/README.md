@@ -430,3 +430,41 @@ Keep all fourteen older pairs/examples, v1–v14 definitions and thirteen histor
 Rust helpers byte-identical; this README's prose may evolve. See
 [M3D3H_REFERENCE](../../docs/M3D3H_REFERENCE.md) and
 [validation](../../docs/VALIDATION.md) for acceptance evidence and limits.
+
+## M3d3i original THING spawn and actor admission
+
+```sh
+python3 tools/reference/generate_m3d3i.py --check
+python3 tools/reference/m3d3i_snapshot_goldens.py --check
+python3 tools/reference/check_demon_map_spawn.py
+```
+
+The70 compiled genuine bodies add P_LoadThings/P_SpawnMapThing to the accepted
+spawn/link/BSP/thinker/RNG/action/combat closure. Original structs/info/state tables
+are used. Commercial single-player THINGS bytes are supplied through bounded WAD
+lump ownership adapters. Original algorithm branches are preserved; unsupported
+player/special/drop/raise services abort. Negative signed shifts use representable
+fixed multiplication; wrap flags and inherited ordered RNG assumptions are recorded.
+
+Each of 334 scripts first records an unadapted type 12/state 475/COUNTKILL spawn pass,
+then independently runs adapted 136 fixture gameplay. The explicit P_SpawnMobj
+boundary translates12→136 after genuine lookup/nomonsters filtering. Raw totals
+remain evidence only; no full scoring/actor claim. All 53 supplied map fixtures,
+covering21 geometry bases, are actually exercised. Inputs/cases, raw spawn and
+native traces,123 isolated filter components and provenance record exact source/
+body/header/adapter/output hashes, ABI and compiler flags.
+
+Gameplay compares585,936 live actor fields,38,944 actual draws including setup/
+discards and 131,946 reconciled instrumentation rows. Original raw spawn separately
+compares10,868 projected actor fields/37,437 draws and spawnpoints. Of123 isolated
+filter components,73 compare admitted source behavior;50 demonstrate explicit
+Rust rejection boundaries. Compiled inventory is not branch coverage, rows are
+not one per event, and components are not gameplay/canonical captures.
+
+Independent Python v16 encoding reads only original-C traces, public inputs and
+schema:3,440 captures/784 full bytes, per-tic digests and first-field diagnostics.
+It composes the unchanged H registry and existing spawnpoint representation.
+The asserted eleven-scenario example ends at 135 tics with `e327c3fbf88cb132`.
+Preserve all fifteen older pairs/examples and fourteen historical Rust helpers.
+See [source investigation](../../docs/M3D3I_REFERENCE.md),
+[state schema](../../docs/STATE_FORMAT.md) and [validation](../../docs/VALIDATION.md).

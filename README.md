@@ -46,13 +46,23 @@ recovery and successful exact-head/post-merge checks. M3d3f adds bounded normal-
 timing Demon melee in profile 13, regularly merged as `75b2a2bc`. M3d3g adds
 Demon pain/death/corpses in profile 14, regularly merged as `f44828d5`. M3d3h
 adds original stand/run closure in profile 15 in [PR #18](https://github.com/Copgunn/DOOM/pull/18),
-for separate owner review.
+regularly merged as `cae36bed` after correction and exact post-merge CI.
+M3d3i adds bounded original Demon THING spawning in profile 16 in
+[PR #19](https://github.com/Copgunn/DOOM/pull/19), for separate owner review.
 Complete original monsters,
 actual player damage and a playable client remain future work. Exact gates and
 limitations are in the [roadmap](docs/ROADMAP.md) and
 [validation notes](docs/VALIDATION.md).
 
 Implemented:
+
+- Bounded single-player DOOM II Demon THING admission through the existing classic
+  parser, source skill/mode/no-monsters filters, signed fixed coordinates/BAM angles,
+  BSP floor placement, two source spawn RNG draws and raw state initialization.
+  Up to four native fixtures preserve THING/thinker/spatial order and compose
+  source stand/run, pursuit, melee, pain/death and persistent corpses. Full original
+  actor/scoring/multiplayer/Nightmare admission remains excluded; see the
+  [M3d3i source and admission note](docs/M3D3I_REFERENCE.md).
 
 - Immutable borrowing WAD reader, checked signed directory fields, configurable
   limits, exact eight-byte names, safe lump access, ASCII-insensitive lookup,
@@ -727,3 +737,19 @@ persistent corpse. Its independently encoded 130-tic DSIM-v15 digest is
 `51463158173610c5`. No IWAD, GPU, audio device or network service is needed.
 See [source investigation](docs/M3D3H_REFERENCE.md),
 [validation](docs/VALIDATION.md) and [state format](docs/STATE_FORMAT.md).
+
+## Bounded Demon map-spawn example
+
+```sh
+cargo run -p doom-sim --example demon_map_spawn --locked
+```
+
+The asserted example parses public synthetic THINGS, checks filters, multiple
+spawns and delayed Look, then source pursuit/melee/pain/death/corpses and independent
+DSIM-v16 digest `e327c3fbf88cb132`. It needs no IWAD or presentation device.
+For an already validated `doom_map::Map`, construct
+`Simulation::with_demon_map_spawn_registry(map, 64,
+ActorRegistry::demon_stand_run_fixture(), ActorOptions::default())`, then call
+`spawn_map_things()` before adding unbound targets. This is an explicit bounded
+fixture profile, not complete level loading. Ordinary enabled non-Demon types,
+starts, multiplayer and Nightmare execution reject; see [admission limits](docs/COMPATIBILITY.md).

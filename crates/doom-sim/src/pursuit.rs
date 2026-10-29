@@ -404,6 +404,7 @@ impl Simulation {
                 shotgunner: self.profile == Profile::Shotgunner,
                 chaingunner: self.profile == Profile::Chaingunner,
                 demon: self.profile.uses_demon(),
+                map_demons: self.profile == Profile::DemonMapSpawn,
                 melee: None,
                 shotgun: None,
                 shot: None,

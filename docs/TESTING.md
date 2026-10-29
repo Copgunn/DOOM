@@ -710,3 +710,41 @@ The example asserts ten C-backed/repeated-instance sequences and 130-tic digest
 perception, damage/corpse setup, generational IDs and complete failed-operation
 state. See [public seed recipe](../fuzz/corpus/README.md); report actual sanitizer
 executions and leak configuration in [VALIDATION](VALIDATION.md).
+
+## Reproduce M3d3i map-spawn evidence
+
+```sh
+python3 tools/reference/generate_m3d3i.py --check
+python3 tools/reference/m3d3i_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3d3i_reference --test m3d3i_policies --locked
+cargo run -p doom-sim --example demon_map_spawn --locked
+python3 tools/reference/check_demon_map_spawn.py
+cargo +nightly fuzz build --sanitizer address
+```
+
+Also run all fifteen earlier C/encoder pairs and examples, mandatory build/fmt/
+Clippy/workspace/release/rustdoc and Rust1.85. Native macOS, Windows, Linux and
+MSRV CI remain required; only Linux regenerates original C and independent bytes,
+while stable OS jobs compare recorded evidence and asserted debug/release examples.
+
+Original-C scripts334 run separate original type12 raw-spawn and adapted136
+multi-tic gameplay passes over53 synthetic map fixtures/all21 geometry bases.
+Compare585,936 gameplay fields,38,944 raw draws including setup/discards and
+131,946 instrumentation rows. The raw pass compares10,868 fields under the stated
+three-field projection and37,437 draws including discards, plus spawnpoint/input
+checks. Isolated filter components123 are separate:73 source filter/initialization
+comparisons and50 explicit Rust exclusions/fatal-error policies. No all-inactive
+C loop, undefined negative player index or actual player damage is executed.
+
+DSIM-v16 has3,440 captures/784 full bytes derived independently from C/schema.
+The example asserts eleven scenarios/repeated instances and135-tic digest
+`e327c3fbf88cb132`. Rust-only policy/fault tests check admission, whole-pass failure
+atomicity before earlier owners, capacity, bindings/stale/pending generations,
+unsupported callbacks/raise/modes/infighting, pause/read independence and existing
+hitscan composition. Those tests are not extra original-C scenarios.
+
+The new `demon_map_spawn` target mutates public map bytes, atomically admits/rejects
+THING batches, then mutates bounded setup/combat/state/identity operations with
+canonical equality on errors. See the public corpus recipe and observed campaign
+limits in [VALIDATION](VALIDATION.md); a build is not a completed campaign and
+`detect_leaks=0` never establishes LeakSanitizer coverage.

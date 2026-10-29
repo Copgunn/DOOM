@@ -84,6 +84,9 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
+        if self.profile == Profile::DemonMapSpawn && ty == ActorTypeId(136) {
+            return Err(MapSpawnError::DirectSpawn.into());
+        }
         if self.profile.uses_perception()
             && (position.iter().any(|v| !crate::sight::within(*v, 1024))
                 || matches!(height,SpawnHeight::Absolute(z) if !crate::sight::within(z,1024)))
@@ -176,6 +179,7 @@ impl Simulation {
                 shotgunner: self.profile == Profile::Shotgunner,
                 chaingunner: self.profile == Profile::Chaingunner,
                 demon: self.profile.uses_demon(),
+                map_demons: self.profile == Profile::DemonMapSpawn,
                 melee: None,
                 shotgun,
                 shot,
@@ -305,13 +309,22 @@ impl Simulation {
         }
         self.reserve_actor_spawns(demand.spawns)
     }
-    /// Atomic ordinary placement in source order. Starts are reported without
-    /// creating players; repeated calls explicitly repeat placement.
+    /// Atomic ordinary placement in source order. The general lifecycle profile
+    /// reports starts without creating players and allows explicit repetition.
+    /// Profile 16 instead requires a fresh batch and rejects starts/unsupported
+    /// enabled types; see `with_demon_map_spawn_registry` for its admission.
     pub fn spawn_map_things(&mut self) -> Result<MapSpawnReport, SimError> {
         let registry = self.registry_required()?;
+        let map_demons = self.profile == Profile::DemonMapSpawn;
+        if map_demons && (self.tic != 0 || !self.actors.slots.is_empty()) {
+            return Err(MapSpawnError::Setup.into());
+        }
         let mut report = MapSpawnReport::default();
         let mut selected = Vec::new();
         for thing in self.world.map().things() {
+            if map_demons && (thing.kind <= 4 || thing.kind == 11) {
+                return Err(MapSpawnError::StartOrInvalidType(thing.kind).into());
+            }
             if thing.kind == 11 {
                 if report.deathmatch_starts.len() < 10 {
                     report.deathmatch_starts.push(*thing);
@@ -331,7 +344,7 @@ impl Simulation {
                 report.filtered += 1;
                 continue;
             }
-            let ty = registry
+            let mut ty = registry
                 .find_doomed(i32::from(thing.kind))
                 .ok_or(ActorError::InvalidType)?;
             let info = registry.actor_type(ty).unwrap();
@@ -340,6 +353,23 @@ impl Simulation {
             {
                 report.filtered += 1;
                 continue;
+            }
+            if map_demons {
+                // Lookup and nomonsters use original metadata, including COUNTKILL,
+                // before the explicit executable fixture adaptation.
+                if ty != ActorTypeId(12) {
+                    return Err(MapSpawnError::UnsupportedType(thing.kind).into());
+                }
+                if selected.len() == MAX_MAP_DEMONS {
+                    return Err(MapSpawnError::WorkLimit.into());
+                }
+                if [thing.position.x, thing.position.y]
+                    .iter()
+                    .any(|v| v.unsigned_abs() > 978)
+                {
+                    return Err(MonsterError::Arithmetic.into());
+                }
+                ty = ActorTypeId(136);
             }
             if self.profile.uses_perception() {
                 if [thing.position.x, thing.position.y]

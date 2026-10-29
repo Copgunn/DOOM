@@ -355,6 +355,7 @@ impl Simulation {
                 shotgunner: true,
                 chaingunner: false,
                 demon: false,
+                map_demons: false,
                 melee: None,
                 shotgun: plan.as_ref(),
                 shot: None,

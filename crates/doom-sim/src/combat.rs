@@ -198,6 +198,67 @@ impl DamagePlan {
     pub(crate) fn spawn_count(self) -> usize {
         self.demand.spawns
     }
+    fn finish(
+        mut self,
+        actor: Actor,
+        registry: &ActorRegistry,
+        validate_entry: impl Fn(StateId) -> Result<(), SimError>,
+    ) -> Result<Self, SimError> {
+        let life = actor.life.unwrap();
+        let info = registry.actor_type(life.actor_type).unwrap();
+        if self.killed {
+            if ["MT_POSSESSED", "MT_WOLFSS", "MT_SHOTGUY", "MT_CHAINGUY"]
+                .iter()
+                .any(|name| lifecycle::source_type_is(life.actor_type, name))
+            {
+                return Err(CombatError::KillBranch.into());
+            }
+            self.extreme = self.health[1] < -info.spawn_health() && info.states()[6].0 != 0;
+            self.state = info.states()[if self.extreme { 6 } else { 5 }];
+            validate_entry(self.state)?;
+            self.demand = registry.demand(self.state, life.tics)?;
+        } else {
+            if info.pain_chance() > 0 {
+                self.demand
+                    .add(registry.demand(info.states()[2], life.tics)?)?;
+            }
+            if self.request.source.is_some() {
+                self.demand
+                    .add(registry.demand(info.states()[1], life.tics)?)?;
+            }
+        }
+        Ok(self)
+    }
+    /// Only called for the globally preflighted profile16 body role. Earlier
+    /// owners may have changed health/RNG; read the actual current small record.
+    pub(crate) fn current_melee_body(
+        registry: &ActorRegistry,
+        actor: Actor,
+        request: DamageRequest,
+    ) -> Result<Self, SimError> {
+        let life = actor.life.unwrap();
+        let mut plan = Self {
+            request,
+            health: [life.health; 2],
+            killed: false,
+            extreme: false,
+            state: StateId(0),
+            demand: Demand::default(),
+            ignored: life.flags & 4 == 0 || life.health <= 0,
+        };
+        if plan.ignored {
+            return Ok(plan);
+        }
+        plan.health[1] = life
+            .health
+            .checked_sub(request.amount)
+            .ok_or(CombatError::Metadata)?;
+        plan.killed = plan.health[1] <= 0;
+        plan.finish(actor, registry, |state| {
+            registry.validate_state_demon_melee(state)?;
+            Ok(())
+        })
+    }
 }
 impl PreparedAttack {
     pub fn parameters(&self) -> LineAttack {
@@ -283,6 +344,7 @@ impl Simulation {
                 | Profile::DemonMelee
                 | Profile::DemonLifecycle
                 | Profile::DemonStandRun
+                | Profile::DemonMapSpawn
         ) {
             return Err(CombatError::Profile.into());
         }
@@ -337,6 +399,7 @@ impl Simulation {
         shooter: Option<ActorId>,
         lookup: Option<&dyn Fn(ActorId) -> Option<Actor>>,
     ) -> Result<DamagePlan, SimError> {
+        self.preflight_map_damage(request)?;
         let base = self.combat_actor(request.target)?;
         let actor = match lookup {
             Some(f) => f(request.target).ok_or(CombatError::Reference)?,
@@ -363,7 +426,6 @@ impl Simulation {
         }
         self.validate_combat_type(life.actor_type)?;
         let registry = self.registry.as_deref().unwrap();
-        let info = registry.actor_type(life.actor_type).unwrap();
         plan.health[1] = life
             .health
             .checked_sub(request.amount)
@@ -383,29 +445,9 @@ impl Simulation {
                 delta.checked_abs().ok_or(CombatError::Coordinates)?;
             }
         }
-        if plan.killed {
-            if ["MT_POSSESSED", "MT_WOLFSS", "MT_SHOTGUY", "MT_CHAINGUY"]
-                .iter()
-                .any(|name| lifecycle::source_type_is(life.actor_type, name))
-            {
-                return Err(CombatError::KillBranch.into());
-            }
-            plan.extreme = plan.health[1] < -info.spawn_health() && info.states()[6].0 != 0;
-            plan.state = info.states()[if plan.extreme { 6 } else { 5 }];
-            self.validate_entry(plan.state)?;
-            plan.demand = registry.demand(plan.state, life.tics)?;
-        } else {
-            if info.pain_chance() > 0 {
-                plan.demand
-                    .add(registry.demand(info.states()[2], life.tics)?)?;
-            }
-            if request.source.is_some() {
-                plan.demand
-                    .add(registry.demand(info.states()[1], life.tics)?)?;
-            }
-        }
-        Ok(plan)
+        plan.finish(actor, registry, |state| self.validate_entry(state))
     }
+
     /// Atomic supported P_DamageMobj operation. No full-simulation clone is used.
     pub fn damage_actor(&mut self, request: DamageRequest) -> Result<DamageResult, SimError> {
         if self.profile.uses_monsters() && !self.profile.uses_demon_lifecycle() {

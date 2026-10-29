@@ -14,12 +14,15 @@ pub(crate) fn strike<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) {
     if host.access.get(id).unwrap().life.unwrap().target.is_none() {
         return;
     }
-    let plan = host
-        .perception
-        .unwrap()
-        .melee
-        .expect("complete melee preflight before mutation")
-        .clone();
+    let plan = if host.perception.unwrap().map_demons {
+        current_map_melee(host, id)
+    } else {
+        host.perception
+            .unwrap()
+            .melee
+            .expect("complete melee preflight before mutation")
+            .clone()
+    };
     assert_eq!(plan.owner, id);
     assert_eq!(plan.initial, *host.rng);
     crate::monsters::face(host, id);
@@ -97,6 +100,9 @@ impl Simulation {
         id: ActorId,
     ) -> Result<Option<MeleePlan>, SimError> {
         self.preflight_monster_callback(id)?;
+        if self.profile == Profile::DemonMapSpawn {
+            return Ok(None);
+        }
         let actor = *self.actor(id).unwrap();
         let Some(target) = actor.life.unwrap().target else {
             return Ok(None);
@@ -131,7 +137,11 @@ impl Simulation {
         }))
     }
     pub(crate) fn preflight_demon_step(&mut self) -> Result<Option<MeleePlan>, SimError> {
-        self.preflight_monster_owner()?
+        let owner = self.preflight_monster_owner()?;
+        if self.profile == Profile::DemonMapSpawn {
+            return Ok(None);
+        }
+        owner
             .map(|id| self.prepare_demon_melee(id))
             .transpose()
             .map(Option::flatten)
@@ -163,7 +173,7 @@ impl Simulation {
             && actor.life.unwrap().actor_type.0 == 136
             && (actor.life.unwrap().health <= 0
                 || !([1, 2, 4, 5, 6].contains(&state.0)
-                    || self.profile == Profile::DemonStandRun
+                    || self.profile.uses_demon_stand_run()
                         && (state.0 == 3 || (15..=21).contains(&state.0))))
         {
             return Err(MonsterError::Definition.into());
@@ -286,3 +296,34 @@ fn validate_registry(r: &ActorRegistry) -> Result<(), SimError> {
 #[cfg(test)]
 #[path = "demon_tests.rs"]
 mod tests;
+
+/// Global profile16 preflight proves stable body lifetimes/roles and complete
+/// zero-allocation closures before any thinker mutation. This small late plan
+/// observes earlier owners' actual RNG/health effects, never a copied world.
+fn current_map_melee<A: ActorAccess>(host: &LifeHost<'_, A>, id: ActorId) -> MeleePlan {
+    let actor = *host.access.get(id).unwrap();
+    let target = actor.life.unwrap().target.unwrap();
+    let body = *host.access.get(target).unwrap();
+    let initial = *host.rng;
+    let mut preview = initial;
+    let _ = crate::monsters::face_angle(actor, body, &mut preview);
+    let amount = (i32::from(preview.p_random()) % 10 + 1) * 4;
+    let damage = crate::combat::DamagePlan::current_melee_body(
+        host.registry,
+        body,
+        DamageRequest {
+            target,
+            inflictor: Some(id),
+            source: Some(id),
+            amount,
+        },
+    )
+    .expect("profile16 complete preflight proves current body damage closure");
+    assert_eq!(damage.spawn_count(), 0);
+    MeleePlan {
+        owner: id,
+        initial,
+        accepted: None,
+        damage: Some((amount, damage)),
+    }
+}

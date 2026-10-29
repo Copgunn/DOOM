@@ -1,6 +1,6 @@
-# Canonical simulation state, DSIM versions 1 through 15
+# Canonical simulation state, DSIM versions 1 through 16
 
-This is a diagnostic/replay comparison format for explicit M2 through M3d3h profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3d3i profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d, `12` for M3d3e, `13` for M3d3f),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d, `12` for M3d3e, `13` for M3d3f, `14` for M3d3g, `15` for M3d3h, `16` for M3d3i),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -718,3 +718,27 @@ IDs and separate Chase actions. No transient tag is added merely to label a fram
 byte fixtures from original-C traces/public inputs/schema, including all loop,
 wake/combat/lifecycle transitions and C-observed RNG-wrap boundaries. It never
 reads Rust output. DSIM is project diagnostic data, not a DOOM savegame or demo.
+
+## DSIM-v16 — Original Demon Map-Spawn Foundations
+
+Version/profile 16 preserves every v1–v15 field layout and expected byte stream.
+It composes the v15 schema and existing persistent fields: raw map THINGS,
+ActorOptions, registry metadata, actor type/state/tics/sprite/frame/health/flags,
+position/momentum/angle/lastlook, floor/ceiling/sector, target generation, thinker
+and spatial order, RNG indexes and existing transient events. No duplicate map-
+spawn, original-type, scoring or corpse flag is introduced.
+
+Each map native has the existing `.spawnpoint`: u8 presence1 followed by exactly
+10 little-endian bytes (i16 x,y,angle,type; u16 options). Unbound/effect spawns
+retain presence0. Original kind3002 remains in spawnpoint/map fields, while the
+explicit executable actor is136 and the registry declares the adaptation. Source
+filter/THING-index observations are recorded in reference rows/report, not hidden
+persistent state. Header and profile carry 16; sound/roster fields compose exactly
+as in 15. Raw spawn has no entered-state action event.
+
+`m3d3i_snapshot_goldens.py` independently composes C rows/public input/schema into
+3,440 captures and 784 complete byte fixtures, including filtered/multi-THING setup,
+angles/floors, source RNG wrap, ordered shared-target strikes and spawn-to-corpse.
+Rust checks full field order/value/bytes and per-tic FNV1a64, with first-field
+errors. The asserted 135-tic lifecycle digest is `e327c3fbf88cb132`. DSIM remains
+project diagnostic evidence, not a vanilla savegame/demo or full synchronization.

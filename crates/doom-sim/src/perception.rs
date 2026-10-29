@@ -321,6 +321,9 @@ impl Simulation {
         let a = self.perception_actor(id)?;
         let life = a.life.unwrap();
         let registry = self.registry.as_deref().unwrap();
+        if self.profile == Profile::DemonMapSpawn && life.actor_type != ActorTypeId(135) {
+            return Err(MapSpawnError::Target.into());
+        }
         if self.profile.uses_monsters() {
             return self.monster_reference(id);
         }
@@ -657,6 +660,7 @@ pub(crate) struct PerceptionInputs<'a> {
     pub shotgunner: bool,
     pub chaingunner: bool,
     pub demon: bool,
+    pub map_demons: bool,
     pub melee: Option<&'a crate::demon::MeleePlan>,
     pub shotgun: Option<&'a crate::shotgunner::ShotgunPlan>,
     pub shot: Option<&'a crate::monsters::MonsterShotPlan>,
@@ -838,6 +842,7 @@ impl Simulation {
                 shotgunner: self.profile == Profile::Shotgunner,
                 chaingunner: self.profile == Profile::Chaingunner,
                 demon: self.profile.uses_demon(),
+                map_demons: self.profile == Profile::DemonMapSpawn,
                 melee: None,
                 shotgun: None,
                 shot: None,
