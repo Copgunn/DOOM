@@ -97,7 +97,9 @@ count raises that work ceiling. All dimensions are separately capped in
 [COMPATIBILITY](COMPATIBILITY.md#map-scale-profile). The reference budget bounds
 list expansion/copying, while raw-word and line caps also bound unused-terminator
 work. Avoid treating one budget as a bound on every stage. A query's membership
-check is constant-time and never chooses candidate order.
+check is constant-time and never chooses candidate order. These bounds describe
+collision/topology preparation; parsing and canonical-map cache construction add
+their separately bounded decoded-table work.
 
 Arithmetic admission runs before authoritative movement. The new untyped profile
 explicitly selects the earlier static-sector canonical field layout under a new
