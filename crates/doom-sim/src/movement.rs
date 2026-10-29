@@ -54,26 +54,39 @@ impl SpatialIndex {
 }
 
 pub(crate) fn validate_profile(world: &mut StaticWorld) -> Result<(), GeometryError> {
-    prepare_cells(world, true, 128, 128 * 4096)
+    prepare_cells(world, true, 128, 128 * 4096, 4096)
 }
 pub(crate) fn prepare_reference_profile(world: &mut StaticWorld) -> Result<(), GeometryError> {
-    prepare_cells(world, false, 128, 128 * 4096)
+    prepare_cells(world, false, 128, 128 * 4096, 4096)
 }
 pub(crate) fn prepare_map_scale(
     world: &mut StaticWorld,
     budget: usize,
 ) -> Result<(), GeometryError> {
-    prepare_cells(world, false, crate::line_work::MAX_LINES, budget)
+    prepare_cells(world, false, crate::line_work::MAX_LINES, budget, 4096)
+}
+pub(crate) fn prepare_map_extent(
+    world: &mut StaticWorld,
+    budget: usize,
+) -> Result<(), GeometryError> {
+    prepare_cells(
+        world,
+        false,
+        crate::line_work::MAX_LINES,
+        budget,
+        crate::MAP_EXTENT_MAX_CELLS,
+    )
 }
 fn prepare_cells(
     world: &mut StaticWorld,
     conservative: bool,
     max_lines: usize,
     budget: usize,
+    max_cells: usize,
 ) -> Result<(), GeometryError> {
     let map = world.map();
     let [w, h] = map.blockmap().dimensions().map(usize::from);
-    if world.lines.len() > max_lines || w * h > 4096 || map.blockmap().words().len() > 65536 {
+    if world.lines.len() > max_lines || w * h > max_cells || map.blockmap().words().len() > 65536 {
         return Err(GeometryError::Unsupported(if conservative {
             "M3a geometry work limit"
         } else {

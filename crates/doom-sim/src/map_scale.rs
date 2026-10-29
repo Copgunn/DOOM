@@ -65,6 +65,9 @@ impl Simulation {
         if self.profile != Profile::MapScale {
             return Err(GeometryError::Unsupported("requires map-scale profile").into());
         }
+        Ok(self.prepared_geometry_metrics())
+    }
+    pub(crate) fn prepared_geometry_metrics(&self) -> MapScaleMetrics {
         let cells = self
             .world
             .collision_cells
@@ -85,13 +88,13 @@ impl Simulation {
                 .expect("map-scale topology")
                 .storage_bytes()
             + self.sectors.capacity() * std::mem::size_of::<SectorState>();
-        Ok(MapScaleMetrics {
+        MapScaleMetrics {
             lines: self.world.lines.len(),
             sectors: self.sectors.len(),
             cells: cells.len(),
             prepared_references,
             prepared_storage_bytes,
-        })
+        }
     }
     pub(crate) fn preflight_map_scale_step(&self) -> Result<(), SimError> {
         for id in self.actor_order() {

@@ -61,6 +61,14 @@ impl Simulation {
     }
     /// Original read-only REJECT/BSP sight, independent of roster/RNG/presentation.
     pub fn check_sight(&self, observer: ActorId, target: ActorId) -> Result<SightResult, SimError> {
+        if self.profile == Profile::MapExtent {
+            return crate::sight::try_extent_query(
+                &self.world,
+                &self.sectors,
+                self.map_extent_sight_actor(observer)?,
+                self.map_extent_sight_actor(target)?,
+            );
+        }
         let (observer, target) = if self.profile == Profile::MapScale {
             (
                 self.map_scale_sight_actor(observer)?,

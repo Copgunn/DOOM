@@ -59,7 +59,12 @@ pub use lifecycle::{
 pub use spawning::MapSpawnReport;
 mod geometry;
 mod line_work;
+mod map_extent;
 mod map_scale;
+pub use map_extent::{
+    MAP_EXTENT_COLLISION_WORK, MAP_EXTENT_MAX_CELLS, MAP_EXTENT_PREPARATION_BYTES,
+    MAP_EXTENT_SIGHT_WORK, MapExtentLimits,
+};
 pub use map_scale::{
     MAP_SCALE_MAX_LINES, MAP_SCALE_MAX_REFERENCES, MAP_SCALE_MAX_SECTORS, MapScaleLimits,
     MapScaleMetrics,
@@ -122,6 +127,8 @@ pub enum Profile {
     DemonMapContext,
     /// M3f1 expanded bounded unbound static geometry and read-only sight, DSIM-v18.
     MapScale,
+    /// M3f2 checked expanded static extents and spatial work, DSIM-v19.
+    MapExtent,
 }
 
 impl Profile {
@@ -185,6 +192,7 @@ impl Profile {
         matches!(
             self,
             Self::MapScale
+                | Self::MapExtent
                 | Self::MultiSector
                 | Self::ActorStates
                 | Self::Combat
@@ -498,8 +506,12 @@ impl Simulation {
             movement::validate_profile(&mut world)?;
         }
         if profile.uses_sectors() {
-            if profile == Profile::MapScale {
-                movement::prepare_map_scale(&mut world, reference_budget)?;
+            if matches!(profile, Profile::MapScale | Profile::MapExtent) {
+                if profile == Profile::MapExtent {
+                    movement::prepare_map_extent(&mut world, reference_budget)?;
+                } else {
+                    movement::prepare_map_scale(&mut world, reference_budget)?;
+                }
                 world.topology = Some(multisector::Topology::new_bounded(
                     &world,
                     MAP_SCALE_MAX_SECTORS,
@@ -638,6 +650,9 @@ impl Simulation {
         if self.profile == Profile::MapScale {
             map_scale::bounded(target, 1024)?;
         }
+        if self.profile == Profile::MapExtent {
+            map_extent::position(target, map_extent::QUERY_UNITS)?;
+        }
         let actor = self.actors.get(id).ok_or(StoreError::InvalidHandle)?;
         Ok(multisector::check_move(
             (&self.world, &self.sectors),
@@ -751,7 +766,10 @@ impl Simulation {
         solidity: Solidity,
         vertical: VerticalSpec,
     ) -> Result<ActorId, SimError> {
-        if !matches!(self.profile, Profile::MultiSector | Profile::MapScale) {
+        if !matches!(
+            self.profile,
+            Profile::MultiSector | Profile::MapScale | Profile::MapExtent
+        ) {
             return Err(GeometryError::Unsupported(
                 "parameterized vertical spawn requires M3b profile",
             )
@@ -759,6 +777,9 @@ impl Simulation {
         }
         if self.profile == Profile::MapScale {
             map_scale::spawn_bounds(spec, vertical)?;
+        }
+        if self.profile == Profile::MapExtent {
+            map_extent::spawn_bounds(spec, vertical)?;
         }
         let location = self.world.locate_validated(spec.position);
         let sector = self.sectors[usize::from(location.sector)];
@@ -796,7 +817,7 @@ impl Simulation {
     }
     /// Changes M3b vertical momentum between tics; invalid/profile errors preserve state.
     pub fn set_vertical_momentum(&mut self, id: ActorId, momentum: Fixed) -> Result<(), SimError> {
-        if self.profile == Profile::MapScale {
+        if matches!(self.profile, Profile::MapScale | Profile::MapExtent) {
             map_scale::bounded([momentum], 64)?;
         }
         if !self.profile.uses_sectors() {
@@ -835,7 +856,7 @@ impl Simulation {
     }
     /// Changes explicit momentum between tics; next update clamps it like the reference.
     pub fn set_momentum(&mut self, id: ActorId, momentum: [Fixed; 2]) -> Result<(), SimError> {
-        if self.profile == Profile::MapScale {
+        if matches!(self.profile, Profile::MapScale | Profile::MapExtent) {
             map_scale::bounded(momentum, 64)?;
         }
         if self.actors.is_pending(id) != Some(false) {
@@ -870,7 +891,7 @@ impl Simulation {
     /// M2 non-player response or M3a player XY response, according to the profile.
     /// This does not implement full type/state-driven player spawning.
     pub fn bind_player(&mut self, slot: usize, id: ActorId) -> Result<(), SimError> {
-        if self.profile == Profile::MapScale {
+        if matches!(self.profile, Profile::MapScale | Profile::MapExtent) {
             return Err(GeometryError::Unsupported("map-scale player binding").into());
         }
         if self.profile.uses_perception() {
@@ -940,6 +961,9 @@ impl Simulation {
         };
         if self.profile == Profile::MapScale {
             self.preflight_map_scale_step()?;
+        }
+        if self.profile == Profile::MapExtent {
+            self.preflight_map_extent_step()?;
         }
         self.preflight_actor_step()?;
         self.events = std::mem::take(&mut self.pending);
