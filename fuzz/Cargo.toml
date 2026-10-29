@@ -146,3 +146,10 @@ path = "fuzz_targets/map_extent.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "demon_expanded_map"
+path = "fuzz_targets/demon_expanded_map.rs"
+test = false
+doc = false
+bench = false

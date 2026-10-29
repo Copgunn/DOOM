@@ -25,3 +25,6 @@
 
 # Public lifecycle seed recipe is documented; mutations stay local.
 /corpus/demon_lifecycle/
+
+# New public composition seeds are reproducible from tools; mutations stay local.
+/corpus/demon_expanded_map/
