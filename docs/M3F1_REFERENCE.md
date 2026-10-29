@@ -84,9 +84,11 @@ Inspected [parser](../crates/doom-map/src/parse.rs),
 ## Implementation decision and safety boundary
 
 Introduce a separate opt-in geometry profile rather than changing historical
-admission. Initial target: **512 lines and 256 static sectors**, retaining existing
+admission. Initial target: **1,024 lines and 256 static sectors**, retaining existing
 cell/raw-word/node/leaf and arithmetic ceilings. This covers required 128/129/256
-boundaries while allowing a 256-sector strip with more than 256 boundary lines.
+boundaries while allowing a 256-sector strip with more than 256 boundary lines. A closed 256-sector strip needs 769 linedefs (separate top/bottom
+walls, portals and end walls), so a 512-line ceiling would not admit that fixture;
+1,024 allows this coherent topology plus a tested line-capacity boundary.
 It is a bounded implementation decision, not an original-format ceiling. Require
 source comparisons at the new ceiling and rejected ceiling-plus-one cases before
 claiming support. A prepared-reference budget of 262,144 bounds shared-list
