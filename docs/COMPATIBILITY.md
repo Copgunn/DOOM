@@ -43,6 +43,7 @@ Historical profile behavior and DSIM bytes remain frozen. New behavior is opt-in
 | 15 | Original two-state stand and eight-state run closure |
 | 16 | Bounded classic Demon THING spawning, retaining the prior fixture flags |
 | 17 | Map kill totals, original COUNTKILL flags and bounded death-credit context |
+| 18 | Expanded bounded static geometry, unbound XY/Z and read-only original sight |
 
 These are separate contracts, not modes that automatically admit all original
 actors or map features. Detailed older limits remain available in the complete
@@ -130,8 +131,8 @@ all dependent representations and services.
 
 | Area | Current bound | Implementation |
 | --- | --- | --- |
-| Collision preparation | 128 lines; 4,096 BLOCKMAP cells; 65,536 BLOCKMAP words | [prepare_cells](../crates/doom-sim/src/movement.rs) |
-| Static topology | 128 sectors; 4,096 subsectors; 4,096 nodes | [Topology::new](../crates/doom-sim/src/multisector.rs) |
+| Historical collision profiles 2–17 | 128 lines; 4,096 BLOCKMAP cells; 65,536 BLOCKMAP words | [prepare_cells](../crates/doom-sim/src/movement.rs) |
+| Historical topology profiles 3–17 | 128 sectors; 4,096 subsectors; 4,096 nodes | [Topology::new](../crates/doom-sim/src/multisector.rs) |
 | Sight-supported geometry | Absolute vertex coordinates, node origins/deltas and sector heights at most 512 map units | [validate_map](../crates/doom-sim/src/sight.rs) |
 | Map Demon setup | 256 THINGS, four native Demon test actors, 64 total actor slots | [map spawning](../crates/doom-sim/src/demon_map_spawn.rs), [constructor](../crates/doom-sim/src/demon_lifecycle.rs) |
 | Earlier general actor-state setup | 4,096 THINGS and 1,024 actor slots | [actor-state constructor](../crates/doom-sim/src/spawning.rs) |
@@ -141,8 +142,8 @@ all dependent representations and services.
 For example, collision and hitscan services contain fixed line-work buffers tied
 to the line bound; raising only the rejection constant would not be sufficient.
 The [future map-scale milestone](ROADMAP.md#map-scale-limits-and-real-map-readiness)
-plans a separately validated audit and expansion. This inventory does not change
-runtime capacities.
+describes the broader direction. The separate map-scale configuration below expands
+its declared slice while retaining historical admission.
 
 ### 4. Performance and traversal work limits
 
@@ -157,6 +158,47 @@ Some work bounds also preserve source semantics: the hitscan cell loop follows
 vanilla behavior. Other bounds prevent pathological CPU/memory growth. The future
 inventory must distinguish these reasons rather than replace every value with a
 large constant. Keep deterministic traversal and checked resource use throughout.
+
+## Map-scale profile
+
+`Simulation::map_scale` / `with_map_scale_limits` select profile18, not a Demon or
+player profile. Parsing capacities/formats are unchanged. The new configuration
+supports at most **1,024 linedefs, 256 static sectors, 64 unbound actor slots,
+4,096 BLOCKMAP cells, 65,536 raw BLOCKMAP words, and 262,144 compiled first-occurrence
+references summed over cells**. Shared lists count once per cell in the last budget.
+Nodes and subsectors remain at most 4,096 each. Smaller actor/reference budgets
+are available through `MapScaleLimits`; higher budgets reject.
+
+Vertex coordinates, node origins/deltas, sector heights and BLOCKMAP origins stay within
+512 absolute map units. Original sight expansion remains bounded at 8,192 work
+units, including repeated node children and segs. Spawn positions/absolute Z and
+current positions/Z before a step stay within 994 units; XY/Z momentum is at most
+64. Source XY movement clamps to 30. Read-only destination/sight actor coordinates
+are bounded at 1,024 units. A source step can leave the 994-unit step-admission
+margin; the next step then rejects atomically. This is an explicit conservative
+Rust boundary, not unrestricted off-map movement compatibility.
+
+Use parameterized unbound bodies and existing XY/Z, gravity, openings, collision,
+sector/BLOCKMAP head insertion and thinker storage. THINGS remain parsed data.
+Read-only `check_sight` preserves REJECT indexing and source BSP/seg ordering without
+admitting perception rosters or AI. Unsupported player binding, typed spawning,
+map spawning, damage/hitscan, noise/Look/Chase, map specials and dynamic sectors
+reject; no unsupported callback becomes a no-op. Real player, Demon/Spectre and
+whole-map/game admission are not implied.
+
+Source BLOCKMAP words, cell traversal and first encounters determine candidates.
+Lists are never rebuilt or globally sorted by line ID. Recoverable rejected setup,
+controls, identity queries and stepping preserve canonical state. Allocation for
+new geometry preparation is fallible and bounded; existing runtime diagnostic
+allocation exhaustion retains the process-level Rust policy described by `step`.
+The source 64-cell slide/hitscan traversal and 128-intercept restriction are not
+expanded or admitted by this configuration. Historical constructors retain their
+old capacities and DSIM expectations.
+
+[Source findings](M3F1_REFERENCE.md) explain the representation and adapter;
+[measured evidence](validation/M3F1.md) separates original-C equivalence,
+independent DSIM consistency, safety tests and host measurements. This supports
+larger controlled classic fixtures, not all real DOOM maps or vanilla demos.
 
 ## Demon runtime restrictions
 

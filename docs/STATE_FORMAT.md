@@ -1,6 +1,6 @@
-# Canonical diagnostic state format: DSIM versions 1–17
+# Canonical diagnostic state format: DSIM versions 1–18
 
-This is a diagnostic/replay comparison format for explicit M2 through M3d3i profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3f1 profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -781,3 +781,31 @@ The [independent encoder](../tools/reference/m3d3j_snapshot_goldens.py) derives
 complete bytes/digests from C rows and documented schema, never Rust output.
 See [source findings](M3D3J_REFERENCE.md), [validation](validation/M3D3J.md) and
 [reproduction](TESTING.md).
+
+## DSIM-v18 — Map Scale Foundations
+
+Profile18 deliberately composes the **DSIM-v3 untyped static-sector field layout**,
+with header version and `profile` field both u32 value18. It does not inherit typed
+lifecycle fields merely because its version is numerically higher. All v1–v17
+encoders, fixtures, helpers and encoded meanings remain unchanged.
+
+Field order, integer widths and event tags are those of v3: tic/rate/profile/pause,
+owned RNG indexes, store limit/slots/list links and thinker order, untyped physical
+actor fields and flags, XY/Z/momentum/constraints/location, spatial link order,
+BLOCKMAP policy/omission diagnostic, indexed runtime sector heights/head lists,
+four unbound command slots, ordered last/pending events, then original map tables
+and source BLOCKMAP words/ranges. No registry, actor-state, perception roster,
+weapon or map-statistics fields are added. Existing count/index widths cover the
+[declared capacities](COMPATIBILITY.md#map-scale-profile) without widening classic records.
+
+Prepared-list caches, membership words, setup reference budget, timing measurements
+and derived storage metrics are excluded. The map is immutable; a different
+successful setup reference budget cannot affect later behavior. Actor slot limits
+remain encoded by the existing `store.max_slots` field.
+
+The [independent encoder](../tools/reference/m3f1_snapshot_goldens.py) consumes
+original-C traces/public fixture inputs and this schema, never Rust output. The
+[record](validation/M3F1.md) identifies full-byte and per-tic coverage and its
+explicit exclusions. Full fixtures diagnose the first differing named field;
+digests are noncryptographic diagnostics, not source-equivalence proof. This is
+neither an original savegame nor a vanilla demo format.

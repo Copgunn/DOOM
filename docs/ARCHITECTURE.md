@@ -69,6 +69,44 @@ versioned schemas. Historical profiles remain frozen. Source-C equivalence,
 independent encoding and Rust-specific safety tests serve different purposes;
 see [validation](VALIDATION.md).
 
+## Bounded larger geometry
+
+The opt-in map-scale configuration reuses `StaticWorld`, sector state, the actor
+store and existing movement/sight services. Its capacities and excluded gameplay
+are owned by [COMPATIBILITY](COMPATIBILITY.md#map-scale-profile).
+
+Preparation compiles each supplied cell into a vector of linedefs in original
+first-occurrence order. Reverse word-position lookup handles shared lists/suffixes
+without repeated raw scans. Sorting preparation metadata by original word position
+does not sort gameplay candidates by line ID. Checked total-reference accounting
+and fallible reservations precede installation; source BLOCKMAP is never rebuilt.
+
+Preparation membership is a multiword bit matrix sized from actual cells and
+lines. Query-local deduplication uses a bounded multiword stack set; membership
+bits never choose traversal order. Topology retains source first-seg sector
+ownership and indexed sector vectors. The existing spatial index preserves
+head insertion independently from thinker order.
+
+Preparation has separate storage and CPU bounds. Let L be linedefs, C cells, W raw
+words, K distinct list starts, T terminators and E compiled references. Reverse
+lookup, line-marker resets, per-start ordering and coverage diagnostics take
+`O(W log C + T*L + K*L log L + E + L*C)` work in the conservative worst case.
+Temporary membership/storage is `O(C + L + E + C*ceil(L/64))`. The historical
+algorithm already reset/scanned its fixed line table; increasing the admitted line
+count raises that work ceiling. All dimensions are separately capped in
+[COMPATIBILITY](COMPATIBILITY.md#map-scale-profile). The reference budget bounds
+list expansion/copying, while raw-word and line caps also bound unused-terminator
+work. Avoid treating one budget as a bound on every stage. A query's membership
+check is constant-time and never chooses candidate order. These bounds describe
+collision/topology preparation; parsing and canonical-map cache construction add
+their separately bounded decoded-table work.
+
+Arithmetic admission runs before authoritative movement. The new untyped profile
+explicitly selects the earlier static-sector canonical field layout under a new
+version tag; numeric version order cannot implicitly enable typed actors. Immutable
+preparation budgets and derived storage metrics are not redundant persistent actor
+state. Snapshot fields remain defined only in [STATE_FORMAT](STATE_FORMAT.md).
+
 ## Rendering direction
 
 A custom Vulkan-first presentation architecture is planned. No renderer or

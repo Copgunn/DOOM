@@ -47,7 +47,7 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2, 7=M3d2b, 8=M3d3a, 9=M3d3b, 10=M3d3c, 11=M3d3d, 12=M3d3e, 13=M3d3f, 14=M3d3g, 15=M3d3h, 16=M3d3i, 17=M3d3j.
+    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2, 7=M3d2b, 8=M3d3a, 9=M3d3b, 10=M3d3c, 11=M3d3d, 12=M3d3e, 13=M3d3f, 14=M3d3g, 15=M3d3h, 16=M3d3i, 17=M3d3j, 18=M3f1.
     pub const fn version(&self) -> u32 {
         self.version
     }
@@ -411,13 +411,16 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::DemonStandRun => 15,
         crate::Profile::DemonMapSpawn => 16,
         crate::Profile::DemonMapContext => 17,
+        crate::Profile::MapScale => 18,
     };
+    // Version18 explicitly composes the untyped static-sector field layout.
+    let layout = if version == 18 { 3 } else { version };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
     let [p, m] = sim.rng.indices();
     field(&mut fields, "rng.gameplay", [p]);
     field(&mut fields, "rng.miscellaneous", [m]);
-    if version >= 4 {
+    if layout >= 4 {
         field(
             &mut fields,
             "actors.options",
@@ -508,7 +511,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 a.spec.angle.to_le_bytes(),
             );
             field(&mut fields, format!("{prefix}.lastlook"), [a.lastlook]);
-            if version >= 2 {
+            if layout >= 2 {
                 field(
                     &mut fields,
                     format!("{prefix}.flags"),
@@ -517,17 +520,17 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                         .to_le_bytes(),
                 );
             }
-            if version >= 4 {
+            if layout >= 4 {
                 life_fields(&mut fields, &prefix, a.life.expect("typed profile"));
             }
-            if version >= 5 {
+            if layout >= 5 {
                 field(
                     &mut fields,
                     format!("{prefix}.threshold"),
                     a.life.unwrap().threshold.to_le_bytes(),
                 );
             }
-            if version >= 9 {
+            if layout >= 9 {
                 field(
                     &mut fields,
                     format!("{prefix}.movedir"),
@@ -539,7 +542,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                     a.life.unwrap().movecount.to_le_bytes(),
                 );
             }
-            if version >= 3 {
+            if layout >= 3 {
                 let location = a.location.expect("M3b actor location");
                 field(
                     &mut fields,
@@ -559,7 +562,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             }
         }
     }
-    if version >= 2 {
+    if layout >= 2 {
         field(
             &mut fields,
             "spatial.link_order",
@@ -571,7 +574,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .collect::<Vec<_>>(),
         );
     }
-    if version >= 3 {
+    if layout >= 3 {
         field(&mut fields, "world.blockmap_policy", [1]);
         field(
             &mut fields,
@@ -617,7 +620,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .flat_map(id)
                 .collect::<Vec<_>>();
             field(&mut fields, format!("sector.{i}.actors"), order);
-            if matches!(version, 6 | 8..=17) {
+            if matches!(layout, 6 | 8..=17) {
                 field(
                     &mut fields,
                     format!("sector.{i}.soundtarget"),
@@ -646,7 +649,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(version, 8..=17) {
+    if matches!(layout, 8..=17) {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,
@@ -665,7 +668,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             );
         }
     }
-    if version == 6 {
+    if layout == 6 {
         weapon_fields(&mut fields, sim.weapon_player.as_ref());
     }
     for (prefix, events) in [

@@ -6,6 +6,10 @@ use std::{error::Error, fmt};
 /// Geometry/profile validation failure.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GeometryError {
+    /// Bounded geometry storage could not be reserved.
+    Allocation,
+    /// Explicit prepared-reference work budget exceeded.
+    WorkLimit,
     /// The selected simulation profile does not implement this feature.
     Unsupported(&'static str),
     /// A reference line delta or sector span is not representable as signed i32.
@@ -193,7 +197,7 @@ impl StaticWorld {
         {
             return Err(GeometryError::CoordinateOverflow);
         }
-        let mut lines = Vec::new();
+        let mut lines = crate::line_work::reserved(map.linedefs().len())?;
         for line in map.linedefs() {
             let a = map
                 .vertices()

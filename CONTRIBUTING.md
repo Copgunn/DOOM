@@ -45,6 +45,9 @@ Do not merge without explicit owner authorization, enable auto-merge, force-push
 shared history or remove active branches. An implementation PR stays open for its
 own owner review. Agent-specific enforcement rules are in [AGENTS.md](AGENTS.md).
 
+Documentation accuracy, completeness and readability are mandatory review gates
+alongside source correctness and tests.
+
 Before changing documentation, use the [authority map](docs/README.md#documentation-authority)
 to find the document responsible for that fact. Update it and link from other
 pages; do not repeat milestone status, commit hashes, test totals or implementation logs.

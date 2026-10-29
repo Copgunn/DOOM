@@ -132,3 +132,10 @@ path = "fuzz_targets/demon_map_context.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "map_scale"
+path = "fuzz_targets/map_scale.rs"
+test = false
+doc = false
+bench = false
