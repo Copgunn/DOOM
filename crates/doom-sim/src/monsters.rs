@@ -763,6 +763,7 @@ impl Simulation {
                     | Profile::DemonMelee
                     | Profile::DemonLifecycle
                     | Profile::DemonStandRun
+                    | Profile::DemonMapSpawn
             )
         {
             return Err(MonsterError::Definition.into());

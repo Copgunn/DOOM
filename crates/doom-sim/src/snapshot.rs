@@ -47,7 +47,7 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2, 7=M3d2b, 8=M3d3a, 9=M3d3b, 10=M3d3c, 11=M3d3d, 12=M3d3e, 13=M3d3f, 14=M3d3g, 15=M3d3h.
+    /// Canonical schema version: 1=M2, 2=M3a, 3=M3b, 4=M3c, 5=M3d1, 6=M3d2, 7=M3d2b, 8=M3d3a, 9=M3d3b, 10=M3d3c, 11=M3d3d, 12=M3d3e, 13=M3d3f, 14=M3d3g, 15=M3d3h, 16=M3d3i.
     pub const fn version(&self) -> u32 {
         self.version
     }
@@ -400,6 +400,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::DemonMelee => 13,
         crate::Profile::DemonLifecycle => 14,
         crate::Profile::DemonStandRun => 15,
+        crate::Profile::DemonMapSpawn => 16,
     };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
@@ -593,7 +594,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .flat_map(id)
                 .collect::<Vec<_>>();
             field(&mut fields, format!("sector.{i}.actors"), order);
-            if matches!(version, 6 | 8..=15) {
+            if matches!(version, 6 | 8..=16) {
                 field(
                     &mut fields,
                     format!("sector.{i}.soundtarget"),
@@ -622,7 +623,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(version, 8..=15) {
+    if matches!(version, 8..=16) {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,

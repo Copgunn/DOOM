@@ -163,7 +163,7 @@ impl Simulation {
             && actor.life.unwrap().actor_type.0 == 136
             && (actor.life.unwrap().health <= 0
                 || !([1, 2, 4, 5, 6].contains(&state.0)
-                    || self.profile == Profile::DemonStandRun
+                    || self.profile.uses_demon_stand_run()
                         && (state.0 == 3 || (15..=21).contains(&state.0))))
         {
             return Err(MonsterError::Definition.into());

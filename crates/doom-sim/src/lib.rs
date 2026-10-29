@@ -23,7 +23,9 @@ pub use direction::MoveDirection;
 mod chaingunner;
 mod demon;
 mod demon_lifecycle;
+mod demon_map_spawn;
 mod demon_stand_run;
+pub use demon_map_spawn::{MAX_DEMON_MAP_THINGS, MAX_MAP_DEMONS, MapSpawnError};
 mod monsters;
 mod shotgunner;
 pub use chaingunner::{RefireDecision, RefireEvent};
@@ -106,16 +108,24 @@ pub enum Profile {
     DemonLifecycle,
     /// M3d3h original normal Demon stand/run closure, DSIM-v15.
     DemonStandRun,
+    /// M3d3i bounded classic THING Demon admission, DSIM-v16.
+    DemonMapSpawn,
 }
 
 impl Profile {
+    pub(crate) const fn uses_demon_stand_run(self) -> bool {
+        matches!(self, Self::DemonStandRun | Self::DemonMapSpawn)
+    }
     pub(crate) const fn uses_demon_lifecycle(self) -> bool {
-        matches!(self, Self::DemonLifecycle | Self::DemonStandRun)
+        matches!(
+            self,
+            Self::DemonLifecycle | Self::DemonStandRun | Self::DemonMapSpawn
+        )
     }
     pub(crate) const fn uses_demon(self) -> bool {
         matches!(
             self,
-            Self::DemonMelee | Self::DemonLifecycle | Self::DemonStandRun
+            Self::DemonMelee | Self::DemonLifecycle | Self::DemonStandRun | Self::DemonMapSpawn
         )
     }
     pub(crate) const fn uses_monsters(self) -> bool {
@@ -127,6 +137,7 @@ impl Profile {
                 | Self::DemonMelee
                 | Self::DemonLifecycle
                 | Self::DemonStandRun
+                | Self::DemonMapSpawn
         )
     }
     pub(crate) const fn uses_perception(self) -> bool {
@@ -140,6 +151,7 @@ impl Profile {
                 | Self::DemonMelee
                 | Self::DemonLifecycle
                 | Self::DemonStandRun
+                | Self::DemonMapSpawn
         )
     }
     pub(crate) fn uses_sectors(self) -> bool {
@@ -158,6 +170,7 @@ impl Profile {
                 | Self::DemonMelee
                 | Self::DemonLifecycle
                 | Self::DemonStandRun
+                | Self::DemonMapSpawn
         )
     }
 }
@@ -181,6 +194,8 @@ pub enum SimError {
     Pursuit(PursuitError),
     /// Monster admission, ownership or attack preflight rejection.
     Monster(MonsterError),
+    /// Bounded classic THING spawning or map-Demon admission failure.
+    MapSpawn(MapSpawnError),
     /// Unsupported or invalid map/profile.
     Geometry(GeometryError),
     /// Input slot is outside 0..4 or duplicates an existing binding.
@@ -196,6 +211,11 @@ impl fmt::Display for SimError {
     }
 }
 impl Error for SimError {}
+impl From<MapSpawnError> for SimError {
+    fn from(e: MapSpawnError) -> Self {
+        Self::MapSpawn(e)
+    }
+}
 impl From<MonsterError> for SimError {
     fn from(e: MonsterError) -> Self {
         Self::Monster(e)
