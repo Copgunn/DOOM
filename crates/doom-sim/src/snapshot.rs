@@ -414,7 +414,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::MapScale => 18,
         crate::Profile::MapExtent => 19,
     };
-    // Version18 explicitly composes the untyped static-sector field layout.
+    // Versions18/19 explicitly compose the untyped static-sector field layout.
     let layout = if matches!(version, 18 | 19) {
         3
     } else {

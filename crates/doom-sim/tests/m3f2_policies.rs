@@ -193,9 +193,9 @@ fn full_height_and_negative_floors_are_bounded_independently_of_xy() {
         .unwrap();
     falling.step(commands()).unwrap();
     assert_eq!(falling.actor(id).unwrap().vertical_momentum(), u(-65));
-    let before = falling.snapshot();
+    let falling_before = falling.snapshot();
     assert!(falling.step(commands()).is_err());
-    assert_eq!(before, falling.snapshot());
+    assert_eq!(falling_before, falling.snapshot());
     assert!(
         sim.spawn(ActorSpec {
             height: Fixed::from_bits(2048 * 65536 + 1),
