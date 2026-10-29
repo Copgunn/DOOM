@@ -2,7 +2,9 @@
 
 Rust DOOM separates validated input, owned authoritative simulation and eventual
 presentation. Compatibility comes from original-source investigation and independent
-comparisons within explicit profiles, rather than mechanically copying C globals.
+comparisons within explicitly selected simulation configurations, rather than
+mechanically copying C globals. The [glossary](README.md#short-glossary) explains
+terms such as profile, fixture and admission.
 
 ## Crate boundaries
 
@@ -21,9 +23,9 @@ state. Each simulation owns its RNG, actors, counters and ordered observations.
 
 Simulation advances exactly one logical tic per successful step at 35 tics/second.
 There is no wall-clock pacing in authoritative gameplay. Fixed-point operations
-and BAM angles use explicit integer semantics; source-defined wrapping and Rust
-checked rejection are documented separately. Gameplay and miscellaneous RNG streams
-have independent owned indexes. Presentation cannot consume gameplay draws.
+and binary angle measurements (BAM) use explicit integer semantics. Source-defined
+wrapping and checked Rust rejection are documented separately. Gameplay and
+miscellaneous RNG streams have independent owned indexes. Presentation cannot consume gameplay draws.
 
 ## Actors, lifecycle and ordering
 
@@ -41,21 +43,21 @@ and thinker identity; completion of its animation does not imply retirement.
 
 ## Map context
 
-Profile17 composes the profile16 THING path with source `MF_COUNTKILL`, initialized
-level totals and the original single-player unbound-source kill-credit branch.
-Available map kills and credited deaths are separate signed counters. Spawn totals
-change after source timer RNG; death credit follows corpse initialization and
-precedes death-state entry. Removal does not decrement available kills.
+Each simulation owns its level statistics alongside actors and RNG. Map placement
+and shared damage/lifecycle services update those counters; there is no separate
+statistics world, actor store or scheduler. Available map kills and credited deaths
+have distinct ownership and meaning.
 
-Fresh restart reuses the same validated constructor and batch, creates a new actor
-store, clears level statistics/tic and retains RNG state as source P_SetupLevel
-does. Old instances are unchanged; handles remain scoped to their own simulation.
-It does not implement complete game reload, player starts or intermission.
+Fresh restart builds a new simulation through the existing constructor and THING
+batch, keeping the old instance intact on failure. Handles remain scoped to their
+own simulation. [COMPATIBILITY](COMPATIBILITY.md) defines the supported reset and
+statistics behavior; the [source investigation](M3D3J_REFERENCE.md) explains exact
+chronology, and [STATE_FORMAT](STATE_FORMAT.md) owns the encoding.
 
 ## Validation and failure atomicity
 
-Immutable map/registry data and bounded plans validate roles, references, capacity,
-action closure, arithmetic and source dependencies before authoritative mutation.
+Immutable map/registry data and small, bounded plans validate roles, references,
+capacity, reachable actions, arithmetic and source dependencies before changing state.
 Damage uses one shared plan/execution service. Multi-Demon melee evaluates the
 current body health and RNG after earlier thinkers; it does not reuse stale plans.
 There is no full-simulation clone per tic. Setup may construct a bounded fresh

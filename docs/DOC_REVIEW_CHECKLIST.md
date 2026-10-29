@@ -22,20 +22,13 @@ Return to the [documentation index](README.md) for the file map.
 
 ## 2. Find the right source of truth
 
-| Question | Primary document |
-| --- | --- |
-| What is implemented on this branch? | [README](../README.md), with source and tests checked |
-| Is a milestone accepted or merged? | [ROADMAP](ROADMAP.md), [VALIDATION](VALIDATION.md) and the live PR |
-| What are the supported behaviors and limits? | [COMPATIBILITY](COMPATIBILITY.md) |
-| Why was a design chosen? | [ARCHITECTURE](ARCHITECTURE.md) |
-| How do I reproduce a check? | [TESTING](TESTING.md) and [reference tooling](../tools/reference/README.md) |
-| What exactly is serialized? | [STATE_FORMAT](STATE_FORMAT.md) |
-| Which original source functions were checked? | The corresponding milestone REFERENCE note |
-| What rules govern agents and contributors? | [AGENTS](../AGENTS.md) and [CONTRIBUTING](../CONTRIBUTING.md) |
-
-Avoid copying live CI status, test counts or the latest commit ID into a
-navigation page, because they become stale quickly. For an evidence record,
-however, include the exact immutable commit and the completed run.
+- [ ] Identify the authoritative home in the [documentation authority map](README.md#documentation-authority).
+- [ ] Update that home and link from other pages; do not create duplicate status
+      tables, test-count lists, schema definitions or implementation logs.
+- [ ] Keep current milestone summaries in ROADMAP, detailed test observations in
+      milestone evidence records, and exact review commits/CI/history in GitHub.
+- [ ] Treat frozen archives and dated source observations as historical evidence,
+      not current status. Do not rewrite them to match a later milestone.
 
 ## 3. Link and text quality
 
@@ -64,9 +57,12 @@ however, include the exact immutable commit and the completed run.
       settings accurately; disabled leak detection is not LeakSanitizer coverage.
 - [ ] Verify exact final-head and post-merge CI **when claiming** they passed.
       Linux reference generation and other OS CI steps may differ.
-- [ ] Record the reviewed SHA and CI run in validation *after* the run succeeds.
-      A commit cannot truthfully embed its own final SHA; use a subsequent
-      documentation correction and fresh exact-head validation if required.
+- [ ] Link exact reviewed commits and completed CI in the PR/Actions evidence.
+      Keep methodology in VALIDATION and measured test results in the milestone
+      record. Do not create another correction commit solely to copy live CI data.
+- [ ] For a stacked PR, verify the base/head and changed-file scope. If existing
+      workflow filters exclude that base, report CI as unavailable for the stack;
+      retarget and run fresh exact-head validation after the prerequisite merges.
 - [ ] Preserve historical DSIM versions, original-C fixtures and their
       provenance. Do not silently regenerate expected data from Rust output.
 

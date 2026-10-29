@@ -34,8 +34,8 @@ On a supported GNU C host (Linux, 32-bit int/fixed/angle, 16-bit short,
 python3 tools/reference/check_references.py
 ```
 
-This runs all 17 historical/new generator and independent-encoder pairs with
-`--check`. It does not regenerate expectations to match Rust. For the new slice:
+This runs all committed generator and independent-encoder pairs with `--check`.
+It does not regenerate expectations to match Rust. For the map-context slice:
 
 ```sh
 python3 tools/reference/generate_m3d3j.py --check
@@ -57,7 +57,7 @@ cargo run -p doom-sim --example demon_map_context --locked
 python3 tools/reference/check_examples.py
 ```
 
-The helper compares debug/release output for all 17 simulation examples. They span
+The helper compares debug/release output for all committed simulation examples. They span
 movement, collision, sectors, lifecycle, combat, weapons/projectiles, perception,
 pursuit, selected attacks and Demon gameplay/map context. Assertions use committed
 original-C evidence and independent snapshots where applicable. Earlier examples
@@ -72,8 +72,8 @@ cargo +nightly fuzz build --sanitizer address
 cargo +nightly fuzz run demon_map_context --sanitizer address -- -runs=4096 -max_len=65 -timeout=20 -rss_limit_mb=2048
 ```
 
-The build retains all 15 previous targets and adds the bounded map-context target.
-It mutates public synthetic maps and limits operations/tics, testing roles,
+The build covers all committed fuzz targets. The map-context target mutates public
+synthetic maps and limits operations/tics, testing roles,
 identity, damage, reset, capacity and complete-state rejection. Local sanitizer
 results and exact model/seed/options are recorded in [M3d3j evidence](validation/M3D3J.md).
 If your environment requires `ASAN_OPTIONS=detect_leaks=0`, disclose it; that
@@ -94,3 +94,13 @@ see [ASSETS](ASSETS.md) without accessing such assets for public validation.
 
 For earlier per-profile procedures and qualified historical sanitizer observations,
 read the [complete testing archive](validation/archive/pre-m3d3j-testing.md).
+
+## Stacked documentation PRs
+
+The existing [workflow](../.github/workflows/rust.yml) automatically validates PRs
+targeting master; its branch filter does not run on a PR targeting a feature
+branch. Keep such a documentation stack draft and report its exact-head CI as
+unavailable. A passing prerequisite run is evidence for that base commit, not the
+new docs head. After the prerequisite merges, retarget to master, recheck the
+resulting diff/base and run fresh required local and exact-head platform checks.
+Do not change workflow filters or create a duplicate PR to work around this.

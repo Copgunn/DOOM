@@ -2,7 +2,7 @@
 
 An independent Rust-native rewrite of the original DOOM engine, focused on
 deterministic simulation and source-compatible gameplay. Development is early:
-the engine runs bounded headless gameplay profiles, not a complete playable game.
+the engine runs limited simulation examples without graphics, not a complete game.
 
 > **Machine-Maintained, Human-Directed Project**
 >
@@ -18,15 +18,16 @@ the engine runs bounded headless gameplay profiles, not a complete playable game
 ## Status
 
 The Rust workspace provides WAD and classic-map parsing, fixed-point arithmetic,
-original RNG streams, ordered actors and several explicitly bounded simulation
-profiles. The Demon profile now covers synthetic map spawning, stand/run,
+original random-number streams, ordered actors and explicitly selected simulation
+configurations. The Demon example covers synthetic map spawning, stand/run,
 perception, pursuit, melee, pain, death, persistent corpses and map kill totals.
-It still uses labeled native actor/state aliases and restricted game context.
+It still adapts some original actor/state identifiers and restricts game context.
 See [compatibility](docs/COMPATIBILITY.md) for the exact boundary.
 
 ## What works
 
-- Validated WAD directories and classic map records, including BSP and BLOCKMAP.
+- Validated WAD directories and classic maps, including their spatial partitions
+  (BSP) and collision grids (BLOCKMAP).
 - Deterministic 35 Hz headless simulation with explicit actor identities.
 - Static-sector movement, collision, actor states and selected combat services.
 - Original-C comparisons, independently encoded canonical snapshots, and safety
@@ -36,7 +37,7 @@ See [compatibility](docs/COMPATIBILITY.md) for the exact boundary.
 ## What does not work yet
 
 There is no game renderer, audio playback, complete player gameplay, general map
-loading, full monster admission, multiplayer or verified vanilla demo playback.
+loading, complete original monster support, multiplayer or verified vanilla demos.
 Doors, dynamic sectors, resurrection and Nightmare respawning are excluded.
 A custom Vulkan-first rendering architecture is a future direction; rendering
 runtime is not implemented. The [roadmap](docs/ROADMAP.md) describes dependencies.
@@ -75,8 +76,8 @@ outcomes. Read the [architecture guide](docs/ARCHITECTURE.md) and
 Original id Software Linux DOOM 1.10 is the behavioral authority. Matching an
 isolated source slice does not establish whole-game or DOS demo compatibility.
 The [validation guide](docs/VALIDATION.md) distinguishes original-C evidence,
-independent DSIM snapshots and Rust-specific safety policies. DSIM is a project
-diagnostic format, not an original demo or savegame. Detailed historical evidence
+independent DSIM simulation snapshots and Rust-specific safety policies. DSIM is
+a project diagnostic format, not an original demo or savegame. Historical evidence
 remains available in the [archive](docs/validation/archive/README.md).
 
 ## Contributing

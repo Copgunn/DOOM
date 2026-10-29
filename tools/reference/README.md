@@ -5,21 +5,11 @@ Synthetic adapters supply explicit geometry, actors and unsupported-service
 boundaries; they do not constitute original whole-game execution. Compiled
 function inventory is not branch coverage.
 
-## Reproduce
+## Reproduction and ownership
 
-From the repository root on a supported GNU C/Linux host:
-
-```sh
-python3 tools/reference/check_references.py
-```
-
-This checks all 17 generator/independent-encoder pairs without modifying fixtures.
-To reproduce the map-context slice alone:
-
-```sh
-python3 tools/reference/generate_m3d3j.py --check
-python3 tools/reference/m3d3j_snapshot_goldens.py --check
-```
+[TESTING](../../docs/TESTING.md#original-c-and-independent-canonical-bytes) owns
+the commands and host requirements for reproducing all source/encoder pairs or a
+selected slice. This guide describes harness organization and adapter assumptions.
 
 Generators read original C/public inputs, never Rust output. A deliberate fixture
 regeneration omits `--check`; review the source, adapter and output differences
@@ -30,7 +20,8 @@ and fixtures. [Testing](../../docs/TESTING.md) lists Rust comparisons and exampl
 
 - `generate.py` / `snapshot_goldens.py`: original foundations and DSIM-v1.
 - `generate_<milestone>.py` / `<milestone>_snapshot_goldens.py`: subsequent source
-  closures and independent DSIM-v2–v17 encoders.
+  closures and independent versioned DSIM encoders; [STATE_FORMAT](../../docs/STATE_FORMAT.md)
+  owns the schema definitions.
 - `tests/reference/`: synthetic maps, exact C rows, input tables, provenance,
   complete byte streams and per-tic digest indexes.
 - `tests/support/`: Rust readers/adapters for those public inputs and observations.
@@ -45,8 +36,8 @@ policy tests are reported separately.
 
 ## M3d3j map context
 
-The generator compiles 70 genuine bodies for the existing load/spawn/movement/
-combat/thinker/RNG closure. Two original P_SetupLevel initialization fragments are
+The generator compiles genuine bodies for the existing load/spawn/movement/
+combat/thinker/RNG closure. Original P_SetupLevel initialization fragments are
 extracted verbatim and hashed separately; the complete level loader is not compiled
 or claimed. Original structs/tables are used. Unsupported runtime callbacks abort.
 
@@ -54,9 +45,9 @@ A separate unadapted source-spawn pass retains type12, original states/flags and
 map totals. The gameplay pass maps identity/state IDs to the explicit native136
 fixture while retaining original COUNTKILL flags. C observes available kills,
 unbound single-player fallback credit, corpse scheduling, source relationships,
-reset and continuing RNG. Ten separate credit components include actual
+reset and continuing RNG. Separate credit components include actual
 player-pointer/network branches as source observations only; Rust does not admit
-those subsystems. The existing 123 filter components distinguish admitted original
+those subsystems. Filter components distinguish admitted original
 filters from recoverable Rust rejection policies.
 
 The independent v17 encoder uses only C observations, source metadata, public
