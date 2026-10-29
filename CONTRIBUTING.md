@@ -15,8 +15,9 @@ changes can be wrong, and passing tests does not guarantee correctness.
 ## A useful contribution
 
 Explain the concrete behavior being changed, its source authority and its
-supported input slice. Original Linux DOOM 1.10 determines gameplay behavior;
-its C architecture need not be mechanically translated. Keep metadata recognition,
+specific supported inputs and behavior. Original Linux DOOM 1.10 determines
+gameplay behavior; its C architecture need not be mechanically translated.
+Unfamiliar terms are in the [glossary](docs/README.md#short-glossary). Keep metadata recognition,
 fixture execution and full-game compatibility claims separate. Read the relevant
 [source investigation](docs/README.md) before modifying a subsystem.
 
@@ -44,6 +45,10 @@ Do not merge without explicit owner authorization, enable auto-merge, force-push
 shared history or remove active branches. An implementation PR stays open for its
 own owner review. Agent-specific enforcement rules are in [AGENTS.md](AGENTS.md).
 
+Before changing documentation, use the [authority map](docs/README.md#documentation-authority)
+to find the document responsible for that fact. Update it and link from other
+pages; do not repeat milestone status, commit hashes, test totals or implementation logs.
+
 ## Evidence and reporting
 
 Original-C comparisons verify only their declared adapters and inputs. Independent
@@ -57,7 +62,8 @@ Historical records belong in the [validation archive](docs/validation/archive/RE
 ## Source, assets and licensing
 
 Keep the repository public and GPL-2.0-only. Preserve original upstream source,
-history, notices and attribution. Use only synthetic or redistributable fixtures.
+history, notices and attribution. The project is independent of id Software and
+Bethesda. Use only synthetic or redistributable fixtures.
 Do not access unrelated private repositories, private cloud resources,
 credentials or proprietary assets. Never commit commercial IWADs or publish
 private paths, links, data or test output. See [external assets](docs/ASSETS.md).

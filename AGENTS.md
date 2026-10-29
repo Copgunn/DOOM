@@ -30,8 +30,8 @@
   thinker budgets retain their separately documented nontransactional contract.
 - Reuse actor storage, geometry, state entry, shared damage and lifecycle services.
   Unsupported actions must reject explicitly; callbacks must never silently no-op.
-- Keep every historical profile and DSIM-v1–v16 expectation unchanged. New behavior
-  selects profile17/DSIM-v17 explicitly. Preserve strict native/target roles and
+- Keep every historical profile, canonical schema and fixture expectation unchanged.
+  New behavior requires an explicit configuration/schema choice. Preserve actor roles and
   existing admission/resource bounds; see [compatibility](docs/COMPATIBILITY.md).
   Source-compatible original state entry is immediate; raw spawn has no action.
 
@@ -64,6 +64,14 @@
   source investigation and schema documentation. Use the
   [documentation review checklist](docs/DOC_REVIEW_CHECKLIST.md). Archive historical
   evidence with digests and working links instead of deleting or rewriting it.
+- **Documentation authority:** Each information category has one authoritative
+  home, mapped in the [documentation index](docs/README.md#documentation-authority).
+  Milestone status belongs in ROADMAP, support/limits in COMPATIBILITY, schemas in
+  STATE_FORMAT, commands in TESTING, observations in milestone evidence records,
+  and exact review commits/CI/history in GitHub. Other pages summarize briefly and
+  link; never maintain duplicate status tables, hashes, test totals or logs.
+  Before editing, identify the authoritative home and check existing information
+  there rather than creating another copy because a milestone changed.
 - Keep the prominent machine-maintained/human-directed disclosure accurate. Do not
   imply universal manual review, absent human oversight or guaranteed correctness.
 - Stop at the assigned milestone's owner-review gate; no unrelated systems.

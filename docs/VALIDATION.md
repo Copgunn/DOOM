@@ -20,9 +20,9 @@ canonical consistency and Rust-specific rejection are never interchangeable clai
 
 ## Reproduce
 
-[TESTING](TESTING.md) lists build/format/Clippy/workspace/release/rustdoc/MSRV checks,
-all 17 C/encoder pairs,17 asserted debug/release examples, documentation validation
-and16 fuzz builds. Cross-platform CI requires Linux, Windows, native macOS and
+[TESTING](TESTING.md) owns build, format, Clippy, workspace/release, rustdoc/MSRV,
+reference/encoder, example, documentation and fuzz reproduction commands.
+Cross-platform CI requires Linux, Windows, native macOS and
 Rust 1.85.0. Original-C regeneration runs on Linux; other hosts compare recorded
 observations and independent canonical fixtures.
 
@@ -40,10 +40,8 @@ LeakSanitizer coverage; no bounded campaign is exhaustive.
 
 ## Historical evidence preservation
 
-The old validation ledger is retained byte-for-byte in
-[pre-m3d3j-ledger.txt](validation/archive/pre-m3d3j-ledger.txt): 142,549 bytes,
-SHA-256 `6b2e68e2978d644fbd34c4170eaf0d0011c39f6545d01a755e6555a9613ce9a6`.
-Its readable Markdown copy rebases relative links. The
+The old validation ledger is retained byte-for-byte in the
+[archive](validation/archive/README.md). Its readable Markdown copy rebases links. The
 [manifest](validation/archive/manifest.json) records source commit, hashes, sizes,
 archive destinations and every original heading. Other former guides are also
 archived intact, preserving detailed restrictions and evidence.
@@ -53,3 +51,11 @@ remain historical observations. Moving them does not assert they were rerun on a
 new commit. Actual generators, encoders, fixtures and historical helper bytes remain
 at their existing paths. The [documentation checklist](DOC_REVIEW_CHECKLIST.md)
 governs evidence and link review.
+
+## Keep observations separate from current status
+
+Detailed measured results belong in milestone records, not this guide or other
+entry points. ROADMAP owns the development summary; GitHub PRs/Actions own exact
+review commits, statuses and CI history. Source investigations and frozen archives
+describe their original observation context. Follow the
+[authority map](README.md#documentation-authority) rather than copying those facts.
