@@ -279,7 +279,7 @@ M3d3h remains a separate owner-review PR, open/unmerged without auto-merge.
 
 Read [M3D3I_REFERENCE](docs/M3D3I_REFERENCE.md), the v16 schema and admission limits.
 Preserve raw spawn versus entered-state timing and original filter/RNG/THING order.
-Source type12 and the executable native136 adaptation are distinct. New owners
+Source type 12 and the executable native 136 adaptation are distinct. New owners
 share existing thinker/geometry/damage services; bounded preflight and small
 current strike plans replace neither scheduling nor combat. Keep every historical
 profile/fixture/helper unchanged and unsupported modes/types/actions explicit.

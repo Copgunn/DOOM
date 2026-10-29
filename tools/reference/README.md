@@ -446,16 +446,16 @@ lump ownership adapters. Original algorithm branches are preserved; unsupported
 player/special/drop/raise services abort. Negative signed shifts use representable
 fixed multiplication; wrap flags and inherited ordered RNG assumptions are recorded.
 
-Each of334 scripts first records an unadapted type12/state475/COUNTKILL spawn pass,
-then independently runs adapted136 fixture gameplay. The explicit P_SpawnMobj
+Each of 334 scripts first records an unadapted type 12/state 475/COUNTKILL spawn pass,
+then independently runs adapted 136 fixture gameplay. The explicit P_SpawnMobj
 boundary translates12→136 after genuine lookup/nomonsters filtering. Raw totals
-remain evidence only; no full scoring/actor claim. All53 supplied map fixtures,
+remain evidence only; no full scoring/actor claim. All 53 supplied map fixtures,
 covering21 geometry bases, are actually exercised. Inputs/cases, raw spawn and
 native traces,123 isolated filter components and provenance record exact source/
 body/header/adapter/output hashes, ABI and compiler flags.
 
 Gameplay compares585,936 live actor fields,38,944 actual draws including setup/
-discards and131,946 reconciled instrumentation rows. Original raw spawn separately
+discards and 131,946 reconciled instrumentation rows. Original raw spawn separately
 compares10,868 projected actor fields/37,437 draws and spawnpoints. Of123 isolated
 filter components,73 compare admitted source behavior;50 demonstrate explicit
 Rust rejection boundaries. Compiled inventory is not branch coverage, rows are
@@ -464,7 +464,7 @@ not one per event, and components are not gameplay/canonical captures.
 Independent Python v16 encoding reads only original-C traces, public inputs and
 schema:3,440 captures/784 full bytes, per-tic digests and first-field diagnostics.
 It composes the unchanged H registry and existing spawnpoint representation.
-The asserted eleven-scenario example ends at135 tics with `e327c3fbf88cb132`.
+The asserted eleven-scenario example ends at 135 tics with `e327c3fbf88cb132`.
 Preserve all fifteen older pairs/examples and fourteen historical Rust helpers.
 See [source investigation](../../docs/M3D3I_REFERENCE.md),
 [state schema](../../docs/STATE_FORMAT.md) and [validation](../../docs/VALIDATION.md).

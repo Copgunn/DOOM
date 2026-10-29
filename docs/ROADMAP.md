@@ -636,12 +636,11 @@ was committed before runtime.
   [CI40784721289](https://github.com/Copgunn/DOOM/actions/runs/40784721289).
 - [x] Reviewed final head `29824fbb9e098bcd0403f0dc7de2ab918e0bc9bc` passed all
   four jobs in [CI40786196192](https://github.com/Copgunn/DOOM/actions/runs/40786196192).
-- [x] [PR18](https://github.com/Copgunn/DOOM/pull/18) received conditional GO.
-  The M3d3i mission authorizes its regular merge after this documentation
-  correction, fresh mandatory local/four-job corrected-head checks and live
-  blocker verification. Verify merge parents/tree/master and successful exact
-  post-merge CI before M3d3i runtime. See [VALIDATION](VALIDATION.md).
-  Keep auto-merge disabled; the new M3d3i PR requires separate owner review.
+- [x] [PR18](https://github.com/Copgunn/DOOM/pull/18) completed the M3d3i-authorized
+  correction `f5d1bc83`, fresh local/four-job CI40791592122, regular merge `cae36bed`
+  and exact post-merge CI40792730511 before M3d3i runtime. Ordered parents/tree/
+  master and preservation were verified; see [VALIDATION](VALIDATION.md).
+  Auto-merge stayed disabled. M3d3i has a separate owner-review PR.
 
 Full actor/map-spawn admission, fast/Nightmare, scoring/global statistics,
 resurrection, player damage, other attacks/projectiles, dynamic sectors/specials,
@@ -654,26 +653,33 @@ M3d3h's declared runtime scope.
 ## M3d3i — Original Demon Map-Spawn and Actor Admission Foundations
 
 PR18 finalized as regular merge `cae36bed` after correction/fresh CI and successful
-exact post-merge CI40792730511 before this branch/investigation/runtime. Full
+exact post-merge CI 40792730511 before this branch/investigation/runtime. Full
 ordered-parent/tree/master evidence is in [VALIDATION](VALIDATION.md).
 
-- [x] Source investigation committed before runtime; separate profile16/feature branch.
-- [x] Existing validated classic THINGS/parser, original type3002 resolution and
+- [x] Source investigation committed before runtime; separate profile 16/feature branch.
+- [x] Existing validated classic THINGS/parser, original type 3002 resolution and
   source filter/RNG/order/raw-state initialization with explicit native adaptation.
 - [x] Signed coordinates, truncating BAM angle, BSP floors, thinker append and
   spatial heads; no premature Look or second store/scheduler.
 - [x] Bounded multi-Demon perception/pursuit/melee/pain/death/corpse composition,
   current shared-target/RNG planning and complete preflight before mutation.
 - [x] Unsupported types/modes/starts/player/scoring/raise/infighting reject.
-- [x] Original-C70 bodies/334 scripts/53 maps/all21 geometry bases; separate raw
-  original spawn and123 isolated filter components, evidence families distinguished.
-- [x] Independent DSIM-v16:3,440 captures/784 complete bytes; asserted eleven-scenario
-  example with135-tic digest `e327c3fbf88cb132`.
+- [x] Original C: 70 bodies/334 scripts/53 maps/all 21 geometry bases; separate raw
+  original spawn and 123 isolated filter components, evidence families distinguished.
+- [x] Independent DSIM-v16: 3,440 captures/784 complete bytes; asserted eleven-scenario
+  example with 135-tic digest `e327c3fbf88cb132`.
 - [x] Focused Rust admission/fault/atomicity/identity/capacity/pause/read tests.
-- [ ] Fresh complete workspace/release/MSRV, all sixteen pairs/examples, preservation.
-- [ ] Bounded ASan campaign completed and actual executions/findings/leak limits recorded.
-- [ ] Exact final-head Linux/Windows/native macOS/Rust1.85 CI passed.
-- [ ] New M3d3i PR ready/open/unmerged without auto-merge for owner review.
+- [x] Fresh complete workspace/MSRV 261 each, release 237, all sixteen pairs/examples,
+  build/fmt/Clippy/rustdoc and original/history/fixture preservation.
+- [x] Bounded ASan completed:4,096 executions/983.6 seconds/no findings, leak detection
+  disabled; all fifteen fuzz executables built.
+- [x] Implementation `ca6162fc` passed Linux/Windows/native macOS/Rust 1.85 in
+  [CI 40795637820](https://github.com/Copgunn/DOOM/actions/runs/40795637820). The live PR
+  records fresh exact final-head CI after the acceptance-documentation correction.
+- [x] Separate [PR19](https://github.com/Copgunn/DOOM/pull/19) open/unmerged without
+  auto-merge; readiness requires successful fresh final-head checks.
+- [ ] Unprojected original flags/COUNTKILL/scoring and complete MT_SERGEANT admission
+  remain excluded dependencies; this delivery is the documented fixture slice.
 
 Full original flags/scoring/counts, original actor admission and complete map/game
 initialization remain deferred; source comparisons use the explicitly documented

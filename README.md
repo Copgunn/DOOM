@@ -47,8 +47,8 @@ timing Demon melee in profile 13, regularly merged as `75b2a2bc`. M3d3g adds
 Demon pain/death/corpses in profile 14, regularly merged as `f44828d5`. M3d3h
 adds original stand/run closure in profile 15 in [PR #18](https://github.com/Copgunn/DOOM/pull/18),
 regularly merged as `cae36bed` after correction and exact post-merge CI.
-M3d3i adds bounded original Demon THING spawning in profile16 on the dedicated
-feature branch, for separate owner review.
+M3d3i adds bounded original Demon THING spawning in profile 16 in
+[PR #19](https://github.com/Copgunn/DOOM/pull/19), for separate owner review.
 Complete original monsters,
 actual player damage and a playable client remain future work. Exact gates and
 limitations are in the [roadmap](docs/ROADMAP.md) and

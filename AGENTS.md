@@ -380,28 +380,28 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
 ## M3d3i original Demon map-spawn changes
 
 - PR18 completed its owner-authorized regular merge as `cae36bed` after correction
-  `f5d1bc83`, fresh CI40791592122 and exact post-merge CI40792730511. All four jobs
+  `f5d1bc83`, fresh CI 40791592122 and exact post-merge CI 40792730511. All four jobs
   passed before investigation `ab755838` or runtime. The M3d3i mission supersedes
   M3d3h's earlier owner-review-only status; the new M3d3i PR must stay open/unmerged
   without auto-merge. Do not begin another gameplay milestone.
 - Read [M3D3I_REFERENCE](docs/M3D3I_REFERENCE.md) before spawn/admission changes.
-  Profile16 reuses the existing classic THING parser and profile15 registry.
-  Source3002 resolves to original MT_SERGEANT12 before filtering/adaptation to
-  labelled native136. Keep COUNTKILL-based nomonsters filtering before mapping;
+  Profile 16 reuses the existing classic THING parser and profile 15 registry.
+  Source 3002 resolves to original MT_SERGEANT 12 before filtering/adaptation to
+  labelled native 136. Keep COUNTKILL-based nomonsters filtering before mapping;
   scoring/raise/full original actor admission remain excluded.
-- Preserve source skill groups, single-player bit16, record order, signed fixed
+- Preserve source skill groups, single-player bit 16, record order, signed fixed
   coordinates, BSP/floor/ceiling, truncating/wrapping ANG45 conversion, raw spawn
   without action, lastlook then positive timer RNG and post-spawn ambush. No second
   parser/store/scheduler, sorted actors, rebuilt BLOCKMAP or per-tic world clone.
-- Batch requires tic0/never-allocated store, at most256 THINGS/four Demons/64 slots;
+- Batch requires tic 0/never-allocated store, at most256 THINGS/four Demons/64 slots;
   preflight the entire batch before RNG/allocation/link changes. Native thinkers
-  precede stable unbound135 targets/effects. Live native/roster/sound targets must
+  precede stable unbound 135 targets/effects. Live native/roster/sound targets must
   be135; cross-native retargeting/infighting rejects. Corpses retain old generations.
 - Global bounded preflight proves roles, closures, references, bindings, geometry,
   counters and zero melee allocation before a pass. Late small shared DamagePlan
   reads actual current target health/RNG at A_SargAttack after earlier owners;
-  never reuse an earlier owner's cached plan. Keep body initial XY momentum64,
-  native978/1008 and other994/map512/query1024/sight8192 bounds. Unsupported future
+  never reuse an earlier owner's cached plan. Keep body initial XY momentum 64,
+  native 978/1008 and other994/map512/query1024/sight8192 bounds. Unsupported future
   callbacks must reject before any earlier actor mutates.
 - Reproduce all sixteen C/independent-encoder pairs and sixteen asserted examples;
   build all fifteen ASan targets and report actual bounded map-spawn executions
@@ -411,4 +411,4 @@ Never claim unverified tests, benchmarks, commits, branches, or features.
   canonical evidence and Rust-only policy tests. Inventory70 is not branch coverage.
 - Keep native macos-26-intel, required check names and every prior CI step. Pending
   delivery stays draft until observed mandatory checks and exact final-head Linux/
-  Windows/native macOS/Rust1.85 CI pass. Never access IWADs or other repositories.
+  Windows/native macOS/Rust 1.85 CI pass. Never access IWADs or other repositories.

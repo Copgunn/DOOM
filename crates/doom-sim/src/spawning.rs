@@ -309,8 +309,10 @@ impl Simulation {
         }
         self.reserve_actor_spawns(demand.spawns)
     }
-    /// Atomic ordinary placement in source order. Starts are reported without
-    /// creating players; repeated calls explicitly repeat placement.
+    /// Atomic ordinary placement in source order. The general lifecycle profile
+    /// reports starts without creating players and allows explicit repetition.
+    /// Profile 16 instead requires a fresh batch and rejects starts/unsupported
+    /// enabled types; see `with_demon_map_spawn_registry` for its admission.
     pub fn spawn_map_things(&mut self) -> Result<MapSpawnReport, SimError> {
         let registry = self.registry_required()?;
         let map_demons = self.profile == Profile::DemonMapSpawn;

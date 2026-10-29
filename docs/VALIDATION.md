@@ -2147,11 +2147,11 @@ Reviewed PR18 head `29824fbb9e098bcd0403f0dc7de2ab918e0bc9bc` and base
 changes/comments/reviews/threads or auto-merge. Documentation-only correction
 `f5d1bc830ed04fac1ab75b1bf52a6df26336e610` directly recorded the reviewed SHA/CI
 and conditional gate. Fresh mandatory local checks passed242 workspace/242
-Rust1.85/218 release tests, all fifteen C/encoder pairs and fifteen debug/release
-examples, build/fmt/Clippy/rustdoc and244 relative links/two anchors.
-[Fresh CI40791592122](https://github.com/Copgunn/DOOM/actions/runs/40791592122)
-passed all four jobs, completed2026-10-29 00:11:30 UTC. Mac job123177882930 executed
-all applicable steps on macos-26-intel, runner1000000419. The PR testmerge
+Rust 1.85/218 release tests, all fifteen C/encoder pairs and fifteen debug/release
+examples, build/fmt/Clippy/rustdoc and 244 relative links/two anchors.
+[Fresh CI 40791592122](https://github.com/Copgunn/DOOM/actions/runs/40791592122)
+passed all four jobs, completed2026-10-29 00:11:30 UTC. Mac job 123177882930 executed
+all applicable steps on macos-26-intel, runner 1000000419. The PR testmerge
 `1f7c27b8a8b622e985991b97b1d74a4acaddca02` had ordered parents base/correction and
 tree `588735801e1f72dbffc26e86f2c7be346c4edf1a`, equal to corrected head.
 
@@ -2159,10 +2159,10 @@ The owner-authorized regular merge is `cae36bedc9de4f0ec14b571e1730fbc041ea5ba3`
 ordered parents `f44828d5ad3169fe77c116bdebb30c74d1b5feb2` and
 `f5d1bc830ed04fac1ab75b1bf52a6df26336e610`, with that same tree. PR18 is closed/
 merged; local/remote master agreed. Exact merge
-[push CI40792730511](https://github.com/Copgunn/DOOM/actions/runs/40792730511)
-passed Linux, Windows, native macOS and Rust1.85, completed2026-10-29 00:24:09 UTC.
-Native Mac job123181641665, runner1000000423, checked out the exact merge and
-executed every applicable step. All165 original files/3126 historical reference,
+[push CI 40792730511](https://github.com/Copgunn/DOOM/actions/runs/40792730511)
+passed Linux, Windows, native macOS and Rust 1.85, completed2026-10-29 00:24:09 UTC.
+Native Mac job 123181641665, runner 1000000423, checked out the exact merge and
+executed every applicable step. All 165 original files/3126 historical reference,
 tool and support paths, ancestry/licenses/attribution/locks and fsck passed after
 merge. Repository public/GPL-2.0-only. No private repository or IWAD was accessed.
 
@@ -2172,16 +2172,16 @@ precedes runtime. No squash, forced history, CI bypass or auto-merge was used.
 ## M3d3i focused independent evidence
 
 - Genuine original C:70 compiled bodies,334 scripts with separate unadapted spawn
-  and admitted gameplay passes;53 exercised maps/all21 geometry bases.
+  and admitted gameplay passes;53 exercised maps/all 21 geometry bases.
 - Admitted gameplay:585,936 actor fields,38,944 raw draws including setup/discards,
   131,946 reconciled instrumentation rows. Body inventory is not branch coverage.
 - Unadapted original spawn:10,868 fields under explicit type/state/COUNTKILL
   projection,37,437 raw draws including discards, plus source spawnpoint/input
   checks. Original totals are recorded only, not implemented global statistics.
-- Isolated source filter components123:73 admitted source filter/initialization
-  comparisons and50 explicit Rust admission/fatal-error policies. They are not
+- Isolated source filter components 123:73 admitted source filter/initialization
+  comparisons and 50 explicit Rust admission/fatal-error policies. They are not
   gameplay/canonical captures or full Nightmare/multiplayer compatibility.
-- Independent DSIM-v16:3,440 captures/784 complete byte fixtures, fields/bytes/
+- Independent DSIM-v16: 3,440 captures/784 complete byte fixtures, fields/bytes/
   digests with first-field diagnostics. No Rust-generated expected values.
 - Asserted eleven-scenario example and repeated instances:135-tic lifecycle digest
   `e327c3fbf88cb132`, including delayed Look, pain/death sounds and corpse persistence.
@@ -2189,6 +2189,57 @@ precedes runtime. No squash, forced history, CI bypass or auto-merge was used.
   stale/pending generations, capacity, bindings/unsupported actions/modes/raise/
   infighting, pause/presentation independence and existing shared hitscan integration.
 
-Full mandatory, historical, final-head CI and ASan acceptance remain pending until
-observed below. All fifteen ASan targets built; the bounded new campaign is running
-with leak detection disabled. A running campaign is not a successful result.
+Complete local, sanitizer and implementation CI results are recorded below.
+Final review readiness additionally requires fresh CI on the subsequent
+acceptance-documentation correction, with its exact SHA recorded in the PR.
+
+### Observed complete local regression
+
+Implementation `ca6162fcdebfca367599b7e115023ef38eb1cf69` passed all 19 core commands:
+build, workspace/fuzz formatting, all-target Clippy with warnings denied, workspace
+261 / Rust 1.85.0 261 / release 237 tests, rustdoc with warnings denied and all
+sixteen asserted debug/release examples. Workspace/MSRV include one doctest and
+the same two historical ignored probes; release has no ignored tests. All32
+original-C generator/independent-encoder commands (sixteen pairs) passed --check,
+including every historical v1–v15 fixture. All fifteen ASan fuzz executables were
+built and verified. All 165 original upstream files/3126 historical reference,
+tool/support paths, dependency locks/licenses/ancestry/fsck passed. Documentation
+links:30 Markdown files/257 relative links/two anchors. No runtime/fuzz-model
+behavior changed after these checks or the sanitizer campaign launch; subsequent
+acceptance edits concern prose and the public API documentation comment.
+
+### Completed bounded sanitizer and implementation CI
+
+The new map-spawn ASan campaign completed **4,096 actual executions in 983.6
+seconds without findings**, exit0, verified against the final libFuzzer DONE
+counter. All fifteen targets built with cargo-fuzz0.13.2/nightly AddressSanitizer,
+debug assertions and overflow checks. Twelve fresh public 65-byte seeds, seed 1,
+max_len 65, RSS 2048 MiB, timeout 20s, at most 8 operations/32 individually checked tics,
+capacity setups and at most 8 public map-byte mutations per input. Runtime fixture
+selection uses the eight declared one/multi-owner/lifecycle/source-reuse/floor
+cases; constructor mutations may select 53 map fixtures. Source/canonical scenario
+counts are separate from fuzz coverage. **ASAN_OPTIONS=detect_leaks=0: leak
+detection was disabled; no LeakSanitizer or exhaustive coverage claim.**
+
+Implementation `ca6162fcdebfca367599b7e115023ef38eb1cf69` passed all four jobs in
+[CI 40795637820](https://github.com/Copgunn/DOOM/actions/runs/40795637820), completed
+2026-10-29 00:52:37 UTC. Native macos-26-intel job 123191332103, runner 1000000426,
+actually executed checkout/toolchain/format/Clippy/build/workspace/release/all
+sixteen debug-release examples/rustdoc; recorded source/canonical comparisons
+passed. Linux also regenerated all sixteen C/encoder pairs; Windows and Rust 1.85
+passed. This does not imply arm64 or cross-platform original-C regeneration.
+
+The PR checkout was testmerge `42f6f71f6e3ce4a839471aec451671d5eb10d4ae`, ordered
+parents verified master `cae36bedc9de4f0ec14b571e1730fbc041ea5ba3` and that feature
+head. Its tree `34f97c5fed6fff4e9eb237e8606138eeb69dd61c` equals the feature-head
+tree. This proves the tested PR source tree; PR19 itself is not merged.
+
+The subsequent correction records this immutable evidence, clarifies prose and
+the public spawn_map_things documentation (profile 16 rejects starts/repetition),
+and updates the state-format version list. No runtime behavior, test, fixture,
+encoder, workflow, dependency or fuzz model changed. Fresh mandatory local checks
+and a new exact-head four-job run are required before readiness; the final SHA/
+successful run is recorded in [PR19](https://github.com/Copgunn/DOOM/pull/19) after
+observation. PR19 stays open/unmerged without auto-merge. All 165 original files,
+3126 historical reference/tool/support paths, v1–v15, fourteen old Rust helpers,
+history/attribution/locks/licensing and public/asset safeguards remain preserved.

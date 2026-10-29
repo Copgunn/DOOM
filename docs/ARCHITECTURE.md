@@ -595,16 +595,16 @@ independent encoders remain tooling, separate from native Rust simulation.
 
 ## M3d3i bounded map-spawn composition
 
-Profile16 reuses doom-map THINGS, the exact profile15 fixture registry, LifeHost
+Profile 16 reuses doom-map THINGS, the exact profile 15 fixture registry, LifeHost
 spawn, actor storage, source spatial head insertion and thinker append. Original
 metadata resolves/filter DoomEd3002 before the declared12→136 executable mapping.
 The bounded setup plan validates every selected record and reserves once; only
 then does existing spawn install raw state/link/lastlook, followed by spawnpoint,
 timer randomization, angle and ambush. No persistent "level spawned" flag is
-needed: tic0/allocated-slot state defines admission. All-filtered setup may repeat
+needed: tic 0/allocated-slot state defines admission. All-filtered setup may repeat
 without canonical changes; any allocated/retired store or later tic rejects.
 
-Up to four native thinkers form a prefix before unbound135 bodies and effects.
+Up to four native thinkers form a prefix before unbound 135 bodies and effects.
 Live native targets and active perception/sound references are stable135 bodies;
 unsupported infighting and real players reject. This ensures an earlier native
 cannot damage another native or retire/move its target before that target's later
