@@ -483,6 +483,10 @@ impl Simulation {
             {
                 return Err(GeometryError::Unsupported("map-scale geometry capacity").into());
             }
+            let origin = map.blockmap().origin();
+            if origin.x.unsigned_abs() > 512 || origin.y.unsigned_abs() > 512 {
+                return Err(GeometryError::CoordinateOverflow.into());
+            }
             sight::validate_map(&map)?;
         }
         let mut world = if profile.uses_sectors() {
