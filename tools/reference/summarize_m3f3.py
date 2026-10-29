@@ -24,6 +24,6 @@ for prefix in ['m3f3','m3f3_clipping']:
         if tag=='A' and row[4]!='0' and row[5]=='136':
             ox,oy,w,h=maps[int(cases[int(row[1])]['map'])];x=(int(row[6])-ox*65536)>>23;y=(int(row[7])-oy*65536)>>23
             if 0<=x<w and 0<=y<h:max_native=max(max_native,y*w+x)
-    result=dict(adapter=prefix,source_inventory=p['evidence_inventory'],tics=sum(int(c['tics']) for c in cases),ordered_counts=dict(counts),maximum_observed_native_cell=max_native,captures=v['captures'],full_byte_fixtures=sum(p.endswith('.bin') for p in v['outputs_sha256']),rust_policy_byte_fixtures=v['rust_policy_byte_fixtures'])
+    result=dict(adapter=prefix,source_inventory=p['evidence_inventory'],tics=sum(int(c['tics']) for c in cases),ordered_counts=dict(counts),maximum_observed_native_cell=max_native,captures=v['captures'],complete_dsim_byte_fixtures=sum('_state_' in p or '_atomic_' in p for p in v['outputs_sha256']),ordered_event_fields=v['ordered_event_fields'],rust_policy_byte_fixtures=v['rust_policy_byte_fixtures'])
     results.append(result)
 print(json.dumps(dict(unique_original_bodies=len(functions),adapters=results),indent=2))

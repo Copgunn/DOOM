@@ -358,6 +358,97 @@ fn later_sight_failure_discards_earlier_movement_rng_events_and_commands() {
     assert_eq!(s.step(commands), Err(PerceptionError::Arithmetic.into()));
     assert_eq!(s.snapshot(), before);
 }
+
+#[test]
+fn later_sight_failure_discards_planned_kill_credit_and_corpse_changes() {
+    // Injected native actors isolate a Rust atomicity policy, not new C output.
+    let killed = ActorId::from_parts(0, 1);
+    let observer = ActorId::from_parts(1, 1);
+    let request = DamageRequest {
+        target: killed,
+        source: None,
+        inflictor: None,
+        amount: 150,
+    };
+    let mut control = clipping(true);
+    control.damage_actor(request).unwrap();
+    assert_eq!(
+        control.level_statistics().unwrap().single_player_kill_count,
+        1
+    );
+    assert_eq!(
+        control.actor(killed).unwrap().height(),
+        Fixed::from_map_units(14)
+    );
+    assert_ne!(
+        control.actor(killed).unwrap().life().unwrap().flags & 1048576,
+        0
+    );
+
+    let mut s = clipping(true);
+    let plan = s.plan_damage(request).unwrap();
+    let before = s.snapshot();
+    let result = s.checked_demon_operation(|host| {
+        host.apply_damage(plan);
+        assert_eq!(
+            host.statistics.as_ref().unwrap().single_player_kill_count,
+            1
+        );
+        assert_eq!(
+            host.access.get(killed).unwrap().height(),
+            Fixed::from_map_units(14)
+        );
+        host.invoke_look(observer);
+    });
+    assert_eq!(result, Err(PerceptionError::Arithmetic.into()));
+    assert_eq!(s.snapshot(), before);
+}
+
+#[test]
+fn direct_damage_retargeting_and_nested_chase_sight_are_atomic() {
+    let owner = ActorId::from_parts(0, 1);
+    let source = ActorId::from_parts(1, 1);
+    let prepare = || {
+        let mut s = clipping(false);
+        // The next original draw is 220: damage fails the 180 pain threshold.
+        s.rng = DoomRng::from_indices(2, 0);
+        s.actors
+            .get_mut(source)
+            .unwrap()
+            .life
+            .as_mut()
+            .unwrap()
+            .flags &= !4;
+        s
+    };
+    let mut control = prepare();
+    let result = control
+        .damage_actor(DamageRequest {
+            target: owner,
+            source: None,
+            inflictor: None,
+            amount: 1,
+        })
+        .unwrap();
+    assert!(!result.pain);
+    assert_eq!(control.actor(owner).unwrap().life().unwrap().health, 149);
+    assert_eq!(
+        control.actor(owner).unwrap().life().unwrap().state,
+        Some(StateId(1))
+    );
+
+    let mut s = prepare();
+    atomic(&mut s, |s| {
+        let result = s.damage_actor(DamageRequest {
+            target: owner,
+            source: Some(source),
+            inflictor: None,
+            amount: 1,
+        });
+        assert_eq!(result, Err(PerceptionError::Arithmetic.into()));
+        result
+    });
+}
 #[test]
 fn expanded_sight_work_is_exercised_and_excess_rejected() {
     let mut s = setup("expanded_sight_dag");
