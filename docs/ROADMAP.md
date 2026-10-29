@@ -20,19 +20,24 @@ The merged baseline provides:
   See the [source investigation](M3D3J_REFERENCE.md) and
   [observed tests](validation/M3D3J.md) for technical evidence.
 
+- M3f1 bounded line/sector scale, regularly merged: reusable source-ordered static
+  collision and read-only sight preparation. See [source findings](M3F1_REFERENCE.md)
+  and [observations](validation/M3F1.md).
+
 These foundations support controlled headless tests, not a complete playable game.
 Earlier findings and milestones are retained in the [historical records](validation/archive/README.md).
 
 ## Next
 
-### M3f1: Map Scale Foundations — line and sector capacity
+### M3f2: Expanded map coordinates and spatial work
 
-The opt-in geometry implementation on this feature branch awaits separate owner
-review. It expands bounded static geometry and reuses movement, spatial storage
-and read-only sight, without adding player or monster gameplay. See the
-[support boundary](COMPATIBILITY.md#map-scale-profile),
-[source investigation](M3F1_REFERENCE.md) and [measured evidence](validation/M3F1.md).
-This is the first stage of broader map readiness, not complete real-map support.
+The opt-in implementation on this feature branch awaits separate owner review.
+It extends bounded coordinate admission and collision/sight work through checked
+arithmetic and setup proofs, using the same unbound static-sector services.
+See the [support boundary](COMPATIBILITY.md#map-extent-profile),
+[source investigation](M3F2_REFERENCE.md) and [measured evidence](validation/M3F2.md).
+It does not establish unrestricted classic maps, complete player/monster admission
+or a playable game.
 
 ### Remaining Demon admission
 
@@ -42,8 +47,9 @@ explains why the current test adaptation does not establish full Demon/Spectre s
 
 ### Map Scale, Limits, and Real-Map Readiness
 
-**Broader readiness remains planned.** M3f1 above supplies its bounded line/sector
-foundation; further stages require separate owner direction. The longer-term
+**Broader readiness remains planned.** M3f1 supplies the merged line/sector
+foundation; M3f2 addresses bounded coordinates and spatial work. Further stages
+require separate owner direction. The longer-term
 purpose is practical support for increasingly complex classic maps,
 not unlimited geometry or arbitrarily larger constants.
 

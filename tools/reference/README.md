@@ -84,3 +84,33 @@ atomicity and unsupported API rejection are separate Rust policies.
 [measured evidence](../../docs/validation/M3F1.md) owns observed comparison counts,
 performance, sanitizer settings and limitations. Historical tools/fixtures/helpers
 remain unchanged; the new scripts run alongside frozen aggregators.
+
+## M3f2 expanded extents and spatial work
+
+`m3f2_reference.py` reuses the declared extraction/geometry fixture services while
+compiling genuine original physics, ordering and sight bodies. It generates new
+classic inputs and comparison tables; it never reads Rust outputs. The named-field
+ABI/terminal state is an explicit unbound projection, not complete original actor
+structures, P_SetupLevel or P_GroupLines. Unsupported callbacks abort. Compiler,
+source, adapters, exact inputs and outputs are hashed in its provenance manifest.
+
+Original sight expressions are instrumented once to record full node/leaf/seg,
+side, opening, fraction, slope and blocked chronology. Repeated-child fixtures
+count actual full expansion. Conventionally empty and shared/suffix lists retain
+the parser's leading-zero rule; original iteration processes that zero as line0.
+A separate primitive table probes near-extreme fixed inputs and partition products.
+The optional signed/division/cast audit is scoped explicitly, not a claim of all
+undefined-behavior or branch coverage.
+
+`m3f2_snapshot_goldens.py` independently composes the untyped canonical layout
+under tag19 from C physical/event chronology and synthetic map bytes. Source
+predicates define diagnostic vertical contact bits. It excludes the two-actor
+script from complete-state encoding while Rust still compares that script directly
+to C. `summarize_m3f2.py` counts actual records; seg-only assertions overlap the full
+sight trace and must not inflate unique observation claims. Bounds, capacities,
+identity reuse and atomic rejection remain separately labeled Rust policies.
+
+[TESTING](../../docs/TESTING.md#expanded-map-extents-and-spatial-work) owns commands,
+[M3F2_REFERENCE](../../docs/M3F2_REFERENCE.md) owns the arithmetic design, and
+[the evidence record](../../docs/validation/M3F2.md) owns observations and limitations.
+All earlier tools, discovery inventories, encoders, helpers and fixtures stay intact.

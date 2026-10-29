@@ -1,8 +1,8 @@
 # M3f2 source investigation: map extents and bounded spatial work
 
-This investigation precedes runtime changes. Behavioral authority is the preserved
-Linux DOOM 1.10 source. This is an arithmetic/admission design, not a claim that
-the proposed configuration or comparisons have already passed. Current supported
+This investigation was committed before runtime changes. Behavioral authority is the preserved
+Linux DOOM 1.10 source. This records the arithmetic/admission design; [observed validation](validation/M3F2.md)
+separately records the implementation evidence. Current supported
 behavior belongs in COMPATIBILITY; reproduction commands in TESTING; subsequent
 observations in the milestone evidence record. DSIM remains a project diagnostic.
 
@@ -51,7 +51,7 @@ components768+768; a per-component768 ceiling would reject safe axis cases.
 The norm is a setup proof, not a substitute gameplay distance calculation.
 No query-specific exception silently admits longer lines.
 
-Proposed distinct admission envelope:
+Derived admission envelope:
 
 - Vertex and node-origin components: absolute2048 units. Node deltas:2048.
 - Linedef deltas: sum of absolute XY components at most1536, checked from endpoints.
@@ -100,6 +100,11 @@ expanded sight units. A256x32 grid permits a real actor/query cell index above40
 within the derived coordinate envelope, rather than merely padding an unused grid.
 List offsets after an8192-cell table still fit positive signed16. Shared/suffix
 lists count references once per cell; conventional leading zero remains line0.
+
+Every referenced classic list/suffix retains the existing parser requirement to
+start with zero. A conventional empty list is `[0,-1]`, so source iteration still
+visits line0. This parser policy is stricter than arbitrary original list starts;
+it is not widened here. Shared suffix fixtures start at another genuine zero.
 
 Reuse existing first-occurrence preparation, bounded SeenLines and cell membership.
 No source list is regenerated or sorted by line ID. Checked native-size arithmetic
@@ -154,3 +159,9 @@ This slice remains untyped/static/unbound. No full classic-map loader, player or
 monster admission, dynamic sectors, specials, hitscan, rendering, extended format,
 commercial asset or vanilla demo compatibility is implied. Source arithmetic or
 work outside the proved domain must reject explicitly.
+
+The implementation caches the proved root cost and sizes new query scratch from
+that cost and the actual linedef count. It separately checks the configurable
+collision proof budget (`nodes + 4*lines + 4*actor_limit`) and conservatively
+charges preparation memory before allocation. The supported values and exclusions
+are maintained only in [COMPATIBILITY](COMPATIBILITY.md#map-extent-profile).

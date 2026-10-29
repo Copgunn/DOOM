@@ -59,9 +59,10 @@ cargo run -p doom-map --example parse_map --locked
 cargo run -p doom-sim --example demon_map_context --locked
 python3 tools/reference/check_examples.py
 python3 tools/reference/check_map_scale.py
+python3 tools/reference/check_map_extent.py
 ```
 
-The frozen historical helper and new map-scale helper together compare debug/release
+The frozen historical helper and separate map-scale/map-extent helpers compare debug/release
 output for every committed simulation example. They span
 movement, collision, sectors, lifecycle, combat, weapons/projectiles, perception,
 pursuit, selected attacks and Demon gameplay/map context. Assertions use committed
@@ -127,3 +128,49 @@ performance threshold or a golden file. It builds the release example and a smal
 native `wait4` launcher, then measures preparation excluding parsing, collision,
 sight, snapshot-inclusive stepping, requested prepared capacities and process peak
 RSS. Recorded results and method limitations live in [M3f1 evidence](validation/M3F1.md).
+
+## Expanded map extents and spatial work
+
+Run the new pair alongside every historical source/encoder pair above:
+
+```sh
+python3 tools/reference/m3f2_reference.py --check --overflow-check
+python3 tools/reference/m3f2_snapshot_goldens.py --check
+python3 tools/reference/summarize_m3f2.py
+cargo run -p doom-sim --example map_extent --locked
+python3 tools/reference/check_map_extent.py
+```
+
+The overflow check recompiles genuine C with signed-overflow, integer-division and
+float-cast sanitization and requires identical outputs. It does not claim portable
+ISO-C negative shifts or exhaustive undefined-behavior coverage; the GNU source
+setup-shift contract is declared in [source findings](M3F2_REFERENCE.md).
+The source/encoder names deliberately stay outside historical `generate*.py`
+discovery; frozen aggregators/helpers remain unchanged.
+
+For the bounded synthetic campaign, after installing cargo-fuzz/nightly:
+
+```sh
+python3 tools/seed_map_extent_fuzz.py fuzz/corpus/map_extent
+cargo +nightly fuzz build --sanitizer address
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run map_extent fuzz/corpus/map_extent --sanitizer address -- -runs=4096 -max_len=35 -seed=1 -timeout=20 -rss_limit_mb=2048
+```
+
+The environment setting explicitly disables leak detection. Do not report that
+campaign as LeakSanitizer coverage. Corpus and artifacts remain ignored development
+outputs. Inputs exercise expanded geometry/origins, shared lists, repeated BSP
+children, budgets, stale identities, controls, pause/RNG and complete-state errors
+in two instances; no proprietary data is needed.
+
+On Linux with GNU C, collect separate release-process samples:
+
+```sh
+python3 tools/measure_map_extent.py
+```
+
+This prints JSON, not a performance golden or acceptance threshold. The same small
+fixture is measured under profiles18/19; larger fixtures have different operation
+volumes and cannot establish like-for-like regressions. Parsing and full preparation
+are timed separately; preparation includes geometry/sight validation, BLOCKMAP and
+topology work and canonical-cache construction, not isolated subsystem timers.
+[Measured observations](validation/M3F2.md) own results, memory scope and limitations.

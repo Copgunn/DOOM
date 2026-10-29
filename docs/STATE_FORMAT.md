@@ -1,6 +1,6 @@
-# Canonical diagnostic state format: DSIM versions 1–18
+# Canonical diagnostic state format: DSIM versions 1–19
 
-This is a diagnostic/replay comparison format for explicit M2 through M3f1 profiles,
+This is a diagnostic/replay comparison format for explicit M2 through M3f2 profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d, `12` for M3d3e, `13` for M3d3f, `14` for M3d3g, `15` for M3d3h, `16` for M3d3i),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d, `12` for M3d3e, `13` for M3d3f, `14` for M3d3g, `15` for M3d3h, `16` for M3d3i, `17` for M3d3j, `18` for M3f1, `19` for M3f2),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -809,3 +809,23 @@ original-C traces/public fixture inputs and this schema, never Rust output. The
 explicit exclusions. Full fixtures diagnose the first differing named field;
 digests are noncryptographic diagnostics, not source-equivalence proof. This is
 neither an original savegame nor a vanilla demo format.
+
+## DSIM-v19 — Expanded Map Extents and Spatial Work
+
+Profile19 uses the same untyped static-sector field layout described for v18 and
+v3, with header version and `profile` both u32 value19. It adds no persistent fields
+or new event tags. Existing physical actors, flags, XYZ/momentum/constraints,
+location, thinker/spatial/sector order, owned RNG, command/event fields and original
+map tables represent the expanded inputs. Numeric version order does not admit
+typed lifecycle, perception, weapons or statistics.
+
+Preparation budgets, membership, root-expansion cache, timing/storage observations
+and read-only SightResult diagnostics are excluded. Actor slot limits remain in
+`store.max_slots`; successful differences in other setup budgets do not alter
+canonical state. All v1–v18 schemas, encoders, helpers and expected bytes remain
+unchanged. [The independent encoder](../tools/reference/m3f2_snapshot_goldens.py)
+uses original-C physical/order traces, public classic bytes and this schema;
+expected snapshots are never generated from Rust. Full fixtures identify the first
+different named field; per-tic FNV digests are diagnostics, not vanilla savegames,
+demos or independent proof of complete source equivalence. Coverage and exclusions
+belong in [the evidence record](validation/M3F2.md).

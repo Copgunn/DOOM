@@ -133,7 +133,7 @@ all dependent representations and services.
 | --- | --- | --- |
 | Historical collision profiles 2–17 | 128 lines; 4,096 BLOCKMAP cells; 65,536 BLOCKMAP words | [prepare_cells](../crates/doom-sim/src/movement.rs) |
 | Historical topology profiles 3–17 | 128 sectors; 4,096 subsectors; 4,096 nodes | [Topology::new](../crates/doom-sim/src/multisector.rs) |
-| Sight-supported geometry | Absolute vertex coordinates, node origins/deltas and sector heights at most 512 map units | [validate_map](../crates/doom-sim/src/sight.rs) |
+| Historical sight-supported geometry through profile18 | Absolute vertex coordinates, node origins/deltas and sector heights at most 512 map units | [validate_map](../crates/doom-sim/src/sight.rs) |
 | Map Demon setup | 256 THINGS, four native Demon test actors, 64 total actor slots | [map spawning](../crates/doom-sim/src/demon_map_spawn.rs), [constructor](../crates/doom-sim/src/demon_lifecycle.rs) |
 | Earlier general actor-state setup | 4,096 THINGS and 1,024 actor slots | [actor-state constructor](../crates/doom-sim/src/spawning.rs) |
 | Underlying actor store | Configurable, at most 65,536 slots; individual configurations are stricter | [ThinkerStore::new](../crates/doom-sim/src/store.rs) |
@@ -142,14 +142,14 @@ all dependent representations and services.
 For example, collision and hitscan services contain fixed line-work buffers tied
 to the line bound; raising only the rejection constant would not be sufficient.
 The [future map-scale milestone](ROADMAP.md#map-scale-limits-and-real-map-readiness)
-describes the broader direction. The separate map-scale configuration below expands
-its declared slice while retaining historical admission.
+describes the broader direction. The separate geometry configurations below expand their declared slices while
+retaining historical admission.
 
 ### 4. Performance and traversal work limits
 
 | Service | Current work bound | Meaning |
 | --- | --- | --- |
-| Sight | 8,192 units of fully expanded BSP traversal work, including repeated children/segs | [sight work validation](../crates/doom-sim/src/sight.rs) |
+| Historical sight through profile18 | 8,192 units of fully expanded BSP traversal work, including repeated children/segs | [sight work validation](../crates/doom-sim/src/sight.rs) |
 | Hitscan | 64 grid-cell iterations; candidate count bounded by `64 * (128 + 1024)` | [combat tracing](../crates/doom-sim/src/combat_trace.rs) |
 | State actions | 128 immediate entry work units, 8,192 planned step work units, and bounded child spawning | [lifecycle planning](../crates/doom-sim/src/lifecycle.rs) |
 
@@ -199,6 +199,69 @@ old capacities and DSIM expectations.
 [measured evidence](validation/M3F1.md) separates original-C equivalence,
 independent DSIM consistency, safety tests and host measurements. This supports
 larger controlled classic fixtures, not all real DOOM maps or vanilla demos.
+
+## Map-extent profile
+
+`Simulation::map_extent` / `with_map_extent_limits` select **profile19**, a separate
+unbound static-geometry configuration. Historical profiles, including profile18,
+retain their existing coordinate/work rejection thresholds and canonical bytes.
+Classic formats and parser budgets are unchanged.
+
+| Domain or resource | Profile19 admission |
+| --- | --- |
+| Vertex components, node origins and node deltas | Absolute 2,048 map units each |
+| Linedef delta | `abs(dx) + abs(dy) <= 1,536` units, checked from endpoints |
+| Sector floor/ceiling | Absolute 1,024 units; noninverted |
+| BLOCKMAP origin components | Absolute 2,048 units |
+| Actor spawn/current XY before a tic | Absolute 2,018 units |
+| Destination and sight XY | Absolute 2,048 units |
+| Absolute spawn/current Z before a tic | Absolute 1,984 units; floor/ceiling placement uses the sector |
+| Sight Z | Absolute 2,048 units |
+| Actor radius / height | Radius 0–32; positive height fitting the spawn sector, at most 2,048 |
+| XY/Z momentum | Absolute 64; original XY clamp remains 30 |
+| Linedefs / sectors / unbound actor slots | 1,024 / 256 / 64 |
+| Nodes / subsectors | 4,096 each |
+| BLOCKMAP cells / raw words | 8,192 / 65,536 |
+| Prepared first-occurrence references | 262,144, counting each shared list once per cell |
+| Conservative preparation allocation requests | 4 MiB; independently configurable downward |
+| Collision work proof | At most 16,384 units; setup checks `nodes + 4*lines + 4*actor_limit` |
+| Expanded sight work | 16,384, counting both repeated children, leaves and segs |
+
+`MapExtentLimits` allows smaller actor, reference, preparation-memory and collision-
+work budgets. Larger budgets reject. Preparation charges reserved reference limits
+and native-size cell/line/membership/topology/work scratch conservatively, including
+scratch whose lifetimes do not overlap. Parsed Map storage, canonical caches,
+actors, snapshots and allocator overhead are outside that request budget and retain
+their separately bounded/process-level allocation policies. Geometry preparation
+and new sight-query scratch reservations are fallible. Existing tic diagnostics
+and canonical allocation exhaustion remain process-level Rust failures, not `SimError`.
+
+World-space bounds and pairwise differences are distinct: admitted query actors
+can differ by 4,096 units. The line-delta norm additionally protects the original
+shifted intercept sum/difference; blindly enlarging all coordinates would not.
+This is not a strict superset of profile18: some long old diagonals require the
+old narrower interaction domain. A successful tic can leave the next-tic XY/Z or
+momentum margin; a subsequent tic rejects before any earlier actor moves.
+
+A radius-bounded destination visits at most four line cells and four thing cells:
+at most 4,096 compiled references, 1,024 unique linedef callbacks and 64 unique
+thing candidates. BSP lookup adds at most the admitted node count. Source supplied
+list/cell order, duplicate suppression, leading-zero behavior, things-before-lines,
+head insertion and thinker order remain authoritative. Conventional empty cells
+still contain the required zero word and therefore visit line0. Unused grid padding
+need not fit world coordinates; runtime queries cannot leave their proven domain.
+
+Sight caches a proved full-root expansion cost; query execution uses that same
+bound and fallibly reserves bounded tasks/observations. REJECT returns before BSP
+work or scratch reservation. No query consumes RNG or changes canonical state.
+
+Use existing unbound XY/Z, gravity, static openings, spatial storage and read-only
+sight only. Player binding, typed actors, map spawning, AI/hearing, combat/hitscan,
+sliding, dynamic sectors, specials and complete game/map admission remain excluded.
+Original 64-cell `P_PathTraverse` and 128-intercept behavior is unchanged.
+[Source analysis](M3F2_REFERENCE.md) owns the arithmetic derivation;
+[observations](validation/M3F2.md) distinguish genuine C comparisons, independent
+canonical encoding, Rust safety tests and host measurements.
 
 ## Demon runtime restrictions
 
