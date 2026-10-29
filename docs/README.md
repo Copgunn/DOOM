@@ -127,3 +127,4 @@ and [license](../LICENSE.TXT) must remain untouched.
 
 - [M3d3g Demon pain/death investigation](M3D3G_REFERENCE.md): source timing, RNG, corpse collision and admission proof obligations.
 - [M3d3h Demon stand/run investigation](M3D3H_REFERENCE.md): original state closure, source timing and explicit admission plan.
+- [M3d3i source investigation](M3D3I_REFERENCE.md): bounded original Demon THING spawning and explicit actor admission.
