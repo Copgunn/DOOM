@@ -9,7 +9,7 @@
   "inputs_sha256": {
     "tools/reference/m3f1_snapshot_goldens.py": "b8e8d95e93045ea5918ba7ad68686158cf99e2cc0405b5040c1f83fa8ad67b59",
     "tests/reference/m3f1_cases.csv": "4e7aa8924094bbb8bff6d9fd5aad7c86d44423cd63615e666cbb66131579ed30",
-    "tests/reference/m3f1_movement.csv": "9d824e911f106d2f2b32e1e4d611d76a8d404672ca286a3bf6d05479872f0229",
+    "tests/reference/m3f1_movement.csv": "38f4158eedfd4d00f0fbff38fc6b3b6b60f1b547dfc6c824aac36bc525acf84f",
     "tests/reference/m3f1_map_0.bin": "fa2b97c112acc88422b2cb2e5111118e0723b90db63bb2339de637a330da6a3c",
     "tests/reference/m3f1_map_1.bin": "3a9b0cfaa3154d4b81b76282303525091d8597c6e869912ac4339cf410cd4414",
     "tests/reference/m3f1_map_2.bin": "88ae99c4cd20d177cc866cd9232d9c6f974fd4aa3de602fb583171191a3d5a9d",

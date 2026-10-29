@@ -98,11 +98,11 @@ def loader():
 
 def main():
     s=old.MAIN
-    s=s.replace('m->state=&states[7];P_SetThingPosition(m);','m->state=&states[7];m->tics=-1;m->thinker.function.acp1=(actionf_p1)P_MobjThinker;m->lastlook=P_Random()%4;P_SetThingPosition(m);P_AddThinker(&m->thinker);')
-    s=s.replace('motion_order");','motion_order,thinkers,rng,lastlook,radius,height,flags");')
+    s=s.replace('m->state=&states[7];P_SetThingPosition(m);','m->state=&states[7];states[7].tics=-1;m->tics=-1;m->thinker.function.acp1=(actionf_p1)P_MobjThinker;m->lastlook=P_Random()%4;P_SetThingPosition(m);P_AddThinker(&m->thinker);')
+    s=s.replace('motion_order");','motion_order,thinkers,rng,lastlook,radius,height,flags,other");')
     s=s.replace('if(m.player)P_MovePlayer(&p);\n   if(m.momx||m.momy)P_XYMovement(&m);\n   if(m.z!=m.floorz||m.momz){vertical_called=1;before_z=m.z;before_momz=m.momz;P_ZMovement(&m);}','thinker_count=0;P_RunThinkers();')
     s=s.replace('motion_value[i]);putchar(\'\\n\');','motion_value[i]);putchar(\',\');ints(thinkers_seen,thinker_count);printf(",%d,%d\\n",prndindex,m.lastlook);')
-    s=s.replace('printf(",%d,%d\\n",prndindex,m.lastlook);','printf(",%d,%d,%d,%d,%d\\n",prndindex,m.lastlook,m.radius,m.height,m.flags);')
+    s=s.replace('printf(",%d,%d\\n",prndindex,m.lastlook);','printf(",%d,%d,%d,%d,%d,",prndindex,m.lastlook,m.radius,m.height,m.flags);if(input[c][12]){int v[]={other.x,other.y,other.z,other.momx,other.momy,other.momz,other.floorz,other.ceilingz,(int)(other.subsector-subsectors),(int)(other.subsector->sector-sectors),(int)other.angle,other.lastlook,other.radius,other.height,other.flags};ints(v,15);}else putchar(\'-\');putchar(\'\\n\');')
     # Every leaf/boundary is exercised, including the final high sector index.
     a=s.index('void bsp(void)');b=s.index('void openings(void)',a)
     s=s[:a]+'''void bsp(void){int map,x,d;puts("map,x,y,subsector,sector");for(map=0;map<MAP_COUNT;map++){load_world(map);for(x=-128;x<=128;x++)for(d=-1;d<=1;d++){fixed_t p=x*FRACUNIT+d;subsector_t* leaf=R_PointInSubsector(p,0);printf("%d,%d,0,%ld,%ld\\n",map,p,(long)(leaf-subsectors),(long)(leaf->sector-sectors));}}}
@@ -131,7 +131,7 @@ def run(check):
         for mode in ['movement','probes','bsp','openings','sight']:outputs[f'tests/reference/m3f1_{mode}.csv']=subprocess.check_output([str(binary),mode])
     hashes=lambda paths,parent:{n:hashlib.sha256((parent/n).read_bytes()).hexdigest() for n in paths}
     sources=sorted({f for f,_,_,_ in FUNCTIONS}|{'m_fixed.c','m_fixed.h','m_random.c','m_random.h','doomtype.h','p_mobj.h','p_local.h','doomdata.h','r_defs.h'})
-    adapters=['generate.py','generate_m3a.py','generate_m3b.py','generate_m3f1.py','m3f1_shim.h']
+    adapters=['generate.py','generate_m3a.py','generate_m3b.py','m3f1_reference.py','m3f1_shim.h']
     p=dict(source_revision='a77dfb96cb91780ca334d0d4cfd86957558007e0',flags=FLAGS,source_sha256=hashes(sources,SOURCE),adapter_sha256=hashes(adapters,ROOT/'tools/reference'),functions=[f'{f}:{n}' for f,n,_,_ in FUNCTIONS],maps=len(MAPS),scenarios=len(CASES),outputs_sha256={n:hashlib.sha256(b).hexdigest() for n,b in outputs.items()})
     manifest=ROOT/'tests/reference/m3f1_provenance.json'
     if check:

@@ -123,7 +123,7 @@ void Ref_LineOpening(line_t*);
 int try_data[128][15],checking,blocked_line=-1,blocked_actor=-1;
 int opening_count,opening_data[4096][5];
 int vertical_called,before_z,before_momz,sound_count;
-void S_StartSound(mobj_t* m,int n){(void)m;(void)n;sound_count++;}
+void S_StartSound(mobj_t* m,int n){(void)m;(void)n;abort();}
 void P_LineOpening(line_t* l){int i;Ref_LineOpening(l);if(checking){i=opening_count++;if(i>=4096)abort();opening_data[i][0]=(int)(l-lines);opening_data[i][1]=opentop;opening_data[i][2]=openbottom;opening_data[i][3]=openrange;opening_data[i][4]=lowfloor;}}
 boolean P_TryMove(mobj_t* m,fixed_t x,fixed_t y){int i=try_count++,ok,reason=0,lc=candidate_count,tc=thing_count,oc=opening_count;subsector_t* ss;if(i>=128)abort();record_motion(0,i);blocked_line=blocked_actor=-1;checking=1;ok=Ref_TryMove(m,x,y);checking=0;ss=R_PointInSubsector(x,y);
 if(!ok){if(blocked_actor>=0)reason=1;else if(blocked_line>=0)reason=2;else if(tmceilingz-tmfloorz<m->height)reason=3;else if(tmceilingz-m->z<m->height)reason=4;else if(tmfloorz-m->z>24*FRACUNIT)reason=5;else reason=6;}

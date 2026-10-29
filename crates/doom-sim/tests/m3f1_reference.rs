@@ -136,6 +136,37 @@ fn all_multitic_xy_z_constraints_order_and_membership_match_c() {
             })
             .collect();
         assert_eq!(thinker_order, fixtures::integers(c[21]), "C thinker order");
+        if let Some(other_id) = other {
+            let a = sim.actor(other_id).unwrap();
+            let location = a.location().unwrap();
+            let flags = u32::from(a.solidity() == doom_sim::Solidity::Solid) * 2
+                + u32::from(a.gravity() == doom_sim::Gravity::None) * 512
+                + u32::from(a.allows_dropoff()) * 1024;
+            let physical = vec![
+                a.position()[0].bits(),
+                a.position()[1].bits(),
+                a.z().bits(),
+                a.momentum()[0].bits(),
+                a.momentum()[1].bits(),
+                a.vertical_momentum().bits(),
+                a.constraints()[0].bits(),
+                a.constraints()[1].bits(),
+                i32::from(location.subsector),
+                i32::from(location.sector),
+                a.angle() as i32,
+                i32::from(a.lastlook()),
+                a.radius().bits(),
+                a.height().bits(),
+                flags as i32,
+            ];
+            assert_eq!(
+                physical,
+                fixtures::integers(c[27]),
+                "C other actor complete physical fields"
+            );
+        } else {
+            assert_eq!(c[27], "-");
+        }
         let a = sim.actor(actor).unwrap();
         assert_eq!(a.lastlook(), c[23].parse::<u8>().unwrap());
         assert_eq!(a.radius().bits(), c[24].parse::<i32>().unwrap());

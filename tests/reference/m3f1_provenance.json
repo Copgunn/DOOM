@@ -33,8 +33,8 @@
     "generate.py": "e80beb09a686c030a6229599f5e0c9e9fd9b109ecebdcb9dd474a2a78e01d6cf",
     "generate_m3a.py": "97a6bb6117329ee3fbbb942c1f17af14c0f16f264ecda1d298e791e0bd09f725",
     "generate_m3b.py": "613aeb1563573f1990314414c0e1086d1645c3afd4764c2316c8e7d4e828a374",
-    "generate_m3f1.py": "37602daae16aff6d36115bab767459a6d4db93783ce4c54303d16efd3a74c6b4",
-    "m3f1_shim.h": "92a715d2a0c9e1196ebb04200ca3af2966b64d8a58fa3716db8ba5cab8c90b4e"
+    "m3f1_reference.py": "9ba2e71746621c42dd2775a2af1fd2776d6ea5358636827138dcb59e42541f27",
+    "m3f1_shim.h": "50afebaec0a192d594a449bc1ae5a4501dcd46ae457c7fbddd033d015fd0cb47"
   },
   "functions": [
     "r_main.c:R_PointOnSide",
@@ -112,7 +112,7 @@
     "tests/reference/m3f1_map_28.bin": "4a008ff1223d993b52beb23b6921e1f12aa2f4823fb0f6e75b31b7838aba18b8",
     "tests/reference/m3f1_maps.rs": "4261a4bc5a127597f937f5983a97c831cfd872545ebe796ce91a158eaf71a10e",
     "tests/reference/m3f1_cases.csv": "4e7aa8924094bbb8bff6d9fd5aad7c86d44423cd63615e666cbb66131579ed30",
-    "tests/reference/m3f1_movement.csv": "9d824e911f106d2f2b32e1e4d611d76a8d404672ca286a3bf6d05479872f0229",
+    "tests/reference/m3f1_movement.csv": "38f4158eedfd4d00f0fbff38fc6b3b6b60f1b547dfc6c824aac36bc525acf84f",
     "tests/reference/m3f1_probes.csv": "bfc7db7c17024cf3d0eabb4c21b9342bb16e0e2c535f14158836285b38221a02",
     "tests/reference/m3f1_bsp.csv": "640579eb38c3b72b5a8b911c0c6b946da9675977f2215871230c6b933060dd66",
     "tests/reference/m3f1_openings.csv": "4e5e022012e9c39d4a3519c038215a4aa3458e4b4457c23fd154335afc0d1465",
