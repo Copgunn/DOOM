@@ -28,7 +28,7 @@ See [compatibility](docs/COMPATIBILITY.md) for the exact boundary.
 
 - Validated WAD directories and classic maps, including their spatial partitions
   (BSP) and collision grids (BLOCKMAP).
-- Deterministic 35 Hz headless simulation with explicit actor identities.
+- Deterministic 35 Hz headless simulation with [canonical identity metadata](docs/ACTOR_IDENTITIES.md).
 - Static-sector movement, collision, actor states and selected combat services.
 - Original-C comparisons, independently encoded canonical snapshots, and safety
   tests for rejection, stale references and recoverable-error atomicity.

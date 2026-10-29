@@ -93,6 +93,7 @@ jobs:
           python3 tools/reference/m3f3_snapshot_goldens.py --check
           python3 tools/reference/m3f3_clipping_reference.py --check --overflow-check
           python3 tools/reference/m3f3_clipping_snapshot_goldens.py --check
+          ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3f4_reference.py --check --sanitize
       - name: Synthetic map example
         run: cargo +stable run -p doom-map --example parse_map --locked
       - name: Headless simulation example
@@ -114,6 +115,7 @@ jobs:
           python tools/reference/check_map_scale.py
           python tools/reference/check_map_extent.py
           python tools/reference/check_demon_expanded_map.py
+          python tools/reference/check_original_identity.py
       - name: Documentation links and archive integrity
         run: python tools/check_docs.py
       - name: Documentation

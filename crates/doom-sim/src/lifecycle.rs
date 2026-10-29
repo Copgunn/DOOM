@@ -6,10 +6,10 @@ use crate::{
 use doom_types::{DoomRng, Fixed};
 use std::{collections::BTreeSet, error::Error, fmt};
 include!("source_actors.rs");
-/// Source/registry type identity; lookups validate candidate indexes.
+/// Registry-local type candidate; use identity::OriginalActorType for canonical metadata.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct ActorTypeId(pub u16);
-/// Source/registry state identity. Zero is S_NULL, not a normal entered state.
+/// Registry-local state candidate. Canonical metadata uses identity::OriginalState.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct StateId(pub u16);
 /// Original symbolic action identity, indexed by the registry action-name table.

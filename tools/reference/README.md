@@ -151,3 +151,13 @@ events/indexes and statistics are qualified in the evidence.
 [TESTING](../../docs/TESTING.md#expanded-map-demon-gameplay-composition) owns commands;
 [source findings](../../docs/M3F3_REFERENCE.md) own the composition proof;
 [observed evidence](../../docs/validation/M3F3.md) owns counts/results.
+
+## M3f4 canonical identity observation
+
+`m3f4_reference.py --check` preserves the separately versioned DOOM-IDENTITY-v1
+capture of every original enum symbol, actor/state field, action association and
+sprite resource name. Add `--sanitize` for ASan/UBSan; disclose any disabled leak
+detection. Original action stubs abort: this is metadata, not callback behavior.
+See [investigation](../../docs/M3F4_REFERENCE.md),
+[mapping](../../docs/ACTOR_IDENTITIES.md) and [tests](../../docs/TESTING.md#original-actorstate-identity-metadata).
+All historical tools, table generation and DSIM fixtures remain unchanged.

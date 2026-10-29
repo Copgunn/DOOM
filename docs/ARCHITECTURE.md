@@ -194,3 +194,14 @@ consume simulation results without changing time, ordering or RNG.
 
 For detailed historical design constraints see the complete
 [pre-M3d3j architecture](validation/archive/pre-m3d3j-architecture.md).
+
+## Canonical metadata and registry identity
+
+The [identity API](ACTOR_IDENTITIES.md) borrows existing immutable source tables.
+Private bounded canonical IDs are distinct from registry-local candidates and
+from generational live actor handles. Explicit conversions compare a complete
+record at its original slot. They certify that record only; downstream registry
+records and executable game context still require their existing admission.
+No alias is silently promoted, no second registry/store is introduced, and queries
+allocate nothing and do not mutate simulation state. Profiles 1–20 retain their
+existing identity encodings, state chronology and RNG contracts.

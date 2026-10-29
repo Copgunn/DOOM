@@ -233,3 +233,27 @@ unbound and typed workloads have different behavior and observation volumes.
 The tool records construction/spawn/query/Chase/step/snapshot timings and native
 peak RSS. It defines no performance threshold; raw samples and caveats belong in
 the evidence record.
+
+## Original actor/state identity metadata
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3f4_reference.py --check --sanitize
+cargo test -p doom-sim --test m3f4_reference --locked
+python3 tools/reference/check_original_identity.py
+python3 tools/seed_original_identity_fuzz.py fuzz/corpus/original_identity
+cargo +nightly fuzz build --sanitizer address
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run original_identity fuzz/corpus/original_identity --sanitizer address -- -runs=4096 -max_len=68 -seed=1 -timeout=20 -rss_limit_mb=2048
+```
+
+The C observer compiles untouched original tables and evaluates actual enum
+symbols. Aborting action stubs supply pointer-to-symbol metadata only. It never
+reads Rust output. Its separate schema preserves every historical DSIM fixture.
+Rust policy tests exhaust u16 candidates, signed extremes and altered registry
+records; existing independent captures verify chronology and RNG retention.
+The fuzz target bounds name input, checks descriptors/round trips and mutates
+registry properties. It does not broaden gameplay. Both sanitizer commands disable
+leak detection explicitly; they provide no LeakSanitizer coverage.
+Run all historical commands above as well. Reuse the unmodified
+`tools/measure_demon_expanded_map.py` on the base and feature with the same
+release toolchain/workloads, three samples each; compare identical cases/profiles.
+[M3f4 observations](validation/M3F4.md) own results and measurement limitations.
