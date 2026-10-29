@@ -161,15 +161,23 @@ pub(crate) fn validate_map(map: &Map) -> Result<(), SimError> {
     {
         return Err(PerceptionError::Arithmetic.into());
     }
+    validate_expansion(map, WORK_LIMIT)
+}
+pub(crate) fn validate_expansion(map: &Map, limit: usize) -> Result<(), SimError> {
+    expanded_work(map, limit).map(|_| ())
+}
+pub(crate) fn expanded_work(map: &Map, limit: usize) -> Result<usize, SimError> {
     let leaf = |i: u16| 1 + usize::from(map.subsectors()[usize::from(i)].seg_count);
     if map.nodes().is_empty() {
-        if leaf(0) > WORK_LIMIT {
+        if leaf(0) > limit {
             return Err(PerceptionError::WorkLimit.into());
         }
-        return Ok(());
+        return Ok(leaf(0));
     }
-    let mut costs = vec![None; map.nodes().len()];
-    let mut stack = vec![(map.nodes().len() - 1, false)];
+    let mut costs = crate::line_work::reserved(map.nodes().len())?;
+    costs.resize(map.nodes().len(), None);
+    let mut stack = crate::line_work::reserved(2 * map.nodes().len() + 1)?;
+    stack.push((map.nodes().len() - 1, false));
     while let Some((i, done)) = stack.pop() {
         if costs[i].is_some() {
             continue;
@@ -191,13 +199,13 @@ pub(crate) fn validate_map(map: &Map) -> Result<(), SimError> {
                 };
                 cost = cost
                     .checked_add(n)
-                    .filter(|v| *v <= WORK_LIMIT)
+                    .filter(|v| *v <= limit)
                     .ok_or(PerceptionError::WorkLimit)?;
             }
             costs[i] = Some(cost);
         }
     }
-    Ok(())
+    Ok(costs[map.nodes().len() - 1].expect("root expansion proved"))
 }
 #[derive(Clone, Copy)]
 enum Task {
@@ -223,6 +231,52 @@ pub(crate) fn query(
     observer: Actor,
     target: Actor,
 ) -> SightResult {
+    query_prepared(
+        world,
+        sectors,
+        observer,
+        target,
+        WORK_LIMIT,
+        Vec::new(),
+        Vec::new(),
+    )
+    .expect("historical sight retains defined Rust numeric policy")
+}
+pub(crate) fn try_extent_query(
+    world: &StaticWorld,
+    sectors: &[SectorState],
+    observer: Actor,
+    target: Actor,
+) -> Result<SightResult, SimError> {
+    let pair = usize::from(observer.location.unwrap().sector) * sectors.len()
+        + usize::from(target.location.unwrap().sector);
+    let mut visits = Vec::new();
+    let mut tasks = Vec::new();
+    if world.map().reject()[pair >> 3] & (1 << (pair & 7)) == 0 {
+        visits = crate::line_work::reserved(
+            world.extent_sight_work.expect("extent expansion proved") + 5 * world.lines.len(),
+        )?;
+        tasks = crate::line_work::reserved(2 * world.map().nodes().len() + 1)?;
+    }
+    query_prepared(
+        world,
+        sectors,
+        observer,
+        target,
+        world.extent_sight_work.expect("extent expansion proved"),
+        visits,
+        tasks,
+    )
+}
+fn query_prepared(
+    world: &StaticWorld,
+    sectors: &[SectorState],
+    observer: Actor,
+    target: Actor,
+    work_limit: usize,
+    visits: Vec<SightVisit>,
+    mut tasks: Vec<Task>,
+) -> Result<SightResult, SimError> {
     let map = world.map();
     let pair = usize::from(observer.location.unwrap().sector) * sectors.len()
         + usize::from(target.location.unwrap().sector);
@@ -233,10 +287,10 @@ pub(crate) fn query(
         rejected,
         eye: None,
         slopes: None,
-        visits: Vec::new(),
+        visits,
     };
     if rejected {
-        return out;
+        return Ok(out);
     }
     let eye = observer.z + observer.height() - Fixed::from_bits(observer.height().bits() >> 2);
     let mut slopes = [target.z - eye, target.z + target.height() - eye];
@@ -253,12 +307,12 @@ pub(crate) fn query(
     } else {
         BspChild::Node((map.nodes().len() - 1) as u16)
     };
-    let mut tasks = vec![Task::Child(root)];
+    tasks.push(Task::Child(root));
     let mut seen = crate::line_work::SeenLines::default();
     let mut work = 0;
     'walk: while let Some(task) = tasks.pop() {
         work += 1;
-        assert!(work <= WORK_LIMIT, "admitted expanded sight work");
+        assert!(work <= work_limit, "admitted expanded sight work");
         match task {
             Task::After(i, start) => {
                 let end = side(target.position(), node_line(map, i));
@@ -286,7 +340,7 @@ pub(crate) fn query(
                     ..usize::from(leaf.first_seg) + usize::from(leaf.seg_count)
                 {
                     work += 1;
-                    assert!(work <= WORK_LIMIT, "admitted seg work");
+                    assert!(work <= work_limit, "admitted seg work");
                     let seg = &map.segs()[seg_index];
                     let line_id = seg.linedef;
                     let duplicate = !seen.insert(usize::from(line_id));
@@ -356,6 +410,14 @@ pub(crate) fn query(
                         break 'walk;
                     }
                     let frac = fraction(ray, div);
+                    // The source intercept guard can saturate to INT_MIN even
+                    // inside the coordinate envelope (quantized side tests).
+                    // Original FixedDiv then evaluates abs(INT_MIN) on its
+                    // divisor. Reject that undefined C branch in profile19;
+                    // historical profiles retain their explicit Rust policy.
+                    if world.extent_sight_work.is_some() && frac == Fixed::MIN {
+                        return Err(PerceptionError::Arithmetic.into());
+                    }
                     if front.floor != back.floor {
                         slopes[0] = slopes[0].max((bottom - eye) / frac);
                     }
@@ -380,7 +442,7 @@ pub(crate) fn query(
         }
     }
     out.slopes = Some(slopes);
-    out
+    Ok(out)
 }
 
 #[cfg(test)]

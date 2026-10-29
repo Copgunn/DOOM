@@ -159,6 +159,7 @@ pub struct StaticWorld {
     pub(crate) lines: Vec<LineGeometry>,
     pub(crate) collision_cells: Option<Vec<Vec<u16>>>,
     pub(crate) topology: Option<crate::multisector::Topology>,
+    pub(crate) extent_sight_work: Option<usize>,
     floor: Fixed,
     ceiling: Fixed,
 }
@@ -217,12 +218,20 @@ impl StaticWorld {
             lines,
             collision_cells: None,
             topology: None,
+            extent_sight_work: None,
             floor,
             ceiling,
         })
     }
     /// Source BSP location in the explicit M3b profile, independent of rendering.
     pub fn locate(&self, position: [Fixed; 2]) -> Result<crate::Location, GeometryError> {
+        if self.extent_sight_work.is_some()
+            && position
+                .iter()
+                .any(|v| !crate::sight::within(*v, crate::map_extent::QUERY_UNITS))
+        {
+            return Err(GeometryError::CoordinateOverflow);
+        }
         let topology = self.topology.as_ref().ok_or(GeometryError::Unsupported(
             "BSP lookup requires M3b profile",
         ))?;

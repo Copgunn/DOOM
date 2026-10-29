@@ -412,9 +412,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::DemonMapSpawn => 16,
         crate::Profile::DemonMapContext => 17,
         crate::Profile::MapScale => 18,
+        crate::Profile::MapExtent => 19,
     };
-    // Version18 explicitly composes the untyped static-sector field layout.
-    let layout = if version == 18 { 3 } else { version };
+    // Versions18/19 explicitly compose the untyped static-sector field layout.
+    let layout = if matches!(version, 18 | 19) {
+        3
+    } else {
+        version
+    };
     field(&mut fields, "profile", version.to_le_bytes());
     field(&mut fields, "paused", [u8::from(sim.paused)]);
     let [p, m] = sim.rng.indices();

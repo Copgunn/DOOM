@@ -270,6 +270,7 @@ fn node_side(point: [Fixed; 2], node: &doom_map::Node) -> u8 {
     let right = y * Fixed::from_bits(dx.bits() >> 16);
     u8::from(right >= left)
 }
+
 pub(crate) fn opening(
     world: &StaticWorld,
     sectors: &[SectorState],
@@ -446,4 +447,37 @@ pub(crate) fn flags(actor: &Actor) -> u32 {
     } else {
         0
     }) | (if actor.allow_dropoff { 1024 } else { 0 })
+}
+
+#[cfg(test)]
+mod extent_tests {
+    use super::*;
+    #[test]
+    fn original_c_large_partition_side_products_match() {
+        for row in include_str!("../../../tests/reference/m3f2_arithmetic.csv")
+            .lines()
+            .skip(1)
+        {
+            let n: Vec<i32> = row.split(',').map(|v| v.parse().unwrap()).collect();
+            let node = doom_map::Node {
+                origin: doom_map::Vertex {
+                    x: (n[10] >> 16) as i16,
+                    y: (n[11] >> 16) as i16,
+                },
+                delta: doom_map::Vertex {
+                    x: (n[12] >> 16) as i16,
+                    y: (n[13] >> 16) as i16,
+                },
+                bounds: [[0; 4]; 2],
+                children: [BspChild::Subsector(0); 2],
+            };
+            assert_eq!(
+                i32::from(node_side(
+                    [Fixed::from_bits(n[4]), Fixed::from_bits(n[5])],
+                    &node
+                )),
+                n[15]
+            );
+        }
+    }
 }
