@@ -85,6 +85,8 @@ jobs:
           python3 tools/reference/m3d3i_snapshot_goldens.py --check
           python3 tools/reference/generate_m3d3j.py --check
           python3 tools/reference/m3d3j_snapshot_goldens.py --check
+          python3 tools/reference/m3f1_reference.py --check
+          python3 tools/reference/m3f1_snapshot_goldens.py --check
       - name: Synthetic map example
         run: cargo +stable run -p doom-map --example parse_map --locked
       - name: Headless simulation example
@@ -103,6 +105,7 @@ jobs:
           python tools/reference/check_demon_stand_run.py
           python tools/reference/check_demon_map_spawn.py
           python tools/reference/check_demon_map_context.py
+          python tools/reference/check_map_scale.py
       - name: Documentation links and archive integrity
         run: python tools/check_docs.py
       - name: Documentation
