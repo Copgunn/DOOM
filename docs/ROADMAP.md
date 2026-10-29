@@ -26,8 +26,8 @@ Earlier findings and milestones are retained in the [historical records](validat
 The implementation is in [PR #20](https://github.com/Copgunn/DOOM/pull/20), which is
 open and not merged into master. It adds original kill-count flags, separate map
 and credited-kill totals, and fresh level reset with RNG continuity. Completion
-and owner review remain pending; live gates, including the separate repository
-About setting, are authoritative in that PR. See the [source investigation](M3D3J_REFERENCE.md)
+and owner review remain pending; live review and merge gates are authoritative
+in that PR. See the [source investigation](M3D3J_REFERENCE.md)
 and [observed tests](validation/M3D3J.md) for technical evidence.
 
 Next, investigate original Demon actor/state identity and remaining game-context
