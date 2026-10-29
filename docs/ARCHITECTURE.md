@@ -87,6 +87,18 @@ bits never choose traversal order. Topology retains source first-seg sector
 ownership and indexed sector vectors. The existing spatial index preserves
 head insertion independently from thinker order.
 
+Preparation has separate storage and CPU bounds. Let L be linedefs, C cells, W raw
+words, K distinct list starts, T terminators and E compiled references. Reverse
+lookup, line-marker resets, per-start ordering and coverage diagnostics take
+`O(W log C + T*L + K*L log L + E + L*C)` work in the conservative worst case.
+Temporary membership/storage is `O(C + L + E + C*ceil(L/64))`. The historical
+algorithm already reset/scanned its fixed line table; increasing the admitted line
+count raises that work ceiling. All dimensions are separately capped in
+[COMPATIBILITY](COMPATIBILITY.md#map-scale-profile). The reference budget bounds
+list expansion/copying, while raw-word and line caps also bound unused-terminator
+work. Avoid treating one budget as a bound on every stage. A query's membership
+check is constant-time and never chooses candidate order.
+
 Arithmetic admission runs before authoritative movement. The new untyped profile
 explicitly selects the earlier static-sector canonical field layout under a new
 version tag; numeric version order cannot implicitly enable typed actors. Immutable
