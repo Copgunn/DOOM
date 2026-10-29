@@ -246,3 +246,27 @@ reverse lookup; queries allocate nothing. Profile20's entry/death/Fall guards us
 named states through constant-time reverse lookup, without full registry validation
 per tic. Earlier fixture profiles retain their policies. Thinker, spatial, RNG,
 transactional planning and serialization services remain shared and unchanged.
+
+## Original-ID registry and shared execution
+
+The [original-ID registry](ACTOR_IDENTITIES.md#original-id-execution-registry)
+certifies an immutable source metadata package and a separate context package.
+Source ordinals are direct indexes; a typed definition key prevents the context
+slot from becoming a fake original identity. ActorLife remains the sole persistent
+identity storage. Only explicitly admitted roles execute, through existing
+LifeHost, DamagePlan, ThinkerStore, movement/perception and checked Demon plans.
+No second scheduler, actor store or per-monster native translation table is added.
+
+Original-root state sets and action policies are derived once with bounded work.
+They preserve damage-controlled entry and exclude raise without modifying its
+metadata. Construction certifies all records; state reads do not repeat full table
+validation. Historical profiles retain native definitions and guards through a
+small explicit profile/role boundary. The [pre-implementation investigation](M3F7_REFERENCE.md)
+records alternatives, consumer responsibilities and adapter removal criteria.
+
+Immutable source/context schema IDs replace redundant registry rows in new
+DSIM-v21 diagnostics. Complete runtime/map/event order remains observable.
+The bounded decoder borrows values, validates identity namespaces and generations,
+and never restores a Simulation. It explicitly dispatches v20/v21 and preserves
+legacy interpretation. [STATE_FORMAT](STATE_FORMAT.md#dsim-v21--original-id-demon-diagnostics)
+defines the wire contract and the limits of validation.

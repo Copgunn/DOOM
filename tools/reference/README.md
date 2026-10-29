@@ -41,7 +41,7 @@ combat/thinker/RNG closure. Original P_SetupLevel initialization fragments are
 extracted verbatim and hashed separately; the complete level loader is not compiled
 or claimed. Original structs/tables are used. Unsupported runtime callbacks abort.
 
-A separate unadapted source-spawn pass retains type12, original states/flags and
+A separate unadapted source-spawn pass retains type 12, original states/flags and
 map totals. The gameplay pass maps identity/state IDs to the explicit native136
 fixture while retaining original COUNTKILL flags. C observes available kills,
 unbound single-player fallback credit, corpse scheduling, source relationships,
@@ -191,3 +191,21 @@ separate from new C-input coverage. The new check_runtime_identity helper assert
 its example in debug/release against the existing independent digest index.
 See [audit](../../docs/M3F6_REFERENCE.md) and
 [observations](../../docs/validation/M3F6.md).
+
+## M3f7 compact original-ID evidence
+
+[m3f7_snapshot_goldens.py](m3f7_snapshot_goldens.py) independently re-encodes the
+immutable M3f5 C dataset into DSIM-v21. It retains actual source type/state IDs;
+only the explicitly synthetic body binds to the separately identified context.
+It invokes unchanged field/event framing in a temporary tree, emits no redundant
+registry rows and never reads Rust source/output. Sorted discovery/provenance
+makes output independent of filesystem ordering. New evidence is a compact index,
+two full byte streams and input/output SHA256 provenance, not another trace/event
+copy. Regenerate without `--check`; verify with `--check`.
+
+The Rust harness reads actual ActorLife fields and reuses old EV20 payloads,
+substituting identity fields directly from C chronology. No native Demon state
+mapping enters the new registry. This is representation evidence using reused
+inputs, not new source execution coverage. [Commands](../../docs/TESTING.md#original-id-registry-and-diagnostic-contract),
+[contract](../../docs/STATE_FORMAT.md#dsim-v21--original-id-demon-diagnostics) and
+[observations](../../docs/validation/M3F7.md) separate those claims.

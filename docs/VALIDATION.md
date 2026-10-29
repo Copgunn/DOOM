@@ -32,6 +32,10 @@ LeakSanitizer coverage; no bounded campaign is exhaustive.
 
 ## Detailed records
 
+- [M3f7 original-ID registry/profile and bounded diagnostics](validation/M3F7.md):
+  new encoding of reused C inputs; actual runtime storage and exact ordered event
+  comparisons remain distinct from metadata, digests and Rust-only reader policy.
+
 - [M3f6 runtime identity audit and boundary](validation/M3F6.md), reusing independent
   C observations without claiming new capture or gameplay coverage.
 

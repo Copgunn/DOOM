@@ -21,9 +21,10 @@ The Rust workspace provides WAD and classic-map parsing, fixed-point arithmetic,
 original random-number streams, ordered actors and explicitly selected simulation
 configurations. The Demon example covers synthetic map spawning, stand/run,
 perception, pursuit, melee, pain, death, persistent corpses and map kill totals.
-Checked canonical Demon requests resolve through an explicit runtime identity
-binding. Explicit native identity views distinguish stored slots from original
-ordinals; the runtime representation and restricted game context remain.
+Historical Demon profiles retain their explicit native identity binding. An
+opt-in original-ID registry/profile stores original Demon types and states directly,
+using the same bounded execution services and an explicitly versioned diagnostic
+contract. The restricted game context remains.
 See [compatibility](docs/COMPATIBILITY.md) for the exact boundary.
 
 ## What works
@@ -61,6 +62,7 @@ cargo test --workspace --locked
 cargo run -p doom-sim --example demon_expanded_map --locked
 cargo run -p doom-sim --example canonical_demon --locked
 cargo run -p doom-sim --example runtime_identity --locked
+cargo run -p doom-sim --example original_registry --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked
@@ -73,6 +75,7 @@ results. They require no commercial IWAD, GPU, audio device or network service.
 `canonical_demon` drives that existing behavior with original MT_SERGEANT/SARG
 identities; it does not admit Spectre or resurrection.
 `runtime_identity` checks the [native identity boundary](docs/ACTOR_IDENTITIES.md#native-runtime-identity-boundary) against unchanged historical captures.
+`original_registry` checks [actual original-ID storage](docs/ACTOR_IDENTITIES.md#original-id-execution-registry) and bounded v20/v21 diagnostic reading.
 `map_extent` separately demonstrates expanded unbound coordinates and spatial work.
 See [testing](docs/TESTING.md) for all examples and reproduction commands.
 

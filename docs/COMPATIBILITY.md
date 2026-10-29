@@ -46,6 +46,7 @@ Historical profile behavior and DSIM bytes remain frozen. New behavior is opt-in
 | 18 | Expanded bounded static geometry, unbound XY/Z and read-only original sight |
 | 19 | Checked larger coordinate envelope and spatial work for unbound static actors |
 | 20 | Explicit intersection of larger static geometry and adapted Demon gameplay |
+| OriginalDemon | Same bounded Demon closure with actual original IDs and explicit context; DSIM21/profile wire ID 1 |
 
 These are separate contracts, not modes that automatically admit all original
 actors or map features. Detailed older limits remain available in the complete
@@ -135,7 +136,7 @@ all dependent representations and services.
 | --- | --- | --- |
 | Historical collision profiles 2–17 | 128 lines; 4,096 BLOCKMAP cells; 65,536 BLOCKMAP words | [prepare_cells](../crates/doom-sim/src/movement.rs) |
 | Historical topology profiles 3–17 | 128 sectors; 4,096 subsectors; 4,096 nodes | [Topology::new](../crates/doom-sim/src/multisector.rs) |
-| Historical sight-supported geometry through profile18 | Absolute vertex coordinates, node origins/deltas and sector heights at most 512 map units | [validate_map](../crates/doom-sim/src/sight.rs) |
+| Historical sight-supported geometry through profile 18 | Absolute vertex coordinates, node origins/deltas and sector heights at most 512 map units | [validate_map](../crates/doom-sim/src/sight.rs) |
 | Map Demon setup | 256 THINGS, four native Demon test actors, 64 total actor slots | [map spawning](../crates/doom-sim/src/demon_map_spawn.rs), [constructor](../crates/doom-sim/src/demon_lifecycle.rs) |
 | Earlier general actor-state setup | 4,096 THINGS and 1,024 actor slots | [actor-state constructor](../crates/doom-sim/src/spawning.rs) |
 | Underlying actor store | Configurable, at most 65,536 slots; individual configurations are stricter | [ThinkerStore::new](../crates/doom-sim/src/store.rs) |
@@ -151,7 +152,7 @@ expand their declared slices while retaining historical admission.
 
 | Service | Current work bound | Meaning |
 | --- | --- | --- |
-| Historical sight through profile18 | 8,192 units of fully expanded BSP traversal work, including repeated children/segs | [sight work validation](../crates/doom-sim/src/sight.rs) |
+| Historical sight through profile 18 | 8,192 units of fully expanded BSP traversal work, including repeated children/segs | [sight work validation](../crates/doom-sim/src/sight.rs) |
 | Hitscan | 64 grid-cell iterations; candidate count bounded by `64 * (128 + 1024)` | [combat tracing](../crates/doom-sim/src/combat_trace.rs) |
 | State actions | 128 immediate entry work units, 8,192 planned step work units, and bounded child spawning | [lifecycle planning](../crates/doom-sim/src/lifecycle.rs) |
 
@@ -163,7 +164,7 @@ large constant. Keep deterministic traversal and checked resource use throughout
 
 ## Map-scale profile
 
-`Simulation::map_scale` / `with_map_scale_limits` select profile18, not a Demon or
+`Simulation::map_scale` / `with_map_scale_limits` select profile 18, not a Demon or
 player profile. Parsing capacities/formats are unchanged. The new configuration
 supports at most **1,024 linedefs, 256 static sectors, 64 unbound actor slots,
 4,096 BLOCKMAP cells, 65,536 raw BLOCKMAP words, and 262,144 compiled first-occurrence
@@ -204,8 +205,8 @@ larger controlled classic fixtures, not all real DOOM maps or vanilla demos.
 
 ## Map-extent profile
 
-`Simulation::map_extent` / `with_map_extent_limits` select **profile19**, a separate
-unbound static-geometry configuration. Historical profiles, including profile18,
+`Simulation::map_extent` / `with_map_extent_limits` select **profile 19**, a separate
+unbound static-geometry configuration. Historical profiles, including profile 18,
 retain their existing coordinate/work rejection thresholds and canonical bytes.
 Classic formats and parser budgets are unchanged.
 
@@ -241,7 +242,7 @@ and canonical allocation exhaustion remain process-level Rust failures, not `Sim
 World-space bounds and pairwise differences are distinct: admitted query actors
 can differ by 4,096 units. The line-delta norm additionally protects the original
 shifted intercept sum/difference; blindly enlarging all coordinates would not.
-This is not a strict superset of profile18: some long old diagonals require the
+This is not a strict superset of profile 18: some long old diagonals require the
 old narrower interaction domain. A successful tic can leave the next-tic XY/Z or
 momentum margin; a subsequent tic rejects before any earlier actor moves.
 
@@ -393,15 +394,41 @@ hitscan/projectiles and rendering remain deferred. See the
 ## Native runtime identity boundary
 
 M3f6 retains all existing stored IDs and admission bounds. The typed native Demon
-view covers only the validated Profile20 type136/21-state execution correspondence.
+view covers only the validated Profile20 type 136/21-state execution correspondence.
 It is separate from original identities and live handles; it grants no additional
 state entry, actor, raise, Spectre or player behavior. The complete original registry
 remains metadata, not executable support. Earlier profiles retain their distinct
 native fixtures, including unrelated uses of136.
 
-Raw canonical type12 or SARG475–501 requests are not silently interpreted as native
+Raw canonical type 12 or SARG475–501 requests are not silently interpreted as native
 owner/state requests. Use the explicit canonical APIs or checked native projection.
 Pain/death observations are representable native values but direct entry still
 rejects. All historical public raw observations, event payloads and DSIM-v20 remain
 unchanged. See [mapping](ACTOR_IDENTITIES.md#native-runtime-identity-boundary),
 [audit](M3F6_REFERENCE.md) and [evidence](validation/M3F6.md).
+
+## Original-ID Demon profile
+
+`Profile::OriginalDemon` is opt-in. `OriginalExecutionProfile::DemonNormalV1`
+identifies its role contract independently of diagnostic version. The
+[registry](ACTOR_IDENTITIES.md#original-id-execution-registry) keeps complete
+original metadata pristine and stores admitted Demon type 12/states 475–495 directly.
+Normal gameplay is the existing Profile20 closure, not broader Demon support.
+Direct stand/run/melee entry is guarded; pain/death remain damage-controlled and
+raise 496–501 remains metadata only. MT_SHADOWS, MT_SHOTGUY, MT_PLAYER and original
+MT_MISC85/86 have no executable actor role. Existing puff/blood effects and an
+explicit synthetic unbound body context retain their bounded roles.
+
+All [expanded-map restrictions](#expanded-map-demon-profile), four-owner/64-slot
+limits, geometry/work bounds, THING filter order, normal timing, signed-angle
+proof, checked operation atomicity and unbound statistics policy apply. Source
+DoomEd lookup precedes admission; source decorations at 135/136 now retain their
+true metadata and reject if selected. This is distinct from their overwritten
+fixture metadata in old profiles. Source-ID metadata does not authorize new map
+placements, callbacks, players, infighting, hitscan, Fast, respawn or resurrection.
+
+This profile reuses the immutable M3f5 independent C scenarios. New comparisons
+exercise actual source-ID storage and diagnostic interpretation; they are not new
+C-input or whole-game coverage. Profiles 1–20, native aliases and DSIM-v20 bytes
+remain unchanged. V21 is a read-only diagnostic contract, not a savegame; see
+[format and validation limits](STATE_FORMAT.md#dsim-v21--original-id-demon-diagnostics).

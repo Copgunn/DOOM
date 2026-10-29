@@ -12,7 +12,7 @@ a claim of completed execution or whole-game compatibility.
 `info.h/info.c` define MT_SERGEANT12 / DoomEd3002, normal SARG475–495 and raise
 496–501. MT_SHADOWS13 / DoomEd58 shares the SARG graph but differs in identity and
 flags; MT_SHOTGUY2 / DoomEd9 is a separate actor. Source136 is MT_MISC86, and
-source135 is MT_MISC85. Complete original metadata has137 types/967 states/138
+source 135 is MT_MISC85. Complete original metadata has137 types/967 states / 138
 sprites, independently observed by the unchanged compiled-C metadata tool.
 
 `p_mobj.h` stores mobjtype_t plus an info pointer and a state pointer. P_SpawnMobj
@@ -31,7 +31,7 @@ missile/special-actor branches remain outside the Demon closure. Source12 and
 old fixture136 do not acquire boss, Vile, skull or player branches. Source target135
 and the planned context body are both unbound synthetic bodies, not source players.
 
-The unchanged M3f5 compiled-C observer already executes real type12 and states
+The unchanged M3f5 compiled-C observer already executes real type 12 and states
 475–495 throughout its nine scenarios. It retains one explicit target135/roster
 adapter. Its C metadata/body observations justify a new original-ID input slice;
 they do not authorize Spectre, raise, players, generalized infighting or Fast.
@@ -53,13 +53,13 @@ context definitions, executable roles and live generational handles.
 
 ## Registry and role contract
 
-The new immutable registry retains all137 original actor records and all967 state
+The new immutable registry retains all 137 original actor records and all967 state
 records at their exact original indexes. No source record may be overwritten or
 renamed. Source state and sprite ordinals remain untouched. Full-record validation
 certifies the known immutable registry package; type/state recognition alone never
 authorizes execution.
 
-A synthetic unbound body must not occupy source135 or masquerade as MT_PLAYER.
+A synthetic unbound body must not occupy source 135 or masquerade as MT_PLAYER.
 Represent it as an explicitly typed context definition, in a separate definition
 namespace. A context slot can be appended after OriginalActorType::COUNT in the
 existing bounded registry container; its number is derived, not a magic native
@@ -123,8 +123,8 @@ version, u64 field count; each ordered field is u32 UTF-8 path length/path and
 u64 value length/value. Use format21 for this actual contract difference.
 This is not a DOOM savegame, demo or executable world-restoration interface.
 
-For v21, execution profile ID1 means the normal bounded original-ID Demon closure.
-It is independent of format version21 and of the Rust Profile enum's ordering.
+For v21, execution profile ID 1 means the normal bounded original-ID Demon closure.
+It is independent of format version 21 and of the Rust Profile enum's ordering.
 After tic/tic_rate/profile, include registry.schema=`DOOM-INFO-1.10-v1` and
 context.schema=`UNBOUND-BODY-v1` identifiers. The registry ID fixes the original Linux DOOM source metadata package;
 the context ID fixes the unbound-body descriptor/role. Unknown identifiers and
@@ -162,8 +162,8 @@ that arbitrary physical state can safely resume execution.
 
 Reuse immutable M3f4 metadata and M3f5 raw canonical C observations. Do not duplicate
 large traces or regenerate historical outputs. Encode new v21 expectations directly
-from raw C source12/SARG rows. The only necessary context identity adaptation maps
-the observer's synthetic body135 to the separately declared context definition;
+from raw C source 12/SARG rows. The only necessary context identity adaptation maps
+the observer's synthetic body 135 to the separately declared context definition;
 this is neither a source actor mapping nor new C behavior coverage.
 
 Use the unchanged independent field/event encoder as bounded observation machinery
@@ -191,7 +191,7 @@ metadata/source sanitizer check, test/example and relevant bounded fuzz campaign
 | Original definition key to registry slot | Necessary checked lookup; source keys are direct ordinals, not a translation table |
 | Original role to shared execution services | Necessary admission boundary, not another engine implementation |
 | Unbound synthetic body context | Explicit experimental/test context; replace in a future new profile only after real game context is independently admitted; preserve this schema historically |
-| Old C observer body135 to context key | Temporary oracle adapter, isolated to evidence readers/encoders; remove from future new observers with explicit context roles, retain old evidence |
+| Old C observer body 135 to context key | Temporary oracle adapter, isolated to evidence readers/encoders; remove from future new observers with explicit context roles, retain old evidence |
 | DSIM version/profile/schema dispatch | Necessary permanent diagnostic compatibility boundary; separate from simulation mutation |
 
 ## Validation and reporting plan
@@ -206,3 +206,31 @@ Build all fuzz targets; execute bounded registry/diagnostic campaigns with exact
 counts/options and disclose disabled leak detection. Measure matching old workloads
 before/after; identify new-profile measurements separately because diagnostic
 contents differ. Retain all three-process samples/outliers, RSS and limitations.
+
+## Implementation disposition and finding classification
+
+The selected A+B proof is implemented in `original_registry.rs` and the shared
+execution capability/role guards. Original ActorLife IDs are authoritative in the
+opt-in profile; no persistent native duplicate or new gameplay interpreter exists.
+Historical profiles and helpers remain unchanged. The format/reader contract is
+implemented in `diagnostic.rs`; it is explicitly observational rather than world
+restoration. Current [identity](ACTOR_IDENTITIES.md#original-id-execution-registry),
+[support](COMPATIBILITY.md#original-id-demon-profile) and
+[format](STATE_FORMAT.md#dsim-v21--original-id-demon-diagnostics) guides own normative
+API/wire details; [measurements](validation/M3F7.md) own observed results.
+
+| Finding | Classification and source |
+| --- | --- |
+| Type12, source SARG graph, descriptors, actions, raise root | Independently compiled-C metadata: [info.h](../linuxdoom-1.10/info.h), [info.c](../linuxdoom-1.10/info.c), unchanged M3f4 observer |
+| Direct type/info and raw spawn, immediate state entry, physics/countdown/terminal corpse | Original-C source facts in [p_mobj.c](../linuxdoom-1.10/p_mobj.c); already independently observed by unchanged M3f5 dataset |
+| Linked insertion/deferred retirement | Original-C source fact in [p_tick.c](../linuxdoom-1.10/p_tick.c); shared Rust scheduling and reused event chronology checks |
+| Look/Chase, original info roots, melee and RNG | Already implemented/independently validated through genuine [p_enemy.c](../linuxdoom-1.10/p_enemy.c) observations; no new input/function/branch coverage |
+| Damage/pain/death, Fall and kill accounting | Already implemented/independently validated [p_inter.c](../linuxdoom-1.10/p_inter.c) and p_enemy.c slice with inherited unbound-context adapters |
+| Ordered collision/sight/movement dependencies | Existing validated [p_map.c](../linuxdoom-1.10/p_map.c)/[p_maputl.c](../linuxdoom-1.10/p_maputl.c) slice; wider world arithmetic/context is unverified |
+| Direct original storage and pristine registry indexing | Newly admitted representation using these same observations, not new gameplay |
+| Context namespace, schema/profile IDs, bounded state sets/reader, rejection/atomicity | Rust-specific implementation/safety policy, separately tested |
+| Player, Spectre, raise/Fast/Nightmare/general actor or map support | Unsupported or unverified; metadata does not admit execution |
+
+Remaining migration prerequisites are a separately validated game-context contract
+and original-role policies for any additional actor. The explicit context package
+and historical native/DSIM readers are not silently removed by future admission.

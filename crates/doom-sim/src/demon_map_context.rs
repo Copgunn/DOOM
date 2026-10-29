@@ -88,7 +88,9 @@ impl Simulation {
         if !self.profile.uses_map_statistics() {
             return Err(MapSpawnError::Context.into());
         }
-        let constructor = if self.profile == Profile::DemonExpandedMap {
+        let constructor = if self.profile == Profile::OriginalDemon {
+            Self::with_original_actor_registry
+        } else if self.profile == Profile::DemonExpandedMap {
             Self::with_demon_expanded_map_registry
         } else {
             Self::with_demon_map_context_registry
@@ -105,6 +107,23 @@ impl Simulation {
         )?;
         fresh.spawn_map_things()?;
         Ok(fresh)
+    }
+}
+
+impl Simulation {
+    pub(crate) fn demon_owner_type(&self) -> ActorTypeId {
+        if self.profile == Profile::OriginalDemon {
+            original_registry::owner_slot()
+        } else {
+            canonical_demon::RUNTIME_OWNER
+        }
+    }
+    pub(crate) fn demon_body_type(&self) -> ActorTypeId {
+        if self.profile == Profile::OriginalDemon {
+            original_registry::body_slot()
+        } else {
+            ActorTypeId(135)
+        }
     }
 }
 

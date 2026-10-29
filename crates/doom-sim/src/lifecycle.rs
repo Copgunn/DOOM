@@ -841,6 +841,42 @@ impl ActorRegistry {
         }
         Ok(())
     }
+    pub(crate) fn validate_type_original(
+        &self,
+        ty: ActorTypeId,
+        sectors: &[SectorState],
+    ) -> Result<(), ActorError> {
+        self.admit_type(
+            ty,
+            sectors,
+            &mut BTreeSet::new(),
+            &mut BTreeSet::new(),
+            &mut 0,
+            Admission {
+                flags: ALLOWED_FLAGS
+                    | 64
+                    | 128
+                    | 524288
+                    | 2097152
+                    | if ty == crate::original_registry::owner_slot() {
+                        4194304
+                    } else {
+                        0
+                    },
+                look: true,
+                chase: true,
+                attacks: false,
+                shotgun: false,
+                chaingun: false,
+                demon: true,
+            },
+        )?;
+        let info = self.actor_type(ty).ok_or(ActorError::InvalidType)?;
+        for state in info.states().into_iter().take(7) {
+            self.validate_state_demon_melee(state)?;
+        }
+        Ok(())
+    }
     pub(crate) fn validate_impact_source(&self) -> Result<(), crate::CombatError> {
         let mut todo = Vec::new();
         let mut seen = BTreeSet::new();

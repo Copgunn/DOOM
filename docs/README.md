@@ -68,6 +68,7 @@ for present status. Historical review statements are not new claims that work is
 | Demon gameplay on larger static maps | [M3f3](M3F3_REFERENCE.md), [measured evidence](validation/M3F3.md) |
 | Canonical actor/state identity | [M3f4](M3F4_REFERENCE.md), [mapping](ACTOR_IDENTITIES.md), [observations](validation/M3F4.md) |
 | Canonical Demon execution binding | [M3f5](M3F5_REFERENCE.md), [mapping](ACTOR_IDENTITIES.md#canonical-demon-execution-binding), [observations](validation/M3F5.md) |
+| Original-ID registry and diagnostic contract | [M3f7](M3F7_REFERENCE.md), [registry](ACTOR_IDENTITIES.md#original-id-execution-registry), [observations](validation/M3F7.md) |
 | Runtime identity storage audit | [M3f6](M3F6_REFERENCE.md), [native boundary](ACTOR_IDENTITIES.md#native-runtime-identity-boundary), [observations](validation/M3F6.md) |
 
 [Reference tooling](../tools/reference/README.md) describes harness layout and

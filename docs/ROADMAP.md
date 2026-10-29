@@ -42,31 +42,33 @@ The merged baseline provides:
   explicit DSIM projection. See [investigation](M3F5_REFERENCE.md) and
   [observations](validation/M3F5.md).
 
+- M3f6 original-ID runtime storage audit is merged. Its native representation
+  guards preserve all historical aliases and diagnostics; see
+  [audit](M3F6_REFERENCE.md) and [observations](validation/M3F6.md).
+
 These foundations support controlled headless tests, not a complete playable game.
 Earlier findings and milestones are retained in the [historical records](validation/archive/README.md).
 
 ## Next
 
-### M3f6: Original-ID runtime storage investigation
+### M3f7: Original-ID registry, execution profile and diagnostic contract
 
-The complete consumer audit selects preservation of native storage with an
-explicit typed execution boundary. Native state/type views and named Profile20
-transition guards strengthen namespace handling without changing stored IDs,
-public observation values, DSIM-v20 or gameplay admission. A direct storage
-migration is deferred; exact review state belongs to GitHub. See
-[source audit and design comparison](M3F6_REFERENCE.md),
-[runtime representation](ACTOR_IDENTITIES.md#native-runtime-identity-boundary)
-and [observations](validation/M3F6.md).
+M3f6 is merged: sealed native views preserve historical storage and DSIM-v20.
+M3f7 implements a separate immutable original-ID registry and an opt-in executable
+Demon closure using existing services. Actual source IDs, explicit context roles,
+root-derived state admission and bounded v20/v21 diagnostics form the new boundary.
+This does not broaden gameplay. Exact review state belongs to GitHub; see
+[design](M3F7_REFERENCE.md), [support](COMPATIBILITY.md#original-id-demon-profile)
+and [observations](validation/M3F7.md).
 
-### Remaining identity migration
+### Next narrow prerequisite
 
-The next narrow prerequisite is an independently encoded, opt-in original-ID
-registry/profile and serialization contract for the existing Demon closure.
-Specify all type/state/event/registry differences, keep v20 readers/fixtures and
-old profiles intact, and prove cross-representation semantics before authorizing
-runtime storage changes. Do not persist duplicate canonical/native identities.
-The audit explains concrete owner, raise-root and public-format blockers to an
-in-place substitution. No broader actors, gameplay or capacities are implied.
+Investigate a source-derived game-context interface for unbound damage/perception
+bodies before any real player or additional monster admission. Preserve explicit
+context definitions and old diagnostic schemas; validate target lifetime, damage
+ownership and event semantics independently. This is a recommendation, not admitted
+work. A separate evidence-storage investigation could measure deduplication without
+rewriting or deleting historical captures.
 
 ### Map Scale, Limits, and Real-Map Readiness
 

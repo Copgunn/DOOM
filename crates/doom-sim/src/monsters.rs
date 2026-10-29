@@ -410,10 +410,17 @@ impl Simulation {
         sim.sound_targets = vec![None; sim.sectors.len()];
         Ok(sim)
     }
+    pub(crate) fn monster_is_owner_type(&self, ty: ActorTypeId) -> bool {
+        if self.profile == Profile::OriginalDemon {
+            ty == original_registry::owner_slot()
+        } else {
+            OWNERS.contains(&ty.0)
+        }
+    }
     pub(crate) fn monster_is_owner(&self, id: ActorId) -> bool {
         self.actor(id)
             .and_then(Actor::life)
-            .is_some_and(|l| OWNERS.contains(&l.actor_type.0))
+            .is_some_and(|l| self.monster_is_owner_type(l.actor_type))
     }
     pub(crate) fn validate_monster_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
         if self.profile.uses_demon_lifecycle() {
@@ -428,7 +435,7 @@ impl Simulation {
         if self.profile == Profile::Shotgunner {
             return self.validate_shotgun_type(ty);
         }
-        if !OWNERS.contains(&ty.0) && ![37, 38, 135].contains(&ty.0) {
+        if !self.monster_is_owner_type(ty) && ![37, 38, 135].contains(&ty.0) {
             return Err(MonsterError::Definition.into());
         }
         let info = self
@@ -437,7 +444,7 @@ impl Simulation {
             .unwrap()
             .actor_type(ty)
             .ok_or(MonsterError::Definition)?;
-        if OWNERS.contains(&ty.0)
+        if self.monster_is_owner_type(ty)
             && (info.name != format!("FIXTURE_ATTACKER_{}", ty.0)
                 || info.states()[..2] != [StateId(1), StateId(2)])
             || ty.0 == 135 && info.name != "FIXTURE_DAMAGE_TARGET"
@@ -463,7 +470,7 @@ impl Simulation {
         {
             return Err(MonsterError::Arithmetic.into());
         }
-        if OWNERS.contains(&l.actor_type.0) {
+        if self.monster_is_owner_type(l.actor_type) {
             if l.flags
                 & !(OWNER_FLAGS
                     | if self.profile.uses_map_statistics() {
@@ -489,10 +496,10 @@ impl Simulation {
             {
                 return Err(MonsterError::Arithmetic.into());
             }
-        } else if l.actor_type.0 == 135 && l.flags & !TARGET_FLAGS != 0 {
+        } else if l.actor_type == self.demon_body_type() && l.flags & !TARGET_FLAGS != 0 {
             return Err(MonsterError::Definition.into());
         }
-        if self.profile.uses_demon_lifecycle() && l.actor_type.0 == 136 {
+        if self.profile.uses_demon_lifecycle() && l.actor_type == self.demon_owner_type() {
             self.lifecycle_owner(a)?;
         }
         self.monster_state_role(l.actor_type, l.state.ok_or(MonsterError::Definition)?)?;
@@ -515,7 +522,7 @@ impl Simulation {
         if self.profile == Profile::Shotgunner {
             return self.shotgun_state_role(ty, state);
         }
-        let valid = if OWNERS.contains(&ty.0) {
+        let valid = if self.monster_is_owner_type(ty) {
             (149..=173).contains(&state.0)
                 || [1, 2, 3, 7].contains(&state.0)
                 || ty.0 == 136 && (4..=6).contains(&state.0)
@@ -563,7 +570,7 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<(), SimError> {
-        if OWNERS.contains(&ty.0) {
+        if self.monster_is_owner_type(ty) {
             let a = lifecycle::make_actor(
                 &self.world,
                 &self.sectors,
@@ -577,7 +584,7 @@ impl Simulation {
                 return Err(MonsterError::Ownership.into());
             }
         }
-        if OWNERS.contains(&ty.0) && self.actors.order().next().is_some() {
+        if self.monster_is_owner_type(ty) && self.actors.order().next().is_some() {
             return Err(MonsterError::Ownership.into());
         }
         if position.iter().any(|v| !crate::sight::within(*v, 1008))
@@ -594,7 +601,7 @@ impl Simulation {
     ) -> Result<(), SimError> {
         self.monster_actor(id, 1008)?;
         let owner = self.monster_is_owner(id);
-        if !owner && self.actor(id).unwrap().life.unwrap().actor_type.0 != 135 {
+        if !owner && self.actor(id).unwrap().life.unwrap().actor_type != self.demon_body_type() {
             return Err(MonsterError::Definition.into());
         }
         if MoveDirection::from_raw(p.movedir).is_none()
@@ -774,7 +781,7 @@ impl Simulation {
         self.preflight_monster_callback(id)?;
         let a = *self.actor(id).unwrap();
         let t = a.life.unwrap().target.map(|t| *self.actor(t).unwrap());
-        if self.profile != Profile::DemonExpandedMap {
+        if !self.profile.uses_checked_demons() {
             return Ok(melee(
                 &self.world,
                 &self.sectors,
@@ -823,15 +830,16 @@ impl Simulation {
                     | Profile::DemonMapSpawn
                     | Profile::DemonMapContext
                     | Profile::DemonExpandedMap
+                    | Profile::OriginalDemon
             )
         {
             return Err(MonsterError::Definition.into());
         }
         self.preflight_monster_callback(id)?;
-        if pos && self.actor(id).unwrap().life.unwrap().actor_type.0 != 136 {
+        if pos && self.actor(id).unwrap().life.unwrap().actor_type != self.demon_owner_type() {
             return Err(MonsterError::Definition.into());
         }
-        if self.profile == Profile::DemonExpandedMap {
+        if self.profile.uses_checked_demons() {
             return self.checked_demon_operation(|host| {
                 host.events.push(Event::ActorState(ActorStateEvent::Action {
                     actor: id,

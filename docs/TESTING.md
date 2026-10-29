@@ -36,8 +36,8 @@ python3 tools/reference/m3f1_reference.py --check
 python3 tools/reference/m3f1_snapshot_goldens.py --check
 ```
 
-The frozen historical helper plus the new pair cover every committed version
-with `--check`.
+The frozen historical helper covers the original reference pairs. Run the
+separate milestone commands below as well; it does not discover newer tools.
 It does not regenerate expectations to match Rust. For the expanded geometry slice:
 
 ```sh
@@ -62,8 +62,8 @@ python3 tools/reference/check_map_scale.py
 python3 tools/reference/check_map_extent.py
 ```
 
-The frozen historical helper and separate map-scale/map-extent helpers compare debug/release
-output for every committed simulation example. They span
+The frozen historical helper and separate milestone helpers below compare
+debug/release output for the committed simulation examples. They span
 movement, collision, sectors, lifecycle, combat, weapons/projectiles, perception,
 pursuit, selected attacks and Demon gameplay/map context. Assertions use committed
 original-C evidence and independent snapshots where applicable. Earlier examples
@@ -152,7 +152,7 @@ python3 tools/reference/m3f2_reference.py --check --probe-undefined-clip
 ```
 
 The tool expects the original abs(INT_MIN) sanitizer failure and prints it. This
-is evidence for profile19's recoverable rejection, not a passing original-C full
+is evidence for profile 19's recoverable rejection, not a passing original-C full
 sight comparison. Standard reference modes never enter the undefined continuation.
 
 The source/encoder names deliberately stay outside historical `generate*.py`
@@ -346,5 +346,41 @@ eight operations; corpus seeds include valid native slots, source ordinals and
 sentinels. Build-all and campaign counts are separate. Leak detection is disabled
 by the documented setting; no leak coverage or exhaustive proof is implied.
 Retain matched before/after three-sample legacy and canonical-API workloads and
-all outliers. No new canonical-storage workload exists because no storage migration
-is admitted. [M3f6 observations](validation/M3F6.md) own actual results.
+all outliers. Those M3f6 measurements contain no canonical-storage workload;
+the separate original-ID workload below belongs to M3f7.
+[M3f6 observations](validation/M3F6.md) retain the historical results.
+
+## Original-ID registry and diagnostic contract
+
+```sh
+cargo test -p doom-sim --test m3f7_reference --test m3f7_policies --test m3f7_diagnostics --locked
+python3 tools/reference/m3f7_snapshot_goldens.py --check
+python3 tools/reference/check_original_registry.py
+python3 tools/check_docs.py
+```
+
+The C comparison reads immutable M3f5 raw source observations against actual
+ActorLife source IDs; it checks every ordered event payload by reusing the old
+EV20 bytes with identity fields supplied by C rows. New compact diagnostics retain
+provenance and two complete fixtures; no new C-input/gameplay coverage is claimed.
+Keep all existing generators/encoders, metadata/source sanitizer checks and all
+historical debug/release examples in the full validation run. New decoder policy
+checks are structural/identity safety, not physical-state restoration proof.
+
+```sh
+cargo +nightly fuzz build --sanitizer address
+python3 tools/seed_original_registry_fuzz.py
+python3 tools/seed_diagnostic_fuzz.py
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run original_registry fuzz/corpus/original_registry --sanitizer address -- -runs=4096 -max_len=34 -seed=1 -timeout=20 -rss_limit_mb=2048
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run diagnostic_format fuzz/corpus/diagnostic_format --sanitizer address -- -runs=4096 -max_len=131072 -seed=1 -timeout=20 -rss_limit_mb=2048
+python3 tools/measure_demon_expanded_map.py
+python3 tools/measure_canonical_demon.py
+python3 tools/measure_original_registry.py
+```
+
+The first two measurement tools retain unchanged workloads for matched baseline/
+feature comparisons. The third is separate: source-ID diagnostics omit immutable
+metadata and have different volume, so its timings are not a like-for-like legacy
+speedup. Keep all three process samples/outliers and RSS. Build-all and executed
+campaign counts are separate; disabled leak detection supplies no leak coverage.
+[Design](M3F7_REFERENCE.md) and [observations](validation/M3F7.md) define the scope.

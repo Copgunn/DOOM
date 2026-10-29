@@ -349,6 +349,7 @@ impl Simulation {
                 | Profile::DemonMapSpawn
                 | Profile::DemonMapContext
                 | Profile::DemonExpandedMap
+                | Profile::OriginalDemon
         ) {
             return Err(CombatError::Profile.into());
         }
@@ -369,7 +370,7 @@ impl Simulation {
         angle: u32,
         range: Fixed,
     ) -> Result<AimResult, SimError> {
-        if self.profile == Profile::DemonExpandedMap {
+        if self.profile.uses_checked_demons() {
             return Err(CombatError::Profile.into());
         }
         if self.profile.uses_monsters() && !self.profile.uses_demon_lifecycle() {
@@ -377,7 +378,7 @@ impl Simulation {
         }
         self.combat_actor(shooter)?;
         if self.profile.uses_demon_lifecycle()
-            && self.actor(shooter).unwrap().life.unwrap().actor_type != ActorTypeId(135)
+            && self.actor(shooter).unwrap().life.unwrap().actor_type != self.demon_body_type()
         {
             return Err(MonsterError::Definition.into());
         }
@@ -478,7 +479,7 @@ impl Simulation {
             ])?;
         }
         let plan = self.plan_damage(request)?;
-        if self.profile == Profile::DemonExpandedMap {
+        if self.profile.uses_checked_demons() {
             if plan.spawn_count() != 0 {
                 return Err(CombatError::WorkLimit.into());
             }
@@ -494,7 +495,7 @@ impl Simulation {
         shooter: ActorId,
         attack: LineAttack,
     ) -> Result<AttackResult, SimError> {
-        if self.profile == Profile::DemonExpandedMap {
+        if self.profile.uses_checked_demons() {
             return Err(CombatError::Profile.into());
         }
         if self.profile.uses_monsters() && !self.profile.uses_demon_lifecycle() {
@@ -517,7 +518,7 @@ impl Simulation {
     ) -> Result<AttackResult, SimError> {
         if self.profile.uses_demon_lifecycle() {
             self.preflight_lifecycle_combat(&[Some(shooter)])?;
-            if self.actor(shooter).unwrap().life.unwrap().actor_type != ActorTypeId(135) {
+            if self.actor(shooter).unwrap().life.unwrap().actor_type != self.demon_body_type() {
                 return Err(MonsterError::Definition.into());
             }
         }

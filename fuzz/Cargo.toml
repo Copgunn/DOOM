@@ -174,3 +174,17 @@ path = "fuzz_targets/runtime_identity.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "original_registry"
+path = "fuzz_targets/original_registry.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "diagnostic_format"
+path = "fuzz_targets/diagnostic_format.rs"
+test = false
+doc = false
+bench = false

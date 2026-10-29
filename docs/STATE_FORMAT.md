@@ -1,6 +1,6 @@
-# Canonical diagnostic state format: DSIM versions 1–20
+# Canonical diagnostic state format: DSIM versions 1–21
 
-This is a diagnostic/replay comparison format for explicit M2 through M3f3 profiles,
+This is a diagnostic/replay comparison format for explicit simulation profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
 intentional format-version change and reviewed golden updates. All integers
 below are little endian, with explicit widths and two's-complement signed values.
@@ -10,7 +10,7 @@ addresses are excluded.
 
 ## Framing and field order
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d, `12` for M3d3e, `13` for M3d3f, `14` for M3d3g, `15` for M3d3h, `16` for M3d3i, `17` for M3d3j, `18` for M3f1, `19` for M3f2, `20` for M3f3),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d, `12` for M3d3e, `13` for M3d3f, `14` for M3d3g, `15` for M3d3h, `16` for M3d3i, `17` for M3d3j, `18` for M3f1, `19` for M3f2, `20` for M3f3, `21` for the original-ID profile),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -873,14 +873,14 @@ The [mapping guide](ACTOR_IDENTITIES.md) documents interpretation, and the
 ## Canonical Demon execution observations
 
 M3f5 adds no DSIM schema, profile, persistent field or event tag. Raw ActorLife
-and DSIM-v20 continue encoding native type136 and historical state aliases.
+and DSIM-v20 continue encoding native type 136 and historical state aliases.
 Canonical definition queries are derived observations, excluded from snapshots.
 
 The separate text protocol `DOOM-DEMON-EXEC-v1` prefixes the original-C trace and
 spawn files with that schema line. Its tagged rows inherit the column definitions
 in the unchanged [M3f3 observer](../tools/reference/m3f3_reference.py) and
 [source extractor](../tools/reference/generate_m3d3j.py), but retain raw original
-type12/SARG identities. The [new encoder](../tools/reference/m3f5_snapshot_goldens.py)
+type 12/SARG identities. The [new encoder](../tools/reference/m3f5_snapshot_goldens.py)
 explicitly projects only identity-bearing A/E/K/J/G fields into native Profile20
 slots before invoking the unchanged independent DSIM encoder. Its provenance lists
 every mapping and input/output hash. The raw C files are retained separately.
@@ -892,7 +892,97 @@ original ordinals. Historical captures remain unchanged.
 M3f6 changes no DSIM version, profile tag, registry metadata, field path, width,
 value or event encoding. NativeDemonType/NativeDemonState are derived views, excluded
 from serialization. ActorLife.actor_type/state and state-bearing events retain the v20
-native slots. No original-ID DSIM-v21 stream or decoder is introduced. Historical
+native slots. M3f6 itself introduced no v21 stream or decoder. Historical
 encoders/readers and fixtures keep their existing interpretation. The
 [runtime audit](M3F6_REFERENCE.md) identifies the exact observable fields that a
-future opt-in migration must version rather than silently reinterpret.
+opt-in original-ID contract must version rather than silently reinterpret.
+
+## DSIM-v21 — Original-ID Demon diagnostics
+
+Version21 changes actual definition/state/event values, supplies explicit registry
+and context identifiers, and omits redundant immutable registry rows. It is an
+opt-in diagnostic representation; it is not a savegame or executable world loader.
+No historical version is redefined. Existing readers/helpers for 1–20 remain valid;
+a v20-only reader rejects21.
+
+### Identifiers and field layout
+
+Framing is unchanged: DSIM + u32 version 21 + u64 field count, followed by ordered
+u32 path length/UTF-8 path/u64 value length/value records. Runtime fields compose
+the version 17 families, as v20 does, with these explicit differences:
+
+| Field or family | V21 contract |
+| --- | --- |
+| `tic`, `tic_rate` | u64 completed tic, u32 value 35; unchanged |
+| `profile` | u32 execution policy 1 = `DemonNormalV1`; independent of format21 and Rust enum ordering |
+| `registry.schema` | Exact UTF-8 bytes `DOOM-INFO-1.10-v1`, immediately after profile |
+| `context.schema` | Exact UTF-8 bytes `UNBOUND-BODY-v1`, immediately after registry schema |
+| `.type` and initialized-state event type | u16 definition slot: source ordinals0–136 or explicit context 137; only admitted roles may occur |
+| `.state` and state-bearing events | u16 actual original state ordinal; normal SARG475–495, not native1–21 |
+| Absent current state | u16 65535; distinct from original S_NULL0 |
+| All actor handles | u32 slot + u64 generation (12 bytes); optional handles have one presence byte plus12 bytes |
+| Registry counts/records/actions | Not emitted; derived from identified immutable source/context packages |
+| Remaining runtime/map/event fields | Same explicit widths and order as v20, complete map fields retained |
+
+The registry identifier fixes all original actor/state/sprite/action metadata of
+the preserved Linux DOOM1.10 package. `OriginalExecutionRegistry::admit` checks the
+complete records; changed metadata requires a new schema. Action IDs in event
+payloads retain the existing Rust dispatch encoding fixed by this package, not
+invented original-C action ordinals. There are no serialized function pointers.
+The context package fixes one synthetic unbound body, its definition slot derived
+from original actor count, and the descriptor specified in
+[identity mapping](ACTOR_IDENTITIES.md#original-id-execution-registry). It does not
+claim original player identity. Source135/136 remain original decorations.
+
+State-entry event subtype1, perception SeeState subtype8, monster attack selection
+subtype3 and combat Pain/Killed subtypes6/7 carry source states. Initialized type
+subtype0 carries the original/context definition slot. Other event payloads,
+chronology, raw RNG observations/indexes, statistics and map/physics fields retain
+the shared schema. Referenced handles may be stale because an event describes
+history; they must never resolve to a different generation. No second canonical
+identity field is added to runtime storage or diagnostics.
+
+### Bounded encoding and reading
+
+`Snapshot::diagnostic_bytes(DiagnosticLimits)` preflights byte/field/path/value
+counts with checked arithmetic and uses a fallible reservation before encoding.
+The existing trusted `canonical_bytes()` convenience API keeps its prior process
+allocation policy. `Diagnostic::decode` explicitly accepts20/21;
+`decode_v20` accepts only20. Unknown versions and incompatible profile/registry/
+context identifiers reject, with no fallback reinterpretation. Versions1–19 use
+their unchanged historical readers and are not accepted by this new reader.
+
+Default budgets are 64 MiB total/value,262144 fields and192 path bytes. These are
+diagnostic input/output budgets, not increased simulation capacities. Lengths,
+UTF-8, duplicate paths, truncation/trailing data, integer overflow and allocation
+failure reject. Field-count reservations require enough remaining framing bytes.
+The reader borrows values and sorts only a bounded lookup index; encoded actor,
+thinker and event order is preserved. Raw nested sight/collision payload counts
+are not used to allocate or traverse untrusted arrays.
+
+The read-only view validates required version/profile/schema fields, source/context
+role and current-state closure, current generations/occupied slots, handle widths,
+bounded handle slots, event counts/tags and the identity-bearing event fields.
+V20 retains native interpretation and validates its complete embedded registry
+against the legacy package. `actor(handle)` resolves only an occupied slot with
+matching generation. Optional unavailable/stale target references do not redirect.
+`encode` rechecks caller budgets and preserves exact input bytes/order.
+
+This is deliberately a diagnostic reader: non-identity event bodies and physical/
+map values are opaque, and successful decode does not prove canonical full-field
+shape, executable state, coherent geometry or restorable simulation. Unknown field
+paths can be retained for inspection; unknown format/profile/schema identifiers
+cannot. It never constructs a Simulation. Error-policy, malformed-input and
+namespace tests are Rust-only safety evidence, separate from C compatibility.
+
+### Independent evidence and historical reading
+
+[M3f7 encoding](../tools/reference/m3f7_snapshot_goldens.py) consumes unchanged
+M3f5 compiled-C rows, preserving actual type 12/source SARG states. Only the
+observer's explicitly synthetic body 135 binds to the context definition. Immutable
+metadata is omitted by schema; profile/schema/framing are independently encoded.
+A compact digest index and two complete streams avoid duplicating old raw traces
+or EV20 data. Ordered event tests reuse old EV20 bytes and replace only identity
+payloads from actual C rows, not native-to-original runtime tables. These are new
+encodings of reused inputs, not new C behavior coverage. [Observed results](validation/M3F7.md)
+own exact counts and size. All v20 expectations/readers remain byte-for-byte intact.

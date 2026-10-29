@@ -1,0 +1,33 @@
+{
+  "captures": 664,
+  "context": "UNBOUND-BODY-v1",
+  "execution_profile": 1,
+  "full_byte_fixtures": 2,
+  "inputs_sha256": {
+    "tests/reference/m3f4_identities.csv": "11cdcb5267e3c39b259f6d78674e0fb5e3920d365cd89033f4c4c29f4fc9eb4a",
+    "tests/reference/m3f5_cases.csv": "ed76edeaaf55e4e85322fb1f5cc77afc15a1f8268c325daa8b65de6a3749068b",
+    "tests/reference/m3f5_events.bin": "321ce8c6d13a0eeffc36d747c8c464a6b9611e3d7ad6a75bcb4111e448991737",
+    "tests/reference/m3f5_map_0.bin": "5ea2f73dfb74b7833ecdd1af1f657590b34fcbde047fe7895be44eda78115b97",
+    "tests/reference/m3f5_map_1.bin": "5d25a4f8d9a0b2ade9a03687b00a8c6ad07c1942254500a659241fb71ecef3e7",
+    "tests/reference/m3f5_map_2.bin": "92ae1bd0de866064d3a57764dd08519536696e2627015240fde262368c917668",
+    "tests/reference/m3f5_map_3.bin": "3697cca20984725c4cc2ba2db6f0195d24eb6fe5e4ec46fd3e8f6ed070cfb8cb",
+    "tests/reference/m3f5_map_4.bin": "af6ecc4a5eba657b92e619c3d63524953a351379caafc049d1edbfc4339010fd",
+    "tests/reference/m3f5_map_5.bin": "37ebf1ceba79135405d69952d863c9753c55025087c56e358cfc0a5befa30f73",
+    "tests/reference/m3f5_map_6.bin": "dbb7bac7ef58814c468bde4e4b2d39e92e0f1703ccdc9bfa25c0cb578cb605a6",
+    "tests/reference/m3f5_map_7.bin": "70be80c9a800337766fd4e3b8b4c7e9c44f1d8c523d312514bb1a9712243bfcd",
+    "tests/reference/m3f5_trace.csv": "c7b5f9f4ad05d453c05789a45da57617e22aabb996f5314ac87e4e92e51272b5",
+    "tools/reference/m3c_snapshot_goldens.py": "95eac9b3e9f416eea16bb2ace5bb12a3aa401d9942069046dca05e0edc3a123c",
+    "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
+    "tools/reference/m3f7_snapshot_goldens.py": "29e04b2498d2d5d41ee489d972bb6b84583f56ba7764bc057d0a0c7d367b3ee9"
+  },
+  "new_C_inputs_functions_branches": 0,
+  "ordered_event_fields": 14063,
+  "outputs_sha256": {
+    "tests/reference/m3f7_snapshots.csv": "56901d02dbf4758830e7800d32767e78f9c54e410a87d65740589c6c57a2d52b",
+    "tests/reference/m3f7_state_0_0.bin": "8e03ddbc75edacc5d2491a4ad8f76b8a06038c7465e76ef512248e9b645451d9",
+    "tests/reference/m3f7_state_0_80.bin": "5b6a4077421cc6fceac0834b47d4499e34f5258079c513038b076dc0ec166cdc"
+  },
+  "registry": "DOOM-INFO-1.10-v1",
+  "schema": "DSIM-v21",
+  "scope": "Re-encoding of immutable M3f5 C observations, actual original IDs; observer body135 bound to separate context137. No new gameplay coverage. Two full bytes plus 664 digest checks. All event bytes checked by reusing EV20 with C-observed identity payloads."
+}
