@@ -21,7 +21,8 @@ The Rust workspace provides WAD and classic-map parsing, fixed-point arithmetic,
 original random-number streams, ordered actors and explicitly selected simulation
 configurations. The Demon example covers synthetic map spawning, stand/run,
 perception, pursuit, melee, pain, death, persistent corpses and map kill totals.
-It still adapts some original actor/state identifiers and restricts game context.
+Checked canonical Demon requests resolve through an explicit runtime identity
+binding; the existing runtime representation and restricted game context remain.
 See [compatibility](docs/COMPATIBILITY.md) for the exact boundary.
 
 ## What works
@@ -57,6 +58,7 @@ cargo test --workspace --locked
 
 ```sh
 cargo run -p doom-sim --example demon_expanded_map --locked
+cargo run -p doom-sim --example canonical_demon --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked
@@ -66,6 +68,8 @@ cargo run -p doom-map --example parse_map --locked
 Examples use synthetic public maps, assert expected behavior and print diagnostic
 results. They require no commercial IWAD, GPU, audio device or network service.
 `demon_expanded_map` runs source-tested Demon gameplay on larger synthetic maps.
+`canonical_demon` drives that existing behavior with original MT_SERGEANT/SARG
+identities; it does not admit Spectre or resurrection.
 `map_extent` separately demonstrates expanded unbound coordinates and spatial work.
 See [testing](docs/TESTING.md) for all examples and reproduction commands.
 

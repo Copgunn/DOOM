@@ -31,3 +31,6 @@
 
 # Canonical identity seeds are reproducible; mutations stay local.
 /corpus/original_identity/
+
+# Canonical execution requests use the public seed recipe.
+/corpus/canonical_demon/

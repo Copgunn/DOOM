@@ -47,6 +47,7 @@ impl Simulation {
         if registry.states() != expected.states() || registry.types() != expected.types() {
             return Err(MonsterError::Definition.into());
         }
+        DemonExecutionBinding::admit(&registry).map_err(|_| MonsterError::Definition)?;
         registry.validate_impact_source()?;
         let limits = MapExtentLimits {
             max_actors: limit,

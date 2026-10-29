@@ -353,8 +353,8 @@ Read [M3D3J_REFERENCE](M3D3J_REFERENCE.md) for exact statistics chronology,
 M3f4 represents all 137 original actor, 967 state and 138 sprite identities and
 all original actor/state descriptor records. The [mapping guide](ACTOR_IDENTITIES.md)
 defines checked conversions and named properties. This is complete metadata
-recognition, not complete actor/state execution. No new gameplay profile or
-executable behavior is admitted. Existing original decorative/effect/lifecycle
+recognition, not complete actor/state execution. M3f4 admitted no new gameplay
+profile or behavior. Existing original decorative/effect/lifecycle
 slices retain their existing checks; the focused integration uses MT_TFOG through
 the same typed owner, raw spawn, state entry and thinker services.
 
@@ -362,7 +362,30 @@ Canonical-to-registry resolution compares only the requested complete record at
 its original ordinal. It does not certify every referenced state or live actor
 context. Returned slots must still pass existing action/flag/role/map checks.
 Altered records, reordered names and fixture replacements reject. Native Demon
-136 and state aliases remain explicit fixture adaptations. Original MT_SERGEANT,
-MT_SHADOWS, players, raise states and every other unimplemented dependency remain
-recognized metadata without new gameplay permission. Spectre gameplay, real
+136 and state aliases remain explicit fixture adaptations. The separate binding
+below connects MT_SERGEANT to its already admitted subset. MT_SHADOWS, players,
+raise states and other unimplemented dependencies remain metadata without new
+gameplay permission. Spectre gameplay, real
 players, infighting, resurrection and Nightmare/respawn remain deferred.
+
+## Canonical Demon execution requests
+
+The M3f5 binding connects original MT_SERGEANT (Demon/Pinky, not Shotgun Guy) to
+the existing [Profile20 closure](#expanded-map-demon-profile). It derives native
+metadata from canonical records and admits typed canonical batch/state requests
+through existing services. All original ordinals are preserved in the source
+registry. All runtime limits, native identity bytes, event order and game-context
+restrictions remain the Profile20 contract; there is no Profile21.
+
+The binding covers normal stand, run, melee, pain and death definitions. Only
+stand/run/attack have direct entry permission; pain/death remain damage-controlled.
+Raise references are represented but have no binding. Invalid ordinal conversion,
+unsupported identity/state requests, wrong owners and stale handles reject safely.
+MT_SHADOWS (Spectre) and MT_SHOTGUY (Shotgun Guy) are explicitly excluded.
+
+Canonical definition queries are projections through a validated correspondence,
+not raw original IDs in ActorLife/DSIM. Full actor compatibility, real players,
+generalized infighting, Nightmare/respawn, resurrection, dynamic sectors, new
+hitscan/projectiles and rendering remain deferred. See the
+[mapping](ACTOR_IDENTITIES.md#canonical-demon-execution-binding),
+[source investigation](M3F5_REFERENCE.md) and [observations](validation/M3F5.md).

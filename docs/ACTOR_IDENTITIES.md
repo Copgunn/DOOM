@@ -100,3 +100,46 @@ actors retain their existing storage. Queries neither allocate nor consume RNG,
 change thinker/spatial ordering, enter states or change snapshots. Construction
 and simulation retain all existing capacities and failure policies. There is no
 new profile or diagnostic simulation schema; see [STATE_FORMAT](STATE_FORMAT.md).
+
+## Canonical Demon execution binding
+
+M3f5 adds `DemonExecutionBinding::admit(&registry)`, separate from the strict
+same-record conversion above. It validates MT_SERGEANT's complete source record,
+S_NULL, all normal source SARG records, the native actor definition and all
+corresponding native state fields/next references. It proves the declared
+definition correspondence, not other registry records or arbitrary game contexts.
+Profile20's existing exact constructor still validates the remaining registry.
+
+| Canonical source state | Original ordinal | Existing runtime StateId |
+| --- | --- | --- |
+| S_SARG_STND / STND2 | 475 / 476 | 1 / 3 |
+| S_SARG_RUN1 | 477 | 2 |
+| S_SARG_RUN2–8 | 478–484 | 15–21 |
+| S_SARG_ATK1–3 | 485–487 | 4–6 |
+| S_SARG_PAIN / PAIN2 | 488 / 489 | 7 / 8 |
+| S_SARG_DIE1–6 | 490–495 | 9–14 |
+
+Original MT_SERGEANT12 / DoomEd3002 maps to native owner136 only through this
+explicit execution binding. The native map-context actor copies canonical
+properties with translated state references, DoomEd=-1 (source lookup precedes
+projection), and raise=0. The source record remains unchanged with raise496.
+S_NULL is an internal reference sentinel, not a public entry binding. Raise496–501
+has no executable binding. MT_SHADOWS13 / DoomEd58 (Spectre) and MT_SHOTGUY2 /
+DoomEd9 (Shotgun Guy) reject even when descriptors share some references.
+
+`Simulation::canonical_demon_map` selects the existing source-derived Profile20
+registry. `spawn_original_demons(OriginalActorType::MT_SERGEANT)` requests its
+existing atomic THING batch. `enter_original_demon_state(actor, original_state)`
+resolves a state before delegation. Only live stand/run/attack entries pass the
+existing owner policy; pain/death are damage-controlled. Unsupported types and
+states reject before delegation. Read queries can observe a pending record until
+retirement; retired/stale handles and unbound targets reject.
+
+`original_demon_identity(actor)` returns source definition identity, while raw
+ActorLife and DSIM retain native IDs. Binding `runtime_state` and `original_state`
+round trips cover the explicit table only; they do not authorize entry or silently
+convert arbitrary registry slots. No raw runtime-ID migration or full Demon/Spectre
+compatibility is claimed. The [C observer](M3F5_REFERENCE.md) runs pristine
+type12/states475–495 throughout gameplay. Comparisons distinguish physical source
+fields, this definition projection, independently projected DSIM bytes and
+Rust-only rejection policy.

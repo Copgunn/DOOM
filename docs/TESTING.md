@@ -257,3 +257,64 @@ Run all historical commands above as well. Reuse the unmodified
 `tools/measure_demon_expanded_map.py` on the base and feature with the same
 release toolchain/workloads, three samples each; compare identical cases/profiles.
 [M3f4 observations](validation/M3F4.md) own results and measurement limitations.
+
+## Canonical Demon execution binding
+
+These checks retain the original canonical C identities during gameplay, then
+compare an explicitly projected native Profile20 representation. They add no
+DSIM schema or gameplay profile. Run them alongside every historical check above:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3f5_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3f5_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3f5_reference --test m3f5_policies --locked -- --nocapture
+python3 tools/reference/check_canonical_demon.py
+cargo run -p doom-sim --example canonical_demon --locked
+cargo run -p doom-sim --example canonical_demon --release --locked
+```
+
+The observer retains raw original type/state fields in DOOM-DEMON-EXEC-v1 files.
+The independent encoder declares identity-only translation before reusing the
+historical DSIM-v20 encoder. Rust compares C physical/statistics/RNG observations,
+canonical definition queries, ordered event fields and independent snapshots.
+Separate policy tests cover metadata mutation, wrong type/owner, raise, corpse,
+stale-handle and atomicity boundaries. See [investigation](M3F5_REFERENCE.md) and
+[observations](validation/M3F5.md) for exact coverage and limitations.
+
+```sh
+python3 tools/seed_canonical_demon_fuzz.py fuzz/corpus/canonical_demon
+cargo +nightly fuzz build --sanitizer address
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run canonical_demon fuzz/corpus/canonical_demon --sanitizer address -- -runs=4096 -max_len=35 -seed=1 -timeout=20 -rss_limit_mb=2048
+python3 tools/measure_demon_expanded_map.py > /tmp/m3f5-legacy-performance.json
+python3 tools/measure_canonical_demon.py > /tmp/m3f5-api-performance.json
+```
+
+Build-all and actual campaign execution are different results. The seed recipe
+creates fresh synthetic requests; evolving data stays ignored. Leak detection is
+disabled in the documented managed-host campaign; no leak coverage is claimed.
+The legacy benchmark supplies matching before/after workloads. The new canonical
+API workload includes explicit validation/query costs and is reported separately;
+it has no pre-M3f5 API baseline. Timing output is observational, never an assertion.
+
+To exercise cross-filesystem provenance reproducibility without changing source
+observations, reverse file discovery in both new publishers. This checks whole
+publisher output bytes, separately from gameplay comparisons:
+
+```sh
+python3 - <<'PY'
+import sys
+from pathlib import Path
+sys.path.insert(0, 'tools/reference')
+import m3f5_reference as source
+import m3f5_snapshot_goldens as encoder
+raw = source.capture(list(source.main.legacy.base.FLAGS))
+source.capture = lambda flags: dict(reversed(list(raw.items())))
+source.run(True, False)
+original = Path.glob
+try:
+    Path.glob = lambda path, pattern: iter(reversed(list(original(path, pattern))))
+    encoder.run(True)
+finally:
+    Path.glob = original
+PY
+```

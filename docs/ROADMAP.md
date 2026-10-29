@@ -32,25 +32,33 @@ The merged baseline provides:
   melee and lifecycle. See [support](COMPATIBILITY.md#expanded-map-demon-profile),
   [source findings](M3F3_REFERENCE.md) and [observations](validation/M3F3.md).
 
+- M3f4 original actor/state identity admission is merged. Complete original
+  identity metadata and checked registry resolution preserve existing execution.
+  See [mapping](ACTOR_IDENTITIES.md), [source findings](M3F4_REFERENCE.md) and
+  [observations](validation/M3F4.md).
+
 These foundations support controlled headless tests, not a complete playable game.
 Earlier findings and milestones are retained in the [historical records](validation/archive/README.md).
 
 ## Next
 
-### M3f4: Original actor/state identity admission
+### M3f5: Canonical MT_SERGEANT execution binding
 
-M3f4 establishes checked original actor/state/sprite identities and read-only
-named descriptors, with explicit validation when crossing into an owned registry.
-All source metadata is represented; existing profiles and executable behaviors
-remain unchanged. See [mapping](ACTOR_IDENTITIES.md),
-[source investigation](M3F4_REFERENCE.md) and [observations](validation/M3F4.md).
+M3f5 connects canonical Demon requests to the existing Profile20 closure, with a
+complete checked definition binding and a source-derived registry projection.
+Independent C executes the real type/state identities. Runtime storage and DSIM
+remain unchanged; no new gameplay profile is introduced. It is prepared for owner
+review; exact review state belongs to GitHub. See [source findings](M3F5_REFERENCE.md),
+[mapping](ACTOR_IDENTITIES.md#canonical-demon-execution-binding) and
+[observations](validation/M3F5.md).
 
 ### Remaining Demon admission
 
-The next narrow recommendation is a separate original MT_SERGEANT/state execution
-profile investigation: replace fixture identity projection only after auditing
-role checks, chronology, source type tests and independent canonical encoding.
-Retain player, Spectre, scoring expansion, raise and respawn exclusions.
+The next narrow recommendation is a separate native representation migration
+investigation for the existing Demon closure: audit all owner/role/state checks
+and specify independently encoded original-ID storage before changing runtime or
+DSIM identity fields. Reuse the checked M3f5 definition binding as an oracle for
+that correspondence. Retain player, Spectre, scoring expansion, raise and respawn exclusions.
 The [support matrix](COMPATIBILITY.md#demon-support-remaining-dependencies)
 explains the remaining adaptations. This recommendation is future work.
 

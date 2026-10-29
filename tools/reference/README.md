@@ -161,3 +161,22 @@ detection. Original action stubs abort: this is metadata, not callback behavior.
 See [investigation](../../docs/M3F4_REFERENCE.md),
 [mapping](../../docs/ACTOR_IDENTITIES.md) and [tests](../../docs/TESTING.md#original-actorstate-identity-metadata).
 All historical tools, table generation and DSIM fixtures remain unchanged.
+
+## Canonical Demon execution binding (M3f5)
+
+[m3f5_reference.py](m3f5_reference.py) reuses immutable M3f3 extraction and public
+geometry construction, removes the Demon setup/table and spawn-ID adaptations,
+and executes pristine MT_SERGEANT/SARG records throughout the same genuine source
+bodies. Only the explicitly declared target135/roster and inherited arithmetic,
+geometry and observation adapters remain. Raw trace/spawn data carries the new
+DOOM-DEMON-EXEC-v1 tag. Normal, strict arithmetic and ASan/UBSan runs must agree.
+
+[m3f5_snapshot_goldens.py](m3f5_snapshot_goldens.py) independently maps canonical
+C identity fields into the frozen native representation and invokes the unchanged
+DSIM-v20 encoder in a temporary tree. It reads C-derived metadata, not Rust output.
+Both raw C and projected expectations remain available with hashes/provenance.
+Historical tools and captures are unchanged. [check_canonical_demon.py](check_canonical_demon.py)
+checks debug/release example output against the independently encoded captures.
+[Investigation](../../docs/M3F5_REFERENCE.md), [commands](../../docs/TESTING.md#canonical-demon-execution-binding)
+and [observations](../../docs/validation/M3F5.md) separate source behavior,
+projection, encoding and Rust policy evidence.
