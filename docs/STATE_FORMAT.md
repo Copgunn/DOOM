@@ -869,3 +869,20 @@ registry-local identifiers remain encoded exactly as before. The separate
 by ordered type/state/sprite records; it is not a DSIM capture or demo format.
 The [mapping guide](ACTOR_IDENTITIES.md) documents interpretation, and the
 [source observer](../tools/reference/m3f4_reference.py) defines emitted columns.
+
+## Canonical Demon execution observations
+
+M3f5 adds no DSIM schema, profile, persistent field or event tag. Raw ActorLife
+and DSIM-v20 continue encoding native type136 and historical state aliases.
+Canonical definition queries are derived observations, excluded from snapshots.
+
+The separate text protocol `DOOM-DEMON-EXEC-v1` prefixes the original-C trace and
+spawn files with that schema line. Its tagged rows inherit the column definitions
+in the unchanged [M3f3 observer](../tools/reference/m3f3_reference.py) and
+[source extractor](../tools/reference/generate_m3d3j.py), but retain raw original
+type12/SARG identities. The [new encoder](../tools/reference/m3f5_snapshot_goldens.py)
+explicitly projects only identity-bearing A/E/K/J/G fields into native Profile20
+slots before invoking the unchanged independent DSIM encoder. Its provenance lists
+every mapping and input/output hash. The raw C files are retained separately.
+This is source-derived projected evidence, not a claim that native IDs equal
+original ordinals. Historical captures remain unchanged.

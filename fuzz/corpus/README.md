@@ -179,3 +179,18 @@ metadata and tests bounded property mutations. It loads no game assets and does
 not admit new gameplay. The evolving corpus remains ignored. See
 [reproduction commands](../../docs/TESTING.md#original-actorstate-identity-metadata)
 and [observations](../../docs/validation/M3F4.md) for the actual sanitizer campaign.
+
+## Canonical Demon execution seeds
+
+[seed_canonical_demon_fuzz.py](../../tools/seed_canonical_demon_fuzz.py) creates
+22 fresh synthetic seeds: nine eight-tic scripts, nine canonical entry/query,
+unsupported raise/Spectre, stale-handle, damage and step scripts, and four low-slot
+batch requests. The target uses the nine public canonical C cases. Each input is
+bounded to 35 bytes, two prefix bytes and at most eight four-byte operations.
+Successful setups install the existing unbound targets; low limits test admission
+without inventing a partial gameplay setup. Two instances compare complete
+snapshots after every operation; each recoverable failure checks rollback. No
+commercial assets are loaded. Corpus/artifacts remain ignored or temporary.
+See [commands](../../docs/TESTING.md#canonical-demon-execution-binding) and
+[actual results](../../docs/validation/M3F5.md). All target builds do not imply all
+historical targets were recampaigned. detect_leaks=0 means no leak coverage.

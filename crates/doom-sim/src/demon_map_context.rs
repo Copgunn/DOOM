@@ -45,11 +45,7 @@ impl ActorRegistry {
     /// Profile17 preserves original Demon flags. Native identity/state aliases
     /// and disabled raise remain explicit adaptations, not full MT_SERGEANT.
     pub fn demon_map_context_fixture() -> Self {
-        let fixture = Self::demon_stand_run_fixture();
-        let mut types = fixture.types().to_vec();
-        types[136].name = "FIXTURE_DEMON_MAP_CONTEXT_136".into();
-        types[136].properties[21] = 4194310;
-        Self::new(fixture.states().to_vec(), types).expect("source-derived context fixture")
+        crate::canonical_demon::registry()
     }
 }
 impl Simulation {

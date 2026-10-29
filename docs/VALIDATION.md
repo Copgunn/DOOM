@@ -32,6 +32,10 @@ LeakSanitizer coverage; no bounded campaign is exhaustive.
 
 ## Detailed records
 
+- [M3f5 canonical Demon execution binding](validation/M3F5.md), including raw
+  canonical C observations and separately projected DSIM-v20 comparisons.
+- [M3f4 canonical identity metadata](validation/M3F4.md).
+
 - [M3f3 combined Demon/expanded-map evidence](validation/M3F3.md).
 
 - [M3f2 expanded-coordinate/spatial-work evidence](validation/M3F2.md).

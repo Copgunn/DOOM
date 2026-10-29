@@ -205,3 +205,27 @@ records and executable game context still require their existing admission.
 No alias is silently promoted, no second registry/store is introduced, and queries
 allocate nothing and do not mutate simulation state. Profiles 1–20 retain their
 existing identity encodings, state chronology and RNG contracts.
+
+## Canonical Demon execution binding
+
+`DemonExecutionBinding` is a borrowed proof connecting canonical MT_SERGEANT and
+its normal SARG closure to Profile20's existing native definition. Admission
+checks full canonical records through M3f4 resolution, then checks every bound
+native descriptor and translated next edge. An explicit bounded bijection keeps
+canonical definition identity distinct from registry slot identity. No second
+actor store, persistent identity field or scheduler is added.
+
+The map-context fixture now derives its native records directly from canonical
+metadata, preserving its previous bytes. Profile20 construction certifies the
+binding. `canonical_demon_map`, `spawn_original_demons` and
+`enter_original_demon_state` delegate to existing constructor, batch and state-entry
+services; existing role/health/arithmetic checks still apply. Definition queries
+are immutable, allocate nothing and consume no RNG. Their bounded validation cost
+is paid only by explicit requests, outside ordinary per-tic execution.
+
+Native actor/state aliases remain serialized. Canonical observation explicitly
+projects a current owner record through the verified binding; M3f4's same-record
+resolver continues rejecting native136 as pristine source metadata. Source raise
+metadata remains intact while native raise is suppressed. See the
+[mapping](ACTOR_IDENTITIES.md#canonical-demon-execution-binding) and
+[investigation](M3F5_REFERENCE.md) for the narrower integration boundary.

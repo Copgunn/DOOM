@@ -51,8 +51,8 @@ is not reachable by an ordinary next edge from that closure.
 | Source BLOCKMAP order, movement attempts, sight clipping and RNG ordering | p_map.c/p_maputl.c/p_sight.c/m_random.c; existing bounded Profile20 evidence |
 | Native type136/state aliases and unbound target135 | Explicit Rust/reference-fixture representation policy, not original ordinals |
 | Generational references, bounded work, transactional rejection and clipped INT_MIN rejection | Rust safety policy; not claims of defined original-C continuations |
-| Raw canonical type12 gameplay throughout a new capture | Candidate new independent observation, to be established by the M3f5 observer |
-| Canonical requests driving existing state/spawn services | Candidate M3f5 admission, subject to definition and behavior comparison |
+| Raw canonical type12 gameplay throughout a new capture | Independently observed by the M3f5 compiled-C observer |
+| Canonical requests driving existing state/spawn services | Newly validated definition binding over already implemented Profile20 services |
 | Spectre, players, generalized infighting, Fast/Nightmare, respawn, resurrection, dynamic sectors | Unsupported/unverified game contexts; no admission |
 
 The type-branch audit includes P_CheckMissileRange, A_Look/A_Scream, damage/kill
@@ -95,9 +95,9 @@ There is no new behavior/capacity to justify a gratuitous Profile21 or DSIM vers
 
 ## Independent verification design
 
-A new versioned observer will run the existing genuine C bodies with type12 and
+The new versioned observer runs the existing genuine C bodies with type12 and
 states475–495 throughout, removing the old Demon type/state adaptation from its
-C setup. Retain and declare only the unbound target135/roster and established
+C setup. It retains and declares only the unbound target135/roster and established
 arithmetic/geometry adapters. Retain raw canonical observations, including RNG and
 state-bearing event payloads. Never use Rust output to manufacture expectations.
 
@@ -106,4 +106,41 @@ definition observation. Independently project C identity fields into the frozen
 DSIM-v20 representation for full snapshots and ordered event-byte comparisons.
 Keep source behavior, projection, canonical encoding and Rust-only rejection
 results separate. Existing Profiles1–20 and all historical fixtures/tools remain
-unchanged. Actual counts and conclusions belong in the new measured evidence record.
+unchanged. Actual counts and conclusions belong in the [measured evidence record](validation/M3F5.md).
+
+## Exact source dependencies and observation boundary
+
+The source inventory and per-body digests are retained in
+[m3f5_provenance.json](../tests/reference/m3f5_provenance.json). These are the same
+compiled bodies as M3f3, under different identity setup; this is not new function
+or exhaustive branch coverage. Source facts below have existing independent
+coverage and the stated new canonical-identity input slice; untested contexts
+remain unsupported.
+
+| Source location | Symbols and relevant ordering |
+| --- | --- |
+| [info.h](../linuxdoom-1.10/info.h), [info.c](../linuxdoom-1.10/info.c) | mobjtype_t/statenum_t/spritenum_t, mobjinfo/states; source enum and descriptor references remain pristine |
+| [p_mobj.c](../linuxdoom-1.10/p_mobj.c) | P_SpawnMobj, P_SpawnMapThing, P_SetMobjState, P_MobjThinker, P_XYMovement, P_ZMovement: raw spawn/action distinction, floor/state setup, movement before countdown, nested entry, terminal timer |
+| [p_tick.c](../linuxdoom-1.10/p_tick.c) | P_AddThinker/P_RunThinkers/P_RemoveThinker: append traversal and deferred retirement; no identity-based sorting |
+| [p_enemy.c](../linuxdoom-1.10/p_enemy.c) | A_Look/P_LookForPlayers/P_NoiseAlert: sound target and ambush sight, bounded roster scan, see entry; A_Chase/P_NewChaseDir/P_Move/P_TryWalk: reaction/threshold, turn, melee selection, source movement candidates |
+| [p_enemy.c](../linuxdoom-1.10/p_enemy.c) | A_FaceTarget clears ambush; A_SargAttack repeats melee range/sight at callback time, then (P_Random()%10+1)*4 damage. Shared states alone do not admit Spectre's shadow-dependent facing branch |
+| [p_inter.c](../linuxdoom-1.10/p_inter.c) | P_DamageMobj/P_KillMobj: thrust/health, lethal branch before pain, pain roll/state, reaction/retarget, flags/corpse/height, kill credit and death timer adjustment |
+| [p_enemy.c](../linuxdoom-1.10/p_enemy.c) | A_Pain/A_Scream/A_Fall: sounds and delayed SOLID removal; source COUNTKILL survives death |
+| [p_map.c](../linuxdoom-1.10/p_map.c), [p_maputl.c](../linuxdoom-1.10/p_maputl.c) | P_TryMove/P_CheckPosition/PIT_CheckThing/PIT_CheckLine, P_BlockThingsIterator/P_BlockLinesIterator and P_SetThingPosition: source list order, blocking/floor/ceiling and relinking |
+| [p_sight.c](../linuxdoom-1.10/p_sight.c) | P_CheckSight/P_CrossBSPNode/P_CrossSubsector: REJECT/BSP/portal clipping; original INT_MIN subtraction remains excluded by checked Rust policy |
+| [m_random.c](../linuxdoom-1.10/m_random.c) | P_Random advances prndindex before reading, wraps at256; M_Random owns separate rndindex |
+
+RNG sites include raw spawn lastlook; positive map-spawn timer; selected pursuit
+candidate order/walk duration/active sound; admitted melee damage; pain decision;
+ordinary death timer shortening; and source sound randomization where applicable.
+A rejected range attack draws no damage. Actual source draws are logged in order,
+reconciled to the simulation's owned index and dependent observations; the Rust
+implementation does not expose an independent log for every internal draw.
+Presentation/metadata queries consume neither stream. The raw spawn trace retains
+setup skips/discards separately from gameplay trace draws.
+
+Raise metadata is observed without entering it. Source global Fast rewrites,
+Nightmare timing/respawn, A_VileChase corpse selection, real player pointers,
+nonlethal native infighting and Spectre shadow branches are unsupported/unverified.
+The synthetic fallback roster and target135 are explicit context policy, not proof
+of real player gameplay or whole-game Demon compatibility.

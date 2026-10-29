@@ -360,7 +360,11 @@ impl Simulation {
             if map_demons {
                 // Lookup and nomonsters use original metadata, including COUNTKILL,
                 // before the explicit executable fixture adaptation.
-                if ty != ActorTypeId(12) {
+                if ty
+                    != crate::identity::OriginalActorType::MT_SERGEANT
+                        .resolve(registry)
+                        .map_err(|_| MonsterError::Definition)?
+                {
                     return Err(MapSpawnError::UnsupportedType(thing.kind).into());
                 }
                 if self.profile == Profile::DemonExpandedMap
@@ -377,7 +381,7 @@ impl Simulation {
                 {
                     return Err(MonsterError::Arithmetic.into());
                 }
-                ty = ActorTypeId(136);
+                ty = crate::canonical_demon::RUNTIME_OWNER;
             }
             if self.profile.uses_perception() {
                 if [thing.position.x, thing.position.y]
