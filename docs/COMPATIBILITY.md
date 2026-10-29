@@ -142,8 +142,8 @@ all dependent representations and services.
 For example, collision and hitscan services contain fixed line-work buffers tied
 to the line bound; raising only the rejection constant would not be sufficient.
 The [future map-scale milestone](ROADMAP.md#map-scale-limits-and-real-map-readiness)
-describes the broader direction. The separate geometry configurations below expand their declared slices while
-retaining historical admission.
+describes the broader direction. The separate geometry configurations below
+expand their declared slices while retaining historical admission.
 
 ### 4. Performance and traversal work limits
 

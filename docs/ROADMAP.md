@@ -19,7 +19,6 @@ The merged baseline provides:
   map and credited-kill totals, and fresh level reset with RNG continuity.
   See the [source investigation](M3D3J_REFERENCE.md) and
   [observed tests](validation/M3D3J.md) for technical evidence.
-
 - M3f1 bounded line/sector scale, regularly merged: reusable source-ordered static
   collision and read-only sight preparation. See [source findings](M3F1_REFERENCE.md)
   and [observations](validation/M3F1.md).
