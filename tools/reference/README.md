@@ -180,3 +180,14 @@ checks debug/release example output against the independently encoded captures.
 [Investigation](../../docs/M3F5_REFERENCE.md), [commands](../../docs/TESTING.md#canonical-demon-execution-binding)
 and [observations](../../docs/validation/M3F5.md) separate source behavior,
 projection, encoding and Rust policy evidence.
+
+## M3f6 native runtime boundary
+
+The new m3f6_reference Rust test reads the unchanged M3f5 raw canonical observations
+and independent DSIM-v20/event fixtures. It compares the new typed native view to
+actual ActorLife slots and projected source definitions. No C generator, adapter,
+capture or encoder changes; existing provenance remains intact. Reuse is explicitly
+separate from new C-input coverage. The new check_runtime_identity helper asserts
+its example in debug/release against the existing independent digest index.
+See [audit](../../docs/M3F6_REFERENCE.md) and
+[observations](../../docs/validation/M3F6.md).

@@ -37,30 +37,36 @@ The merged baseline provides:
   See [mapping](ACTOR_IDENTITIES.md), [source findings](M3F4_REFERENCE.md) and
   [observations](validation/M3F4.md).
 
+- M3f5 canonical MT_SERGEANT execution binding is merged. Typed source requests
+  use the existing native closure, with independent canonical C observations and
+  explicit DSIM projection. See [investigation](M3F5_REFERENCE.md) and
+  [observations](validation/M3F5.md).
+
 These foundations support controlled headless tests, not a complete playable game.
 Earlier findings and milestones are retained in the [historical records](validation/archive/README.md).
 
 ## Next
 
-### M3f5: Canonical MT_SERGEANT execution binding
+### M3f6: Original-ID runtime storage investigation
 
-M3f5 connects canonical Demon requests to the existing Profile20 closure, with a
-complete checked definition binding and a source-derived registry projection.
-Independent C executes the real type/state identities. Runtime storage and DSIM
-remain unchanged; no new gameplay profile is introduced. It is prepared for owner
-review; exact review state belongs to GitHub. See [source findings](M3F5_REFERENCE.md),
-[mapping](ACTOR_IDENTITIES.md#canonical-demon-execution-binding) and
-[observations](validation/M3F5.md).
+The complete consumer audit selects preservation of native storage with an
+explicit typed execution boundary. Native state/type views and named Profile20
+transition guards strengthen namespace handling without changing stored IDs,
+public observation values, DSIM-v20 or gameplay admission. A direct storage
+migration is deferred; exact review state belongs to GitHub. See
+[source audit and design comparison](M3F6_REFERENCE.md),
+[runtime representation](ACTOR_IDENTITIES.md#native-runtime-identity-boundary)
+and [observations](validation/M3F6.md).
 
-### Remaining Demon admission
+### Remaining identity migration
 
-The next narrow recommendation is a separate native representation migration
-investigation for the existing Demon closure: audit all owner/role/state checks
-and specify independently encoded original-ID storage before changing runtime or
-DSIM identity fields. Reuse the checked M3f5 definition binding as an oracle for
-that correspondence. Retain player, Spectre, scoring expansion, raise and respawn exclusions.
-The [support matrix](COMPATIBILITY.md#demon-support-remaining-dependencies)
-explains the remaining adaptations. This recommendation is future work.
+The next narrow prerequisite is an independently encoded, opt-in original-ID
+registry/profile and serialization contract for the existing Demon closure.
+Specify all type/state/event/registry differences, keep v20 readers/fixtures and
+old profiles intact, and prove cross-representation semantics before authorizing
+runtime storage changes. Do not persist duplicate canonical/native identities.
+The audit explains concrete owner, raise-root and public-format blockers to an
+in-place substitution. No broader actors, gameplay or capacities are implied.
 
 ### Map Scale, Limits, and Real-Map Readiness
 

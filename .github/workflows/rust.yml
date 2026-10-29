@@ -119,6 +119,7 @@ jobs:
           python tools/reference/check_demon_expanded_map.py
           python tools/reference/check_original_identity.py
           python tools/reference/check_canonical_demon.py
+          python tools/reference/check_runtime_identity.py
       - name: Documentation links and archive integrity
         run: python tools/check_docs.py
       - name: Documentation

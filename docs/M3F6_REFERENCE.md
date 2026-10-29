@@ -130,3 +130,19 @@ handles, replay and complete-state-error tests from C comparisons. Preserve ever
 historical fixture/helper byte. Matching original/native projection alone is not
 whole-gameplay equivalence. No DSIM-v21 is needed when no observable format or
 stored ID changes; old capture interpretation and decoders stay unchanged.
+
+## Implemented outcome
+
+The implementation selects C. No stored actor/state ID becomes canonical and no
+historical profile or format changes. The sealed native views reuse the original
+binding and its single mapping; Profile20 uses named classification without
+broadening direct entry or corpse behavior. Small boundary methods are inline to
+avoid preventable call overhead. Actual measurements, including pre-inline
+outliers and final-source results, belong in [the evidence record](validation/M3F6.md);
+this annotation is not itself a performance claim.
+
+The next prerequisite for direct storage is a separate, independently encoded
+original-ID registry/profile and diagnostic-format contract, tested alongside
+unchanged v20 interpretation before changing public runtime observations. Existing
+raw canonical C traces can supply its independent input; they do not authorize
+new actors, raise, respawn or broader gameplay.

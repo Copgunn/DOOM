@@ -167,3 +167,10 @@ path = "fuzz_targets/canonical_demon.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "runtime_identity"
+path = "fuzz_targets/runtime_identity.rs"
+test = false
+doc = false
+bench = false

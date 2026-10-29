@@ -229,3 +229,20 @@ resolver continues rejecting native136 as pristine source metadata. Source raise
 metadata remains intact while native raise is suppressed. See the
 [mapping](ACTOR_IDENTITIES.md#canonical-demon-execution-binding) and
 [investigation](M3F5_REFERENCE.md) for the narrower integration boundary.
+
+## Runtime identity representation boundary
+
+M3f6 keeps ActorLife's registry-local type/state fields authoritative. The
+[complete audit](M3F6_REFERENCE.md) distinguishes definition IDs, execution slots,
+DoomEd numbers and generational object handles. Persisting both canonical and
+native IDs would introduce synchronization invariants without solving historical
+observation compatibility; no such fields are added.
+
+Sealed native Demon views make the existing representation explicit. The borrowed
+binding still proves metadata; scalar views do not certify another registry, a
+live handle or state-entry permission. Existing canonical observations delegate
+through the native view. One mapping supplies projection and a derived bounded
+reverse lookup; queries allocate nothing. Profile20's entry/death/Fall guards use
+named states through constant-time reverse lookup, without full registry validation
+per tic. Earlier fixture profiles retain their policies. Thinker, spatial, RNG,
+transactional planning and serialization services remain shared and unchanged.

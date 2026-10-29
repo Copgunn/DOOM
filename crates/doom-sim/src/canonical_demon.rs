@@ -10,7 +10,7 @@ use std::{error::Error, fmt};
 pub(crate) const RUNTIME_OWNER: ActorTypeId = ActorTypeId(136);
 const RUNTIME_NAME: &str = "FIXTURE_DEMON_MAP_CONTEXT_136";
 // The historical native layout is explicit policy, not original enum ordering.
-const STATES: &[(State, StateId)] = &[
+pub(crate) const STATES: &[(State, StateId)] = &[
     (State::S_SARG_STND, StateId(1)),
     (State::S_SARG_STND2, StateId(3)),
     (State::S_SARG_RUN1, StateId(2)),
@@ -64,10 +64,8 @@ impl From<SimError> for CanonicalDemonError {
     }
 }
 fn runtime_state(original: State) -> Result<StateId, CanonicalDemonError> {
-    STATES
-        .iter()
-        .find(|(s, _)| *s == original)
-        .map(|(_, r)| *r)
+    NativeDemonState::from_original(original)
+        .map(NativeDemonState::runtime)
         .ok_or(CanonicalDemonError::UnsupportedState(original))
 }
 fn reference(original: State) -> Result<StateId, CanonicalDemonError> {
@@ -143,10 +141,33 @@ impl<'a> DemonExecutionBinding<'a> {
     }
     /// Resolve an explicit executable source type; Spectre and Shotgun Guy reject.
     pub fn runtime_type(self, original: Type) -> Result<ActorTypeId, CanonicalDemonError> {
+        self.native_type(original).map(NativeDemonType::runtime)
+    }
+    /// Resolve the source type into the explicitly named native namespace.
+    pub fn native_type(self, original: Type) -> Result<NativeDemonType, CanonicalDemonError> {
         if original != self.original_type() {
             return Err(CanonicalDemonError::UnsupportedType(original));
         }
-        Ok(RUNTIME_OWNER)
+        self.check_native_type(RUNTIME_OWNER)
+    }
+    /// Check a native type candidate, without interpreting it as an original ordinal.
+    pub fn check_native_type(
+        self,
+        candidate: ActorTypeId,
+    ) -> Result<NativeDemonType, CanonicalDemonError> {
+        NativeDemonType::checked(candidate).ok_or(CanonicalDemonError::Owner)
+    }
+    /// Resolve a source state into a native representation; entry still needs role checks.
+    pub fn native_state(self, original: State) -> Result<NativeDemonState, CanonicalDemonError> {
+        NativeDemonState::from_original(original)
+            .ok_or(CanonicalDemonError::UnsupportedState(original))
+    }
+    /// Check a native slot, rejecting canonical SARG ordinals and unrelated slots.
+    pub fn check_native_state(
+        self,
+        candidate: StateId,
+    ) -> Result<NativeDemonState, CanonicalDemonError> {
+        NativeDemonState::checked(candidate).ok_or(CanonicalDemonError::RuntimeState(candidate))
     }
     /// Runtime definition, visibly distinct from the pristine canonical descriptor.
     pub fn runtime_definition(self) -> &'a ActorTypeDef {
@@ -160,15 +181,12 @@ impl<'a> DemonExecutionBinding<'a> {
     }
     /// Resolve a canonical state. Existing entry/health/role checks still apply.
     pub fn runtime_state(self, original: State) -> Result<StateId, CanonicalDemonError> {
-        runtime_state(original)
+        self.native_state(original).map(NativeDemonState::runtime)
     }
     /// Observe the source definition behind a bound native state candidate.
     pub fn original_state(self, runtime: StateId) -> Result<State, CanonicalDemonError> {
-        STATES
-            .iter()
-            .find(|(_, r)| *r == runtime)
-            .map(|(s, _)| *s)
-            .ok_or(CanonicalDemonError::RuntimeState(runtime))
+        self.check_native_state(runtime)
+            .map(NativeDemonState::original)
     }
 }
 
@@ -267,17 +285,27 @@ impl Simulation {
         &self,
         actor: ActorId,
     ) -> Result<(Type, Option<State>), CanonicalDemonError> {
+        let (ty, state) = self.native_demon_identity(actor)?;
+        Ok((ty.original(), state.map(NativeDemonState::original)))
+    }
+    /// Checked view of the raw native owner/state stored by Profile20.
+    ///
+    /// A value is representation evidence, not permission to enter pain/death,
+    /// reuse a stale handle or execute in another registry. No state or RNG changes.
+    pub fn native_demon_identity(
+        &self,
+        actor: ActorId,
+    ) -> Result<(NativeDemonType, Option<NativeDemonState>), CanonicalDemonError> {
         let binding = self.canonical_demon_binding()?;
         let life = self
             .actor(actor)
             .and_then(Actor::life)
             .ok_or(CanonicalDemonError::Owner)?;
-        if life.actor_type != RUNTIME_OWNER {
-            return Err(CanonicalDemonError::Owner);
-        }
         Ok((
-            binding.original_type(),
-            life.state.map(|s| binding.original_state(s)).transpose()?,
+            binding.check_native_type(life.actor_type)?,
+            life.state
+                .map(|s| binding.check_native_state(s))
+                .transpose()?,
         ))
     }
 }

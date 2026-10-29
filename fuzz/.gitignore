@@ -34,3 +34,6 @@
 
 # Canonical execution requests use the public seed recipe.
 /corpus/canonical_demon/
+
+# Native identity boundary seeds are reproducible; mutations remain local.
+/corpus/runtime_identity/

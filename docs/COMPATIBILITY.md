@@ -389,3 +389,19 @@ generalized infighting, Nightmare/respawn, resurrection, dynamic sectors, new
 hitscan/projectiles and rendering remain deferred. See the
 [mapping](ACTOR_IDENTITIES.md#canonical-demon-execution-binding),
 [source investigation](M3F5_REFERENCE.md) and [observations](validation/M3F5.md).
+
+## Native runtime identity boundary
+
+M3f6 retains all existing stored IDs and admission bounds. The typed native Demon
+view covers only the validated Profile20 type136/21-state execution correspondence.
+It is separate from original identities and live handles; it grants no additional
+state entry, actor, raise, Spectre or player behavior. The complete original registry
+remains metadata, not executable support. Earlier profiles retain their distinct
+native fixtures, including unrelated uses of136.
+
+Raw canonical type12 or SARG475–501 requests are not silently interpreted as native
+owner/state requests. Use the explicit canonical APIs or checked native projection.
+Pain/death observations are representable native values but direct entry still
+rejects. All historical public raw observations, event payloads and DSIM-v20 remain
+unchanged. See [mapping](ACTOR_IDENTITIES.md#native-runtime-identity-boundary),
+[audit](M3F6_REFERENCE.md) and [evidence](validation/M3F6.md).

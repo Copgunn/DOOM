@@ -133,6 +133,9 @@ impl Simulation {
         state: StateId,
     ) -> Result<(), SimError> {
         let valid = match ty.0 {
+            136 if self.profile == Profile::DemonExpandedMap => {
+                NativeDemonState::checked(state).is_some()
+            }
             136 if self.profile.uses_demon_stand_run() => (1..=21).contains(&state.0),
             136 => [1, 2].contains(&state.0) || (4..=14).contains(&state.0),
             135 => (149..=173).contains(&state.0),
@@ -146,14 +149,20 @@ impl Simulation {
     }
     pub(crate) fn lifecycle_owner(&self, a: Actor) -> Result<(), SimError> {
         let l = a.life.unwrap();
-        let state = l.state.ok_or(MonsterError::Definition)?.0;
+        let state = l.state.ok_or(MonsterError::Definition)?;
+        let (death_state, before_fall) = if self.profile == Profile::DemonExpandedMap {
+            let native = NativeDemonState::checked(state).ok_or(MonsterError::Definition)?;
+            (native.is_death(), native.before_fall())
+        } else {
+            ((9..=14).contains(&state.0), state.0 < 12)
+        };
         let dead = l.health <= 0;
         if self.profile.uses_map_statistics() && l.flags & 4194304 == 0
-            || dead != (9..=14).contains(&state)
+            || dead != death_state
             || (l.flags & 1048576 != 0) != dead
             || (l.flags & 4 != 0) == dead
             || a.height() != Fixed::from_map_units(if dead { 14 } else { 56 })
-            || dead && ((l.flags & 2 != 0) != (state < 12) || l.flags & 1024 == 0)
+            || dead && ((l.flags & 2 != 0) != before_fall || l.flags & 1024 == 0)
         {
             return Err(MonsterError::Definition.into());
         }
