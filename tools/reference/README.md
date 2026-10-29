@@ -61,3 +61,26 @@ For exact observed counts and sanitizer limits see
 [M3d3j evidence](../../docs/validation/M3D3J.md). Earlier implementation and
 provenance details remain in the complete
 [historical tooling guide](../../docs/validation/archive/pre-m3d3j-reference-tools.md).
+
+## M3f1 map scale
+
+The new generator compiles genuine geometry, movement, original thinker and sight
+bodies under a declared named-field synthetic ABI adapter. `P_LoadBlockMap` executes
+with bounded fixture-backed cache/allocation services; remaining geometry/seg
+initialization is a public-input adapter, not the complete original map loader.
+The terminal synthetic mobj state admits unbound physics only. Unsupported
+state/respawn/player/damage/special callbacks abort if reached. Compiled body
+inventory must not be described as coverage of every source branch.
+
+Raw classic fixtures cover larger line/sector counts, sparse/dense/shared/suffix
+lists, ordering, openings, BSP boundaries, REJECT and multi-tic motion. Rust compares
+actual C fields and ordered observations. The independent encoder composes the
+untyped schema under the new tag; the two-actor ordering case remains a C comparison
+and is explicitly outside its full-state capture set. Bounds, stale handles,
+atomicity and unsupported API rejection are separate Rust policies.
+
+[TESTING](../../docs/TESTING.md) owns reproduction commands;
+[M3F1_REFERENCE](../../docs/M3F1_REFERENCE.md) owns source findings and
+[measured evidence](../../docs/validation/M3F1.md) owns observed comparison counts,
+performance, sanitizer settings and limitations. Historical tools/fixtures/helpers
+remain unchanged; the new scripts run alongside frozen aggregators.

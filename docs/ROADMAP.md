@@ -25,6 +25,15 @@ Earlier findings and milestones are retained in the [historical records](validat
 
 ## Next
 
+### M3f1: Map Scale Foundations — line and sector capacity
+
+The opt-in geometry implementation on this feature branch awaits separate owner
+review. It expands bounded static geometry and reuses movement, spatial storage
+and read-only sight, without adding player or monster gameplay. See the
+[support boundary](COMPATIBILITY.md#map-scale-profile),
+[source investigation](M3F1_REFERENCE.md) and [measured evidence](validation/M3F1.md).
+This is the first stage of broader map readiness, not complete real-map support.
+
 ### Remaining Demon admission
 
 Next, investigate original Demon actor/state identity and remaining game-context
@@ -33,9 +42,9 @@ explains why the current test adaptation does not establish full Demon/Spectre s
 
 ### Map Scale, Limits, and Real-Map Readiness
 
-**Planned only; no capacity change or runtime implementation is authorized here.**
-This is a dedicated future engineering milestone with no conflicting number
-assigned. Its purpose is practical support for increasingly complex classic maps,
+**Broader readiness remains planned.** M3f1 above supplies its bounded line/sector
+foundation; further stages require separate owner direction. The longer-term
+purpose is practical support for increasingly complex classic maps,
 not unlimited geometry or arbitrarily larger constants.
 
 Start from the [code-backed limits inventory](COMPATIBILITY.md#map-size-and-processing-limits).
@@ -60,7 +69,7 @@ Acceptance for that future milestone:
   historical canonical fixtures. Publish measurements and remaining restrictions.
 
 This plan does not authorize commercial-asset access, new map formats or broader
-monster/player behavior. Implementation requires separate owner direction.
+monster/player behavior. Further stages require separate owner direction.
 
 ## Later
 

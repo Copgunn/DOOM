@@ -64,6 +64,9 @@
   source investigation and schema documentation. Use the
   [documentation review checklist](docs/DOC_REVIEW_CHECKLIST.md). Archive historical
   evidence with digests and working links instead of deleting or rewriting it.
+- Documentation is an equal engineering gate alongside source and tests. A milestone
+  is not ready when its guides are stale, contradictory, incomplete, misleading
+  or difficult for humans to understand; resolving links alone is insufficient.
 - **Documentation authority:** Each information category has one authoritative
   home, mapped in the [documentation index](docs/README.md#documentation-authority).
   Milestone status belongs in ROADMAP, support/limits in COMPATIBILITY, schemas in

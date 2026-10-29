@@ -4,7 +4,7 @@ This investigation precedes runtime implementation. Original Linux DOOM 1.10 at
 `a77dfb96cb91780ca334d0d4cfd86957558007e0` is behavioral authority. The
 [compatibility inventory](COMPATIBILITY.md#map-size-and-processing-limits) is the
 starting inventory; it does not imply that parsed maps can execute. Final support
-belongs in COMPATIBILITY, measurements in `docs/validation/M3F1.md`, and exact
+belongs in COMPATIBILITY, measurements in [the M3f1 record](validation/M3F1.md), and exact
 review/merge/CI history in GitHub. No new comparison result is claimed here.
 
 ## Source findings
@@ -135,3 +135,33 @@ Measure preparation, collision, sight, repeated stepping and geometry storage on
 small and expanded dense/sparse maps. Run the full historical suite and relevant
 bounded fuzz/ASan campaign; report actual executions and leak settings. These
 observations do not establish complete real-map or vanilla-demo compatibility.
+
+## Implemented closure and remaining dependencies
+
+The new harness executes genuine `P_LoadBlockMap`, `P_InitThinkers`,
+`P_AddThinker`, `P_RunThinkers`, `P_MobjThinker`, collision/opening/XY/Z, BSP and
+sight bodies. Its synthetic named-field structures and geometry/seg initialization
+are adapters. In particular, the complete `P_GroupLines`/`P_SetupLevel` closure is
+not compiled; original `P_GroupLines` also contains a `total*4` pointer-allocation
+assumption that cannot be silently treated as portable native 64-bit loading.
+Leaf ownership is explicitly specified by the fixtures and compared with Rust's
+source first-seg association. No full map-loader or original actor ABI claim follows.
+
+Terminal synthetic state/tics and flags excluding COUNTKILL keep original
+`P_MobjThinker` inside the unbound physics closure. Raw fixture initialization draws
+lastlook once; it is not a claim to execute complete `P_SpawnMobj`. Unsupported
+callbacks abort. Source RNG indexes/lastlook are compared, not represented as a
+complete raw-draw transcript. Generational retirement remains a Rust safety policy.
+
+BLOCKMAP origin is additionally bounded before execution to keep origin/position
+subtraction inside the admitted arithmetic slice. Preparation-only budgets are
+not serialized. Read [COMPATIBILITY](COMPATIBILITY.md#map-scale-profile) for final
+admission and [measured evidence](validation/M3F1.md) for observed results; the
+investigation above remains the design chronology, not a duplicated test ledger.
+
+The new generator is named `m3f1_reference.py`: the frozen M3d3j checker inventories
+all root `generate*.py` files, including files it does not import. Keeping the new
+independent harness outside that historical name glob preserves its exact adapter
+map and provenance. Both harnesses still execute their full checks; the new pair
+has dedicated CI commands. No historical checker, fixture or expected hash is
+relaxed or regenerated.
