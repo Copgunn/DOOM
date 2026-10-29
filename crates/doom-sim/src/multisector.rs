@@ -140,8 +140,14 @@ pub(crate) struct Topology {
 }
 impl Topology {
     pub fn new(world: &StaticWorld) -> Result<Self, GeometryError> {
+        Self::new_bounded(world, 128)
+    }
+    pub fn new_bounded(world: &StaticWorld, sectors: usize) -> Result<Self, GeometryError> {
         let map = world.map();
-        if map.sectors().len() > 128 || map.subsectors().len() > 4096 || map.nodes().len() > 4096 {
+        if map.sectors().len() > sectors
+            || map.subsectors().len() > 4096
+            || map.nodes().len() > 4096
+        {
             return Err(GeometryError::Unsupported("M3b topology work limit"));
         }
         if map
@@ -166,29 +172,23 @@ impl Topology {
         if highest.checked_sub(lowest).is_none() {
             return Err(GeometryError::CoordinateOverflow);
         }
-        let leaf_sectors = map
-            .subsectors()
-            .iter()
-            .map(|leaf| {
-                let seg = &map.segs()[usize::from(leaf.first_seg)];
-                let line = &map.linedefs()[usize::from(seg.linedef)];
-                map.sidedefs()
-                    [usize::from(line.sides[usize::from(seg.side)].expect("M1 validates seg side"))]
-                .sector
-            })
-            .collect();
+        let mut leaf_sectors = crate::line_work::reserved(map.subsectors().len())?;
+        leaf_sectors.extend(map.subsectors().iter().map(|leaf| {
+            let seg = &map.segs()[usize::from(leaf.first_seg)];
+            let line = &map.linedefs()[usize::from(seg.linedef)];
+            map.sidedefs()
+                [usize::from(line.sides[usize::from(seg.side)].expect("M1 validates seg side"))]
+            .sector
+        }));
         let [w, h] = map.blockmap().dimensions().map(i64::from);
         let origin = map.blockmap().origin();
-        let mut masks = Vec::new();
-        for y in 0..h {
-            for x in 0..w {
-                masks.push(
-                    world
-                        .line_candidates(x as usize, y as usize)
-                        .fold(0_u128, |mask, line| mask | (1_u128 << line)),
-                );
-            }
-        }
+        let masks = crate::line_work::CellMembership::new(
+            world
+                .collision_cells
+                .as_ref()
+                .expect("prepared collision lists"),
+            world.lines.len(),
+        )?;
         let mut omissions = 0;
         for (i, line) in world.lines.iter().enumerate() {
             let bounds = line.bounds.map(Fixed::bits);
@@ -198,7 +198,7 @@ impl Topology {
             let yh = ((i64::from(bounds[0]) - (i64::from(origin.y) << 16)) >> 23).min(h - 1);
             for x in xl..=xh {
                 for y in yl..=yh {
-                    if masks[y as usize * w as usize + x as usize] & (1_u128 << i) == 0 {
+                    if !masks.contains(y as usize * w as usize + x as usize, i) {
                         omissions += 1;
                     }
                 }
@@ -208,6 +208,9 @@ impl Topology {
             leaf_sectors,
             conservative_omissions: omissions,
         })
+    }
+    pub fn storage_bytes(&self) -> usize {
+        self.leaf_sectors.capacity() * std::mem::size_of::<u16>()
     }
     pub fn locate(&self, world: &StaticWorld, point: [Fixed; 2]) -> Location {
         let map = world.map();
@@ -332,15 +335,14 @@ pub(crate) fn check_move_from_things(
     let xh = ((b[3] - ox).bits() >> 23).min(w - 1);
     let yl = ((b[1] - oy).bits() >> 23).max(0);
     let yh = ((b[0] - oy).bits() >> 23).min(h - 1);
-    let mut seen = [false; 128];
+    let mut seen = crate::line_work::SeenLines::default();
     for x in xl..=xh {
         for y in yl..=yh {
             for index in world.line_candidates(x as usize, y as usize) {
                 let i = usize::from(index);
-                if seen[i] {
+                if !seen.insert(i) {
                     continue;
                 }
-                seen[i] = true;
                 result.movement.lines.candidates.push(index);
                 if !world.lines[i].crosses(b) {
                     continue;

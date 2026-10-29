@@ -54,15 +54,26 @@ impl SpatialIndex {
 }
 
 pub(crate) fn validate_profile(world: &mut StaticWorld) -> Result<(), GeometryError> {
-    prepare_cells(world, true)
+    prepare_cells(world, true, 128, 128 * 4096)
 }
 pub(crate) fn prepare_reference_profile(world: &mut StaticWorld) -> Result<(), GeometryError> {
-    prepare_cells(world, false)
+    prepare_cells(world, false, 128, 128 * 4096)
 }
-fn prepare_cells(world: &mut StaticWorld, conservative: bool) -> Result<(), GeometryError> {
+pub(crate) fn prepare_map_scale(
+    world: &mut StaticWorld,
+    budget: usize,
+) -> Result<(), GeometryError> {
+    prepare_cells(world, false, crate::line_work::MAX_LINES, budget)
+}
+fn prepare_cells(
+    world: &mut StaticWorld,
+    conservative: bool,
+    max_lines: usize,
+    budget: usize,
+) -> Result<(), GeometryError> {
     let map = world.map();
     let [w, h] = map.blockmap().dimensions().map(usize::from);
-    if world.lines.len() > 128 || w * h > 4096 || map.blockmap().words().len() > 65536 {
+    if world.lines.len() > max_lines || w * h > 4096 || map.blockmap().words().len() > 65536 {
         return Err(GeometryError::Unsupported(if conservative {
             "M3a geometry work limit"
         } else {
@@ -83,41 +94,45 @@ fn prepare_cells(world: &mut StaticWorld, conservative: bool) -> Result<(), Geom
     }
     // Compile first-occurrence order for each requested suffix in bounded work.
     // Shared/overlapping long lists must not multiply scans of raw words.
-    let mut starts = std::collections::BTreeMap::<usize, Vec<usize>>::new();
+    let mut starts = crate::line_work::reserved(w * h)?;
     for (cell, range) in map.blockmap().cell_ranges().iter().enumerate() {
-        starts.entry(range.start).or_default().push(cell);
+        starts.push((range.start, cell));
     }
-    let mut cells = vec![Vec::new(); w * h];
-    let mut next = [usize::MAX; 128];
+    starts.sort_unstable(); // Preparation lookup only; never candidate traversal.
+    let mut cells = crate::line_work::reserved(w * h)?;
+    cells.resize_with(w * h, Vec::new);
+    let mut next = crate::line_work::reserved(world.lines.len())?;
+    next.resize(world.lines.len(), usize::MAX);
+    let mut references = 0_usize;
     for (position, word) in map.blockmap().words().iter().copied().enumerate().rev() {
         if word == u16::MAX {
             next.fill(usize::MAX);
         } else if usize::from(word) < world.lines.len() {
             next[usize::from(word)] = position;
         }
-        if let Some(rows) = starts.get(&position) {
-            let mut order = next
-                .iter()
-                .copied()
-                .enumerate()
-                .filter(|(_, p)| *p != usize::MAX)
-                .map(|(line, p)| (p, line as u16))
-                .collect::<Vec<_>>();
-            order.sort_unstable(); // Word positions are unique; there are no ties.
-            let order = order.into_iter().map(|(_, line)| line).collect::<Vec<_>>();
-            for row in rows {
-                cells[*row] = order.clone();
+        let first = starts.partition_point(|&(start, _)| start < position);
+        let end = starts.partition_point(|&(start, _)| start <= position);
+        if first == end {
+            continue;
+        }
+        let mut order = crate::line_work::reserved(next.len())?;
+        for (line, &word_position) in next.iter().enumerate() {
+            if word_position != usize::MAX {
+                order.push((word_position, line as u16));
             }
         }
+        order.sort_unstable(); // Original word positions, never linedef IDs.
+        for &(_, row) in &starts[first..end] {
+            references = references
+                .checked_add(order.len())
+                .filter(|n| *n <= budget)
+                .ok_or(GeometryError::WorkLimit)?;
+            let mut list = crate::line_work::reserved(order.len())?;
+            list.extend(order.iter().map(|&(_, line)| line));
+            cells[row] = list;
+        }
     }
-    let masks = cells
-        .iter()
-        .map(|lines| {
-            lines
-                .iter()
-                .fold(0_u128, |mask, line| mask | (1_u128 << line))
-        })
-        .collect::<Vec<_>>();
+    let masks = crate::line_work::CellMembership::new(&cells, world.lines.len())?;
     for (i, line) in world.lines.iter().enumerate() {
         if line.delta == [Fixed::ZERO; 2] {
             return Err(GeometryError::Unsupported(if conservative {
@@ -135,7 +150,7 @@ fn prepare_cells(world: &mut StaticWorld, conservative: bool) -> Result<(), Geom
         let yh = ((i64::from(line.bounds[0].bits()) - (i64::from(origin.y) << 16)) >> 23) as usize;
         for x in xl..=xh {
             for y in yl..=yh {
-                if masks[y * w + x] & (1_u128 << i) == 0 {
+                if !masks.contains(y * w + x, i) {
                     return Err(GeometryError::Unsupported(
                         "M3a incomplete collision BLOCKMAP",
                     ));
@@ -332,16 +347,15 @@ fn path(world: &StaticWorld, mut start: [Fixed; 2], end: [Fixed; 2]) -> Vec<(Fix
         crossings[axis] = shifted(a[other], 7) + partial * increments[axis];
     }
     let [w, h] = world.map().blockmap().dimensions().map(i32::from);
-    let mut seen = [false; 128];
+    let mut seen = crate::line_work::SeenLines::default();
     let mut hits = Vec::new();
     for _ in 0..64 {
         if map[0] >= 0 && map[1] >= 0 && map[0] < w && map[1] < h {
             for n in world.line_candidates(map[0] as usize, map[1] as usize) {
                 let i = usize::from(n);
-                if seen[i] {
+                if !seen.insert(i) {
                     continue;
                 }
-                seen[i] = true;
                 let line = &world.lines[i];
                 let sides = if trace
                     .delta

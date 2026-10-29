@@ -254,7 +254,7 @@ pub(crate) fn query(
         BspChild::Node((map.nodes().len() - 1) as u16)
     };
     let mut tasks = vec![Task::Child(root)];
-    let mut seen = 0_u128;
+    let mut seen = crate::line_work::SeenLines::default();
     let mut work = 0;
     'walk: while let Some(task) = tasks.pop() {
         work += 1;
@@ -289,7 +289,7 @@ pub(crate) fn query(
                     assert!(work <= WORK_LIMIT, "admitted seg work");
                     let seg = &map.segs()[seg_index];
                     let line_id = seg.linedef;
-                    let duplicate = seen & (1_u128 << line_id) != 0;
+                    let duplicate = !seen.insert(usize::from(line_id));
                     out.visits.push(SightVisit::Seg {
                         subsector: i,
                         seg: seg_index as u32,
@@ -299,7 +299,6 @@ pub(crate) fn query(
                     if duplicate {
                         continue;
                     }
-                    seen |= 1_u128 << line_id;
                     let line = &map.linedefs()[usize::from(line_id)];
                     let p = line.vertices.map(|id| {
                         let v = map.vertices()[usize::from(id)];
