@@ -68,6 +68,7 @@ impl Simulation {
         if map.things().len() > MAX_DEMON_MAP_THINGS {
             return Err(MapSpawnError::WorkLimit.into());
         }
+        let statistics = LevelStatistics::default();
         let mut sim = Self::with_demon_lifecycle_profile(
             map,
             limit,
@@ -75,7 +76,7 @@ impl Simulation {
             options,
             Profile::DemonMapContext,
         )?;
-        sim.statistics = Some(LevelStatistics::default());
+        sim.statistics = Some(statistics);
         sim.rng = context.initial_rng;
         Ok(sim)
     }
@@ -208,5 +209,69 @@ mod tests {
             rng.p_random();
         }
         assert_eq!(fresh.rng(), rng);
+    }
+    #[test]
+    fn hitscan_credit_overflow_precedes_impact_rng_and_allocation() {
+        let bytes = include_bytes!("../../../tests/reference/m3d3i_map_0.bin");
+        let wad = doom_wad::Wad::parse(bytes, doom_wad::Limits::default()).unwrap();
+        let map = Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default()).unwrap();
+        let mut s = Simulation::with_demon_map_context_registry(
+            map,
+            64,
+            ActorRegistry::demon_map_context_fixture(),
+            ActorOptions::default(),
+            MapContextOptions::default(),
+        )
+        .unwrap();
+        s.spawn_map_things().unwrap();
+        let shooter = s
+            .spawn_type(ActorTypeId(135), [Fixed::ZERO; 2], SpawnHeight::Floor)
+            .unwrap();
+        s.statistics.as_mut().unwrap().single_player_kill_count = i32::MAX;
+        let before = s.snapshot();
+        assert_eq!(
+            s.line_attack(
+                shooter,
+                LineAttack {
+                    angle: 0x80000000,
+                    range: Fixed::from_map_units(512),
+                    slope: Fixed::ZERO,
+                    damage: 150
+                }
+            ),
+            Err(MapSpawnError::StatisticsOverflow.into())
+        );
+        assert_eq!(s.snapshot(), before);
+    }
+    #[test]
+    fn later_owner_faults_reject_before_any_earlier_thinker_work() {
+        for fault in 0..4 {
+            let mut s = empty();
+            s.spawn_map_things().unwrap();
+            let body = s
+                .spawn_type(ActorTypeId(135), [Fixed::ZERO; 2], SpawnHeight::Floor)
+                .unwrap();
+            for id in [ActorId::from_parts(0, 1), ActorId::from_parts(1, 1)] {
+                s.set_actor_target(id, Some(body)).unwrap();
+                s.enter_actor_state(id, StateId(5)).unwrap();
+                s.actors.get_mut(id).unwrap().life.as_mut().unwrap().tics = 1;
+            }
+            let later = s
+                .actors
+                .get_mut(ActorId::from_parts(1, 1))
+                .unwrap()
+                .life
+                .as_mut()
+                .unwrap();
+            match fault {
+                0 => later.flags &= !4194304,
+                1 => later.state = Some(StateId(496)),
+                2 => later.reaction_time = i32::MIN + 1,
+                _ => s.bindings[0] = Some(body),
+            }
+            let before = s.snapshot();
+            assert!(s.step([TicCommand::default(); 4]).is_err());
+            assert_eq!(s.snapshot(), before);
+        }
     }
 }
