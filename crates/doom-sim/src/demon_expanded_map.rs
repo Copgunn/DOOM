@@ -274,12 +274,44 @@ impl Simulation {
         &mut self,
         commands: [TicCommand; 4],
     ) -> Result<(), SimError> {
+        let command_policy =
+            self.player_policy() == OriginalExecutionProfile::PlayerCommandMovementV1;
+        let command_body = if command_policy {
+            self.preflight_player_commands(&commands)?
+        } else {
+            None
+        };
         self.preflight_expanded_demons_for(true)?;
         self.preflight_actor_step()?;
         let mut plan = self.demon_plan()?;
         let control = SightControl::default();
-        plan.events
-            .extend([Event::Phase(Phase::Players), Event::Phase(Phase::Thinkers)]);
+        if command_policy {
+            plan.events.push(Event::Phase(Phase::Players));
+            if let Some(id) = command_body {
+                player_commands::stage(
+                    &mut LifeHost {
+                        player: plan.player.as_deref_mut(),
+                        statistics: plan.statistics.as_mut(),
+                        perception: Some(self.checked_demon_inputs(&control)),
+                        access: &mut plan.actors,
+                        registry: self.registry.as_deref().ok_or(ActorError::InvalidType)?,
+                        world: &self.world,
+                        sectors: &self.sectors,
+                        options: self.actor_options,
+                        rng: &mut plan.rng,
+                        spatial: &mut plan.spatial,
+                        bindings: &mut plan.bindings,
+                        events: &mut plan.events,
+                    },
+                    id,
+                    commands[usize::from(PlayerSlot::One.ordinal())],
+                )?;
+            }
+            plan.events.push(Event::Phase(Phase::Thinkers));
+        } else {
+            plan.events
+                .extend([Event::Phase(Phase::Players), Event::Phase(Phase::Thinkers)]);
+        }
         thinkers::run(
             &mut plan.actors,
             thinkers::Inputs {
@@ -301,6 +333,9 @@ impl Simulation {
         );
         if let Some(error) = control.failure.get() {
             return Err(error);
+        }
+        if command_policy {
+            player_commands::validate_result(&plan.actors, plan.player.as_deref())?;
         }
         let events = self.commit_demon_plan(plan);
         self.events = std::mem::take(&mut self.pending);

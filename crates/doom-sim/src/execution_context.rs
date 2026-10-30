@@ -355,6 +355,17 @@ impl<'ctx> ExecutionContext<'ctx> {
             .original_player(slot)
             .map_err(|e| ContextError::Runtime(e.into()))
     }
+    /// Checked initial source delay on this context's existing player binding.
+    /// No raw or foreign actor reference can select another body here.
+    pub fn set_initial_player_reaction_time(
+        &mut self,
+        slot: PlayerSlot,
+        delay: u8,
+    ) -> Result<(), ContextError> {
+        self.simulation
+            .set_initial_player_reaction_time(slot, delay)
+            .map_err(Into::into)
+    }
     /// Set/repair the existing four-slot synthetic perception input. This is not
     /// player gameplay or a new ownership role. Existing roster guards apply.
     pub fn set_perception_player(

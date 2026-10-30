@@ -223,3 +223,10 @@ path = "fuzz_targets/player_knockback.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_commands"
+path = "fuzz_targets/player_commands.rs"
+test = false
+doc = false
+bench = false

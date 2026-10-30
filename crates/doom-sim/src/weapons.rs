@@ -234,7 +234,7 @@ pub enum WeaponEvent {
 }
 trait Host {
     fn actor(&self) -> Actor;
-    fn motion(&mut self, command: TicCommand);
+    fn motion(&mut self, command: TicCommand) -> Result<(), SimError>;
     fn body_state(&mut self, state: StateId);
     fn event(&mut self, event: WeaponEvent);
     fn sound(&mut self, sound: u16);
@@ -446,7 +446,7 @@ impl<H: Host> Machine<'_, H> {
         Ok(())
     }
     fn tick(&mut self, command: TicCommand) -> Result<(), SimError> {
-        self.host.motion(command);
+        self.host.motion(command)?;
         let a = self.host.actor();
         let [x, y] = a.momentum();
         self.player.bob = Fixed::from_bits(((x * x + y * y).bits() >> 2).min(0x100000));
@@ -494,8 +494,8 @@ impl Host for Preview<'_> {
     fn actor(&self) -> Actor {
         self.actor
     }
-    fn motion(&mut self, command: TicCommand) {
-        apply_motion(&mut self.actor, command);
+    fn motion(&mut self, command: TicCommand) -> Result<(), SimError> {
+        apply_player_motion(&mut self.actor, command).map(|_| ())
     }
     fn body_state(&mut self, s: StateId) {
         self.actor.life.as_mut().unwrap().state = Some(s);
@@ -604,16 +604,19 @@ impl Host for Commit<'_> {
     fn actor(&self) -> Actor {
         *self.sim.actor(self.id).unwrap()
     }
-    fn motion(&mut self, command: TicCommand) {
+    fn motion(&mut self, command: TicCommand) -> Result<(), SimError> {
         let old = self.actor();
         let a = self.sim.actors.get_mut(self.id).unwrap();
-        apply_motion(a, command);
-        if old.life.unwrap().reaction_time == 0
+        let moved = apply_player_motion(a, command)?;
+        if moved
             && (command.forward != 0 || command.side != 0)
-            && old.life.unwrap().state == Some(state("S_PLAY"))
+            && old
+                .life
+                .is_some_and(|life| life.state == Some(state("S_PLAY")))
         {
             self.body_state(state("S_PLAY_RUN1"));
         }
+        Ok(())
     }
     fn body_state(&mut self, s: StateId) {
         self.sim.enter_validated(self.id, s);
@@ -699,30 +702,6 @@ impl Host for Commit<'_> {
         }
         Ok(())
     }
-}
-fn apply_motion(actor: &mut Actor, command: TicCommand) {
-    let life = actor.life.as_mut().unwrap();
-    if life.reaction_time != 0 {
-        life.reaction_time -= 1;
-        return;
-    }
-    let physical = if actor.z > actor.floor {
-        TicCommand {
-            forward: 0,
-            side: 0,
-            buttons: 0,
-            ..command
-        }
-    } else {
-        TicCommand {
-            buttons: 0,
-            ..command
-        }
-    };
-    let (angle, momentum) =
-        command_thrust(actor.spec.angle, actor.spec.momentum, physical).expect("sanitized buttons");
-    actor.spec.angle = angle;
-    actor.spec.momentum = momentum;
 }
 impl Simulation {
     /// Explicit source weapon profile; at most 64 actors and one live player.

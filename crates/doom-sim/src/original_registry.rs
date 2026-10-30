@@ -16,6 +16,8 @@ pub enum OriginalExecutionProfile {
     PlayerBodyLifecycleV1,
     /// One grounded original player with bounded physical thrust and axis-wall motion.
     PlayerBodyKnockbackV1,
+    /// One original player's bounded commands and source reaction-time gate.
+    PlayerCommandMovementV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -24,6 +26,7 @@ impl OriginalExecutionProfile {
             Self::DemonNormalV1 => 1,
             Self::PlayerBodyLifecycleV1 => 2,
             Self::PlayerBodyKnockbackV1 => 3,
+            Self::PlayerCommandMovementV1 => 4,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -32,12 +35,21 @@ impl OriginalExecutionProfile {
             Self::DemonNormalV1 => ORIGINAL_CONTEXT_SCHEMA,
             Self::PlayerBodyLifecycleV1 => PLAYER_BODY_CONTEXT_SCHEMA,
             Self::PlayerBodyKnockbackV1 => PLAYER_KNOCKBACK_CONTEXT_SCHEMA,
+            Self::PlayerCommandMovementV1 => PLAYER_COMMAND_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_body(self) -> bool {
         matches!(
             self,
-            Self::PlayerBodyLifecycleV1 | Self::PlayerBodyKnockbackV1
+            Self::PlayerBodyLifecycleV1
+                | Self::PlayerBodyKnockbackV1
+                | Self::PlayerCommandMovementV1
+        )
+    }
+    pub(crate) const fn has_physical_player(self) -> bool {
+        matches!(
+            self,
+            Self::PlayerBodyKnockbackV1 | Self::PlayerCommandMovementV1
         )
     }
 }
@@ -233,7 +245,8 @@ impl OriginalExecutionRegistry {
                 demon_policy()?;
             }
             OriginalExecutionProfile::PlayerBodyLifecycleV1
-            | OriginalExecutionProfile::PlayerBodyKnockbackV1 => {
+            | OriginalExecutionProfile::PlayerBodyKnockbackV1
+            | OriginalExecutionProfile::PlayerCommandMovementV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -260,7 +273,8 @@ impl OriginalExecutionRegistry {
                 demon_policy()?;
             }
             OriginalExecutionProfile::PlayerBodyLifecycleV1
-            | OriginalExecutionProfile::PlayerBodyKnockbackV1 => {
+            | OriginalExecutionProfile::PlayerBodyKnockbackV1
+            | OriginalExecutionProfile::PlayerCommandMovementV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -420,7 +434,7 @@ impl Simulation {
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
-        if policy == OriginalExecutionProfile::PlayerBodyKnockbackV1 {
+        if policy.has_physical_player() {
             original_player::validate_grounded_geometry(&map)?;
         }
         let mut sim = Self::with_demon_expanded_profile(

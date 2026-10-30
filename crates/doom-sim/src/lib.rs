@@ -28,6 +28,7 @@ mod game_instance;
 mod native_demon;
 mod original_player;
 mod original_registry;
+mod player_commands;
 pub use diagnostic::{Diagnostic, DiagnosticError, DiagnosticIdentity, DiagnosticLimits};
 pub use execution_context::{ContextActor, ContextError, ExecutionContext, TargetReference};
 pub use game_instance::{GameInstance, InstanceActorRef, InstanceId, ProvenanceError};
@@ -40,6 +41,7 @@ pub use original_registry::{
     ContextRole, DefinitionIdentity, ORIGINAL_CONTEXT_SCHEMA, ORIGINAL_REGISTRY_SCHEMA,
     OriginalExecutionProfile, OriginalExecutionRegistry, OriginalRegistryError,
 };
+pub use player_commands::PLAYER_COMMAND_CONTEXT_SCHEMA;
 mod chaingunner;
 mod demon;
 pub use canonical_demon::{CanonicalDemonError, DemonExecutionBinding};
@@ -405,7 +407,10 @@ pub fn command_thrust(
     if command.buttons != 0 {
         return Err(SimError::UnsupportedButtons);
     }
-    let angle = angle.wrapping_add((i32::from(command.angle_turn) as u32).wrapping_shl(16));
+    // Explicit bit interpretation of the historical unsigned-shift adapter.
+    // The literal original negative signed left shift has no ISO-C guarantee.
+    let turn = u32::from_le_bytes(i32::from(command.angle_turn).to_le_bytes());
+    let angle = angle.wrapping_add(turn.wrapping_shl(16));
     let mut momentum = momentum;
     for (heading, amount) in [
         (angle, command.forward),
@@ -420,6 +425,42 @@ pub fn command_thrust(
         momentum[1] = momentum[1] + force * Fixed::from_bits(FINE_SINE[index]);
     }
     Ok((angle, momentum))
+}
+
+/// Shared P_PlayerThink movement gate plus P_MovePlayer's angle/thrust portion.
+/// Caller owns liveness, command/button policy and source state entry. Returns
+/// whether P_MovePlayer executes, including when its directional input is zero.
+pub(crate) fn apply_player_motion(
+    actor: &mut Actor,
+    command: TicCommand,
+) -> Result<bool, SimError> {
+    let life = actor.life.as_mut().ok_or(ActorError::InvalidState)?;
+    if life.reaction_time != 0 {
+        life.reaction_time = life
+            .reaction_time
+            .checked_sub(1)
+            .ok_or(ActorError::InvalidState)?;
+        return Ok(false);
+    }
+    // Buttons belong to the caller's separately admitted services. Existing
+    // weapon execution supplies them; the canonical command policy rejects them.
+    let physical = if actor.z > actor.floor {
+        TicCommand {
+            forward: 0,
+            side: 0,
+            buttons: 0,
+            ..command
+        }
+    } else {
+        TicCommand {
+            buttons: 0,
+            ..command
+        }
+    };
+    let (angle, momentum) = command_thrust(actor.spec.angle, actor.spec.momentum, physical)?;
+    actor.spec.angle = angle;
+    actor.spec.momentum = momentum;
+    Ok(true)
 }
 
 /// Owned deterministic state. Map data is immutable and all runtime state is explicit.
@@ -868,9 +909,7 @@ impl Simulation {
     }
     /// Changes explicit momentum between tics; next update clamps it like the reference.
     pub fn set_momentum(&mut self, id: ActorId, momentum: [Fixed; 2]) -> Result<(), SimError> {
-        if self.owns_player_body(id)
-            || self.player_policy() == OriginalExecutionProfile::PlayerBodyKnockbackV1
-        {
+        if self.owns_player_body(id) || self.player_policy().has_physical_player() {
             return Err(PlayerBodyError::Unsupported.into());
         }
         if self.profile.uses_checked_demons() {
@@ -966,7 +1005,10 @@ impl Simulation {
         } else if commands.iter().any(|c| c.buttons != 0) {
             return Err(SimError::UnsupportedButtons);
         }
-        if self.original_player.is_some() && commands.iter().any(|c| *c != TicCommand::default()) {
+        if self.original_player.is_some()
+            && self.player_policy() != OriginalExecutionProfile::PlayerCommandMovementV1
+            && commands.iter().any(|c| *c != TicCommand::default())
+        {
             return Err(PlayerBodyError::Unsupported.into());
         }
         if self.profile.uses_checked_demons() {
