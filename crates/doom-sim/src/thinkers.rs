@@ -107,14 +107,14 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                                 commands[slot].forward == 0 && commands[slot].side == 0
                             }))
                 {
-                    let run = lifecycle::source_state_id("S_PLAY_RUN1").unwrap().0;
+                    let run = identity::OriginalState::S_PLAY_RUN1.ordinal();
                     if actor
                         .life
                         .unwrap()
                         .state
                         .is_some_and(|s| s.0.wrapping_sub(run) < 4)
                     {
-                        let play = lifecycle::source_state_id("S_PLAY").unwrap();
+                        let play = StateId(identity::OriginalState::S_PLAY.ordinal());
                         *context.get_mut(id).unwrap() = actor;
                         lifecycle::LifeHost {
                             player: player.as_deref_mut(),

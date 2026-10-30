@@ -646,6 +646,9 @@ and [measured evidence](validation/M3G2.md). No complete player gameplay claim f
 Select `Simulation::original_player_knockback_map` or explicit
 `OriginalExecutionProfile::PlayerBodyKnockbackV1`. This is a separate capability;
 PlayerBodyLifecycleV1 stays stationary and continues rejecting physical inflictors.
+The constructor and new capability-enum variant are explicit API additions;
+exhaustive matches on OriginalExecutionProfile need the new arm. The historical
+Profile enum and existing signatures/variant meanings stay unchanged.
 Both use one genuine original MT_PLAYER0 with the same checked mo/player ownership,
 source health, pain/death states and allocated corpse semantics. Canonical identity
 representation still does not imply general executable support.

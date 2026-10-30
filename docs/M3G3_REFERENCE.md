@@ -119,3 +119,16 @@ momentum into an AI-blocked next tic. This is Rust admission policy, not a claim
 that original P_DamageMobj rejects live origins. Existing no-inflictor controlled
 source operations retain their M3g2 boundaries. No new per-tic nonplayer scan is
 introduced for profiles without a genuine player body.
+
+## Implemented disposition
+
+The integration uses the existing LifeHost thrust code unchanged and validates
+its defined arithmetic/future travel before staging. Shared movement selects the
+player path through exact mo association, and the existing stop hook now uses typed
+OriginalState::S_PLAY_RUN1/S_PLAY constants instead of two inherited string lookups
+and unwraps. This preserves the historical weapon-player hook as well; no state
+translation table or additional callback is added. New source fields, complete
+events and independent full fixtures agree, while old player fixtures remain
+unchanged. [The engineering record](validation/M3G3.md) owns observed counts,
+checks, raw measurements and limitations. The rest of the graph/ownership design
+above remains the declared bounded contract, not whole-player compatibility.
