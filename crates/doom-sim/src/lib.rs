@@ -43,7 +43,7 @@ pub use original_registry::{
     OriginalExecutionProfile, OriginalExecutionRegistry, OriginalRegistryError,
 };
 pub use player_commands::PLAYER_COMMAND_CONTEXT_SCHEMA;
-pub use player_roster::PLAYER_DEMON_CONTEXT_SCHEMA;
+pub use player_roster::{PLAYER_DEMON_CONTEXT_SCHEMA, PLAYER_DEMON_MELEE_CONTEXT_SCHEMA};
 mod chaingunner;
 mod demon;
 pub use canonical_demon::{CanonicalDemonError, DemonExecutionBinding};

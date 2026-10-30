@@ -20,6 +20,8 @@ pub enum OriginalExecutionProfile {
     PlayerCommandMovementV1,
     /// Fixed active player0 and one canonical Demon: visual acquisition/nonmelee chase.
     PlayerDemonAcquisitionV1,
+    /// The same fixed roster with source-timed autonomous Demon physical melee.
+    PlayerDemonMeleeV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -30,6 +32,7 @@ impl OriginalExecutionProfile {
             Self::PlayerBodyKnockbackV1 => 3,
             Self::PlayerCommandMovementV1 => 4,
             Self::PlayerDemonAcquisitionV1 => 5,
+            Self::PlayerDemonMeleeV1 => 6,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -40,6 +43,7 @@ impl OriginalExecutionProfile {
             Self::PlayerBodyKnockbackV1 => PLAYER_KNOCKBACK_CONTEXT_SCHEMA,
             Self::PlayerCommandMovementV1 => PLAYER_COMMAND_CONTEXT_SCHEMA,
             Self::PlayerDemonAcquisitionV1 => PLAYER_DEMON_CONTEXT_SCHEMA,
+            Self::PlayerDemonMeleeV1 => PLAYER_DEMON_MELEE_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -49,6 +53,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerBodyKnockbackV1
                 | Self::PlayerCommandMovementV1
                 | Self::PlayerDemonAcquisitionV1
+                | Self::PlayerDemonMeleeV1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -57,12 +62,15 @@ impl OriginalExecutionProfile {
             Self::PlayerBodyKnockbackV1
                 | Self::PlayerCommandMovementV1
                 | Self::PlayerDemonAcquisitionV1
+                | Self::PlayerDemonMeleeV1
         )
     }
     pub(crate) const fn has_player_commands(self) -> bool {
         matches!(
             self,
-            Self::PlayerCommandMovementV1 | Self::PlayerDemonAcquisitionV1
+            Self::PlayerCommandMovementV1
+                | Self::PlayerDemonAcquisitionV1
+                | Self::PlayerDemonMeleeV1
         )
     }
 }
@@ -260,7 +268,8 @@ impl OriginalExecutionRegistry {
             OriginalExecutionProfile::PlayerBodyLifecycleV1
             | OriginalExecutionProfile::PlayerBodyKnockbackV1
             | OriginalExecutionProfile::PlayerCommandMovementV1
-            | OriginalExecutionProfile::PlayerDemonAcquisitionV1 => {
+            | OriginalExecutionProfile::PlayerDemonAcquisitionV1
+            | OriginalExecutionProfile::PlayerDemonMeleeV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -289,7 +298,8 @@ impl OriginalExecutionRegistry {
             OriginalExecutionProfile::PlayerBodyLifecycleV1
             | OriginalExecutionProfile::PlayerBodyKnockbackV1
             | OriginalExecutionProfile::PlayerCommandMovementV1
-            | OriginalExecutionProfile::PlayerDemonAcquisitionV1 => {
+            | OriginalExecutionProfile::PlayerDemonAcquisitionV1
+            | OriginalExecutionProfile::PlayerDemonMeleeV1 => {
                 demon_policy()?;
                 player_policy()?;
             }

@@ -9,6 +9,8 @@ pub const PLAYER_KNOCKBACK_CONTEXT_SCHEMA: &[u8] = b"PLAYER-BODY-1-MEDIUM-GROUND
 // doomdata.h / p_mobj.c / p_inter.c. Raw fixed-point admission proof, not clamps.
 const ML_BLOCKING: u16 = 1;
 pub(crate) const MAX_MOVE_BITS: u32 = 30 * 65536;
+// Existing bounded direct-damage domain, distinct from the SARG4..40 formula.
+const MAX_PLAYER_DAMAGE: i32 = 1000;
 const THRUST_FRACTION: i32 = 65536 >> 3;
 const THRUST_MASS_SCALE: i32 = 100;
 // tables.h ANGLETOFINESHIFT and finecosine=finesine+FINEANGLES/4.
@@ -24,6 +26,7 @@ const MF_FLOAT: u32 = 0x4000;
 const MF_NOGRAVITY: u32 = 0x200;
 // p_mobj.h. These describe source behavior, not storage availability.
 pub(crate) const MF_SOLID: u32 = 0x2;
+pub(crate) const MF_JUSTHIT: u32 = 0x40;
 pub(crate) const MF_SHOOTABLE: u32 = 0x4;
 pub(crate) const MF_CORPSE: u32 = 0x100000;
 // g_game.c G_PlayerReborn/MAXHEALTH, and p_inter.c P_DamageMobj.
@@ -455,43 +458,55 @@ impl Simulation {
         // A physical hit cannot repair live, unlisted Demon AI. Require the
         // already admitted thinker closure before committing new momentum.
         self.preflight_player_body(true)?;
-        let mass = OriginalActorType::MT_PLAYER.descriptor().mass;
-        let thrust = request
-            .amount
-            .checked_mul(THRUST_FRACTION)
-            .and_then(|n| n.checked_mul(THRUST_MASS_SCALE))
-            .and_then(|n| n.checked_div(mass))
-            .ok_or(CombatError::Metadata)?;
-        let mut delta = [Fixed::ZERO; 2];
-        for (axis, d) in delta.iter_mut().enumerate() {
-            *d = Fixed::from_bits(
-                target.position()[axis]
-                    .bits()
-                    .checked_sub(origin.position()[axis].bits())
-                    .ok_or(CombatError::Coordinates)?,
-            );
-            d.bits().checked_abs().ok_or(CombatError::Coordinates)?;
-        }
-        let angle = movement::point_angle(delta);
-        let phase =
-            usize::try_from(angle >> ANGLE_TO_FINE_SHIFT).map_err(|_| CombatError::Coordinates)?;
-        let cosine = *FINE_SINE
-            .get(phase + FINE_COSINE_OFFSET)
-            .ok_or(CombatError::Coordinates)?;
-        let sine = *FINE_SINE.get(phase).ok_or(CombatError::Coordinates)?;
-        let mut momentum = target.momentum();
-        for (axis, component) in [cosine, sine].into_iter().enumerate() {
-            let impulse = Fixed::from_bits(thrust) * Fixed::from_bits(component);
-            momentum[axis] = Fixed::from_bits(
-                momentum[axis]
-                    .bits()
-                    .checked_add(impulse.bits())
-                    .ok_or(CombatError::Coordinates)?,
-            );
-        }
-        travel_bounds(target.position(), momentum)?;
-        Ok(())
+        preflight_player_impulse(target, origin, request.amount)
     }
+}
+
+/// Shared current-record proof; callers separately establish role/ownership and
+/// grounded, no-power settings before using the source physical damage service.
+pub(crate) fn preflight_player_impulse(
+    target: &Actor,
+    origin: &Actor,
+    amount: i32,
+) -> Result<(), SimError> {
+    if !(0..=MAX_PLAYER_DAMAGE).contains(&amount) {
+        return Err(CombatError::Damage.into());
+    }
+    let mass = OriginalActorType::MT_PLAYER.descriptor().mass;
+    let thrust = amount
+        .checked_mul(THRUST_FRACTION)
+        .and_then(|n| n.checked_mul(THRUST_MASS_SCALE))
+        .and_then(|n| n.checked_div(mass))
+        .ok_or(CombatError::Metadata)?;
+    let mut delta = [Fixed::ZERO; 2];
+    for (axis, d) in delta.iter_mut().enumerate() {
+        *d = Fixed::from_bits(
+            target.position()[axis]
+                .bits()
+                .checked_sub(origin.position()[axis].bits())
+                .ok_or(CombatError::Coordinates)?,
+        );
+        d.bits().checked_abs().ok_or(CombatError::Coordinates)?;
+    }
+    let angle = movement::point_angle(delta);
+    let phase =
+        usize::try_from(angle >> ANGLE_TO_FINE_SHIFT).map_err(|_| CombatError::Coordinates)?;
+    let cosine = *FINE_SINE
+        .get(phase + FINE_COSINE_OFFSET)
+        .ok_or(CombatError::Coordinates)?;
+    let sine = *FINE_SINE.get(phase).ok_or(CombatError::Coordinates)?;
+    let mut momentum = target.momentum();
+    for (axis, component) in [cosine, sine].into_iter().enumerate() {
+        let impulse = Fixed::from_bits(thrust) * Fixed::from_bits(component);
+        momentum[axis] = Fixed::from_bits(
+            momentum[axis]
+                .bits()
+                .checked_add(impulse.bits())
+                .ok_or(CombatError::Coordinates)?,
+        );
+    }
+    travel_bounds(target.position(), momentum)?;
+    Ok(())
 }
 
 #[cfg(test)]

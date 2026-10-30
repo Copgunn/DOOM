@@ -3,6 +3,8 @@ use crate::{identity::OriginalActorType, *};
 
 /// DSIM22 policy5: active player0, grounded commands, visual Demon AI, no melee.
 pub const PLAYER_DEMON_CONTEXT_SCHEMA: &[u8] = b"PLAYER-DEMON-1-MEDIUM-GROUNDED-NOMELEE-v1";
+/// DSIM22 policy6: the fixed active roster with source-timed physical SARG melee.
+pub const PLAYER_DEMON_MELEE_CONTEXT_SCHEMA: &[u8] = b"PLAYER-DEMON-1-MEDIUM-GROUNDED-MELEE-v1";
 
 pub(crate) fn view(player: &OriginalPlayer) -> [PerceptionPlayer; 4] {
     let mut roster = [PerceptionPlayer::default(); 4];
@@ -30,7 +32,24 @@ impl Simulation {
     }
 
     pub(crate) fn uses_active_player_roster(&self) -> bool {
-        self.player_policy() == OriginalExecutionProfile::PlayerDemonAcquisitionV1
+        matches!(
+            self.player_policy(),
+            OriginalExecutionProfile::PlayerDemonAcquisitionV1
+                | OriginalExecutionProfile::PlayerDemonMeleeV1
+        )
+    }
+
+    /// Fixed genuine player0 and at most one map-THING Demon, including autonomous
+    /// original melee. Existing grounded movement/travel and ownership bounds apply.
+    pub fn original_player_demon_melee_map(
+        map: Map,
+        limit: u32,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        let registry =
+            OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerDemonMeleeV1)?;
+        Self::with_original_registry(map, limit, registry, ActorOptions::default(), context)
+            .map_err(Into::into)
     }
 
     /// Derived source roster observation for the fixed-active capability.
@@ -72,11 +91,21 @@ impl Simulation {
 }
 
 /// Select a roster source without copying historical arrays or persisting a
-/// second mutable player record. Original fields are read at each action.
+/// second mutable player record. Original fields are read at each action; the
+/// immutable capability is copied from PlayerRuntime only for this operation.
 #[derive(Clone, Copy)]
 pub(crate) enum PerceptionRoster<'a> {
     Historical(&'a [PerceptionPlayer; 4]),
-    OriginalPlayer,
+    OriginalPlayer(OriginalExecutionProfile),
+}
+
+impl PerceptionRoster<'_> {
+    pub(crate) fn allows_player_melee(self) -> bool {
+        matches!(
+            self,
+            Self::OriginalPlayer(OriginalExecutionProfile::PlayerDemonMeleeV1)
+        )
+    }
 }
 
 pub(crate) fn scan_current<A: lifecycle::ActorAccess>(
@@ -88,7 +117,7 @@ pub(crate) fn scan_current<A: lifecycle::ActorAccess>(
     let derived;
     let roster = match input.players {
         PerceptionRoster::Historical(roster) => roster,
-        PerceptionRoster::OriginalPlayer => {
+        PerceptionRoster::OriginalPlayer(_) => {
             derived = view(host.player.as_deref().ok_or(PerceptionError::Roster)?);
             &derived
         }
