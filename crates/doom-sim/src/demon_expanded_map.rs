@@ -152,7 +152,7 @@ struct DemonPlan {
     spatial: movement::SpatialIndex,
     rng: DoomRng,
     statistics: Option<LevelStatistics>,
-    player: Option<OriginalPlayer>,
+    player: Option<original_player::PlayerRuntime>,
     bindings: [Option<ActorId>; 4],
     events: Vec<Event>,
 }
@@ -250,7 +250,7 @@ impl Simulation {
         let mut plan = self.demon_plan()?;
         let control = SightControl::default();
         let result = action(&mut LifeHost {
-            player: plan.player.as_mut(),
+            player: plan.player.as_deref_mut(),
             statistics: plan.statistics.as_mut(),
             perception: Some(self.checked_demon_inputs(&control)),
             access: &mut plan.actors,
@@ -291,7 +291,7 @@ impl Simulation {
                 registry: &self.registry,
                 options: self.actor_options,
                 statistics: &mut plan.statistics,
-                player: plan.player.as_mut(),
+                player: plan.player.as_deref_mut(),
                 rng: &mut plan.rng,
                 spatial: &mut plan.spatial,
                 events: &mut plan.events,

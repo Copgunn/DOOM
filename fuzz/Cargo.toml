@@ -216,3 +216,10 @@ path = "fuzz_targets/original_player.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_knockback"
+path = "fuzz_targets/player_knockback.rs"
+test = false
+doc = false
+bench = false

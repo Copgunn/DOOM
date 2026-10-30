@@ -1,0 +1,34 @@
+{
+  "captures": 236,
+  "event_frames": 829,
+  "execution_profile": 3,
+  "full_byte_fixtures": 4,
+  "inputs_sha256": {
+    "tests/reference/m3f5_map_0.bin": "5ea2f73dfb74b7833ecdd1af1f657590b34fcbde047fe7895be44eda78115b97",
+    "tests/reference/m3g3_cases.csv": "41a973121690012bbbf4fb1cb1348bb93562a59efc4408312e3654d287650fa0",
+    "tests/reference/m3g3_map_1.bin": "261301cc02d56bce1819c9478154ef211fc1e8a0c30a29b1bfcaca8958bd0ac8",
+    "tests/reference/m3g3_map_2.bin": "8e1462112797fe0c3c2020fe8933751bf1808950540d2a0e7b6c80fb3c662049",
+    "tests/reference/m3g3_map_3.bin": "43de68c196ce29f0dc4c0ee0f28c41cee6db677318812de5a3f920da31eadfd5",
+    "tests/reference/m3g3_map_4.bin": "e7495841f574d49a7b83e888b8fad718d58e7028f6e7ae02195772d90feefdce",
+    "tests/reference/m3g3_map_5.bin": "8136e05a7925760f830017aa5e5dcf74202c7eab173fd4bb742cdedfa239e16f",
+    "tests/reference/m3g3_map_6.bin": "ecab4f6ab27be97067ffdb77119d271935a8b6eebdfda395d65f08f43bef4137",
+    "tests/reference/m3g3_map_7.bin": "03bd1d1ea4b434574e09347984bc51f1268ec0e633cb46663ab7b2e6a7e0f6e6",
+    "tests/reference/m3g3_trace.csv": "cf9edd92dacd980fc03eeeeab2bb5dd963f867272b2a19b41c3e1068444477cb",
+    "tools/reference/m3c_snapshot_goldens.py": "95eac9b3e9f416eea16bb2ace5bb12a3aa401d9942069046dca05e0edc3a123c",
+    "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
+    "tools/reference/m3g2_snapshot_goldens.py": "b65bbd286f22fb0ec0b2176cfbc339f0376a24ccfe4a91d537e5f672a3e8ceee",
+    "tools/reference/m3g3_snapshot_goldens.py": "1fc786da8fd4cd4ed91e446ad1befba010d72ff739b158148a738eea91c8c80c",
+    "tools/reference/player_snapshot.py": "9524e70b09184766fc9aa10c8625e9849f8b59579165218cc1a1e66e90747c5c"
+  },
+  "ordered_event_fields": 6652,
+  "outputs_sha256": {
+    "tests/reference/m3g3_events.bin": "f96b82044802e43f1f363e8fd193c33b9d6df9032bedd00afb0658acce4c63d9",
+    "tests/reference/m3g3_snapshots.csv": "0a2e2ab8ab8f1ef5061ea9c2706f00b2f828e2494937697bd097b89701f50461",
+    "tests/reference/m3g3_state_10_1.bin": "27fecfd01ff0ca8855687714317569d8c9974173b8c5114909716ab25412c7ad",
+    "tests/reference/m3g3_state_11_72.bin": "7b44f2e75a8ed041f5c271da415fc7fdad9f55840cb367462dbc80355bb75bc0",
+    "tests/reference/m3g3_state_12_72.bin": "522f97619d23d9f58dcc6e7e4f098465b85d3d54068f49e7999f538e98a2174a",
+    "tests/reference/m3g3_state_8_8.bin": "22dfd3bcc75bd31549de8ca7d76998c25b5d47865d288eed77324312fe7b012d"
+  },
+  "schema": "DSIM-v22",
+  "scope": "New compiled-C knockback/grounded player fields and complete ordered events. Same DSIM22 layout, distinct policy3/context; old stationary policy2 unchanged. PBE1 compact event fixture omits derivable path strings; every payload/order/count is compared. Source allocation births project through independently specified Rust slot/generation policy. No Rust expected output."
+}

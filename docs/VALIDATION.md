@@ -104,3 +104,12 @@ inferred. Rust generation/provenance/atomicity tests remain policy evidence.
 Historical observers, fixtures and encoders continue to run unchanged. The
 [source matrix](M3G2_REFERENCE.md) and [support contract](COMPATIBILITY.md#original-player-body-lifecycle)
 define what each comparison proves.
+
+[M3g3](validation/M3G3.md) adds original-player physical impulse and actual grounded
+movement, friction, axis sliding and moving-corpse observations. Genuine map-spawn
+origins retain previous ownership/RNG semantics. Independent DSIM22 policy3 captures
+and compact complete event frames remain distinct from Rust-only forward bounds,
+provenance and rollback guarantees. Three source slide bodies extend this observer
+but already occur in historical movement evidence; their inventory is not globally
+new function or branch coverage. All old observers, schemas and fixtures remain
+regression gates.

@@ -300,3 +300,11 @@ actor definition identity is never duplicated. Scoped/qualified binding validate
 the full live handle and definition. Stored relationships survive death/retirement
 without redirecting after reuse. [Source matrix](M3G2_REFERENCE.md) distinguishes
 these original behaviors from Rust lifetime/provenance policy and exclusions.
+
+PlayerBodyKnockbackV1 adds a separate executable capability using those same
+MT_PLAYER0 and original state identities. The private player runtime pairs selected
+policy with source state; no canonical/native actor identity mirror or new handle
+namespace is introduced. Genuine Demon origins still use map-THING spawning and
+canonical MT_SERGEANT12. The synthetic UnboundBody137 remains historical context,
+not a player. [Physical admission](COMPATIBILITY.md#original-player-grounded-knockback)
+and [source investigation](M3G3_REFERENCE.md) define the narrower behavior contract.

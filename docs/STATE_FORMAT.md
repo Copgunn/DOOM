@@ -1009,8 +1009,9 @@ own exact counts and size. All v20 expectations/readers remain byte-for-byte int
 
 ## DSIM-v22 — Original player body
 
-V22 is selected only by PlayerBodyLifecycleV1 (wire policy2), because genuine
-player ownership/attacker/health/state observations change the schema. It preserves
+V22 was introduced for PlayerBodyLifecycleV1 (wire policy2), because genuine
+player ownership/attacker/health/state observations change the schema. The original
+policy2 contract below remains unchanged; a separate grounded policy follows. It preserves
 DSIM framing and the immutable original registry ID `DOOM-INFO-1.10-v1`; context ID
 is exactly `PLAYER-BODY-1-MEDIUM-NOTHRUST-v1`. Historical v20/v21 bytes, identities,
 encoders and readers remain unchanged. No reinterpretation or world restoration.
@@ -1060,3 +1061,32 @@ C player/body observations and separately declared Rust birth/generation schema
 policy. Complete event bytes cover every tic; selected state captures, compact
 indexes and four complete fixtures avoid broad raw-trace growth. Expected bytes
 never come from Rust. [The evidence record](validation/M3G2.md) owns exact counts.
+
+## DSIM-v22 grounded-player execution policy
+
+PlayerBodyKnockbackV1 selects wire policy 3 with exact context schema
+`PLAYER-BODY-1-MEDIUM-GROUNDED-v1`. It uses the same version 22 framing, ordered
+fields, source player/mo/attacker association and event widths as stationary
+policy 2. The original registry schema remains `DOOM-INFO-1.10-v1`. Position,
+momentum, existing movement/slide and CombatEvent::Knockback payloads already
+represent every required observable; no version 23 or new event tag is necessary.
+
+Policy 2 must pair with `PLAYER-BODY-1-MEDIUM-NOTHRUST-v1`, and policy 3 with the
+new grounded schema. Mixed/unknown pairs reject. `Diagnostic::decode_player`
+explicitly validates both v22 capabilities; the historical v20/v21 decode entry
+point still rejects v22. Neither old context definitions nor native identities are
+reinterpreted. Existing policy 2 full bytes remain immutable.
+
+The [new independent encoder](../tools/reference/m3g3_snapshot_goldens.py) uses
+C physical/relationship/collision observations plus explicit schema policy. Its
+reusable [player projection](../tools/reference/player_snapshot.py) retains full
+DSIM bytes for selected fixtures. Test-only `PBE1` event evidence is compact:
+4-byte magic, repeated u32 case/op/last-count/pending-count, followed by each
+last then pending event's u32 length and exact payload. Field names are derived
+from family/index; both counts and every ordered payload are compared. This is
+a separately versioned test-fixture encoding, not a DSIM format change or a demo.
+
+Decoding stays read-only, bounded and distinct from restoring an executable world.
+Physical/map fields and unrelated event payloads retain their documented opaque
+validation limits. Source equivalence is established by the declared comparisons,
+not merely by successful decoding or canonical projection.
