@@ -22,7 +22,7 @@ fn apply(sim: &mut Simulation, bytes: &[u8], snapshot: bool) -> Result<(), SimEr
             sim.spawn_player_body(
                 slot,
                 [
-                    Fixed::from_map_units(i16::from(bytes[5] as i8)),
+                    Fixed::from_map_units(i16::from(bytes[5] as i8) * 8),
                     Fixed::ZERO,
                 ],
             )
