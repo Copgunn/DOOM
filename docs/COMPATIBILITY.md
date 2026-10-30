@@ -799,6 +799,11 @@ player health. Removing this fixed active body rejects, including after death;
 roster deactivation, body replacement and respawn require a future capability.
 Other actor retirement/reuse retains existing generation safety. Foreign instance
 references reject at existing provenance boundaries; raw ActorId remains local.
+Damage can also retain a source in the player's mobj target, separately from
+OriginalPlayer.attacker. Neither reference registers a player or enables player AI.
+The scoped target view classifies compatibility with the perception-target role:
+a retained Demon source can be Incompatible with that role while remaining a valid
+stored identity. Actor fields/availability and source lifetime are separate observations.
 
 At most one MT_SERGEANT=12 may enter through the original Demon THING batch,
 before the player/effect suffix. Zero Demons is supported. This narrows the new

@@ -1,0 +1,1260 @@
+{
+  "runtime_revision": "8988bca636b80c5d9de915cf2142ff4cc4da9acc",
+  "runtime_tree": "89a5f810e9611a896a57c38758443d9d843e664c",
+  "validation": [
+    {
+      "check": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 0.066,
+      "log_sha256": "a13905646e2aed93ec6ea9ed6ac91490a4e01f91af0215c3965279a910612149"
+    },
+    {
+      "check": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.367,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "fuzz-format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.71,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0,
+      "seconds": 5.501,
+      "log_sha256": "df2b82af65c8b225c2522883699368eea430058219394a246c4e102a69fd11ca"
+    },
+    {
+      "check": "workspace",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 173.381,
+      "log_sha256": "8f13c674269b7573e76683f3aabd2dadfac77fa97045554bbb46debd47e30f89"
+    },
+    {
+      "check": "release",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "doom-sim",
+        "-p",
+        "doom-types",
+        "--release",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 68.076,
+      "log_sha256": "ded3978d57dc6ab75c01a033a000e9ca3eefc2c69f2a2e6b1b431d0e7959930d"
+    },
+    {
+      "check": "msrv",
+      "command": [
+        "cargo",
+        "+1.85.0",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 197.905,
+      "log_sha256": "ebc16e2542e30755c977078ff85cc2cdfa82bfcf532a5ef826363095e07d3f05"
+    },
+    {
+      "check": "rustdoc",
+      "command": [
+        "cargo",
+        "doc",
+        "--workspace",
+        "--no-deps",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 0.699,
+      "log_sha256": "1be77a915b03ffc3f267c9c2be62ece8b10c5e7ba70882741e29e67c4e6b41da"
+    },
+    {
+      "check": "new-c",
+      "command": [
+        "python3",
+        "tools/reference/m3g5_reference.py",
+        "--check",
+        "--overflow-check",
+        "--address-check"
+      ],
+      "exit": 0,
+      "seconds": 3.661,
+      "log_sha256": "c27129cefd7849b4fc25549251bd364e6369144ab27bbe8e84019059ff1138d3"
+    },
+    {
+      "check": "new-encoder",
+      "command": [
+        "python3",
+        "tools/reference/m3g5_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.604,
+      "log_sha256": "4e11d9dfa4c8d3dbf41a1ac07de6a0b8e845d64a2543f57ec77d260e0cae542a"
+    },
+    {
+      "check": "metadata-c",
+      "command": [
+        "python3",
+        "tools/reference/m3f4_reference.py",
+        "--check",
+        "--sanitize"
+      ],
+      "exit": 0,
+      "seconds": 9.399,
+      "log_sha256": "50ab66f493d8c8db707e1bdf83116c8475c3fcd745aabecf4abf67a66cdb844b"
+    },
+    {
+      "check": "check_canonical_demon",
+      "command": [
+        "python3",
+        "tools/reference/check_canonical_demon.py"
+      ],
+      "exit": 0,
+      "seconds": 0.866,
+      "log_sha256": "da48a225306c65fdc7a2ca84f1512bac8601e6453ed604ad447e2b40d5512927"
+    },
+    {
+      "check": "check_chaingunner_attacks",
+      "command": [
+        "python3",
+        "tools/reference/check_chaingunner_attacks.py"
+      ],
+      "exit": 0,
+      "seconds": 1.214,
+      "log_sha256": "c1b034d6deea40b30999994aea85d5d1ed73b29ae2f0b676e8c481349d91966f"
+    },
+    {
+      "check": "check_context_ownership",
+      "command": [
+        "python3",
+        "tools/reference/check_context_ownership.py"
+      ],
+      "exit": 0,
+      "seconds": 0.385,
+      "log_sha256": "6015b884db69b783db05b1201c70ae10f0f6f0aec2337ac6491dac774f90aeab"
+    },
+    {
+      "check": "check_demon_expanded_map",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_expanded_map.py"
+      ],
+      "exit": 0,
+      "seconds": 8.377,
+      "log_sha256": "44c20ecd6da425a6eb2326e4b867b2bfe8e54bedd34367d5b9be25eb1f99ca4b"
+    },
+    {
+      "check": "check_demon_lifecycle",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_lifecycle.py"
+      ],
+      "exit": 0,
+      "seconds": 2.525,
+      "log_sha256": "33e2c5925798ed9d7f7e566dd32ba9b0b6709b383705f373ab58998b4228c11a"
+    },
+    {
+      "check": "check_demon_map_context",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_map_context.py"
+      ],
+      "exit": 0,
+      "seconds": 11.365,
+      "log_sha256": "441cde367f6ea1961cd03dc7e34138768800b10302ca6d6d0fc22dddcb4497ee"
+    },
+    {
+      "check": "check_demon_map_spawn",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_map_spawn.py"
+      ],
+      "exit": 0,
+      "seconds": 4.545,
+      "log_sha256": "c2008f009f5f46846fbbb55ef909a3a6843fe5485f1a2b614060fe0f446920f1"
+    },
+    {
+      "check": "check_demon_melee",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_melee.py"
+      ],
+      "exit": 0,
+      "seconds": 1.735,
+      "log_sha256": "fa80c339fdaaa5eeadb544254ae7c211d61b560c5c26481793aead43f5c0048f"
+    },
+    {
+      "check": "check_demon_stand_run",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_stand_run.py"
+      ],
+      "exit": 0,
+      "seconds": 3.579,
+      "log_sha256": "043751e5d3af0c6ca72ad1b7e7bb433497fd39a17ba21fd2a86b789ea5bb0b03"
+    },
+    {
+      "check": "check_diagnostic_free",
+      "command": [
+        "python3",
+        "tools/reference/check_diagnostic_free.py"
+      ],
+      "exit": 0,
+      "seconds": 0.106,
+      "log_sha256": "5bdf11aca5fa92d7c5562142e69487ea1302f5e00a59f65cb6c29d2940a10aef"
+    },
+    {
+      "check": "check_game_instance",
+      "command": [
+        "python3",
+        "tools/reference/check_game_instance.py"
+      ],
+      "exit": 0,
+      "seconds": 0.113,
+      "log_sha256": "5b36252589dfa6a46a83eef4e5f54631dc120c1a61982f534d60339d55c66aea"
+    },
+    {
+      "check": "check_headless",
+      "command": [
+        "python3",
+        "tools/reference/check_headless.py"
+      ],
+      "exit": 0,
+      "seconds": 0.628,
+      "log_sha256": "1d048ab6eb9a4e1340048377f4e67805ca3986a8941aa957e23fdf9ab2fc08f1"
+    },
+    {
+      "check": "check_map_extent",
+      "command": [
+        "python3",
+        "tools/reference/check_map_extent.py"
+      ],
+      "exit": 0,
+      "seconds": 0.121,
+      "log_sha256": "ab7a0504b76f08f48669076824780e560e563697d6bf9bd7c0f85cab999db827"
+    },
+    {
+      "check": "check_map_scale",
+      "command": [
+        "python3",
+        "tools/reference/check_map_scale.py"
+      ],
+      "exit": 0,
+      "seconds": 0.133,
+      "log_sha256": "d7c6d8774b794340a0991230826090832d13952c145f08ec3ac6759fbc5c7b27"
+    },
+    {
+      "check": "check_monster_attacks",
+      "command": [
+        "python3",
+        "tools/reference/check_monster_attacks.py"
+      ],
+      "exit": 0,
+      "seconds": 0.593,
+      "log_sha256": "6c96149869822ca46cd7fb4c8e604be759bf44f02bd1705c8a0f6659a03ee499"
+    },
+    {
+      "check": "check_monster_perception",
+      "command": [
+        "python3",
+        "tools/reference/check_monster_perception.py"
+      ],
+      "exit": 0,
+      "seconds": 0.11,
+      "log_sha256": "f499ce7db2ee4eebb0bafdeebfda3b8061b53dac32824a9e0ee090f91f68c4c1"
+    },
+    {
+      "check": "check_monster_pursuit",
+      "command": [
+        "python3",
+        "tools/reference/check_monster_pursuit.py"
+      ],
+      "exit": 0,
+      "seconds": 0.293,
+      "log_sha256": "a95a1f4f107ee6441e4f33d1c839d11c51451960c9c5d02b6b19c9105a793055"
+    },
+    {
+      "check": "check_original_identity",
+      "command": [
+        "python3",
+        "tools/reference/check_original_identity.py"
+      ],
+      "exit": 0,
+      "seconds": 0.08,
+      "log_sha256": "f5ce5cd85364c48a4bd75b0da814ce1b4ac1d963ff8820838505a7925f02634e"
+    },
+    {
+      "check": "check_original_player",
+      "command": [
+        "python3",
+        "tools/reference/check_original_player.py"
+      ],
+      "exit": 0,
+      "seconds": 0.348,
+      "log_sha256": "123ab03a35e8243c5df9ab12e1954fbea39654cf624d512eee8ee1c034cf838f"
+    },
+    {
+      "check": "check_original_registry",
+      "command": [
+        "python3",
+        "tools/reference/check_original_registry.py"
+      ],
+      "exit": 0,
+      "seconds": 1.708,
+      "log_sha256": "0ea5867063bf246d38cf2f91fc348f098695eaba2a4b9ac52fc6f548cc87b0ec"
+    },
+    {
+      "check": "check_player_commands",
+      "command": [
+        "python3",
+        "tools/reference/check_player_commands.py"
+      ],
+      "exit": 0,
+      "seconds": 0.525,
+      "log_sha256": "c6d067c65a0ae90b5dc3361309167d3ca55ed468877e6e25dea650a8340ec9d0"
+    },
+    {
+      "check": "check_player_demon",
+      "command": [
+        "python3",
+        "tools/reference/check_player_demon.py"
+      ],
+      "exit": 0,
+      "seconds": 0.986,
+      "log_sha256": "73cbb127bc444eb9d5d3c488dd059d11b1ebb525475d25751a1aea0541af573f"
+    },
+    {
+      "check": "check_player_knockback",
+      "command": [
+        "python3",
+        "tools/reference/check_player_knockback.py"
+      ],
+      "exit": 0,
+      "seconds": 0.674,
+      "log_sha256": "9f3a90ce5c6cb473e6db2986d547d26d5c55a24ac6d4786f4fa075c16b624677"
+    },
+    {
+      "check": "check_projectiles",
+      "command": [
+        "python3",
+        "tools/reference/check_projectiles.py"
+      ],
+      "exit": 0,
+      "seconds": 0.281,
+      "log_sha256": "bdb0ca3e70b5e6db7b4441dfb0aff3a44c162c9a6254b56a88a5b515270a56f2"
+    },
+    {
+      "check": "check_runtime_identity",
+      "command": [
+        "python3",
+        "tools/reference/check_runtime_identity.py"
+      ],
+      "exit": 0,
+      "seconds": 1.066,
+      "log_sha256": "ddb577fc692ddb74cab68b139486ff7f8e18d1b6885f06088d8a41bd19d5248a"
+    },
+    {
+      "check": "check_shotgunner_attacks",
+      "command": [
+        "python3",
+        "tools/reference/check_shotgunner_attacks.py"
+      ],
+      "exit": 0,
+      "seconds": 0.698,
+      "log_sha256": "3a97985e741ccc7d7cb9095167b63d311ddb9fff76078e0abe1d9ce093d82882"
+    },
+    {
+      "check": "parse_map-debug",
+      "command": [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "doom-map",
+        "--example",
+        "parse_map",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 0.033,
+      "log_sha256": "5e8aae9bd104e2a9baff5ffe7605e4adbc13b7b2fc674294d2e373bc3ea8707c"
+    },
+    {
+      "check": "generate_fuzz_seeds-debug",
+      "command": [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "doom-map",
+        "--example",
+        "generate_fuzz_seeds",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 0.032,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "parse_map-release",
+      "command": [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "doom-map",
+        "--example",
+        "parse_map",
+        "--locked",
+        "--release"
+      ],
+      "exit": 0,
+      "seconds": 0.118,
+      "log_sha256": "5e8aae9bd104e2a9baff5ffe7605e4adbc13b7b2fc674294d2e373bc3ea8707c"
+    },
+    {
+      "check": "generate_fuzz_seeds-release",
+      "command": [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "doom-map",
+        "--example",
+        "generate_fuzz_seeds",
+        "--locked",
+        "--release"
+      ],
+      "exit": 0,
+      "seconds": 0.032,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "fuzz-build",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "build",
+        "--sanitizer",
+        "address"
+      ],
+      "exit": 0,
+      "seconds": 9.652,
+      "log_sha256": "73a9908fc6ff940d35b1dc0092ce47e1f7171baef24f33a4fd47da07c77590af"
+    }
+  ],
+  "tests": {
+    "workspace": {
+      "passed": 494,
+      "failed": 0,
+      "ignored": 2
+    },
+    "release": {
+      "passed": 470,
+      "failed": 0,
+      "ignored": 0
+    },
+    "msrv": {
+      "passed": 494,
+      "failed": 0,
+      "ignored": 2
+    }
+  },
+  "new_policy_tests": 14,
+  "private_tests": 5,
+  "new_reference_tests": 1,
+  "simulation_examples": 31,
+  "source_inventory": {
+    "actor_fields": 19032,
+    "added_observer_bodies": 0,
+    "association_fields": 732,
+    "captures": 373,
+    "collision_candidates": 3109,
+    "command_calls": 1032,
+    "command_fields": 4596,
+    "command_stage_rng_draws": 0,
+    "compiled_original_bodies": 76,
+    "demon_fields": 17712,
+    "exercised_unique_functions": 43,
+    "function_entries": 19086,
+    "gameplay_draws": 563,
+    "literal_defined_cases": 24,
+    "literal_defined_tics": 1060,
+    "motion_fields": 14937,
+    "movement_attempts": 619,
+    "new_cases": 25,
+    "new_engine_source_bodies": 0,
+    "player_fields": 2238,
+    "roster_fields": 5968,
+    "scan_observations": 495,
+    "setup_discards": 0,
+    "slide_line_observations": 0,
+    "statistics_fields": 1492,
+    "tics": 1124
+  },
+  "source_check_flags": {
+    "strict": true,
+    "address_undefined": true,
+    "ASAN_OPTIONS": "detect_leaks=0",
+    "intentional_negative_signed_shift_probe": {
+      "diagnostic": "left shift of negative value -1",
+      "expected_exit": 1,
+      "expression": "(cmd->angleturn<<16)",
+      "flags": [
+        "-std=c11",
+        "-O0",
+        "-fno-wrapv",
+        "-fsanitize=shift",
+        "-fno-sanitize-recover=all"
+      ],
+      "gameplay_expected_values": false,
+      "source_sha256": "9cd227f012a6ebee2d623262b1a94aa46f9cd05cd641a709b63d21b5529c2c9b"
+    }
+  },
+  "new_source_and_encoder_bytes": 895994,
+  "historical_pairs": 21,
+  "historical_reproduction": [
+    {
+      "tool": "check_references.py",
+      "exit": 0,
+      "seconds": 438.54
+    },
+    {
+      "tool": "m3f1_reference.py",
+      "exit": 0,
+      "seconds": 3.61
+    },
+    {
+      "tool": "m3f1_snapshot_goldens.py",
+      "exit": 0,
+      "seconds": 4.71
+    },
+    {
+      "tool": "m3f2_reference.py",
+      "exit": 0,
+      "seconds": 1.5
+    },
+    {
+      "tool": "m3f2_snapshot_goldens.py",
+      "exit": 0,
+      "seconds": 5.9
+    },
+    {
+      "tool": "m3f3_reference.py",
+      "exit": 0,
+      "seconds": 44.74
+    },
+    {
+      "tool": "m3f3_snapshot_goldens.py",
+      "exit": 0,
+      "seconds": 197.41
+    },
+    {
+      "tool": "m3f3_clipping_reference.py",
+      "exit": 0,
+      "seconds": 5.27
+    },
+    {
+      "tool": "m3f3_clipping_snapshot_goldens.py",
+      "exit": 0,
+      "seconds": 8.98
+    }
+  ],
+  "reused_source_reproduction": [
+    {
+      "check": "lifetime-c",
+      "exit": 0,
+      "seconds": 2.05
+    },
+    {
+      "check": "lifetime-encoder",
+      "exit": 0,
+      "seconds": 0.16
+    },
+    {
+      "check": "canonical-c",
+      "exit": 0,
+      "seconds": 102.79
+    },
+    {
+      "check": "canonical-encoder",
+      "exit": 0,
+      "seconds": 42.78
+    },
+    {
+      "check": "original-encoder",
+      "exit": 0,
+      "seconds": 37.18
+    }
+  ],
+  "preparation": [
+    {
+      "check": "historical",
+      "exit": 0,
+      "seconds": 710.7
+    },
+    {
+      "check": "source",
+      "exit": 0,
+      "seconds": 184.98
+    },
+    {
+      "check": "old-player-c",
+      "exit": 0,
+      "seconds": 2.21
+    },
+    {
+      "check": "old-player-encoder",
+      "exit": 0,
+      "seconds": 0.17
+    },
+    {
+      "check": "old-knockback-c",
+      "exit": 0,
+      "seconds": 2.49
+    },
+    {
+      "check": "old-knockback-encoder",
+      "exit": 0,
+      "seconds": 0.3
+    },
+    {
+      "check": "legacy-measurements",
+      "exit": 0,
+      "seconds": 17.64
+    },
+    {
+      "check": "stepping-measurements",
+      "exit": 0,
+      "seconds": 23.4
+    },
+    {
+      "check": "player-measurements",
+      "exit": 0,
+      "seconds": 0.87
+    },
+    {
+      "check": "knockback-measurements",
+      "exit": 0,
+      "seconds": 1.12
+    },
+    {
+      "check": "command-measurements",
+      "exit": 0,
+      "seconds": 1.31
+    }
+  ],
+  "parser_generator": {
+    "results": [
+      {
+        "check": "parse_map-debug",
+        "command": [
+          "cargo",
+          "run",
+          "-q",
+          "-p",
+          "doom-map",
+          "--example",
+          "parse_map",
+          "--locked"
+        ],
+        "exit": 0,
+        "seconds": 0.033,
+        "log_sha256": "5e8aae9bd104e2a9baff5ffe7605e4adbc13b7b2fc674294d2e373bc3ea8707c"
+      },
+      {
+        "check": "generate_fuzz_seeds-debug",
+        "command": [
+          "cargo",
+          "run",
+          "-q",
+          "-p",
+          "doom-map",
+          "--example",
+          "generate_fuzz_seeds",
+          "--locked"
+        ],
+        "exit": 0,
+        "seconds": 0.032,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "check": "parse_map-release",
+        "command": [
+          "cargo",
+          "run",
+          "-q",
+          "-p",
+          "doom-map",
+          "--example",
+          "parse_map",
+          "--locked",
+          "--release"
+        ],
+        "exit": 0,
+        "seconds": 0.118,
+        "log_sha256": "5e8aae9bd104e2a9baff5ffe7605e4adbc13b7b2fc674294d2e373bc3ea8707c"
+      },
+      {
+        "check": "generate_fuzz_seeds-release",
+        "command": [
+          "cargo",
+          "run",
+          "-q",
+          "-p",
+          "doom-map",
+          "--example",
+          "generate_fuzz_seeds",
+          "--locked",
+          "--release"
+        ],
+        "exit": 0,
+        "seconds": 0.032,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "seed_sha256": {
+      "fuzz/corpus/wad/empty_iwad": "1c752adca4dce342d362ef48c4df48371f3903a59f0ad3e4637af643fc2081a7",
+      "fuzz/corpus/wad/duplicates": "c9c09f0c9f0afe9362ed8f2a700dbb3a660acc7d7aa9a3ef71d8d036e5beefce",
+      "fuzz/corpus/map/classic_square": "8d3f63a56a68b137351751a7a61919be93ad917b4d77bdb26644aa02c4672d9b"
+    },
+    "unchanged": true
+  },
+  "fuzz": {
+    "targets_built": 31,
+    "targets_executed": 7,
+    "total_executions": 28672,
+    "campaigns": [
+      {
+        "target": "player_demon",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "player_demon",
+          "/workspace/doom-tools/m3g5/fuzz-final/player_demon",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=161",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g5/fuzz-final/artifacts/"
+        ],
+        "seed_count": 43,
+        "seed_sha256": {
+          "boundary-0": "e7c92db3acd2d4fd307acb00658f35379f03bad9ffeb37c8d84f28dbb16d3b1a",
+          "boundary-1": "976a5bbcd2c564581f25dae1ef6fefbebefff22cfcfc70d8b5de24ad61d7b0a8",
+          "boundary-2": "959c233e51391f832f727eb7e911b190a3eb318e8f7425afb7a64109c8e8d89c",
+          "boundary-3": "e29840faa8c36702c216629ef42f7cc67003d8ed13d34dab185c18d8b2eb44ac",
+          "boundary-4": "1e12137d193ffba99cabaffdebae0d82f715248820cf7d33c12e1c425d06a138",
+          "case-00": "3eb782ca32802fdbf4944b368439eb0101b120f407a301311aeecb961ef3dc7c",
+          "case-01": "f86d4321caf92be59738f110429cc212a3460b40b1d884e42cfad4fe9c383582",
+          "case-02": "7ab53e452d35eb018a24baf8e34fedae562769e7eaef10fd953bcd27c1d7b528",
+          "case-03": "0b86aa887fd923850b300bbebdc0006b3185215d9180a340955a843ba957d7c1",
+          "case-04": "88c2d34f72abc3055cfceba32d83fff7a2dda2d731bd64bebc74c5cd259fce69",
+          "case-05": "0c0f475d120e1623e7d8fd047fa11637d6a997ff161df4fa5b5623d7eee16e05",
+          "case-06": "26d943f216731bd89aa09e0f44e6108acd8c7dc6f39758c2dce1ebfb8e365b4e",
+          "case-07": "7e1bc4ceea6ddb76e3e77e84a007424b920d5c2a03dd1f41eb7c1b405dc6da1b",
+          "case-08": "c110ae8e1f7d2073458a79861df46b41ac61fc208a6ec1cda39c793be89d60dc",
+          "case-09": "f8246c27d41fd0236324f88e874a32331e4cd0271567589785e36a1481de1796",
+          "case-10": "823ce7104268498c41f460c93027ab1be108b0bc883514d9836ae0865754fd06",
+          "case-11": "db727e2b305fa28e9658c31bbb5e8afb4a980b845bf7df08936aef2efe9fa39c",
+          "case-12": "f421eb8c5a653ea5d405c94c9198886b4e0dbad9eb31613486c3501653d2c559",
+          "case-13": "8d679bd64b1eb541717fc41976f0cfd925961dc324c4e5381940fb9ee5a04249",
+          "case-14": "c265a903262ad643a07f7cd3882bd24c7b1b2be6c72853268ba07c0ae1b4fcba",
+          "case-15": "f1893bd4bb31b91bf8f20444be0254f1bc25220ce0512510aa7060e257894903",
+          "case-16": "21f651fb40b85e05b196aa308c8b44a6fdf25079eb8bc3b88fb928ad6cc354e6",
+          "case-17": "dbd9134f4f0d22443930927773df897015ac1102225c1160a12cff60c730bcf4",
+          "case-18": "ed1ea0f16fcbc6647a8d294de071ebbabbd7c6fe4ff9ae612bfc1a72e5ccfa74",
+          "case-19": "55d76fdfc167c1b6a13f674e3bf47343ba652fa1488ee0b1439abae2e845d873",
+          "case-20": "e07691f1b991cc9e9b301d59144572b51a82991abc32af94a509bb37c4f1317e",
+          "case-21": "efb36a0cfcd91fbf0bef2d20359ecd1d48763c84dbc236b716ac0ecb457f711e",
+          "case-22": "62b8ee9d518555eb76363e269392139600148a19f4a9bb3be9a5f542a190f251",
+          "case-23": "7b455ec78ee6861deea43fa1e0ee240a3dfc7847eb1444320b6f0dd426981b5a",
+          "case-24": "18da69308e9987fa79148704d0f835ad96f6622f5148f9388c5ab28a3ea32332",
+          "operation-00": "93a6022d6ce63c8ebb7ebf7cc5f16f7fce48d0387a0e3d703905173732521ba1",
+          "operation-01": "2ed57fa2a1b477a630390e8af6d2c2d0a6b529d345409c14678feef490a702de",
+          "operation-02": "1b30d25be1c0f3fcd9b3351470479ee5ba9626d0d62828c272b944f907a63efc",
+          "operation-03": "e86026fa142031e705da202c87a730018de1e9e67617734be78aeb6bc912a588",
+          "operation-04": "f6249f89d2b9b38dfb11feba8612f6a24cd84360de7fa178ffcb4bf24fad78c4",
+          "operation-05": "86a5425d1595bb8950b52708d2e298c6ed84ac59693d27ee1788845ef654618d",
+          "operation-06": "da79f9477b4e646bb1bcc833cc22d61fb8b0e236c5ba4fc1438a2ab25b72ad63",
+          "operation-07": "81480e25bb1fddcb321374f27a7d7fe65e3bc0dc71a304de4c86fd435ed09dc7",
+          "operation-08": "e669d3676ad0943972c19c7ff8bb1208167fa4c7e3cd2dde4106d55ef511a800",
+          "operation-09": "274a8dc8dd4a8c33e60636213043793f6391cd36e8d380dba1e8e9510910e36e",
+          "operation-10": "9b078074e58a6867b45bd85225235d06b20f62adab9306b24b671313cb9512f6",
+          "operation-11": "6c1d386f3a0ef593e6359fca64b9608d30f6dfd49b7f79308ff03bda75ef709b",
+          "retire-reuse": "655eea5b6d103911cf4f1bdb13ea0aff67e49765ec86d310e8b602da8704d64d"
+        },
+        "input_budget": 161,
+        "observed_final_limit": 121,
+        "exit": 0,
+        "wall_seconds": 151.206,
+        "executions": 4096,
+        "reported_seconds": 132,
+        "log_sha256": "51192ab4bccc28f53bd33c037cf9e313b74ba6b0aea58717f066503e0018ede5",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "player_commands",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "player_commands",
+          "/workspace/doom-tools/m3g5/fuzz/player_commands",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=129",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g5/fuzz/artifacts/"
+        ],
+        "seed_count": 28,
+        "seed_sha256": {
+          "all-operations": "662ee01c45371345e86f5e78474999f38bee4d16545661061438035e6a188693",
+          "boundary-0": "f6edb8e20d3531e124b9b7af9583bbd2d908d9fcdcd04adb5a09eb02d9923479",
+          "boundary-1": "bcca8bdfd3bb177e6fe1c16d4fe2a6e50654158bc26f7d2aad88b336f5b802f2",
+          "boundary-2": "0b8dd66f73ff140f69c95a6965beb983051bb99236c43f950fbf67779c685c9c",
+          "boundary-3": "0d44815795318ff4817ae6bf8431a6c087c03482ac5af6fcc3e54f61939400f0",
+          "boundary-4": "6ee8de219cea8c04a360b40c07ccd21730ba7533aebf1f415b62ac59f205dacb",
+          "case-00": "136dd1a7d0a62859f2077a62b7673c5c712fb750604a15f5f6140ab2c5112327",
+          "case-01": "1ea3be7ee6750bffe55a5732221c2b0ef808cd90a6237f2c477075093bc86bef",
+          "case-02": "71684147e01604882d19eb08452e8f8f42acb0ab98832a8ec9a155ae35dab0cd",
+          "case-03": "07ba1f4d00997826534fb79fe956aa893a360c9f6ffbd1cc8971bde4ac212f22",
+          "case-04": "c5bfa600447d36611f0c8bf1b7bcd235d1554a77dfb0226325fb4c99d342856a",
+          "case-05": "a1f68b20fad3cdf90f93292419c85f1e7f89d9b38a4f02a9d4a49907dcadfa38",
+          "case-06": "225abea02f8cd30523605fccff6c71e712975b53dab11803708dd795c10801c7",
+          "case-07": "4ea2835cc2fc308380e3e173a080e89eb8a105628db0ff509bec3145a63889c8",
+          "case-08": "b3a3d93c648e86e3fc3782bf21e937173be76150c36e6dbac53d18ab411325b3",
+          "case-09": "c2ee2f4987e2701e624f46a247bcac349665a1e8d967d6e03c2d8403608d0234",
+          "case-10": "8efecb67e4ee9fcbe7130e50ce4ecd75a7310c2bdc6054b4d59dd5bd6fc36be9",
+          "case-11": "19a7a6ad8e1e27962aeb11fb7e7e48d6d6e3d9fae8c72295d3dd6ad2a8f248a8",
+          "case-12": "c5166174a1efa35f91e3015ca42848ac24461860974bbc6becb6d39343378d1e",
+          "case-13": "a87c165721adbe2b292859f500a06de40d6acc4cee24ed09eb64ab7bd8e81f7f",
+          "case-14": "5721ae800b55c890ce3691a8e821725ebd780bafb75fd4d9b7867d4971d7e01d",
+          "case-15": "a34aa89d9955413b03a6cac5e99fc0c6184fbe078341f500a8721a3c60e4a0b6",
+          "case-16": "324f0946226749ca81aafc48c507a66eb3e60d705e4d9c5c46cf3f21e21d7be6",
+          "case-17": "669f7b6403e791b1e665f9734a8969b242d2a057f5797f0eb8747d945aa81b82",
+          "case-18": "188b159a1f616fe904e597cd2f49df575fe41cac15f03069939db49480999c20",
+          "case-19": "f9a7b44cbdb33cf373c8df0c81ea0fbec44968dec1e77b00078fe4b90eb81fe4",
+          "case-20": "bb3671ab0d0eb64a541764be90a4eea7c3245691d028b5dc84befd93f9e84203",
+          "case-21": "dec3b0dd8b39f6ee9f4772fd5c019e7cec489f744d79e9c000a6377c3058d44a"
+        },
+        "input_budget": 129,
+        "observed_final_limit": 97,
+        "exit": 0,
+        "wall_seconds": 65.886,
+        "executions": 4096,
+        "reported_seconds": 65,
+        "log_sha256": "a96ca730319f3247d353f79edb5f508ea99b7455e18e2471da37f868af2e0ca4",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "player_knockback",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "player_knockback",
+          "/workspace/doom-tools/m3g5/fuzz/player_knockback",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=129",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g5/fuzz/artifacts/"
+        ],
+        "seed_count": 21,
+        "seed_sha256": {
+          "all-operations": "874354dea19a4003c54ca0d204a20458c3827112218c5c3ed43b76c677343974",
+          "binding": "bf21e764c36787d6efd63e0eeb1965502d244e15b380571b49f6cd521381f723",
+          "case-00": "2cfbb7ad27719955e787f7a7f000973ec090f27d8c5ba56fd1dc868c8d05919f",
+          "case-01": "db0be169ba34d15243c9a02fd0ace9d8332b15e58df0e19b7760eb7ab8364d78",
+          "case-02": "853379b0ad6ab470fa7993d4f4bafdac392b20c5f77cdc3659af895eb898778d",
+          "case-03": "dc378c23f073c859847736343ca73e8a410ffbc8f4a34eabee4bdef4c9994b41",
+          "case-04": "892cb12f6fd7afe063c32523839096a978722c5fcac464754b15a72f0bbc5a01",
+          "case-05": "9744865e05789928939f29f9e7bc12a3399c6b8bd1586d478924feca0c26a1df",
+          "case-06": "1f97fa498d51a8c6ee6887f4502b78169bac29a963722658173b9fc22e9e0d70",
+          "case-07": "75187e02421c3906d9545fd11bf7682b4940a375d9d84de5b1eacec48953075d",
+          "case-08": "0e6dece18cf69a2b306dd0256312a13b194e01037d373197153961b28ae7937b",
+          "case-09": "6df3eccbeec74f368ba902bff1e8109d60871d344b7c50f2c31ca684d4c0da53",
+          "case-10": "98f6ffbee2f319d30873e169e1dc7bd7fa7cbedbc69b6e1281cd273b8d689333",
+          "case-11": "f536f091ac168317af9b41854d3eb2b26a938d669d73fd752e0d71b9d5d40b3d",
+          "case-12": "1ee5446f386b6a051b53d5dd8828e630097befa09c10522dc1a0a7e540162f73",
+          "case-13": "c9f95989dcb5a06d4bdc2d29a622f2ecfac28252cb8e3565b1206f53957be987",
+          "case-14": "ee124fa19638e977b54f0e5ed91e27decb45a06cc22f1cf35f4214e8a651d853",
+          "case-15": "e005b6bc00c6632ea750eb0ddad3861731d8cd6d4e5100f6cae4533a3e336c82",
+          "case-16": "ef52a6cba3335abf4a742735286156d2f1f6401a039337169b156b1855f4d513",
+          "live-origin": "05f6d269618a894e644c9cd1bf32a94ea04e52105019684b1212e8c864d1a054",
+          "raw-bind": "75d1bd174a025c0a0d9540bb00f520fafb63c8f47e5a6feb386e0b70ae6a93d5"
+        },
+        "input_budget": 129,
+        "observed_final_limit": 121,
+        "exit": 0,
+        "wall_seconds": 85.401,
+        "executions": 4096,
+        "reported_seconds": 85,
+        "log_sha256": "c8f03183de8bcd276340672487b4a0ef19b688476ff88cb58c74c34e9e427c0f",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "original_player",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "original_player",
+          "/workspace/doom-tools/m3g5/fuzz/original_player",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=97",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g5/fuzz/artifacts/"
+        ],
+        "seed_count": 11,
+        "seed_sha256": {
+          "all-operations": "7994d17c26e306fb8bb5b38ab2137200a7c6eff3173940025e25fdd7f42a7ad7",
+          "damage-000": "57479d67ea66e8a740484b6ae8e9dbc4a9333ff468c44388c8bce47643b6276e",
+          "damage-001": "f3401854c3844a2f21facb9f9832b3c7d90da6a8a372e4f8027ee48697e7d3ee",
+          "damage-020": "990b73a5b4c9b4bbf1dd0167f5f758a319ec03f9b8b7c98fe6c2307cb2b38713",
+          "damage-099": "526f65318e8443e3c25a8022e227eebc4f2e0ea642bf830b6a85727d448ebe55",
+          "damage-100": "310f8a90ca54b7bbd11d2db5501da465b21895c8f2e4b527b83cbdb30fbbe9ec",
+          "damage-150": "4d7774af3991c0013170a36fc1c1a6715fce3545c46f78da3bc43e388d990f3d",
+          "damage-200": "b017a414287242d95ce4948864e9f42f41c7484d11868b4d3622d3a5d9c8fecf",
+          "damage-201": "8f9a4d815b773e1c764d84c73967888cc3abc866f73168e7e28b188c10994c41",
+          "damage-255": "60072096d9ace6cf0d650e9513807af5bd164701afe06c3687916c801ba7782e",
+          "reuse": "80a49804bcbf07ee14cc65d32d72193d18c51b5d76ec3c7a62057a7bea95890d"
+        },
+        "input_budget": 97,
+        "observed_final_limit": 81,
+        "exit": 0,
+        "wall_seconds": 41.518,
+        "executions": 4096,
+        "reported_seconds": 41,
+        "log_sha256": "b88df1b775bf7ff9741ba6a865981468b2346cc75fb6aebded013418db7f3d7a",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "context_ownership",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "context_ownership",
+          "/workspace/doom-tools/m3g5/fuzz/context_ownership",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=128",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g5/fuzz/artifacts/"
+        ],
+        "seed_count": 10,
+        "seed_sha256": {
+          "seed-00": "98368624fb0a435fdf6de12c0b0c3397d661f28abaadaa8ee76fe90c09c4ba25",
+          "seed-01": "c4de171a2cf57a9951f3f3e67f7c84e138566ec8c424b0c9cf08a3f4b7981f69",
+          "seed-02": "3617ba6af4730e69ab00dc21f7eaabccc493053871ff7d96c6925fe1c041b435",
+          "seed-03": "2cc0676414f291de51f9794273f47e67af0606c6d38dbfb4a459334aa06a4cf1",
+          "seed-04": "5540a305cb734be616abb35ac44cc968cd1699c6e06f5ba6eb674a05547069b8",
+          "seed-05": "916e7b40bcd4e8ac3e6bd63b84dfbb91bf222c94390425b5d598d126c253f63a",
+          "seed-06": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b",
+          "seed-07": "ebecc02c867a43f2ce89119ae362e13002702048961ae5c5c76c746527729713",
+          "seed-08": "04a59e5fb93c1ef5249b31e7e9263a5de5443e471b62dacc13943528ad722770",
+          "seed-09": "046a46293eb8e22b1641979ead09d2e5c16a3493fde4ca6a12be27d86dc24636"
+        },
+        "input_budget": 128,
+        "observed_final_limit": 80,
+        "exit": 0,
+        "wall_seconds": 49.385,
+        "executions": 4096,
+        "reported_seconds": 49,
+        "log_sha256": "1591d4dc927e25a42023a22b600d5003f46aba4ae3b828cb4b4804f74fc21f69",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "game_instance",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "game_instance",
+          "/workspace/doom-tools/m3g5/fuzz/game_instance",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=128",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g5/fuzz/artifacts/"
+        ],
+        "seed_count": 18,
+        "seed_sha256": {
+          "clone_then_stale": "499ae16a5c5de5c0a02c526f3d8ddca6c1f81a1c4150ee975ba566910d30ed23",
+          "foreign": "98368624fb0a435fdf6de12c0b0c3397d661f28abaadaa8ee76fe90c09c4ba25",
+          "invalid_generation": "02c75b9703b2bba7438368af386588470281f02e7d07a75b95f94826f3e7d184",
+          "missing": "8e8e7a76fd13012c2c497bd5e0fdc7bc6532cf6b8c4cb7def11ec5aa1ee0058d",
+          "op_0": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "op_1": "7c3ccd10bb7ec37b46d37926ae6274267f007a34aeaf15c882a715a7f3300529",
+          "op_2": "692865c9a376a1a82d161b0f9578595554873797fa9ebbb068b797828122e61d",
+          "op_3": "8b1ae42fc4b17726106d647de9f43a6f33bf1df273310924b03e789769904c9c",
+          "op_4": "65be554fa6188b181a91caf7ca837eaaa8be5f79dc9a2b9daecb50ac3ed8066f",
+          "op_5": "cb9a02f579da3ffa03dc3ed340e0162018c4c446875d8b15d9f4e23152b25822",
+          "op_6": "9b65b044264bd07cae9001dfe2c7b240b7bfcf39b4ce111d5e178bd7e9412a88",
+          "op_7": "6bae426822df52caf9dc36c8319247d6debb080aa918fa7830ac1c5edabd22c1",
+          "op_8": "9d145e71ec64116e64e509727fa0a276c54ecb01d4f85a2aca8c3b671130effd",
+          "op_9": "c03983e8c8370764ebfb8573c8128473fe5bb0c1c419c32f4953e02b6cd93ddd",
+          "out_of_range": "3c79f1b5ca0a59275ca1b3236f81b5547ddc9dfca6a21236d85ef63060aaccaf",
+          "restart_then_stale": "e9d30b8e3b1c200164ea667cf9ed2b621accc714cac250202756bfc92d0a9c52",
+          "retire_reuse": "2db7c97ab019826b7b3891a9089dcf447e98cce9d68e0bad4ebd92887ed8b830",
+          "wrong_definition": "1349a3998807d01fb1bb740088944fed74363d610079605f89fdb9db35e395fe"
+        },
+        "input_budget": 128,
+        "observed_final_limit": 96,
+        "exit": 0,
+        "wall_seconds": 71.334,
+        "executions": 4096,
+        "reported_seconds": 71,
+        "log_sha256": "42f9716999bc5d55f216f8580a98257dc91947ec53ebc65522586ada04d64726",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "stepping_equivalence",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "stepping_equivalence",
+          "/workspace/doom-tools/m3g5/fuzz/stepping_equivalence",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=97",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g5/fuzz/artifacts/"
+        ],
+        "seed_count": 21,
+        "seed_sha256": {
+          "profile-00": "e5d3de2e8f8d065404ac808a969b8d8b81106591cfea7e50fd42424f169c1607",
+          "profile-01": "0f8fc9a97b670d0d1edfc687da099f76e69d021a557882ae65cbc5597da8e170",
+          "profile-02": "36e1e33d63bc2d0fd0ff85d84c2fa287f6491d0609f73106c3680cef4997f47d",
+          "profile-03": "fff2effc1dd587218bc53c31d0c3bb78cce6c1519f947a85a55124bba288dc9a",
+          "profile-04": "d97a634bea6d204d927b1e918f35bb328d1ca76892c852b86245601342c3c32b",
+          "profile-05": "7755f0de25a2fc796db28658c98d902377b0fca03351dc07280d9b6c00b0bbee",
+          "profile-06": "dd04c64374a11381ccd7f3b4a15ef5497fdb0f1632d69af76aa91f686f44b59f",
+          "profile-07": "c359a59e460f19d3242c9ea421fb6924134a42dbddbf1955dfdcd27247ec21eb",
+          "profile-08": "0f7364c55bd19a97bc0ac2143d8bc1f602b4bcd43b438d85d9fae240c29695de",
+          "profile-09": "07a9ed1965e4741d644df6504fabb1397e4460bbd79a98f223a4b7a57adc1046",
+          "profile-10": "8f4d55b62c9adeafa73612afebba4b20ce41a0339445379356de406c470f963f",
+          "profile-11": "c13948548fe941768dedb34cc063798a728b9de48a1041134e001b3db137ddda",
+          "profile-12": "0f02614edec0b6810036df0dc67bce97d6a2acf8915f179466937fdfaa660eb0",
+          "profile-13": "637c0d9afc4759574ab9856ef2447ef19860067c64c9f53774600a21f673b079",
+          "profile-14": "4097ccafe80dcbca3478ea9f60a0329788bb42590aee0dad340a993991eeb5f8",
+          "profile-15": "c1b2178f4741850965be86e1cbc5e80dfb1e4a82adaad37c1e35395efe0126f6",
+          "profile-16": "5664b15bc848cd50d8ad4e593b1abed627642247643358d83f5fab3784a6a7fd",
+          "profile-17": "33892efa441e38d2d19f8a2a7eb0076fcdebdca96b5ecd448861459289e2a594",
+          "profile-18": "9d3102f30d5c7e877cf29d962c5f8aa1b83db1b4901d62ddfa52ddd27f42392e",
+          "profile-19": "dcda5db93495bc98e8299f81ee00350f4ad8e572cd1f27c9eddea4a872e85a72",
+          "profile-20": "7186f8b0bd019cc1bdd45d90ddb8847770b18c0ff07abc7cb23ff8135a43dfc4"
+        },
+        "input_budget": 97,
+        "observed_final_limit": 41,
+        "exit": 0,
+        "wall_seconds": 93.176,
+        "executions": 4096,
+        "reported_seconds": 93,
+        "log_sha256": "8c2e12fb3154391cf4b022bc22baf8251fbaec1b70f3ccdce46a60a726c16680",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      }
+    ],
+    "artifacts": [],
+    "additional_pre_refinement_campaign": {
+      "target": "player_demon",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "player_demon",
+        "/workspace/doom-tools/m3g5/fuzz/player_demon",
+        "--sanitizer",
+        "address",
+        "--",
+        "-runs=4096",
+        "-max_len=161",
+        "-seed=1",
+        "-timeout=20",
+        "-rss_limit_mb=2048",
+        "-artifact_prefix=/workspace/doom-tools/m3g5/fuzz/artifacts/"
+      ],
+      "seed_count": 43,
+      "seed_sha256": {
+        "boundary-0": "e7c92db3acd2d4fd307acb00658f35379f03bad9ffeb37c8d84f28dbb16d3b1a",
+        "boundary-1": "976a5bbcd2c564581f25dae1ef6fefbebefff22cfcfc70d8b5de24ad61d7b0a8",
+        "boundary-2": "959c233e51391f832f727eb7e911b190a3eb318e8f7425afb7a64109c8e8d89c",
+        "boundary-3": "e29840faa8c36702c216629ef42f7cc67003d8ed13d34dab185c18d8b2eb44ac",
+        "boundary-4": "1e12137d193ffba99cabaffdebae0d82f715248820cf7d33c12e1c425d06a138",
+        "case-00": "3eb782ca32802fdbf4944b368439eb0101b120f407a301311aeecb961ef3dc7c",
+        "case-01": "f86d4321caf92be59738f110429cc212a3460b40b1d884e42cfad4fe9c383582",
+        "case-02": "7ab53e452d35eb018a24baf8e34fedae562769e7eaef10fd953bcd27c1d7b528",
+        "case-03": "0b86aa887fd923850b300bbebdc0006b3185215d9180a340955a843ba957d7c1",
+        "case-04": "88c2d34f72abc3055cfceba32d83fff7a2dda2d731bd64bebc74c5cd259fce69",
+        "case-05": "0c0f475d120e1623e7d8fd047fa11637d6a997ff161df4fa5b5623d7eee16e05",
+        "case-06": "26d943f216731bd89aa09e0f44e6108acd8c7dc6f39758c2dce1ebfb8e365b4e",
+        "case-07": "7e1bc4ceea6ddb76e3e77e84a007424b920d5c2a03dd1f41eb7c1b405dc6da1b",
+        "case-08": "c110ae8e1f7d2073458a79861df46b41ac61fc208a6ec1cda39c793be89d60dc",
+        "case-09": "f8246c27d41fd0236324f88e874a32331e4cd0271567589785e36a1481de1796",
+        "case-10": "823ce7104268498c41f460c93027ab1be108b0bc883514d9836ae0865754fd06",
+        "case-11": "db727e2b305fa28e9658c31bbb5e8afb4a980b845bf7df08936aef2efe9fa39c",
+        "case-12": "f421eb8c5a653ea5d405c94c9198886b4e0dbad9eb31613486c3501653d2c559",
+        "case-13": "8d679bd64b1eb541717fc41976f0cfd925961dc324c4e5381940fb9ee5a04249",
+        "case-14": "c265a903262ad643a07f7cd3882bd24c7b1b2be6c72853268ba07c0ae1b4fcba",
+        "case-15": "f1893bd4bb31b91bf8f20444be0254f1bc25220ce0512510aa7060e257894903",
+        "case-16": "21f651fb40b85e05b196aa308c8b44a6fdf25079eb8bc3b88fb928ad6cc354e6",
+        "case-17": "dbd9134f4f0d22443930927773df897015ac1102225c1160a12cff60c730bcf4",
+        "case-18": "ed1ea0f16fcbc6647a8d294de071ebbabbd7c6fe4ff9ae612bfc1a72e5ccfa74",
+        "case-19": "55d76fdfc167c1b6a13f674e3bf47343ba652fa1488ee0b1439abae2e845d873",
+        "case-20": "e07691f1b991cc9e9b301d59144572b51a82991abc32af94a509bb37c4f1317e",
+        "case-21": "efb36a0cfcd91fbf0bef2d20359ecd1d48763c84dbc236b716ac0ecb457f711e",
+        "case-22": "62b8ee9d518555eb76363e269392139600148a19f4a9bb3be9a5f542a190f251",
+        "case-23": "7b455ec78ee6861deea43fa1e0ee240a3dfc7847eb1444320b6f0dd426981b5a",
+        "case-24": "18da69308e9987fa79148704d0f835ad96f6622f5148f9388c5ab28a3ea32332",
+        "operation-00": "93a6022d6ce63c8ebb7ebf7cc5f16f7fce48d0387a0e3d703905173732521ba1",
+        "operation-01": "2ed57fa2a1b477a630390e8af6d2c2d0a6b529d345409c14678feef490a702de",
+        "operation-02": "1b30d25be1c0f3fcd9b3351470479ee5ba9626d0d62828c272b944f907a63efc",
+        "operation-03": "e86026fa142031e705da202c87a730018de1e9e67617734be78aeb6bc912a588",
+        "operation-04": "f6249f89d2b9b38dfb11feba8612f6a24cd84360de7fa178ffcb4bf24fad78c4",
+        "operation-05": "86a5425d1595bb8950b52708d2e298c6ed84ac59693d27ee1788845ef654618d",
+        "operation-06": "da79f9477b4e646bb1bcc833cc22d61fb8b0e236c5ba4fc1438a2ab25b72ad63",
+        "operation-07": "81480e25bb1fddcb321374f27a7d7fe65e3bc0dc71a304de4c86fd435ed09dc7",
+        "operation-08": "e669d3676ad0943972c19c7ff8bb1208167fa4c7e3cd2dde4106d55ef511a800",
+        "operation-09": "274a8dc8dd4a8c33e60636213043793f6391cd36e8d380dba1e8e9510910e36e",
+        "operation-10": "9b078074e58a6867b45bd85225235d06b20f62adab9306b24b671313cb9512f6",
+        "operation-11": "6c1d386f3a0ef593e6359fca64b9608d30f6dfd49b7f79308ff03bda75ef709b",
+        "retire-reuse": "655eea5b6d103911cf4f1bdb13ea0aff67e49765ec86d310e8b602da8704d64d"
+      },
+      "input_budget": 161,
+      "observed_final_limit": 121,
+      "exit": 0,
+      "wall_seconds": 145.667,
+      "executions": 4096,
+      "reported_seconds": 145,
+      "log_sha256": "be0a4fb9a65ea0ec007be15c3029490282928db0bbbd44f6529cfeaa24511725",
+      "ASAN_OPTIONS": "detect_leaks=0"
+    },
+    "additional_pre_refinement_executions": 4096,
+    "observed_total_executions": 32768,
+    "scope": "31 executables built; seven relevant targets executed. Only policy5 changed in the measured guard refinement: its campaign was repeated from the same43 seeds; other six targets do not select this policy and are unaffected. Final relevant set28672 executions; additional initial policy5 campaign4096, totalobserved32768. Bounded address instrumentation, no leak/exhaustive claim."
+  },
+  "preservation": {
+    "upstream_files": 165,
+    "protected_historical_paths": 6127,
+    "archives": 20,
+    "ignored_asset_tests": 2,
+    "all_byte_identical": true
+  },
+  "performance": {
+    "matched_groups": 85,
+    "unchanged_digests": 85,
+    "unchanged_allocation_arrays": 85,
+    "raw_directory": "m3g5",
+    "intermediate_retained": true,
+    "method": "Matching Rust1.99.1 release tools/workloads, three timing/RSS and three allocation processes per group. No concurrent local fuzz/test load. Shared host not isolated. New groups separate from historical comparisons; repeated acquisition/pursuit label inputs are identical100-update workloads, not independent source coverage."
+  },
+  "development_corrections": [
+    "New source room initially violated existing1536 line-norm bound; reduced only new C inputs and independently regenerated them, never runtime limits or historical data.",
+    "Ignored damage is a successful diagnostic event, not an unchanged Snapshot; test preserves health/RNG instead. Initial source movedir/turnaround can move away from a rear target; late rollback test uses explicit controlled no-direction setup. No gameplay expectations changed for these test corrections.",
+    "Duplicate frozen test modules removed by a generic seeded field reader; default-field test initialization fixed; Clippy policy retained.",
+    "Source tool Python3.11 f-string print/provenance check strengthened; only two tool-input provenance digests updated. All C gameplay rows/maps/DSIM/event fixture bytes remained unchanged and strict checks passed.",
+    "Measurements identified redundant complete actor-definition graph walks in the new roster relationship guard. Existing global map/operation role validation retained; wrong-state/definition private checks, full suite and affected fuzz campaign repeated."
+  ],
+  "source_limits": [
+    "Fixed active player0, current genuine owned body; at most one map-THING canonical Demon; no soundtarget propagation.",
+    "Bounded command conditional before actual source thinkers, not full PlayerThink/Ticker/DeathThink.",
+    "Nonmelee pursuit only; actual melee branch rejects atomically.",
+    "Normalized negative turn interpretation is not ISO-C equivalence for undefined signed shift.",
+    "Source retirement quarantine/birth projection is distinct from Rust generations and C allocator lifetime."
+  ],
+  "supplementary_log_sha256": {
+    "final-clippy": "118c6f9a4afd84d33843f8f752c42e7a918dd3cdcb711f0885f690ae6786d9ae",
+    "final-rustdoc": "ac546012d05da3621c59ebb35c7a81d189ef40754e95fcbb39c87b98e85ae072",
+    "source-final": "c27129cefd7849b4fc25549251bd364e6369144ab27bbe8e84019059ff1138d3",
+    "encoder-final": "4e11d9dfa4c8d3dbf41a1ac07de6a0b8e845d64a2543f57ec77d260e0cae542a",
+    "roster-guard-integration": "89783a8997547fa89f69e244c5d5d03c912f26a073ec5c42ec0ba124ad343c73",
+    "roster-guard-private": "bff8d4b6e3f7e8d6b6f1c30d6dee20330d2cd6ca10715183947b149477ff7e43"
+  }
+}

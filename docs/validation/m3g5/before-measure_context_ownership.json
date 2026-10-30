@@ -1,0 +1,71 @@
+{
+  "host": "Linux x86_64",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "method": "New separate microbenchmark, not a historical before baseline. Three release processes per path. 100000 raw permissive target lookups versus scoped generation/definition/role-aware observations (additional validation differs);100 replacements;100 mark/step-snapshot/spawn/stale-check cycles. Setup/token admission excluded. Same inputs, mutation sequence and final digest. Native wait4 RSS; no CPU/frequency isolation or allocation instrumentation. Do not interpret raw lookup latency as equivalent validation or compare this workload with whole-simulation benchmarks.",
+  "results": [
+    {
+      "path": "raw",
+      "samples": [
+        {
+          "query100000_us": 202,
+          "set100_us": 319,
+          "retirement100_us": 13224,
+          "max_rss_kib": 2580,
+          "output": "query100000_us=202 set100_us=319 retirement100_us=13224 digest=c77a461c488206ba"
+        },
+        {
+          "query100000_us": 201,
+          "set100_us": 324,
+          "retirement100_us": 13002,
+          "max_rss_kib": 2564,
+          "output": "query100000_us=201 set100_us=324 retirement100_us=13002 digest=c77a461c488206ba"
+        },
+        {
+          "query100000_us": 218,
+          "set100_us": 299,
+          "retirement100_us": 14011,
+          "max_rss_kib": 2416,
+          "output": "query100000_us=218 set100_us=299 retirement100_us=14011 digest=c77a461c488206ba"
+        }
+      ],
+      "medians": {
+        "query100000_us": 202,
+        "set100_us": 319,
+        "retirement100_us": 13224,
+        "max_rss_kib": 2564
+      }
+    },
+    {
+      "path": "scoped",
+      "samples": [
+        {
+          "query100000_us": 3022,
+          "set100_us": 323,
+          "retirement100_us": 12958,
+          "max_rss_kib": 2560,
+          "output": "query100000_us=3022 set100_us=323 retirement100_us=12958 digest=c77a461c488206ba"
+        },
+        {
+          "query100000_us": 3139,
+          "set100_us": 311,
+          "retirement100_us": 13595,
+          "max_rss_kib": 2460,
+          "output": "query100000_us=3139 set100_us=311 retirement100_us=13595 digest=c77a461c488206ba"
+        },
+        {
+          "query100000_us": 3276,
+          "set100_us": 306,
+          "retirement100_us": 12898,
+          "max_rss_kib": 2436,
+          "output": "query100000_us=3276 set100_us=306 retirement100_us=12898 digest=c77a461c488206ba"
+        }
+      ],
+      "medians": {
+        "query100000_us": 3139,
+        "set100_us": 311,
+        "retirement100_us": 12958,
+        "max_rss_kib": 2460
+      }
+    }
+  ]
+}
