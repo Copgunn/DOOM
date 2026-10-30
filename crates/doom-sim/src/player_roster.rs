@@ -55,7 +55,10 @@ impl Simulation {
     pub(crate) fn preflight_original_roster(&self) -> Result<(), SimError> {
         let player = self.original_player(PlayerSlot::One)?;
         let id = player.mo.ok_or(PerceptionError::Roster)?;
-        let actor = self.validate_perception_reference(id)?;
+        // This is the roster relationship guard. The existing map/operation
+        // preflight validates every actor's immutable definition and state role;
+        // do not repeat that allocating graph validation at each roster check.
+        let actor = self.perception_actor(id)?;
         let life = actor.life().ok_or(PerceptionError::Roster)?;
         if life.actor_type.0 != OriginalActorType::MT_PLAYER.ordinal()
             || player.health != life.health.max(0)

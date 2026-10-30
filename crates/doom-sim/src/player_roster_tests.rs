@@ -1,5 +1,6 @@
 //! Private corruption and transaction guards are Rust policy, not C pointer behavior.
 use super::*;
+use crate::identity::OriginalState;
 struct Actors {
     body: ActorId,
     origin: Option<ActorId>,
@@ -27,7 +28,7 @@ fn fresh(index: usize) -> (Simulation, Actors) {
 }
 #[test]
 fn invalid_current_body_health_liveness_and_generation_reject_without_mutation() {
-    for kind in 0..7 {
+    for kind in 0..9 {
         let (mut s, a) = fresh(1);
         match kind {
             0 => s.original_player.as_mut().unwrap().mo = None,
@@ -49,7 +50,17 @@ fn invalid_current_body_health_liveness_and_generation_reject_without_mutation()
             5 => {
                 s.actors.mark_remove(a.body).unwrap();
             }
-            _ => s.sound_targets[0] = Some(a.body),
+            6 => s.sound_targets[0] = Some(a.body),
+            7 => {
+                s.actors
+                    .get_mut(a.body)
+                    .unwrap()
+                    .life
+                    .as_mut()
+                    .unwrap()
+                    .state = Some(StateId(OriginalState::S_SARG_RUN1.ordinal()))
+            }
+            _ => s.original_player.as_mut().unwrap().mo = a.origin,
         }
         let before = s.snapshot();
         let roster = s.original_player_roster();
