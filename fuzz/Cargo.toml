@@ -237,3 +237,10 @@ path = "fuzz_targets/player_demon.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_demon_melee"
+path = "fuzz_targets/player_demon_melee.rs"
+test = false
+doc = false
+bench = false
