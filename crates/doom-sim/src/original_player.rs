@@ -12,6 +12,8 @@ pub(crate) const MF_CORPSE: u32 = 0x100000;
 pub(crate) const INITIAL_PLAYER_HEALTH: i32 = 100;
 pub(crate) const MAX_DAMAGE_COUNT: i32 = 100;
 pub(crate) const TACTILE_BASE: i32 = 40;
+// Existing shared map/target pre-tic proof, not an original-C coordinate limit.
+const PLAYER_BODY_COORDINATE_LIMIT: u32 = 994;
 
 /// Bounded source player index, independent of the body's actor slot.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -158,11 +160,15 @@ impl Simulation {
     pub(crate) fn player_spawn_guard(
         &self,
         ty: ActorTypeId,
+        position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<(), SimError> {
         if self.original_player.is_some()
             && ty.0 == OriginalActorType::MT_PLAYER.ordinal()
-            && (height != SpawnHeight::Floor
+            && (position
+                .iter()
+                .any(|v| !crate::sight::within(*v, PLAYER_BODY_COORDINATE_LIMIT))
+                || height != SpawnHeight::Floor
                 || self.original_player.is_some_and(|p| p.mo.is_some())
                 || self.actors.order().any(|id| {
                     self.actor(id)
@@ -204,6 +210,9 @@ impl Simulation {
             || l.movedir != 0
             || l.movecount != 0
             || a.angle() != 0
+            || a.position()
+                .iter()
+                .any(|v| !crate::sight::within(*v, PLAYER_BODY_COORDINATE_LIMIT))
             || a.momentum() != [Fixed::ZERO; 2]
             || a.momz != Fixed::ZERO
             || a.z != a.floor

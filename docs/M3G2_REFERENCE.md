@@ -128,3 +128,11 @@ retain mobj.player while player.mo changes to a new body. Derivation from the so
 mo is correct only for this nonrebindable body closure. Do not extend it to respawn
 by overwriting mo or silently detaching a still-allocated old corpse. That requires
 new source evidence and a separately reviewed ownership representation.
+
+
+Final boundary review tightened spawn/binding admission to the already established
+shared target pre-tic coordinate proof. A stationary bound body cannot be moved
+back into range through this policy, so accepting a wider spawn-only margin would
+leave an unusable successful binding. Out-of-bound positions now reject before
+allocation, RNG or events; both positive and negative exact boundaries step. This
+is Rust safety policy and adds no original-C behavior or capture claim.

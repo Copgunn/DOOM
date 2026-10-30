@@ -70,6 +70,25 @@ fn explicit_registry_policy_admits_only_the_source_player_closure() {
 }
 #[test]
 fn binding_requires_a_current_initial_original_body_and_cannot_be_duplicated() {
+    let mut bounded = empty();
+    for coordinate in [-1008, -995, 995, 1008] {
+        rejected(&mut bounded, |s| {
+            s.spawn_player_body(
+                PlayerSlot::One,
+                [Fixed::from_map_units(coordinate), Fixed::ZERO],
+            )
+            .map(|_| ())
+        });
+    }
+    for coordinate in [-994, 994] {
+        let mut edge = empty();
+        edge.spawn_player_body(
+            PlayerSlot::One,
+            [Fixed::from_map_units(coordinate), Fixed::ZERO],
+        )
+        .unwrap();
+        edge.advance(inputs::COMMANDS).unwrap();
+    }
     let mut sim = empty();
     let puff = sim
         .spawn_type(

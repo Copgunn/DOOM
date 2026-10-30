@@ -84,7 +84,7 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
-        self.player_spawn_guard(ty, height)?;
+        self.player_spawn_guard(ty, position, height)?;
         if self.profile.uses_demon_map() && ty == self.demon_owner_type() {
             return Err(MapSpawnError::DirectSpawn.into());
         }

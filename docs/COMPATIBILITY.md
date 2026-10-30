@@ -584,7 +584,9 @@ single-player, no armor/powers/cheats, pistol presentation request, automap fals
 no respawn, static one-sector floor0/ceiling128, existing64 actor-slot maximum and
 existing geometry/work budgets. Input movement/buttons, physical inflictors,
 manual player state/health/pursuit/momentum changes and unsupported settings reject.
-The body stays grounded and stationary. Real player starts, spawn-angle loading,
+The body stays grounded and stationary; XY must already fit the shared pre-tic
+±994-unit proof when spawned or bound. This is a Rust support bound, not an
+original-C coordinate limit. Real player starts, spawn-angle loading,
 HUD, weapons, inventory and view initialization are not claimed.
 
 `spawn_player_body(PlayerSlot::One, XY)` atomically spawns at the floor with
