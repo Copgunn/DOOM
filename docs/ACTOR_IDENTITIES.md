@@ -92,14 +92,14 @@ RegistryMismatch; out-of-range candidates reject with OutOfRange. No alias looku
 registry mutation or implicit conversion is performed. This is a local-record
 identity check, not certification of other reachable registry records or of an
 actor's live timer, flags or game context. Use existing execution admission after
-resolution. Fixture type136 is not silently relabeled MT_SERGEANT, and fixture
+resolution. Fixture type 136 is not silently relabeled MT_SERGEANT, and fixture
 state aliases do not become canonical merely because their numbers are in range.
 
 The canonical views reuse the static source table. Owned registries and runtime
 actors retain their existing storage. Queries neither allocate nor consume RNG,
 change thinker/spatial ordering, enter states or change snapshots. Construction
-and simulation retain all existing capacities and failure policies. There is no
-new profile or diagnostic simulation schema; see [STATE_FORMAT](STATE_FORMAT.md).
+and simulation retain their capacities and failure policies. M3f4 itself introduced
+no execution profile; the opt-in original-ID contract below is separate.
 
 ## Canonical Demon execution binding
 
@@ -122,7 +122,7 @@ Profile20's existing exact constructor still validates the remaining registry.
 Original MT_SERGEANT12 / DoomEd3002 maps to native owner136 only through this
 explicit execution binding. The native map-context actor copies canonical
 properties with translated state references, DoomEd=-1 (source lookup precedes
-projection), and raise=0. The source record remains unchanged with raise496.
+projection), and raise=0. The source record remains unchanged with raise 496.
 S_NULL is an internal reference sentinel, not a public entry binding. Raise496–501
 has no executable binding. MT_SHADOWS13 / DoomEd58 (Spectre) and MT_SHOTGUY2 /
 DoomEd9 (Shotgun Guy) reject even when descriptors share some references.
@@ -140,14 +140,14 @@ ActorLife and DSIM retain native IDs. Binding `runtime_state` and `original_stat
 round trips cover the explicit table only; they do not authorize entry or silently
 convert arbitrary registry slots. No raw runtime-ID migration or full Demon/Spectre
 compatibility is claimed. The [C observer](M3F5_REFERENCE.md) runs pristine
-type12/states475–495 throughout gameplay. Comparisons distinguish physical source
+type 12/states 475–495 throughout gameplay. Comparisons distinguish physical source
 fields, this definition projection, independently projected DSIM bytes and
 Rust-only rejection policy.
 
 ## Native runtime identity boundary
 
-M3f6's [consumer audit and design](M3F6_REFERENCE.md) retains native runtime
-storage. No actor or state ID becomes canonical in ActorLife, events or DSIM.
+For historical Profile20, M3f6's [consumer audit and design](M3F6_REFERENCE.md)
+retains native runtime storage. Its ActorLife, events and DSIM remain native.
 `NativeDemonType` and `NativeDemonState` are sealed transient execution views,
 produced by the validated Profile20 binding. They carry no second authoritative
 identity or live-owner permission. Existing raw registry APIs remain unchanged.
@@ -183,5 +183,47 @@ the single native mapping. Stand/run/attack remain the only direct entries;
 pain/death remain damage-controlled, and the corpse's pre-Fall solidity boundary
 is unchanged. Earlier profiles keep their narrower fixture-specific guards and
 all native identities. Source raise metadata remains represented without execution.
-A future direct-storage migration requires an explicit profile/registry/schema
-boundary; it must not reinterpret historical v20 data or globally renumber136.
+The original-ID execution registry below supplies a separate opt-in boundary.
+It does not reinterpret historical v20 data or globally renumber136.
+
+## Original-ID execution registry
+
+`OriginalExecutionRegistry::new(OriginalExecutionProfile::DemonNormalV1)` owns
+immutable original definitions plus an explicitly named context package. Every
+source type/state retains its original ordinal and complete record; MT_MISC85/86
+at 135/136 are pristine. `admit` compares the complete identified package before
+accepting an externally constructed registry. Registry ownership moves into the
+existing shared immutable simulation registry, not a mutable metadata mirror.
+
+`DefinitionIdentity::Original(OriginalActorType)` and `Context(ContextRole)` are
+separate typed keys. Source keys resolve directly to original indexes. The sole
+context, `UnboundBody`, is appended at `OriginalActorType::COUNT`; that slot is
+not an original type and canonical conversion still rejects the count sentinel.
+Its descriptor derives from source player metadata with DoomEd=-1, health 1000,
+painchance 0, radius 16 units and flags 6. Its state animations are shared source
+metadata; it is not a real player. No live capacity increases.
+
+`Simulation::original_id_map` or `with_original_registry` selects
+`Profile::OriginalDemon`. Only the normal Demon, existing puff/blood effects and
+context body have execution roles. The registry represents other actors without
+admitting them. `spawn_original_actor(MT_SERGEANT)` performs the existing atomic
+THING batch with direct type 12 storage. `spawn_context_body` uses the explicit
+context key. `enter_original_state` uses actual source state indexes; only live
+stand/run/melee direct entry passes. Damage controls pain/death; raise rejects.
+
+Normal closure and direct/death/Fall subsets derive from source descriptor roots,
+next edges and action associations in bounded immutable bit sets. There is no
+native SARG mapping in this registry. Future roles require original-root/capability
+policy and independent execution evidence, rather than another translation table.
+`original_actor_identity` validates a current generational record and returns
+actual source/context identity and optional original state. Pending records remain
+readable until retirement; stale/reused handles reject. Historical native views
+and canonical projections reject this profile instead of reinterpreting it.
+
+ActorLife stores type 12 and states 475–495 directly; it stores no native duplicate.
+Context bodies store their separately identified definition slot. Handles remain
+u32 slot/u64 generation. Shared physics, AI, damage, scheduling and checked actor
+plans preserve execution order and RNG. The only body 135-to-context binding is in
+independent evidence adapters; it is absent from the new registry core.
+[Design/adapters](M3F7_REFERENCE.md), [format](STATE_FORMAT.md#dsim-v21--original-id-demon-diagnostics)
+and [support](COMPATIBILITY.md#original-id-demon-profile) define the remaining bounds.

@@ -82,7 +82,7 @@ impl Simulation {
             let life = a.life.unwrap();
             // Validate complete future actions, not only this tic's next state.
             self.validate_combat_type(life.actor_type)?;
-            if life.actor_type == ActorTypeId(136) {
+            if life.actor_type == self.demon_owner_type() {
                 owners += 1;
                 if suffix || owners > MAX_MAP_DEMONS {
                     return Err(MapSpawnError::Ownership.into());
@@ -97,7 +97,7 @@ impl Simulation {
                 if a.position().iter().any(|v| !crate::sight::within(*v, 994)) {
                     return Err(MonsterError::Arithmetic.into());
                 }
-                if life.actor_type == ActorTypeId(135)
+                if life.actor_type == self.demon_body_type()
                     && a.momentum().iter().any(|v| !crate::sight::within(*v, 64))
                 {
                     return Err(MapSpawnError::Ownership.into());
@@ -116,13 +116,13 @@ impl Simulation {
         if self
             .actor(request.target)
             .and_then(Actor::life)
-            .is_some_and(|l| l.actor_type == ActorTypeId(136))
+            .is_some_and(|l| l.actor_type == self.demon_owner_type())
             && request.source.is_some_and(|source| {
                 source != request.target
                     && self
                         .actor(source)
                         .and_then(Actor::life)
-                        .is_some_and(|l| l.actor_type == ActorTypeId(136))
+                        .is_some_and(|l| l.actor_type == self.demon_owner_type())
             })
         {
             let target = self.actor(request.target).unwrap().life.unwrap();

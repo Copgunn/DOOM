@@ -395,7 +395,7 @@ impl Simulation {
         if op == PursuitOperation::Chase {
             self.pursuit_dependencies(id)?;
         }
-        if self.profile == Profile::DemonExpandedMap {
+        if self.profile.uses_checked_demons() {
             return self.checked_demon_operation(|host| match op {
                 PursuitOperation::Move => move_actor(host, id),
                 PursuitOperation::TryWalk => try_walk(host, id),

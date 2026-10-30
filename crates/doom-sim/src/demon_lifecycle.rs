@@ -118,6 +118,14 @@ impl Simulation {
         Ok(sim)
     }
     pub(crate) fn validate_demon_lifecycle_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
+        if self.profile == Profile::OriginalDemon {
+            original_registry::require_role(ty).map_err(|_| MonsterError::Definition)?;
+            self.registry
+                .as_deref()
+                .ok_or(MonsterError::Definition)?
+                .validate_type_original(ty, &self.sectors)?;
+            return Ok(());
+        }
         if ![37, 38, 135, 136].contains(&ty.0) {
             return Err(MonsterError::Definition.into());
         }
@@ -132,6 +140,10 @@ impl Simulation {
         ty: ActorTypeId,
         state: StateId,
     ) -> Result<(), SimError> {
+        if self.profile == Profile::OriginalDemon {
+            return original_registry::state_role(ty, state)
+                .map_err(|_| MonsterError::Definition.into());
+        }
         let valid = match ty.0 {
             136 if self.profile == Profile::DemonExpandedMap => {
                 NativeDemonState::checked(state).is_some()
@@ -150,7 +162,9 @@ impl Simulation {
     pub(crate) fn lifecycle_owner(&self, a: Actor) -> Result<(), SimError> {
         let l = a.life.unwrap();
         let state = l.state.ok_or(MonsterError::Definition)?;
-        let (death_state, before_fall) = if self.profile == Profile::DemonExpandedMap {
+        let (death_state, before_fall) = if self.profile == Profile::OriginalDemon {
+            original_registry::death_phase(state).map_err(|_| MonsterError::Definition)?
+        } else if self.profile == Profile::DemonExpandedMap {
             let native = NativeDemonState::checked(state).ok_or(MonsterError::Definition)?;
             (native.is_death(), native.before_fall())
         } else {

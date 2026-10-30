@@ -21,8 +21,15 @@ mod actor;
 mod direction;
 pub use direction::MoveDirection;
 mod canonical_demon;
+mod diagnostic;
 mod native_demon;
+mod original_registry;
+pub use diagnostic::{Diagnostic, DiagnosticError, DiagnosticIdentity, DiagnosticLimits};
 pub use native_demon::{NativeDemonState, NativeDemonType};
+pub use original_registry::{
+    ContextRole, DefinitionIdentity, ORIGINAL_CONTEXT_SCHEMA, ORIGINAL_REGISTRY_SCHEMA,
+    OriginalExecutionProfile, OriginalExecutionRegistry, OriginalRegistryError,
+};
 mod chaingunner;
 mod demon;
 pub use canonical_demon::{CanonicalDemonError, DemonExecutionBinding};
@@ -139,16 +146,24 @@ pub enum Profile {
     MapExtent,
     /// M3f3 bounded expanded static maps with native Demon gameplay, DSIM-v20.
     DemonExpandedMap,
+    /// Original-ID normal Demon closure and explicit context, DSIM-v21.
+    OriginalDemon,
 }
 
 impl Profile {
+    pub(crate) const fn uses_checked_demons(self) -> bool {
+        matches!(self, Self::DemonExpandedMap | Self::OriginalDemon)
+    }
     pub(crate) const fn uses_map_statistics(self) -> bool {
-        matches!(self, Self::DemonMapContext | Self::DemonExpandedMap)
+        matches!(
+            self,
+            Self::DemonMapContext | Self::DemonExpandedMap | Self::OriginalDemon
+        )
     }
     pub(crate) const fn uses_expanded_geometry(self) -> bool {
         matches!(
             self,
-            Self::MapScale | Self::MapExtent | Self::DemonExpandedMap
+            Self::MapScale | Self::MapExtent | Self::DemonExpandedMap | Self::OriginalDemon
         )
     }
     pub(crate) const fn uses_demon_map(self) -> bool {
@@ -621,9 +636,9 @@ impl Simulation {
             }
             return Ok(self.query_projectile_move(id, target).0);
         }
-        if matches!(self.profile, Profile::MapScale | Profile::DemonExpandedMap) {
+        if self.profile == Profile::MapScale || self.profile.uses_checked_demons() {
             map_scale::bounded(target, 1024)?;
-            if self.profile == Profile::DemonExpandedMap {
+            if self.profile.uses_checked_demons() {
                 self.perception_actor(id)?;
             }
         }
@@ -833,7 +848,7 @@ impl Simulation {
     }
     /// Changes explicit momentum between tics; next update clamps it like the reference.
     pub fn set_momentum(&mut self, id: ActorId, momentum: [Fixed; 2]) -> Result<(), SimError> {
-        if self.profile == Profile::DemonExpandedMap {
+        if self.profile.uses_checked_demons() {
             map_scale::bounded(momentum, 64)?;
         }
         if matches!(self.profile, Profile::MapScale | Profile::MapExtent) {
@@ -915,7 +930,7 @@ impl Simulation {
         } else if commands.iter().any(|c| c.buttons != 0) {
             return Err(SimError::UnsupportedButtons);
         }
-        if self.profile == Profile::DemonExpandedMap {
+        if self.profile.uses_checked_demons() {
             return self.step_expanded_demons(commands);
         }
         if self.profile == Profile::Projectiles {

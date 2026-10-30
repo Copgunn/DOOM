@@ -12,6 +12,23 @@ impl Simulation {
         options: ActorOptions,
         context: MapContextOptions,
     ) -> Result<Self, SimError> {
+        Self::with_demon_expanded_profile(
+            map,
+            limit,
+            registry,
+            options,
+            context,
+            Profile::DemonExpandedMap,
+        )
+    }
+    pub(crate) fn with_demon_expanded_profile(
+        map: Map,
+        limit: u32,
+        registry: ActorRegistry,
+        options: ActorOptions,
+        context: MapContextOptions,
+        profile: Profile,
+    ) -> Result<Self, SimError> {
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
         }
@@ -43,25 +60,27 @@ impl Simulation {
         {
             return Err(CombatError::Sky.into());
         }
-        let expected = ActorRegistry::demon_map_context_fixture();
-        if registry.states() != expected.states() || registry.types() != expected.types() {
-            return Err(MonsterError::Definition.into());
+        if profile == Profile::OriginalDemon {
+            OriginalExecutionRegistry::validate(&registry, OriginalExecutionProfile::DemonNormalV1)
+                .map_err(|_| MonsterError::Definition)?;
+        } else {
+            let expected = ActorRegistry::demon_map_context_fixture();
+            if registry.states() != expected.states() || registry.types() != expected.types() {
+                return Err(MonsterError::Definition.into());
+            }
+            DemonExecutionBinding::admit(&registry).map_err(|_| MonsterError::Definition)?;
         }
-        DemonExecutionBinding::admit(&registry).map_err(|_| MonsterError::Definition)?;
         registry.validate_impact_source()?;
         let limits = MapExtentLimits {
             max_actors: limit,
             ..Default::default()
         };
         let work = map_extent::validate(&map, limits)?;
-        let mut sim = Self::create_bounded(
-            map,
-            limit,
-            Profile::DemonExpandedMap,
-            limits.max_prepared_references,
-        )?;
+        let mut sim = Self::create_bounded(map, limit, profile, limits.max_prepared_references)?;
         sim.world.extent_sight_work = Some(work);
-        snapshot::registry_fields(Arc::make_mut(&mut sim.map_fields), &registry);
+        if profile != Profile::OriginalDemon {
+            snapshot::registry_fields(Arc::make_mut(&mut sim.map_fields), &registry);
+        }
         sim.registry = Some(Arc::new(registry));
         sim.actor_options = options;
         sim.rng = context.initial_rng;

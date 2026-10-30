@@ -61,7 +61,7 @@ impl Simulation {
     }
     /// Original read-only REJECT/BSP sight, independent of roster/RNG/presentation.
     pub fn check_sight(&self, observer: ActorId, target: ActorId) -> Result<SightResult, SimError> {
-        if matches!(self.profile, Profile::MapExtent | Profile::DemonExpandedMap) {
+        if self.profile == Profile::MapExtent || self.profile.uses_checked_demons() {
             return crate::sight::try_extent_query(
                 &self.world,
                 &self.sectors,
@@ -348,7 +348,7 @@ impl Simulation {
         let a = self.perception_actor(id)?;
         let life = a.life.unwrap();
         let registry = self.registry.as_deref().unwrap();
-        if self.profile.uses_demon_map() && life.actor_type != ActorTypeId(135) {
+        if self.profile.uses_demon_map() && life.actor_type != self.demon_body_type() {
             return Err(MapSpawnError::Target.into());
         }
         if self.profile.uses_monsters() {
@@ -880,7 +880,7 @@ impl Simulation {
     /// no-wake decision and may still change threshold/target/lastlook/events.
     pub fn look(&mut self, id: ActorId) -> Result<bool, SimError> {
         self.preflight_perception_look(id)?;
-        if self.profile == Profile::DemonExpandedMap {
+        if self.profile.uses_checked_demons() {
             return self.checked_demon_operation(|host| host.invoke_look(id));
         }
         Ok(crate::lifecycle::LifeHost {

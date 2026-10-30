@@ -84,7 +84,7 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
-        if self.profile.uses_demon_map() && ty == ActorTypeId(136) {
+        if self.profile.uses_demon_map() && ty == self.demon_owner_type() {
             return Err(MapSpawnError::DirectSpawn.into());
         }
         if self.profile.uses_perception()
@@ -367,9 +367,7 @@ impl Simulation {
                 {
                     return Err(MapSpawnError::UnsupportedType(thing.kind).into());
                 }
-                if self.profile == Profile::DemonExpandedMap
-                    && !(-4..=3).contains(&(thing.angle / 45))
-                {
+                if self.profile.uses_checked_demons() && !(-4..=3).contains(&(thing.angle / 45)) {
                     return Err(MapSpawnError::Angle(thing.angle).into());
                 }
                 if selected.len() == MAX_MAP_DEMONS {
@@ -381,7 +379,7 @@ impl Simulation {
                 {
                     return Err(MonsterError::Arithmetic.into());
                 }
-                ty = crate::canonical_demon::RUNTIME_OWNER;
+                ty = self.demon_owner_type();
             }
             if self.profile.uses_perception() {
                 if [thing.position.x, thing.position.y]
