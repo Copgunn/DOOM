@@ -80,11 +80,12 @@ use one transactional core with optional explicit snapshots.
 
 ### Next narrow gameplay milestone
 
-Investigate grounded original-player knockback and source player thinker/roster
-participation in a separately admitted policy. Require original-C body movement,
-player command/health roster synchronization and Demon acquisition evidence before
-automatic targeting. Keep death camera, weapons and respawn out until their own
-dependencies are executable and independently tested. The all-inactive source
+Investigate bounded grounded original-player knockback through the shared XY/Z
+services, with independent fixed-point movement/friction/collision evidence and
+explicit unsupported geometry. Then investigate source player thinker/roster
+participation separately; require command/health synchronization and Demon
+acquisition evidence before automatic targeting. Keep death camera, weapons and
+respawn out until their dependencies are independently executable and tested. The all-inactive source
 player scan does not terminate; a real roster is a gameplay prerequisite, not a
 fixture flag to bypass. Preserve the existing body-only policy and diagnostics.
 
@@ -98,6 +99,13 @@ fixture flag to bypass. Preserve the existing body-only policy and diagnostics.
   adding large traces. Prefer compact uniquely useful evidence while retaining
   immutable historical fixtures/tools/archives. Any storage migration needs its own
   preservation proof and reviewed scope.
+
+- Inventory repeated preflight walks and transaction staging against the measured
+  component/allocation baseline. Any removal must preserve late-error rollback,
+  bounded resources and complete source/event/RNG observations, with matched
+  three-process timings and actual allocation counters. Do not add an unchecked
+  release mode or fragile timing gate. Prioritize a separately reviewed bounded
+  scratch reuse or one proven redundant validation over broad redesign.
 
 ### Map Scale, Limits, and Real-Map Readiness
 

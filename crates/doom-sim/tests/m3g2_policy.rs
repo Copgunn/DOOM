@@ -355,6 +355,9 @@ fn live_demon_ai_requires_a_future_roster_but_direct_source_damage_is_real() {
     rejected(&mut sim, |s| s.advance(inputs::COMMANDS));
     rejected(&mut sim, |s| s.look(demon).map(|_| ()));
     rejected(&mut sim, |s| s.chase(demon));
+    rejected(&mut sim, |s| s.face_target(demon));
+    rejected(&mut sim, |s| s.check_missile_range(demon).map(|_| ()));
+    rejected(&mut sim, |s| s.pos_attack(demon));
     damage(&mut sim, player, Some(demon), 5).unwrap();
     assert_eq!(
         sim.original_player(PlayerSlot::One).unwrap().attacker,
