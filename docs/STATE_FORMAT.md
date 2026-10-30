@@ -1064,18 +1064,18 @@ never come from Rust. [The evidence record](validation/M3G2.md) owns exact count
 
 ## DSIM-v22 grounded-player execution policy
 
-PlayerBodyKnockbackV1 selects wire policy3 with exact context schema
-`PLAYER-BODY-1-MEDIUM-GROUNDED-v1`. It uses the same version22 framing, ordered
+PlayerBodyKnockbackV1 selects wire policy 3 with exact context schema
+`PLAYER-BODY-1-MEDIUM-GROUNDED-v1`. It uses the same version 22 framing, ordered
 fields, source player/mo/attacker association and event widths as stationary
-policy2. The original registry schema remains `DOOM-INFO-1.10-v1`. Position,
+policy 2. The original registry schema remains `DOOM-INFO-1.10-v1`. Position,
 momentum, existing movement/slide and CombatEvent::Knockback payloads already
-represent every required observable; no version23 or new event tag is necessary.
+represent every required observable; no version 23 or new event tag is necessary.
 
-Policy2 must pair with `PLAYER-BODY-1-MEDIUM-NOTHRUST-v1`, and policy3 with the
+Policy 2 must pair with `PLAYER-BODY-1-MEDIUM-NOTHRUST-v1`, and policy 3 with the
 new grounded schema. Mixed/unknown pairs reject. `Diagnostic::decode_player`
 explicitly validates both v22 capabilities; the historical v20/v21 decode entry
-point still rejects22. Neither old context definitions nor native identities are
-reinterpreted. Existing policy2 full bytes remain immutable.
+point still rejects v22. Neither old context definitions nor native identities are
+reinterpreted. Existing policy 2 full bytes remain immutable.
 
 The [new independent encoder](../tools/reference/m3g3_snapshot_goldens.py) uses
 C physical/relationship/collision observations plus explicit schema policy. Its

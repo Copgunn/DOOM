@@ -1,0 +1,453 @@
+{
+  "local_checks": [
+    {
+      "check": "build",
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "check": "format",
+      "exit": 0,
+      "seconds": 1.25
+    },
+    {
+      "check": "fuzz-format",
+      "exit": 0,
+      "seconds": 1.67
+    },
+    {
+      "check": "clippy",
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "check": "workspace",
+      "exit": 0,
+      "seconds": 170.57
+    },
+    {
+      "check": "release",
+      "exit": 0,
+      "seconds": 51.25
+    },
+    {
+      "check": "msrv",
+      "exit": 0,
+      "seconds": 188.31
+    },
+    {
+      "check": "rustdoc",
+      "exit": 0,
+      "seconds": 0.65
+    },
+    {
+      "check": "identity-c",
+      "exit": 0,
+      "seconds": 9.12
+    },
+    {
+      "check": "knockback-c",
+      "exit": 0,
+      "seconds": 2.51
+    },
+    {
+      "check": "knockback-encoder",
+      "exit": 0,
+      "seconds": 0.29
+    }
+  ],
+  "tests": {
+    "workspace": {
+      "passed": 457,
+      "failed": 0,
+      "ignored": 2,
+      "sha256": "b5b18f7463bb24e91575d06bc474dc3a5f6f43e544bda44f981b2d2c884d842e"
+    },
+    "release": {
+      "passed": 433,
+      "failed": 0,
+      "ignored": 0,
+      "sha256": "83cd4241891d7fc40242affdddeee1ee15699db5707707cfe4960c72078c250f"
+    },
+    "msrv": {
+      "passed": 457,
+      "failed": 0,
+      "ignored": 2,
+      "sha256": "7c03e1102f90b0c09764ecabd0c48717e73b6f31a25e3140b7b12b235a084d4d"
+    }
+  },
+  "initial_local_checks": [
+    {
+      "check": "build",
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "check": "format",
+      "exit": 0,
+      "seconds": 1.26
+    },
+    {
+      "check": "fuzz-format",
+      "exit": 0,
+      "seconds": 1.65
+    },
+    {
+      "check": "clippy",
+      "exit": 0,
+      "seconds": 2.74
+    },
+    {
+      "check": "workspace",
+      "exit": 0,
+      "seconds": 179.8
+    },
+    {
+      "check": "release",
+      "exit": 0,
+      "seconds": 64.7
+    },
+    {
+      "check": "msrv",
+      "exit": 0,
+      "seconds": 202.13
+    },
+    {
+      "check": "rustdoc",
+      "exit": 0,
+      "seconds": 0.66
+    },
+    {
+      "check": "identity-c",
+      "exit": 0,
+      "seconds": 9.17
+    },
+    {
+      "check": "knockback-c",
+      "exit": 0,
+      "seconds": 2.46
+    },
+    {
+      "check": "knockback-encoder",
+      "exit": 0,
+      "seconds": 0.3
+    }
+  ],
+  "typed_stop_checks": {
+    "debug": {
+      "passed": 101,
+      "failed": 0,
+      "ignored": 0,
+      "sha256": "473f316fbf3f2a0e70177bfb1c5033b3ebd3b3e635b9540001ef2f18e2b4fa05"
+    },
+    "release": {
+      "passed": 101,
+      "failed": 0,
+      "ignored": 0,
+      "sha256": "f4926468e130583805c36c10963ce332eb3f0650aa196419baf03e5049d6dd58"
+    },
+    "msrv": {
+      "passed": 101,
+      "failed": 0,
+      "ignored": 0,
+      "sha256": "7f36836b97b5b2337093f119625c350219b8144b6fc36f179a4a698413de21b8"
+    }
+  },
+  "historical_baseline_checks": [
+    {
+      "tool": "check_references.py",
+      "exit": 0,
+      "seconds": 434.62
+    },
+    {
+      "tool": "m3f1_reference.py",
+      "exit": 0,
+      "seconds": 3.61
+    },
+    {
+      "tool": "m3f1_snapshot_goldens.py",
+      "exit": 0,
+      "seconds": 4.55
+    },
+    {
+      "tool": "m3f2_reference.py",
+      "exit": 0,
+      "seconds": 1.44
+    },
+    {
+      "tool": "m3f2_snapshot_goldens.py",
+      "exit": 0,
+      "seconds": 6.06
+    },
+    {
+      "tool": "m3f3_reference.py",
+      "exit": 0,
+      "seconds": 44.61
+    },
+    {
+      "tool": "m3f3_snapshot_goldens.py",
+      "exit": 0,
+      "seconds": 194.57
+    },
+    {
+      "tool": "m3f3_clipping_reference.py",
+      "exit": 0,
+      "seconds": 5.29
+    },
+    {
+      "tool": "m3f3_clipping_snapshot_goldens.py",
+      "exit": 0,
+      "seconds": 9.17
+    }
+  ],
+  "source_baseline_checks": [
+    {
+      "check": "lifetime-c",
+      "exit": 0,
+      "seconds": 2.04
+    },
+    {
+      "check": "lifetime-encoder",
+      "exit": 0,
+      "seconds": 0.15
+    },
+    {
+      "check": "canonical-c",
+      "exit": 0,
+      "seconds": 102.53
+    },
+    {
+      "check": "canonical-encoder",
+      "exit": 0,
+      "seconds": 42.57
+    },
+    {
+      "check": "original-encoder",
+      "exit": 0,
+      "seconds": 36.07
+    }
+  ],
+  "examples": [
+    {
+      "check": "check_examples.py",
+      "exit": 0,
+      "seconds": 27.71
+    },
+    {
+      "check": "check_map_scale.py",
+      "exit": 0,
+      "seconds": 0.14
+    },
+    {
+      "check": "check_map_extent.py",
+      "exit": 0,
+      "seconds": 0.12
+    },
+    {
+      "check": "check_demon_expanded_map.py",
+      "exit": 0,
+      "seconds": 8.36
+    },
+    {
+      "check": "check_original_identity.py",
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "check": "check_canonical_demon.py",
+      "exit": 0,
+      "seconds": 0.83
+    },
+    {
+      "check": "check_runtime_identity.py",
+      "exit": 0,
+      "seconds": 1.09
+    },
+    {
+      "check": "check_original_registry.py",
+      "exit": 0,
+      "seconds": 1.72
+    },
+    {
+      "check": "check_context_ownership.py",
+      "exit": 0,
+      "seconds": 0.38
+    },
+    {
+      "check": "check_game_instance.py",
+      "exit": 0,
+      "seconds": 0.11
+    },
+    {
+      "check": "check_diagnostic_free.py",
+      "exit": 0,
+      "seconds": 0.11
+    }
+  ],
+  "parser_generator": {
+    "results": [
+      {
+        "mode": "debug",
+        "example": "parse_map",
+        "exit": 0,
+        "stdout": "Synthetic map: 4 vertices, 4 linedefs, 1 sectors\n",
+        "stderr": ""
+      },
+      {
+        "mode": "debug",
+        "example": "generate_fuzz_seeds",
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "mode": "release",
+        "example": "parse_map",
+        "exit": 0,
+        "stdout": "Synthetic map: 4 vertices, 4 linedefs, 1 sectors\n",
+        "stderr": ""
+      },
+      {
+        "mode": "release",
+        "example": "generate_fuzz_seeds",
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    ],
+    "original_seed_hashes": {
+      "/workspace/DOOM/fuzz/corpus/wad/empty_iwad": "1c752adca4dce342d362ef48c4df48371f3903a59f0ad3e4637af643fc2081a7",
+      "/workspace/DOOM/fuzz/corpus/wad/duplicates": "c9c09f0c9f0afe9362ed8f2a700dbb3a660acc7d7aa9a3ef71d8d036e5beefce",
+      "/workspace/DOOM/fuzz/corpus/map/classic_square": "8d3f63a56a68b137351751a7a61919be93ad917b4d77bdb26644aa02c4672d9b"
+    },
+    "original_seeds_byte_identical": true
+  },
+  "fuzz_targets_built": 29,
+  "fuzz_initial": [
+    {
+      "target": "player_knockback",
+      "exit": 0,
+      "initial_seed_files": 21,
+      "max_len": 129,
+      "seconds": 91.38,
+      "asan_options": "detect_leaks=0",
+      "arguments": [
+        "fuzz/target/x86_64-unknown-linux-gnu/release/player_knockback",
+        "task-workspace/corpus/player_knockback",
+        "-runs=4096",
+        "-max_len=129",
+        "-seed=1",
+        "-timeout=20",
+        "-rss_limit_mb=2048",
+        "-artifact_prefix=task-workspace/final/logs/player_knockback-"
+      ],
+      "done": "#4096\tDONE   cov: 4706 ft: 15893 corp: 559/43Kb lim: 121 exec/s: 45 rss: 535Mb",
+      "completed_executions": 4096,
+      "findings": 0,
+      "log_sha256": "39f7771a533f18afa7536e43f8c87b695a30bb1ada2b2242e14c065699bcacce"
+    },
+    {
+      "target": "original_player",
+      "exit": 0,
+      "initial_seed_files": 11,
+      "max_len": 97,
+      "seconds": 38.05,
+      "asan_options": "detect_leaks=0",
+      "arguments": [
+        "fuzz/target/x86_64-unknown-linux-gnu/release/original_player",
+        "task-workspace/corpus/original_player",
+        "-runs=4096",
+        "-max_len=97",
+        "-seed=1",
+        "-timeout=20",
+        "-rss_limit_mb=2048",
+        "-artifact_prefix=task-workspace/final/logs/original_player-"
+      ],
+      "done": "#4096\tDONE   cov: 3799 ft: 12158 corp: 413/24Kb lim: 81 exec/s: 107 rss: 504Mb",
+      "completed_executions": 4096,
+      "findings": 0,
+      "log_sha256": "26c70acac008468fe34d2e24fe41b472f2b7d94ff7eefac7c123028044c3d7c4"
+    },
+    {
+      "target": "stepping_equivalence",
+      "exit": 0,
+      "initial_seed_files": 21,
+      "max_len": 97,
+      "seconds": 85.73,
+      "asan_options": "detect_leaks=0",
+      "arguments": [
+        "fuzz/target/x86_64-unknown-linux-gnu/release/stepping_equivalence",
+        "task-workspace/corpus/stepping_equivalence",
+        "-runs=4096",
+        "-max_len=97",
+        "-seed=1",
+        "-timeout=20",
+        "-rss_limit_mb=2048",
+        "-artifact_prefix=task-workspace/final/logs/stepping_equivalence-"
+      ],
+      "done": "#4096\tDONE   cov: 8445 ft: 16838 corp: 343/11042b lim: 41 exec/s: 48 rss: 529Mb",
+      "completed_executions": 4096,
+      "findings": 0,
+      "log_sha256": "c804626824a90179e7cc65faff2c8a38b4736c4cdd3ac93598e1f12932953556"
+    },
+    {
+      "target": "original_registry",
+      "exit": 0,
+      "initial_seed_files": 24,
+      "max_len": 97,
+      "seconds": 335.96,
+      "asan_options": "detect_leaks=0",
+      "arguments": [
+        "fuzz/target/x86_64-unknown-linux-gnu/release/original_registry",
+        "task-workspace/corpus/original_registry",
+        "-runs=4096",
+        "-max_len=97",
+        "-seed=1",
+        "-timeout=20",
+        "-rss_limit_mb=2048",
+        "-artifact_prefix=task-workspace/final/logs/original_registry-"
+      ],
+      "done": "#4096\tDONE   cov: 5053 ft: 13199 corp: 326/7338b lim: 26 exec/s: 12 rss: 630Mb",
+      "completed_executions": 4096,
+      "findings": 0,
+      "log_sha256": "3caf823c6eeeeb612c37e76a6ff41ef558b01651793c89036e3e196833bd825a"
+    }
+  ],
+  "fuzz_final_recheck": [
+    {
+      "target": "player_knockback",
+      "purpose": "typed-state stop-hook final rebuild/recheck; repeated input family",
+      "exit": 0,
+      "initial_seed_files": 21,
+      "max_len": 129,
+      "seconds": 93.1,
+      "asan_options": "detect_leaks=0",
+      "arguments": [
+        "fuzz/target/x86_64-unknown-linux-gnu/release/player_knockback",
+        "task-workspace/corpus-final/player_knockback",
+        "-runs=4096",
+        "-max_len=129",
+        "-seed=1",
+        "-timeout=20",
+        "-rss_limit_mb=2048",
+        "-artifact_prefix=task-workspace/head/logs/player_knockback-"
+      ],
+      "done": "#4096\tDONE   cov: 4703 ft: 15891 corp: 551/42Kb lim: 121 exec/s: 44 rss: 540Mb",
+      "completed_executions": 4096,
+      "findings": 0,
+      "log_sha256": "20c907eb2cca664829600c13e8be6b193ab0d6a2ff78f809669e66821c5830a8"
+    }
+  ],
+  "sanitizer": "All29 fuzz targets built with nightly address instrumentation; executed campaigns counted separately. C original metadata and new17-case observer passed supported ASan/UBSan and strict checks. ASAN_OPTIONS=detect_leaks=0; no LeakSanitizer/exhaustiveness claim.",
+  "original_files_preserved": 165,
+  "historical_protected_paths": 6069,
+  "limitations": [
+    "Initial raw-Demon test input rejected intentional DirectSpawn; only new inputs were replaced with genuine C/Rust THING batches. Historical bytes unchanged.",
+    "An initial misspelled test target ran no tests; corrected command passed.",
+    "New reference count assertions updated from the regenerated C map-input manifest after every actual field/event/full-byte comparison already matched.",
+    "Duplicate helper module Clippy include corrected before full gates.",
+    "Typed original state constants replaced two inherited stop-hook name lookups/unwraps after initial measurements; raw initial measurements retained and final code remeasured/rechecked.",
+    "Bounded fuzz repetitions are not independent gameplay evidence or exhaustive coverage.",
+    "Historical C/helper bytes unchanged from fully reproduced baseline; final Rust fixtures and exact-head CI are separate validation."
+  ]
+}

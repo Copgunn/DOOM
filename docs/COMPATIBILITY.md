@@ -578,10 +578,10 @@ Select `Simulation::original_player_map` or an OriginalExecutionRegistry with
 DemonNormalV1, ContextRole::UnboundBody137 and all old profiles keep their behavior.
 No synthetic body is reclassified as a player.
 
-This policy admits one genuine MT_PLAYER0, with original S_PLAY/RUN/pain/normal
+This policy admits one genuine MT_PLAYER=0, with original S_PLAY/RUN/pain/normal
 and extreme-death states149–153/156–173. Fixed settings are Medium, commercial,
 single-player, no armor/powers/cheats, pistol presentation request, automap false,
-no respawn, static one-sector floor0/ceiling128, existing64 actor-slot maximum and
+no respawn, static one-sector floor 0 / ceiling 128, existing64 actor-slot maximum and
 existing geometry/work budgets. Input movement/buttons, physical inflictors,
 manual player state/health/pursuit/momentum changes and unsupported settings reject.
 The body stays grounded and stationary; XY must already fit the shared pre-tic
@@ -649,13 +649,13 @@ PlayerBodyLifecycleV1 stays stationary and continues rejecting physical inflicto
 The constructor and new capability-enum variant are explicit API additions;
 exhaustive matches on OriginalExecutionProfile need the new arm. The historical
 Profile enum and existing signatures/variant meanings stay unchanged.
-Both use one genuine original MT_PLAYER0 with the same checked mo/player ownership,
+Both use one genuine original MT_PLAYER=0 with the same checked mo/player ownership,
 source health, pain/death states and allocated corpse semantics. Canonical identity
 representation still does not imply general executable support.
 
 Settings remain Medium/commercial/single-player/pistol, no armor/powers/cheats,
 automap/respawn false, unlisted player, zero commands, no PlayerThink/DeathThink.
-Geometry is one static sector floor0/ceiling128 with axis-aligned, one-sided walls
+Geometry is one static sector floor 0 / ceiling 128 with axis-aligned, one-sided walls
 whose flags are ML_BLOCKING. Existing actor/geometry/work limits are unchanged.
 Angled/two-sided walls, steps/dropoffs, airborne player motion, dynamic sectors and
 unsupported settings reject during construction. Player/body spawn/binding keeps
@@ -664,7 +664,7 @@ the existing ±994-unit initial XY boundary and initial zero momentum.
 A controlled DamageRequest may supply a distinct optional attacker source and
 physical inflictor. Both references must be current and nonpending original player
 or Demon instances; a dead-but-allocated source remains valid. The physical origin
-and player target must be at floor0 with zero vertical momentum. New momentum may
+and player target must be at floor 0 with zero vertical momentum. New momentum may
 only enter through shared damage; direct XY momentum control in this policy rejects.
 Physical damage to another actor is outside this new admission. No new weapon,
 projectile, infighting or automatic melee/acquisition system is implied.
@@ -675,25 +675,25 @@ retains the existing map-THING admission; raw Demon spawning remains rejected.
 Old no-inflictor controlled source interactions keep their lifecycle boundaries.
 A valid definition or available handle alone never grants permission to execute AI.
 
-Damage0..1000 is accepted only when its original ordered thrust arithmetic,
+Damage 0..1000 is accepted only when its original ordered thrust arithmetic,
 checked momentum addition and forward travel proof succeed. Let M=max(abs XY
-momentum) in raw16.16 bits after impulse: M<=30U and each
+momentum) in raw 16.16 bits after impulse: M<=30U and each
 abs(position)+ceil(160M/3)<=994U. This conservative support bound proves later
 axis-wall/friction tics remain executable; it is not an original-C coordinate
 limit or a gameplay clamp. Additional hits must establish it again. Even a small
 hit near the old coordinate boundary may reject atomically instead of committing
 an unsupported future position. See the [derivation](M3G3_REFERENCE.md#forward-coordinate-proof).
 
-Actual source thrust uses point-to-angle, mass100, integer damage*(FRACUNIT>>3)*100/
+Actual source thrust uses point-to-angle, mass 100, integer damage*(FRACUNIT>>3)*100/
 mass and fine cosine/sine FixedMul additions before player-specific health,
 attacker/damagecount/tactile and signed mobj health. The reverse-thrust branch is
-unreachable because both Z values are0; no thrust RNG draw or reverse-thrust
+unreachable because both Z values are 0; no thrust RNG draw or reverse-thrust
 coverage is claimed. Zero damage still follows source pain processing. Existing
 pain/death RNG, flags, statistics and ordered event semantics remain shared.
 
 Subsequent tics perform real shared XY movement, source positive-only subdivision,
 things-before-lines collision, source BLOCKMAP candidate order, spatial relinking,
-axis-wall sliding/stairstep, grounded friction0xe800 and strict stop-speed0x1000.
+axis-wall sliding/stairstep, grounded friction 0xe800 and strict stop speed 0x1000.
 A stopped RUN frame enters S_PLAY before state countdown. Lethal hits preserve
 momentum: the allocated player corpse can move, decay and stop while mo/attacker
 stay bound. Death, explicit removal and generational reuse remain distinct. There
@@ -702,8 +702,8 @@ occupant. Rejected operations preserve complete actor/player/RNG/statistics/spat
 event state, including late checked failures.
 
 [DSIM-v22](STATE_FORMAT.md#dsim-v22-grounded-player-execution-policy) already
-represents these observations. Wire policy3 and a distinct grounded context schema
-select the new behavior with unchanged field/event layout. Old v20/v21/v22 policy2
+represents these observations. Wire policy 3 and a distinct grounded context schema
+select the new behavior with unchanged field/event layout. Old v20/v21/v22 policy 2
 fixtures/readers retain their meanings. advance remains diagnostic-free, and step
 captures only after the same core. [Evidence](validation/M3G3.md) distinguishes new
 C observations, reused history and Rust-only safety policies. Full player controls,

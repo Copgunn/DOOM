@@ -12,22 +12,22 @@ M3g2 stationary-body inputs, fixtures and tools remain immutable.
 | --- | --- | --- |
 | [p_inter.c P_DamageMobj](../linuxdoom-1.10/p_inter.c): reject nonshootable/dead targets before thrust | DamagePlan and LifeHost::apply_damage already implement the early return | Validate current generational references first as Rust safety policy. Observe physical repeated damage to dead bodies without new thrust/RNG. |
 | Baby halves damage before thrust; chainsaw source-player, MF_NOCLIP and inflictor absence suppress thrust | Shared combat already has normal physical thrust; genuine owned players explicitly reject it | New opt-in policy retains Medium/commercial/single-player, pistol, no armor/powers/cheats, no NOCLIP. Inflictor may be a current grounded original player or Demon. Source is a distinct optional player/Demon reference. No weapon/projectile system is implied. |
-| R_PointToAngle2(inflictor XY, target XY), damage*(FRACUNIT>>3)*100/mass, FixedMul cosine/sine, add to existing momentum | Reuse shared integer point_angle, original fine tables, Fixed and damage execution | Pristine MT_PLAYER0 mass100. Damage0..1000 makes the original ordered numerator at most819200000. Check deltas, accumulation and future travel before mutation. Observe cardinal/diagonal, repeated, zero and lethal physical hits independently. No floating-point substitute. |
+| R_PointToAngle2(inflictor XY, target XY), damage*(FRACUNIT>>3)*100/mass, FixedMul cosine/sine, add to existing momentum | Reuse shared integer point_angle, original fine tables, Fixed and damage execution | Pristine MT_PLAYER=0 mass 100. Damage 0..1000 makes the original ordered numerator at most 819200000. Check deltas, accumulation and future travel before mutation. Observe cardinal/diagonal, repeated, zero and lethal physical hits independently. No floating-point substitute. |
 | Reverse thrust requires damage<40 AND damage>health AND target.z-inflictor.z>64U before drawing P_Random | Existing conditional source branch remains shared | Both admitted target and inflictor are grounded at floor0; vertical predicate is false. No thrust RNG draw or reverse-thrust compatibility claim. Pain/death draws remain in source order. |
 | Thrust precedes player health/attacker/damagecount/tactile, then signed mobj health, pain/retarget or kill | Same DamagePlan/LifeHost and player source record | Reuse M3g2 health, frags, death, corpse and presentation-request boundaries. Death does not clear momentum. New C inputs must compare this combined chronology, not merely calculate an impulse. |
 | [p_mobj.c P_MobjThinker](../linuxdoom-1.10/p_mobj.c): XY, conditional Z, then state countdown | Shared thinkers::run, existing XY/Z and lifecycle services | No second scheduler. Grounded player z=floor0 and momz0 makes source player Z/view-height/landing branches unreachable. Compare unchanged Z fields and absence of vertical events, not full airborne compatibility. |
 | P_XYMovement clamps components to MAXMOVE30U; subdivision tests only positive x/y>15U; division and signed shift differ | Shared movement::move_xy_multisector already preserves this arithmetic | Retain asymmetric source subdivision. Bounded physical hits must demonstrate actual positive two-attempt and negative one-attempt movement. Inputs exceeding the forward travel proof reject instead of inventing a clamp. |
 | Failed player movement calls P_SlideMove, including dead player bodies; three corner traces, two retries and stairstep | Existing player slide path is selected by an optional command, separate from actor input bindings | Supply a zero command from exact original player/mo association. Restrict new policy to axis-aligned, one-sided, nonspecial walls in a flat single sector; no angled projection, steps/dropoffs, dynamic sectors or generalized sliding claim. Compile genuine slide functions instead of the old aborting service stub. |
 | [p_map.c P_CheckPosition/P_TryMove/PIT_CheckThing/PIT_CheckLine](../linuxdoom-1.10/p_map.c): things before lines, source BLOCKMAP order, strict solid overlap | Existing collision, SpatialIndex and prepared source lists | Reuse candidate order and relinking, never sort handles. Other admitted definitions have no MF_SPECIAL pickup branch. Observe wall and solid dying-Demon blocking, selected slide lines, allowed destinations and spatial order. |
-| Ground friction0xe800, strict STOPSPEED0x1000; corpse off-step exception | Shared movement already has friction/stop and corpse exception | Flat floor0 equals subsector floor: corpse exception cannot skip friction. No airborne/no-momentum-cheat/missile/skull behavior. Independently observe positive/negative decay and stopping. |
+| Ground friction 0xe800, strict STOPSPEED 0x1000; corpse off-step exception | Shared movement already has friction/stop and corpse exception | Flat floor0 equals subsector floor: corpse exception cannot skip friction. No airborne/no-momentum-cheat/missile/skull behavior. Independently observe positive/negative decay and stopping. |
 | A stopped RUN frame calls P_SetMobjState(player.mo,S_PLAY) before countdown | Existing PlayerWeapons stop-state hook, shared LifeHost::enter | Extend the same hook through checked player/mo association. No PlayerThink movement or automatic RUN entry. Nonpain255 plus source retargeting can independently reach RUN and then friction-stop into PLAY. |
 | [p_tick.c](../linuxdoom-1.10/p_tick.c) thinker insertion/deferred removal; [p_enemy.c](../linuxdoom-1.10/p_enemy.c) all-inactive roster scan does not terminate | Existing generational owner, context/provenance guards and M3g2 live-AI rejection | Kill/retire live Demon sources before traversal. Dying/corpse actors still precede the player in validated owner order. Never fabricate automatic acquisition or unsafe dangling-pointer execution. |
 
 ## Selected execution and representation boundary
 
 Add an explicit PlayerBodyKnockbackV1 capability beside PlayerBodyLifecycleV1;
-do not broaden the stationary policy. Both execute the same genuine MT_PLAYER0,
-original states149–153/156–173, one source player record, actor store, DamagePlan,
+do not broaden the stationary policy. Both execute the same genuine MT_PLAYER=0,
+original states 149–153/156–173, one source player record, actor store, DamagePlan,
 checked bounded transaction and thinker core. Preserve actor/geometry capacities.
 The unbound historical context body is not admitted or relabeled.
 
@@ -82,7 +82,7 @@ silently escape the proof.
 Existing DSIM-v22 already carries actor XY/Z/momentum, ownership/attacker, health,
 states, movement/slide, damage and ordered event fields. Retain its layout rather
 than create a milestone-driven version. Select a distinct wire execution policy
-and exact grounded-context schema, while old policy2/NOTHRUST and every v20/v21/v22
+and exact grounded-context schema, while old policy 2/NOTHRUST and every v20/v21/v22
 fixture retain their interpretation. Reject mixed policy/schema pairs. Diagnostic
 decoding stays bounded/read-only, not executable-world restoration.
 
