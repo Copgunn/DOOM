@@ -64,30 +64,30 @@ Earlier findings and milestones are retained in the [historical records](validat
 
 ## Next
 
-### M3g3: Bounded original-player knockback and grounded movement
+### M3g4: Original player command movement and reaction-time execution
 
-The implementation adds opt-in physical damage, deterministic XY momentum,
-friction, bounded axis-wall sliding and moving corpses through shared services.
-Its source observations and independent diagnostics preserve the older stationary
-body policy. It stops at owner review; exact review/CI state belongs to GitHub.
-See [investigation](M3G3_REFERENCE.md), [supported inputs](COMPATIBILITY.md#original-player-grounded-knockback)
-and [observations](validation/M3G3.md).
+Opt-in PlayerCommandMovementV1 adds genuine player turning, forward/side thrust,
+source reaction-time suppression, shared grounded collision/sliding/friction and
+standing/running transitions. It uses the same transactional simulation core;
+older player capabilities remain unchanged. It stops at owner review. See
+[source investigation](M3G4_REFERENCE.md), [supported inputs](COMPATIBILITY.md#original-player-command-movement)
+and [observations](validation/M3G4.md). Exact review and CI state belongs to GitHub.
 
-M3g2 original player ownership/damage/death is merged; its
-[investigation](M3G2_REFERENCE.md) and [observations](validation/M3G2.md) remain
-historical references. M3g1 diagnostic-free stepping is merged; its
-[audit](M3G1_REFERENCE.md) and [observations](validation/M3G1.md) remain unchanged.
-Both stepping APIs still use one transactional gameplay core.
+M3g3 physical knockback and grounded corpses is merged; its
+[investigation](M3G3_REFERENCE.md) and [observations](validation/M3G3.md) remain
+historical references. M3g2 original player ownership/damage/death and M3g1
+[diagnostic-free stepping](M3G1_REFERENCE.md) are merged. Both stepping APIs still
+use one transactional gameplay core.
 
 ### Next narrow gameplay milestone
 
-Investigate bounded canonical player command movement through original P_MovePlayer
-and shared grounded services, with independently observed command/reaction-time/
-state-entry ordering. Resolve the relevant PlayerThink dependencies explicitly;
-do not infer full PlayerThink, view/camera, weapons or respawn compatibility from
-movement alone. Active roster and automatic Demon acquisition require their own
-source-validated player-thinker/roster boundary: the all-inactive source scan does
-not terminate. Preserve both existing player policies and diagnostic schemas.
+Admit a separately validated active-player roster and original Demon acquisition
+using the existing player ownership, context/provenance and shared simulation.
+Define bounded source player-search termination, visibility/selection order,
+player death/removal handling and RNG/event chronology before enabling live AI.
+Require independently compiled original-C player-versus-Demon scenarios, historical
+regressions and matched production measurements. Do not introduce another gameplay
+engine or infer full PlayerThink, camera, weapons, respawn or multiplayer support.
 
 ### Focused maintenance acceptance criteria
 

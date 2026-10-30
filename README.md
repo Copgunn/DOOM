@@ -35,11 +35,12 @@ A separate opt-in policy now executes one genuine original MT_PLAYER body with
 checked player/mo ownership, direct damage, pain, death and retained corpses.
 It shares the actor owner and combat/stepping core; synthetic bodies remain
 separate. The stationary lifecycle policy remains available. A separate opt-in policy adds
-source-validated physical knockback, grounded friction and bounded axis-wall
+source-validated command turning/thrust, reaction-time delays, physical knockback,
+grounded friction and bounded axis-wall
 sliding through the shared movement services. Controls, weapons, automatic
 monster targeting and respawn remain excluded. See the
 [player contract](docs/COMPATIBILITY.md#original-player-body-lifecycle) and
-[grounded knockback boundary](docs/COMPATIBILITY.md#original-player-grounded-knockback).
+[command movement boundary](docs/COMPATIBILITY.md#original-player-command-movement).
 
 Call `Simulation::advance()` for a tic without an implicit diagnostic Snapshot.
 `step()` retains its Snapshot return, and `snapshot()` captures explicitly in
@@ -88,6 +89,7 @@ cargo run -p doom-sim --example game_instance --locked
 cargo run -p doom-sim --example diagnostic_free --locked
 cargo run -p doom-sim --example original_player --locked
 cargo run -p doom-sim --example player_knockback --locked
+cargo run -p doom-sim --example player_commands --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked

@@ -136,3 +136,21 @@ view/camera, inventory, powers/cheats, airborne controls, generalized geometry,
 respawn, multiplayer and rendering remain excluded. The next separately validated
 gameplay milestone should admit the active-player roster and original Demon
 acquisition through these same shared services, not another gameplay engine.
+
+## Implemented disposition
+
+The selected boundary is implemented in `player_commands.rs`, using the existing
+shared actor plan and LifeHost state entry. The former private weapon motion/gate
+was extracted as a checked shared service; its existing execution path still uses
+it. Canonical command input reaches the same thinker XY/friction service. Exact
+movement executes once, and late postcondition failures discard the staged plan.
+The original body/knockback policies and historical expectations remain unchanged.
+
+New observations now exist independently of this design. The compiled observer,
+source hashes, executed entry inventory, defined literal subset, UB expression
+probe and independent encoder are preserved with compact fixtures. Expected C
+and diagnostic data were generated and committed before Rust integration; the
+first complete Rust command reference comparison passed without revising them.
+The [engineering record](validation/M3G4.md) owns measured counts, checks,
+performance and limitations. Neither successful projection nor the command gate
+establishes full player-ticker, player-roster or whole-gameplay compatibility.
