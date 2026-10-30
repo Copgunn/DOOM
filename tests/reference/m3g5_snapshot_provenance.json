@@ -1,0 +1,41 @@
+{
+  "captures": 373,
+  "event_frames": 1149,
+  "execution_profile": 5,
+  "full_byte_fixtures": 8,
+  "inputs_sha256": {
+    "tests/reference/m3g5_cases.csv": "18d7e461a8da80877dc36ac1c1e8e8f21d38e49a041be5b0789d9e6c589230ce",
+    "tests/reference/m3g5_map_0.bin": "99f2ba7d1097ff74e020d8183857ea1544864e1129d3c1c71c1b1ce6e8f8f202",
+    "tests/reference/m3g5_map_1.bin": "0d743a60d10dcca48588607989f699f1b724f41491a2b770bb0d2b08c8e3fd47",
+    "tests/reference/m3g5_map_2.bin": "650975f80accd4a375baeb3d3da233eb72a793d2fbff7daa4def28ec7b2b3016",
+    "tests/reference/m3g5_map_3.bin": "337f60178bd589a3d8c16f8c24af2e12d85b859617ea40de821d0e41483abf40",
+    "tests/reference/m3g5_map_4.bin": "c5c22afd22ad449e39dd2fd89ee89cab5338ddab89133d689ab0c34355207cac",
+    "tests/reference/m3g5_map_5.bin": "501e62b31fd653dd0c092083bed0563b82a1bfce2b72473b05fb52f1f35d2006",
+    "tests/reference/m3g5_map_6.bin": "1d3be102d669372f2eac03570041baa994ba6f4e7ce7496b7765711e0d3546b5",
+    "tests/reference/m3g5_map_7.bin": "cbe8075dbbd08241d803e6017d222f89394f4d933a35e9497a0b9cd913cda518",
+    "tests/reference/m3g5_provenance.json": "fd49c3eaf0a1b169dfb0aab2849f46c2c97781ee5697c0f1bebb131d9eb98f49",
+    "tests/reference/m3g5_trace.csv": "dd7e87d0bd118d66b63269e4afed1e36abf6cb245d5b8ac1e56d3cb2eac8cf65",
+    "tools/reference/m3c_snapshot_goldens.py": "95eac9b3e9f416eea16bb2ace5bb12a3aa401d9942069046dca05e0edc3a123c",
+    "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
+    "tools/reference/m3g2_snapshot_goldens.py": "b65bbd286f22fb0ec0b2176cfbc339f0376a24ccfe4a91d537e5f672a3e8ceee",
+    "tools/reference/m3g5_snapshot_goldens.py": "605221b441195541708014de4ef822c60dd0781a7b03ccb3672e17c5b1cdee80",
+    "tools/reference/player_execution_snapshot.py": "98a5c4a37cc43ce901636cd6504f891dbad19e86440efeb25b4596e69800e336",
+    "tools/reference/player_snapshot.py": "9524e70b09184766fc9aa10c8625e9849f8b59579165218cc1a1e66e90747c5c"
+  },
+  "ordered_event_fields": 12886,
+  "outputs_sha256": {
+    "tests/reference/m3g5_events.bin": "967d272ae6792c373554c7e4373b8699e8916be239793fcfc5a41ddb24ee9c15",
+    "tests/reference/m3g5_snapshots.csv": "73c27e473bd6ba0051e712b0ca8e58171df9a366d0c018bc9bff16e414530a31",
+    "tests/reference/m3g5_state_10_32.bin": "0f26e03a0bbd90e82d9aaef84614e253e68881cdd6a5edee9cd8d1732583adf6",
+    "tests/reference/m3g5_state_17_128.bin": "f3757c5b73db4b203575207982a9e3564c470b1656684d8cf7a4ae7968c44640",
+    "tests/reference/m3g5_state_19_32.bin": "605ebf4ba442cc1f8701cdd2dae1d5eede6a5e1c0ef739d8e3e8d1b3b804a9ba",
+    "tests/reference/m3g5_state_1_10.bin": "2e4b823efaaa0c00c68218e3d02f396fb30662014ecd0ef8b14a66b9c7b22007",
+    "tests/reference/m3g5_state_23_32.bin": "9c4ef86010c424d63fdabda042ccea96962becd745fdf988cbff78880c51e689",
+    "tests/reference/m3g5_state_2_10.bin": "e9921abee9005057d5bb695e1396b76d40a9139bee8d8be20830111cc84c440d",
+    "tests/reference/m3g5_state_2_11.bin": "4d3e6ca6ac67dc779ce3d8a3e408e633ca9505ecbcefd6bbe4bdf5c4e1ff714a",
+    "tests/reference/m3g5_state_7_10.bin": "a1ff8f13bfd9275244e268219d2711f6fa9e3bc8aa5765017a03604928c69370"
+  },
+  "roster_fields": 5968,
+  "schema": "DSIM-v22",
+  "scope": "Actual original player0 active and other slots inactive, verified against source R/P/AP rows; activity fixed by context, not duplicated mutable health. Shared frozen player field/event primitives with actual command-stage markers and original Look/Chase/scan evidence. Same DSIM22 layout; distinct policy5/context, no autonomous melee. This is bounded command-gate plus thinker execution, not full P_Ticker or P_PlayerThink. Negative turns and birth/generation projection retain explicitly qualified arithmetic/schema policies. No Rust expected outputs."
+}
