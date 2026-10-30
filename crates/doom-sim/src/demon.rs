@@ -11,6 +11,15 @@ pub(crate) struct MeleePlan {
     damage: Option<(i32, crate::combat::DamagePlan)>,
 }
 pub(crate) fn strike<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) {
+    if host.perception.is_some_and(|input| {
+        matches!(
+            input.players,
+            crate::player_roster::PerceptionRoster::OriginalPlayer
+        )
+    }) {
+        host.fail_sight(PlayerBodyError::Unsupported.into());
+        return;
+    }
     if host.access.get(id).unwrap().life.unwrap().target.is_none() {
         return;
     }
@@ -180,7 +189,7 @@ impl Simulation {
         id: ActorId,
         state: StateId,
     ) -> Result<(), SimError> {
-        if self.original_player.is_some() {
+        if self.original_player.is_some() && !self.uses_active_player_roster() {
             return Err(PlayerBodyError::Unsupported.into());
         }
         let actor = self.monster_actor(id, 1008)?;

@@ -33,7 +33,7 @@ impl Simulation {
         _slot: PlayerSlot,
         delay: u8,
     ) -> Result<(), SimError> {
-        if self.player_policy() != OriginalExecutionProfile::PlayerCommandMovementV1 {
+        if !self.player_policy().has_player_commands() {
             return Err(PlayerBodyError::Profile.into());
         }
         if self.tic != 0 {
@@ -65,7 +65,7 @@ impl Simulation {
             .original_player
             .as_ref()
             .ok_or(PlayerBodyError::Profile)?;
-        if p.policy != OriginalExecutionProfile::PlayerCommandMovementV1 {
+        if !p.policy.has_player_commands() {
             return Err(PlayerBodyError::Profile.into());
         }
         let slot = usize::from(PlayerSlot::One.ordinal());

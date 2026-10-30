@@ -84,7 +84,7 @@ impl Simulation {
             self.validate_combat_type(life.actor_type)?;
             if life.actor_type == self.demon_owner_type() {
                 owners += 1;
-                if suffix || owners > MAX_MAP_DEMONS {
+                if suffix || owners > self.map_demon_limit() {
                     return Err(MapSpawnError::Ownership.into());
                 }
                 if life.health > 0 {

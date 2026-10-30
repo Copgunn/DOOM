@@ -413,7 +413,9 @@ impl Simulation {
             player: None,
             statistics: self.statistics.as_mut(),
             perception: Some(crate::perception::PerceptionInputs {
-                players: &self.perception_players,
+                players: crate::player_roster::PerceptionRoster::Historical(
+                    &self.perception_players,
+                ),
                 sound_targets: &self.sound_targets,
                 pursuit: true,
                 monsters: self.profile.uses_monsters(),

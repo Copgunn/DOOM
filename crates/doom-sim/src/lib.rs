@@ -29,6 +29,7 @@ mod native_demon;
 mod original_player;
 mod original_registry;
 mod player_commands;
+mod player_roster;
 pub use diagnostic::{Diagnostic, DiagnosticError, DiagnosticIdentity, DiagnosticLimits};
 pub use execution_context::{ContextActor, ContextError, ExecutionContext, TargetReference};
 pub use game_instance::{GameInstance, InstanceActorRef, InstanceId, ProvenanceError};
@@ -42,6 +43,7 @@ pub use original_registry::{
     OriginalExecutionProfile, OriginalExecutionRegistry, OriginalRegistryError,
 };
 pub use player_commands::PLAYER_COMMAND_CONTEXT_SCHEMA;
+pub use player_roster::PLAYER_DEMON_CONTEXT_SCHEMA;
 mod chaingunner;
 mod demon;
 pub use canonical_demon::{CanonicalDemonError, DemonExecutionBinding};
@@ -896,6 +898,9 @@ impl Simulation {
     }
     /// Marks removal and unbinds input slots immediately. Storage retires at traversal.
     pub fn mark_remove(&mut self, id: ActorId) -> Result<(), SimError> {
+        if self.uses_active_player_roster() && self.owns_player_body(id) {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         if self.actors.mark_remove(id)? {
             self.spatial.unlink(id);
             self.pending.push(Event::RemovalMarked(id));
@@ -1006,7 +1011,7 @@ impl Simulation {
             return Err(SimError::UnsupportedButtons);
         }
         if self.original_player.is_some()
-            && self.player_policy() != OriginalExecutionProfile::PlayerCommandMovementV1
+            && !self.player_policy().has_player_commands()
             && commands.iter().any(|c| *c != TicCommand::default())
         {
             return Err(PlayerBodyError::Unsupported.into());
@@ -1096,7 +1101,9 @@ impl Simulation {
                     melee: demon_melee.as_ref(),
                     shotgun: shotgun_blast.as_ref(),
                     shot: monster_shot.as_ref(),
-                    players: &self.perception_players,
+                    players: crate::player_roster::PerceptionRoster::Historical(
+                        &self.perception_players,
+                    ),
                     sound_targets: &self.sound_targets,
                 });
             thinkers::run(
