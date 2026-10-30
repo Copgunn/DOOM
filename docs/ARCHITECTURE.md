@@ -359,7 +359,8 @@ Stored mo/attacker retain their original handles after retirement, and availabil
 comes from the existing store. Generations prevent rebinding to a new occupant.
 C quarantine/opaque-pointer observations and Rust generation safety are distinct.
 In the stationary capability, physical inflictors and player inputs reject;
-live Demon AI remains outside all current genuine-player capabilities. The fixed unlisted context avoids pretending that PlayerThink, a roster,
+live Demon AI remains outside the historical unlisted player capabilities. Their
+fixed unlisted context avoids pretending that PlayerThink, a roster,
 weapon lowering animation or a death camera is implemented.
 
 ## Grounded original-player physical execution
@@ -408,3 +409,33 @@ historical capacities, direct-state/physics controls and transaction guarantees
 remain. Simple command interpretation adds no collection; measured complete-path
 allocations, including existing staging/preflight work, are documented in
 [the evidence record](validation/M3G4.md). Diagnostic decoding remains read-only.
+
+
+## Active original-player roster and shared Demon AI
+
+`PlayerDemonAcquisitionV1` is a distinct opt-in capability. Its execution context
+fixes `playeringame` to active slot0 and inactive slots1–3. The existing
+`OriginalPlayer` record and actor store supply current health, state and mo; no
+second player record, mutable roster health cache or actor manager exists. A
+transient roster selector borrows historical fixture records in old profiles or
+derives the genuine player view from the current transaction at each Look/Chase
+scan. Both paths invoke the same bounded source scanner. The derived public
+`original_player_roster` observation does not grant permission to execute.
+
+Setup appends the map-THING Demon before binding the genuine player. The existing
+command/reaction stage precedes their shared thinker traversal; the earlier Demon
+therefore sees the player's pre-XY position, even after command angle/momentum
+updates. Immediate Look-to-see-to-Chase entry, target assignment, movement and
+sounds use existing lifecycle, perception, sight and pursuit services. No separate
+player-versus-monster loop, store, RNG or spatial scheduler is introduced.
+
+Death preserves fixed activity, mo association, corpse allocation and retained
+target/attacker handles. This capability rejects removal of its owned player body;
+roster deactivation/respawn is unavailable. Other actor retirement/reuse still uses
+existing generations. Current ownership and nonempty-roster support validate
+before action/tic mutation. The same bounded transaction discards all staged
+commands, movement, player fields, targets, statistics, RNG and events if chase
+reaches the unsupported autonomous melee branch. There is no implicit Snapshot in
+advance and no release-only rollback exception. [Support](COMPATIBILITY.md#active-original-player-and-demon-acquisition)
+and [source findings](M3G5_REFERENCE.md) distinguish original behavior from Rust
+lifetime/admission policy; [observations](validation/M3G5.md) report measured costs.

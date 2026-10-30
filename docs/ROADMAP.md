@@ -64,30 +64,30 @@ Earlier findings and milestones are retained in the [historical records](validat
 
 ## Next
 
-### M3g4: Original player command movement and reaction-time execution
+### M3g5: Active original-player roster and canonical Demon acquisition
 
-Opt-in PlayerCommandMovementV1 adds genuine player turning, forward/side thrust,
-source reaction-time suppression, shared grounded collision/sliding/friction and
-standing/running transitions. It uses the same transactional simulation core;
-older player capabilities remain unchanged. It stops at owner review. See
-[source investigation](M3G4_REFERENCE.md), [supported inputs](COMPATIBILITY.md#original-player-command-movement)
-and [observations](validation/M3G4.md). Exact review and CI state belongs to GitHub.
+Opt-in PlayerDemonAcquisitionV1 composes one active genuine player and at most one
+map-THING Demon. Existing commands precede shared thinkers; source visual search,
+lastlook/stop-slot behavior, wake sound/state entry and bounded autonomous pursuit
+use the same simulation. Death retains activity and corpse ownership. The actual
+melee branch rejects transactionally; full PlayerThink, roster deactivation and
+autonomous combat are not claimed. This milestone stops at owner review. See
+[source investigation](M3G5_REFERENCE.md), [support](COMPATIBILITY.md#active-original-player-and-demon-acquisition)
+and [observations](validation/M3G5.md). Exact review/CI state belongs to GitHub.
 
-M3g3 physical knockback and grounded corpses is merged; its
-[investigation](M3G3_REFERENCE.md) and [observations](validation/M3G3.md) remain
-historical references. M3g2 original player ownership/damage/death and M3g1
-[diagnostic-free stepping](M3G1_REFERENCE.md) are merged. Both stepping APIs still
-use one transactional gameplay core.
+M3g4 command/reaction movement, M3g3 physical knockback/corpses, M3g2 genuine-player
+lifecycle and M3g1 diagnostic-free stepping are merged. Their investigations and
+observations remain linked from the [evidence index](README.md).
 
 ### Next narrow gameplay milestone
 
-Admit a separately validated active-player roster and original Demon acquisition
-using the existing player ownership, context/provenance and shared simulation.
-Define bounded source player-search termination, visibility/selection order,
-player death/removal handling and RNG/event chronology before enabling live AI.
-Require independently compiled original-C player-versus-Demon scenarios, historical
-regressions and matched production measurements. Do not introduce another gameplay
-engine or infer full PlayerThink, camera, weapons, respawn or multiplayer support.
+Admit the checked autonomous Demon-to-player melee damage closure through the
+existing DamagePlan and thinker transaction. Independently verify source/inflictor,
+physical impulse/travel proof, synchronized health, pain/death/frags, late RNG and
+ordered events, including target death and rollback. Remove the explicit melee
+boundary only when that closure is independently established. Do not introduce a
+parallel combat engine, broaden the player thinker, add other monsters or redesign
+identity infrastructure to obtain the next gameplay result.
 
 ### Focused maintenance acceptance criteria
 

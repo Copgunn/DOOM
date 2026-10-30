@@ -429,8 +429,10 @@ fn new_policy_preserves_one_demon_limit_and_excluded_sound_and_weapon_services()
     assert_eq!(s.snapshot(), before);
     let r =
         OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerDemonAcquisitionV1).unwrap();
-    let mut options = ActorOptions::default();
-    options.skill = Skill::Easy;
+    let options = ActorOptions {
+        skill: Skill::Easy,
+        ..Default::default()
+    };
     assert!(
         Simulation::with_original_registry(
             source::map(),

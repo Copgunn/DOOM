@@ -300,3 +300,5 @@ old encoders are unchanged. PM/UC compact rows, PG phase markers and PBE1 events
 have explicit provenance. See [investigation](../../docs/M3G4_REFERENCE.md),
 [reproduction](../../docs/TESTING.md#original-player-command-movement) and
 [observations](../../docs/validation/M3G4.md). No full PlayerThink claim.
+
+M3g5 adds [the active-player/Demon observer](m3g5_reference.py) and [independent DSIM22 encoder](m3g5_snapshot_goldens.py); [source boundaries](../../docs/M3G5_REFERENCE.md) and [reproduction](../../docs/TESTING.md#active-original-player-and-demon-acquisition) qualify the fixed roster and nonmelee pursuit slice. Historical tools and expected bytes remain unchanged.
