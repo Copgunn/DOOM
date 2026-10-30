@@ -1,0 +1,13 @@
+{
+  "commit": "85fa38969fae4d0295661fe1c623818f40e91dcd",
+  "tree": "8b5d571819a95ac84922e01d4c0064d07a0ae496",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "status": "",
+  "tools": {
+    "measure_demon_expanded_map.py": "2e1b3c7c00d9ea0cf4f820b41f6fd724dc5292f54a2fbf81843101e12e4a3426",
+    "measure_canonical_demon.py": "b48fb56d182b1760fa993ff7c8680efb1711ef5dcaa9afa8cc8d9d2ec57b8f01",
+    "measure_original_registry.py": "ce85cb6f22da950e620492fdf564f003a414e067e5300ee95122750812b5d139",
+    "measure_context_ownership.py": "fabbe611fc1186d18cfd674fd4976b4e9bd3a0b039d7afc100812eee071a3efe",
+    "measure_game_instance.py": "611fdab8358a92ecea2f6b29bf39d5722c836e6b98972318713b15506c75fdca"
+  }
+}

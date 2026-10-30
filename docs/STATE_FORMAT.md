@@ -1117,3 +1117,35 @@ combines actual C command/phase observations with frozen field/event primitives
 through a reusable player execution projection. It preserves PBE1 test framing,
 reports birth/generation projection separately from C pointer behavior and never
 uses Rust outcomes as expectations. See [observations](validation/M3G4.md).
+
+## DSIM-v22 active-player Demon policy
+
+`PlayerDemonAcquisitionV1` selects wire policy5 and exact context
+`PLAYER-DEMON-1-MEDIUM-GROUNDED-NOMELEE-v1`, paired with `DOOM-INFO-1.10-v1`.
+Framing, widths, field order and event tags remain DSIM22. Existing original_player
+mo/health/state/attacker fields and derived actor.player association describe the
+same canonical record. Fixed active source slot0 and inactive slots1–3 are part
+of this immutable context contract; no independently mutable roster health/actor
+copy or redundant immutable activity field is serialized. The historical
+perception fixture array is not encoded in player policies.
+
+Existing actor target, lastlook, angle/momentum, state/tics, reaction/threshold,
+command, RNG, statistics and ordered events describe acquisition and nonmelee
+pursuit. Players/Thinkers phase ordering and Player command events retain policy4
+meanings; the existing Perception, Pursuit, Monster range, state/sound and movement
+events retain their source chronology. No version increment or event reinterpretation
+is required. Old v20/v21/v22 policies2/3/4 retain their bytes and identifiers.
+
+The explicit decode_player reader recognizes only matching policy/context pairs
+and validates original identities against this policy's admitted states. Unknown
+or mixed pairs reject. SARG attack metadata exists but has no executable permission
+under this policy. Structural reading still does not establish executable geometry,
+roster liveness, provenance or a restored world. Setup and retained-reference
+observations remain distinct from permission to advance.
+
+The [independent encoder](../tools/reference/m3g5_snapshot_goldens.py) verifies
+actual C roster R rows against P/AP ownership and health before using frozen field/
+event primitives. Complete PBE1 event frames and selected full fixtures preserve
+all ordered payloads. Birth/generation projection is independent Rust schema policy,
+not C allocator identity. See [evidence](validation/M3G5.md) and
+[source/harness qualifications](M3G5_REFERENCE.md).

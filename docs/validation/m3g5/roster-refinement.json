@@ -1,0 +1,226 @@
+{
+  "unchanged_workload_hashes": true,
+  "unchanged_digests": true,
+  "rows": [
+    {
+      "label": "active_player",
+      "mode": "advance",
+      "initial_ms": 1.580455,
+      "final_ms": 1.042506,
+      "initial_calls": 46499,
+      "final_calls": 28099,
+      "initial_bytes": 2018424,
+      "final_bytes": 1366024
+    },
+    {
+      "label": "active_player",
+      "mode": "step",
+      "initial_ms": 2.604247,
+      "final_ms": 1.974868,
+      "initial_calls": 67608,
+      "final_calls": 49208,
+      "initial_bytes": 3547543,
+      "final_bytes": 2895143
+    },
+    {
+      "label": "standing_demon",
+      "mode": "advance",
+      "initial_ms": 5.079985,
+      "final_ms": 3.812723,
+      "initial_calls": 151749,
+      "final_calls": 114949,
+      "initial_bytes": 6250632,
+      "final_bytes": 4945832
+    },
+    {
+      "label": "standing_demon",
+      "mode": "step",
+      "initial_ms": 6.586541,
+      "final_ms": 5.508918,
+      "initial_calls": 181307,
+      "final_calls": 144507,
+      "initial_bytes": 9159512,
+      "final_bytes": 7854712
+    },
+    {
+      "label": "failed_sight",
+      "mode": "advance",
+      "initial_ms": 5.048098,
+      "final_ms": 3.85805,
+      "initial_calls": 151749,
+      "final_calls": 114949,
+      "initial_bytes": 6234312,
+      "final_bytes": 4929512
+    },
+    {
+      "label": "failed_sight",
+      "mode": "step",
+      "initial_ms": 6.472282,
+      "final_ms": 5.36192,
+      "initial_calls": 181267,
+      "final_calls": 144467,
+      "initial_bytes": 9146532,
+      "final_bytes": 7841732
+    },
+    {
+      "label": "acquisition",
+      "mode": "advance",
+      "initial_ms": 5.952315,
+      "final_ms": 4.820287,
+      "initial_calls": 176634,
+      "final_calls": 139834,
+      "initial_bytes": 7237626,
+      "final_bytes": 5932826
+    },
+    {
+      "label": "acquisition",
+      "mode": "step",
+      "initial_ms": 7.570925,
+      "final_ms": 6.459597,
+      "initial_calls": 206959,
+      "final_calls": 170159,
+      "initial_bytes": 10168822,
+      "final_bytes": 8864022
+    },
+    {
+      "label": "stop_slot",
+      "mode": "advance",
+      "initial_ms": 6.08472,
+      "final_ms": 4.845264,
+      "initial_calls": 176357,
+      "final_calls": 139557,
+      "initial_bytes": 7248744,
+      "final_bytes": 5943944
+    },
+    {
+      "label": "stop_slot",
+      "mode": "step",
+      "initial_ms": 7.617554,
+      "final_ms": 6.675347,
+      "initial_calls": 206708,
+      "final_calls": 169908,
+      "initial_bytes": 10180701,
+      "final_bytes": 8875901
+    },
+    {
+      "label": "repeated_search",
+      "mode": "advance",
+      "initial_ms": 13.07038,
+      "final_ms": 9.43532,
+      "initial_calls": 374849,
+      "final_calls": 282849,
+      "initial_bytes": 16217056,
+      "final_bytes": 12955056
+    },
+    {
+      "label": "repeated_search",
+      "mode": "step",
+      "initial_ms": 14.998259,
+      "final_ms": 11.970278,
+      "initial_calls": 407807,
+      "final_calls": 315807,
+      "initial_bytes": 19312436,
+      "final_bytes": 16050436
+    },
+    {
+      "label": "moving_player",
+      "mode": "advance",
+      "initial_ms": 6.012714,
+      "final_ms": 5.045321,
+      "initial_calls": 176934,
+      "final_calls": 140134,
+      "initial_bytes": 7353490,
+      "final_bytes": 6048690
+    },
+    {
+      "label": "moving_player",
+      "mode": "step",
+      "initial_ms": 8.103211,
+      "final_ms": 6.92612,
+      "initial_calls": 207927,
+      "final_calls": 171127,
+      "initial_bytes": 10320599,
+      "final_bytes": 9015799
+    },
+    {
+      "label": "pursuit",
+      "mode": "advance",
+      "initial_ms": 6.04416,
+      "final_ms": 4.732797,
+      "initial_calls": 176634,
+      "final_calls": 139834,
+      "initial_bytes": 7237626,
+      "final_bytes": 5932826
+    },
+    {
+      "label": "pursuit",
+      "mode": "step",
+      "initial_ms": 7.461594,
+      "final_ms": 6.342593,
+      "initial_calls": 206959,
+      "final_calls": 170159,
+      "initial_bytes": 10168822,
+      "final_bytes": 8864022
+    },
+    {
+      "label": "target_death",
+      "mode": "advance",
+      "initial_ms": 5.926095,
+      "final_ms": 4.802901,
+      "initial_calls": 180462,
+      "final_calls": 142926,
+      "initial_bytes": 7183633,
+      "final_bytes": 5852737
+    },
+    {
+      "label": "target_death",
+      "mode": "step",
+      "initial_ms": 7.619297,
+      "final_ms": 6.38778,
+      "initial_calls": 209957,
+      "final_calls": 172421,
+      "initial_bytes": 10087965,
+      "final_bytes": 8757069
+    },
+    {
+      "label": "target_loss",
+      "mode": "advance",
+      "initial_ms": 5.943852,
+      "final_ms": 4.723804,
+      "initial_calls": 176359,
+      "final_calls": 139559,
+      "initial_bytes": 7230302,
+      "final_bytes": 5925502
+    },
+    {
+      "label": "target_loss",
+      "mode": "step",
+      "initial_ms": 7.436166,
+      "final_ms": 6.247353,
+      "initial_calls": 206690,
+      "final_calls": 169890,
+      "initial_bytes": 10161770,
+      "final_bytes": 8856970
+    },
+    {
+      "label": "retirement",
+      "mode": "advance",
+      "initial_ms": 2.554514,
+      "final_ms": 1.878815,
+      "initial_calls": 76211,
+      "final_calls": 53579,
+      "initial_bytes": 3250122,
+      "final_bytes": 2447670
+    },
+    {
+      "label": "retirement",
+      "mode": "step",
+      "initial_ms": 3.833003,
+      "final_ms": 3.042481,
+      "initial_calls": 101180,
+      "final_calls": 78548,
+      "initial_bytes": 5324733,
+      "final_bytes": 4522281
+    }
+  ]
+}

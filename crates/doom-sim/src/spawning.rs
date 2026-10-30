@@ -187,7 +187,9 @@ impl Simulation {
                 melee: None,
                 shotgun,
                 shot,
-                players: &self.perception_players,
+                players: crate::player_roster::PerceptionRoster::Historical(
+                    &self.perception_players,
+                ),
                 sound_targets: &self.sound_targets,
             });
         LifeHost {
@@ -378,7 +380,7 @@ impl Simulation {
                 if self.profile.uses_checked_demons() && !(-4..=3).contains(&(thing.angle / 45)) {
                     return Err(MapSpawnError::Angle(thing.angle).into());
                 }
-                if selected.len() == MAX_MAP_DEMONS {
+                if selected.len() == self.map_demon_limit() {
                     return Err(MapSpawnError::WorkLimit.into());
                 }
                 if [thing.position.x, thing.position.y]

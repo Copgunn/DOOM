@@ -122,3 +122,16 @@ The unsigned negative-turn adapter, literal defined cases and deliberate UB
 expression probe have distinct claims. Rust admission, generation/provenance,
 zero-command continuation and late transaction checks remain separate safety
 policy. Every older observer, fixture and decoder remains a regression gate.
+
+
+[M3g5](validation/M3G5.md) adds genuine active-player/MT_SERGEANT source scenarios.
+The new observer executes original scan/Look/Chase bodies against a genuine player
+association, with the explicitly bounded command gate before the thinker pass.
+This is neither full PlayerThink nor full P_Ticker execution. Source roster rows
+are independently checked against player/mo fields before policy5 DSIM22 encoding.
+Per-tic motion/Demon/decision rows overlap selected full captures and are counted
+separately. All-inactive C scanning is never run. Retired source identity uses the
+declared quarantine observation; stale/foreign generations, fixed-body removal
+rejection and transactional melee refusal are Rust policy. Historical evidence,
+source extraction and encoders remain unchanged; new expected values never come
+from Rust output. See the [source matrix](M3G5_REFERENCE.md).

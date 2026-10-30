@@ -320,3 +320,20 @@ closure may coexist with command execution. Metadata recognition is unchanged.
 See [accepted commands](COMPATIBILITY.md#original-player-command-movement),
 [shared architecture](ARCHITECTURE.md#original-player-command-stage) and
 [source ordering](M3G4_REFERENCE.md).
+
+
+## Active player and canonical Demon execution
+
+`PlayerDemonAcquisitionV1` uses actual MT_PLAYER=0 and MT_SERGEANT=12 storage and
+original PLAY/SARG states. PlayerSlot::One remains source roster ordinal0,
+independent of the owned body's actor slot. The existing player/mo association is
+also the source of the derived active roster view. This is executable gameplay
+composition, not a definition alias or another actor identity namespace.
+
+SARG stand and run actions now observe the active canonical player through shared
+Look/Chase services. For this capability, S_SARG_ATK1/2/3 and raise remain outside
+execution; their original records and ordinals remain represented unchanged.
+Source melee eligibility causes atomic rejection rather than silent branch
+skipping. Old DemonNormalV1 and player policies retain their state permissions and
+synthetic context boundaries. See [support](COMPATIBILITY.md#active-original-player-and-demon-acquisition),
+[source matrix](M3G5_REFERENCE.md) and [schema](STATE_FORMAT.md#dsim-v22-active-player-demon-policy).

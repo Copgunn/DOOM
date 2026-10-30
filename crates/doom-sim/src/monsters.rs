@@ -272,6 +272,17 @@ pub(crate) fn select<A: ActorAccess>(
     let states = info.states();
     let sound = info.sounds()[1];
     if states[3].0 != 0 && melee_host(h, id) {
+        if h.perception.is_some_and(|input| {
+            matches!(
+                input.players,
+                crate::player_roster::PerceptionRoster::OriginalPlayer
+            )
+        }) {
+            // The historical late melee plan assumes a synthetic unbound body.
+            // Preserve the real source branch boundary; commit no partial chase.
+            h.fail_sight(PlayerBodyError::Unsupported.into());
+            return false;
+        }
         observe(
             h,
             MonsterEvent::Selection {
@@ -889,7 +900,9 @@ impl Simulation {
             player: None,
             statistics: self.statistics.as_mut(),
             perception: Some(crate::perception::PerceptionInputs {
-                players: &self.perception_players,
+                players: crate::player_roster::PerceptionRoster::Historical(
+                    &self.perception_players,
+                ),
                 sound_targets: &self.sound_targets,
                 pursuit: true,
                 monsters: true,

@@ -97,14 +97,17 @@ impl Simulation {
     }
 }
 
-/// Perception-only player record; activity, health and actor identity are distinct.
+/// Source roster view; activity, health and actor identity are distinct.
+/// Historical profiles register fixtures; the genuine-player policy derives this
+/// view from its existing canonical owner instead of maintaining a second record.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct PerceptionPlayer {
     /// Corresponds to `playeringame[slot]`, not a network connection.
     pub active: bool,
     /// Source player.health used by scanning, independent of mobj health.
     pub health: i32,
-    /// A stable admitted unbound pawn/fixture; inactive records may retain old IDs.
+    /// Generational body identity, subject to the selected role/lifetime contract.
+    /// Inactive historical records may retain old IDs.
     pub actor: Option<ActorId>,
 }
 /// Source perception decisions, in the order actually evaluated.
@@ -224,7 +227,10 @@ pub(crate) fn scan(
     allaround: bool,
     checked: Option<&crate::demon_expanded_map::SightControl>,
 ) -> Result<ScanPlan, SimError> {
-    let observer = get(id).expect("preflight observer");
+    let observer = get(id).ok_or(PerceptionError::Reference)?;
+    if observer.lastlook >= 4 {
+        return Err(PerceptionError::Roster.into());
+    }
     let mut lastlook = observer.lastlook;
     let stop = lastlook.wrapping_sub(1) & 3;
     let mut plan = ScanPlan {
@@ -273,8 +279,8 @@ pub(crate) fn scan(
                 },
             );
             if p.health > 0 {
-                let target = p.actor.expect("preflight active roster");
-                let a = get(target).expect("preflight stable target");
+                let target = p.actor.ok_or(PerceptionError::Roster)?;
+                let a = get(target).ok_or(PerceptionError::Reference)?;
                 let result =
                     crate::demon_expanded_map::action_sight(checked, world, sectors, observer, a)?;
                 let visible = result.visible;
@@ -318,7 +324,7 @@ pub(crate) fn scan(
         }
         lastlook = (lastlook + 1) & 3;
     }
-    unreachable!("nonempty four-slot source scan terminates within 12 visits")
+    Err(PerceptionError::WorkLimit.into())
 }
 pub(crate) fn commit_scan<A: crate::lifecycle::ActorAccess>(
     host: &mut crate::lifecycle::LifeHost<'_, A>,
@@ -340,19 +346,28 @@ pub(crate) fn commit_scan<A: crate::lifecycle::ActorAccess>(
     found
 }
 impl Simulation {
-    /// Read the distinct four-slot perception roster.
+    /// Read the historical fixture roster. For the genuine fixed-active policy,
+    /// use [`Self::original_player_roster`] to observe current player fields.
     pub fn perception_players(&self) -> &[PerceptionPlayer; 4] {
         &self.perception_players
     }
     /// Definition-role policy shared by read-only reference observation and
     /// acquisition. Physical/action validation remains in the latter below.
     pub(crate) fn validate_perception_target_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
-        if self.profile.uses_demon_map() && ty != self.demon_body_type() {
+        let expected = if self.uses_active_player_roster() {
+            ActorTypeId(crate::identity::OriginalActorType::MT_PLAYER.ordinal())
+        } else {
+            self.demon_body_type()
+        };
+        if self.profile.uses_demon_map() && ty != expected {
             return Err(MapSpawnError::Target.into());
         }
         Ok(())
     }
     pub(crate) fn validate_perception_reference(&self, id: ActorId) -> Result<Actor, SimError> {
+        if self.uses_active_player_roster() && !self.owns_player_body(id) {
+            return Err(PerceptionError::Roster.into());
+        }
         let a = self.perception_actor(id)?;
         let life = a.life.unwrap();
         let registry = self.registry.as_deref().unwrap();
@@ -375,6 +390,9 @@ impl Simulation {
         Ok(a)
     }
     pub(crate) fn preflight_perception_roster(&self) -> Result<(), SimError> {
+        if self.uses_active_player_roster() {
+            return self.preflight_original_roster();
+        }
         for p in self.perception_players {
             if p.active {
                 self.validate_perception_reference(p.actor.ok_or(PerceptionError::Roster)?)?;
@@ -426,6 +444,13 @@ impl Simulation {
     }
     /// Exact P_LookForPlayers selection. Ok(false) may still advance lastlook.
     pub fn look_for_players(&mut self, id: ActorId, allaround: bool) -> Result<bool, SimError> {
+        if self.uses_active_player_roster() {
+            self.preflight_monster_callback(id)?;
+            return self.checked_demon_operation(|host| {
+                let plan = crate::player_roster::scan_current(host, id, allaround)?;
+                Ok(commit_scan(host, id, plan))
+            })?;
+        }
         if self.original_player.is_some() {
             return Err(PlayerBodyError::Unsupported.into());
         }
@@ -703,7 +728,7 @@ impl Simulation {
 #[derive(Clone, Copy)]
 pub(crate) struct PerceptionInputs<'a> {
     pub checked: Option<&'a crate::demon_expanded_map::SightControl>,
-    pub players: &'a [PerceptionPlayer; 4],
+    pub players: crate::player_roster::PerceptionRoster<'a>,
     pub pursuit: bool,
     pub monsters: bool,
     pub shotgunner: bool,
@@ -775,15 +800,7 @@ pub(crate) fn look<A: crate::lifecycle::ActorAccess>(
         }
     }
     if !heard {
-        let plan = scan(
-            host.world,
-            host.sectors,
-            input.players,
-            &|id| host.access.get(id).copied(),
-            id,
-            false,
-            input.checked,
-        );
+        let plan = crate::player_roster::scan_current(host, id, false);
         let plan = match plan {
             Ok(plan) => plan,
             Err(error) => {
@@ -898,7 +915,7 @@ impl Simulation {
     /// Execute admitted original A_Look between tics. Ok(false) is a normal
     /// no-wake decision and may still change threshold/target/lastlook/events.
     pub fn look(&mut self, id: ActorId) -> Result<bool, SimError> {
-        if self.original_player.is_some() {
+        if self.original_player.is_some() && !self.uses_active_player_roster() {
             return Err(PlayerBodyError::Unsupported.into());
         }
         self.preflight_perception_look(id)?;
@@ -919,7 +936,9 @@ impl Simulation {
                 melee: None,
                 shotgun: None,
                 shot: None,
-                players: &self.perception_players,
+                players: crate::player_roster::PerceptionRoster::Historical(
+                    &self.perception_players,
+                ),
                 sound_targets: &self.sound_targets,
             }),
             access: &mut self.actors,

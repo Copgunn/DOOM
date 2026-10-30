@@ -631,3 +631,39 @@ measure_player_knockback controls; new command workload timing is separate. Tool
 report three independent timing/RSS and three allocation processes, raw samples
 and validated allocator controls. Source fields/capture counts, actually executed
 campaigns and host limitations belong in [M3g4 evidence](validation/M3G4.md).
+
+## Active original player and Demon acquisition
+
+The [capability contract](COMPATIBILITY.md#active-original-player-and-demon-acquisition)
+and [source matrix](M3G5_REFERENCE.md) define fixed active player0, genuine Demon
+acquisition, nonmelee pursuit and explicit rollback at the melee boundary.
+Historical helpers and expected bytes remain unchanged.
+
+```sh
+cargo test -p doom-sim --test m3g5_reference --test m3g5_policy --locked
+cargo test -p doom-sim --lib player_roster --locked
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g5_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3g5_snapshot_goldens.py --check
+python3 tools/reference/check_player_demon.py
+cargo run -p doom-sim --example player_demon --locked
+cargo fmt --manifest-path fuzz/Cargo.toml --all -- --check
+cargo +nightly fuzz build --sanitizer address
+python3 tools/seed_player_demon_fuzz.py /tmp/doom-player-demon-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_demon /tmp/doom-player-demon-seeds --sanitizer address -- -runs=4096 -max_len=161 -seed=1 -timeout=20 -rss_limit_mb=2048
+python3 tools/measure_player_demon.py
+```
+
+The new source command harness is a declared bounded movement gate before
+P_RunThinkers, not full active-player P_Ticker/PlayerThink execution. Never execute
+all-inactive original P_LookForPlayers as a terminating test. Source death/corpse
+retention is distinct from Rust fixed-body removal and stale/foreign-handle
+rejection. Leak detection remains disabled under the tracing environment;
+bounded fuzzing is neither exhaustive proof nor leak coverage.
+
+Run every existing workspace/MSRV/release, example, historical reference/encoder,
+metadata, parser/generator, documentation, preservation and cross-platform gate.
+The new helper supplements all existing checks; the two asset-gated tests stay
+ignored. Measure new workloads separately from matched frozen historical tools.
+`advance` measures production stepping; diagnostic `step` is a separate mode.
+Raw three-process timing/RSS/allocation samples and limitations belong in
+[the engineering evidence](validation/M3G5.md).

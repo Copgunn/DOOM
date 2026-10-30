@@ -319,7 +319,7 @@ impl Simulation {
                     }
                     || a.momz != Fixed::ZERO
                     || a.z != a.floor
-                    || (p.policy == OriginalExecutionProfile::PlayerCommandMovementV1
+                    || (p.policy.has_player_commands()
                         && (l.flags & player_commands::MF_JUSTATTACKED != 0
                             || !(0..=i32::from(u8::MAX)).contains(&l.reaction_time)))
                 {
@@ -327,7 +327,11 @@ impl Simulation {
                 }
             } else if p.policy.has_physical_player() && a.momentum() != [Fixed::ZERO; 2] {
                 return Err(PlayerBodyError::Unsupported.into());
-            } else if stepping && l.actor_type == original_registry::owner_slot() && l.health > 0 {
+            } else if stepping
+                && !self.uses_active_player_roster()
+                && l.actor_type == original_registry::owner_slot()
+                && l.health > 0
+            {
                 // Original all-inactive LookForPlayers does not terminate. Do not
                 // replace it with unobserved player AI in this explicit policy.
                 return Err(PlayerBodyError::Unsupported.into());

@@ -773,3 +773,83 @@ weapons/buttons, inventory/powers/cheats, special sectors, airborne controls,
 respawn/multiplayer, arbitrary angled/two-sided walls and automatic Demon
 perception/acquisition remain unsupported. Dying/corpse Demon origins retain
 existing controlled interaction semantics; no live AI/roster is silently enabled.
+
+## Active original player and Demon acquisition
+
+Select `Simulation::original_player_demon_map` or the separate
+`OriginalExecutionProfile::PlayerDemonAcquisitionV1`. It composes the existing
+command/knockback/player lifecycle with canonical Demon visual acquisition and
+bounded nonmelee pursuit. Historical DemonNormalV1 and player policies are unchanged.
+Metadata still represents every original actor/state; only admitted roles execute.
+
+The fixed source roster is `[true,false,false,false]`: only PlayerSlot::One
+(source index0) is active, regardless of its actor storage slot or health.
+`spawn_player_body` or checked initial binding associates the genuine MT_PLAYER=0
+with the existing OriginalPlayer. `original_player_roster()` derives current
+health/mo from that record; it is an observation, not a separate mutable roster.
+`perception_players()` remains the historical fixture-array observation and does
+not describe this capability's active player. Its fixture registration setter
+rejects here, including attempts to deactivate or fabricate players.
+
+Before any unpaused tic or search, the player must have a current, nonpending,
+correct-generation owned body with consistent definition/health/state. Incomplete
+setup may be observed but cannot execute. Player activity persists when health
+becomes zero; the allocated corpse remains owned but source search ignores its
+player health. Removing this fixed active body rejects, including after death;
+roster deactivation, body replacement and respawn require a future capability.
+Other actor retirement/reuse retains existing generation safety. Foreign instance
+references reject at existing provenance boundaries; raw ActorId remains local.
+Damage can also retain a source in the player's mobj target, separately from
+OriginalPlayer.attacker. Neither reference registers a player or enables player AI.
+The scoped target view classifies compatibility with the perception-target role:
+a retained Demon source can be Incompatible with that role while remaining a valid
+stored identity. Actor fields/availability and source lifetime are separate observations.
+
+At most one MT_SERGEANT=12 may enter through the original Demon THING batch,
+before the player/effect suffix. Zero Demons is supported. This narrows the new
+capability without changing historical four-owner or 64-total-slot bounds. All
+existing Medium/commercial, grounded one-flat-sector, static axis-wall, geometry,
+coordinate/travel and command bounds still apply. Player commands remain slot0,
+forward/side -50..50, signed i16 turns under the declared bit interpretation,
+buttons0 and default other slots. Physical damage composes through existing shared
+services; it is not proof of autonomous melee. No sector soundtarget/noise
+propagation is admitted; AMBUSH can use the source visual fallback.
+
+The existing scanner preserves source lastlook, stopping slot and active encounter
+count, then player-health/sight/facing checks. It does not sort by distance. Rear
+angle strictly between ANG90/ANG270 permits acquisition only within approximate
+64-unit distance. Initial lastlook1 with only player0 active stops at that slot
+before eligibility on its first scan. Other initial lastlook values and repeated
+scans keep original progression. New execution never feeds an empty active roster
+to source scanning: original all-inactive search may not terminate. The historical
+Rust EmptyRoster safety policy remains isolated in its historical configuration.
+
+A_Look resets threshold, scans, assigns the real player's current ActorId, emits
+the single Demon wake sound without sound-selection RNG, and immediately enters
+SARG see/Chase chronology. Shared A_Chase supports target/reaction/threshold/facing,
+movement direction, original collision/sight and RNG. Commands update player
+angle/momentum before thinkers; XY moves at the player's own thinker position.
+A Demon inserted first therefore initially sees pre-player-XY coordinates.
+
+SARG attack states and autonomous melee are explicitly unexecutable here. If the
+actual source melee check succeeds, the complete operation rejects before attack
+sound/state/damage commit; chase does not silently skip the branch. Controlled
+initial direction/state setup is distinct from automatic gameplay. Death or loss
+of target shootability invokes source allaround fallback; failed scanning and
+spawn entry retain an allocated dead target handle. Pending, retired, stale or
+otherwise incompatible target/body references reject before execution and never
+resolve to a different slot occupant. Nonshootable living player corruption rejects
+as Rust invariant policy, not a claim about a separately admitted source branch.
+
+Both stepping APIs share the same transaction; late rejection preserves player,
+actor, targets, RNG, statistics, spatial/thinker order, commands, tic and both event
+queues. Paused input retains historical no-op precedence. `advance` captures no
+Snapshot; `step` captures once after successful advancement. DSIM22 policy5/context
+select the fixed active contract with unchanged layout; [STATE_FORMAT](STATE_FORMAT.md#dsim-v22-active-player-demon-policy)
+owns its precise identifiers.
+
+Full P_PlayerThink/P_Ticker/P_DeathThink, view/camera, weapons, inventory, powers,
+armor/cheats, roster changes, respawn/multiplayer, generalized targeting/infighting,
+other monster species, sound propagation, arbitrary geometry and autonomous combat
+remain unsupported. [Source findings](M3G5_REFERENCE.md) and
+[observed evidence](validation/M3G5.md) qualify this bounded gameplay composition.

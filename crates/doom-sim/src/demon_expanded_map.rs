@@ -183,7 +183,11 @@ impl Simulation {
     ) -> perception::PerceptionInputs<'a> {
         perception::PerceptionInputs {
             checked: Some(control),
-            players: &self.perception_players,
+            players: if self.uses_active_player_roster() {
+                player_roster::PerceptionRoster::OriginalPlayer
+            } else {
+                player_roster::PerceptionRoster::Historical(&self.perception_players)
+            },
             sound_targets: &self.sound_targets,
             pursuit: true,
             monsters: true,
@@ -274,8 +278,7 @@ impl Simulation {
         &mut self,
         commands: [TicCommand; 4],
     ) -> Result<(), SimError> {
-        let command_policy =
-            self.player_policy() == OriginalExecutionProfile::PlayerCommandMovementV1;
+        let command_policy = self.player_policy().has_player_commands();
         let command_body = if command_policy {
             self.preflight_player_commands(&commands)?
         } else {

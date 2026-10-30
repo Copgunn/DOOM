@@ -31,16 +31,7 @@ fn chase_body<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId, work: &mut u
         }
     }
     if target.is_none_or(|a| a.life.unwrap().flags & 4 == 0) {
-        let inputs = h.perception.unwrap();
-        let plan = crate::perception::scan(
-            h.world,
-            h.sectors,
-            inputs.players,
-            &|id| h.access.get(id).copied(),
-            id,
-            true,
-            inputs.checked,
-        );
+        let plan = crate::player_roster::scan_current(h, id, true);
         let plan = match plan {
             Ok(plan) => plan,
             Err(error) => {
