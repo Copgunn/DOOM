@@ -599,6 +599,9 @@ impl Simulation {
         id: ActorId,
         p: PursuitSetup,
     ) -> Result<(), SimError> {
+        if self.owns_player_body(id) {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.monster_actor(id, 1008)?;
         let owner = self.monster_is_owner(id);
         if !owner && self.actor(id).unwrap().life.unwrap().actor_type != self.demon_body_type() {
@@ -874,6 +877,7 @@ impl Simulation {
         shot: Option<&'a MonsterShotPlan>,
     ) -> LifeHost<'a, &'a mut ThinkerStore<Actor>> {
         LifeHost {
+            player: None,
             statistics: self.statistics.as_mut(),
             perception: Some(crate::perception::PerceptionInputs {
                 players: &self.perception_players,

@@ -410,6 +410,7 @@ impl Simulation {
             });
         }
         let mut host = LifeHost {
+            player: None,
             statistics: self.statistics.as_mut(),
             perception: Some(crate::perception::PerceptionInputs {
                 players: &self.perception_players,
@@ -450,19 +451,31 @@ impl Simulation {
     }
     /// Source P_Move: positional movement, without momentum conversion.
     pub fn move_pursuer(&mut self, id: ActorId) -> Result<bool, SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.pursuit_operation(id, PursuitOperation::Move)
     }
     /// Source P_TryWalk: only success draws the movement count.
     pub fn try_walk(&mut self, id: ActorId) -> Result<bool, SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.pursuit_operation(id, PursuitOperation::TryWalk)
     }
     /// Source P_NewChaseDir, requiring a valid current target.
     pub fn new_chase_direction(&mut self, id: ActorId) -> Result<(), SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.pursuit_operation(id, PursuitOperation::NewChaseDir)
             .map(|_| ())
     }
     /// Explicit supported A_Chase, sharing the same thinker/state callback.
     pub fn chase(&mut self, id: ActorId) -> Result<(), SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.pursuit_operation(id, PursuitOperation::Chase)
             .map(|_| ())
     }

@@ -568,3 +568,73 @@ RNG consumption, capacity expansion, gameplay profile or DSIM schema is added.
 Real-player mo/attacker, new species relationships, persistence and transport remain
 separate work. See [architecture](ARCHITECTURE.md#game-instance-provenance),
 [audit/design](M3F9_REFERENCE.md) and [observations](validation/M3F9.md).
+
+## Original player body lifecycle
+
+Select `Simulation::original_player_map` or an OriginalExecutionRegistry with
+`OriginalExecutionProfile::PlayerBodyLifecycleV1` explicitly. The legacy
+`Profile::OriginalDemon` names the shared original-ID service family;
+`original_execution_profile()` identifies the selected policy. Historical
+DemonNormalV1, ContextRole::UnboundBody137 and all old profiles keep their behavior.
+No synthetic body is reclassified as a player.
+
+This policy admits one genuine MT_PLAYER0, with original S_PLAY/RUN/pain/normal
+and extreme-death states149–153/156–173. Fixed settings are Medium, commercial,
+single-player, no armor/powers/cheats, pistol presentation request, automap false,
+no respawn, static one-sector floor0/ceiling128, existing64 actor-slot maximum and
+existing geometry/work budgets. Input movement/buttons, physical inflictors,
+manual player state/health/pursuit/momentum changes and unsupported settings reject.
+The body stays grounded and stationary. Real player starts, spawn-angle loading,
+HUD, weapons, inventory and view initialization are not claimed.
+
+`spawn_player_body(PlayerSlot::One, XY)` atomically spawns at the floor with
+angle0 and health100, then establishes source mo ownership. A separately raw-spawned
+initial canonical body can be bound through checked local/scoped APIs. Bind validates
+current generation, nonpending storage, pristine state/health/flags/physics and
+initial counters/orientation. Double binding, wrong definition, stale/pending or
+invalid handles reject atomically. Player index0 can own a different actor slot;
+raw slot equality never establishes ownership. GameInstance import still rejects
+foreign or old incarnation references. Raw admission remains explicitly store-local.
+
+Supported direct damage is `P_DamageMobj(target, NULL, source, amount)` for bounded
+amount0–1000 and admitted current player/Demon sources or NULL. Source and inflictor
+are distinct; physical thrust is explicitly excluded. Player health subtracts and
+clamps0; mobj health stays signed. Attacker assigns source including NULL, damagecount
+caps100 and the console tactile request is observed before mobj health subtraction.
+Nonlethal pain/reaction/retargeting and lethal state selection/jitter use the shared
+source-tested damage service and RNG. Self damage may store self as attacker;
+NULL clears player.attacker without clearing the distinct mobj.target.
+
+Death preserves the mo binding, sets PST_DEAD, clears MF_SOLID immediately, keeps
+source corpse/dropoff flags, quarters height and retains the allocated corpse.
+Normal versus extreme death uses the strict health < -100 boundary. Commercial
+player scream uses the source -50 threshold. P_DropWeapon's requested pistol-down
+state is observed; psprite lowering/weapon execution is excluded. Source environment/
+self frags and sole-player monster kill credit are admitted. No score/intermission,
+respawn, automatic retirement or PlayerThink/DeathThink damagecount/camera update
+is implied. Repeated damage to a dead body is source-ignored after Rust reference
+validation; malformed sources still reject without changes.
+
+The player body is unlisted (`playeringame=false`), not an active AI roster or
+complete game-loop player. Original all-inactive LookForPlayers does not terminate.
+Live Demon AI stepping/manual AI callbacks therefore reject in this policy. A live
+canonical Demon can be a controlled direct damage source between tics, then must
+be explicitly killed or marked for removal before stepping. Dead-but-allocated
+sources and Demon death/corpse actions remain supported. Player-to-Demon damage is
+restricted to lethal input, avoiding unsupported nonlethal retarget/infighting.
+Automatic targeting and physical Demon melee against the player remain future work.
+
+mo/attacker retain their original opaque handles after pending removal, retirement
+and reuse. New damage/binding cannot use pending or unavailable actors. Death alone
+keeps a current actor, including a possible attacker corpse. No incoming-reference
+sweep clears identities. Generational availability queries never resolve an old
+reference to a new occupant. These guarantees are Rust policy, separate from safe
+C logical-retirement observations. Restart/respawn reject rather than silently
+losing or transferring the player binding.
+
+DSIM-v22 supplies the genuinely new player observations; v20/v21 and their readers
+retain their old interpretations. `advance` still captures no Snapshot, `step`
+captures after the same shared core, and every supported/rejected operation keeps
+its existing transaction boundary. See [schema](STATE_FORMAT.md#dsim-v22--original-player-body),
+[source investigation](M3G2_REFERENCE.md), [tests](TESTING.md#original-player-body-validation)
+and [measured evidence](validation/M3G2.md). No complete player gameplay claim follows.

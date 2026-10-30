@@ -119,7 +119,8 @@ impl Simulation {
     }
     pub(crate) fn validate_demon_lifecycle_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
         if self.profile == Profile::OriginalDemon {
-            original_registry::require_role(ty).map_err(|_| MonsterError::Definition)?;
+            original_registry::require_role_for(self.player_policy(), ty)
+                .map_err(|_| MonsterError::Definition)?;
             self.registry
                 .as_deref()
                 .ok_or(MonsterError::Definition)?
@@ -141,7 +142,7 @@ impl Simulation {
         state: StateId,
     ) -> Result<(), SimError> {
         if self.profile == Profile::OriginalDemon {
-            return original_registry::state_role(ty, state)
+            return original_registry::state_role_for(self.player_policy(), ty, state)
                 .map_err(|_| MonsterError::Definition.into());
         }
         let valid = match ty.0 {

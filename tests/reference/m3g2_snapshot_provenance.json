@@ -1,0 +1,25 @@
+{
+  "captures": 185,
+  "event_frames": 620,
+  "execution_profile": 2,
+  "full_byte_fixtures": 4,
+  "inputs_sha256": {
+    "tests/reference/m3f5_map_0.bin": "5ea2f73dfb74b7833ecdd1af1f657590b34fcbde047fe7895be44eda78115b97",
+    "tests/reference/m3g2_cases.csv": "3b7da1aaeb6d3c643e183ffd050b899d269e7cfceebe82d7751c730e40ad495d",
+    "tests/reference/m3g2_trace.csv": "f57fefeeebd0b29aa5f4083b49d8a83a7710e1426f211470152eb580ae3a177d",
+    "tools/reference/m3c_snapshot_goldens.py": "95eac9b3e9f416eea16bb2ace5bb12a3aa401d9942069046dca05e0edc3a123c",
+    "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
+    "tools/reference/m3g2_snapshot_goldens.py": "b65bbd286f22fb0ec0b2176cfbc339f0376a24ccfe4a91d537e5f672a3e8ceee"
+  },
+  "ordered_event_fields": 4256,
+  "outputs_sha256": {
+    "tests/reference/m3g2_events.bin": "916d35c5101a34c99d4eb92cedffd52604f7e683486827d3feae825bf0ced916",
+    "tests/reference/m3g2_snapshots.csv": "459b492a0216b9d6e3c5a0d06765f47d9b94a07633cea0cf462e3e59bc9a256e",
+    "tests/reference/m3g2_state_0_0.bin": "f8a2c6b9f8d340cebdb026eb871d1329e792a586cdc01726369e971e0ce340f9",
+    "tests/reference/m3g2_state_10_52.bin": "008facb4b70d33cced9a3ba7a0d441c86ee1d6912531acb05024b786c55567fe",
+    "tests/reference/m3g2_state_13_3.bin": "e3394e997801e78e4bcb9512edafc81efa35f7516ae026dddd0410897c205bdb",
+    "tests/reference/m3g2_state_6_72.bin": "9c76a4bd21fda18bedb6d14b52abb50540df81a59de7b0b69d431d2f253f816b"
+  },
+  "schema": "DSIM-v22",
+  "scope": "Actual original player0/Demon12 source records and relationships. Separate player fields and derived association; unchanged framing. Complete ordered event fields every tic, compact selected full-state captures, four byte fixtures. No Rust output or historical fixture mutation."
+}

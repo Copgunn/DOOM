@@ -319,6 +319,42 @@ impl<'ctx> ExecutionContext<'ctx> {
         // A successful existing spawn certifies this current owned instance.
         Ok(self.token(id))
     }
+    /// Spawn and bind the sole genuine player through the existing actor owner.
+    pub fn spawn_player(
+        &mut self,
+        slot: PlayerSlot,
+        position: [doom_types::Fixed; 2],
+    ) -> Result<ContextActor<'ctx>, ContextError> {
+        let id = self.simulation.spawn_player_body(slot, position)?;
+        Ok(self.token(id))
+    }
+    /// Bind a checked scoped initial MT_PLAYER; qualified imports retain instance checks.
+    /// A body from another scope cannot be bound, even with equal raw slots:
+    /// ```compile_fail
+    /// use doom_sim::*;
+    /// fn cross(a: &mut Simulation, b: &mut Simulation) -> Result<(), ContextError> {
+    ///     a.with_execution_context(|outer| {
+    ///         let player = outer.spawn_player(PlayerSlot::One, Default::default())?;
+    ///         b.with_execution_context(|inner| inner.bind_original_player(PlayerSlot::One, player))
+    ///     })
+    /// }
+    /// ```
+    pub fn bind_original_player(
+        &mut self,
+        slot: PlayerSlot,
+        body: ContextActor<'ctx>,
+    ) -> Result<(), ContextError> {
+        self.actor(body)?;
+        self.simulation
+            .bind_original_player_body(slot, body.id)
+            .map_err(Into::into)
+    }
+    /// Source record with retained opaque handles, not proof of reference liveness.
+    pub fn original_player(&self, slot: PlayerSlot) -> Result<OriginalPlayer, ContextError> {
+        self.simulation
+            .original_player(slot)
+            .map_err(|e| ContextError::Runtime(e.into()))
+    }
     /// Set/repair the existing four-slot synthetic perception input. This is not
     /// player gameplay or a new ownership role. Existing roster guards apply.
     pub fn set_perception_player(

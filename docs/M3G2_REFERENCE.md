@@ -103,3 +103,21 @@ traversal, or use dead-but-allocated sources. No observer runs the all-inactive
 loop, no source body is patched to invent a terminating result, and no player
 roster is fabricated to conceal this dependency. Future acquisition requires
 player roster/think integration as its own gameplay milestone.
+
+## Implemented disposition
+
+The selected stationary body slice is implemented through the shared original-ID
+registry, actor owner, DamagePlan/LifeHost, checked actor staging and thinker core.
+[Source creation/state entry](../linuxdoom-1.10/p_mobj.c),
+[damage/death](../linuxdoom-1.10/p_inter.c),
+[player callbacks/perception](../linuxdoom-1.10/p_enemy.c),
+[player structure](../linuxdoom-1.10/d_player.h),
+[death thinker dependencies](../linuxdoom-1.10/p_user.c),
+[weapon request](../linuxdoom-1.10/p_pspr.c) and
+[deferred thinker retirement](../linuxdoom-1.10/p_tick.c) remain untouched authority.
+New compiled-C observations establish the admitted source fields/chronology;
+[the evidence record](validation/M3G2.md) owns counts and measured results.
+Generation/provenance, bounded binding, invalid-reference rejection and rollback
+remain Rust policies. Automatic player roster/Demon acquisition, physical thrust,
+PlayerThink, weapons, camera and respawn remain unsupported dependencies rather
+than silently approximated compatibility.

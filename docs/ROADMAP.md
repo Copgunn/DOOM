@@ -64,26 +64,29 @@ Earlier findings and milestones are retained in the [historical records](validat
 
 ## Next
 
-### M3g1: Diagnostic-free simulation stepping and transaction cost audit
+### M3g2: Original MT_PLAYER body, ownership, damage and death
 
-The implementation adds advance without implicit Snapshot capture; step delegates
-to the same core and retains its return. Event recording, checked transactions,
-RNG, admission and historical formats remain intact. Measured preflight/staging
-costs are separate from diagnostic capture/encoding. Structural tests and advisory
-CI measurements avoid unstable timing thresholds. This milestone stops at owner
-review; exact review state belongs to GitHub. See [audit](M3G1_REFERENCE.md),
-[API guarantees](COMPATIBILITY.md#stepping-and-diagnostics) and
-[observations](validation/M3G1.md).
+The implementation admits one genuine canonical player body through existing
+ownership/provenance and shared combat/stepping. Direct source damage, separate
+player/mobj health, pain, normal/extreme death, frags and allocated corpses have
+new independent C observations. It stops at owner review; exact review/CI state
+belongs to GitHub. See [investigation](M3G2_REFERENCE.md),
+[supported inputs](COMPATIBILITY.md#original-player-body-lifecycle) and
+[observations](validation/M3G2.md).
+
+M3g1 diagnostic-free stepping is merged. Its [audit](M3G1_REFERENCE.md) and
+[observations](validation/M3G1.md) remain historical references; both APIs still
+use one transactional core with optional explicit snapshots.
 
 ### Next narrow gameplay milestone
 
-Investigate bounded original MT_PLAYER body ownership and damage/death lifecycle,
-including mo/attacker relationships, through the same owner and provenance boundary.
-Require independent source observations, deterministic health/death/statistics and
-explicit unsupported dependencies before real-player execution. This is a gameplay
-recommendation, not admitted behavior or another automatic identity-layer milestone.
-Additional monster admission likewise needs source-root/capability and relationship
-evidence through the same owner. Persistence/transport remain separately specified.
+Investigate grounded original-player knockback and source player thinker/roster
+participation in a separately admitted policy. Require original-C body movement,
+player command/health roster synchronization and Demon acquisition evidence before
+automatic targeting. Keep death camera, weapons and respawn out until their own
+dependencies are executable and independently tested. The all-inactive source
+player scan does not terminate; a real roster is a gameplay prerequisite, not a
+fixture flag to bypass. Preserve the existing body-only policy and diagnostics.
 
 ### Focused maintenance acceptance criteria
 

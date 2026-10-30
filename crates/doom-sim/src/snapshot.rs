@@ -47,7 +47,7 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Explicit diagnostic schema version (1–21); field layouts are selected per profile.
+    /// Explicit diagnostic schema version (1–22); field layouts are selected per profile.
     /// See the repository STATE_FORMAT guide for widths and composition.
     pub const fn version(&self) -> u32 {
         self.version
@@ -198,6 +198,34 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        Event::PlayerBody(event) => {
+            use crate::PlayerBodyEvent;
+            b.push(22);
+            match event {
+                PlayerBodyEvent::Bound(body) => {
+                    b.push(0);
+                    b.extend(id(*body));
+                }
+                PlayerBodyEvent::Damaged {
+                    health,
+                    attacker,
+                    damage_count,
+                    tactile,
+                } => {
+                    b.push(1);
+                    b.extend(health.to_le_bytes());
+                    b.extend(optional_id(*attacker));
+                    b.extend(damage_count.to_le_bytes());
+                    b.extend(tactile.to_le_bytes());
+                }
+                PlayerBodyEvent::Died { frags, weapon_down } => {
+                    b.push(2);
+                    b.extend(frags.to_le_bytes());
+                    b.extend(weapon_down.ordinal().to_le_bytes());
+                }
+            }
+        }
+
         Event::Refire(event) => {
             b.extend([20, event.decision.code()]);
             b.extend(event.actor.slot().to_le_bytes());
@@ -426,12 +454,18 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::MapScale => 18,
         crate::Profile::MapExtent => 19,
         crate::Profile::DemonExpandedMap => 20,
-        crate::Profile::OriginalDemon => 21,
+        crate::Profile::OriginalDemon => {
+            if sim.original_player.is_some() {
+                22
+            } else {
+                21
+            }
+        }
     };
     // Versions18/19 explicitly compose the untyped static-sector field layout.
     let layout = if matches!(version, 18 | 19) {
         3
-    } else if matches!(version, 20 | 21) {
+    } else if matches!(version, 20..=22) {
         17
     } else {
         version
@@ -439,14 +473,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     field(
         &mut fields,
         "profile",
-        (if version == 21 {
-            crate::OriginalExecutionProfile::DemonNormalV1.wire_id()
+        (if matches!(version, 21 | 22) {
+            sim.player_policy().wire_id()
         } else {
             version
         })
         .to_le_bytes(),
     );
-    if version == 21 {
+    if matches!(version, 21 | 22) {
         field(
             &mut fields,
             "registry.schema",
@@ -455,7 +489,11 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         field(
             &mut fields,
             "context.schema",
-            crate::ORIGINAL_CONTEXT_SCHEMA,
+            if version == 22 {
+                crate::PLAYER_BODY_CONTEXT_SCHEMA
+            } else {
+                crate::ORIGINAL_CONTEXT_SCHEMA
+            },
         );
     }
     field(&mut fields, "paused", [u8::from(sim.paused)]);
@@ -584,6 +622,22 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                     a.life.unwrap().movecount.to_le_bytes(),
                 );
             }
+            if let Some(p) = sim.original_player {
+                field(
+                    &mut fields,
+                    format!("{prefix}.player"),
+                    [
+                        if p.mo.is_some_and(|mo| {
+                            usize::try_from(mo.slot()).ok() == Some(i)
+                                && mo.generation() == slot.generation
+                        }) {
+                            0
+                        } else {
+                            u8::MAX
+                        },
+                    ],
+                );
+            }
             if layout >= 3 {
                 let location = a.location.expect("M3b actor location");
                 field(
@@ -691,7 +745,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(layout, 8..=17) {
+    if matches!(layout, 8..=17) && version != 22 {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,
@@ -709,6 +763,34 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 optional_id(p.actor),
             );
         }
+    }
+    if let Some(p) = sim.original_player {
+        field(&mut fields, "original_player.0.mo", optional_id(p.mo));
+        field(
+            &mut fields,
+            "original_player.0.health",
+            p.health.to_le_bytes(),
+        );
+        field(
+            &mut fields,
+            "original_player.0.state",
+            [u8::from(p.state == crate::PlayerBodyState::Dead)],
+        );
+        field(
+            &mut fields,
+            "original_player.0.attacker",
+            optional_id(p.attacker),
+        );
+        field(
+            &mut fields,
+            "original_player.0.damage_count",
+            p.damage_count.to_le_bytes(),
+        );
+        field(
+            &mut fields,
+            "original_player.0.frags",
+            p.frags.to_le_bytes(),
+        );
     }
     if layout == 6 {
         weapon_fields(&mut fields, sim.weapon_player.as_ref());

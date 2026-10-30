@@ -31,6 +31,13 @@ rejects foreign or pre-restart references. Its opaque provenance is process-loca
 diagnostics remain local observations, not portable actor references or savegames.
 See [compatibility](docs/COMPATIBILITY.md) for the exact boundary.
 
+A separate opt-in policy now executes one genuine original MT_PLAYER body with
+checked player/mo ownership, direct damage, pain, death and retained corpses.
+It shares the actor owner and combat/stepping core; synthetic bodies remain
+separate. This is a stationary body lifecycle, excluding controls, weapons,
+knockback, automatic monster targeting and respawn. See the
+[player contract](docs/COMPATIBILITY.md#original-player-body-lifecycle).
+
 Call `Simulation::advance()` for a tic without an implicit diagnostic Snapshot.
 `step()` retains its Snapshot return, and `snapshot()` captures explicitly in
 debug or release. Both stepping APIs run the same gameplay and retain events and
@@ -76,6 +83,7 @@ cargo run -p doom-sim --example original_registry --locked
 cargo run -p doom-sim --example context_ownership --locked
 cargo run -p doom-sim --example game_instance --locked
 cargo run -p doom-sim --example diagnostic_free --locked
+cargo run -p doom-sim --example original_player --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked

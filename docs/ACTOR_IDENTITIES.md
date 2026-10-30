@@ -280,3 +280,23 @@ Keys have no numeric/byte encoding and do not enter DSIM20/21. Decoded local han
 alone cannot supply provenance. [Support](COMPATIBILITY.md#game-instance-provenance),
 [audit](M3F9_REFERENCE.md) and [evidence](validation/M3F9.md) distinguish this Rust
 policy from reused C gameplay observations and unsupported persistence/networking.
+
+## Genuine original player body
+
+PlayerBodyLifecycleV1 adds actual MT_PLAYER0 execution under its explicit
+[body contract](COMPATIBILITY.md#original-player-body-lifecycle), preserving
+DemonNormalV1 and its synthetic ContextRole::UnboundBody137. Metadata remains the
+same complete original package. Player permissions derive from spawn/see/pain/
+death/extreme-death roots: S_PLAY149, RUN150–153 and PAIN/death156–173. Weapon
+attack154/155 are represented but unexecutable here. Pain and death entry are
+controlled by shared damage; direct player state requests reject.
+
+PlayerSlot::One is source index0, not actor slot0. The body uses ordinary ActorLife
+with canonical type/state storage, not a native identity alias. One OriginalPlayer
+record stores source mo, health, state, attacker, damagecount and frags[0]; its
+mo equality derives mobj-to-player association. Existing LevelStatistics supplies
+source players[0].killcount. Source health duplication has explicit clamp semantics;
+actor definition identity is never duplicated. Scoped/qualified binding validates
+the full live handle and definition. Stored relationships survive death/retirement
+without redirecting after reuse. [Source matrix](M3G2_REFERENCE.md) distinguishes
+these original behaviors from Rust lifetime/provenance policy and exclusions.

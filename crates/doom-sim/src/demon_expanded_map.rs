@@ -152,6 +152,7 @@ struct DemonPlan {
     spatial: movement::SpatialIndex,
     rng: DoomRng,
     statistics: Option<LevelStatistics>,
+    player: Option<OriginalPlayer>,
     bindings: [Option<ActorId>; 4],
     events: Vec<Event>,
 }
@@ -171,6 +172,7 @@ impl Simulation {
             spatial: movement::SpatialIndex { order },
             rng: self.rng,
             statistics: self.statistics,
+            player: self.original_player,
             bindings: self.bindings,
             events: Vec::new(),
         })
@@ -195,6 +197,9 @@ impl Simulation {
         }
     }
     fn preflight_expanded_demons(&self) -> Result<(), SimError> {
+        self.preflight_expanded_demons_for(false)
+    }
+    fn preflight_expanded_demons_for(&self, stepping: bool) -> Result<(), SimError> {
         if self.statistics.is_none() || self.sound_targets.len() != self.sectors.len() {
             return Err(MapSpawnError::Ownership.into());
         }
@@ -223,6 +228,7 @@ impl Simulation {
             }
             map_scale::bounded(actor.momentum().into_iter().chain([actor.momz]), 64)?;
         }
+        self.preflight_player_body(stepping)?;
         self.preflight_monster_owner()?;
         Ok(())
     }
@@ -231,6 +237,7 @@ impl Simulation {
         self.spatial = plan.spatial;
         self.rng = plan.rng;
         self.statistics = plan.statistics;
+        self.original_player = plan.player;
         self.bindings = plan.bindings;
         plan.events
     }
@@ -243,6 +250,7 @@ impl Simulation {
         let mut plan = self.demon_plan()?;
         let control = SightControl::default();
         let result = action(&mut LifeHost {
+            player: plan.player.as_mut(),
             statistics: plan.statistics.as_mut(),
             perception: Some(self.checked_demon_inputs(&control)),
             access: &mut plan.actors,
@@ -266,7 +274,7 @@ impl Simulation {
         &mut self,
         commands: [TicCommand; 4],
     ) -> Result<(), SimError> {
-        self.preflight_expanded_demons()?;
+        self.preflight_expanded_demons_for(true)?;
         self.preflight_actor_step()?;
         let mut plan = self.demon_plan()?;
         let control = SightControl::default();
@@ -283,6 +291,7 @@ impl Simulation {
                 registry: &self.registry,
                 options: self.actor_options,
                 statistics: &mut plan.statistics,
+                player: plan.player.as_mut(),
                 rng: &mut plan.rng,
                 spatial: &mut plan.spatial,
                 events: &mut plan.events,

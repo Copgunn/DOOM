@@ -524,3 +524,38 @@ Build all targets as above, and report executed targets separately. This setting
 provides no leak coverage; bounded executions are not exhaustive. Frozen helper
 reuse needs a narrow duplicate-module Clippy allowance in the new host input
 modules; no runtime lint, assertion or historical helper is relaxed.
+
+## Original player body validation
+
+Run the standard workspace/MSRV/release/format/Clippy/rustdoc and historical
+commands above unchanged, then the new source/encoder/example checks:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g2_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3g2_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3g2_reference --test m3g2_policy --locked
+cargo test -p doom-sim --lib original_player --locked
+python3 tools/reference/check_original_player.py
+cargo run -p doom-sim --example original_player --locked
+cargo +nightly fuzz build --fuzz-dir fuzz
+python3 tools/seed_player_fuzz.py /tmp/doom-player-corpus
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run original_player /tmp/doom-player-corpus -- -runs=4096 -seed=1 -max_len=97 -timeout=20 -rss_limit_mb=2048
+python3 tools/measure_player_body.py > /tmp/player-measurements.json
+```
+
+The source observer uses actual MT_PLAYER0 and canonical Demon12, with source
+association fragment and explicit presentation-service boundaries. The independent
+encoder uses C rows/schema policy, never Rust output. C field/event comparisons,
+full-byte/digest encoding, scoped/generation/provenance safety, rollback and API
+refinement are separate tests. The new reader is explicitly decode_player; the
+historical decoder must still reject22. Old fixtures/expected bytes are immutable.
+
+For matched production measurements run unchanged `tools/measure_stepping.py`
+before/after on the same toolchain and inputs; use advance rows for gameplay.
+Retain old five-tool measurements as separate step/setup/sight/collision controls.
+New player measurements have no historical before-player equivalent. Their full
+world construction+spawn timer is separate from100-update timers. Keep all three
+process samples/RSS and separate allocation-process samples, controls and outliers.
+No hard shared-host time gates, zero-allocation inference or leak-coverage claim.
+See [scope](COMPATIBILITY.md#original-player-body-lifecycle),
+[source investigation](M3G2_REFERENCE.md) and [results](validation/M3G2.md).

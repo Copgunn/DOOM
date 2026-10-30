@@ -81,3 +81,6 @@ for present status. Historical review statements are not new claims that work is
 [Reference tooling](../tools/reference/README.md) describes harness layout and
 provenance. [Historical records](validation/archive/README.md) retain complete
 original evidence and former guide contents with exact-byte copies and digests.
+
+- [M3g2 original player body investigation](M3G2_REFERENCE.md), with
+  [observed lifecycle, safety and performance evidence](validation/M3G2.md).

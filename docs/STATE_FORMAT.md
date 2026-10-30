@@ -1,4 +1,4 @@
-# Canonical diagnostic state format: DSIM versions 1–21
+# Canonical diagnostic state format: DSIM versions 1–22
 
 This is a diagnostic/replay comparison format for explicit simulation profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
@@ -19,7 +19,7 @@ M3f9's process-local InstanceId and qualified-reference envelopes are also exclu
 They have no numeric/byte encoding, and neither DSIM version can restore them or
 an executable world. A decoded local ActorId carries no provenance and rejects
 qualified import unless a caller explicitly supplies trusted local routing policy.
-No v22, field change or reinterpretation is introduced; see the
+That provenance milestone introduced no v22, field change or reinterpretation; see the
 [provenance contract](COMPATIBILITY.md#game-instance-provenance).
 
 ## Framing and field order
@@ -1006,3 +1006,57 @@ or EV20 data. Ordered event tests reuse old EV20 bytes and replace only identity
 payloads from actual C rows, not native-to-original runtime tables. These are new
 encodings of reused inputs, not new C behavior coverage. [Observed results](validation/M3F7.md)
 own exact counts and size. All v20 expectations/readers remain byte-for-byte intact.
+
+## DSIM-v22 — Original player body
+
+V22 is selected only by PlayerBodyLifecycleV1 (wire policy2), because genuine
+player ownership/attacker/health/state observations change the schema. It preserves
+DSIM framing and the immutable original registry ID `DOOM-INFO-1.10-v1`; context ID
+is exactly `PLAYER-BODY-1-MEDIUM-NOTHRUST-v1`. Historical v20/v21 bytes, identities,
+encoders and readers remain unchanged. No reinterpretation or world restoration.
+
+Runtime fields compose the v21/version17 families with these changes:
+
+| Ordered location | V22 representation |
+| --- | --- |
+| Header / profile | u32 version22 / u32 execution policy2 |
+| registry.schema, context.schema | Exact IDs above, in the existing positions |
+| Occupied actor after movecount, before momz | actor.N.player: u8 source player index0 if its full handle equals mo, otherwise255; derived, not another stored identity |
+| Synthetic perception.player.* family | Omitted; this policy has an unlisted genuine body, no synthetic AI roster |
+| After four historical command-slot families, before events.last | original_player.0.mo (optional handle), health (i32), state (u8 PST_LIVE0/PST_DEAD1), attacker (optional handle), damage_count (i32), frags (i32), in that order |
+| Existing level.single_player_kill_count | Sole source players[0].killcount, no duplicate player counter |
+| Definitions / states | Actual original0/12/37/38 and root-admitted source states; context137 is not executable here |
+
+OriginalPlayer fields are present even before binding, initially mo/attacker absent,
+health100, Live, damagecount/frags0. The four old `player.N.actor` command binding
+families remain distinct and empty, with zero commands. mo and attacker retain
+stored handles when unavailable. The derived actor association requires exact slot
+AND generation; no stale handle points at a reused body. InstanceId remains excluded.
+Immutable metadata is identified, never serialized redundantly.
+
+New event tag22 is exclusive to v22. Player slot0 is fixed by the policy:
+
+| Subtype | Ordered payload after tag/subtype |
+| --- | --- |
+| 0 Bound | 12-byte body handle, after existing Spawned/Initialized observations |
+| 1 Damaged | i32 clamped player health, 13-byte optional attacker, i32 damagecount, i32 tactile amplitude; before existing mobj Health event; tactile period40/duration10 fixed by schema |
+| 2 Died | i32 frags[0], u16 original requested S_PISTOLDOWN state; after source player-dead/solidity changes and before existing Kill/state entry |
+
+Other ordered event bytes and identity meanings remain as previously specified.
+The psprite request state is metadata for a service boundary, never permission to
+execute that state as a mobj. Tactile is an observation, not a device implementation.
+
+`Diagnostic::decode` retains its v20/v21-only contract and rejects22. Explicit
+`Diagnostic::decode_player` accepts only22 through the same bounded framing parser,
+validating policy/schema, admitted identities/states, handle widths/generations,
+player health/state/association, available attacker roles and new event payloads.
+Malformed/truncated/duplicate/over-budget data reject. Stale references remain
+opaque, not redirected. `Snapshot::diagnostic_bytes` supports20–22 with existing
+fallible size budgets. Trusted canonical_bytes remains available. As before,
+physical/map and unrelated event data are not executable restoration proof.
+
+[Independent encoding](../tools/reference/m3g2_snapshot_goldens.py) uses new genuine
+C player/body observations and separately declared Rust birth/generation schema
+policy. Complete event bytes cover every tic; selected state captures, compact
+indexes and four complete fixtures avoid broad raw-trace growth. Expected bytes
+never come from Rust. [The evidence record](validation/M3G2.md) owns exact counts.

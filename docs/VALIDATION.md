@@ -91,3 +91,16 @@ describe their original observation context. Follow the
 M3f4 adds a separate compiled-C [identity metadata observer](M3F4_REFERENCE.md),
 without changing historical DSIM captures. [Measured observations](validation/M3F4.md)
 separate complete metadata recognition from unchanged executable admission.
+
+## Original-player evidence boundary
+
+[M3g2](validation/M3G2.md) adds genuine original-player damage/death inputs, C field
+and ordered-event comparisons, and independently encoded DSIM-v22 fixtures. It
+reuses the existing source extraction services while separately counting executed
+function entries, inherited inventory and the newly compiled P_DropWeapon body.
+The association fragment and tactile/psprite request boundaries are explicit;
+controls, weapons, death thinker and automatic roster/monster acquisition are not
+inferred. Rust generation/provenance/atomicity tests remain policy evidence.
+Historical observers, fixtures and encoders continue to run unchanged. The
+[source matrix](M3G2_REFERENCE.md) and [support contract](COMPATIBILITY.md#original-player-body-lifecycle)
+define what each comparison proves.
