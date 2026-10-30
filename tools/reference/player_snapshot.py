@@ -28,7 +28,7 @@ def frame(fields):
         path=path.encode();data+=n('I',len(path))+path+n('Q',len(value))+value
     return bytes(data)
 
-def build(cases,rows,map_file,policy,context,prefix,full):
+def build(cases,rows,map_files,policy,context,prefix,full):
     """Return new independent evidence; case inputs/selected full fixtures explicit."""
     outputs={};index=['case,operation,tic,fnv1a64,bytes_fixture,bytes,fields,event_fields']
     # Versioned compact test-evidence framing, not a different DSIM wire layout.
@@ -36,11 +36,12 @@ def build(cases,rows,map_file,policy,context,prefix,full):
     stream=bytearray(b'PBE1');event_fields=0;event_frames=0
     with tempfile.TemporaryDirectory(prefix='doom-player-projection-') as directory:
         temp=Path(directory);(temp/'tests/reference').mkdir(parents=True)
-        shutil.copyfile(map_file,temp/'tests/reference/m3f3_map_0.bin')
+        for i,map_file in enumerate(map_files):
+            shutil.copyfile(map_file,temp/f'tests/reference/m3f3_map_{i}.bin')
         base.ROOT=temp;base.map_fields.cache_clear();base.metadata=lambda _c:[];base.events=events
         for which,values in enumerate(cases):
             c={k:int(v) for k,v in values.items() if k!='label'}
-            c.update(mode=4,map=0,skill=2,no_monsters=0)
+            c.update(mode=4,skill=2,no_monsters=0);c.setdefault("map",0)
             selected=[r for r in rows if r[1]==which];grouped=collections.defaultdict(list)
             for r in selected:grouped[r[2]].append(r)
             captures={r[2] for r in selected if r[0]=='P'}

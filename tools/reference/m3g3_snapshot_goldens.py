@@ -15,7 +15,9 @@ def run(check):
     lines=(ROOT/inputs[5]).read_text().splitlines();assert lines.pop(0)=='DOOM-PLAYER-KNOCKBACK-v1'
     rows=[[r[0],*map(int,r[1:])] for r in csv.reader(lines)]
     cases=list(csv.DictReader((ROOT/inputs[6]).open()))
-    outputs,inventory=player_snapshot.build(cases,rows,ROOT/inputs[7],3,
+    maps=[ROOT/inputs[7]]+[ROOT/f'tests/reference/m3g3_map_{i}.bin' for i in range(1,1+max(int(c['map']) for c in cases))]
+    inputs.extend(str(m.relative_to(ROOT)) for m in maps[1:])
+    outputs,inventory=player_snapshot.build(cases,rows,maps,3,
         b'PLAYER-BODY-1-MEDIUM-GROUNDED-v1','m3g3',{(8,8),(10,1),(11,72),(12,72)})
     provenance=dict(schema='DSIM-v22',execution_profile=3,**inventory,
         scope='New compiled-C knockback/grounded player fields and complete ordered events. Same DSIM22 layout, distinct policy3/context; old stationary policy2 unchanged. PBE1 compact event fixture omits derivable path strings; every payload/order/count is compared. Source allocation births project through independently specified Rust slot/generation policy. No Rust expected output.',

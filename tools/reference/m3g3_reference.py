@@ -35,23 +35,27 @@ case('negative_subdivision',tics=72,ix=96,amount=144,repeat=2)
 case('extreme_moving_corpse',tics=72,amount=120,pre=99,source=0,repeat=2)
 case('zero_physical',tics=12,amount=0)
 case('nonpain_run_stop',tics=24,amount=1,source=0,
-     skip=(player.rng.index(255)-4)%256)
+     skip=(player.rng.index(255)-5)%256)
 case('self_inflictor',physical=2,source=2)
 case('moving_body_retirement',tics=8,retire=1)
 
 main.MAPS,main.THINGS,main.KEYS,main.CASES=[],[],[],[]
 for c in CASES:
-    main.case(c['label'],n=1,tics=c['tics'],skip=c['skip'],
+    things=[(c['ix'],c['iy'],0,3002,7)]
+    if c['extra']:things.append((-96,40,0,3002,7) if c['extra']==1 else (64,0,0,3002,7))
+    main.case(c['label'],n=1,things=things,tics=c['tics'],skip=c['skip'],
               **{'kb_'+k:v for k,v in c.items() if k not in ['label','tics','skip']})
+    c['map']=main.CASES[-1]['map']
 assert main.MAPS[0]['bytes']==(ROOT/'tests/reference/m3f5_map_0.bin').read_bytes()
 # Keep the source association fragment and original setup/filter/credit probes.
-# New gameplay inputs use raw original spawns, not P_LoadThings/map-count claims.
+# Demon origins/blockers retain genuine map-THING admission; only the bound
+# original player uses the established raw-spawn/association boundary.
 legacy.MAIN=player.MAIN[:player.MAIN.index('for(c=0;c<CASE_COUNT;c++)')]+r'''
 for(c=0;c<CASE_COUNT;c++){int* v=input[c];mobj_t *origin,*other=NULL,*body,*inflictor,*source;
 reset(c);printf("SEED,%d,0,0\n",c);admit_native=0;
 for(i=0;i<v[V_SKIP];i++){int draw=P_Random();observe(9,-1,draw);}
-origin=P_SpawnMobj(v[V_KB_IX]*FRACUNIT,v[V_KB_IY]*FRACUNIT,ONFLOORZ,MT_SERGEANT);
-if(v[V_KB_EXTRA])other=P_SpawnMobj((v[V_KB_EXTRA]==1?-96:64)*FRACUNIT,(v[V_KB_EXTRA]==1?40:0)*FRACUNIT,ONFLOORZ,MT_SERGEANT);
+P_LoadThings(0);origin=owned[0];if(v[V_KB_EXTRA])other=owned[1];
+printf("F,%d,0,-1,0,0,0,0,0,%d,%d,%d,%d\n",scenario,owned_count,prndindex,totalkills,totalitems);
 players[0].health=100;players[0].readyweapon=wp_pistol;
 body=P_SpawnMobj(v[V_KB_PX]*FRACUNIT,v[V_KB_PY]*FRACUNIT,ONFLOORZ,MT_PLAYER);associate(body);
 P_DamageMobj(origin,NULL,NULL,150);
@@ -121,6 +125,10 @@ def run(check,overflow,address):
     w.writerows([i,*c.values()] for i,c in enumerate(CASES))
     outputs={'tests/reference/m3g3_trace.csv':(SCHEMA+'\n'+trace.getvalue()).encode(),
              'tests/reference/m3g3_cases.csv':cases.getvalue().encode()}
+    for i,m in enumerate(main.MAPS):
+        if i:outputs[f'tests/reference/m3g3_map_{i}.bin']=m['bytes']
+    outputs['tests/reference/m3g3_maps.rs']=('// Public synthetic source inputs; GPL-2.0-only.\npub const MAP_BYTES: &[&[u8]] = &[\n'+
+        '    include_bytes!("m3f5_map_0.bin"),\n'+''.join(f'    include_bytes!("m3g3_map_{i}.bin"),\n' for i in range(1,len(main.MAPS)))+'];\n').encode()
     manifest=json.loads(output['m3d3j_provenance.json'])
     hashes={f+':'+n:hashlib.sha256(player._original_body(f,n,r).encode()).hexdigest() for f,n,r in manifest['functions']}
     inherited=json.loads((ROOT/'tests/reference/m3g2_provenance.json').read_text())
@@ -143,7 +151,7 @@ def run(check,overflow,address):
         association_fragment_sha256=hashlib.sha256(player.ASSOCIATION.encode()).hexdigest(),
         input_sha256={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ['tools/reference/m3g3_reference.py','tools/reference/m3g2_reference.py','tools/reference/m3f3_shim.h','tests/reference/m3f5_map_0.bin']},
         assumptions=[
-            'Pristine original player0/Demon12, raw P_SpawnMobj plus verbatim P_SpawnPlayer association fragment; no alias, map-THING admission or full player spawn claim.',
+            'Pristine original player0/Demon12. Genuine P_LoadThings/P_SpawnMapThing for Demon origins/blockers, preserving spawnpoint/timer/RNG/statistics. Raw player P_SpawnMobj plus verbatim P_SpawnPlayer association fragment; no alias or full player spawn claim.',
             'Medium/commercial/single-player/pistol; no cheats/armor/powers/PlayerThink/active roster; all Demon origins killed before traversal. Physical target/origin floor0/momz0: reverse-thrust vertical predicate false, no thrust RNG draw.',
             'Source and inflictor are separate declared inputs. Source health/pain/death/corpse/statistics and actual XY/friction/axis-slide are observed, including source negative subdivision asymmetry.',
             'Three genuine slide bodies added to this observer already occur in historical M3a evidence; not globally new compiled function coverage. FN counts source setup/gameplay entries, excluding observer-only BSP lookup; inventory is not branch coverage.',
