@@ -105,6 +105,10 @@ jobs:
           python3 tools/reference/m3g2_snapshot_goldens.py --check
           ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g3_reference.py --check --overflow-check --address-check
           python3 tools/reference/m3g3_snapshot_goldens.py --check
+          ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g4_reference.py --check --overflow-check --address-check
+          python3 tools/reference/m3g4_snapshot_goldens.py --check
+      - name: Player command debug/release comparison
+        run: python3 tools/reference/check_player_commands.py
       - name: Player knockback debug/release comparison
         run: python3 tools/reference/check_player_knockback.py
       - name: Original player body debug/release comparison

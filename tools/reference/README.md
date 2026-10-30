@@ -291,3 +291,12 @@ frames. Historical tools/fixtures remain unchanged. Commands belong in
 [TESTING](../../docs/TESTING.md#grounded-original-player-knockback), source/adapters in
 [the investigation](../../docs/M3G3_REFERENCE.md), and observed counts/limitations in
 [the engineering record](../../docs/validation/M3G3.md).
+
+
+M3g4: `m3g4_reference.py` extracts actual P_Thrust/P_MovePlayer plus the declared
+verbatim reaction conditional before P_RunThinkers. `m3g4_snapshot_goldens.py`
+uses reusable `player_execution_snapshot.py` and frozen field/event primitives;
+old encoders are unchanged. PM/UC compact rows, PG phase markers and PBE1 events
+have explicit provenance. See [investigation](../../docs/M3G4_REFERENCE.md),
+[reproduction](../../docs/TESTING.md#original-player-command-movement) and
+[observations](../../docs/validation/M3G4.md). No full PlayerThink claim.

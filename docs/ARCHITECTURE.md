@@ -358,8 +358,8 @@ Death leaves the actor allocated and bound; removal is explicit and deferred.
 Stored mo/attacker retain their original handles after retirement, and availability
 comes from the existing store. Generations prevent rebinding to a new occupant.
 C quarantine/opaque-pointer observations and Rust generation safety are distinct.
-Unsupported physical inflictors, player inputs and live Demon AI reject before
-execution. The fixed unlisted context avoids pretending that PlayerThink, a roster,
+In the stationary capability, physical inflictors and player inputs reject;
+live Demon AI remains outside all current genuine-player capabilities. The fixed unlisted context avoids pretending that PlayerThink, a roster,
 weapon lowering animation or a death camera is implemented.
 
 ## Grounded original-player physical execution
@@ -378,7 +378,8 @@ The bounded actor/player/spatial/RNG/statistics/event plan preserves late-error
 rollback. The proof uses wider temporaries for rejection, not wider gameplay
 arithmetic or an alternative physics predictor.
 
-Exact player/mo association supplies a zero command to the existing player slide
+In the knockback capability, exact player/mo association supplies a zero command
+to the existing player slide
 branch, independently of historical command bindings. The existing stop-state
 hook handles RUN-to-PLAY before countdown. Grounded z/momz keep player view/landing
 branches outside execution. Flat axis-wall restrictions make the conservative
@@ -386,3 +387,24 @@ travel proof forward invariant; unsupported geometry and direct XY control rejec
 Map-spawned Demon origins retain their original admission, spawn RNG and statistics.
 Physical hits require an already executable dying/corpse thinker closure; no active
 player roster or automatic Demon AI is added. See [source/design](M3G3_REFERENCE.md).
+
+
+## Original-player command stage
+
+[Command capability](COMPATIBILITY.md#original-player-command-movement) admission
+resolves the existing player/mo handle once before the shared checked actor plan.
+The stage runs between Players and Thinkers phases before any linked actor. The
+existing weapon interpreter and this capability share one checked motion/reaction
+helper and root command_thrust integer implementation. LifeHost performs immediate
+RUN entry; the same thinker pass receives actual commands for friction/sliding and
+stopping. No second player loop, timer, actor store, health source or identity field
+is introduced. The capability stays beside OriginalPlayer in PlayerRuntime.
+
+The existing bounded DemonPlan stages actor slots, spatial order, RNG, player
+fields, statistics and events while borrowing world/registry/sector data. Exact
+motion runs once; a late travel postcondition rejects by discarding that plan.
+Old policies retain their original phase construction and command guards. All
+historical capacities, direct-state/physics controls and transaction guarantees
+remain. Simple command interpretation adds no collection; measured complete-path
+allocations, including existing staging/preflight work, are documented in
+[the evidence record](validation/M3G4.md). Diagnostic decoding remains read-only.

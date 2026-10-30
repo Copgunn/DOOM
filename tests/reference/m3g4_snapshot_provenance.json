@@ -1,0 +1,33 @@
+{
+  "captures": 316,
+  "event_frames": 1463,
+  "execution_profile": 4,
+  "full_byte_fixtures": 6,
+  "inputs_sha256": {
+    "tests/reference/m3f5_map_0.bin": "5ea2f73dfb74b7833ecdd1af1f657590b34fcbde047fe7895be44eda78115b97",
+    "tests/reference/m3g4_cases.csv": "5f8baa1a3258f385a096f0cbccb8c6798c5ef14ee390dd2d4da72416b1c20419",
+    "tests/reference/m3g4_map_0.bin": "fa2b97c112acc88422b2cb2e5111118e0723b90db63bb2339de637a330da6a3c",
+    "tests/reference/m3g4_map_2.bin": "0348ac69edaeed26edf421ee986f5539a047dabf4cb6a08be92cc3c463bb56b5",
+    "tests/reference/m3g4_provenance.json": "16b3bfe7f1ffa1ec85dcdd92c89ee249348a4d9c59af9bc0a695a7847dee56ae",
+    "tests/reference/m3g4_trace.csv": "8fa698a4ec23e3869b3a136135083375d90778aaae678eec31f6882f3f52ad05",
+    "tools/reference/m3c_snapshot_goldens.py": "95eac9b3e9f416eea16bb2ace5bb12a3aa401d9942069046dca05e0edc3a123c",
+    "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
+    "tools/reference/m3g2_snapshot_goldens.py": "b65bbd286f22fb0ec0b2176cfbc339f0376a24ccfe4a91d537e5f672a3e8ceee",
+    "tools/reference/m3g4_snapshot_goldens.py": "15bbb1645cb1655882bb2703f12079cf51d040e43120ba881a18d2beaa0a8d51",
+    "tools/reference/player_execution_snapshot.py": "98a5c4a37cc43ce901636cd6504f891dbad19e86440efeb25b4596e69800e336",
+    "tools/reference/player_snapshot.py": "9524e70b09184766fc9aa10c8625e9849f8b59579165218cc1a1e66e90747c5c"
+  },
+  "ordered_event_fields": 10530,
+  "outputs_sha256": {
+    "tests/reference/m3g4_events.bin": "f5a78a70b253d999941f562f94cd64f4aa9bd39209621d7e4b53f14ed6ba8e92",
+    "tests/reference/m3g4_snapshots.csv": "0cc57c75f4a78089f28ab4f5fae50102f04986212958ee9cdf0e5b123b1500d9",
+    "tests/reference/m3g4_state_12_4.bin": "35fbcc7c06fd388e1c512762ae6ee0680dd9ad9e5ab8c72953085d6424ae67d2",
+    "tests/reference/m3g4_state_13_4.bin": "dc087e24f5b1660f83b91af94b6d117d95cc11f8d8ee3f4491827f40922a2f8f",
+    "tests/reference/m3g4_state_15_16.bin": "98d3673050b1cac6c71db3dfb587922f3dd33f9c875487df9611cc4f377957c0",
+    "tests/reference/m3g4_state_18_72.bin": "c0bef97d4fb8b330867ca86409cbb3b492b8e55ddc7f74829f96d244a36217c2",
+    "tests/reference/m3g4_state_1_1.bin": "210408c9c4f95ebb31715045acdbb9e93ac86839433919467be856fc9d31c51f",
+    "tests/reference/m3g4_state_6_8.bin": "be89fcdf90d4c7be533d8d40e46fbc099bf20ad540b56af133ef4292136765f0"
+  },
+  "schema": "DSIM-v22",
+  "scope": "New compiled-C player command/reaction gate and full source-ordered PG phase events. Negative turns use the explicitly declared historical unsigned-shift interpretation, not ISO-C equivalence. Existing DSIM22 fields/tags and PBE1 framing; distinct policy4/context. Frozen non-event field and player/event primitives reused, old fixed-phase scaffolding replaced from actual source stage observations. Birth/generation projection is independent Rust schema policy, not C allocator identity. No Rust expected output."
+}

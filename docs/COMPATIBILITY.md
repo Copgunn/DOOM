@@ -709,3 +709,67 @@ captures only after the same core. [Evidence](validation/M3G3.md) distinguishes 
 C observations, reused history and Rust-only safety policies. Full player controls,
 PlayerThink, roster/automatic Demon attacks, view/camera, weapons, inventory,
 armor/powers, air movement, respawn and multiplayer remain unsupported.
+
+
+## Original player command movement
+
+Select `Simulation::original_player_command_map` or
+`OriginalExecutionProfile::PlayerCommandMovementV1`. This is a new explicit
+capability, not a change to PlayerBodyLifecycleV1 or PlayerBodyKnockbackV1. Their
+old command rejection, diagnostics and inputs remain unchanged. All three use
+one genuine MT_PLAYER=0 and the existing player/mo ownership, damage, pain/death,
+corpse retention, scoped handles and game-instance provenance. Context UnboundBody
+remains synthetic. An exhaustive match on OriginalExecutionProfile needs the new
+variant; historical Profile variants and existing API signatures are unchanged.
+
+Only source player slot One executes. TicCommand forward/side each range -50..50
+(g_game MAXPLMOVE), angle_turn accepts all signed i16 values, and buttons must be
+zero. Other command slots must be default. Medium/commercial/pistol, no armor,
+powers, cheats or active roster, and the grounded flat axis-wall geometry/limits
+of the knockback capability remain required. MF_JUSTATTACKED rewriting is excluded.
+The bound live body's existing reaction_time must be in 0..255. Controlled
+`set_initial_player_reaction_time` accepts u8 on a current live bound body only
+before the first successful tic; default spawn is unchanged. This setup operation
+is not teleport gameplay or a second timer.
+
+The single player stage runs before every actor thinker. If reaction_time is
+nonzero it decrements once and suppresses all P_MovePlayer work for that tic,
+including turning; movement resumes on the next tic that begins with zero.
+Commands still reach XY/friction's stop condition. Source damage can reset the
+counter before the stage. Otherwise angle updates first, forward thrust uses that
+new angle, then sideways thrust uses angle minus ANG90. Integer fine tables and
+FixedMul accumulate existing momentum. Standing directional input immediately
+enters S_PLAY_RUN1; ordinary thinker countdown continues its source graph. When
+existing XY movement stops a RUN frame with zero directional input, S_PLAY entry
+precedes countdown. An already zero-momentum RUN state is not forcibly reset.
+Turning alone does not enter RUN. Pain does not disable an otherwise live command.
+
+Negative original signed left shifts are undefined ISO C. Supported turns use the
+explicit unsigned two's-complement bit-pattern interpretation of the existing
+historical observer adapter. Defined literal C cases are compared separately;
+there is no portable ISO-C equivalence claim for negative signed shifts. See
+[arithmetic investigation](M3G4_REFERENCE.md).
+
+Shared physical damage/knockback composes without replacing momentum. New command
+attempts require M=max(abs XY momentum)<=30U and
+abs(position)+4M+8 raw bits<=994U for nonzero M; zero M requires only the coordinate
+bound. After actual shared movement, the staged body must satisfy the existing
+abs(position)+ceil(160M/3)<=994U travel envelope. These conservative Rust support
+checks preserve a safe zero-command continuation, not original coordinate limits
+or clamps. A source-valid command can reject near this bounded domain's edges.
+Any early or late recoverable error preserves complete authoritative state,
+including angle, reaction, commands, RNG, both event queues and spatial order.
+
+Unbound, pending-removal, retired/stale or dead bodies accept only default inactive
+input through the ordinary thinker/removal pass; nonzero input rejects. Pending
+and stale handles never redirect to a reused slot. Dead allocated corpses keep
+physical motion and ownership; no command revives them. Malformed current body
+identity/health/state rejects. Pause retains its historical precedence. `advance`
+remains diagnostic-free; `step` uses the same core and captures once on success.
+
+This is a declared P_PlayerThink movement conditional plus P_MovePlayer, not full
+PlayerThink, P_Ticker, P_DeathThink or player roster execution. View/camera/bob,
+weapons/buttons, inventory/powers/cheats, special sectors, airborne controls,
+respawn/multiplayer, arbitrary angled/two-sided walls and automatic Demon
+perception/acquisition remain unsupported. Dying/corpse Demon origins retain
+existing controlled interaction semantics; no live AI/roster is silently enabled.

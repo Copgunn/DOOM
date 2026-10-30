@@ -271,6 +271,16 @@ impl<'a> Diagnostic<'a> {
         if self.version == 22
             && self.field("profile")
                 == Some(
+                    OriginalExecutionProfile::PlayerCommandMovementV1
+                        .wire_id()
+                        .to_le_bytes()
+                        .as_slice(),
+                )
+        {
+            OriginalExecutionProfile::PlayerCommandMovementV1
+        } else if self.version == 22
+            && self.field("profile")
+                == Some(
                     OriginalExecutionProfile::PlayerBodyKnockbackV1
                         .wire_id()
                         .to_le_bytes()

@@ -1,0 +1,733 @@
+{
+  "validation": [
+    {
+      "check": "build",
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "check": "format",
+      "exit": 0,
+      "seconds": 1.29
+    },
+    {
+      "check": "fuzz-format",
+      "exit": 0,
+      "seconds": 1.69
+    },
+    {
+      "check": "clippy",
+      "exit": 0,
+      "seconds": 0.16
+    },
+    {
+      "check": "workspace",
+      "exit": 0,
+      "seconds": 175.79
+    },
+    {
+      "check": "release",
+      "exit": 0,
+      "seconds": 66.99
+    },
+    {
+      "check": "msrv",
+      "exit": 0,
+      "seconds": 202.17
+    },
+    {
+      "check": "rustdoc",
+      "exit": 0,
+      "seconds": 0.64
+    },
+    {
+      "check": "command-c",
+      "exit": 0,
+      "seconds": 3.59
+    },
+    {
+      "check": "command-encoder",
+      "exit": 0,
+      "seconds": 0.35
+    },
+    {
+      "check": "identity-c",
+      "exit": 0,
+      "seconds": 9.27
+    },
+    {
+      "check": "check_canonical_demon",
+      "exit": 0,
+      "seconds": 0.84
+    },
+    {
+      "check": "check_chaingunner_attacks",
+      "exit": 0,
+      "seconds": 1.26
+    },
+    {
+      "check": "check_context_ownership",
+      "exit": 0,
+      "seconds": 0.38
+    },
+    {
+      "check": "check_demon_expanded_map",
+      "exit": 0,
+      "seconds": 8.43
+    },
+    {
+      "check": "check_demon_lifecycle",
+      "exit": 0,
+      "seconds": 2.56
+    },
+    {
+      "check": "check_demon_map_context",
+      "exit": 0,
+      "seconds": 11.48
+    },
+    {
+      "check": "check_demon_map_spawn",
+      "exit": 0,
+      "seconds": 4.54
+    },
+    {
+      "check": "check_demon_melee",
+      "exit": 0,
+      "seconds": 1.74
+    },
+    {
+      "check": "check_demon_stand_run",
+      "exit": 0,
+      "seconds": 3.62
+    },
+    {
+      "check": "check_diagnostic_free",
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "check": "check_examples",
+      "exit": 0,
+      "seconds": 28.14
+    },
+    {
+      "check": "check_game_instance",
+      "exit": 0,
+      "seconds": 0.12
+    },
+    {
+      "check": "check_headless",
+      "exit": 0,
+      "seconds": 0.64
+    },
+    {
+      "check": "check_map_extent",
+      "exit": 0,
+      "seconds": 0.12
+    },
+    {
+      "check": "check_map_scale",
+      "exit": 0,
+      "seconds": 0.14
+    },
+    {
+      "check": "check_monster_attacks",
+      "exit": 0,
+      "seconds": 0.59
+    },
+    {
+      "check": "check_monster_perception",
+      "exit": 0,
+      "seconds": 0.11
+    },
+    {
+      "check": "check_monster_pursuit",
+      "exit": 0,
+      "seconds": 0.3
+    },
+    {
+      "check": "check_original_identity",
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "check": "check_original_player",
+      "exit": 0,
+      "seconds": 0.36
+    },
+    {
+      "check": "check_original_registry",
+      "exit": 0,
+      "seconds": 1.7
+    },
+    {
+      "check": "check_player_commands",
+      "exit": 0,
+      "seconds": 0.52
+    },
+    {
+      "check": "check_player_knockback",
+      "exit": 0,
+      "seconds": 0.66
+    },
+    {
+      "check": "check_projectiles",
+      "exit": 0,
+      "seconds": 0.28
+    },
+    {
+      "check": "check_runtime_identity",
+      "exit": 0,
+      "seconds": 1.1
+    },
+    {
+      "check": "check_shotgunner_attacks",
+      "exit": 0,
+      "seconds": 0.7
+    },
+    {
+      "check": "fuzz-build",
+      "exit": 0,
+      "seconds": 29.2
+    }
+  ],
+  "tests": {
+    "workspace": {
+      "passed": 474,
+      "failed": 0,
+      "ignored": 2
+    },
+    "release": {
+      "passed": 450,
+      "failed": 0,
+      "ignored": 0
+    },
+    "msrv": {
+      "passed": 474,
+      "failed": 0,
+      "ignored": 2
+    }
+  },
+  "source_inventory": {
+    "actor_fields": 9776,
+    "added_observer_bodies": 2,
+    "association_fields": 376,
+    "captures": 316,
+    "collision_candidates": 6188,
+    "command_calls": 1047,
+    "command_fields": 5852,
+    "command_stage_rng_draws": 0,
+    "compiled_original_bodies": 76,
+    "exercised_unique_functions": 41,
+    "function_entries": 37085,
+    "gameplay_draws": 39,
+    "literal_defined_cases": 18,
+    "literal_defined_tics": 1257,
+    "motion_fields": 19019,
+    "movement_attempts": 1349,
+    "new_cases": 22,
+    "new_engine_source_bodies": 0,
+    "player_fields": 1896,
+    "setup_discards": 0,
+    "slide_line_observations": 100,
+    "statistics_fields": 1264,
+    "tics": 1441
+  },
+  "source_check_flags": [
+    "--check",
+    "--overflow-check",
+    "--address-check"
+  ],
+  "new_source_and_encoder_bytes": 743394,
+  "historical_pairs": 21,
+  "historical_reproduction": [
+    {
+      "tool": "check_references.py",
+      "exit": 0,
+      "seconds": 441.12
+    },
+    {
+      "tool": "m3f1_reference.py",
+      "exit": 0,
+      "seconds": 3.65
+    },
+    {
+      "tool": "m3f1_snapshot_goldens.py",
+      "exit": 0,
+      "seconds": 4.68
+    },
+    {
+      "tool": "m3f2_reference.py",
+      "exit": 0,
+      "seconds": 1.52
+    },
+    {
+      "tool": "m3f2_snapshot_goldens.py",
+      "exit": 0,
+      "seconds": 6.29
+    },
+    {
+      "tool": "m3f3_reference.py",
+      "exit": 0,
+      "seconds": 44.67
+    },
+    {
+      "tool": "m3f3_snapshot_goldens.py",
+      "exit": 0,
+      "seconds": 194.48
+    },
+    {
+      "tool": "m3f3_clipping_reference.py",
+      "exit": 0,
+      "seconds": 5.25
+    },
+    {
+      "tool": "m3f3_clipping_snapshot_goldens.py",
+      "exit": 0,
+      "seconds": 8.97
+    }
+  ],
+  "reused_source_reproduction": [
+    {
+      "check": "lifetime-c",
+      "exit": 0,
+      "seconds": 2.05
+    },
+    {
+      "check": "lifetime-encoder",
+      "exit": 0,
+      "seconds": 0.15
+    },
+    {
+      "check": "canonical-c",
+      "exit": 0,
+      "seconds": 99.52
+    },
+    {
+      "check": "canonical-encoder",
+      "exit": 0,
+      "seconds": 42.48
+    },
+    {
+      "check": "original-encoder",
+      "exit": 0,
+      "seconds": 36.56
+    }
+  ],
+  "premerge_same_tree": [
+    {
+      "check": "build",
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "check": "format",
+      "exit": 0,
+      "seconds": 1.29
+    },
+    {
+      "check": "fuzz-format",
+      "exit": 0,
+      "seconds": 1.65
+    },
+    {
+      "check": "clippy",
+      "exit": 0,
+      "seconds": 3.15
+    },
+    {
+      "check": "workspace",
+      "exit": 0,
+      "seconds": 163.78
+    },
+    {
+      "check": "release",
+      "exit": 0,
+      "seconds": 37.8
+    },
+    {
+      "check": "msrv",
+      "exit": 0,
+      "seconds": 180.87
+    },
+    {
+      "check": "rustdoc",
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "check": "identity-c",
+      "exit": 0,
+      "seconds": 9.24
+    },
+    {
+      "check": "knockback-c",
+      "exit": 0,
+      "seconds": 2.47
+    },
+    {
+      "check": "knockback-encoder",
+      "exit": 0,
+      "seconds": 0.28
+    },
+    {
+      "check": "docs",
+      "exit": 0,
+      "seconds": 0.14
+    }
+  ],
+  "parser_generator": {
+    "results": [
+      {
+        "example": "parse_map",
+        "mode": "debug",
+        "exit": 0,
+        "seconds": 15.174,
+        "stdout": "Synthetic map: 4 vertices, 4 linedefs, 1 sectors\n"
+      },
+      {
+        "example": "generate_fuzz_seeds",
+        "mode": "debug",
+        "exit": 0,
+        "seconds": 0.034,
+        "stdout": ""
+      },
+      {
+        "example": "parse_map",
+        "mode": "release",
+        "exit": 0,
+        "seconds": 0.158,
+        "stdout": "Synthetic map: 4 vertices, 4 linedefs, 1 sectors\n"
+      },
+      {
+        "example": "generate_fuzz_seeds",
+        "mode": "release",
+        "exit": 0,
+        "seconds": 0.045,
+        "stdout": ""
+      }
+    ],
+    "seed_sha256": {
+      "fuzz/corpus/wad/empty_iwad": "1c752adca4dce342d362ef48c4df48371f3903a59f0ad3e4637af643fc2081a7",
+      "fuzz/corpus/wad/duplicates": "c9c09f0c9f0afe9362ed8f2a700dbb3a660acc7d7aa9a3ef71d8d036e5beefce",
+      "fuzz/corpus/map/classic_square": "8d3f63a56a68b137351751a7a61919be93ad917b4d77bdb26644aa02c4672d9b"
+    },
+    "unchanged": true
+  },
+  "fuzz": {
+    "targets_built": 30,
+    "targets_executed": 5,
+    "total_executions": 20480,
+    "campaigns": [
+      {
+        "target": "player_commands",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "player_commands",
+          "/workspace/doom-tools/m3g4/fuzz/player_commands",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=129",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g4/fuzz/artifacts/"
+        ],
+        "seed_count": 28,
+        "seed_sha256": {
+          "all-operations": "662ee01c45371345e86f5e78474999f38bee4d16545661061438035e6a188693",
+          "boundary-0": "f6edb8e20d3531e124b9b7af9583bbd2d908d9fcdcd04adb5a09eb02d9923479",
+          "boundary-1": "bcca8bdfd3bb177e6fe1c16d4fe2a6e50654158bc26f7d2aad88b336f5b802f2",
+          "boundary-2": "0b8dd66f73ff140f69c95a6965beb983051bb99236c43f950fbf67779c685c9c",
+          "boundary-3": "0d44815795318ff4817ae6bf8431a6c087c03482ac5af6fcc3e54f61939400f0",
+          "boundary-4": "6ee8de219cea8c04a360b40c07ccd21730ba7533aebf1f415b62ac59f205dacb",
+          "case-00": "136dd1a7d0a62859f2077a62b7673c5c712fb750604a15f5f6140ab2c5112327",
+          "case-01": "1ea3be7ee6750bffe55a5732221c2b0ef808cd90a6237f2c477075093bc86bef",
+          "case-02": "71684147e01604882d19eb08452e8f8f42acb0ab98832a8ec9a155ae35dab0cd",
+          "case-03": "07ba1f4d00997826534fb79fe956aa893a360c9f6ffbd1cc8971bde4ac212f22",
+          "case-04": "c5bfa600447d36611f0c8bf1b7bcd235d1554a77dfb0226325fb4c99d342856a",
+          "case-05": "a1f68b20fad3cdf90f93292419c85f1e7f89d9b38a4f02a9d4a49907dcadfa38",
+          "case-06": "225abea02f8cd30523605fccff6c71e712975b53dab11803708dd795c10801c7",
+          "case-07": "4ea2835cc2fc308380e3e173a080e89eb8a105628db0ff509bec3145a63889c8",
+          "case-08": "b3a3d93c648e86e3fc3782bf21e937173be76150c36e6dbac53d18ab411325b3",
+          "case-09": "c2ee2f4987e2701e624f46a247bcac349665a1e8d967d6e03c2d8403608d0234",
+          "case-10": "8efecb67e4ee9fcbe7130e50ce4ecd75a7310c2bdc6054b4d59dd5bd6fc36be9",
+          "case-11": "19a7a6ad8e1e27962aeb11fb7e7e48d6d6e3d9fae8c72295d3dd6ad2a8f248a8",
+          "case-12": "c5166174a1efa35f91e3015ca42848ac24461860974bbc6becb6d39343378d1e",
+          "case-13": "a87c165721adbe2b292859f500a06de40d6acc4cee24ed09eb64ab7bd8e81f7f",
+          "case-14": "5721ae800b55c890ce3691a8e821725ebd780bafb75fd4d9b7867d4971d7e01d",
+          "case-15": "a34aa89d9955413b03a6cac5e99fc0c6184fbe078341f500a8721a3c60e4a0b6",
+          "case-16": "324f0946226749ca81aafc48c507a66eb3e60d705e4d9c5c46cf3f21e21d7be6",
+          "case-17": "669f7b6403e791b1e665f9734a8969b242d2a057f5797f0eb8747d945aa81b82",
+          "case-18": "188b159a1f616fe904e597cd2f49df575fe41cac15f03069939db49480999c20",
+          "case-19": "f9a7b44cbdb33cf373c8df0c81ea0fbec44968dec1e77b00078fe4b90eb81fe4",
+          "case-20": "bb3671ab0d0eb64a541764be90a4eea7c3245691d028b5dc84befd93f9e84203",
+          "case-21": "dec3b0dd8b39f6ee9f4772fd5c019e7cec489f744d79e9c000a6377c3058d44a"
+        },
+        "input_budget": 129,
+        "observed_final_limit": 97,
+        "exit": 0,
+        "wall_seconds": 65.633,
+        "executions": 4096,
+        "reported_seconds": 65,
+        "log_sha256": "ee4474b3875d02cee84c93e9d1b711a0b32b7f46f9e00b2e1210706ea3f75d73",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "player_knockback",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "player_knockback",
+          "/workspace/doom-tools/m3g4/fuzz/player_knockback",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=129",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g4/fuzz/artifacts/"
+        ],
+        "seed_count": 21,
+        "seed_sha256": {
+          "all-operations": "874354dea19a4003c54ca0d204a20458c3827112218c5c3ed43b76c677343974",
+          "binding": "bf21e764c36787d6efd63e0eeb1965502d244e15b380571b49f6cd521381f723",
+          "case-00": "2cfbb7ad27719955e787f7a7f000973ec090f27d8c5ba56fd1dc868c8d05919f",
+          "case-01": "db0be169ba34d15243c9a02fd0ace9d8332b15e58df0e19b7760eb7ab8364d78",
+          "case-02": "853379b0ad6ab470fa7993d4f4bafdac392b20c5f77cdc3659af895eb898778d",
+          "case-03": "dc378c23f073c859847736343ca73e8a410ffbc8f4a34eabee4bdef4c9994b41",
+          "case-04": "892cb12f6fd7afe063c32523839096a978722c5fcac464754b15a72f0bbc5a01",
+          "case-05": "9744865e05789928939f29f9e7bc12a3399c6b8bd1586d478924feca0c26a1df",
+          "case-06": "1f97fa498d51a8c6ee6887f4502b78169bac29a963722658173b9fc22e9e0d70",
+          "case-07": "75187e02421c3906d9545fd11bf7682b4940a375d9d84de5b1eacec48953075d",
+          "case-08": "0e6dece18cf69a2b306dd0256312a13b194e01037d373197153961b28ae7937b",
+          "case-09": "6df3eccbeec74f368ba902bff1e8109d60871d344b7c50f2c31ca684d4c0da53",
+          "case-10": "98f6ffbee2f319d30873e169e1dc7bd7fa7cbedbc69b6e1281cd273b8d689333",
+          "case-11": "f536f091ac168317af9b41854d3eb2b26a938d669d73fd752e0d71b9d5d40b3d",
+          "case-12": "1ee5446f386b6a051b53d5dd8828e630097befa09c10522dc1a0a7e540162f73",
+          "case-13": "c9f95989dcb5a06d4bdc2d29a622f2ecfac28252cb8e3565b1206f53957be987",
+          "case-14": "ee124fa19638e977b54f0e5ed91e27decb45a06cc22f1cf35f4214e8a651d853",
+          "case-15": "e005b6bc00c6632ea750eb0ddad3861731d8cd6d4e5100f6cae4533a3e336c82",
+          "case-16": "ef52a6cba3335abf4a742735286156d2f1f6401a039337169b156b1855f4d513",
+          "live-origin": "05f6d269618a894e644c9cd1bf32a94ea04e52105019684b1212e8c864d1a054",
+          "raw-bind": "75d1bd174a025c0a0d9540bb00f520fafb63c8f47e5a6feb386e0b70ae6a93d5"
+        },
+        "input_budget": 129,
+        "observed_final_limit": 121,
+        "exit": 0,
+        "wall_seconds": 91.454,
+        "executions": 4096,
+        "reported_seconds": 91,
+        "log_sha256": "2adfc6c4fed795b4bf9b4959e88b41c62dd712d498547130789af3b3c3ff9c9e",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "original_player",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "original_player",
+          "/workspace/doom-tools/m3g4/fuzz/original_player",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=97",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g4/fuzz/artifacts/"
+        ],
+        "seed_count": 11,
+        "seed_sha256": {
+          "all-operations": "7994d17c26e306fb8bb5b38ab2137200a7c6eff3173940025e25fdd7f42a7ad7",
+          "damage-000": "57479d67ea66e8a740484b6ae8e9dbc4a9333ff468c44388c8bce47643b6276e",
+          "damage-001": "f3401854c3844a2f21facb9f9832b3c7d90da6a8a372e4f8027ee48697e7d3ee",
+          "damage-020": "990b73a5b4c9b4bbf1dd0167f5f758a319ec03f9b8b7c98fe6c2307cb2b38713",
+          "damage-099": "526f65318e8443e3c25a8022e227eebc4f2e0ea642bf830b6a85727d448ebe55",
+          "damage-100": "310f8a90ca54b7bbd11d2db5501da465b21895c8f2e4b527b83cbdb30fbbe9ec",
+          "damage-150": "4d7774af3991c0013170a36fc1c1a6715fce3545c46f78da3bc43e388d990f3d",
+          "damage-200": "b017a414287242d95ce4948864e9f42f41c7484d11868b4d3622d3a5d9c8fecf",
+          "damage-201": "8f9a4d815b773e1c764d84c73967888cc3abc866f73168e7e28b188c10994c41",
+          "damage-255": "60072096d9ace6cf0d650e9513807af5bd164701afe06c3687916c801ba7782e",
+          "reuse": "80a49804bcbf07ee14cc65d32d72193d18c51b5d76ec3c7a62057a7bea95890d"
+        },
+        "input_budget": 97,
+        "observed_final_limit": 81,
+        "exit": 0,
+        "wall_seconds": 38.861,
+        "executions": 4096,
+        "reported_seconds": 38,
+        "log_sha256": "01f6ddf73d54ec0526f3645f57c25640dd9c9b6deb5d0a8636da27a3f26c4cdb",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "stepping_equivalence",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "stepping_equivalence",
+          "/workspace/doom-tools/m3g4/fuzz/stepping_equivalence",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=97",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g4/fuzz/artifacts/"
+        ],
+        "seed_count": 21,
+        "seed_sha256": {
+          "profile-00": "e5d3de2e8f8d065404ac808a969b8d8b81106591cfea7e50fd42424f169c1607",
+          "profile-01": "0f8fc9a97b670d0d1edfc687da099f76e69d021a557882ae65cbc5597da8e170",
+          "profile-02": "36e1e33d63bc2d0fd0ff85d84c2fa287f6491d0609f73106c3680cef4997f47d",
+          "profile-03": "fff2effc1dd587218bc53c31d0c3bb78cce6c1519f947a85a55124bba288dc9a",
+          "profile-04": "d97a634bea6d204d927b1e918f35bb328d1ca76892c852b86245601342c3c32b",
+          "profile-05": "7755f0de25a2fc796db28658c98d902377b0fca03351dc07280d9b6c00b0bbee",
+          "profile-06": "dd04c64374a11381ccd7f3b4a15ef5497fdb0f1632d69af76aa91f686f44b59f",
+          "profile-07": "c359a59e460f19d3242c9ea421fb6924134a42dbddbf1955dfdcd27247ec21eb",
+          "profile-08": "0f7364c55bd19a97bc0ac2143d8bc1f602b4bcd43b438d85d9fae240c29695de",
+          "profile-09": "07a9ed1965e4741d644df6504fabb1397e4460bbd79a98f223a4b7a57adc1046",
+          "profile-10": "8f4d55b62c9adeafa73612afebba4b20ce41a0339445379356de406c470f963f",
+          "profile-11": "c13948548fe941768dedb34cc063798a728b9de48a1041134e001b3db137ddda",
+          "profile-12": "0f02614edec0b6810036df0dc67bce97d6a2acf8915f179466937fdfaa660eb0",
+          "profile-13": "637c0d9afc4759574ab9856ef2447ef19860067c64c9f53774600a21f673b079",
+          "profile-14": "4097ccafe80dcbca3478ea9f60a0329788bb42590aee0dad340a993991eeb5f8",
+          "profile-15": "c1b2178f4741850965be86e1cbc5e80dfb1e4a82adaad37c1e35395efe0126f6",
+          "profile-16": "5664b15bc848cd50d8ad4e593b1abed627642247643358d83f5fab3784a6a7fd",
+          "profile-17": "33892efa441e38d2d19f8a2a7eb0076fcdebdca96b5ecd448861459289e2a594",
+          "profile-18": "9d3102f30d5c7e877cf29d962c5f8aa1b83db1b4901d62ddfa52ddd27f42392e",
+          "profile-19": "dcda5db93495bc98e8299f81ee00350f4ad8e572cd1f27c9eddea4a872e85a72",
+          "profile-20": "7186f8b0bd019cc1bdd45d90ddb8847770b18c0ff07abc7cb23ff8135a43dfc4"
+        },
+        "input_budget": 97,
+        "observed_final_limit": 41,
+        "exit": 0,
+        "wall_seconds": 88.438,
+        "executions": 4096,
+        "reported_seconds": 88,
+        "log_sha256": "beda20c9afaeca8cec8d74fd8d641edf6f6a36670ec1e088210aaf46073acc2b",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "game_instance",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "game_instance",
+          "/workspace/doom-tools/m3g4/fuzz/game_instance",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=128",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g4/fuzz/artifacts/"
+        ],
+        "seed_count": 18,
+        "seed_sha256": {
+          "clone_then_stale": "499ae16a5c5de5c0a02c526f3d8ddca6c1f81a1c4150ee975ba566910d30ed23",
+          "foreign": "98368624fb0a435fdf6de12c0b0c3397d661f28abaadaa8ee76fe90c09c4ba25",
+          "invalid_generation": "02c75b9703b2bba7438368af386588470281f02e7d07a75b95f94826f3e7d184",
+          "missing": "8e8e7a76fd13012c2c497bd5e0fdc7bc6532cf6b8c4cb7def11ec5aa1ee0058d",
+          "op_0": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "op_1": "7c3ccd10bb7ec37b46d37926ae6274267f007a34aeaf15c882a715a7f3300529",
+          "op_2": "692865c9a376a1a82d161b0f9578595554873797fa9ebbb068b797828122e61d",
+          "op_3": "8b1ae42fc4b17726106d647de9f43a6f33bf1df273310924b03e789769904c9c",
+          "op_4": "65be554fa6188b181a91caf7ca837eaaa8be5f79dc9a2b9daecb50ac3ed8066f",
+          "op_5": "cb9a02f579da3ffa03dc3ed340e0162018c4c446875d8b15d9f4e23152b25822",
+          "op_6": "9b65b044264bd07cae9001dfe2c7b240b7bfcf39b4ce111d5e178bd7e9412a88",
+          "op_7": "6bae426822df52caf9dc36c8319247d6debb080aa918fa7830ac1c5edabd22c1",
+          "op_8": "9d145e71ec64116e64e509727fa0a276c54ecb01d4f85a2aca8c3b671130effd",
+          "op_9": "c03983e8c8370764ebfb8573c8128473fe5bb0c1c419c32f4953e02b6cd93ddd",
+          "out_of_range": "3c79f1b5ca0a59275ca1b3236f81b5547ddc9dfca6a21236d85ef63060aaccaf",
+          "restart_then_stale": "e9d30b8e3b1c200164ea667cf9ed2b621accc714cac250202756bfc92d0a9c52",
+          "retire_reuse": "2db7c97ab019826b7b3891a9089dcf447e98cce9d68e0bad4ebd92887ed8b830",
+          "wrong_definition": "1349a3998807d01fb1bb740088944fed74363d610079605f89fdb9db35e395fe"
+        },
+        "input_budget": 128,
+        "observed_final_limit": 96,
+        "exit": 0,
+        "wall_seconds": 70.814,
+        "executions": 4096,
+        "reported_seconds": 70,
+        "log_sha256": "ac101ea6275a4f0d2eeb0b3e6925d08eb813a2fad0af9a95949c19acfd8b6de4",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      }
+    ],
+    "toolchain": "rustc 1.101.0-nightly (92ffebece 2026-10-28)",
+    "sanitizer": "address",
+    "ASAN_OPTIONS": "detect_leaks=0",
+    "findings": 0,
+    "limitations": "Bounded campaigns, not exhaustive; no leak coverage. Command harness diagnostic mutation uses a bounded prefix offset; policy tests separately corrupt body associations. Seed counts and observed limits do not establish full semantic input coverage."
+  },
+  "preservation": {
+    "upstream_files": 165,
+    "historical_paths": 6099,
+    "byte_identical": true,
+    "ignored_asset_tests": 2
+  },
+  "validation_log_sha256": {
+    "check_demon_expanded_map.log": "44c20ecd6da425a6eb2326e4b867b2bfe8e54bedd34367d5b9be25eb1f99ca4b",
+    "check_demon_lifecycle.log": "33e2c5925798ed9d7f7e566dd32ba9b0b6709b383705f373ab58998b4228c11a",
+    "check_map_scale.log": "4cf9fd4788af07638b5c05bb9ba5b468fb9346e4a8f8ceac0ed0170758565a05",
+    "build.log": "6d77f64dfc8c5325b90fdbe05d8be367bdd578bcccec24f275c5ffee7d03dd6e",
+    "check_original_player.log": "123ab03a35e8243c5df9ab12e1954fbea39654cf624d512eee8ee1c034cf838f",
+    "check_original_identity.log": "f5ce5cd85364c48a4bd75b0da814ce1b4ac1d963ff8820838505a7925f02634e",
+    "check_game_instance.log": "5b36252589dfa6a46a83eef4e5f54631dc120c1a61982f534d60339d55c66aea",
+    "msrv.log": "99d1ae83b4f45cdf37f06692d1c2e98e815c137515b3553a6ca6b91b0e6cb33b",
+    "workspace.log": "fe4a35e245a2a78d19596aa271f7edfc493823f193f7fc32e397d90b00675889",
+    "check_runtime_identity.log": "ddb577fc692ddb74cab68b139486ff7f8e18d1b6885f06088d8a41bd19d5248a",
+    "check_map_extent.log": "ab7a0504b76f08f48669076824780e560e563697d6bf9bd7c0f85cab999db827",
+    "check_player_commands.log": "c6d067c65a0ae90b5dc3361309167d3ca55ed468877e6e25dea650a8340ec9d0",
+    "clippy.log": "1cc68eba3131d63c54dcdbeb38ecc32a1ace6e439ddcdeb8bb8f0f4c42c0a21b",
+    "check_headless.log": "1d048ab6eb9a4e1340048377f4e67805ca3986a8941aa957e23fdf9ab2fc08f1",
+    "check_original_registry.log": "0ea5867063bf246d38cf2f91fc348f098695eaba2a4b9ac52fc6f548cc87b0ec",
+    "check_projectiles.log": "bdb0ca3e70b5e6db7b4441dfb0aff3a44c162c9a6254b56a88a5b515270a56f2",
+    "check_canonical_demon.log": "da48a225306c65fdc7a2ca84f1512bac8601e6453ed604ad447e2b40d5512927",
+    "check_examples.log": "5b9f4700353b6f2c4948b6f20d89c08f43497ba668876e5af8b8d7cf4a457aab",
+    "rustdoc.log": "a5de8e97c81ea3dcd0ad2012a63e605f6d403b76f20aadfe2ccb5a6c2e18a01f",
+    "command-encoder.log": "7d7ecaa22f9edbea355d2e607e8ea39a8870111d1c1ebcb358698650a1c590ad",
+    "fuzz-build.log": "9466392cff8dcb1e22b11130e88341a2c96059bdda26197012764cb4f9936dab",
+    "check_context_ownership.log": "6015b884db69b783db05b1201c70ae10f0f6f0aec2337ac6491dac774f90aeab",
+    "check_player_knockback.log": "9f3a90ce5c6cb473e6db2986d547d26d5c55a24ac6d4786f4fa075c16b624677",
+    "fuzz-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "release.log": "96ae2cf56a1686abb33aca31234ca7ff82737f7f6c1ad13d1d90e71eb306f18a",
+    "check_monster_attacks.log": "6c96149869822ca46cd7fb4c8e604be759bf44f02bd1705c8a0f6659a03ee499",
+    "check_diagnostic_free.log": "5bdf11aca5fa92d7c5562142e69487ea1302f5e00a59f65cb6c29d2940a10aef",
+    "format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "check_monster_pursuit.log": "a95a1f4f107ee6441e4f33d1c839d11c51451960c9c5d02b6b19c9105a793055",
+    "check_chaingunner_attacks.log": "c1b034d6deea40b30999994aea85d5d1ed73b29ae2f0b676e8c481349d91966f",
+    "check_demon_melee.log": "fa80c339fdaaa5eeadb544254ae7c211d61b560c5c26481793aead43f5c0048f",
+    "check_demon_map_context.log": "441cde367f6ea1961cd03dc7e34138768800b10302ca6d6d0fc22dddcb4497ee",
+    "check_shotgunner_attacks.log": "3a97985e741ccc7d7cb9095167b63d311ddb9fff76078e0abe1d9ce093d82882",
+    "check_demon_stand_run.log": "043751e5d3af0c6ca72ad1b7e7bb433497fd39a17ba21fd2a86b789ea5bb0b03",
+    "identity-c.log": "50ab66f493d8c8db707e1bdf83116c8475c3fcd745aabecf4abf67a66cdb844b",
+    "check_monster_perception.log": "f499ce7db2ee4eebb0bafdeebfda3b8061b53dac32824a9e0ee090f91f68c4c1",
+    "check_demon_map_spawn.log": "c2008f009f5f46846fbbb55ef909a3a6843fe5485f1a2b614060fe0f446920f1",
+    "command-c.log": "04b9a7c43fb2aa60c94f6e6602e604ff6e2b8eede6f57d3f7232bea1d3a6063d"
+  },
+  "development_corrections": [
+    "A new test helper initially referenced a nonexistent Snapshot RNG accessor; it was corrected to the existing Simulation::rng accessor before the final successful gates. No historical expected bytes changed."
+  ],
+  "source_limits": "Declared source conditional/P_MovePlayer harness, not full PlayerThink/Ticker/DeathThink. Defined positive-turn literal comparison and normalized negative-turn bit policy are separate; deliberate UB probe provides no gameplay expectations."
+}

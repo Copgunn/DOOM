@@ -597,3 +597,37 @@ The host measurement tool uses three independent timing/RSS processes and separa
 allocation probes per workload/mode. Construction is distinct from100 updates;
 new physical workloads have no executable baseline equivalent. Retain unchanged
 historical tools and matched old-player workloads for before/after comparisons.
+
+
+## Original player command movement
+
+Read [source assumptions](M3G4_REFERENCE.md) and the
+[bounded input contract](COMPATIBILITY.md#original-player-command-movement).
+Keep every historical check above; the new observer/encoder are additive:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g4_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3g4_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3g4_reference --test m3g4_policy --locked
+python3 tools/reference/check_player_commands.py
+cargo fmt --manifest-path fuzz/Cargo.toml --all -- --check
+cargo +nightly fuzz build --sanitizer address
+python3 tools/seed_player_commands_fuzz.py /tmp/doom-command-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_commands /tmp/doom-command-seeds --sanitizer address -- -runs=4096 -max_len=129 -seed=1 -timeout=20 -rss_limit_mb=2048
+python3 tools/measure_player_commands.py > /tmp/doom-command-measurements.json
+```
+
+The source check intentionally verifies a negative-shift UB diagnostic separately;
+its normalized gameplay observer must pass strict/ASan/UBSan equality. Defined
+literal source cases are checked independently of negative-turn bit policy. This
+is a command-gate harness, not full PlayerThink or a player roster. Rust tests
+separately exercise ownership/provenance, inactive/stale input, bounds, late rollback,
+full step/advance refinement and zero implicit advance captures. The new fuzz
+model compares outcomes and complete rejected state, decodes bounded diagnostics,
+and mutates external inputs; it is not an original-C oracle or exhaustive proof.
+
+Retain matched existing measure_stepping, measure_player_body and
+measure_player_knockback controls; new command workload timing is separate. Tools
+report three independent timing/RSS and three allocation processes, raw samples
+and validated allocator controls. Source fields/capture counts, actually executed
+campaigns and host limitations belong in [M3g4 evidence](validation/M3G4.md).

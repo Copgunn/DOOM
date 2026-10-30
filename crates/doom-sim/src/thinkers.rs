@@ -56,7 +56,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                     );
                 } else {
                     let command = if source_player {
-                        Some(TicCommand::default())
+                        Some(commands[usize::from(PlayerSlot::One.ordinal())])
                     } else {
                         bindings
                             .iter()
@@ -99,13 +99,17 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                     && had_xy_momentum
                     && actor.z <= actor.floor
                     && actor.momentum() == [Fixed::ZERO; 2]
-                    && (source_player
-                        || bindings
+                    && (if source_player {
+                        commands[usize::from(PlayerSlot::One.ordinal())].forward == 0
+                            && commands[usize::from(PlayerSlot::One.ordinal())].side == 0
+                    } else {
+                        bindings
                             .iter()
                             .position(|b| *b == Some(id))
                             .is_some_and(|slot| {
                                 commands[slot].forward == 0 && commands[slot].side == 0
-                            }))
+                            })
+                    })
                 {
                     let run = identity::OriginalState::S_PLAY_RUN1.ordinal();
                     if actor

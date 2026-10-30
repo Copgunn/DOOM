@@ -113,3 +113,12 @@ provenance and rollback guarantees. Three source slide bodies extend this observ
 but already occur in historical movement evidence; their inventory is not globally
 new function or branch coverage. All old observers, schemas and fixtures remain
 regression gates.
+
+
+[M3g4](validation/M3G4.md) adds command-gate/P_MovePlayer observations, compact
+per-tic motion/command rows and independently encoded DSIM22 policy4 fixtures.
+Selected full captures overlap these rows; do not sum them as unique coverage.
+The unsigned negative-turn adapter, literal defined cases and deliberate UB
+expression probe have distinct claims. Rust admission, generation/provenance,
+zero-command continuation and late transaction checks remain separate safety
+policy. Every older observer, fixture and decoder remains a regression gate.

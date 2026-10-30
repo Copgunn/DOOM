@@ -84,3 +84,5 @@ provenance. [Historical records](validation/archive/README.md) retain complete
 original evidence and former guide contents with exact-byte copies and digests.
 
 - [M3g3 original-player knockback and grounded movement](M3G3_REFERENCE.md).
+
+- [M3g4 original-player commands and reaction-time execution](M3G4_REFERENCE.md), with [observations](validation/M3G4.md).

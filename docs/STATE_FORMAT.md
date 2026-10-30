@@ -1011,7 +1011,7 @@ own exact counts and size. All v20 expectations/readers remain byte-for-byte int
 
 V22 was introduced for PlayerBodyLifecycleV1 (wire policy2), because genuine
 player ownership/attacker/health/state observations change the schema. The original
-policy2 contract below remains unchanged; a separate grounded policy follows. It preserves
+policy2 contract below remains unchanged; separate grounded and command policies follow. It preserves
 DSIM framing and the immutable original registry ID `DOOM-INFO-1.10-v1`; context ID
 is exactly `PLAYER-BODY-1-MEDIUM-NOTHRUST-v1`. Historical v20/v21 bytes, identities,
 encoders and readers remain unchanged. No reinterpretation or world restoration.
@@ -1030,7 +1030,7 @@ Runtime fields compose the v21/version17 families with these changes:
 
 OriginalPlayer fields are present even before binding, initially mo/attacker absent,
 health100, Live, damagecount/frags0. The four old `player.N.actor` command binding
-families remain distinct and empty, with zero commands. mo and attacker retain
+families remain distinct and empty, with zero commands under policy 2. mo and attacker retain
 stored handles when unavailable. The derived actor association requires exact slot
 AND generation; no stale handle points at a reused body. InstanceId remains excluded.
 Immutable metadata is identified, never serialized redundantly.
@@ -1073,7 +1073,7 @@ represent every required observable; no version 23 or new event tag is necessary
 
 Policy 2 must pair with `PLAYER-BODY-1-MEDIUM-NOTHRUST-v1`, and policy 3 with the
 new grounded schema. Mixed/unknown pairs reject. `Diagnostic::decode_player`
-explicitly validates both v22 capabilities; the historical v20/v21 decode entry
+explicitly validates these two policy/context pairs; the historical v20/v21 decode entry
 point still rejects v22. Neither old context definitions nor native identities are
 reinterpreted. Existing policy 2 full bytes remain immutable.
 
@@ -1090,3 +1090,30 @@ Decoding stays read-only, bounded and distinct from restoring an executable worl
 Physical/map fields and unrelated event payloads retain their documented opaque
 validation limits. Source equivalence is established by the declared comparisons,
 not merely by successful decoding or canonical projection.
+
+
+## DSIM-v22 player-command execution policy
+
+PlayerCommandMovementV1 selects wire policy 4 and exact context schema
+`PLAYER-COMMAND-1-MEDIUM-GROUNDED-v1`, with registry `DOOM-INFO-1.10-v1`. Framing,
+field order/widths and original player association remain unchanged. Existing
+player.0.forward/side/angle_turn/buttons contain admitted input; the remaining
+three slots stay default, and historical player.N.actor bindings stay empty.
+Existing actor angle/momentum/reaction/state/timer fields describe the outcome.
+No persistent field, DSIM version or event tag is added.
+
+The Players phase now precedes command work and the Thinkers phase follows it.
+Existing tag4 Player(slot0,body handle) observes completed P_MovePlayer, after any
+immediate RUN entry; reaction-suppressed or inactive bodies emit no such event.
+All ordinary thinker/movement/combat events retain their meanings. Old policies
+2/3 retain their previous bytes, phase order and exact context pairing; v20/v21
+retain their historical interpretation. Mixed/unknown policy/context pairs reject
+through explicit decode_player; the historical decode entry point still rejects22.
+The reader validates bounded structural/identity/player contracts, not complete
+command arithmetic, map physics or executable-world restoration.
+
+The [independent command encoder](../tools/reference/m3g4_snapshot_goldens.py)
+combines actual C command/phase observations with frozen field/event primitives
+through a reusable player execution projection. It preserves PBE1 test framing,
+reports birth/generation projection separately from C pointer behavior and never
+uses Rust outcomes as expectations. See [observations](validation/M3G4.md).

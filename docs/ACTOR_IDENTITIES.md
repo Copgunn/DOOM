@@ -308,3 +308,15 @@ namespace is introduced. Genuine Demon origins still use map-THING spawning and
 canonical MT_SERGEANT12. The synthetic UnboundBody137 remains historical context,
 not a player. [Physical admission](COMPATIBILITY.md#original-player-grounded-knockback)
 and [source investigation](M3G3_REFERENCE.md) define the narrower behavior contract.
+
+
+## Original-player command capability
+
+PlayerCommandMovementV1 reuses the genuine MT_PLAYER=0 definition, player/mo binding
+and existing original PLAY/RUN/pain/death state closure. It adds no identity alias,
+actor fields or roster. Canonical MT_SERGEANT=12 stays distinct from synthetic
+context bodies and MT_SHADOWS; only the already supported dying/corpse Demon
+closure may coexist with command execution. Metadata recognition is unchanged.
+See [accepted commands](COMPATIBILITY.md#original-player-command-movement),
+[shared architecture](ARCHITECTURE.md#original-player-command-stage) and
+[source ordering](M3G4_REFERENCE.md).

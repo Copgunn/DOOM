@@ -8,7 +8,7 @@ pub const PLAYER_BODY_CONTEXT_SCHEMA: &[u8] = b"PLAYER-BODY-1-MEDIUM-NOTHRUST-v1
 pub const PLAYER_KNOCKBACK_CONTEXT_SCHEMA: &[u8] = b"PLAYER-BODY-1-MEDIUM-GROUNDED-v1";
 // doomdata.h / p_mobj.c / p_inter.c. Raw fixed-point admission proof, not clamps.
 const ML_BLOCKING: u16 = 1;
-const MAX_MOVE_BITS: u32 = 30 * 65536;
+pub(crate) const MAX_MOVE_BITS: u32 = 30 * 65536;
 const THRUST_FRACTION: i32 = 65536 >> 3;
 const THRUST_MASS_SCALE: i32 = 100;
 // tables.h ANGLETOFINESHIFT and finecosine=finesine+FINEANGLES/4.
@@ -31,7 +31,7 @@ pub(crate) const INITIAL_PLAYER_HEALTH: i32 = 100;
 pub(crate) const MAX_DAMAGE_COUNT: i32 = 100;
 pub(crate) const TACTILE_BASE: i32 = 40;
 // Existing shared map/target pre-tic proof, not an original-C coordinate limit.
-const PLAYER_BODY_COORDINATE_LIMIT: u32 = 994;
+pub(crate) const PLAYER_BODY_COORDINATE_LIMIT: u32 = 994;
 
 /// Bounded source player index, independent of the body's actor slot.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -309,7 +309,7 @@ impl Simulation {
                             OriginalActorType::MT_PLAYER.descriptor().height
                                 >> if l.health > 0 { 0 } else { 2 },
                         )
-                    || if p.policy == OriginalExecutionProfile::PlayerBodyKnockbackV1 {
+                    || if p.policy.has_physical_player() {
                         travel_bounds(a.position(), a.momentum()).is_err()
                             || l.flags
                                 & (MF_NOCLIP | MF_MISSILE | MF_SKULLFLY | MF_FLOAT | MF_NOGRAVITY)
@@ -319,12 +319,13 @@ impl Simulation {
                     }
                     || a.momz != Fixed::ZERO
                     || a.z != a.floor
+                    || (p.policy == OriginalExecutionProfile::PlayerCommandMovementV1
+                        && (l.flags & player_commands::MF_JUSTATTACKED != 0
+                            || !(0..=i32::from(u8::MAX)).contains(&l.reaction_time)))
                 {
                     return Err(PlayerBodyError::Invariant.into());
                 }
-            } else if p.policy == OriginalExecutionProfile::PlayerBodyKnockbackV1
-                && a.momentum() != [Fixed::ZERO; 2]
-            {
+            } else if p.policy.has_physical_player() && a.momentum() != [Fixed::ZERO; 2] {
                 return Err(PlayerBodyError::Unsupported.into());
             } else if stepping && l.actor_type == original_registry::owner_slot() && l.health > 0 {
                 // Original all-inactive LookForPlayers does not terminate. Do not
@@ -338,7 +339,7 @@ impl Simulation {
         let Some(p) = self.original_player else {
             return Ok(());
         };
-        if p.policy == OriginalExecutionProfile::PlayerBodyKnockbackV1
+        if p.policy.has_physical_player()
             && request.inflictor.is_some()
             && !self.owns_player_body(request.target)
         {
@@ -346,7 +347,7 @@ impl Simulation {
         }
         if self.owns_player_body(request.target) {
             if let Some(inflictor) = request.inflictor {
-                if p.policy != OriginalExecutionProfile::PlayerBodyKnockbackV1 {
+                if !p.policy.has_physical_player() {
                     return Err(PlayerBodyError::Unsupported.into());
                 }
                 self.preflight_player_thrust(request, inflictor)?;
@@ -375,7 +376,10 @@ impl Simulation {
 
 /// Conservative forward invariant from the source axis-wall/friction proof.
 /// Wider temporaries validate support; actual gameplay still uses source Fixed.
-fn travel_bounds(position: [Fixed; 2], momentum: [Fixed; 2]) -> Result<(), PlayerBodyError> {
+pub(crate) fn travel_bounds(
+    position: [Fixed; 2],
+    momentum: [Fixed; 2],
+) -> Result<(), PlayerBodyError> {
     let maximum = momentum
         .into_iter()
         .map(|m| m.bits().unsigned_abs())
