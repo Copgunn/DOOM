@@ -37,3 +37,6 @@
 
 # Native identity boundary seeds are reproducible; mutations remain local.
 /corpus/runtime_identity/
+
+# Context ownership seeds are reproducible; mutations remain local.
+/corpus/context_ownership/

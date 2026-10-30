@@ -16,6 +16,7 @@ status tables, test-count lists, commit histories or schema definitions.
 | Exact supported behavior and runtime/parser limits | [COMPATIBILITY](COMPATIBILITY.md) |
 | Architecture and subsystem ownership | [ARCHITECTURE](ARCHITECTURE.md) |
 | Original actor/state and runtime identity mapping | [ACTOR_IDENTITIES](ACTOR_IDENTITIES.md) |
+| Execution-context ownership and reference lifetime limits | [COMPATIBILITY](COMPATIBILITY.md#context-and-target-lifetime-contract), with ownership architecture in [ARCHITECTURE](ARCHITECTURE.md) |
 | Canonical simulation snapshot schemas | [STATE_FORMAT](STATE_FORMAT.md) |
 | Build, test and reproduction commands | [TESTING](TESTING.md) |
 | Validation methodology and evidence navigation | [VALIDATION](VALIDATION.md) |
@@ -70,6 +71,7 @@ for present status. Historical review statements are not new claims that work is
 | Canonical Demon execution binding | [M3f5](M3F5_REFERENCE.md), [mapping](ACTOR_IDENTITIES.md#canonical-demon-execution-binding), [observations](validation/M3F5.md) |
 | Original-ID registry and diagnostic contract | [M3f7](M3F7_REFERENCE.md), [registry](ACTOR_IDENTITIES.md#original-id-execution-registry), [observations](validation/M3F7.md) |
 | Runtime identity storage audit | [M3f6](M3F6_REFERENCE.md), [native boundary](ACTOR_IDENTITIES.md#native-runtime-identity-boundary), [observations](validation/M3F6.md) |
+| Context and target lifetimes | [M3f8](M3F8_REFERENCE.md), [contract](COMPATIBILITY.md#context-and-target-lifetime-contract), [observations](validation/M3F8.md) |
 
 [Reference tooling](../tools/reference/README.md) describes harness layout and
 provenance. [Historical records](validation/archive/README.md) retain complete

@@ -35,6 +35,23 @@ slot identity and spatial head-insertion order are separate contracts. Source
 BLOCKMAP ordering is retained; sorting handles or rebuilding BLOCKMAP would alter
 collision decisions.
 
+The original-ID profile also exposes an exclusive `ExecutionContext` callback.
+Invariant lifetime-branded `ContextActor` values cannot escape or mix between
+callbacks. They carry the existing generational handle, not another definition or
+owner ID. Every access still validates current storage; tokens are not liveness
+leases. Raw handle admission explicitly interprets a candidate locally and cannot
+infer foreign provenance from identical numbers. This preserves legacy APIs and
+diagnostics while providing a checked typed boundary for new callers.
+
+`ActorAvailability` derives current, pending, retired, stale and invalid states
+from existing slots. Pure target observation keeps stored identity distinct from
+availability, health and role. Target mutation, damage, perception repair, spawn,
+state entry and stepping delegate to the existing services and target-role guard.
+No actor store, scheduler, reference sweep or persistent identity field is added.
+Each operation retains its atomicity; the callback is not an aggregate transaction.
+See the [contract](COMPATIBILITY.md#context-and-target-lifetime-contract) and
+[source investigation](M3F8_REFERENCE.md).
+
 State entry installs frame/timer and executes its action immediately, including
 nested Look-to-Chase or Chase-to-melee transitions. Raw spawning initializes state
 without executing its action. Damage, death state entry, delayed sounds, Fall and

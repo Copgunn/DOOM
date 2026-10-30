@@ -259,8 +259,9 @@ impl Simulation {
         self.enter_validated(id, state);
         Ok(())
     }
-    /// Assign a validated target. Self and pending targets are permitted. Stored
-    /// references remain unchanged when their targets retire, as in the source.
+    /// Assign a validated store-local target. Role/lifetime rules depend on the
+    /// profile: canonical Demons require a current, nonpending context body.
+    /// References are retained on retirement; clearing never resolves the old target.
     pub fn set_actor_target(
         &mut self,
         id: ActorId,
@@ -278,10 +279,8 @@ impl Simulation {
         }
         self.actors
             .get_mut(id)
-            .unwrap()
-            .life
-            .as_mut()
-            .unwrap()
+            .and_then(|actor| actor.life.as_mut())
+            .ok_or(StoreError::InvalidHandle)?
             .target = target;
         self.pending
             .push(Event::ActorState(ActorStateEvent::Target {

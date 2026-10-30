@@ -1,0 +1,46 @@
+{
+  "assumptions": [
+    "Same70 genuine original bodies and2 setup fragments, checked against frozen M3f5 source hashes. New inputs, not new function/branch coverage.",
+    "Original MT_SERGEANT12/SARG throughout. Only source MT_MISC85 observer body135 has the inherited explicit player-derived unbound descriptor; not a real player.",
+    "Manual target writes are declared inputs; damage replacement, death and thinker retirement execute genuine source bodies.",
+    "Inherited GNU ABI/arithmetic/instrumentation/synthetic geometry/roster adapters remain; source bytes are untouched.",
+    "Z_Free logically retires but quarantines bytes until case reset. No gameplay dereference of a retired target, libc-free safety or zone/address reuse equivalence is claimed.",
+    "Case7 retains an opaque target identity in dying-owner actions which do not read the target. Post-retirement actor fields are excluded from comparisons.",
+    "Slot/generation reuse in DSIM is independently declared Rust schema policy, separate from the C allocation/birth sequence.",
+    "Inherited isolated setup/filter/credit probes also run but are not counted as new lifetime inputs or published again. No Rust output or commercial assets."
+  ],
+  "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fwrapv",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char"
+  ],
+  "inherited_source_inventory": "tests/reference/m3f5_provenance.json",
+  "input_sha256": {
+    "tests/reference/m3f5_map_0.bin": "5ea2f73dfb74b7833ecdd1af1f657590b34fcbde047fe7895be44eda78115b97",
+    "tests/reference/m3f5_provenance.json": "6b61467756ca783a0de62b8b76fbdaf9253a7a921917f80ed3154faf270a35fb",
+    "tools/reference/m3f5_reference.py": "d97a2d3a9642ac819e2012e01b1a32f519fdf0a657bada13833589a38ac95ae1",
+    "tools/reference/m3f8_reference.py": "99cfd089a13788f04ac31caa9a2fb4b065d7ff5d78472a0fe332055fda2aaa0a"
+  },
+  "inventory": {
+    "C_gameplay_draws": 63,
+    "actor_fields": 11856,
+    "captures": 94,
+    "compiled_original_bodies": 70,
+    "new_input_cases": 8,
+    "new_unique_bodies": 0,
+    "statistics_fields": 376,
+    "target_fields": 456,
+    "tics": 86
+  },
+  "outputs_sha256": {
+    "tests/reference/m3f8_cases.csv": "6a2b3e5a5ea726261890f23fe847bc38c76af75f2251cc8e51adf62f6dece3ba",
+    "tests/reference/m3f8_trace.csv": "4b0792168593736def1172143a0093c05ba98de02b48f0ab1a7e528f034cdd74"
+  },
+  "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "schema": "DOOM-OWNERSHIP-v1",
+  "script_sha256": "a627c5da0915669efb47bb2bd30208993221430045d5b151c49956765a1ba5dd"
+}

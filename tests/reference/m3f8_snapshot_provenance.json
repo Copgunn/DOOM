@@ -1,0 +1,23 @@
+{
+  "captures": 94,
+  "full_byte_fixtures": 2,
+  "input_sha256": {
+    "tests/reference/m3f4_identities.csv": "11cdcb5267e3c39b259f6d78674e0fb5e3920d365cd89033f4c4c29f4fc9eb4a",
+    "tests/reference/m3f5_map_0.bin": "5ea2f73dfb74b7833ecdd1af1f657590b34fcbde047fe7895be44eda78115b97",
+    "tests/reference/m3f8_cases.csv": "6a2b3e5a5ea726261890f23fe847bc38c76af75f2251cc8e51adf62f6dece3ba",
+    "tests/reference/m3f8_trace.csv": "4b0792168593736def1172143a0093c05ba98de02b48f0ab1a7e528f034cdd74",
+    "tools/reference/m3c_snapshot_goldens.py": "95eac9b3e9f416eea16bb2ace5bb12a3aa401d9942069046dca05e0edc3a123c",
+    "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
+    "tools/reference/m3f7_snapshot_goldens.py": "29e04b2498d2d5d41ee489d972bb6b84583f56ba7764bc057d0a0c7d367b3ee9",
+    "tools/reference/m3f8_snapshot_goldens.py": "17d32f86cc0b09fbb3aee6b494acf998e6dc30135ce78bf20843f2e0b0df2c08"
+  },
+  "ordered_event_fields": 1138,
+  "outputs_sha256": {
+    "tests/reference/m3f8_events.bin": "21b9099587440ea7615fddaa4e6991e0b4143995cc89aaf68add5adc93fba3ab",
+    "tests/reference/m3f8_snapshots.csv": "f64a064ade6b7b16b1108df797acf3665cdc2ecb66043dab63c0b0d1e58615c7",
+    "tests/reference/m3f8_state_4_0.bin": "a90c673260240e33659b7f0b1bcb60c6bbb2e2d78798ad7057df8370d39431a0",
+    "tests/reference/m3f8_state_5_2.bin": "561a7a578389302669630c4ee056f9d023606d6096c4f71f832b1f8162f11d42"
+  },
+  "schema": "DSIM-v21",
+  "scope": "New C inputs; original type12/SARG retained. Only observer body135 binds to explicit context137. Independent schema policy assigns lowest vacant slots/generations to C birth order, not proof of C allocator reuse. Complete event bytes for every capture; two unique pending/reuse full fixtures. No Rust input; no DSIM format change."
+}

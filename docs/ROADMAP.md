@@ -46,29 +46,34 @@ The merged baseline provides:
   guards preserve all historical aliases and diagnostics; see
   [audit](M3F6_REFERENCE.md) and [observations](validation/M3F6.md).
 
+- M3f7 original-ID registry/profile and diagnostic contract is merged. Actual
+  source IDs, explicit context definitions and root-derived state permissions use
+  shared execution services; bounded v20/v21 readers preserve historical meaning.
+  See [investigation](M3F7_REFERENCE.md) and [observations](validation/M3F7.md).
+
 These foundations support controlled headless tests, not a complete playable game.
 Earlier findings and milestones are retained in the [historical records](validation/archive/README.md).
 
 ## Next
 
-### M3f7: Original-ID registry, execution profile and diagnostic contract
+### M3f8: Context and target-lifetime ownership contract
 
-M3f6 is merged: sealed native views preserve historical storage and DSIM-v20.
-M3f7 implements a separate immutable original-ID registry and an opt-in executable
-Demon closure using existing services. Actual source IDs, explicit context roles,
-root-derived state admission and bounded v20/v21 diagnostics form the new boundary.
-This does not broaden gameplay. Exact review state belongs to GitHub; see
-[design](M3F7_REFERENCE.md), [support](COMPATIBILITY.md#original-id-demon-profile)
-and [observations](validation/M3F7.md).
+M3f8 adds scoped instance access and derived reference availability over the same
+owner, with compact new C target/lifetime inputs and separate Rust generation/
+context safety checks. Gameplay, capacity and DSIM admission remain unchanged.
+The implementation stops at owner review; exact review state belongs to GitHub.
+See [design](M3F8_REFERENCE.md), [support](COMPATIBILITY.md#context-and-target-lifetime-contract)
+and [observations](validation/M3F8.md).
 
 ### Next narrow prerequisite
 
-Investigate a source-derived game-context interface for unbound damage/perception
-bodies before any real player or additional monster admission. Preserve explicit
-context definitions and old diagnostic schemas; validate target lifetime, damage
-ownership and event semantics independently. This is a recommendation, not admitted
-work. A separate evidence-storage investigation could measure deduplication without
-rewriting or deleting historical captures.
+Investigate persistent game-instance provenance and the player mo/attacker ownership
+boundary before real-player execution or cross-world references. Scoped local
+tokens do not solve serialized world identity. Additional monster admission needs
+source-root/capability and relationship policy through the same owner, rather than
+per-species ownership adapters. These are recommendations, not admitted work.
+Dedicated panic/constant maintenance and evidence-storage measurement remain
+separate follow-ups; preserve historical captures and avoid broad cleanup here.
 
 ### Map Scale, Limits, and Real-Map Readiness
 

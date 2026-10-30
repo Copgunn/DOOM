@@ -378,6 +378,54 @@ python3 tools/measure_canonical_demon.py
 python3 tools/measure_original_registry.py
 ```
 
+## Context and target-lifetime validation
+
+Run the new pair alongside every historical pair above:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3f8_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3f8_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3f8_reference --test m3f8_policies --locked -- --nocapture
+cargo test -p doom-sim --doc --locked -- --show-output
+python3 tools/reference/check_context_ownership.py
+```
+
+The observer supplies new controlled C inputs, not another implementation of the
+engine. Original source/body hashes are checked against inherited provenance.
+Logical retirement uses the declared storage quarantine; no freed-pointer or
+allocator-reuse gameplay equivalence is asserted. The independent encoder reads
+C observations and declared v21 schema policy, not Rust output. Rust policy tests
+separately cover lifetime brands, local admission, rejected mutations, retained
+references and generation reuse. Rustdoc output confirms the expected lifetime
+errors rather than an unrelated syntax error. Whole workspace, release and MSRV
+checks also include the focused tests and generation-exhaustion unit case.
+
+```sh
+python3 tools/seed_context_ownership_fuzz.py
+cargo +nightly fuzz build --sanitizer address
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run context_ownership fuzz/corpus/context_ownership --sanitizer address -- -runs=4096 -max_len=128 -seed=1 -timeout=20 -rss_limit_mb=2048
+```
+
+The new target decodes bounded operation chunks and malicious handle/definition/
+state/roster candidates, compares two executions and checks complete-state
+rejection. Continue relevant original-registry/diagnostic campaigns above; building
+all targets does not mean all targets were executed. Leak detection disabled by
+the environment is not leak coverage. Corpus files remain ignored local inputs.
+
+For matched measurements, retain all before/after JSON from the unchanged
+`measure_demon_expanded_map.py`, `measure_canonical_demon.py` and
+`measure_original_registry.py` workloads. Also run:
+
+```sh
+python3 tools/measure_context_ownership.py
+```
+
+This new microbenchmark compares raw and scoped access paths on the same inputs,
+mutations and retirement cycles, with identical final digests. Scoped observations
+perform additional validation; permissive raw query latency is not equivalent
+work. It is not a historical before baseline or a whole-simulation benchmark.
+The [record](validation/M3F8.md) owns actual counts, samples, RSS and limitations.
+
 The first two measurement tools retain unchanged workloads for matched baseline/
 feature comparisons. The third is separate: source-ID diagnostics omit immutable
 metadata and have different volume, so its timings are not a like-for-like legacy
