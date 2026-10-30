@@ -243,3 +243,13 @@ policy are Rust-specific safety checks, not original-C identity equivalence.
 See [the audit](../../docs/M3F9_REFERENCE.md),
 [commands](../../docs/TESTING.md#game-instance-provenance-validation) and
 [observations](../../docs/validation/M3F9.md).
+
+## M3g1 observation placement
+
+[Investigation](../../docs/M3G1_REFERENCE.md) separates stepping, dynamic capture,
+byte encoding and bounded transaction costs. `check_diagnostic_free.py` checks the
+new example against the unchanged M3f8 independent capture index in debug/release.
+The new API comparisons replay the same frozen inputs and reuse the same C/DSIM
+oracles; there is no new C input, behavioral coverage, encoder or raw fixture.
+[Testing](../../docs/TESTING.md#snapshot-free-stepping-validation) describes the
+separate structural/safety and host measurement checks.

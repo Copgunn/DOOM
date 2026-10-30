@@ -1,6 +1,7 @@
 //! Deterministic, headless Linux DOOM simulation foundations.
 //!
-//! Each [`Simulation::step`] is one logical 35 Hz tic, never elapsed wall time.
+//! Each unpaused [`Simulation::advance`] is one logical 35 Hz tic, never elapsed
+//! wall time. [`Simulation::step`] adds diagnostic Snapshot capture.
 //! Explicit profiles preserve M2 foundations and M3a grounded player collision,
 //! and add M3b static-sector BSP/openings and XY/Z/gravity. None implements full
 //! player thinking or establishes complete vanilla gameplay synchronization.
@@ -917,14 +918,25 @@ impl Simulation {
         self.bindings[slot] = Some(id);
         Ok(())
     }
-    /// Advances exactly one 35 Hz logical tic. No wall-clock/frame-time parameter.
-    /// Recoverable errors (unsupported buttons/tic exhaustion) preserve all state.
-    /// Actor/map invariants are validated by setup, so movement has no late
-    /// recoverable error path. Allocation exhaustion is the process-level Rust
-    /// policy, not SimError. Internal invariant assertions indicate engine bugs.
+    /// Run [`Self::advance`] and capture one diagnostic Snapshot on success.
+    /// A paused call captures unchanged state. Recoverable errors preserve
+    /// canonical state and capture nothing. Checked transactions retain rollback
+    /// in debug and release. Allocation exhaustion outside fallible reservations
+    /// remains process-level Rust policy; invariant assertions indicate bugs.
     pub fn step(&mut self, commands: [TicCommand; 4]) -> Result<Snapshot, SimError> {
+        self.advance(commands)?;
+        Ok(self.snapshot())
+    }
+
+    /// Advance one logical tic without constructing a diagnostic Snapshot.
+    /// Paused calls succeed without changing time, commands, RNG or events.
+    /// Recoverable errors preserve canonical state, just as with [`Self::step`].
+    /// Ordered events remain available through [`Self::events`]; gameplay and
+    /// transactional validation may still allocate. Call [`Self::snapshot`]
+    /// explicitly when diagnostics are needed, including in release builds.
+    pub fn advance(&mut self, commands: [TicCommand; 4]) -> Result<(), SimError> {
         if self.paused {
-            return Ok(self.snapshot());
+            return Ok(());
         }
         if self.tic == u64::MAX {
             return Err(SimError::TicOverflow);
@@ -935,7 +947,7 @@ impl Simulation {
             return Err(SimError::UnsupportedButtons);
         }
         if self.profile.uses_checked_demons() {
-            return self.step_expanded_demons(commands);
+            return self.advance_expanded_demons(commands);
         }
         if self.profile == Profile::Projectiles {
             self.preflight_projectile_step()?;
@@ -1044,7 +1056,7 @@ impl Simulation {
         self.events.push(Event::Phase(Phase::Specials));
         self.events.push(Event::Phase(Phase::Respawn));
         self.tic += 1;
-        Ok(self.snapshot())
+        Ok(())
     }
     /// Captures every implemented state field and immutable map data canonically.
     pub fn snapshot(&self) -> Snapshot {
@@ -1135,3 +1147,6 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod advance_tests;

@@ -346,6 +346,11 @@ impl<'ctx> ExecutionContext<'ctx> {
     pub fn step(&mut self, commands: [TicCommand; 4]) -> Result<Snapshot, ContextError> {
         self.simulation.step(commands).map_err(Into::into)
     }
+    /// Existing checked tic without implicit Snapshot capture. Event recording,
+    /// per-operation atomicity and this context's ownership rules are unchanged.
+    pub fn advance(&mut self, commands: [TicCommand; 4]) -> Result<(), ContextError> {
+        self.simulation.advance(commands).map_err(Into::into)
+    }
     /// Existing diagnostics, with unchanged field meanings and v21 bytes.
     pub fn snapshot(&self) -> Snapshot {
         self.simulation.snapshot()

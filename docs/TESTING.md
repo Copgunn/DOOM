@@ -477,3 +477,50 @@ an already scoped actor versus explicit reimport on each update. Validation work
 differs; import is never inserted automatically into ordinary tic execution.
 Retain every sample/outlier/RSS and avoid universal or causal performance claims.
 The [evidence record](validation/M3F9.md) owns actual results and limitations.
+
+## Snapshot-free stepping validation
+
+```sh
+cargo test -p doom-sim --lib advance_tests --locked
+cargo test -p doom-sim --test m3g1_reference --test m3g1_policies --locked
+python3 tools/reference/check_diagnostic_free.py
+```
+
+The unit capture-boundary hook checks success, pause and rejection without timing
+assumptions. Complete snapshots/bytes compare across every supported profile;
+reference tests reuse frozen C observations on both APIs, not Rust-generated
+expectations. Historical callers, encoders and all example checks remain required.
+The new example requests its final diagnostic explicitly.
+
+On Linux/glibc with a C compiler, run advisory optimized measurements:
+
+```sh
+python3 tools/measure_stepping.py --check
+python3 tools/measure_stepping.py > stepping-observations.json
+```
+
+Full measurement uses three separate processes per mode/workload, separate
+allocation-counter processes with mandatory zero/positive controls, and private
+preflight/staging instrumentation in the release test binary. Host-only
+[interposition](../tools/measurement/alloc_probe.c) adds no engine dependency or
+unsafe Rust. Counts cover the marked thread's intercepted allocator requests;
+requested bytes are cumulative, not peak live heap or leaks. Timing/RSS samples
+run without the counter. Private frozen-state component timers are not additive
+to evolving update timers, and test-harness RSS differs from example RSS.
+Process RSS includes setup and final verification outside the measured interval.
+No shared-host timing threshold, CPU isolation or universal speed claim applies.
+CI executes a small advisory smoke plus deterministic structural tests.
+[The record](validation/M3G1.md) retains all samples and remaining costs.
+
+The bounded refinement fuzz model uses the existing profile setups, pause,
+commands, RNG, removals and invalid handles:
+
+```sh
+python3 tools/seed_stepping_fuzz.py /tmp/doom-stepping-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run stepping_equivalence /tmp/doom-stepping-seeds --sanitizer address -- -runs=4096 -max_len=97 -seed=1 -timeout=20 -rss_limit_mb=2048
+```
+
+Build all targets as above, and report executed targets separately. This setting
+provides no leak coverage; bounded executions are not exhaustive. Frozen helper
+reuse needs a narrow duplicate-module Clippy allowance in the new host input
+modules; no runtime lint, assertion or historical helper is relaxed.

@@ -390,7 +390,18 @@ fn event_bytes(event: &Event) -> Vec<u8> {
     b
 }
 
+#[cfg(test)]
+std::thread_local! {
+    static CAPTURES: std::cell::Cell<u64> = const { std::cell::Cell::new(0) };
+}
+#[cfg(test)]
+pub(crate) fn capture_count() -> u64 {
+    CAPTURES.with(std::cell::Cell::get)
+}
+
 pub(crate) fn capture(sim: &Simulation) -> Snapshot {
+    #[cfg(test)]
+    CAPTURES.with(|count| count.set(count.get().wrapping_add(1)));
     let mut fields = Vec::new();
     field(&mut fields, "tic", sim.tic.to_le_bytes());
     field(&mut fields, "tic_rate", doom_types::TIC_RATE.to_le_bytes());

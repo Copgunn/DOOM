@@ -262,10 +262,10 @@ impl Simulation {
         self.pending.extend(events);
         Ok(result)
     }
-    pub(crate) fn step_expanded_demons(
+    pub(crate) fn advance_expanded_demons(
         &mut self,
         commands: [TicCommand; 4],
-    ) -> Result<Snapshot, SimError> {
+    ) -> Result<(), SimError> {
         self.preflight_expanded_demons()?;
         self.preflight_actor_step()?;
         let mut plan = self.demon_plan()?;
@@ -300,10 +300,14 @@ impl Simulation {
             .extend([Event::Phase(Phase::Specials), Event::Phase(Phase::Respawn)]);
         self.commands = commands;
         self.tic += 1;
-        Ok(self.snapshot())
+        Ok(())
     }
 }
 
 #[cfg(test)]
 #[path = "demon_expanded_map_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "transaction_cost_tests.rs"]
+mod transaction_cost_tests;

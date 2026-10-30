@@ -32,6 +32,10 @@ LeakSanitizer coverage; no bounded campaign is exhaustive.
 
 ## Detailed records
 
+- [M3g1 stepping and transaction costs](validation/M3G1.md): complete-state API
+  refinement, capture-boundary regression hooks, reused C observations, and
+  separately instrumented timing/allocation measurements. No new C coverage.
+
 - [M3f9 game-instance provenance](validation/M3F9.md): Rust-specific incarnation,
   import/export, restart and trust policy; the selected C input is reused evidence,
   not new original-source coverage. Historical DSIM and gameplay remain separate.

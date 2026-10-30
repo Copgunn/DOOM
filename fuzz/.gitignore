@@ -43,3 +43,5 @@
 
 # Provenance seeds are reproducible; mutations remain local.
 /corpus/game_instance/
+/corpus/stepping_equivalence/
+/artifacts/stepping_equivalence/

@@ -202,3 +202,10 @@ path = "fuzz_targets/game_instance.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "stepping_equivalence"
+path = "fuzz_targets/stepping_equivalence.rs"
+test = false
+doc = false
+bench = false
