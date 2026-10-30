@@ -101,3 +101,14 @@ retirement/reuse, replay and step versus advance+snapshot. Existing fixtures and
 source/encoder pairs remain immutable regression gates. Matched three-process
 measurements preserve existing before/after workloads, raw samples, allocation
 observations and RSS; new physical workloads are reported separately.
+
+## Integration finding: preserve Demon map admission
+
+The first Rust comparison rejected raw Demon creation at the established
+MapSpawn::DirectSpawn boundary. This is an intentional ownership/provenance guard,
+not a physical-thrust mismatch. Do not widen that guard to make a test pass.
+Use synthetic THING batches for the new Demon origins/blockers instead: genuine
+P_LoadThings/P_SpawnMapThing in C and the existing original map-spawn API in Rust.
+Include their actual spawnpoint, initial timer, RNG and available-kill observations.
+The player remains a genuine bound raw MT_PLAYER body, as in M3g2. Revise only new
+unreviewed M3g3 inputs and their C-derived outputs; preserve historical bytes.
