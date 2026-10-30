@@ -1,4 +1,18 @@
 {
+  "admission_guard_campaign": {
+    "coordinate_input_scale": 8,
+    "executions": 4096,
+    "final_status": "#4096\tDONE   cov: 3783 ft: 11993 corp: 413/24Kb lim: 81 exec/s: 110 rss: 498Mb",
+    "findings": 0,
+    "initial_seed_files": 11,
+    "max_input_budget": 97,
+    "reported_elapsed_seconds": 37,
+    "rss_limit_mb": 2048,
+    "seed": 1,
+    "stage": "pre-tic position admission, expanded spawn inputs",
+    "target": "original_player",
+    "timeout_seconds": 20
+  },
   "asan_options": "detect_leaks=0",
   "campaigns": [
     {
@@ -355,5 +369,6 @@
       "seconds": 37.62
     }
   ],
-  "total_executions": 24576
+  "total_executions": 24576,
+  "total_executions_including_admission_recheck": 28672
 }
