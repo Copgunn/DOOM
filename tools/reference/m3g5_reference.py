@@ -38,7 +38,7 @@ case('moving_away',forward=25,move_hold=24,tics=80)
 main.MAPS,main.THINGS,main.KEYS,main.CASES=[],[],[],[]
 for c in CASES:
  m=geometry.fixture(n=1,count=5 if c['wall'] else 4,blockers=bool(c['wall']))
- 
+
  if c['wall']==1:m['vertices'][4:6]=[(16,y)for x,y in m['vertices'][4:6]]
  m['vertices']=[(6*x,12*y)for x,y in m['vertices']];m['lumps']['VERTEXES']=b''.join(geometry.old.words(v)for v in m['vertices']);m['range']=(-768,768);m['center']=(0,0)
  m=extent.grid(m,(-1024,-1024),16,16)

@@ -13,7 +13,7 @@
     "tests/reference/m3g5_map_5.bin": "246055c4e46f531cea903f28c5a7e408c4bd9216d57e17cb8baec8e0573be976",
     "tests/reference/m3g5_map_6.bin": "82e2a8acb43adb330b5c88ba8a6e1b8af2999e84bffe189af3ca14e28933be6e",
     "tests/reference/m3g5_map_7.bin": "f002df8e4ac58d3bb18b1423f8047b4fe36ca28ecf1460dbb181884c75e7ac1e",
-    "tests/reference/m3g5_provenance.json": "3e27a79a2f52c58988c07271e4179e17702f28f220758f05cdbe1e9cc2c6cd22",
+    "tests/reference/m3g5_provenance.json": "5e897b6a9e3c2159fd02e77fc71d42bfbbbdda28e5b151f7be7b3b2130863e91",
     "tests/reference/m3g5_trace.csv": "dd7e87d0bd118d66b63269e4afed1e36abf6cb245d5b8ac1e56d3cb2eac8cf65",
     "tools/reference/m3c_snapshot_goldens.py": "95eac9b3e9f416eea16bb2ace5bb12a3aa401d9942069046dca05e0edc3a123c",
     "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
