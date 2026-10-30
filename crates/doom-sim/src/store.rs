@@ -21,6 +21,27 @@ impl ActorId {
     }
 }
 
+/// Derived storage availability, not health, shootability or execution permission.
+/// No history is stored: after reuse, an older identity is stale. `Retired` below
+/// describes an occupant; the DSIM slot `retired` bit instead means exhaustion.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ActorAvailability {
+    /// Current occupied storage, not marked for removal (possibly a corpse).
+    Live,
+    /// Current readable storage, spatially unlinked and awaiting traversal.
+    PendingRemoval,
+    /// Most recent occupant of a vacant slot, including an exhausted slot.
+    Retired,
+    /// Generation differs from the current occupant or most recent retirement.
+    StaleGeneration,
+    /// Current generation names a vacant slot and has not been issued.
+    Vacant,
+    /// Slot is not allocated, even if it is inside the configured capacity.
+    OutOfRange,
+    /// Generation zero is never issued.
+    InvalidGeneration,
+}
+
 /// Actor ownership/scheduling failure.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum StoreError {
@@ -79,6 +100,42 @@ pub struct ThinkerStore<T> {
     pub(crate) max_slots: u32,
 }
 impl<T> ThinkerStore<T> {
+    /// Pure, checked classification. It neither resolves a different generation
+    /// nor mutates references, processing order or generation counters.
+    pub fn availability(&self, id: ActorId) -> ActorAvailability {
+        if id.generation == 0 {
+            return ActorAvailability::InvalidGeneration;
+        }
+        let Some(slot) = usize::try_from(id.slot)
+            .ok()
+            .and_then(|index| self.slots.get(index))
+        else {
+            return ActorAvailability::OutOfRange;
+        };
+        if let Some(entry) = &slot.entry {
+            return if slot.generation != id.generation {
+                ActorAvailability::StaleGeneration
+            } else if entry.pending {
+                ActorAvailability::PendingRemoval
+            } else {
+                ActorAvailability::Live
+            };
+        }
+        if slot.retired {
+            return if id.generation == slot.generation {
+                ActorAvailability::Retired
+            } else {
+                ActorAvailability::StaleGeneration
+            };
+        }
+        if id.generation == slot.generation {
+            ActorAvailability::Vacant
+        } else if id.generation.checked_add(1) == Some(slot.generation) {
+            ActorAvailability::Retired
+        } else {
+            ActorAvailability::StaleGeneration
+        }
+    }
     /// Creates an empty store. The bound makes snapshots and callback budgets finite.
     pub fn new(max_slots: u32) -> Result<Self, StoreError> {
         if max_slots > 65536 {

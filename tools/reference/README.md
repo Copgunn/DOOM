@@ -209,3 +209,25 @@ mapping enters the new registry. This is representation evidence using reused
 inputs, not new source execution coverage. [Commands](../../docs/TESTING.md#original-id-registry-and-diagnostic-contract),
 [contract](../../docs/STATE_FORMAT.md#dsim-v21--original-id-demon-diagnostics) and
 [observations](../../docs/validation/M3F7.md) separate those claims.
+
+## M3f8 compact target/lifetime evidence
+
+[m3f8_reference.py](m3f8_reference.py) supplies new controlled inputs to the
+unchanged genuine-body M3f5 extraction. Manual target writes are declared inputs;
+damage replacement, death and deferred thinker retirement execute original bodies.
+The inherited storage quarantine observes logical retirement without dereferencing
+retired gameplay targets or proving real zone/address reuse. Original type/state
+IDs stay pristine; the unbound observer-body adapter remains explicitly separate.
+Normal, strict arithmetic and ASan/UBSan outputs must agree. No historical writer,
+trace, map or fixture is rewritten.
+
+[m3f8_snapshot_goldens.py](m3f8_snapshot_goldens.py) consumes those C rows and the
+existing independent schema encoder in a temporary tree. It preserves original
+IDs, binds only the synthetic observer body to the context definition, and applies
+declared slot/generation policy to C birth order. A compact digest index, complete
+ordered event payloads and two uniquely useful pending/reuse full-byte fixtures
+avoid redundant large snapshots. This is still DSIM-v21, not a new save format.
+Input/output digests and inherited source provenance remain explicit. The
+[example checker](check_context_ownership.py), [commands](../../docs/TESTING.md#context-and-target-lifetime-validation)
+and [observations](../../docs/validation/M3F8.md) separate new C observations,
+historical evidence reuse, schema projection and Rust-only safety.

@@ -173,7 +173,8 @@ own admission. S_NULL and raise have no native state value.
 
 `Simulation::native_demon_identity(actor)` returns checked raw storage views for
 a current Profile20 owner; pending records remain readable until retirement,
-while stale/reused/foreign handles reject. Its `.runtime()` values equal the actual
+while stale/reused local generations reject. Raw values do not prove foreign-world
+provenance. Its `.runtime()` values equal the actual
 ActorLife fields. `.original()` names the corresponding source definitions.
 The existing `original_demon_identity` delegates through this explicit boundary.
 Queries do not change state, RNG, actor order or captures.
@@ -227,3 +228,29 @@ plans preserve execution order and RNG. The only body 135-to-context binding is 
 independent evidence adapters; it is absent from the new registry core.
 [Design/adapters](M3F7_REFERENCE.md), [format](STATE_FORMAT.md#dsim-v21--original-id-demon-diagnostics)
 and [support](COMPATIBILITY.md#original-id-demon-profile) define the remaining bounds.
+
+## Context-scoped actor instances
+
+DefinitionIdentity identifies metadata/roles; ActorId identifies a generational
+instance within one store. ContextRole names a context definition, not a world.
+`MapContextOptions` configures setup/RNG, not instance ownership. The new
+`Simulation::with_execution_context` establishes an exclusive, generative access
+scope for the original-ID profile; its private `ContextActor` brand identifies
+that scope without a persistent counter, pointer address or per-actor mirror.
+
+`ctx.admit_local(raw, expected_definition)` validates current storage and exact
+definition. Pending storage can be observed but is not thereby authorized for
+target acquisition. `ctx.actor(token)` returns a checked copy rather than a
+borrow that survives validation. `ctx.target(token)` observes the retained target
+through the shared definition-role guard. Mutation wrappers use the existing
+simulation services, preserving source IDs, ordering and RNG.
+
+Tokens cannot escape or cross nested/distinct scopes; compile-fail tests check
+both. `token.raw_id()` explicitly erases the brand for historical diagnostics and
+local APIs. Equivalent simulations intentionally have equivalent raw IDs, so
+re-admitting an erased value is a local interpretation, **not** proof of its
+origin. Persistent world IDs, serialized cross-world references and restart
+provenance remain future work. No existing raw API is silently strengthened or
+given global identity semantics. [Support/lifetime rules](COMPATIBILITY.md#context-and-target-lifetime-contract),
+[source investigation](M3F8_REFERENCE.md) and [observations](validation/M3F8.md)
+define this narrower boundary.

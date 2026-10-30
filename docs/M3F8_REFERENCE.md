@@ -173,3 +173,59 @@ It adds a reusable access boundary over the same Simulation and ThinkerStore;
 it does not replace their authority. Live actor identity remains ActorId and
 original definition identity remains DefinitionIdentity. Implementation and measured
 findings will be recorded separately after validation.
+
+## Implementation disposition
+
+The selected scope is implemented in
+[execution_context.rs](../crates/doom-sim/src/execution_context.rs). Invariant
+function-position lifetime brands prevent escape/cross-scope substitution; the
+Simulation's exclusive borrow, existing store and generation remain authoritative.
+Raw interoperability is explicit and local. Neither scope brands nor availability
+become persistent actor fields or DSIM data. The existing target setter's final
+validated storage access now returns an error rather than relying on unwrap.
+
+Target observation delegates definition-role compatibility to the shared
+`validate_perception_target_type` (also used by acquisition), rather than copying
+its definition policy into the ownership view. Damage, roster repair, state entry, removal and stepping
+delegate to existing services. One retained-source case illustrates the distinction:
+shared damage can put a Demon source on an inert body's target field, while that
+source remains incompatible with the profile's acquisition role. Observing it
+does not admit body AI or generalized infighting. This classification is covered
+by Rust policy tests, separately from new C capture comparisons.
+
+The new [C observer](../tools/reference/m3f8_reference.py) executes controlled
+assignment/replacement/clear, genuine damage retargeting, target death, owner
+death, pending target and owner retirement, replacement after retirement, and
+opaque retention on a dying owner. The source functions are inherited unchanged;
+only input coverage is new. A live owner is explicitly repaired before its retired
+target could be dereferenced. The retained-corpse case runs only death actions
+that do not read the target. Quarantined pointer identification is not proof of
+real zone reuse, C dangling-pointer safety or general relationship compatibility.
+
+The [independent encoder](../tools/reference/m3f8_snapshot_goldens.py) applies
+declared generation/lowest-slot policy to source birth order, distinct from C
+allocation behavior. It retains compact raw observations, all ordered event
+payloads, a digest index and two uniquely useful full-byte fixtures. New versus
+reused source counts, diagnostics, safety campaigns and measurements belong to
+[the evidence record](validation/M3F8.md). No old evidence or schema is rewritten.
+
+Remaining prerequisites are persistent game-instance/transport provenance;
+original player mo/attacker and damage ownership; and independently admitted
+cross-species/projectile/tracer relationships. They should extend the same owner
+and source/capability policy, not add actor-specific lifetime managers. Panic/
+numeric-constant maintenance and evidence-storage efficiency remain separately
+scoped follow-ups. No real player, new monster, resurrection, respawn, dynamic
+sector, rendering or capacity work is admitted here.
+
+## Query-cost investigation
+
+The first measurement/source review found that calling the full acquisition
+validator from a read-only target observation repeated immutable type admission
+and allocated temporary BTreeSets. That work is unnecessary for observing a
+current generation, admitted state, definition role, health and shootable bit.
+The selected refinement extracts the existing definition-role predicate into one
+shared guard used by both observation and acquisition. Observation still validates
+storage and original state identity; it does not grant physical/action permission.
+Acquisition and all mutations retain their complete prior guards in the same order.
+No actor cache, metadata mirror or persistent field is added. Affected Rust modes,
+fuzz campaigns and measurements are repeated; initial samples remain recorded.

@@ -188,3 +188,10 @@ path = "fuzz_targets/diagnostic_format.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "context_ownership"
+path = "fuzz_targets/context_ownership.rs"
+test = false
+doc = false
+bench = false

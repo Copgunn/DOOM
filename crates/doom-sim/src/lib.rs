@@ -22,9 +22,11 @@ mod direction;
 pub use direction::MoveDirection;
 mod canonical_demon;
 mod diagnostic;
+mod execution_context;
 mod native_demon;
 mod original_registry;
 pub use diagnostic::{Diagnostic, DiagnosticError, DiagnosticIdentity, DiagnosticLimits};
+pub use execution_context::{ContextActor, ContextError, ExecutionContext, TargetReference};
 pub use native_demon::{NativeDemonState, NativeDemonType};
 pub use original_registry::{
     ContextRole, DefinitionIdentity, ORIGINAL_CONTEXT_SCHEMA, ORIGINAL_REGISTRY_SCHEMA,
@@ -101,7 +103,7 @@ use doom_types::{DoomRng, Fixed};
 pub use geometry::{Collision, GeometryError, LineGeometry, MoveAttempt, StaticWorld};
 pub use snapshot::{Divergence, Snapshot, StateField, compare_traces};
 use std::{error::Error, fmt, sync::Arc};
-pub use store::{ActorId, StoreError, ThinkerContext, ThinkerStore, Visit};
+pub use store::{ActorAvailability, ActorId, StoreError, ThinkerContext, ThinkerStore, Visit};
 
 /// Explicit behavior/schema profile; M2 remains frozen for regression consumers.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

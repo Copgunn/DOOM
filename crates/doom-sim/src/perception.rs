@@ -344,13 +344,19 @@ impl Simulation {
     pub fn perception_players(&self) -> &[PerceptionPlayer; 4] {
         &self.perception_players
     }
+    /// Definition-role policy shared by read-only reference observation and
+    /// acquisition. Physical/action validation remains in the latter below.
+    pub(crate) fn validate_perception_target_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
+        if self.profile.uses_demon_map() && ty != self.demon_body_type() {
+            return Err(MapSpawnError::Target.into());
+        }
+        Ok(())
+    }
     pub(crate) fn validate_perception_reference(&self, id: ActorId) -> Result<Actor, SimError> {
         let a = self.perception_actor(id)?;
         let life = a.life.unwrap();
         let registry = self.registry.as_deref().unwrap();
-        if self.profile.uses_demon_map() && life.actor_type != self.demon_body_type() {
-            return Err(MapSpawnError::Target.into());
-        }
+        self.validate_perception_target_type(life.actor_type)?;
         if self.profile.uses_monsters() {
             return self.monster_reference(id);
         }

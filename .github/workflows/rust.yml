@@ -97,6 +97,8 @@ jobs:
           ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3f5_reference.py --check --overflow-check --address-check
           python3 tools/reference/m3f5_snapshot_goldens.py --check
           python3 tools/reference/m3f7_snapshot_goldens.py --check
+          ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3f8_reference.py --check --overflow-check --address-check
+          python3 tools/reference/m3f8_snapshot_goldens.py --check
       - name: Synthetic map example
         run: cargo +stable run -p doom-map --example parse_map --locked
       - name: Headless simulation example
@@ -122,6 +124,7 @@ jobs:
           python tools/reference/check_canonical_demon.py
           python tools/reference/check_runtime_identity.py
           python tools/reference/check_original_registry.py
+          python tools/reference/check_context_ownership.py
       - name: Documentation links and archive integrity
         run: python tools/check_docs.py
       - name: Documentation

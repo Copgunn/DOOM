@@ -432,3 +432,55 @@ exercise actual source-ID storage and diagnostic interpretation; they are not ne
 C-input or whole-game coverage. Profiles 1–20, native aliases and DSIM-v20 bytes
 remain unchanged. V21 is a read-only diagnostic contract, not a savegame; see
 [format and validation limits](STATE_FORMAT.md#dsim-v21--original-id-demon-diagnostics).
+
+## Context and target-lifetime contract
+
+The original-ID profile admits an additive `with_execution_context` interface.
+Its lifetime-branded instance tokens belong to one exclusive callback; they cannot
+escape or mix with another scope. Explicit local raw-handle admission checks
+generation, actual definition and the caller's expected definition. This is an
+access contract over the existing Simulation, not a second lifetime manager.
+Metadata recognition and token possession alone do not grant gameplay permission.
+Historical profiles reject this scope before invoking its callback; their raw APIs
+and diagnostics retain their prior meanings.
+
+| Reference condition | Observation and mutation policy |
+| --- | --- |
+| Current nonpending storage | `Live`, including corpses; health and shootability remain separate |
+| Pending removal | Readable until traversal; spatial membership already unlinked; acquisition rejects |
+| Latest retired occupant, slot still vacant | `Retired`; actor access rejects; stored references remain inert |
+| Slot reused / older generation | `StaleGeneration`; never resolves to the new occupant |
+| Unissued current generation in vacant slot | `Vacant`, not a live actor |
+| Generation zero / unallocated slot | `InvalidGeneration` / `OutOfRange`; admission rejects |
+| No stored target | `TargetReference::Absent`; no implicit mutation |
+| Current target with incompatible role | `Incompatible` observation; acquisition remains rejected |
+
+Generation exhaustion seals a slot instead of wrapping. `Retired` above describes
+the most recent occupant; the existing DSIM slot `.retired` flag means permanent
+generation exhaustion. Availability is derived without adding a history table.
+
+Target observation reuses the shared definition-role guard, consumes no
+RNG and never clears/rebinds a reference. An available body corpse is not proof of
+combat permission. The Demon cannot target itself because its target must be a
+context body; the existing synthetic-body self policy is retained. Shared damage
+can retain a source on an inert body even when that source is not an admissible
+Demon target. Observation does not authorize a new autonomous relationship.
+
+Assignment/replacement validate before mutation; clearing does not resolve the
+old target. Removal is spatially immediate and thinker-deferred; duplicate marks
+are idempotent. Death preserves instance identity and does not universally clear
+targets. There is no incoming-reference sweep. A living Demon with an unavailable
+target retains the established checked-step rejection until explicit caller repair;
+roster/sound references have their own guards and are not automatically repaired.
+Dead-owner references can remain inert and observable. Each existing operation
+retains its atomicity; successful earlier operations inside a callback remain
+applied if a later operation fails.
+
+Raw handles remain store-scoped. Their equal values across worlds/restarts do not
+establish provenance; the origin of an erased/re-admitted ID cannot be recovered
+from its raw value. No persistent global context ID or cross-world transport is admitted.
+No actor/geometry limit, execution profile, registry schema or DSIM version changes.
+Real player mo/attacker ownership, general species relationships, tracer/projectile
+ownership and resurrection require separate source/capability investigations.
+The new boundary grants none of those behaviors. See [mapping](ACTOR_IDENTITIES.md#context-scoped-actor-instances),
+[investigation](M3F8_REFERENCE.md) and [qualified evidence](validation/M3F8.md).

@@ -8,6 +8,13 @@ No Rust layout, padding, pointers, addresses, timestamps, paths, or GPU state is
 encoded. Shared immutable map storage uses Arc internally; reference counts and
 addresses are excluded.
 
+M3f8's execution-scope brands and derived target availability are API observations,
+not persistent fields. V20/v21, profile/registry/context schema identifiers, stored
+target handles and event meanings remain unchanged. An inert target identity may
+remain encoded after retirement; readers must not redirect it to a reused slot.
+Decoded diagnostics do not restore a world or grant a context token. See the
+[ownership contract](COMPATIBILITY.md#context-and-target-lifetime-contract).
+
 ## Framing and field order
 
 Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d, `12` for M3d3e, `13` for M3d3f, `14` for M3d3g, `15` for M3d3h, `16` for M3d3i, `17` for M3d3j, `18` for M3f1, `19` for M3f2, `20` for M3f3, `21` for the original-ID profile),

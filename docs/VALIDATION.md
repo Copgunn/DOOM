@@ -32,6 +32,10 @@ LeakSanitizer coverage; no bounded campaign is exhaustive.
 
 ## Detailed records
 
+- [M3f8 context/target ownership](validation/M3F8.md): new compact C inputs,
+  retained references and logical retirement, independently encoded v21 captures,
+  and separately labeled lifetime-brand/generation/atomicity policy checks.
+
 - [M3f7 original-ID registry/profile and bounded diagnostics](validation/M3F7.md):
   new encoding of reused C inputs; actual runtime storage and exact ordered event
   comparisons remain distinct from metadata, digests and Rust-only reader policy.
