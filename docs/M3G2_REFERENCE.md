@@ -121,3 +121,10 @@ Generation/provenance, bounded binding, invalid-reference rejection and rollback
 remain Rust policies. Automatic player roster/Demon acquisition, physical thrust,
 PlayerThink, weapons, camera and respawn remain unsupported dependencies rather
 than silently approximated compatibility.
+
+
+Future respawn must also audit the reverse association: original old corpses can
+retain mobj.player while player.mo changes to a new body. Derivation from the sole
+mo is correct only for this nonrebindable body closure. Do not extend it to respawn
+by overwriting mo or silently detaching a still-allocated old corpse. That requires
+new source evidence and a separately reviewed ownership representation.
