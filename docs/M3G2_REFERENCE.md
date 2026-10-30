@@ -89,3 +89,17 @@ all historical source/encoder pairs and immutable fixtures, all supported toolch
 examples, fuzz builds and bounded campaigns, with disclosed sanitizer/leak limits.
 Performance uses preserved matched before/after advance workloads and separate
 new player initialization/damage/death inputs; allocation counts and RSS are distinct.
+
+## Additional source finding before runtime implementation
+
+P_LookForPlayers skips inactive slots before its stopping condition; all-inactive
+source scanning does not terminate. Existing Rust EmptyRoster is a safety policy,
+not a C-observed result. This player-body policy therefore does not admit live
+Demon AI stepping or manual AI callbacks: direct controlled damage may reference a
+live Demon between tics, but it must be explicitly killed or marked for removal
+before the shared thinker pass. Dying/corpse Demon actions are independently
+validated and remain executable. New source scenarios retire live sources before
+traversal, or use dead-but-allocated sources. No observer runs the all-inactive
+loop, no source body is patched to invent a terminating result, and no player
+roster is fabricated to conceal this dependency. Future acquisition requires
+player roster/think integration as its own gameplay milestone.
