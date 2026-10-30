@@ -489,11 +489,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         field(
             &mut fields,
             "context.schema",
-            if version == 22 {
-                crate::PLAYER_BODY_CONTEXT_SCHEMA
-            } else {
-                crate::ORIGINAL_CONTEXT_SCHEMA
-            },
+            sim.player_policy().context_schema(),
         );
     }
     field(&mut fields, "paused", [u8::from(sim.paused)]);

@@ -14,6 +14,8 @@ pub enum OriginalExecutionProfile {
     DemonNormalV1,
     /// One genuine Medium/commercial player body; no input/inflictor/roster execution.
     PlayerBodyLifecycleV1,
+    /// One grounded original player with bounded physical thrust and axis-wall motion.
+    PlayerBodyKnockbackV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -21,7 +23,22 @@ impl OriginalExecutionProfile {
         match self {
             Self::DemonNormalV1 => 1,
             Self::PlayerBodyLifecycleV1 => 2,
+            Self::PlayerBodyKnockbackV1 => 3,
         }
+    }
+    /// Exact immutable execution-context schema; not an actor-instance identity.
+    pub const fn context_schema(self) -> &'static [u8] {
+        match self {
+            Self::DemonNormalV1 => ORIGINAL_CONTEXT_SCHEMA,
+            Self::PlayerBodyLifecycleV1 => PLAYER_BODY_CONTEXT_SCHEMA,
+            Self::PlayerBodyKnockbackV1 => PLAYER_KNOCKBACK_CONTEXT_SCHEMA,
+        }
+    }
+    pub(crate) const fn has_player_body(self) -> bool {
+        matches!(
+            self,
+            Self::PlayerBodyLifecycleV1 | Self::PlayerBodyKnockbackV1
+        )
     }
 }
 /// A non-source definition supplied by the explicit execution context.
@@ -215,7 +232,8 @@ impl OriginalExecutionRegistry {
             OriginalExecutionProfile::DemonNormalV1 => {
                 demon_policy()?;
             }
-            OriginalExecutionProfile::PlayerBodyLifecycleV1 => {
+            OriginalExecutionProfile::PlayerBodyLifecycleV1
+            | OriginalExecutionProfile::PlayerBodyKnockbackV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -241,7 +259,8 @@ impl OriginalExecutionRegistry {
             OriginalExecutionProfile::DemonNormalV1 => {
                 demon_policy()?;
             }
-            OriginalExecutionProfile::PlayerBodyLifecycleV1 => {
+            OriginalExecutionProfile::PlayerBodyLifecycleV1
+            | OriginalExecutionProfile::PlayerBodyKnockbackV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -311,7 +330,7 @@ pub(crate) fn require_role_for(
     profile: OriginalExecutionProfile,
     slot: ActorTypeId,
 ) -> Result<(), OriginalRegistryError> {
-    if profile == OriginalExecutionProfile::PlayerBodyLifecycleV1 {
+    if profile.has_player_body() {
         return match identity(slot)? {
             DefinitionIdentity::Original(
                 OriginalActorType::MT_PLAYER
@@ -394,12 +413,15 @@ impl Simulation {
         context: MapContextOptions,
     ) -> Result<Self, SimError> {
         let policy = registry.profile;
-        if policy == OriginalExecutionProfile::PlayerBodyLifecycleV1
+        if policy.has_player_body()
             && (options != ActorOptions::default()
                 || map.sectors().len() != 1
                 || map.sectors().iter().any(|s| s.heights != [0, 128]))
         {
             return Err(PlayerBodyError::Unsupported.into());
+        }
+        if policy == OriginalExecutionProfile::PlayerBodyKnockbackV1 {
+            original_player::validate_grounded_geometry(&map)?;
         }
         let mut sim = Self::with_demon_expanded_profile(
             map,
@@ -409,8 +431,11 @@ impl Simulation {
             context,
             Profile::OriginalDemon,
         )?;
-        if policy == OriginalExecutionProfile::PlayerBodyLifecycleV1 {
-            sim.original_player = Some(OriginalPlayer::default());
+        if policy.has_player_body() {
+            sim.original_player = Some(original_player::PlayerRuntime {
+                source: OriginalPlayer::default(),
+                policy,
+            });
         }
         Ok(sim)
     }

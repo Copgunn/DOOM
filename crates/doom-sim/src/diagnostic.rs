@@ -268,7 +268,17 @@ impl<'a> Diagnostic<'a> {
         self.identity(ty, state).map(Some)
     }
     fn policy(&self) -> OriginalExecutionProfile {
-        if self.version == 22 {
+        if self.version == 22
+            && self.field("profile")
+                == Some(
+                    OriginalExecutionProfile::PlayerBodyKnockbackV1
+                        .wire_id()
+                        .to_le_bytes()
+                        .as_slice(),
+                )
+        {
+            OriginalExecutionProfile::PlayerBodyKnockbackV1
+        } else if self.version == 22 {
             OriginalExecutionProfile::PlayerBodyLifecycleV1
         } else {
             OriginalExecutionProfile::DemonNormalV1
@@ -283,12 +293,7 @@ impl<'a> Diagnostic<'a> {
         if matches!(self.version, 21 | 22) {
             if profile != self.policy().wire_id()
                 || self.required("registry.schema")? != ORIGINAL_REGISTRY_SCHEMA
-                || self.required("context.schema")?
-                    != if self.version == 22 {
-                        PLAYER_BODY_CONTEXT_SCHEMA
-                    } else {
-                        ORIGINAL_CONTEXT_SCHEMA
-                    }
+                || self.required("context.schema")? != self.policy().context_schema()
                 || self
                     .fields
                     .iter()

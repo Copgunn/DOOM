@@ -4,6 +4,24 @@ use std::{error::Error, fmt};
 
 /// Fixed settings/ownership contract, separate from the historical unbound body.
 pub const PLAYER_BODY_CONTEXT_SCHEMA: &[u8] = b"PLAYER-BODY-1-MEDIUM-NOTHRUST-v1";
+/// Same DSIM22 field layout, explicitly selected grounded physical execution.
+pub const PLAYER_KNOCKBACK_CONTEXT_SCHEMA: &[u8] = b"PLAYER-BODY-1-MEDIUM-GROUNDED-v1";
+// doomdata.h / p_mobj.c / p_inter.c. Raw fixed-point admission proof, not clamps.
+const ML_BLOCKING: u16 = 1;
+const MAX_MOVE_BITS: u32 = 30 * 65536;
+const THRUST_FRACTION: i32 = 65536 >> 3;
+const THRUST_MASS_SCALE: i32 = 100;
+// tables.h ANGLETOFINESHIFT and finecosine=finesine+FINEANGLES/4.
+const ANGLE_TO_FINE_SHIFT: u32 = 19;
+const FINE_COSINE_OFFSET: usize = 8192 / 4;
+// The conservative axis/friction proof is derived in M3G3_REFERENCE.md.
+const TRAVEL_NUMERATOR: i64 = 160;
+const TRAVEL_DENOMINATOR: i64 = 3;
+const MF_NOCLIP: u32 = 0x1000;
+const MF_MISSILE: u32 = 0x10000;
+const MF_SKULLFLY: u32 = 0x1000000;
+const MF_FLOAT: u32 = 0x4000;
+const MF_NOGRAVITY: u32 = 0x200;
 // p_mobj.h. These describe source behavior, not storage availability.
 pub(crate) const MF_SOLID: u32 = 0x2;
 pub(crate) const MF_SHOOTABLE: u32 = 0x4;
@@ -73,6 +91,24 @@ impl Default for OriginalPlayer {
         }
     }
 }
+// Store the selected capability once beside source state. ActorLife remains the
+// sole actor definition/state storage; this is not a second player/actor owner.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct PlayerRuntime {
+    pub source: OriginalPlayer,
+    pub policy: OriginalExecutionProfile,
+}
+impl std::ops::Deref for PlayerRuntime {
+    type Target = OriginalPlayer;
+    fn deref(&self) -> &Self::Target {
+        &self.source
+    }
+}
+impl std::ops::DerefMut for PlayerRuntime {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.source
+    }
+}
 /// Checked ownership/settings/behavior rejection, before authoritative mutation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PlayerBodyError {
@@ -82,7 +118,7 @@ pub enum PlayerBodyError {
     Slot,
     /// Missing/stale/pending, wrong definition, duplicate or noninitial binding.
     Binding,
-    /// Unsupported controls, inflictor, AI, settings or direct state mutation.
+    /// Unsupported controls, physical domain, AI, settings or direct state mutation.
     Unsupported,
     /// Player/body health, state, physics or ownership invariant is inconsistent.
     Invariant,
@@ -138,17 +174,30 @@ impl Simulation {
         Self::with_original_registry(map, limit, registry, ActorOptions::default(), context)
             .map_err(Into::into)
     }
+    /// Opt-in grounded physical player body, sharing damage, movement and thinkers.
+    /// Static flat axis walls, zero commands and checked future travel only.
+    pub fn original_player_knockback_map(
+        map: Map,
+        limit: u32,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        let registry =
+            OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerBodyKnockbackV1)?;
+        Self::with_original_registry(map, limit, registry, ActorOptions::default(), context)
+            .map_err(Into::into)
+    }
     /// Explicit original-ID policy; the legacy Profile enum denotes the service family.
     pub fn original_execution_profile(&self) -> Option<OriginalExecutionProfile> {
-        (self.profile == Profile::OriginalDemon).then_some(if self.original_player.is_some() {
-            OriginalExecutionProfile::PlayerBodyLifecycleV1
-        } else {
-            OriginalExecutionProfile::DemonNormalV1
-        })
+        (self.profile == Profile::OriginalDemon).then_some(
+            self.original_player
+                .map_or(OriginalExecutionProfile::DemonNormalV1, |p| p.policy),
+        )
     }
     /// Read source player fields without resolving, clearing or rebinding references.
     pub fn original_player(&self, _slot: PlayerSlot) -> Result<OriginalPlayer, PlayerBodyError> {
-        self.original_player.ok_or(PlayerBodyError::Profile)
+        self.original_player
+            .map(|p| p.source)
+            .ok_or(PlayerBodyError::Profile)
     }
     pub(crate) fn owns_player_body(&self, id: ActorId) -> bool {
         self.original_player.is_some_and(|p| p.mo == Some(id))
@@ -260,12 +309,23 @@ impl Simulation {
                             OriginalActorType::MT_PLAYER.descriptor().height
                                 >> if l.health > 0 { 0 } else { 2 },
                         )
-                    || a.momentum() != [Fixed::ZERO; 2]
+                    || if p.policy == OriginalExecutionProfile::PlayerBodyKnockbackV1 {
+                        travel_bounds(a.position(), a.momentum()).is_err()
+                            || l.flags
+                                & (MF_NOCLIP | MF_MISSILE | MF_SKULLFLY | MF_FLOAT | MF_NOGRAVITY)
+                                != 0
+                    } else {
+                        a.momentum() != [Fixed::ZERO; 2]
+                    }
                     || a.momz != Fixed::ZERO
                     || a.z != a.floor
                 {
                     return Err(PlayerBodyError::Invariant.into());
                 }
+            } else if p.policy == OriginalExecutionProfile::PlayerBodyKnockbackV1
+                && a.momentum() != [Fixed::ZERO; 2]
+            {
+                return Err(PlayerBodyError::Unsupported.into());
             } else if stepping && l.actor_type == original_registry::owner_slot() && l.health > 0 {
                 // Original all-inactive LookForPlayers does not terminate. Do not
                 // replace it with unobserved player AI in this explicit policy.
@@ -278,9 +338,18 @@ impl Simulation {
         let Some(p) = self.original_player else {
             return Ok(());
         };
+        if p.policy == OriginalExecutionProfile::PlayerBodyKnockbackV1
+            && request.inflictor.is_some()
+            && !self.owns_player_body(request.target)
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         if self.owns_player_body(request.target) {
-            if request.inflictor.is_some() {
-                return Err(PlayerBodyError::Unsupported.into());
+            if let Some(inflictor) = request.inflictor {
+                if p.policy != OriginalExecutionProfile::PlayerBodyKnockbackV1 {
+                    return Err(PlayerBodyError::Unsupported.into());
+                }
+                self.preflight_player_thrust(request, inflictor)?;
             }
             if let Some(l) = self.actor(request.target).and_then(Actor::life) {
                 if l.health > 0
@@ -304,6 +373,123 @@ impl Simulation {
     }
 }
 
+/// Conservative forward invariant from the source axis-wall/friction proof.
+/// Wider temporaries validate support; actual gameplay still uses source Fixed.
+fn travel_bounds(position: [Fixed; 2], momentum: [Fixed; 2]) -> Result<(), PlayerBodyError> {
+    let maximum = momentum
+        .into_iter()
+        .map(|m| m.bits().unsigned_abs())
+        .max()
+        .unwrap_or(0);
+    if maximum > MAX_MOVE_BITS {
+        return Err(PlayerBodyError::Unsupported);
+    }
+    let travel =
+        (TRAVEL_NUMERATOR * i64::from(maximum) + TRAVEL_DENOMINATOR - 1) / TRAVEL_DENOMINATOR;
+    let limit = i64::from(PLAYER_BODY_COORDINATE_LIMIT) * 65536;
+    if position
+        .into_iter()
+        .any(|p| i64::from(p.bits()).abs() + travel > limit)
+    {
+        return Err(PlayerBodyError::Unsupported);
+    }
+    Ok(())
+}
+pub(crate) fn validate_grounded_geometry(map: &Map) -> Result<(), SimError> {
+    for line in map.linedefs() {
+        let [a, b] = line.vertices.map(usize::from);
+        let from = map.vertices().get(a).ok_or(PlayerBodyError::Unsupported)?;
+        let to = map.vertices().get(b).ok_or(PlayerBodyError::Unsupported)?;
+        if line.sides[1].is_some()
+            || line.flags != ML_BLOCKING
+            || (from.x != to.x && from.y != to.y)
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
+    }
+    Ok(())
+}
+impl Simulation {
+    fn preflight_player_thrust(
+        &self,
+        request: DamageRequest,
+        inflictor: ActorId,
+    ) -> Result<(), SimError> {
+        if !(0..=1000).contains(&request.amount) {
+            return Err(CombatError::Damage.into());
+        }
+        let target = self.actor(request.target).ok_or(CombatError::Reference)?;
+        let origin = self.actor(inflictor).ok_or(CombatError::Reference)?;
+        if self.actors.is_pending(inflictor) != Some(false) {
+            return Err(CombatError::Reference.into());
+        }
+        let original = origin.life().ok_or(PlayerBodyError::Unsupported)?;
+        if ![
+            OriginalActorType::MT_PLAYER.ordinal(),
+            OriginalActorType::MT_SERGEANT.ordinal(),
+        ]
+        .contains(&original.actor_type.0)
+            || origin.z() != Fixed::ZERO
+            || origin.vertical_momentum() != Fixed::ZERO
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
+        let life = target.life().ok_or(PlayerBodyError::Invariant)?;
+        if life.health <= 0 || life.flags & MF_SHOOTABLE == 0 {
+            return Ok(());
+        }
+        if life.actor_type.0 != OriginalActorType::MT_PLAYER.ordinal()
+            || target.z() != Fixed::ZERO
+            || target.vertical_momentum() != Fixed::ZERO
+        {
+            return Err(PlayerBodyError::Invariant.into());
+        }
+        // A physical hit cannot repair live, unlisted Demon AI. Require the
+        // already admitted thinker closure before committing new momentum.
+        self.preflight_player_body(true)?;
+        let mass = OriginalActorType::MT_PLAYER.descriptor().mass;
+        let thrust = request
+            .amount
+            .checked_mul(THRUST_FRACTION)
+            .and_then(|n| n.checked_mul(THRUST_MASS_SCALE))
+            .and_then(|n| n.checked_div(mass))
+            .ok_or(CombatError::Metadata)?;
+        let mut delta = [Fixed::ZERO; 2];
+        for (axis, d) in delta.iter_mut().enumerate() {
+            *d = Fixed::from_bits(
+                target.position()[axis]
+                    .bits()
+                    .checked_sub(origin.position()[axis].bits())
+                    .ok_or(CombatError::Coordinates)?,
+            );
+            d.bits().checked_abs().ok_or(CombatError::Coordinates)?;
+        }
+        let angle = movement::point_angle(delta);
+        let phase =
+            usize::try_from(angle >> ANGLE_TO_FINE_SHIFT).map_err(|_| CombatError::Coordinates)?;
+        let cosine = *FINE_SINE
+            .get(phase + FINE_COSINE_OFFSET)
+            .ok_or(CombatError::Coordinates)?;
+        let sine = *FINE_SINE.get(phase).ok_or(CombatError::Coordinates)?;
+        let mut momentum = target.momentum();
+        for (axis, component) in [cosine, sine].into_iter().enumerate() {
+            let impulse = Fixed::from_bits(thrust) * Fixed::from_bits(component);
+            momentum[axis] = Fixed::from_bits(
+                momentum[axis]
+                    .bits()
+                    .checked_add(impulse.bits())
+                    .ok_or(CombatError::Coordinates)?,
+            );
+        }
+        travel_bounds(target.position(), momentum)?;
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 #[path = "original_player_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "original_player_knockback_tests.rs"]
+mod knockback_tests;

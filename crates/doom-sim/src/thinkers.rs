@@ -46,6 +46,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                 events.push(Event::Think(id));
                 let mut actor = *context.get(id).expect("live thinker handle");
                 let had_xy_momentum = actor.momentum().iter().any(|m| *m != Fixed::ZERO);
+                let source_player = player.as_ref().is_some_and(|p| p.mo == Some(id));
                 if profile == Profile::Foundation {
                     events.extend(
                         world
@@ -54,10 +55,14 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                             .map(|attempt| Event::Movement { actor: id, attempt }),
                     );
                 } else {
-                    let command = bindings
-                        .iter()
-                        .position(|binding| *binding == Some(id))
-                        .map(|slot| commands[slot]);
+                    let command = if source_player {
+                        Some(TicCommand::default())
+                    } else {
+                        bindings
+                            .iter()
+                            .position(|binding| *binding == Some(id))
+                            .map(|slot| commands[slot])
+                    };
                     let motion = if profile.uses_sectors() {
                         movement::move_xy_multisector(
                             world,
@@ -90,14 +95,17 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                         });
                     }
                 }
-                if profile == Profile::PlayerWeapons
+                if (profile == Profile::PlayerWeapons || source_player)
                     && had_xy_momentum
                     && actor.z <= actor.floor
                     && actor.momentum() == [Fixed::ZERO; 2]
-                    && bindings
-                        .iter()
-                        .position(|b| *b == Some(id))
-                        .is_some_and(|slot| commands[slot].forward == 0 && commands[slot].side == 0)
+                    && (source_player
+                        || bindings
+                            .iter()
+                            .position(|b| *b == Some(id))
+                            .is_some_and(|slot| {
+                                commands[slot].forward == 0 && commands[slot].side == 0
+                            }))
                 {
                     let run = lifecycle::source_state_id("S_PLAY_RUN1").unwrap().0;
                     if actor

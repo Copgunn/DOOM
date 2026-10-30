@@ -64,30 +64,30 @@ Earlier findings and milestones are retained in the [historical records](validat
 
 ## Next
 
-### M3g2: Original MT_PLAYER body, ownership, damage and death
+### M3g3: Bounded original-player knockback and grounded movement
 
-The implementation admits one genuine canonical player body through existing
-ownership/provenance and shared combat/stepping. Direct source damage, separate
-player/mobj health, pain, normal/extreme death, frags and allocated corpses have
-new independent C observations. It stops at owner review; exact review/CI state
-belongs to GitHub. See [investigation](M3G2_REFERENCE.md),
-[supported inputs](COMPATIBILITY.md#original-player-body-lifecycle) and
-[observations](validation/M3G2.md).
+The implementation adds opt-in physical damage, deterministic XY momentum,
+friction, bounded axis-wall sliding and moving corpses through shared services.
+Its source observations and independent diagnostics preserve the older stationary
+body policy. It stops at owner review; exact review/CI state belongs to GitHub.
+See [investigation](M3G3_REFERENCE.md), [supported inputs](COMPATIBILITY.md#original-player-grounded-knockback)
+and [observations](validation/M3G3.md).
 
-M3g1 diagnostic-free stepping is merged. Its [audit](M3G1_REFERENCE.md) and
-[observations](validation/M3G1.md) remain historical references; both APIs still
-use one transactional core with optional explicit snapshots.
+M3g2 original player ownership/damage/death is merged; its
+[investigation](M3G2_REFERENCE.md) and [observations](validation/M3G2.md) remain
+historical references. M3g1 diagnostic-free stepping is merged; its
+[audit](M3G1_REFERENCE.md) and [observations](validation/M3G1.md) remain unchanged.
+Both stepping APIs still use one transactional gameplay core.
 
 ### Next narrow gameplay milestone
 
-Investigate bounded grounded original-player knockback through the shared XY/Z
-services, with independent fixed-point movement/friction/collision evidence and
-explicit unsupported geometry. Then investigate source player thinker/roster
-participation separately; require command/health synchronization and Demon
-acquisition evidence before automatic targeting. Keep death camera, weapons and
-respawn out until their dependencies are independently executable and tested. The all-inactive source
-player scan does not terminate; a real roster is a gameplay prerequisite, not a
-fixture flag to bypass. Preserve the existing body-only policy and diagnostics.
+Investigate bounded canonical player command movement through original P_MovePlayer
+and shared grounded services, with independently observed command/reaction-time/
+state-entry ordering. Resolve the relevant PlayerThink dependencies explicitly;
+do not infer full PlayerThink, view/camera, weapons or respawn compatibility from
+movement alone. Active roster and automatic Demon acquisition require their own
+source-validated player-thinker/roster boundary: the all-inactive source scan does
+not terminate. Preserve both existing player policies and diagnostic schemas.
 
 ### Focused maintenance acceptance criteria
 

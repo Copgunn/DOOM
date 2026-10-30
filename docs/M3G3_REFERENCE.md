@@ -112,3 +112,10 @@ P_LoadThings/P_SpawnMapThing in C and the existing original map-spawn API in Rus
 Include their actual spawnpoint, initial timer, RNG and available-kill observations.
 The player remains a genuine bound raw MT_PLAYER body, as in M3g2. Revise only new
 unreviewed M3g3 inputs and their C-derived outputs; preserve historical bytes.
+
+Physical hits additionally require an already executable thinker closure: live
+unlisted Demons must be killed or retired before the hit, rather than committing
+momentum into an AI-blocked next tic. This is Rust admission policy, not a claim
+that original P_DamageMobj rejects live origins. Existing no-inflictor controlled
+source operations retain their M3g2 boundaries. No new per-tic nonplayer scan is
+introduced for profiles without a genuine player body.

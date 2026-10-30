@@ -559,3 +559,41 @@ process samples/RSS and separate allocation-process samples, controls and outlie
 No hard shared-host time gates, zero-allocation inference or leak-coverage claim.
 See [scope](COMPATIBILITY.md#original-player-body-lifecycle),
 [source investigation](M3G2_REFERENCE.md) and [results](validation/M3G2.md).
+
+## Grounded original-player knockback
+
+Run the new observers alongside every historical pair and M3g2 command:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g3_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3g3_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3g3_reference --test m3g3_policy --locked
+cargo run -p doom-sim --example player_knockback --locked
+python3 tools/reference/check_player_knockback.py
+python3 tools/measure_player_knockback.py
+```
+
+The genuine source observer retains map-THING spawning for Demon origins,
+source association for one player body, eligible thrust and actual subsequent
+XY/friction/axis-slide execution. Its manifest separates compiled inventory from
+actual entry counts and new inputs from inherited bodies. The independent encoder
+compares selected complete states and every frame's ordered event payloads without
+Rust-generated expectations. Rust-only policy tests cover handles/provenance,
+geometry/arithmetic rejection, rollback and both stepping APIs. See
+[source findings](M3G3_REFERENCE.md), [support](COMPATIBILITY.md#original-player-grounded-knockback)
+and [observed results](validation/M3G3.md).
+
+After building all fuzz targets, use a fresh development corpus:
+
+```sh
+python3 tools/seed_knockback_fuzz.py fuzz/corpus/player_knockback
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_knockback fuzz/corpus/player_knockback --sanitizer address -- -runs=4096 -max_len=129 -seed=1 -timeout=20 -rss_limit_mb=2048
+```
+
+Also execute relevant unchanged player/stepping/provenance targets; building them
+is not an executed campaign. Leak detection is disabled in the command above and
+provides no LeakSanitizer evidence. Keep corpus/artifacts outside tracked fixtures.
+The host measurement tool uses three independent timing/RSS processes and separate
+allocation probes per workload/mode. Construction is distinct from100 updates;
+new physical workloads have no executable baseline equivalent. Retain unchanged
+historical tools and matched old-player workloads for before/after comparisons.

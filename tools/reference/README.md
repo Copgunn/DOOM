@@ -278,3 +278,16 @@ limiting new reference growth. No old output/helper/tool bytes change.
 [evidence record](../../docs/validation/M3G2.md) and
 [reproduction commands](../../docs/TESTING.md#original-player-body-validation)
 separate C behavior, encoding and Rust safety policy.
+
+## Original-player physical knockback
+
+`m3g3_reference.py` extends the frozen source extraction runner with actual original
+slide bodies and bounded map-spawned origins; it never reads Rust outputs. New
+C trace/case/provenance files retain selected physical captures and every compared
+damage/movement/state/RNG event. Uncompared auxiliary path-trace instrumentation is
+omitted. `m3g3_snapshot_goldens.py` uses reusable `player_snapshot.py` to encode
+DSIM22 policy3, selected full fixtures and separately versioned PBE1 compact event
+frames. Historical tools/fixtures remain unchanged. Commands belong in
+[TESTING](../../docs/TESTING.md#grounded-original-player-knockback), source/adapters in
+[the investigation](../../docs/M3G3_REFERENCE.md), and observed counts/limitations in
+[the engineering record](../../docs/validation/M3G3.md).

@@ -361,3 +361,28 @@ C quarantine/opaque-pointer observations and Rust generation safety are distinct
 Unsupported physical inflictors, player inputs and live Demon AI reject before
 execution. The fixed unlisted context avoids pretending that PlayerThink, a roster,
 weapon lowering animation or a death camera is implemented.
+
+## Grounded original-player physical execution
+
+The [knockback policy](COMPATIBILITY.md#original-player-grounded-knockback) reuses
+the same body, shared damage service, XY/Z movement and thinker pass. A private
+PlayerRuntime stores the immutable selected capability once beside OriginalPlayer
+source fields. Public player observations are unchanged; ActorLife remains the
+sole definition/state storage. There is no extra per-actor identity or owner.
+Historical stationary policy remains independently selected.
+
+Physical input validates source/inflictor independently and proves checked source
+impulse accumulation plus a forward coordinate envelope before mutation. Actual
+thrust still executes in LifeHost::apply_damage before player/mobj health changes.
+The bounded actor/player/spatial/RNG/statistics/event plan preserves late-error
+rollback. The proof uses wider temporaries for rejection, not wider gameplay
+arithmetic or an alternative physics predictor.
+
+Exact player/mo association supplies a zero command to the existing player slide
+branch, independently of historical command bindings. The existing stop-state
+hook handles RUN-to-PLAY before countdown. Grounded z/momz keep player view/landing
+branches outside execution. Flat axis-wall restrictions make the conservative
+travel proof forward invariant; unsupported geometry and direct XY control reject.
+Map-spawned Demon origins retain their original admission, spawn RNG and statistics.
+Physical hits require an already executable dying/corpse thinker closure; no active
+player roster or automatic Demon AI is added. See [source/design](M3G3_REFERENCE.md).

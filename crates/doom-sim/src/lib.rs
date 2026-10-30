@@ -33,8 +33,8 @@ pub use execution_context::{ContextActor, ContextError, ExecutionContext, Target
 pub use game_instance::{GameInstance, InstanceActorRef, InstanceId, ProvenanceError};
 pub use native_demon::{NativeDemonState, NativeDemonType};
 pub use original_player::{
-    OriginalPlayer, PLAYER_BODY_CONTEXT_SCHEMA, PlayerBodyError, PlayerBodyEvent, PlayerBodyState,
-    PlayerSlot,
+    OriginalPlayer, PLAYER_BODY_CONTEXT_SCHEMA, PLAYER_KNOCKBACK_CONTEXT_SCHEMA, PlayerBodyError,
+    PlayerBodyEvent, PlayerBodyState, PlayerSlot,
 };
 pub use original_registry::{
     ContextRole, DefinitionIdentity, ORIGINAL_CONTEXT_SCHEMA, ORIGINAL_REGISTRY_SCHEMA,
@@ -429,7 +429,7 @@ pub struct Simulation {
     pub(crate) perception_players: [PerceptionPlayer; 4],
     pub(crate) registry: Option<Arc<ActorRegistry>>,
     pub(crate) weapon_player: Option<WeaponPlayer>,
-    pub(crate) original_player: Option<OriginalPlayer>,
+    pub(crate) original_player: Option<original_player::PlayerRuntime>,
     pub(crate) sound_targets: Vec<Option<ActorId>>,
     pub(crate) actor_options: ActorOptions,
     pub(crate) statistics: Option<LevelStatistics>,
@@ -868,7 +868,9 @@ impl Simulation {
     }
     /// Changes explicit momentum between tics; next update clamps it like the reference.
     pub fn set_momentum(&mut self, id: ActorId, momentum: [Fixed; 2]) -> Result<(), SimError> {
-        if self.owns_player_body(id) {
+        if self.owns_player_body(id)
+            || self.player_policy() == OriginalExecutionProfile::PlayerBodyKnockbackV1
+        {
             return Err(PlayerBodyError::Unsupported.into());
         }
         if self.profile.uses_checked_demons() {
