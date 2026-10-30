@@ -56,7 +56,7 @@ pub struct OriginalPlayer {
     pub attacker: Option<ActorId>,
     /// Source damagecount, capped100; no PlayerThink decay in this body-only policy.
     pub damage_count: i32,
-    /// Source frags[0]; other player slots are unavailable.
+    /// Source `frags[0]`; other player slots are unavailable.
     pub frags: i32,
 }
 impl Default for OriginalPlayer {
@@ -118,7 +118,7 @@ pub enum PlayerBodyEvent {
     /// PST_DEAD/MF_SOLID clearing and P_DropWeapon's lowering request, before
     /// body death-state entry. Psprite animation is explicitly not executed.
     Died {
-        /// Source frags[0].
+        /// Source `frags[0]`.
         frags: i32,
         /// Original requested pistol-down state, not an executable mobj state.
         weapon_down: OriginalState,

@@ -53,6 +53,7 @@ fn apply(sim: &mut Simulation, bytes: &[u8], snapshot: bool) -> Result<(), SimEr
                 SpawnHeight::Floor,
             )
             .map(|_| ()),
+        5 if bytes[4] & 1 != 0 => sim.face_target(candidate),
         5 => sim.enter_actor_state(candidate, StateId(u16::from_le_bytes([bytes[4], bytes[5]]))),
         6 => sim.set_momentum(
             candidate,
