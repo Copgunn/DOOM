@@ -39,7 +39,7 @@ for c in CASES:
  m=geometry.fixture(n=1,count=5 if c['wall'] else 4,blockers=bool(c['wall']))
  
  if c['wall']==1:m['vertices'][4:6]=[(16,y)for x,y in m['vertices'][4:6]]
- m['vertices']=[(7*x,14*y)for x,y in m['vertices']];m['lumps']['VERTEXES']=b''.join(geometry.old.words(v)for v in m['vertices']);m['range']=(-896,896);m['center']=(0,0)
+ m['vertices']=[(6*x,12*y)for x,y in m['vertices']];m['lumps']['VERTEXES']=b''.join(geometry.old.words(v)for v in m['vertices']);m['range']=(-768,768);m['center']=(0,0)
  m=extent.grid(m,(-1024,-1024),16,16)
  things=[] if not c['thing']else[(c['dx'],c['dy'],c['thing_angle'],3002,15 if c['thing']==2 else 7)]
  main.case(c['label'],n=1,custom=m,things=things,tics=c['tics'],rejected=bool(c['rejected']),**{'pc_'+k:v for k,v in c.items()if k not in ['label','tics']});c['map']=main.CASES[-1]['map']
@@ -152,7 +152,7 @@ def run(check, overflow, address):
             'Same 76 compiled source bodies as M3g4: zero additions and zero globally new bodies. Function entries count actual scenarios, not branch coverage. Negative turns retain declared unsigned-bit interpretation; literal nonnegative cases and separate intentional UB probe remain qualified.',
             'One source player0, Medium/commercial, grounded static axis walls, no sector sound target or automatic melee. Cases stop before source melee. Controlled between-tic damage/target/state/retirement operations are explicit driver setup, not normal input gameplay.',
             'Source thinker order is Demon before player when present; commands change angle/momentum before thinkers, not player XY before the earlier Demon. Single sgtsit wake sound takes no random draw; shared subsequent chase can draw RNG.',
-            'All per-tic PM/UC/DM and decision/event rows retained; selected full actor/player/roster/statistics captures overlap those fields and are counted separately. Original x=0 horizontal sight quirk is distinct from actually blocked x=112 wall. Birth/generation reuse projection is independently specified Rust schema policy, not C allocator identity.',
+            'All per-tic PM/UC/DM and decision/event rows retained; selected full actor/player/roster/statistics captures overlap those fields and are counted separately. Original x=0 horizontal sight quirk is distinct from actually blocked x=96 wall. Birth/generation reuse projection is independently specified Rust schema policy, not C allocator identity.',
             'Demon retirement uses the inherited deferred-removal/quarantine adapter. No freed C pointer is dereferenced; the active player body is never retired. Stale/foreign/body-removal rejection remains Rust policy, not source gameplay. No Rust observations generate expected values.'],
         outputs_sha256={p:hashlib.sha256(b).hexdigest() for p,b in outputs.items()})
     outputs['tests/reference/m3g5_provenance.json'] = (json.dumps(provenance, indent=2, sort_keys=True)+'\n').encode()

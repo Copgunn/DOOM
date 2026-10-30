@@ -98,3 +98,12 @@ player health, pain/death/frags, late RNG and whole-operation rollback. It shoul
 extend shared combat services rather than introduce a parallel player-versus-monster
 engine. Existing panic paths, unnamed flags, evidence growth and transaction costs
 remain measurable maintenance priorities, not authorization for a broad refactor.
+
+## Input-admission correction
+
+The first source-only draft used outer walls of length1792, exceeding the existing
+1536 line-norm proof. Rust correctly rejected construction before gameplay. The
+new synthetic room was reduced to ±768 (line norm1536); its actual blocking wall
+is x=96, with x=0 retained as a separate source quirk. Only the new M3g5 input
+fixtures/observations were regenerated from compiled C. No runtime bound or
+historical source, tool, fixture or expectation changed.
