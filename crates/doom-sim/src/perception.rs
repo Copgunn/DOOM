@@ -97,14 +97,17 @@ impl Simulation {
     }
 }
 
-/// Perception-only player record; activity, health and actor identity are distinct.
+/// Source roster view; activity, health and actor identity are distinct.
+/// Historical profiles register fixtures; the genuine-player policy derives this
+/// view from its existing canonical owner instead of maintaining a second record.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct PerceptionPlayer {
     /// Corresponds to `playeringame[slot]`, not a network connection.
     pub active: bool,
     /// Source player.health used by scanning, independent of mobj health.
     pub health: i32,
-    /// A stable admitted unbound pawn/fixture; inactive records may retain old IDs.
+    /// Generational body identity, subject to the selected role/lifetime contract.
+    /// Inactive historical records may retain old IDs.
     pub actor: Option<ActorId>,
 }
 /// Source perception decisions, in the order actually evaluated.

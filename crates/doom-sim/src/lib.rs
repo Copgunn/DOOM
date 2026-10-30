@@ -897,6 +897,7 @@ impl Simulation {
         Ok(())
     }
     /// Marks removal and unbinds input slots immediately. Storage retires at traversal.
+    /// The fixed-active capability rejects removal of its owned player body.
     pub fn mark_remove(&mut self, id: ActorId) -> Result<(), SimError> {
         if self.uses_active_player_roster() && self.owns_player_body(id) {
             return Err(PlayerBodyError::Unsupported.into());

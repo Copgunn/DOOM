@@ -527,7 +527,7 @@
     "tools/reference/m3g2_reference.py": "5a86885c69bdca9f8793b5ff2dcf90ad5f2c4b19dafbe6fea9cef551eb3460de",
     "tools/reference/m3g3_reference.py": "cf14cc4e7cdb7223f7d8cc4d6032fa510da669722d8b4765908adb5d58074ae4",
     "tools/reference/m3g4_reference.py": "6b3502782f7f06779c78df155515b863d5496aa93fe0cd2c03686f7e0e131634",
-    "tools/reference/m3g5_reference.py": "2ba31c9b6095f0e54df9b43031a78230872720f17620f1d84ee69889c14555f3"
+    "tools/reference/m3g5_reference.py": "cb70567ac17ecff89c21286dd6bd90b838a206c7c2abfab8c74ea83ecc7f22d6"
   },
   "inventory": {
     "actor_fields": 19032,

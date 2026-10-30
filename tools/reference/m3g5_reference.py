@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT/'tools/reference'))
 import m3g4_reference as commands
 main,legacy,geometry,extent=commands.main,commands.legacy,commands.main.geometry,commands.main.extent
+SCHEMA = 'DOOM-PLAYER-DEMON-v1'
 CASES=[]
 def case(label,tics=64,**kw):
  c=dict(label=label,tics=tics,forward=0,side=0,turn=0,move_hold=0,turn_hold=0,px=256,py=0,reaction=0,thing=1,pre_damage=0,hit_at=-1,hit_amount=0,physical=0,dx=-512,dy=0,thing_angle=0,seed=0,threshold=0,clear_at=-1,retire_at=-1,puff_at=-1,existing=0,see=0,wall=0,rejected=0);c.update(kw);CASES.append(c)
@@ -137,7 +138,7 @@ def run(check, overflow, address):
     outputs['tests/reference/m3g5_maps.rs'] = ('// Public synthetic source inputs; GPL-2.0-only.\npub const MAP_BYTES: &[&[u8]] = &[\n'+
         ''.join(f'    include_bytes!("{Path(p).name}"),\n' for p in maps)+'];\n').encode()
     hashes = {f+':'+n:hashlib.sha256(commands.player._original_body(f,n,r).encode()).hexdigest() for f,n,r in manifest['functions']}
-    for k, v in json.loads((ROOT/'tests/reference/m3g3_provenance.json').read_text())['function_sha256'].items():
+    for k, v in json.loads((ROOT/'tests/reference/m3g4_provenance.json').read_text())['function_sha256'].items():
         assert hashes[k] == v, k
     provenance = dict(schema='DOOM-PLAYER-DEMON-v1', revision=manifest['revision'], flags=flags, inventory=inventory, maps=maps,
         source_sha256={**manifest['source_sha256'], **{f:hashlib.sha256((legacy.SOURCE/f).read_bytes()).hexdigest() for f in ['p_user.c','d_ticcmd.h','d_player.h','g_game.c','p_tick.c','p_sight.c']}},
@@ -159,7 +160,7 @@ def run(check, overflow, address):
     for path, data in outputs.items():
         if check: assert (ROOT/path).read_bytes() == data, path
         else: (ROOT/path).write_bytes(data)
-    print(f'{"Checked" if check else "Generated"} {'DOOM-PLAYER-DEMON-v1'}: {inventory}; strict={overflow}; ASan/UBSan={address}; bytes={sum(map(len, outputs.values()))}')
+    print(f'{"Checked" if check else "Generated"} {SCHEMA}: {inventory}; strict={overflow}; ASan/UBSan={address}; bytes={sum(map(len, outputs.values()))}')
 
 
 if __name__ == '__main__':
