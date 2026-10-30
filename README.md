@@ -34,11 +34,11 @@ See [compatibility](docs/COMPATIBILITY.md) for the exact boundary.
 A separate opt-in policy now executes one genuine original MT_PLAYER body with
 checked player/mo ownership, direct damage, pain, death and retained corpses.
 It shares the actor owner and combat/stepping core; synthetic bodies remain
-separate. The stationary lifecycle policy remains available. A separate opt-in policy adds
-source-validated command turning/thrust, reaction-time delays, physical knockback,
-grounded friction and bounded axis-wall
-sliding through the shared movement services. Controls, weapons, automatic
-monster targeting and respawn remain excluded. See the
+separate. Explicit capabilities add physical knockback and grounded collision,
+then command turning/thrust and reaction-time delays through the same movement
+services. The older lifecycle and knockback policies remain available. Full player
+thinker/view processing, weapons, automatic monster targeting and respawn remain
+excluded. See the
 [player contract](docs/COMPATIBILITY.md#original-player-body-lifecycle) and
 [command movement boundary](docs/COMPATIBILITY.md#original-player-command-movement).
 

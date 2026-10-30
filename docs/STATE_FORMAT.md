@@ -1073,7 +1073,7 @@ represent every required observable; no version 23 or new event tag is necessary
 
 Policy 2 must pair with `PLAYER-BODY-1-MEDIUM-NOTHRUST-v1`, and policy 3 with the
 new grounded schema. Mixed/unknown pairs reject. `Diagnostic::decode_player`
-explicitly validates both v22 capabilities; the historical v20/v21 decode entry
+explicitly validates these two policy/context pairs; the historical v20/v21 decode entry
 point still rejects v22. Neither old context definitions nor native identities are
 reinterpreted. Existing policy 2 full bytes remain immutable.
 
