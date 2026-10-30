@@ -1,0 +1,5285 @@
+{
+  "after": {
+    "historical": {
+      "measure_canonical_demon": {
+        "host": "Linux x86_64",
+        "medians": {
+          "enter100_us": 16412,
+          "max_rss_kib": 2908,
+          "parse100_us": 172,
+          "prepare100_us": 30080,
+          "query1000_us": 292,
+          "snapshot_bytes": 87940,
+          "spawn100_us": 488,
+          "step100_with_query_us": 13763
+        },
+        "method": "New canonical_api_small workload, no pre-M3f5 API baseline. Three separate release processes. 100 parses/constructors/typed batches timed separately; 100 direct canonical ATK2 entries each in a fresh same-input setup, target/roster installation outside timers; 1000 complete binding/definition queries; 100 existing script updates each preceded by a canonical identity query, including snapshots. Native wait4 peak RSS covers process/allocator overhead. Not directly comparable with old workloads that omit these queries, no isolated CPU/frequency control, no performance threshold.",
+        "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+        "samples": [
+          {
+            "enter100_us": 16412,
+            "max_rss_kib": 2844,
+            "output": "workload=canonical_api_small parse100_us=170 prepare100_us=30006 spawn100_us=467 enter100_us=16412 query1000_us=276 step100_with_query_us=13763 snapshot_bytes=87940",
+            "parse100_us": 170,
+            "prepare100_us": 30006,
+            "query1000_us": 276,
+            "snapshot_bytes": 87940,
+            "spawn100_us": 467,
+            "step100_with_query_us": 13763
+          },
+          {
+            "enter100_us": 16415,
+            "max_rss_kib": 2908,
+            "output": "workload=canonical_api_small parse100_us=181 prepare100_us=30080 spawn100_us=499 enter100_us=16415 query1000_us=299 step100_with_query_us=14000 snapshot_bytes=87940",
+            "parse100_us": 181,
+            "prepare100_us": 30080,
+            "query1000_us": 299,
+            "snapshot_bytes": 87940,
+            "spawn100_us": 499,
+            "step100_with_query_us": 14000
+          },
+          {
+            "enter100_us": 16178,
+            "max_rss_kib": 2968,
+            "output": "workload=canonical_api_small parse100_us=172 prepare100_us=30570 spawn100_us=488 enter100_us=16178 query1000_us=292 step100_with_query_us=13655 snapshot_bytes=87940",
+            "parse100_us": 172,
+            "prepare100_us": 30570,
+            "query1000_us": 292,
+            "snapshot_bytes": 87940,
+            "spawn100_us": 488,
+            "step100_with_query_us": 13655
+          }
+        ]
+      },
+      "measure_context_ownership": {
+        "host": "Linux x86_64",
+        "method": "New separate microbenchmark, not a historical before baseline. Three release processes per path. 100000 raw permissive target lookups versus scoped generation/definition/role-aware observations (additional validation differs);100 replacements;100 mark/step-snapshot/spawn/stale-check cycles. Setup/token admission excluded. Same inputs, mutation sequence and final digest. Native wait4 RSS; no CPU/frequency isolation or allocation instrumentation. Do not interpret raw lookup latency as equivalent validation or compare this workload with whole-simulation benchmarks.",
+        "results": [
+          {
+            "medians": {
+              "max_rss_kib": 2524,
+              "query100000_us": 203,
+              "retirement100_us": 13368,
+              "set100_us": 301
+            },
+            "path": "raw",
+            "samples": [
+              {
+                "max_rss_kib": 2580,
+                "output": "query100000_us=203 set100_us=300 retirement100_us=14462 digest=c77a461c488206ba",
+                "query100000_us": 203,
+                "retirement100_us": 14462,
+                "set100_us": 300
+              },
+              {
+                "max_rss_kib": 2504,
+                "output": "query100000_us=233 set100_us=335 retirement100_us=13368 digest=c77a461c488206ba",
+                "query100000_us": 233,
+                "retirement100_us": 13368,
+                "set100_us": 335
+              },
+              {
+                "max_rss_kib": 2524,
+                "output": "query100000_us=200 set100_us=301 retirement100_us=13164 digest=c77a461c488206ba",
+                "query100000_us": 200,
+                "retirement100_us": 13164,
+                "set100_us": 301
+              }
+            ]
+          },
+          {
+            "medians": {
+              "max_rss_kib": 2548,
+              "query100000_us": 3163,
+              "retirement100_us": 13578,
+              "set100_us": 316
+            },
+            "path": "scoped",
+            "samples": [
+              {
+                "max_rss_kib": 2532,
+                "output": "query100000_us=2786 set100_us=321 retirement100_us=13578 digest=c77a461c488206ba",
+                "query100000_us": 2786,
+                "retirement100_us": 13578,
+                "set100_us": 321
+              },
+              {
+                "max_rss_kib": 2548,
+                "output": "query100000_us=3163 set100_us=309 retirement100_us=13453 digest=c77a461c488206ba",
+                "query100000_us": 3163,
+                "retirement100_us": 13453,
+                "set100_us": 309
+              },
+              {
+                "max_rss_kib": 2552,
+                "output": "query100000_us=3353 set100_us=316 retirement100_us=14389 digest=c77a461c488206ba",
+                "query100000_us": 3353,
+                "retirement100_us": 14389,
+                "set100_us": 316
+              }
+            ]
+          }
+        ],
+        "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)"
+      },
+      "measure_demon_expanded_map": {
+        "host": "Linux x86_64",
+        "method": "Three separate Linux release processes per source-backed input/profile; 100 parses and full constructors timed separately (ownership passed, no parsing/clone in prepare timer); 100 THING batches timed after construction for typed profiles only; 1000 immutable collision and sight queries; 100 direct Chase calls each on fresh same-input targets for typed profiles only; 100 script updates including external scripted damage and Snapshot construction, then 100 complete canonical encodings. Native wait4 RSS includes benchmark/Rust allocator/event overhead, not Python launch pages. Profile17 prepared metrics unavailable (null); profile19 has no typed batch/Chase (zero timer is not claimed execution). Only small_control17/20 are like-for-like gameplay inputs; other sizes/profiles are different workloads. No performance threshold or universal regression claim",
+        "results": [
+          {
+            "case": "small_control",
+            "medians": {
+              "candidates": 8000,
+              "cells": 8,
+              "chase100_us": 5451,
+              "collision1000_us": 147,
+              "lines": 4,
+              "max_rss_kib": 3572,
+              "parse100_us": 164,
+              "prepare100_us": 30533,
+              "prepared_bytes": null,
+              "references": null,
+              "sectors": 1,
+              "sight1000_us": 148,
+              "snapshot100_us": 3581,
+              "snapshot_bytes": 8794000,
+              "spawn100_us": 469,
+              "step100_us": 13253,
+              "visits": 11000
+            },
+            "profile": 17,
+            "samples": [
+              {
+                "candidates": 8000,
+                "cells": 8,
+                "chase100_us": 5451,
+                "collision1000_us": 147,
+                "lines": 4,
+                "max_rss_kib": 3588,
+                "output": "label=small_control profile=17 parse100_us=183 prepare100_us=30618 spawn100_us=452 collision1000_us=147 candidates=8000 sight1000_us=146 visits=11000 chase100_us=5451 step100_us=13154 snapshot100_us=3581 snapshot_bytes=8794000 lines=4 sectors=1 cells=8 references=- prepared_bytes=-",
+                "parse100_us": 183,
+                "prepare100_us": 30618,
+                "prepared_bytes": null,
+                "references": null,
+                "sectors": 1,
+                "sight1000_us": 146,
+                "snapshot100_us": 3581,
+                "snapshot_bytes": 8794000,
+                "spawn100_us": 452,
+                "step100_us": 13154,
+                "visits": 11000
+              },
+              {
+                "candidates": 8000,
+                "cells": 8,
+                "chase100_us": 5450,
+                "collision1000_us": 147,
+                "lines": 4,
+                "max_rss_kib": 3572,
+                "output": "label=small_control profile=17 parse100_us=155 prepare100_us=28999 spawn100_us=598 collision1000_us=147 candidates=8000 sight1000_us=148 visits=11000 chase100_us=5450 step100_us=13545 snapshot100_us=3527 snapshot_bytes=8794000 lines=4 sectors=1 cells=8 references=- prepared_bytes=-",
+                "parse100_us": 155,
+                "prepare100_us": 28999,
+                "prepared_bytes": null,
+                "references": null,
+                "sectors": 1,
+                "sight1000_us": 148,
+                "snapshot100_us": 3527,
+                "snapshot_bytes": 8794000,
+                "spawn100_us": 598,
+                "step100_us": 13545,
+                "visits": 11000
+              },
+              {
+                "candidates": 8000,
+                "cells": 8,
+                "chase100_us": 5547,
+                "collision1000_us": 137,
+                "lines": 4,
+                "max_rss_kib": 3564,
+                "output": "label=small_control profile=17 parse100_us=164 prepare100_us=30533 spawn100_us=469 collision1000_us=137 candidates=8000 sight1000_us=148 visits=11000 chase100_us=5547 step100_us=13253 snapshot100_us=3815 snapshot_bytes=8794000 lines=4 sectors=1 cells=8 references=- prepared_bytes=-",
+                "parse100_us": 164,
+                "prepare100_us": 30533,
+                "prepared_bytes": null,
+                "references": null,
+                "sectors": 1,
+                "sight1000_us": 148,
+                "snapshot100_us": 3815,
+                "snapshot_bytes": 8794000,
+                "spawn100_us": 469,
+                "step100_us": 13253,
+                "visits": 11000
+              }
+            ]
+          },
+          {
+            "case": "small_control",
+            "medians": {
+              "candidates": 8000,
+              "cells": 8,
+              "chase100_us": 16391,
+              "collision1000_us": 168,
+              "lines": 4,
+              "max_rss_kib": 3440,
+              "parse100_us": 160,
+              "prepare100_us": 30412,
+              "prepared_bytes": 410,
+              "references": 32,
+              "sectors": 1,
+              "sight1000_us": 92,
+              "snapshot100_us": 2733,
+              "snapshot_bytes": 8794000,
+              "spawn100_us": 465,
+              "step100_us": 13669,
+              "visits": 11000
+            },
+            "profile": 20,
+            "samples": [
+              {
+                "candidates": 8000,
+                "cells": 8,
+                "chase100_us": 16149,
+                "collision1000_us": 159,
+                "lines": 4,
+                "max_rss_kib": 3548,
+                "output": "label=small_control profile=20 parse100_us=156 prepare100_us=29582 spawn100_us=428 collision1000_us=159 candidates=8000 sight1000_us=92 visits=11000 chase100_us=16149 step100_us=13370 snapshot100_us=2733 snapshot_bytes=8794000 lines=4 sectors=1 cells=8 references=32 prepared_bytes=410",
+                "parse100_us": 156,
+                "prepare100_us": 29582,
+                "prepared_bytes": 410,
+                "references": 32,
+                "sectors": 1,
+                "sight1000_us": 92,
+                "snapshot100_us": 2733,
+                "snapshot_bytes": 8794000,
+                "spawn100_us": 428,
+                "step100_us": 13370,
+                "visits": 11000
+              },
+              {
+                "candidates": 8000,
+                "cells": 8,
+                "chase100_us": 17148,
+                "collision1000_us": 171,
+                "lines": 4,
+                "max_rss_kib": 3424,
+                "output": "label=small_control profile=20 parse100_us=161 prepare100_us=30412 spawn100_us=465 collision1000_us=171 candidates=8000 sight1000_us=92 visits=11000 chase100_us=17148 step100_us=13669 snapshot100_us=2805 snapshot_bytes=8794000 lines=4 sectors=1 cells=8 references=32 prepared_bytes=410",
+                "parse100_us": 161,
+                "prepare100_us": 30412,
+                "prepared_bytes": 410,
+                "references": 32,
+                "sectors": 1,
+                "sight1000_us": 92,
+                "snapshot100_us": 2805,
+                "snapshot_bytes": 8794000,
+                "spawn100_us": 465,
+                "step100_us": 13669,
+                "visits": 11000
+              },
+              {
+                "candidates": 8000,
+                "cells": 8,
+                "chase100_us": 16391,
+                "collision1000_us": 168,
+                "lines": 4,
+                "max_rss_kib": 3440,
+                "output": "label=small_control profile=20 parse100_us=160 prepare100_us=30629 spawn100_us=482 collision1000_us=168 candidates=8000 sight1000_us=98 visits=11000 chase100_us=16391 step100_us=13798 snapshot100_us=2649 snapshot_bytes=8794000 lines=4 sectors=1 cells=8 references=32 prepared_bytes=410",
+                "parse100_us": 160,
+                "prepare100_us": 30629,
+                "prepared_bytes": 410,
+                "references": 32,
+                "sectors": 1,
+                "sight1000_us": 98,
+                "snapshot100_us": 2649,
+                "snapshot_bytes": 8794000,
+                "spawn100_us": 482,
+                "step100_us": 13798,
+                "visits": 11000
+              }
+            ]
+          },
+          {
+            "case": "long_lifecycle",
+            "medians": {
+              "candidates": 773000,
+              "cells": 8,
+              "chase100_us": 0,
+              "collision1000_us": 4249,
+              "lines": 769,
+              "max_rss_kib": 2980,
+              "parse100_us": 2521,
+              "prepare100_us": 16049,
+              "prepared_bytes": 42740,
+              "references": 6152,
+              "sectors": 256,
+              "sight1000_us": 10305,
+              "snapshot100_us": 6271,
+              "snapshot_bytes": 12137000,
+              "spawn100_us": 0,
+              "step100_us": 7360,
+              "visits": 2190000
+            },
+            "profile": 19,
+            "samples": [
+              {
+                "candidates": 773000,
+                "cells": 8,
+                "chase100_us": 0,
+                "collision1000_us": 4249,
+                "lines": 769,
+                "max_rss_kib": 2980,
+                "output": "label=long_lifecycle profile=19 parse100_us=2451 prepare100_us=15898 spawn100_us=0 collision1000_us=4249 candidates=773000 sight1000_us=10313 visits=2190000 chase100_us=0 step100_us=7456 snapshot100_us=6265 snapshot_bytes=12137000 lines=769 sectors=256 cells=8 references=6152 prepared_bytes=42740",
+                "parse100_us": 2451,
+                "prepare100_us": 15898,
+                "prepared_bytes": 42740,
+                "references": 6152,
+                "sectors": 256,
+                "sight1000_us": 10313,
+                "snapshot100_us": 6265,
+                "snapshot_bytes": 12137000,
+                "spawn100_us": 0,
+                "step100_us": 7456,
+                "visits": 2190000
+              },
+              {
+                "candidates": 773000,
+                "cells": 8,
+                "chase100_us": 0,
+                "collision1000_us": 4244,
+                "lines": 769,
+                "max_rss_kib": 3044,
+                "output": "label=long_lifecycle profile=19 parse100_us=3304 prepare100_us=16049 spawn100_us=0 collision1000_us=4244 candidates=773000 sight1000_us=10142 visits=2190000 chase100_us=0 step100_us=7209 snapshot100_us=6271 snapshot_bytes=12137000 lines=769 sectors=256 cells=8 references=6152 prepared_bytes=42740",
+                "parse100_us": 3304,
+                "prepare100_us": 16049,
+                "prepared_bytes": 42740,
+                "references": 6152,
+                "sectors": 256,
+                "sight1000_us": 10142,
+                "snapshot100_us": 6271,
+                "snapshot_bytes": 12137000,
+                "spawn100_us": 0,
+                "step100_us": 7209,
+                "visits": 2190000
+              },
+              {
+                "candidates": 773000,
+                "cells": 8,
+                "chase100_us": 0,
+                "collision1000_us": 4521,
+                "lines": 769,
+                "max_rss_kib": 2928,
+                "output": "label=long_lifecycle profile=19 parse100_us=2521 prepare100_us=16221 spawn100_us=0 collision1000_us=4521 candidates=773000 sight1000_us=10305 visits=2190000 chase100_us=0 step100_us=7360 snapshot100_us=6570 snapshot_bytes=12137000 lines=769 sectors=256 cells=8 references=6152 prepared_bytes=42740",
+                "parse100_us": 2521,
+                "prepare100_us": 16221,
+                "prepared_bytes": 42740,
+                "references": 6152,
+                "sectors": 256,
+                "sight1000_us": 10305,
+                "snapshot100_us": 6570,
+                "snapshot_bytes": 12137000,
+                "spawn100_us": 0,
+                "step100_us": 7360,
+                "visits": 2190000
+              }
+            ]
+          },
+          {
+            "case": "long_lifecycle",
+            "medians": {
+              "candidates": 773000,
+              "cells": 8,
+              "chase100_us": 18039,
+              "collision1000_us": 4214,
+              "lines": 769,
+              "max_rss_kib": 4092,
+              "parse100_us": 2764,
+              "prepare100_us": 46425,
+              "prepared_bytes": 42740,
+              "references": 6152,
+              "sectors": 256,
+              "sight1000_us": 10398,
+              "snapshot100_us": 14008,
+              "snapshot_bytes": 21546600,
+              "spawn100_us": 570,
+              "step100_us": 23158,
+              "visits": 2190000
+            },
+            "profile": 20,
+            "samples": [
+              {
+                "candidates": 773000,
+                "cells": 8,
+                "chase100_us": 17689,
+                "collision1000_us": 4363,
+                "lines": 769,
+                "max_rss_kib": 4092,
+                "output": "label=long_lifecycle profile=20 parse100_us=2809 prepare100_us=46425 spawn100_us=570 collision1000_us=4363 candidates=773000 sight1000_us=10398 visits=2190000 chase100_us=17689 step100_us=23158 snapshot100_us=14008 snapshot_bytes=21546600 lines=769 sectors=256 cells=8 references=6152 prepared_bytes=42740",
+                "parse100_us": 2809,
+                "prepare100_us": 46425,
+                "prepared_bytes": 42740,
+                "references": 6152,
+                "sectors": 256,
+                "sight1000_us": 10398,
+                "snapshot100_us": 14008,
+                "snapshot_bytes": 21546600,
+                "spawn100_us": 570,
+                "step100_us": 23158,
+                "visits": 2190000
+              },
+              {
+                "candidates": 773000,
+                "cells": 8,
+                "chase100_us": 18039,
+                "collision1000_us": 4209,
+                "lines": 769,
+                "max_rss_kib": 3940,
+                "output": "label=long_lifecycle profile=20 parse100_us=2755 prepare100_us=46041 spawn100_us=595 collision1000_us=4209 candidates=773000 sight1000_us=10466 visits=2190000 chase100_us=18039 step100_us=23634 snapshot100_us=15290 snapshot_bytes=21546600 lines=769 sectors=256 cells=8 references=6152 prepared_bytes=42740",
+                "parse100_us": 2755,
+                "prepare100_us": 46041,
+                "prepared_bytes": 42740,
+                "references": 6152,
+                "sectors": 256,
+                "sight1000_us": 10466,
+                "snapshot100_us": 15290,
+                "snapshot_bytes": 21546600,
+                "spawn100_us": 595,
+                "step100_us": 23634,
+                "visits": 2190000
+              },
+              {
+                "candidates": 773000,
+                "cells": 8,
+                "chase100_us": 18916,
+                "collision1000_us": 4214,
+                "lines": 769,
+                "max_rss_kib": 4092,
+                "output": "label=long_lifecycle profile=20 parse100_us=2764 prepare100_us=46542 spawn100_us=564 collision1000_us=4214 candidates=773000 sight1000_us=10363 visits=2190000 chase100_us=18916 step100_us=22166 snapshot100_us=12798 snapshot_bytes=21546600 lines=769 sectors=256 cells=8 references=6152 prepared_bytes=42740",
+                "parse100_us": 2764,
+                "prepare100_us": 46542,
+                "prepared_bytes": 42740,
+                "references": 6152,
+                "sectors": 256,
+                "sight1000_us": 10363,
+                "snapshot100_us": 12798,
+                "snapshot_bytes": 21546600,
+                "spawn100_us": 564,
+                "step100_us": 22166,
+                "visits": 2190000
+              }
+            ]
+          },
+          {
+            "case": "four_owners",
+            "medians": {
+              "candidates": 4000,
+              "cells": 8,
+              "chase100_us": 48780,
+              "collision1000_us": 1115,
+              "lines": 769,
+              "max_rss_kib": 4360,
+              "parse100_us": 2745,
+              "prepare100_us": 45982,
+              "prepared_bytes": 42740,
+              "references": 6152,
+              "sectors": 256,
+              "sight1000_us": 11132,
+              "snapshot100_us": 16867,
+              "snapshot_bytes": 23659200,
+              "spawn100_us": 2164,
+              "step100_us": 60849,
+              "visits": 2187000
+            },
+            "profile": 20,
+            "samples": [
+              {
+                "candidates": 4000,
+                "cells": 8,
+                "chase100_us": 47977,
+                "collision1000_us": 1134,
+                "lines": 769,
+                "max_rss_kib": 4360,
+                "output": "label=four_owners profile=20 parse100_us=2709 prepare100_us=45701 spawn100_us=2164 collision1000_us=1134 candidates=4000 sight1000_us=11391 visits=2187000 chase100_us=47977 step100_us=60594 snapshot100_us=16867 snapshot_bytes=23659200 lines=769 sectors=256 cells=8 references=6152 prepared_bytes=42740",
+                "parse100_us": 2709,
+                "prepare100_us": 45701,
+                "prepared_bytes": 42740,
+                "references": 6152,
+                "sectors": 256,
+                "sight1000_us": 11391,
+                "snapshot100_us": 16867,
+                "snapshot_bytes": 23659200,
+                "spawn100_us": 2164,
+                "step100_us": 60594,
+                "visits": 2187000
+              },
+              {
+                "candidates": 4000,
+                "cells": 8,
+                "chase100_us": 48979,
+                "collision1000_us": 1104,
+                "lines": 769,
+                "max_rss_kib": 4360,
+                "output": "label=four_owners profile=20 parse100_us=2745 prepare100_us=46162 spawn100_us=2202 collision1000_us=1104 candidates=4000 sight1000_us=11132 visits=2187000 chase100_us=48979 step100_us=63035 snapshot100_us=17968 snapshot_bytes=23659200 lines=769 sectors=256 cells=8 references=6152 prepared_bytes=42740",
+                "parse100_us": 2745,
+                "prepare100_us": 46162,
+                "prepared_bytes": 42740,
+                "references": 6152,
+                "sectors": 256,
+                "sight1000_us": 11132,
+                "snapshot100_us": 17968,
+                "snapshot_bytes": 23659200,
+                "spawn100_us": 2202,
+                "step100_us": 63035,
+                "visits": 2187000
+              },
+              {
+                "candidates": 4000,
+                "cells": 8,
+                "chase100_us": 48780,
+                "collision1000_us": 1115,
+                "lines": 769,
+                "max_rss_kib": 4352,
+                "output": "label=four_owners profile=20 parse100_us=2784 prepare100_us=45982 spawn100_us=2164 collision1000_us=1115 candidates=4000 sight1000_us=11077 visits=2187000 chase100_us=48780 step100_us=60849 snapshot100_us=16663 snapshot_bytes=23659200 lines=769 sectors=256 cells=8 references=6152 prepared_bytes=42740",
+                "parse100_us": 2784,
+                "prepare100_us": 45982,
+                "prepared_bytes": 42740,
+                "references": 6152,
+                "sectors": 256,
+                "sight1000_us": 11077,
+                "snapshot100_us": 16663,
+                "snapshot_bytes": 23659200,
+                "spawn100_us": 2164,
+                "step100_us": 60849,
+                "visits": 2187000
+              }
+            ]
+          },
+          {
+            "case": "wide_map_lifecycle",
+            "medians": {
+              "candidates": 770000,
+              "cells": 136,
+              "chase100_us": 17908,
+              "collision1000_us": 4947,
+              "lines": 769,
+              "max_rss_kib": 4352,
+              "parse100_us": 2139,
+              "prepare100_us": 60990,
+              "prepared_bytes": 242676,
+              "references": 104584,
+              "sectors": 256,
+              "sight1000_us": 6519,
+              "snapshot100_us": 13885,
+              "snapshot_bytes": 20849100,
+              "spawn100_us": 586,
+              "step100_us": 22990,
+              "visits": 1401000
+            },
+            "profile": 20,
+            "samples": [
+              {
+                "candidates": 770000,
+                "cells": 136,
+                "chase100_us": 18027,
+                "collision1000_us": 5005,
+                "lines": 769,
+                "max_rss_kib": 4356,
+                "output": "label=wide_map_lifecycle profile=20 parse100_us=2139 prepare100_us=60990 spawn100_us=633 collision1000_us=5005 candidates=770000 sight1000_us=6519 visits=1401000 chase100_us=18027 step100_us=22944 snapshot100_us=13885 snapshot_bytes=20849100 lines=769 sectors=256 cells=136 references=104584 prepared_bytes=242676",
+                "parse100_us": 2139,
+                "prepare100_us": 60990,
+                "prepared_bytes": 242676,
+                "references": 104584,
+                "sectors": 256,
+                "sight1000_us": 6519,
+                "snapshot100_us": 13885,
+                "snapshot_bytes": 20849100,
+                "spawn100_us": 633,
+                "step100_us": 22944,
+                "visits": 1401000
+              },
+              {
+                "candidates": 770000,
+                "cells": 136,
+                "chase100_us": 17591,
+                "collision1000_us": 4837,
+                "lines": 769,
+                "max_rss_kib": 4324,
+                "output": "label=wide_map_lifecycle profile=20 parse100_us=2065 prepare100_us=56717 spawn100_us=582 collision1000_us=4837 candidates=770000 sight1000_us=6692 visits=1401000 chase100_us=17591 step100_us=22990 snapshot100_us=13097 snapshot_bytes=20849100 lines=769 sectors=256 cells=136 references=104584 prepared_bytes=242676",
+                "parse100_us": 2065,
+                "prepare100_us": 56717,
+                "prepared_bytes": 242676,
+                "references": 104584,
+                "sectors": 256,
+                "sight1000_us": 6692,
+                "snapshot100_us": 13097,
+                "snapshot_bytes": 20849100,
+                "spawn100_us": 582,
+                "step100_us": 22990,
+                "visits": 1401000
+              },
+              {
+                "candidates": 770000,
+                "cells": 136,
+                "chase100_us": 17908,
+                "collision1000_us": 4947,
+                "lines": 769,
+                "max_rss_kib": 4352,
+                "output": "label=wide_map_lifecycle profile=20 parse100_us=2220 prepare100_us=63901 spawn100_us=586 collision1000_us=4947 candidates=770000 sight1000_us=6494 visits=1401000 chase100_us=17908 step100_us=23526 snapshot100_us=13947 snapshot_bytes=20849100 lines=769 sectors=256 cells=136 references=104584 prepared_bytes=242676",
+                "parse100_us": 2220,
+                "prepare100_us": 63901,
+                "prepared_bytes": 242676,
+                "references": 104584,
+                "sectors": 256,
+                "sight1000_us": 6494,
+                "snapshot100_us": 13947,
+                "snapshot_bytes": 20849100,
+                "spawn100_us": 586,
+                "step100_us": 23526,
+                "visits": 1401000
+              }
+            ]
+          },
+          {
+            "case": "expanded_sight_dag",
+            "medians": {
+              "candidates": 8000,
+              "cells": 20,
+              "chase100_us": 16330,
+              "collision1000_us": 196,
+              "lines": 4,
+              "max_rss_kib": 3660,
+              "parse100_us": 169,
+              "prepare100_us": 31023,
+              "prepared_bytes": 794,
+              "references": 80,
+              "sectors": 1,
+              "sight1000_us": 75168,
+              "snapshot100_us": 3552,
+              "snapshot_bytes": 8819800,
+              "spawn100_us": 455,
+              "step100_us": 13995,
+              "visits": 16384000
+            },
+            "profile": 20,
+            "samples": [
+              {
+                "candidates": 8000,
+                "cells": 20,
+                "chase100_us": 16330,
+                "collision1000_us": 196,
+                "lines": 4,
+                "max_rss_kib": 3668,
+                "output": "label=expanded_sight_dag profile=20 parse100_us=169 prepare100_us=31656 spawn100_us=445 collision1000_us=196 candidates=8000 sight1000_us=74617 visits=16384000 chase100_us=16330 step100_us=13995 snapshot100_us=3552 snapshot_bytes=8819800 lines=4 sectors=1 cells=20 references=80 prepared_bytes=794",
+                "parse100_us": 169,
+                "prepare100_us": 31656,
+                "prepared_bytes": 794,
+                "references": 80,
+                "sectors": 1,
+                "sight1000_us": 74617,
+                "snapshot100_us": 3552,
+                "snapshot_bytes": 8819800,
+                "spawn100_us": 445,
+                "step100_us": 13995,
+                "visits": 16384000
+              },
+              {
+                "candidates": 8000,
+                "cells": 20,
+                "chase100_us": 16236,
+                "collision1000_us": 287,
+                "lines": 4,
+                "max_rss_kib": 3660,
+                "output": "label=expanded_sight_dag profile=20 parse100_us=169 prepare100_us=30503 spawn100_us=455 collision1000_us=287 candidates=8000 sight1000_us=77804 visits=16384000 chase100_us=16236 step100_us=13633 snapshot100_us=3540 snapshot_bytes=8819800 lines=4 sectors=1 cells=20 references=80 prepared_bytes=794",
+                "parse100_us": 169,
+                "prepare100_us": 30503,
+                "prepared_bytes": 794,
+                "references": 80,
+                "sectors": 1,
+                "sight1000_us": 77804,
+                "snapshot100_us": 3540,
+                "snapshot_bytes": 8819800,
+                "spawn100_us": 455,
+                "step100_us": 13633,
+                "visits": 16384000
+              },
+              {
+                "candidates": 8000,
+                "cells": 20,
+                "chase100_us": 16438,
+                "collision1000_us": 189,
+                "lines": 4,
+                "max_rss_kib": 3652,
+                "output": "label=expanded_sight_dag profile=20 parse100_us=168 prepare100_us=31023 spawn100_us=537 collision1000_us=189 candidates=8000 sight1000_us=75168 visits=16384000 chase100_us=16438 step100_us=14197 snapshot100_us=3597 snapshot_bytes=8819800 lines=4 sectors=1 cells=20 references=80 prepared_bytes=794",
+                "parse100_us": 168,
+                "prepare100_us": 31023,
+                "prepared_bytes": 794,
+                "references": 80,
+                "sectors": 1,
+                "sight1000_us": 75168,
+                "snapshot100_us": 3597,
+                "snapshot_bytes": 8819800,
+                "spawn100_us": 537,
+                "step100_us": 14197,
+                "visits": 16384000
+              }
+            ]
+          },
+          {
+            "case": "line_table",
+            "medians": {
+              "candidates": 1028000,
+              "cells": 8,
+              "chase100_us": 17045,
+              "collision1000_us": 5970,
+              "lines": 1024,
+              "max_rss_kib": 4224,
+              "parse100_us": 3157,
+              "prepare100_us": 50547,
+              "prepared_bytes": 53450,
+              "references": 8192,
+              "sectors": 1,
+              "sight1000_us": 15325,
+              "snapshot100_us": 3358,
+              "snapshot_bytes": 20103600,
+              "spawn100_us": 462,
+              "step100_us": 13699,
+              "visits": 3066000
+            },
+            "profile": 20,
+            "samples": [
+              {
+                "candidates": 1028000,
+                "cells": 8,
+                "chase100_us": 17045,
+                "collision1000_us": 5955,
+                "lines": 1024,
+                "max_rss_kib": 4240,
+                "output": "label=line_table profile=20 parse100_us=3361 prepare100_us=50547 spawn100_us=446 collision1000_us=5955 candidates=1028000 sight1000_us=15227 visits=3066000 chase100_us=17045 step100_us=13737 snapshot100_us=3310 snapshot_bytes=20103600 lines=1024 sectors=1 cells=8 references=8192 prepared_bytes=53450",
+                "parse100_us": 3361,
+                "prepare100_us": 50547,
+                "prepared_bytes": 53450,
+                "references": 8192,
+                "sectors": 1,
+                "sight1000_us": 15227,
+                "snapshot100_us": 3310,
+                "snapshot_bytes": 20103600,
+                "spawn100_us": 446,
+                "step100_us": 13737,
+                "visits": 3066000
+              },
+              {
+                "candidates": 1028000,
+                "cells": 8,
+                "chase100_us": 17531,
+                "collision1000_us": 5970,
+                "lines": 1024,
+                "max_rss_kib": 4076,
+                "output": "label=line_table profile=20 parse100_us=3157 prepare100_us=51237 spawn100_us=462 collision1000_us=5970 candidates=1028000 sight1000_us=16393 visits=3066000 chase100_us=17531 step100_us=13568 snapshot100_us=3358 snapshot_bytes=20103600 lines=1024 sectors=1 cells=8 references=8192 prepared_bytes=53450",
+                "parse100_us": 3157,
+                "prepare100_us": 51237,
+                "prepared_bytes": 53450,
+                "references": 8192,
+                "sectors": 1,
+                "sight1000_us": 16393,
+                "snapshot100_us": 3358,
+                "snapshot_bytes": 20103600,
+                "spawn100_us": 462,
+                "step100_us": 13568,
+                "visits": 3066000
+              },
+              {
+                "candidates": 1028000,
+                "cells": 8,
+                "chase100_us": 17015,
+                "collision1000_us": 6056,
+                "lines": 1024,
+                "max_rss_kib": 4224,
+                "output": "label=line_table profile=20 parse100_us=3109 prepare100_us=50263 spawn100_us=470 collision1000_us=6056 candidates=1028000 sight1000_us=15325 visits=3066000 chase100_us=17015 step100_us=13699 snapshot100_us=3450 snapshot_bytes=20103600 lines=1024 sectors=1 cells=8 references=8192 prepared_bytes=53450",
+                "parse100_us": 3109,
+                "prepare100_us": 50263,
+                "prepared_bytes": 53450,
+                "references": 8192,
+                "sectors": 1,
+                "sight1000_us": 15325,
+                "snapshot100_us": 3450,
+                "snapshot_bytes": 20103600,
+                "spawn100_us": 470,
+                "step100_us": 13699,
+                "visits": 3066000
+              }
+            ]
+          },
+          {
+            "case": "high_cell_demon",
+            "medians": {
+              "candidates": 770000,
+              "cells": 8192,
+              "chase100_us": 17726,
+              "collision1000_us": 4805,
+              "lines": 769,
+              "max_rss_kib": 6288,
+              "parse100_us": 4344,
+              "prepare100_us": 104606,
+              "prepared_bytes": 344612,
+              "references": 58880,
+              "sectors": 256,
+              "sight1000_us": 6697,
+              "snapshot100_us": 13553,
+              "snapshot_bytes": 28905100,
+              "spawn100_us": 600,
+              "step100_us": 23876,
+              "visits": 1401000
+            },
+            "profile": 20,
+            "samples": [
+              {
+                "candidates": 770000,
+                "cells": 8192,
+                "chase100_us": 18973,
+                "collision1000_us": 4832,
+                "lines": 769,
+                "max_rss_kib": 6268,
+                "output": "label=high_cell_demon profile=20 parse100_us=4279 prepare100_us=102595 spawn100_us=573 collision1000_us=4832 candidates=770000 sight1000_us=7101 visits=1401000 chase100_us=18973 step100_us=23876 snapshot100_us=13444 snapshot_bytes=28905100 lines=769 sectors=256 cells=8192 references=58880 prepared_bytes=344612",
+                "parse100_us": 4279,
+                "prepare100_us": 102595,
+                "prepared_bytes": 344612,
+                "references": 58880,
+                "sectors": 256,
+                "sight1000_us": 7101,
+                "snapshot100_us": 13444,
+                "snapshot_bytes": 28905100,
+                "spawn100_us": 573,
+                "step100_us": 23876,
+                "visits": 1401000
+              },
+              {
+                "candidates": 770000,
+                "cells": 8192,
+                "chase100_us": 17726,
+                "collision1000_us": 4805,
+                "lines": 769,
+                "max_rss_kib": 6296,
+                "output": "label=high_cell_demon profile=20 parse100_us=4769 prepare100_us=110144 spawn100_us=634 collision1000_us=4805 candidates=770000 sight1000_us=6399 visits=1401000 chase100_us=17726 step100_us=23692 snapshot100_us=13566 snapshot_bytes=28905100 lines=769 sectors=256 cells=8192 references=58880 prepared_bytes=344612",
+                "parse100_us": 4769,
+                "prepare100_us": 110144,
+                "prepared_bytes": 344612,
+                "references": 58880,
+                "sectors": 256,
+                "sight1000_us": 6399,
+                "snapshot100_us": 13566,
+                "snapshot_bytes": 28905100,
+                "spawn100_us": 634,
+                "step100_us": 23692,
+                "visits": 1401000
+              },
+              {
+                "candidates": 770000,
+                "cells": 8192,
+                "chase100_us": 17442,
+                "collision1000_us": 4767,
+                "lines": 769,
+                "max_rss_kib": 6288,
+                "output": "label=high_cell_demon profile=20 parse100_us=4344 prepare100_us=104606 spawn100_us=600 collision1000_us=4767 candidates=770000 sight1000_us=6697 visits=1401000 chase100_us=17442 step100_us=24186 snapshot100_us=13553 snapshot_bytes=28905100 lines=769 sectors=256 cells=8192 references=58880 prepared_bytes=344612",
+                "parse100_us": 4344,
+                "prepare100_us": 104606,
+                "prepared_bytes": 344612,
+                "references": 58880,
+                "sectors": 256,
+                "sight1000_us": 6697,
+                "snapshot100_us": 13553,
+                "snapshot_bytes": 28905100,
+                "spawn100_us": 600,
+                "step100_us": 24186,
+                "visits": 1401000
+              }
+            ]
+          }
+        ],
+        "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)"
+      },
+      "measure_game_instance": {
+        "host": "Linux x86_64",
+        "method": "New workload, not a historical before baseline. Three separate release processes per path. Setup/admission excluded. Both time 100000 validated imports and 100000 checked exports (including returned Arc drop); then 100 same-input snapshot-inclusive updates with target observations. Scoped path retains one already scoped actor; qualified path explicitly reimports the same reference on every update. Different boundary validation work is intentional; ordinary tic logic never automatically imports references. Native wait4 peak RSS, no allocation counter or CPU/frequency isolation. Preserve all samples/outliers.",
+        "results": [
+          {
+            "medians": {
+              "export100000_us": 1383,
+              "import100000_us": 1609,
+              "max_rss_kib": 2456,
+              "step100_us": 14497
+            },
+            "path": "scoped",
+            "samples": [
+              {
+                "export100000_us": 1383,
+                "import100000_us": 1602,
+                "max_rss_kib": 2456,
+                "output": "import100000_us=1602 export100000_us=1383 step100_us=14497 digest=e93bf409545bf8ed",
+                "step100_us": 14497
+              },
+              {
+                "export100000_us": 1611,
+                "import100000_us": 1812,
+                "max_rss_kib": 2484,
+                "output": "import100000_us=1812 export100000_us=1611 step100_us=15328 digest=e93bf409545bf8ed",
+                "step100_us": 15328
+              },
+              {
+                "export100000_us": 1366,
+                "import100000_us": 1609,
+                "max_rss_kib": 2428,
+                "output": "import100000_us=1609 export100000_us=1366 step100_us=14494 digest=e93bf409545bf8ed",
+                "step100_us": 14494
+              }
+            ]
+          },
+          {
+            "medians": {
+              "export100000_us": 1381,
+              "import100000_us": 1668,
+              "max_rss_kib": 2456,
+              "step100_us": 14616
+            },
+            "path": "qualified",
+            "samples": [
+              {
+                "export100000_us": 1378,
+                "import100000_us": 1691,
+                "max_rss_kib": 2424,
+                "output": "import100000_us=1691 export100000_us=1378 step100_us=14677 digest=e93bf409545bf8ed",
+                "step100_us": 14677
+              },
+              {
+                "export100000_us": 1410,
+                "import100000_us": 1668,
+                "max_rss_kib": 2456,
+                "output": "import100000_us=1668 export100000_us=1410 step100_us=14616 digest=e93bf409545bf8ed",
+                "step100_us": 14616
+              },
+              {
+                "export100000_us": 1381,
+                "import100000_us": 1615,
+                "max_rss_kib": 2480,
+                "output": "import100000_us=1615 export100000_us=1381 step100_us=14581 digest=e93bf409545bf8ed",
+                "step100_us": 14581
+              }
+            ]
+          }
+        ],
+        "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)"
+      },
+      "measure_original_registry": {
+        "host": "Linux x86_64",
+        "method": "Three separate release processes each. New original-ID workloads; no before baseline and diagnostic volume differs from legacy. 100 parses/constructors/batches/direct entries timed separately; setup excluded from direct-entry timers. 100000 immutable direct lookups and identity queries. 100 existing script updates include snapshots; 100 bounded encodes/decodes separately. Native wait4 RSS includes process/allocator/events. No isolated CPU/frequency control or threshold; preserve every sample/outlier.",
+        "results": [
+          {
+            "case": 0,
+            "medians": {
+              "conversion100000_us": 54,
+              "decode100_us": 3368,
+              "diagnostic_bytes": 8627,
+              "encode100_us": 238,
+              "enter100_us": 15783,
+              "lookup100000_us": 79,
+              "max_rss_kib": 2756,
+              "parse100_us": 161,
+              "prepare100_us": 3560,
+              "query100000_us": 936,
+              "spawn100_us": 406,
+              "step100_us": 13569
+            },
+            "samples": [
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 3234,
+                "diagnostic_bytes": 8627,
+                "encode100_us": 237,
+                "enter100_us": 15751,
+                "lookup100000_us": 79,
+                "max_rss_kib": 2800,
+                "output": "workload=original_canonical_small parse100_us=159 prepare100_us=3560 spawn100_us=406 enter100_us=15751 conversion100000_us=54 lookup100000_us=79 query100000_us=935 step100_us=13326 encode100_us=237 decode100_us=3234 diagnostic_bytes=8627",
+                "parse100_us": 159,
+                "prepare100_us": 3560,
+                "query100000_us": 935,
+                "spawn100_us": 406,
+                "step100_us": 13326
+              },
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 3368,
+                "diagnostic_bytes": 8627,
+                "encode100_us": 238,
+                "enter100_us": 15783,
+                "lookup100000_us": 79,
+                "max_rss_kib": 2740,
+                "output": "workload=original_canonical_small parse100_us=161 prepare100_us=3525 spawn100_us=396 enter100_us=15783 conversion100000_us=54 lookup100000_us=79 query100000_us=936 step100_us=13569 encode100_us=238 decode100_us=3368 diagnostic_bytes=8627",
+                "parse100_us": 161,
+                "prepare100_us": 3525,
+                "query100000_us": 936,
+                "spawn100_us": 396,
+                "step100_us": 13569
+              },
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 3398,
+                "diagnostic_bytes": 8627,
+                "encode100_us": 238,
+                "enter100_us": 16287,
+                "lookup100000_us": 79,
+                "max_rss_kib": 2756,
+                "output": "workload=original_canonical_small parse100_us=179 prepare100_us=3778 spawn100_us=408 enter100_us=16287 conversion100000_us=54 lookup100000_us=79 query100000_us=997 step100_us=13641 encode100_us=238 decode100_us=3398 diagnostic_bytes=8627",
+                "parse100_us": 179,
+                "prepare100_us": 3778,
+                "query100000_us": 997,
+                "spawn100_us": 408,
+                "step100_us": 13641
+              }
+            ]
+          },
+          {
+            "case": 1,
+            "medians": {
+              "conversion100000_us": 54,
+              "decode100_us": 9782,
+              "diagnostic_bytes": 136153,
+              "encode100_us": 1397,
+              "enter100_us": 17172,
+              "lookup100000_us": 79,
+              "max_rss_kib": 3696,
+              "parse100_us": 3078,
+              "prepare100_us": 19925,
+              "query100000_us": 936,
+              "spawn100_us": 565,
+              "step100_us": 23137
+            },
+            "samples": [
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 9782,
+                "diagnostic_bytes": 136153,
+                "encode100_us": 1371,
+                "enter100_us": 16730,
+                "lookup100000_us": 79,
+                "max_rss_kib": 3600,
+                "output": "workload=original_canonical_lifecycle parse100_us=3045 prepare100_us=20054 spawn100_us=573 enter100_us=16730 conversion100000_us=54 lookup100000_us=79 query100000_us=940 step100_us=22116 encode100_us=1371 decode100_us=9782 diagnostic_bytes=136153",
+                "parse100_us": 3045,
+                "prepare100_us": 20054,
+                "query100000_us": 940,
+                "spawn100_us": 573,
+                "step100_us": 22116
+              },
+              {
+                "conversion100000_us": 71,
+                "decode100_us": 10014,
+                "diagnostic_bytes": 136153,
+                "encode100_us": 1468,
+                "enter100_us": 17172,
+                "lookup100000_us": 87,
+                "max_rss_kib": 3740,
+                "output": "workload=original_canonical_lifecycle parse100_us=3078 prepare100_us=19631 spawn100_us=549 enter100_us=17172 conversion100000_us=71 lookup100000_us=87 query100000_us=936 step100_us=23137 encode100_us=1468 decode100_us=10014 diagnostic_bytes=136153",
+                "parse100_us": 3078,
+                "prepare100_us": 19631,
+                "query100000_us": 936,
+                "spawn100_us": 549,
+                "step100_us": 23137
+              },
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 9719,
+                "diagnostic_bytes": 136153,
+                "encode100_us": 1397,
+                "enter100_us": 20209,
+                "lookup100000_us": 79,
+                "max_rss_kib": 3696,
+                "output": "workload=original_canonical_lifecycle parse100_us=3393 prepare100_us=19925 spawn100_us=565 enter100_us=20209 conversion100000_us=54 lookup100000_us=79 query100000_us=935 step100_us=25569 encode100_us=1397 decode100_us=9719 diagnostic_bytes=136153",
+                "parse100_us": 3393,
+                "prepare100_us": 19925,
+                "query100000_us": 935,
+                "spawn100_us": 565,
+                "step100_us": 25569
+              }
+            ]
+          },
+          {
+            "case": 2,
+            "medians": {
+              "conversion100000_us": 54,
+              "decode100_us": 14403,
+              "diagnostic_bytes": 157279,
+              "encode100_us": 1704,
+              "enter100_us": 46414,
+              "lookup100000_us": 79,
+              "max_rss_kib": 3872,
+              "parse100_us": 2951,
+              "prepare100_us": 20111,
+              "query100000_us": 947,
+              "spawn100_us": 1994,
+              "step100_us": 61085
+            },
+            "samples": [
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 14403,
+                "diagnostic_bytes": 157279,
+                "encode100_us": 1575,
+                "enter100_us": 45603,
+                "lookup100000_us": 79,
+                "max_rss_kib": 3872,
+                "output": "workload=original_canonical_four_owners parse100_us=2926 prepare100_us=19721 spawn100_us=1978 enter100_us=45603 conversion100000_us=54 lookup100000_us=79 query100000_us=955 step100_us=63238 encode100_us=1575 decode100_us=14403 diagnostic_bytes=157279",
+                "parse100_us": 2926,
+                "prepare100_us": 19721,
+                "query100000_us": 955,
+                "spawn100_us": 1978,
+                "step100_us": 63238
+              },
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 14963,
+                "diagnostic_bytes": 157279,
+                "encode100_us": 1704,
+                "enter100_us": 48932,
+                "lookup100000_us": 79,
+                "max_rss_kib": 3868,
+                "output": "workload=original_canonical_four_owners parse100_us=3150 prepare100_us=20293 spawn100_us=2057 enter100_us=48932 conversion100000_us=54 lookup100000_us=79 query100000_us=941 step100_us=61085 encode100_us=1704 decode100_us=14963 diagnostic_bytes=157279",
+                "parse100_us": 3150,
+                "prepare100_us": 20293,
+                "query100000_us": 941,
+                "spawn100_us": 2057,
+                "step100_us": 61085
+              },
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 14314,
+                "diagnostic_bytes": 157279,
+                "encode100_us": 1890,
+                "enter100_us": 46414,
+                "lookup100000_us": 94,
+                "max_rss_kib": 3904,
+                "output": "workload=original_canonical_four_owners parse100_us=2951 prepare100_us=20111 spawn100_us=1994 enter100_us=46414 conversion100000_us=54 lookup100000_us=94 query100000_us=947 step100_us=60456 encode100_us=1890 decode100_us=14314 diagnostic_bytes=157279",
+                "parse100_us": 2951,
+                "prepare100_us": 20111,
+                "query100000_us": 947,
+                "spawn100_us": 1994,
+                "step100_us": 60456
+              }
+            ]
+          },
+          {
+            "case": 5,
+            "medians": {
+              "conversion100000_us": 54,
+              "decode100_us": 10073,
+              "diagnostic_bytes": 136112,
+              "encode100_us": 1425,
+              "enter100_us": 17287,
+              "lookup100000_us": 79,
+              "max_rss_kib": 3776,
+              "parse100_us": 3147,
+              "prepare100_us": 20309,
+              "query100000_us": 940,
+              "spawn100_us": 583,
+              "step100_us": 21324
+            },
+            "samples": [
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 10183,
+                "diagnostic_bytes": 136112,
+                "encode100_us": 1386,
+                "enter100_us": 18012,
+                "lookup100000_us": 79,
+                "max_rss_kib": 3672,
+                "output": "workload=original_canonical_clipping parse100_us=4501 prepare100_us=20515 spawn100_us=826 enter100_us=18012 conversion100000_us=54 lookup100000_us=79 query100000_us=940 step100_us=21324 encode100_us=1386 decode100_us=10183 diagnostic_bytes=136112",
+                "parse100_us": 4501,
+                "prepare100_us": 20515,
+                "query100000_us": 940,
+                "spawn100_us": 826,
+                "step100_us": 21324
+              },
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 10073,
+                "diagnostic_bytes": 136112,
+                "encode100_us": 1433,
+                "enter100_us": 17148,
+                "lookup100000_us": 79,
+                "max_rss_kib": 3776,
+                "output": "workload=original_canonical_clipping parse100_us=3147 prepare100_us=20309 spawn100_us=583 enter100_us=17148 conversion100000_us=54 lookup100000_us=79 query100000_us=974 step100_us=21990 encode100_us=1433 decode100_us=10073 diagnostic_bytes=136112",
+                "parse100_us": 3147,
+                "prepare100_us": 20309,
+                "query100000_us": 974,
+                "spawn100_us": 583,
+                "step100_us": 21990
+              },
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 9720,
+                "diagnostic_bytes": 136112,
+                "encode100_us": 1425,
+                "enter100_us": 17287,
+                "lookup100000_us": 98,
+                "max_rss_kib": 3776,
+                "output": "workload=original_canonical_clipping parse100_us=3040 prepare100_us=19800 spawn100_us=541 enter100_us=17287 conversion100000_us=54 lookup100000_us=98 query100000_us=939 step100_us=21175 encode100_us=1425 decode100_us=9720 diagnostic_bytes=136112",
+                "parse100_us": 3040,
+                "prepare100_us": 19800,
+                "query100000_us": 939,
+                "spawn100_us": 541,
+                "step100_us": 21175
+              }
+            ]
+          },
+          {
+            "case": 6,
+            "medians": {
+              "conversion100000_us": 54,
+              "decode100_us": 10161,
+              "diagnostic_bytes": 209738,
+              "encode100_us": 1384,
+              "enter100_us": 16708,
+              "lookup100000_us": 79,
+              "max_rss_kib": 4768,
+              "parse100_us": 4439,
+              "prepare100_us": 76345,
+              "query100000_us": 958,
+              "spawn100_us": 562,
+              "step100_us": 23092
+            },
+            "samples": [
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 10161,
+                "diagnostic_bytes": 209738,
+                "encode100_us": 1362,
+                "enter100_us": 16586,
+                "lookup100000_us": 79,
+                "max_rss_kib": 4812,
+                "output": "workload=original_canonical_high_grid parse100_us=4404 prepare100_us=76219 spawn100_us=593 enter100_us=16586 conversion100000_us=54 lookup100000_us=79 query100000_us=947 step100_us=23092 encode100_us=1362 decode100_us=10161 diagnostic_bytes=209738",
+                "parse100_us": 4404,
+                "prepare100_us": 76219,
+                "query100000_us": 947,
+                "spawn100_us": 593,
+                "step100_us": 23092
+              },
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 10139,
+                "diagnostic_bytes": 209738,
+                "encode100_us": 1384,
+                "enter100_us": 16800,
+                "lookup100000_us": 79,
+                "max_rss_kib": 4768,
+                "output": "workload=original_canonical_high_grid parse100_us=4439 prepare100_us=76345 spawn100_us=560 enter100_us=16800 conversion100000_us=54 lookup100000_us=79 query100000_us=958 step100_us=22624 encode100_us=1384 decode100_us=10139 diagnostic_bytes=209738",
+                "parse100_us": 4439,
+                "prepare100_us": 76345,
+                "query100000_us": 958,
+                "spawn100_us": 560,
+                "step100_us": 22624
+              },
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 10259,
+                "diagnostic_bytes": 209738,
+                "encode100_us": 1410,
+                "enter100_us": 16708,
+                "lookup100000_us": 79,
+                "max_rss_kib": 4688,
+                "output": "workload=original_canonical_high_grid parse100_us=4545 prepare100_us=76674 spawn100_us=562 enter100_us=16708 conversion100000_us=54 lookup100000_us=79 query100000_us=964 step100_us=23268 encode100_us=1410 decode100_us=10259 diagnostic_bytes=209738",
+                "parse100_us": 4545,
+                "prepare100_us": 76674,
+                "query100000_us": 964,
+                "spawn100_us": 562,
+                "step100_us": 23268
+              }
+            ]
+          },
+          {
+            "case": 7,
+            "medians": {
+              "conversion100000_us": 54,
+              "decode100_us": 3232,
+              "diagnostic_bytes": 121723,
+              "encode100_us": 487,
+              "enter100_us": 16007,
+              "lookup100000_us": 79,
+              "max_rss_kib": 3408,
+              "parse100_us": 3095,
+              "prepare100_us": 24443,
+              "query100000_us": 936,
+              "spawn100_us": 414,
+              "step100_us": 13627
+            },
+            "samples": [
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 3232,
+                "diagnostic_bytes": 121723,
+                "encode100_us": 486,
+                "enter100_us": 16407,
+                "lookup100000_us": 79,
+                "max_rss_kib": 3408,
+                "output": "workload=original_canonical_line_bound parse100_us=3095 prepare100_us=23729 spawn100_us=411 enter100_us=16407 conversion100000_us=54 lookup100000_us=79 query100000_us=936 step100_us=13627 encode100_us=486 decode100_us=3232 diagnostic_bytes=121723",
+                "parse100_us": 3095,
+                "prepare100_us": 23729,
+                "query100000_us": 936,
+                "spawn100_us": 411,
+                "step100_us": 13627
+              },
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 3230,
+                "diagnostic_bytes": 121723,
+                "encode100_us": 487,
+                "enter100_us": 16007,
+                "lookup100000_us": 79,
+                "max_rss_kib": 3380,
+                "output": "workload=original_canonical_line_bound parse100_us=3040 prepare100_us=24443 spawn100_us=426 enter100_us=16007 conversion100000_us=54 lookup100000_us=79 query100000_us=944 step100_us=13592 encode100_us=487 decode100_us=3230 diagnostic_bytes=121723",
+                "parse100_us": 3040,
+                "prepare100_us": 24443,
+                "query100000_us": 944,
+                "spawn100_us": 426,
+                "step100_us": 13592
+              },
+              {
+                "conversion100000_us": 54,
+                "decode100_us": 3329,
+                "diagnostic_bytes": 121723,
+                "encode100_us": 489,
+                "enter100_us": 15313,
+                "lookup100000_us": 116,
+                "max_rss_kib": 3436,
+                "output": "workload=original_canonical_line_bound parse100_us=3206 prepare100_us=25008 spawn100_us=414 enter100_us=15313 conversion100000_us=54 lookup100000_us=116 query100000_us=927 step100_us=13994 encode100_us=489 decode100_us=3329 diagnostic_bytes=121723",
+                "parse100_us": 3206,
+                "prepare100_us": 25008,
+                "query100000_us": 927,
+                "spawn100_us": 414,
+                "step100_us": 13994
+              }
+            ]
+          }
+        ],
+        "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)"
+      }
+    },
+    "provenance": {
+      "commit": "9f7830ea5836ad0ccf5d4845845a2436fe8715af",
+      "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+      "status": "",
+      "tools": {
+        "measure_canonical_demon.py": "b48fb56d182b1760fa993ff7c8680efb1711ef5dcaa9afa8cc8d9d2ec57b8f01",
+        "measure_context_ownership.py": "fabbe611fc1186d18cfd674fd4976b4e9bd3a0b039d7afc100812eee071a3efe",
+        "measure_demon_expanded_map.py": "2e1b3c7c00d9ea0cf4f820b41f6fd724dc5292f54a2fbf81843101e12e4a3426",
+        "measure_game_instance.py": "611fdab8358a92ecea2f6b29bf39d5722c836e6b98972318713b15506c75fdca",
+        "measure_original_registry.py": "ce85cb6f22da950e620492fdf564f003a414e067e5300ee95122750812b5d139"
+      },
+      "tree": "9868e83db9d65f20923b3deb0fc4714fc2d10d49"
+    },
+    "stepping": {
+      "controls": {
+        "--control": {
+          "calls": 0,
+          "failures": 0,
+          "frees": 0,
+          "reallocs": 0,
+          "requested_bytes": 0
+        },
+        "--probe": {
+          "calls": 1,
+          "failures": 0,
+          "frees": 1,
+          "reallocs": 0,
+          "requested_bytes": 4096
+        }
+      },
+      "method": "Three separate release processes per workload/mode. Setup excluded; update timers include identical scripted inputs and destruction of returned snapshots. Capture uses frozen state after100 advances; encode uses a prebuilt snapshot. These frozen components are not additive to evolving update medians. Allocation samples are separate instrumented processes, NOT timing/RSS samples. Linux/glibc interposition counts successful malloc/calloc/aligned requests, realloc requests, cumulative requested bytes and explicit nonnull frees in the marked workload thread; allocator internals/direct mappings/other threads/peak-live-heap/leaks are not measured. Native wait4 RSS includes setup, allocator, events and final verification capture/encoding outside timer. Private component samples include test-harness RSS, are100 calls on frozen initial state and are separate from evolving update work. Staging bytes include vacant logical slots; spatial allocation reserves max_slots while copying only current links. No CPU/frequency/host isolation, timing thresholds or universal performance claim.",
+      "provenance": {
+        "cc": "cc (Debian 14.2.0-19) 14.2.0",
+        "commit": "9f7830ea5836ad0ccf5d4845845a2436fe8715af",
+        "host": "Linux-6.18.55-x86_64-with-glibc2.41",
+        "libc": [
+          "glibc",
+          "2.41"
+        ],
+        "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+        "source_sha256": {
+          "crates/doom-sim/examples/diagnostic_free.rs": "72dfa7d0710d77283109788438eb037d8548b14e3212ff1b2e74c91415d688ca",
+          "crates/doom-sim/src/actor.rs": "069cf777ce5227e54220e3b2399b2e2d4350535b5e9e004903915906d48e84e5",
+          "crates/doom-sim/src/advance_tests.rs": "7fd9847f511b7fbe2a6573cf6d9adf7d023fb456ec88a296ceb736887b6498c7",
+          "crates/doom-sim/src/canonical_demon.rs": "94185ee8db5c0ee44030e72c8bc931c1385a42275d8ec9669ff968bd77b8ae02",
+          "crates/doom-sim/src/chaingunner.rs": "96c8156758ebdbdd170029057a779620840a2cd11c7fca2b1d8561ed2bcb35e1",
+          "crates/doom-sim/src/combat.rs": "592ddae7286436f7d281848e979aa0e9d34d350c639dd0b4418f6d672d38c3b4",
+          "crates/doom-sim/src/combat_trace.rs": "2f44bbb02482e0a8600f044d24867e90e4a57fbcffa034d6187a54e5bc44d383",
+          "crates/doom-sim/src/demon.rs": "269540f12338f5a3e76af907a0acf8028ffcbca584f58aea9e7ad81bf2c5f17a",
+          "crates/doom-sim/src/demon_expanded_map.rs": "8bcab5ce4eb0bec47809c25b30585be79c914b5bbea610310990d5c9b902c3ba",
+          "crates/doom-sim/src/demon_expanded_map_tests.rs": "bc2998baafdc829af6dbf2bc1012ad61674f8be3a8878f85febfdfe0eb85370d",
+          "crates/doom-sim/src/demon_lifecycle.rs": "3ee28d72ed0aef199964c4c23429f4ede4111a0aa1daff6454fd416847edfc21",
+          "crates/doom-sim/src/demon_lifecycle_tests.rs": "0c4870c9ee03403ae50cd16b5b1863fe425718c499d303e76e9887c8d48ab9f5",
+          "crates/doom-sim/src/demon_map_context.rs": "b07ae3092b912bb0101255d7c442aaf08c9b322063341f24ba2821566f898c26",
+          "crates/doom-sim/src/demon_map_spawn.rs": "6f9f50b1d751f203993168d1a4588638f4b2fdf1955635aa5d047f572f9276e1",
+          "crates/doom-sim/src/demon_map_spawn_tests.rs": "958d2be5c566df25aec9542ee16a10b0b3f11e192b3cce1fd39255bae2fe0fb2",
+          "crates/doom-sim/src/demon_stand_run.rs": "4920bdcc46e03b4ae0e448940ffe9207153bae53e9ef92df4ed66d71823555e6",
+          "crates/doom-sim/src/demon_stand_run_tests.rs": "9a3668a5e72782ace3c85c29e5ee03831a4b092dca599f4d90096b62fbcb01b1",
+          "crates/doom-sim/src/demon_tests.rs": "22b0ebb16d952ee0213d1f5dbf7215003e0e26d80b6d4bafab8732c78d583326",
+          "crates/doom-sim/src/diagnostic.rs": "ae69306b1340d34282dfd76443ad08a40f9b078621d3846c4c8d5fc0648d2c43",
+          "crates/doom-sim/src/direction.rs": "4c8e70eb410ebe32a458875e06cb84fb7ce86140e494b39f7428364d56a57740",
+          "crates/doom-sim/src/execution_context.rs": "91a18e51813aed84103c8acfeb60beb6ace7139b846a4586881cd2f4aa96d557",
+          "crates/doom-sim/src/fine_sine.rs": "667b54fae2eef4fb9f27b752db1ea91398dab3e322076a9f64f4239d9859ee03",
+          "crates/doom-sim/src/game_instance.rs": "1fc288b2c8c6e46853287459e21d312763cb206293cade61a188ca6c1f26ff20",
+          "crates/doom-sim/src/geometry.rs": "7e87af01a9cc1bef13b92c7449da78ce2c5e6dc4df51e486dadde254cdafb49a",
+          "crates/doom-sim/src/identity.rs": "0992cade2db116da2ea5d6e4e4c9ae650405fe9bd2910c93a15469f676964e5e",
+          "crates/doom-sim/src/identity/names.rs": "e2df23e96c2d8fb6930bfc38d8bc873192972f3a0e2ca6466d54d14d609640cd",
+          "crates/doom-sim/src/lib.rs": "0792cac8290311b4f8acbafe5258c5787a31a4753d997e70fef543d12b7fb75e",
+          "crates/doom-sim/src/lifecycle.rs": "5f4acdd6f55079deaced1061fda225b83a7f1eea04b09e88cd6876ca8c7c1a47",
+          "crates/doom-sim/src/line_work.rs": "1416e794e07ce759facc236204b0aca686635097b88320887c5f362c2c43264c",
+          "crates/doom-sim/src/map_extent.rs": "e002f9eb9a06cd080d83acb11d421df6517d0591136e047ab6a6a002d4527099",
+          "crates/doom-sim/src/map_scale.rs": "d8725b77067a3a5a49b119a7b3b12924aab1298149d8578b723025ed5f2f8bec",
+          "crates/doom-sim/src/monsters.rs": "ceebe3ec013ebb1cc1b3ce394ff28805ba6ed9998c4ff8cfe40429b502631ddd",
+          "crates/doom-sim/src/movement.rs": "b95f6cd7be1c6de2f6fca87e66da694ba47eebe3111670a56695cb4965ac1a0e",
+          "crates/doom-sim/src/multisector.rs": "3c737326755bc5ec9639d856d1309d64c100585714803c5663215ca7a7955950",
+          "crates/doom-sim/src/native_demon.rs": "de2dd3531b99486401fb150b4e610e39796756a9cefcdbb737e18cec39e0e82a",
+          "crates/doom-sim/src/native_demon_tests.rs": "b9f8d9265cad19ab3c70372844ad585367dd6854e7efe8a8621510de342d34e2",
+          "crates/doom-sim/src/original_player.rs": "ffb6f960c463a5159cfa7f9464a21c855917cdefbb538deb63265a906786cf35",
+          "crates/doom-sim/src/original_player_tests.rs": "01f781b66a187ca12d3b487fab62240591086651470f2081ecd33f29fef7a15e",
+          "crates/doom-sim/src/original_registry.rs": "94d251916f885853207cd44cf8f1d7341c2659127a496ea519289c9830cef60b",
+          "crates/doom-sim/src/perception.rs": "d811e25b3c2dff62d86f340285820683a18c254b7e2dfe61e4f3d5a5396a184c",
+          "crates/doom-sim/src/perception_tests.rs": "c16e72e12ad5229163ae55446e08511d84f6b63975a4b84d4b04d03839c90f0a",
+          "crates/doom-sim/src/projectiles.rs": "cfb0c7dd9539cfb19a391541ce33834ba99062df89164854bfd26e03ddfc02d9",
+          "crates/doom-sim/src/pursuit.rs": "8116393c344a3e27ea2271cc0f5a1be671127ec3ae7b1dec33e886e00ec32831",
+          "crates/doom-sim/src/pursuit/chase.rs": "9d50f3fa3c1840b0ce81e847a268377242a0b2c0264885f30f0d422033a9d9a1",
+          "crates/doom-sim/src/pursuit/directions.rs": "181a249e1424d2e5813a07b0b8014848fdb4b713705380ac8b8ea119c017f18d",
+          "crates/doom-sim/src/shotgunner.rs": "d44e6302ad02681109a084246dcb7dcb69f4858c112633f19b95c58657dc60df",
+          "crates/doom-sim/src/sight.rs": "92142ada5cc8341d3b1c6b14b03e26bb290ed134d693db032caab8b8612ba599",
+          "crates/doom-sim/src/snapshot.rs": "9b9ae163c999e4e55589a359fcf74c8cac55cf238f75f7d99e1c811882ebcd45",
+          "crates/doom-sim/src/source_actors.rs": "eda6f6d38278d2fcbc7247cc6644f6f89a4ed3c273a33af874281370ad40a6ff",
+          "crates/doom-sim/src/spawning.rs": "8dd63cc4e31a170897000a18aa118671eaa668cdce55e0f9d501ad1f99d7a3d1",
+          "crates/doom-sim/src/store.rs": "ebc9a1294371648d4c3931df3e747a4c43895e750b5fa2b9d1e73d9d5983fa0d",
+          "crates/doom-sim/src/tan_to_angle.rs": "3b9ae790948b581d0b4a68f3a6574886f2a8efcd231378f19123d2ccbbc307c4",
+          "crates/doom-sim/src/thinkers.rs": "960489d0973b5435f08d5764bda4a525372212534502eccb4374a5ee3b761f8f",
+          "crates/doom-sim/src/transaction_cost_tests.rs": "f573e574c5d37c84ebfbc19e9bea8ce1b76f359f4dc061fcec7709fa665d45bb",
+          "crates/doom-sim/src/weapons.rs": "9a97ccb37b278b8a6f68708f988b383c390e992b26742a707d56ddd8322012e8",
+          "crates/doom-sim/src/weapons_tests.rs": "f941a824640a6806374f59048a807a68ffa807aa391614235ebf12c69cc38b7b",
+          "tests/support/m3g1.rs": "8e1092a1422d5396680d10958b33b9e800913607b9c9fdfe0bb6339a5a13f064",
+          "tests/support/m3g1_profiles.rs": "cadf6ef56a57cd3900706b91f12c33b821d46e966762cbbc1546cf1dd9d2ace8",
+          "tools/measure_stepping.py": "28b18ccc166e7b067d9758feaf17bb7d925f0129e2e4c383422edcfeab0ffc99",
+          "tools/measurement/alloc_probe.c": "e83310c16a4870b6fda9ce1095b87353e4be0dd2ce470b20a46912e4865be931"
+        },
+        "status": "",
+        "tree": "9868e83db9d65f20923b3deb0fc4714fc2d10d49"
+      },
+      "results": [
+        {
+          "allocation_samples": [
+            {
+              "calls": 374263,
+              "failures": 0,
+              "frees": 374263,
+              "reallocs": 27622,
+              "requested_bytes": 15234482
+            },
+            {
+              "calls": 374263,
+              "failures": 0,
+              "frees": 374263,
+              "reallocs": 27622,
+              "requested_bytes": 15234482
+            },
+            {
+              "calls": 374263,
+              "failures": 0,
+              "frees": 374263,
+              "reallocs": 27622,
+              "requested_bytes": 15234482
+            }
+          ],
+          "digest": "53585b0322f0a790",
+          "label": "small_control",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2968,
+            "ns": 13217414
+          },
+          "mode": "step",
+          "profile": "17",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3020,
+              "ns": 13217414
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2968,
+              "ns": 13863380
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2880,
+              "ns": 13110435
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 320739,
+              "failures": 0,
+              "frees": 320739,
+              "reallocs": 233,
+              "requested_bytes": 11874154
+            },
+            {
+              "calls": 320739,
+              "failures": 0,
+              "frees": 320739,
+              "reallocs": 233,
+              "requested_bytes": 11874154
+            },
+            {
+              "calls": 320739,
+              "failures": 0,
+              "frees": 320739,
+              "reallocs": 233,
+              "requested_bytes": 11874154
+            }
+          ],
+          "digest": "53585b0322f0a790",
+          "label": "small_control",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2844,
+            "ns": 10476695
+          },
+          "mode": "advance",
+          "profile": "17",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 2844,
+              "ns": 10450155
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2780,
+              "ns": 10478387
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2928,
+              "ns": 10476695
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 374263,
+              "failures": 0,
+              "frees": 374263,
+              "reallocs": 27622,
+              "requested_bytes": 15234482
+            },
+            {
+              "calls": 374263,
+              "failures": 0,
+              "frees": 374263,
+              "reallocs": 27622,
+              "requested_bytes": 15234482
+            },
+            {
+              "calls": 374263,
+              "failures": 0,
+              "frees": 374263,
+              "reallocs": 27622,
+              "requested_bytes": 15234482
+            }
+          ],
+          "digest": "53585b0322f0a790",
+          "label": "small_control",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2872,
+            "ns": 13719667
+          },
+          "mode": "advance_snapshot",
+          "profile": "17",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 2780,
+              "ns": 16718948
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2872,
+              "ns": 13719667
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2932,
+              "ns": 13508474
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 52800,
+              "failures": 0,
+              "frees": 52800,
+              "reallocs": 26500,
+              "requested_bytes": 3308900
+            },
+            {
+              "calls": 52800,
+              "failures": 0,
+              "frees": 52800,
+              "reallocs": 26500,
+              "requested_bytes": 3308900
+            },
+            {
+              "calls": 52800,
+              "failures": 0,
+              "frees": 52800,
+              "reallocs": 26500,
+              "requested_bytes": 3308900
+            }
+          ],
+          "digest": "53585b0322f0a790",
+          "label": "small_control",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2876,
+            "ns": 1921555
+          },
+          "mode": "capture",
+          "profile": "17",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 2876,
+              "ns": 2000763
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2844,
+              "ns": 1802449
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3020,
+              "ns": 1921555
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1500,
+              "requested_bytes": 26214000
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1500,
+              "requested_bytes": 26214000
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1500,
+              "requested_bytes": 26214000
+            }
+          ],
+          "digest": "53585b0322f0a790",
+          "label": "small_control",
+          "medians": {
+            "bytes": 8794000,
+            "max_rss_kib": 2844,
+            "ns": 1161070
+          },
+          "mode": "encode",
+          "profile": "17",
+          "samples": [
+            {
+              "bytes": 8794000,
+              "max_rss_kib": 2844,
+              "ns": 1161070
+            },
+            {
+              "bytes": 8794000,
+              "max_rss_kib": 2932,
+              "ns": 1128100
+            },
+            {
+              "bytes": 8794000,
+              "max_rss_kib": 2844,
+              "ns": 1342828
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 374663,
+              "failures": 0,
+              "frees": 374663,
+              "reallocs": 27622,
+              "requested_bytes": 15643606
+            },
+            {
+              "calls": 374663,
+              "failures": 0,
+              "frees": 374663,
+              "reallocs": 27622,
+              "requested_bytes": 15643606
+            },
+            {
+              "calls": 374663,
+              "failures": 0,
+              "frees": 374663,
+              "reallocs": 27622,
+              "requested_bytes": 15643606
+            }
+          ],
+          "digest": "2f68458de949874c",
+          "label": "small_control",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2880,
+            "ns": 13215050
+          },
+          "mode": "step",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 2884,
+              "ns": 13215050
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2880,
+              "ns": 14197284
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2844,
+              "ns": 13197654
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 321139,
+              "failures": 0,
+              "frees": 321139,
+              "reallocs": 233,
+              "requested_bytes": 12283278
+            },
+            {
+              "calls": 321139,
+              "failures": 0,
+              "frees": 321139,
+              "reallocs": 233,
+              "requested_bytes": 12283278
+            },
+            {
+              "calls": 321139,
+              "failures": 0,
+              "frees": 321139,
+              "reallocs": 233,
+              "requested_bytes": 12283278
+            }
+          ],
+          "digest": "2f68458de949874c",
+          "label": "small_control",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2744,
+            "ns": 10458408
+          },
+          "mode": "advance",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 2744,
+              "ns": 10325810
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2892,
+              "ns": 10458408
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2652,
+              "ns": 10785702
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 374663,
+              "failures": 0,
+              "frees": 374663,
+              "reallocs": 27622,
+              "requested_bytes": 15643606
+            },
+            {
+              "calls": 374663,
+              "failures": 0,
+              "frees": 374663,
+              "reallocs": 27622,
+              "requested_bytes": 15643606
+            },
+            {
+              "calls": 374663,
+              "failures": 0,
+              "frees": 374663,
+              "reallocs": 27622,
+              "requested_bytes": 15643606
+            }
+          ],
+          "digest": "2f68458de949874c",
+          "label": "small_control",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2968,
+            "ns": 13170294
+          },
+          "mode": "advance_snapshot",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 2968,
+              "ns": 14133089
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2968,
+              "ns": 13170294
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2968,
+              "ns": 13164465
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 52800,
+              "failures": 0,
+              "frees": 52800,
+              "reallocs": 26500,
+              "requested_bytes": 3308900
+            },
+            {
+              "calls": 52800,
+              "failures": 0,
+              "frees": 52800,
+              "reallocs": 26500,
+              "requested_bytes": 3308900
+            },
+            {
+              "calls": 52800,
+              "failures": 0,
+              "frees": 52800,
+              "reallocs": 26500,
+              "requested_bytes": 3308900
+            }
+          ],
+          "digest": "2f68458de949874c",
+          "label": "small_control",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2748,
+            "ns": 1967554
+          },
+          "mode": "capture",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 2744,
+              "ns": 1989767
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2800,
+              "ns": 1967554
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2748,
+              "ns": 1932472
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1500,
+              "requested_bytes": 26214000
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1500,
+              "requested_bytes": 26214000
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1500,
+              "requested_bytes": 26214000
+            }
+          ],
+          "digest": "2f68458de949874c",
+          "label": "small_control",
+          "medians": {
+            "bytes": 8794000,
+            "max_rss_kib": 2872,
+            "ns": 1062954
+          },
+          "mode": "encode",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 8794000,
+              "max_rss_kib": 2872,
+              "ns": 1062944
+            },
+            {
+              "bytes": 8794000,
+              "max_rss_kib": 2872,
+              "ns": 1062954
+            },
+            {
+              "bytes": 8794000,
+              "max_rss_kib": 2884,
+              "ns": 1065899
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 551709,
+              "failures": 0,
+              "frees": 551709,
+              "reallocs": 79222,
+              "requested_bytes": 36782970
+            },
+            {
+              "calls": 551709,
+              "failures": 0,
+              "frees": 551709,
+              "reallocs": 79222,
+              "requested_bytes": 36782970
+            },
+            {
+              "calls": 551709,
+              "failures": 0,
+              "frees": 551709,
+              "reallocs": 79222,
+              "requested_bytes": 36782970
+            }
+          ],
+          "digest": "7c0ab9260c6e50da",
+          "label": "long_lifecycle",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3612,
+            "ns": 22581240
+          },
+          "mode": "step",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3612,
+              "ns": 22581240
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3548,
+              "ns": 25769361
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3792,
+              "ns": 22078817
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 293950,
+              "failures": 0,
+              "frees": 293950,
+              "reallocs": 471,
+              "requested_bytes": 11919085
+            },
+            {
+              "calls": 293950,
+              "failures": 0,
+              "frees": 293950,
+              "reallocs": 471,
+              "requested_bytes": 11919085
+            },
+            {
+              "calls": 293950,
+              "failures": 0,
+              "frees": 293950,
+              "reallocs": 471,
+              "requested_bytes": 11919085
+            }
+          ],
+          "digest": "7c0ab9260c6e50da",
+          "label": "long_lifecycle",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3520,
+            "ns": 10590204
+          },
+          "mode": "advance",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3608,
+              "ns": 10590204
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3520,
+              "ns": 10403839
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3440,
+              "ns": 11501964
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 551709,
+              "failures": 0,
+              "frees": 551709,
+              "reallocs": 79222,
+              "requested_bytes": 36782970
+            },
+            {
+              "calls": 551709,
+              "failures": 0,
+              "frees": 551709,
+              "reallocs": 79222,
+              "requested_bytes": 36782970
+            },
+            {
+              "calls": 551709,
+              "failures": 0,
+              "frees": 551709,
+              "reallocs": 79222,
+              "requested_bytes": 36782970
+            }
+          ],
+          "digest": "7c0ab9260c6e50da",
+          "label": "long_lifecycle",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3612,
+            "ns": 23226586
+          },
+          "mode": "advance_snapshot",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3612,
+              "ns": 23226586
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3548,
+              "ns": 23755079
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3640,
+              "ns": 23095613
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 257300,
+              "failures": 0,
+              "frees": 257300,
+              "reallocs": 78000,
+              "requested_bytes": 24592200
+            },
+            {
+              "calls": 257300,
+              "failures": 0,
+              "frees": 257300,
+              "reallocs": 78000,
+              "requested_bytes": 24592200
+            },
+            {
+              "calls": 257300,
+              "failures": 0,
+              "frees": 257300,
+              "reallocs": 78000,
+              "requested_bytes": 24592200
+            }
+          ],
+          "digest": "7c0ab9260c6e50da",
+          "label": "long_lifecycle",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3444,
+            "ns": 11374425
+          },
+          "mode": "capture",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3528,
+              "ns": 15491719
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3420,
+              "ns": 11374425
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3444,
+              "ns": 11228398
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1600,
+              "requested_bytes": 52428400
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1600,
+              "requested_bytes": 52428400
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1600,
+              "requested_bytes": 52428400
+            }
+          ],
+          "digest": "7c0ab9260c6e50da",
+          "label": "long_lifecycle",
+          "medians": {
+            "bytes": 21546600,
+            "max_rss_kib": 3640,
+            "ns": 2343469
+          },
+          "mode": "encode",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 21546600,
+              "max_rss_kib": 3732,
+              "ns": 4103864
+            },
+            {
+              "bytes": 21546600,
+              "max_rss_kib": 3640,
+              "ns": 2021431
+            },
+            {
+              "bytes": 21546600,
+              "max_rss_kib": 3548,
+              "ns": 2343469
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 1570019,
+              "failures": 0,
+              "frees": 1570000,
+              "reallocs": 119842,
+              "requested_bytes": 82613860
+            },
+            {
+              "calls": 1570019,
+              "failures": 0,
+              "frees": 1570000,
+              "reallocs": 119842,
+              "requested_bytes": 82613860
+            },
+            {
+              "calls": 1570019,
+              "failures": 0,
+              "frees": 1570000,
+              "reallocs": 119842,
+              "requested_bytes": 82613860
+            }
+          ],
+          "digest": "3d5bc38cb2e2283a",
+          "label": "four_owners",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 4048,
+            "ns": 64376911
+          },
+          "mode": "step",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 4048,
+              "ns": 68175062
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 4048,
+              "ns": 64376911
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3804,
+              "ns": 61330402
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 1270082,
+              "failures": 0,
+              "frees": 1270063,
+              "reallocs": 4396,
+              "requested_bytes": 54615821
+            },
+            {
+              "calls": 1270082,
+              "failures": 0,
+              "frees": 1270063,
+              "reallocs": 4396,
+              "requested_bytes": 54615821
+            },
+            {
+              "calls": 1270082,
+              "failures": 0,
+              "frees": 1270063,
+              "reallocs": 4396,
+              "requested_bytes": 54615821
+            }
+          ],
+          "digest": "3d5bc38cb2e2283a",
+          "label": "four_owners",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3784,
+            "ns": 46357231
+          },
+          "mode": "advance",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3740,
+              "ns": 47334037
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3784,
+              "ns": 46357231
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3792,
+              "ns": 45882178
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 1570019,
+              "failures": 0,
+              "frees": 1570000,
+              "reallocs": 119842,
+              "requested_bytes": 82613860
+            },
+            {
+              "calls": 1570019,
+              "failures": 0,
+              "frees": 1570000,
+              "reallocs": 119842,
+              "requested_bytes": 82613860
+            },
+            {
+              "calls": 1570019,
+              "failures": 0,
+              "frees": 1570000,
+              "reallocs": 119842,
+              "requested_bytes": 82613860
+            }
+          ],
+          "digest": "3d5bc38cb2e2283a",
+          "label": "four_owners",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3952,
+            "ns": 59987084
+          },
+          "mode": "advance_snapshot",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3904,
+              "ns": 59785486
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3952,
+              "ns": 59987084
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 4040,
+              "ns": 60893596
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 307300,
+              "failures": 0,
+              "frees": 307300,
+              "reallocs": 125000,
+              "requested_bytes": 29876700
+            },
+            {
+              "calls": 307300,
+              "failures": 0,
+              "frees": 307300,
+              "reallocs": 125000,
+              "requested_bytes": 29876700
+            },
+            {
+              "calls": 307300,
+              "failures": 0,
+              "frees": 307300,
+              "reallocs": 125000,
+              "requested_bytes": 29876700
+            }
+          ],
+          "digest": "3d5bc38cb2e2283a",
+          "label": "four_owners",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3904,
+            "ns": 14483407
+          },
+          "mode": "capture",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3896,
+              "ns": 14288758
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 4044,
+              "ns": 14483407
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3904,
+              "ns": 14839374
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1600,
+              "requested_bytes": 52428400
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1600,
+              "requested_bytes": 52428400
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1600,
+              "requested_bytes": 52428400
+            }
+          ],
+          "digest": "3d5bc38cb2e2283a",
+          "label": "four_owners",
+          "medians": {
+            "bytes": 23659200,
+            "max_rss_kib": 3996,
+            "ns": 2267977
+          },
+          "mode": "encode",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 23659200,
+              "max_rss_kib": 3996,
+              "ns": 2267977
+            },
+            {
+              "bytes": 23659200,
+              "max_rss_kib": 3996,
+              "ns": 2264111
+            },
+            {
+              "bytes": 23659200,
+              "max_rss_kib": 3996,
+              "ns": 2540900
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 579460,
+              "failures": 0,
+              "frees": 579457,
+              "reallocs": 79995,
+              "requested_bytes": 37546679
+            },
+            {
+              "calls": 579460,
+              "failures": 0,
+              "frees": 579457,
+              "reallocs": 79995,
+              "requested_bytes": 37546679
+            },
+            {
+              "calls": 579460,
+              "failures": 0,
+              "frees": 579457,
+              "reallocs": 79995,
+              "requested_bytes": 37546679
+            }
+          ],
+          "digest": "53e69006774bfdb8",
+          "label": "wide_map_lifecycle",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3916,
+            "ns": 23032509
+          },
+          "mode": "step",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3916,
+              "ns": 22798314
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3920,
+              "ns": 23032509
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3864,
+              "ns": 23235580
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 321220,
+              "failures": 0,
+              "frees": 321217,
+              "reallocs": 621,
+              "requested_bytes": 12707266
+            },
+            {
+              "calls": 321220,
+              "failures": 0,
+              "frees": 321217,
+              "reallocs": 621,
+              "requested_bytes": 12707266
+            },
+            {
+              "calls": 321220,
+              "failures": 0,
+              "frees": 321217,
+              "reallocs": 621,
+              "requested_bytes": 12707266
+            }
+          ],
+          "digest": "53e69006774bfdb8",
+          "label": "wide_map_lifecycle",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3916,
+            "ns": 11327876
+          },
+          "mode": "advance",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3776,
+              "ns": 11347675
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3920,
+              "ns": 11261097
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3916,
+              "ns": 11327876
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 579460,
+              "failures": 0,
+              "frees": 579457,
+              "reallocs": 79995,
+              "requested_bytes": 37546679
+            },
+            {
+              "calls": 579460,
+              "failures": 0,
+              "frees": 579457,
+              "reallocs": 79995,
+              "requested_bytes": 37546679
+            },
+            {
+              "calls": 579460,
+              "failures": 0,
+              "frees": 579457,
+              "reallocs": 79995,
+              "requested_bytes": 37546679
+            }
+          ],
+          "digest": "53e69006774bfdb8",
+          "label": "wide_map_lifecycle",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3828,
+            "ns": 23021082
+          },
+          "mode": "advance_snapshot",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3772,
+              "ns": 23021082
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3868,
+              "ns": 22725265
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3828,
+              "ns": 23561443
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 259400,
+              "failures": 0,
+              "frees": 259400,
+              "reallocs": 81000,
+              "requested_bytes": 25058400
+            },
+            {
+              "calls": 259400,
+              "failures": 0,
+              "frees": 259400,
+              "reallocs": 81000,
+              "requested_bytes": 25058400
+            },
+            {
+              "calls": 259400,
+              "failures": 0,
+              "frees": 259400,
+              "reallocs": 81000,
+              "requested_bytes": 25058400
+            }
+          ],
+          "digest": "53e69006774bfdb8",
+          "label": "wide_map_lifecycle",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3772,
+            "ns": 11414013
+          },
+          "mode": "capture",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3676,
+              "ns": 11274387
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3780,
+              "ns": 11414013
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3772,
+              "ns": 11431419
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1600,
+              "requested_bytes": 52428400
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1600,
+              "requested_bytes": 52428400
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1600,
+              "requested_bytes": 52428400
+            }
+          ],
+          "digest": "53e69006774bfdb8",
+          "label": "wide_map_lifecycle",
+          "medians": {
+            "bytes": 20849100,
+            "max_rss_kib": 3748,
+            "ns": 2034010
+          },
+          "mode": "encode",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 20849100,
+              "max_rss_kib": 3748,
+              "ns": 2100519
+            },
+            {
+              "bytes": 20849100,
+              "max_rss_kib": 3896,
+              "ns": 2025207
+            },
+            {
+              "bytes": 20849100,
+              "max_rss_kib": 3748,
+              "ns": 2034010
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 374663,
+              "failures": 0,
+              "frees": 374663,
+              "reallocs": 27637,
+              "requested_bytes": 17479830
+            },
+            {
+              "calls": 374663,
+              "failures": 0,
+              "frees": 374663,
+              "reallocs": 27637,
+              "requested_bytes": 17479830
+            },
+            {
+              "calls": 374663,
+              "failures": 0,
+              "frees": 374663,
+              "reallocs": 27637,
+              "requested_bytes": 17479830
+            }
+          ],
+          "digest": "5205dbe116db7a6d",
+          "label": "expanded_sight_dag",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3128,
+            "ns": 13715219
+          },
+          "mode": "step",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3128,
+              "ns": 13715219
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3100,
+              "ns": 13636022
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3224,
+              "ns": 13717153
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 321139,
+              "failures": 0,
+              "frees": 321139,
+              "reallocs": 233,
+              "requested_bytes": 13856334
+            },
+            {
+              "calls": 321139,
+              "failures": 0,
+              "frees": 321139,
+              "reallocs": 233,
+              "requested_bytes": 13856334
+            },
+            {
+              "calls": 321139,
+              "failures": 0,
+              "frees": 321139,
+              "reallocs": 233,
+              "requested_bytes": 13856334
+            }
+          ],
+          "digest": "5205dbe116db7a6d",
+          "label": "expanded_sight_dag",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2972,
+            "ns": 10773816
+          },
+          "mode": "advance",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 2972,
+              "ns": 10650354
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2972,
+              "ns": 10773816
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2972,
+              "ns": 10806784
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 374663,
+              "failures": 0,
+              "frees": 374663,
+              "reallocs": 27637,
+              "requested_bytes": 17479830
+            },
+            {
+              "calls": 374663,
+              "failures": 0,
+              "frees": 374663,
+              "reallocs": 27637,
+              "requested_bytes": 17479830
+            },
+            {
+              "calls": 374663,
+              "failures": 0,
+              "frees": 374663,
+              "reallocs": 27637,
+              "requested_bytes": 17479830
+            }
+          ],
+          "digest": "5205dbe116db7a6d",
+          "label": "expanded_sight_dag",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3128,
+            "ns": 13670603
+          },
+          "mode": "advance_snapshot",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3036,
+              "ns": 14286905
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3128,
+              "ns": 13310681
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3188,
+              "ns": 13670603
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 52800,
+              "failures": 0,
+              "frees": 52800,
+              "reallocs": 26500,
+              "requested_bytes": 3308900
+            },
+            {
+              "calls": 52800,
+              "failures": 0,
+              "frees": 52800,
+              "reallocs": 26500,
+              "requested_bytes": 3308900
+            },
+            {
+              "calls": 52800,
+              "failures": 0,
+              "frees": 52800,
+              "reallocs": 26500,
+              "requested_bytes": 3308900
+            }
+          ],
+          "digest": "5205dbe116db7a6d",
+          "label": "expanded_sight_dag",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3000,
+            "ns": 1969035
+          },
+          "mode": "capture",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3056,
+              "ns": 1967261
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2908,
+              "ns": 1969035
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3000,
+              "ns": 2148229
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1500,
+              "requested_bytes": 26214000
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1500,
+              "requested_bytes": 26214000
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1500,
+              "requested_bytes": 26214000
+            }
+          ],
+          "digest": "5205dbe116db7a6d",
+          "label": "expanded_sight_dag",
+          "medians": {
+            "bytes": 8819800,
+            "max_rss_kib": 3092,
+            "ns": 1082942
+          },
+          "mode": "encode",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 8819800,
+              "max_rss_kib": 3144,
+              "ns": 1082942
+            },
+            {
+              "bytes": 8819800,
+              "max_rss_kib": 3092,
+              "ns": 1131034
+            },
+            {
+              "bytes": 8819800,
+              "max_rss_kib": 3000,
+              "ns": 1063705
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 374681,
+              "failures": 0,
+              "frees": 374681,
+              "reallocs": 28061,
+              "requested_bytes": 17320054
+            },
+            {
+              "calls": 374681,
+              "failures": 0,
+              "frees": 374681,
+              "reallocs": 28061,
+              "requested_bytes": 17320054
+            },
+            {
+              "calls": 374681,
+              "failures": 0,
+              "frees": 374681,
+              "reallocs": 28061,
+              "requested_bytes": 17320054
+            }
+          ],
+          "digest": "82d8c304f67724ba",
+          "label": "line_table",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3548,
+            "ns": 13537336
+          },
+          "mode": "step",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3524,
+              "ns": 13662751
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3604,
+              "ns": 13452601
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3548,
+              "ns": 13537336
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 321157,
+              "failures": 0,
+              "frees": 321157,
+              "reallocs": 507,
+              "requested_bytes": 13253678
+            },
+            {
+              "calls": 321157,
+              "failures": 0,
+              "frees": 321157,
+              "reallocs": 507,
+              "requested_bytes": 13253678
+            },
+            {
+              "calls": 321157,
+              "failures": 0,
+              "frees": 321157,
+              "reallocs": 507,
+              "requested_bytes": 13253678
+            }
+          ],
+          "digest": "82d8c304f67724ba",
+          "label": "line_table",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3388,
+            "ns": 10745053
+          },
+          "mode": "advance",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3384,
+              "ns": 10745053
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3392,
+              "ns": 10670162
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3388,
+              "ns": 10917909
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 374681,
+              "failures": 0,
+              "frees": 374681,
+              "reallocs": 28061,
+              "requested_bytes": 17320054
+            },
+            {
+              "calls": 374681,
+              "failures": 0,
+              "frees": 374681,
+              "reallocs": 28061,
+              "requested_bytes": 17320054
+            },
+            {
+              "calls": 374681,
+              "failures": 0,
+              "frees": 374681,
+              "reallocs": 28061,
+              "requested_bytes": 17320054
+            }
+          ],
+          "digest": "82d8c304f67724ba",
+          "label": "line_table",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3612,
+            "ns": 13927133
+          },
+          "mode": "advance_snapshot",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3524,
+              "ns": 14017076
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3612,
+              "ns": 13927133
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3664,
+              "ns": 13804021
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 52800,
+              "failures": 0,
+              "frees": 52800,
+              "reallocs": 26500,
+              "requested_bytes": 3308900
+            },
+            {
+              "calls": 52800,
+              "failures": 0,
+              "frees": 52800,
+              "reallocs": 26500,
+              "requested_bytes": 3308900
+            },
+            {
+              "calls": 52800,
+              "failures": 0,
+              "frees": 52800,
+              "reallocs": 26500,
+              "requested_bytes": 3308900
+            }
+          ],
+          "digest": "82d8c304f67724ba",
+          "label": "line_table",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3484,
+            "ns": 1754337
+          },
+          "mode": "capture",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3528,
+              "ns": 1754337
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3480,
+              "ns": 1672676
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3484,
+              "ns": 1856158
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1600,
+              "requested_bytes": 70051900
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1600,
+              "requested_bytes": 70051900
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1600,
+              "requested_bytes": 70051900
+            }
+          ],
+          "digest": "82d8c304f67724ba",
+          "label": "line_table",
+          "medians": {
+            "bytes": 20103600,
+            "max_rss_kib": 3420,
+            "ns": 1328506
+          },
+          "mode": "encode",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 20103600,
+              "max_rss_kib": 3420,
+              "ns": 1328506
+            },
+            {
+              "bytes": 20103600,
+              "max_rss_kib": 3392,
+              "ns": 1312894
+            },
+            {
+              "bytes": 20103600,
+              "max_rss_kib": 3420,
+              "ns": 1343097
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 579460,
+              "failures": 0,
+              "frees": 579457,
+              "reallocs": 79995,
+              "requested_bytes": 37546679
+            },
+            {
+              "calls": 579460,
+              "failures": 0,
+              "frees": 579457,
+              "reallocs": 79995,
+              "requested_bytes": 37546679
+            },
+            {
+              "calls": 579460,
+              "failures": 0,
+              "frees": 579457,
+              "reallocs": 79995,
+              "requested_bytes": 37546679
+            }
+          ],
+          "digest": "1443dddf42741546",
+          "label": "high_cell_demon",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 4296,
+            "ns": 23690974
+          },
+          "mode": "step",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 4332,
+              "ns": 23052349
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 4296,
+              "ns": 23759756
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 4244,
+              "ns": 23690974
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 321220,
+              "failures": 0,
+              "frees": 321217,
+              "reallocs": 621,
+              "requested_bytes": 12707266
+            },
+            {
+              "calls": 321220,
+              "failures": 0,
+              "frees": 321217,
+              "reallocs": 621,
+              "requested_bytes": 12707266
+            },
+            {
+              "calls": 321220,
+              "failures": 0,
+              "frees": 321217,
+              "reallocs": 621,
+              "requested_bytes": 12707266
+            }
+          ],
+          "digest": "1443dddf42741546",
+          "label": "high_cell_demon",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 4328,
+            "ns": 11543705
+          },
+          "mode": "advance",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 4328,
+              "ns": 11543705
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 4296,
+              "ns": 12227808
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 4472,
+              "ns": 11532469
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 579460,
+              "failures": 0,
+              "frees": 579457,
+              "reallocs": 79995,
+              "requested_bytes": 37546679
+            },
+            {
+              "calls": 579460,
+              "failures": 0,
+              "frees": 579457,
+              "reallocs": 79995,
+              "requested_bytes": 37546679
+            },
+            {
+              "calls": 579460,
+              "failures": 0,
+              "frees": 579457,
+              "reallocs": 79995,
+              "requested_bytes": 37546679
+            }
+          ],
+          "digest": "1443dddf42741546",
+          "label": "high_cell_demon",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 4328,
+            "ns": 23027071
+          },
+          "mode": "advance_snapshot",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 4328,
+              "ns": 23027071
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 4336,
+              "ns": 22852292
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 4252,
+              "ns": 23679587
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 259400,
+              "failures": 0,
+              "frees": 259400,
+              "reallocs": 81000,
+              "requested_bytes": 25058400
+            },
+            {
+              "calls": 259400,
+              "failures": 0,
+              "frees": 259400,
+              "reallocs": 81000,
+              "requested_bytes": 25058400
+            },
+            {
+              "calls": 259400,
+              "failures": 0,
+              "frees": 259400,
+              "reallocs": 81000,
+              "requested_bytes": 25058400
+            }
+          ],
+          "digest": "1443dddf42741546",
+          "label": "high_cell_demon",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 4332,
+            "ns": 11371350
+          },
+          "mode": "capture",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 4332,
+              "ns": 11477808
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 4476,
+              "ns": 11371350
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 4252,
+              "ns": 11179657
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1700,
+              "requested_bytes": 104857200
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1700,
+              "requested_bytes": 104857200
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1700,
+              "requested_bytes": 104857200
+            }
+          ],
+          "digest": "1443dddf42741546",
+          "label": "high_cell_demon",
+          "medians": {
+            "bytes": 28905100,
+            "max_rss_kib": 4424,
+            "ns": 2152165
+          },
+          "mode": "encode",
+          "profile": "20",
+          "samples": [
+            {
+              "bytes": 28905100,
+              "max_rss_kib": 4424,
+              "ns": 2152165
+            },
+            {
+              "bytes": 28905100,
+              "max_rss_kib": 4372,
+              "ns": 2109963
+            },
+            {
+              "bytes": 28905100,
+              "max_rss_kib": 4464,
+              "ns": 2215158
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 368523,
+              "failures": 0,
+              "frees": 368523,
+              "reallocs": 27622,
+              "requested_bytes": 15512364
+            },
+            {
+              "calls": 368523,
+              "failures": 0,
+              "frees": 368523,
+              "reallocs": 27622,
+              "requested_bytes": 15512364
+            },
+            {
+              "calls": 368523,
+              "failures": 0,
+              "frees": 368523,
+              "reallocs": 27622,
+              "requested_bytes": 15512364
+            }
+          ],
+          "digest": "6c62609cd51c3a12",
+          "label": "canonical_small",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2672,
+            "ns": 13464949
+          },
+          "mode": "step",
+          "profile": "original",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 2672,
+              "ns": 13756581
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2664,
+              "ns": 13303560
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2712,
+              "ns": 13464949
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 314599,
+              "failures": 0,
+              "frees": 314599,
+              "reallocs": 233,
+              "requested_bytes": 12145936
+            },
+            {
+              "calls": 314599,
+              "failures": 0,
+              "frees": 314599,
+              "reallocs": 233,
+              "requested_bytes": 12145936
+            },
+            {
+              "calls": 314599,
+              "failures": 0,
+              "frees": 314599,
+              "reallocs": 233,
+              "requested_bytes": 12145936
+            }
+          ],
+          "digest": "6c62609cd51c3a12",
+          "label": "canonical_small",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2548,
+            "ns": 10482154
+          },
+          "mode": "advance",
+          "profile": "original",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 2548,
+              "ns": 11204433
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2544,
+              "ns": 10482154
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2548,
+              "ns": 10460993
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 368523,
+              "failures": 0,
+              "frees": 368523,
+              "reallocs": 27622,
+              "requested_bytes": 15512364
+            },
+            {
+              "calls": 368523,
+              "failures": 0,
+              "frees": 368523,
+              "reallocs": 27622,
+              "requested_bytes": 15512364
+            },
+            {
+              "calls": 368523,
+              "failures": 0,
+              "frees": 368523,
+              "reallocs": 27622,
+              "requested_bytes": 15512364
+            }
+          ],
+          "digest": "6c62609cd51c3a12",
+          "label": "canonical_small",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2668,
+            "ns": 13390459
+          },
+          "mode": "advance_snapshot",
+          "profile": "original",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 2748,
+              "ns": 13589033
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2668,
+              "ns": 13178976
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2668,
+              "ns": 13390459
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 53200,
+              "failures": 0,
+              "frees": 53200,
+              "reallocs": 26500,
+              "requested_bytes": 3315000
+            },
+            {
+              "calls": 53200,
+              "failures": 0,
+              "frees": 53200,
+              "reallocs": 26500,
+              "requested_bytes": 3315000
+            },
+            {
+              "calls": 53200,
+              "failures": 0,
+              "frees": 53200,
+              "reallocs": 26500,
+              "requested_bytes": 3315000
+            }
+          ],
+          "digest": "6c62609cd51c3a12",
+          "label": "canonical_small",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 2584,
+            "ns": 1739625
+          },
+          "mode": "capture",
+          "profile": "original",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 2584,
+              "ns": 1717802
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2624,
+              "ns": 1819222
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2544,
+              "ns": 1739625
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1200,
+              "requested_bytes": 3276400
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1200,
+              "requested_bytes": 3276400
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1200,
+              "requested_bytes": 3276400
+            }
+          ],
+          "digest": "6c62609cd51c3a12",
+          "label": "canonical_small",
+          "medians": {
+            "bytes": 862700,
+            "max_rss_kib": 2628,
+            "ns": 218924
+          },
+          "mode": "encode",
+          "profile": "original",
+          "samples": [
+            {
+              "bytes": 862700,
+              "max_rss_kib": 2628,
+              "ns": 253395
+            },
+            {
+              "bytes": 862700,
+              "max_rss_kib": 2548,
+              "ns": 218313
+            },
+            {
+              "bytes": 862700,
+              "max_rss_kib": 2628,
+              "ns": 218924
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 3544581,
+              "failures": 0,
+              "frees": 3544581,
+              "reallocs": 295322,
+              "requested_bytes": 163708701
+            },
+            {
+              "calls": 3544581,
+              "failures": 0,
+              "frees": 3544581,
+              "reallocs": 295322,
+              "requested_bytes": 163708701
+            },
+            {
+              "calls": 3544581,
+              "failures": 0,
+              "frees": 3544581,
+              "reallocs": 295322,
+              "requested_bytes": 163708701
+            }
+          ],
+          "digest": "aa4d9c3508eebb61",
+          "label": "actor_capacity",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3132,
+            "ns": 123114817
+          },
+          "mode": "step",
+          "profile": "original",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3132,
+              "ns": 126481910
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3052,
+              "ns": 123114817
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3148,
+              "ns": 121553607
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 3029486,
+              "failures": 0,
+              "frees": 3029486,
+              "reallocs": 644,
+              "requested_bytes": 116005928
+            },
+            {
+              "calls": 3029486,
+              "failures": 0,
+              "frees": 3029486,
+              "reallocs": 644,
+              "requested_bytes": 116005928
+            },
+            {
+              "calls": 3029486,
+              "failures": 0,
+              "frees": 3029486,
+              "reallocs": 644,
+              "requested_bytes": 116005928
+            }
+          ],
+          "digest": "aa4d9c3508eebb61",
+          "label": "actor_capacity",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3016,
+            "ns": 99746049
+          },
+          "mode": "advance",
+          "profile": "original",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3024,
+              "ns": 99746049
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 2964,
+              "ns": 98349673
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3016,
+              "ns": 100094575
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 3544581,
+              "failures": 0,
+              "frees": 3544581,
+              "reallocs": 295322,
+              "requested_bytes": 163708701
+            },
+            {
+              "calls": 3544581,
+              "failures": 0,
+              "frees": 3544581,
+              "reallocs": 295322,
+              "requested_bytes": 163708701
+            },
+            {
+              "calls": 3544581,
+              "failures": 0,
+              "frees": 3544581,
+              "reallocs": 295322,
+              "requested_bytes": 163708701
+            }
+          ],
+          "digest": "aa4d9c3508eebb61",
+          "label": "actor_capacity",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3052,
+            "ns": 124046135
+          },
+          "mode": "advance_snapshot",
+          "profile": "original",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3052,
+              "ns": 124046135
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3052,
+              "ns": 124462674
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3060,
+              "ns": 122348764
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 513400,
+              "failures": 0,
+              "frees": 513400,
+              "reallocs": 292800,
+              "requested_bytes": 47638800
+            },
+            {
+              "calls": 513400,
+              "failures": 0,
+              "frees": 513400,
+              "reallocs": 292800,
+              "requested_bytes": 47638800
+            },
+            {
+              "calls": 513400,
+              "failures": 0,
+              "frees": 513400,
+              "reallocs": 292800,
+              "requested_bytes": 47638800
+            }
+          ],
+          "digest": "aa4d9c3508eebb61",
+          "label": "actor_capacity",
+          "medians": {
+            "bytes": 0,
+            "max_rss_kib": 3044,
+            "ns": 24347493
+          },
+          "mode": "capture",
+          "profile": "original",
+          "samples": [
+            {
+              "bytes": 0,
+              "max_rss_kib": 3044,
+              "ns": 34370180
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3044,
+              "ns": 24347493
+            },
+            {
+              "bytes": 0,
+              "max_rss_kib": 3044,
+              "ns": 23928903
+            }
+          ]
+        },
+        {
+          "allocation_samples": [
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1500,
+              "requested_bytes": 26214000
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1500,
+              "requested_bytes": 26214000
+            },
+            {
+              "calls": 100,
+              "failures": 0,
+              "frees": 100,
+              "reallocs": 1500,
+              "requested_bytes": 26214000
+            }
+          ],
+          "digest": "aa4d9c3508eebb61",
+          "label": "actor_capacity",
+          "medians": {
+            "bytes": 7618800,
+            "max_rss_kib": 3176,
+            "ns": 2061709
+          },
+          "mode": "encode",
+          "profile": "original",
+          "samples": [
+            {
+              "bytes": 7618800,
+              "max_rss_kib": 3176,
+              "ns": 2061709
+            },
+            {
+              "bytes": 7618800,
+              "max_rss_kib": 3176,
+              "ns": 2056822
+            },
+            {
+              "bytes": 7618800,
+              "max_rss_kib": 3220,
+              "ns": 2112174
+            }
+          ]
+        }
+      ],
+      "smoke": false,
+      "transaction_samples": [
+        {
+          "allocation": {
+            "calls": 295300,
+            "failures": 0,
+            "frees": 295300,
+            "reallocs": 0,
+            "requested_bytes": 10459200
+          },
+          "calls": 100,
+          "label": "small_control",
+          "logical_slots": 5,
+          "max_rss_kib": 6188,
+          "ns": 9818864,
+          "operation": "preflight",
+          "profile": 20,
+          "sample": 0,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "small_control",
+          "logical_slots": 5,
+          "max_rss_kib": 6188,
+          "ns": 2063,
+          "operation": "actor_preflight",
+          "profile": 20,
+          "sample": 0,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 206400
+          },
+          "calls": 100,
+          "label": "small_control",
+          "logical_slots": 5,
+          "max_rss_kib": 6188,
+          "ns": 25117,
+          "operation": "staging",
+          "profile": 20,
+          "sample": 0,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 1064500,
+            "failures": 0,
+            "frees": 1064500,
+            "reallocs": 0,
+            "requested_bytes": 37944000
+          },
+          "calls": 100,
+          "label": "four_owners",
+          "logical_slots": 8,
+          "max_rss_kib": 6188,
+          "ns": 36471476,
+          "operation": "preflight",
+          "profile": 20,
+          "sample": 0,
+          "slot_bytes": 1664,
+          "spatial_copy_bytes": 128,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "four_owners",
+          "logical_slots": 8,
+          "max_rss_kib": 6188,
+          "ns": 2644,
+          "operation": "actor_preflight",
+          "profile": 20,
+          "sample": 0,
+          "slot_bytes": 1664,
+          "spatial_copy_bytes": 128,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 268800
+          },
+          "calls": 100,
+          "label": "four_owners",
+          "logical_slots": 8,
+          "max_rss_kib": 6188,
+          "ns": 48412,
+          "operation": "staging",
+          "profile": 20,
+          "sample": 0,
+          "slot_bytes": 1664,
+          "spatial_copy_bytes": 128,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 295300,
+            "failures": 0,
+            "frees": 295300,
+            "reallocs": 0,
+            "requested_bytes": 10459200
+          },
+          "calls": 100,
+          "label": "high_cell_demon",
+          "logical_slots": 5,
+          "max_rss_kib": 6188,
+          "ns": 10290180,
+          "operation": "preflight",
+          "profile": 20,
+          "sample": 0,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "high_cell_demon",
+          "logical_slots": 5,
+          "max_rss_kib": 6188,
+          "ns": 1763,
+          "operation": "actor_preflight",
+          "profile": 20,
+          "sample": 0,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 206400
+          },
+          "calls": 100,
+          "label": "high_cell_demon",
+          "logical_slots": 5,
+          "max_rss_kib": 6188,
+          "ns": 22253,
+          "operation": "staging",
+          "profile": 20,
+          "sample": 0,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 289300,
+            "failures": 0,
+            "frees": 289300,
+            "reallocs": 0,
+            "requested_bytes": 10333200
+          },
+          "calls": 100,
+          "label": "canonical_small",
+          "logical_slots": 5,
+          "max_rss_kib": 6188,
+          "ns": 9581121,
+          "operation": "preflight",
+          "profile": "original",
+          "sample": 0,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "canonical_small",
+          "logical_slots": 5,
+          "max_rss_kib": 6188,
+          "ns": 2163,
+          "operation": "actor_preflight",
+          "profile": "original",
+          "sample": 0,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 206400
+          },
+          "calls": 100,
+          "label": "canonical_small",
+          "logical_slots": 5,
+          "max_rss_kib": 6188,
+          "ns": 26049,
+          "operation": "staging",
+          "profile": "original",
+          "sample": 0,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 3004200,
+            "failures": 0,
+            "frees": 3004200,
+            "reallocs": 0,
+            "requested_bytes": 106744600
+          },
+          "calls": 100,
+          "label": "actor_capacity",
+          "logical_slots": 64,
+          "max_rss_kib": 6188,
+          "ns": 98277214,
+          "operation": "preflight",
+          "profile": "original",
+          "sample": 0,
+          "slot_bytes": 13312,
+          "spatial_copy_bytes": 1024,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "actor_capacity",
+          "logical_slots": 64,
+          "max_rss_kib": 6188,
+          "ns": 21261,
+          "operation": "actor_preflight",
+          "profile": "original",
+          "sample": 0,
+          "slot_bytes": 13312,
+          "spatial_copy_bytes": 1024,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 1433600
+          },
+          "calls": 100,
+          "label": "actor_capacity",
+          "logical_slots": 64,
+          "max_rss_kib": 6188,
+          "ns": 172244,
+          "operation": "staging",
+          "profile": "original",
+          "sample": 0,
+          "slot_bytes": 13312,
+          "spatial_copy_bytes": 1024,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 295300,
+            "failures": 0,
+            "frees": 295300,
+            "reallocs": 0,
+            "requested_bytes": 10459200
+          },
+          "calls": 100,
+          "label": "small_control",
+          "logical_slots": 5,
+          "max_rss_kib": 6304,
+          "ns": 9700118,
+          "operation": "preflight",
+          "profile": 20,
+          "sample": 1,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "small_control",
+          "logical_slots": 5,
+          "max_rss_kib": 6304,
+          "ns": 1983,
+          "operation": "actor_preflight",
+          "profile": 20,
+          "sample": 1,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 206400
+          },
+          "calls": 100,
+          "label": "small_control",
+          "logical_slots": 5,
+          "max_rss_kib": 6304,
+          "ns": 25027,
+          "operation": "staging",
+          "profile": 20,
+          "sample": 1,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 1064500,
+            "failures": 0,
+            "frees": 1064500,
+            "reallocs": 0,
+            "requested_bytes": 37944000
+          },
+          "calls": 100,
+          "label": "four_owners",
+          "logical_slots": 8,
+          "max_rss_kib": 6304,
+          "ns": 36670460,
+          "operation": "preflight",
+          "profile": 20,
+          "sample": 1,
+          "slot_bytes": 1664,
+          "spatial_copy_bytes": 128,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "four_owners",
+          "logical_slots": 8,
+          "max_rss_kib": 6304,
+          "ns": 3055,
+          "operation": "actor_preflight",
+          "profile": 20,
+          "sample": 1,
+          "slot_bytes": 1664,
+          "spatial_copy_bytes": 128,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 268800
+          },
+          "calls": 100,
+          "label": "four_owners",
+          "logical_slots": 8,
+          "max_rss_kib": 6304,
+          "ns": 27421,
+          "operation": "staging",
+          "profile": 20,
+          "sample": 1,
+          "slot_bytes": 1664,
+          "spatial_copy_bytes": 128,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 295300,
+            "failures": 0,
+            "frees": 295300,
+            "reallocs": 0,
+            "requested_bytes": 10459200
+          },
+          "calls": 100,
+          "label": "high_cell_demon",
+          "logical_slots": 5,
+          "max_rss_kib": 6304,
+          "ns": 10478469,
+          "operation": "preflight",
+          "profile": 20,
+          "sample": 1,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "high_cell_demon",
+          "logical_slots": 5,
+          "max_rss_kib": 6304,
+          "ns": 1883,
+          "operation": "actor_preflight",
+          "profile": 20,
+          "sample": 1,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 206400
+          },
+          "calls": 100,
+          "label": "high_cell_demon",
+          "logical_slots": 5,
+          "max_rss_kib": 6304,
+          "ns": 21202,
+          "operation": "staging",
+          "profile": 20,
+          "sample": 1,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 289300,
+            "failures": 0,
+            "frees": 289300,
+            "reallocs": 0,
+            "requested_bytes": 10333200
+          },
+          "calls": 100,
+          "label": "canonical_small",
+          "logical_slots": 5,
+          "max_rss_kib": 6304,
+          "ns": 9707999,
+          "operation": "preflight",
+          "profile": "original",
+          "sample": 1,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "canonical_small",
+          "logical_slots": 5,
+          "max_rss_kib": 6304,
+          "ns": 1733,
+          "operation": "actor_preflight",
+          "profile": "original",
+          "sample": 1,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 206400
+          },
+          "calls": 100,
+          "label": "canonical_small",
+          "logical_slots": 5,
+          "max_rss_kib": 6304,
+          "ns": 26640,
+          "operation": "staging",
+          "profile": "original",
+          "sample": 1,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 3004200,
+            "failures": 0,
+            "frees": 3004200,
+            "reallocs": 0,
+            "requested_bytes": 106744600
+          },
+          "calls": 100,
+          "label": "actor_capacity",
+          "logical_slots": 64,
+          "max_rss_kib": 6304,
+          "ns": 100893494,
+          "operation": "preflight",
+          "profile": "original",
+          "sample": 1,
+          "slot_bytes": 13312,
+          "spatial_copy_bytes": 1024,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "actor_capacity",
+          "logical_slots": 64,
+          "max_rss_kib": 6304,
+          "ns": 21822,
+          "operation": "actor_preflight",
+          "profile": "original",
+          "sample": 1,
+          "slot_bytes": 13312,
+          "spatial_copy_bytes": 1024,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 1433600
+          },
+          "calls": 100,
+          "label": "actor_capacity",
+          "logical_slots": 64,
+          "max_rss_kib": 6304,
+          "ns": 172986,
+          "operation": "staging",
+          "profile": "original",
+          "sample": 1,
+          "slot_bytes": 13312,
+          "spatial_copy_bytes": 1024,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 295300,
+            "failures": 0,
+            "frees": 295300,
+            "reallocs": 0,
+            "requested_bytes": 10459200
+          },
+          "calls": 100,
+          "label": "small_control",
+          "logical_slots": 5,
+          "max_rss_kib": 6192,
+          "ns": 9426523,
+          "operation": "preflight",
+          "profile": 20,
+          "sample": 2,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "small_control",
+          "logical_slots": 5,
+          "max_rss_kib": 6192,
+          "ns": 1913,
+          "operation": "actor_preflight",
+          "profile": 20,
+          "sample": 2,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 206400
+          },
+          "calls": 100,
+          "label": "small_control",
+          "logical_slots": 5,
+          "max_rss_kib": 6192,
+          "ns": 25157,
+          "operation": "staging",
+          "profile": 20,
+          "sample": 2,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 1064500,
+            "failures": 0,
+            "frees": 1064500,
+            "reallocs": 0,
+            "requested_bytes": 37944000
+          },
+          "calls": 100,
+          "label": "four_owners",
+          "logical_slots": 8,
+          "max_rss_kib": 6192,
+          "ns": 36268456,
+          "operation": "preflight",
+          "profile": 20,
+          "sample": 2,
+          "slot_bytes": 1664,
+          "spatial_copy_bytes": 128,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "four_owners",
+          "logical_slots": 8,
+          "max_rss_kib": 6192,
+          "ns": 2935,
+          "operation": "actor_preflight",
+          "profile": 20,
+          "sample": 2,
+          "slot_bytes": 1664,
+          "spatial_copy_bytes": 128,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 268800
+          },
+          "calls": 100,
+          "label": "four_owners",
+          "logical_slots": 8,
+          "max_rss_kib": 6192,
+          "ns": 27360,
+          "operation": "staging",
+          "profile": 20,
+          "sample": 2,
+          "slot_bytes": 1664,
+          "spatial_copy_bytes": 128,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 295300,
+            "failures": 0,
+            "frees": 295300,
+            "reallocs": 0,
+            "requested_bytes": 10459200
+          },
+          "calls": 100,
+          "label": "high_cell_demon",
+          "logical_slots": 5,
+          "max_rss_kib": 6192,
+          "ns": 10102933,
+          "operation": "preflight",
+          "profile": 20,
+          "sample": 2,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "high_cell_demon",
+          "logical_slots": 5,
+          "max_rss_kib": 6192,
+          "ns": 1753,
+          "operation": "actor_preflight",
+          "profile": 20,
+          "sample": 2,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 206400
+          },
+          "calls": 100,
+          "label": "high_cell_demon",
+          "logical_slots": 5,
+          "max_rss_kib": 6192,
+          "ns": 21922,
+          "operation": "staging",
+          "profile": 20,
+          "sample": 2,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 289300,
+            "failures": 0,
+            "frees": 289300,
+            "reallocs": 0,
+            "requested_bytes": 10333200
+          },
+          "calls": 100,
+          "label": "canonical_small",
+          "logical_slots": 5,
+          "max_rss_kib": 6192,
+          "ns": 9431571,
+          "operation": "preflight",
+          "profile": "original",
+          "sample": 2,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "canonical_small",
+          "logical_slots": 5,
+          "max_rss_kib": 6192,
+          "ns": 2114,
+          "operation": "actor_preflight",
+          "profile": "original",
+          "sample": 2,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 206400
+          },
+          "calls": 100,
+          "label": "canonical_small",
+          "logical_slots": 5,
+          "max_rss_kib": 6192,
+          "ns": 26479,
+          "operation": "staging",
+          "profile": "original",
+          "sample": 2,
+          "slot_bytes": 1040,
+          "spatial_copy_bytes": 80,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 3004200,
+            "failures": 0,
+            "frees": 3004200,
+            "reallocs": 0,
+            "requested_bytes": 106744600
+          },
+          "calls": 100,
+          "label": "actor_capacity",
+          "logical_slots": 64,
+          "max_rss_kib": 6192,
+          "ns": 99006923,
+          "operation": "preflight",
+          "profile": "original",
+          "sample": 2,
+          "slot_bytes": 13312,
+          "spatial_copy_bytes": 1024,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 0,
+            "failures": 0,
+            "frees": 0,
+            "reallocs": 0,
+            "requested_bytes": 0
+          },
+          "calls": 100,
+          "label": "actor_capacity",
+          "logical_slots": 64,
+          "max_rss_kib": 6192,
+          "ns": 20520,
+          "operation": "actor_preflight",
+          "profile": "original",
+          "sample": 2,
+          "slot_bytes": 13312,
+          "spatial_copy_bytes": 1024,
+          "spatial_reserved_bytes": 1024
+        },
+        {
+          "allocation": {
+            "calls": 200,
+            "failures": 0,
+            "frees": 200,
+            "reallocs": 0,
+            "requested_bytes": 1433600
+          },
+          "calls": 100,
+          "label": "actor_capacity",
+          "logical_slots": 64,
+          "max_rss_kib": 6192,
+          "ns": 181128,
+          "operation": "staging",
+          "profile": "original",
+          "sample": 2,
+          "slot_bytes": 13312,
+          "spatial_copy_bytes": 1024,
+          "spatial_reserved_bytes": 1024
+        }
+      ]
+    }
+  },
+  "before_reference": "m3g2-performance.json:before",
+  "comparison": {
+    "all_50_matching_allocation_samples": true,
+    "all_50_matching_digests": true
+  },
+  "new_player": {
+    "controls": {
+      "--control": {
+        "calls": 0,
+        "failures": 0,
+        "frees": 0,
+        "reallocs": 0,
+        "requested_bytes": 0
+      },
+      "--probe": {
+        "calls": 1,
+        "failures": 0,
+        "frees": 1,
+        "reallocs": 0,
+        "requested_bytes": 4096
+      }
+    },
+    "method": "Three separate release timing/RSS processes and three separate allocation-instrumented processes per workload/mode.100 shared-core updates, scripted damage/removal included; setup and final explicit Snapshot/digest excluded from timer/counters but included in whole-process RSS. Initialization separately measures100 full world constructions+body spawns with prepared input maps; input parse/clone outside timer, disposal of previous worlds included. No historical before-player equivalent; these are new workloads. Allocation counts use the unchanged validated glibc thread-local interposer, not allocator internals/mappings/peak-live-heap/leak measurement. Requested bytes cumulative. No CPU isolation or timing threshold; retain all samples/outliers.",
+    "provenance": {
+      "commit": "9f7830ea5836ad0ccf5d4845845a2436fe8715af",
+      "host": "Linux-6.18.55-x86_64-with-glibc2.41",
+      "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+      "source_sha256": {
+        "crates/doom-sim/examples/original_player.rs": "6bb59381eb0579660d917c7a1af8e57ae242f233e78dbd2cfa9a50e0ffa54af8",
+        "tests/reference/m3f5_map_0.bin": "5ea2f73dfb74b7833ecdd1af1f657590b34fcbde047fe7895be44eda78115b97",
+        "tests/support/m3g2.rs": "0c54d646bfe1139bdc5f9531e16333be4e5988b3125716d571115cb2634d61c2",
+        "tools/measure_player_body.py": "92b7a2aded561323a2bd3b65d0c17896700f2c2af4a3e2c65cefc2ae37f77a37",
+        "tools/measurement/alloc_probe.c": "e83310c16a4870b6fda9ce1095b87353e4be0dd2ce470b20a46912e4865be931"
+      },
+      "status": "",
+      "tree": "9868e83db9d65f20923b3deb0fc4714fc2d10d49"
+    },
+    "results": [
+      {
+        "allocation_samples": [
+          {
+            "calls": 28099,
+            "failures": 0,
+            "frees": 28099,
+            "reallocs": 100,
+            "requested_bytes": 1363592
+          },
+          {
+            "calls": 28099,
+            "failures": 0,
+            "frees": 28099,
+            "reallocs": 100,
+            "requested_bytes": 1363592
+          },
+          {
+            "calls": 28099,
+            "failures": 0,
+            "frees": 28099,
+            "reallocs": 100,
+            "requested_bytes": 1363592
+          }
+        ],
+        "digest": "8e365bf2dd0f6746",
+        "label": "idle",
+        "medians": {
+          "max_rss_kib": 2368,
+          "ns": 971938
+        },
+        "mode": "advance",
+        "samples": [
+          {
+            "max_rss_kib": 2332,
+            "ns": 971938
+          },
+          {
+            "max_rss_kib": 2448,
+            "ns": 976644
+          },
+          {
+            "max_rss_kib": 2368,
+            "ns": 956225
+          }
+        ]
+      },
+      {
+        "allocation_samples": [
+          {
+            "calls": 48908,
+            "failures": 0,
+            "frees": 48908,
+            "reallocs": 7509,
+            "requested_bytes": 2884511
+          },
+          {
+            "calls": 48908,
+            "failures": 0,
+            "frees": 48908,
+            "reallocs": 7509,
+            "requested_bytes": 2884511
+          },
+          {
+            "calls": 48908,
+            "failures": 0,
+            "frees": 48908,
+            "reallocs": 7509,
+            "requested_bytes": 2884511
+          }
+        ],
+        "digest": "8e365bf2dd0f6746",
+        "label": "idle",
+        "medians": {
+          "max_rss_kib": 2356,
+          "ns": 1988371
+        },
+        "mode": "step",
+        "samples": [
+          {
+            "max_rss_kib": 2352,
+            "ns": 1944185
+          },
+          {
+            "max_rss_kib": 2356,
+            "ns": 1988371
+          },
+          {
+            "max_rss_kib": 2356,
+            "ns": 2010554
+          }
+        ]
+      },
+      {
+        "allocation_samples": [
+          {
+            "calls": 29599,
+            "failures": 0,
+            "frees": 29599,
+            "reallocs": 105,
+            "requested_bytes": 1432062
+          },
+          {
+            "calls": 29599,
+            "failures": 0,
+            "frees": 29599,
+            "reallocs": 105,
+            "requested_bytes": 1432062
+          },
+          {
+            "calls": 29599,
+            "failures": 0,
+            "frees": 29599,
+            "reallocs": 105,
+            "requested_bytes": 1432062
+          }
+        ],
+        "digest": "25b7904b302ad78d",
+        "label": "damage_death",
+        "medians": {
+          "max_rss_kib": 2352,
+          "ns": 1021441
+        },
+        "mode": "advance",
+        "samples": [
+          {
+            "max_rss_kib": 2344,
+            "ns": 1056884
+          },
+          {
+            "max_rss_kib": 2440,
+            "ns": 1021441
+          },
+          {
+            "max_rss_kib": 2352,
+            "ns": 1012037
+          }
+        ]
+      },
+      {
+        "allocation_samples": [
+          {
+            "calls": 50498,
+            "failures": 0,
+            "frees": 50498,
+            "reallocs": 7616,
+            "requested_bytes": 2955594
+          },
+          {
+            "calls": 50498,
+            "failures": 0,
+            "frees": 50498,
+            "reallocs": 7616,
+            "requested_bytes": 2955594
+          },
+          {
+            "calls": 50498,
+            "failures": 0,
+            "frees": 50498,
+            "reallocs": 7616,
+            "requested_bytes": 2955594
+          }
+        ],
+        "digest": "25b7904b302ad78d",
+        "label": "damage_death",
+        "medians": {
+          "max_rss_kib": 2424,
+          "ns": 2220594
+        },
+        "mode": "step",
+        "samples": [
+          {
+            "max_rss_kib": 2424,
+            "ns": 2220594
+          },
+          {
+            "max_rss_kib": 2436,
+            "ns": 2002031
+          },
+          {
+            "max_rss_kib": 2364,
+            "ns": 2532757
+          }
+        ]
+      },
+      {
+        "allocation_samples": [
+          {
+            "calls": 31449,
+            "failures": 0,
+            "frees": 31449,
+            "reallocs": 107,
+            "requested_bytes": 1527316
+          },
+          {
+            "calls": 31449,
+            "failures": 0,
+            "frees": 31449,
+            "reallocs": 107,
+            "requested_bytes": 1527316
+          },
+          {
+            "calls": 31449,
+            "failures": 0,
+            "frees": 31449,
+            "reallocs": 107,
+            "requested_bytes": 1527316
+          }
+        ],
+        "digest": "ce2a8a69d9f9179a",
+        "label": "demon_source",
+        "medians": {
+          "max_rss_kib": 2368,
+          "ns": 1093437
+        },
+        "mode": "advance",
+        "samples": [
+          {
+            "max_rss_kib": 2368,
+            "ns": 1167516
+          },
+          {
+            "max_rss_kib": 2444,
+            "ns": 1093437
+          },
+          {
+            "max_rss_kib": 2344,
+            "ns": 1076723
+          }
+        ]
+      },
+      {
+        "allocation_samples": [
+          {
+            "calls": 53072,
+            "failures": 0,
+            "frees": 53072,
+            "reallocs": 7945,
+            "requested_bytes": 3061101
+          },
+          {
+            "calls": 53072,
+            "failures": 0,
+            "frees": 53072,
+            "reallocs": 7945,
+            "requested_bytes": 3061101
+          },
+          {
+            "calls": 53072,
+            "failures": 0,
+            "frees": 53072,
+            "reallocs": 7945,
+            "requested_bytes": 3061101
+          }
+        ],
+        "digest": "ce2a8a69d9f9179a",
+        "label": "demon_source",
+        "medians": {
+          "max_rss_kib": 2440,
+          "ns": 1950114
+        },
+        "mode": "step",
+        "samples": [
+          {
+            "max_rss_kib": 2424,
+            "ns": 1955412
+          },
+          {
+            "max_rss_kib": 2448,
+            "ns": 1949534
+          },
+          {
+            "max_rss_kib": 2440,
+            "ns": 1950114
+          }
+        ]
+      },
+      {
+        "allocation_samples": [
+          {
+            "calls": 132700,
+            "failures": 0,
+            "frees": 132544,
+            "reallocs": 2100,
+            "requested_bytes": 11793900
+          },
+          {
+            "calls": 132700,
+            "failures": 0,
+            "frees": 132544,
+            "reallocs": 2100,
+            "requested_bytes": 11793900
+          },
+          {
+            "calls": 132700,
+            "failures": 0,
+            "frees": 132544,
+            "reallocs": 2100,
+            "requested_bytes": 11793900
+          }
+        ],
+        "digest": "bf2805b4893184ab",
+        "label": "initialization",
+        "medians": {
+          "max_rss_kib": 2608,
+          "ns": 6003880
+        },
+        "mode": "construct_spawn",
+        "samples": [
+          {
+            "max_rss_kib": 2592,
+            "ns": 5638780
+          },
+          {
+            "max_rss_kib": 2700,
+            "ns": 6011532
+          },
+          {
+            "max_rss_kib": 2608,
+            "ns": 6003880
+          }
+        ]
+      }
+    ]
+  },
+  "scope": "Repeated after the cold spawn/binding-coordinate guard. Initial measurements remain unchanged in m3g2-performance.json; samples are separate and never combined as matching repetitions."
+}

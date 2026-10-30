@@ -388,6 +388,9 @@ impl Simulation {
         slot: usize,
         p: PerceptionPlayer,
     ) -> Result<(), SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         if !self.profile.uses_perception() {
             return Err(PerceptionError::Profile.into());
         }
@@ -407,6 +410,9 @@ impl Simulation {
         angle: u32,
         threshold: i32,
     ) -> Result<(), SimError> {
+        if self.owns_player_body(id) {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.perception_actor(id)?;
         if (self.profile == Profile::Pursuit || self.profile.uses_monsters())
             && threshold == i32::MIN
@@ -420,6 +426,9 @@ impl Simulation {
     }
     /// Exact P_LookForPlayers selection. Ok(false) may still advance lastlook.
     pub fn look_for_players(&mut self, id: ActorId, allaround: bool) -> Result<bool, SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.perception_actor(id)?;
         self.preflight_perception_roster()?;
         let plan = scan(
@@ -433,6 +442,7 @@ impl Simulation {
         )?;
         Ok(commit_scan(
             &mut crate::lifecycle::LifeHost {
+                player: None,
                 statistics: self.statistics.as_mut(),
                 perception: None,
                 access: &mut self.actors,
@@ -680,6 +690,9 @@ impl Simulation {
     /// Original P_NoiseAlert(target, emitter), sharing profile-6 propagation.
     /// This does not fire a weapon or require the target to be a roster player.
     pub fn noise_alert(&mut self, target: ActorId, emitter: ActorId) -> Result<(), SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.validate_perception_reference(target)?;
         self.perception_actor(emitter)?;
         self.emit_noise(target, emitter);
@@ -885,11 +898,15 @@ impl Simulation {
     /// Execute admitted original A_Look between tics. Ok(false) is a normal
     /// no-wake decision and may still change threshold/target/lastlook/events.
     pub fn look(&mut self, id: ActorId) -> Result<bool, SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.preflight_perception_look(id)?;
         if self.profile.uses_checked_demons() {
             return self.checked_demon_operation(|host| host.invoke_look(id));
         }
         Ok(crate::lifecycle::LifeHost {
+            player: None,
             statistics: self.statistics.as_mut(),
             perception: Some(PerceptionInputs {
                 pursuit: (self.profile == Profile::Pursuit || self.profile.uses_monsters()),

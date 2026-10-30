@@ -1149,6 +1149,7 @@ pub(crate) fn make_actor(
 }
 pub(crate) struct LifeHost<'a, A> {
     pub statistics: Option<&'a mut crate::LevelStatistics>,
+    pub player: Option<&'a mut crate::OriginalPlayer>,
     pub perception: Option<crate::perception::PerceptionInputs<'a>>,
     pub access: A,
     pub registry: &'a ActorRegistry,

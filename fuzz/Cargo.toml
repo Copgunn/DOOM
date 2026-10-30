@@ -209,3 +209,10 @@ path = "fuzz_targets/stepping_equivalence.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "original_player"
+path = "fuzz_targets/original_player.rs"
+test = false
+doc = false
+bench = false

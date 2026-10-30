@@ -11,8 +11,9 @@ pub struct LevelStatistics {
     pub total_items: i32,
     /// Original `totalsecret`, initialized but specials are excluded.
     pub total_secrets: i32,
-    /// Original `players[0].killcount` fallback for unbound/absent sources.
-    /// This does not implement player-pointer attribution, points or frags.
+    /// Original `players[0].killcount`: historical fallback for unbound/absent
+    /// sources; the explicit one-player policy also credits its genuine owner.
+    /// This field does not contain points or frags.
     pub single_player_kill_count: i32,
 }
 /// Explicit game context at level construction. P_SetupLevel retains RNG state.
@@ -33,7 +34,8 @@ pub enum StatisticsEvent {
         /// Updated available map kills.
         total: i32,
     },
-    /// Unbound single-player death credit after corpse initialization.
+    /// Single-player death credit after corpse initialization: historical
+    /// fallback or the explicit sole original-player source.
     SinglePlayerKill {
         /// Killed actor.
         actor: ActorId,
@@ -85,6 +87,9 @@ impl Simulation {
     /// Handles are scoped to their simulation. Targets/roster are reinstalled
     /// explicitly; complete player starts and game reload are unsupported.
     pub fn restart_demon_map_context(&self) -> Result<Self, SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         if !self.profile.uses_map_statistics() {
             return Err(MapSpawnError::Context.into());
         }

@@ -328,3 +328,36 @@ The bounded decoder borrows values, validates identity namespaces and generation
 and never restores a Simulation. It explicitly dispatches v20/v21 and preserves
 legacy interpretation. [STATE_FORMAT](STATE_FORMAT.md#dsim-v21--original-id-demon-diagnostics)
 defines the wire contract and the limits of validation.
+
+## Original player body ownership and damage
+
+The [player-body policy](COMPATIBILITY.md#original-player-body-lifecycle) extends
+the original-ID service family explicitly. OriginalExecutionProfile distinguishes
+DemonNormalV1 from PlayerBodyLifecycleV1; the historical public Profile enum is
+unchanged for exhaustive callers. The registry carries the selected capability
+until construction. Simulation's optional OriginalPlayer record then identifies
+the policy without another persistent actor-type or profile mirror.
+
+PlayerSlot identifies the sole source player, independently of ActorId slots.
+OriginalPlayer.mo references the existing generational actor owner; reverse
+association derives from exact handle equality. A checked initial canonical0 body
+binds once. ExecutionContext checks the current branded token and GameInstance
+checks incarnation provenance before import. Existing command bindings, synthetic
+perception records and historical WeaponPlayer remain separate contracts.
+
+Source-required player health clamps0 while mobj health stays signed. Shared
+DamagePlan/LifeHost updates player fields before actor health; death immediately
+clears solidity, sets PST_DEAD and records the source weapon-lowering request
+before body death-state entry. The small player record is staged and committed
+with actors/RNG/statistics/events, so late failure rolls everything back. No actor
+store, scheduler, damage engine, player-specific tic loop or per-tic diagnostic
+capture is added. Existing contexts hold no player heap allocation; measured
+scalar/branch and allocation effects belong in [the record](validation/M3G2.md).
+
+Death leaves the actor allocated and bound; removal is explicit and deferred.
+Stored mo/attacker retain their original handles after retirement, and availability
+comes from the existing store. Generations prevent rebinding to a new occupant.
+C quarantine/opaque-pointer observations and Rust generation safety are distinct.
+Unsupported physical inflictors, player inputs and live Demon AI reject before
+execution. The fixed unlisted context avoids pretending that PlayerThink, a roster,
+weapon lowering animation or a death camera is implemented.

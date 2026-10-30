@@ -407,6 +407,7 @@ impl Simulation {
         shooter: Option<ActorId>,
         lookup: Option<&dyn Fn(ActorId) -> Option<Actor>>,
     ) -> Result<DamagePlan, SimError> {
+        self.preflight_player_damage(request)?;
         self.preflight_map_damage(request)?;
         let base = self.combat_actor(request.target)?;
         let actor = match lookup {
@@ -592,6 +593,7 @@ impl Simulation {
             return self.monster_host(None);
         }
         LifeHost {
+            player: None,
             statistics: self.statistics.as_mut(),
             perception: None,
             access: &mut self.actors,
@@ -674,6 +676,20 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                 momentum,
             });
         }
+        if let Some(p) = self.player.as_deref_mut().filter(|p| p.mo == Some(id)) {
+            p.health = (p.health - request.amount).max(0);
+            p.attacker = request.source;
+            p.damage_count =
+                (p.damage_count + request.amount).min(original_player::MAX_DAMAGE_COUNT);
+            self.events
+                .push(Event::PlayerBody(PlayerBodyEvent::Damaged {
+                    health: p.health,
+                    attacker: p.attacker,
+                    damage_count: p.damage_count,
+                    tactile: original_player::TACTILE_BASE
+                        + request.amount.min(original_player::MAX_DAMAGE_COUNT) * 2,
+                }));
+        }
         self.access
             .get_mut(id)
             .unwrap()
@@ -711,6 +727,22 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                         actor: id,
                         total: stats.single_player_kill_count,
                     }));
+            }
+            if let Some(p) = self.player.as_deref_mut().filter(|p| p.mo == Some(id)) {
+                if request.source.is_none() || request.source == p.mo {
+                    p.frags += 1;
+                }
+                p.state = PlayerBodyState::Dead;
+                if let Some(a) = self.access.get_mut(id) {
+                    if let Some(l) = &mut a.life {
+                        l.flags &= !original_player::MF_SOLID;
+                    }
+                    a.solidity = Solidity::NonSolid;
+                }
+                self.events.push(Event::PlayerBody(PlayerBodyEvent::Died {
+                    frags: p.frags,
+                    weapon_down: identity::OriginalState::S_PISTOLDOWN,
+                }));
             }
             self.combat_event(CombatEvent::Kill {
                 target: id,

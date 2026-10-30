@@ -599,6 +599,9 @@ impl Simulation {
         id: ActorId,
         p: PursuitSetup,
     ) -> Result<(), SimError> {
+        if self.owns_player_body(id) {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.monster_actor(id, 1008)?;
         let owner = self.monster_is_owner(id);
         if !owner && self.actor(id).unwrap().life.unwrap().actor_type != self.demon_body_type() {
@@ -801,6 +804,9 @@ impl Simulation {
     }
     /// Original P_CheckMissileRange, including JUSTHIT clearing and ordered RNG.
     pub fn check_missile_range(&mut self, id: ActorId) -> Result<bool, SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         if self.profile.uses_demon() {
             return Err(MonsterError::Profile.into());
         }
@@ -812,10 +818,16 @@ impl Simulation {
     }
     /// Direct source facing action, sharing the state-machine callback.
     pub fn face_target(&mut self, id: ActorId) -> Result<(), SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.monster_action(id, false)
     }
     /// Direct bounded source A_PosAttack; actual player damage stays unavailable.
     pub fn pos_attack(&mut self, id: ActorId) -> Result<(), SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.monster_action(id, true)
     }
     fn monster_action(&mut self, id: ActorId, pos: bool) -> Result<(), SimError> {
@@ -874,6 +886,7 @@ impl Simulation {
         shot: Option<&'a MonsterShotPlan>,
     ) -> LifeHost<'a, &'a mut ThinkerStore<Actor>> {
         LifeHost {
+            player: None,
             statistics: self.statistics.as_mut(),
             perception: Some(crate::perception::PerceptionInputs {
                 players: &self.perception_players,

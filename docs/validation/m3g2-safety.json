@@ -1,0 +1,374 @@
+{
+  "admission_guard_campaign": {
+    "coordinate_input_scale": 8,
+    "executions": 4096,
+    "final_status": "#4096\tDONE   cov: 3783 ft: 11993 corp: 413/24Kb lim: 81 exec/s: 110 rss: 498Mb",
+    "findings": 0,
+    "initial_seed_files": 11,
+    "max_input_budget": 97,
+    "reported_elapsed_seconds": 37,
+    "rss_limit_mb": 2048,
+    "seed": 1,
+    "stage": "pre-tic position admission, expanded spawn inputs",
+    "target": "original_player",
+    "timeout_seconds": 20
+  },
+  "asan_options": "detect_leaks=0",
+  "campaigns": [
+    {
+      "executions": 4096,
+      "final_status": "#4096\tDONE   cov: 3770 ft: 11962 corp: 417/25Kb lim: 81 exec/s: 73 rss: 496Mb",
+      "findings": 0,
+      "initial_seed_files": 11,
+      "max_input_budget": 97,
+      "reported_elapsed_seconds": 56,
+      "rss_limit_mb": 2048,
+      "seed": 1,
+      "stage": "initial ownership campaign",
+      "target": "original_player",
+      "timeout_seconds": 20
+    },
+    {
+      "executions": 4096,
+      "final_status": "#4096\tDONE   cov: 3767 ft: 11946 corp: 412/25Kb lim: 81 exec/s: 105 rss: 504Mb",
+      "findings": 0,
+      "initial_seed_files": 11,
+      "max_input_budget": 97,
+      "reported_elapsed_seconds": 39,
+      "rss_limit_mb": 2048,
+      "seed": 1,
+      "stage": "binding-guard recheck",
+      "target": "original_player",
+      "timeout_seconds": 20
+    },
+    {
+      "executions": 4096,
+      "final_status": "#4096\tDONE   cov: 3767 ft: 11946 corp: 412/25Kb lim: 81 exec/s: 102 rss: 503Mb",
+      "findings": 0,
+      "initial_seed_files": 11,
+      "max_input_budget": 97,
+      "reported_elapsed_seconds": 40,
+      "rss_limit_mb": 2048,
+      "seed": 1,
+      "stage": "final runtime action-guard recheck",
+      "target": "original_player",
+      "timeout_seconds": 20
+    },
+    {
+      "executions": 4096,
+      "final_status": "#4096\tDONE   cov: 3779 ft: 12046 corp: 435/26Kb lim: 81 exec/s: 105 rss: 498Mb",
+      "findings": 0,
+      "initial_seed_files": 11,
+      "max_input_budget": 97,
+      "reported_elapsed_seconds": 39,
+      "rss_limit_mb": 2048,
+      "seed": 1,
+      "stage": "delivery harness including manual action rejection",
+      "target": "original_player",
+      "timeout_seconds": 20
+    },
+    {
+      "executions": 4096,
+      "final_status": "#4096\tDONE   cov: 8402 ft: 16778 corp: 342/11277b lim: 41 exec/s: 37 rss: 521Mb",
+      "findings": 0,
+      "initial_seed_files": 21,
+      "max_input_budget": 97,
+      "reported_elapsed_seconds": 108,
+      "rss_limit_mb": 2048,
+      "seed": 1,
+      "stage": "historical stepping",
+      "target": "stepping_equivalence",
+      "timeout_seconds": 20
+    },
+    {
+      "executions": 4096,
+      "final_status": "#4096\tDONE   cov: 3435 ft: 8160 corp: 154/8009b lim: 65 exec/s: 66 rss: 504Mb",
+      "findings": 0,
+      "initial_seed_files": 18,
+      "max_input_budget": 65,
+      "reported_elapsed_seconds": 62,
+      "rss_limit_mb": 2048,
+      "seed": 1,
+      "stage": "provenance",
+      "target": "game_instance",
+      "timeout_seconds": 20
+    }
+  ],
+  "delivery_cargo_validation": [
+    {
+      "check": "build",
+      "exit": 0,
+      "seconds": 0.66
+    },
+    {
+      "check": "format",
+      "exit": 0,
+      "seconds": 1.27
+    },
+    {
+      "check": "fuzz-format",
+      "exit": 0,
+      "seconds": 1.62
+    },
+    {
+      "check": "clippy",
+      "exit": 0,
+      "seconds": 5.16
+    },
+    {
+      "check": "workspace",
+      "exit": 0,
+      "seconds": 169.25
+    },
+    {
+      "check": "release",
+      "exit": 0,
+      "seconds": 51.06
+    },
+    {
+      "check": "msrv",
+      "exit": 0,
+      "seconds": 188.01
+    },
+    {
+      "check": "rustdoc",
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "check": "identity-c",
+      "exit": 0,
+      "seconds": 9.16
+    }
+  ],
+  "fuzz_targets_built": 28,
+  "historical_commands": [
+    {
+      "exit": 0,
+      "seconds": 489.45,
+      "tool": "check_references.py"
+    },
+    {
+      "exit": 0,
+      "seconds": 3.69,
+      "tool": "m3f1_reference.py"
+    },
+    {
+      "exit": 0,
+      "seconds": 4.59,
+      "tool": "m3f1_snapshot_goldens.py"
+    },
+    {
+      "exit": 0,
+      "seconds": 1.46,
+      "tool": "m3f2_reference.py"
+    },
+    {
+      "exit": 0,
+      "seconds": 5.85,
+      "tool": "m3f2_snapshot_goldens.py"
+    },
+    {
+      "exit": 0,
+      "seconds": 44.01,
+      "tool": "m3f3_reference.py"
+    },
+    {
+      "exit": 0,
+      "seconds": 196.07,
+      "tool": "m3f3_snapshot_goldens.py"
+    },
+    {
+      "exit": 0,
+      "seconds": 5.25,
+      "tool": "m3f3_clipping_reference.py"
+    },
+    {
+      "exit": 0,
+      "seconds": 8.85,
+      "tool": "m3f3_clipping_snapshot_goldens.py"
+    }
+  ],
+  "historical_example_comparisons": [
+    {
+      "check": "check_examples.py",
+      "exit": 0,
+      "seconds": 72.61
+    },
+    {
+      "check": "check_map_scale.py",
+      "exit": 0,
+      "seconds": 0.77
+    },
+    {
+      "check": "check_map_extent.py",
+      "exit": 0,
+      "seconds": 0.81
+    },
+    {
+      "check": "check_demon_expanded_map.py",
+      "exit": 0,
+      "seconds": 16.75
+    },
+    {
+      "check": "check_original_identity.py",
+      "exit": 0,
+      "seconds": 0.25
+    },
+    {
+      "check": "check_canonical_demon.py",
+      "exit": 0,
+      "seconds": 2.55
+    },
+    {
+      "check": "check_runtime_identity.py",
+      "exit": 0,
+      "seconds": 2.66
+    },
+    {
+      "check": "check_original_registry.py",
+      "exit": 0,
+      "seconds": 4.29
+    },
+    {
+      "check": "check_context_ownership.py",
+      "exit": 0,
+      "seconds": 2.18
+    },
+    {
+      "check": "check_game_instance.py",
+      "exit": 0,
+      "seconds": 1.94
+    },
+    {
+      "check": "check_diagnostic_free.py",
+      "exit": 0,
+      "seconds": 2.29
+    }
+  ],
+  "identity_sanitizer_retry": {
+    "exit": 0,
+    "sprites": 138,
+    "states": 967,
+    "types": 137
+  },
+  "initial_cargo_validation": [
+    {
+      "check": "build",
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "check": "format",
+      "exit": 0,
+      "seconds": 1.24
+    },
+    {
+      "check": "fuzz-format",
+      "exit": 0,
+      "seconds": 1.63
+    },
+    {
+      "check": "clippy",
+      "exit": 0,
+      "seconds": 0.17
+    },
+    {
+      "check": "workspace",
+      "exit": 0,
+      "seconds": 202.83
+    },
+    {
+      "check": "release",
+      "exit": 0,
+      "seconds": 78.81
+    },
+    {
+      "check": "msrv",
+      "exit": 0,
+      "seconds": 211.03
+    },
+    {
+      "check": "rustdoc",
+      "exit": 101,
+      "seconds": 0.38
+    }
+  ],
+  "leak_coverage": false,
+  "new_player_example": {
+    "debug_release_match": true
+  },
+  "parser_generator": {
+    "original_seed_hashes": {
+      "fuzz/corpus/map/classic_square": "8d3f63a56a68b137351751a7a61919be93ad917b4d77bdb26644aa02c4672d9b",
+      "fuzz/corpus/wad/duplicates": "c9c09f0c9f0afe9362ed8f2a700dbb3a660acc7d7aa9a3ef71d8d036e5beefce",
+      "fuzz/corpus/wad/empty_iwad": "1c752adca4dce342d362ef48c4df48371f3903a59f0ad3e4637af643fc2081a7"
+    },
+    "original_seeds_byte_identical": true,
+    "results": [
+      {
+        "example": "parse_map",
+        "exit": 0,
+        "mode": "debug",
+        "stderr": "",
+        "stdout": "Synthetic map: 4 vertices, 4 linedefs, 1 sectors\n"
+      },
+      {
+        "example": "generate_fuzz_seeds",
+        "exit": 0,
+        "mode": "debug",
+        "stderr": "",
+        "stdout": ""
+      },
+      {
+        "example": "parse_map",
+        "exit": 0,
+        "mode": "release",
+        "stderr": "",
+        "stdout": "Synthetic map: 4 vertices, 4 linedefs, 1 sectors\n"
+      },
+      {
+        "example": "generate_fuzz_seeds",
+        "exit": 0,
+        "mode": "release",
+        "stderr": "",
+        "stdout": ""
+      }
+    ]
+  },
+  "qualification": "Four original-player repetitions include intermediate/final guard or harness revisions; they are not four independent input families. Bounded campaigns do not establish exhaustive coverage.",
+  "rustdoc_retry": {
+    "exit": 0,
+    "reason": "Two source frags[0] doc strings parsed as links; fixed with inline code, warnings-denied documentation reran successfully."
+  },
+  "sanitizer": "Rust libFuzzer address sanitizer, final all-target build with two jobs",
+  "source_commands": [
+    {
+      "check": "lifetime-c",
+      "exit": 0,
+      "seconds": 2.05
+    },
+    {
+      "check": "lifetime-encoder",
+      "exit": 0,
+      "seconds": 0.15
+    },
+    {
+      "check": "canonical-c",
+      "exit": 0,
+      "seconds": 131.01
+    },
+    {
+      "check": "canonical-encoder",
+      "exit": 0,
+      "seconds": 47.72
+    },
+    {
+      "check": "original-encoder",
+      "exit": 0,
+      "seconds": 37.62
+    }
+  ],
+  "total_executions": 24576,
+  "total_executions_including_admission_recheck": 28672
+}

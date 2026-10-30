@@ -1,4 +1,4 @@
-//! Bounded, read-only DSIM20/21 observations. Never an executable world loader.
+//! Bounded, read-only DSIM20/21 and explicitly selected DSIM22 observations. Never an executable world loader.
 use crate::{identity::*, *};
 use std::{error::Error, fmt, sync::OnceLock};
 
@@ -120,6 +120,21 @@ fn reserve<T>(n: usize) -> Result<Vec<T>, DiagnosticError> {
 impl<'a> Diagnostic<'a> {
     /// Read only v20/v21 with explicit identity/schema validation and bounded allocation.
     pub fn decode(bytes: &'a [u8], limits: DiagnosticLimits) -> Result<Self, DiagnosticError> {
+        Self::decode_selected(bytes, limits, false)
+    }
+    /// Explicit DSIM-v22 player-body reader. Historical decode still rejects22.
+    /// Shares bounded framing; observations never restore executable worlds.
+    pub fn decode_player(
+        bytes: &'a [u8],
+        limits: DiagnosticLimits,
+    ) -> Result<Self, DiagnosticError> {
+        Self::decode_selected(bytes, limits, true)
+    }
+    fn decode_selected(
+        bytes: &'a [u8],
+        limits: DiagnosticLimits,
+        player: bool,
+    ) -> Result<Self, DiagnosticError> {
         if bytes.len() > limits.bytes {
             return Err(DiagnosticError::Limit);
         }
@@ -128,7 +143,7 @@ impl<'a> Diagnostic<'a> {
             return Err(DiagnosticError::Structure);
         }
         let version = cursor.u32()?;
-        if !matches!(version, 20 | 21) {
+        if (player && version != 22) || (!player && !matches!(version, 20 | 21)) {
             return Err(DiagnosticError::Version(version));
         }
         let count = cursor.usize64()?;
@@ -206,10 +221,13 @@ impl<'a> Diagnostic<'a> {
     fn identity(&self, ty: u16, state: u16) -> Result<DiagnosticIdentity, DiagnosticError> {
         let actor = ActorTypeId(ty);
         let state = (state != u16::MAX).then_some(StateId(state));
-        if self.version == 21 {
-            original_registry::require_role(actor).map_err(|_| DiagnosticError::Identity)?;
+        if matches!(self.version, 21 | 22) {
+            let policy = self.policy();
+            original_registry::require_role_for(policy, actor)
+                .map_err(|_| DiagnosticError::Identity)?;
             if let Some(s) = state {
-                original_registry::state_role(actor, s).map_err(|_| DiagnosticError::Identity)?;
+                original_registry::state_role_for(policy, actor, s)
+                    .map_err(|_| DiagnosticError::Identity)?;
             }
             Ok(DiagnosticIdentity::Original {
                 definition: original_registry::identity(actor)
@@ -249,16 +267,28 @@ impl<'a> Diagnostic<'a> {
         let state = u16::from_le_bytes(number(self.required(&format!("{prefix}.state"))?)?);
         self.identity(ty, state).map(Some)
     }
+    fn policy(&self) -> OriginalExecutionProfile {
+        if self.version == 22 {
+            OriginalExecutionProfile::PlayerBodyLifecycleV1
+        } else {
+            OriginalExecutionProfile::DemonNormalV1
+        }
+    }
     fn validate(&self) -> Result<(), DiagnosticError> {
         let profile = u32::from_le_bytes(number(self.required("profile")?)?);
         if u32::from_le_bytes(number(self.required("tic_rate")?)?) != 35 {
             return Err(DiagnosticError::Schema);
         }
         number::<8>(self.required("tic")?)?;
-        if self.version == 21 {
-            if profile != OriginalExecutionProfile::DemonNormalV1.wire_id()
+        if matches!(self.version, 21 | 22) {
+            if profile != self.policy().wire_id()
                 || self.required("registry.schema")? != ORIGINAL_REGISTRY_SCHEMA
-                || self.required("context.schema")? != ORIGINAL_CONTEXT_SCHEMA
+                || self.required("context.schema")?
+                    != if self.version == 22 {
+                        PLAYER_BODY_CONTEXT_SCHEMA
+                    } else {
+                        ORIGINAL_CONTEXT_SCHEMA
+                    }
                 || self
                     .fields
                     .iter()
@@ -316,6 +346,11 @@ impl<'a> Diagnostic<'a> {
                 || f.path.ends_with(".soundtarget")
                 || f.path.ends_with(".previous")
                 || f.path.ends_with(".next")
+                || self.version == 22
+                    && matches!(
+                        f.path,
+                        "original_player.0.mo" | "original_player.0.attacker"
+                    )
                 || f.path.starts_with("player.") && f.path.ends_with(".actor")
                 || f.path.starts_with("perception.player.") && f.path.ends_with(".actor");
             if optional {
@@ -354,8 +389,11 @@ impl<'a> Diagnostic<'a> {
             for i in 0..count {
                 let event = self.required(&format!("{prefix}.{i}"))?;
                 let tag = *event.first().ok_or(DiagnosticError::Structure)?;
-                if tag > 21 {
+                if tag > if self.version == 22 { 22 } else { 21 } {
                     return Err(DiagnosticError::Structure);
+                }
+                if tag == 22 {
+                    validate_player_event(event)?;
                 }
                 // Validate identity-bearing payloads without interpreting nested
                 // untrusted collision/sight counts or allocating from them.
@@ -373,7 +411,7 @@ impl<'a> Diagnostic<'a> {
                     )?);
                     if is_type {
                         self.identity(value, u16::MAX)?;
-                    } else if self.version == 21 {
+                    } else if matches!(self.version, 21 | 22) {
                         let state = OriginalState::try_from(value)
                             .map_err(|_| DiagnosticError::Identity)?;
                         // Any admitted normal role; never original alias interpretation.
@@ -385,16 +423,91 @@ impl<'a> Diagnostic<'a> {
                         ]
                         .into_iter()
                         .any(|ty| {
-                            let slot = if ty == OriginalActorType::MT_PLAYER {
+                            let slot = if ty == OriginalActorType::MT_PLAYER && self.version == 21 {
                                 original_registry::body_slot()
                             } else {
                                 ActorTypeId(ty.ordinal())
                             };
-                            original_registry::state_role(slot, StateId(state.ordinal())).is_ok()
+                            original_registry::state_role_for(
+                                self.policy(),
+                                slot,
+                                StateId(state.ordinal()),
+                            )
+                            .is_ok()
                         }) {
                             return Err(DiagnosticError::Identity);
                         }
                     }
+                }
+            }
+        }
+        if self.version == 22 {
+            self.validate_player()?;
+        }
+        Ok(())
+    }
+    fn validate_player(&self) -> Result<(), DiagnosticError> {
+        let hp = i32::from_le_bytes(number(self.required("original_player.0.health")?)?);
+        let damage = i32::from_le_bytes(number(self.required("original_player.0.damage_count")?)?);
+        let frags = i32::from_le_bytes(number(self.required("original_player.0.frags")?)?);
+        let state = self.required("original_player.0.state")?;
+        if !(0..=100).contains(&hp)
+            || !(0..=100).contains(&damage)
+            || frags < 0
+            || !matches!(state, [0] | [1])
+            || (state == [1]) != (hp == 0)
+        {
+            return Err(DiagnosticError::Identity);
+        }
+        let raw = self.required("original_player.0.mo")?;
+        let mo = if raw[0] == 1 {
+            Some(ActorId::from_parts(
+                u32::from_le_bytes(number(&raw[1..5])?),
+                u64::from_le_bytes(number(&raw[5..13])?),
+            ))
+        } else {
+            None
+        };
+        let attacker = self.required("original_player.0.attacker")?;
+        if attacker[0] == 1 {
+            let handle = ActorId::from_parts(
+                u32::from_le_bytes(number(&attacker[1..5])?),
+                u64::from_le_bytes(number(&attacker[5..13])?),
+            );
+            if let Some(DiagnosticIdentity::Original { definition, .. }) = self.actor(handle)? {
+                if !matches!(
+                    definition,
+                    DefinitionIdentity::Original(
+                        OriginalActorType::MT_PLAYER | OriginalActorType::MT_SERGEANT
+                    )
+                ) {
+                    return Err(DiagnosticError::Identity);
+                }
+            }
+        }
+        for slot in 0..self.slots()? {
+            let prefix = format!("actor.{slot}");
+            if self.required(&format!("{prefix}.occupied"))? != [1] {
+                continue;
+            }
+            let generation =
+                u64::from_le_bytes(number(self.required(&format!("{prefix}.generation"))?)?);
+            let current = mo
+                == Some(ActorId::from_parts(
+                    u32::try_from(slot).map_err(|_| DiagnosticError::Identity)?,
+                    generation,
+                ));
+            let ty = u16::from_le_bytes(number(self.required(&format!("{prefix}.type"))?)?);
+            if self.required(&format!("{prefix}.player"))? != [if current { 0 } else { u8::MAX }]
+                || current && ty != OriginalActorType::MT_PLAYER.ordinal()
+            {
+                return Err(DiagnosticError::Identity);
+            }
+            if current {
+                let actor_hp =
+                    i32::from_le_bytes(number(self.required(&format!("{prefix}.health"))?)?);
+                if actor_hp.max(0) != hp {
+                    return Err(DiagnosticError::Identity);
                 }
             }
         }
@@ -427,10 +540,10 @@ fn validate_handle(bytes: &[u8]) -> Result<(), DiagnosticError> {
     Ok(())
 }
 impl Snapshot {
-    /// Bounded Result-returning DSIM20/21 encoder. Trusted convenience APIs retain
+    /// Bounded Result-returning DSIM20/21/22 encoder. Trusted convenience APIs retain
     /// their old allocation policy; callers at input/output boundaries use this.
     pub fn diagnostic_bytes(&self, limits: DiagnosticLimits) -> Result<Vec<u8>, DiagnosticError> {
-        if !matches!(self.version(), 20 | 21) {
+        if !matches!(self.version(), 20..=22) {
             return Err(DiagnosticError::Version(self.version()));
         }
         let mut size = 16_usize;
@@ -476,5 +589,38 @@ impl Snapshot {
             out.extend_from_slice(f.value());
         }
         Ok(out)
+    }
+}
+
+fn validate_player_event(event: &[u8]) -> Result<(), DiagnosticError> {
+    match event.get(1) {
+        Some(0) if event.len() == 14 => validate_handle(&event[2..]),
+        Some(1) if event.len() == 27 => {
+            let hp = i32::from_le_bytes(number(&event[2..6])?);
+            let count = i32::from_le_bytes(number(&event[19..23])?);
+            let tactile = i32::from_le_bytes(number(&event[23..27])?);
+            if !(0..=100).contains(&hp)
+                || !(0..=100).contains(&count)
+                || !(40..=240).contains(&tactile)
+                || tactile % 2 != 0
+            {
+                return Err(DiagnosticError::Identity);
+            }
+            match event[6] {
+                0 if event[7..19].iter().all(|b| *b == 0) => Ok(()),
+                1 => validate_handle(&event[7..19]),
+                _ => Err(DiagnosticError::Identity),
+            }
+        }
+        Some(2) if event.len() == 8 => {
+            if i32::from_le_bytes(number(&event[2..6])?) < 0
+                || u16::from_le_bytes(number(&event[6..8])?)
+                    != OriginalState::S_PISTOLDOWN.ordinal()
+            {
+                return Err(DiagnosticError::Identity);
+            }
+            Ok(())
+        }
+        _ => Err(DiagnosticError::Structure),
     }
 }

@@ -26,11 +26,16 @@ mod diagnostic;
 mod execution_context;
 mod game_instance;
 mod native_demon;
+mod original_player;
 mod original_registry;
 pub use diagnostic::{Diagnostic, DiagnosticError, DiagnosticIdentity, DiagnosticLimits};
 pub use execution_context::{ContextActor, ContextError, ExecutionContext, TargetReference};
 pub use game_instance::{GameInstance, InstanceActorRef, InstanceId, ProvenanceError};
 pub use native_demon::{NativeDemonState, NativeDemonType};
+pub use original_player::{
+    OriginalPlayer, PLAYER_BODY_CONTEXT_SCHEMA, PlayerBodyError, PlayerBodyEvent, PlayerBodyState,
+    PlayerSlot,
+};
 pub use original_registry::{
     ContextRole, DefinitionIdentity, ORIGINAL_CONTEXT_SCHEMA, ORIGINAL_REGISTRY_SCHEMA,
     OriginalExecutionProfile, OriginalExecutionRegistry, OriginalRegistryError,
@@ -209,6 +214,8 @@ impl Profile {
 /// Deterministic stepping/setup failure. Unsupported gameplay is explicit.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SimError {
+    /// Explicit original-player body ownership or behavior rejection.
+    PlayerBody(PlayerBodyError),
     /// Actor storage/scheduling failure.
     Store(StoreError),
     /// Actor definition, action admission or bounded preflight failure.
@@ -309,6 +316,8 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
+    /// Original-player field and presentation-service observations, DSIM-v22 only.
+    PlayerBody(PlayerBodyEvent),
     /// Ordered profile-11 shotgun boundaries and per-pellet observations.
     Shotgun(ShotgunEvent),
     /// Source profile-12 refire decision before immediate see-state entry.
@@ -420,6 +429,7 @@ pub struct Simulation {
     pub(crate) perception_players: [PerceptionPlayer; 4],
     pub(crate) registry: Option<Arc<ActorRegistry>>,
     pub(crate) weapon_player: Option<WeaponPlayer>,
+    pub(crate) original_player: Option<OriginalPlayer>,
     pub(crate) sound_targets: Vec<Option<ActorId>>,
     pub(crate) actor_options: ActorOptions,
     pub(crate) statistics: Option<LevelStatistics>,
@@ -532,6 +542,7 @@ impl Simulation {
             perception_players: [PerceptionPlayer::default(); 4],
             registry: None,
             weapon_player: None,
+            original_player: None,
             sound_targets: Vec::new(),
             actor_options: ActorOptions::default(),
             statistics: None,
@@ -549,7 +560,8 @@ impl Simulation {
             map_fields,
         })
     }
-    /// Selected behavior and canonical schema profile.
+    /// Historical service-family selection. For original-ID contexts, also use
+    /// [`Self::original_execution_profile`] to distinguish the explicit policies.
     pub const fn profile(&self) -> Profile {
         self.profile
     }
@@ -814,6 +826,9 @@ impl Simulation {
     }
     /// Changes M3b vertical momentum between tics; invalid/profile errors preserve state.
     pub fn set_vertical_momentum(&mut self, id: ActorId, momentum: Fixed) -> Result<(), SimError> {
+        if self.owns_player_body(id) {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         if matches!(self.profile, Profile::MapScale | Profile::MapExtent) {
             map_scale::bounded([momentum], 64)?;
         }
@@ -853,6 +868,9 @@ impl Simulation {
     }
     /// Changes explicit momentum between tics; next update clamps it like the reference.
     pub fn set_momentum(&mut self, id: ActorId, momentum: [Fixed; 2]) -> Result<(), SimError> {
+        if self.owns_player_body(id) {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         if self.profile.uses_checked_demons() {
             map_scale::bounded(momentum, 64)?;
         }
@@ -945,6 +963,9 @@ impl Simulation {
             self.preflight_weapon_step(&commands)?;
         } else if commands.iter().any(|c| c.buttons != 0) {
             return Err(SimError::UnsupportedButtons);
+        }
+        if self.original_player.is_some() && commands.iter().any(|c| *c != TicCommand::default()) {
+            return Err(PlayerBodyError::Unsupported.into());
         }
         if self.profile.uses_checked_demons() {
             return self.advance_expanded_demons(commands);
@@ -1045,6 +1066,7 @@ impl Simulation {
                     registry: &self.registry,
                     options: self.actor_options,
                     statistics: &mut self.statistics,
+                    player: None,
                     rng: &mut self.rng,
                     spatial: &mut self.spatial,
                     events: &mut self.events,

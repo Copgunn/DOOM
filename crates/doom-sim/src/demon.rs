@@ -149,6 +149,9 @@ impl Simulation {
     /// Atomic original A_SargAttack: Face, current range/sight, one damage draw,
     /// shared direct damage. No attack sound or hitscan impact is invented.
     pub fn demon_melee_attack(&mut self, id: ActorId) -> Result<(), SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         if !self.profile.uses_demon() {
             return Err(MonsterError::Profile.into());
         }
@@ -177,6 +180,9 @@ impl Simulation {
         id: ActorId,
         state: StateId,
     ) -> Result<(), SimError> {
+        if self.original_player.is_some() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         let actor = self.monster_actor(id, 1008)?;
         self.monster_state_role(actor.life.unwrap().actor_type, state)?;
         let direct_entry = if self.profile == Profile::OriginalDemon {

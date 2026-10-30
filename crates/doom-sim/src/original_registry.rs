@@ -12,12 +12,15 @@ pub const ORIGINAL_CONTEXT_SCHEMA: &[u8] = b"UNBOUND-BODY-v1";
 pub enum OriginalExecutionProfile {
     /// Existing normal Demon closure with bounded unbound bodies and effects.
     DemonNormalV1,
+    /// One genuine Medium/commercial player body; no input/inflictor/roster execution.
+    PlayerBodyLifecycleV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
     pub const fn wire_id(self) -> u32 {
         match self {
             Self::DemonNormalV1 => 1,
+            Self::PlayerBodyLifecycleV1 => 2,
         }
     }
 }
@@ -203,17 +206,23 @@ fn definitions() -> Result<ActorRegistry, OriginalRegistryError> {
 #[derive(Clone, Debug)]
 pub struct OriginalExecutionRegistry {
     registry: ActorRegistry,
+    profile: OriginalExecutionProfile,
 }
 impl OriginalExecutionRegistry {
-    /// Construct the source package and the bounded normal Demon execution policy.
+    /// Construct the immutable source package and explicitly selected execution policy.
     pub fn new(profile: OriginalExecutionProfile) -> Result<Self, OriginalRegistryError> {
         match profile {
             OriginalExecutionProfile::DemonNormalV1 => {
                 demon_policy()?;
             }
+            OriginalExecutionProfile::PlayerBodyLifecycleV1 => {
+                demon_policy()?;
+                player_policy()?;
+            }
         }
         Ok(Self {
             registry: definitions()?,
+            profile,
         })
     }
     /// Validate all source/context records before accepting externally built data.
@@ -222,7 +231,7 @@ impl OriginalExecutionRegistry {
         profile: OriginalExecutionProfile,
     ) -> Result<Self, OriginalRegistryError> {
         Self::validate(&registry, profile)?;
-        Ok(Self { registry })
+        Ok(Self { registry, profile })
     }
     pub(crate) fn validate(
         registry: &ActorRegistry,
@@ -231,6 +240,10 @@ impl OriginalExecutionRegistry {
         match profile {
             OriginalExecutionProfile::DemonNormalV1 => {
                 demon_policy()?;
+            }
+            OriginalExecutionProfile::PlayerBodyLifecycleV1 => {
+                demon_policy()?;
+                player_policy()?;
             }
         }
         if registry.states().len() != usize::from(OriginalState::COUNT)
@@ -269,7 +282,7 @@ impl OriginalExecutionRegistry {
         identity: DefinitionIdentity,
     ) -> Result<ActorTypeId, OriginalRegistryError> {
         let slot = self.resolve(identity);
-        require_role(slot)?;
+        require_role_for(self.profile, slot)?;
         Ok(slot)
     }
     /// Check normal state closure; raise metadata never gains execution permission.
@@ -279,7 +292,7 @@ impl OriginalExecutionRegistry {
         state: OriginalState,
     ) -> Result<StateId, OriginalRegistryError> {
         let slot = self.admit_definition(identity)?;
-        state_role(slot, StateId(state.ordinal()))?;
+        state_role_for(self.profile, slot, StateId(state.ordinal()))?;
         Ok(StateId(state.ordinal()))
     }
     pub(crate) fn into_registry(self) -> ActorRegistry {
@@ -294,7 +307,21 @@ pub(crate) fn identity(slot: ActorTypeId) -> Result<DefinitionIdentity, Original
         .map(DefinitionIdentity::Original)
         .map_err(|_| OriginalRegistryError::Definition(slot.0))
 }
-pub(crate) fn require_role(slot: ActorTypeId) -> Result<(), OriginalRegistryError> {
+pub(crate) fn require_role_for(
+    profile: OriginalExecutionProfile,
+    slot: ActorTypeId,
+) -> Result<(), OriginalRegistryError> {
+    if profile == OriginalExecutionProfile::PlayerBodyLifecycleV1 {
+        return match identity(slot)? {
+            DefinitionIdentity::Original(
+                OriginalActorType::MT_PLAYER
+                | OriginalActorType::MT_SERGEANT
+                | OriginalActorType::MT_PUFF
+                | OriginalActorType::MT_BLOOD,
+            ) => Ok(()),
+            other => Err(OriginalRegistryError::Unsupported(other)),
+        };
+    }
     match identity(slot)? {
         DefinitionIdentity::Original(
             OriginalActorType::MT_SERGEANT
@@ -305,10 +332,16 @@ pub(crate) fn require_role(slot: ActorTypeId) -> Result<(), OriginalRegistryErro
         other => Err(OriginalRegistryError::Unsupported(other)),
     }
 }
-pub(crate) fn state_role(ty: ActorTypeId, state: StateId) -> Result<(), OriginalRegistryError> {
-    require_role(ty)?;
+pub(crate) fn state_role_for(
+    profile: OriginalExecutionProfile,
+    ty: ActorTypeId,
+    state: StateId,
+) -> Result<(), OriginalRegistryError> {
+    require_role_for(profile, ty)?;
     let s = OriginalState::try_from(state.0).map_err(|_| OriginalRegistryError::State(state.0))?;
-    let allowed = if ty == owner_slot() {
+    let allowed = if ty.0 == OriginalActorType::MT_PLAYER.ordinal() {
+        player_policy()?.normal.contains(s)
+    } else if ty == owner_slot() {
         demon_policy()?.normal.contains(s)
     } else {
         let source = if ty == body_slot() {
@@ -351,7 +384,8 @@ pub(crate) fn death_phase(state: StateId) -> Result<(bool, bool), OriginalRegist
     Ok((p.death.contains(s), p.before_fall.contains(s)))
 }
 impl Simulation {
-    /// Opt-in original-ID normal Demon execution using the existing shared services.
+    /// Opt-in original-ID policy using shared services. The selected registry policy
+    /// determines Demon-only or bounded genuine-player execution.
     pub fn with_original_registry(
         map: Map,
         limit: u32,
@@ -359,14 +393,26 @@ impl Simulation {
         options: ActorOptions,
         context: MapContextOptions,
     ) -> Result<Self, SimError> {
-        Self::with_demon_expanded_profile(
+        let policy = registry.profile;
+        if policy == OriginalExecutionProfile::PlayerBodyLifecycleV1
+            && (options != ActorOptions::default()
+                || map.sectors().len() != 1
+                || map.sectors().iter().any(|s| s.heights != [0, 128]))
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
+        let mut sim = Self::with_demon_expanded_profile(
             map,
             limit,
             registry.into_registry(),
             options,
             context,
             Profile::OriginalDemon,
-        )
+        )?;
+        if policy == OriginalExecutionProfile::PlayerBodyLifecycleV1 {
+            sim.original_player = Some(OriginalPlayer::default());
+        }
+        Ok(sim)
     }
     /// Construct the identified original package and bounded Demon context.
     pub fn original_id_map(
@@ -421,9 +467,9 @@ impl Simulation {
             .actor(actor)
             .and_then(Actor::life)
             .ok_or(OriginalRegistryError::ProfileOrActor)?;
-        require_role(life.actor_type)?;
+        require_role_for(self.player_policy(), life.actor_type)?;
         if let Some(s) = life.state {
-            state_role(life.actor_type, s)?;
+            state_role_for(self.player_policy(), life.actor_type, s)?;
         }
         Ok((
             identity(life.actor_type)?,
@@ -453,4 +499,31 @@ impl Simulation {
             Err(OriginalRegistryError::ProfileOrActor)
         }
     }
+}
+
+fn player_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
+    static POLICY: OnceLock<Result<ActorPolicy, OriginalRegistryError>> = OnceLock::new();
+    POLICY
+        .get_or_init(|| {
+            let roots = OriginalActorType::MT_PLAYER.states();
+            let mut p = ActorPolicy::source(OriginalActorType::MT_PLAYER)?;
+            p.normal = StateSet::graph([
+                roots.spawn,
+                roots.see,
+                roots.pain,
+                roots.death,
+                roots.extreme_death,
+            ])?;
+            for s in OriginalState::all().filter(|s| p.normal.contains(*s)) {
+                if !matches!(
+                    s.descriptor().action,
+                    None | Some("A_Pain" | "A_PlayerScream" | "A_XScream" | "A_Fall")
+                ) {
+                    return Err(OriginalRegistryError::Graph);
+                }
+            }
+            Ok(p)
+        })
+        .as_ref()
+        .map_err(|e| *e)
 }

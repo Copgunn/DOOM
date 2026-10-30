@@ -8,6 +8,7 @@ pub(crate) struct Inputs<'a> {
     pub live_bindings: &'a mut [Option<ActorId>; 4],
     pub registry: &'a Option<Arc<ActorRegistry>>,
     pub options: ActorOptions,
+    pub player: Option<&'a mut OriginalPlayer>,
     pub statistics: &'a mut Option<LevelStatistics>,
     pub rng: &'a mut DoomRng,
     pub spatial: &'a mut movement::SpatialIndex,
@@ -25,6 +26,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
         registry,
         options,
         statistics,
+        mut player,
         rng,
         spatial,
         events,
@@ -107,6 +109,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                         let play = lifecycle::source_state_id("S_PLAY").unwrap();
                         *context.get_mut(id).unwrap() = actor;
                         lifecycle::LifeHost {
+                            player: player.as_deref_mut(),
                             statistics: statistics.as_mut(),
                             perception: perception_inputs,
                             access: &mut *context,
@@ -131,6 +134,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                 *context.get_mut(id).expect("same live thinker handle") = actor;
                 if let Some(registry) = registry {
                     lifecycle::LifeHost {
+                        player: player.as_deref_mut(),
                         statistics: statistics.as_mut(),
                         perception: perception_inputs,
                         access: context,

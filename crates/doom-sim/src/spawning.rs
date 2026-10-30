@@ -84,6 +84,7 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
+        self.player_spawn_guard(ty, position, height)?;
         if self.profile.uses_demon_map() && ty == self.demon_owner_type() {
             return Err(MapSpawnError::DirectSpawn.into());
         }
@@ -111,6 +112,7 @@ impl Simulation {
         }
         self.reserve_actor_spawns(1)?;
         Ok(LifeHost {
+            player: None,
             statistics: self.statistics.as_mut(),
             perception: None,
             access: &mut self.actors,
@@ -189,6 +191,7 @@ impl Simulation {
                 sound_targets: &self.sound_targets,
             });
         LifeHost {
+            player: None,
             statistics: self.statistics.as_mut(),
             perception,
             access: &mut self.actors,
@@ -206,6 +209,9 @@ impl Simulation {
     /// Enter a validated state immediately between tics. Work, action availability
     /// and child capacity are checked before any callback or gameplay RNG draw.
     pub fn enter_actor_state(&mut self, id: ActorId, state: StateId) -> Result<(), SimError> {
+        if self.owns_player_body(id) {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         let life = self.active_typed(id)?;
         self.projectile_control(id)?;
         if self.profile == Profile::Shotgunner {
@@ -267,6 +273,9 @@ impl Simulation {
         id: ActorId,
         target: Option<ActorId>,
     ) -> Result<(), SimError> {
+        if self.owns_player_body(id) {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.active_typed(id)?;
         self.projectile_control(id)?;
         if self.profile == Profile::Pursuit || self.profile.uses_monsters() {
@@ -429,6 +438,7 @@ impl Simulation {
                 SpawnHeight::Floor
             };
             let id = LifeHost {
+                player: None,
                 statistics: self.statistics.as_mut(),
                 perception: None,
                 access: &mut self.actors,
