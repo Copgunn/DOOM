@@ -29,7 +29,9 @@ jobs:
     # hosted-runner acquisition is capacity constrained (see VALIDATION.md).
     runs-on: ${{ matrix.os == 'macos-latest' && 'macos-26-intel' || matrix.os }}
     # Preserve the complete growing reference/encoder suite on Linux.
-    timeout-minutes: ${{ matrix.os == 'ubuntu-latest' && 30 || 15 }}
+    # Native Intel post-merge CI reached the 15-minute limit after its examples.
+    # Keep every check and allow the same headroom as the full Linux suite.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 15 || 30 }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -125,6 +127,7 @@ jobs:
           python tools/reference/check_runtime_identity.py
           python tools/reference/check_original_registry.py
           python tools/reference/check_context_ownership.py
+          python tools/reference/check_game_instance.py
       - name: Documentation links and archive integrity
         run: python tools/check_docs.py
       - name: Documentation

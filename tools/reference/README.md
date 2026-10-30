@@ -231,3 +231,15 @@ Input/output digests and inherited source provenance remain explicit. The
 [example checker](check_context_ownership.py), [commands](../../docs/TESTING.md#context-and-target-lifetime-validation)
 and [observations](../../docs/validation/M3F8.md) separate new C observations,
 historical evidence reuse, schema projection and Rust-only safety.
+
+## Game-instance boundary checks
+
+`check_game_instance.py` compares debug/release output against the unchanged
+M3f8 replacement/clear C-derived digest. The Rust reference helper drives that
+same input through checked provenance imports; no new C observer, raw trace or
+fixture is generated. Run every historical observer/encoder and the M3f8 pair
+unchanged. In-process instance keys, missing/foreign routing, restart and clone
+policy are Rust-specific safety checks, not original-C identity equivalence.
+See [the audit](../../docs/M3F9_REFERENCE.md),
+[commands](../../docs/TESTING.md#game-instance-provenance-validation) and
+[observations](../../docs/validation/M3F9.md).

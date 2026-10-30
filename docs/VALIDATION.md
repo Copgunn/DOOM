@@ -32,6 +32,10 @@ LeakSanitizer coverage; no bounded campaign is exhaustive.
 
 ## Detailed records
 
+- [M3f9 game-instance provenance](validation/M3F9.md): Rust-specific incarnation,
+  import/export, restart and trust policy; the selected C input is reused evidence,
+  not new original-source coverage. Historical DSIM and gameplay remain separate.
+
 - [M3f8 context/target ownership](validation/M3F8.md): new compact C inputs,
   retained references and logical retirement, independently encoded v21 captures,
   and separately labeled lifetime-brand/generation/atomicity policy checks.

@@ -484,3 +484,64 @@ Real player mo/attacker ownership, general species relationships, tracer/project
 ownership and resurrection require separate source/capability investigations.
 The new boundary grants none of those behaviors. See [mapping](ACTOR_IDENTITIES.md#context-scoped-actor-instances),
 [investigation](M3F8_REFERENCE.md) and [qualified evidence](validation/M3F8.md).
+
+## Game-instance provenance
+
+`GameInstance` adds an owning in-process boundary over one Simulation. Fresh
+wrapping always creates a distinct opaque InstanceId, even for equal map/registry/
+state or cloned Simulation data. Moving the owner preserves its identity. The
+wrapper is not Clone; its read-only Simulation view cannot replace state behind
+the key. Consuming extraction preserves raw state, while rewrapping creates a new
+incarnation. Existing raw APIs remain explicitly local, without inferred provenance.
+
+`GameInstance::with_execution_context` reuses the current original-ID scope and
+all role/state/action guards. Wrapping a historical profile does not admit that
+scope. An exported InstanceActorRef holds only an opaque key and local handle,
+not a world/actor lease. Import checks these conditions in order:
+
+| Condition | Result |
+| --- | --- |
+| Raw Simulation scope, without an owner key | UnboundContext |
+| Candidate without provenance, including decoded local IDs | MissingProvenance |
+| Different instance or earlier incarnation | InstanceMismatch, before actor lookup |
+| Matching key, invalid/stale/vacant/retired local identity | Existing ContextError::Unavailable classification |
+| Matching current actor, wrong expected definition/state/role | Existing identity/definition error |
+| Matching current actor, including pending storage or corpse | Scoped observation; existing gameplay guards still apply |
+
+Import/export are pure: no game-state mutation, event, RNG draw or actor allocation.
+Generation exhaustion, lowest-slot reuse and scheduling remain unchanged. A pending
+actor can be observed but cannot be newly acquired through a rejected target role.
+Successful earlier operations remain applied when a later callback import fails;
+the scope is not an aggregate transaction.
+
+`restart()` delegates to existing fresh level setup/spawning with continuing RNG.
+Only success replaces both state and key. References to the previous incarnation
+reject even if new actors have equal slots/generations/definitions. Failure leaves
+the prior identity and complete simulation state intact. There is no global live-
+instance directory or history index; foreign and pre-restart keys share the explicit
+InstanceMismatch classification.
+
+### Trust and unsupported boundaries
+
+Opaque keys compare runtime allocation identity, not numeric contents, map hashes
+or snapshot equality. A retained key prevents reuse aliasing but retains neither
+the world nor actor. Keys are process-local, with no persistent/serialized meaning,
+byte constructor, numeric conversion, remote resolver or authentication guarantee.
+There is no savegame restoration or networking implementation. DSIM decoding
+remains diagnostic observation and cannot manufacture provenance.
+
+`InstanceActorRef::candidate` is deliberately explicit local routing/readmission.
+A caller possessing a trusted local key can assert that a raw candidate should be
+interpreted there; an erased origin cannot be recovered or authenticated. Preserved
+checked exports reject foreign worlds automatically, whereas deliberately replacing
+their provenance changes the caller's assertion. Untrusted remote data would need
+a separately trusted resolver/transport policy, not a numeric tag alone.
+
+One small Arc allocation is made per new wrapper/successful restart, under the
+existing process-level OOM policy. Import borrows the key; export/reference cloning
+shares it without a new allocation. Allocation counts were not instrumented.
+No per-actor or Simulation identity field, global counter, wall clock, OS randomness,
+RNG consumption, capacity expansion, gameplay profile or DSIM schema is added.
+Real-player mo/attacker, new species relationships, persistence and transport remain
+separate work. See [architecture](ARCHITECTURE.md#game-instance-provenance),
+[audit/design](M3F9_REFERENCE.md) and [observations](validation/M3F9.md).

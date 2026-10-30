@@ -23,10 +23,12 @@ pub use direction::MoveDirection;
 mod canonical_demon;
 mod diagnostic;
 mod execution_context;
+mod game_instance;
 mod native_demon;
 mod original_registry;
 pub use diagnostic::{Diagnostic, DiagnosticError, DiagnosticIdentity, DiagnosticLimits};
 pub use execution_context::{ContextActor, ContextError, ExecutionContext, TargetReference};
+pub use game_instance::{GameInstance, InstanceActorRef, InstanceId, ProvenanceError};
 pub use native_demon::{NativeDemonState, NativeDemonType};
 pub use original_registry::{
     ContextRole, DefinitionIdentity, ORIGINAL_CONTEXT_SCHEMA, ORIGINAL_REGISTRY_SCHEMA,
