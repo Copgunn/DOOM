@@ -73,7 +73,8 @@ moving corpses. Additional hits must establish it again. Conservative rejections
 near boundaries do not approximate an accepted source operation.
 
 Validate these assumptions against actual shared services and independent C
-observations before claiming admission. In particular, arbitrary angled slides,+airborne origins, direct momentum mutation and unsupported geometry must not
+observations before claiming admission. In particular, arbitrary angled slides,
+airborne origins, direct momentum mutation and unsupported geometry must not
 silently escape the proof.
 
 ## Diagnostic and evidence decision

@@ -1,0 +1,27 @@
+{
+  "captures": 236,
+  "event_frames": 829,
+  "execution_profile": 3,
+  "full_byte_fixtures": 4,
+  "inputs_sha256": {
+    "tests/reference/m3f5_map_0.bin": "5ea2f73dfb74b7833ecdd1af1f657590b34fcbde047fe7895be44eda78115b97",
+    "tests/reference/m3g3_cases.csv": "dc0315c6e1278547f0f89dfb5daf6457f83517fbe78aa568bcc7fd6cafabcf35",
+    "tests/reference/m3g3_trace.csv": "ddd71fd893bca85d3815a3265ccab1da162b8b5e0ee2eeff03aa41f09eb92c3c",
+    "tools/reference/m3c_snapshot_goldens.py": "95eac9b3e9f416eea16bb2ace5bb12a3aa401d9942069046dca05e0edc3a123c",
+    "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
+    "tools/reference/m3g2_snapshot_goldens.py": "b65bbd286f22fb0ec0b2176cfbc339f0376a24ccfe4a91d537e5f672a3e8ceee",
+    "tools/reference/m3g3_snapshot_goldens.py": "eaab9fda258502f40a790368b253cf21890cd60cf73cdd76b1f4711136049bf0",
+    "tools/reference/player_snapshot.py": "a234a68c950d1676292f2ee2db73542882f8597ec3f9963599893e3156370560"
+  },
+  "ordered_event_fields": 6618,
+  "outputs_sha256": {
+    "tests/reference/m3g3_events.bin": "68c9d1f9954b876829628c21830ac4f7168b1b777f4539f8208e1bad24b08a08",
+    "tests/reference/m3g3_snapshots.csv": "482f5262ff9fdfd5412c70e340e6ca015ca06ec60e4acfc0520fe99c3e6c0015",
+    "tests/reference/m3g3_state_10_1.bin": "f03b6ee82bd806b6fa44b529edc284dec5ee33f76eee9b8c325ed4b16d1304b9",
+    "tests/reference/m3g3_state_11_72.bin": "8fc1c0c56196a6fd8e640ecb8aba58a1dc4386f3cf1bbe24bea030e7e78d09c2",
+    "tests/reference/m3g3_state_12_72.bin": "c41e43a4b9956cb7b79f2c9fc3d7f4cfef52100e0b2d2493d3a3f72bfdac1657",
+    "tests/reference/m3g3_state_8_8.bin": "c6c87a961422ac5114f9d66fe517c44d45e4440af1eeea8353ec53577ee43c63"
+  },
+  "schema": "DSIM-v22",
+  "scope": "New compiled-C knockback/grounded player fields and complete ordered events. Same DSIM22 layout, distinct policy3/context; old stationary policy2 unchanged. PBE1 compact event fixture omits derivable path strings; every payload/order/count is compared. Source allocation births project through independently specified Rust slot/generation policy. No Rust expected output."
+}
