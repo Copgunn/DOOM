@@ -253,3 +253,28 @@ The new API comparisons replay the same frozen inputs and reuse the same C/DSIM
 oracles; there is no new C input, behavioral coverage, encoder or raw fixture.
 [Testing](../../docs/TESTING.md#snapshot-free-stepping-validation) describes the
 separate structural/safety and host measurement checks.
+
+## Original player body lifecycle
+
+`m3g2_reference.py` extends the frozen genuine-body extractor with actual pristine
+MT_PLAYER0 and a verbatim source association/counter fragment. It does not claim
+full P_SpawnPlayer or PlayerThink. A separately selected unlisted, stationary,
+Medium/commercial context supports direct damage without a physical inflictor,
+pain, death and retained corpses. Live Demon sources are explicitly retired before
+traversal or killed into allocated corpses; the all-inactive C scan is never run.
+
+Genuine P_DropWeapon is added, with original weapon metadata. P_SetPsprite and
+I_Tactile record declared service requests; actual weapon animation and hardware
+presentation remain excluded. Executed function entries are inventoried separately
+from compiled bodies and new branch/input observations. Retired allocations remain
+quarantined and opaque; no freed-pointer or address-reuse equivalence is claimed.
+
+`m3g2_snapshot_goldens.py` reuses independent field/event framing over C rows and
+explicit v22 schema policy, without player fixture aliases or Rust output. Compact
+selected physical captures and full per-tic event payloads retain provenance while
+limiting new reference growth. No old output/helper/tool bytes change.
+[The investigation](../../docs/M3G2_REFERENCE.md),
+[diagnostic schema](../../docs/STATE_FORMAT.md#dsim-v22--original-player-body),
+[evidence record](../../docs/validation/M3G2.md) and
+[reproduction commands](../../docs/TESTING.md#original-player-body-validation)
+separate C behavior, encoding and Rust safety policy.

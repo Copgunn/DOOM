@@ -77,10 +77,8 @@ for present status. Historical review statements are not new claims that work is
 | Runtime identity storage audit | [M3f6](M3F6_REFERENCE.md), [native boundary](ACTOR_IDENTITIES.md#native-runtime-identity-boundary), [observations](validation/M3F6.md) |
 | Context and target lifetimes | [M3f8](M3F8_REFERENCE.md), [contract](COMPATIBILITY.md#context-and-target-lifetime-contract), [observations](validation/M3F8.md) |
 | Game-instance provenance | [M3f9](M3F9_REFERENCE.md), [contract](COMPATIBILITY.md#game-instance-provenance), [observations](validation/M3F9.md) |
+| Original player body lifecycle | [M3g2](M3G2_REFERENCE.md), [body contract](COMPATIBILITY.md#original-player-body-lifecycle), [observations](validation/M3G2.md) |
 
 [Reference tooling](../tools/reference/README.md) describes harness layout and
 provenance. [Historical records](validation/archive/README.md) retain complete
 original evidence and former guide contents with exact-byte copies and digests.
-
-- [M3g2 original player body investigation](M3G2_REFERENCE.md), with
-  [observed lifecycle, safety and performance evidence](validation/M3G2.md).
