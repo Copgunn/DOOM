@@ -55,20 +55,25 @@ The merged baseline provides:
   reference availability and compact independent lifetime inputs preserve existing
   gameplay. See [design](M3F8_REFERENCE.md) and [observations](validation/M3F8.md).
 
+M3f9 game-instance provenance is merged. Opaque incarnation keys qualify boundary
+references while the same actor store and execution context remain authoritative;
+see [design](M3F9_REFERENCE.md) and [observations](validation/M3F9.md).
+
 These foundations support controlled headless tests, not a complete playable game.
 Earlier findings and milestones are retained in the [historical records](validation/archive/README.md).
 
 ## Next
 
-### M3f9: Game-instance provenance and cross-boundary identity
+### M3g1: Diagnostic-free simulation stepping and transaction cost audit
 
-M3f9 qualifies external in-process references with an opaque incarnation token,
-checked import/export and explicit restart/clone/readmission rules. Scoped access
-and the existing actor owner remain authoritative. No gameplay, capacity, savegame,
-networking or DSIM admission is added. Existing C observations are reused.
-The implementation stops at owner review; exact review state belongs to GitHub.
-See [audit/design](M3F9_REFERENCE.md), [support](COMPATIBILITY.md#game-instance-provenance)
-and [observations](validation/M3F9.md).
+The implementation adds advance without implicit Snapshot capture; step delegates
+to the same core and retains its return. Event recording, checked transactions,
+RNG, admission and historical formats remain intact. Measured preflight/staging
+costs are separate from diagnostic capture/encoding. Structural tests and advisory
+CI measurements avoid unstable timing thresholds. This milestone stops at owner
+review; exact review state belongs to GitHub. See [audit](M3G1_REFERENCE.md),
+[API guarantees](COMPATIBILITY.md#stepping-and-diagnostics) and
+[observations](validation/M3G1.md).
 
 ### Next narrow gameplay milestone
 

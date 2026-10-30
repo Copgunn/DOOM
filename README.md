@@ -31,6 +31,12 @@ rejects foreign or pre-restart references. Its opaque provenance is process-loca
 diagnostics remain local observations, not portable actor references or savegames.
 See [compatibility](docs/COMPATIBILITY.md) for the exact boundary.
 
+Call `Simulation::advance()` for a tic without an implicit diagnostic Snapshot.
+`step()` retains its Snapshot return, and `snapshot()` captures explicitly in
+debug or release. Both stepping APIs run the same gameplay and retain events and
+recoverable-error guarantees; gameplay may still allocate. See the
+[stepping contract](docs/COMPATIBILITY.md#stepping-and-diagnostics).
+
 ## What works
 
 - Validated WAD directories and classic maps, including their spatial partitions
@@ -69,6 +75,7 @@ cargo run -p doom-sim --example runtime_identity --locked
 cargo run -p doom-sim --example original_registry --locked
 cargo run -p doom-sim --example context_ownership --locked
 cargo run -p doom-sim --example game_instance --locked
+cargo run -p doom-sim --example diagnostic_free --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked

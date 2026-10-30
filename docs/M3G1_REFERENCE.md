@@ -8,15 +8,16 @@ the schema, [TESTING](TESTING.md) reproduction, and validation/M3G1 the measurem
 
 ## Original source and evidence boundary
 
-p_tick.c P_Ticker returns on paused, then visits active players in slot order,
+[p_tick.c](../linuxdoom-1.10/p_tick.c) P_Ticker returns on paused, then visits active players in slot order,
 P_RunThinkers, P_UpdateSpecials, P_RespawnSpecials and finally increments leveltime.
 The source also has a menu/demo pause guard; no menu/demo or complete player
 execution is added here. There is no full named diagnostic snapshot in that sequence. P_RunThinkers follows
 insertion links and deferred removal, with the source zone-allocation assumptions
 documented in M3f8; this change does not reinterpret dangling C pointers.
-p_mobj.c P_MobjThinker supplies physics-before-state countdown; P_SetMobjState
-installs a state and immediately invokes its action. p_enemy.c action decisions,
-p_inter.c damage/death and m_random.c gameplay draw ordering remain unchanged.
+[p_mobj.c](../linuxdoom-1.10/p_mobj.c) P_MobjThinker supplies physics-before-state countdown; P_SetMobjState
+installs a state and immediately invokes its action. [p_enemy.c](../linuxdoom-1.10/p_enemy.c) action decisions,
+[p_inter.c](../linuxdoom-1.10/p_inter.c) damage/death and
+[m_random.c](../linuxdoom-1.10/m_random.c) gameplay draw ordering remain unchanged.
 These are source readings and previously observed behavior, not new C coverage.
 
 The existing independently compiled C observers and independent DSIM encoders

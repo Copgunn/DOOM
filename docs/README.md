@@ -49,6 +49,9 @@ public examples and checks use synthetic or redistributable inputs.
 
 ## Original-source investigations
 
+- [M3g1 stepping and transaction-cost audit](M3G1_REFERENCE.md), with
+  [observed evidence](validation/M3G1.md).
+
 These technical notes retain their original investigation and observation context.
 They are not live milestone-status pages; consult ROADMAP and the linked GitHub PR
 for present status. Historical review statements are not new claims that work is pending.

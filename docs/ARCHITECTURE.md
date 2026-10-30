@@ -21,11 +21,28 @@ state. Each simulation owns its RNG, actors, counters and ordered observations.
 
 ## Deterministic time and numbers
 
-Simulation advances exactly one logical tic per successful step at 35 tics/second.
+Simulation advances one logical tic per successful unpaused call at 35 tics/second.
 There is no wall-clock pacing in authoritative gameplay. Fixed-point operations
 and binary angle measurements (BAM) use explicit integer semantics. Source-defined
 wrapping and checked Rust rejection are documented separately. Gameplay and
 miscellaneous RNG streams have independent owned indexes. Presentation cannot consume gameplay draws.
+
+## Stepping and observation
+
+`Simulation::advance` owns the single stepping implementation and returns unit.
+`step` delegates to it, then captures one Snapshot. `snapshot` captures explicitly;
+encoding and digesting are further explicit work. Paused advance calls do no tic
+work or capture; paused step calls retain their historical capture. Events remain
+recorded and observable on both paths. `run_commands` still collects snapshots.
+`ExecutionContext::advance` delegates to that core, also through GameInstance.
+
+Dynamic snapshot fields allocate names/value buffers and serialize events; map
+fields and historical registry fields are cached and shared. Checked-Demon staging
+separately copies bounded actor slots/spatial order and small owned state while
+borrowing geometry/definitions. Recoverable late failures still discard that
+projection in release. There is no unchecked fast mode or allocation-free claim.
+The [cost inventory](M3G1_REFERENCE.md) separates these operations; measured costs
+and limitations belong in [the evidence record](validation/M3G1.md).
 
 ## Actors, lifecycle and ordering
 

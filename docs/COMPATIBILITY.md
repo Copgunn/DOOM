@@ -22,6 +22,29 @@ Loading a WAD, recognizing MT_SERGEANT or matching an isolated hash does not
 establish the last level. [Reference notes](README.md) describe each admitted
 slice and the [validation guide](VALIDATION.md) distinguishes evidence families.
 
+## Stepping and diagnostics
+
+`Simulation::advance([TicCommand; 4]) -> Result<(), SimError>` completes one tic
+when unpaused. It constructs no Snapshot. `step` runs that same core and returns
+one Snapshot on success; explicit `snapshot()` remains available in release.
+`Snapshot::canonical_bytes` and `digest` additionally encode bytes. Opening an
+execution scope or using GameInstance does not select a second stepping engine.
+
+Both APIs preserve commands, ordered events, pending observations, thinker/slot
+ordering, RNG, actor/state admission and per-operation recoverable-error atomicity.
+Paused calls are no-ops before command/overflow checks: advance returns unit;
+step captures unchanged state. Errors capture nothing and preserve canonical state,
+including queues and RNG. This is per call, not rollback of a whole command stream
+or context callback. Allocation failure outside fallible reservations remains the
+existing process-level Rust policy, not a promise to recover from every OOM.
+
+Events and gameplay/preflight/staging allocations remain enabled. This API makes
+full diagnostic capture optional; it adds no gameplay profile, identity storage,
+DSIM version, actor or geometry capacity. `run_commands` retains its diagnostic
+collection contract. Use an ordinary loop over advance when snapshots are unwanted.
+See [architecture](ARCHITECTURE.md#stepping-and-observation),
+[source/cost audit](M3G1_REFERENCE.md) and [measurements](validation/M3G1.md).
+
 ## Versioned gameplay profiles
 
 Historical profile behavior and DSIM bytes remain frozen. New behavior is opt-in.
