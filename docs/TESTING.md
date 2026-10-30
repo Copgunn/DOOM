@@ -432,3 +432,48 @@ metadata and have different volume, so its timings are not a like-for-like legac
 speedup. Keep all three process samples/outliers and RSS. Build-all and executed
 campaign counts are separate; disabled leak detection supplies no leak coverage.
 [Design](M3F7_REFERENCE.md) and [observations](validation/M3F7.md) define the scope.
+
+## Game-instance provenance validation
+
+```sh
+cargo test -p doom-sim --test m3f9_policies --test m3f9_reference --locked -- --nocapture
+cargo test -p doom-sim --doc --locked -- --show-output
+python3 tools/reference/check_game_instance.py
+python3 tools/check_docs.py
+```
+
+The new reference test and example drive the existing M3f8 replacement/clear input
+through qualified imports. Expected fields, RNG and complete event payloads still
+come from frozen C observations and the independent encoder. No new C scenarios,
+raw traces or diagnostic version are introduced. Continue every historical/source/
+metadata/sanitizer command above. Rust policy tests separately cover identical raw
+IDs in different worlds, clone/move/extraction, successful/failed restart, current/
+pending/corpse/retired/stale/vacant/invalid actors, missing/foreign provenance, wrong
+definitions, pure rejection and exact replay/snapshot/RNG preservation. Inspect
+compile-fail diagnostics for invariant token escape and a non-Clone owner.
+
+```sh
+python3 tools/seed_game_instance_fuzz.py
+cargo +nightly fuzz build --sanitizer address
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run game_instance fuzz/corpus/game_instance --sanitizer address -- -runs=4096 -max_len=128 -seed=1 -timeout=20 -rss_limit_mb=2048
+```
+
+The bounded harness selects local opaque keys; input bytes never become InstanceId.
+It compares two instances, malformed candidates, missing/foreign/old routing,
+generation/state/definition guards, restart/state-clone and rejected-operation
+atomicity. Continue the original-registry and diagnostic campaigns above. Building
+all targets is separate from executing them. Record seeds, actual executions,
+limits, RSS, findings and leak configuration; leak0 is not leak coverage.
+
+Retain all four existing measurement tools unchanged for matched before/after
+three-process samples; then measure the separate boundary workload:
+
+```sh
+python3 tools/measure_game_instance.py
+```
+
+This separately times checked import/export and compares identical gameplay with
+an already scoped actor versus explicit reimport on each update. Validation work
+differs; import is never inserted automatically into ordinary tic execution.
+Retain every sample/outlier/RSS and avoid universal or causal performance claims.
+The [evidence record](validation/M3F9.md) owns actual results and limitations.

@@ -26,6 +26,9 @@ opt-in original-ID registry/profile stores original Demon types and states direc
 using the same bounded execution services and an explicitly versioned diagnostic
 contract. Scoped actor access adds explicit context admission and target-lifetime
 observations over that same owner. The restricted game context remains.
+An owning game-instance boundary qualifies references across execution scopes and
+rejects foreign or pre-restart references. Its opaque provenance is process-local;
+diagnostics remain local observations, not portable actor references or savegames.
 See [compatibility](docs/COMPATIBILITY.md) for the exact boundary.
 
 ## What works
@@ -65,6 +68,7 @@ cargo run -p doom-sim --example canonical_demon --locked
 cargo run -p doom-sim --example runtime_identity --locked
 cargo run -p doom-sim --example original_registry --locked
 cargo run -p doom-sim --example context_ownership --locked
+cargo run -p doom-sim --example game_instance --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked
@@ -80,6 +84,8 @@ identities; it does not admit Spectre or resurrection.
 `original_registry` checks [actual original-ID storage](docs/ACTOR_IDENTITIES.md#original-id-execution-registry) and bounded v20/v21 diagnostic reading.
 `context_ownership` checks scoped target operations and retirement against compact
 new C observations; see the [ownership contract](docs/COMPATIBILITY.md#context-and-target-lifetime-contract).
+`game_instance` demonstrates [qualified references](docs/COMPATIBILITY.md#game-instance-provenance)
+and reuses an existing C scenario without admitting new gameplay.
 `map_extent` separately demonstrates expanded unbound coordinates and spatial work.
 See [testing](docs/TESTING.md) for all examples and reproduction commands.
 

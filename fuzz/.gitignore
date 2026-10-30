@@ -40,3 +40,6 @@
 
 # Context ownership seeds are reproducible; mutations remain local.
 /corpus/context_ownership/
+
+# Provenance seeds are reproducible; mutations remain local.
+/corpus/game_instance/

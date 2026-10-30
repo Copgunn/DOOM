@@ -115,6 +115,7 @@ pub enum TargetReference<'ctx> {
 /// ```
 pub struct ExecutionContext<'ctx> {
     simulation: &'ctx mut Simulation,
+    instance: Option<&'ctx InstanceId>,
     brand: Brand<'ctx>,
 }
 impl Simulation {
@@ -129,17 +130,56 @@ impl Simulation {
         &mut self,
         operation: impl for<'ctx> FnOnce(&mut ExecutionContext<'ctx>) -> Result<R, ContextError>,
     ) -> Result<R, ContextError> {
-        if self.profile != Profile::OriginalDemon {
-            return Err(ContextError::Profile);
-        }
-        // Construction already certified the immutable registry and profile.
-        operation(&mut ExecutionContext {
-            simulation: self,
-            brand: PhantomData,
-        })
+        operation(&mut ExecutionContext::new(self, None)?)
     }
 }
 impl<'ctx> ExecutionContext<'ctx> {
+    pub(crate) fn new(
+        simulation: &'ctx mut Simulation,
+        instance: Option<&'ctx InstanceId>,
+    ) -> Result<Self, ContextError> {
+        if simulation.profile != Profile::OriginalDemon {
+            return Err(ContextError::Profile);
+        }
+        // Construction already certified the immutable registry and profile.
+        Ok(Self {
+            simulation,
+            instance,
+            brand: PhantomData,
+        })
+    }
+    /// Export a checked current actor for another scope of this same incarnation.
+    /// Pending storage remains observable. The reference retains only a small key,
+    /// not actor storage/liveness. Raw Simulation scopes reject as unbound.
+    pub fn export_actor(
+        &self,
+        actor: ContextActor<'ctx>,
+    ) -> Result<InstanceActorRef, ProvenanceError> {
+        let instance = self.instance.ok_or(ProvenanceError::UnboundContext)?;
+        self.actor(actor)?;
+        Ok(InstanceActorRef::candidate(
+            Some(instance.clone()),
+            actor.id,
+        ))
+    }
+    /// Revalidate matching provenance before existing local generation/state/
+    /// expected-definition admission. No mutation, allocation or RNG consumption.
+    /// Pending/corpse observation does not authorize any gameplay operation.
+    pub fn import_actor(
+        &self,
+        reference: &InstanceActorRef,
+        expected: DefinitionIdentity,
+    ) -> Result<ContextActor<'ctx>, ProvenanceError> {
+        let instance = self.instance.ok_or(ProvenanceError::UnboundContext)?;
+        let provenance = reference
+            .provenance()
+            .ok_or(ProvenanceError::MissingProvenance)?;
+        if provenance != instance {
+            return Err(ProvenanceError::InstanceMismatch);
+        }
+        self.admit_local(reference.local_id(), expected)
+            .map_err(Into::into)
+    }
     fn token(&self, id: ActorId) -> ContextActor<'ctx> {
         ContextActor {
             id,

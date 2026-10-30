@@ -249,8 +249,34 @@ Tokens cannot escape or cross nested/distinct scopes; compile-fail tests check
 both. `token.raw_id()` explicitly erases the brand for historical diagnostics and
 local APIs. Equivalent simulations intentionally have equivalent raw IDs, so
 re-admitting an erased value is a local interpretation, **not** proof of its
-origin. Persistent world IDs, serialized cross-world references and restart
-provenance remain future work. No existing raw API is silently strengthened or
+origin. The [game-instance boundary](#game-instance-qualified-references) adds
+in-process/restart provenance; persistent world IDs and portable serialized
+references remain unsupported. No existing raw API is silently strengthened or
 given global identity semantics. [Support/lifetime rules](COMPATIBILITY.md#context-and-target-lifetime-contract),
 [source investigation](M3F8_REFERENCE.md) and [observations](validation/M3F8.md)
 define this narrower boundary.
+
+## Game-instance qualified references
+
+`InstanceId` identifies a runtime incarnation, not a definition, actor slot,
+registry/context schema or deterministic state. Each `GameInstance::new` creates
+a distinct opaque identity, including when the supplied Simulation is a clone.
+`InstanceActorRef` combines that provenance with the existing ActorId; it stores
+no duplicate definition. `ctx.export_actor(token)` validates current storage;
+`ctx.import_actor(&reference, expected_definition)` checks provenance then delegates
+to local actor admission. The resulting ContextActor retains the same invariant
+scope restrictions. Pending storage and corpses remain observable without granting
+target/state-entry permission. Retirement/reuse still invalidates the local handle.
+
+The wrapper's immutable `simulation()` view remains local; `into_simulation()`
+consumes the owner and rewrapping creates a fresh incarnation. Successful
+`restart()` rotates the key even when fresh handles numerically match old ones.
+`InstanceActorRef::candidate(optional_key, raw)` explicitly assembles a candidate,
+not proof of erased origin or authentication. Missing keys reject. Foreign/old
+keys reject as InstanceMismatch; matching keys still require current generation,
+state and expected definition. A retained reference owns only its small key.
+
+Keys have no numeric/byte encoding and do not enter DSIM20/21. Decoded local handles
+alone cannot supply provenance. [Support](COMPATIBILITY.md#game-instance-provenance),
+[audit](M3F9_REFERENCE.md) and [evidence](validation/M3F9.md) distinguish this Rust
+policy from reused C gameplay observations and unsupported persistence/networking.

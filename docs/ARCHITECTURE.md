@@ -52,6 +52,30 @@ Each operation retains its atomicity; the callback is not an aggregate transacti
 See the [contract](COMPATIBILITY.md#context-and-target-lifetime-contract) and
 [source investigation](M3F8_REFERENCE.md).
 
+### Game-instance provenance
+
+`GameInstance` owns one unchanged Simulation and one opaque `InstanceId`. Its
+key compares private Arc allocation identity; retained tokens prevent aliasing
+with a newly allocated incarnation. Moves preserve identity. Wrapping cloned or
+extracted simulation state creates a fresh identity; the owner itself is not
+Clone and exposes no mutable Simulation escape. Successful restart installs the
+existing fresh level state and a new key together. Setup failure retains both.
+
+`InstanceActorRef` carries optional opaque provenance and the existing local
+handle, without retaining actor/world storage. Explicit checked export/import use
+the same `ExecutionContext` and invariant `ContextActor` brand. Bound scopes borrow
+the owner's key; raw Simulation scopes remain unbound. Import rejects missing or
+foreign provenance before existing generation/state/expected-definition checks.
+Actors, relationships, collision, scheduling and ordinary tics still use local
+handles; no per-actor identity mirror or per-tic provenance lookup is introduced.
+
+This is in-process uniqueness and consistency, not authentication or persistent
+identity. Explicitly attaching a trusted local key to an erased candidate is local
+readmission, not recovery of its origin. There is no byte/numeric InstanceId
+constructor, savegame loader or transport resolver. Keys/refcounts are excluded
+from snapshots, events and RNG. See [support/trust rules](COMPATIBILITY.md#game-instance-provenance)
+and [the complete audit](M3F9_REFERENCE.md).
+
 State entry installs frame/timer and executes its action immediately, including
 nested Look-to-Chase or Chase-to-melee transitions. Raw spawning initializes state
 without executing its action. Damage, death state entry, delayed sounds, Fall and

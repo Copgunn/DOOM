@@ -125,7 +125,7 @@ does not allocate another identity. Only wrapper creation/successful restart add
 one small key allocation, subject to the existing process-level allocation-failure
 policy. No allocation counter is claimed unless measured. No new per-actor field,
 global counter, RNG draw, wall clock, OS randomness, actor capacity or geometry
-limit is needed. Token identity/refcounts never enter deterministic decisions,
+limit is needed. Token identity/refcounts are never consulted by tic logic,
 snapshots, events or DSIM. Rejected imports/exports are pure; successful earlier
 gameplay operations in a callback retain M3f8's nontransactional-scope contract.
 
@@ -151,3 +151,15 @@ through the same owner. Do not automatically add another identity layer or admit
 that gameplay here. Production panic paths/named flags and historical evidence
 storage efficiency remain separately scoped maintenance work with measurable
 acceptance criteria; this milestone does not perform a repository-wide cleanup.
+
+## Implementation disposition
+
+The selected boundary is implemented in
+[game_instance.rs](../crates/doom-sim/src/game_instance.rs) and the existing
+[execution context](../crates/doom-sim/src/execution_context.rs). InstanceActorRef
+contains only optional InstanceId and ActorId. ProvenanceError separates unbound,
+missing and mismatched provenance from existing ContextError failures. The key
+is borrowed by a bound scope; unbound Simulation scopes and their public signatures
+remain unchanged. Existing actor/state/target/step services still own execution.
+No actor/Simulation storage or diagnostic field is added. Detailed observations
+and limitations belong in [the evidence record](validation/M3F9.md).

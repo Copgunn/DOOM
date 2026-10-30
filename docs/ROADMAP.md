@@ -51,29 +51,45 @@ The merged baseline provides:
   shared execution services; bounded v20/v21 readers preserve historical meaning.
   See [investigation](M3F7_REFERENCE.md) and [observations](validation/M3F7.md).
 
+- M3f8 context and target-lifetime ownership is merged. Scoped access, derived
+  reference availability and compact independent lifetime inputs preserve existing
+  gameplay. See [design](M3F8_REFERENCE.md) and [observations](validation/M3F8.md).
+
 These foundations support controlled headless tests, not a complete playable game.
 Earlier findings and milestones are retained in the [historical records](validation/archive/README.md).
 
 ## Next
 
-### M3f8: Context and target-lifetime ownership contract
+### M3f9: Game-instance provenance and cross-boundary identity
 
-M3f8 adds scoped instance access and derived reference availability over the same
-owner, with compact new C target/lifetime inputs and separate Rust generation/
-context safety checks. Gameplay, capacity and DSIM admission remain unchanged.
+M3f9 qualifies external in-process references with an opaque incarnation token,
+checked import/export and explicit restart/clone/readmission rules. Scoped access
+and the existing actor owner remain authoritative. No gameplay, capacity, savegame,
+networking or DSIM admission is added. Existing C observations are reused.
 The implementation stops at owner review; exact review state belongs to GitHub.
-See [design](M3F8_REFERENCE.md), [support](COMPATIBILITY.md#context-and-target-lifetime-contract)
-and [observations](validation/M3F8.md).
+See [audit/design](M3F9_REFERENCE.md), [support](COMPATIBILITY.md#game-instance-provenance)
+and [observations](validation/M3F9.md).
 
-### Next narrow prerequisite
+### Next narrow gameplay milestone
 
-Investigate persistent game-instance provenance and the player mo/attacker ownership
-boundary before real-player execution or cross-world references. Scoped local
-tokens do not solve serialized world identity. Additional monster admission needs
-source-root/capability and relationship policy through the same owner, rather than
-per-species ownership adapters. These are recommendations, not admitted work.
-Dedicated panic/constant maintenance and evidence-storage measurement remain
-separate follow-ups; preserve historical captures and avoid broad cleanup here.
+Investigate bounded original MT_PLAYER body ownership and damage/death lifecycle,
+including mo/attacker relationships, through the same owner and provenance boundary.
+Require independent source observations, deterministic health/death/statistics and
+explicit unsupported dependencies before real-player execution. This is a gameplay
+recommendation, not admitted behavior or another automatic identity-layer milestone.
+Additional monster admission likewise needs source-root/capability and relationship
+evidence through the same owner. Persistence/transport remain separately specified.
+
+### Focused maintenance acceptance criteria
+
+- Inventory production panic paths reachable from public inputs; replace recoverable
+  failures with checked errors and preserve complete-state rejection evidence.
+  Name remaining gameplay flags/constants with source references, without broad
+  unrelated refactoring or changing historical profile semantics.
+- Measure reference bytes against independently useful input/event coverage before
+  adding large traces. Prefer compact uniquely useful evidence while retaining
+  immutable historical fixtures/tools/archives. Any storage migration needs its own
+  preservation proof and reviewed scope.
 
 ### Map Scale, Limits, and Real-Map Readiness
 
