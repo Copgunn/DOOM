@@ -152,7 +152,17 @@ fn late_failure_after_an_actual_shot_discards_ammo_rng_effects_and_damage() {
                 .health
                 < 150
         );
-        assert!(host.player.as_ref().unwrap().pistol.unwrap().bullets < pistol.unwrap().bullets);
+        assert!(
+            host.player
+                .as_ref()
+                .unwrap()
+                .weapon
+                .unwrap()
+                .pistol()
+                .unwrap()
+                .bullets
+                < pistol.unwrap().bullets
+        );
         host.fail_sight(PerceptionError::WorkLimit.into());
     });
     assert_eq!(result, Err(PerceptionError::WorkLimit.into()));
@@ -223,7 +233,15 @@ fn no_implicit_snapshot_in_winning_losing_and_paused_weapon_execution() {
 fn invalid_internal_weapon_fields_reject_before_commands_rng_or_events() {
     for mode in 0..5 {
         let (mut s, _) = source::setup(&source::cases()[0]);
-        let state = s.original_player.as_mut().unwrap().pistol.as_mut().unwrap();
+        let state = s
+            .original_player
+            .as_mut()
+            .unwrap()
+            .weapon
+            .as_mut()
+            .unwrap()
+            .pistol_mut()
+            .unwrap();
         match mode {
             0 => state.psprites[0].state = Some(StateId(OriginalState::S_SGUN.ordinal())),
             1 => state.psprites[0].tics = 2,

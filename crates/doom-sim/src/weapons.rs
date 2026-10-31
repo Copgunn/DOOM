@@ -34,7 +34,7 @@ pub enum Weapon {
     SuperShotgun = 8,
 }
 impl Weapon {
-    fn from_number(v: u8) -> Result<Self, WeaponError> {
+    pub(crate) fn from_number(v: u8) -> Result<Self, WeaponError> {
         match v {
             0 => Ok(Self::Fist),
             1 => Ok(Self::Pistol),
@@ -50,7 +50,7 @@ impl Weapon {
             _ => Some(0),
         }
     }
-    fn states(self) -> [StateId; 5] {
+    pub(crate) fn states(self) -> [StateId; 5] {
         let names = match self {
             Self::Fist => ["S_PUNCHUP", "S_PUNCHDOWN", "S_PUNCH", "S_PUNCH1", "S_NULL"],
             Self::Pistol => [
@@ -128,7 +128,7 @@ impl Default for WeaponInventory {
     }
 }
 impl WeaponInventory {
-    fn validate(self) -> Result<(), WeaponError> {
+    pub(crate) fn validate(self) -> Result<(), WeaponError> {
         Weapon::from_number(self.ready as u8)?;
         if self.owned & !15 != 0
             || self.owned & 3 != 3
@@ -531,9 +531,7 @@ pub(crate) fn pistol<H: Host>(
         PistolOperation::Setup => machine.bring_up()?,
         PistolOperation::Advance => machine.after_motion(command)?,
         PistolOperation::DeadAdvance => machine.move_psprites()?,
-        PistolOperation::Drop => {
-            machine.enter(0, StateId(identity::OriginalState::S_PISTOLDOWN.ordinal()))?
-        }
+        PistolOperation::Drop => machine.enter(0, machine.player.ready.states()[1])?,
     }
     Ok(machine.player)
 }

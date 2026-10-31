@@ -100,7 +100,7 @@ impl Default for OriginalPlayer {
 pub(crate) struct PlayerRuntime {
     pub source: OriginalPlayer,
     pub policy: OriginalExecutionProfile,
-    pub pistol: Option<crate::PistolState>,
+    pub weapon: Option<crate::player_weapons::PlayerWeaponRuntime>,
 }
 impl std::ops::Deref for PlayerRuntime {
     type Target = OriginalPlayer;
@@ -330,7 +330,7 @@ impl Simulation {
                     return Err(PlayerBodyError::Invariant.into());
                 }
             } else if p.policy.has_physical_player() && a.momentum() != [Fixed::ZERO; 2] {
-                if p.policy != OriginalExecutionProfile::PlayerDemonPistolV1
+                if !p.policy.has_player_weapons()
                     || l.actor_type.0 != OriginalActorType::MT_SERGEANT.ordinal()
                     || a.z != a.floor
                     || a.momz != Fixed::ZERO
@@ -357,7 +357,7 @@ impl Simulation {
         if p.policy.has_physical_player()
             && request.inflictor.is_some()
             && !self.owns_player_body(request.target)
-            && !(p.policy == OriginalExecutionProfile::PlayerDemonPistolV1
+            && !(p.policy.has_player_weapons()
                 && request.source == p.mo
                 && request.inflictor == p.mo
                 && self
@@ -367,7 +367,7 @@ impl Simulation {
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
-        if p.policy == OriginalExecutionProfile::PlayerDemonPistolV1
+        if p.policy.has_player_weapons()
             && request.inflictor == p.mo
             && p.mo.is_some()
             && !self.owns_player_body(request.target)
@@ -403,7 +403,7 @@ impl Simulation {
                     p.frags.checked_add(1).ok_or(PlayerBodyError::Statistics)?;
                 }
             }
-        } else if p.policy != OriginalExecutionProfile::PlayerDemonPistolV1
+        } else if !p.policy.has_player_weapons()
             && request.source == p.mo
             && p.mo.is_some()
             && self

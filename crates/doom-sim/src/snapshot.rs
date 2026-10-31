@@ -47,7 +47,7 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Explicit diagnostic schema version (1–23); field layouts are selected per profile.
+    /// Explicit diagnostic schema version (1–24); field layouts are selected per profile.
     /// See the repository STATE_FORMAT guide for widths and composition.
     pub const fn version(&self) -> u32 {
         self.version
@@ -455,7 +455,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::MapExtent => 19,
         crate::Profile::DemonExpandedMap => 20,
         crate::Profile::OriginalDemon => {
-            if sim.player_policy() == OriginalExecutionProfile::PlayerDemonPistolV1 {
+            if sim.player_policy() == OriginalExecutionProfile::PlayerDemonWeaponsV1 {
+                24
+            } else if sim.player_policy() == OriginalExecutionProfile::PlayerDemonPistolV1 {
                 23
             } else if sim.original_player.is_some() {
                 22
@@ -467,7 +469,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     // Versions18/19 explicitly compose the untyped static-sector field layout.
     let layout = if matches!(version, 18 | 19) {
         3
-    } else if matches!(version, 20..=23) {
+    } else if matches!(version, 20..=24) {
         17
     } else {
         version
@@ -475,14 +477,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     field(
         &mut fields,
         "profile",
-        (if matches!(version, 21..=23) {
+        (if matches!(version, 21..=24) {
             sim.player_policy().wire_id()
         } else {
             version
         })
         .to_le_bytes(),
     );
-    if matches!(version, 21..=23) {
+    if matches!(version, 21..=24) {
         field(
             &mut fields,
             "registry.schema",
@@ -743,7 +745,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(layout, 8..=17) && !matches!(version, 22 | 23) {
+    if matches!(layout, 8..=17) && !matches!(version, 22..=24) {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,
@@ -791,7 +793,18 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
     }
     if version == 23 {
-        pistol_fields(&mut fields, sim.original_player.and_then(|p| p.pistol));
+        pistol_fields(
+            &mut fields,
+            sim.original_player
+                .and_then(|p| p.weapon.and_then(|w| w.pistol())),
+        );
+    }
+    if version == 24 {
+        pack_fields(
+            &mut fields,
+            sim.original_player
+                .and_then(|p| p.weapon.and_then(|w| w.pack())),
+        );
     }
     if layout == 6 {
         weapon_fields(&mut fields, sim.weapon_player.as_ref());
@@ -1193,6 +1206,61 @@ fn pistol_fields(fields: &mut Vec<StateField>, state: Option<crate::PistolState>
         return;
     };
     field(fields, format!("{prefix}.bullets"), p.bullets.to_le_bytes());
+    field(
+        fields,
+        format!("{prefix}.attack_down"),
+        [u8::from(p.attack_down)],
+    );
+    field(fields, format!("{prefix}.refire"), p.refire.to_le_bytes());
+    field(fields, format!("{prefix}.bob"), p.bob.bits().to_le_bytes());
+    field(
+        fields,
+        format!("{prefix}.extra_light"),
+        p.extra_light.to_le_bytes(),
+    );
+    for (i, ps) in p.psprites.into_iter().enumerate() {
+        field(
+            fields,
+            format!("{prefix}.psprite.{i}.state"),
+            ps.state.map_or(u16::MAX, |s| s.0).to_le_bytes(),
+        );
+        field(
+            fields,
+            format!("{prefix}.psprite.{i}.tics"),
+            ps.tics.to_le_bytes(),
+        );
+        field(
+            fields,
+            format!("{prefix}.psprite.{i}.x"),
+            ps.position[0].bits().to_le_bytes(),
+        );
+        field(
+            fields,
+            format!("{prefix}.psprite.{i}.y"),
+            ps.position[1].bits().to_le_bytes(),
+        );
+    }
+}
+fn pack_fields(fields: &mut Vec<StateField>, state: Option<crate::PlayerWeaponState>) {
+    let prefix = "original_player.0.weapons";
+    field(
+        fields,
+        format!("{prefix}.present"),
+        [u8::from(state.is_some())],
+    );
+    let Some(p) = state else {
+        return;
+    };
+    field(fields, format!("{prefix}.ready"), [p.ready as u8]);
+    field(
+        fields,
+        format!("{prefix}.pending"),
+        [p.pending
+            .map_or(crate::player_weapons::NO_CHANGE, |w| w as u8)],
+    );
+    field(fields, format!("{prefix}.owned"), p.owned.to_le_bytes());
+    field(fields, format!("{prefix}.bullets"), p.bullets.to_le_bytes());
+    field(fields, format!("{prefix}.shells"), p.shells.to_le_bytes());
     field(
         fields,
         format!("{prefix}.attack_down"),

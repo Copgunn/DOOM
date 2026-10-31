@@ -781,7 +781,15 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                 }
                 self.events.push(Event::PlayerBody(PlayerBodyEvent::Died {
                     frags: p.frags,
-                    weapon_down: identity::OriginalState::S_PISTOLDOWN,
+                    weapon_down: p.weapon.and_then(|w| w.pack()).map_or(
+                        identity::OriginalState::S_PISTOLDOWN,
+                        |w| match w.ready {
+                            Weapon::Fist => identity::OriginalState::S_PUNCHDOWN,
+                            Weapon::Shotgun => identity::OriginalState::S_SGUNDOWN,
+                            Weapon::Chaingun => identity::OriginalState::S_CHAINDOWN,
+                            _ => identity::OriginalState::S_PISTOLDOWN,
+                        },
+                    ),
                 }));
             }
             if self.player.as_ref().is_some_and(|p| p.mo == Some(id)) {

@@ -244,7 +244,7 @@ impl Simulation {
         self.rng = plan.rng;
         self.statistics = plan.statistics;
         self.original_player = plan.player;
-        if self.player_policy() == OriginalExecutionProfile::PlayerDemonPistolV1 {
+        if self.player_policy().has_player_weapons() {
             if let Some(target) = self.sound_targets.first_mut() {
                 *target = plan.sound_target;
             }
@@ -286,12 +286,12 @@ impl Simulation {
         commands: [TicCommand; 4],
     ) -> Result<(), SimError> {
         let command_policy = self.player_policy().has_player_commands();
-        let pistol_policy = self.player_policy() == OriginalExecutionProfile::PlayerDemonPistolV1;
+        let pistol_policy = self.player_policy().has_player_weapons();
         if pistol_policy
             && self
                 .original_player
                 .as_ref()
-                .is_none_or(|p| p.pistol.is_none())
+                .is_none_or(|p| p.weapon.is_none())
         {
             return Err(WeaponError::Player.into());
         }
