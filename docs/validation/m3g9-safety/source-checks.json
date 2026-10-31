@@ -1,0 +1,667 @@
+[
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.144,
+    "log_sha256": "6eb9628465c1bd250156d2101ff2f1908e131584d8726480394d452d55984ae1"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.028,
+    "log_sha256": "ac09904346e36686949dc431a26da4d81b15ae292fc5f965337b8b639a36cd60"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3a.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.161,
+    "log_sha256": "02e54a6952a2dd6640447ac13d6a509099dd4ff4f13c5fb9dd27b0c3eb4ac8ab"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3a_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.031,
+    "log_sha256": "a760f78589d5c0989e9880d498f13324c3fed838f3d5735b89ba3797115ef832"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3b.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.199,
+    "log_sha256": "cf70a1d5fb556808955cd5dab9bb75f26fa0c1cba5d820e0a4299e60aec934d6"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3b_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.067,
+    "log_sha256": "d510fd61abc05c0f61ef57cbecd75f058a96c90d0fc780caf8e88eef2cb75698"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3c.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.184,
+    "log_sha256": "1ee2c579aa8aa1fc1b105dc2dc987cde85e038525175391be731fd60b81bfaeb"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3c_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.93,
+    "log_sha256": "42126b82d03f5c4dbfd01b82389f829595c54eca8b2ab46c9b22bb6c3c6958c8"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d1.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.235,
+    "log_sha256": "addae4877c970c8df45baabfbb43bd952051ae5ef10e5b2bb39d6f92cc698197"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d1_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.862,
+    "log_sha256": "4693db0c205e85beafef680b25b4c8e16eb76477e9906f8ab30bef2e12eb3ede"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d2.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.459,
+    "log_sha256": "2bfb7af2cbd420afc71adbc84ed8db2c7e1e45ecb2a9e84e0cff036d415cae44"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d2_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 2.013,
+    "log_sha256": "5ea37c7c2e27376e2617659c72482b21119141d03e7767876fdede75c4c325da"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d2b.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.25,
+    "log_sha256": "a51cb1faa9d909299a1c196bf29a4d203e065debbd78bc5b9b73fe0472044242"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d2b_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 1.879,
+    "log_sha256": "98b49ddd4ee3818692d2c4723eb0f613628b7e3ec842f8ee156bbc42767eec39"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d3a.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.302,
+    "log_sha256": "794f857c1babd929d435f6fb4b897772bf0960aa73afc252da9c75a407874257"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d3a_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 19.853,
+    "log_sha256": "51142166ee0a0c3d71ebe3702c4a6f870c753dc1013bcbd9b5cbf606c9a61d15"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d3b.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.331,
+    "log_sha256": "253eb2a2587f186557dbc0391d0c195341babcbb835085f4b30424a20779862c"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d3b_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 44.075,
+    "log_sha256": "9a6aabf14d4a59bfad5532ec6e96810a8cd7e193626bab2d1ae3b337477adb84"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d3c.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.358,
+    "log_sha256": "343a2baf486164adb1bbe5134fa7e4dee25967beca9caf9ed25c9b1ca9aa0932"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d3c_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 81.251,
+    "log_sha256": "8e36f2cb4074e0a35133c9e23d451985317bcc66348397f004b6fd1230ed44c4"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d3d.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.349,
+    "log_sha256": "cac5745b5b707bc678fbac0fb0e833a90847f20b99ecf4c5fe9cb7875db6abda"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d3d_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 21.23,
+    "log_sha256": "9502e9485b3c5796efd4258e7d5c14fb2ca8137ef9918db12c5de32bd08162af"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d3e.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.408,
+    "log_sha256": "dafa62e0bade626da508ed27c8e47e5946c28f5f2776df597141bff9dfb45a7e"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d3e_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 19.772,
+    "log_sha256": "11ac08dba4d0664c11fa352903cf3c7d5c129c40d95fc8aa5f36f428204c27ca"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d3f.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.391,
+    "log_sha256": "9501ff8103c4d01396cd55edc2b5c54cf079da04f3a6df9e48ee6dffa69b7988"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d3f_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 14.411,
+    "log_sha256": "07e220348a942686dc76894b6dbfae65496b76a20d6a699caa6ff755817d3899"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d3g.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.561,
+    "log_sha256": "df9b9ef72c2a488c69b88d1111377dd9b9ce32a9a19a952ee4165e07a4a149b3"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d3g_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 51.363,
+    "log_sha256": "b1676b11e34baa85360b3417acd1152894e5704ae5c3f03e20c2617c1d2077ff"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d3h.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.882,
+    "log_sha256": "430a2c8e93695b8a939e80dba9b7eabdeba26de02b8215a383d3a7e558bcf1e1"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d3h_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 92.145,
+    "log_sha256": "a690bc81ff9b8043b866594eba2dbb7b58c558b7d69270d6cd94149ed1f5a703"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d3i.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.838,
+    "log_sha256": "fd181365487cc2fa46e5bfb126599413afe3d1ee0fc34b2a311930fa8f63c4e6"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d3i_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 41.225,
+    "log_sha256": "ff9c9f27a0e5b0314189755a66b83eea0b2acf37da7be33dea6a7f3d74585dcf"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/generate_m3d3j.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.955,
+    "log_sha256": "e61bebd56f453100a59c110715d8368563dfa52b867880f29342f2cd2a7331aa"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3d3j_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 69.772,
+    "log_sha256": "58bb57553d889a4ffeecc090428e1c0f9e2beeffa3c4cf708301513d06f839a6"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f1_reference.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 3.706,
+    "log_sha256": "e3a5b5cbc786144bcfd4b536027b82278e589d7efae6da1954c1a4cb53c9750c"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f1_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 4.776,
+    "log_sha256": "258dd4cff15a0c62a23092d12193c9f06b5429d39b7cef44bb26a86b1abe8835"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f2_reference.py",
+      "--check",
+      "--overflow-check"
+    ],
+    "exit": 0,
+    "seconds": 1.497,
+    "log_sha256": "c485d701cbcbaec7cbec204db08e8c5b52792d0830c6a4dfb1bca16938f2c332"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f2_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 5.922,
+    "log_sha256": "55303da24aee6c2980baacc14d0c1029cce109448bbae9ff1bf894192421c78f"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f3_reference.py",
+      "--check",
+      "--overflow-check",
+      "--probe-undefined-angle"
+    ],
+    "exit": 0,
+    "seconds": 44.532,
+    "log_sha256": "a2af28a8f88fba74291b2d3b1785cd5ca4eb115520a80bc9d1b18f2a04a6f276"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f3_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 199.671,
+    "log_sha256": "65e1489476c430eb5f966ddf3bd296e91c12749ee2db37de53b8eca74bcb6b0d"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f3_clipping_reference.py",
+      "--check",
+      "--overflow-check"
+    ],
+    "exit": 0,
+    "seconds": 5.395,
+    "log_sha256": "13c42790b61dcacf40f7f573ad430d926755aab93d48efad1ac4ed54edf9d828"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f3_clipping_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 8.927,
+    "log_sha256": "1890dee2d2b1a6bce45475ddbfebd6b928b454f72ceb749214c548ad2a808447"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f4_reference.py",
+      "--check",
+      "--sanitize"
+    ],
+    "exit": 0,
+    "seconds": 9.167,
+    "log_sha256": "50ab66f493d8c8db707e1bdf83116c8475c3fcd745aabecf4abf67a66cdb844b"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f5_reference.py",
+      "--check",
+      "--overflow-check",
+      "--address-check"
+    ],
+    "exit": 0,
+    "seconds": 100.761,
+    "log_sha256": "477390a89dd323fa92524427a6dc7c544903b57e3db2f702b0f620cfb91050cc"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f5_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 42.878,
+    "log_sha256": "7e207525586e4d8e72506095c7b1af1b91ceaf99b8c17c893e3731e9eeba1d00"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f7_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 37.625,
+    "log_sha256": "70798074fc19b380854f5dada65eb1e33f04b8ff70e33eb68351b2fd0eb1d44d"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f8_reference.py",
+      "--check",
+      "--overflow-check",
+      "--address-check"
+    ],
+    "exit": 0,
+    "seconds": 2.029,
+    "log_sha256": "346b7bfef44f7738522473b6ffca686adf8aa477f15bd52f6d0564fb193f2027"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3f8_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.158,
+    "log_sha256": "5f88bc9003eded1a2711635ba920311a6cf9d518fbcb625da8470f79aff37c71"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g2_reference.py",
+      "--check",
+      "--overflow-check",
+      "--address-check"
+    ],
+    "exit": 0,
+    "seconds": 2.12,
+    "log_sha256": "f7dacd6ec65dc85e2dc52cd22a9ffbc228108b2ece96b4e139187f1d32de5198"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g2_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.177,
+    "log_sha256": "07502dfa849ae60e6199a8bf517eb6922c7584421f516c06e44eaa5d112fe8ad"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g3_reference.py",
+      "--check",
+      "--overflow-check",
+      "--address-check"
+    ],
+    "exit": 0,
+    "seconds": 2.622,
+    "log_sha256": "27ab97c48456f73a5aa29dc4e06794359fce79c0dd4455b1e01aba2c663cfdee"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g3_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.293,
+    "log_sha256": "6f7f4dc7eb6e9f84014e03ae853d0e16896695dcaa544e3b2cfe8bb76d74c69a"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g4_reference.py",
+      "--check",
+      "--overflow-check",
+      "--address-check"
+    ],
+    "exit": 0,
+    "seconds": 3.741,
+    "log_sha256": "04b9a7c43fb2aa60c94f6e6602e604ff6e2b8eede6f57d3f7232bea1d3a6063d"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g4_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.358,
+    "log_sha256": "7d7ecaa22f9edbea355d2e607e8ea39a8870111d1c1ebcb358698650a1c590ad"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g5_reference.py",
+      "--check",
+      "--overflow-check",
+      "--address-check"
+    ],
+    "exit": 0,
+    "seconds": 3.681,
+    "log_sha256": "c27129cefd7849b4fc25549251bd364e6369144ab27bbe8e84019059ff1138d3"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g5_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.535,
+    "log_sha256": "4e11d9dfa4c8d3dbf41a1ac07de6a0b8e845d64a2543f57ec77d260e0cae542a"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g6_reference.py",
+      "--check",
+      "--overflow-check",
+      "--address-check"
+    ],
+    "exit": 0,
+    "seconds": 4.084,
+    "log_sha256": "3cdac47f887c9fdc1bc5691781c175f26896d36dd6d357be42ec53b3f6d68b24"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g6_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 0.765,
+    "log_sha256": "898137f18b4539600c753dc8df615ddf28498690a0c06caa3409971b7f2917c2"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g7_reference.py",
+      "--check",
+      "--overflow-check",
+      "--address-check"
+    ],
+    "exit": 0,
+    "seconds": 4.815,
+    "log_sha256": "92339bd177cacda4c9f52e364c9af648e07c7d6c671c34e9241c9e795a99b420"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g7_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 1.53,
+    "log_sha256": "17f9c0d16a4e20f327aa32e21093316ac69c1192a73234f6b876ee114199bb77"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g8_reference.py",
+      "--check",
+      "--overflow-check",
+      "--address-check"
+    ],
+    "exit": 0,
+    "seconds": 16.205,
+    "log_sha256": "c20c20e1fa95bddbc1cbade493ab81b8513e932a66fd3258d4b4d2572fd12b42"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g8_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 7.925,
+    "log_sha256": "164e5155347d32c54a7ad7533bc4036e346e89500140d84506845c0068b5ee4e"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g9_reference.py",
+      "--check",
+      "--overflow-check",
+      "--address-check"
+    ],
+    "exit": 0,
+    "seconds": 13.549,
+    "log_sha256": "917eba2dd40b2f27cb07714906ed764e2e890a1971774394ef6ea739cb4100bd"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g9_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 5.469,
+    "log_sha256": "efc6d100bc088a4b250a948b2843ed57b9f47733a61a710f715bb2d8c70d36bd"
+  }
+]

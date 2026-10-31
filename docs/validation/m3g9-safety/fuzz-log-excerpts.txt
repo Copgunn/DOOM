@@ -1,0 +1,259 @@
+## player_world_pickups seed391
+
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 391
+INFO: Loaded 1 modules   (62244 inline 8-bit counters): 62244 [0x55c3b72fb210, 0x55c3b730a534), 
+INFO: Loaded 1 PC tables (62244 PCs): 62244 [0x55c3b730a538,0x55c3b73fd778), 
+INFO:     1018 files found in /workspace/doom-tools/m3g9/fuzz/player_world_pickups
+INFO: seed corpus: files: 1018 min: 12b max: 162b total: 13136b rss: 79Mb
+#64	pulse  cov: 6925 ft: 17839 corp: 41/492b exec/s: 32 rss: 386Mb
+#128	pulse  cov: 7357 ft: 21223 corp: 74/888b exec/s: 25 rss: 585Mb
+...
+"\004UUUUUUU" # Uses: 1
+"store.slot_count" # Uses: 0
+"A\000\000\000\000\000\000\000" # Uses: 2
+"\006UUUUUUU" # Uses: 1
+"\012\000" # Uses: 1
+"player." # Uses: 0
+"\377\377\377\006" # Uses: 0
+"\0310\000\000\000\000\000\000" # Uses: 0
+"actor.0.sprit" # Uses: 0
+"actor.1.momz" # Uses: 1
+"\001\000\000\000" # Uses: 0
+"\377\377\377\377\377\377\377\017" # Uses: 0
+###### End of recommended dictionary. ######
+Done 4096 runs in 238 second(s)
+
+## player_weapon_pack seed392
+
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 392
+INFO: Loaded 1 modules   (61844 inline 8-bit counters): 61844 [0x55a3edc3e510, 0x55a3edc4d6a4), 
+INFO: Loaded 1 PC tables (61844 PCs): 61844 [0x55a3edc4d6a8,0x55a3edd3efe8), 
+INFO:      613 files found in /workspace/doom-tools/m3g9/fuzz/player_weapon_pack
+INFO: seed corpus: files: 613 min: 12b max: 162b total: 8126b rss: 79Mb
+#16	pulse  cov: 5919 ft: 12199 corp: 12/144b exec/s: 8 rss: 399Mb
+#32	pulse  cov: 6437 ft: 15975 corp: 23/276b exec/s: 8 rss: 544Mb
+...
+"\377\377\377\377\377\377\377\007" # Uses: 0
+"events.last.count" # Uses: 1
+"\006\000\000\000" # Uses: 1
+"\000\000\000\373" # Uses: 3
+"\377\234\211\330\235\211\330\235" # Uses: 0
+"original_player.0.weapons.extra" # Uses: 0
+"events.last.0" # Uses: 0
+"original_player.0.w" # Uses: 0
+"\000\000\000\021" # Uses: 0
+"\372\377\377\377" # Uses: 0
+"original_player.0.weapons.shell" # Uses: 0
+"original_player.0.weapons.extra_light" # Uses: 0
+###### End of recommended dictionary. ######
+Done 4096 runs in 581 second(s)
+
+## player_pistol seed393
+
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 393
+INFO: Loaded 1 modules   (61385 inline 8-bit counters): 61385 [0x559658aed1f0, 0x559658afc1b9), 
+INFO: Loaded 1 PC tables (61385 PCs): 61385 [0x559658afc1c0,0x559658bebe50), 
+INFO:      282 files found in /workspace/doom-tools/m3g9/fuzz/player_pistol
+INFO: seed corpus: files: 282 min: 12b max: 162b total: 3704b rss: 79Mb
+#16	pulse  cov: 6065 ft: 13163 corp: 13/156b exec/s: 8 rss: 330Mb
+#32	pulse  cov: 6197 ft: 15118 corp: 27/324b exec/s: 10 rss: 445Mb
+...
+"\000\000\000\000\000\000\000\016" # Uses: 0
+"actor.1.playe" # Uses: 1
+"\377\377\377\377\377\377\377\377" # Uses: 2
+"\377'" # Uses: 1
+"\000\000\000\000\000\000\000Q" # Uses: 1
+"\000\000\000\373" # Uses: 1
+"\001\000\000\000\000\000\001\000" # Uses: 0
+"\376\377\377\375" # Uses: 1
+"\377\377\377\022" # Uses: 1
+"actor.0.z" # Uses: 0
+"\373\377\377\377" # Uses: 0
+"\001\000\000\000\000\000\000\033" # Uses: 0
+###### End of recommended dictionary. ######
+Done 4096 runs in 387 second(s)
+
+## player_demon_melee seed394
+
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 394
+INFO: Loaded 1 modules   (60265 inline 8-bit counters): 60265 [0x55a7c4bee980, 0x55a7c4bfd4e9), 
+INFO: Loaded 1 PC tables (60265 PCs): 60265 [0x55a7c4bfd4f0,0x55a7c4ce8b80), 
+INFO:       95 files found in /workspace/doom-tools/m3g9/fuzz/player_demon_melee
+INFO: seed corpus: files: 95 min: 12b max: 162b total: 1310b rss: 79Mb
+#32	pulse  cov: 5132 ft: 11510 corp: 25/300b exec/s: 16 rss: 337Mb
+#64	pulse  cov: 5246 ft: 12144 corp: 42/504b exec/s: 16 rss: 487Mb
+...
+"actor.10.t" # Uses: 2
+"events.pending.3" # Uses: 1
+"\363\377\377\377" # Uses: 0
+"\370\377\377\377" # Uses: 1
+"\267\377\377\377" # Uses: 0
+"actor.1.occupied" # Uses: 0
+"\000\000\000\000\000\000\000@" # Uses: 1
+"\377\377\377\377\377\377\377\017" # Uses: 0
+"\253\252\252\252\252\252\252\002" # Uses: 0
+"\021\021\021\021\021\021\021\001" # Uses: 1
+"\376\377\377\371" # Uses: 1
+"<\261\023;\261\023;\001" # Uses: 0
+###### End of recommended dictionary. ######
+Done 4096 runs in 264 second(s)
+
+## player_commands seed395
+
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 395
+INFO: Loaded 1 modules   (58678 inline 8-bit counters): 58678 [0x55d7f9ca0020, 0x55d7f9cae556), 
+INFO: Loaded 1 PC tables (58678 PCs): 58678 [0x55d7f9cae558,0x55d7f9d938b8), 
+INFO:       28 files found in /workspace/doom-tools/m3g9/fuzz/player_commands
+INFO: seed corpus: files: 28 min: 33b max: 97b total: 2364b rss: 79Mb
+#29	INITED cov: 4342 ft: 7622 corp: 18/1458b exec/s: 0 rss: 134Mb
+	NEW_FUNC[1/1]: 0x55d7f9995010  (/workspace/DOOM/fuzz/target/x86_64-unknown-linux-gnu/release/player_commands+0x4ca010) (BuildId: 588a29911df76e6f124579e2ea2494846b208139)
+...
+"\377\377\377\377\377\377\377\016" # Uses: 5
+"actor.0.occupi" # Uses: 6
+"edefs" # Uses: 5
+"map.nodes" # Uses: 3
+"\000\012" # Uses: 4
+"actor.0.genera" # Uses: 2
+"events.pending.4" # Uses: 3
+"\000\000\000\000" # Uses: 3
+"\010\000\000\000\000\000\000\000" # Uses: 1
+"4333333\003" # Uses: 2
+"original_player.0.attacker" # Uses: 1
+"\234\330\211\235\330\211\235\000" # Uses: 0
+###### End of recommended dictionary. ######
+Done 4096 runs in 75 second(s)
+
+## player_knockback seed396
+
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 396
+INFO: Loaded 1 modules   (59417 inline 8-bit counters): 59417 [0x55b973bce1f0, 0x55b973bdca09), 
+INFO: Loaded 1 PC tables (59417 PCs): 59417 [0x55b973bdca10,0x55b973cc4ba0), 
+INFO:       21 files found in /workspace/doom-tools/m3g9/fuzz/player_knockback
+INFO: seed corpus: files: 21 min: 31b max: 121b total: 1101b rss: 79Mb
+#22	INITED cov: 4470 ft: 8532 corp: 17/897b exec/s: 0 rss: 105Mb
+#24	NEW    cov: 4475 ft: 8868 corp: 18/933b lim: 121 exec/s: 0 rss: 110Mb L: 36/121 MS: 2 ChangeByte-EraseBytes-
+...
+"TUUUUUU\025" # Uses: 0
+"\001\015" # Uses: 1
+"\373\377\377\377" # Uses: 3
+"\014\000" # Uses: 1
+"\000\013" # Uses: 0
+"\000\026" # Uses: 0
+"\000\000\000\270" # Uses: 0
+"actor.2.occupi" # Uses: 0
+"VUUUUUU\005" # Uses: 0
+"\323\377\377\377" # Uses: 0
+"actor.0.t" # Uses: 1
+"actor.0.occupi" # Uses: 0
+###### End of recommended dictionary. ######
+Done 4096 runs in 111 second(s)
+
+## game_instance seed397
+
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 397
+INFO: Loaded 1 modules   (57396 inline 8-bit counters): 57396 [0x5589f564be50, 0x5589f5659e84), 
+INFO: Loaded 1 PC tables (57396 PCs): 57396 [0x5589f5659e88,0x5589f573a1c8), 
+INFO:       18 files found in /workspace/doom-tools/m3g9/fuzz/game_instance
+INFO: seed corpus: files: 18 min: 16b max: 96b total: 400b rss: 79Mb
+#19	INITED cov: 3413 ft: 5759 corp: 18/400b exec/s: 0 rss: 79Mb
+#23	NEW    cov: 3413 ft: 5765 corp: 19/433b lim: 96 exec/s: 0 rss: 85Mb L: 33/96 MS: 4 ChangeBit-CrossOver-ChangeByte-InsertRepeatedBytes-
+...
+"\271\013" # Uses: 10
+"\001\000\000\000\000\000\000\000" # Uses: 18
+"\377\377\377\375" # Uses: 8
+"\015\000" # Uses: 11
+"seed" # Uses: 8
+"\016\000\000\000\000\000\000\000" # Uses: 13
+"tics" # Uses: 9
+"\377\377\012\272" # Uses: 4
+"\011\000\000\000\000\000\000\000" # Uses: 8
+"\010\000\000\000\000\000\000\000" # Uses: 1
+"A_Fall" # Uses: 2
+"\007\377\377\377\377\377\377\377" # Uses: 0
+###### End of recommended dictionary. ######
+Done 4096 runs in 72 second(s)
+
+## stepping_equivalence seed398
+
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 398
+INFO: Loaded 1 modules   (65755 inline 8-bit counters): 65755 [0x55728928d9a0, 0x55728929da7b), 
+INFO: Loaded 1 PC tables (65755 PCs): 65755 [0x55728929da80,0x55728939e830), 
+INFO:       21 files found in /workspace/doom-tools/m3g9/fuzz/stepping_equivalence
+INFO: seed corpus: files: 21 min: 41b max: 41b total: 861b rss: 79Mb
+#22	INITED cov: 8148 ft: 10811 corp: 21/861b exec/s: 0 rss: 167Mb
+#23	NEW    cov: 8149 ft: 10838 corp: 22/895b lim: 41 exec/s: 0 rss: 172Mb L: 34/41 MS: 1 EraseBytes-
+...
+"\015\000\000\000" # Uses: 4
+"my" # Uses: 3
+"MT_BLOOD" # Uses: 1
+"\012\000" # Uses: 3
+"\000\000\000\000\000\000\000\001" # Uses: 5
+"p3health" # Uses: 1
+"\377\377\002\266" # Uses: 6
+"\030\000\000\000\000\000\000\000" # Uses: 1
+"\001\000\000\000\000\000\010\000" # Uses: 2
+"\377\377\377\377\377\377\377\027" # Uses: 0
+"mx" # Uses: 0
+"S_SARG_DIE3" # Uses: 0
+###### End of recommended dictionary. ######
+Done 4096 runs in 84 second(s)
+
+## diagnostic_format seed399
+
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 399
+INFO: Loaded 1 modules   (5881 inline 8-bit counters): 5881 [0x565011e7c480, 0x565011e7db79), 
+INFO: Loaded 1 PC tables (5881 PCs): 5881 [0x565011e7db80,0x565011e94b10), 
+INFO:       11 files found in /workspace/doom-tools/m3g9/fuzz/diagnostic_format
+INFO: seed corpus: files: 11 min: 3b max: 88114b total: 106367b rss: 79Mb
+#13	INITED cov: 811 ft: 974 corp: 11/103Kb exec/s: 0 rss: 79Mb
+#14	NEW    cov: 815 ft: 978 corp: 12/103Kb lim: 88114 exec/s: 0 rss: 79Mb L: 4/88114 MS: 1 ChangeBit-
+...
+#3941	NEW    cov: 880 ft: 1839 corp: 108/1989Kb lim: 88114 exec/s: 0 rss: 205Mb L: 5/88114 MS: 3 ChangeBinInt-ChangeBinInt-CopyPart-
+#3997	REDUCE cov: 880 ft: 1839 corp: 108/1989Kb lim: 88114 exec/s: 0 rss: 208Mb L: 3/88114 MS: 1 EraseBytes-
+#4096	DONE   cov: 880 ft: 1839 corp: 108/1989Kb lim: 88114 exec/s: 4096 rss: 211Mb
+###### Recommended dictionary. ######
+"\014\000" # Uses: 60
+"\303\004\000\000\000\000\000\000" # Uses: 41
+"events.pending.count" # Uses: 48
+"\000\000\000\000" # Uses: 29
+"9\006\000\000\000\000\000\000" # Uses: 40
+"\001\000" # Uses: 24
+"actor.0.z" # Uses: 25
+"\377\377\377\377" # Uses: 38
+###### End of recommended dictionary. ######
+Done 4096 runs in 1 second(s)
+
+## player_world_pickups seed400
+
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 400
+INFO: Loaded 1 modules   (62229 inline 8-bit counters): 62229 [0x556003c59f10, 0x556003c69225), 
+INFO: Loaded 1 PC tables (62229 PCs): 62229 [0x556003c69228,0x556003d5c378), 
+INFO:     1038 files found in /workspace/doom-tools/m3g9/fuzz-final/player_world_pickups
+INFO: seed corpus: files: 1038 min: 12b max: 162b total: 13376b rss: 79Mb
+#32	pulse  cov: 6936 ft: 15914 corp: 24/288b exec/s: 16 rss: 329Mb
+#64	pulse  cov: 7183 ft: 19024 corp: 44/528b exec/s: 21 rss: 453Mb
+...
+"\376\377\377\371" # Uses: 0
+"\366\377\377\377" # Uses: 0
+"\377\377\377\003" # Uses: 0
+"original_player.0.pickups.item_co" # Uses: 1
+"actor.7.t" # Uses: 0
+"\000\034" # Uses: 1
+"\374\377\377\377" # Uses: 0
+"\356\377\377\377" # Uses: 1
+"original_player.0.state" # Uses: 0
+"\001\000\000\000\000\000\000\021" # Uses: 0
+"original_player.0.weapons.refir" # Uses: 0
+"\010\000\000\000\000\000\000\000" # Uses: 0
+###### End of recommended dictionary. ######
+Done 4096 runs in 279 second(s)

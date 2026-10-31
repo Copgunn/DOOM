@@ -1,0 +1,97 @@
+[
+  {
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "doom-sim",
+      "--lib",
+      "world_pickup_tests"
+    ],
+    "exit": 0,
+    "log_sha256": "170bb013db0fcadd103100e16f50e5ec8148fd371a662dea1e7814d4dcd5a7ab",
+    "totals": [
+      26,
+      0,
+      0
+    ]
+  },
+  {
+    "command": [
+      "cargo",
+      "+1.85.0",
+      "test",
+      "-p",
+      "doom-sim",
+      "--lib",
+      "world_pickup_tests"
+    ],
+    "exit": 0,
+    "log_sha256": "ee4045f1bfa07034ce0c7a2d73b9bdda9001369230eca1f000ce323d5f81dee5",
+    "totals": [
+      26,
+      0,
+      0
+    ]
+  },
+  {
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "doom-sim",
+      "--release",
+      "--lib",
+      "world_pickup_tests"
+    ],
+    "exit": 0,
+    "log_sha256": "c47139733f6f84772ea0470e05911065adc02caa30bd965b56645684143e3c2a",
+    "totals": [
+      26,
+      0,
+      0
+    ]
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/check_player_world_pickups.py"
+    ],
+    "exit": 0,
+    "log_sha256": "3d33d9eab1e7bbcee5933a38ee234c4b787a48889a09b52b0bc85b5523a724eb"
+  },
+  {
+    "command": [
+      "cargo",
+      "clippy",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit": 0,
+    "log_sha256": "c1d5f3573bc4250b9e6a319556231dd2b19c38b539b4bcb658848b512fe25df4"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g9_reference.py",
+      "--check",
+      "--overflow-check",
+      "--address-check"
+    ],
+    "exit": 0,
+    "log_sha256": "79d4e9a81be2753cae3589711c7686d0afd4b6cd8d1d98f5552f25ce94ae0316"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/reference/m3g9_snapshot_goldens.py",
+      "--check"
+    ],
+    "exit": 0,
+    "log_sha256": "b26727bfeab4a47c4efc63c4657df8811959fc6b6a0c0f596ddebd3a3437a3e1"
+  }
+]

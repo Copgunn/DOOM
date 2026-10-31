@@ -1,0 +1,391 @@
+{
+  "host": "Linux x86_64",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "method": "Three separate release processes each. New original-ID workloads; no before baseline and diagnostic volume differs from legacy. 100 parses/constructors/batches/direct entries timed separately; setup excluded from direct-entry timers. 100000 immutable direct lookups and identity queries. 100 existing script updates include snapshots; 100 bounded encodes/decodes separately. Native wait4 RSS includes process/allocator/events. No isolated CPU/frequency control or threshold; preserve every sample/outlier.",
+  "results": [
+    {
+      "case": 0,
+      "samples": [
+        {
+          "parse100_us": 145,
+          "prepare100_us": 3534,
+          "spawn100_us": 391,
+          "enter100_us": 15597,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1014,
+          "step100_us": 13505,
+          "encode100_us": 235,
+          "decode100_us": 3220,
+          "diagnostic_bytes": 8627,
+          "max_rss_kib": 2716,
+          "output": "workload=original_canonical_small parse100_us=145 prepare100_us=3534 spawn100_us=391 enter100_us=15597 conversion100000_us=54 lookup100000_us=79 query100000_us=1014 step100_us=13505 encode100_us=235 decode100_us=3220 diagnostic_bytes=8627"
+        },
+        {
+          "parse100_us": 144,
+          "prepare100_us": 3637,
+          "spawn100_us": 397,
+          "enter100_us": 15856,
+          "conversion100000_us": 67,
+          "lookup100000_us": 79,
+          "query100000_us": 1015,
+          "step100_us": 13476,
+          "encode100_us": 309,
+          "decode100_us": 3204,
+          "diagnostic_bytes": 8627,
+          "max_rss_kib": 2720,
+          "output": "workload=original_canonical_small parse100_us=144 prepare100_us=3637 spawn100_us=397 enter100_us=15856 conversion100000_us=67 lookup100000_us=79 query100000_us=1015 step100_us=13476 encode100_us=309 decode100_us=3204 diagnostic_bytes=8627"
+        },
+        {
+          "parse100_us": 130,
+          "prepare100_us": 3883,
+          "spawn100_us": 431,
+          "enter100_us": 15535,
+          "conversion100000_us": 54,
+          "lookup100000_us": 92,
+          "query100000_us": 1018,
+          "step100_us": 13292,
+          "encode100_us": 237,
+          "decode100_us": 3248,
+          "diagnostic_bytes": 8627,
+          "max_rss_kib": 2716,
+          "output": "workload=original_canonical_small parse100_us=130 prepare100_us=3883 spawn100_us=431 enter100_us=15535 conversion100000_us=54 lookup100000_us=92 query100000_us=1018 step100_us=13292 encode100_us=237 decode100_us=3248 diagnostic_bytes=8627"
+        }
+      ],
+      "medians": {
+        "parse100_us": 144,
+        "prepare100_us": 3637,
+        "spawn100_us": 397,
+        "enter100_us": 15597,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1015,
+        "step100_us": 13476,
+        "encode100_us": 237,
+        "decode100_us": 3220,
+        "diagnostic_bytes": 8627,
+        "max_rss_kib": 2716
+      }
+    },
+    {
+      "case": 1,
+      "samples": [
+        {
+          "parse100_us": 2978,
+          "prepare100_us": 19713,
+          "spawn100_us": 593,
+          "enter100_us": 17903,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1019,
+          "step100_us": 22359,
+          "encode100_us": 1376,
+          "decode100_us": 9832,
+          "diagnostic_bytes": 136153,
+          "max_rss_kib": 3636,
+          "output": "workload=original_canonical_lifecycle parse100_us=2978 prepare100_us=19713 spawn100_us=593 enter100_us=17903 conversion100000_us=54 lookup100000_us=79 query100000_us=1019 step100_us=22359 encode100_us=1376 decode100_us=9832 diagnostic_bytes=136153"
+        },
+        {
+          "parse100_us": 2962,
+          "prepare100_us": 20075,
+          "spawn100_us": 533,
+          "enter100_us": 17268,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1016,
+          "step100_us": 22801,
+          "encode100_us": 1387,
+          "decode100_us": 9817,
+          "diagnostic_bytes": 136153,
+          "max_rss_kib": 3532,
+          "output": "workload=original_canonical_lifecycle parse100_us=2962 prepare100_us=20075 spawn100_us=533 enter100_us=17268 conversion100000_us=54 lookup100000_us=79 query100000_us=1016 step100_us=22801 encode100_us=1387 decode100_us=9817 diagnostic_bytes=136153"
+        },
+        {
+          "parse100_us": 3119,
+          "prepare100_us": 20021,
+          "spawn100_us": 555,
+          "enter100_us": 17199,
+          "conversion100000_us": 68,
+          "lookup100000_us": 79,
+          "query100000_us": 1020,
+          "step100_us": 23079,
+          "encode100_us": 1582,
+          "decode100_us": 10445,
+          "diagnostic_bytes": 136153,
+          "max_rss_kib": 3636,
+          "output": "workload=original_canonical_lifecycle parse100_us=3119 prepare100_us=20021 spawn100_us=555 enter100_us=17199 conversion100000_us=68 lookup100000_us=79 query100000_us=1020 step100_us=23079 encode100_us=1582 decode100_us=10445 diagnostic_bytes=136153"
+        }
+      ],
+      "medians": {
+        "parse100_us": 2978,
+        "prepare100_us": 20021,
+        "spawn100_us": 555,
+        "enter100_us": 17268,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1019,
+        "step100_us": 22801,
+        "encode100_us": 1387,
+        "decode100_us": 9832,
+        "diagnostic_bytes": 136153,
+        "max_rss_kib": 3636
+      }
+    },
+    {
+      "case": 2,
+      "samples": [
+        {
+          "parse100_us": 2828,
+          "prepare100_us": 19763,
+          "spawn100_us": 2071,
+          "enter100_us": 46370,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1018,
+          "step100_us": 60573,
+          "encode100_us": 1635,
+          "decode100_us": 14640,
+          "diagnostic_bytes": 157279,
+          "max_rss_kib": 3912,
+          "output": "workload=original_canonical_four_owners parse100_us=2828 prepare100_us=19763 spawn100_us=2071 enter100_us=46370 conversion100000_us=54 lookup100000_us=79 query100000_us=1018 step100_us=60573 encode100_us=1635 decode100_us=14640 diagnostic_bytes=157279"
+        },
+        {
+          "parse100_us": 3115,
+          "prepare100_us": 20083,
+          "spawn100_us": 2032,
+          "enter100_us": 47229,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1215,
+          "step100_us": 63022,
+          "encode100_us": 1705,
+          "decode100_us": 14829,
+          "diagnostic_bytes": 157279,
+          "max_rss_kib": 3892,
+          "output": "workload=original_canonical_four_owners parse100_us=3115 prepare100_us=20083 spawn100_us=2032 enter100_us=47229 conversion100000_us=54 lookup100000_us=79 query100000_us=1215 step100_us=63022 encode100_us=1705 decode100_us=14829 diagnostic_bytes=157279"
+        },
+        {
+          "parse100_us": 2916,
+          "prepare100_us": 20209,
+          "spawn100_us": 2074,
+          "enter100_us": 46698,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1030,
+          "step100_us": 64683,
+          "encode100_us": 1641,
+          "decode100_us": 15053,
+          "diagnostic_bytes": 157279,
+          "max_rss_kib": 3892,
+          "output": "workload=original_canonical_four_owners parse100_us=2916 prepare100_us=20209 spawn100_us=2074 enter100_us=46698 conversion100000_us=54 lookup100000_us=79 query100000_us=1030 step100_us=64683 encode100_us=1641 decode100_us=15053 diagnostic_bytes=157279"
+        }
+      ],
+      "medians": {
+        "parse100_us": 2916,
+        "prepare100_us": 20083,
+        "spawn100_us": 2071,
+        "enter100_us": 46698,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1030,
+        "step100_us": 63022,
+        "encode100_us": 1641,
+        "decode100_us": 14829,
+        "diagnostic_bytes": 157279,
+        "max_rss_kib": 3892
+      }
+    },
+    {
+      "case": 5,
+      "samples": [
+        {
+          "parse100_us": 3076,
+          "prepare100_us": 20180,
+          "spawn100_us": 590,
+          "enter100_us": 17959,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1124,
+          "step100_us": 22603,
+          "encode100_us": 1417,
+          "decode100_us": 9888,
+          "diagnostic_bytes": 136112,
+          "max_rss_kib": 3632,
+          "output": "workload=original_canonical_clipping parse100_us=3076 prepare100_us=20180 spawn100_us=590 enter100_us=17959 conversion100000_us=54 lookup100000_us=79 query100000_us=1124 step100_us=22603 encode100_us=1417 decode100_us=9888 diagnostic_bytes=136112"
+        },
+        {
+          "parse100_us": 2939,
+          "prepare100_us": 19819,
+          "spawn100_us": 540,
+          "enter100_us": 18100,
+          "conversion100000_us": 63,
+          "lookup100000_us": 79,
+          "query100000_us": 1062,
+          "step100_us": 21635,
+          "encode100_us": 1614,
+          "decode100_us": 9938,
+          "diagnostic_bytes": 136112,
+          "max_rss_kib": 3656,
+          "output": "workload=original_canonical_clipping parse100_us=2939 prepare100_us=19819 spawn100_us=540 enter100_us=18100 conversion100000_us=63 lookup100000_us=79 query100000_us=1062 step100_us=21635 encode100_us=1614 decode100_us=9938 diagnostic_bytes=136112"
+        },
+        {
+          "parse100_us": 2901,
+          "prepare100_us": 20105,
+          "spawn100_us": 541,
+          "enter100_us": 17853,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1106,
+          "step100_us": 21530,
+          "encode100_us": 1448,
+          "decode100_us": 10507,
+          "diagnostic_bytes": 136112,
+          "max_rss_kib": 3616,
+          "output": "workload=original_canonical_clipping parse100_us=2901 prepare100_us=20105 spawn100_us=541 enter100_us=17853 conversion100000_us=54 lookup100000_us=79 query100000_us=1106 step100_us=21530 encode100_us=1448 decode100_us=10507 diagnostic_bytes=136112"
+        }
+      ],
+      "medians": {
+        "parse100_us": 2939,
+        "prepare100_us": 20105,
+        "spawn100_us": 541,
+        "enter100_us": 17959,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1106,
+        "step100_us": 21635,
+        "encode100_us": 1448,
+        "decode100_us": 9938,
+        "diagnostic_bytes": 136112,
+        "max_rss_kib": 3632
+      }
+    },
+    {
+      "case": 6,
+      "samples": [
+        {
+          "parse100_us": 4222,
+          "prepare100_us": 76054,
+          "spawn100_us": 536,
+          "enter100_us": 16821,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1028,
+          "step100_us": 22793,
+          "encode100_us": 1362,
+          "decode100_us": 10085,
+          "diagnostic_bytes": 209738,
+          "max_rss_kib": 4896,
+          "output": "workload=original_canonical_high_grid parse100_us=4222 prepare100_us=76054 spawn100_us=536 enter100_us=16821 conversion100000_us=54 lookup100000_us=79 query100000_us=1028 step100_us=22793 encode100_us=1362 decode100_us=10085 diagnostic_bytes=209738"
+        },
+        {
+          "parse100_us": 4498,
+          "prepare100_us": 78558,
+          "spawn100_us": 579,
+          "enter100_us": 17831,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1075,
+          "step100_us": 23368,
+          "encode100_us": 1364,
+          "decode100_us": 10153,
+          "diagnostic_bytes": 209738,
+          "max_rss_kib": 4908,
+          "output": "workload=original_canonical_high_grid parse100_us=4498 prepare100_us=78558 spawn100_us=579 enter100_us=17831 conversion100000_us=54 lookup100000_us=79 query100000_us=1075 step100_us=23368 encode100_us=1364 decode100_us=10153 diagnostic_bytes=209738"
+        },
+        {
+          "parse100_us": 4433,
+          "prepare100_us": 77878,
+          "spawn100_us": 557,
+          "enter100_us": 17208,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1035,
+          "step100_us": 23371,
+          "encode100_us": 1396,
+          "decode100_us": 10109,
+          "diagnostic_bytes": 209738,
+          "max_rss_kib": 4804,
+          "output": "workload=original_canonical_high_grid parse100_us=4433 prepare100_us=77878 spawn100_us=557 enter100_us=17208 conversion100000_us=54 lookup100000_us=79 query100000_us=1035 step100_us=23371 encode100_us=1396 decode100_us=10109 diagnostic_bytes=209738"
+        }
+      ],
+      "medians": {
+        "parse100_us": 4433,
+        "prepare100_us": 77878,
+        "spawn100_us": 557,
+        "enter100_us": 17208,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1035,
+        "step100_us": 23368,
+        "encode100_us": 1364,
+        "decode100_us": 10109,
+        "diagnostic_bytes": 209738,
+        "max_rss_kib": 4896
+      }
+    },
+    {
+      "case": 7,
+      "samples": [
+        {
+          "parse100_us": 3048,
+          "prepare100_us": 23747,
+          "spawn100_us": 412,
+          "enter100_us": 16820,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1038,
+          "step100_us": 15357,
+          "encode100_us": 529,
+          "decode100_us": 3478,
+          "diagnostic_bytes": 121723,
+          "max_rss_kib": 3412,
+          "output": "workload=original_canonical_line_bound parse100_us=3048 prepare100_us=23747 spawn100_us=412 enter100_us=16820 conversion100000_us=54 lookup100000_us=79 query100000_us=1038 step100_us=15357 encode100_us=529 decode100_us=3478 diagnostic_bytes=121723"
+        },
+        {
+          "parse100_us": 3021,
+          "prepare100_us": 24591,
+          "spawn100_us": 459,
+          "enter100_us": 16178,
+          "conversion100000_us": 54,
+          "lookup100000_us": 96,
+          "query100000_us": 1022,
+          "step100_us": 13917,
+          "encode100_us": 491,
+          "decode100_us": 3319,
+          "diagnostic_bytes": 121723,
+          "max_rss_kib": 3516,
+          "output": "workload=original_canonical_line_bound parse100_us=3021 prepare100_us=24591 spawn100_us=459 enter100_us=16178 conversion100000_us=54 lookup100000_us=96 query100000_us=1022 step100_us=13917 encode100_us=491 decode100_us=3319 diagnostic_bytes=121723"
+        },
+        {
+          "parse100_us": 3192,
+          "prepare100_us": 24950,
+          "spawn100_us": 452,
+          "enter100_us": 16483,
+          "conversion100000_us": 54,
+          "lookup100000_us": 79,
+          "query100000_us": 1038,
+          "step100_us": 13732,
+          "encode100_us": 480,
+          "decode100_us": 3221,
+          "diagnostic_bytes": 121723,
+          "max_rss_kib": 3528,
+          "output": "workload=original_canonical_line_bound parse100_us=3192 prepare100_us=24950 spawn100_us=452 enter100_us=16483 conversion100000_us=54 lookup100000_us=79 query100000_us=1038 step100_us=13732 encode100_us=480 decode100_us=3221 diagnostic_bytes=121723"
+        }
+      ],
+      "medians": {
+        "parse100_us": 3048,
+        "prepare100_us": 24591,
+        "spawn100_us": 452,
+        "enter100_us": 16483,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1038,
+        "step100_us": 13917,
+        "encode100_us": 491,
+        "decode100_us": 3319,
+        "diagnostic_bytes": 121723,
+        "max_rss_kib": 3516
+      }
+    }
+  ]
+}
