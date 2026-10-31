@@ -14,9 +14,14 @@ def events(rows):
         if role==2 and row[0]in {'D','B','U','I','T'}:continue
         filtered.append(row)
     rows=filtered
-    out=[];chunk=[]
+    out=[];chunk=[];candidates=[]
     for r in rows:
         if r[0]in {'PX','PQ','RI'}:continue
+        # C rows precede PIT_CheckThing, which can emit a pickup before the
+        # final M observation. Keep the whole source candidate prefix across
+        # event flushes, and attach it only to its own movement observation.
+        if r[0]in {'C','O'}:candidates.append(r);continue
+        if r[0]=='M':chunk+=candidates;candidates=[]
         if r[0]!='PN':chunk.append(r);continue
         out+=weapon.events(chunk);chunk=[]
         code,*v=r[3:];payload=bytes([23,code])
@@ -45,6 +50,7 @@ def events(rows):
             payload+=base.ident(item)+n('B',outcome)
         else:raise ValueError(r)
         out.append(payload)
+    assert not candidates, "source collision prefix lacks its movement result"
     return out+weapon.events(chunk)
 
 def build(cases,rows,maps,prefix,full):

@@ -48,3 +48,10 @@ retains a losing player-death outcome. Controlled damaged-health cases remain
 separate. World shotgun/chaingun acquisition is feasible in the source and will
 be implemented after world ammo and health integration; it is not deferred merely
 because it changes pending weapon state.
+
+During initial comparison, the new encoder's pickup-event flush exposed a
+candidate-prefix bug: source C rows emitted before a touch must remain attached
+to the later M movement result. The correction buffers those read-only C/O rows
+across pickup events. Original observations and all historical families remain
+unchanged; the new DSIM expectations are corrected from their actual source
+candidate rows. This is an encoder correction, not changed source gameplay.
