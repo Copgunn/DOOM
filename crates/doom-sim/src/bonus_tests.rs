@@ -53,11 +53,14 @@ fn component(
 }
 
 fn touch(s: &mut Simulation, a: bonus_evidence::Actors) {
+    touch_one(s, a, None);
+}
+fn touch_one(s: &mut Simulation, a: bonus_evidence::Actors, only: Option<ActorId>) {
     // Direct Touch component, not movement: use the actual contact eligibility
     // query at x1, retain the original x0 body, as in the unticked C invocation.
     s.checked_demon_operation(|host| {
         let mut body = *host.access.get(a.body).unwrap();
-        let attempt = movement::check(
+        let mut attempt = movement::check(
             host.world,
             a.body,
             &body,
@@ -65,6 +68,9 @@ fn touch(s: &mut Simulation, a: bonus_evidence::Actors) {
             host.spatial,
             &|id| host.access.get(id).copied(),
         );
+        if let Some(item) = only {
+            attempt.actors.retain(|id| *id == item);
+        }
         let mut events = Vec::new();
         world_pickups::Contacts {
             access: &mut host.access,
@@ -375,4 +381,423 @@ fn retirement_before_second_counted_collection_is_part_of_the_same_transaction()
         2
     );
     assert_eq!(s.level_statistics().unwrap().total_items, 2);
+}
+
+fn map_with_things(things: &[[i16; 5]]) -> doom_map::Map {
+    // Test-input assembly only. Retain every synthetic geometry lump in order.
+    let bytes = bonus_evidence::MAP_BYTES[0];
+    let u32at = |at: usize| u32::from_le_bytes(bytes[at..at + 4].try_into().unwrap()) as usize;
+    let count = u32at(4);
+    let directory = u32at(8);
+    let mut output = vec![0; 12];
+    output[..4].copy_from_slice(b"PWAD");
+    let mut entries = Vec::new();
+    for i in 0..count {
+        let at = directory + i * 16;
+        let name = &bytes[at + 8..at + 16];
+        let offset = output.len();
+        if name == b"THINGS\0\0" {
+            for t in things {
+                for v in t {
+                    output.extend(v.to_le_bytes());
+                }
+            }
+        } else {
+            output.extend_from_slice(&bytes[u32at(at)..u32at(at) + u32at(at + 4)]);
+        }
+        entries.extend((offset as u32).to_le_bytes());
+        entries.extend(((output.len() - offset) as u32).to_le_bytes());
+        entries.extend_from_slice(name);
+    }
+    output[4..8].copy_from_slice(&(count as u32).to_le_bytes());
+    let directory = output.len() as u32;
+    output[8..12].copy_from_slice(&directory.to_le_bytes());
+    output.extend(entries);
+    let wad = doom_wad::Wad::parse(&output, doom_wad::Limits::default()).unwrap();
+    doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default()).unwrap()
+}
+
+#[test]
+fn item_limits_and_partial_map_selection_errors_preserve_setup() {
+    for things in [
+        vec![[36, 0, 0, 2014, 7]; 17],
+        vec![[-64, 0, 0, 3002, 7], [-128, 0, 0, 3002, 7]],
+        vec![[36, 0, 0, 2014, 7], [72, 0, 0, 32000, 7]],
+    ] {
+        let mut s = Simulation::original_player_bonuses_map(
+            map_with_things(&things),
+            64,
+            MapContextOptions::default(),
+        )
+        .unwrap();
+        let before = s.snapshot();
+        assert!(s.spawn_map_things().is_err());
+        assert_eq!(s.snapshot(), before);
+    }
+}
+
+#[test]
+fn above100_health_and_green_armor_damage_failures_restore_all_state() {
+    for (health, points, raw) in [(200, 101, 60), (151, 200, 60), (108, 1, 200), (1, 0, 12)] {
+        let (mut s, a, _) = component(2015, health, if points == 0 { 0 } else { 1 }, points);
+        let request = DamageRequest {
+            target: a.body,
+            source: a.origin,
+            // The lethal200 component is nonphysical: raw thrust is bounded
+            // independently of armor, as in the declared source components.
+            inflictor: if raw == 200 { None } else { a.origin },
+            amount: raw,
+        };
+        let plan = s.plan_damage(request).unwrap();
+        let before = s.snapshot();
+        let spatial = s.spatial.order.clone();
+        let result = s.checked_demon_operation(|host| {
+            host.apply_damage(plan);
+            host.fail_sight(PerceptionError::WorkLimit.into());
+        });
+        assert_eq!(result, Err(PerceptionError::WorkLimit.into()));
+        assert_eq!(s.snapshot(), before);
+        assert_eq!(s.spatial.order, spatial);
+    }
+}
+
+#[test]
+fn source_capped_repeat_components_credit_each_actor_once() {
+    for which in 0..2 {
+        let kind = if which == 0 { 2014 } else { 2015 };
+        let mut s = Simulation::original_player_bonuses_map(
+            map_with_things(&[[36, 0, 0, kind, 7], [36, 0, 0, kind, 7]]),
+            64,
+            MapContextOptions::default(),
+        )
+        .unwrap();
+        let ids = s.spawn_map_things().unwrap().spawned;
+        let body = s
+            .spawn_player_body(PlayerSlot::One, [Fixed::ZERO; 2])
+            .unwrap();
+        s.initialize_player_weapons(
+            PlayerSlot::One,
+            WeaponInventory {
+                ready: Weapon::Pistol,
+                owned: 3,
+                ammo: [50, 0, 0, 0],
+            },
+        )
+        .unwrap();
+        s.original_player.as_mut().unwrap().health = 200;
+        s.actors
+            .get_mut(body)
+            .unwrap()
+            .life
+            .as_mut()
+            .unwrap()
+            .health = 200;
+        if which == 1 {
+            s.original_player.as_mut().unwrap().armor = Some(PlayerArmorState {
+                kind: ArmorType::Green,
+                points: 200,
+            });
+        }
+        let a = bonus_evidence::Actors { body, origin: None };
+        for (j, item) in ids.iter().copied().enumerate() {
+            touch_one(&mut s, a, Some(item));
+            let p = s.original_player(PlayerSlot::One).unwrap();
+            let armor = s.original_player_armor(PlayerSlot::One).unwrap();
+            let pickup = s.original_player_pickups(PlayerSlot::One).unwrap();
+            let got = [
+                i64::from(p.health),
+                i64::from(s.actor(body).unwrap().life().unwrap().health),
+                i64::from(armor.kind.wire_id()),
+                i64::from(armor.points),
+                i64::from(pickup.item_count),
+                i64::from(s.level_statistics().unwrap().total_items),
+                i64::from(pickup.bonus_count),
+                pickup.message as i64,
+                i64::from(s.actors.is_pending(item) == Some(true)),
+            ];
+            let prefix = format!("BCOMP,C,{which},{j},");
+            let line = include_str!("../../../tests/reference/m3g11_components.csv")
+                .lines()
+                .find(|l| l.starts_with(&prefix))
+                .unwrap();
+            let expected: Vec<i64> = line
+                .split(',')
+                .skip(4)
+                .map(|n| n.parse().unwrap())
+                .collect();
+            assert_eq!(got.as_slice(), expected);
+        }
+    }
+}
+
+#[test]
+fn source_depletion_then_bonus_reacquires_green_without_an_ordinary_grant() {
+    let mut s = Simulation::original_player_bonuses_map(
+        map_with_things(&[
+            [-64, 0, 0, 3002, 7],
+            [36, 0, 0, 2015, 7],
+            [36, 0, 0, 2015, 7],
+        ]),
+        64,
+        MapContextOptions::default(),
+    )
+    .unwrap();
+    let ids = s.spawn_map_things().unwrap().spawned;
+    let body = s
+        .spawn_player_body(PlayerSlot::One, [Fixed::ZERO; 2])
+        .unwrap();
+    s.initialize_player_weapons(
+        PlayerSlot::One,
+        WeaponInventory {
+            ready: Weapon::Pistol,
+            owned: 3,
+            ammo: [50, 0, 0, 0],
+        },
+    )
+    .unwrap();
+    let a = bonus_evidence::Actors {
+        body,
+        origin: Some(ids[0]),
+    };
+    for j in 0..2 {
+        for phase in 0..2 {
+            if phase == 0 {
+                touch_one(&mut s, a, Some(ids[j + 1]));
+            } else {
+                s.rng = DoomRng::from_indices(0, 0);
+                s.damage_actor(DamageRequest {
+                    target: body,
+                    source: a.origin,
+                    inflictor: None,
+                    amount: 12,
+                })
+                .unwrap();
+            }
+            let p = s.original_player(PlayerSlot::One).unwrap();
+            let armor = s.original_player_armor(PlayerSlot::One).unwrap();
+            let pickup = s.original_player_pickups(PlayerSlot::One).unwrap();
+            let got = [
+                i64::from(p.health),
+                i64::from(s.actor(body).unwrap().life().unwrap().health),
+                i64::from(armor.kind.wire_id()),
+                i64::from(armor.points),
+                i64::from(pickup.item_count),
+                i64::from(s.level_statistics().unwrap().total_items),
+                i64::from(pickup.bonus_count),
+            ];
+            let prefix = format!("BCOMP,R,{j},{phase},");
+            let line = include_str!("../../../tests/reference/m3g11_components.csv")
+                .lines()
+                .find(|l| l.starts_with(&prefix))
+                .unwrap();
+            let expected: Vec<i64> = line
+                .split(',')
+                .skip(4)
+                .map(|n| n.parse().unwrap())
+                .collect();
+            assert_eq!(got.as_slice(), expected);
+        }
+    }
+}
+
+#[test]
+fn paused_bonus_world_does_not_animate_collect_consume_rng_or_capture_implicitly() {
+    let (mut s, _) = bonus_evidence::setup(&bonus_evidence::cases()[2]);
+    s.set_paused(true);
+    let mut stepped = s.clone();
+    let armor = s.original_player_armor(PlayerSlot::One).unwrap();
+    let rng = s.rng;
+    let captures = snapshot::capture_count();
+    let c = bonus_evidence::commands(&bonus_evidence::cases()[2], 1);
+    s.advance(c).unwrap();
+    assert_eq!(snapshot::capture_count(), captures);
+    assert_eq!(s.snapshot(), stepped.step(c).unwrap());
+    assert_eq!(s.rng, rng);
+    assert_eq!(s.original_player_armor(PlayerSlot::One).unwrap(), armor);
+}
+#[test]
+fn bonus_item_instance_references_do_not_cross_game_instances() {
+    use identity::*;
+    let (s, a) = bonus_evidence::setup(&bonus_evidence::cases()[1]);
+    let item = s.actor_order().find(|id| *id != a.body).unwrap();
+    let mut left = GameInstance::new(s.clone());
+    let mut right = GameInstance::new(s);
+    let reference = left
+        .with_execution_context(|ctx| {
+            let item = ctx.admit_local(
+                item,
+                DefinitionIdentity::Original(OriginalActorType::MT_MISC2),
+            )?;
+            ctx.export_actor(item)
+        })
+        .unwrap();
+    let before = right.simulation().snapshot();
+    assert!(
+        right
+            .with_execution_context(|ctx| {
+                ctx.import_actor(
+                    &reference,
+                    DefinitionIdentity::Original(OriginalActorType::MT_MISC2),
+                )?;
+                Ok(())
+            })
+            .is_err()
+    );
+    assert_eq!(right.simulation().snapshot(), before);
+}
+fn replace_field(bytes: &mut [u8], name: &str, value: &[u8]) {
+    let mut at = 16;
+    while at < bytes.len() {
+        let n = u32::from_le_bytes(bytes[at..at + 4].try_into().unwrap()) as usize;
+        at += 4;
+        let yes = &bytes[at..at + n] == name.as_bytes();
+        at += n;
+        let n = u64::from_le_bytes(bytes[at..at + 8].try_into().unwrap()) as usize;
+        at += 8;
+        if yes {
+            assert_eq!(n, value.len());
+            bytes[at..at + n].copy_from_slice(value);
+            return;
+        }
+        at += n;
+    }
+    panic!("missing test field {name}");
+}
+#[test]
+fn bonus_diagnostic_is_explicit_and_preserves_historical_readers() {
+    let (s, _) = bonus_evidence::setup(&bonus_evidence::cases()[1]);
+    let bytes = s
+        .snapshot()
+        .diagnostic_bytes(DiagnosticLimits::default())
+        .unwrap();
+    assert_eq!(s.snapshot().version(), 27);
+    assert!(Diagnostic::decode(&bytes, DiagnosticLimits::default()).is_err());
+    assert!(Diagnostic::decode_player(&bytes, DiagnosticLimits::default()).is_err());
+    assert!(Diagnostic::decode_pistol(&bytes, DiagnosticLimits::default()).is_err());
+    assert!(Diagnostic::decode_weapons(&bytes, DiagnosticLimits::default()).is_err());
+    assert!(Diagnostic::decode_pickups(&bytes, DiagnosticLimits::default()).is_err());
+    assert!(Diagnostic::decode_armor(&bytes, DiagnosticLimits::default()).is_err());
+    assert!(Diagnostic::decode_bonuses(&bytes, DiagnosticLimits::default()).is_ok());
+}
+
+#[test]
+fn bonus_retirement_slot_reuse_and_no_implicit_capture() {
+    let c = &bonus_evidence::cases()[19];
+    let (mut s, _) = bonus_evidence::setup(c);
+    let items: Vec<_> = s
+        .actor_order()
+        .filter(|id| s.actor(*id).unwrap().life().unwrap().actor_type.0 == 45)
+        .collect();
+    let mut observed_reuse = false;
+    for op in 1..=c.tics {
+        let captures = snapshot::capture_count();
+        s.advance(bonus_evidence::commands(c, op)).unwrap();
+        assert_eq!(snapshot::capture_count(), captures);
+        observed_reuse |= items.iter().any(|old| {
+            s.actor_order()
+                .any(|id| id.slot() == old.slot() && id.generation() != old.generation())
+        });
+    }
+    assert_eq!(
+        s.original_player_pickups(PlayerSlot::One)
+            .unwrap()
+            .item_count,
+        8
+    );
+    assert_eq!(s.level_statistics().unwrap().total_items, 8);
+    assert!(observed_reuse);
+    for item in items {
+        assert!(matches!(
+            s.actor_availability(item),
+            ActorAvailability::StaleGeneration | ActorAvailability::Retired
+        ));
+        let before = s.snapshot();
+        assert!(s.set_actor_target(item, None).is_err());
+        assert_eq!(s.snapshot(), before);
+    }
+}
+
+#[test]
+fn animation_transition_then_late_damage_error_preserves_clock_and_rng() {
+    let (mut s, a, item) = component(2015, 200, 1, 120);
+    s.actors.get_mut(item).unwrap().life.as_mut().unwrap().tics = 1;
+    let plan = s
+        .plan_damage(DamageRequest {
+            target: a.body,
+            source: a.origin,
+            inflictor: None,
+            amount: 60,
+        })
+        .unwrap();
+    let before = s.snapshot();
+    let result = s.checked_demon_operation(|host| {
+        host.tick(item);
+        assert_eq!(
+            host.access.get(item).unwrap().life().unwrap().state,
+            Some(StateId(823))
+        );
+        host.apply_damage(plan);
+        host.fail_sight(PerceptionError::WorkLimit.into());
+    });
+    assert_eq!(result, Err(PerceptionError::WorkLimit.into()));
+    assert_eq!(s.snapshot(), before);
+}
+
+#[test]
+fn malformed_bonus_diagnostic_resources_statistics_and_events_reject() {
+    for which in [28, 29] {
+        let c = &bonus_evidence::cases()[which];
+        let (mut s, a) = bonus_evidence::setup(c);
+        initial_cap(&mut s, c, a);
+        s.advance(bonus_evidence::commands(c, 1)).unwrap();
+        let snap = s.snapshot();
+        let bytes = snap.diagnostic_bytes(DiagnosticLimits::default()).unwrap();
+        Diagnostic::decode_bonuses(&bytes, DiagnosticLimits::default()).unwrap();
+        for (name, value) in [
+            ("profile", 10u32.to_le_bytes().to_vec()),
+            ("original_player.0.health", 201i32.to_le_bytes().to_vec()),
+            ("original_player.0.armor.type", vec![3]),
+            (
+                "original_player.0.armor.points",
+                201i32.to_le_bytes().to_vec(),
+            ),
+            (
+                "original_player.0.pickups.item_count",
+                17i32.to_le_bytes().to_vec(),
+            ),
+            (
+                "original_player.0.pickups.item_count",
+                (-1i32).to_le_bytes().to_vec(),
+            ),
+            ("level.total_items", 17i32.to_le_bytes().to_vec()),
+            ("level.total_items", 0i32.to_le_bytes().to_vec()),
+            ("original_player.0.pickups.message", vec![14]),
+        ] {
+            let mut bad = bytes.clone();
+            replace_field(&mut bad, name, &value);
+            assert!(
+                Diagnostic::decode_bonuses(&bad, DiagnosticLimits::default()).is_err(),
+                "{name}"
+            );
+        }
+        let mut checked = 0;
+        for f in snap.fields().filter(|f| {
+            f.path().starts_with("events.last.") && matches!(f.value().get(..2), Some([23, 8..=10]))
+        }) {
+            let mut value = f.value().to_vec();
+            *value.last_mut().unwrap() = 255;
+            let mut bad = bytes.clone();
+            replace_field(&mut bad, f.path(), &value);
+            assert!(
+                Diagnostic::decode_bonuses(&bad, DiagnosticLimits::default()).is_err(),
+                "{}",
+                f.path()
+            );
+            checked += 1;
+        }
+        assert!(checked >= 2);
+        for n in [0, 4, 16, bytes.len() - 1] {
+            assert!(Diagnostic::decode_bonuses(&bytes[..n], DiagnosticLimits::default()).is_err());
+        }
+    }
 }

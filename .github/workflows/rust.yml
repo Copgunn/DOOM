@@ -70,6 +70,13 @@ jobs:
         run: |
           ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g10_reference.py --check --overflow-check --address-check
           python3 tools/reference/m3g10_snapshot_goldens.py --check
+      - name: Independent original bonus, animation, resource and counted-item evidence
+        if: runner.os == 'Linux'
+        run: |
+          ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g11_reference.py --check --overflow-check --address-check
+          python3 tools/reference/m3g11_snapshot_goldens.py --check
+      - name: Original bonus sustained combat debug/release comparison
+        run: python3 tools/reference/check_player_bonuses.py
       - name: Original armor sustained combat debug/release comparison
         run: python3 tools/reference/check_player_armor.py
       - name: Active player Demon debug/release comparison
