@@ -1267,3 +1267,6 @@ mod bonus_actor_tests;
 #[cfg(test)]
 #[path = "../../../tests/support/m3g11.rs"]
 mod bonus_evidence;
+
+#[cfg(test)]
+mod bonus_tests;

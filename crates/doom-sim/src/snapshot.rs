@@ -253,6 +253,18 @@ fn event_bytes(event: &Event) -> Vec<u8> {
                     b.extend(id(*item));
                     b.push(*outcome as u8);
                 }
+                HealthBonus(before, after, body) => {
+                    b.push(8);
+                    b.extend(before.to_le_bytes());
+                    b.extend(after.to_le_bytes());
+                    b.extend(body.to_le_bytes());
+                }
+                ArmorBonus(before, after) => {
+                    b.extend([9, before.kind.wire_id()]);
+                    b.extend(before.points.to_le_bytes());
+                    b.push(after.kind.wire_id());
+                    b.extend(after.points.to_le_bytes());
+                }
                 Armor(requested, accepted, before, after) => {
                     b.extend([
                         7,

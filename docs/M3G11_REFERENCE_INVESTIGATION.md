@@ -64,3 +64,10 @@ loot, item respawning, multiplayer, full player/death thinkers, dynamic geometry
 audio playback and rendering remain excluded. The inherited ordered-operand,
 signed-shift/BAM and GNU ABI observation adapters remain qualified separately;
 positive bonus arithmetic adds no floating-point gameplay.
+
+Physical component T40 first collects health at199, then requests raw300 damage.
+Its source impulse exceeds the existing30-unit momentum admission. The post-hit
+C result remains source-only; Rust compares its pickup to the identical T4 pickup
+and proves atomic rejection of the physical request. Other admitted direct
+resource/damage components retain complete post-action comparisons. This does
+not widen physical bounds or substitute reduced/effective damage for raw thrust.

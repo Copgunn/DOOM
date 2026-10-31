@@ -493,14 +493,18 @@ impl<'a> Diagnostic<'a> {
                     validate_pickup_event(event, self.version)?;
                 }
                 if tag == 24 {
-                    validate_armor_event(event)?;
+                    validate_armor_event(event, self.version)?;
                     let mo = self.required("original_player.0.mo")?;
                     if mo.len() != 13 || mo[0] != 1 || mo[1..] != event[1..13] {
                         return Err(DiagnosticError::Identity);
                     }
                 }
                 if tag == 22 {
-                    validate_player_event(event, matches!(self.version, 24..=27))?;
+                    validate_player_event(
+                        event,
+                        matches!(self.version, 24..=27),
+                        self.version == 27,
+                    )?;
                 }
                 if tag == 14 && matches!(self.version, 23..=27) {
                     validate_weapon_event(event, matches!(self.version, 24..=27))?;
@@ -586,7 +590,11 @@ impl<'a> Diagnostic<'a> {
             if kind.len() != 1 {
                 return Err(DiagnosticError::Structure);
             }
-            diagnostic_armor(kind[0], self.required("original_player.0.armor.points")?)?;
+            diagnostic_armor(
+                kind[0],
+                self.required("original_player.0.armor.points")?,
+                self.policy(),
+            )?;
         }
         if matches!(self.version, 25..=27) {
             self.validate_pickup_items()?;
@@ -603,7 +611,8 @@ impl<'a> Diagnostic<'a> {
             if !(0..=world_pickups::MAX_BONUS).contains(&bonus)
                 || items != 0
                 || !(matches!(message, [0..=6] | [8..=9])
-                    || (matches!(self.version, 26 | 27) && matches!(message, [10..=11])))
+                    || (matches!(self.version, 26 | 27) && matches!(message, [10..=11]))
+                    || (self.version == 27 && matches!(message, [12..=13])))
             {
                 return Err(DiagnosticError::Structure);
             }
@@ -851,7 +860,7 @@ impl<'a> Diagnostic<'a> {
         let damage = i32::from_le_bytes(number(self.required("original_player.0.damage_count")?)?);
         let frags = i32::from_le_bytes(number(self.required("original_player.0.frags")?)?);
         let state = self.required("original_player.0.state")?;
-        if !(0..=100).contains(&hp)
+        if !(0..=if self.version == 27 { 200 } else { 100 }).contains(&hp)
             || !(0..=100).contains(&damage)
             || frags < 0
             || !matches!(state, [0] | [1])
@@ -1100,14 +1109,14 @@ fn validate_weapon_event(event: &[u8], pack: bool) -> Result<(), DiagnosticError
     }
 }
 
-fn validate_player_event(event: &[u8], pack: bool) -> Result<(), DiagnosticError> {
+fn validate_player_event(event: &[u8], pack: bool, bonuses: bool) -> Result<(), DiagnosticError> {
     match event.get(1) {
         Some(0) if event.len() == 14 => validate_handle(&event[2..]),
         Some(1) if event.len() == 27 => {
             let hp = i32::from_le_bytes(number(&event[2..6])?);
             let count = i32::from_le_bytes(number(&event[19..23])?);
             let tactile = i32::from_le_bytes(number(&event[23..27])?);
-            if !(0..=100).contains(&hp)
+            if !(0..=if bonuses { 200 } else { 100 }).contains(&hp)
                 || !(0..=100).contains(&count)
                 || !(40..=240).contains(&tactile)
                 || tactile % 2 != 0
@@ -1147,15 +1156,21 @@ fn validate_player_event(event: &[u8], pack: bool) -> Result<(), DiagnosticError
     }
 }
 
-fn diagnostic_armor(kind: u8, points: &[u8]) -> Result<PlayerArmorState, DiagnosticError> {
+fn diagnostic_armor(
+    kind: u8,
+    points: &[u8],
+    policy: OriginalExecutionProfile,
+) -> Result<PlayerArmorState, DiagnosticError> {
     let value = PlayerArmorState {
         kind: ArmorType::try_from(kind).map_err(|_| DiagnosticError::Identity)?,
         points: i32::from_le_bytes(number(points)?),
     };
-    value.validate().map_err(|_| DiagnosticError::Identity)?;
+    value
+        .validate_for(policy)
+        .map_err(|_| DiagnosticError::Identity)?;
     Ok(value)
 }
-fn validate_armor_event(event: &[u8]) -> Result<(), DiagnosticError> {
+fn validate_armor_event(event: &[u8], version: u32) -> Result<(), DiagnosticError> {
     if event.len() != 35 {
         return Err(DiagnosticError::Structure);
     }
@@ -1163,9 +1178,15 @@ fn validate_armor_event(event: &[u8]) -> Result<(), DiagnosticError> {
     let incoming = i32::from_le_bytes(number(&event[13..17])?);
     let saved = i32::from_le_bytes(number(&event[17..21])?);
     let effective = i32::from_le_bytes(number(&event[21..25])?);
-    let before = diagnostic_armor(event[25], &event[26..30])?;
-    let after = diagnostic_armor(event[30], &event[31..35])?;
-    let expected = ArmorEvent::plan(
+    let policy = if version == 27 {
+        OriginalExecutionProfile::PlayerDemonBonusesV1
+    } else {
+        OriginalExecutionProfile::PlayerDemonArmorV1
+    };
+    let before = diagnostic_armor(event[25], &event[26..30], policy)?;
+    let after = diagnostic_armor(event[30], &event[31..35], policy)?;
+    let expected = ArmorEvent::plan_for(
+        policy,
         ActorId::from_parts(
             u32::from_le_bytes(number(&event[1..5])?),
             u64::from_le_bytes(number(&event[5..13])?),
@@ -1183,6 +1204,11 @@ fn validate_armor_event(event: &[u8]) -> Result<(), DiagnosticError> {
 fn validate_pickup_event(event: &[u8], version: u32) -> Result<(), DiagnosticError> {
     let armor = matches!(version, 26 | 27);
     let bonuses = version == 27;
+    let policy = if bonuses {
+        OriginalExecutionProfile::PlayerDemonBonusesV1
+    } else {
+        OriginalExecutionProfile::PlayerDemonArmorV1
+    };
     let get = |a: usize, b: usize| event.get(a..b).ok_or(DiagnosticError::Structure);
     let ok = match event.get(1) {
         Some(0) => {
@@ -1249,7 +1275,9 @@ fn validate_pickup_event(event: &[u8], version: u32) -> Result<(), DiagnosticErr
         }
         Some(4) => {
             event.len() == 3
-                && (matches!(event[2],1..=6|8..=9) || (armor && matches!(event[2], 10..=11)))
+                && (matches!(event[2],1..=6|8..=9)
+                    || (armor && matches!(event[2], 10..=11))
+                    || (bonuses && matches!(event[2], 12..=13)))
         }
         Some(5) => {
             event.len() == 10
@@ -1263,6 +1291,29 @@ fn validate_pickup_event(event: &[u8], version: u32) -> Result<(), DiagnosticErr
             validate_handle(get(2, 14)?)?;
             event[14] <= 3
         }
+        Some(8) if bonuses => {
+            if event.len() != 14 {
+                return Err(DiagnosticError::Structure);
+            }
+            let before = i32::from_le_bytes(number(get(2, 6)?)?);
+            let after = i32::from_le_bytes(number(get(6, 10)?)?);
+            let body = i32::from_le_bytes(number(get(10, 14)?)?);
+            (1..=200).contains(&before) && after == (before + 1).min(200) && body == after
+        }
+        Some(9) if bonuses => {
+            if event.len() != 12 {
+                return Err(DiagnosticError::Structure);
+            }
+            let before = diagnostic_armor(event[2], get(3, 7)?, policy)?;
+            let after = diagnostic_armor(event[7], get(8, 12)?, policy)?;
+            after.points == (before.points + 1).min(200)
+                && after.kind
+                    == if before.kind == ArmorType::None {
+                        ArmorType::Green
+                    } else {
+                        before.kind
+                    }
+        }
         Some(7) if armor => {
             if event.len() != 14 || event[3] > 1 {
                 return Err(DiagnosticError::Structure);
@@ -1271,8 +1322,8 @@ fn validate_pickup_event(event: &[u8], version: u32) -> Result<(), DiagnosticErr
             if requested == ArmorType::None {
                 return Err(DiagnosticError::Identity);
             }
-            let before = diagnostic_armor(event[4], get(5, 9)?)?;
-            let after = diagnostic_armor(event[9], get(10, 14)?)?;
+            let before = diagnostic_armor(event[4], get(5, 9)?, policy)?;
+            let after = diagnostic_armor(event[9], get(10, 14)?, policy)?;
             let accepted = before.points < requested.capacity();
             accepted == (event[3] == 1)
                 && after

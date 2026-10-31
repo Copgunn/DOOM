@@ -55,6 +55,21 @@ impl PlayerArmorState {
     /// P_GiveArmor compares points, rather than ordering armor classes.
     pub(crate) fn grant(&mut self, requested: ArmorType) -> Result<bool, PlayerBodyError> {
         self.validate()?;
+        self.grant_validated(requested)
+    }
+    /// Ordinary grant threshold, with the caller's explicit resource invariant.
+    pub(crate) fn grant_for(
+        &mut self,
+        requested: ArmorType,
+        policy: OriginalExecutionProfile,
+    ) -> Result<bool, PlayerBodyError> {
+        if !policy.has_player_bonuses() {
+            return self.grant(requested);
+        }
+        self.validate_for(policy)?;
+        self.grant_validated(requested)
+    }
+    fn grant_validated(&mut self, requested: ArmorType) -> Result<bool, PlayerBodyError> {
         if requested == ArmorType::None {
             return Err(PlayerBodyError::Unsupported);
         }
@@ -66,6 +81,20 @@ impl PlayerArmorState {
             points: requested.capacity(),
         };
         Ok(true)
+    }
+    /// Bonus-capable green armor may exceed its ordinary100-point grant.
+    pub(crate) fn validate_for(
+        self,
+        policy: OriginalExecutionProfile,
+    ) -> Result<(), PlayerBodyError> {
+        if !policy.has_player_bonuses() {
+            return self.validate();
+        }
+        if !(0..=200).contains(&self.points) || (self.kind == ArmorType::None) != (self.points == 0)
+        {
+            return Err(PlayerBodyError::Invariant);
+        }
+        Ok(())
     }
     pub(crate) fn validate(self) -> Result<(), PlayerBodyError> {
         if self.points < 0
@@ -100,7 +129,31 @@ impl ArmorEvent {
         incoming: i32,
         before: PlayerArmorState,
     ) -> Result<Self, SimError> {
-        before.validate()?;
+        Self::calculate(
+            OriginalExecutionProfile::PlayerDemonArmorV1,
+            target,
+            incoming,
+            before,
+        )
+    }
+    pub(crate) fn plan_for(
+        policy: OriginalExecutionProfile,
+        target: ActorId,
+        incoming: i32,
+        before: PlayerArmorState,
+    ) -> Result<Self, SimError> {
+        if !policy.has_player_bonuses() {
+            return Self::plan(target, incoming, before);
+        }
+        Self::calculate(policy, target, incoming, before)
+    }
+    fn calculate(
+        policy: OriginalExecutionProfile,
+        target: ActorId,
+        incoming: i32,
+        before: PlayerArmorState,
+    ) -> Result<Self, SimError> {
+        before.validate_for(policy)?;
         if !(0..=1000).contains(&incoming) {
             return Err(CombatError::Damage.into());
         }
@@ -116,7 +169,7 @@ impl ArmorEvent {
             after.kind = ArmorType::None;
         }
         after.points -= saved;
-        after.validate()?;
+        after.validate_for(policy)?;
         Ok(Self {
             target,
             incoming,
@@ -153,7 +206,7 @@ impl Simulation {
             .as_ref()
             .and_then(|p| p.armor)
             .ok_or(PlayerBodyError::Profile)?;
-        armor.validate()?;
+        armor.validate_for(self.player_policy())?;
         Ok(armor)
     }
 }

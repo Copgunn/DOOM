@@ -298,6 +298,15 @@ impl Simulation {
         let Some(p) = self.original_player else {
             return Ok(());
         };
+        if !(0..=if p.policy.has_player_bonuses() {
+            200
+        } else {
+            100
+        })
+            .contains(&p.health)
+        {
+            return Err(PlayerBodyError::Invariant.into());
+        }
         for id in self.actors.order() {
             if self.actors.is_pending(id) != Some(false) {
                 continue;
@@ -358,7 +367,9 @@ impl Simulation {
             return Ok(());
         };
         if p.policy.has_player_armor() {
-            p.armor.ok_or(PlayerBodyError::Invariant)?.validate()?;
+            p.armor
+                .ok_or(PlayerBodyError::Invariant)?
+                .validate_for(p.policy)?;
         }
         if p.policy.has_physical_player()
             && request.inflictor.is_some()
@@ -404,7 +415,7 @@ impl Simulation {
             if let Some(l) = self.actor(request.target).and_then(Actor::life) {
                 if l.health > 0
                     && p.armor
-                        .map(|a| ArmorEvent::plan(request.target, request.amount, a))
+                        .map(|a| ArmorEvent::plan_for(p.policy, request.target, request.amount, a))
                         .transpose()?
                         .map_or(request.amount, |a| a.effective)
                         >= l.health

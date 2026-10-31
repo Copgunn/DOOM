@@ -181,6 +181,11 @@ impl PlayerPickupState {
         if !(0..=MAX_BONUS).contains(&self.bonus_count)
             || self.item_count != 0
             || self.message == PickupMessage::MedikitNeeded
+            || (!profile.has_player_bonuses()
+                && matches!(
+                    self.message,
+                    PickupMessage::HealthBonus | PickupMessage::ArmorBonus
+                ))
             || (!profile.has_player_armor()
                 && matches!(
                     self.message,
@@ -224,6 +229,10 @@ pub enum PickupEvent {
     Result(ActorId, PickupOutcome),
     /// Requested source class, accepted, armor before and after P_GiveArmor.
     Armor(ArmorType, bool, PlayerArmorState, PlayerArmorState),
+    /// Direct BON1 effect, without entering P_GiveBody.
+    HealthBonus(i32, i32, i32),
+    /// Direct BON2 effect; ordinary armor grant thresholds remain separate.
+    ArmorBonus(PlayerArmorState, PlayerArmorState),
 }
 pub(crate) enum ContactEvent {
     Pickup(PickupEvent),
@@ -466,8 +475,42 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                     return Err(WeaponError::Inventory.into());
                 };
                 let accepted = match k {
-                    PickupKind::HealthBonus | PickupKind::ArmorBonus => {
-                        return Err(PlayerBodyError::Unsupported.into());
+                    PickupKind::HealthBonus => {
+                        let before = self.player.health;
+                        let after = before
+                            .checked_add(1)
+                            .ok_or(PlayerBodyError::Invariant)?
+                            .min(200);
+                        self.player.health = after;
+                        body.life.as_mut().ok_or(ActorError::InvalidType)?.health = after;
+                        self.access
+                            .get_mut(id)
+                            .and_then(|a| a.life.as_mut())
+                            .ok_or(StoreError::InvalidHandle)?
+                            .health = after;
+                        observe(events, PickupEvent::HealthBonus(before, after, after));
+                        true
+                    }
+                    PickupKind::ArmorBonus => {
+                        let policy = self.player.policy;
+                        let armor = self
+                            .player
+                            .armor
+                            .as_mut()
+                            .ok_or(PlayerBodyError::Invariant)?;
+                        armor.validate_for(policy)?;
+                        let before = *armor;
+                        armor.points = armor
+                            .points
+                            .checked_add(1)
+                            .ok_or(PlayerBodyError::Invariant)?
+                            .min(200);
+                        if armor.kind == ArmorType::None {
+                            armor.kind = ArmorType::Green;
+                        }
+                        armor.validate_for(policy)?;
+                        observe(events, PickupEvent::ArmorBonus(before, *armor));
+                        true
                     }
                     PickupKind::GreenArmor | PickupKind::BlueArmor => {
                         let requested = if k == PickupKind::GreenArmor {
@@ -481,7 +524,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                             .as_mut()
                             .ok_or(PlayerBodyError::Invariant)?;
                         let before = *armor;
-                        let accepted = armor.grant(requested)?;
+                        let accepted = armor.grant_for(requested, self.player.policy)?;
                         observe(
                             events,
                             PickupEvent::Armor(requested, accepted, before, *armor),
