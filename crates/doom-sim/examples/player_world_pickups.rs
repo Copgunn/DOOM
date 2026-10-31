@@ -57,6 +57,7 @@ fn measure(label: &str, mode: &str) -> ResultHost<()> {
         "supplies_melee" => (46, 192),
         "after_heal" => (46, 254),
         "player_death" => (49, 412),
+        "death_transition" => (50, 0),
         "full_encounter" => (46, 0),
         "losing_encounter" => (49, 0),
         _ => return Err("unknown workload".into()),

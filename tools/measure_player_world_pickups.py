@@ -44,7 +44,7 @@ int main(int n,char **v){int s;struct rusage u;pid_t p;if(n<2)return 2;p=fork();
         assert controls['--control']==dict(zip(ALLOC_KEYS,[0,0,0,0,0]))
         assert controls['--probe']==dict(zip(ALLOC_KEYS,[1,0,4096,1,0]))
         results=[]
-        for label in (['clip','supplies_melee'] if args.smoke else ['idle','clip','full_ammo','four_ammo','stim','medikit','blocked_pickup','sixteen','shotgun','chaingun','world_weapon_fight','supplies_melee','after_heal','player_death','full_encounter','losing_encounter']):
+        for label in (['clip','supplies_melee'] if args.smoke else ['idle','clip','full_ammo','four_ammo','stim','medikit','blocked_pickup','sixteen','shotgun','chaingun','world_weapon_fight','supplies_melee','after_heal','player_death','death_transition','full_encounter','losing_encounter']):
             digests=set()
             for mode in ['advance','step']:
                 samples=[];allocations=[];command=[binary,'--measure',label,mode]

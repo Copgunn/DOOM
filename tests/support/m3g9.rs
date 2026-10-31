@@ -187,6 +187,14 @@ pub fn assert_snapshot(snapshot: &Snapshot, which: usize, op: usize) -> bool {
     if v[4] != "-" {
         let full: &[(&str, &[u8])] = &[
             (
+                "m3g9_state_50_28.bin",
+                include_bytes!("../reference/m3g9_state_50_28.bin"),
+            ),
+            (
+                "m3g9_state_50_128.bin",
+                include_bytes!("../reference/m3g9_state_50_128.bin"),
+            ),
+            (
                 "m3g9_state_0_0.bin",
                 include_bytes!("../reference/m3g9_state_0_0.bin"),
             ),

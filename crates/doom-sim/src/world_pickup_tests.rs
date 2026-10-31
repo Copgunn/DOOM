@@ -341,18 +341,23 @@ fn dead_moving_body_cannot_collect_or_resurrect() {
 }
 #[test]
 fn late_bonus_rejection_rolls_back_real_grant_removal_and_prior_command() {
-    let (mut s, _) = fresh(1);
-    s.original_player
-        .as_mut()
-        .unwrap()
-        .pickups
-        .as_mut()
-        .unwrap()
-        .bonus_count = 96;
-    // Accepted field range, inconsistent causal history: the checked +6 fails
-    // after the real ammo grant and logical removal, inside the same transaction.
-    rejected(&mut s, source::commands(&source::cases()[1], 1));
+    for index in [1, 33, 34] {
+        let (mut s, _) = fresh(index);
+        s.original_player
+            .as_mut()
+            .unwrap()
+            .pickups
+            .as_mut()
+            .unwrap()
+            .bonus_count = 96;
+        // Range-valid but causally inconsistent private state: +6 fails after
+        // ammo/ownership/pending changes and removal in the same transaction.
+        rejected(&mut s, source::commands(&source::cases()[index], 1));
+        let w = s.original_player_weapons(PlayerSlot::One).unwrap().unwrap();
+        assert_eq!((w.owned, w.pending, w.bullets, w.shells), (3, None, 50, 0));
+    }
 }
+
 #[test]
 fn paused_advance_and_step_keep_pickups_pending_and_snapshot_capture_explicit() {
     let (mut s, _) = fresh(1);

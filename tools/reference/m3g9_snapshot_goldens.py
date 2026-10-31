@@ -29,7 +29,7 @@ def run(check):
     inputs += maps
     outputs, inventory = pickup_snapshot.build(
         cases, rows, [ROOT/path for path in maps], 'm3g9',
-        {(0,0),(1,1),(7,8),(10,64),(16,1),(18,1),(22,1),(27,1),(28,1),(32,1),(33,64),(34,64),(38,8),(46,254),(46,512),(47,96),(48,1),(48,54),(49,466),(49,512)})
+        {(0,0),(1,1),(7,8),(10,64),(16,1),(18,1),(22,1),(27,1),(28,1),(32,1),(33,64),(34,64),(38,8),(46,254),(46,512),(47,96),(48,1),(48,54),(49,466),(49,512),(50,28),(50,128)})
     events=outputs.pop('tests/reference/m3g9_events.bin')
     outputs['tests/reference/m3g9_events.dref']=pack(events)
     inventory.update(expanded_event_bytes=len(events),packed_event_bytes=len(outputs['tests/reference/m3g9_events.dref']))

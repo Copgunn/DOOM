@@ -250,13 +250,23 @@ fn ammo(
     events: &mut Vec<movement::MotionEvent>,
 ) -> Result<bool, SimError> {
     let before = if shell { p.shells } else { p.bullets };
-    let cap = if shell { 50 } else { 200 };
+    let cap = u16::try_from(
+        *weapons::AMMO_CAPACITIES
+            .get(usize::from(shell))
+            .ok_or(WeaponError::Inventory)?,
+    )
+    .map_err(|_| WeaponError::Inventory)?;
+    if before > cap {
+        return Err(WeaponError::Inventory.into());
+    }
     let accepted = before != cap;
     if accepted {
         let count = if loads == 0 {
             5
         } else {
-            loads * if shell { 4 } else { 10 }
+            loads
+                .checked_mul(if shell { 4 } else { 10 })
+                .ok_or(WeaponError::Inventory)?
         };
         // Private callers supply at most five loads: before<=200 and count<=50,
         // so the checked source addition is representable before capping.

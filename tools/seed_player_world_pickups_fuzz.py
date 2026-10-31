@@ -5,7 +5,7 @@ from pathlib import Path
 out=Path(sys.argv[1]);out.mkdir(parents=True,exist_ok=True)
 idle=bytes(10)
 attack=bytes([0,0,0,0,0,0,1,0,1,0])
-for case in range(50):
+for case in range(51):
     for warm in range(20):
         (out/f'case{case}-warm{warm}').write_bytes(bytes([case,warm])+attack)
 for name,request in {

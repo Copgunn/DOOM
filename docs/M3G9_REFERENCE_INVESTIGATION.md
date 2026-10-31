@@ -55,3 +55,16 @@ to the later M movement result. The correction buffers those read-only C/O rows
 across pickup events. Original observations and all historical families remain
 unchanged; the new DSIM expectations are corrected from their actual source
 candidate rows. This is an encoder correction, not changed source gameplay.
+
+
+The final appended timing case starts with controlled health8, collects a placed
+chaingun, then dies from genuine Demon melee at28 while lowering the pistol with
+the chaingun pending. Original P_DropWeapon's nested lowering action executes in
+that same tic; pending ownership persists after death without rebirth or firing.
+This extends combination evidence without new gameplay implementation. Earlier50
+source/event/index prefixes and their full/map bytes remain unchanged.
+
+P_GiveAmmo's original invalid-index check uses `ammo > NUMAMMO`; equality can index
+past its arrays. Invalid ammo indexes are never exercised in C. The bounded Rust
+item dispatch has only bullet/shell grant paths and rejects unsupported roles;
+this is a safety policy, not equivalence for undefined C input.

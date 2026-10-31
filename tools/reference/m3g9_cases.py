@@ -52,4 +52,5 @@ def populate(pack):
     add('sustained_weapon_supplies',[item(2001),item(2008,48),item(2012,0)],part=3,tics=512,thing=1,dx=256,script=21,seed=6,attack_start=50,attack_end=512)
     add('sixteen_clips_then_slot_reuse',[item(2007)for _ in range(16)],clips=0,tics=96,attack_start=50,attack_end=50)
     add('sustained_supplies_player_death',[item(2007,0),item(2012,0)],part=3,tics=512,thing=1,dx=256,script=22,forward=0,seed=6)
+    add('death_during_world_weapon_switch',[item(2002)],part=2,tics=128,thing=1,dx=-59,thing_angle=0,pre_damage=92,attack_start=15,attack_end=128)
     return layouts
