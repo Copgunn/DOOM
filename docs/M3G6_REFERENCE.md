@@ -97,3 +97,16 @@ infighting, sound propagation, airborne/general geometry, dynamic sectors, Fast 
 Nightmare, resurrection and rendering remain excluded. Future player weapon
 admission must independently establish its own source state/ammo/damage closure
 through these same shared services.
+
+## Implemented disposition
+
+The selected path uses the existing current-body DamagePlan builder after checked
+genuine-player ownership and impulse validation. The authoritative capability
+stays in PlayerRuntime and is copied only into the operation's transient roster
+selector; OriginalPlayer and actors gain no persistent fields. Source expectations
+and independent bytes were committed before runtime integration. Complete C field/
+event comparison and every-tic step/advance equivalence passed without changing
+those expectations. [Measured evidence](validation/M3G6.md) owns actual totals,
+safety campaigns and performance; [support](COMPATIBILITY.md#autonomous-original-demon-player-melee)
+owns the accepted domain and [format](STATE_FORMAT.md#dsim-v22-autonomous-demon-player-melee-policy)
+owns the new policy/context pair.

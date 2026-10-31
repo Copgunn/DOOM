@@ -1149,3 +1149,32 @@ event primitives. Complete PBE1 event frames and selected full fixtures preserve
 all ordered payloads. Birth/generation projection is independent Rust schema policy,
 not C allocator identity. See [evidence](validation/M3G5.md) and
 [source/harness qualifications](M3G5_REFERENCE.md).
+
+## DSIM-v22 autonomous Demon-player melee policy
+
+`PlayerDemonMeleeV1` selects wire policy6 and exact context
+`PLAYER-DEMON-1-MEDIUM-GROUNDED-MELEE-v1`, paired with `DOOM-INFO-1.10-v1`.
+Framing, field order, widths and event tags remain DSIM22. Existing player/mo,
+attacker, actor target/lastlook, angle/momentum, health/state/tics, flags, reaction,
+statistics, RNG and ordered Monster/Combat/PlayerBody events describe the admitted
+melee without new persistent fields or redundant immutable metadata.
+
+Fixed source activity remains player0 active and slots1–3 inactive, declared by
+this context rather than serialized as another mutable roster. Death does not
+change activity or mo ownership. Actor source identities and SARG states remain
+original ordinals. Policy6 permits normal attack states485–487; policy5 retains its
+no-melee context and rejection. All previous v20/v21/v22 bytes and meanings remain.
+
+`decode_player` validates exact policy/context pairs and their admitted definition/
+state roles. Mixed or unknown pairs reject; replacing both identifiers with the
+no-melee pair still rejects a captured SARG attack state. The old decode entry
+continues rejecting22. Structural decoding supplies neither safe execution,
+geometry admission, incarnation provenance nor executable-world restoration.
+
+The [independent encoder](../tools/reference/m3g6_snapshot_goldens.py) checks source
+roster/player/association rows and uses frozen generic field/event primitives.
+The separately named source capture `DOOM-PLAYER-DEMON-MELEE-v1` and new PBE1 event
+file preserve complete event order without rewriting older captures. Birth/generation
+projection and invalid-input rejection remain Rust schema/safety policy. See
+[source qualification](M3G6_REFERENCE.md), [reproduction](TESTING.md#autonomous-demon-player-melee)
+and [observations](validation/M3G6.md).

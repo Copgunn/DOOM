@@ -88,3 +88,6 @@ original evidence and former guide contents with exact-byte copies and digests.
 - [M3g4 original-player commands and reaction-time execution](M3G4_REFERENCE.md), with [observations](validation/M3G4.md).
 
 - [M3g5 active original-player roster and canonical Demon acquisition](M3G5_REFERENCE.md), with [observations](validation/M3G5.md).
+
+- [M3g6 autonomous canonical Demon-to-player melee](M3G6_REFERENCE.md), with
+  [observations](validation/M3G6.md) and [reproduction](TESTING.md#autonomous-demon-player-melee).

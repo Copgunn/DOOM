@@ -439,3 +439,27 @@ reaches the unsupported autonomous melee branch. There is no implicit Snapshot i
 advance and no release-only rollback exception. [Support](COMPATIBILITY.md#active-original-player-and-demon-acquisition)
 and [source findings](M3G5_REFERENCE.md) distinguish original behavior from Rust
 lifetime/admission policy; [observations](validation/M3G5.md) report measured costs.
+
+## Autonomous Demon-to-player combat
+
+`PlayerDemonMeleeV1` composes the same fixed roster, command stage, original state
+machine and thinker pass. The authoritative capability remains in PlayerRuntime;
+its immutable value travels through the existing transient perception selector.
+OriginalPlayer still contains only source player fields. No persistent actor or
+player field, roster cache, lifetime manager or alternate simulation loop is added.
+
+Chase selects the original attack state and sound. Two normal state timers later,
+SargAttack faces and rechecks current range before drawing damage. Its checked
+wrapper resolves the current owned body and live Demon from the staged actor store,
+uses the shared physical impulse/travel proof, then the existing current-body
+DamagePlan and LifeHost damage executor. No future hit, health or RNG is cached.
+Range misses and absent targets never build a damage plan. A dead allocated target
+can pass range and consume an attack draw before shared damage ignores it.
+
+The existing bounded transaction carries late combat errors as well as sight and
+command errors. Failure discards actor/player/RNG/statistics/spatial/event changes
+before commit, including partially executed commands or damage; release retains
+the same protection. Live Demon follow-through, player friction and corpse movement
+use existing services. The acquisition-only capability keeps its old rejection.
+See [support](COMPATIBILITY.md#autonomous-original-demon-player-melee),
+[source matrix](M3G6_REFERENCE.md) and [observations](validation/M3G6.md).

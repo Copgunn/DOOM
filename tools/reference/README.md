@@ -302,3 +302,12 @@ have explicit provenance. See [investigation](../../docs/M3G4_REFERENCE.md),
 [observations](../../docs/validation/M3G4.md). No full PlayerThink claim.
 
 M3g5 adds [the active-player/Demon observer](m3g5_reference.py) and [independent DSIM22 encoder](m3g5_snapshot_goldens.py); [source boundaries](../../docs/M3G5_REFERENCE.md) and [reproduction](../../docs/TESTING.md#active-original-player-and-demon-acquisition) qualify the fixed roster and nonmelee pursuit slice. Historical tools and expected bytes remain unchanged.
+
+M3g6 [melee observations](m3g6_reference.py) reuse that exact frozen source driver
+with new genuine-player combat inputs, and [independent encoding](m3g6_snapshot_goldens.py)
+reuses generic player/event primitives for DSIM22 policy6. Selection and later
+attack range decisions remain distinct; source function hashes/entries, partial
+captures and complete events have separate provenance. No Rust output creates
+expectations. See [source qualifications](../../docs/M3G6_REFERENCE.md),
+[commands](../../docs/TESTING.md#autonomous-demon-player-melee) and
+[observations](../../docs/validation/M3G6.md). Old capture formats and files remain immutable.
