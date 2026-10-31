@@ -235,7 +235,11 @@ impl Simulation {
             .original_player
             .as_ref()
             .ok_or(PlayerBodyError::Profile)?;
-        if p.policy != OriginalExecutionProfile::PlayerDemonWeaponsV1 {
+        if !matches!(
+            p.policy,
+            OriginalExecutionProfile::PlayerDemonWeaponsV1
+                | OriginalExecutionProfile::PlayerDemonPickupsV1
+        ) {
             return Err(PlayerBodyError::Profile.into());
         }
         if self.tic != 0
@@ -269,7 +273,13 @@ impl Simulation {
     ) -> Result<Option<PlayerWeaponState>, PlayerBodyError> {
         self.original_player
             .as_ref()
-            .filter(|p| p.policy == OriginalExecutionProfile::PlayerDemonWeaponsV1)
+            .filter(|p| {
+                matches!(
+                    p.policy,
+                    OriginalExecutionProfile::PlayerDemonWeaponsV1
+                        | OriginalExecutionProfile::PlayerDemonPickupsV1
+                )
+            })
             .map(|p| p.weapon.and_then(PlayerWeaponRuntime::pack))
             .ok_or(PlayerBodyError::Profile)
     }

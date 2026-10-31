@@ -650,6 +650,7 @@ impl Simulation {
                         );
                         for m in motion {
                             self.pending.push(match m {
+                                movement::MotionEvent::Contact(event) => event.event(),
                                 movement::MotionEvent::Sector(attempt) => {
                                     Event::SectorMovement { actor: id, attempt }
                                 }

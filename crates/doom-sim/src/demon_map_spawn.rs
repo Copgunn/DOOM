@@ -72,6 +72,7 @@ impl Simulation {
         for target in self.sound_targets.iter().flatten() {
             self.validate_perception_reference(*target)?;
         }
+        self.preflight_world_pickups()?;
         let mut suffix = false;
         let mut owners = 0;
         for id in self.actors.order() {
@@ -82,7 +83,14 @@ impl Simulation {
             let life = a.life.unwrap();
             // Validate complete future actions, not only this tic's next state.
             self.validate_combat_type(life.actor_type)?;
-            if life.actor_type == self.demon_owner_type() {
+            if self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
+                && world_pickups::kind(life.actor_type).is_some()
+            {
+                world_pickups::validate_item(a)?;
+                if suffix {
+                    return Err(MapSpawnError::Ownership.into());
+                }
+            } else if life.actor_type == self.demon_owner_type() {
                 owners += 1;
                 if suffix || owners > self.map_demon_limit() {
                     return Err(MapSpawnError::Ownership.into());

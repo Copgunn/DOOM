@@ -464,34 +464,70 @@ fn project(line: &LineGeometry, position: [Fixed; 2], motion: [Fixed; 2]) -> [Fi
 }
 
 pub(crate) enum MotionEvent {
+    Contact(crate::world_pickups::ContactEvent),
     Attempt(ActorMoveAttempt),
     Slide(u16),
     Sector(crate::SectorMoveAttempt),
+}
+pub(crate) trait MotionAccess {
+    type Error;
+    fn get(&self, id: ActorId) -> Option<Actor>;
+    fn contacts(
+        &mut self,
+        _id: ActorId,
+        _actor: &mut Actor,
+        _attempt: &ActorMoveAttempt,
+        _spatial: &mut SpatialIndex,
+        _events: &mut Vec<MotionEvent>,
+    ) -> Result<(), Self::Error> {
+        Ok(())
+    }
+}
+impl<F: Fn(ActorId) -> Option<Actor>> MotionAccess for F {
+    type Error = std::convert::Infallible;
+    fn get(&self, id: ActorId) -> Option<Actor> {
+        self(id)
+    }
+}
+fn infallible<T>(result: Result<T, std::convert::Infallible>) -> T {
+    match result {
+        Ok(v) => v,
+        Err(never) => match never {},
+    }
 }
 struct Mover<'a, F> {
     world: &'a StaticWorld,
     id: ActorId,
     actor: &'a mut Actor,
     spatial: &'a mut SpatialIndex,
-    get: F,
+    access: F,
     events: Vec<MotionEvent>,
     profile: MotionProfile<'a>,
 }
-impl<F: Fn(ActorId) -> Option<Actor>> Mover<'_, F> {
-    fn attempt(&mut self, delta: [Fixed; 2]) -> bool {
+impl<F: MotionAccess> Mover<'_, F> {
+    fn attempt(&mut self, delta: [Fixed; 2]) -> Result<bool, F::Error> {
         let target = [
             self.actor.spec.position[0] + delta[0],
             self.actor.spec.position[1] + delta[1],
         ];
+        let mut things = check_things(
+            self.world,
+            self.id,
+            self.actor,
+            target,
+            self.spatial,
+            &|id| self.access.get(id),
+        );
+        self.access
+            .contacts(self.id, self.actor, &things, self.spatial, &mut self.events)?;
         if let Some(sectors) = self.profile.sectors {
-            let attempt = crate::multisector::check_move(
+            let attempt = crate::multisector::check_move_from_things(
                 (self.world, sectors),
-                self.id,
                 self.actor,
                 target,
-                self.spatial,
-                &self.get,
+                things,
                 self.profile.command.is_some(),
+                false,
             );
             let allowed = attempt.allowed();
             if allowed {
@@ -502,30 +538,31 @@ impl<F: Fn(ActorId) -> Option<Actor>> Mover<'_, F> {
                 self.spatial.link(self.id);
             }
             self.events.push(MotionEvent::Sector(attempt));
-            return allowed;
+            return Ok(allowed);
         }
-        let attempt = check(
-            self.world,
-            self.id,
-            self.actor,
-            target,
-            self.spatial,
-            &self.get,
-        );
+        if things.blocked_by_actor.is_none() {
+            things.lines = self.world.check_validated_position(
+                target,
+                self.actor.spec.radius,
+                self.actor.spec.height,
+            );
+        }
+        let attempt = things;
         let allowed = attempt.allowed();
         self.events.push(MotionEvent::Attempt(attempt));
         if allowed {
             self.actor.spec.position = target;
             self.spatial.link(self.id);
         }
-        allowed
+        Ok(allowed)
     }
-    fn stairstep(&mut self) {
-        if !self.attempt([Fixed::ZERO, self.actor.spec.momentum[1]]) {
-            self.attempt([self.actor.spec.momentum[0], Fixed::ZERO]);
+    fn stairstep(&mut self) -> Result<(), F::Error> {
+        if !self.attempt([Fixed::ZERO, self.actor.spec.momentum[1]])? {
+            self.attempt([self.actor.spec.momentum[0], Fixed::ZERO])?;
         }
+        Ok(())
     }
-    fn slide(&mut self) {
+    fn slide(&mut self) -> Result<(), F::Error> {
         for _ in 0..2 {
             let pos = self.actor.spec.position;
             let radius = self.actor.spec.radius;
@@ -577,17 +614,17 @@ impl<F: Fn(ActorId) -> Option<Actor>> Mover<'_, F> {
                 }
             }
             let Some(i) = blocker else {
-                self.stairstep();
-                return;
+                self.stairstep()?;
+                return Ok(());
             };
             let flush = best - Fixed::from_bits(0x800);
-            if flush > Fixed::ZERO && !self.attempt([mom[0] * flush, mom[1] * flush]) {
-                self.stairstep();
-                return;
+            if flush > Fixed::ZERO && !self.attempt([mom[0] * flush, mom[1] * flush])? {
+                self.stairstep()?;
+                return Ok(());
             }
             let remainder = (Fixed::ONE - best).min(Fixed::ONE);
             if remainder <= Fixed::ZERO {
-                return;
+                return Ok(());
             }
             self.events.push(MotionEvent::Slide(i as u16));
             let motion = project(
@@ -596,11 +633,11 @@ impl<F: Fn(ActorId) -> Option<Actor>> Mover<'_, F> {
                 [mom[0] * remainder, mom[1] * remainder],
             );
             self.actor.spec.momentum = motion;
-            if self.attempt(motion) {
-                return;
+            if self.attempt(motion)? {
+                return Ok(());
             }
         }
-        self.stairstep();
+        self.stairstep()
     }
 }
 
@@ -612,7 +649,7 @@ pub(crate) fn move_xy(
     get: impl Fn(ActorId) -> Option<Actor>,
     command: Option<TicCommand>,
 ) -> Vec<MotionEvent> {
-    move_xy_profile(
+    infallible(move_xy_profile(
         world,
         id,
         actor,
@@ -622,7 +659,7 @@ pub(crate) fn move_xy(
             command,
             sectors: None,
         },
-    )
+    ))
 }
 pub(crate) fn move_xy_multisector(
     world: &StaticWorld,
@@ -633,7 +670,7 @@ pub(crate) fn move_xy_multisector(
     command: Option<TicCommand>,
     sectors: &[crate::SectorState],
 ) -> Vec<MotionEvent> {
-    move_xy_profile(
+    infallible(move_xy_profile(
         world,
         id,
         actor,
@@ -643,32 +680,32 @@ pub(crate) fn move_xy_multisector(
             command,
             sectors: Some(sectors),
         },
-    )
+    ))
 }
 struct MotionProfile<'a> {
     command: Option<TicCommand>,
     sectors: Option<&'a [crate::SectorState]>,
 }
-fn move_xy_profile(
+fn move_xy_profile<F: MotionAccess>(
     world: &StaticWorld,
     id: ActorId,
     actor: &mut Actor,
     spatial: &mut SpatialIndex,
-    get: impl Fn(ActorId) -> Option<Actor>,
+    access: F,
     profile: MotionProfile<'_>,
-) -> Vec<MotionEvent> {
+) -> Result<Vec<MotionEvent>, F::Error> {
     let command = profile.command;
     let mut mover = Mover {
         world,
         id,
         actor,
         spatial,
-        get,
+        access,
         events: Vec::new(),
         profile,
     };
     if mover.actor.spec.momentum == [Fixed::ZERO; 2] {
-        return mover.events;
+        return Ok(mover.events);
     }
     for m in &mut mover.actor.spec.momentum {
         *m = Fixed::from_bits(m.bits().clamp(-30 * 65536, 30 * 65536));
@@ -686,9 +723,9 @@ fn move_xy_profile(
             y = 0;
             d
         };
-        if !mover.attempt(delta.map(Fixed::from_bits)) {
+        if !mover.attempt(delta.map(Fixed::from_bits))? {
             if command.is_some() {
-                mover.slide();
+                mover.slide()?;
             } else {
                 mover.actor.spec.momentum = [Fixed::ZERO; 2];
             }
@@ -698,7 +735,7 @@ fn move_xy_profile(
         }
     }
     if mover.profile.sectors.is_some() && mover.actor.z > mover.actor.floor {
-        return mover.events;
+        return Ok(mover.events);
     }
     if mover
         .actor
@@ -714,7 +751,7 @@ fn move_xy_profile(
         if let Some(sectors) = mover.profile.sectors {
             if mover.actor.floor != sectors[usize::from(mover.actor.location.unwrap().sector)].floor
             {
-                return mover.events;
+                return Ok(mover.events);
             }
         }
     }
@@ -732,9 +769,30 @@ fn move_xy_profile(
             *m = *m * Fixed::from_bits(0xe800);
         }
     }
-    mover.events
+    Ok(mover.events)
 }
 
+pub(crate) fn move_xy_contacts<F: MotionAccess>(
+    world: &StaticWorld,
+    id: ActorId,
+    actor: &mut Actor,
+    spatial: &mut SpatialIndex,
+    access: F,
+    command: Option<TicCommand>,
+    sectors: &[crate::SectorState],
+) -> Result<Vec<MotionEvent>, F::Error> {
+    move_xy_profile(
+        world,
+        id,
+        actor,
+        spatial,
+        access,
+        MotionProfile {
+            command,
+            sectors: Some(sectors),
+        },
+    )
+}
 /// Original P_AproxDistance within the admitted signed coordinate bounds.
 pub(crate) fn approx_distance(delta: [Fixed; 2]) -> Fixed {
     let x = delta[0].bits().abs();

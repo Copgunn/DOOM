@@ -228,12 +228,13 @@ impl<A: ActorAccess> weapons::Host for Host<'_, '_, A> {
     }
     fn admit_weapon(&self, weapon: Weapon) -> Result<(), SimError> {
         if weapon == Weapon::Pistol
-            || (self
-                .life
-                .player
-                .as_ref()
-                .is_some_and(|p| p.policy == OriginalExecutionProfile::PlayerDemonWeaponsV1)
-                && matches!(weapon, Weapon::Fist | Weapon::Shotgun | Weapon::Chaingun))
+            || (self.life.player.as_ref().is_some_and(|p| {
+                matches!(
+                    p.policy,
+                    OriginalExecutionProfile::PlayerDemonWeaponsV1
+                        | OriginalExecutionProfile::PlayerDemonPickupsV1
+                )
+            }) && matches!(weapon, Weapon::Fist | Weapon::Shotgun | Weapon::Chaingun))
         {
             Ok(())
         } else {
@@ -334,7 +335,8 @@ pub(crate) fn run<A: ActorAccess>(
             OriginalExecutionProfile::PlayerDemonPistolV1,
             player_weapons::PlayerWeaponRuntime::Pistol(_)
         ) | (
-            OriginalExecutionProfile::PlayerDemonWeaponsV1,
+            OriginalExecutionProfile::PlayerDemonWeaponsV1
+                | OriginalExecutionProfile::PlayerDemonPickupsV1,
             player_weapons::PlayerWeaponRuntime::Pack(_)
         )
     ) {

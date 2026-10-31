@@ -1,0 +1,507 @@
+//! Source sprite-dispatched world contacts, using the existing player and store.
+use crate::{identity::*, lifecycle::ActorAccess, player_weapons::PlayerWeaponRuntime, *};
+
+/// Explicit pickup capability; historical no-pickup policies remain unchanged.
+pub const PLAYER_DEMON_PICKUPS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-DEMON-1-MEDIUM-GROUNDED-PICKUPS-v1";
+/// New placed plus controlled-dropped item budget, within the existing64 slots.
+pub const MAX_WORLD_PICKUPS: usize = 16;
+pub(crate) const MF_SPECIAL: u32 = 1;
+pub(crate) const MF_COUNTKILL: u32 = 0x0040_0000;
+const MF_DROPPED: u32 = 0x0002_0000;
+const MF_AMBUSH: u32 = 0x20;
+const MF_PICKUP: u32 = 0x800;
+const BONUS_ADD: i32 = 6; // p_inter.c BONUSADD
+const MAX_BONUS: i32 = BONUS_ADD * MAX_WORLD_PICKUPS as i32;
+
+/// Executable item definitions; each remains its original canonical actor.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PickupKind {
+    /// MT_CLIP, DoomEd2007.
+    Clip,
+    /// MT_MISC17, DoomEd2048.
+    BulletBox,
+    /// MT_MISC22, DoomEd2008.
+    Shells,
+    /// MT_MISC23, DoomEd2049.
+    ShellBox,
+    /// MT_MISC10, DoomEd2011.
+    Stimpack,
+    /// MT_MISC11, DoomEd2012.
+    Medikit,
+    /// MT_SHOTGUN, DoomEd2001; distinct from MT_SHOTGUY.
+    Shotgun,
+    /// MT_CHAINGUN, DoomEd2002; distinct from MT_CHAINGUY.
+    Chaingun,
+}
+impl PickupKind {
+    /// Original definition, never a synthetic pickup alias.
+    pub const fn original_type(self) -> OriginalActorType {
+        match self {
+            Self::Clip => OriginalActorType::MT_CLIP,
+            Self::BulletBox => OriginalActorType::MT_MISC17,
+            Self::Shells => OriginalActorType::MT_MISC22,
+            Self::ShellBox => OriginalActorType::MT_MISC23,
+            Self::Stimpack => OriginalActorType::MT_MISC10,
+            Self::Medikit => OriginalActorType::MT_MISC11,
+            Self::Shotgun => OriginalActorType::MT_SHOTGUN,
+            Self::Chaingun => OriginalActorType::MT_CHAINGUN,
+        }
+    }
+    fn message(self) -> PickupMessage {
+        match self {
+            Self::Clip => PickupMessage::Clip,
+            Self::BulletBox => PickupMessage::BulletBox,
+            Self::Shells => PickupMessage::Shells,
+            Self::ShellBox => PickupMessage::ShellBox,
+            Self::Stimpack => PickupMessage::Stimpack,
+            Self::Medikit => PickupMessage::Medikit,
+            Self::Shotgun => PickupMessage::Shotgun,
+            Self::Chaingun => PickupMessage::Chaingun,
+        }
+    }
+    fn can_drop(self) -> bool {
+        matches!(self, Self::Clip | Self::Shotgun | Self::Chaingun)
+    }
+}
+pub(crate) fn kind(ty: ActorTypeId) -> Option<PickupKind> {
+    Some(match OriginalActorType::try_from(ty.0).ok()? {
+        OriginalActorType::MT_CLIP => PickupKind::Clip,
+        OriginalActorType::MT_MISC17 => PickupKind::BulletBox,
+        OriginalActorType::MT_MISC22 => PickupKind::Shells,
+        OriginalActorType::MT_MISC23 => PickupKind::ShellBox,
+        _ => return None,
+    })
+}
+/// Stable identifiers for actual dstrings.h messages; no HUD timeout is implied.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(u8)]
+pub enum PickupMessage {
+    /// No source message assigned.
+    #[default]
+    None = 0,
+    /// GOTCLIP.
+    Clip = 1,
+    /// GOTCLIPBOX.
+    BulletBox = 2,
+    /// GOTSHELLS.
+    Shells = 3,
+    /// GOTSHELLBOX.
+    ShellBox = 4,
+    /// GOTSTIM.
+    Stimpack = 5,
+    /// GOTMEDIKIT.
+    Medikit = 6,
+    /// GOTMEDINEED, source metadata only in this positive-health domain.
+    MedikitNeeded = 7,
+    /// GOTSHOTGUN.
+    Shotgun = 8,
+    /// GOTCHAINGUN.
+    Chaingun = 9,
+}
+/// Source pickup-only fields; health, body and inventory retain their owners.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct PlayerPickupState {
+    /// Source bonuscount; live admitted fragment decrements before thinkers.
+    pub bonus_count: i32,
+    /// Source itemcount; all eight definitions lack MF_COUNTITEM.
+    pub item_count: i32,
+    /// Last assigned source message, without presentation-side clearing.
+    pub message: PickupMessage,
+}
+impl PlayerPickupState {
+    fn validate(self) -> Result<(), SimError> {
+        if !(0..=MAX_BONUS).contains(&self.bonus_count)
+            || self.item_count != 0
+            || self.message == PickupMessage::MedikitNeeded
+        {
+            return Err(PlayerBodyError::Invariant.into());
+        }
+        Ok(())
+    }
+}
+/// Source touch return classification, independent of handle lifetime policy.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum PickupOutcome {
+    /// Vertical reach rejected.
+    OutOfReach = 0,
+    /// Toucher health is nonpositive.
+    Dead = 1,
+    /// The resource was already full/owned with no ammo benefit.
+    NotNeeded = 2,
+    /// Resource granted and item marked for deferred retirement.
+    Collected = 3,
+}
+/// Ordered actual source observations; DSIM25 event23 subtypes0–6.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum PickupEvent {
+    /// Item/body/sprite, vertical delta, body height and signed health.
+    Touch(ActorId, ActorId, u16, Fixed, Fixed, i32),
+    /// Ammo kind, accepted, before/after, current ready and resulting pending.
+    Ammo(u8, bool, i32, i32, Weapon, Option<Weapon>),
+    /// Accepted and player before/after plus resulting mobj health.
+    Body(bool, i32, i32, i32),
+    /// Weapon, accepted, ownership before/after, pending before/after.
+    Weapon(Weapon, bool, u16, u16, Option<Weapon>, Option<Weapon>),
+    /// Assigned actual source message.
+    Message(PickupMessage),
+    /// Resulting source bonuscount and itemcount.
+    Bonus(i32, i32),
+    /// Actual source touch return classification.
+    Result(ActorId, PickupOutcome),
+}
+pub(crate) enum ContactEvent {
+    Pickup(PickupEvent),
+    Removed(ActorId),
+    Sound(u16),
+}
+impl ContactEvent {
+    pub(crate) fn event(self) -> Event {
+        match self {
+            Self::Pickup(e) => Event::Pickup(e),
+            Self::Removed(id) => Event::RemovalMarked(id),
+            Self::Sound(sound) => Event::ActorState(ActorStateEvent::Sound { actor: None, sound }),
+        }
+    }
+}
+pub(crate) fn validate_definition(ty: ActorTypeId) -> Result<(), SimError> {
+    let k = kind(ty).ok_or(ActorError::InvalidType)?;
+    let d = k.original_type().descriptor();
+    let s = d.states.spawn.descriptor();
+    if d.flags != MF_SPECIAL
+        || s.tics != -1
+        || s.next != OriginalState::S_NULL
+        || s.action.is_some()
+    {
+        return Err(ActorError::InvalidType.into());
+    }
+    Ok(())
+}
+pub(crate) fn validate_item(a: Actor) -> Result<(), SimError> {
+    let l = a.life().ok_or(ActorError::InvalidType)?;
+    let k = kind(l.actor_type).ok_or(ActorError::InvalidType)?;
+    validate_definition(l.actor_type)?;
+    let state = k.original_type().states().spawn;
+    let s = state.descriptor();
+    let dropped = l.flags & MF_DROPPED != 0;
+    if l.state != Some(StateId(state.ordinal()))
+        || l.sprite != s.sprite.ordinal()
+        || l.frame != s.frame
+        || l.tics != -1
+        || l.health != 1000
+        || l.target.is_some()
+        || a.radius() != Fixed::from_map_units(20)
+        || a.height() != Fixed::from_map_units(16)
+        || a.momentum() != [Fixed::ZERO; 2]
+        || a.momz != Fixed::ZERO
+        || a.z != a.floor
+        || a.position().iter().any(|v| !sight::within(*v, 978))
+        || l.flags & !(MF_SPECIAL | MF_AMBUSH | MF_DROPPED) != 0
+        || l.flags & MF_SPECIAL == 0
+        || (dropped && (!k.can_drop() || l.spawnpoint.is_some() || l.flags & MF_AMBUSH != 0))
+        || (!dropped
+            && l.spawnpoint.is_none_or(|p| {
+                i32::from(p.kind) != k.original_type().descriptor().doomed_number
+                    || a.position()
+                        != [
+                            Fixed::from_map_units(p.position.x),
+                            Fixed::from_map_units(p.position.y),
+                        ]
+            }))
+    {
+        return Err(PlayerBodyError::Invariant.into());
+    }
+    Ok(())
+}
+pub(crate) fn bonus_tick(
+    player: Option<&mut original_player::PlayerRuntime>,
+) -> Result<(), SimError> {
+    if let Some(p) = player {
+        if p.policy == OriginalExecutionProfile::PlayerDemonPickupsV1 {
+            let live = p.state == PlayerBodyState::Live;
+            let state = p.pickups.as_mut().ok_or(PlayerBodyError::Invariant)?;
+            state.validate()?;
+            if live && state.bonus_count > 0 {
+                state.bonus_count -= 1;
+            }
+        }
+    }
+    Ok(())
+}
+fn observe(events: &mut Vec<movement::MotionEvent>, event: PickupEvent) {
+    events.push(movement::MotionEvent::Contact(ContactEvent::Pickup(event)));
+}
+fn ammo(
+    p: &mut PlayerWeaponState,
+    shell: bool,
+    loads: u16,
+    events: &mut Vec<movement::MotionEvent>,
+) -> bool {
+    let before = if shell { p.shells } else { p.bullets };
+    let cap = if shell { 50 } else { 200 };
+    let accepted = before != cap;
+    if accepted {
+        let count = if loads == 0 {
+            5
+        } else {
+            loads * if shell { 4 } else { 10 }
+        };
+        let after = before.saturating_add(count).min(cap);
+        if shell {
+            p.shells = after;
+        } else {
+            p.bullets = after;
+        }
+        if before == 0 {
+            if shell
+                && matches!(p.ready, Weapon::Fist | Weapon::Pistol)
+                && p.owned & (1 << Weapon::Shotgun as u8) != 0
+            {
+                p.pending = Some(Weapon::Shotgun);
+            }
+            if !shell && p.ready == Weapon::Fist {
+                p.pending = Some(if p.owned & (1 << Weapon::Chaingun as u8) != 0 {
+                    Weapon::Chaingun
+                } else {
+                    Weapon::Pistol
+                });
+            }
+        }
+    }
+    observe(
+        events,
+        PickupEvent::Ammo(
+            u8::from(shell),
+            accepted,
+            i32::from(before),
+            i32::from(if shell { p.shells } else { p.bullets }),
+            p.ready,
+            p.pending,
+        ),
+    );
+    accepted
+}
+/// Same actor access and player state used by the shared thinker transaction.
+pub(crate) struct Contacts<'a, A> {
+    pub access: &'a mut A,
+    pub player: &'a mut original_player::PlayerRuntime,
+}
+impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
+    type Error = SimError;
+    fn get(&self, id: ActorId) -> Option<Actor> {
+        self.access.get(id).copied()
+    }
+    fn contacts(
+        &mut self,
+        id: ActorId,
+        body: &mut Actor,
+        attempt: &ActorMoveAttempt,
+        spatial: &mut movement::SpatialIndex,
+        events: &mut Vec<movement::MotionEvent>,
+    ) -> Result<(), SimError> {
+        if self.player.mo != Some(id)
+            || self.player.policy != OriginalExecutionProfile::PlayerDemonPickupsV1
+        {
+            return Err(PlayerBodyError::Binding.into());
+        }
+        for &item_id in &attempt.actors {
+            if item_id == id {
+                continue;
+            }
+            let item = self.get(item_id).ok_or(StoreError::InvalidHandle)?;
+            let l = item.life().ok_or(ActorError::InvalidType)?;
+            if l.flags & MF_SPECIAL == 0 {
+                continue;
+            }
+            let distance = i64::from(body.radius().bits()) + i64::from(item.radius().bits());
+            if (0..2).any(|axis| {
+                (i64::from(item.position()[axis].bits()) - i64::from(attempt.target[axis].bits()))
+                    .abs()
+                    >= distance
+            }) {
+                continue;
+            }
+            if body.life().is_none_or(|v| v.flags & MF_PICKUP == 0) {
+                continue;
+            }
+            validate_item(item)?;
+            let k = kind(l.actor_type).ok_or(ActorError::InvalidType)?;
+            let delta = item.z - body.z;
+            let health = body.life().ok_or(ActorError::InvalidType)?.health;
+            observe(
+                events,
+                PickupEvent::Touch(item_id, id, l.sprite, delta, body.height(), health),
+            );
+            let mut outcome = if delta > body.height() || delta < Fixed::from_map_units(-8) {
+                PickupOutcome::OutOfReach
+            } else if health <= 0 {
+                PickupOutcome::Dead
+            } else {
+                PickupOutcome::NotNeeded
+            };
+            if outcome == PickupOutcome::NotNeeded {
+                let weapon = self.player.weapon.as_mut().ok_or(WeaponError::Player)?;
+                let PlayerWeaponRuntime::Pack(w) = weapon else {
+                    return Err(WeaponError::Inventory.into());
+                };
+                let accepted = match k {
+                    PickupKind::Clip => ammo(
+                        w,
+                        false,
+                        if l.flags & MF_DROPPED != 0 { 0 } else { 1 },
+                        events,
+                    ),
+                    PickupKind::BulletBox => ammo(w, false, 5, events),
+                    PickupKind::Shells => ammo(w, true, 1, events),
+                    PickupKind::ShellBox => ammo(w, true, 5, events),
+                    _ => return Err(PlayerBodyError::Unsupported.into()),
+                };
+                if accepted {
+                    let state = self
+                        .player
+                        .pickups
+                        .as_mut()
+                        .ok_or(PlayerBodyError::Invariant)?;
+                    state.message = k.message();
+                    observe(events, PickupEvent::Message(state.message));
+                    if !self.access.mark(item_id)? {
+                        return Err(StoreError::InvalidHandle.into());
+                    }
+                    spatial.unlink(item_id);
+                    events.push(movement::MotionEvent::Contact(ContactEvent::Removed(
+                        item_id,
+                    )));
+                    state.bonus_count = state
+                        .bonus_count
+                        .checked_add(BONUS_ADD)
+                        .ok_or(PlayerBodyError::Invariant)?;
+                    state.validate()?;
+                    observe(
+                        events,
+                        PickupEvent::Bonus(state.bonus_count, state.item_count),
+                    );
+                    let sound = if matches!(k, PickupKind::Shotgun | PickupKind::Chaingun) {
+                        "sfx_wpnup"
+                    } else {
+                        "sfx_itemup"
+                    };
+                    events.push(movement::MotionEvent::Contact(ContactEvent::Sound(
+                        lifecycle::source_sound(sound).ok_or(ActorError::InvalidType)?,
+                    )));
+                    outcome = PickupOutcome::Collected;
+                }
+            }
+            observe(events, PickupEvent::Result(item_id, outcome));
+        }
+        Ok(())
+    }
+}
+impl Simulation {
+    /// One genuine player/Demon world with source ammo, health and weapon items.
+    pub fn original_player_pickups_map(
+        map: Map,
+        limit: u32,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        Self::with_original_registry(
+            map,
+            limit,
+            OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerDemonPickupsV1)?,
+            ActorOptions::default(),
+            context,
+        )
+        .map_err(Into::into)
+    }
+    /// Source pickup observations; no mutable player/inventory alias is exposed.
+    pub fn original_player_pickups(
+        &self,
+        _slot: PlayerSlot,
+    ) -> Result<PlayerPickupState, PlayerBodyError> {
+        self.original_player
+            .as_ref()
+            .and_then(|p| p.pickups)
+            .ok_or(PlayerBodyError::Profile)
+    }
+    pub(crate) fn preflight_world_pickups(&self) -> Result<(), SimError> {
+        if self.player_policy() != OriginalExecutionProfile::PlayerDemonPickupsV1 {
+            return Ok(());
+        }
+        self.original_player
+            .as_ref()
+            .and_then(|p| p.pickups)
+            .ok_or(PlayerBodyError::Invariant)?
+            .validate()?;
+        let mut count = 0;
+        for id in self.actors.order() {
+            if self.actors.is_pending(id) != Some(false) {
+                continue;
+            }
+            let a = *self.actor(id).ok_or(StoreError::InvalidHandle)?;
+            if a.life().is_some_and(|l| kind(l.actor_type).is_some()) {
+                count += 1;
+                validate_item(a)?;
+            }
+        }
+        if count > MAX_WORLD_PICKUPS {
+            return Err(MapSpawnError::WorkLimit.into());
+        }
+        Ok(())
+    }
+    /// Controlled actual dropped Clip/Shotgun/Chaingun spawn, before body/tic0.
+    /// This is setup, not monster loot, respawn or dynamic item creation.
+    pub fn spawn_dropped_pickup(
+        &mut self,
+        k: PickupKind,
+        position: [Fixed; 2],
+    ) -> Result<ActorId, SimError> {
+        if self.player_policy() != OriginalExecutionProfile::PlayerDemonPickupsV1
+            || self.tic != 0
+            || self.original_player.as_ref().is_none_or(|p| p.mo.is_some())
+            || k != PickupKind::Clip
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
+        self.preflight_world_pickups()?;
+        let items = self
+            .actors
+            .order()
+            .filter(|id| {
+                self.actor(*id)
+                    .and_then(Actor::life)
+                    .is_some_and(|l| kind(l.actor_type).is_some())
+            })
+            .count();
+        if items >= MAX_WORLD_PICKUPS {
+            return Err(MapSpawnError::WorkLimit.into());
+        }
+        if position.iter().any(|v| !sight::within(*v, 978)) {
+            return Err(MonsterError::Arithmetic.into());
+        }
+        self.reserve_actor_spawns(1)?;
+        let id = lifecycle::LifeHost {
+            player: None,
+            statistics: self.statistics.as_mut(),
+            perception: None,
+            access: &mut self.actors,
+            registry: self.registry.as_deref().ok_or(ActorError::InvalidType)?,
+            world: &self.world,
+            sectors: &self.sectors,
+            options: self.actor_options,
+            rng: &mut self.rng,
+            spatial: &mut self.spatial,
+            bindings: &mut self.bindings,
+            events: &mut self.pending,
+        }
+        .spawn(
+            ActorTypeId(k.original_type().ordinal()),
+            position,
+            SpawnHeight::Floor,
+        );
+        self.actors
+            .get_mut(id)
+            .and_then(|a| a.life.as_mut())
+            .ok_or(StoreError::InvalidHandle)?
+            .flags |= MF_DROPPED;
+        Ok(id)
+    }
+}

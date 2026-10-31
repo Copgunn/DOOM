@@ -138,6 +138,13 @@ impl<'a> Diagnostic<'a> {
     ) -> Result<Self, DiagnosticError> {
         Self::decode_selected(bytes, limits, Some(23))
     }
+    /// Explicit DSIM25 world-pickup reader; older readers retain their version gate.
+    pub fn decode_pickups(
+        bytes: &'a [u8],
+        limits: DiagnosticLimits,
+    ) -> Result<Self, DiagnosticError> {
+        Self::decode_selected(bytes, limits, Some(25))
+    }
     /// Explicit DSIM24 reader for the original four-weapon capability.
     /// Decoding validates observations, never restores an executable world.
     pub fn decode_weapons(
@@ -237,7 +244,7 @@ impl<'a> Diagnostic<'a> {
     fn identity(&self, ty: u16, state: u16) -> Result<DiagnosticIdentity, DiagnosticError> {
         let actor = ActorTypeId(ty);
         let state = (state != u16::MAX).then_some(StateId(state));
-        if matches!(self.version, 21..=24) {
+        if matches!(self.version, 21..=25) {
             let policy = self.policy();
             original_registry::require_role_for(policy, actor)
                 .map_err(|_| DiagnosticError::Identity)?;
@@ -284,13 +291,16 @@ impl<'a> Diagnostic<'a> {
         self.identity(ty, state).map(Some)
     }
     fn policy(&self) -> OriginalExecutionProfile {
+        if self.version == 25 {
+            return OriginalExecutionProfile::PlayerDemonPickupsV1;
+        }
         if self.version == 24 {
             return OriginalExecutionProfile::PlayerDemonWeaponsV1;
         }
         if self.version == 23 {
             return OriginalExecutionProfile::PlayerDemonPistolV1;
         }
-        if matches!(self.version, 22..=24)
+        if matches!(self.version, 22..=25)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerDemonMeleeV1
@@ -300,7 +310,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerDemonMeleeV1
-        } else if matches!(self.version, 22..=24)
+        } else if matches!(self.version, 22..=25)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerDemonAcquisitionV1
@@ -310,7 +320,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerDemonAcquisitionV1
-        } else if matches!(self.version, 22..=24)
+        } else if matches!(self.version, 22..=25)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerCommandMovementV1
@@ -320,7 +330,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerCommandMovementV1
-        } else if matches!(self.version, 22..=24)
+        } else if matches!(self.version, 22..=25)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerBodyKnockbackV1
@@ -330,7 +340,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerBodyKnockbackV1
-        } else if matches!(self.version, 22..=24) {
+        } else if matches!(self.version, 22..=25) {
             OriginalExecutionProfile::PlayerBodyLifecycleV1
         } else {
             OriginalExecutionProfile::DemonNormalV1
@@ -342,7 +352,7 @@ impl<'a> Diagnostic<'a> {
             return Err(DiagnosticError::Schema);
         }
         number::<8>(self.required("tic")?)?;
-        if matches!(self.version, 21..=24) {
+        if matches!(self.version, 21..=25) {
             if profile != self.policy().wire_id()
                 || self.required("registry.schema")? != ORIGINAL_REGISTRY_SCHEMA
                 || self.required("context.schema")? != self.policy().context_schema()
@@ -403,7 +413,7 @@ impl<'a> Diagnostic<'a> {
                 || f.path.ends_with(".soundtarget")
                 || f.path.ends_with(".previous")
                 || f.path.ends_with(".next")
-                || matches!(self.version, 22..=24)
+                || matches!(self.version, 22..=25)
                     && matches!(
                         f.path,
                         "original_player.0.mo" | "original_player.0.attacker"
@@ -447,7 +457,9 @@ impl<'a> Diagnostic<'a> {
                 let event = self.required(&format!("{prefix}.{i}"))?;
                 let tag = *event.first().ok_or(DiagnosticError::Structure)?;
                 if tag
-                    > if matches!(self.version, 22..=24) {
+                    > if self.version == 25 {
+                        23
+                    } else if matches!(self.version, 22..=25) {
                         22
                     } else {
                         21
@@ -455,11 +467,14 @@ impl<'a> Diagnostic<'a> {
                 {
                     return Err(DiagnosticError::Structure);
                 }
-                if tag == 22 {
-                    validate_player_event(event, self.version == 24)?;
+                if tag == 23 {
+                    validate_pickup_event(event)?;
                 }
-                if tag == 14 && matches!(self.version, 23 | 24) {
-                    validate_weapon_event(event, self.version == 24)?;
+                if tag == 22 {
+                    validate_player_event(event, matches!(self.version, 24 | 25))?;
+                }
+                if tag == 14 && matches!(self.version, 23..=25) {
+                    validate_weapon_event(event, matches!(self.version, 24 | 25))?;
                 }
                 // Validate identity-bearing payloads without interpreting nested
                 // untrusted collision/sight counts or allocating from them.
@@ -477,13 +492,13 @@ impl<'a> Diagnostic<'a> {
                     )?);
                     if is_type {
                         self.identity(value, u16::MAX)?;
-                    } else if matches!(self.version, 21..=24) {
+                    } else if matches!(self.version, 21..=25) {
                         let state = OriginalState::try_from(value)
                             .map_err(|_| DiagnosticError::Identity)?;
                         // Entering S_NULL is a source removal event, not a live
                         // executable state. Real pistol impact thinkers expose
                         // this sentinel in23; historical readers stay unchanged.
-                        if matches!(self.version, 23 | 24)
+                        if matches!(self.version, 23..=25)
                             && state == OriginalState::S_NULL
                             && event.get(..2) == Some(&[12, 1])
                         {
@@ -495,6 +510,14 @@ impl<'a> Diagnostic<'a> {
                             OriginalActorType::MT_PUFF,
                             OriginalActorType::MT_BLOOD,
                             OriginalActorType::MT_PLAYER,
+                            OriginalActorType::MT_CLIP,
+                            OriginalActorType::MT_MISC17,
+                            OriginalActorType::MT_MISC22,
+                            OriginalActorType::MT_MISC23,
+                            OriginalActorType::MT_MISC10,
+                            OriginalActorType::MT_MISC11,
+                            OriginalActorType::MT_SHOTGUN,
+                            OriginalActorType::MT_CHAINGUN,
                         ]
                         .into_iter()
                         .any(|ty| {
@@ -516,14 +539,29 @@ impl<'a> Diagnostic<'a> {
                 }
             }
         }
-        if matches!(self.version, 22..=24) {
+        if matches!(self.version, 22..=25) {
             self.validate_player()?;
         }
         if self.version == 23 {
             self.validate_pistol()?;
         }
-        if self.version == 24 {
+        if matches!(self.version, 24 | 25) {
             self.validate_weapons()?;
+        }
+        if self.version == 25 {
+            if self.required("original_player.0.pickups.present")? != [1] {
+                return Err(DiagnosticError::Structure);
+            }
+            let bonus = i32::from_le_bytes(number(
+                self.required("original_player.0.pickups.bonus_count")?,
+            )?);
+            let items = i32::from_le_bytes(number(
+                self.required("original_player.0.pickups.item_count")?,
+            )?);
+            let message = self.required("original_player.0.pickups.message")?;
+            if !(0..=96).contains(&bonus) || items != 0 || !matches!(message, [0..=6] | [8..=9]) {
+                return Err(DiagnosticError::Structure);
+            }
         }
         Ok(())
     }
@@ -784,7 +822,7 @@ impl Snapshot {
     /// Bounded Result-returning DSIM20/21/22/23/24 encoder. Trusted convenience APIs retain
     /// their old allocation policy; callers at input/output boundaries use this.
     pub fn diagnostic_bytes(&self, limits: DiagnosticLimits) -> Result<Vec<u8>, DiagnosticError> {
-        if !matches!(self.version(), 20..=24) {
+        if !matches!(self.version(), 20..=25) {
             return Err(DiagnosticError::Version(self.version()));
         }
         let mut size = 16_usize;
@@ -985,5 +1023,70 @@ fn validate_player_event(event: &[u8], pack: bool) -> Result<(), DiagnosticError
             Ok(())
         }
         _ => Err(DiagnosticError::Structure),
+    }
+}
+
+// Independent DSIM25 widths and bounded source enum domains; no world restoration.
+fn validate_pickup_event(event: &[u8]) -> Result<(), DiagnosticError> {
+    let get = |a: usize, b: usize| event.get(a..b).ok_or(DiagnosticError::Structure);
+    let ok = match event.get(1) {
+        Some(0) => {
+            if event.len() != 40 {
+                return Err(DiagnosticError::Structure);
+            }
+            validate_handle(get(2, 14)?)?;
+            validate_handle(get(14, 26)?)?;
+            let sprite = u16::from_le_bytes(number(get(26, 28)?)?);
+            [68, 69, 78, 79, 84, 85, 88, 92].contains(&sprite)
+        }
+        Some(1) => {
+            event.len() == 14
+                && event[2] <= 1
+                && event[3] <= 1
+                && event[12] <= 3
+                && matches!(event[13], 0..=3 | 10)
+                && {
+                    let before = i32::from_le_bytes(number(get(4, 8)?)?);
+                    let after = i32::from_le_bytes(number(get(8, 12)?)?);
+                    let max = if event[2] == 0 { 200 } else { 50 };
+                    (0..=max).contains(&before) && (before..=max).contains(&after)
+                }
+        }
+        Some(2) => {
+            event.len() == 15 && event[2] <= 1 && {
+                let before = i32::from_le_bytes(number(get(3, 7)?)?);
+                let after = i32::from_le_bytes(number(get(7, 11)?)?);
+                let body = i32::from_le_bytes(number(get(11, 15)?)?);
+                (1..=100).contains(&before) && (before..=100).contains(&after) && after == body
+            }
+        }
+        Some(3) => {
+            event.len() == 10
+                && matches!(event[2], 2 | 3)
+                && event[3] <= 1
+                && u16::from_le_bytes(number(get(4, 6)?)?) <= 15
+                && u16::from_le_bytes(number(get(6, 8)?)?) <= 15
+                && matches!(event[8], 0..=3 | 10)
+                && matches!(event[9], 0..=3 | 10)
+        }
+        Some(4) => event.len() == 3 && matches!(event[2],1..=6|8..=9),
+        Some(5) => {
+            event.len() == 10
+                && (0..=96).contains(&i32::from_le_bytes(number(get(2, 6)?)?))
+                && get(6, 10)? == [0; 4]
+        }
+        Some(6) => {
+            if event.len() != 15 {
+                return Err(DiagnosticError::Structure);
+            }
+            validate_handle(get(2, 14)?)?;
+            event[14] <= 3
+        }
+        _ => false,
+    };
+    if ok {
+        Ok(())
+    } else {
+        Err(DiagnosticError::Structure)
     }
 }

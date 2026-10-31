@@ -121,6 +121,11 @@ impl Simulation {
         if self.profile == Profile::OriginalDemon {
             original_registry::require_role_for(self.player_policy(), ty)
                 .map_err(|_| MonsterError::Definition)?;
+            if self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
+                && world_pickups::kind(ty).is_some()
+            {
+                return world_pickups::validate_definition(ty);
+            }
             self.registry
                 .as_deref()
                 .ok_or(MonsterError::Definition)?

@@ -78,7 +78,11 @@ impl Simulation {
         }
         let command = commands[slot];
         if command.buttons
-            & !(if p.policy == OriginalExecutionProfile::PlayerDemonWeaponsV1 {
+            & !(if matches!(
+                p.policy,
+                OriginalExecutionProfile::PlayerDemonWeaponsV1
+                    | OriginalExecutionProfile::PlayerDemonPickupsV1
+            ) {
                 BT_ATTACK | BT_CHANGE | BT_WEAPONMASK
             } else if p.policy == OriginalExecutionProfile::PlayerDemonPistolV1 {
                 BT_ATTACK
@@ -94,7 +98,11 @@ impl Simulation {
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
-        if p.policy == OriginalExecutionProfile::PlayerDemonWeaponsV1 {
+        if matches!(
+            p.policy,
+            OriginalExecutionProfile::PlayerDemonWeaponsV1
+                | OriginalExecutionProfile::PlayerDemonPickupsV1
+        ) {
             player_weapons::validate_command(command)?;
         }
         let current = p.mo.filter(|id| self.actors.is_pending(*id) == Some(false));
