@@ -1211,7 +1211,7 @@ attack states154/155 are executable only under this capability. Weapon overlays
 
 Persistent weapon states are source pistol ready/up/down/attack; flash is17 or
 NULL. Timers are checked against canonical source descriptors. Null flash retains
-zero timer/coordinates as source transitions dictate; it does not restore another
+a zero timer and source-maintained coordinates; it does not restore another
 weapon. Decoding bounds bullets, refire, bob, light, coordinates, channel-specific
 states and exact schema/policy pairs. Death retains the body and weapon ownership,
 with a lowering pistol. Setup snapshots may have present0 before initialization.
