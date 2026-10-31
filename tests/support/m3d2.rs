@@ -222,11 +222,16 @@ pub fn player_values(sim: &Simulation) -> Vec<i64> {
     v
 }
 pub fn player_reference(which: usize) -> Vec<Vec<i64>> {
-    include_str!("../reference/m3d2_trace.csv")
-        .lines()
-        .filter(|r| {
-            r.starts_with("P,") && r.split(',').nth(1).unwrap().parse::<usize>().unwrap() == which
-        })
-        .map(|r| r.split(',').skip(3).map(|x| x.parse().unwrap()).collect())
-        .collect()
+    doom_test_evidence::text(
+        "tests/reference/m3d2_trace.csv",
+        include_bytes!("../reference/m3d2_trace.csv.zst"),
+        include_str!("../reference/zstd_manifest.json"),
+    )
+    .expect("verified historical zstd evidence")
+    .lines()
+    .filter(|r| {
+        r.starts_with("P,") && r.split(',').nth(1).unwrap().parse::<usize>().unwrap() == which
+    })
+    .map(|r| r.split(',').skip(3).map(|x| x.parse().unwrap()).collect())
+    .collect()
 }

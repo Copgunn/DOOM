@@ -31,9 +31,9 @@ On a supported GNU C host (Linux, 32-bit int/fixed/angle, 16-bit short,
 64-bit pointers, little-endian):
 
 ```sh
-python3 tools/reference/check_references.py
-python3 tools/reference/m3f1_reference.py --check
-python3 tools/reference/m3f1_snapshot_goldens.py --check
+python3 tools/reference/run_reference.py check_references.py
+python3 tools/reference/run_reference.py m3f1_reference.py --check
+python3 tools/reference/run_reference.py m3f1_snapshot_goldens.py --check
 ```
 
 The frozen historical helper covers the original reference pairs. Run the
@@ -41,8 +41,8 @@ separate milestone commands below as well; it does not discover newer tools.
 It does not regenerate expectations to match Rust. For the expanded geometry slice:
 
 ```sh
-python3 tools/reference/m3f1_reference.py --check
-python3 tools/reference/m3f1_snapshot_goldens.py --check
+python3 tools/reference/run_reference.py m3f1_reference.py --check
+python3 tools/reference/run_reference.py m3f1_snapshot_goldens.py --check
 cargo test -p doom-sim --test m3f1_reference --test m3f1_policies --locked
 ```
 
@@ -134,8 +134,8 @@ RSS. Recorded results and method limitations live in [M3f1 evidence](validation/
 Run the new pair alongside every historical source/encoder pair above:
 
 ```sh
-python3 tools/reference/m3f2_reference.py --check --overflow-check
-python3 tools/reference/m3f2_snapshot_goldens.py --check
+python3 tools/reference/run_reference.py m3f2_reference.py --check --overflow-check
+python3 tools/reference/run_reference.py m3f2_snapshot_goldens.py --check
 python3 tools/reference/summarize_m3f2.py
 cargo run -p doom-sim --example map_extent --locked
 python3 tools/reference/check_map_extent.py
@@ -148,7 +148,7 @@ setup-shift contract is declared in [source findings](M3F2_REFERENCE.md).
 To reproduce the separately excluded original C failure on GNU/Linux:
 
 ```sh
-python3 tools/reference/m3f2_reference.py --check --probe-undefined-clip
+python3 tools/reference/run_reference.py m3f2_reference.py --check --probe-undefined-clip
 ```
 
 The tool expects the original abs(INT_MIN) sanitizer failure and prints it. This
@@ -190,10 +190,10 @@ topology work and canonical-cache construction, not isolated subsystem timers.
 Run both M3f3 source/encoder adapters alongside all historical pairs:
 
 ```sh
-python3 tools/reference/m3f3_reference.py --check --overflow-check --probe-undefined-angle
-python3 tools/reference/m3f3_snapshot_goldens.py --check
-python3 tools/reference/m3f3_clipping_reference.py --check --overflow-check
-python3 tools/reference/m3f3_clipping_snapshot_goldens.py --check
+python3 tools/reference/run_reference.py m3f3_reference.py --check --overflow-check --probe-undefined-angle
+python3 tools/reference/run_reference.py m3f3_snapshot_goldens.py --check
+python3 tools/reference/run_reference.py m3f3_clipping_reference.py --check --overflow-check
+python3 tools/reference/run_reference.py m3f3_clipping_snapshot_goldens.py --check
 cargo test -p doom-sim --test m3f3_reference --test m3f3_clipping_reference --locked
 cargo run -p doom-sim --example demon_expanded_map --locked
 python3 tools/reference/check_demon_expanded_map.py
@@ -237,7 +237,7 @@ the evidence record.
 ## Original actor/state identity metadata
 
 ```sh
-ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3f4_reference.py --check --sanitize
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/run_reference.py m3f4_reference.py --check --sanitize
 cargo test -p doom-sim --test m3f4_reference --locked
 python3 tools/reference/check_original_identity.py
 python3 tools/seed_original_identity_fuzz.py fuzz/corpus/original_identity
@@ -265,8 +265,8 @@ compare an explicitly projected native Profile20 representation. They add no
 DSIM schema or gameplay profile. Run them alongside every historical check above:
 
 ```sh
-ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3f5_reference.py --check --overflow-check --address-check
-python3 tools/reference/m3f5_snapshot_goldens.py --check
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/run_reference.py m3f5_reference.py --check --overflow-check --address-check
+python3 tools/reference/run_reference.py m3f5_snapshot_goldens.py --check
 cargo test -p doom-sim --test m3f5_reference --test m3f5_policies --locked -- --nocapture
 python3 tools/reference/check_canonical_demon.py
 cargo run -p doom-sim --example canonical_demon --locked
@@ -354,7 +354,7 @@ the separate original-ID workload below belongs to M3f7.
 
 ```sh
 cargo test -p doom-sim --test m3f7_reference --test m3f7_policies --test m3f7_diagnostics --locked
-python3 tools/reference/m3f7_snapshot_goldens.py --check
+python3 tools/reference/run_reference.py m3f7_snapshot_goldens.py --check
 python3 tools/reference/check_original_registry.py
 python3 tools/check_docs.py
 ```
@@ -383,8 +383,8 @@ python3 tools/measure_original_registry.py
 Run the new pair alongside every historical pair above:
 
 ```sh
-ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3f8_reference.py --check --overflow-check --address-check
-python3 tools/reference/m3f8_snapshot_goldens.py --check
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/run_reference.py m3f8_reference.py --check --overflow-check --address-check
+python3 tools/reference/run_reference.py m3f8_snapshot_goldens.py --check
 cargo test -p doom-sim --test m3f8_reference --test m3f8_policies --locked -- --nocapture
 cargo test -p doom-sim --doc --locked -- --show-output
 python3 tools/reference/check_context_ownership.py
@@ -531,8 +531,8 @@ Run the standard workspace/MSRV/release/format/Clippy/rustdoc and historical
 commands above unchanged, then the new source/encoder/example checks:
 
 ```sh
-ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g2_reference.py --check --overflow-check --address-check
-python3 tools/reference/m3g2_snapshot_goldens.py --check
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/run_reference.py m3g2_reference.py --check --overflow-check --address-check
+python3 tools/reference/run_reference.py m3g2_snapshot_goldens.py --check
 cargo test -p doom-sim --test m3g2_reference --test m3g2_policy --locked
 cargo test -p doom-sim --lib original_player --locked
 python3 tools/reference/check_original_player.py
@@ -565,8 +565,8 @@ See [scope](COMPATIBILITY.md#original-player-body-lifecycle),
 Run the new observers alongside every historical pair and M3g2 command:
 
 ```sh
-ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g3_reference.py --check --overflow-check --address-check
-python3 tools/reference/m3g3_snapshot_goldens.py --check
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/run_reference.py m3g3_reference.py --check --overflow-check --address-check
+python3 tools/reference/run_reference.py m3g3_snapshot_goldens.py --check
 cargo test -p doom-sim --test m3g3_reference --test m3g3_policy --locked
 cargo run -p doom-sim --example player_knockback --locked
 python3 tools/reference/check_player_knockback.py
@@ -606,8 +606,8 @@ Read [source assumptions](M3G4_REFERENCE.md) and the
 Keep every historical check above; the new observer/encoder are additive:
 
 ```sh
-ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g4_reference.py --check --overflow-check --address-check
-python3 tools/reference/m3g4_snapshot_goldens.py --check
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/run_reference.py m3g4_reference.py --check --overflow-check --address-check
+python3 tools/reference/run_reference.py m3g4_snapshot_goldens.py --check
 cargo test -p doom-sim --test m3g4_reference --test m3g4_policy --locked
 python3 tools/reference/check_player_commands.py
 cargo fmt --manifest-path fuzz/Cargo.toml --all -- --check
@@ -642,8 +642,8 @@ Historical helpers and expected bytes remain unchanged.
 ```sh
 cargo test -p doom-sim --test m3g5_reference --test m3g5_policy --locked
 cargo test -p doom-sim --lib player_roster --locked
-ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g5_reference.py --check --overflow-check --address-check
-python3 tools/reference/m3g5_snapshot_goldens.py --check
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/run_reference.py m3g5_reference.py --check --overflow-check --address-check
+python3 tools/reference/run_reference.py m3g5_snapshot_goldens.py --check
 python3 tools/reference/check_player_demon.py
 cargo run -p doom-sim --example player_demon --locked
 cargo fmt --manifest-path fuzz/Cargo.toml --all -- --check
@@ -675,8 +675,8 @@ checks. Expected source and diagnostic files are independent of Rust output:
 
 ```sh
 cargo test -p doom-sim --test m3g6_policy --test m3g6_reference --locked
-ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g6_reference.py --check --overflow-check --address-check
-python3 tools/reference/m3g6_snapshot_goldens.py --check
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/run_reference.py m3g6_reference.py --check --overflow-check --address-check
+python3 tools/reference/run_reference.py m3g6_snapshot_goldens.py --check
 python3 tools/reference/check_player_demon_melee.py
 cargo run -p doom-sim --example player_demon_melee --locked
 cargo fmt --manifest-path fuzz/Cargo.toml --all -- --check
@@ -724,8 +724,8 @@ Use synthetic inputs only. Run the complete standard suite and every historical
 source/encoder family, then the new genuine-player weapon checks:
 
 ```sh
-ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g7_reference.py --check --overflow-check --address-check
-python3 tools/reference/m3g7_snapshot_goldens.py --check
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/run_reference.py m3g7_reference.py --check --overflow-check --address-check
+python3 tools/reference/run_reference.py m3g7_snapshot_goldens.py --check
 cargo test -p doom-sim --test m3g7_reference --test m3g7_policy --locked
 cargo test -p doom-sim --lib player_pistol --locked
 python3 tools/reference/check_player_pistol.py
@@ -780,8 +780,8 @@ See [support](COMPATIBILITY.md#genuine-player-pistol-combat) and
 
 ```sh
 python3 tools/reference/evidence_pack.py
-ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g8_reference.py --check --overflow-check --address-check
-python3 tools/reference/m3g8_snapshot_goldens.py --check
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/run_reference.py m3g8_reference.py --check --overflow-check --address-check
+python3 tools/reference/run_reference.py m3g8_snapshot_goldens.py --check
 cargo test -p doom-sim --test player_weapon_pack --locked
 python3 tools/reference/check_player_weapon_pack.py
 cargo run -p doom-sim --example player_weapon_pack --locked
@@ -810,8 +810,8 @@ Rust-admitted comparison totals are deliberately reported separately.
 ## Original world pickups
 
 ```sh
-ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g9_reference.py --check --overflow-check --address-check
-python3 tools/reference/m3g9_snapshot_goldens.py --check
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/run_reference.py m3g9_reference.py --check --overflow-check --address-check
+python3 tools/reference/run_reference.py m3g9_snapshot_goldens.py --check
 cargo test -p doom-sim --lib world_pickup_tests --locked
 python3 tools/reference/check_player_world_pickups.py
 cargo run -p doom-sim --example player_world_pickups --locked
@@ -840,3 +840,36 @@ exhaustive coverage. Benchmarks retain three timing/RSS and separate allocation
 processes, frozen control workloads and independently labeled pickup intervals.
 See [source matrix](M3G9_REFERENCE_INVESTIGATION.md) and
 [observed validation](validation/M3G9.md).
+
+## Historical zstd evidence
+
+Run ordinary tests from the compressed checkout, without Git history or network
+access after dependencies are installed. [Storage contract](EVIDENCE_STORAGE.md)
+owns framing, budgets, preservation boundaries and dependency rationale.
+
+```sh
+python3 tools/reference/evidence_storage.py verify
+python3 tools/reference/run_reference.py --suite
+python3 tools/reference/run_reference.py generate_m3d2.py --check
+# Separate migration audit; fetch this pinned object explicitly in shallow CI.
+git fetch --no-tags --depth=1 origin 138c66b6c6b6d57d0b18cf945d8661722741bd66
+python3 tools/reference/evidence_storage.py verify-git
+cargo test -p doom-test-evidence --locked
+python3 tools/seed_evidence_fuzz.py /tmp/doom-evidence-corpus
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run evidence_zstd /tmp/doom-evidence-corpus -- -seed=401 -runs=4096 -max_len=131072 -timeout=15 -rss_limit_mb=1024
+```
+
+`source_suite.json` retains the exact previous 65 CI source commands, including
+strict arithmetic and sanitizer options. The wrapper also supports individual
+frozen `--check` scripts. Direct legacy generators expect raw paths and therefore
+run inside this wrapper after migration. Historical archived commands describe
+their old checkout; archived bytes remain untouched. The wrapper changes no
+expected output, generator or encoder.
+
+For deterministic recompression, extract an original file from the manifest's
+pinned Git object into a temporary path, then use the locked `evidence encode`
+CLI (`cargo run -p doom-test-evidence --bin evidence --locked -- encode RAW ZST`).
+Compare the produced compressed SHA-256 with the manifest before replacing any
+artifact. This command pins bundled encoder version/parameters and verifies its
+own actual round trip. `migrate` is a one-time raw-tree operation; it deliberately
+fails when original raw files are absent.

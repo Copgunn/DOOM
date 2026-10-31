@@ -342,10 +342,15 @@ fn all_multitic_xy_z_constraints_order_and_membership_match_c() {
 fn complete_expanded_sight_order_and_clipping_match_c() {
     use doom_sim::{ActorSpec, SightVisit, Solidity};
     let mut high_work = false;
-    for (row_number, row) in include_str!("../../../tests/reference/m3f2_sight.csv")
-        .lines()
-        .skip(1)
-        .enumerate()
+    for (row_number, row) in doom_test_evidence::text(
+        "tests/reference/m3f2_sight.csv",
+        include_bytes!("../../../tests/reference/m3f2_sight.csv.zst"),
+        include_str!("../../../tests/reference/zstd_manifest.json"),
+    )
+    .expect("verified historical zstd evidence")
+    .lines()
+    .skip(1)
+    .enumerate()
     {
         let c: Vec<_> = row.split(',').collect();
         let n: Vec<i64> = c[..12].iter().map(|s| s.parse().unwrap()).collect();

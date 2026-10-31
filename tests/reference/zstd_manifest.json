@@ -1,0 +1,217 @@
+{
+  "schema": "DOOM-ZSTD-EVIDENCE-v1",
+  "baseline": "138c66b6c6b6d57d0b18cf945d8661722741bd66",
+  "encoder": "zstd crate 0.13.3; zstd-safe 7.3.0; libzstd 1.5.7",
+  "parameters": "level=9,window_log=23,checksum=true,content_size=true,workers=0,dictionary=none",
+  "entries": [
+    {
+      "original_path": "tests/reference/m3d2_trace.csv",
+      "compressed_path": "tests/reference/m3d2_trace.csv.zst",
+      "original_length": 4944681,
+      "original_sha256": "867a17b5ad1f753db86518ceca1bbd7d0344704ea201c7adf51332eac3dc4494",
+      "original_git_blob": "b281cd708d65bdd2e0baa10ef9b3bd8718adf4cc",
+      "compressed_length": 241191,
+      "compressed_sha256": "25d8d18dfdaf1cc553a8e1817946b2cf6a63c622c751dbc68a95a5523674f353",
+      "decode_budget": 4944681,
+      "family": "m3d2"
+    },
+    {
+      "original_path": "tests/reference/m3d2b_trace.csv",
+      "compressed_path": "tests/reference/m3d2b_trace.csv.zst",
+      "original_length": 1477220,
+      "original_sha256": "8d1199edc46853dba4d57e8115d3567ca58cc2f6adfda46c9158aa2554b908ac",
+      "original_git_blob": "5f4c4631ed7554f22c45c17c869e224ff0c82d74",
+      "compressed_length": 77926,
+      "compressed_sha256": "e5dcdde6030c4a1e8e7f7859fced7ce8c74122aca9da58a9c4b43a8a75864ca4",
+      "decode_budget": 1477220,
+      "family": "m3d2b"
+    },
+    {
+      "original_path": "tests/reference/m3d3b_trace.csv",
+      "compressed_path": "tests/reference/m3d3b_trace.csv.zst",
+      "original_length": 1077576,
+      "original_sha256": "4e68b87f4deb8a451e9a327885ac4dcbf4717434761ccd190a572df3995ca7bf",
+      "original_git_blob": "c725a2e565418d44f5f314a5794b41460f8e2871",
+      "compressed_length": 73405,
+      "compressed_sha256": "650f8c4eda439aaac8c80d85156f05d65d39786810c7f17f25d5631198e28072",
+      "decode_budget": 1077576,
+      "family": "m3d3b"
+    },
+    {
+      "original_path": "tests/reference/m3d3c_trace.csv",
+      "compressed_path": "tests/reference/m3d3c_trace.csv.zst",
+      "original_length": 1851813,
+      "original_sha256": "ac610e4c2ab0678195c049f51c305c4eaac5942fc9721b225b99b0e9f2fac1fe",
+      "original_git_blob": "c013f3b83e2c9c8c262baadb2fd158a030626205",
+      "compressed_length": 90439,
+      "compressed_sha256": "906e6714c37b131ba8f33a70d9fae91d5556d9be0e4d4a3c1f98c3d304c14987",
+      "decode_budget": 1851813,
+      "family": "m3d3c"
+    },
+    {
+      "original_path": "tests/reference/m3d3d_trace.csv",
+      "compressed_path": "tests/reference/m3d3d_trace.csv.zst",
+      "original_length": 1791165,
+      "original_sha256": "1f31035acbc005a28bc28fae26b2cd3ede9ca2c9fe5192b09191680ffe9274e6",
+      "original_git_blob": "972c4585a09f6357504c1cf8046d05ee1e87208d",
+      "compressed_length": 116870,
+      "compressed_sha256": "b6d3f062b4a83a816ee3e83deb24796c5cb41d885cf90784d93a6bcaabe49a2b",
+      "decode_budget": 1791165,
+      "family": "m3d3d"
+    },
+    {
+      "original_path": "tests/reference/m3d3e_trace.csv",
+      "compressed_path": "tests/reference/m3d3e_trace.csv.zst",
+      "original_length": 3970619,
+      "original_sha256": "286229398c47f838aef115ced8fbe78d6388554bb866fafd740e283af2272fcf",
+      "original_git_blob": "f44a4c25336f22fd879e6dca72e7f34f9f0fac5f",
+      "compressed_length": 257705,
+      "compressed_sha256": "ff888575d049e1e3f075314a99302b7493dccbdc96e3e9fe712d26f833d2ddd1",
+      "decode_budget": 3970619,
+      "family": "m3d3e"
+    },
+    {
+      "original_path": "tests/reference/m3d3f_trace.csv",
+      "compressed_path": "tests/reference/m3d3f_trace.csv.zst",
+      "original_length": 1285282,
+      "original_sha256": "bf08b5409effdc01496b2b0e0b8738b671370f135849ecbffefd82cf4393397f",
+      "original_git_blob": "327c9c0b93a90205cdbe14aede3fecbb8301630d",
+      "compressed_length": 94412,
+      "compressed_sha256": "f44c1ccc4dae2b8047122d2abec8e0083b06e09f81a2a8ce2bf5e478489d81fc",
+      "decode_budget": 1285282,
+      "family": "m3d3f"
+    },
+    {
+      "original_path": "tests/reference/m3d3g_trace.csv",
+      "compressed_path": "tests/reference/m3d3g_trace.csv.zst",
+      "original_length": 4188957,
+      "original_sha256": "7d7ffda4375ee091aa97835fae15575a604680542b121b8796b67babeee48196",
+      "original_git_blob": "e0d124bf7bdb61d790cbdf081adf57950c7c267f",
+      "compressed_length": 236319,
+      "compressed_sha256": "5364ba23bf545effbad4f5235eb3e8f9c7e11a700f58ffce8280ed02d399f3e3",
+      "decode_budget": 4188957,
+      "family": "m3d3g"
+    },
+    {
+      "original_path": "tests/reference/m3d3h_trace.csv",
+      "compressed_path": "tests/reference/m3d3h_trace.csv.zst",
+      "original_length": 7056084,
+      "original_sha256": "936238b2340fc3ee663ce93d966022e9a244cc7e8b475e20833a9a8ad1e098c9",
+      "original_git_blob": "a56e69e16c0c25ed774e2ea8c5950e9d61dc0434",
+      "compressed_length": 397500,
+      "compressed_sha256": "721e8655d0ae630f8336555ad3a415f0d0be6543550a1b9d9c3fa31451031e1a",
+      "decode_budget": 7056084,
+      "family": "m3d3h"
+    },
+    {
+      "original_path": "tests/reference/m3d3i_spawn.csv",
+      "compressed_path": "tests/reference/m3d3i_spawn.csv.zst",
+      "original_length": 1330657,
+      "original_sha256": "43f073ef0237b472bb664dc5e8f7a07bd73f6f72114412a382e8138f2cdbbda7",
+      "original_git_blob": "00bfbbf6422d18be0e7bc6126568473d6863f422",
+      "compressed_length": 101817,
+      "compressed_sha256": "5e783d03ccd8b8dc09f5fdf02cd0d1cb598300f4cd69c6efe52437950cc595ca",
+      "decode_budget": 1330657,
+      "family": "m3d3i"
+    },
+    {
+      "original_path": "tests/reference/m3d3i_trace.csv",
+      "compressed_path": "tests/reference/m3d3i_trace.csv.zst",
+      "original_length": 4961898,
+      "original_sha256": "d2fc186d567ed2f8ad397c7f40314298b76465bf5edf43c22c11aacf3b961060",
+      "original_git_blob": "4a5ac3efb7f509474f7678e0e3e02252a715de9d",
+      "compressed_length": 269120,
+      "compressed_sha256": "989394bc27eb36bd2b65d07ba15cfd59e44a736548765cb15f21e5ef79e4336d",
+      "decode_budget": 4961898,
+      "family": "m3d3i"
+    },
+    {
+      "original_path": "tests/reference/m3d3j_spawn.csv",
+      "compressed_path": "tests/reference/m3d3j_spawn.csv.zst",
+      "original_length": 1363363,
+      "original_sha256": "5bf64a637244f8284236ec5e689762ed873bccb343828ecfbfef9e9e5db767d2",
+      "original_git_blob": "8b5f3064fb52a799cee7b31e50836a2acbbcb56e",
+      "compressed_length": 109036,
+      "compressed_sha256": "56e8efffa4e54a0d00d813b78f55f476a00accf3a517765ed058d0066892d0bd",
+      "decode_budget": 1363363,
+      "family": "m3d3j"
+    },
+    {
+      "original_path": "tests/reference/m3d3j_trace.csv",
+      "compressed_path": "tests/reference/m3d3j_trace.csv.zst",
+      "original_length": 7007769,
+      "original_sha256": "bbf4431c5c5a0b571b1edf6ae83daa82bec0ea10194225c002a01e6678ae80fb",
+      "original_git_blob": "b84427b5c3b6109a3877ee5b19eeb3c6c7a600ee",
+      "compressed_length": 322567,
+      "compressed_sha256": "7b1305cbee2b6af810b1b00a42fc3bba03e61d469a8403c7207ae9b3f3cd6065",
+      "decode_budget": 7007769,
+      "family": "m3d3j"
+    },
+    {
+      "original_path": "tests/reference/m3f1_movement.csv",
+      "compressed_path": "tests/reference/m3f1_movement.csv.zst",
+      "original_length": 1399006,
+      "original_sha256": "38f4158eedfd4d00f0fbff38fc6b3b6b60f1b547dfc6c824aac36bc525acf84f",
+      "original_git_blob": "244fd890871f7b207228bbb98887616367fcd84c",
+      "compressed_length": 15885,
+      "compressed_sha256": "7ea4b44047fb90231005281de45e45ed74bd0e8beb8da8f6adc9cfe1a8f0e6de",
+      "decode_budget": 1399006,
+      "family": "m3f1"
+    },
+    {
+      "original_path": "tests/reference/m3f2_sight.csv",
+      "compressed_path": "tests/reference/m3f2_sight.csv.zst",
+      "original_length": 5005831,
+      "original_sha256": "70415d805e76889e22cf7397c1db9d4bb49e1f16c0f8164aa5b356491216312e",
+      "original_git_blob": "4bf75e6f5a81350e383239470b0d0a1567050dcf",
+      "compressed_length": 27485,
+      "compressed_sha256": "789a1da0f61cb8a76f439691ef85b33db5e4f519be71c91c1463721384f169f6",
+      "decode_budget": 5005831,
+      "family": "m3f2"
+    },
+    {
+      "original_path": "tests/reference/m3f3_clipping_trace.csv",
+      "compressed_path": "tests/reference/m3f3_clipping_trace.csv.zst",
+      "original_length": 1933895,
+      "original_sha256": "0042d3ed9efe024e00abf33d8a20c3dc9001938add5cc07bfeb38d56e38770f7",
+      "original_git_blob": "30e234c49ab880081e8c229a3f19f8fd6a44e798",
+      "compressed_length": 112921,
+      "compressed_sha256": "3a32778ce6452fc98c6cd61051fc08bee4472404af25875fa740c905341437fe",
+      "decode_budget": 1933895,
+      "family": "m3f3"
+    },
+    {
+      "original_path": "tests/reference/m3f3_trace.csv",
+      "compressed_path": "tests/reference/m3f3_trace.csv.zst",
+      "original_length": 28923662,
+      "original_sha256": "019e2570d101f8400217e5960756b441c666d35678c268fa2e7f6a883f0d4504",
+      "original_git_blob": "7c252cd70a7b101d39f7a046c87a2c0eaaf0a193",
+      "compressed_length": 1631081,
+      "compressed_sha256": "a14b77bc7cc01dff7873d21ee10cfb8a72cff1bcf53b262a787f979f609a4b0d",
+      "decode_budget": 28923662,
+      "family": "m3f3"
+    },
+    {
+      "original_path": "tests/reference/m3f5_trace.csv",
+      "compressed_path": "tests/reference/m3f5_trace.csv.zst",
+      "original_length": 7224524,
+      "original_sha256": "c7b5f9f4ad05d453c05789a45da57617e22aabb996f5314ac87e4e92e51272b5",
+      "original_git_blob": "565924957aeb33e72437a67ff5961179ae13f4a1",
+      "compressed_length": 440991,
+      "compressed_sha256": "be76eee24cea11c20025dcb79b2a7236198a00e18069c336ed28f22af41cafdf",
+      "decode_budget": 7224524,
+      "family": "m3f5"
+    },
+    {
+      "original_path": "tests/reference/m3g7_trace.csv",
+      "compressed_path": "tests/reference/m3g7_trace.csv.zst",
+      "original_length": 1675556,
+      "original_sha256": "fe934fe7bcd6884d7d2f82b5d6517152de0f2e9d262f52c8c9d06360e4f44e57",
+      "original_git_blob": "93ea37664265aa14f5d9230f691d162cba258816",
+      "compressed_length": 204153,
+      "compressed_sha256": "8a2f60f13b8c0a100adfeee929f7180a8c4316ffffb630dfcb299c5bb4d352d2",
+      "decode_budget": 1675556,
+      "family": "m3g7"
+    }
+  ]
+}

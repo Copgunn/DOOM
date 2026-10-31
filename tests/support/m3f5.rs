@@ -117,7 +117,16 @@ pub fn rows(which: usize, op: usize, spawn: bool) -> &'static [Row] {
     let all = if spawn {
         SPAWN.get_or_init(|| parse(include_str!("../reference/m3f5_spawn.csv")))
     } else {
-        TRACE.get_or_init(|| parse(include_str!("../reference/m3f5_trace.csv")))
+        TRACE.get_or_init(|| {
+            parse(
+                doom_test_evidence::text(
+                    "tests/reference/m3f5_trace.csv",
+                    include_bytes!("../reference/m3f5_trace.csv.zst"),
+                    include_str!("../reference/zstd_manifest.json"),
+                )
+                .expect("verified historical zstd evidence"),
+            )
+        })
     };
     all.get(&(which, op)).unwrap()
 }

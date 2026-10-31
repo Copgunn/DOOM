@@ -8,7 +8,12 @@ fn numbers(row: &str) -> Vec<i64> {
 }
 #[test]
 fn complete_player_weapon_sequences_match_original_c() {
-    let source = include_str!("../../../tests/reference/m3d2_trace.csv");
+    let source = doom_test_evidence::text(
+        "tests/reference/m3d2_trace.csv",
+        include_bytes!("../../../tests/reference/m3d2_trace.csv.zst"),
+        include_str!("../../../tests/reference/zstd_manifest.json"),
+    )
+    .expect("verified historical zstd evidence");
     let mut fields = 0;
     for (which, c) in fixtures::cases().iter().enumerate() {
         let mut sim = fixtures::setup(c);

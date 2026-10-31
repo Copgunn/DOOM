@@ -112,7 +112,12 @@ pub fn evidence() -> &'static evidence_reader::PlayerEvidence {
     static DATA: OnceLock<evidence_reader::PlayerEvidence> = OnceLock::new();
     DATA.get_or_init(|| {
         evidence_reader::PlayerEvidence::new(
-            include_str!("../reference/m3g7_trace.csv"),
+            doom_test_evidence::text(
+                "tests/reference/m3g7_trace.csv",
+                include_bytes!("../reference/m3g7_trace.csv.zst"),
+                include_str!("../reference/zstd_manifest.json"),
+            )
+            .expect("verified historical zstd evidence"),
             "DOOM-PLAYER-DEMON-PISTOL-v1",
             include_bytes!("../reference/m3g7_events.bin"),
             "case,operation,tic,fnv1a64,bytes_fixture,bytes,fields,event_fields\n",

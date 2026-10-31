@@ -114,9 +114,14 @@ fn all_step_dropoff_clearance_and_blocking_probes_match_c_without_mutation() {
 fn all_multitic_xy_z_constraints_order_and_membership_match_c() {
     let cases = fixtures::cases();
     let (mut sim, mut actor, mut other) = cases[0].setup(true);
-    for row in include_str!("../../../tests/reference/m3f1_movement.csv")
-        .lines()
-        .skip(1)
+    for row in doom_test_evidence::text(
+        "tests/reference/m3f1_movement.csv",
+        include_bytes!("../../../tests/reference/m3f1_movement.csv.zst"),
+        include_str!("../../../tests/reference/zstd_manifest.json"),
+    )
+    .expect("verified historical zstd evidence")
+    .lines()
+    .skip(1)
     {
         let c: Vec<_> = row.split(',').collect();
         let n: Vec<i64> = c[..13].iter().map(|n| n.parse().unwrap()).collect();

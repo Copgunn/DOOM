@@ -71,6 +71,7 @@ name = "doom-sim"
 version = "0.1.0"
 dependencies = [
  "doom-map",
+ "doom-test-evidence",
  "doom-types",
  "doom-wad",
 ]

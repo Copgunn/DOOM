@@ -20,13 +20,18 @@ fn genuine_original_spawn_and_ordered_gameplay_match_independent_v16() {
         source.check_original_spawn(&s, which);
         raw[0] += source.actor_fields;
         raw[1] += source.draws;
-        let f = include_str!("../../../tests/reference/m3d3i_spawn.csv")
-            .lines()
-            .find(|line| line.starts_with(&format!("F,{which},0,-1,")))
-            .unwrap()
-            .split(',')
-            .map(str::to_string)
-            .collect::<Vec<_>>();
+        let f = doom_test_evidence::text(
+            "tests/reference/m3d3i_spawn.csv",
+            include_bytes!("../../../tests/reference/m3d3i_spawn.csv.zst"),
+            include_str!("../../../tests/reference/zstd_manifest.json"),
+        )
+        .expect("verified historical zstd evidence")
+        .lines()
+        .find(|line| line.starts_with(&format!("F,{which},0,-1,")))
+        .unwrap()
+        .split(',')
+        .map(str::to_string)
+        .collect::<Vec<_>>();
         assert_eq!(report.spawned.len(), f[9].parse::<usize>().unwrap());
         assert_eq!(s.rng().indices()[0], f[10].parse::<u8>().unwrap());
         assert_eq!(

@@ -349,3 +349,15 @@ Historical observers/helpers/fixtures are unchanged. See
 [source investigation](../../docs/M3G9_REFERENCE_INVESTIGATION.md),
 [commands](../../docs/TESTING.md#original-world-pickups) and
 [observations](../../docs/validation/M3G9.md).
+
+## Historical raw-trace loading
+
+Selected large CSV traces now use standard zstd storage. Run frozen C/encoder
+scripts through `run_reference.py`; it restores their original raw paths in a
+private copied workspace and runs their unchanged checks. The complete suite
+retains every previous source command and sanitizer flag. See the
+[storage contract](../../docs/EVIDENCE_STORAGE.md),
+[authoritative commands](../../docs/TESTING.md#historical-zstd-evidence) and
+[migration observations](../../docs/validation/ZSTD_WEAPON_MAINTENANCE.md).
+Direct legacy generators still describe their original raw-tree interface.
+Existing DREFLZ1 streams, complete DSIM fixtures and provenance are unchanged.

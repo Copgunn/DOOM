@@ -153,3 +153,36 @@ fn unknown_fields_are_rejected() {
     value["entries"][0]["unexpected"] = true.into();
     assert!(Manifest::parse(&value.to_string()).is_err());
 }
+
+#[test]
+fn committed_manifest_and_cache_are_checked() {
+    const MANIFEST: &str = include_str!("../../../tests/reference/zstd_manifest.json");
+    const DATA: &[u8] = include_bytes!("../../../tests/reference/m3d2_trace.csv.zst");
+    let m = Manifest::parse(MANIFEST).unwrap();
+    assert_eq!(m.entries.len(), 19);
+    assert!(text("tests/reference/m3d2_trace.csv", DATA, "{}").is_err());
+    let first = text("tests/reference/m3d2_trace.csv", DATA, MANIFEST).unwrap();
+    let second = text("tests/reference/m3d2_trace.csv", DATA, MANIFEST).unwrap();
+    assert!(std::ptr::eq(first, second));
+    assert_eq!(sha256(first.as_bytes()), m.entries[0].original_sha256);
+    assert!(text("tests/reference/m3d2_trace.csv", b"invalid", MANIFEST).is_err());
+    assert!(text("tests/reference/absent.csv", DATA, MANIFEST).is_err());
+    assert!(text("tests/reference/m3d2_trace.csv", DATA, "{}").is_err());
+}
+
+#[test]
+fn every_committed_frame_recompresses_identically() {
+    let manifest =
+        Manifest::parse(include_str!("../../../tests/reference/zstd_manifest.json")).unwrap();
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for entry in manifest.entries {
+        let raw = load(&root, &entry).unwrap();
+        let encoded = encode(&raw).unwrap();
+        assert_eq!(
+            encoded,
+            read_bounded(&root.join(&entry.compressed_path), MAX_COMPRESSED).unwrap(),
+            "{}",
+            entry.original_path
+        );
+    }
+}

@@ -13,6 +13,7 @@ doom-types.workspace = true
 doom-map = { path = "../doom-map" }
 
 [dev-dependencies]
+doom-test-evidence = { path = "../doom-test-evidence" }
 doom-wad = { path = "../doom-wad" }
 
 [lints]

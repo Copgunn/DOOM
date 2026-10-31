@@ -115,16 +115,21 @@ pub fn rows(which: usize, op: usize) -> Vec<(String, Vec<i64>)> {
     type SourceRow = (usize, usize, String, Vec<i64>);
     static ROWS: std::sync::OnceLock<Vec<SourceRow>> = std::sync::OnceLock::new();
     ROWS.get_or_init(|| {
-        include_str!("../reference/m3d2b_trace.csv")
-            .lines()
-            .map(|r| {
-                let mut c = r.split(',');
-                let tag = c.next().unwrap().to_owned();
-                let which = c.next().unwrap().parse().unwrap();
-                let op = c.next().unwrap().parse().unwrap();
-                (which, op, tag, c.map(|s| s.parse().unwrap()).collect())
-            })
-            .collect()
+        doom_test_evidence::text(
+            "tests/reference/m3d2b_trace.csv",
+            include_bytes!("../reference/m3d2b_trace.csv.zst"),
+            include_str!("../reference/zstd_manifest.json"),
+        )
+        .expect("verified historical zstd evidence")
+        .lines()
+        .map(|r| {
+            let mut c = r.split(',');
+            let tag = c.next().unwrap().to_owned();
+            let which = c.next().unwrap().parse().unwrap();
+            let op = c.next().unwrap().parse().unwrap();
+            (which, op, tag, c.map(|s| s.parse().unwrap()).collect())
+        })
+        .collect()
     })
     .iter()
     .filter(|(w, o, _, _)| *w == which && *o == op)

@@ -297,7 +297,14 @@ pub fn source_rows(which: usize, op: usize) -> Vec<(String, Vec<i64>)> {
     static ROWS: std::sync::OnceLock<Rows> = std::sync::OnceLock::new();
     ROWS.get_or_init(|| {
         let mut rows = Rows::new();
-        for line in include_str!("../reference/m3d3i_trace.csv").lines() {
+        for line in doom_test_evidence::text(
+            "tests/reference/m3d3i_trace.csv",
+            include_bytes!("../reference/m3d3i_trace.csv.zst"),
+            include_str!("../reference/zstd_manifest.json"),
+        )
+        .expect("verified historical zstd evidence")
+        .lines()
+        {
             let mut values = line.split(',');
             let tag = values.next().unwrap().to_string();
             let which = values.next().unwrap().parse().unwrap();
@@ -327,43 +334,48 @@ impl SourceTrace {
                 self.births.push(*id);
             }
         }
-        let rows = include_str!("../reference/m3d3i_spawn.csv")
-            .lines()
-            .filter_map(|line| {
-                let mut fields = line.split(',');
-                let tag = fields.next().unwrap().to_string();
-                let scenario = fields.next().unwrap().parse::<usize>().unwrap();
-                let _op = fields.next();
-                if scenario != which {
-                    return None;
-                }
-                let mut c = fields
-                    .map(|x| x.parse::<i64>().unwrap())
-                    .collect::<Vec<_>>();
-                if tag == "A" {
-                    assert_eq!(c[2], 12);
-                    assert_eq!(c[10], 475);
-                    c[2] = 136;
-                    c[10] = 1;
-                    c[12] &= !4194304;
-                }
-                if tag == "F" && c[0] >= 0 && c[7] > c[6] {
-                    let actor = sim.actor(ActorId::from_parts(c[6] as u32, 1)).unwrap();
-                    let point = actor.life().unwrap().spawnpoint.unwrap();
-                    assert_eq!(
-                        [
-                            i64::from(point.position.x),
-                            i64::from(point.position.y),
-                            i64::from(point.angle),
-                            i64::from(point.kind),
-                            i64::from(point.options)
-                        ],
-                        c[1..6]
-                    );
-                }
-                Some((tag, c))
-            })
-            .collect();
+        let rows = doom_test_evidence::text(
+            "tests/reference/m3d3i_spawn.csv",
+            include_bytes!("../reference/m3d3i_spawn.csv.zst"),
+            include_str!("../reference/zstd_manifest.json"),
+        )
+        .expect("verified historical zstd evidence")
+        .lines()
+        .filter_map(|line| {
+            let mut fields = line.split(',');
+            let tag = fields.next().unwrap().to_string();
+            let scenario = fields.next().unwrap().parse::<usize>().unwrap();
+            let _op = fields.next();
+            if scenario != which {
+                return None;
+            }
+            let mut c = fields
+                .map(|x| x.parse::<i64>().unwrap())
+                .collect::<Vec<_>>();
+            if tag == "A" {
+                assert_eq!(c[2], 12);
+                assert_eq!(c[10], 475);
+                c[2] = 136;
+                c[10] = 1;
+                c[12] &= !4194304;
+            }
+            if tag == "F" && c[0] >= 0 && c[7] > c[6] {
+                let actor = sim.actor(ActorId::from_parts(c[6] as u32, 1)).unwrap();
+                let point = actor.life().unwrap().spawnpoint.unwrap();
+                assert_eq!(
+                    [
+                        i64::from(point.position.x),
+                        i64::from(point.position.y),
+                        i64::from(point.angle),
+                        i64::from(point.kind),
+                        i64::from(point.options)
+                    ],
+                    c[1..6]
+                );
+            }
+            Some((tag, c))
+        })
+        .collect();
         self.compare_rows(sim, which, 0, rows);
     }
     pub fn check(&mut self, sim: &Simulation, which: usize, op: usize, events: &[Event]) {
