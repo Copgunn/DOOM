@@ -1,0 +1,379 @@
+{
+  "provenance": {
+    "before": {
+      "commit": "938cfc45263c3dd82e09cacd537921c454225ed8",
+      "tree": "020160cf0403b22a5dc259b7e634267431dc1ca4",
+      "status": "",
+      "sources": {
+        "crates/doom-sim/examples/original_player.rs": "6bb59381eb0579660d917c7a1af8e57ae242f233e78dbd2cfa9a50e0ffa54af8",
+        "crates/doom-sim/examples/player_commands.rs": "6c6dcc1bae41557c1beb0c8407f611739e2aa4b2a1b12d7c19a5fd6c320e0433",
+        "crates/doom-sim/examples/player_demon_melee.rs": "ed3227285e4decc0d578b396a4e83b648c2b3ba05230064fcbd1b02c023d34ed"
+      }
+    },
+    "after": {
+      "commit": "28bcc6dab45681870f1dca4c563fefbe756abd0c",
+      "tree": "bff2c16047aaa31bcd2978d71bd77ba251dcba0e",
+      "status": "",
+      "sources": {
+        "crates/doom-sim/examples/original_player.rs": "6bb59381eb0579660d917c7a1af8e57ae242f233e78dbd2cfa9a50e0ffa54af8",
+        "crates/doom-sim/examples/player_commands.rs": "6c6dcc1bae41557c1beb0c8407f611739e2aa4b2a1b12d7c19a5fd6c320e0433",
+        "crates/doom-sim/examples/player_demon_melee.rs": "ed3227285e4decc0d578b396a4e83b648c2b3ba05230064fcbd1b02c023d34ed"
+      }
+    }
+  },
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "host": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "method": "Three paired separate release processes per selected outlier workload, order before/after then after/before then before/after. Same unchanged example source, commands, toolchain and wait4 RSS launcher as full batch. Baseline build in detached worktree; current build in main workspace; no other validation/compiler/fuzz work concurrent. Not CPU-isolated; binary build paths differ. Timing/RSS only; full-batch allocation samples retained separately. All full-batch observations remain, including original outliers. No universal timing claim.",
+  "results": [
+    {
+      "family": "player",
+      "label": "demon_source",
+      "mode": "step",
+      "before": [
+        {
+          "ns": 2011075,
+          "max_rss_kib": 2128,
+          "digest": "ce2a8a69d9f9179a",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer label=demon_source mode=step calls=100 ns=2011075 digest=ce2a8a69d9f9179a"
+        },
+        {
+          "ns": 2005037,
+          "max_rss_kib": 2236,
+          "digest": "ce2a8a69d9f9179a",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer label=demon_source mode=step calls=100 ns=2005037 digest=ce2a8a69d9f9179a"
+        },
+        {
+          "ns": 2178893,
+          "max_rss_kib": 2268,
+          "digest": "ce2a8a69d9f9179a",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer label=demon_source mode=step calls=100 ns=2178893 digest=ce2a8a69d9f9179a"
+        }
+      ],
+      "after": [
+        {
+          "ns": 1954902,
+          "max_rss_kib": 2340,
+          "digest": "ce2a8a69d9f9179a",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer label=demon_source mode=step calls=100 ns=1954902 digest=ce2a8a69d9f9179a"
+        },
+        {
+          "ns": 1992387,
+          "max_rss_kib": 2392,
+          "digest": "ce2a8a69d9f9179a",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer label=demon_source mode=step calls=100 ns=1992387 digest=ce2a8a69d9f9179a"
+        },
+        {
+          "ns": 2016364,
+          "max_rss_kib": 2376,
+          "digest": "ce2a8a69d9f9179a",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer label=demon_source mode=step calls=100 ns=2016364 digest=ce2a8a69d9f9179a"
+        }
+      ],
+      "process_order": [
+        [
+          "before",
+          "after"
+        ],
+        [
+          "after",
+          "before"
+        ],
+        [
+          "before",
+          "after"
+        ]
+      ],
+      "medians": {
+        "before": {
+          "ns": 2011075,
+          "max_rss_kib": 2236
+        },
+        "after": {
+          "ns": 1992387,
+          "max_rss_kib": 2376
+        }
+      },
+      "delta_percent": -0.9292542545653482
+    },
+    {
+      "family": "player-demon-melee",
+      "label": "moving_pressure",
+      "mode": "step",
+      "before": [
+        {
+          "ns": 6539935,
+          "max_rss_kib": 2352,
+          "digest": "c82c2637aa1469f3",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer_demon_melee label=moving_pressure mode=step calls=100 warmup=0 ns=6539935 digest=c82c2637aa1469f3"
+        },
+        {
+          "ns": 6260282,
+          "max_rss_kib": 2464,
+          "digest": "c82c2637aa1469f3",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer_demon_melee label=moving_pressure mode=step calls=100 warmup=0 ns=6260282 digest=c82c2637aa1469f3"
+        },
+        {
+          "ns": 6399988,
+          "max_rss_kib": 2384,
+          "digest": "c82c2637aa1469f3",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer_demon_melee label=moving_pressure mode=step calls=100 warmup=0 ns=6399988 digest=c82c2637aa1469f3"
+        }
+      ],
+      "after": [
+        {
+          "ns": 6360070,
+          "max_rss_kib": 2512,
+          "digest": "c82c2637aa1469f3",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer_demon_melee label=moving_pressure mode=step calls=100 warmup=0 ns=6360070 digest=c82c2637aa1469f3"
+        },
+        {
+          "ns": 6636147,
+          "max_rss_kib": 2504,
+          "digest": "c82c2637aa1469f3",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer_demon_melee label=moving_pressure mode=step calls=100 warmup=0 ns=6636147 digest=c82c2637aa1469f3"
+        },
+        {
+          "ns": 6537693,
+          "max_rss_kib": 2452,
+          "digest": "c82c2637aa1469f3",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer_demon_melee label=moving_pressure mode=step calls=100 warmup=0 ns=6537693 digest=c82c2637aa1469f3"
+        }
+      ],
+      "process_order": [
+        [
+          "before",
+          "after"
+        ],
+        [
+          "after",
+          "before"
+        ],
+        [
+          "before",
+          "after"
+        ]
+      ],
+      "medians": {
+        "before": {
+          "ns": 6399988,
+          "max_rss_kib": 2384
+        },
+        "after": {
+          "ns": 6537693,
+          "max_rss_kib": 2504
+        }
+      },
+      "delta_percent": 2.151644659333729
+    },
+    {
+      "family": "commands",
+      "label": "forward",
+      "mode": "step",
+      "before": [
+        {
+          "ns": 2108970,
+          "max_rss_kib": 2152,
+          "digest": "58050e55c75cc070",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\ncommands label=forward mode=step calls=100 ns=2108970 digest=58050e55c75cc070"
+        },
+        {
+          "ns": 2165123,
+          "max_rss_kib": 2152,
+          "digest": "58050e55c75cc070",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\ncommands label=forward mode=step calls=100 ns=2165123 digest=58050e55c75cc070"
+        },
+        {
+          "ns": 2045656,
+          "max_rss_kib": 2160,
+          "digest": "58050e55c75cc070",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\ncommands label=forward mode=step calls=100 ns=2045656 digest=58050e55c75cc070"
+        }
+      ],
+      "after": [
+        {
+          "ns": 2090092,
+          "max_rss_kib": 2416,
+          "digest": "58050e55c75cc070",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\ncommands label=forward mode=step calls=100 ns=2090092 digest=58050e55c75cc070"
+        },
+        {
+          "ns": 2042992,
+          "max_rss_kib": 2432,
+          "digest": "58050e55c75cc070",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\ncommands label=forward mode=step calls=100 ns=2042992 digest=58050e55c75cc070"
+        },
+        {
+          "ns": 2039708,
+          "max_rss_kib": 2424,
+          "digest": "58050e55c75cc070",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\ncommands label=forward mode=step calls=100 ns=2039708 digest=58050e55c75cc070"
+        }
+      ],
+      "process_order": [
+        [
+          "before",
+          "after"
+        ],
+        [
+          "after",
+          "before"
+        ],
+        [
+          "before",
+          "after"
+        ]
+      ],
+      "medians": {
+        "before": {
+          "ns": 2108970,
+          "max_rss_kib": 2152
+        },
+        "after": {
+          "ns": 2042992,
+          "max_rss_kib": 2424
+        }
+      },
+      "delta_percent": -3.1284465876707634
+    },
+    {
+      "family": "player",
+      "label": "idle",
+      "mode": "advance",
+      "before": [
+        {
+          "ns": 941943,
+          "max_rss_kib": 2184,
+          "digest": "8e365bf2dd0f6746",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer label=idle mode=advance calls=100 ns=941943 digest=8e365bf2dd0f6746"
+        },
+        {
+          "ns": 1078316,
+          "max_rss_kib": 2268,
+          "digest": "8e365bf2dd0f6746",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer label=idle mode=advance calls=100 ns=1078316 digest=8e365bf2dd0f6746"
+        },
+        {
+          "ns": 975964,
+          "max_rss_kib": 2272,
+          "digest": "8e365bf2dd0f6746",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer label=idle mode=advance calls=100 ns=975964 digest=8e365bf2dd0f6746"
+        }
+      ],
+      "after": [
+        {
+          "ns": 975333,
+          "max_rss_kib": 2432,
+          "digest": "8e365bf2dd0f6746",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer label=idle mode=advance calls=100 ns=975333 digest=8e365bf2dd0f6746"
+        },
+        {
+          "ns": 961182,
+          "max_rss_kib": 2336,
+          "digest": "8e365bf2dd0f6746",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer label=idle mode=advance calls=100 ns=961182 digest=8e365bf2dd0f6746"
+        },
+        {
+          "ns": 959699,
+          "max_rss_kib": 2376,
+          "digest": "8e365bf2dd0f6746",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer label=idle mode=advance calls=100 ns=959699 digest=8e365bf2dd0f6746"
+        }
+      ],
+      "process_order": [
+        [
+          "before",
+          "after"
+        ],
+        [
+          "after",
+          "before"
+        ],
+        [
+          "before",
+          "after"
+        ]
+      ],
+      "medians": {
+        "before": {
+          "ns": 975964,
+          "max_rss_kib": 2268
+        },
+        "after": {
+          "ns": 961182,
+          "max_rss_kib": 2376
+        }
+      },
+      "delta_percent": -1.514605046907469
+    },
+    {
+      "family": "player-demon-melee",
+      "label": "prior_impulse",
+      "mode": "advance",
+      "before": [
+        {
+          "ns": 4696789,
+          "max_rss_kib": 2428,
+          "digest": "3821ef4f38251dae",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer_demon_melee label=prior_impulse mode=advance calls=100 warmup=0 ns=4696789 digest=3821ef4f38251dae"
+        },
+        {
+          "ns": 4697290,
+          "max_rss_kib": 2220,
+          "digest": "3821ef4f38251dae",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer_demon_melee label=prior_impulse mode=advance calls=100 warmup=0 ns=4697290 digest=3821ef4f38251dae"
+        },
+        {
+          "ns": 4692592,
+          "max_rss_kib": 2460,
+          "digest": "3821ef4f38251dae",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer_demon_melee label=prior_impulse mode=advance calls=100 warmup=0 ns=4692592 digest=3821ef4f38251dae"
+        }
+      ],
+      "after": [
+        {
+          "ns": 4760043,
+          "max_rss_kib": 2504,
+          "digest": "3821ef4f38251dae",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer_demon_melee label=prior_impulse mode=advance calls=100 warmup=0 ns=4760043 digest=3821ef4f38251dae"
+        },
+        {
+          "ns": 4771759,
+          "max_rss_kib": 2548,
+          "digest": "3821ef4f38251dae",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer_demon_melee label=prior_impulse mode=advance calls=100 warmup=0 ns=4771759 digest=3821ef4f38251dae"
+        },
+        {
+          "ns": 4953829,
+          "max_rss_kib": 2544,
+          "digest": "3821ef4f38251dae",
+          "stdout": "DOOM_ALLOC_BEGIN\nDOOM_ALLOC_END\nplayer_demon_melee label=prior_impulse mode=advance calls=100 warmup=0 ns=4953829 digest=3821ef4f38251dae"
+        }
+      ],
+      "process_order": [
+        [
+          "before",
+          "after"
+        ],
+        [
+          "after",
+          "before"
+        ],
+        [
+          "before",
+          "after"
+        ]
+      ],
+      "medians": {
+        "before": {
+          "ns": 4696789,
+          "max_rss_kib": 2428
+        },
+        "after": {
+          "ns": 4771759,
+          "max_rss_kib": 2544
+        }
+      },
+      "delta_percent": 1.59619689111008
+    }
+  ]
+}
