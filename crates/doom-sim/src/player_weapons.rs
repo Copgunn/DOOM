@@ -1,7 +1,7 @@
 //! Weapon-only source state; OriginalPlayer and the actor store retain ownership.
 use crate::{identity::*, *};
 
-/// DSIM24 policy8: one genuine player, four original weapons, one map Demon.
+/// Four-weapon context for DSIM24/policy8; the pickup policy composes it separately.
 pub const PLAYER_DEMON_WEAPONS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-DEMON-1-MEDIUM-GROUNDED-WEAPONS-v1";
 /// Original wp_nochange (doomdef.h); distinct from NUMWEAPONS.
 pub(crate) const NO_CHANGE: u8 = 10;

@@ -1,4 +1,4 @@
-//! Bounded, read-only DSIM20/21 and explicitly selected DSIM22 observations. Never an executable world loader.
+//! Bounded, read-only DSIM20–25 observations with explicit version readers. Never a world loader.
 use crate::{identity::*, *};
 use std::{error::Error, fmt, sync::OnceLock};
 

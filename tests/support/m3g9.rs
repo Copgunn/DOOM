@@ -104,10 +104,7 @@ pub fn setup(c: &Case) -> (Simulation, Actors) {
         },
     )
     .unwrap();
-    let spawned = s
-        .spawn_original_actor(OriginalActorType::MT_SERGEANT)
-        .unwrap()
-        .spawned;
+    let spawned = s.spawn_map_things().unwrap().spawned;
     let origin = spawned.iter().copied().find(|id| {
         s.actor(*id).unwrap().life().unwrap().actor_type.0
             == OriginalActorType::MT_SERGEANT.ordinal()

@@ -331,7 +331,7 @@ pub enum Phase {
 pub enum Event {
     /// Source world-item contact and resource-grant observations (DSIM25).
     Pickup(PickupEvent),
-    /// Original-player field and presentation-service observations, DSIM-v22 only.
+    /// Original-player field and presentation-service observations, DSIM-v22 and later.
     PlayerBody(PlayerBodyEvent),
     /// Ordered profile-11 shotgun boundaries and per-pellet observations.
     Shotgun(ShotgunEvent),

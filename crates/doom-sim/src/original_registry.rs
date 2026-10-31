@@ -548,7 +548,9 @@ impl Simulation {
         let registry = OriginalExecutionRegistry::new(OriginalExecutionProfile::DemonNormalV1)?;
         Self::with_original_registry(map, limit, registry, options, context).map_err(Into::into)
     }
-    /// Spawn the already admitted source actor through the existing atomic THING batch.
+    /// Run the existing atomic THING batch for the canonical Demon context.
+    /// The pickup policy also admits its declared world items in that same batch;
+    /// use `spawn_map_things` directly when setting up that mixed world.
     pub fn spawn_original_actor(
         &mut self,
         ty: OriginalActorType,
