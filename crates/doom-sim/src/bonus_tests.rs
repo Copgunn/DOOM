@@ -153,9 +153,7 @@ fn independent_bonus_resources_ordinary_thresholds_and_shared_damage() {
                 .collect();
             let got = component_observations(&s, a, item);
             for (field, (got, expected)) in got.iter().zip(&expected).enumerate() {
-                if ![4, 5].contains(&field) {
-                    assert_eq!(got, expected, "source pickupT40 field{field}");
-                }
+                assert_eq!(got, expected, "source pickupT40 field{field}");
             }
             let before = s.snapshot();
             assert_eq!(
@@ -184,10 +182,6 @@ fn independent_bonus_resources_ordinary_thresholds_and_shared_damage() {
         let got = component_observations(&s, a, item);
         let expected: Vec<i64> = v[8..].iter().map(|n| n.parse().unwrap()).collect();
         for (field, (got, expected)) in got.iter().zip(&expected).enumerate() {
-            // Counted statistics receive their independent implementation gate.
-            if [4, 5].contains(&field) {
-                continue;
-            }
             assert_eq!(got, expected, "{line} field{field}");
         }
         count += 1;
@@ -221,4 +215,164 @@ fn bonus_armor_invariant_does_not_redefine_ordinary_green_armor() {
             );
         }
     }
+}
+
+fn initial_cap(s: &mut Simulation, c: &bonus_evidence::Case, a: bonus_evidence::Actors) {
+    assert!(matches!(c.component, 30 | 31));
+    s.original_player.as_mut().unwrap().health = 200;
+    s.actors
+        .get_mut(a.body)
+        .unwrap()
+        .life
+        .as_mut()
+        .unwrap()
+        .health = 200;
+    if c.component == 31 {
+        s.original_player.as_mut().unwrap().armor = Some(PlayerArmorState {
+            kind: ArmorType::Green,
+            points: 200,
+        });
+    }
+}
+#[test]
+fn independent_counted_items_and_integrated_bonus_combat() {
+    assert_ne!(bonus_evidence::verify(), 0);
+}
+#[test]
+fn independent_capped_resources_collect_through_actual_movement() {
+    assert_ne!(bonus_evidence::verify_with_setup(28..30, initial_cap), 0);
+}
+
+#[test]
+fn counted_map_batch_rolls_back_after_positive_timer_rng_and_tentative_statistics() {
+    let cases = bonus_evidence::cases();
+    let c = &cases[7];
+    for after in [1, 2, 16] {
+        let mut s = Simulation::original_player_bonuses_map(
+            bonus_evidence::case_map(c.map),
+            64,
+            MapContextOptions::default(),
+        )
+        .unwrap();
+        let before = s.snapshot();
+        let spatial = s.spatial.order.clone();
+        spawning::BONUS_MAP_FAILURE_OBSERVATION.with(|o| o.set(None));
+        spawning::BONUS_MAP_FAIL_AFTER.with(|f| f.set(Some(after)));
+        assert_eq!(s.spawn_map_things(), Err(MapSpawnError::WorkLimit.into()));
+        let (rng, total, actors, tics) = spawning::BONUS_MAP_FAILURE_OBSERVATION
+            .with(|o| o.take())
+            .unwrap();
+        assert_eq!(rng, 2 * after as u8);
+        assert_eq!(total, after as i32);
+        assert_eq!(actors, after);
+        assert!((1..=6).contains(&tics));
+        assert_eq!(s.snapshot(), before);
+        assert_eq!(s.spatial.order, spatial);
+        assert_eq!(s.actor_order().count(), 0);
+        let spawned = s.spawn_map_things().unwrap();
+        assert_eq!(spawned.spawned.len(), 16);
+        assert_eq!(s.level_statistics().unwrap().total_items, 16);
+    }
+}
+
+fn rejected_tic(s: &mut Simulation, commands: [TicCommand; 4]) {
+    let before = s.snapshot();
+    let spatial = s.spatial.order.clone();
+    let roster = s.original_player_roster();
+    let captures = snapshot::capture_count();
+    assert!(s.advance(commands).is_err());
+    assert_eq!(snapshot::capture_count(), captures);
+    assert_eq!(s.snapshot(), before);
+    assert_eq!(s.spatial.order, spatial);
+    assert_eq!(s.original_player_roster(), roster);
+    assert!(s.step(commands).is_err());
+    assert_eq!(s.snapshot(), before);
+    assert_eq!(s.spatial.order, spatial);
+}
+
+#[test]
+fn counted_collection_failure_rolls_back_resources_messages_removal_and_credit() {
+    for which in [2, 5, 11, 15] {
+        let cases = bonus_evidence::cases();
+        let c = &cases[which];
+        let (mut s, _) = bonus_evidence::setup(c);
+        // Range-valid but causally artificial, matching the historical late-error
+        // technique:95+6 fails after the source effect/count/removal have run.
+        s.original_player
+            .as_mut()
+            .unwrap()
+            .pickups
+            .as_mut()
+            .unwrap()
+            .bonus_count = 96;
+        rejected_tic(&mut s, bonus_evidence::commands(c, 1));
+        assert_eq!(
+            s.original_player_pickups(PlayerSlot::One)
+                .unwrap()
+                .item_count,
+            0
+        );
+    }
+    let cases = bonus_evidence::cases();
+    let c = &cases[11];
+    let (mut s, _) = bonus_evidence::setup(c);
+    // First contact reaches94; second reaches100 and rejects the entire tic.
+    s.original_player
+        .as_mut()
+        .unwrap()
+        .pickups
+        .as_mut()
+        .unwrap()
+        .bonus_count = 89;
+    rejected_tic(&mut s, bonus_evidence::commands(c, 1));
+}
+
+#[test]
+fn retirement_before_second_counted_collection_is_part_of_the_same_transaction() {
+    let cases = bonus_evidence::cases();
+    let c = &cases[30];
+    let (mut s, _) = bonus_evidence::setup(c);
+    let item = s
+        .actor_order()
+        .find(|id| s.actor(*id).unwrap().life().unwrap().actor_type.0 == 45)
+        .unwrap();
+    s.advance(bonus_evidence::commands(c, 1)).unwrap();
+    assert_eq!(s.actors.is_pending(item), Some(true));
+    assert_eq!(
+        s.original_player_pickups(PlayerSlot::One)
+            .unwrap()
+            .item_count,
+        1
+    );
+    s.original_player
+        .as_mut()
+        .unwrap()
+        .pickups
+        .as_mut()
+        .unwrap()
+        .bonus_count = 96;
+    rejected_tic(&mut s, bonus_evidence::commands(c, 2));
+    assert_eq!(s.actors.is_pending(item), Some(true));
+    assert_eq!(
+        s.original_player_pickups(PlayerSlot::One)
+            .unwrap()
+            .item_count,
+        1
+    );
+    s.original_player
+        .as_mut()
+        .unwrap()
+        .pickups
+        .as_mut()
+        .unwrap()
+        .bonus_count = 6;
+    s.advance(bonus_evidence::commands(c, 2)).unwrap();
+    assert!(s.actor(item).is_none());
+    assert_eq!(
+        s.original_player_pickups(PlayerSlot::One)
+            .unwrap()
+            .item_count,
+        2
+    );
+    assert_eq!(s.level_statistics().unwrap().total_items, 2);
 }

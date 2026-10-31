@@ -45,8 +45,6 @@ fn bonus_actor_identity_flags_and_policy_isolation() {
 
 #[test]
 fn independent_bonus_actor_clocks_and_spawn_rng() {
-    // This checkpoint compares actual actor clocks/identity/RNG. Counted level
-    // statistics are verified by the subsequent statistics implementation gate.
     for which in [1, 4, 7, 9, 10] {
         let cases = bonus_evidence::cases();
         let c = &cases[which];
@@ -62,12 +60,8 @@ fn independent_bonus_actor_clocks_and_spawn_rng() {
             } else {
                 &sim.events()[pending..]
             };
-            let rows: Vec<_> = bonus_evidence::rows(which, op)
-                .iter()
-                .filter(|(tag, _)| tag != "LS")
-                .cloned()
-                .collect();
-            trace.check(&sim, which, op, events, &rows);
+            let rows = bonus_evidence::rows(which, op);
+            trace.check(&sim, which, op, events, rows);
             assert_eq!(sim.snapshot().version(), 27);
         }
     }

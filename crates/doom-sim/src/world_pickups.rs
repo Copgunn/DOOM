@@ -179,7 +179,11 @@ pub struct PlayerPickupState {
 impl PlayerPickupState {
     fn validate(self, profile: OriginalExecutionProfile) -> Result<(), SimError> {
         if !(0..=MAX_BONUS).contains(&self.bonus_count)
-            || self.item_count != 0
+            || if profile.has_player_bonuses() {
+                !(0..=MAX_WORLD_PICKUPS as i32).contains(&self.item_count)
+            } else {
+                self.item_count != 0
+            }
             || self.message == PickupMessage::MedikitNeeded
             || (!profile.has_player_bonuses()
                 && matches!(
@@ -233,6 +237,8 @@ pub enum PickupEvent {
     HealthBonus(i32, i32, i32),
     /// Direct BON2 effect; ordinary armor grant thresholds remain separate.
     ArmorBonus(PlayerArmorState, PlayerArmorState),
+    /// Original COUNTITEM increment, after message and before source removal.
+    Counted(i32, i32),
 }
 pub(crate) enum ContactEvent {
     Pickup(PickupEvent),
@@ -608,6 +614,15 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         .ok_or(PlayerBodyError::Invariant)?;
                     state.message = k.message();
                     observe(events, PickupEvent::Message(state.message));
+                    if l.flags & MF_COUNTITEM != 0 {
+                        if !self.player.policy.has_player_bonuses() {
+                            return Err(PlayerBodyError::Invariant.into());
+                        }
+                        let before = state.item_count;
+                        state.item_count =
+                            before.checked_add(1).ok_or(PlayerBodyError::Invariant)?;
+                        observe(events, PickupEvent::Counted(before, state.item_count));
+                    }
                     if !self.access.mark(item_id)? {
                         return Err(StoreError::InvalidHandle.into());
                     }
@@ -679,6 +694,7 @@ impl Simulation {
             self.original_player_armor(PlayerSlot::One)?;
         }
         let mut count = 0;
+        let mut counted = 0;
         for id in self.actors.order() {
             if self.actors.is_pending(id) != Some(false) {
                 continue;
@@ -688,7 +704,27 @@ impl Simulation {
                 .is_some_and(|l| kind_for(self.player_policy(), l.actor_type).is_some())
             {
                 count += 1;
+                counted += usize::from(a.life().is_some_and(|l| l.flags & MF_COUNTITEM != 0));
                 validate_item(a)?;
+            }
+        }
+        if self.player_policy().has_player_bonuses() {
+            let total = self
+                .statistics
+                .ok_or(PlayerBodyError::Invariant)?
+                .total_items;
+            let collected = self
+                .original_player
+                .as_ref()
+                .and_then(|p| p.pickups)
+                .ok_or(PlayerBodyError::Invariant)?
+                .item_count;
+            if !(0..=MAX_WORLD_PICKUPS as i32).contains(&total)
+                || collected > total
+                || counted > (total - collected) as usize
+                || (total > 0 && total as usize != counted_map_things(self.world.map().things()))
+            {
+                return Err(PlayerBodyError::Invariant.into());
             }
         }
         if count > MAX_WORLD_PICKUPS {
@@ -753,4 +789,13 @@ impl Simulation {
             .flags |= MF_DROPPED;
         Ok(id)
     }
+}
+
+// Medium, commercial single-player placement filters; actor admission stays in
+// the existing batch validator. The counter has no second persistent owner.
+pub(crate) fn counted_map_things(things: &[doom_map::Thing]) -> usize {
+    things
+        .iter()
+        .filter(|t| matches!(t.kind, 2014 | 2015) && t.options & 16 == 0 && t.options & 2 != 0)
+        .count()
 }

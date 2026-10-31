@@ -252,6 +252,42 @@ impl Simulation {
         self.bindings = plan.bindings;
         plan.events
     }
+    /// New-policy THING setup stages the same bounded actor/RNG/statistics plan.
+    /// It runs before player binding, so it does not require a live-player preflight.
+    pub(crate) fn checked_map_spawn_batch(
+        &mut self,
+        count: usize,
+        action: impl FnOnce(
+            &mut LifeHost<'_, &mut ThinkerStore<Actor>>,
+        ) -> Result<Vec<ActorId>, SimError>,
+    ) -> Result<Vec<ActorId>, SimError> {
+        if !self.player_policy().has_player_bonuses() || self.statistics.is_none() {
+            return Err(MapSpawnError::Context.into());
+        }
+        let mut plan = self.demon_plan()?;
+        plan.actors.reserve_spawns(count)?;
+        plan.spatial
+            .order
+            .try_reserve(count)
+            .map_err(|_| StoreError::Capacity)?;
+        let result = action(&mut LifeHost {
+            player: None,
+            statistics: plan.statistics.as_mut(),
+            perception: None,
+            access: &mut plan.actors,
+            registry: self.registry.as_deref().ok_or(ActorError::InvalidType)?,
+            world: &self.world,
+            sectors: &self.sectors,
+            options: self.actor_options,
+            rng: &mut plan.rng,
+            spatial: &mut plan.spatial,
+            bindings: &mut plan.bindings,
+            events: &mut plan.events,
+        })?;
+        let events = self.commit_demon_plan(plan);
+        self.pending.extend(events);
+        Ok(result)
+    }
     /// One bounded shared action execution; successful plans are committed once.
     pub(crate) fn checked_demon_operation<T>(
         &mut self,

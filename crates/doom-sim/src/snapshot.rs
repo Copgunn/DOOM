@@ -253,6 +253,11 @@ fn event_bytes(event: &Event) -> Vec<u8> {
                     b.extend(id(*item));
                     b.push(*outcome as u8);
                 }
+                Counted(before, after) => {
+                    b.push(10);
+                    b.extend(before.to_le_bytes());
+                    b.extend(after.to_le_bytes());
+                }
                 HealthBonus(before, after, body) => {
                     b.push(8);
                     b.extend(before.to_le_bytes());
@@ -439,6 +444,7 @@ fn event_bytes(event: &Event) -> Vec<u8> {
         Event::Statistics(event) => {
             let (kind, actor, total) = match event {
                 crate::StatisticsEvent::MapKillTotal { actor, total } => (0, *actor, *total),
+                crate::StatisticsEvent::MapItemTotal { actor, total } => (2, *actor, *total),
                 crate::StatisticsEvent::SinglePlayerKill { actor, total } => (1, *actor, *total),
             };
             b.extend([21, kind]);

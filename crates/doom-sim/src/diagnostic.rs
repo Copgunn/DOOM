@@ -489,6 +489,18 @@ impl<'a> Diagnostic<'a> {
                 {
                     return Err(DiagnosticError::Structure);
                 }
+                if self.version == 27 && tag == 21 {
+                    if event.len() != 18 || !matches!(event[1], 0..=2) {
+                        return Err(DiagnosticError::Structure);
+                    }
+                    validate_handle(&event[2..14])?;
+                    let total = i32::from_le_bytes(number(&event[14..18])?);
+                    if total < 0
+                        || (event[1] == 2 && !(1..=MAX_WORLD_PICKUPS as i32).contains(&total))
+                    {
+                        return Err(DiagnosticError::Identity);
+                    }
+                }
                 if tag == 23 {
                     validate_pickup_event(event, self.version)?;
                 }
@@ -596,6 +608,9 @@ impl<'a> Diagnostic<'a> {
                 self.policy(),
             )?;
         }
+        if self.version == 27 {
+            self.validate_bonus_statistics()?;
+        }
         if matches!(self.version, 25..=27) {
             self.validate_pickup_items()?;
             if self.required("original_player.0.pickups.present")? != [1] {
@@ -609,13 +624,58 @@ impl<'a> Diagnostic<'a> {
             )?);
             let message = self.required("original_player.0.pickups.message")?;
             if !(0..=world_pickups::MAX_BONUS).contains(&bonus)
-                || items != 0
+                || if self.version == 27 {
+                    !(0..=MAX_WORLD_PICKUPS as i32).contains(&items)
+                } else {
+                    items != 0
+                }
                 || !(matches!(message, [0..=6] | [8..=9])
                     || (matches!(self.version, 26 | 27) && matches!(message, [10..=11]))
                     || (self.version == 27 && matches!(message, [12..=13])))
             {
                 return Err(DiagnosticError::Structure);
             }
+        }
+        Ok(())
+    }
+    fn validate_bonus_statistics(&self) -> Result<(), DiagnosticError> {
+        let total = i32::from_le_bytes(number(self.required("level.total_items")?)?);
+        let collected = i32::from_le_bytes(number(
+            self.required("original_player.0.pickups.item_count")?,
+        )?);
+        if !(0..=MAX_WORLD_PICKUPS as i32).contains(&total) || !(0..=total).contains(&collected) {
+            return Err(DiagnosticError::Identity);
+        }
+        let things = self.required("map.things")?;
+        if things.len() % 10 != 0 || things.len() > MAX_DEMON_MAP_THINGS * 10 {
+            return Err(DiagnosticError::Limit);
+        }
+        let expected = things
+            .chunks_exact(10)
+            .filter(|t| {
+                matches!(i16::from_le_bytes([t[6], t[7]]), 2014 | 2015)
+                    && u16::from_le_bytes([t[8], t[9]]) & 16 == 0
+                    && u16::from_le_bytes([t[8], t[9]]) & 2 != 0
+            })
+            .count();
+        // Zero also describes a constructed world whose THING batch has not run.
+        if total > 0 && total as usize != expected {
+            return Err(DiagnosticError::Identity);
+        }
+        let mut live = 0;
+        for slot in 0..self.slots()? {
+            let prefix = format!("actor.{slot}");
+            if self.required(&format!("{prefix}.occupied"))? != [1] {
+                continue;
+            }
+            let ty = u16::from_le_bytes(number(self.required(&format!("{prefix}.type"))?)?);
+            if matches!(ty, 45 | 46) && self.required(&format!("{prefix}.pending_removal"))? == [0]
+            {
+                live += 1;
+            }
+        }
+        if live > (total - collected) as usize {
+            return Err(DiagnosticError::Identity);
         }
         Ok(())
     }
@@ -1261,7 +1321,11 @@ fn validate_pickup_event(event: &[u8], version: u32) -> Result<(), DiagnosticErr
                 let before = i32::from_le_bytes(number(get(3, 7)?)?);
                 let after = i32::from_le_bytes(number(get(7, 11)?)?);
                 let body = i32::from_le_bytes(number(get(11, 15)?)?);
-                (1..=100).contains(&before) && (before..=100).contains(&after) && after == body
+                if bonuses && (100..=200).contains(&before) {
+                    event[2] == 0 && after == before && after == body
+                } else {
+                    (1..=100).contains(&before) && (before..=100).contains(&after) && after == body
+                }
             }
         }
         Some(3) => {
@@ -1282,7 +1346,12 @@ fn validate_pickup_event(event: &[u8], version: u32) -> Result<(), DiagnosticErr
         Some(5) => {
             event.len() == 10
                 && (0..=world_pickups::MAX_BONUS).contains(&i32::from_le_bytes(number(get(2, 6)?)?))
-                && get(6, 10)? == [0; 4]
+                && if bonuses {
+                    (0..=MAX_WORLD_PICKUPS as i32)
+                        .contains(&i32::from_le_bytes(number(get(6, 10)?)?))
+                } else {
+                    get(6, 10)? == [0; 4]
+                }
         }
         Some(6) => {
             if event.len() != 15 {
@@ -1290,6 +1359,14 @@ fn validate_pickup_event(event: &[u8], version: u32) -> Result<(), DiagnosticErr
             }
             validate_handle(get(2, 14)?)?;
             event[14] <= 3
+        }
+        Some(10) if bonuses => {
+            if event.len() != 10 {
+                return Err(DiagnosticError::Structure);
+            }
+            let before = i32::from_le_bytes(number(get(2, 6)?)?);
+            let after = i32::from_le_bytes(number(get(6, 10)?)?);
+            (0..MAX_WORLD_PICKUPS as i32).contains(&before) && after == before + 1
         }
         Some(8) if bonuses => {
             if event.len() != 14 {
