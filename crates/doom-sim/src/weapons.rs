@@ -1,6 +1,9 @@
 //! Source player weapon/psprite interpreter and conservative preflight.
 use crate::*;
 use std::{collections::BTreeMap, error::Error, fmt};
+// p_inter.c maxammo and p_user.c/p_pspr.c MAXBOB; immutable source policy data.
+pub(crate) const AMMO_CAPACITIES: [i32; 4] = [200, 50, 300, 50];
+pub(crate) const MAX_BOB_BITS: i32 = 0x100000;
 /// Original command attack bit.
 pub const BT_ATTACK: u8 = 1;
 /// Original command weapon-change bit.
@@ -133,7 +136,7 @@ impl WeaponInventory {
             || self
                 .ammo
                 .into_iter()
-                .zip([200, 50, 300, 50])
+                .zip(AMMO_CAPACITIES)
                 .any(|(a, m)| a < 0 || a > m)
             || self.ammo[2] != 0
             || self.ammo[3] != 0
@@ -232,14 +235,23 @@ pub enum WeaponEvent {
         value: u8,
     },
 }
-trait Host {
-    fn actor(&self) -> Actor;
+pub(crate) trait Host {
+    fn actor(&self) -> Result<Actor, SimError>;
+    fn health(&self) -> i32 {
+        100
+    }
+    fn dead(&self) -> bool {
+        false
+    }
+    fn admit_weapon(&self, _weapon: Weapon) -> Result<(), SimError> {
+        Ok(())
+    }
     fn motion(&mut self, command: TicCommand) -> Result<(), SimError>;
-    fn body_state(&mut self, state: StateId);
+    fn body_state(&mut self, state: StateId) -> Result<(), SimError>;
     fn event(&mut self, event: WeaponEvent);
     fn sound(&mut self, sound: u16);
     fn fire(&mut self, weapon: Weapon, accurate: bool) -> Result<(), SimError>;
-    fn noise(&mut self);
+    fn noise(&mut self) -> Result<(), SimError>;
 }
 struct Machine<'a, H> {
     player: WeaponPlayer,
@@ -268,18 +280,15 @@ impl<H: Host> Machine<'_, H> {
                 self.player.psprites[position].state = None;
                 return Ok(());
             }
-            let s = self
-                .registry
-                .state(id)
-                .ok_or(WeaponError::Definition)?
-                .clone();
+            let s = self.registry.state(id).ok_or(WeaponError::Definition)?;
+            let (tics, misc, action) = (s.tics, s.misc, s.action);
             let ps = &mut self.player.psprites[position];
             ps.state = Some(id);
-            ps.tics = s.tics;
-            if s.misc[0] != 0 {
-                ps.position = s.misc.map(|v| Fixed::from_bits(v.wrapping_shl(16)));
+            ps.tics = tics;
+            if misc[0] != 0 {
+                ps.position = misc.map(|v| Fixed::from_bits(v.wrapping_shl(16)));
             }
-            match s.action {
+            match action {
                 ActorAction::None => {}
                 ActorAction::Original(action) => {
                     self.emit(WeaponEvent::Action {
@@ -295,7 +304,11 @@ impl<H: Host> Machine<'_, H> {
             if ps.state.is_none() || ps.tics != 0 {
                 return Ok(());
             }
-            id = self.registry.state(ps.state.unwrap()).unwrap().next;
+            id = self
+                .registry
+                .state(ps.state.ok_or(WeaponError::Definition)?)
+                .ok_or(WeaponError::Definition)?
+                .next;
         }
     }
     fn bring_up(&mut self) -> Result<(), SimError> {
@@ -313,7 +326,7 @@ impl<H: Host> Machine<'_, H> {
         {
             return Ok(true);
         }
-        self.player.pending = Some(if self.player.owned & 8 != 0 && self.player.ammo[0] != 0 {
+        let fallback = if self.player.owned & 8 != 0 && self.player.ammo[0] != 0 {
             Weapon::Chaingun
         } else if self.player.owned & 4 != 0 && self.player.ammo[1] != 0 {
             Weapon::Shotgun
@@ -321,7 +334,9 @@ impl<H: Host> Machine<'_, H> {
             Weapon::Pistol
         } else {
             Weapon::Fist
-        });
+        };
+        self.host.admit_weapon(fallback)?;
+        self.player.pending = Some(fallback);
         self.enter(0, self.player.ready.states()[1])?;
         Ok(false)
     }
@@ -334,9 +349,9 @@ impl<H: Host> Machine<'_, H> {
             weapon: self.player.ready,
             refire: self.player.refire,
         });
-        self.host.body_state(state("S_PLAY_ATK1"));
+        self.host.body_state(state("S_PLAY_ATK1"))?;
         self.enter(0, self.player.ready.states()[3])?;
-        self.host.noise();
+        self.host.noise()?;
         Ok(())
     }
     fn act(&mut self, position: usize, action: ActionId) -> Result<(), SimError> {
@@ -357,16 +372,24 @@ impl<H: Host> Machine<'_, H> {
                 self.player.psprites[position].position[1] =
                     self.player.psprites[position].position[1] + Fixed::from_map_units(6);
                 if self.player.psprites[position].position[1] >= Fixed::from_map_units(128) {
+                    if self.host.dead() {
+                        self.player.psprites[position].position[1] = Fixed::from_map_units(128);
+                        return Ok(());
+                    }
+                    if self.host.health() == 0 {
+                        self.enter(0, StateId(identity::OriginalState::S_NULL.ordinal()))?;
+                        return Ok(());
+                    }
                     self.player.ready = self.player.pending.ok_or(WeaponError::Definition)?;
                     self.bring_up()?;
                 }
             }
             "A_WeaponReady" => {
-                if matches!(self.host.actor().life.unwrap().state,Some(s) if s==state("S_PLAY_ATK1")||s==state("S_PLAY_ATK2"))
+                if matches!(self.host.actor()?.life.ok_or(WeaponError::Definition)?.state,Some(s) if s==state("S_PLAY_ATK1")||s==state("S_PLAY_ATK2"))
                 {
-                    self.host.body_state(state("S_PLAY"));
+                    self.host.body_state(state("S_PLAY"))?;
                 }
-                if self.player.pending.is_some() {
+                if self.player.pending.is_some() || self.host.health() == 0 {
                     self.enter(0, self.player.ready.states()[1])?;
                     return Ok(());
                 }
@@ -385,7 +408,10 @@ impl<H: Host> Machine<'_, H> {
                 ];
             }
             "A_ReFire" => {
-                if self.buttons & BT_ATTACK != 0 && self.player.pending.is_none() {
+                if self.buttons & BT_ATTACK != 0
+                    && self.player.pending.is_none()
+                    && self.host.health() != 0
+                {
                     self.player.refire = self
                         .player
                         .refire
@@ -411,7 +437,7 @@ impl<H: Host> Machine<'_, H> {
                 if w == Weapon::Chaingun && self.player.ammo[ammo] == 0 {
                     return Ok(());
                 }
-                self.host.body_state(state("S_PLAY_ATK2"));
+                self.host.body_state(state("S_PLAY_ATK2"))?;
                 let before = self.player.ammo[ammo];
                 self.player.ammo[ammo] -= 1;
                 self.emit(WeaponEvent::Ammo {
@@ -447,21 +473,30 @@ impl<H: Host> Machine<'_, H> {
     }
     fn tick(&mut self, command: TicCommand) -> Result<(), SimError> {
         self.host.motion(command)?;
-        let a = self.host.actor();
+        self.after_motion(command)
+    }
+    fn after_motion(&mut self, command: TicCommand) -> Result<(), SimError> {
+        let a = self.host.actor()?;
         let [x, y] = a.momentum();
-        self.player.bob = Fixed::from_bits(((x * x + y * y).bits() >> 2).min(0x100000));
+        self.player.bob = Fixed::from_bits(((x * x + y * y).bits() >> 2).min(MAX_BOB_BITS));
         if command.buttons & BT_CHANGE != 0 {
             let w = Weapon::from_number((command.buttons & BT_WEAPONMASK) >> 3)?;
             if self.player.owned & (1 << (w as u8)) != 0 && w != self.player.ready {
                 self.player.pending = Some(w);
             }
         }
+        self.move_psprites()
+    }
+    fn move_psprites(&mut self) -> Result<(), SimError> {
         for i in 0..2 {
             if let Some(id) = self.player.psprites[i].state {
                 if self.player.psprites[i].tics != -1 {
                     self.player.psprites[i].tics -= 1;
                     if self.player.psprites[i].tics == 0 {
-                        self.enter(i, self.registry.state(id).unwrap().next)?;
+                        self.enter(
+                            i,
+                            self.registry.state(id).ok_or(WeaponError::Definition)?.next,
+                        )?;
                     }
                 }
             }
@@ -469,6 +504,53 @@ impl<H: Host> Machine<'_, H> {
         self.player.psprites[1].position = self.player.psprites[0].position;
         Ok(())
     }
+}
+pub(crate) enum PistolOperation {
+    Setup,
+    Advance,
+    DeadAdvance,
+    Drop,
+}
+pub(crate) fn pistol<H: Host>(
+    registry: &ActorRegistry,
+    player: WeaponPlayer,
+    host: H,
+    operation: PistolOperation,
+    command: TicCommand,
+    leveltime: u64,
+) -> Result<WeaponPlayer, SimError> {
+    let mut machine = Machine {
+        player,
+        registry,
+        host,
+        buttons: command.buttons,
+        leveltime,
+        work: 0,
+    };
+    match operation {
+        PistolOperation::Setup => machine.bring_up()?,
+        PistolOperation::Advance => machine.after_motion(command)?,
+        PistolOperation::DeadAdvance => machine.move_psprites()?,
+        PistolOperation::Drop => {
+            machine.enter(0, StateId(identity::OriginalState::S_PISTOLDOWN.ordinal()))?
+        }
+    }
+    Ok(machine.player)
+}
+
+/// Shared source P_GunShot ordering; caller supplies the existing gameplay RNG.
+pub(crate) fn gun_shot(
+    angle: u32,
+    accurate: bool,
+    random: &mut impl FnMut(u8) -> u8,
+) -> (u32, i32) {
+    let damage = 5 * (i32::from(random(0)) % 3 + 1);
+    let spread = if accurate {
+        0
+    } else {
+        (i32::from(random(1)) - i32::from(random(2))) * 262144
+    };
+    (angle.wrapping_add_signed(spread), damage)
 }
 struct Preview<'a> {
     sim: &'a Simulation,
@@ -491,18 +573,25 @@ impl Preview<'_> {
     }
 }
 impl Host for Preview<'_> {
-    fn actor(&self) -> Actor {
-        self.actor
+    fn actor(&self) -> Result<Actor, SimError> {
+        Ok(self.actor)
     }
     fn motion(&mut self, command: TicCommand) -> Result<(), SimError> {
         apply_player_motion(&mut self.actor, command).map(|_| ())
     }
-    fn body_state(&mut self, s: StateId) {
-        self.actor.life.as_mut().unwrap().state = Some(s);
+    fn body_state(&mut self, s: StateId) -> Result<(), SimError> {
+        self.actor
+            .life
+            .as_mut()
+            .ok_or(WeaponError::Definition)?
+            .state = Some(s);
+        Ok(())
     }
     fn event(&mut self, _: WeaponEvent) {}
     fn sound(&mut self, _: u16) {}
-    fn noise(&mut self) {}
+    fn noise(&mut self) -> Result<(), SimError> {
+        Ok(())
+    }
     fn fire(&mut self, w: Weapon, accurate: bool) -> Result<(), SimError> {
         self.spawns += if w == Weapon::Shotgun { 7 } else { 1 };
         if self.spawns > 7 {
@@ -531,18 +620,22 @@ impl Host for Preview<'_> {
             }
         }
         for _ in 0..if w == Weapon::Shotgun { 7 } else { 1 } {
-            let r = self.rng.p_random();
-            let damage = if w == Weapon::Fist {
-                2 * (i32::from(r) % 10 + 1)
+            let (an, damage) = if matches!(w, Weapon::Pistol | Weapon::Chaingun) {
+                gun_shot(angle, accurate, &mut |_| self.rng.p_random())
             } else {
-                5 * (i32::from(r) % 3 + 1)
-            };
-            let mut an = angle;
-            if w == Weapon::Fist || w == Weapon::Shotgun || !accurate {
+                let r = self.rng.p_random();
+                let damage = if w == Weapon::Fist {
+                    2 * (i32::from(r) % 10 + 1)
+                } else {
+                    5 * (i32::from(r) % 3 + 1)
+                };
                 let l = self.rng.p_random();
                 let r = self.rng.p_random();
-                an = an.wrapping_add(((i32::from(l) - i32::from(r)) * 262144) as u32);
-            }
+                (
+                    angle.wrapping_add_signed((i32::from(l) - i32::from(r)) * 262144),
+                    damage,
+                )
+            };
             if w == Weapon::Fist {
                 slope = crate::combat_trace::aim_with(self.sim, self.id, an, range, &|id| {
                     self.lookup(id)
@@ -601,11 +694,14 @@ struct Commit<'a> {
     id: ActorId,
 }
 impl Host for Commit<'_> {
-    fn actor(&self) -> Actor {
-        *self.sim.actor(self.id).unwrap()
+    fn actor(&self) -> Result<Actor, SimError> {
+        self.sim
+            .actor(self.id)
+            .copied()
+            .ok_or(WeaponError::Reference.into())
     }
     fn motion(&mut self, command: TicCommand) -> Result<(), SimError> {
-        let old = self.actor();
+        let old = self.actor()?;
         let a = self.sim.actors.get_mut(self.id).unwrap();
         let moved = apply_player_motion(a, command)?;
         if moved
@@ -614,12 +710,13 @@ impl Host for Commit<'_> {
                 .life
                 .is_some_and(|life| life.state == Some(state("S_PLAY")))
         {
-            self.body_state(state("S_PLAY_RUN1"));
+            self.body_state(state("S_PLAY_RUN1"))?;
         }
         Ok(())
     }
-    fn body_state(&mut self, s: StateId) {
+    fn body_state(&mut self, s: StateId) -> Result<(), SimError> {
         self.sim.enter_validated(self.id, s);
+        Ok(())
     }
     fn event(&mut self, e: WeaponEvent) {
         self.sim.pending.push(Event::Weapon(e));
@@ -632,12 +729,14 @@ impl Host for Commit<'_> {
                 sound,
             }));
     }
-    fn noise(&mut self) {
+    fn noise(&mut self) -> Result<(), SimError> {
         self.sim.weapon_noise(self.id);
+        Ok(())
     }
     fn fire(&mut self, w: Weapon, accurate: bool) -> Result<(), SimError> {
         let mut slope = Fixed::ZERO;
-        let angle = self.actor().angle();
+        let angle = self.actor()?.angle();
+        let range = Fixed::from_map_units(if w == Weapon::Fist { 64 } else { 2048 });
         if w != Weapon::Fist {
             for an in [
                 angle,
@@ -654,19 +753,22 @@ impl Host for Commit<'_> {
             }
         }
         for _ in 0..if w == Weapon::Shotgun { 7 } else { 1 } {
-            let r = self.sim.weapon_random(0);
-            let damage = if w == Weapon::Fist {
-                2 * (i32::from(r) % 10 + 1)
+            let (an, damage) = if matches!(w, Weapon::Pistol | Weapon::Chaingun) {
+                gun_shot(angle, accurate, &mut |kind| self.sim.weapon_random(kind))
             } else {
-                5 * (i32::from(r) % 3 + 1)
-            };
-            let mut an = angle;
-            if w == Weapon::Fist || w == Weapon::Shotgun || !accurate {
+                let r = self.sim.weapon_random(0);
+                let damage = if w == Weapon::Fist {
+                    2 * (i32::from(r) % 10 + 1)
+                } else {
+                    5 * (i32::from(r) % 3 + 1)
+                };
                 let l = self.sim.weapon_random(1);
                 let r = self.sim.weapon_random(2);
-                an = an.wrapping_add(((i32::from(l) - i32::from(r)) * 262144) as u32);
-            }
-            let range = Fixed::from_map_units(if w == Weapon::Fist { 64 } else { 2048 });
+                (
+                    angle.wrapping_add_signed((i32::from(l) - i32::from(r)) * 262144),
+                    damage,
+                )
+            };
             if w == Weapon::Fist {
                 slope = crate::combat_trace::aim(self.sim, self.id, an, range)
                     .expect("preflight fist aim")
@@ -694,7 +796,7 @@ impl Host for Commit<'_> {
                 if let Some(TraceObject::Actor(target)) = result.hit {
                     self.sound(lifecycle::source_sound("sfx_punch").unwrap());
                     let to = self.sim.actor(target).unwrap().position();
-                    let from = self.actor().position();
+                    let from = self.actor()?.position();
                     self.sim.actors.get_mut(self.id).unwrap().spec.angle =
                         movement::point_angle([to[0] - from[0], to[1] - from[1]]);
                 }
@@ -781,7 +883,7 @@ impl Simulation {
             pending: Some(inventory.ready),
             owned: inventory.owned,
             ammo: inventory.ammo,
-            max_ammo: [200, 50, 300, 50],
+            max_ammo: AMMO_CAPACITIES,
             attack_down: true,
             refire: 0,
             bob: Fixed::ZERO,

@@ -4,6 +4,8 @@ use crate::{
     *,
 };
 use std::{error::Error, fmt};
+// p_mobj.h: source kill-count eligibility.
+const MF_COUNTKILL: u32 = 1 << 22;
 /// A bounded combat prerequisite failed before authoritative mutation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CombatError {
@@ -230,6 +232,30 @@ impl DamagePlan {
         }
         Ok(self)
     }
+    /// Current canonical bullet damage, sharing health/pain/death/retarget planning.
+    pub(crate) fn current_pistol(
+        registry: &ActorRegistry,
+        actor: Actor,
+        request: DamageRequest,
+        statistics: &LevelStatistics,
+    ) -> Result<Self, SimError> {
+        let life = actor.life().ok_or(CombatError::Metadata)?;
+        if life.actor_type.0 != identity::OriginalActorType::MT_SERGEANT.ordinal() {
+            return Err(MonsterError::Definition.into());
+        }
+        let mut plan = Self::current_melee_body(registry, actor, request)?;
+        if plan.killed {
+            // The exact admitted Demon definition has MF_COUNTKILL (p_mobj.h).
+            if life.flags & MF_COUNTKILL != 0 {
+                statistics
+                    .single_player_kill_count
+                    .checked_add(1)
+                    .ok_or(MapSpawnError::StatisticsOverflow)?;
+                plan.credit = true;
+            }
+        }
+        Ok(plan)
+    }
     /// Current damage for a globally preflighted body role. The canonical player
     /// caller additionally proves current ownership and physical impulse bounds.
     /// Earlier actions may change health/RNG; never reuse a prior-tic plan.
@@ -264,6 +290,19 @@ impl DamagePlan {
     }
 }
 impl PreparedAttack {
+    pub(crate) fn current(
+        shooter: ActorId,
+        attack: LineAttack,
+        result: AttackResult,
+        plan: Option<DamagePlan>,
+    ) -> Self {
+        Self {
+            shooter,
+            attack,
+            result,
+            plan,
+        }
+    }
     pub fn parameters(&self) -> LineAttack {
         self.attack
     }
@@ -744,6 +783,12 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                     frags: p.frags,
                     weapon_down: identity::OriginalState::S_PISTOLDOWN,
                 }));
+            }
+            if self.player.as_ref().is_some_and(|p| p.mo == Some(id)) {
+                if let Err(error) = player_pistol::drop_weapon(self) {
+                    self.fail_sight(error);
+                    return result;
+                }
             }
             self.combat_event(CombatEvent::Kill {
                 target: id,

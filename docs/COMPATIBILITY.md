@@ -932,3 +932,82 @@ pickups, armor/powers/cheats, roster changes, respawn/multiplayer, other monster
 infighting, dynamic sectors, airborne/general geometry and rendering remain
 excluded. [Source findings](M3G6_REFERENCE.md) and [observed evidence](validation/M3G6.md)
 separate source behavior, reusable historical evidence and Rust safety policy.
+
+
+## Genuine player pistol combat
+
+Select `Simulation::original_player_demon_pistol_map` or the explicit
+`OriginalExecutionProfile::PlayerDemonPistolV1` (wire7). Exhaustive public policy
+matches need a new arm. It composes the existing genuine MT_PLAYER0, at most one
+map-spawned MT_SERGEANT12, fixed active player0, commands, acquisition, pursuit and
+autonomous melee. Older policies, including the no-weapon melee policy6, retain
+all prior inputs, diagnostics and rejection behavior. No synthetic body is
+reclassified as a player.
+
+After spawning/binding the fresh live health100 body, call
+`initialize_player_pistol(PlayerSlot::One, INITIAL_PISTOL_BULLETS)` before any tic.
+G_PlayerReborn uses50; explicit initial values0..200 are controlled inventory
+setup, not pickups. Double setup, wrong capability, absent/stale/pending body and
+noninitial setup reject. PistolState observations are copies of weapon-only
+fields; mo/health/state/attacker remain authoritative in the existing player.
+Fixed player retirement/rebinding and foreign-instance admission remain checked.
+
+Settings are Medium/commercial/single-player, floor0/ceiling128, one static flat
+sector, axis-aligned one-sided walls, at most128 trace lines and existing64 actor,
+coordinate/travel, BLOCKMAP, sight and work bounds. Turning and forward/side
+-50..50 retain the prior arithmetic qualification. Only BT_ATTACK is newly
+admitted; other player slots must remain default. Dead-player commands must be
+default, while existing corpse physics and source weapon lowering continue.
+There is no full PlayerThink/DeathThink, view/camera or damagecount decay.
+
+Original pistol overlays use10..17 plus immediate LightDone1/Null0, distinct from
+mobj states. Body attack states154/155 are newly executable only here. Setup
+immediately raises128 to122; continuous attack can select at tic15 and first
+fires at19. Pistol attack durations4/6/4/5 and immediate ReFire yield a14-tic held
+shot interval. Ammo decrements at FirePistol, after sound/body-state and before
+flash/aim/shot. Release does not cancel a selected windup. Refire resets when the
+source ReFire action observes release, not at arbitrary button-change time.
+
+P_GunShot draws5/10/15 damage first. An accurate refire0 shot has no spread draws;
+inaccurate shots draw two ordered spread values. Autoaim tries the current angle,
++2^26 and-2^26 at1024 units; it changes slope, not the actual bullet angle. Bullet
+range is2048. Both use the same source BLOCKMAP/intercept service. Original
+P_PathTraverse processes collected intercepts after its bounded64-cell loop even
+when the endpoint was not reached; this newly observed pistol domain admits that
+finite result. Historical trace APIs retain their stricter endpoint rejection.
+Puff37 and Blood38 are real allocated thinkers with source RNG and same-tic
+thinker insertion, not presentation placeholders. Walls and misses cannot
+fabricate Demon damage.
+
+One-sector P_NoiseAlert sets the genuine player's sector soundtarget at
+FireWeapon selection, before the later bullet action. Nonambush Look may wake
+from sound despite rear facing or a wall; ambush retains its sight check. This is
+not generalized sound propagation. Direct damage retaliation is separately
+performed by the shared damage service. Old acquisition/melee policies still
+reject sector soundtargets as before.
+
+A real hit uses the current owned player as both source and inflictor, applies
+checked mass400 Demon thrust, then original health/pain/reaction/retarget/death
+processing. The existing single-player kill counter is the source player kill
+count; no duplicate statistic is stored. Surviving AI and autonomous Demon melee
+continue through the same core. Player death immediately lowers the weapon,
+retains mo/attacker and active roster membership, and leaves an allocated moving
+corpse. A dead player never fires or automatically respawns.
+
+Empty ammo may idle, but source CheckAmmo fallback requires an unadmitted weapon.
+That continuation rejects atomically, including a late ReFire check after
+release. There is no infinite ammo or silently executed fist. Trace, capacity,
+impulse, ownership, unsupported-action and later AI failures preserve ammo,
+psprites, health, references, RNG, statistics, soundtarget, ordering, queues and
+tic. `advance` constructs no implicit Snapshot; `step` captures once from the
+same execution. [DSIM23](STATE_FORMAT.md#dsim-v23-genuine-player-pistol) adds only
+the required dynamic weapon fields; historical20/21/22 remain intact.
+
+Other weapons, switching, pickups, armor/powers/cheats, respawn, multiplayer,
+other monsters, infighting, full player thinkers, airborne/general geometry,
+dynamic sectors, generalized sound propagation and rendering remain unsupported.
+New source scenarios use defined map angles0/-180 and nonnegative turns; inherited
+negative-turn and ordered spread/jitter qualifications are not new portable
+ISO-C evidence. [Investigation](M3G7_REFERENCE.md),
+[reproduction](TESTING.md#genuine-player-pistol) and [observations](validation/M3G7.md)
+state exactly what source comparisons and Rust safety tests establish.

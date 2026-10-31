@@ -40,12 +40,16 @@ services. A separate active-player capability lets a canonical Demon acquire tha
 player visually and pursue through the shared thinker pass. An additional combat
 capability executes source-timed Demon melee, movement misses, physical damage,
 pain, death and retained corpses. The acquisition-only policy keeps its explicit
-melee rejection. Older policies remain available. Full player-thinker/view
-processing, weapons and respawn remain excluded. See the
+melee rejection. A separate pistol capability adds original psprite cadence,
+ammunition, refire spread, real hitscan impacts, one-sector noise alerts and
+Demon damage/pain/death through that same combat loop. Older policies remain
+available. Full player-thinker/view processing, other weapons and respawn remain excluded. See the
 [player contract](docs/COMPATIBILITY.md#original-player-body-lifecycle) and
 [command movement boundary](docs/COMPATIBILITY.md#original-player-command-movement) and
 [active-player/Demon contract](docs/COMPATIBILITY.md#active-original-player-and-demon-acquisition)
 and [autonomous melee boundary](docs/COMPATIBILITY.md#autonomous-original-demon-player-melee).
+See the [genuine pistol contract](docs/COMPATIBILITY.md#genuine-player-pistol-combat)
+for its separately admitted inputs, geometry, ammunition and source limits.
 
 Call `Simulation::advance()` for a tic without an implicit diagnostic Snapshot.
 `step()` retains its Snapshot return, and `snapshot()` captures explicitly in
@@ -97,6 +101,7 @@ cargo run -p doom-sim --example player_knockback --locked
 cargo run -p doom-sim --example player_commands --locked
 cargo run -p doom-sim --example player_demon --locked
 cargo run -p doom-sim --example player_demon_melee --locked
+cargo run -p doom-sim --example player_pistol --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked

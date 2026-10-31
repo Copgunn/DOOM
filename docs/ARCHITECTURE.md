@@ -463,3 +463,43 @@ the same protection. Live Demon follow-through, player friction and corpse movem
 use existing services. The acquisition-only capability keeps its old rejection.
 See [support](COMPATIBILITY.md#autonomous-original-demon-player-melee),
 [source matrix](M3G6_REFERENCE.md) and [observations](validation/M3G6.md).
+
+
+## Canonical player pistol execution
+
+OriginalPlayer remains the sole source player owner for mo, health, state,
+attacker and lifetime. PlayerRuntime holds optional PistolState containing only
+bullets, attackdown, refire, bob, extralight and two psprites. Immutable ownership,
+ready/pending pistol and capacities derive from the explicit capability. There is
+no second actor handle, health record, player manager or persistent WeaponPlayer.
+
+A transient adapter supplies the existing weapon Machine with current ownership
+and health and returns only checked weapon fields. Historical WeaponPlayer and
+its profile remain available unchanged. The shared interpreter now reads source
+health/death through its host, so original lowering runs immediately at the
+existing player-death boundary. Pistol damage/spread generation is shared with
+historical weapons; immutable state metadata is borrowed rather than cloning its
+String on each entry. No alternate weapon loop or RNG is added.
+
+The existing Players phase runs the command/reaction gate once, then the shared
+weapon interpreter; dead continuation runs only MovePsprites. The same actor
+thinker traversal follows, including impact thinkers born during firing. Pure
+trace collection/aim/hit algorithms accept borrowed current transaction actors,
+spatial order, world and sectors. Historical wrappers retain endpoint rejection;
+policy7 admits the original finite64-cell collection result even without endpoint
+completion. No map or actor bounds expand.
+
+Current hits use the shared PreparedAttack, DamagePlan, impact spawning and
+LifeHost executor. There is no cached future damage, health, target position or
+RNG outcome. The one-sector soundtarget is an inline transaction value and is
+visible to the following thinker pass; it is committed with ammo, psprites,
+actors, player, RNG, statistics, spatial order and both event queues. Earlier
+profiles continue borrowing their unchanged sound-target representation. Late
+errors discard the existing bounded plan, including initialization/fallback and
+impact-capacity errors. No full Simulation clone or implicit Snapshot is added.
+
+[Support](COMPATIBILITY.md#genuine-player-pistol-combat),
+[source boundaries](M3G7_REFERENCE.md), [DSIM23](STATE_FORMAT.md#dsim-v23-genuine-player-pistol)
+and [observations](validation/M3G7.md) separate source execution, schema projection
+and Rust safety. Camera, other weapons, inventory gameplay and full player
+thinking remain separate work.

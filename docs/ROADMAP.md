@@ -77,29 +77,42 @@ M3g4 command/reaction movement, M3g3 physical knockback/corpses, M3g2 genuine-pl
 lifecycle and M3g1 diagnostic-free stepping are merged. Their investigations and
 observations remain linked from the [evidence index](README.md).
 
-## Next
+## Current milestone
 
-### M3g6: Autonomous canonical Demon-to-player melee
+### M3g7: Genuine canonical player pistol combat
+
+PlayerDemonPistolV1 composes genuine player commands, original psprites, bounded
+ammo/refire, source hitscan/impacts and one-sector noise with the existing Demon
+acquisition, pursuit, melee, pain and death services. It keeps one authoritative
+player, actor store, RNG and stepping/rollback core. New persistent weapon fields
+have an explicit DSIM23 contract; earlier schemas and policies remain intact.
+This milestone stops at owner review; exact commits and CI belong to GitHub.
+See [source investigation](M3G7_REFERENCE.md),
+[support](COMPATIBILITY.md#genuine-player-pistol-combat) and
+[observations](validation/M3G7.md).
+
+### Previous gameplay foundation — M3g6: Autonomous canonical Demon-to-player melee
 
 Opt-in PlayerDemonMeleeV1 composes the same genuine player, fixed active roster,
 commands, sight, pursuit and thinker transaction with original delayed SARG melee.
 The attack rechecks current range, then applies damage/physical impulse through
 the shared DamagePlan, including pain, death, target retention and persistent
 corpses. Misses and dead-body ignored damage retain distinct RNG behavior. Older
-policies keep their admission and rejection contracts. This milestone stops at
-owner review; exact commits and CI belong to GitHub. See
+policies keep their admission and rejection contracts. M3g6 is merged; exact
+commits and CI belong to GitHub. See
 [source investigation](M3G6_REFERENCE.md),
 [support](COMPATIBILITY.md#autonomous-original-demon-player-melee) and
 [observations](validation/M3G6.md).
 
 ### Next narrow gameplay milestone
 
-Prioritize bounded genuine-player pistol firing against the existing Demon through
-shared weapon/hitscan/damage services. Independently establish command-triggered
-cadence, minimal source ammo/weapon state, attack RNG, physical monster damage,
-pain/death and supported retaliation. Keep pickups, additional weapons/monsters,
-full PlayerThink and generalized infighting separate. The goal is player agency
-inside this shared combat loop, not another identity/ownership redesign.
+Prioritize source-validated empty-ammo fist fallback and bounded original A_Punch.
+The current pistol policy rejects unadmitted fallback atomically; a separate
+capability should establish CheckAmmo/lower/raise/ready chronology and genuine
+player punches against the same Demon using shared weapon, trace and damage
+services. Keep berserk, pickups, additional monsters, full PlayerThink and
+multiplayer separate. This closes a concrete normal-gameplay continuation gap
+without another identity/ownership redesign.
 
 ### Focused maintenance acceptance criteria
 

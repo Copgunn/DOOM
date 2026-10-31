@@ -36,7 +36,7 @@ psprites. It contains no body handle, player slot, health or lifetime token.
 Immutable pistol ownership/readiness/capacity are policy constants.
 
 The historical WeaponPlayer remains unchanged for its own profile. A transient
-adapter may supply the shared interpreter with current authoritative ownership
+adapter supplies the shared interpreter with current authoritative ownership
 and health, then return only weapon-specific fields. It is never persisted as a
 second player and cannot rebind a body. No second scheduler, combat engine,
 movement implementation, actor store or RNG is introduced.
@@ -97,3 +97,30 @@ remain unsupported. Source noise and direct damage retaliation are distinct.
 No all-inactive player scan, freed-pointer dereference or proprietary asset is
 used. Compiled-function inventory is not branch coverage or globally new source
 coverage; actual entries are counted independently.
+
+
+## Observed trace boundary and selected implementation
+
+The committed first west-facing bullet exhausts the original64-cell loop without
+reaching its endpoint, then source P_TraverseIntercepts resolves the collected
+hit. The historical Rust wrapper rejected this stronger-domain boundary. The new
+capability uses the same collector with source-budget completion; the old wrapper
+still requires an endpoint. Separate actual-query comparisons cover every source
+cell/candidate/intercept and stopping result. This is bounded source behavior,
+not an unbounded traversal or a change to historical fixtures.
+
+The implementation selects the transient historical WeaponPlayer adapter rather
+than a second persistent player. It supplies current health/death through the
+shared host and returns only checked dynamic weapon state. Canonical state
+metadata supplies timer bounds. Original one-sector noise uses an inline staged
+target seen by the following thinker traversal; direct damage uses current
+shared PreparedAttack/DamagePlan and real effect reservation. Immediate weapon
+lowering is restricted to death of the owned player, never Demon death.
+
+
+Impact retirement uses the inherited observer quarantine: source actor bytes are
+retained until scenario reset solely to observe allocation births and logical
+retirement safely. No freed pointer is dereferenced. Rust generations and lowest
+vacant-slot reuse are independently specified safety/schema policy, not C memory
+allocator equivalence. Two separate CheckAmmo/dead-lowering components have no
+scripted tic timeline and are not counted as additional full gameplay scenarios.

@@ -112,8 +112,42 @@ pub(crate) fn collect(
     angle: u32,
     range: Fixed,
 ) -> Result<HitscanTrace, CombatError> {
+    collect_limited(
+        &sim.world,
+        &sim.spatial,
+        &|id| sim.actor(id).copied(),
+        shooter,
+        angle,
+        range,
+        true,
+    )
+}
+/// Same collector over the current transaction projection; no alternate trace engine.
+pub(crate) fn collect_in(
+    world: &crate::StaticWorld,
+    spatial: &crate::movement::SpatialIndex,
+    lookup: &impl Fn(ActorId) -> Option<Actor>,
+    shooter: ActorId,
+    angle: u32,
+    range: Fixed,
+) -> Result<HitscanTrace, CombatError> {
+    collect_limited(world, spatial, lookup, shooter, angle, range, false)
+}
+// Original P_PathTraverse traverses collected intercepts after its finite64-cell
+// loop even if the endpoint was not reached. Historical profiles retain their
+// stricter endpoint-rejection policy; only the explicit canonical pistol uses
+// this independently observed source-budget behavior.
+fn collect_limited(
+    world: &crate::StaticWorld,
+    spatial: &crate::movement::SpatialIndex,
+    lookup: &impl Fn(ActorId) -> Option<Actor>,
+    shooter: ActorId,
+    angle: u32,
+    range: Fixed,
+    require_endpoint: bool,
+) -> Result<HitscanTrace, CombatError> {
     validate_range(range)?;
-    let actor = sim.actor(shooter).ok_or(CombatError::Reference)?;
+    let actor = lookup(shooter).ok_or(CombatError::Reference)?;
     let mut start = actor.position();
     let phase = (angle >> 19) as usize;
     let units = range.bits() >> 16;
@@ -124,7 +158,7 @@ pub(crate) fn collect(
         )?,
         checked_add(start[1], Fixed::from_bits(units * crate::FINE_SINE[phase]))?,
     ];
-    let origin = sim.world.map().blockmap().origin();
+    let origin = world.map().blockmap().origin();
     let origin = [
         Fixed::from_map_units(origin.x),
         Fixed::from_map_units(origin.y),
@@ -185,23 +219,21 @@ pub(crate) fn collect(
         intercepts: Vec::new(),
     };
     let mut seen = [false; 128];
-    let [width, height] = sim.world.map().blockmap().dimensions().map(i32::from);
+    let [width, height] = world.map().blockmap().dimensions().map(i32::from);
     let mut complete = false;
     for _ in 0..64 {
         out.cells.push(cell);
         if cell[0] >= 0 && cell[0] < width && cell[1] >= 0 && cell[1] < height {
-            for line_id in sim
-                .world
-                .line_candidates(cell[0] as usize, cell[1] as usize)
-            {
+            for line_id in world.line_candidates(cell[0] as usize, cell[1] as usize) {
                 let i = usize::from(line_id);
-                if seen[i] {
+                let visited = seen.get_mut(i).ok_or(CombatError::InterceptLimit)?;
+                if *visited {
                     continue;
                 }
-                seen[i] = true;
+                *visited = true;
                 let object = TraceObject::Line(line_id);
                 out.candidates.push(object);
-                let line = &sim.world.lines[i];
+                let line = &world.lines[i];
                 let other = [line.start[0] + line.delta[0], line.start[1] + line.delta[1]];
                 let sides = if trace
                     .delta
@@ -226,9 +258,9 @@ pub(crate) fn collect(
                     )?;
                 }
             }
-            for id in &sim.spatial.order {
-                let actor = sim.actor(*id).expect("linked live actor");
-                if !crate::lifecycle::blocks_cell_index(actor) {
+            for id in &spatial.order {
+                let actor = lookup(*id).ok_or(CombatError::Reference)?;
+                if !crate::lifecycle::blocks_cell_index(&actor) {
                     continue;
                 }
                 let position = actor.position();
@@ -279,7 +311,7 @@ pub(crate) fn collect(
             cell[1] += steps[1];
         }
     }
-    if !complete {
+    if require_endpoint && !complete {
         return Err(CombatError::TraversalLimit);
     }
     out.intercepts.sort_by_key(|i| i.fraction);
@@ -313,7 +345,17 @@ pub(crate) fn aim_with(
     lookup: &impl Fn(ActorId) -> Option<Actor>,
 ) -> Result<AimResult, CombatError> {
     let trace = collect(sim, shooter, angle, range)?;
-    let a = lookup(shooter).unwrap();
+    aim_trace(&sim.world, &sim.sectors, shooter, trace, range, lookup)
+}
+pub(crate) fn aim_trace(
+    world: &crate::StaticWorld,
+    sectors: &[crate::SectorState],
+    shooter: ActorId,
+    trace: HitscanTrace,
+    range: Fixed,
+    lookup: &impl Fn(ActorId) -> Option<Actor>,
+) -> Result<AimResult, CombatError> {
+    let a = lookup(shooter).ok_or(CombatError::Reference)?;
     let z = a.z() + Fixed::from_bits(a.height().bits() >> 1) + Fixed::from_map_units(8);
     let mut result = AimResult {
         trace,
@@ -331,12 +373,11 @@ pub(crate) fn aim_with(
         let dist = range * intercept.fraction;
         match intercept.object {
             TraceObject::Line(index) => {
-                let open =
-                    crate::multisector::opening(&sim.world, &sim.sectors, usize::from(index));
+                let open = crate::multisector::opening(world, sectors, usize::from(index));
                 let mut blocked = true;
                 if let Some(open) = open {
                     if open.bottom < open.top {
-                        let [front, back] = line_sectors(sim, index);
+                        let [front, back] = line_sectors(world, sectors, index);
                         if front.floor != back.floor {
                             result.window[0] = result.window[0].max((open.bottom - z) / dist);
                         }
@@ -355,8 +396,8 @@ pub(crate) fn aim_with(
                 if id == shooter {
                     continue;
                 }
-                let actor = lookup(id).unwrap();
-                if actor.life().unwrap().flags & 4 == 0 {
+                let actor = lookup(id).ok_or(CombatError::Reference)?;
+                if actor.life().ok_or(CombatError::Metadata)?.flags & 4 == 0 {
                     continue;
                 }
                 let top = (actor.z() + actor.height() - z) / dist;
@@ -393,7 +434,28 @@ pub(crate) fn hit_with(
     slope: Fixed,
     lookup: &impl Fn(ActorId) -> Option<Actor>,
 ) -> (Option<TraceObject>, Option<[Fixed; 3]>, u32) {
-    let a = lookup(shooter).unwrap();
+    hit_trace(
+        &sim.world,
+        &sim.sectors,
+        shooter,
+        trace,
+        range,
+        slope,
+        lookup,
+    )
+    .expect("historical attack preflight validates every trace actor")
+}
+pub(crate) type TraceHit = (Option<TraceObject>, Option<[Fixed; 3]>, u32);
+pub(crate) fn hit_trace(
+    world: &crate::StaticWorld,
+    sectors: &[crate::SectorState],
+    shooter: ActorId,
+    trace: &HitscanTrace,
+    range: Fixed,
+    slope: Fixed,
+    lookup: &impl Fn(ActorId) -> Option<Actor>,
+) -> Result<TraceHit, CombatError> {
+    let a = lookup(shooter).ok_or(CombatError::Reference)?;
     let z = a.z() + Fixed::from_bits(a.height().bits() >> 1) + Fixed::from_map_units(8);
     let mut visited = 0;
     for intercept in &trace.intercepts {
@@ -404,10 +466,10 @@ pub(crate) fn hit_with(
         let dist = range * intercept.fraction;
         let hit = match intercept.object {
             TraceObject::Line(index) => {
-                match crate::multisector::opening(&sim.world, &sim.sectors, usize::from(index)) {
+                match crate::multisector::opening(world, sectors, usize::from(index)) {
                     None => true,
                     Some(open) => {
-                        let [f, b] = line_sectors(sim, index);
+                        let [f, b] = line_sectors(world, sectors, index);
                         f.floor != b.floor && (open.bottom - z) / dist > slope
                             || f.ceiling != b.ceiling && (open.top - z) / dist < slope
                     }
@@ -417,8 +479,8 @@ pub(crate) fn hit_with(
                 if id == shooter {
                     false
                 } else {
-                    let a = lookup(id).unwrap();
-                    a.life().unwrap().flags & 4 != 0
+                    let a = lookup(id).ok_or(CombatError::Reference)?;
+                    a.life().ok_or(CombatError::Metadata)?.flags & 4 != 0
                         && (a.z() + a.height() - z) / dist >= slope
                         && (a.z() - z) / dist <= slope
                 }
@@ -436,16 +498,18 @@ pub(crate) fn hit_with(
                 trace.origin[1] + trace.delta[1] * frac,
                 z + slope * (frac * range),
             ];
-            return (Some(intercept.object), Some(point), visited);
+            return Ok((Some(intercept.object), Some(point), visited));
         }
     }
-    (None, None, visited)
+    Ok((None, None, visited))
 }
 
-fn line_sectors(sim: &Simulation, index: u16) -> [crate::SectorState; 2] {
-    sim.world.map().linedefs()[usize::from(index)]
+fn line_sectors(
+    world: &crate::StaticWorld,
+    sectors: &[crate::SectorState],
+    index: u16,
+) -> [crate::SectorState; 2] {
+    world.map().linedefs()[usize::from(index)]
         .sides
-        .map(|side| {
-            sim.sectors[usize::from(sim.world.map().sidedefs()[usize::from(side.unwrap())].sector)]
-        })
+        .map(|side| sectors[usize::from(world.map().sidedefs()[usize::from(side.unwrap())].sector)])
 }

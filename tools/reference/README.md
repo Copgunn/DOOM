@@ -311,3 +311,14 @@ captures and complete events have separate provenance. No Rust output creates
 expectations. See [source qualifications](../../docs/M3G6_REFERENCE.md),
 [commands](../../docs/TESTING.md#autonomous-demon-player-melee) and
 [observations](../../docs/validation/M3G6.md). Old capture formats and files remain immutable.
+
+
+M3g7's [genuine pistol observer](m3g7_reference.py) and
+[independent DSIM23 encoder](m3g7_snapshot_goldens.py) add original reborn/psprite,
+clip/refire, aim/trace/effect/noise and Demon combat composition. Historical
+observers/helpers remain immutable. Source rows and expected bytes precede
+matching Rust integration; read-only aim queries are not monster-aim events.
+See [source qualifications](../../docs/M3G7_REFERENCE.md),
+[evidence counts](../../docs/validation/M3G7.md) and
+[commands](../../docs/TESTING.md#genuine-player-pistol). No whole-player or
+portable unmodified ISO-C equivalence is inferred.

@@ -716,3 +716,62 @@ RSS and separate allocation-process samples, outliers and workload fingerprints.
 The smoke mode is advisory and has no timing threshold. See
 [source boundaries](M3G6_REFERENCE.md), [support](COMPATIBILITY.md#autonomous-original-demon-player-melee)
 and [measured observations](validation/M3G6.md).
+
+
+## Genuine player pistol
+
+Use synthetic inputs only. Run the complete standard suite and every historical
+source/encoder family, then the new genuine-player weapon checks:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g7_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3g7_snapshot_goldens.py --check
+cargo test -p doom-sim --test m3g7_reference --test m3g7_policy --locked
+cargo test -p doom-sim --lib player_pistol --locked
+python3 tools/reference/check_player_pistol.py
+cargo run -p doom-sim --example player_pistol --locked
+cargo +nightly fuzz build --sanitizer address
+python3 tools/seed_player_pistol_fuzz.py /tmp/doom-player-pistol-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_pistol /tmp/doom-player-pistol-seeds --sanitizer address -- -runs=4096 -max_len=162 -seed=1 -timeout=20 -rss_limit_mb=2048
+python3 tools/measure_player_pistol.py
+python3 tools/measure_player_pistol.py --smoke
+python3 tools/measure_legacy_weapons.py
+```
+
+The compiled-C observer executes genuine reborn/setup, weapon/psprite, aim/trace,
+impact, damage and Demon functions over the declared command/weapon stage before
+original thinkers. It does not execute complete PlayerThink/Ticker/DeathThink.
+The independent encoder reads only source rows and explicit DSIM23 policy. Full
+byte fixtures precede matching Rust integration. Separate actual aim-query tests
+compare cells, candidates, intercepts, windows, targets and source stopping.
+Compiled bodies, linked fixed math, instrumented function entries, source fields,
+new composition evidence and reused historical coverage are counted separately.
+
+Rust policy tests cover unsupported inputs, missing/pending/stale/reused/foreign
+ownership, invalid weapon state, capacity and late rollback, empty-ammo fallback,
+schema corruption, deterministic replay and full step/advance equivalence. These
+are safety claims, not fabricated C lifetime behavior. The source driver defaults
+commands after death and never scans an all-inactive roster or freed C pointer.
+
+Fuzz targets built are distinct from campaigns actually run. Record seeds,
+execution and byte budgets, timeouts, memory limits and findings. Leak detection
+is disabled by the recorded ASAN_OPTIONS because of the environment's tracing
+limits; this is not leak coverage or exhaustive testing. Historical campaign
+parameters and fixtures remain unchanged.
+
+Pistol benchmarks use100 production advances or separately100 diagnostic steps,
+with source inputs, warmup/setup and final diagnostics outside the measured
+interval. Three separate timing/RSS processes and three allocation-instrumented
+processes retain all samples/outliers. New labels are continuous source scenarios,
+not isolated shot/pain/retaliation costs; some labels intentionally share an
+interval. Compare old controls only with identical frozen workloads/tools and
+compiler settings. Whole-process RSS includes setup; requested allocation bytes
+are cumulative and do not establish peak live heap or leaks. No shared-runner
+hard timing gate is used. [Observations](validation/M3G7.md) hold raw records.
+
+CI preserves all required jobs and the native Intel macOS runner. Linux adds the
+new source/encoder checks and all stable platforms run the asserted pistol
+example. Its timeout has additional headroom because the unchanged M3g6
+exact-master Linux job approached28 minutes; no validation is removed or bypassed.
+See [support](COMPATIBILITY.md#genuine-player-pistol-combat) and
+[source arithmetic/harness limits](M3G7_REFERENCE.md).
