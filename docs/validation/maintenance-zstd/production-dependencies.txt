@@ -1,0 +1,6 @@
+doom-sim v0.1.0 (/workspace/DOOM/crates/doom-sim)
+├── doom-map v0.1.0 (/workspace/DOOM/crates/doom-map)
+│   ├── doom-types v0.1.0 (/workspace/DOOM/crates/doom-types)
+│   └── doom-wad v0.1.0 (/workspace/DOOM/crates/doom-wad)
+│       └── doom-types v0.1.0 (/workspace/DOOM/crates/doom-types)
+└── doom-types v0.1.0 (/workspace/DOOM/crates/doom-types)

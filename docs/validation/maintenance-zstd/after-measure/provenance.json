@@ -1,0 +1,37 @@
+{
+  "commit": "3c61820b92170818bf0ef76a63625cac1968ec86",
+  "tree": "3ecc1eae39a7f7e99b13a548979aad1aca765164",
+  "status": "",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)\nbinary: rustc\ncommit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67\ncommit-date: 2026-10-13\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.1\nLLVM version: 23.1.1",
+  "cc": "cc (Debian 14.2.0-19) 14.2.0",
+  "host": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "cpu_max": "400000 100000",
+  "memory_max": "17179869184",
+  "tools_sha256": {
+    "stepping": "28b18ccc166e7b067d9758feaf17bb7d925f0129e2e4c383422edcfeab0ffc99",
+    "demon_expanded_map": "2e1b3c7c00d9ea0cf4f820b41f6fd724dc5292f54a2fbf81843101e12e4a3426",
+    "canonical_demon": "b48fb56d182b1760fa993ff7c8680efb1711ef5dcaa9afa8cc8d9d2ec57b8f01",
+    "original_registry": "ce85cb6f22da950e620492fdf564f003a414e067e5300ee95122750812b5d139",
+    "context_ownership": "fabbe611fc1186d18cfd674fd4976b4e9bd3a0b039d7afc100812eee071a3efe",
+    "game_instance": "611fdab8358a92ecea2f6b29bf39d5722c836e6b98972318713b15506c75fdca",
+    "player_body": "92b7a2aded561323a2bd3b65d0c17896700f2c2af4a3e2c65cefc2ae37f77a37",
+    "player_knockback": "fea698fb467b0f5e83076f9907ee07df79a026d633d001fe36601d3018279b22",
+    "player_commands": "6f7dc7d97499d68ce97ded28958bb3d92da92b1b1bfa102521b98897c0a10d7c",
+    "player_demon": "ed65b161728541da77c62b1857f1f17117d2591a7af0ecc74bbfcfd09ffff154",
+    "player_demon_melee": "f88caf2f1673e9739538884646f1ff7a5ca2b51c2c7c5479d78ba1d87672d3e0",
+    "legacy_weapons": "a89150069905e7274c555dce3c2e8fd40088b1676b62fd7b5f2b099f3aa9ed86",
+    "player_pistol": "040fb0e916895d830b8b0daa92cedded1398c0fdfbbe47f2ecd46f8153b8fae6",
+    "player_weapons": "36c57f5b5b220e3e0f2008dd5bcf8dc405f57c9600ed1720f79843f638b78e6d",
+    "map_scale": "e82d4ffa290c4fc89001808e29098f9683743990d9c09031884eec02c113face",
+    "map_extent": "8c0d62ff45055216eb203cd95d6bd24c78c579c8db3f3685781f64e9c6434bd5",
+    "player_world_pickups": "8048a374066abc272dddb82f6d25b52894db3c671f9fbb2c928c2c0bfff88ca3"
+  },
+  "method": "Quiet sequential batch; no local tests/source generation/fuzzing running. Each preserved tool retains its original independent three-process timing/RSS and allocation procedure; workloads and modes remain separately labeled."
+}

@@ -1,0 +1,12 @@
+{
+  "target": "evidence_zstd",
+  "seed": 423,
+  "initial_seeds": 150,
+  "executions": 4096,
+  "input_byte_limit": 131072,
+  "input_timeout_seconds": 15,
+  "rss_limit_mb": 1024,
+  "ASAN_OPTIONS": "detect_leaks=0",
+  "scope": "Additional native-C-instrumented campaign after early direct-entry budget guard and expanded direct-entry fuzz path",
+  "log_sha256": "e9839c68a810daa837d7ee783f0eb8f6b7e050bbc41fd58022abdf5b08229b20"
+}

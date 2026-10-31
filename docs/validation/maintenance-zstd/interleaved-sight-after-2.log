@@ -1,0 +1,3 @@
+DOOM_ALLOC_BEGIN
+DOOM_ALLOC_END
+stepping label=expanded_sight_dag profile=20 mode=step calls=100 ns=14168574 bytes=0 digest=5205dbe116db7a6d

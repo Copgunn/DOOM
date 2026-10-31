@@ -1,0 +1,30 @@
+
+running 1 test
+test weapons::weapon_stage_cost_tests::legacy_weapon_stages_preserve_preview_state_and_report_optional_costs ... DOOM_ALLOC_BEGIN
+DOOM_ALLOC_END
+weapon_stage case=0 stage=preview calls=100 ns=596893 digest=7a098fd61af76c5d
+DOOM_ALLOC_BEGIN
+DOOM_ALLOC_END
+weapon_stage case=0 stage=commit calls=100 ns=941814 digest=4a4381854d64729a
+DOOM_ALLOC_BEGIN
+DOOM_ALLOC_END
+weapon_stage case=5 stage=preview calls=100 ns=1548281 digest=31af3603ab480ef6
+DOOM_ALLOC_BEGIN
+DOOM_ALLOC_END
+weapon_stage case=5 stage=commit calls=100 ns=2800555 digest=9d40a105c0574e12
+DOOM_ALLOC_BEGIN
+DOOM_ALLOC_END
+weapon_stage case=23 stage=preview calls=100 ns=530605 digest=4714bffffc9366c4
+DOOM_ALLOC_BEGIN
+DOOM_ALLOC_END
+weapon_stage case=23 stage=commit calls=100 ns=705584 digest=bfe4d8d796105709
+DOOM_ALLOC_BEGIN
+DOOM_ALLOC_END
+weapon_stage case=24 stage=preview calls=100 ns=643723 digest=2f6c000af26ef209
+DOOM_ALLOC_BEGIN
+DOOM_ALLOC_END
+weapon_stage case=24 stage=commit calls=100 ns=941233 digest=6ac340f8efc9b121
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 154 filtered out; finished in 0.33s
+

@@ -1,0 +1,10 @@
+{
+  "native_library": "zstd-sys bundled libzstd 1.5.7",
+  "asan_symbol_references": 359,
+  "ubsan_symbol_references": 132,
+  "CFLAGS": "-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer",
+  "Rust": "nightly address sanitizer",
+  "ASAN_OPTIONS": "detect_leaks=0",
+  "nightly": "rustc 1.101.0-nightly (92ffebece 2026-10-28)\nbinary: rustc\ncommit-hash: 92ffebeceaa0a071066f233873c2438e73d70fe7\ncommit-date: 2026-10-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.101.0-nightly\nLLVM version: 23.1.4\n",
+  "method": "Actual undefined sanitizer references inspected in vendor C static archive used by dedicated codec fuzzer. Not branch coverage or LeakSanitizer coverage."
+}

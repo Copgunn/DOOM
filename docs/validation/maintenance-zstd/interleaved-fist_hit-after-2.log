@@ -1,0 +1,3 @@
+DOOM_ALLOC_BEGIN
+DOOM_ALLOC_END
+player_weapon_pack label=fist_hit mode=advance calls=100 warmup=0 ns=5635052 digest=9ddc3bf0b58549d7

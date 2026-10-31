@@ -1,0 +1,8 @@
+{
+  "external_packages": 31,
+  "registry_archives_bytes": 3247555,
+  "unpacked_registry_file_bytes": 17453490,
+  "vendored_dependency_bytes": 0,
+  "production_graph": "doom-sim v0.1.0 (/workspace/DOOM/crates/doom-sim)\n\u251c\u2500\u2500 doom-map v0.1.0 (/workspace/DOOM/crates/doom-map)\n\u2502   \u251c\u2500\u2500 doom-types v0.1.0 (/workspace/DOOM/crates/doom-types)\n\u2502   \u2514\u2500\u2500 doom-wad v0.1.0 (/workspace/DOOM/crates/doom-wad)\n\u2502       \u2514\u2500\u2500 doom-types v0.1.0 (/workspace/DOOM/crates/doom-types)\n\u2514\u2500\u2500 doom-types v0.1.0 (/workspace/DOOM/crates/doom-types)\n",
+  "method": "Actual locked package metadata and filesystem byte counts; external registry cache is not repository checkout storage. Unpacked package files include license/build/native source files, exclude generated target output. Platform/toolchain target artifacts measured separately, not a universal disk budget."
+}

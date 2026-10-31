@@ -1,0 +1,28 @@
+{
+  "decoded_actual_byte_equal": 19,
+  "protected_paths_checked": 6342,
+  "unchanged_paths": 6327,
+  "loading_only_adapters": [
+    "tests/support/m3d2.rs",
+    "tests/support/m3d2b.rs",
+    "tests/support/m3d3b.rs",
+    "tests/support/m3d3c.rs",
+    "tests/support/m3d3d.rs",
+    "tests/support/m3d3e.rs",
+    "tests/support/m3d3f.rs",
+    "tests/support/m3d3g.rs",
+    "tests/support/m3d3h.rs",
+    "tests/support/m3d3i.rs",
+    "tests/support/m3d3j.rs",
+    "tests/support/m3f3.rs",
+    "tests/support/m3f3_clipping.rs",
+    "tests/support/m3f5.rs",
+    "tests/support/m3g7.rs",
+    "crates/doom-sim/tests/m3d2_reference.rs",
+    "crates/doom-sim/tests/m3d3i_reference.rs",
+    "crates/doom-sim/tests/m3f1_reference.rs",
+    "crates/doom-sim/tests/m3f2_reference.rs"
+  ],
+  "upstream_files": 165,
+  "source_commands": 65
+}

@@ -1,0 +1,389 @@
+{
+  "results": [
+    {
+      "label": "small_control",
+      "records": [
+        {
+          "phase": "before",
+          "sample": 0,
+          "fields": {
+            "label": "small_control",
+            "profile": 20,
+            "mode": "advance",
+            "calls": 100,
+            "ns": 12923831,
+            "bytes": 0,
+            "digest": "2f68458de949874c"
+          },
+          "max_rss_kib": 12928,
+          "log_sha256": "e29f80c70fc30b186b468f540d614089009855df5f9e52096964d7f354df0c14"
+        },
+        {
+          "phase": "after",
+          "sample": 0,
+          "fields": {
+            "label": "small_control",
+            "profile": 20,
+            "mode": "advance",
+            "calls": 100,
+            "ns": 11410080,
+            "bytes": 0,
+            "digest": "2f68458de949874c"
+          },
+          "max_rss_kib": 12928,
+          "log_sha256": "bd0c87d533751ffaa75fc6463c78ac61980e5a5ecd99bc7fd11f89759ac391fb"
+        },
+        {
+          "phase": "after",
+          "sample": 1,
+          "fields": {
+            "label": "small_control",
+            "profile": 20,
+            "mode": "advance",
+            "calls": 100,
+            "ns": 10919133,
+            "bytes": 0,
+            "digest": "2f68458de949874c"
+          },
+          "max_rss_kib": 12928,
+          "log_sha256": "1c0fbe7a029730165d2e1b9060a2d0e20a969d7520feff3f76478efc0da74c40"
+        },
+        {
+          "phase": "before",
+          "sample": 1,
+          "fields": {
+            "label": "small_control",
+            "profile": 20,
+            "mode": "advance",
+            "calls": 100,
+            "ns": 10577308,
+            "bytes": 0,
+            "digest": "2f68458de949874c"
+          },
+          "max_rss_kib": 12928,
+          "log_sha256": "0135928038b7400fb531d92ab6e25ab41196245ae6e6b6c9cefb0e2b1326251c"
+        },
+        {
+          "phase": "before",
+          "sample": 2,
+          "fields": {
+            "label": "small_control",
+            "profile": 20,
+            "mode": "advance",
+            "calls": 100,
+            "ns": 10648112,
+            "bytes": 0,
+            "digest": "2f68458de949874c"
+          },
+          "max_rss_kib": 12928,
+          "log_sha256": "810677695660435535c712fdf73768b358e7f1de2309e481dc87c13fe2621e85"
+        },
+        {
+          "phase": "after",
+          "sample": 2,
+          "fields": {
+            "label": "small_control",
+            "profile": 20,
+            "mode": "advance",
+            "calls": 100,
+            "ns": 11158237,
+            "bytes": 0,
+            "digest": "2f68458de949874c"
+          },
+          "max_rss_kib": 12928,
+          "log_sha256": "a6867d3dae5f6eb520ec95edbc85903dfbdedd94cc8c52872db2c72dc65ea3be"
+        }
+      ],
+      "median_ns": {
+        "before": 10648112,
+        "after": 11158237
+      }
+    },
+    {
+      "label": "sight",
+      "records": [
+        {
+          "phase": "before",
+          "sample": 0,
+          "fields": {
+            "label": "expanded_sight_dag",
+            "profile": 20,
+            "mode": "step",
+            "calls": 100,
+            "ns": 14645209,
+            "bytes": 0,
+            "digest": "5205dbe116db7a6d"
+          },
+          "max_rss_kib": 12928,
+          "log_sha256": "65b9bd73483f7fa1a01c2e6b2e6434875f9042580f1997ee555d30f976e6a970"
+        },
+        {
+          "phase": "after",
+          "sample": 0,
+          "fields": {
+            "label": "expanded_sight_dag",
+            "profile": 20,
+            "mode": "step",
+            "calls": 100,
+            "ns": 14551591,
+            "bytes": 0,
+            "digest": "5205dbe116db7a6d"
+          },
+          "max_rss_kib": 12928,
+          "log_sha256": "4f4b7222df3fdd350b3a42041626d11f43feedf12b6bd78aba0a3309d259857d"
+        },
+        {
+          "phase": "after",
+          "sample": 1,
+          "fields": {
+            "label": "expanded_sight_dag",
+            "profile": 20,
+            "mode": "step",
+            "calls": 100,
+            "ns": 15141954,
+            "bytes": 0,
+            "digest": "5205dbe116db7a6d"
+          },
+          "max_rss_kib": 12928,
+          "log_sha256": "db09d58214da48d6e0a2c16b9dedefcf6e37fd52c9c9e4622b555ecc1b50c906"
+        },
+        {
+          "phase": "before",
+          "sample": 1,
+          "fields": {
+            "label": "expanded_sight_dag",
+            "profile": 20,
+            "mode": "step",
+            "calls": 100,
+            "ns": 13779457,
+            "bytes": 0,
+            "digest": "5205dbe116db7a6d"
+          },
+          "max_rss_kib": 12928,
+          "log_sha256": "d69552bb5a0f82ab1960e0c377431a8738191a436091726ec948b2fbb1aa3f52"
+        },
+        {
+          "phase": "before",
+          "sample": 2,
+          "fields": {
+            "label": "expanded_sight_dag",
+            "profile": 20,
+            "mode": "step",
+            "calls": 100,
+            "ns": 13459423,
+            "bytes": 0,
+            "digest": "5205dbe116db7a6d"
+          },
+          "max_rss_kib": 12928,
+          "log_sha256": "51793a17379022bc4e6a6c64ee1360ee53357f073c78bd35e23f4c22936b992f"
+        },
+        {
+          "phase": "after",
+          "sample": 2,
+          "fields": {
+            "label": "expanded_sight_dag",
+            "profile": 20,
+            "mode": "step",
+            "calls": 100,
+            "ns": 14168574,
+            "bytes": 0,
+            "digest": "5205dbe116db7a6d"
+          },
+          "max_rss_kib": 12928,
+          "log_sha256": "cc7b801ef529c7028444d01e4d1bc94e2dba72450845ae94dae3fcbd1d77d71a"
+        }
+      ],
+      "median_ns": {
+        "before": 13779457,
+        "after": 14551591
+      }
+    },
+    {
+      "label": "fist_hit",
+      "records": [
+        {
+          "phase": "before",
+          "sample": 0,
+          "fields": {
+            "label": "fist_hit",
+            "mode": "advance",
+            "calls": 100,
+            "warmup": 0,
+            "ns": 5666167,
+            "digest": "9ddc3bf0b58549d7"
+          },
+          "max_rss_kib": 47840,
+          "log_sha256": "9b27195d878256dde5ff3834847a2fcafcbae2947a25a96d5f0462b6c34fae0d"
+        },
+        {
+          "phase": "after",
+          "sample": 0,
+          "fields": {
+            "label": "fist_hit",
+            "mode": "advance",
+            "calls": 100,
+            "warmup": 0,
+            "ns": 5428706,
+            "digest": "9ddc3bf0b58549d7"
+          },
+          "max_rss_kib": 47676,
+          "log_sha256": "8879942e18e74120236cb6a58f42d203787de68e93726940a0c50101af2c0b81"
+        },
+        {
+          "phase": "after",
+          "sample": 1,
+          "fields": {
+            "label": "fist_hit",
+            "mode": "advance",
+            "calls": 100,
+            "warmup": 0,
+            "ns": 5586439,
+            "digest": "9ddc3bf0b58549d7"
+          },
+          "max_rss_kib": 47704,
+          "log_sha256": "fdf3fb365f163b50f86fda07967f9c4d64755cf4d2d916839e35eaa86cffc43e"
+        },
+        {
+          "phase": "before",
+          "sample": 1,
+          "fields": {
+            "label": "fist_hit",
+            "mode": "advance",
+            "calls": 100,
+            "warmup": 0,
+            "ns": 5745565,
+            "digest": "9ddc3bf0b58549d7"
+          },
+          "max_rss_kib": 47672,
+          "log_sha256": "66d6dec27c8f117b55e4f5f129032a232bd87232684909e08683070f3e223428"
+        },
+        {
+          "phase": "before",
+          "sample": 2,
+          "fields": {
+            "label": "fist_hit",
+            "mode": "advance",
+            "calls": 100,
+            "warmup": 0,
+            "ns": 5798293,
+            "digest": "9ddc3bf0b58549d7"
+          },
+          "max_rss_kib": 47696,
+          "log_sha256": "3b3ec3f9862924d71819b1cd77b9c6bbcad33edd384ef75987d7ba8a3e622989"
+        },
+        {
+          "phase": "after",
+          "sample": 2,
+          "fields": {
+            "label": "fist_hit",
+            "mode": "advance",
+            "calls": 100,
+            "warmup": 0,
+            "ns": 5635052,
+            "digest": "9ddc3bf0b58549d7"
+          },
+          "max_rss_kib": 47772,
+          "log_sha256": "6d32bf5815a9685fe58d21dd8fe01b42d30c5db26bac1fff1d23e7694ee3d59d"
+        }
+      ],
+      "median_ns": {
+        "before": 5745565,
+        "after": 5586439
+      }
+    },
+    {
+      "label": "pickup_full_encounter",
+      "records": [
+        {
+          "phase": "before",
+          "sample": 0,
+          "fields": {
+            "label": "full_encounter",
+            "mode": "advance",
+            "calls": 512,
+            "warmup": 0,
+            "ns": 29322596,
+            "digest": "491898a7e2e75e31"
+          },
+          "max_rss_kib": 35776,
+          "log_sha256": "da7553a6927289c00e14c7103df2fa08a8b270a16237f6b771e6bead3d6a78dc"
+        },
+        {
+          "phase": "after",
+          "sample": 0,
+          "fields": {
+            "label": "full_encounter",
+            "mode": "advance",
+            "calls": 512,
+            "warmup": 0,
+            "ns": 28997915,
+            "digest": "491898a7e2e75e31"
+          },
+          "max_rss_kib": 35908,
+          "log_sha256": "fa75a84b7e1eca457be12cdf1fe3d6ce0343a28b90b3558c2933ef062508919a"
+        },
+        {
+          "phase": "after",
+          "sample": 1,
+          "fields": {
+            "label": "full_encounter",
+            "mode": "advance",
+            "calls": 512,
+            "warmup": 0,
+            "ns": 29211611,
+            "digest": "491898a7e2e75e31"
+          },
+          "max_rss_kib": 35676,
+          "log_sha256": "6401720315db8a329408f6acf3494f6af0e9311d06d6e8642cbbdfbcf2d75664"
+        },
+        {
+          "phase": "before",
+          "sample": 1,
+          "fields": {
+            "label": "full_encounter",
+            "mode": "advance",
+            "calls": 512,
+            "warmup": 0,
+            "ns": 30757950,
+            "digest": "491898a7e2e75e31"
+          },
+          "max_rss_kib": 35772,
+          "log_sha256": "f508ece920f1833b04ba12ba8cf13f9cf0bfda7fc00dedcdbd92972bfad52a4c"
+        },
+        {
+          "phase": "before",
+          "sample": 2,
+          "fields": {
+            "label": "full_encounter",
+            "mode": "advance",
+            "calls": 512,
+            "warmup": 0,
+            "ns": 29536095,
+            "digest": "491898a7e2e75e31"
+          },
+          "max_rss_kib": 35752,
+          "log_sha256": "0add8294b9c82a32c1f5882a2ab9684732088f94a5906e1895523e1d0a1cabb1"
+        },
+        {
+          "phase": "after",
+          "sample": 2,
+          "fields": {
+            "label": "full_encounter",
+            "mode": "advance",
+            "calls": 512,
+            "warmup": 0,
+            "ns": 41742077,
+            "digest": "491898a7e2e75e31"
+          },
+          "max_rss_kib": 35756,
+          "log_sha256": "a2d614bdd42026995052a104f9d425f66ffa6991737afc4031fa3013653f5135"
+        }
+      ],
+      "median_ns": {
+        "before": 29536095,
+        "after": 29211611
+      }
+    }
+  ],
+  "method": "Targeted follow-up after mixed full-batch medians:3 independent baseline and3 after processes per workload, alternating pair order. Identical release1.99.1 workload inputs and flags. Baseline production example code unchanged; cfg(test) instrumentation excluded. All original batch samples retained; no allocator instrumentation repeated, no CPU isolation, no universal speedup/regression claim."
+}

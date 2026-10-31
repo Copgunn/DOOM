@@ -1,0 +1,412 @@
+{
+  "host": "Linux x86_64",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "method": "three separate release processes/case; 100 complete Simulation preparations excluding parsing, 1000 immutable collision queries, 1000 sight queries (new profile only), 100 tics including snapshots; native wait4 launcher peak RSS in KiB includes the Rust process and excludes Python launch pages; no performance acceptance threshold",
+  "results": [
+    {
+      "map": 0,
+      "legacy": true,
+      "samples": [
+        {
+          "prepare100_us": 395,
+          "collision1000_us": 102,
+          "candidates": 4000,
+          "sight1000_us": 0,
+          "sight_visits": 0,
+          "step100_us": 727,
+          "max_rss_kib": 2068,
+          "output": "map=0 legacy=true prepare100_us=395 collision1000_us=102 candidates=4000 sight1000_us=0 sight_visits=0 step100_us=727 metrics=None"
+        },
+        {
+          "prepare100_us": 277,
+          "collision1000_us": 108,
+          "candidates": 4000,
+          "sight1000_us": 0,
+          "sight_visits": 0,
+          "step100_us": 753,
+          "max_rss_kib": 2076,
+          "output": "map=0 legacy=true prepare100_us=277 collision1000_us=108 candidates=4000 sight1000_us=0 sight_visits=0 step100_us=753 metrics=None"
+        },
+        {
+          "prepare100_us": 257,
+          "collision1000_us": 102,
+          "candidates": 4000,
+          "sight1000_us": 0,
+          "sight_visits": 0,
+          "step100_us": 665,
+          "max_rss_kib": 2136,
+          "output": "map=0 legacy=true prepare100_us=257 collision1000_us=102 candidates=4000 sight1000_us=0 sight_visits=0 step100_us=665 metrics=None"
+        }
+      ],
+      "medians": {
+        "prepare100_us": 277,
+        "collision1000_us": 102,
+        "candidates": 4000,
+        "sight1000_us": 0,
+        "sight_visits": 0,
+        "step100_us": 727,
+        "max_rss_kib": 2076
+      }
+    },
+    {
+      "map": 0,
+      "legacy": false,
+      "samples": [
+        {
+          "prepare100_us": 348,
+          "collision1000_us": 103,
+          "candidates": 4000,
+          "sight1000_us": 137,
+          "sight_visits": 11000,
+          "step100_us": 997,
+          "max_rss_kib": 2056,
+          "output": "map=0 legacy=false prepare100_us=348 collision1000_us=103 candidates=4000 sight1000_us=137 sight_visits=11000 step100_us=997 metrics=Some(MapScaleMetrics { lines: 4, sectors: 1, cells: 8, prepared_references: 32, prepared_storage_bytes: 410 })"
+        },
+        {
+          "prepare100_us": 272,
+          "collision1000_us": 108,
+          "candidates": 4000,
+          "sight1000_us": 133,
+          "sight_visits": 11000,
+          "step100_us": 1090,
+          "max_rss_kib": 2140,
+          "output": "map=0 legacy=false prepare100_us=272 collision1000_us=108 candidates=4000 sight1000_us=133 sight_visits=11000 step100_us=1090 metrics=Some(MapScaleMetrics { lines: 4, sectors: 1, cells: 8, prepared_references: 32, prepared_storage_bytes: 410 })"
+        },
+        {
+          "prepare100_us": 240,
+          "collision1000_us": 105,
+          "candidates": 4000,
+          "sight1000_us": 133,
+          "sight_visits": 11000,
+          "step100_us": 1059,
+          "max_rss_kib": 2140,
+          "output": "map=0 legacy=false prepare100_us=240 collision1000_us=105 candidates=4000 sight1000_us=133 sight_visits=11000 step100_us=1059 metrics=Some(MapScaleMetrics { lines: 4, sectors: 1, cells: 8, prepared_references: 32, prepared_storage_bytes: 410 })"
+        }
+      ],
+      "medians": {
+        "prepare100_us": 272,
+        "collision1000_us": 105,
+        "candidates": 4000,
+        "sight1000_us": 133,
+        "sight_visits": 11000,
+        "step100_us": 1059,
+        "max_rss_kib": 2140
+      }
+    },
+    {
+      "map": 6,
+      "legacy": false,
+      "samples": [
+        {
+          "prepare100_us": 4995,
+          "collision1000_us": 1325,
+          "candidates": 256000,
+          "sight1000_us": 3566,
+          "sight_visits": 766000,
+          "step100_us": 1086,
+          "max_rss_kib": 2392,
+          "output": "map=6 legacy=false prepare100_us=4995 collision1000_us=1325 candidates=256000 sight1000_us=3566 sight_visits=766000 step100_us=1086 metrics=Some(MapScaleMetrics { lines: 256, sectors: 1, cells: 8, prepared_references: 2048, prepared_storage_bytes: 13514 })"
+        },
+        {
+          "prepare100_us": 5294,
+          "collision1000_us": 1310,
+          "candidates": 256000,
+          "sight1000_us": 3676,
+          "sight_visits": 766000,
+          "step100_us": 1346,
+          "max_rss_kib": 2332,
+          "output": "map=6 legacy=false prepare100_us=5294 collision1000_us=1310 candidates=256000 sight1000_us=3676 sight_visits=766000 step100_us=1346 metrics=Some(MapScaleMetrics { lines: 256, sectors: 1, cells: 8, prepared_references: 2048, prepared_storage_bytes: 13514 })"
+        },
+        {
+          "prepare100_us": 5047,
+          "collision1000_us": 1237,
+          "candidates": 256000,
+          "sight1000_us": 3749,
+          "sight_visits": 766000,
+          "step100_us": 1174,
+          "max_rss_kib": 2252,
+          "output": "map=6 legacy=false prepare100_us=5047 collision1000_us=1237 candidates=256000 sight1000_us=3749 sight_visits=766000 step100_us=1174 metrics=Some(MapScaleMetrics { lines: 256, sectors: 1, cells: 8, prepared_references: 2048, prepared_storage_bytes: 13514 })"
+        }
+      ],
+      "medians": {
+        "prepare100_us": 5047,
+        "collision1000_us": 1310,
+        "candidates": 256000,
+        "sight1000_us": 3676,
+        "sight_visits": 766000,
+        "step100_us": 1174,
+        "max_rss_kib": 2332
+      }
+    },
+    {
+      "map": 7,
+      "legacy": false,
+      "samples": [
+        {
+          "prepare100_us": 1683,
+          "collision1000_us": 1122,
+          "candidates": 159000,
+          "sight1000_us": 3772,
+          "sight_visits": 766000,
+          "step100_us": 1328,
+          "max_rss_kib": 2368,
+          "output": "map=7 legacy=false prepare100_us=1683 collision1000_us=1122 candidates=159000 sight1000_us=3772 sight_visits=766000 step100_us=1328 metrics=Some(MapScaleMetrics { lines: 256, sectors: 1, cells: 8, prepared_references: 526, prepared_storage_bytes: 10470 })"
+        },
+        {
+          "prepare100_us": 1551,
+          "collision1000_us": 1107,
+          "candidates": 159000,
+          "sight1000_us": 3883,
+          "sight_visits": 766000,
+          "step100_us": 1112,
+          "max_rss_kib": 2192,
+          "output": "map=7 legacy=false prepare100_us=1551 collision1000_us=1107 candidates=159000 sight1000_us=3883 sight_visits=766000 step100_us=1112 metrics=Some(MapScaleMetrics { lines: 256, sectors: 1, cells: 8, prepared_references: 526, prepared_storage_bytes: 10470 })"
+        },
+        {
+          "prepare100_us": 1563,
+          "collision1000_us": 1040,
+          "candidates": 159000,
+          "sight1000_us": 3618,
+          "sight_visits": 766000,
+          "step100_us": 1111,
+          "max_rss_kib": 2196,
+          "output": "map=7 legacy=false prepare100_us=1563 collision1000_us=1040 candidates=159000 sight1000_us=3618 sight_visits=766000 step100_us=1111 metrics=Some(MapScaleMetrics { lines: 256, sectors: 1, cells: 8, prepared_references: 526, prepared_storage_bytes: 10470 })"
+        }
+      ],
+      "medians": {
+        "prepare100_us": 1563,
+        "collision1000_us": 1107,
+        "candidates": 159000,
+        "sight1000_us": 3772,
+        "sight_visits": 766000,
+        "step100_us": 1112,
+        "max_rss_kib": 2196
+      }
+    },
+    {
+      "map": 8,
+      "legacy": false,
+      "samples": [
+        {
+          "prepare100_us": 20753,
+          "collision1000_us": 4394,
+          "candidates": 1024000,
+          "sight1000_us": 15889,
+          "sight_visits": 3066000,
+          "step100_us": 1536,
+          "max_rss_kib": 2648,
+          "output": "map=8 legacy=false prepare100_us=20753 collision1000_us=4394 candidates=1024000 sight1000_us=15889 sight_visits=3066000 step100_us=1536 metrics=Some(MapScaleMetrics { lines: 1024, sectors: 1, cells: 8, prepared_references: 8192, prepared_storage_bytes: 53450 })"
+        },
+        {
+          "prepare100_us": 20383,
+          "collision1000_us": 4492,
+          "candidates": 1024000,
+          "sight1000_us": 14762,
+          "sight_visits": 3066000,
+          "step100_us": 1354,
+          "max_rss_kib": 2692,
+          "output": "map=8 legacy=false prepare100_us=20383 collision1000_us=4492 candidates=1024000 sight1000_us=14762 sight_visits=3066000 step100_us=1354 metrics=Some(MapScaleMetrics { lines: 1024, sectors: 1, cells: 8, prepared_references: 8192, prepared_storage_bytes: 53450 })"
+        },
+        {
+          "prepare100_us": 20432,
+          "collision1000_us": 4356,
+          "candidates": 1024000,
+          "sight1000_us": 14669,
+          "sight_visits": 3066000,
+          "step100_us": 1320,
+          "max_rss_kib": 2696,
+          "output": "map=8 legacy=false prepare100_us=20432 collision1000_us=4356 candidates=1024000 sight1000_us=14669 sight_visits=3066000 step100_us=1320 metrics=Some(MapScaleMetrics { lines: 1024, sectors: 1, cells: 8, prepared_references: 8192, prepared_storage_bytes: 53450 })"
+        }
+      ],
+      "medians": {
+        "prepare100_us": 20432,
+        "collision1000_us": 4394,
+        "candidates": 1024000,
+        "sight1000_us": 14762,
+        "sight_visits": 3066000,
+        "step100_us": 1354,
+        "max_rss_kib": 2692
+      }
+    },
+    {
+      "map": 9,
+      "legacy": false,
+      "samples": [
+        {
+          "prepare100_us": 5662,
+          "collision1000_us": 3084,
+          "candidates": 543000,
+          "sight1000_us": 13977,
+          "sight_visits": 3066000,
+          "step100_us": 1267,
+          "max_rss_kib": 2696,
+          "output": "map=9 legacy=false prepare100_us=5662 collision1000_us=3084 candidates=543000 sight1000_us=13977 sight_visits=3066000 step100_us=1267 metrics=Some(MapScaleMetrics { lines: 1024, sectors: 1, cells: 8, prepared_references: 2070, prepared_storage_bytes: 41206 })"
+        },
+        {
+          "prepare100_us": 5716,
+          "collision1000_us": 3327,
+          "candidates": 543000,
+          "sight1000_us": 14054,
+          "sight_visits": 3066000,
+          "step100_us": 1287,
+          "max_rss_kib": 2748,
+          "output": "map=9 legacy=false prepare100_us=5716 collision1000_us=3327 candidates=543000 sight1000_us=14054 sight_visits=3066000 step100_us=1287 metrics=Some(MapScaleMetrics { lines: 1024, sectors: 1, cells: 8, prepared_references: 2070, prepared_storage_bytes: 41206 })"
+        },
+        {
+          "prepare100_us": 5564,
+          "collision1000_us": 3074,
+          "candidates": 543000,
+          "sight1000_us": 14300,
+          "sight_visits": 3066000,
+          "step100_us": 1292,
+          "max_rss_kib": 2588,
+          "output": "map=9 legacy=false prepare100_us=5564 collision1000_us=3074 candidates=543000 sight1000_us=14300 sight_visits=3066000 step100_us=1292 metrics=Some(MapScaleMetrics { lines: 1024, sectors: 1, cells: 8, prepared_references: 2070, prepared_storage_bytes: 41206 })"
+        }
+      ],
+      "medians": {
+        "prepare100_us": 5662,
+        "collision1000_us": 3084,
+        "candidates": 543000,
+        "sight1000_us": 14054,
+        "sight_visits": 3066000,
+        "step100_us": 1287,
+        "max_rss_kib": 2696
+      }
+    },
+    {
+      "map": 14,
+      "legacy": false,
+      "samples": [
+        {
+          "prepare100_us": 15718,
+          "collision1000_us": 3408,
+          "candidates": 769000,
+          "sight1000_us": 4633,
+          "sight_visits": 830000,
+          "step100_us": 6609,
+          "max_rss_kib": 2576,
+          "output": "map=14 legacy=false prepare100_us=15718 collision1000_us=3408 candidates=769000 sight1000_us=4633 sight_visits=830000 step100_us=6609 metrics=Some(MapScaleMetrics { lines: 769, sectors: 256, cells: 8, prepared_references: 6152, prepared_storage_bytes: 42740 })"
+        },
+        {
+          "prepare100_us": 15691,
+          "collision1000_us": 3666,
+          "candidates": 769000,
+          "sight1000_us": 4687,
+          "sight_visits": 830000,
+          "step100_us": 6613,
+          "max_rss_kib": 2696,
+          "output": "map=14 legacy=false prepare100_us=15691 collision1000_us=3666 candidates=769000 sight1000_us=4687 sight_visits=830000 step100_us=6613 metrics=Some(MapScaleMetrics { lines: 769, sectors: 256, cells: 8, prepared_references: 6152, prepared_storage_bytes: 42740 })"
+        },
+        {
+          "prepare100_us": 16857,
+          "collision1000_us": 3496,
+          "candidates": 769000,
+          "sight1000_us": 4802,
+          "sight_visits": 830000,
+          "step100_us": 6968,
+          "max_rss_kib": 2652,
+          "output": "map=14 legacy=false prepare100_us=16857 collision1000_us=3496 candidates=769000 sight1000_us=4802 sight_visits=830000 step100_us=6968 metrics=Some(MapScaleMetrics { lines: 769, sectors: 256, cells: 8, prepared_references: 6152, prepared_storage_bytes: 42740 })"
+        }
+      ],
+      "medians": {
+        "prepare100_us": 15718,
+        "collision1000_us": 3496,
+        "candidates": 769000,
+        "sight1000_us": 4687,
+        "sight_visits": 830000,
+        "step100_us": 6613,
+        "max_rss_kib": 2652
+      }
+    },
+    {
+      "map": 15,
+      "legacy": false,
+      "samples": [
+        {
+          "prepare100_us": 4176,
+          "collision1000_us": 2178,
+          "candidates": 387000,
+          "sight1000_us": 4757,
+          "sight_visits": 830000,
+          "step100_us": 6690,
+          "max_rss_kib": 2588,
+          "output": "map=15 legacy=false prepare100_us=4176 collision1000_us=2178 candidates=387000 sight1000_us=4757 sight_visits=830000 step100_us=6690 metrics=Some(MapScaleMetrics { lines: 769, sectors: 256, cells: 8, prepared_references: 1044, prepared_storage_bytes: 32524 })"
+        },
+        {
+          "prepare100_us": 4476,
+          "collision1000_us": 2160,
+          "candidates": 387000,
+          "sight1000_us": 4667,
+          "sight_visits": 830000,
+          "step100_us": 6819,
+          "max_rss_kib": 2652,
+          "output": "map=15 legacy=false prepare100_us=4476 collision1000_us=2160 candidates=387000 sight1000_us=4667 sight_visits=830000 step100_us=6819 metrics=Some(MapScaleMetrics { lines: 769, sectors: 256, cells: 8, prepared_references: 1044, prepared_storage_bytes: 32524 })"
+        },
+        {
+          "prepare100_us": 4122,
+          "collision1000_us": 2416,
+          "candidates": 387000,
+          "sight1000_us": 4681,
+          "sight_visits": 830000,
+          "step100_us": 6701,
+          "max_rss_kib": 2680,
+          "output": "map=15 legacy=false prepare100_us=4122 collision1000_us=2416 candidates=387000 sight1000_us=4681 sight_visits=830000 step100_us=6701 metrics=Some(MapScaleMetrics { lines: 769, sectors: 256, cells: 8, prepared_references: 1044, prepared_storage_bytes: 32524 })"
+        }
+      ],
+      "medians": {
+        "prepare100_us": 4176,
+        "collision1000_us": 2178,
+        "candidates": 387000,
+        "sight1000_us": 4681,
+        "sight_visits": 830000,
+        "step100_us": 6701,
+        "max_rss_kib": 2652
+      }
+    },
+    {
+      "map": 28,
+      "legacy": false,
+      "samples": [
+        {
+          "prepare100_us": 53745,
+          "collision1000_us": 2448,
+          "candidates": 512000,
+          "sight1000_us": 7638,
+          "sight_visits": 1532000,
+          "step100_us": 1238,
+          "max_rss_kib": 2860,
+          "output": "map=28 legacy=false prepare100_us=53745 collision1000_us=2448 candidates=512000 sight1000_us=7638 sight_visits=1532000 step100_us=1238 metrics=Some(MapScaleMetrics { lines: 512, sectors: 1, cells: 512, prepared_references: 262144, prepared_storage_bytes: 555018 })"
+        },
+        {
+          "prepare100_us": 51193,
+          "collision1000_us": 2110,
+          "candidates": 512000,
+          "sight1000_us": 7056,
+          "sight_visits": 1532000,
+          "step100_us": 1247,
+          "max_rss_kib": 2928,
+          "output": "map=28 legacy=false prepare100_us=51193 collision1000_us=2110 candidates=512000 sight1000_us=7056 sight_visits=1532000 step100_us=1247 metrics=Some(MapScaleMetrics { lines: 512, sectors: 1, cells: 512, prepared_references: 262144, prepared_storage_bytes: 555018 })"
+        },
+        {
+          "prepare100_us": 53787,
+          "collision1000_us": 2112,
+          "candidates": 512000,
+          "sight1000_us": 7439,
+          "sight_visits": 1532000,
+          "step100_us": 1315,
+          "max_rss_kib": 3060,
+          "output": "map=28 legacy=false prepare100_us=53787 collision1000_us=2112 candidates=512000 sight1000_us=7439 sight_visits=1532000 step100_us=1315 metrics=Some(MapScaleMetrics { lines: 512, sectors: 1, cells: 512, prepared_references: 262144, prepared_storage_bytes: 555018 })"
+        }
+      ],
+      "medians": {
+        "prepare100_us": 53745,
+        "collision1000_us": 2112,
+        "candidates": 512000,
+        "sight1000_us": 7439,
+        "sight_visits": 1532000,
+        "step100_us": 1247,
+        "max_rss_kib": 2928
+      }
+    }
+  ]
+}

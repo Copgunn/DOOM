@@ -1,0 +1,38 @@
+
+running 1 test
+test weapons::weapon_stage_cost_tests::legacy_weapon_stages_preserve_preview_state_and_report_optional_costs ... DOOM_ALLOC_BEGIN
+ALLOC calls=9500 reallocs=700 requested_bytes=628800 frees=9500 failures=0
+DOOM_ALLOC_END
+weapon_stage case=0 stage=preview calls=100 ns=652646 digest=7a098fd61af76c5d
+DOOM_ALLOC_BEGIN
+ALLOC calls=9900 reallocs=1000 requested_bytes=1366800 frees=9500 failures=0
+DOOM_ALLOC_END
+weapon_stage case=0 stage=commit calls=100 ns=911059 digest=4a4381854d64729a
+DOOM_ALLOC_BEGIN
+ALLOC calls=28900 reallocs=3300 requested_bytes=1980800 frees=28900 failures=0
+DOOM_ALLOC_END
+weapon_stage case=5 stage=preview calls=100 ns=1655930 digest=31af3603ab480ef6
+DOOM_ALLOC_BEGIN
+ALLOC calls=31900 reallocs=3600 requested_bytes=5739600 frees=29100 failures=0
+DOOM_ALLOC_END
+weapon_stage case=5 stage=commit calls=100 ns=3203451 digest=9d40a105c0574e12
+DOOM_ALLOC_BEGIN
+ALLOC calls=9500 reallocs=200 requested_bytes=564800 frees=9500 failures=0
+DOOM_ALLOC_END
+weapon_stage case=23 stage=preview calls=100 ns=660778 digest=4714bffffc9366c4
+DOOM_ALLOC_BEGIN
+ALLOC calls=9900 reallocs=500 requested_bytes=1290800 frees=9500 failures=0
+DOOM_ALLOC_END
+weapon_stage case=23 stage=commit calls=100 ns=797350 digest=bfe4d8d796105709
+DOOM_ALLOC_BEGIN
+ALLOC calls=9500 reallocs=700 requested_bytes=628800 frees=9500 failures=0
+DOOM_ALLOC_END
+weapon_stage case=24 stage=preview calls=100 ns=718794 digest=2f6c000af26ef209
+DOOM_ALLOC_BEGIN
+ALLOC calls=10100 reallocs=1100 requested_bytes=2340100 frees=9700 failures=0
+DOOM_ALLOC_END
+weapon_stage case=24 stage=commit calls=100 ns=963135 digest=6ac340f8efc9b121
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 154 filtered out; finished in 0.35s
+

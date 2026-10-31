@@ -1,0 +1,47 @@
+{
+  "commit": "138c66b6c6b6d57d0b18cf945d8661722741bd66",
+  "test": "m3f3_reference",
+  "results": [
+    {
+      "mode": "debug",
+      "samples": [
+        {
+          "ns": 17434876435,
+          "max_rss_kib": 273828,
+          "log_sha256": "c0ce0f6ac9328042eac39ca612366154816ef98eb18a0c778be434ab68d520b7"
+        },
+        {
+          "ns": 17730035705,
+          "max_rss_kib": 273924,
+          "log_sha256": "d76574cee6e43b2f20f43b4337077429a1bd51fe9e6fa27d6cecf478638b83a5"
+        },
+        {
+          "ns": 17615554386,
+          "max_rss_kib": 273808,
+          "log_sha256": "2d1d4e0d8c708aef3997168617a7b276a6e7879692757ffd2c35b7602c7536bf"
+        }
+      ]
+    },
+    {
+      "mode": "release",
+      "samples": [
+        {
+          "ns": 2816894782,
+          "max_rss_kib": 272388,
+          "log_sha256": "8506893913cf01aeb084f9cbf76f116f815b8086eb1ef1ac9634c43416b6e0e5"
+        },
+        {
+          "ns": 2806470651,
+          "max_rss_kib": 272380,
+          "log_sha256": "2dcb70f501c885114dcf8e198b586cc907e19ec1aed3481a007fd6329ba133ad"
+        },
+        {
+          "ns": 2814011463,
+          "max_rss_kib": 272340,
+          "log_sha256": "8506893913cf01aeb084f9cbf76f116f815b8086eb1ef1ac9634c43416b6e0e5"
+        }
+      ]
+    }
+  ],
+  "method": "Three separate test-binary processes per build mode; full M3f3 source-derived Rust comparison including startup, evidence loading/parsing and all assertions. Build excluded. Native wait4 whole-process RSS, no allocation instrumentation. One test thread. This is end-to-end reference-check overhead, separate from production gameplay intervals."
+}

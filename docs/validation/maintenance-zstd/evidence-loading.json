@@ -1,0 +1,115 @@
+{
+  "results": [
+    {
+      "mode": "raw",
+      "samples": [
+        {
+          "ns": 129433332,
+          "max_rss_kib": 36404
+        },
+        {
+          "ns": 125886893,
+          "max_rss_kib": 36340
+        },
+        {
+          "ns": 125075863,
+          "max_rss_kib": 36400
+        }
+      ],
+      "allocation_samples": [
+        {
+          "calls": 76,
+          "reallocs": 19,
+          "requested_bytes": 88475657,
+          "frees": 76,
+          "failures": 0
+        },
+        {
+          "calls": 76,
+          "reallocs": 19,
+          "requested_bytes": 88475657,
+          "frees": 76,
+          "failures": 0
+        },
+        {
+          "calls": 76,
+          "reallocs": 19,
+          "requested_bytes": 88475657,
+          "frees": 76,
+          "failures": 0
+        }
+      ],
+      "digest": "757266f94ac2f562",
+      "medians": {
+        "ns": 125886893,
+        "max_rss_kib": 36400
+      }
+    },
+    {
+      "mode": "zstd",
+      "samples": [
+        {
+          "ns": 218899016,
+          "max_rss_kib": 36668
+        },
+        {
+          "ns": 217577299,
+          "max_rss_kib": 36664
+        },
+        {
+          "ns": 214547915,
+          "max_rss_kib": 36728
+        }
+      ],
+      "allocation_samples": [
+        {
+          "calls": 228,
+          "reallocs": 38,
+          "requested_bytes": 95123359,
+          "frees": 228,
+          "failures": 0
+        },
+        {
+          "calls": 228,
+          "reallocs": 38,
+          "requested_bytes": 95123359,
+          "frees": 228,
+          "failures": 0
+        },
+        {
+          "calls": 228,
+          "reallocs": 38,
+          "requested_bytes": 95123359,
+          "frees": 228,
+          "failures": 0
+        }
+      ],
+      "digest": "757266f94ac2f562",
+      "medians": {
+        "ns": 217577299,
+        "max_rss_kib": 36668
+      }
+    }
+  ],
+  "controls": {
+    "--control": {
+      "calls": 0,
+      "reallocs": 0,
+      "requested_bytes": 0,
+      "frees": 0,
+      "failures": 0
+    },
+    "--probe": {
+      "calls": 1,
+      "reallocs": 0,
+      "requested_bytes": 4096,
+      "frees": 1,
+      "failures": 0
+    }
+  },
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)\nbinary: rustc\ncommit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67\ncommit-date: 2026-10-13\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.1\nLLVM version: 23.1.1\n",
+  "host": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "program_sha256": "bf5ac719c49e1d61bd95f2e9e8dab11a3449ab76600fa54876e896e72dc7f52a",
+  "manifest_sha256": "f431853c47df91fb206e36be0b9b521029db73c70b700923bf8cc2d64a2aed97",
+  "method": "Three separate release timing/RSS and three allocation processes per path. Reads all19 files with decoded identity checks, then drops each byte buffer. Raw root is actual pinned Git baseline checkout, same SHA/length. Both paths use one common executable; zstd additionally validates compressed identity and frame, then decodes. Manifest parsing excluded; directory traversal/read/integrity included. No cold page-cache reset; OS cache and shared-host variance apply. This filesystem microbenchmark is NOT the former include_str test architecture and NOT gameplay. Requested allocations cumulative, not peak live memory or leak coverage."
+}
