@@ -943,3 +943,26 @@ three-process timing/RSS/allocation samples and toolchain limitations belong to
 [the engineering record](validation/M3G10.md). Rust lifetime/rollback/malformed
 input tests are safety policy; source component and world comparisons are separate.
 Leak detection is disabled in the documented ASan environment, not verified.
+
+
+## Original health and armor bonuses
+
+Bonus evidence has its own source/encoding contract and leaves historical
+expectations untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g11_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3g11_snapshot_goldens.py --check
+cargo test -p doom-sim bonus_
+python3 tools/reference/check_player_bonuses.py
+python3 tools/seed_player_bonuses_fuzz.py /tmp/doom-bonus-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_bonuses /tmp/doom-bonus-seeds -- -runs=4096 -seed=471 -max_len=290 -timeout=15 -rss_limit_mb=1024
+```
+
+The example asserts every source timeline and complete ordered event frame in
+debug and release; `--measure workload advance|step|capture` times ordinary
+gameplay, deliberate step capture, or advance plus explicit snapshot. Measurement
+summaries and any toolchain limitations belong to
+[the engineering record](validation/M3G11.md). Leak detection is disabled in the
+documented ASan environment, not verified.
+

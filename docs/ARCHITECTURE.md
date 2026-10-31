@@ -592,3 +592,19 @@ late-error rollback; advance adds no Snapshot or world clone.
 See [support](COMPATIBILITY.md#original-armor-and-damage-absorption),
 [source matrix](M3G10_REFERENCE_INVESTIGATION.md) and
 [DSIM26](STATE_FORMAT.md#dsim-v26-original-player-armor).
+
+## Original health and armor bonuses
+
+PlayerDemonBonusesV1 extends the armor capability rather than adding a new owner.
+Bonus kinds derive from canonical MT_MISC2/MT_MISC3 and animate through the shared
+thinker pass. The existing contact hook applies the +1 effects directly to the
+OriginalPlayer health (synchronized to the moving actor) and the existing armor
+record, then increments the existing pickup `item_count` before the shared
+removal. Map totalitems lives in the existing LevelStatistics and is incremented
+inside the atomic THING spawn batch. All of it stays in the bounded DemonPlan
+transaction, so late failures discard RNG, statistics, player and spatial changes
+together. No second statistics store, inventory or scheduler is introduced.
+
+See [support](COMPATIBILITY.md#original-health-and-armor-bonuses),
+[source matrix](M3G11_REFERENCE_INVESTIGATION.md) and
+[DSIM27](STATE_FORMAT.md#dsim-v27-original-health-and-armor-bonuses).
