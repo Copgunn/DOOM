@@ -46,8 +46,10 @@ Demon damage/pain/death through that same combat loop. Older policies remain
 available. The four-weapon capability adds source fallback, genuine fists, manual
 switching, seven-pellet shotgun and chaingun firing in the same world. A separate world-pickup capability adds original bullet/shell supplies,
 stimpacks, medikits and world shotgun/chaingun acquisition through shared collision
-and inventory services. Full player-thinker/view processing, remaining weapons,
-armor/powers and respawn remain excluded. See the
+and inventory services. A separately selected armor capability adds genuine animated
+green/blue armor, source pickup thresholds, absorption and depletion through the same
+autonomous combat loop. Full player-thinker/view processing, remaining weapons,
+bonuses/powers and respawn remain excluded. See the
 [player contract](docs/COMPATIBILITY.md#original-player-body-lifecycle) and
 [command movement boundary](docs/COMPATIBILITY.md#original-player-command-movement) and
 [active-player/Demon contract](docs/COMPATIBILITY.md#active-original-player-and-demon-acquisition)
@@ -57,7 +59,9 @@ for its separately admitted inputs, geometry, ammunition and source limits.
 The [weapon expansion contract](docs/COMPATIBILITY.md#original-player-weapon-expansion)
 describes controlled loadouts and the additional weapon actions. The
 [world pickup contract](docs/COMPATIBILITY.md#original-world-pickups) defines the
-separate source touch, collection and lifetime capability.
+separate source touch, collection and lifetime capability. The
+[armor contract](docs/COMPATIBILITY.md#original-armor-and-damage-absorption) defines
+the new opt-in gameplay domain and its limits.
 
 Call `Simulation::advance()` for a tic without an implicit diagnostic Snapshot.
 `step()` retains its Snapshot return, and `snapshot()` captures explicitly in

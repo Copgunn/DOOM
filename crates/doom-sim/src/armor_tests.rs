@@ -174,6 +174,37 @@ fn independent_original_armor_repeated_and_ignored_damage() {
         assert_eq!(s.original_player_armor(PlayerSlot::One).unwrap(), armor);
         assert_eq!(s.rng, rng);
         assert_eq!(*s.actor(a.body).unwrap(), actor);
+        let line = include_str!("../../../tests/reference/m3g10_components.csv")
+            .lines()
+            .find(|line| line.starts_with(&format!("ACOMP,I,{kind},")))
+            .unwrap();
+        let expected: Vec<i64> = line
+            .split(',')
+            .skip(3)
+            .map(|v| v.parse().unwrap())
+            .collect();
+        let after = s.original_player(PlayerSlot::One).unwrap();
+        let left = s.original_player_armor(PlayerSlot::One).unwrap();
+        let current = s.actor(a.body).unwrap();
+        let got = [
+            i64::from(armor.kind.wire_id()),
+            i64::from(armor.points),
+            i64::from(left.kind.wire_id()),
+            i64::from(left.points),
+            i64::from(before.health),
+            i64::from(after.health),
+            i64::from(actor.life().unwrap().health),
+            i64::from(current.life().unwrap().health),
+            i64::from(before.damage_count),
+            i64::from(after.damage_count),
+            i64::from(rng.indices()[0]),
+            i64::from(s.rng.indices()[0]),
+            i64::from(actor.momentum()[0].bits()),
+            i64::from(current.momentum()[0].bits()),
+            i64::from(actor.momentum()[1].bits()),
+            i64::from(current.momentum()[1].bits()),
+        ];
+        assert_eq!(got.as_slice(), expected, "{line}");
     }
 }
 #[test]
@@ -598,7 +629,9 @@ fn armor_retirement_and_effect_slot_reuse_do_not_redirect_old_item_identity() {
         })
         .unwrap();
     for op in 1..=128 {
+        let captures = snapshot::capture_count();
         s.advance(armor_evidence::commands(c, op)).unwrap();
+        assert_eq!(snapshot::capture_count(), captures);
     }
     assert!(s.actor(item).is_none());
     assert_eq!(
@@ -610,4 +643,11 @@ fn armor_retirement_and_effect_slot_reuse_do_not_redirect_old_item_identity() {
     let before = s.snapshot();
     assert!(s.set_actor_target(item, None).is_err());
     assert_eq!(s.snapshot(), before);
+    // Continue the real encounter through absorption and Demon death without
+    // implicit diagnostics in any successful production advance.
+    for op in 129..=c.tics {
+        let captures = snapshot::capture_count();
+        s.advance(armor_evidence::commands(c, op)).unwrap();
+        assert_eq!(snapshot::capture_count(), captures);
+    }
 }

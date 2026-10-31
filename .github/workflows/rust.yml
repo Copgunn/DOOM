@@ -63,6 +63,13 @@ jobs:
       - name: Independent original weapon formula components
         if: runner.os == 'Linux'
         run: ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/weapon_formulas_reference.py --check --sanitize
+      - name: Independent original armor, animation, pickup and absorption evidence
+        if: runner.os == 'Linux'
+        run: |
+          ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g10_reference.py --check --overflow-check --address-check
+          python3 tools/reference/m3g10_snapshot_goldens.py --check
+      - name: Original armor sustained combat debug/release comparison
+        run: python3 tools/reference/check_player_armor.py
       - name: Active player Demon debug/release comparison
         run: python3 tools/reference/check_player_demon.py
       - name: Autonomous player Demon melee debug/release comparison

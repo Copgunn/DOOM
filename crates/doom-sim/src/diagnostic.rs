@@ -1,4 +1,4 @@
-//! Bounded, read-only DSIM20–25 observations with explicit version readers. Never a world loader.
+//! Bounded, read-only DSIM20–26 observations with explicit version readers. Never a world loader.
 use crate::{identity::*, *};
 use std::{error::Error, fmt, sync::OnceLock};
 

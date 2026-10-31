@@ -918,3 +918,28 @@ processes. It differs from the original embedded include_str architecture. Measu
 actual reference test binaries separately (three processes per debug/release mode)
 to capture parser/comparison overhead. Whole-gameplay controls use advance/step
 as already labeled by each preserved measurement driver.
+
+
+## Original armor and sustained combat
+
+Run the frozen historical suite through its existing wrapper. New armor evidence
+has its own source/encoding contract and does not rewrite historical expectations:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g10_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3g10_snapshot_goldens.py --check
+cargo test -p doom-sim armor_
+python3 tools/reference/check_player_armor.py
+python3 tools/seed_player_armor_fuzz.py /tmp/doom-armor-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_armor /tmp/doom-armor-seeds -- -runs=4096 -seed=441 -max_len=290 -timeout=15 -rss_limit_mb=1024
+python3 tools/measure_player_armor.py
+```
+
+The example asserts every source timeline and complete ordered event frame in
+both debug and release. Its `--measure workload advance|step|capture` mode times
+ordinary gameplay, deliberate step capture, or advance+explicit snapshot separately.
+Initialization is separately labeled100 complete setups, not100 updates. All raw
+three-process timing/RSS/allocation samples and toolchain limitations belong to
+[the engineering record](validation/M3G10.md). Rust lifetime/rollback/malformed
+input tests are safety policy; source component and world comparisons are separate.
+Leak detection is disabled in the documented ASan environment, not verified.

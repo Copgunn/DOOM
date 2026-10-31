@@ -361,3 +361,17 @@ retains every previous source command and sanitizer flag. See the
 [migration observations](../../docs/validation/ZSTD_WEAPON_MAINTENANCE.md).
 Direct legacy generators still describe their original raw-tree interface.
 Existing DREFLZ1 streams, complete DSIM fixtures and provenance are unchanged.
+
+
+## Original armor source family
+
+[m3g10_reference.py](m3g10_reference.py) reuses the frozen world-pickup source
+harness and adds actual P_GiveArmor plus explicit armor observations.
+[m3g10_components.py](m3g10_components.py) declares controlled source component
+inputs separately from normal-health world encounters. [armor_snapshot.py](armor_snapshot.py)
+and [m3g10_snapshot_goldens.py](m3g10_snapshot_goldens.py) independently encode
+DSIM26; no Rust result is an expected-output source. New files deliberately avoid
+frozen legacy generator/inventory globs. Historical tool/helper bytes and every old
+fixture remain unchanged. See [investigation](../../docs/M3G10_REFERENCE_INVESTIGATION.md),
+[commands](../../docs/TESTING.md#original-armor-and-sustained-combat) and
+[observations](../../docs/validation/M3G10.md).

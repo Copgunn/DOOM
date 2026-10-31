@@ -273,3 +273,10 @@ path = "fuzz_targets/evidence_zstd.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_armor"
+path = "fuzz_targets/player_armor.rs"
+test = false
+doc = false
+bench = false

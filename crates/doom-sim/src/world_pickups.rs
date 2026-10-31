@@ -136,7 +136,7 @@ pub enum PickupMessage {
 pub struct PlayerPickupState {
     /// Source bonuscount; live admitted fragment decrements before thinkers.
     pub bonus_count: i32,
-    /// Source itemcount; all eight definitions lack MF_COUNTITEM.
+    /// Source itemcount; the admitted definitions lack MF_COUNTITEM.
     pub item_count: i32,
     /// Last assigned source message, without presentation-side clearing.
     pub message: PickupMessage,
@@ -170,7 +170,7 @@ pub enum PickupOutcome {
     /// Resource granted and item marked for deferred retirement.
     Collected = 3,
 }
-/// Ordered actual source observations; DSIM25 event23 subtypes0–6.
+/// Ordered source observations; DSIM25 event23 subtypes0–6, DSIM26 also7.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PickupEvent {
     /// Item/body/sprite, vertical delta, body height and signed health.
