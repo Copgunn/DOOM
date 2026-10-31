@@ -357,11 +357,8 @@ impl Simulation {
         let Some(p) = self.original_player else {
             return Ok(());
         };
-        // Actor/animation checkpoint; the armor-aware damage package admits this
-        // branch only after the independent source consequence is integrated.
-        if p.policy == OriginalExecutionProfile::PlayerDemonArmorV1 && p.mo == Some(request.target)
-        {
-            return Err(PlayerBodyError::Unsupported.into());
+        if p.policy == OriginalExecutionProfile::PlayerDemonArmorV1 {
+            p.armor.ok_or(PlayerBodyError::Invariant)?.validate()?;
         }
         if p.policy.has_physical_player()
             && request.inflictor.is_some()
@@ -406,7 +403,11 @@ impl Simulation {
             }
             if let Some(l) = self.actor(request.target).and_then(Actor::life) {
                 if l.health > 0
-                    && request.amount >= l.health
+                    && p.armor
+                        .map(|a| ArmorEvent::plan(request.target, request.amount, a))
+                        .transpose()?
+                        .map_or(request.amount, |a| a.effective)
+                        >= l.health
                     && (request.source.is_none() || request.source == p.mo)
                 {
                     p.frags.checked_add(1).ok_or(PlayerBodyError::Statistics)?;

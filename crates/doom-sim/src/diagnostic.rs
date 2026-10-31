@@ -1155,12 +1155,16 @@ fn validate_armor_event(event: &[u8]) -> Result<(), DiagnosticError> {
     let effective = i32::from_le_bytes(number(&event[21..25])?);
     let before = diagnostic_armor(event[25], &event[26..30])?;
     let after = diagnostic_armor(event[30], &event[31..35])?;
-    if !(0..=1000).contains(&incoming)
-        || !(0..=200).contains(&saved)
-        || !(0..=1000).contains(&effective)
-        || saved + effective != incoming
-        || before.points - saved != after.points
-    {
+    let expected = ArmorEvent::plan(
+        ActorId::from_parts(
+            u32::from_le_bytes(number(&event[1..5])?),
+            u64::from_le_bytes(number(&event[5..13])?),
+        ),
+        incoming,
+        before,
+    )
+    .map_err(|_| DiagnosticError::Identity)?;
+    if saved != expected.saved || effective != expected.effective || after != expected.after {
         return Err(DiagnosticError::Identity);
     }
     Ok(())

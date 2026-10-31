@@ -182,6 +182,7 @@ pub enum CombatEvent {
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct DamagePlan {
     request: DamageRequest,
+    armor: Option<ArmorEvent>,
     health: [i32; 2],
     killed: bool,
     extreme: bool,
@@ -198,6 +199,39 @@ pub(crate) struct PreparedAttack {
     plan: Option<DamagePlan>,
 }
 impl DamagePlan {
+    fn start(
+        actor: Actor,
+        request: DamageRequest,
+        armor: Option<PlayerArmorState>,
+    ) -> Result<Self, SimError> {
+        let life = actor.life().ok_or(CombatError::Metadata)?;
+        let ignored = life.flags & original_player::MF_SHOOTABLE == 0 || life.health <= 0;
+        let armor = if ignored {
+            None
+        } else {
+            armor
+                .map(|a| ArmorEvent::plan(request.target, request.amount, a))
+                .transpose()?
+        };
+        let after = if ignored {
+            life.health
+        } else {
+            life.health
+                .checked_sub(armor.map_or(request.amount, |a| a.effective))
+                .ok_or(CombatError::Metadata)?
+        };
+        Ok(Self {
+            request,
+            armor,
+            health: [life.health, after],
+            killed: !ignored && after <= 0,
+            extreme: false,
+            state: StateId(0),
+            demand: Demand::default(),
+            ignored,
+            credit: false,
+        })
+    }
     pub(crate) fn spawn_count(self) -> usize {
         self.demand.spawns
     }
@@ -264,25 +298,19 @@ impl DamagePlan {
         actor: Actor,
         request: DamageRequest,
     ) -> Result<Self, SimError> {
-        let life = actor.life.unwrap();
-        let mut plan = Self {
-            request,
-            health: [life.health; 2],
-            credit: false,
-            killed: false,
-            extreme: false,
-            state: StateId(0),
-            demand: Demand::default(),
-            ignored: life.flags & 4 == 0 || life.health <= 0,
-        };
+        Self::current_armored_body(registry, actor, request, None)
+    }
+    /// Same shared plan, with source armor owned by the current genuine player.
+    pub(crate) fn current_armored_body(
+        registry: &ActorRegistry,
+        actor: Actor,
+        request: DamageRequest,
+        armor: Option<PlayerArmorState>,
+    ) -> Result<Self, SimError> {
+        let plan = Self::start(actor, request, armor)?;
         if plan.ignored {
             return Ok(plan);
         }
-        plan.health[1] = life
-            .health
-            .checked_sub(request.amount)
-            .ok_or(CombatError::Metadata)?;
-        plan.killed = plan.health[1] <= 0;
         plan.finish(actor, registry, |state| {
             registry.validate_state_demon_melee(state)?;
             Ok(())
@@ -461,26 +489,17 @@ impl Simulation {
             return Err(CombatError::Damage.into());
         }
         let life = actor.life.unwrap();
-        let mut plan = DamagePlan {
-            request,
-            health: [life.health; 2],
-            credit: false,
-            killed: false,
-            extreme: false,
-            state: StateId(0),
-            demand: Demand::default(),
-            ignored: life.flags & 4 == 0 || life.health <= 0,
-        };
+        let armor = self
+            .original_player
+            .as_ref()
+            .filter(|p| p.mo == Some(request.target))
+            .and_then(|p| p.armor);
+        let mut plan = DamagePlan::start(actor, request, armor)?;
         if plan.ignored {
             return Ok(plan);
         }
         self.validate_combat_type(life.actor_type)?;
         let registry = self.registry.as_deref().unwrap();
-        plan.health[1] = life
-            .health
-            .checked_sub(request.amount)
-            .ok_or(CombatError::Metadata)?;
-        plan.killed = plan.health[1] <= 0;
         if life.flags & 4194304 != 0 && plan.killed {
             let stats = self.statistics.ok_or(CombatError::KillBranch)?;
             stats
@@ -716,18 +735,24 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                 momentum,
             });
         }
+        let effective = plan.armor.map_or(request.amount, |a| a.effective);
+        if let Some(armor) = plan.armor {
+            if let Some(p) = self.player.as_deref_mut() {
+                p.armor = Some(armor.after);
+            }
+            self.events.push(Event::Armor(armor));
+        }
         if let Some(p) = self.player.as_deref_mut().filter(|p| p.mo == Some(id)) {
-            p.health = (p.health - request.amount).max(0);
+            p.health = (p.health - effective).max(0);
             p.attacker = request.source;
-            p.damage_count =
-                (p.damage_count + request.amount).min(original_player::MAX_DAMAGE_COUNT);
+            p.damage_count = (p.damage_count + effective).min(original_player::MAX_DAMAGE_COUNT);
             self.events
                 .push(Event::PlayerBody(PlayerBodyEvent::Damaged {
                     health: p.health,
                     attacker: p.attacker,
                     damage_count: p.damage_count,
                     tactile: original_player::TACTILE_BASE
-                        + request.amount.min(original_player::MAX_DAMAGE_COUNT) * 2,
+                        + effective.min(original_player::MAX_DAMAGE_COUNT) * 2,
                 }));
         }
         self.access

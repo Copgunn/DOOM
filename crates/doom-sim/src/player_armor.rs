@@ -93,6 +93,40 @@ pub struct ArmorEvent {
     /// Source armor state after the block.
     pub after: PlayerArmorState,
 }
+impl ArmorEvent {
+    /// Pure bounded P_DamageMobj armor block. Physical thrust uses `incoming`.
+    pub(crate) fn plan(
+        target: ActorId,
+        incoming: i32,
+        before: PlayerArmorState,
+    ) -> Result<Self, SimError> {
+        before.validate()?;
+        if !(0..=1000).contains(&incoming) {
+            return Err(CombatError::Damage.into());
+        }
+        let mut after = before;
+        let mut saved = match before.kind {
+            ArmorType::None => 0,
+            ArmorType::Green => incoming / 3,
+            ArmorType::Blue => incoming / 2,
+        };
+        // The original clears armortype on equality as well as exhaustion.
+        if before.kind != ArmorType::None && before.points <= saved {
+            saved = before.points;
+            after.kind = ArmorType::None;
+        }
+        after.points -= saved;
+        after.validate()?;
+        Ok(Self {
+            target,
+            incoming,
+            saved,
+            effective: incoming - saved,
+            before,
+            after,
+        })
+    }
+}
 impl Simulation {
     /// Explicit original armor world, using the existing player, store and core.
     pub fn original_player_armor_map(
