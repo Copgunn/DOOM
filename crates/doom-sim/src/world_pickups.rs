@@ -71,6 +71,8 @@ pub(crate) fn kind(ty: ActorTypeId) -> Option<PickupKind> {
         OriginalActorType::MT_MISC23 => PickupKind::ShellBox,
         OriginalActorType::MT_MISC10 => PickupKind::Stimpack,
         OriginalActorType::MT_MISC11 => PickupKind::Medikit,
+        OriginalActorType::MT_SHOTGUN => PickupKind::Shotgun,
+        OriginalActorType::MT_CHAINGUN => PickupKind::Chaingun,
         _ => return None,
     })
 }
@@ -381,7 +383,38 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         );
                         accepted
                     }
-                    _ => return Err(PlayerBodyError::Unsupported.into()),
+                    PickupKind::Shotgun | PickupKind::Chaingun => {
+                        let weapon = if k == PickupKind::Shotgun {
+                            Weapon::Shotgun
+                        } else {
+                            Weapon::Chaingun
+                        };
+                        let before = w.owned;
+                        let pending = w.pending;
+                        let gave = ammo(
+                            w,
+                            weapon == Weapon::Shotgun,
+                            if l.flags & MF_DROPPED != 0 { 1 } else { 2 },
+                            events,
+                        );
+                        let fresh = before & (1 << weapon as u8) == 0;
+                        if fresh {
+                            w.owned |= 1 << weapon as u8;
+                            w.pending = Some(weapon);
+                        }
+                        observe(
+                            events,
+                            PickupEvent::Weapon(
+                                weapon,
+                                gave || fresh,
+                                before,
+                                w.owned,
+                                pending,
+                                w.pending,
+                            ),
+                        );
+                        gave || fresh
+                    }
                 };
                 if accepted {
                     let state = self
@@ -484,7 +517,7 @@ impl Simulation {
         if self.player_policy() != OriginalExecutionProfile::PlayerDemonPickupsV1
             || self.tic != 0
             || self.original_player.as_ref().is_none_or(|p| p.mo.is_some())
-            || k != PickupKind::Clip
+            || !k.can_drop()
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
