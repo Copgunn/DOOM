@@ -1,0 +1,1801 @@
+{
+  "runtime_revision": "44beca530f716154ecd2815406f53c1fa9b24e5f",
+  "runtime_tree": "1bd425b70e0030841ce2b340fe189b42d7c675e0",
+  "validation": [
+    {
+      "check": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 0.042,
+      "log_sha256": "6d77f64dfc8c5325b90fdbe05d8be367bdd578bcccec24f275c5ffee7d03dd6e"
+    },
+    {
+      "check": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.357,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "fuzz-format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.764,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0,
+      "seconds": 0.201,
+      "log_sha256": "97985c26b3c4fd5b89f216df4eca38b2a8d17cce1bd6e1ae88b782de7b12a4ca"
+    },
+    {
+      "check": "workspace",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 182.146,
+      "log_sha256": "481b4a695b1f8765892648384b990cf11fb79396c535a6bc81500756c6c51fcb"
+    },
+    {
+      "check": "release",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "doom-sim",
+        "-p",
+        "doom-types",
+        "--release",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 79.403,
+      "log_sha256": "83bdbd6dcfeb7304b5198c851b847e7f463d0471c12ed26376561ce63292041f"
+    },
+    {
+      "check": "msrv",
+      "command": [
+        "cargo",
+        "+1.85.0",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 215.837,
+      "log_sha256": "52312e13aeeef365ab8a773331048d2f5f4ab0abd11489f032f13f83b1e35042"
+    },
+    {
+      "check": "rustdoc",
+      "command": [
+        "cargo",
+        "doc",
+        "--workspace",
+        "--no-deps",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 0.718,
+      "log_sha256": "a5a6cf881da5d92ace326291119fd341f26ff2ddd9817507ddacda04e4f8a584"
+    },
+    {
+      "check": "new-c",
+      "command": [
+        "python3",
+        "tools/reference/m3g6_reference.py",
+        "--check",
+        "--overflow-check",
+        "--address-check"
+      ],
+      "exit": 0,
+      "seconds": 4.023,
+      "log_sha256": "3cdac47f887c9fdc1bc5691781c175f26896d36dd6d357be42ec53b3f6d68b24"
+    },
+    {
+      "check": "new-encoder",
+      "command": [
+        "python3",
+        "tools/reference/m3g6_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.751,
+      "log_sha256": "898137f18b4539600c753dc8df615ddf28498690a0c06caa3409971b7f2917c2"
+    },
+    {
+      "check": "metadata-c",
+      "command": [
+        "python3",
+        "tools/reference/m3f4_reference.py",
+        "--check",
+        "--sanitize"
+      ],
+      "exit": 0,
+      "seconds": 9.111,
+      "log_sha256": "50ab66f493d8c8db707e1bdf83116c8475c3fcd745aabecf4abf67a66cdb844b"
+    },
+    {
+      "check": "check_canonical_demon",
+      "command": [
+        "python3",
+        "tools/reference/check_canonical_demon.py"
+      ],
+      "exit": 0,
+      "seconds": 0.85,
+      "log_sha256": "da48a225306c65fdc7a2ca84f1512bac8601e6453ed604ad447e2b40d5512927"
+    },
+    {
+      "check": "check_chaingunner_attacks",
+      "command": [
+        "python3",
+        "tools/reference/check_chaingunner_attacks.py"
+      ],
+      "exit": 0,
+      "seconds": 1.227,
+      "log_sha256": "c1b034d6deea40b30999994aea85d5d1ed73b29ae2f0b676e8c481349d91966f"
+    },
+    {
+      "check": "check_context_ownership",
+      "command": [
+        "python3",
+        "tools/reference/check_context_ownership.py"
+      ],
+      "exit": 0,
+      "seconds": 0.381,
+      "log_sha256": "6015b884db69b783db05b1201c70ae10f0f6f0aec2337ac6491dac774f90aeab"
+    },
+    {
+      "check": "check_demon_expanded_map",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_expanded_map.py"
+      ],
+      "exit": 0,
+      "seconds": 8.239,
+      "log_sha256": "44c20ecd6da425a6eb2326e4b867b2bfe8e54bedd34367d5b9be25eb1f99ca4b"
+    },
+    {
+      "check": "check_demon_lifecycle",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_lifecycle.py"
+      ],
+      "exit": 0,
+      "seconds": 2.481,
+      "log_sha256": "33e2c5925798ed9d7f7e566dd32ba9b0b6709b383705f373ab58998b4228c11a"
+    },
+    {
+      "check": "check_demon_map_context",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_map_context.py"
+      ],
+      "exit": 0,
+      "seconds": 11.729,
+      "log_sha256": "441cde367f6ea1961cd03dc7e34138768800b10302ca6d6d0fc22dddcb4497ee"
+    },
+    {
+      "check": "check_demon_map_spawn",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_map_spawn.py"
+      ],
+      "exit": 0,
+      "seconds": 4.587,
+      "log_sha256": "c2008f009f5f46846fbbb55ef909a3a6843fe5485f1a2b614060fe0f446920f1"
+    },
+    {
+      "check": "check_demon_melee",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_melee.py"
+      ],
+      "exit": 0,
+      "seconds": 1.729,
+      "log_sha256": "fa80c339fdaaa5eeadb544254ae7c211d61b560c5c26481793aead43f5c0048f"
+    },
+    {
+      "check": "check_demon_stand_run",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_stand_run.py"
+      ],
+      "exit": 0,
+      "seconds": 3.696,
+      "log_sha256": "043751e5d3af0c6ca72ad1b7e7bb433497fd39a17ba21fd2a86b789ea5bb0b03"
+    },
+    {
+      "check": "check_diagnostic_free",
+      "command": [
+        "python3",
+        "tools/reference/check_diagnostic_free.py"
+      ],
+      "exit": 0,
+      "seconds": 0.112,
+      "log_sha256": "5bdf11aca5fa92d7c5562142e69487ea1302f5e00a59f65cb6c29d2940a10aef"
+    },
+    {
+      "check": "check_game_instance",
+      "command": [
+        "python3",
+        "tools/reference/check_game_instance.py"
+      ],
+      "exit": 0,
+      "seconds": 0.115,
+      "log_sha256": "5b36252589dfa6a46a83eef4e5f54631dc120c1a61982f534d60339d55c66aea"
+    },
+    {
+      "check": "check_headless",
+      "command": [
+        "python3",
+        "tools/reference/check_headless.py"
+      ],
+      "exit": 0,
+      "seconds": 0.669,
+      "log_sha256": "1d048ab6eb9a4e1340048377f4e67805ca3986a8941aa957e23fdf9ab2fc08f1"
+    },
+    {
+      "check": "check_map_extent",
+      "command": [
+        "python3",
+        "tools/reference/check_map_extent.py"
+      ],
+      "exit": 0,
+      "seconds": 0.129,
+      "log_sha256": "ab7a0504b76f08f48669076824780e560e563697d6bf9bd7c0f85cab999db827"
+    },
+    {
+      "check": "check_map_scale",
+      "command": [
+        "python3",
+        "tools/reference/check_map_scale.py"
+      ],
+      "exit": 0,
+      "seconds": 0.137,
+      "log_sha256": "d7c6d8774b794340a0991230826090832d13952c145f08ec3ac6759fbc5c7b27"
+    },
+    {
+      "check": "check_monster_attacks",
+      "command": [
+        "python3",
+        "tools/reference/check_monster_attacks.py"
+      ],
+      "exit": 0,
+      "seconds": 0.597,
+      "log_sha256": "6c96149869822ca46cd7fb4c8e604be759bf44f02bd1705c8a0f6659a03ee499"
+    },
+    {
+      "check": "check_monster_perception",
+      "command": [
+        "python3",
+        "tools/reference/check_monster_perception.py"
+      ],
+      "exit": 0,
+      "seconds": 0.115,
+      "log_sha256": "f499ce7db2ee4eebb0bafdeebfda3b8061b53dac32824a9e0ee090f91f68c4c1"
+    },
+    {
+      "check": "check_monster_pursuit",
+      "command": [
+        "python3",
+        "tools/reference/check_monster_pursuit.py"
+      ],
+      "exit": 0,
+      "seconds": 0.294,
+      "log_sha256": "a95a1f4f107ee6441e4f33d1c839d11c51451960c9c5d02b6b19c9105a793055"
+    },
+    {
+      "check": "check_original_identity",
+      "command": [
+        "python3",
+        "tools/reference/check_original_identity.py"
+      ],
+      "exit": 0,
+      "seconds": 0.081,
+      "log_sha256": "f5ce5cd85364c48a4bd75b0da814ce1b4ac1d963ff8820838505a7925f02634e"
+    },
+    {
+      "check": "check_original_player",
+      "command": [
+        "python3",
+        "tools/reference/check_original_player.py"
+      ],
+      "exit": 0,
+      "seconds": 0.366,
+      "log_sha256": "123ab03a35e8243c5df9ab12e1954fbea39654cf624d512eee8ee1c034cf838f"
+    },
+    {
+      "check": "check_original_registry",
+      "command": [
+        "python3",
+        "tools/reference/check_original_registry.py"
+      ],
+      "exit": 0,
+      "seconds": 1.721,
+      "log_sha256": "0ea5867063bf246d38cf2f91fc348f098695eaba2a4b9ac52fc6f548cc87b0ec"
+    },
+    {
+      "check": "check_player_commands",
+      "command": [
+        "python3",
+        "tools/reference/check_player_commands.py"
+      ],
+      "exit": 0,
+      "seconds": 0.531,
+      "log_sha256": "c6d067c65a0ae90b5dc3361309167d3ca55ed468877e6e25dea650a8340ec9d0"
+    },
+    {
+      "check": "check_player_demon",
+      "command": [
+        "python3",
+        "tools/reference/check_player_demon.py"
+      ],
+      "exit": 0,
+      "seconds": 1.016,
+      "log_sha256": "73cbb127bc444eb9d5d3c488dd059d11b1ebb525475d25751a1aea0541af573f"
+    },
+    {
+      "check": "check_player_demon_melee",
+      "command": [
+        "python3",
+        "tools/reference/check_player_demon_melee.py"
+      ],
+      "exit": 0,
+      "seconds": 2.992,
+      "log_sha256": "88aa4504df3391026c08b5b62544e6ccf4e68c1147693e1686223cdd5ecb0352"
+    },
+    {
+      "check": "check_player_knockback",
+      "command": [
+        "python3",
+        "tools/reference/check_player_knockback.py"
+      ],
+      "exit": 0,
+      "seconds": 0.678,
+      "log_sha256": "9f3a90ce5c6cb473e6db2986d547d26d5c55a24ac6d4786f4fa075c16b624677"
+    },
+    {
+      "check": "check_projectiles",
+      "command": [
+        "python3",
+        "tools/reference/check_projectiles.py"
+      ],
+      "exit": 0,
+      "seconds": 0.321,
+      "log_sha256": "bdb0ca3e70b5e6db7b4441dfb0aff3a44c162c9a6254b56a88a5b515270a56f2"
+    },
+    {
+      "check": "check_runtime_identity",
+      "command": [
+        "python3",
+        "tools/reference/check_runtime_identity.py"
+      ],
+      "exit": 0,
+      "seconds": 1.12,
+      "log_sha256": "ddb577fc692ddb74cab68b139486ff7f8e18d1b6885f06088d8a41bd19d5248a"
+    },
+    {
+      "check": "check_shotgunner_attacks",
+      "command": [
+        "python3",
+        "tools/reference/check_shotgunner_attacks.py"
+      ],
+      "exit": 0,
+      "seconds": 0.739,
+      "log_sha256": "3a97985e741ccc7d7cb9095167b63d311ddb9fff76078e0abe1d9ce093d82882"
+    },
+    {
+      "check": "parse_map-debug",
+      "command": [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "doom-map",
+        "--example",
+        "parse_map",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 0.031,
+      "log_sha256": "5e8aae9bd104e2a9baff5ffe7605e4adbc13b7b2fc674294d2e373bc3ea8707c"
+    },
+    {
+      "check": "generate_fuzz_seeds-debug",
+      "command": [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "doom-map",
+        "--example",
+        "generate_fuzz_seeds",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 0.034,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "parse_map-release",
+      "command": [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "doom-map",
+        "--example",
+        "parse_map",
+        "--locked",
+        "--release"
+      ],
+      "exit": 0,
+      "seconds": 0.113,
+      "log_sha256": "5e8aae9bd104e2a9baff5ffe7605e4adbc13b7b2fc674294d2e373bc3ea8707c"
+    },
+    {
+      "check": "generate_fuzz_seeds-release",
+      "command": [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "doom-map",
+        "--example",
+        "generate_fuzz_seeds",
+        "--locked",
+        "--release"
+      ],
+      "exit": 0,
+      "seconds": 0.032,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "fuzz-build",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "build",
+        "--sanitizer",
+        "address"
+      ],
+      "exit": 0,
+      "seconds": 0.05,
+      "log_sha256": "8891688152b3682ac33cac049b7f47af9e151be35242f35d1894ba784331e3a7"
+    }
+  ],
+  "tests": {
+    "workspace": {
+      "passed": 515,
+      "failed": 0,
+      "ignored": 2
+    },
+    "release": {
+      "passed": 491,
+      "failed": 0,
+      "ignored": 0
+    },
+    "msrv": {
+      "passed": 515,
+      "failed": 0,
+      "ignored": 2
+    }
+  },
+  "new_policy_tests": 14,
+  "private_tests": 6,
+  "new_reference_tests": 1,
+  "simulation_examples": 32,
+  "source_inventory": {
+    "absent_target_returns": 1,
+    "actor_fields": 20904,
+    "added_observer_bodies": 0,
+    "association_fields": 804,
+    "attack_entries": 51,
+    "attack_range_checks": 50,
+    "attack_range_misses": 18,
+    "captures": 402,
+    "collision_candidates": 7083,
+    "command_calls": 1614,
+    "command_fields": 7844,
+    "command_stage_rng_draws": 0,
+    "compiled_original_bodies": 76,
+    "damage_draws": 32,
+    "damage_observation_fields": 821,
+    "damage_requests": 32,
+    "damage_values": [
+      4,
+      8,
+      12,
+      20,
+      24,
+      28,
+      32,
+      36,
+      40
+    ],
+    "demon_fields": 31376,
+    "exercised_unique_functions": 53,
+    "function_entries": 35283,
+    "gameplay_draws": 330,
+    "ignored_attack_requests": 1,
+    "literal_defined_cases": 17,
+    "literal_defined_tics": 1944,
+    "melee_selections": 54,
+    "motion_fields": 25493,
+    "movement_attempts": 1216,
+    "new_cases": 17,
+    "new_engine_source_bodies": 0,
+    "player_fields": 2412,
+    "roster_fields": 6432,
+    "setup_discards": 0,
+    "slide_line_observations": 4,
+    "statistics_fields": 1608,
+    "tics": 1944
+  },
+  "encoder_inventory": {
+    "captures": 402,
+    "event_frames": 1961,
+    "execution_profile": 6,
+    "full_byte_fixtures": 8,
+    "ordered_event_fields": 18532,
+    "roster_fields": 6432,
+    "schema": "DSIM-v22",
+    "scope": "Original MT_PLAYER0 and MT_SERGEANT12, fixed active player0. Source player/mo/roster rows and ordered Look/Chase/attack/damage events independently encode unchanged DSIM22 fields with policy6 and a distinct melee context. Command gate plus original thinkers is not full P_Ticker/PlayerThink/DeathThink. Birth/generation projection remains separate Rust schema policy. No Rust expected outputs."
+  },
+  "source_check_flags": {
+    "strict": true,
+    "address_undefined": true,
+    "ASAN_OPTIONS": "detect_leaks=0",
+    "intentional_negative_signed_shift_probe": {
+      "diagnostic": "left shift of negative value -1",
+      "expected_exit": 1,
+      "expression": "(cmd->angleturn<<16)",
+      "flags": [
+        "-std=c11",
+        "-O0",
+        "-fno-wrapv",
+        "-fsanitize=shift",
+        "-fno-sanitize-recover=all"
+      ],
+      "gameplay_expected_values": false,
+      "source_sha256": "9cd227f012a6ebee2d623262b1a94aa46f9cd05cd641a709b63d21b5529c2c9b"
+    }
+  },
+  "new_source_and_encoder_bytes": 1293344,
+  "historical_pairs": 21,
+  "historical_reproduction": [
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.141,
+      "log_sha256": "6eb9628465c1bd250156d2101ff2f1908e131584d8726480394d452d55984ae1"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.029,
+      "log_sha256": "ac09904346e36686949dc431a26da4d81b15ae292fc5f965337b8b639a36cd60"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3a.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.161,
+      "log_sha256": "02e54a6952a2dd6640447ac13d6a509099dd4ff4f13c5fb9dd27b0c3eb4ac8ab"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3a_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.032,
+      "log_sha256": "a760f78589d5c0989e9880d498f13324c3fed838f3d5735b89ba3797115ef832"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3b.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.192,
+      "log_sha256": "cf70a1d5fb556808955cd5dab9bb75f26fa0c1cba5d820e0a4299e60aec934d6"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3b_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.068,
+      "log_sha256": "d510fd61abc05c0f61ef57cbecd75f058a96c90d0fc780caf8e88eef2cb75698"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3c.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.181,
+      "log_sha256": "1ee2c579aa8aa1fc1b105dc2dc987cde85e038525175391be731fd60b81bfaeb"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3c_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.906,
+      "log_sha256": "42126b82d03f5c4dbfd01b82389f829595c54eca8b2ab46c9b22bb6c3c6958c8"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d1.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.261,
+      "log_sha256": "addae4877c970c8df45baabfbb43bd952051ae5ef10e5b2bb39d6f92cc698197"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d1_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.825,
+      "log_sha256": "4693db0c205e85beafef680b25b4c8e16eb76477e9906f8ab30bef2e12eb3ede"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d2.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.354,
+      "log_sha256": "2bfb7af2cbd420afc71adbc84ed8db2c7e1e45ecb2a9e84e0cff036d415cae44"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d2_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.559,
+      "log_sha256": "5ea37c7c2e27376e2617659c72482b21119141d03e7767876fdede75c4c325da"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d2b.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.25,
+      "log_sha256": "a51cb1faa9d909299a1c196bf29a4d203e065debbd78bc5b9b73fe0472044242"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d2b_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.921,
+      "log_sha256": "98b49ddd4ee3818692d2c4723eb0f613628b7e3ec842f8ee156bbc42767eec39"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d3a.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.303,
+      "log_sha256": "794f857c1babd929d435f6fb4b897772bf0960aa73afc252da9c75a407874257"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d3a_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 16.932,
+      "log_sha256": "51142166ee0a0c3d71ebe3702c4a6f870c753dc1013bcbd9b5cbf606c9a61d15"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d3b.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.328,
+      "log_sha256": "253eb2a2587f186557dbc0391d0c195341babcbb835085f4b30424a20779862c"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d3b_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 42.766,
+      "log_sha256": "9a6aabf14d4a59bfad5532ec6e96810a8cd7e193626bab2d1ae3b337477adb84"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d3c.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.359,
+      "log_sha256": "343a2baf486164adb1bbe5134fa7e4dee25967beca9caf9ed25c9b1ca9aa0932"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d3c_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 80.794,
+      "log_sha256": "8e36f2cb4074e0a35133c9e23d451985317bcc66348397f004b6fd1230ed44c4"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d3d.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.348,
+      "log_sha256": "cac5745b5b707bc678fbac0fb0e833a90847f20b99ecf4c5fe9cb7875db6abda"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d3d_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 20.822,
+      "log_sha256": "9502e9485b3c5796efd4258e7d5c14fb2ca8137ef9918db12c5de32bd08162af"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d3e.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.409,
+      "log_sha256": "dafa62e0bade626da508ed27c8e47e5946c28f5f2776df597141bff9dfb45a7e"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d3e_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 19.415,
+      "log_sha256": "11ac08dba4d0664c11fa352903cf3c7d5c129c40d95fc8aa5f36f428204c27ca"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d3f.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.389,
+      "log_sha256": "9501ff8103c4d01396cd55edc2b5c54cf079da04f3a6df9e48ee6dffa69b7988"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d3f_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 14.657,
+      "log_sha256": "07e220348a942686dc76894b6dbfae65496b76a20d6a699caa6ff755817d3899"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d3g.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.52,
+      "log_sha256": "df9b9ef72c2a488c69b88d1111377dd9b9ce32a9a19a952ee4165e07a4a149b3"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d3g_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 42.314,
+      "log_sha256": "b1676b11e34baa85360b3417acd1152894e5704ae5c3f03e20c2617c1d2077ff"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d3h.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.644,
+      "log_sha256": "430a2c8e93695b8a939e80dba9b7eabdeba26de02b8215a383d3a7e558bcf1e1"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d3h_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 82.69,
+      "log_sha256": "a690bc81ff9b8043b866594eba2dbb7b58c558b7d69270d6cd94149ed1f5a703"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d3i.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.692,
+      "log_sha256": "fd181365487cc2fa46e5bfb126599413afe3d1ee0fc34b2a311930fa8f63c4e6"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d3i_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 40.875,
+      "log_sha256": "ff9c9f27a0e5b0314189755a66b83eea0b2acf37da7be33dea6a7f3d74585dcf"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/generate_m3d3j.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.92,
+      "log_sha256": "e61bebd56f453100a59c110715d8368563dfa52b867880f29342f2cd2a7331aa"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3d3j_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 77.918,
+      "log_sha256": "58bb57553d889a4ffeecc090428e1c0f9e2beeffa3c4cf708301513d06f839a6"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f1_reference.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 3.681,
+      "log_sha256": "e3a5b5cbc786144bcfd4b536027b82278e589d7efae6da1954c1a4cb53c9750c"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f1_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 4.656,
+      "log_sha256": "258dd4cff15a0c62a23092d12193c9f06b5429d39b7cef44bb26a86b1abe8835"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f2_reference.py",
+        "--check",
+        "--overflow-check"
+      ],
+      "exit": 0,
+      "seconds": 1.466,
+      "log_sha256": "c485d701cbcbaec7cbec204db08e8c5b52792d0830c6a4dfb1bca16938f2c332"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f2_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 5.923,
+      "log_sha256": "55303da24aee6c2980baacc14d0c1029cce109448bbae9ff1bf894192421c78f"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f3_reference.py",
+        "--check",
+        "--overflow-check",
+        "--probe-undefined-angle"
+      ],
+      "exit": 0,
+      "seconds": 43.935,
+      "log_sha256": "a2af28a8f88fba74291b2d3b1785cd5ca4eb115520a80bc9d1b18f2a04a6f276"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f3_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 194.638,
+      "log_sha256": "65e1489476c430eb5f966ddf3bd296e91c12749ee2db37de53b8eca74bcb6b0d"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f3_clipping_reference.py",
+        "--check",
+        "--overflow-check"
+      ],
+      "exit": 0,
+      "seconds": 5.249,
+      "log_sha256": "13c42790b61dcacf40f7f573ad430d926755aab93d48efad1ac4ed54edf9d828"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f3_clipping_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 8.916,
+      "log_sha256": "1890dee2d2b1a6bce45475ddbfebd6b928b454f72ceb749214c548ad2a808447"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f4_reference.py",
+        "--check",
+        "--sanitize"
+      ],
+      "exit": 0,
+      "seconds": 9.089,
+      "log_sha256": "50ab66f493d8c8db707e1bdf83116c8475c3fcd745aabecf4abf67a66cdb844b"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f5_reference.py",
+        "--check",
+        "--overflow-check",
+        "--address-check"
+      ],
+      "exit": 0,
+      "seconds": 100.697,
+      "log_sha256": "477390a89dd323fa92524427a6dc7c544903b57e3db2f702b0f620cfb91050cc"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f5_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 42.294,
+      "log_sha256": "7e207525586e4d8e72506095c7b1af1b91ceaf99b8c17c893e3731e9eeba1d00"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f7_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 36.525,
+      "log_sha256": "70798074fc19b380854f5dada65eb1e33f04b8ff70e33eb68351b2fd0eb1d44d"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f8_reference.py",
+        "--check",
+        "--overflow-check",
+        "--address-check"
+      ],
+      "exit": 0,
+      "seconds": 2.059,
+      "log_sha256": "346b7bfef44f7738522473b6ffca686adf8aa477f15bd52f6d0564fb193f2027"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3f8_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.158,
+      "log_sha256": "5f88bc9003eded1a2711635ba920311a6cf9d518fbcb625da8470f79aff37c71"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3g2_reference.py",
+        "--check",
+        "--overflow-check",
+        "--address-check"
+      ],
+      "exit": 0,
+      "seconds": 2.185,
+      "log_sha256": "f7dacd6ec65dc85e2dc52cd22a9ffbc228108b2ece96b4e139187f1d32de5198"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3g2_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.182,
+      "log_sha256": "07502dfa849ae60e6199a8bf517eb6922c7584421f516c06e44eaa5d112fe8ad"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3g3_reference.py",
+        "--check",
+        "--overflow-check",
+        "--address-check"
+      ],
+      "exit": 0,
+      "seconds": 2.518,
+      "log_sha256": "27ab97c48456f73a5aa29dc4e06794359fce79c0dd4455b1e01aba2c663cfdee"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3g3_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.293,
+      "log_sha256": "6f7f4dc7eb6e9f84014e03ae853d0e16896695dcaa544e3b2cfe8bb76d74c69a"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3g4_reference.py",
+        "--check",
+        "--overflow-check",
+        "--address-check"
+      ],
+      "exit": 0,
+      "seconds": 3.668,
+      "log_sha256": "04b9a7c43fb2aa60c94f6e6602e604ff6e2b8eede6f57d3f7232bea1d3a6063d"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3g4_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.365,
+      "log_sha256": "7d7ecaa22f9edbea355d2e607e8ea39a8870111d1c1ebcb358698650a1c590ad"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3g5_reference.py",
+        "--check",
+        "--overflow-check",
+        "--address-check"
+      ],
+      "exit": 0,
+      "seconds": 3.657,
+      "log_sha256": "c27129cefd7849b4fc25549251bd364e6369144ab27bbe8e84019059ff1138d3"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/reference/m3g5_snapshot_goldens.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.531,
+      "log_sha256": "4e11d9dfa4c8d3dbf41a1ac07de6a0b8e845d64a2543f57ec77d260e0cae542a"
+    }
+  ],
+  "parser_generator": {
+    "results": [
+      {
+        "check": "parse_map-debug",
+        "command": [
+          "cargo",
+          "run",
+          "-q",
+          "-p",
+          "doom-map",
+          "--example",
+          "parse_map",
+          "--locked"
+        ],
+        "exit": 0,
+        "seconds": 0.031,
+        "log_sha256": "5e8aae9bd104e2a9baff5ffe7605e4adbc13b7b2fc674294d2e373bc3ea8707c"
+      },
+      {
+        "check": "generate_fuzz_seeds-debug",
+        "command": [
+          "cargo",
+          "run",
+          "-q",
+          "-p",
+          "doom-map",
+          "--example",
+          "generate_fuzz_seeds",
+          "--locked"
+        ],
+        "exit": 0,
+        "seconds": 0.034,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "check": "parse_map-release",
+        "command": [
+          "cargo",
+          "run",
+          "-q",
+          "-p",
+          "doom-map",
+          "--example",
+          "parse_map",
+          "--locked",
+          "--release"
+        ],
+        "exit": 0,
+        "seconds": 0.113,
+        "log_sha256": "5e8aae9bd104e2a9baff5ffe7605e4adbc13b7b2fc674294d2e373bc3ea8707c"
+      },
+      {
+        "check": "generate_fuzz_seeds-release",
+        "command": [
+          "cargo",
+          "run",
+          "-q",
+          "-p",
+          "doom-map",
+          "--example",
+          "generate_fuzz_seeds",
+          "--locked",
+          "--release"
+        ],
+        "exit": 0,
+        "seconds": 0.032,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "seed_sha256": {
+      "fuzz/corpus/wad/empty_iwad": "1c752adca4dce342d362ef48c4df48371f3903a59f0ad3e4637af643fc2081a7",
+      "fuzz/corpus/wad/duplicates": "c9c09f0c9f0afe9362ed8f2a700dbb3a660acc7d7aa9a3ef71d8d036e5beefce",
+      "fuzz/corpus/map/classic_square": "8d3f63a56a68b137351751a7a61919be93ad917b4d77bdb26644aa02c4672d9b"
+    },
+    "unchanged": true
+  },
+  "fuzz": {
+    "targets_built": 32,
+    "targets_executed": 8,
+    "total_executions": 32768,
+    "campaigns": [
+      {
+        "target": "player_demon_melee",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "player_demon_melee",
+          "/workspace/doom-tools/m3g6/fuzz/player_demon_melee",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=162",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g6/fuzz/artifacts/"
+        ],
+        "seed_count": 95,
+        "seed_sha256": {
+          "attack-state": "289f7d20379e9e1ea6e546fe43e23c4738d6404010926420d524d3306df8918f",
+          "buttons": "af9fc33a7591528070b6b2cdae844cd149e33088f0a704cc6f9e92f255466e2b",
+          "case0-warm0": "15ec7bf0b50732b49f8228e07d24365338f9e3ab994b00af08e5a3bffe55fd8b",
+          "case0-warm12": "d6d63bf5fdb1909f8482df8148f08e9a9740842f44f2e661ed74d58822284810",
+          "case0-warm13": "b3b4a6d38b8701b35aded2f96c697338b6c1016984faa72771e71a758e61c850",
+          "case0-warm3": "a77a0026743de4c749f23a87e48e881cd8ac7a376c89db7633ca0d96881c2259",
+          "case0-warm5": "6712c26d6c812c8aab321968e1b79441138cb99f2c314a45d71c3b46e71e810a",
+          "case1-warm0": "ca888f40c3caca805b37a5434c75de5550616e0795e7602fb91156f22dd90851",
+          "case1-warm12": "1252afa5f1546195401d9f6ef69eee48a574e0380ddc682cf61e869ce3a40063",
+          "case1-warm13": "915b4d4f52655f96b143a3ee4ed7e7d09473937254f5725c3c9b5afd270fe3ed",
+          "case1-warm3": "ef2de0baf5a2fbc172e3ad5963bc2df95989995f19bf5e413b5b27db7cefb6a4",
+          "case1-warm5": "169adf421cf07ac78c12db5731c206ac2114d84c6fd5a936e9ce45cac902a4fa",
+          "case10-warm0": "596c0ad17b38f4bf6c899f6b02c82f9ee326cfb7ac2d9775f49a88163364882b",
+          "case10-warm12": "5eb65254165f2f71de0c741a23d09abd483752bc8ca4ee440984c923ea3d46f6",
+          "case10-warm13": "48704957843778d1e87d4c4fe19273c45dbfbdc58bbe4dc9b944d39d993184ad",
+          "case10-warm3": "1d783750f1358ae4307354d8527e9df2278a2ae673e74ebff51958227b0eee4d",
+          "case10-warm5": "ae758fa35230322613bda38d354bce550d0d4492f9e75085b3e308423d2f2c2f",
+          "case11-warm0": "b6729fb8bd4e1ca1b07d75a60eb442c046ef8ebfcc3140d2083209bec55dd1da",
+          "case11-warm12": "8f4c85cc6cbb7a732af799dbb25fe9534cee21ac158d8f9a474a5fb1d374af50",
+          "case11-warm13": "c99ca6d7a8744fbb79fcffba5a168f25f3f9d8a252b5add3b26ac3af916eb059",
+          "case11-warm3": "4955e2a297b426a50076a5e3d988c6a0e9163395ad3f80e2c8271bd05b6e70ab",
+          "case11-warm5": "6db58fcbd9d916792776c6edd4592bc3c812c76ff9a6d74c475a66de03646597",
+          "case12-warm0": "0102ba247f90833cfc780ecaea5a790f534b3cbe29c9a7c992776defba3fe11d",
+          "case12-warm12": "350af2ed9c0d9a7fe7b53e636b9ac09388ac672d35dcbe493282c70d91a5fd22",
+          "case12-warm13": "201353bfeb6f7d321d8f6260acc33769f670bab1d7513a0d8849996a4a21befc",
+          "case12-warm3": "c29cb34772d58fcab6b61d805fa426fa21f02bc3aba1b55082e598942267a5c2",
+          "case12-warm5": "2c133b91abbb7b41b7b52d22c3506bcdcbf986552fd2dbb91e56b9cb0497dedd",
+          "case13-warm0": "1dedf0f85df807a7d9522d3116c0636e5ec6845bf212ad5c805153dd0ef734da",
+          "case13-warm12": "937db8ddf333cf17b2debd5494d51b8e25848104c0c15acb020da5288fecdc78",
+          "case13-warm13": "88b6d9005c76e2090783bb5ddbcb70a9bf3c90773a7ed235d6f35f12a8359fed",
+          "case13-warm3": "619b1118add8079ef64d5cc8013717652bcd999c451399e09a4214e9b1f76e35",
+          "case13-warm5": "2e1c631d2943d1c448fd05b7aff75e12da97e3cc8ab8373931e22e1188857ed0",
+          "case14-warm0": "1e99261c7e6000f1081f2e8556637d48aa59f94b39b74eaae1fc9b6901e4ac1e",
+          "case14-warm12": "6642604857ac1051aa383da4ab241c2eee5a3013b5e4956a4d619de28c5f9f28",
+          "case14-warm13": "4bc2b64acb9e5cb9121cd44efc5a2f1807af1619e5d8f78b0ceae6b40cf3b748",
+          "case14-warm3": "01b484757a2db8c8e066fec4d0fbbde689bb85a4b3090708044aa7199a0787bd",
+          "case14-warm5": "b4a61dac98e0fe9f39882e30ee7279a90933638ab0350040d2ffebd2dc949230",
+          "case15-warm0": "d6c66a468c61c2bcbeeaab9492beb1818056446fd4191b7a7fbef22ae9a78d28",
+          "case15-warm12": "ca1b61e004dc7abc90649844d7cb46758eda6ee8c8216a0fc780f2fb68c22560",
+          "case15-warm13": "b705de08e4946a61be877143483ed31f0b22bb2b560f806009356da9ece2094a",
+          "case15-warm3": "bac8807a38ca6c25644aaa4154ca4f6acc70709a867b1b2c322481620fc46169",
+          "case15-warm5": "cd6d130e1865c41ddbb7204638bc0ea394e074e64c1e848ba1c6f766ddcb6c45",
+          "case16-warm0": "92ee0b61bd440fd8cd31a7b58b3a591d5f088e9bc165200777a958dbb18c520e",
+          "case16-warm12": "6efa9dce8caadaf6328533b2b3034f47af27ccb0509b0d065eda3b4024e52825",
+          "case16-warm13": "f005e12a9551fdc808e457444e73a41eb627b58388028140223ece7d787639da",
+          "case16-warm3": "d4e802e9a25687b8e084bad77175777927813ad851de48885afafe6d91757e86",
+          "case16-warm5": "d510a8e8903515449cdd66a13dcd43fc51419d0ec39f834dd91c7c1fb352e5c2",
+          "case2-warm0": "b76875c50ef704dbbf7f02c982445971d1bbd61aebe2e4b28ddc58a1d66317d5",
+          "case2-warm12": "11db8d53e8186cab65105cd66821ec849cdd2d5165b12a20dfaca26d20c76d6d",
+          "case2-warm13": "08282011db55959a40634750625dca5d5149cd0352b9da3bed0f85f14fc8e60e",
+          "case2-warm3": "98b373abe4ed2d5f8f9f27bfaf1d30b758aaa98bc5323af272a840a3a525ea68",
+          "case2-warm5": "c8e85ab61118efc82e576e32e7d7cb5f511bb42e982d2f2741078878e6a75817",
+          "case3-warm0": "82f63b935a385c7a6e1176aec3307db0df131cd469b491b666e01d47d91a02d1",
+          "case3-warm12": "01109079926a90b91886e87a96a7bcc071fb40202872c19ffb144ed7103cb69e",
+          "case3-warm13": "b67564d24fd6cafe294785930635adea2d883d9a865b1fe286df2187f2781d85",
+          "case3-warm3": "aa20527f5c795498ff7a9266816a89d92e35e422c27bf3961a74932ab8e70b51",
+          "case3-warm5": "d9e30dc62d8148023aa48f753a5e5a951c4b65839f146ea9e6be459b65a7dc73",
+          "case4-warm0": "1acd855e4657b0c3f4e203d3452dbfd1cf66eff0101b0ac539f0570f06990f9c",
+          "case4-warm12": "af675d1a391f629dfe1b8d71726db9463f21b7027a1764ee01f3f308bd86951c",
+          "case4-warm13": "61a07fcbce630b164403a9a7d887c1da801ee8528f13326c10448e0dcd0f099c",
+          "case4-warm3": "2f089a5dd626d9fc723bfc6b2fbfdff6ce94ce6fc2216e600453759564f21f8d",
+          "case4-warm5": "3e76d0429e6f6c99e542f6c691c6f5f9809b9e6ef349e2879653bb70282c9223",
+          "case5-warm0": "65536c129f290987890b4c6c880d43bdecac47e954651457a53a49b362da8969",
+          "case5-warm12": "46d1987af3fc3aec5ae35503208ad1891dc07d046bdb4f681841847e1c8c23f6",
+          "case5-warm13": "92cc2b0ceb8093ce3716803cbd863c5a3a661d35582d7f7fd20923a80cb0638a",
+          "case5-warm3": "fda54858064ec39b6587ac03848a733901984bd0096a31691afe37440a0e3e4c",
+          "case5-warm5": "386a977878bccf8e5670b37d495cfb75cdcffe8f7ca1b3b976985c7038eb9fe7",
+          "case6-warm0": "8be77d9aea1fa1f795f59c6498bfa494fbb9f331a0f0cfbe5cac9c765b09bcc0",
+          "case6-warm12": "10f9557964fbc1fc0629f08d03ba99c4cd55d9e9b954a300ec76ff367f29f792",
+          "case6-warm13": "d8de0376c84439f8582f51af7fc7fe74d67a223b697613ec0cfd8027ca89dff7",
+          "case6-warm3": "210ca4c93cac195013671c457bb7aa04fa7319fa6980b6dd97f4448d324a3247",
+          "case6-warm5": "dc329a77d74a597240066e7d8c83dc3017756b32fb436558231a04084c35b2d9",
+          "case7-warm0": "35620c6ab15d72cbb713e74e0dba4881c782f00bee3864062bad13867e463b1a",
+          "case7-warm12": "2ab6c283d75179449e13548a9896a344efbb8a9b972afacac1f92e6b8840f2aa",
+          "case7-warm13": "0214770a83c86e922fdab3c1dfe4464fc1c42dda89c52f97243edc1bf7ddbfde",
+          "case7-warm3": "06b73557595ade0177798e68a226de797fd05baf234ea58312f3a3d9d410bdd6",
+          "case7-warm5": "78c8d938dfe804234aeebb277a90381ebab1d79264d3dbcb55e57f18616199b0",
+          "case8-warm0": "958f8e67d123a4fd3942a588a4447f781501af6120487ff147b2cef0e5076421",
+          "case8-warm12": "f2b9667c697ac84979b288054d8ca818857558dc36e63c2c92ab34f5be744bd7",
+          "case8-warm13": "2a88d2381f937239152034e97144872885c4c5af724d199085b20c726ac0407e",
+          "case8-warm3": "513c426f54320a2c56a87bffb6e7bf99e7bfacefb6f833cbc091aa729e892a90",
+          "case8-warm5": "81ecc108581f7222c015fe05e431f5d1318b22fa7d630e3028c65610493247eb",
+          "case9-warm0": "0762f2b0cdf080b15824ca47c34e3dccefa4f7d81ef8276dc00d8bb00e33659a",
+          "case9-warm12": "c9df75abbc316cc1a533c4df2924ec2771a0f1e16e72665b2b8fd2032dceae07",
+          "case9-warm13": "dd5e0cbf3e9ea2a79acacb87ced89ef2407f2031679b83382a1fc94515f470ad",
+          "case9-warm3": "945e64794f5fee75593eedcf49394774fbe660c4562550b05717d318c3d9b1f8",
+          "case9-warm5": "4cfaa1d481d8a178a3b5df47f994ed06578fdfd5c9ffb663bafd29916f4a5b36",
+          "command": "e660027194930e819ce82dd23a9c3b0b69ab2f6c2d551ccd58a984b57a38fca3",
+          "damage": "f458610184a5b6ee07bca7fe6a4e3761538b03533980e53be4ca6741447e2a79",
+          "full-input": "8d87466e1cf26cbf1e8e6f855a01354dd8c8b666c8cc58311c668e36c3581cb9",
+          "missing-target": "4eb57ceb3c527d94a08095dfdf30ba31a89b4eb7d79cf45e96fad7172bae1ec5",
+          "remove-player": "28edd08d585b18ff2d4730a989c41728a7f83cd4090b5efe39b8729c5cc12c2c",
+          "retire-source": "7d4d1992238b153e77383bac8341b772b10354be8fdda4e5366560bf5f836756",
+          "stale-target": "75e60a9e6782d9d33fba4199c767c2c085620912bb8600bd79e13ee9f42d0c98",
+          "wrong-slot": "d2a2d46a8b148273655bc7b2aa5737feb3de68277f92ef96966d269f404205fd"
+        },
+        "input_budget": 162,
+        "observed_final_limit": 162,
+        "exit": 0,
+        "wall_seconds": 256.373,
+        "executions": 4096,
+        "reported_seconds": 256,
+        "log_sha256": "c9968a2a11c97bb882bd75e27bc1401740b05d96294e8b1b4a45c161257c78b5",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "player_demon",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "player_demon",
+          "/workspace/doom-tools/m3g6/fuzz/player_demon",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=161",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g6/fuzz/artifacts/"
+        ],
+        "seed_count": 43,
+        "seed_sha256": {
+          "boundary-0": "e7c92db3acd2d4fd307acb00658f35379f03bad9ffeb37c8d84f28dbb16d3b1a",
+          "boundary-1": "976a5bbcd2c564581f25dae1ef6fefbebefff22cfcfc70d8b5de24ad61d7b0a8",
+          "boundary-2": "959c233e51391f832f727eb7e911b190a3eb318e8f7425afb7a64109c8e8d89c",
+          "boundary-3": "e29840faa8c36702c216629ef42f7cc67003d8ed13d34dab185c18d8b2eb44ac",
+          "boundary-4": "1e12137d193ffba99cabaffdebae0d82f715248820cf7d33c12e1c425d06a138",
+          "case-00": "3eb782ca32802fdbf4944b368439eb0101b120f407a301311aeecb961ef3dc7c",
+          "case-01": "f86d4321caf92be59738f110429cc212a3460b40b1d884e42cfad4fe9c383582",
+          "case-02": "7ab53e452d35eb018a24baf8e34fedae562769e7eaef10fd953bcd27c1d7b528",
+          "case-03": "0b86aa887fd923850b300bbebdc0006b3185215d9180a340955a843ba957d7c1",
+          "case-04": "88c2d34f72abc3055cfceba32d83fff7a2dda2d731bd64bebc74c5cd259fce69",
+          "case-05": "0c0f475d120e1623e7d8fd047fa11637d6a997ff161df4fa5b5623d7eee16e05",
+          "case-06": "26d943f216731bd89aa09e0f44e6108acd8c7dc6f39758c2dce1ebfb8e365b4e",
+          "case-07": "7e1bc4ceea6ddb76e3e77e84a007424b920d5c2a03dd1f41eb7c1b405dc6da1b",
+          "case-08": "c110ae8e1f7d2073458a79861df46b41ac61fc208a6ec1cda39c793be89d60dc",
+          "case-09": "f8246c27d41fd0236324f88e874a32331e4cd0271567589785e36a1481de1796",
+          "case-10": "823ce7104268498c41f460c93027ab1be108b0bc883514d9836ae0865754fd06",
+          "case-11": "db727e2b305fa28e9658c31bbb5e8afb4a980b845bf7df08936aef2efe9fa39c",
+          "case-12": "f421eb8c5a653ea5d405c94c9198886b4e0dbad9eb31613486c3501653d2c559",
+          "case-13": "8d679bd64b1eb541717fc41976f0cfd925961dc324c4e5381940fb9ee5a04249",
+          "case-14": "c265a903262ad643a07f7cd3882bd24c7b1b2be6c72853268ba07c0ae1b4fcba",
+          "case-15": "f1893bd4bb31b91bf8f20444be0254f1bc25220ce0512510aa7060e257894903",
+          "case-16": "21f651fb40b85e05b196aa308c8b44a6fdf25079eb8bc3b88fb928ad6cc354e6",
+          "case-17": "dbd9134f4f0d22443930927773df897015ac1102225c1160a12cff60c730bcf4",
+          "case-18": "ed1ea0f16fcbc6647a8d294de071ebbabbd7c6fe4ff9ae612bfc1a72e5ccfa74",
+          "case-19": "55d76fdfc167c1b6a13f674e3bf47343ba652fa1488ee0b1439abae2e845d873",
+          "case-20": "e07691f1b991cc9e9b301d59144572b51a82991abc32af94a509bb37c4f1317e",
+          "case-21": "efb36a0cfcd91fbf0bef2d20359ecd1d48763c84dbc236b716ac0ecb457f711e",
+          "case-22": "62b8ee9d518555eb76363e269392139600148a19f4a9bb3be9a5f542a190f251",
+          "case-23": "7b455ec78ee6861deea43fa1e0ee240a3dfc7847eb1444320b6f0dd426981b5a",
+          "case-24": "18da69308e9987fa79148704d0f835ad96f6622f5148f9388c5ab28a3ea32332",
+          "operation-00": "93a6022d6ce63c8ebb7ebf7cc5f16f7fce48d0387a0e3d703905173732521ba1",
+          "operation-01": "2ed57fa2a1b477a630390e8af6d2c2d0a6b529d345409c14678feef490a702de",
+          "operation-02": "1b30d25be1c0f3fcd9b3351470479ee5ba9626d0d62828c272b944f907a63efc",
+          "operation-03": "e86026fa142031e705da202c87a730018de1e9e67617734be78aeb6bc912a588",
+          "operation-04": "f6249f89d2b9b38dfb11feba8612f6a24cd84360de7fa178ffcb4bf24fad78c4",
+          "operation-05": "86a5425d1595bb8950b52708d2e298c6ed84ac59693d27ee1788845ef654618d",
+          "operation-06": "da79f9477b4e646bb1bcc833cc22d61fb8b0e236c5ba4fc1438a2ab25b72ad63",
+          "operation-07": "81480e25bb1fddcb321374f27a7d7fe65e3bc0dc71a304de4c86fd435ed09dc7",
+          "operation-08": "e669d3676ad0943972c19c7ff8bb1208167fa4c7e3cd2dde4106d55ef511a800",
+          "operation-09": "274a8dc8dd4a8c33e60636213043793f6391cd36e8d380dba1e8e9510910e36e",
+          "operation-10": "9b078074e58a6867b45bd85225235d06b20f62adab9306b24b671313cb9512f6",
+          "operation-11": "6c1d386f3a0ef593e6359fca64b9608d30f6dfd49b7f79308ff03bda75ef709b",
+          "retire-reuse": "655eea5b6d103911cf4f1bdb13ea0aff67e49765ec86d310e8b602da8704d64d"
+        },
+        "input_budget": 161,
+        "observed_final_limit": 121,
+        "exit": 0,
+        "wall_seconds": 133.333,
+        "executions": 4096,
+        "reported_seconds": 133,
+        "log_sha256": "ec7088148dc99aa50c58e7945e71d386124be6418b0999df6833572ee1f2abc3",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "player_commands",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "player_commands",
+          "/workspace/doom-tools/m3g6/fuzz/player_commands",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=129",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g6/fuzz/artifacts/"
+        ],
+        "seed_count": 28,
+        "seed_sha256": {
+          "all-operations": "662ee01c45371345e86f5e78474999f38bee4d16545661061438035e6a188693",
+          "boundary-0": "f6edb8e20d3531e124b9b7af9583bbd2d908d9fcdcd04adb5a09eb02d9923479",
+          "boundary-1": "bcca8bdfd3bb177e6fe1c16d4fe2a6e50654158bc26f7d2aad88b336f5b802f2",
+          "boundary-2": "0b8dd66f73ff140f69c95a6965beb983051bb99236c43f950fbf67779c685c9c",
+          "boundary-3": "0d44815795318ff4817ae6bf8431a6c087c03482ac5af6fcc3e54f61939400f0",
+          "boundary-4": "6ee8de219cea8c04a360b40c07ccd21730ba7533aebf1f415b62ac59f205dacb",
+          "case-00": "136dd1a7d0a62859f2077a62b7673c5c712fb750604a15f5f6140ab2c5112327",
+          "case-01": "1ea3be7ee6750bffe55a5732221c2b0ef808cd90a6237f2c477075093bc86bef",
+          "case-02": "71684147e01604882d19eb08452e8f8f42acb0ab98832a8ec9a155ae35dab0cd",
+          "case-03": "07ba1f4d00997826534fb79fe956aa893a360c9f6ffbd1cc8971bde4ac212f22",
+          "case-04": "c5bfa600447d36611f0c8bf1b7bcd235d1554a77dfb0226325fb4c99d342856a",
+          "case-05": "a1f68b20fad3cdf90f93292419c85f1e7f89d9b38a4f02a9d4a49907dcadfa38",
+          "case-06": "225abea02f8cd30523605fccff6c71e712975b53dab11803708dd795c10801c7",
+          "case-07": "4ea2835cc2fc308380e3e173a080e89eb8a105628db0ff509bec3145a63889c8",
+          "case-08": "b3a3d93c648e86e3fc3782bf21e937173be76150c36e6dbac53d18ab411325b3",
+          "case-09": "c2ee2f4987e2701e624f46a247bcac349665a1e8d967d6e03c2d8403608d0234",
+          "case-10": "8efecb67e4ee9fcbe7130e50ce4ecd75a7310c2bdc6054b4d59dd5bd6fc36be9",
+          "case-11": "19a7a6ad8e1e27962aeb11fb7e7e48d6d6e3d9fae8c72295d3dd6ad2a8f248a8",
+          "case-12": "c5166174a1efa35f91e3015ca42848ac24461860974bbc6becb6d39343378d1e",
+          "case-13": "a87c165721adbe2b292859f500a06de40d6acc4cee24ed09eb64ab7bd8e81f7f",
+          "case-14": "5721ae800b55c890ce3691a8e821725ebd780bafb75fd4d9b7867d4971d7e01d",
+          "case-15": "a34aa89d9955413b03a6cac5e99fc0c6184fbe078341f500a8721a3c60e4a0b6",
+          "case-16": "324f0946226749ca81aafc48c507a66eb3e60d705e4d9c5c46cf3f21e21d7be6",
+          "case-17": "669f7b6403e791b1e665f9734a8969b242d2a057f5797f0eb8747d945aa81b82",
+          "case-18": "188b159a1f616fe904e597cd2f49df575fe41cac15f03069939db49480999c20",
+          "case-19": "f9a7b44cbdb33cf373c8df0c81ea0fbec44968dec1e77b00078fe4b90eb81fe4",
+          "case-20": "bb3671ab0d0eb64a541764be90a4eea7c3245691d028b5dc84befd93f9e84203",
+          "case-21": "dec3b0dd8b39f6ee9f4772fd5c019e7cec489f744d79e9c000a6377c3058d44a"
+        },
+        "input_budget": 129,
+        "observed_final_limit": 97,
+        "exit": 0,
+        "wall_seconds": 65.888,
+        "executions": 4096,
+        "reported_seconds": 65,
+        "log_sha256": "44ae77b6a560550aaf3577b92c0a98c7d4908982804399c48132b0decde73e52",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "player_knockback",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "player_knockback",
+          "/workspace/doom-tools/m3g6/fuzz/player_knockback",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=129",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g6/fuzz/artifacts/"
+        ],
+        "seed_count": 21,
+        "seed_sha256": {
+          "all-operations": "874354dea19a4003c54ca0d204a20458c3827112218c5c3ed43b76c677343974",
+          "binding": "bf21e764c36787d6efd63e0eeb1965502d244e15b380571b49f6cd521381f723",
+          "case-00": "2cfbb7ad27719955e787f7a7f000973ec090f27d8c5ba56fd1dc868c8d05919f",
+          "case-01": "db0be169ba34d15243c9a02fd0ace9d8332b15e58df0e19b7760eb7ab8364d78",
+          "case-02": "853379b0ad6ab470fa7993d4f4bafdac392b20c5f77cdc3659af895eb898778d",
+          "case-03": "dc378c23f073c859847736343ca73e8a410ffbc8f4a34eabee4bdef4c9994b41",
+          "case-04": "892cb12f6fd7afe063c32523839096a978722c5fcac464754b15a72f0bbc5a01",
+          "case-05": "9744865e05789928939f29f9e7bc12a3399c6b8bd1586d478924feca0c26a1df",
+          "case-06": "1f97fa498d51a8c6ee6887f4502b78169bac29a963722658173b9fc22e9e0d70",
+          "case-07": "75187e02421c3906d9545fd11bf7682b4940a375d9d84de5b1eacec48953075d",
+          "case-08": "0e6dece18cf69a2b306dd0256312a13b194e01037d373197153961b28ae7937b",
+          "case-09": "6df3eccbeec74f368ba902bff1e8109d60871d344b7c50f2c31ca684d4c0da53",
+          "case-10": "98f6ffbee2f319d30873e169e1dc7bd7fa7cbedbc69b6e1281cd273b8d689333",
+          "case-11": "f536f091ac168317af9b41854d3eb2b26a938d669d73fd752e0d71b9d5d40b3d",
+          "case-12": "1ee5446f386b6a051b53d5dd8828e630097befa09c10522dc1a0a7e540162f73",
+          "case-13": "c9f95989dcb5a06d4bdc2d29a622f2ecfac28252cb8e3565b1206f53957be987",
+          "case-14": "ee124fa19638e977b54f0e5ed91e27decb45a06cc22f1cf35f4214e8a651d853",
+          "case-15": "e005b6bc00c6632ea750eb0ddad3861731d8cd6d4e5100f6cae4533a3e336c82",
+          "case-16": "ef52a6cba3335abf4a742735286156d2f1f6401a039337169b156b1855f4d513",
+          "live-origin": "05f6d269618a894e644c9cd1bf32a94ea04e52105019684b1212e8c864d1a054",
+          "raw-bind": "75d1bd174a025c0a0d9540bb00f520fafb63c8f47e5a6feb386e0b70ae6a93d5"
+        },
+        "input_budget": 129,
+        "observed_final_limit": 121,
+        "exit": 0,
+        "wall_seconds": 83.871,
+        "executions": 4096,
+        "reported_seconds": 83,
+        "log_sha256": "9e985da980b34eaf8a1a2b300a2b86790f52f171869794f96b7ea7e06b954d8b",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "original_player",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "original_player",
+          "/workspace/doom-tools/m3g6/fuzz/original_player",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=97",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g6/fuzz/artifacts/"
+        ],
+        "seed_count": 11,
+        "seed_sha256": {
+          "all-operations": "7994d17c26e306fb8bb5b38ab2137200a7c6eff3173940025e25fdd7f42a7ad7",
+          "damage-000": "57479d67ea66e8a740484b6ae8e9dbc4a9333ff468c44388c8bce47643b6276e",
+          "damage-001": "f3401854c3844a2f21facb9f9832b3c7d90da6a8a372e4f8027ee48697e7d3ee",
+          "damage-020": "990b73a5b4c9b4bbf1dd0167f5f758a319ec03f9b8b7c98fe6c2307cb2b38713",
+          "damage-099": "526f65318e8443e3c25a8022e227eebc4f2e0ea642bf830b6a85727d448ebe55",
+          "damage-100": "310f8a90ca54b7bbd11d2db5501da465b21895c8f2e4b527b83cbdb30fbbe9ec",
+          "damage-150": "4d7774af3991c0013170a36fc1c1a6715fce3545c46f78da3bc43e388d990f3d",
+          "damage-200": "b017a414287242d95ce4948864e9f42f41c7484d11868b4d3622d3a5d9c8fecf",
+          "damage-201": "8f9a4d815b773e1c764d84c73967888cc3abc866f73168e7e28b188c10994c41",
+          "damage-255": "60072096d9ace6cf0d650e9513807af5bd164701afe06c3687916c801ba7782e",
+          "reuse": "80a49804bcbf07ee14cc65d32d72193d18c51b5d76ec3c7a62057a7bea95890d"
+        },
+        "input_budget": 97,
+        "observed_final_limit": 81,
+        "exit": 0,
+        "wall_seconds": 38.661,
+        "executions": 4096,
+        "reported_seconds": 38,
+        "log_sha256": "4d7a79ad6abddd93a62383d110a47d457e1aaff2af2e0d68f1f0f91c3d8a6a5b",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "context_ownership",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "context_ownership",
+          "/workspace/doom-tools/m3g6/fuzz/context_ownership",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=128",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g6/fuzz/artifacts/"
+        ],
+        "seed_count": 10,
+        "seed_sha256": {
+          "seed-00": "98368624fb0a435fdf6de12c0b0c3397d661f28abaadaa8ee76fe90c09c4ba25",
+          "seed-01": "c4de171a2cf57a9951f3f3e67f7c84e138566ec8c424b0c9cf08a3f4b7981f69",
+          "seed-02": "3617ba6af4730e69ab00dc21f7eaabccc493053871ff7d96c6925fe1c041b435",
+          "seed-03": "2cc0676414f291de51f9794273f47e67af0606c6d38dbfb4a459334aa06a4cf1",
+          "seed-04": "5540a305cb734be616abb35ac44cc968cd1699c6e06f5ba6eb674a05547069b8",
+          "seed-05": "916e7b40bcd4e8ac3e6bd63b84dfbb91bf222c94390425b5d598d126c253f63a",
+          "seed-06": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b",
+          "seed-07": "ebecc02c867a43f2ce89119ae362e13002702048961ae5c5c76c746527729713",
+          "seed-08": "04a59e5fb93c1ef5249b31e7e9263a5de5443e471b62dacc13943528ad722770",
+          "seed-09": "046a46293eb8e22b1641979ead09d2e5c16a3493fde4ca6a12be27d86dc24636"
+        },
+        "input_budget": 128,
+        "observed_final_limit": 80,
+        "exit": 0,
+        "wall_seconds": 49.572,
+        "executions": 4096,
+        "reported_seconds": 49,
+        "log_sha256": "a22285a54459d0607d55b4a6b1e760eb8881f41f9cc99955dc7941c1dd85036b",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "game_instance",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "game_instance",
+          "/workspace/doom-tools/m3g6/fuzz/game_instance",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=128",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g6/fuzz/artifacts/"
+        ],
+        "seed_count": 18,
+        "seed_sha256": {
+          "clone_then_stale": "499ae16a5c5de5c0a02c526f3d8ddca6c1f81a1c4150ee975ba566910d30ed23",
+          "foreign": "98368624fb0a435fdf6de12c0b0c3397d661f28abaadaa8ee76fe90c09c4ba25",
+          "invalid_generation": "02c75b9703b2bba7438368af386588470281f02e7d07a75b95f94826f3e7d184",
+          "missing": "8e8e7a76fd13012c2c497bd5e0fdc7bc6532cf6b8c4cb7def11ec5aa1ee0058d",
+          "op_0": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+          "op_1": "7c3ccd10bb7ec37b46d37926ae6274267f007a34aeaf15c882a715a7f3300529",
+          "op_2": "692865c9a376a1a82d161b0f9578595554873797fa9ebbb068b797828122e61d",
+          "op_3": "8b1ae42fc4b17726106d647de9f43a6f33bf1df273310924b03e789769904c9c",
+          "op_4": "65be554fa6188b181a91caf7ca837eaaa8be5f79dc9a2b9daecb50ac3ed8066f",
+          "op_5": "cb9a02f579da3ffa03dc3ed340e0162018c4c446875d8b15d9f4e23152b25822",
+          "op_6": "9b65b044264bd07cae9001dfe2c7b240b7bfcf39b4ce111d5e178bd7e9412a88",
+          "op_7": "6bae426822df52caf9dc36c8319247d6debb080aa918fa7830ac1c5edabd22c1",
+          "op_8": "9d145e71ec64116e64e509727fa0a276c54ecb01d4f85a2aca8c3b671130effd",
+          "op_9": "c03983e8c8370764ebfb8573c8128473fe5bb0c1c419c32f4953e02b6cd93ddd",
+          "out_of_range": "3c79f1b5ca0a59275ca1b3236f81b5547ddc9dfca6a21236d85ef63060aaccaf",
+          "restart_then_stale": "e9d30b8e3b1c200164ea667cf9ed2b621accc714cac250202756bfc92d0a9c52",
+          "retire_reuse": "2db7c97ab019826b7b3891a9089dcf447e98cce9d68e0bad4ebd92887ed8b830",
+          "wrong_definition": "1349a3998807d01fb1bb740088944fed74363d610079605f89fdb9db35e395fe"
+        },
+        "input_budget": 128,
+        "observed_final_limit": 96,
+        "exit": 0,
+        "wall_seconds": 73.199,
+        "executions": 4096,
+        "reported_seconds": 73,
+        "log_sha256": "3f7b4ccebdea9beeb01fde330ba4890003e83f4d93cadd7299892c617d2b125e",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      {
+        "target": "stepping_equivalence",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "stepping_equivalence",
+          "/workspace/doom-tools/m3g6/fuzz/stepping_equivalence",
+          "--sanitizer",
+          "address",
+          "--",
+          "-runs=4096",
+          "-max_len=97",
+          "-seed=1",
+          "-timeout=20",
+          "-rss_limit_mb=2048",
+          "-artifact_prefix=/workspace/doom-tools/m3g6/fuzz/artifacts/"
+        ],
+        "seed_count": 21,
+        "seed_sha256": {
+          "profile-00": "e5d3de2e8f8d065404ac808a969b8d8b81106591cfea7e50fd42424f169c1607",
+          "profile-01": "0f8fc9a97b670d0d1edfc687da099f76e69d021a557882ae65cbc5597da8e170",
+          "profile-02": "36e1e33d63bc2d0fd0ff85d84c2fa287f6491d0609f73106c3680cef4997f47d",
+          "profile-03": "fff2effc1dd587218bc53c31d0c3bb78cce6c1519f947a85a55124bba288dc9a",
+          "profile-04": "d97a634bea6d204d927b1e918f35bb328d1ca76892c852b86245601342c3c32b",
+          "profile-05": "7755f0de25a2fc796db28658c98d902377b0fca03351dc07280d9b6c00b0bbee",
+          "profile-06": "dd04c64374a11381ccd7f3b4a15ef5497fdb0f1632d69af76aa91f686f44b59f",
+          "profile-07": "c359a59e460f19d3242c9ea421fb6924134a42dbddbf1955dfdcd27247ec21eb",
+          "profile-08": "0f7364c55bd19a97bc0ac2143d8bc1f602b4bcd43b438d85d9fae240c29695de",
+          "profile-09": "07a9ed1965e4741d644df6504fabb1397e4460bbd79a98f223a4b7a57adc1046",
+          "profile-10": "8f4d55b62c9adeafa73612afebba4b20ce41a0339445379356de406c470f963f",
+          "profile-11": "c13948548fe941768dedb34cc063798a728b9de48a1041134e001b3db137ddda",
+          "profile-12": "0f02614edec0b6810036df0dc67bce97d6a2acf8915f179466937fdfaa660eb0",
+          "profile-13": "637c0d9afc4759574ab9856ef2447ef19860067c64c9f53774600a21f673b079",
+          "profile-14": "4097ccafe80dcbca3478ea9f60a0329788bb42590aee0dad340a993991eeb5f8",
+          "profile-15": "c1b2178f4741850965be86e1cbc5e80dfb1e4a82adaad37c1e35395efe0126f6",
+          "profile-16": "5664b15bc848cd50d8ad4e593b1abed627642247643358d83f5fab3784a6a7fd",
+          "profile-17": "33892efa441e38d2d19f8a2a7eb0076fcdebdca96b5ecd448861459289e2a594",
+          "profile-18": "9d3102f30d5c7e877cf29d962c5f8aa1b83db1b4901d62ddfa52ddd27f42392e",
+          "profile-19": "dcda5db93495bc98e8299f81ee00350f4ad8e572cd1f27c9eddea4a872e85a72",
+          "profile-20": "7186f8b0bd019cc1bdd45d90ddb8847770b18c0ff07abc7cb23ff8135a43dfc4"
+        },
+        "input_budget": 97,
+        "observed_final_limit": 41,
+        "exit": 0,
+        "wall_seconds": 90.483,
+        "executions": 4096,
+        "reported_seconds": 90,
+        "log_sha256": "ad4141b1ddd0b1f2b340c86816e7918ba30e9b5e618a53a1754ed90d667072a9",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      }
+    ],
+    "artifacts": []
+  },
+  "fuzz_provenance": {
+    "commit": "44beca530f716154ecd2815406f53c1fa9b24e5f",
+    "tree": "1bd425b70e0030841ce2b340fe189b42d7c675e0",
+    "status": "",
+    "host": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "nightly": "rustc 1.101.0-nightly (92ffebece 2026-10-28)",
+    "source_sha256": {
+      "fuzz/Cargo.toml": "801f826352547e72a71995c043679ea665baaae1a8d77829435fc0c297ba6ba9",
+      "fuzz/fuzz_targets/player_demon_melee.rs": "483c5fe361cdf9fe9dbac79afbaab1dc7cfcafde6deb21e34adcd714324de8ae",
+      "tests/support/m3g6.rs": "ffa13c0f0a209a273af7eeab4e1982842906044456b4989b2b5223f67e04574a",
+      "tools/seed_player_demon_melee_fuzz.py": "dce48558e23c8c381dfe59e27e53a195890697c3593fa111d340aa6c5a4437fa",
+      "tests/reference/m3g6_cases.csv": "202534c726759ad8b9e4ffd6e316b7e04886ae7804439f3e4903e26d735371b8"
+    }
+  },
+  "preservation": {
+    "upstream_files": 165,
+    "protected_historical_paths": 6155,
+    "archives": 20,
+    "ignored_asset_tests": 2,
+    "all_byte_identical": true
+  },
+  "performance": {
+    "matched_groups": 107,
+    "unchanged_digests": 107,
+    "unchanged_allocation_arrays": 107,
+    "new_groups": 18,
+    "raw_directory": "m3g6",
+    "method": "Matching Rust1.99.1 release tools/workloads, three timing/RSS and three allocation processes per group. No concurrent local fuzz/test load. Shared host is not isolated. New melee groups are separate from historical comparisons. Warmup, controlled initial health/impulse and final explicit capture are excluded from intervals, included in whole-process RSS."
+  },
+  "development_corrections": [
+    "Only the new boundary source input was moved inside the unchanged travel-envelope proof before expectations were committed. No historical fixture or runtime bound changed.",
+    "Execution capability belongs to PlayerRuntime, not OriginalPlayer. A transient action selector carries that existing immutable capability; no persistent duplicate policy/identity field was introduced.",
+    "Fuzz operation error types were normalized for comparison without changing public runtime errors or gameplay behavior."
+  ],
+  "source_limits": [
+    "One genuine player0 with fixed active roster and at most one map-THING MT_SERGEANT; supported grounded static geometry.",
+    "Bounded original-source command/reaction conditional before actual thinkers, not full PlayerThink/Ticker/DeathThink.",
+    "Current staged range/health/position and actual late RNG feed the shared DamagePlan. Errors discard existing transaction.",
+    "Reverse thrust is unreachable for both grounded actors; extreme autonomous player death is unreachable for source4..40 damage starting at positive health.",
+    "New turns are nonnegative literal-defined cases. Reused negative-turn bit interpretation is not portable ISO-C equivalence for signed-shift UB.",
+    "Rust retirement/generation/provenance protections are separate from original pointer behavior. No new C freed-memory or allocator-reuse observations."
+  ]
+}
