@@ -52,6 +52,21 @@ pub struct PlayerArmorState {
     pub points: i32,
 }
 impl PlayerArmorState {
+    /// P_GiveArmor compares points, rather than ordering armor classes.
+    pub(crate) fn grant(&mut self, requested: ArmorType) -> Result<bool, PlayerBodyError> {
+        self.validate()?;
+        if requested == ArmorType::None {
+            return Err(PlayerBodyError::Unsupported);
+        }
+        if self.points >= requested.capacity() {
+            return Ok(false);
+        }
+        *self = Self {
+            kind: requested,
+            points: requested.capacity(),
+        };
+        Ok(true)
+    }
     pub(crate) fn validate(self) -> Result<(), PlayerBodyError> {
         if self.points < 0
             || self.points > self.kind.capacity()

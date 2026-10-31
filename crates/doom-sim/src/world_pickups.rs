@@ -419,10 +419,24 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                     return Err(WeaponError::Inventory.into());
                 };
                 let accepted = match k {
-                    // Actor/animation checkpoint: contact execution is admitted
-                    // by the following source-backed pickup package.
                     PickupKind::GreenArmor | PickupKind::BlueArmor => {
-                        return Err(PlayerBodyError::Unsupported.into());
+                        let requested = if k == PickupKind::GreenArmor {
+                            ArmorType::Green
+                        } else {
+                            ArmorType::Blue
+                        };
+                        let armor = self
+                            .player
+                            .armor
+                            .as_mut()
+                            .ok_or(PlayerBodyError::Invariant)?;
+                        let before = *armor;
+                        let accepted = armor.grant(requested)?;
+                        observe(
+                            events,
+                            PickupEvent::Armor(requested, accepted, before, *armor),
+                        );
+                        accepted
                     }
                     PickupKind::Clip => ammo(
                         w,
