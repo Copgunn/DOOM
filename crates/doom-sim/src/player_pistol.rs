@@ -409,7 +409,7 @@ fn fire_current(
         let slope = aim_current(host, id, angle, MELEE_UNITS)?;
         return line_current(host, id, weapon, angle, slope, damage, MELEE_UNITS);
     }
-    if !matches!(weapon, Weapon::Pistol | Weapon::Shotgun) {
+    if !matches!(weapon, Weapon::Pistol | Weapon::Shotgun | Weapon::Chaingun) {
         return Err(WeaponError::UnsupportedWeapon.into());
     }
     let slope = aim_current(host, id, angle, AUTOAIM_UNITS)?;
