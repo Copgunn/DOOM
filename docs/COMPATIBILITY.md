@@ -961,7 +961,8 @@ default, while existing corpse physics and source weapon lowering continue.
 There is no full PlayerThink/DeathThink, view/camera or damagecount decay.
 
 Original pistol overlays use10..17 plus immediate LightDone1/Null0, distinct from
-mobj states. Body attack states154/155 are newly executable only here. Setup
+mobj states. Body attack states154/155 execute under this capability and the separately selected
+weapon expansion capability. Setup
 immediately raises128 to122; continuous attack can select at tic15 and first
 fires at19. Pistol attack durations4/6/4/5 and immediate ReFire yield a14-tic held
 shot interval. Ammo decrements at FirePistol, after sound/body-state and before
@@ -1011,3 +1012,70 @@ negative-turn and ordered spread/jitter qualifications are not new portable
 ISO-C evidence. [Investigation](M3G7_REFERENCE.md),
 [reproduction](TESTING.md#genuine-player-pistol) and [observations](validation/M3G7.md)
 state exactly what source comparisons and Rust safety tests establish.
+
+## Original player weapon expansion
+
+Opt in with `original_player_demon_weapons_map` / `PlayerDemonWeaponsV1`.
+The fixed active slot0 owns genuine MT_PLAYER0; at most one map-spawned
+MT_SERGEANT12 shares the original command, acquisition, pursuit, melee and damage
+core. Initialize once with `initialize_player_weapons(PlayerSlot::One,
+WeaponInventory::default())` after fresh body binding, before any tic. Default
+means fist+pistol, pistol ready,50 bullets. Alternative ready/owned/loadouts are
+explicit controlled source-compatible setup: only fist/pistol/shotgun/chaingun,
+fist+pistol always owned, bullets0..200, shells0..50, cells/rockets0. This is not
+pickup gameplay. Wrong ready ownership, foreign/stale/pending body, double or
+noninitial setup rejects. `original_player_weapons` returns a copy of weapon-only
+observations; OriginalPlayer still owns body, health, attacker and lifetime.
+
+Medium/commercial settings, grounded movement, one static floor0/ceiling128 sector,
+axis-aligned one-sided walls,128 trace lines,64 actors and all earlier coordinate,
+travel, sight and work proofs remain. Forward/side commands are -50..50; turning
+retains the original arithmetic qualification. Player0 accepts BT_ATTACK and
+BT_CHANGE with only the four supported weapon selections. Unsupported button bits,
+weapon-mask bits without CHANGE and commands in other slots reject. A request for
+an unowned supported weapon follows source behavior and does nothing; it never
+grants ownership or ammunition. Dead-player commands must be default.
+
+Empty ammunition selects an owned usable chaingun, shotgun, pistol or fist in
+source priority. Pending selection enters the actual ready weapon's downstate;
+ready changes at bottom, followed by raise and ready actions. Requests are not
+instantaneous. A pending manual selection can be superseded by the source
+CheckAmmo branch. Attackdown/refire, held attack, release and selected windup
+retain source chronology. Empty chaingun still makes the source sound request
+before returning without bullet/flash/ammo/damage draws. No infinite ammo exists.
+
+Unpowered fists draw damage2..20 then two spread draws, aim/attack at64 units,
+and use real current intercepts. An actual actor hit produces the source punch
+sound and faces the target's **post-damage** position. Shotgun consumes one shell,
+aims once, then resolves seven independent inaccurate bullets sequentially through
+effects, damage, pain/death and retaliation. Chaingun uses pistol bullet damage but
+its own cadence, two initial accurate shots, refire spread and state-dependent
+flashes. No shotgun aggregation or precomputed future hits/health is used.
+Pistol behavior retains the earlier source algorithm within this new capability.
+
+Immediate attack actions can execute before P_FireWeapon's NoiseAlert: chaingun
+can damage/retarget the Demon first. The same admitted one-sector soundtarget then
+feeds existing AI. Fist/pistol/shotgun windups place noise before their later attack
+action. All effects are real Puff/Blood thinkers; the same Demon can hurt or kill
+the genuine player while weapons execute. Death lowers the actual ready weapon,
+retains pending/ownership/roster/body/attacker, and continues supported corpse
+physics. No death camera, respawn or dead-player firing is implemented.
+
+Every recoverable failure discards the existing bounded transaction, including
+partial pellet effects/damage, ammo/psprites, commands, soundtarget, references,
+RNG, statistics, ordering, events and tic. `advance` constructs no implicit
+Snapshot; `step` runs that core and captures once. Historical pistol-only and
+synthetic weapon policies retain all prior rejection and diagnostic contracts.
+[DSIM24](STATE_FORMAT.md#dsim-v24-original-player-weapon-expansion) records the
+additional dynamic ownership, ready/pending and shell fields explicitly.
+
+No Berserk, other weapons, weapon pickups, armor/powers/cheats, inventory expansion,
+full PlayerThink/DeathThink/view, respawn, multiplayer, additional monsters,
+infighting, general sound propagation, arbitrary geometry, dynamic sectors or
+rendering is admitted. Source scenarios are a qualified bounded command/weapon
+stage before original thinkers, not full ticker equivalence. The source-only
+out-of-enclosing-wall scenario eventually exceeds the unchanged Rust978-unit
+Demon admission proof; Rust compares its supported prefix and rejects atomically
+rather than following that later C path. See [source qualifications](M3G8_REFERENCE_INVESTIGATION.md),
+[reproduction](TESTING.md#original-player-weapon-expansion) and
+[observations](validation/M3G8.md).

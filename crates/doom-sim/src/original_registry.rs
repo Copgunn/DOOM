@@ -24,6 +24,8 @@ pub enum OriginalExecutionProfile {
     PlayerDemonMeleeV1,
     /// The fixed combat roster with genuine source pistol/psprite execution.
     PlayerDemonPistolV1,
+    /// Four source weapons sharing the genuine player and autonomous Demon.
+    PlayerDemonWeaponsV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -36,6 +38,7 @@ impl OriginalExecutionProfile {
             Self::PlayerDemonAcquisitionV1 => 5,
             Self::PlayerDemonMeleeV1 => 6,
             Self::PlayerDemonPistolV1 => 7,
+            Self::PlayerDemonWeaponsV1 => 8,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -48,6 +51,7 @@ impl OriginalExecutionProfile {
             Self::PlayerDemonAcquisitionV1 => PLAYER_DEMON_CONTEXT_SCHEMA,
             Self::PlayerDemonMeleeV1 => PLAYER_DEMON_MELEE_CONTEXT_SCHEMA,
             Self::PlayerDemonPistolV1 => PLAYER_DEMON_PISTOL_CONTEXT_SCHEMA,
+            Self::PlayerDemonWeaponsV1 => PLAYER_DEMON_WEAPONS_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -59,6 +63,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonAcquisitionV1
                 | Self::PlayerDemonMeleeV1
                 | Self::PlayerDemonPistolV1
+                | Self::PlayerDemonWeaponsV1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -69,7 +74,11 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonAcquisitionV1
                 | Self::PlayerDemonMeleeV1
                 | Self::PlayerDemonPistolV1
+                | Self::PlayerDemonWeaponsV1
         )
+    }
+    pub(crate) const fn has_player_weapons(self) -> bool {
+        matches!(self, Self::PlayerDemonPistolV1 | Self::PlayerDemonWeaponsV1)
     }
     pub(crate) const fn has_player_commands(self) -> bool {
         matches!(
@@ -78,6 +87,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonAcquisitionV1
                 | Self::PlayerDemonMeleeV1
                 | Self::PlayerDemonPistolV1
+                | Self::PlayerDemonWeaponsV1
         )
     }
 }
@@ -277,7 +287,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerCommandMovementV1
             | OriginalExecutionProfile::PlayerDemonAcquisitionV1
             | OriginalExecutionProfile::PlayerDemonMeleeV1
-            | OriginalExecutionProfile::PlayerDemonPistolV1 => {
+            | OriginalExecutionProfile::PlayerDemonPistolV1
+            | OriginalExecutionProfile::PlayerDemonWeaponsV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -308,7 +319,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerCommandMovementV1
             | OriginalExecutionProfile::PlayerDemonAcquisitionV1
             | OriginalExecutionProfile::PlayerDemonMeleeV1
-            | OriginalExecutionProfile::PlayerDemonPistolV1 => {
+            | OriginalExecutionProfile::PlayerDemonPistolV1
+            | OriginalExecutionProfile::PlayerDemonWeaponsV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -408,7 +420,7 @@ pub(crate) fn state_role_for(
     let s = OriginalState::try_from(state.0).map_err(|_| OriginalRegistryError::State(state.0))?;
     let allowed = if ty.0 == OriginalActorType::MT_PLAYER.ordinal() {
         player_policy()?.normal.contains(s)
-            || (profile == OriginalExecutionProfile::PlayerDemonPistolV1
+            || (profile.has_player_weapons()
                 && matches!(s, OriginalState::S_PLAY_ATK1 | OriginalState::S_PLAY_ATK2))
     } else if ty == owner_slot() {
         demon_policy()?.normal.contains(s)
@@ -480,7 +492,7 @@ impl Simulation {
         if policy.has_physical_player() {
             original_player::validate_grounded_geometry(&map)?;
         }
-        if policy == OriginalExecutionProfile::PlayerDemonPistolV1 && map.linedefs().len() > 128 {
+        if policy.has_player_weapons() && map.linedefs().len() > 128 {
             return Err(CombatError::InterceptLimit.into());
         }
         let mut sim = Self::with_demon_expanded_profile(
@@ -494,7 +506,7 @@ impl Simulation {
         if policy.has_player_body() {
             sim.original_player = Some(original_player::PlayerRuntime {
                 source: OriginalPlayer::default(),
-                pistol: None,
+                weapon: None,
                 policy,
             });
         }

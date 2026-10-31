@@ -164,3 +164,15 @@ active-roster scan is executed. Ownership, atomic failure, invalid inputs and
 corrupt diagnostics are Rust policy tests. The [source investigation](M3G7_REFERENCE.md)
 and [commands](TESTING.md#genuine-player-pistol) declare bounded harness sequencing,
 source arithmetic qualifications and unsupported complete player-thinker behavior.
+
+## Original four-weapon composition
+
+[M3g8 evidence](validation/M3G8.md) distinguishes original-C observations,
+independent DSIM24 encoding, actual admitted Rust comparisons and Rust-only
+resource/lifetime/rollback policies. The same shared source services execute
+fallback, fist, switching, shotgun and chaingun in one canonical player/Demon
+world. Source-only inputs may exceed the unchanged Rust admission domain; such
+prefix comparisons and safety rejection are identified explicitly, without
+altering the C expectations. No whole-ticker or portable undefined-C claim is made.
+See [source matrix](M3G8_REFERENCE_INVESTIGATION.md) and
+[reproduction](TESTING.md#original-player-weapon-expansion).

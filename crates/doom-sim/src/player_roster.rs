@@ -37,6 +37,7 @@ impl Simulation {
             OriginalExecutionProfile::PlayerDemonAcquisitionV1
                 | OriginalExecutionProfile::PlayerDemonMeleeV1
                 | OriginalExecutionProfile::PlayerDemonPistolV1
+                | OriginalExecutionProfile::PlayerDemonWeaponsV1
         )
     }
 
@@ -85,8 +86,7 @@ impl Simulation {
             || (player.state == PlayerBodyState::Dead) != (life.health <= 0)
             || self.sound_targets.iter().any(|target| {
                 target.is_some()
-                    && !(self.player_policy() == OriginalExecutionProfile::PlayerDemonPistolV1
-                        && *target == Some(id))
+                    && !(self.player_policy().has_player_weapons() && *target == Some(id))
             })
         {
             return Err(PerceptionError::Roster.into());
@@ -111,6 +111,7 @@ impl PerceptionRoster<'_> {
             Self::OriginalPlayer(
                 OriginalExecutionProfile::PlayerDemonMeleeV1
                     | OriginalExecutionProfile::PlayerDemonPistolV1
+                    | OriginalExecutionProfile::PlayerDemonWeaponsV1
             )
         )
     }

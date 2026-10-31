@@ -366,3 +366,16 @@ identity or lifetime manager. Metadata recognition still grants no other weapon
 or monster execution. See [support](COMPATIBILITY.md#genuine-player-pistol-combat),
 [ownership architecture](ARCHITECTURE.md#canonical-player-pistol-execution),
 [source matrix](M3G7_REFERENCE.md) and [DSIM23](STATE_FORMAT.md#dsim-v23-genuine-player-pistol).
+
+## Four-weapon player roles
+
+PlayerDemonWeaponsV1 retains genuine body0, Demon12 and effect37/38 identities.
+Fist S_PUNCH..S_PUNCH5, pistol S_PISTOL..S_PISTOLFLASH, shotgun S_SGUN..S_SGUNFLASH2
+and chaingun S_CHAIN..S_CHAINFLASH2 are original player psprites, not new actor
+identities or thinkers. LightDone/Null and zero-tic Chain3 actions remain immediate;
+zero-duration overlay states cannot persist in a captured weapon record.
+Existing actor state-role permissions are reused; metadata presence does not
+admit any other weapon or monster. Adding this public execution-profile variant
+requires downstream exhaustive matches to handle its arm. See
+[support](COMPATIBILITY.md#original-player-weapon-expansion) and
+[DSIM24](STATE_FORMAT.md#dsim-v24-original-player-weapon-expansion).

@@ -244,7 +244,7 @@ impl Simulation {
         self.rng = plan.rng;
         self.statistics = plan.statistics;
         self.original_player = plan.player;
-        if self.player_policy() == OriginalExecutionProfile::PlayerDemonPistolV1 {
+        if self.player_policy().has_player_weapons() {
             if let Some(target) = self.sound_targets.first_mut() {
                 *target = plan.sound_target;
             }
@@ -286,12 +286,12 @@ impl Simulation {
         commands: [TicCommand; 4],
     ) -> Result<(), SimError> {
         let command_policy = self.player_policy().has_player_commands();
-        let pistol_policy = self.player_policy() == OriginalExecutionProfile::PlayerDemonPistolV1;
-        if pistol_policy
+        let weapon_policy = self.player_policy().has_player_weapons();
+        if weapon_policy
             && self
                 .original_player
                 .as_ref()
-                .is_none_or(|p| p.pistol.is_none())
+                .is_none_or(|p| p.weapon.is_none())
         {
             return Err(WeaponError::Player.into());
         }
@@ -328,7 +328,7 @@ impl Simulation {
                         commands[usize::from(PlayerSlot::One.ordinal())],
                     )?;
                 }
-                if pistol_policy {
+                if weapon_policy {
                     player_pistol::stage(
                         &mut host,
                         commands[usize::from(PlayerSlot::One.ordinal())],
@@ -344,7 +344,7 @@ impl Simulation {
         }
         let sound_targets = [plan.sound_target];
         let mut perception_inputs = self.checked_demon_inputs(&control);
-        if pistol_policy {
+        if weapon_policy {
             perception_inputs.sound_targets = &sound_targets;
         }
         thinkers::run(
@@ -371,7 +371,7 @@ impl Simulation {
         }
         if command_policy {
             player_commands::validate_result(&plan.actors, plan.player.as_deref())?;
-            if pistol_policy {
+            if weapon_policy {
                 for id in plan.actors.order() {
                     if let Some(actor) = plan.actors.get(id) {
                         if actor.life().is_some_and(|l| {

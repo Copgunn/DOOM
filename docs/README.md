@@ -96,3 +96,8 @@ original evidence and former guide contents with exact-byte copies and digests.
 - [M3g7 genuine-player pistol combat](M3G7_REFERENCE.md), with
   [observations](validation/M3G7.md), [DSIM23](STATE_FORMAT.md#dsim-v23-genuine-player-pistol)
   and [reproduction](TESTING.md#genuine-player-pistol).
+
+- [M3g8 original weapon expansion investigation](M3G8_REFERENCE_INVESTIGATION.md),
+  [observations](validation/M3G8.md),
+  [DSIM24](STATE_FORMAT.md#dsim-v24-original-player-weapon-expansion) and
+  [reproduction](TESTING.md#original-player-weapon-expansion).

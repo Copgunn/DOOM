@@ -43,13 +43,18 @@ pain, death and retained corpses. The acquisition-only policy keeps its explicit
 melee rejection. A separate pistol capability adds original psprite cadence,
 ammunition, refire spread, real hitscan impacts, one-sector noise alerts and
 Demon damage/pain/death through that same combat loop. Older policies remain
-available. Full player-thinker/view processing, other weapons and respawn remain excluded. See the
+available. The four-weapon capability adds source fallback, genuine fists, manual
+switching, seven-pellet shotgun and chaingun firing in the same world. Full
+player-thinker/view processing, remaining weapons, pickups and respawn remain
+excluded. See the
 [player contract](docs/COMPATIBILITY.md#original-player-body-lifecycle) and
 [command movement boundary](docs/COMPATIBILITY.md#original-player-command-movement) and
 [active-player/Demon contract](docs/COMPATIBILITY.md#active-original-player-and-demon-acquisition)
 and [autonomous melee boundary](docs/COMPATIBILITY.md#autonomous-original-demon-player-melee).
 See the [genuine pistol contract](docs/COMPATIBILITY.md#genuine-player-pistol-combat)
 for its separately admitted inputs, geometry, ammunition and source limits.
+The [weapon expansion contract](docs/COMPATIBILITY.md#original-player-weapon-expansion)
+describes controlled loadouts and the additional weapon actions.
 
 Call `Simulation::advance()` for a tic without an implicit diagnostic Snapshot.
 `step()` retains its Snapshot return, and `snapshot()` captures explicitly in

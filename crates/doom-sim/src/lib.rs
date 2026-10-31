@@ -31,6 +31,7 @@ mod original_registry;
 mod player_commands;
 mod player_pistol;
 mod player_roster;
+mod player_weapons;
 pub use diagnostic::{Diagnostic, DiagnosticError, DiagnosticIdentity, DiagnosticLimits};
 pub use execution_context::{ContextActor, ContextError, ExecutionContext, TargetReference};
 pub use game_instance::{GameInstance, InstanceActorRef, InstanceId, ProvenanceError};
@@ -46,6 +47,7 @@ pub use original_registry::{
 pub use player_commands::PLAYER_COMMAND_CONTEXT_SCHEMA;
 pub use player_pistol::{INITIAL_PISTOL_BULLETS, PLAYER_DEMON_PISTOL_CONTEXT_SCHEMA, PistolState};
 pub use player_roster::{PLAYER_DEMON_CONTEXT_SCHEMA, PLAYER_DEMON_MELEE_CONTEXT_SCHEMA};
+pub use player_weapons::{PLAYER_DEMON_WEAPONS_CONTEXT_SCHEMA, PlayerWeaponState};
 mod chaingunner;
 mod demon;
 pub use canonical_demon::{CanonicalDemonError, DemonExecutionBinding};
@@ -1010,7 +1012,7 @@ impl Simulation {
         }
         if self.profile == Profile::PlayerWeapons {
             self.preflight_weapon_step(&commands)?;
-        } else if self.player_policy() != OriginalExecutionProfile::PlayerDemonPistolV1
+        } else if !self.player_policy().has_player_weapons()
             && commands.iter().any(|c| c.buttons != 0)
         {
             return Err(SimError::UnsupportedButtons);
@@ -1228,3 +1230,7 @@ mod tests {
 
 #[cfg(test)]
 mod advance_tests;
+
+#[cfg(test)]
+#[path = "../../../tests/support/m3g8.rs"]
+mod weapon_pack_evidence;

@@ -79,15 +79,22 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3g7: Genuine canonical player pistol combat
+### M3g8: Original weapon expansion
 
-PlayerDemonPistolV1 composes genuine player commands, original psprites, bounded
-ammo/refire, source hitscan/impacts and one-sector noise with the existing Demon
-acquisition, pursuit, melee, pain and death services. It keeps one authoritative
-player, actor store, RNG and stepping/rollback core. New persistent weapon fields
-have an explicit DSIM23 contract; earlier schemas and policies remain intact.
-This milestone stops at owner review; exact commits and CI belong to GitHub.
-See [source investigation](M3G7_REFERENCE.md),
+PlayerDemonWeaponsV1 composes empty-ammo fallback, genuine unpowered fists,
+manual switching, shotgun and chaingun with the existing player/Demon world.
+A source-only evidence commit preceded runtime changes. The shared interpreter,
+trace/damage services, actor store and scheduler remain authoritative. Weapon-only
+state has a separate DSIM24 contract; historical policies and schemas remain.
+This milestone stops at owner review; exact commit and CI state belong to GitHub.
+See [investigation](M3G8_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-player-weapon-expansion) and
+[observations](validation/M3G8.md).
+
+### Previous gameplay foundation — M3g7: Genuine canonical player pistol combat
+
+M3g7 is merged. PlayerDemonPistolV1 retains its separately bounded no-switching,
+no-fallback contract and DSIM23. See [source investigation](M3G7_REFERENCE.md),
 [support](COMPATIBILITY.md#genuine-player-pistol-combat) and
 [observations](validation/M3G7.md).
 
@@ -106,13 +113,12 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Prioritize source-validated empty-ammo fist fallback and bounded original A_Punch.
-The current pistol policy rejects unadmitted fallback atomically; a separate
-capability should establish CheckAmmo/lower/raise/ready chronology and genuine
-player punches against the same Demon using shared weapon, trace and damage
-services. Keep berserk, pickups, additional monsters, full PlayerThink and
-multiplayer separate. This closes a concrete normal-gameplay continuation gap
-without another identity/ownership redesign.
+Prioritize independently verified clip/shell and a small health-pickup slice
+through original P_TouchSpecialThing and the existing canonical player/inventory.
+Start with controlled original map things, exact eligibility/capacity, touch
+ordering and removal, without weapons beyond this pack, powers or generalized
+specials. This would make sustained combat resemble ordinary DOOM gameplay.
+It requires a separate milestone; no pickup behavior is admitted here.
 
 ### Focused maintenance acceptance criteria
 
