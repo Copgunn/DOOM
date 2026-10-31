@@ -200,6 +200,11 @@ pub fn decode(data: &[u8], expected: usize, budget: usize) -> Result<Vec<u8>> {
 }
 /// Verify compressed identity, decode exactly, then verify original identity.
 pub fn decode_entry(entry: &Entry, data: &[u8]) -> Result<Vec<u8>> {
+    // Direct callers may construct Entry without Manifest::parse. Bound work
+    // before hashing, not only before native decompression/output allocation.
+    if data.len() > MAX_COMPRESSED || entry.compressed_length > MAX_COMPRESSED {
+        return Err(Error("compressed budget"));
+    }
     if data.len() != entry.compressed_length || sha256(data) != entry.compressed_sha256 {
         return Err(Error("compressed identity mismatch"));
     }

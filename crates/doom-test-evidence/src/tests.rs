@@ -89,6 +89,18 @@ fn hashes_are_separate_guards() {
     let raw = b"data";
     let z = encode(raw).unwrap();
     let mut e = entry(raw, &z);
+    e.compressed_length = usize::MAX;
+    assert_eq!(decode_entry(&e, &z), Err(Error("compressed budget")));
+    e.compressed_length = z.len();
+    let oversized = vec![0u8; MAX_COMPRESSED + 1];
+    let mut big = e.clone();
+    big.compressed_length = oversized.len();
+    // Invalid hash as well: the budget must win before the hash comparison.
+    big.compressed_sha256 = "0".repeat(64);
+    assert_eq!(
+        decode_entry(&big, &oversized),
+        Err(Error("compressed budget"))
+    );
     e.compressed_sha256 = "0".repeat(64);
     assert_eq!(
         decode_entry(&e, &z),
