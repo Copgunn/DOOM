@@ -5,6 +5,7 @@ use crate::{identity::*, lifecycle::ActorAccess, player_weapons::PlayerWeaponRun
 pub const PLAYER_DEMON_PICKUPS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-DEMON-1-MEDIUM-GROUNDED-PICKUPS-v1";
 /// New placed plus controlled-dropped item budget, within the existing64 slots.
 pub const MAX_WORLD_PICKUPS: usize = 16;
+pub(crate) const MF_COUNTITEM: u32 = 0x800000;
 pub(crate) const MF_SPECIAL: u32 = 1;
 pub(crate) const MF_COUNTKILL: u32 = 0x0040_0000;
 pub(crate) const MF_DROPPED: u32 = 0x0002_0000;
@@ -36,6 +37,10 @@ pub enum PickupKind {
     GreenArmor,
     /// Original MT_MISC1, DoomEd2019, animated blue armor.
     BlueArmor,
+    /// Canonical MT_MISC2, DoomEd2014, SPR_BON1.
+    HealthBonus,
+    /// Canonical MT_MISC3, DoomEd2015, SPR_BON2.
+    ArmorBonus,
 }
 impl PickupKind {
     /// Original definition, never a synthetic pickup alias.
@@ -51,6 +56,8 @@ impl PickupKind {
             Self::Chaingun => OriginalActorType::MT_CHAINGUN,
             Self::GreenArmor => OriginalActorType::MT_MISC0,
             Self::BlueArmor => OriginalActorType::MT_MISC1,
+            Self::HealthBonus => OriginalActorType::MT_MISC2,
+            Self::ArmorBonus => OriginalActorType::MT_MISC3,
         }
     }
     fn message(self) -> PickupMessage {
@@ -65,10 +72,21 @@ impl PickupKind {
             Self::Chaingun => PickupMessage::Chaingun,
             Self::GreenArmor => PickupMessage::GreenArmor,
             Self::BlueArmor => PickupMessage::BlueArmor,
+            Self::HealthBonus => PickupMessage::HealthBonus,
+            Self::ArmorBonus => PickupMessage::ArmorBonus,
         }
     }
     fn can_drop(self) -> bool {
         matches!(self, Self::Clip | Self::Shotgun | Self::Chaingun)
+    }
+    pub(crate) fn is_bonus(self) -> bool {
+        matches!(self, Self::HealthBonus | Self::ArmorBonus)
+    }
+    pub(crate) fn is_animated(self) -> bool {
+        self.is_armor() || self.is_bonus()
+    }
+    pub(crate) fn definition_flags(self) -> u32 {
+        MF_SPECIAL | if self.is_bonus() { MF_COUNTITEM } else { 0 }
     }
     pub(crate) fn is_armor(self) -> bool {
         matches!(self, Self::GreenArmor | Self::BlueArmor)
@@ -86,6 +104,8 @@ pub(crate) fn kind(ty: ActorTypeId) -> Option<PickupKind> {
         OriginalActorType::MT_CHAINGUN => PickupKind::Chaingun,
         OriginalActorType::MT_MISC0 => PickupKind::GreenArmor,
         OriginalActorType::MT_MISC1 => PickupKind::BlueArmor,
+        OriginalActorType::MT_MISC2 => PickupKind::HealthBonus,
+        OriginalActorType::MT_MISC3 => PickupKind::ArmorBonus,
         _ => return None,
     })
 }
@@ -95,12 +115,21 @@ pub(crate) fn kind_for(profile: OriginalExecutionProfile, ty: ActorTypeId) -> Op
         return None;
     }
     let k = kind(ty)?;
-    (!k.is_armor() || profile == OriginalExecutionProfile::PlayerDemonArmorV1).then_some(k)
+    (!k.is_armor() || profile.has_player_armor())
+        .then_some(k)
+        .filter(|k| !k.is_bonus() || profile.has_player_bonuses())
 }
 pub(crate) fn state_allowed(ty: ActorTypeId, state: OriginalState) -> bool {
     kind(ty).is_some_and(|k| {
         let root = k.original_type().states().spawn;
-        state == root || (k.is_armor() && state == root.descriptor().next)
+        if k.is_bonus() {
+            state
+                .ordinal()
+                .checked_sub(root.ordinal())
+                .is_some_and(|offset| offset < 6)
+        } else {
+            state == root || (k.is_armor() && state == root.descriptor().next)
+        }
     })
 }
 /// Stable identifiers for actual dstrings.h messages; no HUD timeout is implied.
@@ -132,6 +161,10 @@ pub enum PickupMessage {
     GreenArmor = 10,
     /// GOTMEGA, blue armor; not a MegaSphere.
     BlueArmor = 11,
+    /// GOTHTHBONUS.
+    HealthBonus = 12,
+    /// GOTARMBONUS.
+    ArmorBonus = 13,
 }
 /// Source pickup-only fields; health, body and inventory retain their owners.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -148,7 +181,7 @@ impl PlayerPickupState {
         if !(0..=MAX_BONUS).contains(&self.bonus_count)
             || self.item_count != 0
             || self.message == PickupMessage::MedikitNeeded
-            || (profile != OriginalExecutionProfile::PlayerDemonArmorV1
+            || (!profile.has_player_armor()
                 && matches!(
                     self.message,
                     PickupMessage::GreenArmor | PickupMessage::BlueArmor
@@ -210,7 +243,19 @@ pub(crate) fn validate_definition(ty: ActorTypeId) -> Result<(), SimError> {
     let k = kind(ty).ok_or(ActorError::InvalidType)?;
     let d = k.original_type().descriptor();
     let s = d.states.spawn.descriptor();
-    let timing = if k.is_armor() {
+    let timing = if k.is_bonus() {
+        let mut state = d.states.spawn;
+        let mut valid = true;
+        for frame in [0, 1, 2, 3, 2, 1] {
+            let descriptor = state.descriptor();
+            valid &= descriptor.tics == 6
+                && descriptor.sprite == s.sprite
+                && descriptor.frame == frame
+                && descriptor.action.is_none();
+            state = descriptor.next;
+        }
+        valid && state == d.states.spawn
+    } else if k.is_armor() {
         let next = s.next.descriptor();
         s.tics > 0
             && next.tics > 0
@@ -220,7 +265,7 @@ pub(crate) fn validate_definition(ty: ActorTypeId) -> Result<(), SimError> {
     } else {
         s.tics == -1 && s.next == OriginalState::S_NULL
     };
-    if d.flags != MF_SPECIAL || !timing || s.action.is_some() {
+    if d.flags != k.definition_flags() || !timing || s.action.is_some() {
         return Err(ActorError::InvalidType.into());
     }
     Ok(())
@@ -238,7 +283,7 @@ pub(crate) fn validate_item(a: Actor) -> Result<(), SimError> {
     if !state_allowed(l.actor_type, state)
         || l.sprite != s.sprite.ordinal()
         || l.frame != s.frame
-        || (if k.is_armor() {
+        || (if k.is_animated() {
             !(1..=s.tics).contains(&l.tics)
         } else {
             l.tics != -1
@@ -259,8 +304,8 @@ pub(crate) fn validate_item(a: Actor) -> Result<(), SimError> {
         || a.floor != Fixed::ZERO
         || a.ceiling != Fixed::from_map_units(128)
         || a.position().iter().any(|v| !sight::within(*v, 978))
-        || l.flags & !(MF_SPECIAL | MF_AMBUSH | MF_DROPPED) != 0
-        || l.flags & MF_SPECIAL == 0
+        || l.flags & !(k.definition_flags() | MF_AMBUSH | MF_DROPPED) != 0
+        || l.flags & k.definition_flags() != k.definition_flags()
         || (dropped && (!k.can_drop() || l.spawnpoint.is_some() || l.flags & MF_AMBUSH != 0))
         || (!dropped
             && l.spawnpoint.is_none_or(|p| {
@@ -421,6 +466,9 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                     return Err(WeaponError::Inventory.into());
                 };
                 let accepted = match k {
+                    PickupKind::HealthBonus | PickupKind::ArmorBonus => {
+                        return Err(PlayerBodyError::Unsupported.into());
+                    }
                     PickupKind::GreenArmor | PickupKind::BlueArmor => {
                         let requested = if k == PickupKind::GreenArmor {
                             ArmorType::Green
@@ -584,7 +632,7 @@ impl Simulation {
             .and_then(|p| p.pickups)
             .ok_or(PlayerBodyError::Invariant)?
             .validate(self.player_policy())?;
-        if self.player_policy() == OriginalExecutionProfile::PlayerDemonArmorV1 {
+        if self.player_policy().has_player_armor() {
             self.original_player_armor(PlayerSlot::One)?;
         }
         let mut count = 0;

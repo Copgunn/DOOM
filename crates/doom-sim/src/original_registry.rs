@@ -30,6 +30,8 @@ pub enum OriginalExecutionProfile {
     PlayerDemonPickupsV1,
     /// Original animated armor and source protection in the shared combat world.
     PlayerDemonArmorV1,
+    /// Original animated bonuses and counted items in the shared player world.
+    PlayerDemonBonusesV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -45,6 +47,7 @@ impl OriginalExecutionProfile {
             Self::PlayerDemonWeaponsV1 => 8,
             Self::PlayerDemonPickupsV1 => 9,
             Self::PlayerDemonArmorV1 => 10,
+            Self::PlayerDemonBonusesV1 => 11,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -60,10 +63,20 @@ impl OriginalExecutionProfile {
             Self::PlayerDemonWeaponsV1 => PLAYER_DEMON_WEAPONS_CONTEXT_SCHEMA,
             Self::PlayerDemonPickupsV1 => PLAYER_DEMON_PICKUPS_CONTEXT_SCHEMA,
             Self::PlayerDemonArmorV1 => PLAYER_DEMON_ARMOR_CONTEXT_SCHEMA,
+            Self::PlayerDemonBonusesV1 => PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA,
         }
     }
+    pub(crate) const fn has_player_armor(self) -> bool {
+        matches!(self, Self::PlayerDemonArmorV1 | Self::PlayerDemonBonusesV1)
+    }
+    pub(crate) const fn has_player_bonuses(self) -> bool {
+        matches!(self, Self::PlayerDemonBonusesV1)
+    }
     pub(crate) const fn has_world_pickups(self) -> bool {
-        matches!(self, Self::PlayerDemonPickupsV1 | Self::PlayerDemonArmorV1)
+        matches!(
+            self,
+            Self::PlayerDemonPickupsV1 | Self::PlayerDemonArmorV1 | Self::PlayerDemonBonusesV1
+        )
     }
     pub(crate) const fn has_player_body(self) -> bool {
         matches!(
@@ -77,6 +90,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonWeaponsV1
                 | Self::PlayerDemonPickupsV1
                 | Self::PlayerDemonArmorV1
+                | Self::PlayerDemonBonusesV1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -90,6 +104,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonWeaponsV1
                 | Self::PlayerDemonPickupsV1
                 | Self::PlayerDemonArmorV1
+                | Self::PlayerDemonBonusesV1
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -99,6 +114,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonWeaponsV1
                 | Self::PlayerDemonPickupsV1
                 | Self::PlayerDemonArmorV1
+                | Self::PlayerDemonBonusesV1
         )
     }
     pub(crate) const fn has_player_commands(self) -> bool {
@@ -111,6 +127,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonWeaponsV1
                 | Self::PlayerDemonPickupsV1
                 | Self::PlayerDemonArmorV1
+                | Self::PlayerDemonBonusesV1
         )
     }
 }
@@ -313,7 +330,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerDemonPistolV1
             | OriginalExecutionProfile::PlayerDemonWeaponsV1
             | OriginalExecutionProfile::PlayerDemonPickupsV1
-            | OriginalExecutionProfile::PlayerDemonArmorV1 => {
+            | OriginalExecutionProfile::PlayerDemonArmorV1
+            | OriginalExecutionProfile::PlayerDemonBonusesV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -347,7 +365,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerDemonPistolV1
             | OriginalExecutionProfile::PlayerDemonWeaponsV1
             | OriginalExecutionProfile::PlayerDemonPickupsV1
-            | OriginalExecutionProfile::PlayerDemonArmorV1 => {
+            | OriginalExecutionProfile::PlayerDemonArmorV1
+            | OriginalExecutionProfile::PlayerDemonBonusesV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -539,7 +558,8 @@ impl Simulation {
             sim.original_player = Some(original_player::PlayerRuntime {
                 source: OriginalPlayer::default(),
                 weapon: None,
-                armor: (policy == OriginalExecutionProfile::PlayerDemonArmorV1)
+                armor: policy
+                    .has_player_armor()
                     .then_some(PlayerArmorState::default()),
                 pickups: policy
                     .has_world_pickups()

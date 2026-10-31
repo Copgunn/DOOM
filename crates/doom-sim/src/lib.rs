@@ -29,9 +29,11 @@ mod native_demon;
 mod original_player;
 mod original_registry;
 mod player_armor;
+mod player_bonuses;
 pub use player_armor::{
     ArmorEvent, ArmorType, PLAYER_DEMON_ARMOR_CONTEXT_SCHEMA, PlayerArmorState,
 };
+pub use player_bonuses::PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA;
 mod player_commands;
 mod player_pistol;
 mod player_roster;
@@ -1259,3 +1261,9 @@ mod world_pickup_tests;
 mod armor_evidence;
 #[cfg(test)]
 mod armor_tests;
+
+#[cfg(test)]
+mod bonus_actor_tests;
+#[cfg(test)]
+#[path = "../../../tests/support/m3g11.rs"]
+mod bonus_evidence;

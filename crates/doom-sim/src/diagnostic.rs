@@ -160,6 +160,13 @@ impl<'a> Diagnostic<'a> {
     ) -> Result<Self, DiagnosticError> {
         Self::decode_selected(bytes, limits, Some(26))
     }
+    /// Explicit DSIM27 bonus reader; historical version readers reject27.
+    pub fn decode_bonuses(
+        bytes: &'a [u8],
+        limits: DiagnosticLimits,
+    ) -> Result<Self, DiagnosticError> {
+        Self::decode_selected(bytes, limits, Some(27))
+    }
     fn decode_selected(
         bytes: &'a [u8],
         limits: DiagnosticLimits,
@@ -251,7 +258,7 @@ impl<'a> Diagnostic<'a> {
     fn identity(&self, ty: u16, state: u16) -> Result<DiagnosticIdentity, DiagnosticError> {
         let actor = ActorTypeId(ty);
         let state = (state != u16::MAX).then_some(StateId(state));
-        if matches!(self.version, 21..=26) {
+        if matches!(self.version, 21..=27) {
             let policy = self.policy();
             original_registry::require_role_for(policy, actor)
                 .map_err(|_| DiagnosticError::Identity)?;
@@ -298,6 +305,9 @@ impl<'a> Diagnostic<'a> {
         self.identity(ty, state).map(Some)
     }
     fn policy(&self) -> OriginalExecutionProfile {
+        if self.version == 27 {
+            return OriginalExecutionProfile::PlayerDemonBonusesV1;
+        }
         if self.version == 26 {
             return OriginalExecutionProfile::PlayerDemonArmorV1;
         }
@@ -310,7 +320,7 @@ impl<'a> Diagnostic<'a> {
         if self.version == 23 {
             return OriginalExecutionProfile::PlayerDemonPistolV1;
         }
-        if matches!(self.version, 22..=26)
+        if matches!(self.version, 22..=27)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerDemonMeleeV1
@@ -320,7 +330,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerDemonMeleeV1
-        } else if matches!(self.version, 22..=26)
+        } else if matches!(self.version, 22..=27)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerDemonAcquisitionV1
@@ -330,7 +340,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerDemonAcquisitionV1
-        } else if matches!(self.version, 22..=26)
+        } else if matches!(self.version, 22..=27)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerCommandMovementV1
@@ -340,7 +350,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerCommandMovementV1
-        } else if matches!(self.version, 22..=26)
+        } else if matches!(self.version, 22..=27)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerBodyKnockbackV1
@@ -350,7 +360,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerBodyKnockbackV1
-        } else if matches!(self.version, 22..=26) {
+        } else if matches!(self.version, 22..=27) {
             OriginalExecutionProfile::PlayerBodyLifecycleV1
         } else {
             OriginalExecutionProfile::DemonNormalV1
@@ -362,7 +372,7 @@ impl<'a> Diagnostic<'a> {
             return Err(DiagnosticError::Schema);
         }
         number::<8>(self.required("tic")?)?;
-        if matches!(self.version, 21..=26) {
+        if matches!(self.version, 21..=27) {
             if profile != self.policy().wire_id()
                 || self.required("registry.schema")? != ORIGINAL_REGISTRY_SCHEMA
                 || self.required("context.schema")? != self.policy().context_schema()
@@ -423,7 +433,7 @@ impl<'a> Diagnostic<'a> {
                 || f.path.ends_with(".soundtarget")
                 || f.path.ends_with(".previous")
                 || f.path.ends_with(".next")
-                || matches!(self.version, 22..=26)
+                || matches!(self.version, 22..=27)
                     && matches!(
                         f.path,
                         "original_player.0.mo" | "original_player.0.attacker"
@@ -467,11 +477,11 @@ impl<'a> Diagnostic<'a> {
                 let event = self.required(&format!("{prefix}.{i}"))?;
                 let tag = *event.first().ok_or(DiagnosticError::Structure)?;
                 if tag
-                    > if self.version == 26 {
+                    > if matches!(self.version, 26 | 27) {
                         24
                     } else if self.version == 25 {
                         23
-                    } else if matches!(self.version, 22..=26) {
+                    } else if matches!(self.version, 22..=27) {
                         22
                     } else {
                         21
@@ -480,7 +490,7 @@ impl<'a> Diagnostic<'a> {
                     return Err(DiagnosticError::Structure);
                 }
                 if tag == 23 {
-                    validate_pickup_event(event, self.version == 26)?;
+                    validate_pickup_event(event, self.version)?;
                 }
                 if tag == 24 {
                     validate_armor_event(event)?;
@@ -490,10 +500,10 @@ impl<'a> Diagnostic<'a> {
                     }
                 }
                 if tag == 22 {
-                    validate_player_event(event, matches!(self.version, 24..=26))?;
+                    validate_player_event(event, matches!(self.version, 24..=27))?;
                 }
-                if tag == 14 && matches!(self.version, 23..=26) {
-                    validate_weapon_event(event, matches!(self.version, 24..=26))?;
+                if tag == 14 && matches!(self.version, 23..=27) {
+                    validate_weapon_event(event, matches!(self.version, 24..=27))?;
                 }
                 // Validate identity-bearing payloads without interpreting nested
                 // untrusted collision/sight counts or allocating from them.
@@ -511,13 +521,13 @@ impl<'a> Diagnostic<'a> {
                     )?);
                     if is_type {
                         self.identity(value, u16::MAX)?;
-                    } else if matches!(self.version, 21..=26) {
+                    } else if matches!(self.version, 21..=27) {
                         let state = OriginalState::try_from(value)
                             .map_err(|_| DiagnosticError::Identity)?;
                         // Entering S_NULL is a source removal event, not a live
                         // executable state. Real pistol impact thinkers expose
                         // this sentinel in23; historical readers stay unchanged.
-                        if matches!(self.version, 23..=26)
+                        if matches!(self.version, 23..=27)
                             && state == OriginalState::S_NULL
                             && event.get(..2) == Some(&[12, 1])
                         {
@@ -539,6 +549,8 @@ impl<'a> Diagnostic<'a> {
                             OriginalActorType::MT_CHAINGUN,
                             OriginalActorType::MT_MISC0,
                             OriginalActorType::MT_MISC1,
+                            OriginalActorType::MT_MISC2,
+                            OriginalActorType::MT_MISC3,
                         ]
                         .into_iter()
                         .any(|ty| {
@@ -560,23 +572,23 @@ impl<'a> Diagnostic<'a> {
                 }
             }
         }
-        if matches!(self.version, 22..=26) {
+        if matches!(self.version, 22..=27) {
             self.validate_player()?;
         }
         if self.version == 23 {
             self.validate_pistol()?;
         }
-        if matches!(self.version, 24..=26) {
+        if matches!(self.version, 24..=27) {
             self.validate_weapons()?;
         }
-        if self.version == 26 {
+        if matches!(self.version, 26 | 27) {
             let kind = self.required("original_player.0.armor.type")?;
             if kind.len() != 1 {
                 return Err(DiagnosticError::Structure);
             }
             diagnostic_armor(kind[0], self.required("original_player.0.armor.points")?)?;
         }
-        if matches!(self.version, 25 | 26) {
+        if matches!(self.version, 25..=27) {
             self.validate_pickup_items()?;
             if self.required("original_player.0.pickups.present")? != [1] {
                 return Err(DiagnosticError::Structure);
@@ -591,7 +603,7 @@ impl<'a> Diagnostic<'a> {
             if !(0..=world_pickups::MAX_BONUS).contains(&bonus)
                 || items != 0
                 || !(matches!(message, [0..=6] | [8..=9])
-                    || (self.version == 26 && matches!(message, [10..=11])))
+                    || (matches!(self.version, 26 | 27) && matches!(message, [10..=11])))
             {
                 return Err(DiagnosticError::Structure);
             }
@@ -634,7 +646,7 @@ impl<'a> Diagnostic<'a> {
                     != descriptor.sprite.ordinal()
                 || u32::from_le_bytes(number(self.required(&format!("{prefix}.frame"))?)?)
                     != descriptor.frame
-                || (if k.is_armor() {
+                || (if k.is_animated() {
                     !(1..=descriptor.tics).contains(&i32field("tics")?)
                 } else {
                     i32field("tics")? != -1
@@ -650,11 +662,9 @@ impl<'a> Diagnostic<'a> {
                 || i32field("ceiling")? != 128 * 65536
                 || self.required(&format!("{prefix}.target"))? != [0; 13]
                 || flags
-                    & !(world_pickups::MF_SPECIAL
-                        | world_pickups::MF_AMBUSH
-                        | world_pickups::MF_DROPPED)
+                    & !(k.definition_flags() | world_pickups::MF_AMBUSH | world_pickups::MF_DROPPED)
                     != 0
-                || flags & world_pickups::MF_SPECIAL == 0
+                || flags & k.definition_flags() != k.definition_flags()
                 || (dropped
                     && (spawn != [0]
                         || flags & world_pickups::MF_AMBUSH != 0
@@ -933,7 +943,7 @@ impl Snapshot {
     /// Bounded Result-returning DSIM20/21/22/23/24 encoder. Trusted convenience APIs retain
     /// their old allocation policy; callers at input/output boundaries use this.
     pub fn diagnostic_bytes(&self, limits: DiagnosticLimits) -> Result<Vec<u8>, DiagnosticError> {
-        if !matches!(self.version(), 20..=26) {
+        if !matches!(self.version(), 20..=27) {
             return Err(DiagnosticError::Version(self.version()));
         }
         let mut size = 16_usize;
@@ -1170,7 +1180,9 @@ fn validate_armor_event(event: &[u8]) -> Result<(), DiagnosticError> {
     Ok(())
 }
 // Independent DSIM25/26 widths and bounded source domains; no world restoration.
-fn validate_pickup_event(event: &[u8], armor: bool) -> Result<(), DiagnosticError> {
+fn validate_pickup_event(event: &[u8], version: u32) -> Result<(), DiagnosticError> {
+    let armor = matches!(version, 26 | 27);
+    let bonuses = version == 27;
     let get = |a: usize, b: usize| event.get(a..b).ok_or(DiagnosticError::Structure);
     let ok = match event.get(1) {
         Some(0) => {
@@ -1196,6 +1208,12 @@ fn validate_pickup_event(event: &[u8], armor: bool) -> Result<(), DiagnosticErro
                     && [
                         OriginalSprite::SPR_ARM1.ordinal(),
                         OriginalSprite::SPR_ARM2.ordinal(),
+                    ]
+                    .contains(&sprite))
+                || (bonuses
+                    && [
+                        OriginalSprite::SPR_BON1.ordinal(),
+                        OriginalSprite::SPR_BON2.ordinal(),
                     ]
                     .contains(&sprite))
         }

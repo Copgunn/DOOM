@@ -357,7 +357,7 @@ impl Simulation {
         let Some(p) = self.original_player else {
             return Ok(());
         };
-        if p.policy == OriginalExecutionProfile::PlayerDemonArmorV1 {
+        if p.policy.has_player_armor() {
             p.armor.ok_or(PlayerBodyError::Invariant)?.validate()?;
         }
         if p.policy.has_physical_player()
