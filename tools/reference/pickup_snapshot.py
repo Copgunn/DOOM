@@ -84,4 +84,3 @@ def build(cases,rows,maps,prefix,full):
         outputs[index]=('\n'.join(lines)+'\n').encode()
         return outputs,inventory
     finally:physical.events,physical.frame=old_events,old_frame
-

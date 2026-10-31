@@ -36,7 +36,7 @@
     "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
     "tools/reference/m3g2_snapshot_goldens.py": "b65bbd286f22fb0ec0b2176cfbc339f0376a24ccfe4a91d537e5f672a3e8ceee",
     "tools/reference/m3g9_snapshot_goldens.py": "b4b6c62669b7ddf26f54b2a334a2a2c658b662a453f6d488b116a8a25aebd1c9",
-    "tools/reference/pickup_snapshot.py": "9270ed6e8d7dbd561a7de085355fe884ee949c55a7da84d7abb4177961b0e85b",
+    "tools/reference/pickup_snapshot.py": "6abd238d983ac893d6473fe843a61daa15c2941b99aabc410f5ec74b59a8cbc9",
     "tools/reference/player_execution_snapshot.py": "98a5c4a37cc43ce901636cd6504f891dbad19e86440efeb25b4596e69800e336",
     "tools/reference/player_snapshot.py": "9524e70b09184766fc9aa10c8625e9849f8b59579165218cc1a1e66e90747c5c",
     "tools/reference/weapon_snapshot.py": "b2070f8fb12577cf4debb18abad1daa64b7d79d3770f3969ca2d5bcdfb97c67c"
