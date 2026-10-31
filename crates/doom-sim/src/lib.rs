@@ -29,6 +29,7 @@ mod native_demon;
 mod original_player;
 mod original_registry;
 mod player_commands;
+mod player_pistol;
 mod player_roster;
 pub use diagnostic::{Diagnostic, DiagnosticError, DiagnosticIdentity, DiagnosticLimits};
 pub use execution_context::{ContextActor, ContextError, ExecutionContext, TargetReference};
@@ -43,6 +44,7 @@ pub use original_registry::{
     OriginalExecutionProfile, OriginalExecutionRegistry, OriginalRegistryError,
 };
 pub use player_commands::PLAYER_COMMAND_CONTEXT_SCHEMA;
+pub use player_pistol::{INITIAL_PISTOL_BULLETS, PLAYER_DEMON_PISTOL_CONTEXT_SCHEMA, PistolState};
 pub use player_roster::{PLAYER_DEMON_CONTEXT_SCHEMA, PLAYER_DEMON_MELEE_CONTEXT_SCHEMA};
 mod chaingunner;
 mod demon;
@@ -1008,7 +1010,9 @@ impl Simulation {
         }
         if self.profile == Profile::PlayerWeapons {
             self.preflight_weapon_step(&commands)?;
-        } else if commands.iter().any(|c| c.buttons != 0) {
+        } else if self.player_policy() != OriginalExecutionProfile::PlayerDemonPistolV1
+            && commands.iter().any(|c| c.buttons != 0)
+        {
             return Err(SimError::UnsupportedButtons);
         }
         if self.original_player.is_some()

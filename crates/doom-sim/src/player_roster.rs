@@ -36,6 +36,7 @@ impl Simulation {
             self.player_policy(),
             OriginalExecutionProfile::PlayerDemonAcquisitionV1
                 | OriginalExecutionProfile::PlayerDemonMeleeV1
+                | OriginalExecutionProfile::PlayerDemonPistolV1
         )
     }
 
@@ -82,7 +83,11 @@ impl Simulation {
         if life.actor_type.0 != OriginalActorType::MT_PLAYER.ordinal()
             || player.health != life.health.max(0)
             || (player.state == PlayerBodyState::Dead) != (life.health <= 0)
-            || self.sound_targets.iter().any(Option::is_some)
+            || self.sound_targets.iter().any(|target| {
+                target.is_some()
+                    && !(self.player_policy() == OriginalExecutionProfile::PlayerDemonPistolV1
+                        && *target == Some(id))
+            })
         {
             return Err(PerceptionError::Roster.into());
         }
@@ -103,7 +108,10 @@ impl PerceptionRoster<'_> {
     pub(crate) fn allows_player_melee(self) -> bool {
         matches!(
             self,
-            Self::OriginalPlayer(OriginalExecutionProfile::PlayerDemonMeleeV1)
+            Self::OriginalPlayer(
+                OriginalExecutionProfile::PlayerDemonMeleeV1
+                    | OriginalExecutionProfile::PlayerDemonPistolV1
+            )
         )
     }
 }

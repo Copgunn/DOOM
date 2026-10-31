@@ -154,6 +154,7 @@ struct DemonPlan {
     statistics: Option<LevelStatistics>,
     player: Option<original_player::PlayerRuntime>,
     bindings: [Option<ActorId>; 4],
+    sound_target: Option<ActorId>,
     events: Vec<Event>,
 }
 impl Simulation {
@@ -174,6 +175,7 @@ impl Simulation {
             statistics: self.statistics,
             player: self.original_player,
             bindings: self.bindings,
+            sound_target: self.sound_targets.first().copied().flatten(),
             events: Vec::new(),
         })
     }
@@ -242,6 +244,11 @@ impl Simulation {
         self.rng = plan.rng;
         self.statistics = plan.statistics;
         self.original_player = plan.player;
+        if self.player_policy() == OriginalExecutionProfile::PlayerDemonPistolV1 {
+            if let Some(target) = self.sound_targets.first_mut() {
+                *target = plan.sound_target;
+            }
+        }
         self.bindings = plan.bindings;
         plan.events
     }
@@ -254,7 +261,7 @@ impl Simulation {
         let mut plan = self.demon_plan()?;
         let control = SightControl::default();
         let result = action(&mut LifeHost {
-            player: plan.player.as_deref_mut(),
+            player: plan.player.as_mut(),
             statistics: plan.statistics.as_mut(),
             perception: Some(self.checked_demon_inputs(&control)),
             access: &mut plan.actors,
@@ -279,6 +286,15 @@ impl Simulation {
         commands: [TicCommand; 4],
     ) -> Result<(), SimError> {
         let command_policy = self.player_policy().has_player_commands();
+        let pistol_policy = self.player_policy() == OriginalExecutionProfile::PlayerDemonPistolV1;
+        if pistol_policy
+            && self
+                .original_player
+                .as_ref()
+                .is_none_or(|p| p.pistol.is_none())
+        {
+            return Err(WeaponError::Player.into());
+        }
         let command_body = if command_policy {
             self.preflight_player_commands(&commands)?
         } else {
@@ -290,30 +306,46 @@ impl Simulation {
         let control = SightControl::default();
         if command_policy {
             plan.events.push(Event::Phase(Phase::Players));
-            if let Some(id) = command_body {
-                player_commands::stage(
-                    &mut LifeHost {
-                        player: plan.player.as_deref_mut(),
-                        statistics: plan.statistics.as_mut(),
-                        perception: Some(self.checked_demon_inputs(&control)),
-                        access: &mut plan.actors,
-                        registry: self.registry.as_deref().ok_or(ActorError::InvalidType)?,
-                        world: &self.world,
-                        sectors: &self.sectors,
-                        options: self.actor_options,
-                        rng: &mut plan.rng,
-                        spatial: &mut plan.spatial,
-                        bindings: &mut plan.bindings,
-                        events: &mut plan.events,
-                    },
-                    id,
-                    commands[usize::from(PlayerSlot::One.ordinal())],
-                )?;
+            {
+                let mut host = LifeHost {
+                    player: plan.player.as_mut(),
+                    statistics: plan.statistics.as_mut(),
+                    perception: Some(self.checked_demon_inputs(&control)),
+                    access: &mut plan.actors,
+                    registry: self.registry.as_deref().ok_or(ActorError::InvalidType)?,
+                    world: &self.world,
+                    sectors: &self.sectors,
+                    options: self.actor_options,
+                    rng: &mut plan.rng,
+                    spatial: &mut plan.spatial,
+                    bindings: &mut plan.bindings,
+                    events: &mut plan.events,
+                };
+                if let Some(id) = command_body {
+                    player_commands::stage(
+                        &mut host,
+                        id,
+                        commands[usize::from(PlayerSlot::One.ordinal())],
+                    )?;
+                }
+                if pistol_policy {
+                    player_pistol::stage(
+                        &mut host,
+                        commands[usize::from(PlayerSlot::One.ordinal())],
+                        self.tic,
+                        &mut plan.sound_target,
+                    )?;
+                }
             }
             plan.events.push(Event::Phase(Phase::Thinkers));
         } else {
             plan.events
                 .extend([Event::Phase(Phase::Players), Event::Phase(Phase::Thinkers)]);
+        }
+        let sound_targets = [plan.sound_target];
+        let mut perception_inputs = self.checked_demon_inputs(&control);
+        if pistol_policy {
+            perception_inputs.sound_targets = &sound_targets;
         }
         thinkers::run(
             &mut plan.actors,
@@ -326,12 +358,12 @@ impl Simulation {
                 registry: &self.registry,
                 options: self.actor_options,
                 statistics: &mut plan.statistics,
-                player: plan.player.as_deref_mut(),
+                player: plan.player.as_mut(),
                 rng: &mut plan.rng,
                 spatial: &mut plan.spatial,
                 events: &mut plan.events,
                 commands,
-                perception_inputs: Some(self.checked_demon_inputs(&control)),
+                perception_inputs: Some(perception_inputs),
             },
         );
         if let Some(error) = control.failure.get() {
@@ -339,6 +371,17 @@ impl Simulation {
         }
         if command_policy {
             player_commands::validate_result(&plan.actors, plan.player.as_deref())?;
+            if pistol_policy {
+                for id in plan.actors.order() {
+                    if let Some(actor) = plan.actors.get(id) {
+                        if actor.life().is_some_and(|l| {
+                            l.actor_type.0 == identity::OriginalActorType::MT_SERGEANT.ordinal()
+                        }) {
+                            original_player::travel_bounds(actor.position(), actor.momentum())?;
+                        }
+                    }
+                }
+            }
         }
         let events = self.commit_demon_plan(plan);
         self.events = std::mem::take(&mut self.pending);

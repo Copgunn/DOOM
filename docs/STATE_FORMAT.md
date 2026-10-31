@@ -1,4 +1,4 @@
-# Canonical diagnostic state format: DSIM versions 1–22
+# Canonical diagnostic state format: DSIM versions 1–23
 
 This is a diagnostic/replay comparison format for explicit simulation profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
@@ -1035,7 +1035,7 @@ stored handles when unavailable. The derived actor association requires exact sl
 AND generation; no stale handle points at a reused body. InstanceId remains excluded.
 Immutable metadata is identified, never serialized redundantly.
 
-New event tag22 is exclusive to v22. Player slot0 is fixed by the policy:
+Event tag22 was introduced in v22 and is retained in v23. Player slot0 is fixed by the policy:
 
 | Subtype | Ordered payload after tag/subtype |
 | --- | --- |
@@ -1178,3 +1178,61 @@ file preserve complete event order without rewriting older captures. Birth/gener
 projection and invalid-input rejection remain Rust schema/safety policy. See
 [source qualification](M3G6_REFERENCE.md), [reproduction](TESTING.md#autonomous-demon-player-melee)
 and [observations](validation/M3G6.md).
+
+
+## DSIM-v23 genuine-player pistol
+
+V23 is required by player-owned persistent weapon/psprite observations. It retains
+the v22 genuine-player field/event families and framing, selects wire policy7 and
+exact context `PLAYER-DEMON-1-MEDIUM-GROUNDED-PISTOL-v1`, with unchanged registry
+`DOOM-INFO-1.10-v1`. Earlier20/21/22 layouts, readers and policy meanings are
+immutable. `Diagnostic::decode_pistol` reads23 explicitly; the historical decode
+and decode_player entry points continue rejecting it.
+
+After `original_player.0.frags`, before `events.last.count`, append these fields
+in the stated order. Prefix is `original_player.0.pistol`:
+
+| Suffix | Representation |
+| --- | --- |
+| present | u8 bool; if0, no remaining pistol fields follow |
+| bullets | u16 source am_clip in0..200 |
+| attack_down | u8 source bool |
+| refire | i32 source counter in0..200 |
+| bob | i32 raw source fixed-point value in0..0x100000 |
+| extra_light | i32 source light0/1 |
+| psprite.0.state, .tics, .x, .y | u16 original state or65535 forNULL; i32 countdown and raw fixed-point XY |
+| psprite.1.state, .tics, .x, .y | Same fields, flash after weapon |
+
+Immutable ready=Pistol, pending=nochange, owned=fist+pistol and original ammo
+capacity derive from policy7 rather than another serialized player record.
+Original body0, Demon12 and effects37/38 retain actual source IDs. Player mobj
+attack states154/155 are executable only under this capability. Weapon overlays
+10..17 and immediate LightDone1/Null0 are not actor states or thinker instances.
+
+Persistent weapon states are source pistol ready/up/down/attack; flash is17 or
+NULL. Timers are checked against canonical source descriptors. Null flash retains
+a zero timer and source-maintained coordinates; it does not restore another
+weapon. Decoding bounds bullets, refire, bob, light, coordinates, channel-specific
+states and exact schema/policy pairs. Death retains the body and weapon ownership,
+with a lowering pistol. Setup snapshots may have present0 before initialization.
+
+Existing event tag14 weapon subtypes and payload widths remain unchanged. V23
+validates the admitted pistol state/action identities, ammo changes, source
+5/10/15 bullet damage, ordered draw categories and one-sector noise payload.
+Source initialization and psprite entry are real events, not synthetic firing
+requests. Tag22 Died remains the same boundary, now followed immediately by
+actual tag14 lowering entries/actions before existing Kill/death-state events.
+An ActorState Entered S_NULL event can mark an impact thinker for removal; v23
+explicitly recognizes that sentinel without granting live S_NULL execution.
+
+Read-only source aim queries are compared separately; no monster-aim event is
+invented for them. Existing Attack/Trace/Impact/Damage and player/movement/AI events
+encode actual source chronology. PBE1 remains compact independent test-evidence
+framing, not a savegame format. Instance provenance and context tokens remain
+excluded. Diagnostic decoding observes fields and identity boundaries; map,
+physical values and other nested payloads retain their declared opaque limits.
+It never restores executable worlds or grants actor ownership.
+
+[Support](COMPATIBILITY.md#genuine-player-pistol-combat),
+[source qualification](M3G7_REFERENCE.md), [reproduction](TESTING.md#genuine-player-pistol)
+and [evidence](validation/M3G7.md) identify the independent bytes and limits.

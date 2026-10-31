@@ -352,3 +352,17 @@ Profile enum retain their meanings. The acquisition-only policy still rejects
 attack execution; raise and player weapon states remain excluded. See
 [combat support](COMPATIBILITY.md#autonomous-original-demon-player-melee),
 [source timing](M3G6_REFERENCE.md) and [diagnostics](STATE_FORMAT.md#dsim-v22-autonomous-demon-player-melee-policy).
+
+
+## Genuine player pistol roles
+
+PlayerDemonPistolV1 retains source MT_PLAYER0 and MT_SERGEANT12 alongside the
+existing Puff37/Blood38 effects. It admits player body attack states154/155 under
+its explicit capability while older policies keep their state guards. Pistol
+10..17 plus immediate LightDone1/Null0 are player-owned psprites, never artificial
+mobj states, actor instances or native aliases. OriginalPlayer remains the sole
+owner of the body's generational handle and health. Weapon-only state adds no
+identity or lifetime manager. Metadata recognition still grants no other weapon
+or monster execution. See [support](COMPATIBILITY.md#genuine-player-pistol-combat),
+[ownership architecture](ARCHITECTURE.md#canonical-player-pistol-execution),
+[source matrix](M3G7_REFERENCE.md) and [DSIM23](STATE_FORMAT.md#dsim-v23-genuine-player-pistol).

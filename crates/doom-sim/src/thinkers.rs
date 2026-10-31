@@ -8,7 +8,7 @@ pub(crate) struct Inputs<'a> {
     pub live_bindings: &'a mut [Option<ActorId>; 4],
     pub registry: &'a Option<Arc<ActorRegistry>>,
     pub options: ActorOptions,
-    pub player: Option<&'a mut OriginalPlayer>,
+    pub player: Option<&'a mut original_player::PlayerRuntime>,
     pub statistics: &'a mut Option<LevelStatistics>,
     pub rng: &'a mut DoomRng,
     pub spatial: &'a mut movement::SpatialIndex,

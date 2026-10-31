@@ -1,0 +1,73 @@
+{
+  "reason": "Initial partial baseline measured reviewed feature parent instead of actual regular merge. Equal tree does not substitute for required exact-master provenance. All reported before samples were rerun at actual merged master; this attempt is excluded from comparisons.",
+  "files": {
+    "before-legacy.log": {
+      "bytes": 210,
+      "sha256": "17b5c098a97862387effacc49402907269f7c59b38dc6dab70b73bdac74c4bc5"
+    },
+    "before-legacy.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "before-measure-progress.log": {
+      "bytes": 9,
+      "sha256": "e97a3cf96e5a67d10654ff70fb42d9d1d355295311596b653f9623aec0ca0d06"
+    },
+    "before-measure-results.json": {
+      "bytes": 71,
+      "sha256": "b9cc902b4f2bbad3562e1262adaf7ff152b7bef21632913658d9df6d3e76c245"
+    },
+    "before-measure_canonical_demon.json": {
+      "bytes": 2219,
+      "sha256": "3dfe5a14a8e41489c2341be989ebd131c3397ec81104207ddebcfc6a327d2b63"
+    },
+    "before-measure_canonical_demon.py.log": {
+      "bytes": 62,
+      "sha256": "376a48f02bf305a0c383aa68e8f2d8c5df3ec64cbee6a09491a649aa453baba9"
+    },
+    "before-measure_context_ownership.json": {
+      "bytes": 2620,
+      "sha256": "6a1146effe78eb7f4fc11030c4d2ecc4474345d75f59086cd829e6c261b6feda"
+    },
+    "before-measure_context_ownership.py.log": {
+      "bytes": 62,
+      "sha256": "376a48f02bf305a0c383aa68e8f2d8c5df3ec64cbee6a09491a649aa453baba9"
+    },
+    "before-measure_demon_expanded_map.json": {
+      "bytes": 29852,
+      "sha256": "41226ae312cf404532d59f60b47347374deb375d30b86fa47cce891ccadc1b42"
+    },
+    "before-measure_demon_expanded_map.py.log": {
+      "bytes": 62,
+      "sha256": "376a48f02bf305a0c383aa68e8f2d8c5df3ec64cbee6a09491a649aa453baba9"
+    },
+    "before-measure_game_instance.json": {
+      "bytes": 2707,
+      "sha256": "7c957c108191c0cd76987b43ac28d5d82877112212f75eb7b7b1850faa599d79"
+    },
+    "before-measure_game_instance.py.log": {
+      "bytes": 62,
+      "sha256": "376a48f02bf305a0c383aa68e8f2d8c5df3ec64cbee6a09491a649aa453baba9"
+    },
+    "before-measure_original_registry.json": {
+      "bytes": 15631,
+      "sha256": "87d17a057e120730f3b5fdd37ef1fc76d6dacd04ecc78a46ebdfd7f34a172566"
+    },
+    "before-measure_original_registry.py.log": {
+      "bytes": 62,
+      "sha256": "376a48f02bf305a0c383aa68e8f2d8c5df3ec64cbee6a09491a649aa453baba9"
+    },
+    "before-provenance.json": {
+      "bytes": 711,
+      "sha256": "a05545c8621033ac10ac6a8c26e5bcd74440aaaeb43e65d88b1f316de7e55f9e"
+    },
+    "before-stepping.json": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "before-stepping.stderr": {
+      "bytes": 62,
+      "sha256": "376a48f02bf305a0c383aa68e8f2d8c5df3ec64cbee6a09491a649aa453baba9"
+    }
+  }
+}

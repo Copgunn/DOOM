@@ -91,3 +91,8 @@ original evidence and former guide contents with exact-byte copies and digests.
 
 - [M3g6 autonomous canonical Demon-to-player melee](M3G6_REFERENCE.md), with
   [observations](validation/M3G6.md) and [reproduction](TESTING.md#autonomous-demon-player-melee).
+
+
+- [M3g7 genuine-player pistol combat](M3G7_REFERENCE.md), with
+  [observations](validation/M3G7.md), [DSIM23](STATE_FORMAT.md#dsim-v23-genuine-player-pistol)
+  and [reproduction](TESTING.md#genuine-player-pistol).

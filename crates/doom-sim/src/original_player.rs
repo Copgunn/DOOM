@@ -100,6 +100,7 @@ impl Default for OriginalPlayer {
 pub(crate) struct PlayerRuntime {
     pub source: OriginalPlayer,
     pub policy: OriginalExecutionProfile,
+    pub pistol: Option<crate::PistolState>,
 }
 impl std::ops::Deref for PlayerRuntime {
     type Target = OriginalPlayer;
@@ -329,7 +330,14 @@ impl Simulation {
                     return Err(PlayerBodyError::Invariant.into());
                 }
             } else if p.policy.has_physical_player() && a.momentum() != [Fixed::ZERO; 2] {
-                return Err(PlayerBodyError::Unsupported.into());
+                if p.policy != OriginalExecutionProfile::PlayerDemonPistolV1
+                    || l.actor_type.0 != OriginalActorType::MT_SERGEANT.ordinal()
+                    || a.z != a.floor
+                    || a.momz != Fixed::ZERO
+                {
+                    return Err(PlayerBodyError::Unsupported.into());
+                }
+                travel_bounds(a.position(), a.momentum())?;
             } else if stepping
                 && !self.uses_active_player_roster()
                 && l.actor_type == original_registry::owner_slot()
@@ -349,8 +357,36 @@ impl Simulation {
         if p.policy.has_physical_player()
             && request.inflictor.is_some()
             && !self.owns_player_body(request.target)
+            && !(p.policy == OriginalExecutionProfile::PlayerDemonPistolV1
+                && request.source == p.mo
+                && request.inflictor == p.mo
+                && self
+                    .actor(request.target)
+                    .and_then(Actor::life)
+                    .is_some_and(|l| l.actor_type.0 == OriginalActorType::MT_SERGEANT.ordinal()))
         {
             return Err(PlayerBodyError::Unsupported.into());
+        }
+        if p.policy == OriginalExecutionProfile::PlayerDemonPistolV1
+            && request.inflictor == p.mo
+            && p.mo.is_some()
+            && !self.owns_player_body(request.target)
+        {
+            let target = self.actor(request.target).ok_or(CombatError::Reference)?;
+            let origin = self
+                .actor(p.mo.ok_or(PlayerBodyError::Binding)?)
+                .ok_or(CombatError::Reference)?;
+            if target
+                .life()
+                .is_some_and(|life| life.health > 0 && life.flags & MF_SHOOTABLE != 0)
+            {
+                preflight_grounded_impulse(
+                    target,
+                    origin,
+                    request.amount,
+                    OriginalActorType::MT_SERGEANT.descriptor().mass,
+                )?;
+            }
         }
         if self.owns_player_body(request.target) {
             if let Some(inflictor) = request.inflictor {
@@ -367,7 +403,8 @@ impl Simulation {
                     p.frags.checked_add(1).ok_or(PlayerBodyError::Statistics)?;
                 }
             }
-        } else if request.source == p.mo
+        } else if p.policy != OriginalExecutionProfile::PlayerDemonPistolV1
+            && request.source == p.mo
             && p.mo.is_some()
             && self
                 .actor(request.target)
@@ -469,10 +506,30 @@ pub(crate) fn preflight_player_impulse(
     origin: &Actor,
     amount: i32,
 ) -> Result<(), SimError> {
+    preflight_grounded_impulse(
+        target,
+        origin,
+        amount,
+        OriginalActorType::MT_PLAYER.descriptor().mass,
+    )
+}
+pub(crate) fn preflight_grounded_impulse(
+    target: &Actor,
+    origin: &Actor,
+    amount: i32,
+    mass: i32,
+) -> Result<(), SimError> {
     if !(0..=MAX_PLAYER_DAMAGE).contains(&amount) {
         return Err(CombatError::Damage.into());
     }
-    let mass = OriginalActorType::MT_PLAYER.descriptor().mass;
+    if mass <= 0
+        || target.z != Fixed::ZERO
+        || target.momz != Fixed::ZERO
+        || origin.z != Fixed::ZERO
+        || origin.momz != Fixed::ZERO
+    {
+        return Err(PlayerBodyError::Unsupported.into());
+    }
     let thrust = amount
         .checked_mul(THRUST_FRACTION)
         .and_then(|n| n.checked_mul(THRUST_MASS_SCALE))

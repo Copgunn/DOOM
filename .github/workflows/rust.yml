@@ -30,8 +30,9 @@ jobs:
     runs-on: ${{ matrix.os == 'macos-latest' && 'macos-26-intel' || matrix.os }}
     # Preserve the complete growing reference/encoder suite on Linux.
     # Native Intel post-merge CI reached the 15-minute limit after its examples.
-    # Keep every check and allow the same headroom as the full Linux suite.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && 15 || 30 }}
+    # Keep every check; M3g6 exact-master Linux took almost28 minutes.
+    # New pistol reference/codec/example checks require additional headroom.
+    timeout-minutes: ${{ matrix.os == 'ubuntu-latest' && 45 || matrix.os == 'windows-latest' && 15 || 30 }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -111,10 +112,14 @@ jobs:
           python3 tools/reference/m3g5_snapshot_goldens.py --check
           ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g6_reference.py --check --overflow-check --address-check
           python3 tools/reference/m3g6_snapshot_goldens.py --check
+          ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g7_reference.py --check --overflow-check --address-check
+          python3 tools/reference/m3g7_snapshot_goldens.py --check
       - name: Active player Demon debug/release comparison
         run: python3 tools/reference/check_player_demon.py
       - name: Autonomous player Demon melee debug/release comparison
         run: python3 tools/reference/check_player_demon_melee.py
+      - name: Genuine player pistol debug/release comparison
+        run: python3 tools/reference/check_player_pistol.py
       - name: Player command debug/release comparison
         run: python3 tools/reference/check_player_commands.py
       - name: Player knockback debug/release comparison

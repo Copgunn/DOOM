@@ -77,7 +77,14 @@ impl Simulation {
             return Err(PlayerBodyError::Slot.into());
         }
         let command = commands[slot];
-        if command.buttons != 0 {
+        if command.buttons
+            & !(if p.policy == OriginalExecutionProfile::PlayerDemonPistolV1 {
+                BT_ATTACK
+            } else {
+                0
+            })
+            != 0
+        {
             return Err(SimError::UnsupportedButtons);
         }
         if !(-MAX_COMMAND_MOVE..=MAX_COMMAND_MOVE).contains(&command.forward)

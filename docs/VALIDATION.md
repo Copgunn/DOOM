@@ -144,3 +144,23 @@ declared quarantine observation; stale/foreign generations, fixed-body removal
 rejection and transactional melee refusal are Rust policy. Historical evidence,
 source extraction and encoders remain unchanged; new expected values never come
 from Rust output. See the [source matrix](M3G5_REFERENCE.md).
+
+
+## Genuine-player pistol evidence
+
+[M3g7](validation/M3G7.md) establishes a new source-backed composition of genuine
+player weapon setup, command-triggered psprites, ammo/refire, aim/hitscan,
+Puff/Blood thinkers, one-sector noise, Demon pain/death/retaliation and existing
+autonomous melee. It reuses historical source bodies and shared Rust services;
+new scenarios are not globally new function or branch coverage. The instrumented
+entry inventory explicitly separates uninstrumented linked fixed-math bodies.
+
+Expected C rows and independent DSIM23 bytes were recorded before matching Rust
+integration. Full ordered-event comparisons and separate actual aim-query
+comparisons complement actor/player/weapon field checks. Source allocations are
+projected into the separately specified lowest-vacant generational schema, not
+claimed equivalent to C pointer lifetime. No stale/freed C dereference or empty
+active-roster scan is executed. Ownership, atomic failure, invalid inputs and
+corrupt diagnostics are Rust policy tests. The [source investigation](M3G7_REFERENCE.md)
+and [commands](TESTING.md#genuine-player-pistol) declare bounded harness sequencing,
+source arithmetic qualifications and unsupported complete player-thinker behavior.
