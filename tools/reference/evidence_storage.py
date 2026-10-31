@@ -42,6 +42,7 @@ def verify_git(binary):
     m=json.loads(MANIFEST.read_text()); entries=m['entries']; paths={e['original_path'] for e in entries}
     inventory=json.loads(INVENTORY.read_text())
     assert m['baseline']==BASELINE==inventory['baseline']
+    assert inventory['tree']==checked(['git','rev-parse',BASELINE+'^{tree}'],capture_output=True).stdout.decode().strip()
     assert paths=={e['path'] for e in inventory['files']}, 'migration allowlist mismatch'
     with tempfile.TemporaryDirectory(prefix='doom-byte-proof-') as directory:
         out=Path(directory)
@@ -50,6 +51,8 @@ def verify_git(binary):
             before=original(e['original_path']); after=(out/e['original_path']).read_bytes()
             recorded=next(x for x in inventory['files'] if x['path']==e['original_path'])
             assert len(before)==recorded['bytes'] and hashlib.sha256(before).hexdigest()==recorded['sha256']
+            blob=hashlib.sha1(b'blob '+str(len(before)).encode()+b'\0'+before).hexdigest()
+            assert e['original_git_blob']==recorded['git_blob']==blob
             assert before==after, e['original_path']
     # Check every historical source/evidence/helper/archive path against Git.
     names={Path(p).name for p in paths}; protected=0; adapters=[]

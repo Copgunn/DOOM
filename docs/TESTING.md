@@ -902,6 +902,7 @@ own actual results. These are advisory measurements, not CI timing thresholds.
 ```sh
 # Raw root is a detached checkout of the manifest's exact baseline object.
 python3 tools/measure_evidence.py RAW_BASELINE_ROOT
+python3 tools/measure_weapon_stages.py --logs /tmp/doom-weapon-stage-samples
 ```
 
 The loading microbenchmark uses the same release executable for raw files and
