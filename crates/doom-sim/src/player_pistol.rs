@@ -395,9 +395,8 @@ fn fire_current(
     weapon: Weapon,
     accurate: bool,
 ) -> Result<(), SimError> {
-    let actor = *host.access.get(id).ok_or(WeaponError::Reference)?;
-    let angle = actor.angle();
-    let (angle, slope, damage, range) = if weapon == Weapon::Fist {
+    let angle = host.access.get(id).ok_or(WeaponError::Reference)?.angle();
+    if weapon == Weapon::Fist {
         let mut random = |kind| {
             let value = host.rng.p_random();
             host.events
@@ -408,21 +407,37 @@ fn fire_current(
         let spread = (i32::from(random(1)) - i32::from(random(2))) * 262144;
         let angle = angle.wrapping_add_signed(spread);
         let slope = aim_current(host, id, angle, MELEE_UNITS)?;
-        (angle, slope, damage, MELEE_UNITS)
-    } else {
-        if weapon != Weapon::Pistol {
-            return Err(WeaponError::UnsupportedWeapon.into());
-        }
-        let slope = aim_current(host, id, angle, AUTOAIM_UNITS)?;
+        return line_current(host, id, weapon, angle, slope, damage, MELEE_UNITS);
+    }
+    if !matches!(weapon, Weapon::Pistol | Weapon::Shotgun) {
+        return Err(WeaponError::UnsupportedWeapon.into());
+    }
+    let slope = aim_current(host, id, angle, AUTOAIM_UNITS)?;
+    // Source shotgun computes aim once and resolves each complete GunShot in order.
+    let pellets = if weapon == Weapon::Shotgun { 7 } else { 1 };
+    for _ in 0..pellets {
         let mut random = |kind| {
             let value = host.rng.p_random();
             host.events
                 .push(Event::Weapon(WeaponEvent::Random { kind, value }));
             value
         };
-        let (angle, damage) = weapons::gun_shot(angle, accurate, &mut random);
-        (angle, slope, damage, BULLET_UNITS)
-    };
+        let (bullet_angle, damage) =
+            weapons::gun_shot(angle, weapon != Weapon::Shotgun && accurate, &mut random);
+        line_current(host, id, weapon, bullet_angle, slope, damage, BULLET_UNITS)?;
+    }
+    Ok(())
+}
+fn line_current(
+    host: &mut LifeHost<'_, &mut ThinkerStore<Actor>>,
+    id: ActorId,
+    weapon: Weapon,
+    angle: u32,
+    slope: Fixed,
+    damage: i32,
+    range: i16,
+) -> Result<(), SimError> {
+    let actor = *host.access.get(id).ok_or(WeaponError::Reference)?;
     host.events.push(Event::Weapon(WeaponEvent::Bullet {
         actor: id,
         angle,
