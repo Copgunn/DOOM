@@ -69,6 +69,8 @@ pub(crate) fn kind(ty: ActorTypeId) -> Option<PickupKind> {
         OriginalActorType::MT_MISC17 => PickupKind::BulletBox,
         OriginalActorType::MT_MISC22 => PickupKind::Shells,
         OriginalActorType::MT_MISC23 => PickupKind::ShellBox,
+        OriginalActorType::MT_MISC10 => PickupKind::Stimpack,
+        OriginalActorType::MT_MISC11 => PickupKind::Medikit,
         _ => return None,
     })
 }
@@ -354,6 +356,31 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                     PickupKind::BulletBox => ammo(w, false, 5, events),
                     PickupKind::Shells => ammo(w, true, 1, events),
                     PickupKind::ShellBox => ammo(w, true, 5, events),
+                    PickupKind::Stimpack | PickupKind::Medikit => {
+                        let before = self.player.health;
+                        let accepted = before < 100;
+                        if accepted {
+                            let after =
+                                (before + if k == PickupKind::Stimpack { 10 } else { 25 }).min(100);
+                            self.player.health = after;
+                            body.life.as_mut().ok_or(ActorError::InvalidType)?.health = after;
+                            self.access
+                                .get_mut(id)
+                                .and_then(|a| a.life.as_mut())
+                                .ok_or(StoreError::InvalidHandle)?
+                                .health = after;
+                        }
+                        observe(
+                            events,
+                            PickupEvent::Body(
+                                accepted,
+                                before,
+                                self.player.health,
+                                body.life().ok_or(ActorError::InvalidType)?.health,
+                            ),
+                        );
+                        accepted
+                    }
                     _ => return Err(PlayerBodyError::Unsupported.into()),
                 };
                 if accepted {

@@ -304,7 +304,7 @@ pub fn verify_parts(part: u8) -> u64 {
     let mut counts = [0; 5];
     let mut weapon_fields = 0;
     for (which, c) in cases().iter().enumerate() {
-        if c.part > part || (part == 0 && which == 0) {
+        if c.part > part {
             continue;
         }
         let (mut s, a) = setup(c);
