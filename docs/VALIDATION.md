@@ -105,6 +105,15 @@ Historical observers, fixtures and encoders continue to run unchanged. The
 [source matrix](M3G2_REFERENCE.md) and [support contract](COMPATIBILITY.md#original-player-body-lifecycle)
 define what each comparison proves.
 
+[M3g6 autonomous melee](validation/M3G6.md) adds genuine player-versus-Demon
+selection, delayed attack, range miss, physical damage, pain/death and corpse
+observations through the existing source command/thinker harness. Compiled-body
+inventory, actually exercised entries, newly exercised input families, C fields,
+independent event/schema projections and Rust-only ownership/rollback checks are
+reported separately. Existing source bodies and previous evidence are reused,
+not counted again as globally new coverage. The [source matrix](M3G6_REFERENCE.md)
+qualifies unreachable reverse thrust/extreme death and excluded full player thinkers.
+
 [M3g3](validation/M3G3.md) adds original-player physical impulse and actual grounded
 movement, friction, axis sliding and moving-corpse observations. Genuine map-spawn
 origins retain previous ownership/RNG semantics. Independent DSIM22 policy3 captures

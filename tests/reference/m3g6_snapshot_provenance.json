@@ -1,0 +1,42 @@
+{
+  "captures": 402,
+  "event_frames": 1961,
+  "execution_profile": 6,
+  "full_byte_fixtures": 8,
+  "inputs_sha256": {
+    "tests/reference/m3g6_cases.csv": "202534c726759ad8b9e4ffd6e316b7e04886ae7804439f3e4903e26d735371b8",
+    "tests/reference/m3g6_map_0.bin": "40569858a7316cd14105cb795514266c41457f5176619859841166190929887b",
+    "tests/reference/m3g6_map_1.bin": "b76c7d65ae807bea41b2b4293691edc75a3221363422eea17a0df590d207fd1d",
+    "tests/reference/m3g6_map_2.bin": "cf79464179e80b5d2a731f55b8789c1af784e1961b75fc0719deafa043a0dcc1",
+    "tests/reference/m3g6_map_3.bin": "4c3d995414f7ccdebd2139629470eb3152f7d3c1c7132778517b3f999669f35c",
+    "tests/reference/m3g6_map_4.bin": "d70a176cb2d22ad2f072302fb19b3f8e0f2a0ff6c75b5f142da2735a03f144b6",
+    "tests/reference/m3g6_map_5.bin": "8cb62f1e38b311320797f21ccfae72771f7c0115f01ae4bd02906165c3debdc8",
+    "tests/reference/m3g6_map_6.bin": "09d66dc57ad0dadc80ff2ef330b797583c751b2b278821ebd353063e5bf9320e",
+    "tests/reference/m3g6_map_7.bin": "083768c2b1333106449b17bc9aa693d937165e0e9e919897e8f11c34ffa325b8",
+    "tests/reference/m3g6_map_8.bin": "06d73f5c0a6e11badffd37d680b5110beac1d0782c09fd8539a5c735d92a084f",
+    "tests/reference/m3g6_provenance.json": "d0131601b6898d68447f851d285efd59d2680ed2f80036a97a0e46e94861a197",
+    "tests/reference/m3g6_trace.csv": "d22d7f74b1962d9827cad5432442eafe17b136387626540f50bea46cef0f3153",
+    "tools/reference/m3c_snapshot_goldens.py": "95eac9b3e9f416eea16bb2ace5bb12a3aa401d9942069046dca05e0edc3a123c",
+    "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
+    "tools/reference/m3g2_snapshot_goldens.py": "b65bbd286f22fb0ec0b2176cfbc339f0376a24ccfe4a91d537e5f672a3e8ceee",
+    "tools/reference/m3g6_snapshot_goldens.py": "00a5c2c529bcbbf542b01110238fb7869c017ba9a175cb90bd399a0e6911435f",
+    "tools/reference/player_execution_snapshot.py": "98a5c4a37cc43ce901636cd6504f891dbad19e86440efeb25b4596e69800e336",
+    "tools/reference/player_snapshot.py": "9524e70b09184766fc9aa10c8625e9849f8b59579165218cc1a1e66e90747c5c"
+  },
+  "ordered_event_fields": 18532,
+  "outputs_sha256": {
+    "tests/reference/m3g6_events.bin": "dbc9a9b63d8a7ecce07636515f65798eb387b3dc0c1f780e2a71d02386258221",
+    "tests/reference/m3g6_snapshots.csv": "191cb09c32c905a482e1425f86160747039fbbc65f81edb80b157b808900b06c",
+    "tests/reference/m3g6_state_0_330.bin": "0d81557f9991023f9061ceeedef80c05fb3f7fd4dfa7a52ab961be718eb063c1",
+    "tests/reference/m3g6_state_0_416.bin": "5a6f749ce3771069192044b40866a9d0f42dbf63d93b80da66a387a4326c4388",
+    "tests/reference/m3g6_state_0_92.bin": "2fe555dee4fc7119e9031ce022144cc4f5716d22d2c31e67e5932b33568857e7",
+    "tests/reference/m3g6_state_11_17.bin": "88bc59a9943c4a8fc870079297d8502b62e58e816af329671e75cce709940474",
+    "tests/reference/m3g6_state_13_17.bin": "f62620082f34935450f4278ce9be5ec0361b44b886c67e495f40734cbd118cd7",
+    "tests/reference/m3g6_state_16_32.bin": "0f474476634324185173307052d382f9bcc2c2cd9014756dd0c6a301a666b05d",
+    "tests/reference/m3g6_state_2_32.bin": "271f617f31cb0d77c4d7d22b70bbba69ebb3763dfe8ee772f3e32922aeb40c31",
+    "tests/reference/m3g6_state_6_122.bin": "7c46a3ca0b4a1eed47d7d5c4a603bb1997cfff02c0b4b8def3536b7b18b69220"
+  },
+  "roster_fields": 6432,
+  "schema": "DSIM-v22",
+  "scope": "Original MT_PLAYER0 and MT_SERGEANT12, fixed active player0. Source player/mo/roster rows and ordered Look/Chase/attack/damage events independently encode unchanged DSIM22 fields with policy6 and a distinct melee context. Command gate plus original thinkers is not full P_Ticker/PlayerThink/DeathThink. Birth/generation projection remains separate Rust schema policy. No Rust expected outputs."
+}

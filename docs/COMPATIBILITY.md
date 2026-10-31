@@ -853,3 +853,82 @@ armor/cheats, roster changes, respawn/multiplayer, generalized targeting/infight
 other monster species, sound propagation, arbitrary geometry and autonomous combat
 remain unsupported. [Source findings](M3G5_REFERENCE.md) and
 [observed evidence](validation/M3G5.md) qualify this bounded gameplay composition.
+
+## Autonomous original Demon-player melee
+
+Select `Simulation::original_player_demon_melee_map` or the separate
+`OriginalExecutionProfile::PlayerDemonMeleeV1`. This adds a public capability
+variant and constructor; callers with exhaustive policy matches need a new arm.
+It composes the existing fixed active player0, genuine MT_PLAYER=0 ownership,
+map-THING MT_SERGEANT=12, commands, acquisition and pursuit. Historical policies,
+including acquisition-only PlayerDemonAcquisitionV1, keep their original inputs,
+state permissions and rejection behavior. No actor or geometry bound expands.
+
+The admitted domain retains Medium/commercial single-player settings, at most one
+Demon, one active owned player, floor0/ceiling128, static one-sector axis-aligned
+one-sided walls, source BLOCKMAP/sight order and existing arithmetic/work limits.
+Zero Demons is allowed. The same player slot0 commands execute before thinkers:
+forward/side -50..50, signed i16 turns under the declared bit interpretation,
+buttons0 and default other slots. No armor, powers, cheats, soundtarget propagation,
+Fast/Nightmare, inventory, weapon or respawn configuration is implied.
+
+Original A_Chase chooses melee using current approximate distance and sight, emits
+the attack sound and immediately enters S_SARG_ATK1. ATK1/2/3 retain original
+ordinals485/486/487, durations8/8/8 and Face/Face/SargAttack actions. The damaging
+action occurs16 tics after selection, and returns to run chronology8 tics later.
+The player can move during windup. SargAttack returns on absent target; otherwise
+it faces and checks range again. A pristine player requires distance strictly
+below60 units plus successful sight. A range miss consumes no damage draw.
+
+An accepted range check draws exactly `((P_Random()%10)+1)*4`, giving4–40 damage
+in increments of4. The current Demon is explicitly both source and inflictor in
+DamageRequest. The existing shared damage service applies mass-scaled fixed-point
+thrust before player health/attacker/damagecount and signed mobj health. Incoming
+momentum includes the command stage and prior impulses; the player's later thinker
+then performs existing XY/friction/sliding. The live inflictor remains executable
+afterward and need not be killed or marked for removal.
+
+Current ownership, generation, definition, state, health and grounded assumptions
+are checked. The shared impulse/travel proof must accept the actual staged result:
+component magnitude<=30 units and the existing conservative `160/3` travel envelope
+inside±994. These are Rust admission limits, not original world limits or a clamp.
+A well-defined C impulse outside that proof is an atomic unsupported operation.
+Player SHADOW/power flags are outside the accepted source settings. Both z values
+are0, so reverse-thrust height>64 and its conditional random draw are unreachable.
+
+Nonlethal damage preserves the source pain draw, reaction reset and conditional
+mobj retargeting. Player chance255 does not trigger pain on draw255. Player health
+clamps0 while mobj health can become negative. Lethal damage enters the existing
+player death path, clears solidity/shootability, retains momentum, sets PST_DEAD
+and leaves an allocated corpse. Kill returns before the nonlethal reaction reset.
+Death does not deactivate the roster, clear mo/attacker or erase the Demon's target.
+Subsequent Chase handles nonshootability through the existing source scan/spawn
+fallback; no actor-slot reuse can redirect retained generations.
+
+Melee from positive health cannot produce mobj health below-39. Autonomous extreme
+death(<-100) and the commercial below-50 high scream are therefore unreachable.
+Existing controlled-damage extreme-death behavior remains separate coverage. If a
+target dies during windup but remains in range, SargAttack can still draw damage;
+P_DamageMobj then ignores the dead/nonshootable body without thrust, health or new
+pain/death effects. This differs from a range miss and from invalid storage.
+
+Existing live-owner controlled original state-entry restrictions still apply;
+player pain/death remain damage-controlled and raise is excluded. The legacy
+synthetic `demon_melee_attack` API remains unavailable with a genuine player.
+Normal autonomous execution needs only advance/step, not that helper or injected
+damage. Fixed player removal/rebinding, all-inactive roster transitions and
+foreign/stale/pending relationship admission retain their checked boundaries.
+
+All late failures discard the bounded existing transaction, including command,
+actor/player fields, impulse, references, RNG, statistics, spatial/thinker order,
+tic and pending/last events. No release exception or full-world clone is added.
+`advance` constructs no implicit Snapshot; `step` uses the same core and captures
+once after success. [DSIM22 policy6](STATE_FORMAT.md#dsim-v22-autonomous-demon-player-melee-policy)
+uses the existing layout with a distinct context; policy5 remains no-melee.
+
+This is a bounded command gate plus original actor thinkers, not complete
+P_Ticker/P_PlayerThink/P_DeathThink. View/camera, damagecount decay, weapons,
+pickups, armor/powers/cheats, roster changes, respawn/multiplayer, other monsters,
+infighting, dynamic sectors, airborne/general geometry and rendering remain
+excluded. [Source findings](M3G6_REFERENCE.md) and [observed evidence](validation/M3G6.md)
+separate source behavior, reusable historical evidence and Rust safety policy.

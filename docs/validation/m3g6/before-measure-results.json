@@ -1,0 +1,32 @@
+[
+  {
+    "check": "legacy",
+    "exit": 0,
+    "seconds": 17.599
+  },
+  {
+    "check": "stepping",
+    "exit": 0,
+    "seconds": 23.385
+  },
+  {
+    "check": "player",
+    "exit": 0,
+    "seconds": 0.896
+  },
+  {
+    "check": "knockback",
+    "exit": 0,
+    "seconds": 1.152
+  },
+  {
+    "check": "commands",
+    "exit": 0,
+    "seconds": 1.338
+  },
+  {
+    "check": "player-demon",
+    "exit": 0,
+    "seconds": 1.901
+  }
+]

@@ -230,8 +230,9 @@ impl DamagePlan {
         }
         Ok(self)
     }
-    /// Only called for the globally preflighted profile16 body role. Earlier
-    /// owners may have changed health/RNG; read the actual current small record.
+    /// Current damage for a globally preflighted body role. The canonical player
+    /// caller additionally proves current ownership and physical impulse bounds.
+    /// Earlier actions may change health/RNG; never reuse a prior-tic plan.
     pub(crate) fn current_melee_body(
         registry: &ActorRegistry,
         actor: Actor,

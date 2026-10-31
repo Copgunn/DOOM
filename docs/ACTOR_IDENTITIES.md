@@ -337,3 +337,18 @@ Source melee eligibility causes atomic rejection rather than silent branch
 skipping. Old DemonNormalV1 and player policies retain their state permissions and
 synthetic context boundaries. See [support](COMPATIBILITY.md#active-original-player-and-demon-acquisition),
 [source matrix](M3G5_REFERENCE.md) and [schema](STATE_FORMAT.md#dsim-v22-active-player-demon-policy).
+
+## Autonomous canonical Demon melee
+
+`PlayerDemonMeleeV1` adds execution permission for the same pristine SARG attack
+states485–487 against the existing owned MT_PLAYER=0. MT_SERGEANT=12 remains the
+actual owner and physical inflictor; MT_SHOTGUY and MT_SHADOWS remain unadmitted.
+Player slot0, actor generation, original definition and execution capability keep
+their separate meanings. No alias, actor field or extra identity namespace is added.
+
+The new OriginalExecutionProfile variant is an explicit API addition; downstream
+exhaustive matches need its arm. Existing wire IDs and the public historical
+Profile enum retain their meanings. The acquisition-only policy still rejects
+attack execution; raise and player weapon states remain excluded. See
+[combat support](COMPATIBILITY.md#autonomous-original-demon-player-melee),
+[source timing](M3G6_REFERENCE.md) and [diagnostics](STATE_FORMAT.md#dsim-v22-autonomous-demon-player-melee-policy).

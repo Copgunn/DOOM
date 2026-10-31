@@ -62,8 +62,6 @@ see [design](M3F9_REFERENCE.md) and [observations](validation/M3F9.md).
 These foundations support controlled headless tests, not a complete playable game.
 Earlier findings and milestones are retained in the [historical records](validation/archive/README.md).
 
-## Next
-
 ### M3g5: Active original-player roster and canonical Demon acquisition
 
 Opt-in PlayerDemonAcquisitionV1 composes one active genuine player and at most one
@@ -71,7 +69,7 @@ map-THING Demon. Existing commands precede shared thinkers; source visual search
 lastlook/stop-slot behavior, wake sound/state entry and bounded autonomous pursuit
 use the same simulation. Death retains activity and corpse ownership. The actual
 melee branch rejects transactionally; full PlayerThink, roster deactivation and
-autonomous combat are not claimed. This milestone stops at owner review. See
+autonomous combat are not claimed by that capability. M3g5 is merged. See
 [source investigation](M3G5_REFERENCE.md), [support](COMPATIBILITY.md#active-original-player-and-demon-acquisition)
 and [observations](validation/M3G5.md). Exact review/CI state belongs to GitHub.
 
@@ -79,15 +77,29 @@ M3g4 command/reaction movement, M3g3 physical knockback/corpses, M3g2 genuine-pl
 lifecycle and M3g1 diagnostic-free stepping are merged. Their investigations and
 observations remain linked from the [evidence index](README.md).
 
+## Next
+
+### M3g6: Autonomous canonical Demon-to-player melee
+
+Opt-in PlayerDemonMeleeV1 composes the same genuine player, fixed active roster,
+commands, sight, pursuit and thinker transaction with original delayed SARG melee.
+The attack rechecks current range, then applies damage/physical impulse through
+the shared DamagePlan, including pain, death, target retention and persistent
+corpses. Misses and dead-body ignored damage retain distinct RNG behavior. Older
+policies keep their admission and rejection contracts. This milestone stops at
+owner review; exact commits and CI belong to GitHub. See
+[source investigation](M3G6_REFERENCE.md),
+[support](COMPATIBILITY.md#autonomous-original-demon-player-melee) and
+[observations](validation/M3G6.md).
+
 ### Next narrow gameplay milestone
 
-Admit the checked autonomous Demon-to-player melee damage closure through the
-existing DamagePlan and thinker transaction. Independently verify source/inflictor,
-physical impulse/travel proof, synchronized health, pain/death/frags, late RNG and
-ordered events, including target death and rollback. Remove the explicit melee
-boundary only when that closure is independently established. Do not introduce a
-parallel combat engine, broaden the player thinker, add other monsters or redesign
-identity infrastructure to obtain the next gameplay result.
+Prioritize bounded genuine-player pistol firing against the existing Demon through
+shared weapon/hitscan/damage services. Independently establish command-triggered
+cadence, minimal source ammo/weapon state, attack RNG, physical monster damage,
+pain/death and supported retaliation. Keep pickups, additional weapons/monsters,
+full PlayerThink and generalized infighting separate. The goal is player agency
+inside this shared combat loop, not another identity/ownership redesign.
 
 ### Focused maintenance acceptance criteria
 

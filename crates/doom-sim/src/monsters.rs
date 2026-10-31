@@ -275,8 +275,8 @@ pub(crate) fn select<A: ActorAccess>(
         if h.perception.is_some_and(|input| {
             matches!(
                 input.players,
-                crate::player_roster::PerceptionRoster::OriginalPlayer
-            )
+                crate::player_roster::PerceptionRoster::OriginalPlayer(_)
+            ) && !input.players.allows_player_melee()
         }) {
             // The historical late melee plan assumes a synthetic unbound body.
             // Preserve the real source branch boundary; commit no partial chase.

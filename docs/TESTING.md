@@ -667,3 +667,52 @@ ignored. Measure new workloads separately from matched frozen historical tools.
 `advance` measures production stepping; diagnostic `step` is a separate mode.
 Raw three-process timing/RSS/allocation samples and limitations belong in
 [the engineering evidence](validation/M3G5.md).
+
+## Autonomous Demon-player melee
+
+Run the new observer/encoder alongside every historical pair and all existing
+checks. Expected source and diagnostic files are independent of Rust output:
+
+```sh
+cargo test -p doom-sim --test m3g6_policy --test m3g6_reference --locked
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g6_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3g6_snapshot_goldens.py --check
+python3 tools/reference/check_player_demon_melee.py
+cargo run -p doom-sim --example player_demon_melee --locked
+cargo fmt --manifest-path fuzz/Cargo.toml --all -- --check
+cargo +nightly fuzz build --sanitizer address
+python3 tools/seed_player_demon_melee_fuzz.py /tmp/doom-player-demon-melee-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_demon_melee /tmp/doom-player-demon-melee-seeds --sanitizer address -- -runs=4096 -max_len=162 -seed=1 -timeout=20 -rss_limit_mb=2048
+python3 tools/measure_player_demon_melee.py
+python3 tools/measure_player_demon_melee.py --smoke
+```
+
+The default example checks original-C fields, RNG, complete ordered events and
+independent diagnostics, including pure autonomous acquisition through lethal
+damage and a terminal corpse. It compares every scripted tic through step and
+advance followed by explicit snapshot. Separate Rust policy tests cover invalid
+roles/generations/provenance, pending/retired storage, conservative impulse limits,
+late failure after real staged damage and zero implicit advance captures.
+
+The source tool reuses the frozen bounded command gate before original thinkers;
+it does not run full P_Ticker/PlayerThink/DeathThink. Current range is rechecked at
+attack time. Range misses, absent targets and ignored dead-body damage have
+different RNG consequences. New turn inputs are nonnegative literal defined cases;
+historical negative-turn qualification remains reused evidence. Never execute an
+unbounded all-inactive source scan or dereference freed pointers.
+
+The new fuzz model warms only bounded committed timelines, then exercises individual
+checked operations in two instances, complete rejection/equivalence and diagnostic
+corruption. Built targets and actually executed campaigns are separate observations.
+Leak detection is disabled above; bounded runs are not exhaustive or leak coverage.
+
+Measure old controls with their unchanged tools. New melee intervals each contain
+100 shared-core updates, with setup and final explicit diagnostics excluded.
+Repeated melee warms64 tics; corpse continuation warms300 tics before its measured
+interval. Other labels start at tic0. Near-lethal health reduction, prior impulse
+and reaction delay are declared setup; no timed interval injects an attack or
+damage. Advance and diagnostic step are separate modes. Retain all three timing/
+RSS and separate allocation-process samples, outliers and workload fingerprints.
+The smoke mode is advisory and has no timing threshold. See
+[source boundaries](M3G6_REFERENCE.md), [support](COMPATIBILITY.md#autonomous-original-demon-player-melee)
+and [measured observations](validation/M3G6.md).

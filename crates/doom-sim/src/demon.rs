@@ -14,10 +14,19 @@ pub(crate) fn strike<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) {
     if host.perception.is_some_and(|input| {
         matches!(
             input.players,
-            crate::player_roster::PerceptionRoster::OriginalPlayer
+            crate::player_roster::PerceptionRoster::OriginalPlayer(_)
         )
     }) {
-        host.fail_sight(PlayerBodyError::Unsupported.into());
+        if host
+            .perception
+            .is_some_and(|input| input.players.allows_player_melee())
+        {
+            if let Err(error) = strike_player(host, id) {
+                host.fail_sight(error);
+            }
+        } else {
+            host.fail_sight(PlayerBodyError::Unsupported.into());
+        }
         return;
     }
     if host.access.get(id).unwrap().life.unwrap().target.is_none() {
@@ -46,6 +55,79 @@ pub(crate) fn strike<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) {
         assert_eq!(actual, amount);
         host.apply_damage(damage);
     }
+}
+
+// p_enemy.c A_SargAttack and the existing MonsterEvent random-kind namespace.
+const SARG_DAMAGE_CHOICES: i32 = 10;
+const SARG_DAMAGE_UNIT: i32 = 4;
+const SARG_DAMAGE_DRAW: u8 = 4;
+
+/// Runs only inside the existing checked action transaction. No future hit,
+/// health or RNG is predicted: Face/range are pure with respect to target fields,
+/// then the shared DamagePlan reads the current staged body at actual attack time.
+fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Result<(), SimError> {
+    use crate::identity::{OriginalActorType, OriginalState};
+    let owner = host.access.get(id).ok_or(CombatError::Reference)?;
+    let life = owner.life().ok_or(MonsterError::Definition)?;
+    if life.actor_type.0 != OriginalActorType::MT_SERGEANT.ordinal()
+        || life.health <= 0
+        || life.state != Some(StateId(OriginalState::S_SARG_ATK3.ordinal()))
+        || owner.z() != Fixed::ZERO
+        || owner.vertical_momentum() != Fixed::ZERO
+    {
+        return Err(MonsterError::Definition.into());
+    }
+    let Some(target) = life.target else {
+        return Ok(());
+    };
+    let player = host.player.as_deref().ok_or(PlayerBodyError::Binding)?;
+    let body = host.access.get(target).ok_or(CombatError::Reference)?;
+    let body_life = body.life().ok_or(PlayerBodyError::Invariant)?;
+    // Powers/SHADOW, cheats and arbitrary player flag mutations are unadmitted.
+    // JUSTHIT and CORPSE are the source damage/death additions to pristine flags.
+    let allowed = OriginalActorType::MT_PLAYER.descriptor().flags
+        | original_player::MF_JUSTHIT
+        | original_player::MF_CORPSE;
+    if player.mo != Some(target)
+        || body_life.actor_type.0 != OriginalActorType::MT_PLAYER.ordinal()
+        || player.health != body_life.health.max(0)
+        || (player.state == PlayerBodyState::Dead) != (body_life.health <= 0)
+        || body_life.flags & !allowed != 0
+        || body.z() != Fixed::ZERO
+        || body.vertical_momentum() != Fixed::ZERO
+    {
+        return Err(PlayerBodyError::Invariant.into());
+    }
+    crate::monsters::face(host, id);
+    if !crate::monsters::melee_host(host, id) {
+        // A failed checked sight query is already latched for whole-tic rollback.
+        return Ok(());
+    }
+    // Bounded u8 draw makes this source formula4..40 without integer overflow.
+    let amount =
+        (i32::from(crate::monsters::draw(host, id, SARG_DAMAGE_DRAW)) % SARG_DAMAGE_CHOICES + 1)
+            * SARG_DAMAGE_UNIT;
+    let body = host.access.get(target).ok_or(CombatError::Reference)?;
+    let owner = host.access.get(id).ok_or(CombatError::Reference)?;
+    let current = body.life().ok_or(PlayerBodyError::Invariant)?;
+    if current.health > 0 && current.flags & original_player::MF_SHOOTABLE != 0 {
+        original_player::preflight_player_impulse(body, owner, amount)?;
+    }
+    let damage = crate::combat::DamagePlan::current_melee_body(
+        host.registry,
+        *body,
+        DamageRequest {
+            target,
+            inflictor: Some(id),
+            source: Some(id),
+            amount,
+        },
+    )?;
+    if damage.spawn_count() != 0 {
+        return Err(CombatError::WorkLimit.into());
+    }
+    host.apply_damage(damage);
+    Ok(())
 }
 impl Simulation {
     /// Explicit normal 8/8/8 SARG fixture, not full Demon/Spectre gameplay.
@@ -330,6 +412,10 @@ fn validate_registry(r: &ActorRegistry) -> Result<(), SimError> {
 #[cfg(test)]
 #[path = "demon_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "player_melee_tests.rs"]
+mod player_melee_tests;
 
 /// Global profile16 preflight proves stable body lifetimes/roles and complete
 /// zero-allocation closures before any thinker mutation. This small late plan

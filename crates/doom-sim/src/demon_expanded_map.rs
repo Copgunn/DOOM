@@ -184,7 +184,7 @@ impl Simulation {
         perception::PerceptionInputs {
             checked: Some(control),
             players: if self.uses_active_player_roster() {
-                player_roster::PerceptionRoster::OriginalPlayer
+                player_roster::PerceptionRoster::OriginalPlayer(self.player_policy())
             } else {
                 player_roster::PerceptionRoster::Historical(&self.perception_players)
             },
