@@ -212,6 +212,18 @@ pub fn assert_snapshot(snapshot: &Snapshot, which: usize, op: usize) -> bool {
                 include_bytes!("../reference/m3g8_state_26_512.bin"),
             ),
             (
+                "m3g8_state_27_19.bin",
+                include_bytes!("../reference/m3g8_state_27_19.bin"),
+            ),
+            (
+                "m3g8_state_28_256.bin",
+                include_bytes!("../reference/m3g8_state_28_256.bin"),
+            ),
+            (
+                "m3g8_state_29_256.bin",
+                include_bytes!("../reference/m3g8_state_29_256.bin"),
+            ),
+            (
                 "m3g8_state_5_19.bin",
                 include_bytes!("../reference/m3g8_state_5_19.bin"),
             ),

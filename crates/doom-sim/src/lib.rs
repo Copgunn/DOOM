@@ -1230,3 +1230,7 @@ mod tests {
 
 #[cfg(test)]
 mod advance_tests;
+
+#[cfg(test)]
+#[path = "../../../tests/support/m3g8.rs"]
+mod weapon_pack_evidence;

@@ -322,3 +322,16 @@ See [source qualifications](../../docs/M3G7_REFERENCE.md),
 [evidence counts](../../docs/validation/M3G7.md) and
 [commands](../../docs/TESTING.md#genuine-player-pistol). No whole-player or
 portable unmodified ISO-C equivalence is inferred.
+
+M3g8 extends the frozen M3g7 extraction with actual original fist/shotgun/chaingun
+and Light2 bodies plus the declared source weapon-selection fragment.
+[m3g8_reference.py](m3g8_reference.py) produces new compact C observations;
+[m3g8_snapshot_goldens.py](m3g8_snapshot_goldens.py) and
+[weapon_snapshot.py](weapon_snapshot.py) independently encode DSIM24.
+[evidence_pack.py](evidence_pack.py) specifies bounded DREFLZ1 storage for new test
+evidence only; it does not migrate any historical fixture or define a game format.
+Packed and expanded hashes retain provenance and inspection/reproduction needs
+only standard-library Python. A safe bounded test-only Rust decoder supplies the
+same committed bytes to comparisons. See [investigation](../../docs/M3G8_REFERENCE_INVESTIGATION.md),
+[commands](../../docs/TESTING.md#original-player-weapon-expansion) and
+[observations](../../docs/validation/M3G8.md).

@@ -28,7 +28,7 @@ def run(check):
     inputs += maps
     outputs, inventory = weapon_snapshot.build(
         cases, rows, [ROOT/path for path in maps], 'm3g8',
-        {(0,0),(1,19),(1,96),(5,19),(10,128),(12,18),(13,129),(18,15),(19,19),(24,64),(25,512),(26,512)})
+        {(0,0),(1,19),(1,96),(5,19),(10,128),(12,18),(13,129),(18,15),(19,19),(24,64),(25,512),(26,512),(27,19),(28,256),(29,256)})
     events=outputs.pop('tests/reference/m3g8_events.bin')
     outputs['tests/reference/m3g8_events.dref']=pack(events)
     inventory.update(expanded_event_bytes=len(events),packed_event_bytes=len(outputs['tests/reference/m3g8_events.dref']))

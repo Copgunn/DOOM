@@ -85,7 +85,7 @@ fn state(name: &str) -> StateId {
 /// A rejected profile, player, command or preflight prerequisite.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum WeaponError {
-    /// Requires explicit profile 6.
+    /// Requires an explicitly admitted weapon capability.
     Profile,
     /// Only one initialized live player is admitted, in a validated slot.
     Player,
@@ -163,7 +163,8 @@ pub struct WeaponPlayer {
     pub slot: u8,
     /// Generation-safe bound body.
     pub actor: ActorId,
-    /// Fixed live-health prerequisite; player damage is excluded.
+    /// Historical persistent profile requires fixed live health. Genuine-player
+    /// adapters borrow current authoritative health only for one operation.
     pub health: i32,
     /// Current source weapon.
     pub ready: Weapon,
@@ -505,17 +506,17 @@ impl<H: Host> Machine<'_, H> {
         Ok(())
     }
 }
-pub(crate) enum PistolOperation {
+pub(crate) enum PlayerWeaponOperation {
     Setup,
     Advance,
     DeadAdvance,
     Drop,
 }
-pub(crate) fn pistol<H: Host>(
+pub(crate) fn original_player<H: Host>(
     registry: &ActorRegistry,
     player: WeaponPlayer,
     host: H,
-    operation: PistolOperation,
+    operation: PlayerWeaponOperation,
     command: TicCommand,
     leveltime: u64,
 ) -> Result<WeaponPlayer, SimError> {
@@ -528,10 +529,10 @@ pub(crate) fn pistol<H: Host>(
         work: 0,
     };
     match operation {
-        PistolOperation::Setup => machine.bring_up()?,
-        PistolOperation::Advance => machine.after_motion(command)?,
-        PistolOperation::DeadAdvance => machine.move_psprites()?,
-        PistolOperation::Drop => machine.enter(0, machine.player.ready.states()[1])?,
+        PlayerWeaponOperation::Setup => machine.bring_up()?,
+        PlayerWeaponOperation::Advance => machine.after_motion(command)?,
+        PlayerWeaponOperation::DeadAdvance => machine.move_psprites()?,
+        PlayerWeaponOperation::Drop => machine.enter(0, machine.player.ready.states()[1])?,
     }
     Ok(machine.player)
 }

@@ -775,3 +775,33 @@ example. Its timeout has additional headroom because the unchanged M3g6
 exact-master Linux job approached28 minutes; no validation is removed or bypassed.
 See [support](COMPATIBILITY.md#genuine-player-pistol-combat) and
 [source arithmetic/harness limits](M3G7_REFERENCE.md).
+
+## Original player weapon expansion
+
+```sh
+python3 tools/reference/evidence_pack.py
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g8_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3g8_snapshot_goldens.py --check
+cargo test -p doom-sim --test player_weapon_pack --locked
+python3 tools/reference/check_player_weapon_pack.py
+cargo run -p doom-sim --example player_weapon_pack --locked
+cargo +nightly fuzz build --sanitizer address
+python3 tools/seed_player_weapon_pack_fuzz.py /tmp/player-weapon-pack-seeds
+# From fuzz/; bounded example, not exhaustive coverage or leak detection:
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_weapon_pack /tmp/player-weapon-pack-seeds -- -seed=381 -runs=4096 -max_len=162 -timeout=15 -rss_limit_mb=1024
+python3 tools/measure_player_weapons.py
+```
+
+The asserted example executes source command streams, not injected damage.
+New DREFLZ1 test storage is reproducible with standard-library Python and a bounded
+safe Rust test decoder. For inspection:
+
+```sh
+python3 tools/reference/evidence_pack.py --unpack tests/reference/m3g8_trace.dref --output /tmp/m3g8-trace.csv
+```
+
+Expected source fields/events and independent DSIM24 fixtures precede runtime
+integration. Historical tools and expectations remain unchanged. All historical
+checks above still apply. See [source qualification](M3G8_REFERENCE_INVESTIGATION.md)
+and [observed results](validation/M3G8.md); source observation totals and actual
+Rust-admitted comparison totals are deliberately reported separately.

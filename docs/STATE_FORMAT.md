@@ -1,4 +1,4 @@
-# Canonical diagnostic state format: DSIM versions 1–23
+# Canonical diagnostic state format: DSIM versions 1–24
 
 This is a diagnostic/replay comparison format for explicit simulation profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
@@ -1206,7 +1206,7 @@ in the stated order. Prefix is `original_player.0.pistol`:
 Immutable ready=Pistol, pending=nochange, owned=fist+pistol and original ammo
 capacity derive from policy7 rather than another serialized player record.
 Original body0, Demon12 and effects37/38 retain actual source IDs. Player mobj
-attack states154/155 are executable only under this capability. Weapon overlays
+attack states154/155 are executable under this capability; policy8 reuses them separately. Weapon overlays
 10..17 and immediate LightDone1/Null0 are not actor states or thinker instances.
 
 Persistent weapon states are source pistol ready/up/down/attack; flash is17 or
@@ -1236,3 +1236,42 @@ It never restores executable worlds or grants actor ownership.
 [Support](COMPATIBILITY.md#genuine-player-pistol-combat),
 [source qualification](M3G7_REFERENCE.md), [reproduction](TESTING.md#genuine-player-pistol)
 and [evidence](validation/M3G7.md) identify the independent bytes and limits.
+
+## DSIM-v24 original player weapon expansion
+
+Version24 selects policy8 (`PlayerDemonWeaponsV1`) and context
+`PLAYER-DEMON-1-MEDIUM-GROUNDED-WEAPONS-v1`, with the original registry schema.
+This separate layout is necessary because ready/pending/owned and shell counts
+are dynamic; v23's immutable pistol assumptions remain unchanged. The explicit
+`Diagnostic::decode_weapons` reader handles24; older readers reject it. V20–23
+bytes, readers, event meanings and execution-policy/context pairs are preserved.
+
+Replace the v23 pistol-only group with prefix `original_player.0.weapons`, after
+`original_player.0.frags` and before `events.last.count`, in this order:
+
+| Suffix | Representation |
+| --- | --- |
+| present | u8 bool;0 means no other weapon fields follow |
+| ready, pending | u8 original weapon ordinal0..3; pending10 means wp_nochange |
+| owned | u16 original weapon bits0..3; fist/pistol required; ready/pending must be owned |
+| bullets, shells | u16 am_clip0..200, am_shell0..50 |
+| attack_down | u8 bool |
+| refire | nonnegative i32, checked on source increment |
+| bob, extra_light | i32 raw fixed0..0x100000; i32 light0..2 |
+| psprite.0.state, .tics, .x, .y | u16 original state or65535 NULL; i32 countdown/raw XY |
+| psprite.1.state, .tics, .x, .y | Same, flash after weapon |
+
+There are18 fields when present. Capacity and excluded cell/rocket ammo remain
+immutable policy data. Original overlays are fist2–9, pistol10–17, shotgun18–31,
+chaingun49–56, with immediate Null0/LightDone1. Persisted weapon states must match
+ready and canonical positive timers; flash identity/light and coordinate bounds
+are checked. Source Chain3 is zero-tic and appears only as an entry/action event.
+Dead-player weapon state must be the actual ready downstate. No health, actor
+binding, immutable original metadata or process-local provenance is duplicated.
+
+Existing tag14 widths/order remain. Version24/policy8 admits the four named weapon
+state/action closures, ammo0/1 decrements, lights0..2, nonnegative refire and fist
+or bullet damage domains. Tag22 Died keeps its width and records the actual
+ready weapon's downstate. V23 retains pistol-only validation. Other nested payloads
+retain their documented bounded/opaque handling. Decoding validates diagnostic
+observations, never restores an executable world or grants ownership.

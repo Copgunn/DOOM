@@ -246,7 +246,7 @@ impl Simulation {
         self.checked_demon_operation(|host| {
             let result = player_pistol::run(
                 host,
-                weapons::PistolOperation::Setup,
+                weapons::PlayerWeaponOperation::Setup,
                 TicCommand::default(),
                 0,
                 None,
@@ -271,3 +271,7 @@ impl Simulation {
             .ok_or(PlayerBodyError::Profile)
     }
 }
+
+#[cfg(test)]
+#[path = "player_weapon_tests.rs"]
+mod tests;

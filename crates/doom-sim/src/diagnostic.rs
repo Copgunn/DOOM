@@ -781,7 +781,7 @@ fn validate_handle(bytes: &[u8]) -> Result<(), DiagnosticError> {
     Ok(())
 }
 impl Snapshot {
-    /// Bounded Result-returning DSIM20/21/22/23 encoder. Trusted convenience APIs retain
+    /// Bounded Result-returning DSIM20/21/22/23/24 encoder. Trusted convenience APIs retain
     /// their old allocation policy; callers at input/output boundaries use this.
     pub fn diagnostic_bytes(&self, limits: DiagnosticLimits) -> Result<Vec<u8>, DiagnosticError> {
         if !matches!(self.version(), 20..=24) {

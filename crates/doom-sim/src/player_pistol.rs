@@ -11,6 +11,8 @@ pub const PLAYER_DEMON_PISTOL_CONTEXT_SCHEMA: &[u8] = b"PLAYER-DEMON-1-MEDIUM-GR
 const AUTOAIM_UNITS: i16 = 1024;
 const BULLET_UNITS: i16 = 2048;
 const MELEE_UNITS: i16 = 64;
+const SHOTGUN_PELLETS: usize = 7;
+const SPREAD_SCALE: i32 = 1 << 18;
 const AUTOAIM_OFFSET: u32 = 1 << 26;
 const OWNED_FIST_PISTOL: u16 = (1 << Weapon::Fist as u8) | (1 << Weapon::Pistol as u8);
 /// Source initial ammunition, from G_PlayerReborn (not pickup gameplay).
@@ -172,7 +174,7 @@ impl Simulation {
         self.checked_demon_operation(|host| {
             let result = run(
                 host,
-                weapons::PistolOperation::Setup,
+                weapons::PlayerWeaponOperation::Setup,
                 TicCommand::default(),
                 0,
                 None,
@@ -294,7 +296,7 @@ impl<A: ActorAccess> weapons::Host for Host<'_, '_, A> {
 
 pub(crate) fn run<A: ActorAccess>(
     host: &mut LifeHost<'_, A>,
-    operation: weapons::PistolOperation,
+    operation: weapons::PlayerWeaponOperation,
     command: TicCommand,
     leveltime: u64,
     fire: Option<Fire<A>>,
@@ -326,9 +328,21 @@ pub(crate) fn run<A: ActorAccess>(
             state
         }
     };
+    if !matches!(
+        (player.policy, state),
+        (
+            OriginalExecutionProfile::PlayerDemonPistolV1,
+            player_weapons::PlayerWeaponRuntime::Pistol(_)
+        ) | (
+            OriginalExecutionProfile::PlayerDemonWeaponsV1,
+            player_weapons::PlayerWeaponRuntime::Pack(_)
+        )
+    ) {
+        return Err(WeaponError::Inventory.into());
+    }
     let adapter = state.adapter(id, player.health);
     let registry = host.registry;
-    let result = weapons::pistol(
+    let result = weapons::original_player(
         registry,
         adapter,
         Host {
@@ -363,9 +377,9 @@ pub(crate) fn stage(
     run(
         host,
         if dead {
-            weapons::PistolOperation::DeadAdvance
+            weapons::PlayerWeaponOperation::DeadAdvance
         } else {
-            weapons::PistolOperation::Advance
+            weapons::PlayerWeaponOperation::Advance
         },
         command,
         leveltime,
@@ -378,7 +392,7 @@ pub(crate) fn drop_weapon<A: ActorAccess>(host: &mut LifeHost<'_, A>) -> Result<
     if host.player.as_ref().is_some_and(|p| p.weapon.is_some()) {
         run(
             host,
-            weapons::PistolOperation::Drop,
+            weapons::PlayerWeaponOperation::Drop,
             TicCommand::default(),
             0,
             None,
@@ -404,7 +418,7 @@ fn fire_current(
             value
         };
         let damage = 2 * (i32::from(random(0)) % 10 + 1);
-        let spread = (i32::from(random(1)) - i32::from(random(2))) * 262144;
+        let spread = (i32::from(random(1)) - i32::from(random(2))) * SPREAD_SCALE;
         let angle = angle.wrapping_add_signed(spread);
         let slope = aim_current(host, id, angle, MELEE_UNITS)?;
         return line_current(host, id, weapon, angle, slope, damage, MELEE_UNITS);
@@ -414,7 +428,11 @@ fn fire_current(
     }
     let slope = aim_current(host, id, angle, AUTOAIM_UNITS)?;
     // Source shotgun computes aim once and resolves each complete GunShot in order.
-    let pellets = if weapon == Weapon::Shotgun { 7 } else { 1 };
+    let pellets = if weapon == Weapon::Shotgun {
+        SHOTGUN_PELLETS
+    } else {
+        1
+    };
     for _ in 0..pellets {
         let mut random = |kind| {
             let value = host.rng.p_random();
@@ -471,7 +489,7 @@ fn line_current(
                 damage,
                 OriginalActorType::MT_SERGEANT.descriptor().mass,
             )?;
-            Some(combat::DamagePlan::current_pistol(
+            Some(combat::DamagePlan::current_player_attack(
                 host.registry,
                 victim,
                 DamageRequest {
@@ -555,3 +573,7 @@ thread_local! {
 #[cfg(test)]
 #[path = "player_pistol_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "player_weapon_aim_tests.rs"]
+mod weapon_aim_tests;

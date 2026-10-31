@@ -35,6 +35,9 @@ case('empty_chaingun_to_shotgun',part=3,tics=256,ready=3,owned=15,clips=0,shells
 case('fallback_overrides_pending',part=3,tics=192,ready=2,owned=15,clips=4,shells=1,script=7)
 case('all_weapons_one_world',part=3,tics=512,ready=1,owned=15,clips=20,shells=3,script=4,dx=-128,thing_angle=0,turn=16384,turn_hold=2)
 case('fist_kill',tics=512,ready=0,clips=0,dx=60,seed=8)
+case('fist_blocked_near_wall',tics=128,ready=0,clips=0,wall=1,px=72,dx=132,attack_start=15,attack_end=15)
+case('shotgun_death_before_empty',part=1,tics=384,ready=2,owned=7,shells=50,clips=0,dx=-59,thing_angle=0,turn=16384,turn_hold=1)
+case('chaingun_death_before_empty',part=2,tics=384,ready=3,owned=11,clips=200,dx=-59,thing_angle=0,turn=16384,turn_hold=1)
 old_body=base.observed_body
 base.WEAPON_ACTIONS+=['A_Punch','A_FireShotgun','A_FireCGun','A_Light2']
 source=(ROOT/'linuxdoom-1.10/p_user.c').read_text();a=source.index('    // Check for weapon change.');b=source.index('    // check for use',a)

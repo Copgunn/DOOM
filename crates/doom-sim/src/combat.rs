@@ -233,7 +233,7 @@ impl DamagePlan {
         Ok(self)
     }
     /// Current canonical bullet damage, sharing health/pain/death/retarget planning.
-    pub(crate) fn current_pistol(
+    pub(crate) fn current_player_attack(
         registry: &ActorRegistry,
         actor: Actor,
         request: DamageRequest,

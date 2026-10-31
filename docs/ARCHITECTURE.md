@@ -468,7 +468,7 @@ See [support](COMPATIBILITY.md#autonomous-original-demon-player-melee),
 ## Canonical player pistol execution
 
 OriginalPlayer remains the sole source player owner for mo, health, state,
-attacker and lifetime. PlayerRuntime holds optional PistolState containing only
+attacker and lifetime. Under the pistol-only capability, PlayerRuntime selects its PistolState variant, containing only
 bullets, attackdown, refire, bob, extralight and two psprites. Immutable ownership,
 ready/pending pistol and capacities derive from the explicit capability. There is
 no second actor handle, health record, player manager or persistent WeaponPlayer.
@@ -503,3 +503,25 @@ impact-capacity errors. No full Simulation clone or implicit Snapshot is added.
 and [observations](validation/M3G7.md) separate source execution, schema projection
 and Rust safety. Camera, other weapons, inventory gameplay and full player
 thinking remain separate work.
+
+## Shared original weapon expansion
+
+PlayerRuntime holds one exclusive weapon-state variant: historical PistolState or
+PlayerWeaponState for the four-weapon capability. The latter adds ready, pending,
+owned and shell fields without duplicating mo, health, attacker or provenance.
+A transient WeaponPlayer adapter invokes the same Machine and returns checked
+weapon-only fields. There is no second persistent player, weapon interpreter,
+actor store, combat engine or scheduler. Existing synthetic WeaponPlayer remains
+its historical profile's representation.
+
+The shared genuine-player host admits four weapons only under the new capability.
+Original selection and psprites execute in the existing Players stage; original
+actor thinkers follow. Current aim, line-hit, effect and DamagePlan services are
+shared. Shotgun repeats the complete current bullet operation seven times after
+one aim calculation, so earlier pellets can affect later damage/trace/RNG state.
+Fist uses one melee aim and faces a struck target only after shared damage returns.
+Current weapon state supplies death lowering. The transaction commits weapon,
+player, actor, spatial, sound, RNG, statistics and events together. No Snapshot or
+full Simulation clone is added to production stepping. See the
+[support boundary](COMPATIBILITY.md#original-player-weapon-expansion) and
+[source matrix](M3G8_REFERENCE_INVESTIGATION.md).
