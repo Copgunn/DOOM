@@ -90,10 +90,12 @@ pub(crate) fn kind(ty: ActorTypeId) -> Option<PickupKind> {
     })
 }
 pub(crate) fn kind_for(profile: OriginalExecutionProfile, ty: ActorTypeId) -> Option<PickupKind> {
+    // Historical non-pickup execution must not walk item identity metadata.
+    if !profile.has_world_pickups() {
+        return None;
+    }
     let k = kind(ty)?;
-    (profile.has_world_pickups()
-        && (!k.is_armor() || profile == OriginalExecutionProfile::PlayerDemonArmorV1))
-        .then_some(k)
+    (!k.is_armor() || profile == OriginalExecutionProfile::PlayerDemonArmorV1).then_some(k)
 }
 pub(crate) fn state_allowed(ty: ActorTypeId, state: OriginalState) -> bool {
     kind(ty).is_some_and(|k| {
