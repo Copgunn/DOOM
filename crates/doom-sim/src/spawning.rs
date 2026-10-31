@@ -84,8 +84,8 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
-        if self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
-            && world_pickups::kind(ty).is_some()
+        if self.player_policy().has_world_pickups()
+            && world_pickups::kind_for(self.player_policy(), ty).is_some()
         {
             return Err(MapSpawnError::DirectSpawn.into());
         }
@@ -220,8 +220,8 @@ impl Simulation {
             return Err(PlayerBodyError::Unsupported.into());
         }
         let life = self.active_typed(id)?;
-        if self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
-            && world_pickups::kind(life.actor_type).is_some()
+        if self.player_policy().has_world_pickups()
+            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
@@ -250,8 +250,8 @@ impl Simulation {
             return Err(MonsterError::Profile.into());
         }
         let life = self.active_typed(id)?;
-        if self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
-            && world_pickups::kind(life.actor_type).is_some()
+        if self.player_policy().has_world_pickups()
+            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
@@ -294,8 +294,8 @@ impl Simulation {
             return Err(PlayerBodyError::Unsupported.into());
         }
         let life = self.active_typed(id)?;
-        if self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
-            && world_pickups::kind(life.actor_type).is_some()
+        if self.player_policy().has_world_pickups()
+            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
@@ -390,8 +390,8 @@ impl Simulation {
             if map_demons {
                 // Lookup and nomonsters use original metadata, including COUNTKILL,
                 // before the explicit executable fixture adaptation.
-                let pickup = self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
-                    && world_pickups::kind(ty).is_some();
+                let pickup = self.player_policy().has_world_pickups()
+                    && world_pickups::kind_for(self.player_policy(), ty).is_some();
                 if !pickup
                     && ty
                         != crate::identity::OriginalActorType::MT_SERGEANT
@@ -412,7 +412,9 @@ impl Simulation {
                     || (pickup
                         && selected
                             .iter()
-                            .filter(|(_, ty)| world_pickups::kind(*ty).is_some())
+                            .filter(|(_, ty)| {
+                                world_pickups::kind_for(self.player_policy(), *ty).is_some()
+                            })
                             .count()
                             == MAX_WORLD_PICKUPS)
                 {

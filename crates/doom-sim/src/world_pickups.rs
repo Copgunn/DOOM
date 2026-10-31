@@ -32,6 +32,10 @@ pub enum PickupKind {
     Shotgun,
     /// MT_CHAINGUN, DoomEd2002; distinct from MT_CHAINGUY.
     Chaingun,
+    /// Original MT_MISC0, DoomEd2018, animated green armor.
+    GreenArmor,
+    /// Original MT_MISC1, DoomEd2019, animated blue armor.
+    BlueArmor,
 }
 impl PickupKind {
     /// Original definition, never a synthetic pickup alias.
@@ -45,6 +49,8 @@ impl PickupKind {
             Self::Medikit => OriginalActorType::MT_MISC11,
             Self::Shotgun => OriginalActorType::MT_SHOTGUN,
             Self::Chaingun => OriginalActorType::MT_CHAINGUN,
+            Self::GreenArmor => OriginalActorType::MT_MISC0,
+            Self::BlueArmor => OriginalActorType::MT_MISC1,
         }
     }
     fn message(self) -> PickupMessage {
@@ -57,10 +63,15 @@ impl PickupKind {
             Self::Medikit => PickupMessage::Medikit,
             Self::Shotgun => PickupMessage::Shotgun,
             Self::Chaingun => PickupMessage::Chaingun,
+            Self::GreenArmor => PickupMessage::GreenArmor,
+            Self::BlueArmor => PickupMessage::BlueArmor,
         }
     }
     fn can_drop(self) -> bool {
         matches!(self, Self::Clip | Self::Shotgun | Self::Chaingun)
+    }
+    pub(crate) fn is_armor(self) -> bool {
+        matches!(self, Self::GreenArmor | Self::BlueArmor)
     }
 }
 pub(crate) fn kind(ty: ActorTypeId) -> Option<PickupKind> {
@@ -73,7 +84,21 @@ pub(crate) fn kind(ty: ActorTypeId) -> Option<PickupKind> {
         OriginalActorType::MT_MISC11 => PickupKind::Medikit,
         OriginalActorType::MT_SHOTGUN => PickupKind::Shotgun,
         OriginalActorType::MT_CHAINGUN => PickupKind::Chaingun,
+        OriginalActorType::MT_MISC0 => PickupKind::GreenArmor,
+        OriginalActorType::MT_MISC1 => PickupKind::BlueArmor,
         _ => return None,
+    })
+}
+pub(crate) fn kind_for(profile: OriginalExecutionProfile, ty: ActorTypeId) -> Option<PickupKind> {
+    let k = kind(ty)?;
+    (profile.has_world_pickups()
+        && (!k.is_armor() || profile == OriginalExecutionProfile::PlayerDemonArmorV1))
+        .then_some(k)
+}
+pub(crate) fn state_allowed(ty: ActorTypeId, state: OriginalState) -> bool {
+    kind(ty).is_some_and(|k| {
+        let root = k.original_type().states().spawn;
+        state == root || (k.is_armor() && state == root.descriptor().next)
     })
 }
 /// Stable identifiers for actual dstrings.h messages; no HUD timeout is implied.
@@ -101,6 +126,10 @@ pub enum PickupMessage {
     Shotgun = 8,
     /// GOTCHAINGUN.
     Chaingun = 9,
+    /// GOTARMOR, ordinary green armor.
+    GreenArmor = 10,
+    /// GOTMEGA, blue armor; not a MegaSphere.
+    BlueArmor = 11,
 }
 /// Source pickup-only fields; health, body and inventory retain their owners.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -113,10 +142,15 @@ pub struct PlayerPickupState {
     pub message: PickupMessage,
 }
 impl PlayerPickupState {
-    fn validate(self) -> Result<(), SimError> {
+    fn validate(self, profile: OriginalExecutionProfile) -> Result<(), SimError> {
         if !(0..=MAX_BONUS).contains(&self.bonus_count)
             || self.item_count != 0
             || self.message == PickupMessage::MedikitNeeded
+            || (profile != OriginalExecutionProfile::PlayerDemonArmorV1
+                && matches!(
+                    self.message,
+                    PickupMessage::GreenArmor | PickupMessage::BlueArmor
+                ))
         {
             return Err(PlayerBodyError::Invariant.into());
         }
@@ -153,6 +187,8 @@ pub enum PickupEvent {
     Bonus(i32, i32),
     /// Actual source touch return classification.
     Result(ActorId, PickupOutcome),
+    /// Requested source class, accepted, armor before and after P_GiveArmor.
+    Armor(ArmorType, bool, PlayerArmorState, PlayerArmorState),
 }
 pub(crate) enum ContactEvent {
     Pickup(PickupEvent),
@@ -172,11 +208,17 @@ pub(crate) fn validate_definition(ty: ActorTypeId) -> Result<(), SimError> {
     let k = kind(ty).ok_or(ActorError::InvalidType)?;
     let d = k.original_type().descriptor();
     let s = d.states.spawn.descriptor();
-    if d.flags != MF_SPECIAL
-        || s.tics != -1
-        || s.next != OriginalState::S_NULL
-        || s.action.is_some()
-    {
+    let timing = if k.is_armor() {
+        let next = s.next.descriptor();
+        s.tics > 0
+            && next.tics > 0
+            && next.next == d.states.spawn
+            && next.sprite == s.sprite
+            && next.action.is_none()
+    } else {
+        s.tics == -1 && s.next == OriginalState::S_NULL
+    };
+    if d.flags != MF_SPECIAL || !timing || s.action.is_some() {
         return Err(ActorError::InvalidType.into());
     }
     Ok(())
@@ -185,13 +227,20 @@ pub(crate) fn validate_item(a: Actor) -> Result<(), SimError> {
     let l = a.life().ok_or(ActorError::InvalidType)?;
     let k = kind(l.actor_type).ok_or(ActorError::InvalidType)?;
     validate_definition(l.actor_type)?;
-    let state = k.original_type().states().spawn;
+    let state = l
+        .state
+        .and_then(|v| OriginalState::try_from(v.0).ok())
+        .ok_or(ActorError::InvalidState)?;
     let s = state.descriptor();
     let dropped = l.flags & MF_DROPPED != 0;
-    if l.state != Some(StateId(state.ordinal()))
+    if !state_allowed(l.actor_type, state)
         || l.sprite != s.sprite.ordinal()
         || l.frame != s.frame
-        || l.tics != -1
+        || (if k.is_armor() {
+            !(1..=s.tics).contains(&l.tics)
+        } else {
+            l.tics != -1
+        })
         || l.health != 1000
         || l.target.is_some()
         || l.reaction_time != 8
@@ -229,10 +278,10 @@ pub(crate) fn bonus_tick(
     player: Option<&mut original_player::PlayerRuntime>,
 ) -> Result<(), SimError> {
     if let Some(p) = player {
-        if p.policy == OriginalExecutionProfile::PlayerDemonPickupsV1 {
+        if p.policy.has_world_pickups() {
             let live = p.state == PlayerBodyState::Live;
             let state = p.pickups.as_mut().ok_or(PlayerBodyError::Invariant)?;
-            state.validate()?;
+            state.validate(p.policy)?;
             if live && state.bonus_count > 0 {
                 state.bonus_count -= 1;
             }
@@ -326,9 +375,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
         spatial: &mut movement::SpatialIndex,
         events: &mut Vec<movement::MotionEvent>,
     ) -> Result<(), SimError> {
-        if self.player.mo != Some(id)
-            || self.player.policy != OriginalExecutionProfile::PlayerDemonPickupsV1
-        {
+        if self.player.mo != Some(id) || !self.player.policy.has_world_pickups() {
             return Err(PlayerBodyError::Binding.into());
         }
         for &item_id in &attempt.actors {
@@ -352,7 +399,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                 continue;
             }
             validate_item(item)?;
-            let k = kind(l.actor_type).ok_or(ActorError::InvalidType)?;
+            let k = kind_for(self.player.policy, l.actor_type).ok_or(ActorError::InvalidType)?;
             let delta = item.z - body.z;
             let health = body.life().ok_or(ActorError::InvalidType)?.health;
             observe(
@@ -372,6 +419,11 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                     return Err(WeaponError::Inventory.into());
                 };
                 let accepted = match k {
+                    // Actor/animation checkpoint: contact execution is admitted
+                    // by the following source-backed pickup package.
+                    PickupKind::GreenArmor | PickupKind::BlueArmor => {
+                        return Err(PlayerBodyError::Unsupported.into());
+                    }
                     PickupKind::Clip => ammo(
                         w,
                         false,
@@ -460,7 +512,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         .bonus_count
                         .checked_add(BONUS_ADD)
                         .ok_or(PlayerBodyError::Invariant)?;
-                    state.validate()?;
+                    state.validate(self.player.policy)?;
                     observe(
                         events,
                         PickupEvent::Bonus(state.bonus_count, state.item_count),
@@ -508,21 +560,26 @@ impl Simulation {
             .ok_or(PlayerBodyError::Profile)
     }
     pub(crate) fn preflight_world_pickups(&self) -> Result<(), SimError> {
-        if self.player_policy() != OriginalExecutionProfile::PlayerDemonPickupsV1 {
+        if !self.player_policy().has_world_pickups() {
             return Ok(());
         }
         self.original_player
             .as_ref()
             .and_then(|p| p.pickups)
             .ok_or(PlayerBodyError::Invariant)?
-            .validate()?;
+            .validate(self.player_policy())?;
+        if self.player_policy() == OriginalExecutionProfile::PlayerDemonArmorV1 {
+            self.original_player_armor(PlayerSlot::One)?;
+        }
         let mut count = 0;
         for id in self.actors.order() {
             if self.actors.is_pending(id) != Some(false) {
                 continue;
             }
             let a = *self.actor(id).ok_or(StoreError::InvalidHandle)?;
-            if a.life().is_some_and(|l| kind(l.actor_type).is_some()) {
+            if a.life()
+                .is_some_and(|l| kind_for(self.player_policy(), l.actor_type).is_some())
+            {
                 count += 1;
                 validate_item(a)?;
             }
@@ -539,7 +596,7 @@ impl Simulation {
         k: PickupKind,
         position: [Fixed; 2],
     ) -> Result<ActorId, SimError> {
-        if self.player_policy() != OriginalExecutionProfile::PlayerDemonPickupsV1
+        if !self.player_policy().has_world_pickups()
             || self.tic != 0
             || self.original_player.as_ref().is_none_or(|p| p.mo.is_some())
             || !k.can_drop()
@@ -553,7 +610,7 @@ impl Simulation {
             .filter(|id| {
                 self.actor(*id)
                     .and_then(Actor::life)
-                    .is_some_and(|l| kind(l.actor_type).is_some())
+                    .is_some_and(|l| kind_for(self.player_policy(), l.actor_type).is_some())
             })
             .count();
         if items >= MAX_WORLD_PICKUPS {

@@ -47,7 +47,7 @@ pub struct Snapshot {
     map: Arc<Vec<StateField>>,
 }
 impl Snapshot {
-    /// Explicit diagnostic schema version (1–25); field layouts are selected per profile.
+    /// Explicit diagnostic schema version (1–26); field layouts are selected per profile.
     /// See the repository STATE_FORMAT guide for widths and composition.
     pub const fn version(&self) -> u32 {
         self.version
@@ -198,6 +198,17 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        Event::Armor(event) => {
+            b.push(24);
+            b.extend(id(event.target));
+            b.extend(event.incoming.to_le_bytes());
+            b.extend(event.saved.to_le_bytes());
+            b.extend(event.effective.to_le_bytes());
+            b.push(event.before.kind.wire_id());
+            b.extend(event.before.points.to_le_bytes());
+            b.push(event.after.kind.wire_id());
+            b.extend(event.after.points.to_le_bytes());
+        }
         Event::Pickup(event) => {
             use crate::PickupEvent::*;
             b.push(23);
@@ -241,6 +252,17 @@ fn event_bytes(event: &Event) -> Vec<u8> {
                     b.push(6);
                     b.extend(id(*item));
                     b.push(*outcome as u8);
+                }
+                Armor(requested, accepted, before, after) => {
+                    b.extend([
+                        7,
+                        requested.wire_id(),
+                        u8::from(*accepted),
+                        before.kind.wire_id(),
+                    ]);
+                    b.extend(before.points.to_le_bytes());
+                    b.push(after.kind.wire_id());
+                    b.extend(after.points.to_le_bytes());
                 }
             }
         }
@@ -501,7 +523,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::MapExtent => 19,
         crate::Profile::DemonExpandedMap => 20,
         crate::Profile::OriginalDemon => {
-            if sim.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1 {
+            if sim.player_policy() == OriginalExecutionProfile::PlayerDemonArmorV1 {
+                26
+            } else if sim.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1 {
                 25
             } else if sim.player_policy() == OriginalExecutionProfile::PlayerDemonWeaponsV1 {
                 24
@@ -517,7 +541,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     // Versions18/19 explicitly compose the untyped static-sector field layout.
     let layout = if matches!(version, 18 | 19) {
         3
-    } else if matches!(version, 20..=25) {
+    } else if matches!(version, 20..=26) {
         17
     } else {
         version
@@ -525,14 +549,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     field(
         &mut fields,
         "profile",
-        (if matches!(version, 21..=25) {
+        (if matches!(version, 21..=26) {
             sim.player_policy().wire_id()
         } else {
             version
         })
         .to_le_bytes(),
     );
-    if matches!(version, 21..=25) {
+    if matches!(version, 21..=26) {
         field(
             &mut fields,
             "registry.schema",
@@ -793,7 +817,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(layout, 8..=17) && !matches!(version, 22..=25) {
+    if matches!(layout, 8..=17) && !matches!(version, 22..=26) {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,
@@ -847,14 +871,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .and_then(|p| p.weapon.and_then(|w| w.pistol())),
         );
     }
-    if matches!(version, 24 | 25) {
+    if matches!(version, 24..=26) {
         pack_fields(
             &mut fields,
             sim.original_player
                 .and_then(|p| p.weapon.and_then(|w| w.pack())),
         );
     }
-    if version == 25 {
+    if matches!(version, 25 | 26) {
         let state = sim.original_player.and_then(|p| p.pickups);
         field(
             &mut fields,
@@ -876,6 +900,20 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 &mut fields,
                 "original_player.0.pickups.message",
                 [p.message as u8],
+            );
+        }
+    }
+    if version == 26 {
+        if let Some(armor) = sim.original_player.and_then(|p| p.armor) {
+            field(
+                &mut fields,
+                "original_player.0.armor.type",
+                [armor.kind.wire_id()],
+            );
+            field(
+                &mut fields,
+                "original_player.0.armor.points",
+                armor.points.to_le_bytes(),
             );
         }
     }

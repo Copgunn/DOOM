@@ -28,6 +28,8 @@ pub enum OriginalExecutionProfile {
     PlayerDemonWeaponsV1,
     /// World pickups composed with the existing player/four-weapon/Demon closure.
     PlayerDemonPickupsV1,
+    /// Original animated armor and source protection in the shared combat world.
+    PlayerDemonArmorV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -42,6 +44,7 @@ impl OriginalExecutionProfile {
             Self::PlayerDemonPistolV1 => 7,
             Self::PlayerDemonWeaponsV1 => 8,
             Self::PlayerDemonPickupsV1 => 9,
+            Self::PlayerDemonArmorV1 => 10,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -56,7 +59,11 @@ impl OriginalExecutionProfile {
             Self::PlayerDemonPistolV1 => PLAYER_DEMON_PISTOL_CONTEXT_SCHEMA,
             Self::PlayerDemonWeaponsV1 => PLAYER_DEMON_WEAPONS_CONTEXT_SCHEMA,
             Self::PlayerDemonPickupsV1 => PLAYER_DEMON_PICKUPS_CONTEXT_SCHEMA,
+            Self::PlayerDemonArmorV1 => PLAYER_DEMON_ARMOR_CONTEXT_SCHEMA,
         }
+    }
+    pub(crate) const fn has_world_pickups(self) -> bool {
+        matches!(self, Self::PlayerDemonPickupsV1 | Self::PlayerDemonArmorV1)
     }
     pub(crate) const fn has_player_body(self) -> bool {
         matches!(
@@ -69,6 +76,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonPistolV1
                 | Self::PlayerDemonWeaponsV1
                 | Self::PlayerDemonPickupsV1
+                | Self::PlayerDemonArmorV1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -81,12 +89,16 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonPistolV1
                 | Self::PlayerDemonWeaponsV1
                 | Self::PlayerDemonPickupsV1
+                | Self::PlayerDemonArmorV1
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
         matches!(
             self,
-            Self::PlayerDemonPistolV1 | Self::PlayerDemonWeaponsV1 | Self::PlayerDemonPickupsV1
+            Self::PlayerDemonPistolV1
+                | Self::PlayerDemonWeaponsV1
+                | Self::PlayerDemonPickupsV1
+                | Self::PlayerDemonArmorV1
         )
     }
     pub(crate) const fn has_player_commands(self) -> bool {
@@ -98,6 +110,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonPistolV1
                 | Self::PlayerDemonWeaponsV1
                 | Self::PlayerDemonPickupsV1
+                | Self::PlayerDemonArmorV1
         )
     }
 }
@@ -299,7 +312,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerDemonMeleeV1
             | OriginalExecutionProfile::PlayerDemonPistolV1
             | OriginalExecutionProfile::PlayerDemonWeaponsV1
-            | OriginalExecutionProfile::PlayerDemonPickupsV1 => {
+            | OriginalExecutionProfile::PlayerDemonPickupsV1
+            | OriginalExecutionProfile::PlayerDemonArmorV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -332,7 +346,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerDemonMeleeV1
             | OriginalExecutionProfile::PlayerDemonPistolV1
             | OriginalExecutionProfile::PlayerDemonWeaponsV1
-            | OriginalExecutionProfile::PlayerDemonPickupsV1 => {
+            | OriginalExecutionProfile::PlayerDemonPickupsV1
+            | OriginalExecutionProfile::PlayerDemonArmorV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -402,9 +417,7 @@ pub(crate) fn require_role_for(
     profile: OriginalExecutionProfile,
     slot: ActorTypeId,
 ) -> Result<(), OriginalRegistryError> {
-    if profile == OriginalExecutionProfile::PlayerDemonPickupsV1
-        && world_pickups::kind(slot).is_some()
-    {
+    if world_pickups::kind_for(profile, slot).is_some() {
         return Ok(());
     }
     if profile.has_player_body() {
@@ -435,13 +448,8 @@ pub(crate) fn state_role_for(
 ) -> Result<(), OriginalRegistryError> {
     require_role_for(profile, ty)?;
     let s = OriginalState::try_from(state.0).map_err(|_| OriginalRegistryError::State(state.0))?;
-    let allowed = if profile == OriginalExecutionProfile::PlayerDemonPickupsV1
-        && world_pickups::kind(ty).is_some()
-    {
-        s == OriginalActorType::try_from(ty.0)
-            .map_err(|_| OriginalRegistryError::Definition(ty.0))?
-            .states()
-            .spawn
+    let allowed = if world_pickups::kind_for(profile, ty).is_some() {
+        world_pickups::state_allowed(ty, s)
     } else if ty.0 == OriginalActorType::MT_PLAYER.ordinal() {
         player_policy()?.normal.contains(s)
             || (profile.has_player_weapons()
@@ -531,7 +539,10 @@ impl Simulation {
             sim.original_player = Some(original_player::PlayerRuntime {
                 source: OriginalPlayer::default(),
                 weapon: None,
-                pickups: (policy == OriginalExecutionProfile::PlayerDemonPickupsV1)
+                armor: (policy == OriginalExecutionProfile::PlayerDemonArmorV1)
+                    .then_some(PlayerArmorState::default()),
+                pickups: policy
+                    .has_world_pickups()
                     .then_some(PlayerPickupState::default()),
                 policy,
             });

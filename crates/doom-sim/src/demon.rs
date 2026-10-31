@@ -81,6 +81,9 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
         return Ok(());
     };
     let player = host.player.as_deref().ok_or(PlayerBodyError::Binding)?;
+    if player.policy == OriginalExecutionProfile::PlayerDemonArmorV1 {
+        return Err(PlayerBodyError::Unsupported.into());
+    }
     let body = host.access.get(target).ok_or(CombatError::Reference)?;
     let body_life = body.life().ok_or(PlayerBodyError::Invariant)?;
     // Powers/SHADOW, cheats and arbitrary player flag mutations are unadmitted.
