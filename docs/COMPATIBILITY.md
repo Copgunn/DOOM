@@ -1079,3 +1079,71 @@ Demon admission proof; Rust compares its supported prefix and rejects atomically
 rather than following that later C path. See [source qualifications](M3G8_REFERENCE_INVESTIGATION.md),
 [reproduction](TESTING.md#original-player-weapon-expansion) and
 [observations](validation/M3G8.md).
+
+
+## Original world pickups
+
+`PlayerDemonPickupsV1` (wire policy9) composes the four-weapon/player/Demon
+capability with one actual original player0, fixed active roster, at most one
+map Demon and at most16 placed plus controlled dropped items within64 actor slots.
+Medium/commercial settings and existing grounded one-sector, flat0/128,
+axis-aligned one-sided wall, coordinate/travel, sight and trace budgets remain.
+There is one player, actor store, inventory, movement service and thinker pass.
+
+| Original item | DoomEd | Executable grant |
+| --- | ---: | --- |
+| MT_CLIP |2007|10 bullets; controlled dropped Clip gives5 |
+| MT_MISC17 |2048|50 bullets |
+| MT_MISC22 |2008|4 shells |
+| MT_MISC23 |2049|20 shells |
+| MT_MISC10 |2011|10 health |
+| MT_MISC11 |2012|25 health |
+| MT_SHOTGUN |2001|Shotgun ownership and8 shells; dropped4 |
+| MT_CHAINGUN |2002|Chaingun ownership and20 bullets; dropped10 |
+
+`spawn_map_things` admits this subset in the existing atomic THING pass, retaining
+single-player/skill filtering, angle admission and input order. Demon count and
+item count are separate. Map kill totals follow MF_COUNTKILL; none of these items
+has MF_COUNTITEM, so level.total_items and source player itemcount remain0.
+Items may surround the map Demon in placement order; all precede the bound body
+and effect suffix. Original monster identities remain distinct from weapon items.
+Raw `spawn_type` does not grant item execution. `spawn_dropped_pickup` admits only
+Clip/Shotgun/Chaingun before body binding and tic0, through actual raw spawn plus
+MF_DROPPED. This is controlled setup, not monster loot or runtime respawn.
+
+Collection occurs only through the existing moving player's thing checks. Strict
+square overlap precedes line checks; source vertical bounds are inclusive body
+height/−8, and nonpositive toucher health refuses collection. The grounded policy
+does not grant airborne item access. A successful pickup remains collected if a
+later wall/solid actor normally blocks movement. It is immediately unlinked from
+spatial queries, marked pending and retired by existing thinker traversal. Its old
+handle never resolves to a later effect reusing that slot. A recoverable error
+instead discards the complete transaction, including earlier grants/removals.
+
+Ammo caps at200 bullets/50 shells. Full resources refuse without removing the
+item. Zero-to-nonzero ammo selection uses current readyweapon: bullets select
+owned chaingun or pistol from fist; shells select owned shotgun from fist/pistol.
+GiveWeapon grants ammo before new ownership/pending selection. Already-owned
+weapons can grant ammo; new ownership still collects with full ammo. Pending
+selection uses existing source lowering/raising, never instantaneous replacement.
+Health caps at100, synchronizes the same player/mo and preserves pain, attacker
+and damagecount. Dead bodies cannot heal or collect. Medikit message selection
+uses post-heal health; GOTMEDINEED is unreachable for positive admitted health.
+
+Accepted grants assign a typed persistent source message, mark removal, add6 to
+bonuscount, then request source item/weapon pickup sound without an actor origin.
+Only the live bonuscount decrement fragment after the weapon stage is admitted;
+no HUD message clearing or full PlayerThink/DeathThink is implied. The16-item
+one-time budget bounds bonuscount at96; this is Rust admission policy, not a
+claimed original source cap. Original P_RemoveMobj also writes an inactive item
+respawn queue; those C-only PQ observations are retained, while queue storage and
+respawning are outside this executable/diagnostic contract. Audio requests do not
+implement playback or active-sound ownership.
+
+Historical no-pickup policies and DSIM20–24 remain unchanged. DSIM25 separately
+records pickup fields/events; decoding never restores a game. Armor, powers,
+keys, backpacks, other items/weapons, player rebirth, multiplayer, generalized
+specials and dynamic geometry remain excluded. Source evidence, explicit harness
+adapters, generation/provenance safety and rollback are separate claims; see
+[investigation](M3G9_REFERENCE_INVESTIGATION.md), [schema](STATE_FORMAT.md#dsim-v25-original-world-pickups)
+and [observations](validation/M3G9.md).

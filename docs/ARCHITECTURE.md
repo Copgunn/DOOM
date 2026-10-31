@@ -525,3 +525,36 @@ player, actor, spatial, sound, RNG, statistics and events together. No Snapshot 
 full Simulation clone is added to production stepping. See the
 [support boundary](COMPATIBILITY.md#original-player-weapon-expansion) and
 [source matrix](M3G8_REFERENCE_INVESTIGATION.md).
+
+
+## Original world contacts and resources
+
+The pickup capability stores canonical item type/state identities in existing
+ActorLife records. Item kind derives from those definitions and validated source
+sprites; no per-item kind mirror or new lifetime manager exists. Map admission
+uses the same THING batch, with separate Demon/item budgets. Controlled dropped
+setup uses the existing spawn and MF_DROPPED flag, with no map spawnpoint.
+
+The shared Mover uses a statically dispatched MotionAccess contact hook. Historical
+lookup closures use Infallible with an empty hook; their movement signatures and
+algorithm remain. Pickup access borrows the current transaction's actor access
+and PlayerRuntime. It uses the existing thing-candidate prefix before the existing
+sector line check. Collection removes only nonsolid items and changes resources,
+so it cannot invalidate the already ordered blocker/candidate decision. Contacts,
+removal and sound events precede their own movement-result event even on a normal
+blocked move. Shared slide/stairstep retries use that same hook; there is no
+second pickup collision or physics loop.
+
+OriginalPlayer remains authoritative for health/mo/state/attacker; the moving
+actor copy and its stored mobj health are synchronized on a grant. The existing
+weapon-only Pack record owns ammo/ownership/pending fields. PlayerRuntime adds
+only optional bonuscount/itemcount/message fields, with no body/health duplicate.
+One accepted item uses the same generational mark and spatial unlink operations;
+existing thinker traversal retires it. The existing bounded DemonPlan stages these
+fields together with actors, spatial order, RNG, sound, statistics and events.
+Late failure discards all of them. No full Simulation clone, implicit Snapshot,
+new allocator, global counter or second scheduler is introduced.
+
+See [support](COMPATIBILITY.md#original-world-pickups),
+[source matrix](M3G9_REFERENCE_INVESTIGATION.md) and
+[DSIM25](STATE_FORMAT.md#dsim-v25-original-world-pickups).

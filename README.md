@@ -44,9 +44,10 @@ melee rejection. A separate pistol capability adds original psprite cadence,
 ammunition, refire spread, real hitscan impacts, one-sector noise alerts and
 Demon damage/pain/death through that same combat loop. Older policies remain
 available. The four-weapon capability adds source fallback, genuine fists, manual
-switching, seven-pellet shotgun and chaingun firing in the same world. Full
-player-thinker/view processing, remaining weapons, pickups and respawn remain
-excluded. See the
+switching, seven-pellet shotgun and chaingun firing in the same world. A separate world-pickup capability adds original bullet/shell supplies,
+stimpacks, medikits and world shotgun/chaingun acquisition through shared collision
+and inventory services. Full player-thinker/view processing, remaining weapons,
+armor/powers and respawn remain excluded. See the
 [player contract](docs/COMPATIBILITY.md#original-player-body-lifecycle) and
 [command movement boundary](docs/COMPATIBILITY.md#original-player-command-movement) and
 [active-player/Demon contract](docs/COMPATIBILITY.md#active-original-player-and-demon-acquisition)
@@ -54,7 +55,9 @@ and [autonomous melee boundary](docs/COMPATIBILITY.md#autonomous-original-demon-
 See the [genuine pistol contract](docs/COMPATIBILITY.md#genuine-player-pistol-combat)
 for its separately admitted inputs, geometry, ammunition and source limits.
 The [weapon expansion contract](docs/COMPATIBILITY.md#original-player-weapon-expansion)
-describes controlled loadouts and the additional weapon actions.
+describes controlled loadouts and the additional weapon actions. The
+[world pickup contract](docs/COMPATIBILITY.md#original-world-pickups) defines the
+separate source touch, collection and lifetime capability.
 
 Call `Simulation::advance()` for a tic without an implicit diagnostic Snapshot.
 `step()` retains its Snapshot return, and `snapshot()` captures explicitly in
@@ -107,6 +110,8 @@ cargo run -p doom-sim --example player_commands --locked
 cargo run -p doom-sim --example player_demon --locked
 cargo run -p doom-sim --example player_demon_melee --locked
 cargo run -p doom-sim --example player_pistol --locked
+cargo run -p doom-sim --example player_weapon_pack --locked
+cargo run -p doom-sim --example player_world_pickups --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked

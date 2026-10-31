@@ -335,3 +335,17 @@ only standard-library Python. A safe bounded test-only Rust decoder supplies the
 same committed bytes to comparisons. See [investigation](../../docs/M3G8_REFERENCE_INVESTIGATION.md),
 [commands](../../docs/TESTING.md#original-player-weapon-expansion) and
 [observations](../../docs/validation/M3G8.md).
+
+
+M3g9 adds actual original GiveAmmo/GiveBody/GiveWeapon/TouchSpecialThing bodies
+through [m3g9_reference.py](m3g9_reference.py). Its case/observation/component
+modules are source-harness inputs, not production item managers. The independent
+[pickup encoder](pickup_snapshot.py) and
+[fixture writer](m3g9_snapshot_goldens.py) specify DSIM25 from source rows.
+Things-before-lines candidate prefixes survive interleaved touch events. Actual
+trace callback roles keep geometry-only slide observations distinct from shot/aim
+events. C-only inactive item-respawn queue rows remain in packed evidence.
+Historical observers/helpers/fixtures are unchanged. See
+[source investigation](../../docs/M3G9_REFERENCE_INVESTIGATION.md),
+[commands](../../docs/TESTING.md#original-world-pickups) and
+[observations](../../docs/validation/M3G9.md).

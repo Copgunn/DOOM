@@ -549,6 +549,7 @@ impl<'a> Diagnostic<'a> {
             self.validate_weapons()?;
         }
         if self.version == 25 {
+            self.validate_pickup_items()?;
             if self.required("original_player.0.pickups.present")? != [1] {
                 return Err(DiagnosticError::Structure);
             }
@@ -559,9 +560,80 @@ impl<'a> Diagnostic<'a> {
                 self.required("original_player.0.pickups.item_count")?,
             )?);
             let message = self.required("original_player.0.pickups.message")?;
-            if !(0..=96).contains(&bonus) || items != 0 || !matches!(message, [0..=6] | [8..=9]) {
+            if !(0..=world_pickups::MAX_BONUS).contains(&bonus)
+                || items != 0
+                || !matches!(message, [0..=6] | [8..=9])
+            {
                 return Err(DiagnosticError::Structure);
             }
+        }
+        Ok(())
+    }
+    fn validate_pickup_items(&self) -> Result<(), DiagnosticError> {
+        let mut count = 0;
+        for slot in 0..self.slots()? {
+            let prefix = format!("actor.{slot}");
+            if self.required(&format!("{prefix}.occupied"))? != [1] {
+                continue;
+            }
+            let ty = ActorTypeId(u16::from_le_bytes(number(
+                self.required(&format!("{prefix}.type"))?,
+            )?));
+            let Some(k) = world_pickups::kind(ty) else {
+                continue;
+            };
+            count += 1;
+            let state = k.original_type().states().spawn;
+            let descriptor = state.descriptor();
+            let i32field = |name: &str| -> Result<i32, DiagnosticError> {
+                Ok(i32::from_le_bytes(number(
+                    self.required(&format!("{prefix}.{name}"))?,
+                )?))
+            };
+            let flags = u32::from_le_bytes(number(self.required(&format!("{prefix}.flags"))?)?);
+            let spawn = self.required(&format!("{prefix}.spawnpoint"))?;
+            let dropped = flags & world_pickups::MF_DROPPED != 0;
+            if u16::from_le_bytes(number(self.required(&format!("{prefix}.state"))?)?)
+                != state.ordinal()
+                || u16::from_le_bytes(number(self.required(&format!("{prefix}.sprite"))?)?)
+                    != descriptor.sprite.ordinal()
+                || u32::from_le_bytes(number(self.required(&format!("{prefix}.frame"))?)?)
+                    != descriptor.frame
+                || i32field("tics")? != -1
+                || i32field("health")? != 1000
+                || i32field("radius")? != 20 * 65536
+                || i32field("height")? != 16 * 65536
+                || i32field("momx")? != 0
+                || i32field("momy")? != 0
+                || i32field("momz")? != 0
+                || i32field("z")? != 0
+                || i32field("floor")? != 0
+                || i32field("ceiling")? != 128 * 65536
+                || self.required(&format!("{prefix}.target"))? != [0; 13]
+                || flags
+                    & !(world_pickups::MF_SPECIAL
+                        | world_pickups::MF_AMBUSH
+                        | world_pickups::MF_DROPPED)
+                    != 0
+                || flags & world_pickups::MF_SPECIAL == 0
+                || (dropped
+                    && (spawn != [0]
+                        || flags & world_pickups::MF_AMBUSH != 0
+                        || !matches!(
+                            k,
+                            PickupKind::Clip | PickupKind::Shotgun | PickupKind::Chaingun
+                        )))
+                || (!dropped
+                    && (spawn.len() != 11
+                        || spawn[0] != 1
+                        || i32::from(i16::from_le_bytes(number(&spawn[7..9])?))
+                            != k.original_type().descriptor().doomed_number))
+            {
+                return Err(DiagnosticError::Identity);
+            }
+        }
+        if count > MAX_WORLD_PICKUPS {
+            return Err(DiagnosticError::Limit);
         }
         Ok(())
     }
@@ -1037,7 +1109,18 @@ fn validate_pickup_event(event: &[u8]) -> Result<(), DiagnosticError> {
             validate_handle(get(2, 14)?)?;
             validate_handle(get(14, 26)?)?;
             let sprite = u16::from_le_bytes(number(get(26, 28)?)?);
-            [68, 69, 78, 79, 84, 85, 88, 92].contains(&sprite)
+            [
+                OriginalSprite::SPR_STIM,
+                OriginalSprite::SPR_MEDI,
+                OriginalSprite::SPR_CLIP,
+                OriginalSprite::SPR_AMMO,
+                OriginalSprite::SPR_SHEL,
+                OriginalSprite::SPR_SBOX,
+                OriginalSprite::SPR_MGUN,
+                OriginalSprite::SPR_SHOT,
+            ]
+            .map(OriginalSprite::ordinal)
+            .contains(&sprite)
         }
         Some(1) => {
             event.len() == 14
@@ -1072,7 +1155,7 @@ fn validate_pickup_event(event: &[u8]) -> Result<(), DiagnosticError> {
         Some(4) => event.len() == 3 && matches!(event[2],1..=6|8..=9),
         Some(5) => {
             event.len() == 10
-                && (0..=96).contains(&i32::from_le_bytes(number(get(2, 6)?)?))
+                && (0..=world_pickups::MAX_BONUS).contains(&i32::from_le_bytes(number(get(2, 6)?)?))
                 && get(6, 10)? == [0; 4]
         }
         Some(6) => {

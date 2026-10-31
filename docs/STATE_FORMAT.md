@@ -1275,3 +1275,50 @@ or bullet damage domains. Tag22 Died keeps its width and records the actual
 ready weapon's downstate. V23 retains pistol-only validation. Other nested payloads
 retain their documented bounded/opaque handling. Decoding validates diagnostic
 observations, never restores an executable world or grants ownership.
+
+
+## DSIM-v25 original world pickups
+
+Version25 selects policy9 (`PlayerDemonPickupsV1`), original registry schema and
+context `PLAYER-DEMON-1-MEDIUM-GROUNDED-PICKUPS-v1`. The explicit
+`Diagnostic::decode_pickups` reader validates25; earlier readers reject it.
+V20–24 bytes, policy/context meanings and readers are preserved. New persistent
+pickup fields and ordered touch/resource observations justify this separate
+layout; a milestone counter alone does not justify a version.
+
+The existing18-field v24 weapon group remains. Immediately after it and before
+`events.last.count`, encode prefix `original_player.0.pickups`:
+
+| Suffix | Representation |
+| --- | --- |
+| present | u8=1 under the pickup policy |
+| bonus_count | i32,0..96 from the bounded16-item budget |
+| item_count | i32=0 for these non-COUNTITEM definitions |
+| message | u8:0 none,1 clip,2 bullet box,3 shells,4 shell box,5 stimpack,6 medikit,8 shotgun,9 chaingun |
+
+Message7 identifies source GOTMEDINEED but is unreachable in the positive-health
+admitted slice and rejects. Immutable metadata, capacities, item kind, active
+roster and provenance are not duplicated. Actors retain original type/state,
+flags, spawnpoint and generation fields. The reader checks static pickup
+state/sprite/frame, health, dimensions, flags, origin shape and physics fields.
+It does not grant executable world restoration.
+
+New event tag23 has a u8 subtype, followed by these little-endian fields:
+
+| Subtype | Payload |
+| --- | --- |
+|0 Touch|item handle12, body handle12, sprite u16, delta/height/health i32 each |
+|1 Ammo|ammo u8, accepted u8, before/after i32, ready/pending u8 |
+|2 Body|accepted u8, before/after/mobj health i32 |
+|3 Weapon|weapon/accepted u8, owned before/after u16, pending before/after u8 |
+|4 Message|message u8 |
+|5 Bonus|bonus_count/item_count i32 |
+|6 Result|item handle12, outcome u8:0 unreachable,1 dead,2 not needed,3 collected |
+
+Pending10 retains original wp_nochange; handles retain the existing slot u32 and
+generation u64 representation. Widths, bool/enum domains and bounded handles are
+checked before interpretation. Existing removal tag2 and source sound tag12/3
+retain their meanings and occur between Message, Bonus and Result at source
+boundaries. Source-only inactive item-respawn queue PQ rows are excluded from
+DSIM, explicitly retained in original evidence. No respawn equivalence is claimed.
+PBE1/DREFLZ1 remain test-evidence framing/storage, not another runtime format.

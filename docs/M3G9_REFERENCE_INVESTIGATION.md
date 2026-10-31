@@ -1,7 +1,7 @@
 # Original world pickup investigation
 
-This investigation concerns a proposed opt-in pickup capability. It does not
-claim completed Rust execution. Original Linux DOOM 1.10 at the revision named in
+This investigation defines the opt-in original world pickup capability.
+Source observations, Rust execution and safety policy remain distinct claims. Original Linux DOOM 1.10 at the revision named in
 AGENTS is the authority; the source checkpoint precedes matching Rust gameplay.
 
 | Source behavior | Existing service / implementation disposition | Evidence boundary |
@@ -24,12 +24,12 @@ MT_MISC23/SBOX (70/877), MT_CHAINGUN/MGUN (73/880), MT_SHOTGUN/SHOT (77/884).
 The second value is the original spawn-state ordinal. All have static tics−1,
 MF_SPECIAL, radius20 and height16. Weapon items are distinct from monster types.
 
-The proposed policy9 uses one genuine active player0, at most one map Demon,
+The separate policy9 uses one genuine active player0, at most one map Demon,
 Medium/commercial settings, existing grounded static axis-wall geometry and
 four-weapon execution. Controlled dropped Clip/Shotgun/Chaingun setup precedes
 body binding and tic0; no monster loot or runtime respawn is claimed.
 
-DSIM25 is proposed because persistent bonus/item/message fields and pickup event
+DSIM25 is necessary because persistent bonus/item/message fields and pickup event
 observations are absent from DSIM24. It retains the existing weapon fields, adds
 pickup presence/bonus_count/item_count/message before events and uses event23.
 The independent encoder specifies exact bytes before matching Rust changes.
@@ -45,9 +45,9 @@ used. See the new provenance manifests for hashes and exact observations.
 The sustained pistol cases start with ordinary50 bullets and use fixed command
 scripts, genuine Demon melee and actual world ammo/healing. One wins, another
 retains a losing player-death outcome. Controlled damaged-health cases remain
-separate. World shotgun/chaingun acquisition is feasible in the source and will
-be implemented after world ammo and health integration; it is not deferred merely
-because it changes pending weapon state.
+separate. World shotgun/chaingun acquisition is feasible in the source and executes through the same player inventory and psprites after the ammo and
+health checkpoints; it is not deferred merely because it changes pending weapon
+state.
 
 During initial comparison, the new encoder's pickup-event flush exposed a
 candidate-prefix bug: source C rows emitted before a touch must remain attached

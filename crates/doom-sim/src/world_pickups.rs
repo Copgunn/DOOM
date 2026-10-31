@@ -7,11 +7,11 @@ pub const PLAYER_DEMON_PICKUPS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-DEMON-1-MEDIUM-G
 pub const MAX_WORLD_PICKUPS: usize = 16;
 pub(crate) const MF_SPECIAL: u32 = 1;
 pub(crate) const MF_COUNTKILL: u32 = 0x0040_0000;
-const MF_DROPPED: u32 = 0x0002_0000;
-const MF_AMBUSH: u32 = 0x20;
+pub(crate) const MF_DROPPED: u32 = 0x0002_0000;
+pub(crate) const MF_AMBUSH: u32 = 0x20;
 const MF_PICKUP: u32 = 0x800;
 const BONUS_ADD: i32 = 6; // p_inter.c BONUSADD
-const MAX_BONUS: i32 = BONUS_ADD * MAX_WORLD_PICKUPS as i32;
+pub(crate) const MAX_BONUS: i32 = BONUS_ADD * MAX_WORLD_PICKUPS as i32;
 
 /// Executable item definitions; each remains its original canonical actor.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -194,11 +194,19 @@ pub(crate) fn validate_item(a: Actor) -> Result<(), SimError> {
         || l.tics != -1
         || l.health != 1000
         || l.target.is_some()
+        || l.reaction_time != 8
+        || l.threshold != 0
+        || l.movedir != 0
+        || l.movecount != 0
+        || l.death_requested
+        || a.lastlook() > 3
         || a.radius() != Fixed::from_map_units(20)
         || a.height() != Fixed::from_map_units(16)
         || a.momentum() != [Fixed::ZERO; 2]
         || a.momz != Fixed::ZERO
         || a.z != a.floor
+        || a.floor != Fixed::ZERO
+        || a.ceiling != Fixed::from_map_units(128)
         || a.position().iter().any(|v| !sight::within(*v, 978))
         || l.flags & !(MF_SPECIAL | MF_AMBUSH | MF_DROPPED) != 0
         || l.flags & MF_SPECIAL == 0
@@ -240,7 +248,7 @@ fn ammo(
     shell: bool,
     loads: u16,
     events: &mut Vec<movement::MotionEvent>,
-) -> bool {
+) -> Result<bool, SimError> {
     let before = if shell { p.shells } else { p.bullets };
     let cap = if shell { 50 } else { 200 };
     let accepted = before != cap;
@@ -250,7 +258,12 @@ fn ammo(
         } else {
             loads * if shell { 4 } else { 10 }
         };
-        let after = before.saturating_add(count).min(cap);
+        // Private callers supply at most five loads: before<=200 and count<=50,
+        // so the checked source addition is representable before capping.
+        let after = before
+            .checked_add(count)
+            .ok_or(WeaponError::Inventory)?
+            .min(cap);
         if shell {
             p.shells = after;
         } else {
@@ -283,7 +296,7 @@ fn ammo(
             p.pending,
         ),
     );
-    accepted
+    Ok(accepted)
 }
 /// Same actor access and player state used by the shared thinker transaction.
 pub(crate) struct Contacts<'a, A> {
@@ -354,16 +367,18 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         false,
                         if l.flags & MF_DROPPED != 0 { 0 } else { 1 },
                         events,
-                    ),
-                    PickupKind::BulletBox => ammo(w, false, 5, events),
-                    PickupKind::Shells => ammo(w, true, 1, events),
-                    PickupKind::ShellBox => ammo(w, true, 5, events),
+                    )?,
+                    PickupKind::BulletBox => ammo(w, false, 5, events)?,
+                    PickupKind::Shells => ammo(w, true, 1, events)?,
+                    PickupKind::ShellBox => ammo(w, true, 5, events)?,
                     PickupKind::Stimpack | PickupKind::Medikit => {
                         let before = self.player.health;
                         let accepted = before < 100;
                         if accepted {
-                            let after =
-                                (before + if k == PickupKind::Stimpack { 10 } else { 25 }).min(100);
+                            let after = before
+                                .checked_add(if k == PickupKind::Stimpack { 10 } else { 25 })
+                                .ok_or(PlayerBodyError::Invariant)?
+                                .min(100);
                             self.player.health = after;
                             body.life.as_mut().ok_or(ActorError::InvalidType)?.health = after;
                             self.access
@@ -396,7 +411,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                             weapon == Weapon::Shotgun,
                             if l.flags & MF_DROPPED != 0 { 1 } else { 2 },
                             events,
-                        );
+                        )?;
                         let fresh = before & (1 << weapon as u8) == 0;
                         if fresh {
                             w.owned |= 1 << weapon as u8;
