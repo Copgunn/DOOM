@@ -258,3 +258,10 @@ path = "fuzz_targets/player_weapon_pack.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_world_pickups"
+path = "fuzz_targets/player_world_pickups.rs"
+test = false
+doc = false
+bench = false

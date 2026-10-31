@@ -379,3 +379,16 @@ admit any other weapon or monster. Adding this public execution-profile variant
 requires downstream exhaustive matches to handle its arm. See
 [support](COMPATIBILITY.md#original-player-weapon-expansion) and
 [DSIM24](STATE_FORMAT.md#dsim-v24-original-player-weapon-expansion).
+
+
+## Original world item execution
+
+PlayerDemonPickupsV1 additionally admits static canonical definitions53/54/63/64/
+69/70/73/77 with original spawn states840/841/870/871/876/877/880/884 and sprites
+STIM/MEDI/CLIP/AMMO/SHEL/SBOX/MGUN/SHOT. Definition recognition never substitutes
+for a current generational instance or permission to execute a role. Weapon item
+MT_SHOTGUN and MT_CHAINGUN are distinct from monster MT_SHOTGUY/MT_CHAINGUY.
+Items are neither damage sources nor AI owners/targets, and public direct state
+entry/raw spawning remain gated. Static state roots have tics−1/no action; death,
+respawn and arbitrary item behavior are not inferred from metadata. See the
+[exact support contract](COMPATIBILITY.md#original-world-pickups).

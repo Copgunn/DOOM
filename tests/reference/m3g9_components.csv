@@ -1,0 +1,8 @@
+PCOMP,vertical,0,3670016,1,60,6,1
+PCOMP,vertical,1,3670017,0,50,0,0
+PCOMP,vertical,2,-524288,1,60,6,1
+PCOMP,vertical,3,-524289,0,50,0,0
+PCOMP,square_edge,0,1,0,50,0
+PCOMP,square_edge,1,1,1,60,6
+PCOMP,above_health,0,0,125,125
+PCOMP,dead_touch,0,0,0,0,0

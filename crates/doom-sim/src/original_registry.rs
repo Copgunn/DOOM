@@ -26,6 +26,8 @@ pub enum OriginalExecutionProfile {
     PlayerDemonPistolV1,
     /// Four source weapons sharing the genuine player and autonomous Demon.
     PlayerDemonWeaponsV1,
+    /// World pickups composed with the existing player/four-weapon/Demon closure.
+    PlayerDemonPickupsV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -39,6 +41,7 @@ impl OriginalExecutionProfile {
             Self::PlayerDemonMeleeV1 => 6,
             Self::PlayerDemonPistolV1 => 7,
             Self::PlayerDemonWeaponsV1 => 8,
+            Self::PlayerDemonPickupsV1 => 9,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -52,6 +55,7 @@ impl OriginalExecutionProfile {
             Self::PlayerDemonMeleeV1 => PLAYER_DEMON_MELEE_CONTEXT_SCHEMA,
             Self::PlayerDemonPistolV1 => PLAYER_DEMON_PISTOL_CONTEXT_SCHEMA,
             Self::PlayerDemonWeaponsV1 => PLAYER_DEMON_WEAPONS_CONTEXT_SCHEMA,
+            Self::PlayerDemonPickupsV1 => PLAYER_DEMON_PICKUPS_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -64,6 +68,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonMeleeV1
                 | Self::PlayerDemonPistolV1
                 | Self::PlayerDemonWeaponsV1
+                | Self::PlayerDemonPickupsV1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -75,10 +80,14 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonMeleeV1
                 | Self::PlayerDemonPistolV1
                 | Self::PlayerDemonWeaponsV1
+                | Self::PlayerDemonPickupsV1
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
-        matches!(self, Self::PlayerDemonPistolV1 | Self::PlayerDemonWeaponsV1)
+        matches!(
+            self,
+            Self::PlayerDemonPistolV1 | Self::PlayerDemonWeaponsV1 | Self::PlayerDemonPickupsV1
+        )
     }
     pub(crate) const fn has_player_commands(self) -> bool {
         matches!(
@@ -88,6 +97,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonMeleeV1
                 | Self::PlayerDemonPistolV1
                 | Self::PlayerDemonWeaponsV1
+                | Self::PlayerDemonPickupsV1
         )
     }
 }
@@ -288,7 +298,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerDemonAcquisitionV1
             | OriginalExecutionProfile::PlayerDemonMeleeV1
             | OriginalExecutionProfile::PlayerDemonPistolV1
-            | OriginalExecutionProfile::PlayerDemonWeaponsV1 => {
+            | OriginalExecutionProfile::PlayerDemonWeaponsV1
+            | OriginalExecutionProfile::PlayerDemonPickupsV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -320,7 +331,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerDemonAcquisitionV1
             | OriginalExecutionProfile::PlayerDemonMeleeV1
             | OriginalExecutionProfile::PlayerDemonPistolV1
-            | OriginalExecutionProfile::PlayerDemonWeaponsV1 => {
+            | OriginalExecutionProfile::PlayerDemonWeaponsV1
+            | OriginalExecutionProfile::PlayerDemonPickupsV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -390,6 +402,11 @@ pub(crate) fn require_role_for(
     profile: OriginalExecutionProfile,
     slot: ActorTypeId,
 ) -> Result<(), OriginalRegistryError> {
+    if profile == OriginalExecutionProfile::PlayerDemonPickupsV1
+        && world_pickups::kind(slot).is_some()
+    {
+        return Ok(());
+    }
     if profile.has_player_body() {
         return match identity(slot)? {
             DefinitionIdentity::Original(
@@ -418,7 +435,14 @@ pub(crate) fn state_role_for(
 ) -> Result<(), OriginalRegistryError> {
     require_role_for(profile, ty)?;
     let s = OriginalState::try_from(state.0).map_err(|_| OriginalRegistryError::State(state.0))?;
-    let allowed = if ty.0 == OriginalActorType::MT_PLAYER.ordinal() {
+    let allowed = if profile == OriginalExecutionProfile::PlayerDemonPickupsV1
+        && world_pickups::kind(ty).is_some()
+    {
+        s == OriginalActorType::try_from(ty.0)
+            .map_err(|_| OriginalRegistryError::Definition(ty.0))?
+            .states()
+            .spawn
+    } else if ty.0 == OriginalActorType::MT_PLAYER.ordinal() {
         player_policy()?.normal.contains(s)
             || (profile.has_player_weapons()
                 && matches!(s, OriginalState::S_PLAY_ATK1 | OriginalState::S_PLAY_ATK2))
@@ -507,6 +531,8 @@ impl Simulation {
             sim.original_player = Some(original_player::PlayerRuntime {
                 source: OriginalPlayer::default(),
                 weapon: None,
+                pickups: (policy == OriginalExecutionProfile::PlayerDemonPickupsV1)
+                    .then_some(PlayerPickupState::default()),
                 policy,
             });
         }
@@ -522,7 +548,9 @@ impl Simulation {
         let registry = OriginalExecutionRegistry::new(OriginalExecutionProfile::DemonNormalV1)?;
         Self::with_original_registry(map, limit, registry, options, context).map_err(Into::into)
     }
-    /// Spawn the already admitted source actor through the existing atomic THING batch.
+    /// Run the existing atomic THING batch for the canonical Demon context.
+    /// The pickup policy also admits its declared world items in that same batch;
+    /// use `spawn_map_things` directly when setting up that mixed world.
     pub fn spawn_original_actor(
         &mut self,
         ty: OriginalActorType,

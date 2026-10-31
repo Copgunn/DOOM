@@ -101,6 +101,7 @@ pub(crate) struct PlayerRuntime {
     pub source: OriginalPlayer,
     pub policy: OriginalExecutionProfile,
     pub weapon: Option<crate::player_weapons::PlayerWeaponRuntime>,
+    pub pickups: Option<PlayerPickupState>,
 }
 impl std::ops::Deref for PlayerRuntime {
     type Target = OriginalPlayer;

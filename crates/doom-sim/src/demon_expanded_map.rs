@@ -337,6 +337,7 @@ impl Simulation {
                     )?;
                 }
             }
+            world_pickups::bonus_tick(plan.player.as_mut())?;
             plan.events.push(Event::Phase(Phase::Thinkers));
         } else {
             plan.events

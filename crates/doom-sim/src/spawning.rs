@@ -84,6 +84,11 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
+        if self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
+            && world_pickups::kind(ty).is_some()
+        {
+            return Err(MapSpawnError::DirectSpawn.into());
+        }
         self.player_spawn_guard(ty, position, height)?;
         if self.profile.uses_demon_map() && ty == self.demon_owner_type() {
             return Err(MapSpawnError::DirectSpawn.into());
@@ -215,6 +220,11 @@ impl Simulation {
             return Err(PlayerBodyError::Unsupported.into());
         }
         let life = self.active_typed(id)?;
+        if self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
+            && world_pickups::kind(life.actor_type).is_some()
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.projectile_control(id)?;
         if self.profile == Profile::Shotgunner {
             return self.enter_shotgun_state(id, state);
@@ -240,6 +250,11 @@ impl Simulation {
             return Err(MonsterError::Profile.into());
         }
         let life = self.active_typed(id)?;
+        if self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
+            && world_pickups::kind(life.actor_type).is_some()
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.projectile_control(id)?;
         if self.bindings.contains(&Some(id)) {
             return Err(ActorError::BoundDeath.into());
@@ -278,7 +293,12 @@ impl Simulation {
         if self.owns_player_body(id) {
             return Err(PlayerBodyError::Unsupported.into());
         }
-        self.active_typed(id)?;
+        let life = self.active_typed(id)?;
+        if self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
+            && world_pickups::kind(life.actor_type).is_some()
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.projectile_control(id)?;
         if self.profile == Profile::Pursuit || self.profile.uses_monsters() {
             if let Some(t) = target {
@@ -370,17 +390,32 @@ impl Simulation {
             if map_demons {
                 // Lookup and nomonsters use original metadata, including COUNTKILL,
                 // before the explicit executable fixture adaptation.
-                if ty
-                    != crate::identity::OriginalActorType::MT_SERGEANT
-                        .resolve(registry)
-                        .map_err(|_| MonsterError::Definition)?
+                let pickup = self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
+                    && world_pickups::kind(ty).is_some();
+                if !pickup
+                    && ty
+                        != crate::identity::OriginalActorType::MT_SERGEANT
+                            .resolve(registry)
+                            .map_err(|_| MonsterError::Definition)?
                 {
                     return Err(MapSpawnError::UnsupportedType(thing.kind).into());
                 }
                 if self.profile.uses_checked_demons() && !(-4..=3).contains(&(thing.angle / 45)) {
                     return Err(MapSpawnError::Angle(thing.angle).into());
                 }
-                if selected.len() == self.map_demon_limit() {
+                if (!pickup
+                    && selected
+                        .iter()
+                        .filter(|(_, ty)| *ty == self.demon_owner_type())
+                        .count()
+                        == self.map_demon_limit())
+                    || (pickup
+                        && selected
+                            .iter()
+                            .filter(|(_, ty)| world_pickups::kind(*ty).is_some())
+                            .count()
+                            == MAX_WORLD_PICKUPS)
+                {
                     return Err(MapSpawnError::WorkLimit.into());
                 }
                 if [thing.position.x, thing.position.y]
@@ -389,7 +424,9 @@ impl Simulation {
                 {
                     return Err(MonsterError::Arithmetic.into());
                 }
-                ty = self.demon_owner_type();
+                if !pickup {
+                    ty = self.demon_owner_type();
+                }
             }
             if self.profile.uses_perception() {
                 if [thing.position.x, thing.position.y]
@@ -422,8 +459,17 @@ impl Simulation {
             selected.push((*thing, ty));
         }
         if let Some(stats) = self.statistics {
-            let count =
-                i32::try_from(selected.len()).map_err(|_| MapSpawnError::StatisticsOverflow)?;
+            let count = i32::try_from(
+                selected
+                    .iter()
+                    .filter(|(_, ty)| {
+                        registry
+                            .actor_type(*ty)
+                            .is_some_and(|t| t.flags() & world_pickups::MF_COUNTKILL != 0)
+                    })
+                    .count(),
+            )
+            .map_err(|_| MapSpawnError::StatisticsOverflow)?;
             stats
                 .total_kills
                 .checked_add(count)
@@ -467,7 +513,11 @@ impl Simulation {
             if life.tics > 0 {
                 life.tics = 1 + i32::from(self.rng.p_random()) % life.tics;
             }
-            if let Some(stats) = self.statistics.as_mut() {
+            if let Some(stats) = self
+                .statistics
+                .as_mut()
+                .filter(|_| life.flags & world_pickups::MF_COUNTKILL != 0)
+            {
                 // Entire batch addition was proved before allocation or RNG.
                 stats.total_kills += 1;
                 self.pending

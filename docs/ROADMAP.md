@@ -79,15 +79,22 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3g8: Original weapon expansion
+### M3g9: Original world pickups and combat sustain
 
-PlayerDemonWeaponsV1 composes empty-ammo fallback, genuine unpowered fists,
-manual switching, shotgun and chaingun with the existing player/Demon world.
-A source-only evidence commit preceded runtime changes. The shared interpreter,
-trace/damage services, actor store and scheduler remain authoritative. Weapon-only
-state has a separate DSIM24 contract; historical policies and schemas remain.
-This milestone stops at owner review; exact commit and CI state belong to GitHub.
-See [investigation](M3G8_REFERENCE_INVESTIGATION.md),
+PlayerDemonPickupsV1 adds bounded original world items to the existing genuine
+player/four-weapon/Demon world. Ammo, healing and source-gated shotgun/chaingun
+acquisition share actor storage, collision, inventory, retirement and transactions.
+Source-first observations and DSIM25 make pickup ordering and player resource
+changes explicit. This milestone stops at owner review; exact review/CI state
+belongs to GitHub. See [source investigation](M3G9_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-world-pickups) and
+[observations](validation/M3G9.md).
+
+### Previous gameplay foundation — M3g8: Original weapon expansion
+
+M3g8 is merged. Its separately selected no-pickup four-weapon capability and
+DSIM24 retain their original contract. See
+[investigation](M3G8_REFERENCE_INVESTIGATION.md),
 [support](COMPATIBILITY.md#original-player-weapon-expansion) and
 [observations](validation/M3G8.md).
 
@@ -113,12 +120,11 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Prioritize independently verified clip/shell and a small health-pickup slice
-through original P_TouchSpecialThing and the existing canonical player/inventory.
-Start with controlled original map things, exact eligibility/capacity, touch
-ordering and removal, without weapons beyond this pack, powers or generalized
-specials. This would make sustained combat resemble ordinary DOOM gameplay.
-It requires a separate milestone; no pickup behavior is admitted here.
+Prioritize a bounded original green/blue armor pickup and damage-absorption slice.
+It should compose source P_GiveArmor/P_DamageMobj with the same player, inventory,
+world contact and combat loop, independently observing armor before pain/death.
+Do not add other powers, cheats, weapons, respawn or generalized specials in that
+step. This recommendation is future work, not armor admission in M3g9.
 
 ### Focused maintenance acceptance criteria
 

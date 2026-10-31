@@ -1,0 +1,7903 @@
+{
+  "groups": 247,
+  "digest_groups": 207,
+  "records": [
+    {
+      "tool": "canonical_demon",
+      "workload": {},
+      "metrics": {
+        "parse100_us": {
+          "before": 183,
+          "after": 163,
+          "percent": -10.928961748633881
+        },
+        "prepare100_us": {
+          "before": 30325,
+          "after": 29734,
+          "percent": -1.9488870568837635
+        },
+        "spawn100_us": {
+          "before": 486,
+          "after": 485,
+          "percent": -0.2057613168724326
+        },
+        "enter100_us": {
+          "before": 16457,
+          "after": 15967,
+          "percent": -2.9774564015312643
+        },
+        "query1000_us": {
+          "before": 282,
+          "after": 295,
+          "percent": 4.6099290780141855
+        },
+        "step100_with_query_us": {
+          "before": 13542,
+          "after": 13351,
+          "percent": -1.410426820262889
+        },
+        "snapshot_bytes": {
+          "before": 87940,
+          "after": 87940,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 2980,
+          "after": 2956,
+          "percent": -0.8053691275167751
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "context_ownership",
+      "workload": {
+        "path": "raw"
+      },
+      "metrics": {
+        "query100000_us": {
+          "before": 201,
+          "after": 239,
+          "percent": 18.905472636815922
+        },
+        "set100_us": {
+          "before": 296,
+          "after": 299,
+          "percent": 1.0135135135135087
+        },
+        "retirement100_us": {
+          "before": 13065,
+          "after": 13314,
+          "percent": 1.9058553386911647
+        },
+        "max_rss_kib": {
+          "before": 2636,
+          "after": 2552,
+          "percent": -3.1866464339908918
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "context_ownership",
+      "workload": {
+        "path": "scoped"
+      },
+      "metrics": {
+        "query100000_us": {
+          "before": 3284,
+          "after": 3376,
+          "percent": 2.8014616321559105
+        },
+        "set100_us": {
+          "before": 308,
+          "after": 310,
+          "percent": 0.6493506493506551
+        },
+        "retirement100_us": {
+          "before": 13197,
+          "after": 13199,
+          "percent": 0.015154959460472739
+        },
+        "max_rss_kib": {
+          "before": 2636,
+          "after": 2556,
+          "percent": -3.034901365705611
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "demon_expanded_map",
+      "workload": {
+        "case": "small_control",
+        "profile": 17
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 175,
+          "after": 174,
+          "percent": -0.5714285714285672
+        },
+        "prepare100_us": {
+          "before": 29352,
+          "after": 29305,
+          "percent": -0.16012537476151056
+        },
+        "spawn100_us": {
+          "before": 486,
+          "after": 488,
+          "percent": 0.4115226337448652
+        },
+        "collision1000_us": {
+          "before": 147,
+          "after": 149,
+          "percent": 1.3605442176870763
+        },
+        "candidates": {
+          "before": 8000,
+          "after": 8000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 148,
+          "after": 160,
+          "percent": 8.108108108108114
+        },
+        "visits": {
+          "before": 11000,
+          "after": 11000,
+          "percent": 0.0
+        },
+        "chase100_us": {
+          "before": 5743,
+          "after": 5835,
+          "percent": 1.6019502002437846
+        },
+        "step100_us": {
+          "before": 14051,
+          "after": 13403,
+          "percent": -4.611771404170517
+        },
+        "snapshot100_us": {
+          "before": 3580,
+          "after": 3628,
+          "percent": 1.3407821229050265
+        },
+        "snapshot_bytes": {
+          "before": 8794000,
+          "after": 8794000,
+          "percent": 0.0
+        },
+        "lines": {
+          "before": 4,
+          "after": 4,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 1,
+          "after": 1,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 8,
+          "after": 8,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 3720,
+          "after": 3544,
+          "percent": -4.731182795698929
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "demon_expanded_map",
+      "workload": {
+        "case": "small_control",
+        "profile": 20
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 157,
+          "after": 157,
+          "percent": 0.0
+        },
+        "prepare100_us": {
+          "before": 31176,
+          "after": 30202,
+          "percent": -3.124198101103415
+        },
+        "spawn100_us": {
+          "before": 433,
+          "after": 464,
+          "percent": 7.159353348729791
+        },
+        "collision1000_us": {
+          "before": 143,
+          "after": 154,
+          "percent": 7.692307692307687
+        },
+        "candidates": {
+          "before": 8000,
+          "after": 8000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 92,
+          "after": 94,
+          "percent": 2.1739130434782705
+        },
+        "visits": {
+          "before": 11000,
+          "after": 11000,
+          "percent": 0.0
+        },
+        "chase100_us": {
+          "before": 16803,
+          "after": 16039,
+          "percent": -4.546807117776586
+        },
+        "step100_us": {
+          "before": 13751,
+          "after": 13269,
+          "percent": -3.5051996218456893
+        },
+        "snapshot100_us": {
+          "before": 2827,
+          "after": 2765,
+          "percent": -2.1931376016979143
+        },
+        "snapshot_bytes": {
+          "before": 8794000,
+          "after": 8794000,
+          "percent": 0.0
+        },
+        "lines": {
+          "before": 4,
+          "after": 4,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 1,
+          "after": 1,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 8,
+          "after": 8,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 32,
+          "after": 32,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 410,
+          "after": 410,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 3588,
+          "after": 3364,
+          "percent": -6.243032329988852
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "demon_expanded_map",
+      "workload": {
+        "case": "long_lifecycle",
+        "profile": 19
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 2497,
+          "after": 2631,
+          "percent": 5.366439727673211
+        },
+        "prepare100_us": {
+          "before": 16309,
+          "after": 15921,
+          "percent": -2.3790545097798765
+        },
+        "spawn100_us": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        },
+        "collision1000_us": {
+          "before": 4385,
+          "after": 4276,
+          "percent": -2.4857468643101455
+        },
+        "candidates": {
+          "before": 773000,
+          "after": 773000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 10363,
+          "after": 10415,
+          "percent": 0.5017851973366794
+        },
+        "visits": {
+          "before": 2190000,
+          "after": 2190000,
+          "percent": 0.0
+        },
+        "chase100_us": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        },
+        "step100_us": {
+          "before": 7259,
+          "after": 7413,
+          "percent": 2.121504339440694
+        },
+        "snapshot100_us": {
+          "before": 6254,
+          "after": 6463,
+          "percent": 3.3418612088263577
+        },
+        "snapshot_bytes": {
+          "before": 12137000,
+          "after": 12137000,
+          "percent": 0.0
+        },
+        "lines": {
+          "before": 769,
+          "after": 769,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 256,
+          "after": 256,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 8,
+          "after": 8,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 6152,
+          "after": 6152,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 42740,
+          "after": 42740,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 3064,
+          "after": 3144,
+          "percent": 2.610966057441244
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "demon_expanded_map",
+      "workload": {
+        "case": "long_lifecycle",
+        "profile": 20
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 2699,
+          "after": 2718,
+          "percent": 0.7039644312708315
+        },
+        "prepare100_us": {
+          "before": 47236,
+          "after": 46466,
+          "percent": -1.6301126259632537
+        },
+        "spawn100_us": {
+          "before": 593,
+          "after": 566,
+          "percent": -4.553119730185495
+        },
+        "collision1000_us": {
+          "before": 4307,
+          "after": 4374,
+          "percent": 1.5556071511492853
+        },
+        "candidates": {
+          "before": 773000,
+          "after": 773000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 10002,
+          "after": 10387,
+          "percent": 3.8492301539692075
+        },
+        "visits": {
+          "before": 2190000,
+          "after": 2190000,
+          "percent": 0.0
+        },
+        "chase100_us": {
+          "before": 18353,
+          "after": 18075,
+          "percent": -1.5147387348117491
+        },
+        "step100_us": {
+          "before": 22723,
+          "after": 22373,
+          "percent": -1.5402895744399903
+        },
+        "snapshot100_us": {
+          "before": 12963,
+          "after": 12999,
+          "percent": 0.2777134922471669
+        },
+        "snapshot_bytes": {
+          "before": 21546600,
+          "after": 21546600,
+          "percent": 0.0
+        },
+        "lines": {
+          "before": 769,
+          "after": 769,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 256,
+          "after": 256,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 8,
+          "after": 8,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 6152,
+          "after": 6152,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 42740,
+          "after": 42740,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 4088,
+          "after": 3888,
+          "percent": -4.892367906066541
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "demon_expanded_map",
+      "workload": {
+        "case": "four_owners",
+        "profile": 20
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 2680,
+          "after": 2775,
+          "percent": 3.5447761194029814
+        },
+        "prepare100_us": {
+          "before": 46253,
+          "after": 45689,
+          "percent": -1.2193803645168977
+        },
+        "spawn100_us": {
+          "before": 2164,
+          "after": 2077,
+          "percent": -4.020332717190389
+        },
+        "collision1000_us": {
+          "before": 1103,
+          "after": 1130,
+          "percent": 2.447869446962825
+        },
+        "candidates": {
+          "before": 4000,
+          "after": 4000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 11106,
+          "after": 11152,
+          "percent": 0.41419052764271047
+        },
+        "visits": {
+          "before": 2187000,
+          "after": 2187000,
+          "percent": 0.0
+        },
+        "chase100_us": {
+          "before": 49746,
+          "after": 47686,
+          "percent": -4.141036465243442
+        },
+        "step100_us": {
+          "before": 63992,
+          "after": 60279,
+          "percent": -5.802287785973248
+        },
+        "snapshot100_us": {
+          "before": 16815,
+          "after": 16961,
+          "percent": 0.8682723758548949
+        },
+        "snapshot_bytes": {
+          "before": 23659200,
+          "after": 23659200,
+          "percent": 0.0
+        },
+        "lines": {
+          "before": 769,
+          "after": 769,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 256,
+          "after": 256,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 8,
+          "after": 8,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 6152,
+          "after": 6152,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 42740,
+          "after": 42740,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 4332,
+          "after": 4184,
+          "percent": -3.4164358264081263
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "demon_expanded_map",
+      "workload": {
+        "case": "wide_map_lifecycle",
+        "profile": 20
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 2012,
+          "after": 2066,
+          "percent": 2.6838966202783254
+        },
+        "prepare100_us": {
+          "before": 57540,
+          "after": 57218,
+          "percent": -0.559610705596103
+        },
+        "spawn100_us": {
+          "before": 611,
+          "after": 575,
+          "percent": -5.891980360065463
+        },
+        "collision1000_us": {
+          "before": 5002,
+          "after": 4885,
+          "percent": -2.3390643742502992
+        },
+        "candidates": {
+          "before": 770000,
+          "after": 770000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 6697,
+          "after": 6660,
+          "percent": -0.5524861878453025
+        },
+        "visits": {
+          "before": 1401000,
+          "after": 1401000,
+          "percent": 0.0
+        },
+        "chase100_us": {
+          "before": 18238,
+          "after": 17690,
+          "percent": -3.00471542932339
+        },
+        "step100_us": {
+          "before": 23172,
+          "after": 23313,
+          "percent": 0.6084930088037233
+        },
+        "snapshot100_us": {
+          "before": 13159,
+          "after": 13338,
+          "percent": 1.360285735998179
+        },
+        "snapshot_bytes": {
+          "before": 20849100,
+          "after": 20849100,
+          "percent": 0.0
+        },
+        "lines": {
+          "before": 769,
+          "after": 769,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 256,
+          "after": 256,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 136,
+          "after": 136,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 104584,
+          "after": 104584,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 242676,
+          "after": 242676,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 4336,
+          "after": 4412,
+          "percent": 1.7527675276752808
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "demon_expanded_map",
+      "workload": {
+        "case": "expanded_sight_dag",
+        "profile": 20
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 188,
+          "after": 177,
+          "percent": -5.851063829787229
+        },
+        "prepare100_us": {
+          "before": 30830,
+          "after": 30554,
+          "percent": -0.8952319169640011
+        },
+        "spawn100_us": {
+          "before": 442,
+          "after": 446,
+          "percent": 0.9049773755656076
+        },
+        "collision1000_us": {
+          "before": 190,
+          "after": 212,
+          "percent": 11.578947368421044
+        },
+        "candidates": {
+          "before": 8000,
+          "after": 8000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 75373,
+          "after": 74413,
+          "percent": -1.2736656362357879
+        },
+        "visits": {
+          "before": 16384000,
+          "after": 16384000,
+          "percent": 0.0
+        },
+        "chase100_us": {
+          "before": 16785,
+          "after": 16025,
+          "percent": -4.527852249031872
+        },
+        "step100_us": {
+          "before": 13934,
+          "after": 13903,
+          "percent": -0.22247739342615702
+        },
+        "snapshot100_us": {
+          "before": 3579,
+          "after": 3589,
+          "percent": 0.27940765576977
+        },
+        "snapshot_bytes": {
+          "before": 8819800,
+          "after": 8819800,
+          "percent": 0.0
+        },
+        "lines": {
+          "before": 4,
+          "after": 4,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 1,
+          "after": 1,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 20,
+          "after": 20,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 80,
+          "after": 80,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 794,
+          "after": 794,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 3780,
+          "after": 3676,
+          "percent": -2.751322751322749
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "demon_expanded_map",
+      "workload": {
+        "case": "line_table",
+        "profile": 20
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 3080,
+          "after": 3179,
+          "percent": 3.214285714285725
+        },
+        "prepare100_us": {
+          "before": 52233,
+          "after": 51503,
+          "percent": -1.3975839028966375
+        },
+        "spawn100_us": {
+          "before": 465,
+          "after": 447,
+          "percent": -3.8709677419354827
+        },
+        "collision1000_us": {
+          "before": 6152,
+          "after": 6185,
+          "percent": 0.5364109232769865
+        },
+        "candidates": {
+          "before": 1028000,
+          "after": 1028000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 15150,
+          "after": 15481,
+          "percent": 2.184818481848194
+        },
+        "visits": {
+          "before": 3066000,
+          "after": 3066000,
+          "percent": 0.0
+        },
+        "chase100_us": {
+          "before": 17208,
+          "after": 17106,
+          "percent": -0.5927475592747533
+        },
+        "step100_us": {
+          "before": 14811,
+          "after": 13847,
+          "percent": -6.508675984065892
+        },
+        "snapshot100_us": {
+          "before": 3482,
+          "after": 3369,
+          "percent": -3.245261344055139
+        },
+        "snapshot_bytes": {
+          "before": 20103600,
+          "after": 20103600,
+          "percent": 0.0
+        },
+        "lines": {
+          "before": 1024,
+          "after": 1024,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 1,
+          "after": 1,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 8,
+          "after": 8,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 8192,
+          "after": 8192,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 53450,
+          "after": 53450,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 4356,
+          "after": 4176,
+          "percent": -4.1322314049586755
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "demon_expanded_map",
+      "workload": {
+        "case": "high_cell_demon",
+        "profile": 20
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 4596,
+          "after": 4381,
+          "percent": -4.677980852915575
+        },
+        "prepare100_us": {
+          "before": 113257,
+          "after": 103870,
+          "percent": -8.288229425112792
+        },
+        "spawn100_us": {
+          "before": 588,
+          "after": 589,
+          "percent": 0.1700680272108901
+        },
+        "collision1000_us": {
+          "before": 4838,
+          "after": 4721,
+          "percent": -2.418354692021496
+        },
+        "candidates": {
+          "before": 770000,
+          "after": 770000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 6515,
+          "after": 6745,
+          "percent": 3.530314658480438
+        },
+        "visits": {
+          "before": 1401000,
+          "after": 1401000,
+          "percent": 0.0
+        },
+        "chase100_us": {
+          "before": 18193,
+          "after": 18177,
+          "percent": -0.08794591326334311
+        },
+        "step100_us": {
+          "before": 25625,
+          "after": 23799,
+          "percent": -7.125853658536585
+        },
+        "snapshot100_us": {
+          "before": 14861,
+          "after": 14225,
+          "percent": -4.279658165668532
+        },
+        "snapshot_bytes": {
+          "before": 28905100,
+          "after": 28905100,
+          "percent": 0.0
+        },
+        "lines": {
+          "before": 769,
+          "after": 769,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 256,
+          "after": 256,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 8192,
+          "after": 8192,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 58880,
+          "after": 58880,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 344612,
+          "after": 344612,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 6332,
+          "after": 6284,
+          "percent": -0.758054327226787
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "game_instance",
+      "workload": {
+        "path": "scoped"
+      },
+      "metrics": {
+        "import100000_us": {
+          "before": 2070,
+          "after": 2206,
+          "percent": 6.570048309178733
+        },
+        "export100000_us": {
+          "before": 1663,
+          "after": 1533,
+          "percent": -7.817197835237522
+        },
+        "step100_us": {
+          "before": 15051,
+          "after": 15125,
+          "percent": 0.49166168360905704
+        },
+        "max_rss_kib": {
+          "before": 2544,
+          "after": 2492,
+          "percent": -2.0440251572327095
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "game_instance",
+      "workload": {
+        "path": "qualified"
+      },
+      "metrics": {
+        "import100000_us": {
+          "before": 2699,
+          "after": 2267,
+          "percent": -16.00592812152649
+        },
+        "export100000_us": {
+          "before": 1638,
+          "after": 1544,
+          "percent": -5.7387057387057405
+        },
+        "step100_us": {
+          "before": 15466,
+          "after": 14603,
+          "percent": -5.579981895771368
+        },
+        "max_rss_kib": {
+          "before": 2536,
+          "after": 2504,
+          "percent": -1.2618296529968487
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "legacy_weapons",
+      "workload": {
+        "label": "historical_pistol_held",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 127128,
+          "after": 145224,
+          "percent": 14.23447234283557
+        },
+        "max_rss_kib": {
+          "before": 2592,
+          "after": 2640,
+          "percent": 1.85185185185186
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "legacy_weapons",
+      "workload": {
+        "label": "historical_pistol_held",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2099948,
+          "after": 2086277,
+          "percent": -0.6510161203991727
+        },
+        "max_rss_kib": {
+          "before": 2636,
+          "after": 2616,
+          "percent": -0.7587253414264028
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_extent",
+      "workload": {
+        "map": 0,
+        "profile18": true
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 92,
+          "after": 85,
+          "percent": -7.608695652173914
+        },
+        "prepare100_us": {
+          "before": 265,
+          "after": 238,
+          "percent": -10.188679245283016
+        },
+        "collision1000_us": {
+          "before": 121,
+          "after": 115,
+          "percent": -4.958677685950407
+        },
+        "candidates": {
+          "before": 4000,
+          "after": 4000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 146,
+          "after": 147,
+          "percent": 0.6849315068493178
+        },
+        "sight_visits": {
+          "before": 11000,
+          "after": 11000,
+          "percent": 0.0
+        },
+        "sight_work": {
+          "before": 5000,
+          "after": 5000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 958,
+          "after": 960,
+          "percent": 0.20876826722338038
+        },
+        "lines": {
+          "before": 4,
+          "after": 4,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 1,
+          "after": 1,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 20,
+          "after": 20,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 80,
+          "after": 80,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 794,
+          "after": 794,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 2164,
+          "after": 2128,
+          "percent": -1.6635859519408491
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_extent",
+      "workload": {
+        "map": 0,
+        "profile18": false
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 87,
+          "after": 98,
+          "percent": 12.643678160919535
+        },
+        "prepare100_us": {
+          "before": 279,
+          "after": 264,
+          "percent": -5.376344086021501
+        },
+        "collision1000_us": {
+          "before": 125,
+          "after": 118,
+          "percent": -5.600000000000005
+        },
+        "candidates": {
+          "before": 4000,
+          "after": 4000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 102,
+          "after": 102,
+          "percent": 0.0
+        },
+        "sight_visits": {
+          "before": 11000,
+          "after": 11000,
+          "percent": 0.0
+        },
+        "sight_work": {
+          "before": 5000,
+          "after": 5000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1014,
+          "after": 956,
+          "percent": -5.7199211045364855
+        },
+        "lines": {
+          "before": 4,
+          "after": 4,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 1,
+          "after": 1,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 20,
+          "after": 20,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 80,
+          "after": 80,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 794,
+          "after": 794,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 2100,
+          "after": 2256,
+          "percent": 7.428571428571429
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_extent",
+      "workload": {
+        "map": 3,
+        "profile18": false
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 114,
+          "after": 109,
+          "percent": -4.385964912280704
+        },
+        "prepare100_us": {
+          "before": 413,
+          "after": 371,
+          "percent": -10.169491525423723
+        },
+        "collision1000_us": {
+          "before": 134,
+          "after": 136,
+          "percent": 1.4925373134328401
+        },
+        "candidates": {
+          "before": 13000,
+          "after": 13000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 201,
+          "after": 181,
+          "percent": -9.950248756218905
+        },
+        "sight_visits": {
+          "before": 29000,
+          "after": 29000,
+          "percent": 0.0
+        },
+        "sight_work": {
+          "before": 16000,
+          "after": 16000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1096,
+          "after": 1149,
+          "percent": 4.835766423357657
+        },
+        "lines": {
+          "before": 13,
+          "after": 13,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 4,
+          "after": 4,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 20,
+          "after": 20,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 260,
+          "after": 260,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 1508,
+          "after": 1508,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 2324,
+          "after": 2256,
+          "percent": -2.9259896729776247
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_extent",
+      "workload": {
+        "map": 7,
+        "profile18": false
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 378,
+          "after": 359,
+          "percent": -5.026455026455023
+        },
+        "prepare100_us": {
+          "before": 2463,
+          "after": 2416,
+          "percent": -1.9082419813235885
+        },
+        "collision1000_us": {
+          "before": 297,
+          "after": 292,
+          "percent": -1.683501683501687
+        },
+        "candidates": {
+          "before": 49000,
+          "after": 49000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 249,
+          "after": 240,
+          "percent": -3.6144578313253017
+        },
+        "sight_visits": {
+          "before": 41000,
+          "after": 41000,
+          "percent": 0.0
+        },
+        "sight_work": {
+          "before": 28000,
+          "after": 28000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1352,
+          "after": 1337,
+          "percent": -1.1094674556213047
+        },
+        "lines": {
+          "before": 49,
+          "after": 49,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 16,
+          "after": 16,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 136,
+          "after": 136,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 6664,
+          "after": 6664,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 18516,
+          "after": 18516,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 2356,
+          "after": 2256,
+          "percent": -4.244482173174868
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_extent",
+      "workload": {
+        "map": 9,
+        "profile18": false
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 101,
+          "after": 98,
+          "percent": -2.970297029702973
+        },
+        "prepare100_us": {
+          "before": 493,
+          "after": 472,
+          "percent": -4.259634888438136
+        },
+        "collision1000_us": {
+          "before": 125,
+          "after": 119,
+          "percent": -4.800000000000004
+        },
+        "candidates": {
+          "before": 4000,
+          "after": 4000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 101,
+          "after": 115,
+          "percent": 13.861386138613852
+        },
+        "sight_visits": {
+          "before": 11000,
+          "after": 11000,
+          "percent": 0.0
+        },
+        "sight_work": {
+          "before": 5000,
+          "after": 5000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 975,
+          "after": 960,
+          "percent": -1.538461538461533
+        },
+        "lines": {
+          "before": 4,
+          "after": 4,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 1,
+          "after": 1,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 60,
+          "after": 60,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 240,
+          "after": 240,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 2074,
+          "after": 2074,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 2080,
+          "after": 2288,
+          "percent": 10.000000000000009
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_extent",
+      "workload": {
+        "map": 10,
+        "profile18": false
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 150,
+          "after": 152,
+          "percent": 1.333333333333342
+        },
+        "prepare100_us": {
+          "before": 755,
+          "after": 779,
+          "percent": 3.178807947019857
+        },
+        "collision1000_us": {
+          "before": 144,
+          "after": 154,
+          "percent": 6.944444444444442
+        },
+        "candidates": {
+          "before": 7000,
+          "after": 7000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 138,
+          "after": 141,
+          "percent": 2.1739130434782705
+        },
+        "sight_visits": {
+          "before": 15000,
+          "after": 15000,
+          "percent": 0.0
+        },
+        "sight_work": {
+          "before": 6000,
+          "after": 6000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1047,
+          "after": 1020,
+          "percent": -2.5787965616045794
+        },
+        "lines": {
+          "before": 7,
+          "after": 7,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 2,
+          "after": 2,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 99,
+          "after": 99,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 693,
+          "after": 693,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 4034,
+          "after": 4034,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 2292,
+          "after": 2176,
+          "percent": -5.061082024432806
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_extent",
+      "workload": {
+        "map": 20,
+        "profile18": false
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 2546,
+          "after": 2558,
+          "percent": 0.47132757266299397
+        },
+        "prepare100_us": {
+          "before": 100419,
+          "after": 91408,
+          "percent": -8.97340144793316
+        },
+        "collision1000_us": {
+          "before": 203,
+          "after": 202,
+          "percent": -0.49261083743842304
+        },
+        "candidates": {
+          "before": 32000,
+          "after": 32000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 471,
+          "after": 451,
+          "percent": -4.24628450106157
+        },
+        "sight_visits": {
+          "before": 95000,
+          "after": 95000,
+          "percent": 0.0
+        },
+        "sight_work": {
+          "before": 33000,
+          "after": 33000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 995,
+          "after": 1000,
+          "percent": 0.5025125628140614
+        },
+        "lines": {
+          "before": 32,
+          "after": 32,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 1,
+          "after": 1,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 8192,
+          "after": 8192,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 262144,
+          "after": 262144,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 722058,
+          "after": 722058,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 3472,
+          "after": 3448,
+          "percent": -0.691244239631339
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_extent",
+      "workload": {
+        "map": 21,
+        "profile18": false
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 2636,
+          "after": 2624,
+          "percent": -0.4552352048558417
+        },
+        "prepare100_us": {
+          "before": 114301,
+          "after": 107461,
+          "percent": -5.984199613301722
+        },
+        "collision1000_us": {
+          "before": 223,
+          "after": 216,
+          "percent": -3.139013452914796
+        },
+        "candidates": {
+          "before": 32000,
+          "after": 32000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 450,
+          "after": 467,
+          "percent": 3.777777777777769
+        },
+        "sight_visits": {
+          "before": 95000,
+          "after": 95000,
+          "percent": 0.0
+        },
+        "sight_work": {
+          "before": 33000,
+          "after": 33000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1001,
+          "after": 1018,
+          "percent": 1.6983016983016963
+        },
+        "lines": {
+          "before": 32,
+          "after": 32,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 1,
+          "after": 1,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 8192,
+          "after": 8192,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 262144,
+          "after": 262144,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 722058,
+          "after": 722058,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 3328,
+          "after": 3332,
+          "percent": 0.12019230769231282
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_extent",
+      "workload": {
+        "map": 22,
+        "profile18": false
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 2609,
+          "after": 2740,
+          "percent": 5.021080873898054
+        },
+        "prepare100_us": {
+          "before": 58468,
+          "after": 58875,
+          "percent": 0.6961072723541184
+        },
+        "collision1000_us": {
+          "before": 207,
+          "after": 207,
+          "percent": 0.0
+        },
+        "candidates": {
+          "before": 32000,
+          "after": 32000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 451,
+          "after": 456,
+          "percent": 1.1086474501108556
+        },
+        "sight_visits": {
+          "before": 95000,
+          "after": 95000,
+          "percent": 0.0
+        },
+        "sight_work": {
+          "before": 33000,
+          "after": 33000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1029,
+          "after": 1022,
+          "percent": -0.6802721088435382
+        },
+        "lines": {
+          "before": 32,
+          "after": 32,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 1,
+          "after": 1,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 8192,
+          "after": 8192,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 8378,
+          "after": 8378,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 214526,
+          "after": 214526,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 3068,
+          "after": 3048,
+          "percent": -0.6518904823989535
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_extent",
+      "workload": {
+        "map": 27,
+        "profile18": false
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 105,
+          "after": 118,
+          "percent": 12.380952380952381
+        },
+        "prepare100_us": {
+          "before": 314,
+          "after": 319,
+          "percent": 1.5923566878981
+        },
+        "collision1000_us": {
+          "before": 171,
+          "after": 189,
+          "percent": 10.526315789473696
+        },
+        "candidates": {
+          "before": 4000,
+          "after": 4000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 82247,
+          "after": 81677,
+          "percent": -0.6930343963913566
+        },
+        "sight_visits": {
+          "before": 16384000,
+          "after": 16384000,
+          "percent": 0.0
+        },
+        "sight_work": {
+          "before": 16382000,
+          "after": 16382000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1041,
+          "after": 985,
+          "percent": -5.37944284341979
+        },
+        "lines": {
+          "before": 4,
+          "after": 4,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 1,
+          "after": 1,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 20,
+          "after": 20,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 80,
+          "after": 80,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 794,
+          "after": 794,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 2440,
+          "after": 2560,
+          "percent": 4.918032786885251
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_extent",
+      "workload": {
+        "map": 29,
+        "profile18": false
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 1795,
+          "after": 1772,
+          "percent": -1.2813370473537589
+        },
+        "prepare100_us": {
+          "before": 10312,
+          "after": 10617,
+          "percent": 2.9577191621412036
+        },
+        "collision1000_us": {
+          "before": 3223,
+          "after": 3323,
+          "percent": 3.1026993484331467
+        },
+        "candidates": {
+          "before": 1024000,
+          "after": 1024000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 13887,
+          "after": 13481,
+          "percent": -2.923597609274864
+        },
+        "sight_visits": {
+          "before": 3066000,
+          "after": 3066000,
+          "percent": 0.0
+        },
+        "sight_work": {
+          "before": 1025000,
+          "after": 1025000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1328,
+          "after": 1302,
+          "percent": -1.957831325301207
+        },
+        "lines": {
+          "before": 1024,
+          "after": 1024,
+          "percent": 0.0
+        },
+        "sectors": {
+          "before": 1,
+          "after": 1,
+          "percent": 0.0
+        },
+        "cells": {
+          "before": 20,
+          "after": 20,
+          "percent": 0.0
+        },
+        "references": {
+          "before": 20480,
+          "after": 20480,
+          "percent": 0.0
+        },
+        "prepared_bytes": {
+          "before": 78314,
+          "after": 78314,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 2612,
+          "after": 2676,
+          "percent": 2.450229709035212
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_scale",
+      "workload": {
+        "map": 0,
+        "legacy": true
+      },
+      "metrics": {
+        "prepare100_us": {
+          "before": 255,
+          "after": 272,
+          "percent": 6.666666666666665
+        },
+        "collision1000_us": {
+          "before": 111,
+          "after": 109,
+          "percent": -1.8018018018018056
+        },
+        "candidates": {
+          "before": 4000,
+          "after": 4000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        },
+        "sight_visits": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        },
+        "step100_us": {
+          "before": 695,
+          "after": 694,
+          "percent": -0.14388489208633226
+        },
+        "max_rss_kib": {
+          "before": 2080,
+          "after": 2108,
+          "percent": 1.3461538461538414
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_scale",
+      "workload": {
+        "map": 0,
+        "legacy": false
+      },
+      "metrics": {
+        "prepare100_us": {
+          "before": 271,
+          "after": 259,
+          "percent": -4.4280442804427995
+        },
+        "collision1000_us": {
+          "before": 102,
+          "after": 109,
+          "percent": 6.8627450980392135
+        },
+        "candidates": {
+          "before": 4000,
+          "after": 4000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 138,
+          "after": 156,
+          "percent": 13.043478260869556
+        },
+        "sight_visits": {
+          "before": 11000,
+          "after": 11000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1015,
+          "after": 1049,
+          "percent": 3.349753694581281
+        },
+        "max_rss_kib": {
+          "before": 2116,
+          "after": 2064,
+          "percent": -2.457466918714557
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_scale",
+      "workload": {
+        "map": 6,
+        "legacy": false
+      },
+      "metrics": {
+        "prepare100_us": {
+          "before": 5152,
+          "after": 5380,
+          "percent": 4.425465838509313
+        },
+        "collision1000_us": {
+          "before": 1263,
+          "after": 1333,
+          "percent": 5.542359461599378
+        },
+        "candidates": {
+          "before": 256000,
+          "after": 256000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 3578,
+          "after": 3957,
+          "percent": 10.592509782001125
+        },
+        "sight_visits": {
+          "before": 766000,
+          "after": 766000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1186,
+          "after": 1119,
+          "percent": -5.649241146711637
+        },
+        "max_rss_kib": {
+          "before": 2308,
+          "after": 2368,
+          "percent": 2.5996533795493937
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_scale",
+      "workload": {
+        "map": 7,
+        "legacy": false
+      },
+      "metrics": {
+        "prepare100_us": {
+          "before": 1559,
+          "after": 1609,
+          "percent": 3.2071840923669104
+        },
+        "collision1000_us": {
+          "before": 1072,
+          "after": 1045,
+          "percent": -2.518656716417911
+        },
+        "candidates": {
+          "before": 159000,
+          "after": 159000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 3581,
+          "after": 3674,
+          "percent": 2.5970399329796168
+        },
+        "sight_visits": {
+          "before": 766000,
+          "after": 766000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1129,
+          "after": 1177,
+          "percent": 4.251550044286989
+        },
+        "max_rss_kib": {
+          "before": 2232,
+          "after": 2332,
+          "percent": 4.480286738351258
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_scale",
+      "workload": {
+        "map": 8,
+        "legacy": false
+      },
+      "metrics": {
+        "prepare100_us": {
+          "before": 20460,
+          "after": 20542,
+          "percent": 0.40078201368523025
+        },
+        "collision1000_us": {
+          "before": 4694,
+          "after": 4285,
+          "percent": -8.713250958670649
+        },
+        "candidates": {
+          "before": 1024000,
+          "after": 1024000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 15075,
+          "after": 14881,
+          "percent": -1.2868988391376401
+        },
+        "sight_visits": {
+          "before": 3066000,
+          "after": 3066000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1358,
+          "after": 1358,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 2620,
+          "after": 2752,
+          "percent": 5.038167938931304
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_scale",
+      "workload": {
+        "map": 9,
+        "legacy": false
+      },
+      "metrics": {
+        "prepare100_us": {
+          "before": 5542,
+          "after": 5644,
+          "percent": 1.8404907975460016
+        },
+        "collision1000_us": {
+          "before": 3119,
+          "after": 3015,
+          "percent": -3.334402051939722
+        },
+        "candidates": {
+          "before": 543000,
+          "after": 543000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 13944,
+          "after": 14094,
+          "percent": 1.075731497418242
+        },
+        "sight_visits": {
+          "before": 3066000,
+          "after": 3066000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1284,
+          "after": 1334,
+          "percent": 3.89408099688473
+        },
+        "max_rss_kib": {
+          "before": 2628,
+          "after": 2696,
+          "percent": 2.5875190258751957
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_scale",
+      "workload": {
+        "map": 14,
+        "legacy": false
+      },
+      "metrics": {
+        "prepare100_us": {
+          "before": 16204,
+          "after": 15788,
+          "percent": -2.5672673413971836
+        },
+        "collision1000_us": {
+          "before": 3490,
+          "after": 3472,
+          "percent": -0.5157593123209181
+        },
+        "candidates": {
+          "before": 769000,
+          "after": 769000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 4729,
+          "after": 4784,
+          "percent": 1.1630365827870692
+        },
+        "sight_visits": {
+          "before": 830000,
+          "after": 830000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 6745,
+          "after": 6999,
+          "percent": 3.7657524091919914
+        },
+        "max_rss_kib": {
+          "before": 2628,
+          "after": 2588,
+          "percent": -1.5220700152207
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_scale",
+      "workload": {
+        "map": 15,
+        "legacy": false
+      },
+      "metrics": {
+        "prepare100_us": {
+          "before": 4163,
+          "after": 4170,
+          "percent": 0.16814797021378336
+        },
+        "collision1000_us": {
+          "before": 2180,
+          "after": 2181,
+          "percent": 0.04587155963302614
+        },
+        "candidates": {
+          "before": 387000,
+          "after": 387000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 4535,
+          "after": 4601,
+          "percent": 1.4553472987872018
+        },
+        "sight_visits": {
+          "before": 830000,
+          "after": 830000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 6695,
+          "after": 6834,
+          "percent": 2.0761762509335258
+        },
+        "max_rss_kib": {
+          "before": 2668,
+          "after": 2580,
+          "percent": -3.2983508245877036
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "map_scale",
+      "workload": {
+        "map": 28,
+        "legacy": false
+      },
+      "metrics": {
+        "prepare100_us": {
+          "before": 51945,
+          "after": 51581,
+          "percent": -0.7007411685436504
+        },
+        "collision1000_us": {
+          "before": 2204,
+          "after": 2114,
+          "percent": -4.0834845735027265
+        },
+        "candidates": {
+          "before": 512000,
+          "after": 512000,
+          "percent": 0.0
+        },
+        "sight1000_us": {
+          "before": 7391,
+          "after": 7224,
+          "percent": -2.2595048031389564
+        },
+        "sight_visits": {
+          "before": 1532000,
+          "after": 1532000,
+          "percent": 0.0
+        },
+        "step100_us": {
+          "before": 1320,
+          "after": 1261,
+          "percent": -4.469696969696968
+        },
+        "max_rss_kib": {
+          "before": 2944,
+          "after": 2960,
+          "percent": 0.5434782608695565
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "original_registry",
+      "workload": {
+        "case": 0
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 152,
+          "after": 144,
+          "percent": -5.263157894736848
+        },
+        "prepare100_us": {
+          "before": 3852,
+          "after": 3637,
+          "percent": -5.581516095534789
+        },
+        "spawn100_us": {
+          "before": 404,
+          "after": 397,
+          "percent": -1.7326732673267342
+        },
+        "enter100_us": {
+          "before": 16228,
+          "after": 15597,
+          "percent": -3.8883411387724887
+        },
+        "conversion100000_us": {
+          "before": 54,
+          "after": 54,
+          "percent": 0.0
+        },
+        "lookup100000_us": {
+          "before": 79,
+          "after": 79,
+          "percent": 0.0
+        },
+        "query100000_us": {
+          "before": 998,
+          "after": 1015,
+          "percent": 1.7034068136272618
+        },
+        "step100_us": {
+          "before": 13537,
+          "after": 13476,
+          "percent": -0.45061682795302094
+        },
+        "encode100_us": {
+          "before": 243,
+          "after": 237,
+          "percent": -2.4691358024691357
+        },
+        "decode100_us": {
+          "before": 3254,
+          "after": 3220,
+          "percent": -1.044867854947762
+        },
+        "diagnostic_bytes": {
+          "before": 8627,
+          "after": 8627,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 2700,
+          "after": 2716,
+          "percent": 0.592592592592589
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "original_registry",
+      "workload": {
+        "case": 1
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 3068,
+          "after": 2978,
+          "percent": -2.933507170795302
+        },
+        "prepare100_us": {
+          "before": 20054,
+          "after": 20021,
+          "percent": -0.16455569961104644
+        },
+        "spawn100_us": {
+          "before": 539,
+          "after": 555,
+          "percent": 2.9684601113172615
+        },
+        "enter100_us": {
+          "before": 16851,
+          "after": 17268,
+          "percent": 2.4746305857219264
+        },
+        "conversion100000_us": {
+          "before": 54,
+          "after": 54,
+          "percent": 0.0
+        },
+        "lookup100000_us": {
+          "before": 79,
+          "after": 79,
+          "percent": 0.0
+        },
+        "query100000_us": {
+          "before": 994,
+          "after": 1019,
+          "percent": 2.515090543259557
+        },
+        "step100_us": {
+          "before": 22797,
+          "after": 22801,
+          "percent": 0.017546168355475622
+        },
+        "encode100_us": {
+          "before": 1425,
+          "after": 1387,
+          "percent": -2.6666666666666616
+        },
+        "decode100_us": {
+          "before": 9699,
+          "after": 9832,
+          "percent": 1.3712753892153762
+        },
+        "diagnostic_bytes": {
+          "before": 136153,
+          "after": 136153,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 3688,
+          "after": 3636,
+          "percent": -1.4099783080260275
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "original_registry",
+      "workload": {
+        "case": 2
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 3038,
+          "after": 2916,
+          "percent": -4.015799868334435
+        },
+        "prepare100_us": {
+          "before": 20530,
+          "after": 20083,
+          "percent": -2.1773015099853854
+        },
+        "spawn100_us": {
+          "before": 2188,
+          "after": 2071,
+          "percent": -5.347349177330896
+        },
+        "enter100_us": {
+          "before": 46491,
+          "after": 46698,
+          "percent": 0.44524746725171926
+        },
+        "conversion100000_us": {
+          "before": 54,
+          "after": 54,
+          "percent": 0.0
+        },
+        "lookup100000_us": {
+          "before": 79,
+          "after": 79,
+          "percent": 0.0
+        },
+        "query100000_us": {
+          "before": 1006,
+          "after": 1030,
+          "percent": 2.385685884691857
+        },
+        "step100_us": {
+          "before": 60908,
+          "after": 63022,
+          "percent": 3.470808432389827
+        },
+        "encode100_us": {
+          "before": 1692,
+          "after": 1641,
+          "percent": -3.014184397163122
+        },
+        "decode100_us": {
+          "before": 14660,
+          "after": 14829,
+          "percent": 1.1527967257844551
+        },
+        "diagnostic_bytes": {
+          "before": 157279,
+          "after": 157279,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 3912,
+          "after": 3892,
+          "percent": -0.5112474437627856
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "original_registry",
+      "workload": {
+        "case": 5
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 2992,
+          "after": 2939,
+          "percent": -1.7713903743315496
+        },
+        "prepare100_us": {
+          "before": 20194,
+          "after": 20105,
+          "percent": -0.4407249678122227
+        },
+        "spawn100_us": {
+          "before": 533,
+          "after": 541,
+          "percent": 1.5009380863039379
+        },
+        "enter100_us": {
+          "before": 17268,
+          "after": 17959,
+          "percent": 4.0016214964095465
+        },
+        "conversion100000_us": {
+          "before": 54,
+          "after": 54,
+          "percent": 0.0
+        },
+        "lookup100000_us": {
+          "before": 79,
+          "after": 79,
+          "percent": 0.0
+        },
+        "query100000_us": {
+          "before": 989,
+          "after": 1106,
+          "percent": 11.830131445904946
+        },
+        "step100_us": {
+          "before": 21244,
+          "after": 21635,
+          "percent": 1.840519676143848
+        },
+        "encode100_us": {
+          "before": 1431,
+          "after": 1448,
+          "percent": 1.187980433263447
+        },
+        "decode100_us": {
+          "before": 9722,
+          "after": 9938,
+          "percent": 2.2217650689158708
+        },
+        "diagnostic_bytes": {
+          "before": 136112,
+          "after": 136112,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 3820,
+          "after": 3632,
+          "percent": -4.921465968586391
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "original_registry",
+      "workload": {
+        "case": 6
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 4337,
+          "after": 4433,
+          "percent": 2.2135116439935487
+        },
+        "prepare100_us": {
+          "before": 78264,
+          "after": 77878,
+          "percent": -0.49320249412245776
+        },
+        "spawn100_us": {
+          "before": 554,
+          "after": 557,
+          "percent": 0.5415162454873723
+        },
+        "enter100_us": {
+          "before": 16656,
+          "after": 17208,
+          "percent": 3.3141210374639796
+        },
+        "conversion100000_us": {
+          "before": 54,
+          "after": 54,
+          "percent": 0.0
+        },
+        "lookup100000_us": {
+          "before": 79,
+          "after": 79,
+          "percent": 0.0
+        },
+        "query100000_us": {
+          "before": 999,
+          "after": 1035,
+          "percent": 3.603603603603611
+        },
+        "step100_us": {
+          "before": 22652,
+          "after": 23368,
+          "percent": 3.1608687974571836
+        },
+        "encode100_us": {
+          "before": 1402,
+          "after": 1364,
+          "percent": -2.710413694721825
+        },
+        "decode100_us": {
+          "before": 9953,
+          "after": 10109,
+          "percent": 1.5673666231287076
+        },
+        "diagnostic_bytes": {
+          "before": 209738,
+          "after": 209738,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 4844,
+          "after": 4896,
+          "percent": 1.073492981007429
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "original_registry",
+      "workload": {
+        "case": 7
+      },
+      "metrics": {
+        "parse100_us": {
+          "before": 3114,
+          "after": 3048,
+          "percent": -2.1194605009633882
+        },
+        "prepare100_us": {
+          "before": 24907,
+          "after": 24591,
+          "percent": -1.26871963704982
+        },
+        "spawn100_us": {
+          "before": 463,
+          "after": 452,
+          "percent": -2.3758099352051865
+        },
+        "enter100_us": {
+          "before": 16869,
+          "after": 16483,
+          "percent": -2.2882209970952583
+        },
+        "conversion100000_us": {
+          "before": 54,
+          "after": 54,
+          "percent": 0.0
+        },
+        "lookup100000_us": {
+          "before": 79,
+          "after": 79,
+          "percent": 0.0
+        },
+        "query100000_us": {
+          "before": 999,
+          "after": 1038,
+          "percent": 3.9039039039038936
+        },
+        "step100_us": {
+          "before": 13686,
+          "after": 13917,
+          "percent": 1.6878562034195577
+        },
+        "encode100_us": {
+          "before": 490,
+          "after": 491,
+          "percent": 0.20408163265306367
+        },
+        "decode100_us": {
+          "before": 3212,
+          "after": 3319,
+          "percent": 3.33125778331258
+        },
+        "diagnostic_bytes": {
+          "before": 121723,
+          "after": 121723,
+          "percent": 0.0
+        },
+        "max_rss_kib": {
+          "before": 3516,
+          "after": 3516,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_body",
+      "workload": {
+        "label": "idle",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 956396,
+          "after": 964898,
+          "percent": 0.8889623126821844
+        },
+        "max_rss_kib": {
+          "before": 2516,
+          "after": 2328,
+          "percent": -7.472178060413359
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_body",
+      "workload": {
+        "label": "idle",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1994884,
+          "after": 1897058,
+          "percent": -4.903844033036508
+        },
+        "max_rss_kib": {
+          "before": 2436,
+          "after": 2312,
+          "percent": -5.090311986863716
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_body",
+      "workload": {
+        "label": "damage_death",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1032068,
+          "after": 1015653,
+          "percent": -1.5904959750714154
+        },
+        "max_rss_kib": {
+          "before": 2488,
+          "after": 2224,
+          "percent": -10.61093247588425
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_body",
+      "workload": {
+        "label": "damage_death",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2118597,
+          "after": 2105987,
+          "percent": -0.5952052230792315
+        },
+        "max_rss_kib": {
+          "before": 2436,
+          "after": 2328,
+          "percent": -4.433497536945808
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_body",
+      "workload": {
+        "label": "demon_source",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1089383,
+          "after": 1179245,
+          "percent": 8.248889509015655
+        },
+        "max_rss_kib": {
+          "before": 2440,
+          "after": 2348,
+          "percent": -3.770491803278686
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_body",
+      "workload": {
+        "label": "demon_source",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2073400,
+          "after": 2808476,
+          "percent": 35.45268640879715
+        },
+        "max_rss_kib": {
+          "before": 2464,
+          "after": 2332,
+          "percent": -5.35714285714286
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_body",
+      "workload": {
+        "label": "initialization",
+        "mode": "construct_spawn"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5892052,
+          "after": 5815436,
+          "percent": -1.3003279672345047
+        },
+        "max_rss_kib": {
+          "before": 2692,
+          "after": 2580,
+          "percent": -4.160475482912329
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "idle",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 945199,
+          "after": 1045868,
+          "percent": 10.650561416167381
+        },
+        "max_rss_kib": {
+          "before": 2440,
+          "after": 2344,
+          "percent": -3.934426229508192
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "idle",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1905811,
+          "after": 1996505,
+          "percent": 4.7588139642388505
+        },
+        "max_rss_kib": {
+          "before": 2428,
+          "after": 2260,
+          "percent": -6.919275123558489
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "forward",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1002674,
+          "after": 1025798,
+          "percent": 2.306233132603408
+        },
+        "max_rss_kib": {
+          "before": 2420,
+          "after": 2344,
+          "percent": -3.1404958677686
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "forward",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2053740,
+          "after": 2157152,
+          "percent": 5.035301450037499
+        },
+        "max_rss_kib": {
+          "before": 2508,
+          "after": 2388,
+          "percent": -4.784688995215314
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "turn_strafe",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1049583,
+          "after": 1063594,
+          "percent": 1.334911102790337
+        },
+        "max_rss_kib": {
+          "before": 2428,
+          "after": 2364,
+          "percent": -2.635914332784184
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "turn_strafe",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2733946,
+          "after": 2202960,
+          "percent": -19.42196371106086
+        },
+        "max_rss_kib": {
+          "before": 2424,
+          "after": 2344,
+          "percent": -3.300330033003296
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "combined",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1035693,
+          "after": 1029784,
+          "percent": -0.5705358634267133
+        },
+        "max_rss_kib": {
+          "before": 2432,
+          "after": 2364,
+          "percent": -2.796052631578949
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "combined",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1929376,
+          "after": 2044816,
+          "percent": 5.983281641318228
+        },
+        "max_rss_kib": {
+          "before": 2436,
+          "after": 2336,
+          "percent": -4.105090311986858
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "reaction",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 955684,
+          "after": 1008803,
+          "percent": 5.558217988372727
+        },
+        "max_rss_kib": {
+          "before": 2420,
+          "after": 2264,
+          "percent": -6.446280991735542
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "reaction",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1933421,
+          "after": 1959510,
+          "percent": 1.349369847539661
+        },
+        "max_rss_kib": {
+          "before": 2536,
+          "after": 2368,
+          "percent": -6.624605678233442
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "continuous",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1007561,
+          "after": 1336568,
+          "percent": 32.65380458354383
+        },
+        "max_rss_kib": {
+          "before": 2424,
+          "after": 2268,
+          "percent": -6.435643564356431
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "continuous",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2221378,
+          "after": 2270270,
+          "percent": 2.2009761508396952
+        },
+        "max_rss_kib": {
+          "before": 2400,
+          "after": 2388,
+          "percent": -0.5000000000000004
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "knockback",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2436065,
+          "after": 2290300,
+          "percent": -5.98362523167485
+        },
+        "max_rss_kib": {
+          "before": 2428,
+          "after": 2344,
+          "percent": -3.4596375617792385
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "knockback",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 3610834,
+          "after": 3704163,
+          "percent": 2.584693730035781
+        },
+        "max_rss_kib": {
+          "before": 2452,
+          "after": 2476,
+          "percent": 0.978792822185981
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "wall",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1032909,
+          "after": 1041522,
+          "percent": 0.8338585490106132
+        },
+        "max_rss_kib": {
+          "before": 2512,
+          "after": 2336,
+          "percent": -7.006369426751591
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "wall",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2095071,
+          "after": 2119506,
+          "percent": 1.1663089222274658
+        },
+        "max_rss_kib": {
+          "before": 2452,
+          "after": 2504,
+          "percent": 2.1207177814029254
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_commands",
+      "workload": {
+        "label": "initialization",
+        "mode": "construct_spawn"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5640689,
+          "after": 6571054,
+          "percent": 16.493818397007875
+        },
+        "max_rss_kib": {
+          "before": 2676,
+          "after": 2596,
+          "percent": -2.9895366218236186
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "active_player",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1009384,
+          "after": 1042984,
+          "percent": 3.3287628890491527
+        },
+        "max_rss_kib": {
+          "before": 2524,
+          "after": 2336,
+          "percent": -7.448494453248811
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "active_player",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2063895,
+          "after": 1992318,
+          "percent": -3.4680543341594428
+        },
+        "max_rss_kib": {
+          "before": 2492,
+          "after": 2512,
+          "percent": 0.8025682182985605
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "standing_demon",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4063364,
+          "after": 3834165,
+          "percent": -5.64062190834983
+        },
+        "max_rss_kib": {
+          "before": 2512,
+          "after": 2508,
+          "percent": -0.15923566878981443
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "standing_demon",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5392070,
+          "after": 5457257,
+          "percent": 1.2089420204114631
+        },
+        "max_rss_kib": {
+          "before": 2512,
+          "after": 2500,
+          "percent": -0.4777070063694322
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "failed_sight",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4123433,
+          "after": 4068451,
+          "percent": -1.3334035014028411
+        },
+        "max_rss_kib": {
+          "before": 2468,
+          "after": 2488,
+          "percent": 0.8103727714748876
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "failed_sight",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5695179,
+          "after": 5400142,
+          "percent": -5.18046930570576
+        },
+        "max_rss_kib": {
+          "before": 2500,
+          "after": 2504,
+          "percent": 0.16000000000000458
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "acquisition",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5089293,
+          "after": 4695559,
+          "percent": -7.736516643863888
+        },
+        "max_rss_kib": {
+          "before": 2500,
+          "after": 2480,
+          "percent": -0.8000000000000007
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "acquisition",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6493651,
+          "after": 6453631,
+          "percent": -0.6162942849869846
+        },
+        "max_rss_kib": {
+          "before": 2468,
+          "after": 2468,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "stop_slot",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4925620,
+          "after": 4740676,
+          "percent": -3.7547354444719683
+        },
+        "max_rss_kib": {
+          "before": 2500,
+          "after": 2504,
+          "percent": 0.16000000000000458
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "stop_slot",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6654008,
+          "after": 6374493,
+          "percent": -4.200701291612519
+        },
+        "max_rss_kib": {
+          "before": 2512,
+          "after": 2508,
+          "percent": -0.15923566878981443
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "repeated_search",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 10771112,
+          "after": 9602983,
+          "percent": -10.845017673198454
+        },
+        "max_rss_kib": {
+          "before": 2492,
+          "after": 2512,
+          "percent": 0.8025682182985605
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "repeated_search",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 12043435,
+          "after": 11610572,
+          "percent": -3.5941822245895816
+        },
+        "max_rss_kib": {
+          "before": 2672,
+          "after": 2636,
+          "percent": -1.3473053892215536
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "moving_player",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5141660,
+          "after": 4825110,
+          "percent": -6.156572002038252
+        },
+        "max_rss_kib": {
+          "before": 2508,
+          "after": 2500,
+          "percent": -0.31897926634768536
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "moving_player",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6736901,
+          "after": 6528913,
+          "percent": -3.087294885289249
+        },
+        "max_rss_kib": {
+          "before": 2512,
+          "after": 2508,
+          "percent": -0.15923566878981443
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "pursuit",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5214449,
+          "after": 4785652,
+          "percent": -8.223246598058587
+        },
+        "max_rss_kib": {
+          "before": 2500,
+          "after": 2468,
+          "percent": -1.2800000000000034
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "pursuit",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6601190,
+          "after": 10357288,
+          "percent": 56.90031645809317
+        },
+        "max_rss_kib": {
+          "before": 2512,
+          "after": 2468,
+          "percent": -1.7515923566879033
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "target_death",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4950507,
+          "after": 5553478,
+          "percent": 12.179984797516695
+        },
+        "max_rss_kib": {
+          "before": 2512,
+          "after": 2464,
+          "percent": -1.9108280254777066
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "target_death",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6932811,
+          "after": 7874263,
+          "percent": 13.579657659786193
+        },
+        "max_rss_kib": {
+          "before": 2520,
+          "after": 2484,
+          "percent": -1.4285714285714235
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "target_loss",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4830429,
+          "after": 4722399,
+          "percent": -2.236447321759616
+        },
+        "max_rss_kib": {
+          "before": 2540,
+          "after": 2508,
+          "percent": -1.2598425196850394
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "target_loss",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6770240,
+          "after": 6290760,
+          "percent": -7.0821713853570945
+        },
+        "max_rss_kib": {
+          "before": 2488,
+          "after": 2500,
+          "percent": 0.4823151125401992
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "retirement",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1887463,
+          "after": 1907763,
+          "percent": 1.0755177717391096
+        },
+        "max_rss_kib": {
+          "before": 2524,
+          "after": 2376,
+          "percent": -5.863708399366086
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon",
+      "workload": {
+        "label": "retirement",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 3190873,
+          "after": 3106948,
+          "percent": -2.63015795363839
+        },
+        "max_rss_kib": {
+          "before": 2524,
+          "after": 2512,
+          "percent": -0.47543581616481534
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "acquisition_selection",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4617975,
+          "after": 4699154,
+          "percent": 1.7578917166073849
+        },
+        "max_rss_kib": {
+          "before": 2516,
+          "after": 2552,
+          "percent": 1.4308426073131875
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "acquisition_selection",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6631424,
+          "after": 6309698,
+          "percent": -4.8515371660747375
+        },
+        "max_rss_kib": {
+          "before": 2648,
+          "after": 2476,
+          "percent": -6.495468277945616
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "hit_followthrough",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4673928,
+          "after": 4718042,
+          "percent": 0.9438313983441748
+        },
+        "max_rss_kib": {
+          "before": 2496,
+          "after": 2400,
+          "percent": -3.8461538461538436
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "hit_followthrough",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6432180,
+          "after": 6354283,
+          "percent": -1.2110513076437512
+        },
+        "max_rss_kib": {
+          "before": 2540,
+          "after": 2476,
+          "percent": -2.5196850393700787
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "miss",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4691654,
+          "after": 4785762,
+          "percent": 2.0058597671524847
+        },
+        "max_rss_kib": {
+          "before": 2468,
+          "after": 2508,
+          "percent": 1.620745542949753
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "miss",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6339493,
+          "after": 6411018,
+          "percent": 1.1282447981250332
+        },
+        "max_rss_kib": {
+          "before": 2464,
+          "after": 2484,
+          "percent": 0.8116883116883189
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "repeated",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4775938,
+          "after": 4805552,
+          "percent": 0.620066675907438
+        },
+        "max_rss_kib": {
+          "before": 2448,
+          "after": 2428,
+          "percent": -0.8169934640522847
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "repeated",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6332061,
+          "after": 6335316,
+          "percent": 0.0514050638488861
+        },
+        "max_rss_kib": {
+          "before": 2540,
+          "after": 2532,
+          "percent": -0.31496062992125706
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "lethal",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4660418,
+          "after": 4744061,
+          "percent": 1.7947531745006629
+        },
+        "max_rss_kib": {
+          "before": 2472,
+          "after": 2256,
+          "percent": -8.737864077669899
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "lethal",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6250070,
+          "after": 6238752,
+          "percent": -0.18108597183711383
+        },
+        "max_rss_kib": {
+          "before": 2472,
+          "after": 2516,
+          "percent": 1.7799352750809128
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "moving_pressure",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4728018,
+          "after": 4810509,
+          "percent": 1.7447268601769261
+        },
+        "max_rss_kib": {
+          "before": 2492,
+          "after": 2460,
+          "percent": -1.2841091492776902
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "moving_pressure",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6437427,
+          "after": 7503986,
+          "percent": 16.568094675093015
+        },
+        "max_rss_kib": {
+          "before": 2440,
+          "after": 2556,
+          "percent": 4.754098360655745
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "prior_impulse",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4666276,
+          "after": 4762839,
+          "percent": 2.069380379557484
+        },
+        "max_rss_kib": {
+          "before": 2492,
+          "after": 2504,
+          "percent": 0.48154093097914075
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "prior_impulse",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6306153,
+          "after": 6320835,
+          "percent": 0.2328202312883887
+        },
+        "max_rss_kib": {
+          "before": 2544,
+          "after": 2500,
+          "percent": -1.7295597484276781
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "corpse_continuation",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4780776,
+          "after": 4788737,
+          "percent": 0.16652108360650786
+        },
+        "max_rss_kib": {
+          "before": 2516,
+          "after": 2400,
+          "percent": -4.610492845786962
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "corpse_continuation",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6303909,
+          "after": 6282458,
+          "percent": -0.34028092727861337
+        },
+        "max_rss_kib": {
+          "before": 2496,
+          "after": 2460,
+          "percent": -1.4423076923076872
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "wall",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4789288,
+          "after": 4797730,
+          "percent": 0.1762683722507319
+        },
+        "max_rss_kib": {
+          "before": 2516,
+          "after": 2484,
+          "percent": -1.2718600953895098
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_demon_melee",
+      "workload": {
+        "label": "wall",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6470406,
+          "after": 6276368,
+          "percent": -2.9988535495299673
+        },
+        "max_rss_kib": {
+          "before": 2516,
+          "after": 2480,
+          "percent": -1.4308426073131986
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_knockback",
+      "workload": {
+        "label": "physical",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2204354,
+          "after": 2249559,
+          "percent": 2.050714177486923
+        },
+        "max_rss_kib": {
+          "before": 2408,
+          "after": 2284,
+          "percent": -5.1495016611295625
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_knockback",
+      "workload": {
+        "label": "physical",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 3671766,
+          "after": 3735299,
+          "percent": 1.730311790021477
+        },
+        "max_rss_kib": {
+          "before": 2504,
+          "after": 2336,
+          "percent": -6.709265175718848
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_knockback",
+      "workload": {
+        "label": "friction",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2386394,
+          "after": 2408985,
+          "percent": 0.9466584310889203
+        },
+        "max_rss_kib": {
+          "before": 2520,
+          "after": 2380,
+          "percent": -5.555555555555558
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_knockback",
+      "workload": {
+        "label": "friction",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 3763982,
+          "after": 4197462,
+          "percent": 11.51652691219034
+        },
+        "max_rss_kib": {
+          "before": 2500,
+          "after": 2340,
+          "percent": -6.399999999999995
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_knockback",
+      "workload": {
+        "label": "collision",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2201229,
+          "after": 2238202,
+          "percent": 1.6796525940735885
+        },
+        "max_rss_kib": {
+          "before": 2424,
+          "after": 2328,
+          "percent": -3.960396039603964
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_knockback",
+      "workload": {
+        "label": "collision",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 3730202,
+          "after": 3903567,
+          "percent": 4.647603534607514
+        },
+        "max_rss_kib": {
+          "before": 2428,
+          "after": 2336,
+          "percent": -3.789126853377267
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_knockback",
+      "workload": {
+        "label": "blocker",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 3401466,
+          "after": 3670673,
+          "percent": 7.914440420689206
+        },
+        "max_rss_kib": {
+          "before": 2536,
+          "after": 2360,
+          "percent": -6.940063091482651
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_knockback",
+      "workload": {
+        "label": "blocker",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5314928,
+          "after": 5382106,
+          "percent": 1.2639493893426224
+        },
+        "max_rss_kib": {
+          "before": 2504,
+          "after": 2488,
+          "percent": -0.6389776357827448
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_knockback",
+      "workload": {
+        "label": "moving_corpse",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2239205,
+          "after": 2301907,
+          "percent": 2.800190246091816
+        },
+        "max_rss_kib": {
+          "before": 2428,
+          "after": 2356,
+          "percent": -2.9654036243822124
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_knockback",
+      "workload": {
+        "label": "moving_corpse",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 3713057,
+          "after": 3850068,
+          "percent": 3.6899783655354623
+        },
+        "max_rss_kib": {
+          "before": 2452,
+          "after": 2360,
+          "percent": -3.7520391517128826
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_knockback",
+      "workload": {
+        "label": "initialization",
+        "mode": "construct_spawn"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5606680,
+          "after": 6079517,
+          "percent": 8.43345794659227
+        },
+        "max_rss_kib": {
+          "before": 2688,
+          "after": 2632,
+          "percent": -2.083333333333337
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "idle",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1020941,
+          "after": 978528,
+          "percent": -4.154304705169054
+        },
+        "max_rss_kib": {
+          "before": 18760,
+          "after": 18684,
+          "percent": -0.4051172707889128
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "idle",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2283800,
+          "after": 2358110,
+          "percent": 3.2537875470706634
+        },
+        "max_rss_kib": {
+          "before": 18876,
+          "after": 18776,
+          "percent": -0.5297732570459845
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "first_shot",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5740776,
+          "after": 5758181,
+          "percent": 0.3031820088434056
+        },
+        "max_rss_kib": {
+          "before": 18804,
+          "after": 18744,
+          "percent": -0.319081046585834
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "first_shot",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7692745,
+          "after": 7445359,
+          "percent": -3.2158351797700324
+        },
+        "max_rss_kib": {
+          "before": 19000,
+          "after": 18840,
+          "percent": -0.8421052631578996
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "held_refire",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5976645,
+          "after": 5914664,
+          "percent": -1.0370533970145424
+        },
+        "max_rss_kib": {
+          "before": 18856,
+          "after": 18740,
+          "percent": -0.6151887993211758
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "held_refire",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8385591,
+          "after": 8293224,
+          "percent": -1.1014966029228024
+        },
+        "max_rss_kib": {
+          "before": 18984,
+          "after": 18788,
+          "percent": -1.0324483775811188
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "repeated",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6347525,
+          "after": 6672755,
+          "percent": 5.123729327572568
+        },
+        "max_rss_kib": {
+          "before": 18752,
+          "after": 18872,
+          "percent": 0.6399317406143412
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "repeated",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8815937,
+          "after": 8790429,
+          "percent": -0.289339635707464
+        },
+        "max_rss_kib": {
+          "before": 18904,
+          "after": 18812,
+          "percent": -0.48666948793906206
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "miss",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5785492,
+          "after": 6309427,
+          "percent": 9.05601459651142
+        },
+        "max_rss_kib": {
+          "before": 18776,
+          "after": 18740,
+          "percent": -0.19173412867490303
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "miss",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8152095,
+          "after": 8129751,
+          "percent": -0.27408905318203614
+        },
+        "max_rss_kib": {
+          "before": 18988,
+          "after": 18784,
+          "percent": -1.074362755424474
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "wall",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6082301,
+          "after": 5960300,
+          "percent": -2.0058362780796313
+        },
+        "max_rss_kib": {
+          "before": 18848,
+          "after": 18740,
+          "percent": -0.573005093378609
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "wall",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8337589,
+          "after": 8226495,
+          "percent": -1.3324475456873652
+        },
+        "max_rss_kib": {
+          "before": 18892,
+          "after": 18792,
+          "percent": -0.529324581833579
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "demon_hits",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6256960,
+          "after": 6119947,
+          "percent": -2.189769472715186
+        },
+        "max_rss_kib": {
+          "before": 18848,
+          "after": 18664,
+          "percent": -0.9762308998302216
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "demon_hits",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8476094,
+          "after": 8626436,
+          "percent": 1.7737179413064519
+        },
+        "max_rss_kib": {
+          "before": 18900,
+          "after": 18816,
+          "percent": -0.4444444444444473
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "demon_pain",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6157263,
+          "after": 6148028,
+          "percent": -0.1499854724412497
+        },
+        "max_rss_kib": {
+          "before": 18772,
+          "after": 18788,
+          "percent": 0.08523332623056046
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "demon_pain",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8661869,
+          "after": 8715979,
+          "percent": 0.6246919689041786
+        },
+        "max_rss_kib": {
+          "before": 18900,
+          "after": 18780,
+          "percent": -0.6349206349206327
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "demon_death",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4824350,
+          "after": 4735408,
+          "percent": -1.843605874366494
+        },
+        "max_rss_kib": {
+          "before": 18856,
+          "after": 18664,
+          "percent": -1.0182435299109005
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "demon_death",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7335667,
+          "after": 7318941,
+          "percent": -0.2280092594170391
+        },
+        "max_rss_kib": {
+          "before": 18976,
+          "after": 18792,
+          "percent": -0.9696458684654297
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "moving_fire",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6466080,
+          "after": 6275988,
+          "percent": -2.9398337168732858
+        },
+        "max_rss_kib": {
+          "before": 18832,
+          "after": 18664,
+          "percent": -0.8920985556499561
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "moving_fire",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8518747,
+          "after": 8550854,
+          "percent": 0.3768981518056602
+        },
+        "max_rss_kib": {
+          "before": 18992,
+          "after": 18816,
+          "percent": -0.9267059814658807
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "reaction",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6232974,
+          "after": 6087109,
+          "percent": -2.340215120422451
+        },
+        "max_rss_kib": {
+          "before": 18764,
+          "after": 18764,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "reaction",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8404498,
+          "after": 8430195,
+          "percent": 0.3057529432453965
+        },
+        "max_rss_kib": {
+          "before": 18976,
+          "after": 18776,
+          "percent": -1.0539629005059004
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "retaliation",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6301847,
+          "after": 6505387,
+          "percent": 3.2298467417568144
+        },
+        "max_rss_kib": {
+          "before": 18772,
+          "after": 18812,
+          "percent": 0.21308331557639004
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "retaliation",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8759431,
+          "after": 8774556,
+          "percent": 0.17267103308422627
+        },
+        "max_rss_kib": {
+          "before": 18932,
+          "after": 18780,
+          "percent": -0.8028734417916739
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "two_way",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5279723,
+          "after": 4837398,
+          "percent": -8.377806941765698
+        },
+        "max_rss_kib": {
+          "before": 18772,
+          "after": 18688,
+          "percent": -0.44747496271041465
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "two_way",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7343266,
+          "after": 7179045,
+          "percent": -2.236348240687458
+        },
+        "max_rss_kib": {
+          "before": 18992,
+          "after": 18836,
+          "percent": -0.8213984835720334
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "player_death",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6105534,
+          "after": 6015632,
+          "percent": -1.4724674369187007
+        },
+        "max_rss_kib": {
+          "before": 18852,
+          "after": 18792,
+          "percent": -0.3182686187141903
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "player_death",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8284899,
+          "after": 8219834,
+          "percent": -0.785344516571651
+        },
+        "max_rss_kib": {
+          "before": 18980,
+          "after": 18812,
+          "percent": -0.8851422550052668
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "empty_idle",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4724120,
+          "after": 4718473,
+          "percent": -0.1195354902077006
+        },
+        "max_rss_kib": {
+          "before": 18764,
+          "after": 18612,
+          "percent": -0.8100618205073573
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_pistol",
+      "workload": {
+        "label": "empty_idle",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7230478,
+          "after": 6774976,
+          "percent": -6.299749477143834
+        },
+        "max_rss_kib": {
+          "before": 18892,
+          "after": 18872,
+          "percent": -0.1058649163667158
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "idle",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 972910,
+          "after": 1013620,
+          "percent": 4.1843541540327545
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 972910.0,
+          "after": 1013620.0,
+          "percent": 4.1843541540327545
+        },
+        "max_rss_kib": {
+          "before": 47736,
+          "after": 47720,
+          "percent": -0.033517680576500286
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "idle",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2412460,
+          "after": 2355856,
+          "percent": -2.3463186954395088
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 2412460.0,
+          "after": 2355856.0,
+          "percent": -2.3463186954395088
+        },
+        "max_rss_kib": {
+          "before": 47744,
+          "after": 47772,
+          "percent": 0.05864611260053554
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "fallback",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5921992,
+          "after": 5990024,
+          "percent": 1.1488026326276657
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 5921992.0,
+          "after": 5990024.0,
+          "percent": 1.1488026326276657
+        },
+        "max_rss_kib": {
+          "before": 47768,
+          "after": 47704,
+          "percent": -0.1339809077206544
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "fallback",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8202757,
+          "after": 8227536,
+          "percent": 0.3020813611813722
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 8202757.0,
+          "after": 8227536.0,
+          "percent": 0.3020813611813722
+        },
+        "max_rss_kib": {
+          "before": 47736,
+          "after": 47720,
+          "percent": -0.033517680576500286
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "zero_ammo",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1150943,
+          "after": 1176301,
+          "percent": 2.2032368240651357
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 1150943.0,
+          "after": 1176301.0,
+          "percent": 2.2032368240651357
+        },
+        "max_rss_kib": {
+          "before": 47748,
+          "after": 47696,
+          "percent": -0.10890508502974239
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "zero_ammo",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2622201,
+          "after": 2552968,
+          "percent": -2.640262893653078
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 2622201.0,
+          "after": 2552968.0,
+          "percent": -2.640262893653078
+        },
+        "max_rss_kib": {
+          "before": 47736,
+          "after": 47720,
+          "percent": -0.033517680576500286
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "release",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5702581,
+          "after": 5813032,
+          "percent": 1.936859818387493
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 5702581.0,
+          "after": 5813032.0,
+          "percent": 1.936859818387493
+        },
+        "max_rss_kib": {
+          "before": 47736,
+          "after": 47720,
+          "percent": -0.033517680576500286
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "release",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7714619,
+          "after": 7755408,
+          "percent": 0.5287234534848695
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 7714619.0,
+          "after": 7755408.0,
+          "percent": 0.5287234534848695
+        },
+        "max_rss_kib": {
+          "before": 47756,
+          "after": 47700,
+          "percent": -0.11726275232432082
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "fist_hit",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5474492,
+          "after": 5690458,
+          "percent": 3.944950508649936
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 5474492.0,
+          "after": 5690458.0,
+          "percent": 3.944950508649936
+        },
+        "max_rss_kib": {
+          "before": 47688,
+          "after": 47728,
+          "percent": 0.08387854386848748
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "fist_hit",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7589069,
+          "after": 7702964,
+          "percent": 1.500776972774931
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 7589069.0,
+          "after": 7702964.0,
+          "percent": 1.500776972774931
+        },
+        "max_rss_kib": {
+          "before": 47780,
+          "after": 47728,
+          "percent": -0.10883214734198621
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "fist_kill",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6144482,
+          "after": 6077019,
+          "percent": -1.0979444646432412
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 6144482.0,
+          "after": 6077019.0,
+          "percent": -1.0979444646432412
+        },
+        "max_rss_kib": {
+          "before": 47756,
+          "after": 47676,
+          "percent": -0.16751821760616625
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "fist_kill",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8478495,
+          "after": 8372504,
+          "percent": -1.2501157339834479
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 8478495.0,
+          "after": 8372504.0,
+          "percent": -1.2501157339834479
+        },
+        "max_rss_kib": {
+          "before": 47768,
+          "after": 47700,
+          "percent": -0.1423547144531856
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "fist_miss",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5518145,
+          "after": 5722896,
+          "percent": 3.7105041639898806
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 5518145.0,
+          "after": 5722896.0,
+          "percent": 3.7105041639898806
+        },
+        "max_rss_kib": {
+          "before": 47768,
+          "after": 47724,
+          "percent": -0.09211187405794297
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "fist_miss",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7696318,
+          "after": 7722392,
+          "percent": 0.3387853776312344
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 7696318.0,
+          "after": 7722392.0,
+          "percent": 0.3387853776312344
+        },
+        "max_rss_kib": {
+          "before": 47744,
+          "after": 47680,
+          "percent": -0.13404825737265424
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "switch_moving",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5687725,
+          "after": 5834541,
+          "percent": 2.581278103283835
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 5687725.0,
+          "after": 5834541.0,
+          "percent": 2.581278103283835
+        },
+        "max_rss_kib": {
+          "before": 47736,
+          "after": 47704,
+          "percent": -0.06703536115301167
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "switch_moving",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7878548,
+          "after": 8027445,
+          "percent": 1.8899040787718757
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 7878548.0,
+          "after": 8027445.0,
+          "percent": 1.8899040787718757
+        },
+        "max_rss_kib": {
+          "before": 47780,
+          "after": 47680,
+          "percent": -0.20929259104227604
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "switch_death",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4737270,
+          "after": 4986856,
+          "percent": 5.268561851023912
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 4737270.0,
+          "after": 4986856.0,
+          "percent": 5.268561851023912
+        },
+        "max_rss_kib": {
+          "before": 47756,
+          "after": 47696,
+          "percent": -0.12563866320461914
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "switch_death",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6853271,
+          "after": 6962609,
+          "percent": 1.5954133434968432
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 6853271.0,
+          "after": 6962609.0,
+          "percent": 1.5954133434968432
+        },
+        "max_rss_kib": {
+          "before": 47760,
+          "after": 47728,
+          "percent": -0.06700167504187782
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "shotgun",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6143831,
+          "after": 6307711,
+          "percent": 2.66739107895384
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 6143831.0,
+          "after": 6307711.0,
+          "percent": 2.66739107895384
+        },
+        "max_rss_kib": {
+          "before": 47744,
+          "after": 47728,
+          "percent": -0.03351206434316634
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "shotgun",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8675307,
+          "after": 8902438,
+          "percent": 2.618132130655426
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 8675307.0,
+          "after": 8902438.0,
+          "percent": 2.618132130655426
+        },
+        "max_rss_kib": {
+          "before": 47756,
+          "after": 47728,
+          "percent": -0.05863137616215486
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "shotgun_held",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7364277,
+          "after": 7377453,
+          "percent": 0.17891776748755195
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 7364277.0,
+          "after": 7377453.0,
+          "percent": 0.17891776748755195
+        },
+        "max_rss_kib": {
+          "before": 47688,
+          "after": 47676,
+          "percent": -0.025163563160546243
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "shotgun_held",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 10724572,
+          "after": 10641841,
+          "percent": -0.7714154000737716
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 10724572.0,
+          "after": 10641841.0,
+          "percent": -0.7714154000737716
+        },
+        "max_rss_kib": {
+          "before": 47748,
+          "after": 47784,
+          "percent": 0.075395828097502
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "shotgun_death",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4736780,
+          "after": 4779069,
+          "percent": 0.8927794831087743
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 4736780.0,
+          "after": 4779069.0,
+          "percent": 0.8927794831087743
+        },
+        "max_rss_kib": {
+          "before": 47756,
+          "after": 47748,
+          "percent": -0.016751821760618846
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "shotgun_death",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7551946,
+          "after": 8201231,
+          "percent": 8.59758531112378
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 7551946.0,
+          "after": 8201231.0,
+          "percent": 8.59758531112378
+        },
+        "max_rss_kib": {
+          "before": 47668,
+          "after": 47772,
+          "percent": 0.21817571536459912
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "shotgun_player_death",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6865538,
+          "after": 7194604,
+          "percent": 4.793011123090429
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 6865538.0,
+          "after": 7194604.0,
+          "percent": 4.793011123090429
+        },
+        "max_rss_kib": {
+          "before": 47760,
+          "after": 47700,
+          "percent": -0.12562814070351536
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "shotgun_player_death",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 9754532,
+          "after": 10006016,
+          "percent": 2.5781247116724915
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 9754532.0,
+          "after": 10006016.0,
+          "percent": 2.5781247116724915
+        },
+        "max_rss_kib": {
+          "before": 47756,
+          "after": 47728,
+          "percent": -0.05863137616215486
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "shotgun_mixed",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6328613,
+          "after": 6411457,
+          "percent": 1.3090388051852697
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 6328613.0,
+          "after": 6411457.0,
+          "percent": 1.3090388051852697
+        },
+        "max_rss_kib": {
+          "before": 47768,
+          "after": 47676,
+          "percent": -0.19259755484843932
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "shotgun_mixed",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 9039284,
+          "after": 8918811,
+          "percent": -1.332771489423279
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 9039284.0,
+          "after": 8918811.0,
+          "percent": -1.332771489423279
+        },
+        "max_rss_kib": {
+          "before": 47776,
+          "after": 47772,
+          "percent": -0.008372404554590762
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "shotgun_fallback",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6062720,
+          "after": 6268257,
+          "percent": 3.3901780059115483
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 6062720.0,
+          "after": 6268257.0,
+          "percent": 3.3901780059115483
+        },
+        "max_rss_kib": {
+          "before": 47680,
+          "after": 47672,
+          "percent": -0.01677852348993536
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "shotgun_fallback",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8737978,
+          "after": 8771263,
+          "percent": 0.3809233669391343
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 8737978.0,
+          "after": 8771263.0,
+          "percent": 0.3809233669391343
+        },
+        "max_rss_kib": {
+          "before": 47760,
+          "after": 47720,
+          "percent": -0.08375209380234727
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "chaingun",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7660727,
+          "after": 7420719,
+          "percent": -3.132966362069811
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 7660727.0,
+          "after": 7420719.0,
+          "percent": -3.132966362069811
+        },
+        "max_rss_kib": {
+          "before": 47760,
+          "after": 47704,
+          "percent": -0.11725293132328618
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "chaingun",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 10646085,
+          "after": 10814976,
+          "percent": 1.5864141606985127
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 10646085.0,
+          "after": 10814976.0,
+          "percent": 1.5864141606985127
+        },
+        "max_rss_kib": {
+          "before": 47736,
+          "after": 47696,
+          "percent": -0.08379420144125627
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "chaingun_last",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5819892,
+          "after": 6178643,
+          "percent": 6.164220916814256
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 5819892.0,
+          "after": 6178643.0,
+          "percent": 6.164220916814256
+        },
+        "max_rss_kib": {
+          "before": 47768,
+          "after": 47728,
+          "percent": -0.08373806732540068
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "chaingun_last",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7771762,
+          "after": 7974321,
+          "percent": 2.6063458968506703
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 7771762.0,
+          "after": 7974321.0,
+          "percent": 2.6063458968506703
+        },
+        "max_rss_kib": {
+          "before": 47744,
+          "after": 47704,
+          "percent": -0.08378016085790474
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "retaliation",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7206475,
+          "after": 7233335,
+          "percent": 0.3727203660596867
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 7206475.0,
+          "after": 7233335.0,
+          "percent": 0.3727203660596867
+        },
+        "max_rss_kib": {
+          "before": 47764,
+          "after": 47692,
+          "percent": -0.15074114395778881
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "retaliation",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 11022822,
+          "after": 10606387,
+          "percent": -3.777934543440875
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 11022822.0,
+          "after": 10606387.0,
+          "percent": -3.777934543440875
+        },
+        "max_rss_kib": {
+          "before": 47668,
+          "after": 47720,
+          "percent": 0.10908785768231066
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "chaingun_release",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6089492,
+          "after": 6516584,
+          "percent": 7.01358996776742
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 6089492.0,
+          "after": 6516584.0,
+          "percent": 7.01358996776742
+        },
+        "max_rss_kib": {
+          "before": 47664,
+          "after": 47700,
+          "percent": 0.07552870090634656
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "chaingun_release",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 9466008,
+          "after": 9195989,
+          "percent": -2.852511850824546
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 9466008.0,
+          "after": 9195989.0,
+          "percent": -2.852511850824546
+        },
+        "max_rss_kib": {
+          "before": 47660,
+          "after": 47704,
+          "percent": 0.09232060428032707
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "chaingun_death",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8068801,
+          "after": 7985971,
+          "percent": -1.0265465711696176
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 8068801.0,
+          "after": 7985971.0,
+          "percent": -1.0265465711696176
+        },
+        "max_rss_kib": {
+          "before": 47764,
+          "after": 47700,
+          "percent": -0.13399212796247895
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "chaingun_death",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 11389426,
+          "after": 11615932,
+          "percent": 1.9887393798423192
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 11389426.0,
+          "after": 11615932.0,
+          "percent": 1.9887393798423192
+        },
+        "max_rss_kib": {
+          "before": 47756,
+          "after": 47704,
+          "percent": -0.1088868414440114
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "fallback_priority",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6486851,
+          "after": 6575472,
+          "percent": 1.366163643962226
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 6486851.0,
+          "after": 6575472.0,
+          "percent": 1.366163643962226
+        },
+        "max_rss_kib": {
+          "before": 47660,
+          "after": 47728,
+          "percent": 0.14267729752412972
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "fallback_priority",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 9397689,
+          "after": 9779435,
+          "percent": 4.062126337655991
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 9397689.0,
+          "after": 9779435.0,
+          "percent": 4.062126337655991
+        },
+        "max_rss_kib": {
+          "before": 47736,
+          "after": 47692,
+          "percent": -0.09217362158538966
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "pending_precedence",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 6455003,
+          "after": 6521441,
+          "percent": 1.0292481661123842
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 6455003.0,
+          "after": 6521441.0,
+          "percent": 1.0292481661123842
+        },
+        "max_rss_kib": {
+          "before": 47768,
+          "after": 47720,
+          "percent": -0.10048568079048525
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "pending_precedence",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 9259073,
+          "after": 9194006,
+          "percent": -0.7027377362723075
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 9259073.0,
+          "after": 9194006.0,
+          "percent": -0.7027377362723075
+        },
+        "max_rss_kib": {
+          "before": 47764,
+          "after": 47676,
+          "percent": -0.18423917594840855
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "opening_switch",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 5670362,
+          "after": 6041050,
+          "percent": 6.537289859095408
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 5670362.0,
+          "after": 6041050.0,
+          "percent": 6.537289859095408
+        },
+        "max_rss_kib": {
+          "before": 47756,
+          "after": 47696,
+          "percent": -0.12563866320461914
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "opening_switch",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 8026509,
+          "after": 7951227,
+          "percent": -0.9379170944678439
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 8026509.0,
+          "after": 7951227.0,
+          "percent": -0.9379170944678439
+        },
+        "max_rss_kib": {
+          "before": 47748,
+          "after": 47704,
+          "percent": -0.0921504565636222
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "full_encounter",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 24459519,
+          "after": 25484695,
+          "percent": 4.191317090086688
+        },
+        "calls": {
+          "before": 512,
+          "after": 512,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 4777249.8046875,
+          "after": 4977479.4921875,
+          "percent": 4.191317090086688
+        },
+        "max_rss_kib": {
+          "before": 47736,
+          "after": 47680,
+          "percent": -0.11731188201776765
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "full_encounter",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 37857187,
+          "after": 38549871,
+          "percent": 1.8297291872214405
+        },
+        "calls": {
+          "before": 512,
+          "after": 512,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 7393981.8359375,
+          "after": 7529271.6796875,
+          "percent": 1.8297291872214405
+        },
+        "max_rss_kib": {
+          "before": 47660,
+          "after": 47840,
+          "percent": 0.3776751993285865
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "two_way",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 4838861,
+          "after": 5151834,
+          "percent": 6.46790639367405
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 4838861.0,
+          "after": 5151834.0,
+          "percent": 6.46790639367405
+        },
+        "max_rss_kib": {
+          "before": 47736,
+          "after": 47720,
+          "percent": -0.033517680576500286
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "player_weapons",
+      "workload": {
+        "label": "two_way",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 7531806,
+          "after": 7783679,
+          "percent": 3.3441249017831742
+        },
+        "calls": {
+          "before": 100,
+          "after": 100,
+          "percent": 0.0
+        },
+        "ns_per_100": {
+          "before": 7531806.0,
+          "after": 7783679.0,
+          "percent": 3.3441249017831742
+        },
+        "max_rss_kib": {
+          "before": 47780,
+          "after": 47624,
+          "percent": -0.3264964420259475
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "small_control",
+        "profile": "17",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 13446157,
+          "after": 13203471,
+          "percent": -1.8048725743719962
+        },
+        "max_rss_kib": {
+          "before": 2920,
+          "after": 3032,
+          "percent": 3.835616438356171
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "small_control",
+        "profile": "17",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 10722966,
+          "after": 11343628,
+          "percent": 5.788156000867661
+        },
+        "max_rss_kib": {
+          "before": 3008,
+          "after": 2824,
+          "percent": -6.117021276595747
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "small_control",
+        "profile": "17",
+        "mode": "advance_snapshot"
+      },
+      "metrics": {
+        "ns": {
+          "before": 13604662,
+          "after": 13856788,
+          "percent": 1.853232369903779
+        },
+        "max_rss_kib": {
+          "before": 2948,
+          "after": 2792,
+          "percent": -5.291723202170962
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "small_control",
+        "profile": "17",
+        "mode": "capture"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1811772,
+          "after": 1817810,
+          "percent": 0.3332648920504333
+        },
+        "max_rss_kib": {
+          "before": 2864,
+          "after": 2816,
+          "percent": -1.6759776536312887
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "small_control",
+        "profile": "17",
+        "mode": "encode"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1203722,
+          "after": 1161529,
+          "percent": -3.505211336172309
+        },
+        "max_rss_kib": {
+          "before": 2952,
+          "after": 2824,
+          "percent": -4.336043360433606
+        },
+        "bytes": {
+          "before": 8794000,
+          "after": 8794000,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "small_control",
+        "profile": "20",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 13707174,
+          "after": 13593917,
+          "percent": -0.8262607595117655
+        },
+        "max_rss_kib": {
+          "before": 2924,
+          "after": 2884,
+          "percent": -1.3679890560875485
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "small_control",
+        "profile": "20",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 11002179,
+          "after": 10634899,
+          "percent": -3.33824781436477
+        },
+        "max_rss_kib": {
+          "before": 2912,
+          "after": 2908,
+          "percent": -0.13736263736263687
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "small_control",
+        "profile": "20",
+        "mode": "advance_snapshot"
+      },
+      "metrics": {
+        "ns": {
+          "before": 13879169,
+          "after": 13580038,
+          "percent": -2.1552515139775297
+        },
+        "max_rss_kib": {
+          "before": 2948,
+          "after": 2792,
+          "percent": -5.291723202170962
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "small_control",
+        "profile": "20",
+        "mode": "capture"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2005570,
+          "after": 1946731,
+          "percent": -2.9337794243033177
+        },
+        "max_rss_kib": {
+          "before": 2892,
+          "after": 2884,
+          "percent": -0.2766251728907321
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "small_control",
+        "profile": "20",
+        "mode": "encode"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1066248,
+          "after": 1110794,
+          "percent": 4.177827297214165
+        },
+        "max_rss_kib": {
+          "before": 2924,
+          "after": 2792,
+          "percent": -4.514363885088923
+        },
+        "bytes": {
+          "before": 8794000,
+          "after": 8794000,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "long_lifecycle",
+        "profile": "20",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 22726218,
+          "after": 22455953,
+          "percent": -1.1892211893769544
+        },
+        "max_rss_kib": {
+          "before": 3716,
+          "after": 3688,
+          "percent": -0.753498385360607
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "long_lifecycle",
+        "profile": "20",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 11143819,
+          "after": 10650422,
+          "percent": -4.4275396073823465
+        },
+        "max_rss_kib": {
+          "before": 3680,
+          "after": 3584,
+          "percent": -2.608695652173909
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "long_lifecycle",
+        "profile": "20",
+        "mode": "advance_snapshot"
+      },
+      "metrics": {
+        "ns": {
+          "before": 22591638,
+          "after": 22718302,
+          "percent": 0.5606676240120345
+        },
+        "max_rss_kib": {
+          "before": 3688,
+          "after": 3728,
+          "percent": 1.0845986984815648
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "long_lifecycle",
+        "profile": "20",
+        "mode": "capture"
+      },
+      "metrics": {
+        "ns": {
+          "before": 11358687,
+          "after": 11365440,
+          "percent": 0.05945229408996777
+        },
+        "max_rss_kib": {
+          "before": 3592,
+          "after": 3560,
+          "percent": -0.8908685968819552
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "long_lifecycle",
+        "profile": "20",
+        "mode": "encode"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2068213,
+          "after": 2181419,
+          "percent": 5.473614178036779
+        },
+        "max_rss_kib": {
+          "before": 3684,
+          "after": 3652,
+          "percent": -0.8686210640608039
+        },
+        "bytes": {
+          "before": 21546600,
+          "after": 21546600,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "four_owners",
+        "profile": "20",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 63630698,
+          "after": 62930293,
+          "percent": -1.1007344285300813
+        },
+        "max_rss_kib": {
+          "before": 4072,
+          "after": 3840,
+          "percent": -5.697445972495085
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "four_owners",
+        "profile": "20",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 46984974,
+          "after": 46389844,
+          "percent": -1.266638989733182
+        },
+        "max_rss_kib": {
+          "before": 3788,
+          "after": 3728,
+          "percent": -1.5839493136219684
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "four_owners",
+        "profile": "20",
+        "mode": "advance_snapshot"
+      },
+      "metrics": {
+        "ns": {
+          "before": 62518011,
+          "after": 61182937,
+          "percent": -2.135502999287675
+        },
+        "max_rss_kib": {
+          "before": 3888,
+          "after": 3884,
+          "percent": -0.10288065843621075
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "four_owners",
+        "profile": "20",
+        "mode": "capture"
+      },
+      "metrics": {
+        "ns": {
+          "before": 14757207,
+          "after": 14763859,
+          "percent": 0.04507628035577138
+        },
+        "max_rss_kib": {
+          "before": 4064,
+          "after": 3852,
+          "percent": -5.216535433070868
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "four_owners",
+        "profile": "20",
+        "mode": "encode"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2268287,
+          "after": 2263359,
+          "percent": -0.21725645828768458
+        },
+        "max_rss_kib": {
+          "before": 4008,
+          "after": 3888,
+          "percent": -2.9940119760479056
+        },
+        "bytes": {
+          "before": 23659200,
+          "after": 23659200,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "wide_map_lifecycle",
+        "profile": "20",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 24596969,
+          "after": 23076130,
+          "percent": -6.1830341779102955
+        },
+        "max_rss_kib": {
+          "before": 3920,
+          "after": 3820,
+          "percent": -2.5510204081632626
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "wide_map_lifecycle",
+        "profile": "20",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 12012877,
+          "after": 11331401,
+          "percent": -5.672879194550983
+        },
+        "max_rss_kib": {
+          "before": 3844,
+          "after": 3728,
+          "percent": -3.0176899063475537
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "wide_map_lifecycle",
+        "profile": "20",
+        "mode": "advance_snapshot"
+      },
+      "metrics": {
+        "ns": {
+          "before": 23589708,
+          "after": 23794655,
+          "percent": 0.8687983759697149
+        },
+        "max_rss_kib": {
+          "before": 3820,
+          "after": 3884,
+          "percent": 1.675392670157061
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "wide_map_lifecycle",
+        "profile": "20",
+        "mode": "capture"
+      },
+      "metrics": {
+        "ns": {
+          "before": 11476683,
+          "after": 11812942,
+          "percent": 2.929931932423324
+        },
+        "max_rss_kib": {
+          "before": 3916,
+          "after": 3780,
+          "percent": -3.4729315628192037
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "wide_map_lifecycle",
+        "profile": "20",
+        "mode": "encode"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2043123,
+          "after": 2056333,
+          "percent": 0.6465592135177278
+        },
+        "max_rss_kib": {
+          "before": 3896,
+          "after": 3936,
+          "percent": 1.0266940451745477
+        },
+        "bytes": {
+          "before": 20849100,
+          "after": 20849100,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "expanded_sight_dag",
+        "profile": "20",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 14232702,
+          "after": 13900492,
+          "percent": -2.3341316357217368
+        },
+        "max_rss_kib": {
+          "before": 3204,
+          "after": 3048,
+          "percent": -4.868913857677903
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "expanded_sight_dag",
+        "profile": "20",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 11116450,
+          "after": 10708878,
+          "percent": -3.666386301382185
+        },
+        "max_rss_kib": {
+          "before": 3120,
+          "after": 2960,
+          "percent": -5.128205128205132
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "expanded_sight_dag",
+        "profile": "20",
+        "mode": "advance_snapshot"
+      },
+      "metrics": {
+        "ns": {
+          "before": 14253532,
+          "after": 13873481,
+          "percent": -2.6663636774379884
+        },
+        "max_rss_kib": {
+          "before": 3264,
+          "after": 3088,
+          "percent": -5.392156862745101
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "expanded_sight_dag",
+        "profile": "20",
+        "mode": "capture"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1967902,
+          "after": 2070384,
+          "percent": 5.2076780246170795
+        },
+        "max_rss_kib": {
+          "before": 3152,
+          "after": 3036,
+          "percent": -3.680203045685282
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "expanded_sight_dag",
+        "profile": "20",
+        "mode": "encode"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1071796,
+          "after": 1212665,
+          "percent": 13.143266069289306
+        },
+        "max_rss_kib": {
+          "before": 3112,
+          "after": 2952,
+          "percent": -5.141388174807194
+        },
+        "bytes": {
+          "before": 8819800,
+          "after": 8819800,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "line_table",
+        "profile": "20",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 14100977,
+          "after": 13803839,
+          "percent": -2.1072156915084683
+        },
+        "max_rss_kib": {
+          "before": 3632,
+          "after": 3684,
+          "percent": 1.4317180616740144
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "line_table",
+        "profile": "20",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 11622610,
+          "after": 10859702,
+          "percent": -6.5639989640881025
+        },
+        "max_rss_kib": {
+          "before": 3504,
+          "after": 3672,
+          "percent": 4.794520547945202
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "line_table",
+        "profile": "20",
+        "mode": "advance_snapshot"
+      },
+      "metrics": {
+        "ns": {
+          "before": 14201555,
+          "after": 13750229,
+          "percent": -3.1780040988469205
+        },
+        "max_rss_kib": {
+          "before": 3632,
+          "after": 3596,
+          "percent": -0.9911894273127775
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "line_table",
+        "profile": "20",
+        "mode": "capture"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1795397,
+          "after": 1687538,
+          "percent": -6.007529253975585
+        },
+        "max_rss_kib": {
+          "before": 3504,
+          "after": 3496,
+          "percent": -0.22831050228310223
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "line_table",
+        "profile": "20",
+        "mode": "encode"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1333414,
+          "after": 1448393,
+          "percent": 8.622903314349472
+        },
+        "max_rss_kib": {
+          "before": 3504,
+          "after": 3464,
+          "percent": -1.1415525114155223
+        },
+        "bytes": {
+          "before": 20103600,
+          "after": 20103600,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "high_cell_demon",
+        "profile": "20",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 23281001,
+          "after": 23195758,
+          "percent": -0.3661483455973391
+        },
+        "max_rss_kib": {
+          "before": 4344,
+          "after": 4352,
+          "percent": 0.18416206261511192
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "high_cell_demon",
+        "profile": "20",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 11961791,
+          "after": 11884489,
+          "percent": -0.6462410185899436
+        },
+        "max_rss_kib": {
+          "before": 4400,
+          "after": 4352,
+          "percent": -1.0909090909090868
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "high_cell_demon",
+        "profile": "20",
+        "mode": "advance_snapshot"
+      },
+      "metrics": {
+        "ns": {
+          "before": 23718879,
+          "after": 22758021,
+          "percent": -4.051026188885231
+        },
+        "max_rss_kib": {
+          "before": 4332,
+          "after": 4344,
+          "percent": 0.27700831024930483
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "high_cell_demon",
+        "profile": "20",
+        "mode": "capture"
+      },
+      "metrics": {
+        "ns": {
+          "before": 11437936,
+          "after": 11456986,
+          "percent": 0.16655102808758038
+        },
+        "max_rss_kib": {
+          "before": 4348,
+          "after": 4344,
+          "percent": -0.09199632014719183
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "high_cell_demon",
+        "profile": "20",
+        "mode": "encode"
+      },
+      "metrics": {
+        "ns": {
+          "before": 2197241,
+          "after": 2146086,
+          "percent": -2.3281469806907817
+        },
+        "max_rss_kib": {
+          "before": 4460,
+          "after": 4456,
+          "percent": -0.08968609865470656
+        },
+        "bytes": {
+          "before": 28905100,
+          "after": 28905100,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "canonical_small",
+        "profile": "original",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 13724119,
+          "after": 13632617,
+          "percent": -0.6667240352550174
+        },
+        "max_rss_kib": {
+          "before": 2896,
+          "after": 2648,
+          "percent": -8.563535911602205
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "canonical_small",
+        "profile": "original",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 10888172,
+          "after": 10568642,
+          "percent": -2.9346523916043976
+        },
+        "max_rss_kib": {
+          "before": 2616,
+          "after": 2568,
+          "percent": -1.834862385321101
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "canonical_small",
+        "profile": "original",
+        "mode": "advance_snapshot"
+      },
+      "metrics": {
+        "ns": {
+          "before": 13677020,
+          "after": 13421575,
+          "percent": -1.8676948633547408
+        },
+        "max_rss_kib": {
+          "before": 2796,
+          "after": 2536,
+          "percent": -9.298998569384832
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "canonical_small",
+        "profile": "original",
+        "mode": "capture"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1691503,
+          "after": 1690201,
+          "percent": -0.07697296428087474
+        },
+        "max_rss_kib": {
+          "before": 2620,
+          "after": 2628,
+          "percent": 0.3053435114503733
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "canonical_small",
+        "profile": "original",
+        "mode": "encode"
+      },
+      "metrics": {
+        "ns": {
+          "before": 214508,
+          "after": 227827,
+          "percent": 6.209092434780983
+        },
+        "max_rss_kib": {
+          "before": 2636,
+          "after": 2648,
+          "percent": 0.4552352048558417
+        },
+        "bytes": {
+          "before": 862700,
+          "after": 862700,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "actor_capacity",
+        "profile": "original",
+        "mode": "step"
+      },
+      "metrics": {
+        "ns": {
+          "before": 130263159,
+          "after": 126794804,
+          "percent": -2.6625755329640066
+        },
+        "max_rss_kib": {
+          "before": 3160,
+          "after": 3200,
+          "percent": 1.2658227848101333
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "actor_capacity",
+        "profile": "original",
+        "mode": "advance"
+      },
+      "metrics": {
+        "ns": {
+          "before": 103941225,
+          "after": 103712862,
+          "percent": -0.21970397212462967
+        },
+        "max_rss_kib": {
+          "before": 3076,
+          "after": 2920,
+          "percent": -5.071521456436933
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "actor_capacity",
+        "profile": "original",
+        "mode": "advance_snapshot"
+      },
+      "metrics": {
+        "ns": {
+          "before": 130836961,
+          "after": 121833921,
+          "percent": -6.881113663286631
+        },
+        "max_rss_kib": {
+          "before": 3212,
+          "after": 3116,
+          "percent": -2.988792029887921
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "actor_capacity",
+        "profile": "original",
+        "mode": "capture"
+      },
+      "metrics": {
+        "ns": {
+          "before": 24086747,
+          "after": 24146919,
+          "percent": 0.24981372536523327
+        },
+        "max_rss_kib": {
+          "before": 3112,
+          "after": 3044,
+          "percent": -2.185089974293064
+        },
+        "bytes": {
+          "before": 0,
+          "after": 0,
+          "percent": null
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    },
+    {
+      "tool": "stepping",
+      "workload": {
+        "label": "actor_capacity",
+        "profile": "original",
+        "mode": "encode"
+      },
+      "metrics": {
+        "ns": {
+          "before": 1961955,
+          "after": 2046569,
+          "percent": 4.31273907913281
+        },
+        "max_rss_kib": {
+          "before": 3308,
+          "after": 3292,
+          "percent": -0.48367593712213
+        },
+        "bytes": {
+          "before": 7618800,
+          "after": 7618800,
+          "percent": 0.0
+        }
+      },
+      "digest_equal": true,
+      "allocation_arrays_equal": true
+    }
+  ],
+  "allocation_groups": 207,
+  "allocation_groups_with_three_samples": 207,
+  "matching_transaction_allocation_and_copy_samples": 45
+}

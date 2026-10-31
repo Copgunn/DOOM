@@ -805,3 +805,38 @@ integration. Historical tools and expectations remain unchanged. All historical
 checks above still apply. See [source qualification](M3G8_REFERENCE_INVESTIGATION.md)
 and [observed results](validation/M3G8.md); source observation totals and actual
 Rust-admitted comparison totals are deliberately reported separately.
+
+
+## Original world pickups
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g9_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3g9_snapshot_goldens.py --check
+cargo test -p doom-sim --lib world_pickup_tests --locked
+python3 tools/reference/check_player_world_pickups.py
+cargo run -p doom-sim --example player_world_pickups --locked
+cargo +nightly fuzz build --sanitizer address
+python3 tools/seed_player_world_pickups_fuzz.py /tmp/player-world-pickup-seeds
+# From fuzz/; bounded execution, leak detection disabled:
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_world_pickups /tmp/player-world-pickup-seeds -- -seed=391 -runs=4096 -max_len=162 -timeout=15 -rss_limit_mb=1024
+python3 tools/measure_player_world_pickups.py
+```
+
+All historical commands remain required. The new observer compiles actual source
+GiveAmmo/GiveBody/GiveWeapon/TouchSpecialThing and reuses existing original map,
+movement, player, weapon, damage and AI bodies. Source observation rows and
+independent DSIM25 bytes precede matching runtime integration. The asserted
+example uses fixed source command streams, actual world contacts and autonomous
+combat; it never injects a bullet/melee hit to stand in for gameplay. Controlled
+health/loadout/dropped setup cases remain explicitly separate. Direct vertical
+components do not admit airborne physics. Source-only item-respawn queue and
+geometry trace rows remain qualified observations.
+
+The focused fuzz target exercises commands, contacts, resource/lifetime/provenance
+boundaries, invalid operations and DSIM25 with exact advance/step equality and
+full-state rejection checks. Record built executables separately from campaigns
+run. ASAN_OPTIONS disables leak detection; bounded campaigns do not prove
+exhaustive coverage. Benchmarks retain three timing/RSS and separate allocation
+processes, frozen control workloads and independently labeled pickup intervals.
+See [source matrix](M3G9_REFERENCE_INVESTIGATION.md) and
+[observed validation](validation/M3G9.md).

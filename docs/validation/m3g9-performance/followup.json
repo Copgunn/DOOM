@@ -1,0 +1,272 @@
+{
+  "before_commit": "285eba75a845520af84c8a43d61a90e575055c8b",
+  "after_commit": "6718b12d5946144911b2faa8acd5f12646ef2c15",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)\nbinary: rustc\ncommit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67\ncommit-date: 2026-10-13\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.1\nLLVM version: 23.1.1",
+  "results": [
+    {
+      "binary": "player_demon",
+      "label": "pursuit",
+      "mode": "step",
+      "before": [
+        {
+          "label": "pursuit",
+          "mode": "step",
+          "calls": 100,
+          "ns": 6278944,
+          "digest": "76b812b602b7fbb1",
+          "max_rss_kib": 2548
+        },
+        {
+          "label": "pursuit",
+          "mode": "step",
+          "calls": 100,
+          "ns": 6344131,
+          "digest": "76b812b602b7fbb1",
+          "max_rss_kib": 2524
+        },
+        {
+          "label": "pursuit",
+          "mode": "step",
+          "calls": 100,
+          "ns": 6366994,
+          "digest": "76b812b602b7fbb1",
+          "max_rss_kib": 2536
+        }
+      ],
+      "after": [
+        {
+          "label": "pursuit",
+          "mode": "step",
+          "calls": 100,
+          "ns": 6241378,
+          "digest": "76b812b602b7fbb1",
+          "max_rss_kib": 2448
+        },
+        {
+          "label": "pursuit",
+          "mode": "step",
+          "calls": 100,
+          "ns": 6449436,
+          "digest": "76b812b602b7fbb1",
+          "max_rss_kib": 2364
+        },
+        {
+          "label": "pursuit",
+          "mode": "step",
+          "calls": 100,
+          "ns": 6252364,
+          "digest": "76b812b602b7fbb1",
+          "max_rss_kib": 2512
+        }
+      ],
+      "execution_order": [
+        {
+          "sample": 0,
+          "phase": "before"
+        },
+        {
+          "sample": 0,
+          "phase": "after"
+        },
+        {
+          "sample": 1,
+          "phase": "after"
+        },
+        {
+          "sample": 1,
+          "phase": "before"
+        },
+        {
+          "sample": 2,
+          "phase": "before"
+        },
+        {
+          "sample": 2,
+          "phase": "after"
+        }
+      ],
+      "medians": {
+        "before": 6344131,
+        "after": 6252364
+      },
+      "percent": -1.4464865243167258
+    },
+    {
+      "binary": "original_player",
+      "label": "demon_source",
+      "mode": "step",
+      "before": [
+        {
+          "label": "demon_source",
+          "mode": "step",
+          "calls": 100,
+          "ns": 1978609,
+          "digest": "ce2a8a69d9f9179a",
+          "max_rss_kib": 2416
+        },
+        {
+          "label": "demon_source",
+          "mode": "step",
+          "calls": 100,
+          "ns": 2000741,
+          "digest": "ce2a8a69d9f9179a",
+          "max_rss_kib": 2492
+        },
+        {
+          "label": "demon_source",
+          "mode": "step",
+          "calls": 100,
+          "ns": 2104185,
+          "digest": "ce2a8a69d9f9179a",
+          "max_rss_kib": 2524
+        }
+      ],
+      "after": [
+        {
+          "label": "demon_source",
+          "mode": "step",
+          "calls": 100,
+          "ns": 1978198,
+          "digest": "ce2a8a69d9f9179a",
+          "max_rss_kib": 2316
+        },
+        {
+          "label": "demon_source",
+          "mode": "step",
+          "calls": 100,
+          "ns": 1975114,
+          "digest": "ce2a8a69d9f9179a",
+          "max_rss_kib": 2348
+        },
+        {
+          "label": "demon_source",
+          "mode": "step",
+          "calls": 100,
+          "ns": 2073539,
+          "digest": "ce2a8a69d9f9179a",
+          "max_rss_kib": 2324
+        }
+      ],
+      "execution_order": [
+        {
+          "sample": 0,
+          "phase": "before"
+        },
+        {
+          "sample": 0,
+          "phase": "after"
+        },
+        {
+          "sample": 1,
+          "phase": "after"
+        },
+        {
+          "sample": 1,
+          "phase": "before"
+        },
+        {
+          "sample": 2,
+          "phase": "before"
+        },
+        {
+          "sample": 2,
+          "phase": "after"
+        }
+      ],
+      "medians": {
+        "before": 2000741,
+        "after": 1978198
+      },
+      "percent": -1.1267325455918575
+    },
+    {
+      "binary": "player_commands",
+      "label": "continuous",
+      "mode": "advance",
+      "before": [
+        {
+          "label": "continuous",
+          "mode": "advance",
+          "calls": 100,
+          "ns": 1109071,
+          "digest": "883f4943d1dce6af",
+          "max_rss_kib": 2432
+        },
+        {
+          "label": "continuous",
+          "mode": "advance",
+          "calls": 100,
+          "ns": 1067059,
+          "digest": "883f4943d1dce6af",
+          "max_rss_kib": 2456
+        },
+        {
+          "label": "continuous",
+          "mode": "advance",
+          "calls": 100,
+          "ns": 1169701,
+          "digest": "883f4943d1dce6af",
+          "max_rss_kib": 2436
+        }
+      ],
+      "after": [
+        {
+          "label": "continuous",
+          "mode": "advance",
+          "calls": 100,
+          "ns": 1151705,
+          "digest": "883f4943d1dce6af",
+          "max_rss_kib": 2336
+        },
+        {
+          "label": "continuous",
+          "mode": "advance",
+          "calls": 100,
+          "ns": 1129031,
+          "digest": "883f4943d1dce6af",
+          "max_rss_kib": 2376
+        },
+        {
+          "label": "continuous",
+          "mode": "advance",
+          "calls": 100,
+          "ns": 1011607,
+          "digest": "883f4943d1dce6af",
+          "max_rss_kib": 2376
+        }
+      ],
+      "execution_order": [
+        {
+          "sample": 0,
+          "phase": "before"
+        },
+        {
+          "sample": 0,
+          "phase": "after"
+        },
+        {
+          "sample": 1,
+          "phase": "after"
+        },
+        {
+          "sample": 1,
+          "phase": "before"
+        },
+        {
+          "sample": 2,
+          "phase": "before"
+        },
+        {
+          "sample": 2,
+          "phase": "after"
+        }
+      ],
+      "medians": {
+        "before": 1109071,
+        "after": 1129031
+      },
+      "percent": 1.799704437317362
+    }
+  ],
+  "method": "Quiet follow-up after all local source/test/fuzz work. Same frozen workload inputs and compiler settings; detached exact-baseline worktree, current main checkout. Three independent timing/RSS processes each side; order alternates before/after, after/before, before/after. Separate build paths/code layout and uncontrolled shared-host variation remain limitations. No allocation rerun; full-batch exact allocation arrays are retained separately. No hard timing gate."
+}

@@ -101,3 +101,7 @@ original evidence and former guide contents with exact-byte copies and digests.
   [observations](validation/M3G8.md),
   [DSIM24](STATE_FORMAT.md#dsim-v24-original-player-weapon-expansion) and
   [reproduction](TESTING.md#original-player-weapon-expansion).
+
+- [M3g9 original world pickup investigation](M3G9_REFERENCE_INVESTIGATION.md),
+  [observations](validation/M3G9.md), [support](COMPATIBILITY.md#original-world-pickups)
+  and [DSIM25](STATE_FORMAT.md#dsim-v25-original-world-pickups).

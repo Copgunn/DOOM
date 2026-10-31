@@ -1,7 +1,7 @@
 //! Weapon-only source state; OriginalPlayer and the actor store retain ownership.
 use crate::{identity::*, *};
 
-/// DSIM24 policy8: one genuine player, four original weapons, one map Demon.
+/// Four-weapon context for DSIM24/policy8; the pickup policy composes it separately.
 pub const PLAYER_DEMON_WEAPONS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-DEMON-1-MEDIUM-GROUNDED-WEAPONS-v1";
 /// Original wp_nochange (doomdef.h); distinct from NUMWEAPONS.
 pub(crate) const NO_CHANGE: u8 = 10;
@@ -235,7 +235,11 @@ impl Simulation {
             .original_player
             .as_ref()
             .ok_or(PlayerBodyError::Profile)?;
-        if p.policy != OriginalExecutionProfile::PlayerDemonWeaponsV1 {
+        if !matches!(
+            p.policy,
+            OriginalExecutionProfile::PlayerDemonWeaponsV1
+                | OriginalExecutionProfile::PlayerDemonPickupsV1
+        ) {
             return Err(PlayerBodyError::Profile.into());
         }
         if self.tic != 0
@@ -269,7 +273,13 @@ impl Simulation {
     ) -> Result<Option<PlayerWeaponState>, PlayerBodyError> {
         self.original_player
             .as_ref()
-            .filter(|p| p.policy == OriginalExecutionProfile::PlayerDemonWeaponsV1)
+            .filter(|p| {
+                matches!(
+                    p.policy,
+                    OriginalExecutionProfile::PlayerDemonWeaponsV1
+                        | OriginalExecutionProfile::PlayerDemonPickupsV1
+                )
+            })
             .map(|p| p.weapon.and_then(PlayerWeaponRuntime::pack))
             .ok_or(PlayerBodyError::Profile)
     }

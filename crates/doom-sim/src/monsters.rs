@@ -549,7 +549,10 @@ impl Simulation {
     }
     pub(crate) fn monster_reference(&self, id: ActorId) -> Result<Actor, SimError> {
         let a = self.monster_actor(id, 1008)?;
-        if [37, 38].contains(&a.life.unwrap().actor_type.0) {
+        if [37, 38].contains(&a.life.unwrap().actor_type.0)
+            || (self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
+                && world_pickups::kind(a.life.unwrap().actor_type).is_some())
+        {
             return Err(MonsterError::Target.into());
         }
         Ok(a)

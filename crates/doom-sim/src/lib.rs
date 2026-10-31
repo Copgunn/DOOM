@@ -32,6 +32,7 @@ mod player_commands;
 mod player_pistol;
 mod player_roster;
 mod player_weapons;
+mod world_pickups;
 pub use diagnostic::{Diagnostic, DiagnosticError, DiagnosticIdentity, DiagnosticLimits};
 pub use execution_context::{ContextActor, ContextError, ExecutionContext, TargetReference};
 pub use game_instance::{GameInstance, InstanceActorRef, InstanceId, ProvenanceError};
@@ -48,6 +49,10 @@ pub use player_commands::PLAYER_COMMAND_CONTEXT_SCHEMA;
 pub use player_pistol::{INITIAL_PISTOL_BULLETS, PLAYER_DEMON_PISTOL_CONTEXT_SCHEMA, PistolState};
 pub use player_roster::{PLAYER_DEMON_CONTEXT_SCHEMA, PLAYER_DEMON_MELEE_CONTEXT_SCHEMA};
 pub use player_weapons::{PLAYER_DEMON_WEAPONS_CONTEXT_SCHEMA, PlayerWeaponState};
+pub use world_pickups::{
+    MAX_WORLD_PICKUPS, PLAYER_DEMON_PICKUPS_CONTEXT_SCHEMA, PickupEvent, PickupKind, PickupMessage,
+    PickupOutcome, PlayerPickupState,
+};
 mod chaingunner;
 mod demon;
 pub use canonical_demon::{CanonicalDemonError, DemonExecutionBinding};
@@ -324,7 +329,9 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
-    /// Original-player field and presentation-service observations, DSIM-v22 only.
+    /// Source world-item contact and resource-grant observations (DSIM25).
+    Pickup(PickupEvent),
+    /// Original-player field and presentation-service observations, DSIM-v22 and later.
     PlayerBody(PlayerBodyEvent),
     /// Ordered profile-11 shotgun boundaries and per-pellet observations.
     Shotgun(ShotgunEvent),
@@ -1234,3 +1241,9 @@ mod advance_tests;
 #[cfg(test)]
 #[path = "../../../tests/support/m3g8.rs"]
 mod weapon_pack_evidence;
+
+#[cfg(test)]
+#[path = "../../../tests/support/m3g9.rs"]
+mod pickup_evidence;
+#[cfg(test)]
+mod world_pickup_tests;

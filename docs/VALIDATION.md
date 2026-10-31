@@ -176,3 +176,19 @@ prefix comparisons and safety rejection are identified explicitly, without
 altering the C expectations. No whole-ticker or portable undefined-C claim is made.
 See [source matrix](M3G8_REFERENCE_INVESTIGATION.md) and
 [reproduction](TESTING.md#original-player-weapon-expansion).
+
+
+## Original world pickup composition
+
+[M3g9 observations](validation/M3G9.md) distinguish new source world contacts,
+resource/weapon grants, independent DSIM25 encoding and Rust-only handle/error
+policies. Actual source things-before-lines collection is compared even when a
+later wall or solid actor blocks movement. No Rust output generates expectations.
+The source's inactive item-respawn queue is retained as C-only PQ evidence and is
+outside the executable projection; no whole RemoveMobj or respawn claim is made.
+Eight unticked components separately establish reach/overlap/full/dead boundaries.
+The fixed command/weapon/bonus fragment before original thinkers is not complete
+P_Ticker/PlayerThink/DeathThink. Sustained winning and losing encounters use normal
+initial pistol ammo and real autonomous damage, then actual world resources.
+See [source qualification](M3G9_REFERENCE_INVESTIGATION.md) and
+[reproduction](TESTING.md#original-world-pickups).

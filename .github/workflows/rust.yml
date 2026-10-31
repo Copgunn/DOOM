@@ -117,6 +117,8 @@ jobs:
           python3 tools/reference/evidence_pack.py
           ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g8_reference.py --check --overflow-check --address-check
           python3 tools/reference/m3g8_snapshot_goldens.py --check
+          ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g9_reference.py --check --overflow-check --address-check
+          python3 tools/reference/m3g9_snapshot_goldens.py --check
       - name: Active player Demon debug/release comparison
         run: python3 tools/reference/check_player_demon.py
       - name: Autonomous player Demon melee debug/release comparison
@@ -125,6 +127,8 @@ jobs:
         run: python3 tools/reference/check_player_pistol.py
       - name: Original weapon pack debug/release comparison
         run: python3 tools/reference/check_player_weapon_pack.py
+      - name: Original world pickups debug/release comparison
+        run: python3 tools/reference/check_player_world_pickups.py
       - name: Player command debug/release comparison
         run: python3 tools/reference/check_player_commands.py
       - name: Player knockback debug/release comparison
