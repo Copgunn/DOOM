@@ -5,7 +5,7 @@ behavioral authority. This investigation and compiled-C expectations precede
 matching Rust execution. Source facts, admitted gameplay, observation adapters
 and Rust safety restrictions are distinct.
 
-| Source fact | Intended existing service | Boundary |
+| Source fact | Existing service used | Boundary |
 | --- | --- | --- |
 | info.h/info.c MT_MISC2=45, DoomEd2014, SPR_BON1=60; MT_MISC3=46, DoomEd2015, SPR_BON2=61 | Canonical registry and ActorLife | Original identities, no synthetic aliases |
 | Health states816–821, armor822–827; six tics each; frames0,1,2,3,2,1; NULL actions; closed36-tic loops | Existing LifeHost/state countdown and thinker traversal | No presentation clock or second update pass |
@@ -21,7 +21,7 @@ and Rust safety restrictions are distinct.
 | Touch tail: itemcount++ for COUNTITEM, P_RemoveMobj, bonuscount+=6, sound | PlayerPickupState and existing lifecycle/spatial unlink | Count at cap still credits; ordinary items keep original uncounted flags |
 | P_RemoveMobj may write inactive respawn queue and defers thinker retirement | Existing generational arena | Queue observations are source-only; no item respawn, freed-pointer or C allocator-reuse equivalence |
 
-The intended opt-in capability is PlayerDemonBonusesV1, wire11, with a separate
+The opt-in capability is PlayerDemonBonusesV1, wire11, with a separate
 PLAYER-DEMON-1-MEDIUM-GROUNDED-BONUSES-v1 context and DSIM27. Historical policies,
 wire IDs, DSIM20–26 and their domains remain unchanged. The bounded world retains
 one active original player0, at most one map Demon12, four weapons, Medium and
