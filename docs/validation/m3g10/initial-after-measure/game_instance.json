@@ -1,0 +1,71 @@
+{
+  "host": "Linux x86_64",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "method": "New workload, not a historical before baseline. Three separate release processes per path. Setup/admission excluded. Both time 100000 validated imports and 100000 checked exports (including returned Arc drop); then 100 same-input snapshot-inclusive updates with target observations. Scoped path retains one already scoped actor; qualified path explicitly reimports the same reference on every update. Different boundary validation work is intentional; ordinary tic logic never automatically imports references. Native wait4 peak RSS, no allocation counter or CPU/frequency isolation. Preserve all samples/outliers.",
+  "results": [
+    {
+      "path": "scoped",
+      "samples": [
+        {
+          "import100000_us": 2217,
+          "export100000_us": 1549,
+          "step100_us": 14839,
+          "max_rss_kib": 2520,
+          "output": "import100000_us=2217 export100000_us=1549 step100_us=14839 digest=e93bf409545bf8ed"
+        },
+        {
+          "import100000_us": 2289,
+          "export100000_us": 1587,
+          "step100_us": 15453,
+          "max_rss_kib": 2572,
+          "output": "import100000_us=2289 export100000_us=1587 step100_us=15453 digest=e93bf409545bf8ed"
+        },
+        {
+          "import100000_us": 2156,
+          "export100000_us": 1561,
+          "step100_us": 15259,
+          "max_rss_kib": 2572,
+          "output": "import100000_us=2156 export100000_us=1561 step100_us=15259 digest=e93bf409545bf8ed"
+        }
+      ],
+      "medians": {
+        "import100000_us": 2217,
+        "export100000_us": 1561,
+        "step100_us": 15259,
+        "max_rss_kib": 2572
+      }
+    },
+    {
+      "path": "qualified",
+      "samples": [
+        {
+          "import100000_us": 2170,
+          "export100000_us": 1548,
+          "step100_us": 15373,
+          "max_rss_kib": 2468,
+          "output": "import100000_us=2170 export100000_us=1548 step100_us=15373 digest=e93bf409545bf8ed"
+        },
+        {
+          "import100000_us": 2163,
+          "export100000_us": 1516,
+          "step100_us": 15356,
+          "max_rss_kib": 2572,
+          "output": "import100000_us=2163 export100000_us=1516 step100_us=15356 digest=e93bf409545bf8ed"
+        },
+        {
+          "import100000_us": 2202,
+          "export100000_us": 1947,
+          "step100_us": 18662,
+          "max_rss_kib": 2488,
+          "output": "import100000_us=2202 export100000_us=1947 step100_us=18662 digest=e93bf409545bf8ed"
+        }
+      ],
+      "medians": {
+        "import100000_us": 2170,
+        "export100000_us": 1548,
+        "step100_us": 15373,
+        "max_rss_kib": 2488
+      }
+    }
+  ]
+}

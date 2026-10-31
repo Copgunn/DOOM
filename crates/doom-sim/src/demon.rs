@@ -113,7 +113,7 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
     if current.health > 0 && current.flags & original_player::MF_SHOOTABLE != 0 {
         original_player::preflight_player_impulse(body, owner, amount)?;
     }
-    let damage = crate::combat::DamagePlan::current_melee_body(
+    let damage = crate::combat::DamagePlan::current_armored_body(
         host.registry,
         *body,
         DamageRequest {
@@ -122,6 +122,7 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
             source: Some(id),
             amount,
         },
+        host.player.as_deref().and_then(|p| p.armor),
     )?;
     if damage.spawn_count() != 0 {
         return Err(CombatError::WorkLimit.into());

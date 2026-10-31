@@ -1,0 +1,87 @@
+{
+  "reviewed_feature": "814ac4ba4d28073f203800a1f3ff2ab37162134a",
+  "regular_merge": "ebbf9e78a9f10111f9ba990631a59dc7e3813fc9",
+  "ordered_parents": [
+    "138c66b6c6b6d57d0b18cf945d8661722741bd66",
+    "814ac4ba4d28073f203800a1f3ff2ab37162134a"
+  ],
+  "tree": "9400acec955c24e123ca18ebbd9d4da0565d8ed0",
+  "postmerge": {
+    "passed": true,
+    "run": 41200507306,
+    "url": "https://github.com/Copgunn/DOOM/actions/runs/41200507306",
+    "commit": "ebbf9e78a9f10111f9ba990631a59dc7e3813fc9",
+    "jobs": [
+      {
+        "name": "Stable / windows-latest",
+        "id": 124535196267,
+        "conclusion": "success",
+        "checkout_sha": "ebbf9e78a9f10111f9ba990631a59dc7e3813fc9",
+        "test_aggregate": [
+          1163,
+          0,
+          2
+        ],
+        "intel_macos": false,
+        "source65": false,
+        "byte_proof": false,
+        "upstream165": false
+      },
+      {
+        "name": "Minimum Rust / 1.85.0",
+        "id": 124535196409,
+        "conclusion": "success",
+        "checkout_sha": "ebbf9e78a9f10111f9ba990631a59dc7e3813fc9",
+        "test_aggregate": [
+          598,
+          0,
+          2
+        ],
+        "intel_macos": false,
+        "source65": false,
+        "byte_proof": false,
+        "upstream165": false
+      },
+      {
+        "name": "Stable / macos-latest",
+        "id": 124535196441,
+        "conclusion": "success",
+        "checkout_sha": "ebbf9e78a9f10111f9ba990631a59dc7e3813fc9",
+        "test_aggregate": [
+          1163,
+          0,
+          2
+        ],
+        "intel_macos": true,
+        "source65": false,
+        "byte_proof": false,
+        "upstream165": false
+      },
+      {
+        "name": "Stable / ubuntu-latest",
+        "id": 124535196456,
+        "conclusion": "success",
+        "checkout_sha": "ebbf9e78a9f10111f9ba990631a59dc7e3813fc9",
+        "test_aggregate": [
+          1163,
+          0,
+          2
+        ],
+        "intel_macos": false,
+        "source65": true,
+        "byte_proof": true,
+        "upstream165": true
+      }
+    ]
+  },
+  "gate": "All four exact-merge checkout logs and results verified before branch creation/runtime edits.",
+  "upstream": {
+    "files": 165,
+    "original": "a77dfb96cb91780ca334d0d4cfd86957558007e0"
+  },
+  "historical": {
+    "files": 6512,
+    "bytes": 509667184,
+    "inventory_sha256": "b8b738d7747a322a805e4578525bb99697b2fa82c9ec44c4c1d6027103aad2a9"
+  }
+}

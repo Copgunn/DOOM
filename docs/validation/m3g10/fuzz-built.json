@@ -1,0 +1,150 @@
+[
+  {
+    "name": "wad",
+    "sha256": "9c87c2dd6ae95c20b4caf71acccfff75b04099b3372b89191dccd1693d036d42"
+  },
+  {
+    "name": "map",
+    "sha256": "bfb6731ddba06e982a231523a7be71930cd85cca4a10428fcbd500d04567c13a"
+  },
+  {
+    "name": "actor_states",
+    "sha256": "7d7c9e2b7c47b76630f8a95b29508d3a992b66187602cd260e1902c94ea3bf1c"
+  },
+  {
+    "name": "combat",
+    "sha256": "5e02f4d2878d2e7e67bdc45320aeba1f8c962a20a22675da91d42ed7da2e6906"
+  },
+  {
+    "name": "player_weapons",
+    "sha256": "9cdd9d9d5fc111e6bbc8ac7338eccf76bf6bc30096cabde98700472d9ae03e05"
+  },
+  {
+    "name": "projectiles",
+    "sha256": "9e8e32f26e8105b084668ab0ec530fc2a2fd25f8b4dc965173505fd134402f5a"
+  },
+  {
+    "name": "monster_perception",
+    "sha256": "5e9970b2701349891eeaabe4f40d204888253e08b411ab0e746e31cb176db48c"
+  },
+  {
+    "name": "monster_pursuit",
+    "sha256": "35889c3e90d09b304b1699992617301b0e7b58ba4172f8c635bfe99ba4137236"
+  },
+  {
+    "name": "monster_attacks",
+    "sha256": "7898a913d057bd3c5d3fb9a48a387dfcc849c97c2eb8c8f4211a9bd243169fe1"
+  },
+  {
+    "name": "shotgunner_attacks",
+    "sha256": "3147dbc93cf141240b923fa76b83166fa36afca3807bba4b6cd43a7171cbacab"
+  },
+  {
+    "name": "chaingunner_attacks",
+    "sha256": "051d8270a1b5a5629737630c4ea3bbed02be49a535ed5d2f6c8fc847e475983e"
+  },
+  {
+    "name": "demon_melee",
+    "sha256": "717083ab0a27d9832d15d4a5964ae9b046b1bc42d932628400f466797ffa3505"
+  },
+  {
+    "name": "demon_lifecycle",
+    "sha256": "5ab46610bf13c1e9d0eb936c43901207e1838c4f857b16c5fc0dfa86c55d5ee7"
+  },
+  {
+    "name": "demon_stand_run",
+    "sha256": "04268ad764cbc7af5e7a9f7e064705f8894aa5111d121f9b5d0c3e3bd5164dbf"
+  },
+  {
+    "name": "demon_map_spawn",
+    "sha256": "5438ad9f00674d3c932552785762f5a8ed440f24138ae4199863951df6b1c334"
+  },
+  {
+    "name": "demon_map_context",
+    "sha256": "48016543d7a175dd13d7d4c2e05ae48cd0b472f77318bf7cd93203187daa1c90"
+  },
+  {
+    "name": "map_scale",
+    "sha256": "1fc5c681a0558eb7d99aad6dcd2bf21cbf2a44d29a5b0315ae1a919d821b7388"
+  },
+  {
+    "name": "map_extent",
+    "sha256": "055ed88cd896220229b6103d918e0585c5e1ec9566c4dafaa35fcd8c6aac7aaf"
+  },
+  {
+    "name": "demon_expanded_map",
+    "sha256": "96a227637e79e089caa1ae673dd99eda350c02528c79d79ae03fa058c3ea5873"
+  },
+  {
+    "name": "original_identity",
+    "sha256": "66f50b95ae22249a5311e3d033c1074b9b90e993e2dc327536f6f9e14d3b4327"
+  },
+  {
+    "name": "canonical_demon",
+    "sha256": "6199b1403e4200461e5e8b47dd2a89780aba05059d9fb5670df748a1545078b1"
+  },
+  {
+    "name": "runtime_identity",
+    "sha256": "be0640e9714e1e49b5aa63d088c8a0cf91e4d0580e87964ef64afc8b258a1cc3"
+  },
+  {
+    "name": "original_registry",
+    "sha256": "9b3925480ce935be654697c8b44a1cf608ceff19a6507d34a705fd408a2dcaae"
+  },
+  {
+    "name": "diagnostic_format",
+    "sha256": "8776a76645af1c1a1285314bd6796596432cf487e47264436eb9ac07100ed96b"
+  },
+  {
+    "name": "context_ownership",
+    "sha256": "1e221e14353bcaf8e065219910ea8955414e6c795c2375b493b929c5b91ad4bc"
+  },
+  {
+    "name": "game_instance",
+    "sha256": "f6ed2d50568d9f56acf71390f576e31160ee0551770b1fdadedb48a9e939ac2b"
+  },
+  {
+    "name": "stepping_equivalence",
+    "sha256": "ec12139f70ce3e3c1b400ce3d4e0a36909150a4a014d467636e34080af5e28d2"
+  },
+  {
+    "name": "original_player",
+    "sha256": "6f189696d0fca5ebe8182558a214dcd0a03251bb20b15f95e8b1629862244622"
+  },
+  {
+    "name": "player_knockback",
+    "sha256": "f84261a315cdcc2a8538c768a64976653a008d3f16ba697f4c99116d2a7a8ac1"
+  },
+  {
+    "name": "player_commands",
+    "sha256": "7ce6b7badc0cadff92cb890506e6caf78ae29e707cef32fa7589a5f777808898"
+  },
+  {
+    "name": "player_demon",
+    "sha256": "2b00da7f444a4ffaaccd0b7a2f69e4a4d29425d802975f81788dc3a464379f1c"
+  },
+  {
+    "name": "player_demon_melee",
+    "sha256": "ef74f0a0dbebdc489384f11b5309412a98e31583909ca20ac04e391176b0ede6"
+  },
+  {
+    "name": "player_pistol",
+    "sha256": "5ad0f6d9f9dac069043b6459def92730e1359f7ed5d247c07e10dd1ee323c5a8"
+  },
+  {
+    "name": "player_weapon_pack",
+    "sha256": "0b72be0a290577e0ac6f151d01037102fa016fcae2623a81fac8b50b162ecb6a"
+  },
+  {
+    "name": "player_world_pickups",
+    "sha256": "93acce5471e7059ef91ef7331284a52953697feea4ba980f5ea042a1ee53645f"
+  },
+  {
+    "name": "evidence_zstd",
+    "sha256": "357e256e5e7e4f1377eb08a7354bdc06c513d95b3713977d9c7cd242c37bc91c"
+  },
+  {
+    "name": "player_armor",
+    "sha256": "5653228158e3ec11308fa4a6a860c7a1f07d005d434452a332c661905167fb83"
+  }
+]

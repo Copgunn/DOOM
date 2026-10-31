@@ -102,6 +102,7 @@ pub(crate) struct PlayerRuntime {
     pub policy: OriginalExecutionProfile,
     pub weapon: Option<crate::player_weapons::PlayerWeaponRuntime>,
     pub pickups: Option<PlayerPickupState>,
+    pub armor: Option<PlayerArmorState>,
 }
 impl std::ops::Deref for PlayerRuntime {
     type Target = OriginalPlayer;
@@ -356,6 +357,9 @@ impl Simulation {
         let Some(p) = self.original_player else {
             return Ok(());
         };
+        if p.policy == OriginalExecutionProfile::PlayerDemonArmorV1 {
+            p.armor.ok_or(PlayerBodyError::Invariant)?.validate()?;
+        }
         if p.policy.has_physical_player()
             && request.inflictor.is_some()
             && !self.owns_player_body(request.target)
@@ -399,7 +403,11 @@ impl Simulation {
             }
             if let Some(l) = self.actor(request.target).and_then(Actor::life) {
                 if l.health > 0
-                    && request.amount >= l.health
+                    && p.armor
+                        .map(|a| ArmorEvent::plan(request.target, request.amount, a))
+                        .transpose()?
+                        .map_or(request.amount, |a| a.effective)
+                        >= l.health
                     && (request.source.is_none() || request.source == p.mo)
                 {
                     p.frags.checked_add(1).ok_or(PlayerBodyError::Statistics)?;

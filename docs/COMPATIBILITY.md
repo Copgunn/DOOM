@@ -1155,3 +1155,49 @@ profile, actor admission, capacities, error contract or diagnostic schema. The
 historical raw bytes remain in Git and are supplied exactly to existing test
 parsers. Source arithmetic retains its qualified ordered-draw/BAM interpretation.
 See [storage limits](EVIDENCE_STORAGE.md) and [formula scope](WEAPON_FORMULAS.md).
+
+
+## Original armor and damage absorption
+
+`PlayerDemonArmorV1` is a separate opt-in composition of the existing grounded
+single-player/four-weapon/autonomous-Demon world. Player slot0 owns canonical
+MT_PLAYER=0; roster remains [true,false,false,false], including after death.
+At most one map MT_SERGEANT=12 and16 total world items share64 actor slots.
+Medium/commercial, static flat one-sector/axis-aligned one-sided wall, existing
+command/coordinate/travel/sight/trace bounds and transaction guarantees remain.
+Earlier policies and their no-armor contracts are unchanged.
+
+New executable items are MT_MISC0=43/DoomEd2018 (green) and MT_MISC1=44/DoomEd2019
+(blue), with real states802/803 and804/805, sprites55/56 and fullbright frame bits.
+Map spawning consumes the original lastlook and positive timer draws. Shared
+thinkers execute green6/7 and blue6/6-tic animation loops. Armor is map-spawned;
+controlled dropped armor, raw arbitrary item spawn/state/target/damage operations
+remain rejected. These are SPECIAL, non-COUNTITEM actors.
+
+One player-owned armor record starts None/0. Ordinary green is type1 with1..100
+points; blue is type2 with1..200. GiveArmor compares current points to100/200,
+not class ranking: blue80 accepts green100, blue100/180 refuses green. Successful
+contacts use source message GOTARMOR/GOTMEGA, removal, BONUSADD6 and itemup sound.
+A normally blocked later wall move retains collection; recoverable failures roll
+back the whole operation. Dead bodies cannot collect or resurrect.
+
+For live shootable player damage, grounded physical thrust uses incoming raw
+damage first. Green saves floor(raw/3), blue floor(raw/2), capped by remaining
+points. Equality depletes and clears type. Effective damage updates clamped player
+health, signed mobj health, attacker, damagecount and tactile response before
+existing pain/death logic. Zero damage still follows the admitted source path;
+ignored dead/nonshootable targets consume no armor or new RNG. Demons never gain
+player armor. Autonomous SARG strikes and controlled damage share that same plan.
+Dead players retain armor, body, attacker and active status; corpse physics remain
+separate from retirement. Stale/foreign handles reject under Rust safety policy,
+not unsafe C pointer emulation.
+
+Real source-derived encounters collect armor before autonomous melee, fire actual
+weapon commands, collect healing/ammo/weapons under pressure, deplete armor and
+reach player or Demon death. The harness is the declared bounded command/weapon
+stage before original thinkers, not complete PlayerThink/Ticker/DeathThink.
+No armor/health bonuses, powers, god mode, Baby scaling, special-sector damage,
+telefrag system, new weapons/monsters, respawn, multiplayer, general airborne or
+dynamic geometry are admitted. Existing reverse-thrust RNG is unreachable in this
+grounded domain. See [source qualifications](M3G10_REFERENCE_INVESTIGATION.md)
+and [observed evidence](validation/M3G10.md).

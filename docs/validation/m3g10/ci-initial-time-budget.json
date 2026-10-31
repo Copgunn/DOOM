@@ -1,0 +1,20 @@
+{
+  "run": 41212772588,
+  "url": "https://github.com/Copgunn/DOOM/actions/runs/41212772588",
+  "feature": "909953a24dff8b03090455623b80fb36fe408874",
+  "synthetic": "7d70b806169ee01ef838243c67a68b2e17e064c2",
+  "job": 124571050307,
+  "conclusion": "cancelled",
+  "started_at": "2026-10-31T15:00:50Z",
+  "completed_at": "2026-10-31T15:15:55Z",
+  "cancellation_log_time": "2026-10-31T15:15:50.4442741Z",
+  "configured_limit_minutes": 15,
+  "tests": [
+    1207,
+    0,
+    2
+  ],
+  "armor_example": "success",
+  "interrupted_example": "demon_map_context",
+  "interpretation": "Cancellation at approximately900 seconds matches the configured15-minute job limit; no preceding gameplay assertion failure. Increase time allowance while retaining every check. This initial run is not successful final CI evidence."
+}

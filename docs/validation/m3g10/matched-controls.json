@@ -1,0 +1,5993 @@
+{
+  "rows": 281,
+  "matching_digest_rows": 241,
+  "matching_allocation_array_rows": 241,
+  "identical_toolchains_and_control_driver_hashes": true,
+  "results": [
+    {
+      "driver": "canonical_demon",
+      "index": 0,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 197,
+        "prepare100_us": 30725,
+        "spawn100_us": 533,
+        "enter100_us": 16216,
+        "query1000_us": 289,
+        "step100_with_query_us": 13630,
+        "snapshot_bytes": 87940,
+        "max_rss_kib": 2900
+      },
+      "after": {
+        "parse100_us": 159,
+        "prepare100_us": 29833,
+        "spawn100_us": 513,
+        "enter100_us": 15757,
+        "query1000_us": 305,
+        "step100_with_query_us": 13187,
+        "snapshot_bytes": 87940,
+        "max_rss_kib": 2976
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "context_ownership",
+      "index": 0,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "query100000_us": 227,
+        "set100_us": 300,
+        "retirement100_us": 13763,
+        "max_rss_kib": 2520
+      },
+      "after": {
+        "query100000_us": 202,
+        "set100_us": 302,
+        "retirement100_us": 13013,
+        "max_rss_kib": 2452
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "context_ownership",
+      "index": 1,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "query100000_us": 3370,
+        "set100_us": 313,
+        "retirement100_us": 13439,
+        "max_rss_kib": 2524
+      },
+      "after": {
+        "query100000_us": 3577,
+        "set100_us": 345,
+        "retirement100_us": 13331,
+        "max_rss_kib": 2448
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "demon_expanded_map",
+      "index": 0,
+      "label": null,
+      "profile": 17,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 172,
+        "prepare100_us": 29549,
+        "spawn100_us": 464,
+        "collision1000_us": 150,
+        "candidates": 8000,
+        "sight1000_us": 148,
+        "visits": 11000,
+        "chase100_us": 5498,
+        "step100_us": 13989,
+        "snapshot100_us": 3654,
+        "snapshot_bytes": 8794000,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 8,
+        "references": null,
+        "prepared_bytes": null,
+        "max_rss_kib": 3652
+      },
+      "after": {
+        "parse100_us": 168,
+        "prepare100_us": 29051,
+        "spawn100_us": 456,
+        "collision1000_us": 149,
+        "candidates": 8000,
+        "sight1000_us": 168,
+        "visits": 11000,
+        "chase100_us": 5592,
+        "step100_us": 13704,
+        "snapshot100_us": 3610,
+        "snapshot_bytes": 8794000,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 8,
+        "references": null,
+        "prepared_bytes": null,
+        "max_rss_kib": 3652
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "demon_expanded_map",
+      "index": 1,
+      "label": null,
+      "profile": 20,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 169,
+        "prepare100_us": 30807,
+        "spawn100_us": 429,
+        "collision1000_us": 161,
+        "candidates": 8000,
+        "sight1000_us": 120,
+        "visits": 11000,
+        "chase100_us": 15992,
+        "step100_us": 13427,
+        "snapshot100_us": 2721,
+        "snapshot_bytes": 8794000,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 8,
+        "references": 32,
+        "prepared_bytes": 410,
+        "max_rss_kib": 3508
+      },
+      "after": {
+        "parse100_us": 155,
+        "prepare100_us": 29568,
+        "spawn100_us": 431,
+        "collision1000_us": 162,
+        "candidates": 8000,
+        "sight1000_us": 91,
+        "visits": 11000,
+        "chase100_us": 17017,
+        "step100_us": 13864,
+        "snapshot100_us": 2760,
+        "snapshot_bytes": 8794000,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 8,
+        "references": 32,
+        "prepared_bytes": 410,
+        "max_rss_kib": 3544
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "demon_expanded_map",
+      "index": 2,
+      "label": null,
+      "profile": 19,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 2548,
+        "prepare100_us": 16165,
+        "spawn100_us": 0,
+        "collision1000_us": 4253,
+        "candidates": 773000,
+        "sight1000_us": 10169,
+        "visits": 2190000,
+        "chase100_us": 0,
+        "step100_us": 7338,
+        "snapshot100_us": 6585,
+        "snapshot_bytes": 12137000,
+        "lines": 769,
+        "sectors": 256,
+        "cells": 8,
+        "references": 6152,
+        "prepared_bytes": 42740,
+        "max_rss_kib": 3252
+      },
+      "after": {
+        "parse100_us": 2714,
+        "prepare100_us": 15844,
+        "spawn100_us": 0,
+        "collision1000_us": 4226,
+        "candidates": 773000,
+        "sight1000_us": 10078,
+        "visits": 2190000,
+        "chase100_us": 0,
+        "step100_us": 7284,
+        "snapshot100_us": 6685,
+        "snapshot_bytes": 12137000,
+        "lines": 769,
+        "sectors": 256,
+        "cells": 8,
+        "references": 6152,
+        "prepared_bytes": 42740,
+        "max_rss_kib": 3180
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "demon_expanded_map",
+      "index": 3,
+      "label": null,
+      "profile": 20,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 2797,
+        "prepare100_us": 47696,
+        "spawn100_us": 596,
+        "collision1000_us": 4428,
+        "candidates": 773000,
+        "sight1000_us": 10669,
+        "visits": 2190000,
+        "chase100_us": 17611,
+        "step100_us": 23364,
+        "snapshot100_us": 13008,
+        "snapshot_bytes": 21546600,
+        "lines": 769,
+        "sectors": 256,
+        "cells": 8,
+        "references": 6152,
+        "prepared_bytes": 42740,
+        "max_rss_kib": 4020
+      },
+      "after": {
+        "parse100_us": 2751,
+        "prepare100_us": 47449,
+        "spawn100_us": 573,
+        "collision1000_us": 4441,
+        "candidates": 773000,
+        "sight1000_us": 10203,
+        "visits": 2190000,
+        "chase100_us": 18126,
+        "step100_us": 22588,
+        "snapshot100_us": 13100,
+        "snapshot_bytes": 21546600,
+        "lines": 769,
+        "sectors": 256,
+        "cells": 8,
+        "references": 6152,
+        "prepared_bytes": 42740,
+        "max_rss_kib": 4072
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "demon_expanded_map",
+      "index": 4,
+      "label": null,
+      "profile": 20,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 2817,
+        "prepare100_us": 46193,
+        "spawn100_us": 2112,
+        "collision1000_us": 1119,
+        "candidates": 4000,
+        "sight1000_us": 11524,
+        "visits": 2187000,
+        "chase100_us": 48506,
+        "step100_us": 60311,
+        "snapshot100_us": 17190,
+        "snapshot_bytes": 23659200,
+        "lines": 769,
+        "sectors": 256,
+        "cells": 8,
+        "references": 6152,
+        "prepared_bytes": 42740,
+        "max_rss_kib": 4340
+      },
+      "after": {
+        "parse100_us": 2772,
+        "prepare100_us": 46104,
+        "spawn100_us": 2095,
+        "collision1000_us": 1108,
+        "candidates": 4000,
+        "sight1000_us": 11342,
+        "visits": 2187000,
+        "chase100_us": 49743,
+        "step100_us": 61284,
+        "snapshot100_us": 17301,
+        "snapshot_bytes": 23659200,
+        "lines": 769,
+        "sectors": 256,
+        "cells": 8,
+        "references": 6152,
+        "prepared_bytes": 42740,
+        "max_rss_kib": 4444
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "demon_expanded_map",
+      "index": 5,
+      "label": null,
+      "profile": 20,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 2128,
+        "prepare100_us": 58099,
+        "spawn100_us": 569,
+        "collision1000_us": 4886,
+        "candidates": 770000,
+        "sight1000_us": 6730,
+        "visits": 1401000,
+        "chase100_us": 17528,
+        "step100_us": 22947,
+        "snapshot100_us": 13129,
+        "snapshot_bytes": 20849100,
+        "lines": 769,
+        "sectors": 256,
+        "cells": 136,
+        "references": 104584,
+        "prepared_bytes": 242676,
+        "max_rss_kib": 4428
+      },
+      "after": {
+        "parse100_us": 2039,
+        "prepare100_us": 57535,
+        "spawn100_us": 587,
+        "collision1000_us": 4826,
+        "candidates": 770000,
+        "sight1000_us": 6686,
+        "visits": 1401000,
+        "chase100_us": 18419,
+        "step100_us": 23441,
+        "snapshot100_us": 13871,
+        "snapshot_bytes": 20849100,
+        "lines": 769,
+        "sectors": 256,
+        "cells": 136,
+        "references": 104584,
+        "prepared_bytes": 242676,
+        "max_rss_kib": 4568
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "demon_expanded_map",
+      "index": 6,
+      "label": null,
+      "profile": 20,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 190,
+        "prepare100_us": 30633,
+        "spawn100_us": 447,
+        "collision1000_us": 205,
+        "candidates": 8000,
+        "sight1000_us": 76982,
+        "visits": 16384000,
+        "chase100_us": 16405,
+        "step100_us": 13672,
+        "snapshot100_us": 3559,
+        "snapshot_bytes": 8819800,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 20,
+        "references": 80,
+        "prepared_bytes": 794,
+        "max_rss_kib": 3800
+      },
+      "after": {
+        "parse100_us": 175,
+        "prepare100_us": 30636,
+        "spawn100_us": 460,
+        "collision1000_us": 197,
+        "candidates": 8000,
+        "sight1000_us": 76455,
+        "visits": 16384000,
+        "chase100_us": 16414,
+        "step100_us": 13765,
+        "snapshot100_us": 3612,
+        "snapshot_bytes": 8819800,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 20,
+        "references": 80,
+        "prepared_bytes": 794,
+        "max_rss_kib": 3852
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "demon_expanded_map",
+      "index": 7,
+      "label": null,
+      "profile": 20,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 3070,
+        "prepare100_us": 50041,
+        "spawn100_us": 441,
+        "collision1000_us": 6200,
+        "candidates": 1028000,
+        "sight1000_us": 15436,
+        "visits": 3066000,
+        "chase100_us": 16751,
+        "step100_us": 13757,
+        "snapshot100_us": 3411,
+        "snapshot_bytes": 20103600,
+        "lines": 1024,
+        "sectors": 1,
+        "cells": 8,
+        "references": 8192,
+        "prepared_bytes": 53450,
+        "max_rss_kib": 4272
+      },
+      "after": {
+        "parse100_us": 3212,
+        "prepare100_us": 51453,
+        "spawn100_us": 493,
+        "collision1000_us": 6341,
+        "candidates": 1028000,
+        "sight1000_us": 15480,
+        "visits": 3066000,
+        "chase100_us": 17517,
+        "step100_us": 14591,
+        "snapshot100_us": 3520,
+        "snapshot_bytes": 20103600,
+        "lines": 1024,
+        "sectors": 1,
+        "cells": 8,
+        "references": 8192,
+        "prepared_bytes": 53450,
+        "max_rss_kib": 4312
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "demon_expanded_map",
+      "index": 8,
+      "label": null,
+      "profile": 20,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 4544,
+        "prepare100_us": 104737,
+        "spawn100_us": 584,
+        "collision1000_us": 5086,
+        "candidates": 770000,
+        "sight1000_us": 6562,
+        "visits": 1401000,
+        "chase100_us": 17940,
+        "step100_us": 23135,
+        "snapshot100_us": 13742,
+        "snapshot_bytes": 28905100,
+        "lines": 769,
+        "sectors": 256,
+        "cells": 8192,
+        "references": 58880,
+        "prepared_bytes": 344612,
+        "max_rss_kib": 6352
+      },
+      "after": {
+        "parse100_us": 4637,
+        "prepare100_us": 109710,
+        "spawn100_us": 636,
+        "collision1000_us": 5000,
+        "candidates": 770000,
+        "sight1000_us": 6559,
+        "visits": 1401000,
+        "chase100_us": 18428,
+        "step100_us": 23815,
+        "snapshot100_us": 14241,
+        "snapshot_bytes": 28905100,
+        "lines": 769,
+        "sectors": 256,
+        "cells": 8192,
+        "references": 58880,
+        "prepared_bytes": 344612,
+        "max_rss_kib": 6432
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "game_instance",
+      "index": 0,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "import100000_us": 2227,
+        "export100000_us": 1550,
+        "step100_us": 14757,
+        "max_rss_kib": 2504
+      },
+      "after": {
+        "import100000_us": 2215,
+        "export100000_us": 1568,
+        "step100_us": 15142,
+        "max_rss_kib": 2608
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "game_instance",
+      "index": 1,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "import100000_us": 2243,
+        "export100000_us": 1532,
+        "step100_us": 15029,
+        "max_rss_kib": 2504
+      },
+      "after": {
+        "import100000_us": 2297,
+        "export100000_us": 1541,
+        "step100_us": 14719,
+        "max_rss_kib": 2556
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "legacy_weapons",
+      "index": 0,
+      "label": "historical_pistol_held",
+      "profile": null,
+      "mode": "advance",
+      "digest": "63003ae3ffaa78af",
+      "before": {
+        "ns": 147077,
+        "max_rss_kib": 2616
+      },
+      "after": {
+        "ns": 150152,
+        "max_rss_kib": 2624
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "legacy_weapons",
+      "index": 1,
+      "label": "historical_pistol_held",
+      "profile": null,
+      "mode": "step",
+      "digest": "63003ae3ffaa78af",
+      "before": {
+        "ns": 2068200,
+        "max_rss_kib": 2616
+      },
+      "after": {
+        "ns": 2426772,
+        "max_rss_kib": 2600
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "map_extent",
+      "index": 0,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 82,
+        "prepare100_us": 255,
+        "collision1000_us": 117,
+        "candidates": 4000,
+        "sight1000_us": 149,
+        "sight_visits": 11000,
+        "sight_work": 5000,
+        "step100_us": 957,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 20,
+        "references": 80,
+        "prepared_bytes": 794,
+        "max_rss_kib": 2188
+      },
+      "after": {
+        "parse100_us": 95,
+        "prepare100_us": 256,
+        "collision1000_us": 124,
+        "candidates": 4000,
+        "sight1000_us": 148,
+        "sight_visits": 11000,
+        "sight_work": 5000,
+        "step100_us": 955,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 20,
+        "references": 80,
+        "prepared_bytes": 794,
+        "max_rss_kib": 2136
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_extent",
+      "index": 1,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 79,
+        "prepare100_us": 264,
+        "collision1000_us": 117,
+        "candidates": 4000,
+        "sight1000_us": 104,
+        "sight_visits": 11000,
+        "sight_work": 5000,
+        "step100_us": 962,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 20,
+        "references": 80,
+        "prepared_bytes": 794,
+        "max_rss_kib": 2292
+      },
+      "after": {
+        "parse100_us": 82,
+        "prepare100_us": 273,
+        "collision1000_us": 123,
+        "candidates": 4000,
+        "sight1000_us": 102,
+        "sight_visits": 11000,
+        "sight_work": 5000,
+        "step100_us": 963,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 20,
+        "references": 80,
+        "prepared_bytes": 794,
+        "max_rss_kib": 2264
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_extent",
+      "index": 2,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 104,
+        "prepare100_us": 391,
+        "collision1000_us": 136,
+        "candidates": 13000,
+        "sight1000_us": 182,
+        "sight_visits": 29000,
+        "sight_work": 16000,
+        "step100_us": 1100,
+        "lines": 13,
+        "sectors": 4,
+        "cells": 20,
+        "references": 260,
+        "prepared_bytes": 1508,
+        "max_rss_kib": 2316
+      },
+      "after": {
+        "parse100_us": 109,
+        "prepare100_us": 378,
+        "collision1000_us": 134,
+        "candidates": 13000,
+        "sight1000_us": 183,
+        "sight_visits": 29000,
+        "sight_work": 16000,
+        "step100_us": 1078,
+        "lines": 13,
+        "sectors": 4,
+        "cells": 20,
+        "references": 260,
+        "prepared_bytes": 1508,
+        "max_rss_kib": 2308
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_extent",
+      "index": 3,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 412,
+        "prepare100_us": 2418,
+        "collision1000_us": 299,
+        "candidates": 49000,
+        "sight1000_us": 258,
+        "sight_visits": 41000,
+        "sight_work": 28000,
+        "step100_us": 1430,
+        "lines": 49,
+        "sectors": 16,
+        "cells": 136,
+        "references": 6664,
+        "prepared_bytes": 18516,
+        "max_rss_kib": 2252
+      },
+      "after": {
+        "parse100_us": 344,
+        "prepare100_us": 2357,
+        "collision1000_us": 308,
+        "candidates": 49000,
+        "sight1000_us": 244,
+        "sight_visits": 41000,
+        "sight_work": 28000,
+        "step100_us": 1331,
+        "lines": 49,
+        "sectors": 16,
+        "cells": 136,
+        "references": 6664,
+        "prepared_bytes": 18516,
+        "max_rss_kib": 2192
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_extent",
+      "index": 4,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 98,
+        "prepare100_us": 479,
+        "collision1000_us": 127,
+        "candidates": 4000,
+        "sight1000_us": 104,
+        "sight_visits": 11000,
+        "sight_work": 5000,
+        "step100_us": 1005,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 60,
+        "references": 240,
+        "prepared_bytes": 2074,
+        "max_rss_kib": 2232
+      },
+      "after": {
+        "parse100_us": 98,
+        "prepare100_us": 559,
+        "collision1000_us": 144,
+        "candidates": 4000,
+        "sight1000_us": 102,
+        "sight_visits": 11000,
+        "sight_work": 5000,
+        "step100_us": 1005,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 60,
+        "references": 240,
+        "prepared_bytes": 2074,
+        "max_rss_kib": 2264
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_extent",
+      "index": 5,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 146,
+        "prepare100_us": 771,
+        "collision1000_us": 152,
+        "candidates": 7000,
+        "sight1000_us": 141,
+        "sight_visits": 15000,
+        "sight_work": 6000,
+        "step100_us": 1092,
+        "lines": 7,
+        "sectors": 2,
+        "cells": 99,
+        "references": 693,
+        "prepared_bytes": 4034,
+        "max_rss_kib": 2292
+      },
+      "after": {
+        "parse100_us": 147,
+        "prepare100_us": 814,
+        "collision1000_us": 157,
+        "candidates": 7000,
+        "sight1000_us": 143,
+        "sight_visits": 15000,
+        "sight_work": 6000,
+        "step100_us": 1023,
+        "lines": 7,
+        "sectors": 2,
+        "cells": 99,
+        "references": 693,
+        "prepared_bytes": 4034,
+        "max_rss_kib": 2300
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_extent",
+      "index": 6,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 2550,
+        "prepare100_us": 102047,
+        "collision1000_us": 205,
+        "candidates": 32000,
+        "sight1000_us": 461,
+        "sight_visits": 95000,
+        "sight_work": 33000,
+        "step100_us": 1081,
+        "lines": 32,
+        "sectors": 1,
+        "cells": 8192,
+        "references": 262144,
+        "prepared_bytes": 722058,
+        "max_rss_kib": 3448
+      },
+      "after": {
+        "parse100_us": 2610,
+        "prepare100_us": 103158,
+        "collision1000_us": 207,
+        "candidates": 32000,
+        "sight1000_us": 450,
+        "sight_visits": 95000,
+        "sight_work": 33000,
+        "step100_us": 998,
+        "lines": 32,
+        "sectors": 1,
+        "cells": 8192,
+        "references": 262144,
+        "prepared_bytes": 722058,
+        "max_rss_kib": 3456
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_extent",
+      "index": 7,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 2587,
+        "prepare100_us": 112468,
+        "collision1000_us": 214,
+        "candidates": 32000,
+        "sight1000_us": 451,
+        "sight_visits": 95000,
+        "sight_work": 33000,
+        "step100_us": 1004,
+        "lines": 32,
+        "sectors": 1,
+        "cells": 8192,
+        "references": 262144,
+        "prepared_bytes": 722058,
+        "max_rss_kib": 3332
+      },
+      "after": {
+        "parse100_us": 2575,
+        "prepare100_us": 117453,
+        "collision1000_us": 226,
+        "candidates": 32000,
+        "sight1000_us": 487,
+        "sight_visits": 95000,
+        "sight_work": 33000,
+        "step100_us": 1023,
+        "lines": 32,
+        "sectors": 1,
+        "cells": 8192,
+        "references": 262144,
+        "prepared_bytes": 722058,
+        "max_rss_kib": 3388
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_extent",
+      "index": 8,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 2575,
+        "prepare100_us": 58207,
+        "collision1000_us": 205,
+        "candidates": 32000,
+        "sight1000_us": 465,
+        "sight_visits": 95000,
+        "sight_work": 33000,
+        "step100_us": 1010,
+        "lines": 32,
+        "sectors": 1,
+        "cells": 8192,
+        "references": 8378,
+        "prepared_bytes": 214526,
+        "max_rss_kib": 3076
+      },
+      "after": {
+        "parse100_us": 2514,
+        "prepare100_us": 56503,
+        "collision1000_us": 208,
+        "candidates": 32000,
+        "sight1000_us": 466,
+        "sight_visits": 95000,
+        "sight_work": 33000,
+        "step100_us": 1012,
+        "lines": 32,
+        "sectors": 1,
+        "cells": 8192,
+        "references": 8378,
+        "prepared_bytes": 214526,
+        "max_rss_kib": 3060
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_extent",
+      "index": 9,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 116,
+        "prepare100_us": 313,
+        "collision1000_us": 196,
+        "candidates": 4000,
+        "sight1000_us": 84945,
+        "sight_visits": 16384000,
+        "sight_work": 16382000,
+        "step100_us": 985,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 20,
+        "references": 80,
+        "prepared_bytes": 794,
+        "max_rss_kib": 2556
+      },
+      "after": {
+        "parse100_us": 109,
+        "prepare100_us": 294,
+        "collision1000_us": 162,
+        "candidates": 4000,
+        "sight1000_us": 80019,
+        "sight_visits": 16384000,
+        "sight_work": 16382000,
+        "step100_us": 975,
+        "lines": 4,
+        "sectors": 1,
+        "cells": 20,
+        "references": 80,
+        "prepared_bytes": 794,
+        "max_rss_kib": 2564
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_extent",
+      "index": 10,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 1864,
+        "prepare100_us": 10842,
+        "collision1000_us": 3218,
+        "candidates": 1024000,
+        "sight1000_us": 13671,
+        "sight_visits": 3066000,
+        "sight_work": 1025000,
+        "step100_us": 1281,
+        "lines": 1024,
+        "sectors": 1,
+        "cells": 20,
+        "references": 20480,
+        "prepared_bytes": 78314,
+        "max_rss_kib": 2676
+      },
+      "after": {
+        "parse100_us": 1789,
+        "prepare100_us": 10264,
+        "collision1000_us": 3263,
+        "candidates": 1024000,
+        "sight1000_us": 13563,
+        "sight_visits": 3066000,
+        "sight_work": 1025000,
+        "step100_us": 1293,
+        "lines": 1024,
+        "sectors": 1,
+        "cells": 20,
+        "references": 20480,
+        "prepared_bytes": 78314,
+        "max_rss_kib": 2684
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_scale",
+      "index": 0,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "prepare100_us": 242,
+        "collision1000_us": 106,
+        "candidates": 4000,
+        "sight1000_us": 0,
+        "sight_visits": 0,
+        "step100_us": 706,
+        "max_rss_kib": 2076
+      },
+      "after": {
+        "prepare100_us": 263,
+        "collision1000_us": 143,
+        "candidates": 4000,
+        "sight1000_us": 0,
+        "sight_visits": 0,
+        "step100_us": 726,
+        "max_rss_kib": 2088
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_scale",
+      "index": 1,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "prepare100_us": 241,
+        "collision1000_us": 110,
+        "candidates": 4000,
+        "sight1000_us": 134,
+        "sight_visits": 11000,
+        "step100_us": 1005,
+        "max_rss_kib": 2112
+      },
+      "after": {
+        "prepare100_us": 244,
+        "collision1000_us": 104,
+        "candidates": 4000,
+        "sight1000_us": 137,
+        "sight_visits": 11000,
+        "step100_us": 1060,
+        "max_rss_kib": 2152
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_scale",
+      "index": 2,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "prepare100_us": 5136,
+        "collision1000_us": 1242,
+        "candidates": 256000,
+        "sight1000_us": 3635,
+        "sight_visits": 766000,
+        "step100_us": 1102,
+        "max_rss_kib": 2332
+      },
+      "after": {
+        "prepare100_us": 5207,
+        "collision1000_us": 1277,
+        "candidates": 256000,
+        "sight1000_us": 3757,
+        "sight_visits": 766000,
+        "step100_us": 1145,
+        "max_rss_kib": 2344
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_scale",
+      "index": 3,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "prepare100_us": 1584,
+        "collision1000_us": 1097,
+        "candidates": 159000,
+        "sight1000_us": 3727,
+        "sight_visits": 766000,
+        "step100_us": 1159,
+        "max_rss_kib": 2192
+      },
+      "after": {
+        "prepare100_us": 1573,
+        "collision1000_us": 1105,
+        "candidates": 159000,
+        "sight1000_us": 3549,
+        "sight_visits": 766000,
+        "step100_us": 1108,
+        "max_rss_kib": 2344
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_scale",
+      "index": 4,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "prepare100_us": 20587,
+        "collision1000_us": 4357,
+        "candidates": 1024000,
+        "sight1000_us": 14844,
+        "sight_visits": 3066000,
+        "step100_us": 1335,
+        "max_rss_kib": 2680
+      },
+      "after": {
+        "prepare100_us": 20730,
+        "collision1000_us": 4402,
+        "candidates": 1024000,
+        "sight1000_us": 14764,
+        "sight_visits": 3066000,
+        "step100_us": 1433,
+        "max_rss_kib": 2728
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_scale",
+      "index": 5,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "prepare100_us": 5590,
+        "collision1000_us": 3140,
+        "candidates": 543000,
+        "sight1000_us": 14260,
+        "sight_visits": 3066000,
+        "step100_us": 1314,
+        "max_rss_kib": 2748
+      },
+      "after": {
+        "prepare100_us": 5579,
+        "collision1000_us": 3066,
+        "candidates": 543000,
+        "sight1000_us": 14102,
+        "sight_visits": 3066000,
+        "step100_us": 1271,
+        "max_rss_kib": 2728
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_scale",
+      "index": 6,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "prepare100_us": 15663,
+        "collision1000_us": 3470,
+        "candidates": 769000,
+        "sight1000_us": 4663,
+        "sight_visits": 830000,
+        "step100_us": 6718,
+        "max_rss_kib": 2692
+      },
+      "after": {
+        "prepare100_us": 15711,
+        "collision1000_us": 3458,
+        "candidates": 769000,
+        "sight1000_us": 4774,
+        "sight_visits": 830000,
+        "step100_us": 6662,
+        "max_rss_kib": 2600
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_scale",
+      "index": 7,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "prepare100_us": 4281,
+        "collision1000_us": 2183,
+        "candidates": 387000,
+        "sight1000_us": 4787,
+        "sight_visits": 830000,
+        "step100_us": 7089,
+        "max_rss_kib": 2580
+      },
+      "after": {
+        "prepare100_us": 4137,
+        "collision1000_us": 2201,
+        "candidates": 387000,
+        "sight1000_us": 4644,
+        "sight_visits": 830000,
+        "step100_us": 6718,
+        "max_rss_kib": 2600
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "map_scale",
+      "index": 8,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "prepare100_us": 51354,
+        "collision1000_us": 2180,
+        "candidates": 512000,
+        "sight1000_us": 7157,
+        "sight_visits": 1532000,
+        "step100_us": 1232,
+        "max_rss_kib": 2960
+      },
+      "after": {
+        "prepare100_us": 52436,
+        "collision1000_us": 2277,
+        "candidates": 512000,
+        "sight1000_us": 7668,
+        "sight_visits": 1532000,
+        "step100_us": 1271,
+        "max_rss_kib": 3032
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "original_registry",
+      "index": 0,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 147,
+        "prepare100_us": 3611,
+        "spawn100_us": 413,
+        "enter100_us": 15891,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1039,
+        "step100_us": 13649,
+        "encode100_us": 237,
+        "decode100_us": 3298,
+        "diagnostic_bytes": 8627,
+        "max_rss_kib": 2880
+      },
+      "after": {
+        "parse100_us": 154,
+        "prepare100_us": 3667,
+        "spawn100_us": 425,
+        "enter100_us": 16005,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1013,
+        "step100_us": 13590,
+        "encode100_us": 239,
+        "decode100_us": 3302,
+        "diagnostic_bytes": 8627,
+        "max_rss_kib": 2892
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "original_registry",
+      "index": 1,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 2995,
+        "prepare100_us": 19441,
+        "spawn100_us": 555,
+        "enter100_us": 17144,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1022,
+        "step100_us": 22577,
+        "encode100_us": 1420,
+        "decode100_us": 9775,
+        "diagnostic_bytes": 136153,
+        "max_rss_kib": 3728
+      },
+      "after": {
+        "parse100_us": 2985,
+        "prepare100_us": 20161,
+        "spawn100_us": 542,
+        "enter100_us": 18209,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1033,
+        "step100_us": 23319,
+        "encode100_us": 1469,
+        "decode100_us": 10301,
+        "diagnostic_bytes": 136153,
+        "max_rss_kib": 3700
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "original_registry",
+      "index": 2,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 2867,
+        "prepare100_us": 20014,
+        "spawn100_us": 2048,
+        "enter100_us": 47691,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1034,
+        "step100_us": 63357,
+        "encode100_us": 1631,
+        "decode100_us": 14518,
+        "diagnostic_bytes": 157279,
+        "max_rss_kib": 4044
+      },
+      "after": {
+        "parse100_us": 2852,
+        "prepare100_us": 20652,
+        "spawn100_us": 2113,
+        "enter100_us": 48034,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 988,
+        "step100_us": 64126,
+        "encode100_us": 1656,
+        "decode100_us": 14941,
+        "diagnostic_bytes": 157279,
+        "max_rss_kib": 3952
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "original_registry",
+      "index": 3,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 3008,
+        "prepare100_us": 19602,
+        "spawn100_us": 559,
+        "enter100_us": 17836,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1016,
+        "step100_us": 21348,
+        "encode100_us": 1392,
+        "decode100_us": 10204,
+        "diagnostic_bytes": 136112,
+        "max_rss_kib": 3784
+      },
+      "after": {
+        "parse100_us": 2972,
+        "prepare100_us": 20213,
+        "spawn100_us": 586,
+        "enter100_us": 19504,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1033,
+        "step100_us": 22125,
+        "encode100_us": 1510,
+        "decode100_us": 9811,
+        "diagnostic_bytes": 136112,
+        "max_rss_kib": 3792
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "original_registry",
+      "index": 4,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 4224,
+        "prepare100_us": 76059,
+        "spawn100_us": 568,
+        "enter100_us": 17389,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1036,
+        "step100_us": 23278,
+        "encode100_us": 1385,
+        "decode100_us": 10313,
+        "diagnostic_bytes": 209738,
+        "max_rss_kib": 4932
+      },
+      "after": {
+        "parse100_us": 4333,
+        "prepare100_us": 79967,
+        "spawn100_us": 566,
+        "enter100_us": 17745,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1045,
+        "step100_us": 23776,
+        "encode100_us": 1504,
+        "decode100_us": 10548,
+        "diagnostic_bytes": 209738,
+        "max_rss_kib": 4940
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "original_registry",
+      "index": 5,
+      "label": null,
+      "profile": null,
+      "mode": null,
+      "digest": null,
+      "before": {
+        "parse100_us": 3003,
+        "prepare100_us": 24861,
+        "spawn100_us": 452,
+        "enter100_us": 16290,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1022,
+        "step100_us": 14519,
+        "encode100_us": 486,
+        "decode100_us": 3280,
+        "diagnostic_bytes": 121723,
+        "max_rss_kib": 3556
+      },
+      "after": {
+        "parse100_us": 3256,
+        "prepare100_us": 26636,
+        "spawn100_us": 463,
+        "enter100_us": 17827,
+        "conversion100000_us": 54,
+        "lookup100000_us": 79,
+        "query100000_us": 1087,
+        "step100_us": 14422,
+        "encode100_us": 639,
+        "decode100_us": 3277,
+        "diagnostic_bytes": 121723,
+        "max_rss_kib": 3640
+      },
+      "allocation_arrays_equal": false
+    },
+    {
+      "driver": "player_body",
+      "index": 0,
+      "label": "idle",
+      "profile": null,
+      "mode": "advance",
+      "digest": "8e365bf2dd0f6746",
+      "before": {
+        "ns": 1029273,
+        "max_rss_kib": 2308
+      },
+      "after": {
+        "ns": 942004,
+        "max_rss_kib": 2344
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_body",
+      "index": 1,
+      "label": "idle",
+      "profile": null,
+      "mode": "step",
+      "digest": "8e365bf2dd0f6746",
+      "before": {
+        "ns": 1957557,
+        "max_rss_kib": 2320
+      },
+      "after": {
+        "ns": 2069253,
+        "max_rss_kib": 2384
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_body",
+      "index": 2,
+      "label": "damage_death",
+      "profile": null,
+      "mode": "advance",
+      "digest": "25b7904b302ad78d",
+      "before": {
+        "ns": 1008502,
+        "max_rss_kib": 2324
+      },
+      "after": {
+        "ns": 1005088,
+        "max_rss_kib": 2240
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_body",
+      "index": 3,
+      "label": "damage_death",
+      "profile": null,
+      "mode": "step",
+      "digest": "25b7904b302ad78d",
+      "before": {
+        "ns": 2066358,
+        "max_rss_kib": 2332
+      },
+      "after": {
+        "ns": 2078586,
+        "max_rss_kib": 2376
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_body",
+      "index": 4,
+      "label": "demon_source",
+      "profile": null,
+      "mode": "advance",
+      "digest": "ce2a8a69d9f9179a",
+      "before": {
+        "ns": 1058096,
+        "max_rss_kib": 2324
+      },
+      "after": {
+        "ns": 1134389,
+        "max_rss_kib": 2348
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_body",
+      "index": 5,
+      "label": "demon_source",
+      "profile": null,
+      "mode": "step",
+      "digest": "ce2a8a69d9f9179a",
+      "before": {
+        "ns": 1980330,
+        "max_rss_kib": 2332
+      },
+      "after": {
+        "ns": 1983976,
+        "max_rss_kib": 2284
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_body",
+      "index": 6,
+      "label": "initialization",
+      "profile": null,
+      "mode": "construct_spawn",
+      "digest": "bf2805b4893184ab",
+      "before": {
+        "ns": 5614769,
+        "max_rss_kib": 2604
+      },
+      "after": {
+        "ns": 6070273,
+        "max_rss_kib": 2584
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 0,
+      "label": "idle",
+      "profile": null,
+      "mode": "advance",
+      "digest": "613080789387139a",
+      "before": {
+        "ns": 963576,
+        "max_rss_kib": 2340
+      },
+      "after": {
+        "ns": 958799,
+        "max_rss_kib": 2284
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 1,
+      "label": "idle",
+      "profile": null,
+      "mode": "step",
+      "digest": "613080789387139a",
+      "before": {
+        "ns": 1961603,
+        "max_rss_kib": 2336
+      },
+      "after": {
+        "ns": 1990897,
+        "max_rss_kib": 2312
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 2,
+      "label": "forward",
+      "profile": null,
+      "mode": "advance",
+      "digest": "58050e55c75cc070",
+      "before": {
+        "ns": 1034921,
+        "max_rss_kib": 2364
+      },
+      "after": {
+        "ns": 1034270,
+        "max_rss_kib": 2360
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 3,
+      "label": "forward",
+      "profile": null,
+      "mode": "step",
+      "digest": "58050e55c75cc070",
+      "before": {
+        "ns": 2057344,
+        "max_rss_kib": 2476
+      },
+      "after": {
+        "ns": 2088080,
+        "max_rss_kib": 2312
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 4,
+      "label": "turn_strafe",
+      "profile": null,
+      "mode": "advance",
+      "digest": "ee08bb4dece9d363",
+      "before": {
+        "ns": 1128339,
+        "max_rss_kib": 2256
+      },
+      "after": {
+        "ns": 977547,
+        "max_rss_kib": 2364
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 5,
+      "label": "turn_strafe",
+      "profile": null,
+      "mode": "step",
+      "digest": "ee08bb4dece9d363",
+      "before": {
+        "ns": 2083453,
+        "max_rss_kib": 2336
+      },
+      "after": {
+        "ns": 2024637,
+        "max_rss_kib": 2276
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 6,
+      "label": "combined",
+      "profile": null,
+      "mode": "advance",
+      "digest": "b0e94a1df3df1129",
+      "before": {
+        "ns": 971598,
+        "max_rss_kib": 2368
+      },
+      "after": {
+        "ns": 975414,
+        "max_rss_kib": 2364
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 7,
+      "label": "combined",
+      "profile": null,
+      "mode": "step",
+      "digest": "b0e94a1df3df1129",
+      "before": {
+        "ns": 1893351,
+        "max_rss_kib": 2340
+      },
+      "after": {
+        "ns": 1870368,
+        "max_rss_kib": 2312
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 8,
+      "label": "reaction",
+      "profile": null,
+      "mode": "advance",
+      "digest": "f140097c3890f29c",
+      "before": {
+        "ns": 962524,
+        "max_rss_kib": 2340
+      },
+      "after": {
+        "ns": 952830,
+        "max_rss_kib": 2284
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 9,
+      "label": "reaction",
+      "profile": null,
+      "mode": "step",
+      "digest": "f140097c3890f29c",
+      "before": {
+        "ns": 1940250,
+        "max_rss_kib": 2264
+      },
+      "after": {
+        "ns": 1914183,
+        "max_rss_kib": 2312
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 10,
+      "label": "continuous",
+      "profile": null,
+      "mode": "advance",
+      "digest": "883f4943d1dce6af",
+      "before": {
+        "ns": 997746,
+        "max_rss_kib": 2348
+      },
+      "after": {
+        "ns": 995573,
+        "max_rss_kib": 2372
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 11,
+      "label": "continuous",
+      "profile": null,
+      "mode": "step",
+      "digest": "883f4943d1dce6af",
+      "before": {
+        "ns": 2197492,
+        "max_rss_kib": 2476
+      },
+      "after": {
+        "ns": 2165264,
+        "max_rss_kib": 2488
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 12,
+      "label": "knockback",
+      "profile": null,
+      "mode": "advance",
+      "digest": "2fae22857e869f12",
+      "before": {
+        "ns": 2160888,
+        "max_rss_kib": 2344
+      },
+      "after": {
+        "ns": 2111855,
+        "max_rss_kib": 2372
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 13,
+      "label": "knockback",
+      "profile": null,
+      "mode": "step",
+      "digest": "2fae22857e869f12",
+      "before": {
+        "ns": 3795867,
+        "max_rss_kib": 2472
+      },
+      "after": {
+        "ns": 3585346,
+        "max_rss_kib": 2488
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 14,
+      "label": "wall",
+      "profile": null,
+      "mode": "advance",
+      "digest": "bc2194df44836c2e",
+      "before": {
+        "ns": 992909,
+        "max_rss_kib": 2376
+      },
+      "after": {
+        "ns": 985889,
+        "max_rss_kib": 2380
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 15,
+      "label": "wall",
+      "profile": null,
+      "mode": "step",
+      "digest": "bc2194df44836c2e",
+      "before": {
+        "ns": 2120788,
+        "max_rss_kib": 2496
+      },
+      "after": {
+        "ns": 2118285,
+        "max_rss_kib": 2488
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_commands",
+      "index": 16,
+      "label": "initialization",
+      "profile": null,
+      "mode": "construct_spawn",
+      "digest": "2b71429a77e9a327",
+      "before": {
+        "ns": 5647897,
+        "max_rss_kib": 2604
+      },
+      "after": {
+        "ns": 5685264,
+        "max_rss_kib": 2612
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 0,
+      "label": "active_player",
+      "profile": null,
+      "mode": "advance",
+      "digest": "73d2b76567dc4430",
+      "before": {
+        "ns": 1002413,
+        "max_rss_kib": 2380
+      },
+      "after": {
+        "ns": 958418,
+        "max_rss_kib": 2408
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 1,
+      "label": "active_player",
+      "profile": null,
+      "mode": "step",
+      "digest": "73d2b76567dc4430",
+      "before": {
+        "ns": 2047309,
+        "max_rss_kib": 2472
+      },
+      "after": {
+        "ns": 1958379,
+        "max_rss_kib": 2532
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 2,
+      "label": "standing_demon",
+      "profile": null,
+      "mode": "advance",
+      "digest": "73910d3d3b15bc99",
+      "before": {
+        "ns": 4049943,
+        "max_rss_kib": 2508
+      },
+      "after": {
+        "ns": 3867764,
+        "max_rss_kib": 2484
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 3,
+      "label": "standing_demon",
+      "profile": null,
+      "mode": "step",
+      "digest": "73910d3d3b15bc99",
+      "before": {
+        "ns": 5422174,
+        "max_rss_kib": 2504
+      },
+      "after": {
+        "ns": 5365591,
+        "max_rss_kib": 2540
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 4,
+      "label": "failed_sight",
+      "profile": null,
+      "mode": "advance",
+      "digest": "a840d193b46adaec",
+      "before": {
+        "ns": 3982674,
+        "max_rss_kib": 2492
+      },
+      "after": {
+        "ns": 3875115,
+        "max_rss_kib": 2456
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 5,
+      "label": "failed_sight",
+      "profile": null,
+      "mode": "step",
+      "digest": "a840d193b46adaec",
+      "before": {
+        "ns": 5507660,
+        "max_rss_kib": 2488
+      },
+      "after": {
+        "ns": 5382235,
+        "max_rss_kib": 2484
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 6,
+      "label": "acquisition",
+      "profile": null,
+      "mode": "advance",
+      "digest": "76b812b602b7fbb1",
+      "before": {
+        "ns": 4854473,
+        "max_rss_kib": 2492
+      },
+      "after": {
+        "ns": 4788167,
+        "max_rss_kib": 2496
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 7,
+      "label": "acquisition",
+      "profile": null,
+      "mode": "step",
+      "digest": "76b812b602b7fbb1",
+      "before": {
+        "ns": 7081749,
+        "max_rss_kib": 2488
+      },
+      "after": {
+        "ns": 6285372,
+        "max_rss_kib": 2496
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 8,
+      "label": "stop_slot",
+      "profile": null,
+      "mode": "advance",
+      "digest": "5636261bb0090755",
+      "before": {
+        "ns": 4893481,
+        "max_rss_kib": 2484
+      },
+      "after": {
+        "ns": 4665194,
+        "max_rss_kib": 2504
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 9,
+      "label": "stop_slot",
+      "profile": null,
+      "mode": "step",
+      "digest": "5636261bb0090755",
+      "before": {
+        "ns": 6638734,
+        "max_rss_kib": 2472
+      },
+      "after": {
+        "ns": 6331010,
+        "max_rss_kib": 2492
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 10,
+      "label": "repeated_search",
+      "profile": null,
+      "mode": "advance",
+      "digest": "11fc644aa8c4f4fd",
+      "before": {
+        "ns": 10011895,
+        "max_rss_kib": 2500
+      },
+      "after": {
+        "ns": 9515912,
+        "max_rss_kib": 2456
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 11,
+      "label": "repeated_search",
+      "profile": null,
+      "mode": "step",
+      "digest": "11fc644aa8c4f4fd",
+      "before": {
+        "ns": 15097650,
+        "max_rss_kib": 2632
+      },
+      "after": {
+        "ns": 11770499,
+        "max_rss_kib": 2620
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 12,
+      "label": "moving_player",
+      "profile": null,
+      "mode": "advance",
+      "digest": "2a44581eb5b55c7e",
+      "before": {
+        "ns": 5137312,
+        "max_rss_kib": 2468
+      },
+      "after": {
+        "ns": 4769188,
+        "max_rss_kib": 2488
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 13,
+      "label": "moving_player",
+      "profile": null,
+      "mode": "step",
+      "digest": "2a44581eb5b55c7e",
+      "before": {
+        "ns": 6511235,
+        "max_rss_kib": 2492
+      },
+      "after": {
+        "ns": 6412670,
+        "max_rss_kib": 2448
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 14,
+      "label": "pursuit",
+      "profile": null,
+      "mode": "advance",
+      "digest": "76b812b602b7fbb1",
+      "before": {
+        "ns": 5338259,
+        "max_rss_kib": 2480
+      },
+      "after": {
+        "ns": 4741267,
+        "max_rss_kib": 2488
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 15,
+      "label": "pursuit",
+      "profile": null,
+      "mode": "step",
+      "digest": "76b812b602b7fbb1",
+      "before": {
+        "ns": 6399029,
+        "max_rss_kib": 2472
+      },
+      "after": {
+        "ns": 6437498,
+        "max_rss_kib": 2504
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 16,
+      "label": "target_death",
+      "profile": null,
+      "mode": "advance",
+      "digest": "5821afb823a023c3",
+      "before": {
+        "ns": 4964276,
+        "max_rss_kib": 2508
+      },
+      "after": {
+        "ns": 4944248,
+        "max_rss_kib": 2492
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 17,
+      "label": "target_death",
+      "profile": null,
+      "mode": "step",
+      "digest": "5821afb823a023c3",
+      "before": {
+        "ns": 6481711,
+        "max_rss_kib": 2464
+      },
+      "after": {
+        "ns": 6445960,
+        "max_rss_kib": 2528
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 18,
+      "label": "target_loss",
+      "profile": null,
+      "mode": "advance",
+      "digest": "b540e0fcf1c4fd10",
+      "before": {
+        "ns": 5206314,
+        "max_rss_kib": 2492
+      },
+      "after": {
+        "ns": 4704413,
+        "max_rss_kib": 2460
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 19,
+      "label": "target_loss",
+      "profile": null,
+      "mode": "step",
+      "digest": "b540e0fcf1c4fd10",
+      "before": {
+        "ns": 6635830,
+        "max_rss_kib": 2508
+      },
+      "after": {
+        "ns": 6392902,
+        "max_rss_kib": 2496
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 20,
+      "label": "retirement",
+      "profile": null,
+      "mode": "advance",
+      "digest": "3b1cce7038b783fc",
+      "before": {
+        "ns": 1911468,
+        "max_rss_kib": 2376
+      },
+      "after": {
+        "ns": 1864780,
+        "max_rss_kib": 2388
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon",
+      "index": 21,
+      "label": "retirement",
+      "profile": null,
+      "mode": "step",
+      "digest": "3b1cce7038b783fc",
+      "before": {
+        "ns": 3134218,
+        "max_rss_kib": 2500
+      },
+      "after": {
+        "ns": 3169551,
+        "max_rss_kib": 2532
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 0,
+      "label": "acquisition_selection",
+      "profile": null,
+      "mode": "advance",
+      "digest": "72933bbab80efe62",
+      "before": {
+        "ns": 4915273,
+        "max_rss_kib": 2536
+      },
+      "after": {
+        "ns": 4933412,
+        "max_rss_kib": 2540
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 1,
+      "label": "acquisition_selection",
+      "profile": null,
+      "mode": "step",
+      "digest": "72933bbab80efe62",
+      "before": {
+        "ns": 6417897,
+        "max_rss_kib": 2536
+      },
+      "after": {
+        "ns": 6503446,
+        "max_rss_kib": 2528
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 2,
+      "label": "hit_followthrough",
+      "profile": null,
+      "mode": "advance",
+      "digest": "f0a3e6269c17cd8b",
+      "before": {
+        "ns": 4895254,
+        "max_rss_kib": 2552
+      },
+      "after": {
+        "ns": 4889586,
+        "max_rss_kib": 2556
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 3,
+      "label": "hit_followthrough",
+      "profile": null,
+      "mode": "step",
+      "digest": "f0a3e6269c17cd8b",
+      "before": {
+        "ns": 6425468,
+        "max_rss_kib": 2480
+      },
+      "after": {
+        "ns": 6510636,
+        "max_rss_kib": 2528
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 4,
+      "label": "miss",
+      "profile": null,
+      "mode": "advance",
+      "digest": "cdb773c675cab92d",
+      "before": {
+        "ns": 4731572,
+        "max_rss_kib": 2476
+      },
+      "after": {
+        "ns": 5059958,
+        "max_rss_kib": 2528
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 5,
+      "label": "miss",
+      "profile": null,
+      "mode": "step",
+      "digest": "cdb773c675cab92d",
+      "before": {
+        "ns": 6593907,
+        "max_rss_kib": 2472
+      },
+      "after": {
+        "ns": 6673547,
+        "max_rss_kib": 2520
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 6,
+      "label": "repeated",
+      "profile": null,
+      "mode": "advance",
+      "digest": "23ad02e4bef1bc3b",
+      "before": {
+        "ns": 4975613,
+        "max_rss_kib": 2512
+      },
+      "after": {
+        "ns": 5120028,
+        "max_rss_kib": 2484
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 7,
+      "label": "repeated",
+      "profile": null,
+      "mode": "step",
+      "digest": "23ad02e4bef1bc3b",
+      "before": {
+        "ns": 6363166,
+        "max_rss_kib": 2516
+      },
+      "after": {
+        "ns": 6661449,
+        "max_rss_kib": 2484
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 8,
+      "label": "lethal",
+      "profile": null,
+      "mode": "advance",
+      "digest": "9bc1b34492e7c212",
+      "before": {
+        "ns": 4698092,
+        "max_rss_kib": 2516
+      },
+      "after": {
+        "ns": 5014601,
+        "max_rss_kib": 2560
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 9,
+      "label": "lethal",
+      "profile": null,
+      "mode": "step",
+      "digest": "9bc1b34492e7c212",
+      "before": {
+        "ns": 6198272,
+        "max_rss_kib": 2524
+      },
+      "after": {
+        "ns": 6505128,
+        "max_rss_kib": 2544
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 10,
+      "label": "moving_pressure",
+      "profile": null,
+      "mode": "advance",
+      "digest": "c82c2637aa1469f3",
+      "before": {
+        "ns": 4669670,
+        "max_rss_kib": 2504
+      },
+      "after": {
+        "ns": 4896827,
+        "max_rss_kib": 2484
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 11,
+      "label": "moving_pressure",
+      "profile": null,
+      "mode": "step",
+      "digest": "c82c2637aa1469f3",
+      "before": {
+        "ns": 6319141,
+        "max_rss_kib": 2520
+      },
+      "after": {
+        "ns": 6554942,
+        "max_rss_kib": 2520
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 12,
+      "label": "prior_impulse",
+      "profile": null,
+      "mode": "advance",
+      "digest": "3821ef4f38251dae",
+      "before": {
+        "ns": 4744521,
+        "max_rss_kib": 2516
+      },
+      "after": {
+        "ns": 4969895,
+        "max_rss_kib": 2544
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 13,
+      "label": "prior_impulse",
+      "profile": null,
+      "mode": "step",
+      "digest": "3821ef4f38251dae",
+      "before": {
+        "ns": 6246183,
+        "max_rss_kib": 2552
+      },
+      "after": {
+        "ns": 6572678,
+        "max_rss_kib": 2484
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 14,
+      "label": "corpse_continuation",
+      "profile": null,
+      "mode": "advance",
+      "digest": "8895f91dc8652aec",
+      "before": {
+        "ns": 4784540,
+        "max_rss_kib": 2528
+      },
+      "after": {
+        "ns": 4953902,
+        "max_rss_kib": 2416
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 15,
+      "label": "corpse_continuation",
+      "profile": null,
+      "mode": "step",
+      "digest": "8895f91dc8652aec",
+      "before": {
+        "ns": 6402514,
+        "max_rss_kib": 2496
+      },
+      "after": {
+        "ns": 6586707,
+        "max_rss_kib": 2508
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 16,
+      "label": "wall",
+      "profile": null,
+      "mode": "advance",
+      "digest": "9cb9354ebf34661e",
+      "before": {
+        "ns": 4798310,
+        "max_rss_kib": 2508
+      },
+      "after": {
+        "ns": 5025678,
+        "max_rss_kib": 2508
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_demon_melee",
+      "index": 17,
+      "label": "wall",
+      "profile": null,
+      "mode": "step",
+      "digest": "9cb9354ebf34661e",
+      "before": {
+        "ns": 6443745,
+        "max_rss_kib": 2536
+      },
+      "after": {
+        "ns": 6574530,
+        "max_rss_kib": 2468
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_knockback",
+      "index": 0,
+      "label": "physical",
+      "profile": null,
+      "mode": "advance",
+      "digest": "75ffdc69f7cb3ed9",
+      "before": {
+        "ns": 2201808,
+        "max_rss_kib": 2376
+      },
+      "after": {
+        "ns": 2206866,
+        "max_rss_kib": 2304
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_knockback",
+      "index": 1,
+      "label": "physical",
+      "profile": null,
+      "mode": "step",
+      "digest": "75ffdc69f7cb3ed9",
+      "before": {
+        "ns": 3609942,
+        "max_rss_kib": 2376
+      },
+      "after": {
+        "ns": 3653006,
+        "max_rss_kib": 2304
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_knockback",
+      "index": 2,
+      "label": "friction",
+      "profile": null,
+      "mode": "advance",
+      "digest": "0fb81f86dec8c1ca",
+      "before": {
+        "ns": 2335376,
+        "max_rss_kib": 2288
+      },
+      "after": {
+        "ns": 2285513,
+        "max_rss_kib": 2388
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_knockback",
+      "index": 3,
+      "label": "friction",
+      "profile": null,
+      "mode": "step",
+      "digest": "0fb81f86dec8c1ca",
+      "before": {
+        "ns": 3796778,
+        "max_rss_kib": 2356
+      },
+      "after": {
+        "ns": 3713706,
+        "max_rss_kib": 2356
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_knockback",
+      "index": 4,
+      "label": "collision",
+      "profile": null,
+      "mode": "advance",
+      "digest": "5316606e6ca98313",
+      "before": {
+        "ns": 2237951,
+        "max_rss_kib": 2356
+      },
+      "after": {
+        "ns": 2200347,
+        "max_rss_kib": 2376
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_knockback",
+      "index": 5,
+      "label": "collision",
+      "profile": null,
+      "mode": "step",
+      "digest": "5316606e6ca98313",
+      "before": {
+        "ns": 3652775,
+        "max_rss_kib": 2288
+      },
+      "after": {
+        "ns": 3760185,
+        "max_rss_kib": 2372
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_knockback",
+      "index": 6,
+      "label": "blocker",
+      "profile": null,
+      "mode": "advance",
+      "digest": "d0a0568cdb7b6d46",
+      "before": {
+        "ns": 3444567,
+        "max_rss_kib": 2340
+      },
+      "after": {
+        "ns": 3555372,
+        "max_rss_kib": 2304
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_knockback",
+      "index": 7,
+      "label": "blocker",
+      "profile": null,
+      "mode": "step",
+      "digest": "d0a0568cdb7b6d46",
+      "before": {
+        "ns": 5298910,
+        "max_rss_kib": 2464
+      },
+      "after": {
+        "ns": 5405491,
+        "max_rss_kib": 2520
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_knockback",
+      "index": 8,
+      "label": "moving_corpse",
+      "profile": null,
+      "mode": "advance",
+      "digest": "6d91d69b5e70a206",
+      "before": {
+        "ns": 2262057,
+        "max_rss_kib": 2372
+      },
+      "after": {
+        "ns": 2572808,
+        "max_rss_kib": 2376
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_knockback",
+      "index": 9,
+      "label": "moving_corpse",
+      "profile": null,
+      "mode": "step",
+      "digest": "6d91d69b5e70a206",
+      "before": {
+        "ns": 3737110,
+        "max_rss_kib": 2340
+      },
+      "after": {
+        "ns": 3689611,
+        "max_rss_kib": 2372
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_knockback",
+      "index": 10,
+      "label": "initialization",
+      "profile": null,
+      "mode": "construct_spawn",
+      "digest": "fe900ea0010b2933",
+      "before": {
+        "ns": 5643971,
+        "max_rss_kib": 2616
+      },
+      "after": {
+        "ns": 5617594,
+        "max_rss_kib": 2588
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 0,
+      "label": "idle",
+      "profile": null,
+      "mode": "advance",
+      "digest": "74817ee957e5a36d",
+      "before": {
+        "ns": 1007941,
+        "max_rss_kib": 19176
+      },
+      "after": {
+        "ns": 1040169,
+        "max_rss_kib": 19192
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 1,
+      "label": "idle",
+      "profile": null,
+      "mode": "step",
+      "digest": "74817ee957e5a36d",
+      "before": {
+        "ns": 2241857,
+        "max_rss_kib": 19300
+      },
+      "after": {
+        "ns": 2344639,
+        "max_rss_kib": 19336
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 2,
+      "label": "first_shot",
+      "profile": null,
+      "mode": "advance",
+      "digest": "eb9501d1cbfc85d1",
+      "before": {
+        "ns": 5717000,
+        "max_rss_kib": 19420
+      },
+      "after": {
+        "ns": 5705504,
+        "max_rss_kib": 19360
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 3,
+      "label": "first_shot",
+      "profile": null,
+      "mode": "step",
+      "digest": "eb9501d1cbfc85d1",
+      "before": {
+        "ns": 7916574,
+        "max_rss_kib": 19416
+      },
+      "after": {
+        "ns": 8618285,
+        "max_rss_kib": 19360
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 4,
+      "label": "held_refire",
+      "profile": null,
+      "mode": "advance",
+      "digest": "8e66002a34f4ae90",
+      "before": {
+        "ns": 6444667,
+        "max_rss_kib": 19264
+      },
+      "after": {
+        "ns": 6273084,
+        "max_rss_kib": 19340
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 5,
+      "label": "held_refire",
+      "profile": null,
+      "mode": "step",
+      "digest": "8e66002a34f4ae90",
+      "before": {
+        "ns": 8486588,
+        "max_rss_kib": 19292
+      },
+      "after": {
+        "ns": 8647687,
+        "max_rss_kib": 19364
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 6,
+      "label": "repeated",
+      "profile": null,
+      "mode": "advance",
+      "digest": "eb8a51d966d9222c",
+      "before": {
+        "ns": 6473008,
+        "max_rss_kib": 19304
+      },
+      "after": {
+        "ns": 6454552,
+        "max_rss_kib": 19332
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 7,
+      "label": "repeated",
+      "profile": null,
+      "mode": "step",
+      "digest": "eb8a51d966d9222c",
+      "before": {
+        "ns": 8746212,
+        "max_rss_kib": 19444
+      },
+      "after": {
+        "ns": 9392300,
+        "max_rss_kib": 19444
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 8,
+      "label": "miss",
+      "profile": null,
+      "mode": "advance",
+      "digest": "29eb295aed34a189",
+      "before": {
+        "ns": 5859731,
+        "max_rss_kib": 19280
+      },
+      "after": {
+        "ns": 6010845,
+        "max_rss_kib": 19320
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 9,
+      "label": "miss",
+      "profile": null,
+      "mode": "step",
+      "digest": "29eb295aed34a189",
+      "before": {
+        "ns": 8558544,
+        "max_rss_kib": 19316
+      },
+      "after": {
+        "ns": 8273194,
+        "max_rss_kib": 19288
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 10,
+      "label": "wall",
+      "profile": null,
+      "mode": "advance",
+      "digest": "15a23fb4151568ae",
+      "before": {
+        "ns": 6047479,
+        "max_rss_kib": 19312
+      },
+      "after": {
+        "ns": 6332241,
+        "max_rss_kib": 19328
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 11,
+      "label": "wall",
+      "profile": null,
+      "mode": "step",
+      "digest": "15a23fb4151568ae",
+      "before": {
+        "ns": 8432388,
+        "max_rss_kib": 19316
+      },
+      "after": {
+        "ns": 8787279,
+        "max_rss_kib": 19344
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 12,
+      "label": "demon_hits",
+      "profile": null,
+      "mode": "advance",
+      "digest": "e6777a0fdcee7f9e",
+      "before": {
+        "ns": 6541249,
+        "max_rss_kib": 19320
+      },
+      "after": {
+        "ns": 6537809,
+        "max_rss_kib": 19328
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 13,
+      "label": "demon_hits",
+      "profile": null,
+      "mode": "step",
+      "digest": "e6777a0fdcee7f9e",
+      "before": {
+        "ns": 8963935,
+        "max_rss_kib": 19280
+      },
+      "after": {
+        "ns": 8997330,
+        "max_rss_kib": 19324
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 14,
+      "label": "demon_pain",
+      "profile": null,
+      "mode": "advance",
+      "digest": "eb8a51d966d9222c",
+      "before": {
+        "ns": 6709658,
+        "max_rss_kib": 19300
+      },
+      "after": {
+        "ns": 6330552,
+        "max_rss_kib": 19320
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 15,
+      "label": "demon_pain",
+      "profile": null,
+      "mode": "step",
+      "digest": "eb8a51d966d9222c",
+      "before": {
+        "ns": 8837018,
+        "max_rss_kib": 19396
+      },
+      "after": {
+        "ns": 8776493,
+        "max_rss_kib": 19488
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 16,
+      "label": "demon_death",
+      "profile": null,
+      "mode": "advance",
+      "digest": "29fd3ad45d4d7f19",
+      "before": {
+        "ns": 5014150,
+        "max_rss_kib": 19280
+      },
+      "after": {
+        "ns": 5111898,
+        "max_rss_kib": 19364
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 17,
+      "label": "demon_death",
+      "profile": null,
+      "mode": "step",
+      "digest": "29fd3ad45d4d7f19",
+      "before": {
+        "ns": 7545386,
+        "max_rss_kib": 19312
+      },
+      "after": {
+        "ns": 7442859,
+        "max_rss_kib": 19340
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 18,
+      "label": "moving_fire",
+      "profile": null,
+      "mode": "advance",
+      "digest": "a26021db305872a8",
+      "before": {
+        "ns": 6242437,
+        "max_rss_kib": 19328
+      },
+      "after": {
+        "ns": 6374767,
+        "max_rss_kib": 19316
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 19,
+      "label": "moving_fire",
+      "profile": null,
+      "mode": "step",
+      "digest": "a26021db305872a8",
+      "before": {
+        "ns": 8729998,
+        "max_rss_kib": 19272
+      },
+      "after": {
+        "ns": 8733160,
+        "max_rss_kib": 19368
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 20,
+      "label": "reaction",
+      "profile": null,
+      "mode": "advance",
+      "digest": "855a80d97306dc11",
+      "before": {
+        "ns": 6345370,
+        "max_rss_kib": 19292
+      },
+      "after": {
+        "ns": 7000744,
+        "max_rss_kib": 19284
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 21,
+      "label": "reaction",
+      "profile": null,
+      "mode": "step",
+      "digest": "855a80d97306dc11",
+      "before": {
+        "ns": 9078995,
+        "max_rss_kib": 19292
+      },
+      "after": {
+        "ns": 8755412,
+        "max_rss_kib": 19328
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 22,
+      "label": "retaliation",
+      "profile": null,
+      "mode": "advance",
+      "digest": "fa4919453f5979a9",
+      "before": {
+        "ns": 6597333,
+        "max_rss_kib": 19300
+      },
+      "after": {
+        "ns": 6582185,
+        "max_rss_kib": 19360
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 23,
+      "label": "retaliation",
+      "profile": null,
+      "mode": "step",
+      "digest": "fa4919453f5979a9",
+      "before": {
+        "ns": 10751380,
+        "max_rss_kib": 19400
+      },
+      "after": {
+        "ns": 9594425,
+        "max_rss_kib": 19324
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 24,
+      "label": "two_way",
+      "profile": null,
+      "mode": "advance",
+      "digest": "29fd3ad45d4d7f19",
+      "before": {
+        "ns": 5021892,
+        "max_rss_kib": 19276
+      },
+      "after": {
+        "ns": 5123486,
+        "max_rss_kib": 19332
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 25,
+      "label": "two_way",
+      "profile": null,
+      "mode": "step",
+      "digest": "29fd3ad45d4d7f19",
+      "before": {
+        "ns": 7473249,
+        "max_rss_kib": 19264
+      },
+      "after": {
+        "ns": 7296683,
+        "max_rss_kib": 19328
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 26,
+      "label": "player_death",
+      "profile": null,
+      "mode": "advance",
+      "digest": "511558ea64df3e50",
+      "before": {
+        "ns": 6259413,
+        "max_rss_kib": 19312
+      },
+      "after": {
+        "ns": 6613982,
+        "max_rss_kib": 19336
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 27,
+      "label": "player_death",
+      "profile": null,
+      "mode": "step",
+      "digest": "511558ea64df3e50",
+      "before": {
+        "ns": 8711220,
+        "max_rss_kib": 19296
+      },
+      "after": {
+        "ns": 8549397,
+        "max_rss_kib": 19288
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 28,
+      "label": "empty_idle",
+      "profile": null,
+      "mode": "advance",
+      "digest": "fcc7c4546bf959c1",
+      "before": {
+        "ns": 4924066,
+        "max_rss_kib": 19272
+      },
+      "after": {
+        "ns": 4867624,
+        "max_rss_kib": 19288
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_pistol",
+      "index": 29,
+      "label": "empty_idle",
+      "profile": null,
+      "mode": "step",
+      "digest": "fcc7c4546bf959c1",
+      "before": {
+        "ns": 7196008,
+        "max_rss_kib": 19300
+      },
+      "after": {
+        "ns": 6711593,
+        "max_rss_kib": 19320
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 0,
+      "label": "idle",
+      "profile": null,
+      "mode": "advance",
+      "digest": "61d79e631235014b",
+      "before": {
+        "ns": 999349,
+        "calls": 100,
+        "ns_per_100": 999349.0,
+        "max_rss_kib": 47748
+      },
+      "after": {
+        "ns": 1042984,
+        "calls": 100,
+        "ns_per_100": 1042984.0,
+        "max_rss_kib": 47728
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 1,
+      "label": "idle",
+      "profile": null,
+      "mode": "step",
+      "digest": "61d79e631235014b",
+      "before": {
+        "ns": 2346102,
+        "calls": 100,
+        "ns_per_100": 2346102.0,
+        "max_rss_kib": 47668
+      },
+      "after": {
+        "ns": 2370158,
+        "calls": 100,
+        "ns_per_100": 2370158.0,
+        "max_rss_kib": 47684
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 2,
+      "label": "fallback",
+      "profile": null,
+      "mode": "advance",
+      "digest": "812980fca67b6403",
+      "before": {
+        "ns": 5931638,
+        "calls": 100,
+        "ns_per_100": 5931638.0,
+        "max_rss_kib": 47840
+      },
+      "after": {
+        "ns": 5835036,
+        "calls": 100,
+        "ns_per_100": 5835036.0,
+        "max_rss_kib": 47684
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 3,
+      "label": "fallback",
+      "profile": null,
+      "mode": "step",
+      "digest": "812980fca67b6403",
+      "before": {
+        "ns": 8136974,
+        "calls": 100,
+        "ns_per_100": 8136974.0,
+        "max_rss_kib": 47696
+      },
+      "after": {
+        "ns": 8073418,
+        "calls": 100,
+        "ns_per_100": 8073418.0,
+        "max_rss_kib": 47688
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 4,
+      "label": "zero_ammo",
+      "profile": null,
+      "mode": "advance",
+      "digest": "77b1503753c01224",
+      "before": {
+        "ns": 1162501,
+        "calls": 100,
+        "ns_per_100": 1162501.0,
+        "max_rss_kib": 47728
+      },
+      "after": {
+        "ns": 1163943,
+        "calls": 100,
+        "ns_per_100": 1163943.0,
+        "max_rss_kib": 47780
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 5,
+      "label": "zero_ammo",
+      "profile": null,
+      "mode": "step",
+      "digest": "77b1503753c01224",
+      "before": {
+        "ns": 2600099,
+        "calls": 100,
+        "ns_per_100": 2600099.0,
+        "max_rss_kib": 47680
+      },
+      "after": {
+        "ns": 2568731,
+        "calls": 100,
+        "ns_per_100": 2568731.0,
+        "max_rss_kib": 47708
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 6,
+      "label": "release",
+      "profile": null,
+      "mode": "advance",
+      "digest": "30cafa966fbac9f3",
+      "before": {
+        "ns": 5668770,
+        "calls": 100,
+        "ns_per_100": 5668770.0,
+        "max_rss_kib": 47720
+      },
+      "after": {
+        "ns": 5513062,
+        "calls": 100,
+        "ns_per_100": 5513062.0,
+        "max_rss_kib": 47692
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 7,
+      "label": "release",
+      "profile": null,
+      "mode": "step",
+      "digest": "30cafa966fbac9f3",
+      "before": {
+        "ns": 7689862,
+        "calls": 100,
+        "ns_per_100": 7689862.0,
+        "max_rss_kib": 47704
+      },
+      "after": {
+        "ns": 7572141,
+        "calls": 100,
+        "ns_per_100": 7572141.0,
+        "max_rss_kib": 47688
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 8,
+      "label": "fist_hit",
+      "profile": null,
+      "mode": "advance",
+      "digest": "9ddc3bf0b58549d7",
+      "before": {
+        "ns": 5475384,
+        "calls": 100,
+        "ns_per_100": 5475384.0,
+        "max_rss_kib": 47720
+      },
+      "after": {
+        "ns": 5502927,
+        "calls": 100,
+        "ns_per_100": 5502927.0,
+        "max_rss_kib": 47680
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 9,
+      "label": "fist_hit",
+      "profile": null,
+      "mode": "step",
+      "digest": "9ddc3bf0b58549d7",
+      "before": {
+        "ns": 7622392,
+        "calls": 100,
+        "ns_per_100": 7622392.0,
+        "max_rss_kib": 47680
+      },
+      "after": {
+        "ns": 7879675,
+        "calls": 100,
+        "ns_per_100": 7879675.0,
+        "max_rss_kib": 47692
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 10,
+      "label": "fist_kill",
+      "profile": null,
+      "mode": "advance",
+      "digest": "0b1d101f21459e58",
+      "before": {
+        "ns": 5825452,
+        "calls": 100,
+        "ns_per_100": 5825452.0,
+        "max_rss_kib": 47772
+      },
+      "after": {
+        "ns": 5929158,
+        "calls": 100,
+        "ns_per_100": 5929158.0,
+        "max_rss_kib": 47732
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 11,
+      "label": "fist_kill",
+      "profile": null,
+      "mode": "step",
+      "digest": "0b1d101f21459e58",
+      "before": {
+        "ns": 8276740,
+        "calls": 100,
+        "ns_per_100": 8276740.0,
+        "max_rss_kib": 47692
+      },
+      "after": {
+        "ns": 8316853,
+        "calls": 100,
+        "ns_per_100": 8316853.0,
+        "max_rss_kib": 47788
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 12,
+      "label": "fist_miss",
+      "profile": null,
+      "mode": "advance",
+      "digest": "b7efcddd7dc0ac39",
+      "before": {
+        "ns": 5586078,
+        "calls": 100,
+        "ns_per_100": 5586078.0,
+        "max_rss_kib": 47696
+      },
+      "after": {
+        "ns": 5423158,
+        "calls": 100,
+        "ns_per_100": 5423158.0,
+        "max_rss_kib": 47784
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 13,
+      "label": "fist_miss",
+      "profile": null,
+      "mode": "step",
+      "digest": "b7efcddd7dc0ac39",
+      "before": {
+        "ns": 7602522,
+        "calls": 100,
+        "ns_per_100": 7602522.0,
+        "max_rss_kib": 47700
+      },
+      "after": {
+        "ns": 7666256,
+        "calls": 100,
+        "ns_per_100": 7666256.0,
+        "max_rss_kib": 47708
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 14,
+      "label": "switch_moving",
+      "profile": null,
+      "mode": "advance",
+      "digest": "15c88036bcd3034a",
+      "before": {
+        "ns": 5743589,
+        "calls": 100,
+        "ns_per_100": 5743589.0,
+        "max_rss_kib": 47700
+      },
+      "after": {
+        "ns": 5716161,
+        "calls": 100,
+        "ns_per_100": 5716161.0,
+        "max_rss_kib": 47704
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 15,
+      "label": "switch_moving",
+      "profile": null,
+      "mode": "step",
+      "digest": "15c88036bcd3034a",
+      "before": {
+        "ns": 7794904,
+        "calls": 100,
+        "ns_per_100": 7794904.0,
+        "max_rss_kib": 47696
+      },
+      "after": {
+        "ns": 7925869,
+        "calls": 100,
+        "ns_per_100": 7925869.0,
+        "max_rss_kib": 47736
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 16,
+      "label": "switch_death",
+      "profile": null,
+      "mode": "advance",
+      "digest": "38663fcbd8e51960",
+      "before": {
+        "ns": 4856416,
+        "calls": 100,
+        "ns_per_100": 4856416.0,
+        "max_rss_kib": 47696
+      },
+      "after": {
+        "ns": 4888756,
+        "calls": 100,
+        "ns_per_100": 4888756.0,
+        "max_rss_kib": 47692
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 17,
+      "label": "switch_death",
+      "profile": null,
+      "mode": "step",
+      "digest": "38663fcbd8e51960",
+      "before": {
+        "ns": 6769507,
+        "calls": 100,
+        "ns_per_100": 6769507.0,
+        "max_rss_kib": 47772
+      },
+      "after": {
+        "ns": 7115821,
+        "calls": 100,
+        "ns_per_100": 7115821.0,
+        "max_rss_kib": 47648
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 18,
+      "label": "shotgun",
+      "profile": null,
+      "mode": "advance",
+      "digest": "ad6cd5e5df1175b5",
+      "before": {
+        "ns": 6132395,
+        "calls": 100,
+        "ns_per_100": 6132395.0,
+        "max_rss_kib": 47704
+      },
+      "after": {
+        "ns": 6185515,
+        "calls": 100,
+        "ns_per_100": 6185515.0,
+        "max_rss_kib": 47684
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 19,
+      "label": "shotgun",
+      "profile": null,
+      "mode": "step",
+      "digest": "ad6cd5e5df1175b5",
+      "before": {
+        "ns": 8759550,
+        "calls": 100,
+        "ns_per_100": 8759550.0,
+        "max_rss_kib": 47840
+      },
+      "after": {
+        "ns": 8582372,
+        "calls": 100,
+        "ns_per_100": 8582372.0,
+        "max_rss_kib": 47680
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 20,
+      "label": "shotgun_held",
+      "profile": null,
+      "mode": "advance",
+      "digest": "bae6ff612ec49dc9",
+      "before": {
+        "ns": 7155797,
+        "calls": 100,
+        "ns_per_100": 7155797.0,
+        "max_rss_kib": 47840
+      },
+      "after": {
+        "ns": 7051828,
+        "calls": 100,
+        "ns_per_100": 7051828.0,
+        "max_rss_kib": 47636
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 21,
+      "label": "shotgun_held",
+      "profile": null,
+      "mode": "step",
+      "digest": "bae6ff612ec49dc9",
+      "before": {
+        "ns": 10371137,
+        "calls": 100,
+        "ns_per_100": 10371137.0,
+        "max_rss_kib": 47672
+      },
+      "after": {
+        "ns": 10372603,
+        "calls": 100,
+        "ns_per_100": 10372603.0,
+        "max_rss_kib": 47704
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 22,
+      "label": "shotgun_death",
+      "profile": null,
+      "mode": "advance",
+      "digest": "8405625f27fafcf1",
+      "before": {
+        "ns": 4596987,
+        "calls": 100,
+        "ns_per_100": 4596987.0,
+        "max_rss_kib": 47680
+      },
+      "after": {
+        "ns": 4815437,
+        "calls": 100,
+        "ns_per_100": 4815437.0,
+        "max_rss_kib": 47708
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 23,
+      "label": "shotgun_death",
+      "profile": null,
+      "mode": "step",
+      "digest": "8405625f27fafcf1",
+      "before": {
+        "ns": 7631874,
+        "calls": 100,
+        "ns_per_100": 7631874.0,
+        "max_rss_kib": 47692
+      },
+      "after": {
+        "ns": 7629963,
+        "calls": 100,
+        "ns_per_100": 7629963.0,
+        "max_rss_kib": 47680
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 24,
+      "label": "shotgun_player_death",
+      "profile": null,
+      "mode": "advance",
+      "digest": "cf0c487d89a1c0b5",
+      "before": {
+        "ns": 6967881,
+        "calls": 100,
+        "ns_per_100": 6967881.0,
+        "max_rss_kib": 47696
+      },
+      "after": {
+        "ns": 6853473,
+        "calls": 100,
+        "ns_per_100": 6853473.0,
+        "max_rss_kib": 47740
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 25,
+      "label": "shotgun_player_death",
+      "profile": null,
+      "mode": "step",
+      "digest": "cf0c487d89a1c0b5",
+      "before": {
+        "ns": 9934852,
+        "calls": 100,
+        "ns_per_100": 9934852.0,
+        "max_rss_kib": 47720
+      },
+      "after": {
+        "ns": 9861886,
+        "calls": 100,
+        "ns_per_100": 9861886.0,
+        "max_rss_kib": 47784
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 26,
+      "label": "shotgun_mixed",
+      "profile": null,
+      "mode": "advance",
+      "digest": "e4b70f449fdd4151",
+      "before": {
+        "ns": 6209749,
+        "calls": 100,
+        "ns_per_100": 6209749.0,
+        "max_rss_kib": 47692
+      },
+      "after": {
+        "ns": 6266836,
+        "calls": 100,
+        "ns_per_100": 6266836.0,
+        "max_rss_kib": 47740
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 27,
+      "label": "shotgun_mixed",
+      "profile": null,
+      "mode": "step",
+      "digest": "e4b70f449fdd4151",
+      "before": {
+        "ns": 8822155,
+        "calls": 100,
+        "ns_per_100": 8822155.0,
+        "max_rss_kib": 47728
+      },
+      "after": {
+        "ns": 8787967,
+        "calls": 100,
+        "ns_per_100": 8787967.0,
+        "max_rss_kib": 47692
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 28,
+      "label": "shotgun_fallback",
+      "profile": null,
+      "mode": "advance",
+      "digest": "d7968d7e2f85024c",
+      "before": {
+        "ns": 6206144,
+        "calls": 100,
+        "ns_per_100": 6206144.0,
+        "max_rss_kib": 47720
+      },
+      "after": {
+        "ns": 6102903,
+        "calls": 100,
+        "ns_per_100": 6102903.0,
+        "max_rss_kib": 47728
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 29,
+      "label": "shotgun_fallback",
+      "profile": null,
+      "mode": "step",
+      "digest": "d7968d7e2f85024c",
+      "before": {
+        "ns": 8704261,
+        "calls": 100,
+        "ns_per_100": 8704261.0,
+        "max_rss_kib": 47680
+      },
+      "after": {
+        "ns": 8591436,
+        "calls": 100,
+        "ns_per_100": 8591436.0,
+        "max_rss_kib": 47648
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 30,
+      "label": "chaingun",
+      "profile": null,
+      "mode": "advance",
+      "digest": "0695c337a8d33e36",
+      "before": {
+        "ns": 7574499,
+        "calls": 100,
+        "ns_per_100": 7574499.0,
+        "max_rss_kib": 47676
+      },
+      "after": {
+        "ns": 7251302,
+        "calls": 100,
+        "ns_per_100": 7251302.0,
+        "max_rss_kib": 47704
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 31,
+      "label": "chaingun",
+      "profile": null,
+      "mode": "step",
+      "digest": "0695c337a8d33e36",
+      "before": {
+        "ns": 10921662,
+        "calls": 100,
+        "ns_per_100": 10921662.0,
+        "max_rss_kib": 47680
+      },
+      "after": {
+        "ns": 10906452,
+        "calls": 100,
+        "ns_per_100": 10906452.0,
+        "max_rss_kib": 47636
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 32,
+      "label": "chaingun_last",
+      "profile": null,
+      "mode": "advance",
+      "digest": "b5d2795d1c18f13a",
+      "before": {
+        "ns": 5785071,
+        "calls": 100,
+        "ns_per_100": 5785071.0,
+        "max_rss_kib": 47680
+      },
+      "after": {
+        "ns": 5650543,
+        "calls": 100,
+        "ns_per_100": 5650543.0,
+        "max_rss_kib": 47692
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 33,
+      "label": "chaingun_last",
+      "profile": null,
+      "mode": "step",
+      "digest": "b5d2795d1c18f13a",
+      "before": {
+        "ns": 7805461,
+        "calls": 100,
+        "ns_per_100": 7805461.0,
+        "max_rss_kib": 47724
+      },
+      "after": {
+        "ns": 8236871,
+        "calls": 100,
+        "ns_per_100": 8236871.0,
+        "max_rss_kib": 47736
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 34,
+      "label": "retaliation",
+      "profile": null,
+      "mode": "advance",
+      "digest": "2471c0193bf85d04",
+      "before": {
+        "ns": 7679536,
+        "calls": 100,
+        "ns_per_100": 7679536.0,
+        "max_rss_kib": 47704
+      },
+      "after": {
+        "ns": 7205004,
+        "calls": 100,
+        "ns_per_100": 7205004.0,
+        "max_rss_kib": 47692
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 35,
+      "label": "retaliation",
+      "profile": null,
+      "mode": "step",
+      "digest": "2471c0193bf85d04",
+      "before": {
+        "ns": 10870519,
+        "calls": 100,
+        "ns_per_100": 10870519.0,
+        "max_rss_kib": 47680
+      },
+      "after": {
+        "ns": 10867224,
+        "calls": 100,
+        "ns_per_100": 10867224.0,
+        "max_rss_kib": 47648
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 36,
+      "label": "chaingun_release",
+      "profile": null,
+      "mode": "advance",
+      "digest": "7d5e25d08cdc4517",
+      "before": {
+        "ns": 6296059,
+        "calls": 100,
+        "ns_per_100": 6296059.0,
+        "max_rss_kib": 47672
+      },
+      "after": {
+        "ns": 6444559,
+        "calls": 100,
+        "ns_per_100": 6444559.0,
+        "max_rss_kib": 47680
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 37,
+      "label": "chaingun_release",
+      "profile": null,
+      "mode": "step",
+      "digest": "7d5e25d08cdc4517",
+      "before": {
+        "ns": 8800024,
+        "calls": 100,
+        "ns_per_100": 8800024.0,
+        "max_rss_kib": 47772
+      },
+      "after": {
+        "ns": 8858982,
+        "calls": 100,
+        "ns_per_100": 8858982.0,
+        "max_rss_kib": 47688
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 38,
+      "label": "chaingun_death",
+      "profile": null,
+      "mode": "advance",
+      "digest": "e0810ac537b7ec28",
+      "before": {
+        "ns": 8154138,
+        "calls": 100,
+        "ns_per_100": 8154138.0,
+        "max_rss_kib": 47728
+      },
+      "after": {
+        "ns": 7811211,
+        "calls": 100,
+        "ns_per_100": 7811211.0,
+        "max_rss_kib": 47728
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 39,
+      "label": "chaingun_death",
+      "profile": null,
+      "mode": "step",
+      "digest": "e0810ac537b7ec28",
+      "before": {
+        "ns": 11383968,
+        "calls": 100,
+        "ns_per_100": 11383968.0,
+        "max_rss_kib": 47748
+      },
+      "after": {
+        "ns": 12078957,
+        "calls": 100,
+        "ns_per_100": 12078957.0,
+        "max_rss_kib": 47632
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 40,
+      "label": "fallback_priority",
+      "profile": null,
+      "mode": "advance",
+      "digest": "93b90d561faf9558",
+      "before": {
+        "ns": 6481141,
+        "calls": 100,
+        "ns_per_100": 6481141.0,
+        "max_rss_kib": 47724
+      },
+      "after": {
+        "ns": 6388315,
+        "calls": 100,
+        "ns_per_100": 6388315.0,
+        "max_rss_kib": 47728
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 41,
+      "label": "fallback_priority",
+      "profile": null,
+      "mode": "step",
+      "digest": "93b90d561faf9558",
+      "before": {
+        "ns": 9606097,
+        "calls": 100,
+        "ns_per_100": 9606097.0,
+        "max_rss_kib": 47772
+      },
+      "after": {
+        "ns": 9759154,
+        "calls": 100,
+        "ns_per_100": 9759154.0,
+        "max_rss_kib": 47736
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 42,
+      "label": "pending_precedence",
+      "profile": null,
+      "mode": "advance",
+      "digest": "920bbfb6a24626b0",
+      "before": {
+        "ns": 6529503,
+        "calls": 100,
+        "ns_per_100": 6529503.0,
+        "max_rss_kib": 47728
+      },
+      "after": {
+        "ns": 6567069,
+        "calls": 100,
+        "ns_per_100": 6567069.0,
+        "max_rss_kib": 47648
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 43,
+      "label": "pending_precedence",
+      "profile": null,
+      "mode": "step",
+      "digest": "920bbfb6a24626b0",
+      "before": {
+        "ns": 9158804,
+        "calls": 100,
+        "ns_per_100": 9158804.0,
+        "max_rss_kib": 47724
+      },
+      "after": {
+        "ns": 9071256,
+        "calls": 100,
+        "ns_per_100": 9071256.0,
+        "max_rss_kib": 47648
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 44,
+      "label": "opening_switch",
+      "profile": null,
+      "mode": "advance",
+      "digest": "79803d73046a5b3d",
+      "before": {
+        "ns": 5851139,
+        "calls": 100,
+        "ns_per_100": 5851139.0,
+        "max_rss_kib": 47728
+      },
+      "after": {
+        "ns": 5626438,
+        "calls": 100,
+        "ns_per_100": 5626438.0,
+        "max_rss_kib": 47684
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 45,
+      "label": "opening_switch",
+      "profile": null,
+      "mode": "step",
+      "digest": "79803d73046a5b3d",
+      "before": {
+        "ns": 7823318,
+        "calls": 100,
+        "ns_per_100": 7823318.0,
+        "max_rss_kib": 47720
+      },
+      "after": {
+        "ns": 7832281,
+        "calls": 100,
+        "ns_per_100": 7832281.0,
+        "max_rss_kib": 47708
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 46,
+      "label": "full_encounter",
+      "profile": null,
+      "mode": "advance",
+      "digest": "1bd161ace1ad24dc",
+      "before": {
+        "ns": 25264058,
+        "calls": 512,
+        "ns_per_100": 4934386.328125,
+        "max_rss_kib": 47840
+      },
+      "after": {
+        "ns": 25795148,
+        "calls": 512,
+        "ns_per_100": 5038114.84375,
+        "max_rss_kib": 47728
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 47,
+      "label": "full_encounter",
+      "profile": null,
+      "mode": "step",
+      "digest": "1bd161ace1ad24dc",
+      "before": {
+        "ns": 36687753,
+        "calls": 512,
+        "ns_per_100": 7165576.7578125,
+        "max_rss_kib": 47668
+      },
+      "after": {
+        "ns": 37184705,
+        "calls": 512,
+        "ns_per_100": 7262637.6953125,
+        "max_rss_kib": 47740
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 48,
+      "label": "two_way",
+      "profile": null,
+      "mode": "advance",
+      "digest": "3d3ca74c2e619a97",
+      "before": {
+        "ns": 4723981,
+        "calls": 100,
+        "ns_per_100": 4723981.0,
+        "max_rss_kib": 47744
+      },
+      "after": {
+        "ns": 4770039,
+        "calls": 100,
+        "ns_per_100": 4770039.0,
+        "max_rss_kib": 47736
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_weapons",
+      "index": 49,
+      "label": "two_way",
+      "profile": null,
+      "mode": "step",
+      "digest": "3d3ca74c2e619a97",
+      "before": {
+        "ns": 7596983,
+        "calls": 100,
+        "ns_per_100": 7596983.0,
+        "max_rss_kib": 47676
+      },
+      "after": {
+        "ns": 7488242,
+        "calls": 100,
+        "ns_per_100": 7488242.0,
+        "max_rss_kib": 47648
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 0,
+      "label": "idle",
+      "profile": null,
+      "mode": "advance",
+      "digest": "d2292b7e4379b604",
+      "before": {
+        "ns": 1105777,
+        "calls": 100,
+        "ns_per_100": 1105777.0,
+        "max_rss_kib": 35732
+      },
+      "after": {
+        "ns": 1141390,
+        "calls": 100,
+        "ns_per_100": 1141390.0,
+        "max_rss_kib": 35752
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 1,
+      "label": "idle",
+      "profile": null,
+      "mode": "step",
+      "digest": "d2292b7e4379b604",
+      "before": {
+        "ns": 3207436,
+        "calls": 100,
+        "ns_per_100": 3207436.0,
+        "max_rss_kib": 35760
+      },
+      "after": {
+        "ns": 3289638,
+        "calls": 100,
+        "ns_per_100": 3289638.0,
+        "max_rss_kib": 35712
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 2,
+      "label": "clip",
+      "profile": null,
+      "mode": "advance",
+      "digest": "947508152cb24f17",
+      "before": {
+        "ns": 1033069,
+        "calls": 100,
+        "ns_per_100": 1033069.0,
+        "max_rss_kib": 35756
+      },
+      "after": {
+        "ns": 1054730,
+        "calls": 100,
+        "ns_per_100": 1054730.0,
+        "max_rss_kib": 35756
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 3,
+      "label": "clip",
+      "profile": null,
+      "mode": "step",
+      "digest": "947508152cb24f17",
+      "before": {
+        "ns": 2382896,
+        "calls": 100,
+        "ns_per_100": 2382896.0,
+        "max_rss_kib": 35768
+      },
+      "after": {
+        "ns": 2427091,
+        "calls": 100,
+        "ns_per_100": 2427091.0,
+        "max_rss_kib": 35764
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 4,
+      "label": "full_ammo",
+      "profile": null,
+      "mode": "advance",
+      "digest": "4d97e614b7ab3a3c",
+      "before": {
+        "ns": 1070755,
+        "calls": 100,
+        "ns_per_100": 1070755.0,
+        "max_rss_kib": 35904
+      },
+      "after": {
+        "ns": 1119577,
+        "calls": 100,
+        "ns_per_100": 1119577.0,
+        "max_rss_kib": 35784
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 5,
+      "label": "full_ammo",
+      "profile": null,
+      "mode": "step",
+      "digest": "4d97e614b7ab3a3c",
+      "before": {
+        "ns": 2885730,
+        "calls": 100,
+        "ns_per_100": 2885730.0,
+        "max_rss_kib": 35748
+      },
+      "after": {
+        "ns": 2852501,
+        "calls": 100,
+        "ns_per_100": 2852501.0,
+        "max_rss_kib": 35752
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 6,
+      "label": "four_ammo",
+      "profile": null,
+      "mode": "advance",
+      "digest": "6a51d843f1679c44",
+      "before": {
+        "ns": 1052728,
+        "calls": 100,
+        "ns_per_100": 1052728.0,
+        "max_rss_kib": 35748
+      },
+      "after": {
+        "ns": 1172255,
+        "calls": 100,
+        "ns_per_100": 1172255.0,
+        "max_rss_kib": 35768
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 7,
+      "label": "four_ammo",
+      "profile": null,
+      "mode": "step",
+      "digest": "6a51d843f1679c44",
+      "before": {
+        "ns": 2561631,
+        "calls": 100,
+        "ns_per_100": 2561631.0,
+        "max_rss_kib": 35732
+      },
+      "after": {
+        "ns": 2584265,
+        "calls": 100,
+        "ns_per_100": 2584265.0,
+        "max_rss_kib": 35756
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 8,
+      "label": "stim",
+      "profile": null,
+      "mode": "advance",
+      "digest": "13a014dbd6333c49",
+      "before": {
+        "ns": 1044346,
+        "calls": 100,
+        "ns_per_100": 1044346.0,
+        "max_rss_kib": 35752
+      },
+      "after": {
+        "ns": 1031426,
+        "calls": 100,
+        "ns_per_100": 1031426.0,
+        "max_rss_kib": 35736
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 9,
+      "label": "stim",
+      "profile": null,
+      "mode": "step",
+      "digest": "13a014dbd6333c49",
+      "before": {
+        "ns": 2396757,
+        "calls": 100,
+        "ns_per_100": 2396757.0,
+        "max_rss_kib": 35752
+      },
+      "after": {
+        "ns": 2431668,
+        "calls": 100,
+        "ns_per_100": 2431668.0,
+        "max_rss_kib": 35788
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 10,
+      "label": "medikit",
+      "profile": null,
+      "mode": "advance",
+      "digest": "139a5fa5901e93c7",
+      "before": {
+        "ns": 1009073,
+        "calls": 100,
+        "ns_per_100": 1009073.0,
+        "max_rss_kib": 35728
+      },
+      "after": {
+        "ns": 1097925,
+        "calls": 100,
+        "ns_per_100": 1097925.0,
+        "max_rss_kib": 35780
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 11,
+      "label": "medikit",
+      "profile": null,
+      "mode": "step",
+      "digest": "139a5fa5901e93c7",
+      "before": {
+        "ns": 2436566,
+        "calls": 100,
+        "ns_per_100": 2436566.0,
+        "max_rss_kib": 35748
+      },
+      "after": {
+        "ns": 2438968,
+        "calls": 100,
+        "ns_per_100": 2438968.0,
+        "max_rss_kib": 35756
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 12,
+      "label": "blocked_pickup",
+      "profile": null,
+      "mode": "advance",
+      "digest": "499194902de14cc3",
+      "before": {
+        "ns": 1024997,
+        "calls": 100,
+        "ns_per_100": 1024997.0,
+        "max_rss_kib": 35768
+      },
+      "after": {
+        "ns": 1109972,
+        "calls": 100,
+        "ns_per_100": 1109972.0,
+        "max_rss_kib": 35740
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 13,
+      "label": "blocked_pickup",
+      "profile": null,
+      "mode": "step",
+      "digest": "499194902de14cc3",
+      "before": {
+        "ns": 2416376,
+        "calls": 100,
+        "ns_per_100": 2416376.0,
+        "max_rss_kib": 35748
+      },
+      "after": {
+        "ns": 2502342,
+        "calls": 100,
+        "ns_per_100": 2502342.0,
+        "max_rss_kib": 35764
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 14,
+      "label": "sixteen",
+      "profile": null,
+      "mode": "advance",
+      "digest": "ce79aed13dfeb66c",
+      "before": {
+        "ns": 1348306,
+        "calls": 100,
+        "ns_per_100": 1348306.0,
+        "max_rss_kib": 35732
+      },
+      "after": {
+        "ns": 1330719,
+        "calls": 100,
+        "ns_per_100": 1330719.0,
+        "max_rss_kib": 35784
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 15,
+      "label": "sixteen",
+      "profile": null,
+      "mode": "step",
+      "digest": "ce79aed13dfeb66c",
+      "before": {
+        "ns": 3466440,
+        "calls": 100,
+        "ns_per_100": 3466440.0,
+        "max_rss_kib": 35688
+      },
+      "after": {
+        "ns": 3470637,
+        "calls": 100,
+        "ns_per_100": 3470637.0,
+        "max_rss_kib": 35780
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 16,
+      "label": "shotgun",
+      "profile": null,
+      "mode": "advance",
+      "digest": "14acb000ff81f4eb",
+      "before": {
+        "ns": 6342015,
+        "calls": 100,
+        "ns_per_100": 6342015.0,
+        "max_rss_kib": 35752
+      },
+      "after": {
+        "ns": 6472339,
+        "calls": 100,
+        "ns_per_100": 6472339.0,
+        "max_rss_kib": 35752
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 17,
+      "label": "shotgun",
+      "profile": null,
+      "mode": "step",
+      "digest": "14acb000ff81f4eb",
+      "before": {
+        "ns": 9429836,
+        "calls": 100,
+        "ns_per_100": 9429836.0,
+        "max_rss_kib": 35660
+      },
+      "after": {
+        "ns": 9545327,
+        "calls": 100,
+        "ns_per_100": 9545327.0,
+        "max_rss_kib": 35780
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 18,
+      "label": "chaingun",
+      "profile": null,
+      "mode": "advance",
+      "digest": "5340b7f1a0be2a94",
+      "before": {
+        "ns": 6153817,
+        "calls": 100,
+        "ns_per_100": 6153817.0,
+        "max_rss_kib": 35616
+      },
+      "after": {
+        "ns": 7569072,
+        "calls": 100,
+        "ns_per_100": 7569072.0,
+        "max_rss_kib": 35764
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 19,
+      "label": "chaingun",
+      "profile": null,
+      "mode": "step",
+      "digest": "5340b7f1a0be2a94",
+      "before": {
+        "ns": 9568049,
+        "calls": 100,
+        "ns_per_100": 9568049.0,
+        "max_rss_kib": 35752
+      },
+      "after": {
+        "ns": 9203311,
+        "calls": 100,
+        "ns_per_100": 9203311.0,
+        "max_rss_kib": 35756
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 20,
+      "label": "world_weapon_fight",
+      "profile": null,
+      "mode": "advance",
+      "digest": "e60d51b9f084558b",
+      "before": {
+        "ns": 6611404,
+        "calls": 100,
+        "ns_per_100": 6611404.0,
+        "max_rss_kib": 35764
+      },
+      "after": {
+        "ns": 6748258,
+        "calls": 100,
+        "ns_per_100": 6748258.0,
+        "max_rss_kib": 35740
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 21,
+      "label": "world_weapon_fight",
+      "profile": null,
+      "mode": "step",
+      "digest": "e60d51b9f084558b",
+      "before": {
+        "ns": 9757200,
+        "calls": 100,
+        "ns_per_100": 9757200.0,
+        "max_rss_kib": 35748
+      },
+      "after": {
+        "ns": 9840704,
+        "calls": 100,
+        "ns_per_100": 9840704.0,
+        "max_rss_kib": 35712
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 22,
+      "label": "supplies_melee",
+      "profile": null,
+      "mode": "advance",
+      "digest": "66f47251b26b6f8a",
+      "before": {
+        "ns": 6100698,
+        "calls": 100,
+        "ns_per_100": 6100698.0,
+        "max_rss_kib": 35760
+      },
+      "after": {
+        "ns": 6257221,
+        "calls": 100,
+        "ns_per_100": 6257221.0,
+        "max_rss_kib": 35708
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 23,
+      "label": "supplies_melee",
+      "profile": null,
+      "mode": "step",
+      "digest": "66f47251b26b6f8a",
+      "before": {
+        "ns": 8499589,
+        "calls": 100,
+        "ns_per_100": 8499589.0,
+        "max_rss_kib": 35732
+      },
+      "after": {
+        "ns": 8573779,
+        "calls": 100,
+        "ns_per_100": 8573779.0,
+        "max_rss_kib": 35752
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 24,
+      "label": "after_heal",
+      "profile": null,
+      "mode": "advance",
+      "digest": "5a9872a108282a4a",
+      "before": {
+        "ns": 6385350,
+        "calls": 100,
+        "ns_per_100": 6385350.0,
+        "max_rss_kib": 35748
+      },
+      "after": {
+        "ns": 6620168,
+        "calls": 100,
+        "ns_per_100": 6620168.0,
+        "max_rss_kib": 35748
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 25,
+      "label": "after_heal",
+      "profile": null,
+      "mode": "step",
+      "digest": "5a9872a108282a4a",
+      "before": {
+        "ns": 8891200,
+        "calls": 100,
+        "ns_per_100": 8891200.0,
+        "max_rss_kib": 35676
+      },
+      "after": {
+        "ns": 9495964,
+        "calls": 100,
+        "ns_per_100": 9495964.0,
+        "max_rss_kib": 35756
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 26,
+      "label": "player_death",
+      "profile": null,
+      "mode": "advance",
+      "digest": "96ef8288cf32e04f",
+      "before": {
+        "ns": 5732474,
+        "calls": 100,
+        "ns_per_100": 5732474.0,
+        "max_rss_kib": 35748
+      },
+      "after": {
+        "ns": 5981533,
+        "calls": 100,
+        "ns_per_100": 5981533.0,
+        "max_rss_kib": 35768
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 27,
+      "label": "player_death",
+      "profile": null,
+      "mode": "step",
+      "digest": "96ef8288cf32e04f",
+      "before": {
+        "ns": 8201318,
+        "calls": 100,
+        "ns_per_100": 8201318.0,
+        "max_rss_kib": 35748
+      },
+      "after": {
+        "ns": 8452841,
+        "calls": 100,
+        "ns_per_100": 8452841.0,
+        "max_rss_kib": 35708
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 28,
+      "label": "death_transition",
+      "profile": null,
+      "mode": "advance",
+      "digest": "f5964c4c4705993c",
+      "before": {
+        "ns": 4907643,
+        "calls": 100,
+        "ns_per_100": 4907643.0,
+        "max_rss_kib": 35764
+      },
+      "after": {
+        "ns": 4881404,
+        "calls": 100,
+        "ns_per_100": 4881404.0,
+        "max_rss_kib": 35756
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 29,
+      "label": "death_transition",
+      "profile": null,
+      "mode": "step",
+      "digest": "f5964c4c4705993c",
+      "before": {
+        "ns": 6843879,
+        "calls": 100,
+        "ns_per_100": 6843879.0,
+        "max_rss_kib": 35768
+      },
+      "after": {
+        "ns": 7320855,
+        "calls": 100,
+        "ns_per_100": 7320855.0,
+        "max_rss_kib": 35756
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 30,
+      "label": "full_encounter",
+      "profile": null,
+      "mode": "advance",
+      "digest": "491898a7e2e75e31",
+      "before": {
+        "ns": 29193759,
+        "calls": 512,
+        "ns_per_100": 5701906.0546875,
+        "max_rss_kib": 35756
+      },
+      "after": {
+        "ns": 29220098,
+        "calls": 512,
+        "ns_per_100": 5707050.390625,
+        "max_rss_kib": 35748
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 31,
+      "label": "full_encounter",
+      "profile": null,
+      "mode": "step",
+      "digest": "491898a7e2e75e31",
+      "before": {
+        "ns": 41756081,
+        "calls": 512,
+        "ns_per_100": 8155484.5703125,
+        "max_rss_kib": 35728
+      },
+      "after": {
+        "ns": 42383250,
+        "calls": 512,
+        "ns_per_100": 8277978.515625,
+        "max_rss_kib": 35712
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 32,
+      "label": "losing_encounter",
+      "profile": null,
+      "mode": "advance",
+      "digest": "96ef8288cf32e04f",
+      "before": {
+        "ns": 29968846,
+        "calls": 512,
+        "ns_per_100": 5853290.234375,
+        "max_rss_kib": 35756
+      },
+      "after": {
+        "ns": 30474254,
+        "calls": 512,
+        "ns_per_100": 5952002.734375,
+        "max_rss_kib": 35708
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "player_world_pickups",
+      "index": 33,
+      "label": "losing_encounter",
+      "profile": null,
+      "mode": "step",
+      "digest": "96ef8288cf32e04f",
+      "before": {
+        "ns": 41201000,
+        "calls": 512,
+        "ns_per_100": 8047070.3125,
+        "max_rss_kib": 35752
+      },
+      "after": {
+        "ns": 43021306,
+        "calls": 512,
+        "ns_per_100": 8402598.828125,
+        "max_rss_kib": 35764
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 0,
+      "label": "small_control",
+      "profile": "17",
+      "mode": "step",
+      "digest": "53585b0322f0a790",
+      "before": {
+        "ns": 13497611,
+        "max_rss_kib": 2884,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 13651942,
+        "max_rss_kib": 2804,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 1,
+      "label": "small_control",
+      "profile": "17",
+      "mode": "advance",
+      "digest": "53585b0322f0a790",
+      "before": {
+        "ns": 10733562,
+        "max_rss_kib": 2964,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 10938866,
+        "max_rss_kib": 2928,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 2,
+      "label": "small_control",
+      "profile": "17",
+      "mode": "advance_snapshot",
+      "digest": "53585b0322f0a790",
+      "before": {
+        "ns": 13403863,
+        "max_rss_kib": 2792,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 13508430,
+        "max_rss_kib": 2804,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 3,
+      "label": "small_control",
+      "profile": "17",
+      "mode": "capture",
+      "digest": "53585b0322f0a790",
+      "before": {
+        "ns": 1908093,
+        "max_rss_kib": 2828,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 1886331,
+        "max_rss_kib": 2920,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 4,
+      "label": "small_control",
+      "profile": "17",
+      "mode": "encode",
+      "digest": "53585b0322f0a790",
+      "before": {
+        "ns": 1222278,
+        "max_rss_kib": 2912,
+        "bytes": 8794000
+      },
+      "after": {
+        "ns": 1254055,
+        "max_rss_kib": 2920,
+        "bytes": 8794000
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 5,
+      "label": "small_control",
+      "profile": "20",
+      "mode": "step",
+      "digest": "2f68458de949874c",
+      "before": {
+        "ns": 14278797,
+        "max_rss_kib": 2832,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 13886349,
+        "max_rss_kib": 2804,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 6,
+      "label": "small_control",
+      "profile": "20",
+      "mode": "advance",
+      "digest": "2f68458de949874c",
+      "before": {
+        "ns": 10715024,
+        "max_rss_kib": 2824,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 11792040,
+        "max_rss_kib": 2740,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 7,
+      "label": "small_control",
+      "profile": "20",
+      "mode": "advance_snapshot",
+      "digest": "2f68458de949874c",
+      "before": {
+        "ns": 13600955,
+        "max_rss_kib": 2828,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 13692171,
+        "max_rss_kib": 2804,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 8,
+      "label": "small_control",
+      "profile": "20",
+      "mode": "capture",
+      "digest": "2f68458de949874c",
+      "before": {
+        "ns": 2031156,
+        "max_rss_kib": 2916,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 1975773,
+        "max_rss_kib": 2800,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 9,
+      "label": "small_control",
+      "profile": "20",
+      "mode": "encode",
+      "digest": "2f68458de949874c",
+      "before": {
+        "ns": 1061220,
+        "max_rss_kib": 2824,
+        "bytes": 8794000
+      },
+      "after": {
+        "ns": 1116552,
+        "max_rss_kib": 2828,
+        "bytes": 8794000
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 10,
+      "label": "long_lifecycle",
+      "profile": "20",
+      "mode": "step",
+      "digest": "7c0ab9260c6e50da",
+      "before": {
+        "ns": 23450097,
+        "max_rss_kib": 3800,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 22752669,
+        "max_rss_kib": 3736,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 11,
+      "label": "long_lifecycle",
+      "profile": "20",
+      "mode": "advance",
+      "digest": "7c0ab9260c6e50da",
+      "before": {
+        "ns": 10674565,
+        "max_rss_kib": 3560,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 10905427,
+        "max_rss_kib": 3612,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 12,
+      "label": "long_lifecycle",
+      "profile": "20",
+      "mode": "advance_snapshot",
+      "digest": "7c0ab9260c6e50da",
+      "before": {
+        "ns": 23182231,
+        "max_rss_kib": 3728,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 22798576,
+        "max_rss_kib": 3700,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 13,
+      "label": "long_lifecycle",
+      "profile": "20",
+      "mode": "capture",
+      "digest": "7c0ab9260c6e50da",
+      "before": {
+        "ns": 11591922,
+        "max_rss_kib": 3596,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 11297298,
+        "max_rss_kib": 3612,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 14,
+      "label": "long_lifecycle",
+      "profile": "20",
+      "mode": "encode",
+      "digest": "7c0ab9260c6e50da",
+      "before": {
+        "ns": 2111474,
+        "max_rss_kib": 3656,
+        "bytes": 21546600
+      },
+      "after": {
+        "ns": 2123833,
+        "max_rss_kib": 3664,
+        "bytes": 21546600
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 15,
+      "label": "four_owners",
+      "profile": "20",
+      "mode": "step",
+      "digest": "3d5bc38cb2e2283a",
+      "before": {
+        "ns": 61953488,
+        "max_rss_kib": 3912,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 61562465,
+        "max_rss_kib": 3856,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 16,
+      "label": "four_owners",
+      "profile": "20",
+      "mode": "advance",
+      "digest": "3d5bc38cb2e2283a",
+      "before": {
+        "ns": 45793007,
+        "max_rss_kib": 3808,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 46788389,
+        "max_rss_kib": 3796,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 17,
+      "label": "four_owners",
+      "profile": "20",
+      "mode": "advance_snapshot",
+      "digest": "3d5bc38cb2e2283a",
+      "before": {
+        "ns": 62169649,
+        "max_rss_kib": 3856,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 62765005,
+        "max_rss_kib": 3852,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 18,
+      "label": "four_owners",
+      "profile": "20",
+      "mode": "capture",
+      "digest": "3d5bc38cb2e2283a",
+      "before": {
+        "ns": 14780855,
+        "max_rss_kib": 3852,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 14640519,
+        "max_rss_kib": 3828,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 19,
+      "label": "four_owners",
+      "profile": "20",
+      "mode": "encode",
+      "digest": "3d5bc38cb2e2283a",
+      "before": {
+        "ns": 2209241,
+        "max_rss_kib": 3892,
+        "bytes": 23659200
+      },
+      "after": {
+        "ns": 2346853,
+        "max_rss_kib": 3924,
+        "bytes": 23659200
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 20,
+      "label": "wide_map_lifecycle",
+      "profile": "20",
+      "mode": "step",
+      "digest": "53e69006774bfdb8",
+      "before": {
+        "ns": 23962319,
+        "max_rss_kib": 3908,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 23442873,
+        "max_rss_kib": 3824,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 21,
+      "label": "wide_map_lifecycle",
+      "profile": "20",
+      "mode": "advance",
+      "digest": "53e69006774bfdb8",
+      "before": {
+        "ns": 11854702,
+        "max_rss_kib": 3724,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 11734166,
+        "max_rss_kib": 3700,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 22,
+      "label": "wide_map_lifecycle",
+      "profile": "20",
+      "mode": "advance_snapshot",
+      "digest": "53e69006774bfdb8",
+      "before": {
+        "ns": 23768372,
+        "max_rss_kib": 3816,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 23526037,
+        "max_rss_kib": 3924,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 23,
+      "label": "wide_map_lifecycle",
+      "profile": "20",
+      "mode": "capture",
+      "digest": "53e69006774bfdb8",
+      "before": {
+        "ns": 11924376,
+        "max_rss_kib": 3724,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 11550905,
+        "max_rss_kib": 3700,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 24,
+      "label": "wide_map_lifecycle",
+      "profile": "20",
+      "mode": "encode",
+      "digest": "53e69006774bfdb8",
+      "before": {
+        "ns": 1997738,
+        "max_rss_kib": 4060,
+        "bytes": 20849100
+      },
+      "after": {
+        "ns": 2088101,
+        "max_rss_kib": 3944,
+        "bytes": 20849100
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 25,
+      "label": "expanded_sight_dag",
+      "profile": "20",
+      "mode": "step",
+      "digest": "5205dbe116db7a6d",
+      "before": {
+        "ns": 14169179,
+        "max_rss_kib": 3164,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 14727407,
+        "max_rss_kib": 3180,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 26,
+      "label": "expanded_sight_dag",
+      "profile": "20",
+      "mode": "advance",
+      "digest": "5205dbe116db7a6d",
+      "before": {
+        "ns": 10748013,
+        "max_rss_kib": 3044,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 11423618,
+        "max_rss_kib": 2928,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 27,
+      "label": "expanded_sight_dag",
+      "profile": "20",
+      "mode": "advance_snapshot",
+      "digest": "5205dbe116db7a6d",
+      "before": {
+        "ns": 13845810,
+        "max_rss_kib": 3048,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 14160426,
+        "max_rss_kib": 3232,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 28,
+      "label": "expanded_sight_dag",
+      "profile": "20",
+      "mode": "capture",
+      "digest": "5205dbe116db7a6d",
+      "before": {
+        "ns": 2052369,
+        "max_rss_kib": 3012,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 1936406,
+        "max_rss_kib": 2928,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 29,
+      "label": "expanded_sight_dag",
+      "profile": "20",
+      "mode": "encode",
+      "digest": "5205dbe116db7a6d",
+      "before": {
+        "ns": 1065758,
+        "max_rss_kib": 2944,
+        "bytes": 8819800
+      },
+      "after": {
+        "ns": 1054641,
+        "max_rss_kib": 2868,
+        "bytes": 8819800
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 30,
+      "label": "line_table",
+      "profile": "20",
+      "mode": "step",
+      "digest": "82d8c304f67724ba",
+      "before": {
+        "ns": 13615348,
+        "max_rss_kib": 3600,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 14060429,
+        "max_rss_kib": 3700,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 31,
+      "label": "line_table",
+      "profile": "20",
+      "mode": "advance",
+      "digest": "82d8c304f67724ba",
+      "before": {
+        "ns": 10883845,
+        "max_rss_kib": 3500,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 11392049,
+        "max_rss_kib": 3540,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 32,
+      "label": "line_table",
+      "profile": "20",
+      "mode": "advance_snapshot",
+      "digest": "82d8c304f67724ba",
+      "before": {
+        "ns": 14067768,
+        "max_rss_kib": 3592,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 14011476,
+        "max_rss_kib": 3692,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 33,
+      "label": "line_table",
+      "profile": "20",
+      "mode": "capture",
+      "digest": "82d8c304f67724ba",
+      "before": {
+        "ns": 1739246,
+        "max_rss_kib": 3584,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 2008492,
+        "max_rss_kib": 3468,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 34,
+      "label": "line_table",
+      "profile": "20",
+      "mode": "encode",
+      "digest": "82d8c304f67724ba",
+      "before": {
+        "ns": 1321166,
+        "max_rss_kib": 3552,
+        "bytes": 20103600
+      },
+      "after": {
+        "ns": 1363668,
+        "max_rss_kib": 3572,
+        "bytes": 20103600
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 35,
+      "label": "high_cell_demon",
+      "profile": "20",
+      "mode": "step",
+      "digest": "1443dddf42741546",
+      "before": {
+        "ns": 23449941,
+        "max_rss_kib": 4344,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 23286532,
+        "max_rss_kib": 4336,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 36,
+      "label": "high_cell_demon",
+      "profile": "20",
+      "mode": "advance",
+      "digest": "1443dddf42741546",
+      "before": {
+        "ns": 11551384,
+        "max_rss_kib": 4344,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 11897657,
+        "max_rss_kib": 4380,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 37,
+      "label": "high_cell_demon",
+      "profile": "20",
+      "mode": "advance_snapshot",
+      "digest": "1443dddf42741546",
+      "before": {
+        "ns": 23523228,
+        "max_rss_kib": 4356,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 23478466,
+        "max_rss_kib": 4376,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 38,
+      "label": "high_cell_demon",
+      "profile": "20",
+      "mode": "capture",
+      "digest": "1443dddf42741546",
+      "before": {
+        "ns": 11677380,
+        "max_rss_kib": 4312,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 11718823,
+        "max_rss_kib": 4376,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 39,
+      "label": "high_cell_demon",
+      "profile": "20",
+      "mode": "encode",
+      "digest": "1443dddf42741546",
+      "before": {
+        "ns": 2124586,
+        "max_rss_kib": 4472,
+        "bytes": 28905100
+      },
+      "after": {
+        "ns": 2166557,
+        "max_rss_kib": 4472,
+        "bytes": 28905100
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 40,
+      "label": "canonical_small",
+      "profile": "original",
+      "mode": "step",
+      "digest": "6c62609cd51c3a12",
+      "before": {
+        "ns": 13859370,
+        "max_rss_kib": 2692,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 13778552,
+        "max_rss_kib": 2612,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 41,
+      "label": "canonical_small",
+      "profile": "original",
+      "mode": "advance",
+      "digest": "6c62609cd51c3a12",
+      "before": {
+        "ns": 10377717,
+        "max_rss_kib": 2580,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 10760825,
+        "max_rss_kib": 2540,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 42,
+      "label": "canonical_small",
+      "profile": "original",
+      "mode": "advance_snapshot",
+      "digest": "6c62609cd51c3a12",
+      "before": {
+        "ns": 13218611,
+        "max_rss_kib": 2604,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 14430696,
+        "max_rss_kib": 2668,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 43,
+      "label": "canonical_small",
+      "profile": "original",
+      "mode": "capture",
+      "digest": "6c62609cd51c3a12",
+      "before": {
+        "ns": 1700757,
+        "max_rss_kib": 2688,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 1686346,
+        "max_rss_kib": 2700,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 44,
+      "label": "canonical_small",
+      "profile": "original",
+      "mode": "encode",
+      "digest": "6c62609cd51c3a12",
+      "before": {
+        "ns": 236821,
+        "max_rss_kib": 2600,
+        "bytes": 862700
+      },
+      "after": {
+        "ns": 238673,
+        "max_rss_kib": 2612,
+        "bytes": 862700
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 45,
+      "label": "actor_capacity",
+      "profile": "original",
+      "mode": "step",
+      "digest": "aa4d9c3508eebb61",
+      "before": {
+        "ns": 123891581,
+        "max_rss_kib": 3200,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 127536143,
+        "max_rss_kib": 3212,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 46,
+      "label": "actor_capacity",
+      "profile": "original",
+      "mode": "advance",
+      "digest": "aa4d9c3508eebb61",
+      "before": {
+        "ns": 101499554,
+        "max_rss_kib": 3076,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 104203772,
+        "max_rss_kib": 3084,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 47,
+      "label": "actor_capacity",
+      "profile": "original",
+      "mode": "advance_snapshot",
+      "digest": "aa4d9c3508eebb61",
+      "before": {
+        "ns": 122375428,
+        "max_rss_kib": 3160,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 135328164,
+        "max_rss_kib": 3124,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 48,
+      "label": "actor_capacity",
+      "profile": "original",
+      "mode": "capture",
+      "digest": "aa4d9c3508eebb61",
+      "before": {
+        "ns": 24192171,
+        "max_rss_kib": 3040,
+        "bytes": 0
+      },
+      "after": {
+        "ns": 24149820,
+        "max_rss_kib": 3096,
+        "bytes": 0
+      },
+      "allocation_arrays_equal": true
+    },
+    {
+      "driver": "stepping",
+      "index": 49,
+      "label": "actor_capacity",
+      "profile": "original",
+      "mode": "encode",
+      "digest": "aa4d9c3508eebb61",
+      "before": {
+        "ns": 2017355,
+        "max_rss_kib": 3192,
+        "bytes": 7618800
+      },
+      "after": {
+        "ns": 2070865,
+        "max_rss_kib": 3200,
+        "bytes": 7618800
+      },
+      "allocation_arrays_equal": true
+    }
+  ]
+}

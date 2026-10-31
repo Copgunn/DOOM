@@ -121,8 +121,8 @@ impl Simulation {
         if self.profile == Profile::OriginalDemon {
             original_registry::require_role_for(self.player_policy(), ty)
                 .map_err(|_| MonsterError::Definition)?;
-            if self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
-                && world_pickups::kind(ty).is_some()
+            if self.player_policy().has_world_pickups()
+                && world_pickups::kind_for(self.player_policy(), ty).is_some()
             {
                 let registry = self.registry.as_deref().ok_or(MonsterError::Definition)?;
                 let original = identity::OriginalActorType::try_from(ty.0)
