@@ -79,14 +79,23 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3g9: Original world pickups and combat sustain
+### Maintenance: zstd evidence and shared weapon formulas
+
+The post-M3g9 maintenance branch losslessly compresses selected historical source
+traces and consolidates existing weapon arithmetic. It adds no executable gameplay
+or DSIM version. Separate compression and formula commits retain independent
+migration/source proofs. This work stops at owner review; exact commits and CI
+belong to GitHub. See the [storage contract](EVIDENCE_STORAGE.md),
+[formula contract](WEAPON_FORMULAS.md) and
+[observations](validation/ZSTD_WEAPON_MAINTENANCE.md).
+
+### Previous gameplay foundation — M3g9: Original world pickups and combat sustain
 
 PlayerDemonPickupsV1 adds bounded original world items to the existing genuine
 player/four-weapon/Demon world. Ammo, healing and source-gated shotgun/chaingun
 acquisition share actor storage, collision, inventory, retirement and transactions.
 Source-first observations and DSIM25 make pickup ordering and player resource
-changes explicit. This milestone stops at owner review; exact review/CI state
-belongs to GitHub. See [source investigation](M3G9_REFERENCE_INVESTIGATION.md),
+changes explicit. M3g9 is merged; exact review/CI state belongs to GitHub. See [source investigation](M3G9_REFERENCE_INVESTIGATION.md),
 [support](COMPATIBILITY.md#original-world-pickups) and
 [observations](validation/M3G9.md).
 
@@ -124,7 +133,7 @@ Prioritize a bounded original green/blue armor pickup and damage-absorption slic
 It should compose source P_GiveArmor/P_DamageMobj with the same player, inventory,
 world contact and combat loop, independently observing armor before pain/death.
 Do not add other powers, cheats, weapons, respawn or generalized specials in that
-step. This recommendation is future work, not armor admission in M3g9.
+step. This recommendation is future M3g10 work, not armor admission in maintenance.
 
 ### Focused maintenance acceptance criteria
 

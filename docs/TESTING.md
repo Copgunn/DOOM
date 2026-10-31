@@ -890,3 +890,23 @@ component hashes do not establish hitscan/combat or whole-weapon equivalence.
 The optional stage harness prepares 100 independent source-fixture worlds outside
 each interval and measures preview or already-preflighted weapon commit only.
 It is not a second gameplay loop, a production API or a whole-tic benchmark.
+
+## Maintenance measurements
+
+Keep source/test/fuzz execution outside the quiet measurement window. Use the
+same release compiler, map/command inputs and process counts for before/after.
+Retain each established `tools/measure_*.py` control output, all samples and
+allocation arrays; [engineering observations](validation/ZSTD_WEAPON_MAINTENANCE.md)
+own actual results. These are advisory measurements, not CI timing thresholds.
+
+```sh
+# Raw root is a detached checkout of the manifest's exact baseline object.
+python3 tools/measure_evidence.py RAW_BASELINE_ROOT
+```
+
+The loading microbenchmark uses the same release executable for raw files and
+compressed decode, checks original lengths/hashes and measures separate allocation
+processes. It differs from the original embedded include_str architecture. Measure
+actual reference test binaries separately (three processes per debug/release mode)
+to capture parser/comparison overhead. Whole-gameplay controls use advance/step
+as already labeled by each preserved measurement driver.

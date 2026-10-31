@@ -63,7 +63,7 @@ def verify_git(binary):
         if path.startswith('tests/support/') and path.endswith('.rs'):
             before=original(path)
             transformed=adapt(before.decode(),names)
-            expected=checked(['rustfmt','--edition','2024','--emit','stdout'],input=transformed.encode(),capture_output=True).stdout if transformed!=before.decode() else before
+            expected=checked(['rustup','run','stable','rustfmt','--edition','2024','--emit','stdout'],input=transformed.encode(),capture_output=True).stdout if transformed!=before.decode() else before
             if expected!=before: adapters.append(path)
             assert after==expected, path
         elif path=='tools/reference/README.md':
@@ -80,7 +80,7 @@ def verify_git(binary):
     for path in ['crates/doom-sim/tests/m3d2_reference.rs','crates/doom-sim/tests/m3d3i_reference.rs','crates/doom-sim/tests/m3f1_reference.rs','crates/doom-sim/tests/m3f2_reference.rs']:
         before=original(path).decode(); transformed=adapt(before,names)
         assert transformed!=before
-        formatted=checked(['rustfmt','--edition','2024','--emit','stdout'],input=transformed.encode(),capture_output=True).stdout
+        formatted=checked(['rustup','run','stable','rustfmt','--edition','2024','--emit','stdout'],input=transformed.encode(),capture_output=True).stdout
         assert (ROOT/path).read_bytes()==formatted, path
         adapters.append(path)
     upstream=sum(row.split('\t')[1].split('/')[0] in ['linuxdoom-1.10','ipx','sersrc','sndserv','LICENSE.TXT','README.TXT'] for row in rows)

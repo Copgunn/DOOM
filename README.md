@@ -141,6 +141,11 @@ outcomes. Read the [architecture guide](docs/ARCHITECTURE.md) and
 
 ## Compatibility and validation
 
+Historical source traces use bounded offline zstd loading, and preview/execution
+share original weapon formulas. These maintenance changes preserve gameplay and
+DSIM bytes. See the [storage contract](docs/EVIDENCE_STORAGE.md) and
+[formula contract](docs/WEAPON_FORMULAS.md).
+
 Original id Software Linux DOOM 1.10 is the behavioral authority. Matching an
 isolated source slice does not establish whole-game or DOS demo compatibility.
 The [validation guide](docs/VALIDATION.md) distinguishes original-C evidence,

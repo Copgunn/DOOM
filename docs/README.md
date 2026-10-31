@@ -105,3 +105,7 @@ original evidence and former guide contents with exact-byte copies and digests.
 - [M3g9 original world pickup investigation](M3G9_REFERENCE_INVESTIGATION.md),
   [observations](validation/M3G9.md), [support](COMPATIBILITY.md#original-world-pickups)
   and [DSIM25](STATE_FORMAT.md#dsim-v25-original-world-pickups).
+
+- [Historical evidence storage](EVIDENCE_STORAGE.md) and
+  [shared weapon arithmetic](WEAPON_FORMULAS.md), with
+  [maintenance observations](validation/ZSTD_WEAPON_MAINTENANCE.md).
