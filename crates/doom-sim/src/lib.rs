@@ -28,6 +28,10 @@ mod game_instance;
 mod native_demon;
 mod original_player;
 mod original_registry;
+mod player_armor;
+pub use player_armor::{
+    ArmorEvent, ArmorType, PLAYER_DEMON_ARMOR_CONTEXT_SCHEMA, PlayerArmorState,
+};
 mod player_commands;
 mod player_pistol;
 mod player_roster;
@@ -329,6 +333,8 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
+    /// Original player armor absorption, DSIM26.
+    Armor(ArmorEvent),
     /// Source world-item contact and resource-grant observations (DSIM25).
     Pickup(PickupEvent),
     /// Original-player field and presentation-service observations, DSIM-v22 and later.
@@ -1247,3 +1253,9 @@ mod weapon_pack_evidence;
 mod pickup_evidence;
 #[cfg(test)]
 mod world_pickup_tests;
+
+#[cfg(test)]
+#[path = "../../../tests/support/m3g10.rs"]
+mod armor_evidence;
+#[cfg(test)]
+mod armor_tests;

@@ -569,3 +569,26 @@ Frozen observers run unchanged in a copied decoded workspace. See
 weapon execution reuse the same source-derived damage/spread helpers and their
 existing RNG adapters; player ownership, state-machine services and transactions
 remain authoritative. See [weapon formulas](WEAPON_FORMULAS.md).
+
+
+## Original player armor
+
+PlayerRuntime owns one optional armor-only record under PlayerDemonArmorV1.
+OriginalPlayer and ActorLife retain their existing health/mo/lifetime ownership.
+Armor item kind derives from canonical MT_MISC0/MT_MISC1, with the original
+positive two-state animation clocks in the shared thinker pass. Profile-aware
+role checks keep those actors out of historical pickup execution.
+
+The existing contact hook calls the source points-threshold grant and stages its
+message, removal, bonus and sound. DamagePlan retains the raw DamageRequest and
+computes a single optional armor consequence from the current staged player at
+actual damage time. Shared physical thrust still uses raw damage. The executor
+then commits armor and uses effective damage for player/mobj health, damagecount,
+tactile response and kill/pain decisions. Ignored damage has no armor consequence.
+This is one damage planner/executor, not a player-specific combat engine or a
+future-hit cache. All fields remain in the existing bounded transaction, including
+late-error rollback; advance adds no Snapshot or world clone.
+
+See [support](COMPATIBILITY.md#original-armor-and-damage-absorption),
+[source matrix](M3G10_REFERENCE_INVESTIGATION.md) and
+[DSIM26](STATE_FORMAT.md#dsim-v26-original-player-armor).

@@ -1,4 +1,4 @@
-# Canonical diagnostic state format: DSIM versions 1–24
+# Canonical diagnostic state format: DSIM versions 1–26
 
 This is a diagnostic/replay comparison format for explicit simulation profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
@@ -1329,3 +1329,36 @@ Selected raw C trace CSVs use standard zstd framing at the test-loading boundary
 this does not compress or redefine any DSIM payload. Every historical version,
 policy, reader and complete-byte fixture retains its old meaning. Existing
 DREFLZ1 evidence is unchanged. See [storage contract](EVIDENCE_STORAGE.md).
+
+
+## DSIM-v26 original player armor
+
+Version26 selects policy10 (`PlayerDemonArmorV1`), unchanged original registry
+schema and context `PLAYER-DEMON-1-MEDIUM-GROUNDED-ARMOR-v1`.
+`Diagnostic::decode_armor` explicitly reads26; all prior version-specific readers
+retain their historical contracts and reject26. V20–25 bytes, encoders, fixtures
+and policy/context meanings are unchanged. Diagnostic decoding is not executable
+world restoration or actor ownership.
+
+After the v25 pickup group and before events, add exactly two persistent fields:
+`original_player.0.armor.type` u8 (0 none,1 green,2 blue) and `.points` i32.
+None requires0, green1..100, blue1..200. No redundant presence, immutable definition,
+body identity or health is added. Pickup message10=GOTARMOR and11=GOTMEGA are valid
+only here. Animated item records validate current original state/sprite/frame and
+positive tics bounded by that descriptor; older static-item validation remains.
+
+Existing event23 gains subtype7 only under26: requested type u8, accepted u8,
+before type u8/points i32, after type u8/points i32 (14 bytes including tag/subtype).
+The reader checks typed bounds and source grant acceptance/replacement. Event24
+has no subtype: target handle12, incoming/saved/effective i32 each, before type
+u8/points i32, after type u8/points i32 (35 bytes including tag). It occurs after
+raw thrust and before player health observations, only for live player armor work,
+including None/0 or raw0. The reader checks the owned body, raw0..1000, exact
+integer absorption, depletion class and resulting points. It grants no lifetime
+lease and does not recompute past gameplay.
+
+Independent C rows AX/AR and grant observations feed the Python
+[armor projection](../tools/reference/armor_snapshot.py); independent full bytes
+and PBE1 ordered events precede matching Rust changes. Source-only inactive item
+respawn queue observations remain excluded. DREFLZ1/PBE1 are evidence storage,
+not another runtime diagnostic version.

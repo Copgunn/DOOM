@@ -66,9 +66,10 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                                 .map(|slot| commands[slot])
                         };
                         let motion = if source_player
-                            && player.as_ref().is_some_and(|p| {
-                                p.policy == OriginalExecutionProfile::PlayerDemonPickupsV1
-                            }) {
+                            && player
+                                .as_ref()
+                                .is_some_and(|p| p.policy.has_world_pickups())
+                        {
                             let Some(p) = player.as_deref_mut() else {
                                 return;
                             };

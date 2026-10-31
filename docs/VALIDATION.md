@@ -8,7 +8,7 @@ savegame compatibility or vanilla demo synchronization.
 
 | Evidence | What it establishes | Main records |
 | --- | --- | --- |
-| Genuine original C | Source decisions, fields, RNG and ordering under documented adapters | Milestone REFERENCE notes and `tests/reference/*provenance.json` |
+| Genuine original C | Source decisions, fields, RNG and ordering under documented adapters | Milestone REFERENCE notes and `tests/reference/*provenance.json` and versioned `*contract.json` |
 | Fixture projection | Explicit native identity/state adaptations compared with original C | Source investigations and adapter assumptions |
 | Independent DSIM | Complete bytes/per-tic digests from C observations plus documented schema; no Rust expected-output generation | [State format](STATE_FORMAT.md), independent Python encoders |
 | Rust safety policies | Checked arithmetic, bounds, atomic rejection, stale handles and independent instances | Policy/unit tests, [compatibility](COMPATIBILITY.md) |
@@ -198,3 +198,7 @@ See [source qualification](M3G9_REFERENCE_INVESTIGATION.md) and
   source-body component observations and matched before/after measurements.
   [Storage](EVIDENCE_STORAGE.md) and [formula](WEAPON_FORMULAS.md) contracts
   separate new safety/component tests from reused gameplay evidence.
+
+
+- [M3g10 armor and sustained combat](validation/M3G10.md): real animated armor,
+  source grants/absorption, independent DSIM26 and separately labeled Rust safety.

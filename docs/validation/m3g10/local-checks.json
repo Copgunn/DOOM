@@ -1,0 +1,532 @@
+{
+  "totals": {
+    "workspace": [
+      620,
+      0,
+      2
+    ],
+    "msrv": [
+      620,
+      0,
+      2
+    ],
+    "release": [
+      587,
+      0,
+      0
+    ]
+  },
+  "checks": [
+    {
+      "check": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 0.99,
+      "log_sha256": "b3599f7bb7769253e1b89cb37facacd706287fe9be7063268bdbed807e934fe9"
+    },
+    {
+      "check": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.476,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "fuzz-format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.986,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0,
+      "seconds": 3.842,
+      "log_sha256": "94bcefa590309e736f6b7bd19088eada1a575dce2eb4fb25a3fe51885aa5948b"
+    },
+    {
+      "check": "workspace",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 233.543,
+      "log_sha256": "dfc0d62d83975408a407343636ecdc6f3866716862e3b362769d090692a2a763"
+    },
+    {
+      "check": "release",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "doom-sim",
+        "-p",
+        "doom-types",
+        "--release",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 126.692,
+      "log_sha256": "a9f83f2bd3fc1ea40ccd6c7cf957ea6663157ee1dbd45bfad1d069a72bc61d8a"
+    },
+    {
+      "check": "msrv",
+      "command": [
+        "cargo",
+        "+1.85.0",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 287.561,
+      "log_sha256": "87b8f18e9befc968a4b79885367cfc28f97ec86fe368833ea5a5260ea0e5b785"
+    },
+    {
+      "check": "rustdoc",
+      "command": [
+        "cargo",
+        "doc",
+        "--workspace",
+        "--no-deps",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 0.909,
+      "log_sha256": "b02a76f2d3fc5e95bd546f1e086970960f2deeeb9ea2dde46f96c90c0cb657f1"
+    },
+    {
+      "check": "check_canonical_demon",
+      "command": [
+        "python3",
+        "tools/reference/check_canonical_demon.py"
+      ],
+      "exit": 0,
+      "seconds": 0.866,
+      "log_sha256": "da48a225306c65fdc7a2ca84f1512bac8601e6453ed604ad447e2b40d5512927"
+    },
+    {
+      "check": "check_chaingunner_attacks",
+      "command": [
+        "python3",
+        "tools/reference/check_chaingunner_attacks.py"
+      ],
+      "exit": 0,
+      "seconds": 1.433,
+      "log_sha256": "b2cd350030d34ebbb7eb89b786026e9bc4e579cc6b01fca8db95609c261617b2"
+    },
+    {
+      "check": "check_context_ownership",
+      "command": [
+        "python3",
+        "tools/reference/check_context_ownership.py"
+      ],
+      "exit": 0,
+      "seconds": 0.412,
+      "log_sha256": "6015b884db69b783db05b1201c70ae10f0f6f0aec2337ac6491dac774f90aeab"
+    },
+    {
+      "check": "check_demon_expanded_map",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_expanded_map.py"
+      ],
+      "exit": 0,
+      "seconds": 9.832,
+      "log_sha256": "045a2266cb4c2612b0a89a2fa6272fdb1355cf1fd4266e5563ef5e5691f2c258"
+    },
+    {
+      "check": "check_demon_lifecycle",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_lifecycle.py"
+      ],
+      "exit": 0,
+      "seconds": 2.757,
+      "log_sha256": "f5bbbc5082506484af9569068dd04adff2535db3f7bd354794ffee96ba0ab9ce"
+    },
+    {
+      "check": "check_demon_map_context",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_map_context.py"
+      ],
+      "exit": 0,
+      "seconds": 11.855,
+      "log_sha256": "b202468578394a73f9fad1da9b4f476eb48529646093c6bf77402736d6d14201"
+    },
+    {
+      "check": "check_demon_map_spawn",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_map_spawn.py"
+      ],
+      "exit": 0,
+      "seconds": 4.973,
+      "log_sha256": "fb2867d15c5654072a935dca49fe7fdb914c43a6a981ab4002adb907a9d2e73d"
+    },
+    {
+      "check": "check_demon_melee",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_melee.py"
+      ],
+      "exit": 0,
+      "seconds": 1.826,
+      "log_sha256": "c1a5fc03cec746ed3816ca5b89d535ad9dda4c295b82fb8af37e91f3be7707e6"
+    },
+    {
+      "check": "check_demon_stand_run",
+      "command": [
+        "python3",
+        "tools/reference/check_demon_stand_run.py"
+      ],
+      "exit": 0,
+      "seconds": 3.963,
+      "log_sha256": "6b189c4f0b6c49396f8715b0c5927f71634022db2344ef16112109f5757ce708"
+    },
+    {
+      "check": "check_diagnostic_free",
+      "command": [
+        "python3",
+        "tools/reference/check_diagnostic_free.py"
+      ],
+      "exit": 0,
+      "seconds": 0.132,
+      "log_sha256": "5bdf11aca5fa92d7c5562142e69487ea1302f5e00a59f65cb6c29d2940a10aef"
+    },
+    {
+      "check": "check_game_instance",
+      "command": [
+        "python3",
+        "tools/reference/check_game_instance.py"
+      ],
+      "exit": 0,
+      "seconds": 0.137,
+      "log_sha256": "5b36252589dfa6a46a83eef4e5f54631dc120c1a61982f534d60339d55c66aea"
+    },
+    {
+      "check": "check_headless",
+      "command": [
+        "python3",
+        "tools/reference/check_headless.py"
+      ],
+      "exit": 0,
+      "seconds": 1.002,
+      "log_sha256": "8f5844b55d561ff23f5836af76ef88e36a1d4f4c8abf899c4204f701fa1e7fcc"
+    },
+    {
+      "check": "check_map_extent",
+      "command": [
+        "python3",
+        "tools/reference/check_map_extent.py"
+      ],
+      "exit": 0,
+      "seconds": 0.145,
+      "log_sha256": "7de4ad41ad70693ee0d020f3e6f6ad5ad6db21bea4adc0bcd0a53216f429708a"
+    },
+    {
+      "check": "check_map_scale",
+      "command": [
+        "python3",
+        "tools/reference/check_map_scale.py"
+      ],
+      "exit": 0,
+      "seconds": 0.153,
+      "log_sha256": "a752658319cf04d52c9cd47757d809af89d6dff286d7c92e935f6a858439547b"
+    },
+    {
+      "check": "check_monster_attacks",
+      "command": [
+        "python3",
+        "tools/reference/check_monster_attacks.py"
+      ],
+      "exit": 0,
+      "seconds": 0.694,
+      "log_sha256": "a321304a0ce42e36669dcadf989a38593b5c17b9baa0102d8a0921ef1b5ce5b9"
+    },
+    {
+      "check": "check_monster_perception",
+      "command": [
+        "python3",
+        "tools/reference/check_monster_perception.py"
+      ],
+      "exit": 0,
+      "seconds": 0.138,
+      "log_sha256": "53e5575c00947c04727cdb3f88fcabb6fe08462dce3b4df7becb18980cd0a740"
+    },
+    {
+      "check": "check_monster_pursuit",
+      "command": [
+        "python3",
+        "tools/reference/check_monster_pursuit.py"
+      ],
+      "exit": 0,
+      "seconds": 0.381,
+      "log_sha256": "8cc06ae377567eb0176c8e5ea00e0a511244ce6b76b4f2147cb70eac2abdc123"
+    },
+    {
+      "check": "check_original_identity",
+      "command": [
+        "python3",
+        "tools/reference/check_original_identity.py"
+      ],
+      "exit": 0,
+      "seconds": 0.108,
+      "log_sha256": "f5ce5cd85364c48a4bd75b0da814ce1b4ac1d963ff8820838505a7925f02634e"
+    },
+    {
+      "check": "check_original_player",
+      "command": [
+        "python3",
+        "tools/reference/check_original_player.py"
+      ],
+      "exit": 0,
+      "seconds": 0.377,
+      "log_sha256": "123ab03a35e8243c5df9ab12e1954fbea39654cf624d512eee8ee1c034cf838f"
+    },
+    {
+      "check": "check_original_registry",
+      "command": [
+        "python3",
+        "tools/reference/check_original_registry.py"
+      ],
+      "exit": 0,
+      "seconds": 2.022,
+      "log_sha256": "0ea5867063bf246d38cf2f91fc348f098695eaba2a4b9ac52fc6f548cc87b0ec"
+    },
+    {
+      "check": "check_player_commands",
+      "command": [
+        "python3",
+        "tools/reference/check_player_commands.py"
+      ],
+      "exit": 0,
+      "seconds": 0.552,
+      "log_sha256": "c6d067c65a0ae90b5dc3361309167d3ca55ed468877e6e25dea650a8340ec9d0"
+    },
+    {
+      "check": "check_player_demon",
+      "command": [
+        "python3",
+        "tools/reference/check_player_demon.py"
+      ],
+      "exit": 0,
+      "seconds": 1.015,
+      "log_sha256": "73cbb127bc444eb9d5d3c488dd059d11b1ebb525475d25751a1aea0541af573f"
+    },
+    {
+      "check": "check_player_demon_melee",
+      "command": [
+        "python3",
+        "tools/reference/check_player_demon_melee.py"
+      ],
+      "exit": 0,
+      "seconds": 2.99,
+      "log_sha256": "88aa4504df3391026c08b5b62544e6ccf4e68c1147693e1686223cdd5ecb0352"
+    },
+    {
+      "check": "check_player_knockback",
+      "command": [
+        "python3",
+        "tools/reference/check_player_knockback.py"
+      ],
+      "exit": 0,
+      "seconds": 0.701,
+      "log_sha256": "9f3a90ce5c6cb473e6db2986d547d26d5c55a24ac6d4786f4fa075c16b624677"
+    },
+    {
+      "check": "check_player_pistol",
+      "command": [
+        "python3",
+        "tools/reference/check_player_pistol.py"
+      ],
+      "exit": 0,
+      "seconds": 4.745,
+      "log_sha256": "6df678b476e8ed7edf678233d5af4e7b4ecd572b0ab0f06df0218f1bdc160ee4"
+    },
+    {
+      "check": "check_player_weapon_pack",
+      "command": [
+        "python3",
+        "tools/reference/check_player_weapon_pack.py"
+      ],
+      "exit": 0,
+      "seconds": 13.354,
+      "log_sha256": "128a829f636f09c16940e613ab4160d425e3c0f4b4765959c356f9b8193f0a55"
+    },
+    {
+      "check": "check_player_world_pickups",
+      "command": [
+        "python3",
+        "tools/reference/check_player_world_pickups.py"
+      ],
+      "exit": 0,
+      "seconds": 7.568,
+      "log_sha256": "3d33d9eab1e7bbcee5933a38ee234c4b787a48889a09b52b0bc85b5523a724eb"
+    },
+    {
+      "check": "check_projectiles",
+      "command": [
+        "python3",
+        "tools/reference/check_projectiles.py"
+      ],
+      "exit": 0,
+      "seconds": 0.371,
+      "log_sha256": "6ceac5cc74ad481ae54536376b3422a74fe7b6af095ccd43a79f3ec9a880a776"
+    },
+    {
+      "check": "check_runtime_identity",
+      "command": [
+        "python3",
+        "tools/reference/check_runtime_identity.py"
+      ],
+      "exit": 0,
+      "seconds": 1.087,
+      "log_sha256": "ddb577fc692ddb74cab68b139486ff7f8e18d1b6885f06088d8a41bd19d5248a"
+    },
+    {
+      "check": "check_shotgunner_attacks",
+      "command": [
+        "python3",
+        "tools/reference/check_shotgunner_attacks.py"
+      ],
+      "exit": 0,
+      "seconds": 0.787,
+      "log_sha256": "18133d0e2f6084003cc3d1ff0c4a6dabc033c008a420a1902338549bf75555ef"
+    },
+    {
+      "check": "parse_map-debug",
+      "command": [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "doom-map",
+        "--example",
+        "parse_map",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 0.037,
+      "log_sha256": "5e8aae9bd104e2a9baff5ffe7605e4adbc13b7b2fc674294d2e373bc3ea8707c"
+    },
+    {
+      "check": "generate_fuzz_seeds-debug",
+      "command": [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "doom-map",
+        "--example",
+        "generate_fuzz_seeds",
+        "--locked"
+      ],
+      "exit": 0,
+      "seconds": 0.036,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "parse_map-release",
+      "command": [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "doom-map",
+        "--example",
+        "parse_map",
+        "--locked",
+        "--release"
+      ],
+      "exit": 0,
+      "seconds": 0.125,
+      "log_sha256": "5e8aae9bd104e2a9baff5ffe7605e4adbc13b7b2fc674294d2e373bc3ea8707c"
+    },
+    {
+      "check": "generate_fuzz_seeds-release",
+      "command": [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "doom-map",
+        "--example",
+        "generate_fuzz_seeds",
+        "--locked",
+        "--release"
+      ],
+      "exit": 0,
+      "seconds": 0.036,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "check_player_armor",
+      "command": [
+        "python3",
+        "tools/reference/check_player_armor.py"
+      ],
+      "exit": 0,
+      "seconds": 19.813,
+      "log_sha256": "163b9d3cde98ac968592202e3922a42804440038d1fe5350601755254c8c27fc"
+    },
+    {
+      "check": "fuzz-build",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "build",
+        "--sanitizer",
+        "address"
+      ],
+      "exit": 0,
+      "seconds": 0.069,
+      "log_sha256": "09f7af2ff9cdcadfac512d53f8eff6ba3b902c54886e613afaa350a783e834bb"
+    }
+  ],
+  "examples": 36,
+  "parser_generator_debug_release": true,
+  "source_commands": 65,
+  "source_report": "historical-source-checks.json",
+  "new_source_checks": [
+    "m3g10_reference.py --check --overflow-check --address-check",
+    "m3g10_snapshot_goldens.py --check",
+    "weapon_formulas_reference.py --check --sanitize"
+  ],
+  "ASAN_OPTIONS": "detect_leaks=0",
+  "new_source_log_sha256": "66e56a5e00110687f932d08d6466419a094b272ac415ffacfabb93bcc9c20234"
+}

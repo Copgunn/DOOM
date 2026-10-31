@@ -109,3 +109,6 @@ original evidence and former guide contents with exact-byte copies and digests.
 - [Historical evidence storage](EVIDENCE_STORAGE.md) and
   [shared weapon arithmetic](WEAPON_FORMULAS.md), with
   [maintenance observations](validation/ZSTD_WEAPON_MAINTENANCE.md).
+
+- [M3g10 original armor investigation](M3G10_REFERENCE_INVESTIGATION.md),
+  [observations](validation/M3G10.md), [support](COMPATIBILITY.md#original-armor-and-damage-absorption).

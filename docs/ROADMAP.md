@@ -79,14 +79,20 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### Maintenance: zstd evidence and shared weapon formulas
+### M3g10: Original armor, damage absorption and sustained combat
 
-The post-M3g9 maintenance branch losslessly compresses selected historical source
-traces and consolidates existing weapon arithmetic. It adds no executable gameplay
-or DSIM version. Separate compression and formula commits retain independent
-migration/source proofs. This work stops at owner review; exact commits and CI
-belong to GitHub. See the [storage contract](EVIDENCE_STORAGE.md),
-[formula contract](WEAPON_FORMULAS.md) and
+The separately selected PlayerDemonArmorV1 composes genuine animated green/blue
+world armor with the existing player, weapons, contacts and autonomous Demon.
+Source-derived grants and shared damage planning retain raw thrust, effective
+health damage, depletion, pain/death and transactional rollback. DSIM26 adds only
+the necessary armor fields and observations. This branch stops at owner review;
+exact commits and CI belong to GitHub. See [source investigation](M3G10_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-armor-and-damage-absorption) and
+[observations](validation/M3G10.md).
+
+The zstd/formula maintenance milestone is merged. Its independent migration and
+formula proofs, unchanged gameplay and preserved DSIM contracts remain in
+[storage](EVIDENCE_STORAGE.md), [formulas](WEAPON_FORMULAS.md) and
 [observations](validation/ZSTD_WEAPON_MAINTENANCE.md).
 
 ### Previous gameplay foundation — M3g9: Original world pickups and combat sustain
@@ -129,11 +135,10 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Prioritize a bounded original green/blue armor pickup and damage-absorption slice.
-It should compose source P_GiveArmor/P_DamageMobj with the same player, inventory,
-world contact and combat loop, independently observing armor before pain/death.
-Do not add other powers, cheats, weapons, respawn or generalized specials in that
-step. This recommendation is future M3g10 work, not armor admission in maintenance.
+Prioritize independently validated original health and armor bonuses: genuine
+animated actors, source caps and pickup ordering using these same services.
+Require source-first observations, unchanged ordinary green/blue grants and
+measured sustained encounters. This is future work, not admission in M3g10.
 
 ### Focused maintenance acceptance criteria
 

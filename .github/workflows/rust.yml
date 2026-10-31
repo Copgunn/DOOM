@@ -32,7 +32,9 @@ jobs:
     # Native Intel post-merge CI reached the 15-minute limit after its examples.
     # Keep every check; M3g6 exact-master Linux took almost28 minutes.
     # New pistol reference/codec/example checks require additional headroom.
-    timeout-minutes: ${{ matrix.os == 'ubuntu-latest' && 45 || matrix.os == 'windows-latest' && 15 || 30 }}
+    # M3g10 Windows reached its15-minute limit during historical examples after
+    # workspace/release tests and the armor example passed. Retain every check.
+    timeout-minutes: ${{ matrix.os == 'ubuntu-latest' && 45 || 30 }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -63,6 +65,13 @@ jobs:
       - name: Independent original weapon formula components
         if: runner.os == 'Linux'
         run: ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/weapon_formulas_reference.py --check --sanitize
+      - name: Independent original armor, animation, pickup and absorption evidence
+        if: runner.os == 'Linux'
+        run: |
+          ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g10_reference.py --check --overflow-check --address-check
+          python3 tools/reference/m3g10_snapshot_goldens.py --check
+      - name: Original armor sustained combat debug/release comparison
+        run: python3 tools/reference/check_player_armor.py
       - name: Active player Demon debug/release comparison
         run: python3 tools/reference/check_player_demon.py
       - name: Autonomous player Demon melee debug/release comparison

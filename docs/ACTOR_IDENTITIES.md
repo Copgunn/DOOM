@@ -392,3 +392,16 @@ Items are neither damage sources nor AI owners/targets, and public direct state
 entry/raw spawning remain gated. Static state roots have tics−1/no action; death,
 respawn and arbitrary item behavior are not inferred from metadata. See the
 [exact support contract](COMPATIBILITY.md#original-world-pickups).
+
+
+## Original armor execution boundary
+
+PlayerDemonArmorV1 adds canonical MT_MISC0=43/DoomEd2018 and MT_MISC1=44/DoomEd2019
+as genuine map items, using existing actor ownership and original animation states
+S_ARM1/S_ARM1A=802/803 and S_ARM2/S_ARM2A=804/805. Sprites ARM1/ARM2 retain55/56 and
+frames0/32769. Registry metadata does not admit other items, bonuses or powers.
+ArmorType0/1/2 is the source player's protection class, not an actor ordinal or
+instance handle. Its points belong to the existing player, never item metadata.
+Old policies retain their distinct role gates. See
+[support](COMPATIBILITY.md#original-armor-and-damage-absorption) and
+[source investigation](M3G10_REFERENCE_INVESTIGATION.md).

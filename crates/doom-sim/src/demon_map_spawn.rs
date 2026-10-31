@@ -83,8 +83,8 @@ impl Simulation {
             let life = a.life.unwrap();
             // Validate complete future actions, not only this tic's next state.
             self.validate_combat_type(life.actor_type)?;
-            if self.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1
-                && world_pickups::kind(life.actor_type).is_some()
+            if self.player_policy().has_world_pickups()
+                && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
             {
                 world_pickups::validate_item(a)?;
                 if suffix {
