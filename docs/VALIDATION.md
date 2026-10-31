@@ -192,3 +192,9 @@ P_Ticker/PlayerThink/DeathThink. Sustained winning and losing encounters use nor
 initial pistol ammo and real autonomous damage, then actual world resources.
 See [source qualification](M3G9_REFERENCE_INVESTIGATION.md) and
 [reproduction](TESTING.md#original-world-pickups).
+
+- [Zstd and weapon-formula maintenance](validation/ZSTD_WEAPON_MAINTENANCE.md):
+  actual baseline-byte migration proof, bounded loader policy, compact inherited
+  source-body component observations and matched before/after measurements.
+  [Storage](EVIDENCE_STORAGE.md) and [formula](WEAPON_FORMULAS.md) contracts
+  separate new safety/component tests from reused gameplay evidence.

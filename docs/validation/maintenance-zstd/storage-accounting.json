@@ -1,0 +1,14 @@
+{
+  "baseline": "138c66b6c6b6d57d0b18cf945d8661722741bd66",
+  "baseline_tracked_blob_bytes": 594743343,
+  "final_candidate_tracked_file_count": 6856,
+  "final_candidate_tracked_bytes": 512725529,
+  "selected_original_trace_bytes": 88469558,
+  "selected_compressed_trace_bytes": 4820823,
+  "selected_payload_savings": 83648735,
+  "manifest_bytes": 10143,
+  "new_or_changed_nonpayload_net_bytes": 1630921,
+  "net_current_checkout_savings": 82017814,
+  "dependency_vendored_bytes": 0,
+  "method": "Actual baseline Git blob lengths versus current git-listed source/evidence files, including new validation/measurement artifacts and this accounting file. Excludes .git/history, ignored build targets, external Cargo registry caches and worktrees. Nonpayload net includes code, lockfiles, guides, tests, manifests and retained measurement records. Does not claim Git-history shrinkage."
+}

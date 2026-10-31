@@ -1,7 +1,7 @@
 //! Internal bounded interpreter edge cases; public admission rejects these graphs.
 use super::*;
 #[path = "../../../tests/support/m3d2.rs"]
-mod fixtures;
+pub(super) mod fixtures;
 #[test]
 fn psprite_zero_chain_infinite_null_and_coordinate_rules() {
     let sim = fixtures::setup(&fixtures::cases()[0]);

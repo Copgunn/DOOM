@@ -1147,3 +1147,11 @@ specials and dynamic geometry remain excluded. Source evidence, explicit harness
 adapters, generation/provenance safety and rollback are separate claims; see
 [investigation](M3G9_REFERENCE_INVESTIGATION.md), [schema](STATE_FORMAT.md#dsim-v25-original-world-pickups)
 and [observations](validation/M3G9.md).
+
+## Maintenance compatibility boundary
+
+Reference compression and shared weapon formulas change no supported gameplay
+profile, actor admission, capacities, error contract or diagnostic schema. The
+historical raw bytes remain in Git and are supplied exactly to existing test
+parsers. Source arithmetic retains its qualified ordered-draw/BAM interpretation.
+See [storage limits](EVIDENCE_STORAGE.md) and [formula scope](WEAPON_FORMULAS.md).

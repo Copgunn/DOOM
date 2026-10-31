@@ -40,12 +40,13 @@ def main():
     if platform.system() != 'Linux' or platform.libc_ver()[0] != 'glibc':
         raise SystemExit('Linux/glibc measurement only')
     checked(['cargo','build','-p','doom-sim','--example','diagnostic_free','--release','--locked'])
+    checked(['cargo','build','-p','doom-test-evidence','--release','--locked'])
     with tempfile.TemporaryDirectory(prefix='doom-legacy-weapons-') as directory:
         temp=Path(directory);src=temp/'legacy.rs'
         source=PROGRAM.replace('@FIXTURES@',str(ROOT/'tests/support/m3d2.rs'))
         src.write_text(source);binary=temp/'legacy'
         command=['rustc','--edition=2024','-C','opt-level=3','-L',str(ROOT/'target/release/deps'),str(src),'-o',str(binary)]
-        for crate in ['doom_sim','doom_types','doom_map','doom_wad']:
+        for crate in ['doom_sim','doom_types','doom_map','doom_wad','doom_test_evidence']:
             library=max((ROOT/'target/release/deps').glob('lib'+crate+'-*.rlib'),key=lambda p:p.stat().st_mtime)
             command += ['--extern',crate+'='+str(library)]
         compiler_env=os.environ.copy();compiler_env["CARGO_MANIFEST_DIR"]=str(ROOT/"crates/doom-sim")

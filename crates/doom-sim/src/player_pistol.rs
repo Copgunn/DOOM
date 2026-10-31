@@ -12,7 +12,6 @@ const AUTOAIM_UNITS: i16 = 1024;
 const BULLET_UNITS: i16 = 2048;
 const MELEE_UNITS: i16 = 64;
 const SHOTGUN_PELLETS: usize = 7;
-const SPREAD_SCALE: i32 = 1 << 18;
 const AUTOAIM_OFFSET: u32 = 1 << 26;
 const OWNED_FIST_PISTOL: u16 = (1 << Weapon::Fist as u8) | (1 << Weapon::Pistol as u8);
 /// Source initial ammunition, from G_PlayerReborn (not pickup gameplay).
@@ -419,9 +418,7 @@ fn fire_current(
                 .push(Event::Weapon(WeaponEvent::Random { kind, value }));
             value
         };
-        let damage = 2 * (i32::from(random(0)) % 10 + 1);
-        let spread = (i32::from(random(1)) - i32::from(random(2))) * SPREAD_SCALE;
-        let angle = angle.wrapping_add_signed(spread);
+        let (angle, damage) = weapons::punch_shot(angle, &mut random);
         let slope = aim_current(host, id, angle, MELEE_UNITS)?;
         return line_current(host, id, weapon, angle, slope, damage, MELEE_UNITS);
     }

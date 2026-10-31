@@ -13,3 +13,6 @@
 /docs/validation/archive/*.txt -text
 /docs/validation/archive/*.md text eol=lf
 /docs/validation/archive/manifest.json text eol=lf
+
+# Standard zstd source traces are binary and must survive checkout exactly.
+/tests/reference/*.zst -text

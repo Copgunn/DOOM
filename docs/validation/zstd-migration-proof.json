@@ -1,0 +1,121 @@
+{
+  "baseline": "138c66b6c6b6d57d0b18cf945d8661722741bd66",
+  "proofs": [
+    {
+      "path": "tests/reference/m3d2_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3d2b_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3d3b_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3d3c_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3d3d_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3d3e_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3d3f_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3d3g_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3d3h_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3d3i_spawn.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3d3i_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3d3j_spawn.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3d3j_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3f1_movement.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3f2_sight.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3f3_clipping_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3f3_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3f5_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    },
+    {
+      "path": "tests/reference/m3g7_trace.csv",
+      "raw_equals_git": true,
+      "decoded_equals_raw": true,
+      "decoded_equals_git": true
+    }
+  ],
+  "original_bytes": 88469558,
+  "compressed_bytes": 4820823
+}

@@ -9,6 +9,7 @@ license = "GPL-2.0-only"
 cargo-fuzz = true
 
 [dependencies]
+doom-test-evidence = { path = "../crates/doom-test-evidence" }
 libfuzzer-sys = "0.4"
 doom-wad = { path = "../crates/doom-wad" }
 doom-map = { path = "../crates/doom-map" }
@@ -262,6 +263,13 @@ bench = false
 [[bin]]
 name = "player_world_pickups"
 path = "fuzz_targets/player_world_pickups.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "evidence_zstd"
+path = "fuzz_targets/evidence_zstd.rs"
 test = false
 doc = false
 bench = false

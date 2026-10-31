@@ -1,0 +1,50 @@
+{
+  "host": "Linux x86_64",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "method": "New canonical_api_small workload, no pre-M3f5 API baseline. Three separate release processes. 100 parses/constructors/typed batches timed separately; 100 direct canonical ATK2 entries each in a fresh same-input setup, target/roster installation outside timers; 1000 complete binding/definition queries; 100 existing script updates each preceded by a canonical identity query, including snapshots. Native wait4 peak RSS covers process/allocator overhead. Not directly comparable with old workloads that omit these queries, no isolated CPU/frequency control, no performance threshold.",
+  "samples": [
+    {
+      "parse100_us": 201,
+      "prepare100_us": 32368,
+      "spawn100_us": 517,
+      "enter100_us": 17412,
+      "query1000_us": 299,
+      "step100_with_query_us": 13799,
+      "snapshot_bytes": 87940,
+      "max_rss_kib": 2900,
+      "output": "workload=canonical_api_small parse100_us=201 prepare100_us=32368 spawn100_us=517 enter100_us=17412 query1000_us=299 step100_with_query_us=13799 snapshot_bytes=87940"
+    },
+    {
+      "parse100_us": 187,
+      "prepare100_us": 31681,
+      "spawn100_us": 506,
+      "enter100_us": 17399,
+      "query1000_us": 320,
+      "step100_with_query_us": 14332,
+      "snapshot_bytes": 87940,
+      "max_rss_kib": 3028,
+      "output": "workload=canonical_api_small parse100_us=187 prepare100_us=31681 spawn100_us=506 enter100_us=17399 query1000_us=320 step100_with_query_us=14332 snapshot_bytes=87940"
+    },
+    {
+      "parse100_us": 241,
+      "prepare100_us": 30675,
+      "spawn100_us": 479,
+      "enter100_us": 16784,
+      "query1000_us": 283,
+      "step100_with_query_us": 13700,
+      "snapshot_bytes": 87940,
+      "max_rss_kib": 3024,
+      "output": "workload=canonical_api_small parse100_us=241 prepare100_us=30675 spawn100_us=479 enter100_us=16784 query1000_us=283 step100_with_query_us=13700 snapshot_bytes=87940"
+    }
+  ],
+  "medians": {
+    "parse100_us": 201,
+    "prepare100_us": 31681,
+    "spawn100_us": 506,
+    "enter100_us": 17399,
+    "query1000_us": 299,
+    "step100_with_query_us": 13799,
+    "snapshot_bytes": 87940,
+    "max_rss_kib": 3024
+  }
+}

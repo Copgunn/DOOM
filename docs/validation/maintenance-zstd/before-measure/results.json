@@ -1,0 +1,189 @@
+[
+  {
+    "name": "stepping",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_stepping.py"
+    ],
+    "exit": 0,
+    "seconds": 25.095,
+    "sha256": "4ed714472baf35ffbe7e54ce71e1f0c5e6a952916d91071072b463e2fcb8ed32"
+  },
+  {
+    "name": "demon_expanded_map",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_demon_expanded_map.py"
+    ],
+    "exit": 0,
+    "seconds": 5.067,
+    "sha256": "4b1545dbfc62eec7c5b9021b9bdd8a3490d04773cbf399a33995c9601958e8b3"
+  },
+  {
+    "name": "canonical_demon",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_canonical_demon.py"
+    ],
+    "exit": 0,
+    "seconds": 0.354,
+    "sha256": "545bb6b2c21264c8042393b07656d026a926ffc48b99e1a7df43e27b22cc58e5"
+  },
+  {
+    "name": "original_registry",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_original_registry.py"
+    ],
+    "exit": 0,
+    "seconds": 1.968,
+    "sha256": "4f4007882b753d40fc9e034a3f39313b31ffca573a5f3407e50335cef681be52"
+  },
+  {
+    "name": "context_ownership",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_context_ownership.py"
+    ],
+    "exit": 0,
+    "seconds": 0.236,
+    "sha256": "a8c22a3f2428b7b0da11025d463f5634de3620a06ab66bd60ad0799465bac8e8"
+  },
+  {
+    "name": "game_instance",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_game_instance.py"
+    ],
+    "exit": 0,
+    "seconds": 0.255,
+    "sha256": "a7ca2b2cfc106a8cf95c94582c1159862ea005e9656fa693c8f06d5319492206"
+  },
+  {
+    "name": "player_body",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_player_body.py"
+    ],
+    "exit": 0,
+    "seconds": 0.393,
+    "sha256": "488c9786967dce044e1f977107dd9dc28bcd5d57c97376a0e338fe333b0ab7db"
+  },
+  {
+    "name": "player_knockback",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_player_knockback.py"
+    ],
+    "exit": 0,
+    "seconds": 0.632,
+    "sha256": "12b61e7af5e0ae846d9830074af0adf03d222373580f404c2c4e7f289c8ae046"
+  },
+  {
+    "name": "player_commands",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_player_commands.py"
+    ],
+    "exit": 0,
+    "seconds": 0.642,
+    "sha256": "b7090cd3bdc6a32341bad5bf62ed53a916910e1987a83bbe5adb4bddd97d8df0"
+  },
+  {
+    "name": "player_demon",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_player_demon.py"
+    ],
+    "exit": 0,
+    "seconds": 1.276,
+    "sha256": "265a5aec10d8efae79715ac3f77313f01e3eedfee835f27f5d6f3e401bcf1d07"
+  },
+  {
+    "name": "player_demon_melee",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_player_demon_melee.py"
+    ],
+    "exit": 0,
+    "seconds": 1.35,
+    "sha256": "7f274d40a0dcec0ded9f2e5f2d331393db0453db6095aa75655969e2fd9f6089"
+  },
+  {
+    "name": "legacy_weapons",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_legacy_weapons.py"
+    ],
+    "exit": 0,
+    "seconds": 0.62,
+    "sha256": "fde690e60a6fb9bebc860d7fa059079bb8ea7fe94f460fae25945914a87209d5"
+  },
+  {
+    "name": "player_pistol",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_player_pistol.py"
+    ],
+    "exit": 0,
+    "seconds": 7.134,
+    "sha256": "be872ce3097ada2116faccea691a7cf9ff5b6f599379023226d61fe1c187ad7a"
+  },
+  {
+    "name": "player_weapons",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_player_weapons.py"
+    ],
+    "exit": 0,
+    "seconds": 28.544,
+    "sha256": "981807ba2f9bb70f89ff20160996630b75852e98fdca3be58001b4ca2a708040"
+  },
+  {
+    "name": "map_scale",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_map_scale.py"
+    ],
+    "exit": 0,
+    "seconds": 0.814,
+    "sha256": "40164ccf1b0ee865e109eed431d75763e19d48d0f313cb31022fdf46a2b43e71"
+  },
+  {
+    "name": "map_extent",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_map_extent.py"
+    ],
+    "exit": 0,
+    "seconds": 1.492,
+    "sha256": "ec0644c3ec7e6bb60d85f61d3fa5851bd4a54009457be276b4408c7531e55a16"
+  },
+  {
+    "name": "player_world_pickups",
+    "command": [
+      "/workspace/doom-tools/run",
+      "python3",
+      "tools/measure_player_world_pickups.py"
+    ],
+    "exit": 0,
+    "seconds": 15.194,
+    "sha256": "c996fc41c19accf3d18600feade8dd444df0b72182e16d53c2a717fd8f8d2664"
+  }
+]

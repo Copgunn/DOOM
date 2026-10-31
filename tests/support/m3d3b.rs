@@ -294,7 +294,14 @@ pub fn rows(which: usize, op: usize) -> Vec<Row> {
     static ROWS: std::sync::OnceLock<Rows> = std::sync::OnceLock::new();
     ROWS.get_or_init(|| {
         let mut out = Rows::new();
-        for r in include_str!("../reference/m3d3b_trace.csv").lines() {
+        for r in doom_test_evidence::text(
+            "tests/reference/m3d3b_trace.csv",
+            include_bytes!("../reference/m3d3b_trace.csv.zst"),
+            include_str!("../reference/zstd_manifest.json"),
+        )
+        .expect("verified historical zstd evidence")
+        .lines()
+        {
             let mut c = r.split(',');
             let tag = c.next().unwrap().to_string();
             let which = c.next().unwrap().parse().unwrap();

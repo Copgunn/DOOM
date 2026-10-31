@@ -87,7 +87,8 @@ runtime is not implemented. The [roadmap](docs/ROADMAP.md) describes dependencie
 ## Getting started
 
 Install Rust through rustup. The workspace uses stable Rust and supports Rust
-1.85.0. From the repository root:
+1.85.0. Full workspace checks also need a host C compiler for the bundled
+test-only zstd library; no external zstd program is needed. From the repository root:
 
 ```sh
 cargo build --workspace --locked
@@ -140,6 +141,11 @@ outcomes. Read the [architecture guide](docs/ARCHITECTURE.md) and
 [documentation index](docs/README.md).
 
 ## Compatibility and validation
+
+Historical source traces use bounded offline zstd loading, and preview/execution
+share original weapon formulas. These maintenance changes preserve gameplay and
+DSIM bytes. See the [storage contract](docs/EVIDENCE_STORAGE.md) and
+[formula contract](docs/WEAPON_FORMULAS.md).
 
 Original id Software Linux DOOM 1.10 is the behavioral authority. Matching an
 isolated source slice does not establish whole-game or DOS demo compatibility.

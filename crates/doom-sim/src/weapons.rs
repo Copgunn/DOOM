@@ -537,19 +537,41 @@ pub(crate) fn original_player<H: Host>(
     Ok(machine.player)
 }
 
+// p_pspr.c P_GunShot/A_Punch: bounded i32 difference, explicit BAM wrapping.
+// Replaces the source's undefined negative signed left shift by multiplication.
+const SOURCE_SPREAD_SCALE: i32 = 1 << 18;
+fn source_spread(left: u8, right: u8) -> i32 {
+    (i32::from(left) - i32::from(right)) * SOURCE_SPREAD_SCALE
+}
+fn bullet_damage(value: u8) -> i32 {
+    5 * (i32::from(value) % 3 + 1)
+}
+fn punch_damage(value: u8) -> i32 {
+    2 * (i32::from(value) % 10 + 1)
+}
+fn spread_angle(angle: u32, random: &mut impl FnMut(u8) -> u8) -> u32 {
+    let left = random(1);
+    let right = random(2);
+    angle.wrapping_add_signed(source_spread(left, right))
+}
 /// Shared source P_GunShot ordering; caller supplies the existing gameplay RNG.
 pub(crate) fn gun_shot(
     angle: u32,
     accurate: bool,
     random: &mut impl FnMut(u8) -> u8,
 ) -> (u32, i32) {
-    let damage = 5 * (i32::from(random(0)) % 3 + 1);
-    let spread = if accurate {
-        0
+    let damage = bullet_damage(random(0));
+    let angle = if accurate {
+        angle
     } else {
-        (i32::from(random(1)) - i32::from(random(2))) * 262144
+        spread_angle(angle, random)
     };
-    (angle.wrapping_add_signed(spread), damage)
+    (angle, damage)
+}
+/// Unpowered A_Punch component; aim/impact remains the caller's source action.
+pub(crate) fn punch_shot(angle: u32, random: &mut impl FnMut(u8) -> u8) -> (u32, i32) {
+    let damage = punch_damage(random(0));
+    (spread_angle(angle, random), damage)
 }
 struct Preview<'a> {
     sim: &'a Simulation,
@@ -619,20 +641,13 @@ impl Host for Preview<'_> {
             }
         }
         for _ in 0..if w == Weapon::Shotgun { 7 } else { 1 } {
-            let (an, damage) = if matches!(w, Weapon::Pistol | Weapon::Chaingun) {
-                gun_shot(angle, accurate, &mut |_| self.rng.p_random())
+            let (an, damage) = if w == Weapon::Fist {
+                punch_shot(angle, &mut |_| self.rng.p_random())
             } else {
-                let r = self.rng.p_random();
-                let damage = if w == Weapon::Fist {
-                    2 * (i32::from(r) % 10 + 1)
-                } else {
-                    5 * (i32::from(r) % 3 + 1)
-                };
-                let l = self.rng.p_random();
-                let r = self.rng.p_random();
-                (
-                    angle.wrapping_add_signed((i32::from(l) - i32::from(r)) * 262144),
-                    damage,
+                gun_shot(
+                    angle,
+                    matches!(w, Weapon::Pistol | Weapon::Chaingun) && accurate,
+                    &mut |_| self.rng.p_random(),
                 )
             };
             if w == Weapon::Fist {
@@ -752,20 +767,13 @@ impl Host for Commit<'_> {
             }
         }
         for _ in 0..if w == Weapon::Shotgun { 7 } else { 1 } {
-            let (an, damage) = if matches!(w, Weapon::Pistol | Weapon::Chaingun) {
-                gun_shot(angle, accurate, &mut |kind| self.sim.weapon_random(kind))
+            let (an, damage) = if w == Weapon::Fist {
+                punch_shot(angle, &mut |kind| self.sim.weapon_random(kind))
             } else {
-                let r = self.sim.weapon_random(0);
-                let damage = if w == Weapon::Fist {
-                    2 * (i32::from(r) % 10 + 1)
-                } else {
-                    5 * (i32::from(r) % 3 + 1)
-                };
-                let l = self.sim.weapon_random(1);
-                let r = self.sim.weapon_random(2);
-                (
-                    angle.wrapping_add_signed((i32::from(l) - i32::from(r)) * 262144),
-                    damage,
+                gun_shot(
+                    angle,
+                    matches!(w, Weapon::Pistol | Weapon::Chaingun) && accurate,
+                    &mut |kind| self.sim.weapon_random(kind),
                 )
             };
             if w == Weapon::Fist {
@@ -1086,3 +1094,10 @@ impl Simulation {
 #[cfg(test)]
 #[path = "weapons_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "formula_tests.rs"]
+mod formula_tests;
+#[cfg(test)]
+#[path = "weapon_stage_cost_tests.rs"]
+mod weapon_stage_cost_tests;

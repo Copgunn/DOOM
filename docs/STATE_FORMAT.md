@@ -1322,3 +1322,10 @@ retain their meanings and occur between Message, Bonus and Result at source
 boundaries. Source-only inactive item-respawn queue PQ rows are excluded from
 DSIM, explicitly retained in original evidence. No respawn equivalence is claimed.
 PBE1/DREFLZ1 remain test-evidence framing/storage, not another runtime format.
+
+## Reference storage is outside DSIM
+
+Selected raw C trace CSVs use standard zstd framing at the test-loading boundary;
+this does not compress or redefine any DSIM payload. Every historical version,
+policy, reader and complete-byte fixture retains its old meaning. Existing
+DREFLZ1 evidence is unchanged. See [storage contract](EVIDENCE_STORAGE.md).

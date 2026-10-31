@@ -1,0 +1,3 @@
+DOOM_ALLOC_BEGIN
+DOOM_ALLOC_END
+player_world_pickups label=full_encounter mode=advance calls=512 warmup=0 ns=29322596 digest=491898a7e2e75e31

@@ -1,0 +1,538 @@
+{
+  "results": [
+    {
+      "instrumented": false,
+      "sample": 0,
+      "rows": [
+        {
+          "case": 0,
+          "stage": "preview",
+          "ns": 695300,
+          "digest": "7a098fd61af76c5d"
+        },
+        {
+          "case": 0,
+          "stage": "commit",
+          "ns": 975844,
+          "digest": "4a4381854d64729a"
+        },
+        {
+          "case": 5,
+          "stage": "preview",
+          "ns": 1628000,
+          "digest": "31af3603ab480ef6"
+        },
+        {
+          "case": 5,
+          "stage": "commit",
+          "ns": 2895124,
+          "digest": "9d40a105c0574e12"
+        },
+        {
+          "case": 23,
+          "stage": "preview",
+          "ns": 529654,
+          "digest": "4714bffffc9366c4"
+        },
+        {
+          "case": 23,
+          "stage": "commit",
+          "ns": 711923,
+          "digest": "bfe4d8d796105709"
+        },
+        {
+          "case": 24,
+          "stage": "preview",
+          "ns": 766164,
+          "digest": "2f6c000af26ef209"
+        },
+        {
+          "case": 24,
+          "stage": "commit",
+          "ns": 975534,
+          "digest": "6ac340f8efc9b121"
+        }
+      ],
+      "allocation_samples": [],
+      "max_rss_kib": 40452,
+      "log_sha256": "3c3586494073c75bdf149b10f97de22283da081ce56a9facf004600cb83b20c5"
+    },
+    {
+      "instrumented": false,
+      "sample": 1,
+      "rows": [
+        {
+          "case": 0,
+          "stage": "preview",
+          "ns": 615711,
+          "digest": "7a098fd61af76c5d"
+        },
+        {
+          "case": 0,
+          "stage": "commit",
+          "ns": 912871,
+          "digest": "4a4381854d64729a"
+        },
+        {
+          "case": 5,
+          "stage": "preview",
+          "ns": 1564445,
+          "digest": "31af3603ab480ef6"
+        },
+        {
+          "case": 5,
+          "stage": "commit",
+          "ns": 2973570,
+          "digest": "9d40a105c0574e12"
+        },
+        {
+          "case": 23,
+          "stage": "preview",
+          "ns": 546920,
+          "digest": "4714bffffc9366c4"
+        },
+        {
+          "case": 23,
+          "stage": "commit",
+          "ns": 816238,
+          "digest": "bfe4d8d796105709"
+        },
+        {
+          "case": 24,
+          "stage": "preview",
+          "ns": 745102,
+          "digest": "2f6c000af26ef209"
+        },
+        {
+          "case": 24,
+          "stage": "commit",
+          "ns": 977797,
+          "digest": "6ac340f8efc9b121"
+        }
+      ],
+      "allocation_samples": [],
+      "max_rss_kib": 40320,
+      "log_sha256": "3ce1e222e9fca0538c14b2b5d1cdf341bac491797ffce105b736a10c53f5c16c"
+    },
+    {
+      "instrumented": false,
+      "sample": 2,
+      "rows": [
+        {
+          "case": 0,
+          "stage": "preview",
+          "ns": 606748,
+          "digest": "7a098fd61af76c5d"
+        },
+        {
+          "case": 0,
+          "stage": "commit",
+          "ns": 902986,
+          "digest": "4a4381854d64729a"
+        },
+        {
+          "case": 5,
+          "stage": "preview",
+          "ns": 1690552,
+          "digest": "31af3603ab480ef6"
+        },
+        {
+          "case": 5,
+          "stage": "commit",
+          "ns": 2979520,
+          "digest": "9d40a105c0574e12"
+        },
+        {
+          "case": 23,
+          "stage": "preview",
+          "ns": 560139,
+          "digest": "4714bffffc9366c4"
+        },
+        {
+          "case": 23,
+          "stage": "commit",
+          "ns": 780905,
+          "digest": "bfe4d8d796105709"
+        },
+        {
+          "case": 24,
+          "stage": "preview",
+          "ns": 661258,
+          "digest": "2f6c000af26ef209"
+        },
+        {
+          "case": 24,
+          "stage": "commit",
+          "ns": 939631,
+          "digest": "6ac340f8efc9b121"
+        }
+      ],
+      "allocation_samples": [],
+      "max_rss_kib": 40388,
+      "log_sha256": "39fc4e9035e2ab48f85ea8069de73638b1b21b41eaed06ac64dcef488c3fbcd8"
+    },
+    {
+      "instrumented": true,
+      "sample": 0,
+      "rows": [
+        {
+          "case": 0,
+          "stage": "preview",
+          "ns": 610193,
+          "digest": "7a098fd61af76c5d"
+        },
+        {
+          "case": 0,
+          "stage": "commit",
+          "ns": 934443,
+          "digest": "4a4381854d64729a"
+        },
+        {
+          "case": 5,
+          "stage": "preview",
+          "ns": 1709630,
+          "digest": "31af3603ab480ef6"
+        },
+        {
+          "case": 5,
+          "stage": "commit",
+          "ns": 2896026,
+          "digest": "9d40a105c0574e12"
+        },
+        {
+          "case": 23,
+          "stage": "preview",
+          "ns": 543995,
+          "digest": "4714bffffc9366c4"
+        },
+        {
+          "case": 23,
+          "stage": "commit",
+          "ns": 735598,
+          "digest": "bfe4d8d796105709"
+        },
+        {
+          "case": 24,
+          "stage": "preview",
+          "ns": 687989,
+          "digest": "2f6c000af26ef209"
+        },
+        {
+          "case": 24,
+          "stage": "commit",
+          "ns": 927333,
+          "digest": "6ac340f8efc9b121"
+        }
+      ],
+      "allocation_samples": [
+        {
+          "calls": 9500,
+          "reallocs": 700,
+          "requested_bytes": 628800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 9900,
+          "reallocs": 1000,
+          "requested_bytes": 1366800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 28900,
+          "reallocs": 3300,
+          "requested_bytes": 1980800,
+          "frees": 28900,
+          "failures": 0
+        },
+        {
+          "calls": 31900,
+          "reallocs": 3600,
+          "requested_bytes": 5739600,
+          "frees": 29100,
+          "failures": 0
+        },
+        {
+          "calls": 9500,
+          "reallocs": 200,
+          "requested_bytes": 564800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 9900,
+          "reallocs": 500,
+          "requested_bytes": 1290800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 9500,
+          "reallocs": 700,
+          "requested_bytes": 628800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 10100,
+          "reallocs": 1100,
+          "requested_bytes": 2340100,
+          "frees": 9700,
+          "failures": 0
+        }
+      ],
+      "max_rss_kib": 40544,
+      "log_sha256": "a03c3001d33e7ed9846fcbac3fd7285b5613f1b21785230de92264e9d582ed74"
+    },
+    {
+      "instrumented": true,
+      "sample": 1,
+      "rows": [
+        {
+          "case": 0,
+          "stage": "preview",
+          "ns": 622451,
+          "digest": "7a098fd61af76c5d"
+        },
+        {
+          "case": 0,
+          "stage": "commit",
+          "ns": 982905,
+          "digest": "4a4381854d64729a"
+        },
+        {
+          "case": 5,
+          "stage": "preview",
+          "ns": 1677802,
+          "digest": "31af3603ab480ef6"
+        },
+        {
+          "case": 5,
+          "stage": "commit",
+          "ns": 3062282,
+          "digest": "9d40a105c0574e12"
+        },
+        {
+          "case": 23,
+          "stage": "preview",
+          "ns": 557034,
+          "digest": "4714bffffc9366c4"
+        },
+        {
+          "case": 23,
+          "stage": "commit",
+          "ns": 735899,
+          "digest": "bfe4d8d796105709"
+        },
+        {
+          "case": 24,
+          "stage": "preview",
+          "ns": 718273,
+          "digest": "2f6c000af26ef209"
+        },
+        {
+          "case": 24,
+          "stage": "commit",
+          "ns": 975784,
+          "digest": "6ac340f8efc9b121"
+        }
+      ],
+      "allocation_samples": [
+        {
+          "calls": 9500,
+          "reallocs": 700,
+          "requested_bytes": 628800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 9900,
+          "reallocs": 1000,
+          "requested_bytes": 1366800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 28900,
+          "reallocs": 3300,
+          "requested_bytes": 1980800,
+          "frees": 28900,
+          "failures": 0
+        },
+        {
+          "calls": 31900,
+          "reallocs": 3600,
+          "requested_bytes": 5739600,
+          "frees": 29100,
+          "failures": 0
+        },
+        {
+          "calls": 9500,
+          "reallocs": 200,
+          "requested_bytes": 564800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 9900,
+          "reallocs": 500,
+          "requested_bytes": 1290800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 9500,
+          "reallocs": 700,
+          "requested_bytes": 628800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 10100,
+          "reallocs": 1100,
+          "requested_bytes": 2340100,
+          "frees": 9700,
+          "failures": 0
+        }
+      ],
+      "max_rss_kib": 40452,
+      "log_sha256": "c2e65130a6b3bae510367f69206f626d2a4fd82797e604eaf90a3ba24e26310b"
+    },
+    {
+      "instrumented": true,
+      "sample": 2,
+      "rows": [
+        {
+          "case": 0,
+          "stage": "preview",
+          "ns": 608320,
+          "digest": "7a098fd61af76c5d"
+        },
+        {
+          "case": 0,
+          "stage": "commit",
+          "ns": 899582,
+          "digest": "4a4381854d64729a"
+        },
+        {
+          "case": 5,
+          "stage": "preview",
+          "ns": 1661649,
+          "digest": "31af3603ab480ef6"
+        },
+        {
+          "case": 5,
+          "stage": "commit",
+          "ns": 2804090,
+          "digest": "9d40a105c0574e12"
+        },
+        {
+          "case": 23,
+          "stage": "preview",
+          "ns": 623232,
+          "digest": "4714bffffc9366c4"
+        },
+        {
+          "case": 23,
+          "stage": "commit",
+          "ns": 773494,
+          "digest": "bfe4d8d796105709"
+        },
+        {
+          "case": 24,
+          "stage": "preview",
+          "ns": 703111,
+          "digest": "2f6c000af26ef209"
+        },
+        {
+          "case": 24,
+          "stage": "commit",
+          "ns": 946241,
+          "digest": "6ac340f8efc9b121"
+        }
+      ],
+      "allocation_samples": [
+        {
+          "calls": 9500,
+          "reallocs": 700,
+          "requested_bytes": 628800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 9900,
+          "reallocs": 1000,
+          "requested_bytes": 1366800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 28900,
+          "reallocs": 3300,
+          "requested_bytes": 1980800,
+          "frees": 28900,
+          "failures": 0
+        },
+        {
+          "calls": 31900,
+          "reallocs": 3600,
+          "requested_bytes": 5739600,
+          "frees": 29100,
+          "failures": 0
+        },
+        {
+          "calls": 9500,
+          "reallocs": 200,
+          "requested_bytes": 564800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 9900,
+          "reallocs": 500,
+          "requested_bytes": 1290800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 9500,
+          "reallocs": 700,
+          "requested_bytes": 628800,
+          "frees": 9500,
+          "failures": 0
+        },
+        {
+          "calls": 10100,
+          "reallocs": 1100,
+          "requested_bytes": 2340100,
+          "frees": 9700,
+          "failures": 0
+        }
+      ],
+      "max_rss_kib": 40452,
+      "log_sha256": "5beaa09480f6230f9a195ff79a55e09cfa5199477c168c80a387b3af451194c7"
+    }
+  ],
+  "controls": {
+    "--control": {
+      "calls": 0,
+      "reallocs": 0,
+      "requested_bytes": 0,
+      "frees": 0,
+      "failures": 0
+    },
+    "--probe": {
+      "calls": 1,
+      "reallocs": 0,
+      "requested_bytes": 4096,
+      "frees": 1,
+      "failures": 0
+    }
+  },
+  "host": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "harness_sha256": "3faf06e13dc4165f8971e0a2316414693d3217e489d1871b5d008ad6fe6b197e",
+  "commit": "138c66b6c6b6d57d0b18cf945d8661722741bd66",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)\nbinary: rustc\ncommit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67\ncommit-date: 2026-10-13\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.1\nLLVM version: 23.1.1\n",
+  "method": "Same private test harness on pinned baseline and after. Cases0/5/23/24: pistol/shotgun/fist/chaingun actual firing boundary found outside timing.100 independent worlds prepared outside each preview or already-preflighted commit interval; weapon stage only, not whole advance.3 timing and3 allocation processes, every process reports all8 stages. Whole-process native wait4 RSS includes setup/evidence. Baseline adds only cfg(test) module and shared fixture visibility; after includes identical instrumentation and zstd test loading. No CPU isolation or page-cache resets."
+}

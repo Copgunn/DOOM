@@ -1,0 +1,6 @@
+   Compiling doom-sim v0.1.0 (/workspace/doom-tools/maintenance-zstd/formula-baseline-worktree/crates/doom-sim)
+    Finished `release` profile [optimized] target(s) in 1.45s
+small_control {'before': 10648112, 'after': 11158237}
+sight {'before': 13779457, 'after': 14551591}
+fist_hit {'before': 5745565, 'after': 5586439}
+pickup_full_encounter {'before': 29536095, 'after': 29211611}

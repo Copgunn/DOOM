@@ -558,3 +558,14 @@ new allocator, global counter or second scheduler is introduced.
 See [support](COMPATIBILITY.md#original-world-pickups),
 [source matrix](M3G9_REFERENCE_INVESTIGATION.md) and
 [DSIM25](STATE_FORMAT.md#dsim-v25-original-world-pickups).
+
+## Test evidence and shared weapon arithmetic
+
+The isolated `doom-test-evidence` crate is a test/tool dependency; ordinary
+simulation stepping has no codec dependency or evidence-loading work. Its bounded
+immutable cache replaces selected embedded raw trace text at test boundaries.
+Frozen observers run unchanged in a copied decoded workspace. See
+[evidence storage](EVIDENCE_STORAGE.md). Historical preview/commit and genuine
+weapon execution reuse the same source-derived damage/spread helpers and their
+existing RNG adapters; player ownership, state-machine services and transactions
+remain authoritative. See [weapon formulas](WEAPON_FORMULAS.md).
