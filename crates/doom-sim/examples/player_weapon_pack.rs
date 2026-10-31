@@ -65,11 +65,16 @@ fn measure(label: &str, mode: &str) -> ResultHost<()> {
         "chaingun_death" => (29, 128),
         "fallback_priority" => (23, 0),
         "pending_precedence" => (24, 0),
-        "all_weapons" => (25, 0),
+        "opening_switch" | "full_encounter" => (25, 0),
         "two_way" => (25, 256),
         _ => return Err("unknown workload".into()),
     };
     let c = &source::cases()[index];
+    let calls = if label == "full_encounter" {
+        c.tics
+    } else {
+        CALLS
+    };
     let (mut sim, _) = source::setup(c);
     for op in 1..=warmup {
         sim.advance(if label == "idle" {
@@ -79,7 +84,7 @@ fn measure(label: &str, mode: &str) -> ResultHost<()> {
         })?;
     }
     let (result, time) = interval(|| -> Result<(), SimError> {
-        for op in warmup + 1..=warmup + CALLS {
+        for op in warmup + 1..=warmup + calls {
             let commands = if label == "idle" {
                 [TicCommand::default(); 4]
             } else {
@@ -95,7 +100,7 @@ fn measure(label: &str, mode: &str) -> ResultHost<()> {
     })?;
     result?;
     println!(
-        "player_weapon_pack label={label} mode={mode} calls={CALLS} warmup={warmup} ns={} digest={:016x}",
+        "player_weapon_pack label={label} mode={mode} calls={calls} warmup={warmup} ns={} digest={:016x}",
         time.as_nanos(),
         sim.snapshot().digest()
     );
