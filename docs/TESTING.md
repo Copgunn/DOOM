@@ -931,7 +931,7 @@ python3 tools/reference/m3g10_snapshot_goldens.py --check
 cargo test -p doom-sim armor_
 python3 tools/reference/check_player_armor.py
 python3 tools/seed_player_armor_fuzz.py /tmp/doom-armor-seeds
-ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_armor /tmp/doom-armor-seeds -- -runs=4096 -seed=441 -max_len=290 -timeout=15 -rss_limit_mb=1024
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_armor /tmp/doom-armor-seeds -- -runs=4096 -seed=461 -max_len=290 -timeout=15 -rss_limit_mb=1024
 python3 tools/measure_player_armor.py
 ```
 

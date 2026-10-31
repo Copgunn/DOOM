@@ -1,0 +1,148 @@
+{
+  "stage": "62aec48: focused revalidation after the metadata early gate; unchanged C/gameplay expectations.",
+  "campaigns": [
+    {
+      "target": "combat",
+      "seed": 465,
+      "initial_seeds": 1,
+      "input_byte_limit": 256,
+      "input_timeout_seconds": 15,
+      "rss_limit_mb": 1024,
+      "exit": 0,
+      "executions": 4096,
+      "wall_seconds": 24.208119210990844,
+      "libfuzzer_elapsed_seconds": 24,
+      "sanitizer": "Rust address; external C backend not instrumented in this build",
+      "ASAN_OPTIONS": "detect_leaks=0",
+      "binary_sha256": "5e02f4d2878d2e7e67bdc45320aeba1f8c962a20a22675da91d42ed7da2e6906",
+      "log_sha256": "e1bd373b748106610910b19565d1463fd1b36f4e437ba6920be1b9e7c18c5784",
+      "artifacts": 0,
+      "original_reported_seed": 415,
+      "seed_source": "Actual preserved libFuzzer INFO: Seed line; batch metadata offset corrected before publication.",
+      "initial_corpus_min_max_bytes": [
+        24,
+        24
+      ]
+    },
+    {
+      "target": "diagnostic_format",
+      "seed": 466,
+      "initial_seeds": 12,
+      "input_byte_limit": 131072,
+      "input_timeout_seconds": 15,
+      "rss_limit_mb": 1024,
+      "exit": 0,
+      "executions": 4096,
+      "wall_seconds": 1.0165099620062392,
+      "libfuzzer_elapsed_seconds": 0,
+      "sanitizer": "Rust address; external C backend not instrumented in this build",
+      "ASAN_OPTIONS": "detect_leaks=0",
+      "binary_sha256": "8776a76645af1c1a1285314bd6796596432cf487e47264436eb9ac07100ed96b",
+      "log_sha256": "7ea8fc7a3daa80befe1a6d2bd7cfc2ed59eb433f7ef9463815503880c1514eef",
+      "artifacts": 0,
+      "original_reported_seed": 416,
+      "seed_source": "Actual preserved libFuzzer INFO: Seed line; batch metadata offset corrected before publication.",
+      "initial_corpus_min_max_bytes": [
+        3,
+        88114
+      ]
+    },
+    {
+      "target": "game_instance",
+      "seed": 463,
+      "initial_seeds": 18,
+      "input_byte_limit": 256,
+      "input_timeout_seconds": 15,
+      "rss_limit_mb": 1024,
+      "exit": 0,
+      "executions": 4096,
+      "wall_seconds": 78.271743994992,
+      "libfuzzer_elapsed_seconds": 78,
+      "sanitizer": "Rust address; external C backend not instrumented in this build",
+      "ASAN_OPTIONS": "detect_leaks=0",
+      "binary_sha256": "f6ed2d50568d9f56acf71390f576e31160ee0551770b1fdadedb48a9e939ac2b",
+      "log_sha256": "1c6c1fb0a4214a507f7757c2ee04c18c26c7d06e07a8fcd7d9a4838831dff024",
+      "artifacts": 0,
+      "original_reported_seed": 413,
+      "seed_source": "Actual preserved libFuzzer INFO: Seed line; batch metadata offset corrected before publication.",
+      "initial_corpus_min_max_bytes": [
+        16,
+        96
+      ]
+    },
+    {
+      "target": "player_armor",
+      "seed": 461,
+      "initial_seeds": 264,
+      "input_byte_limit": 290,
+      "input_timeout_seconds": 15,
+      "rss_limit_mb": 1024,
+      "exit": 0,
+      "executions": 4096,
+      "wall_seconds": 280.48305904399604,
+      "libfuzzer_elapsed_seconds": 280,
+      "sanitizer": "Rust address; external C backend not instrumented in this build",
+      "ASAN_OPTIONS": "detect_leaks=0",
+      "binary_sha256": "5653228158e3ec11308fa4a6a860c7a1f07d005d434452a332c661905167fb83",
+      "log_sha256": "1edc0be38404487baddf3ec4669c621136ed08365bc9dadaab5c34903203d292",
+      "artifacts": 0,
+      "original_reported_seed": 411,
+      "seed_source": "Actual preserved libFuzzer INFO: Seed line; batch metadata offset corrected before publication.",
+      "initial_corpus_min_max_bytes": [
+        2,
+        290
+      ]
+    },
+    {
+      "target": "player_world_pickups",
+      "seed": 462,
+      "initial_seeds": 1038,
+      "input_byte_limit": 162,
+      "input_timeout_seconds": 15,
+      "rss_limit_mb": 1024,
+      "exit": 0,
+      "executions": 4096,
+      "wall_seconds": 329.50995424899156,
+      "libfuzzer_elapsed_seconds": 329,
+      "sanitizer": "Rust address; external C backend not instrumented in this build",
+      "ASAN_OPTIONS": "detect_leaks=0",
+      "binary_sha256": "93acce5471e7059ef91ef7331284a52953697feea4ba980f5ea042a1ee53645f",
+      "log_sha256": "7d13436149e8ea688f56311adb3b809d33fab29467b8ac2f6f5067f7084d4bab",
+      "artifacts": 0,
+      "original_reported_seed": 412,
+      "seed_source": "Actual preserved libFuzzer INFO: Seed line; batch metadata offset corrected before publication.",
+      "initial_corpus_min_max_bytes": [
+        12,
+        162
+      ]
+    },
+    {
+      "target": "stepping_equivalence",
+      "seed": 464,
+      "initial_seeds": 21,
+      "input_byte_limit": 129,
+      "input_timeout_seconds": 15,
+      "rss_limit_mb": 1024,
+      "exit": 0,
+      "executions": 4096,
+      "wall_seconds": 165.25660785200307,
+      "libfuzzer_elapsed_seconds": 165,
+      "sanitizer": "Rust address; external C backend not instrumented in this build",
+      "ASAN_OPTIONS": "detect_leaks=0",
+      "binary_sha256": "ec12139f70ce3e3c1b400ce3d4e0a36909150a4a014d467636e34080af5e28d2",
+      "log_sha256": "e1e3b88b4fb3ea9ca474bddf7106f687d44adde463011acfe638b6dba25557e7",
+      "artifacts": 0,
+      "original_reported_seed": 414,
+      "seed_source": "Actual preserved libFuzzer INFO: Seed line; batch metadata offset corrected before publication.",
+      "initial_corpus_min_max_bytes": [
+        41,
+        41
+      ]
+    }
+  ],
+  "executions": 24576,
+  "targets_built": 37,
+  "targets_executed": 6,
+  "leak_detection": false,
+  "native_codec_instrumented": false
+}

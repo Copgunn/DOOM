@@ -1,0 +1,327 @@
+[
+  {
+    "command": "python3 tools/reference/generate.py --check",
+    "exit": 0,
+    "seconds": 0.14351745598833077
+  },
+  {
+    "command": "python3 tools/reference/snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 0.025771231012186036
+  },
+  {
+    "command": "python3 tools/reference/generate_m3a.py --check",
+    "exit": 0,
+    "seconds": 0.15717009198851883
+  },
+  {
+    "command": "python3 tools/reference/m3a_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 0.033130897994851694
+  },
+  {
+    "command": "python3 tools/reference/generate_m3b.py --check",
+    "exit": 0,
+    "seconds": 0.2063476869952865
+  },
+  {
+    "command": "python3 tools/reference/m3b_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 0.06832254500477575
+  },
+  {
+    "command": "python3 tools/reference/generate_m3c.py --check",
+    "exit": 0,
+    "seconds": 0.19081402898882516
+  },
+  {
+    "command": "python3 tools/reference/m3c_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 0.9297885179985315
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d1.py --check",
+    "exit": 0,
+    "seconds": 0.2611996960185934
+  },
+  {
+    "command": "python3 tools/reference/m3d1_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 0.866047258983599
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d2.py --check",
+    "exit": 0,
+    "seconds": 0.3601619850087445
+  },
+  {
+    "command": "python3 tools/reference/m3d2_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 1.6166313610156067
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d2b.py --check",
+    "exit": 0,
+    "seconds": 0.3291084939846769
+  },
+  {
+    "command": "python3 tools/reference/m3d2b_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 2.213193277013488
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d3a.py --check",
+    "exit": 0,
+    "seconds": 0.44256127800326794
+  },
+  {
+    "command": "python3 tools/reference/m3d3a_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 17.972401006991277
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d3b.py --check",
+    "exit": 0,
+    "seconds": 0.32743207199382596
+  },
+  {
+    "command": "python3 tools/reference/m3d3b_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 42.23460940999212
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d3c.py --check",
+    "exit": 0,
+    "seconds": 0.3488309280073736
+  },
+  {
+    "command": "python3 tools/reference/m3d3c_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 80.42073939499096
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d3d.py --check",
+    "exit": 0,
+    "seconds": 0.3671506649989169
+  },
+  {
+    "command": "python3 tools/reference/m3d3d_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 21.238726771989604
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d3e.py --check",
+    "exit": 0,
+    "seconds": 0.4177860089985188
+  },
+  {
+    "command": "python3 tools/reference/m3d3e_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 19.61967983498471
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d3f.py --check",
+    "exit": 0,
+    "seconds": 0.430252838996239
+  },
+  {
+    "command": "python3 tools/reference/m3d3f_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 14.784058676013956
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d3g.py --check",
+    "exit": 0,
+    "seconds": 0.5953238219954073
+  },
+  {
+    "command": "python3 tools/reference/m3d3g_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 45.19150972200441
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d3h.py --check",
+    "exit": 0,
+    "seconds": 0.8805187880061567
+  },
+  {
+    "command": "python3 tools/reference/m3d3h_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 91.65448404900962
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d3i.py --check",
+    "exit": 0,
+    "seconds": 0.8474737389769871
+  },
+  {
+    "command": "python3 tools/reference/m3d3i_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 47.14405783600523
+  },
+  {
+    "command": "python3 tools/reference/generate_m3d3j.py --check",
+    "exit": 0,
+    "seconds": 0.9180996520153712
+  },
+  {
+    "command": "python3 tools/reference/m3d3j_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 68.5315018639958
+  },
+  {
+    "command": "python3 tools/reference/m3f1_reference.py --check",
+    "exit": 0,
+    "seconds": 3.5386253190226853
+  },
+  {
+    "command": "python3 tools/reference/m3f1_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 4.517366979009239
+  },
+  {
+    "command": "python3 tools/reference/m3f2_reference.py --check --overflow-check",
+    "exit": 0,
+    "seconds": 1.4863078519992996
+  },
+  {
+    "command": "python3 tools/reference/m3f2_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 6.034498400986195
+  },
+  {
+    "command": "python3 tools/reference/m3f3_reference.py --check --overflow-check --probe-undefined-angle",
+    "exit": 0,
+    "seconds": 45.03434282101807
+  },
+  {
+    "command": "python3 tools/reference/m3f3_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 196.7723821089894
+  },
+  {
+    "command": "python3 tools/reference/m3f3_clipping_reference.py --check --overflow-check",
+    "exit": 0,
+    "seconds": 5.428308845992433
+  },
+  {
+    "command": "python3 tools/reference/m3f3_clipping_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 9.035639059002278
+  },
+  {
+    "command": "ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3f4_reference.py --check --sanitize",
+    "exit": 0,
+    "seconds": 9.34720358098275
+  },
+  {
+    "command": "ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3f5_reference.py --check --overflow-check --address-check",
+    "exit": 0,
+    "seconds": 108.76316021499224
+  },
+  {
+    "command": "python3 tools/reference/m3f5_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 51.9071351979801
+  },
+  {
+    "command": "python3 tools/reference/m3f7_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 36.949815998988925
+  },
+  {
+    "command": "ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3f8_reference.py --check --overflow-check --address-check",
+    "exit": 0,
+    "seconds": 2.127870776981581
+  },
+  {
+    "command": "python3 tools/reference/m3f8_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 0.1542891610006336
+  },
+  {
+    "command": "ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g2_reference.py --check --overflow-check --address-check",
+    "exit": 0,
+    "seconds": 2.142960775003303
+  },
+  {
+    "command": "python3 tools/reference/m3g2_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 0.1702637909911573
+  },
+  {
+    "command": "ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g3_reference.py --check --overflow-check --address-check",
+    "exit": 0,
+    "seconds": 2.4979147250123788
+  },
+  {
+    "command": "python3 tools/reference/m3g3_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 0.29108945999178104
+  },
+  {
+    "command": "ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g4_reference.py --check --overflow-check --address-check",
+    "exit": 0,
+    "seconds": 3.7237770869978704
+  },
+  {
+    "command": "python3 tools/reference/m3g4_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 0.3679054509848356
+  },
+  {
+    "command": "ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g5_reference.py --check --overflow-check --address-check",
+    "exit": 0,
+    "seconds": 3.670490857999539
+  },
+  {
+    "command": "python3 tools/reference/m3g5_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 0.5209579579823185
+  },
+  {
+    "command": "ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g6_reference.py --check --overflow-check --address-check",
+    "exit": 0,
+    "seconds": 4.102693099994212
+  },
+  {
+    "command": "python3 tools/reference/m3g6_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 0.8001477490179241
+  },
+  {
+    "command": "ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g7_reference.py --check --overflow-check --address-check",
+    "exit": 0,
+    "seconds": 4.655323386978125
+  },
+  {
+    "command": "python3 tools/reference/m3g7_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 1.4741844139934983
+  },
+  {
+    "command": "python3 tools/reference/evidence_pack.py",
+    "exit": 0,
+    "seconds": 0.3471703290124424
+  },
+  {
+    "command": "ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g8_reference.py --check --overflow-check --address-check",
+    "exit": 0,
+    "seconds": 16.426925940002548
+  },
+  {
+    "command": "python3 tools/reference/m3g8_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 8.057607604016084
+  },
+  {
+    "command": "ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3g9_reference.py --check --overflow-check --address-check",
+    "exit": 0,
+    "seconds": 13.975731980986893
+  },
+  {
+    "command": "python3 tools/reference/m3g9_snapshot_goldens.py --check",
+    "exit": 0,
+    "seconds": 5.634388484002557
+  }
+]
