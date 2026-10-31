@@ -1,0 +1,30 @@
+{
+  "schema": "DOOM-WEAPON-FORMULA-v1",
+  "source_revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fwrapv",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char"
+  ],
+  "observer_sha256": "0d91f664ee265d3e900ea5b05c83246e57d0cf7dea4721c0cdac183a02ff1a80",
+  "source_sha256": "b47100f9c2c2c4f7913831c170bff55161af2d5d01f5467dbbc6be081c4f1af1",
+  "function_sha256": {
+    "P_GunShot": "e0b0c52da0c971c908b275c91ffb9e42ec9f46b55def72e23abd8fcb9ebb8ebb",
+    "A_Punch": "7a0c5c8382df4796e7dbf6ea7d0d9fd5d339da6ff4b91a70e22d3829602c2e5e"
+  },
+  "observations_sha256": "865df334dd2bb014ee44b5178c16c0434d80720867b8128d4bf9d4b0eb2d76a0",
+  "damage_inputs": 256,
+  "spread_pairs_per_body": 65536,
+  "starting_angles": [
+    0,
+    2147483648,
+    4294967295
+  ],
+  "function_entries_per_body": 196864,
+  "globally_new_source_bodies": 0,
+  "scope": "Inherited full source bodies, unpowered punch, no hit target, stubbed aim/line/sound. Explicit left-then-right draws and representable multiplication replace undefined negative signed spread shifts; unsigned angle accumulation wraps. Component arithmetic/draw evidence only, not trace, impact, combat or branch coverage."
+}
