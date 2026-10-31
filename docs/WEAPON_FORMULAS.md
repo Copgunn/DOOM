@@ -27,8 +27,9 @@ This maintenance adds no Berserk or unsupported weapon behavior.
 ## Independent component evidence
 
 [weapon_formulas_reference.py](../tools/reference/weapon_formulas_reference.py)
-extracts two complete original bodies. Its no-hit, unpowered harness stubs aim,
-line attack and unused sound/turn callbacks. Controlled input bytes independently
+extracts two complete original bodies. Minimal named-field player/mobj records
+expose the required angle/power fields; this is not the original structure ABI.
+The no-hit, unpowered harness stubs aim, line attack and unused sound/turn callbacks. Controlled input bytes independently
 produce the [damage rows and spread summaries](../tests/reference/weapon_formula_observations.csv),
 with [hashes and limits](../tests/reference/weapon_formula_contract.json).
 These expectations were committed before the helper consolidation.

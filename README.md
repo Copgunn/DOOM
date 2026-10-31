@@ -87,7 +87,8 @@ runtime is not implemented. The [roadmap](docs/ROADMAP.md) describes dependencie
 ## Getting started
 
 Install Rust through rustup. The workspace uses stable Rust and supports Rust
-1.85.0. From the repository root:
+1.85.0. Full workspace checks also need a host C compiler for the bundled
+test-only zstd library; no external zstd program is needed. From the repository root:
 
 ```sh
 cargo build --workspace --locked

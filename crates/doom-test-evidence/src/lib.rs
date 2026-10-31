@@ -1,16 +1,21 @@
 //! Offline test/tool evidence codec. Never a production simulation dependency.
-#![allow(missing_docs)]
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{fs::File, io::Read, path::Path, sync::OnceLock};
 
+/// Maximum decoded bytes accepted for one trace.
 pub const MAX_DECODED: usize = 32 * 1024 * 1024;
+/// Maximum compressed bytes accepted for one trace.
 pub const MAX_COMPRESSED: usize = 8 * 1024 * 1024;
+/// Maximum aggregate declared decode budgets in one catalog.
 pub const MAX_TOTAL: usize = 96 * 1024 * 1024;
+/// Maximum UTF-8 manifest bytes admitted before JSON parsing.
 pub const MAX_MANIFEST: usize = 128 * 1024;
+/// Immutable post-M3g9 Git object used by this migration contract.
 pub const BASELINE: &str = "138c66b6c6b6d57d0b18cf945d8661722741bd66";
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Error(pub &'static str);
+/// Deterministic checked evidence failure; never an executable-world error.
+pub struct Error(#[doc = "Stable failure category."] pub &'static str);
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.0)
@@ -19,6 +24,7 @@ impl std::fmt::Display for Error {
 impl std::error::Error for Error {}
 type Result<T> = std::result::Result<T, Error>;
 
+/// Return the lowercase SHA-256 identity of exact bytes.
 pub fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
@@ -40,30 +46,49 @@ fn filename(path: &str, suffix: &str) -> bool {
 }
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
+/// One original trace and its lossless compressed replacement.
 pub struct Entry {
+    /// Original repository-relative CSV path.
     pub original_path: String,
+    /// The original path with a .zst suffix.
     pub compressed_path: String,
+    /// Exact original byte length.
     pub original_length: usize,
+    /// Original exact-byte SHA-256 captured before transformation.
     pub original_sha256: String,
+    /// Original Git blob identity, independently audited against Git bytes.
     pub original_git_blob: String,
+    /// Exact single-frame byte length.
     pub compressed_length: usize,
+    /// Exact committed compressed-byte SHA-256.
     pub compressed_sha256: String,
+    /// Checked output allocation limit, at least original_length.
     pub decode_budget: usize,
+    /// Historical source-evidence family, not a gameplay capability.
     pub family: String,
 }
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
+/// Strict version-one migration catalog, separate from DSIM.
 pub struct Manifest {
+    /// Evidence catalog identifier; not a simulation schema.
     pub schema: String,
+    /// Immutable Git baseline for independent migration proof.
     pub baseline: String,
+    /// Pinned encoder identity.
     pub encoder: String,
+    /// Pinned deterministic settings.
     pub parameters: String,
+    /// Strictly ordered, unique bounded trace entries.
     pub entries: Vec<Entry>,
 }
+/// Pinned encoder and bundled native format implementation.
 pub const ENCODER: &str = "zstd crate 0.13.3; zstd-safe 7.3.0; libzstd 1.5.7";
+/// Exact deterministic encoding settings used for committed frames.
 pub const PARAMETERS: &str =
     "level=9,window_log=23,checksum=true,content_size=true,workers=0,dictionary=none";
 impl Manifest {
+    /// Validate schema, paths, identity syntax, order and resource budgets.
     pub fn parse(text: &str) -> Result<Self> {
         if text.len() > MAX_MANIFEST {
             return Err(Error("manifest budget"));
@@ -173,6 +198,7 @@ pub fn decode(data: &[u8], expected: usize, budget: usize) -> Result<Vec<u8>> {
     }
     Ok(out)
 }
+/// Verify compressed identity, decode exactly, then verify original identity.
 pub fn decode_entry(entry: &Entry, data: &[u8]) -> Result<Vec<u8>> {
     if data.len() != entry.compressed_length || sha256(data) != entry.compressed_sha256 {
         return Err(Error("compressed identity mismatch"));
@@ -224,6 +250,7 @@ pub fn read_bounded(path: &Path, limit: usize) -> Result<Vec<u8>> {
     }
     Ok(bytes)
 }
+/// Read one listed frame within its root and identity/resource limits.
 pub fn load(root: &Path, entry: &Entry) -> Result<Vec<u8>> {
     if !filename(&entry.compressed_path, ".csv.zst") {
         return Err(Error("unsafe path"));

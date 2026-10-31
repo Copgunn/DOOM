@@ -56,7 +56,7 @@ def verify_git(binary):
             assert before==after, e['original_path']
     # Check every historical source/evidence/helper/archive path against Git.
     names={Path(p).name for p in paths}; protected=0; adapters=[]
-    rows=checked(['git','ls-tree','-r',BASELINE,'--','ipx','sersrc','sndserv','linuxdoom-1.10','tests/reference','tests/support','tools/reference','docs/validation/archive','README.TXT','LICENSE.TXT'],capture_output=True).stdout.decode().splitlines()
+    rows=checked(['git','ls-tree','-r',BASELINE,'--','ipx','sersrc','sndserv','linuxdoom-1.10','tests/reference','tests/support','tools/reference','docs/validation','README.TXT','LICENSE.TXT'],capture_output=True).stdout.decode().splitlines()
     for row in rows:
         header,path=row.split('\t')
         if path in paths:

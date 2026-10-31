@@ -6,6 +6,13 @@ service is required after toolchain/dependency installation.
 
 ## Required Rust checks
 
+Full workspace builds/tests require a host C compiler (MSVC on Windows, or a
+supported C compiler on Linux/macOS) for bundled test/tool zstd. No system zstd
+installation, Clang/bindgen runtime, or zstd executable is required. Normal
+`cargo build -p doom-sim --locked` retains its Rust-only production dependency
+graph; the native codec is a dev/tool dependency. Original-C observers below
+separately require their documented GNU C host.
+
 ```sh
 cargo build --workspace --locked
 cargo fmt --all -- --check
