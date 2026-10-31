@@ -6,7 +6,10 @@ pub fn unpack(data: &[u8]) -> Result<Vec<u8>, &'static str> {
     {
         return Err("framing");
     }
-    let size = u32::from_le_bytes(data[8..12].try_into().map_err(|_| "size")?) as usize;
+    let size = usize::try_from(u32::from_le_bytes(
+        data[8..12].try_into().map_err(|_| "size")?,
+    ))
+    .map_err(|_| "size")?;
     if size > LIMIT {
         return Err("limit");
     }

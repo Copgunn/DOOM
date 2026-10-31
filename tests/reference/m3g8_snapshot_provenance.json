@@ -23,7 +23,7 @@
     "tools/reference/evidence_pack.py": "12854a2562cfc6407230b0b6d75491a2b2eea2303403e4dbbe5fff9379e84ffb",
     "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
     "tools/reference/m3g2_snapshot_goldens.py": "b65bbd286f22fb0ec0b2176cfbc339f0376a24ccfe4a91d537e5f672a3e8ceee",
-    "tools/reference/m3g8_snapshot_goldens.py": "15d155cf77555186872a4bf79193db40f82d07cb2170ff0e9a21a7f9160ba801",
+    "tools/reference/m3g8_snapshot_goldens.py": "eb18bb61c7a53ecbf309b62949ed922196b0f6902d5d2c35f10e88f32ecab999",
     "tools/reference/player_execution_snapshot.py": "98a5c4a37cc43ce901636cd6504f891dbad19e86440efeb25b4596e69800e336",
     "tools/reference/player_snapshot.py": "9524e70b09184766fc9aa10c8625e9849f8b59579165218cc1a1e66e90747c5c",
     "tools/reference/weapon_snapshot.py": "b2070f8fb12577cf4debb18abad1daa64b7d79d3770f3969ca2d5bcdfb97c67c"

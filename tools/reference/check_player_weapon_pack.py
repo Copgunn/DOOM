@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assert the genuine pistol combat example and debug/release output equality."""
+"""Assert the genuine four-weapon combat example and debug/release output equality."""
 import subprocess
 from pathlib import Path
 root=Path(__file__).resolve().parents[2]

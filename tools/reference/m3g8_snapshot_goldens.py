@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent DSIM24 pistol/player bytes, exclusively from compiled-C rows."""
+"""Independent DSIM24 four-weapon/player bytes, exclusively from compiled-C rows."""
 import argparse
 import csv
 import hashlib
@@ -52,7 +52,7 @@ def run(check):
             assert (ROOT/path).read_bytes() == data, path
         else:
             (ROOT/path).write_bytes(data)
-    print(f'{"Checked" if check else "Generated"} DSIM24 pistol: {inventory}; '
+    print(f'{"Checked" if check else "Generated"} DSIM24 four-weapon: {inventory}; '
           f'bytes={sum(map(len, outputs.values()))}')
 
 

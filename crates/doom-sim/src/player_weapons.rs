@@ -3,7 +3,7 @@ use crate::{identity::*, *};
 
 /// DSIM24 policy8: one genuine player, four original weapons, one map Demon.
 pub const PLAYER_DEMON_WEAPONS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-DEMON-1-MEDIUM-GROUNDED-WEAPONS-v1";
-/// Original wp_nochange (d_items.h); distinct from NUMWEAPONS.
+/// Original wp_nochange (doomdef.h); distinct from NUMWEAPONS.
 pub(crate) const NO_CHANGE: u8 = 10;
 
 /// Dynamic source weapon fields, without duplicate body, health or lifetime.
@@ -48,7 +48,7 @@ impl PlayerWeaponState {
     }
     pub(crate) fn adapter(self, id: ActorId, health: i32) -> WeaponPlayer {
         WeaponPlayer {
-            slot: 0,
+            slot: PlayerSlot::One.ordinal(),
             actor: id,
             health,
             ready: self.ready,
@@ -64,7 +64,10 @@ impl PlayerWeaponState {
         }
     }
     pub(crate) fn from_adapter(value: WeaponPlayer, id: ActorId) -> Result<Self, SimError> {
-        if value.actor != id || value.slot != 0 || value.max_ammo != weapons::AMMO_CAPACITIES {
+        if value.actor != id
+            || value.slot != PlayerSlot::One.ordinal()
+            || value.max_ammo != weapons::AMMO_CAPACITIES
+        {
             return Err(WeaponError::Inventory.into());
         }
         WeaponInventory {

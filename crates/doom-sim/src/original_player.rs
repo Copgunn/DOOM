@@ -158,11 +158,12 @@ pub enum PlayerBodyEvent {
         tactile: i32,
     },
     /// PST_DEAD/MF_SOLID clearing and P_DropWeapon's lowering request, before
-    /// body death-state entry. Psprite animation is explicitly not executed.
+    /// body death-state entry. Body-only policies observe the request; weapon
+    /// capabilities also execute source psprite lowering.
     Died {
         /// Source `frags[0]`.
         frags: i32,
-        /// Original requested pistol-down state, not an executable mobj state.
+        /// Original requested ready-weapon downstate, never a mobj state.
         weapon_down: OriginalState,
     },
 }

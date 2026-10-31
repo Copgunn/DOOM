@@ -1,4 +1,4 @@
-//! Genuine pistol inputs and independently committed source/schema evidence.
+//! Genuine four-weapon inputs and independently committed source/schema evidence.
 #![allow(dead_code)]
 // Frozen evidence readers are intentionally shared by independent test binaries.
 #[allow(clippy::duplicate_mod)]
