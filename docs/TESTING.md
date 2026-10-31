@@ -873,3 +873,20 @@ Compare the produced compressed SHA-256 with the manifest before replacing any
 artifact. This command pins bundled encoder version/parameters and verifies its
 own actual round trip. `migrate` is a one-time raw-tree operation; it deliberately
 fails when original raw files are absent.
+
+## Shared weapon formula validation
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/weapon_formulas_reference.py --check --sanitize
+cargo test -p doom-sim --lib formula_tests --locked
+cargo test -p doom-sim --lib legacy_weapon_stages --locked
+# Optional private stage-cost observations, separate from whole advance/step.
+DOOM_WEAPON_STAGE_COST=1 cargo test -p doom-sim --release --lib legacy_weapon_stages --locked -- --nocapture --test-threads=1
+```
+
+[Formula contract](WEAPON_FORMULAS.md) describes source arithmetic, shared callers
+and the bounded component observer. Run the full historical suite above as well;
+component hashes do not establish hitscan/combat or whole-weapon equivalence.
+The optional stage harness prepares 100 independent source-fixture worlds outside
+each interval and measures preview or already-preflighted weapon commit only.
+It is not a second gameplay loop, a production API or a whole-tic benchmark.
