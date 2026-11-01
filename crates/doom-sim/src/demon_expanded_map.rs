@@ -19,6 +19,7 @@ impl Simulation {
             options,
             context,
             Profile::DemonExpandedMap,
+            64,
         )
     }
     pub(crate) fn with_demon_expanded_profile(
@@ -28,6 +29,7 @@ impl Simulation {
         options: ActorOptions,
         context: MapContextOptions,
         profile: Profile,
+        actor_cap: u32,
     ) -> Result<Self, SimError> {
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
@@ -75,7 +77,7 @@ impl Simulation {
             max_actors: limit,
             ..Default::default()
         };
-        let work = map_extent::validate(&map, limits)?;
+        let work = map_extent::validate_with_actor_cap(&map, limits, actor_cap)?;
         let mut sim = Self::create_bounded(map, limit, profile, limits.max_prepared_references)?;
         sim.world.extent_sight_work = Some(work);
         if profile != Profile::OriginalDemon {
@@ -220,7 +222,7 @@ impl Simulation {
                 continue;
             }
             let actor = self.actor(id).unwrap();
-            sight::actor_bounds(actor)?;
+            sight::actor_bounds_within(actor, self.sight_margin())?;
             let life = actor.life.ok_or(MonsterError::Definition)?;
             if life.tics < -1 {
                 return Err(ActorError::InvalidState.into());
@@ -237,7 +239,12 @@ impl Simulation {
             {
                 return Err(MapSpawnError::Ownership.into());
             }
-            map_scale::bounded(actor.momentum().into_iter().chain([actor.momz]), 64)?;
+            if self.room().is_some() {
+                player_map_scale::momentum_admitted(actor.momentum())?;
+            } else {
+                map_scale::bounded(actor.momentum(), 64)?;
+            }
+            map_scale::bounded([actor.momz], 64)?;
         }
         self.preflight_player_body(stepping)?;
         self.preflight_monster_owner()?;
@@ -413,14 +420,18 @@ impl Simulation {
             return Err(error);
         }
         if command_policy {
-            player_commands::validate_result(&plan.actors, plan.player.as_deref())?;
+            player_commands::validate_result(&plan.actors, plan.player.as_ref())?;
             if weapon_policy {
                 for id in plan.actors.order() {
                     if let Some(actor) = plan.actors.get(id) {
                         if actor.life().is_some_and(|l| {
                             original_registry::is_policy_monster(self.player_policy(), l.actor_type)
                         }) {
-                            original_player::travel_bounds(actor.position(), actor.momentum())?;
+                            player_map_scale::travel_admitted(
+                                self.room(),
+                                actor.position(),
+                                actor.momentum(),
+                            )?;
                         }
                     }
                 }

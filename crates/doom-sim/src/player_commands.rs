@@ -86,6 +86,7 @@ impl Simulation {
                     | OriginalExecutionProfile::PlayerDemonBonusesV1
                     | OriginalExecutionProfile::PlayerMonstersV1
                     | OriginalExecutionProfile::PlayerMonstersImpV1
+                    | OriginalExecutionProfile::PlayerMonstersMapScaleV1
             ) {
                 BT_ATTACK | BT_CHANGE | BT_WEAPONMASK
             } else if p.policy == OriginalExecutionProfile::PlayerDemonPistolV1 {
@@ -110,6 +111,7 @@ impl Simulation {
                 | OriginalExecutionProfile::PlayerDemonBonusesV1
                 | OriginalExecutionProfile::PlayerMonstersV1
                 | OriginalExecutionProfile::PlayerMonstersImpV1
+                | OriginalExecutionProfile::PlayerMonstersMapScaleV1
         ) {
             player_weapons::validate_command(command)?;
         }
@@ -137,7 +139,14 @@ impl Simulation {
     }
 }
 
-fn attempt_bounds(actor: &Actor) -> Result<(), SimError> {
+fn attempt_bounds(
+    room: Option<crate::player_map_scale::RoomBounds>,
+    actor: &Actor,
+) -> Result<(), SimError> {
+    if room.is_some() {
+        // Walls bound the pass; only the momentum stays checked.
+        return crate::player_map_scale::travel_admitted(room, actor.position(), actor.momentum());
+    }
     let [x, y] = actor.momentum().map(|m| m.bits().unsigned_abs());
     let maximum = x.max(y);
     if maximum > original_player::MAX_MOVE_BITS {
@@ -169,6 +178,7 @@ pub(crate) fn stage<A: ActorAccess>(
     if player.mo != Some(id) || player.state != PlayerBodyState::Live {
         return Err(PlayerBodyError::Binding.into());
     }
+    let room = player.room;
     // The caller admitted this current nonpending handle before cloning the
     // existing bounded actor plan; no thinker/removal occurs before this stage.
     let actor = host.access.get_mut(id).ok_or(PlayerBodyError::Binding)?;
@@ -177,7 +187,7 @@ pub(crate) fn stage<A: ActorAccess>(
         return Err(PlayerBodyError::Invariant.into());
     }
     let moved = apply_player_motion(actor, command)?;
-    attempt_bounds(actor)?;
+    attempt_bounds(room, actor)?;
     let running = moved
         && (command.forward != 0 || command.side != 0)
         && actor
@@ -197,14 +207,20 @@ pub(crate) fn stage<A: ActorAccess>(
 
 pub(crate) fn validate_result(
     actors: &ThinkerStore<Actor>,
-    player: Option<&OriginalPlayer>,
+    player: Option<&original_player::PlayerRuntime>,
 ) -> Result<(), SimError> {
-    if let Some(id) = player.and_then(|p| p.mo) {
-        if actors.is_pending(id) == Some(false) {
-            let actor = actors.get(id).ok_or(PlayerBodyError::Invariant)?;
-            // Actual movement is executed once. This postcondition preserves
-            // the source-zero-command continuation instead of predicting it.
-            original_player::travel_bounds(actor.position(), actor.momentum())?;
+    if let Some(p) = player {
+        if let Some(id) = p.mo {
+            if actors.is_pending(id) == Some(false) {
+                let actor = actors.get(id).ok_or(PlayerBodyError::Invariant)?;
+                // Actual movement is executed once. This postcondition preserves
+                // the source-zero-command continuation instead of predicting it.
+                crate::player_map_scale::travel_admitted(
+                    p.room,
+                    actor.position(),
+                    actor.momentum(),
+                )?;
+            }
         }
     }
     Ok(())

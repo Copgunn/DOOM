@@ -114,7 +114,8 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
     let owner = host.access.get(id).ok_or(CombatError::Reference)?;
     let current = body.life().ok_or(PlayerBodyError::Invariant)?;
     if current.health > 0 && current.flags & original_player::MF_SHOOTABLE != 0 {
-        original_player::preflight_player_impulse(body, owner, amount)?;
+        let room = host.player.as_deref().and_then(|p| p.room);
+        original_player::preflight_player_impulse(room, body, owner, amount)?;
     }
     let damage = crate::combat::DamagePlan::current_armored_body(
         host.registry,

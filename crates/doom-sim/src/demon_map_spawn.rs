@@ -86,7 +86,7 @@ impl Simulation {
             if self.player_policy().has_world_pickups()
                 && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
             {
-                world_pickups::validate_item(a)?;
+                world_pickups::validate_item(self.room(), a)?;
                 // P_KillMobj drops are appended after the player/impact suffix.
                 let dropped = self.player_policy().has_monsters()
                     && life.flags & world_pickups::MF_DROPPED != 0;
@@ -105,7 +105,7 @@ impl Simulation {
                 }
             } else {
                 suffix = true;
-                if a.position().iter().any(|v| !crate::sight::within(*v, 994)) {
+                if !self.position_admitted(a.position(), 994) {
                     return Err(MonsterError::Arithmetic.into());
                 }
                 if life.actor_type == self.demon_body_type()

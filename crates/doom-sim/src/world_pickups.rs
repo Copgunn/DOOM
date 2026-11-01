@@ -285,7 +285,10 @@ pub(crate) fn validate_definition(ty: ActorTypeId) -> Result<(), SimError> {
     }
     Ok(())
 }
-pub(crate) fn validate_item(a: Actor) -> Result<(), SimError> {
+pub(crate) fn validate_item(
+    room: Option<crate::player_map_scale::RoomBounds>,
+    a: Actor,
+) -> Result<(), SimError> {
     let l = a.life().ok_or(ActorError::InvalidType)?;
     let k = kind(l.actor_type).ok_or(ActorError::InvalidType)?;
     validate_definition(l.actor_type)?;
@@ -318,7 +321,7 @@ pub(crate) fn validate_item(a: Actor) -> Result<(), SimError> {
         || a.z != a.floor
         || a.floor != Fixed::ZERO
         || a.ceiling != Fixed::from_map_units(128)
-        || a.position().iter().any(|v| !sight::within(*v, 978))
+        || !crate::player_map_scale::position_admitted(room, a.position(), 978)
         || l.flags & !(k.definition_flags() | MF_AMBUSH | MF_DROPPED) != 0
         || l.flags & k.definition_flags() != k.definition_flags()
         || (dropped && (!k.can_drop() || l.spawnpoint.is_some() || l.flags & MF_AMBUSH != 0))
@@ -460,7 +463,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
             if body.life().is_none_or(|v| v.flags & MF_PICKUP == 0) {
                 continue;
             }
-            validate_item(item)?;
+            validate_item(self.player.room, item)?;
             let k = kind_for(self.player.policy, l.actor_type).ok_or(ActorError::InvalidType)?;
             let delta = item.z - body.z;
             let health = body.life().ok_or(ActorError::InvalidType)?.health;
@@ -705,7 +708,7 @@ impl Simulation {
             {
                 count += 1;
                 counted += usize::from(a.life().is_some_and(|l| l.flags & MF_COUNTITEM != 0));
-                validate_item(a)?;
+                validate_item(self.room(), a)?;
             }
         }
         if self.player_policy().has_player_bonuses() {
@@ -759,7 +762,11 @@ impl Simulation {
         if items >= MAX_WORLD_PICKUPS {
             return Err(MapSpawnError::WorkLimit.into());
         }
-        if position.iter().any(|v| !sight::within(*v, 978)) {
+        if !self.spawn_admitted(
+            position,
+            Fixed::from_bits(k.original_type().descriptor().radius),
+            978,
+        ) {
             return Err(MonsterError::Arithmetic.into());
         }
         self.reserve_actor_spawns(1)?;

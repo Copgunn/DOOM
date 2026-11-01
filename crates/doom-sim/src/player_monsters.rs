@@ -14,6 +14,10 @@ pub const MAX_PLAYER_MONSTERS: usize = 8;
 /// Explicit original Imp/fireball execution context; older contexts stay frozen.
 pub const PLAYER_IMPS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-IMPS-1-MEDIUM-GROUNDED-v1";
 
+/// Explicit real-map-scale execution context; older contexts stay frozen.
+pub const PLAYER_MAP_SCALE_CONTEXT_SCHEMA: &[u8] =
+    b"PLAYER-MONSTERS-MAP-SCALE-1-MEDIUM-GROUNDED-v1";
+
 impl Simulation {
     /// Autonomous roster member: the native/original Demon owner or a policy
     /// monster (former humans, and under `PlayerMonstersImpV1` the Imp).
@@ -48,6 +52,23 @@ impl Simulation {
             map,
             limit,
             OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersImpV1)?,
+            ActorOptions::default(),
+            context,
+        )
+        .map_err(Into::into)
+    }
+    /// The Imp world inside a walled rectangle of up to 2,048 units: travel bounds
+    /// derived from the loaded walls, `MAP_SCALE_ACTOR_SLOTS` slots and
+    /// `MAP_SCALE_MAX_LIVE_PROJECTILES` live fireballs. Geometry outside the proven
+    /// domain is rejected here, never during play.
+    pub fn original_player_map_scale_map(
+        map: Map,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        Self::with_original_registry(
+            map,
+            crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS,
+            OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersMapScaleV1)?,
             ActorOptions::default(),
             context,
         )

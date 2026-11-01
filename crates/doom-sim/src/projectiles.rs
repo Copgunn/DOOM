@@ -433,7 +433,10 @@ pub(crate) fn launch_fireball<A: lifecycle::ActorAccess>(
     source: ActorId,
     dest: ActorId,
 ) -> Result<(), SimError> {
-    if h.access.live_of_type(FIREBALL) >= MAX_LIVE_PROJECTILES {
+    let bound = h.player.as_deref().map_or(MAX_LIVE_PROJECTILES, |p| {
+        crate::player_map_scale::live_projectile_bound(p.policy)
+    });
+    if h.access.live_of_type(FIREBALL) >= bound {
         return Err(ProjectileError::WorkLimit.into());
     }
     h.access.reserve(1)?;
@@ -667,7 +670,7 @@ impl Simulation {
         if !self.player_policy().has_imps() {
             return Ok(());
         }
-        if self.actors.live_of_type(FIREBALL) > MAX_LIVE_PROJECTILES {
+        if self.actors.live_of_type(FIREBALL) > self.live_projectile_bound() {
             return Err(ProjectileError::WorkLimit.into());
         }
         for id in self.actors.order() {
