@@ -203,6 +203,7 @@ impl DamagePlan {
         actor: Actor,
         request: DamageRequest,
         armor: Option<PlayerArmorState>,
+        policy: OriginalExecutionProfile,
     ) -> Result<Self, SimError> {
         let life = actor.life().ok_or(CombatError::Metadata)?;
         let ignored = life.flags & original_player::MF_SHOOTABLE == 0 || life.health <= 0;
@@ -210,7 +211,7 @@ impl DamagePlan {
             None
         } else {
             armor
-                .map(|a| ArmorEvent::plan(request.target, request.amount, a))
+                .map(|a| ArmorEvent::plan_for(policy, request.target, request.amount, a))
                 .transpose()?
         };
         let after = if ignored {
@@ -298,7 +299,13 @@ impl DamagePlan {
         actor: Actor,
         request: DamageRequest,
     ) -> Result<Self, SimError> {
-        Self::current_armored_body(registry, actor, request, None)
+        Self::current_armored_body(
+            registry,
+            actor,
+            request,
+            None,
+            OriginalExecutionProfile::DemonNormalV1,
+        )
     }
     /// Same shared plan, with source armor owned by the current genuine player.
     pub(crate) fn current_armored_body(
@@ -306,8 +313,9 @@ impl DamagePlan {
         actor: Actor,
         request: DamageRequest,
         armor: Option<PlayerArmorState>,
+        policy: OriginalExecutionProfile,
     ) -> Result<Self, SimError> {
-        let plan = Self::start(actor, request, armor)?;
+        let plan = Self::start(actor, request, armor, policy)?;
         if plan.ignored {
             return Ok(plan);
         }
@@ -494,7 +502,7 @@ impl Simulation {
             .as_ref()
             .filter(|p| p.mo == Some(request.target))
             .and_then(|p| p.armor);
-        let mut plan = DamagePlan::start(actor, request, armor)?;
+        let mut plan = DamagePlan::start(actor, request, armor, self.player_policy())?;
         if plan.ignored {
             return Ok(plan);
         }

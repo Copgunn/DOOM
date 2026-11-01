@@ -280,3 +280,10 @@ path = "fuzz_targets/player_armor.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_bonuses"
+path = "fuzz_targets/player_bonuses.rs"
+test = false
+doc = false
+bench = false

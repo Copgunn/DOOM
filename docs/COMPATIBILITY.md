@@ -1196,8 +1196,46 @@ Real source-derived encounters collect armor before autonomous melee, fire actua
 weapon commands, collect healing/ammo/weapons under pressure, deplete armor and
 reach player or Demon death. The harness is the declared bounded command/weapon
 stage before original thinkers, not complete PlayerThink/Ticker/DeathThink.
-No armor/health bonuses, powers, god mode, Baby scaling, special-sector damage,
-telefrag system, new weapons/monsters, respawn, multiplayer, general airborne or
-dynamic geometry are admitted. Existing reverse-thrust RNG is unreachable in this
-grounded domain. See [source qualifications](M3G10_REFERENCE_INVESTIGATION.md)
-and [observed evidence](validation/M3G10.md).
+This policy admits no armor/health bonuses (see the separate
+[bonus capability](#original-health-and-armor-bonuses)), powers, god mode, Baby
+scaling, special-sector damage, telefrag system, new weapons/monsters, respawn,
+multiplayer, general airborne or dynamic geometry. Existing reverse-thrust RNG is
+unreachable in this grounded domain. See
+[source qualifications](M3G10_REFERENCE_INVESTIGATION.md) and
+[observed evidence](validation/M3G10.md).
+
+## Original health and armor bonuses
+
+`PlayerDemonBonusesV1` (wire11, context
+`PLAYER-DEMON-1-MEDIUM-GROUNDED-BONUSES-v1`, DSIM-v27) is a separate opt-in
+superset of the armor world. Select it with `Simulation::original_player_bonuses_map`.
+The same single player0, at most one map MT_SERGEANT=12, four weapons, 16 world
+items, 64 actor slots, Medium/commercial settings, grounded static geometry and
+transaction guarantees apply. Older policies, wires and DSIM20–26 are unchanged and
+continue to reject bonus items.
+
+New executable items are MT_MISC2=45/DoomEd2014 (health bonus, SPR_BON1) and
+MT_MISC3=46/DoomEd2015 (armor bonus, SPR_BON2). Both use their real six-state
+loops (816–821 and 822–827): six tics per state, frames 0,1,2,3,2,1, no actions,
+flags SPECIAL|COUNTITEM. Map spawning draws the source lastlook and one positive
+timer randomization per placed item, in THING order; animation draws no RNG.
+
+On contact, a health bonus adds 1 health up to 200 and syncs the body's health; an
+armor bonus adds 1 point up to 200 and sets green type only when the player had
+none. Bonuses are always collected, even at the cap. Ordinary items keep their
+rules: stimpacks/medikits still refuse at 100+, and green/blue grants still compare
+current points to 100/200. Under this policy only, green armor may exceed 100 and
+still absorbs one third.
+
+Bonus items are the only admitted COUNTITEM actors. `level.total_items` counts
+filtered placed bonuses at spawn and never decreases; the player's `item_count`
+increases after the pickup message and before removal, matching
+`P_TouchSpecialThing`. Recoverable failures roll back RNG, statistics, player
+state, spatial links and events together.
+
+Soulspheres, MegaSpheres, powers, keys, backpacks, item respawn, dropped bonuses,
+new weapons/monsters, multiplayer and dynamic geometry remain excluded. Physical
+component T40's post-hit result (raw 300 damage exceeding the 30-unit momentum
+admission) stays source-only; its pickup is compared and the hit is atomically
+rejected. See [source investigation](M3G11_REFERENCE_INVESTIGATION.md) and
+[observed evidence](validation/M3G11.md).

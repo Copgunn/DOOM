@@ -79,14 +79,26 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3g10: Original armor, damage absorption and sustained combat
+### M3g11: Original health/armor bonuses and counted items
 
-The separately selected PlayerDemonArmorV1 composes genuine animated green/blue
-world armor with the existing player, weapons, contacts and autonomous Demon.
-Source-derived grants and shared damage planning retain raw thrust, effective
-health damage, depletion, pain/death and transactional rollback. DSIM26 adds only
-the necessary armor fields and observations. This branch stops at owner review;
-exact commits and CI belong to GitHub. See [source investigation](M3G10_REFERENCE_INVESTIGATION.md),
+The separately selected PlayerDemonBonusesV1 adds genuine animated health and
+armor bonuses to the armor world. Bonuses use their real six-state loops, raise
+health and armor by one up to 200, credit COUNTITEM statistics and share the
+existing player, contact, damage and transaction owners. Ordinary healing and
+armor grants keep their thresholds. DSIM27 adds no persistent field, only
+widened item/resource ranges and new observations. This branch stops at owner
+review; exact commits and CI belong to GitHub. See
+[source investigation](M3G11_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-health-and-armor-bonuses) and
+[observations](validation/M3G11.md).
+
+### Previous gameplay foundation — M3g10: Original armor, damage absorption and sustained combat
+
+PlayerDemonArmorV1 composes genuine animated green/blue world armor with the
+existing player, weapons, contacts and autonomous Demon, using shared damage
+planning for absorption, depletion and rollback with DSIM26. M3g10 is merged;
+exact review/CI state belongs to GitHub. See
+[source investigation](M3G10_REFERENCE_INVESTIGATION.md),
 [support](COMPATIBILITY.md#original-armor-and-damage-absorption) and
 [observations](validation/M3G10.md).
 
@@ -135,10 +147,11 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Prioritize independently validated original health and armor bonuses: genuine
-animated actors, source caps and pickup ordering using these same services.
-Require source-first observations, unchanged ordinary green/blue grants and
-measured sustained encounters. This is future work, not admission in M3g10.
+Prioritize the original soulsphere and MegaSphere: animated COUNTITEM actors whose
+health/armor effects reuse the bonus caps, statistics and transaction owners added
+in M3g11. Require source-first observations, unchanged bonus and ordinary grant
+contracts and measured sustained encounters. This is future work, not admission
+in M3g11.
 
 ### Focused maintenance acceptance criteria
 

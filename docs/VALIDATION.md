@@ -202,3 +202,5 @@ See [source qualification](M3G9_REFERENCE_INVESTIGATION.md) and
 
 - [M3g10 armor and sustained combat](validation/M3G10.md): real animated armor,
   source grants/absorption, independent DSIM26 and separately labeled Rust safety.
+- [M3g11 health/armor bonuses](validation/M3G11.md): animated bonuses, COUNTITEM
+  statistics, independent DSIM27, matched timings and bounded ASan fuzz campaigns.

@@ -253,6 +253,23 @@ fn event_bytes(event: &Event) -> Vec<u8> {
                     b.extend(id(*item));
                     b.push(*outcome as u8);
                 }
+                Counted(before, after) => {
+                    b.push(10);
+                    b.extend(before.to_le_bytes());
+                    b.extend(after.to_le_bytes());
+                }
+                HealthBonus(before, after, body) => {
+                    b.push(8);
+                    b.extend(before.to_le_bytes());
+                    b.extend(after.to_le_bytes());
+                    b.extend(body.to_le_bytes());
+                }
+                ArmorBonus(before, after) => {
+                    b.extend([9, before.kind.wire_id()]);
+                    b.extend(before.points.to_le_bytes());
+                    b.push(after.kind.wire_id());
+                    b.extend(after.points.to_le_bytes());
+                }
                 Armor(requested, accepted, before, after) => {
                     b.extend([
                         7,
@@ -427,6 +444,7 @@ fn event_bytes(event: &Event) -> Vec<u8> {
         Event::Statistics(event) => {
             let (kind, actor, total) = match event {
                 crate::StatisticsEvent::MapKillTotal { actor, total } => (0, *actor, *total),
+                crate::StatisticsEvent::MapItemTotal { actor, total } => (2, *actor, *total),
                 crate::StatisticsEvent::SinglePlayerKill { actor, total } => (1, *actor, *total),
             };
             b.extend([21, kind]);
@@ -523,7 +541,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::MapExtent => 19,
         crate::Profile::DemonExpandedMap => 20,
         crate::Profile::OriginalDemon => {
-            if sim.player_policy() == OriginalExecutionProfile::PlayerDemonArmorV1 {
+            if sim.player_policy().has_player_bonuses() {
+                27
+            } else if sim.player_policy() == OriginalExecutionProfile::PlayerDemonArmorV1 {
                 26
             } else if sim.player_policy() == OriginalExecutionProfile::PlayerDemonPickupsV1 {
                 25
@@ -541,7 +561,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     // Versions18/19 explicitly compose the untyped static-sector field layout.
     let layout = if matches!(version, 18 | 19) {
         3
-    } else if matches!(version, 20..=26) {
+    } else if matches!(version, 20..=27) {
         17
     } else {
         version
@@ -549,14 +569,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     field(
         &mut fields,
         "profile",
-        (if matches!(version, 21..=26) {
+        (if matches!(version, 21..=27) {
             sim.player_policy().wire_id()
         } else {
             version
         })
         .to_le_bytes(),
     );
-    if matches!(version, 21..=26) {
+    if matches!(version, 21..=27) {
         field(
             &mut fields,
             "registry.schema",
@@ -817,7 +837,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(layout, 8..=17) && !matches!(version, 22..=26) {
+    if matches!(layout, 8..=17) && !matches!(version, 22..=27) {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,
@@ -871,14 +891,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .and_then(|p| p.weapon.and_then(|w| w.pistol())),
         );
     }
-    if matches!(version, 24..=26) {
+    if matches!(version, 24..=27) {
         pack_fields(
             &mut fields,
             sim.original_player
                 .and_then(|p| p.weapon.and_then(|w| w.pack())),
         );
     }
-    if matches!(version, 25 | 26) {
+    if matches!(version, 25..=27) {
         let state = sim.original_player.and_then(|p| p.pickups);
         field(
             &mut fields,
@@ -903,7 +923,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             );
         }
     }
-    if version == 26 {
+    if matches!(version, 26 | 27) {
         if let Some(armor) = sim.original_player.and_then(|p| p.armor) {
             field(
                 &mut fields,

@@ -405,3 +405,14 @@ instance handle. Its points belong to the existing player, never item metadata.
 Old policies retain their distinct role gates. See
 [support](COMPATIBILITY.md#original-armor-and-damage-absorption) and
 [source investigation](M3G10_REFERENCE_INVESTIGATION.md).
+
+## Original bonus execution boundary
+
+PlayerDemonBonusesV1 adds canonical MT_MISC2=45/DoomEd2014 (health bonus) and
+MT_MISC3=46/DoomEd2015 (armor bonus) as genuine map items, using existing actor
+ownership and their real six-state loops S_BON1..S_BON1E=816..821 and
+S_BON2..S_BON2E=822..827 with sprites BON1/BON2=60/61. Both definitions are
+SPECIAL|COUNTITEM. Registry metadata still does not admit soulspheres, MegaSpheres
+or powers. Earlier policies reject both bonus types. See
+[support](COMPATIBILITY.md#original-health-and-armor-bonuses) and
+[source investigation](M3G11_REFERENCE_INVESTIGATION.md).

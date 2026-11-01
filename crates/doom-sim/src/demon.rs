@@ -123,6 +123,10 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
             amount,
         },
         host.player.as_deref().and_then(|p| p.armor),
+        host.player
+            .as_deref()
+            .ok_or(PlayerBodyError::Binding)?
+            .policy,
     )?;
     if damage.spawn_count() != 0 {
         return Err(CombatError::WorkLimit.into());

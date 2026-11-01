@@ -477,17 +477,58 @@ impl Simulation {
                 .checked_add(count)
                 .ok_or(MapSpawnError::StatisticsOverflow)?;
         }
-        self.reserve_actor_spawns(selected.len())?;
-        // No recoverable operation follows reservation: all selected definitions
-        // were validated together. This preserves batch failure atomicity.
-        for (thing, ty) in selected {
-            let info = self.registry.as_deref().unwrap().actor_type(ty).unwrap();
-            let height = if info.flags() & 256 != 0 {
-                SpawnHeight::Ceiling
-            } else {
-                SpawnHeight::Floor
-            };
-            let id = LifeHost {
+        if self.player_policy().has_player_bonuses() {
+            let total = self
+                .statistics
+                .ok_or(PlayerBodyError::Invariant)?
+                .total_items;
+            let count = selected
+                .iter()
+                .filter(|(_, ty)| {
+                    registry
+                        .actor_type(*ty)
+                        .is_some_and(|t| t.flags() & world_pickups::MF_COUNTITEM != 0)
+                })
+                .count();
+            let count = i32::try_from(count).map_err(|_| MapSpawnError::StatisticsOverflow)?;
+            if !(0..=MAX_WORLD_PICKUPS as i32).contains(&total)
+                || total
+                    .checked_add(count)
+                    .is_none_or(|n| n > MAX_WORLD_PICKUPS as i32)
+            {
+                return Err(MapSpawnError::StatisticsOverflow.into());
+            }
+            report.spawned = self.checked_map_spawn_batch(selected.len(), |host| {
+                let mut ids = line_work::reserved(selected.len())?;
+                for (thing, ty) in selected {
+                    ids.push(host.spawn_placed_thing(thing, ty, true));
+                    #[cfg(test)]
+                    BONUS_MAP_FAIL_AFTER.with(|counter| {
+                        if let Some(left) = counter.get() {
+                            if left <= 1 {
+                                counter.set(None);
+                                let last = *ids.last().unwrap();
+                                BONUS_MAP_FAILURE_OBSERVATION.with(|o| {
+                                    o.set(Some((
+                                        host.rng.indices()[0],
+                                        host.statistics.as_ref().unwrap().total_items,
+                                        host.access.order().count(),
+                                        host.access.get(last).unwrap().life().unwrap().tics,
+                                    )))
+                                });
+                                return Err(MapSpawnError::WorkLimit.into());
+                            }
+                            counter.set(Some(left - 1));
+                        }
+                        Ok::<(), SimError>(())
+                    })?;
+                }
+                Ok(ids)
+            })?;
+        } else {
+            self.reserve_actor_spawns(selected.len())?;
+            // Legacy batches still have no recoverable work after reservation.
+            let mut host = LifeHost {
                 player: None,
                 statistics: self.statistics.as_mut(),
                 perception: None,
@@ -500,40 +541,73 @@ impl Simulation {
                 spatial: &mut self.spatial,
                 bindings: &mut self.bindings,
                 events: &mut self.pending,
+            };
+            for (thing, ty) in selected {
+                report
+                    .spawned
+                    .push(host.spawn_placed_thing(thing, ty, false));
             }
-            .spawn(
-                ty,
-                [
-                    Fixed::from_map_units(thing.position.x),
-                    Fixed::from_map_units(thing.position.y),
-                ],
-                height,
-            );
-            let actor = self.actors.get_mut(id).unwrap();
-            let life = actor.life.as_mut().unwrap();
-            life.spawnpoint = Some(thing);
-            if life.tics > 0 {
-                life.tics = 1 + i32::from(self.rng.p_random()) % life.tics;
-            }
-            if let Some(stats) = self
-                .statistics
-                .as_mut()
-                .filter(|_| life.flags & world_pickups::MF_COUNTKILL != 0)
-            {
-                // Entire batch addition was proved before allocation or RNG.
+        }
+        Ok(report)
+    }
+}
+
+impl<A: lifecycle::ActorAccess> LifeHost<'_, A> {
+    // All definitions and complete counter additions are proved before calling.
+    // Both legacy and staged batches use this one original placement service.
+    fn spawn_placed_thing(
+        &mut self,
+        thing: doom_map::Thing,
+        ty: ActorTypeId,
+        count_items: bool,
+    ) -> ActorId {
+        let info = self.registry.actor_type(ty).unwrap();
+        let height = if info.flags() & 256 != 0 {
+            SpawnHeight::Ceiling
+        } else {
+            SpawnHeight::Floor
+        };
+        let id = self.spawn(
+            ty,
+            [
+                Fixed::from_map_units(thing.position.x),
+                Fixed::from_map_units(thing.position.y),
+            ],
+            height,
+        );
+        let actor = self.access.get_mut(id).unwrap();
+        let life = actor.life.as_mut().unwrap();
+        life.spawnpoint = Some(thing);
+        if life.tics > 0 {
+            life.tics = 1 + i32::from(self.rng.p_random()) % life.tics;
+        }
+        if let Some(stats) = self.statistics.as_deref_mut() {
+            if life.flags & world_pickups::MF_COUNTKILL != 0 {
                 stats.total_kills += 1;
-                self.pending
+                self.events
                     .push(Event::Statistics(StatisticsEvent::MapKillTotal {
                         actor: id,
                         total: stats.total_kills,
                     }));
             }
-            actor.spec.angle = ((i32::from(thing.angle) / 45) as u32).wrapping_mul(0x20000000_u32);
-            if thing.options & 8 != 0 {
-                life.flags |= 32;
+            if count_items && life.flags & world_pickups::MF_COUNTITEM != 0 {
+                stats.total_items += 1;
+                self.events
+                    .push(Event::Statistics(StatisticsEvent::MapItemTotal {
+                        actor: id,
+                        total: stats.total_items,
+                    }));
             }
-            report.spawned.push(id);
         }
-        Ok(report)
+        actor.spec.angle = ((i32::from(thing.angle) / 45) as u32).wrapping_mul(0x20000000);
+        if thing.options & 8 != 0 {
+            life.flags |= 32;
+        }
+        id
     }
+}
+#[cfg(test)]
+std::thread_local! {
+    pub(crate) static BONUS_MAP_FAILURE_OBSERVATION: std::cell::Cell<Option<(u8,i32,usize,i32)>> = const { std::cell::Cell::new(None) };
+    pub(crate) static BONUS_MAP_FAIL_AFTER: std::cell::Cell<Option<usize>> = const { std::cell::Cell::new(None) };
 }

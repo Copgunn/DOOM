@@ -2,12 +2,12 @@
 use crate::*;
 
 /// Admitted signed source counters. Available map kills and credited deaths are
-/// distinct; items/secrets remain zero because their gameplay is unsupported.
+/// distinct from collected resources; secrets remain outside executable admission.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct LevelStatistics {
     /// Original `totalkills`, incremented by admitted map placements only.
     pub total_kills: i32,
-    /// Original `totalitems`, initialized but no item placement is admitted.
+    /// Original `totalitems`, incremented by admitted MF_COUNTITEM map placement.
     pub total_items: i32,
     /// Original `totalsecret`, initialized but specials are excluded.
     pub total_secrets: i32,
@@ -32,6 +32,13 @@ pub enum StatisticsEvent {
         /// New map actor.
         actor: ActorId,
         /// Updated available map kills.
+        total: i32,
+    },
+    /// A placed MF_COUNTITEM actor contributed one available item.
+    MapItemTotal {
+        /// New original counted actor.
+        actor: ActorId,
+        /// Updated source totalitems.
         total: i32,
     },
     /// Single-player death credit after corpse initialization: historical

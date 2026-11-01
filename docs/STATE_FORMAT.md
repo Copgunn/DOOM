@@ -1362,3 +1362,34 @@ Independent C rows AX/AR and grant observations feed the Python
 and PBE1 ordered events precede matching Rust changes. Source-only inactive item
 respawn queue observations remain excluded. DREFLZ1/PBE1 are evidence storage,
 not another runtime diagnostic version.
+
+## DSIM-v27 original health and armor bonuses
+
+Version27 selects policy11 (`PlayerDemonBonusesV1`), the unchanged original registry
+schema and context `PLAYER-DEMON-1-MEDIUM-GROUNDED-BONUSES-v1`.
+`Diagnostic::decode_bonuses` explicitly reads27; every earlier version-specific
+reader keeps its historical contract and rejects27. V20–26 bytes, encoders,
+fixtures and policy/context meanings are unchanged.
+
+V27 adds no persistent field. It widens the meaning of two existing fields:
+`level.total_items` may be0..16 and `original_player.0.pickups.item_count`
+0..total. A nonzero total must equal the placed DoomEd2014/2015 THINGs that pass
+the Medium single-player filter (`options & 2` set, `options & 16` clear); zero also
+describes a constructed world before its THING batch. Live player health may be
+1..200 and green armor1..200, only under27. Pickup message12=GOTHTHBONUS and
+13=GOTARMBONUS are valid only here. Bonus item records validate their current
+state within the six-state loop, sprite/frame and positive tics.
+
+New transient events, valid only under27:
+
+| Tag/subtype | Payload | Meaning |
+| --- | --- | --- |
+| 23/8 | before i32, after i32, body i32 | Health bonus; after = min(before+1, 200) = body |
+| 23/9 | before type u8/points i32, after type u8/points i32 | Armor bonus; +1 capped at200, type0 becomes1 |
+| 23/10 | before i32, after i32 | Player item_count increment, after the message and before removal |
+| 21/2 | actor (u32 slot, u64 generation), total i32 | Map totalitems increment at counted spawn |
+
+Independent C rows feed the Python
+[bonus projection](../tools/reference/bonus_snapshot.py); independent full bytes
+and PBE1 ordered events preceded the matching Rust changes. Diagnostic decoding
+remains observation, not executable world restoration.
