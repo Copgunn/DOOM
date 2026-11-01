@@ -99,6 +99,9 @@ impl Simulation {
         {
             return Err(PerceptionError::Arithmetic.into());
         }
+        if self.player_policy().has_imps() && crate::original_registry::is_fireball(ty) {
+            return Err(ProjectileError::Controlled.into());
+        }
         if self.profile.uses_perception() {
             self.validate_perception_type(ty)?;
         } else if self.profile == Profile::Projectiles {
@@ -134,6 +137,11 @@ impl Simulation {
     }
     pub(crate) fn validate_entry(&self, state: StateId) -> Result<(), SimError> {
         let registry = self.registry_required()?;
+        // The Imp's melee root is direct-entry, unlike any former-human attack.
+        if self.player_policy().has_imps() {
+            registry.validate_state_original_monsters(state)?;
+            return Ok(());
+        }
         if self.profile.uses_demon() {
             registry.validate_state_demon_melee(state)?;
         } else if self.profile == Profile::Chaingunner {
@@ -392,8 +400,8 @@ impl Simulation {
                 // before the explicit executable fixture adaptation.
                 let pickup = self.player_policy().has_world_pickups()
                     && world_pickups::kind_for(self.player_policy(), ty).is_some();
-                let former = self.player_policy().has_monsters()
-                    && crate::original_registry::is_former_human(ty);
+                let former = crate::original_registry::is_extended_monster(ty)
+                    && crate::original_registry::is_policy_monster(self.player_policy(), ty);
                 if !pickup
                     && !former
                     && ty

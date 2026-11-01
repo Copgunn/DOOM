@@ -223,5 +223,16 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                 }
             },
         )
+        .or_else(|error| match perception_inputs.and_then(|p| p.checked) {
+            // A full store can retire and refill a slot mid-pass; the checked
+            // transaction discards the staged tic instead of panicking.
+            Some(control) => {
+                control
+                    .failure
+                    .set(control.failure.get().or(Some(error.into())));
+                Ok(())
+            }
+            None => Err(error),
+        })
         .expect("built-in traversal preserves links and is bounded by max slots");
 }

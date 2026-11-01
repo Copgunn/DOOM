@@ -241,6 +241,7 @@ impl Simulation {
         }
         self.preflight_player_body(stepping)?;
         self.preflight_monster_owner()?;
+        self.preflight_live_missiles()?;
         Ok(())
     }
     fn commit_demon_plan(&mut self, plan: DemonPlan) -> Vec<Event> {
