@@ -93,7 +93,6 @@ impl Simulation {
         if self.profile.uses_demon_map() && ty == self.demon_owner_type() {
             return Err(MapSpawnError::DirectSpawn.into());
         }
-        self.spawn_fits(ty, position)?;
         if self.profile.uses_perception()
             && (!self.spawn_admitted(
                 position,
@@ -106,6 +105,8 @@ impl Simulation {
         {
             return Err(PerceptionError::Arithmetic.into());
         }
+        // After the position bound: the fit lookup descends the BSP.
+        self.spawn_fits(ty, position)?;
         if self.player_policy().has_imps() && crate::original_registry::is_fireball(ty) {
             return Err(ProjectileError::Controlled.into());
         }

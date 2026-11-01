@@ -4,6 +4,7 @@
 //! M3H4_REFERENCE_INVESTIGATION.md, never from Rust output.
 use super::*;
 use crate::heights_room::{Fault, HeightsRoom};
+use crate::identity::OriginalState;
 
 // Source replay: every committed scenario against the compiled original rows,
 // the independent DSIM31 captures and ordered events; step equals advance.
@@ -401,6 +402,52 @@ fn fireball_chord_momz_beyond_the_historical_witness_is_admitted() {
         .expect("launched");
     assert_eq!(momentum[2], Fixed::from_map_units(121));
     progresses(&mut s, |_, _| [TicCommand::default(); 4], 30);
+}
+
+#[test]
+fn steep_fireball_half_step_explodes_below_its_floor_and_is_clipped() {
+    // P_CheckMissileSpawn moves the new fireball by half its momentum before the
+    // first P_TryMove. An Imp 20 units behind a 500-unit ledge edge aiming at a
+    // player 35 units away launches with momz -166 (dist 3), so the half-step
+    // leaves the fireball 51 units below its floor: the step rule refuses, it
+    // explodes in place and its next P_ZMovement clips it to the floor.
+    let room = HeightsRoom::new(&[-512, 0, 512], &[[-200, 500], [300, 500]])
+        .with_things(&[[20, 0, WEST, IMP, 7]]);
+    let mut s = heights(room.map());
+    let imp = s.spawn_map_things().unwrap().spawned[0];
+    let body = arm(&mut s, [-15, 0]);
+    s.advance([TicCommand::default(); 4]).unwrap();
+    // Controlled launch between tics: the blast is below its floor until the next
+    // pass, which the witness exempts as it exempts the blast's XY location.
+    s.checked_demon_operation(|h| crate::projectiles::launch_fireball(h, imp, body))
+        .unwrap()
+        .unwrap();
+    let blast = s
+        .actor_order()
+        .find(|id| {
+            s.actor(*id)
+                .unwrap()
+                .life()
+                .is_some_and(|l| original_registry::is_fireball(l.actor_type))
+        })
+        .expect("exploded fireball");
+    let a = s.actor(blast).unwrap();
+    assert_eq!(a.momz, Fixed::ZERO, "exploded");
+    assert!(a.z < a.floor - Fixed::from_map_units(24), "below its floor");
+    progresses(&mut s, |_, _| [TicCommand::default(); 4], 2);
+    assert_eq!(s.actor(blast).unwrap().z, Fixed::from_map_units(300));
+    // The same launch inside a tic (A_TroopAttack) is clipped in the same pass.
+    let mut s = heights(room.map());
+    let imp = s.spawn_map_things().unwrap().spawned[0];
+    let body = arm(&mut s, [-15, 0]);
+    s.set_actor_target(imp, Some(body)).unwrap();
+    s.enter_original_state(imp, OriginalState::S_TROO_ATK1)
+        .unwrap();
+    progresses(&mut s, |_, _| [TicCommand::default(); 4], 40);
+    assert!(
+        s.events().iter().chain(s.pending_events()).count() > 0 || s.actor_order().count() > 2,
+        "the launch happened"
+    );
 }
 
 #[test]

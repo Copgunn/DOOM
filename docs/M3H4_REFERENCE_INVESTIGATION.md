@@ -332,7 +332,17 @@ source.z + 56 ≤ ceiling`). A move accepted by `P_TryMove` keeps `z + height �
 `P_Move` snaps `z = floorz`; `P_ZMovement` clips `z` into `[floorz, ceilingz − height]`
 and runs in the same thinker call whenever `z != floorz`; damage changes momentum only;
 state entry, target changes and removal do not move. Impacts are spawned at absolute `z`
-by the source itself and are excluded, as M3h3 excluded their boxes.
+by the source itself and are excluded, as M3h3 excluded their boxes. One more case:
+`P_CheckMissileSpawn` moves the new fireball by half its momentum, in `z` too, before
+its first `P_TryMove`; a steep chord (`momz` is never clamped) can leave it more than
+24 units below its floor or above `ceilingz − height`, and `P_ExplodeMissile` leaves it
+there, unlinked. V is restored in the same thinker pass because `P_AddThinker` appends
+to the tail and `P_RunThinkers` reaches the new mobj's `P_MobjThinker`, whose
+`P_ZMovement` clips `z` (the missile flag is already clear, so the floor branch no
+longer returns early). The Rust pass does the same. A fireball launched by the
+controlled between-tic API has not had that pass yet, so the runtime witness exempts an
+exploded, not yet relinked fireball from the `[floor, ceiling − height]` check (it keeps
+the `z`/`momz` bounds), exactly as the location check already exempts its XY.
 
 ### 4.3 Spawn fit
 
@@ -499,8 +509,8 @@ fixes.
 
 Matched release timings of `d9ad98f` and the branch head for every existing `--measure`
 workload (digests compared) plus new workloads from the heights example: `stairs`,
-`ledge_drop`, `window_fight`, `fence_slide`. Run alone on the idle host, eleven
-interleaved process pairs per workload, as in M3h3.
+`ledge_drop`, `corpse_ledge`, `window_sight`, `fence_slide`, `ceiling_fireball`. Run
+alone on the idle host, eleven interleaved process pairs per workload, as in M3h3.
 
 ## 7. Implementation plan
 

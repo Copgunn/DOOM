@@ -1426,7 +1426,7 @@ The proof is in the [investigation](M3H4_REFERENCE_INVESTIGATION.md#4-the-admitt
 | Admitted at load | Value | Why |
 | --- | ---: | --- |
 | Vertices, node origins/deltas, BLOCKMAP origin, line norm, linedef count, slots, fireballs, roster, items | as the map-scale policy | unchanged proofs |
-| Sectors | ≤ 256, heights within ±512, floor ≤ ceiling, no specials, no `F_SKY1`; spans may be shorter than any actor (windows, crawlspaces, closed sectors) | source geometry; a closed door loads as a static wall |
+| Sectors | ≤ 256 (in practice far fewer: the 95-linedef cap bounds a walled strip to about 30), heights within ±512, floor ≤ ceiling, no specials, no `F_SKY1`; spans may be shorter than any actor (windows, crawlspaces, closed sectors) | source geometry; a closed door loads as a static wall |
 | Linedefs | axis-aligned, not degenerate, a front side, `ML_TWOSIDED` exactly when a back side exists; flags within `{1, 2, 8, 16, 32, 64, 128, 256}` plus 4 | `P_HitSlideLine` axis cases; bits 1, 2, 4 and 64 are read by the admitted bodies, the rest only by the renderer and automap |
 | Walls | each side of `R` fully covered by **one-sided** linedefs of any admitted flags | `PIT_CheckLine` blocks a one-sided line regardless of flags |
 | BLOCKMAP | every linedef, one- or two-sided, listed in every cell its bbox touches | the source checks only the destination box's cells |

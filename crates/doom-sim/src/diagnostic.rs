@@ -796,28 +796,32 @@ impl<'a> Diagnostic<'a> {
         }
         Ok(())
     }
-    /// The `[floor, ceiling]` of the sector whose `sector.{i}.actors` list holds
-    /// this slot's handle (12 bytes: slot then generation), for the DSIM31 item
-    /// witness. An item listed in no sector is not a consistent snapshot.
+    /// The `[floor, ceiling]` of this slot's `actor.{slot}.sector`, whose
+    /// `sector.{i}.actors` list must hold the slot's handle (12 bytes: slot then
+    /// generation), for the DSIM31 item witness. An item whose sector field and
+    /// sector list disagree is not a consistent snapshot.
     fn item_sector_span(&self, slot: usize) -> Result<[i32; 2], DiagnosticError> {
         let generation = number::<8>(self.required(&format!("actor.{slot}.generation"))?)?;
+        let sector = u16::from_le_bytes(number(self.required(&format!("actor.{slot}.sector"))?)?);
         let slot = u32::try_from(slot).map_err(|_| DiagnosticError::Limit)?;
         let mut handle = [0_u8; 12];
         handle[..4].copy_from_slice(&slot.to_le_bytes());
         handle[4..].copy_from_slice(&generation);
         let count = u32::from_le_bytes(number(self.required("sectors.count")?)?);
-        for i in 0..count {
-            let actors = self.required(&format!("sector.{i}.actors"))?;
-            if actors.chunks(12).any(|h| h == handle) {
-                let height = |name: &str| -> Result<i32, DiagnosticError> {
-                    Ok(i32::from_le_bytes(number(
-                        self.required(&format!("sector.{i}.{name}"))?,
-                    )?))
-                };
-                return Ok([height("floor")?, height("ceiling")?]);
-            }
+        if u32::from(sector) >= count
+            || !self
+                .required(&format!("sector.{sector}.actors"))?
+                .chunks(12)
+                .any(|h| h == handle)
+        {
+            return Err(DiagnosticError::Identity);
         }
-        Err(DiagnosticError::Identity)
+        let height = |name: &str| -> Result<i32, DiagnosticError> {
+            Ok(i32::from_le_bytes(number(
+                self.required(&format!("sector.{sector}.{name}"))?,
+            )?))
+        };
+        Ok([height("floor")?, height("ceiling")?])
     }
     fn validate_pickup_items(&self) -> Result<(), DiagnosticError> {
         let mut count = 0;

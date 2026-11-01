@@ -276,12 +276,20 @@ impl Simulation {
                 map_scale::bounded(actor.momentum(), 64)?;
             }
             let policy = self.player_policy();
-            if policy.has_heights() && !original_registry::is_impact(life.actor_type) {
-                // Invariant V: impacts spawn at the source's absolute z and are
-                // clipped by P_ZMovement, so only their momz witness applies.
+            if policy.has_heights()
+                && !original_registry::is_impact(life.actor_type)
+                && !unlinked_blast
+            {
+                // Invariant V: impacts spawn at the source's absolute z, and a
+                // fireball exploded by its own half-step is clipped by its next
+                // P_ZMovement (in the same pass for an in-tic launch), so only
+                // their z/momz witnesses apply.
                 player_map_scale::vertical_admitted(actor)?;
             } else {
                 map_scale::bounded([actor.momz], player_map_scale::momz_bound(policy))?;
+                if policy.has_heights() {
+                    map_scale::bounded([actor.z], player_map_scale::HEIGHTS_Z_UNITS)?;
+                }
             }
         }
         self.preflight_player_body(stepping)?;
