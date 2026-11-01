@@ -591,4 +591,8 @@ Kept current while the milestone is in progress; the final state is summarized i
 - Step 1 (this note) committed as `7707e9f`; owner decisions recorded above.
 - Step 2 (C evidence) generated with `--overflow-check --address-check`; the local
   generation ran without `ASAN_OPTIONS`, so LeakSanitizer was active and reported nothing.
-- Next: step 3 (DSIM31 projection).
+- Step 3 (DSIM31 projection) generated: 693 captures, 8 full-byte fixtures. The new
+  encoder pre-filters slide-traverse trace rows (see `heights_snapshot.py`), which the
+  inherited bonus layer drops anyway; without the pre-filter the inherited monster layer
+  reads a stage-0 slide trace in a monster-free scenario as an unterminated aim.
+- Next: step 4 (policy and admission).
