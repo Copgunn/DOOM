@@ -75,6 +75,7 @@ fn touch_one(s: &mut Simulation, a: bonus_evidence::Actors, only: Option<ActorId
         world_pickups::Contacts {
             access: &mut host.access,
             player: host.player.as_deref_mut().unwrap(),
+            sectors: host.sectors,
         }
         .contacts(a.body, &mut body, &attempt, host.spatial, &mut events)
         .unwrap();

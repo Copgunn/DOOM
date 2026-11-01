@@ -107,6 +107,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                                 world_pickups::Contacts {
                                     access: &mut context,
                                     player: p,
+                                    sectors,
                                 },
                                 command,
                                 sectors,

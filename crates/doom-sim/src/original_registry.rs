@@ -483,6 +483,11 @@ pub(crate) const fn is_imp(ty: ActorTypeId) -> bool {
 pub(crate) const fn is_fireball(ty: ActorTypeId) -> bool {
     ty.0 == OriginalActorType::MT_TROOPSHOT.ordinal()
 }
+/// Bullet puffs and blood: spawned at an absolute z by `P_SpawnPuff`/`P_SpawnBlood`
+/// and clipped later by `P_ZMovement`, so the vertical invariant excludes them.
+pub(crate) const fn is_impact(ty: ActorTypeId) -> bool {
+    ty.0 == OriginalActorType::MT_PUFF.ordinal() || ty.0 == OriginalActorType::MT_BLOOD.ordinal()
+}
 /// Original (non-owner-slot) roster definition with a registry-derived closure.
 pub(crate) fn is_extended_monster(ty: ActorTypeId) -> bool {
     is_former_human(ty) || is_imp(ty)

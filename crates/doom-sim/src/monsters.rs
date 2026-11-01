@@ -738,7 +738,7 @@ impl Simulation {
             } else if !self.position_admitted(a.position(), 994) {
                 return Err(MonsterError::Arithmetic.into());
             }
-            if !crate::sight::within(a.momz, 64) || !crate::sight::within(a.z + a.momz, 1024) {
+            if !crate::player_map_scale::vertical_witness(self.player_policy(), &a) {
                 return Err(MonsterError::Arithmetic.into());
             }
         }

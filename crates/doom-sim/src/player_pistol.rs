@@ -509,6 +509,9 @@ fn line_current(
             let victim = *host.access.get(target).ok_or(CombatError::Reference)?;
             original_player::preflight_grounded_impulse(
                 host.player.as_deref().and_then(|p| p.room),
+                host.player
+                    .as_deref()
+                    .is_some_and(|p| p.policy.has_heights()),
                 &victim,
                 &actor,
                 damage,

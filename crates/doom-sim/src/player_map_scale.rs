@@ -242,6 +242,17 @@ pub(crate) const fn momz_bound(policy: OriginalExecutionProfile) -> u32 {
         64
     }
 }
+/// The per-actor vertical witness of the monster preflights: `z` within
+/// `HEIGHTS_Z_UNITS` and `momz` within `HEIGHTS_MOMZ_UNITS` under heights (so every
+/// `P_ZMovement` sum is representable), or the historical `momz` within 64 and
+/// `z + momz` within 1,024.
+pub(crate) fn vertical_witness(policy: OriginalExecutionProfile, a: &Actor) -> bool {
+    if policy.has_heights() {
+        sight::within(a.z, HEIGHTS_Z_UNITS) && sight::within(a.momz, HEIGHTS_MOMZ_UNITS)
+    } else {
+        sight::within(a.momz, 64) && sight::within(a.z + a.momz, 1024)
+    }
+}
 /// The vertical invariant of the heights policy at a tic boundary, for every
 /// actor that is not an impact: `floor <= z <= ceiling - height` with the actor's
 /// own `floorz`/`ceilingz`, `z` within `HEIGHTS_Z_UNITS` and `momz` within
@@ -312,6 +323,30 @@ impl Simulation {
     /// The admitted room of the map-scale policy, if selected.
     pub(crate) fn room(&self) -> Option<RoomBounds> {
         self.original_player.and_then(|p| p.room)
+    }
+    /// The sector table world items are validated against under heights.
+    pub(crate) fn item_sectors(&self) -> Option<&[SectorState]> {
+        self.player_policy()
+            .has_heights()
+            .then_some(self.sectors.as_slice())
+    }
+    /// Rust-only spawn fit of the heights policy (§4.3 of the M3h4 note): the
+    /// type's height fits the spawn position's sector. Always true elsewhere.
+    pub(crate) fn spawn_fits(&self, ty: ActorTypeId, position: [Fixed; 2]) -> Result<(), SimError> {
+        if !self.player_policy().has_heights() {
+            return Ok(());
+        }
+        let height = self
+            .registry
+            .as_deref()
+            .and_then(|r| r.actor_type(ty))
+            .ok_or(ActorError::InvalidType)?
+            .height();
+        if spawn_fits(&self.world, &self.sectors, position, height) {
+            Ok(())
+        } else {
+            Err(MapScaleError::Fit.into())
+        }
     }
     pub(crate) fn position_admitted(&self, position: [Fixed; 2], margin: u32) -> bool {
         position_admitted(self.room(), position, margin)

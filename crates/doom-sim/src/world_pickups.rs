@@ -295,13 +295,27 @@ fn validate_definition_uncached(ty: ActorTypeId) -> Result<(), SimError> {
     }
     Ok(())
 }
+/// `sectors` is the static sector table under the heights policy, where an item
+/// sits on its own sector's floor under its own sector's ceiling; otherwise the
+/// flat world's `0/128`.
 pub(crate) fn validate_item(
     room: Option<crate::player_map_scale::RoomBounds>,
+    sectors: Option<&[SectorState]>,
     a: Actor,
 ) -> Result<(), SimError> {
     let l = a.life().ok_or(ActorError::InvalidType)?;
     let k = kind(l.actor_type).ok_or(ActorError::InvalidType)?;
     validate_definition(l.actor_type)?;
+    let [floor, ceiling] = match sectors {
+        Some(sectors) => {
+            let location = a.location.ok_or(PlayerBodyError::Invariant)?;
+            let sector = sectors
+                .get(usize::from(location.sector))
+                .ok_or(PlayerBodyError::Invariant)?;
+            [sector.floor, sector.ceiling]
+        }
+        None => [Fixed::ZERO, Fixed::from_map_units(128)],
+    };
     let state = l
         .state
         .and_then(|v| OriginalState::try_from(v.0).ok())
@@ -329,8 +343,8 @@ pub(crate) fn validate_item(
         || a.momentum() != [Fixed::ZERO; 2]
         || a.momz != Fixed::ZERO
         || a.z != a.floor
-        || a.floor != Fixed::ZERO
-        || a.ceiling != Fixed::from_map_units(128)
+        || a.floor != floor
+        || a.ceiling != ceiling
         || !crate::player_map_scale::position_admitted(room, a.position(), 978)
         || l.flags & !(k.definition_flags() | MF_AMBUSH | MF_DROPPED) != 0
         || l.flags & k.definition_flags() != k.definition_flags()
@@ -436,6 +450,8 @@ fn ammo(
 pub(crate) struct Contacts<'a, A> {
     pub access: &'a mut A,
     pub player: &'a mut original_player::PlayerRuntime,
+    /// Static sectors, for the item validation of the heights policy.
+    pub sectors: &'a [SectorState],
 }
 impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
     type Error = SimError;
@@ -473,7 +489,11 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
             if body.life().is_none_or(|v| v.flags & MF_PICKUP == 0) {
                 continue;
             }
-            validate_item(self.player.room, item)?;
+            validate_item(
+                self.player.room,
+                self.player.policy.has_heights().then_some(self.sectors),
+                item,
+            )?;
             let k = kind_for(self.player.policy, l.actor_type).ok_or(ActorError::InvalidType)?;
             let delta = item.z - body.z;
             let health = body.life().ok_or(ActorError::InvalidType)?.health;
@@ -718,7 +738,7 @@ impl Simulation {
             {
                 count += 1;
                 counted += usize::from(a.life().is_some_and(|l| l.flags & MF_COUNTITEM != 0));
-                validate_item(self.room(), a)?;
+                validate_item(self.room(), self.item_sectors(), a)?;
             }
         }
         if self.player_policy().has_player_bonuses() {
@@ -779,6 +799,7 @@ impl Simulation {
         ) {
             return Err(MonsterError::Arithmetic.into());
         }
+        self.spawn_fits(ActorTypeId(k.original_type().ordinal()), position)?;
         self.reserve_actor_spawns(1)?;
         let id = lifecycle::LifeHost {
             player: None,

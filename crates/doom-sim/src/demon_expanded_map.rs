@@ -256,7 +256,14 @@ impl Simulation {
             } else {
                 map_scale::bounded(actor.momentum(), 64)?;
             }
-            map_scale::bounded([actor.momz], 64)?;
+            let policy = self.player_policy();
+            if policy.has_heights() && !original_registry::is_impact(life.actor_type) {
+                // Invariant V: impacts spawn at the source's absolute z and are
+                // clipped by P_ZMovement, so only their momz witness applies.
+                player_map_scale::vertical_admitted(actor)?;
+            } else {
+                map_scale::bounded([actor.momz], player_map_scale::momz_bound(policy))?;
+            }
         }
         self.preflight_player_body(stepping)?;
         self.preflight_monster_owner()?;

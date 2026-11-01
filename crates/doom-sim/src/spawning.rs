@@ -93,6 +93,7 @@ impl Simulation {
         if self.profile.uses_demon_map() && ty == self.demon_owner_type() {
             return Err(MapSpawnError::DirectSpawn.into());
         }
+        self.spawn_fits(ty, position)?;
         if self.profile.uses_perception()
             && (!self.spawn_admitted(
                 position,
@@ -447,6 +448,13 @@ impl Simulation {
                 ) {
                     return Err(MonsterError::Arithmetic.into());
                 }
+                self.spawn_fits(
+                    ty,
+                    [
+                        Fixed::from_map_units(thing.position.x),
+                        Fixed::from_map_units(thing.position.y),
+                    ],
+                )?;
                 if !pickup && !former {
                     ty = self.demon_owner_type();
                 }
