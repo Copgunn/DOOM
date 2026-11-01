@@ -1,15 +1,13 @@
 //! Original missile launch, flight, contact and explosion. One algorithm serves the
 //! frozen plasma profile (M3d2b) and the checked player world (`PlayerMonstersImpV1`).
 use crate::{lifecycle::LifeHost, *};
+use crate::{
+    original_player::{MF_MISSILE as MISSILE, MF_SHADOW, MF_SHOOTABLE, MF_SOLID},
+    world_pickups::MF_SPECIAL,
+};
 use std::{error::Error, fmt};
-// p_mobj.h flags used by the missile branch; registry state roots are by role.
-const MISSILE: u32 = 65536;
 const PLASMA: ActorTypeId = ActorTypeId(34);
 const FIREBALL: ActorTypeId = ActorTypeId(identity::OriginalActorType::MT_TROOPSHOT.ordinal());
-const MF_SPECIAL: u32 = 1;
-const MF_SOLID: u32 = 2;
-const MF_SHOOTABLE: u32 = 4;
-const MF_SHADOW: u32 = 262144;
 /// p_mobj.c P_SpawnMissile: launch height above the source origin.
 const MISSILE_SPAWN_HEIGHT: i16 = 32;
 /// p_local.h MAXMOVE: 30 map units per tic.

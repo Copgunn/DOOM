@@ -227,8 +227,8 @@ impl Simulation {
             }
             // P_CheckMissileSpawn keeps a blocked half-step without relinking: an
             // exploding fireball's coordinates may lead its source location.
-            let unlinked_blast =
-                original_registry::is_fireball(life.actor_type) && life.flags & 65536 == 0;
+            let unlinked_blast = original_registry::is_fireball(life.actor_type)
+                && life.flags & original_player::MF_MISSILE == 0;
             if !linked.contains(&id)
                 || (!unlinked_blast
                     && actor.location != Some(self.world.locate_validated(actor.position())))
