@@ -1326,7 +1326,8 @@ the whole tic rolled back. That tic keeps rejecting until the caller changes the
 and player commands may not clear it; removing fireballs with `mark_remove` can. There
 is no partial substitute. `mark_remove` rejects the owner of a flying fireball. The
 existing `|position| + 160M/3 <= 994` travel envelope also applies to fireball knockback,
-so a hit near a wall can reject its tic in the same way.
+so a hit near a wall can reject its tic in the same way, even with no escaping input.
+The earlier promise of a safe zero-command continuation does not hold for that case.
 Fireballs cannot be spawned, entered, retargeted or pushed through the
 public API, and no actor may name one as a target or damage source.
 
