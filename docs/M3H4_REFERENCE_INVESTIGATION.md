@@ -595,21 +595,9 @@ Each step is a separate commit unless noted. Commits 1–3 land before the runti
 
 ## 9. Status / next step
 
-Kept current while the milestone is in progress; the final state is summarized in
-[the evidence record](validation/M3H4.md).
-
-- Step 1 (this note) committed as `7707e9f`; owner decisions recorded above.
-- Step 2 (C evidence) generated with `--overflow-check --address-check`; the local
-  generation ran without `ASAN_OPTIONS`, so LeakSanitizer was active and reported nothing.
-- Step 3 (DSIM31 projection) generated: 693 captures, 8 full-byte fixtures. The new
-  encoder pre-filters slide-traverse trace rows (see `heights_snapshot.py`), which the
-  inherited bonus layer drops anyway; without the pre-filter the inherited monster layer
-  reads a stage-0 slide trace in a monster-free scenario as an unterminated aim.
-- Steps 4–7 committed (policy and admission, witness relaxations, landing sound and
-  noise flood, DSIM31). The DSIM31 reader also had to widen the weapon-noise event
-  check (any sector, `blocks` 0 or 1) that the flat world had pinned to sector 0.
-- Step 8 in progress: all 24 committed scenarios replay exactly (source fields,
-  ordered events, digests, full bytes, decode round trips) with no change to the
-  movement, sight, hitscan, missile or noise bodies; the Rust-only tests, example,
-  fuzz target, CI steps and docs follow.
-- Next: the remaining step 8 artifacts, then follow-ups 1 and 2.
+Every step of §7 is implemented and recorded; the final observations (gates, fuzz
+campaigns, matched timings, the independent review and its fixes) are in
+[the evidence record](validation/M3H4.md). All 24 committed scenarios replay exactly
+with no change to the movement, sight, hitscan, missile or noise bodies. The two
+follow-ups (the `Send + Sync` memo and the fuzz-workspace Clippy lints) are done. The
+branch stops at owner review.
