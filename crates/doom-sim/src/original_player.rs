@@ -342,6 +342,10 @@ impl Simulation {
                     return Err(PlayerBodyError::Invariant.into());
                 }
             } else if p.policy.has_physical_player() && a.momentum() != [Fixed::ZERO; 2] {
+                // A flying fireball is the one admitted airborne mover.
+                if p.policy.has_imps() && original_registry::is_fireball(l.actor_type) {
+                    continue;
+                }
                 if !p.policy.has_player_weapons()
                     || !original_registry::is_policy_monster(p.policy, l.actor_type)
                     || a.z != a.floor
@@ -540,14 +544,33 @@ pub(crate) fn preflight_grounded_impulse(
     amount: i32,
     mass: i32,
 ) -> Result<(), SimError> {
+    preflight_impulse(target, origin, amount, mass, true)
+}
+/// Airborne inflictor (a fireball): the source thrust reads only its XY, and the
+/// P_DamageMobj fall-forward branch needs a target 64 units above the inflictor,
+/// which a grounded target below a flying fireball can never satisfy.
+pub(crate) fn preflight_missile_impulse(
+    target: &Actor,
+    origin: &Actor,
+    amount: i32,
+    mass: i32,
+) -> Result<(), SimError> {
+    preflight_impulse(target, origin, amount, mass, false)
+}
+fn preflight_impulse(
+    target: &Actor,
+    origin: &Actor,
+    amount: i32,
+    mass: i32,
+    grounded_origin: bool,
+) -> Result<(), SimError> {
     if !(0..=MAX_PLAYER_DAMAGE).contains(&amount) {
         return Err(CombatError::Damage.into());
     }
     if mass <= 0
         || target.z != Fixed::ZERO
         || target.momz != Fixed::ZERO
-        || origin.z != Fixed::ZERO
-        || origin.momz != Fixed::ZERO
+        || (grounded_origin && (origin.z != Fixed::ZERO || origin.momz != Fixed::ZERO))
     {
         return Err(PlayerBodyError::Unsupported.into());
     }

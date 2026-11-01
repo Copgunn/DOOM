@@ -42,6 +42,7 @@ impl Simulation {
                 | OriginalExecutionProfile::PlayerDemonArmorV1
                 | OriginalExecutionProfile::PlayerDemonBonusesV1
                 | OriginalExecutionProfile::PlayerMonstersV1
+                | OriginalExecutionProfile::PlayerMonstersImpV1
         )
     }
 
@@ -122,6 +123,7 @@ impl PerceptionRoster<'_> {
                     | OriginalExecutionProfile::PlayerDemonArmorV1
                     | OriginalExecutionProfile::PlayerDemonBonusesV1
                     | OriginalExecutionProfile::PlayerMonstersV1
+                    | OriginalExecutionProfile::PlayerMonstersImpV1
             )
         )
     }

@@ -35,7 +35,9 @@ pub use player_armor::{
     ArmorEvent, ArmorType, PLAYER_DEMON_ARMOR_CONTEXT_SCHEMA, PlayerArmorState,
 };
 pub use player_bonuses::PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA;
-pub use player_monsters::{MAX_PLAYER_MONSTERS, PLAYER_MONSTERS_CONTEXT_SCHEMA};
+pub use player_monsters::{
+    MAX_PLAYER_MONSTERS, PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
+};
 mod player_commands;
 mod player_pistol;
 mod player_roster;
@@ -83,7 +85,9 @@ mod sight;
 pub use perception::{PerceptionError, PerceptionEvent, PerceptionPlayer};
 pub use sight::{SightResult, SightVisit};
 mod projectiles;
-pub use projectiles::{ProjectileAim, ProjectileError, ProjectileEvent, ProjectileRequest};
+pub use projectiles::{
+    MAX_LIVE_PROJECTILES, ProjectileAim, ProjectileError, ProjectileEvent, ProjectileRequest,
+};
 mod weapons;
 pub use weapons::{
     BT_ATTACK, BT_CHANGE, BT_WEAPONMASK, Psprite, Weapon, WeaponError, WeaponEvent,

@@ -430,6 +430,7 @@ impl ActorRegistry {
                                     | "A_SPosAttack"
                                     | "A_CPosAttack"
                                     | "A_CPosRefire"
+                                    | "A_TroopAttack"
                             )
                         ))
                     && !(specialized == SpecialActions::Chaingunner
@@ -882,9 +883,30 @@ impl ActorRegistry {
         ty: ActorTypeId,
         sectors: &[SectorState],
     ) -> Result<(), ActorError> {
-        if crate::original_registry::is_former_human(ty) {
-            // Caller already required the PlayerMonstersV1 role; the original
-            // registry policy proves the exact per-type closure and raise exclusion.
+        if crate::original_registry::is_fireball(ty) {
+            // Caller already required the PlayerMonstersImpV1 role. MF_MISSILE is
+            // admitted only here, for the type whose lifecycle the checked pass owns.
+            self.admit_type(
+                ty,
+                sectors,
+                &mut BTreeSet::new(),
+                &mut BTreeSet::new(),
+                &mut 0,
+                Admission {
+                    flags: ALLOWED_FLAGS | 65536,
+                    look: false,
+                    chase: false,
+                    attacks: false,
+                    shotgun: false,
+                    chaingun: false,
+                    demon: false,
+                },
+            )?;
+            return Ok(());
+        }
+        if crate::original_registry::is_extended_monster(ty) {
+            // Caller already required the policy role; the original registry
+            // policy proves the exact per-type closure and raise exclusion.
             self.admit_type(
                 ty,
                 sectors,
@@ -1116,6 +1138,8 @@ pub(crate) trait ActorAccess {
     fn mark(&mut self, id: ActorId) -> Result<bool, StoreError>;
     /// Prove capacity for upcoming current-state spawns before any spawn.
     fn reserve(&mut self, count: usize) -> Result<(), StoreError>;
+    /// Nonpending thinkers of one type, in the staged store.
+    fn live_of_type(&self, ty: ActorTypeId) -> usize;
 }
 impl ActorAccess for &mut ThinkerStore<Actor> {
     fn get(&self, id: ActorId) -> Option<&Actor> {
@@ -1133,6 +1157,9 @@ impl ActorAccess for &mut ThinkerStore<Actor> {
     fn reserve(&mut self, count: usize) -> Result<(), StoreError> {
         ThinkerStore::reserve_spawns(self, count)
     }
+    fn live_of_type(&self, ty: ActorTypeId) -> usize {
+        ThinkerStore::live_of_type(self, ty)
+    }
 }
 impl ActorAccess for &mut ThinkerContext<'_, Actor> {
     fn get(&self, id: ActorId) -> Option<&Actor> {
@@ -1149,6 +1176,9 @@ impl ActorAccess for &mut ThinkerContext<'_, Actor> {
     }
     fn reserve(&mut self, count: usize) -> Result<(), StoreError> {
         ThinkerContext::reserve_spawns(self, count)
+    }
+    fn live_of_type(&self, ty: ActorTypeId) -> usize {
+        self.store().live_of_type(ty)
     }
 }
 pub(crate) fn make_actor(
@@ -1229,6 +1259,19 @@ pub(crate) struct LifeHost<'a, A> {
     pub spatial: &'a mut crate::movement::SpatialIndex,
     pub bindings: &'a mut [Option<ActorId>; 4],
     pub events: &'a mut Vec<crate::Event>,
+}
+impl ThinkerStore<Actor> {
+    pub(crate) fn live_of_type(&self, ty: ActorTypeId) -> usize {
+        self.order()
+            .filter(|id| {
+                self.is_pending(*id) == Some(false)
+                    && self
+                        .get(*id)
+                        .and_then(Actor::life)
+                        .is_some_and(|l| l.actor_type == ty)
+            })
+            .count()
+    }
 }
 impl<A: ActorAccess> LifeHost<'_, A> {
     pub(crate) fn sight_failed(&self) -> bool {
@@ -1414,6 +1457,10 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                     }
                     "A_PosAttack" if crate::player_monsters::uses_current_monsters(self) => {
                         crate::player_monsters::attack(self, id, Hitscan::Pistol);
+                    }
+                    "A_TroopAttack" => {
+                        assert!(crate::player_monsters::uses_current_monsters(self));
+                        crate::player_monsters::troop_attack(self, id);
                     }
                     "A_CPosAttack" => {
                         assert!(self.perception.is_some_and(|p| p.chaingunner));

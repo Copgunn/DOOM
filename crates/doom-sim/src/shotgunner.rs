@@ -121,6 +121,9 @@ impl ActorAccess for &mut Projection<'_> {
             Err(StoreError::Capacity)
         }
     }
+    fn live_of_type(&self, _: ActorTypeId) -> usize {
+        unreachable!("a historical blast preview never launches a missile")
+    }
 }
 fn projected_ids(store: &ThinkerStore<Actor>) -> [ActorId; 3] {
     let mut ids = store

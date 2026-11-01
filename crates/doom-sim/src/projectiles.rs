@@ -1,9 +1,11 @@
-//! Original missile launch, flight, contact and explosion behind one source algorithm.
+//! Original missile launch, flight, contact and explosion. One algorithm serves the
+//! frozen plasma profile (M3d2b) and the checked player world (`PlayerMonstersImpV1`).
 use crate::{lifecycle::LifeHost, *};
 use std::{error::Error, fmt};
 // p_mobj.h flags used by the missile branch; registry state roots are by role.
 const MISSILE: u32 = 65536;
 const PLASMA: ActorTypeId = ActorTypeId(34);
+const FIREBALL: ActorTypeId = ActorTypeId(identity::OriginalActorType::MT_TROOPSHOT.ordinal());
 const MF_SPECIAL: u32 = 1;
 const MF_SOLID: u32 = 2;
 const MF_SHOOTABLE: u32 = 4;
@@ -22,6 +24,11 @@ const DRAW_SHADOW_LEFT: u8 = 1;
 const DRAW_SHADOW_RIGHT: u8 = 2;
 const DRAW_CONTACT: u8 = 3;
 const DRAW_EXPLODE: u8 = 4;
+/// Live fireball bound for `PlayerMonstersImpV1`. Flying and exploding fireballs
+/// both hold a thinker slot. One player, eight monsters, 16 items and eight drops
+/// use 33 of the 64 slots; these 16 leave 15 for bullet impacts. Eight Imps fire at
+/// most once per 22-tic attack cycle and an explosion lasts at most 18 tics.
+pub const MAX_LIVE_PROJECTILES: usize = 16;
 /// Source missile services shared by the frozen plasma profile and the checked
 /// player world. Each host owns its RNG stream, event queue and damage path; the
 /// algorithms below never branch on which host runs them.
@@ -373,6 +380,81 @@ impl MissileWorld for Simulation {
         self.spatial.link(id);
     }
 }
+impl<A: lifecycle::ActorAccess> MissileWorld for LifeHost<'_, A> {
+    fn missile(&self, id: ActorId) -> Actor {
+        *self.access.get(id).expect("live missile")
+    }
+    fn missile_mut(&mut self, id: ActorId) -> &mut Actor {
+        self.access.get_mut(id).expect("live missile")
+    }
+    fn definition(&self, ty: ActorTypeId) -> &ActorTypeDef {
+        self.registry.actor_type(ty).expect("admitted missile")
+    }
+    fn emit(&mut self, event: Event) {
+        self.events.push(event);
+    }
+    fn gameplay_draw(&mut self) -> u8 {
+        self.rng.p_random()
+    }
+    fn contact(&self, id: ActorId, target: [Fixed; 2]) -> (SectorMoveAttempt, Option<ActorId>) {
+        missile_contact(
+            (self.world, self.sectors),
+            self.spatial,
+            &|i| self.access.get(i).copied(),
+            id,
+            target,
+        )
+    }
+    fn strike(&mut self, request: DamageRequest) {
+        match combat::DamagePlan::current_original(self, request).and_then(|plan| {
+            self.access.reserve(plan.spawn_count())?;
+            Ok(plan)
+        }) {
+            Ok(plan) => {
+                self.apply_damage(plan);
+            }
+            // Keep the first latched cause; the staged tic is discarded either way.
+            Err(error) if !self.sight_failed() => self.fail_sight(error),
+            Err(_) => {}
+        }
+    }
+    fn enter_missile_state(&mut self, id: ActorId, state: StateId) {
+        self.enter(id, state);
+    }
+    fn relink(&mut self, id: ActorId) {
+        self.spatial.link(id);
+    }
+}
+/// A_TroopAttack's P_SpawnMissile inside the checked transaction. The live cap
+/// and slot reservation reject before any RNG, event or actor change.
+pub(crate) fn launch_fireball<A: lifecycle::ActorAccess>(
+    h: &mut LifeHost<'_, A>,
+    source: ActorId,
+    dest: ActorId,
+) -> Result<(), SimError> {
+    if h.access.live_of_type(FIREBALL) >= MAX_LIVE_PROJECTILES {
+        return Err(ProjectileError::WorkLimit.into());
+    }
+    h.access.reserve(1)?;
+    let from = *h.access.get(source).ok_or(ProjectileError::Reference)?;
+    let to = *h.access.get(dest).ok_or(ProjectileError::Reference)?;
+    let speed = Fixed::from_bits(h.definition(FIREBALL).speed());
+    let (angle, momz, shadow) = actor_aim(&from, &to, speed);
+    h.emit(Event::Projectile(ProjectileEvent::Launch(
+        ProjectileRequest {
+            source,
+            actor_type: FIREBALL,
+            aim: ProjectileAim::Actor(dest),
+        },
+    )));
+    let id = h.spawn(
+        FIREBALL,
+        from.position(),
+        SpawnHeight::Absolute(from.z + Fixed::from_map_units(MISSILE_SPAWN_HEIGHT)),
+    );
+    finish_launch(h, id, source, angle, momz, shadow);
+    Ok(())
+}
 /// Rejected projectile prerequisite; recoverable errors precede mutation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ProjectileError {
@@ -576,9 +658,33 @@ impl Simulation {
         }
         Ok(())
     }
+    /// `PlayerMonstersImpV1`: the live cap and each flying fireball's owner.
+    pub(crate) fn preflight_live_missiles(&self) -> Result<(), SimError> {
+        if !self.player_policy().has_imps() {
+            return Ok(());
+        }
+        if self.actors.live_of_type(FIREBALL) > MAX_LIVE_PROJECTILES {
+            return Err(ProjectileError::WorkLimit.into());
+        }
+        for id in self.actors.order() {
+            let life = self.actor(id).and_then(Actor::life).unwrap();
+            if life.actor_type == FIREBALL
+                && life.flags & MISSILE != 0
+                && self.actors.is_pending(id) == Some(false)
+            {
+                let owner = life.target.ok_or(ProjectileError::Owner)?;
+                if self.actors.is_pending(owner) != Some(false) {
+                    return Err(ProjectileError::Owner.into());
+                }
+            }
+        }
+        Ok(())
+    }
     pub(crate) fn projectile_control(&self, id: ActorId) -> Result<(), SimError> {
         let ty = self.actor(id).and_then(Actor::life).map(|l| l.actor_type);
-        if self.profile == Profile::Projectiles && ty == Some(PLASMA) {
+        if (self.profile == Profile::Projectiles && ty == Some(PLASMA))
+            || (self.player_policy().has_imps() && ty == Some(FIREBALL))
+        {
             return Err(ProjectileError::Controlled.into());
         }
         Ok(())

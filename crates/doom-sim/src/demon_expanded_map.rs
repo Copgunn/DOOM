@@ -225,8 +225,13 @@ impl Simulation {
             if life.tics < -1 {
                 return Err(ActorError::InvalidState.into());
             }
+            // P_CheckMissileSpawn keeps a blocked half-step without relinking: an
+            // exploding fireball's coordinates may lead its source location.
+            let unlinked_blast =
+                original_registry::is_fireball(life.actor_type) && life.flags & 65536 == 0;
             if !linked.contains(&id)
-                || actor.location != Some(self.world.locate_validated(actor.position()))
+                || (!unlinked_blast
+                    && actor.location != Some(self.world.locate_validated(actor.position())))
                 || actor.floor > actor.ceiling
                 || actor.height() <= Fixed::ZERO
             {

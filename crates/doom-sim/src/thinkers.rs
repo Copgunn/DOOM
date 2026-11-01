@@ -47,6 +47,31 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                     }
                     events.push(Event::Think(id));
                     let mut actor = *context.get(id).expect("live thinker handle");
+                    if profile == Profile::OriginalDemon
+                        && actor
+                            .life
+                            .is_some_and(|l| original_registry::is_fireball(l.actor_type))
+                    {
+                        // P_MobjThinker of a missile: its movement owns contact and
+                        // explosion, then ordinary state countdown.
+                        let mut host = lifecycle::LifeHost {
+                            player: player.as_deref_mut(),
+                            statistics: statistics.as_mut(),
+                            perception: perception_inputs,
+                            access: context,
+                            registry: registry.as_deref().unwrap(),
+                            world,
+                            sectors,
+                            options,
+                            rng,
+                            spatial,
+                            bindings: live_bindings,
+                            events,
+                        };
+                        projectiles::fly(&mut host, id);
+                        host.tick(id);
+                        return;
+                    }
                     let had_xy_momentum = actor.momentum().iter().any(|m| *m != Fixed::ZERO);
                     let source_player = player.as_ref().is_some_and(|p| p.mo == Some(id));
                     if profile == Profile::Foundation {

@@ -376,9 +376,24 @@ impl DamagePlan {
             .map(|id| host.access.get(id).copied().ok_or(CombatError::Reference))
             .transpose()?;
         let live = life.health > 0 && life.flags & original_player::MF_SHOOTABLE != 0;
+        let impulse = |origin: &Actor, mass: i32| {
+            let airborne = origin
+                .life()
+                .is_some_and(|l| crate::original_registry::is_fireball(l.actor_type));
+            if airborne {
+                original_player::preflight_missile_impulse(&victim, origin, request.amount, mass)
+            } else {
+                original_player::preflight_grounded_impulse(&victim, origin, request.amount, mass)
+            }
+        };
+        let mass = host
+            .registry
+            .actor_type(life.actor_type)
+            .ok_or(CombatError::Metadata)?
+            .mass();
         if player.mo == Some(request.target) {
             if let (true, Some(origin)) = (live, inflictor.as_ref()) {
-                original_player::preflight_player_impulse(&victim, origin, request.amount)?;
+                impulse(origin, mass)?;
             }
             return Self::current_armored_body(
                 host.registry,
@@ -392,12 +407,7 @@ impl DamagePlan {
             return Err(MonsterError::Target.into());
         }
         if let (true, Some(origin)) = (live, inflictor.as_ref()) {
-            let mass = host
-                .registry
-                .actor_type(life.actor_type)
-                .ok_or(CombatError::Metadata)?
-                .mass();
-            original_player::preflight_grounded_impulse(&victim, origin, request.amount, mass)?;
+            impulse(origin, mass)?;
         }
         let mut plan = Self::start(victim, request, None, policy)?;
         if plan.ignored {
