@@ -120,10 +120,8 @@ fuzz_target!(|data: &[u8]| {
     );
     // The key retains no world; even a dropped foreign owner must not alias.
     let foreign = GameInstance::new(fixture::setup()).id();
-    for chunk in data.chunks_exact(REQUEST_BYTES) {
-        let Ok(request) = <&[u8; REQUEST_BYTES]>::try_from(chunk) else {
-            return;
-        };
+    for chunk in data.as_chunks::<REQUEST_BYTES>().0 {
+        let request = chunk;
         let before_a = (a.simulation().snapshot(), a.id());
         let before_b = (b.simulation().snapshot(), b.id());
         let ra = operation(&mut a, &initial_a, &foreign, request);

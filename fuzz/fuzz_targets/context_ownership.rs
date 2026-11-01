@@ -92,7 +92,7 @@ fuzz_target!(|data: &[u8]| {
     }
     let c = &fixtures::cases()[0];
     let (mut a, mut b) = (fixtures::setup(0, c), fixtures::setup(0, c));
-    for bytes in data.chunks_exact(16).take(8) {
+    for bytes in data.as_chunks::<16>().0.iter().take(8) {
         let before = a.snapshot();
         let ra = operation(&mut a, bytes);
         let rb = operation(&mut b, bytes);

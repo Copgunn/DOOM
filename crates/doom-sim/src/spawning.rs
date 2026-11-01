@@ -105,6 +105,8 @@ impl Simulation {
         {
             return Err(PerceptionError::Arithmetic.into());
         }
+        // After the position bound: the fit lookup descends the BSP.
+        self.spawn_fits(ty, position)?;
         if self.player_policy().has_imps() && crate::original_registry::is_fireball(ty) {
             return Err(ProjectileError::Controlled.into());
         }
@@ -447,6 +449,13 @@ impl Simulation {
                 ) {
                     return Err(MonsterError::Arithmetic.into());
                 }
+                self.spawn_fits(
+                    ty,
+                    [
+                        Fixed::from_map_units(thing.position.x),
+                        Fixed::from_map_units(thing.position.y),
+                    ],
+                )?;
                 if !pickup && !former {
                     ty = self.demon_owner_type();
                 }

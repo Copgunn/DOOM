@@ -695,3 +695,27 @@ themselves are unchanged; they simply stop repeating for every actor every tic. 
 [support](COMPATIBILITY.md#original-monsters-at-real-map-scale),
 [source matrix](M3H3_REFERENCE_INVESTIGATION.md) and
 [DSIM30](STATE_FORMAT.md#dsim-v30-original-monsters-at-real-map-scale).
+
+## Static heights and vertical movement
+
+The heights policy adds no mover, collision path or scheduler: the M3b bodies that
+`movement`, `multisector`, `pursuit`, `sight`, `combat_trace` and `projectiles` already
+implement (`P_LineOpening`, `PIT_CheckLine`, `P_TryMove`, `P_SlideMove`, `P_ZMovement`,
+`P_Move`, `P_CrossSubsector`, `PTR_AimTraverse`, `PTR_ShootTraverse`, `P_SpawnMissile`)
+simply run on maps with several sectors. `player_map_scale.rs` owns the additional
+admission (`validate_heights_geometry`, the one-sided boundary covering) and the
+Rust-only witnesses (`spawn_fits`, `vertical_admitted`, `vertical_witness`,
+`HEIGHTS_MOMZ_UNITS`); every flat-world witness of the older policies is kept and
+bypassed only when `has_heights()` holds. Type dimensions are admitted against the
+tallest sector (`Simulation::type_envelope`, set before the shared impact-type
+validation) and fitting is proved per spawn, so windows and closed sectors load.
+
+Two behaviors the flat world could not reach are new code: `thinkers.rs` emits the
+`sfx_oof` sound request before the `Vertical` event when the canonical player lands
+with `momz < -8`, and `noise.rs` is `P_RecursiveSound` as a pure flood over the static
+sectors, used by the staged weapon noise through a per-sector target vector in the
+tic plan (`Simulation::emit_noise` keeps its own copy for the historical profiles). The
+type-admission memo is atomic so `Simulation` stays `Send + Sync`. See
+[support](COMPATIBILITY.md#original-monsters-with-static-heights),
+[source matrix](M3H4_REFERENCE_INVESTIGATION.md) and
+[DSIM31](STATE_FORMAT.md#dsim-v31-original-monsters-with-static-heights).

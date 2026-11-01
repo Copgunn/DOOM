@@ -25,7 +25,7 @@ fuzz_target!(|data: &[u8]| {
         .unwrap();
     let mut sim = fixtures::setup(c);
     let initial = PursuitSetup::from_actor(sim.actor(ActorId::from_parts(0, 1)).unwrap()).unwrap();
-    for chunk in rest.chunks_exact(8).take(8) {
+    for chunk in rest.as_chunks::<8>().0.iter().take(8) {
         let a = ActorId::from_parts(u32::from(chunk[1] % 8), u64::from(chunk[2] % 3));
         let b = ActorId::from_parts(u32::from(chunk[7] % 8), 1);
         let value = i32::from_le_bytes(chunk[3..7].try_into().unwrap());

@@ -340,8 +340,11 @@ impl Simulation {
                     } else {
                         a.momentum() != [Fixed::ZERO; 2]
                     }
-                    || a.momz != Fixed::ZERO
-                    || a.z != a.floor
+                    || if p.policy.has_heights() {
+                        crate::player_map_scale::vertical_admitted(a).is_err()
+                    } else {
+                        a.momz != Fixed::ZERO || a.z != a.floor
+                    }
                     || (p.policy.has_player_commands()
                         && (l.flags & player_commands::MF_JUSTATTACKED != 0
                             || !(0..=i32::from(u8::MAX)).contains(&l.reaction_time)))
@@ -353,10 +356,11 @@ impl Simulation {
                 if p.policy.has_imps() && original_registry::is_fireball(l.actor_type) {
                     continue;
                 }
+                // Under heights the vertical invariant of every actor is checked by
+                // the expanded-map preflight; a moving monster may be falling.
                 if !p.policy.has_player_weapons()
                     || !original_registry::is_policy_monster(p.policy, l.actor_type)
-                    || a.z != a.floor
-                    || a.momz != Fixed::ZERO
+                    || (!p.policy.has_heights() && (a.z != a.floor || a.momz != Fixed::ZERO))
                 {
                     return Err(PlayerBodyError::Unsupported.into());
                 }
@@ -410,6 +414,7 @@ impl Simulation {
             {
                 preflight_grounded_impulse(
                     p.room,
+                    p.policy.has_heights(),
                     target,
                     origin,
                     request.amount,
@@ -505,13 +510,14 @@ impl Simulation {
             return Err(CombatError::Reference.into());
         }
         let original = origin.life().ok_or(PlayerBodyError::Unsupported)?;
+        let heights = self.player_policy().has_heights();
         if ![
             OriginalActorType::MT_PLAYER.ordinal(),
             OriginalActorType::MT_SERGEANT.ordinal(),
         ]
         .contains(&original.actor_type.0)
-            || origin.z() != Fixed::ZERO
-            || origin.vertical_momentum() != Fixed::ZERO
+            || (!heights
+                && (origin.z() != Fixed::ZERO || origin.vertical_momentum() != Fixed::ZERO))
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
@@ -520,15 +526,15 @@ impl Simulation {
             return Ok(());
         }
         if life.actor_type.0 != OriginalActorType::MT_PLAYER.ordinal()
-            || target.z() != Fixed::ZERO
-            || target.vertical_momentum() != Fixed::ZERO
+            || (!heights
+                && (target.z() != Fixed::ZERO || target.vertical_momentum() != Fixed::ZERO))
         {
             return Err(PlayerBodyError::Invariant.into());
         }
         // A physical hit cannot repair live, unlisted Demon AI. Require the
         // already admitted thinker closure before committing new momentum.
         self.preflight_player_body(true)?;
-        preflight_player_impulse(self.room(), target, origin, request.amount)
+        preflight_player_impulse(self.room(), heights, target, origin, request.amount)
     }
 }
 
@@ -536,12 +542,14 @@ impl Simulation {
 /// grounded, no-power settings before using the source physical damage service.
 pub(crate) fn preflight_player_impulse(
     room: Option<crate::player_map_scale::RoomBounds>,
+    heights: bool,
     target: &Actor,
     origin: &Actor,
     amount: i32,
 ) -> Result<(), SimError> {
     preflight_grounded_impulse(
         room,
+        heights,
         target,
         origin,
         amount,
@@ -550,27 +558,34 @@ pub(crate) fn preflight_player_impulse(
 }
 pub(crate) fn preflight_grounded_impulse(
     room: Option<crate::player_map_scale::RoomBounds>,
+    heights: bool,
     target: &Actor,
     origin: &Actor,
     amount: i32,
     mass: i32,
 ) -> Result<(), SimError> {
-    preflight_impulse(room, target, origin, amount, mass, true)
+    preflight_impulse(room, heights, target, origin, amount, mass, true)
 }
 /// Airborne inflictor (a fireball): the source thrust reads only its XY, and the
 /// P_DamageMobj fall-forward branch needs a target 64 units above the inflictor,
 /// which a grounded target below a flying fireball can never satisfy.
 pub(crate) fn preflight_missile_impulse(
     room: Option<crate::player_map_scale::RoomBounds>,
+    heights: bool,
     target: &Actor,
     origin: &Actor,
     amount: i32,
     mass: i32,
 ) -> Result<(), SimError> {
-    preflight_impulse(room, target, origin, amount, mass, false)
+    preflight_impulse(room, heights, target, origin, amount, mass, false)
 }
+/// `heights` lifts the flat-world `z == 0`/`momz == 0` witnesses: under that policy
+/// the thrust still reads only XY, and the fall-forward height test of
+/// `P_DamageMobj` (`target->z - inflictor->z > 64*FRACUNIT`) is reachable and
+/// executed by the shared damage service with its one extra gameplay draw.
 fn preflight_impulse(
     room: Option<crate::player_map_scale::RoomBounds>,
+    heights: bool,
     target: &Actor,
     origin: &Actor,
     amount: i32,
@@ -581,9 +596,10 @@ fn preflight_impulse(
         return Err(CombatError::Damage.into());
     }
     if mass <= 0
-        || target.z != Fixed::ZERO
-        || target.momz != Fixed::ZERO
-        || (grounded_origin && (origin.z != Fixed::ZERO || origin.momz != Fixed::ZERO))
+        || (!heights
+            && (target.z != Fixed::ZERO
+                || target.momz != Fixed::ZERO
+                || (grounded_origin && (origin.z != Fixed::ZERO || origin.momz != Fixed::ZERO))))
     {
         return Err(PlayerBodyError::Unsupported.into());
     }

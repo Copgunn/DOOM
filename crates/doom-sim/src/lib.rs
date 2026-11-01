@@ -38,12 +38,13 @@ pub use player_armor::{
 };
 pub use player_bonuses::PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA;
 pub use player_map_scale::{
-    MAP_SCALE_ACTOR_SLOTS, MAP_SCALE_EXTENT_UNITS, MAP_SCALE_MAX_LIVE_PROJECTILES,
-    MAP_SCALE_MOMENTUM_UNITS, MAP_SCALE_WALL_LINES, MapScaleError, RoomBounds,
+    HEIGHTS_LINE_FLAGS, HEIGHTS_MOMZ_UNITS, HEIGHTS_Z_UNITS, MAP_SCALE_ACTOR_SLOTS,
+    MAP_SCALE_EXTENT_UNITS, MAP_SCALE_MAX_LIVE_PROJECTILES, MAP_SCALE_MOMENTUM_UNITS,
+    MAP_SCALE_WALL_LINES, MapScaleError, RoomBounds,
 };
 pub use player_monsters::{
-    MAX_PLAYER_MONSTERS, PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA,
-    PLAYER_MONSTERS_CONTEXT_SCHEMA,
+    MAX_PLAYER_MONSTERS, PLAYER_HEIGHTS_CONTEXT_SCHEMA, PLAYER_IMPS_CONTEXT_SCHEMA,
+    PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -127,6 +128,7 @@ pub use map_scale::{
 };
 mod movement;
 mod multisector;
+mod noise;
 pub use movement::{ActorMoveAttempt, Solidity};
 pub use multisector::{
     Gravity, Location, MoveFailure, Opening, OpeningVisit, SectorMoveAttempt, SectorState,
@@ -524,8 +526,18 @@ pub struct Simulation {
     pub(crate) map_fields: Arc<Vec<StateField>>,
     /// Immutable definitions already validated against this registry and these
     /// static sectors, by type ordinal. A memo of a pure function, never state.
-    pub(crate) admitted_types: std::cell::Cell<[u64; 4]>,
+    pub(crate) admitted_types: demon_lifecycle::AdmittedTypes,
+    /// Under the heights policy, the tallest static sector: type dimensions are
+    /// admitted against it ("every type fits somewhere") and fitting is proved per
+    /// spawn instead. Derived from the immutable map; never canonical state.
+    pub(crate) type_envelope: Option<SectorState>,
 }
+/// A simulation moves between threads and is shared by reference across them; the
+/// validation memo is atomic so this holds at compile time.
+const _: () = {
+    const fn send_and_sync<T: Send + Sync>() {}
+    send_and_sync::<Simulation>();
+};
 impl Simulation {
     /// Creates a fresh supported world with capacity for 1024 logical actor slots.
     /// Map THINGS are retained as data; complete type-driven spawning is M3 work.
@@ -638,8 +650,17 @@ impl Simulation {
             events: Vec::new(),
             pending: Vec::new(),
             map_fields,
-            admitted_types: std::cell::Cell::new([0; 4]),
+            admitted_types: demon_lifecycle::AdmittedTypes::default(),
+            type_envelope: None,
         })
+    }
+    /// The sectors a type's dimensions are admitted against: the heights policy's
+    /// envelope, or every static sector.
+    pub(crate) fn dimension_sectors(&self) -> &[SectorState] {
+        match &self.type_envelope {
+            Some(envelope) => std::slice::from_ref(envelope),
+            None => &self.sectors,
+        }
     }
     /// Historical service-family selection. For original-ID contexts, also use
     /// [`Self::original_execution_profile`] to distinguish the explicit policies.
@@ -1307,6 +1328,11 @@ mod monster_evidence;
 mod monster_tests;
 
 #[cfg(test)]
+#[path = "../../../tests/support/m3h4.rs"]
+mod heights_evidence;
+#[cfg(test)]
+mod heights_room;
+#[cfg(test)]
 #[path = "../../../tests/support/m3h2.rs"]
 mod imp_evidence;
 #[cfg(test)]
@@ -1314,5 +1340,7 @@ mod imp_tests;
 #[cfg(test)]
 #[path = "../../../tests/support/m3h3.rs"]
 mod map_scale_evidence;
+#[cfg(test)]
+mod player_heights_tests;
 #[cfg(test)]
 mod player_map_scale_tests;

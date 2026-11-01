@@ -79,7 +79,24 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3h3: Wall-aware travel bounds, no-stall guarantees and real-map scale
+### M3h4: Two-sided lines, static floor/ceiling heights and vertical movement
+
+The separately selected PlayerMonstersHeightsV1 takes the canonical player and monster
+world off flat floors inside the M3h3 walled rectangle: axis-aligned sectors with
+different static heights joined by two-sided lines, so steps, ledges, drop-offs,
+windows, closed sectors and fences execute through the original bodies the engine
+already carried (`P_LineOpening`, `P_TryMove`'s fit, step and dropoff rules,
+`P_ZMovement`, sight and hitscan slopes, fireball chords, `P_RecursiveSound`). The
+vertical invariant extends the wall invariant to openings and is checked before every
+tic; spawns must fit their sector. The landing sound, cross-sector weapon noise and the
+fall-forward damage branch become reachable. DSIM31 adds no persistent field. Moving
+sectors, specials, sky ceilings and non-axis walls stay rejected at load. This branch
+stops at owner review; exact commits and CI belong to GitHub. See
+[source investigation](M3H4_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-monsters-with-static-heights) and
+[observations](validation/M3H4.md).
+
+### Previous gameplay foundation — M3h3: Wall-aware travel bounds, no-stall guarantees and real-map scale
 
 The separately selected PlayerMonstersMapScaleV1 replaces the conservative `160M/3`
 travel envelope and the 994-unit actor margins with bounds derived from the loaded
@@ -181,11 +198,11 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Prioritize non-flat geometry: two-sided lines and height changes, so a fireball's
-vertical momentum, floor and ceiling contact and line openings gain observations, with
-the wall invariant extended to openings. Non-axis walls need their own slide proof
-(the projected axis-slide move can exceed a player's box). Require source-first
-evidence and unchanged earlier contracts. This is future work, not admission in M3h3.
+Prioritize non-axis walls: `P_HitSlideLine`'s general projection can move a player
+farther than its box in one slide, so the wall invariant needs its own proof before
+diagonal one- or two-sided lines are admitted, and real E1M1 geometry needs them.
+Then moving sectors (doors, lifts) as the first specials. Require source-first evidence
+and unchanged earlier contracts. This is future work, not admission in M3h4.
 
 ### Focused maintenance acceptance criteria
 

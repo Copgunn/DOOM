@@ -86,7 +86,7 @@ impl Simulation {
             if self.player_policy().has_world_pickups()
                 && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
             {
-                world_pickups::validate_item(self.room(), a)?;
+                world_pickups::validate_item(self.room(), self.item_sectors(), a)?;
                 // P_KillMobj drops are appended after the player/impact suffix.
                 let dropped = self.player_policy().has_monsters()
                     && life.flags & world_pickups::MF_DROPPED != 0;
@@ -114,7 +114,7 @@ impl Simulation {
                     return Err(MapSpawnError::Ownership.into());
                 }
             }
-            if !crate::sight::within(a.momz, 64) || !crate::sight::within(a.z + a.momz, 1024) {
+            if !crate::player_map_scale::vertical_witness(self.player_policy(), &a) {
                 return Err(MonsterError::Arithmetic.into());
             }
         }

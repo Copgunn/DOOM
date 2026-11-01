@@ -1037,3 +1037,34 @@ release; `--measure <workload> advance|step|capture` times one full scripted tim
 Run measurements alone, with no fuzzing, builds or tests at the same time. Measurement
 summaries and limitations belong to [the engineering record](validation/M3H3.md). Leak
 detection is disabled in the documented ASan environment, not verified.
+
+## Original monsters with static heights
+
+Heights evidence has its own source/encoding contract and leaves historical
+expectations untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h4_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3h4_snapshot_goldens.py --check
+cargo test -p doom-sim player_heights_tests
+python3 tools/reference/check_player_heights.py
+python3 tools/seed_player_heights_fuzz.py /tmp/doom-heights-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_heights /tmp/doom-heights-seeds --sanitizer address -- -runs=4096 -seed=501 -max_len=290 -timeout=15 -rss_limit_mb=1024
+```
+
+Add `--cases` to `m3h4_reference.py` to print, per scenario, the blocked moves by
+`P_TryMove` reason, vertical steps, falls, floor and ceiling contacts, landings,
+sight queries, hitscans, noise floods, launches and explosions. The
+`heights_source_case_*` tests replay every committed scenario; the remaining
+`player_heights_tests` are Rust-only: the room builder mirrors the committed geometry
+byte for byte, every out-of-scope feature is rejected at load, spawns that do not fit
+their sector are rejected with unchanged state, the vertical and `momz` witnesses roll
+a tic back, and the stairs and ledge soaks assert the vertical invariant after every
+tic. The fuzz target adds the vertical invariant to the map-scale progress property.
+The example asserts every scenario's source fields and complete ordered event frames
+in debug and release; `--measure <workload> advance|step|capture` times one full
+scripted timeline (`stairs`, `ledge_drop`, `corpse_ledge`, `window_sight`,
+`fence_slide`, `ceiling_fireball`). Run measurements alone, with no fuzzing, builds or
+tests at the same time. Measurement summaries and limitations belong to
+[the engineering record](validation/M3H4.md). Leak detection is disabled in the
+documented ASan environment, not verified.

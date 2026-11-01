@@ -13,7 +13,7 @@ fuzz_target!(|data: &[u8]| {
     for _ in 0..16 {
         sim.step([TicCommand::default(); 4]).unwrap();
     }
-    for chunk in rest.chunks_exact(4).take(32) {
+    for chunk in rest.as_chunks::<4>().0.iter().take(32) {
         let mut commands = [TicCommand::default(); 4];
         commands[usize::from(chunk[0] % 4)] = TicCommand {
             forward: (chunk[1] as i8) % 32,

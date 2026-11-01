@@ -79,7 +79,7 @@ fuzz_target!(|data: &[u8]| {
     a = fixtures::install_targets(a, c);
     b = fixtures::install_targets(b, c);
     let ids: Vec<_> = a.actor_order().collect();
-    for c in data[2..].chunks_exact(4).take(8) {
+    for c in data[2..].as_chunks::<4>().0.iter().take(8) {
         operation(&mut a, &ids, c);
         operation(&mut b, &ids, c);
         assert_eq!(a.snapshot(), b.snapshot());

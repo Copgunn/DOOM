@@ -40,6 +40,10 @@ pub enum OriginalExecutionProfile {
     /// The Imp world at real-map scale: wall-derived travel bounds inside a walled
     /// rectangle up to 2,048 units, 320 actor slots and 208 live fireballs.
     PlayerMonstersMapScaleV1,
+    /// The map-scale world with two-sided lines, static floor/ceiling heights and
+    /// vertical movement: steps, ledges, windows, fences and falls inside the
+    /// walled rectangle. Moving sectors, specials and sky ceilings stay rejected.
+    PlayerMonstersHeightsV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -59,6 +63,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersV1 => 12,
             Self::PlayerMonstersImpV1 => 13,
             Self::PlayerMonstersMapScaleV1 => 14,
+            Self::PlayerMonstersHeightsV1 => 15,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -78,6 +83,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersV1 => PLAYER_MONSTERS_CONTEXT_SCHEMA,
             Self::PlayerMonstersImpV1 => PLAYER_IMPS_CONTEXT_SCHEMA,
             Self::PlayerMonstersMapScaleV1 => PLAYER_MAP_SCALE_CONTEXT_SCHEMA,
+            Self::PlayerMonstersHeightsV1 => PLAYER_HEIGHTS_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_armor(self) -> bool {
@@ -88,6 +94,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
+                | Self::PlayerMonstersHeightsV1
         )
     }
     pub(crate) const fn has_player_bonuses(self) -> bool {
@@ -97,26 +104,41 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
+                | Self::PlayerMonstersHeightsV1
         )
     }
     /// Original former humans, a bounded mixed roster, infighting and drops.
     pub(crate) const fn has_monsters(self) -> bool {
         matches!(
             self,
-            Self::PlayerMonstersV1 | Self::PlayerMonstersImpV1 | Self::PlayerMonstersMapScaleV1
+            Self::PlayerMonstersV1
+                | Self::PlayerMonstersImpV1
+                | Self::PlayerMonstersMapScaleV1
+                | Self::PlayerMonstersHeightsV1
         )
     }
     /// The original Imp and its fireball in the mixed roster.
     pub(crate) const fn has_imps(self) -> bool {
         matches!(
             self,
-            Self::PlayerMonstersImpV1 | Self::PlayerMonstersMapScaleV1
+            Self::PlayerMonstersImpV1
+                | Self::PlayerMonstersMapScaleV1
+                | Self::PlayerMonstersHeightsV1
         )
     }
     /// Wall-derived travel bounds, 320 slots and 208 live fireballs inside a walled
     /// rectangle; the historical 994-unit margins and travel envelope do not apply.
     pub(crate) const fn has_map_scale(self) -> bool {
-        matches!(self, Self::PlayerMonstersMapScaleV1)
+        matches!(
+            self,
+            Self::PlayerMonstersMapScaleV1 | Self::PlayerMonstersHeightsV1
+        )
+    }
+    /// Two-sided lines, static floor/ceiling heights, vertical movement, the
+    /// landing sound and cross-sector noise inside the walled rectangle; the
+    /// flat-world witnesses of the older policies do not apply.
+    pub(crate) const fn has_heights(self) -> bool {
+        matches!(self, Self::PlayerMonstersHeightsV1)
     }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
@@ -127,6 +149,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
+                | Self::PlayerMonstersHeightsV1
         )
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -145,6 +168,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
+                | Self::PlayerMonstersHeightsV1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -162,6 +186,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
+                | Self::PlayerMonstersHeightsV1
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -175,6 +200,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
+                | Self::PlayerMonstersHeightsV1
         )
     }
     pub(crate) const fn has_player_commands(self) -> bool {
@@ -191,6 +217,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
+                | Self::PlayerMonstersHeightsV1
         )
     }
 }
@@ -456,6 +483,11 @@ pub(crate) const fn is_imp(ty: ActorTypeId) -> bool {
 pub(crate) const fn is_fireball(ty: ActorTypeId) -> bool {
     ty.0 == OriginalActorType::MT_TROOPSHOT.ordinal()
 }
+/// Bullet puffs and blood: spawned at an absolute z by `P_SpawnPuff`/`P_SpawnBlood`
+/// and clipped later by `P_ZMovement`, so the vertical invariant excludes them.
+pub(crate) const fn is_impact(ty: ActorTypeId) -> bool {
+    ty.0 == OriginalActorType::MT_PUFF.ordinal() || ty.0 == OriginalActorType::MT_BLOOD.ordinal()
+}
 /// Original (non-owner-slot) roster definition with a registry-derived closure.
 pub(crate) fn is_extended_monster(ty: ActorTypeId) -> bool {
     is_former_human(ty) || is_imp(ty)
@@ -527,7 +559,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerDemonBonusesV1
             | OriginalExecutionProfile::PlayerMonstersV1
             | OriginalExecutionProfile::PlayerMonstersImpV1
-            | OriginalExecutionProfile::PlayerMonstersMapScaleV1 => {
+            | OriginalExecutionProfile::PlayerMonstersMapScaleV1
+            | OriginalExecutionProfile::PlayerMonstersHeightsV1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -574,7 +607,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerDemonBonusesV1
             | OriginalExecutionProfile::PlayerMonstersV1
             | OriginalExecutionProfile::PlayerMonstersImpV1
-            | OriginalExecutionProfile::PlayerMonstersMapScaleV1 => {
+            | OriginalExecutionProfile::PlayerMonstersMapScaleV1
+            | OriginalExecutionProfile::PlayerMonstersHeightsV1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -773,14 +807,18 @@ impl Simulation {
         context: MapContextOptions,
     ) -> Result<Self, SimError> {
         let policy = registry.profile;
+        let heights = policy.has_heights();
         if policy.has_player_body()
             && (options != ActorOptions::default()
-                || map.sectors().len() != 1
-                || map.sectors().iter().any(|s| s.heights != [0, 128]))
+                || (!heights
+                    && (map.sectors().len() != 1
+                        || map.sectors().iter().any(|s| s.heights != [0, 128]))))
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
-        if policy.has_physical_player() {
+        if heights {
+            player_map_scale::validate_heights_geometry(&map)?;
+        } else if policy.has_physical_player() {
             original_player::validate_grounded_geometry(&map)?;
         }
         // The map-scale proof needs its full slot budget and the walled rectangle,
@@ -794,7 +832,8 @@ impl Simulation {
             64
         };
         let room = if policy.has_map_scale() {
-            Some(player_map_scale::RoomBounds::derive(&map)?)
+            // Under heights only one-sided lines may cover the boundary.
+            Some(player_map_scale::RoomBounds::derive_for(&map, heights)?)
         } else {
             None
         };
@@ -809,8 +848,11 @@ impl Simulation {
             registry.into_registry(),
             options,
             context,
-            Profile::OriginalDemon,
-            actor_cap,
+            demon_expanded_map::ExpandedSelection {
+                profile: Profile::OriginalDemon,
+                actor_cap,
+                type_envelope: heights,
+            },
         )?;
         if policy.has_player_body() {
             sim.original_player = Some(original_player::PlayerRuntime {
