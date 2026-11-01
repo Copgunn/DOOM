@@ -989,3 +989,25 @@ source fields and complete ordered event frames in debug and release;
 Measurement summaries and limitations belong to
 [the engineering record](validation/M3H1.md). Leak detection is disabled in the
 documented ASan environment, not verified.
+
+## Original Imps and fireballs
+
+Imp evidence has its own source/encoding contract and leaves historical expectations
+untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h2_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3h2_snapshot_goldens.py --check
+cargo test -p doom-sim imp_tests
+python3 tools/reference/check_player_imps.py
+python3 tools/seed_player_imps_fuzz.py /tmp/doom-imp-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_imps /tmp/doom-imp-seeds --sanitizer address -- -runs=4096 -seed=491 -max_len=290 -timeout=15 -rss_limit_mb=1024
+```
+
+Add `--cases` to `m3h2_reference.py` to print launches, explosions, contact draws,
+claws and kills per scenario. The example asserts every scenario's source fields and
+complete ordered event frames in debug and release; `--measure <workload>
+advance|step|capture` times one full scripted timeline. Run measurements alone, with
+no fuzzing, builds or tests at the same time. Measurement summaries and limitations
+belong to [the engineering record](validation/M3H2.md). Leak detection is disabled in
+the documented ASan environment, not verified.

@@ -3,9 +3,14 @@ use crate::{
     lifecycle::{ActorAccess, Demand, LifeHost},
     *,
 };
+use crate::{
+    original_player::{
+        BASETHRESHOLD, MF_CORPSE, MF_DROPOFF, MF_FLOAT, MF_JUSTHIT, MF_NOBLOOD, MF_NOGRAVITY,
+        MF_SHOOTABLE, MF_SKULLFLY, THRUST_FRACTION, THRUST_MASS_SCALE,
+    },
+    world_pickups::MF_COUNTKILL,
+};
 use std::{error::Error, fmt};
-// p_mobj.h: source kill-count eligibility.
-const MF_COUNTKILL: u32 = 1 << 22;
 /// A bounded combat prerequisite failed before authoritative mutation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CombatError {
@@ -206,7 +211,7 @@ impl DamagePlan {
         policy: OriginalExecutionProfile,
     ) -> Result<Self, SimError> {
         let life = actor.life().ok_or(CombatError::Metadata)?;
-        let ignored = life.flags & original_player::MF_SHOOTABLE == 0 || life.health <= 0;
+        let ignored = life.flags & MF_SHOOTABLE == 0 || life.health <= 0;
         let armor = if ignored {
             None
         } else {
@@ -375,10 +380,25 @@ impl DamagePlan {
             .inflictor
             .map(|id| host.access.get(id).copied().ok_or(CombatError::Reference))
             .transpose()?;
-        let live = life.health > 0 && life.flags & original_player::MF_SHOOTABLE != 0;
+        let live = life.health > 0 && life.flags & MF_SHOOTABLE != 0;
+        let impulse = |origin: &Actor, mass: i32| {
+            let airborne = origin
+                .life()
+                .is_some_and(|l| crate::original_registry::is_fireball(l.actor_type));
+            if airborne {
+                original_player::preflight_missile_impulse(&victim, origin, request.amount, mass)
+            } else {
+                original_player::preflight_grounded_impulse(&victim, origin, request.amount, mass)
+            }
+        };
+        let mass = host
+            .registry
+            .actor_type(life.actor_type)
+            .ok_or(CombatError::Metadata)?
+            .mass();
         if player.mo == Some(request.target) {
             if let (true, Some(origin)) = (live, inflictor.as_ref()) {
-                original_player::preflight_player_impulse(&victim, origin, request.amount)?;
+                impulse(origin, mass)?;
             }
             return Self::current_armored_body(
                 host.registry,
@@ -392,12 +412,7 @@ impl DamagePlan {
             return Err(MonsterError::Target.into());
         }
         if let (true, Some(origin)) = (live, inflictor.as_ref()) {
-            let mass = host
-                .registry
-                .actor_type(life.actor_type)
-                .ok_or(CombatError::Metadata)?
-                .mass();
-            original_player::preflight_grounded_impulse(&victim, origin, request.amount, mass)?;
+            impulse(origin, mass)?;
         }
         let mut plan = Self::start(victim, request, None, policy)?;
         if plan.ignored {
@@ -608,7 +623,7 @@ impl Simulation {
         }
         self.validate_combat_type(life.actor_type)?;
         let registry = self.registry.as_deref().unwrap();
-        if life.flags & 4194304 != 0 && plan.killed {
+        if life.flags & MF_COUNTKILL != 0 && plan.killed {
             let stats = self.statistics.ok_or(CombatError::KillBranch)?;
             stats
                 .single_player_kill_count
@@ -820,7 +835,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                 old.position()[1] - origin.position()[1],
             ];
             let mut angle = movement::point_angle(delta);
-            let mut thrust = request.amount * 8192 * 100 / info.mass();
+            let mut thrust = request.amount * THRUST_FRACTION * THRUST_MASS_SCALE / info.mass();
             if request.amount < 40
                 && request.amount > life.health
                 && old.z() - origin.z() > Fixed::from_map_units(64)
@@ -877,14 +892,14 @@ impl<A: ActorAccess> LifeHost<'_, A> {
         if killed {
             let a = self.access.get_mut(id).unwrap();
             let life = a.life.as_mut().unwrap();
-            life.flags &= !(4 | 16384 | 16777216);
+            life.flags &= !(MF_SHOOTABLE | MF_FLOAT | MF_SKULLFLY);
             if !lifecycle::source_type_is(life.actor_type, "MT_SKULL") {
-                life.flags &= !512;
+                life.flags &= !MF_NOGRAVITY;
             }
-            life.flags |= 1048576 | 1024;
+            life.flags |= MF_CORPSE | MF_DROPOFF;
             a.spec.height = Fixed::from_bits(a.spec.height.bits() >> 2);
             a.allow_dropoff = true;
-            a.gravity = if life.flags & 512 != 0 {
+            a.gravity = if life.flags & MF_NOGRAVITY != 0 {
                 Gravity::None
             } else {
                 Gravity::Normal
@@ -972,7 +987,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                 .life
                 .as_mut()
                 .unwrap()
-                .flags |= 64;
+                .flags |= MF_JUSTHIT;
             self.combat_event(CombatEvent::Pain {
                 target: id,
                 state: info.states()[2],
@@ -1001,7 +1016,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                     .life
                     .as_mut()
                     .unwrap()
-                    .threshold = 100;
+                    .threshold = BASETHRESHOLD;
                 self.combat_event(CombatEvent::Retarget { target: id, source });
                 if self.access.get(id).unwrap().life.unwrap().state == Some(info.states()[0])
                     && info.states()[1].0 != 0
@@ -1026,7 +1041,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             result: Box::new(result.clone()),
         });
         if let Some(mut position) = position {
-            let blood = matches!(hit,Some(TraceObject::Actor(id)) if self.access.get(id).unwrap().life.unwrap().flags&524288==0);
+            let blood = matches!(hit,Some(TraceObject::Actor(id)) if self.access.get(id).unwrap().life.unwrap().flags&MF_NOBLOOD==0);
             let first = self.combat_random(3);
             let second = self.combat_random(4);
             position[2] =

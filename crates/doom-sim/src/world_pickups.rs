@@ -805,6 +805,8 @@ pub(crate) const COUNTED_ITEM_DOOMED: [i16; 2] = [2014, 2015];
 /// DoomEd numbers of the admitted COUNTKILL monsters (info.c MT_SERGEANT,
 /// MT_POSSESSED, MT_SHOTGUY, MT_CHAINGUY).
 pub(crate) const COUNTED_KILL_DOOMED: [i16; 4] = [3002, 3004, 9, 65];
+/// The same set plus MT_TROOP under `PlayerMonstersImpV1`.
+pub(crate) const COUNTED_KILL_DOOMED_IMPS: [i16; 5] = [3001, 3002, 3004, 9, 65];
 /// The single source placement filter for counted THINGs: p_mobj.c
 /// P_SpawnMapThing skips `options & 16` (MTF_NOTSINGLE) in single player and
 /// requires the Medium skill bit `options & 2`. Every caller (runtime

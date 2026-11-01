@@ -117,3 +117,6 @@ original evidence and former guide contents with exact-byte copies and digests.
 - [M3h1 original former-human investigation](M3H1_REFERENCE_INVESTIGATION.md),
   [observations](validation/M3H1.md), [support](COMPATIBILITY.md#original-former-humans-and-multi-monster-encounters)
   and [DSIM28](STATE_FORMAT.md#dsim-v28-original-former-humans-and-mixed-rosters).
+- [M3h2 original Imp and fireball investigation](M3H2_REFERENCE_INVESTIGATION.md),
+  [observations](validation/M3H2.md), [support](COMPATIBILITY.md#original-imps-and-fireballs)
+  and [DSIM29](STATE_FORMAT.md#dsim-v29-original-imps-and-fireballs).

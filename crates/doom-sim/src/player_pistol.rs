@@ -235,6 +235,7 @@ impl<A: ActorAccess> weapons::Host for Host<'_, '_, A> {
                         | OriginalExecutionProfile::PlayerDemonArmorV1
                         | OriginalExecutionProfile::PlayerDemonBonusesV1
                         | OriginalExecutionProfile::PlayerMonstersV1
+                        | OriginalExecutionProfile::PlayerMonstersImpV1
                 )
             }) && matches!(weapon, Weapon::Fist | Weapon::Shotgun | Weapon::Chaingun))
         {
@@ -341,7 +342,8 @@ pub(crate) fn run<A: ActorAccess>(
                 | OriginalExecutionProfile::PlayerDemonPickupsV1
                 | OriginalExecutionProfile::PlayerDemonArmorV1
                 | OriginalExecutionProfile::PlayerDemonBonusesV1
-                | OriginalExecutionProfile::PlayerMonstersV1,
+                | OriginalExecutionProfile::PlayerMonstersV1
+                | OriginalExecutionProfile::PlayerMonstersImpV1,
             player_weapons::PlayerWeaponRuntime::Pack(_)
         )
     ) {

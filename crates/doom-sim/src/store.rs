@@ -357,6 +357,9 @@ impl<T> ThinkerContext<'_, T> {
             Err(StoreError::ReadOnlyVisit)
         }
     }
+    pub(crate) fn store(&self) -> &ThinkerStore<T> {
+        self.store
+    }
     /// Proves free capacity for later spawns in this same traversal.
     pub(crate) fn reserve_spawns(&mut self, count: usize) -> Result<(), StoreError> {
         if self.writable {

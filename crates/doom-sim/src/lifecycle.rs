@@ -430,6 +430,7 @@ impl ActorRegistry {
                                     | "A_SPosAttack"
                                     | "A_CPosAttack"
                                     | "A_CPosRefire"
+                                    | "A_TroopAttack"
                             )
                         ))
                     && !(specialized == SpecialActions::Chaingunner
@@ -882,9 +883,30 @@ impl ActorRegistry {
         ty: ActorTypeId,
         sectors: &[SectorState],
     ) -> Result<(), ActorError> {
-        if crate::original_registry::is_former_human(ty) {
-            // Caller already required the PlayerMonstersV1 role; the original
-            // registry policy proves the exact per-type closure and raise exclusion.
+        if crate::original_registry::is_fireball(ty) {
+            // Caller already required the PlayerMonstersImpV1 role. MF_MISSILE is
+            // admitted only here, for the type whose lifecycle the checked pass owns.
+            self.admit_type(
+                ty,
+                sectors,
+                &mut BTreeSet::new(),
+                &mut BTreeSet::new(),
+                &mut 0,
+                Admission {
+                    flags: ALLOWED_FLAGS | crate::original_player::MF_MISSILE,
+                    look: false,
+                    chase: false,
+                    attacks: false,
+                    shotgun: false,
+                    chaingun: false,
+                    demon: false,
+                },
+            )?;
+            return Ok(());
+        }
+        if crate::original_registry::is_extended_monster(ty) {
+            // Caller already required the policy role; the original registry
+            // policy proves the exact per-type closure and raise exclusion.
             self.admit_type(
                 ty,
                 sectors,
@@ -1116,6 +1138,8 @@ pub(crate) trait ActorAccess {
     fn mark(&mut self, id: ActorId) -> Result<bool, StoreError>;
     /// Prove capacity for upcoming current-state spawns before any spawn.
     fn reserve(&mut self, count: usize) -> Result<(), StoreError>;
+    /// Nonpending thinkers of one type, in the staged store.
+    fn live_of_type(&self, ty: ActorTypeId) -> usize;
 }
 impl ActorAccess for &mut ThinkerStore<Actor> {
     fn get(&self, id: ActorId) -> Option<&Actor> {
@@ -1133,6 +1157,9 @@ impl ActorAccess for &mut ThinkerStore<Actor> {
     fn reserve(&mut self, count: usize) -> Result<(), StoreError> {
         ThinkerStore::reserve_spawns(self, count)
     }
+    fn live_of_type(&self, ty: ActorTypeId) -> usize {
+        ThinkerStore::live_of_type(self, ty)
+    }
 }
 impl ActorAccess for &mut ThinkerContext<'_, Actor> {
     fn get(&self, id: ActorId) -> Option<&Actor> {
@@ -1149,6 +1176,9 @@ impl ActorAccess for &mut ThinkerContext<'_, Actor> {
     }
     fn reserve(&mut self, count: usize) -> Result<(), StoreError> {
         ThinkerContext::reserve_spawns(self, count)
+    }
+    fn live_of_type(&self, ty: ActorTypeId) -> usize {
+        self.store().live_of_type(ty)
     }
 }
 pub(crate) fn make_actor(
@@ -1229,6 +1259,19 @@ pub(crate) struct LifeHost<'a, A> {
     pub spatial: &'a mut crate::movement::SpatialIndex,
     pub bindings: &'a mut [Option<ActorId>; 4],
     pub events: &'a mut Vec<crate::Event>,
+}
+impl ThinkerStore<Actor> {
+    pub(crate) fn live_of_type(&self, ty: ActorTypeId) -> usize {
+        self.order()
+            .filter(|id| {
+                self.is_pending(*id) == Some(false)
+                    && self
+                        .get(*id)
+                        .and_then(Actor::life)
+                        .is_some_and(|l| l.actor_type == ty)
+            })
+            .count()
+    }
 }
 impl<A: ActorAccess> LifeHost<'_, A> {
     pub(crate) fn sight_failed(&self) -> bool {
@@ -1378,7 +1421,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
         }
     }
     fn action(&mut self, id: ActorId, action: ActorAction, work: &mut usize) {
-        use crate::player_monsters::Hitscan;
+        use crate::{actions::OriginalAction, player_monsters::Hitscan};
         match action {
             ActorAction::None => {}
             ActorAction::Original(action) => {
@@ -1391,66 +1434,78 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                         .position(|s| *s == name)
                         .expect("original sound") as u16
                 };
-                match self.registry.action_name(action).expect("original action") {
-                    "A_FaceTarget" => {
+                match OriginalAction::of(action) {
+                    Some(OriginalAction::FaceTarget) => {
                         assert!(self.perception.is_some_and(|p| p.monsters));
                         crate::monsters::face(self, id);
                     }
-                    "A_SargAttack" => {
+                    Some(OriginalAction::SargAttack) => {
                         assert!(self.perception.is_some_and(|p| p.demon));
                         crate::demon::strike(self, id);
                     }
                     // Former humans in PlayerMonstersV1 share one current-state
                     // hitscan implementation; historical profiles keep their
                     // preflighted single-owner plans unchanged.
-                    "A_CPosAttack" if crate::player_monsters::uses_current_monsters(self) => {
+                    Some(OriginalAction::CPosAttack)
+                        if crate::player_monsters::uses_current_monsters(self) =>
+                    {
                         crate::player_monsters::attack(self, id, Hitscan::Chaingun);
                     }
-                    "A_CPosRefire" if crate::player_monsters::uses_current_monsters(self) => {
+                    Some(OriginalAction::CPosRefire)
+                        if crate::player_monsters::uses_current_monsters(self) =>
+                    {
                         crate::player_monsters::refire(self, id, work);
                     }
-                    "A_SPosAttack" if crate::player_monsters::uses_current_monsters(self) => {
+                    Some(OriginalAction::SPosAttack)
+                        if crate::player_monsters::uses_current_monsters(self) =>
+                    {
                         crate::player_monsters::attack(self, id, Hitscan::Shotgun);
                     }
-                    "A_PosAttack" if crate::player_monsters::uses_current_monsters(self) => {
+                    Some(OriginalAction::PosAttack)
+                        if crate::player_monsters::uses_current_monsters(self) =>
+                    {
                         crate::player_monsters::attack(self, id, Hitscan::Pistol);
                     }
-                    "A_CPosAttack" => {
+                    Some(OriginalAction::TroopAttack) => {
+                        assert!(crate::player_monsters::uses_current_monsters(self));
+                        crate::player_monsters::troop_attack(self, id);
+                    }
+                    Some(OriginalAction::CPosAttack) => {
                         assert!(self.perception.is_some_and(|p| p.chaingunner));
                         crate::chaingunner::attack(self, id);
                     }
-                    "A_CPosRefire" => {
+                    Some(OriginalAction::CPosRefire) => {
                         assert!(self.perception.is_some_and(|p| p.chaingunner));
                         crate::chaingunner::refire(self, id, work);
                     }
-                    "A_SPosAttack" => {
+                    Some(OriginalAction::SPosAttack) => {
                         assert!(self.perception.is_some_and(|p| p.shotgunner));
                         crate::shotgunner::fire(self, id);
                     }
-                    "A_PosAttack" => {
+                    Some(OriginalAction::PosAttack) => {
                         assert!(self.perception.is_some_and(|p| p.monsters));
                         crate::monsters::pos_attack(self, id);
                     }
-                    "A_Chase" => {
+                    Some(OriginalAction::Chase) => {
                         assert!(self.perception.is_some_and(|p| p.pursuit));
                         crate::pursuit::chase::chase(self, id, work);
                     }
-                    "A_Look" => {
+                    Some(OriginalAction::Look) => {
                         crate::perception::look(self, id, work);
                     }
-                    "A_Fall" => {
+                    Some(OriginalAction::Fall) => {
                         let actor = self.access.get_mut(id).unwrap();
                         actor.life.as_mut().unwrap().flags &= !2;
                         actor.solidity = Solidity::NonSolid;
                     }
-                    "A_Pain" => {
+                    Some(OriginalAction::Pain) => {
                         let sound = info.sounds()[2];
                         if sound != 0 {
                             self.sound(Some(id), sound);
                         }
                     }
-                    "A_XScream" => self.sound(Some(id), sound_id("sfx_slop")),
-                    "A_PlayerScream" => self.sound(
+                    Some(OriginalAction::XScream) => self.sound(Some(id), sound_id("sfx_slop")),
+                    Some(OriginalAction::PlayerScream) => self.sound(
                         Some(id),
                         sound_id(if life.health < -50 {
                             "sfx_pdiehi"
@@ -1458,7 +1513,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                             "sfx_pldeth"
                         }),
                     ),
-                    "A_Scream" => {
+                    Some(OriginalAction::Scream) => {
                         let sound = info.sounds()[3];
                         if sound == 0 {
                             return;

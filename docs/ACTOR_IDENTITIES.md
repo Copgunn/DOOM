@@ -431,3 +431,15 @@ Their source drops are the already admitted MT_CLIP, MT_SHOTGUN and MT_CHAINGUN
 item identities with MF_DROPPED. Earlier policies reject all three types. See
 [support](COMPATIBILITY.md#original-former-humans-and-multi-monster-encounters) and
 [source investigation](M3H1_REFERENCE_INVESTIGATION.md).
+
+## Original Imp and fireball execution boundary
+
+PlayerMonstersImpV1 adds canonical MT_TROOP=11/DoomEd3001 (SPR_TROO) as a genuine map
+monster and MT_TROOPSHOT=31 (SPR_BAL1), which has no DoomEd number, as its projectile.
+The Imp's state set is derived once from its spawn/see/pain/melee/missile/death/xdeath
+roots; only A_Look, A_Chase, A_FaceTarget, A_TroopAttack, A_Pain, A_Scream, A_XScream
+and A_Fall are allowed. S_TROO_RAISE1 and its successors keep their metadata but never
+gain execution. The fireball's set is S_TBALL1, S_TBALL2 and S_TBALLX1..3, none with an
+action. Earlier policies reject both types. See
+[support](COMPATIBILITY.md#original-imps-and-fireballs) and
+[source investigation](M3H2_REFERENCE_INVESTIGATION.md).

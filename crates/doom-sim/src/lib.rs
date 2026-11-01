@@ -18,6 +18,7 @@
 #[cfg(test)]
 extern crate self as doom_sim;
 
+mod actions;
 mod actor;
 mod direction;
 pub use direction::MoveDirection;
@@ -35,7 +36,9 @@ pub use player_armor::{
     ArmorEvent, ArmorType, PLAYER_DEMON_ARMOR_CONTEXT_SCHEMA, PlayerArmorState,
 };
 pub use player_bonuses::PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA;
-pub use player_monsters::{MAX_PLAYER_MONSTERS, PLAYER_MONSTERS_CONTEXT_SCHEMA};
+pub use player_monsters::{
+    MAX_PLAYER_MONSTERS, PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
+};
 mod player_commands;
 mod player_pistol;
 mod player_roster;
@@ -83,7 +86,9 @@ mod sight;
 pub use perception::{PerceptionError, PerceptionEvent, PerceptionPlayer};
 pub use sight::{SightResult, SightVisit};
 mod projectiles;
-pub use projectiles::{ProjectileAim, ProjectileError, ProjectileEvent, ProjectileRequest};
+pub use projectiles::{
+    MAX_LIVE_PROJECTILES, ProjectileAim, ProjectileError, ProjectileEvent, ProjectileRequest,
+};
 mod weapons;
 pub use weapons::{
     BT_ATTACK, BT_CHANGE, BT_WEAPONMASK, Psprite, Weapon, WeaponError, WeaponEvent,
@@ -722,6 +727,14 @@ impl Simulation {
             if self.profile.uses_checked_demons() {
                 self.perception_actor(id)?;
             }
+            if self.player_policy().has_imps()
+                && self
+                    .actor(id)
+                    .and_then(Actor::life)
+                    .is_some_and(|l| original_registry::is_fireball(l.actor_type))
+            {
+                return Ok(self.query_projectile_move(id, target).0);
+            }
         }
         if self.profile == Profile::MapExtent {
             map_extent::position(target, map_extent::QUERY_UNITS)?;
@@ -923,6 +936,8 @@ impl Simulation {
         if self.uses_active_player_roster() && self.owns_player_body(id) {
             return Err(PlayerBodyError::Unsupported.into());
         }
+        // Removing a flying fireball's owner could never step again.
+        self.preflight_owner_removal(id)?;
         if self.actors.mark_remove(id)? {
             self.spatial.unlink(id);
             self.pending.push(Event::RemovalMarked(id));
@@ -1278,3 +1293,9 @@ mod bonus_tests;
 mod monster_evidence;
 #[cfg(test)]
 mod monster_tests;
+
+#[cfg(test)]
+#[path = "../../../tests/support/m3h2.rs"]
+mod imp_evidence;
+#[cfg(test)]
+mod imp_tests;

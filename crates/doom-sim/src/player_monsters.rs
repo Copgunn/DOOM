@@ -11,12 +11,15 @@ pub const PLAYER_MONSTERS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-1-MEDIUM-GRO
 /// impacts this stays well inside the 64 actor slots and per-tic sight budget.
 pub const MAX_PLAYER_MONSTERS: usize = 8;
 
+/// Explicit original Imp/fireball execution context; older contexts stay frozen.
+pub const PLAYER_IMPS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-IMPS-1-MEDIUM-GROUNDED-v1";
+
 impl Simulation {
-    /// Autonomous roster member: the native/original Demon owner or, under
-    /// `PlayerMonstersV1`, an original former human.
+    /// Autonomous roster member: the native/original Demon owner or a policy
+    /// monster (former humans, and under `PlayerMonstersImpV1` the Imp).
     pub(crate) fn is_roster_monster(&self, ty: ActorTypeId) -> bool {
         ty == self.demon_owner_type()
-            || (self.player_policy().has_monsters() && original_registry::is_former_human(ty))
+            || original_registry::is_policy_monster(self.player_policy(), ty)
     }
     /// Bonus world plus original MT_POSSESSED/MT_SHOTGUY/MT_CHAINGUY, a bounded
     /// mixed roster, source infighting and P_KillMobj item drops.
@@ -29,6 +32,22 @@ impl Simulation {
             map,
             limit,
             OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersV1)?,
+            ActorOptions::default(),
+            context,
+        )
+        .map_err(Into::into)
+    }
+    /// Former-human world plus the original Imp, its fireball and the source
+    /// same-species missile rule.
+    pub fn original_player_imps_map(
+        map: Map,
+        limit: u32,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        Self::with_original_registry(
+            map,
+            limit,
+            OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersImpV1)?,
             ActorOptions::default(),
             context,
         )
@@ -211,6 +230,52 @@ fn bullet<A: ActorAccess>(
         return Err(PlayerBodyError::Unsupported.into());
     }
     Ok(result)
+}
+
+/// p_enemy.c A_TroopAttack: `(P_Random()%8+1)*3`, in the MonsterEvent draw namespace.
+const IMP_DAMAGE_CHOICES: i32 = 8;
+const IMP_DAMAGE_UNIT: i32 = 3;
+const IMP_DAMAGE_DRAW: u8 = 4;
+
+/// A_TroopAttack: the single attack state chooses melee or missile from current
+/// state. Any late error is latched and discards the whole staged tic.
+pub(crate) fn troop_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
+    if let Err(error) = troop_attack_checked(h, id) {
+        if !h.sight_failed() {
+            h.fail_sight(error);
+        }
+    }
+}
+fn troop_attack_checked<A: ActorAccess>(
+    h: &mut LifeHost<'_, A>,
+    id: ActorId,
+) -> Result<(), SimError> {
+    let Some(target) = readable_target(h, id)? else {
+        return Ok(());
+    };
+    crate::monsters::face(h, id);
+    if crate::monsters::melee_host(h, id) {
+        let claw = lifecycle::source_sound("sfx_claw").ok_or(MonsterError::Definition)?;
+        h.sound(Some(id), claw);
+        let draw = crate::monsters::draw(h, id, IMP_DAMAGE_DRAW);
+        let amount = (i32::from(draw) % IMP_DAMAGE_CHOICES + 1) * IMP_DAMAGE_UNIT;
+        let plan = combat::DamagePlan::current_original(
+            h,
+            DamageRequest {
+                target,
+                inflictor: Some(id),
+                source: Some(id),
+                amount,
+            },
+        )?;
+        h.access.reserve(plan.spawn_count())?;
+        h.apply_damage(plan);
+        return Ok(());
+    }
+    if h.sight_failed() {
+        return Ok(());
+    }
+    projectiles::launch_fireball(h, id, target)
 }
 
 /// A_CPosRefire with the checked expanded sight query; decision order is the

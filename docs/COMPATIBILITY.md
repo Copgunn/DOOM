@@ -1284,3 +1284,60 @@ BAM addition. Recoverable failures, including impact or drop capacity exhaustion
 roll back actors, player, RNG, statistics, spatial links and events together. See
 [source investigation](M3H1_REFERENCE_INVESTIGATION.md) and
 [observed evidence](validation/M3H1.md).
+
+## Original Imps and fireballs
+
+`PlayerMonstersImpV1` (wire13, context `PLAYER-MONSTERS-IMPS-1-MEDIUM-GROUNDED-v1`,
+DSIM-v29) is a separate opt-in superset of `PlayerMonstersV1`. Select it with
+`Simulation::original_player_imps_map`. Everything that section states still applies.
+Older policies, wires and DSIM20–28 are unchanged and continue to reject the Imp and
+the fireball.
+
+MT_TROOP=11/DoomEd3001 joins the mixed roster under the unchanged
+`MAX_PLAYER_MONSTERS` = 8. Eight stays right because a monster costs at most a few
+sight queries per tic against the budget of 64, and fireballs cost none. Imps use their
+original spawn/see/pain/attack/death/xdeath closures, sounds and flags. The one attack
+state chooses at action time: `A_TroopAttack` faces the target, then claws for
+`(P_Random()%8+1)*3` when `P_CheckMeleeRange` passes, otherwise launches. Imps drop
+nothing. XDeath needs a single hit above 60, more than any admitted in-world attack;
+it stays reachable through `damage_actor`.
+
+MT_TROOPSHOT=31 is spawned only by `A_TroopAttack`, 32 units above the Imp, at speed
+10. It runs in the same thinker pass that launched it, deals `((P_Random()%8)+1)*3`
+on contact, and explodes on walls and solid things. Items and corpses do not stop it.
+The inflictor is the fireball and the source is the Imp, even if the Imp has since
+died, so `P_DamageMobj` infighting needs no new rule.
+
+The source same-species rule applies to missiles only: a fireball explodes on another
+Imp with no draw, damage or retarget, and passes through its own owner. It still hits
+the player and other species. Bullets and claws have no such exemption.
+
+| Bound | Value | Why |
+| --- | ---: | --- |
+| Actor slots | 64 | Unchanged store |
+| Monsters | 8 | Unchanged; 1 player + 8 + 16 items + 8 drops = 33 slots |
+| Live fireballs, flying or exploding | `MAX_LIVE_PROJECTILES` = 24 | Measured margin, not a proof: unscripted soaks of eight Imps peaked at 19 |
+| Remaining impact slots | 7 | 64 - 33 - 24, when every other budget is full |
+
+The original has no fireball cap; this bound is this project's. A launch past the cap
+(`ProjectileError::WorkLimit`) or past the store (`StoreError::Capacity`) and a full
+store that refills a slot within one pass (`StoreError::VisitLimit`) each reject with
+the whole tic rolled back. That tic keeps rejecting until the caller changes the state,
+and player commands may not clear it; removing fireballs with `mark_remove` can. There
+is no partial substitute. `mark_remove` rejects the owner of a flying fireball. The
+existing `|position| + 160M/3 <= 994` travel envelope also applies to fireball knockback,
+so a hit near a wall can reject its tic in the same way, even with no escaping input.
+The earlier promise of a safe zero-command continuation does not hold for that case.
+Fireballs cannot be spawned, entered, retargeted or pushed through the
+public API, and no actor may name one as a target or damage source.
+
+The geometry stays grounded: one floor height, one-sided axis-aligned blocking walls,
+no sky. Every shootable actor stands at z 0, so a fireball flies level with zero
+vertical momentum. Floor and ceiling contact, the sky hack, line openings and the
+SHADOW spread are unreachable here; this policy makes no observation claim for them.
+Actor coordinates keep the existing 994-unit preflight bound, so a map whose walls
+lie beyond it rejects a fireball that reaches that distance. A blocked spawn check
+needs overlapping THINGs. Every other projectile and monster, raise, nightmare and fast
+monsters, respawn, multiplayer and dynamic geometry remain excluded. See
+[source investigation](M3H2_REFERENCE_INVESTIGATION.md) and
+[observed evidence](validation/M3H2.md).

@@ -121,6 +121,9 @@ impl ActorAccess for &mut Projection<'_> {
             Err(StoreError::Capacity)
         }
     }
+    fn live_of_type(&self, _: ActorTypeId) -> usize {
+        unreachable!("a historical blast preview never launches a missile")
+    }
 }
 fn projected_ids(store: &ThinkerStore<Actor>) -> [ActorId; 3] {
     let mut ids = store
@@ -166,10 +169,8 @@ pub(crate) fn fire<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
         let index = i as u8 + 1;
         assert_eq!(*h.rng, pellet.start);
         observe(h, ShotgunEvent::PelletStart { actor: id, index });
-        let left = i32::from(crate::monsters::draw(h, id, 2));
-        let right = i32::from(crate::monsters::draw(h, id, 3));
-        let angle = plan.angle.wrapping_add(((left - right) * 1048576) as u32);
-        let damage = (i32::from(crate::monsters::draw(h, id, 4)) % 5 + 1) * 3;
+        let (angle, damage) =
+            weapons::monster_shot(plan.angle, &mut |kind| crate::monsters::draw(h, id, kind));
         let params = pellet.attack.parameters();
         assert_eq!(
             (angle, damage, plan.aim.slope),
@@ -297,10 +298,7 @@ impl Simulation {
         let mut pellets = Vec::new();
         for _ in 0..3 {
             let start = rng;
-            let left = i32::from(rng.p_random());
-            let right = i32::from(rng.p_random());
-            let shot_angle = angle.wrapping_add(((left - right) * 1048576) as u32);
-            let damage = (i32::from(rng.p_random()) % 5 + 1) * 3;
+            let (shot_angle, damage) = weapons::monster_shot(angle, &mut |_| rng.p_random());
             // Body positions/radii/index flags cannot change in this closure; hit/damage
             // eligibility and state DO change, and are read from the projected overlay.
             let attack = self.prepare_attack_lookup(

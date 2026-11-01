@@ -356,12 +356,10 @@ impl<H: Host> Machine<'_, H> {
         Ok(())
     }
     fn act(&mut self, position: usize, action: ActionId) -> Result<(), SimError> {
-        match self
-            .registry
-            .action_name(action)
-            .ok_or(WeaponError::Definition)?
-        {
-            "A_Raise" => {
+        use crate::actions::OriginalAction as A;
+        let identity = A::of(action);
+        match identity {
+            Some(A::Raise) => {
                 self.player.psprites[position].position[1] =
                     self.player.psprites[position].position[1] - Fixed::from_map_units(6);
                 if self.player.psprites[position].position[1] <= Fixed::from_map_units(32) {
@@ -369,7 +367,7 @@ impl<H: Host> Machine<'_, H> {
                     self.enter(0, self.player.ready.states()[2])?;
                 }
             }
-            "A_Lower" => {
+            Some(A::Lower) => {
                 self.player.psprites[position].position[1] =
                     self.player.psprites[position].position[1] + Fixed::from_map_units(6);
                 if self.player.psprites[position].position[1] >= Fixed::from_map_units(128) {
@@ -385,7 +383,7 @@ impl<H: Host> Machine<'_, H> {
                     self.bring_up()?;
                 }
             }
-            "A_WeaponReady" => {
+            Some(A::WeaponReady) => {
                 if matches!(self.host.actor()?.life.ok_or(WeaponError::Definition)?.state,Some(s) if s==state("S_PLAY_ATK1")||s==state("S_PLAY_ATK2"))
                 {
                     self.host.body_state(state("S_PLAY"))?;
@@ -408,7 +406,7 @@ impl<H: Host> Machine<'_, H> {
                         + self.player.bob * Fixed::from_bits(FINE_SINE[phase & 4095]),
                 ];
             }
-            "A_ReFire" => {
+            Some(A::ReFire) => {
                 if self.buttons & BT_ATTACK != 0
                     && self.player.pending.is_none()
                     && self.host.health() != 0
@@ -424,7 +422,7 @@ impl<H: Host> Machine<'_, H> {
                     self.check_ammo()?;
                 }
             }
-            "A_FirePistol" | "A_FireShotgun" | "A_FireCGun" => {
+            Some(A::FirePistol | A::FireShotgun | A::FireCGun) => {
                 let w = self.player.ready;
                 self.host.sound(
                     lifecycle::source_sound(if w == Weapon::Shotgun {
@@ -455,11 +453,11 @@ impl<H: Host> Machine<'_, H> {
                 self.enter(1, flash)?;
                 self.host.fire(w, self.player.refire == 0)?;
             }
-            "A_Punch" => self.host.fire(Weapon::Fist, false)?,
-            "A_Light0" | "A_Light1" | "A_Light2" => {
-                let value = match self.registry.action_name(action).unwrap() {
-                    "A_Light0" => 0,
-                    "A_Light1" => 1,
+            Some(A::Punch) => self.host.fire(Weapon::Fist, false)?,
+            Some(A::Light0 | A::Light1 | A::Light2) => {
+                let value = match identity {
+                    Some(A::Light0) => 0,
+                    Some(A::Light1) => 1,
                     _ => 2,
                 };
                 self.player.extra_light = value;

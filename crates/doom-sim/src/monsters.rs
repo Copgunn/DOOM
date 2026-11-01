@@ -563,6 +563,7 @@ impl Simulation {
     pub(crate) fn monster_reference(&self, id: ActorId) -> Result<Actor, SimError> {
         let a = self.monster_actor(id, 1008)?;
         if [37, 38].contains(&a.life.unwrap().actor_type.0)
+            || original_registry::is_fireball(a.life.unwrap().actor_type)
             || (self.player_policy().has_world_pickups()
                 && world_pickups::kind_for(self.player_policy(), a.life.unwrap().actor_type)
                     .is_some())

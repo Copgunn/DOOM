@@ -11,8 +11,8 @@ const ML_BLOCKING: u16 = 1;
 pub(crate) const MAX_MOVE_BITS: u32 = 30 * 65536;
 // Existing bounded direct-damage domain, distinct from the SARG4..40 formula.
 const MAX_PLAYER_DAMAGE: i32 = 1000;
-const THRUST_FRACTION: i32 = 65536 >> 3;
-const THRUST_MASS_SCALE: i32 = 100;
+pub(crate) const THRUST_FRACTION: i32 = 65536 >> 3;
+pub(crate) const THRUST_MASS_SCALE: i32 = 100;
 // tables.h ANGLETOFINESHIFT and finecosine=finesine+FINEANGLES/4.
 const ANGLE_TO_FINE_SHIFT: u32 = 19;
 const FINE_COSINE_OFFSET: usize = 8192 / 4;
@@ -20,15 +20,20 @@ const FINE_COSINE_OFFSET: usize = 8192 / 4;
 const TRAVEL_NUMERATOR: i64 = 160;
 const TRAVEL_DENOMINATOR: i64 = 3;
 const MF_NOCLIP: u32 = 0x1000;
-const MF_MISSILE: u32 = 0x10000;
-const MF_SKULLFLY: u32 = 0x1000000;
-const MF_FLOAT: u32 = 0x4000;
-const MF_NOGRAVITY: u32 = 0x200;
+pub(crate) const MF_MISSILE: u32 = 0x10000;
+pub(crate) const MF_SKULLFLY: u32 = 0x1000000;
+pub(crate) const MF_FLOAT: u32 = 0x4000;
+pub(crate) const MF_NOGRAVITY: u32 = 0x200;
 // p_mobj.h. These describe source behavior, not storage availability.
 pub(crate) const MF_SOLID: u32 = 0x2;
 pub(crate) const MF_JUSTHIT: u32 = 0x40;
 pub(crate) const MF_SHOOTABLE: u32 = 0x4;
 pub(crate) const MF_CORPSE: u32 = 0x100000;
+pub(crate) const MF_DROPOFF: u32 = 0x400;
+pub(crate) const MF_NOBLOOD: u32 = 0x80000;
+pub(crate) const MF_SHADOW: u32 = 0x40000;
+/// p_local.h: damage retarget hold, counted down by A_Chase.
+pub(crate) const BASETHRESHOLD: i32 = 100;
 // g_game.c G_PlayerReborn/MAXHEALTH, and p_inter.c P_DamageMobj.
 pub(crate) const INITIAL_PLAYER_HEALTH: i32 = 100;
 pub(crate) const MAX_DAMAGE_COUNT: i32 = 100;
@@ -342,6 +347,10 @@ impl Simulation {
                     return Err(PlayerBodyError::Invariant.into());
                 }
             } else if p.policy.has_physical_player() && a.momentum() != [Fixed::ZERO; 2] {
+                // A flying fireball is the one admitted airborne mover.
+                if p.policy.has_imps() && original_registry::is_fireball(l.actor_type) {
+                    continue;
+                }
                 if !p.policy.has_player_weapons()
                     || !original_registry::is_policy_monster(p.policy, l.actor_type)
                     || a.z != a.floor
@@ -540,14 +549,33 @@ pub(crate) fn preflight_grounded_impulse(
     amount: i32,
     mass: i32,
 ) -> Result<(), SimError> {
+    preflight_impulse(target, origin, amount, mass, true)
+}
+/// Airborne inflictor (a fireball): the source thrust reads only its XY, and the
+/// P_DamageMobj fall-forward branch needs a target 64 units above the inflictor,
+/// which a grounded target below a flying fireball can never satisfy.
+pub(crate) fn preflight_missile_impulse(
+    target: &Actor,
+    origin: &Actor,
+    amount: i32,
+    mass: i32,
+) -> Result<(), SimError> {
+    preflight_impulse(target, origin, amount, mass, false)
+}
+fn preflight_impulse(
+    target: &Actor,
+    origin: &Actor,
+    amount: i32,
+    mass: i32,
+    grounded_origin: bool,
+) -> Result<(), SimError> {
     if !(0..=MAX_PLAYER_DAMAGE).contains(&amount) {
         return Err(CombatError::Damage.into());
     }
     if mass <= 0
         || target.z != Fixed::ZERO
         || target.momz != Fixed::ZERO
-        || origin.z != Fixed::ZERO
-        || origin.momz != Fixed::ZERO
+        || (grounded_origin && (origin.z != Fixed::ZERO || origin.momz != Fixed::ZERO))
     {
         return Err(PlayerBodyError::Unsupported.into());
     }
