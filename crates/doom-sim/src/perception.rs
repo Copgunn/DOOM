@@ -366,6 +366,15 @@ impl Simulation {
     }
     pub(crate) fn validate_perception_reference(&self, id: ActorId) -> Result<Actor, SimError> {
         if self.uses_active_player_roster() && !self.owns_player_body(id) {
+            // P_DamageMobj infighting may retarget a roster monster to another.
+            if self.player_policy().has_monsters()
+                && self
+                    .actor(id)
+                    .and_then(Actor::life)
+                    .is_some_and(|l| self.is_roster_monster(l.actor_type))
+            {
+                return self.monster_actor(id, 1008);
+            }
             return Err(PerceptionError::Roster.into());
         }
         let a = self.perception_actor(id)?;
