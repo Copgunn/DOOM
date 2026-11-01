@@ -1341,3 +1341,58 @@ needs overlapping THINGs. Every other projectile and monster, raise, nightmare a
 monsters, respawn, multiplayer and dynamic geometry remain excluded. See
 [source investigation](M3H2_REFERENCE_INVESTIGATION.md) and
 [observed evidence](validation/M3H2.md).
+
+## Original monsters at real-map scale
+
+`PlayerMonstersMapScaleV1` (wire14, context
+`PLAYER-MONSTERS-MAP-SCALE-1-MEDIUM-GROUNDED-v1`, DSIM-v30) is a separate opt-in
+superset of `PlayerMonstersImpV1`. Select it with
+`Simulation::original_player_map_scale_map`, which takes no slot limit: the
+capacity is part of the proof. The same roster, weapons, items, drops, fireballs,
+infighting, statistics and whole-tic rollback apply. Older policies, wires and
+DSIM20–29 are unchanged and keep every margin and envelope listed in the sections
+above, including the stalls they can produce.
+
+What changes is the coordinate admission. The historical 978/994/1,008-unit actor
+margins, the `|position| + 160M/3 <= 994` travel envelope, its `M <= 30` rejection and
+the command stage's `4M + 8` margin do not apply to this policy. In their place the
+loaded map itself bounds every actor: the vertex rectangle `R` is derived once at
+construction and the walls keep every mover inside it, as the original's
+`P_TryMove` does. The proof is in the
+[investigation](M3H3_REFERENCE_INVESTIGATION.md#4-the-new-admitted-domain-and-its-proof).
+
+| Admitted at load | Value | Why |
+| --- | ---: | --- |
+| Vertices, node origins/deltas, BLOCKMAP origin | within 2,048 | M3f2 intercept proof (`G = A = 2048`) |
+| Line norm `abs(dx)+abs(dy)` | ≤ 1,536 | same proof |
+| Linedefs | ≤ `MAP_SCALE_WALL_LINES` = 95 | with at most 33 BLOCKMAP-linked things, one trace never exceeds `MAXINTERCEPTS` 128 |
+| Walls | one-sided, axis-aligned, `ML_BLOCKING`; each side of `R` fully covered by wall segments | `P_HitSlideLine` axis cases; a box can only leave `R` through a wall point |
+| BLOCKMAP | origin at or below `R`'s minimum, grid strictly past its maximum, every wall listed in every cell its bbox touches | the source checks only the cells of the destination box |
+| Sector | one, heights `[0,128]`, no specials, no sky | unchanged grounded domain |
+| Spawns | closed bounding box inside `R` (THINGs, player body, dropped-pickup setup) | the invariant must hold from the start |
+| Actor slots | `MAP_SCALE_ACTOR_SLOTS` = 320 | ≤ 241 live actors for any admitted roster, ≤ 256 visits per pass |
+| Live fireballs | `MAP_SCALE_MAX_LIVE_PROJECTILES` = 208 | 26 per Imp from a 23-tic minimum launch interval (attack cut short by pain, then the JUSTHIT shortcut) and a 598-pass maximum lifetime in the largest room |
+| Monsters, items, drops, sight queries | 8, 16, 8, 64 per tic | unchanged |
+
+| Checked before every tic | Value | Status |
+| --- | ---: | --- |
+| Actor center | inside `R` | unreachable witness of the wall invariant |
+| XY momentum per component | ≤ `MAP_SCALE_MOMENTUM_UNITS` = 4,096 | in-world impulses add at most about 650 units per pass and `P_XYMovement` clamps to 30 each tic; reachable only by repeated controlled `damage_actor` calls between tics, which reject with rollback |
+| Z, vertical momentum | as before (`z + momz` within 1,024, `momz` within 64) | flat domain |
+
+Legal source moves, wall slides, corner pinches and hits at walls are never rejected:
+`advance` fails for this policy only on invalid inputs (stale or foreign handles,
+commands outside the source range, non-zero commands to a dead player, unsupported
+buttons, pause), on the two witnesses above, or on a controlled launch past 208
+fireballs. A map that fails any load check is rejected by the constructor with
+`MapScaleError::{Walls, Blockmap, Lines}`, `GeometryError::CoordinateOverflow` or the
+inherited grounded-geometry rejection, never during play. Spawns whose box crosses a
+wall reject with the historical spawn errors and unchanged state.
+
+E1M1-sized rectangles (about 3,900 × 3,200 units) fit when their long walls are
+split at vertices. Non-axis walls stay excluded: with `P_AproxDistance(30,30) = 45`,
+a 22.5° slide can move a player 38 units, more than its 32-unit box, so the wall
+argument does not hold for them. Two-sided lines, height changes, moving sectors,
+other monsters and projectiles remain excluded. See
+[source investigation](M3H3_REFERENCE_INVESTIGATION.md) and
+[observed evidence](validation/M3H3.md).

@@ -37,6 +37,9 @@ pub enum OriginalExecutionProfile {
     PlayerMonstersV1,
     /// The former-human world plus the original Imp and its fireball.
     PlayerMonstersImpV1,
+    /// The Imp world at real-map scale: wall-derived travel bounds inside a walled
+    /// rectangle up to 2,048 units, 320 actor slots and 208 live fireballs.
+    PlayerMonstersMapScaleV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -55,6 +58,7 @@ impl OriginalExecutionProfile {
             Self::PlayerDemonBonusesV1 => 11,
             Self::PlayerMonstersV1 => 12,
             Self::PlayerMonstersImpV1 => 13,
+            Self::PlayerMonstersMapScaleV1 => 14,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -73,6 +77,7 @@ impl OriginalExecutionProfile {
             Self::PlayerDemonBonusesV1 => PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA,
             Self::PlayerMonstersV1 => PLAYER_MONSTERS_CONTEXT_SCHEMA,
             Self::PlayerMonstersImpV1 => PLAYER_IMPS_CONTEXT_SCHEMA,
+            Self::PlayerMonstersMapScaleV1 => PLAYER_MAP_SCALE_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_armor(self) -> bool {
@@ -82,21 +87,36 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonBonusesV1
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
+                | Self::PlayerMonstersMapScaleV1
         )
     }
     pub(crate) const fn has_player_bonuses(self) -> bool {
         matches!(
             self,
-            Self::PlayerDemonBonusesV1 | Self::PlayerMonstersV1 | Self::PlayerMonstersImpV1
+            Self::PlayerDemonBonusesV1
+                | Self::PlayerMonstersV1
+                | Self::PlayerMonstersImpV1
+                | Self::PlayerMonstersMapScaleV1
         )
     }
     /// Original former humans, a bounded mixed roster, infighting and drops.
     pub(crate) const fn has_monsters(self) -> bool {
-        matches!(self, Self::PlayerMonstersV1 | Self::PlayerMonstersImpV1)
+        matches!(
+            self,
+            Self::PlayerMonstersV1 | Self::PlayerMonstersImpV1 | Self::PlayerMonstersMapScaleV1
+        )
     }
     /// The original Imp and its fireball in the mixed roster.
     pub(crate) const fn has_imps(self) -> bool {
-        matches!(self, Self::PlayerMonstersImpV1)
+        matches!(
+            self,
+            Self::PlayerMonstersImpV1 | Self::PlayerMonstersMapScaleV1
+        )
+    }
+    /// Wall-derived travel bounds, 320 slots and 208 live fireballs inside a walled
+    /// rectangle; the historical 994-unit margins and travel envelope do not apply.
+    pub(crate) const fn has_map_scale(self) -> bool {
+        matches!(self, Self::PlayerMonstersMapScaleV1)
     }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
@@ -106,6 +126,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonBonusesV1
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
+                | Self::PlayerMonstersMapScaleV1
         )
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -123,6 +144,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonBonusesV1
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
+                | Self::PlayerMonstersMapScaleV1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -139,6 +161,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonBonusesV1
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
+                | Self::PlayerMonstersMapScaleV1
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -151,6 +174,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonBonusesV1
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
+                | Self::PlayerMonstersMapScaleV1
         )
     }
     pub(crate) const fn has_player_commands(self) -> bool {
@@ -166,6 +190,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonBonusesV1
                 | Self::PlayerMonstersV1
                 | Self::PlayerMonstersImpV1
+                | Self::PlayerMonstersMapScaleV1
         )
     }
 }
@@ -501,7 +526,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerDemonArmorV1
             | OriginalExecutionProfile::PlayerDemonBonusesV1
             | OriginalExecutionProfile::PlayerMonstersV1
-            | OriginalExecutionProfile::PlayerMonstersImpV1 => {
+            | OriginalExecutionProfile::PlayerMonstersImpV1
+            | OriginalExecutionProfile::PlayerMonstersMapScaleV1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -547,7 +573,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerDemonArmorV1
             | OriginalExecutionProfile::PlayerDemonBonusesV1
             | OriginalExecutionProfile::PlayerMonstersV1
-            | OriginalExecutionProfile::PlayerMonstersImpV1 => {
+            | OriginalExecutionProfile::PlayerMonstersImpV1
+            | OriginalExecutionProfile::PlayerMonstersMapScaleV1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -756,7 +783,24 @@ impl Simulation {
         if policy.has_physical_player() {
             original_player::validate_grounded_geometry(&map)?;
         }
-        if policy.has_player_weapons() && map.linedefs().len() > 128 {
+        // The map-scale proof needs its full slot budget and the walled rectangle,
+        // both decided here, before construction; historical policies keep 64.
+        let actor_cap = if policy.has_map_scale() {
+            if limit != player_map_scale::MAP_SCALE_ACTOR_SLOTS {
+                return Err(StoreError::InvalidLimit.into());
+            }
+            player_map_scale::MAP_SCALE_ACTOR_SLOTS
+        } else {
+            64
+        };
+        let room = if policy.has_map_scale() {
+            Some(player_map_scale::RoomBounds::derive(&map)?)
+        } else {
+            None
+        };
+        if policy.has_player_weapons()
+            && map.linedefs().len() > player_map_scale::admitted_lines(policy)
+        {
             return Err(CombatError::InterceptLimit.into());
         }
         let mut sim = Self::with_demon_expanded_profile(
@@ -766,10 +810,12 @@ impl Simulation {
             options,
             context,
             Profile::OriginalDemon,
+            actor_cap,
         )?;
         if policy.has_player_body() {
             sim.original_player = Some(original_player::PlayerRuntime {
                 source: OriginalPlayer::default(),
+                room,
                 weapon: None,
                 armor: policy
                     .has_player_armor()

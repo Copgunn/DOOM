@@ -117,8 +117,28 @@ impl Simulation {
         sim.sound_targets = vec![None; sim.sectors.len()];
         Ok(sim)
     }
+    fn type_admitted(&self, ty: ActorTypeId) -> bool {
+        let bits = self.admitted_types.get();
+        let n = usize::from(ty.0);
+        bits.get(n / 64)
+            .is_some_and(|w| w & (1_u64 << (n % 64)) != 0)
+    }
+    fn remember_admitted(&self, ty: ActorTypeId) {
+        let mut bits = self.admitted_types.get();
+        let n = usize::from(ty.0);
+        if let Some(w) = bits.get_mut(n / 64) {
+            *w |= 1_u64 << (n % 64);
+            self.admitted_types.set(bits);
+        }
+    }
     pub(crate) fn validate_demon_lifecycle_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
         if self.profile == Profile::OriginalDemon {
+            // Every input below is immutable for the life of this simulation: the
+            // shared registry, the static sectors, the policy and the identity
+            // tables. A type that passed once passes again, so remember it.
+            if self.type_admitted(ty) {
+                return Ok(());
+            }
             original_registry::require_role_for(self.player_policy(), ty)
                 .map_err(|_| MonsterError::Definition)?;
             if self.player_policy().has_world_pickups()
@@ -135,12 +155,15 @@ impl Simulation {
                     .spawn
                     .resolve(registry)
                     .map_err(|_| MonsterError::Definition)?;
-                return world_pickups::validate_definition(ty);
+                world_pickups::validate_definition(ty)?;
+                self.remember_admitted(ty);
+                return Ok(());
             }
             self.registry
                 .as_deref()
                 .ok_or(MonsterError::Definition)?
                 .validate_type_original(ty, &self.sectors)?;
+            self.remember_admitted(ty);
             return Ok(());
         }
         if ![37, 38, 135, 136].contains(&ty.0) {

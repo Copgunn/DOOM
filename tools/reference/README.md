@@ -350,6 +350,22 @@ Historical observers/helpers/fixtures are unchanged. See
 [commands](../../docs/TESTING.md#original-world-pickups) and
 [observations](../../docs/validation/M3G9.md).
 
+## Real-map-scale rooms (M3h3)
+
+[m3h3_reference.py](m3h3_reference.py) reuses every compiled M3h2 body, observer and
+controlled input unchanged and replaces only the room: [m3h3_geometry.py](m3h3_geometry.py)
+builds walled rectangles (one flat sector, axis walls split at 1,024 units, a cell-exact
+BLOCKMAP with the rectangle minimum as origin) up to the 2,048-unit vertex envelope,
+including an offset room and a pillar. The C side has no coordinate limit, so the
+scenarios that stalled the historical Rust policies simply continue. The inventory
+counts slides (`SL`), blocked moves, near-wall impulses, peak live fireballs and the
+largest coordinate per scenario. [map_scale_snapshot.py](map_scale_snapshot.py) and
+[m3h3_snapshot_goldens.py](m3h3_snapshot_goldens.py) project DSIM30 from the C rows:
+the DSIM29 layout under version 30, policy 14, the map-scale context, 320 slots and
+the 208 live-fireball bound. See [investigation](../../docs/M3H3_REFERENCE_INVESTIGATION.md),
+[commands](../../docs/TESTING.md#original-monsters-at-real-map-scale) and
+[observations](../../docs/validation/M3H3.md).
+
 ## Historical raw-trace loading
 
 Selected large CSV traces now use standard zstd storage. Run frozen C/encoder

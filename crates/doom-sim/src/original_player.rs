@@ -105,6 +105,8 @@ impl Default for OriginalPlayer {
 pub(crate) struct PlayerRuntime {
     pub source: OriginalPlayer,
     pub policy: OriginalExecutionProfile,
+    /// Walled rectangle of the map-scale policy, derived once at admission.
+    pub room: Option<crate::player_map_scale::RoomBounds>,
     pub weapon: Option<crate::player_weapons::PlayerWeaponRuntime>,
     pub pickups: Option<PlayerPickupState>,
     pub armor: Option<PlayerArmorState>,
@@ -226,10 +228,11 @@ impl Simulation {
     ) -> Result<(), SimError> {
         if self.original_player.is_some()
             && ty.0 == OriginalActorType::MT_PLAYER.ordinal()
-            && (position
-                .iter()
-                .any(|v| !crate::sight::within(*v, PLAYER_BODY_COORDINATE_LIMIT))
-                || height != SpawnHeight::Floor
+            && (!self.spawn_admitted(
+                position,
+                Fixed::from_bits(OriginalActorType::MT_PLAYER.descriptor().radius),
+                PLAYER_BODY_COORDINATE_LIMIT,
+            ) || height != SpawnHeight::Floor
                 || self.original_player.is_some_and(|p| p.mo.is_some())
                 || self.actors.order().any(|id| {
                     self.actor(id)
@@ -271,9 +274,7 @@ impl Simulation {
             || l.movedir != 0
             || l.movecount != 0
             || a.angle() != 0
-            || a.position()
-                .iter()
-                .any(|v| !crate::sight::within(*v, PLAYER_BODY_COORDINATE_LIMIT))
+            || !self.spawn_admitted(a.position(), a.radius(), PLAYER_BODY_COORDINATE_LIMIT)
             || a.momentum() != [Fixed::ZERO; 2]
             || a.momz != Fixed::ZERO
             || a.z != a.floor
@@ -331,7 +332,8 @@ impl Simulation {
                                 >> if l.health > 0 { 0 } else { 2 },
                         )
                     || if p.policy.has_physical_player() {
-                        travel_bounds(a.position(), a.momentum()).is_err()
+                        crate::player_map_scale::travel_admitted(p.room, a.position(), a.momentum())
+                            .is_err()
                             || l.flags
                                 & (MF_NOCLIP | MF_MISSILE | MF_SKULLFLY | MF_FLOAT | MF_NOGRAVITY)
                                 != 0
@@ -358,7 +360,7 @@ impl Simulation {
                 {
                     return Err(PlayerBodyError::Unsupported.into());
                 }
-                travel_bounds(a.position(), a.momentum())?;
+                crate::player_map_scale::travel_admitted(p.room, a.position(), a.momentum())?;
             } else if stepping
                 && !self.uses_active_player_roster()
                 && l.actor_type == original_registry::owner_slot()
@@ -407,6 +409,7 @@ impl Simulation {
                 .is_some_and(|life| life.health > 0 && life.flags & MF_SHOOTABLE != 0)
             {
                 preflight_grounded_impulse(
+                    p.room,
                     target,
                     origin,
                     request.amount,
@@ -525,18 +528,20 @@ impl Simulation {
         // A physical hit cannot repair live, unlisted Demon AI. Require the
         // already admitted thinker closure before committing new momentum.
         self.preflight_player_body(true)?;
-        preflight_player_impulse(target, origin, request.amount)
+        preflight_player_impulse(self.room(), target, origin, request.amount)
     }
 }
 
 /// Shared current-record proof; callers separately establish role/ownership and
 /// grounded, no-power settings before using the source physical damage service.
 pub(crate) fn preflight_player_impulse(
+    room: Option<crate::player_map_scale::RoomBounds>,
     target: &Actor,
     origin: &Actor,
     amount: i32,
 ) -> Result<(), SimError> {
     preflight_grounded_impulse(
+        room,
         target,
         origin,
         amount,
@@ -544,25 +549,28 @@ pub(crate) fn preflight_player_impulse(
     )
 }
 pub(crate) fn preflight_grounded_impulse(
+    room: Option<crate::player_map_scale::RoomBounds>,
     target: &Actor,
     origin: &Actor,
     amount: i32,
     mass: i32,
 ) -> Result<(), SimError> {
-    preflight_impulse(target, origin, amount, mass, true)
+    preflight_impulse(room, target, origin, amount, mass, true)
 }
 /// Airborne inflictor (a fireball): the source thrust reads only its XY, and the
 /// P_DamageMobj fall-forward branch needs a target 64 units above the inflictor,
 /// which a grounded target below a flying fireball can never satisfy.
 pub(crate) fn preflight_missile_impulse(
+    room: Option<crate::player_map_scale::RoomBounds>,
     target: &Actor,
     origin: &Actor,
     amount: i32,
     mass: i32,
 ) -> Result<(), SimError> {
-    preflight_impulse(target, origin, amount, mass, false)
+    preflight_impulse(room, target, origin, amount, mass, false)
 }
 fn preflight_impulse(
+    room: Option<crate::player_map_scale::RoomBounds>,
     target: &Actor,
     origin: &Actor,
     amount: i32,
@@ -611,7 +619,7 @@ fn preflight_impulse(
                 .ok_or(CombatError::Coordinates)?,
         );
     }
-    travel_bounds(target.position(), momentum)?;
+    crate::player_map_scale::travel_admitted(room, target.position(), momentum)?;
     Ok(())
 }
 

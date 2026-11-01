@@ -1,0 +1,1210 @@
+{
+  "assumptions": [
+    "Genuine player0 plus at most eight map-THING MT_TROOP/MT_POSSESSED/MT_SHOTGUY/MT_CHAINGUY/MT_SERGEANT in walled rectangles whose vertices reach 2,048 units, including an offset room; no Rust expected observations.",
+    "Every compiled body, observer and controlled input of M3h2 is reused unchanged; the geometry is a new synthetic room builder (one flat sector, axis walls split at 1,024 units, cell-exact BLOCKMAP with the rectangle minimum as origin), not an original level loader.",
+    "The original has no actor coordinate limit: the three stall scenarios continue where the historical Rust envelope rejected. Blocked moves, slides and wall-adjacent impulses are source observations; their non-rejection in Rust is the new policy, not a source claim.",
+    "Bounded original command/weapon stage precedes original thinkers; not complete P_Ticker/PlayerThink/DeathThink or respawn.",
+    "All M3h1/M3h2 assumptions and adapters apply, including the strict-build retyping of attack-angle int locals; MS/SL rows only observe genuine statements."
+  ],
+  "cases": [
+    {
+      "blocked_moves": 19,
+      "damage": 3,
+      "explosions": 2,
+      "kills": 0,
+      "label": "stall_fireball_hit_near_wall",
+      "launches": 2,
+      "max_abs_coordinate": 1014,
+      "near_wall_damage": 0,
+      "peak_live_fireballs": 1,
+      "room": [
+        -1000,
+        -1000,
+        1200,
+        1000
+      ],
+      "slides": 0
+    },
+    {
+      "blocked_moves": 32,
+      "damage": 2,
+      "explosions": 0,
+      "kills": 0,
+      "label": "stall_hitscan_near_wall",
+      "launches": 0,
+      "max_abs_coordinate": 1198,
+      "near_wall_damage": 0,
+      "peak_live_fireballs": 0,
+      "room": [
+        -1000,
+        -1000,
+        1200,
+        1000
+      ],
+      "slides": 0
+    },
+    {
+      "blocked_moves": 56,
+      "damage": 6,
+      "explosions": 6,
+      "kills": 0,
+      "label": "stall_fireball_past_994",
+      "launches": 6,
+      "max_abs_coordinate": 1191,
+      "near_wall_damage": 0,
+      "peak_live_fireballs": 2,
+      "room": [
+        -1000,
+        -1000,
+        1200,
+        1000
+      ],
+      "slides": 0
+    },
+    {
+      "blocked_moves": 24,
+      "damage": 6,
+      "explosions": 6,
+      "kills": 1,
+      "label": "corner_fireball_pinch",
+      "launches": 6,
+      "max_abs_coordinate": 2039,
+      "near_wall_damage": 6,
+      "peak_live_fireballs": 2,
+      "room": [
+        -2048,
+        -2048,
+        2048,
+        2048
+      ],
+      "slides": 0
+    },
+    {
+      "blocked_moves": 9,
+      "damage": 5,
+      "explosions": 0,
+      "kills": 1,
+      "label": "demon_corner_bites",
+      "launches": 0,
+      "max_abs_coordinate": 2032,
+      "near_wall_damage": 5,
+      "peak_live_fireballs": 0,
+      "room": [
+        -2048,
+        -2048,
+        2048,
+        2048
+      ],
+      "slides": 0
+    },
+    {
+      "blocked_moves": 13,
+      "damage": 5,
+      "explosions": 0,
+      "kills": 0,
+      "label": "wall_slide_under_fire",
+      "launches": 0,
+      "max_abs_coordinate": 2047,
+      "near_wall_damage": 5,
+      "peak_live_fireballs": 0,
+      "room": [
+        -2048,
+        -2048,
+        2048,
+        2048
+      ],
+      "slides": 41
+    },
+    {
+      "blocked_moves": 98,
+      "damage": 2,
+      "explosions": 0,
+      "kills": 1,
+      "label": "monster_knockback_at_wall",
+      "launches": 0,
+      "max_abs_coordinate": 2044,
+      "near_wall_damage": 0,
+      "peak_live_fireballs": 0,
+      "room": [
+        -2048,
+        -2048,
+        2048,
+        2048
+      ],
+      "slides": 0
+    },
+    {
+      "blocked_moves": 24,
+      "damage": 6,
+      "explosions": 2,
+      "kills": 1,
+      "label": "pillar_pinch",
+      "launches": 2,
+      "max_abs_coordinate": 2036,
+      "near_wall_damage": 0,
+      "peak_live_fireballs": 1,
+      "room": [
+        -2048,
+        -2048,
+        2048,
+        2048
+      ],
+      "slides": 0
+    },
+    {
+      "blocked_moves": 146,
+      "damage": 2,
+      "explosions": 2,
+      "kills": 0,
+      "label": "long_fireball_flight",
+      "launches": 2,
+      "max_abs_coordinate": 1945,
+      "near_wall_damage": 0,
+      "peak_live_fireballs": 2,
+      "room": [
+        -2048,
+        -2048,
+        2048,
+        2048
+      ],
+      "slides": 0
+    },
+    {
+      "blocked_moves": 141,
+      "damage": 0,
+      "explosions": 0,
+      "kills": 0,
+      "label": "full_room_traversal",
+      "launches": 2,
+      "max_abs_coordinate": 2031,
+      "near_wall_damage": 0,
+      "peak_live_fireballs": 2,
+      "room": [
+        -2048,
+        -2048,
+        2048,
+        2048
+      ],
+      "slides": 298
+    },
+    {
+      "blocked_moves": 155,
+      "damage": 8,
+      "explosions": 34,
+      "kills": 1,
+      "label": "eight_imps_far_room",
+      "launches": 36,
+      "max_abs_coordinate": 2041,
+      "near_wall_damage": 0,
+      "peak_live_fireballs": 29,
+      "room": [
+        -2048,
+        -2048,
+        2048,
+        2048
+      ],
+      "slides": 0
+    },
+    {
+      "blocked_moves": 195,
+      "damage": 54,
+      "explosions": 4,
+      "kills": 8,
+      "label": "mixed_roster_corner_fight",
+      "launches": 4,
+      "max_abs_coordinate": 2043,
+      "near_wall_damage": 0,
+      "peak_live_fireballs": 1,
+      "room": [
+        -2048,
+        -2048,
+        2048,
+        2048
+      ],
+      "slides": 0
+    },
+    {
+      "blocked_moves": 69,
+      "damage": 15,
+      "explosions": 0,
+      "kills": 3,
+      "label": "drops_far_from_origin",
+      "launches": 0,
+      "max_abs_coordinate": 2044,
+      "near_wall_damage": 0,
+      "peak_live_fireballs": 0,
+      "room": [
+        200,
+        -2048,
+        2048,
+        -200
+      ],
+      "slides": 0
+    },
+    {
+      "blocked_moves": 59,
+      "damage": 2,
+      "explosions": 0,
+      "kills": 1,
+      "label": "hitscan_far_from_origin",
+      "launches": 0,
+      "max_abs_coordinate": 1918,
+      "near_wall_damage": 0,
+      "peak_live_fireballs": 0,
+      "room": [
+        200,
+        -2048,
+        2048,
+        -200
+      ],
+      "slides": 0
+    }
+  ],
+  "executed_function_entries": {
+    "g_game.c:G_PlayerReborn": 14,
+    "m_random.c:P_Random": 5293,
+    "p_enemy.c:A_CPosAttack": 79,
+    "p_enemy.c:A_CPosRefire": 38,
+    "p_enemy.c:A_Chase": 2433,
+    "p_enemy.c:A_FaceTarget": 374,
+    "p_enemy.c:A_Fall": 17,
+    "p_enemy.c:A_Look": 457,
+    "p_enemy.c:A_Pain": 73,
+    "p_enemy.c:A_PlayerScream": 4,
+    "p_enemy.c:A_PosAttack": 1,
+    "p_enemy.c:A_SPosAttack": 3,
+    "p_enemy.c:A_SargAttack": 13,
+    "p_enemy.c:A_Scream": 13,
+    "p_enemy.c:A_TroopAttack": 64,
+    "p_enemy.c:P_CheckMeleeRange": 2171,
+    "p_enemy.c:P_CheckMissileRange": 292,
+    "p_enemy.c:P_LookForPlayers": 471,
+    "p_enemy.c:P_Move": 2392,
+    "p_enemy.c:P_NewChaseDir": 312,
+    "p_enemy.c:P_NoiseAlert": 148,
+    "p_enemy.c:P_RecursiveSound": 148,
+    "p_enemy.c:P_TryWalk": 359,
+    "p_inter.c:P_DamageMobj": 116,
+    "p_inter.c:P_GiveAmmo": 3,
+    "p_inter.c:P_GiveWeapon": 2,
+    "p_inter.c:P_KillMobj": 17,
+    "p_inter.c:P_TouchSpecialThing": 3,
+    "p_map.c:PIT_CheckLine": 26850,
+    "p_map.c:PIT_CheckThing": 13965,
+    "p_map.c:PTR_AimTraverse": 2575,
+    "p_map.c:PTR_ShootTraverse": 1304,
+    "p_map.c:PTR_SlideTraverse": 827,
+    "p_map.c:P_AimLineAttack": 730,
+    "p_map.c:P_CheckPosition": 22648,
+    "p_map.c:P_HitSlideLine": 339,
+    "p_map.c:P_LineAttack": 349,
+    "p_map.c:P_SlideMove": 469,
+    "p_map.c:P_TryMove": 22648,
+    "p_maputl.c:PIT_AddLineIntercepts": 8111,
+    "p_maputl.c:PIT_AddThingIntercepts": 5361,
+    "p_maputl.c:P_AproxDistance": 2460,
+    "p_maputl.c:P_BlockLinesIterator": 47581,
+    "p_maputl.c:P_BlockThingsIterator": 78749,
+    "p_maputl.c:P_BoxOnLineSide": 1214,
+    "p_maputl.c:P_InterceptVector": 5773,
+    "p_maputl.c:P_MakeDivline": 1931,
+    "p_maputl.c:P_PathTraverse": 2933,
+    "p_maputl.c:P_PointOnDivlineSide": 15910,
+    "p_maputl.c:P_PointOnLineSide": 11861,
+    "p_maputl.c:P_SetThingPosition": 21680,
+    "p_maputl.c:P_TraverseIntercepts": 2933,
+    "p_maputl.c:P_UnsetThingPosition": 21618,
+    "p_mobj.c:P_CheckMissileSpawn": 60,
+    "p_mobj.c:P_ExplodeMissile": 56,
+    "p_mobj.c:P_MobjThinker": 48994,
+    "p_mobj.c:P_RemoveMobj": 273,
+    "p_mobj.c:P_SetMobjState": 9226,
+    "p_mobj.c:P_SpawnBlood": 76,
+    "p_mobj.c:P_SpawnMapThing": 33,
+    "p_mobj.c:P_SpawnMissile": 60,
+    "p_mobj.c:P_SpawnMobj": 335,
+    "p_mobj.c:P_SpawnPuff": 143,
+    "p_mobj.c:P_XYMovement": 18935,
+    "p_mobj.c:P_ZMovement": 19735,
+    "p_pspr.c:A_FireCGun": 225,
+    "p_pspr.c:A_FirePistol": 35,
+    "p_pspr.c:A_Light0": 36,
+    "p_pspr.c:A_Light1": 148,
+    "p_pspr.c:A_Light2": 112,
+    "p_pspr.c:A_Lower": 967,
+    "p_pspr.c:A_Raise": 240,
+    "p_pspr.c:A_ReFire": 147,
+    "p_pspr.c:A_WeaponReady": 3186,
+    "p_pspr.c:P_BringUpWeapon": 15,
+    "p_pspr.c:P_BulletSlope": 260,
+    "p_pspr.c:P_CheckAmmo": 151,
+    "p_pspr.c:P_DropWeapon": 4,
+    "p_pspr.c:P_FireWeapon": 148,
+    "p_pspr.c:P_GunShot": 260,
+    "p_pspr.c:P_MovePsprites": 5752,
+    "p_pspr.c:P_SetPsprite": 5165,
+    "p_pspr.c:P_SetupPsprites": 14,
+    "p_setup.c:P_LoadThings": 14,
+    "p_sight.c:P_CheckSight": 387,
+    "p_sight.c:P_CrossBSPNode": 387,
+    "p_sight.c:P_CrossSubsector": 387,
+    "p_sight.c:P_DivlineSide": 13864,
+    "p_tick.c:P_AddThinker": 335,
+    "p_tick.c:P_InitThinkers": 14,
+    "p_tick.c:P_RemoveThinker": 273,
+    "p_tick.c:P_RunThinkers": 5752,
+    "p_user.c:P_CalcHeight": 4805,
+    "p_user.c:P_MovePlayer": 4805,
+    "p_user.c:P_Thrust": 1076,
+    "r_main.c:R_PointInSubsector": 44328,
+    "r_main.c:R_PointToAngle": 580,
+    "r_main.c:R_PointToAngle2": 580
+  },
+  "expanded_trace_sha256": "03619a148f45fb3cb7675ee6afbce9e184ae1ef0fb9c4e0de25de9ba035d9af6",
+  "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fwrapv",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char"
+  ],
+  "function_sha256": {
+    "g_game.c:G_PlayerReborn": "3cea698f0ac9b7595f46eb8daa8cf6e7a4a591e272e385ae8e6995f7da27178f",
+    "m_random.c:P_Random": "4bd1e4245f1c27c7a9c1cde25e85ad445f8ba7a38033217a183eae0b4928c2e4",
+    "p_enemy.c:A_CPosAttack": "97b51612228504176e1f24f2ec8680a28110697a9b8756a570fb44fc006d3c89",
+    "p_enemy.c:A_CPosRefire": "235db87a1934bc3bb6fc4fdcf4735383c0812b1af6854af081fd112d51062a4d",
+    "p_enemy.c:A_Chase": "e29c1764ba4328eb52e5ac8a60e361929d246e374064df1011b07ac9c5d88883",
+    "p_enemy.c:A_FaceTarget": "2aada2930edc5031b189779e518370dda33bf18620323426f76a2ef1999f0481",
+    "p_enemy.c:A_Fall": "11723ecad24d8c31b4ede008a358c21c68212365f97b439520128b1b7185d4ff",
+    "p_enemy.c:A_Look": "88762afe30f3ea7b512fdab5ba9dd08acd05858dd16fb2172ec7a196629f115b",
+    "p_enemy.c:A_Pain": "14c9d7e928acd41a3a311dcf9f88c868a8808c9327fd57ff3d613f3bfdfd49ac",
+    "p_enemy.c:A_PlayerScream": "c2d6c04d42fe8a620a1bde77e9c6055522e2208957b3d2fa9460e6dffe5557cd",
+    "p_enemy.c:A_PosAttack": "46f2b16bba94f90f2dec2a3c23c6c3999e0e74efe64cd76a6b707e08abd59d41",
+    "p_enemy.c:A_SPosAttack": "14b5a9f4db584085efba73ff2702088df74a9f90dfb1326e66bd2b6a2afb952f",
+    "p_enemy.c:A_SargAttack": "74a750f03dc05d8435b65f464c32a02cc66de289120346b1329d2df4bd53b9a9",
+    "p_enemy.c:A_Scream": "7501d046588e5c12c923d670a81a40b5e02023d898e006e13adbd34be75e053c",
+    "p_enemy.c:A_TroopAttack": "8964484a41312a20556a55f98223726230f9bf4317ea670fefe985a687c6087c",
+    "p_enemy.c:A_XScream": "85616509193c15210d33751425d92790b71593a7420b403b5bcf201d60db4e65",
+    "p_enemy.c:P_CheckMeleeRange": "6479f57374f3beb0742f460112e784dee76d0bef7ce8048383fe58fb2e9a294e",
+    "p_enemy.c:P_CheckMissileRange": "e2f2cbc7e4f6b5f7448b737fda8aa492c3215f6864e20ded05a6bf4323e8d901",
+    "p_enemy.c:P_LookForPlayers": "91ea2f9761160efc377edec95e4c754728d7c6a857134e4eaec04efb4c6404e2",
+    "p_enemy.c:P_Move": "e581789dbdc4841e70cf96c89f8e1e3228943e99525f9712ec536e8c8ea1923f",
+    "p_enemy.c:P_NewChaseDir": "a6120963a5e80662ae4cfbdfcf2d4be84f082c5b95ae6f7e83c42233561b97a2",
+    "p_enemy.c:P_NoiseAlert": "a915335edf5c5731e18f49aec57599015ad06263bd3b858a9cb6d2286f593f3f",
+    "p_enemy.c:P_RecursiveSound": "742edd56f80fa252fe1252c7d15bba19eb3001bd60a6238343c3308c3d93e615",
+    "p_enemy.c:P_TryWalk": "6f5ec5355cd1aaf11f5db3bf4f23b50acaf07f2c88ab4dcbe81bd58314f63438",
+    "p_inter.c:P_DamageMobj": "fbca76ffdc30ef82bf3eea5f3f15f64159a13a0fcab4d20fa9fd905fc0bd8d4c",
+    "p_inter.c:P_GiveAmmo": "217b9382422593cf045421c0b1a6bd5c9b4a4e8040415b2311d7259c8bfb2813",
+    "p_inter.c:P_GiveArmor": "8175683a879cfd26f72324001872bdc8f28b093de896a83c9ecf0ac6ec57a9e2",
+    "p_inter.c:P_GiveBody": "1abc6d60e52435d215fc5dc39ec8c0484780c3bf4c0dedcd7547ab1c4ceb2802",
+    "p_inter.c:P_GiveWeapon": "eda5886280ed73307b5e58be3cbb7c834ad2ee9fde843df7bab540aa8eef16bd",
+    "p_inter.c:P_KillMobj": "b10e5409e5f1a0057dcb08aaaa306f52a971490a3d1b4028b1be39ea5ef8a345",
+    "p_inter.c:P_TouchSpecialThing": "2ed37f0dcaa1b9ccde6db786b5a74fcc7fb8d456a598c68f7fd15e52dda05f64",
+    "p_map.c:PIT_CheckLine": "66f2e08a7bdd1aa4364f60d29d926596100be7f9a78bf236d3266f770402af07",
+    "p_map.c:PIT_CheckThing": "15704a9f9849d993e4824878ff081569391acc372705c1e0211897da189734da",
+    "p_map.c:PTR_AimTraverse": "a1f88990bff5cf347cfb636905d5e31024a7919941fd8d0a1066a1c25a56dd76",
+    "p_map.c:PTR_ShootTraverse": "3852294e57eca72f905cf1ab1bd16b5aa1180c525a76c85748ccf4d0a662da15",
+    "p_map.c:PTR_SlideTraverse": "232d380d8226eac1efb0896397b8bea5a981c5be31f99f1135010886b80de364",
+    "p_map.c:P_AimLineAttack": "edfe5a41eaf633408f1f2f38000b5a4d75a0c23a06b9b14abf8b0fde0a67ec71",
+    "p_map.c:P_CheckPosition": "f509cc5252588b4d61c00242d54ff463e0c85c677edf691b1231be1ca5ad6bb5",
+    "p_map.c:P_HitSlideLine": "efaa4fc2acca2b72ad7e1f9b683724fd8e75ac2c0562ee478f8f034abfad0d60",
+    "p_map.c:P_LineAttack": "f12e880fc3569b2b9fc70006d481447c13dc7a61658e24e85098100c060c16e4",
+    "p_map.c:P_SlideMove": "e2fbcd720be5893e87668533c3b7f53ff117b72ae9e0007a3d469f6a226690be",
+    "p_map.c:P_TryMove": "220c77b687eee9e2912db23c9b0939fc3962e127e42487b340f4b8eb0034a4f3",
+    "p_maputl.c:PIT_AddLineIntercepts": "55508a517cc3eb75de233466cbcaf09439eae2e1e203c0d608f84e93124ab7fd",
+    "p_maputl.c:PIT_AddThingIntercepts": "6bb442a05c0603ad53fbc0aa90bbc6746699dfe039af99fabe6495523bc7465d",
+    "p_maputl.c:P_AproxDistance": "7c7a32306847770af6bfed66215d0ced91858eaeba7dd26231d3ab9158e66699",
+    "p_maputl.c:P_BlockLinesIterator": "8fb540c7f31511f9ccfb94e0168e76b18121f30350d2f325aca92da395c0b9ab",
+    "p_maputl.c:P_BlockThingsIterator": "6693ae5ff21b3e51d80b8ac5d10e452c4aafe80e6480672d61392c7d1a96859e",
+    "p_maputl.c:P_BoxOnLineSide": "e91cd38e2d63537354524e96d5acc8287047291283b8561cee29aa6391e51c5d",
+    "p_maputl.c:P_InterceptVector": "b6fc71a4f2bea94b66a1a9d3e435f8f81656b47aa67d4b8a8e5cd441e6394ae3",
+    "p_maputl.c:P_LineOpening": "7ed95f9a3b9b611c72cd2e902728a8bae5a4658c5158b0824508d2c66b01a1ea",
+    "p_maputl.c:P_MakeDivline": "1d57f3a4e7c76678251cb67104d09195bc97ef65ca0117842e74b013ae52d453",
+    "p_maputl.c:P_PathTraverse": "a9acbda97d08b7bb435d53ba0bde2144a6108c7803b6fb6936b8fde565650de2",
+    "p_maputl.c:P_PointOnDivlineSide": "523954c4c38d483ed6495387ac0f01a1f3ea2952cb0031e397762584e4a212d1",
+    "p_maputl.c:P_PointOnLineSide": "80712b3f421e4e3c91469e81695dbb4d515e29e819b225d5c6e1d4f2a0dd0e7e",
+    "p_maputl.c:P_SetThingPosition": "c510796c4d41345c4af93a38dc5f0770b62fe12d9866e6a68a558c10f5b2de95",
+    "p_maputl.c:P_TraverseIntercepts": "6d5e33e5066e43bc8a13e2d9b4534b6ec9526f73e3819aee4667875589b47171",
+    "p_maputl.c:P_UnsetThingPosition": "4fdd013d952f301b4f87336eff6573d8c9a2f829d5f44fa954f6272ec28b9077",
+    "p_mobj.c:P_CheckMissileSpawn": "607f365fe33e6fa8fb26c9d11d054893c8a17cf9057a4572d656d5c37fbe1035",
+    "p_mobj.c:P_ExplodeMissile": "56f216130a0ebbcb2b2d72924e6b048dd359196f65b2b65b98b7c25a7a22cc71",
+    "p_mobj.c:P_MobjThinker": "d5b34a5e05ad8c76f6a8a3ab650e58ee6012f36552f89767f787fcf25c4bbc80",
+    "p_mobj.c:P_RemoveMobj": "fb68b1ffe5140b8d4deda823d9ff875119df0c1289874ee26f898cf8e6d2964b",
+    "p_mobj.c:P_SetMobjState": "d804d2f4fc2abf96cb59ee86d70225767f204c9570dbd1b63596017b53123707",
+    "p_mobj.c:P_SpawnBlood": "2632a614e9e158b24ecb6024ac47d23f7fbdce865fddf603b7c7dff5d4915645",
+    "p_mobj.c:P_SpawnMapThing": "2cff89689b2b9e7e8b487625f5b5166ca8c9bddd6406a0ed36448496ae7d7c99",
+    "p_mobj.c:P_SpawnMissile": "e55c5b697899206af3e62a9b2b15413268ea993ec2deefdb5f2ecf40b9418296",
+    "p_mobj.c:P_SpawnMobj": "ecec71c4d5d54e85ad0bcb99392726c8d970453e13e256aa9aa81a0908a533a7",
+    "p_mobj.c:P_SpawnPuff": "b1a7762c3f8394b48ca3c807063cae2b11401250f95dae96c8c8df61b738b660",
+    "p_mobj.c:P_XYMovement": "c4b15dbc1653705a802dd73bbe6a35c9a090d2461c9e3fe17f20686877adf7ee",
+    "p_mobj.c:P_ZMovement": "3d64d9840cd386f1ec7904005f468589b772602e11baa2d12288eedfb7eea427",
+    "p_pspr.c:A_FireCGun": "2afa9389075a99f3a720383a6cd929d8d4d396df548a771d70209f8cdc1fde9e",
+    "p_pspr.c:A_FirePistol": "47c22683e0bb7b027694cc739fbde0e81aa9e489c73386ee7cb2e80037b739ec",
+    "p_pspr.c:A_FireShotgun": "b3b494dc2296be3c94790ab2f14e7dfda87ea7918bf89ad4e9551a911285c735",
+    "p_pspr.c:A_Light0": "c636046f86451986c0ecf05add525d8e57891fbee3501999822ecda9defe2e88",
+    "p_pspr.c:A_Light1": "1c25aec25d46c35c01d97d4076ab010e1168b42133797849a883e6387c90d90f",
+    "p_pspr.c:A_Light2": "f6f7c4c8b30163a438c4d28680a290ab7f20776b925e55ac35abee6d4c0b5ce8",
+    "p_pspr.c:A_Lower": "1d6dd7a2fef7c6c46d77289af6fd1b8ee91b66f53d938064bf929724a953c9f4",
+    "p_pspr.c:A_Punch": "7a0c5c8382df4796e7dbf6ea7d0d9fd5d339da6ff4b91a70e22d3829602c2e5e",
+    "p_pspr.c:A_Raise": "86c22ac67821b27699860b4ca2012f707ae306d0f37b06c8d6c6cbc05ffed519",
+    "p_pspr.c:A_ReFire": "2572cd7b89243890f8e3bc196c3ffdfe4534695769396f01e6f74b5441c7e6e2",
+    "p_pspr.c:A_WeaponReady": "6a2b5d2b48cc246c721b49e0ab72118d2f237dfa850319f380358ed76294e1ca",
+    "p_pspr.c:P_BringUpWeapon": "c98b1f1a6f0f3d8186fadc55febd34217f303d6f737ffb694ac064fd0363ac81",
+    "p_pspr.c:P_BulletSlope": "4086ee8aa96065fd645720ced35b725ad98fd589ac1961e966764ee7f7c7ff3c",
+    "p_pspr.c:P_CheckAmmo": "4a9658fe87550cf0b7dfcdfd4c890c2474e84b1de64165ab7d5c6103fea1733b",
+    "p_pspr.c:P_DropWeapon": "b3b0678cf7137677506b4a505b04f0067f49f7812f32e45b02d8a2abf6d019b2",
+    "p_pspr.c:P_FireWeapon": "5c1c83e423eba043191b979a786d7352fd247461afffd6448f60e90dc32108a3",
+    "p_pspr.c:P_GunShot": "e0b0c52da0c971c908b275c91ffb9e42ec9f46b55def72e23abd8fcb9ebb8ebb",
+    "p_pspr.c:P_MovePsprites": "45b5e03fa33a59cef77b92f8f1d2adf01b68c882275dfafde1291f20c2514a3e",
+    "p_pspr.c:P_SetPsprite": "93997fbc9efd3a42c29f0ac1120f14590227fcad2057d9c687bac683c0cccec9",
+    "p_pspr.c:P_SetupPsprites": "5ad1570b976629d7dfc363ee4d180647c997ed7285f78796a450f27ac6bc1e79",
+    "p_setup.c:P_LoadThings": "65a3f36f3315ef435ff8a6a0cccd15f6b86fae2be30544d7937a40b2363af02b",
+    "p_sight.c:P_CheckSight": "4b5a5b18c10d91522210eff8007202c927a4d1f5205b32889e78a7104d76ac01",
+    "p_sight.c:P_CrossBSPNode": "cfd3bb823051b6c98fdae1e1d54b072b1796d32425c77eb9276e6cca6c0938a3",
+    "p_sight.c:P_CrossSubsector": "67345d18cf2adaf4471af8afa056d690b9b6ab1ae60364d3be4b72875025405c",
+    "p_sight.c:P_DivlineSide": "c55a6505c1c40dba5fc16e194c89c07e1ec97000115c3326d62ff72d0e4b6f25",
+    "p_sight.c:P_InterceptVector2": "590ec7f8a464c70f743c9c69c3a9fcf0b6d6fb9087aa012db232b5217c632593",
+    "p_tick.c:P_AddThinker": "c30567602c4ec6095303697a3875aa7f54f78f885974eb2b81425ab0c3742cfb",
+    "p_tick.c:P_InitThinkers": "65f448147f953e5f1f5459509ee9eb98322235fff30b29ae51551071ff84639b",
+    "p_tick.c:P_RemoveThinker": "15d836b3ea687ee911ae5a84f67bcdc671c852084624336fca31da80f58ab0d5",
+    "p_tick.c:P_RunThinkers": "a6db3d89282e7228b23af1bf5da3b0b854c468970b4e11dfd725c2400255b1ab",
+    "p_user.c:P_CalcHeight": "d9876ca89c38f081ba57b57020f6c9ab3ac0243206718dc1c2c93ebec73c86cb",
+    "p_user.c:P_MovePlayer": "54174a5f9a4cb589c4043205b228b7aa38b6b7d7573f1f4c474800c99b343024",
+    "p_user.c:P_Thrust": "e6c538ba6ec0e39efe892f35f5d6568019bf3707017db4c548ddb9c29dcb707c",
+    "r_main.c:R_PointInSubsector": "efc1ba17a5f2ffcb33d65ff061302adf0b7d48feb3d98c6bc9ce294f267d8b40",
+    "r_main.c:R_PointOnSide": "4f5f2ca961cd290f3cc4e8e4aa9e0a84be85a75b8889918b2b17447d4c79a4af",
+    "r_main.c:R_PointToAngle": "d82e2502adbba8cfbaa28876fc5c542e6483f9992ccc6f4408ed3144814c9d25",
+    "r_main.c:R_PointToAngle2": "f3c68fd85a77ef30f2390850a0e19e2f03f0b79bb0b2300f9cb6126a062b13d2"
+  },
+  "functions": [
+    [
+      "r_main.c",
+      "R_PointOnSide",
+      "int"
+    ],
+    [
+      "r_main.c",
+      "R_PointInSubsector",
+      "subsector_t*"
+    ],
+    [
+      "r_main.c",
+      "R_PointToAngle",
+      "angle_t"
+    ],
+    [
+      "r_main.c",
+      "R_PointToAngle2",
+      "angle_t"
+    ],
+    [
+      "p_maputl.c",
+      "P_AproxDistance",
+      "fixed_t"
+    ],
+    [
+      "p_maputl.c",
+      "P_PointOnLineSide",
+      "int"
+    ],
+    [
+      "p_maputl.c",
+      "P_BoxOnLineSide",
+      "int"
+    ],
+    [
+      "p_maputl.c",
+      "P_PointOnDivlineSide",
+      "int"
+    ],
+    [
+      "p_maputl.c",
+      "P_MakeDivline",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_InterceptVector",
+      "fixed_t"
+    ],
+    [
+      "p_maputl.c",
+      "P_LineOpening",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_SetThingPosition",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_UnsetThingPosition",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_BlockLinesIterator",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "P_BlockThingsIterator",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "PIT_AddLineIntercepts",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "PIT_AddThingIntercepts",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "P_TraverseIntercepts",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "P_PathTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PIT_CheckLine",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PIT_CheckThing",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_CheckPosition",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_TryMove",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PTR_AimTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PTR_ShootTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_AimLineAttack",
+      "fixed_t"
+    ],
+    [
+      "p_map.c",
+      "P_LineAttack",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_InitThinkers",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_AddThinker",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_RemoveThinker",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_RunThinkers",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SetMobjState",
+      "boolean"
+    ],
+    [
+      "p_mobj.c",
+      "P_MobjThinker",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnMobj",
+      "mobj_t*"
+    ],
+    [
+      "p_mobj.c",
+      "P_RemoveMobj",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnPuff",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnBlood",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_XYMovement",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_ZMovement",
+      "void"
+    ],
+    [
+      "p_inter.c",
+      "P_KillMobj",
+      "void"
+    ],
+    [
+      "p_inter.c",
+      "P_DamageMobj",
+      "void"
+    ],
+    [
+      "p_sight.c",
+      "P_DivlineSide",
+      "int"
+    ],
+    [
+      "p_sight.c",
+      "P_InterceptVector2",
+      "fixed_t"
+    ],
+    [
+      "p_sight.c",
+      "P_CrossSubsector",
+      "boolean"
+    ],
+    [
+      "p_sight.c",
+      "P_CrossBSPNode",
+      "boolean"
+    ],
+    [
+      "p_sight.c",
+      "P_CheckSight",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_LookForPlayers",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "A_Look",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_RecursiveSound",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_NoiseAlert",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_Move",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_TryWalk",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_NewChaseDir",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Chase",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_CheckMeleeRange",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_CheckMissileRange",
+      "boolean"
+    ],
+    [
+      "p_setup.c",
+      "P_LoadThings",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnMapThing",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_DropWeapon",
+      "void"
+    ],
+    [
+      "p_map.c",
+      "P_HitSlideLine",
+      "void"
+    ],
+    [
+      "p_map.c",
+      "PTR_SlideTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_SlideMove",
+      "void"
+    ],
+    [
+      "p_user.c",
+      "P_Thrust",
+      "void"
+    ],
+    [
+      "p_user.c",
+      "P_MovePlayer",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_SetupPsprites",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_MovePsprites",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_SetPsprite",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_BringUpWeapon",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_CheckAmmo",
+      "boolean"
+    ],
+    [
+      "p_pspr.c",
+      "P_FireWeapon",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_BulletSlope",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_GunShot",
+      "void"
+    ],
+    [
+      "p_user.c",
+      "P_CalcHeight",
+      "void"
+    ],
+    [
+      "g_game.c",
+      "G_PlayerReborn",
+      "void"
+    ],
+    [
+      "p_inter.c",
+      "P_GiveAmmo",
+      "boolean"
+    ],
+    [
+      "p_inter.c",
+      "P_GiveBody",
+      "boolean"
+    ],
+    [
+      "p_inter.c",
+      "P_GiveWeapon",
+      "boolean"
+    ],
+    [
+      "p_inter.c",
+      "P_TouchSpecialThing",
+      "void"
+    ],
+    [
+      "p_inter.c",
+      "P_GiveArmor",
+      "boolean"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnMissile",
+      "mobj_t*"
+    ],
+    [
+      "p_mobj.c",
+      "P_CheckMissileSpawn",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_ExplodeMissile",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_TroopAttack",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_FaceTarget",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_PosAttack",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_SPosAttack",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_CPosAttack",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_CPosRefire",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_SargAttack",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Fall",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Pain",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Scream",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_XScream",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_PlayerScream",
+      "void"
+    ],
+    [
+      "m_random.c",
+      "P_Random",
+      "int"
+    ],
+    [
+      "p_pspr.c",
+      "A_WeaponReady",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_Lower",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_Raise",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_ReFire",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_FirePistol",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_Light0",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_Light1",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_Punch",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_FireShotgun",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_FireCGun",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_Light2",
+      "void"
+    ]
+  ],
+  "inputs_sha256": {
+    "tools/reference/evidence_pack.py": "12854a2562cfc6407230b0b6d75491a2b2eea2303403e4dbbe5fff9379e84ffb",
+    "tools/reference/generate.py": "e80beb09a686c030a6229599f5e0c9e9fd9b109ecebdcb9dd474a2a78e01d6cf",
+    "tools/reference/generate_m3a.py": "97a6bb6117329ee3fbbb942c1f17af14c0f16f264ecda1d298e791e0bd09f725",
+    "tools/reference/generate_m3b.py": "613aeb1563573f1990314414c0e1086d1645c3afd4764c2316c8e7d4e828a374",
+    "tools/reference/generate_m3c.py": "caca6c42d0856c87878f22e65380bf9ef50d8070e721f2edbb2d6ad656667d64",
+    "tools/reference/generate_m3d1.py": "a2abea47bea8ace07c0091e87dcd2edc159b3e17abb8a52204e569cd53b23ce9",
+    "tools/reference/generate_m3d3a.py": "e44b12d5eaa820241ec91c5915e9a859fcabcd4161a878d834aa64f3c29507ff",
+    "tools/reference/generate_m3d3c.py": "b4b679350f9586b83a126bee04371bd046c6a525422fc856e1251a2ae6e4beaf",
+    "tools/reference/generate_m3d3h.py": "3419858a229589fb981db06f1ef233c6613265980966e3c40673f60dc8cfba5d",
+    "tools/reference/generate_m3d3j.py": "24f0916f5fb6223f6f32b4a115ec811d3f85ac72cba36d383ac07ad1e825c839",
+    "tools/reference/m3f1_reference.py": "9ba2e71746621c42dd2775a2af1fd2776d6ea5358636827138dcb59e42541f27",
+    "tools/reference/m3f2_reference.py": "bdffbb17cdeb4bcb1a043a8542d6827dd6db0a6d42a890e1f5763da8635309aa",
+    "tools/reference/m3f3_reference.py": "d4489880ae4ca0e5c8f22fe37c8a429a6e286b1781fe62056871116a0ef8bfe0",
+    "tools/reference/m3f5_reference.py": "d97a2d3a9642ac819e2012e01b1a32f519fdf0a657bada13833589a38ac95ae1",
+    "tools/reference/m3g10_cases.py": "1aeda7661e0cb684ff8c105fd5501e1cbcaa09593ee7018535375fd0550730d2",
+    "tools/reference/m3g10_components.py": "f04c68bd1b1bad8e95d2305a2b7e15bd3634f7d6823b2a934791c27d3f7742e1",
+    "tools/reference/m3g10_reference.py": "8a317f576abcba89bc2d4a953d5ca44f00133cd00ac876c9978727527db78074",
+    "tools/reference/m3g11_cases.py": "7ada49cbd81c3ba32913d41a6bdb3cb9911b56b5382adf99068d9069da0caeaf",
+    "tools/reference/m3g11_components.py": "3e176a4e8e795748a6062b976b341d620117fd48b574d7b8eda78f2a0451cd4d",
+    "tools/reference/m3g11_observers.py": "aa37fcb89ff5dc9a165d945bf7471f6f75f80839eedb2faffe8eb3f04be147d2",
+    "tools/reference/m3g11_reference.py": "c37b7d9939e707a17340a42f346548a6e8406efa328cd5e5296324a7e67c2659",
+    "tools/reference/m3g2_reference.py": "5a86885c69bdca9f8793b5ff2dcf90ad5f2c4b19dafbe6fea9cef551eb3460de",
+    "tools/reference/m3g3_reference.py": "cf14cc4e7cdb7223f7d8cc4d6032fa510da669722d8b4765908adb5d58074ae4",
+    "tools/reference/m3g4_reference.py": "6b3502782f7f06779c78df155515b863d5496aa93fe0cd2c03686f7e0e131634",
+    "tools/reference/m3g5_reference.py": "83cbcb8ddf4da4e07d9a1df92b3b16a3b0350766d82a6cc013a3dc9fcbc06f27",
+    "tools/reference/m3g6_reference.py": "72626936e7f2b7cd642abd0f968e4175de6275fcc923c8c21118051ff96fe817",
+    "tools/reference/m3g7_reference.py": "cd4e9555cc659cb23b3eff8fdb101086493e63d29f17abe3bcc3c45e803cf8ac",
+    "tools/reference/m3g8_reference.py": "c00fb03c856f5d45a7b9f01ee6edc71f70b2ece239bdd108e46b69bff3419d4a",
+    "tools/reference/m3g9_cases.py": "de5aacba267b6cb711edb05ee74b15bcc178efa013db0db9d2b00172bab7aca6",
+    "tools/reference/m3g9_components.py": "1620144183393e650ee47da0676484833f1a14ca41027309188d744a6ec79850",
+    "tools/reference/m3g9_observers.py": "4363d2a77d1c5f1e727f970430f6fd15653b758295ea251c050c37e53ab91144",
+    "tools/reference/m3g9_reference.py": "875682e61dc7474ba82f1e98ca450216b5b18f8b4859bc7e5bc98316a66ed6dc",
+    "tools/reference/m3h1_cases.py": "9f1dc94d14ba39cb6fdc5176f135bdfd57c969a7706c5d86263acde445e7560c",
+    "tools/reference/m3h1_observers.py": "5440124fc15b12a694b543b0621f8a838913e9471a33429bbf7406a5a13f345e",
+    "tools/reference/m3h1_reference.py": "8957db3b1d85574fef10f164d06874bc9c4942eb68c3d773c67826c68ec824cc",
+    "tools/reference/m3h2_cases.py": "a132039b2e5c23b9e86c65fce965cd4956735d1d5704f8611aaa029a1429e470",
+    "tools/reference/m3h2_observers.py": "53c7b7251dd0e9fd4fc9bc7790b6246ad2b07a51f811f043d58f3451f0fba4b3",
+    "tools/reference/m3h2_reference.py": "c0996344042ae3f2acd0c0c1fa8c68940795264f3a8c13e0c9d0a433b2b6f33f",
+    "tools/reference/m3h3_cases.py": "c00993238faa53bde09a97cfcf92807622f8f8a1577a38421b1f791729a880bc",
+    "tools/reference/m3h3_geometry.py": "da8e77799e2201c4dc1df24a9be8120ea017ba00c46257618154a32f3aa8f9e2",
+    "tools/reference/m3h3_reference.py": "c79487a068037b640a69ec4c0a53255096cdafa433aec531cc6d8a5e0720c2cb"
+  },
+  "inventory": {
+    "actor_fields": 147706,
+    "blocked_moves": 1040,
+    "captures": 723,
+    "captures_beyond_994": 680,
+    "damage_requests": 116,
+    "drop_touches": 3,
+    "drops": 9,
+    "exercised_unique_functions": 98,
+    "expanded_trace_bytes": 9293773,
+    "explode_missile": 56,
+    "fireball_damage_requests": 24,
+    "fireball_explosions": 56,
+    "fireball_launches": 60,
+    "fireball_monster_hits": 1,
+    "fireball_player_hits": 23,
+    "function_entries": 528507,
+    "gameplay_draws": 5293,
+    "hit_slide_line_entries": 339,
+    "imp_attacks": 64,
+    "imp_kills": 3,
+    "infighting_retargets": 1,
+    "kill_credits": 13,
+    "max_abs_coordinate": 2047,
+    "monster_kills": 13,
+    "near_wall_damage_requests": 16,
+    "packed_trace_bytes": 2529199,
+    "peak_live_fireballs": 29,
+    "player_deaths": 4,
+    "scenarios": 14,
+    "scripted_tics": 5752,
+    "selected_original_bodies": 106,
+    "slide_entries": 469,
+    "slide_observations": 339,
+    "spawn_missile": 60
+  },
+  "maps": [
+    "tests/reference/m3h3_geometry_0.bin",
+    "tests/reference/m3h3_geometry_1.bin",
+    "tests/reference/m3h3_geometry_2.bin",
+    "tests/reference/m3h3_geometry_3.bin",
+    "tests/reference/m3h3_geometry_4.bin",
+    "tests/reference/m3h3_geometry_5.bin",
+    "tests/reference/m3h3_geometry_6.bin",
+    "tests/reference/m3h3_geometry_7.bin",
+    "tests/reference/m3h3_geometry_8.bin",
+    "tests/reference/m3h3_geometry_9.bin",
+    "tests/reference/m3h3_geometry_10.bin",
+    "tests/reference/m3h3_geometry_11.bin",
+    "tests/reference/m3h3_geometry_12.bin",
+    "tests/reference/m3h3_geometry_13.bin"
+  ],
+  "outputs_sha256": {
+    "m3h3_cases.csv": "15b3549238210cfda0a433e98b9ef963924e97d4a6372187d29e269097494b99",
+    "m3h3_geometry_0.bin": "e6da360dacd8bc0ef20674dcfbc8ab8a649be83bd2a76ba52afc8b536678e216",
+    "m3h3_geometry_1.bin": "f29d9085bf15440cce2c3301c2c0f4b709c4329b9b7a1dbb8dacc9b882c1e126",
+    "m3h3_geometry_10.bin": "96e45e5dd69846fbf7b90c9cee7ab1c9d05bbcfa5ac0234632cc340e4c9dc98c",
+    "m3h3_geometry_11.bin": "674fc1e9b3b3e04b3588da3fabd6455060305779af01bc38df9e3e9dea8f7980",
+    "m3h3_geometry_12.bin": "8aa1dc9ed08f773545db564478d83de1f0574f43f23b91f78e551b7c8f4da521",
+    "m3h3_geometry_13.bin": "54ba28ef734dcc85a0d35521a6ea021c9edf71d07852cd0c4c538d0232d1a504",
+    "m3h3_geometry_2.bin": "1f903f0374ee53b3b8a9c401ea1c9f268a2a1bd602dd5d5b0945301bd1098493",
+    "m3h3_geometry_3.bin": "8fc1f04b0b21da1d22ae1a9667fc0b9ef9e40a2b761b5fb536dcecd51b6dcd61",
+    "m3h3_geometry_4.bin": "8eb4b75e65162f9befb8d776a012b70fdc040301515f7f2063c506edb8d40aa0",
+    "m3h3_geometry_5.bin": "6644bd549312c0e7216e27cf2913649abcae32c6ba1692d78e8c37d78171d66f",
+    "m3h3_geometry_6.bin": "ccd8d0aabc3b4d6c48b1fa6c5e60d9672de2c593dd7bb27882dfd68f088ac7f5",
+    "m3h3_geometry_7.bin": "b62e92b5213623d05a1ffb0641afc40662186c60ef021c58fbb655441143e406",
+    "m3h3_geometry_8.bin": "09db779ba515d5b2a4a11dd7b6e7b3d1f42bc8979e7f2b86ab42b74298010489",
+    "m3h3_geometry_9.bin": "28ab5259400d1ec842ece89e41997252248922481386a08ea7562b6b4a22ad23",
+    "m3h3_maps.rs": "f984560f60ab27ec4404cbb38d24cdffeb51f187889eb4437d4ed7d04cfc93cf",
+    "m3h3_trace.dref": "45890016b35288a02cba4d962b6e4a15a0d805d1199e5735852c868c82459739"
+  },
+  "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "schema": "DOOM-PLAYER-MAP-SCALE-v1",
+  "source_sha256": {
+    "am_map.h": "75c3671cbc7f003e16cc50abe98fe824e595f1c3bf66c2c722e8597a015e40ed",
+    "d_englsh.h": "b018968e3aef65e0009d6ec676d40c8731b33e2882758640d3028c530c87a789",
+    "d_event.h": "24ba8629e157f4f76c4da0821a9f1bf71c34c2aec5cbc1ee4ec5898751225d22",
+    "d_french.h": "018e635134bb064b6c559407221629bc27bc400769d9074dc742510ac7d88086",
+    "d_items.c": "76531d5366de1157cf3d8510ef749617cfc46b6e721845bda4324cd697028fe6",
+    "d_items.h": "322a73acb345703c9f00ae7528900daa3a49bd27c670d5acee4196c1ded74bda",
+    "d_main.h": "adb0988d417528bdb689f5249cc650360f5a81936c797346d8390b80af0c4ca9",
+    "d_net.h": "54d77e10fe98e7ad640c711e7146f1440e4bd3f73e46d27905f9c19b8117ac3d",
+    "d_player.h": "9c9a342ab7c3661ab02d32890bd0d74ede94a0745ae0d622de83a9ae11046ffb",
+    "d_textur.h": "fac8baf1195a1a1a00f872271c7e159ad8b66a3632385128403ed99f99cf5ba1",
+    "d_think.h": "a8d3d4943495c729cd33b67eff1b56d801f1cf8cd0db74fb5d63b613c4eabddc",
+    "d_ticcmd.h": "2f70caa7c187365850e467254d8b0a31c07ea304d59339c68fde63d05274d146",
+    "doomdata.h": "f0504fd3926491ee56c61c8e9c732f0bf7e74306cba482eb267beda5022accca",
+    "doomdef.h": "643daca966fb762fa86f39ce9a1779355117578527bf2e295163647f9ad0d74e",
+    "doomstat.h": "c8b9eb311ec529a371c1c49dbd9a571ee07976dfd1bdc83d26b77ff6ba163355",
+    "doomtype.h": "e2b8da9ed44c6686a282af8e14a53b605ecc781d05ccd78579fcf57c720297e6",
+    "dstrings.h": "de1d24709df885ac93ddc5c1b86dbc2e0baad1027dde01ea09076d9e28778bc0",
+    "f_finale.h": "ee5cb17f104a894de9fed452dfad04df3e070a7bc70e65d9d336421f7dee9359",
+    "f_wipe.h": "fff2fb466d978eb4d482464899302830a377e305b0d31c9524072ec569cfaff0",
+    "g_game.c": "bc8e2e0d76a70f8120174946641a82c46f0116a624f51c011b292e2ffcb78a29",
+    "g_game.h": "ab47e29d7506cda9a702073c451d6e533204e49a064a0ccc6e98ae4c5e9faa60",
+    "hu_lib.h": "611143caa98ef13992845fde571be9a9c3d944fa850ee2f2d8b0406aae9ed02e",
+    "hu_stuff.h": "09a1c0ef0434b0b46e9ea3b43232898b7b939b07bf18f302458227948d98579c",
+    "i_net.h": "0c32e01a687cda4e8db3f87ec38db53b7c4c9826e69a128f6dc7a2121a622f5a",
+    "i_sound.h": "7a4171979ac20b40c02969be19d404cbc77e4493aa69bb22c0eeaf1f9b8c519b",
+    "i_system.h": "426ccb2f2b29facaa80e0a43165bb62395ceda6dbb8ed27d0a3cfc99a91a6abc",
+    "i_video.h": "d9af47ac4d55f1acb0dd1060b663b8d2c085688a39807b101a9ff082800b4e42",
+    "info.c": "e09631527669ee528bdae20a47be79e1cb33972b39964c33ac4814e1701a0949",
+    "info.h": "3e68ee6cc13323e69cbcf208e9a0af7b13867bead49e66d765abefa5d914b0dd",
+    "m_argv.h": "388205a8bda230f472caafac172a42621c72693f018e66c7c71389e4ea24c7b4",
+    "m_bbox.h": "fc041f774ff1f7b2b05d5bd8dd35a9496cf4dd4ca2a0a2df2420ac6f827b0b5d",
+    "m_cheat.h": "92f43c6df575a07bc394981f1beb1b901889f84bce67b557b8274f0379f0ae88",
+    "m_fixed.c": "a4472841bc8890c5d5a41b325ecf56d10d7026a7489967aa29100b5dee759fea",
+    "m_fixed.h": "67aa3925a905d448fb947fb7358093a39367f534c3e26e3f8b06228f553227ef",
+    "m_menu.h": "ccfc1f2abe50cbb78e83d2ec35eb3812003945f2d668e69551b5b2d56bfc4dfa",
+    "m_misc.h": "5cf237e545bd93d01a59f3696afa02073beedf8131ea23f30924fd5cc3891c7b",
+    "m_random.c": "8d89f5cfcbbd0170e46b55538c4c272b3cf5b5d7dce91023b8aa8d9b922b21ee",
+    "m_random.h": "31ec17387c9b7148f8e9762b71cccebaa199bffece76e1103bdb64f0ae615caa",
+    "m_swap.h": "04e76b9143f1d78a8f5cbb11b8d5022b2d5b0f18f644615384fa793f741ffd19",
+    "p_enemy.c": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0",
+    "p_inter.c": "72e9bbabe560ef548c2f2522494786347d5c831b0e1f0ecb5cb29d8d8e682356",
+    "p_inter.h": "348edaf0dbbac0b455e54823d3e8bdab72ac210bf22cd17cffc519596661fa2a",
+    "p_local.h": "8d71f591ed5f26580042d991558c89d674b683f9cd1c2801ac7714de04b0185f",
+    "p_map.c": "752c7873c81fe6b10b77a08b7ef5716fe49c3103f6caa02097ed299e6e04736c",
+    "p_maputl.c": "4d93e06d11160fb935e94750babbdcc9a4469d96f593764872db87cefd37c0a1",
+    "p_mobj.c": "21a39bdbd746d6fba38660500203216052f0723b8e0ab033ce2a650ada2b403f",
+    "p_mobj.h": "85be6ea83fc4b5f95df666c68c8999f7fe5745a5f503d3a441afd66b5f7e5db0",
+    "p_pspr.c": "b47100f9c2c2c4f7913831c170bff55161af2d5d01f5467dbbc6be081c4f1af1",
+    "p_pspr.h": "21b95a0eb8b901287be5077b780b809e5e4e296393cb63c8e02970646a8f8e67",
+    "p_saveg.h": "31457a112b24c4bd91df919c9e2c81add41019194492d320f81f2d837ed00bac",
+    "p_setup.c": "cc56c3ef5eb73aaec4db8be855fd3c192af19bf8f775478d002e9b2e9225872d",
+    "p_setup.h": "ffffe92a94edde836ca5d2d5db311d003ce03e1dcfe542d948ee8094f1637be0",
+    "p_sight.c": "81014a71e4155db6da0af21e6ecf14687daf18075fb75322b63bdc254ce11120",
+    "p_spec.h": "95d93e2e3b803126b0ecf6ea42de41d2bce7b2d09ea701e03992f0cc6dae22a3",
+    "p_tick.c": "21a638b7b1ae4fcb6b6892a731cd27d20f44e2df12dd3325c8215ca4c9aee22f",
+    "p_tick.h": "a0512fd19e760d5d43e477bfe4fabf686542bc21bc27daa87108cb703fc562a7",
+    "p_user.c": "ecb5bab44ab9326c9c0d14bd607bc49c669bf048eecda27f7dc4634023a6c4a4",
+    "r_bsp.h": "08ca429757b65ac35798cf9f47ef9dea072e27a5b856fdf300c9fc2fcba5fac6",
+    "r_data.h": "4dbb1515b2e1be1e2496018365ebd37507f001ae449a181a54a894a70141ed1b",
+    "r_defs.h": "d8856503bea02282f5f338f3533885e87c6c430ce4f11511d6a04b5fc040db31",
+    "r_draw.h": "4ab1c0bbf7dba3712db71ba0ba7901184b2a35a8b6132db40bd0f6c87b74ccfe",
+    "r_local.h": "b92f15cbc8620b38de46512166244ba9f357de4fc8ef32be2f35088bc1cfd443",
+    "r_main.c": "2aae43cf807929a8758f71ed0205fc08017556541ba8df2ea9167c003d0dec5a",
+    "r_main.h": "9576bf120653af7127dcfd754f50e294b76be38bacb3b43f8686111a2dcd501b",
+    "r_plane.h": "abc99d0fc7845c8e9e73057b14a886b138046d5e432303c87fa5c34879f5903e",
+    "r_segs.h": "9343a51c57d93f13098118cfbc23377487b4063ec0dbf447c6aee8a7d0fd68ce",
+    "r_sky.h": "2c4a650afa36997ccb8ff97b7e1a5a0b25c1090a17c9e39b3d66e1d53ea9391e",
+    "r_state.h": "35a0d8f2e6a8f88ff100625708e54a6f04d22506319bef1c08033293e3ca22bd",
+    "r_things.h": "7e7a985f29f971e7e5c14c93c79f8d3462f4a42f5544d4c298a90df00561cf50",
+    "s_sound.h": "d747126bc8105ef540dee2f6f7e9f17db047dabb2c03a740ddc1bb9f98746b83",
+    "sounds.h": "fa5a6c19c689eeb6e4a2df08b1d4efe5c445b3d0cb4081dc3a7d28fdadfd39f8",
+    "st_lib.h": "8ae86cf219785672579e6dd75ce3a5abae2e9991c44af647d59f6bec384307c2",
+    "st_stuff.h": "0e2aad8828e13314e754c370da0c8cb61f08006c349fb1587ad28ea789ba4d85",
+    "tables.c": "db8759f4311654c63785dcffb8f73a00a61cfe2713e4284c238dea420b6e5f89",
+    "tables.h": "54e366ed33a0bd65e5cad6c5b6f7df77573909e5974b8af296fdb1503c77fcf2",
+    "v_video.h": "728500c3b693d1baff1a43c5df6d0c6d55d1ec343247becd7db33c1be747635b",
+    "w_wad.h": "1c5f7a0f6ba41f1f6ce22440fb020596d0ea7b16742f9f2a044e9bc7d66e8abb",
+    "wi_stuff.h": "57ab19c222d6e54158b3fff8ea6ea23d23e7646925aab830b06cf8cfc1e84f5e",
+    "z_zone.h": "46498575b14b5f5538d0d93f3d7c8325941b76f0e36b435bb895ecaac6f54cca"
+  }
+}

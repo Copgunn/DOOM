@@ -236,6 +236,7 @@ impl<A: ActorAccess> weapons::Host for Host<'_, '_, A> {
                         | OriginalExecutionProfile::PlayerDemonBonusesV1
                         | OriginalExecutionProfile::PlayerMonstersV1
                         | OriginalExecutionProfile::PlayerMonstersImpV1
+                        | OriginalExecutionProfile::PlayerMonstersMapScaleV1
                 )
             }) && matches!(weapon, Weapon::Fist | Weapon::Shotgun | Weapon::Chaingun))
         {
@@ -343,7 +344,8 @@ pub(crate) fn run<A: ActorAccess>(
                 | OriginalExecutionProfile::PlayerDemonArmorV1
                 | OriginalExecutionProfile::PlayerDemonBonusesV1
                 | OriginalExecutionProfile::PlayerMonstersV1
-                | OriginalExecutionProfile::PlayerMonstersImpV1,
+                | OriginalExecutionProfile::PlayerMonstersImpV1
+                | OriginalExecutionProfile::PlayerMonstersMapScaleV1,
             player_weapons::PlayerWeaponRuntime::Pack(_)
         )
     ) {
@@ -504,6 +506,7 @@ fn line_current(
         Some(TraceObject::Actor(target)) => {
             let victim = *host.access.get(target).ok_or(CombatError::Reference)?;
             original_player::preflight_grounded_impulse(
+                host.player.as_deref().and_then(|p| p.room),
                 &victim,
                 &actor,
                 damage,

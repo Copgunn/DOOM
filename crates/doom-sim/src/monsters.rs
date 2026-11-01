@@ -514,10 +514,7 @@ impl Simulation {
             {
                 return Err(MonsterError::Ownership.into());
             }
-            if a.position()
-                .iter()
-                .any(|v| !crate::sight::within(*v, margin))
-            {
+            if !self.position_admitted(a.position(), margin) {
                 return Err(MonsterError::Arithmetic.into());
             }
         } else if l.actor_type == self.demon_body_type() && l.flags & !TARGET_FLAGS != 0 {
@@ -616,7 +613,12 @@ impl Simulation {
         if self.monster_is_owner_type(ty) && self.actors.order().next().is_some() {
             return Err(MonsterError::Ownership.into());
         }
-        if position.iter().any(|v| !crate::sight::within(*v, 1008))
+        let radius = self
+            .registry
+            .as_deref()
+            .and_then(|r| r.actor_type(ty))
+            .map_or(Fixed::ZERO, ActorTypeDef::radius);
+        if !self.spawn_admitted(position, radius, 1008)
             || matches!(height,SpawnHeight::Absolute(z) if !crate::sight::within(z,1018))
         {
             return Err(MonsterError::Arithmetic.into());
@@ -733,7 +735,7 @@ impl Simulation {
                 {
                     shot_owner = Some(id);
                 }
-            } else if a.position().iter().any(|v| !crate::sight::within(*v, 994)) {
+            } else if !self.position_admitted(a.position(), 994) {
                 return Err(MonsterError::Arithmetic.into());
             }
             if !crate::sight::within(a.momz, 64) || !crate::sight::within(a.z + a.momz, 1024) {

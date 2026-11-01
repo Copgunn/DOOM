@@ -94,8 +94,14 @@ impl Simulation {
             return Err(MapSpawnError::DirectSpawn.into());
         }
         if self.profile.uses_perception()
-            && (position.iter().any(|v| !crate::sight::within(*v, 1024))
-                || matches!(height,SpawnHeight::Absolute(z) if !crate::sight::within(z,1024)))
+            && (!self.spawn_admitted(
+                position,
+                self.registry
+                    .as_deref()
+                    .and_then(|r| r.actor_type(ty))
+                    .map_or(Fixed::ZERO, ActorTypeDef::radius),
+                1024,
+            ) || matches!(height,SpawnHeight::Absolute(z) if !crate::sight::within(z,1024)))
         {
             return Err(PerceptionError::Arithmetic.into());
         }
@@ -431,10 +437,14 @@ impl Simulation {
                 {
                     return Err(MapSpawnError::WorkLimit.into());
                 }
-                if [thing.position.x, thing.position.y]
-                    .iter()
-                    .any(|v| v.unsigned_abs() > 978)
-                {
+                if !self.spawn_admitted(
+                    [
+                        Fixed::from_map_units(thing.position.x),
+                        Fixed::from_map_units(thing.position.y),
+                    ],
+                    info.radius(),
+                    978,
+                ) {
                     return Err(MonsterError::Arithmetic.into());
                 }
                 if !pickup && !former {
@@ -442,10 +452,14 @@ impl Simulation {
                 }
             }
             if self.profile.uses_perception() {
-                if [thing.position.x, thing.position.y]
-                    .iter()
-                    .any(|v| v.unsigned_abs() > 1024)
-                {
+                if !self.spawn_admitted(
+                    [
+                        Fixed::from_map_units(thing.position.x),
+                        Fixed::from_map_units(thing.position.y),
+                    ],
+                    info.radius(),
+                    1024,
+                ) {
                     return Err(PerceptionError::Arithmetic.into());
                 }
                 self.validate_perception_type(ty)?;

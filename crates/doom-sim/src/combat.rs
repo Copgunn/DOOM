@@ -386,9 +386,21 @@ impl DamagePlan {
                 .life()
                 .is_some_and(|l| crate::original_registry::is_fireball(l.actor_type));
             if airborne {
-                original_player::preflight_missile_impulse(&victim, origin, request.amount, mass)
+                original_player::preflight_missile_impulse(
+                    player.room,
+                    &victim,
+                    origin,
+                    request.amount,
+                    mass,
+                )
             } else {
-                original_player::preflight_grounded_impulse(&victim, origin, request.amount, mass)
+                original_player::preflight_grounded_impulse(
+                    player.room,
+                    &victim,
+                    origin,
+                    request.amount,
+                    mass,
+                )
             }
         };
         let mass = host

@@ -134,10 +134,15 @@ pub(crate) fn within(v: Fixed, units: u32) -> bool {
     v.bits().unsigned_abs() <= units * 65536
 }
 pub(crate) fn actor_bounds(a: &Actor) -> Result<(), SimError> {
+    actor_bounds_within(a, 1024)
+}
+/// XY/Z within `units`: 1,024 for the historical profiles, the 2,048-unit M3f2
+/// sight domain for the map-scale policy.
+pub(crate) fn actor_bounds_within(a: &Actor, units: u32) -> Result<(), SimError> {
     if a.position()
         .into_iter()
         .chain([a.z])
-        .any(|v| !within(v, 1024))
+        .any(|v| !within(v, units))
     {
         return Err(PerceptionError::Arithmetic.into());
     }

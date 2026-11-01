@@ -1011,3 +1011,29 @@ advance|step|capture` times one full scripted timeline. Run measurements alone, 
 no fuzzing, builds or tests at the same time. Measurement summaries and limitations
 belong to [the engineering record](validation/M3H2.md). Leak detection is disabled in
 the documented ASan environment, not verified.
+
+## Original monsters at real-map scale
+
+Map-scale evidence has its own source/encoding contract and leaves historical
+expectations untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h3_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3h3_snapshot_goldens.py --check
+cargo test -p doom-sim player_map_scale_tests
+python3 tools/reference/check_player_map_scale.py
+python3 tools/seed_player_map_scale_fuzz.py /tmp/doom-map-scale-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_map_scale /tmp/doom-map-scale-seeds --sanitizer address -- -runs=4096 -seed=501 -max_len=290 -timeout=15 -rss_limit_mb=1024
+```
+
+Add `--cases` to `m3h3_reference.py` to print launches, explosions, slides, blocked
+moves, near-wall damage, peak live fireballs and the largest coordinate per scenario.
+The `stall_*` tests reproduce the M3h2 stalls on the historical policies and must keep
+passing; the `map_scale_*` tests show the same scenarios progressing. The fuzz target
+asserts the progress property: a valid slot-One command to a live player is never
+rejected and every accepted tic advances the counter by one unless paused. The example
+asserts every scenario's source fields and complete ordered event frames in debug and
+release; `--measure <workload> advance|step|capture` times one full scripted timeline.
+Run measurements alone, with no fuzzing, builds or tests at the same time. Measurement
+summaries and limitations belong to [the engineering record](validation/M3H3.md). Leak
+detection is disabled in the documented ASan environment, not verified.

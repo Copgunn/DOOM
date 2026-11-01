@@ -31,13 +31,19 @@ mod original_player;
 mod original_registry;
 mod player_armor;
 mod player_bonuses;
+mod player_map_scale;
 mod player_monsters;
 pub use player_armor::{
     ArmorEvent, ArmorType, PLAYER_DEMON_ARMOR_CONTEXT_SCHEMA, PlayerArmorState,
 };
 pub use player_bonuses::PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA;
+pub use player_map_scale::{
+    MAP_SCALE_ACTOR_SLOTS, MAP_SCALE_EXTENT_UNITS, MAP_SCALE_MAX_LIVE_PROJECTILES,
+    MAP_SCALE_MOMENTUM_UNITS, MAP_SCALE_WALL_LINES, MapScaleError, RoomBounds,
+};
 pub use player_monsters::{
-    MAX_PLAYER_MONSTERS, PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
+    MAX_PLAYER_MONSTERS, PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA,
+    PLAYER_MONSTERS_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -262,6 +268,8 @@ pub enum SimError {
     MapSpawn(MapSpawnError),
     /// Unsupported or invalid map/profile.
     Geometry(GeometryError),
+    /// Real-map-scale room admission or wall-derived bound failure.
+    MapScale(MapScaleError),
     /// Input slot is outside 0..4 or duplicates an existing binding.
     InvalidPlayer,
     /// Button behavior is not implemented in either profile.
@@ -514,6 +522,9 @@ pub struct Simulation {
     pub(crate) events: Vec<Event>,
     pub(crate) pending: Vec<Event>,
     pub(crate) map_fields: Arc<Vec<StateField>>,
+    /// Immutable definitions already validated against this registry and these
+    /// static sectors, by type ordinal. A memo of a pure function, never state.
+    pub(crate) admitted_types: std::cell::Cell<[u64; 4]>,
 }
 impl Simulation {
     /// Creates a fresh supported world with capacity for 1024 logical actor slots.
@@ -627,6 +638,7 @@ impl Simulation {
             events: Vec::new(),
             pending: Vec::new(),
             map_fields,
+            admitted_types: std::cell::Cell::new([0; 4]),
         })
     }
     /// Historical service-family selection. For original-ID contexts, also use
@@ -723,7 +735,7 @@ impl Simulation {
             return Ok(self.query_projectile_move(id, target).0);
         }
         if self.profile == Profile::MapScale || self.profile.uses_checked_demons() {
-            map_scale::bounded(target, 1024)?;
+            map_scale::bounded(target, self.sight_margin())?;
             if self.profile.uses_checked_demons() {
                 self.perception_actor(id)?;
             }
@@ -1299,3 +1311,8 @@ mod monster_tests;
 mod imp_evidence;
 #[cfg(test)]
 mod imp_tests;
+#[cfg(test)]
+#[path = "../../../tests/support/m3h3.rs"]
+mod map_scale_evidence;
+#[cfg(test)]
+mod player_map_scale_tests;

@@ -1460,3 +1460,27 @@ Independent C rows feed the Python
 [Imp projection](../tools/reference/imps_snapshot.py); its full bytes and PBE1 ordered
 events preceded the matching Rust changes. Decoding remains observation, not
 executable world restoration.
+
+## DSIM-v30 original monsters at real-map scale
+
+Version30 selects policy14 (`PlayerMonstersMapScaleV1`), the unchanged original
+registry schema and context `PLAYER-MONSTERS-MAP-SCALE-1-MEDIUM-GROUNDED-v1`.
+`Diagnostic::decode_map_scale` explicitly reads30; every earlier version-specific
+reader keeps its historical contract and rejects30, and the v30 reader rejects every
+earlier version. V20–29 bytes, encoders, fixtures and policy/context meanings are
+unchanged, including their 64-slot bounds.
+
+V30 uses the DSIM29 field layout, event vocabulary and tag15 projectile events, and
+adds no persistent field or event tag. It widens bounds only under30:
+
+- `store.max_slots` and `store.slot_count` may reach 320, and handle slots in every
+  field and event payload are bounded by 320 instead of 64.
+- At most 208 nonpending actors may have type 31; every `pending_removal` is 0 or 1.
+- Actor coordinates are bounded by the registry's 2,048-unit domain; the walled
+  rectangle is derived from `map.vertices` by the runtime and is not a stored field.
+- `level.total_kills` and the counted DoomEd set are those of v29.
+
+Independent C rows feed the Python
+[map-scale projection](../tools/reference/map_scale_snapshot.py); its full bytes and
+PBE1 ordered events preceded the matching Rust changes. Decoding remains observation,
+not executable world restoration.

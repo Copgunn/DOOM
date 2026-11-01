@@ -110,10 +110,14 @@ fuzz_target!(|data: &[u8]| {
     let mut captured = s.clone();
     for b in data[2..data.len().min(290)].chunks_exact(9) {
         let before = s.snapshot();
+        let (tic, paused) = (s.tic(), s.paused());
         let result = apply(&mut s, body, &monsters, b, false);
         assert_eq!(result, apply(&mut captured, body, &monsters, b, true));
         if result.is_err() {
             assert_eq!(s.snapshot(), before);
+        } else if b[0] % 8 <= 3 {
+            // An accepted tic advances the counter by one unless paused.
+            assert_eq!(s.tic(), if paused { tic } else { tic + 1 });
         }
         let snap = s.snapshot();
         assert_eq!(snap, captured.snapshot());
