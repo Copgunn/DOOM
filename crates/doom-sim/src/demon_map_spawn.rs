@@ -87,10 +87,13 @@ impl Simulation {
                 && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
             {
                 world_pickups::validate_item(a)?;
-                if suffix {
+                // P_KillMobj drops are appended after the player/impact suffix.
+                let dropped = self.player_policy().has_monsters()
+                    && life.flags & world_pickups::MF_DROPPED != 0;
+                if suffix && !dropped {
                     return Err(MapSpawnError::Ownership.into());
                 }
-            } else if life.actor_type == self.demon_owner_type() {
+            } else if self.is_roster_monster(life.actor_type) {
                 owners += 1;
                 if suffix || owners > self.map_demon_limit() {
                     return Err(MapSpawnError::Ownership.into());

@@ -343,7 +343,7 @@ impl Simulation {
                 }
             } else if p.policy.has_physical_player() && a.momentum() != [Fixed::ZERO; 2] {
                 if !p.policy.has_player_weapons()
-                    || l.actor_type.0 != OriginalActorType::MT_SERGEANT.ordinal()
+                    || !original_registry::is_policy_monster(p.policy, l.actor_type)
                     || a.z != a.floor
                     || a.momz != Fixed::ZERO
                 {

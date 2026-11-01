@@ -392,7 +392,10 @@ impl Simulation {
                 // before the explicit executable fixture adaptation.
                 let pickup = self.player_policy().has_world_pickups()
                     && world_pickups::kind_for(self.player_policy(), ty).is_some();
+                let former = self.player_policy().has_monsters()
+                    && crate::original_registry::is_former_human(ty);
                 if !pickup
+                    && !former
                     && ty
                         != crate::identity::OriginalActorType::MT_SERGEANT
                             .resolve(registry)
@@ -406,7 +409,7 @@ impl Simulation {
                 if (!pickup
                     && selected
                         .iter()
-                        .filter(|(_, ty)| *ty == self.demon_owner_type())
+                        .filter(|(_, ty)| self.is_roster_monster(*ty))
                         .count()
                         == self.map_demon_limit())
                     || (pickup
@@ -426,7 +429,7 @@ impl Simulation {
                 {
                     return Err(MonsterError::Arithmetic.into());
                 }
-                if !pickup {
+                if !pickup && !former {
                     ty = self.demon_owner_type();
                 }
             }

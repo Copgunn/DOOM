@@ -568,6 +568,18 @@ pub(crate) fn gun_shot(
     };
     (angle, damage)
 }
+// p_enemy.c A_PosAttack/A_SPosAttack/A_CPosAttack: (P_Random()-P_Random())<<20
+// spread, then ((P_Random()%5)+1)*3 damage. Multiplication replaces the
+// source's negative signed shift; BAM addition wraps explicitly.
+const MONSTER_SPREAD_SCALE: i32 = 1 << 20;
+/// Shared former-human bullet: left (kind2) then right (kind3) spread draw, then
+/// damage (kind4). The caller owns the RNG/event adapter and the trace.
+pub(crate) fn monster_shot(angle: u32, random: &mut impl FnMut(u8) -> u8) -> (u32, i32) {
+    let left = i32::from(random(2));
+    let right = i32::from(random(3));
+    let angle = angle.wrapping_add_signed((left - right) * MONSTER_SPREAD_SCALE);
+    (angle, (i32::from(random(4)) % 5 + 1) * 3)
+}
 /// Unpowered A_Punch component; aim/impact remains the caller's source action.
 pub(crate) fn punch_shot(angle: u32, random: &mut impl FnMut(u8) -> u8) -> (u32, i32) {
     let damage = punch_damage(random(0));

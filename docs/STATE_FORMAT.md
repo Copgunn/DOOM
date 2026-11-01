@@ -1393,3 +1393,35 @@ Independent C rows feed the Python
 [bonus projection](../tools/reference/bonus_snapshot.py); independent full bytes
 and PBE1 ordered events preceded the matching Rust changes. Diagnostic decoding
 remains observation, not executable world restoration.
+
+## DSIM-v28 original former humans and mixed rosters
+
+Version28 selects policy12 (`PlayerMonstersV1`), the unchanged original registry
+schema and context `PLAYER-MONSTERS-1-MEDIUM-GROUNDED-v1`.
+`Diagnostic::decode_monsters` explicitly reads28; every earlier version-specific
+reader keeps its historical contract and rejects28, and the v28 reader rejects
+every earlier version. V20–27 bytes, encoders, fixtures and policy/context
+meanings are unchanged.
+
+V28 uses the DSIM27 field layout and adds no persistent field or event tag. It
+widens meanings only under28:
+
+- Actor `type`/`state` and state-bearing event payloads may name MT_POSSESSED=1,
+  MT_SHOTGUY=2 and MT_CHAINGUY=10 within their admitted normal closures.
+- `original_player.0.attacker` may name any roster monster.
+- World items may number at most 16 placed items plus one MF_DROPPED
+  MT_CLIP/MT_SHOTGUN/MT_CHAINGUN per roster monster; drops have no spawnpoint.
+- `level.total_kills` is 0..8. A nonzero total must equal the placed DoomEd
+  3002/3004/9/65 THINGs that pass the Medium single-player filter (`options & 2`
+  set, `options & 16` clear); `level.single_player_kill_count` is 0..total.
+  The same filter function counts DoomEd2014/2015 for `level.total_items`.
+
+Existing event encodings carry the new behavior: shotgunner Begin/PelletStart/
+Pellet/PelletDone/Completed (tag19), MonsterEvent Aim/Random/Face (tag18), refire
+decisions (tag20), combat retarget/kill/death-timer (tag13), the grouped
+`A_Scream` draw as ActorStateEvent Random (12/7) and drop spawns (tags1 and 12/0).
+
+Independent C rows feed the Python
+[former-human projection](../tools/reference/monsters_snapshot.py); its full bytes
+and PBE1 ordered events preceded the matching Rust changes. Decoding remains
+observation, not executable world restoration.

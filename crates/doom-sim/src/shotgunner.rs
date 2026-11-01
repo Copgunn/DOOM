@@ -113,6 +113,14 @@ impl ActorAccess for &mut Projection<'_> {
             "strict source-body and positive impact entry states never remove within a blast"
         )
     }
+    fn reserve(&mut self, count: usize) -> Result<(), StoreError> {
+        // The historical preview projects at most three impacts per blast.
+        if self.born.len() + count <= 3 {
+            Ok(())
+        } else {
+            Err(StoreError::Capacity)
+        }
+    }
 }
 fn projected_ids(store: &ThinkerStore<Actor>) -> [ActorId; 3] {
     let mut ids = store

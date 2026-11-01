@@ -30,10 +30,12 @@ mod original_player;
 mod original_registry;
 mod player_armor;
 mod player_bonuses;
+mod player_monsters;
 pub use player_armor::{
     ArmorEvent, ArmorType, PLAYER_DEMON_ARMOR_CONTEXT_SCHEMA, PlayerArmorState,
 };
 pub use player_bonuses::PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA;
+pub use player_monsters::{MAX_PLAYER_MONSTERS, PLAYER_MONSTERS_CONTEXT_SCHEMA};
 mod player_commands;
 mod player_pistol;
 mod player_roster;
@@ -1270,3 +1272,9 @@ mod bonus_evidence;
 
 #[cfg(test)]
 mod bonus_tests;
+
+#[cfg(test)]
+#[path = "../../../tests/support/m3h1.rs"]
+mod monster_evidence;
+#[cfg(test)]
+mod monster_tests;

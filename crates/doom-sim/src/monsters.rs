@@ -216,7 +216,20 @@ fn missile<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -> bool {
     let a = *h.access.get(id).unwrap();
     let life = a.life.unwrap();
     let t = *h.access.get(life.target.unwrap()).unwrap();
-    let sight = crate::sight::query(h.world, h.sectors, a, t);
+    // Checked worlds use the bounded fallible query; historical fixtures keep
+    // their infallible query. Only PlayerMonstersV1 reaches this with control.
+    let sight = match h.perception.and_then(|p| p.checked) {
+        Some(control) => {
+            match crate::demon_expanded_map::action_sight(Some(control), h.world, h.sectors, a, t) {
+                Ok(sight) => sight,
+                Err(error) => {
+                    h.fail_sight(error);
+                    return false;
+                }
+            }
+        }
+        None => crate::sight::query(h.world, h.sectors, a, t),
+    };
     let visible = sight.visible;
     h.events.push(Event::Perception(PerceptionEvent::Sight {
         observer: id,

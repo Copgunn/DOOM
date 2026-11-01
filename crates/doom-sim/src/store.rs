@@ -357,6 +357,14 @@ impl<T> ThinkerContext<'_, T> {
             Err(StoreError::ReadOnlyVisit)
         }
     }
+    /// Proves free capacity for later spawns in this same traversal.
+    pub(crate) fn reserve_spawns(&mut self, count: usize) -> Result<(), StoreError> {
+        if self.writable {
+            self.store.reserve_spawns(count)
+        } else {
+            Err(StoreError::ReadOnlyVisit)
+        }
+    }
     /// Marks another/current thinker without unlinking it.
     pub fn mark_remove(&mut self, id: ActorId) -> Result<bool, StoreError> {
         if self.writable {

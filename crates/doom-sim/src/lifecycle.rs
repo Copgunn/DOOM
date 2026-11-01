@@ -232,11 +232,26 @@ struct Admission {
     chaingun: bool,
     demon: bool,
 }
+impl Admission {
+    const fn special(self) -> SpecialActions {
+        if self.demon && self.chaingun {
+            SpecialActions::OriginalMonsters
+        } else if self.demon {
+            SpecialActions::Demon
+        } else if self.chaingun {
+            SpecialActions::Chaingunner
+        } else {
+            SpecialActions::None
+        }
+    }
+}
 #[derive(Clone, Copy, Eq, PartialEq)]
 enum SpecialActions {
     None,
     Chaingunner,
     Demon,
+    /// Demon plus original former-human attacks (PlayerMonstersV1 only).
+    OriginalMonsters,
 }
 const ENTRY_LIMIT: usize = 128;
 const STEP_LIMIT: usize = 8192;
@@ -404,6 +419,18 @@ impl ActorRegistry {
                         && matches!(
                             self.action_name(action),
                             Some("A_FaceTarget" | "A_SargAttack")
+                        ))
+                    && !(specialized == SpecialActions::OriginalMonsters
+                        && matches!(
+                            self.action_name(action),
+                            Some(
+                                "A_FaceTarget"
+                                    | "A_SargAttack"
+                                    | "A_PosAttack"
+                                    | "A_SPosAttack"
+                                    | "A_CPosAttack"
+                                    | "A_CPosRefire"
+                            )
                         ))
                     && !(specialized == SpecialActions::Chaingunner
                         && matches!(
@@ -575,13 +602,7 @@ impl ActorRegistry {
                 admission.chase,
                 admission.attacks,
                 admission.shotgun,
-                if admission.demon {
-                    SpecialActions::Demon
-                } else if admission.chaingun {
-                    SpecialActions::Chaingunner
-                } else {
-                    SpecialActions::None
-                },
+                admission.special(),
             )?;
             let mut seen = BTreeSet::new();
             let mut todo = vec![root];
@@ -795,6 +816,21 @@ impl ActorRegistry {
         }
         Ok(())
     }
+    /// Shared original monster callbacks; per-type closures are proved by the
+    /// original-ID registry policy, so this admits the union of attack actions.
+    pub(crate) fn validate_state_original_monsters(
+        &self,
+        state: StateId,
+    ) -> Result<(), ActorError> {
+        self.validate_state_with(
+            state,
+            true,
+            true,
+            false,
+            false,
+            SpecialActions::OriginalMonsters,
+        )
+    }
     pub(crate) fn validate_state_demon_melee(&self, state: StateId) -> Result<(), ActorError> {
         self.validate_state_with(state, true, true, false, false, SpecialActions::Demon)
     }
@@ -846,6 +882,31 @@ impl ActorRegistry {
         ty: ActorTypeId,
         sectors: &[SectorState],
     ) -> Result<(), ActorError> {
+        if crate::original_registry::is_former_human(ty) {
+            // Caller already required the PlayerMonstersV1 role; the original
+            // registry policy proves the exact per-type closure and raise exclusion.
+            self.admit_type(
+                ty,
+                sectors,
+                &mut BTreeSet::new(),
+                &mut BTreeSet::new(),
+                &mut 0,
+                Admission {
+                    flags: ALLOWED_FLAGS | 64 | 128 | 524288 | 2097152 | 4194304,
+                    look: true,
+                    chase: true,
+                    attacks: false,
+                    shotgun: false,
+                    chaingun: true,
+                    demon: true,
+                },
+            )?;
+            let info = self.actor_type(ty).ok_or(ActorError::InvalidType)?;
+            for state in info.states().into_iter().take(7) {
+                self.validate_state_original_monsters(state)?;
+            }
+            return Ok(());
+        }
         self.admit_type(
             ty,
             sectors,
@@ -1053,6 +1114,8 @@ pub(crate) trait ActorAccess {
     fn get_mut(&mut self, id: ActorId) -> Option<&mut Actor>;
     fn spawn(&mut self, actor: Actor) -> Result<ActorId, StoreError>;
     fn mark(&mut self, id: ActorId) -> Result<bool, StoreError>;
+    /// Prove capacity for upcoming current-state spawns before any spawn.
+    fn reserve(&mut self, count: usize) -> Result<(), StoreError>;
 }
 impl ActorAccess for &mut ThinkerStore<Actor> {
     fn get(&self, id: ActorId) -> Option<&Actor> {
@@ -1067,6 +1130,9 @@ impl ActorAccess for &mut ThinkerStore<Actor> {
     fn mark(&mut self, id: ActorId) -> Result<bool, StoreError> {
         ThinkerStore::mark_remove(self, id)
     }
+    fn reserve(&mut self, count: usize) -> Result<(), StoreError> {
+        ThinkerStore::reserve_spawns(self, count)
+    }
 }
 impl ActorAccess for &mut ThinkerContext<'_, Actor> {
     fn get(&self, id: ActorId) -> Option<&Actor> {
@@ -1080,6 +1146,9 @@ impl ActorAccess for &mut ThinkerContext<'_, Actor> {
     }
     fn mark(&mut self, id: ActorId) -> Result<bool, StoreError> {
         ThinkerContext::mark_remove(self, id)
+    }
+    fn reserve(&mut self, count: usize) -> Result<(), StoreError> {
+        ThinkerContext::reserve_spawns(self, count)
     }
 }
 pub(crate) fn make_actor(
@@ -1309,6 +1378,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
         }
     }
     fn action(&mut self, id: ActorId, action: ActorAction, work: &mut usize) {
+        use crate::player_monsters::Hitscan;
         match action {
             ActorAction::None => {}
             ActorAction::Original(action) => {
@@ -1329,6 +1399,21 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                     "A_SargAttack" => {
                         assert!(self.perception.is_some_and(|p| p.demon));
                         crate::demon::strike(self, id);
+                    }
+                    // Former humans in PlayerMonstersV1 share one current-state
+                    // hitscan implementation; historical profiles keep their
+                    // preflighted single-owner plans unchanged.
+                    "A_CPosAttack" if crate::player_monsters::uses_current_monsters(self) => {
+                        crate::player_monsters::attack(self, id, Hitscan::Chaingun);
+                    }
+                    "A_CPosRefire" if crate::player_monsters::uses_current_monsters(self) => {
+                        crate::player_monsters::refire(self, id, work);
+                    }
+                    "A_SPosAttack" if crate::player_monsters::uses_current_monsters(self) => {
+                        crate::player_monsters::attack(self, id, Hitscan::Shotgun);
+                    }
+                    "A_PosAttack" if crate::player_monsters::uses_current_monsters(self) => {
+                        crate::player_monsters::attack(self, id, Hitscan::Pistol);
                     }
                     "A_CPosAttack" => {
                         assert!(self.perception.is_some_and(|p| p.chaingunner));

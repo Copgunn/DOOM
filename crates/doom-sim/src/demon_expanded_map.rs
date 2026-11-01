@@ -412,7 +412,7 @@ impl Simulation {
                 for id in plan.actors.order() {
                     if let Some(actor) = plan.actors.get(id) {
                         if actor.life().is_some_and(|l| {
-                            l.actor_type.0 == identity::OriginalActorType::MT_SERGEANT.ordinal()
+                            original_registry::is_policy_monster(self.player_policy(), l.actor_type)
                         }) {
                             original_player::travel_bounds(actor.position(), actor.momentum())?;
                         }

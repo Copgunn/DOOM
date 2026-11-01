@@ -234,6 +234,7 @@ impl<A: ActorAccess> weapons::Host for Host<'_, '_, A> {
                         | OriginalExecutionProfile::PlayerDemonPickupsV1
                         | OriginalExecutionProfile::PlayerDemonArmorV1
                         | OriginalExecutionProfile::PlayerDemonBonusesV1
+                        | OriginalExecutionProfile::PlayerMonstersV1
                 )
             }) && matches!(weapon, Weapon::Fist | Weapon::Shotgun | Weapon::Chaingun))
         {
@@ -339,7 +340,8 @@ pub(crate) fn run<A: ActorAccess>(
             OriginalExecutionProfile::PlayerDemonWeaponsV1
                 | OriginalExecutionProfile::PlayerDemonPickupsV1
                 | OriginalExecutionProfile::PlayerDemonArmorV1
-                | OriginalExecutionProfile::PlayerDemonBonusesV1,
+                | OriginalExecutionProfile::PlayerDemonBonusesV1
+                | OriginalExecutionProfile::PlayerMonstersV1,
             player_weapons::PlayerWeaponRuntime::Pack(_)
         )
     ) {
@@ -483,7 +485,20 @@ fn line_current(
         slope,
         &lookup,
     )?;
+    let monsters = host
+        .player
+        .as_ref()
+        .is_some_and(|p| p.policy.has_monsters());
     let plan = match hit {
+        Some(TraceObject::Actor(target)) if monsters => Some(combat::DamagePlan::current_original(
+            host,
+            DamageRequest {
+                target,
+                inflictor: Some(id),
+                source: Some(id),
+                amount: damage,
+            },
+        )?),
         Some(TraceObject::Actor(target)) => {
             let victim = *host.access.get(target).ok_or(CombatError::Reference)?;
             original_player::preflight_grounded_impulse(

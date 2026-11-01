@@ -49,8 +49,10 @@ stimpacks, medikits and world shotgun/chaingun acquisition through shared collis
 and inventory services. A separately selected armor capability adds genuine animated
 green/blue armor, source pickup thresholds, absorption and depletion through the same
 autonomous combat loop. A bonus capability adds animated health and armor bonuses
-(+1 up to 200) and counted-item statistics. Full player-thinker/view processing,
-remaining weapons, soulspheres/powers and respawn remain excluded. See the
+(+1 up to 200) and counted-item statistics. A monster capability adds the original
+former humans beside the Demon, up to eight monsters at once, source infighting and
+item drops. Full player-thinker/view processing, remaining weapons and monsters,
+soulspheres/powers and respawn remain excluded. See the
 [player contract](docs/COMPATIBILITY.md#original-player-body-lifecycle) and
 [command movement boundary](docs/COMPATIBILITY.md#original-player-command-movement) and
 [active-player/Demon contract](docs/COMPATIBILITY.md#active-original-player-and-demon-acquisition)
@@ -64,7 +66,9 @@ separate source touch, collection and lifetime capability. The
 [armor contract](docs/COMPATIBILITY.md#original-armor-and-damage-absorption) defines
 that opt-in gameplay domain, and the
 [bonus contract](docs/COMPATIBILITY.md#original-health-and-armor-bonuses) its
-bonus superset and limits.
+bonus superset and limits; the
+[monster contract](docs/COMPATIBILITY.md#original-former-humans-and-multi-monster-encounters)
+defines the mixed-roster superset.
 
 Call `Simulation::advance()` for a tic without an implicit diagnostic Snapshot.
 `step()` retains its Snapshot return, and `snapshot()` captures explicitly in
@@ -121,6 +125,7 @@ cargo run -p doom-sim --example player_pistol --locked
 cargo run -p doom-sim --example player_weapon_pack --locked
 cargo run -p doom-sim --example player_world_pickups --locked
 cargo run -p doom-sim --example player_bonuses --locked
+cargo run -p doom-sim --example player_monsters --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked

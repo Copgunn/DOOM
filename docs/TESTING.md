@@ -966,3 +966,26 @@ summaries and any toolchain limitations belong to
 [the engineering record](validation/M3G11.md). Leak detection is disabled in the
 documented ASan environment, not verified.
 
+
+## Original former humans and mixed rosters
+
+Former-human evidence has its own source/encoding contract and leaves historical
+expectations untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h1_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3h1_snapshot_goldens.py --check
+cargo test -p doom-sim monster_
+python3 tools/reference/check_player_monsters.py
+python3 tools/seed_player_monsters_fuzz.py /tmp/doom-monster-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_monsters /tmp/doom-monster-seeds --sanitizer address -- -runs=4096 -seed=481 -max_len=290 -timeout=15 -rss_limit_mb=1024
+```
+
+`m3h1_reference.py` keeps the declared GNU wrapping build for its trace; the strict
+signed-overflow and ASan/UBSan audits retype only the original attack-angle locals
+and must reproduce the identical trace. The example asserts every scenario's
+source fields and complete ordered event frames in debug and release;
+`--measure <workload> advance|step|capture` times one full scripted timeline.
+Measurement summaries and limitations belong to
+[the engineering record](validation/M3H1.md). Leak detection is disabled in the
+documented ASan environment, not verified.
