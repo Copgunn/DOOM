@@ -99,7 +99,10 @@ fuzz_target!(|data: &[u8]| {
         s.advance(inputs::commands(c, op)).unwrap();
     }
     let mut captured = s.clone();
-    for b in rest[..rest.len().min(MAX_INPUT - 2)].chunks_exact(REQUEST_BYTES) {
+    for b in rest[..rest.len().min(MAX_INPUT - 2)]
+        .as_chunks::<REQUEST_BYTES>()
+        .0
+    {
         let before = s.snapshot();
         let roster = s.original_player_roster();
         let actual = apply(&mut s, a, b, false);

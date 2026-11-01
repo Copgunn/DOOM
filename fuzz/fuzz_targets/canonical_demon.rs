@@ -24,10 +24,10 @@ fn operation(sim: &mut Simulation, ids: &[ActorId], c: &[u8]) {
         3 => {
             let _ = sim.original_demon_identity(actor);
             let binding = sim.canonical_demon_binding().unwrap();
-            if let Ok(state) = OriginalState::try_from(ordinal) {
-                if let Ok(runtime) = binding.runtime_state(state) {
-                    assert_eq!(binding.original_state(runtime), Ok(state));
-                }
+            if let Ok(state) = OriginalState::try_from(ordinal)
+                && let Ok(runtime) = binding.runtime_state(state)
+            {
+                assert_eq!(binding.original_state(runtime), Ok(state));
             }
             assert_eq!(before, sim.snapshot());
             false
@@ -92,7 +92,7 @@ fuzz_target!(|data: &[u8]| {
     b = fixtures::install_targets(b, c);
     let ids: Vec<_> = a.actor_order().collect();
     assert_eq!(a.snapshot(), b.snapshot());
-    for c in data[2..].chunks_exact(4).take(8) {
+    for c in data[2..].as_chunks::<4>().0.iter().take(8) {
         operation(&mut a, &ids, c);
         operation(&mut b, &ids, c);
         assert_eq!(a.snapshot(), b.snapshot());

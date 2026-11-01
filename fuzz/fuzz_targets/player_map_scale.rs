@@ -91,7 +91,7 @@ fuzz_target!(|data: &[u8]| {
         include_bytes!("../../tests/reference/m3h3_state_11_720.bin").as_slice(),
     ] {
         let mut bytes = original.to_vec();
-        for c in data.chunks_exact(3).take(32) {
+        for c in data.as_chunks::<3>().0.iter().take(32) {
             let at = usize::from(u16::from_le_bytes([c[0], c[1]])) % bytes.len();
             bytes[at] ^= c[2];
         }
@@ -124,7 +124,7 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
     let mut captured = s.clone();
-    for b in data[2..data.len().min(290)].chunks_exact(9) {
+    for b in data[2..data.len().min(290)].as_chunks::<9>().0 {
         let before = s.snapshot();
         let (tic, paused) = (s.tic(), s.paused());
         let live = s.original_player(PlayerSlot::One).unwrap().state == PlayerBodyState::Live;

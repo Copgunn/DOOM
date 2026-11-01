@@ -32,7 +32,7 @@ fn vertical_invariant(s: &Simulation) {
     for id in s.actor_order() {
         let a = s.actor(id).unwrap();
         let Some(l) = a.life() else { continue };
-        if matches!(l.actor_type.0, 37 | 38) {
+        if matches!(l.actor_type.0, 37..=38) {
             continue;
         }
         let z = a.z();
@@ -112,7 +112,7 @@ fuzz_target!(|data: &[u8]| {
         include_bytes!("../../tests/reference/m3h4_state_10_240.bin").as_slice(),
     ] {
         let mut bytes = original.to_vec();
-        for c in data.chunks_exact(3).take(32) {
+        for c in data.as_chunks::<3>().0.iter().take(32) {
             let at = usize::from(u16::from_le_bytes([c[0], c[1]])) % bytes.len();
             bytes[at] ^= c[2];
         }
@@ -145,7 +145,7 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
     let mut captured = s.clone();
-    for b in data[2..data.len().min(290)].chunks_exact(9) {
+    for b in data[2..data.len().min(290)].as_chunks::<9>().0 {
         let before = s.snapshot();
         let (tic, paused) = (s.tic(), s.paused());
         let live = s.original_player(PlayerSlot::One).unwrap().state == PlayerBodyState::Live;

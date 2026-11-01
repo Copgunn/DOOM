@@ -69,7 +69,10 @@ fuzz_target!(|data: &[u8]| {
     let cases = inputs::cases();
     let (mut s, a) = inputs::setup(&cases[usize::from(first) % cases.len()]);
     let mut captured = s.clone();
-    for b in rest[..rest.len().min(MAX_INPUT - 1)].chunks_exact(REQUEST_BYTES) {
+    for b in rest[..rest.len().min(MAX_INPUT - 1)]
+        .as_chunks::<REQUEST_BYTES>()
+        .0
+    {
         let before = s.snapshot();
         let roster = s.original_player_roster();
         let actual = apply(&mut s, a, b, false);
