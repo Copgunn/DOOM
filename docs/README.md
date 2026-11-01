@@ -114,3 +114,6 @@ original evidence and former guide contents with exact-byte copies and digests.
   [observations](validation/M3G10.md), [support](COMPATIBILITY.md#original-armor-and-damage-absorption).
 - [M3g11 original bonus investigation](M3G11_REFERENCE_INVESTIGATION.md),
   [observations](validation/M3G11.md), [support](COMPATIBILITY.md#original-health-and-armor-bonuses).
+- [M3h1 original former-human investigation](M3H1_REFERENCE_INVESTIGATION.md),
+  [observations](validation/M3H1.md), [support](COMPATIBILITY.md#original-former-humans-and-multi-monster-encounters)
+  and [DSIM28](STATE_FORMAT.md#dsim-v28-original-former-humans-and-mixed-rosters).

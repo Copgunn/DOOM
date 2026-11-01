@@ -79,15 +79,25 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3g11: Original health/armor bonuses and counted items
+### M3h1: Original former humans and multi-monster encounters
 
-The separately selected PlayerDemonBonusesV1 adds genuine animated health and
-armor bonuses to the armor world. Bonuses use their real six-state loops, raise
-health and armor by one up to 200, credit COUNTITEM statistics and share the
-existing player, contact, damage and transaction owners. Ordinary healing and
-armor grants keep their thresholds. DSIM27 adds no persistent field, only
-widened item/resource ranges and new observations. This branch stops at owner
-review; exact commits and CI belong to GitHub. See
+The separately selected PlayerMonstersV1 moves from one player against at most
+one Demon toward real encounters: original MT_POSSESSED, MT_SHOTGUY and
+MT_CHAINGUY beside the Demon, up to eight monsters at once, source infighting and
+P_KillMobj item drops with kill credit. Everything runs through the existing
+registry, action table, thinker, sight, pursuit, attack, damage, pickup,
+statistics and transaction owners; former-human attacks share one current-state
+implementation. DSIM28 adds no persistent field, only widened identities and
+statistics. This branch stops at owner review; exact commits and CI belong to
+GitHub. See [source investigation](M3H1_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-former-humans-and-multi-monster-encounters)
+and [observations](validation/M3H1.md).
+
+### Previous gameplay foundation — M3g11: Original health/armor bonuses and counted items
+
+PlayerDemonBonusesV1 adds genuine animated health and armor bonuses (+1 up to 200)
+and COUNTITEM statistics to the armor world with DSIM27. M3g11 is merged; exact
+review/CI state belongs to GitHub. See
 [source investigation](M3G11_REFERENCE_INVESTIGATION.md),
 [support](COMPATIBILITY.md#original-health-and-armor-bonuses) and
 [observations](validation/M3G11.md).
@@ -147,11 +157,13 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Prioritize the original soulsphere and MegaSphere: animated COUNTITEM actors whose
-health/armor effects reuse the bonus caps, statistics and transaction owners added
-in M3g11. Require source-first observations, unchanged bonus and ordinary grant
-contracts and measured sustained encounters. This is future work, not admission
-in M3g11.
+Prioritize the original Imp (MT_TROOP) and its first projectile: A_TroopAttack's
+melee/missile choice, MT_TROOPSHOT spawning, flight, collision and explosion
+through the existing projectile, damage, infighting and transaction owners, in the
+same mixed roster. Require source-first observations, unchanged former-human,
+Demon and bonus contracts, and measured sustained encounters. The soulsphere and
+MegaSphere remain a smaller alternative. This is future work, not admission in
+M3h1.
 
 ### Focused maintenance acceptance criteria
 

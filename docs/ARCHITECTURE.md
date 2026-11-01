@@ -608,3 +608,30 @@ together. No second statistics store, inventory or scheduler is introduced.
 See [support](COMPATIBILITY.md#original-health-and-armor-bonuses),
 [source matrix](M3G11_REFERENCE_INVESTIGATION.md) and
 [DSIM27](STATE_FORMAT.md#dsim-v27-original-health-and-armor-bonuses).
+
+## Original former humans and mixed rosters
+
+PlayerMonstersV1 extends the bonus capability; no new owner, store or scheduler
+is added. Former-human identities are ordinary original-ID registry roles whose
+closures are derived from source roots. The single `LifeHost::action` table,
+keyed by original action name, routes A_PosAttack, A_SPosAttack, A_CPosAttack and
+A_CPosRefire to one current-state implementation under this policy. Historical
+fixture profiles keep their preflighted single-owner plans in the same table.
+
+A current attack faces, aims and traces against the staged transaction at action
+time, uses the shared `weapons::monster_shot` formula, plans damage with
+`DamagePlan::current_original` from the target's current health, armor and
+roles, and executes through the shared impact/damage executor. Several shooters
+per tic therefore see each other's effects and RNG. Demon bites and player
+bullets against monsters use the same plan. `LifeHost::apply_damage` already owns
+P_DamageMobj retargeting; its kill branch now spawns the P_KillMobj drop through
+`LifeHost::spawn`. Capacity for impacts and drops is proved before spawning, and
+any late error is latched and discards the whole staged tic, as for every other
+DemonPlan operation.
+
+The owner-prefix preflight treats every roster monster as an owner and admits
+drops after the player/impact suffix. Monster-to-monster target references are
+validated as monster actors. See
+[support](COMPATIBILITY.md#original-former-humans-and-multi-monster-encounters),
+[source matrix](M3H1_REFERENCE_INVESTIGATION.md) and
+[DSIM28](STATE_FORMAT.md#dsim-v28-original-former-humans-and-mixed-rosters).

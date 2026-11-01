@@ -204,3 +204,6 @@ See [source qualification](M3G9_REFERENCE_INVESTIGATION.md) and
   source grants/absorption, independent DSIM26 and separately labeled Rust safety.
 - [M3g11 health/armor bonuses](validation/M3G11.md): animated bonuses, COUNTITEM
   statistics, independent DSIM27, matched timings and bounded ASan fuzz campaigns.
+- [M3h1 former humans and mixed rosters](validation/M3H1.md): original attacks,
+  infighting, drops and kill statistics, independent DSIM28, matched timings and
+  bounded ASan fuzz campaigns.

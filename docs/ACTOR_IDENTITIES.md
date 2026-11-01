@@ -416,3 +416,18 @@ SPECIAL|COUNTITEM. Registry metadata still does not admit soulspheres, MegaSpher
 or powers. Earlier policies reject both bonus types. See
 [support](COMPATIBILITY.md#original-health-and-armor-bonuses) and
 [source investigation](M3G11_REFERENCE_INVESTIGATION.md).
+
+## Original former-human execution boundary
+
+PlayerMonstersV1 adds canonical MT_POSSESSED=1/DoomEd3004 (SPR_POSS),
+MT_SHOTGUY=2/DoomEd9 (SPR_SPOS) and MT_CHAINGUY=10/DoomEd65 (SPR_CPOS) as genuine
+map monsters beside MT_SERGEANT, using existing actor ownership. Each executable
+state set is derived once from its original spawn/see/pain/missile/death/xdeath
+roots; only A_Look, A_Chase, A_FaceTarget, the type's own attack callbacks
+(A_PosAttack, A_SPosAttack, or A_CPosAttack/A_CPosRefire), A_Pain, A_Scream,
+A_XScream and A_Fall are allowed. Raise states (S_POSS_RAISE1, S_SPOS_RAISE1,
+S_CPOS_RAISE1 and their successors) keep their metadata but never gain execution.
+Their source drops are the already admitted MT_CLIP, MT_SHOTGUN and MT_CHAINGUN
+item identities with MF_DROPPED. Earlier policies reject all three types. See
+[support](COMPATIBILITY.md#original-former-humans-and-multi-monster-encounters) and
+[source investigation](M3H1_REFERENCE_INVESTIGATION.md).

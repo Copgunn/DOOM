@@ -1239,3 +1239,48 @@ component T40's post-hit result (raw 300 damage exceeding the 30-unit momentum
 admission) stays source-only; its pickup is compared and the hit is atomically
 rejected. See [source investigation](M3G11_REFERENCE_INVESTIGATION.md) and
 [observed evidence](validation/M3G11.md).
+
+## Original former humans and multi-monster encounters
+
+`PlayerMonstersV1` (wire12, context `PLAYER-MONSTERS-1-MEDIUM-GROUNDED-v1`,
+DSIM-v28) is a separate opt-in superset of the bonus world. Select it with
+`Simulation::original_player_monsters_map`. The same single player0, four weapons,
+16 placed world items, 64 actor slots, Medium/commercial single-player settings,
+grounded static axis-wall geometry and transaction guarantees apply. Older policies,
+wires and DSIM20–27 are unchanged and continue to reject former humans.
+
+Admitted monsters are map THINGs of MT_POSSESSED=1/DoomEd3004,
+MT_SHOTGUY=2/DoomEd9, MT_CHAINGUY=10/DoomEd65 and MT_SERGEANT=12/DoomEd3002, in
+any mix, at most `MAX_PLAYER_MONSTERS` = 8. The cap keeps one player, 16 items, at
+most eight drops and transient impacts inside 64 slots and each tic's checked sight
+budget (64 queries). THING angles keep the earlier admission of `angle / 45` quotients in
+[-4, 3], which avoids the original signed `ANG45` product overflow. Monsters spawn in THING order
+with source timer randomization and `total_kills`.
+
+Former humans use their original spawn/see/missile/pain/death/xdeath closures,
+sounds and flags. They wake through `A_Look`, chase and choose missile attacks
+through the original `A_Chase`/`P_CheckMissileRange`, and fire `A_PosAttack`
+(one bullet), `A_SPosAttack` (one aim, three complete bullets) and
+`A_CPosAttack`/`A_CPosRefire` with the original draw order. Each bullet is traced
+and damaged against the current state of the tic, so earlier shooters' kills, pain
+and RNG are visible to later ones. Monster bullets and Demon bites damage the
+player (including armor), other monsters, or nothing.
+
+`P_DamageMobj` infighting is the source rule: a damaged actor with zero threshold
+retargets to any different source, sets threshold 100 and enters its see state if
+it was in its spawn state. There is no same-species exception and no MT_VILE.
+Every COUNTKILL death is credited to `single_player_kill_count`, whoever killed it.
+A dead former human drops MT_CLIP / MT_SHOTGUN / MT_CHAINGUN at its position with
+MF_DROPPED; dropped ammo is halved by the existing pickup rules. Drops are
+appended after the player in thinker order and are not counted items.
+
+Raise/resurrection, MT_VILE and every other monster type, projectiles, nightmare
+and fast monsters, respawn, multiplayer and dynamic geometry remain excluded.
+The original attack actions store BAM angles in `int` locals; `angle += spread`
+is signed overflow near 180°. The default original-C build keeps that text under
+the declared GNU wrapping interpretation, and strict audits retype only those
+locals to `angle_t` and must reproduce the identical trace. Rust uses wrapping
+BAM addition. Recoverable failures, including impact or drop capacity exhaustion,
+roll back actors, player, RNG, statistics, spatial links and events together. See
+[source investigation](M3H1_REFERENCE_INVESTIGATION.md) and
+[observed evidence](validation/M3H1.md).
