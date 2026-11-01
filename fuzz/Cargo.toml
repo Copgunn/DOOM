@@ -308,3 +308,10 @@ path = "fuzz_targets/player_map_scale.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_heights"
+path = "fuzz_targets/player_heights.rs"
+test = false
+doc = false
+bench = false

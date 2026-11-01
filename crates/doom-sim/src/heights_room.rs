@@ -99,26 +99,28 @@ impl HeightsRoom {
         };
         let mut lines: Vec<Line> = Vec::new();
         let segment = i32::from(self.segment);
-        let mut add = |a: [i16; 2], b: [i16; 2], front: usize, back: Option<usize>, flags: u16| {
-            let length = (i32::from(b[0]) - i32::from(a[0])).abs()
-                + (i32::from(b[1]) - i32::from(a[1])).abs();
-            let pieces = ((length + segment - 1) / segment).max(1);
-            let at = |p: i16, q: i16, k: i32| {
-                let d = (i32::from(q) - i32::from(p)) * k;
-                // Truncating division, as the Python builder's `tdiv`.
-                (i32::from(p) + d / pieces) as i16
+        let mut add =
+            |a: [i16; 2], b: [i16; 2], front: usize, back: Option<usize>, flags: u16| -> usize {
+                let length = (i32::from(b[0]) - i32::from(a[0])).abs()
+                    + (i32::from(b[1]) - i32::from(a[1])).abs();
+                let pieces = ((length + segment - 1) / segment).max(1);
+                let at = |p: i16, q: i16, k: i32| {
+                    let d = (i32::from(q) - i32::from(p)) * k;
+                    // Truncating division, as the Python builder's `tdiv`.
+                    (i32::from(p) + d / pieces) as i16
+                };
+                for k in 0..pieces {
+                    lines.push(Line {
+                        a: vertex([at(a[0], b[0], k), at(a[1], b[1], k)]),
+                        b: vertex([at(a[0], b[0], k + 1), at(a[1], b[1], k + 1)]),
+                        front,
+                        back,
+                        flags,
+                        special: 0,
+                    });
+                }
+                lines.len() - 1
             };
-            for k in 0..pieces {
-                lines.push(Line {
-                    a: vertex([at(a[0], b[0], k), at(a[1], b[1], k)]),
-                    b: vertex([at(a[0], b[0], k + 1), at(a[1], b[1], k + 1)]),
-                    front,
-                    back,
-                    flags,
-                    special: 0,
-                });
-            }
-        };
         // Clockwise perimeter keeps each sector on its walls' right (front) side.
         add([self.spans[0], y0], [self.spans[0], y1], 0, None, 1);
         for i in 0..n {
@@ -138,8 +140,7 @@ impl HeightsRoom {
                     k,
                     Some(k - 1),
                     flags,
-                );
-                lines.len() - 1
+                )
             })
             .collect();
         drop(add);

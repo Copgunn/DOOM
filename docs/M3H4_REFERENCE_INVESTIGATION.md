@@ -456,7 +456,7 @@ the dodging player.
 
 Observed in the committed trace (`m3h4_contract.json` has the per-case counts): 3 snapped
 steps up and 4 falls down the stairs; 104 step-up refusals (reason 5) at the 25-unit riser
-and the ledge, 33 dropoff refusals (reason 6) by former humans at the riser and the ledge,
+and the ledge, 27 dropoff refusals (reason 6) by former humans at the riser and the ledge,
 70 fit refusals (reason 3) at the closed sector and the crawlspace, 3 headroom refusals
 (reason 4, two by the falling player and one by a fireball under the 100-unit ceiling);
 one landing sound (`E,7,ident,34`) after a 13-tic fall with `momz = −14`; a corpse sliding
