@@ -1322,6 +1322,11 @@ mod monster_evidence;
 mod monster_tests;
 
 #[cfg(test)]
+#[path = "../../../tests/support/m3h4.rs"]
+mod heights_evidence;
+#[cfg(test)]
+mod heights_room;
+#[cfg(test)]
 #[path = "../../../tests/support/m3h2.rs"]
 mod imp_evidence;
 #[cfg(test)]
@@ -1329,5 +1334,7 @@ mod imp_tests;
 #[cfg(test)]
 #[path = "../../../tests/support/m3h3.rs"]
 mod map_scale_evidence;
+#[cfg(test)]
+mod player_heights_tests;
 #[cfg(test)]
 mod player_map_scale_tests;

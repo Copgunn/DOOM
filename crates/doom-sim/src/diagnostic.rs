@@ -593,10 +593,16 @@ impl<'a> Diagnostic<'a> {
                     )?;
                 }
                 if tag == 14 && matches!(self.version, 23..=31) {
+                    let sectors = if self.version == 31 {
+                        Some(u32::from_le_bytes(number(self.required("sectors.count")?)?))
+                    } else {
+                        None
+                    };
                     validate_weapon_event(
                         event,
                         matches!(self.version, 24..=31),
                         self.slot_bound(),
+                        sectors,
                     )?;
                 }
                 if tag == 15 && matches!(self.version, 29..=31) {
@@ -1218,7 +1224,14 @@ impl Snapshot {
     }
 }
 
-fn validate_weapon_event(event: &[u8], pack: bool, slots: u32) -> Result<(), DiagnosticError> {
+/// `sectors` is the static sector count under DSIM31, where a noise flood visits any
+/// sector with `blocks` 0 or 1 (`P_RecursiveSound`); earlier versions flood sector 0.
+fn validate_weapon_event(
+    event: &[u8],
+    pack: bool,
+    slots: u32,
+    sectors: Option<u32>,
+) -> Result<(), DiagnosticError> {
     let invalid = DiagnosticError::Identity;
     match event.get(1) {
         Some(0 | 1) if event.len() == 6 && event[2] == 0 && event[3] <= 1 => {
@@ -1319,7 +1332,15 @@ fn validate_weapon_event(event: &[u8], pack: bool, slots: u32) -> Result<(), Dia
                 Err(invalid)
             }
         }
-        Some(6) if event.len() == 17 && event[2..5] == [0, 0, 0] => {
+        Some(6) if event.len() == 17 => {
+            let sector = u32::from(u16::from_le_bytes([event[2], event[3]]));
+            let flooded = match sectors {
+                Some(count) => sector < count && event[4] <= 1,
+                None => event[2..5] == [0, 0, 0],
+            };
+            if !flooded {
+                return Err(DiagnosticError::Structure);
+            }
             validate_handle(&event[5..17], slots)
         }
         Some(7) if event.len() == 15 && event[2] == 0 => validate_handle(&event[3..15], slots),
