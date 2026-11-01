@@ -376,3 +376,22 @@ fn monster_step_advance_and_debug_release_digest_is_stable() {
         });
     assert_eq!(digest, again);
 }
+
+#[test]
+fn former_human_direct_entry_rejects_death_and_pain_states() {
+    // Review regression: live former humans, like the Demon, may only be
+    // entered directly into spawn/see states; death needs P_KillMobj.
+    let c = &monster_evidence::cases()[0];
+    let (mut s, _) = monster_evidence::setup(c);
+    let possessed = s.actors.order().next().unwrap();
+    let roots = OriginalActorType::MT_POSSESSED.states();
+    for state in [roots.death, roots.extreme_death, roots.pain, roots.missile] {
+        let before = s.clone();
+        assert!(
+            s.enter_original_state(possessed, state).is_err(),
+            "{state:?}"
+        );
+        assert_eq!(s.snapshot(), before.snapshot());
+    }
+    s.enter_original_state(possessed, roots.see).unwrap();
+}

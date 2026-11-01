@@ -455,6 +455,11 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersV1 => {
                 demon_policy()?;
                 player_policy()?;
+                if profile.has_monsters() {
+                    for ty in FORMER_HUMANS {
+                        former_human_policy(ty)?;
+                    }
+                }
             }
         }
         if registry.states().len() != usize::from(OriginalState::COUNT)

@@ -322,7 +322,7 @@ impl Simulation {
                     && (state.0 == 3 || (15..=21).contains(&state.0))
         };
         if self.profile.uses_demon_lifecycle()
-            && actor.life.unwrap().actor_type == self.demon_owner_type()
+            && self.is_roster_monster(actor.life.unwrap().actor_type)
             && (actor.life.unwrap().health <= 0 || !direct_entry)
         {
             return Err(MonsterError::Definition.into());

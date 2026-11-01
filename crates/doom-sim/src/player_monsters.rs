@@ -62,7 +62,10 @@ pub(crate) fn uses_current_monsters<A: ActorAccess>(h: &LifeHost<'_, A>) -> bool
 /// late error is latched and discards the whole staged tic.
 pub(crate) fn attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId, kind: Hitscan) {
     if let Err(error) = attack_checked(h, id, kind) {
-        h.fail_sight(error);
+        // Keep the first latched cause; the staged tic is discarded either way.
+        if !h.sight_failed() {
+            h.fail_sight(error);
+        }
     }
 }
 
@@ -214,7 +217,10 @@ fn bullet<A: ActorAccess>(
 /// shared source short-circuit in `chaingunner::decide`.
 pub(crate) fn refire<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId, work: &mut usize) {
     if let Err(error) = refire_checked(h, id, work) {
-        h.fail_sight(error);
+        // Keep the first latched cause; the staged tic is discarded either way.
+        if !h.sight_failed() {
+            h.fail_sight(error);
+        }
     }
 }
 fn refire_checked<A: ActorAccess>(
