@@ -1,8 +1,378 @@
-//! Bounded original plasma launch, missile collision and shared actor lifecycle.
+//! Original missile launch, flight, contact and explosion behind one source algorithm.
 use crate::{lifecycle::LifeHost, *};
 use std::{error::Error, fmt};
+// p_mobj.h flags used by the missile branch; registry state roots are by role.
 const MISSILE: u32 = 65536;
 const PLASMA: ActorTypeId = ActorTypeId(34);
+const MF_SPECIAL: u32 = 1;
+const MF_SOLID: u32 = 2;
+const MF_SHOOTABLE: u32 = 4;
+const MF_SHADOW: u32 = 262144;
+/// p_mobj.c P_SpawnMissile: launch height above the source origin.
+const MISSILE_SPAWN_HEIGHT: i16 = 32;
+/// p_local.h MAXMOVE: 30 map units per tic.
+const MAX_MOVE: i16 = 30;
+/// p_mobj.c P_XYMovement: larger components split at MAXMOVE/2.
+const MAX_STEP: i16 = MAX_MOVE / 2;
+/// p_map.c PIT_CheckThing: `((P_Random()%8)+1)*info->damage`.
+const CONTACT_DAMAGE_CHOICES: u8 = 8;
+/// `ProjectileEvent::Random` draw kinds.
+const DRAW_SPAWN: u8 = 0;
+const DRAW_SHADOW_LEFT: u8 = 1;
+const DRAW_SHADOW_RIGHT: u8 = 2;
+const DRAW_CONTACT: u8 = 3;
+const DRAW_EXPLODE: u8 = 4;
+/// Source missile services shared by the frozen plasma profile and the checked
+/// player world. Each host owns its RNG stream, event queue and damage path; the
+/// algorithms below never branch on which host runs them.
+pub(crate) trait MissileWorld {
+    fn missile(&self, id: ActorId) -> Actor;
+    fn missile_mut(&mut self, id: ActorId) -> &mut Actor;
+    fn definition(&self, ty: ActorTypeId) -> &ActorTypeDef;
+    fn emit(&mut self, event: Event);
+    fn gameplay_draw(&mut self) -> u8;
+    /// PIT_CheckThing/PIT_CheckLine result, with any thing to damage.
+    fn contact(&self, id: ActorId, target: [Fixed; 2]) -> (SectorMoveAttempt, Option<ActorId>);
+    /// P_DamageMobj from inside the block iterator.
+    fn strike(&mut self, request: DamageRequest);
+    fn enter_missile_state(&mut self, id: ActorId, state: StateId);
+    fn relink(&mut self, id: ActorId);
+}
+fn observed_draw<W: MissileWorld>(w: &mut W, kind: u8) -> u8 {
+    let value = w.gameplay_draw();
+    w.emit(Event::Projectile(ProjectileEvent::Random { kind, value }));
+    value
+}
+fn missile_sound<W: MissileWorld>(w: &mut W, id: ActorId, sound: u16) {
+    if sound != 0 {
+        w.emit(Event::ActorState(ActorStateEvent::Sound {
+            actor: Some(id),
+            sound,
+        }));
+    }
+}
+/// P_SpawnMissile aim: angle, `(dest z - source z) / flight time`, shadow.
+fn actor_aim(source: &Actor, dest: &Actor, speed: Fixed) -> (u32, Fixed, bool) {
+    let delta = [
+        dest.position()[0] - source.position()[0],
+        dest.position()[1] - source.position()[1],
+    ];
+    let angle = movement::point_angle(delta);
+    let x = delta[0].bits().unsigned_abs() as i32;
+    let y = delta[1].bits().unsigned_abs() as i32;
+    let dist = x + y - x.min(y) / 2;
+    let time = (dist / speed.bits()).max(1);
+    (
+        angle,
+        Fixed::from_bits((dest.z - source.z).bits() / time),
+        dest.life.unwrap().flags & MF_SHADOW != 0,
+    )
+}
+/// Everything after P_SpawnMobj in P_SpawnMissile, then P_CheckMissileSpawn.
+fn finish_launch<W: MissileWorld>(
+    w: &mut W,
+    id: ActorId,
+    source: ActorId,
+    mut angle: u32,
+    momz: Fixed,
+    shadow: bool,
+) {
+    let ty = w.missile(id).life.unwrap().actor_type;
+    let info = w.definition(ty);
+    let (speed, sound) = (Fixed::from_bits(info.speed()), info.sounds()[0]);
+    missile_sound(w, id, sound);
+    w.missile_mut(id).life.as_mut().unwrap().target = Some(source);
+    w.emit(Event::ActorState(ActorStateEvent::Target {
+        actor: id,
+        target: Some(source),
+    }));
+    if shadow {
+        let left = observed_draw(w, DRAW_SHADOW_LEFT);
+        let right = observed_draw(w, DRAW_SHADOW_RIGHT);
+        angle = angle.wrapping_add(((i32::from(left) - i32::from(right)) * 1048576) as u32);
+    }
+    let phase = (angle >> 19) as usize;
+    let momentum = [
+        speed * Fixed::from_bits(FINE_SINE[phase + 2048]),
+        speed * Fixed::from_bits(FINE_SINE[phase]),
+    ];
+    let a = w.missile_mut(id);
+    a.spec.angle = angle;
+    a.spec.momentum = momentum;
+    a.momz = momz;
+    w.emit(Event::Projectile(ProjectileEvent::Velocity {
+        actor: id,
+        angle,
+        momentum: [momentum[0], momentum[1], momz],
+    }));
+    let random = observed_draw(w, DRAW_SPAWN);
+    let a = w.missile_mut(id);
+    let life = a.life.as_mut().unwrap();
+    life.tics = (life.tics - i32::from(random & 3)).max(1);
+    let tics = life.tics;
+    for axis in 0..2 {
+        a.spec.position[axis] =
+            a.spec.position[axis] + Fixed::from_bits(a.spec.momentum[axis].bits() >> 1);
+    }
+    a.z = a.z + Fixed::from_bits(a.momz.bits() >> 1);
+    let position = [a.position()[0], a.position()[1], a.z];
+    w.emit(Event::Projectile(ProjectileEvent::HalfStep {
+        actor: id,
+        position,
+        tics,
+    }));
+    let target = w.missile(id).position();
+    if !try_move(w, id, target) {
+        explode(w, id);
+    }
+}
+/// P_ExplodeMissile.
+fn explode<W: MissileWorld>(w: &mut W, id: ActorId) {
+    w.emit(Event::Projectile(ProjectileEvent::Exploded(id)));
+    let a = w.missile_mut(id);
+    a.spec.momentum = [Fixed::ZERO; 2];
+    a.momz = Fixed::ZERO;
+    let ty = a.life.unwrap().actor_type;
+    let info = w.definition(ty);
+    let (death, sound) = (info.states()[5], info.sounds()[3]);
+    w.enter_missile_state(id, death);
+    let r = observed_draw(w, DRAW_EXPLODE);
+    let life = w.missile_mut(id).life.as_mut().unwrap();
+    life.tics = (life.tics - i32::from(r & 3)).max(1);
+    life.flags &= !MISSILE;
+    missile_sound(w, id, sound);
+}
+/// P_TryMove for a missile. Contact damage precedes the move result, as it runs
+/// inside the source block iterator.
+fn try_move<W: MissileWorld>(w: &mut W, id: ActorId, target: [Fixed; 2]) -> bool {
+    let (attempt, hit) = w.contact(id, target);
+    if let Some(victim) = hit {
+        let life = w.missile(id).life.unwrap();
+        let damage = w.definition(life.actor_type).damage();
+        let draw = observed_draw(w, DRAW_CONTACT);
+        w.strike(DamageRequest {
+            target: victim,
+            inflictor: Some(id),
+            source: life.target,
+            amount: (i32::from(draw % CONTACT_DAMAGE_CHOICES) + 1) * damage,
+        });
+    }
+    let allowed = attempt.allowed();
+    if allowed {
+        let a = w.missile_mut(id);
+        a.spec.position = target;
+        a.floor = attempt.floor;
+        a.ceiling = attempt.ceiling;
+        a.location = Some(attempt.location);
+        w.relink(id);
+    }
+    w.emit(Event::SectorMovement { actor: id, attempt });
+    allowed
+}
+/// P_XYMovement for a thing that may stop being a missile mid-loop.
+fn move_xy<W: MissileWorld>(w: &mut W, id: ActorId) {
+    let a = w.missile_mut(id);
+    let max = Fixed::from_map_units(MAX_MOVE);
+    a.spec.momentum = a.spec.momentum.map(|m| m.clamp(-max, max));
+    let mut left = a.spec.momentum;
+    while left != [Fixed::ZERO; 2] {
+        let mut target = w.missile(id).position();
+        if left[0] > Fixed::from_map_units(MAX_STEP) || left[1] > Fixed::from_map_units(MAX_STEP) {
+            for axis in 0..2 {
+                target[axis] = target[axis] + Fixed::from_bits(left[axis].bits() / 2);
+                left[axis] = Fixed::from_bits(left[axis].bits() >> 1);
+            }
+        } else {
+            for axis in 0..2 {
+                target[axis] = target[axis] + left[axis];
+            }
+            left = [Fixed::ZERO; 2];
+        }
+        if !try_move(w, id, target) {
+            if w.missile(id).life.unwrap().flags & MISSILE != 0 {
+                explode(w, id);
+            } else {
+                w.missile_mut(id).spec.momentum = [Fixed::ZERO; 2];
+            }
+        }
+    }
+}
+/// P_ZMovement for a missile.
+fn move_z<W: MissileWorld>(w: &mut W, id: ActorId) {
+    let a = w.missile_mut(id);
+    if a.z == a.floor && a.momz == Fixed::ZERO {
+        return;
+    }
+    let before = [a.z, a.momz];
+    let constraints = [a.floor, a.ceiling];
+    let missile = a.life.unwrap().flags & MISSILE != 0;
+    let mut floor = false;
+    let mut ceiling = false;
+    let mut gravity = false;
+    let mut blast = false;
+    a.z = a.z + a.momz;
+    if a.z <= a.floor {
+        floor = true;
+        if a.momz < Fixed::ZERO {
+            a.momz = Fixed::ZERO
+        }
+        a.z = a.floor;
+        blast = missile;
+    } else if a.gravity == Gravity::Normal {
+        gravity = true;
+        a.momz = if a.momz == Fixed::ZERO {
+            -Fixed::from_map_units(2)
+        } else {
+            a.momz - Fixed::ONE
+        };
+    }
+    if !blast && a.z + a.height() > a.ceiling {
+        ceiling = true;
+        if a.momz > Fixed::ZERO {
+            a.momz = Fixed::ZERO
+        }
+        a.z = a.ceiling - a.height();
+        blast = missile;
+    }
+    if blast {
+        explode(w, id);
+    }
+    let a = w.missile(id);
+    w.emit(Event::Vertical {
+        actor: id,
+        update: VerticalEvent {
+            before,
+            after: [a.z, a.momz],
+            constraints,
+            floor_contact: floor,
+            ceiling_contact: ceiling,
+            gravity_applied: gravity,
+        },
+    });
+}
+/// P_MobjThinker movement half: state countdown belongs to the caller.
+pub(crate) fn fly<W: MissileWorld>(w: &mut W, id: ActorId) {
+    if w.missile(id).momentum() != [Fixed::ZERO; 2] {
+        move_xy(w, id);
+    }
+    move_z(w, id);
+}
+/// PIT_CheckThing/PIT_CheckLine over any actor lookup. Pure: the source draw
+/// and P_DamageMobj in the missile branch are the caller's, after this returns.
+fn missile_contact(
+    (world, sectors): (&StaticWorld, &[SectorState]),
+    spatial: &movement::SpatialIndex,
+    lookup: &impl Fn(ActorId) -> Option<Actor>,
+    id: ActorId,
+    target: [Fixed; 2],
+) -> (SectorMoveAttempt, Option<ActorId>) {
+    let a = lookup(id).expect("live missile");
+    let missile = a.life.unwrap().flags & MISSILE != 0;
+    if !missile {
+        return (
+            multisector::check_move((world, sectors), id, &a, target, spatial, lookup, false),
+            None,
+        );
+    }
+    let owner = a.life.unwrap().target.unwrap();
+    let owner_type = lookup(owner)
+        .expect("preflight owner")
+        .life
+        .unwrap()
+        .actor_type;
+    let mut movement = ActorMoveAttempt {
+        target,
+        lines: Collision {
+            blocked_by: None,
+            fits: true,
+            candidates: Vec::new(),
+        },
+        actors: Vec::new(),
+        blocked_by_actor: None,
+    };
+    let mut damage = None;
+    movement::for_things(
+        world,
+        id,
+        &a,
+        target,
+        spatial,
+        lookup,
+        |candidate, other| {
+            movement.actors.push(candidate);
+            let life = other.life.unwrap();
+            if life.flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE) == 0 {
+                return true;
+            }
+            let distance = a.radius().bits() + other.radius().bits();
+            if (other.position()[0] - target[0]).bits().unsigned_abs() >= distance as u32
+                || (other.position()[1] - target[1]).bits().unsigned_abs() >= distance as u32
+                || candidate == id
+            {
+                return true;
+            }
+            if a.z > other.z + other.height() || a.z + a.height() < other.z {
+                return true;
+            }
+            // MT_KNIGHT(17) and MT_BRUISER(15) are one species to the source.
+            let same = owner_type == life.actor_type
+                || [owner_type.0, life.actor_type.0] == [15, 17]
+                || [owner_type.0, life.actor_type.0] == [17, 15];
+            if same {
+                if candidate == owner {
+                    return true;
+                }
+                if life.actor_type != ActorTypeId(0) {
+                    movement.blocked_by_actor = Some(candidate);
+                    return false;
+                }
+            }
+            if life.flags & MF_SHOOTABLE == 0 {
+                if life.flags & MF_SOLID == 0 {
+                    return true;
+                }
+            } else {
+                damage = Some(candidate)
+            }
+            movement.blocked_by_actor = Some(candidate);
+            false
+        },
+    );
+    (
+        multisector::check_move_from_things((world, sectors), &a, target, movement, false, true),
+        damage,
+    )
+}
+impl MissileWorld for Simulation {
+    fn missile(&self, id: ActorId) -> Actor {
+        *self.actor(id).expect("live missile")
+    }
+    fn missile_mut(&mut self, id: ActorId) -> &mut Actor {
+        self.actors.get_mut(id).expect("live missile")
+    }
+    fn definition(&self, ty: ActorTypeId) -> &ActorTypeDef {
+        self.registry.as_deref().unwrap().actor_type(ty).unwrap()
+    }
+    fn emit(&mut self, event: Event) {
+        self.pending.push(event);
+    }
+    fn gameplay_draw(&mut self) -> u8 {
+        self.rng.p_random()
+    }
+    fn contact(&self, id: ActorId, target: [Fixed; 2]) -> (SectorMoveAttempt, Option<ActorId>) {
+        self.query_projectile_move(id, target)
+    }
+    fn strike(&mut self, request: DamageRequest) {
+        self.damage_actor(request)
+            .expect("prevalidated projectile damage");
+    }
+    fn enter_missile_state(&mut self, id: ActorId, state: StateId) {
+        self.enter_validated(id, state);
+    }
+    fn relink(&mut self, id: ActorId) {
+        self.spatial.link(id);
+    }
+}
 /// Rejected projectile prerequisite; recoverable errors precede mutation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ProjectileError {
@@ -207,11 +577,8 @@ impl Simulation {
         Ok(())
     }
     pub(crate) fn projectile_control(&self, id: ActorId) -> Result<(), SimError> {
-        if self.profile == Profile::Projectiles
-            && self
-                .actor(id)
-                .is_some_and(|a| a.life.unwrap().actor_type == PLASMA)
-        {
+        let ty = self.actor(id).and_then(Actor::life).map(|l| l.actor_type);
+        if self.profile == Profile::Projectiles && ty == Some(PLASMA) {
             return Err(ProjectileError::Controlled.into());
         }
         Ok(())
@@ -233,12 +600,6 @@ impl Simulation {
         }
         Ok(a)
     }
-    fn projectile_random(&mut self, kind: u8) -> u8 {
-        let value = self.rng.p_random();
-        self.pending
-            .push(Event::Projectile(ProjectileEvent::Random { kind, value }));
-        value
-    }
     /// Atomic source launch/check. A blocked initial check returns a real explosion actor.
     pub fn launch_projectile(&mut self, request: ProjectileRequest) -> Result<ActorId, SimError> {
         if self.profile != Profile::Projectiles {
@@ -258,24 +619,8 @@ impl Simulation {
                 .unwrap()
                 .speed(),
         );
-        let (mut angle, momz, shadow) = match request.aim {
-            ProjectileAim::Actor(id) => {
-                let dest = self.projectile_source(id)?;
-                let delta = [
-                    dest.position()[0] - source.position()[0],
-                    dest.position()[1] - source.position()[1],
-                ];
-                let angle = movement::point_angle(delta);
-                let x = delta[0].bits().unsigned_abs() as i32;
-                let y = delta[1].bits().unsigned_abs() as i32;
-                let dist = x + y - x.min(y) / 2;
-                let time = (dist / speed.bits()).max(1);
-                (
-                    angle,
-                    Fixed::from_bits((dest.z - source.z).bits() / time),
-                    dest.life.unwrap().flags & 262144 != 0,
-                )
-            }
+        let (angle, momz, shadow) = match request.aim {
+            ProjectileAim::Actor(id) => actor_aim(&source, &self.projectile_source(id)?, speed),
             ProjectileAim::PlayerAutoAim => {
                 let base = source.angle();
                 let mut chosen = base;
@@ -319,306 +664,23 @@ impl Simulation {
         .spawn(
             PLASMA,
             source.position(),
-            SpawnHeight::Absolute(source.z + Fixed::from_map_units(32)),
+            SpawnHeight::Absolute(source.z + Fixed::from_map_units(MISSILE_SPAWN_HEIGHT)),
         );
-        let sound = self
-            .registry
-            .as_deref()
-            .unwrap()
-            .actor_type(PLASMA)
-            .unwrap()
-            .properties[4] as u16;
-        self.projectile_sound(id, sound);
-        self.actors
-            .get_mut(id)
-            .unwrap()
-            .life
-            .as_mut()
-            .unwrap()
-            .target = Some(request.source);
-        self.pending
-            .push(Event::ActorState(ActorStateEvent::Target {
-                actor: id,
-                target: Some(request.source),
-            }));
-        if shadow {
-            let left = self.projectile_random(1);
-            let right = self.projectile_random(2);
-            angle = angle.wrapping_add(((i32::from(left) - i32::from(right)) * 1048576) as u32);
-        }
-        let phase = (angle >> 19) as usize;
-        let momentum = [
-            speed * Fixed::from_bits(FINE_SINE[phase + 2048]),
-            speed * Fixed::from_bits(FINE_SINE[phase]),
-        ];
-        let a = self.actors.get_mut(id).unwrap();
-        a.spec.angle = angle;
-        a.spec.momentum = momentum;
-        a.momz = momz;
-        self.pending
-            .push(Event::Projectile(ProjectileEvent::Velocity {
-                actor: id,
-                angle,
-                momentum: [momentum[0], momentum[1], momz],
-            }));
-        let random = self.projectile_random(0);
-        let a = self.actors.get_mut(id).unwrap();
-        let life = a.life.as_mut().unwrap();
-        life.tics = (life.tics - i32::from(random & 3)).max(1);
-        let tics = life.tics;
-        for axis in 0..2 {
-            a.spec.position[axis] =
-                a.spec.position[axis] + Fixed::from_bits(a.spec.momentum[axis].bits() >> 1);
-        }
-        a.z = a.z + Fixed::from_bits(a.momz.bits() >> 1);
-        self.pending
-            .push(Event::Projectile(ProjectileEvent::HalfStep {
-                actor: id,
-                position: [a.position()[0], a.position()[1], a.z],
-                tics,
-            }));
-        if !self.try_projectile_move(id, self.actor(id).unwrap().position()) {
-            self.explode_projectile(id);
-        }
+        finish_launch(self, id, request.source, angle, momz, shadow);
         Ok(id)
-    }
-    fn projectile_sound(&mut self, id: ActorId, sound: u16) {
-        if sound != 0 {
-            self.pending.push(Event::ActorState(ActorStateEvent::Sound {
-                actor: Some(id),
-                sound,
-            }));
-        }
-    }
-    fn explode_projectile(&mut self, id: ActorId) {
-        self.pending
-            .push(Event::Projectile(ProjectileEvent::Exploded(id)));
-        let a = self.actors.get_mut(id).unwrap();
-        a.spec.momentum = [Fixed::ZERO; 2];
-        a.momz = Fixed::ZERO;
-        let info = self
-            .registry
-            .as_deref()
-            .unwrap()
-            .actor_type(PLASMA)
-            .unwrap();
-        let death = info.states()[5];
-        let sound = info.properties[14] as u16;
-        self.enter_validated(id, death);
-        let r = self.projectile_random(4);
-        let life = self.actors.get_mut(id).unwrap().life.as_mut().unwrap();
-        life.tics = (life.tics - i32::from(r & 3)).max(1);
-        life.flags &= !MISSILE;
-        self.projectile_sound(id, sound);
     }
     pub(crate) fn query_projectile_move(
         &self,
         id: ActorId,
         target: [Fixed; 2],
     ) -> (SectorMoveAttempt, Option<ActorId>) {
-        let a = *self.actor(id).unwrap();
-        let missile = a.life.unwrap().flags & MISSILE != 0;
-        if !missile {
-            return (
-                multisector::check_move(
-                    (&self.world, &self.sectors),
-                    id,
-                    &a,
-                    target,
-                    &self.spatial,
-                    &|id| self.actor(id).copied(),
-                    false,
-                ),
-                None,
-            );
-        }
-        let owner = a.life.unwrap().target.unwrap();
-        let owner_type = self
-            .actor(owner)
-            .expect("preflight owner")
-            .life
-            .unwrap()
-            .actor_type;
-        let mut movement = ActorMoveAttempt {
-            target,
-            lines: Collision {
-                blocked_by: None,
-                fits: true,
-                candidates: Vec::new(),
-            },
-            actors: Vec::new(),
-            blocked_by_actor: None,
-        };
-        let mut damage = None;
-        movement::for_things(
-            &self.world,
-            id,
-            &a,
-            target,
+        missile_contact(
+            (&self.world, &self.sectors),
             &self.spatial,
             &|id| self.actor(id).copied(),
-            |candidate, other| {
-                movement.actors.push(candidate);
-                let life = other.life.unwrap();
-                if life.flags & (2 | 1 | 4) == 0 {
-                    return true;
-                }
-                let distance = a.radius().bits() + other.radius().bits();
-                if (other.position()[0] - target[0]).bits().unsigned_abs() >= distance as u32
-                    || (other.position()[1] - target[1]).bits().unsigned_abs() >= distance as u32
-                    || candidate == id
-                {
-                    return true;
-                }
-                if a.z > other.z + other.height() || a.z + a.height() < other.z {
-                    return true;
-                }
-                let same = owner_type == life.actor_type
-                    || [owner_type.0, life.actor_type.0] == [15, 17]
-                    || [owner_type.0, life.actor_type.0] == [17, 15];
-                if same {
-                    if candidate == owner {
-                        return true;
-                    }
-                    if life.actor_type != ActorTypeId(0) {
-                        movement.blocked_by_actor = Some(candidate);
-                        return false;
-                    }
-                }
-                if life.flags & 4 == 0 {
-                    if life.flags & 2 == 0 {
-                        return true;
-                    }
-                } else {
-                    damage = Some(candidate)
-                }
-                movement.blocked_by_actor = Some(candidate);
-                false
-            },
-        );
-        (
-            multisector::check_move_from_things(
-                (&self.world, &self.sectors),
-                &a,
-                target,
-                movement,
-                false,
-                true,
-            ),
-            damage,
+            id,
+            target,
         )
-    }
-    fn try_projectile_move(&mut self, id: ActorId, target: [Fixed; 2]) -> bool {
-        let (attempt, damage) = self.query_projectile_move(id, target);
-        if let Some(target) = damage {
-            let damage = self
-                .registry
-                .as_deref()
-                .unwrap()
-                .actor_type(self.actor(id).unwrap().life.unwrap().actor_type)
-                .unwrap()
-                .damage();
-            let amount = (i32::from(self.projectile_random(3) % 8) + 1) * damage;
-            let owner = self.actor(id).unwrap().life.unwrap().target;
-            self.damage_actor(DamageRequest {
-                target,
-                inflictor: Some(id),
-                source: owner,
-                amount,
-            })
-            .expect("prevalidated projectile damage");
-        }
-        let allowed = attempt.allowed();
-        if allowed {
-            let a = self.actors.get_mut(id).unwrap();
-            a.spec.position = target;
-            a.floor = attempt.floor;
-            a.ceiling = attempt.ceiling;
-            a.location = Some(attempt.location);
-            self.spatial.link(id);
-        }
-        self.pending
-            .push(Event::SectorMovement { actor: id, attempt });
-        allowed
-    }
-    fn projectile_xy(&mut self, id: ActorId) {
-        let a = self.actors.get_mut(id).unwrap();
-        let max = Fixed::from_map_units(30);
-        a.spec.momentum = a.spec.momentum.map(|m| m.clamp(-max, max));
-        let mut left = a.spec.momentum;
-        while left != [Fixed::ZERO; 2] {
-            let mut target = self.actor(id).unwrap().position();
-            if left[0] > Fixed::from_map_units(15) || left[1] > Fixed::from_map_units(15) {
-                for axis in 0..2 {
-                    target[axis] = target[axis] + Fixed::from_bits(left[axis].bits() / 2);
-                    left[axis] = Fixed::from_bits(left[axis].bits() >> 1);
-                }
-            } else {
-                for axis in 0..2 {
-                    target[axis] = target[axis] + left[axis];
-                }
-                left = [Fixed::ZERO; 2];
-            }
-            if !self.try_projectile_move(id, target) {
-                if self.actor(id).unwrap().life.unwrap().flags & MISSILE != 0 {
-                    self.explode_projectile(id);
-                } else {
-                    self.actors.get_mut(id).unwrap().spec.momentum = [Fixed::ZERO; 2];
-                }
-            }
-        }
-    }
-    fn projectile_z(&mut self, id: ActorId) {
-        let a = self.actors.get_mut(id).unwrap();
-        if a.z == a.floor && a.momz == Fixed::ZERO {
-            return;
-        }
-        let before = [a.z, a.momz];
-        let constraints = [a.floor, a.ceiling];
-        let missile = a.life.unwrap().flags & MISSILE != 0;
-        let mut floor = false;
-        let mut ceiling = false;
-        let mut gravity = false;
-        let mut explode = false;
-        a.z = a.z + a.momz;
-        if a.z <= a.floor {
-            floor = true;
-            if a.momz < Fixed::ZERO {
-                a.momz = Fixed::ZERO
-            }
-            a.z = a.floor;
-            explode = missile;
-        } else if a.gravity == Gravity::Normal {
-            gravity = true;
-            a.momz = if a.momz == Fixed::ZERO {
-                -Fixed::from_map_units(2)
-            } else {
-                a.momz - Fixed::ONE
-            };
-        }
-        if !explode && a.z + a.height() > a.ceiling {
-            ceiling = true;
-            if a.momz > Fixed::ZERO {
-                a.momz = Fixed::ZERO
-            }
-            a.z = a.ceiling - a.height();
-            explode = missile;
-        }
-        if explode {
-            self.explode_projectile(id);
-        }
-        let a = self.actor(id).unwrap();
-        self.pending.push(Event::Vertical {
-            actor: id,
-            update: VerticalEvent {
-                before,
-                after: [a.z, a.momz],
-                constraints,
-                floor_contact: floor,
-                ceiling_contact: ceiling,
-                gravity_applied: gravity,
-            },
-        });
     }
     pub(crate) fn projectile_thinkers_with(&mut self, mut before: impl FnMut(&mut Self, ActorId)) {
         let mut cursor = self.actors.cursor(self.actors.max_slots as usize);
@@ -633,10 +695,7 @@ impl Simulation {
                     self.events.push(Event::Think(id));
                     before(self, id);
                     if self.actor(id).unwrap().life.unwrap().actor_type == PLASMA {
-                        if self.actor(id).unwrap().momentum() != [Fixed::ZERO; 2] {
-                            self.projectile_xy(id);
-                        }
-                        self.projectile_z(id);
+                        fly(self, id);
                     } else {
                         let mut a = *self.actor(id).unwrap();
                         let motion = movement::move_xy_multisector(
