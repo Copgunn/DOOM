@@ -26,6 +26,13 @@ fuzz_target!(|data: &[u8]| {
         assert!(Diagnostic::decode(data, limits).is_err());
         assert!(Diagnostic::decode_bonuses(data, limits).is_err());
     }
+    // The explicit DSIM29 reader accepts only29 and never overlaps older readers.
+    if let Ok(view) = Diagnostic::decode_imps(data, limits) {
+        assert_eq!(view.encode(limits).unwrap(), data);
+        assert_eq!(view.version(), 29);
+        assert!(Diagnostic::decode(data, limits).is_err());
+        assert!(Diagnostic::decode_monsters(data, limits).is_err());
+    }
     // Also attack framing/schema/identity fields inside an otherwise valid stream.
     if (1..=64).contains(&data.len()) {
         let mut bytes = include_bytes!("../../tests/reference/m3f7_state_0_0.bin").to_vec();
