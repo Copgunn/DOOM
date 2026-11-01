@@ -1299,3 +1299,5 @@ mod monster_tests;
 mod imp_evidence;
 #[cfg(test)]
 mod imp_tests;
+#[cfg(test)]
+mod player_map_scale_tests;
