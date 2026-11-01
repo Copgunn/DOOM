@@ -190,8 +190,13 @@ impl OriginalActorType {
             spawn_health: p[2],
             reaction_time: p[5],
             pain_chance: p[8],
-            sounds: [4, 6, 9, 14, 20]
-                .map(|i| u16::try_from(p[i]).expect("verified original sound")),
+            sounds: [
+                u16::try_from(p[4]).expect("verified original sound"),
+                u16::try_from(p[6]).expect("verified original sound"),
+                u16::try_from(p[9]).expect("verified original sound"),
+                u16::try_from(p[14]).expect("verified original sound"),
+                u16::try_from(p[20]).expect("verified original sound"),
+            ],
             speed: p[15],
             radius: p[16],
             height: p[17],

@@ -254,7 +254,17 @@ impl ContactEvent {
         }
     }
 }
+/// Pure function of the type ordinal and the compile-time identity tables, so its
+/// result is computed once per process and reused by every later preflight.
 pub(crate) fn validate_definition(ty: ActorTypeId) -> Result<(), SimError> {
+    static MEMO: [std::sync::OnceLock<Result<(), SimError>>; 256] =
+        [const { std::sync::OnceLock::new() }; 256];
+    match MEMO.get(usize::from(ty.0)) {
+        Some(cell) => *cell.get_or_init(|| validate_definition_uncached(ty)),
+        None => validate_definition_uncached(ty),
+    }
+}
+fn validate_definition_uncached(ty: ActorTypeId) -> Result<(), SimError> {
     let k = kind(ty).ok_or(ActorError::InvalidType)?;
     let d = k.original_type().descriptor();
     let s = d.states.spawn.descriptor();

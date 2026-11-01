@@ -522,6 +522,9 @@ pub struct Simulation {
     pub(crate) events: Vec<Event>,
     pub(crate) pending: Vec<Event>,
     pub(crate) map_fields: Arc<Vec<StateField>>,
+    /// Immutable definitions already validated against this registry and these
+    /// static sectors, by type ordinal. A memo of a pure function, never state.
+    pub(crate) admitted_types: std::cell::Cell<[u64; 4]>,
 }
 impl Simulation {
     /// Creates a fresh supported world with capacity for 1024 logical actor slots.
@@ -635,6 +638,7 @@ impl Simulation {
             events: Vec::new(),
             pending: Vec::new(),
             map_fields,
+            admitted_types: std::cell::Cell::new([0; 4]),
         })
     }
     /// Historical service-family selection. For original-ID contexts, also use
