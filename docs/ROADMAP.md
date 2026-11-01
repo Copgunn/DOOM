@@ -79,7 +79,23 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3h2: Original Imp, fireballs and roster maintenance
+### M3h3: Wall-aware travel bounds, no-stall guarantees and real-map scale
+
+The separately selected PlayerMonstersMapScaleV1 replaces the conservative `160M/3`
+travel envelope and the 994-unit actor margins with bounds derived from the loaded
+map: a walled rectangle of up to 2,048 units whose one-sided axis walls keep every
+mover inside, exactly as the original's `P_TryMove` does. Both M3h2 stalls (a hit
+near a wall, and a fireball past 994, which was confirmed rather than refuted) are
+reproduced on the historical policies and progress on the new one. Slot and
+fireball budgets (256 and 192) are derived from flight time and attack cadence, so
+ordinary play cannot reach a cap, and immutable definitions are validated once
+instead of every tic. DSIM30 adds no persistent field. This branch stops at owner
+review; exact commits and CI belong to GitHub. See
+[source investigation](M3H3_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-monsters-at-real-map-scale) and
+[observations](validation/M3H3.md).
+
+### Previous gameplay foundation — M3h2: Original Imp, fireballs and roster maintenance
 
 The separately selected PlayerMonstersImpV1 brings projectiles into the canonical
 player world: the original MT_TROOP chooses melee or missile, and MT_TROOPSHOT flies,
@@ -165,12 +181,11 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Replace the conservative `160M/3` travel envelope with a proof from the actual walls.
-A monster or player hit near a wall can currently reject every later tic, which
-fireballs make easy to reach. Then prioritize non-flat geometry: two-sided lines and
-height changes, so a fireball's vertical momentum, floor and ceiling contact and line
-openings gain observations. Require source-first evidence and unchanged earlier
-contracts. This is future work, not admission in M3h2.
+Prioritize non-flat geometry: two-sided lines and height changes, so a fireball's
+vertical momentum, floor and ceiling contact and line openings gain observations, with
+the wall invariant extended to openings. Non-axis walls need their own slide proof
+(the projected axis-slide move can exceed a player's box). Require source-first
+evidence and unchanged earlier contracts. This is future work, not admission in M3h3.
 
 ### Focused maintenance acceptance criteria
 

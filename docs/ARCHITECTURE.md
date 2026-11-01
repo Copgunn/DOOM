@@ -659,3 +659,38 @@ Admission keeps its explicit per-profile tables: a typed identity grants nothing
 [support](COMPATIBILITY.md#original-imps-and-fireballs),
 [source matrix](M3H2_REFERENCE_INVESTIGATION.md) and
 [DSIM29](STATE_FORMAT.md#dsim-v29-original-imps-and-fireballs).
+
+## Wall-derived travel bounds and real-map scale
+
+`player_map_scale.rs` owns the map-scale policy's admission and bounds without a second
+movement, collision or scheduler path. `RoomBounds::derive` runs once in
+`with_original_registry`: it computes the vertex rectangle, checks that its four sides are
+covered by one-sided walls, that the BLOCKMAP covers the rectangle and lists every wall in
+every cell its bbox touches, and that the line count leaves room for the linked things
+under `MAXINTERCEPTS`. The result is stored once in `PlayerRuntime`, beside the policy,
+and is not canonical state.
+
+Every coordinate check of the checked player world now goes through one policy-aware
+helper: `position_admitted`, `spawn_admitted` and `travel_admitted` return the historical
+constant margins and the `160M/3` envelope for every older policy, byte for byte, and the
+derived rectangle plus the 4,096-unit momentum bound for the map-scale policy. The
+callers are the same preflights as before (`monster_actor`, the map-Demon and
+world-pickup preflights, the player body and command stage, every damage plan's impulse
+proof and the post-tic monster check), so no check was removed, only its bound changed
+for one policy. The sight domain, momentum domain and live-fireball bound are selected
+the same way.
+
+The slot budget is derived rather than measured: `MAP_SCALE_ACTOR_SLOTS` (256) exceeds
+the worst-case live actors of any admitted roster plus the spawns of one pass, so the
+store never fills and the thinker visit budget is never reached; the recoverable-refill
+latch stays as defense. `MAP_SCALE_MAX_LIVE_PROJECTILES` (192) follows from the Imp's
+25-tic minimum launch interval and the longest flight in the largest room.
+
+Immutable definitions are validated once per registry: `validate_demon_lifecycle_type`
+remembers each admitted type ordinal in a per-simulation bitmask (the registry, static
+sectors and policy never change after construction), and `world_pickups::validate_definition`,
+a pure function of the compile-time identity tables, is memoized per process. The checks
+themselves are unchanged; they simply stop repeating for every actor every tic. See
+[support](COMPATIBILITY.md#original-monsters-at-real-map-scale),
+[source matrix](M3H3_REFERENCE_INVESTIGATION.md) and
+[DSIM30](STATE_FORMAT.md#dsim-v30-original-monsters-at-real-map-scale).

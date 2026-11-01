@@ -89,6 +89,13 @@ jobs:
           python3 tools/reference/m3h2_snapshot_goldens.py --check
       - name: Original Imp encounter debug/release comparison
         run: python3 tools/reference/check_player_imps.py
+      - name: Independent original real-map-scale evidence
+        if: runner.os == 'Linux'
+        run: |
+          ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h3_reference.py --check --overflow-check --address-check
+          python3 tools/reference/m3h3_snapshot_goldens.py --check
+      - name: Original real-map-scale debug/release comparison
+        run: python3 tools/reference/check_player_map_scale.py
       - name: Original bonus sustained combat debug/release comparison
         run: python3 tools/reference/check_player_bonuses.py
       - name: Original armor sustained combat debug/release comparison
