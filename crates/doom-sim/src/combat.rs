@@ -942,11 +942,16 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             life.tics = (life.tics - i32::from(random & 3)).max(1);
             let tics = life.tics;
             self.combat_event(CombatEvent::DeathTimer { target: id, tics });
-            if self.player.as_ref().is_some_and(|p| p.policy.has_monsters()) {
+            if self
+                .player
+                .as_ref()
+                .is_some_and(|p| p.policy.has_monsters())
+            {
                 if let Some(item) = source_drop(old.life.unwrap().actor_type) {
                     // p_inter.c P_KillMobj: P_SpawnMobj(x, y, ONFLOORZ), then MF_DROPPED.
                     let position = self.access.get(id).unwrap().position();
-                    let drop = self.spawn(ActorTypeId(item.ordinal()), position, SpawnHeight::Floor);
+                    let drop =
+                        self.spawn(ActorTypeId(item.ordinal()), position, SpawnHeight::Floor);
                     self.access
                         .get_mut(drop)
                         .unwrap()

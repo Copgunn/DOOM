@@ -810,10 +810,7 @@ pub(crate) const COUNTED_KILL_DOOMED: [i16; 4] = [3002, 3004, 9, 65];
 /// requires the Medium skill bit `options & 2`. Every caller (runtime
 /// preflight and DSIM readers) counts through this one definition. Actor
 /// admission itself stays in the existing batch validator.
-pub(crate) fn counted_things(
-    things: impl IntoIterator<Item = (i16, u16)>,
-    kinds: &[i16],
-) -> usize {
+pub(crate) fn counted_things(things: impl IntoIterator<Item = (i16, u16)>, kinds: &[i16]) -> usize {
     things
         .into_iter()
         .filter(|(kind, options)| kinds.contains(kind) && options & 16 == 0 && options & 2 != 0)

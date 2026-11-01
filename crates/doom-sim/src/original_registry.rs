@@ -316,7 +316,9 @@ fn former_human_attacks(ty: OriginalActorType) -> &'static [&'static str] {
     }
 }
 /// Normal spawn/see/pain/missile/death/xdeath closure; raise metadata stays inert.
-fn former_human_policy(ty: OriginalActorType) -> Result<&'static ActorPolicy, OriginalRegistryError> {
+fn former_human_policy(
+    ty: OriginalActorType,
+) -> Result<&'static ActorPolicy, OriginalRegistryError> {
     static POLICIES: [OnceLock<Result<ActorPolicy, OriginalRegistryError>>; 3] =
         [OnceLock::new(), OnceLock::new(), OnceLock::new()];
     let index = FORMER_HUMANS
@@ -331,8 +333,13 @@ fn former_human_policy(ty: OriginalActorType) -> Result<&'static ActorPolicy, Or
                 if !(matches!(
                     action,
                     None | Some(
-                        "A_Look" | "A_Chase" | "A_FaceTarget" | "A_Pain" | "A_Scream"
-                            | "A_XScream" | "A_Fall"
+                        "A_Look"
+                            | "A_Chase"
+                            | "A_FaceTarget"
+                            | "A_Pain"
+                            | "A_Scream"
+                            | "A_XScream"
+                            | "A_Fall"
                     )
                 ) || action.is_some_and(|a| former_human_attacks(ty).contains(&a)))
                 {
@@ -526,7 +533,9 @@ pub(crate) fn require_role_for(
                 | OriginalActorType::MT_PUFF
                 | OriginalActorType::MT_BLOOD,
             ) => Ok(()),
-            DefinitionIdentity::Original(ty) if profile.has_monsters() && FORMER_HUMANS.contains(&ty) => {
+            DefinitionIdentity::Original(ty)
+                if profile.has_monsters() && FORMER_HUMANS.contains(&ty) =>
+            {
                 Ok(())
             }
             other => Err(OriginalRegistryError::Unsupported(other)),
@@ -556,9 +565,11 @@ pub(crate) fn state_role_for(
             || (profile.has_player_weapons()
                 && matches!(s, OriginalState::S_PLAY_ATK1 | OriginalState::S_PLAY_ATK2))
     } else if is_former_human(ty) {
-        former_human_policy(OriginalActorType::try_from(ty.0).map_err(|_| OriginalRegistryError::Graph)?)?
-            .normal
-            .contains(s)
+        former_human_policy(
+            OriginalActorType::try_from(ty.0).map_err(|_| OriginalRegistryError::Graph)?,
+        )?
+        .normal
+        .contains(s)
     } else if ty == owner_slot() {
         demon_policy()?.normal.contains(s)
             && !(profile == OriginalExecutionProfile::PlayerDemonAcquisitionV1
@@ -616,7 +627,9 @@ pub(crate) fn death_phase(
 ) -> Result<(bool, bool), OriginalRegistryError> {
     let s = OriginalState::try_from(state.0).map_err(|_| OriginalRegistryError::State(state.0))?;
     let p = if is_former_human(ty) {
-        former_human_policy(OriginalActorType::try_from(ty.0).map_err(|_| OriginalRegistryError::Graph)?)?
+        former_human_policy(
+            OriginalActorType::try_from(ty.0).map_err(|_| OriginalRegistryError::Graph)?,
+        )?
     } else {
         demon_policy()?
     };

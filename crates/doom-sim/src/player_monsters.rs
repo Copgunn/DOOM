@@ -119,11 +119,12 @@ fn attack_checked<A: ActorAccess>(
     };
     for index in 1..=pellets {
         if kind == Hitscan::Shotgun {
-            h.events
-                .push(Event::Shotgun(ShotgunEvent::PelletStart { actor: id, index }));
+            h.events.push(Event::Shotgun(ShotgunEvent::PelletStart {
+                actor: id,
+                index,
+            }));
         }
-        let (shot, damage) =
-            weapons::monster_shot(angle, &mut |k| crate::monsters::draw(h, id, k));
+        let (shot, damage) = weapons::monster_shot(angle, &mut |k| crate::monsters::draw(h, id, k));
         if kind == Hitscan::Shotgun {
             h.events.push(Event::Shotgun(ShotgunEvent::Pellet {
                 actor: id,
@@ -169,15 +170,14 @@ fn bullet<A: ActorAccess>(
     };
     let (trace, (hit, position, traversed)) = {
         let lookup = |i| h.access.get(i).copied();
-        let trace =
-            combat_trace::collect_in(h.world, h.spatial, &lookup, id, angle, attack.range)?;
+        let trace = combat_trace::collect_in(h.world, h.spatial, &lookup, id, angle, attack.range)?;
         let hit =
             combat_trace::hit_trace(h.world, h.sectors, id, &trace, attack.range, slope, &lookup)?;
         (trace, hit)
     };
     let plan = match hit {
-        Some(TraceObject::Actor(target)) if damage != 0 => Some(
-            combat::DamagePlan::current_original(
+        Some(TraceObject::Actor(target)) if damage != 0 => {
+            Some(combat::DamagePlan::current_original(
                 h,
                 DamageRequest {
                     target,
@@ -185,8 +185,8 @@ fn bullet<A: ActorAccess>(
                     source: Some(id),
                     amount: damage,
                 },
-            )?,
-        ),
+            )?)
+        }
         _ => None,
     };
     let prepared = combat::PreparedAttack::current(
@@ -232,7 +232,10 @@ fn refire_checked<A: ActorAccess>(
         roll,
         || target.and_then(|t| h.access.get(t).and_then(Actor::life).map(|l| l.health)),
         || {
-            let t = *h.access.get(target.expect("health branch proved target")).unwrap();
+            let t = *h
+                .access
+                .get(target.expect("health branch proved target"))
+                .unwrap();
             crate::demon_expanded_map::action_sight(checked, h.world, h.sectors, a, t)
                 .unwrap_or_else(|error| {
                     failure = Some(error);

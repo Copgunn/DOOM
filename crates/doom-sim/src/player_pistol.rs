@@ -485,19 +485,20 @@ fn line_current(
         slope,
         &lookup,
     )?;
-    let monsters = host.player.as_ref().is_some_and(|p| p.policy.has_monsters());
+    let monsters = host
+        .player
+        .as_ref()
+        .is_some_and(|p| p.policy.has_monsters());
     let plan = match hit {
-        Some(TraceObject::Actor(target)) if monsters => {
-            Some(combat::DamagePlan::current_original(
-                host,
-                DamageRequest {
-                    target,
-                    inflictor: Some(id),
-                    source: Some(id),
-                    amount: damage,
-                },
-            )?)
-        }
+        Some(TraceObject::Actor(target)) if monsters => Some(combat::DamagePlan::current_original(
+            host,
+            DamageRequest {
+                target,
+                inflictor: Some(id),
+                source: Some(id),
+                amount: damage,
+            },
+        )?),
         Some(TraceObject::Actor(target)) => {
             let victim = *host.access.get(target).ok_or(CombatError::Reference)?;
             original_player::preflight_grounded_impulse(

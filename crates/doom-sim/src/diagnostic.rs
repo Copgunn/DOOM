@@ -665,20 +665,21 @@ impl<'a> Diagnostic<'a> {
             return Err(DiagnosticError::Limit);
         }
         let raw = || {
-            things
-                .chunks_exact(10)
-                .map(|t| (i16::from_le_bytes([t[6], t[7]]), u16::from_le_bytes([t[8], t[9]])))
+            things.chunks_exact(10).map(|t| {
+                (
+                    i16::from_le_bytes([t[6], t[7]]),
+                    u16::from_le_bytes([t[8], t[9]]),
+                )
+            })
         };
         let expected = world_pickups::counted_things(raw(), &world_pickups::COUNTED_ITEM_DOOMED);
         if self.version == 28 {
             // Every admitted COUNTKILL monster is a placed THING; credits never
             // exceed the map total. Zero again describes a pre-batch world.
             let kills = i32::from_le_bytes(number(self.required("level.total_kills")?)?);
-            let credited = i32::from_le_bytes(number(
-                self.required("level.single_player_kill_count")?,
-            )?);
-            let placed =
-                world_pickups::counted_things(raw(), &world_pickups::COUNTED_KILL_DOOMED);
+            let credited =
+                i32::from_le_bytes(number(self.required("level.single_player_kill_count")?)?);
+            let placed = world_pickups::counted_things(raw(), &world_pickups::COUNTED_KILL_DOOMED);
             if !(0..=MAX_PLAYER_MONSTERS as i32).contains(&kills)
                 || (kills > 0 && kills as usize != placed)
                 || !(0..=kills).contains(&credited)
@@ -948,7 +949,12 @@ impl<'a> Diagnostic<'a> {
         let damage = i32::from_le_bytes(number(self.required("original_player.0.damage_count")?)?);
         let frags = i32::from_le_bytes(number(self.required("original_player.0.frags")?)?);
         let state = self.required("original_player.0.state")?;
-        if !(0..=if matches!(self.version, 27 | 28) { 200 } else { 100 }).contains(&hp)
+        if !(0..=if matches!(self.version, 27 | 28) {
+            200
+        } else {
+            100
+        })
+            .contains(&hp)
             || !(0..=100).contains(&damage)
             || frags < 0
             || !matches!(state, [0] | [1])

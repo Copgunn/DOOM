@@ -180,7 +180,8 @@ impl Simulation {
         let l = a.life.unwrap();
         let state = l.state.ok_or(MonsterError::Definition)?;
         let (death_state, before_fall) = if self.profile == Profile::OriginalDemon {
-            original_registry::death_phase(l.actor_type, state).map_err(|_| MonsterError::Definition)?
+            original_registry::death_phase(l.actor_type, state)
+                .map_err(|_| MonsterError::Definition)?
         } else if self.profile == Profile::DemonExpandedMap {
             let native = NativeDemonState::checked(state).ok_or(MonsterError::Definition)?;
             (native.is_death(), native.before_fall())
