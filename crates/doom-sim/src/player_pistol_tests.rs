@@ -142,7 +142,13 @@ fn late_failure_after_an_actual_shot_discards_ammo_rng_effects_and_damage() {
     let pistol = sim.original_player_pistol(PlayerSlot::One).unwrap();
     let result = sim.checked_demon_operation(|host| {
         let mut sound = Some(a.body);
-        stage(host, source::commands(c, 19)[0], 18, &mut sound).unwrap();
+        stage(
+            host,
+            source::commands(c, 19)[0],
+            18,
+            std::slice::from_mut(&mut sound),
+        )
+        .unwrap();
         assert!(
             host.access
                 .get(a.origin.unwrap())

@@ -128,6 +128,7 @@ pub use map_scale::{
 };
 mod movement;
 mod multisector;
+mod noise;
 pub use movement::{ActorMoveAttempt, Solidity};
 pub use multisector::{
     Gravity, Location, MoveFailure, Opening, OpeningVisit, SectorMoveAttempt, SectorState,

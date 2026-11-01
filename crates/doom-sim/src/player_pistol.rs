@@ -206,7 +206,9 @@ struct Host<'a, 'b, A> {
     life: &'a mut LifeHost<'b, A>,
     id: ActorId,
     fire: Option<Fire<A>>,
-    sound: Option<&'a mut Option<ActorId>>,
+    /// Staged per-sector sound targets: one sector in the flat world, every
+    /// static sector under the heights policy.
+    sound: Option<&'a mut [Option<ActorId>]>,
 }
 impl<A: ActorAccess> weapons::Host for Host<'_, '_, A> {
     fn actor(&self) -> Result<Actor, SimError> {
@@ -284,12 +286,42 @@ impl<A: ActorAccess> weapons::Host for Host<'_, '_, A> {
     }
     fn noise(&mut self) -> Result<(), SimError> {
         let sector = self.actor()?.location.ok_or(WeaponError::Reference)?.sector;
+        let heights = self
+            .life
+            .player
+            .as_deref()
+            .is_some_and(|p| p.policy.has_heights());
+        if heights {
+            // p_enemy.c P_NoiseAlert: the flood from the emitter's sector.
+            let visits = noise::flood(self.life.world, self.life.sectors, sector);
+            {
+                let targets = self
+                    .sound
+                    .as_deref_mut()
+                    .ok_or(PlayerBodyError::Unsupported)?;
+                if targets.len() != self.life.sectors.len() {
+                    return Err(PlayerBodyError::Unsupported.into());
+                }
+                for (sector, _) in &visits {
+                    targets[usize::from(*sector)] = Some(self.id);
+                }
+            }
+            for (sector, blocks) in visits {
+                self.event(WeaponEvent::Noise {
+                    sector,
+                    blocks,
+                    target: self.id,
+                });
+            }
+            return Ok(());
+        }
         if sector != 0 || self.life.sectors.len() != 1 {
             return Err(PlayerBodyError::Unsupported.into());
         }
         *self
             .sound
             .as_deref_mut()
+            .and_then(|targets| targets.first_mut())
             .ok_or(PlayerBodyError::Unsupported)? = Some(self.id);
         self.event(WeaponEvent::Noise {
             sector,
@@ -306,7 +338,7 @@ pub(crate) fn run<A: ActorAccess>(
     command: TicCommand,
     leveltime: u64,
     fire: Option<Fire<A>>,
-    sound: Option<&mut Option<ActorId>>,
+    sound: Option<&mut [Option<ActorId>]>,
     setup: Option<player_weapons::PlayerWeaponRuntime>,
 ) -> Result<(), SimError> {
     let player = host.player.as_deref().ok_or(PlayerBodyError::Profile)?;
@@ -381,7 +413,7 @@ pub(crate) fn stage(
     host: &mut LifeHost<'_, &mut ThinkerStore<Actor>>,
     command: TicCommand,
     leveltime: u64,
-    sound: &mut Option<ActorId>,
+    sound: &mut [Option<ActorId>],
 ) -> Result<(), SimError> {
     let dead = host
         .player

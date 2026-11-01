@@ -40,6 +40,11 @@ pub const HEIGHTS_Z_UNITS: u32 = MAP_SCALE_EXTENT_UNITS;
 /// automap data with no reader in this project (doomdata.h).
 pub const HEIGHTS_LINE_FLAGS: u16 = 1 | 2 | 8 | 16 | 32 | 64 | 128 | 256;
 const ML_TWOSIDED: u16 = 4;
+/// sounds.h `sfx_oof`: the landing sound `P_ZMovement` requests for a player whose
+/// `momz` is below `-GRAVITY*8` on floor contact. A sound request only.
+pub(crate) const SFX_OOF: u16 = 34;
+/// p_mobj.c P_ZMovement: `if (mo->player && mo->momz < -GRAVITY*8)`.
+pub(crate) const LANDING_SOUND_MOMZ: i16 = -8;
 const MAX_LINKED_THINGS: usize = 1 + MAX_PLAYER_MONSTERS + MAX_WORLD_PICKUPS + MAX_PLAYER_MONSTERS;
 
 /// Map geometry or actor state outside the proven real-map-scale domain.

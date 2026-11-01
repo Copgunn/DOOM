@@ -201,6 +201,21 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                     }
                     if profile.uses_sectors() {
                         if let Some(update) = multisector::move_z(&mut actor) {
+                            // p_mobj.c P_ZMovement: on floor contact a player whose
+                            // momz was below -GRAVITY*8 requests sfx_oof before momz is
+                            // zeroed. Reachable only off the flat floor (heights policy).
+                            if update.floor_contact
+                                && update.before[1]
+                                    < Fixed::from_map_units(player_map_scale::LANDING_SOUND_MOMZ)
+                                && player
+                                    .as_ref()
+                                    .is_some_and(|p| p.policy.has_heights() && p.mo == Some(id))
+                            {
+                                events.push(Event::ActorState(lifecycle::ActorStateEvent::Sound {
+                                    actor: Some(id),
+                                    sound: player_map_scale::SFX_OOF,
+                                }));
+                            }
                             events.push(Event::Vertical { actor: id, update });
                         }
                     }

@@ -168,7 +168,9 @@ struct DemonPlan {
     statistics: Option<LevelStatistics>,
     player: Option<original_player::PlayerRuntime>,
     bindings: [Option<ActorId>; 4],
-    sound_target: Option<ActorId>,
+    /// Per-sector sound targets staged by the weapon noise (one sector in the
+    /// flat world, every sector under heights).
+    sound_targets: Vec<Option<ActorId>>,
     events: Vec<Event>,
 }
 impl Simulation {
@@ -177,6 +179,8 @@ impl Simulation {
         slots.extend_from_slice(&self.actors.slots);
         let mut order = line_work::reserved(self.actors.max_slots as usize)?;
         order.extend_from_slice(&self.spatial.order);
+        let mut sound_targets = line_work::reserved(self.sound_targets.len())?;
+        sound_targets.extend_from_slice(&self.sound_targets);
         Ok(DemonPlan {
             actors: ThinkerStore {
                 slots,
@@ -189,7 +193,7 @@ impl Simulation {
             statistics: self.statistics,
             player: self.original_player,
             bindings: self.bindings,
-            sound_target: self.sound_targets.first().copied().flatten(),
+            sound_targets,
             events: Vec::new(),
         })
     }
@@ -277,9 +281,7 @@ impl Simulation {
         self.statistics = plan.statistics;
         self.original_player = plan.player;
         if self.player_policy().has_player_weapons() {
-            if let Some(target) = self.sound_targets.first_mut() {
-                *target = plan.sound_target;
-            }
+            self.sound_targets = plan.sound_targets;
         }
         self.bindings = plan.bindings;
         plan.events
@@ -401,7 +403,7 @@ impl Simulation {
                         &mut host,
                         commands[usize::from(PlayerSlot::One.ordinal())],
                         self.tic,
-                        &mut plan.sound_target,
+                        &mut plan.sound_targets,
                     )?;
                 }
             }
@@ -411,10 +413,9 @@ impl Simulation {
             plan.events
                 .extend([Event::Phase(Phase::Players), Event::Phase(Phase::Thinkers)]);
         }
-        let sound_targets = [plan.sound_target];
         let mut perception_inputs = self.checked_demon_inputs(&control);
         if weapon_policy {
-            perception_inputs.sound_targets = &sound_targets;
+            perception_inputs.sound_targets = &plan.sound_targets;
         }
         thinkers::run(
             &mut plan.actors,
