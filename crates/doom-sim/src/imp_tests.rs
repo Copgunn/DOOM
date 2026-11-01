@@ -673,6 +673,51 @@ fn dsim29_reader_enforces_the_live_projectile_bound() {
 }
 
 #[test]
+fn dsim29_live_bound_does_not_depend_on_field_order() {
+    // Review regression: duplicate-free frames may list fields in any order.
+    let c = &cases()[19];
+    let (mut s, a, things) = setup(c);
+    for _ in 0..MAX_LIVE_PROJECTILES {
+        s.checked_demon_operation(|h| crate::projectiles::launch_fireball(h, things[0], a.body))
+            .unwrap()
+            .unwrap();
+    }
+    let limits = DiagnosticLimits::default();
+    let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
+    // Reverse the whole field list: the count must not change.
+    let snapshot = s.snapshot();
+    let mut reversed = bytes[..16].to_vec();
+    for f in snapshot.fields().collect::<Vec<_>>().into_iter().rev() {
+        reversed.extend((f.path().len() as u32).to_le_bytes());
+        reversed.extend(f.path().as_bytes());
+        reversed.extend((f.value().len() as u64).to_le_bytes());
+        reversed.extend(f.value());
+    }
+    for frame in [&bytes, &reversed] {
+        let view = Diagnostic::decode_imps(frame, limits).unwrap();
+        assert!(view.validate_live_projectiles_at(16).is_ok());
+        assert!(view.validate_live_projectiles_at(15).is_err());
+    }
+}
+
+#[test]
+fn fireball_position_query_uses_the_missile_contact_rule() {
+    // Review regression: a fresh fireball overlaps its owner, which never blocks it.
+    let c = &cases()[3];
+    let (mut s, a, things) = setup(c);
+    s.checked_demon_operation(|h| crate::projectiles::launch_fireball(h, things[0], a.body))
+        .unwrap()
+        .unwrap();
+    let fireball = s.actors.order().last().unwrap();
+    let position = s.actor(fireball).unwrap().position();
+    assert!(
+        s.check_multisector_position(fireball, position)
+            .unwrap()
+            .allowed()
+    );
+}
+
+#[test]
 fn imp_replay_digest_is_stable_across_runs() {
     let run = || {
         cases().iter().enumerate().fold(0, |acc, (which, c)| {

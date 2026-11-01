@@ -160,24 +160,25 @@ impl<'a> Diagnostic<'a> {
     ) -> Result<Self, DiagnosticError> {
         Self::decode_selected(bytes, limits, Some(26))
     }
-    /// Nonpending fireball bound of `PlayerMonstersImpV1`. Each actor record
-    /// lists `pending_removal` before `type`, so one ordered pass suffices.
+    /// Nonpending fireball bound of `PlayerMonstersImpV1`, looked up per slot
+    /// because frames need not list fields in canonical order.
     fn validate_live_projectiles(&self) -> Result<(), DiagnosticError> {
-        let (mut live, mut pending) = (0, false);
-        for f in &self.fields {
-            if !f.path.starts_with("actor.") {
+        self.validate_live_projectiles_at(crate::MAX_LIVE_PROJECTILES)
+    }
+    pub(crate) fn validate_live_projectiles_at(&self, bound: usize) -> Result<(), DiagnosticError> {
+        let fireball = OriginalActorType::MT_TROOPSHOT.ordinal().to_le_bytes();
+        let mut live = 0;
+        for slot in 0..self.slots()? {
+            if self.required(&format!("actor.{slot}.occupied"))? != [1] {
                 continue;
             }
-            if f.path.ends_with(".pending_removal") {
-                pending = f.value != [0];
-            } else if f.path.ends_with(".type")
-                && !pending
-                && f.value == OriginalActorType::MT_TROOPSHOT.ordinal().to_le_bytes()
+            if self.required(&format!("actor.{slot}.type"))? == fireball
+                && self.required(&format!("actor.{slot}.pending_removal"))? == [0]
             {
                 live += 1;
             }
         }
-        if live > crate::MAX_LIVE_PROJECTILES {
+        if live > bound {
             return Err(DiagnosticError::Limit);
         }
         Ok(())

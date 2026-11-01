@@ -24,8 +24,9 @@ const DRAW_CONTACT: u8 = 3;
 const DRAW_EXPLODE: u8 = 4;
 /// Live fireball bound for `PlayerMonstersImpV1`. Flying and exploding fireballs
 /// both hold a thinker slot. One player, eight monsters, 16 items and eight drops
-/// use 33 of the 64 slots; these 16 leave 15 for bullet impacts. Eight Imps fire at
-/// most once per 22-tic attack cycle and an explosion lasts at most 18 tics.
+/// use 33 of the 64 slots; these 16 leave 15 for bullet impacts. This is a chosen
+/// slot budget, not a proof about play: flight time grows with room size, so a large
+/// room can reach it, and the launch then rejects its whole tic.
 pub const MAX_LIVE_PROJECTILES: usize = 16;
 /// Source missile services shared by the frozen plasma profile and the checked
 /// player world. Each host owns its RNG stream, event queue and damage path; the
@@ -424,7 +425,8 @@ impl<A: lifecycle::ActorAccess> MissileWorld for LifeHost<'_, A> {
     }
 }
 /// A_TroopAttack's P_SpawnMissile inside the checked transaction. The live cap
-/// and slot reservation reject before any RNG, event or actor change.
+/// and slot reservation reject before this launch changes anything; the caller
+/// latches the error, which discards the tic's earlier staged effects.
 pub(crate) fn launch_fireball<A: lifecycle::ActorAccess>(
     h: &mut LifeHost<'_, A>,
     source: ActorId,

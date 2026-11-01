@@ -613,8 +613,8 @@ See [support](COMPATIBILITY.md#original-health-and-armor-bonuses),
 
 PlayerMonstersV1 extends the bonus capability; no new owner, store or scheduler
 is added. Former-human identities are ordinary original-ID registry roles whose
-closures are derived from source roots. The single `LifeHost::action` table,
-keyed by original action name, routes A_PosAttack, A_SPosAttack, A_CPosAttack and
+closures are derived from source roots. The single `LifeHost::action` table
+routes A_PosAttack, A_SPosAttack, A_CPosAttack and
 A_CPosRefire to one current-state implementation under this policy. Historical
 fixture profiles keep their preflighted single-owner plans in the same table.
 
@@ -635,3 +635,27 @@ validated as monster actors. See
 [support](COMPATIBILITY.md#original-former-humans-and-multi-monster-encounters),
 [source matrix](M3H1_REFERENCE_INVESTIGATION.md) and
 [DSIM28](STATE_FORMAT.md#dsim-v28-original-former-humans-and-mixed-rosters).
+
+## Original missiles and typed action dispatch
+
+`projectiles.rs` holds one source missile algorithm: launch tail, spawn check,
+explosion, contact query, XY and Z movement. It runs over the small `MissileWorld`
+trait, which supplies actor access, RNG, events, damage and relinking. `Simulation`
+implements it for the frozen plasma profile; `LifeHost` implements it for the checked
+player world, so no missile code is duplicated and no second scheduler exists.
+Historical request validation and the profile7 thinker loop stay plasma-only.
+
+`thinkers::run` gives a fireball its own branch inside the shared pass: movement,
+which owns contact and explosion, then the ordinary state countdown. Contact damage
+uses `DamagePlan::current_original` from the staged transaction, with an impulse proof
+that accepts an airborne inflictor. A failure is latched and discards the staged tic.
+A blocked spawn keeps the half-stepped position without relinking, as the source does,
+so preflight accepts that one location mismatch for an exploding fireball.
+
+Canonical dispatch is typed. `actions::OriginalAction` is resolved at compile time from
+the original action table, and `LifeHost::action` and the weapon `act` table match it
+instead of comparing names, for the Demon, former-human, Imp and player-weapon family.
+Admission keeps its explicit per-profile tables: a typed identity grants nothing. See
+[support](COMPATIBILITY.md#original-imps-and-fireballs),
+[source matrix](M3H2_REFERENCE_INVESTIGATION.md) and
+[DSIM29](STATE_FORMAT.md#dsim-v29-original-imps-and-fireballs).

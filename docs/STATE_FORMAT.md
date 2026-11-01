@@ -1425,3 +1425,38 @@ Independent C rows feed the Python
 [former-human projection](../tools/reference/monsters_snapshot.py); its full bytes
 and PBE1 ordered events preceded the matching Rust changes. Decoding remains
 observation, not executable world restoration.
+
+## DSIM-v29 original Imps and fireballs
+
+Version29 selects policy13 (`PlayerMonstersImpV1`), the unchanged original registry
+schema and context `PLAYER-MONSTERS-IMPS-1-MEDIUM-GROUNDED-v1`.
+`Diagnostic::decode_imps` explicitly reads29; every earlier version-specific reader
+keeps its historical contract and rejects29, and the v29 reader rejects every earlier
+version. V20–28 bytes, encoders, fixtures and policy/context meanings are unchanged.
+
+V29 uses the DSIM28 field layout and adds no persistent field or event tag. A
+fireball is an ordinary actor record. It widens meanings only under29:
+
+- Actor `type`/`state` and state-bearing event payloads may name MT_TROOP=11 and
+  MT_TROOPSHOT=31 within their admitted normal closures.
+- `original_player.0.attacker` may name an Imp.
+- At most 16 nonpending actors may have type 31.
+- A nonzero `level.total_kills` must equal the placed DoomEd
+  3001/3002/3004/9/65 THINGs that pass the Medium single-player filter. The v28 set
+  stays without 3001.
+
+Tag15 projectile events, which earlier original-ID versions never carried, are
+validated under29:
+
+| Sub-tag | Meaning | Payload after tag and sub-tag |
+| --- | --- | --- |
+| 0 | Explosion, before momentum clears | fireball handle |
+| 1 | Launch velocity | fireball handle, u32 angle, three i32 momentum |
+| 2 | Draw | u8 kind (0 spawn, 1/2 shadow, 3 contact, 4 explosion), u8 value |
+| 4 | Half-step, before the spawn move | fireball handle, three i32 position, i32 tics ≥1 |
+| 5 | Validated launch | Imp handle, u8 aim 0, target handle, u16 type 31 |
+
+Independent C rows feed the Python
+[Imp projection](../tools/reference/imps_snapshot.py); its full bytes and PBE1 ordered
+events preceded the matching Rust changes. Decoding remains observation, not
+executable world restoration.

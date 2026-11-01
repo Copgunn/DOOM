@@ -79,19 +79,27 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3h1: Original former humans and multi-monster encounters
+### M3h2: Original Imp, fireballs and roster maintenance
 
-The separately selected PlayerMonstersV1 moves from one player against at most
-one Demon toward real encounters: original MT_POSSESSED, MT_SHOTGUY and
-MT_CHAINGUY beside the Demon, up to eight monsters at once, source infighting and
-P_KillMobj item drops with kill credit. Everything runs through the existing
-registry, action table, thinker, sight, pursuit, attack, damage, pickup,
-statistics and transaction owners; former-human attacks share one current-state
-implementation. DSIM28 adds no persistent field, only widened identities and
-statistics. This branch stops at owner review; exact commits and CI belong to
-GitHub. See [source investigation](M3H1_REFERENCE_INVESTIGATION.md),
-[support](COMPATIBILITY.md#original-former-humans-and-multi-monster-encounters)
-and [observations](validation/M3H1.md).
+The separately selected PlayerMonstersImpV1 brings projectiles into the canonical
+player world: the original MT_TROOP chooses melee or missile, and MT_TROOPSHOT flies,
+collides and explodes through one shared missile service, so fights gain dodgeable
+shots and projectile infighting with the source same-species rule. Imps join the
+eight-monster roster, at most 16 fireballs are live, and exceeding a bound rolls back
+the whole tic. Canonical action dispatch is now typed. DSIM29 adds no persistent
+field. This branch stops at owner review; exact commits and CI belong to GitHub. See
+[source investigation](M3H2_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-imps-and-fireballs) and
+[observations](validation/M3H2.md).
+
+### Previous gameplay foundation — M3h1: Original former humans and multi-monster encounters
+
+PlayerMonstersV1 adds original MT_POSSESSED, MT_SHOTGUY and MT_CHAINGUY beside the
+Demon, up to eight monsters, source infighting and P_KillMobj drops with DSIM28.
+M3h1 is merged; exact review/CI state belongs to GitHub. See
+[source investigation](M3H1_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-former-humans-and-multi-monster-encounters) and
+[observations](validation/M3H1.md).
 
 ### Previous gameplay foundation — M3g11: Original health/armor bonuses and counted items
 
@@ -157,13 +165,12 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Prioritize the original Imp (MT_TROOP) and its first projectile: A_TroopAttack's
-melee/missile choice, MT_TROOPSHOT spawning, flight, collision and explosion
-through the existing projectile, damage, infighting and transaction owners, in the
-same mixed roster. Require source-first observations, unchanged former-human,
-Demon and bonus contracts, and measured sustained encounters. The soulsphere and
-MegaSphere remain a smaller alternative. This is future work, not admission in
-M3h1.
+Prioritize non-flat geometry in the checked player world: two-sided lines and
+height changes for the player, monsters and fireballs. Today every shootable actor
+stands at z 0, so a fireball's vertical momentum, floor and ceiling contact and line
+openings are shared code without an observation in this world. Require source-first
+observations and unchanged earlier contracts. This is future work, not admission in
+M3h2.
 
 ### Focused maintenance acceptance criteria
 

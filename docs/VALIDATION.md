@@ -207,3 +207,5 @@ See [source qualification](M3G9_REFERENCE_INVESTIGATION.md) and
 - [M3h1 former humans and mixed rosters](validation/M3H1.md): original attacks,
   infighting, drops and kill statistics, independent DSIM28, matched timings and
   bounded ASan fuzz campaigns.
+- [M3h2 Imps and fireballs](validation/M3H2.md): original melee/missile choice,
+  fireball flight and contact, same-species rule, DSIM29, dispatch and measurements.

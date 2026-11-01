@@ -727,6 +727,14 @@ impl Simulation {
             if self.profile.uses_checked_demons() {
                 self.perception_actor(id)?;
             }
+            if self.player_policy().has_imps()
+                && self
+                    .actor(id)
+                    .and_then(Actor::life)
+                    .is_some_and(|l| original_registry::is_fireball(l.actor_type))
+            {
+                return Ok(self.query_projectile_move(id, target).0);
+            }
         }
         if self.profile == Profile::MapExtent {
             map_extent::position(target, map_extent::QUERY_UNITS)?;
