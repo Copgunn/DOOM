@@ -526,12 +526,18 @@ pub struct Simulation {
     pub(crate) map_fields: Arc<Vec<StateField>>,
     /// Immutable definitions already validated against this registry and these
     /// static sectors, by type ordinal. A memo of a pure function, never state.
-    pub(crate) admitted_types: std::cell::Cell<[u64; 4]>,
+    pub(crate) admitted_types: demon_lifecycle::AdmittedTypes,
     /// Under the heights policy, the tallest static sector: type dimensions are
     /// admitted against it ("every type fits somewhere") and fitting is proved per
     /// spawn instead. Derived from the immutable map; never canonical state.
     pub(crate) type_envelope: Option<SectorState>,
 }
+/// A simulation moves between threads and is shared by reference across them; the
+/// validation memo is atomic so this holds at compile time.
+const _: () = {
+    const fn send_and_sync<T: Send + Sync>() {}
+    send_and_sync::<Simulation>();
+};
 impl Simulation {
     /// Creates a fresh supported world with capacity for 1024 logical actor slots.
     /// Map THINGS are retained as data; complete type-driven spawning is M3 work.
@@ -644,7 +650,7 @@ impl Simulation {
             events: Vec::new(),
             pending: Vec::new(),
             map_fields,
-            admitted_types: std::cell::Cell::new([0; 4]),
+            admitted_types: demon_lifecycle::AdmittedTypes::default(),
             type_envelope: None,
         })
     }

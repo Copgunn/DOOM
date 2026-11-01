@@ -1,5 +1,41 @@
 //! Explicit normal-timing Demon fixture definitions and bounded lifecycle admission.
 use crate::*;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+/// Memo of type ordinals already validated against the immutable registry, static
+/// sectors and policy: a pure function's cache, never canonical state. Atomics keep
+/// `Simulation: Sync`; relaxed ordering suffices because a stale read only repeats
+/// a validation whose result cannot change, and a clone starts from the same bits.
+#[derive(Default)]
+pub(crate) struct AdmittedTypes([AtomicU64; 4]);
+impl AdmittedTypes {
+    pub(crate) fn contains(&self, ty: ActorTypeId) -> bool {
+        let n = usize::from(ty.0);
+        self.0
+            .get(n / 64)
+            .is_some_and(|w| w.load(Ordering::Relaxed) & (1_u64 << (n % 64)) != 0)
+    }
+    pub(crate) fn insert(&self, ty: ActorTypeId) {
+        let n = usize::from(ty.0);
+        if let Some(w) = self.0.get(n / 64) {
+            w.fetch_or(1_u64 << (n % 64), Ordering::Relaxed);
+        }
+    }
+}
+impl Clone for AdmittedTypes {
+    fn clone(&self) -> Self {
+        Self(std::array::from_fn(|i| {
+            AtomicU64::new(self.0[i].load(Ordering::Relaxed))
+        }))
+    }
+}
+impl std::fmt::Debug for AdmittedTypes {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_list()
+            .entries(self.0.iter().map(|w| w.load(Ordering::Relaxed)))
+            .finish()
+    }
+}
 impl ActorRegistry {
     /// Labelled Demon lifecycle fixture, not full original Demon/Spectre admission.
     /// Source Demon fields are copied, excluding scoring and resurrection; the
@@ -118,18 +154,10 @@ impl Simulation {
         Ok(sim)
     }
     fn type_admitted(&self, ty: ActorTypeId) -> bool {
-        let bits = self.admitted_types.get();
-        let n = usize::from(ty.0);
-        bits.get(n / 64)
-            .is_some_and(|w| w & (1_u64 << (n % 64)) != 0)
+        self.admitted_types.contains(ty)
     }
     fn remember_admitted(&self, ty: ActorTypeId) {
-        let mut bits = self.admitted_types.get();
-        let n = usize::from(ty.0);
-        if let Some(w) = bits.get_mut(n / 64) {
-            *w |= 1_u64 << (n % 64);
-            self.admitted_types.set(bits);
-        }
+        self.admitted_types.insert(ty);
     }
     pub(crate) fn validate_demon_lifecycle_type(&self, ty: ActorTypeId) -> Result<(), SimError> {
         if self.profile == Profile::OriginalDemon {
