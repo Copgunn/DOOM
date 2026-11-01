@@ -15,10 +15,14 @@ seeds={'original_spawn':(root/'tests/reference/m3f7_state_0_0.bin').read_bytes()
        'imps_same_species':(root/'tests/reference/m3h2_state_10_480.bin').read_bytes(),
        'imps_roster':(root/'tests/reference/m3h2_state_19_480.bin').read_bytes(),
        'imps_version':b'DSIM'+(29).to_bytes(4,'little')+bytes(8),
+       'map_scale_spawn':(root/'tests/reference/m3h3_state_0_0.bin').read_bytes(),
+       'map_scale_far_imps':(root/'tests/reference/m3h3_state_10_960.bin').read_bytes(),
+       'map_scale_corner_fight':(root/'tests/reference/m3h3_state_11_720.bin').read_bytes(),
+       'map_scale_version':b'DSIM'+(30).to_bytes(4,'little')+bytes(8),
        'empty':b'', 'magic':b'DSIM', 'length':b'DSIM'+(21).to_bytes(4,'little')+b'\xff'*8,
        'version':b'DSIM'+(22).to_bytes(4,'little')+bytes(8),
        'mutation_count':b'\x08\0\xff', 'mutation_utf8':b'\x14\0\xff',
        'mutation_profile':b'\x50\0\x14', 'mutation_state':b'\x80\x01\xff',
        'truncated':b'DSIM'+(21).to_bytes(4,'little')}
 for name,data in seeds.items(): (destination/name).write_bytes(data)
-print(f'{len(seeds)} public diagnostic seeds; valid independent v20/v21/v28/v29 plus malformed framing')
+print(f'{len(seeds)} public diagnostic seeds; valid independent v20/v21/v28/v29/v30 plus malformed framing')

@@ -15,6 +15,10 @@ pub(crate) struct Room {
     pub things: Vec<[i16; 5]>,
     /// BLOCKMAP origin; the grid is sized to cover the vertex rectangle.
     pub origin: [i16; 2],
+    /// Leave this wall piece out entirely (a gap in the boundary).
+    pub omit: Option<usize>,
+    /// Keep this wall but list it in no BLOCKMAP cell (an incomplete BLOCKMAP).
+    pub unlisted: Option<usize>,
 }
 impl Room {
     pub fn rectangle(min: [i16; 2], max: [i16; 2]) -> Self {
@@ -24,7 +28,9 @@ impl Room {
             pillars: Vec::new(),
             segment: 1024,
             things: Vec::new(),
-            origin: [min[0] - 8, min[1] - 8],
+            origin: min,
+            omit: None,
+            unlisted: None,
         }
     }
     fn walls(&self) -> Vec<[i16; 4]> {
@@ -62,7 +68,10 @@ impl Room {
         out
     }
     pub fn wad(&self) -> Vec<u8> {
-        let walls = self.walls();
+        let mut walls = self.walls();
+        if let Some(i) = self.omit {
+            walls.remove(i);
+        }
         let mut vertices: Vec<[i16; 2]> = Vec::new();
         let mut vertex = |p: [i16; 2]| -> i16 {
             if let Some(i) = vertices.iter().position(|v| *v == p) {
@@ -112,7 +121,13 @@ impl Room {
             for (i, w) in walls.iter().enumerate() {
                 let (lx0, lx1) = (w[0].min(w[2]) as i32, w[0].max(w[2]) as i32);
                 let (ly0, ly1) = (w[1].min(w[3]) as i32, w[1].max(w[3]) as i32);
-                if lx1 >= cx && lx0 <= cx + 128 && ly1 >= cy && ly0 <= cy + 128 && i != 0 {
+                if lx1 >= cx
+                    && lx0 <= cx + 128
+                    && ly1 >= cy
+                    && ly0 <= cy + 128
+                    && i != 0
+                    && self.unlisted != Some(i)
+                {
                     lists.push(i as u16);
                 }
             }
@@ -334,4 +349,634 @@ fn stall_imp_policy_rejects_every_tic_once_a_fireball_passes_994() {
         fireball.position()[0].bits() / 65536
     );
     assert!(fireball.position()[0] < Fixed::from_map_units(1200));
+}
+
+// Source replay: every committed scenario against the compiled original rows,
+// the independent DSIM30 captures and ordered events; step equals advance.
+#[test]
+fn map_scale_source_case_00_stall_fireball_hit_near_wall() {
+    map_scale_evidence::verify_case(0);
+}
+#[test]
+fn map_scale_source_case_01_stall_hitscan_near_wall() {
+    map_scale_evidence::verify_case(1);
+}
+#[test]
+fn map_scale_source_case_02_stall_fireball_past_994() {
+    map_scale_evidence::verify_case(2);
+}
+#[test]
+fn map_scale_source_case_03_corner_fireball_pinch() {
+    map_scale_evidence::verify_case(3);
+}
+#[test]
+fn map_scale_source_case_04_demon_corner_bites() {
+    map_scale_evidence::verify_case(4);
+}
+#[test]
+fn map_scale_source_case_05_wall_slide_under_fire() {
+    map_scale_evidence::verify_case(5);
+}
+#[test]
+fn map_scale_source_case_06_monster_knockback_at_wall() {
+    map_scale_evidence::verify_case(6);
+}
+#[test]
+fn map_scale_source_case_07_pillar_pinch() {
+    map_scale_evidence::verify_case(7);
+}
+#[test]
+fn map_scale_source_case_08_long_fireball_flight() {
+    map_scale_evidence::verify_case(8);
+}
+#[test]
+fn map_scale_source_case_09_full_room_traversal() {
+    map_scale_evidence::verify_case(9);
+}
+#[test]
+fn map_scale_source_case_10_eight_imps_far_room() {
+    map_scale_evidence::verify_case(10);
+}
+#[test]
+fn map_scale_source_case_11_mixed_roster_corner_fight() {
+    map_scale_evidence::verify_case(11);
+}
+#[test]
+fn map_scale_source_case_12_drops_far_from_origin() {
+    map_scale_evidence::verify_case(12);
+}
+#[test]
+fn map_scale_source_case_13_hitscan_far_from_origin() {
+    map_scale_evidence::verify_case(13);
+}
+
+// Rust-only policy tests for PlayerMonstersMapScaleV1: the reproduced stalls
+// progressing, map admission, the new recoverable paths, caps and readers.
+
+fn map_scale(map: doom_map::Map) -> Simulation {
+    Simulation::original_player_map_scale_map(
+        map,
+        MapContextOptions {
+            initial_rng: DoomRng::from_indices(6, 0),
+            respawn_monsters: false,
+        },
+    )
+    .unwrap()
+}
+fn stall_room_scale(things: &[[i16; 5]]) -> Simulation {
+    map_scale(stall_room(things))
+}
+/// Every tic must succeed and advance the counter by exactly one.
+fn progresses(
+    s: &mut Simulation,
+    mut command: impl FnMut(&Simulation, usize) -> [TicCommand; 4],
+    tics: usize,
+) {
+    for op in 1..=tics {
+        let before = s.tic();
+        let commands = command(s, op);
+        s.advance(commands)
+            .unwrap_or_else(|e| panic!("tic {op} rejected under the map-scale policy: {e}"));
+        assert_eq!(s.tic(), before + 1);
+    }
+}
+fn fireball_count(s: &Simulation) -> usize {
+    s.actor_order()
+        .filter(|id| {
+            s.actor(*id)
+                .unwrap()
+                .life()
+                .is_some_and(|l| l.actor_type.0 == OriginalActorType::MT_TROOPSHOT.ordinal())
+        })
+        .count()
+}
+
+#[test]
+fn map_scale_fireball_hit_near_the_wall_progresses() {
+    // The M3h2 stall 3.1 under the new policy: the hit pushes the body into the
+    // wall and the world keeps running, as the source does.
+    let mut s = stall_room_scale(&[[800, 0, 0, IMP, 7]]);
+    let imp = s.spawn_map_things().unwrap().spawned[0];
+    let body = arm(&mut s, [984, 0]);
+    s.set_actor_target(imp, Some(body)).unwrap();
+    s.enter_original_state(imp, OriginalState::S_TROO_ATK1)
+        .unwrap();
+    progresses(&mut s, |_, _| [TicCommand::default(); 4], 400);
+    let p = s.original_player(PlayerSlot::One).unwrap();
+    assert!(p.health < 100, "the fireball hit landed");
+    // Pushed east by the hits, at most to the wall at 1,200 (center 1,184).
+    let a = s.actor(body).unwrap();
+    assert!(a.position()[0] <= Fixed::from_map_units(1184));
+    assert!(a.position()[0] > Fixed::from_map_units(984));
+}
+
+#[test]
+fn map_scale_hitscan_hit_near_the_wall_progresses() {
+    let mut s = stall_room_scale(&[[936, 0, 0, SHOTGUY, 7]]);
+    s.spawn_map_things().unwrap();
+    arm(&mut s, [984, 0]);
+    progresses(&mut s, |_, _| [TicCommand::default(); 4], 300);
+    assert!(s.original_player(PlayerSlot::One).unwrap().health < 100);
+}
+
+#[test]
+fn map_scale_fireball_past_994_progresses_to_the_far_wall() {
+    let mut s = stall_room_scale(&[[-900, 100, 0, IMP, 7]]);
+    let imp = s.spawn_map_things().unwrap().spawned[0];
+    let body = arm(&mut s, [-600, 0]);
+    s.set_actor_target(imp, Some(body)).unwrap();
+    s.enter_original_state(imp, OriginalState::S_TROO_ATK1)
+        .unwrap();
+    let mut dodge_from = None;
+    let mut farthest = 0;
+    for op in 1..=400 {
+        if dodge_from.is_none()
+            && s.events()
+                .iter()
+                .any(|e| matches!(e, Event::Projectile(ProjectileEvent::Launch(_))))
+        {
+            dodge_from = Some(op);
+        }
+        let mut c = [TicCommand::default(); 4];
+        if dodge_from.is_some_and(|from| op < from + 5) {
+            c[0].side = 50;
+        }
+        s.advance(c).unwrap_or_else(|e| panic!("tic {op}: {e}"));
+        for id in s.actor_order() {
+            let a = s.actor(id).unwrap();
+            if a.life()
+                .is_some_and(|l| l.actor_type.0 == OriginalActorType::MT_TROOPSHOT.ordinal())
+            {
+                farthest = farthest.max(a.position()[0].bits() / 65536);
+            }
+        }
+    }
+    assert!(
+        farthest > 994 && farthest <= 1194,
+        "the missed fireball flew to the east wall: x {farthest}"
+    );
+}
+
+#[test]
+fn map_scale_rejects_geometry_outside_the_proven_domain_at_load() {
+    let options = MapContextOptions::default();
+    let make = |room: &Room| Simulation::original_player_map_scale_map(room.map(), options);
+    // A full-extent room is admitted; one vertex beyond 2,048 is not.
+    make(&Room::rectangle([-2048, -2048], [2048, 2048])).unwrap();
+    assert!(matches!(
+        make(&Room::rectangle([-2048, -2048], [2049, 2048])),
+        Err(OriginalRegistryError::Runtime(SimError::Geometry(
+            GeometryError::CoordinateOverflow
+        )))
+    ));
+    // A gap in the bounding walls, and a wall listed in no BLOCKMAP cell.
+    let mut gap = Room::rectangle([-1000, -1000], [1000, 1000]);
+    gap.segment = 500;
+    gap.omit = Some(5);
+    assert!(matches!(
+        make(&gap),
+        Err(OriginalRegistryError::Runtime(SimError::MapScale(
+            MapScaleError::Walls
+        )))
+    ));
+    let mut unlisted = Room::rectangle([-1000, -1000], [1000, 1000]);
+    unlisted.segment = 500;
+    unlisted.unlisted = Some(5);
+    assert!(matches!(
+        make(&unlisted),
+        Err(OriginalRegistryError::Runtime(SimError::MapScale(
+            MapScaleError::Blockmap
+        )))
+    ));
+    // The historical Imp policy never checked either; it admits both maps.
+    for room in [&gap, &unlisted] {
+        historical(OriginalExecutionProfile::PlayerMonstersImpV1, room.map());
+    }
+    // A BLOCKMAP that does not cover the rectangle.
+    let mut short = Room::rectangle([-1000, -1000], [1000, 1000]);
+    short.origin = [-900, -1000];
+    assert!(matches!(
+        make(&short),
+        Err(OriginalRegistryError::Runtime(SimError::MapScale(
+            MapScaleError::Blockmap
+        )))
+    ));
+    // Too many linedefs for one hitscan: 20 pillars of four walls plus the room.
+    let mut many = Room::rectangle([-2048, -2048], [2048, 2048]);
+    many.pillars = (0..20)
+        .map(|i| {
+            let x = -1800 + 150 * (i % 10);
+            let y = if i < 10 { -1000 } else { 1000 };
+            [x, y, x + 50, y + 50]
+        })
+        .collect();
+    assert_eq!(many.map().linedefs().len(), 16 + 80);
+    assert!(matches!(
+        make(&many),
+        Err(OriginalRegistryError::Runtime(SimError::MapScale(
+            MapScaleError::Lines
+        )))
+    ));
+    many.pillars.pop();
+    make(&many).unwrap();
+    // A non-axis wall stays excluded by the inherited grounded-geometry check.
+    let diagonal = {
+        let room = Room::rectangle([-1000, -1000], [1000, 1000]);
+        let mut bytes = room.wad();
+        let directory = u32::from_le_bytes(bytes[8..12].try_into().unwrap()) as usize;
+        let count = u32::from_le_bytes(bytes[4..8].try_into().unwrap()) as usize;
+        for i in 0..count {
+            let at = directory + 16 * i;
+            if &bytes[at + 8..at + 16] == b"VERTEXES" {
+                let start = u32::from_le_bytes(bytes[at..at + 4].try_into().unwrap()) as usize;
+                bytes[start..start + 2].copy_from_slice(&(-900_i16).to_le_bytes());
+            }
+        }
+        let wad = doom_wad::Wad::parse(&bytes, doom_wad::Limits::default()).unwrap();
+        doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default()).unwrap()
+    };
+    assert!(matches!(
+        Simulation::original_player_map_scale_map(diagonal, options),
+        Err(OriginalRegistryError::Runtime(SimError::PlayerBody(
+            PlayerBodyError::Unsupported
+        )))
+    ));
+    // The slot budget is part of the proof: any other capacity is refused.
+    let registry =
+        OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersMapScaleV1).unwrap();
+    assert_eq!(
+        Simulation::with_original_registry(
+            Room::rectangle([-1000, -1000], [1000, 1000]).map(),
+            64,
+            registry,
+            ActorOptions::default(),
+            options,
+        )
+        .err(),
+        Some(SimError::Store(StoreError::InvalidLimit))
+    );
+}
+
+#[test]
+fn map_scale_rejects_spawns_whose_box_crosses_a_wall() {
+    // A THING 19 units from the east wall (radius 20) could leave the room in
+    // one step; the batch rejects it before any spawn.
+    let mut s = stall_room_scale(&[[1181, 0, 0, IMP, 7], [800, 0, 0, IMP, 7]]);
+    let before = s.snapshot();
+    assert_eq!(
+        s.spawn_map_things().unwrap_err(),
+        SimError::Monster(MonsterError::Arithmetic)
+    );
+    assert_eq!(s.snapshot(), before);
+    let mut s = stall_room_scale(&[[1180, 0, 0, IMP, 7]]);
+    s.spawn_map_things().unwrap();
+    // The player body: touching the wall is admitted, crossing it is not.
+    let before = s.snapshot();
+    assert!(
+        s.spawn_player_body(PlayerSlot::One, [Fixed::from_map_units(1185), Fixed::ZERO])
+            .is_err()
+    );
+    assert_eq!(s.snapshot(), before);
+    arm(&mut s, [1184, 0]);
+    progresses(&mut s, |_, _| [TicCommand::default(); 4], 60);
+}
+
+#[test]
+fn historical_policies_keep_their_coordinate_margins() {
+    // The same THING is beyond the Imp policy's 978-unit spawn margin and inside
+    // the map-scale room.
+    let map = || stall_room(&[[1100, 0, 0, IMP, 7]]);
+    let mut old = historical(OriginalExecutionProfile::PlayerMonstersImpV1, map());
+    let before = old.snapshot();
+    assert_eq!(
+        old.spawn_map_things().unwrap_err(),
+        SimError::Monster(MonsterError::Arithmetic)
+    );
+    assert_eq!(old.snapshot(), before);
+    let mut new = map_scale(map());
+    new.spawn_map_things().unwrap();
+    // The historical player spawn margin (994) is unchanged as well.
+    let mut old = historical(
+        OriginalExecutionProfile::PlayerMonstersImpV1,
+        stall_room(&[]),
+    );
+    assert!(
+        old.spawn_player_body(PlayerSlot::One, [Fixed::from_map_units(1000), Fixed::ZERO])
+            .is_err()
+    );
+    let mut new = stall_room_scale(&[]);
+    new.spawn_player_body(PlayerSlot::One, [Fixed::from_map_units(1000), Fixed::ZERO])
+        .unwrap();
+    assert_eq!(
+        OriginalExecutionProfile::PlayerMonstersMapScaleV1.wire_id(),
+        OriginalExecutionProfile::PlayerMonstersImpV1.wire_id() + 1
+    );
+    assert_eq!(
+        OriginalExecutionProfile::PlayerMonstersMapScaleV1.context_schema(),
+        PLAYER_MAP_SCALE_CONTEXT_SCHEMA
+    );
+    for profile in [
+        OriginalExecutionProfile::PlayerMonstersImpV1,
+        OriginalExecutionProfile::PlayerMonstersV1,
+    ] {
+        assert_ne!(profile.context_schema(), PLAYER_MAP_SCALE_CONTEXT_SCHEMA);
+    }
+}
+
+#[test]
+fn momentum_bound_is_a_recoverable_rejection_with_full_rollback() {
+    // In-world impulses stay far below 4,096 units; an in-crate momentum at the
+    // bound shows the clamp path (a tic runs) and the rejection path (one more
+    // controlled hit, rolled back in full).
+    let mut s = stall_room_scale(&[[0, 60, 0, 3002, 7]]);
+    let demon = s.spawn_map_things().unwrap().spawned[0];
+    let body = arm(&mut s, [0, 0]);
+    let at_bound = [
+        Fixed::from_map_units(MAP_SCALE_MOMENTUM_UNITS as i16),
+        Fixed::ZERO,
+    ];
+    s.actors.get_mut(body).unwrap().spec.momentum = at_bound;
+    s.advance([TicCommand::default(); 4]).unwrap();
+    let a = s.actor(body).unwrap();
+    assert!(
+        a.momentum()[0] < Fixed::from_map_units(30),
+        "clamped by P_XYMovement"
+    );
+    assert!(a.position()[0] <= Fixed::from_map_units(30));
+    s.actors.get_mut(body).unwrap().spec.momentum = at_bound;
+    let before = s.clone();
+    assert_eq!(
+        s.damage_actor(DamageRequest {
+            target: body,
+            inflictor: Some(demon),
+            source: Some(demon),
+            amount: 1,
+        }),
+        Err(SimError::MapScale(MapScaleError::Momentum))
+    );
+    assert_eq!(s.snapshot(), before.snapshot());
+    assert_eq!(s.rng(), before.rng());
+    s.actors.get_mut(body).unwrap().spec.momentum = [
+        Fixed::from_map_units(MAP_SCALE_MOMENTUM_UNITS as i16 + 1),
+        Fixed::ZERO,
+    ];
+    let before = s.clone();
+    assert_eq!(
+        s.advance([TicCommand::default(); 4]),
+        Err(SimError::MapScale(MapScaleError::Momentum))
+    );
+    assert_eq!(s.snapshot(), before.snapshot());
+}
+
+#[test]
+fn position_outside_the_room_is_a_recoverable_rejection() {
+    // Unreachable by the wall invariant; an in-crate corruption shows the witness
+    // check still rolls the tic back instead of continuing with unproven arithmetic.
+    let mut s = stall_room_scale(&[[800, 0, 0, IMP, 7]]);
+    let imp = s.spawn_map_things().unwrap().spawned[0];
+    arm(&mut s, [0, 0]);
+    s.advance([TicCommand::default(); 4]).unwrap();
+    s.actors.get_mut(imp).unwrap().spec.position[0] = Fixed::from_map_units(1300);
+    let before = s.clone();
+    assert_eq!(
+        s.advance([TicCommand::default(); 4]),
+        Err(SimError::Monster(MonsterError::Arithmetic))
+    );
+    assert_eq!(s.snapshot(), before.snapshot());
+}
+
+#[test]
+fn map_scale_fireball_cap_and_slots_reject_with_full_rollback() {
+    let mut s = map_scale({
+        let mut room = Room::rectangle([-2048, -2048], [2048, 2048]);
+        room.things = vec![[-1900, 0, 0, IMP, 7]];
+        room.map()
+    });
+    let imp = s.spawn_map_things().unwrap().spawned[0];
+    let body = arm(&mut s, [1900, 0]);
+    for _ in 0..MAP_SCALE_MAX_LIVE_PROJECTILES {
+        s.checked_demon_operation(|h| crate::projectiles::launch_fireball(h, imp, body))
+            .unwrap()
+            .unwrap();
+    }
+    assert_eq!(fireball_count(&s), 192);
+    let before = s.clone();
+    assert_eq!(
+        s.checked_demon_operation(|h| crate::projectiles::launch_fireball(h, imp, body))
+            .unwrap(),
+        Err(ProjectileError::WorkLimit.into())
+    );
+    assert_eq!(s.snapshot(), before.snapshot());
+    assert_eq!(s.rng(), before.rng());
+    // The 194 live actors advance; the DSIM30 reader admits the frame and its
+    // 192 fireballs, and the v29 reader does not.
+    s.advance([TicCommand::default(); 4]).unwrap();
+    let limits = DiagnosticLimits::default();
+    let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
+    let view = Diagnostic::decode_map_scale(&bytes, limits).unwrap();
+    assert_eq!(view.version(), 30);
+    assert_eq!(view.encode(limits).unwrap(), bytes);
+    assert!(Diagnostic::decode_imps(&bytes, limits).is_err());
+    assert_eq!(
+        view.validate_live_projectiles_at(MAP_SCALE_MAX_LIVE_PROJECTILES - 1),
+        Err(DiagnosticError::Limit)
+    );
+}
+
+#[test]
+fn dsim30_reader_is_explicit_and_bounds_slots() {
+    let mut s = stall_room_scale(&[[800, 0, 0, IMP, 7]]);
+    s.spawn_map_things().unwrap();
+    arm(&mut s, [984, 0]);
+    s.advance([TicCommand::default(); 4]).unwrap();
+    let limits = DiagnosticLimits::default();
+    let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
+    let view = Diagnostic::decode_map_scale(&bytes, limits).unwrap();
+    assert_eq!(view.version(), 30);
+    assert_eq!(view.encode(limits).unwrap(), bytes);
+    for reader in [
+        Diagnostic::decode_imps,
+        Diagnostic::decode_monsters,
+        Diagnostic::decode,
+    ] {
+        assert!(reader(&bytes, limits).is_err());
+    }
+    let patch = |path: &str, value: &[u8]| {
+        let mut out = bytes.clone();
+        let needle = [&(path.len() as u32).to_le_bytes()[..], path.as_bytes()].concat();
+        let at = out.windows(needle.len()).position(|w| w == needle).unwrap() + needle.len();
+        let len = u64::from_le_bytes(out[at..at + 8].try_into().unwrap()) as usize;
+        assert_eq!(len, value.len());
+        out[at + 8..at + 8 + len].copy_from_slice(value);
+        out
+    };
+    assert_eq!(
+        Diagnostic::decode_map_scale(&patch("store.max_slots", &257_u32.to_le_bytes()), limits)
+            .unwrap_err(),
+        DiagnosticError::Limit
+    );
+    assert!(
+        Diagnostic::decode_map_scale(&patch("profile", &13_u32.to_le_bytes()), limits).is_err()
+    );
+    assert!(
+        Diagnostic::decode_map_scale(&patch("level.total_kills", &9_i32.to_le_bytes()), limits)
+            .is_err()
+    );
+    // A v29 frame never admits 256 slots: the historical reader is unchanged.
+    let mut old = historical(
+        OriginalExecutionProfile::PlayerMonstersImpV1,
+        stall_room(&[[800, 0, 0, IMP, 7]]),
+    );
+    old.spawn_map_things().unwrap();
+    arm(&mut old, [0, 0]);
+    let old_bytes = old.snapshot().diagnostic_bytes(limits).unwrap();
+    assert!(Diagnostic::decode_imps(&old_bytes, limits).is_ok());
+    assert!(Diagnostic::decode_map_scale(&old_bytes, limits).is_err());
+    let patch_old = |value: u32| {
+        let mut out = old_bytes.clone();
+        let path = "store.max_slots";
+        let needle = [&(path.len() as u32).to_le_bytes()[..], path.as_bytes()].concat();
+        let at = out.windows(needle.len()).position(|w| w == needle).unwrap() + needle.len() + 8;
+        out[at..at + 4].copy_from_slice(&value.to_le_bytes());
+        out
+    };
+    assert_eq!(
+        Diagnostic::decode_imps(&patch_old(256), limits).unwrap_err(),
+        DiagnosticError::Limit
+    );
+    // A v30 frame relabeled 29 is not an admitted Imp-policy frame.
+    let mut relabeled = bytes.clone();
+    relabeled[4..8].copy_from_slice(&29_u32.to_le_bytes());
+    assert!(Diagnostic::decode_imps(&relabeled, limits).is_err());
+}
+
+#[test]
+fn stale_and_foreign_handles_reject_for_map_scale() {
+    let mut s = stall_room_scale(&[[800, 0, 0, IMP, 7]]);
+    let imp = s.spawn_map_things().unwrap().spawned[0];
+    arm(&mut s, [0, 0]);
+    let stale = ActorId::from_parts(imp.slot(), imp.generation() + 1);
+    let before = s.clone();
+    for target in [
+        stale,
+        ActorId::from_parts(200, 1),
+        ActorId::from_parts(300, 1),
+    ] {
+        assert!(
+            s.damage_actor(DamageRequest {
+                target,
+                inflictor: None,
+                source: None,
+                amount: 10,
+            })
+            .is_err()
+        );
+        assert!(s.set_actor_target(imp, Some(target)).is_err());
+        assert!(s.mark_remove(target).is_err());
+        assert_eq!(s.snapshot(), before.snapshot());
+    }
+    let other = stall_room_scale(&[[800, 0, 0, IMP, 7]]);
+    let mut left = GameInstance::new(before);
+    let mut right = GameInstance::new(other);
+    let id = DefinitionIdentity::Original(OriginalActorType::MT_TROOP);
+    let reference = left
+        .with_execution_context(|ctx| {
+            let actor = ctx.admit_local(imp, id)?;
+            ctx.export_actor(actor)
+        })
+        .unwrap();
+    let snapshot = right.simulation().snapshot();
+    assert!(
+        right
+            .with_execution_context(|ctx| {
+                ctx.import_actor(&reference, id)?;
+                Ok(())
+            })
+            .is_err()
+    );
+    assert_eq!(right.simulation().snapshot(), snapshot);
+}
+
+/// Deterministic command stream: runs, strafes, turns and sustained fire.
+fn scripted(seed: u64, op: usize) -> [TicCommand; 4] {
+    let mut x = seed
+        .wrapping_mul(6364136223846793005)
+        .wrapping_add(op as u64)
+        .wrapping_mul(1442695040888963407);
+    x ^= x >> 29;
+    let phase = (op / 40) as u64 + seed;
+    let mut c = [TicCommand::default(); 4];
+    c[0] = TicCommand {
+        forward: [50, 50, 0, -25, 50][(phase % 5) as usize],
+        side: [0, 40, -40, 0, 24][((phase / 5) % 5) as usize],
+        angle_turn: [0, 0, 1024, -2048, 512][((x >> 8) % 5) as usize],
+        buttons: if (x >> 16) % 4 != 0 { 1 } else { 0 },
+    };
+    c
+}
+
+#[test]
+fn full_budget_soak_never_rejects_a_valid_tic() {
+    // Sixteen placed items, eight monsters (five Imps, three former humans whose
+    // deaths add drops), a firing, running player and the full 4,096-unit room.
+    let mut room = Room::rectangle([-2048, -2048], [2048, 2048]);
+    let mut things = Vec::new();
+    for i in 0..16 {
+        let kind = [2007, 2048, 2008, 2049, 2011, 2012, 2014, 2015][i % 8];
+        things.push([
+            -1800 + 200 * (i as i16 % 8),
+            -1900 + 300 * (i as i16 / 8),
+            0,
+            kind,
+            7,
+        ]);
+    }
+    for (i, kind) in [IMP, IMP, IMP, IMP, IMP, 3004, SHOTGUY, 65]
+        .iter()
+        .enumerate()
+    {
+        things.push([
+            -1700 + 400 * (i as i16 % 4),
+            1200 + 500 * (i as i16 / 4),
+            -90,
+            *kind,
+            7,
+        ]);
+    }
+    room.things = things;
+    let map = room.map();
+    let mut peak_fireballs = 0;
+    let mut peak_actors = 0;
+    let mut kills = 0;
+    for seed in 0..4_u64 {
+        let mut s = Simulation::original_player_map_scale_map(
+            map.clone(),
+            MapContextOptions {
+                initial_rng: DoomRng::from_indices((seed * 61 % 256) as u8, 0),
+                respawn_monsters: false,
+            },
+        )
+        .unwrap();
+        s.spawn_map_things().unwrap();
+        let body = s
+            .spawn_player_body(PlayerSlot::One, [Fixed::ZERO, Fixed::from_map_units(-1500)])
+            .unwrap();
+        s.initialize_player_weapons(
+            PlayerSlot::One,
+            WeaponInventory {
+                ready: Weapon::Chaingun,
+                owned: 15,
+                ammo: [200, 50, 0, 0],
+            },
+        )
+        .unwrap();
+        s.actors.get_mut(body).unwrap().spec.angle = 0x4000_0000;
+        progresses(&mut s, |_, op| scripted(seed, op), 1200);
+        peak_fireballs = peak_fireballs.max(fireball_count(&s));
+        peak_actors = peak_actors.max(s.actor_order().count());
+        kills = kills.max(s.level_statistics().unwrap().single_player_kill_count);
+    }
+    assert!(peak_actors <= 225, "live actors {peak_actors}");
+    assert!(peak_fireballs <= MAP_SCALE_MAX_LIVE_PROJECTILES);
+    println!("soak peak_actors={peak_actors} peak_fireballs={peak_fireballs} kills={kills}");
 }
