@@ -162,7 +162,7 @@ impl Simulation {
             self.registry
                 .as_deref()
                 .ok_or(MonsterError::Definition)?
-                .validate_type_original(ty, &self.sectors)?;
+                .validate_type_original(ty, self.dimension_sectors())?;
             self.remember_admitted(ty);
             return Ok(());
         }

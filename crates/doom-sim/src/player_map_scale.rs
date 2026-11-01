@@ -26,6 +26,20 @@ pub const MAP_SCALE_MOMENTUM_UNITS: u32 = 4096;
 /// Absolute vertex, BLOCKMAP-origin and actor coordinate bound: the M3f2 intercept
 /// proof with `G = A = 2048` and line norm 1,536.
 pub const MAP_SCALE_EXTENT_UNITS: u32 = map_extent::QUERY_UNITS;
+/// Vertical momentum witness of `PlayerMonstersHeightsV1`. Sector heights are within
+/// ±512 and actor heights within 56, so a fireball chord `(dest.z - source.z) /
+/// time` with `time >= 1` is within 968 and gravity reaches −46 in the longest
+/// fall; older policies keep the historical 64. Rust-only, never source behavior.
+pub const HEIGHTS_MOMZ_UNITS: u32 = 1024;
+/// Absolute z witness of the heights policy: the sight proof's margin.
+pub const HEIGHTS_Z_UNITS: u32 = MAP_SCALE_EXTENT_UNITS;
+/// Linedef flag bits admitted under the heights policy besides `ML_TWOSIDED`:
+/// `ML_BLOCKING`, `ML_BLOCKMONSTERS` and `ML_SOUNDBLOCK` are read by the admitted
+/// bodies (p_map.c PIT_CheckLine, p_enemy.c P_RecursiveSound); `ML_DONTPEGTOP`,
+/// `ML_DONTPEGBOTTOM`, `ML_SECRET`, `ML_DONTDRAW` and `ML_MAPPED` are renderer and
+/// automap data with no reader in this project (doomdata.h).
+pub const HEIGHTS_LINE_FLAGS: u16 = 1 | 2 | 8 | 16 | 32 | 64 | 128 | 256;
+const ML_TWOSIDED: u16 = 4;
 const MAX_LINKED_THINGS: usize = 1 + MAX_PLAYER_MONSTERS + MAX_WORLD_PICKUPS + MAX_PLAYER_MONSTERS;
 
 /// Map geometry or actor state outside the proven real-map-scale domain.
@@ -41,6 +55,14 @@ pub enum MapScaleError {
     Position,
     /// An XY momentum component beyond `MAP_SCALE_MOMENTUM_UNITS`.
     Momentum,
+    /// A linedef that is not axis-aligned, has no front side, carries a flag bit
+    /// outside `HEIGHTS_LINE_FLAGS`, or whose back side disagrees with `ML_TWOSIDED`.
+    Geometry,
+    /// A spawn whose type is taller than its spawn sector (a broken map).
+    Fit,
+    /// An actor outside `[floor, ceiling - height]` or beyond the z/momz witnesses
+    /// before a tic (unreachable by the vertical invariant).
+    Vertical,
 }
 impl fmt::Display for MapScaleError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -85,6 +107,14 @@ impl RoomBounds {
     /// caller has already required one-sided axis-aligned blocking walls and the
     /// 2,048-unit vertex envelope. Admission only; nothing here runs per tic.
     pub fn derive(map: &Map) -> Result<Self, SimError> {
+        Self::derive_for(map, false)
+    }
+    /// `derive`, counting only one-sided linedefs toward the boundary covering when
+    /// `one_sided_only` is set: `PIT_CheckLine` blocks a one-sided line regardless
+    /// of flags (`if (!ld->backsector) return false`, p_map.c), which is what the
+    /// wall invariant of the heights policy relies on. The BLOCKMAP must still list
+    /// every linedef, one- or two-sided, in every cell its bbox touches.
+    pub fn derive_for(map: &Map, one_sided_only: bool) -> Result<Self, SimError> {
         if map.linedefs().len() > MAP_SCALE_WALL_LINES {
             return Err(MapScaleError::Lines.into());
         }
@@ -108,6 +138,7 @@ impl RoomBounds {
                 let mut intervals: Vec<[i32; 2]> = map
                     .linedefs()
                     .iter()
+                    .filter(|line| !one_sided_only || line.sides[1].is_none())
                     .filter_map(|line| {
                         let [a, b] = line.vertices.map(|i| vertices[usize::from(i)]);
                         let (pa, pb) = (
@@ -167,6 +198,64 @@ impl RoomBounds {
     }
 }
 
+/// Linedef admission of the heights policy, checked once before construction:
+/// every linedef is axis-aligned and not degenerate (the `P_HitSlideLine` axis
+/// cases are the only proven slide projections), has a front side, carries
+/// `ML_TWOSIDED` exactly when it has a back side, and no flag bit outside
+/// `HEIGHTS_LINE_FLAGS`. Sector heights, specials, sky ceilings and the vertex
+/// envelope are checked by the shared expanded-map admission.
+pub(crate) fn validate_heights_geometry(map: &Map) -> Result<(), SimError> {
+    for line in map.linedefs() {
+        let [a, b] = line.vertices.map(usize::from);
+        let from = map.vertices().get(a).ok_or(MapScaleError::Geometry)?;
+        let to = map.vertices().get(b).ok_or(MapScaleError::Geometry)?;
+        let two_sided = line.flags & ML_TWOSIDED != 0;
+        if line.sides[0].is_none()
+            || line.sides[1].is_some() != two_sided
+            || line.flags & !(HEIGHTS_LINE_FLAGS | ML_TWOSIDED) != 0
+            || (from.x != to.x && from.y != to.y)
+            || (from.x == to.x && from.y == to.y)
+        {
+            return Err(MapScaleError::Geometry.into());
+        }
+    }
+    Ok(())
+}
+/// Whether a type of the given height fits the sector under `position`, as
+/// `P_SpawnMobj` would place it (`R_PointInSubsector`, then `floorz`/`ceilingz`
+/// from that sector). The source never checks this; rejecting a spawn that does
+/// not fit keeps the vertical invariant and costs no legal play.
+pub(crate) fn spawn_fits(
+    world: &StaticWorld,
+    sectors: &[SectorState],
+    position: [Fixed; 2],
+    height: Fixed,
+) -> bool {
+    let sector = sectors[usize::from(world.locate_validated(position).sector)];
+    sector.ceiling - sector.floor >= height
+}
+/// Vertical momentum witness of a policy, in map units.
+pub(crate) const fn momz_bound(policy: OriginalExecutionProfile) -> u32 {
+    if policy.has_heights() {
+        HEIGHTS_MOMZ_UNITS
+    } else {
+        64
+    }
+}
+/// The vertical invariant of the heights policy at a tic boundary, for every
+/// actor that is not an impact: `floor <= z <= ceiling - height` with the actor's
+/// own `floorz`/`ceilingz`, `z` within `HEIGHTS_Z_UNITS` and `momz` within
+/// `HEIGHTS_MOMZ_UNITS`. Both sums are formed from bounded operands.
+pub(crate) fn vertical_admitted(actor: &Actor) -> Result<(), SimError> {
+    if !sight::within(actor.z, HEIGHTS_Z_UNITS)
+        || !sight::within(actor.momz, HEIGHTS_MOMZ_UNITS)
+        || actor.z < actor.floor
+        || actor.z + actor.spec.height > actor.ceiling
+    {
+        return Err(MapScaleError::Vertical.into());
+    }
+    Ok(())
+}
 /// Position admission under the policy: the derived room, or the historical
 /// absolute margin when no room is admitted.
 pub(crate) fn position_admitted(

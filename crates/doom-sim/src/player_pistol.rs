@@ -237,6 +237,7 @@ impl<A: ActorAccess> weapons::Host for Host<'_, '_, A> {
                         | OriginalExecutionProfile::PlayerMonstersV1
                         | OriginalExecutionProfile::PlayerMonstersImpV1
                         | OriginalExecutionProfile::PlayerMonstersMapScaleV1
+                        | OriginalExecutionProfile::PlayerMonstersHeightsV1
                 )
             }) && matches!(weapon, Weapon::Fist | Weapon::Shotgun | Weapon::Chaingun))
         {
@@ -345,7 +346,8 @@ pub(crate) fn run<A: ActorAccess>(
                 | OriginalExecutionProfile::PlayerDemonBonusesV1
                 | OriginalExecutionProfile::PlayerMonstersV1
                 | OriginalExecutionProfile::PlayerMonstersImpV1
-                | OriginalExecutionProfile::PlayerMonstersMapScaleV1,
+                | OriginalExecutionProfile::PlayerMonstersMapScaleV1
+                | OriginalExecutionProfile::PlayerMonstersHeightsV1,
             player_weapons::PlayerWeaponRuntime::Pack(_)
         )
     ) {

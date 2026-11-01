@@ -38,12 +38,13 @@ pub use player_armor::{
 };
 pub use player_bonuses::PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA;
 pub use player_map_scale::{
-    MAP_SCALE_ACTOR_SLOTS, MAP_SCALE_EXTENT_UNITS, MAP_SCALE_MAX_LIVE_PROJECTILES,
-    MAP_SCALE_MOMENTUM_UNITS, MAP_SCALE_WALL_LINES, MapScaleError, RoomBounds,
+    HEIGHTS_LINE_FLAGS, HEIGHTS_MOMZ_UNITS, HEIGHTS_Z_UNITS, MAP_SCALE_ACTOR_SLOTS,
+    MAP_SCALE_EXTENT_UNITS, MAP_SCALE_MAX_LIVE_PROJECTILES, MAP_SCALE_MOMENTUM_UNITS,
+    MAP_SCALE_WALL_LINES, MapScaleError, RoomBounds,
 };
 pub use player_monsters::{
-    MAX_PLAYER_MONSTERS, PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA,
-    PLAYER_MONSTERS_CONTEXT_SCHEMA,
+    MAX_PLAYER_MONSTERS, PLAYER_HEIGHTS_CONTEXT_SCHEMA, PLAYER_IMPS_CONTEXT_SCHEMA,
+    PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -525,6 +526,10 @@ pub struct Simulation {
     /// Immutable definitions already validated against this registry and these
     /// static sectors, by type ordinal. A memo of a pure function, never state.
     pub(crate) admitted_types: std::cell::Cell<[u64; 4]>,
+    /// Under the heights policy, the tallest static sector: type dimensions are
+    /// admitted against it ("every type fits somewhere") and fitting is proved per
+    /// spawn instead. Derived from the immutable map; never canonical state.
+    pub(crate) type_envelope: Option<SectorState>,
 }
 impl Simulation {
     /// Creates a fresh supported world with capacity for 1024 logical actor slots.
@@ -639,7 +644,16 @@ impl Simulation {
             pending: Vec::new(),
             map_fields,
             admitted_types: std::cell::Cell::new([0; 4]),
+            type_envelope: None,
         })
+    }
+    /// The sectors a type's dimensions are admitted against: the heights policy's
+    /// envelope, or every static sector.
+    pub(crate) fn dimension_sectors(&self) -> &[SectorState] {
+        match &self.type_envelope {
+            Some(envelope) => std::slice::from_ref(envelope),
+            None => &self.sectors,
+        }
     }
     /// Historical service-family selection. For original-ID contexts, also use
     /// [`Self::original_execution_profile`] to distinguish the explicit policies.

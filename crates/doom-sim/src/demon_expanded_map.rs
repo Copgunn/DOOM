@@ -20,6 +20,7 @@ impl Simulation {
             context,
             Profile::DemonExpandedMap,
             64,
+            false,
         )
     }
     pub(crate) fn with_demon_expanded_profile(
@@ -30,6 +31,7 @@ impl Simulation {
         context: MapContextOptions,
         profile: Profile,
         actor_cap: u32,
+        type_envelope: bool,
     ) -> Result<Self, SimError> {
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
@@ -80,6 +82,16 @@ impl Simulation {
         let work = map_extent::validate_with_actor_cap(&map, limits, actor_cap)?;
         let mut sim = Self::create_bounded(map, limit, profile, limits.max_prepared_references)?;
         sim.world.extent_sight_work = Some(work);
+        if type_envelope {
+            // Heights policy: windows and closed sectors may be shorter than any
+            // actor; dimensions are admitted against the tallest sector and every
+            // spawn proves its own fit. Earlier policies keep the map-wide fit.
+            sim.type_envelope = sim
+                .sectors
+                .iter()
+                .copied()
+                .max_by_key(|s| s.ceiling - s.floor);
+        }
         if profile != Profile::OriginalDemon {
             snapshot::registry_fields(Arc::make_mut(&mut sim.map_fields), &registry);
         }
