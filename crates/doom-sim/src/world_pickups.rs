@@ -791,11 +791,25 @@ impl Simulation {
     }
 }
 
-// Medium, commercial single-player placement filters; actor admission stays in
-// the existing batch validator. The counter has no second persistent owner.
-pub(crate) fn counted_map_things(things: &[doom_map::Thing]) -> usize {
+/// DoomEd numbers of the COUNTITEM health/armor bonuses (info.c MT_MISC2/MT_MISC3).
+pub(crate) const COUNTED_ITEM_DOOMED: [i16; 2] = [2014, 2015];
+/// The single source placement filter for counted THINGs: p_mobj.c
+/// P_SpawnMapThing skips `options & 16` (MTF_NOTSINGLE) in single player and
+/// requires the Medium skill bit `options & 2`. Every caller (runtime
+/// preflight and DSIM readers) counts through this one definition. Actor
+/// admission itself stays in the existing batch validator.
+pub(crate) fn counted_things(
+    things: impl IntoIterator<Item = (i16, u16)>,
+    kinds: &[i16],
+) -> usize {
     things
-        .iter()
-        .filter(|t| matches!(t.kind, 2014 | 2015) && t.options & 16 == 0 && t.options & 2 != 0)
+        .into_iter()
+        .filter(|(kind, options)| kinds.contains(kind) && options & 16 == 0 && options & 2 != 0)
         .count()
+}
+pub(crate) fn counted_map_things(things: &[doom_map::Thing]) -> usize {
+    counted_things(
+        things.iter().map(|t| (t.kind, t.options)),
+        &COUNTED_ITEM_DOOMED,
+    )
 }

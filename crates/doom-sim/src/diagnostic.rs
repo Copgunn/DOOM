@@ -650,14 +650,12 @@ impl<'a> Diagnostic<'a> {
         if things.len() % 10 != 0 || things.len() > MAX_DEMON_MAP_THINGS * 10 {
             return Err(DiagnosticError::Limit);
         }
-        let expected = things
-            .chunks_exact(10)
-            .filter(|t| {
-                matches!(i16::from_le_bytes([t[6], t[7]]), 2014 | 2015)
-                    && u16::from_le_bytes([t[8], t[9]]) & 16 == 0
-                    && u16::from_le_bytes([t[8], t[9]]) & 2 != 0
-            })
-            .count();
+        let raw = || {
+            things
+                .chunks_exact(10)
+                .map(|t| (i16::from_le_bytes([t[6], t[7]]), u16::from_le_bytes([t[8], t[9]])))
+        };
+        let expected = world_pickups::counted_things(raw(), &world_pickups::COUNTED_ITEM_DOOMED);
         // Zero also describes a constructed world whose THING batch has not run.
         if total > 0 && total as usize != expected {
             return Err(DiagnosticError::Identity);
