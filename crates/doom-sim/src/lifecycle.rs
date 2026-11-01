@@ -893,7 +893,7 @@ impl ActorRegistry {
                 &mut BTreeSet::new(),
                 &mut 0,
                 Admission {
-                    flags: ALLOWED_FLAGS | 65536,
+                    flags: ALLOWED_FLAGS | crate::original_player::MF_MISSILE,
                     look: false,
                     chase: false,
                     attacks: false,
@@ -1421,7 +1421,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
         }
     }
     fn action(&mut self, id: ActorId, action: ActorAction, work: &mut usize) {
-        use crate::player_monsters::Hitscan;
+        use crate::{actions::OriginalAction, player_monsters::Hitscan};
         match action {
             ActorAction::None => {}
             ActorAction::Original(action) => {
@@ -1434,70 +1434,78 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                         .position(|s| *s == name)
                         .expect("original sound") as u16
                 };
-                match self.registry.action_name(action).expect("original action") {
-                    "A_FaceTarget" => {
+                match OriginalAction::of(action) {
+                    Some(OriginalAction::FaceTarget) => {
                         assert!(self.perception.is_some_and(|p| p.monsters));
                         crate::monsters::face(self, id);
                     }
-                    "A_SargAttack" => {
+                    Some(OriginalAction::SargAttack) => {
                         assert!(self.perception.is_some_and(|p| p.demon));
                         crate::demon::strike(self, id);
                     }
                     // Former humans in PlayerMonstersV1 share one current-state
                     // hitscan implementation; historical profiles keep their
                     // preflighted single-owner plans unchanged.
-                    "A_CPosAttack" if crate::player_monsters::uses_current_monsters(self) => {
+                    Some(OriginalAction::CPosAttack)
+                        if crate::player_monsters::uses_current_monsters(self) =>
+                    {
                         crate::player_monsters::attack(self, id, Hitscan::Chaingun);
                     }
-                    "A_CPosRefire" if crate::player_monsters::uses_current_monsters(self) => {
+                    Some(OriginalAction::CPosRefire)
+                        if crate::player_monsters::uses_current_monsters(self) =>
+                    {
                         crate::player_monsters::refire(self, id, work);
                     }
-                    "A_SPosAttack" if crate::player_monsters::uses_current_monsters(self) => {
+                    Some(OriginalAction::SPosAttack)
+                        if crate::player_monsters::uses_current_monsters(self) =>
+                    {
                         crate::player_monsters::attack(self, id, Hitscan::Shotgun);
                     }
-                    "A_PosAttack" if crate::player_monsters::uses_current_monsters(self) => {
+                    Some(OriginalAction::PosAttack)
+                        if crate::player_monsters::uses_current_monsters(self) =>
+                    {
                         crate::player_monsters::attack(self, id, Hitscan::Pistol);
                     }
-                    "A_TroopAttack" => {
+                    Some(OriginalAction::TroopAttack) => {
                         assert!(crate::player_monsters::uses_current_monsters(self));
                         crate::player_monsters::troop_attack(self, id);
                     }
-                    "A_CPosAttack" => {
+                    Some(OriginalAction::CPosAttack) => {
                         assert!(self.perception.is_some_and(|p| p.chaingunner));
                         crate::chaingunner::attack(self, id);
                     }
-                    "A_CPosRefire" => {
+                    Some(OriginalAction::CPosRefire) => {
                         assert!(self.perception.is_some_and(|p| p.chaingunner));
                         crate::chaingunner::refire(self, id, work);
                     }
-                    "A_SPosAttack" => {
+                    Some(OriginalAction::SPosAttack) => {
                         assert!(self.perception.is_some_and(|p| p.shotgunner));
                         crate::shotgunner::fire(self, id);
                     }
-                    "A_PosAttack" => {
+                    Some(OriginalAction::PosAttack) => {
                         assert!(self.perception.is_some_and(|p| p.monsters));
                         crate::monsters::pos_attack(self, id);
                     }
-                    "A_Chase" => {
+                    Some(OriginalAction::Chase) => {
                         assert!(self.perception.is_some_and(|p| p.pursuit));
                         crate::pursuit::chase::chase(self, id, work);
                     }
-                    "A_Look" => {
+                    Some(OriginalAction::Look) => {
                         crate::perception::look(self, id, work);
                     }
-                    "A_Fall" => {
+                    Some(OriginalAction::Fall) => {
                         let actor = self.access.get_mut(id).unwrap();
                         actor.life.as_mut().unwrap().flags &= !2;
                         actor.solidity = Solidity::NonSolid;
                     }
-                    "A_Pain" => {
+                    Some(OriginalAction::Pain) => {
                         let sound = info.sounds()[2];
                         if sound != 0 {
                             self.sound(Some(id), sound);
                         }
                     }
-                    "A_XScream" => self.sound(Some(id), sound_id("sfx_slop")),
-                    "A_PlayerScream" => self.sound(
+                    Some(OriginalAction::XScream) => self.sound(Some(id), sound_id("sfx_slop")),
+                    Some(OriginalAction::PlayerScream) => self.sound(
                         Some(id),
                         sound_id(if life.health < -50 {
                             "sfx_pdiehi"
@@ -1505,7 +1513,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                             "sfx_pldeth"
                         }),
                     ),
-                    "A_Scream" => {
+                    Some(OriginalAction::Scream) => {
                         let sound = info.sounds()[3];
                         if sound == 0 {
                             return;

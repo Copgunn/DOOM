@@ -18,6 +18,7 @@
 #[cfg(test)]
 extern crate self as doom_sim;
 
+mod actions;
 mod actor;
 mod direction;
 pub use direction::MoveDirection;
