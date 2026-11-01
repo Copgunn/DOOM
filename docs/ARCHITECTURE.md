@@ -680,11 +680,12 @@ proof and the post-tic monster check), so no check was removed, only its bound c
 for one policy. The sight domain, momentum domain and live-fireball bound are selected
 the same way.
 
-The slot budget is derived rather than measured: `MAP_SCALE_ACTOR_SLOTS` (256) exceeds
+The slot budget is derived rather than measured: `MAP_SCALE_ACTOR_SLOTS` (320) exceeds
 the worst-case live actors of any admitted roster plus the spawns of one pass, so the
 store never fills and the thinker visit budget is never reached; the recoverable-refill
-latch stays as defense. `MAP_SCALE_MAX_LIVE_PROJECTILES` (192) follows from the Imp's
-25-tic minimum launch interval and the longest flight in the largest room.
+latch stays as defense. `MAP_SCALE_MAX_LIVE_PROJECTILES` (208) follows from the Imp's
+23-tic minimum launch interval (its attack state cut short by pain, then the JUSTHIT
+shortcut) and the longest flight in the largest room.
 
 Immutable definitions are validated once per registry: `validate_demon_lifecycle_type`
 remembers each admitted type ordinal in a per-simulation bitmask (the registry, static

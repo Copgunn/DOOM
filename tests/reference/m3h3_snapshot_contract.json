@@ -30,7 +30,7 @@
     "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
     "tools/reference/m3g2_snapshot_goldens.py": "b65bbd286f22fb0ec0b2176cfbc339f0376a24ccfe4a91d537e5f672a3e8ceee",
     "tools/reference/m3h3_snapshot_goldens.py": "6ecbde5d9e65030a3d00e39d828aea7d420d3409195fcf0858fa49933dcf1358",
-    "tools/reference/map_scale_snapshot.py": "743db94987eeea5937fe7c47f171f1ef1378aa35149a55886d8c0330d8ff967d",
+    "tools/reference/map_scale_snapshot.py": "93022a2fe5a30c02b4c56fdf9fa7be00809299bdec53881bf141ce3ca588024a",
     "tools/reference/monsters_snapshot.py": "19723c4ec5ede24693de0b83c842ec01fb33ae9d3a9076843245f190cfbcd153",
     "tools/reference/pickup_snapshot.py": "6abd238d983ac893d6473fe843a61daa15c2941b99aabc410f5ec74b59a8cbc9",
     "tools/reference/pistol_snapshot.py": "9119b1d55a4a18fb15f18bf673ed6204068e27ca20c0ad30559485a498333605",
@@ -38,21 +38,21 @@
     "tools/reference/player_snapshot.py": "9524e70b09184766fc9aa10c8625e9849f8b59579165218cc1a1e66e90747c5c",
     "tools/reference/weapon_snapshot.py": "b2070f8fb12577cf4debb18abad1daa64b7d79d3770f3969ca2d5bcdfb97c67c"
   },
-  "live_projectile_bound": 192,
+  "live_projectile_bound": 208,
   "ordered_event_fields": 174287,
   "outputs_sha256": {
     "tests/reference/m3h3_events.dref": "1efef1367450bf3fb08d306bf1128c5ce5df23a38b41468596a33e6504d52ce9",
-    "tests/reference/m3h3_snapshots.csv": "bfdec8641d0e4ffe875beab263208a3fa14e9b6c7128642a93f71dc01e5bf465",
-    "tests/reference/m3h3_state_0_0.bin": "099f4603ccab9e346a68e048a7a3a32c402350c5e47b6d60c4001109b8b8a1b5",
-    "tests/reference/m3h3_state_10_960.bin": "f2de6bf48e32b1661ebb28e6a7567851152a8ad95adc22e6b3cf73b3222a493b",
-    "tests/reference/m3h3_state_11_720.bin": "2aaba2ea8baf748912a06b71d6ba438fd089e397c6701c44a232ffd30bef47ac",
-    "tests/reference/m3h3_state_12_512.bin": "a8290aca7e02cb3ab82a3c509ea6037ea6f58b256de974976c7d746d9b54252d",
-    "tests/reference/m3h3_state_2_320.bin": "b4e273a47076de60b4f5d7dc2c350734255b61e26e6ad286911311ce3d0ce113",
-    "tests/reference/m3h3_state_8_480.bin": "dd0cb36a9280c5873bb90b052c4cfdfda6f51ac0418beef6d289efe985c9796e",
-    "tests/reference/m3h3_state_9_480.bin": "53acd1cb20147e0afffe6e9cbbb4f028028f77862ac2c7da99b9330072183cc8"
+    "tests/reference/m3h3_snapshots.csv": "ec055eea174e794e014c0eaee52713c392182e89349aea8e2897bdaf7d4fa6fe",
+    "tests/reference/m3h3_state_0_0.bin": "16eb965ff5ac713eb8f0970109c209f6f1d0713ecf3ac1cba89cf1e2379536a1",
+    "tests/reference/m3h3_state_10_960.bin": "f73c279043759206569ee42e1f711253e3307ce8eeb4bcd33d8a977bfaa66c3f",
+    "tests/reference/m3h3_state_11_720.bin": "66dcb79fbafefcb2acbba729c5d3558905f61b02863ae15211a57406aa2bc576",
+    "tests/reference/m3h3_state_12_512.bin": "0115fb71976f8c49cddf0e849bbdfe09ed64da28850b2f36a421cb2c74f67fa0",
+    "tests/reference/m3h3_state_2_320.bin": "7da8f54007d24507716b5d55c13789e3bdc80c19bbbfdc09e162c1ca866196f4",
+    "tests/reference/m3h3_state_8_480.bin": "3d493d421c7b1e46e86e926599fe03ee85da1ddac7cdea98839c9ec1704e5ddb",
+    "tests/reference/m3h3_state_9_480.bin": "5677a9358e6a0a53b5f2ab2f43b5f0ad20c2a24b1289d3fb1adb02fb53904849"
   },
   "packed_event_bytes": 582895,
   "schema": "DSIM-v30",
   "scope": "Original C fields and source event order, independent schema/birth-generation projection. Bounded command/weapon stage then original thinkers, not full player/ticker execution. No Rust observations.",
-  "store_slots": 256
+  "store_slots": 320
 }

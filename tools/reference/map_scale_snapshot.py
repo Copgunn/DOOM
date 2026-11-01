@@ -2,12 +2,12 @@
 
 Extends the frozen DSIM29 projection without editing it: the same field layout
 and event vocabulary under version 30, policy 14, the map-scale context, the
-256-slot store and the derived 192 live-fireball bound of the new policy."""
+320-slot store and the derived 208 live-fireball bound of the new policy."""
 import struct
 import imps_snapshot as inherited
 base=inherited.base;n=base.n;execution=inherited.execution;physical=inherited.physical
 CONTEXT=b'PLAYER-MONSTERS-MAP-SCALE-1-MEDIUM-GROUNDED-v1'
-VERSION=30;POLICY=14;MAX_SLOTS=256;MAX_LIVE_PROJECTILES=192;FIREBALL=31
+VERSION=30;POLICY=14;MAX_SLOTS=320;MAX_LIVE_PROJECTILES=208;FIREBALL=31
 events=inherited.events
 def build(cases,rows,maps,prefix,full):
     inherited.inherited.BODIES.clear()

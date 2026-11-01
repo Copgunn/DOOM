@@ -87,7 +87,7 @@ map: a walled rectangle of up to 2,048 units whose one-sided axis walls keep eve
 mover inside, exactly as the original's `P_TryMove` does. Both M3h2 stalls (a hit
 near a wall, and a fireball past 994, which was confirmed rather than refuted) are
 reproduced on the historical policies and progress on the new one. Slot and
-fireball budgets (256 and 192) are derived from flight time and attack cadence, so
+fireball budgets (320 slots and 208 fireballs) are derived from flight time and attack cadence, so
 ordinary play cannot reach a cap, and immutable definitions are validated once
 instead of every tic. DSIM30 adds no persistent field. This branch stops at owner
 review; exact commits and CI belong to GitHub. See

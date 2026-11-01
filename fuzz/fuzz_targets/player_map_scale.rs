@@ -15,11 +15,11 @@ const SPAWNS: [[i16; 2]; 4] = [[-600, 0], [1800, 1800], [1900, 0], [1800, -1800]
 /// A command the admitted domain must execute: slot One, source movement range,
 /// buttons the four-weapon policy admits. Anything else is an invalid input.
 fn valid_command(c: &TicCommand) -> bool {
-    let weapon = (c.buttons & 0x38) >> 3;
+    let weapon = (c.buttons & BT_WEAPONMASK) >> 3;
     (-50..=50).contains(&c.forward)
         && (-50..=50).contains(&c.side)
-        && c.buttons & !0x3b == 0
-        && if c.buttons & 2 != 0 {
+        && c.buttons & !(BT_ATTACK | BT_CHANGE | BT_WEAPONMASK) == 0
+        && if c.buttons & BT_CHANGE != 0 {
             weapon <= 3
         } else {
             weapon == 0

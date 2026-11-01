@@ -38,7 +38,7 @@ pub enum OriginalExecutionProfile {
     /// The former-human world plus the original Imp and its fireball.
     PlayerMonstersImpV1,
     /// The Imp world at real-map scale: wall-derived travel bounds inside a walled
-    /// rectangle up to 2,048 units, 256 actor slots and 192 live fireballs.
+    /// rectangle up to 2,048 units, 320 actor slots and 208 live fireballs.
     PlayerMonstersMapScaleV1,
 }
 impl OriginalExecutionProfile {
@@ -113,7 +113,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersImpV1 | Self::PlayerMonstersMapScaleV1
         )
     }
-    /// Wall-derived travel bounds, 256 slots and 192 live fireballs inside a walled
+    /// Wall-derived travel bounds, 320 slots and 208 live fireballs inside a walled
     /// rectangle; the historical 994-unit margins and travel envelope do not apply.
     pub(crate) const fn has_map_scale(self) -> bool {
         matches!(self, Self::PlayerMonstersMapScaleV1)

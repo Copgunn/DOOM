@@ -361,8 +361,8 @@ scenarios that stalled the historical Rust policies simply continue. The invento
 counts slides (`SL`), blocked moves, near-wall impulses, peak live fireballs and the
 largest coordinate per scenario. [map_scale_snapshot.py](map_scale_snapshot.py) and
 [m3h3_snapshot_goldens.py](m3h3_snapshot_goldens.py) project DSIM30 from the C rows:
-the DSIM29 layout under version 30, policy 14, the map-scale context, 256 slots and
-the 192 live-fireball bound. See [investigation](../../docs/M3H3_REFERENCE_INVESTIGATION.md),
+the DSIM29 layout under version 30, policy 14, the map-scale context, 320 slots and
+the 208 live-fireball bound. See [investigation](../../docs/M3H3_REFERENCE_INVESTIGATION.md),
 [commands](../../docs/TESTING.md#original-monsters-at-real-map-scale) and
 [observations](../../docs/validation/M3H3.md).
 

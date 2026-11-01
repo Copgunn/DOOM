@@ -1370,8 +1370,8 @@ construction and the walls keep every mover inside it, as the original's
 | BLOCKMAP | origin at or below `R`'s minimum, grid strictly past its maximum, every wall listed in every cell its bbox touches | the source checks only the cells of the destination box |
 | Sector | one, heights `[0,128]`, no specials, no sky | unchanged grounded domain |
 | Spawns | closed bounding box inside `R` (THINGs, player body, dropped-pickup setup) | the invariant must hold from the start |
-| Actor slots | `MAP_SCALE_ACTOR_SLOTS` = 256 | ≤ 225 live actors for any admitted roster, ≤ 240 visits per pass |
-| Live fireballs | `MAP_SCALE_MAX_LIVE_PROJECTILES` = 192 | 24 per Imp from a 25-tic minimum launch interval and a 598-pass maximum lifetime in the largest room |
+| Actor slots | `MAP_SCALE_ACTOR_SLOTS` = 320 | ≤ 241 live actors for any admitted roster, ≤ 256 visits per pass |
+| Live fireballs | `MAP_SCALE_MAX_LIVE_PROJECTILES` = 208 | 26 per Imp from a 23-tic minimum launch interval (attack cut short by pain, then the JUSTHIT shortcut) and a 598-pass maximum lifetime in the largest room |
 | Monsters, items, drops, sight queries | 8, 16, 8, 64 per tic | unchanged |
 
 | Checked before every tic | Value | Status |
@@ -1383,7 +1383,7 @@ construction and the walls keep every mover inside it, as the original's
 Legal source moves, wall slides, corner pinches and hits at walls are never rejected:
 `advance` fails for this policy only on invalid inputs (stale or foreign handles,
 commands outside the source range, non-zero commands to a dead player, unsupported
-buttons, pause), on the two witnesses above, or on a controlled launch past 192
+buttons, pause), on the two witnesses above, or on a controlled launch past 208
 fireballs. A map that fails any load check is rejected by the constructor with
 `MapScaleError::{Walls, Blockmap, Lines}`, `GeometryError::CoordinateOverflow` or the
 inherited grounded-geometry rejection, never during play. Spawns whose box crosses a

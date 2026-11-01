@@ -267,18 +267,23 @@ The actor store is a hard capacity; a full store is a deterministic rejection. T
 original has none, so the budget must exceed what admitted play can hold at any instant.
 
 **Fireballs.** An Imp fires on entering `S_TROO_ATK3`. The shortest cycle back to a
-launch is `S_TROO_ATK3` (6) → `S_TROO_RUN1` entry, whose `A_Chase` only clears
-`MF_JUSTATTACKED` and picks a direction → `S_TROO_RUN1` (3) → `S_TROO_RUN2` entry, whose
-`A_Chase` may select the missile state immediately when `movecount == 0` → `S_TROO_ATK1`
-(8) → `S_TROO_ATK2` (8) → `S_TROO_ATK3` entry: **25 tics minimum** between launches.
-A fireball holds a slot from its launch pass through retirement: the launch pass (half
-step and first 10-unit move), then 10 units per pass along a straight chord of the room,
-then `S_TBALLX1` (6 minus `P_Random()&3`, at least 3) + `S_TBALLX2` (6) + `S_TBALLX3` (6)
-+ one retirement visit. For the largest room (`R` = 4,096 × 4,096, chord of the
-12-unit-shrunk rectangle 5,776) that is `1 + 578 + 18 + 1 = 598` passes, so one Imp
-holds at most `ceil(598/25) = 24` fireballs and eight Imps **192**. This policy sets
-`MAP_SCALE_MAX_LIVE_PROJECTILES = 192`; the launch check stays as the schema witness and
-is unreachable in play.
+launch is not the undisturbed one (`S_TROO_ATK3` 6 → `S_TROO_RUN1` 3 → `ATK1` 8 →
+`ATK2` 8 = 25 tics) but the one cut short by damage: `P_DamageMobj` enters
+`S_TROO_PAIN` (2) → `S_TROO_PAIN2` (2) → `S_TROO_RUN1` without clearing
+`MF_JUSTATTACKED` and with `MF_JUSTHIT` set, so `A_Chase` at `RUN1` only clears the
+flag and picks a direction, `RUN1` (3) ends, and `A_Chase` at `RUN2` may select the
+missile state at once because `P_CheckMissileRange` returns true on `MF_JUSTHIT`:
+`2 + 2 + 3 + 8 + 8 =` **23 tics minimum** between launches (found by the independent
+review; the first draft said 25). A fireball holds a slot from its launch pass through
+retirement: the launch pass (half step and first 10-unit move), then 10 units per pass
+along a straight chord of the room, then `S_TBALLX1` (6 minus `P_Random()&3`, at
+least 3) + `S_TBALLX2` (6) + `S_TBALLX3` (6) + one retirement visit. For the largest
+room (`R` = 4,096 × 4,096, chord of the 12-unit-shrunk rectangle 5,776) that is at
+most `1 + 578 + 18 + 1 = 598` passes, so one Imp holds at most `ceil(598/23) = 26`
+fireballs and eight Imps **208**. This policy sets
+`MAP_SCALE_MAX_LIVE_PROJECTILES = 208`; the launch check stays as the schema witness and
+is unreachable in play (it needs eight Imps hit after every launch and winning every
+range roll for 600 tics).
 
 **Impacts.** A puff holds at most 17 passes (`S_PUFF1` 1–4, then 4+4+4, retirement), blood
 at most 25 (`S_BLOOD1` 5–8, then 8+8, retirement; shorter when damage ≤ 12). The fastest
@@ -288,13 +293,13 @@ passes: ≤ 7; a weapon switch takes ≥ 32 passes, so volleys of two weapons ne
 overlap): player impacts ≤ 8. A shotgunner (3 per ≥ 33 passes) ≤ 3, a zombieman ≤ 2.
 
 **Slots.** With `k` Imps and `8 − k` former humans:
-`1 + 8 + 16 + 24k + (8 − k) drops + 8·(8 − k) impacts + 8 player impacts = 105 + 15k ≤ 225`.
+`1 + 8 + 16 + 26k + (8 − k) drops + 8·(8 − k) impacts + 8 player impacts = 105 + 17k ≤ 241`.
 Spawns in one pass ≤ `k + 7 + 4·(8 − k) = 39 − 3k`, so the visit count of one thinker
-pass is at most `144 + 12k ≤ 240`. The policy fixes **256 slots**
-(`MAP_SCALE_ACTOR_SLOTS`): the store never fills, `StoreError::Capacity` and
-`StoreError::VisitLimit` are unreachable, and the recoverable-refill latch stays only
-for defense. The DSIM30 reader admits `store.max_slots ≤ 256` and at most 192
-non-pending fireballs.
+pass is at most `144 + 14k ≤ 256`. The policy fixes **320 slots**
+(`MAP_SCALE_ACTOR_SLOTS`): the store never fills, `StoreError::Capacity` is unreachable,
+and `StoreError::VisitLimit` keeps a 64-visit margin below its budget; the
+recoverable-refill latch stays only for defense. The DSIM30 reader admits
+`store.max_slots ≤ 320` and at most 208 non-pending fireballs.
 
 **Unchanged caps.** Monsters 8 (sight budget: ≤ 3 queries each per tic, 64 allowed),
 items 16, drops 8 (one per former-human death), 64 sight queries, hitscan 64 cells and
@@ -309,6 +314,6 @@ progressing in C, near-wall and corner impulses, long-distance fireballs, full-r
 traversal at `±2048`, mixed-roster fights at walls and corners, and drops/pickups far
 from the origin. `tools/reference/map_scale_snapshot.py` and
 `m3h3_snapshot_goldens.py` independently project DSIM30 (the DSIM29 layout with
-version 30, policy 14, the new context and 256 slots). Both are committed before the
+version 30, policy 14, the new context and 320 slots). Both are committed before the
 matching runtime. Cap and budget soaks are Rust-only tests with the full item and drop
 budget filled; the C harness has no cap to reach.

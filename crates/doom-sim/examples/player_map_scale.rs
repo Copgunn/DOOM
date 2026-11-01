@@ -48,8 +48,8 @@ fn main() -> ResultHost<()> {
         far > 0,
         "captured actor fields beyond the historical 994 margin"
     );
-    assert_eq!(MAP_SCALE_MAX_LIVE_PROJECTILES, 192);
-    assert_eq!(MAP_SCALE_ACTOR_SLOTS, 256);
+    assert_eq!(MAP_SCALE_MAX_LIVE_PROJECTILES, 208);
+    assert_eq!(MAP_SCALE_ACTOR_SLOTS, 320);
     println!(
         "player_map_scale: C monsters, fireballs, slides and impulses at walls across rooms up to 2048 units, DSIM30: source/schema/policy checks complete digest={digest:016x}"
     );

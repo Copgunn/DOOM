@@ -6,15 +6,16 @@
 use crate::*;
 use std::{error::Error, fmt};
 
-/// Actor slots of the map-scale policy: `1 + 8 + 16 + 24k + (8-k) + 8(8-k) + 8 <= 225`
+/// Actor slots of the map-scale policy: `1 + 8 + 16 + 26k + (8-k) + 8(8-k) + 8 <= 241`
 /// live actors for `k` Imps, plus at most `39 - 3k` spawns in one pass, is at most
-/// 240 visits, so the store never fills and the visit budget is never reached.
-pub const MAP_SCALE_ACTOR_SLOTS: u32 = 256;
-/// Live fireballs: one Imp launches at most every 25 tics and a fireball holds its
-/// slot for at most `ceil(5776/10) + 20 = 598` passes in the largest room, so
-/// `ceil(598/25) = 24` per Imp and 192 for eight. Unreachable in play; kept as the
-/// schema bound and launch witness.
-pub const MAP_SCALE_MAX_LIVE_PROJECTILES: usize = 192;
+/// 256 visits, so the store never fills and the visit budget keeps a 64-visit margin.
+pub const MAP_SCALE_ACTOR_SLOTS: u32 = 320;
+/// Live fireballs: one Imp launches at most every 23 tics (its attack state cut
+/// short by pain, then the JUSTHIT shortcut of `P_CheckMissileRange`) and a fireball
+/// holds its slot for at most `ceil(5776/10) + 20 = 598` passes in the largest room,
+/// so `ceil(598/23) = 26` per Imp and 208 for eight. Unreachable in play; kept as
+/// the schema bound and launch witness.
+pub const MAP_SCALE_MAX_LIVE_PROJECTILES: usize = 208;
 /// Linedefs plus the at most 33 BLOCKMAP-linked things never exceed the source
 /// `MAXINTERCEPTS` (128) in one trace.
 pub const MAP_SCALE_WALL_LINES: usize = 95;
@@ -68,9 +69,14 @@ impl RoomBounds {
     }
     /// Closed containment of a whole bounding box: the spawn condition under which
     /// every later `P_TryMove` keeps the open box inside the open rectangle.
+    /// The box edges are formed in i64, so a coordinate near `i32::MIN` cannot wrap
+    /// into the rectangle.
     pub fn contains_box(&self, position: [Fixed; 2], radius: Fixed) -> bool {
         (0..2).all(|axis| {
-            position[axis] - radius >= self.min[axis] && position[axis] + radius <= self.max[axis]
+            let center = i64::from(position[axis].bits());
+            let radius = i64::from(radius.bits());
+            center - radius >= i64::from(self.min[axis].bits())
+                && center + radius <= i64::from(self.max[axis].bits())
         })
     }
     /// Derive and check the rectangle of a grounded single-sector map: four fully

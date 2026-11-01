@@ -759,7 +759,7 @@ fn map_scale_fireball_cap_and_slots_reject_with_full_rollback() {
             .unwrap()
             .unwrap();
     }
-    assert_eq!(fireball_count(&s), 192);
+    assert_eq!(fireball_count(&s), MAP_SCALE_MAX_LIVE_PROJECTILES);
     let before = s.clone();
     assert_eq!(
         s.checked_demon_operation(|h| crate::projectiles::launch_fireball(h, imp, body))
@@ -768,8 +768,8 @@ fn map_scale_fireball_cap_and_slots_reject_with_full_rollback() {
     );
     assert_eq!(s.snapshot(), before.snapshot());
     assert_eq!(s.rng(), before.rng());
-    // The 194 live actors advance; the DSIM30 reader admits the frame and its
-    // 192 fireballs, and the v29 reader does not.
+    // The 210 live actors advance; the DSIM30 reader admits the frame and its
+    // 208 fireballs, and the v29 reader does not.
     s.advance([TicCommand::default(); 4]).unwrap();
     let limits = DiagnosticLimits::default();
     let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
@@ -811,8 +811,14 @@ fn dsim30_reader_is_explicit_and_bounds_slots() {
         out
     };
     assert_eq!(
-        Diagnostic::decode_map_scale(&patch("store.max_slots", &257_u32.to_le_bytes()), limits)
-            .unwrap_err(),
+        Diagnostic::decode_map_scale(
+            &patch(
+                "store.max_slots",
+                &(MAP_SCALE_ACTOR_SLOTS + 1).to_le_bytes()
+            ),
+            limits
+        )
+        .unwrap_err(),
         DiagnosticError::Limit
     );
     assert!(
@@ -822,7 +828,7 @@ fn dsim30_reader_is_explicit_and_bounds_slots() {
         Diagnostic::decode_map_scale(&patch("level.total_kills", &9_i32.to_le_bytes()), limits)
             .is_err()
     );
-    // A v29 frame never admits 256 slots: the historical reader is unchanged.
+    // A v29 frame never admits the map-scale slot count: the historical reader is unchanged.
     let mut old = historical(
         OriginalExecutionProfile::PlayerMonstersImpV1,
         stall_room(&[[800, 0, 0, IMP, 7]]),
@@ -841,7 +847,7 @@ fn dsim30_reader_is_explicit_and_bounds_slots() {
         out
     };
     assert_eq!(
-        Diagnostic::decode_imps(&patch_old(256), limits).unwrap_err(),
+        Diagnostic::decode_imps(&patch_old(MAP_SCALE_ACTOR_SLOTS), limits).unwrap_err(),
         DiagnosticError::Limit
     );
     // A v30 frame relabeled 29 is not an admitted Imp-policy frame.
@@ -976,7 +982,74 @@ fn full_budget_soak_never_rejects_a_valid_tic() {
         peak_actors = peak_actors.max(s.actor_order().count());
         kills = kills.max(s.level_statistics().unwrap().single_player_kill_count);
     }
-    assert!(peak_actors <= 225, "live actors {peak_actors}");
+    assert!(peak_actors <= 241, "live actors {peak_actors}");
     assert!(peak_fireballs <= MAP_SCALE_MAX_LIVE_PROJECTILES);
     println!("soak peak_actors={peak_actors} peak_fireballs={peak_fireballs} kills={kills}");
+}
+
+#[test]
+fn spawn_near_the_coordinate_minimum_cannot_wrap_into_the_room() {
+    // Review regression: a THING at -32,768 (bits i32::MIN) once passed the box test
+    // through wrapping fixed-point subtraction and then stalled every tic.
+    let mut s = stall_room_scale(&[[-32768, 0, 0, IMP, 7], [800, 0, 0, IMP, 7]]);
+    let before = s.snapshot();
+    assert!(s.spawn_map_things().is_err());
+    assert_eq!(s.snapshot(), before);
+    let mut s = stall_room_scale(&[[800, 0, 0, IMP, 7]]);
+    s.spawn_map_things().unwrap();
+    let before = s.snapshot();
+    assert!(
+        s.spawn_player_body(PlayerSlot::One, [Fixed::from_bits(i32::MIN), Fixed::ZERO])
+            .is_err()
+    );
+    assert!(
+        s.spawn_player_body(
+            PlayerSlot::One,
+            [Fixed::ZERO, Fixed::from_bits(i32::MIN + 65536)]
+        )
+        .is_err()
+    );
+    assert_eq!(s.snapshot(), before);
+    arm(&mut s, [0, 0]);
+    progresses(&mut s, |_, _| [TicCommand::default(); 4], 30);
+}
+
+#[test]
+fn derived_budgets_follow_the_source_state_tables() {
+    // The fireball bound and slot budget are derived, not measured: the shortest
+    // Imp launch cycle is its attack state cut short by pain (PAIN, PAIN2, RUN1
+    // then ATK1 and ATK2, the missile check passing on JUSTHIT), and a fireball
+    // holds a slot for the launch pass, the longest chord of the largest room at
+    // 10 units per pass, its three explosion states and one retirement visit.
+    let tics = |s: OriginalState| s.descriptor().tics as usize;
+    let imp = OriginalActorType::MT_TROOP.states();
+    let fireball = OriginalActorType::MT_TROOPSHOT.states();
+    assert_eq!(imp.pain, OriginalState::S_TROO_PAIN);
+    assert_eq!(imp.missile, OriginalState::S_TROO_ATK1);
+    let pain = tics(OriginalState::S_TROO_PAIN) + tics(OriginalState::S_TROO_PAIN2);
+    let run = tics(OriginalState::S_TROO_RUN1);
+    let attack = tics(OriginalState::S_TROO_ATK1) + tics(OriginalState::S_TROO_ATK2);
+    let cycle = pain + run + attack;
+    assert_eq!(cycle, 23);
+    let speed = OriginalActorType::MT_TROOPSHOT.descriptor().speed / 65536;
+    let radius = OriginalActorType::MT_TROOPSHOT.descriptor().radius / 65536;
+    let side = 2 * i64::from(MAP_SCALE_EXTENT_UNITS) - 2 * i64::from(radius);
+    let chord = ((2 * side * side) as f64).sqrt().ceil() as usize;
+    let flight = chord.div_ceil(speed as usize);
+    let explosion =
+        tics(fireball.death) + tics(OriginalState::S_TBALLX2) + tics(OriginalState::S_TBALLX3);
+    let lifetime = 1 + flight + explosion + 1;
+    assert_eq!(lifetime, 598);
+    let per_imp = lifetime.div_ceil(cycle);
+    assert_eq!(per_imp, 26);
+    assert_eq!(
+        MAP_SCALE_MAX_LIVE_PROJECTILES,
+        MAX_PLAYER_MONSTERS * per_imp
+    );
+    // Slots: player, monsters, items, drops, fireballs and impacts for the worst
+    // roster (eight Imps), plus one pass of spawns, stays below the budget.
+    let live = 1 + MAX_PLAYER_MONSTERS + MAX_WORLD_PICKUPS + MAP_SCALE_MAX_LIVE_PROJECTILES + 8;
+    let spawns = MAX_PLAYER_MONSTERS + 7;
+    assert_eq!(live, 241);
+    assert!(live + spawns <= MAP_SCALE_ACTOR_SLOTS as usize - 64);
 }

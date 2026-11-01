@@ -1473,9 +1473,9 @@ unchanged, including their 64-slot bounds.
 V30 uses the DSIM29 field layout, event vocabulary and tag15 projectile events, and
 adds no persistent field or event tag. It widens bounds only under30:
 
-- `store.max_slots` and `store.slot_count` may reach 256, and handle slots in every
-  field and event payload are bounded by 256 instead of 64.
-- At most 192 nonpending actors may have type 31; every `pending_removal` is 0 or 1.
+- `store.max_slots` and `store.slot_count` may reach 320, and handle slots in every
+  field and event payload are bounded by 320 instead of 64.
+- At most 208 nonpending actors may have type 31; every `pending_removal` is 0 or 1.
 - Actor coordinates are bounded by the registry's 2,048-unit domain; the walled
   rectangle is derived from `map.vertices` by the runtime and is not a stored field.
 - `level.total_kills` and the counted DoomEd set are those of v29.
