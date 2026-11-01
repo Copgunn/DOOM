@@ -229,7 +229,7 @@ impl HeightsRoom {
             if lo == hi {
                 return 0x8000 | lo as u16;
             }
-            let mid = (lo + hi + 1) / 2;
+            let mid = (lo + hi).div_ceil(2);
             let left = build(spans, y, lo, mid - 1, nodes, count);
             let right = build(spans, y, mid, hi, nodes, count);
             let x = spans[mid];

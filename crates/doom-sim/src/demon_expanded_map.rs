@@ -1,6 +1,16 @@
 //! Explicit intersection of expanded static geometry and the native Demon closure.
 use crate::*;
 
+/// Which expanded-map service family a construction selects and the two
+/// policy-decided admissions it needs before any type validation runs.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct ExpandedSelection {
+    pub profile: Profile,
+    /// Actor slots the proof needs (64 historically, 320 at map scale).
+    pub actor_cap: u32,
+    /// Admit type dimensions against the tallest sector (heights policy).
+    pub type_envelope: bool,
+}
 impl Simulation {
     /// Profile 20: larger static maps with the exact map-context Demon registry.
     /// Geometry uses the extent proof; actors retain the narrower gameplay bounds.
@@ -18,9 +28,11 @@ impl Simulation {
             registry,
             options,
             context,
-            Profile::DemonExpandedMap,
-            64,
-            false,
+            ExpandedSelection {
+                profile: Profile::DemonExpandedMap,
+                actor_cap: 64,
+                type_envelope: false,
+            },
         )
     }
     pub(crate) fn with_demon_expanded_profile(
@@ -29,10 +41,13 @@ impl Simulation {
         registry: ActorRegistry,
         options: ActorOptions,
         context: MapContextOptions,
-        profile: Profile,
-        actor_cap: u32,
-        type_envelope: bool,
+        selection: ExpandedSelection,
     ) -> Result<Self, SimError> {
+        let ExpandedSelection {
+            profile,
+            actor_cap,
+            type_envelope,
+        } = selection;
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
         }

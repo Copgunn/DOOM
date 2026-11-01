@@ -366,6 +366,25 @@ the 208 live-fireball bound. See [investigation](../../docs/M3H3_REFERENCE_INVES
 [commands](../../docs/TESTING.md#original-monsters-at-real-map-scale) and
 [observations](../../docs/validation/M3H3.md).
 
+## Static-heights rooms (M3h4)
+
+[m3h4_reference.py](m3h4_reference.py) reuses every compiled M3h2 body, observer and
+controlled input unchanged and replaces only the room: [m3h4_geometry.py](m3h4_geometry.py)
+builds strips of axis-aligned sectors with static floor/ceiling heights inside a walled
+rectangle (one-sided boundary walls split at 1,024 units, two-sided lines with
+configurable flags between neighbours, one subsector per sector, a guillotine BSP,
+optional REJECT pairs and a cell-exact BLOCKMAP); [m3h4_cases.py](m3h4_cases.py)
+places THINGs on stairs, a ledge, a window, a closed sector, fences, a crawlspace and
+a tower. The inventory counts blocked moves by `P_TryMove` reason, vertical steps,
+falls, floor/ceiling contacts, landing sounds, sight queries, hitscan impacts, noise
+floods and fireball floor/ceiling explosions. [heights_snapshot.py](heights_snapshot.py)
+and [m3h4_snapshot_goldens.py](m3h4_snapshot_goldens.py) project DSIM31 from the C
+rows: the DSIM30 layout under version 31, policy 15 and the heights context, with
+slide-traverse trace rows filtered before the inherited chain. See
+[investigation](../../docs/M3H4_REFERENCE_INVESTIGATION.md),
+[commands](../../docs/TESTING.md#original-monsters-with-static-heights) and
+[observations](../../docs/validation/M3H4.md).
+
 ## Historical raw-trace loading
 
 Selected large CSV traces now use standard zstd storage. Run frozen C/encoder

@@ -212,3 +212,6 @@ See [source qualification](M3G9_REFERENCE_INVESTIGATION.md) and
 - [M3h3 wall-aware travel and real-map scale](validation/M3H3.md): the reproduced
   M3h2 stalls and their continuation in C, rooms to 2,048 units, wall slides and
   impulses, DSIM30, the no-stall soaks, caps and the `sixteen` fix.
+- [M3h4 two-sided lines, static heights and vertical movement](validation/M3H4.md):
+  steps, falls, landings, ledges, windows, fences, noise floods and fireball
+  floor/ceiling explosions in C, DSIM31, the vertical-invariant soaks and fuzzing.

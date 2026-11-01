@@ -848,9 +848,11 @@ impl Simulation {
             registry.into_registry(),
             options,
             context,
-            Profile::OriginalDemon,
-            actor_cap,
-            heights,
+            demon_expanded_map::ExpandedSelection {
+                profile: Profile::OriginalDemon,
+                actor_cap,
+                type_envelope: heights,
+            },
         )?;
         if policy.has_player_body() {
             sim.original_player = Some(original_player::PlayerRuntime {

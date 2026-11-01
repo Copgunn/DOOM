@@ -1396,3 +1396,55 @@ argument does not hold for them. Two-sided lines, height changes, moving sectors
 other monsters and projectiles remain excluded. See
 [source investigation](M3H3_REFERENCE_INVESTIGATION.md) and
 [observed evidence](validation/M3H3.md).
+
+## Original monsters with static heights
+
+`PlayerMonstersHeightsV1` (wire15, context `PLAYER-MONSTERS-HEIGHTS-1-MEDIUM-v1`,
+DSIM-v31) is a separate opt-in superset of `PlayerMonstersMapScaleV1`. Select it with
+`Simulation::original_player_heights_map`, which takes no slot limit. The same roster,
+weapons, items, drops, fireballs, infighting, statistics, walled rectangle, slot and
+fireball budgets, momentum bound and whole-tic rollback apply. Older policies, wires
+and DSIM20–30 are unchanged and keep the flat single sector, the `z == floor`,
+`momz == 0` and 64-unit witnesses and every margin listed above.
+
+What changes is the vertical domain. The map may hold up to 256 axis-aligned sectors
+with different static floor and ceiling heights joined by two-sided linedefs: steps,
+ledges, drop-offs, windows, closed sectors and fences. Every mover follows the
+original bodies that the engine already carried for the M3b profile: `P_LineOpening`,
+`PIT_CheckLine`'s `tmfloorz`/`tmceilingz`/`tmdropoffz`, `P_TryMove`'s fit, headroom,
+24-unit step and dropoff rules, `P_SlideMove` against blocking two-sided lines,
+`P_ZMovement` gravity, landing and ceiling clipping, `P_Move` snapping a walking monster
+to its floor, `P_CheckSight`/`P_CrossSubsector` slopes with REJECT, `P_AimLineAttack`
+and `PTR_ShootTraverse` through openings and onto upper and lower walls, fireball
+`momz` chords and floor/ceiling explosions, and `P_RecursiveSound` through open
+two-sided lines with `ML_SOUNDBLOCK`. Three behaviors the flat world could never reach
+become reachable: the player's landing sound request (`sfx_oof` when `momz < -8`),
+weapon noise flooding every connected sector, and the `P_DamageMobj` fall-forward
+branch for a lethal weak hit from more than 64 units below (one extra gameplay draw).
+The proof is in the [investigation](M3H4_REFERENCE_INVESTIGATION.md#4-the-admitted-domain).
+
+| Admitted at load | Value | Why |
+| --- | ---: | --- |
+| Vertices, node origins/deltas, BLOCKMAP origin, line norm, linedef count, slots, fireballs, roster, items | as the map-scale policy | unchanged proofs |
+| Sectors | ≤ 256, heights within ±512, floor ≤ ceiling, no specials, no `F_SKY1`; spans may be shorter than any actor (windows, crawlspaces, closed sectors) | source geometry; a closed door loads as a static wall |
+| Linedefs | axis-aligned, not degenerate, a front side, `ML_TWOSIDED` exactly when a back side exists; flags within `{1, 2, 8, 16, 32, 64, 128, 256}` plus 4 | `P_HitSlideLine` axis cases; bits 1, 2, 4 and 64 are read by the admitted bodies, the rest only by the renderer and automap |
+| Walls | each side of `R` fully covered by **one-sided** linedefs of any admitted flags | `PIT_CheckLine` blocks a one-sided line regardless of flags |
+| BLOCKMAP | every linedef, one- or two-sided, listed in every cell its bbox touches | the source checks only the destination box's cells |
+| Type dimensions | each type fits the tallest sector | Rust-only; fitting is proved per spawn instead of map-wide |
+| Spawns | closed box inside `R` **and** the type's height fits the spawn sector's span (THINGs, player body, controlled spawns, dropped pickups, `P_KillMobj` drops) | Rust-only: the source would stand a too-tall thing through the ceiling; rejecting it costs no legal play |
+
+| Checked before every tic | Value | Status |
+| --- | ---: | --- |
+| Vertical invariant | every non-impact actor has `floor <= z <= ceiling - height` with its own `floorz`/`ceilingz` | unreachable witness (`MapScaleError::Vertical`); puffs and blood spawn at absolute `z` and are clipped by `P_ZMovement`, as in the source |
+| `z`, `momz` | within 2,048 and `HEIGHTS_MOMZ_UNITS` = 1,024 | a fireball chord is within 968, gravity within 46; unreachable witness |
+| Items | `z == floor`, `floor`/`ceiling` equal to the item's own sector | replaces the flat `0/128` |
+
+Legal source moves are never rejected. A map that fails a load check is rejected by
+the constructor with `MapScaleError::{Geometry, Walls, Blockmap, Lines}`, the inherited
+specials, sky, height-range and inverted-sector rejections, never during play; a spawn
+that does not fit rejects with `MapScaleError::Fit` and unchanged state, and a
+`P_KillMobj` drop that would not fit fails its checked tic. Moving sectors, doors,
+lifts, crushers, line and sector specials, damaging floors, teleporters, sky ceilings,
+non-axis walls, `P_CalcHeight`/view bobbing and every other monster or weapon stay
+excluded. See [source investigation](M3H4_REFERENCE_INVESTIGATION.md) and
+[observed evidence](validation/M3H4.md).
