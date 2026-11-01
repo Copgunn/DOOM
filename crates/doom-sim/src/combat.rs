@@ -237,24 +237,38 @@ impl DamagePlan {
         self.demand.spawns
     }
     fn finish(
-        mut self,
+        self,
         actor: Actor,
         registry: &ActorRegistry,
         validate_entry: impl Fn(StateId) -> Result<(), SimError>,
     ) -> Result<Self, SimError> {
+        self.finish_with(actor, registry, validate_entry, false)
+    }
+    /// `drops` admits the P_KillMobj item branch (PlayerMonstersV1 only); its
+    /// one MF_DROPPED item is a counted spawn demand like any other thinker.
+    fn finish_with(
+        mut self,
+        actor: Actor,
+        registry: &ActorRegistry,
+        validate_entry: impl Fn(StateId) -> Result<(), SimError>,
+        drops: bool,
+    ) -> Result<Self, SimError> {
         let life = actor.life.unwrap();
         let info = registry.actor_type(life.actor_type).unwrap();
         if self.killed {
-            if ["MT_POSSESSED", "MT_WOLFSS", "MT_SHOTGUY", "MT_CHAINGUY"]
+            let dropper = ["MT_POSSESSED", "MT_WOLFSS", "MT_SHOTGUY", "MT_CHAINGUY"]
                 .iter()
-                .any(|name| lifecycle::source_type_is(life.actor_type, name))
-            {
+                .any(|name| lifecycle::source_type_is(life.actor_type, name));
+            if dropper && !(drops && crate::original_registry::is_former_human(life.actor_type)) {
                 return Err(CombatError::KillBranch.into());
             }
             self.extreme = self.health[1] < -info.spawn_health() && info.states()[6].0 != 0;
             self.state = info.states()[if self.extreme { 6 } else { 5 }];
             validate_entry(self.state)?;
             self.demand = registry.demand(self.state, life.tics)?;
+            if dropper {
+                self.demand.spawns += 1;
+            }
         } else {
             if info.pain_chance() > 0 {
                 self.demand
@@ -323,6 +337,92 @@ impl DamagePlan {
             registry.validate_state_demon_melee(state)?;
             Ok(())
         })
+    }
+}
+/// P_KillMobj item for an admitted former human (p_inter.c drop switch).
+pub(crate) fn source_drop(ty: ActorTypeId) -> Option<identity::OriginalActorType> {
+    use identity::OriginalActorType as T;
+    match ty.0 {
+        n if n == T::MT_POSSESSED.ordinal() => Some(T::MT_CLIP),
+        n if n == T::MT_SHOTGUY.ordinal() => Some(T::MT_SHOTGUN),
+        n if n == T::MT_CHAINGUY.ordinal() => Some(T::MT_CHAINGUN),
+        _ => None,
+    }
+}
+impl DamagePlan {
+    /// PlayerMonstersV1 current damage for any admitted target, planned from the
+    /// staged transaction at actual attack time: the genuine player (with armor
+    /// and the grounded impulse proof) or a roster monster (with the grounded
+    /// impulse proof, kill credit and source drop demand). Never a cached plan.
+    pub(crate) fn current_original<A: ActorAccess>(
+        host: &LifeHost<'_, A>,
+        request: DamageRequest,
+    ) -> Result<Self, SimError> {
+        let player = host.player.as_deref().ok_or(PlayerBodyError::Profile)?;
+        let policy = player.policy;
+        if !policy.has_monsters() {
+            return Err(PlayerBodyError::Profile.into());
+        }
+        if !(0..=1000).contains(&request.amount) {
+            return Err(CombatError::Damage.into());
+        }
+        let victim = *host
+            .access
+            .get(request.target)
+            .ok_or(CombatError::Reference)?;
+        let life = victim.life().ok_or(CombatError::Metadata)?;
+        let inflictor = request
+            .inflictor
+            .map(|id| host.access.get(id).copied().ok_or(CombatError::Reference))
+            .transpose()?;
+        let live = life.health > 0 && life.flags & original_player::MF_SHOOTABLE != 0;
+        if player.mo == Some(request.target) {
+            if let (true, Some(origin)) = (live, inflictor.as_ref()) {
+                original_player::preflight_player_impulse(&victim, origin, request.amount)?;
+            }
+            return Self::current_armored_body(
+                host.registry,
+                victim,
+                request,
+                player.armor,
+                policy,
+            );
+        }
+        if !crate::original_registry::is_policy_monster(policy, life.actor_type) {
+            return Err(MonsterError::Target.into());
+        }
+        if let (true, Some(origin)) = (live, inflictor.as_ref()) {
+            let mass = host
+                .registry
+                .actor_type(life.actor_type)
+                .ok_or(CombatError::Metadata)?
+                .mass();
+            original_player::preflight_grounded_impulse(&victim, origin, request.amount, mass)?;
+        }
+        let mut plan = Self::start(victim, request, None, policy)?;
+        if plan.ignored {
+            return Ok(plan);
+        }
+        if plan.killed && life.flags & MF_COUNTKILL != 0 {
+            host.statistics
+                .as_deref()
+                .ok_or(MapSpawnError::Ownership)?
+                .single_player_kill_count
+                .checked_add(1)
+                .ok_or(MapSpawnError::StatisticsOverflow)?;
+            plan.credit = true;
+        }
+        plan.finish_with(
+            victim,
+            host.registry,
+            |state| {
+                crate::original_registry::state_role_for(policy, life.actor_type, state)
+                    .map_err(|_| MonsterError::Definition)?;
+                host.registry.validate_state_original_monsters(state)?;
+                Ok(())
+            },
+            true,
+        )
     }
 }
 impl PreparedAttack {
@@ -842,6 +942,20 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             life.tics = (life.tics - i32::from(random & 3)).max(1);
             let tics = life.tics;
             self.combat_event(CombatEvent::DeathTimer { target: id, tics });
+            if self.player.as_ref().is_some_and(|p| p.policy.has_monsters()) {
+                if let Some(item) = source_drop(old.life.unwrap().actor_type) {
+                    // p_inter.c P_KillMobj: P_SpawnMobj(x, y, ONFLOORZ), then MF_DROPPED.
+                    let position = self.access.get(id).unwrap().position();
+                    let drop = self.spawn(ActorTypeId(item.ordinal()), position, SpawnHeight::Floor);
+                    self.access
+                        .get_mut(drop)
+                        .unwrap()
+                        .life
+                        .as_mut()
+                        .unwrap()
+                        .flags |= crate::world_pickups::MF_DROPPED;
+                }
+            }
             return result;
         }
         let random = self.combat_random(1);

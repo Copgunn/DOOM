@@ -41,6 +41,7 @@ impl Simulation {
                 | OriginalExecutionProfile::PlayerDemonPickupsV1
                 | OriginalExecutionProfile::PlayerDemonArmorV1
                 | OriginalExecutionProfile::PlayerDemonBonusesV1
+                | OriginalExecutionProfile::PlayerMonstersV1
         )
     }
 
@@ -69,7 +70,9 @@ impl Simulation {
     }
 
     pub(crate) fn map_demon_limit(&self) -> usize {
-        if self.uses_active_player_roster() {
+        if self.player_policy().has_monsters() {
+            MAX_PLAYER_MONSTERS
+        } else if self.uses_active_player_roster() {
             1
         } else {
             MAX_MAP_DEMONS
@@ -118,6 +121,7 @@ impl PerceptionRoster<'_> {
                     | OriginalExecutionProfile::PlayerDemonPickupsV1
                     | OriginalExecutionProfile::PlayerDemonArmorV1
                     | OriginalExecutionProfile::PlayerDemonBonusesV1
+                    | OriginalExecutionProfile::PlayerMonstersV1
             )
         )
     }

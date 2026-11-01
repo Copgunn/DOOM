@@ -84,6 +84,7 @@ impl Simulation {
                     | OriginalExecutionProfile::PlayerDemonPickupsV1
                     | OriginalExecutionProfile::PlayerDemonArmorV1
                     | OriginalExecutionProfile::PlayerDemonBonusesV1
+                    | OriginalExecutionProfile::PlayerMonstersV1
             ) {
                 BT_ATTACK | BT_CHANGE | BT_WEAPONMASK
             } else if p.policy == OriginalExecutionProfile::PlayerDemonPistolV1 {
@@ -106,6 +107,7 @@ impl Simulation {
                 | OriginalExecutionProfile::PlayerDemonPickupsV1
                 | OriginalExecutionProfile::PlayerDemonArmorV1
                 | OriginalExecutionProfile::PlayerDemonBonusesV1
+                | OriginalExecutionProfile::PlayerMonstersV1
         ) {
             player_weapons::validate_command(command)?;
         }

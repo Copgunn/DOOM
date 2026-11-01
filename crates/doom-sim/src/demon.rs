@@ -81,6 +81,9 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
         return Ok(());
     };
     let player = host.player.as_deref().ok_or(PlayerBodyError::Binding)?;
+    if player.policy.has_monsters() && player.mo != Some(target) {
+        return strike_monster(host, id, target);
+    }
     let body = host.access.get(target).ok_or(CombatError::Reference)?;
     let body_life = body.life().ok_or(PlayerBodyError::Invariant)?;
     // Powers/SHADOW, cheats and arbitrary player flag mutations are unadmitted.
@@ -131,6 +134,34 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
     if damage.spawn_count() != 0 {
         return Err(CombatError::WorkLimit.into());
     }
+    host.apply_damage(damage);
+    Ok(())
+}
+/// PlayerMonstersV1 infighting bite: the same A_SargAttack face/range/draw
+/// order, then the shared current damage plan for the staged monster target.
+fn strike_monster<A: ActorAccess>(
+    host: &mut LifeHost<'_, A>,
+    id: ActorId,
+    target: ActorId,
+) -> Result<(), SimError> {
+    host.access.get(target).ok_or(MonsterError::Target)?;
+    crate::monsters::face(host, id);
+    if !crate::monsters::melee_host(host, id) {
+        return Ok(());
+    }
+    let amount =
+        (i32::from(crate::monsters::draw(host, id, SARG_DAMAGE_DRAW)) % SARG_DAMAGE_CHOICES + 1)
+            * SARG_DAMAGE_UNIT;
+    let damage = crate::combat::DamagePlan::current_original(
+        host,
+        DamageRequest {
+            target,
+            inflictor: Some(id),
+            source: Some(id),
+            amount,
+        },
+    )?;
+    host.access.reserve(damage.spawn_count())?;
     host.apply_damage(damage);
     Ok(())
 }
@@ -282,7 +313,7 @@ impl Simulation {
         let actor = self.monster_actor(id, 1008)?;
         self.monster_state_role(actor.life.unwrap().actor_type, state)?;
         let direct_entry = if self.profile == Profile::OriginalDemon {
-            original_registry::direct(state)
+            original_registry::direct(actor.life.unwrap().actor_type, state)
         } else if self.profile.uses_checked_demons() {
             NativeDemonState::checked(state).is_some_and(NativeDemonState::allows_direct_entry)
         } else {

@@ -241,6 +241,7 @@ impl Simulation {
                 | OriginalExecutionProfile::PlayerDemonPickupsV1
                 | OriginalExecutionProfile::PlayerDemonArmorV1
                 | OriginalExecutionProfile::PlayerDemonBonusesV1
+                | OriginalExecutionProfile::PlayerMonstersV1
         ) {
             return Err(PlayerBodyError::Profile.into());
         }
@@ -282,6 +283,7 @@ impl Simulation {
                         | OriginalExecutionProfile::PlayerDemonPickupsV1
                         | OriginalExecutionProfile::PlayerDemonArmorV1
                         | OriginalExecutionProfile::PlayerDemonBonusesV1
+                        | OriginalExecutionProfile::PlayerMonstersV1
                 )
             })
             .map(|p| p.weapon.and_then(PlayerWeaponRuntime::pack))

@@ -32,6 +32,9 @@ pub enum OriginalExecutionProfile {
     PlayerDemonArmorV1,
     /// Original animated bonuses and counted items in the shared player world.
     PlayerDemonBonusesV1,
+    /// The bonus world plus original former humans, a bounded mixed roster,
+    /// source infighting and P_KillMobj drops.
+    PlayerMonstersV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -48,6 +51,7 @@ impl OriginalExecutionProfile {
             Self::PlayerDemonPickupsV1 => 9,
             Self::PlayerDemonArmorV1 => 10,
             Self::PlayerDemonBonusesV1 => 11,
+            Self::PlayerMonstersV1 => 12,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -64,18 +68,29 @@ impl OriginalExecutionProfile {
             Self::PlayerDemonPickupsV1 => PLAYER_DEMON_PICKUPS_CONTEXT_SCHEMA,
             Self::PlayerDemonArmorV1 => PLAYER_DEMON_ARMOR_CONTEXT_SCHEMA,
             Self::PlayerDemonBonusesV1 => PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA,
+            Self::PlayerMonstersV1 => PLAYER_MONSTERS_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_armor(self) -> bool {
-        matches!(self, Self::PlayerDemonArmorV1 | Self::PlayerDemonBonusesV1)
+        matches!(
+            self,
+            Self::PlayerDemonArmorV1 | Self::PlayerDemonBonusesV1 | Self::PlayerMonstersV1
+        )
     }
     pub(crate) const fn has_player_bonuses(self) -> bool {
-        matches!(self, Self::PlayerDemonBonusesV1)
+        matches!(self, Self::PlayerDemonBonusesV1 | Self::PlayerMonstersV1)
+    }
+    /// Original former humans, a bounded mixed roster, infighting and drops.
+    pub(crate) const fn has_monsters(self) -> bool {
+        matches!(self, Self::PlayerMonstersV1)
     }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
             self,
-            Self::PlayerDemonPickupsV1 | Self::PlayerDemonArmorV1 | Self::PlayerDemonBonusesV1
+            Self::PlayerDemonPickupsV1
+                | Self::PlayerDemonArmorV1
+                | Self::PlayerDemonBonusesV1
+                | Self::PlayerMonstersV1
         )
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -91,6 +106,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonPickupsV1
                 | Self::PlayerDemonArmorV1
                 | Self::PlayerDemonBonusesV1
+                | Self::PlayerMonstersV1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -105,6 +121,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonPickupsV1
                 | Self::PlayerDemonArmorV1
                 | Self::PlayerDemonBonusesV1
+                | Self::PlayerMonstersV1
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -115,6 +132,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonPickupsV1
                 | Self::PlayerDemonArmorV1
                 | Self::PlayerDemonBonusesV1
+                | Self::PlayerMonstersV1
         )
     }
     pub(crate) const fn has_player_commands(self) -> bool {
@@ -128,6 +146,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerDemonPickupsV1
                 | Self::PlayerDemonArmorV1
                 | Self::PlayerDemonBonusesV1
+                | Self::PlayerMonstersV1
         )
     }
 }
@@ -282,6 +301,59 @@ fn demon_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
         .as_ref()
         .map_err(|e| *e)
 }
+/// p_mobj.h/info.c former humans admitted only by `PlayerMonstersV1`.
+pub(crate) const FORMER_HUMANS: [OriginalActorType; 3] = [
+    OriginalActorType::MT_POSSESSED,
+    OriginalActorType::MT_SHOTGUY,
+    OriginalActorType::MT_CHAINGUY,
+];
+/// Original attack callbacks reachable from each former human's normal closure.
+fn former_human_attacks(ty: OriginalActorType) -> &'static [&'static str] {
+    match ty {
+        OriginalActorType::MT_POSSESSED => &["A_PosAttack"],
+        OriginalActorType::MT_SHOTGUY => &["A_SPosAttack"],
+        _ => &["A_CPosAttack", "A_CPosRefire"],
+    }
+}
+/// Normal spawn/see/pain/missile/death/xdeath closure; raise metadata stays inert.
+fn former_human_policy(ty: OriginalActorType) -> Result<&'static ActorPolicy, OriginalRegistryError> {
+    static POLICIES: [OnceLock<Result<ActorPolicy, OriginalRegistryError>>; 3] =
+        [OnceLock::new(), OnceLock::new(), OnceLock::new()];
+    let index = FORMER_HUMANS
+        .iter()
+        .position(|t| *t == ty)
+        .ok_or(OriginalRegistryError::Graph)?;
+    POLICIES[index]
+        .get_or_init(|| {
+            let p = ActorPolicy::source(ty)?;
+            for s in OriginalState::all().filter(|s| p.normal.contains(*s)) {
+                let action = s.descriptor().action;
+                if !(matches!(
+                    action,
+                    None | Some(
+                        "A_Look" | "A_Chase" | "A_FaceTarget" | "A_Pain" | "A_Scream"
+                            | "A_XScream" | "A_Fall"
+                    )
+                ) || action.is_some_and(|a| former_human_attacks(ty).contains(&a)))
+                {
+                    return Err(OriginalRegistryError::Graph);
+                }
+            }
+            if p.normal.contains(ty.states().raise) {
+                return Err(OriginalRegistryError::Graph);
+            }
+            Ok(p)
+        })
+        .as_ref()
+        .map_err(|e| *e)
+}
+pub(crate) fn is_former_human(ty: ActorTypeId) -> bool {
+    FORMER_HUMANS.iter().any(|t| t.ordinal() == ty.0)
+}
+/// Autonomous monster definitions executable by the selected player policy.
+pub(crate) fn is_policy_monster(policy: OriginalExecutionProfile, ty: ActorTypeId) -> bool {
+    ty == owner_slot() || (policy.has_monsters() && is_former_human(ty))
+}
 pub(crate) fn body_slot() -> ActorTypeId {
     ActorTypeId(OriginalActorType::COUNT)
 }
@@ -331,9 +403,15 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerDemonWeaponsV1
             | OriginalExecutionProfile::PlayerDemonPickupsV1
             | OriginalExecutionProfile::PlayerDemonArmorV1
-            | OriginalExecutionProfile::PlayerDemonBonusesV1 => {
+            | OriginalExecutionProfile::PlayerDemonBonusesV1
+            | OriginalExecutionProfile::PlayerMonstersV1 => {
                 demon_policy()?;
                 player_policy()?;
+                if profile.has_monsters() {
+                    for ty in FORMER_HUMANS {
+                        former_human_policy(ty)?;
+                    }
+                }
             }
         }
         Ok(Self {
@@ -366,7 +444,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerDemonWeaponsV1
             | OriginalExecutionProfile::PlayerDemonPickupsV1
             | OriginalExecutionProfile::PlayerDemonArmorV1
-            | OriginalExecutionProfile::PlayerDemonBonusesV1 => {
+            | OriginalExecutionProfile::PlayerDemonBonusesV1
+            | OriginalExecutionProfile::PlayerMonstersV1 => {
                 demon_policy()?;
                 player_policy()?;
             }
@@ -447,6 +526,9 @@ pub(crate) fn require_role_for(
                 | OriginalActorType::MT_PUFF
                 | OriginalActorType::MT_BLOOD,
             ) => Ok(()),
+            DefinitionIdentity::Original(ty) if profile.has_monsters() && FORMER_HUMANS.contains(&ty) => {
+                Ok(())
+            }
             other => Err(OriginalRegistryError::Unsupported(other)),
         };
     }
@@ -473,6 +555,10 @@ pub(crate) fn state_role_for(
         player_policy()?.normal.contains(s)
             || (profile.has_player_weapons()
                 && matches!(s, OriginalState::S_PLAY_ATK1 | OriginalState::S_PLAY_ATK2))
+    } else if is_former_human(ty) {
+        former_human_policy(OriginalActorType::try_from(ty.0).map_err(|_| OriginalRegistryError::Graph)?)?
+            .normal
+            .contains(s)
     } else if ty == owner_slot() {
         demon_policy()?.normal.contains(s)
             && !(profile == OriginalExecutionProfile::PlayerDemonAcquisitionV1
@@ -512,14 +598,28 @@ pub(crate) fn state_role_for(
         Err(OriginalRegistryError::State(state.0))
     }
 }
-pub(crate) fn direct(state: StateId) -> bool {
-    OriginalState::try_from(state.0)
-        .ok()
-        .is_some_and(|s| demon_policy().is_ok_and(|p| p.direct.contains(s)))
+pub(crate) fn direct(ty: ActorTypeId, state: StateId) -> bool {
+    OriginalState::try_from(state.0).ok().is_some_and(|s| {
+        if is_former_human(ty) {
+            OriginalActorType::try_from(ty.0)
+                .ok()
+                .and_then(|t| former_human_policy(t).ok())
+                .is_some_and(|p| p.direct.contains(s))
+        } else {
+            demon_policy().is_ok_and(|p| p.direct.contains(s))
+        }
+    })
 }
-pub(crate) fn death_phase(state: StateId) -> Result<(bool, bool), OriginalRegistryError> {
+pub(crate) fn death_phase(
+    ty: ActorTypeId,
+    state: StateId,
+) -> Result<(bool, bool), OriginalRegistryError> {
     let s = OriginalState::try_from(state.0).map_err(|_| OriginalRegistryError::State(state.0))?;
-    let p = demon_policy()?;
+    let p = if is_former_human(ty) {
+        former_human_policy(OriginalActorType::try_from(ty.0).map_err(|_| OriginalRegistryError::Graph)?)?
+    } else {
+        demon_policy()?
+    };
     Ok((p.death.contains(s), p.before_fall.contains(s)))
 }
 impl Simulation {
