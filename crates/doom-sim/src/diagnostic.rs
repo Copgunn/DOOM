@@ -172,9 +172,11 @@ impl<'a> Diagnostic<'a> {
             if self.required(&format!("actor.{slot}.occupied"))? != [1] {
                 continue;
             }
-            if self.required(&format!("actor.{slot}.type"))? == fireball
-                && self.required(&format!("actor.{slot}.pending_removal"))? == [0]
-            {
+            let pending = self.required(&format!("actor.{slot}.pending_removal"))?;
+            if !matches!(pending, [0 | 1]) {
+                return Err(DiagnosticError::Structure);
+            }
+            if self.required(&format!("actor.{slot}.type"))? == fireball && pending == [0] {
                 live += 1;
             }
         }

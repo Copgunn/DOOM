@@ -8,7 +8,7 @@ import struct
 import monsters_snapshot as inherited
 base=inherited.base;n=base.n;execution=inherited.execution;physical=inherited.physical
 CONTEXT=b'PLAYER-MONSTERS-IMPS-1-MEDIUM-GROUNDED-v1'
-MAX_LIVE_PROJECTILES=16
+MAX_LIVE_PROJECTILES=24
 FIREBALL=31
 def missile_bytes(v):
     code,*a=v;b=bytes([15,code])

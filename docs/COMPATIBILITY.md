@@ -1316,15 +1316,18 @@ the player and other species. Bullets and claws have no such exemption.
 | --- | ---: | --- |
 | Actor slots | 64 | Unchanged store |
 | Monsters | 8 | Unchanged; 1 player + 8 + 16 items + 8 drops = 33 slots |
-| Live fireballs, flying or exploding | `MAX_LIVE_PROJECTILES` = 16 | Chosen slot budget, not a proof about play: flight time grows with room size, so a large room can reach it |
-| Remaining impact slots | 15 | 64 - 33 - 16 |
+| Live fireballs, flying or exploding | `MAX_LIVE_PROJECTILES` = 24 | Measured margin, not a proof: unscripted soaks of eight Imps peaked at 19 |
+| Remaining impact slots | 7 | 64 - 33 - 24, when every other budget is full |
 
 The original has no fireball cap; this bound is this project's. A launch past the cap
-(`ProjectileError::WorkLimit`) or past the store (`StoreError::Capacity`), a full store
-that refills a slot within one pass (`StoreError::VisitLimit`) and a removed owner of a
-flying fireball (`ProjectileError::Owner`) each reject with the whole tic rolled back.
-That tic stays rejected until the caller changes the state; there is no partial
-substitute. Fireballs cannot be spawned, entered, retargeted or pushed through the
+(`ProjectileError::WorkLimit`) or past the store (`StoreError::Capacity`) and a full
+store that refills a slot within one pass (`StoreError::VisitLimit`) each reject with
+the whole tic rolled back. That tic keeps rejecting until the caller changes the state,
+and player commands may not clear it; removing fireballs with `mark_remove` can. There
+is no partial substitute. `mark_remove` rejects the owner of a flying fireball. The
+existing `|position| + 160M/3 <= 994` travel envelope also applies to fireball knockback,
+so a hit near a wall can reject its tic in the same way.
+Fireballs cannot be spawned, entered, retargeted or pushed through the
 public API, and no actor may name one as a target or damage source.
 
 The geometry stays grounded: one floor height, one-sided axis-aligned blocking walls,

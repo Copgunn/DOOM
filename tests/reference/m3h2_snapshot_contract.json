@@ -31,7 +31,7 @@
     "tools/reference/armor_snapshot.py": "f2a1f33b2ba9ed403bd1f74850519a4c0b58ac0d9cd33833f8767a3ed6596050",
     "tools/reference/bonus_snapshot.py": "093e13d9da120978c8aaf24f770cc7662702e6be05e3313497b63a039f54d190",
     "tools/reference/evidence_pack.py": "12854a2562cfc6407230b0b6d75491a2b2eea2303403e4dbbe5fff9379e84ffb",
-    "tools/reference/imps_snapshot.py": "d4ff0b3ab6eaaade4b28f30f17e5abe2adaef153b240a3c1840a4f8ea7502383",
+    "tools/reference/imps_snapshot.py": "f0d96e4e5bdefa901c25ebbdfb058ec2d396474c9c01f11a48cdba74fad919c9",
     "tools/reference/m3f3_snapshot_goldens.py": "bcb410f5416144cfd2cc6333bd3c249cfb1c59e54a1ffc3b51975058af28e17d",
     "tools/reference/m3g2_snapshot_goldens.py": "b65bbd286f22fb0ec0b2176cfbc339f0376a24ccfe4a91d537e5f672a3e8ceee",
     "tools/reference/m3h2_snapshot_goldens.py": "968ba2ad5f99a4c285b94a17506c2f0ebd6a3d18c638ae56f5e2570dd4dedc9c",

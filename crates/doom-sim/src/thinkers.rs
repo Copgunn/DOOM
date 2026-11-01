@@ -33,6 +33,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
         commands,
         perception_inputs,
     } = input;
+    let recoverable_refill = player.as_ref().is_some_and(|p| p.policy.has_imps());
     actors
         .run(
             actors.max_slots as usize,
@@ -224,15 +225,15 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
             },
         )
         .or_else(|error| match perception_inputs.and_then(|p| p.checked) {
-            // A full store can retire and refill a slot mid-pass; the checked
-            // transaction discards the staged tic instead of panicking.
-            Some(control) => {
+            // A fireball can spawn into a slot retired earlier in this pass. The
+            // checked transaction discards that tic; older policies are unchanged.
+            Some(control) if recoverable_refill && error == StoreError::VisitLimit => {
                 control
                     .failure
                     .set(control.failure.get().or(Some(error.into())));
                 Ok(())
             }
-            None => Err(error),
+            _ => Err(error),
         })
         .expect("built-in traversal preserves links and is bounded by max slots");
 }

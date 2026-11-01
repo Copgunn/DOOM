@@ -1440,7 +1440,7 @@ fireball is an ordinary actor record. It widens meanings only under29:
 - Actor `type`/`state` and state-bearing event payloads may name MT_TROOP=11 and
   MT_TROOPSHOT=31 within their admitted normal closures.
 - `original_player.0.attacker` may name an Imp.
-- At most 16 nonpending actors may have type 31.
+- At most 24 nonpending actors may have type 31, and every `pending_removal` is 0 or 1.
 - A nonzero `level.total_kills` must equal the placed DoomEd
   3001/3002/3004/9/65 THINGs that pass the Medium single-player filter. The v28 set
   stays without 3001.

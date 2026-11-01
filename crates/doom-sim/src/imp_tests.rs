@@ -401,17 +401,32 @@ fn fireball_public_controls_reject_atomically() {
 }
 
 #[test]
-fn removed_owner_rejects_flying_fireball_atomically() {
+fn flying_fireball_owner_cannot_be_removed() {
     let c = &cases()[3];
     let (mut s, a, things) = setup(c);
     s.checked_demon_operation(|h| crate::projectiles::launch_fireball(h, things[0], a.body))
         .unwrap()
         .unwrap();
-    s.mark_remove(things[0]).unwrap();
+    let before = s.clone();
+    assert_eq!(s.mark_remove(things[0]), Err(ProjectileError::Owner.into()));
+    assert_eq!(s.snapshot(), before.snapshot());
+    s.advance(commands(c, 1)).unwrap();
+}
+
+#[test]
+fn raised_imp_launch_rejects_excess_vertical_momentum() {
+    // Review regression: an off-floor source never commits an unsteppable fireball.
+    let c = &cases()[0];
+    let (mut s, a, things) = setup(c);
+    s.actors.get_mut(things[0]).unwrap().z = Fixed::from_map_units(500);
+    let before = s.clone();
     assert_eq!(
-        advance_rolls_back(&mut s, commands(c, 1)),
-        Err(ProjectileError::Owner.into())
+        s.checked_demon_operation(|h| crate::projectiles::launch_fireball(h, things[0], a.body))
+            .unwrap(),
+        Err(ProjectileError::Arithmetic.into())
     );
+    assert_eq!(s.rng(), before.rng());
+    assert_eq!(s.snapshot(), before.snapshot());
 }
 
 #[test]
@@ -654,22 +669,28 @@ fn dsim29_reader_enforces_the_live_projectile_bound() {
     let limits = DiagnosticLimits::default();
     let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
     assert!(Diagnostic::decode_imps(&bytes, limits).is_ok());
-    // Retype the Imp's type record: one more live fireball than admitted.
-    let imp_type = format!("actor.{}.type", things[1].slot());
-    let needle = [
-        &(imp_type.len() as u32).to_le_bytes()[..],
-        imp_type.as_bytes(),
-    ]
-    .concat();
-    let mut over = bytes.clone();
-    let at = over
+    // A malformed pending flag cannot hide a live fireball from the bound.
+    let fireball = s.actors.order().last().unwrap();
+    let path = format!("actor.{}.pending_removal", fireball.slot());
+    let needle = [&(path.len() as u32).to_le_bytes()[..], path.as_bytes()].concat();
+    let mut flag = bytes.clone();
+    let at = flag
         .windows(needle.len())
         .position(|w| w == needle)
         .unwrap()
         + needle.len()
         + 8;
-    over[at..at + 2].copy_from_slice(&FIREBALL.0.to_le_bytes());
-    assert!(Diagnostic::decode_imps(&over, limits).is_err());
+    flag[at] = 2;
+    assert_eq!(
+        Diagnostic::decode_imps(&flag, limits).unwrap_err(),
+        DiagnosticError::Structure
+    );
+    // One more live fireball than admitted.
+    let view = Diagnostic::decode_imps(&bytes, limits).unwrap();
+    assert_eq!(
+        view.validate_live_projectiles_at(MAX_LIVE_PROJECTILES - 1),
+        Err(DiagnosticError::Limit)
+    );
 }
 
 #[test]
@@ -695,8 +716,14 @@ fn dsim29_live_bound_does_not_depend_on_field_order() {
     }
     for frame in [&bytes, &reversed] {
         let view = Diagnostic::decode_imps(frame, limits).unwrap();
-        assert!(view.validate_live_projectiles_at(16).is_ok());
-        assert!(view.validate_live_projectiles_at(15).is_err());
+        assert!(
+            view.validate_live_projectiles_at(MAX_LIVE_PROJECTILES)
+                .is_ok()
+        );
+        assert!(
+            view.validate_live_projectiles_at(MAX_LIVE_PROJECTILES - 1)
+                .is_err()
+        );
     }
 }
 

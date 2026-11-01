@@ -19,7 +19,9 @@ def main():
                 seeds.append(bytes([color,rng])+op*32)
             for damage in [0,1,3,24,60,61,130,1000,1001,-1]:
                 for kind in [0,1,2]:
-                    seeds.append(bytes([color,rng,4,kind,1,0,2])+damage.to_bytes(2,'little',signed=True)[:1]+bytes([1])+damage.to_bytes(2,'little',signed=True)[1:]+idle*8)
+                    low,high=damage.to_bytes(2,'little',signed=True)
+                    # b0 op, b1 target kind, b2 monster, b3 source/inflictor, b4 monster, b5 low, b6-7 handle, b8 high.
+                    seeds.append(bytes([color,rng,4,kind,1,0,2,low,0,1,high])+idle*8)
             # Infighting retarget, stale/foreign handles, owner removal, pause.
             for operation in [bytes([5,0,1,1,0,0,0,1,0]),bytes([5,1,1,0,0,0,0,1,0]),bytes([5,0,2,0,0,0,63,9,0]),
                               bytes([6,0,0,0,0,0,40,1,0]),bytes([6,1,1,0,0,0,0,1,0]),bytes([7,1,0,0,0,0,0,1,0])]:

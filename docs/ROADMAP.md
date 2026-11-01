@@ -85,7 +85,7 @@ The separately selected PlayerMonstersImpV1 brings projectiles into the canonica
 player world: the original MT_TROOP chooses melee or missile, and MT_TROOPSHOT flies,
 collides and explodes through one shared missile service, so fights gain dodgeable
 shots and projectile infighting with the source same-species rule. Imps join the
-eight-monster roster, at most 16 fireballs are live, and exceeding a bound rolls back
+eight-monster roster, at most 24 fireballs are live, and exceeding a bound rolls back
 the whole tic. Canonical action dispatch is now typed. DSIM29 adds no persistent
 field. This branch stops at owner review; exact commits and CI belong to GitHub. See
 [source investigation](M3H2_REFERENCE_INVESTIGATION.md),
@@ -165,12 +165,12 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Prioritize non-flat geometry in the checked player world: two-sided lines and
-height changes for the player, monsters and fireballs. Today every shootable actor
-stands at z 0, so a fireball's vertical momentum, floor and ceiling contact and line
-openings are shared code without an observation in this world. Require source-first
-observations and unchanged earlier contracts. This is future work, not admission in
-M3h2.
+Replace the conservative `160M/3` travel envelope with a proof from the actual walls.
+A monster or player hit near a wall can currently reject every later tic, which
+fireballs make easy to reach. Then prioritize non-flat geometry: two-sided lines and
+height changes, so a fireball's vertical momentum, floor and ceiling contact and line
+openings gain observations. Require source-first evidence and unchanged earlier
+contracts. This is future work, not admission in M3h2.
 
 ### Focused maintenance acceptance criteria
 

@@ -24,10 +24,11 @@ const DRAW_CONTACT: u8 = 3;
 const DRAW_EXPLODE: u8 = 4;
 /// Live fireball bound for `PlayerMonstersImpV1`. Flying and exploding fireballs
 /// both hold a thinker slot. One player, eight monsters, 16 items and eight drops
-/// use 33 of the 64 slots; these 16 leave 15 for bullet impacts. This is a chosen
-/// slot budget, not a proof about play: flight time grows with room size, so a large
-/// room can reach it, and the launch then rejects its whole tic.
-pub const MAX_LIVE_PROJECTILES: usize = 16;
+/// use 33 of the 64 slots; these 24 leave 7 for bullet impacts. Unscripted soaks of
+/// eight Imps peaked at 19, so 16 froze ordinary runs. This is a measured margin, not
+/// a proof: the source has no cap, and a launch past it rejects its tic, repeatedly,
+/// until the caller changes the state.
+pub const MAX_LIVE_PROJECTILES: usize = 24;
 /// Source missile services shared by the frozen plasma profile and the checked
 /// player world. Each host owns its RNG stream, event queue and damage path; the
 /// algorithms below never branch on which host runs them.
@@ -440,6 +441,9 @@ pub(crate) fn launch_fireball<A: lifecycle::ActorAccess>(
     let to = *h.access.get(dest).ok_or(ProjectileError::Reference)?;
     let speed = Fixed::from_bits(h.definition(FIREBALL).speed());
     let (angle, momz, shadow) = actor_aim(&from, &to, speed);
+    if !within(momz, 64) {
+        return Err(ProjectileError::Arithmetic.into());
+    }
     h.emit(Event::Projectile(ProjectileEvent::Launch(
         ProjectileRequest {
             source,
@@ -677,6 +681,21 @@ impl Simulation {
                     return Err(ProjectileError::Owner.into());
                 }
             }
+        }
+        Ok(())
+    }
+    pub(crate) fn preflight_owner_removal(&self, owner: ActorId) -> Result<(), SimError> {
+        if !self.player_policy().has_imps() {
+            return Ok(());
+        }
+        let owns_flight = self.actors.order().any(|id| {
+            self.actors.is_pending(id) == Some(false)
+                && self.actor(id).and_then(Actor::life).is_some_and(|l| {
+                    l.actor_type == FIREBALL && l.flags & MISSILE != 0 && l.target == Some(owner)
+                })
+        });
+        if owns_flight {
+            return Err(ProjectileError::Owner.into());
         }
         Ok(())
     }

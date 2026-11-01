@@ -936,6 +936,8 @@ impl Simulation {
         if self.uses_active_player_roster() && self.owns_player_body(id) {
             return Err(PlayerBodyError::Unsupported.into());
         }
+        // Removing a flying fireball's owner could never step again.
+        self.preflight_owner_removal(id)?;
         if self.actors.mark_remove(id)? {
             self.spatial.unlink(id);
             self.pending.push(Event::RemovalMarked(id));

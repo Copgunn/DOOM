@@ -42,7 +42,7 @@ fn main() -> ResultHost<()> {
         }
     }
     assert_eq!([launches, explosions], [115, 114]);
-    assert_eq!(MAX_LIVE_PROJECTILES, 16);
+    assert_eq!(MAX_LIVE_PROJECTILES, 24);
     println!(
         "player_imps: C Imp melee/missile choice, fireball flight, contact and explosion, same-species rule, infighting and mixed rosters: source/schema/policy checks complete digest={digest:016x}"
     );

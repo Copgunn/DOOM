@@ -2,8 +2,8 @@
 //!
 //! `ActionId` indexes the original action table. Dispatch for the admitted Demon,
 //! former-human, Imp and player-weapon callbacks matches this enum, which is
-//! resolved once at compile time from the source names, so no gameplay path
-//! compares strings. Admission keeps its own explicit per-profile tables: naming a
+//! resolved once at compile time from the source names, so action dispatch
+//! compares no strings. Admission keeps its own explicit per-profile tables: naming a
 //! variant here grants nothing.
 use crate::{ActionId, lifecycle::SOURCE_ACTIONS};
 
