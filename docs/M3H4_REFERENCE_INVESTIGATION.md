@@ -409,27 +409,69 @@ optional set bits, and a cell-exact BLOCKMAP. The C adapter already installs sec
 lists, sidedef sectors, segs, subsectors, node partitions and REJECT from these lumps
 (`generate_m3d3a.post_loader`). `m3h4_cases.py` places THINGs and scripts commands.
 
-Planned rooms (ceilings 256 unless stated; y spans −512..512 unless stated):
+Rooms as generated (`m3h4_cases.py`; ceilings 256 unless stated; y spans −512..512):
 
 | Room | Sectors along x | Purpose |
 | --- | --- | --- |
-| stairs | floors 0, 24, 48, 72 in 256-unit treads, then 97 (a 25-unit step) | steps up and down, the too-high step, Imp and Demon pursuit across stairs, autoaim up/down a step |
-| ledge | `[−1024,−256]` floor 0 ceiling 100; `[−256,0]` floor 0; `[0,1024]` floor 96 | player drop with landing (`momz < −8` → oof), headroom refusal while airborne, a former human refusing the ledge, a corpse knocked off the ledge, the fall-forward branch, lower-wall puff with no target, fireballs across the ledge (floor explosion when the player dodges) |
-| window | `[−1024,−64]` floor 0 ceiling 128; `[−64,64]` floor 40 ceiling 88; `[64,512]` floor −64; `[512,1024]` floor 0 | sight blocked by the window's bottom slope from the pit, allowed from the step; hitscan into the window's upper and lower walls; noise through the window |
-| closed | `[−512,0]`; `[0,64]` floor 128 ceiling 128; `[64,512]` | sight, noise and hitscan stopped by a closed opening; REJECT bit between the end sectors in a variant |
-| fence | two equal sectors split by a two-sided `ML_BLOCKING` line, and a variant with `ML_BLOCKMONSTERS` | player slide along a blocking fence, monster blocked, fireball and hitscan passing, sight unaffected |
+| stairs | floors 97, 72, 48, 24 in 256-unit treads (the first riser is 25 units), then 0 over `[256,1024]` | steps up and down, the too-high step, Imp and Demon pursuit down the stairs, a former human refusing the 25-unit riser, autoaim up/down a step |
+| ledge | `[−1024,0]` floor 96; `[0,64]` floor 0; `[64,1024]` floor 0 ceiling 100 | player drop with landing (`momz < −8` → oof), headroom refusal while airborne, a former human refusing the ledge, a corpse knocked off the ledge, the fall-forward branch, fireballs down the ledge (floor explosion when the player dodges, upper-wall explosion under the low ceiling) |
+| window | `[−1024,−64]` floor 0 ceiling 128; `[−64,64]` floor 40 ceiling 88; `[64,512]` floor −64; `[512,1024]` floor 64 | sight blocked by the window's bottom slope from the pit, allowed from the step; hitscan into the window's lower wall (from floor 0) and upper wall (from floor 64); noise through the window; variants with a REJECT pair (0,3) and with `ML_SOUNDBLOCK` on both window lines |
+| closed | `[−512,0]`; `[0,64]` floor 128 ceiling 128; `[64,512]` | sight, noise, hitscan and movement stopped by a zero-opening line |
+| fence | two equal sectors split by a two-sided `ML_BLOCKING` line, and a variant with `ML_BLOCKMONSTERS` | player slide along a blocking fence, monster blocked, fireball and hitscan passing, sight unaffected; the player passing a monsters-only fence |
 | crawl | `[−512,0]` floor 0 ceiling 128; `[0,512]` floor 0 ceiling 32 | too-low ceiling (fit refusal), upper-wall puff at slope 0 |
-| tower | `[−1024,0]` floor 0 ceiling 160; `[0,1024]` floor 96 ceiling 160 | fireball from below rising past a dodging player into the ceiling |
+| tower | `[−1024,0]` floor 0 ceiling 160; `[0,1024]` floor 96 ceiling 160 | fireball from 900 units below rising past a dodging player into the ceiling |
 
-Scenarios (≈16): `stairs_up_down`, `too_high_step`, `imp_pursuit_stairs`,
-`demon_pursuit_stairs`, `autoaim_up_step`, `autoaim_down_step`, `drop_landing_oof`,
-`headroom_while_falling`, `monster_refuses_ledge`, `corpse_pushed_off_ledge`,
-`fall_forward_from_below`, `fireball_down_ledge_floor_explosion`,
-`fireball_up_ceiling_explosion`, `window_sight_pit_then_step`, `window_upper_lower_puffs`,
-`noise_through_window`, `closed_opening_blocks_all`, `reject_bit`, `fence_slide`,
-`fence_blocks_monsters_only`, `crawlspace_refusal`. Captures are selected as in M3h3 plus
-every tic with a `Z` row whose floor flag changes, every landing sound, every noise flood
-and every blocked move with reason 3–6.
+Two source facts shaped the placements, and both are observations worth keeping:
+
+- Every fresh mobj has `movedir == 0 == DI_EAST` (`P_SpawnMobj` zero-fills), so a chase
+  target due west is the first `P_NewChaseDir`'s `turnaround` (`opposite[DI_EAST]`), is
+  discarded (`d[1] = DI_NODIR`, [p_enemy.c:414](../linuxdoom-1.10/p_enemy.c)) and the
+  monster first walks east by `olddir` ([p_enemy.c:441](../linuxdoom-1.10/p_enemy.c)) until
+  blocked or until `movecount` expires. The high sides therefore lie west and the player
+  east, so that the first move heads for the edge.
+- `P_PathTraverse` ([p_maputl.c:632](../linuxdoom-1.10/p_maputl.c)) follows the exact trace
+  end point: at angle 180° `finesine[4096] = −25`, so a 1,024-unit autoaim trace ends 0.39
+  units below its start, and together with the `y1 += FRACUNIT` nudge the block walk steps
+  down one block row before reaching the target's block. Things are linked only in the
+  block of their center, so the aim misses a zombie standing on the trace while the
+  2,048-unit `P_LineAttack` trace, whose descent is halved, finds it (`autoaim_down_step`,
+  tics 19–75 versus 89–117). Neither trace is a geometry claim of this milestone; the Rust
+  trace already reproduces the block walk (M3f3).
+
+The 24 scenarios (`m3h4_cases.csv`): `stairs_up`, `stairs_down`, `too_high_step`,
+`imp_pursuit_stairs`, `demon_pursuit_stairs`, `monster_refuses_riser`, `autoaim_up_step`,
+`autoaim_down_step`, `drop_landing_oof`, `monster_refuses_ledge`, `corpse_pushed_off_ledge`
+(shotgun), `fall_forward_from_below` (controlled 12-point hit at tic 1, then a pistol kill
+from 96 units below), `fireball_down_ledge_floor`, `window_sight_pit_then_step`,
+`window_lower_wall_puff`, `window_upper_wall_puff`, `noise_through_window`,
+`noise_through_soundblock`, `reject_bit`, `closed_opening_blocks_all`, `fence_slide`,
+`fence_blocks_monsters_only`, `crawlspace_refusal`, `fireball_up_ceiling`. Captures are
+selected as in M3h3 plus every tic with a hitscan, a noise flood, a landing sound, a
+blocked move with reason 3–6 and every `Z` row whose floor-contact flag changes. The fireball
+chords follow `momz = (dest.z − source.z) / (distance / speed)` from a start 32 units above
+the source, which fixes the Imp positions: an Imp 124 units behind the ledge edge aiming at
+a player 300 units past it crosses the edge at `z = 100` and enters the 100-unit ceiling at
+`z = 85`; an Imp 900 units from a 96-unit ledge reaches the 160-unit ceiling 300 units past
+the dodging player.
+
+Observed in the committed trace (`m3h4_contract.json` has the per-case counts): 3 snapped
+steps up and 4 falls down the stairs; 104 step-up refusals (reason 5) at the 25-unit riser
+and the ledge, 33 dropoff refusals (reason 6) by former humans at the riser and the ledge,
+70 fit refusals (reason 3) at the closed sector and the crawlspace, 3 headroom refusals
+(reason 4, two by the falling player and one by a fireball under the 100-unit ceiling);
+one landing sound (`E,7,ident,34`) after a 13-tic fall with `momz = −14`; a corpse sliding
+over the ledge without friction, falling and landing silently; the fall-forward branch
+(`P_Random() & 1` on draw 161) throwing a 96-unit-higher zombie toward and off the ledge
+with the thrust quadrupled; one fireball exploding on the floor, one on the ceiling, one
+against an upper wall and one stepping onto a 96-unit ledge floor before exploding there;
+sight blocked from the pit and allowed from the step, 24 REJECT rejections, 0 of 24
+queries through the closed sector; 8 noise floods of all four window sectors, floods
+stopped after the second `ML_SOUNDBLOCK` line (`soundblocks == 1` observed) and at the
+closed sector; lower-wall puffs at `z = 36` under the 40-unit sill and upper-wall puffs at
+`z = 100` over the 88-unit lintel; a puff spawned 30 units below the floor when a spread
+shot missed down a staircase; 318 line refusals of an Imp at a blocking fence while its
+fireballs and the player's bullets crossed it; and a player passing an `ML_BLOCKMONSTERS`
+fence that refused a zombie twice.
 
 ### 6.2 Independent DSIM31
 
@@ -531,3 +573,22 @@ Each step is a separate commit unless noted. Commits 1–3 land before the runti
   source reading and covered by a Rust-only test.
 - Nothing here admits non-axis walls; if the evidence turns up a zero-risk proof for them,
   the owner is asked before any admission.
+
+### 8.1 Owner decisions (2026-11-01)
+
+1. **Dimension envelope and spawn fit (§4.1 item 6, §4.3): approved.** Type dimensions are
+   evaluated against the tallest admitted sector; fitting is proved per spawn. Short and
+   zero-height sectors are not rejected: a closed-door sector (`floor == ceiling`) must load
+   as a static wall.
+2. **momz witness (§4.4): approved.** `PlayerMonstersHeightsV1` uses the derived 1,024-unit
+   `momz` witness; every older policy keeps the historical 64.
+
+## 9. Status / next step
+
+Kept current while the milestone is in progress; the final state is summarized in
+[the evidence record](validation/M3H4.md).
+
+- Step 1 (this note) committed as `7707e9f`; owner decisions recorded above.
+- Step 2 (C evidence) generated with `--overflow-check --address-check`; the local
+  generation ran without `ASAN_OPTIONS`, so LeakSanitizer was active and reported nothing.
+- Next: step 3 (DSIM31 projection).
