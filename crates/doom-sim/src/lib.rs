@@ -1282,3 +1282,9 @@ mod bonus_tests;
 mod monster_evidence;
 #[cfg(test)]
 mod monster_tests;
+
+#[cfg(test)]
+#[path = "../../../tests/support/m3h2.rs"]
+mod imp_evidence;
+#[cfg(test)]
+mod imp_tests;
