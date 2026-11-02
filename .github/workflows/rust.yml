@@ -34,7 +34,10 @@ jobs:
     # New pistol reference/codec/example checks require additional headroom.
     # M3g10 Windows reached its15-minute limit during historical examples after
     # workspace/release tests and the armor example passed. Retain every check.
-    timeout-minutes: ${{ matrix.os == 'ubuntu-latest' && 45 || 30 }}
+    # Measured on master 5e711be (run 41378833526): Ubuntu 30 of 45 before the
+    # parallel suite, macOS Intel 17 of 30 with its test suites alone over 14, Windows
+    # 12 of 30. macOS gets 40 so an M3h5-sized test addition cannot time it out.
+    timeout-minutes: ${{ matrix.os == 'ubuntu-latest' && 45 || (matrix.os == 'macos-latest' && 40 || 30) }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -56,7 +59,7 @@ jobs:
       - name: Reproduce isolated reference vectors and snapshot goldens
         if: runner.os == 'Linux'
         run: |
-          python3 tools/reference/run_reference.py --suite
+          python3 tools/reference/run_reference.py --suite --jobs 4
       - name: Verify lossless historical migration against baseline Git objects
         if: runner.os == 'Linux'
         run: |

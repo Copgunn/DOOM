@@ -867,7 +867,13 @@ ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run evidence_zstd /tmp/doom-evid
 ```
 
 `source_suite.json` retains the exact previous 65 CI source commands, including
-strict arithmetic and sanitizer options. The wrapper also supports individual
+strict arithmetic and sanitizer options. `--jobs N` runs them N at a time in N private
+workspaces, scheduled longest-first from the committed duration table
+`source_suite_durations.json` (measured once on an idle host; a command without an
+entry runs last); every command still only compares against committed bytes, so the
+order changes no result, and `--jobs 1` is the historical sequential run. CI passes
+`--jobs 4` on the four-vCPU Ubuntu runner. `--report <file>` writes each command's
+exit status, seconds and stdout digest. The wrapper also supports individual
 frozen `--check` scripts. Direct legacy generators expect raw paths and therefore
 run inside this wrapper after migration. Historical archived commands describe
 their old checkout; archived bytes remain untouched. The wrapper changes no
