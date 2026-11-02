@@ -798,9 +798,10 @@ impl<'a> Diagnostic<'a> {
     }
     /// The `[floor, ceiling]` of this slot's `actor.{slot}.sector`, whose
     /// `sector.{i}.actors` list must hold the slot's handle (12 bytes: slot then
-    /// generation), for the DSIM31 item witness. An item whose sector field and
-    /// sector list disagree is not a consistent snapshot.
-    fn item_sector_span(&self, slot: usize) -> Result<[i32; 2], DiagnosticError> {
+    /// generation) when `listed`, for the DSIM31 item witness. A linked item whose
+    /// sector field and sector list disagree is not a consistent snapshot; an item
+    /// pending removal is already unlinked and only its sector field is read.
+    fn item_sector_span(&self, slot: usize, listed: bool) -> Result<[i32; 2], DiagnosticError> {
         let generation = number::<8>(self.required(&format!("actor.{slot}.generation"))?)?;
         let sector = u16::from_le_bytes(number(self.required(&format!("actor.{slot}.sector"))?)?);
         let slot = u32::try_from(slot).map_err(|_| DiagnosticError::Limit)?;
@@ -809,10 +810,11 @@ impl<'a> Diagnostic<'a> {
         handle[4..].copy_from_slice(&generation);
         let count = u32::from_le_bytes(number(self.required("sectors.count")?)?);
         if u32::from(sector) >= count
-            || !self
-                .required(&format!("sector.{sector}.actors"))?
-                .chunks(12)
-                .any(|h| h == handle)
+            || (listed
+                && !self
+                    .required(&format!("sector.{sector}.actors"))?
+                    .chunks(12)
+                    .any(|h| h == handle))
         {
             return Err(DiagnosticError::Identity);
         }
@@ -856,7 +858,10 @@ impl<'a> Diagnostic<'a> {
             // DSIM31 items sit on their own sector's floor; earlier versions on the
             // flat world's floor 0 under ceiling 128.
             let span = if self.version == 31 {
-                self.item_sector_span(slot)?
+                // A collected or removed item is unlinked from its sector list at
+                // once and retired by the next pass; its sector field still holds.
+                let listed = self.required(&format!("{prefix}.pending_removal"))? == [0];
+                self.item_sector_span(slot, listed)?
             } else {
                 [0, 128 * 65536]
             };

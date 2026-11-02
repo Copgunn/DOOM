@@ -799,7 +799,11 @@ impl Simulation {
         ) {
             return Err(MonsterError::Arithmetic.into());
         }
-        self.spawn_fits(ActorTypeId(k.original_type().ordinal()), position)?;
+        self.spawn_fits(
+            ActorTypeId(k.original_type().ordinal()),
+            position,
+            SpawnHeight::Floor,
+        )?;
         self.reserve_actor_spawns(1)?;
         let id = lifecycle::LifeHost {
             player: None,

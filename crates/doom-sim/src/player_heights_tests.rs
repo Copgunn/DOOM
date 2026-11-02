@@ -407,15 +407,16 @@ fn fireball_chord_momz_beyond_the_historical_witness_is_admitted() {
 #[test]
 fn steep_fireball_half_step_explodes_below_its_floor_and_is_clipped() {
     // P_CheckMissileSpawn moves the new fireball by half its momentum before the
-    // first P_TryMove. An Imp 20 units behind a 500-unit ledge edge aiming at a
-    // player 35 units away launches with momz -166 (dist 3), so the half-step
-    // leaves the fireball 51 units below its floor: the step rule refuses, it
-    // explodes in place and its next P_ZMovement clips it to the floor.
-    let room = HeightsRoom::new(&[-512, 0, 512], &[[-200, 500], [300, 500]])
+    // first P_TryMove. An Imp 20 units behind a 968-unit ledge edge aiming at a
+    // player 65 units away (beyond its melee range) launches with momz -161
+    // (dist 6), so the half-step leaves the fireball 48 units below its floor:
+    // the step rule refuses, it explodes in place and its next P_ZMovement clips
+    // it to the floor.
+    let room = HeightsRoom::new(&[-512, 0, 512], &[[-512, 512], [456, 512]])
         .with_things(&[[20, 0, WEST, IMP, 7]]);
     let mut s = heights(room.map());
     let imp = s.spawn_map_things().unwrap().spawned[0];
-    let body = arm(&mut s, [-15, 0]);
+    let body = arm(&mut s, [-45, 0]);
     s.advance([TicCommand::default(); 4]).unwrap();
     // Controlled launch between tics: the blast is below its floor until the next
     // pass, which the witness exempts as it exempts the blast's XY location.
@@ -435,19 +436,37 @@ fn steep_fireball_half_step_explodes_below_its_floor_and_is_clipped() {
     assert_eq!(a.momz, Fixed::ZERO, "exploded");
     assert!(a.z < a.floor - Fixed::from_map_units(24), "below its floor");
     progresses(&mut s, |_, _| [TicCommand::default(); 4], 2);
-    assert_eq!(s.actor(blast).unwrap().z, Fixed::from_map_units(300));
+    assert_eq!(s.actor(blast).unwrap().z, Fixed::from_map_units(456));
     // The same launch inside a tic (A_TroopAttack) is clipped in the same pass.
     let mut s = heights(room.map());
     let imp = s.spawn_map_things().unwrap().spawned[0];
-    let body = arm(&mut s, [-15, 0]);
+    let body = arm(&mut s, [-45, 0]);
     s.set_actor_target(imp, Some(body)).unwrap();
     s.enter_original_state(imp, OriginalState::S_TROO_ATK1)
         .unwrap();
-    progresses(&mut s, |_, _| [TicCommand::default(); 4], 40);
-    assert!(
-        s.events().iter().chain(s.pending_events()).count() > 0 || s.actor_order().count() > 2,
-        "the launch happened"
-    );
+    let mut exploded = None;
+    for op in 1..=40 {
+        s.advance([TicCommand::default(); 4])
+            .unwrap_or_else(|e| panic!("tic {op}: {e}"));
+        assert_vertical_invariant(&s, op);
+        if exploded.is_none() {
+            let blast = s.events().iter().find_map(|e| match e {
+                Event::Projectile(ProjectileEvent::Exploded(id)) => Some(*id),
+                _ => None,
+            });
+            if let Some(blast) = blast {
+                // The same pass clipped the blast to its floor before the tic boundary.
+                let a = s
+                    .actor(blast)
+                    .expect("the blast lives through its death states");
+                assert_eq!(a.z, a.floor, "clipped to the floor at tic {op}");
+                assert_eq!(a.floor, Fixed::from_map_units(456));
+                exploded = Some(op);
+            }
+        }
+    }
+    let op = exploded.expect("the in-tic launch exploded on its half-step");
+    assert!(op >= 16, "launched from S_TROO_ATK3 at tic {op}");
 }
 
 #[test]
@@ -665,4 +684,67 @@ fn ledge_soak_keeps_the_vertical_invariant_with_the_full_budget() {
         things.push([-900 + 250 * i as i16, 300, 0, *kind, 7]);
     }
     soak(ledge().with_things(&things), [-200, -300], 0);
+}
+
+#[test]
+fn dsim31_decodes_items_pending_removal_and_rejects_absolute_spawns_that_do_not_fit() {
+    // A collected item is unlinked from its sector list at once and retired by the
+    // next pass; the tic-boundary snapshot of the pickup tic must still decode.
+    let room = stairs().with_things(&[[-400, -300, 0, POSSESSED, 7], [520, 0, 0, 2007, 7]]);
+    let mut s = heights(room.map());
+    let spawned = s.spawn_map_things().unwrap().spawned;
+    let clip = spawned[1];
+    arm(&mut s, [600, 0]);
+    s.actors
+        .get_mut(s.original_player(PlayerSlot::One).unwrap().mo.unwrap())
+        .unwrap()
+        .spec
+        .angle = 0x8000_0000;
+    let limits = DiagnosticLimits::default();
+    let mut collected = None;
+    for op in 1..=40 {
+        let mut c = [TicCommand::default(); 4];
+        c[0].forward = 50;
+        s.advance(c).unwrap();
+        let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
+        Diagnostic::decode_heights(&bytes, limits).unwrap_or_else(|e| panic!("tic {op}: {e:?}"));
+        if collected.is_none() && s.actor(clip).is_none_or(|a| a.life().is_none()) {
+            collected = Some(op);
+        }
+    }
+    assert!(collected.is_some(), "the clip was collected");
+    let room = stairs().with_things(&[[-400, -300, 0, POSSESSED, 7], [520, 0, 0, 2007, 7]]);
+    let mut s = heights(room.map());
+    let clip = s.spawn_map_things().unwrap().spawned[1];
+    // A controlled absolute-height spawn outside [floor, ceiling - height] is a
+    // broken input: rejected with unchanged state instead of wedging every tic.
+    // Roster monsters precede the player body, as the map-spawn order requires.
+    let zombie = ActorTypeId(crate::identity::OriginalActorType::MT_POSSESSED.ordinal());
+    let before = s.snapshot();
+    for z in [300, -10, 201] {
+        assert_eq!(
+            s.spawn_type(
+                zombie,
+                [Fixed::from_map_units(600), Fixed::from_map_units(200)],
+                SpawnHeight::Absolute(Fixed::from_map_units(z)),
+            )
+            .unwrap_err(),
+            SimError::MapScale(MapScaleError::Fit),
+            "z {z}"
+        );
+        assert_eq!(s.snapshot(), before);
+    }
+    s.spawn_type(
+        zombie,
+        [Fixed::from_map_units(600), Fixed::from_map_units(200)],
+        SpawnHeight::Absolute(Fixed::from_map_units(100)),
+    )
+    .unwrap();
+    arm(&mut s, [900, 0]);
+    s.advance([TicCommand::default(); 4]).unwrap();
+    // A removed item between tics: unlinked, pending, still decodable.
+    s.mark_remove(clip).unwrap();
+    let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
+    Diagnostic::decode_heights(&bytes, limits).unwrap();
+    progresses(&mut s, |_, _| [TicCommand::default(); 4], 30);
 }

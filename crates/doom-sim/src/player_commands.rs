@@ -78,17 +78,7 @@ impl Simulation {
         }
         let command = commands[slot];
         if command.buttons
-            & !(if matches!(
-                p.policy,
-                OriginalExecutionProfile::PlayerDemonWeaponsV1
-                    | OriginalExecutionProfile::PlayerDemonPickupsV1
-                    | OriginalExecutionProfile::PlayerDemonArmorV1
-                    | OriginalExecutionProfile::PlayerDemonBonusesV1
-                    | OriginalExecutionProfile::PlayerMonstersV1
-                    | OriginalExecutionProfile::PlayerMonstersImpV1
-                    | OriginalExecutionProfile::PlayerMonstersMapScaleV1
-                    | OriginalExecutionProfile::PlayerMonstersHeightsV1
-            ) {
+            & !(if p.policy.has_weapon_pack() {
                 BT_ATTACK | BT_CHANGE | BT_WEAPONMASK
             } else if p.policy == OriginalExecutionProfile::PlayerDemonPistolV1 {
                 BT_ATTACK
@@ -104,17 +94,7 @@ impl Simulation {
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
-        if matches!(
-            p.policy,
-            OriginalExecutionProfile::PlayerDemonWeaponsV1
-                | OriginalExecutionProfile::PlayerDemonPickupsV1
-                | OriginalExecutionProfile::PlayerDemonArmorV1
-                | OriginalExecutionProfile::PlayerDemonBonusesV1
-                | OriginalExecutionProfile::PlayerMonstersV1
-                | OriginalExecutionProfile::PlayerMonstersImpV1
-                | OriginalExecutionProfile::PlayerMonstersMapScaleV1
-                | OriginalExecutionProfile::PlayerMonstersHeightsV1
-        ) {
+        if p.policy.has_weapon_pack() {
             player_weapons::validate_command(command)?;
         }
         let current = p.mo.filter(|id| self.actors.is_pending(*id) == Some(false));

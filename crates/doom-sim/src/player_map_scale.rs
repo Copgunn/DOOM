@@ -234,10 +234,16 @@ pub(crate) fn spawn_fits(
     world: &StaticWorld,
     sectors: &[SectorState],
     position: [Fixed; 2],
+    spawn: SpawnHeight,
     height: Fixed,
 ) -> bool {
     let sector = sectors[usize::from(world.locate_validated(position).sector)];
-    sector.ceiling - sector.floor >= height
+    let z = match spawn {
+        SpawnHeight::Floor => sector.floor,
+        SpawnHeight::Ceiling => sector.ceiling - height,
+        SpawnHeight::Absolute(z) => z,
+    };
+    sector.floor <= z && z + height <= sector.ceiling
 }
 /// Vertical momentum witness of a policy, in map units.
 pub(crate) const fn momz_bound(policy: OriginalExecutionProfile) -> u32 {
@@ -336,8 +342,14 @@ impl Simulation {
             .then_some(self.sectors.as_slice())
     }
     /// Rust-only spawn fit of the heights policy (§4.3 of the M3h4 note): the
-    /// type's height fits the spawn position's sector. Always true elsewhere.
-    pub(crate) fn spawn_fits(&self, ty: ActorTypeId, position: [Fixed; 2]) -> Result<(), SimError> {
+    /// spawn's resulting `z` lies within `[floor, ceiling - height]` of the spawn
+    /// position's sector (an absolute `z` included). Always true elsewhere.
+    pub(crate) fn spawn_fits(
+        &self,
+        ty: ActorTypeId,
+        position: [Fixed; 2],
+        spawn: SpawnHeight,
+    ) -> Result<(), SimError> {
         if !self.player_policy().has_heights() {
             return Ok(());
         }
@@ -347,7 +359,7 @@ impl Simulation {
             .and_then(|r| r.actor_type(ty))
             .ok_or(ActorError::InvalidType)?
             .height();
-        if spawn_fits(&self.world, &self.sectors, position, height) {
+        if spawn_fits(&self.world, &self.sectors, position, spawn, height) {
             Ok(())
         } else {
             Err(MapScaleError::Fit.into())

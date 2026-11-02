@@ -235,17 +235,7 @@ impl Simulation {
             .original_player
             .as_ref()
             .ok_or(PlayerBodyError::Profile)?;
-        if !matches!(
-            p.policy,
-            OriginalExecutionProfile::PlayerDemonWeaponsV1
-                | OriginalExecutionProfile::PlayerDemonPickupsV1
-                | OriginalExecutionProfile::PlayerDemonArmorV1
-                | OriginalExecutionProfile::PlayerDemonBonusesV1
-                | OriginalExecutionProfile::PlayerMonstersV1
-                | OriginalExecutionProfile::PlayerMonstersImpV1
-                | OriginalExecutionProfile::PlayerMonstersMapScaleV1
-                | OriginalExecutionProfile::PlayerMonstersHeightsV1
-        ) {
+        if !p.policy.has_weapon_pack() {
             return Err(PlayerBodyError::Profile.into());
         }
         if self.tic != 0
@@ -279,19 +269,7 @@ impl Simulation {
     ) -> Result<Option<PlayerWeaponState>, PlayerBodyError> {
         self.original_player
             .as_ref()
-            .filter(|p| {
-                matches!(
-                    p.policy,
-                    OriginalExecutionProfile::PlayerDemonWeaponsV1
-                        | OriginalExecutionProfile::PlayerDemonPickupsV1
-                        | OriginalExecutionProfile::PlayerDemonArmorV1
-                        | OriginalExecutionProfile::PlayerDemonBonusesV1
-                        | OriginalExecutionProfile::PlayerMonstersV1
-                        | OriginalExecutionProfile::PlayerMonstersImpV1
-                        | OriginalExecutionProfile::PlayerMonstersMapScaleV1
-                        | OriginalExecutionProfile::PlayerMonstersHeightsV1
-                )
-            })
+            .filter(|p| p.policy.has_weapon_pack())
             .map(|p| p.weapon.and_then(PlayerWeaponRuntime::pack))
             .ok_or(PlayerBodyError::Profile)
     }
