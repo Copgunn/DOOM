@@ -209,13 +209,20 @@ struct DemonPlan {
     events: Vec<Event>,
 }
 impl Simulation {
-    fn demon_plan(&self) -> Result<DemonPlan, SimError> {
+    fn demon_plan(&mut self) -> Result<DemonPlan, SimError> {
         let mut slots = line_work::reserved(self.actors.slots.len())?;
         slots.extend_from_slice(&self.actors.slots);
         let mut order = line_work::reserved(self.actors.max_slots as usize)?;
         order.extend_from_slice(&self.spatial.order);
         let sound_targets = if self.player_policy().has_heights() {
-            let mut targets = line_work::reserved(self.sound_targets.len())?;
+            // The spare buffer swapped out by the last committed plan: no
+            // allocation once its capacity matches the sector count. It is never
+            // read, so a failed tic drops it and the next plan allocates once.
+            let mut targets = std::mem::take(&mut self.spare_sound_targets);
+            targets.clear();
+            targets
+                .try_reserve(self.sound_targets.len())
+                .map_err(|_| StoreError::Capacity)?;
             targets.extend_from_slice(&self.sound_targets);
             StagedSound::Many(targets)
         } else {
@@ -335,7 +342,9 @@ impl Simulation {
                         *first = target;
                     }
                 }
-                StagedSound::Many(targets) => self.sound_targets = targets,
+                StagedSound::Many(targets) => {
+                    self.spare_sound_targets = std::mem::replace(&mut self.sound_targets, targets);
+                }
             }
         }
         self.bindings = plan.bindings;

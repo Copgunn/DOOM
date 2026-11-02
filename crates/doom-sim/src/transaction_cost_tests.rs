@@ -7,7 +7,7 @@ use std::hint::black_box;
 fn projection_mutation_is_isolated_and_component_costs_are_observable() {
     for (label, profile) in [("small_control", "20"), ("canonical_small", "original")] {
         let workload = fixture::Workload::setup(label, profile).unwrap();
-        let sim = workload.sim;
+        let mut sim = workload.sim;
         let before = sim.snapshot();
         let mut plan = sim.demon_plan().unwrap();
         assert_eq!(

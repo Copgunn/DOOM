@@ -535,6 +535,10 @@ pub struct Simulation {
     /// spawn rule and the escape witness). Derived from the immutable map; never
     /// canonical state.
     pub(crate) boundary: Option<Arc<player_map_scale::Boundary>>,
+    /// Under the heights policies, the sound-target vector of the last committed
+    /// plan, kept as the next plan's staging buffer so a tic allocates nothing
+    /// for it. Never read; not canonical state, not encoded, not compared.
+    pub(crate) spare_sound_targets: Vec<Option<ActorId>>,
 }
 /// A simulation moves between threads and is shared by reference across them; the
 /// validation memo is atomic so this holds at compile time.
@@ -657,6 +661,7 @@ impl Simulation {
             admitted_types: demon_lifecycle::AdmittedTypes::default(),
             type_envelope: None,
             boundary: None,
+            spare_sound_targets: Vec::new(),
         })
     }
     /// The sectors a type's dimensions are admitted against: the heights policy's
