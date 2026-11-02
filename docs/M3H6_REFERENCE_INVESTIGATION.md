@@ -650,4 +650,4 @@ the new policy.
 ## 10. Status / next step
 
 Status: **investigation complete**; owner decisions of §8.2 recorded 2026-11-02. Phase 2
-in progress: steps 1–3 of §8.1 done; next step is 4 (DSIM33 projection).
+in progress: steps 1–4 of §8.1 done; next step is 5 (admission and witnesses).
