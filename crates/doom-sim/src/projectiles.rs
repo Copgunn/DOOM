@@ -444,7 +444,13 @@ pub(crate) fn launch_fireball<A: lifecycle::ActorAccess>(
     let to = *h.access.get(dest).ok_or(ProjectileError::Reference)?;
     let speed = Fixed::from_bits(h.definition(FIREBALL).speed());
     let (angle, momz, shadow) = actor_aim(&from, &to, speed);
-    if !within(momz, 64) {
+    // Rust-only launch witness: 64 in the flat policies, the derived 1,024 under
+    // heights, where the chord to a target up to 968 units away in z is legal.
+    let momz_bound = h
+        .player
+        .as_deref()
+        .map_or(64, |p| crate::player_map_scale::momz_bound(p.policy));
+    if !within(momz, momz_bound) {
         return Err(ProjectileError::Arithmetic.into());
     }
     h.emit(Event::Projectile(ProjectileEvent::Launch(

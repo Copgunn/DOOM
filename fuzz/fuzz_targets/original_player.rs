@@ -122,7 +122,10 @@ fuzz_target!(|data: &[u8]| {
             .unwrap();
     }
     let mut captured = sim.clone();
-    for request in rest[..rest.len().min(MAX_INPUT - 1)].chunks_exact(REQUEST_BYTES) {
+    for request in rest[..rest.len().min(MAX_INPUT - 1)]
+        .as_chunks::<REQUEST_BYTES>()
+        .0
+    {
         let before = sim.snapshot();
         let actual = apply(&mut sim, request, false);
         let expected = apply(&mut captured, request, true);

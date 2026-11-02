@@ -215,7 +215,7 @@ fuzz_target!(|data: &[u8]| {
         );
         assert_eq!(a.snapshot(), old);
     }
-    for command in data[3..].chunks_exact(4).take(8) {
+    for command in data[3..].as_chunks::<4>().0.iter().take(8) {
         operation(&mut a, &mut ia, command);
         operation(&mut b, &mut ib, command);
         assert_eq!(ia, ib);

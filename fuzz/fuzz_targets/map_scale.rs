@@ -107,7 +107,7 @@ fuzz_target!(|data: &[u8]| {
         ids.push(a.spawn(spec).unwrap());
         other_ids.push(b.spawn(spec).unwrap());
     }
-    for c in data[3..].chunks_exact(4).take(8) {
+    for c in data[3..].as_chunks::<4>().0.iter().take(8) {
         operation(&mut a, &mut ids, c);
         operation(&mut b, &mut other_ids, c);
         assert_eq!(ids, other_ids);

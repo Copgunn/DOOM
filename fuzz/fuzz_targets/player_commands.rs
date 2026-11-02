@@ -11,7 +11,7 @@ fn apply(s: &mut Simulation, b: &[u8], capture: bool) -> Result<(), SimError> {
         .mo
         .unwrap_or(ActorId::from_parts(u32::MAX, 0));
     match b[0] % 8 {
-        0 | 1 | 2 => {
+        0..=2 => {
             let mut c = [TicCommand::default(); 4];
             c[usize::from(b[1] % 4)] = TicCommand {
                 forward: i8::from_le_bytes([b[2]]),
@@ -56,7 +56,10 @@ fuzz_target!(|data: &[u8]| {
     let cases = inputs::cases();
     let (mut s, _) = inputs::setup(&cases[usize::from(first) % cases.len()]);
     let mut captured = s.clone();
-    for b in rest[..rest.len().min(MAX_INPUT - 1)].chunks_exact(REQUEST_BYTES) {
+    for b in rest[..rest.len().min(MAX_INPUT - 1)]
+        .as_chunks::<REQUEST_BYTES>()
+        .0
+    {
         let before = s.snapshot();
         let a = apply(&mut s, b, false);
         let expected = apply(&mut captured, b, true);

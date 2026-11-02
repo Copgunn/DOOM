@@ -12,7 +12,7 @@ fuzz_target!(|data: &[u8]| {
     let c = &fixtures::cases()
         [[37, 38, 39, 40, 51, 52, 53, 54, 55, 56, 57, 58][usize::from(first % 12)]];
     let mut sim = fixtures::setup(c);
-    for chunk in rest.chunks_exact(4).take(12) {
+    for chunk in rest.as_chunks::<4>().0.iter().take(12) {
         let a = ActorId::from_parts(u32::from(chunk[1] % 8), u64::from(chunk[2] % 3));
         let b = ActorId::from_parts(u32::from(chunk[3] % 8), 1);
         let before = sim.snapshot();

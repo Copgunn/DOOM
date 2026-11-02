@@ -106,7 +106,7 @@ fuzz_target!(|data: &[u8]| {
         s.advance(c).unwrap();
     }
     let mut captured = s.clone();
-    for b in data[2..data.len().min(290)].chunks_exact(9) {
+    for b in data[2..data.len().min(290)].as_chunks::<9>().0 {
         let before = s.snapshot();
         let armor = s.original_player_armor(PlayerSlot::One).unwrap();
         let result = apply(&mut s, body, demon, b, false);

@@ -1484,3 +1484,35 @@ Independent C rows feed the Python
 [map-scale projection](../tools/reference/map_scale_snapshot.py); its full bytes and
 PBE1 ordered events preceded the matching Rust changes. Decoding remains observation,
 not executable world restoration.
+
+## DSIM-v31 original monsters with static heights
+
+Version31 selects policy15 (`PlayerMonstersHeightsV1`), the unchanged original
+registry schema and context `PLAYER-MONSTERS-HEIGHTS-1-MEDIUM-v1`.
+`Diagnostic::decode_heights` explicitly reads31; every earlier version-specific
+reader keeps its historical contract and rejects31, and the v31 reader rejects every
+earlier version. V20–30 bytes, encoders, fixtures and policy/context meanings are
+unchanged.
+
+V31 uses the DSIM30 field layout and event vocabulary and adds no persistent field or
+event tag: the source state that heights need (`z`, `momz`, `floor`, `ceiling`, the
+subsector/sector location and every `sector.{i}.soundtarget`) has been in the layout
+since v3 and v6. It changes the item witness only under31:
+
+- A world item's `z` equals its `floor`, and its `floor`/`ceiling` equal the
+  `sector.{i}.floor`/`sector.{i}.ceiling` of the sector whose `sector.{i}.actors`
+  list holds the item's handle, instead of `0`/`128`.
+- The 320-slot store, the 208-fireball bound and the 2,048-unit coordinate domain of
+  v30 apply unchanged.
+
+Newly reachable event payloads under31 use existing tags: a `Sound` actor-state
+event with sound 34 (`sfx_oof`) immediately before the `Vertical` event of a landing
+player, `Noise` weapon events for every sector the `P_RecursiveSound` flood visits (in
+source order, with `blocks` 0 or 1), `Vertical` events with floor or ceiling contact
+for falling, stepping and exploding actors, and `SectorMovement` attempts refused by
+the fit, headroom, step and dropoff rules.
+
+Independent C rows feed the Python
+[heights projection](../tools/reference/heights_snapshot.py); its full bytes and
+PBE1 ordered events preceded the matching Rust changes. Decoding remains observation,
+not executable world restoration.

@@ -32,20 +32,19 @@ fuzz_target!(|data: &[u8]| {
         let offset = (usize::from(*byte) + i * 17) % map_bytes.len();
         map_bytes[offset] ^= *byte;
     }
-    if let Ok(wad) = doom_wad::Wad::parse(&map_bytes, doom_wad::Limits::default()) {
-        if let Ok(map) = doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default()) {
-            if let Ok(mut candidate) = Simulation::with_demon_map_context_registry(
-                map,
-                64,
-                fixtures::registry(c),
-                ActorOptions::default(),
-                MapContextOptions::default(),
-            ) {
-                let before = candidate.snapshot();
-                if candidate.spawn_map_things().is_err() {
-                    assert_eq!(candidate.snapshot(), before);
-                }
-            }
+    if let Ok(wad) = doom_wad::Wad::parse(&map_bytes, doom_wad::Limits::default())
+        && let Ok(map) = doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default())
+        && let Ok(mut candidate) = Simulation::with_demon_map_context_registry(
+            map,
+            64,
+            fixtures::registry(c),
+            ActorOptions::default(),
+            MapContextOptions::default(),
+        )
+    {
+        let before = candidate.snapshot();
+        if candidate.spawn_map_things().is_err() {
+            assert_eq!(candidate.snapshot(), before);
         }
     }
     let mut s = fixtures::setup(c);
@@ -62,7 +61,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     let initial = PursuitSetup::from_actor(s.actor(ActorId::from_parts(0, 1)).unwrap()).unwrap();
-    for c in rest.chunks_exact(8).take(8) {
+    for c in rest.as_chunks::<8>().0.iter().take(8) {
         let a = ActorId::from_parts(u32::from(c[1] % 8), u64::from(c[2] % 3));
         let b = ActorId::from_parts(u32::from(c[7] % 8), 1);
         let value = i32::from_le_bytes(c[3..7].try_into().unwrap());

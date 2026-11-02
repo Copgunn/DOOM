@@ -87,6 +87,7 @@ impl Simulation {
                     | OriginalExecutionProfile::PlayerMonstersV1
                     | OriginalExecutionProfile::PlayerMonstersImpV1
                     | OriginalExecutionProfile::PlayerMonstersMapScaleV1
+                    | OriginalExecutionProfile::PlayerMonstersHeightsV1
             ) {
                 BT_ATTACK | BT_CHANGE | BT_WEAPONMASK
             } else if p.policy == OriginalExecutionProfile::PlayerDemonPistolV1 {
@@ -112,6 +113,7 @@ impl Simulation {
                 | OriginalExecutionProfile::PlayerMonstersV1
                 | OriginalExecutionProfile::PlayerMonstersImpV1
                 | OriginalExecutionProfile::PlayerMonstersMapScaleV1
+                | OriginalExecutionProfile::PlayerMonstersHeightsV1
         ) {
             player_weapons::validate_command(command)?;
         }

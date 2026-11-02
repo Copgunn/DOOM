@@ -102,6 +102,14 @@ impl Actor {
     pub const fn z(&self) -> Fixed {
         self.z
     }
+    /// Current floor constraint (`floorz`), from the last position check.
+    pub const fn floor(&self) -> Fixed {
+        self.floor
+    }
+    /// Current ceiling constraint (`ceilingz`), from the last position check.
+    pub const fn ceiling(&self) -> Fixed {
+        self.ceiling
+    }
     /// Radius used for destination-box collision.
     pub const fn radius(&self) -> Fixed {
         self.spec.radius

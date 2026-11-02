@@ -17,7 +17,10 @@ fuzz_target!(|data: &[u8]| {
     };
     let mut observed = inputs::setup(profile);
     let mut direct = observed.clone();
-    for chunk in remaining[..remaining.len().min(MAX_INPUT - 1)].chunks_exact(REQUEST_BYTES) {
+    for chunk in remaining[..remaining.len().min(MAX_INPUT - 1)]
+        .as_chunks::<REQUEST_BYTES>()
+        .0
+    {
         let mut command = [TicCommand::default(); 4];
         let slot = usize::from(chunk[0] % 4);
         if let Some(value) = command.get_mut(slot) {

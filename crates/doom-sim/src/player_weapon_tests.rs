@@ -188,7 +188,12 @@ fn late_shotgun_capacity_failure_discards_earlier_pellets_damage_rng_and_ammo() 
     let before = s.snapshot();
     let result = s.checked_demon_operation(|host| {
         let mut sound = Some(a.body);
-        let result = player_pistol::stage(host, source::commands(c, 18)[0], 17, &mut sound);
+        let result = player_pistol::stage(
+            host,
+            source::commands(c, 18)[0],
+            17,
+            std::slice::from_mut(&mut sound),
+        );
         assert!(result.is_err());
         assert!(
             host.events
@@ -225,7 +230,13 @@ fn completed_shotgun_then_late_error_rolls_back_all_seven_pellets() {
     let before = s.snapshot();
     let result = s.checked_demon_operation(|host| {
         let mut sound = Some(a.body);
-        player_pistol::stage(host, source::commands(c, 18)[0], 17, &mut sound).unwrap();
+        player_pistol::stage(
+            host,
+            source::commands(c, 18)[0],
+            17,
+            std::slice::from_mut(&mut sound),
+        )
+        .unwrap();
         assert_eq!(
             host.events
                 .iter()
@@ -256,7 +267,13 @@ fn chaingun_immediate_fire_then_noise_is_one_atomic_transaction() {
     let before = s.snapshot();
     let result = s.checked_demon_operation(|host| {
         let mut sound = None;
-        player_pistol::stage(host, source::commands(c, 15)[0], 14, &mut sound).unwrap();
+        player_pistol::stage(
+            host,
+            source::commands(c, 15)[0],
+            14,
+            std::slice::from_mut(&mut sound),
+        )
+        .unwrap();
         assert_eq!(sound, Some(a.body));
         let bullet = host
             .events
@@ -438,7 +455,13 @@ fn completed_lethal_shotgun_then_late_error_restores_statistics_and_corpse_field
     let before = s.snapshot();
     let result = s.checked_demon_operation(|host| {
         let mut sound = Some(a.body);
-        player_pistol::stage(host, source::commands(c, 166)[0], 165, &mut sound).unwrap();
+        player_pistol::stage(
+            host,
+            source::commands(c, 166)[0],
+            165,
+            std::slice::from_mut(&mut sound),
+        )
+        .unwrap();
         assert!(
             host.access
                 .get(a.origin.unwrap())

@@ -69,11 +69,16 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
     use crate::identity::{OriginalActorType, OriginalState};
     let owner = host.access.get(id).ok_or(CombatError::Reference)?;
     let life = owner.life().ok_or(MonsterError::Definition)?;
+    // The heights policy admits a Demon or player off the floor; A_SargAttack reads
+    // neither z, and the shared damage service carries the vertical state.
+    let heights = host
+        .player
+        .as_deref()
+        .is_some_and(|p| p.policy.has_heights());
     if life.actor_type.0 != OriginalActorType::MT_SERGEANT.ordinal()
         || life.health <= 0
         || life.state != Some(StateId(OriginalState::S_SARG_ATK3.ordinal()))
-        || owner.z() != Fixed::ZERO
-        || owner.vertical_momentum() != Fixed::ZERO
+        || (!heights && (owner.z() != Fixed::ZERO || owner.vertical_momentum() != Fixed::ZERO))
     {
         return Err(MonsterError::Definition.into());
     }
@@ -96,8 +101,7 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
         || player.health != body_life.health.max(0)
         || (player.state == PlayerBodyState::Dead) != (body_life.health <= 0)
         || body_life.flags & !allowed != 0
-        || body.z() != Fixed::ZERO
-        || body.vertical_momentum() != Fixed::ZERO
+        || (!heights && (body.z() != Fixed::ZERO || body.vertical_momentum() != Fixed::ZERO))
     {
         return Err(PlayerBodyError::Invariant.into());
     }
@@ -115,7 +119,7 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
     let current = body.life().ok_or(PlayerBodyError::Invariant)?;
     if current.health > 0 && current.flags & original_player::MF_SHOOTABLE != 0 {
         let room = host.player.as_deref().and_then(|p| p.room);
-        original_player::preflight_player_impulse(room, body, owner, amount)?;
+        original_player::preflight_player_impulse(room, heights, body, owner, amount)?;
     }
     let damage = crate::combat::DamagePlan::current_armored_body(
         host.registry,

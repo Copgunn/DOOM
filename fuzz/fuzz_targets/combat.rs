@@ -22,7 +22,7 @@ fuzz_target!(|data: &[u8]| {
         )
         .unwrap();
     }
-    for chunk in data.chunks_exact(8).take(32) {
+    for chunk in data.as_chunks::<8>().0.iter().take(32) {
         let before = sim.snapshot();
         let raw = i32::from_le_bytes(chunk[..4].try_into().unwrap());
         let id = ActorId::from_parts(u32::from(chunk[4] % 10), u64::from(chunk[5] % 3));

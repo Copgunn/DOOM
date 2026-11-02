@@ -74,7 +74,7 @@ fuzz_target!(|data: &[u8]| {
         include_bytes!("../../tests/reference/m3g11_state_29_1.bin").as_slice(),
     ] {
         let mut bytes = original.to_vec();
-        for c in data.chunks_exact(3).take(32) {
+        for c in data.as_chunks::<3>().0.iter().take(32) {
             let at = usize::from(u16::from_le_bytes([c[0], c[1]])) % bytes.len();
             bytes[at] ^= c[2];
         }
@@ -107,7 +107,7 @@ fuzz_target!(|data: &[u8]| {
         .spawn_player_body(
             PlayerSlot::One,
             [
-                Fixed::from_map_units(if data[0] % 3 == 0 { 0 } else { -300 }),
+                Fixed::from_map_units(if data[0].is_multiple_of(3) { 0 } else { -300 }),
                 Fixed::ZERO,
             ],
         )
@@ -132,7 +132,7 @@ fuzz_target!(|data: &[u8]| {
         }
     }
     let mut captured = s.clone();
-    for b in data[2..data.len().min(290)].chunks_exact(9) {
+    for b in data[2..data.len().min(290)].as_chunks::<9>().0 {
         let before = s.snapshot();
         let armor = s.original_player_armor(PlayerSlot::One).unwrap();
         let result = apply(&mut s, body, demon, b, false);

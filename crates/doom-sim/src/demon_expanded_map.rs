@@ -1,6 +1,16 @@
 //! Explicit intersection of expanded static geometry and the native Demon closure.
 use crate::*;
 
+/// Which expanded-map service family a construction selects and the two
+/// policy-decided admissions it needs before any type validation runs.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct ExpandedSelection {
+    pub profile: Profile,
+    /// Actor slots the proof needs (64 historically, 320 at map scale).
+    pub actor_cap: u32,
+    /// Admit type dimensions against the tallest sector (heights policy).
+    pub type_envelope: bool,
+}
 impl Simulation {
     /// Profile 20: larger static maps with the exact map-context Demon registry.
     /// Geometry uses the extent proof; actors retain the narrower gameplay bounds.
@@ -18,8 +28,11 @@ impl Simulation {
             registry,
             options,
             context,
-            Profile::DemonExpandedMap,
-            64,
+            ExpandedSelection {
+                profile: Profile::DemonExpandedMap,
+                actor_cap: 64,
+                type_envelope: false,
+            },
         )
     }
     pub(crate) fn with_demon_expanded_profile(
@@ -28,9 +41,13 @@ impl Simulation {
         registry: ActorRegistry,
         options: ActorOptions,
         context: MapContextOptions,
-        profile: Profile,
-        actor_cap: u32,
+        selection: ExpandedSelection,
     ) -> Result<Self, SimError> {
+        let ExpandedSelection {
+            profile,
+            actor_cap,
+            type_envelope,
+        } = selection;
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
         }
@@ -80,6 +97,16 @@ impl Simulation {
         let work = map_extent::validate_with_actor_cap(&map, limits, actor_cap)?;
         let mut sim = Self::create_bounded(map, limit, profile, limits.max_prepared_references)?;
         sim.world.extent_sight_work = Some(work);
+        if type_envelope {
+            // Heights policy: windows and closed sectors may be shorter than any
+            // actor; dimensions are admitted against the tallest sector and every
+            // spawn proves its own fit. Earlier policies keep the map-wide fit.
+            sim.type_envelope = sim
+                .sectors
+                .iter()
+                .copied()
+                .max_by_key(|s| s.ceiling - s.floor);
+        }
         if profile != Profile::OriginalDemon {
             snapshot::registry_fields(Arc::make_mut(&mut sim.map_fields), &registry);
         }
@@ -149,6 +176,27 @@ pub(crate) fn action_sight(
 
 /// Only the bounded mutable actor projection is staged. World, map, registry,
 /// sectors, sound targets, roster, canonical caches and old events are borrowed.
+/// Staged per-sector sound targets: the flat policies stage their one sector without
+/// allocating (the tic plan keeps exactly its two historical allocations); the
+/// heights policy copies every sector's target.
+enum StagedSound {
+    One(Option<ActorId>),
+    Many(Vec<Option<ActorId>>),
+}
+impl StagedSound {
+    fn as_slice(&self) -> &[Option<ActorId>] {
+        match self {
+            Self::One(target) => std::slice::from_ref(target),
+            Self::Many(targets) => targets,
+        }
+    }
+    fn as_mut_slice(&mut self) -> &mut [Option<ActorId>] {
+        match self {
+            Self::One(target) => std::slice::from_mut(target),
+            Self::Many(targets) => targets,
+        }
+    }
+}
 struct DemonPlan {
     actors: ThinkerStore<Actor>,
     spatial: movement::SpatialIndex,
@@ -156,7 +204,8 @@ struct DemonPlan {
     statistics: Option<LevelStatistics>,
     player: Option<original_player::PlayerRuntime>,
     bindings: [Option<ActorId>; 4],
-    sound_target: Option<ActorId>,
+    /// Sound targets staged by the weapon noise.
+    sound_targets: StagedSound,
     events: Vec<Event>,
 }
 impl Simulation {
@@ -165,6 +214,13 @@ impl Simulation {
         slots.extend_from_slice(&self.actors.slots);
         let mut order = line_work::reserved(self.actors.max_slots as usize)?;
         order.extend_from_slice(&self.spatial.order);
+        let sound_targets = if self.player_policy().has_heights() {
+            let mut targets = line_work::reserved(self.sound_targets.len())?;
+            targets.extend_from_slice(&self.sound_targets);
+            StagedSound::Many(targets)
+        } else {
+            StagedSound::One(self.sound_targets.first().copied().flatten())
+        };
         Ok(DemonPlan {
             actors: ThinkerStore {
                 slots,
@@ -177,7 +233,7 @@ impl Simulation {
             statistics: self.statistics,
             player: self.original_player,
             bindings: self.bindings,
-            sound_target: self.sound_targets.first().copied().flatten(),
+            sound_targets,
             events: Vec::new(),
         })
     }
@@ -244,7 +300,22 @@ impl Simulation {
             } else {
                 map_scale::bounded(actor.momentum(), 64)?;
             }
-            map_scale::bounded([actor.momz], 64)?;
+            let policy = self.player_policy();
+            if policy.has_heights()
+                && !original_registry::is_impact(life.actor_type)
+                && !unlinked_blast
+            {
+                // Invariant V: impacts spawn at the source's absolute z, and a
+                // fireball exploded by its own half-step is clipped by its next
+                // P_ZMovement (in the same pass for an in-tic launch), so only
+                // their z/momz witnesses apply.
+                player_map_scale::vertical_admitted(actor)?;
+            } else {
+                map_scale::bounded([actor.momz], player_map_scale::momz_bound(policy))?;
+                if policy.has_heights() {
+                    map_scale::bounded([actor.z], player_map_scale::HEIGHTS_Z_UNITS)?;
+                }
+            }
         }
         self.preflight_player_body(stepping)?;
         self.preflight_monster_owner()?;
@@ -258,8 +329,13 @@ impl Simulation {
         self.statistics = plan.statistics;
         self.original_player = plan.player;
         if self.player_policy().has_player_weapons() {
-            if let Some(target) = self.sound_targets.first_mut() {
-                *target = plan.sound_target;
+            match plan.sound_targets {
+                StagedSound::One(target) => {
+                    if let Some(first) = self.sound_targets.first_mut() {
+                        *first = target;
+                    }
+                }
+                StagedSound::Many(targets) => self.sound_targets = targets,
             }
         }
         self.bindings = plan.bindings;
@@ -382,7 +458,7 @@ impl Simulation {
                         &mut host,
                         commands[usize::from(PlayerSlot::One.ordinal())],
                         self.tic,
-                        &mut plan.sound_target,
+                        plan.sound_targets.as_mut_slice(),
                     )?;
                 }
             }
@@ -392,10 +468,9 @@ impl Simulation {
             plan.events
                 .extend([Event::Phase(Phase::Players), Event::Phase(Phase::Thinkers)]);
         }
-        let sound_targets = [plan.sound_target];
         let mut perception_inputs = self.checked_demon_inputs(&control);
         if weapon_policy {
-            perception_inputs.sound_targets = &sound_targets;
+            perception_inputs.sound_targets = plan.sound_targets.as_slice();
         }
         thinkers::run(
             &mut plan.actors,

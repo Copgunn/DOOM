@@ -123,3 +123,6 @@ original evidence and former guide contents with exact-byte copies and digests.
 - [M3h3 wall-aware travel and real-map-scale investigation](M3H3_REFERENCE_INVESTIGATION.md),
   [observations](validation/M3H3.md), [support](COMPATIBILITY.md#original-monsters-at-real-map-scale)
   and [DSIM30](STATE_FORMAT.md#dsim-v30-original-monsters-at-real-map-scale).
+- [M3h4 two-sided lines, static heights and vertical movement investigation](M3H4_REFERENCE_INVESTIGATION.md),
+  [observations](validation/M3H4.md), [support](COMPATIBILITY.md#original-monsters-with-static-heights)
+  and [DSIM31](STATE_FORMAT.md#dsim-v31-original-monsters-with-static-heights).

@@ -388,6 +388,7 @@ impl DamagePlan {
             if airborne {
                 original_player::preflight_missile_impulse(
                     player.room,
+                    player.policy.has_heights(),
                     &victim,
                     origin,
                     request.amount,
@@ -396,6 +397,7 @@ impl DamagePlan {
             } else {
                 original_player::preflight_grounded_impulse(
                     player.room,
+                    player.policy.has_heights(),
                     &victim,
                     origin,
                     request.amount,
@@ -977,15 +979,31 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                 if let Some(item) = source_drop(old.life.unwrap().actor_type) {
                     // p_inter.c P_KillMobj: P_SpawnMobj(x, y, ONFLOORZ), then MF_DROPPED.
                     let position = self.access.get(id).unwrap().position();
-                    let drop =
-                        self.spawn(ActorTypeId(item.ordinal()), position, SpawnHeight::Floor);
-                    self.access
-                        .get_mut(drop)
-                        .unwrap()
-                        .life
-                        .as_mut()
-                        .unwrap()
-                        .flags |= crate::world_pickups::MF_DROPPED;
+                    let ty = ActorTypeId(item.ordinal());
+                    let fits = !self.player.as_ref().is_some_and(|p| p.policy.has_heights())
+                        || self.registry.actor_type(ty).is_some_and(|t| {
+                            crate::player_map_scale::spawn_fits(
+                                self.world,
+                                self.sectors,
+                                position,
+                                t.height(),
+                            )
+                        });
+                    if fits {
+                        let drop = self.spawn(ty, position, SpawnHeight::Floor);
+                        self.access
+                            .get_mut(drop)
+                            .unwrap()
+                            .life
+                            .as_mut()
+                            .unwrap()
+                            .flags |= crate::world_pickups::MF_DROPPED;
+                    } else {
+                        // Rust-only: a drop taller than the corpse's sector would stand
+                        // through the ceiling in the source; the checked tic fails and
+                        // rolls back instead (M3h4 note, section 4.3).
+                        self.fail_sight(crate::MapScaleError::Fit.into());
+                    }
                 }
             }
             return result;
