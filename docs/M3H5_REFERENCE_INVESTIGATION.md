@@ -646,4 +646,4 @@ and the smoke assertion is left as it is.
 ## 9. Status / next step
 
 Status: **investigation complete; owner decisions recorded (§8.1); Phase 2 in
-progress; step 2 (C harness, polygon room builder and node splitter) committed, next step 3 (DSIM32 projection)**.
+progress; step 2 (C harness, polygon room builder and node splitter) and step 3 (DSIM32 projection) committed, next step 4 (admission)**.
