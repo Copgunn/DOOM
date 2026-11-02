@@ -355,7 +355,9 @@ every `P_TryMove` and `P_Move`.
 
 ### 4.5 Real node-builder output: C3, dangling walls, BLOCKMAPs, REJECT
 
-Measured over the 68 maps of the two IWADs (counts only):
+Measured over the 68 maps of the two IWADs (counts only; the per-map table is
+[validation/M3H6_IWAD_COUNTS.md](validation/M3H6_IWAD_COUNTS.md), the output of
+`tools/iwad_counts.py --markdown`):
 
 | Rule | E1M1 | Maps satisfying it | Exceptions |
 | --- | --- | ---: | --- |
@@ -648,4 +650,4 @@ the new policy.
 ## 10. Status / next step
 
 Status: **investigation complete**; owner decisions of §8.2 recorded 2026-11-02. Phase 2
-in progress: next step is 2 of §8.1 (`tools/iwad_counts.py`).
+in progress: steps 1–2 of §8.1 done; next step is 3 (C evidence).
