@@ -541,7 +541,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::MapExtent => 19,
         crate::Profile::DemonExpandedMap => 20,
         crate::Profile::OriginalDemon => {
-            if sim.player_policy().has_diagonals() {
+            if sim.player_policy().has_real_map() {
+                33
+            } else if sim.player_policy().has_diagonals() {
                 32
             } else if sim.player_policy().has_heights() {
                 31
@@ -571,7 +573,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     // Versions18/19 explicitly compose the untyped static-sector field layout.
     let layout = if matches!(version, 18 | 19) {
         3
-    } else if matches!(version, 20..=32) {
+    } else if matches!(version, 20..=33) {
         17
     } else {
         version
@@ -579,14 +581,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     field(
         &mut fields,
         "profile",
-        (if matches!(version, 21..=32) {
+        (if matches!(version, 21..=33) {
             sim.player_policy().wire_id()
         } else {
             version
         })
         .to_le_bytes(),
     );
-    if matches!(version, 21..=32) {
+    if matches!(version, 21..=33) {
         field(
             &mut fields,
             "registry.schema",
@@ -847,7 +849,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(layout, 8..=17) && !matches!(version, 22..=32) {
+    if matches!(layout, 8..=17) && !matches!(version, 22..=33) {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,
@@ -901,14 +903,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .and_then(|p| p.weapon.and_then(|w| w.pistol())),
         );
     }
-    if matches!(version, 24..=32) {
+    if matches!(version, 24..=33) {
         pack_fields(
             &mut fields,
             sim.original_player
                 .and_then(|p| p.weapon.and_then(|w| w.pack())),
         );
     }
-    if matches!(version, 25..=32) {
+    if matches!(version, 25..=33) {
         let state = sim.original_player.and_then(|p| p.pickups);
         field(
             &mut fields,
@@ -933,7 +935,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             );
         }
     }
-    if matches!(version, 26..=32) {
+    if matches!(version, 26..=33) {
         if let Some(armor) = sim.original_player.and_then(|p| p.armor) {
             field(
                 &mut fields,

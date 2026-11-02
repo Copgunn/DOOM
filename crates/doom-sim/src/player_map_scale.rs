@@ -54,7 +54,9 @@ pub enum MapScaleError {
     Walls,
     /// The BLOCKMAP does not cover the rectangle or omits a wall from a cell it touches.
     Blockmap,
-    /// More linedefs than `MAP_SCALE_WALL_LINES`.
+    /// More linedefs than `MAP_SCALE_WALL_LINES`, or, under the real-map policy,
+    /// more than `MAX_INTERCEPTS` distinct lines in one 2 × 2 window of BLOCKMAP
+    /// cells (the slide-window certificate, M3h6 note §4.4).
     Lines,
     /// An actor center outside the rectangle before a tic (unreachable by the proof).
     Position,
@@ -77,6 +79,18 @@ pub enum MapScaleError {
     /// §4.4): the one legal source move the policy refuses. The tic fails and the
     /// state before it is kept.
     Escape,
+    /// Under the real-map policy, the arithmetic certificate of the M3h6 note §4.2
+    /// fails for the loaded map: a line norm above 3,853, a vertex rectangle whose
+    /// diagonal times the longest line exceeds the sight-intercept bound, spans
+    /// whose sum reaches 32,768 or whose maximum reaches 8,192, a BLOCKMAP that
+    /// does not cover the rectangle, or a node partition the side tests cannot
+    /// evaluate exactly.
+    Arithmetic,
+    /// Under the real-map policy, a trace of this tic would write the source's
+    /// 129th intercept (`MAXINTERCEPTS`, p_local.h), which the original writes past
+    /// `intercepts[]` (undefined): the tic is refused and the state before it is
+    /// kept. Reached only by construction (M3h6 note §4.4); never observed in C.
+    Intercepts,
 }
 impl fmt::Display for MapScaleError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -102,6 +116,19 @@ impl RoomBounds {
     /// Closed containment of an actor center.
     pub fn contains(&self, position: [Fixed; 2]) -> bool {
         (0..2).all(|axis| position[axis] >= self.min[axis] && position[axis] <= self.max[axis])
+    }
+    /// The absolute coordinate envelope of the rectangle in map units (at least the
+    /// M3f2 query envelope): the bound every live actor center is checked against
+    /// by the sight and perception reads under the real-map policy.
+    pub fn envelope_units(&self) -> u32 {
+        let raw = self
+            .min
+            .iter()
+            .chain(self.max.iter())
+            .map(|v| v.bits().unsigned_abs() >> 16)
+            .max()
+            .unwrap_or(0);
+        raw.max(MAP_SCALE_EXTENT_UNITS)
     }
     /// Closed containment of a whole bounding box: the spawn condition under which
     /// every later `P_TryMove` keeps the open box inside the open rectangle.
@@ -220,6 +247,16 @@ impl RoomBounds {
         if map.linedefs().len() > MAP_SCALE_WALL_LINES {
             return Err(MapScaleError::Lines.into());
         }
+        Self::derive_closed_cell(map)
+    }
+    /// The vertex rectangle of a real-map-policy room: `derive_diagonal` without the
+    /// 95-line bound, whose `MAXINTERCEPTS` role moves to the runtime witness
+    /// `MapScaleError::Intercepts` (M3h6 note §4.4). The line count itself is
+    /// bounded by the WAD format (`short` references).
+    pub fn derive_real_map(map: &Map) -> Result<Self, SimError> {
+        Self::derive_closed_cell(map)
+    }
+    fn derive_closed_cell(map: &Map) -> Result<Self, SimError> {
         let vertices = map.vertices();
         let (Some(first), Some(_)) = (vertices.first(), map.linedefs().first()) else {
             return Err(MapScaleError::Walls.into());
@@ -665,12 +702,14 @@ impl Simulation {
                 .as_deref()
                 .is_none_or(|b| b.spawn_admitted(position, radius))
     }
-    /// Absolute XY/Z bound of every live actor for sight and perception reads.
+    /// Absolute XY/Z bound of every live actor for sight and perception reads: the
+    /// room's own envelope under the real-map policy, the M3f2 envelope under the
+    /// other map-scale policies, the historical 1,024 elsewhere.
     pub(crate) fn sight_margin(&self) -> u32 {
-        if self.room().is_some() {
-            MAP_SCALE_EXTENT_UNITS
-        } else {
-            1024
+        match self.room() {
+            Some(room) if self.player_policy().has_real_map() => room.envelope_units(),
+            Some(_) => MAP_SCALE_EXTENT_UNITS,
+            None => 1024,
         }
     }
     /// Live fireball bound of the selected policy.
@@ -686,10 +725,197 @@ pub(crate) const fn live_projectile_bound(policy: OriginalExecutionProfile) -> u
     }
 }
 pub(crate) const fn admitted_lines(policy: OriginalExecutionProfile) -> usize {
-    if policy.has_map_scale() {
+    if policy.has_real_map() {
+        REAL_MAP_FORMAT_RECORDS
+    } else if policy.has_map_scale() {
         MAP_SCALE_WALL_LINES
     } else {
         128
     }
+}
+/// Every linedef, sidedef, vertex, seg, subsector, node and sector table of the WAD
+/// format is bounded by its `short` references (doomdata.h; M3h6 note §2.1): a
+/// non-negative `short` index, or a 15-bit node child. The parser enforces it.
+pub const REAL_MAP_FORMAT_RECORDS: usize = i16::MAX as usize;
+/// p_local.h `MAXINTERCEPTS`: the source array one trace may fill; the real-map
+/// policy refuses the tic that would write the 129th entry.
+pub const MAX_INTERCEPTS: usize = 128;
+/// The arithmetic certificate of the real-map policy (M3h6 note §4.2), computed
+/// from the loaded map in exact integer arithmetic against the same source
+/// expressions the M3f2/M3h3 envelope bounded with constants: (i) the hitscan
+/// `P_InterceptVector` numerator and denominator, (ii) the sight
+/// `P_InterceptVector2` sums, (iii) `P_AproxDistance`, (iv) `SlopeDiv`, (v) the
+/// BLOCKMAP grid, (vi) the side tests, (vii) the heights. Derived at load; never
+/// canonical state.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ArithmeticCertificate {
+    /// Width and height of the vertex rectangle in map units.
+    pub span: [u32; 2],
+    /// Largest `|dx| + |dy|` over the linedefs.
+    pub norm1: u32,
+    /// Largest `dx² + dy²` over the linedefs.
+    pub norm2_squared: u64,
+    /// Largest `|dx|` or `|dy|` of any linedef.
+    pub component: u32,
+    /// Largest `|dx| + |dy|` over the node partitions.
+    pub node_norm: u32,
+    /// Largest absolute floor or ceiling height.
+    pub height: u16,
+}
+impl ArithmeticCertificate {
+    /// Trace reach of a hitscan in map units: `MISSILERANGE` plus one cell plus
+    /// the `FRACUNIT` nudge (M3h6 note §2.3).
+    pub const HITSCAN_REACH: u64 = 2_048 + 128 + 1;
+    /// Largest line norm the hitscan intercept arithmetic admits (`256 · 2,177 · L
+    /// + L + 2 ≤ 2³¹ − 1`).
+    pub const MAX_LINE_NORM: u32 = 3_853;
+    /// `SlopeDiv` reproduces the source quotient for deltas below 8,192 units per
+    /// axis (owner decision 10 of the M3h6 note).
+    pub const SLOPE_DIV_UNITS: u32 = 8_192;
+    /// Compute the certificate and check (i)–(vii); `MapScaleError::Arithmetic`
+    /// names any failure. Linear in the map; nothing runs per tic.
+    pub fn derive(map: &Map) -> Result<Self, SimError> {
+        let vertices = map.vertices();
+        let (Some(first), Some(_)) = (vertices.first(), map.linedefs().first()) else {
+            return Err(MapScaleError::Walls.into());
+        };
+        let mut min = [i64::from(first.x), i64::from(first.y)];
+        let mut max = min;
+        for v in vertices {
+            for (axis, value) in [v.x, v.y].into_iter().enumerate() {
+                min[axis] = min[axis].min(i64::from(value));
+                max[axis] = max[axis].max(i64::from(value));
+            }
+        }
+        let span = [max[0] - min[0], max[1] - min[1]];
+        let (mut norm1, mut norm2_squared, mut component) = (0_i64, 0_i64, 0_i64);
+        for line in map.linedefs() {
+            let [a, b] = line.vertices.map(|i| vertices[usize::from(i)]);
+            let dx = i64::from(b.x) - i64::from(a.x);
+            let dy = i64::from(b.y) - i64::from(a.y);
+            norm1 = norm1.max(dx.abs() + dy.abs());
+            norm2_squared = norm2_squared.max(dx * dx + dy * dy);
+            component = component.max(dx.abs()).max(dy.abs());
+        }
+        let node_norm = map
+            .nodes()
+            .iter()
+            .map(|n| i64::from(n.delta.x).abs() + i64::from(n.delta.y).abs())
+            .max()
+            .unwrap_or(0);
+        let height = map
+            .sectors()
+            .iter()
+            .flat_map(|s| s.heights)
+            .map(i16::unsigned_abs)
+            .max()
+            .unwrap_or(0);
+        let certificate = Self {
+            span: span.map(|v| v as u32),
+            norm1: norm1 as u32,
+            norm2_squared: norm2_squared as u64,
+            component: component as u32,
+            node_norm: node_norm as u32,
+            height,
+        };
+        let limit = i64::from(i32::MAX);
+        // (i) hitscan intercepts: |num| ≤ 256 · 2,177 · L₁ + L₁ + 2, |den| ≤ 256 · L₁ · 2,049.
+        let hitscan = 256 * Self::HITSCAN_REACH as i64 * norm1 + norm1 + 2 <= limit
+            && 256 * norm1 * 2_049 <= limit;
+        // (ii) sight intercepts: 256 · diag · L₂ + L₁ + 2 ≤ 2³¹ − 1, squared.
+        let diag_squared = (span[0] * span[0] + span[1] * span[1]) as u128;
+        let sight = 65_536 * diag_squared * norm2_squared as u128
+            <= ((limit - norm1 - 2).max(0) as u128).pow(2);
+        // (iii) P_AproxDistance of any actor pair.
+        let approx = span[0] + span[1] < 32_768;
+        // (iv) SlopeDiv for actor pairs and line directions.
+        let slope = span[0].max(span[1]) < i64::from(Self::SLOPE_DIV_UNITS)
+            && component < i64::from(Self::SLOPE_DIV_UNITS);
+        // (v) the grid: origin at or below the minimum, the maximum inside the
+        // grid and within 32,768 units of the origin (MAPBLOCKSHIFT indexing).
+        let blockmap = map.blockmap();
+        let origin = [
+            i64::from(blockmap.origin().x),
+            i64::from(blockmap.origin().y),
+        ];
+        let [width, height_cells] = blockmap.dimensions().map(i64::from);
+        let grid = origin[0] <= min[0]
+            && origin[1] <= min[1]
+            && max[0] < origin[0] + 128 * width
+            && max[1] < origin[1] + 128 * height_cells
+            && max[0] - origin[0] < 32_768
+            && max[1] - origin[1] < 32_768;
+        // (vi) the side tests: (L₁ + N) · span < 2³¹.
+        let sides = (norm1 + node_norm) * span[0].max(span[1]) < 1_i64 << 31;
+        // (vii) heights within ±512 (row 11 of the M3h6 note, kept).
+        let heights = i64::from(height) <= 512;
+        if hitscan && sight && approx && slope && grid && sides && heights {
+            Ok(certificate)
+        } else {
+            Err(MapScaleError::Arithmetic.into())
+        }
+    }
+}
+/// Distinct linedefs listed in the fullest 2 × 2 window of BLOCKMAP cells (line 0
+/// counted through each cell's leading 0): the slide-window certificate of the
+/// M3h6 note §4.4. A slide trace adds lines only, from at most three cells inside
+/// one such window, so a window of at most `MAX_INTERCEPTS` lines proves that no
+/// slide ever reaches the intercept witness.
+pub fn slide_window_lines(map: &Map) -> usize {
+    let blockmap = map.blockmap();
+    let [width, height] = blockmap.dimensions().map(usize::from);
+    let words = blockmap.words();
+    let ranges = blockmap.cell_ranges();
+    let lines = map.linedefs().len();
+    let mut best = 0;
+    let mut seen = vec![usize::MAX; lines];
+    for cy in 0..height.max(1) {
+        for cx in 0..width.max(1) {
+            let stamp = cy * width + cx;
+            let mut distinct = 0;
+            for wy in [cy, cy + 1] {
+                for wx in [cx, cx + 1] {
+                    if wx >= width || wy >= height {
+                        continue;
+                    }
+                    for &word in &words[ranges[wy * width + wx].clone()] {
+                        let line = usize::from(word);
+                        if line < lines && seen[line] != stamp {
+                            seen[line] = stamp;
+                            distinct += 1;
+                        }
+                    }
+                }
+            }
+            best = best.max(distinct);
+        }
+    }
+    best
+}
+/// The slide-window admission rule of the real-map policy.
+pub(crate) fn validate_slide_window(map: &Map) -> Result<(), SimError> {
+    if slide_window_lines(map) > MAX_INTERCEPTS {
+        return Err(MapScaleError::Lines.into());
+    }
+    Ok(())
+}
+/// `P_GroupLines` (p_setup.c): every sector's lines in linedef order, a two-sided
+/// line listed once in each of its sectors.
+pub(crate) fn sector_lines(map: &Map) -> Vec<Vec<u16>> {
+    let mut lists = vec![Vec::new(); map.sectors().len()];
+    for (index, line) in map.linedefs().iter().enumerate() {
+        let ends = line
+            .sides
+            .map(|s| s.map(|s| map.sidedefs()[usize::from(s)].sector));
+        if let Some(front) = ends[0] {
+            lists[usize::from(front)].push(index as u16);
+        }
+        if let Some(back) = ends[1] {
+            if ends[0] != Some(back) {
+                lists[usize::from(back)].push(index as u16);
+            }
+        }
+    }
+    lists
 }
 const _: () = assert!(MAP_SCALE_WALL_LINES + MAX_LINKED_THINGS <= 128);

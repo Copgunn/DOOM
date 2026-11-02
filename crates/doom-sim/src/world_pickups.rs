@@ -472,6 +472,17 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
             _ => Ok(()),
         }
     }
+    /// The intercept witness of the real-map policy (M3h6 note §4.4): a slide
+    /// trace that would write the source's 129th intercept fails the tic.
+    fn intercept_limit(&self) -> Option<usize> {
+        self.player
+            .policy
+            .has_real_map()
+            .then_some(crate::player_map_scale::MAX_INTERCEPTS)
+    }
+    fn intercept_overflow(&self) -> SimError {
+        crate::CombatError::InterceptLimit.into()
+    }
     fn contacts(
         &mut self,
         id: ActorId,

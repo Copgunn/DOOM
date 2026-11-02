@@ -65,17 +65,16 @@ pub(crate) fn prepare_map_scale(
 ) -> Result<(), GeometryError> {
     prepare_cells(world, false, crate::line_work::MAX_LINES, budget, 4096)
 }
-pub(crate) fn prepare_map_extent(
+/// Expanded-geometry preparation with explicit line and cell capacities: the M3f2
+/// constants for the historical profiles, the format's own under the real-map
+/// policy.
+pub(crate) fn prepare_extent_with(
     world: &mut StaticWorld,
+    max_lines: usize,
     budget: usize,
+    max_cells: usize,
 ) -> Result<(), GeometryError> {
-    prepare_cells(
-        world,
-        false,
-        crate::line_work::MAX_LINES,
-        budget,
-        crate::MAP_EXTENT_MAX_CELLS,
-    )
+    prepare_cells(world, false, max_lines, budget, max_cells)
 }
 fn prepare_cells(
     world: &mut StaticWorld,
@@ -319,7 +318,21 @@ fn intercept(trace: Divline, line: &LineGeometry) -> Fixed {
     num / den
 }
 
-fn path(world: &StaticWorld, mut start: [Fixed; 2], end: [Fixed; 2]) -> Vec<(Fixed, usize)> {
+/// The source's 129th intercept of one trace (p_local.h `MAXINTERCEPTS`), which it
+/// writes past `intercepts[]`; refused by the real-map policy.
+pub(crate) struct InterceptOverflow;
+/// P_PathTraverse with PT_ADDLINES for a slide trace: every line listed in a
+/// visited cell whose endpoints straddle the infinite trace line with a
+/// non-negative fraction, in fraction order. `limit` is the policy's intercept
+/// witness (`Some(128)` under the real-map policy): the intercept that would be
+/// the `limit + 1`th is an overflow. Historical policies pass `None` and collect
+/// without bound, exactly as before.
+fn path(
+    world: &StaticWorld,
+    mut start: [Fixed; 2],
+    end: [Fixed; 2],
+    limit: Option<usize>,
+) -> Result<Vec<(Fixed, usize)>, InterceptOverflow> {
     let o = world.map().blockmap().origin();
     let origin = [Fixed::from_map_units(o.x), Fixed::from_map_units(o.y)];
     for axis in 0..2 {
@@ -360,7 +373,7 @@ fn path(world: &StaticWorld, mut start: [Fixed; 2], end: [Fixed; 2]) -> Vec<(Fix
         crossings[axis] = shifted(a[other], 7) + partial * increments[axis];
     }
     let [w, h] = world.map().blockmap().dimensions().map(i32::from);
-    let mut seen = crate::line_work::SeenLines::default();
+    let mut seen = crate::line_work::SeenLines::for_lines(world.lines.len());
     let mut hits = Vec::new();
     for _ in 0..64 {
         if map[0] >= 0 && map[1] >= 0 && map[0] < w && map[1] < h {
@@ -388,6 +401,9 @@ fn path(world: &StaticWorld, mut start: [Fixed; 2], end: [Fixed; 2]) -> Vec<(Fix
                 if sides[0] != sides[1] {
                     let frac = intercept(trace, line);
                     if frac >= Fixed::ZERO {
+                        if limit.is_some_and(|limit| hits.len() == limit) {
+                            return Err(InterceptOverflow);
+                        }
                         hits.push((frac, i));
                     }
                 }
@@ -406,7 +422,7 @@ fn path(world: &StaticWorld, mut start: [Fixed; 2], end: [Fixed; 2]) -> Vec<(Fix
     }
     // Stable sort reproduces the C repeated strict-minimum scan on ties.
     hits.sort_by_key(|hit| hit.0);
-    hits
+    Ok(hits)
 }
 
 fn slope_div(num: u32, den: u32) -> usize {
@@ -487,6 +503,16 @@ pub(crate) trait MotionAccess {
     /// escape witness (M3h5 note §4.5). No-op elsewhere.
     fn after_slide(&mut self, _actor: &Actor) -> Result<(), Self::Error> {
         Ok(())
+    }
+    /// The slide trace's intercept witness: `Some(MAX_INTERCEPTS)` under the
+    /// real-map policy, `None` (unbounded, the historical behavior) elsewhere.
+    fn intercept_limit(&self) -> Option<usize> {
+        None
+    }
+    /// The error of a slide trace that reached the witness; called only when
+    /// `intercept_limit` is `Some`.
+    fn intercept_overflow(&self) -> Self::Error {
+        unreachable!("no intercept limit without a policy error")
     }
 }
 impl<F: Fn(ActorId) -> Option<Actor>> MotionAccess for F {
@@ -600,7 +626,12 @@ impl<F: MotionAccess> Mover<'_, F> {
             let mut best = Fixed::from_bits(65537);
             let mut blocker = None;
             for start in [lead, [trail[0], lead[1]], [lead[0], trail[1]]] {
-                for (frac, i) in path(self.world, start, [start[0] + mom[0], start[1] + mom[1]]) {
+                let end = [start[0] + mom[0], start[1] + mom[1]];
+                let hits = match path(self.world, start, end, self.access.intercept_limit()) {
+                    Ok(hits) => hits,
+                    Err(InterceptOverflow) => return Err(self.access.intercept_overflow()),
+                };
+                for (frac, i) in hits {
                     if frac > Fixed::ONE {
                         break;
                     }

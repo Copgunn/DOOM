@@ -11,13 +11,35 @@ pub(crate) fn reserved<T>(count: usize) -> Result<Vec<T>, GeometryError> {
     Ok(values)
 }
 
-/// Query-local validcount equivalent. No allocation during a movement decision.
-/// All callers have already admitted at most MAX_LINES immutable linedefs.
-#[derive(Clone, Default)]
-pub(crate) struct SeenLines([u64; MAX_LINES / 64]);
+/// Query-local validcount equivalent. Worlds of at most `MAX_LINES` linedefs (every
+/// policy before the real-map one) keep the inline bitset and allocate nothing
+/// during a movement or combat decision; larger worlds, admitted only by the
+/// real-map policy, use one heap bitset sized from the line count (the WAD format
+/// bounds it at 32,768 lines, 4 KiB), the same way the trace already grows its
+/// intercept list. Bit order never determines candidate order.
+#[derive(Clone)]
+pub(crate) enum SeenLines {
+    Inline([u64; MAX_LINES / 64]),
+    Heap(Vec<u64>),
+}
 impl SeenLines {
+    /// A clear set able to hold every index below `lines`.
+    pub fn for_lines(lines: usize) -> Self {
+        if lines <= MAX_LINES {
+            Self::Inline([0; MAX_LINES / 64])
+        } else {
+            Self::Heap(vec![0; lines.div_ceil(64)])
+        }
+    }
+    fn words(&mut self) -> &mut [u64] {
+        match self {
+            Self::Inline(words) => words,
+            Self::Heap(words) => words,
+        }
+    }
+    /// Mark `index` and report whether it was fresh.
     pub fn insert(&mut self, index: usize) -> bool {
-        let word = &mut self.0[index / 64];
+        let word = &mut self.words()[index / 64];
         let bit = 1_u64 << (index % 64);
         let fresh = *word & bit == 0;
         *word |= bit;

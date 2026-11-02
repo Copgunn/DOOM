@@ -370,8 +370,12 @@ impl Simulation {
         }
         let mut report = MapSpawnReport::default();
         let mut selected = Vec::new();
+        // The real-map policy keeps starts as `P_SpawnMapThing` does (types 1–4 in
+        // `playerstarts`, up to ten type 11 in `deathmatchstarts`; the player body
+        // is spawned by the caller); the earlier map-demon policies reject them.
+        let starts_as_records = self.player_policy().has_real_map();
         for thing in self.world.map().things() {
-            if map_demons && (thing.kind <= 4 || thing.kind == 11) {
+            if map_demons && !starts_as_records && (thing.kind <= 4 || thing.kind == 11) {
                 return Err(MapSpawnError::StartOrInvalidType(thing.kind).into());
             }
             if thing.kind == 11 {

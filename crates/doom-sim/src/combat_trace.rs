@@ -218,7 +218,10 @@ fn collect_limited(
         candidates: Vec::new(),
         intercepts: Vec::new(),
     };
-    let mut seen = [false; 128];
+    // `ld->validcount == validcount` of PIT_AddLineIntercepts: one bit per line of
+    // the world (a line index is never an intercept count; the count is kept by
+    // `add`, M3h6 note §3).
+    let mut seen = crate::line_work::SeenLines::for_lines(world.lines.len());
     let [width, height] = world.map().blockmap().dimensions().map(i32::from);
     let mut complete = false;
     for _ in 0..64 {
@@ -226,11 +229,9 @@ fn collect_limited(
         if cell[0] >= 0 && cell[0] < width && cell[1] >= 0 && cell[1] < height {
             for line_id in world.line_candidates(cell[0] as usize, cell[1] as usize) {
                 let i = usize::from(line_id);
-                let visited = seen.get_mut(i).ok_or(CombatError::InterceptLimit)?;
-                if *visited {
+                if !seen.insert(i) {
                     continue;
                 }
-                *visited = true;
                 let object = TraceObject::Line(line_id);
                 out.candidates.push(object);
                 let line = &world.lines[i];

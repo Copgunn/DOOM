@@ -160,6 +160,13 @@ pub struct StaticWorld {
     pub(crate) collision_cells: Option<Vec<Vec<u16>>>,
     pub(crate) topology: Option<crate::multisector::Topology>,
     pub(crate) extent_sight_work: Option<usize>,
+    /// `P_GroupLines` per-sector line lists (linedef order), prepared by the
+    /// real-map policy for the noise flood; `None` scans every linedef.
+    pub(crate) sector_lines: Option<Vec<Vec<u16>>>,
+    /// Per-operation sight work budget of the checked policies: the historical
+    /// 1,048,576, or `64 · (expanded_work + 5 · lines)` derived from the map by the
+    /// real-map policy.
+    pub(crate) sight_work_budget: usize,
     floor: Fixed,
     ceiling: Fixed,
 }
@@ -219,6 +226,8 @@ impl StaticWorld {
             collision_cells: None,
             topology: None,
             extent_sight_work: None,
+            sector_lines: None,
+            sight_work_budget: 1_048_576,
             floor,
             ceiling,
         })

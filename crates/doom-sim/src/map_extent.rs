@@ -134,6 +134,111 @@ pub(crate) fn validate_with_actor_cap(
     sight::expanded_work(map, MAP_EXTENT_SIGHT_WORK)
 }
 
+/// Prepared-table bounds the real-map policy keeps as allocation guards (M3h6 note
+/// §4.1 row 7): compiled cell references and preparation bytes are functions of
+/// the lump, recorded, and refused only beyond these, which no `short`-indexed map
+/// of the two IWADs approaches (at most 13,435 BLOCKMAP words).
+pub const REAL_MAP_MAX_PREPARED_REFERENCES: usize = 1 << 24;
+pub const REAL_MAP_PREPARATION_BYTES: usize = 64 * 1024 * 1024;
+/// What the real-map admission derives from the loaded map instead of checking
+/// against constants: every value is recorded, none is a fixed threshold.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RealMapAdmission {
+    /// Fully expanded BSP/leaf/seg sight work of one query (`sight::expanded_work`).
+    pub sight_work: usize,
+    /// Per-operation sight work budget: `64 · (sight_work + 5 · lines)`.
+    pub sight_budget: usize,
+    /// BLOCKMAP list words the preparation may compile into cell references.
+    pub references: usize,
+    /// Conservative collision work of one destination query:
+    /// `nodes + 4 · lines + 4 · actors`.
+    pub collision_work: usize,
+    /// Conservatively charged preparation requests, as the M3f2 proof charges them.
+    pub preparation_bytes: usize,
+}
+/// The real-map admission (M3h6 note §4.1): format bounds, heights within the M3f2
+/// vertical envelope, and the derived work values. The arithmetic certificate,
+/// the boundary and the BLOCKMAP rules are checked by the caller.
+pub(crate) fn validate_real_map(map: &Map, actor_cap: u32) -> Result<RealMapAdmission, SimError> {
+    let records = crate::player_map_scale::REAL_MAP_FORMAT_RECORDS;
+    let blockmap = map.blockmap();
+    let cells = blockmap.cell_ranges().len();
+    if map.linedefs().len() > records
+        || map.sectors().len() > records
+        || map.nodes().len() > records
+        || map.subsectors().len() > records
+        || map.segs().len() > records
+        || map.vertices().len() > records
+        || map.sidedefs().len() > records
+        || blockmap.words().len() > 32_768
+        || cells >= blockmap.words().len()
+    {
+        return Err(GeometryError::WorkLimit.into());
+    }
+    if map
+        .sectors()
+        .iter()
+        .any(|s| s.heights.iter().any(|v| v.unsigned_abs() > HEIGHT_UNITS))
+    {
+        return Err(GeometryError::CoordinateOverflow.into());
+    }
+    // The sight expansion of a BSP that is a tree is at most 2 per node plus one
+    // per leaf plus its segs; a larger expansion means shared children.
+    let tree_bound = 2 * map.nodes().len() + map.subsectors().len() + map.segs().len();
+    let sight_work = sight::expanded_work(map, tree_bound)?;
+    let lines = map.linedefs().len();
+    let sight_budget = 64_usize
+        .checked_mul(
+            sight_work
+                .checked_add(5 * lines)
+                .ok_or(GeometryError::WorkLimit)?,
+        )
+        .ok_or(GeometryError::WorkLimit)?;
+    let references = blockmap
+        .cell_ranges()
+        .iter()
+        .try_fold(0_usize, |total, range| total.checked_add(range.len()))
+        .filter(|n| *n <= REAL_MAP_MAX_PREPARED_REFERENCES)
+        .ok_or(GeometryError::WorkLimit)?;
+    let collision_work = map
+        .nodes()
+        .len()
+        .checked_add(4 * lines)
+        .and_then(|n| n.checked_add(4 * actor_cap as usize))
+        .ok_or(GeometryError::WorkLimit)?;
+    let stride = lines.div_ceil(64);
+    let requests = [
+        (cells, size_of::<Vec<u16>>() + size_of::<(usize, usize)>()),
+        (cells * stride, size_of::<u64>()),
+        (references, size_of::<u16>()),
+        (
+            lines,
+            size_of::<LineGeometry>() + size_of::<usize>() + size_of::<(usize, u16)>(),
+        ),
+        (
+            map.nodes().len(),
+            size_of::<Option<usize>>() + 2 * size_of::<(usize, bool)>(),
+        ),
+        (map.subsectors().len(), size_of::<u16>()),
+        (map.sectors().len(), size_of::<SectorState>()),
+        (16, size_of::<Vec<u8>>()),
+    ];
+    let preparation_bytes = requests
+        .into_iter()
+        .try_fold(0_usize, |total, (n, size)| {
+            n.checked_mul(size).and_then(|n| total.checked_add(n))
+        })
+        .filter(|bytes| *bytes <= REAL_MAP_PREPARATION_BYTES)
+        .ok_or(GeometryError::WorkLimit)?;
+    Ok(RealMapAdmission {
+        sight_work,
+        sight_budget,
+        references,
+        collision_work,
+        preparation_bytes,
+    })
+}
+
 pub(crate) fn position(
     values: impl IntoIterator<Item = Fixed>,
     units: u32,

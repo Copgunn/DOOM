@@ -327,7 +327,7 @@ fn query_prepared(
         BspChild::Node((map.nodes().len() - 1) as u16)
     };
     tasks.push(Task::Child(root));
-    let mut seen = crate::line_work::SeenLines::default();
+    let mut seen = crate::line_work::SeenLines::for_lines(map.linedefs().len());
     let mut work = 0;
     'walk: while let Some(task) = tasks.pop() {
         work += 1;
