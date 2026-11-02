@@ -322,3 +322,10 @@ path = "fuzz_targets/player_diagonal.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_real_map"
+path = "fuzz_targets/player_real_map.rs"
+test = false
+doc = false
+bench = false

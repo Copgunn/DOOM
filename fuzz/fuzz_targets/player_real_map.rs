@@ -1,0 +1,252 @@
+#![no_main]
+use doom_sim::*;
+use doom_types::{DoomRng, Fixed};
+use libfuzzer_sys::fuzz_target;
+// Committed synthetic M3h6 rooms: the town with the full roster and sixteen
+// pickups, the gallery with a zombie firing along 32 teeth and sixteen pickups,
+// the extent room with a zombie across the 2,683-unit two-sided line, the dense
+// comb lane, the wide corridor square with a Demon, and the Rust-only witness
+// hall where a long shot reaches the 129th intercept.
+const MAPS: [&[u8]; 6] = [
+    include_bytes!("../../tests/reference/m3h6_geometry_1.bin"),
+    include_bytes!("../../tests/reference/m3h6_geometry_7.bin"),
+    include_bytes!("../../tests/reference/m3h6_geometry_10.bin"),
+    include_bytes!("../../tests/reference/m3h6_geometry_12.bin"),
+    include_bytes!("../../tests/reference/m3h6_geometry_13.bin"),
+    include_bytes!("../../tests/reference/m3h6_witness.bin"),
+];
+/// Player spawn of the committed scenario in each room.
+const SPAWNS: [[i16; 2]; 6] = [
+    [64, 144],
+    [-960, 84],
+    [200, 400],
+    [-200, 60],
+    [300, 192],
+    [-1000, 100],
+];
+/// A command the admitted domain must execute: slot One, source movement range,
+/// buttons the four-weapon policy admits. Anything else is an invalid input.
+fn valid_command(c: &TicCommand) -> bool {
+    let weapon = (c.buttons & BT_WEAPONMASK) >> 3;
+    (-50..=50).contains(&c.forward)
+        && (-50..=50).contains(&c.side)
+        && c.buttons & !(BT_ATTACK | BT_CHANGE | BT_WEAPONMASK) == 0
+        && if c.buttons & BT_CHANGE != 0 {
+            weapon <= 3
+        } else {
+            weapon == 0
+        }
+}
+/// Invariants V (M3h4) and Ω (M3h5) at a tic boundary, unchanged at real-map
+/// scale: every actor that is not a bullet puff or blood sits within
+/// `[floor, ceiling - height]`; every XY mover (not an item) has its center inside
+/// the one-sided boundary with its open box meeting no wall, and every live
+/// actor's center is in the vertex rectangle.
+fn invariants(s: &Simulation, boundary: &Boundary, room: RoomBounds) {
+    for id in s.actor_order() {
+        let a = s.actor(id).unwrap();
+        let Some(l) = a.life() else { continue };
+        if matches!(l.actor_type.0, 37..=38) {
+            continue;
+        }
+        let z = a.z();
+        assert!(
+            a.floor() <= z && z + a.height() <= a.ceiling(),
+            "type {} z {} floor {} ceiling {}",
+            l.actor_type.0,
+            z.bits(),
+            a.floor().bits(),
+            a.ceiling().bits()
+        );
+        assert!(
+            room.contains(a.position()),
+            "type {} outside the rectangle",
+            l.actor_type.0
+        );
+        if l.flags & 1 != 0 {
+            continue;
+        }
+        assert!(
+            boundary.inside(a.position()),
+            "type {} at {:?} outside the boundary",
+            l.actor_type.0,
+            a.position().map(Fixed::bits)
+        );
+        assert!(
+            !boundary.box_meets_wall(a.position(), a.radius() - Fixed::from_bits(1)),
+            "type {} at {:?} meets a wall",
+            l.actor_type.0,
+            a.position().map(Fixed::bits)
+        );
+    }
+}
+fn apply(
+    s: &mut Simulation,
+    body: ActorId,
+    monsters: &[ActorId],
+    b: &[u8],
+    capture: bool,
+) -> Result<(), SimError> {
+    let candidate = ActorId::from_parts(u32::from(b[6]), u64::from(b[7]));
+    let monster = |i: u8| monsters[usize::from(i) % monsters.len()];
+    match b[0] % 9 {
+        0..=3 => {
+            let mut commands = [TicCommand::default(); 4];
+            commands[usize::from(b[1] % 4)] = TicCommand {
+                forward: i8::from_le_bytes([b[2]]),
+                side: i8::from_le_bytes([b[3]]),
+                angle_turn: i16::from_le_bytes([b[4], b[5]]),
+                buttons: b[8],
+            };
+            if capture {
+                s.step(commands).map(|_| ())
+            } else {
+                s.advance(commands)
+            }
+        }
+        4 => s
+            .damage_actor(DamageRequest {
+                target: match b[1] % 3 {
+                    0 => body,
+                    1 => monster(b[2]),
+                    _ => candidate,
+                },
+                source: (b[3] & 1 == 0).then(|| monster(b[4])),
+                inflictor: (b[3] & 2 == 0).then(|| monster(b[4])),
+                amount: i32::from(i16::from_le_bytes([b[5], b[8]])),
+            })
+            .map(|_| ()),
+        5 => s.set_actor_target(
+            monster(b[1]),
+            match b[2] % 3 {
+                0 => Some(body),
+                1 => Some(monster(b[3])),
+                _ => Some(candidate),
+            },
+        ),
+        6 => s.mark_remove(if b[1] & 1 == 0 {
+            candidate
+        } else {
+            monster(b[2])
+        }),
+        7 => {
+            s.set_paused(b[1] & 1 != 0);
+            Ok(())
+        }
+        // The controlled push of the diagonal policies: the player body (or a
+        // monster, or a candidate handle) gets an explicit momentum in map units.
+        _ => s.set_momentum(
+            match b[1] % 3 {
+                0 => body,
+                1 => monster(b[2]),
+                _ => candidate,
+            },
+            [
+                Fixed::from_map_units(i16::from_le_bytes([b[3], b[4]])),
+                Fixed::from_map_units(i16::from_le_bytes([b[5], b[8]])),
+            ],
+        ),
+    }
+}
+fuzz_target!(|data: &[u8]| {
+    if data.len() < 2 {
+        return;
+    }
+    // Independent DSIM33 fixtures are read-only decoder inputs, never
+    // executable initial states or Rust-produced expectations.
+    for original in [
+        include_bytes!("../../tests/reference/m3h6_state_1_420.bin").as_slice(),
+        include_bytes!("../../tests/reference/m3h6_state_17_400.bin").as_slice(),
+    ] {
+        let mut bytes = original.to_vec();
+        for c in data.as_chunks::<3>().0.iter().take(32) {
+            let at = usize::from(u16::from_le_bytes([c[0], c[1]])) % bytes.len();
+            bytes[at] ^= c[2];
+        }
+        if let Ok(v) = Diagnostic::decode_real_map(&bytes, DiagnosticLimits::default()) {
+            assert_eq!(v.encode(DiagnosticLimits::default()).unwrap(), bytes);
+        }
+    }
+    let which = usize::from(data[0] % 6);
+    let wad = doom_wad::Wad::parse(MAPS[which], doom_wad::Limits::default()).unwrap();
+    let map = doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default()).unwrap();
+    let boundary = Boundary::derive(&map).unwrap();
+    let room = RoomBounds::derive_real_map(&map).unwrap();
+    ArithmeticCertificate::derive(&map).unwrap();
+    assert!(slide_window_lines(&map) <= MAX_INTERCEPTS);
+    let mut s = Simulation::original_player_real_map_map(
+        map,
+        MapContextOptions {
+            initial_rng: DoomRng::from_indices(data[1], 0),
+            respawn_monsters: false,
+        },
+    )
+    .unwrap();
+    let mut monsters = s.spawn_map_things().unwrap().spawned;
+    let body = s
+        .spawn_player_body(PlayerSlot::One, SPAWNS[which].map(Fixed::from_map_units))
+        .unwrap();
+    if monsters.is_empty() {
+        monsters.push(body);
+    }
+    s.initialize_player_weapons(
+        PlayerSlot::One,
+        WeaponInventory {
+            ready: Weapon::Chaingun,
+            owned: 15,
+            ammo: [200, 50, 0, 0],
+        },
+    )
+    .unwrap();
+    let mut captured = s.clone();
+    for b in data[2..data.len().min(290)].as_chunks::<9>().0 {
+        let before = s.snapshot();
+        let (tic, paused) = (s.tic(), s.paused());
+        let live = s.original_player(PlayerSlot::One).unwrap().state == PlayerBodyState::Live;
+        let result = apply(&mut s, body, &monsters, b, false);
+        assert_eq!(result, apply(&mut captured, body, &monsters, b, true));
+        if result.is_err() {
+            assert_eq!(s.snapshot(), before);
+        }
+        // Progress property: a valid slot-One command to a live player is never
+        // rejected except by the two refused legal source behaviors (the corner
+        // jump after a push, the 129th intercept of a trace), and every accepted
+        // tic advances the counter by exactly one unless the world is paused. A
+        // dead player admits only zero commands, as the body contract documents.
+        if b[0] % 9 <= 3 {
+            let command = TicCommand {
+                forward: i8::from_le_bytes([b[2]]),
+                side: i8::from_le_bytes([b[3]]),
+                angle_turn: i16::from_le_bytes([b[4], b[5]]),
+                buttons: b[8],
+            };
+            if b[1] % 4 == 0
+                && (live || command == TicCommand::default())
+                && valid_command(&command)
+            {
+                assert!(
+                    matches!(
+                        result,
+                        Ok(())
+                            | Err(SimError::MapScale(
+                                MapScaleError::Escape | MapScaleError::Intercepts
+                            ))
+                    ),
+                    "valid command rejected: {command:?} {result:?}"
+                );
+            }
+            if result.is_ok() {
+                assert_eq!(s.tic(), if paused { tic } else { tic + 1 });
+            }
+        }
+        invariants(&s, &boundary, room);
+        let snap = s.snapshot();
+        assert_eq!(snap, captured.snapshot());
+        let mut bytes = snap.diagnostic_bytes(DiagnosticLimits::default()).unwrap();
+        let view = Diagnostic::decode_real_map(&bytes, DiagnosticLimits::default()).unwrap();
+        assert_eq!(view.encode(DiagnosticLimits::default()).unwrap(), bytes);
+        let at = usize::from(u16::from_le_bytes([b[6], b[7]])) % bytes.len();
+        bytes[at] ^= b[8];
+        let _ = Diagnostic::decode_real_map(&bytes, DiagnosticLimits::default());
+    }
+});

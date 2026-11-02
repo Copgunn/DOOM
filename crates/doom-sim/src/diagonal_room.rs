@@ -57,9 +57,66 @@ impl Lumps {
         data
     }
     pub fn map(&self) -> doom_map::Map {
+        self.try_map().unwrap()
+    }
+    /// The parser's own verdict on the patched lumps.
+    pub fn try_map(&self) -> Result<doom_map::Map, doom_map::MapError> {
         let bytes = self.wad();
         let wad = doom_wad::Wad::parse(&bytes, doom_wad::Limits::default()).unwrap();
-        doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default()).unwrap()
+        doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default())
+    }
+    /// Shorten the REJECT lump to `bytes`.
+    pub fn truncate_reject(&mut self, bytes: usize) {
+        self.lump("REJECT").truncate(bytes);
+    }
+    /// Count the linedefs listed by a BLOCKMAP cell.
+    pub fn cell_lines(&mut self, cell: usize) -> Vec<u16> {
+        let b = self.lump("BLOCKMAP");
+        let words: Vec<u16> = b
+            .chunks(2)
+            .map(|w| u16::from_le_bytes([w[0], w[1]]))
+            .collect();
+        let mut at = usize::from(words[4 + cell]);
+        let mut list = Vec::new();
+        while words[at] != 0xFFFF {
+            list.push(words[at]);
+            at += 1;
+        }
+        list
+    }
+    /// Append `lines` to one cell's list (offsets rebuilt): extra listings the
+    /// closed-cell rule allows, used to overfill a 2 × 2 window.
+    pub fn list_lines_in_cell(&mut self, cell: usize, lines: &[u16]) {
+        let b = self.lump("BLOCKMAP");
+        let words: Vec<u16> = b
+            .chunks(2)
+            .map(|w| u16::from_le_bytes([w[0], w[1]]))
+            .collect();
+        let cells = usize::from(words[2]) * usize::from(words[3]);
+        let mut lists: Vec<Vec<u16>> = Vec::new();
+        for index in 0..cells {
+            let mut at = usize::from(words[4 + index]);
+            let mut list = Vec::new();
+            while words[at] != 0xFFFF {
+                list.push(words[at]);
+                at += 1;
+            }
+            if index == cell {
+                list.extend_from_slice(lines);
+            }
+            lists.push(list);
+        }
+        let mut out: Vec<u16> = words[..4].to_vec();
+        let mut offsets = Vec::new();
+        let mut body = Vec::new();
+        for list in lists {
+            offsets.push(u16::try_from(4 + cells + body.len()).unwrap());
+            body.extend(list);
+            body.push(0xFFFF);
+        }
+        out.extend(offsets);
+        out.extend(body);
+        *b = out.iter().flat_map(|w| w.to_le_bytes()).collect();
     }
     fn lump(&mut self, name: &str) -> &mut Vec<u8> {
         &mut self
