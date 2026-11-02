@@ -888,7 +888,7 @@
       "noise_floods": 2,
       "pickups": 0,
       "player_final": [
-        -16384000,
+        -14417920,
         6553600
       ],
       "player_void_captures": 0,
@@ -1112,12 +1112,12 @@
     "p_maputl.c:PIT_AddLineIntercepts": 46182,
     "p_maputl.c:PIT_AddThingIntercepts": 1586,
     "p_maputl.c:P_AproxDistance": 1506,
-    "p_maputl.c:P_BlockLinesIterator": 18115,
-    "p_maputl.c:P_BlockThingsIterator": 23953,
+    "p_maputl.c:P_BlockLinesIterator": 18117,
+    "p_maputl.c:P_BlockThingsIterator": 23955,
     "p_maputl.c:P_BoxOnLineSide": 2731,
-    "p_maputl.c:P_InterceptVector": 7602,
+    "p_maputl.c:P_InterceptVector": 7618,
     "p_maputl.c:P_LineOpening": 19873,
-    "p_maputl.c:P_MakeDivline": 6256,
+    "p_maputl.c:P_MakeDivline": 6272,
     "p_maputl.c:P_PathTraverse": 3478,
     "p_maputl.c:P_PointOnDivlineSide": 45258,
     "p_maputl.c:P_PointOnLineSide": 54617,
@@ -1173,7 +1173,7 @@
     "r_main.c:R_PointToAngle": 953,
     "r_main.c:R_PointToAngle2": 953
   },
-  "expanded_trace_sha256": "148dbe9ecdfcbc5146791f6d51dc3bb4b408a22f45cc34ca970c22478056d031",
+  "expanded_trace_sha256": "5788381d79387e4d8a53610151f9ff79a09a81d0837d4135ebf8abac567954c0",
   "flags": [
     "-std=gnu89",
     "-O0",
@@ -1863,9 +1863,9 @@
     "tools/reference/m3h2_observers.py": "53c7b7251dd0e9fd4fc9bc7790b6246ad2b07a51f811f043d58f3451f0fba4b3",
     "tools/reference/m3h2_reference.py": "c0996344042ae3f2acd0c0c1fa8c68940795264f3a8c13e0c9d0a433b2b6f33f",
     "tools/reference/m3h5_geometry.py": "6e4345159b758799c7df610ab27abf3fc9f3e64c969ce3393495089f55610a8d",
-    "tools/reference/m3h6_cases.py": "9b1567d2eb3c43ab69ed7dd448ae9473c921301bf8262deec02473599e699d68",
+    "tools/reference/m3h6_cases.py": "6c8e9c5e22ad5712626724b91b4fa198b1127f4d43cf96f15a07ffc2970be26c",
     "tools/reference/m3h6_geometry.py": "03c3d298376a0039bab530dbb82980b7b715bf0d2f3c39e74c2e79e65012bf31",
-    "tools/reference/m3h6_reference.py": "3f3ca62f858315ae3fe59589b90e9ab85a6c80068d24dca1f5c815bd7ae743b7"
+    "tools/reference/m3h6_reference.py": "d26095d6db7f9f23863bd531e0f07f0fd1dd710aee73e6b347cd55912d315464"
   },
   "inventory": {
     "actor_fields": 235456,
@@ -1879,12 +1879,12 @@
     "diagonal_lines": 1374,
     "drops": 3,
     "exercised_unique_functions": 99,
-    "expanded_trace_bytes": 7666166,
+    "expanded_trace_bytes": 7666484,
     "fireball_damage_requests": 3,
     "fireball_explosions": 3,
     "fireball_launches": 4,
     "fireball_player_hits": 3,
-    "function_entries": 472832,
+    "function_entries": 472868,
     "gameplay_draws": 3286,
     "hit_slide_line": 615,
     "hitscan_line_impacts": 134,
@@ -1911,7 +1911,7 @@
     "monster_kills": 3,
     "new_chase_dir": 269,
     "noise_floods": 5315,
-    "packed_trace_bytes": 1951817,
+    "packed_trace_bytes": 1951890,
     "path_traverse": 3478,
     "peak_live_fireballs": 2,
     "pickups": 48,
@@ -1964,7 +1964,7 @@
     "tests/reference/m3h6_geometry_15.bin"
   ],
   "outputs_sha256": {
-    "m3h6_cases.csv": "49542560dddab445c4ff45b1b97c5f236fe85c7056d387faeab66b27cd1782a9",
+    "m3h6_cases.csv": "7ab2e7509399b36336b32b7a3c506a843f609ae883c3526bea34128216e20bd5",
     "m3h6_geometry_0.bin": "b66f720812fbf2e835ae8183f607ebd96853fad721831bbc84c08c9beba90ca8",
     "m3h6_geometry_1.bin": "db02bc14ab1119a2224bce25312232be796bea9c34ab8df304c94f608afd77e0",
     "m3h6_geometry_10.bin": "c48ba240a7562e4887107480747644c2f96d881729496879a8f4596055d6ed1b",
@@ -1982,9 +1982,18 @@
     "m3h6_geometry_8.bin": "c4190f9c4417d65386a30c1fc5ef3d05f43a104eb84b2e05814379313e851a02",
     "m3h6_geometry_9.bin": "b93485a5209ec748ff72052e46bc90dd48751ee0470fd7efc4421cdf8b457974",
     "m3h6_maps.rs": "74098c367caff72dee7724be9e3a77134cc6d06f07ae664bd7d011cdbcc17731",
-    "m3h6_trace.dref": "a6c4279b24df516217467152bde48d01d0fe036f48a3920b94b462c1e249e64f"
+    "m3h6_trace.dref": "0a1b24dd9818458f9fa5e84b87248b537526280805565e30afac7dd8a70fb824",
+    "m3h6_witness.bin": "c7860b7937eb1adeab8360f6077fad0f32b71b0f8a131e749eac79f8bdf2bc8e"
   },
   "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "rust_only_maps": {
+    "witness": {
+      "linedefs": 200,
+      "note": "65 thin teeth on one wall: a 2,048-unit hitscan straddles 130 lines; never run in C",
+      "path": "tests/reference/m3h6_witness.bin",
+      "slide_window": 29
+    }
+  },
   "schema": "DOOM-PLAYER-REALMAP-v1",
   "source_sha256": {
     "am_map.h": "75c3671cbc7f003e16cc50abe98fe824e595f1c3bf66c2c722e8597a015e40ed",

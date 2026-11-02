@@ -116,8 +116,22 @@ def wide(size=7552, room=384, width=64):
     sectors = [([ring], 0, 128) for ring in (sw, se, nw, ne, south, north, west, east)]
     return (sectors, {}, (), None, 424)
 
+def witness(pitch=30, depth=48, teeth=65, first=-950):
+    """Rust-only: a hall whose top wall carries 65 thin teeth (30-unit pitch, 6-unit
+    base, 48 deep) from x = -950, so a 2,048-unit hitscan from (-1000, 100) east
+    straddles 130 lines: the 129th intercept the source writes past `intercepts[]`.
+    Never run in the C harness (it would abort); the Rust policy refuses the tic."""
+    top = [(-1024, 128), (first, 128)]
+    for k in range(teeth):
+        x = first + pitch * k
+        top += [(x + 12, 128), (x + 15, 128 - depth), (x + 18, 128)]
+    top.append((1024, 128))
+    bottom = [(1024, -128), (-1024, -128)]
+    return ([([top + bottom], 0, 128)], {}, (), None, 4096)
+
 ROOMS = [town(), gallery(), extent(), dense(), wide()]
 ROOM_NAMES = ['town', 'gallery', 'extent', 'dense', 'wide']
+WITNESS = witness()
 
 def populate(pack):
     core = pack.base; core.CASES.clear(); layouts = []
@@ -185,7 +199,7 @@ def populate(pack):
     add('dense_slide', 3, [], px=-200, py=60, forward=50, side=-20, move_hold=100, tics=120)
     add('dense_slide_steep', 3, [], px=-200, py=60, forward=50, side=-50, move_hold=100, tics=120)
     # A shot along the upper band: every tooth within range straddles the trace.
-    add('dense_shot', 3, [], px=-250, py=100, tics=60, attack_start=10, attack_end=40, **dict(turn=512, turn_hold=1))
+    add('dense_shot', 3, [], px=-220, py=100, tics=60, attack_start=10, attack_end=40, **dict(turn=512, turn_hold=1))
     # --- wide -------------------------------------------------------------------
     # A Demon 2,600 units down the south corridor pursues into the south-west room.
     add('wide_pursuit', 4, [monster(DEMON, 3000, 192, -180)], px=300, py=192, tics=400)

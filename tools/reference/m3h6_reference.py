@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT/'tools/reference'))
 import m3h2_reference as inherited
 import m3h6_geometry as geometry
-from m3h6_cases import ROOMS,ROOM_NAMES,populate,MAX_PICKUPS
+from m3h6_cases import ROOMS,ROOM_NAMES,WITNESS,populate,MAX_PICKUPS
 from m3h2_observers import replace_once
 from evidence_pack import pack,unpack
 import m3g9_reference as pickup_stage
@@ -131,6 +131,10 @@ def run(check,overflow,address):
     for i,m in enumerate(core.main.MAPS):
         name=f'm3h6_geometry_{i}.bin';outputs[name]=m['bytes'];maps.append('tests/reference/'+name)
     outputs['m3h6_maps.rs']=('// Synthetic source inputs; GPL-2.0-only.\npub const MAP_BYTES: &[&[u8]] = &[\n'+''.join(f'    include_bytes!("{Path(p).name}"),\n'for p in maps)+'];\n').encode()
+    # Rust-only: the intercept-witness hall (m3h6_cases.witness), built by the same
+    # builder but never run in C, where it would abort at the 129th intercept.
+    witness_room=geometry.room(*WITNESS[:1],portals=WITNESS[1],reject=WITNESS[2],tree=WITNESS[3],segment=WITNESS[4])
+    outputs['m3h6_witness.bin']=witness_room['bytes']
     manifest=json.loads(observed_trace['m3d3j_provenance.json'])
     bodies=manifest['functions']+[['p_pspr.c',n,'void']for n in previous.pack.WEAPON_ACTIONS]
     assert len(bodies)==len({tuple(b)for b in bodies})
@@ -221,6 +225,8 @@ def run(check,overflow,address):
       expanded_trace_bytes=len(expanded),packed_trace_bytes=len(outputs['m3h6_trace.dref']))
     inputs=sorted({Path(m.__file__).name for m in list(sys.modules.values()) if getattr(m,'__file__',None) and Path(m.__file__).resolve().parent==ROOT/'tools/reference'})
     contract=dict(schema=SCHEMA,revision=manifest['revision'],flags=manifest['flags'],inventory=inventory,cases=per_case,maps=maps,functions=bodies,
+      rust_only_maps=dict(witness=dict(path='tests/reference/m3h6_witness.bin',linedefs=len(witness_room['lines']),slide_window=geometry.window_lines(witness_room),
+                                       note='65 thin teeth on one wall: a 2,048-unit hitscan straddles 130 lines; never run in C')),
       source_sha256={n:sha((ROOT/'linuxdoom-1.10'/n).read_bytes())for n in sorted(set(manifest['source_sha256'])|{'d_items.c','dstrings.h'})},
       function_sha256={f'{f}:{n}':sha(core.raw_body(f,n,t).encode())for f,n,t in bodies},
       executed_function_entries=dict(sorted(functions.items())),
