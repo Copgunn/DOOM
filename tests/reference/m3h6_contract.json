@@ -1864,8 +1864,8 @@
     "tools/reference/m3h2_observers.py": "53c7b7251dd0e9fd4fc9bc7790b6246ad2b07a51f811f043d58f3451f0fba4b3",
     "tools/reference/m3h2_reference.py": "c0996344042ae3f2acd0c0c1fa8c68940795264f3a8c13e0c9d0a433b2b6f33f",
     "tools/reference/m3h5_geometry.py": "6e4345159b758799c7df610ab27abf3fc9f3e64c969ce3393495089f55610a8d",
-    "tools/reference/m3h6_cases.py": "45d8abbe8d17018fe6140c806724bc5eadadb1185f2061c9801de9d80d73fdf0",
-    "tools/reference/m3h6_geometry.py": "03c3d298376a0039bab530dbb82980b7b715bf0d2f3c39e74c2e79e65012bf31",
+    "tools/reference/m3h6_cases.py": "37afec661f191488dbc5c48ddcba1fe6bf710eca6d0f1f3d4d503b5e11b3e01b",
+    "tools/reference/m3h6_geometry.py": "f988cc2349175962808194e25f8bbeb987829f7617951aad634d0e0d9c1be2a2",
     "tools/reference/m3h6_reference.py": "d26095d6db7f9f23863bd531e0f07f0fd1dd710aee73e6b347cd55912d315464"
   },
   "inventory": {

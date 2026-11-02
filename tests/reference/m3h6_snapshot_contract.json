@@ -7,7 +7,7 @@
   "full_byte_fixtures": 9,
   "inputs_sha256": {
     "tests/reference/m3h6_cases.csv": "1a44ff920a1204a510b63fcb2c11db9aaee78f10149268b2412d10249a3adb24",
-    "tests/reference/m3h6_contract.json": "243b13a5d020e2f641f7c9e1acb51565319af66ee013c145286a30c2d25cd133",
+    "tests/reference/m3h6_contract.json": "dcd4c228cbbe0851b845476c98a12cd86f76026eb1b7f93354f8d22124c35823",
     "tests/reference/m3h6_geometry_0.bin": "b66f720812fbf2e835ae8183f607ebd96853fad721831bbc84c08c9beba90ca8",
     "tests/reference/m3h6_geometry_1.bin": "db02bc14ab1119a2224bce25312232be796bea9c34ab8df304c94f608afd77e0",
     "tests/reference/m3h6_geometry_10.bin": "c48ba240a7562e4887107480747644c2f96d881729496879a8f4596055d6ed1b",
