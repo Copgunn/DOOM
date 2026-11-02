@@ -38,13 +38,13 @@ pub use player_armor::{
 };
 pub use player_bonuses::PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA;
 pub use player_map_scale::{
-    HEIGHTS_LINE_FLAGS, HEIGHTS_MOMZ_UNITS, HEIGHTS_Z_UNITS, MAP_SCALE_ACTOR_SLOTS,
+    Boundary, HEIGHTS_LINE_FLAGS, HEIGHTS_MOMZ_UNITS, HEIGHTS_Z_UNITS, MAP_SCALE_ACTOR_SLOTS,
     MAP_SCALE_EXTENT_UNITS, MAP_SCALE_MAX_LIVE_PROJECTILES, MAP_SCALE_MOMENTUM_UNITS,
     MAP_SCALE_WALL_LINES, MapScaleError, RoomBounds,
 };
 pub use player_monsters::{
-    MAX_PLAYER_MONSTERS, PLAYER_HEIGHTS_CONTEXT_SCHEMA, PLAYER_IMPS_CONTEXT_SCHEMA,
-    PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
+    MAX_PLAYER_MONSTERS, PLAYER_DIAGONAL_CONTEXT_SCHEMA, PLAYER_HEIGHTS_CONTEXT_SCHEMA,
+    PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -531,6 +531,10 @@ pub struct Simulation {
     /// admitted against it ("every type fits somewhere") and fitting is proved per
     /// spawn instead. Derived from the immutable map; never canonical state.
     pub(crate) type_envelope: Option<SectorState>,
+    /// Under the diagonal policy, the one-sided walls and their parity test (the
+    /// spawn rule and the escape witness). Derived from the immutable map; never
+    /// canonical state.
+    pub(crate) boundary: Option<Arc<player_map_scale::Boundary>>,
 }
 /// A simulation moves between threads and is shared by reference across them; the
 /// validation memo is atomic so this holds at compile time.
@@ -652,6 +656,7 @@ impl Simulation {
             map_fields,
             admitted_types: demon_lifecycle::AdmittedTypes::default(),
             type_envelope: None,
+            boundary: None,
         })
     }
     /// The sectors a type's dimensions are admitted against: the heights policy's
@@ -983,8 +988,13 @@ impl Simulation {
         Ok(())
     }
     /// Changes explicit momentum between tics; next update clamps it like the reference.
+    /// Under the diagonal policy this is the declared mirror of the C harness's
+    /// `push_*` input and admits the player body (the corner-jump replay); every
+    /// older physical-player policy keeps refusing it.
     pub fn set_momentum(&mut self, id: ActorId, momentum: [Fixed; 2]) -> Result<(), SimError> {
-        if self.owns_player_body(id) || self.player_policy().has_physical_player() {
+        if (self.owns_player_body(id) || self.player_policy().has_physical_player())
+            && !self.player_policy().has_diagonals()
+        {
             return Err(PlayerBodyError::Unsupported.into());
         }
         if self.profile.uses_checked_demons() {
@@ -1195,6 +1205,7 @@ impl Simulation {
                     events: &mut self.events,
                     commands,
                     perception_inputs,
+                    boundary: self.boundary.as_deref(),
                 },
             );
         }
@@ -1328,6 +1339,11 @@ mod monster_evidence;
 mod monster_tests;
 
 #[cfg(test)]
+#[path = "../../../tests/support/m3h5.rs"]
+mod diagonal_evidence;
+#[cfg(test)]
+mod diagonal_room;
+#[cfg(test)]
 #[path = "../../../tests/support/m3h4.rs"]
 mod heights_evidence;
 #[cfg(test)]
@@ -1340,6 +1356,8 @@ mod imp_tests;
 #[cfg(test)]
 #[path = "../../../tests/support/m3h3.rs"]
 mod map_scale_evidence;
+#[cfg(test)]
+mod player_diagonal_tests;
 #[cfg(test)]
 mod player_heights_tests;
 #[cfg(test)]

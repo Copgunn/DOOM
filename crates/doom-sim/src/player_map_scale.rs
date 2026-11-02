@@ -68,6 +68,15 @@ pub enum MapScaleError {
     /// An actor outside `[floor, ceiling - height]` or beyond the z/momz witnesses
     /// before a tic (unreachable by the vertical invariant).
     Vertical,
+    /// Under the diagonal policy, the one-sided walls do not form a closed boundary
+    /// facing its room: two walls meet elsewhere than at a shared endpoint, a vertex
+    /// has odd degree, or a wall's front side faces even parity (M3h5 note §4.1).
+    Boundary,
+    /// Under the diagonal policy, a player's projected slide move was accepted by
+    /// `P_TryMove` with its center outside the room (the corner jump, M3h5 note
+    /// §4.4): the one legal source move the policy refuses. The tic fails and the
+    /// state before it is kept.
+    Escape,
 }
 impl fmt::Display for MapScaleError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -201,6 +210,284 @@ impl RoomBounds {
             max: max.map(|v| Fixed::from_map_units(v as i16)),
         })
     }
+    /// The vertex rectangle of a diagonal-policy room: at most
+    /// `MAP_SCALE_WALL_LINES` linedefs, a BLOCKMAP whose grid covers the rectangle
+    /// and lists every linedef, one- or two-sided, in every cell whose closed
+    /// 128-unit square meets the closed segment (the rule real node builders
+    /// follow, and what the M3h5 proof needs: the cell holding any wall point lists
+    /// that wall). The boundary itself is checked by `Boundary::derive`.
+    pub fn derive_diagonal(map: &Map) -> Result<Self, SimError> {
+        if map.linedefs().len() > MAP_SCALE_WALL_LINES {
+            return Err(MapScaleError::Lines.into());
+        }
+        let vertices = map.vertices();
+        let (Some(first), Some(_)) = (vertices.first(), map.linedefs().first()) else {
+            return Err(MapScaleError::Walls.into());
+        };
+        let mut min = [i32::from(first.x), i32::from(first.y)];
+        let mut max = min;
+        for v in vertices {
+            for (axis, value) in [v.x, v.y].into_iter().enumerate() {
+                min[axis] = min[axis].min(i32::from(value));
+                max[axis] = max[axis].max(i32::from(value));
+            }
+        }
+        let blockmap = map.blockmap();
+        let origin = [
+            i32::from(blockmap.origin().x),
+            i32::from(blockmap.origin().y),
+        ];
+        let [width, height] = blockmap.dimensions().map(i32::from);
+        if origin[0] > min[0]
+            || origin[1] > min[1]
+            || max[0] >= origin[0] + 128 * width
+            || max[1] >= origin[1] + 128 * height
+        {
+            return Err(MapScaleError::Blockmap.into());
+        }
+        let words = blockmap.words();
+        for (index, line) in map.linedefs().iter().enumerate() {
+            let [a, b] = line.vertices.map(|i| vertices[usize::from(i)]);
+            let segment = [
+                [i64::from(a.x), i64::from(a.y)],
+                [i64::from(b.x), i64::from(b.y)],
+            ];
+            let xl = (i32::from(a.x.min(b.x)) - origin[0]) >> 7;
+            let xh = (i32::from(a.x.max(b.x)) - origin[0]) >> 7;
+            let yl = (i32::from(a.y.min(b.y)) - origin[1]) >> 7;
+            let yh = (i32::from(a.y.max(b.y)) - origin[1]) >> 7;
+            for x in xl..=xh {
+                for y in yl..=yh {
+                    let cell = [
+                        i64::from(origin[0] + 128 * x),
+                        i64::from(origin[1] + 128 * y),
+                    ];
+                    if !segment_meets_box(segment, cell, [cell[0] + 128, cell[1] + 128]) {
+                        continue;
+                    }
+                    let range = blockmap.cell_ranges()[(y * width + x) as usize].clone();
+                    if !words[range].contains(&(index as u16)) {
+                        return Err(MapScaleError::Blockmap.into());
+                    }
+                }
+            }
+        }
+        Ok(Self {
+            min: min.map(|v| Fixed::from_map_units(v as i16)),
+            max: max.map(|v| Fixed::from_map_units(v as i16)),
+        })
+    }
+}
+
+/// Twice the signed area of `(a, b, p)`: negative when `p` is right of the directed
+/// line `a → b` (the source front side), zero on it.
+fn orient(a: [i64; 2], b: [i64; 2], p: [i64; 2]) -> i64 {
+    (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])
+}
+/// Whether the closed segment meets the closed box `[lo, hi]`: the bounding boxes
+/// overlap and the segment's line does not leave all four corners strictly on one
+/// side. Exact in integers (the chord of the line inside the box and the segment are
+/// intervals of one line whose projections overlap exactly when the boxes do).
+fn segment_meets_box(segment: [[i64; 2]; 2], lo: [i64; 2], hi: [i64; 2]) -> bool {
+    let [a, b] = segment;
+    if a[0].max(b[0]) < lo[0]
+        || a[0].min(b[0]) > hi[0]
+        || a[1].max(b[1]) < lo[1]
+        || a[1].min(b[1]) > hi[1]
+    {
+        return false;
+    }
+    let corners = [lo, [hi[0], lo[1]], hi, [lo[0], hi[1]]].map(|p| orient(a, b, p));
+    !(corners.iter().all(|c| *c > 0) || corners.iter().all(|c| *c < 0))
+}
+/// Whether the closed segments `ab` and `cd` share a point.
+fn segments_meet(a: [i64; 2], b: [i64; 2], c: [i64; 2], d: [i64; 2]) -> bool {
+    let on = |p: [i64; 2], q: [i64; 2], r: [i64; 2]| {
+        orient(p, q, r) == 0
+            && r[0] >= p[0].min(q[0])
+            && r[0] <= p[0].max(q[0])
+            && r[1] >= p[1].min(q[1])
+            && r[1] <= p[1].max(q[1])
+    };
+    let (d1, d2, d3, d4) = (
+        orient(c, d, a),
+        orient(c, d, b),
+        orient(a, b, c),
+        orient(a, b, d),
+    );
+    ((d1 > 0) != (d2 > 0) && (d1 < 0) != (d2 < 0) && (d3 > 0) != (d4 > 0) && (d3 < 0) != (d4 < 0))
+        || on(c, d, a)
+        || on(c, d, b)
+        || on(a, b, c)
+        || on(a, b, d)
+}
+/// Crossings of the horizontal ray `{(x, p.y) : x > p.x}` with the closed segment
+/// under the half-open rule, which is exact for a point not on the segment. With
+/// `from_below`, a vertex exactly at the ray's height counts as above it (the limit
+/// of a ray just below `p`); without it, as below (the limit from above).
+fn ray_crosses(p: [i64; 2], a: [i64; 2], b: [i64; 2], from_below: bool) -> bool {
+    let above = |v: [i64; 2]| v[1] > p[1] || (from_below && v[1] == p[1]);
+    if above(a) == above(b) {
+        return false;
+    }
+    // The crossing abscissa exceeds p.x exactly when num / den > 0.
+    let num = (p[1] - a[1]) * (b[0] - a[0]) - (p[0] - a[0]) * (b[1] - a[1]);
+    let den = b[1] - a[1];
+    (num > 0) == (den > 0)
+}
+
+/// The one-sided walls of a diagonal-policy room as closed integer segments, with the
+/// exact ray-parity test that defines the admitted region `Ω` (M3h5 note §4.1–4.3).
+/// Derived from the immutable map at load; never canonical state.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Boundary {
+    /// Endpoints of every one-sided linedef in map units, in linedef order.
+    segments: Vec<[[i64; 2]; 2]>,
+}
+impl Boundary {
+    /// Collect the one-sided linedefs and check the closed-boundary rules: C1, two
+    /// walls meet only at a shared endpoint; C2, every vertex ends an even number of
+    /// walls; C3, the front (sidedef 0) side of every wall has odd parity. Admission
+    /// only; at most `MAP_SCALE_WALL_LINES²` integer products, nothing per tic.
+    pub fn derive(map: &Map) -> Result<Self, SimError> {
+        let vertices = map.vertices();
+        let mut segments = Vec::new();
+        for line in map.linedefs() {
+            if line.sides[1].is_some() {
+                continue;
+            }
+            let [a, b] = line.vertices.map(usize::from);
+            let from = vertices.get(a).ok_or(MapScaleError::Geometry)?;
+            let to = vertices.get(b).ok_or(MapScaleError::Geometry)?;
+            segments.push([
+                [i64::from(from.x), i64::from(from.y)],
+                [i64::from(to.x), i64::from(to.y)],
+            ]);
+        }
+        if segments.is_empty() {
+            return Err(MapScaleError::Walls.into());
+        }
+        for (i, &[a, b]) in segments.iter().enumerate() {
+            if a == b {
+                return Err(MapScaleError::Geometry.into());
+            }
+            for &[c, d] in &segments[i + 1..] {
+                let shared: Vec<[i64; 2]> =
+                    [a, b].into_iter().filter(|p| *p == c || *p == d).collect();
+                match shared.as_slice() {
+                    [] => {
+                        if segments_meet(a, b, c, d) {
+                            return Err(MapScaleError::Boundary.into());
+                        }
+                    }
+                    [p] => {
+                        // Collinear walls leaving the shared endpoint the same way
+                        // overlap; anything else meets only at the endpoint.
+                        let q1 = if a == *p { b } else { a };
+                        let q2 = if c == *p { d } else { c };
+                        let dot = (q1[0] - p[0]) * (q2[0] - p[0]) + (q1[1] - p[1]) * (q2[1] - p[1]);
+                        if orient(*p, q1, q2) == 0 && dot > 0 {
+                            return Err(MapScaleError::Boundary.into());
+                        }
+                    }
+                    _ => return Err(MapScaleError::Boundary.into()),
+                }
+            }
+        }
+        let mut degree: Vec<([i64; 2], u32)> = Vec::new();
+        for &[a, b] in &segments {
+            for p in [a, b] {
+                match degree.iter_mut().find(|(v, _)| *v == p) {
+                    Some((_, n)) => *n += 1,
+                    None => degree.push((p, 1)),
+                }
+            }
+        }
+        if degree.iter().any(|(_, n)| n % 2 != 0) {
+            return Err(MapScaleError::Boundary.into());
+        }
+        let boundary = Self { segments };
+        // C3 in doubled coordinates so the midpoint is integral: the parity of a
+        // point just in front of the midpoint is the ray count over the other walls
+        // taken as the limit toward the front side, plus the wall itself when the
+        // ray from the front side crosses it (`dy < 0`).
+        for (i, &[a, b]) in boundary.segments.iter().enumerate() {
+            let m = [a[0] + b[0], a[1] + b[1]];
+            let (dx, dy) = (b[0] - a[0], b[1] - a[1]);
+            let from_below = dx > 0;
+            let mut odd = dy < 0;
+            for (j, &[c, d]) in boundary.segments.iter().enumerate() {
+                if j != i && ray_crosses(m, [2 * c[0], 2 * c[1]], [2 * d[0], 2 * d[1]], from_below)
+                {
+                    odd = !odd;
+                }
+            }
+            if !odd {
+                return Err(MapScaleError::Boundary.into());
+            }
+        }
+        Ok(boundary)
+    }
+    /// The walls in map units.
+    pub fn segments(&self) -> &[[[i64; 2]; 2]] {
+        &self.segments
+    }
+    /// Ray parity of a raw fixed-point center: true when odd, i.e. inside `Ω`.
+    /// Exact for a center not on a wall; a center on a wall reads as the limit from
+    /// above, which the callers never rely on (a box containing its center meets the
+    /// wall and is refused separately).
+    pub fn inside(&self, position: [Fixed; 2]) -> bool {
+        let p = position.map(|v| i64::from(v.bits()));
+        self.segments
+            .iter()
+            .filter(|[a, b]| ray_crosses(p, raw(*a), raw(*b), false))
+            .count()
+            % 2
+            == 1
+    }
+    /// Whether the closed box `[x − r, x + r] × [y − r, y + r]` (raw units, formed
+    /// in i64) meets any wall.
+    pub fn box_meets_wall(&self, position: [Fixed; 2], radius: Fixed) -> bool {
+        let p = position.map(|v| i64::from(v.bits()));
+        let r = i64::from(radius.bits());
+        self.segments.iter().any(|[a, b]| {
+            segment_meets_box(
+                [raw(*a), raw(*b)],
+                [p[0] - r, p[1] - r],
+                [p[0] + r, p[1] + r],
+            )
+        })
+    }
+    /// The spawn condition of the diagonal policy (M3h5 note §4.1 item 4): center
+    /// inside `Ω` and the closed box meeting no wall, so the open box lies in `Ω`.
+    pub fn spawn_admitted(&self, position: [Fixed; 2], radius: Fixed) -> bool {
+        self.inside(position) && !self.box_meets_wall(position, radius)
+    }
+}
+/// Map units to raw fixed point, in i64.
+fn raw(p: [i64; 2]) -> [i64; 2] {
+    p.map(|v| v << 16)
+}
+/// Linedef admission of the diagonal policy: as `validate_heights_geometry` without
+/// the axis rule (every `P_HitSlideLine` branch is admitted; the projected move's
+/// witness is `MapScaleError::Escape`). Lines may have any direction; degenerate
+/// lines reject. The line norm, heights, specials, sky and the vertex envelope are
+/// checked by the shared expanded-map admission; the boundary by `Boundary::derive`.
+pub(crate) fn validate_diagonal_geometry(map: &Map) -> Result<(), SimError> {
+    for line in map.linedefs() {
+        let [a, b] = line.vertices.map(usize::from);
+        let from = map.vertices().get(a).ok_or(MapScaleError::Geometry)?;
+        let to = map.vertices().get(b).ok_or(MapScaleError::Geometry)?;
+        let two_sided = line.flags & ML_TWOSIDED != 0;
+        if line.sides[0].is_none()
+            || line.sides[1].is_some() != two_sided
+            || line.flags & !(HEIGHTS_LINE_FLAGS | ML_TWOSIDED) != 0
+            || (from.x == to.x && from.y == to.y)
+        {
+            return Err(MapScaleError::Geometry.into());
+        }
+    }
+    Ok(())
 }
 
 /// Linedef admission of the heights policy, checked once before construction:
@@ -368,8 +655,15 @@ impl Simulation {
     pub(crate) fn position_admitted(&self, position: [Fixed; 2], margin: u32) -> bool {
         position_admitted(self.room(), position, margin)
     }
+    /// Spawn admission: the rectangle rule of the map-scale policies, and under the
+    /// diagonal policy also the boundary rule (center inside `Ω`, closed box meeting
+    /// no wall).
     pub(crate) fn spawn_admitted(&self, position: [Fixed; 2], radius: Fixed, margin: u32) -> bool {
         spawn_admitted(self.room(), position, radius, margin)
+            && self
+                .boundary
+                .as_deref()
+                .is_none_or(|b| b.spawn_admitted(position, radius))
     }
     /// Absolute XY/Z bound of every live actor for sight and perception reads.
     pub(crate) fn sight_margin(&self) -> u32 {

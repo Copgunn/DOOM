@@ -489,6 +489,7 @@ impl Simulation {
                 events: &mut plan.events,
                 commands,
                 perception_inputs: Some(perception_inputs),
+                boundary: self.boundary.as_deref(),
             },
         );
         if let Some(error) = control.failure.get() {

@@ -197,6 +197,16 @@ impl<'a> Diagnostic<'a> {
     ) -> Result<Self, DiagnosticError> {
         Self::decode_selected(bytes, limits, Some(31))
     }
+    /// Explicit DSIM32 diagonal-wall reader; every earlier reader rejects 32 and
+    /// this reader rejects every earlier version. DSIM32 keeps the DSIM31 field
+    /// layout, event vocabulary and item/vertical witnesses under policy 16 and the
+    /// diagonal context; diagonal walls add no persistent field.
+    pub fn decode_diagonal(
+        bytes: &'a [u8],
+        limits: DiagnosticLimits,
+    ) -> Result<Self, DiagnosticError> {
+        Self::decode_selected(bytes, limits, Some(32))
+    }
     /// Explicit DSIM30 real-map-scale reader; every earlier reader rejects 30 and
     /// this reader rejects every earlier version.
     pub fn decode_map_scale(
@@ -319,7 +329,7 @@ impl<'a> Diagnostic<'a> {
     fn identity(&self, ty: u16, state: u16) -> Result<DiagnosticIdentity, DiagnosticError> {
         let actor = ActorTypeId(ty);
         let state = (state != u16::MAX).then_some(StateId(state));
-        if matches!(self.version, 21..=31) {
+        if matches!(self.version, 21..=32) {
             let policy = self.policy();
             original_registry::require_role_for(policy, actor)
                 .map_err(|_| DiagnosticError::Identity)?;
@@ -366,6 +376,9 @@ impl<'a> Diagnostic<'a> {
         self.identity(ty, state).map(Some)
     }
     fn policy(&self) -> OriginalExecutionProfile {
+        if self.version == 32 {
+            return OriginalExecutionProfile::PlayerMonstersDiagonalV1;
+        }
         if self.version == 31 {
             return OriginalExecutionProfile::PlayerMonstersHeightsV1;
         }
@@ -393,7 +406,7 @@ impl<'a> Diagnostic<'a> {
         if self.version == 23 {
             return OriginalExecutionProfile::PlayerDemonPistolV1;
         }
-        if matches!(self.version, 22..=31)
+        if matches!(self.version, 22..=32)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerDemonMeleeV1
@@ -403,7 +416,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerDemonMeleeV1
-        } else if matches!(self.version, 22..=31)
+        } else if matches!(self.version, 22..=32)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerDemonAcquisitionV1
@@ -413,7 +426,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerDemonAcquisitionV1
-        } else if matches!(self.version, 22..=31)
+        } else if matches!(self.version, 22..=32)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerCommandMovementV1
@@ -423,7 +436,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerCommandMovementV1
-        } else if matches!(self.version, 22..=31)
+        } else if matches!(self.version, 22..=32)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerBodyKnockbackV1
@@ -433,7 +446,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerBodyKnockbackV1
-        } else if matches!(self.version, 22..=31) {
+        } else if matches!(self.version, 22..=32) {
             OriginalExecutionProfile::PlayerBodyLifecycleV1
         } else {
             OriginalExecutionProfile::DemonNormalV1
@@ -445,7 +458,7 @@ impl<'a> Diagnostic<'a> {
             return Err(DiagnosticError::Schema);
         }
         number::<8>(self.required("tic")?)?;
-        if matches!(self.version, 21..=31) {
+        if matches!(self.version, 21..=32) {
             if profile != self.policy().wire_id()
                 || self.required("registry.schema")? != ORIGINAL_REGISTRY_SCHEMA
                 || self.required("context.schema")? != self.policy().context_schema()
@@ -506,7 +519,7 @@ impl<'a> Diagnostic<'a> {
                 || f.path.ends_with(".soundtarget")
                 || f.path.ends_with(".previous")
                 || f.path.ends_with(".next")
-                || matches!(self.version, 22..=31)
+                || matches!(self.version, 22..=32)
                     && matches!(
                         f.path,
                         "original_player.0.mo" | "original_player.0.attacker"
@@ -550,11 +563,11 @@ impl<'a> Diagnostic<'a> {
                 let event = self.required(&format!("{prefix}.{i}"))?;
                 let tag = *event.first().ok_or(DiagnosticError::Structure)?;
                 if tag
-                    > if matches!(self.version, 26..=31) {
+                    > if matches!(self.version, 26..=32) {
                         24
                     } else if self.version == 25 {
                         23
-                    } else if matches!(self.version, 22..=31) {
+                    } else if matches!(self.version, 22..=32) {
                         22
                     } else {
                         21
@@ -562,7 +575,7 @@ impl<'a> Diagnostic<'a> {
                 {
                     return Err(DiagnosticError::Structure);
                 }
-                if matches!(self.version, 27..=31) && tag == 21 {
+                if matches!(self.version, 27..=32) && tag == 21 {
                     if event.len() != 18 || !matches!(event[1], 0..=2) {
                         return Err(DiagnosticError::Structure);
                     }
@@ -587,25 +600,25 @@ impl<'a> Diagnostic<'a> {
                 if tag == 22 {
                     validate_player_event(
                         event,
-                        matches!(self.version, 24..=31),
-                        matches!(self.version, 27..=31),
+                        matches!(self.version, 24..=32),
+                        matches!(self.version, 27..=32),
                         self.slot_bound(),
                     )?;
                 }
-                if tag == 14 && matches!(self.version, 23..=31) {
-                    let sectors = if self.version == 31 {
+                if tag == 14 && matches!(self.version, 23..=32) {
+                    let sectors = if matches!(self.version, 31 | 32) {
                         Some(u32::from_le_bytes(number(self.required("sectors.count")?)?))
                     } else {
                         None
                     };
                     validate_weapon_event(
                         event,
-                        matches!(self.version, 24..=31),
+                        matches!(self.version, 24..=32),
                         self.slot_bound(),
                         sectors,
                     )?;
                 }
-                if tag == 15 && matches!(self.version, 29..=31) {
+                if tag == 15 && matches!(self.version, 29..=32) {
                     validate_projectile_event(event, self.slot_bound())?;
                 }
                 // Validate identity-bearing payloads without interpreting nested
@@ -624,13 +637,13 @@ impl<'a> Diagnostic<'a> {
                     )?);
                     if is_type {
                         self.identity(value, u16::MAX)?;
-                    } else if matches!(self.version, 21..=31) {
+                    } else if matches!(self.version, 21..=32) {
                         let state = OriginalState::try_from(value)
                             .map_err(|_| DiagnosticError::Identity)?;
                         // Entering S_NULL is a source removal event, not a live
                         // executable state. Real pistol impact thinkers expose
                         // this sentinel in23; historical readers stay unchanged.
-                        if matches!(self.version, 23..=31)
+                        if matches!(self.version, 23..=32)
                             && state == OriginalState::S_NULL
                             && event.get(..2) == Some(&[12, 1])
                         {
@@ -680,16 +693,16 @@ impl<'a> Diagnostic<'a> {
                 }
             }
         }
-        if matches!(self.version, 22..=31) {
+        if matches!(self.version, 22..=32) {
             self.validate_player()?;
         }
         if self.version == 23 {
             self.validate_pistol()?;
         }
-        if matches!(self.version, 24..=31) {
+        if matches!(self.version, 24..=32) {
             self.validate_weapons()?;
         }
-        if matches!(self.version, 26..=31) {
+        if matches!(self.version, 26..=32) {
             let kind = self.required("original_player.0.armor.type")?;
             if kind.len() != 1 {
                 return Err(DiagnosticError::Structure);
@@ -700,13 +713,13 @@ impl<'a> Diagnostic<'a> {
                 self.policy(),
             )?;
         }
-        if matches!(self.version, 27..=31) {
+        if matches!(self.version, 27..=32) {
             self.validate_bonus_statistics()?;
         }
-        if matches!(self.version, 29..=31) {
+        if matches!(self.version, 29..=32) {
             self.validate_live_projectiles()?;
         }
-        if matches!(self.version, 25..=31) {
+        if matches!(self.version, 25..=32) {
             self.validate_pickup_items()?;
             if self.required("original_player.0.pickups.present")? != [1] {
                 return Err(DiagnosticError::Structure);
@@ -719,14 +732,14 @@ impl<'a> Diagnostic<'a> {
             )?);
             let message = self.required("original_player.0.pickups.message")?;
             if !(0..=world_pickups::MAX_BONUS).contains(&bonus)
-                || if matches!(self.version, 27..=31) {
+                || if matches!(self.version, 27..=32) {
                     !(0..=MAX_WORLD_PICKUPS as i32).contains(&items)
                 } else {
                     items != 0
                 }
                 || !(matches!(message, [0..=6] | [8..=9])
-                    || (matches!(self.version, 26..=31) && matches!(message, [10..=11]))
-                    || (matches!(self.version, 27..=31) && matches!(message, [12..=13])))
+                    || (matches!(self.version, 26..=32) && matches!(message, [10..=11]))
+                    || (matches!(self.version, 27..=32) && matches!(message, [12..=13])))
             {
                 return Err(DiagnosticError::Structure);
             }
@@ -754,7 +767,7 @@ impl<'a> Diagnostic<'a> {
             })
         };
         let expected = world_pickups::counted_things(raw(), &world_pickups::COUNTED_ITEM_DOOMED);
-        if matches!(self.version, 28..=31) {
+        if matches!(self.version, 28..=32) {
             // Every admitted COUNTKILL monster is a placed THING; credits never
             // exceed the map total. Zero again describes a pre-batch world.
             let kills = i32::from_le_bytes(number(self.required("level.total_kills")?)?);
@@ -762,7 +775,7 @@ impl<'a> Diagnostic<'a> {
                 i32::from_le_bytes(number(self.required("level.single_player_kill_count")?)?);
             let placed = world_pickups::counted_things(
                 raw(),
-                if matches!(self.version, 29..=31) {
+                if matches!(self.version, 29..=32) {
                     &world_pickups::COUNTED_KILL_DOOMED_IMPS
                 } else {
                     &world_pickups::COUNTED_KILL_DOOMED
@@ -857,7 +870,7 @@ impl<'a> Diagnostic<'a> {
             let dropped = flags & world_pickups::MF_DROPPED != 0;
             // DSIM31 items sit on their own sector's floor; earlier versions on the
             // flat world's floor 0 under ceiling 128.
-            let span = if self.version == 31 {
+            let span = if matches!(self.version, 31 | 32) {
                 // A collected or removed item is unlinked from its sector list at
                 // once and retired by the next pass; its sector field still holds.
                 let listed = self.required(&format!("{prefix}.pending_removal"))? == [0];
@@ -1075,7 +1088,7 @@ impl<'a> Diagnostic<'a> {
         let damage = i32::from_le_bytes(number(self.required("original_player.0.damage_count")?)?);
         let frags = i32::from_le_bytes(number(self.required("original_player.0.frags")?)?);
         let state = self.required("original_player.0.state")?;
-        if !(0..=if matches!(self.version, 27..=31) {
+        if !(0..=if matches!(self.version, 27..=32) {
             200
         } else {
             100
@@ -1174,7 +1187,7 @@ fn validate_handle(bytes: &[u8], slots: u32) -> Result<(), DiagnosticError> {
 }
 /// Store capacity admitted by a DSIM version.
 const fn slot_bound_for(version: u32) -> u32 {
-    if matches!(version, 30 | 31) {
+    if matches!(version, 30..=32) {
         crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS
     } else {
         64
@@ -1184,7 +1197,7 @@ impl Snapshot {
     /// Bounded Result-returning DSIM20/21/22/23/24 encoder. Trusted convenience APIs retain
     /// their old allocation policy; callers at input/output boundaries use this.
     pub fn diagnostic_bytes(&self, limits: DiagnosticLimits) -> Result<Vec<u8>, DiagnosticError> {
-        if !matches!(self.version(), 20..=31) {
+        if !matches!(self.version(), 20..=32) {
             return Err(DiagnosticError::Version(self.version()));
         }
         let mut size = 16_usize;
@@ -1459,7 +1472,9 @@ fn validate_armor_event(event: &[u8], version: u32, slots: u32) -> Result<(), Di
     let incoming = i32::from_le_bytes(number(&event[13..17])?);
     let saved = i32::from_le_bytes(number(&event[17..21])?);
     let effective = i32::from_le_bytes(number(&event[21..25])?);
-    let policy = if version == 31 {
+    let policy = if version == 32 {
+        OriginalExecutionProfile::PlayerMonstersDiagonalV1
+    } else if version == 31 {
         OriginalExecutionProfile::PlayerMonstersHeightsV1
     } else if version == 30 {
         OriginalExecutionProfile::PlayerMonstersMapScaleV1
@@ -1491,9 +1506,11 @@ fn validate_armor_event(event: &[u8], version: u32, slots: u32) -> Result<(), Di
 }
 // Independent DSIM25/26 widths and bounded source domains; no world restoration.
 fn validate_pickup_event(event: &[u8], version: u32, slots: u32) -> Result<(), DiagnosticError> {
-    let armor = matches!(version, 26..=31);
-    let bonuses = matches!(version, 27..=31);
-    let policy = if version == 31 {
+    let armor = matches!(version, 26..=32);
+    let bonuses = matches!(version, 27..=32);
+    let policy = if version == 32 {
+        OriginalExecutionProfile::PlayerMonstersDiagonalV1
+    } else if version == 31 {
         OriginalExecutionProfile::PlayerMonstersHeightsV1
     } else if version == 30 {
         OriginalExecutionProfile::PlayerMonstersMapScaleV1

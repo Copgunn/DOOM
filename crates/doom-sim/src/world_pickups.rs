@@ -452,11 +452,25 @@ pub(crate) struct Contacts<'a, A> {
     pub player: &'a mut original_player::PlayerRuntime,
     /// Static sectors, for the item validation of the heights policy.
     pub sectors: &'a [SectorState],
+    /// The one-sided boundary of the diagonal policy, for the escape witness.
+    pub boundary: Option<&'a crate::player_map_scale::Boundary>,
 }
 impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
     type Error = SimError;
     fn get(&self, id: ActorId) -> Option<Actor> {
         self.access.get(id).copied()
+    }
+    /// The escape witness of the diagonal policy: a projected slide move whose
+    /// accepted destination has even parity left the room (the corner jump); the
+    /// tic fails and the transaction is dropped. Exact and never a false positive
+    /// (M3h5 note §4.5); Theorem B makes it unreachable below 30 units per axis.
+    fn after_slide(&mut self, body: &Actor) -> Result<(), SimError> {
+        match self.boundary {
+            Some(boundary) if !boundary.inside(body.position()) => {
+                Err(crate::MapScaleError::Escape.into())
+            }
+            _ => Ok(()),
+        }
     }
     fn contacts(
         &mut self,

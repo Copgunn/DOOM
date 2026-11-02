@@ -45,6 +45,7 @@ impl Simulation {
                 | OriginalExecutionProfile::PlayerMonstersImpV1
                 | OriginalExecutionProfile::PlayerMonstersMapScaleV1
                 | OriginalExecutionProfile::PlayerMonstersHeightsV1
+                | OriginalExecutionProfile::PlayerMonstersDiagonalV1
         )
     }
 
@@ -128,6 +129,7 @@ impl PerceptionRoster<'_> {
                     | OriginalExecutionProfile::PlayerMonstersImpV1
                     | OriginalExecutionProfile::PlayerMonstersMapScaleV1
                     | OriginalExecutionProfile::PlayerMonstersHeightsV1
+                    | OriginalExecutionProfile::PlayerMonstersDiagonalV1
             )
         )
     }

@@ -482,6 +482,12 @@ pub(crate) trait MotionAccess {
     ) -> Result<(), Self::Error> {
         Ok(())
     }
+    /// Called once a projected slide move (`P_HitSlideLine` then `P_TryMove`) has
+    /// been accepted, with the actor at its new position: the diagonal policy's
+    /// escape witness (M3h5 note §4.5). No-op elsewhere.
+    fn after_slide(&mut self, _actor: &Actor) -> Result<(), Self::Error> {
+        Ok(())
+    }
 }
 impl<F: Fn(ActorId) -> Option<Actor>> MotionAccess for F {
     type Error = std::convert::Infallible;
@@ -634,6 +640,7 @@ impl<F: MotionAccess> Mover<'_, F> {
             );
             self.actor.spec.momentum = motion;
             if self.attempt(motion)? {
+                self.access.after_slide(self.actor)?;
                 return Ok(());
             }
         }

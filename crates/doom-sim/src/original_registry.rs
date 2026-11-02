@@ -44,6 +44,10 @@ pub enum OriginalExecutionProfile {
     /// vertical movement: steps, ledges, windows, fences and falls inside the
     /// walled rectangle. Moving sectors, specials and sky ceilings stay rejected.
     PlayerMonstersHeightsV1,
+    /// The heights world with linedefs of any direction inside a closed boundary of
+    /// one-sided walls: wall slides at any angle, diagonal risers, windows, pillars
+    /// and corridors. The corner jump is the one refused legal source move.
+    PlayerMonstersDiagonalV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -64,6 +68,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersImpV1 => 13,
             Self::PlayerMonstersMapScaleV1 => 14,
             Self::PlayerMonstersHeightsV1 => 15,
+            Self::PlayerMonstersDiagonalV1 => 16,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -84,6 +89,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersImpV1 => PLAYER_IMPS_CONTEXT_SCHEMA,
             Self::PlayerMonstersMapScaleV1 => PLAYER_MAP_SCALE_CONTEXT_SCHEMA,
             Self::PlayerMonstersHeightsV1 => PLAYER_HEIGHTS_CONTEXT_SCHEMA,
+            Self::PlayerMonstersDiagonalV1 => PLAYER_DIAGONAL_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_armor(self) -> bool {
@@ -95,6 +101,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
                 | Self::PlayerMonstersHeightsV1
+                | Self::PlayerMonstersDiagonalV1
         )
     }
     pub(crate) const fn has_player_bonuses(self) -> bool {
@@ -105,6 +112,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
                 | Self::PlayerMonstersHeightsV1
+                | Self::PlayerMonstersDiagonalV1
         )
     }
     /// Original former humans, a bounded mixed roster, infighting and drops.
@@ -115,6 +123,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
                 | Self::PlayerMonstersHeightsV1
+                | Self::PlayerMonstersDiagonalV1
         )
     }
     /// The original Imp and its fireball in the mixed roster.
@@ -124,6 +133,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
                 | Self::PlayerMonstersHeightsV1
+                | Self::PlayerMonstersDiagonalV1
         )
     }
     /// Wall-derived travel bounds, 320 slots and 208 live fireballs inside a walled
@@ -131,14 +141,24 @@ impl OriginalExecutionProfile {
     pub(crate) const fn has_map_scale(self) -> bool {
         matches!(
             self,
-            Self::PlayerMonstersMapScaleV1 | Self::PlayerMonstersHeightsV1
+            Self::PlayerMonstersMapScaleV1
+                | Self::PlayerMonstersHeightsV1
+                | Self::PlayerMonstersDiagonalV1
         )
     }
     /// Two-sided lines, static floor/ceiling heights, vertical movement, the
     /// landing sound and cross-sector noise inside the walled rectangle; the
     /// flat-world witnesses of the older policies do not apply.
     pub(crate) const fn has_heights(self) -> bool {
-        matches!(self, Self::PlayerMonstersHeightsV1)
+        matches!(
+            self,
+            Self::PlayerMonstersHeightsV1 | Self::PlayerMonstersDiagonalV1
+        )
+    }
+    /// Linedefs of any direction inside a closed one-sided boundary, the parity
+    /// spawn rule and the escape witness of the M3h5 note.
+    pub(crate) const fn has_diagonals(self) -> bool {
+        matches!(self, Self::PlayerMonstersDiagonalV1)
     }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
@@ -150,6 +170,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
                 | Self::PlayerMonstersHeightsV1
+                | Self::PlayerMonstersDiagonalV1
         )
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -169,6 +190,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
                 | Self::PlayerMonstersHeightsV1
+                | Self::PlayerMonstersDiagonalV1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -187,6 +209,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
                 | Self::PlayerMonstersHeightsV1
+                | Self::PlayerMonstersDiagonalV1
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -201,6 +224,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
                 | Self::PlayerMonstersHeightsV1
+                | Self::PlayerMonstersDiagonalV1
         )
     }
     /// The four-weapon pack (fists, shotgun, chaingun, manual switching): every
@@ -223,6 +247,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersImpV1
                 | Self::PlayerMonstersMapScaleV1
                 | Self::PlayerMonstersHeightsV1
+                | Self::PlayerMonstersDiagonalV1
         )
     }
 }
@@ -565,7 +590,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersV1
             | OriginalExecutionProfile::PlayerMonstersImpV1
             | OriginalExecutionProfile::PlayerMonstersMapScaleV1
-            | OriginalExecutionProfile::PlayerMonstersHeightsV1 => {
+            | OriginalExecutionProfile::PlayerMonstersHeightsV1
+            | OriginalExecutionProfile::PlayerMonstersDiagonalV1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -613,7 +639,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersV1
             | OriginalExecutionProfile::PlayerMonstersImpV1
             | OriginalExecutionProfile::PlayerMonstersMapScaleV1
-            | OriginalExecutionProfile::PlayerMonstersHeightsV1 => {
+            | OriginalExecutionProfile::PlayerMonstersHeightsV1
+            | OriginalExecutionProfile::PlayerMonstersDiagonalV1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -821,7 +848,9 @@ impl Simulation {
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
-        if heights {
+        if policy.has_diagonals() {
+            player_map_scale::validate_diagonal_geometry(&map)?;
+        } else if heights {
             player_map_scale::validate_heights_geometry(&map)?;
         } else if policy.has_physical_player() {
             original_player::validate_grounded_geometry(&map)?;
@@ -836,8 +865,17 @@ impl Simulation {
         } else {
             64
         };
-        let room = if policy.has_map_scale() {
-            // Under heights only one-sided lines may cover the boundary.
+        // Under diagonals the boundary is the closed one-sided chain and the
+        // BLOCKMAP follows the closed-cell rule; under heights only one-sided lines
+        // may cover the rectangle; the map-scale policy keeps its original rule.
+        let boundary = if policy.has_diagonals() {
+            Some(Arc::new(player_map_scale::Boundary::derive(&map)?))
+        } else {
+            None
+        };
+        let room = if policy.has_diagonals() {
+            Some(player_map_scale::RoomBounds::derive_diagonal(&map)?)
+        } else if policy.has_map_scale() {
             Some(player_map_scale::RoomBounds::derive_for(&map, heights)?)
         } else {
             None
@@ -859,6 +897,7 @@ impl Simulation {
                 type_envelope: heights,
             },
         )?;
+        sim.boundary = boundary;
         if policy.has_player_body() {
             sim.original_player = Some(original_player::PlayerRuntime {
                 source: OriginalPlayer::default(),
