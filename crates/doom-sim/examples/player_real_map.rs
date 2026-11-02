@@ -37,7 +37,7 @@ fn main() -> ResultHost<()> {
     }
     let digest = source::verify();
     // Committed source rows really exercise real-map scale: slides, blocked moves,
-    // hitscan impacts, noise floods across 74 sectors, and traces of up to 80
+    // hitscan impacts, noise floods across 74 sectors, and traces of up to 73
     // intercepts (the TI observer rows), none reaching the source's 128.
     let (mut slides, mut blocked, mut impacts, mut floods, mut largest) = (0, 0, 0, 0, 0);
     for c in source::cases() {
@@ -53,8 +53,8 @@ fn main() -> ResultHost<()> {
             }
         }
     }
-    assert_eq!([slides, blocked, impacts, floods], [615, 1536, 134, 5315]);
-    assert_eq!(largest, 80);
+    assert_eq!([slides, blocked, impacts, floods], [615, 1508, 136, 5693]);
+    assert_eq!(largest, 73);
     assert!(source::EXPECTED_ESCAPES.is_empty());
     assert_eq!(
         OriginalExecutionProfile::PlayerMonstersRealMapV1.wire_id(),
@@ -64,7 +64,7 @@ fn main() -> ResultHost<()> {
     assert_eq!(town.linedefs().len(), 516);
     assert_eq!(town.sectors().len(), 74);
     println!(
-        "player_real_map: C rooms of 516 linedefs, 74 sectors, a 3,850-norm wall and a 60 x 60 cell BLOCKMAP, traces of up to 80 intercepts, DSIM33: source/schema/policy checks complete digest={digest:016x}"
+        "player_real_map: C rooms of 516 linedefs, 74 sectors, a 3,850-norm wall and a 60 x 60 cell BLOCKMAP, traces of up to 73 intercepts, DSIM33: source/schema/policy checks complete digest={digest:016x}"
     );
     Ok(())
 }

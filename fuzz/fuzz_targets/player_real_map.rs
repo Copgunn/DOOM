@@ -3,7 +3,7 @@ use doom_sim::*;
 use doom_types::{DoomRng, Fixed};
 use libfuzzer_sys::fuzz_target;
 // Committed synthetic M3h6 rooms: the town with the full roster and sixteen
-// pickups, the gallery with a zombie firing along 32 teeth and sixteen pickups,
+// pickups, the gallery with a zombie firing along 27 teeth and sixteen pickups,
 // the extent room with a zombie across the 2,683-unit two-sided line, the dense
 // comb lane, the wide corridor square with a Demon, and the Rust-only witness
 // hall where a long shot reaches the 129th intercept.
@@ -18,7 +18,7 @@ const MAPS: [&[u8]; 6] = [
 /// Player spawn of the committed scenario in each room.
 const SPAWNS: [[i16; 2]; 6] = [
     [64, 144],
-    [-960, 84],
+    [900, 100],
     [200, 400],
     [-200, 60],
     [300, 192],

@@ -218,18 +218,6 @@ pub fn assert_snapshot(snapshot: &Snapshot, which: usize, op: usize) -> bool {
                 include_bytes!("../reference/m3h6_state_0_360.bin"),
             ),
             (
-                "m3h6_state_1_420.bin",
-                include_bytes!("../reference/m3h6_state_1_420.bin"),
-            ),
-            (
-                "m3h6_state_2_200.bin",
-                include_bytes!("../reference/m3h6_state_2_200.bin"),
-            ),
-            (
-                "m3h6_state_8_240.bin",
-                include_bytes!("../reference/m3h6_state_8_240.bin"),
-            ),
-            (
                 "m3h6_state_11_200.bin",
                 include_bytes!("../reference/m3h6_state_11_200.bin"),
             ),
@@ -244,6 +232,18 @@ pub fn assert_snapshot(snapshot: &Snapshot, which: usize, op: usize) -> bool {
             (
                 "m3h6_state_17_400.bin",
                 include_bytes!("../reference/m3h6_state_17_400.bin"),
+            ),
+            (
+                "m3h6_state_1_420.bin",
+                include_bytes!("../reference/m3h6_state_1_420.bin"),
+            ),
+            (
+                "m3h6_state_2_200.bin",
+                include_bytes!("../reference/m3h6_state_2_200.bin"),
+            ),
+            (
+                "m3h6_state_8_600.bin",
+                include_bytes!("../reference/m3h6_state_8_600.bin"),
             ),
         ];
         let full = full.iter().find(|(name, _)| *name == v[4]).unwrap().1;

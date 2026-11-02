@@ -250,7 +250,7 @@ runtime witness, for itself only.
 | 11 | Sector heights | ±512 (`demon_expanded_map.rs:68–74`); outer 1,024 | ±512, **kept** | the M3h4 vertical envelope (fireball chord 968, z witness 2,048, eye/opening clipping) is not re-derived here; E1M1 needs 264 (§9), 58 of 68 IWAD maps fit. Follow-up §8.3. | (a) kept |
 | 12 | THING records | 256 (`MAX_DEMON_MAP_THINGS`) | 32,768 | lump length / 10; the parser. Spawned actors are still bounded by the roster (row 16). The DSIM reader's `≤ 2,560` THINGS bytes (`diagnostic.rs:758`) is derived from the stream under 33. | (e) → format |
 | 13 | Player starts 1–4 and 11 | rejected (`StartOrInvalidType`) | admitted as records (§4.7) | `P_SpawnMapThing` 718–736. | domain |
-| 14 | Sight work per query | `MAP_EXTENT_SIGHT_WORK` 16,384 (`map_extent.rs:8`) | `expanded_work(map)` exactly (`sight.rs:174`), no fixed threshold | the full BSP expansion `2 · nodes + Σ(1 + segs)` is a function of the map (E1M1 1,462; the largest IWAD map about 5,400). The per-tic budget becomes `queries ≤ 3 · monsters` and `work ≤ queries · (expanded_work + 5 · lines)` ([M3H3 §1](M3H3_REFERENCE_INVESTIGATION.md): at most three queries per monster per tic). | (e) → derived |
+| 14 | Sight work per query | `MAP_EXTENT_SIGHT_WORK` 16,384 (`map_extent.rs:8`) | `expanded_work(map)` exactly (`sight.rs:174`), bounded only by the tree size `2 · nodes + subsectors + segs` (a larger expansion means shared children) | the full BSP expansion `2 · nodes + Σ(1 + segs)` is a function of the map (E1M1 1,462; the largest IWAD map about 5,400). Phase 1 proposed `queries ≤ 3 · monsters` per tic; Phase 2 keeps the exercised 64-query cap (the C evidence observed at most 6 queries in one tic) and derives the work budget `64 · (expanded_work + 5 · lines)` (E1M1 249,088). | (e) → derived |
 | 15 | Collision work per query | `nodes + 4·lines + 4·actors ≤ 16,384` (`map_extent.rs:94–103`) | computed and recorded | a function of rows 1, 5 and the 320 slots (E1M1 3,462; format maximum about 165,000 — a CPU figure, not a safety bound). | (e) → derived |
 | 16 | Roster, slots, fireballs, pickups, drops | 8 / 320 / 208 / 16 / 8 | **unchanged** | (d) bounds of M3h3 §4.1; they also keep the linked-thing term of §4.4 at 33. Raising them is the suggested next milestone (§8.4). | (d) kept |
 | 17 | Momentum, z, momz witnesses | 4,096 / 2,048 / 1,024 | unchanged | `2^28` raw plus any coordinate within the `short` range cannot overflow a checked add. | (a) kept |
@@ -465,7 +465,7 @@ harness. A new observer prints `intercept_p − intercepts` on entry to
 | Map | Geometry | Purpose |
 | --- | --- | --- |
 | town | 516 linedefs, 74 sectors, 182 subsectors, 2,176 × 1,184 units: a 6 × 4 grid of octagonal rooms with corridors, steps, pillars and window bands, 16 pickups, the roster | admission at E1M1 size; soak; pursuit across many sectors; sight across dozens of subsectors |
-| gallery | a 2,048-unit hall whose long walls carry 32 triangular teeth each (64-unit pitch, 48 deep; a fin with a free end would break C2) and 16 pickups along the line of fire | hitscan and autoaim traces with 60–110 intercepts; thing re-adding on a stalled DDA if one occurs |
+| gallery | a 2,048-unit hall whose long walls carry 27 triangular teeth each (64-unit pitch, 48 deep), every tooth a two-sided sector of the hall's heights so sight and aim pass through the comb (a one-sided fin with a free end would break C2, and one-sided teeth block the sight line of any actor aiming along the band) and 16 pickups along the line of fire | hitscan and autoaim traces with 60–110 intercepts, a zombie and a shotgunner aiming along the hall at `MISSILERANGE`; thing re-adding on a stalled DDA if one occurs |
 | extent | a 2,400 × 1,800 room whose boundary holds a 2,750-unit diagonal wall of norm 3,850 and which a 2,683-unit two-sided diagonal splits, so (i) sits at 99.9% and (ii) at 98.3% of `2³¹` (Phase 2 correction: the Phase 1 sketch of a 3,800-unit wall in a 4,000 × 3,000 span fails (ii), which bounds `diag · L₂` by `2²³`, so no wall near the (i) limit can share a map with a span near it) | `P_InterceptVector`/`P_InterceptVector2` sums near the limit under the overflow sanitizer; long-range sight across the two-sided line; a slide along the long wall; a fireball over 2,100 units |
 | dense | a 512 × 256 lane whose middle 240 units carry 30 teeth on each wall: 123 distinct lines in one 2 × 2 cell window | slides into the comb and a shot along its band; the slide window certificate at 123 (admitted) and, Rust-only, 129 (rejected) |
 | wide | four 384-unit rooms at the corners of a 7,552-unit square joined by 64-unit corridors: a 60 × 60-cell grid (3,600 cells, the IWAD maximum class) | wide BLOCKMAP preparation, pursuit and sight along a 6,784-unit corridor, long empty DDA walks, admission time |
@@ -591,6 +591,14 @@ exactly these):**
 
 ### 8.3 Follow-ups and risks
 
+- **Controlled pushes to items.** The diagonal policy admits `set_momentum` on items,
+  but no source path gives a pickup momentum and the DSIM31+ item witness and the tic
+  preflight refuse such a state (found by the M3h6 fuzz campaign). The real-map policy
+  refuses the push; narrowing the diagonal policy the same way is the owner's call.
+- **Three IWAD maps the parser refuses** (`InvalidSubsector`: a subsector whose segs
+  disagree on their front sector) never reach the policy; the existing
+  `doom-map` private IWAD test fails the same way on this host. A parser decision for
+  the real-map loading follow-up.
 - **Heights beyond ±512** need the M3h4 vertical arithmetic re-derived per map (fireball
   chord, eye and opening slopes, `FixedDiv` saturation in `P_CrossSubsector`); 10 of 68
   IWAD maps exceed 512.
@@ -649,5 +657,11 @@ the new policy.
 
 ## 10. Status / next step
 
-Status: **investigation complete**; owner decisions of §8.2 recorded 2026-11-02. Phase 2
-in progress: steps 1–4 of §8.1 done; next step is 5 (admission and witnesses).
+Status: **investigation complete; Phase 2 implemented** (steps 1–8 of §8.1 on
+2026-11-02). Measured observations are in [validation/M3H6.md](validation/M3H6.md); the
+executable domain in [COMPATIBILITY](COMPATIBILITY.md#original-monsters-at-classic-map-scale);
+DSIM33 in [STATE_FORMAT](STATE_FORMAT.md#dsim-v33-original-monsters-at-classic-map-scale).
+Phase 2 departures from the plan: the extent room (§7.1) was redesigned because no wall
+near the (i) limit can share a map with a span near it; the per-tic sight budget keeps
+64 queries (row 14); `set_momentum` refuses pushes to items (§8.3); the witness hall of
+§7.3 is generated by the C builder but never run in C.

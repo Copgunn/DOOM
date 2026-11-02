@@ -164,6 +164,7 @@ all dependent representations and services.
 | Earlier general actor-state setup | 4,096 THINGS and 1,024 actor slots | [actor-state constructor](../crates/doom-sim/src/spawning.rs) |
 | Underlying actor store | Configurable, at most 65,536 slots; individual configurations are stricter | [ThinkerStore::new](../crates/doom-sim/src/store.rs) |
 | Map Demon arithmetic margins | Absolute spawn coordinates 978, owner query margin 1,008, other actor coordinates 994, general actor/query range 1,024 map units; body initial XY momentum and admitted Z momentum at most 64 units | [map preflight](../crates/doom-sim/src/demon_map_spawn.rs), [spawn checks](../crates/doom-sim/src/spawning.rs), [sight](../crates/doom-sim/src/sight.rs) |
+| Real-map policy (wire 17) | The WAD format's own bounds (32,767 records per table, 32,768 BLOCKMAP words, fewer cells than words); sight and collision work computed from the map; compiled cell references at most 2²⁴ and preparation requests at most 64 MiB as allocation guards; see [the classic-map-scale section](#original-monsters-at-classic-map-scale) | [validate_real_map](../crates/doom-sim/src/map_extent.rs), [GeometryCapacity](../crates/doom-sim/src/lib.rs) |
 
 For example, collision and hitscan services contain fixed line-work buffers tied
 to the line bound; raising only the rejection constant would not be sufficient.
@@ -1497,3 +1498,79 @@ crushers, line and sector specials, damaging floors, teleporters, sky ceilings,
 `P_CalcHeight`/view bobbing, cap increases and every other monster, weapon or item stay
 excluded. See [source investigation](M3H5_REFERENCE_INVESTIGATION.md) and
 [observed evidence](validation/M3H5.md).
+
+## Original monsters at classic-map scale
+
+`PlayerMonstersRealMapV1` (wire 17, context `PLAYER-MONSTERS-REALMAP-1-MEDIUM-v1`,
+DSIM-v33) is a separate opt-in superset of `PlayerMonstersDiagonalV1`. Select it with
+`Simulation::original_player_real_map_map`, which takes no slot limit. The same roster
+(eight monsters, sixteen pickups, eight drops), weapons, items, fireballs, infighting,
+statistics, 320 slots, 208 live fireballs, momentum bound, vertical domain (heights
+within ±512), linedef flag set, boundary rules C1–C3, closed-cell BLOCKMAP rule, spawn
+rule, escape witness and whole-tic rollback apply; every committed M3h5 room loads
+unchanged. Older policies, wires and DSIM20–32 are unchanged and keep their caps.
+
+What changes is the static-geometry admission (M3h6 note
+[§4.1](M3H6_REFERENCE_INVESTIGATION.md#41-every-cap-before--after-with-its-derivation)).
+Every cap of the diagonal world that stood in for an allocation or CPU budget becomes
+the WAD format's own bound or a value computed from the loaded map; the cap that stood
+in for the M3f2/M3h3 arithmetic envelope becomes a certificate evaluated on the map
+against the same source expressions; the cap that stood in for `MAXINTERCEPTS` becomes a
+runtime witness with an admission rule for slides.
+
+| Cap | Diagonal policy | Real-map policy | Derivation |
+| --- | ---: | ---: | --- |
+| Linedefs | 95 | 32,767 | `short` references (`mapseg_t::linedef`, `line_t::sidenum`); the parser's own bound |
+| Line-index buffers | 1,024 (`SeenLines`), 128 (hitscan `seen[]`) | sized by the line count | one bitset per trace, inline up to 1,024 lines, heap above (4 KiB at the format maximum) |
+| Sidedefs, vertices, segs | coordinates only | 32,767 each | `short` references; no new check |
+| Sectors | 256 | 32,767 | `mapsidedef_t::sector` is `short`; REJECT is `ceil(n²/8)` bytes by the parser |
+| Subsectors, nodes | 4,096 each | 32,767 each | `unsigned short children[2]` with `NF_SUBSECTOR` as bit 15 |
+| BLOCKMAP cells, words | 8,192 cells, 65,536 words | cells < words ≤ 32,768 | list offsets are `short` word indices (`P_BlockLinesIterator`) |
+| Prepared references, preparation bytes | 262,144 refs, 4 MiB | computed and recorded; refused above 2²⁴ refs or 64 MiB | allocation guards no `short`-indexed IWAD map approaches (at most 13,435 words) |
+| Coordinates, line norm | ±2,048; `\|dx\| + \|dy\| ≤ 1,536` | the arithmetic certificate (i)–(vii) below | §4.2 of the note, computed from the map |
+| Sector heights | ±512 | ±512 | kept (decision 7); 58 of 68 IWAD maps fit |
+| THING records | 256 | 32,768 | lump length by the parser; spawned actors stay bounded by the roster |
+| Player starts 1–4, 11 | rejected | kept as records | `P_SpawnMapThing` 718–736; the player body is spawned by the caller |
+| Sight work per query, per-tic budget | 16,384; 64 queries and 1,048,576 work | the map's expansion (bounded by `2 · nodes + subsectors + segs`); 64 queries and `64 · (expansion + 5 · lines)` | the 64-query cap is kept (at most 6 per tic observed in C); E1M1: 1,462 and 249,088 |
+| Collision work per query | ≤ 16,384 | computed and recorded | `nodes + 4 · lines + 4 · 320` (E1M1 3,462) |
+| Roster, slots, fireballs, pickups, drops, momentum, z witnesses, 64-cell DDA | 8 / 320 / 208 / 16 / 8, 4,096 / 2,048 / 1,024, 64 | unchanged | decisions 3 and 10; the DDA bound is the source's |
+
+**The arithmetic certificate** (`ArithmeticCertificate::derive`, `MapScaleError::Arithmetic`
+on failure), with `R` the vertex rectangle, `L₁ = max(|dx| + |dy|)` and `L₂² = max(dx² +
+dy²)` over the linedefs, `C` the largest line component, `N` the largest node partition
+norm: (i) `256 · 2,177 · L₁ + L₁ + 2 ≤ 2³¹ − 1` and `256 · L₁ · 2,049 ≤ 2³¹ − 1`
+(hitscan `P_InterceptVector`; `L₁ ≤ 3,853`); (ii) `65,536 · diag(R)² · L₂² ≤ (2³¹ − 1 −
+L₁ − 2)²` (sight `P_InterceptVector2`); (iii) `span_x + span_y < 32,768`
+(`P_AproxDistance`); (iv) `max(span) < 8,192` and `C < 8,192` (`SlopeDiv`); (v) the
+BLOCKMAP origin at or below the rectangle, the rectangle inside the grid and within
+32,768 units of the origin; (vi) `(L₁ + N) · max(span) < 2³¹` (side tests); (vii) heights
+within ±512. E1M1 (`L₁ = L₂ = 832`, `diag = 5,373`) holds; across the 68 IWAD maps (i)
+holds for 64, (ii) for 46, (vii) for 58, all for 39 ([counts](validation/M3H6_IWAD_COUNTS.md)).
+The slide-window rule (`slide_window_lines`, `MapScaleError::Lines` above 128) bounds the
+distinct lines listed in any 2 × 2 window of BLOCKMAP cells, which is every line a slide
+trace can meet, so the slide half of the intercept witness never fires (E1M1 28, IWAD
+maximum 101).
+
+| Checked during a tic | Value | Status |
+| --- | ---: | --- |
+| Intercept witness | a hitscan, autoaim or slide trace of this tic would write the source's 129th intercept | the second refused legal source behavior after the corner jump: the original writes it past `intercepts[MAXINTERCEPTS]` (undefined; demo-compatible ports emulate the DOS layout, deferred to M4). The tic fails with `MapScaleError::Intercepts` and the state before it is kept. Reached only by construction (the Rust-only witness hall); the largest trace observed in C holds 73 intercepts and E1M1's replica maximum is 67. A known fidelity gap to revisit for demo compatibility |
+| Escape, rectangle, momentum, vertical, item witnesses | as the diagonal policy | unchanged |
+
+Things are added to a trace once per visit of their cell and never deduplicated, as
+`PIT_AddThingIntercepts` does; no re-add was observed. `Simulation::set_momentum` keeps
+the diagonal admission for the player body, monsters and corpses and refuses a push to
+an item (`PlayerBodyError::Unsupported`), whose momentum no source path produces and
+whose state the item witness would refuse. A map that fails a load check is rejected by
+the constructor with `MapScaleError::{Arithmetic, Geometry, Boundary, Walls, Blockmap,
+Lines}`, `GeometryError::WorkLimit` (a format bound or an allocation guard) or the
+inherited specials, sky, height-range, inverted-sector and short-REJECT rejections, never
+during play; a THING of an unadmitted type still rejects the whole batch
+(`MapSpawnError::UnsupportedType`), which is what keeps E1M1 itself out: after this
+policy E1M1 needs the roster scale (29 monsters, 53 pickups on UV), eight decoration and
+barrel types, sky, eight line-special and five sector-special types and the movers behind
+them ([readiness](M3H6_REFERENCE_INVESTIGATION.md#9-e1m1-readiness-report)). Moving
+sectors, doors, lifts, crushers, line and sector specials, damaging floors, teleporters,
+sky ceilings and floors, `P_CalcHeight`/view bobbing, intercepts-overflow emulation and
+every other monster, weapon or item stay excluded. See
+[source investigation](M3H6_REFERENCE_INVESTIGATION.md) and
+[observed evidence](validation/M3H6.md).

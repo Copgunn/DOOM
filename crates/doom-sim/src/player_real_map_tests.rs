@@ -248,18 +248,18 @@ fn slide_window_certificate_bounds_every_committed_room_and_refuses_an_overfille
     }
     assert_eq!(largest, 123);
     assert_eq!(slide_window_lines(&committed("dense_slide").map()), 123);
-    assert_eq!(slide_window_lines(&committed("gallery_shot").map()), 23);
+    assert_eq!(slide_window_lines(&committed("gallery_shot").map()), 26);
     // Extra listings keep the closed-cell rule but overfill one window: every
     // gallery line listed in cell 0.
     let mut gallery = committed("gallery_shot");
     let all: Vec<u16> = (0..gallery.line_count() as u16).collect();
     gallery.list_lines_in_cell(0, &all);
-    assert_eq!(slide_window_lines(&gallery.map()), 196);
+    assert_eq!(slide_window_lines(&gallery.map()), 222);
     rejects(real_map(&gallery), SimError::MapScale(MapScaleError::Lines));
     // 128 distinct lines are admitted: list exactly enough to reach the bound.
     let mut gallery = committed("gallery_shot");
     let present = gallery.cell_lines(0);
-    let extra: Vec<u16> = (0..196u16)
+    let extra: Vec<u16> = (0..222u16)
         .filter(|l| !present.contains(l))
         .take(MAX_INTERCEPTS - slide_window_lines(&committed("gallery_shot").map()))
         .collect();
@@ -302,7 +302,7 @@ fn real_map_keeps_the_boundary_blockmap_special_and_sky_rules() {
     // A short REJECT is the parser's refusal: the one source read past a lump.
     let mut town = committed("town_patrol");
     town.truncate_reject(100);
-    let error = town.try_map().err().expect("short REJECT rejected");
+    let error = town.try_map().expect_err("short REJECT rejected");
     assert!(format!("{error:?}").contains("RejectTooShort"), "{error:?}");
 }
 
@@ -710,7 +710,7 @@ fn pushes_to_items_are_refused_and_pushes_to_monsters_admitted() {
     let hall = committed("gallery_monster_shot");
     let mut s = real_map(&hall).unwrap();
     let things = s.spawn_map_things().unwrap().spawned;
-    arm(&mut s, [-960, 84]);
+    arm(&mut s, [900, 100]);
     let item = things
         .iter()
         .copied()

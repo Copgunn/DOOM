@@ -11,9 +11,11 @@ The five rooms stress the bounds the policy raises (M3h6 note §7.1):
   bands; about 580 linedefs and 74 sectors over 2,176 x 1,184 units. E1M1-sized
   admission, patrols across many sectors, a fight with the full roster and 16
   pickups, sight down a row of aligned openings.
-- **gallery**: a 2,048-unit hall whose long walls carry 32 triangular teeth each
-  (64-unit pitch, 24-unit base, 48 deep) with 16 pickups along the line of fire: hitscan and
-  autoaim traces with dozens of intercepts, a monster firing back along the hall.
+- **gallery**: a 2,048-unit hall whose top and bottom walls carry 27 triangular teeth
+  each (64-unit pitch, 24-unit base, 48 deep) east of x = -704, every tooth a two-sided
+  sector of the same heights, with 16 pickups along the line of fire: hitscan and autoaim
+  traces with dozens of intercepts through the comb, sight across 55 sectors, a zombie
+  firing along the hall at MISSILERANGE.
 - **extent**: a 2,400 x 1,800 room whose boundary holds a 2,750-unit diagonal wall
   (norm 3,850) and which a 2,683-unit two-sided diagonal line splits in two, so
   certificate (i) sits at 99.9% and (ii) at 98.3% of 2^31: long hitscans at the
@@ -74,15 +76,27 @@ def town(columns=6, rows=4):
                 sectors.append(([[P(128, 352), P(192, 352), P(192, 256), P(128, 256)]], 0, 128))
     return (sectors, {}, (), None, 1024)
 
-def gallery(pitch=64, depth=48, teeth=32):
-    top = [(-1024, 128)]
+def gallery(pitch=64, depth=48, teeth=27, first=-704):
+    """A 2,048 x 256 hall whose top and bottom walls carry 27 triangular teeth each
+    east of x = -704: every tooth is its own sector (floor 0, ceiling 128) whose two
+    slanted edges are two-sided lines and whose base is a one-sided wall, so sight
+    and aim pass through the comb while every edge is an intercept. A zombie at
+    x = -960 sees a player 1,860 units east on the same row, so its MISSILERANGE aim
+    trace runs east through every tooth and pickup."""
+    hall = [(-1024, 128), (first, 128)]
+    sectors = []
     for k in range(teeth):
-        x = -1024 + pitch * k
-        top += [(x + 5 * pitch // 16, 128), (x + pitch // 2, 128 - depth), (x + 11 * pitch // 16, 128)]
-    top.append((1024, 128))
-    bottom = [(x, -y) for x, y in reversed(top)]
-    ring = top + bottom
-    return ([(([ring]), 0, 128)], {}, (), None, 4096)
+        x = first + pitch * k
+        a, tip, b = (x + 5 * pitch // 16, 128), (x + pitch // 2, 128 - depth), (x + 11 * pitch // 16, 128)
+        hall += [a, tip, b]
+        sectors.append(([[a, b, tip]], 0, 128))
+    hall.append((1024, 128))
+    bottom = [(x, -y) for x, y in reversed(hall)]
+    for k in range(teeth):
+        x = first + pitch * k
+        a, tip, b = (x + 5 * pitch // 16, -128), (x + pitch // 2, depth - 128), (x + 11 * pitch // 16, -128)
+        sectors.append(([[b, a, tip]], 0, 128))
+    return ([([hall + bottom], 0, 128)] + sectors, {}, (), None, 4096)
 
 def extent():
     lower = [(0, 0), (0, 600), (2400, 1800), (2400, 1650), (2200, 1650)]
@@ -175,16 +189,17 @@ def populate(pack):
     # A fireball across a step and a pillar room.
     add('town_fireball', 0, [monster(IMP, *cell(1, 0, 160, 144), -180)], px=64, py=144, attack_at=1, tics=200)
     # --- gallery ----------------------------------------------------------------
-    gallery_pickups = [item(kind, -1024 + 64 * k, 80) for k, kind in zip(range(2, 18), [CLIP, SHELLS, STIMPACK, HEALTHBONUS, ARMORBONUS, CLIPBOX, SHELLBOX, MEDIKIT,
+    gallery_pickups = [item(kind, -704 + 64 * k, 92) for k, kind in zip(range(16), [CLIP, SHELLS, STIMPACK, HEALTHBONUS, ARMORBONUS, CLIPBOX, SHELLBOX, MEDIKIT,
                                                                                          SHOTGUN, CHAINGUN, GREENARMOR, BLUEARMOR, HEALTHBONUS, ARMORBONUS, CLIP, SHELLS])]
     # Pistol shots east along the toothed wall: autoaim and bullet traces with dozens of intercepts.
-    add('gallery_shot', 1, gallery_pickups, px=-960, py=84, tics=90, attack_start=10, attack_end=60)
+    add('gallery_shot', 1, gallery_pickups, px=-840, py=100, tics=90, attack_start=10, attack_end=60)
     # Autoaim over sixteen pickups with no target at all.
-    add('gallery_aim_pickups', 1, gallery_pickups, px=-960, py=84, tics=60, attack_start=10, attack_end=40)
-    # A zombie at the far end fires back along the whole hall (MISSILERANGE aim over every tooth and pickup).
-    add('gallery_monster_shot', 1, gallery_pickups + [monster(POSSESSED, 960, 84, -180)], px=-960, py=84, tics=240)
+    add('gallery_aim_pickups', 1, gallery_pickups, px=-840, py=100, tics=60, attack_start=10, attack_end=40)
+    # A zombie at the west end sees the player 1,860 units east on the same row through
+    # the two-sided comb; its MISSILERANGE aim trace runs through every tooth and pickup.
+    add('gallery_monster_shot', 1, gallery_pickups + [monster(POSSESSED, -960, 100, 0)], px=900, py=100, tics=600)
     # A shotgun volley: seven traces with spread after one autoaim.
-    add('gallery_shotgun', 1, gallery_pickups + [monster(SHOTGUY, 576, 84, -180)], px=-960, py=84, tics=120, attack_start=10, attack_end=20, **shotgun)
+    add('gallery_shotgun', 1, gallery_pickups + [monster(SHOTGUY, 576, 100, -180)], px=-840, py=100, tics=120, attack_start=10, attack_end=20, **shotgun)
     # --- extent -----------------------------------------------------------------
     # Hitscans at the 2,750-unit diagonal wall from a distance.
     add('extent_shot_long_wall', 2, [], px=200, py=400, tics=90, attack_start=10, attack_end=60, **dict(turn=-8192, turn_hold=1))
