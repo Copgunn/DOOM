@@ -650,8 +650,8 @@ and the smoke assertion is left as it is.
 Status: **investigation complete; owner decisions recorded (§8.1); Phase 2 in
 progress; step 2 (C harness, polygon room builder and node splitter) steps 3 (DSIM32 projection) and 4–6 (admission, escape witness, DSIM32; one commit,
 since the replay tests need all three), 7 (tools, example, fuzz, CI), 9 (allocation)
-and 10 (docs) committed; step 8 (CI headroom) awaits its serial/parallel comparison;
-then step 11 (gates, review, PR)**. Phase 2 corrections to the plan: the "existing controlled impulse" assumed for
+and 10 (docs) and 8 (CI headroom) committed, review recorded and applied, gates passed; step 11 ends
+with the draft PR and its CI run**. Phase 2 corrections to the plan: the "existing controlled impulse" assumed for
 the Rust replay of the push did not exist (`set_momentum` refused the player body under
 every physical-player policy), so `set_momentum` admits the player body, monsters, corpses
 and items (never fireballs) under this policy only; the DSIM32 projection had to derive actor sectors from the BSP leaves (every earlier
