@@ -203,6 +203,11 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersHeightsV1
         )
     }
+    /// The four-weapon pack (fists, shotgun, chaingun, manual switching): every
+    /// weapon policy except the pistol-only one.
+    pub(crate) const fn has_weapon_pack(self) -> bool {
+        self.has_player_weapons() && !matches!(self, Self::PlayerDemonPistolV1)
+    }
     pub(crate) const fn has_player_commands(self) -> bool {
         matches!(
             self,

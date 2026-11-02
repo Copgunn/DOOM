@@ -986,6 +986,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                                 self.world,
                                 self.sectors,
                                 position,
+                                SpawnHeight::Floor,
                                 t.height(),
                             )
                         });

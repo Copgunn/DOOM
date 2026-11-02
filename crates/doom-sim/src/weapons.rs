@@ -1055,48 +1055,16 @@ impl Simulation {
         self.emit_noise(target, target);
     }
     pub(crate) fn emit_noise(&mut self, target: ActorId, emitter: ActorId) {
+        // p_enemy.c P_NoiseAlert: one P_RecursiveSound flood shared with the
+        // staged weapon noise of the heights policy.
         let sector = self.actor(emitter).unwrap().location.unwrap().sector;
-        let mut visited = vec![u8::MAX; self.sectors.len()];
-        let mut stack = vec![(sector, 0_u8)];
-        while let Some((sector, blocks)) = stack.pop() {
-            let i = usize::from(sector);
-            if visited[i] <= blocks {
-                continue;
-            }
-            visited[i] = blocks;
-            self.sound_targets[i] = Some(target);
+        for (sector, blocks) in noise::flood(&self.world, &self.sectors, sector) {
+            self.sound_targets[usize::from(sector)] = Some(target);
             self.pending.push(Event::Weapon(WeaponEvent::Noise {
                 sector,
                 blocks,
                 target,
             }));
-            let mut children = Vec::new();
-            for (line, l) in self.world.map().linedefs().iter().enumerate() {
-                if l.flags & 4 == 0 {
-                    continue;
-                }
-                let sectors = l
-                    .sides
-                    .map(|s| self.world.map().sidedefs()[usize::from(s.unwrap())].sector);
-                if !sectors.contains(&sector) {
-                    continue;
-                }
-                if multisector::opening(&self.world, &self.sectors, line)
-                    .is_none_or(|o| o.range <= Fixed::ZERO)
-                {
-                    continue;
-                }
-                let next = if sectors[0] == sector {
-                    sectors[1]
-                } else {
-                    sectors[0]
-                };
-                let blocked = u8::from(l.flags & 64 != 0);
-                if blocks + blocked <= 1 {
-                    children.push((next, blocks + blocked));
-                }
-            }
-            stack.extend(children.into_iter().rev());
         }
     }
 }

@@ -229,19 +229,12 @@ impl<A: ActorAccess> weapons::Host for Host<'_, '_, A> {
     }
     fn admit_weapon(&self, weapon: Weapon) -> Result<(), SimError> {
         if weapon == Weapon::Pistol
-            || (self.life.player.as_ref().is_some_and(|p| {
-                matches!(
-                    p.policy,
-                    OriginalExecutionProfile::PlayerDemonWeaponsV1
-                        | OriginalExecutionProfile::PlayerDemonPickupsV1
-                        | OriginalExecutionProfile::PlayerDemonArmorV1
-                        | OriginalExecutionProfile::PlayerDemonBonusesV1
-                        | OriginalExecutionProfile::PlayerMonstersV1
-                        | OriginalExecutionProfile::PlayerMonstersImpV1
-                        | OriginalExecutionProfile::PlayerMonstersMapScaleV1
-                        | OriginalExecutionProfile::PlayerMonstersHeightsV1
-                )
-            }) && matches!(weapon, Weapon::Fist | Weapon::Shotgun | Weapon::Chaingun))
+            || (self
+                .life
+                .player
+                .as_ref()
+                .is_some_and(|p| p.policy.has_weapon_pack())
+                && matches!(weapon, Weapon::Fist | Weapon::Shotgun | Weapon::Chaingun))
         {
             Ok(())
         } else {
@@ -366,23 +359,13 @@ pub(crate) fn run<A: ActorAccess>(
             state
         }
     };
-    if !matches!(
-        (player.policy, state),
-        (
-            OriginalExecutionProfile::PlayerDemonPistolV1,
-            player_weapons::PlayerWeaponRuntime::Pistol(_)
-        ) | (
-            OriginalExecutionProfile::PlayerDemonWeaponsV1
-                | OriginalExecutionProfile::PlayerDemonPickupsV1
-                | OriginalExecutionProfile::PlayerDemonArmorV1
-                | OriginalExecutionProfile::PlayerDemonBonusesV1
-                | OriginalExecutionProfile::PlayerMonstersV1
-                | OriginalExecutionProfile::PlayerMonstersImpV1
-                | OriginalExecutionProfile::PlayerMonstersMapScaleV1
-                | OriginalExecutionProfile::PlayerMonstersHeightsV1,
-            player_weapons::PlayerWeaponRuntime::Pack(_)
-        )
-    ) {
+    let admitted = match state {
+        player_weapons::PlayerWeaponRuntime::Pistol(_) => {
+            player.policy == OriginalExecutionProfile::PlayerDemonPistolV1
+        }
+        player_weapons::PlayerWeaponRuntime::Pack(_) => player.policy.has_weapon_pack(),
+    };
+    if !admitted {
         return Err(WeaponError::Inventory.into());
     }
     let adapter = state.adapter(id, player.health);
