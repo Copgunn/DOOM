@@ -176,6 +176,27 @@ pub(crate) fn action_sight(
 
 /// Only the bounded mutable actor projection is staged. World, map, registry,
 /// sectors, sound targets, roster, canonical caches and old events are borrowed.
+/// Staged per-sector sound targets: the flat policies stage their one sector without
+/// allocating (the tic plan keeps exactly its two historical allocations); the
+/// heights policy copies every sector's target.
+enum StagedSound {
+    One(Option<ActorId>),
+    Many(Vec<Option<ActorId>>),
+}
+impl StagedSound {
+    fn as_slice(&self) -> &[Option<ActorId>] {
+        match self {
+            Self::One(target) => std::slice::from_ref(target),
+            Self::Many(targets) => targets,
+        }
+    }
+    fn as_mut_slice(&mut self) -> &mut [Option<ActorId>] {
+        match self {
+            Self::One(target) => std::slice::from_mut(target),
+            Self::Many(targets) => targets,
+        }
+    }
+}
 struct DemonPlan {
     actors: ThinkerStore<Actor>,
     spatial: movement::SpatialIndex,
@@ -183,9 +204,8 @@ struct DemonPlan {
     statistics: Option<LevelStatistics>,
     player: Option<original_player::PlayerRuntime>,
     bindings: [Option<ActorId>; 4],
-    /// Per-sector sound targets staged by the weapon noise (one sector in the
-    /// flat world, every sector under heights).
-    sound_targets: Vec<Option<ActorId>>,
+    /// Sound targets staged by the weapon noise.
+    sound_targets: StagedSound,
     events: Vec<Event>,
 }
 impl Simulation {
@@ -194,8 +214,13 @@ impl Simulation {
         slots.extend_from_slice(&self.actors.slots);
         let mut order = line_work::reserved(self.actors.max_slots as usize)?;
         order.extend_from_slice(&self.spatial.order);
-        let mut sound_targets = line_work::reserved(self.sound_targets.len())?;
-        sound_targets.extend_from_slice(&self.sound_targets);
+        let sound_targets = if self.player_policy().has_heights() {
+            let mut targets = line_work::reserved(self.sound_targets.len())?;
+            targets.extend_from_slice(&self.sound_targets);
+            StagedSound::Many(targets)
+        } else {
+            StagedSound::One(self.sound_targets.first().copied().flatten())
+        };
         Ok(DemonPlan {
             actors: ThinkerStore {
                 slots,
@@ -304,7 +329,14 @@ impl Simulation {
         self.statistics = plan.statistics;
         self.original_player = plan.player;
         if self.player_policy().has_player_weapons() {
-            self.sound_targets = plan.sound_targets;
+            match plan.sound_targets {
+                StagedSound::One(target) => {
+                    if let Some(first) = self.sound_targets.first_mut() {
+                        *first = target;
+                    }
+                }
+                StagedSound::Many(targets) => self.sound_targets = targets,
+            }
         }
         self.bindings = plan.bindings;
         plan.events
@@ -426,7 +458,7 @@ impl Simulation {
                         &mut host,
                         commands[usize::from(PlayerSlot::One.ordinal())],
                         self.tic,
-                        &mut plan.sound_targets,
+                        plan.sound_targets.as_mut_slice(),
                     )?;
                 }
             }
@@ -438,7 +470,7 @@ impl Simulation {
         }
         let mut perception_inputs = self.checked_demon_inputs(&control);
         if weapon_policy {
-            perception_inputs.sound_targets = &plan.sound_targets;
+            perception_inputs.sound_targets = plan.sound_targets.as_slice();
         }
         thinkers::run(
             &mut plan.actors,
