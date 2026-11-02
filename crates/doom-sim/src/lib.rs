@@ -1063,6 +1063,19 @@ impl Simulation {
         if self.actors.is_pending(id) != Some(false) {
             return Err(StoreError::InvalidHandle.into());
         }
+        // The real-map policy refuses a push to an item (`MF_SPECIAL`): nothing in
+        // the source gives a pickup momentum, and the DSIM31+ item witness and the
+        // tic preflight never admit one that moves. The diagonal policy keeps its
+        // wider admission unchanged (M3h6 note §8.3).
+        if self.player_policy().has_real_map()
+            && momentum != [Fixed::ZERO; 2]
+            && self
+                .actor(id)
+                .and_then(Actor::life)
+                .is_some_and(|l| l.flags & world_pickups::MF_SPECIAL != 0)
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.projectile_control(id)?;
         if self.profile.uses_monsters()
             && !self.profile.uses_demon_lifecycle()

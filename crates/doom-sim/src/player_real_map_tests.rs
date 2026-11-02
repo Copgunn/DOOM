@@ -700,3 +700,42 @@ fn private_iwad_real_map_counts() {
         s.world.sight_work_budget
     );
 }
+
+#[test]
+fn pushes_to_items_are_refused_and_pushes_to_monsters_admitted() {
+    // Found by the fuzz campaign: a pickup pushed by the controlled momentum input
+    // would carry momentum no source path gives an item, which the DSIM33 item
+    // witness and the tic preflight refuse. The real-map policy refuses the push
+    // itself with unchanged state; a monster push is admitted as before.
+    let hall = committed("gallery_monster_shot");
+    let mut s = real_map(&hall).unwrap();
+    let things = s.spawn_map_things().unwrap().spawned;
+    arm(&mut s, [-960, 84]);
+    let item = things
+        .iter()
+        .copied()
+        .find(|id| s.actor(*id).unwrap().life().unwrap().flags & 1 != 0)
+        .unwrap();
+    let zombie = things
+        .iter()
+        .copied()
+        .find(|id| s.actor(*id).unwrap().life().unwrap().flags & 1 == 0)
+        .unwrap();
+    let before = s.snapshot();
+    assert_eq!(
+        s.set_momentum(item, [Fixed::from_map_units(24); 2]),
+        Err(SimError::PlayerBody(PlayerBodyError::Unsupported))
+    );
+    assert_eq!(s.snapshot(), before);
+    s.set_momentum(item, [Fixed::ZERO; 2]).unwrap();
+    s.set_momentum(zombie, [Fixed::from_map_units(24); 2])
+        .unwrap();
+    for _ in 0..8 {
+        s.advance([TicCommand::default(); 4]).unwrap();
+        let bytes = s
+            .snapshot()
+            .diagnostic_bytes(DiagnosticLimits::default())
+            .unwrap();
+        Diagnostic::decode_real_map(&bytes, DiagnosticLimits::default()).unwrap();
+    }
+}
