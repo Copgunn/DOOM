@@ -345,7 +345,7 @@ Theorem B does not cover.
 The projected move is not a slack bound. Take a horizontal one-sided wall `W_h` along
 `y = 0` from `x = −1024` to `0` with the room below it, and a one-sided wall `W_d` from
 `(0, 0)` toward `(−383, −924)` (67.5° from the x axis) with the room on its right; the
-room is the 112.5° wedge between them. A player with momentum `(30, 30)` whose box
+room is the 67.5° wedge between them. A player with momentum `(30, 30)` whose box
 nearly touches `W_d` (center `(−31, −20)`, right edge 0.08 units from the wall at the
 box's bottom) attempts the halved step `(15, 15)`, is blocked by both walls, and slides:
 the third corner trace meets `W_d` at fraction 0.0045, so `W_d` is the slide line, the
@@ -431,39 +431,47 @@ those of 31. `MapScaleError::Escape` is a checked error, not an event.
 
 `tools/reference/m3h5_reference.py` inherits the M3h4 harness (M3h2 bodies, observers,
 controlled inputs) and replaces the geometry and cases. `m3h5_geometry.py` builds rooms
-from explicit polygons: each sector is a list of integer vertices (clockwise, so its walls
-have it on their right/front side); an edge shared by two sectors becomes one two-sided
-linedef with the caller's extra flags; every other edge is a one-sided `ML_BLOCKING` wall
-split at 1,024 units; segs follow the source side convention; a BSP is built by a
-recursive splitter over an **explicit partition list** of linedef indices (seg splits are
-computed exactly and asserted to land on integer coordinates, which the 45°/axis layouts
-guarantee and the 67.5° and 12:5 walls avoid by never being crossed by a partition);
-leaves are convex subsectors; REJECT is zero; the BLOCKMAP lists every line in every cell
-whose closed square meets it (the admission rule of §4.1 item 3), with the origin at the
-vertex minimum. The adapter installs sector line lists, sidedef sectors, segs,
-subsectors, node partitions and REJECT as in M3h4.
+from explicit polygons: each sector is a list of integer vertex rings (the outer ring
+clockwise, holes counterclockwise, so its walls have it on their right/front side); an
+edge shared by two sectors in opposite directions becomes one two-sided linedef with the
+caller's extra flags (front = the sector listed first); every other edge is a one-sided
+`ML_BLOCKING` wall split at `segment` units (1,024 by default) at exact integer points;
+segs follow the source side convention; a BSP is built by a recursive splitter over an
+**explicit partition tree** naming linedefs by their endpoints (seg splits are computed
+exactly and asserted to land on integer coordinates; collinear segs go to the side their
+direction faces); every leaf is asserted non-empty, convex and single-sector, which is why
+the concave wedge carries one partition on its 45° wall and the pillar room seven on the
+pillar's faces; REJECT is zero; the BLOCKMAP lists every line in every cell whose closed
+square meets it (an exact Liang–Barsky clip, the admission rule of §4.1 item 3), with
+the origin at the vertex minimum and line 0 listed only by each cell's leading 0 as in
+every earlier builder. The adapter installs sector line lists, sidedef sectors, segs,
+node partitions and REJECT as in M3h4, plus the leaf-to-sector table (the inherited
+loader gives every sector one subsector; the M3h5 harness patches the generated C so
+`numsubsectors` and `subsectors[k].sector` follow the BSP leaves). The push input is one
+driver line before the tic's command stage: `if (t == push_at) { body->momx = push_x *
+FRACUNIT; body->momy = push_y * FRACUNIT; }`, declared harness-only in the contract.
 
-Rooms (`m3h5_cases.py`; floor 0, ceiling 128 unless stated):
+Rooms (`m3h5_cases.py`; floor 0, ceiling 128 unless stated; coordinates in map units):
 
 | Room | Geometry | Purpose |
 | --- | --- | --- |
-| wedge | one sector: an irregular octagon with a 45° wall, a 12:5 (22.6°) wall, a 5:1 (11.3°) wall, axis walls, one convex 45°/45° corner and one concave corner where a 45° wall meets an axis wall | wall slides at 45°, 22.6°, 11.3°, into the convex and the concave corner; fireball into the 45° wall; hitscan puff on the 12:5 wall; corner reading quirks |
-| pillar | 1,024-square room with an octagonal one-sided pillar (axis and 45° faces) | sight past the pillar, zombie and Imp pursuit around it, fireball and puff on a diagonal face |
-| corridor | two rooms joined by a 45° corridor 128 units wide, three sectors | monster pursuit along the corridor, player slide along both corridor walls |
-| step | a room cut by a 45° two-sided line into floor 0 and floor 48 | slide along a diagonal riser (reason 5 refusals), sight and hitscan across it (lower-wall puff) |
-| window | three sectors across two 45° two-sided lines, the middle `[40, 88]` | slide into the window's lines, sight blocked from the pit, upper-wall puff, autoaim up/down across a diagonal opening, noise through it |
-| corner | the 67.5°/horizontal wedge of §4.4 (closed by far walls) | the corner jump with a controlled `(30, 30)` push, and the same without the push (no jump) |
+| wedge | one sector, eleven vertices from `(−1024, 0)` clockwise: axis walls, a 45° wall `(−256, 768)→(256, 256)`, a horizontal wall meeting it at the concave corner `(256, 256)`, a convex 45°/45° tip at `(1024, 0)`, a 12:5 (22.6°) wall `(768, −512)→(288, −712)` and a 5:1 (11.3°) wall `(288, −712)→(−672, −904)` split in two | wall slides at 45°, 22.6°, 11.3°, into the convex tip and along the concave corner; fireball into the 45° wall; hitscan puff on the 12:5 wall |
+| pillar | 1,024-square room with an octagonal one-sided pillar of half-width 128 (axis faces 128 long, 45° faces) | sight past the pillar; zombie and Imp woken by noise and pursuing around it |
+| corridor | rooms `[−1024, −384] × [−768, −128]` and `[384, 1024] × [128, 768]` joined by a 45° corridor between `y = x + 96` and `y = x − 96` (192 units along the axes), three sectors, two vertical two-sided lines | Demon pursuit along the corridor, player slides along both corridor walls |
+| step | `[−384, 384]²` cut by the diagonal `(−384, −384)→(384, 384)` into floor 0 and floor 48 | slide along a diagonal riser (reason 5 refusals), sight and hitscan across it (lower-wall puff) |
+| window | `[−384, 384]²` cut by `y = x − 192` and `y = x + 192` into a floor-0 room, a `[40, 88]` band and a 64-unit step | slides into both window lines (reason 3), upper-wall puff from the step, autoaim up and down across the opening, noise waking a monster facing away |
+| corner | the 67.5°/horizontal wedge of §4.4, closed by walls at `y = −924` and `x = −1024` (segment 1,536 so the 67.5° wall is one line) | the corner jump with the controlled `(30, 30)` push, and the same start running into the corner without it |
 
-Scenarios (about 16): `slide_45`, `slide_22`, `slide_shallow`, `convex_corner`,
+Scenarios (22): `slide_45`, `slide_22`, `slide_shallow`, `convex_corner`,
 `concave_corner`, `fireball_diagonal_wall`, `puff_diagonal_wall`, `sight_past_pillar`,
-`zombie_around_pillar`, `imp_around_pillar`, `corridor_pursuit`, `corridor_slide`,
-`diagonal_riser_slide`, `diagonal_window_slide`, `autoaim_diagonal_window`,
+`zombie_around_pillar`, `imp_around_pillar`, `corridor_pursuit`, `corridor_slide_east`,
+`corridor_slide_west`, `riser_slide_puff`, `window_slide_low`, `window_slide_high`,
+`window_upper_puff`, `autoaim_up_window`, `autoaim_down_window`,
 `noise_diagonal_window`, `corner_jump`, `corner_no_jump`. Captures as in M3h4 plus every
-slide row (`SL`) and every blocked move at a diagonal line. The corner jump needs a new
-controlled input `push_at/push_x/push_y` (sets `momx`/`momy` before the tic), declared as
-an adapter beside `hit_*`; the Rust replay uses the existing controlled impulse of the
-knockback policy. If the owner declines the new input (§8.1), `corner_jump` is dropped and
-the hole is documented from the replica only.
+slide row (`SL`), every blocked move and the push tic. The contract also counts
+`player_void_captures`: captured player positions whose center has even ray parity
+against the room rings, computed by the script from the trace (7, all in `corner_jump`
+after its first tic). The Rust replay applies the push with `Simulation::set_momentum`.
 
 ### 6.2 Independent DSIM32
 
@@ -553,6 +561,24 @@ Each step is a separate commit. Commits 1–3 land before the runtime change.
    roster.
 6. **CI headroom** (§8.2) and the allocation change (§8.3).
 
+**Owner decisions (recorded 2026-11-01, before any runtime change):**
+
+1. Approved: `PlayerMonstersDiagonalV1`, wire 16, DSIM32, context
+   `PLAYER-MONSTERS-DIAGONAL-1-MEDIUM-v1`.
+2. Approved: option (a). The exact parity witness runs after every accepted projected
+   slide move; the corner jump fails the tic with `MapScaleError::Escape`. It is
+   documented as the one refused legal source move and as a known fidelity gap to
+   revisit for M4 demo compatibility. It is tested (`corner_jump` replay).
+3. Approved: boundary rules C1–C3 for this policy. Real-map loading must revisit
+   backwards and dangling one-sided lines (a later milestone).
+4. Approved: the closed-cell BLOCKMAP rule for this policy only. Real-map loading must
+   revisit BLOCKMAPs produced by real node builders (a later milestone).
+5. Approved: a controlled push input in the C harness, clearly harness-only, so that
+   `corner_jump` is observed in C.
+6. Approved: the parallel reference suite with `--jobs 4` (outputs verified once to be
+   byte-identical to the serial run, recorded in the evidence record), the macOS cap of
+   40 minutes, and the spare-buffer swap.
+
 ### 8.2 Follow-up 1: CI headroom (measured)
 
 Run `41378833526` (master `5e711be`, 2026-11-02): Ubuntu 30 min of 45, macOS 17 of 30,
@@ -619,6 +645,5 @@ and the smoke assertion is left as it is.
 
 ## 9. Status / next step
 
-Status: **investigation complete**. Nothing beyond this note is committed. Phase 2
-starts at §7 step 2 after the owner answers §8.1; the recommended answers are the (a)
-options and "yes" to items 3–5.
+Status: **investigation complete; owner decisions recorded (§8.1); Phase 2 in
+progress; step 2 (C harness, polygon room builder and node splitter) committed, next step 3 (DSIM32 projection)**.
