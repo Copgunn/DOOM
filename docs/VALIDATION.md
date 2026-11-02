@@ -215,3 +215,6 @@ See [source qualification](M3G9_REFERENCE_INVESTIGATION.md) and
 - [M3h4 two-sided lines, static heights and vertical movement](validation/M3H4.md):
   steps, falls, landings, ledges, windows, fences, noise floods and fireball
   floor/ceiling explosions in C, DSIM31, the vertical-invariant soaks and fuzzing.
+- [M3h5 non-axis (diagonal) walls](validation/M3H5.md): wall slides at three slopes,
+  both corner kinds, a diagonal riser, window, pillar and corridor and the corner jump
+  in C, DSIM32, the wall-invariant soaks, fuzzing and the refused escape.

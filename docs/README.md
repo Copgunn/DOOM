@@ -126,3 +126,6 @@ original evidence and former guide contents with exact-byte copies and digests.
 - [M3h4 two-sided lines, static heights and vertical movement investigation](M3H4_REFERENCE_INVESTIGATION.md),
   [observations](validation/M3H4.md), [support](COMPATIBILITY.md#original-monsters-with-static-heights)
   and [DSIM31](STATE_FORMAT.md#dsim-v31-original-monsters-with-static-heights).
+- [M3h5 non-axis (diagonal) walls investigation](M3H5_REFERENCE_INVESTIGATION.md),
+  [observations](validation/M3H5.md), [support](COMPATIBILITY.md#original-monsters-among-diagonal-walls)
+  and [DSIM32](STATE_FORMAT.md#dsim-v32-original-monsters-among-diagonal-walls).

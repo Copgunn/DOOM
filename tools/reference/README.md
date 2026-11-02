@@ -385,6 +385,29 @@ slide-traverse trace rows filtered before the inherited chain. See
 [commands](../../docs/TESTING.md#original-monsters-with-static-heights) and
 [observations](../../docs/validation/M3H4.md).
 
+## Diagonal-wall rooms (M3h5)
+
+[m3h5_reference.py](m3h5_reference.py) reuses every compiled M3h2 body, observer and
+controlled input unchanged and replaces only the room: [m3h5_geometry.py](m3h5_geometry.py)
+builds sectors from explicit polygon rings (clockwise outer rings, counterclockwise
+holes), shares edges listed in opposite directions as two-sided lines, splits one-sided
+walls at exact integer points, builds the BSP from an explicit partition tree with
+convex single-sector leaves (seg splits asserted integral), and lists every line in
+every BLOCKMAP cell whose closed square meets it (an exact clip); the harness patches
+the inherited loader so subsectors carry their leaf sectors. [m3h5_cases.py](m3h5_cases.py)
+places a wedge with 45°, 12:5 and 5:1 walls, a convex tip and a concave corner, an
+octagonal pillar, a 45° corridor, a diagonal riser, a diagonal window and the corner
+of the investigation note, with one harness-only `push_*` input (the player's momentum
+before a tic) declared beside `hit_*`. The inventory counts slides and blocked moves at
+diagonal lines, refusals by reason, sight, hitscans, noise, launches, explosions and
+captured player positions outside the room. [diagonal_snapshot.py](diagonal_snapshot.py)
+and [m3h5_snapshot_goldens.py](m3h5_snapshot_goldens.py) project DSIM32 from the C
+rows: the DSIM31 layout under version 32, policy 16 and the diagonal context, deriving
+each actor's sector from its subsector's first seg because these rooms have several
+subsectors per sector. See [investigation](../../docs/M3H5_REFERENCE_INVESTIGATION.md),
+[commands](../../docs/TESTING.md#original-monsters-among-diagonal-walls) and
+[observations](../../docs/validation/M3H5.md).
+
 ## Historical raw-trace loading
 
 Selected large CSV traces now use standard zstd storage. Run frozen C/encoder

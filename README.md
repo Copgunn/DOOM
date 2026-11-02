@@ -53,10 +53,13 @@ autonomous combat loop. A bonus capability adds animated health and armor bonuse
 former humans beside the Demon, up to eight monsters at once, source infighting and
 item drops. An Imp capability adds the original Imp and its dodgeable fireball to that
 roster. A map-scale capability bounds that world by the loaded walls instead of fixed
-margins, in walled rooms up to 2,048 units, and a heights capability adds axis-aligned
+margins, in walled rooms up to 2,048 units, a heights capability adds axis-aligned
 sectors with static floor/ceiling heights joined by two-sided lines: steps, ledges,
-windows, fences, falls and landings. Full player-thinker/view processing, remaining
-weapons and monsters, moving sectors, specials, non-axis walls, soulspheres/powers and
+windows, fences, falls and landings, and a diagonal capability admits linedefs of any
+direction inside a closed boundary of one-sided walls: wall slides at any angle,
+diagonal corners, risers, windows, pillars and corridors, with one legal source move
+refused (a corner jump by a projected slide). Full player-thinker/view processing,
+remaining weapons and monsters, moving sectors, specials, soulspheres/powers and
 respawn remain excluded. See the
 [player contract](docs/COMPATIBILITY.md#original-player-body-lifecycle) and
 [command movement boundary](docs/COMPATIBILITY.md#original-player-command-movement) and
@@ -78,7 +81,9 @@ defines the mixed-roster superset, the
 the [map-scale contract](docs/COMPATIBILITY.md#original-monsters-at-real-map-scale) the
 wall-derived bounds and the
 [heights contract](docs/COMPATIBILITY.md#original-monsters-with-static-heights) the
-static-heights domain and its exclusions.
+static-heights domain and its exclusions, and the
+[diagonal contract](docs/COMPATIBILITY.md#original-monsters-among-diagonal-walls) the
+closed-boundary domain, its spawn rule and its one refused move.
 
 Call `Simulation::advance()` for a tic without an implicit diagnostic Snapshot.
 `step()` retains its Snapshot return, and `snapshot()` captures explicitly in
@@ -138,6 +143,7 @@ cargo run -p doom-sim --example player_bonuses --locked
 cargo run -p doom-sim --example player_monsters --locked
 cargo run -p doom-sim --example player_imps --locked
 cargo run -p doom-sim --example player_heights --locked
+cargo run -p doom-sim --example player_diagonal --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked
