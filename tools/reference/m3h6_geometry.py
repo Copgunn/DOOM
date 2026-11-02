@@ -18,8 +18,8 @@ integer points). What changes:
   leaf is asserted non-empty and single-sector by its segs' sides, and convex up to
   the rounding tolerance of one unit. An explicit `tree` still works as before.
 - **Bounds.** The M3h5 asserts (128 lines, 256 vertices, 128 leaves and nodes, 256
-  sides, 4,096 cells) are replaced by the sizes of the M3h6 harness arrays
-  (m3h6_shim.h): 4,096 lines, 8,192 sides, 1,024 sectors, 16,384 segs, 8,192 leaves
+  sides, 4,096 cells) are replaced by the sizes of the M3h6 harness arrays (the shim
+  sizes m3h6_reference.py patches in): 4,096 lines, 8,192 sides, 1,024 sectors, 16,384 segs, 8,192 leaves
   and nodes, 16,384 cells; the BLOCKMAP keeps the format's own bounds (list offsets
   below 32,768 words). The line norm is bounded by the arithmetic certificate's 3,853
   (M3h6 note §4.2) instead of 1,536.
@@ -121,8 +121,9 @@ def room(sectors, portals=None, reject=(), tree=None, segment=1024):
             key = (g, int(d[0] != 0 and d[1] != 0))
             if best is None or key < best[0]: best = (key, s['line'])
         return None if best is None else best[1]
-    def build(group, subtree, automatic):
+    def build(group, subtree, automatic, depth=0):
         nonlocal nodebytes
+        assert depth < 4096, 'partition recursion did not terminate'
         if automatic:
             index = choose(group)
             if index is None: return leaf(group)
@@ -145,10 +146,13 @@ def room(sectors, portals=None, reject=(), tree=None, segment=1024):
                 # DoomBSP rounds split points to the nearest integer vertex.
                 mid = vertex((int(m[0] + Fraction(1, 2)) if m[0] >= 0 else -int(-m[0] + Fraction(1, 2)),
                               int(m[1] + Fraction(1, 2)) if m[1] >= 0 else -int(-m[1] + Fraction(1, 2))))
+                # Rounding must not collapse a piece to a point (a loud failure beats a
+                # re-split loop); DoomBSP's inputs never do on the committed rooms.
+                assert mid != s['a'] and mid != s['b'], ('degenerate split piece', pa, pb, o, d)
                 first = dict(s, b=mid); second = dict(s, a=mid)
                 (front if ca < 0 else back).append(first); (front if cb < 0 else back).append(second)
         assert front and back, ('partition does not split', index)
-        children = [build(front, front_tree, automatic), build(back, back_tree, automatic)]
+        children = [build(front, front_tree, automatic, depth + 1), build(back, back_tree, automatic, depth + 1)]
         nodes.append(dict(x=o[0], y=o[1], dx=d[0], dy=d[1], children=children, line=index))
         nodebytes += old.words([o[0], o[1], d[0], d[1], *bbox(front), *bbox(back)]) + struct.pack('<HH', *children)
         return len(nodes) - 1

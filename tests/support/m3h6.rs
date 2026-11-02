@@ -187,8 +187,13 @@ pub fn evidence() -> &'static evidence_reader::PlayerEvidence {
     })
 }
 pub fn rows(which: usize, op: usize) -> &'static [(String, Vec<i64>)] {
-    evidence().rows.get(&(which, op)).map_or(&[], Vec::as_slice)
+    &evidence().rows[&(which, op)]
 }
+/// The committed capture count (`m3h6_snapshot_contract.json`) and compared tics
+/// (every scripted tic plus the spawn capture of each scenario) that `verify`
+/// requires, so empty or truncated evidence can never pass.
+pub const EXPECTED_CAPTURES: usize = 1183;
+pub const EXPECTED_COMPARED_TICS: usize = 4150 + 20;
 /// Independent DSIM33 digest/size/field count, full bytes where committed,
 /// and decode/re-encode round trip through the explicit v33 reader.
 pub fn assert_snapshot(snapshot: &Snapshot, which: usize, op: usize) -> bool {
@@ -418,5 +423,11 @@ pub fn verify() -> u64 {
     println!(
         "real-map source: captures={captures} payload={payload} compared_tics={compared} source_checks={counts:?}"
     );
+    assert_eq!(
+        captures, EXPECTED_CAPTURES,
+        "independent DSIM33 captures compared"
+    );
+    assert_eq!(compared, EXPECTED_COMPARED_TICS, "scripted tics compared");
+    assert!(payload > 0 && counts.iter().all(|c| *c > 0), "{counts:?}");
     digest
 }

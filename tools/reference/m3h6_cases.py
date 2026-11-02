@@ -8,7 +8,7 @@ The five rooms stress the bounds the policy raises (M3h6 note §7.1):
 
 - **town**: a 6 x 4 grid of octagonal rooms (chamfered corners) joined by 64-unit
   corridors, with a raised step or a diamond pillar in every room and three window
-  bands; about 580 linedefs and 74 sectors over 2,176 x 1,184 units. E1M1-sized
+  bands; 516 linedefs and 74 sectors over 2,176 x 1,184 units. E1M1-sized
   admission, patrols across many sectors, a fight with the full roster and 16
   pickups, sight down a row of aligned openings.
 - **gallery**: a 2,048-unit hall whose top and bottom walls carry 27 triangular teeth
@@ -22,7 +22,7 @@ The five rooms stress the bounds the policy raises (M3h6 note §7.1):
   wall, long sight across the two-sided line, a slide along the wall, a fireball
   over 2,100 units.
 - **dense**: a 512 x 256 lane whose middle 240 units carry 30 teeth (8-unit pitch,
-  32 deep) on both walls: 124 distinct lines in one 2 x 2 cell window; slides into
+  32 deep) on both walls: 123 distinct lines in one 2 x 2 cell window; slides into
   the teeth and a shot along the band.
 - **wide**: four 384-unit rooms at the corners of a 7,552-unit square joined by
   64-unit corridors (walls in 424-unit pieces): a 60 x 60 cell BLOCKMAP, pursuit

@@ -17,10 +17,6 @@ pub(crate) fn flood(world: &StaticWorld, sectors: &[SectorState], start: u16) ->
     let mut visits = Vec::new();
     let mut traversed = vec![u8::MAX; sectors.len()];
     let mut stack = vec![(start, 0_u8)];
-    let all: Vec<u16> = match &world.sector_lines {
-        Some(_) => Vec::new(),
-        None => (0..map.linedefs().len()).map(|i| i as u16).collect(),
-    };
     while let Some((sector, blocks)) = stack.pop() {
         let i = usize::from(sector);
         if traversed[i] <= blocks {
@@ -29,12 +25,10 @@ pub(crate) fn flood(world: &StaticWorld, sectors: &[SectorState], start: u16) ->
         traversed[i] = blocks;
         visits.push((sector, blocks));
         let mut children = Vec::new();
-        let candidates = match &world.sector_lines {
-            Some(lists) => lists[i].as_slice(),
-            None => all.as_slice(),
-        };
-        for &line in candidates {
-            let line = usize::from(line);
+        let lists = world.sector_lines.as_deref();
+        let count = lists.map_or(map.linedefs().len(), |lists| lists[i].len());
+        for k in 0..count {
+            let line = lists.map_or(k, |lists| usize::from(lists[i][k]));
             let l = &map.linedefs()[line];
             if l.flags & 4 == 0 {
                 continue;

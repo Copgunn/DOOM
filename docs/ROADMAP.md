@@ -79,7 +79,29 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3h5: Non-axis (diagonal) walls
+### M3h6: Real-map scale — classic map limits toward E1M1
+
+The separately selected PlayerMonstersRealMapV1 raises the static-geometry limits of the
+diagonal world from test-room size to the scale of classic maps. Every cap that stood in
+for an allocation or CPU budget (95 linedefs, 256 sectors, 4,096 nodes and subsectors,
+8,192 BLOCKMAP cells, 256 THINGs, ±2,048 coordinates, 1,536-unit lines, fixed sight and
+collision work) becomes the WAD format's own `short` bound or a value derived from the
+loaded map; the arithmetic envelope becomes a certificate computed from the map against
+the same source expressions; `MAXINTERCEPTS` becomes a runtime witness that refuses the
+tic which would write the source's 129th intercept (`MapScaleError::Intercepts`, the
+second refused legal source behavior after the corner jump, a known fidelity gap for
+demo compatibility), with a slide-window admission rule that proves slides never reach
+it. Player starts are kept as records, the hitscan collector's 128-line buffer is fixed
+so maps above 128 lines can fire, and the noise flood reads per-sector line lists.
+Roster, slots, fireballs, heights, specials, sky and the boundary rules are unchanged;
+E1M1's geometry, BLOCKMAP, REJECT, boundary and arithmetic are inside the new policy,
+its THING roster, decorations, sky and specials are not. DSIM33 adds no persistent
+field. This branch stops at owner review; exact commits and CI belong to GitHub. See
+[source investigation](M3H6_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-monsters-at-classic-map-scale) and
+[observations](validation/M3H6.md).
+
+### Previous gameplay foundation — M3h5: Non-axis (diagonal) walls
 
 The separately selected PlayerMonstersDiagonalV1 takes the heights world off the
 axis-aligned grid: one- and two-sided linedefs of any direction inside a closed
@@ -94,8 +116,8 @@ move outside that bound, a player's projected slide of more than 30 units per ax
 jump a corner in the source and is the one legal source move the policy refuses
 (`MapScaleError::Escape`, a known fidelity gap to revisit for demo compatibility).
 DSIM32 adds no persistent field. Moving sectors, specials, sky ceilings and cap
-increases stay rejected at load. This branch stops at owner review; exact commits and
-CI belong to GitHub. See [source investigation](M3H5_REFERENCE_INVESTIGATION.md),
+increases stay rejected at load. M3h5 is merged. See
+[source investigation](M3H5_REFERENCE_INVESTIGATION.md),
 [support](COMPATIBILITY.md#original-monsters-among-diagonal-walls) and
 [observations](validation/M3H5.md).
 
@@ -218,11 +240,14 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Prioritize real-map loading: raise the linedef, sector and coordinate caps toward E1M1
-and revisit the two rules real maps break, one-sided walls facing away from their sector
-and BLOCKMAPs from real node builders that list a line only in the cells it crosses.
-Then moving sectors (doors, lifts) as the first specials. Require source-first evidence
-and unchanged earlier contracts. This is future work, not admission in M3h5.
+Prioritize roster scale: derive monsters, pickups, drops, slots, fireballs and the
+sight budget from the loaded THINGs (E1M1 on UV needs 29 monsters and 53 pickups). Then
+the E1M1 feature list in dependency order: solid and non-solid decorations and barrels,
+sky, specials (lights, secrets, damage floors), then doors and lifts; and revisit the
+rules the 14 other IWAD maps break (13 with one-sided walls of odd degree, crossing or
+facing away from their sector, one BLOCKMAP with missing listings) and the 22 maps that fail the sight
+certificate. Require source-first evidence and unchanged earlier contracts. This is
+future work, not admission in M3h6.
 
 ### Focused maintenance acceptance criteria
 
@@ -246,7 +271,9 @@ and unchanged earlier contracts. This is future work, not admission in M3h5.
 
 **Broader readiness remains planned.** M3f1 supplies the merged line/sector
 foundation; M3f2 supplies bounded coordinates/work and M3f3 composes a controlled
-Demon gameplay subset. Further stages
+Demon gameplay subset; M3h6 replaces the static-geometry caps of the player and monster
+world with the format's bounds, a per-map arithmetic certificate and derived work
+values, so E1M1-sized geometry is admitted. Further stages
 require separate owner direction. The longer-term
 purpose is practical support for increasingly complex classic maps,
 not unlimited geometry or arbitrarily larger constants.

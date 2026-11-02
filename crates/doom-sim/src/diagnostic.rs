@@ -1493,7 +1493,9 @@ fn validate_armor_event(event: &[u8], version: u32, slots: u32) -> Result<(), Di
     let incoming = i32::from_le_bytes(number(&event[13..17])?);
     let saved = i32::from_le_bytes(number(&event[17..21])?);
     let effective = i32::from_le_bytes(number(&event[21..25])?);
-    let policy = if version == 32 {
+    let policy = if version == 33 {
+        OriginalExecutionProfile::PlayerMonstersRealMapV1
+    } else if version == 32 {
         OriginalExecutionProfile::PlayerMonstersDiagonalV1
     } else if version == 31 {
         OriginalExecutionProfile::PlayerMonstersHeightsV1
@@ -1529,7 +1531,9 @@ fn validate_armor_event(event: &[u8], version: u32, slots: u32) -> Result<(), Di
 fn validate_pickup_event(event: &[u8], version: u32, slots: u32) -> Result<(), DiagnosticError> {
     let armor = matches!(version, 26..=33);
     let bonuses = matches!(version, 27..=33);
-    let policy = if version == 32 {
+    let policy = if version == 33 {
+        OriginalExecutionProfile::PlayerMonstersRealMapV1
+    } else if version == 32 {
         OriginalExecutionProfile::PlayerMonstersDiagonalV1
     } else if version == 31 {
         OriginalExecutionProfile::PlayerMonstersHeightsV1

@@ -58,7 +58,11 @@ sectors with static floor/ceiling heights joined by two-sided lines: steps, ledg
 windows, fences, falls and landings, and a diagonal capability admits linedefs of any
 direction inside a closed boundary of one-sided walls: wall slides at any angle,
 diagonal corners, risers, windows, pillars and corridors, with one legal source move
-refused (a corner jump by a projected slide). Full player-thinker/view processing,
+refused (a corner jump by a projected slide). A real-map capability raises that
+world's static-geometry limits to the WAD format's own bounds under a per-map
+arithmetic certificate, so geometry the size of E1M1 (hundreds of linedefs, dozens of
+sectors, thousands of BLOCKMAP cells) is admitted, with a second refused legal source
+behavior (the trace that would write the 129th intercept). Full player-thinker/view processing,
 remaining weapons and monsters, moving sectors, specials, soulspheres/powers and
 respawn remain excluded. See the
 [player contract](docs/COMPATIBILITY.md#original-player-body-lifecycle) and
@@ -83,7 +87,9 @@ wall-derived bounds and the
 [heights contract](docs/COMPATIBILITY.md#original-monsters-with-static-heights) the
 static-heights domain and its exclusions, and the
 [diagonal contract](docs/COMPATIBILITY.md#original-monsters-among-diagonal-walls) the
-closed-boundary domain, its spawn rule and its one refused move.
+closed-boundary domain, its spawn rule and its one refused move, and the
+[real-map contract](docs/COMPATIBILITY.md#original-monsters-at-classic-map-scale) the
+format-sized limits, the arithmetic certificate and the intercept witness.
 
 Call `Simulation::advance()` for a tic without an implicit diagnostic Snapshot.
 `step()` retains its Snapshot return, and `snapshot()` captures explicitly in
@@ -144,6 +150,7 @@ cargo run -p doom-sim --example player_monsters --locked
 cargo run -p doom-sim --example player_imps --locked
 cargo run -p doom-sim --example player_heights --locked
 cargo run -p doom-sim --example player_diagonal --locked
+cargo run -p doom-sim --example player_real_map --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked

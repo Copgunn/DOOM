@@ -1543,3 +1543,30 @@ carry a real BSP with several subsectors per sector, that layer derives each
 map lumps instead of equating sector and subsector indices; `actor.{i}.subsector` keeps
 the C leaf. Its full bytes and PBE1 ordered events preceded the matching Rust changes.
 Decoding remains observation, not executable world restoration.
+
+## DSIM-v33 original monsters at classic-map scale
+
+Version 33 selects policy 17 (`PlayerMonstersRealMapV1`), the unchanged original
+registry schema and context `PLAYER-MONSTERS-REALMAP-1-MEDIUM-v1`.
+`Diagnostic::decode_real_map` explicitly reads 33; every earlier version-specific
+reader keeps its historical contract and rejects 33, and the v33 reader rejects every
+earlier version. V20–32 bytes, encoders, fixtures and policy/context meanings are
+unchanged.
+
+V33 uses the DSIM32 field layout, event vocabulary, item witness, store and fireball
+bounds and adds no persistent field or event tag: raising the static-geometry caps adds
+no actor or sector state, the arithmetic and slide-window certificates and the
+per-sector line lists are derived from the immutable map at load, and
+`MapScaleError::{Arithmetic, Intercepts}` are checked errors of the constructor and the
+stepping call, not events. What grows is the data already carried: `sectors.count` and
+the `sector.{i}.*` tables of a 74-sector room, `map.*` lumps of hundreds of linedefs,
+positions anywhere inside a rectangle up to the format's range. The reader checks those
+against the stream's own tables instead of the DSIM32 constants: the THINGS lump is
+bounded by the format's 32,768 records instead of 256, the slot bound stays 320, and
+item sectors are read from `sectors.count` as in v31 and v32.
+
+Independent C rows feed the Python
+[real-map projection](../tools/reference/real_map_snapshot.py), which extends the
+diagonal projection without editing it and drops the `TI` observer rows (intercept
+counts) before the chain. Its full bytes and PBE1 ordered events preceded the matching
+Rust changes. Decoding remains observation, not executable world restoration.

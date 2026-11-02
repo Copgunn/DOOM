@@ -1111,3 +1111,51 @@ release; `--measure <workload> advance|step|capture` times one full scripted tim
 fuzzing, builds or tests at the same time. Measurement summaries and limitations belong
 to [the engineering record](validation/M3H5.md). Leak detection is disabled in the
 documented ASan environment, not verified.
+
+## Original monsters at classic-map scale
+
+Real-map-scale evidence has its own source/encoding contract and leaves historical
+expectations untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h6_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3h6_snapshot_goldens.py --check
+cargo test -p doom-sim player_real_map_tests
+python3 tools/reference/check_player_real_map.py
+python3 tools/seed_player_real_map_fuzz.py /tmp/doom-real-map-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_real_map /tmp/doom-real-map-seeds --sanitizer address -- -runs=4096 -seed=501 -max_len=290 -timeout=15 -rss_limit_mb=1024
+python3 tools/measure_real_map.py --check
+```
+
+Add `--cases` to `m3h6_reference.py` to print, per scenario, the room's table sizes,
+slides, blocked moves by `P_TryMove` reason, sight queries and the most per tic,
+hitscans, noise floods, launches, explosions, pickups, the traces and the largest
+intercept count of one trace by traverser kind (the `TI` observer rows). The
+`real_map_source_case_*` tests replay every committed scenario; no scenario is refused.
+The remaining `player_real_map_tests` are Rust-only: every committed M3h5 room loads
+under the new policy, rejection variants are built by patching the committed lumps (a
+3,854-norm wall, a stretched rectangle, a 32,000-unit span, heights beyond ±512, an
+overfilled 2 × 2 window, the boundary, BLOCKMAP, special, sky and short-REJECT cases),
+player starts are kept as records, a hitscan fires in the 516-line town (a regression
+test that fails against the pre-fix line-indexed buffer), the intercept witness is
+reached on the Rust-only witness hall (`tests/reference/m3h6_witness.bin`) through both
+`advance` and `step` with the state byte-identical, a push to an item is refused, the
+per-sector noise flood equals the linedef scan, and the town and wide soaks assert
+Invariant Ω after every tic for 1,200 tics. An opt-in test gated on `DOOM_IWAD_DIR`
+(`private_iwad_real_map_counts`, `--ignored`) prints pass/fail counts of the certificate,
+boundary, BLOCKMAP and window rules over every map of the configured IWADs and the
+admission time of E1M1's geometry with specials and sky stripped in memory; it never
+prints a name beyond the slot or a byte of the map, and `tools/iwad_counts.py` (local
+only, never run by CI, a no-op without `/mnt/d/DoomIWADs`) prints the same counts from
+Python. The fuzz target runs six rooms (town, gallery, extent, dense, wide, witness) under
+the M3h5 properties plus the intercept witness; a valid command may be refused only by
+the escape or intercept witness. The example asserts every scenario's source fields and
+complete ordered event frames in debug and release; `--measure <workload>
+advance|step|capture` times one full scripted timeline (`town_patrol`, `town_fight`,
+`gallery_shot`, `wide_sight`) and `--admit town|gallery|wide` the admission of one
+committed room with parsing excluded; `measure_real_map.py` drives both with a native
+`wait4` launcher (`--check` is the CI smoke). The fuzz workspace is nightly-only and CI
+only format-checks it, so the campaign is a local step. Run measurements alone, with no fuzzing,
+builds or tests at the same time. Measurement summaries and limitations belong to
+[the engineering record](validation/M3H6.md). Leak detection is disabled in the
+documented ASan environment, not verified.

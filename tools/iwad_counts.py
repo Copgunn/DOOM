@@ -6,7 +6,7 @@ when the IWAD directory is absent. It prints counts and pass/fail facts only: a 
 named by its slot (`E1M1`, `MAP01`), never by any lump beyond the slot, and no coordinate
 of any object is printed (spans are differences). Nothing is written anywhere.
 
-    python3 tools/iwad_counts.py                  # /mnt/d/DoomIWADs, text report
+    python3 tools/iwad_counts.py                  # $DOOM_IWAD_DIR or /mnt/d/DoomIWADs, text report
     python3 tools/iwad_counts.py --markdown       # the committed counts table
     python3 tools/iwad_counts.py --readiness E1M1 # the §9 readiness counts of one slot
     python3 tools/iwad_counts.py DIR ...          # another read-only directory
@@ -26,7 +26,7 @@ import re
 import struct
 import sys
 
-DEFAULT_DIR = "/mnt/d/DoomIWADs"
+DEFAULT_DIR = os.environ.get("DOOM_IWAD_DIR") or "/mnt/d/DoomIWADs"
 MAP_SLOT = re.compile(r"E\dM\d|MAP\d\d")
 MAP_LUMPS = (
     "THINGS",

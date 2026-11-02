@@ -83,8 +83,11 @@ pub enum MapScaleError {
     /// fails for the loaded map: a line norm above 3,853, a vertex rectangle whose
     /// diagonal times the longest line exceeds the sight-intercept bound, spans
     /// whose sum reaches 32,768 or whose maximum reaches 8,192, a BLOCKMAP that
-    /// does not cover the rectangle, or a node partition the side tests cannot
-    /// evaluate exactly.
+    /// does not cover the rectangle, a node partition the side tests cannot
+    /// evaluate exactly, heights beyond ±512, or a rectangle within 2,177 units
+    /// of the format's edge (where a trace endpoint or a BLOCKMAP index would
+    /// leave the `short` range). `ArithmeticCertificate::evaluate` names the
+    /// clause.
     Arithmetic,
     /// Under the real-map policy, a trace of this tic would write the source's
     /// 129th intercept (`MAXINTERCEPTS`, p_local.h), which the original writes past
@@ -772,9 +775,25 @@ impl ArithmeticCertificate {
     /// `SlopeDiv` reproduces the source quotient for deltas below 8,192 units per
     /// axis (owner decision 10 of the M3h6 note).
     pub const SLOPE_DIV_UNITS: u32 = 8_192;
-    /// Compute the certificate and check (i)–(vii); `MapScaleError::Arithmetic`
+    /// Roman names of the eight clauses, in the order `evaluate` reports them.
+    pub const CLAUSES: [&'static str; 8] = ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii"];
+    /// Compute the certificate and check (i)–(viii); `MapScaleError::Arithmetic`
     /// names any failure. Linear in the map; nothing runs per tic.
     pub fn derive(map: &Map) -> Result<Self, SimError> {
+        let (certificate, clauses) = Self::evaluate(map)?;
+        if clauses.iter().all(|c| *c) {
+            Ok(certificate)
+        } else {
+            Err(MapScaleError::Arithmetic.into())
+        }
+    }
+    /// The certificate values and the verdict of each clause (`CLAUSES` order):
+    /// (i) hitscan intercepts, (ii) sight intercepts, (iii) `P_AproxDistance`, (iv)
+    /// `SlopeDiv`, (v) the BLOCKMAP grid, (vi) the side tests, (vii) heights,
+    /// (viii) reach: every trace endpoint, collision box and BLOCKMAP index formed
+    /// from a center inside the rectangle stays within the `short` range, and every
+    /// node partition origin lies in the rectangle. Only an empty map is an error.
+    pub fn evaluate(map: &Map) -> Result<(Self, [bool; 8]), SimError> {
         let vertices = map.vertices();
         let (Some(first), Some(_)) = (vertices.first(), map.linedefs().first()) else {
             return Err(MapScaleError::Walls.into());
@@ -849,11 +868,40 @@ impl ArithmeticCertificate {
         let sides = (norm1 + node_norm) * span[0].max(span[1]) < 1_i64 << 31;
         // (vii) heights within ±512 (row 11 of the M3h6 note, kept).
         let heights = i64::from(height) <= 512;
-        if hitscan && sight && approx && slope && grid && sides && heights {
-            Ok(certificate)
-        } else {
-            Err(MapScaleError::Arithmetic.into())
-        }
+        // (viii) reach: a hitscan endpoint (2,048), one cell (128) and the nudge (1)
+        // beyond any center in R stay within ±32,767 units and within 32,768 units
+        // of the BLOCKMAP origin (the raw fixed-point sums and `>> MAPBLOCKSHIFT`
+        // indexes of P_AimLineAttack, P_LineAttack, P_PathTraverse and
+        // P_CheckPosition); every node partition origin lies in R, so the side
+        // tests of R_PointOnSide/P_DivlineSide difference points of R only.
+        let reach = Self::HITSCAN_REACH as i64;
+        let far = min
+            .iter()
+            .chain(max.iter())
+            .map(|v| v.abs())
+            .max()
+            .unwrap_or(0);
+        let in_rect = map.nodes().iter().all(|n| {
+            let o = [i64::from(n.origin.x), i64::from(n.origin.y)];
+            (0..2).all(|axis| o[axis] >= min[axis] && o[axis] <= max[axis])
+        });
+        let within_reach = far + reach < 32_768
+            && max[0] - origin[0] + reach < 32_768
+            && max[1] - origin[1] + reach < 32_768
+            && in_rect;
+        Ok((
+            certificate,
+            [
+                hitscan,
+                sight,
+                approx,
+                slope,
+                grid,
+                sides,
+                heights,
+                within_reach,
+            ],
+        ))
     }
 }
 /// Distinct linedefs listed in the fullest 2 × 2 window of BLOCKMAP cells (line 0

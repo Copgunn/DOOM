@@ -1530,8 +1530,8 @@ runtime witness with an admission rule for slides.
 | Coordinates, line norm | ±2,048; `\|dx\| + \|dy\| ≤ 1,536` | the arithmetic certificate (i)–(vii) below | §4.2 of the note, computed from the map |
 | Sector heights | ±512 | ±512 | kept (decision 7); 58 of 68 IWAD maps fit |
 | THING records | 256 | 32,768 | lump length by the parser; spawned actors stay bounded by the roster |
-| Player starts 1–4, 11 | rejected | kept as records | `P_SpawnMapThing` 718–736; the player body is spawned by the caller |
-| Sight work per query, per-tic budget | 16,384; 64 queries and 1,048,576 work | the map's expansion (bounded by `2 · nodes + subsectors + segs`); 64 queries and `64 · (expansion + 5 · lines)` | the 64-query cap is kept (at most 6 per tic observed in C); E1M1: 1,462 and 249,088 |
+| Player starts 1–4, 11 | rejected | kept as records | `P_SpawnMapThing` 718–736; the player body is spawned by the caller at a position of its choosing (the source spawns it at start 1 in single player; the record's position is not used), a type-0 THING is `ActorError::InvalidType` |
+| Sight work per query, per-tic budget | 16,384; 64 queries and 1,048,576 work | the map's expansion (bounded by `2 · nodes + subsectors + segs`); 64 queries and `64 · (expansion + 5 · lines)` | the 64-query cap is kept (at most 6 per tic observed in C) and is the binding one, since one query charges exactly `expansion + 5 · lines`; E1M1: 1,462 and 249,088 |
 | Collision work per query | ≤ 16,384 | computed and recorded | `nodes + 4 · lines + 4 · 320` (E1M1 3,462) |
 | Roster, slots, fireballs, pickups, drops, momentum, z witnesses, 64-cell DDA | 8 / 320 / 208 / 16 / 8, 4,096 / 2,048 / 1,024, 64 | unchanged | decisions 3 and 10; the DDA bound is the source's |
 
@@ -1544,8 +1544,12 @@ L₁ − 2)²` (sight `P_InterceptVector2`); (iii) `span_x + span_y < 32,768`
 (`P_AproxDistance`); (iv) `max(span) < 8,192` and `C < 8,192` (`SlopeDiv`); (v) the
 BLOCKMAP origin at or below the rectangle, the rectangle inside the grid and within
 32,768 units of the origin; (vi) `(L₁ + N) · max(span) < 2³¹` (side tests); (vii) heights
-within ±512. E1M1 (`L₁ = L₂ = 832`, `diag = 5,373`) holds; across the 68 IWAD maps (i)
-holds for 64, (ii) for 46, (vii) for 58, all for 39 ([counts](validation/M3H6_IWAD_COUNTS.md)).
+within ±512; (viii) reach: `max |R| + 2,177 < 32,768` per axis, `max(R) − org + 2,177 <
+32,768` and every node partition origin inside `R`, so hitscan endpoints, collision
+boxes and BLOCKMAP indexes formed from a center in `R` stay within the `short` range.
+`ArithmeticCertificate::evaluate` reports each clause's verdict. E1M1 (`L₁ = L₂ = 832`,
+`diag = 5,373`) holds; across the 68 IWAD maps (i) holds for 64, (ii) for 46, (vii) for
+58, (viii) for 68, all for 39 ([counts](validation/M3H6_IWAD_COUNTS.md)).
 The slide-window rule (`slide_window_lines`, `MapScaleError::Lines` above 128) bounds the
 distinct lines listed in any 2 × 2 window of BLOCKMAP cells, which is every line a slide
 trace can meet, so the slide half of the intercept witness never fires (E1M1 28, IWAD
@@ -1564,7 +1568,10 @@ whose state the item witness would refuse. A map that fails a load check is reje
 the constructor with `MapScaleError::{Arithmetic, Geometry, Boundary, Walls, Blockmap,
 Lines}`, `GeometryError::WorkLimit` (a format bound or an allocation guard) or the
 inherited specials, sky, height-range, inverted-sector and short-REJECT rejections, never
-during play; a THING of an unadmitted type still rejects the whole batch
+during play. Admission time is linear in the lump for real maps (E1M1 about 1.6 ms in
+release) but the cell preparation visits every line per cell start, so a hostile
+format-maximum lump (32,764 cells of 32,767 lines) would take seconds; it is not an
+admitted target. A THING of an unadmitted type still rejects the whole batch
 (`MapSpawnError::UnsupportedType`), which is what keeps E1M1 itself out: after this
 policy E1M1 needs the roster scale (29 monsters, 53 pickups on UV), eight decoration and
 barrel types, sky, eight line-special and five sector-special types and the movers behind

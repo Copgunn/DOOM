@@ -129,6 +129,7 @@ original evidence and former guide contents with exact-byte copies and digests.
 - [M3h5 non-axis (diagonal) walls investigation](M3H5_REFERENCE_INVESTIGATION.md),
   [observations](validation/M3H5.md), [support](COMPATIBILITY.md#original-monsters-among-diagonal-walls)
   and [DSIM32](STATE_FORMAT.md#dsim-v32-original-monsters-among-diagonal-walls).
-- [M3h6 real-map scale investigation](M3H6_REFERENCE_INVESTIGATION.md) (Phase 1:
-  cap inventory, `MAXINTERCEPTS` options, real-map boundary and BLOCKMAP data, E1M1
-  readiness; evidence, support and DSIM33 follow in Phase 2).
+- [M3h6 real-map scale investigation](M3H6_REFERENCE_INVESTIGATION.md),
+  [observations](validation/M3H6.md), [IWAD counts](validation/M3H6_IWAD_COUNTS.md),
+  [support](COMPATIBILITY.md#original-monsters-at-classic-map-scale)
+  and [DSIM33](STATE_FORMAT.md#dsim-v33-original-monsters-at-classic-map-scale).

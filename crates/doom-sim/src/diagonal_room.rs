@@ -191,6 +191,23 @@ impl Lumps {
         s[at + 12..at + 20].copy_from_slice(ceiling);
         put_i16(s, at + 22, special);
     }
+    /// Move the BLOCKMAP origin (header words 0 and 1).
+    pub fn set_blockmap_origin(&mut self, origin: [i16; 2]) {
+        let b = self.lump("BLOCKMAP");
+        put_i16(b, 0, origin[0]);
+        put_i16(b, 2, origin[1]);
+    }
+    /// Shift every node partition origin and bounding box along x.
+    pub fn shift_nodes(&mut self, dx: i16) {
+        let n = self.lump("NODES");
+        for node in 0..n.len() / 28 {
+            let at = 28 * node;
+            for field in [0, 10, 12, 18, 20] {
+                let v = i16_at(n, at + field);
+                put_i16(n, at + field, v + dx);
+            }
+        }
+    }
     pub fn add_thing(&mut self, thing: [i16; 5]) {
         let t = self.lump("THINGS");
         for v in thing {

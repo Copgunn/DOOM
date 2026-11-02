@@ -238,17 +238,17 @@ runtime witness, for itself only.
 | # | Cap | Diagonal (before) | Real map (after) | Derivation of the new bound | Kind |
 | --- | --- | ---: | ---: | --- | --- |
 | 1 | Linedefs | 95 (`MAP_SCALE_WALL_LINES`, `player_map_scale.rs:21`) | 32,767 | `short` references (§2.1): `mapseg_t::linedef`, `line_t::sidenum`; the parser's `max_records` (32,768) and `≤ i16::MAX` reference check. The `MAXINTERCEPTS` role of the 95 moves to the runtime witness (§4.4). | (b) → format |
-| 2 | Line-index buffers | 1,024 (`MAX_LINES`, `line_work.rs:4`; `seen: [bool; 128]`, `combat_trace.rs:221`) | 32,768 bits | a `[u64; 512]` bitset (4 KiB, zeroed per trace) sized by row 1; no allocation in a movement or combat decision. | (c) → format |
+| 2 | Line-index buffers | 1,024 (`MAX_LINES`, `line_work.rs:4`; `seen: [bool; 128]`, `combat_trace.rs:221`) | sized by the line count | `SeenLines` keeps the inline `[u64; 16]` bitset for worlds of at most 1,024 lines (every older policy, no allocation) and takes one heap bitset per trace above it (at most 4 KiB, built like the trace's own intercept list). | (c) → format |
 | 3 | Sidedefs, vertices, segs | none / coordinates only / none | 32,767 each | `short` references (§2.1); parser. No new check. | format |
 | 4 | Sectors | 256 (`MAP_SCALE_MAX_SECTORS`, `map_scale.rs:8`; `Topology::new_bounded`) | 32,767 | `mapsidedef_t::sector` is `short`; `Topology::new_bounded(&world, map.sectors().len())`. REJECT length is `ceil(n²/8)` by the parser. | (e) → format |
 | 5 | Subsectors, nodes | 4,096 each (`map_extent.rs:61–62`, `multisector.rs:148–149`) | 32,767 each | `children[2]` is `unsigned short` with `NF_SUBSECTOR` as bit 15: 15 bits of index. | (e) → format |
-| 6 | BLOCKMAP cells, words | 8,192 cells (`MAP_EXTENT_MAX_CELLS`), 65,536 words (`map_extent.rs:63–64`) | words ≤ 32,768; cells ≤ words − 4 | list offsets are `short` word indices (§2.1, `P_BlockLinesIterator` 491); the parser already requires every offset ≤ `i16::MAX`. | (e)/(c) → format |
-| 7 | Prepared cell references, preparation bytes | 262,144 refs (`MAP_SCALE_MAX_REFERENCES`), 4 MiB (`MAP_EXTENT_PREPARATION_BYTES`) | computed | references are the lump's own listings (≤ 32,768 words); the byte total is a function of rows 1–6 and is recorded, not capped (its format maximum is a few MiB; the parser's 128 MiB decoded bound stays). | (c) → derived |
+| 6 | BLOCKMAP cells, words | 8,192 cells (`MAP_EXTENT_MAX_CELLS`), 65,536 words (`map_extent.rs:63–64`) | words ≤ 32,768; cells < words | list offsets are `short` word indices (§2.1, `P_BlockLinesIterator` 491); the parser already requires every offset ≤ `i16::MAX`. | (e)/(c) → format |
+| 7 | Prepared cell references, preparation bytes | 262,144 refs (`MAP_SCALE_MAX_REFERENCES`), 4 MiB (`MAP_EXTENT_PREPARATION_BYTES`) | computed; refused above 2²⁴ references or 64 MiB | references are the lump's own listings (≤ 32,768 words, but shared lists may be listed by many cells); the byte total is a function of rows 1–6 and is recorded; both keep an allocation guard a `short`-indexed IWAD map never approaches (at most 13,435 words), since a hostile lump could list one long list from every cell. | (c) → derived |
 | 8 | BLOCKMAP covers `R`; every line listed in every closed cell it meets | required | required, unchanged | the M3h5 proof needs it; real-map data in §4.5. | (d) kept |
 | 9 | Coordinates | vertices, BLOCKMAP origin, node origins/deltas within ±2,048 (`QUERY_UNITS`, `map_extent.rs:13`) | the arithmetic certificate of §4.2, evaluated on the loaded map | §2.3; source constants `MISSILERANGE`, `MAPBLOCKUNITS`, `FRACBITS`, `i32`. | (a) → derived |
 | 10 | Line norm | 1,536 (`LINE_NORM_UNITS`, `map_extent.rs:14`) | ≤ 3,853 from the hitscan numerator and the per-map sight inequality | §4.2 (i), (ii). | (a) → derived |
 | 11 | Sector heights | ±512 (`demon_expanded_map.rs:68–74`); outer 1,024 | ±512, **kept** | the M3h4 vertical envelope (fireball chord 968, z witness 2,048, eye/opening clipping) is not re-derived here; E1M1 needs 264 (§9), 58 of 68 IWAD maps fit. Follow-up §8.3. | (a) kept |
-| 12 | THING records | 256 (`MAX_DEMON_MAP_THINGS`) | 32,768 | lump length / 10; the parser. Spawned actors are still bounded by the roster (row 16). The DSIM reader's `≤ 2,560` THINGS bytes (`diagnostic.rs:758`) is derived from the stream under 33. | (e) → format |
+| 12 | THING records | 256 (`MAX_DEMON_MAP_THINGS`) | 32,768 | lump length / 10; the parser. Spawned actors are still bounded by the roster (row 16). The DSIM reader's `≤ 2,560` THINGS bytes (`diagnostic.rs:758`) becomes the format's 32,768 records under 33. | (e) → format |
 | 13 | Player starts 1–4 and 11 | rejected (`StartOrInvalidType`) | admitted as records (§4.7) | `P_SpawnMapThing` 718–736. | domain |
 | 14 | Sight work per query | `MAP_EXTENT_SIGHT_WORK` 16,384 (`map_extent.rs:8`) | `expanded_work(map)` exactly (`sight.rs:174`), bounded only by the tree size `2 · nodes + subsectors + segs` (a larger expansion means shared children) | the full BSP expansion `2 · nodes + Σ(1 + segs)` is a function of the map (E1M1 1,462; the largest IWAD map about 5,400). Phase 1 proposed `queries ≤ 3 · monsters` per tic; Phase 2 keeps the exercised 64-query cap (the C evidence observed at most 6 queries in one tic) and derives the work budget `64 · (expanded_work + 5 · lines)` (E1M1 249,088). | (e) → derived |
 | 15 | Collision work per query | `nodes + 4·lines + 4·actors ≤ 16,384` (`map_extent.rs:94–103`) | computed and recorded | a function of rows 1, 5 and the 320 slots (E1M1 3,462; format maximum about 165,000 — a CPU figure, not a safety bound). | (e) → derived |
@@ -275,14 +275,21 @@ BLOCKMAP origin, the policy requires (all in exact `i64`/`u128` integer arithmet
   32,768`;
 - **(vi) side tests**: `(L₁ + N) · max(span_x, span_y) < 2³¹` (always true for `short`
   maps; stated for completeness);
-- **(vii) heights**: within ±512 (row 11).
+- **(vii) heights**: within ±512 (row 11);
+- **(viii) reach** (added in Phase 2 after review): `max |R| + 2,177 < 32,768` per axis,
+  `max(R) − org + 2,177 < 32,768`, and every node partition origin inside `R`, so that
+  the hitscan endpoints (`x2 = x + 2,048 · cos`), the collision boxes and the BLOCKMAP
+  indexes `(x − bmaporg) >> MAPBLOCKSHIFT` formed from a center in `R` stay within the
+  `short` range (their raw fixed-point sums would otherwise wrap in C and in the
+  wrapping `Fixed` subtraction of the movers), and the side tests difference points of
+  `R` only.
 
 Every actor center stays in `R` (Invariant Ω of M3h5, unchanged), so every actor–vertex
 and actor–actor difference is bounded by the spans used above; the per-tic witnesses
 (center in `R`, momentum, z) are unchanged and never fire. The slide traces are a special
 case of (i) with `2,177` replaced by `171`. E1M1: `L₁ = L₂ = 832`, `diag = 5,373`, `256 ·
 diag · L₂ ≈ 1.14 · 10⁹`; (i)–(vii) all hold. Across the 68 IWAD maps: (i) holds for 64,
-(ii) for 46, (iii) for 68, (iv) for 67, (vii) for 58, all together for 39 (every E1
+(ii) for 46, (iii) for 68, (iv) for 67, (vii) for 58, (viii) for 68, all together for 39 (every E1
 map except E1M2, E1M3 and E1M8). A failing map is rejected with
 `MapScaleError::Arithmetic` (a new field-less variant) — the Rust arithmetic is checked
 everywhere, so admitting such a map would be a checked error at the first overflowing
@@ -374,7 +381,8 @@ boundary rules hold on E1M1 and on 55 of 68 maps, and the exceptions are the map
 M3h5 anticipated (a wall ending where only two-sided lines continue, one backwards wall,
 one BLOCKMAP with eight missing listings). **Recommendation for M3h6: keep C1–C3 and the
 closed-cell rule unchanged** (they are what the proof needs and what E1M1 satisfies) and
-record the exceptions. The relaxation for the 13 other maps is a later question with two
+record the exceptions. The relaxation for the 14 other maps (13 boundary failures and
+E4M7's missing listings) is a later question with two
 shapes: admit a map with odd-degree walls by closing the parity domain with the two-sided
 lines that continue the boundary (a new definition of `S` whose proof must handle lines
 the mover can cross), or admit it with a per-tic parity witness for every mover (M3h5
@@ -389,9 +397,11 @@ as it does in the source.
 
 ### 4.6 What the per-tic budgets become
 
-With the roster unchanged, the per-tic sight budget is `queries ≤ 24` and `work ≤ 24 ·
-(expanded_work(map) + 5 · lines)` (E1M1: 93,408; the largest IWAD map about 340,000),
-both derived at load and recorded; the thinker visit budget (320) and the fireball bound
+With the roster unchanged, the per-tic sight budget keeps the exercised 64-query cap
+(Phase 2; the C evidence observed at most 6 queries in one tic) with the work budget
+`64 · (expanded_work(map) + 5 · lines)` derived at load (E1M1: 249,088). Because one
+query charges exactly `expanded_work + 5 · lines`, the work budget equals 64 queries'
+worth and the query cap is the one that can fire; the thinker visit budget (320) and the fireball bound
 (208) are unchanged. Per-sector line lists (row 3 of §3) make `noise::flood` O(lines)
 per noise instead of O(sectors · lines) (E1M1: 486 instead of 42,768 line reads per
 flood); results are identical because the flood only asks "which two-sided lines leave
@@ -624,7 +634,7 @@ feature list of §9 in dependency order: solid and non-solid decorations and bar
 
 ## 9. E1M1 readiness report
 
-Counts from the owner's `DOOM.WAD` E1M1, read locally and read-only. "Admitted after
+Counts from the owner's first IWAD's E1M1, read locally and read-only. "Admitted after
 M3h6" assumes the recommendations of §8.2.
 
 | Lump or feature | E1M1 | After M3h6 |
@@ -633,9 +643,9 @@ M3h6" assumes the recommendations of §8.2.
 | Segs / subsectors / nodes | 747 / 239 / 238 | admitted |
 | BLOCKMAP | 36 × 23 = 828 cells, 3,474 words, at most 13 lines per cell, 0 missing closed-cell listings | admitted |
 | REJECT | 968 bytes (exact), 756 of 7,744 bits set, symmetric | admitted, read by sight |
-| Vertex rectangle | 4,576 × 2,816 (x −768…3,808, y −4,864…−2,048) | certificate (i)–(vii) holds |
+| Vertex rectangle | 4,576 × 2,816 (spans only) | certificate (i)–(viii) holds |
 | Longest line norm | 832 | admitted (≤ 3,853) |
-| Heights | floors −136…136, ceilings −40…264 | admitted (±512) |
+| Heights | largest absolute height 264 | admitted (±512) |
 | One-sided boundary | 306 walls, C1 = C2 = C3 = 0 violations | admitted |
 | Slide window | 28 distinct lines at most | admitted (≤ 128) |
 | Hitscan intercepts | replica maximum 67 of 128 at UV spawn | runtime witness, not expected to fire |
@@ -662,6 +672,11 @@ Status: **investigation complete; Phase 2 implemented** (steps 1–8 of §8.1 on
 executable domain in [COMPATIBILITY](COMPATIBILITY.md#original-monsters-at-classic-map-scale);
 DSIM33 in [STATE_FORMAT](STATE_FORMAT.md#dsim-v33-original-monsters-at-classic-map-scale).
 Phase 2 departures from the plan: the extent room (§7.1) was redesigned because no wall
-near the (i) limit can share a map with a span near it; the per-tic sight budget keeps
-64 queries (row 14); `set_momentum` refuses pushes to items (§8.3); the witness hall of
-§7.3 is generated by the C builder but never run in C.
+near the (i) limit can share a map with a span near it, and the gallery's teeth became
+two-sided sectors; the per-tic sight budget keeps 64 queries (row 14); `set_momentum`
+refuses pushes to items (§8.3); the witness hall of §7.3 has 65 thin teeth (130
+straddled lines, not "129 fins"), is generated by the C builder but never run in C;
+the certificate gained clause (viii) after review; the Rust-only rejection variants live
+in `player_real_map_tests.rs` through the M3h5 lump patcher (no `real_map_room.rs`),
+the shim sizes are patched in memory by `m3h6_reference.py` (no `m3h6_shim.h`), the
+fuzz target runs six rooms, and there are 20 scenarios.
