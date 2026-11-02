@@ -562,6 +562,31 @@ admission time of `town`, `wide` and (locally, time only) E1M1's geometry;
    (recommended), or keep both out of the repository and report counts in the PR only.
 10. **`SlopeDiv` bound** (iv): keep 8,192 unless Phase 2 proves the wrap is reproduced.
 
+**Owner decisions, recorded 2026-11-02 before any runtime change (Phase 2 implements
+exactly these):**
+
+1. Approved: `PlayerMonstersRealMapV1`, wire 17, DSIM33, context
+   `PLAYER-MONSTERS-REALMAP-1-MEDIUM-v1`.
+2. Approved: option (b), checked refusal of the tic at the 129th intercept in both
+   collectors, plus the slide-window admission rule. Documented as a known fidelity gap
+   for M4 demo compatibility, like the corner jump. The line-indexed `seen[128]` hitscan
+   buffer is fixed so that maps above 128 lines can fire, with a regression test that
+   fails before the fix.
+3. Approved: roster, slots and fireballs unchanged.
+4. Approved: boundary rules C1–C3 and the closed-cell BLOCKMAP rule kept; the IWAD maps
+   failing them are recorded (counts only, §4.5) for the real-map loading follow-up.
+5. Approved: sky stays out; the recorded plan (§6) is kept for the doors/specials
+   milestone.
+6. Approved: player starts 1–4 and 11 admitted as source records.
+7. Approved: heights stay ±512.
+8. Approved: the arithmetic certificate is an admission requirement.
+9. Approved: `tools/iwad_counts.py` and the counts table are committed, on condition
+   that the script is local-only (never invoked by CI, skips cleanly when
+   `/mnt/d/DoomIWADs` is absent) and the committed table holds counts and pass/fail
+   facts only.
+10. Approved: the `SlopeDiv` 8,192 bound is kept unless Phase 2 proves the unsigned wrap
+    is reproduced.
+
 ### 8.3 Follow-ups and risks
 
 - **Heights beyond ±512** need the M3h4 vertical arithmetic re-derived per map (fireball
@@ -622,5 +647,5 @@ the new policy.
 
 ## 10. Status / next step
 
-Status: **investigation complete**; owner decisions of §8.2 pending. Phase 2 starts at
-step 2 of §8.1 once they are recorded.
+Status: **investigation complete**; owner decisions of §8.2 recorded 2026-11-02. Phase 2
+in progress: next step is 2 of §8.1 (`tools/iwad_counts.py`).
