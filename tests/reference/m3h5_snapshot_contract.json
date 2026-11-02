@@ -24,7 +24,7 @@
     "tests/reference/m3h5_trace.dref": "675907736268f53d343006054337bf19ed6d388232bc29c1596cb90c0eb4bd86",
     "tools/reference/armor_snapshot.py": "f2a1f33b2ba9ed403bd1f74850519a4c0b58ac0d9cd33833f8767a3ed6596050",
     "tools/reference/bonus_snapshot.py": "093e13d9da120978c8aaf24f770cc7662702e6be05e3313497b63a039f54d190",
-    "tools/reference/diagonal_snapshot.py": "754553d48697be7f6fc7a30c64ca9833259fe77667ba0ac89d801cba16c57244",
+    "tools/reference/diagonal_snapshot.py": "fc7f004a4c89a481333312e7efa0df1f79f6f3af66fb23bb5539850edcef6957",
     "tools/reference/evidence_pack.py": "12854a2562cfc6407230b0b6d75491a2b2eea2303403e4dbbe5fff9379e84ffb",
     "tools/reference/heights_snapshot.py": "37c6d5d13fa920b14b5d294a9c4ece2bbc0b598053983ccb5b186b2571dff81e",
     "tools/reference/imps_snapshot.py": "f0d96e4e5bdefa901c25ebbdfb058ec2d396474c9c01f11a48cdba74fad919c9",
@@ -43,16 +43,16 @@
   "ordered_event_fields": 45751,
   "outputs_sha256": {
     "tests/reference/m3h5_events.dref": "7d689f5509c015d5d715089c2adfcbc03258fe97c72d2648ff02a12aea24e23f",
-    "tests/reference/m3h5_snapshots.csv": "18ddb31ddd1a2d51c75de3b5ea2d4c4c622a6d1f4e545160a8bd3a2ff0420937",
+    "tests/reference/m3h5_snapshots.csv": "f8a4346cd4b036e8fadeedf9f912d89ea5da27ca74f1577f774154e470f9180e",
     "tests/reference/m3h5_state_0_0.bin": "183b43442ad5e34c8e5fd526f4cb8a8230ba05dfe1191e02e7d3f1bc87f3c265",
     "tests/reference/m3h5_state_0_150.bin": "1c7c0e790914ce8e0f3386e0e922af14c940778449fee836c3ff6a6318fb94d0",
     "tests/reference/m3h5_state_10_480.bin": "3e558ca6f75ad8779977b9b4d138070fc6df44f969033813ea1e383615dce9df",
     "tests/reference/m3h5_state_13_180.bin": "3b6e9f8da606be037a50dc04d4659f86ba8d7f2675b70930fa868b8919bc02f4",
     "tests/reference/m3h5_state_17_120.bin": "d7d28e989f5163dd6a2c83137c1a7b20596764dcd94bf2637d12f5dc2cc22991",
     "tests/reference/m3h5_state_21_40.bin": "df0efc1534348224700c7b3e8767c890becb562f977e383e0eb26dda6d0271da",
-    "tests/reference/m3h5_state_3_120.bin": "801480baf27f1be400085acd30e15527c8dc0852680c6e85d5f7a31f4a8455b0",
+    "tests/reference/m3h5_state_3_120.bin": "d44daf8bbc270ff21693a362c461bfdb7e436c8d96a352fb1bbab2b4cbf31244",
     "tests/reference/m3h5_state_5_180.bin": "e7f955a39f01419a45072c76f55bd90303115e1641e532ec989d90b8e5c9a109",
-    "tests/reference/m3h5_state_9_400.bin": "ed23f4bbb9a38eada39540986ff63a42c3bf9d04e345083b71fe62856d440fb5"
+    "tests/reference/m3h5_state_9_400.bin": "e120a917206b7b37a31a1d452ef0ec2e4fcf80b91dc578ffbd942be09044b8c4"
   },
   "packed_event_bytes": 100418,
   "schema": "DSIM-v32",
