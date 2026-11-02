@@ -994,8 +994,9 @@ impl Simulation {
     }
     /// Changes explicit momentum between tics; next update clamps it like the reference.
     /// Under the diagonal policy this is the declared mirror of the C harness's
-    /// `push_*` input and admits the player body (the corner-jump replay); every
-    /// older physical-player policy keeps refusing it.
+    /// `push_*` input: the player body (the corner-jump replay), monsters, corpses
+    /// and items are admitted (fireballs stay refused by the projectile control);
+    /// every older physical-player policy keeps refusing them all.
     pub fn set_momentum(&mut self, id: ActorId, momentum: [Fixed; 2]) -> Result<(), SimError> {
         if (self.owns_player_body(id) || self.player_policy().has_physical_player())
             && !self.player_policy().has_diagonals()

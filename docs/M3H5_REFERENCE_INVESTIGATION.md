@@ -242,9 +242,11 @@ endpoints, and let `R` be the closed vertex rectangle as before.
      segment, and is even far away. Define `Ω = {p : parity(p) odd}`. `Ω ⊂ R`.
    - **C3, orientation**: for every segment of `S`, the points just in front of its
      midpoint (the sidedef-0 side, `P_PointOnLineSide = 0`) have odd parity. Tested
-     exactly: the parity of the midpoint's ray not counting the segment itself, flipped
-     when the ray leaves toward the back (`dy < 0`; for a horizontal segment the
-     vertical ray and `dx` are used). By C1 no other segment passes through the midpoint.
+     exactly in doubled coordinates: the horizontal ray from the midpoint counted over
+     the other segments as the limit toward the front side (a vertex exactly at the
+     ray's height counts as above it when `dx > 0`, below it otherwise), plus the
+     segment itself when that ray crosses it (`dy < 0`). By C1 no other segment passes
+     through the midpoint.
      A one-sided wall whose sector side is its back side rejects. Real maps satisfy C3
      because a one-sided line's only sidedef faces its sector.
 3. **BLOCKMAP** (replaces M3h4 item 5): the grid covers `R` (origin at or below the
@@ -647,9 +649,10 @@ and the smoke assertion is left as it is.
 
 Status: **investigation complete; owner decisions recorded (§8.1); Phase 2 in
 progress; step 2 (C harness, polygon room builder and node splitter) steps 3 (DSIM32 projection) and 4–6 (admission, escape witness, DSIM32; one commit,
-since the replay tests need all three) committed, next step 7 (tools, example, fuzz,
-CI)**. Phase 2 corrections to the plan: the "existing controlled impulse" assumed for
+since the replay tests need all three), 7 (tools, example, fuzz, CI), 9 (allocation)
+and 10 (docs) committed; step 8 (CI headroom) awaits its serial/parallel comparison;
+then step 11 (gates, review, PR)**. Phase 2 corrections to the plan: the "existing controlled impulse" assumed for
 the Rust replay of the push did not exist (`set_momentum` refused the player body under
-every physical-player policy), so `set_momentum` admits the player body under this policy
-only; the DSIM32 projection had to derive actor sectors from the BSP leaves (every earlier
+every physical-player policy), so `set_momentum` admits the player body, monsters, corpses
+and items (never fireballs) under this policy only; the DSIM32 projection had to derive actor sectors from the BSP leaves (every earlier
 builder had one subsector per sector); the wedge is concave and carries one partition.

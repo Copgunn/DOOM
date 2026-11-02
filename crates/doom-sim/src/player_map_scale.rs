@@ -433,9 +433,9 @@ impl Boundary {
         &self.segments
     }
     /// Ray parity of a raw fixed-point center: true when odd, i.e. inside `Ω`.
-    /// Exact for a center not on a wall; a center on a wall reads as the limit from
-    /// above, which the callers never rely on (a box containing its center meets the
-    /// wall and is refused separately).
+    /// Exact for a center not on a wall; a center exactly on a wall gets whatever
+    /// the half-open rule yields for that wall, which no caller relies on (a box
+    /// containing its center meets the wall and is refused separately).
     pub fn inside(&self, position: [Fixed; 2]) -> bool {
         let p = position.map(|v| i64::from(v.bits()));
         self.segments

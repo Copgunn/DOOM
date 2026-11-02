@@ -345,6 +345,12 @@ fn sliver_reading_quirks_of_a_diagonal_wall() {
         wall.box_side([Fixed::from_map_units(-8), Fixed::from_map_units(8)], r),
         1
     );
+    // From the back side a box may stop with its leading corner less than 1/L past
+    // the line: a corner 0.25 unit² in front (perpendicular 0.18 units) still reads
+    // back and the box is read as one side; at 1 unit² it reads front and crosses.
+    let raw = |x: i32, y: i32| [Fixed::from_bits(x), Fixed::from_bits(y)];
+    assert_eq!(wall.box_side(raw(-8 * 65536 + 16384, 8 * 65536), r), 1);
+    assert_eq!(wall.box_side(raw(-7 * 65536, 8 * 65536), r), -1);
 }
 
 #[test]
