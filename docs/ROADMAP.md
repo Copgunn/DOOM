@@ -79,7 +79,27 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3h4: Two-sided lines, static floor/ceiling heights and vertical movement
+### M3h5: Non-axis (diagonal) walls
+
+The separately selected PlayerMonstersDiagonalV1 takes the heights world off the
+axis-aligned grid: one- and two-sided linedefs of any direction inside a closed
+boundary of one-sided walls, so wall slides at any angle, convex and concave diagonal
+corners, diagonal risers and windows, an octagonal pillar and a 45° corridor execute
+through the angle-general bodies the engine already carried (`P_HitSlideLine`'s
+projection, `P_BoxOnLineSide`'s corner tests, the intercepts, sight, hitscan, autoaim,
+fireballs and `P_NewChaseDir`). The closed boundary is defined by three exact integer
+rules (endpoint-only contacts, even vertex degree, front sides facing odd parity) and
+the wall invariant is proved for every move of at most `2r − 2` units per axis; the one
+move outside that bound, a player's projected slide of more than 30 units per axis, can
+jump a corner in the source and is the one legal source move the policy refuses
+(`MapScaleError::Escape`, a known fidelity gap to revisit for demo compatibility).
+DSIM32 adds no persistent field. Moving sectors, specials, sky ceilings and cap
+increases stay rejected at load. This branch stops at owner review; exact commits and
+CI belong to GitHub. See [source investigation](M3H5_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-monsters-among-diagonal-walls) and
+[observations](validation/M3H5.md).
+
+### Previous gameplay foundation — M3h4: Two-sided lines, static floor/ceiling heights and vertical movement
 
 The separately selected PlayerMonstersHeightsV1 takes the canonical player and monster
 world off flat floors inside the M3h3 walled rectangle: axis-aligned sectors with
@@ -198,11 +218,11 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Prioritize non-axis walls: `P_HitSlideLine`'s general projection can move a player
-farther than its box in one slide, so the wall invariant needs its own proof before
-diagonal one- or two-sided lines are admitted, and real E1M1 geometry needs them.
+Prioritize real-map loading: raise the linedef, sector and coordinate caps toward E1M1
+and revisit the two rules real maps break, one-sided walls facing away from their sector
+and BLOCKMAPs from real node builders that list a line only in the cells it crosses.
 Then moving sectors (doors, lifts) as the first specials. Require source-first evidence
-and unchanged earlier contracts. This is future work, not admission in M3h4.
+and unchanged earlier contracts. This is future work, not admission in M3h5.
 
 ### Focused maintenance acceptance criteria
 

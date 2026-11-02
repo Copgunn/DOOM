@@ -15,6 +15,8 @@ pub(crate) struct Inputs<'a> {
     pub events: &'a mut Vec<Event>,
     pub commands: [TicCommand; 4],
     pub perception_inputs: Option<perception::PerceptionInputs<'a>>,
+    /// The one-sided boundary of the diagonal policy (the escape witness).
+    pub boundary: Option<&'a player_map_scale::Boundary>,
 }
 pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
     let Inputs {
@@ -32,6 +34,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
         events,
         commands,
         perception_inputs,
+        boundary,
     } = input;
     let recoverable_refill = player.as_ref().is_some_and(|p| p.policy.has_imps());
     actors
@@ -108,6 +111,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                                     access: &mut context,
                                     player: p,
                                     sectors,
+                                    boundary,
                                 },
                                 command,
                                 sectors,

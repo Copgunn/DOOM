@@ -315,3 +315,10 @@ path = "fuzz_targets/player_heights.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_diagonal"
+path = "fuzz_targets/player_diagonal.rs"
+test = false
+doc = false
+bench = false

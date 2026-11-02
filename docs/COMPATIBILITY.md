@@ -1448,3 +1448,52 @@ lifts, crushers, line and sector specials, damaging floors, teleporters, sky cei
 non-axis walls, `P_CalcHeight`/view bobbing and every other monster or weapon stay
 excluded. See [source investigation](M3H4_REFERENCE_INVESTIGATION.md) and
 [observed evidence](validation/M3H4.md).
+
+## Original monsters among diagonal walls
+
+`PlayerMonstersDiagonalV1` (wire16, context `PLAYER-MONSTERS-DIAGONAL-1-MEDIUM-v1`,
+DSIM-v32) is a separate opt-in superset of `PlayerMonstersHeightsV1`. Select it with
+`Simulation::original_player_diagonal_map`, which takes no slot limit. The same roster,
+weapons, items, drops, fireballs, infighting, statistics, slot and fireball budgets,
+momentum bound, vertical domain, witnesses and whole-tic rollback apply. Older policies,
+wires and DSIM20–31 are unchanged and keep their axis-aligned admission.
+
+What changes is the linedef admission. Linedefs may have any direction, one- or
+two-sided, and the walled rectangle is replaced by a **closed boundary** of one-sided
+walls: wall slides at any angle run through the full `P_HitSlideLine` projection
+(`R_PointToAngle2`, `finecosine`/`finesine`, `P_AproxDistance`), `P_BoxOnLineSide`
+reads diagonal walls through its corner tests, intercepts, sight, hitscan, autoaim,
+fireballs and `P_NewChaseDir` meet diagonal lines through the bodies the engine already
+carried. The source's reading quirks are reproduced, never corrected: a box whose corner
+lies exactly on a diagonal wall is blocked from the wall's front side but not from its
+back, a box approaching from the back may stop up to `1/L` units past the line, a slide
+trace starting in that sliver can pick a wall it runs parallel to with fraction 0, a
+player running straight into a convex 45°/45° tip slides in place, and a diagonal trace
+through a BLOCKMAP cell corner visits two of the four cells. The proof is in the
+[investigation](M3H5_REFERENCE_INVESTIGATION.md#4-the-admitted-domain-and-the-proof).
+
+| Admitted at load | Value | Why |
+| --- | ---: | --- |
+| Vertices, node origins/deltas, BLOCKMAP origin, line norm `abs(dx)+abs(dy) <= 1536`, linedef count, slots, fireballs, roster, items, sectors, heights, flags | as the heights policy | unchanged proofs |
+| Linedefs | any direction, not degenerate, a front side, `ML_TWOSIDED` exactly when a back side exists; the heights flag set | every `P_HitSlideLine` branch is admitted; the projected move's bound is the escape witness below |
+| Boundary | the one-sided walls meet only at shared endpoints (C1), every vertex ends an even number of walls (C2), every wall's front side has odd ray parity (C3) | the walls form a closed chain `S` whose odd-parity region `Ω` is the room; C3 rejects a wall facing away from its room, which a real map could carry (to revisit with real-map loading) |
+| BLOCKMAP | the grid covers the vertex rectangle; every linedef, one- or two-sided, is listed in every cell whose closed 128-unit square meets the closed segment | the cell holding any wall point lists that wall; real node builders list a line only in the cells it crosses, which real-map loading must revisit |
+| Spawns | center with odd parity **and** the closed box meeting no wall (THINGs, the player body, controlled spawns and controlled dropped pickups), plus the heights fit | Rust-only; the open box then lies in `Ω`. A `P_KillMobj` drop keeps only the heights fit: it spawns at the corpse's center with a box inside the corpse's, which the invariant already keeps inside `Ω` (and a corpse may legally stand with its box edge exactly on an axis wall) |
+
+| Checked during a tic | Value | Status |
+| --- | ---: | --- |
+| Escape witness | after every projected slide move `P_TryMove` accepts, the player's center still has odd parity | the one refused legal source move: a projected slide of more than 30 units per axis can jump a corner (the `corner_jump` observation); the tic fails with `MapScaleError::Escape` and the state before it is kept. Every other move, spawn and controlled operation keeps Invariant Ω by Theorem B of the investigation, so the witness never fires for them. A known fidelity gap to revisit for demo compatibility |
+| Rectangle, momentum, vertical, item witnesses | as the heights policy | `Ω` lies inside the vertex rectangle, so they never fire |
+
+`Simulation::set_momentum`, refused for every actor under the older physical-player
+policies, is admitted under this policy for the player body (the mirror of the C
+harness's declared push input), monsters, corpses and items, bounded by the 4,096-unit
+momentum admission; fireballs stay refused by the projectile control, so every pushed
+mover is one the proof's clamp covers. A map that fails a load check is
+rejected by the constructor with `MapScaleError::{Geometry, Boundary, Walls, Blockmap,
+Lines}` or the inherited rejections, never during play; a spawn whose box meets a wall
+or whose center lies outside rejects with unchanged state. Moving sectors, doors, lifts,
+crushers, line and sector specials, damaging floors, teleporters, sky ceilings,
+`P_CalcHeight`/view bobbing, cap increases and every other monster, weapon or item stay
+excluded. See [source investigation](M3H5_REFERENCE_INVESTIGATION.md) and
+[observed evidence](validation/M3H5.md).

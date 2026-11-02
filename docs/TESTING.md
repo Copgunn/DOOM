@@ -867,7 +867,13 @@ ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run evidence_zstd /tmp/doom-evid
 ```
 
 `source_suite.json` retains the exact previous 65 CI source commands, including
-strict arithmetic and sanitizer options. The wrapper also supports individual
+strict arithmetic and sanitizer options. `--jobs N` runs them N at a time in N private
+workspaces, scheduled longest-first from the committed duration table
+`source_suite_durations.json` (measured once on an idle host; a command without an
+entry runs last); every command still only compares against committed bytes, so the
+order changes no result, and `--jobs 1` is the historical sequential run. CI passes
+`--jobs 4` on the four-vCPU Ubuntu runner. `--report <file>` writes each command's
+exit status, seconds and stdout digest. The wrapper also supports individual
 frozen `--check` scripts. Direct legacy generators expect raw paths and therefore
 run inside this wrapper after migration. Historical archived commands describe
 their old checkout; archived bytes remain untouched. The wrapper changes no
@@ -1067,4 +1073,41 @@ scripted timeline (`stairs`, `ledge_drop`, `corpse_ledge`, `window_sight`,
 `fence_slide`, `ceiling_fireball`). Run measurements alone, with no fuzzing, builds or
 tests at the same time. Measurement summaries and limitations belong to
 [the engineering record](validation/M3H4.md). Leak detection is disabled in the
+documented ASan environment, not verified.
+
+## Original monsters among diagonal walls
+
+Diagonal-wall evidence has its own source/encoding contract and leaves historical
+expectations untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h5_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3h5_snapshot_goldens.py --check
+cargo test -p doom-sim player_diagonal_tests
+python3 tools/reference/check_player_diagonal.py
+python3 tools/seed_player_diagonal_fuzz.py /tmp/doom-diagonal-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_diagonal /tmp/doom-diagonal-seeds --sanitizer address -- -runs=4096 -seed=501 -max_len=290 -timeout=15 -rss_limit_mb=1024
+```
+
+Add `--cases` to `m3h5_reference.py` to print, per scenario, the slides and blocked
+moves (and how many were at diagonal lines), the blocked moves by `P_TryMove` reason,
+sight queries, hitscans, noise floods, launches, explosions and the captured player
+positions outside the room (`player_void_captures`, non-zero only for `corner_jump`).
+The `diagonal_source_case_*` tests replay every committed scenario; `corner_jump` must
+fail at tic 1 with `MapScaleError::Escape` and leave the state byte-identical, so only
+its spawn capture is compared and its later committed rows are never reached. The
+remaining `player_diagonal_tests` are Rust-only: rejection variants are built by
+patching the committed WAD lumps (a reversed wall, a shortened wall, a moved vertex,
+an unlisted line, forbidden flags, specials, sky, heights), spawns whose box meets a
+wall or whose center has even parity are rejected with unchanged state, the sliver
+quirks of `P_PointOnLineSide`/`P_BoxOnLineSide` are asserted on a `(1,1)` wall, the
+escape witness rolls a tic back, and the wedge and pillar soaks assert Invariant Ω
+(center parity and the open box) after every tic for 1,200 tics on four seeds. The
+fuzz target adds Invariant Ω and a controlled push operation to the heights progress
+property; a valid command may then be refused only by the escape witness. The example
+asserts every scenario's source fields and complete ordered event frames in debug and
+release; `--measure <workload> advance|step|capture` times one full scripted timeline
+(`wedge_slide`, `pillar_chase`, `corridor_pursuit`). Run measurements alone, with no
+fuzzing, builds or tests at the same time. Measurement summaries and limitations belong
+to [the engineering record](validation/M3H5.md). Leak detection is disabled in the
 documented ASan environment, not verified.

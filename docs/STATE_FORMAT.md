@@ -1516,3 +1516,30 @@ Independent C rows feed the Python
 [heights projection](../tools/reference/heights_snapshot.py); its full bytes and
 PBE1 ordered events preceded the matching Rust changes. Decoding remains observation,
 not executable world restoration.
+
+## DSIM-v32 original monsters among diagonal walls
+
+Version32 selects policy16 (`PlayerMonstersDiagonalV1`), the unchanged original
+registry schema and context `PLAYER-MONSTERS-DIAGONAL-1-MEDIUM-v1`.
+`Diagnostic::decode_diagonal` explicitly reads32; every earlier version-specific
+reader keeps its historical contract and rejects32, and the v32 reader rejects every
+earlier version. V20–31 bytes, encoders, fixtures and policy/context meanings are
+unchanged.
+
+V32 uses the DSIM31 field layout, event vocabulary, item witness, store and fireball
+bounds and coordinate domain and adds no persistent field or event tag: a slide's
+outcome is already carried by the mover's `x`, `y`, `momx`, `momy`, `subsector` and
+`sector` fields and the `Slide` event's line index, and the boundary and its parity
+test are derived from the immutable map at load, never state. `MapScaleError::Escape`
+is a checked error of the stepping call, not an event. Newly reachable payloads use
+existing tags: `Slide` events naming diagonal one- and two-sided lines, `SectorMovement`
+attempts refused at diagonal lines, hitscan impacts and fireball explosions at diagonal
+walls, and `Noise` floods through diagonal openings.
+
+Independent C rows feed the Python
+[diagonal projection](../tools/reference/diagonal_snapshot.py). Because the M3h5 rooms
+carry a real BSP with several subsectors per sector, that layer derives each
+`actor.{i}.sector` and `sector.{i}.actors` from the subsector's first seg through the
+map lumps instead of equating sector and subsector indices; `actor.{i}.subsector` keeps
+the C leaf. Its full bytes and PBE1 ordered events preceded the matching Rust changes.
+Decoding remains observation, not executable world restoration.

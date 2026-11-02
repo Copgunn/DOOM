@@ -21,6 +21,9 @@ pub const PLAYER_MAP_SCALE_CONTEXT_SCHEMA: &[u8] =
 /// Explicit static-heights execution context; older contexts stay frozen.
 pub const PLAYER_HEIGHTS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-HEIGHTS-1-MEDIUM-v1";
 
+/// Explicit diagonal-wall execution context; older contexts stay frozen.
+pub const PLAYER_DIAGONAL_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-DIAGONAL-1-MEDIUM-v1";
+
 impl Simulation {
     /// Autonomous roster member: the native/original Demon owner or a policy
     /// monster (former humans, and under `PlayerMonstersImpV1` the Imp).
@@ -89,6 +92,25 @@ impl Simulation {
             map,
             crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS,
             OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersHeightsV1)?,
+            ActorOptions::default(),
+            context,
+        )
+        .map_err(Into::into)
+    }
+    /// The heights world with linedefs of any direction: one- and two-sided diagonal
+    /// walls inside a closed boundary of one-sided walls facing their rooms, wall
+    /// slides at any angle, diagonal risers, windows, pillars and corridors. The
+    /// boundary and BLOCKMAP rules of the M3h5 note are checked here, never during
+    /// play; the one refused legal source move is the corner jump
+    /// (`MapScaleError::Escape`).
+    pub fn original_player_diagonal_map(
+        map: Map,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        Self::with_original_registry(
+            map,
+            crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS,
+            OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersDiagonalV1)?,
             ActorOptions::default(),
             context,
         )

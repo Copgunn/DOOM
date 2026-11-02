@@ -719,3 +719,26 @@ type-admission memo is atomic so `Simulation` stays `Send + Sync`. See
 [support](COMPATIBILITY.md#original-monsters-with-static-heights),
 [source matrix](M3H4_REFERENCE_INVESTIGATION.md) and
 [DSIM31](STATE_FORMAT.md#dsim-v31-original-monsters-with-static-heights).
+
+## Diagonal walls
+
+The diagonal policy adds no mover, collision, traversal or scheduler code either: the
+angle-general bodies (`LineGeometry::point_side`/`box_side`, `movement::project`,
+`movement::path` and the intercepts, `combat_trace`, `sight`, `multisector::node_side`,
+`pursuit`) run on linedefs of any direction once the admission lets them in.
+`player_map_scale.rs` owns the new admission: `Boundary::derive` collects the
+one-sided walls, checks the closed-boundary rules C1–C3 in exact integer arithmetic and
+provides the ray-parity and closed-box tests; `RoomBounds::derive_diagonal` keeps the
+vertex rectangle with the closed-cell BLOCKMAP rule; `validate_diagonal_geometry` is
+the heights linedef check without the axis rule. The boundary lives in
+`Simulation::boundary` as derived data (never canonical state) and flows into the
+thinker inputs and `world_pickups::Contacts`, whose `MotionAccess::after_slide` hook is
+the escape witness: `Mover::slide` calls it once a projected slide move has been
+accepted, and under this policy an even-parity center fails the tic with
+`MapScaleError::Escape` through the same fallible path the pickup contacts use, so the
+transaction is dropped whole. Spawn admission (`Simulation::spawn_admitted`) adds the
+parity-and-box rule to the rectangle rule. `Simulation::set_momentum` admits the player
+body under this policy as the declared mirror of the harness push. See
+[support](COMPATIBILITY.md#original-monsters-among-diagonal-walls),
+[source matrix](M3H5_REFERENCE_INVESTIGATION.md) and
+[DSIM32](STATE_FORMAT.md#dsim-v32-original-monsters-among-diagonal-walls).
