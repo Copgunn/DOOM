@@ -464,11 +464,11 @@ harness. A new observer prints `intercept_p − intercepts` on entry to
 
 | Map | Geometry | Purpose |
 | --- | --- | --- |
-| town | about 500 linedefs, 90 sectors, 2,300 × 1,400 units: a grid of rooms with diagonal corners, corridors, steps, pillars and windows, 16 pickups, the roster | admission at E1M1 size; soak; pursuit across many sectors; sight across dozens of subsectors |
-| gallery | a 2,048-unit hall with short wall fins every 32 units on both sides and 16 pickups along the line of fire | hitscan and autoaim traces with 60–110 intercepts; thing re-adding on a stalled DDA if one occurs |
-| extent | span about 4,000 × 3,000 with a 3,800-unit axis wall and a 2,000-unit diagonal wall, so (i) and (ii) sit within 5% of `2³¹` | `P_InterceptVector`/`P_InterceptVector2` sums near the limit under the overflow sanitizer; long-range sight; BLOCKMAP of about 1,000 cells |
-| dense | one 2 × 2 cell window holding 120 distinct short walls (a comb) with a slide lane | slides collecting up to 120 line intercepts; the slide window certificate at 120 (admitted) and, Rust-only, 129 (rejected) |
-| wide | a sparse 60 × 60-cell grid (3,600 cells, the IWAD maximum class) of far-apart rooms | wide BLOCKMAP preparation, long empty DDA walks, admission time |
+| town | 516 linedefs, 74 sectors, 182 subsectors, 2,176 × 1,184 units: a 6 × 4 grid of octagonal rooms with corridors, steps, pillars and window bands, 16 pickups, the roster | admission at E1M1 size; soak; pursuit across many sectors; sight across dozens of subsectors |
+| gallery | a 2,048-unit hall whose long walls carry 32 triangular teeth each (64-unit pitch, 48 deep; a fin with a free end would break C2) and 16 pickups along the line of fire | hitscan and autoaim traces with 60–110 intercepts; thing re-adding on a stalled DDA if one occurs |
+| extent | a 2,400 × 1,800 room whose boundary holds a 2,750-unit diagonal wall of norm 3,850 and which a 2,683-unit two-sided diagonal splits, so (i) sits at 99.9% and (ii) at 98.3% of `2³¹` (Phase 2 correction: the Phase 1 sketch of a 3,800-unit wall in a 4,000 × 3,000 span fails (ii), which bounds `diag · L₂` by `2²³`, so no wall near the (i) limit can share a map with a span near it) | `P_InterceptVector`/`P_InterceptVector2` sums near the limit under the overflow sanitizer; long-range sight across the two-sided line; a slide along the long wall; a fireball over 2,100 units |
+| dense | a 512 × 256 lane whose middle 240 units carry 30 teeth on each wall: 123 distinct lines in one 2 × 2 cell window | slides into the comb and a shot along its band; the slide window certificate at 123 (admitted) and, Rust-only, 129 (rejected) |
+| wide | four 384-unit rooms at the corners of a 7,552-unit square joined by 64-unit corridors: a 60 × 60-cell grid (3,600 cells, the IWAD maximum class) | wide BLOCKMAP preparation, pursuit and sight along a 6,784-unit corridor, long empty DDA walks, admission time |
 
 Scenarios (about 20): `town_patrol`, `town_fight`, `town_sight_far`, `gallery_shot`,
 `gallery_aim_pickups`, `gallery_monster_shot`, `extent_shot_long_wall`,
@@ -650,4 +650,4 @@ the new policy.
 ## 10. Status / next step
 
 Status: **investigation complete**; owner decisions of §8.2 recorded 2026-11-02. Phase 2
-in progress: steps 1–2 of §8.1 done; next step is 3 (C evidence).
+in progress: steps 1–3 of §8.1 done; next step is 4 (DSIM33 projection).
