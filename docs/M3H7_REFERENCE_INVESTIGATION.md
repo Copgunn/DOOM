@@ -874,3 +874,16 @@ fireball whose center has already entered the lower sector when its box first me
 the line has no `ceilingline` and explodes even when that line's back is sky; and
 `P_CheckMissileSpawn` explodes a missile refused at its spawn half-step with no sky
 test (p_mobj.c:880–881).
+
+Phase 2 step 4 (independent DSIM34 projection): `tools/reference/specials_snapshot.py`
+and `m3h7_snapshot_goldens.py` generate `tests/reference/m3h7_snapshots.csv` (427
+captures), `m3h7_events.dref`, nine full-byte `m3h7_state_*.bin` fixtures and
+`m3h7_snapshot_contract.json` from the C rows alone; the layout is specified in
+[STATE_FORMAT](STATE_FORMAT.md#dsim-v34--original-monsters-with-sky-and-static-specials).
+Departures from §5.2: the shared order is a separate `thinker.shared_order` field of
+kind-tagged handles, while `thinker.order`, `store.head`/`tail` and actor
+`previous`/`next` keep their actor-only DSIM33 meaning; the player's count is
+`original_player.0.secret_count`; a glow record has no `count` (`glow_t` has none);
+light changes, light draws and sector-thinker runs emit no event (decision 5); the
+sky-shot event follows the trace record of the hitscan it ended instead of sitting
+inside it; there is no sector sound in Stage A.

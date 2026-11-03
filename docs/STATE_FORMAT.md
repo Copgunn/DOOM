@@ -1570,3 +1570,96 @@ Independent C rows feed the Python
 diagonal projection without editing it and drops the `TI` observer rows (intercept
 counts) before the chain. Its full bytes and PBE1 ordered events preceded the matching
 Rust changes. Decoding remains observation, not executable world restoration.
+
+## DSIM v34 — original monsters with sky and static specials
+
+Version 34 selects policy 18 (`PlayerMonstersSpecialsV1`), the unchanged original
+registry schema and context `PLAYER-MONSTERS-SPECIALS-1-MEDIUM-v1`. A
+`Diagnostic::decode_specials` reader reads 34 only; every earlier version-specific
+reader keeps its historical contract and rejects 34. V20–33 bytes, encoders, fixtures
+and policy/context meanings are unchanged.
+
+V34 is the DSIM33 layout, event vocabulary, item witness, store and fireball bounds
+plus exactly the state of the sky and static sector specials
+([investigation](M3H7_REFERENCE_INVESTIGATION.md#42-stage-a-m3h7-sky-and-static-specials)).
+Every DSIM33 field keeps its path, width, position and meaning; in particular
+`thinker.order`, `store.head`, `store.tail` and each actor's `previous`/`next` still
+list **actors only** (the actor subsequence of the shared order below). The new fields
+are inserted at four places, in this order of the stream:
+
+| Position | Field | Value encoding |
+| --- | --- | --- |
+| right after `thinker.order` | `thinker.shared_order` | the one thinker list in processing order: 13-byte entries, u8 kind (0 actor, 1 sector thinker) + u32 slot + u64 generation |
+| right after the last `actor.N.*` record, before `spatial.link_order` | `sector_thinkers.slot_count` | u64 logical sector-thinker slot count |
+| | for each slot `j`: `sector_thinker.{j}.generation`, `.occupied` | u64, u8 boolean |
+| | occupied slot: `.kind`, `.sector` | u8 1 flash, 2 strobe, 3 glow, 4 flicker; u16 sector index |
+| | occupied slot except a glow: `.count` | i32 tics left before the next change |
+| | occupied slot: `.minlight`, `.maxlight` | i32, i32 |
+| | flash: `.maxtime`, `.mintime`; strobe: `.darktime`, `.brighttime`; glow: `.direction`; flicker: nothing more | i32 64, 7; i32 15 or 35, 5; i32 −1 down, 1 up |
+| after each `sector.{i}.soundtarget` | `sector.{i}.light`, `sector.{i}.special` | i16 runtime `lightlevel`, i16 runtime `special` |
+| right after `original_player.0.armor.points` | `original_player.0.secret_count` | i32 `player->secretcount` |
+
+So a sector group reads `floor`, `ceiling`, `actors`, `soundtarget`, `light`,
+`special`, and the player block ends `… armor.type`, `armor.points`, `secret_count`,
+then `events.last.count`. Field paths of the sector-thinker store use the same decimal
+slot numbering as `actor.N`. No other field is added, removed or moved.
+
+Meanings:
+
+- **Shared order.** `thinker.shared_order` lists every actor of `thinker.order`
+  (pending removals included) and every occupied sector thinker exactly once, in the
+  order `P_RunThinkers` visits them. A sector thinker is appended when it is created,
+  like an actor; in this policy all of them are created by the one load operation that
+  follows every THING spawn and the player body (`P_SpawnSpecials` in sector-index
+  order), so the list is the load actors, then the sector thinkers, then every later
+  actor. The kind byte selects the handle namespace: kind 0 entries are actor
+  identities, kind 1 entries are sector-thinker identities (slot, generation) in their
+  own store. Neither namespace is reused for the other.
+- **Sector-thinker store.** A separate slot class, bounded at load: its slots are
+  allocated in creation order, so slot `j` is the `j`-th thinker `P_SpawnSpecials`
+  creates, with generation 1. No sector thinker is created after load or removed in
+  this policy, so `slot_count` is the number of light sectors (at most `sectors.count`),
+  every slot is occupied and every generation stays 1. The fields are the source
+  structures of [p_spec.h](../linuxdoom-1.10/p_spec.h): `lightflash_t` (flash, sector
+  special 1), `strobe_t` (strobe, specials 2, 3, 4, 12, 13), `glow_t` (glow, 8; it has no
+  count) and `fireflicker_t` (flicker, 17). `minlight`/`maxlight` are the values the
+  spawner computed (a strobe whose darkest neighbor equals its own light has
+  `minlight` 0).
+- **Sector light and special** are the runtime values; the `map.sectors` lump keeps the
+  original ones. A light sector's special is 0 after load (the spawners clear it, special
+  4 is set back to 4), and a secret sector's special becomes 0 at its entry.
+- **Secrets.** `level.total_secrets` is `P_SpawnSpecials`' `totalsecret`: the number of
+  `map.sectors` records whose special is 9; it does not change when a secret is found.
+  `original_player.0.secret_count` is 0 to `level.total_secrets`.
+- **Time.** `tic` equals the source `leveltime` after the tic. During the step that
+  completes tic *t* the source runs with `leveltime` = *t* − 1, so the damage floors hurt
+  in the steps completing tics 1, 33, 65, … (`!(leveltime & 0x1f)`).
+
+Events. One new tag, 25 (specials), with three sub-tags:
+
+| Sub-tag | Meaning | Payload after tag and sub-tag | Position |
+| --- | --- | --- | --- |
+| 0 | Secret entry | u16 sector, i32 `secret_count` after the increment | in the player phase, after the player's tag-4 command event and before its weapon (tag 14) events, where `P_PlayerInSpecialSector` runs |
+| 1 | Fireball removed at a sky ceiling | fireball identity, u16 `ceilingline` | right after the refused movement attempt (tag 10) and before the removal mark (tag 2); there is no explosion event and no draw |
+| 2 | Hitscan ended at a sky ceiling, no puff | u8 reason (0 `z` above the front sector's ceiling, 1 back sector also sky), u16 line, i32 `z` (16.16) | right after the trace record (tag 13 sub-tag 1) of the hitscan it ended, whose hit is absent |
+
+Environmental damage needs no new tag: it is the existing combat damage event (tag 13
+sub-tag 2) with absent inflictor and source, followed by the existing armor, player-body
+and death events, in the player phase at the position of sub-tag 0. An environmental
+death credits the player's own frag through the existing player event. There is **no**
+event for a light change (it is visible in `sector.{i}.light`, owner decision 5), for a
+sector thinker's run (only actors emit tag 5), for a light draw or a light spawn draw
+(they advance `rng.gameplay` only, never tag 7), for a call of `P_PlayerInSpecialSector`
+that does nothing, for a missile refusal that explodes, or for a scrolling wall (its
+offset is derived from `tic`). This policy has no sector sound. Without its tag-25
+records the event stream is exactly what the DSIM33 vocabulary gives for the same
+source behavior; the independent projection asserts this.
+
+Independent C rows feed the Python
+[specials projection](../tools/reference/specials_snapshot.py), which extends the
+real-map projection without editing it. It takes the shared order and the sector-thinker
+store from the `TK` rows, the runtime light, special and secret count from the `SX`
+rows, and the tag-25 events from the `SE`, `KR` (with its `KY` line) and `KS` rows; the
+other new observer rows are not events. Its full bytes and PBE1 ordered events preceded
+the matching Rust changes. Decoding remains observation, not executable world
+restoration.

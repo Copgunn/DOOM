@@ -451,8 +451,16 @@ one-sided walls, three scrolling walls) and the sky courts (sky-hack blocks, a s
 against a one-sided wall, a tower in a low sky court and three windows whose line
 order and sides pin `ceilingline`). New observer rows (thinker list, sector light and
 special, light draws and changes, special-sector calls, secrets, sky refusals, removals,
-shots and ceiling hits) are documented in the contract's `row_formats`. See
-[investigation](../../docs/M3H7_REFERENCE_INVESTIGATION.md).
+shots and ceiling hits) are documented in the contract's `row_formats`.
+[specials_snapshot.py](specials_snapshot.py) and
+[m3h7_snapshot_goldens.py](m3h7_snapshot_goldens.py) project DSIM34 from the C rows:
+the DSIM33 layout under version 34, policy 18 and the specials context, plus the shared
+thinker order and the sector-thinker store (`TK` rows), runtime sector light and special
+and the player's secret count (`SX` rows) and tag-25 secret, sky-removal and sky-shot
+events (`SE`, `KR`, `KS`); the generator also checks that the stream without tag 25 is
+the DSIM33 projection of the same rows. See
+[investigation](../../docs/M3H7_REFERENCE_INVESTIGATION.md) and the
+[DSIM v34 schema](../../docs/STATE_FORMAT.md#dsim-v34--original-monsters-with-sky-and-static-specials).
 
 ## Historical raw-trace loading
 
