@@ -15,6 +15,12 @@ Stage B state of the M3h8 note §10 (docs/STATE_FORMAT.md, "DSIM v35"):
   checked against the store (the live mover naming the sector) but not encoded;
 - `line.{i}.special` (i16, ML rows) for every line whose map special is nonzero, after
   the last sector group;
+- `button.{k}.btimer` (i32) for every `buttonlist` slot k < MAXBUTTONS (16), after the
+  line specials, followed for a running button (btimer nonzero) by `button.{k}.line`
+  (u16) and `button.{k}.soundorg` (u16, the sector whose `soundorg` the slot names; MB
+  rows): the switch sound of P_ChangeSwitchTexture is made at `buttonlist[0].soundorg`
+  and the restore sound of P_UpdateSpecials at the slot's own field (decision N9);
+  `where` and `btexture` only pick the texture the button restores (presentation);
 - `original_player.0.use_down` (u8, MZ rows) after `original_player.0.secret_count`;
   the reborn request is the source `playerstate` PST_REBORN (2) in the existing
   `original_player.0.state` field;
@@ -23,7 +29,7 @@ Stage B state of the M3h8 note §10 (docs/STATE_FORMAT.md, "DSIM v35"):
 Rows that are not state or events: the use trace's own traversal rows (TR traverser 3,
 D/B/U/I/T/TI at trace stage 9), the P_CheckPosition candidates of a height clip (C/O
 rows and MK rows between an MC entry and exit) and every MK row, MA's coordinates, MN,
-MC entries, MB, MW, MQ, MG end-of-op markers, and LE runs of movers (no sector thinker
+MC entries, MW, MQ, MG end-of-op markers, and LE runs of movers (no sector thinker
 emits a think event). Pickups, removals and state changes inside a clip stay inherited
 events in place."""
 import collections,struct
@@ -43,6 +49,7 @@ DOOR_SPEED={NORMAL:2*FRAC,BLAZE_OPEN:8*FRAC};DOOR_WAIT=150
 PLAT_SPEED=4*FRAC;PLAT_WAIT=105
 FLOOR_SPEED={LOWER_TO_LOWEST:FRAC,TURBO_LOWER:4*FRAC}
 GA_COMPLETED=6;PST_REBORN=2
+MAX_BUTTONS=16;BUTTON_TIME=35
 # Row tags that are state (persistent fields), presentation or harness markers.
 STATE={'MH','ML','MZ','MQ','MB','MW','MN','MK','LE'}
 NEW={'MA','MI','MU','MX','MY','MP','MM','ME','MV','MC','HC','MT','SD','SF','SO','MG','MR'}|STATE
@@ -214,7 +221,23 @@ def events(rows):
     return out
 INHERITED_EVENTS=inherited.events
 HANDLES={}
-def movers(fields,case,op,thinkers,generations,mh,ml,mz,state,tags):
+def button_fields(mb,lump,sides):
+    """The 16 buttonlist slots (decision N9): a free slot is all zero (P_SpawnSpecials and
+    P_UpdateSpecials memset it), a running one has its timer, line and sound origin, the
+    line's front sector (P_StartButton)."""
+    slots={}
+    for slot,line,_where,_texture,timer,origin in mb:
+        assert 0<=slot<MAX_BUTTONS and slot not in slots and 1<=timer<=BUTTON_TIME and line>=0
+        front=struct.unpack_from('<h',lump,14*line+10)[0]
+        assert origin==struct.unpack_from('<h',sides,30*front+28)[0],'soundorg is the front sector'
+        slots[slot]=(timer,line,origin)
+    out=[]
+    for k in range(MAX_BUTTONS):
+        timer,line,origin=slots.get(k,(0,None,None))
+        out.append((f'button.{k}.btimer',n('i',timer)))
+        if timer:out+=[(f'button.{k}.line',n('H',line)),(f'button.{k}.soundorg',n('H',origin))]
+    return out
+def movers(fields,case,op,thinkers,generations,mh,ml,mz,state,tags,mb=()):
     """Insert the DSIM35 fields into one finished DSIM34-layout capture."""
     value=dict(fields)
     usedown,playerstate,gameaction,secretexit,_buttons=mz
@@ -239,7 +262,9 @@ def movers(fields,case,op,thinkers,generations,mh,ml,mz,state,tags):
         if path=='thinker.shared_order':v=order
         if path.startswith('sector.')and path.split('.')[2]in('floor','ceiling'):
             i=int(path.split('.')[1]);v=n('i',heights[3*i+(path.endswith('.ceiling'))])
-        if path=='player.0.actor':stored+=[(f'line.{i}.special',n('h',s))for i,s in sorted(pairs.items())]
+        if path=='player.0.actor':
+            stored+=[(f'line.{i}.special',n('h',s))for i,s in sorted(pairs.items())]
+            stored+=button_fields(mb,lump,value['map.sidedefs'])
         stored.append((path,v))
         if path=='level.single_player_kill_count':stored.append(('level.exit',n('B',gameaction==GA_COMPLETED)))
         elif path=='original_player.0.secret_count':stored.append(('original_player.0.use_down',n('B',usedown)))
@@ -253,7 +278,7 @@ def build(cases,rows,maps,prefix,full):
     cases=[dict(c,tics=str(ended[i]))if i in ended else c for i,c in enumerate(cases)]
     handles,tables,sectors=stores(rows)
     HANDLES.clear();HANDLES.update(handles);SECTORS.clear();SECTORS.update(sectors)
-    thinkers=collections.defaultdict(list);mh={};ml={};mz={};state={}
+    thinkers=collections.defaultdict(list);mh={};ml={};mz={};state={};mb=collections.defaultdict(list)
     for r in rows:
         if r[0]=='TK':
             assert r[3]==len(thinkers[r[1],r[2]])
@@ -261,6 +286,7 @@ def build(cases,rows,maps,prefix,full):
         elif r[0]=='MH':mh[r[1],r[2]]=r[3:]
         elif r[0]=='ML':ml[r[1],r[2]]=r[3:]
         elif r[0]=='MZ':mz[r[1],r[2]]=r[3:]
+        elif r[0]=='MB':mb[r[1],r[2]].append(r[3:])
         elif r[0]=='P':state[r[1],r[2]]=r[5:6]
     selected=iter((r[1],r[2])for r in rows if r[0]=='P');added=[]
     real=map_scale.execution.build
@@ -270,7 +296,7 @@ def build(cases,rows,maps,prefix,full):
             data=inner(fields);case,op=next(selected)
             version,old=inherited.decode(data);assert version==VERSION
             lump=dict(old)['map.sectors'];tags=[struct.unpack_from('<h',lump,26*i+24)[0]for i in range(len(lump)//26)]
-            new=movers(old,case,op,thinkers[case,op],tables[case,op],mh[case,op],ml[case,op],mz[case,op],state[case,op],tags)
+            new=movers(old,case,op,thinkers[case,op],tables[case,op],mh[case,op],ml[case,op],mz[case,op],state[case,op],tags,mb[case,op])
             added.append(len(new)-len(old));return inherited.encode(new)
         physical.frame=frame
         try:outputs,inventory=real(*a,**k)

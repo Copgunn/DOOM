@@ -1696,6 +1696,7 @@ keeps its path, width and relative position; `thinker.order`, `store.*` and each
 | sector-thinker store (same place) | `sector_thinkers.slot_count` and every slot `j` < count | see below; a slot may now be free |
 | `sector.{i}.floor`, `sector.{i}.ceiling` (same place) | the runtime heights | i32 16.16, moved by `T_MovePlane` |
 | right after the last `sector.{i}.special`, before `player.0.actor` | `line.{i}.special` for every line whose `map.linedefs` special is nonzero, in line order | i16 runtime `line->special` (W1 and S1 lines read 0 once cleared) |
+| right after the line specials, before `player.0.actor` | `button.{k}.btimer` for every `buttonlist` slot k = 0..15 (`MAXBUTTONS`), each followed, when nonzero, by `button.{k}.line` and `button.{k}.soundorg` | i32 `btimer` (0: a free, zeroed slot; else 1..35); u16 line; u16 the sector whose `soundorg` the slot names (`P_StartButton`: the line's front sector) |
 | right after `original_player.0.secret_count` | `original_player.0.use_down` | u8 boolean `player->usedown` |
 
 The sector-thinker store:
@@ -1771,14 +1772,14 @@ A height clip's own `P_CheckPosition` candidates and openings are not events; pi
 thing or no origin (`sfx_noway` at the player, the global switch sound when the button
 slot has none) keep the existing actor-state sound event. There is no event for a mover's
 run without a step (a waiting door or plat), for a `spechit` append, for `activeplats` or
-button bookkeeping, or for a switch texture change. Without its tag-26 records the event
+button bookkeeping (the slots are state), or for a switch texture change. Without its tag-26 records the event
 stream is exactly what the DSIM34 vocabulary gives for the same source behavior; the
 independent projection asserts this.
 
 Independent C rows feed the Python
 [movers projection](../tools/reference/movers_snapshot.py), which extends the specials
 projection without editing it. It takes the heights from `MH`, the line specials from
-`ML`, `use_down`, the exit and the player state from `MZ` and `P`, the shared order and
+`ML`, the button slots from `MB`, `use_down`, the exit and the player state from `MZ` and `P`, the shared order and
 the records from `TK` with the slots from `MM` and `SF`, and the tag-26 events from `MA`,
 `MI`, `MU`, `MX`/`MY`, `MP`, `MM`, `ME`, `MV`, `MC`, `HC`/`MT`, `SD`, `SF`, `SO` and `MG`
 rows. Its full bytes and PBE1 ordered events precede the matching Rust changes. Decoding

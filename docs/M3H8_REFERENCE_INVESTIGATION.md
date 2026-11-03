@@ -885,8 +885,9 @@ DSIM35 is DSIM34 plus, only where source state demands:
 - Events (one new tag): use (line, side, result), `sfx_noway` stop, crossing (line,
   side, actor), mover start, step result (`ok`/`crushed`/`pastdest`) and stop,
   `P_ChangeSector` outcomes (gibs, dropped-item removal, `nofit`), sector sounds as sound
-  requests with a sector origin, the exit and the reborn request. Switch textures,
-  button timers and scroll offsets stay out (M3h7 decision 5).
+  requests with a sector origin, the exit and the reborn request. Switch textures and
+  scroll offsets stay out (M3h7 decision 5); the `buttonlist` slots are encoded
+  (decision N9: `btimer`, and the line and `soundorg` sector of a running button).
 
 Every earlier reader rejects 35; `decode_specials` stays 34-only; a new
 `decode_movers` reads 35 only and checks the encoded map: one live mover per mover
@@ -1161,6 +1162,19 @@ below can be revised in review.
   harness; only the switchyard lump and the DSIM35 `map.sidedefs` digest of its
   captures changed (§15).
 
+- **N9: the `buttonlist` is DSIM35 state.** M3h7 decision 5 kept button timers out as
+  presentation. Under the movers policy they are not: the switch sound of
+  `P_ChangeSwitchTexture` is made at `buttonlist[0].soundorg` (a sector, or global when
+  slot 0 is free) and the restore sound of `P_UpdateSpecials` at the address of the
+  expiring slot's `soundorg` field, both recorded sector-sound events, so
+  `Simulation::buttons` is source state the event stream depends on and canonical state
+  carries it. DSIM35 encodes the 16 `MAXBUTTONS` slots in source order: `btimer` (i32, 0
+  for a free slot) and, for a running button, its `line` (u16) and `soundorg` sector
+  (u16); `where` and `btexture` only choose the texture restored (presentation) and are
+  omitted. The independent encoder projects them from the C `MB` rows. Rationale: more
+  faithful (a capture now determines every later switch-sound origin) and no new
+  fidelity gap; the earlier note that a capture does not determine them is withdrawn.
+
 ## 15. Follow-ups, risks, status
 
 - **Roster scale** is the largest remaining E1M1 blocker; every §8 budget is a formula of
@@ -1312,9 +1326,9 @@ the restore sound names the address of the slot's `soundorg` field, origin 2). S
 textures are not simulated: every 11 and 63 line is taken to carry a switch texture,
 exactly the C harness's declared adapter; a map whose switch line has no switch texture
 would differ in sounds and button origins only (a follow-up: a load rule on the
-`SW1`/`SW2` names). The button list (`Simulation::buttons`, staged in the plan) is not
-DSIM35 state (M3h7 decision 5), yet the event stream depends on it: step 13 must state
-that a captured state does not determine later switch-sound origins. Under the movers
+`SW1`/`SW2` names). The button list (`Simulation::buttons`, staged in the plan) was at
+first left out of DSIM35 (M3h7 decision 5), although the event stream depends on it;
+decision N9 (§14) makes it DSIM35 state. Under the movers
 policy `BT_USE` is admitted, `PlayerRuntime::use_down` starts true (`G_PlayerReborn`),
 and `P_PlayerThink` runs the weapon change, the use block, then `P_MovePsprites` (new
 weapon operations `WeaponChange` and `MovePsprites`); a door opened by a use joins the
@@ -1400,5 +1414,12 @@ numbers equal the injected ones), strict and ASan/UBSan traces byte-identical
 `m3h8_snapshots.csv`, cases 8–15, and the fixtures `m3h8_state_8_300`, `_9_3`,
 `_15_20`); the event stream is unchanged. The Rust test-side adapter is deleted:
 `player_movers_tests::room` and `movers_replay::setup` load the raw committed bytes,
-which pass the rule. Next is
-step 13, DSIM35.
+which pass the rule.
+
+Decision N9 (provisional, §14) adds the `buttonlist` to the DSIM35 draft: 16 slots after
+the line specials, each `button.{k}.btimer` and, for a running button, `.line` and
+`.soundorg`. The independent encoder projects them from the C `MB` rows (asserting the
+sound origin is the line's front sector); regenerating changed every capture's size
+and digest (16 to 48 fields more) and all 13 fixtures, while the event stream and its
+digest are unchanged. A running button appears in 13 captures (cases 8, 10 and 11, slot
+0 only), one of them the fixture `m3h8_state_8_300`. Next is step 13, DSIM35 in Rust.
