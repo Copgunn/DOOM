@@ -991,7 +991,7 @@ staging comparison.
 
 ## 12. Implementation plan (one commit per step; evidence before the runtime change)
 
-Status and order: §15. Steps 1–15 are done; the independent review (18) runs before the
+Status and order: §15. Steps 1–16 and 18 are done; the independent review (18) ran before the
 timings (16) and the fuzz campaigns (17), so that its fixes precede the measurements,
 then the gates (19).
 
@@ -1226,7 +1226,8 @@ below can be revised in review.
   step 9.
 - **Performance**: `P_ChangeSector` runs a full position check per linked thing in the
   blockbox per step; small at the current roster, multiplied by roster scale; the
-  per-tic work and timings are step 16 (pending).
+  per-tic work and timings of step 16 are in the
+  [evidence record](validation/M3H8.md#matched-performance).
 - **IWAD tool**: the fixpoint round cap (§5, N7), the door-kind sharing count, the spawn
   rule count and a case-(d) count are not measured; adding them needs owner approval.
 - **CI headroom**: two generators, the replay, the example and the measurement smoke
@@ -1547,6 +1548,9 @@ sector whose blockbox is undefined. The C evidence now has 33 scenarios; every e
 scenario's rows and every fixture are unchanged, and the independent DSIM35 goldens were
 regenerated from the C rows.
 
-**Next:** the matched timings (16) and the coverage-guided and sanitizer fuzz campaigns
-(17), then the gates, the draft PR and its exact-head CI (19). The review moved ahead of
-the measurements because its fixes had to be in the code that is timed and fuzzed.
+**Next:** the coverage-guided and sanitizer fuzz campaigns (17), then the gates, the
+draft PR and its exact-head CI (19). The matched timings (16) are recorded in the
+[evidence record](validation/M3H8.md#matched-performance), including an unresolved
+per-tic slowdown of the older player-and-monster policies (digests unchanged). The review
+moved ahead of the measurements because its fixes had to be in the code that is timed and
+fuzzed.

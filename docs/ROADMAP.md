@@ -102,8 +102,10 @@ jump and the intercepts). Older policies keep their admission, digests and DSIM 
 Status on `feat/m3h8-movers`: implementation, the C evidence (33 scenarios), the
 independent DSIM35 projection, the full replay, Rust-only tests, the example, the
 tools, the fuzz target, this documentation and the independent review with its fixes
-are complete; the matched timings, the fuzz campaigns and the final gates are pending,
-in that order, and
+are complete; the matched timings are recorded (every older-policy digest unchanged; an
+unresolved per-tic slowdown of the older player-and-monster policies is reported in the
+[observations](validation/M3H8.md#matched-performance)); the fuzz campaigns and the final
+gates are pending, in that order, and
 the decisions N1–N9a await owner confirmation. This branch stops at owner review; exact
 commits and CI belong to GitHub. See
 [source investigation](M3H8_REFERENCE_INVESTIGATION.md),
