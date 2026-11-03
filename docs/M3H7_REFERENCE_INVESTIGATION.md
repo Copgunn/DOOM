@@ -964,3 +964,7 @@ landing. (8) COMPATIBILITY states which part of `P_CalcHeight` is computed. (9) 
 specials projection asserts that each `KS` row is followed by its hitscan's `X` end
 row; every generated output is unchanged except the projection's own input hash in
 `m3h7_snapshot_contract.json`. Observations are in [the evidence record](validation/M3H7.md).
+
+Step 10: every local gate of the CI `stable` job and Rust 1.85.0 passed from a clean
+build on the cloud host after the review fixes, the timing rerun and the fuzz rerun
+([observations](validation/M3H7.md#local-gates)); the draft PR follows.
