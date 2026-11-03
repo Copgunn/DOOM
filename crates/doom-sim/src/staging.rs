@@ -26,6 +26,7 @@ pub(crate) struct Sectors<'a> {
 }
 impl<'a> Sectors<'a> {
     /// The committed table alone (no plan, or a plan that wrote nothing).
+    #[inline]
     pub(crate) const fn committed(committed: &'a [SectorState]) -> Self {
         Self {
             table: committed,
@@ -33,25 +34,30 @@ impl<'a> Sectors<'a> {
         }
     }
     /// Whether this view carries the runtime line specials (the movers policy).
+    #[inline]
     pub(crate) const fn has_line_specials(self) -> bool {
         !self.lines.is_empty()
     }
     /// The runtime special of `line` (`line_t::special`), or 0 for a view without
     /// line specials.
+    #[inline]
     pub(crate) fn line_special(self, line: u16) -> i16 {
         self.lines.get(usize::from(line)).copied().unwrap_or(0)
     }
     /// Sector count (the committed table's; writes never add sectors).
+    #[inline]
     pub(crate) const fn len(self) -> usize {
         self.table.len()
     }
     /// The current state of `index`, or `None` past the table.
+    #[inline]
     pub(crate) fn get(self, index: usize) -> Option<&'a SectorState> {
         self.table.get(index)
     }
 }
 impl Index<usize> for Sectors<'_> {
     type Output = SectorState;
+    #[inline]
     fn index(&self, index: usize) -> &SectorState {
         match self.get(index) {
             Some(state) => state,
@@ -76,6 +82,7 @@ impl<T> Default for LazyCopy<T> {
     }
 }
 impl<T: Copy> LazyCopy<T> {
+    #[inline]
     fn view<'a>(&'a self, committed: &'a [T]) -> &'a [T] {
         if self.live { &self.copy } else { committed }
     }
@@ -152,6 +159,7 @@ impl StagedWrites {
     }
     /// The read-through view of `committed` sectors and `lines` (every line's
     /// committed runtime special; empty without movers) under this plan's writes.
+    #[inline]
     pub(crate) fn view<'a>(
         &'a self,
         committed: &'a [SectorState],

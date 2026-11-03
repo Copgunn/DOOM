@@ -705,6 +705,7 @@ pub(crate) fn v_prime_admitted(
 impl Simulation {
     /// Whether `actor` is a gibbed corpse admitted by the movers policy
     /// ([`planes::is_gibs`]); always false under every other policy.
+    #[inline]
     pub(crate) fn gibbed(&self, actor: &Actor) -> bool {
         self.player_policy().has_movers() && planes::is_gibs(actor)
     }

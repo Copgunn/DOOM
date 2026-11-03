@@ -767,9 +767,8 @@ impl Simulation {
                 continue;
             }
             let a = self.actor(id).unwrap();
-            if a.position()
+            if crate::sight::xyz(a.position(), a.z)
                 .into_iter()
-                .chain([a.z])
                 .any(|v| !within(v, 8192))
                 || a.momentum().into_iter().any(|v| !within(v, 8192))
                 || !within(a.momz, 1024)
@@ -841,9 +840,8 @@ impl Simulation {
         if self.bindings.contains(&Some(id)) {
             return Err(ProjectileError::Player.into());
         }
-        if a.position()
+        if crate::sight::xyz(a.position(), a.z)
             .into_iter()
-            .chain([a.z])
             .any(|v| !within(v, 4096))
         {
             return Err(ProjectileError::Arithmetic.into());

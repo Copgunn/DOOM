@@ -227,12 +227,12 @@ impl Simulation {
         }
         Ok(())
     }
-    pub(crate) fn lifecycle_owner(&self, a: Actor) -> Result<(), SimError> {
+    pub(crate) fn lifecycle_owner(&self, a: &Actor) -> Result<(), SimError> {
         let l = a.life.unwrap();
         let state = l.state.ok_or(MonsterError::Definition)?;
         // A gibbed corpse (movers policy, p_map.c:1269–1279) is dead, past A_Fall
         // (MF_SOLID cleared) and has height 0 in place of its corpse height.
-        let gibbed = self.gibbed(&a);
+        let gibbed = self.gibbed(a);
         let (death_state, before_fall) = if gibbed {
             (true, false)
         } else if self.profile == Profile::OriginalDemon {

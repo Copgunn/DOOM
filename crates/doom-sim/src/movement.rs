@@ -781,6 +781,9 @@ fn move_xy_profile<F: MotionAccess>(
     access: F,
     profile: MotionProfile<'_>,
 ) -> Result<Vec<MotionEvent>, F::Error> {
+    if actor.spec.momentum == [Fixed::ZERO; 2] {
+        return Ok(Vec::new());
+    }
     let command = profile.command;
     let mut mover = Mover {
         world,
@@ -793,9 +796,6 @@ fn move_xy_profile<F: MotionAccess>(
         cleared: Vec::new(),
         overflow: false,
     };
-    if mover.actor.spec.momentum == [Fixed::ZERO; 2] {
-        return Ok(mover.events);
-    }
     for m in &mut mover.actor.spec.momentum {
         *m = Fixed::from_bits(m.bits().clamp(-30 * 65536, 30 * 65536));
     }

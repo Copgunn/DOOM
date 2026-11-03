@@ -793,6 +793,7 @@ impl Simulation {
     }
     /// The committed runtime sectors as a read-through view without staged writes:
     /// every query outside a checked plan, and every historical profile.
+    #[inline]
     pub(crate) fn sector_view(&self) -> staging::Sectors<'_> {
         staging::Sectors::committed(&self.sectors)
     }

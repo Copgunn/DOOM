@@ -130,6 +130,12 @@ pub(crate) fn fraction(v2: Divline, v1: Divline) -> Fixed {
         + shift(v2.start[1] - v1.start[1]) * v1.delta[0];
     num / den
 }
+/// The three coordinates `[x, y, z]` (or momenta) one bounds check visits, in
+/// that order, without an iterator chain on the per-tic validation paths.
+pub(crate) const fn xyz(xy: [Fixed; 2], z: Fixed) -> [Fixed; 3] {
+    [xy[0], xy[1], z]
+}
+#[inline]
 pub(crate) fn within(v: Fixed, units: u32) -> bool {
     v.bits().unsigned_abs() <= units * 65536
 }
@@ -138,12 +144,10 @@ pub(crate) fn actor_bounds(a: &Actor) -> Result<(), SimError> {
 }
 /// XY/Z within `units`: 1,024 for the historical profiles, the 2,048-unit M3f2
 /// sight domain for the map-scale policy.
+#[inline]
 pub(crate) fn actor_bounds_within(a: &Actor, units: u32) -> Result<(), SimError> {
-    if a.position()
-        .into_iter()
-        .chain([a.z])
-        .any(|v| !within(v, units))
-    {
+    let [x, y] = a.position();
+    if !within(x, units) || !within(y, units) || !within(a.z, units) {
         return Err(PerceptionError::Arithmetic.into());
     }
     Ok(())

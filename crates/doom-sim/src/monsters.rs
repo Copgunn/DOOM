@@ -485,7 +485,7 @@ impl Simulation {
         if !self.profile.uses_monsters() {
             return Err(MonsterError::Profile.into());
         }
-        let a = self.perception_actor(id)?;
+        let a = self.perception_actor_ref(id)?;
         let l = a.life.unwrap();
         self.validate_monster_type(l.actor_type)?;
         if MoveDirection::from_raw(l.movedir).is_none()
@@ -526,10 +526,10 @@ impl Simulation {
         let state = l.state.ok_or(MonsterError::Definition)?;
         // p_map.c:1269–1279: under the movers policy a corpse a mover crunches
         // enters S_GIBS, outside every monster type's own state graph.
-        if !self.gibbed(&a) {
+        if !self.gibbed(a) {
             self.monster_state_role(l.actor_type, state)?;
         }
-        Ok(a)
+        Ok(*a)
     }
     pub(crate) fn monster_state_role(
         &self,

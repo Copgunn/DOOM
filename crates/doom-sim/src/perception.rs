@@ -49,14 +49,19 @@ impl Simulation {
         Ok(sim)
     }
     pub(crate) fn perception_actor(&self, id: ActorId) -> Result<Actor, SimError> {
+        self.perception_actor_ref(id).copied()
+    }
+    /// [`Self::perception_actor`] without the copy: the hot validators read the
+    /// stored actor in place and copy it once, when they return it.
+    pub(crate) fn perception_actor_ref(&self, id: ActorId) -> Result<&Actor, SimError> {
         if !self.profile.uses_perception() {
             return Err(PerceptionError::Profile.into());
         }
         if self.actors.is_pending(id) != Some(false) {
             return Err(PerceptionError::Reference.into());
         }
-        let a = *self.actor(id).ok_or(PerceptionError::Reference)?;
-        crate::sight::actor_bounds_within(&a, self.sight_margin())?;
+        let a = self.actor(id).ok_or(PerceptionError::Reference)?;
+        crate::sight::actor_bounds_within(a, self.sight_margin())?;
         Ok(a)
     }
     /// Original read-only REJECT/BSP sight, independent of roster/RNG/presentation.

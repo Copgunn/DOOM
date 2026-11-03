@@ -829,16 +829,24 @@ impl Simulation {
             }
         }
         // P_UpdateSpecials: the button countdown (movers policy), in its phase.
-        let mut special_events = Vec::new();
-        if movers {
-            use_lines::update_buttons(&mut plan.buttons, &mut special_events);
-        }
+        let special_events = movers.then(|| {
+            let mut events = Vec::new();
+            use_lines::update_buttons(&mut plan.buttons, &mut events);
+            events
+        });
         let events = self.commit_demon_plan(plan);
         self.events = std::mem::take(&mut self.pending);
         self.events.extend(events);
-        self.events.push(Event::Phase(Phase::Specials));
-        self.events.extend(special_events);
-        self.events.push(Event::Phase(Phase::Respawn));
+        match special_events {
+            Some(special_events) => {
+                self.events.push(Event::Phase(Phase::Specials));
+                self.events.extend(special_events);
+                self.events.push(Event::Phase(Phase::Respawn));
+            }
+            None => self
+                .events
+                .extend([Event::Phase(Phase::Specials), Event::Phase(Phase::Respawn)]),
+        }
         self.commands = commands;
         self.tic += 1;
         Ok(())
