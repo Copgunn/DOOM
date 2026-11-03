@@ -1581,8 +1581,9 @@ policy E1M1 needs the roster scale (29 monsters, 53 pickups on UV), eight decora
 barrel types, sky, eight line-special and five sector-special types and the movers behind
 them ([readiness](M3H6_REFERENCE_INVESTIGATION.md#9-e1m1-readiness-report)). Moving
 sectors, doors, lifts, crushers, line and sector specials, damaging floors, teleporters,
-sky ceilings, `P_CalcHeight`/view bobbing, intercepts-overflow emulation and every other
-monster, weapon or item stay excluded under this policy (the load check rejects only
+sky ceilings, the view-height part of `P_CalcHeight` (`viewheight`, `deltaviewheight`,
+`viewz` and its bobbing; the momentum bob `player->bob` is computed), intercepts-overflow
+emulation and every other monster, weapon or item stay excluded under this policy (the load check rejects only
 `F_SKY1` ceilings; a sky floor has no game-code effect, M3h7 note
 [§2.9](M3H7_REFERENCE_INVESTIGATION.md#29-sky-in-game-code-re-read-for-this-note));
 the [specials policy](#original-monsters-with-sky-and-static-specials) admits sky
@@ -1666,8 +1667,10 @@ stays refused with `SimError::UnsupportedButtons` and the state unchanged. Sky f
 have no game-code effect and are not tested. A map that fails a load check is rejected
 by the constructor, never during play; the inherited rejections of the real-map policy
 still apply. Moving sectors, doors, lifts, floors, switches, the level exit, crushers,
-teleporters, light-switching lines, `P_CalcHeight`/view bobbing and every other monster,
-weapon or item stay excluded. E1M1 is still not admitted: it needs the roster scale,
+teleporters, light-switching lines, the view-height part of `P_CalcHeight`
+(`viewheight`, `deltaviewheight`, `viewz` and its bobbing; the explicit `CalcHeight` step
+computes only the momentum bob `player->bob`) and every other monster, weapon or item stay
+excluded. E1M1 is still not admitted: it needs the roster scale,
 eight decoration and barrel types and the doors, lifts, floors and exit switch of the
 next stage. See [source investigation](M3H7_REFERENCE_INVESTIGATION.md),
 [DSIM34](STATE_FORMAT.md#dsim-v34--original-monsters-with-sky-and-static-specials) and

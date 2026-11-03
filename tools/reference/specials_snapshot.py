@@ -58,7 +58,7 @@ def events(rows):
             assert r[4]==-1,'a sky shot has no hit'
             flush();out.append(shot);shot=None
     flush()
-    if shot is not None:out.append(shot)  # only in the discarded non-stage scaffolding
+    assert shot is None,'a KS row without the X end row of its hitscan'
     return out
 INHERITED_EVENTS=heights.events
 def sector_thinker_fields(entries):

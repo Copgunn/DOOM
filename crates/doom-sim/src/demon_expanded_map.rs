@@ -333,9 +333,16 @@ impl Simulation {
         let mut slots = line_work::reserved(self.actors.slots.len())?;
         slots.extend_from_slice(&self.actors.slots);
         // The shared order lives in the slot links plus head/tail, so staging both
-        // classes stages it. Without sector thinkers this vector is empty and does
-        // not allocate: the tic plan keeps its two historical allocations.
-        let mut sector_slots = line_work::reserved(self.actors.sector_slots.len())?;
+        // classes stages it. The sector class is staged in the spare buffer of the
+        // last committed plan, as for the sound targets: no allocation once its
+        // capacity matches the sector-thinker slot count. Without sector thinkers it
+        // is empty and never allocates: the tic plan keeps its two historical
+        // allocations.
+        let mut sector_slots = std::mem::take(&mut self.spare_sector_slots);
+        sector_slots.clear();
+        sector_slots
+            .try_reserve(self.actors.sector_slots.len())
+            .map_err(|_| StoreError::Capacity)?;
         sector_slots.extend_from_slice(&self.actors.sector_slots);
         let mut order = line_work::reserved(self.actors.max_slots as usize)?;
         order.extend_from_slice(&self.spatial.order);
@@ -469,7 +476,8 @@ impl Simulation {
         Ok(())
     }
     fn commit_demon_plan(&mut self, plan: DemonPlan) -> Vec<Event> {
-        self.actors = plan.actors;
+        let committed = std::mem::replace(&mut self.actors, plan.actors);
+        self.spare_sector_slots = committed.sector_slots;
         self.spatial = plan.spatial;
         self.rng = plan.rng;
         self.statistics = plan.statistics;

@@ -252,6 +252,11 @@ fn min_surrounding_light(
     let mut min = max;
     for &line in lists.get(sector).ok_or(MapSpawnError::Context)? {
         let line = &map.linedefs()[usize::from(line)];
+        // getNextSector's ML_TWOSIDED skip (p_spec.c:255–256), kept for source
+        // fidelity but unreachable under admission: a line with a back side but no
+        // ML_TWOSIDED is refused at load (`validate_diagonal_geometry`, which the
+        // specials policy uses), so every line skipped here also has no back side
+        // and the side lookup below would find no neighbor either.
         if line.flags & crate::player_map_scale::ML_TWOSIDED == 0 {
             continue;
         }

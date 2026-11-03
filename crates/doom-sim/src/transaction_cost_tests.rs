@@ -74,3 +74,24 @@ fn projection_mutation_is_isolated_and_component_costs_are_observable() {
         }
     }
 }
+
+#[test]
+fn specials_plans_stage_the_sector_class_in_the_committed_buffer() {
+    // pools_lights_soak: eight light thinkers in the sector-thinker class.
+    let mut sim = crate::specials_evidence::setup(&crate::specials_evidence::cases()[0]).0;
+    assert_eq!(sim.actors.sector_slots.len(), 8);
+    for _ in 0..2 {
+        sim.advance([TicCommand::default(); 4]).unwrap();
+    }
+    // After a commit the replaced vector is kept as the next plan's buffer, so
+    // staging the sector class reuses it instead of allocating.
+    let spare = sim.spare_sector_slots.as_ptr();
+    assert!(sim.spare_sector_slots.capacity() >= sim.actors.sector_slots.len());
+    let plan = sim.demon_plan().unwrap();
+    assert_eq!(plan.actors.sector_slots.as_ptr(), spare);
+    assert_eq!(plan.actors.sector_slots.len(), 8);
+    assert_eq!(sim.spare_sector_slots.capacity(), 0);
+    let staged = sim.snapshot();
+    drop(plan);
+    assert_eq!(sim.snapshot(), staged);
+}

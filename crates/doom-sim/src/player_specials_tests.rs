@@ -411,6 +411,61 @@ fn refused_tic_keeps_an_unfound_secret() {
 }
 
 #[test]
+fn a_secret_is_found_on_landing_not_while_above_its_floor() {
+    // A5, Rust-only: pools_secret's walk with the secret sector 5 sunk 48 units, so
+    // the body enters it in the air ("Falling, not all the way down yet?",
+    // p_spec.c:1007). No secret while its z is above the sector floor; one on landing.
+    let which = 4;
+    let c = &specials_evidence::cases()[which];
+    let mut lumps = pools();
+    let floor = i16::from_le_bytes(
+        lump(&mut lumps, "SECTORS")[26 * 5..26 * 5 + 2]
+            .try_into()
+            .unwrap(),
+    );
+    set_sector_field(&mut lumps, 5, 0, floor - 48);
+    let (mut s, a, things) = specials_evidence::setup_map(c, lumps.map());
+    // P_PlayerInSpecialSector runs in the player phase, before the thinker pass
+    // moves the body, so a tic tests the z the previous tic ended with.
+    let resting = |s: &Simulation| {
+        let body = s.actor(a.body).unwrap();
+        (
+            body.location.unwrap().sector == 5,
+            body.z == s.sectors()[5].floor,
+        )
+    };
+    let (mut airborne, mut found_at, mut events) = (0, None, 0);
+    for op in 1..=c.tics {
+        let (in_secret, on_floor) = resting(&s);
+        specials_evidence::controlled(&mut s, c, a, &things, op).unwrap();
+        s.advance(specials_evidence::commands(c, op)).unwrap();
+        events += s
+            .events()
+            .iter()
+            .filter(|e| matches!(e, Event::Special(SpecialEvent::Secret { .. })))
+            .count();
+        let count = s.original_player_secret_count().unwrap();
+        let special = s.sector_lights_and_specials().unwrap().nth(5).unwrap().1;
+        match found_at {
+            None if count == 0 => {
+                assert_eq!(special, 9, "op{op}");
+                assert!(!(in_secret && on_floor), "on the floor, no secret, op{op}");
+                airborne += usize::from(in_secret);
+            }
+            None => {
+                assert!(in_secret && on_floor, "found off the floor, op{op}");
+                assert_eq!((count, special), (1, 0), "op{op}");
+                found_at = Some(op);
+            }
+            Some(_) => assert_eq!((count, special), (1, 0), "op{op}"),
+        }
+    }
+    assert!(airborne > 0, "the body never entered the sector in the air");
+    assert!(found_at.is_some());
+    assert_eq!(events, 1);
+}
+
+#[test]
 fn specials_policy_identity_is_distinct_from_the_real_map_policy() {
     let new = OriginalExecutionProfile::PlayerMonstersSpecialsV1;
     let old = OriginalExecutionProfile::PlayerMonstersRealMapV1;
@@ -534,6 +589,196 @@ fn decode_specials_rejects_malformed_specials_fields() {
             "{name}"
         );
     }
+}
+
+/// DSIM34 bytes of `snapshot`, each field value replaced where `edit` returns one.
+type FieldEdit<'a> = &'a dyn Fn(&str, &[u8]) -> Option<Vec<u8>>;
+fn edited_bytes(snapshot: &Snapshot, edit: FieldEdit<'_>) -> Vec<u8> {
+    let mut out = b"DSIM".to_vec();
+    out.extend(34u32.to_le_bytes());
+    let fields: Vec<_> = snapshot.fields().collect();
+    out.extend((fields.len() as u64).to_le_bytes());
+    for f in fields {
+        let value = edit(f.path(), f.value()).unwrap_or_else(|| f.value().to_vec());
+        out.extend((f.path().len() as u32).to_le_bytes());
+        out.extend(f.path().as_bytes());
+        out.extend((value.len() as u64).to_le_bytes());
+        out.extend(value);
+    }
+    out
+}
+fn snapshot_value<'a>(snapshot: &'a Snapshot, path: &str) -> &'a [u8] {
+    snapshot
+        .fields()
+        .find(|f| f.path() == path)
+        .unwrap()
+        .value()
+}
+/// The first snapshot after a tic of the committed scenario `label` whose
+/// `events.last` holds a tag-25 event of `sub_tag`, with that event's index.
+fn snapshot_with_special_event(label: &str, sub_tag: u8) -> (Snapshot, usize) {
+    let c = specials_evidence::cases()
+        .into_iter()
+        .find(|c| c.label == label)
+        .unwrap();
+    let (mut s, a, things) = specials_evidence::setup(&c);
+    for op in 1..=c.tics {
+        specials_evidence::controlled(&mut s, &c, a, &things, op).unwrap();
+        s.advance(specials_evidence::commands(&c, op)).unwrap();
+        let snapshot = s.snapshot();
+        let count = u64::from_le_bytes(
+            snapshot_value(&snapshot, "events.last.count")
+                .try_into()
+                .unwrap(),
+        );
+        let found = (0..count as usize).find(|i| {
+            snapshot_value(&snapshot, &format!("events.last.{i}")).get(..2) == Some(&[25, sub_tag])
+        });
+        if let Some(i) = found {
+            return (snapshot, i);
+        }
+    }
+    panic!("{label}: no tag-25 sub-tag {sub_tag} event");
+}
+
+#[test]
+fn decode_specials_cross_checks_thinkers_specials_and_sky_events_against_the_map() {
+    // Rust-only safety test: each mutation below breaks one property every DSIM34
+    // stream of this policy has; the unmutated streams decode.
+    let limits = DiagnosticLimits::default();
+    let mut s = scenario(4);
+    s.advance([TicCommand::default(); 4]).unwrap();
+    let snapshot = s.snapshot();
+    Diagnostic::decode_specials(&edited_bytes(&snapshot, &|_, _| None), limits).unwrap();
+    let map = snapshot_value(&snapshot, "map.sectors").to_vec();
+    let map_special = |i: usize| i16::from_le_bytes([map[26 * i + 22], map[26 * i + 23]]);
+    let sectors = map.len() / 26;
+    let light = |special: i16| matches!(special, 1 | 2 | 3 | 4 | 8 | 12 | 13 | 17);
+    let find = |want: &dyn Fn(i16) -> bool| (0..sectors).find(|&i| want(map_special(i))).unwrap();
+    let thinker = |j: usize, name: &str| {
+        snapshot_value(&snapshot, &format!("sector_thinker.{j}.{name}")).to_vec()
+    };
+    let slots = u64::from_le_bytes(
+        snapshot_value(&snapshot, "sector_thinkers.slot_count")
+            .try_into()
+            .unwrap(),
+    ) as usize;
+    let strobes: Vec<_> = (0..slots).filter(|&j| thinker(j, "kind") == [2]).collect();
+    assert!(strobes.len() >= 2);
+    let flash = find(&|v| v == 1);
+    let flicker_damage = find(&|v| v == 4);
+    let plain = find(&|v| v == 0);
+    let damage = find(&|v| matches!(v, 5 | 7 | 16));
+    let mut extra_light = map.clone();
+    extra_light[26 * plain + 22..26 * plain + 24].copy_from_slice(&17i16.to_le_bytes());
+    let short_map = map[..map.len() - 26].to_vec();
+    let path = |name: String| name;
+    let cases: Vec<(&str, String, Vec<u8>)> = vec![
+        // Two thinkers of one sector (same kind, so only the duplicate is wrong).
+        (
+            "duplicate sector",
+            path(format!("sector_thinker.{}.sector", strobes[1])),
+            thinker(strobes[0], "sector"),
+        ),
+        // A thinker of a sector whose map special spawns no thinker.
+        (
+            "non-light sector",
+            path("sector_thinker.0.sector".into()),
+            (plain as u16).to_le_bytes().to_vec(),
+        ),
+        // One more light sector in the map than thinkers in the store.
+        ("light count", path("map.sectors".into()), extra_light),
+        ("map sector count", path("map.sectors".into()), short_map),
+        // A light sector keeps its special after the spawners cleared it.
+        (
+            "flash special",
+            path(format!("sector.{flash}.special")),
+            1i16.to_le_bytes().to_vec(),
+        ),
+        // Special 4 is set back to 4 by its spawner.
+        (
+            "special 4 cleared",
+            path(format!("sector.{flicker_damage}.special")),
+            0i16.to_le_bytes().to_vec(),
+        ),
+        // Only a secret clears a non-light special.
+        (
+            "damage special cleared",
+            path(format!("sector.{damage}.special")),
+            0i16.to_le_bytes().to_vec(),
+        ),
+    ];
+    assert!(!light(map_special(plain)) && !light(map_special(damage)));
+    let mut accepted = Vec::new();
+    for (name, target, value) in &cases {
+        let bytes = edited_bytes(&snapshot, &|p, _| (p == target).then(|| value.clone()));
+        if Diagnostic::decode_specials(&bytes, limits).is_ok() {
+            accepted.push(*name);
+        }
+    }
+    // Before the load operation the store is empty, which only tic 0 allows.
+    let mut pre = specials(&pools()).unwrap();
+    pre.spawn_map_things().unwrap();
+    pre.spawn_player_body(PlayerSlot::One, [768, -200].map(Fixed::from_map_units))
+        .unwrap();
+    let before_load = pre.snapshot();
+    Diagnostic::decode_specials(&edited_bytes(&before_load, &|_, _| None), limits).unwrap();
+    let bytes = edited_bytes(&before_load, &|p, _| {
+        (p == "tic").then(|| 1u64.to_le_bytes().to_vec())
+    });
+    if Diagnostic::decode_specials(&bytes, limits).is_ok() {
+        accepted.push("empty store after tic 0");
+    }
+    // Sky events: the line exists; a sky removal names an occupied fireball.
+    let lines_of =
+        |snapshot: &Snapshot| (snapshot_value(snapshot, "map.linedefs").len() / 14) as u16;
+    let (removal, i) = snapshot_with_special_event("sky_hack_wall", 1);
+    let (shot, k) = snapshot_with_special_event("sky_shot_high", 2);
+    let removal_event = format!("events.last.{i}");
+    let shot_event = format!("events.last.{k}");
+    for (snapshot, path) in [(&removal, &removal_event), (&shot, &shot_event)] {
+        Diagnostic::decode_specials(&edited_bytes(snapshot, &|_, _| None), limits).unwrap();
+        let event = snapshot_value(snapshot, path).to_vec();
+        let mut bad_line = event.clone();
+        let at = if event[1] == 1 { 14 } else { 3 };
+        bad_line[at..at + 2].copy_from_slice(&lines_of(snapshot).to_le_bytes());
+        let bytes = edited_bytes(snapshot, &|p, _| (p == path).then(|| bad_line.clone()));
+        if Diagnostic::decode_specials(&bytes, limits).is_ok() {
+            accepted.push(if event[1] == 1 {
+                "removal line"
+            } else {
+                "shot line"
+            });
+        }
+    }
+    let event = snapshot_value(&removal, &removal_event).to_vec();
+    let slot = u32::from_le_bytes(event[2..6].try_into().unwrap());
+    let mut stale = event.clone();
+    let generation = u64::from_le_bytes(event[6..14].try_into().unwrap());
+    stale[6..14].copy_from_slice(&(generation + 1).to_le_bytes());
+    let bytes = edited_bytes(&removal, &|p, _| {
+        (p == removal_event).then(|| stale.clone())
+    });
+    if Diagnostic::decode_specials(&bytes, limits).is_ok() {
+        accepted.push("removal generation");
+    }
+    // The event names another occupied actor (a map monster, not a fireball).
+    let other = (0..)
+        .find(|j| *j != slot && snapshot_value(&removal, &format!("actor.{j}.occupied")) == [1])
+        .unwrap();
+    let mut monster = event.clone();
+    monster[2..6].copy_from_slice(&other.to_le_bytes());
+    monster[6..14].copy_from_slice(snapshot_value(
+        &removal,
+        &format!("actor.{other}.generation"),
+    ));
+    let bytes = edited_bytes(&removal, &|p, _| {
+        (p == removal_event).then(|| monster.clone())
+    });
+    if Diagnostic::decode_specials(&bytes, limits).is_ok() {
+        accepted.push("removal of a non-fireball");
+    }
+    assert!(accepted.is_empty(), "accepted: {accepted:?}");
 }
 
 /// The M3h3 scripted command sequence over a seed: runs, strafes, turns and fires.

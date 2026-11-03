@@ -556,6 +556,10 @@ pub struct Simulation {
     /// The specials vector of the last committed plan, reused as the next plan's
     /// staging buffer (like `spare_sound_targets`). Never read or encoded.
     pub(crate) spare_specials: Vec<sector_thinkers::SectorSpecial>,
+    /// The sector-thinker slot vector of the last committed plan, reused as the next
+    /// plan's staging buffer (like `spare_specials`). Empty, and never allocating,
+    /// without sector thinkers. Never read or encoded.
+    pub(crate) spare_sector_slots: Vec<store::Slot<sector_thinkers::SectorThinker>>,
 }
 /// Static-geometry table bounds a construction prepares against: the M3f2/M3h3
 /// constants for every historical profile, the WAD format's own bounds (M3h6 note
@@ -735,6 +739,7 @@ impl Simulation {
             spare_sound_targets: Vec::new(),
             specials: None,
             spare_specials: Vec::new(),
+            spare_sector_slots: Vec::new(),
         })
     }
     /// The sectors a type's dimensions are admitted against: the heights policy's

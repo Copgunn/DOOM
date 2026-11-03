@@ -793,9 +793,15 @@ the `P_SpawnSpecials` sector scan behind `Simulation::spawn_level_specials` and
 `P_PlayerInSpecialSector`. `Simulation::specials` holds the runtime light and special of
 every sector beside the static `SectorState` heights, which stay read-only. The checked
 transaction stages them like the RNG and the actors: `demon_plan` copies them into the
-plan's buffer, taken from `spare_specials` (the previous committed plan's vector, like the sound
-targets, so no allocation is needed once its capacity matches the sector count), the thinker pass and the player phase write only that buffer, and the commit
-swaps it in; a refused tic drops it with the rest of the plan. The player phase is split
+plan's buffer, taken from `spare_specials` (the previous committed plan's vector, like the
+sound targets), and stages the sector-thinker slot class the same way in
+`spare_sector_slots`; the thinker pass and the player phase write only those buffers, and
+the commit swaps them in, keeping the replaced vectors as the next plan's buffers. After a
+committed tic neither needs an allocation once its capacity matches the sector or
+sector-thinker count; a refused tic drops them with the rest of the plan, so the next plan
+allocates each once. Other policies stage both as empty vectors that never allocate. The
+actor slots and the spatial order are still copied into fresh buffers every tic, as on
+every policy. The player phase is split
 for this policy, as `P_PlayerThink` is: the command stage, then `P_CalcHeight`
 (`PlayerWeaponOperation::CalcHeight`), then `player_in_special_sector`, then the weapon
 change and psprites (`AfterSpecials`); older weapon policies keep the single

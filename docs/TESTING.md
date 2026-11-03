@@ -1193,8 +1193,9 @@ remaining `player_specials_tests` are Rust-only: admission of every committed ro
 rejection of every other special, a two-sided scroller, the 65th scroller, lights
 outside the range and an out-of-range height; the `F_SKY1` lookup-name rule; the load
 order of `spawn_level_specials`; `BT_USE` still refused; refused tics that keep the
-lights, thinkers and an unfound secret; the policy identity and the malformed-field
-rejections of `decode_specials`; the sky-shot boundary at exactly the front ceiling; the
+lights, thinkers and an unfound secret; a secret found on landing, not while the body
+is above the sector floor; the policy identity, the malformed-field rejections of
+`decode_specials` and its cross-checks against the encoded map; the sky-shot boundary at exactly the front ceiling; the
 sector-thinker slot and visit budget; and the `pools` and `sky` soaks, which assert
 Invariant Ω, the vertical invariant, every light within its thinker's bounds, the shared
 order and `secretcount ≤ totalsecret` after every tic for 1,200 tics on four seeds. The

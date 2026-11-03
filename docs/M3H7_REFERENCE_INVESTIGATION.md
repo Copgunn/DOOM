@@ -850,9 +850,17 @@ locally by the owner**.
 
 ## 9. Status / next step
 
-Status: **investigation complete; owner decisions recorded (§7); Phase 2 Stage A in
-progress** on `feat/m3h7-doors-specials-sky`. Completed Phase 2 steps of §6 are listed
-here as they land: step 1 (decisions).
+Status: **Phase 2 Stage A is implemented and at owner review**; milestone status is
+kept in [ROADMAP](ROADMAP.md#m3h7-sky-and-static-specials) and exact review state in
+GitHub. The paragraphs below are the history of each Phase 2 step of §6 as it landed.
+
+Phase 2 step 1 (decisions): the owner decisions of §7 are recorded.
+
+Phase 2 step 2 (IWAD count tool): `tools/iwad_counts.py` gains the §5.6 counts per map
+and in a summary (line and sector special types, tagged lines and sectors, the Stage A
+admission facts and the Stage B count facts) with a `--specials-markdown` table; every
+earlier output line is unchanged, the reachable-height fixpoint prints "not computed",
+and no IWAD was read, so the table awaits a local run by the owner (§5.6).
 
 Phase 2 step 3 (original-C evidence): `tools/reference/m3h7_geometry.py`,
 `m3h7_cases.py` and `m3h7_reference.py` generate `tests/reference/m3h7_*` (17
@@ -934,3 +942,25 @@ with its limits rows and the corrected sky wording of the real-map section (only
 `F_SKY1` ceilings were ever rejected; §2.9, §8), ARCHITECTURE, the
 [TESTING commands](TESTING.md#original-monsters-with-sky-and-static-specials), the
 documentation index, VALIDATION and the tools README; STATE_FORMAT needed no change.
+
+Independent review of Stage A (fix pass): the review reported nine findings, addressed
+as follows. (1) `ThinkerStore::order()` filtered the shared order through a per-entry
+link copy, which cost older policies, which have no sector thinkers, +0.45 % to +2.4 %
+instructions in `Simulation::advance`; it now walks the links directly with one slot
+lookup per entry, and the cursor reads an entry's links once (no change to order,
+encoding or digests; the per-tic set in `preflight_expanded_demons_for` is master
+behavior and was left unchanged). (2) The evidence record's "no timing is a
+measurement" sentence now covers its correctness sections only. (3) This status. (4) The
+sector-thinker slot class was copied into a fresh vector every specials tic; it is now
+staged in a reused spare buffer (`spare_sector_slots`) like the runtime specials, and
+older policies still stage an empty, never-allocating vector. (5) `decode_specials`
+also checks against the encoded map: one thinker per light sector, of its kind; a slot
+count equal to the light-sector count (zero only at tic 0, before the load operation);
+cleared light-sector specials (4 for special 4); the lines of the sky events; and that
+a sky removal names an occupied fireball. (6) The unreachable `ML_TWOSIDED` skip of
+`P_FindMinSurroundingLight` is commented as such. (7) A Rust-only test shows that the
+body above a secret sector's floor does not find the secret and finds it once on
+landing. (8) COMPATIBILITY states which part of `P_CalcHeight` is computed. (9) The
+specials projection asserts that each `KS` row is followed by its hitscan's `X` end
+row; every generated output is unchanged except the projection's own input hash in
+`m3h7_snapshot_contract.json`. Observations are in [the evidence record](validation/M3H7.md).

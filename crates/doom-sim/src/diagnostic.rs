@@ -623,6 +623,7 @@ impl<'a> Diagnostic<'a> {
                 if tag == 25 {
                     let sectors = u32::from_le_bytes(number(self.required("sectors.count")?)?);
                     validate_special_event(event, self.slot_bound(), sectors)?;
+                    self.validate_sky_event(event)?;
                 }
                 if tag == 24 {
                     validate_armor_event(event, self.version, self.slot_bound())?;
@@ -787,6 +788,13 @@ impl<'a> Diagnostic<'a> {
     /// relative order plus every occupied sector thinker, each once), the
     /// sector-thinker store (kinds, sectors, fields by kind), the runtime sector
     /// light and special widths and the secret count within `level.total_secrets`.
+    ///
+    /// Cross-checks against the encoded `map.sectors` lump: each sector thinker is
+    /// the one thinker of a distinct light sector (map special 1, 2, 3, 4, 8, 12, 13
+    /// or 17) of its kind; after the load operation `slot_count` is the number of
+    /// light sectors (zero before it, only at tic 0); a light sector's runtime
+    /// special is then 0 (4 for special 4), and every other runtime special is the
+    /// map's, or 0 for a found secret (9).
     fn validate_specials(&self) -> Result<(), DiagnosticError> {
         let sectors = u32::from_le_bytes(number(self.required("sectors.count")?)?);
         let slots = u64::from_le_bytes(number(self.required("sector_thinkers.slot_count")?)?);
@@ -794,6 +802,14 @@ impl<'a> Diagnostic<'a> {
             return Err(DiagnosticError::Limit);
         }
         let slots = usize::try_from(slots).map_err(|_| DiagnosticError::Limit)?;
+        let map = self.required("map.sectors")?;
+        if map.len() % 26 != 0 || u32::try_from(map.len() / 26) != Ok(sectors) {
+            return Err(DiagnosticError::Structure);
+        }
+        let map_special =
+            |sector: usize| i16::from_le_bytes([map[26 * sector + 22], map[26 * sector + 23]]);
+        let mut claimed = reserve::<bool>(map.len() / 26)?;
+        claimed.resize(map.len() / 26, false);
         let i32field = |name: &str| -> Result<i32, DiagnosticError> {
             Ok(i32::from_le_bytes(number(self.required(name)?)?))
         };
@@ -816,6 +832,12 @@ impl<'a> Diagnostic<'a> {
             if u32::from(sector) >= sectors {
                 return Err(DiagnosticError::Identity);
             }
+            // P_SpawnSpecials spawns one thinker per light sector, of its kind.
+            let claim = &mut claimed[usize::from(sector)];
+            if *claim || light_kind(map_special(usize::from(sector))) != kind.first().copied() {
+                return Err(DiagnosticError::Identity);
+            }
+            *claim = true;
             i32field(&format!("{prefix}.minlight"))?;
             i32field(&format!("{prefix}.maxlight"))?;
             let count = self.field(&format!("{prefix}.count"));
@@ -889,13 +911,59 @@ impl<'a> Diagnostic<'a> {
         if next != slots || actors != self.required("thinker.order")? {
             return Err(DiagnosticError::Identity);
         }
-        for i in 0..sectors {
+        let lights = (0..map.len() / 26)
+            .filter(|&i| light_kind(map_special(i)).is_some())
+            .count();
+        let loaded = slots != 0;
+        if (loaded && slots != lights)
+            || (!loaded && lights != 0 && u64::from_le_bytes(number(self.required("tic")?)?) != 0)
+        {
+            return Err(DiagnosticError::Identity);
+        }
+        for i in 0..map.len() / 26 {
             number::<2>(self.required(&format!("sector.{i}.light"))?)?;
-            number::<2>(self.required(&format!("sector.{i}.special"))?)?;
+            let special =
+                i16::from_le_bytes(number(self.required(&format!("sector.{i}.special"))?)?);
+            let original = map_special(i);
+            let expected = if loaded && light_kind(original).is_some() {
+                special == if original == 4 { 4 } else { 0 }
+            } else {
+                special == original || (original == 9 && special == 0)
+            };
+            if !expected {
+                return Err(DiagnosticError::Identity);
+            }
         }
         let total = i32field("level.total_secrets")?;
         if !(0..=total).contains(&i32field("original_player.0.secret_count")?) {
             return Err(DiagnosticError::Identity);
+        }
+        Ok(())
+    }
+    /// DSIM34 tag 25 against the snapshot: a sky event's line exists in
+    /// `map.linedefs`, and a sky removal names an occupied fireball (it is marked
+    /// for removal in the same tic and retired only by the next traversal).
+    fn validate_sky_event(&self, event: &[u8]) -> Result<(), DiagnosticError> {
+        let line = match event.get(1) {
+            Some(1) if event.len() == 16 => [event[14], event[15]],
+            Some(2) if event.len() == 9 => [event[3], event[4]],
+            _ => return Ok(()),
+        };
+        let linedefs = self.required("map.linedefs")?;
+        if linedefs.len() % 14 != 0 || usize::from(u16::from_le_bytes(line)) >= linedefs.len() / 14
+        {
+            return Err(DiagnosticError::Identity);
+        }
+        if event[1] == 1 {
+            let slot = u32::from_le_bytes(number(&event[2..6])?);
+            let prefix = format!("actor.{slot}");
+            let fireball = OriginalActorType::MT_TROOPSHOT.ordinal().to_le_bytes();
+            if self.field(&format!("{prefix}.occupied")) != Some(&[1])
+                || self.field(&format!("{prefix}.generation")) != Some(&event[6..14])
+                || self.field(&format!("{prefix}.type")) != Some(&fireball)
+            {
+                return Err(DiagnosticError::Identity);
+            }
         }
         Ok(())
     }
@@ -1623,6 +1691,17 @@ fn diagnostic_armor(
         .validate_for(policy)
         .map_err(|_| DiagnosticError::Identity)?;
     Ok(value)
+}
+/// The DSIM34 sector-thinker kind `P_SpawnSpecials` spawns for a map sector
+/// special: 1 flash, 2 strobe, 3 glow, 4 flicker; `None` for every other special.
+fn light_kind(special: i16) -> Option<u8> {
+    match special {
+        1 => Some(1),
+        2 | 3 | 4 | 12 | 13 => Some(2),
+        8 => Some(3),
+        17 => Some(4),
+        _ => None,
+    }
 }
 /// DSIM34 tag 25: 0 secret (u16 sector, i32 count ≥ 1), 1 sky removal (fireball
 /// handle, u16 line), 2 sky shot (u8 reason 0 or 1, u16 line, i32 z).
