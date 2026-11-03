@@ -1212,3 +1212,26 @@ nightly-only and CI only format-checks it, so the campaign is a local step. Run
 measurements alone, with no fuzzing, builds or tests at the same time. Observations
 belong to [the engineering record](validation/M3H7.md). Leak detection is disabled in
 the documented ASan environment (`detect_leaks=0`), not verified.
+
+## Original doors, lifts, floors, switches and the exit (C evidence)
+
+The Stage B C evidence of the
+[M3h8 investigation](M3H8_REFERENCE_INVESTIGATION.md#11-evidence-plan) has its own
+source contract and leaves every historical expectation untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h8_reference.py --check --overflow-check --address-check
+```
+
+The generator compiles the genuine door, plat, floor, switch, use, crossing and
+`P_ChangeSector` bodies over the `doorway`, `hall`, `switchyard`, `lift` (three lift
+ceilings), `floors` and `dense` rooms and checks `tests/reference/m3h8_trace.dref`,
+`m3h8_cases.csv`, the `m3h8_geometry_*.bin` lumps, `m3h8_maps.rs`, the Rust-only
+nine-line lane `m3h8_dense9.bin` and `m3h8_contract.json`. `--overflow-check` and
+`--address-check` rebuild the harness under the sanitizers and assert that each raw trace
+equals the strict one byte for byte; `spechit` keeps its source size of eight, so a ninth
+write would stop the sanitizer build. Add `--cases` to print the per-scenario inventory
+as JSON lines. The DSIM35 projection, the Rust tests, the example, the fuzz target and
+the measurements of this milestone do not exist yet; their commands will be added here
+with them. Leak detection is disabled in the documented ASan environment
+(`detect_leaks=0`), not verified.

@@ -1003,5 +1003,16 @@ below can be revised in review.
   exists.
 
 **Status / next step.** Phase 1 is complete with this note. Step 2 of §12 is done: N1–N8
-are provisionally adopted (end of §14, N1 as option (iii)). Next is step 3, the C evidence
-for the Stage B rooms.
+are provisionally adopted (end of §14, N1 as option (iii)). Step 3 is done: the C
+evidence of §11 (`tools/reference/m3h8_{geometry,cases,reference}.py`, outputs
+`tests/reference/m3h8_*`, [commands](TESTING.md#original-doors-lifts-floors-switches-and-the-exit-c-evidence)),
+30 scenarios over the `doorway`, `hall`, `switchyard`, `lift` (ceilings 192, 118, 112),
+`floors` and `dense` rooms, with the strict and both sanitizer traces byte-identical.
+Differences from the §11 list: under N1 (iii) no two-sided scroller is built, so
+`scroll_spechit_nodir`, `use_scroll_wall_stops_trace` and the scrollers of `dense` are
+replaced by the same bodies on admitted lines (a monster's failed move with a WR 88 line
+in `spechit`, a use stopped by a W1 36 line, eight WR 88 lines); several listed scenarios
+are observed inside a combined one (the contract's per-case inventory names them);
+`exit_then_advance_refused` is Rust-only; the reversed `blazeOpen` door of N5 is
+evidenced (`blaze_reversed`); V′ case (e) is not constructed. Next is step 4, the DSIM35
+projection.

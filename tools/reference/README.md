@@ -465,6 +465,37 @@ the DSIM33 projection of the same rows. See
 [observations](../../docs/validation/M3H7.md). [check_player_specials.py](check_player_specials.py)
 runs the `player_specials` example in debug and release and asserts equal output.
 
+## Doors, lifts, floors, switches and the exit (M3h8)
+
+[m3h8_reference.py](m3h8_reference.py) reuses every compiled M3h7 body, observer and
+controlled input unchanged and adds the genuine `p_doors.c` (`T_VerticalDoor`,
+`EV_DoDoor`, `EV_VerticalDoor`), `p_plats.c` (`T_PlatRaise`, `EV_DoPlat`,
+`P_AddActivePlat`, `P_RemoveActivePlat`), `p_floor.c` (`T_MovePlane`, `T_MoveFloor`,
+`EV_DoFloor`), `p_switch.c` (`P_StartButton`, `P_ChangeSwitchTexture`,
+`P_UseSpecialLine`), `p_spec.c` (`P_CrossSpecialLine` and the `P_Find*` helpers), `p_map.c`
+(`P_ThingHeightClip`, `PIT_ChangeSector`, `P_ChangeSector`, `PTR_UseTraverse`,
+`P_UseLines`), `m_bbox.c` and `G_ExitLevel` bodies, plus three genuine fragments: the use
+block of `P_PlayerThink`, the `BT_USE` statement of `P_DeathThink` and the soundorg and
+blockbox statements of `P_GroupLines`. The `P_TryMove` crossing loop and the `P_Move`
+failure branch, compiled since M3h2, now reach real bodies; `spechit` keeps its source
+size of eight. Declared adapters: sound origins are recorded (sector, button field, mobj or
+global), the switch texture table is a declared pair, `G_DoCompleted` and `G_DoReborn`
+end the case instead of running, and mover allocations are zero-filled (decision N6).
+[m3h8_geometry.py](m3h8_geometry.py) is the M3h7 builder plus optional line flags and the
+list of switch lines; [m3h8_cases.py](m3h8_cases.py) builds the doorway (DR doors closed,
+open and stepped), its one-door hall variant, the switchyard (SR 63 and its tagged door,
+the S1 exit, a plain wall, a DR door used from its back side), the lift at three
+ceilings (riders fit, the last step does not fit, an ordinary step does not fit), the
+floors corridor (W1 36 jump-up and lowering, W1 38, W1 109 sharing its door with a DR
+line) and the dense lane (eight two-sided WR 88 lines in one 2 × 2 window), 30 scenarios
+in all; two-sided scrollers are not built (decision N1 keeps them rejected). The
+Rust-only nine-line lane is written as `m3h8_dense9.bin` and never run in C. New observer
+rows (sector heights, runtime line specials, mover records, `spechit` entries, use and
+crossing calls, plane steps, `P_ChangeSector` outcomes, sector sounds, the exit and the
+reborn request) are documented in the contract's `row_formats`. See
+[investigation](../../docs/M3H8_REFERENCE_INVESTIGATION.md) and
+[commands](../../docs/TESTING.md#original-doors-lifts-floors-switches-and-the-exit-c-evidence).
+
 ## Historical raw-trace loading
 
 Selected large CSV traces now use standard zstd storage. Run frozen C/encoder
