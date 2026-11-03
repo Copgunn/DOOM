@@ -488,8 +488,9 @@ open and stepped), its one-door hall variant, the switchyard (SR 63 and its tagg
 the S1 exit, a plain wall, a DR door used from its back side), the lift at three
 ceilings (riders fit, the last step does not fit, an ordinary step does not fit), the
 floors corridor (W1 36 jump-up and lowering, W1 38, W1 109 sharing its door with a DR
-line) and the dense lane (eight two-sided WR 88 lines in one 2 × 2 window), 30 scenarios
-in all; two-sided scrollers are not built (decision N1 keeps them rejected). The
+line), the dense lane (eight two-sided WR 88 lines in one 2 × 2 window) and the pit (a
+W1 36 target whose only neighbour floor lies below −500), 33 scenarios in all, two of
+them with the controlled between-tic see-state entry `chase_at`; two-sided scrollers are not built (decision N1 keeps them rejected). The
 Rust-only nine-line lane is written as `m3h8_dense9.bin` and never run in C. New observer
 rows (sector heights, runtime line specials, mover records, `spechit` entries, use and
 crossing calls, plane steps, `P_ChangeSector` outcomes, sector sounds, the exit and the

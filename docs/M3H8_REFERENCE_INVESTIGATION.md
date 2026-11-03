@@ -1530,7 +1530,23 @@ variants, buttons as state, the reborn encoding, the built scenarios, the closed
 and the [evidence record](validation/M3H8.md) with the observations so far and
 placeholders for what is pending.
 
-**Next:** the independent review and its fixes (step 18), then the matched timings (16)
-and the coverage-guided and sanitizer fuzz campaigns (17), then the gates, the draft PR
-and its exact-head CI (19). The review moves ahead of the measurements because any fix
-it causes must be in the code that is timed and fuzzed.
+Step 18 is done: an independent review of `f4e38fe` against linuxdoom-1.10 found two
+major issues, one minor and stale comments, each fixed (the findings, fix commits, tests
+and the areas found correct are in the [evidence record](validation/M3H8.md#independent-review)).
+(1) Between-tic operations ran `P_Move` without the runtime line specials, so a
+see-state entry's `A_Chase` skipped crossings and the failure branch (§2.2); both
+between-tic hosts now read through the staged view with line specials. The C harness
+gained one controlled input, `chase_at` (target assignment plus
+`P_SetMobjState(seestate)` between tics, after the inherited damage and attack entry),
+and the scenarios `door_chase_entry` and `lift_chase_entry`. (2) The turbo destination
+now folds from −500 as `P_FindHighestFloorSurrounding` does, at run time and in the §5
+fixpoint and Δ (rule 3 removes only the no-neighbour case); the C room `pit` and
+scenario `floor_turbo_below_500` pin −492; `tools/iwad_counts.py` had the same fold,
+and its committed counts are unchanged after the fix. (3) Rule 10 (§7) rejects a mover
+sector whose blockbox is undefined. The C evidence now has 33 scenarios; every earlier
+scenario's rows and every fixture are unchanged, and the independent DSIM35 goldens were
+regenerated from the C rows.
+
+**Next:** the matched timings (16) and the coverage-guided and sanitizer fuzz campaigns
+(17), then the gates, the draft PR and its exact-head CI (19). The review moved ahead of
+the measurements because its fixes had to be in the code that is timed and fuzzed.

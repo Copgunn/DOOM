@@ -99,10 +99,11 @@ item witness replace the vertical and item witnesses under this policy only, and
 ninth `spechit` write is a refuse-the-tic witness (an M4 fidelity gap like the corner
 jump and the intercepts). Older policies keep their admission, digests and DSIM bytes.
 
-Status on `feat/m3h8-movers`: implementation, the C evidence (30 scenarios), the
+Status on `feat/m3h8-movers`: implementation, the C evidence (33 scenarios), the
 independent DSIM35 projection, the full replay, Rust-only tests, the example, the
-tools, the fuzz target and this documentation are complete; the independent review, the
-matched timings, the fuzz campaigns and the final gates are pending, in that order, and
+tools, the fuzz target, this documentation and the independent review with its fixes
+are complete; the matched timings, the fuzz campaigns and the final gates are pending,
+in that order, and
 the decisions N1–N9a await owner confirmation. This branch stops at owner review; exact
 commits and CI belong to GitHub. See
 [source investigation](M3H8_REFERENCE_INVESTIGATION.md),

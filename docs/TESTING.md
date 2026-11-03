@@ -1246,17 +1246,20 @@ full-byte `m3h8_state_*.bin` fixtures and `m3h8_snapshot_contract.json`, and ass
 the event stream without its tag-26 records equals the DSIM34 projection of the same
 rows. `check_player_movers.py` runs the full Rust replay (the library test
 `movers_replay::full::full_replay_matches_the_c_rows_and_the_independent_dsim35_goldens`)
-in debug and release and asserts that both pass and print the same summary: all 30
+in debug and release and asserts that both pass and print the same summary: all 33
 scenarios through their last op, every C row the replay reads (heights, line specials,
 use latch, exit and player state, crossings, uses, blocked moves, the thinker list
-with every mover record, the button slots), every PBE1 event frame, and at all 1,514
+with every mover record, the button slots), every PBE1 event frame, and at all 1,559
 captures the independent digest, size and field count, the 13 fixtures byte for byte
 and the `Diagnostic::decode_movers` round trip. It is a library test because the
-replay's declared damage input uses the crate-internal checked transaction. It also runs
+replay's declared damage input uses the crate-internal checked transaction. The
+replay applies the declared between-tic inputs before each op's tic: the damage, the
+attack entry and the see-state entry (`chase_at`: target assignment plus
+`S_POSS_RUN1`, whose `A_Chase` runs at once). It also runs
 the asserted example in debug and release and asserts equal output
 (`--example-only` runs the example alone, the CI step on the hosts that skip the
-replay). The example replays, through the public API alone, the 23 scenarios whose
-declared inputs are public (all but the five with the controlled 200 health and the
+replay). The example replays, through the public API alone, the 24 scenarios whose
+declared inputs are public (all but the seven with the controlled 200 health and the
 two whose controlled damage kills, both crate-internal inputs of the replay),
 comparing every op's sector heights and mover work (`T_MovePlane` steps,
 `P_ChangeSector` calls, `PIT_ChangeSector` clips, crossings, uses, blocked moves,
@@ -1275,7 +1278,10 @@ Rust-only: rejection, with the map untouched and the unpatched room admitted, of
 every deferred line family and every other special value on either side, the
 two-sided scroller (N1 iii), a one-sided DR line, a shared family, an inverting door,
 a reachable height of 513, 17 reusable switches, 9 special lines in a window, a sky
-mover and a missing switch texture on the committed rooms, and of a mover without a
+mover, a missing switch texture and a mover sector without a defined blockbox (rule
+10, through `mover_bounds`) on the committed rooms; the turbo destination folded from
+−500 (`pit` room, admission and runtime); the between-tic see-state entries that use a
+DR line from a blocked move and cross a WR 88 line; and of a mover without a
 two-sided neighbour, a self-referencing door line, 31 plat sectors and 65 scrollers
 on synthetic strip rooms (`heights_room`); a tic refused, by a test-only fault site,
 after a plane step's write and `P_ChangeSector` (doors, lifts, floors) or after a
@@ -1285,7 +1291,8 @@ same tic then running as unfaulted; the exit and reborn refusals with any comman
 1,200-tic soaks with four seeds on the doorway, switchyard, lift and floors rooms with
 `BT_USE`, asserting V′ and the item witness after every tic, `step == advance` every
 10th tic and the DSIM35 `decode_movers` round trip every 50th. The fuzz target admits
-one of the 27 distinct committed scenario starts and applies bounded operations
+one of 27 distinct scenario starts of the first 30 committed scenarios (the three
+added by the independent review are not fuzz starts) and applies bounded operations
 (commands with `BT_USE`, damage, retargeting, removal, pause, pushes) under the M3h6
 properties plus V′ (from the public `mover_bounds`), the relaxed item witness, the
 reach of every sector height, the transaction (a refused operation keeps every byte),
