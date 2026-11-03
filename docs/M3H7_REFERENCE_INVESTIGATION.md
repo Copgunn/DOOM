@@ -919,3 +919,10 @@ it; `player_specials_tests` replays all 17 committed scenarios against the C row
 equal to `advance` at every tic and no scenario refused, plus Rust-only rejection,
 load-order, refused-tic and identity tests. No STATE_FORMAT error was found.
 
+Phase 2 step 8 (tests, example, tools, fuzz, CI): the `player_specials` example replays
+every scenario and asserts the committed headline counts (`--measure` and `--admit`
+on the M3h6 pattern), with `check_player_specials.py`, `measure_specials.py --check`,
+the fuzz target `player_specials` with `tools/seed_player_specials_fuzz.py`, the
+1,200-tic `pools` and `sky` soaks on four seeds, the Rust-only sky-shot boundary
+`z == front ceiling` (fails under the `>=` mutation), the A7 slot and visit budget test
+and three CI steps; observations are in [the evidence record](validation/M3H7.md).
