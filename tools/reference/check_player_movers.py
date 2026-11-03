@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assert the full M3h8 movers replay in debug and release and the equality of its output.
+"""Assert the M3h8 movers replay and example in debug and release and the equality of their output.
 
 The replay (crates/doom-sim/src/movers_replay.rs, module `full`) drives every committed
 C scenario through the Rust movers policy and compares, at every op, the C rows (sector
@@ -8,7 +8,12 @@ uses, blocked moves, the thinker list with every mover record, the buttonlist) a
 independent DSIM35 goldens (the PBE1 event frame, and at every capture the digest, size,
 field count, full bytes of the 13 fixtures and the v35 reader's round trip). It needs
 crate-internal declared inputs (the controlled damage transaction), so it runs as a
-library test rather than an example."""
+library test rather than an example.
+
+The asserted example `player_movers` replays, through the public API alone, the 23
+scenarios whose declared inputs are public (heights, mover work and line specials
+against the C rows) and asserts the C rows' headline counts; its output must be equal
+in debug and release."""
 import subprocess
 from pathlib import Path
 root=Path(__file__).resolve().parents[2]
@@ -19,7 +24,12 @@ def run(release):
     lines=[l for l in out.splitlines()if l.startswith('player_movers full replay:')]
     assert len(lines)==1 and '1 passed' in out,out
     return lines[0]
+def example(release):
+    return subprocess.check_output(['cargo','run','-q','-p','doom-sim','--example','player_movers','--locked',*(['--release']if release else[])],cwd=root,text=True)
 debug=run(False);release=run(True)
 assert debug==release,(debug,release)
 print(debug)
+debug=example(False);release=example(True)
+assert debug==release,(debug,release)
+print(debug.strip())
 print('player_movers debug/release assertions and equality passed')
