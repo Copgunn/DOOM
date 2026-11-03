@@ -1223,6 +1223,11 @@ source contract and leaves every historical expectation untouched:
 ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h8_reference.py --check --overflow-check --address-check
 python3 tools/reference/m3h8_snapshot_goldens.py --check
 python3 tools/reference/check_player_movers.py
+cargo test -p doom-sim player_movers
+cargo run -p doom-sim --example player_movers --locked
+python3 tools/measure_movers.py --check
+python3 tools/seed_player_movers_fuzz.py /tmp/doom-movers-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_movers /tmp/doom-movers-corpus --sanitizer address -- -runs=0 -max_len=290 -timeout=15 -rss_limit_mb=1024
 ```
 
 The generator compiles the genuine door, plat, floor, switch, use, crossing and
@@ -1247,7 +1252,44 @@ use latch, exit and player state, crossings, uses, blocked moves, the thinker li
 with every mover record, the button slots), every PBE1 event frame, and at all 1,514
 captures the independent digest, size and field count, the 13 fixtures byte for byte
 and the `Diagnostic::decode_movers` round trip. It is a library test because the
-replay's declared damage input uses the crate-internal checked transaction. The
-example, the fuzz target and the measurements of this milestone do not exist yet;
-their commands will be added here with them. Leak detection is disabled in the documented ASan environment
+replay's declared damage input uses the crate-internal checked transaction. It also runs
+the asserted example in debug and release and asserts equal output
+(`--example-only` runs the example alone, the CI step on the hosts that skip the
+replay). The example replays, through the public API alone, the 23 scenarios whose
+declared inputs are public (all but the five with the controlled 200 health and the
+two whose controlled damage kills, both crate-internal inputs of the replay),
+comparing every op's sector heights and mover work (`T_MovePlane` steps,
+`P_ChangeSector` calls, `PIT_ChangeSector` clips, crossings, uses, blocked moves,
+exits) with the C rows and the final runtime line specials, and asserts the C rows'
+headline counts; `--measure doorway_patrol|lift_cycle|switch_cycle
+advance|step|capture` times a 1,200-tic patrol with `BT_USE` in the doorway room with
+monsters, the committed `lift_last_step_short` timeline or the committed
+`switch_sr_door` timeline and prints the per-tic `P_ChangeSector` work recorded from an
+unmeasured run, and `--admit doorway|switchyard|lift|floors|dense|pools` times the
+movers admission (with the fixpoint and the window rule; for the M3h7 `pools` room the
+specials-policy admission too); `measure_movers.py` drives both with the native
+`wait4` launcher (`--check` is the CI smoke).
+
+The `player_movers` tests (`player_movers_tests`, `player_movers_soak_tests`) are
+Rust-only: rejection, with the map untouched and the unpatched room admitted, of
+every deferred line family and every other special value on either side, the
+two-sided scroller (N1 iii), a one-sided DR line, a shared family, an inverting door,
+a reachable height of 513, 17 reusable switches, 9 special lines in a window, a sky
+mover and a missing switch texture on the committed rooms, and of a mover without a
+two-sided neighbour, a self-referencing door line, 31 plat sectors and 65 scrollers
+on synthetic strip rooms (`heights_room`); a tic refused, by a test-only fault site,
+after a plane step's write and `P_ChangeSector` (doors, lifts, floors) or after a
+use's line action, and at the `SpecialCross` witness, with every byte, the RNG, the
+sector, line-special and button tables, the thinkers and the events unchanged and the
+same tic then running as unfaulted; the exit and reborn refusals with any command; and
+1,200-tic soaks with four seeds on the doorway, switchyard, lift and floors rooms with
+`BT_USE`, asserting V′ and the item witness after every tic, `step == advance` every
+10th tic and the DSIM35 `decode_movers` round trip every 50th. The fuzz target admits
+one of the 27 distinct committed scenario starts and applies bounded operations
+(commands with `BT_USE`, damage, retargeting, removal, pause, pushes) under the M3h6
+properties plus V′ (from the public `mover_bounds`), the relaxed item witness, the
+reach of every sector height, the transaction (a refused operation keeps every byte),
+the exit and reborn refusals and the DSIM35 round trip. Run the fuzz commands from
+`fuzz/` on a fresh copy of the seeds outside the working tree and delete the corpus
+afterwards; `-runs=0` replays the seeds only. Leak detection is disabled in the documented ASan environment
 (`detect_leaks=0`), not verified.

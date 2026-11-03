@@ -1443,5 +1443,44 @@ scenarios), which the partial replay had not compared; and the independent encod
 a button's restore sound (sub-tag 12, origin 2) before the frame's Specials phase record,
 where the frozen DSIM34 chain appends that record after the thinker events, while
 `P_UpdateSpecials` runs in the Specials phase; the encoder now places it after the record
-(three events in cases 8, 10 and 11; their captures' digests changed with them). Next is
-step 14.
+(three events in cases 8, 10 and 11; their captures' digests changed with them).
+
+Step 14 is done ([commands](TESTING.md#original-doors-lifts-floors-switches-and-the-exit-c-evidence)).
+Rust-only tests: every §7 rule now has a rejection test with the map untouched and the
+unpatched room admitted, including every deferred line family (crushers, locked doors,
+teleports, stairs, donuts, `raiseToTexture`, perpetual and stopping plats, light and
+gun lines, the other doors, plats, floors, ceilings and exits) and every other special
+value in `-1..=300` on a two-sided and a one-sided line, the two-sided scroller (N1
+iii) and a reachable height of exactly 513. The three rules the step-6 note left
+without a fixture are exercised on synthetic strip rooms built by the M3h4 test
+builder (`heights_room`, extended with line specials and tags, sector tags and an
+interior self-referencing line), through the full admission: a 109, 36, 38 or 88
+target without a two-sided neighbour, a self-referencing two-sided line in a door
+sector (admitted in an unmoved sector and in a floor target), 31 plat sectors (30
+load), and 65 one-sided scrollers (64 load); no rule is only unit-tested. A test-only
+fault site (`planes::inject_fault`, `cfg(test)` only) refuses a tic after a plane
+step's write and its `P_ChangeSector`, or after a use's line action: at the first
+and the last visit of sampled ops of eleven door, lift and floor scenarios and of
+every use op of nine use scenarios, the refused tic leaves the capture bytes, the RNG,
+the sector, line-special and button tables, the exit flag, the player, the thinker
+store and order and the events unchanged, and the same tic then runs exactly as
+unfaulted; the same holds at the `SpecialCross` witness and for the exit and reborn
+refusals with any command. Soaks: 1,200 tics with four seeds on the doorway (four
+populations), switchyard, lift and four floors rooms with `BT_USE`, asserting V′ and
+the item witness every tic, `step == advance` every 10th and the DSIM35 round trip
+every 50th. The asserted example `player_movers` (public API) replays the 23 scenarios
+whose declared inputs are public against the C rows (every op's heights and mover
+work, the final line specials); `check_player_movers.py` asserts it in debug and
+release beside the full replay. `measure_movers.py` has `--check` and the workloads
+`doorway_patrol`, `lift_cycle` and `switch_cycle` with the per-tic `P_ChangeSector`
+work, and the admission per room (step 16 records the timings). The public
+`mover_bounds` (the admission's `R_min`, `R_max`, `Δ` and `M`) and
+`special_window_lines` serve the fuzz target `player_movers` (27 committed starts,
+commands with `BT_USE`; V′, the item witness, the reach, the transaction, the exit
+and reborn refusals and the DSIM35 round trip), with seeds from
+`tools/seed_player_movers_fuzz.py` (4,428). Observed so far: target compiled, and a
+seed replay only (`-runs=0`, the default `cargo fuzz run` build, which is
+AddressSanitizer-instrumented, leak detection at its default) of all 4,428 seeds plus
+the empty input with no finding; the coverage-guided and sanitizer campaigns are step 17.
+CI runs the example on the hosts that skip the replay and the measurement smoke on
+Linux. Next is step 15.
