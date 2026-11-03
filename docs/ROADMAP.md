@@ -240,6 +240,9 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
+M3h7 (doors, lifts, line and sector specials, sky): investigation complete, Phase 2 awaits
+owner decisions; see the [investigation](M3H7_REFERENCE_INVESTIGATION.md).
+
 Prioritize roster scale: derive monsters, pickups, drops, slots, fireballs and the
 sight budget from the loaded THINGs (E1M1 on UV needs 29 monsters and 53 pickups). Then
 the E1M1 feature list in dependency order: solid and non-solid decorations and barrels,
