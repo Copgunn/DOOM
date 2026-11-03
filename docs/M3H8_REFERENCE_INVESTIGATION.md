@@ -1550,7 +1550,9 @@ regenerated from the C rows.
 
 **Next:** the coverage-guided and sanitizer fuzz campaigns (17), then the gates, the
 draft PR and its exact-head CI (19). The matched timings (16) are recorded in the
-[evidence record](validation/M3H8.md#matched-performance), including an unresolved
-per-tic slowdown of the older player-and-monster policies (digests unchanged). The review
+[evidence record](validation/M3H8.md#matched-performance): the first run's per-tic
+slowdown of the older player-and-monster policies was traced to code generation around
+the movers checks and removed (digests unchanged), and the run after the fixes is recorded
+there. The review
 moved ahead of the measurements because its fixes had to be in the code that is timed and
 fuzzed.
