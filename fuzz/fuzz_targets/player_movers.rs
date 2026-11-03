@@ -369,8 +369,12 @@ fuzz_target!(|data: &[u8]| {
                 {
                     ended = Some(SimError::LevelExited);
                 }
+                // P_DeathThink sees the command only on an unpaused tic (P_Ticker
+                // returns first while paused) and only in slot One, the body's slot.
                 if s.original_player(PlayerSlot::One).unwrap().state != PlayerBodyState::Live
                     && command.buttons & BT_USE != 0
+                    && b[1] % 4 == 0
+                    && !paused
                     && !live
                 {
                     ended = Some(SimError::PlayerReborn);

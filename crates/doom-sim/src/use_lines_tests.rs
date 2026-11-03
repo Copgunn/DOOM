@@ -147,6 +147,32 @@ fn a_dead_use_requests_a_reborn_and_refuses_the_next_tic() {
     assert_eq!(s.snapshot(), snapshot);
 }
 
+/// A paused tic requests no reborn: P_Ticker returns before P_PlayerThink while
+/// `paused` (p_tick.c), so the dead player's `BT_USE` reaches `P_DeathThink` only on
+/// the first unpaused tic (found by the M3h8 coverage-guided fuzz campaign, whose
+/// target inferred a reborn from a paused tic).
+#[test]
+fn a_dead_use_while_paused_requests_no_reborn() {
+    let c = case("dead_use_reborn");
+    let (mut s, _) = replay(&c, c.tics - 1);
+    let use_command = command(&c, c.tics);
+    assert_eq!(use_command[0].buttons, BT_USE);
+    let p = s.original_player.as_ref().unwrap();
+    assert!(!p.reborn && p.state == PlayerBodyState::Dead);
+    s.set_paused(true);
+    let (snapshot, tic) = (s.snapshot(), s.tic());
+    for _ in 0..3 {
+        assert_eq!(s.advance(use_command), Ok(()));
+        assert_eq!(s.step(use_command).map(|_| ()), Ok(()));
+    }
+    assert_eq!((s.snapshot(), s.tic()), (snapshot, tic));
+    assert!(!s.original_player.as_ref().unwrap().reborn);
+    s.set_paused(false);
+    assert_eq!(s.advance(use_command), Ok(()));
+    assert!(s.original_player.as_ref().unwrap().reborn);
+    assert_eq!(s.advance(use_command), Err(SimError::PlayerReborn));
+}
+
 /// SR 63 while its door is active creates nothing: no switch change, no sound, no
 /// button; a reusable switch's first use plays its sound globally, then starts its
 /// button in slot 0, which counts down 35 tics and restores with `sfx_swtchn` at the
