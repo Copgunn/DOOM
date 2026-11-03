@@ -137,6 +137,9 @@ jobs:
       - name: Original doors, lifts, floors, switches and exit full replay debug/release comparison
         if: runner.os == 'Linux'
         run: python3 tools/reference/check_player_movers.py
+      - name: Original doors, lifts, floors, switches and exit example debug/release comparison
+        if: runner.os != 'Linux'
+        run: python3 tools/reference/check_player_movers.py --example-only
       - name: Original bonus sustained combat debug/release comparison
         run: python3 tools/reference/check_player_bonuses.py
       - name: Original armor sustained combat debug/release comparison
@@ -194,6 +197,9 @@ jobs:
       - name: Sky and static-specials measurement smoke
         if: runner.os == 'Linux'
         run: python3 tools/measure_specials.py --check
+      - name: Doors, lifts, floors, switches and exit measurement smoke
+        if: runner.os == 'Linux'
+        run: python3 tools/measure_movers.py --check
       - name: Advisory autonomous melee allocation smoke
         if: runner.os == 'Linux'
         run: python3 tools/measure_player_demon_melee.py --smoke

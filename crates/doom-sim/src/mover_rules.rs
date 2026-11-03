@@ -143,6 +143,34 @@ pub(crate) struct MoverAdmission {
     pub delta: i32,
 }
 
+/// The bounds the movers admission derives from a map (M3h8 note §5), public so
+/// that external checks (the fuzz target) can evaluate the vertical invariant V′
+/// (note §4.1) on their own: `reach` is `[R_min, R_max]` and `delta` is `Δ`, the
+/// largest one-tic sink of a fitting thing, both in map units; `movers` is the
+/// number of mover sectors `M`.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct MoverBounds {
+    /// The smallest and largest reachable floor or ceiling height.
+    pub reach: [i32; 2],
+    /// The largest one-tic sink of a fitting thing.
+    pub delta: i32,
+    /// The number of sectors an admitted line can move.
+    pub movers: usize,
+}
+/// Runs the movers policy's line and sector load rules on `map` (the Stage A sector
+/// special and light rules, then M3h8 note §7: the function
+/// `Simulation::original_player_movers_map` runs after its geometry rules) and
+/// returns the derived bounds, or the field-less error of the first failing rule.
+/// Admission only; no simulation is built, and the geometry rules are not run.
+pub fn mover_bounds(map: &Map) -> Result<MoverBounds, SimError> {
+    let admission = validate_movers(map)?;
+    Ok(MoverBounds {
+        reach: admission.reach,
+        delta: admission.delta,
+        movers: admission.movers,
+    })
+}
+
 /// `getNextSector` (p_spec.c:251–261) of `line` seen from `sector`: `None` without
 /// `ML_TWOSIDED`; the back sector when `sector` is the front (itself for a line with
 /// the sector on both sides), else the front.

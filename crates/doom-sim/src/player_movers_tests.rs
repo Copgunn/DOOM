@@ -84,6 +84,16 @@ fn movers_admit_every_committed_room_and_the_specials_policy_rejects_them() {
         let sim = movers(&lumps).unwrap_or_else(|e| panic!("room {index}: {e:?}"));
         // The runtime line specials start as the map's.
         let map = lumps.map();
+        // The public bounds are the admission's.
+        let admission = sim.movers.as_ref().unwrap();
+        assert_eq!(
+            crate::mover_bounds(&map),
+            Ok(crate::MoverBounds {
+                reach: admission.reach,
+                delta: admission.delta,
+                movers: admission.movers,
+            })
+        );
         assert_eq!(
             sim.line_specials,
             map.linedefs().iter().map(|l| l.special).collect::<Vec<_>>()

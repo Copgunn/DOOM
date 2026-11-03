@@ -13,8 +13,10 @@ library test rather than an example.
 The asserted example `player_movers` replays, through the public API alone, the 23
 scenarios whose declared inputs are public (heights, mover work and line specials
 against the C rows) and asserts the C rows' headline counts; its output must be equal
-in debug and release."""
+in debug and release. `--example-only` checks the example alone (the CI step of the
+hosts that do not run the replay)."""
 import subprocess
+import sys
 from pathlib import Path
 root=Path(__file__).resolve().parents[2]
 TEST='movers_replay::full::full_replay_matches_the_c_rows_and_the_independent_dsim35_goldens'
@@ -26,9 +28,10 @@ def run(release):
     return lines[0]
 def example(release):
     return subprocess.check_output(['cargo','run','-q','-p','doom-sim','--example','player_movers','--locked',*(['--release']if release else[])],cwd=root,text=True)
-debug=run(False);release=run(True)
-assert debug==release,(debug,release)
-print(debug)
+if '--example-only' not in sys.argv[1:]:
+    debug=run(False);release=run(True)
+    assert debug==release,(debug,release)
+    print(debug)
 debug=example(False);release=example(True)
 assert debug==release,(debug,release)
 print(debug.strip())
