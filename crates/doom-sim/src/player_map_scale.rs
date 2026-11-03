@@ -130,6 +130,11 @@ pub enum MapScaleError {
     /// array (undefined): the tic is refused and the state before it is kept.
     /// Unreachable on admitted maps (rule 6).
     SpecialCross,
+    /// Under the movers policy, a switch line (special 11 or 63) whose front side
+    /// carries no episode-1 switch texture in its upper, lower or middle texture, so
+    /// `P_ChangeSwitchTexture` would find nothing in `switchlist` (no texture
+    /// change, no sound, no button; M3h8 note §7 rule 9, decision N9a).
+    SwitchTexture,
 }
 impl fmt::Display for MapScaleError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

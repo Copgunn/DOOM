@@ -17,8 +17,26 @@ pub(crate) fn options() -> MapContextOptions {
     }
 }
 /// A committed M3h8 room: 0–3 `doorway`, 4–5 `hall`, 6 `switchyard`, 7–12 `lift`,
-/// 13–16 `floors`, 17–18 `dense`.
+/// 13–16 `floors`, 17–18 `dense`, as the C harness runs it: its declared adapter
+/// installs the switch texture on the front middle texture of every 11/63 line
+/// (`switch_world`, m3h8_reference.py), which the committed lumps do not name; the
+/// Rust side writes the episode-1 name `SW1COMM` there (§7 rule 9). Everything
+/// else is the committed bytes.
 pub(crate) fn room(index: usize) -> Lumps {
+    let mut lumps = committed_room(index);
+    let lines = lump(&mut lumps, "LINEDEFS").clone();
+    for line in lines.chunks_exact(14) {
+        let special = i16::from_le_bytes([line[6], line[7]]);
+        if special == mover_rules::LINE_EXIT || special == mover_rules::LINE_DOOR_SR {
+            let front = usize::from(u16::from_le_bytes([line[10], line[11]]));
+            lump(&mut lumps, "SIDEDEFS")[30 * front + 20..30 * front + 28]
+                .copy_from_slice(b"SW1COMM\0");
+        }
+    }
+    lumps
+}
+/// The committed room bytes, without the declared switch textures.
+pub(crate) fn committed_room(index: usize) -> Lumps {
     Lumps::parse(maps::MAP_BYTES[index])
 }
 fn lump<'a>(lumps: &'a mut Lumps, name: &str) -> &'a mut Vec<u8> {
@@ -77,8 +95,8 @@ fn movers_policy_identity_is_wire_19_with_its_own_context() {
 
 #[test]
 fn movers_admit_every_committed_room_and_the_specials_policy_rejects_them() {
-    for (index, bytes) in maps::MAP_BYTES.iter().enumerate() {
-        let lumps = Lumps::parse(bytes);
+    for index in 0..maps::MAP_BYTES.len() {
+        let lumps = room(index);
         let sim = movers(&lumps).unwrap_or_else(|e| panic!("room {index}: {e:?}"));
         // The runtime line specials start as the map's.
         let map = lumps.map();
@@ -230,9 +248,11 @@ fn movers_reject_seventeen_reusable_switches() {
     for &line in &walls[..15] {
         set_special(&mut lumps, line, 63);
         set_tag(&mut lumps, line, 1);
+        set_front_texture(&mut lumps, line, 2, b"SW1COMM\0");
     }
     movers(&lumps).unwrap();
     set_special(&mut lumps, walls[15], 63);
+    set_front_texture(&mut lumps, walls[15], 2, b"SW1COMM\0");
     rejects(
         movers(&lumps),
         SimError::MapScale(MapScaleError::MoverCount),
@@ -278,4 +298,101 @@ fn movers_evaluate_tag_zero_on_every_untagged_sector() {
         movers(&lumps),
         SimError::MapScale(MapScaleError::MoverFamily),
     );
+}
+
+fn set_front_texture(lumps: &mut Lumps, line: usize, part: usize, name: &[u8; 8]) {
+    let front = usize::from(line_field(lumps, line, 10));
+    lump(lumps, "SIDEDEFS")[30 * front + 4 + 8 * part..30 * front + 12 + 8 * part]
+        .copy_from_slice(name);
+}
+
+/// Rule 9 (decision N9a): the committed switchyard names no texture (its sides are
+/// `-`, `-`, `TESTWALL`) and is rejected as it stands; with the C harness's
+/// declared switch texture on the front middle texture of its S1 11 and SR 63 lines
+/// it is admitted. An episode-1 name in any one of the three textures, in any ASCII
+/// case and in either column (`SW1`, `SW2`), admits; an episode-2 name (absent from
+/// the shareware `switchlist`), a near miss or a `-` name rejects with
+/// `MapScaleError::SwitchTexture`, before any simulation exists. A DR line (1)
+/// needs no switch texture (`EV_VerticalDoor` never calls `P_ChangeSwitchTexture`).
+#[test]
+fn movers_reject_a_switch_line_without_an_episode_one_switch_texture() {
+    let switch = SimError::MapScale(MapScaleError::SwitchTexture);
+    rejects(movers(&committed_room(6)), switch);
+    movers(&room(6)).unwrap();
+    // Lines 1 (SR 63) and 10 (S1 11) of the switchyard.
+    for line in [1, 10] {
+        let other = 11 - line;
+        for (part, name, admitted) in [
+            (0, b"SW1BRCOM", true),
+            (1, b"sw2strtn", true),
+            (2, b"Sw1Exit\0", true),
+            (2, b"SW1BLUE\0", false),
+            (2, b"SW1COMMX", false),
+            (0, b"-SW1COMM", false),
+            (0, b"SW1COM\0\0", false),
+        ] {
+            let mut lumps = committed_room(6);
+            set_front_texture(&mut lumps, other, 2, b"SW1COMM\0");
+            set_front_texture(&mut lumps, line, part, name);
+            let map = lumps.map();
+            let before = map.clone();
+            let result = Simulation::original_player_movers_map(map.clone(), options());
+            if admitted {
+                assert!(result.is_ok(), "{line} {part} {name:?}");
+            } else {
+                rejects(result, switch);
+            }
+            assert_eq!(map, before);
+        }
+    }
+    // The DR doors of the switchyard keep their plain textures and load.
+    let lumps = room(6);
+    let map = lumps.map();
+    assert!(
+        map.linedefs()
+            .iter()
+            .any(|l| l.special == mover_rules::LINE_DOOR_DR)
+    );
+}
+
+/// `P_ChangeSwitchTexture` scans `switchlist` in slot order and tests top, middle,
+/// bottom at each slot (p_switch.c:224–262): the first slot any texture matches
+/// wins, so a later slot on the top loses to an earlier one on the bottom; the
+/// partner of every episode-1 slot is in the same prefix, so a used switch stays
+/// found. The C harness's switch (middle only) matches its middle texture.
+#[test]
+fn the_switch_match_follows_the_source_scan_order() {
+    let name = |b: &[u8]| {
+        let mut n = [0u8; 8];
+        n[..b.len()].copy_from_slice(b);
+        doom_types::LumpName::from_bytes(n)
+    };
+    let dash = name(b"-");
+    // [upper, lower, middle].
+    assert_eq!(
+        mover_rules::switch_match(&[dash, dash, name(b"SW1COMM")]),
+        Some((10, 1))
+    );
+    assert_eq!(
+        mover_rules::switch_match(&[name(b"SW1STRTN"), name(b"SW1BRCOM"), dash]),
+        Some((0, 2))
+    );
+    assert_eq!(
+        mover_rules::switch_match(&[name(b"SW2BRCOM"), dash, name(b"SW1BRCOM")]),
+        Some((0, 1))
+    );
+    assert_eq!(
+        mover_rules::switch_match(&[name(b"SW1BRCOM"), dash, name(b"SW1BRCOM")]),
+        Some((0, 0))
+    );
+    assert_eq!(
+        mover_rules::switch_match(&[dash, dash, name(b"TESTWALL")]),
+        None
+    );
+    for (slot, n) in mover_rules::EPISODE1_SWITCHES.iter().flatten().enumerate() {
+        assert_eq!(
+            mover_rules::switch_match(&[dash, dash, name(n)]),
+            Some((slot, 1))
+        );
+    }
 }

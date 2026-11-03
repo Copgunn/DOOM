@@ -4,7 +4,6 @@
 //! (`ML`), use latch, player state and exit (`MZ`) and the crossings (`MX`/`MY`) are
 //! compared with the C rows. Step 13 builds the full replay with every row, DSIM35
 //! bytes and the independent captures. Expected values come only from the C rows.
-use crate::diagonal_room::Lumps;
 use crate::identity::OriginalState;
 use crate::*;
 use std::{collections::BTreeMap, sync::OnceLock};
@@ -13,9 +12,6 @@ use std::{collections::BTreeMap, sync::OnceLock};
 #[allow(clippy::duplicate_mod)]
 #[path = "../../../tests/support/evidence_pack.rs"]
 mod packed;
-mod maps {
-    include!("../../../tests/reference/m3h8_maps.rs");
-}
 
 type Rows = BTreeMap<(usize, usize), Vec<(String, Vec<i64>)>>;
 /// Every trace row keyed by (case, op).
@@ -126,7 +122,8 @@ pub(crate) fn command(c: &Case, op: usize) -> [TicCommand; 4] {
 /// The C driver's setup: admission, THINGs, the player body, weapons, then
 /// `P_SpawnSpecials`, as in the M3h7 harness.
 pub(crate) fn setup(c: &Case) -> (Simulation, ActorId, Vec<ActorId>) {
-    setup_map(c, Lumps::parse(maps::MAP_BYTES[c.map]).map())
+    // The committed room with the C harness's declared switch textures.
+    setup_map(c, crate::player_movers_tests::room(c.map).map())
 }
 pub(crate) fn setup_map(c: &Case, map: doom_map::Map) -> (Simulation, ActorId, Vec<ActorId>) {
     let mut s = Simulation::original_player_movers_map(

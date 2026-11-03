@@ -65,6 +65,70 @@ impl Kinds {
     }
 }
 
+/// The episode-1 entries of `alphSwitchList` (p_switch.c:51–69), both columns, in
+/// table order: the first 38 `switchlist` slots `P_InitSwitchList` builds in every
+/// game mode (p_switch.c:107–148 keeps `episode <= 1, 2 or 3` in table order).
+pub(crate) const EPISODE1_SWITCHES: [[&[u8]; 2]; 19] = [
+    [b"SW1BRCOM", b"SW2BRCOM"],
+    [b"SW1BRN1", b"SW2BRN1"],
+    [b"SW1BRN2", b"SW2BRN2"],
+    [b"SW1BRNGN", b"SW2BRNGN"],
+    [b"SW1BROWN", b"SW2BROWN"],
+    [b"SW1COMM", b"SW2COMM"],
+    [b"SW1COMP", b"SW2COMP"],
+    [b"SW1DIRT", b"SW2DIRT"],
+    [b"SW1EXIT", b"SW2EXIT"],
+    [b"SW1GRAY", b"SW2GRAY"],
+    [b"SW1GRAY1", b"SW2GRAY1"],
+    [b"SW1METAL", b"SW2METAL"],
+    [b"SW1PIPE", b"SW2PIPE"],
+    [b"SW1SLAD", b"SW2SLAD"],
+    [b"SW1STARG", b"SW2STARG"],
+    [b"SW1STON1", b"SW2STON1"],
+    [b"SW1STON2", b"SW2STON2"],
+    [b"SW1STONE", b"SW2STONE"],
+    [b"SW1STRTN", b"SW2STRTN"],
+];
+/// Whether a sidedef texture name resolves to the same texture as `candidate`:
+/// `R_CheckTextureNumForName` (r_data.c:696–710) maps a name starting with `-` to
+/// texture 0 and otherwise compares with `strncasecmp(.., 8)` (ASCII case ignored,
+/// stopping at the first NUL or after eight characters).
+fn same_texture(name: &doom_types::LumpName, candidate: &[u8]) -> bool {
+    let name = name.as_bytes();
+    if name[0] == b'-' {
+        return false;
+    }
+    for (k, &a) in name.iter().enumerate() {
+        let b = candidate.get(k).copied().unwrap_or(0);
+        if !a.eq_ignore_ascii_case(&b) {
+            return false;
+        }
+        if a == 0 {
+            return true;
+        }
+    }
+    true
+}
+/// The `switchlist` slot `P_ChangeSwitchTexture` (p_switch.c:224–262) matches for a
+/// front side's `[upper, lower, middle]` textures, restricted to the episode-1
+/// prefix: slots in index order, each tested against the top, then the middle,
+/// then the bottom texture. `Some((slot, part))` with `part` 0 top, 1 middle,
+/// 2 bottom (`bwhere_e`). The first match is unique and the same in every game
+/// mode, since the episode-1 slots precede every other.
+pub(crate) fn switch_match(textures: &[doom_types::LumpName; 3]) -> Option<(usize, u8)> {
+    let [upper, lower, middle] = textures;
+    EPISODE1_SWITCHES
+        .iter()
+        .flatten()
+        .enumerate()
+        .find_map(|(slot, name)| {
+            [(upper, 0), (middle, 1), (lower, 2)]
+                .into_iter()
+                .find(|(texture, _)| same_texture(texture, name))
+                .map(|(_, part)| (slot, part))
+        })
+}
+
 /// What the movers admission derived from the loaded map; immutable, never
 /// canonical state.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -125,7 +189,9 @@ pub(crate) fn tagged(map: &Map, tag: i16) -> impl Iterator<Item = usize> + '_ {
 ///    own BLOCKMAP cells ([`MapScaleError::SpecialWindow`]);
 /// 7. no crushers (none is in rule 1's set);
 /// 8. no mover sector has an `F_SKY1` ceiling ([`MapScaleError::SkyMover`],
-///    decision N4).
+///    decision N4);
+/// 9. every switch line (11, 63) has an episode-1 switch texture on its front side
+///    ([`MapScaleError::SwitchTexture`], decision N9a, [`switch_match`]).
 pub(crate) fn validate_movers(map: &Map) -> Result<MoverAdmission, SimError> {
     use crate::sector_thinkers::{MAX_LINE_ANIMS, SCROLLING_WALL};
     crate::demon_expanded_map::validate_sector_specials(map)?;
@@ -134,6 +200,17 @@ pub(crate) fn validate_movers(map: &Map) -> Result<MoverAdmission, SimError> {
     let (mut scrollers, mut switches) = (0, 0);
     for line in map.linedefs() {
         let back = line.sides[1].map(|s| usize::from(map.sidedefs()[usize::from(s)].sector));
+        // Rule 9: every switch line finds its front texture in `switchlist`.
+        if matches!(line.special, LINE_EXIT | LINE_DOOR_SR) {
+            let front = line.sides[0].ok_or(MapScaleError::SwitchTexture)?;
+            let side = map
+                .sidedefs()
+                .get(usize::from(front))
+                .ok_or(MapScaleError::SwitchTexture)?;
+            if switch_match(&side.textures).is_none() {
+                return Err(MapScaleError::SwitchTexture.into());
+            }
+        }
         match line.special {
             0 | LINE_EXIT => {}
             SCROLLING_WALL if back.is_none() => scrollers += 1,

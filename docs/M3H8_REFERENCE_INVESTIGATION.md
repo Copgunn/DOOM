@@ -645,6 +645,33 @@ field-less error (`MapScaleError::Movers` or one variant per rule), state untouc
 6. **`spechit` window** (§6).
 7. **No crushers** (none in the admitted set; every crusher type is outside rule 1).
 8. **No sky movers** (decision N4): no mover sector has an `F_SKY1` ceiling.
+9. **Switch textures** (decision N9a). Every line with special 11 or 63 (the only
+   admitted lines whose use calls `P_ChangeSwitchTexture`; 1 opens a door through
+   `EV_VerticalDoor` without it, p_switch.c:326–330, and 109 is a walk-over line,
+   p_spec.c:730) has a front sidedef whose upper, lower or middle texture name equals,
+   ignoring ASCII case over at most eight characters (`R_CheckTextureNumForName`'s
+   `strncasecmp`), one of the 38 names of the episode-1 entries of `alphSwitchList`
+   (p_switch.c:51–69, `SW1BRCOM`…`SW2STRTN`, both columns), else
+   `MapScaleError::SwitchTexture`. *Why it suffices.* `P_InitSwitchList` (p_switch.c:
+   107–148) keeps the entries with `episode ≤ 1, 2 or 3` by game mode, in table order, so
+   the episode-1 entries are the first 38 `switchlist` slots in every mode;
+   `P_ChangeSwitchTexture` (201–263) scans `switchlist` in index order and tests the top,
+   then the middle, then the bottom texture against each slot, so a side carrying an
+   episode-1 name always matches at a slot inside that common prefix: the match, and
+   with it the sound and (for 63) `P_StartButton`, is the same in every game mode and is
+   never "not found". After a match the side carries the slot's partner (`i ^ 1`),
+   another episode-1 name, so every later use matches too; S1 11 is used once. Which of
+   the three textures matched decides only `buttonlist[].where` and the texture the
+   button restores, both presentation (texture numbers are read in game code only by
+   the unadmitted `raiseToTexture`); the sound, its origin (`buttonlist[0].soundorg`,
+   the line's front sector, set whatever `where` is) and the button timer do not depend
+   on it, so nothing simulated needs the position. Texture numbers are compared in
+   vanilla, names here: distinct names have distinct numbers, and `-` sides are number 0,
+   which no episode-1 switch texture is in any IWAD (texture 0 is `AASTINKY`/`AASHITTY`).
+   A map failing the rule would, in vanilla, use the line with no texture change, no
+   sound and no button; it is rejected rather than emulated. The committed C geometry
+   names no textures; its declared adapter (front middle texture of every 11/63 line)
+   is mirrored by the Rust tests (§15).
 
 Tag 0 is faithful: a tag-0 63, 109, 88, 36 or 38 acts on every untagged sector, in index
 order (`P_FindSectorFromLineTag`); rules 2–5 and the fixpoint are evaluated with that
@@ -1119,6 +1146,17 @@ below can be revised in review.
 - **N7: (i)**, the Rust admission runs W1 rules to a global fixpoint. `tools/iwad_counts.py`
   is unchanged.
 - **N8: (i)**, `L + 2M` sector-thinker slots and `320 + L + 2M` visits.
+- **N9a: reject switch lines without an episode-1 switch texture (§7 rule 9).** The
+  use code implements the `P_ChangeSwitchTexture` path on which the front side's
+  texture is found in `switchlist` (sound, and for 63 the button). A switch line
+  whose front side carries no switch texture takes the other vanilla path (nothing
+  happens beyond the special's effect), which the Rust code does not implement, so
+  such maps are rejected at load with the field-less `MapScaleError::SwitchTexture`.
+  This is a rejection, not a new fidelity gap: every admitted map behaves as vanilla.
+  The committed C geometry carries no texture names (the C harness installs the
+  declared switch texture number on the front middle texture of every 11/63 line), so
+  the Rust tests load the committed rooms through the same declared adapter, writing
+  `SW1COMM` into those middle textures; the C evidence is unchanged.
 
 ## 15. Follow-ups, risks, status
 
@@ -1338,4 +1376,17 @@ closing: a corpse never sets `nofit`), and the refusal of states outside V′ an
 witness with the state, RNG and events preserved (the inside boundary values admitted).
 Captures of a gibbed thing still use the interim DSIM34 layout; step 13 must admit
 `S_GIBS` for monsters and the player in `decode_movers` (the DSIM34 decoder's
-`state_role_for` check does not). Next is step 13, DSIM35.
+`state_role_for` check does not).
+
+The switch-texture follow-up of step 10 is closed by §7 rule 9 (decision N9a, provisional):
+`validate_movers` rejects a map whose 11 or 63 line has no episode-1 `alphSwitchList`
+name on its front side's upper, lower or middle texture (`mover_rules::switch_match`,
+`MapScaleError::SwitchTexture`), so the Rust use code's assumption (texture found:
+sound, and for 63 the button) is the vanilla path on every admitted map. The committed
+geometry names no textures (front sides `-`, `-`, `TESTWALL`) and the committed
+switchyard is rejected as it stands; the C harness's declared adapter puts the switch
+texture on the front middle texture of every 11/63 line, and the Rust tests load every
+committed room through the same adapter (`player_movers_tests::room` writes `SW1COMM`
+there; `committed_room` is the raw bytes), with the C evidence unchanged. Step 14's
+example, checker and fuzz seeds must load the rooms through that adapter too. Next is
+step 13, DSIM35.
