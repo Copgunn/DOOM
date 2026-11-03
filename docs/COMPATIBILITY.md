@@ -1723,7 +1723,7 @@ constructor with a field-less error and no state is built, never during play:
 | Every line special is 0, a one-sided 48 or one of 1, 63, 109, 88, 36, 38, 11 (every other special, on either side, including a **two-sided 48**, decision N1 option iii) | `PursuitError::Specials` |
 | Every DR line (1) has a back side (no `sides[-1]` read) | `MapScaleError::DoorLine` |
 | No sector belongs to two mover families (doors: back sectors of 1 and targets of 63 and 109; lifts: targets of 88; floors: targets of 36 and 38); door kinds 1, 63 and 109 may share a sector | `MapScaleError::MoverFamily` |
-| Every mover sector has a two-sided neighbor (no `MAXINT − 4` door top, no −500 turbo destination) | `MapScaleError::MoverNeighbor` |
+| Every mover sector has a two-sided neighbor (no `MAXINT − 4` door top; a turbo destination still folds from −500, so neighbor floors all below −500 give −492, as in the source) | `MapScaleError::MoverNeighbor` |
 | Every reachable floor and ceiling height (the note's §5 fixpoint over the admitted lines) stays within ±512 | `MapScaleError::MoverHeights` |
 | No door's smallest possible top lies below its floor (no inverting door) | `MapScaleError::InvertingDoor` |
 | No door sector has a two-sided line with the sector on both sides | `MapScaleError::SelfReferencingDoor` |
@@ -1732,6 +1732,7 @@ constructor with a field-less error and no state is built, never during play:
 | At most 8 distinct two-sided special lines in any 2 × 2 window of BLOCKMAP cells, so no position check can append a ninth `spechit` entry (`MAXSPECIALCROSS`) | `MapScaleError::SpecialWindow` |
 | No mover sector has an `F_SKY1` ceiling (decision N4) | `MapScaleError::SkyMover` |
 | Every 11 and 63 line's front side carries one of the 38 episode-1 `alphSwitchList` names as its upper, lower or middle texture, ignoring ASCII case (decision N9a) | `MapScaleError::SwitchTexture` |
+| Every mover sector has a defined `blockbox`: the `P_GroupLines` box arithmetic stays inside `fixed_t`, so every `P_ChangeSector` of a plane step walks defined BLOCKMAP cells (rule 10, added by the independent review; defensive, since the real-map arithmetic certificate already refuses every constructed counterexample) | `MapScaleError::MoverBlockBox` |
 
 No admitted line is a crusher; crushers are deferred, not emulated. The Stage A sector
 special, light and inherited real-map rejections still apply.

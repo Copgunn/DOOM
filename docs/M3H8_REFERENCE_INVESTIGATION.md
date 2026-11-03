@@ -559,8 +559,12 @@ lines, the sector itself for a self-referencing line) and `top(i) = [min_{n∈N(
 - 109 targets: `C[i] ⊇ top(i)`, plus `C[i]` as it is (the top drop is inside the hull);
 - 88 targets: `F[i] ⊇ [min_{n} F[n].lo, F[i].hi]`;
 - 38 targets: `F[i] ⊇ [min_{n} F[n].lo, F[i].hi]`;
-- 36 targets: `F[i] ⊇ [max_{n} F[n].lo + 8, max_{n} F[n].hi + 8]` unless every neighbour
-  floor and the own floor are one equal value (no + 8, no movement).
+- 36 targets: with `H(i) = [max(−500, max_{n} F[n].lo), max(−500, max_{n} F[n].hi)]`
+  (`P_FindHighestFloorSurrounding` folds from −500, p_spec.c:297–316),
+  `F[i] ⊇ [H.lo + 8, H.hi + 8]` unless `H` is one value equal to a constant own floor
+  (no + 8, no movement). (Corrected after the independent review, §15: the first
+  implementation folded from the neighbours alone and required every neighbour floor
+  to equal the own floor.)
 
 Every admitted body moves a plane monotonically toward a destination computed from the
 current neighbour heights by `min`, `max` and constants, stops short only at heights
@@ -576,8 +580,8 @@ intervals by at least one unit inside `[−512, 512]`: at most `4 · sectors · 
 rounds, each `O(lines)`. An inverting door is detected after the fixpoint (rule 4b).
 
 **What it yields.** `R_min`, `R_max` (rule 4), the inverting-door test (rule 4b: the
-smallest possible top `top(i).lo` below `F[i].hi`), the turbo jump-up `J = max(max_n
-F[n].hi + 8 − F[i].lo)` over 36 targets that move up, the door top drop
+smallest possible top `top(i).lo` below `F[i].hi`), the turbo jump-up
+`J = max(H(i).hi + 8 − F[i].lo)` over 36 targets that move up, the door top drop
 `max(C[i].hi − top(i).lo)` over door sectors, and **Δ = max(2 if 1 or 63 is present, 4 if
 88 is present, J, door top drop)**.
 
@@ -641,7 +645,9 @@ mapping is in [COMPATIBILITY](COMPATIBILITY.md#original-monsters-with-doors-lift
    `specialdata` cast of `EV_VerticalDoor` always reads a door. Door kinds 1, 63 and 109
    may share a sector (all `vldoor_t`; decision N5).
 3. **Neighbours.** Every mover sector has at least one `getNextSector` neighbour (no
-   `MAXINT − 4` top, no −500 turbo destination).
+   `MAXINT − 4` top). `P_FindHighestFloorSurrounding` still folds from −500, so a turbo
+   sector whose neighbour floors all lie below −500 gets −500 + 8 (§5; corrected after
+   the independent review, §15).
 4. **Reachable heights.** The §5 fixpoint stays within ±512; (4b) no door's smallest
    possible top is below its floor; (4c) no door sector has a self-referencing two-sided
    line (it would be its own neighbour and its closed top would be `floor − 4`).
@@ -677,6 +683,14 @@ mapping is in [COMPATIBILITY](COMPATIBILITY.md#original-monsters-with-doors-lift
    sound and no button; it is rejected rather than emulated. The committed C geometry
    names `SW1COMM` as the front middle texture of every 11/63 line, and the C harness
    resolves every side's names through a declared synthetic texture table (§15).
+10. **Defined mover blockboxes** (added by the independent review, §15). Every mover
+   sector's `blockbox`, built at load by the `P_GroupLines` fragment (p_setup.c:555–574;
+   `multisector::sector_block_boxes`), stays inside `fixed_t`, else
+   `MapScaleError::MoverBlockBox`. The source leaves an overflowing box undefined, and
+   `P_ChangeSector` walks it on every plane step; without the rule such a sector was
+   admitted and every plane step refused. The rule is defensive: the only constructed
+   counterexample (a BLOCKMAP origin moved to −32768) is already refused by the M3h6
+   real-map arithmetic certificate.
 
 Tag 0 is faithful: a tag-0 63, 109, 88, 36 or 38 acts on every untagged sector, in index
 order (`P_FindSectorFromLineTag`); rules 2–5 and the fixpoint are evaluated with that

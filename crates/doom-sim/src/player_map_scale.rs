@@ -135,6 +135,10 @@ pub enum MapScaleError {
     /// `P_ChangeSwitchTexture` would find nothing in `switchlist` (no texture
     /// change, no sound, no button; M3h8 note §7 rule 9, decision N9a).
     SwitchTexture,
+    /// Under the movers policy, a mover sector whose `P_GroupLines` `blockbox`
+    /// arithmetic would overflow `fixed_t` (the box is undefined in the source, so
+    /// `P_ChangeSector` could visit no defined cells; M3h8 note §7 rule 10).
+    MoverBlockBox,
 }
 impl fmt::Display for MapScaleError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

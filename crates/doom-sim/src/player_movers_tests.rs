@@ -807,3 +807,31 @@ fn movers_reject_sixty_five_scrollers() {
         SimError::Pursuit(PursuitError::Specials),
     );
 }
+
+/// Review finding 3 (rule 10): a mover sector whose `P_GroupLines` blockbox would
+/// overflow `fixed_t` is rejected at load with `MapScaleError::MoverBlockBox` instead
+/// of being admitted and refusing every plane step later. The doorway room with its
+/// BLOCKMAP origin moved to x = −32768: the door sectors' x bounds (0 and 64) minus
+/// that origin leave `fixed_t`, so `sector_block_boxes` yields no box for them and
+/// the load rules (`mover_bounds`) reject the map; the unpatched room is admitted.
+/// No map passing the real-map arithmetic certificate was constructed that reaches
+/// the rule through the constructor: the rule is defensive.
+#[test]
+fn movers_reject_a_mover_sector_without_a_defined_blockbox() {
+    let mut lumps = room(0);
+    lump(&mut lumps, "BLOCKMAP")[0..2].copy_from_slice(&i16::MIN.to_le_bytes());
+    let map = lumps.map();
+    let boxes = crate::multisector::sector_block_boxes(&map).unwrap();
+    assert!(boxes[2].is_none());
+    assert_eq!(
+        crate::mover_bounds(&map),
+        Err(SimError::MapScale(MapScaleError::MoverBlockBox))
+    );
+    // The constructor's geometry rules run first: this BLOCKMAP no longer covers the
+    // room, so the real-map arithmetic certificate refuses it before rule 10.
+    rejects(
+        movers(&lumps),
+        SimError::MapScale(MapScaleError::Arithmetic),
+    );
+    assert!(movers(&room(0)).is_ok());
+}
