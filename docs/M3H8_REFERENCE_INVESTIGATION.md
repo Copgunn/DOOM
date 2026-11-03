@@ -1516,6 +1516,16 @@ and reborn refusals and the DSIM35 round trip), with seeds from
 seed replay only (`-runs=0`, the default `cargo fuzz run` build, which is
 AddressSanitizer-instrumented, leak detection at its default) of all 4,428 seeds plus
 the empty input with no finding; the coverage-guided and sanitizer campaigns are step 17.
+
+Step 17 is done: all 46 fuzz targets built; a seed replay, a 30-minute coverage-guided
+campaign without a sanitizer and a 30-minute AddressSanitizer campaign
+(`detect_leaks=0`, so no leak coverage) of `player_movers`, and seed replays of
+`player_specials`, `player_real_map`, `player_map_scale`, `player_heights` and
+`player_diagonal`, with no finding in the simulation. The first coverage-guided campaign
+found a fuzz-harness error: the target inferred a reborn request from a paused tic,
+although `P_Ticker` returns before `P_PlayerThink` while paused; the target was fixed and
+every run repeated. Numbers, commands and the minimized input are in the
+[evidence record](validation/M3H8.md#plan-step-17-campaigns).
 CI runs the example on the hosts that skip the replay and the measurement smoke on
 Linux.
 
@@ -1548,8 +1558,8 @@ sector whose blockbox is undefined. The C evidence now has 33 scenarios; every e
 scenario's rows and every fixture are unchanged, and the independent DSIM35 goldens were
 regenerated from the C rows.
 
-**Next:** the coverage-guided and sanitizer fuzz campaigns (17), then the gates, the
-draft PR and its exact-head CI (19). The matched timings (16) are recorded in the
+**Next:** the gates, the draft PR and its exact-head CI (19); the fuzz campaigns (17)
+are recorded. The matched timings (16) are recorded in the
 [evidence record](validation/M3H8.md#matched-performance): the first run's per-tic
 slowdown of the older player-and-monster policies was traced to code generation around
 the movers checks and removed (digests unchanged), and the run after the fixes is recorded

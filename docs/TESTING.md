@@ -1228,6 +1228,9 @@ cargo run -p doom-sim --example player_movers --locked
 python3 tools/measure_movers.py --check
 python3 tools/seed_player_movers_fuzz.py /tmp/doom-movers-seeds
 ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_movers /tmp/doom-movers-corpus --sanitizer address -- -runs=0 -max_len=290 -timeout=15 -rss_limit_mb=1024
+# Bounded campaigns, each on a fresh copy of the seeds:
+cargo +nightly fuzz run player_movers /tmp/doom-movers-corpus --sanitizer none -- -seed=501 -max_total_time=1800 -max_len=290 -timeout=15 -rss_limit_mb=1024
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_movers /tmp/doom-movers-corpus --sanitizer address -- -seed=502 -max_total_time=1800 -max_len=290 -timeout=15 -rss_limit_mb=1024
 ```
 
 The generator compiles the genuine door, plat, floor, switch, use, crossing and
@@ -1299,8 +1302,11 @@ reach of every sector height, the transaction (a refused operation keeps every b
 the exit and reborn refusals and the DSIM35 round trip. Run the fuzz commands from
 `fuzz/` on a fresh copy of the seeds outside the working tree and delete the corpus
 afterwards; `-runs=0` replays the seeds only, and as for the specials target a
-coverage-guided campaign needs `-runs` above the seed count plus one (the seed tool
-writes 4,428 seeds). The fuzz workspace is nightly-only and CI only format-checks it, so
+`-runs` bound must exceed the seed count plus one (the seed tool writes 4,428 seeds)
+before any mutation happens, so the campaigns above are bounded by
+`-max_total_time` instead (libFuzzer counts the initial-corpus runs inside it too).
+The campaign without a sanitizer explores faster; the AddressSanitizer campaign is the
+sanitizer evidence. The fuzz workspace is nightly-only and CI only format-checks it, so
 the campaigns are a local step. Run measurements alone, with no fuzzing, builds or tests
 at the same time. Observations belong to [the engineering record](validation/M3H8.md).
 Leak detection is disabled in the documented ASan environment (`detect_leaks=0`), not

@@ -105,8 +105,9 @@ tools, the fuzz target, this documentation and the independent review with its f
 are complete; the matched timings are recorded (every older-policy digest unchanged; the
 per-tic slowdown of the older player-and-monster policies seen in the first run was traced
 and removed, with a small `original_player` residual, in the
-[observations](validation/M3H8.md#matched-performance)); the fuzz campaigns and the final
-gates are pending, in that order, and
+[observations](validation/M3H8.md#matched-performance)); the bounded fuzz campaigns are
+recorded (one fuzz-harness finding, fixed, in the
+[observations](validation/M3H8.md#plan-step-17-campaigns)); the final gates are pending, and
 the decisions N1–N9a await owner confirmation. This branch stops at owner review; exact
 commits and CI belong to GitHub. See
 [source investigation](M3H8_REFERENCE_INVESTIGATION.md),
