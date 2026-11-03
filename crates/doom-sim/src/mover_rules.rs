@@ -359,6 +359,13 @@ fn reachable<'m, I: Iterator<Item = usize> + 'm>(
             [t[0].min(c[m][0] - 4), t[1].min(c[m][1] - 4)]
         })
     };
+    // P_FindHighestFloorSurrounding over the floor intervals, from −500.
+    let start = i32::from(crate::movers::HIGHEST_FLOOR_START);
+    let highest_floor = |f: &[[i32; 2]], i: usize| {
+        neighbors(i).fold([start, start], |h, m| {
+            [h[0].max(f[m][0]), h[1].max(f[m][1])]
+        })
+    };
     let in_bounds = |v: &[[i32; 2]]| {
         v.iter()
             .all(|r| r[0] >= -REACHABLE_UNITS && r[1] <= REACHABLE_UNITS)
@@ -383,12 +390,13 @@ fn reachable<'m, I: Iterator<Item = usize> + 'm>(
                 changed |= widen(&mut f[i], lo, hi);
             }
             if k.turbo {
-                let constant =
-                    neighbors(i).all(|m| f[m][0] == f[m][1] && f[m] == f[i]) && f[i][0] == f[i][1];
+                // P_FindHighestFloorSurrounding folds from −500 (p_spec.c:297–316);
+                // EV_DoFloor adds 8 unless the destination equals the floor
+                // (p_floor.c:307–315): no movement only when the destination is one
+                // value equal to a constant own floor.
+                let hi = highest_floor(&f, i);
+                let constant = hi[0] == hi[1] && f[i] == hi;
                 if !constant {
-                    let hi = neighbors(i).fold([i32::MIN, i32::MIN], |h, m| {
-                        [h[0].max(f[m][0]), h[1].max(f[m][1])]
-                    });
                     changed |= widen(&mut f[i], hi[0] + 8, hi[1] + 8);
                 }
             }
@@ -416,8 +424,7 @@ fn reachable<'m, I: Iterator<Item = usize> + 'm>(
             delta = delta.max(c[i][1] - t[0]);
         }
         if k.turbo {
-            let hi = neighbors(i).fold(i32::MIN, |h, m| h.max(f[m][1]));
-            delta = delta.max(hi + 8 - f[i][0]);
+            delta = delta.max(highest_floor(&f, i)[1] + 8 - f[i][0]);
         }
     }
     let lo = f.iter().chain(&c).map(|r| r[0]).min().unwrap_or(0);

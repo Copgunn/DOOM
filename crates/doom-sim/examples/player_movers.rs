@@ -104,8 +104,8 @@ fn main() -> ResultHost<()> {
         );
     }
     let cases = source::cases();
-    assert_eq!(cases.len(), 32);
-    // Headline counts of the committed C rows over all 32 scenarios.
+    assert_eq!(cases.len(), 33);
+    // Headline counts of the committed C rows over all 33 scenarios.
     let mut c_work = Work::default();
     for c in &cases {
         for op in 0..=c.tics {
@@ -115,16 +115,16 @@ fn main() -> ResultHost<()> {
     assert_eq!(
         c_work,
         Work {
-            steps: 1742,
-            changes: 1749,
+            steps: 1766,
+            changes: 1773,
             clips: 2032,
-            crossings: 47,
+            crossings: 48,
             uses: 221,
             blocked: 202,
             exits: 2,
         }
     );
-    // Every scenario whose declared inputs are public: all but the five `script` 30
+    // Every scenario whose declared inputs are public: all but the seven `script` 30
     // scenarios (the controlled 200 health) and the two whose controlled damage
     // kills (`door_gibs_drop_bonus`, `dead_use_reborn`: the public `damage_actor`
     // refuses a kill branch), both crate-internal inputs replayed by the library
@@ -175,7 +175,7 @@ fn main() -> ResultHost<()> {
         digest = (digest ^ snapshot.digest()).wrapping_mul(0x100_0000_01b3);
         replayed += 1;
     }
-    assert_eq!((replayed, ops), (23, 4651));
+    assert_eq!((replayed, ops), (24, 4711));
     assert_eq!(
         OriginalExecutionProfile::PlayerMonstersMoversV1.wire_id(),
         19
@@ -192,7 +192,7 @@ fn main() -> ResultHost<()> {
         );
     }
     println!(
-        "player_movers: C doorway, hall, switchyard, lift, floors and dense rooms, 32 scenarios: {} plane steps, {} P_ChangeSector calls, {} thing clips, {} crossings, {} uses, {} spechit-blocked moves, {} exits in the C rows; {replayed} public-input scenarios replayed over {ops} ops with matching heights, mover work and line specials ({} plane steps, {} P_ChangeSector calls); DSIM35 digest={digest:016x}",
+        "player_movers: C doorway, hall, switchyard, lift, floors, dense and pit rooms, 33 scenarios: {} plane steps, {} P_ChangeSector calls, {} thing clips, {} crossings, {} uses, {} spechit-blocked moves, {} exits in the C rows; {replayed} public-input scenarios replayed over {ops} ops with matching heights, mover work and line specials ({} plane steps, {} P_ChangeSector calls); DSIM35 digest={digest:016x}",
         c_work.steps,
         c_work.changes,
         c_work.clips,

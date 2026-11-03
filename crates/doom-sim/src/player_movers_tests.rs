@@ -17,7 +17,8 @@ pub(crate) fn options() -> MapContextOptions {
     }
 }
 /// A committed M3h8 room: 0–3 `doorway`, 4–5 `hall`, 6 `switchyard`, 7–12 `lift`,
-/// 13–16 `floors`, 17–18 `dense`, exactly the committed bytes the C harness reads:
+/// 13–16 `floors`, 17–18 `dense`, 19 `hall` and 20 `lift` (the between-tic chase
+/// entries), 21 `pit`, exactly the committed bytes the C harness reads:
 /// the builder names `SW1COMM` as the front middle texture of every 11/63 line
 /// (§7 rule 9), which the harness resolves through its declared texture table.
 pub(crate) fn room(index: usize) -> Lumps {
@@ -160,6 +161,28 @@ fn movers_reachable_heights_and_delta_follow_the_fixpoint() {
     let door = movers(&room(0)).unwrap();
     assert_eq!(door.movers.as_ref().unwrap().delta, 2);
     assert_eq!(door.movers.as_ref().unwrap().reach, [0, 128]);
+}
+
+/// Review finding 2: `P_FindHighestFloorSurrounding` folds from −500 (p_spec.c:297–316),
+/// so in the `pit` room (map 21: turbo target T, sector 3, whose only neighbour N sits
+/// at −508) the destination is −500 + 8 = −492, not −508 + 8. With T lowered to −510
+/// the destination −492 is an 18-unit jump-up (Δ 18; the neighbour fold would give
+/// −500 and Δ 10), and with T at −500 itself the destination equals the floor: no + 8,
+/// no movement (the old rule, which required every neighbour floor to equal the own
+/// floor, added 8).
+#[test]
+fn movers_fold_the_turbo_destination_from_minus_500() {
+    let pit = movers(&room(21)).unwrap();
+    let admission = pit.movers.as_ref().unwrap();
+    assert_eq!(admission.reach, [-508, 128]);
+    assert_eq!(admission.delta, 0);
+    let mut lumps = room(21);
+    set_heights(&mut lumps, 3, -510, 128);
+    let bounds = crate::mover_bounds(&lumps.map()).unwrap();
+    assert_eq!((bounds.reach, bounds.delta), ([-510, 128], 18));
+    set_heights(&mut lumps, 3, -500, 128);
+    let bounds = crate::mover_bounds(&lumps.map()).unwrap();
+    assert_eq!((bounds.reach, bounds.delta), ([-508, 128], 8));
 }
 
 #[test]

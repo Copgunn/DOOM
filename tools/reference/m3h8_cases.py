@@ -151,8 +151,23 @@ def dense(count=8):
     return (sectors, {}, (), None, 4096, lines)
 
 
-ROOMS = [doorway(), doorway(extra=False), switchyard(), lift(192), lift(118), lift(112), floors(), dense()]
-ROOM_NAMES = ['doorway', 'hall', 'switchyard', 'lift', 'lift_short', 'lift_low', 'floors', 'dense']
+def pit():
+    """A corridor y in [0, 128] (floor 0, ceiling 128) of sectors 0 C0 x in [0, 256] and
+    1 C1 [256, 512], whose boundary at x = 256 carries W1 36 (tag 2); north of it 2 N
+    (the pit x in [0, 512], y in [128, 256], floor -508, ceiling 128) and beyond N 3 T
+    (tag 2, x in [192, 320], y in [256, 384], floor -400, ceiling 128), whose only
+    neighbour is N: P_FindHighestFloorSurrounding starts at -500 (p_spec.c:297-316),
+    above N's floor, so the turbo destination is -500 + 8 = -492, not -508 + 8."""
+    sectors = [([[(0, 128), (256, 128), (256, 0), (0, 0)]], 0, 128),
+               ([[(256, 128), (512, 128), (512, 0), (256, 0)]], 0, 128),
+               ([[(0, 256), (192, 256), (320, 256), (512, 256), (512, 128), (256, 128), (0, 128)]], -508, 128),
+               ([[(192, 384), (320, 384), (320, 256), (192, 256)]], -400, 128, dict(tag=2))]
+    lines = {((256, 128), (256, 0)): (W1_TURBO, 2)}
+    return (sectors, {}, (), None, 4096, lines)
+
+
+ROOMS = [doorway(), doorway(extra=False), switchyard(), lift(192), lift(118), lift(112), floors(), dense(), pit()]
+ROOM_NAMES = ['doorway', 'hall', 'switchyard', 'lift', 'lift_short', 'lift_low', 'floors', 'dense', 'pit']
 DENSE9 = dense(9)
 
 
@@ -306,4 +321,8 @@ def populate(pack):
     # see state between tics with the player on the ledge straight north: its first
     # P_TryWalk north crosses the line and the lift starts lowering.
     add('lift_chase_entry', 3, [monster(POSSESSED, 100, 124, 90)], px=100, py=500, chase_at=1, chase_thing=0, tics=80, **dict(tough, **south))
+    # --- pit ------------------------------------------------------------------------
+    # W1 36 at x = 256: T (floor -400) whose only neighbour N sits at -508 turbo-lowers
+    # to -492 (P_FindHighestFloorSurrounding starts at -500).
+    add('floor_turbo_below_500', 8, [], px=200, py=64, forward=25, move_hold=8, tics=60)
     return layouts

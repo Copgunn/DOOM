@@ -26,6 +26,8 @@ const VDOORWAIT: i32 = 150;
 /// lift waits `35 * PLATWAIT` tics and moves at `PLATSPEED * 4`.
 const PLAT_WAIT: i32 = 35 * 3;
 const PLAT_SPEED: i32 = 4;
+/// p_spec.c `P_FindHighestFloorSurrounding`'s start, `-500*FRACUNIT` (map units).
+pub(crate) const HIGHEST_FLOOR_START: i16 = -500;
 /// p_spec.h `FLOORSPEED` (1 unit); `turboLower` moves at four times it.
 const FLOORSPEED: i32 = 1;
 
@@ -208,13 +210,14 @@ impl Surrounding<'_> {
             .map(|s| s.floor)
             .fold(own, Fixed::min))
     }
-    /// `P_FindHighestFloorSurrounding` (starts at −500; rule 3 guarantees a
-    /// neighbour).
+    /// `P_FindHighestFloorSurrounding` (p_spec.c:297–316): the largest neighbour
+    /// floor, folded from −500, so a sector whose neighbours all lie below −500 gets
+    /// −500 (rule 3 guarantees a neighbour, not that one lies above −500).
     fn highest_floor(&self, sector: u16) -> Result<Fixed, SimError> {
-        self.neighbors(sector)?
+        Ok(self
+            .neighbors(sector)?
             .map(|s| s.floor)
-            .max()
-            .ok_or_else(|| crate::MapScaleError::MoverNeighbor.into())
+            .fold(Fixed::from_map_units(HIGHEST_FLOOR_START), Fixed::max))
     }
 }
 

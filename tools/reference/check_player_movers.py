@@ -10,7 +10,7 @@ field count, full bytes of the 13 fixtures and the v35 reader's round trip). It 
 crate-internal declared inputs (the controlled damage transaction), so it runs as a
 library test rather than an example.
 
-The asserted example `player_movers` replays, through the public API alone, the 23
+The asserted example `player_movers` replays, through the public API alone, the 24
 scenarios whose declared inputs are public (heights, mover work and line specials
 against the C rows) and asserts the C rows' headline counts; its output must be equal
 in debug and release. `--example-only` checks the example alone (the CI step of the

@@ -163,7 +163,8 @@ W1_ADMITTED = frozenset((109, 36, 38))
 # for 88 (p_plats.c:208), FLOORSPEED 1 for 38 and FLOORSPEED * 4 for 36 (p_floor.c:299–315).
 ADMITTED_SPEED = {1: 2, 63: 2, 109: 8, 88: 4, 38: 1, 36: 4}
 # P_FindHighestFloorSurrounding starts at -500 * FRACUNIT (p_spec.c:295): the turbo
-# destination of a sector with no two-sided neighbor.
+# destination of a sector with no two-sided neighbor, or whose neighbor floors all lie
+# below -500.
 NO_NEIGHBOR_FLOOR = -500
 # A fixpoint bound beyond this is reported as divergent (only an inverting door, which
 # rule 4 rejects anyway, can make the interval abstraction walk away).
@@ -657,6 +658,13 @@ class MapCounts:
             # P_FindLowestCeilingSurrounding - 4 over the neighbors' ceiling intervals.
             return min(ceil[o][0] for o in nb[s]) - 4, min(ceil[o][1] for o in nb[s]) - 4
 
+        def highest_floor(s):
+            # P_FindHighestFloorSurrounding over the neighbors' floor intervals, folded
+            # from -500 (p_spec.c:297-316) as the source does, also when every neighbor
+            # floor lies below it.
+            return (max([NO_NEIGHBOR_FLOOR] + [floor[o][0] for o in nb[s]]),
+                    max([NO_NEIGHBOR_FLOOR] + [floor[o][1] for o in nb[s]]))
+
         def apply(special, s):
             if not nb[s]:
                 return False  # rule 3 failure: MAXINT - 4 top, counted separately
@@ -671,7 +679,7 @@ class MapCounts:
             if special == 38:
                 return widen(floor[s], min(floor[o][0] for o in nb[s]), floor[s][1])
             if special == 36:
-                hlo, hhi = max(floor[o][0] for o in nb[s]), max(floor[o][1] for o in nb[s])
+                hlo, hhi = highest_floor(s)
                 if hlo == hhi == floor[s][0] == floor[s][1]:
                     return False  # destination equals the floor: no +8, no movement
                 return widen(floor[s], hlo + 8, hhi + 8)
@@ -725,7 +733,7 @@ class MapCounts:
             if special == 36:
                 for s in targets:
                     if nb[s]:
-                        hlo, hhi = max(floor[o][0] for o in nb[s]), max(floor[o][1] for o in nb[s])
+                        hlo, hhi = highest_floor(s)
                         if hlo == hhi == floor[s][0] == floor[s][1]:
                             continue  # no +8, no movement
                         self.turbo_jump = max(self.turbo_jump, hhi + 8 - floor[s][0])

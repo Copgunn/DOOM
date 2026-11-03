@@ -817,7 +817,7 @@ pub(crate) mod full {
             .filter(|(tag, _)| tag == "TK")
             .count();
         let mb: usize = rows_named("MB");
-        assert_eq!(t.cases, 32);
+        assert_eq!(t.cases, 33);
         assert_eq!(t.ops, frames().len());
         assert_eq!(t.event_frames, frames().len());
         assert_eq!(t.captures, captures().len());

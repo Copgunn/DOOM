@@ -366,3 +366,25 @@ fn a_between_tic_chase_entry_crosses_a_lift_line() {
     }
     assert_eq!(s.line_specials[0], 88);
 }
+
+/// Review finding 2 (runtime): the player crossing the W1 36 line of `pit`
+/// (`floor_turbo_below_500`, op 23) starts a turbo floor on T (sector 3, floor −400,
+/// only neighbour at −508) whose destination is −492: `P_FindHighestFloorSurrounding`
+/// starts at −500 (p_spec.c:297–316) and `EV_DoFloor` adds 8 (p_floor.c:307–315). The
+/// replay compares every op with the C rows; T stops at −492 (C `MV` pastdest, op 46).
+#[test]
+fn a_turbo_floor_whose_neighbours_lie_below_minus_500_stops_at_minus_492() {
+    let c = case("floor_turbo_below_500");
+    let (s, compared) = replay(&c, 23);
+    assert_eq!(compared.crossings, 1);
+    match sector_thinkers(&s).as_slice() {
+        [SectorThinker::Floor(f)] => {
+            assert_eq!(f.sector, 3);
+            assert_eq!(f.kind, movers::FloorKind::TurboLower);
+            assert_eq!(f.floordestheight, Fixed::from_map_units(-492));
+        }
+        other => panic!("{other:?}"),
+    }
+    let (s, _) = replay(&c, c.tics);
+    assert_eq!(s.sectors[3].floor, Fixed::from_map_units(-492));
+}
