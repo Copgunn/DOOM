@@ -853,3 +853,24 @@ locally by the owner**.
 Status: **investigation complete; owner decisions recorded (§7); Phase 2 Stage A in
 progress** on `feat/m3h7-doors-specials-sky`. Completed Phase 2 steps of §6 are listed
 here as they land: step 1 (decisions).
+
+Phase 2 step 3 (original-C evidence): `tools/reference/m3h7_geometry.py`,
+`m3h7_cases.py` and `m3h7_reference.py` generate `tests/reference/m3h7_*` (17
+scenarios in the `pools` and `sky` rooms; counts, row formats and adapters in
+`m3h7_contract.json`). Departures from §5.1: only the Stage A observers exist (no
+`numspechit` or `P_ChangeSector` rows; sector rows carry light and special, not the
+static heights); `P_ShootSpecialLine` is compiled because shots reach the scrollers,
+while `P_CrossSpecialLine`, `P_UseSpecialLine` and every mover body stay aborting
+adapters; there is no sector sound in Stage A, so `S_StartSound` keeps its actor-only
+adapter; sector thinkers are allocated from a separate harness store so actor idents
+keep their meaning; a back-sided line without `ML_TWOSIDED` would be rejected by the
+admitted load rules, so the neighbor that `getNextSector` skips is a dark gallery
+behind one-sided walls; five scenarios were added (`pools_strobe_hurt`,
+`sky_wall_after_hack`, `sky_shot_window`, `sky_window_strict`, `sky_window_back`); the
+null-source `players[0]` kill credit stays unreachable (only players read damage
+floors). During harness tic *t* `leveltime` is *t* − 1. Refinements of §2.9: the
+refused check starts from the destination sector's ceiling (p_map.c:406–407), so a
+fireball whose center has already entered the lower sector when its box first meets
+the line has no `ceilingline` and explodes even when that line's back is sky; and
+`P_CheckMissileSpawn` explodes a missile refused at its spawn half-step with no sky
+test (p_mobj.c:880–881).
