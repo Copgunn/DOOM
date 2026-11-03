@@ -1176,4 +1176,22 @@ change. It was first implemented as the sparse overlay; the §9 measurement foun
 full copy cheaper on the E1M1-sized table, so the approved rule (§14) selects the full
 copy, and the staging now takes it lazily on a plan's first write (sectors and line
 specials alike; the measurement, the line-special comparison and the unchanged M3h7
-digests are in §9). Next is step 6, policy and admission.
+digests are in §9).
+
+Step 6 is done: `OriginalExecutionProfile::PlayerMonstersMoversV1` (wire 19, context
+`PLAYER-MONSTERS-MOVERS-1-MEDIUM-v1`, `has_movers`, every Stage A predicate including
+`has_specials`), `Simulation::original_player_movers_map`, and `validate_movers`
+(`mover_rules.rs`) with the §7 rules: line specials exactly {1, 63, 109, 88, 36, 38,
+11} plus one-sided 48 (two-sided 48 still `PursuitError::Specials`, N1 option iii), the
+Stage A sector, scroller and light rules, and the new field-less
+`MapScaleError::{DoorLine, MoverFamily, MoverNeighbor, MoverHeights, InvertingDoor,
+SelfReferencingDoor, MoverCount, SpecialWindow, SkyMover}` (plus `SpecialCross`, the
+runtime witness, unused until step 9). The §5 fixpoint runs W1 rules to a global
+fixpoint (N7) and also yields `R_min`, `R_max` and `Δ`; rule 6 counts the map's own
+BLOCKMAP windows. Shared door kinds are admitted (N5). The sector-thinker slot class is
+`L + 2M` and the visit bound `320 + L + 2M` (N8); the runtime line specials start as the
+map's. Not covered by a fixture: a door without a two-sided neighbour, a
+self-referencing door line and 31 plat sectors (no committed room can be patched into
+them without rebuilding nodes; the rules are implemented and the switch count,
+window, family, height, inverting, one-sided DR and sky rules are tested). Captures of
+the policy still use the DSIM34 layout until step 13. Next is step 7, the planes.

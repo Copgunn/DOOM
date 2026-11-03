@@ -98,6 +98,38 @@ pub enum MapScaleError {
     /// `intercepts[]` (undefined): the tic is refused and the state before it is
     /// kept. Reached only by construction (M3h6 note §4.4); never observed in C.
     Intercepts,
+    /// Under the movers policy, a DR door line (special 1) without a back side,
+    /// whose `EV_VerticalDoor` would read `sides[-1]` (M3h8 note §7 rule 1).
+    DoorLine,
+    /// Under the movers policy, a sector in two mover families (door, plat, floor),
+    /// whose `specialdata` cast could read a different thinker type (rule 2).
+    MoverFamily,
+    /// Under the movers policy, a mover sector without a `getNextSector`
+    /// neighbour (a `MAXINT − 4` door top or a −500 turbo destination, rule 3).
+    MoverNeighbor,
+    /// Under the movers policy, a reachable floor or ceiling height beyond ±512
+    /// (the §5 fixpoint, rule 4).
+    MoverHeights,
+    /// Under the movers policy, a door whose smallest possible top lies below its
+    /// floor (rule 4b).
+    InvertingDoor,
+    /// Under the movers policy, a door sector with a two-sided line that has the
+    /// sector on both sides (rule 4c).
+    SelfReferencingDoor,
+    /// Under the movers policy, more than 30 plat sectors (`MAXPLATS`) or more than
+    /// 16 reusable switch lines (`MAXBUTTONS`, rule 5).
+    MoverCount,
+    /// Under the movers policy, more than 8 distinct two-sided special lines in
+    /// one 2 × 2 window of BLOCKMAP cells (`MAXSPECIALCROSS`, rule 6).
+    SpecialWindow,
+    /// Under the movers policy, a mover sector with an `F_SKY1` ceiling (rule 8,
+    /// decision N4).
+    SkyMover,
+    /// Under the movers policy, a `P_CheckPosition` of this tic would store a ninth
+    /// `spechit` entry (`MAXSPECIALCROSS`), which the original writes past the
+    /// array (undefined): the tic is refused and the state before it is kept.
+    /// Unreachable on admitted maps (rule 6).
+    SpecialCross,
 }
 impl fmt::Display for MapScaleError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

@@ -46,7 +46,7 @@ pub use player_map_scale::{
 pub use player_monsters::{
     MAX_PLAYER_MONSTERS, PLAYER_DIAGONAL_CONTEXT_SCHEMA, PLAYER_HEIGHTS_CONTEXT_SCHEMA,
     PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
-    PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
+    PLAYER_MOVERS_CONTEXT_SCHEMA, PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -129,6 +129,7 @@ pub use map_scale::{
     MapScaleMetrics,
 };
 mod movement;
+mod mover_rules;
 mod multisector;
 mod noise;
 pub use movement::{ActorMoveAttempt, Solidity};
@@ -569,6 +570,9 @@ pub struct Simulation {
     /// tables a commit replaced), reused as the next plan's (like `spare_specials`).
     /// Never read or encoded.
     pub(crate) spare_writes: staging::StagedWrites,
+    /// Under the movers policy, what its load rules derived from the immutable map
+    /// (families, `M`, reachable heights, `Δ`); never canonical state.
+    pub(crate) movers: Option<mover_rules::MoverAdmission>,
 }
 /// Static-geometry table bounds a construction prepares against: the M3f2/M3h3
 /// constants for every historical profile, the WAD format's own bounds (M3h6 note
@@ -751,6 +755,7 @@ impl Simulation {
             spare_sector_slots: Vec::new(),
             line_specials: Vec::new(),
             spare_writes: staging::StagedWrites::default(),
+            movers: None,
         })
     }
     /// The sectors a type's dimensions are admitted against: the heights policy's
@@ -1481,6 +1486,8 @@ mod player_diagonal_tests;
 mod player_heights_tests;
 #[cfg(test)]
 mod player_map_scale_tests;
+#[cfg(test)]
+mod player_movers_tests;
 #[cfg(test)]
 mod player_real_map_tests;
 #[cfg(test)]

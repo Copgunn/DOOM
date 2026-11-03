@@ -14,6 +14,9 @@ pub(crate) struct ExpandedSelection {
     pub real_map: bool,
     /// Sky ceilings and the static sector specials (specials policy).
     pub specials: bool,
+    /// Doors, lifts, floors, switches and the exit (movers policy, a superset of
+    /// the specials policy: `specials` is set too).
+    pub movers: bool,
 }
 impl Simulation {
     /// Profile 20: larger static maps with the exact map-context Demon registry.
@@ -38,6 +41,7 @@ impl Simulation {
                 type_envelope: false,
                 real_map: false,
                 specials: false,
+                movers: false,
             },
         )
     }
@@ -55,6 +59,7 @@ impl Simulation {
             type_envelope,
             real_map,
             specials,
+            movers,
         } = selection;
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
@@ -70,10 +75,17 @@ impl Simulation {
         if !real_map && map.things().len() > MAX_DEMON_MAP_THINGS {
             return Err(MapSpawnError::WorkLimit.into());
         }
-        if specials {
-            validate_specials(&map)?;
-        } else if map.linedefs().iter().any(|l| l.special != 0)
-            || map.sectors().iter().any(|s| s.special != 0)
+        let movers = if movers {
+            Some(mover_rules::validate_movers(&map)?)
+        } else {
+            if specials {
+                validate_specials(&map)?;
+            }
+            None
+        };
+        if !specials
+            && (map.linedefs().iter().any(|l| l.special != 0)
+                || map.sectors().iter().any(|s| s.special != 0))
         {
             return Err(PursuitError::Specials.into());
         }
@@ -118,7 +130,7 @@ impl Simulation {
             sim.world.extent_sight_work = Some(admission.sight_work);
             sim.world.sight_work_budget = admission.sight_budget;
             if specials {
-                sim.install_specials(limit)?;
+                sim.install_specials(limit, movers)?;
             }
             sim
         } else {
@@ -157,18 +169,31 @@ impl Simulation {
     }
 
     /// The specials policy's load-time state: a sector-thinker slot class bounded by
-    /// the number of light sectors (the only sector thinkers this policy creates,
-    /// all at load), so the visit budget is the 320 actor slots plus that count;
-    /// the per-sector sky identity and `blockbox`; and the runtime lights and
+    /// the number of light sectors `L` (the only sector thinkers this policy
+    /// creates, all at load), so the visit budget is the 320 actor slots plus that
+    /// count; the per-sector sky identity and `blockbox`; and the runtime lights and
     /// specials, still the map's until `spawn_level_specials` runs.
-    fn install_specials(&mut self, limit: u32) -> Result<(), SimError> {
+    ///
+    /// Under the movers policy the slot class holds `L + 2M` (`M` mover sectors: a
+    /// removed mover keeps its slot until the next pass while a replacement for its
+    /// sector can exist, decision N8), so the visit budget is `320 + L + 2M`; the
+    /// runtime line specials start as the map's, and the admission is kept.
+    fn install_specials(
+        &mut self,
+        limit: u32,
+        movers: Option<mover_rules::MoverAdmission>,
+    ) -> Result<(), SimError> {
         let map = self.world.map();
         let lights = map
             .sectors()
             .iter()
             .filter(|s| matches!(s.special, 1 | 2 | 3 | 4 | 8 | 12 | 13 | 17))
             .count();
-        let lights = u32::try_from(lights).map_err(|_| StoreError::InvalidLimit)?;
+        let movers_slots = movers.as_ref().map_or(Some(0), |m| m.movers.checked_mul(2));
+        let lights = movers_slots
+            .and_then(|m| m.checked_add(lights))
+            .and_then(|slots| u32::try_from(slots).ok())
+            .ok_or(StoreError::InvalidLimit)?;
         let sky = map
             .sectors()
             .iter()
@@ -183,6 +208,9 @@ impl Simulation {
             })
             .collect();
         let blockboxes = multisector::sector_block_boxes(map)?;
+        let line_specials = movers
+            .is_some()
+            .then(|| map.linedefs().iter().map(|l| l.special).collect());
         self.actors = ThinkerStore::with_sector_capacity(limit, lights)?;
         self.world.sky_ceilings = Some(sky);
         self.world.sector_block_boxes = Some(blockboxes);
@@ -190,6 +218,10 @@ impl Simulation {
             sectors,
             spawned: false,
         });
+        if let Some(lines) = line_specials {
+            self.line_specials = lines;
+        }
+        self.movers = movers;
         Ok(())
     }
     /// Derived prepared storage metrics; excluded from canonical state.
@@ -220,14 +252,8 @@ pub(crate) fn is_sky_flat(name: &doom_types::LumpName) -> bool {
 /// `PursuitError::Specials`. Every sector light lies in `LIGHT_RANGE`
 /// (`MapScaleError::Light`). Tags are kept: no admitted special reads them.
 pub(crate) fn validate_specials(map: &Map) -> Result<(), SimError> {
-    use sector_thinkers::{ADMITTED_SECTOR_SPECIALS, LIGHT_RANGE, MAX_LINE_ANIMS, SCROLLING_WALL};
-    if map
-        .sectors()
-        .iter()
-        .any(|s| s.special != 0 && !ADMITTED_SECTOR_SPECIALS.contains(&s.special))
-    {
-        return Err(PursuitError::Specials.into());
-    }
+    use sector_thinkers::{MAX_LINE_ANIMS, SCROLLING_WALL};
+    validate_sector_specials(map)?;
     let mut scrollers = 0;
     for line in map.linedefs() {
         match line.special {
@@ -239,10 +265,27 @@ pub(crate) fn validate_specials(map: &Map) -> Result<(), SimError> {
     if scrollers > MAX_LINE_ANIMS {
         return Err(PursuitError::Specials.into());
     }
+    validate_lights(map)
+}
+/// Every sector special is one of `ADMITTED_SECTOR_SPECIALS` or 0
+/// (`PursuitError::Specials`): the sector rule of the specials and movers policies.
+pub(crate) fn validate_sector_specials(map: &Map) -> Result<(), SimError> {
+    use sector_thinkers::ADMITTED_SECTOR_SPECIALS;
     if map
         .sectors()
         .iter()
-        .any(|s| !LIGHT_RANGE.contains(&s.light))
+        .any(|s| s.special != 0 && !ADMITTED_SECTOR_SPECIALS.contains(&s.special))
+    {
+        return Err(PursuitError::Specials.into());
+    }
+    Ok(())
+}
+/// Every sector light lies in `LIGHT_RANGE` (`MapScaleError::Light`).
+pub(crate) fn validate_lights(map: &Map) -> Result<(), SimError> {
+    if map
+        .sectors()
+        .iter()
+        .any(|s| !sector_thinkers::LIGHT_RANGE.contains(&s.light))
     {
         return Err(MapScaleError::Light.into());
     }
