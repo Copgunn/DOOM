@@ -703,7 +703,10 @@ reachable height range and whether it stays within ±512; tag-0 lines with tag-u
 specials; and the maximum number of two-sided special lines in a 2 × 2 window. For
 E1M1 none of these is committed beyond the counts of §1. The tool now prints these
 counts (text report and `--specials-markdown`; the reachable-height fixpoint prints
-"not computed"), and their table awaits a local run by the owner.
+"not computed"), and their table awaits a local run by the owner. (Later, on the M3h8
+branch: the fixpoint was implemented and the owner's local run is committed in the
+[M3h8 IWAD counts](validation/M3H8_IWAD_COUNTS.md), which the
+[M3h8 investigation](M3H8_REFERENCE_INVESTIGATION.md) uses.)
 
 ## 6. Implementation plan (one commit per step; evidence before the runtime change)
 
