@@ -535,3 +535,282 @@ fn decode_specials_rejects_malformed_specials_fields() {
         );
     }
 }
+
+/// The M3h3 scripted command sequence over a seed: runs, strafes, turns and fires.
+fn scripted(seed: u64, op: usize) -> [TicCommand; 4] {
+    let mut x = seed
+        .wrapping_mul(6364136223846793005)
+        .wrapping_add(op as u64);
+    x ^= x >> 29;
+    let mut c = [TicCommand::default(); 4];
+    c[0] = TicCommand {
+        forward: if x & 3 == 0 { 0 } else { 50 },
+        side: match (x >> 2) & 3 {
+            0 => -40,
+            1 => 40,
+            _ => 0,
+        },
+        angle_turn: match (x >> 4) & 7 {
+            0 => 1024,
+            1 => -1024,
+            2 => 4096,
+            _ => 0,
+        },
+        buttons: u8::from((x >> 7) & 7 == 0),
+    };
+    c
+}
+/// Invariants Ω (M3h5) and V (M3h4) at a tic boundary, unchanged by the specials
+/// policy (no height changes in Stage A): every live actor's center is in the
+/// vertex rectangle; every XY mover that is not an impact or an item is inside the
+/// one-sided boundary with its open box meeting no wall; every actor that is not
+/// an impact satisfies `floor <= z <= ceiling - height`.
+fn assert_wall_and_vertical_invariants(s: &Simulation, op: usize) {
+    let boundary = s.boundary.as_deref().unwrap();
+    let room = s.room().unwrap();
+    for id in s.actor_order() {
+        let a = s.actor(id).unwrap();
+        let Some(l) = a.life() else { continue };
+        assert!(
+            room.contains(a.position()),
+            "tic {op} type {}",
+            l.actor_type.0
+        );
+        if original_registry::is_impact(l.actor_type) {
+            continue;
+        }
+        assert!(
+            a.floor <= a.z && a.z + a.height() <= a.ceiling,
+            "tic {op} type {} z {} floor {} ceiling {}",
+            l.actor_type.0,
+            a.z.bits(),
+            a.floor.bits(),
+            a.ceiling.bits()
+        );
+        if l.flags & 1 != 0 {
+            continue;
+        }
+        assert!(
+            boundary.inside(a.position()),
+            "tic {op} type {} at {:?} outside",
+            l.actor_type.0,
+            a.position().map(Fixed::bits)
+        );
+        assert!(
+            !boundary.box_meets_wall(a.position(), a.radius() - Fixed::from_bits(1)),
+            "tic {op} type {} at {:?} meets a wall",
+            l.actor_type.0,
+            a.position().map(Fixed::bits)
+        );
+    }
+}
+/// Every light thinker keeps its sector's level inside `[minlight, maxlight]`
+/// (ordered, since a fire flicker's `minlight + 16` may exceed its `maxlight`);
+/// a sector has at most one light thinker; every sector without one keeps its
+/// map light; the sector thinkers are one contiguous run after the load actors
+/// and before every later actor (A1); `secretcount <= totalsecret` (A5).
+fn assert_specials_invariants(s: &Simulation, load: &[ActorId], op: usize) {
+    let lights: Vec<_> = s.sector_lights_and_specials().unwrap().collect();
+    let mut owned = vec![false; lights.len()];
+    let mut phase = 0;
+    for entry in s.shared_thinker_order() {
+        match entry {
+            ThinkerId::Actor(id) => {
+                let at_load = load.contains(&id);
+                if phase == 0 && !at_load {
+                    phase = 2;
+                }
+                if phase == 1 {
+                    phase = 2;
+                }
+                assert!(phase == 0 || !at_load, "tic {op}: load actor after a light");
+            }
+            ThinkerId::Sector(id) => {
+                assert!(phase < 2, "tic {op}: light after a later actor");
+                phase = 1;
+                let t = s.sector_thinker(id).unwrap();
+                let (lo, hi) = match *t {
+                    SectorThinker::Flash(t) => (t.minlight, t.maxlight),
+                    SectorThinker::Strobe(t) => (t.minlight, t.maxlight),
+                    SectorThinker::Glow(t) => (t.minlight, t.maxlight),
+                    SectorThinker::Flicker(t) => (t.minlight, t.maxlight),
+                };
+                let sector = usize::from(t.sector());
+                assert!(!owned[sector], "tic {op}: two thinkers on sector {sector}");
+                owned[sector] = true;
+                let light = i32::from(lights[sector].0);
+                assert!(
+                    lo.min(hi) <= light && light <= lo.max(hi),
+                    "tic {op} sector {sector} light {light} outside [{lo}, {hi}]"
+                );
+            }
+        }
+    }
+    for (i, (light, _)) in lights.iter().enumerate() {
+        if !owned[i] {
+            assert_eq!(*light, s.world.map().sectors()[i].light, "tic {op} {i}");
+        }
+    }
+    let secrets = s.original_player_secret_count().unwrap();
+    assert!(0 <= secrets && secrets <= s.level_statistics().unwrap().total_secrets);
+}
+/// 1,200 scripted tics in a committed room with its roster; returns the refused
+/// tics (only the two legal source witnesses may refuse, keeping the tic).
+fn specials_soak(label: &str, seed: u64) -> usize {
+    let cases = specials_evidence::cases();
+    let c = cases.iter().find(|c| c.label == label).unwrap();
+    let (mut s, a, things) = specials_evidence::setup(c);
+    let mut load = things.clone();
+    load.push(a.body);
+    assert_specials_invariants(&s, &load, 0);
+    let mut refused = 0;
+    for op in 1..=1200 {
+        let before = s.tic();
+        let live = s.original_player(PlayerSlot::One).unwrap().state == PlayerBodyState::Live;
+        let commands = if live {
+            scripted(seed, op)
+        } else {
+            [TicCommand::default(); 4]
+        };
+        match s.advance(commands) {
+            Ok(()) => assert_eq!(s.tic(), before + 1),
+            Err(SimError::MapScale(MapScaleError::Escape | MapScaleError::Intercepts)) => {
+                refused += 1;
+                assert_eq!(s.tic(), before);
+            }
+            Err(e) => panic!("{label} seed {seed} tic {op}: {e}"),
+        }
+        assert_wall_and_vertical_invariants(&s, op);
+        assert_specials_invariants(&s, &load, op);
+    }
+    refused
+}
+#[test]
+fn pools_soak_keeps_the_invariants_and_light_envelopes() {
+    let mut refused = 0;
+    for seed in [1, 2, 3, 4] {
+        refused += specials_soak("pools_light_and_fireball", seed);
+    }
+    assert_eq!(refused, 0);
+}
+#[test]
+fn sky_soak_keeps_the_invariants_under_the_sky() {
+    let mut refused = 0;
+    for seed in [1, 2, 3, 4] {
+        refused += specials_soak("sky_hack_wall", seed);
+    }
+    assert_eq!(refused, 0);
+}
+
+/// Replays the committed `sky_shot_window` pistol script with the sill S (sector 3,
+/// sky, map 7) lowered to `ceiling`; returns (sky shots, puffs spawned).
+fn window_shots(ceiling: i16) -> (Vec<(u8, u16, Fixed)>, usize) {
+    let cases = specials_evidence::cases();
+    let c = cases.iter().find(|c| c.label == "sky_shot_window").unwrap();
+    let mut lumps = Lumps::parse(specials_evidence::MAP_BYTES[c.map]);
+    set_sector_field(&mut lumps, 3, 2, ceiling);
+    let (mut s, a, things) = specials_evidence::setup_map(c, lumps.map());
+    let (mut shots, mut puffs) = (Vec::new(), 0);
+    for op in 1..=c.tics {
+        specials_evidence::controlled(&mut s, c, a, &things, op).unwrap();
+        s.advance(specials_evidence::commands(c, op)).unwrap();
+        for event in s.events() {
+            match *event {
+                Event::Special(SpecialEvent::SkyShot { reason, line, z }) => {
+                    shots.push((reason, line, z));
+                }
+                Event::Spawned(id) => {
+                    let ty = s.actor(id).and_then(|a| a.life()).map(|l| l.actor_type);
+                    puffs += usize::from(
+                        ty.map(|t| t.0)
+                            == Some(crate::identity::OriginalActorType::MT_PUFF.ordinal()),
+                    );
+                }
+                _ => {}
+            }
+        }
+    }
+    (shots, puffs)
+}
+#[test]
+fn sky_shot_at_exactly_the_front_ceiling_is_not_sky_ended() {
+    // p_map.c:960 `if (z > li->frontsector->ceilingheight) return false;` is strict.
+    // The pistol's would-be puff z is the body's z + 28 + 8 = 36 (slope 0, no
+    // target). With the sky sill at ceiling 36 the court-to-sill line's opening
+    // top equals z, so the shot passes it and stops at the sill-to-window line
+    // (front: the sill, sky; back: the window, not sky) with z == front ceiling:
+    // not sky-ended, a puff. One unit lower and the court-to-sill line (front: the
+    // sill) stops the shot with z above its sky ceiling: sky-ended, no puff.
+    let (shots, puffs) = window_shots(36);
+    assert!(shots.is_empty(), "{shots:?}");
+    assert!(puffs > 0);
+    let (shots, puffs) = window_shots(35);
+    assert!(!shots.is_empty());
+    assert_eq!(puffs, 0);
+    for (reason, _, z) in shots {
+        assert_eq!((reason, z), (0, Fixed::from_map_units(36)));
+    }
+}
+
+#[test]
+fn sector_thinker_slots_and_visit_budget_follow_the_light_sectors() {
+    // A7: the slot class holds exactly the light sectors (specials 1, 2, 3, 4, 8,
+    // 12, 13, 17); the visit budget is the 320 actor slots plus that count.
+    let s = scenario(0);
+    assert_eq!(s.actors.sector_capacity(), 8);
+    assert_eq!(s.actors.visit_bound(), 320 + 8);
+    assert_eq!(
+        s.shared_thinker_order()
+            .filter(|t| t.sector().is_some())
+            .count(),
+        8
+    );
+    // The store is full: one more sector thinker is refused explicitly.
+    let mut full = s.clone();
+    let extra = *full
+        .sector_thinker(
+            full.shared_thinker_order()
+                .find_map(|t| t.sector())
+                .unwrap(),
+        )
+        .unwrap();
+    assert!(full.actors.spawn_sector(extra).is_err());
+    // The sky room has no light sector: capacity zero.
+    let sky = scenario(7);
+    assert_eq!(sky.actors.sector_capacity(), 0);
+    assert_eq!(sky.actors.visit_bound(), 320);
+    // A ninth light sector (the plain corridor 13 as special 17) raises both.
+    let mut lumps = pools();
+    set_sector_field(&mut lumps, 13, 22, 17);
+    let mut s = specials(&lumps).unwrap();
+    assert_eq!(s.actors.sector_capacity(), 9);
+    assert_eq!(s.actors.visit_bound(), 329);
+    s.spawn_map_things().unwrap();
+    s.spawn_player_body(PlayerSlot::One, [768, -200].map(Fixed::from_map_units))
+        .unwrap();
+    s.spawn_level_specials().unwrap();
+    assert_eq!(
+        s.shared_thinker_order()
+            .filter(|t| t.sector().is_some())
+            .count(),
+        9
+    );
+}
+#[test]
+fn every_scenario_keeps_the_specials_invariants_after_every_tic() {
+    // The committed scripts (the secret found, damage, death, fireballs and sky
+    // removals) under the same per-tic checks as the soaks.
+    for c in specials_evidence::cases() {
+        let (mut s, a, things) = specials_evidence::setup(&c);
+        let mut load = things.clone();
+        load.push(a.body);
+        for op in 1..=c.tics {
+            specials_evidence::controlled(&mut s, &c, a, &things, op).unwrap();
+            s.advance(specials_evidence::commands(&c, op)).unwrap();
+            assert_wall_and_vertical_invariants(&s, op);
+            assert_specials_invariants(&s, &load, op);
+        }
+        let found = s.original_player_secret_count().unwrap();
+        assert_eq!(found, i32::from(c.label == "pools_secret"), "{}", c.label);
+    }
+}

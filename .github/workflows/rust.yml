@@ -120,6 +120,13 @@ jobs:
           python3 tools/reference/m3h6_snapshot_goldens.py --check
       - name: Original real-map-scale room debug/release comparison
         run: python3 tools/reference/check_player_real_map.py
+      - name: Independent original sky and static-specials evidence
+        if: runner.os == 'Linux'
+        run: |
+          ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h7_reference.py --check --overflow-check --address-check
+          python3 tools/reference/m3h7_snapshot_goldens.py --check
+      - name: Original sky and static-specials debug/release comparison
+        run: python3 tools/reference/check_player_specials.py
       - name: Original bonus sustained combat debug/release comparison
         run: python3 tools/reference/check_player_bonuses.py
       - name: Original armor sustained combat debug/release comparison
@@ -174,6 +181,9 @@ jobs:
       - name: Real-map-scale measurement smoke
         if: runner.os == 'Linux'
         run: python3 tools/measure_real_map.py --check
+      - name: Sky and static-specials measurement smoke
+        if: runner.os == 'Linux'
+        run: python3 tools/measure_specials.py --check
       - name: Advisory autonomous melee allocation smoke
         if: runner.os == 'Linux'
         run: python3 tools/measure_player_demon_melee.py --smoke

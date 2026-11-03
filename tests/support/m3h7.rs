@@ -105,8 +105,13 @@ pub fn case_map(index: usize) -> doom_map::Map {
     doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default()).unwrap()
 }
 pub fn setup(c: &Case) -> (Simulation, Actors, Vec<ActorId>) {
+    setup_map(c, case_map(c.map))
+}
+/// The committed setup of `c` on `map` (the committed room or a Rust-only variant
+/// of it): admission, THINGs, the player body, weapons, then `P_SpawnSpecials`.
+pub fn setup_map(c: &Case, map: doom_map::Map) -> (Simulation, Actors, Vec<ActorId>) {
     let mut s = Simulation::original_player_specials_map(
-        case_map(c.map),
+        map,
         MapContextOptions {
             initial_rng: DoomRng::from_indices(c.seed, 0),
             respawn_monsters: false,
