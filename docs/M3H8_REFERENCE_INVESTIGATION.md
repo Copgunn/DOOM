@@ -1231,5 +1231,27 @@ free slot. Sector sounds are sub-tag 12 records with origin 1. The snapshot enco
 DSIM35 mover records (kinds 5–8) and the tag-26 events, still inside the interim
 DSIM34 version until step 13. No caller in the tic yet: use, crossing and monster door
 use (steps 9–11) call the starters; Rust-only tests start movers between tics (which
-matches a use in the players phase: tail of the order, steps the same tic). Next is
-step 9, crossing and `spechit`.
+matches a use in the players phase: tail of the order, steps the same tic).
+
+Step 9 is done: `line_triggers.rs` holds `spechit` (the special subsequence of a
+position check's `openings`, read through the runtime line specials; a view without
+them, every older policy, collects nothing), the reverse crossing loop (`crossings`)
+and `P_CrossSpecialLine` (`cross`: a player starts 36, 38 and 109 and clears them
+whatever the `EV_*` did, starts 88 and keeps it; any other non-missile crosser acts on
+88 only; a fireball's crossings are recorded with the special unchanged). Every fill
+site collects it: `Mover::attempt` (player and knocked-back things),
+`pursuit::move_actor`, `projectiles::try_move` and `PlaneHost::height_clip` (the clip
+only feeds the witness). A ninth entry refuses the tic as `MapScaleError::SpecialCross`,
+reached only on the Rust-only `m3h8_dense9.bin` lane loaded with rule 6 bypassed by a
+test-only switch (the imp of `dense_imp_fireballs`, radius 20, is the only box wide
+enough to cover nine lines four units apart); the state is byte-identical after the
+refusal. A player's or a knocked-back thing's crossings are found during its motion (a
+line it clears is read as 0 by its later attempts) and applied after the motion with
+the staged tables, in event position right after the crossing attempt; a monster's
+`P_Move` applies them inline (a monster never clears a line). Events are sub-tag 3
+(`MoverEvent::Crossed`). Confirmed (the §3/§15 risk above): `check_move_from_things`
+keeps the openings visited before a blocking line and none after a thing block, and a
+missile's check keeps blocking two-sided lines. A partial replay of the C scenarios
+(`movers_replay.rs`: per op, every sector height and `specialdata` presence, every
+runtime line special, every `MX`/`MY` crossing in order) matches all 12 crossing-only
+scenarios (floors, lift and dense; 39 crossings). Next is step 10, use and switches.
