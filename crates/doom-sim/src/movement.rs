@@ -706,7 +706,7 @@ pub(crate) fn move_xy_multisector(
     spatial: &mut SpatialIndex,
     get: impl Fn(ActorId) -> Option<Actor>,
     command: Option<TicCommand>,
-    sectors: &[crate::SectorState],
+    sectors: crate::staging::Sectors<'_>,
 ) -> Vec<MotionEvent> {
     infallible(move_xy_profile(
         world,
@@ -722,7 +722,7 @@ pub(crate) fn move_xy_multisector(
 }
 struct MotionProfile<'a> {
     command: Option<TicCommand>,
-    sectors: Option<&'a [crate::SectorState]>,
+    sectors: Option<crate::staging::Sectors<'a>>,
 }
 fn move_xy_profile<F: MotionAccess>(
     world: &StaticWorld,
@@ -817,7 +817,7 @@ pub(crate) fn move_xy_contacts<F: MotionAccess>(
     spatial: &mut SpatialIndex,
     access: F,
     command: Option<TicCommand>,
-    sectors: &[crate::SectorState],
+    sectors: crate::staging::Sectors<'_>,
 ) -> Result<Vec<MotionEvent>, F::Error> {
     move_xy_profile(
         world,

@@ -300,7 +300,7 @@ fn validate_definition_uncached(ty: ActorTypeId) -> Result<(), SimError> {
 /// flat world's `0/128`.
 pub(crate) fn validate_item(
     room: Option<crate::player_map_scale::RoomBounds>,
-    sectors: Option<&[SectorState]>,
+    sectors: Option<crate::staging::Sectors<'_>>,
     a: Actor,
 ) -> Result<(), SimError> {
     let l = a.life().ok_or(ActorError::InvalidType)?;
@@ -451,7 +451,7 @@ pub(crate) struct Contacts<'a, A> {
     pub access: &'a mut A,
     pub player: &'a mut original_player::PlayerRuntime,
     /// Static sectors, for the item validation of the heights policy.
-    pub sectors: &'a [SectorState],
+    pub sectors: crate::staging::Sectors<'a>,
     /// The one-sided boundary of the diagonal policy, for the escape witness.
     pub boundary: Option<&'a crate::player_map_scale::Boundary>,
 }
@@ -837,7 +837,7 @@ impl Simulation {
             access: &mut self.actors,
             registry: self.registry.as_deref().ok_or(ActorError::InvalidType)?,
             world: &self.world,
-            sectors: &self.sectors,
+            sectors: crate::staging::Sectors::committed(&self.sectors),
             options: self.actor_options,
             rng: &mut self.rng,
             spatial: &mut self.spatial,

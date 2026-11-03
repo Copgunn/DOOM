@@ -1,7 +1,7 @@
 //! Validated source actor metadata and bounded state/action execution.
 use crate::{
-    Actor, ActorId, ActorSpec, Gravity, SectorState, Solidity, SpawnHeight, StaticWorld,
-    StoreError, ThinkerContext, ThinkerStore,
+    Actor, ActorId, ActorSpec, Gravity, Solidity, SpawnHeight, StaticWorld, StoreError,
+    ThinkerContext, ThinkerStore,
 };
 use doom_types::{DoomRng, Fixed};
 use std::{collections::BTreeSet, error::Error, fmt};
@@ -547,7 +547,7 @@ impl ActorRegistry {
     pub fn validate_type(
         &self,
         ty: ActorTypeId,
-        sectors: &[SectorState],
+        sectors: &[crate::SectorState],
     ) -> Result<(), ActorError> {
         self.admit_type(
             ty,
@@ -569,7 +569,7 @@ impl ActorRegistry {
     fn admit_type(
         &self,
         ty: ActorTypeId,
-        sectors: &[SectorState],
+        sectors: &[crate::SectorState],
         path: &mut BTreeSet<ActorTypeId>,
         done: &mut BTreeSet<ActorTypeId>,
         work: &mut usize,
@@ -633,7 +633,7 @@ impl ActorRegistry {
     pub(crate) fn validate_type_combat(
         &self,
         ty: ActorTypeId,
-        sectors: &[SectorState],
+        sectors: &[crate::SectorState],
     ) -> Result<(), ActorError> {
         self.admit_type(
             ty,
@@ -655,7 +655,7 @@ impl ActorRegistry {
     pub(crate) fn validate_type_projectile(
         &self,
         ty: ActorTypeId,
-        sectors: &[SectorState],
+        sectors: &[crate::SectorState],
     ) -> Result<(), ActorError> {
         self.admit_type(
             ty,
@@ -677,7 +677,7 @@ impl ActorRegistry {
     pub(crate) fn validate_type_perception(
         &self,
         ty: ActorTypeId,
-        sectors: &[SectorState],
+        sectors: &[crate::SectorState],
     ) -> Result<(), ActorError> {
         let info = self.actor_type(ty).ok_or(ActorError::InvalidType)?;
         // A_Look's see-state action runs immediately. It must never call Look,
@@ -709,7 +709,7 @@ impl ActorRegistry {
     pub(crate) fn validate_type_pursuit(
         &self,
         ty: ActorTypeId,
-        sectors: &[SectorState],
+        sectors: &[crate::SectorState],
     ) -> Result<(), ActorError> {
         let info = self.actor_type(ty).ok_or(ActorError::InvalidType)?;
         self.validate_state_pursuit(info.states()[1])?;
@@ -736,7 +736,7 @@ impl ActorRegistry {
     pub(crate) fn validate_type_monsters(
         &self,
         ty: ActorTypeId,
-        sectors: &[SectorState],
+        sectors: &[crate::SectorState],
     ) -> Result<(), ActorError> {
         self.admit_type(
             ty,
@@ -765,7 +765,7 @@ impl ActorRegistry {
     pub(crate) fn validate_type_shotgunner(
         &self,
         ty: ActorTypeId,
-        sectors: &[SectorState],
+        sectors: &[crate::SectorState],
     ) -> Result<(), ActorError> {
         self.admit_type(
             ty,
@@ -794,7 +794,7 @@ impl ActorRegistry {
     pub(crate) fn validate_type_chaingunner(
         &self,
         ty: ActorTypeId,
-        sectors: &[SectorState],
+        sectors: &[crate::SectorState],
     ) -> Result<(), ActorError> {
         self.admit_type(
             ty,
@@ -838,14 +838,14 @@ impl ActorRegistry {
     pub(crate) fn validate_type_demon_melee(
         &self,
         ty: ActorTypeId,
-        sectors: &[SectorState],
+        sectors: &[crate::SectorState],
     ) -> Result<(), ActorError> {
         self.validate_type_demon_context(ty, sectors, false)
     }
     pub(crate) fn validate_type_demon_context(
         &self,
         ty: ActorTypeId,
-        sectors: &[SectorState],
+        sectors: &[crate::SectorState],
         count_kill: bool,
     ) -> Result<(), ActorError> {
         self.admit_type(
@@ -881,7 +881,7 @@ impl ActorRegistry {
     pub(crate) fn validate_type_original(
         &self,
         ty: ActorTypeId,
-        sectors: &[SectorState],
+        sectors: &[crate::SectorState],
     ) -> Result<(), ActorError> {
         if crate::original_registry::is_fireball(ty) {
             // Caller already required the PlayerMonstersImpV1 role. MF_MISSILE is
@@ -1183,7 +1183,7 @@ impl ActorAccess for &mut ThinkerContext<'_, Actor> {
 }
 pub(crate) fn make_actor(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     registry: &ActorRegistry,
     options: ActorOptions,
     ty: ActorTypeId,
@@ -1253,7 +1253,7 @@ pub(crate) struct LifeHost<'a, A> {
     pub access: A,
     pub registry: &'a ActorRegistry,
     pub world: &'a StaticWorld,
-    pub sectors: &'a [SectorState],
+    pub sectors: crate::staging::Sectors<'a>,
     pub options: ActorOptions,
     pub rng: &'a mut DoomRng,
     pub spatial: &'a mut crate::movement::SpatialIndex,

@@ -159,8 +159,8 @@ impl Simulation {
     /// The specials policy's load-time state: a sector-thinker slot class bounded by
     /// the number of light sectors (the only sector thinkers this policy creates,
     /// all at load), so the visit budget is the 320 actor slots plus that count;
-    /// the per-sector sky identity; and the runtime lights and specials, still the
-    /// map's until `spawn_level_specials` runs.
+    /// the per-sector sky identity and `blockbox`; and the runtime lights and
+    /// specials, still the map's until `spawn_level_specials` runs.
     fn install_specials(&mut self, limit: u32) -> Result<(), SimError> {
         let map = self.world.map();
         let lights = map
@@ -182,8 +182,10 @@ impl Simulation {
                 special: s.special,
             })
             .collect();
+        let blockboxes = multisector::sector_block_boxes(map)?;
         self.actors = ThinkerStore::with_sector_capacity(limit, lights)?;
         self.world.sky_ceilings = Some(sky);
+        self.world.sector_block_boxes = Some(blockboxes);
         self.specials = Some(sector_thinkers::LevelSpecials {
             sectors,
             spawned: false,
@@ -268,7 +270,7 @@ impl Default for SightControl {
 pub(crate) fn action_sight(
     control: Option<&SightControl>,
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     observer: Actor,
     target: Actor,
 ) -> Result<SightResult, SimError> {
@@ -326,6 +328,10 @@ struct DemonPlan {
     /// Under the specials policy, the runtime sector lights and specials written
     /// by the light thinkers and secrets of this tic (empty otherwise).
     specials: Vec<sector_thinkers::SectorSpecial>,
+    /// The sparse overlay of the sector heights and line specials written in this
+    /// tic (M3h8 note §9), read through by every later query of the plan; empty
+    /// under every policy without movers.
+    writes: staging::StagedWrites,
     events: Vec<Event>,
 }
 impl Simulation {
@@ -371,6 +377,11 @@ impl Simulation {
                 .map_err(|_| StoreError::Capacity)?;
             specials.extend_from_slice(&level.sectors);
         }
+        // The overlay of the last committed plan, as for the specials: no
+        // allocation once its capacity covers a tic's writes; never allocating
+        // without writes.
+        let mut writes = std::mem::take(&mut self.spare_writes);
+        writes.clear();
         Ok(DemonPlan {
             actors: ThinkerStore {
                 slots,
@@ -387,6 +398,7 @@ impl Simulation {
             bindings: self.bindings,
             sound_targets,
             specials,
+            writes,
             events: Vec::new(),
         })
     }
@@ -498,6 +510,9 @@ impl Simulation {
         if let Some(level) = &mut self.specials {
             self.spare_specials = std::mem::replace(&mut level.sectors, plan.specials);
         }
+        plan.writes
+            .commit(&mut self.sectors, &mut self.line_specials);
+        self.spare_writes = plan.writes;
         plan.events
     }
     /// New-policy THING setup stages the same bounded actor/RNG/statistics plan.
@@ -525,7 +540,7 @@ impl Simulation {
             access: &mut plan.actors,
             registry: self.registry.as_deref().ok_or(ActorError::InvalidType)?,
             world: &self.world,
-            sectors: &self.sectors,
+            sectors: plan.writes.sectors(&self.sectors),
             options: self.actor_options,
             rng: &mut plan.rng,
             spatial: &mut plan.spatial,
@@ -551,7 +566,7 @@ impl Simulation {
             access: &mut plan.actors,
             registry: self.registry.as_deref().unwrap(),
             world: &self.world,
-            sectors: &self.sectors,
+            sectors: plan.writes.sectors(&self.sectors),
             options: self.actor_options,
             rng: &mut plan.rng,
             spatial: &mut plan.spatial,
@@ -611,7 +626,7 @@ impl Simulation {
                     access: &mut plan.actors,
                     registry: self.registry.as_deref().ok_or(ActorError::InvalidType)?,
                     world: &self.world,
-                    sectors: &self.sectors,
+                    sectors: plan.writes.sectors(&self.sectors),
                     options: self.actor_options,
                     rng: &mut plan.rng,
                     spatial: &mut plan.spatial,
@@ -683,7 +698,7 @@ impl Simulation {
             &mut plan.actors,
             thinkers::Inputs {
                 world: &self.world,
-                sectors: &self.sectors,
+                sectors: plan.writes.sectors(&self.sectors),
                 profile: self.profile,
                 bindings: plan.bindings,
                 live_bindings: &mut plan.bindings,

@@ -903,6 +903,70 @@ mod tests {
         assert_eq!(two.spawn_sector(6).unwrap().generation(), 2);
     }
 
+    /// The DSIM35 slot rules the M3h8 movers rely on, with the store unchanged:
+    /// lights keep slots 0..L-1; a mover takes the lowest free slot; a removed mover
+    /// stays in the shared order, occupied and readable, until the next pass unlinks
+    /// it, so a replacement created meanwhile takes another slot (`L + 2M`); the
+    /// unlink frees the slot and grows its generation; the slot count never shrinks.
+    #[test]
+    fn removed_movers_hold_their_slot_until_the_next_pass() {
+        // L = 2 lights, M = 1 mover sector: 4 sector slots.
+        let mut store = Mixed::with_sector_capacity(2, 4).unwrap();
+        let lights = [
+            store.spawn_sector(1).unwrap(),
+            store.spawn_sector(2).unwrap(),
+        ];
+        let first = store.spawn_sector(10).unwrap();
+        let a = store.spawn(100).unwrap();
+        assert_eq!((first.slot(), first.generation()), (2, 1));
+        // In one pass the mover finishes (marked) and the actor after it starts a
+        // replacement for the same sector.
+        let mut replacement = None;
+        store
+            .run(store.visit_bound(), |visit, context| match visit {
+                Visit::SectorThink(id) if id == first => {
+                    context.mark_remove_sector(id).unwrap();
+                }
+                Visit::Think(id) if id == a => {
+                    assert_eq!(context.store().sector_is_pending(first), Some(true));
+                    replacement = Some(context.spawn_sector(11).unwrap());
+                }
+                _ => {}
+            })
+            .unwrap();
+        let second = replacement.unwrap();
+        assert_eq!((second.slot(), second.generation()), (3, 1));
+        assert_eq!(
+            store.shared_order().collect::<Vec<_>>(),
+            [
+                ThinkerId::Sector(lights[0]),
+                ThinkerId::Sector(lights[1]),
+                ThinkerId::Sector(first),
+                ThinkerId::Actor(a),
+                ThinkerId::Sector(second),
+            ]
+        );
+        assert_eq!(store.sector_get(first), Some(&10));
+        // The next pass reaches the marked entry and unlinks it.
+        let mut visits = Vec::new();
+        store
+            .run(store.visit_bound(), |v, _| visits.push(v))
+            .unwrap();
+        assert!(visits.contains(&Visit::SectorRetired(first)));
+        assert_eq!(store.sector_slots[2].generation, 2);
+        assert!(store.sector_slots[2].entry.is_none());
+        assert_eq!(store.sector_slots.len(), 4);
+        // The next mover takes the freed slot with the grown generation.
+        let third = store.spawn_sector(12).unwrap();
+        assert_eq!((third.slot(), third.generation()), (2, 2));
+        assert_eq!(store.sector_slots.len(), 4);
+        assert_eq!(store.shared_order().last(), Some(ThinkerId::Sector(third)));
+        assert_eq!(
+            store.sector_availability(lights[0]),
+            ActorAvailability::Live
+        );
+    }
+
     #[test]
     fn actor_only_store_is_unchanged_by_the_sector_class() {
         let mut store = ThinkerStore::<i32>::new(4).unwrap();

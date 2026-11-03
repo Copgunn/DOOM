@@ -232,7 +232,7 @@ fn node_line(map: &Map, i: u16) -> Divline {
 }
 pub(crate) fn query(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     observer: Actor,
     target: Actor,
 ) -> SightResult {
@@ -249,7 +249,7 @@ pub(crate) fn query(
 }
 pub(crate) fn try_extent_query(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     observer: Actor,
     target: Actor,
 ) -> Result<SightResult, SimError> {
@@ -277,7 +277,7 @@ pub(crate) fn try_extent_query(
 /// infallible wrapper; a source-undefined clipping continuation is an error.
 pub(crate) fn checked_query(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     observer: Actor,
     target: Actor,
 ) -> Result<SightResult, SimError> {
@@ -289,7 +289,7 @@ pub(crate) fn checked_query(
 }
 fn query_prepared(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     observer: Actor,
     target: Actor,
     work_limit: usize,

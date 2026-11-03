@@ -12,7 +12,11 @@ use crate::*;
 /// `sector->lines` of `P_GroupLines`, in linedef order, the real-map policy) each
 /// sector reads only its own lines; the results are identical because the scan
 /// below only asks which two-sided lines leave the sector, in linedef order.
-pub(crate) fn flood(world: &StaticWorld, sectors: &[SectorState], start: u16) -> Vec<(u16, u8)> {
+pub(crate) fn flood(
+    world: &StaticWorld,
+    sectors: crate::staging::Sectors<'_>,
+    start: u16,
+) -> Vec<(u16, u8)> {
     let map = world.map();
     let mut visits = Vec::new();
     let mut traversed = vec![u8::MAX; sectors.len()];

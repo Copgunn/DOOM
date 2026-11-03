@@ -2,7 +2,7 @@
 use crate::*;
 pub(crate) struct Inputs<'a> {
     pub world: &'a StaticWorld,
-    pub sectors: &'a [SectorState],
+    pub sectors: crate::staging::Sectors<'a>,
     pub profile: Profile,
     pub bindings: [Option<ActorId>; 4],
     pub live_bindings: &'a mut [Option<ActorId>; 4],

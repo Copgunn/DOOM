@@ -47,7 +47,7 @@ pub(crate) trait MissileWorld {
     /// The static world, for the sky identity of the specials policy.
     fn world(&self) -> &StaticWorld;
     /// The runtime sector heights the refused check read.
-    fn sectors(&self) -> &[SectorState];
+    fn sectors(&self) -> crate::staging::Sectors<'_>;
     /// `P_RemoveMobj` of a missile (the sky hack of `P_XYMovement`).
     fn remove_missile(&mut self, id: ActorId);
 }
@@ -56,7 +56,10 @@ pub(crate) trait MissileWorld {
 /// checked before lines (a thing-blocked check visits no line); every visited
 /// two-sided line whose opening top strictly lowers `tmceilingz` becomes it. The
 /// openings of the attempt are exactly those lines, in visit order.
-pub(crate) fn ceiling_line(sectors: &[SectorState], attempt: &SectorMoveAttempt) -> Option<u16> {
+pub(crate) fn ceiling_line(
+    sectors: crate::staging::Sectors<'_>,
+    attempt: &SectorMoveAttempt,
+) -> Option<u16> {
     let mut ceiling = sectors[usize::from(attempt.location.sector)].ceiling;
     let mut line = None;
     for visit in &attempt.openings {
@@ -72,7 +75,7 @@ pub(crate) fn ceiling_line(sectors: &[SectorState], attempt: &SectorMoveAttempt)
 /// missile is on. Only the specials policy has sky ceilings.
 fn sky_line(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     attempt: &SectorMoveAttempt,
 ) -> Option<u16> {
     let sky = world.sky_ceilings.as_ref()?;
@@ -323,7 +326,7 @@ pub(crate) fn fly<W: MissileWorld>(w: &mut W, id: ActorId) -> bool {
 /// PIT_CheckThing/PIT_CheckLine over any actor lookup. Pure: the source draw
 /// and P_DamageMobj in the missile branch are the caller's, after this returns.
 fn missile_contact(
-    (world, sectors): (&StaticWorld, &[SectorState]),
+    (world, sectors): (&StaticWorld, crate::staging::Sectors<'_>),
     spatial: &movement::SpatialIndex,
     lookup: &impl Fn(ActorId) -> Option<Actor>,
     id: ActorId,
@@ -438,8 +441,8 @@ impl MissileWorld for Simulation {
     fn world(&self) -> &StaticWorld {
         &self.world
     }
-    fn sectors(&self) -> &[SectorState] {
-        &self.sectors
+    fn sectors(&self) -> crate::staging::Sectors<'_> {
+        self.sector_view()
     }
     fn remove_missile(&mut self, id: ActorId) {
         // Unreachable: this host's profile has no sky identity.
@@ -496,7 +499,7 @@ impl<A: lifecycle::ActorAccess> MissileWorld for LifeHost<'_, A> {
     fn world(&self) -> &StaticWorld {
         self.world
     }
-    fn sectors(&self) -> &[SectorState] {
+    fn sectors(&self) -> crate::staging::Sectors<'_> {
         self.sectors
     }
     fn remove_missile(&mut self, id: ActorId) {
@@ -866,7 +869,7 @@ impl Simulation {
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),
             world: &self.world,
-            sectors: &self.sectors,
+            sectors: crate::staging::Sectors::committed(&self.sectors),
             options: self.actor_options,
             rng: &mut self.rng,
             spatial: &mut self.spatial,
@@ -887,7 +890,7 @@ impl Simulation {
         target: [Fixed; 2],
     ) -> (SectorMoveAttempt, Option<ActorId>) {
         missile_contact(
-            (&self.world, &self.sectors),
+            (&self.world, self.sector_view()),
             &self.spatial,
             &|id| self.actor(id).copied(),
             id,
@@ -920,7 +923,7 @@ impl Simulation {
                             &mut self.spatial,
                             |id| self.actors.get(id).copied(),
                             None,
-                            &self.sectors,
+                            crate::staging::Sectors::committed(&self.sectors),
                         );
                         for m in motion {
                             self.pending.push(match m {
@@ -949,7 +952,7 @@ impl Simulation {
                             access: &mut self.actors,
                             registry: self.registry.as_deref().unwrap(),
                             world: &self.world,
-                            sectors: &self.sectors,
+                            sectors: crate::staging::Sectors::committed(&self.sectors),
                             options: self.actor_options,
                             rng: &mut self.rng,
                             spatial: &mut self.spatial,

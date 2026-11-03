@@ -1075,7 +1075,7 @@ impl Simulation {
         // p_enemy.c P_NoiseAlert: one P_RecursiveSound flood shared with the
         // staged weapon noise of the heights policy.
         let sector = self.actor(emitter).unwrap().location.unwrap().sector;
-        for (sector, blocks) in noise::flood(&self.world, &self.sectors, sector) {
+        for (sector, blocks) in noise::flood(&self.world, self.sector_view(), sector) {
             self.sound_targets[usize::from(sector)] = Some(target);
             self.pending.push(Event::Weapon(WeaponEvent::Noise {
                 sector,

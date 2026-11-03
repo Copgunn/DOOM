@@ -696,6 +696,56 @@ kept unless the full copy is cheaper on the E1M1-sized table, and the result is 
 either way. A lookup cost of the overlay (a linear scan of at most `M` entries per sector
 read) is part of what is measured.
 
+**Observed (step 5, 2026-11-03).** Host: Intel Core i7-8750H (12 logical CPUs), 7 GiB,
+Linux 6.18.58.1 WSL2, glibc 2.43, rustc 1.99.1, release profile; the measurements ran
+alone, with no concurrent build, test or fuzz job (only the idle agent and editor
+processes; load average ≈ 1 before each run). No CPU or frequency isolation; these are
+host observations, not budgets.
+
+*M3h7 workloads (must not move).* `python3 tools/measure_specials.py` (11 interleaved
+process samples per workload and mode) twice on the parent commit `08df436` (scratch
+worktree) and twice with the refactor, alternating. Every digest is identical between
+the two trees. Medians, parent → refactor, of the timeline: `pools_lights_soak` advance
+2.04–2.06 → 2.09–2.10 ms (1,200 tics), step 46.7–46.9 → 45.8–46.0 ms;
+`pools_light_and_fireball` advance 4.54–4.58 → 4.57–4.67 ms, step 48.4–48.5 → 49.0–49.2 ms;
+`sky_hack_wall` advance 1.15–1.17 → 1.17–1.19 ms; `sky_window_order` advance 0.99–1.00 →
+1.02 ms; capture mode within ±2 %; admission 246–251 → 245–249 µs (`pools`), 267–269 →
+272–274 µs (`sky`); max RSS 51.9–52.0 MiB in every case. The refactor costs at most a
+few percent on `advance`; every read in a plan now passes through the (empty) overlay.
+
+*Synthetic stage/commit.* Opt-in test
+`DOOM_STAGING_COST=1 cargo test -p doom-sim --release --lib --locked -- staging_cost --nocapture`
+(`transaction_cost_tests.rs`): per synthetic tic, `k` sector writes, `reads` reads
+through the staged view, commit; 100,000 tics, median of 7; ns per tic. `sparse` is the
+overlay as implemented (linear scan per read), `full` a full copy into a reused spare
+buffer, `indexed` a bench-only sparse variant with a reused per-sector position table.
+Two runs (the second after adding `indexed`, which changed the sparse codegen):
+
+| sectors | k | reads | baseline | sparse (run 1 / 2) | full (run 1 / 2) | indexed |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 88 | 0 | 0 | 0.5 | 1.5 / 1.3 | 12.2 / 13.5 | 2.1 |
+| 88 | 0 | 256 | 136 | 204 / 341 | 115 / 148 | 343 |
+| 88 | 1 | 256 | 135 | 407 / 473 | 143 / 142 | 349 |
+| 88 | 2 | 256 | 134 | 563 / 1,236 | 143 / 143 | 377 |
+| 88 | 9 | 0 | 0.5 | 23.5 / 25.1 | 17.6 / 18.7 | 29.4 |
+| 88 | 9 | 256 | 134 | 1,438 / 1,875 | 148 / 146 | 380 |
+| 88 | 9 | 2,048 | 1,048 | 11,315 / 15,215 | 1,042 / 1,042 | 2,888 |
+| 4,096 | 0 | 256 | 134 | 199 / 326 | 732 / 734 | 327 |
+| 4,096 | 2 | 256 | 133 | 521 / 1,831 | 735 / 742 | 335 |
+| 4,096 | 9 | 256 | 133 | 1,447 / 2,981 | 737 / 740 | 357 |
+| 4,096 | 9 | 2,048 | 1,059 | 11,348 / 24,187 | 1,635 / 1,663 | 2,637 |
+
+(Full rows for k ∈ {0, 1, 2, 4, 9, 18} and reads ∈ {0, 256, 2,048} are in the run
+logs, not committed.) **Result: on the E1M1-sized table the full copy is cheaper than
+the sparse overlay in every measured row with reads, by 1.8–23×, and also at k ≥ 9
+without reads; the sparse overlay is cheaper only when the tic reads nothing and writes
+at most 4 sectors.** On the format-sized table the sparse overlay wins with 256 reads at
+k ≤ 1 (k = 2 in run 1 only) and loses beyond; the indexed variant wins there at 256
+reads and loses to the full copy at 2,048.
+Under the approved rule (keep the overlay unless the full copy is cheaper on the
+E1M1-sized table) the measurement selects the full copy. The step did not switch: the
+choice is returned to the owner (§15).
+
 ## 10. DSIM35 / wire 19
 
 DSIM35 is DSIM34 plus, only where source state demands:
@@ -1025,4 +1075,11 @@ source `playerstate` (`PST_REBORN`, value 2) in the existing `original_player.0.
 field rather than a second flag; a removed mover not yet unlinked is a store record of
 kind 8 naming its sector; movers take the lowest free sector-thinker slot and a slot's
 generation grows when its mover is unlinked; a case that requested an exit or a reborn
-ends at that tic. Next is step 5, the staging refactor.
+ends at that tic. Next is step 5, the staging refactor. Step 5 is implemented without behaviour change (the `Sectors`
+read-through view in every plan path, `StagedWrites` in `DemonPlan` with runtime line
+specials, the per-sector `blockbox` at load, the store's DSIM35 slot rules confirmed by
+a test with no store change), but **its sparse-overlay choice is blocked**: the §9
+measurement found the full copy cheaper on the E1M1-sized table, so the step stops for
+the owner's decision (keep sparse, switch to the full copy, or an indexed overlay, which
+measured between them) before step 6 (policy and admission). The view type serves either
+strategy unchanged.

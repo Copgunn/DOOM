@@ -138,6 +138,7 @@ pub use multisector::{
 };
 mod sector_thinkers;
 mod snapshot;
+mod staging;
 mod store;
 mod thinkers;
 include!("fine_sine.rs");
@@ -560,6 +561,13 @@ pub struct Simulation {
     /// plan's staging buffer (like `spare_specials`). Empty, and never allocating,
     /// without sector thinkers. Never read or encoded.
     pub(crate) spare_sector_slots: Vec<store::Slot<sector_thinkers::SectorThinker>>,
+    /// The runtime special of every line (`line_t::special`), changed by W1 and S1
+    /// lines; empty, and never allocating, under every policy without movers, whose
+    /// line specials are the map's.
+    pub(crate) line_specials: Vec<i16>,
+    /// The sector and line-special overlay of the last committed plan, reused as the
+    /// next plan's (like `spare_specials`). Never read or encoded.
+    pub(crate) spare_writes: staging::StagedWrites,
 }
 /// Static-geometry table bounds a construction prepares against: the M3f2/M3h3
 /// constants for every historical profile, the WAD format's own bounds (M3h6 note
@@ -740,6 +748,8 @@ impl Simulation {
             specials: None,
             spare_specials: Vec::new(),
             spare_sector_slots: Vec::new(),
+            line_specials: Vec::new(),
+            spare_writes: staging::StagedWrites::default(),
         })
     }
     /// The sectors a type's dimensions are admitted against: the heights policy's
@@ -749,6 +759,11 @@ impl Simulation {
             Some(envelope) => std::slice::from_ref(envelope),
             None => &self.sectors,
         }
+    }
+    /// The committed runtime sectors as a read-through view without staged writes:
+    /// every query outside a checked plan, and every historical profile.
+    pub(crate) fn sector_view(&self) -> staging::Sectors<'_> {
+        staging::Sectors::committed(&self.sectors)
     }
     /// Historical service-family selection. For original-ID contexts, also use
     /// [`Self::original_execution_profile`] to distinguish the explicit policies.
@@ -819,7 +834,7 @@ impl Simulation {
         if index >= self.world.lines.len() {
             return Err(GeometryError::InvalidReference.into());
         }
-        Ok(multisector::opening(&self.world, &self.sectors, index))
+        Ok(multisector::opening(&self.world, self.sector_view(), index))
     }
     /// Read-only source TryMove decision, including step/dropoff/headroom checks.
     pub fn check_multisector_position(
@@ -862,7 +877,7 @@ impl Simulation {
         }
         let actor = self.actors.get(id).ok_or(StoreError::InvalidHandle)?;
         Ok(multisector::check_move(
-            (&self.world, &self.sectors),
+            (&self.world, self.sector_view()),
             id,
             actor,
             target,
@@ -1294,7 +1309,7 @@ impl Simulation {
                 &mut self.actors,
                 thinkers::Inputs {
                     world: &self.world,
-                    sectors: &self.sectors,
+                    sectors: crate::staging::Sectors::committed(&self.sectors),
                     profile: self.profile,
                     bindings: self.bindings,
                     live_bindings: &mut self.bindings,

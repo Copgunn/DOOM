@@ -281,7 +281,7 @@ fn clipping(two: bool) -> Simulation {
     let mut native = |position| {
         let a = lifecycle::make_actor(
             &s.world,
-            &s.sectors,
+            s.sector_view(),
             s.registry.as_deref().unwrap(),
             s.actor_options,
             ActorTypeId(136),

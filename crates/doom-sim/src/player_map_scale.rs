@@ -563,7 +563,7 @@ pub(crate) fn validate_heights_geometry(map: &Map) -> Result<(), SimError> {
 /// not fit keeps the vertical invariant and costs no legal play.
 pub(crate) fn spawn_fits(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     position: [Fixed; 2],
     spawn: SpawnHeight,
     height: Fixed,
@@ -667,10 +667,10 @@ impl Simulation {
         self.original_player.and_then(|p| p.room)
     }
     /// The sector table world items are validated against under heights.
-    pub(crate) fn item_sectors(&self) -> Option<&[SectorState]> {
+    pub(crate) fn item_sectors(&self) -> Option<crate::staging::Sectors<'_>> {
         self.player_policy()
             .has_heights()
-            .then_some(self.sectors.as_slice())
+            .then_some(crate::staging::Sectors::committed(&self.sectors))
     }
     /// Rust-only spawn fit of the heights policy (§4.3 of the M3h4 note): the
     /// spawn's resulting `z` lies within `[floor, ceiling - height]` of the spawn
@@ -690,7 +690,7 @@ impl Simulation {
             .and_then(|r| r.actor_type(ty))
             .ok_or(ActorError::InvalidType)?
             .height();
-        if spawn_fits(&self.world, &self.sectors, position, spawn, height) {
+        if spawn_fits(&self.world, self.sector_view(), position, spawn, height) {
             Ok(())
         } else {
             Err(MapScaleError::Fit.into())

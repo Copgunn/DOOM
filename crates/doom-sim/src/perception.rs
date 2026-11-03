@@ -64,7 +64,7 @@ impl Simulation {
         if self.profile == Profile::MapExtent || self.profile.uses_checked_demons() {
             return crate::sight::try_extent_query(
                 &self.world,
-                &self.sectors,
+                self.sector_view(),
                 if self.profile.uses_perception() {
                     self.perception_actor(observer)?
                 } else {
@@ -90,7 +90,7 @@ impl Simulation {
         };
         Ok(crate::sight::query(
             &self.world,
-            &self.sectors,
+            self.sector_view(),
             observer,
             target,
         ))
@@ -220,7 +220,7 @@ fn perception_event(events: &mut Vec<Event>, e: PerceptionEvent) {
 }
 pub(crate) fn scan(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     roster: &[PerceptionPlayer; 4],
     get: &impl Fn(ActorId) -> Option<Actor>,
     id: ActorId,
@@ -467,7 +467,7 @@ impl Simulation {
         self.preflight_perception_roster()?;
         let plan = scan(
             &self.world,
-            &self.sectors,
+            self.sector_view(),
             &self.perception_players,
             &|id| self.actor(id).copied(),
             id,
@@ -482,7 +482,7 @@ impl Simulation {
                 access: &mut self.actors,
                 registry: self.registry.as_deref().unwrap(),
                 world: &self.world,
-                sectors: &self.sectors,
+                sectors: crate::staging::Sectors::committed(&self.sectors),
                 options: self.actor_options,
                 rng: &mut self.rng,
                 spatial: &mut self.spatial,
@@ -953,7 +953,7 @@ impl Simulation {
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),
             world: &self.world,
-            sectors: &self.sectors,
+            sectors: crate::staging::Sectors::committed(&self.sectors),
             options: self.actor_options,
             rng: &mut self.rng,
             spatial: &mut self.spatial,

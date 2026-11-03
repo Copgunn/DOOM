@@ -132,7 +132,7 @@ fn approx(a: Actor, b: Actor) -> i32 {
 
 pub(crate) fn melee(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     r: &ActorRegistry,
     a: Actor,
     target: Option<Actor>,
@@ -142,7 +142,7 @@ pub(crate) fn melee(
 }
 fn checked_melee(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     r: &ActorRegistry,
     a: Actor,
     target: Option<Actor>,
@@ -599,7 +599,7 @@ impl Simulation {
         if self.monster_is_owner_type(ty) {
             let a = lifecycle::make_actor(
                 &self.world,
-                &self.sectors,
+                self.sector_view(),
                 self.registry.as_deref().unwrap(),
                 self.actor_options,
                 ty,
@@ -818,7 +818,7 @@ impl Simulation {
         if !self.profile.uses_checked_demons() {
             return Ok(melee(
                 &self.world,
-                &self.sectors,
+                self.sector_view(),
                 self.registry.as_deref().unwrap(),
                 a,
                 t,
@@ -826,7 +826,7 @@ impl Simulation {
         }
         checked_melee(
             &self.world,
-            &self.sectors,
+            self.sector_view(),
             self.registry.as_deref().unwrap(),
             a,
             t,
@@ -938,7 +938,7 @@ impl Simulation {
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),
             world: &self.world,
-            sectors: &self.sectors,
+            sectors: crate::staging::Sectors::committed(&self.sectors),
             options: self.actor_options,
             rng: &mut self.rng,
             spatial: &mut self.spatial,
