@@ -30,6 +30,9 @@ pub struct Case {
     /// Controlled between-tic player target plus S_TROO_ATK1 entry.
     pub attack_at: usize,
     pub attack_thing: usize,
+    /// Controlled between-tic player target plus see-state entry (S_POSS_RUN1).
+    pub chase_at: usize,
+    pub chase_thing: usize,
     /// 30: the declared controlled 200 health (crate-internal; not replayed here).
     pub script: u8,
     pub map: usize,
@@ -97,6 +100,8 @@ pub fn cases() -> Vec<Case> {
                 hit_amount: n("hit_amount") as i32,
                 attack_at: n("attack_at") as usize,
                 attack_thing: n("attack_thing") as usize,
+                chase_at: n("chase_at") as usize,
+                chase_thing: n("chase_thing") as usize,
                 script: n("script") as u8,
                 map: n("map") as usize,
             }
@@ -150,8 +155,8 @@ pub fn command(c: &Case, op: usize) -> [TicCommand; 4] {
     };
     commands
 }
-/// The declared between-tic inputs through the public API: the damage, then the
-/// attack entry.
+/// The declared between-tic inputs through the public API: the damage, the attack
+/// entry, then the see-state entry.
 pub fn controlled(
     s: &mut Simulation,
     c: &Case,
@@ -172,6 +177,12 @@ pub fn controlled(
         s.set_actor_target(imp, Some(body))?;
         s.enter_original_state(imp, OriginalState::S_TROO_ATK1)
             .expect("declared controlled attack entry");
+    }
+    if op == c.chase_at {
+        let zombie = things[c.chase_thing];
+        s.set_actor_target(zombie, Some(body))?;
+        s.enter_original_state(zombie, OriginalState::S_POSS_RUN1)
+            .expect("declared controlled see-state entry");
     }
     Ok(())
 }

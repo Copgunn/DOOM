@@ -100,7 +100,7 @@ impl<'b> PlaneHost<'_, 'b> {
     /// The current heights of `sector` under the plan's writes.
     pub(crate) fn sector(&self, sector: u16) -> Result<SectorState, SimError> {
         self.writes
-            .sectors(self.committed)
+            .view(self.committed, self.committed_lines)
             .get(usize::from(sector))
             .copied()
             .ok_or_else(|| crate::GeometryError::InvalidReference.into())

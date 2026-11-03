@@ -267,3 +267,102 @@ fn the_ninth_spechit_entry_refuses_the_tic_with_the_state_preserved() {
     }
     assert!(refused.is_some(), "the lane reaches a ninth entry");
 }
+
+/// The sector-thinker records of the shared order (live and removed).
+fn sector_thinkers(s: &Simulation) -> Vec<SectorThinker> {
+    s.shared_thinker_order()
+        .filter_map(ThinkerId::sector)
+        .map(|id| *s.sector_thinker(id).unwrap())
+        .collect()
+}
+
+/// Review finding 1 (DR): a between-tic see-state entry (`door_chase_entry`, the C
+/// harness's `chase_at`) runs `A_Chase` at once, and its `P_Move` collects `spechit`
+/// and takes the failure branch exactly as inside a tic (p_map.c:410, p_enemy.c:310–324
+/// do not depend on how the move was started): the zombieman pressed against the
+/// closed door D1 tries east (`MP`: movedir 0, one entry), `movedir` becomes
+/// `DI_NODIR`, the DR line 2 is used from side 0 and returns true (`MU`), and a
+/// normal door rising toward 124 is created before any tic runs (C `TK` after op 1).
+#[test]
+fn a_between_tic_chase_entry_uses_a_dr_line_from_its_blocked_move() {
+    let c = case("door_chase_entry");
+    let (mut s, body, things) = crate::movers_replay::setup(&c);
+    let zombie = things[0];
+    let pending = s.pending_events().len();
+    crate::movers_replay::controlled(&mut s, &c, body, &things, 1);
+    let events = &s.pending_events()[pending..];
+    let blocked: Vec<_> = events
+        .iter()
+        .filter_map(|e| match e {
+            Event::Mover(MoverEvent::SpechitBlocked { actor, count }) => Some((*actor, *count)),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(blocked, [(zombie, 1)]);
+    let uses: Vec<_> = events
+        .iter()
+        .filter_map(|e| match e {
+            Event::Mover(MoverEvent::SpecialUse {
+                user,
+                line,
+                side,
+                before,
+                result,
+                after,
+            }) => Some((*user, *line, *side, *before, *result, *after)),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(uses, [(zombie, 2, 0, 1, true, 1)]);
+    assert_eq!(s.actors.get(zombie).unwrap().life.unwrap().movedir, 8);
+    match sector_thinkers(&s).as_slice() {
+        [SectorThinker::Door(d)] => {
+            assert_eq!(d.sector, 2);
+            assert_eq!(d.kind, movers::DoorKind::Normal);
+            assert_eq!(d.direction, 1);
+            assert_eq!(d.topheight, Fixed::from_map_units(124));
+        }
+        other => panic!("{other:?}"),
+    }
+    // Created between tics: the door steps in the next tic, as in C (ceiling 2 after op 1).
+    assert_eq!(s.sectors[2].ceiling, Fixed::ZERO);
+    s.advance(crate::movers_replay::command(&c, 1)).unwrap();
+    assert_eq!(s.sectors[2].ceiling, Fixed::from_map_units(2));
+}
+
+/// Review finding 1 (88): a between-tic see-state entry (`lift_chase_entry`) whose
+/// first `P_TryWalk` north crosses the WR 88 line of the lower hall calls
+/// `P_CrossSpecialLine` from the crossing loop (C `MX`/`MY` in op 1: line 0, old side
+/// 0, special kept) and the lift (sector 3) starts down toward the hall floor 2.
+#[test]
+fn a_between_tic_chase_entry_crosses_a_lift_line() {
+    let c = case("lift_chase_entry");
+    let (mut s, body, things) = crate::movers_replay::setup(&c);
+    let zombie = things[0];
+    let pending = s.pending_events().len();
+    crate::movers_replay::controlled(&mut s, &c, body, &things, 1);
+    let crossings: Vec<_> = s.pending_events()[pending..]
+        .iter()
+        .filter_map(|e| match e {
+            Event::Mover(MoverEvent::Crossed {
+                actor,
+                line,
+                side,
+                before,
+                after,
+            }) => Some((*actor, *line, *side, *before, *after)),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(crossings, [(zombie, 0, 0, 88, 88)]);
+    match sector_thinkers(&s).as_slice() {
+        [SectorThinker::Plat(p)] => {
+            assert_eq!(p.sector, 3);
+            assert_eq!(p.status, movers::PlatStatus::Down);
+            assert_eq!(p.low, Fixed::from_map_units(2));
+            assert_eq!(p.high, Fixed::from_map_units(64));
+        }
+        other => panic!("{other:?}"),
+    }
+    assert_eq!(s.line_specials[0], 88);
+}

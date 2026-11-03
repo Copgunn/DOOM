@@ -162,7 +162,7 @@ def populate(pack):
     def item(kind, x, y): return (x, y, 0, kind, 7)
     def add(label, room, things=(), hit_at=0, hit_thing=0, hit_amount=0, attack_at=0, attack_thing=0, push_at=0, push_x=0, push_y=0,
             use_start=0, use_end=0, use2_start=0, use2_end=0, use3_start=0, use3_end=0, turn2_at=0, turn2=0,
-            forward2=0, move2_start=0, move2_hold=0, forward3=0, move3_start=0, move3_hold=0, **kw):
+            forward2=0, move2_start=0, move2_hold=0, forward3=0, move3_start=0, move3_hold=0, chase_at=0, chase_thing=0, **kw):
         things = list(things)
         assert sum(t[3] in ROSTER for t in things) <= 8
         assert sum(t[3] in PICKUPS for t in things) <= MAX_PICKUPS
@@ -176,7 +176,7 @@ def populate(pack):
                               push_at=push_at, push_x=push_x, push_y=push_y,
                               use_start=use_start, use_end=use_end, use2_start=use2_start, use2_end=use2_end, use3_start=use3_start, use3_end=use3_end,
                               turn2_at=turn2_at, turn2=turn2, forward2=forward2, move2_start=move2_start, move2_hold=move2_hold,
-                              forward3=forward3, move3_start=move3_start, move3_hold=move3_hold)
+                              forward3=forward3, move3_start=move3_start, move3_hold=move3_hold, chase_at=chase_at, chase_thing=chase_thing)
     north = dict(turn=16384, turn_hold=1); south = dict(turn=-16384, turn_hold=1); west = dict(turn=-32768, turn_hold=1)
     pistol = dict(attack_start=10, attack_end=200)
     tough = dict(script=30)
@@ -295,4 +295,15 @@ def populate(pack):
     # An imp told to attack the player: its fireballs cross the same lines (a missile's
     # spechit; P_CrossSpecialLine returns at once for MT_TROOPSHOT).
     add('dense_imp_fireballs', 7, [monster(IMP, 400, 64, -180)], px=100, py=64, attack_at=1, attack_thing=0, tics=300, **tough)
+    # --- between-tic state entry (independent review of the M3h8 branch) ------------
+    # A sleeping zombieman pressed against the closed door D1 from room A (box edge at
+    # x = -1) is given the player as target and enters its see state between tics
+    # (`chase_at`: P_SetMobjState(seestate), whose A_Chase runs at once): P_NewChaseDir
+    # tries east, P_Move is refused by the zero opening with the DR line in spechit,
+    # resets movedir and uses the line from side 0: the door opens before any tic runs.
+    add('door_chase_entry', 1, [monster(POSSESSED, -21, 0, 0)], px=300, py=0, chase_at=1, chase_thing=0, tics=120, **dict(tough, **west))
+    # A sleeping zombieman four units below the WR 88 line of the lower hall enters its
+    # see state between tics with the player on the ledge straight north: its first
+    # P_TryWalk north crosses the line and the lift starts lowering.
+    add('lift_chase_entry', 3, [monster(POSSESSED, 100, 124, 90)], px=100, py=500, chase_at=1, chase_thing=0, tics=80, **dict(tough, **south))
     return layouts

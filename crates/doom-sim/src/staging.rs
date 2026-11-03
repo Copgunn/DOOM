@@ -143,7 +143,10 @@ impl StagedWrites {
     pub(crate) fn buffer_capacities(&self) -> (usize, usize) {
         (self.sectors.copy.capacity(), self.lines.copy.capacity())
     }
-    /// The read-through view of `committed` under this plan's writes.
+    /// The read-through view of `committed` under this plan's writes, without line
+    /// specials (tests only: every plan reads through `view`, so a movers plan always
+    /// carries its runtime line specials).
+    #[cfg(test)]
     pub(crate) fn sectors<'a>(&'a self, committed: &'a [SectorState]) -> Sectors<'a> {
         Sectors {
             table: self.sectors.view(committed),

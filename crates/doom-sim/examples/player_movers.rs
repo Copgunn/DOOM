@@ -104,8 +104,8 @@ fn main() -> ResultHost<()> {
         );
     }
     let cases = source::cases();
-    assert_eq!(cases.len(), 30);
-    // Headline counts of the committed C rows over all 30 scenarios.
+    assert_eq!(cases.len(), 32);
+    // Headline counts of the committed C rows over all 32 scenarios.
     let mut c_work = Work::default();
     for c in &cases {
         for op in 0..=c.tics {
@@ -115,12 +115,12 @@ fn main() -> ResultHost<()> {
     assert_eq!(
         c_work,
         Work {
-            steps: 1663,
-            changes: 1670,
-            clips: 1969,
-            crossings: 44,
-            uses: 213,
-            blocked: 194,
+            steps: 1742,
+            changes: 1749,
+            clips: 2032,
+            crossings: 47,
+            uses: 221,
+            blocked: 202,
             exits: 2,
         }
     );
@@ -192,7 +192,7 @@ fn main() -> ResultHost<()> {
         );
     }
     println!(
-        "player_movers: C doorway, hall, switchyard, lift, floors and dense rooms, 30 scenarios: {} plane steps, {} P_ChangeSector calls, {} thing clips, {} crossings, {} uses, {} spechit-blocked moves, {} exits in the C rows; {replayed} public-input scenarios replayed over {ops} ops with matching heights, mover work and line specials ({} plane steps, {} P_ChangeSector calls); DSIM35 digest={digest:016x}",
+        "player_movers: C doorway, hall, switchyard, lift, floors and dense rooms, 32 scenarios: {} plane steps, {} P_ChangeSector calls, {} thing clips, {} crossings, {} uses, {} spechit-blocked moves, {} exits in the C rows; {replayed} public-input scenarios replayed over {ops} ops with matching heights, mover work and line specials ({} plane steps, {} P_ChangeSector calls); DSIM35 digest={digest:016x}",
         c_work.steps,
         c_work.changes,
         c_work.clips,

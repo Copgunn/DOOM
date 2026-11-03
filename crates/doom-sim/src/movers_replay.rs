@@ -58,6 +58,9 @@ pub(crate) struct Case {
     pub hit_amount: i32,
     pub attack_at: usize,
     pub attack_thing: usize,
+    /// Controlled between-tic player target plus see-state entry (`chase_at`).
+    pub chase_at: usize,
+    pub chase_thing: usize,
     pub map: usize,
     pub clips: i32,
     pub ready: Weapon,
@@ -92,6 +95,8 @@ pub(crate) fn cases() -> Vec<Case> {
                 hit_amount: n("hit_amount") as i32,
                 attack_at: n("attack_at") as usize,
                 attack_thing: n("attack_thing") as usize,
+                chase_at: n("chase_at") as usize,
+                chase_thing: n("chase_thing") as usize,
                 map: n("map") as usize,
                 clips: n("clips") as i32,
                 ready: match n("ready") {
@@ -167,7 +172,8 @@ pub(crate) fn setup_map(c: &Case, map: doom_map::Map) -> (Simulation, ActorId, V
     (s, body, things)
 }
 /// The declared between-tic inputs: the damage (thing `hit_thing`, the player when
-/// the room has no THING) and the attack entry.
+/// the room has no THING), the attack entry and the see-state entry (`chase_at`:
+/// `P_SetMobjState(seestate)` runs the state's `A_Chase` at once, outside any tic).
 pub(crate) fn controlled(
     s: &mut Simulation,
     c: &Case,
@@ -198,6 +204,13 @@ pub(crate) fn controlled(
         let imp = things[c.attack_thing];
         s.set_actor_target(imp, Some(body)).unwrap();
         s.enter_original_state(imp, OriginalState::S_TROO_ATK1)
+            .unwrap();
+    }
+    if op == c.chase_at {
+        // Every chase case declares a zombieman, whose see state is S_POSS_RUN1.
+        let zombie = things[c.chase_thing];
+        s.set_actor_target(zombie, Some(body)).unwrap();
+        s.enter_original_state(zombie, OriginalState::S_POSS_RUN1)
             .unwrap();
     }
 }
@@ -804,7 +817,7 @@ pub(crate) mod full {
             .filter(|(tag, _)| tag == "TK")
             .count();
         let mb: usize = rows_named("MB");
-        assert_eq!(t.cases, 30);
+        assert_eq!(t.cases, 32);
         assert_eq!(t.ops, frames().len());
         assert_eq!(t.event_frames, frames().len());
         assert_eq!(t.captures, captures().len());
