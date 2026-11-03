@@ -38,13 +38,15 @@ pub use player_armor::{
 };
 pub use player_bonuses::PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA;
 pub use player_map_scale::{
-    Boundary, HEIGHTS_LINE_FLAGS, HEIGHTS_MOMZ_UNITS, HEIGHTS_Z_UNITS, MAP_SCALE_ACTOR_SLOTS,
-    MAP_SCALE_EXTENT_UNITS, MAP_SCALE_MAX_LIVE_PROJECTILES, MAP_SCALE_MOMENTUM_UNITS,
-    MAP_SCALE_WALL_LINES, MapScaleError, RoomBounds,
+    ArithmeticCertificate, Boundary, HEIGHTS_LINE_FLAGS, HEIGHTS_MOMZ_UNITS, HEIGHTS_Z_UNITS,
+    MAP_SCALE_ACTOR_SLOTS, MAP_SCALE_EXTENT_UNITS, MAP_SCALE_MAX_LIVE_PROJECTILES,
+    MAP_SCALE_MOMENTUM_UNITS, MAP_SCALE_WALL_LINES, MAX_INTERCEPTS, MapScaleError,
+    REAL_MAP_FORMAT_RECORDS, RoomBounds, slide_window_lines,
 };
 pub use player_monsters::{
     MAX_PLAYER_MONSTERS, PLAYER_DIAGONAL_CONTEXT_SCHEMA, PLAYER_HEIGHTS_CONTEXT_SCHEMA,
     PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
+    PLAYER_REAL_MAP_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -540,6 +542,34 @@ pub struct Simulation {
     /// for it. Never read; not canonical state, not encoded, not compared.
     pub(crate) spare_sound_targets: Vec<Option<ActorId>>,
 }
+/// Static-geometry table bounds a construction prepares against: the M3f2/M3h3
+/// constants for every historical profile, the WAD format's own bounds (M3h6 note
+/// §4.1) under the real-map policy.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct GeometryCapacity {
+    pub lines: usize,
+    pub sectors: usize,
+    /// Subsectors and nodes.
+    pub tree: usize,
+    pub cells: usize,
+}
+impl GeometryCapacity {
+    pub const CLASSIC: Self = Self {
+        lines: MAP_SCALE_MAX_LINES,
+        sectors: MAP_SCALE_MAX_SECTORS,
+        tree: 4096,
+        cells: MAP_EXTENT_MAX_CELLS,
+    };
+    /// `short` references bound every table at 32,767 records; BLOCKMAP list
+    /// offsets are `short` word indices, so the lump holds at most 32,768 words and
+    /// fewer cells than words.
+    pub const FORMAT: Self = Self {
+        lines: player_map_scale::REAL_MAP_FORMAT_RECORDS,
+        sectors: player_map_scale::REAL_MAP_FORMAT_RECORDS,
+        tree: player_map_scale::REAL_MAP_FORMAT_RECORDS,
+        cells: 32_768,
+    };
+}
 /// A simulation moves between threads and is shared by reference across them; the
 /// validation memo is atomic so this holds at compile time.
 const _: () = {
@@ -589,6 +619,21 @@ impl Simulation {
         profile: Profile,
         reference_budget: usize,
     ) -> Result<Self, SimError> {
+        Self::create_bounded_with(
+            map,
+            max_actors,
+            profile,
+            reference_budget,
+            GeometryCapacity::CLASSIC,
+        )
+    }
+    fn create_bounded_with(
+        map: Map,
+        max_actors: u32,
+        profile: Profile,
+        reference_budget: usize,
+        capacity: GeometryCapacity,
+    ) -> Result<Self, SimError> {
         if profile == Profile::MapScale {
             if map.linedefs().len() > MAP_SCALE_MAX_LINES
                 || map.sectors().len() > MAP_SCALE_MAX_SECTORS
@@ -612,13 +657,19 @@ impl Simulation {
         if profile.uses_sectors() {
             if profile.uses_expanded_geometry() {
                 if profile != Profile::MapScale {
-                    movement::prepare_map_extent(&mut world, reference_budget)?;
+                    movement::prepare_extent_with(
+                        &mut world,
+                        capacity.lines,
+                        reference_budget,
+                        capacity.cells,
+                    )?;
                 } else {
                     movement::prepare_map_scale(&mut world, reference_budget)?;
                 }
-                world.topology = Some(multisector::Topology::new_bounded(
+                world.topology = Some(multisector::Topology::new_with_capacity(
                     &world,
-                    MAP_SCALE_MAX_SECTORS,
+                    capacity.sectors,
+                    capacity.tree,
                 )?);
             } else {
                 movement::prepare_reference_profile(&mut world)?;
@@ -1012,6 +1063,19 @@ impl Simulation {
         if self.actors.is_pending(id) != Some(false) {
             return Err(StoreError::InvalidHandle.into());
         }
+        // The real-map policy refuses a push to an item (`MF_SPECIAL`): nothing in
+        // the source gives a pickup momentum, and the DSIM31+ item witness and the
+        // tic preflight never admit one that moves. The diagonal policy keeps its
+        // wider admission unchanged (M3h6 note §8.3).
+        if self.player_policy().has_real_map()
+            && momentum != [Fixed::ZERO; 2]
+            && self
+                .actor(id)
+                .and_then(Actor::life)
+                .is_some_and(|l| l.flags & world_pickups::MF_SPECIAL != 0)
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.projectile_control(id)?;
         if self.profile.uses_monsters()
             && !self.profile.uses_demon_lifecycle()
@@ -1368,3 +1432,8 @@ mod player_diagonal_tests;
 mod player_heights_tests;
 #[cfg(test)]
 mod player_map_scale_tests;
+#[cfg(test)]
+mod player_real_map_tests;
+#[cfg(test)]
+#[path = "../../../tests/support/m3h6.rs"]
+mod real_map_evidence;

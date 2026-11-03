@@ -218,3 +218,7 @@ See [source qualification](M3G9_REFERENCE_INVESTIGATION.md) and
 - [M3h5 non-axis (diagonal) walls](validation/M3H5.md): wall slides at three slopes,
   both corner kinds, a diagonal riser, window, pillar and corridor and the corner jump
   in C, DSIM32, the wall-invariant soaks, fuzzing and the refused escape.
+- [M3h6 real-map scale](validation/M3H6.md): a 516-linedef, 74-sector town, a toothed
+  gallery with 73-intercept traces, a 3,850-norm wall at the arithmetic limit, a comb
+  of 123 lines in one window and a 60 × 60 cell map in C, DSIM33, the admission
+  rejections, the intercept witness, soaks, fuzzing and IWAD counts.

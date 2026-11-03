@@ -23,6 +23,8 @@ pub const PLAYER_HEIGHTS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-HEIGHTS-1-MED
 
 /// Explicit diagonal-wall execution context; older contexts stay frozen.
 pub const PLAYER_DIAGONAL_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-DIAGONAL-1-MEDIUM-v1";
+/// Explicit real-map-scale execution context; older contexts stay frozen.
+pub const PLAYER_REAL_MAP_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-REALMAP-1-MEDIUM-v1";
 
 impl Simulation {
     /// Autonomous roster member: the native/original Demon owner or a policy
@@ -111,6 +113,25 @@ impl Simulation {
             map,
             crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS,
             OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersDiagonalV1)?,
+            ActorOptions::default(),
+            context,
+        )
+        .map_err(Into::into)
+    }
+    /// The diagonal world at the scale of classic maps: static-geometry caps taken
+    /// from the WAD format (32,767 of every record kind), the arithmetic
+    /// certificate and the slide-window rule of the M3h6 note checked here, player
+    /// starts kept as records, and the 129th intercept of one trace refused during
+    /// play (`MapScaleError::Intercepts`). Roster, slots, fireballs, heights,
+    /// specials and sky keep the diagonal policy's rules.
+    pub fn original_player_real_map_map(
+        map: Map,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        Self::with_original_registry(
+            map,
+            crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS,
+            OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersRealMapV1)?,
             ActorOptions::default(),
             context,
         )

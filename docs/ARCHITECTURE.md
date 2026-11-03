@@ -742,3 +742,33 @@ body under this policy as the declared mirror of the harness push. See
 [support](COMPATIBILITY.md#original-monsters-among-diagonal-walls),
 [source matrix](M3H5_REFERENCE_INVESTIGATION.md) and
 [DSIM32](STATE_FORMAT.md#dsim-v32-original-monsters-among-diagonal-walls).
+
+The real-map policy changes no mover, collision, traversal, sight or scheduler body
+either; it changes what the admission lets in and how the tables behind those bodies
+are sized. `GeometryCapacity` (lib.rs) carries the table bounds a construction prepares
+against: the M3f2/M3h3 constants for every historical profile, the WAD format's own
+bounds (`REAL_MAP_FORMAT_RECORDS`, 32,768 BLOCKMAP words) under this policy, through
+`movement::prepare_extent_with` and `Topology::new_with_capacity`.
+`map_extent::validate_real_map` computes, instead of checking against constants, the
+sight expansion (bounded by the tree size `2 · nodes + subsectors + segs`), its
+per-operation budget `64 · (expanded + 5 · lines)` stored in `StaticWorld::
+sight_work_budget`, the compiled cell references and the preparation bytes (guarded
+by `REAL_MAP_MAX_PREPARED_REFERENCES` and `REAL_MAP_PREPARATION_BYTES`).
+`player_map_scale.rs` owns the new admission: `ArithmeticCertificate::derive` evaluates
+(i)–(vii) of the M3h6 note in exact integers, `slide_window_lines` the 2 × 2 window
+rule, `RoomBounds::derive_real_map` the closed-cell rule without the 95-line bound,
+`sector_lines` the `P_GroupLines` lists the noise flood reads from
+`StaticWorld::sector_lines`. `line_work::SeenLines` is the `validcount` of a trace: an
+inline bitset for worlds of at most 1,024 lines (every older policy, unchanged) and a
+heap bitset sized by the line count above it; `combat_trace::collect_limited` uses it
+instead of the line-indexed `seen[128]`, which failed every trace that met a line of
+index 128 or more. The intercept witness is one comparison in each collector: `movement::path`
+takes the policy's limit through `MotionAccess::intercept_limit` (`Some(128)` from
+`world_pickups::Contacts` under this policy, `None` elsewhere) and `combat_trace::add`
+keeps its 128; both surface `CombatError::InterceptLimit`, which the transaction
+boundaries of `demon_expanded_map.rs` name `MapScaleError::Intercepts` under this policy
+so the tic is dropped whole. `spawn_map_things` keeps starts as records under this
+policy and `set_momentum` refuses pushes to items. See
+[support](COMPATIBILITY.md#original-monsters-at-classic-map-scale),
+[source matrix](M3H6_REFERENCE_INVESTIGATION.md) and
+[DSIM33](STATE_FORMAT.md#dsim-v33-original-monsters-at-classic-map-scale).

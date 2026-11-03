@@ -16,3 +16,6 @@ adds session conventions that AGENTS.md does not state.
   delete them at the end of a milestone after their results are recorded.
 - Report only observed results; distinguish target compiled, seed replay, coverage-guided
   campaign and sanitizer campaign, and disclose disabled leak detection.
+- Push the branch to origin after every completed plan step (no PR until gates pass).
+- Check free disk space before large builds, baseline worktrees or fuzzing; keep at least
+  20 GB free; clean scratch first or stop and report.

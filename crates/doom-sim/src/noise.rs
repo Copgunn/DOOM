@@ -8,7 +8,10 @@ use crate::*;
 /// through two-sided lines whose opening is positive (`P_LineOpening`), where an
 /// `ML_SOUNDBLOCK` line raises `soundblocks` once and a sector is revisited only
 /// with fewer blocks (`sec->soundtraversed <= soundblocks+1`). Bounded by the
-/// sector count times two.
+/// sector count times two. With the world's prepared per-sector line lists (the
+/// `sector->lines` of `P_GroupLines`, in linedef order, the real-map policy) each
+/// sector reads only its own lines; the results are identical because the scan
+/// below only asks which two-sided lines leave the sector, in linedef order.
 pub(crate) fn flood(world: &StaticWorld, sectors: &[SectorState], start: u16) -> Vec<(u16, u8)> {
     let map = world.map();
     let mut visits = Vec::new();
@@ -22,7 +25,11 @@ pub(crate) fn flood(world: &StaticWorld, sectors: &[SectorState], start: u16) ->
         traversed[i] = blocks;
         visits.push((sector, blocks));
         let mut children = Vec::new();
-        for (line, l) in map.linedefs().iter().enumerate() {
+        let lists = world.sector_lines.as_deref();
+        let count = lists.map_or(map.linedefs().len(), |lists| lists[i].len());
+        for k in 0..count {
+            let line = lists.map_or(k, |lists| usize::from(lists[i][k]));
+            let l = &map.linedefs()[line];
             if l.flags & 4 == 0 {
                 continue;
             }

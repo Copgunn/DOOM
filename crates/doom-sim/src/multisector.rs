@@ -143,10 +143,19 @@ impl Topology {
         Self::new_bounded(world, 128)
     }
     pub fn new_bounded(world: &StaticWorld, sectors: usize) -> Result<Self, GeometryError> {
+        Self::new_with_capacity(world, sectors, 4096)
+    }
+    /// `new_bounded` with an explicit bound on subsectors and nodes (4,096 for the
+    /// historical profiles, the format's 32,767 under the real-map policy).
+    pub fn new_with_capacity(
+        world: &StaticWorld,
+        sectors: usize,
+        tree: usize,
+    ) -> Result<Self, GeometryError> {
         let map = world.map();
         if map.sectors().len() > sectors
-            || map.subsectors().len() > 4096
-            || map.nodes().len() > 4096
+            || map.subsectors().len() > tree
+            || map.nodes().len() > tree
         {
             return Err(GeometryError::Unsupported("M3b topology work limit"));
         }
@@ -336,7 +345,7 @@ pub(crate) fn check_move_from_things(
     let xh = ((b[3] - ox).bits() >> 23).min(w - 1);
     let yl = ((b[1] - oy).bits() >> 23).max(0);
     let yh = ((b[0] - oy).bits() >> 23).min(h - 1);
-    let mut seen = crate::line_work::SeenLines::default();
+    let mut seen = crate::line_work::SeenLines::for_lines(world.lines.len());
     for x in xl..=xh {
         for y in yl..=yh {
             for index in world.line_candidates(x as usize, y as usize) {

@@ -10,6 +10,8 @@ pub(crate) struct ExpandedSelection {
     pub actor_cap: u32,
     /// Admit type dimensions against the tallest sector (heights policy).
     pub type_envelope: bool,
+    /// Format-sized static geometry with derived work values (real-map policy).
+    pub real_map: bool,
 }
 impl Simulation {
     /// Profile 20: larger static maps with the exact map-context Demon registry.
@@ -32,6 +34,7 @@ impl Simulation {
                 profile: Profile::DemonExpandedMap,
                 actor_cap: 64,
                 type_envelope: false,
+                real_map: false,
             },
         )
     }
@@ -47,6 +50,7 @@ impl Simulation {
             profile,
             actor_cap,
             type_envelope,
+            real_map,
         } = selection;
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
@@ -57,7 +61,9 @@ impl Simulation {
         if options.skill == Skill::Nightmare {
             return Err(MonsterError::Definition.into());
         }
-        if map.things().len() > MAX_DEMON_MAP_THINGS {
+        // The real-map policy takes the THING count from the lump (the parser's
+        // format bound); spawned actors stay bounded by the roster.
+        if !real_map && map.things().len() > MAX_DEMON_MAP_THINGS {
             return Err(MapSpawnError::WorkLimit.into());
         }
         if map.linedefs().iter().any(|l| l.special != 0)
@@ -90,13 +96,29 @@ impl Simulation {
             DemonExecutionBinding::admit(&registry).map_err(|_| MonsterError::Definition)?;
         }
         registry.validate_impact_source()?;
-        let limits = MapExtentLimits {
-            max_actors: limit,
-            ..Default::default()
+        let mut sim = if real_map {
+            let admission = map_extent::validate_real_map(&map, actor_cap)?;
+            let mut sim = Self::create_bounded_with(
+                map,
+                limit,
+                profile,
+                admission.references,
+                GeometryCapacity::FORMAT,
+            )?;
+            sim.world.extent_sight_work = Some(admission.sight_work);
+            sim.world.sight_work_budget = admission.sight_budget;
+            sim
+        } else {
+            let limits = MapExtentLimits {
+                max_actors: limit,
+                ..Default::default()
+            };
+            let work = map_extent::validate_with_actor_cap(&map, limits, actor_cap)?;
+            let mut sim =
+                Self::create_bounded(map, limit, profile, limits.max_prepared_references)?;
+            sim.world.extent_sight_work = Some(work);
+            sim
         };
-        let work = map_extent::validate_with_actor_cap(&map, limits, actor_cap)?;
-        let mut sim = Self::create_bounded(map, limit, profile, limits.max_prepared_references)?;
-        sim.world.extent_sight_work = Some(work);
         if type_envelope {
             // Heights policy: windows and closed sectors may be shorter than any
             // actor; dimensions are admitted against the tallest sector and every
@@ -165,7 +187,7 @@ pub(crate) fn action_sight(
             .get()
             .checked_add(world.extent_sight_work.expect("checked geometry") + 5 * world.lines.len())
             .ok_or(PerceptionError::WorkLimit)?;
-        if count > 64 || work > 1_048_576 {
+        if count > 64 || work > world.sight_work_budget {
             return Err(PerceptionError::WorkLimit.into());
         }
         control.queries.set(count);
@@ -409,11 +431,23 @@ impl Simulation {
             events: &mut plan.events,
         });
         if let Some(error) = control.failure.get() {
-            return Err(error);
+            return Err(self.policy_error(error));
         }
         let events = self.commit_demon_plan(plan);
         self.pending.extend(events);
         Ok(result)
+    }
+    /// The real-map policy names the source's 129th intercept of a trace, reached
+    /// by a hitscan or a slide inside a refused tic, `MapScaleError::Intercepts`
+    /// (M3h6 note §4.4); every other error and policy is unchanged.
+    fn policy_error(&self, error: SimError) -> SimError {
+        if self.player_policy().has_real_map()
+            && error == SimError::Combat(CombatError::InterceptLimit)
+        {
+            MapScaleError::Intercepts.into()
+        } else {
+            error
+        }
     }
     pub(crate) fn advance_expanded_demons(
         &mut self,
@@ -460,7 +494,8 @@ impl Simulation {
                         &mut host,
                         id,
                         commands[usize::from(PlayerSlot::One.ordinal())],
-                    )?;
+                    )
+                    .map_err(|error| self.policy_error(error))?;
                 }
                 if weapon_policy {
                     player_pistol::stage(
@@ -468,7 +503,8 @@ impl Simulation {
                         commands[usize::from(PlayerSlot::One.ordinal())],
                         self.tic,
                         plan.sound_targets.as_mut_slice(),
-                    )?;
+                    )
+                    .map_err(|error| self.policy_error(error))?;
                 }
             }
             world_pickups::bonus_tick(plan.player.as_mut())?;
@@ -502,7 +538,7 @@ impl Simulation {
             },
         );
         if let Some(error) = control.failure.get() {
-            return Err(error);
+            return Err(self.policy_error(error));
         }
         if command_policy {
             player_commands::validate_result(&plan.actors, plan.player.as_ref())?;

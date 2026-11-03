@@ -408,6 +408,32 @@ subsectors per sector. See [investigation](../../docs/M3H5_REFERENCE_INVESTIGATI
 [commands](../../docs/TESTING.md#original-monsters-among-diagonal-walls) and
 [observations](../../docs/validation/M3H5.md).
 
+## Real-map-scale rooms (M3h6)
+
+[m3h6_reference.py](m3h6_reference.py) reuses every compiled M3h2/M3h5 body, observer
+and controlled input unchanged over rooms of classic-map size. [m3h6_geometry.py](m3h6_geometry.py)
+is the M3h5 polygon builder with an automatic recursive node builder (partitions chosen
+among the seg lines by the DoomBSP grade, split vertices rounded to integers as DoomBSP
+rounds them, leaves asserted single-sector and convex within rounding) and the sizes of
+the enlarged harness arrays instead of the M3h5 asserts; [m3h6_cases.py](m3h6_cases.py)
+builds the town (a 6 × 4 grid of octagonal rooms, corridors, steps, pillars and window
+bands: 516 linedefs, 74 sectors), the gallery (27 two-sided teeth per wall and sixteen pickups
+along the line of fire), the extent room (a 2,750-unit diagonal wall of norm 3,850 and a
+2,683-unit two-sided line, at 99.9% and 98.3% of the certificate bounds), the dense comb
+(123 distinct lines in one 2 × 2 cell window), the wide square (a 60 × 60 cell BLOCKMAP)
+and, Rust-only, the witness hall whose long shot straddles 130 lines. The harness keeps
+`intercept_t intercepts[128]` and its abort guard exactly, enlarges the shim's line,
+side, sector, seg, subsector, node, cell, REJECT and owned-object arrays through the
+`m3d3j_shim.h` write hook, and adds one observer, `TI` (the intercept count on entry to
+`P_TraverseIntercepts`), whose count the generator checks against the `I` rows of its
+trace. The inventory records the largest trace by traverser kind, thing re-adds and the
+most sight queries in one tic. [real_map_snapshot.py](real_map_snapshot.py) and
+[m3h6_snapshot_goldens.py](m3h6_snapshot_goldens.py) project DSIM33 from the C rows: the
+DSIM32 layout under version 33, policy 17 and the real-map context, with the `TI` rows
+dropped before the chain. See [investigation](../../docs/M3H6_REFERENCE_INVESTIGATION.md),
+[commands](../../docs/TESTING.md#original-monsters-at-classic-map-scale) and
+[observations](../../docs/validation/M3H6.md).
+
 ## Historical raw-trace loading
 
 Selected large CSV traces now use standard zstd storage. Run frozen C/encoder
