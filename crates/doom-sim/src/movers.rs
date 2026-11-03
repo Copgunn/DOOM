@@ -119,13 +119,6 @@ fn sound(name: &str) -> u16 {
 
 /// The sector-thinker store as the `EV_*` starters see it: the committed store
 /// between tics and in the players phase, the traversal context in the pass.
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "called by the crossing and use bodies (M3h8 plan steps 9-11)"
-    )
-)]
 pub(crate) trait MoverAccess {
     fn mover_store(&self) -> &ThinkerStore<Actor>;
     fn spawn_mover(&mut self, mover: SectorThinker) -> Result<SectorThinkerId, StoreError>;
@@ -157,13 +150,6 @@ impl MoverAccess for ThinkerContext<'_, Actor> {
 /// `sector->specialdata`: the live (not removed) door, plat or floor naming
 /// `sector`; lights never set it. At most one exists (the starters skip a sector
 /// that has one).
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "called by the crossing and use bodies (M3h8 plan steps 9-11)"
-    )
-)]
 pub(crate) fn special_data(store: &ThinkerStore<Actor>, sector: u16) -> Option<SectorThinkerId> {
     store.sector_slots.iter().enumerate().find_map(|(slot, s)| {
         let entry = s.entry.as_ref()?;
@@ -172,13 +158,6 @@ pub(crate) fn special_data(store: &ThinkerStore<Actor>, sector: u16) -> Option<S
     })
 }
 /// The live `downWaitUpStay` plats, the occupied `activeplats` slots.
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "called by the crossing and use bodies (M3h8 plan steps 9-11)"
-    )
-)]
 pub(crate) fn active_plats(store: &ThinkerStore<Actor>) -> usize {
     store
         .sector_slots
@@ -189,24 +168,10 @@ pub(crate) fn active_plats(store: &ThinkerStore<Actor>) -> usize {
 }
 
 /// The `p_spec.c` neighbour searches over `getNextSector`, reading `sectors`.
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "called by the crossing and use bodies (M3h8 plan steps 9-11)"
-    )
-)]
 struct Surrounding<'a> {
     world: &'a StaticWorld,
     sectors: Sectors<'a>,
 }
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "called by the crossing and use bodies (M3h8 plan steps 9-11)"
-    )
-)]
 impl Surrounding<'_> {
     fn neighbors(&self, sector: u16) -> Result<impl Iterator<Item = SectorState> + '_, SimError> {
         let lines = self
@@ -255,26 +220,12 @@ impl Surrounding<'_> {
 
 /// What an `EV_*` starter needs: the map, the current sector heights, the store and
 /// the event stream.
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "called by the crossing and use bodies (M3h8 plan steps 9-11)"
-    )
-)]
 pub(crate) struct Starter<'a, M: ?Sized> {
     pub world: &'a StaticWorld,
     pub sectors: Sectors<'a>,
     pub store: &'a mut M,
     pub events: &'a mut Vec<Event>,
 }
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "called by the crossing and use bodies (M3h8 plan steps 9-11)"
-    )
-)]
 impl<M: MoverAccess + ?Sized> Starter<'_, M> {
     fn surrounding(&self) -> Surrounding<'_> {
         Surrounding {
@@ -377,6 +328,10 @@ impl<M: MoverAccess + ?Sized> Starter<'_, M> {
     /// plays unconditionally and a `normal` door rises to
     /// `P_FindLowestCeilingSurrounding − 4`. `player` is whether the user is a
     /// player (`thing->player`).
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "called by the use bodies (M3h8 plan steps 10-11)")
+    )]
     pub(crate) fn vertical_door(&mut self, line: u16, player: bool) -> Result<(), SimError> {
         let map = self.world.map();
         let l = map

@@ -117,6 +117,7 @@ pub use lifecycle::{
 };
 pub use spawning::MapSpawnReport;
 mod geometry;
+mod line_triggers;
 mod line_work;
 mod map_extent;
 mod map_scale;
@@ -1322,6 +1323,7 @@ impl Simulation {
                 thinkers::Inputs {
                     world: &self.world,
                     committed: &self.sectors,
+                    committed_lines: &[],
                     writes: &mut staging::StagedWrites::default(),
                     leveltime: self.tic,
                     profile: self.profile,
@@ -1488,6 +1490,8 @@ mod imp_tests;
 #[cfg(test)]
 #[path = "../../../tests/support/m3h3.rs"]
 mod map_scale_evidence;
+#[cfg(test)]
+mod movers_replay;
 #[cfg(test)]
 mod player_diagonal_tests;
 #[cfg(test)]

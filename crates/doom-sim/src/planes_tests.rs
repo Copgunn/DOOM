@@ -33,8 +33,9 @@ pub(crate) fn with_planes<R>(
     let mut out = None;
     let registry = s.registry.clone().unwrap();
     let bound = s.actors.visit_bound();
-    let (sectors, world, player, statistics, rng, spatial, bindings, options, boundary) = (
+    let (sectors, lines, world, player, statistics, rng, spatial, bindings, options, boundary) = (
         &s.sectors,
+        &s.line_specials,
         &s.world,
         &mut s.original_player,
         &mut s.statistics,
@@ -49,6 +50,7 @@ pub(crate) fn with_planes<R>(
             if let (Visit::Think(_), Some(f)) = (visit, f.take()) {
                 let mut host = PlaneHost {
                     committed: sectors,
+                    committed_lines: lines,
                     writes: &mut writes,
                     access: context,
                     player: player.as_mut(),

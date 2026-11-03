@@ -742,6 +742,7 @@ impl Simulation {
             thinkers::Inputs {
                 world: &self.world,
                 committed: &self.sectors,
+                committed_lines: &self.line_specials,
                 writes: &mut plan.writes,
                 leveltime: self.tic,
                 profile: self.profile,

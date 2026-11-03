@@ -193,7 +193,7 @@ pub(crate) fn validate_movers(map: &Map) -> Result<MoverAdmission, SimError> {
         return Err(MapScaleError::MoverCount.into());
     }
     let (reach, delta) = reachable(map, &kinds, &neighbors)?;
-    if special_window_lines(map) > MAX_SPECIAL_CROSS {
+    if special_window_lines(map) > MAX_SPECIAL_CROSS && !window_rule_bypassed() {
         return Err(MapScaleError::SpecialWindow.into());
     }
     Ok(MoverAdmission {
@@ -202,6 +202,32 @@ pub(crate) fn validate_movers(map: &Map) -> Result<MoverAdmission, SimError> {
         reach,
         delta,
     })
+}
+
+// Set only by `with_window_rule_bypassed`.
+#[cfg(test)]
+thread_local! {
+    static WINDOW_RULE_BYPASSED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+/// Whether a test has bypassed rule 6 (never outside `cfg(test)`).
+fn window_rule_bypassed() -> bool {
+    #[cfg(test)]
+    {
+        WINDOW_RULE_BYPASSED.with(std::cell::Cell::get)
+    }
+    #[cfg(not(test))]
+    {
+        false
+    }
+}
+/// Runs `f` with rule 6 bypassed on this thread: the only way to load the Rust-only
+/// nine-line lane and reach the `SpecialCross` runtime witness (M3h8 note §6).
+#[cfg(test)]
+pub(crate) fn with_window_rule_bypassed<R>(f: impl FnOnce() -> R) -> R {
+    WINDOW_RULE_BYPASSED.with(|b| b.set(true));
+    let result = f();
+    WINDOW_RULE_BYPASSED.with(|b| b.set(false));
+    result
 }
 
 /// Widens `interval` to contain `[lo, hi]`; whether it changed.

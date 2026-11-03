@@ -1140,6 +1140,11 @@ pub(crate) trait ActorAccess {
     fn reserve(&mut self, count: usize) -> Result<(), StoreError>;
     /// Nonpending thinkers of one type, in the staged store.
     fn live_of_type(&self, ty: ActorTypeId) -> usize;
+    /// The sector-thinker store the `EV_*` starters of a crossing or a monster's
+    /// door use append to (the movers policy); `None` for an access without one.
+    fn movers(&mut self) -> Option<&mut dyn crate::movers::MoverAccess> {
+        None
+    }
 }
 impl ActorAccess for &mut ThinkerStore<Actor> {
     fn get(&self, id: ActorId) -> Option<&Actor> {
@@ -1160,6 +1165,9 @@ impl ActorAccess for &mut ThinkerStore<Actor> {
     fn live_of_type(&self, ty: ActorTypeId) -> usize {
         ThinkerStore::live_of_type(self, ty)
     }
+    fn movers(&mut self) -> Option<&mut dyn crate::movers::MoverAccess> {
+        Some(&mut **self)
+    }
 }
 impl ActorAccess for &mut ThinkerContext<'_, Actor> {
     fn get(&self, id: ActorId) -> Option<&Actor> {
@@ -1179,6 +1187,9 @@ impl ActorAccess for &mut ThinkerContext<'_, Actor> {
     }
     fn live_of_type(&self, ty: ActorTypeId) -> usize {
         self.store().live_of_type(ty)
+    }
+    fn movers(&mut self) -> Option<&mut dyn crate::movers::MoverAccess> {
+        Some(&mut **self)
     }
 }
 pub(crate) fn make_actor(

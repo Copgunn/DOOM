@@ -181,6 +181,13 @@ pub(crate) fn move_actor<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -
         &|id| h.access.get(id).copied(),
         false,
     );
+    // The movers policy's spechit (empty for every other policy's view).
+    let Ok(hit) = line_triggers::spechit(h.sectors, &attempt, &[]) else {
+        h.events.push(Event::SectorMovement { actor: id, attempt });
+        h.fail_sight(MapScaleError::SpecialCross.into());
+        end(h, id, PursuitOperation::Move, false);
+        return false;
+    };
     let allowed = attempt.allowed();
     if allowed {
         let a = h.access.get_mut(id).unwrap();
@@ -193,8 +200,39 @@ pub(crate) fn move_actor<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -
         h.spatial.link(id);
     }
     h.events.push(Event::SectorMovement { actor: id, attempt });
+    if allowed && !hit.is_empty() {
+        cross_lines(h, id, &hit, actor.position(), target);
+    }
     end(h, id, PursuitOperation::Move, allowed);
     allowed
+}
+/// The crossing loop of a monster's successful `P_TryMove` (a monster never clears
+/// a line, so the view stays current); a refused starter refuses the tic.
+fn cross_lines<A: ActorAccess>(
+    h: &mut LifeHost<'_, A>,
+    id: ActorId,
+    hit: &line_triggers::SpecHit,
+    old: [Fixed; 2],
+    new: [Fixed; 2],
+) {
+    for crossing in line_triggers::crossings(h.world, h.sectors, hit, old, new, &[]) {
+        let Some(store) = h.access.movers() else {
+            h.fail_sight(StoreError::UnsupportedThinker.into());
+            return;
+        };
+        let mut starter = movers::Starter {
+            world: h.world,
+            sectors: h.sectors,
+            store,
+            events: &mut *h.events,
+        };
+        if let Err(error) =
+            line_triggers::cross(&mut starter, id, line_triggers::Crosser::Monster, crossing)
+        {
+            h.fail_sight(error);
+            return;
+        }
+    }
 }
 pub(crate) fn try_walk<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -> bool {
     start(h, id, PursuitOperation::TryWalk);

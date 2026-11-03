@@ -56,6 +56,8 @@ const MF_DROPPED: u32 = crate::world_pickups::MF_DROPPED;
 /// table with the plan's staged writes, and the actor plan its clips change.
 pub(crate) struct PlaneHost<'a, 'b> {
     pub committed: &'a [SectorState],
+    /// The committed runtime line specials, read through `writes`.
+    pub committed_lines: &'a [i16],
     pub writes: &'a mut StagedWrites,
     pub access: &'a mut ThinkerContext<'b, Actor>,
     pub player: Option<&'a mut PlayerRuntime>,
@@ -96,7 +98,7 @@ impl<'b> PlaneHost<'_, 'b> {
             access: &mut *self.access,
             registry: self.registry,
             world: self.world,
-            sectors: self.writes.sectors(self.committed),
+            sectors: self.writes.view(self.committed, self.committed_lines),
             options: self.options,
             rng: &mut *self.rng,
             spatial: &mut *self.spatial,
@@ -279,7 +281,7 @@ impl<'b> PlaneHost<'_, 'b> {
                 .is_some_and(|p| p.policy.has_world_pickups())
         {
             let mut touches = Vec::new();
-            let sectors = self.writes.sectors(self.committed);
+            let sectors = self.writes.view(self.committed, self.committed_lines);
             let p = self
                 .player
                 .as_deref_mut()
@@ -306,13 +308,23 @@ impl<'b> PlaneHost<'_, 'b> {
             }
         }
         let attempt = crate::multisector::check_move_from_things(
-            (self.world, self.writes.sectors(self.committed)),
+            (
+                self.world,
+                self.writes.view(self.committed, self.committed_lines),
+            ),
             &actor,
             position,
             things,
             player,
             false,
         );
+        // P_CheckPosition fills spechit here too: only the ninth-entry witness reads
+        // it (the clip's result and its entries are otherwise ignored).
+        crate::line_triggers::spechit(
+            self.writes.view(self.committed, self.committed_lines),
+            &attempt,
+            &[],
+        )?;
         actor.floor = attempt.floor;
         actor.ceiling = attempt.ceiling;
         let height = actor.spec.height;
@@ -331,6 +343,22 @@ impl<'b> PlaneHost<'_, 'b> {
 /// and removals keep their existing events, before the clip's record.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MoverEvent {
+    /// Sub-tag 3: `P_CrossSpecialLine` from the crossing loop of a successful
+    /// `P_TryMove`, right after that move's attempt record and after the records of
+    /// the line action; several crossings of one move follow in reverse `spechit`
+    /// order.
+    Crossed {
+        /// The crosser.
+        actor: ActorId,
+        /// The line.
+        line: u16,
+        /// The side of the position before the move.
+        side: u8,
+        /// The runtime special at entry.
+        before: i16,
+        /// The runtime special at exit (0 once a W1 line is cleared).
+        after: i16,
+    },
     /// Sub-tag 7: one `T_MovePlane` call, after its sector-changed records.
     PlaneStep {
         /// Sector index.

@@ -5,6 +5,9 @@ pub(crate) struct Inputs<'a> {
     /// The committed sector table; every visit reads it through `writes`, so a
     /// mover's height writes are visible to every later thinker of the pass.
     pub committed: &'a [SectorState],
+    /// The committed runtime line specials (empty without movers); read and
+    /// written through `writes` like the sectors.
+    pub committed_lines: &'a [i16],
     /// The plan's staged sector and line-special writes (empty outside movers).
     pub writes: &'a mut crate::staging::StagedWrites,
     /// The source `leveltime` of this tic (the completed-tic count).
@@ -31,6 +34,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
     let Inputs {
         world,
         committed,
+        committed_lines,
         writes,
         leveltime,
         profile,
@@ -72,6 +76,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                     (_, Some(id)) if movers => {
                         let mut host = planes::PlaneHost {
                             committed,
+                            committed_lines,
                             writes: &mut *writes,
                             access: context,
                             player: player.as_deref_mut(),
@@ -104,7 +109,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
             }
             Visit::Retired(id) => events.push(Event::Retired(id)),
             Visit::Think(id) => {
-                let sectors = writes.sectors(committed);
+                let sectors = writes.view(committed, committed_lines);
                 if perception_inputs
                     .and_then(|p| p.checked)
                     .is_some_and(|c| c.failure.get().is_some())
@@ -210,6 +215,11 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                             command,
                         )
                     };
+                    let crosser = if source_player {
+                        line_triggers::Crosser::Player
+                    } else {
+                        line_triggers::Crosser::Monster
+                    };
                     for event in motion {
                         events.push(match event {
                             movement::MotionEvent::Contact(event) => event.event(),
@@ -220,9 +230,49 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                             movement::MotionEvent::Sector(attempt) => {
                                 Event::SectorMovement { actor: id, attempt }
                             }
+                            // P_CrossSpecialLine after the accepted attempt, with the
+                            // staged tables; a W1 clear is staged after the call.
+                            movement::MotionEvent::Cross(crossing) => {
+                                let result = line_triggers::cross(
+                                    &mut movers::Starter {
+                                        world,
+                                        sectors: writes.view(committed, committed_lines),
+                                        store: &mut *context,
+                                        events: &mut *events,
+                                    },
+                                    id,
+                                    crosser,
+                                    crossing,
+                                )
+                                .and_then(|after| {
+                                    if after == crossing.special {
+                                        Ok(())
+                                    } else {
+                                        writes.write_line_special(
+                                            committed_lines,
+                                            crossing.line,
+                                            after,
+                                        )
+                                    }
+                                });
+                                if let Err(error) = result {
+                                    refuse(perception_inputs, &mut refused, error);
+                                    return;
+                                }
+                                continue;
+                            }
+                            movement::MotionEvent::SpecialCross => {
+                                refuse(
+                                    perception_inputs,
+                                    &mut refused,
+                                    MapScaleError::SpecialCross.into(),
+                                );
+                                return;
+                            }
                         });
                     }
                 }
+                let sectors = writes.view(committed, committed_lines);
                 if (profile == Profile::PlayerWeapons || source_player)
                     && had_xy_momentum
                     && actor.z <= actor.floor
@@ -319,6 +369,20 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
         })
         .expect("built-in traversal preserves links and is bounded by max slots");
     if let Some(error) = refused {
-        panic!("no admitted policy runs sector thinkers outside the checked plan: {error}");
+        panic!(
+            "no admitted policy runs movers or sector thinkers outside the checked plan: {error}"
+        );
+    }
+}
+/// Records a refused visit: in the checked transaction's failure, which discards the
+/// tic, or (no admitted policy) in `refused`.
+fn refuse(
+    perception: Option<perception::PerceptionInputs<'_>>,
+    refused: &mut Option<SimError>,
+    error: SimError,
+) {
+    match perception.and_then(|p| p.checked) {
+        Some(control) => control.failure.set(Some(error)),
+        None => *refused = refused.or(Some(error)),
     }
 }

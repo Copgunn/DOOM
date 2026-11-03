@@ -19,11 +19,27 @@ use std::ops::Index;
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Sectors<'a> {
     table: &'a [SectorState],
+    /// The runtime line specials under the same writes; empty under every policy
+    /// without movers (whose line specials are the map's and never read through a
+    /// view), so no `spechit` is collected there.
+    lines: &'a [i16],
 }
 impl<'a> Sectors<'a> {
     /// The committed table alone (no plan, or a plan that wrote nothing).
     pub(crate) const fn committed(committed: &'a [SectorState]) -> Self {
-        Self { table: committed }
+        Self {
+            table: committed,
+            lines: &[],
+        }
+    }
+    /// Whether this view carries the runtime line specials (the movers policy).
+    pub(crate) const fn has_line_specials(self) -> bool {
+        !self.lines.is_empty()
+    }
+    /// The runtime special of `line` (`line_t::special`), or 0 for a view without
+    /// line specials.
+    pub(crate) fn line_special(self, line: u16) -> i16 {
+        self.lines.get(usize::from(line)).copied().unwrap_or(0)
     }
     /// Sector count (the committed table's; writes never add sectors).
     pub(crate) const fn len(self) -> usize {
@@ -131,6 +147,23 @@ impl StagedWrites {
     pub(crate) fn sectors<'a>(&'a self, committed: &'a [SectorState]) -> Sectors<'a> {
         Sectors {
             table: self.sectors.view(committed),
+            lines: &[],
+        }
+    }
+    /// The read-through view of `committed` sectors and `lines` (every line's
+    /// committed runtime special; empty without movers) under this plan's writes.
+    pub(crate) fn view<'a>(
+        &'a self,
+        committed: &'a [SectorState],
+        lines: &'a [i16],
+    ) -> Sectors<'a> {
+        Sectors {
+            table: self.sectors.view(committed),
+            lines: if lines.is_empty() {
+                lines
+            } else {
+                self.lines.view(lines)
+            },
         }
     }
     /// Stages new heights for `sector` (`T_MovePlane`); a second write of the same
@@ -146,24 +179,11 @@ impl StagedWrites {
     }
     /// The runtime special of `line` under this plan's writes (`committed` holds every
     /// line's runtime special), or `None` past the table.
-    #[cfg_attr(
-        not(test),
-        expect(
-            dead_code,
-            reason = "read by the M3h8 crossing and use bodies (plan steps 9–10)"
-        )
-    )]
+    #[cfg(test)]
     pub(crate) fn line_special(&self, committed: &[i16], line: u16) -> Option<i16> {
         self.lines.view(committed).get(usize::from(line)).copied()
     }
     /// Stages the runtime special of `line` (a W1 or S1 line cleared to 0).
-    #[cfg_attr(
-        not(test),
-        expect(
-            dead_code,
-            reason = "written by the M3h8 crossing and use bodies (plan steps 9–10)"
-        )
-    )]
     pub(crate) fn write_line_special(
         &mut self,
         committed: &[i16],

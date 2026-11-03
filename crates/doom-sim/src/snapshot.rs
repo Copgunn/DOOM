@@ -210,6 +210,20 @@ fn event_bytes(event: &Event) -> Vec<u8> {
         Event::Mover(event) => {
             b.push(26);
             match *event {
+                crate::MoverEvent::Crossed {
+                    actor,
+                    line,
+                    side,
+                    before,
+                    after,
+                } => {
+                    b.push(3);
+                    b.extend(id(actor));
+                    b.extend(line.to_le_bytes());
+                    b.push(side);
+                    b.extend(before.to_le_bytes());
+                    b.extend(after.to_le_bytes());
+                }
                 crate::MoverEvent::PlaneStep {
                     sector,
                     plane,

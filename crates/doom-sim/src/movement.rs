@@ -484,6 +484,14 @@ pub(crate) enum MotionEvent {
     Attempt(ActorMoveAttempt),
     Slide(u16),
     Sector(crate::SectorMoveAttempt),
+    /// Under the movers policy, a line the preceding accepted attempt crossed
+    /// (the `P_TryMove` crossing loop, in call order); the caller runs
+    /// `P_CrossSpecialLine` for it with the staged tables.
+    Cross(crate::line_triggers::Crossing),
+    /// Under the movers policy, the preceding attempt would have stored a ninth
+    /// `spechit` entry: the caller refuses the tic (`MapScaleError::SpecialCross`).
+    /// No attempt follows it in the same motion.
+    SpecialCross,
 }
 pub(crate) trait MotionAccess {
     type Error;
@@ -535,9 +543,19 @@ struct Mover<'a, F> {
     access: F,
     events: Vec<MotionEvent>,
     profile: MotionProfile<'a>,
+    /// Lines cleared by crossings of this motion, which the caller stages after
+    /// it: later attempts read them as 0 (`P_CrossSpecialLine` clears a W1 line
+    /// for a player whatever its `EV_*` did, so the clear is known here).
+    cleared: Vec<u16>,
+    /// A ninth `spechit` entry was refused: the tic is discarded, nothing more is
+    /// attempted.
+    overflow: bool,
 }
 impl<F: MotionAccess> Mover<'_, F> {
     fn attempt(&mut self, delta: [Fixed; 2]) -> Result<bool, F::Error> {
+        if self.overflow {
+            return Ok(false);
+        }
         let target = [
             self.actor.spec.position[0] + delta[0],
             self.actor.spec.position[1] + delta[1],
@@ -561,6 +579,13 @@ impl<F: MotionAccess> Mover<'_, F> {
                 self.profile.command.is_some(),
                 false,
             );
+            let Ok(hit) = crate::line_triggers::spechit(sectors, &attempt, &self.cleared) else {
+                self.overflow = true;
+                self.events.push(MotionEvent::Sector(attempt));
+                self.events.push(MotionEvent::SpecialCross);
+                return Ok(false);
+            };
+            let old = self.actor.spec.position;
             let allowed = attempt.allowed();
             if allowed {
                 self.actor.spec.position = target;
@@ -570,6 +595,30 @@ impl<F: MotionAccess> Mover<'_, F> {
                 self.spatial.link(self.id);
             }
             self.events.push(MotionEvent::Sector(attempt));
+            if allowed && !hit.is_empty() {
+                let crosser = if self.profile.command.is_some() {
+                    crate::line_triggers::Crosser::Player
+                } else {
+                    crate::line_triggers::Crosser::Monster
+                };
+                // The entries are distinct lines, so a clear by one crossing of this
+                // loop never changes another entry's test.
+                let found = crate::line_triggers::crossings(
+                    self.world,
+                    sectors,
+                    &hit,
+                    old,
+                    target,
+                    &self.cleared,
+                )
+                .collect::<Vec<_>>();
+                for crossing in found {
+                    if crate::line_triggers::clears(crosser, crossing.special) {
+                        self.cleared.push(crossing.line);
+                    }
+                    self.events.push(MotionEvent::Cross(crossing));
+                }
+            }
             return Ok(allowed);
         }
         if things.blocked_by_actor.is_none() {
@@ -741,6 +790,8 @@ fn move_xy_profile<F: MotionAccess>(
         access,
         events: Vec::new(),
         profile,
+        cleared: Vec::new(),
+        overflow: false,
     };
     if mover.actor.spec.momentum == [Fixed::ZERO; 2] {
         return Ok(mover.events);
