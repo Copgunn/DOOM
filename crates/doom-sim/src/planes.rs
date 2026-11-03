@@ -50,18 +50,10 @@ pub enum ClipOutcome {
 }
 
 /// `p_mobj.h` `MF_DROPPED`.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "run by the M3h8 mover thinkers (plan step 8)")
-)]
 const MF_DROPPED: u32 = crate::world_pickups::MF_DROPPED;
 
 /// Everything a moving plane touches during the thinker pass: the committed sector
 /// table with the plan's staged writes, and the actor plan its clips change.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "run by the M3h8 mover thinkers (plan step 8)")
-)]
 pub(crate) struct PlaneHost<'a, 'b> {
     pub committed: &'a [SectorState],
     pub writes: &'a mut StagedWrites,
@@ -78,10 +70,6 @@ pub(crate) struct PlaneHost<'a, 'b> {
     pub events: &'a mut Vec<Event>,
     pub boundary: Option<&'a crate::player_map_scale::Boundary>,
 }
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "run by the M3h8 mover thinkers (plan step 8)")
-)]
 impl<'b> PlaneHost<'_, 'b> {
     /// The current heights of `sector` under the plan's writes.
     pub(crate) fn sector(&self, sector: u16) -> Result<SectorState, SimError> {
@@ -383,8 +371,71 @@ pub enum MoverEvent {
         /// `ceilingz` (16.16).
         ceiling: Fixed,
     },
+    /// Sub-tag 5: a mover created by an `EV_*` call, at the end of that call, after
+    /// its sounds, one per created mover in creation order.
+    Started {
+        /// The new mover.
+        mover: crate::SectorThinkerId,
+        /// 5 door, 6 plat, 7 floor.
+        kind: u8,
+        /// Its sector.
+        sector: u16,
+    },
+    /// Sub-tag 6: an `EV_*` call, right after its sub-tag 5 records.
+    Call {
+        /// Which starter.
+        function: MoverFunction,
+        /// The line.
+        line: u16,
+        /// Door, plat or floor type; the line special for `EV_VerticalDoor`.
+        argument: i32,
+        /// The return value (−1 for `EV_VerticalDoor`, which returns nothing).
+        result: i32,
+        /// Movers created.
+        created: u8,
+    },
+    /// Sub-tag 10: a mover finished (`P_RemoveThinker`); its entry stays until the
+    /// next pass.
+    Removed {
+        /// The mover.
+        mover: crate::SectorThinkerId,
+    },
+    /// Sub-tag 11: a removed mover's entry unlinked by the pass that reached it.
+    Unlinked {
+        /// The mover.
+        mover: crate::SectorThinkerId,
+    },
+    /// Sub-tag 12: a sound request with a sector or button origin.
+    SectorSound {
+        /// The origin kind.
+        origin: SoundOrigin,
+        /// The sector index (or button slot).
+        index: u16,
+        /// The `sfxenum_t` sound.
+        sound: u16,
+    },
+}
+/// The `EV_*` starter of a mover-call record.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MoverFunction {
+    /// 1: `EV_DoDoor`.
+    DoDoor = 1,
+    /// 2: `EV_VerticalDoor`.
+    VerticalDoor = 2,
+    /// 3: `EV_DoPlat`.
+    DoPlat = 3,
+    /// 4: `EV_DoFloor`.
+    DoFloor = 4,
+}
+/// The origin of a sector sound request.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SoundOrigin {
+    /// 1: `&sector->soundorg`.
+    Sector = 1,
+    /// 2: the address of `buttonlist[index].soundorg`.
+    Button = 2,
 }
 
 #[cfg(test)]
 #[path = "planes_tests.rs"]
-mod tests;
+pub(crate) mod tests;

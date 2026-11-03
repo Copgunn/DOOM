@@ -2,7 +2,13 @@
 use crate::*;
 pub(crate) struct Inputs<'a> {
     pub world: &'a StaticWorld,
-    pub sectors: crate::staging::Sectors<'a>,
+    /// The committed sector table; every visit reads it through `writes`, so a
+    /// mover's height writes are visible to every later thinker of the pass.
+    pub committed: &'a [SectorState],
+    /// The plan's staged sector and line-special writes (empty outside movers).
+    pub writes: &'a mut crate::staging::StagedWrites,
+    /// The source `leveltime` of this tic (the completed-tic count).
+    pub leveltime: u64,
     pub profile: Profile,
     pub bindings: [Option<ActorId>; 4],
     pub live_bindings: &'a mut [Option<ActorId>; 4],
@@ -24,7 +30,9 @@ pub(crate) struct Inputs<'a> {
 pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
     let Inputs {
         world,
-        sectors,
+        committed,
+        writes,
+        leveltime,
         profile,
         bindings,
         live_bindings,
@@ -51,9 +59,43 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                 if checked.is_some_and(|c| c.failure.get().is_some()) {
                     return;
                 }
-                if let Err(error) =
-                    sector_thinkers::visit(context, visit, specials.as_deref_mut(), rng)
-                {
+                let movers = player.as_ref().is_some_and(|p| p.policy.has_movers());
+                let mover = match visit {
+                    Visit::SectorThink(id) => context
+                        .sector_get(id)
+                        .and_then(SectorThinker::mover_sector)
+                        .map(|_| id),
+                    _ => None,
+                };
+                let result = match (visit, mover) {
+                    // T_VerticalDoor, T_PlatRaise, T_MoveFloor at their turn.
+                    (_, Some(id)) if movers => {
+                        let mut host = planes::PlaneHost {
+                            committed,
+                            writes: &mut *writes,
+                            access: context,
+                            player: player.as_deref_mut(),
+                            statistics: statistics.as_mut(),
+                            perception: perception_inputs,
+                            registry: registry.as_deref().expect("original registry"),
+                            world,
+                            options,
+                            rng: &mut *rng,
+                            spatial: &mut *spatial,
+                            bindings: &mut *live_bindings,
+                            events: &mut *events,
+                            boundary,
+                        };
+                        movers::think(&mut host, id, leveltime)
+                    }
+                    // Only movers are ever removed: the marked entry is unlinked now.
+                    (Visit::SectorRetired(id), _) if movers => {
+                        events.push(Event::Mover(MoverEvent::Unlinked { mover: id }));
+                        Ok(())
+                    }
+                    _ => sector_thinkers::visit(context, visit, specials.as_deref_mut(), rng),
+                };
+                if let Err(error) = result {
                     match checked {
                         Some(control) => control.failure.set(Some(error)),
                         None => refused = refused.or(Some(error)),
@@ -62,6 +104,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
             }
             Visit::Retired(id) => events.push(Event::Retired(id)),
             Visit::Think(id) => {
+                let sectors = writes.sectors(committed);
                 if perception_inputs
                     .and_then(|p| p.checked)
                     .is_some_and(|c| c.failure.get().is_some())
@@ -276,6 +319,6 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
         })
         .expect("built-in traversal preserves links and is bounded by max slots");
     if let Some(error) = refused {
-        panic!("no admitted policy creates a sector thinker: {error}");
+        panic!("no admitted policy runs sector thinkers outside the checked plan: {error}");
     }
 }

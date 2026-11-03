@@ -130,6 +130,7 @@ pub use map_scale::{
 };
 mod movement;
 mod mover_rules;
+mod movers;
 mod multisector;
 mod noise;
 mod planes;
@@ -149,7 +150,8 @@ pub use actor::{Actor, ActorSpec, TicCommand};
 use doom_map::Map;
 use doom_types::{DoomRng, Fixed};
 pub use geometry::{Collision, GeometryError, LineGeometry, MoveAttempt, StaticWorld};
-pub use planes::{ClipOutcome, MoveResult, MoverEvent, Plane};
+pub use movers::{Door, DoorKind, FloorKind, FloorMove, Plat, PlatStatus};
+pub use planes::{ClipOutcome, MoveResult, MoverEvent, MoverFunction, Plane, SoundOrigin};
 pub use sector_thinkers::{
     FireFlicker, Glow, LightFlash, SectorThinker, SpecialEvent, StrobeFlash,
 };
@@ -1319,7 +1321,9 @@ impl Simulation {
                 &mut self.actors,
                 thinkers::Inputs {
                     world: &self.world,
-                    sectors: crate::staging::Sectors::committed(&self.sectors),
+                    committed: &self.sectors,
+                    writes: &mut staging::StagedWrites::default(),
+                    leveltime: self.tic,
                     profile: self.profile,
                     bindings: self.bindings,
                     live_bindings: &mut self.bindings,

@@ -195,6 +195,14 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
     }
 }
 
+/// A 12-byte sector-thinker identity: u32 slot, u64 generation (DSIM35).
+fn sector_thinker_id(id: crate::SectorThinkerId) -> impl Iterator<Item = u8> {
+    id.slot()
+        .to_le_bytes()
+        .into_iter()
+        .chain(id.generation().to_le_bytes())
+}
+
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
@@ -239,6 +247,48 @@ fn event_bytes(event: &Event) -> Vec<u8> {
                     for v in [z, floor, ceiling] {
                         b.extend(v.bits().to_le_bytes());
                     }
+                }
+                crate::MoverEvent::Started {
+                    mover,
+                    kind,
+                    sector,
+                } => {
+                    b.push(5);
+                    b.extend(sector_thinker_id(mover));
+                    b.push(kind);
+                    b.extend(sector.to_le_bytes());
+                }
+                crate::MoverEvent::Call {
+                    function,
+                    line,
+                    argument,
+                    result,
+                    created,
+                } => {
+                    b.push(6);
+                    b.push(function as u8);
+                    b.extend(line.to_le_bytes());
+                    b.extend(argument.to_le_bytes());
+                    b.extend(result.to_le_bytes());
+                    b.push(created);
+                }
+                crate::MoverEvent::Removed { mover } => {
+                    b.push(10);
+                    b.extend(sector_thinker_id(mover));
+                }
+                crate::MoverEvent::Unlinked { mover } => {
+                    b.push(11);
+                    b.extend(sector_thinker_id(mover));
+                }
+                crate::MoverEvent::SectorSound {
+                    origin,
+                    index,
+                    sound,
+                } => {
+                    b.push(12);
+                    b.push(origin as u8);
+                    b.extend(index.to_le_bytes());
+                    b.extend(sound.to_le_bytes());
                 }
             }
         }
@@ -1109,6 +1159,10 @@ fn sector_thinker_fields(fields: &mut Vec<StateField>, sim: &Simulation) {
         let Some(entry) = &slot.entry else {
             continue;
         };
+        if let Some(sector) = entry.value.mover_sector() {
+            mover_fields(fields, &prefix, entry.pending, sector, &entry.value);
+            continue;
+        }
         let (kind, sector, count, light, extra): (u8, u16, Option<i32>, [i32; 2], &[i32]) =
             match &entry.value {
                 T::Flash(t) => (
@@ -1127,6 +1181,7 @@ fn sector_thinker_fields(fields: &mut Vec<StateField>, sim: &Simulation) {
                 ),
                 T::Glow(t) => (3, t.sector, None, [t.minlight, t.maxlight], &[t.direction]),
                 T::Flicker(t) => (4, t.sector, Some(t.count), [t.minlight, t.maxlight], &[]),
+                T::Door(_) | T::Plat(_) | T::Floor(_) => unreachable!("movers encoded above"),
             };
         field(fields, format!("{prefix}.kind"), [kind]);
         field(fields, format!("{prefix}.sector"), sector.to_le_bytes());
@@ -1144,6 +1199,54 @@ fn sector_thinker_fields(fields: &mut Vec<StateField>, sim: &Simulation) {
         for (name, value) in names.iter().zip(extra) {
             field(fields, format!("{prefix}.{name}"), value.to_le_bytes());
         }
+    }
+}
+
+/// A DSIM35 mover record (STATE_FORMAT "DSIM v35"): kind 5 door, 6 plat, 7 floor,
+/// or 8 for a removed mover whose entry the next pass unlinks (sector only).
+fn mover_fields(
+    fields: &mut Vec<StateField>,
+    prefix: &str,
+    removed: bool,
+    sector: u16,
+    mover: &crate::SectorThinker,
+) {
+    use crate::SectorThinker as T;
+    let kind = if removed { 8 } else { mover.kind_code() };
+    field(fields, format!("{prefix}.kind"), [kind]);
+    field(fields, format!("{prefix}.sector"), sector.to_le_bytes());
+    if removed {
+        return;
+    }
+    let (kind_name, kind_value, values): (&str, u8, Vec<(&str, i32)>) = match mover {
+        T::Door(d) => (
+            "type",
+            d.kind as u8,
+            vec![
+                ("direction", d.direction),
+                ("topheight", d.topheight.bits()),
+                ("topcountdown", d.topcountdown),
+            ],
+        ),
+        T::Plat(p) => (
+            "status",
+            p.status as u8,
+            vec![
+                ("count", p.count),
+                ("low", p.low.bits()),
+                ("high", p.high.bits()),
+            ],
+        ),
+        T::Floor(f) => (
+            "type",
+            f.kind as u8,
+            vec![("floordestheight", f.floordestheight.bits())],
+        ),
+        _ => return,
+    };
+    field(fields, format!("{prefix}.{kind_name}"), [kind_value]);
+    for (name, value) in values {
+        field(fields, format!("{prefix}.{name}"), value.to_le_bytes());
     }
 }
 

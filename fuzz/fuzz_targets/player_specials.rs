@@ -191,6 +191,9 @@ fn specials_invariants(s: &Simulation, load: &[ActorId]) {
                     SectorThinker::Strobe(t) => (t.minlight, t.maxlight),
                     SectorThinker::Glow(t) => (t.minlight, t.maxlight),
                     SectorThinker::Flicker(t) => (t.minlight, t.maxlight),
+                    SectorThinker::Door(_) | SectorThinker::Plat(_) | SectorThinker::Floor(_) => {
+                        unreachable!("the specials policy creates no mover")
+                    }
                 };
                 let light = i32::from(lights[usize::from(t.sector())].0);
                 assert!(

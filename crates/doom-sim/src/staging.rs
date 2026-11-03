@@ -136,10 +136,6 @@ impl StagedWrites {
     /// Stages new heights for `sector` (`T_MovePlane`); a second write of the same
     /// sector replaces the first. Refused past the table or when the copy cannot be
     /// allocated; the staged state is then unchanged.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "written by the M3h8 plane movers (plan step 7)")
-    )]
     pub(crate) fn write_sector(
         &mut self,
         committed: &[SectorState],

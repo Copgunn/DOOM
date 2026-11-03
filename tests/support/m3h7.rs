@@ -354,6 +354,9 @@ pub fn check_specials(
                     SectorThinker::Flicker(t) => {
                         (4, [t.sector.into(), t.count, t.minlight, t.maxlight, 0, 0])
                     }
+                    SectorThinker::Door(_) | SectorThinker::Plat(_) | SectorThinker::Floor(_) => {
+                        unreachable!("the specials policy creates no mover")
+                    }
                 };
                 assert_eq!(id.generation(), 1, "load-only sector thinkers");
                 let mut v = vec![index as i64, kind, i64::from(id.slot())];

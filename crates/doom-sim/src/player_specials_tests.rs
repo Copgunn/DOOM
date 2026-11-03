@@ -341,6 +341,9 @@ fn break_last_light(s: &mut Simulation) {
         SectorThinker::Strobe(t) => t.sector = u16::MAX,
         SectorThinker::Glow(t) => t.sector = u16::MAX,
         SectorThinker::Flicker(t) => t.sector = u16::MAX,
+        SectorThinker::Door(_) | SectorThinker::Plat(_) | SectorThinker::Floor(_) => {
+            unreachable!("the specials policy creates no mover")
+        }
     }
 }
 
@@ -879,6 +882,9 @@ fn assert_specials_invariants(s: &Simulation, load: &[ActorId], op: usize) {
                     SectorThinker::Strobe(t) => (t.minlight, t.maxlight),
                     SectorThinker::Glow(t) => (t.minlight, t.maxlight),
                     SectorThinker::Flicker(t) => (t.minlight, t.maxlight),
+                    SectorThinker::Door(_) | SectorThinker::Plat(_) | SectorThinker::Floor(_) => {
+                        unreachable!("the specials policy creates no mover")
+                    }
                 };
                 let sector = usize::from(t.sector());
                 assert!(!owned[sector], "tic {op}: two thinkers on sector {sector}");

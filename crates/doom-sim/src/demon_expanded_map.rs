@@ -741,7 +741,9 @@ impl Simulation {
             &mut plan.actors,
             thinkers::Inputs {
                 world: &self.world,
-                sectors: plan.writes.sectors(&self.sectors),
+                committed: &self.sectors,
+                writes: &mut plan.writes,
+                leveltime: self.tic,
                 profile: self.profile,
                 bindings: plan.bindings,
                 live_bindings: &mut plan.bindings,

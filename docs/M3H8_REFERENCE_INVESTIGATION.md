@@ -1213,4 +1213,23 @@ Type admission keeps the static tallest-sector envelope: types are admitted at l
 and no runtime spawn re-admits dimensions, so moving heights do not reach it. Rust-only
 tests replay the pinned C facts on the committed rooms (stuck shootable and rising
 steps, closing at 14 then 12, turbo jump-up with a straddling item, pickup inside a
-clip). Next is step 8, the movers.
+clip).
+
+Step 8 is done: `movers.rs` holds `SectorThinker::{Door, Plat, Floor}` (records
+`Door`, `Plat`, `FloorMove` with the DSIM35 fields only; implied fields are constants,
+uninitialised ones start at 0, N6), the starters on `Starter` (`do_door` for 63/109,
+`vertical_door` for the DR line with the reversal rules by user, `do_plat` for 88,
+`do_floor` for 36/38; each emits its sounds, then sub-tag 5 per created mover, then
+sub-tag 6) and `think` (`T_VerticalDoor`, `T_PlatRaise`, `T_MoveFloor`) run from
+`thinkers::run` at the mover's turn with a fresh `PlaneHost` per visit; the pass now
+takes the committed sector slice, `&mut StagedWrites` and `leveltime` instead of one
+`Sectors` value. `specialdata` is derived (`special_data`: the one live mover naming
+the sector), `activeplats` is the live-plat count (`active_plats`, checked against
+`MAXPLATS` at each start). A finished mover is marked (sub-tag 10) and unlinked by the
+next pass (sub-tag 11), which grows its slot's generation; a new mover takes the lowest
+free slot. Sector sounds are sub-tag 12 records with origin 1. The snapshot encodes the
+DSIM35 mover records (kinds 5–8) and the tag-26 events, still inside the interim
+DSIM34 version until step 13. No caller in the tic yet: use, crossing and monster door
+use (steps 9–11) call the starters; Rust-only tests start movers between tics (which
+matches a use in the players phase: tail of the order, steps the same tic). Next is
+step 9, crossing and `spechit`.
