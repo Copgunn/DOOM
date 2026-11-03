@@ -53,37 +53,52 @@ impl Weapon {
         }
     }
     pub(crate) fn states(self) -> [StateId; 5] {
-        let names = match self {
-            Self::Fist => ["S_PUNCHUP", "S_PUNCHDOWN", "S_PUNCH", "S_PUNCH1", "S_NULL"],
+        use crate::identity::OriginalState as S;
+        let states = match self {
+            Self::Fist => [
+                S::S_PUNCHUP,
+                S::S_PUNCHDOWN,
+                S::S_PUNCH,
+                S::S_PUNCH1,
+                S::S_NULL,
+            ],
             Self::Pistol => [
-                "S_PISTOLUP",
-                "S_PISTOLDOWN",
-                "S_PISTOL",
-                "S_PISTOL1",
-                "S_PISTOLFLASH",
+                S::S_PISTOLUP,
+                S::S_PISTOLDOWN,
+                S::S_PISTOL,
+                S::S_PISTOL1,
+                S::S_PISTOLFLASH,
             ],
             Self::Shotgun => [
-                "S_SGUNUP",
-                "S_SGUNDOWN",
-                "S_SGUN",
-                "S_SGUN1",
-                "S_SGUNFLASH1",
+                S::S_SGUNUP,
+                S::S_SGUNDOWN,
+                S::S_SGUN,
+                S::S_SGUN1,
+                S::S_SGUNFLASH1,
             ],
             Self::Chaingun => [
-                "S_CHAINUP",
-                "S_CHAINDOWN",
-                "S_CHAIN",
-                "S_CHAIN1",
-                "S_CHAINFLASH1",
+                S::S_CHAINUP,
+                S::S_CHAINDOWN,
+                S::S_CHAIN,
+                S::S_CHAIN1,
+                S::S_CHAINFLASH1,
             ],
             _ => unreachable!("weapon admission"),
         };
-        names.map(state)
+        states.map(source_state)
     }
 }
-fn state(name: &str) -> StateId {
-    lifecycle::source_state_id(name).expect("source state")
+/// The `StateId` of a source state: its `statenum_t` ordinal, the index
+/// `lifecycle::source_state_id` finds for its name (checked by the weapon tests), as a
+/// constant instead of a name search on every psprite step.
+const fn source_state(state: crate::identity::OriginalState) -> StateId {
+    StateId(state.ordinal())
 }
+const STATE_CHAIN1: StateId = source_state(crate::identity::OriginalState::S_CHAIN1);
+const STATE_PLAY: StateId = source_state(crate::identity::OriginalState::S_PLAY);
+const STATE_PLAY_ATK1: StateId = source_state(crate::identity::OriginalState::S_PLAY_ATK1);
+const STATE_PLAY_ATK2: StateId = source_state(crate::identity::OriginalState::S_PLAY_ATK2);
+const STATE_PLAY_RUN1: StateId = source_state(crate::identity::OriginalState::S_PLAY_RUN1);
 /// A rejected profile, player, command or preflight prerequisite.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum WeaponError {
@@ -352,7 +367,7 @@ impl<H: Host> Machine<'_, H> {
             weapon: self.player.ready,
             refire: self.player.refire,
         });
-        self.host.body_state(state("S_PLAY_ATK1"))?;
+        self.host.body_state(STATE_PLAY_ATK1)?;
         self.enter(0, self.player.ready.states()[3])?;
         self.host.noise()?;
         Ok(())
@@ -386,9 +401,9 @@ impl<H: Host> Machine<'_, H> {
                 }
             }
             Some(A::WeaponReady) => {
-                if matches!(self.host.actor()?.life.ok_or(WeaponError::Definition)?.state,Some(s) if s==state("S_PLAY_ATK1")||s==state("S_PLAY_ATK2"))
+                if matches!(self.host.actor()?.life.ok_or(WeaponError::Definition)?.state,Some(s) if s==STATE_PLAY_ATK1||s==STATE_PLAY_ATK2)
                 {
-                    self.host.body_state(state("S_PLAY"))?;
+                    self.host.body_state(STATE_PLAY)?;
                 }
                 if self.player.pending.is_some() || self.host.health() == 0 {
                     self.enter(0, self.player.ready.states()[1])?;
@@ -438,7 +453,7 @@ impl<H: Host> Machine<'_, H> {
                 if w == Weapon::Chaingun && self.player.ammo[ammo] == 0 {
                     return Ok(());
                 }
-                self.host.body_state(state("S_PLAY_ATK2"))?;
+                self.host.body_state(STATE_PLAY_ATK2)?;
                 let before = self.player.ammo[ammo];
                 self.player.ammo[ammo] -= 1;
                 self.emit(WeaponEvent::Ammo {
@@ -449,8 +464,7 @@ impl<H: Host> Machine<'_, H> {
                 });
                 let mut flash = w.states()[4];
                 if w == Weapon::Chaingun {
-                    flash.0 +=
-                        self.player.psprites[position].state.unwrap().0 - state("S_CHAIN1").0;
+                    flash.0 += self.player.psprites[position].state.unwrap().0 - STATE_CHAIN1.0;
                 }
                 self.enter(1, flash)?;
                 self.host.fire(w, self.player.refire == 0)?;
@@ -760,11 +774,9 @@ impl Host for Commit<'_> {
         let moved = apply_player_motion(a, command)?;
         if moved
             && (command.forward != 0 || command.side != 0)
-            && old
-                .life
-                .is_some_and(|life| life.state == Some(state("S_PLAY")))
+            && old.life.is_some_and(|life| life.state == Some(STATE_PLAY))
         {
-            self.body_state(state("S_PLAY_RUN1"))?;
+            self.body_state(STATE_PLAY_RUN1)?;
         }
         Ok(())
     }
@@ -916,9 +928,7 @@ impl Simulation {
             return Err(WeaponError::Player.into());
         }
         let life = self.active_typed(id)?;
-        if life.actor_type != ActorTypeId(0)
-            || life.health != 100
-            || life.state != Some(state("S_PLAY"))
+        if life.actor_type != ActorTypeId(0) || life.health != 100 || life.state != Some(STATE_PLAY)
         {
             return Err(WeaponError::Reference.into());
         }
