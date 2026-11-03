@@ -954,6 +954,30 @@ refusing the tic that would need a second entry for one sector. **Recommendation
 Assessment: (a) yes, it is the approved separate slot class bounded at load (M3h7
 decision 4); (b) yes; (c) no, while (ii) would refuse defined play (a new kind); (d) no.
 
+**Provisionally adopted overnight, pending owner confirmation (2026-11-03).** The
+milestone ran unattended under the owner's rule: continue into Phase 2 only with
+recommendations consistent with the approvals that admit no silent divergence. Each item
+below can be revised in review.
+
+- **N1: option (iii), keep rejecting two-sided 48 under every policy, including
+  movers.** This is *not* the note's recommendation (i). Option (i) widens the admitted
+  geometry beyond the approved breadth, which assessment (a) says needs explicit approval,
+  so it is left to the owner. Rejecting costs E1M1 nothing today: roster scale and the 33
+  unadmitted THINGs (§13) block it regardless. Admitting it later is a load-rule
+  relaxation plus the three scenarios named under N1.
+- **N2: (i)**, V′ admits the stuck shootable (d) and the corpse envelope (e).
+- **N3: (i)**, `BT_USE` while dead completes its tic, records the reborn request, and the
+  next `advance` is refused with a checked error that preserves state.
+- **N4: (i)**, sky ceilings on mover sectors are rejected at load.
+- **N5: (i)**, shared door kinds are admitted faithfully if the C harness evidences the
+  reversed `blazeOpen` path. Otherwise (ii): they are rejected at load, and the evidence
+  record says which.
+- **N6: (i)**, zero-filled mover allocations as a declared adapter; DSIM35 encodes
+  `topcountdown` and omits `newspecial`, `texture` and `oldstatus`.
+- **N7: (i)**, the Rust admission runs W1 rules to a global fixpoint. `tools/iwad_counts.py`
+  is unchanged.
+- **N8: (i)**, `L + 2M` sector-thinker slots and `320 + L + 2M` visits.
+
 ## 15. Follow-ups, risks, status
 
 - **Roster scale** is the largest remaining E1M1 blocker; every §8 budget is a formula of
@@ -978,5 +1002,6 @@ decision 4); (b) yes; (c) no, while (ii) would refuse defined play (a new kind);
 - **CI headroom**: two generators and one fuzz target more; estimated when the harness
   exists.
 
-**Status / next step.** Phase 1 is complete with this note. Phase 2 is pending the owner
-decisions N1–N8 of §14; step 2 of §12 records them, and no runtime change precedes it.
+**Status / next step.** Phase 1 is complete with this note. Step 2 of §12 is done: N1–N8
+are provisionally adopted (end of §14, N1 as option (iii)). Next is step 3, the C evidence
+for the Stage B rooms.
