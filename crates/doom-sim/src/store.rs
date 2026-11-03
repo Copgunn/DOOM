@@ -339,6 +339,13 @@ impl<T, S> ThinkerStore<T, S> {
             next,
         })
     }
+    /// Successor of a valid entry in the shared order (one slot lookup).
+    fn next_of(&self, id: ThinkerId) -> Option<Option<ThinkerId>> {
+        match id {
+            ThinkerId::Actor(id) => self.entry(id).map(|e| e.next),
+            ThinkerId::Sector(id) => self.sector_entry(id).map(|e| e.next),
+        }
+    }
     fn links_mut(
         &mut self,
         id: ThinkerId,
@@ -433,15 +440,28 @@ impl<T, S> ThinkerStore<T, S> {
         let mut cursor = self.head;
         std::iter::from_fn(move || {
             let id = cursor?;
-            cursor = self.links(id)?.next;
+            cursor = self.next_of(id)?;
             Some(id)
         })
     }
     /// Logical actor processing order, including pending thinkers; never arena
     /// order. It is the actor subsequence of [`Self::shared_order`] and, without
-    /// sector thinkers, that whole order.
+    /// sector thinkers, that whole order. Walked directly (one slot lookup per
+    /// entry, sector thinkers stepped over in place) because preflights of every
+    /// policy call it several times per tic; it ends where `shared_order` ends.
     pub fn order(&self) -> impl Iterator<Item = ActorId> + '_ {
-        self.shared_order().filter_map(ThinkerId::actor)
+        let mut cursor = self.head;
+        std::iter::from_fn(move || {
+            loop {
+                match cursor? {
+                    ThinkerId::Actor(id) => {
+                        cursor = self.entry(id)?.next;
+                        return Some(id);
+                    }
+                    ThinkerId::Sector(id) => cursor = self.sector_entry(id)?.next,
+                }
+            }
+        })
     }
     /// First actor of the actor subsequence.
     pub(crate) fn actor_head(&self) -> Option<ActorId> {
@@ -475,8 +495,9 @@ impl<T, S> ThinkerStore<T, S> {
         };
         Some((nearest(entry.prev, false)?, nearest(entry.next, true)?))
     }
-    fn retire(&mut self, id: ThinkerId) -> Result<Option<ThinkerId>, StoreError> {
-        let Links { prev, next, .. } = self.links(id).ok_or(StoreError::InvalidHandle)?;
+    /// Unlinks `id`, whose current links the caller has just read, and vacates it.
+    fn retire(&mut self, id: ThinkerId, links: Links) -> Result<Option<ThinkerId>, StoreError> {
+        let Links { prev, next, .. } = links;
         if let Some(prev) = prev {
             *self.links_mut(prev).ok_or(StoreError::InvalidHandle)?.1 = next;
         } else {
@@ -505,7 +526,7 @@ impl<T, S> ThinkerStore<T, S> {
         cursor: &mut ThinkerCursor,
     ) -> Result<Option<Visit>, StoreError> {
         if let Some(previous) = cursor.previous.take() {
-            cursor.next = self.links(previous).ok_or(StoreError::InvalidHandle)?.next;
+            cursor.next = self.next_of(previous).ok_or(StoreError::InvalidHandle)?;
         }
         let Some(id) = cursor.next else {
             return Ok(None);
@@ -514,8 +535,9 @@ impl<T, S> ThinkerStore<T, S> {
             return Err(StoreError::VisitLimit);
         }
         cursor.remaining -= 1;
-        if self.links(id).ok_or(StoreError::InvalidHandle)?.pending {
-            cursor.next = self.retire(id)?;
+        let links = self.links(id).ok_or(StoreError::InvalidHandle)?;
+        if links.pending {
+            cursor.next = self.retire(id, links)?;
             Ok(Some(Visit::of(id, true)))
         } else {
             cursor.previous = Some(id);
