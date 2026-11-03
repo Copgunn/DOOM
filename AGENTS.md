@@ -75,6 +75,9 @@
   link; never maintain duplicate status tables, hashes, test totals or logs.
   Before editing, identify the authoritative home and check existing information
   there rather than creating another copy because a milestone changed.
+- README describes current state only; a milestone adds or edits one row of the
+  capability table and never appends prose history (history lives in
+  [COMPATIBILITY.md](docs/COMPATIBILITY.md) and [ROADMAP.md](docs/ROADMAP.md)).
 - Keep the prominent machine-maintained/human-directed disclosure accurate. Do not
   imply universal manual review, absent human oversight or guaranteed correctness.
 - Stop at the assigned milestone's owner-review gate; no unrelated systems.
