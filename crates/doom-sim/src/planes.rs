@@ -52,6 +52,30 @@ pub enum ClipOutcome {
 /// `p_mobj.h` `MF_DROPPED`.
 const MF_DROPPED: u32 = crate::world_pickups::MF_DROPPED;
 
+/// Whether `actor` is in exactly the state `PIT_ChangeSector` leaves a corpse it
+/// crunches to giblets (p_map.c:1269–1279): `health <= 0`, `S_GIBS` (sprite, frame
+/// and `tics == -1` from its descriptor), `MF_SOLID` cleared, height and radius 0.
+/// Nothing else in the admitted domain makes a height or radius 0, and `S_GIBS`
+/// has no action and no successor (info.c `S_GIBS`: `-1` tics, `S_NULL`), so a
+/// gibbed thing keeps this state for the rest of the level. The movers policy's
+/// witnesses admit it in place of the type's own death states and dimensions.
+pub(crate) fn is_gibs(actor: &Actor) -> bool {
+    let Some(life) = actor.life() else {
+        return false;
+    };
+    let gibs = crate::identity::OriginalState::S_GIBS;
+    let descriptor = gibs.descriptor();
+    life.health <= 0
+        && life.state == Some(crate::StateId(gibs.ordinal()))
+        && life.sprite == descriptor.sprite.ordinal()
+        && life.frame == descriptor.frame
+        && life.tics == -1
+        && life.flags & MF_SOLID == 0
+        && actor.solidity == Solidity::NonSolid
+        && actor.spec.height == Fixed::ZERO
+        && actor.spec.radius == Fixed::ZERO
+}
+
 /// Everything a moving plane touches during the thinker pass: the committed sector
 /// table with the plan's staged writes, and the actor plan its clips change.
 pub(crate) struct PlaneHost<'a, 'b> {

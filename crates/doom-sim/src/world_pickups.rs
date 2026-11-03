@@ -304,8 +304,11 @@ pub(crate) enum ItemHeights<'a> {
     /// that sector's ceiling (static sectors).
     Sector(crate::staging::Sectors<'a>),
     /// The movers policy (M3h8 note §4.2): sector heights move and the item keeps
-    /// its own clipped `floorz`/`ceilingz`, so only `z == floorz` is required; an
-    /// item that does not fit under a closed door stays there (case (b)).
+    /// its own clipped `floorz`/`ceilingz`, so only `z == floorz` is required with
+    /// those fields; the item either fits (`ceilingz − floorz ≥ height`) or is an
+    /// undropped item left under a closed door (V′ case (b), p_map.c:1290–1294; a
+    /// dropped one is removed, 1282–1288). Both alternatives are `z == floorz`, and
+    /// the tic-boundary V′ check (`Simulation::vertical_invariant`) classifies them.
     Own,
 }
 impl<'a> ItemHeights<'a> {

@@ -1303,5 +1303,39 @@ no sound; any special line in `spechit` resets `movedir` even when its use retur
 (110 failure branches), `door_monster_bump` (10), `lift_monster_cross` (73) and
 `dense_imp_fireballs` (1) match at every op, so 28 of the 30 C scenarios match through
 their last op and the other two up to the V′ tics. Not compared before step 13: the
-actors' fields, the RNG, the thinker records and the event stream as bytes. Next is
-step 12, V′ and the relaxed item witness.
+actors' fields, the RNG, the thinker records and the event stream as bytes.
+
+Step 12 is done: under the movers policy the tic-boundary preflight checks V′
+(`player_map_scale::v_prime_admitted`, through `Simulation::vertical_invariant`) in place
+of the M3h4 invariant, for every non-impact actor (the expanded-map preflight) and the
+player body (`preflight_player_body`); every older policy keeps `vertical_admitted`
+exactly. The witnesses are the heights policy's (`|z|` within 2,048, `|momz|` within
+1,024) plus `|floorz|`, `|ceilingz|` within 2,048, then one case of §4.1 with the actor's
+own `floorz`/`ceilingz` and height `h`, tried in order: (a) `floorz ≤ z` and `z + h ≤
+ceilingz`; (b) not `MF_SHOOTABLE`, `z == floorz`, `ceilingz < z + h`; (c) `floorz − Δ ≤ z
+< floorz` and `z + h ≤ ceilingz`; (d) `MF_SHOOTABLE`, `z == floorz`, `ceilingz < z + h`;
+(e) `health ≤ 0`, not `MF_SHOOTABLE`, `R_min − 56 ≤ z < floorz` and `z + h ≤ ceilingz`,
+with `R_min` and `Δ` from the admission (`MoverAdmission::reach`, `delta`). Anything else
+is `MapScaleError::Vertical` with the state preserved. The relaxed item witness
+(`ItemHeights::Own`) is unchanged in substance: `z == floorz` with the item's own fields
+covers both its fitting form and case (b). The giblets of `PIT_ChangeSector`
+(p_map.c:1269–1279: `P_SetMobjState(thing, S_GIBS)`, `flags &= ~MF_SOLID`, `height = 0`,
+`radius = 0`) are admitted under the movers policy only, exactly in that state
+(`planes::is_gibs`: `health ≤ 0`, `S_GIBS` with its sprite, frame and `tics == −1`,
+`MF_SOLID` clear, non-solid, height and radius 0; `S_GIBS` has no action and no
+successor, so it is final): the expanded-map preflight's height `> 0` check, the monster
+state-role check (`monster_actor`), the demon owner's death-phase, `MF_SOLID` and height
+checks (`lifecycle_owner`: dead, past `A_Fall`, height 0), the player body's height check
+(`MT_PLAYER` height `>> 2` when dead, 0 when gibbed; its `MF_SOLID` is already clear,
+p_inter.c `P_KillMobj`) and the identity read (`original_actor_identity`). With these,
+`door_gibs_drop_bonus` and `door_stuck_shootable` replay to their last op (300 and 520),
+so all 30 C scenarios match through their last op in the partial replay. Rust-only tests
+(`v_prime_tests.rs`): 1,200-tic soaks with four seeds on the four doorway maps and six
+lift maps asserting V′ and the item witness after every tic (cases (a), (b) and (d)
+reached; (c) and (e) not reached by the soak), V′ and the item witness at every op of
+the two door scenarios, the dead player crunched to giblets by a closing door (it keeps
+closing: a corpse never sets `nofit`), and the refusal of states outside V′ and the item
+witness with the state, RNG and events preserved (the inside boundary values admitted).
+Captures of a gibbed thing still use the interim DSIM34 layout; step 13 must admit
+`S_GIBS` for monsters and the player in `decode_movers` (the DSIM34 decoder's
+`state_role_for` check does not). Next is step 13, DSIM35.

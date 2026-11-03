@@ -505,7 +505,7 @@ impl Simulation {
                 || (!unlinked_blast
                     && actor.location != Some(self.world.locate_validated(actor.position())))
                 || actor.floor > actor.ceiling
-                || actor.height() <= Fixed::ZERO
+                || (actor.height() <= Fixed::ZERO && !self.gibbed(actor))
             {
                 return Err(MapSpawnError::Ownership.into());
             }
@@ -523,7 +523,7 @@ impl Simulation {
                 // fireball exploded by its own half-step is clipped by its next
                 // P_ZMovement (in the same pass for an in-tic launch), so only
                 // their z/momz witnesses apply.
-                player_map_scale::vertical_admitted(actor)?;
+                self.vertical_invariant(actor)?;
             } else {
                 map_scale::bounded([actor.momz], player_map_scale::momz_bound(policy))?;
                 if policy.has_heights() {

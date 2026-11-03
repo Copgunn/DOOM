@@ -1085,7 +1085,10 @@ impl Simulation {
             .ok_or(OriginalRegistryError::ProfileOrActor)?;
         require_role_for(self.player_policy(), life.actor_type)?;
         if let Some(s) = life.state {
-            state_role_for(self.player_policy(), life.actor_type, s)?;
+            // A gibbed corpse of the movers policy is in S_GIBS (p_map.c:1272).
+            if !self.actor(actor).is_some_and(|a| self.gibbed(a)) {
+                state_role_for(self.player_policy(), life.actor_type, s)?;
+            }
         }
         Ok((
             identity(life.actor_type)?,

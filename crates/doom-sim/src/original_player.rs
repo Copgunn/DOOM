@@ -340,10 +340,15 @@ impl Simulation {
                     || (l.flags & MF_SHOOTABLE != 0) != (l.health > 0)
                     || (l.flags & MF_SOLID != 0) != (l.health > 0)
                     || a.height()
-                        != Fixed::from_bits(
-                            OriginalActorType::MT_PLAYER.descriptor().height
-                                >> if l.health > 0 { 0 } else { 2 },
-                        )
+                        != if self.gibbed(a) {
+                            // p_map.c:1276: a crunched corpse has height 0.
+                            Fixed::ZERO
+                        } else {
+                            Fixed::from_bits(
+                                OriginalActorType::MT_PLAYER.descriptor().height
+                                    >> if l.health > 0 { 0 } else { 2 },
+                            )
+                        }
                     || if p.policy.has_physical_player() {
                         crate::player_map_scale::travel_admitted(p.room, a.position(), a.momentum())
                             .is_err()
@@ -354,7 +359,7 @@ impl Simulation {
                         a.momentum() != [Fixed::ZERO; 2]
                     }
                     || if p.policy.has_heights() {
-                        crate::player_map_scale::vertical_admitted(a).is_err()
+                        self.vertical_invariant(a).is_err()
                     } else {
                         a.momz != Fixed::ZERO || a.z != a.floor
                     }

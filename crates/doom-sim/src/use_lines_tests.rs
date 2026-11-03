@@ -44,25 +44,16 @@ fn use_scenarios_match_the_c_rows() {
         assert_eq!(compared.ops, case(label).tics + 1, "{label}");
     }
 }
-/// `door_gibs_drop_bonus` and `door_stuck_shootable` match the C rows until the
-/// first tic whose end state needs V′ (a gibbed corpse pushed below its floor, case
-/// (e); a shootable thing stuck under a closed door, case (d)), which the movers
-/// policy admits only from plan step 12: until then that tic is refused with the
-/// M3h4 invariant.
+/// `door_gibs_drop_bonus` and `door_stuck_shootable` match the C rows through
+/// their last op under V′ (plan step 12): a gibbed corpse (height 0, `S_GIBS`) and
+/// a dropped item crushed, a bonus stuck under the closed door (case (b)), and a
+/// shootable thing stuck under a closed door refusing the closing steps (case (d)).
 #[test]
-fn door_scenarios_match_the_c_rows_until_v_prime_is_needed() {
-    for (label, refused, uses) in [
-        ("door_gibs_drop_bonus", 216, 2),
-        ("door_stuck_shootable", 6, 2),
-    ] {
+fn door_scenarios_match_the_c_rows_through_their_last_op() {
+    for (label, uses) in [("door_gibs_drop_bonus", 2), ("door_stuck_shootable", 2)] {
         let c = case(label);
-        let (mut s, compared) = replay(&c, refused - 1);
-        assert_eq!((compared.ops, compared.uses), (refused, uses), "{label}");
-        assert_eq!(
-            s.advance(command(&c, refused)),
-            Err(SimError::MapScale(MapScaleError::Vertical)),
-            "{label}"
-        );
+        let (_, compared) = replay(&c, c.tics);
+        assert_eq!((compared.ops, compared.uses), (c.tics + 1, uses), "{label}");
     }
 }
 

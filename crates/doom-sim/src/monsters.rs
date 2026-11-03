@@ -523,7 +523,12 @@ impl Simulation {
         if self.profile.uses_demon_lifecycle() && l.actor_type == self.demon_owner_type() {
             self.lifecycle_owner(a)?;
         }
-        self.monster_state_role(l.actor_type, l.state.ok_or(MonsterError::Definition)?)?;
+        let state = l.state.ok_or(MonsterError::Definition)?;
+        // p_map.c:1269–1279: under the movers policy a corpse a mover crunches
+        // enters S_GIBS, outside every monster type's own state graph.
+        if !self.gibbed(&a) {
+            self.monster_state_role(l.actor_type, state)?;
+        }
         Ok(a)
     }
     pub(crate) fn monster_state_role(

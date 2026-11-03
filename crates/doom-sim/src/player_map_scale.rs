@@ -641,6 +641,76 @@ pub(crate) fn vertical_admitted(actor: &Actor) -> Result<(), SimError> {
     }
     Ok(())
 }
+/// The largest admitted actor height `H_max` of the corpse envelope (V′ case (e)):
+/// the tallest admitted type (the demon, 56) bounds a corpse's pre-gib height.
+pub(crate) const V_PRIME_MAX_HEIGHT_UNITS: i32 = 56;
+/// Which case of the vertical invariant V′ (M3h8 note §4.1) a non-impact actor is
+/// in at a tic boundary under the movers policy, or `None` when it is in none.
+/// `reach` is the admission's `[R_min, R_max]` and `delta` its `Δ`, in map units.
+/// The cases are tried in order (a)–(e); (b) and (d) differ only in
+/// `MF_SHOOTABLE`. Every operand is bounded by the `z` and height witnesses checked
+/// first, so no sum overflows.
+pub(crate) fn v_prime_case(actor: &Actor, reach: [i32; 2], delta: i32) -> Option<char> {
+    let (z, floor, ceiling, height) = (actor.z, actor.floor, actor.ceiling, actor.spec.height);
+    let life = actor.life()?;
+    let shootable = life.flags & original_player::MF_SHOOTABLE != 0;
+    let top = z + height;
+    let units = |u: i32| Fixed::from_bits(u.saturating_mul(65536));
+    if floor <= z && top <= ceiling {
+        Some('a')
+    } else if !shootable && z == floor && ceiling < top {
+        Some('b')
+    } else if floor - units(delta) <= z && z < floor && top <= ceiling {
+        Some('c')
+    } else if shootable && z == floor && ceiling < top {
+        Some('d')
+    } else if life.health <= 0
+        && !shootable
+        && units(reach[0] - V_PRIME_MAX_HEIGHT_UNITS) <= z
+        && z < floor
+        && top <= ceiling
+    {
+        Some('e')
+    } else {
+        None
+    }
+}
+/// The vertical invariant V′ of the movers policy at a tic boundary (M3h8 note
+/// §4.1, decision N2), replacing [`vertical_admitted`] for that policy only: the
+/// `z` and `momz` witnesses of the heights policy, then one of the cases (a)–(e)
+/// of [`v_prime_case`] with the actor's own `floorz`/`ceilingz`.
+pub(crate) fn v_prime_admitted(
+    actor: &Actor,
+    admission: &mover_rules::MoverAdmission,
+) -> Result<(), SimError> {
+    if !sight::within(actor.z, HEIGHTS_Z_UNITS)
+        || !sight::within(actor.momz, HEIGHTS_MOMZ_UNITS)
+        || !sight::within(actor.floor, HEIGHTS_Z_UNITS)
+        || !sight::within(actor.ceiling, HEIGHTS_Z_UNITS)
+        || v_prime_case(actor, admission.reach, admission.delta).is_none()
+    {
+        return Err(MapScaleError::Vertical.into());
+    }
+    Ok(())
+}
+impl Simulation {
+    /// Whether `actor` is a gibbed corpse admitted by the movers policy
+    /// ([`planes::is_gibs`]); always false under every other policy.
+    pub(crate) fn gibbed(&self, actor: &Actor) -> bool {
+        self.player_policy().has_movers() && planes::is_gibs(actor)
+    }
+    /// The tic-boundary vertical invariant of the selected policy for one
+    /// non-impact actor: V′ under the movers policy, the heights invariant under
+    /// the other heights policies.
+    pub(crate) fn vertical_invariant(&self, actor: &Actor) -> Result<(), SimError> {
+        if self.player_policy().has_movers() {
+            let admission = self.movers.as_ref().ok_or(MapSpawnError::Context)?;
+            v_prime_admitted(actor, admission)
+        } else {
+            vertical_admitted(actor)
+        }
+    }
+}
 /// Position admission under the policy: the derived room, or the historical
 /// absolute margin when no room is admitted.
 pub(crate) fn position_admitted(

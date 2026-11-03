@@ -207,6 +207,14 @@ pub(crate) struct Compared {
 /// `specialdata` presence (`MH`), the runtime line specials (`ML`) and the
 /// crossings of the op (`MX`/`MY`, in order).
 pub(crate) fn replay(c: &Case, upto: usize) -> (Simulation, Compared) {
+    replay_observed(c, upto, |_, _| {})
+}
+/// [`replay`], calling `observe` with the state after every op (op 0: the setup).
+pub(crate) fn replay_observed(
+    c: &Case,
+    upto: usize,
+    mut observe: impl FnMut(&Simulation, usize),
+) -> (Simulation, Compared) {
     let (mut s, body, things) = setup(c);
     let mut compared = Compared::default();
     for op in 0..=upto.min(c.tics) {
@@ -375,6 +383,7 @@ pub(crate) fn replay(c: &Case, upto: usize) -> (Simulation, Compared) {
         assert_eq!(intercepts, mi, "{} op{op} use intercepts", c.label);
         compared.uses += uses.len() + intercepts.len();
         compared.ops += 1;
+        observe(&s, op);
     }
     (s, compared)
 }
