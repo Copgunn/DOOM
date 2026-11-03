@@ -136,6 +136,7 @@ pub use multisector::{
     Gravity, Location, MoveFailure, Opening, OpeningVisit, SectorMoveAttempt, SectorState,
     SpawnHeight, VerticalEvent, VerticalSpec,
 };
+mod sector_thinkers;
 mod snapshot;
 mod store;
 mod thinkers;
@@ -145,9 +146,13 @@ pub use actor::{Actor, ActorSpec, TicCommand};
 use doom_map::Map;
 use doom_types::{DoomRng, Fixed};
 pub use geometry::{Collision, GeometryError, LineGeometry, MoveAttempt, StaticWorld};
+pub use sector_thinkers::SectorThinker;
 pub use snapshot::{Divergence, Snapshot, StateField, compare_traces};
 use std::{error::Error, fmt, sync::Arc};
-pub use store::{ActorAvailability, ActorId, StoreError, ThinkerContext, ThinkerStore, Visit};
+pub use store::{
+    ActorAvailability, ActorId, SectorThinkerId, StoreError, ThinkerContext, ThinkerId,
+    ThinkerStore, Visit,
+};
 
 /// Explicit behavior/schema profile; M2 remains frozen for regression consumers.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

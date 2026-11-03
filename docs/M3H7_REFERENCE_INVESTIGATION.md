@@ -887,3 +887,10 @@ kind-tagged handles, while `thinker.order`, `store.head`/`tail` and actor
 light changes, light draws and sector-thinker runs emit no event (decision 5); the
 sky-shot event follows the trace record of the hitscan it ended instead of sitting
 inside it; there is no sector sound in Stage A.
+
+Phase 2 step 5 (thinker order refactor, no behavior change): `ThinkerStore` keeps one
+linked order of `ThinkerId::{Actor, Sector}` entries over the unchanged actor slot class
+and a separate `SectorThinkerId` slot class whose capacity is fixed at construction (zero
+for every existing policy, payload `SectorThinker` still uninhabited), the actor order,
+`store.head`/`tail` and actor `previous`/`next` are derived as its actor subsequence, and
+every historical fixture, digest and the two-allocation tic plan are unchanged.

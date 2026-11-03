@@ -817,13 +817,16 @@ impl Simulation {
         )
     }
     pub(crate) fn projectile_thinkers_with(&mut self, mut before: impl FnMut(&mut Self, ActorId)) {
-        let mut cursor = self.actors.cursor(self.actors.max_slots as usize);
+        let mut cursor = self.actors.cursor(self.actors.visit_bound());
         while let Some(visit) = self
             .actors
             .next_visit(&mut cursor)
             .expect("bounded validated traversal")
         {
             match visit {
+                Visit::SectorThink(_) | Visit::SectorRetired(_) => {
+                    panic!("the historical projectile policy has no sector thinkers: {visit:?}")
+                }
                 Visit::Retired(id) => self.events.push(Event::Retired(id)),
                 Visit::Think(id) => {
                     self.events.push(Event::Think(id));

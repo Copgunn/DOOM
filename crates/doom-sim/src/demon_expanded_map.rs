@@ -234,6 +234,11 @@ impl Simulation {
     fn demon_plan(&mut self) -> Result<DemonPlan, SimError> {
         let mut slots = line_work::reserved(self.actors.slots.len())?;
         slots.extend_from_slice(&self.actors.slots);
+        // The shared order lives in the slot links plus head/tail, so staging both
+        // classes stages it. Without sector thinkers this vector is empty and does
+        // not allocate: the tic plan keeps its two historical allocations.
+        let mut sector_slots = line_work::reserved(self.actors.sector_slots.len())?;
+        sector_slots.extend_from_slice(&self.actors.sector_slots);
         let mut order = line_work::reserved(self.actors.max_slots as usize)?;
         order.extend_from_slice(&self.spatial.order);
         let sound_targets = if self.player_policy().has_heights() {
@@ -253,9 +258,11 @@ impl Simulation {
         Ok(DemonPlan {
             actors: ThinkerStore {
                 slots,
+                sector_slots,
                 head: self.actors.head,
                 tail: self.actors.tail,
                 max_slots: self.actors.max_slots,
+                max_sector_slots: self.actors.max_sector_slots,
             },
             spatial: movement::SpatialIndex { order },
             rng: self.rng,

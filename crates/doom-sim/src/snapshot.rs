@@ -634,8 +634,17 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         sim.actors.max_slots.to_le_bytes(),
     );
     count(&mut fields, "store.slot_count", sim.actors.slots.len());
-    field(&mut fields, "store.head", optional_id(sim.actors.head));
-    field(&mut fields, "store.tail", optional_id(sim.actors.tail));
+    // Actor-only fields: the actor subsequence of the shared order.
+    field(
+        &mut fields,
+        "store.head",
+        optional_id(sim.actors.actor_head()),
+    );
+    field(
+        &mut fields,
+        "store.tail",
+        optional_id(sim.actors.actor_tail()),
+    );
     let order = sim.actors.order().flat_map(id).collect::<Vec<_>>();
     field(&mut fields, "thinker.order", order);
     for (i, slot) in sim.actors.slots.iter().enumerate() {
@@ -657,6 +666,10 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         if let Some(entry) = &slot.entry {
             let a = &entry.value;
+            let (previous, next) = sim
+                .actors
+                .actor_links(ActorId::from_parts(i as u32, slot.generation))
+                .expect("occupied slot at its current generation");
             field(
                 &mut fields,
                 format!("{prefix}.pending_removal"),
@@ -665,13 +678,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             field(
                 &mut fields,
                 format!("{prefix}.previous"),
-                optional_id(entry.prev),
+                optional_id(previous),
             );
-            field(
-                &mut fields,
-                format!("{prefix}.next"),
-                optional_id(entry.next),
-            );
+            field(&mut fields, format!("{prefix}.next"), optional_id(next));
             for (label, value) in [
                 ("x", a.spec.position[0]),
                 ("y", a.spec.position[1]),

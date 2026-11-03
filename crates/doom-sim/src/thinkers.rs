@@ -37,32 +37,167 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
         boundary,
     } = input;
     let recoverable_refill = player.as_ref().is_some_and(|p| p.policy.has_imps());
+    // A refused sector-thinker visit outside the checked transaction; the checked
+    // transaction instead records it and discards the tic.
+    let mut refused = None;
     actors
-        .run(
-            actors.max_slots as usize,
-            |visit, mut context| match visit {
-                Visit::Retired(id) => events.push(Event::Retired(id)),
-                Visit::Think(id) => {
-                    if perception_inputs
-                        .and_then(|p| p.checked)
-                        .is_some_and(|c| c.failure.get().is_some())
-                    {
-                        return;
+        .run(actors.visit_bound(), |visit, mut context| match visit {
+            Visit::SectorThink(_) | Visit::SectorRetired(_) => {
+                if let Err(error) = sector_thinkers::visit(context, visit) {
+                    match perception_inputs.and_then(|p| p.checked) {
+                        Some(control) => control
+                            .failure
+                            .set(control.failure.get().or(Some(error.into()))),
+                        None => refused = refused.or(Some(error)),
                     }
-                    events.push(Event::Think(id));
-                    let mut actor = *context.get(id).expect("live thinker handle");
-                    if profile == Profile::OriginalDemon
-                        && actor
-                            .life
-                            .is_some_and(|l| original_registry::is_fireball(l.actor_type))
+                }
+            }
+            Visit::Retired(id) => events.push(Event::Retired(id)),
+            Visit::Think(id) => {
+                if perception_inputs
+                    .and_then(|p| p.checked)
+                    .is_some_and(|c| c.failure.get().is_some())
+                {
+                    return;
+                }
+                events.push(Event::Think(id));
+                let mut actor = *context.get(id).expect("live thinker handle");
+                if profile == Profile::OriginalDemon
+                    && actor
+                        .life
+                        .is_some_and(|l| original_registry::is_fireball(l.actor_type))
+                {
+                    // P_MobjThinker of a missile: its movement owns contact and
+                    // explosion, then ordinary state countdown.
+                    let mut host = lifecycle::LifeHost {
+                        player: player.as_deref_mut(),
+                        statistics: statistics.as_mut(),
+                        perception: perception_inputs,
+                        access: context,
+                        registry: registry.as_deref().unwrap(),
+                        world,
+                        sectors,
+                        options,
+                        rng,
+                        spatial,
+                        bindings: live_bindings,
+                        events,
+                    };
+                    projectiles::fly(&mut host, id);
+                    host.tick(id);
+                    return;
+                }
+                let had_xy_momentum = actor.momentum().iter().any(|m| *m != Fixed::ZERO);
+                let source_player = player.as_ref().is_some_and(|p| p.mo == Some(id));
+                if profile == Profile::Foundation {
+                    events.extend(
+                        world
+                            .move_xy(&mut actor)
+                            .into_iter()
+                            .map(|attempt| Event::Movement { actor: id, attempt }),
+                    );
+                } else {
+                    let command = if source_player {
+                        Some(commands[usize::from(PlayerSlot::One.ordinal())])
+                    } else {
+                        bindings
+                            .iter()
+                            .position(|binding| *binding == Some(id))
+                            .map(|slot| commands[slot])
+                    };
+                    let motion = if source_player
+                        && player
+                            .as_ref()
+                            .is_some_and(|p| p.policy.has_world_pickups())
                     {
-                        // P_MobjThinker of a missile: its movement owns contact and
-                        // explosion, then ordinary state countdown.
-                        let mut host = lifecycle::LifeHost {
+                        let Some(p) = player.as_deref_mut() else {
+                            return;
+                        };
+                        match movement::move_xy_contacts(
+                            world,
+                            id,
+                            &mut actor,
+                            spatial,
+                            world_pickups::Contacts {
+                                access: &mut context,
+                                player: p,
+                                sectors,
+                                boundary,
+                            },
+                            command,
+                            sectors,
+                        ) {
+                            Ok(events) => events,
+                            Err(error) => {
+                                if let Some(control) = perception_inputs.and_then(|p| p.checked) {
+                                    control.failure.set(Some(error));
+                                }
+                                return;
+                            }
+                        }
+                    } else if profile.uses_sectors() {
+                        movement::move_xy_multisector(
+                            world,
+                            id,
+                            &mut actor,
+                            spatial,
+                            |id| context.get(id).copied(),
+                            command,
+                            sectors,
+                        )
+                    } else {
+                        movement::move_xy(
+                            world,
+                            id,
+                            &mut actor,
+                            spatial,
+                            |id| context.get(id).copied(),
+                            command,
+                        )
+                    };
+                    for event in motion {
+                        events.push(match event {
+                            movement::MotionEvent::Contact(event) => event.event(),
+                            movement::MotionEvent::Attempt(attempt) => {
+                                Event::ActorMovement { actor: id, attempt }
+                            }
+                            movement::MotionEvent::Slide(line) => Event::Slide { actor: id, line },
+                            movement::MotionEvent::Sector(attempt) => {
+                                Event::SectorMovement { actor: id, attempt }
+                            }
+                        });
+                    }
+                }
+                if (profile == Profile::PlayerWeapons || source_player)
+                    && had_xy_momentum
+                    && actor.z <= actor.floor
+                    && actor.momentum() == [Fixed::ZERO; 2]
+                    && (if source_player {
+                        commands[usize::from(PlayerSlot::One.ordinal())].forward == 0
+                            && commands[usize::from(PlayerSlot::One.ordinal())].side == 0
+                    } else {
+                        bindings
+                            .iter()
+                            .position(|b| *b == Some(id))
+                            .is_some_and(|slot| {
+                                commands[slot].forward == 0 && commands[slot].side == 0
+                            })
+                    })
+                {
+                    let run = identity::OriginalState::S_PLAY_RUN1.ordinal();
+                    if actor
+                        .life
+                        .unwrap()
+                        .state
+                        .is_some_and(|s| s.0.wrapping_sub(run) < 4)
+                    {
+                        let play = StateId(identity::OriginalState::S_PLAY.ordinal());
+                        *context.get_mut(id).unwrap() = actor;
+                        lifecycle::LifeHost {
                             player: player.as_deref_mut(),
                             statistics: statistics.as_mut(),
                             perception: perception_inputs,
-                            access: context,
+                            access: &mut *context,
                             registry: registry.as_deref().unwrap(),
                             world,
                             sectors,
@@ -71,179 +206,51 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                             spatial,
                             bindings: live_bindings,
                             events,
-                        };
-                        projectiles::fly(&mut host, id);
-                        host.tick(id);
-                        return;
-                    }
-                    let had_xy_momentum = actor.momentum().iter().any(|m| *m != Fixed::ZERO);
-                    let source_player = player.as_ref().is_some_and(|p| p.mo == Some(id));
-                    if profile == Profile::Foundation {
-                        events.extend(
-                            world
-                                .move_xy(&mut actor)
-                                .into_iter()
-                                .map(|attempt| Event::Movement { actor: id, attempt }),
-                        );
-                    } else {
-                        let command = if source_player {
-                            Some(commands[usize::from(PlayerSlot::One.ordinal())])
-                        } else {
-                            bindings
-                                .iter()
-                                .position(|binding| *binding == Some(id))
-                                .map(|slot| commands[slot])
-                        };
-                        let motion = if source_player
-                            && player
-                                .as_ref()
-                                .is_some_and(|p| p.policy.has_world_pickups())
-                        {
-                            let Some(p) = player.as_deref_mut() else {
-                                return;
-                            };
-                            match movement::move_xy_contacts(
-                                world,
-                                id,
-                                &mut actor,
-                                spatial,
-                                world_pickups::Contacts {
-                                    access: &mut context,
-                                    player: p,
-                                    sectors,
-                                    boundary,
-                                },
-                                command,
-                                sectors,
-                            ) {
-                                Ok(events) => events,
-                                Err(error) => {
-                                    if let Some(control) = perception_inputs.and_then(|p| p.checked)
-                                    {
-                                        control.failure.set(Some(error));
-                                    }
-                                    return;
-                                }
-                            }
-                        } else if profile.uses_sectors() {
-                            movement::move_xy_multisector(
-                                world,
-                                id,
-                                &mut actor,
-                                spatial,
-                                |id| context.get(id).copied(),
-                                command,
-                                sectors,
-                            )
-                        } else {
-                            movement::move_xy(
-                                world,
-                                id,
-                                &mut actor,
-                                spatial,
-                                |id| context.get(id).copied(),
-                                command,
-                            )
-                        };
-                        for event in motion {
-                            events.push(match event {
-                                movement::MotionEvent::Contact(event) => event.event(),
-                                movement::MotionEvent::Attempt(attempt) => {
-                                    Event::ActorMovement { actor: id, attempt }
-                                }
-                                movement::MotionEvent::Slide(line) => {
-                                    Event::Slide { actor: id, line }
-                                }
-                                movement::MotionEvent::Sector(attempt) => {
-                                    Event::SectorMovement { actor: id, attempt }
-                                }
-                            });
                         }
-                    }
-                    if (profile == Profile::PlayerWeapons || source_player)
-                        && had_xy_momentum
-                        && actor.z <= actor.floor
-                        && actor.momentum() == [Fixed::ZERO; 2]
-                        && (if source_player {
-                            commands[usize::from(PlayerSlot::One.ordinal())].forward == 0
-                                && commands[usize::from(PlayerSlot::One.ordinal())].side == 0
-                        } else {
-                            bindings
-                                .iter()
-                                .position(|b| *b == Some(id))
-                                .is_some_and(|slot| {
-                                    commands[slot].forward == 0 && commands[slot].side == 0
-                                })
-                        })
-                    {
-                        let run = identity::OriginalState::S_PLAY_RUN1.ordinal();
-                        if actor
-                            .life
-                            .unwrap()
-                            .state
-                            .is_some_and(|s| s.0.wrapping_sub(run) < 4)
-                        {
-                            let play = StateId(identity::OriginalState::S_PLAY.ordinal());
-                            *context.get_mut(id).unwrap() = actor;
-                            lifecycle::LifeHost {
-                                player: player.as_deref_mut(),
-                                statistics: statistics.as_mut(),
-                                perception: perception_inputs,
-                                access: &mut *context,
-                                registry: registry.as_deref().unwrap(),
-                                world,
-                                sectors,
-                                options,
-                                rng,
-                                spatial,
-                                bindings: live_bindings,
-                                events,
-                            }
-                            .enter(id, play);
-                            actor = *context.get(id).unwrap();
-                        }
-                    }
-                    if profile.uses_sectors() {
-                        if let Some(update) = multisector::move_z(&mut actor) {
-                            // p_mobj.c P_ZMovement: on floor contact a player whose
-                            // momz was below -GRAVITY*8 requests sfx_oof before momz is
-                            // zeroed. Reachable only off the flat floor (heights policy).
-                            if update.floor_contact
-                                && update.before[1]
-                                    < Fixed::from_map_units(player_map_scale::LANDING_SOUND_MOMZ)
-                                && player
-                                    .as_ref()
-                                    .is_some_and(|p| p.policy.has_heights() && p.mo == Some(id))
-                            {
-                                events.push(Event::ActorState(lifecycle::ActorStateEvent::Sound {
-                                    actor: Some(id),
-                                    sound: player_map_scale::SFX_OOF,
-                                }));
-                            }
-                            events.push(Event::Vertical { actor: id, update });
-                        }
-                    }
-                    *context.get_mut(id).expect("same live thinker handle") = actor;
-                    if let Some(registry) = registry {
-                        lifecycle::LifeHost {
-                            player: player.as_deref_mut(),
-                            statistics: statistics.as_mut(),
-                            perception: perception_inputs,
-                            access: context,
-                            registry,
-                            world,
-                            sectors,
-                            options,
-                            rng,
-                            spatial,
-                            bindings: live_bindings,
-                            events,
-                        }
-                        .tick(id);
+                        .enter(id, play);
+                        actor = *context.get(id).unwrap();
                     }
                 }
-            },
-        )
+                if profile.uses_sectors() {
+                    if let Some(update) = multisector::move_z(&mut actor) {
+                        // p_mobj.c P_ZMovement: on floor contact a player whose
+                        // momz was below -GRAVITY*8 requests sfx_oof before momz is
+                        // zeroed. Reachable only off the flat floor (heights policy).
+                        if update.floor_contact
+                            && update.before[1]
+                                < Fixed::from_map_units(player_map_scale::LANDING_SOUND_MOMZ)
+                            && player
+                                .as_ref()
+                                .is_some_and(|p| p.policy.has_heights() && p.mo == Some(id))
+                        {
+                            events.push(Event::ActorState(lifecycle::ActorStateEvent::Sound {
+                                actor: Some(id),
+                                sound: player_map_scale::SFX_OOF,
+                            }));
+                        }
+                        events.push(Event::Vertical { actor: id, update });
+                    }
+                }
+                *context.get_mut(id).expect("same live thinker handle") = actor;
+                if let Some(registry) = registry {
+                    lifecycle::LifeHost {
+                        player: player.as_deref_mut(),
+                        statistics: statistics.as_mut(),
+                        perception: perception_inputs,
+                        access: context,
+                        registry,
+                        world,
+                        sectors,
+                        options,
+                        rng,
+                        spatial,
+                        bindings: live_bindings,
+                        events,
+                    }
+                    .tick(id);
+                }
+            }
+        })
         .or_else(|error| match perception_inputs.and_then(|p| p.checked) {
             // A fireball can spawn into a slot retired earlier in this pass. The
             // checked transaction discards that tic; older policies are unchanged.
@@ -256,4 +263,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
             _ => Err(error),
         })
         .expect("built-in traversal preserves links and is bounded by max slots");
+    if let Some(error) = refused {
+        panic!("no admitted policy creates a sector thinker: {error}");
+    }
 }

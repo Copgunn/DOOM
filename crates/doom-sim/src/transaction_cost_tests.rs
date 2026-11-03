@@ -15,6 +15,19 @@ fn projection_mutation_is_isolated_and_component_costs_are_observable() {
             sim.actor_order().collect::<Vec<_>>()
         );
         assert_eq!(plan.spatial.order, sim.spatial.order);
+        // The shared order is staged with the slots; without sector thinkers it is
+        // the actor order and the empty sector class costs no allocation.
+        assert_eq!(
+            plan.actors.shared_order().collect::<Vec<_>>(),
+            sim.actors.shared_order().collect::<Vec<_>>()
+        );
+        assert!(
+            plan.actors
+                .shared_order()
+                .eq(sim.actor_order().map(ThinkerId::Actor))
+        );
+        assert_eq!(plan.actors.sector_capacity(), 0);
+        assert_eq!(plan.actors.sector_slots.capacity(), 0);
         let first = plan.actors.order().next().unwrap();
         plan.actors.mark_remove(first).unwrap();
         plan.rng.p_random();
