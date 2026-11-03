@@ -926,3 +926,11 @@ the fuzz target `player_specials` with `tools/seed_player_specials_fuzz.py`, the
 1,200-tic `pools` and `sky` soaks on four seeds, the Rust-only sky-shot boundary
 `z == front ceiling` (fails under the `>=` mutation), the A7 slot and visit budget test
 and three CI steps; observations are in [the evidence record](validation/M3H7.md).
+
+Phase 2 step 9 (documentation): README, [ROADMAP](ROADMAP.md#m3h7-sky-and-static-specials)
+(M3h7 current, M3h8 next), the
+[COMPATIBILITY section](COMPATIBILITY.md#original-monsters-with-sky-and-static-specials)
+with its limits rows and the corrected sky wording of the real-map section (only
+`F_SKY1` ceilings were ever rejected; §2.9, §8), ARCHITECTURE, the
+[TESTING commands](TESTING.md#original-monsters-with-sky-and-static-specials), the
+documentation index, VALIDATION and the tools README; STATE_FORMAT needed no change.

@@ -459,8 +459,11 @@ thinker order and the sector-thinker store (`TK` rows), runtime sector light and
 and the player's secret count (`SX` rows) and tag-25 secret, sky-removal and sky-shot
 events (`SE`, `KR`, `KS`); the generator also checks that the stream without tag 25 is
 the DSIM33 projection of the same rows. See
-[investigation](../../docs/M3H7_REFERENCE_INVESTIGATION.md) and the
-[DSIM v34 schema](../../docs/STATE_FORMAT.md#dsim-v34--original-monsters-with-sky-and-static-specials).
+[investigation](../../docs/M3H7_REFERENCE_INVESTIGATION.md), the
+[DSIM v34 schema](../../docs/STATE_FORMAT.md#dsim-v34--original-monsters-with-sky-and-static-specials),
+[commands](../../docs/TESTING.md#original-monsters-with-sky-and-static-specials) and
+[observations](../../docs/validation/M3H7.md). [check_player_specials.py](check_player_specials.py)
+runs the `player_specials` example in debug and release and asserts equal output.
 
 ## Historical raw-trace loading
 

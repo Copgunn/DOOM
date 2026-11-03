@@ -222,3 +222,6 @@ See [source qualification](M3G9_REFERENCE_INVESTIGATION.md) and
   gallery with 73-intercept traces, a 3,850-norm wall at the arithmetic limit, a comb
   of 123 lines in one window and a 60 × 60 cell map in C, DSIM33, the admission
   rejections, the intercept witness, soaks, fuzzing and IWAD counts.
+- [M3h7 sky and static specials](validation/M3H7.md): light thinkers, damage floors,
+  a secret, scrolling walls, sky removals and sky shots in C, DSIM34 with the shared
+  thinker order, the admission rejections, the load order, soaks and fuzzing.

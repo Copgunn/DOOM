@@ -165,6 +165,7 @@ all dependent representations and services.
 | Underlying actor store | Configurable, at most 65,536 slots; individual configurations are stricter | [ThinkerStore::new](../crates/doom-sim/src/store.rs) |
 | Map Demon arithmetic margins | Absolute spawn coordinates 978, owner query margin 1,008, other actor coordinates 994, general actor/query range 1,024 map units; body initial XY momentum and admitted Z momentum at most 64 units | [map preflight](../crates/doom-sim/src/demon_map_spawn.rs), [spawn checks](../crates/doom-sim/src/spawning.rs), [sight](../crates/doom-sim/src/sight.rs) |
 | Real-map policy (wire 17) | The WAD format's own bounds (32,767 records per table, 32,768 BLOCKMAP words, fewer cells than words); sight and collision work computed from the map; compiled cell references at most 2²⁴ and preparation requests at most 64 MiB as allocation guards; see [the classic-map-scale section](#original-monsters-at-classic-map-scale) | [validate_real_map](../crates/doom-sim/src/map_extent.rs), [GeometryCapacity](../crates/doom-sim/src/lib.rs) |
+| Specials policy (wire 18) | The real-map bounds plus sector specials 1–5, 7–9, 12, 13, 16, 17 only; line special 48 on at most 64 one-sided lines; sector lights within `i16::MIN + 64 ..= i16::MAX - 64`; a sector-thinker slot class sized by the light-sector count at load; see [the sky and static-specials section](#original-monsters-with-sky-and-static-specials) | [validate_specials](../crates/doom-sim/src/demon_expanded_map.rs), [sector thinkers](../crates/doom-sim/src/sector_thinkers.rs) |
 
 For example, collision and hitscan services contain fixed line-work buffers tied
 to the line bound; raising only the rejection constant would not be sufficient.
@@ -179,6 +180,7 @@ expand their declared slices while retaining historical admission.
 | Historical sight through profile 18 | 8,192 units of fully expanded BSP traversal work, including repeated children/segs | [sight work validation](../crates/doom-sim/src/sight.rs) |
 | Hitscan | 64 grid-cell iterations; candidate count bounded by `64 * (128 + 1024)` | [combat tracing](../crates/doom-sim/src/combat_trace.rs) |
 | State actions | 128 immediate entry work units, 8,192 planned step work units, and bounded child spawning | [lifecycle planning](../crates/doom-sim/src/lifecycle.rs) |
+| Thinker pass | One visit per slot of either class: the actor slots plus, under the specials policy, the light-sector count | [ThinkerStore](../crates/doom-sim/src/store.rs) |
 
 Some work bounds also preserve source semantics: the hitscan cell loop follows
 [original P_PathTraverse](../linuxdoom-1.10/p_maputl.c), so expanding it may change
@@ -364,7 +366,9 @@ requests as a Rust safety policy. Unsupported actions never silently no-op.
 ## Deferred systems
 
 Full player damage/inventory/armor/powers/scoring, multiplayer, Fast/Nightmare
-execution, respawning, resurrection, dynamic sectors, doors, specials, complete
+execution, respawning, resurrection, dynamic sectors, doors, line and sector specials
+beyond the static set of the
+[specials policy](#original-monsters-with-sky-and-static-specials), complete
 map/actor spawning, generalized monster interactions, demos and presentation remain
 unsupported. Spectre metadata recognition is not Spectre gameplay compatibility.
 Source undefined behavior is not a compatibility target; checked Rust rejection
@@ -1577,7 +1581,94 @@ policy E1M1 needs the roster scale (29 monsters, 53 pickups on UV), eight decora
 barrel types, sky, eight line-special and five sector-special types and the movers behind
 them ([readiness](M3H6_REFERENCE_INVESTIGATION.md#9-e1m1-readiness-report)). Moving
 sectors, doors, lifts, crushers, line and sector specials, damaging floors, teleporters,
-sky ceilings and floors, `P_CalcHeight`/view bobbing, intercepts-overflow emulation and
-every other monster, weapon or item stay excluded. See
+sky ceilings, `P_CalcHeight`/view bobbing, intercepts-overflow emulation and every other
+monster, weapon or item stay excluded under this policy (the load check rejects only
+`F_SKY1` ceilings; a sky floor has no game-code effect, M3h7 note
+[§2.9](M3H7_REFERENCE_INVESTIGATION.md#29-sky-in-game-code-re-read-for-this-note));
+the [specials policy](#original-monsters-with-sky-and-static-specials) admits sky
+ceilings and the static specials. See
 [source investigation](M3H6_REFERENCE_INVESTIGATION.md) and
 [observed evidence](validation/M3H6.md).
+
+## Original monsters with sky and static specials
+
+`PlayerMonstersSpecialsV1` (wire 18, context `PLAYER-MONSTERS-SPECIALS-1-MEDIUM-v1`,
+DSIM-v34) is a separate opt-in superset of `PlayerMonstersRealMapV1`. Select it with
+`Simulation::original_player_specials_map`, which takes no slot limit, spawn the THINGs
+and the player body, then call `Simulation::spawn_level_specials` once before the first
+tic. The same roster (eight monsters, sixteen pickups, eight drops), weapons, items,
+fireballs, infighting, 320 actor slots, 208 live fireballs, heights within ±512,
+arithmetic certificate (i)–(viii), slide-window rule, boundary rules C1–C3, closed-cell
+BLOCKMAP rule, spawn rule, escape, intercept and vertical witnesses and whole-tic
+rollback apply; every committed M3h6 room loads unchanged. Older policies, wires and
+DSIM20–33 are unchanged; the real-map policy still rejects every special and every sky
+ceiling. Every sector height stays static: nothing in this policy moves a floor or a
+ceiling.
+
+What changes is that sector lights and specials become runtime state, four light
+thinkers join the thinker order, the player's sector is tested every tic, and sky
+ceilings are admitted with their two game-code effects (M3h7 note
+[§4.2](M3H7_REFERENCE_INVESTIGATION.md#42-stage-a-m3h7-sky-and-static-specials)).
+
+| Admitted at load | Value | Source behavior |
+| --- | --- | --- |
+| Light sector specials | 1 (blinking), 2 and 3 (fast and slow strobe), 8 (glow), 12 and 13 (synchronized slow and fast strobe), 17 (fire flicker) | `P_SpawnSpecials` spawns `T_LightFlash`, `T_StrobeFlash`, `T_Glow` or `T_FireFlicker` and clears the special; the flash and unsynchronized-strobe spawn draws come in sector order after every THING draw, and the flash and flicker draw again while running |
+| Damage sector specials | 4 (fast strobe plus 20%), 5 (10%), 7 (5%), 16 (20%) | `P_PlayerInSpecialSector` hurts a live player on the 32-tic gate `!(leveltime & 31)`; special 4 also spawns its strobe and keeps its special |
+| Secret sector special | 9 | counted into `level.total_secrets` at load; entered once, it adds one to the player's `secret_count` and clears the sector special |
+| Line special 48 (scrolling wall) | one-sided lines only, at most 64 (`MAXLINEANIMS`) | presentation only: the offset is derived from the tic and never stored |
+| `F_SKY1` ceilings | a ceiling whose flat name equals `F_SKY1` ignoring ASCII case, up to the first NUL | the fireball removal of `P_XYMovement` and the two sky returns of `PTR_ShootTraverse` below |
+| Sector light levels | within `i16::MIN + 64 ..= i16::MAX - 64` | Rust-only: keeps the light arithmetic inside `short lightlevel`; otherwise `MapScaleError::Light` |
+| Tags | kept | no admitted special reads them |
+
+Behavior during play:
+
+- **Thinker order.** Light thinkers live in the same processing order as actors
+  (`P_RunThinkers`), in their own sector-thinker slot class whose capacity is the number
+  of light sectors, fixed at load; the visit budget is the 320 actor slots plus that
+  number. `spawn_level_specials` appends them after every map actor and the player
+  body, in sector order, so the order is the load actors, then the lights, then every
+  later actor. Light changes emit no event; they are visible in the runtime sector
+  light of DSIM34.
+- **Player sector.** `P_PlayerInSpecialSector` runs in the player phase after
+  `P_CalcHeight` and before the weapon change, for a live player whose center lies in a
+  sector with a nonzero runtime special. It does nothing unless the player's `z` equals
+  that **sector's** floor (not `floorz`), so a player on a ledge overhanging nukage is
+  not hurt. `leveltime` is the completed-tic count before the tic.
+- **Environmental damage and death** go through the shared damage path with no
+  inflictor and no source: no thrust, armor absorbs as usual, the pain draw and the
+  death draw are made, and an environmental death counts as one of the player's own
+  frags, as `P_KillMobj` does. Only the player reads damage floors, so the source's
+  `players[0]` kill credit for a null source is unreachable.
+- **Radiation suit.** No admitted roster carries it, so the `P_Random() < 5` of specials
+  4 and 16 is short-circuited away as in the source; the branch that would draw it is
+  an explicit refusal, never a silent no-op.
+- **Sky removal.** A fireball whose move is refused, and whose refused check's
+  `ceilingline` (the last visited two-sided line that strictly lowered the ceiling,
+  starting from the destination sector's ceiling) has a sky **back** sector, is removed
+  without exploding: no explosion draw, no radius or contact damage. A fireball refused
+  by a thing, refused at its spawn half-step, or reaching a sky ceiling vertically still
+  explodes.
+- **Sky shot.** A hitscan reaching a line whose **front** sector has a sky ceiling ends
+  without a puff (and without the puff's two draws) when its height is above that
+  ceiling or the back sector is sky too. A shot exactly at the front ceiling is not sky
+  ended.
+- **Load order.** `spawn_level_specials` is refused with the state unchanged under any
+  other policy, before the player body exists, a second time or after a tic;
+  `advance` and `step` are refused until it has run, and `spawn_map_things` and
+  `spawn_player_body` are refused after it, so no light thinker can precede a map actor
+  or the body.
+
+Still rejected at load with `PursuitError::Specials` (or `MapScaleError::Light` for a
+light outside the range): every line special other than 48, including every tag-using
+one; a two-sided 48 (it would enter `spechit`, which belongs to the movers); a 65th
+scroller; sector specials 6, 10, 11, 14, 15, 18 and every other unknown value. `BT_USE`
+stays refused with `SimError::UnsupportedButtons` and the state unchanged. Sky floors
+have no game-code effect and are not tested. A map that fails a load check is rejected
+by the constructor, never during play; the inherited rejections of the real-map policy
+still apply. Moving sectors, doors, lifts, floors, switches, the level exit, crushers,
+teleporters, light-switching lines, `P_CalcHeight`/view bobbing and every other monster,
+weapon or item stay excluded. E1M1 is still not admitted: it needs the roster scale,
+eight decoration and barrel types and the doors, lifts, floors and exit switch of the
+next stage. See [source investigation](M3H7_REFERENCE_INVESTIGATION.md),
+[DSIM34](STATE_FORMAT.md#dsim-v34--original-monsters-with-sky-and-static-specials) and
+[observed evidence](validation/M3H7.md).
