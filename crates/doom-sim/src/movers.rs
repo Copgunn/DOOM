@@ -328,10 +328,6 @@ impl<M: MoverAccess + ?Sized> Starter<'_, M> {
     /// plays unconditionally and a `normal` door rises to
     /// `P_FindLowestCeilingSurrounding − 4`. `player` is whether the user is a
     /// player (`thing->player`).
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "called by the use bodies (M3h8 plan steps 10-11)")
-    )]
     pub(crate) fn vertical_door(&mut self, line: u16, player: bool) -> Result<(), SimError> {
         let map = self.world.map();
         let l = map

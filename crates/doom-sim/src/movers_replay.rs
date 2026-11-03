@@ -75,10 +75,17 @@ pub(crate) fn cases() -> Vec<Case> {
         .map(|(which, line)| {
             let v: BTreeMap<_, _> = header.iter().copied().zip(line.split(',')).collect();
             let n = |k: &str| v[k].parse::<i64>().unwrap();
+            // A case that requested an exit or a reborn ends at that op.
+            let last = rows()
+                .range((which, 0)..(which + 1, 0))
+                .filter(|(_, r)| r.iter().any(|(t, _)| t == "UC"))
+                .map(|((_, op), _)| *op)
+                .max()
+                .unwrap();
             Case {
                 which,
                 label: v["label"].into(),
-                tics: n("tics") as usize,
+                tics: (n("tics") as usize).min(last),
                 position: [n("px") as i16, n("py") as i16],
                 seed: n("seed") as u8,
                 hit_at: n("hit_at") as usize,
@@ -159,13 +166,22 @@ pub(crate) fn controlled(
 ) {
     if op == c.hit_at {
         let target = things.get(c.hit_thing).copied().unwrap_or(body);
-        s.damage_actor(DamageRequest {
+        let request = DamageRequest {
             target,
             inflictor: None,
             source: None,
             amount: c.hit_amount,
+        };
+        // P_DamageMobj through the shared checked transaction (the drop of a killed
+        // former human is admitted there, as inside the tic).
+        s.checked_demon_operation(|h| -> Result<(), SimError> {
+            let plan = combat::DamagePlan::current_original(h, request)?;
+            lifecycle::ActorAccess::reserve(&mut h.access, plan.spawn_count())?;
+            h.apply_damage(plan);
+            Ok(())
         })
-        .unwrap();
+        .and_then(|r| r)
+        .unwrap_or_else(|e| panic!("{} hit: {e}", c.label));
     }
     if op == c.attack_at {
         let imp = things[c.attack_thing];
@@ -182,6 +198,8 @@ pub(crate) struct Compared {
     pub ops: usize,
     /// Crossings compared (`MX`/`MY` pairs).
     pub crossings: usize,
+    /// `P_UseSpecialLine` and `PTR_UseTraverse` records compared (`MU`, `MI`).
+    pub uses: usize,
 }
 /// Replays `c` through op `upto`, comparing at every op the sector heights and
 /// `specialdata` presence (`MH`), the runtime line specials (`ML`) and the
@@ -270,6 +288,79 @@ pub(crate) fn replay(c: &Case, upto: usize) -> (Simulation, Compared) {
             );
             compared.crossings += 1;
         }
+        // MZ: usedown, playerstate (2 = PST_REBORN), gameaction (6 = ga_completed),
+        // secretexit.
+        let mz = row(rows, "MZ").unwrap_or_else(|| panic!("MZ {} op{op}", c.label));
+        let p = s.original_player.as_ref().unwrap();
+        let state = if p.reborn {
+            2
+        } else {
+            i64::from(p.state == PlayerBodyState::Dead)
+        };
+        assert_eq!(
+            [
+                i64::from(p.use_down),
+                state,
+                if s.level_exit { 6 } else { 0 },
+                0
+            ],
+            mz[..4],
+            "{} op{op} MZ",
+            c.label
+        );
+        // MU and MI: every P_UseSpecialLine and PTR_UseTraverse of the op, in order.
+        // Monster door use (an MP row's P_UseSpecialLine loop) is plan step 11.
+        let monster_uses = rows.iter().any(|(t, _)| t == "MP");
+        let mu: Vec<_> = rows
+            .iter()
+            .filter(|(t, _)| t == "MU" && !monster_uses)
+            .map(|(_, v)| [v[1], v[2], v[3], v[4], v[5]])
+            .collect();
+        let uses: Vec<_> = events
+            .iter()
+            .filter_map(|e| match e {
+                Event::Mover(MoverEvent::SpecialUse {
+                    line,
+                    side,
+                    before,
+                    result,
+                    after,
+                    ..
+                }) => Some([
+                    i64::from(*line),
+                    i64::from(*side),
+                    i64::from(*before),
+                    i64::from(*result),
+                    i64::from(*after),
+                ]),
+                _ => None,
+            })
+            .collect();
+        if !monster_uses {
+            assert_eq!(uses, mu, "{} op{op} uses", c.label);
+        }
+        let mi: Vec<_> = rows
+            .iter()
+            .filter(|(t, _)| t == "MI")
+            .map(|(_, v)| [v[0], v[1], v[4]])
+            .collect();
+        let intercepts: Vec<_> = events
+            .iter()
+            .filter_map(|e| match e {
+                Event::Mover(MoverEvent::UseIntercept {
+                    line,
+                    frac,
+                    continues,
+                }) => Some([
+                    i64::from(*line),
+                    i64::from(frac.bits()),
+                    i64::from(*continues),
+                ]),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(intercepts, mi, "{} op{op} use intercepts", c.label);
+        compared.uses += uses.len() + intercepts.len();
         compared.ops += 1;
     }
     (s, compared)

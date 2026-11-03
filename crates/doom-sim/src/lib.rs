@@ -100,7 +100,7 @@ pub use projectiles::{
 };
 mod weapons;
 pub use weapons::{
-    BT_ATTACK, BT_CHANGE, BT_WEAPONMASK, Psprite, Weapon, WeaponError, WeaponEvent,
+    BT_ATTACK, BT_CHANGE, BT_USE, BT_WEAPONMASK, Psprite, Weapon, WeaponError, WeaponEvent,
     WeaponInventory, WeaponPlayer,
 };
 mod combat;
@@ -121,6 +121,7 @@ mod line_triggers;
 mod line_work;
 mod map_extent;
 mod map_scale;
+mod use_lines;
 pub use map_extent::{
     MAP_EXTENT_COLLISION_WORK, MAP_EXTENT_MAX_CELLS, MAP_EXTENT_PREPARATION_BYTES,
     MAP_EXTENT_SIGHT_WORK, MapExtentLimits,
@@ -294,6 +295,14 @@ pub enum SimError {
     UnsupportedButtons,
     /// Logical u64 tic counter exhausted; no state is advanced.
     TicOverflow,
+    /// Under the movers policy, the exit switch ran `G_ExitLevel` in an earlier tic:
+    /// the next `G_Ticker` would run `G_DoCompleted` (intermission and next map are
+    /// out of scope); no state is advanced.
+    LevelExited,
+    /// Under the movers policy, a dead player held `BT_USE` in an earlier tic
+    /// (`PST_REBORN`): the next `G_Ticker` would run `G_DoReborn` (a level restart,
+    /// out of scope, decision N3); no state is advanced.
+    PlayerReborn,
 }
 impl fmt::Display for SimError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -580,6 +589,12 @@ pub struct Simulation {
     /// Under the movers policy, what its load rules derived from the immutable map
     /// (families, `M`, reachable heights, `Δ`); never canonical state.
     pub(crate) movers: Option<mover_rules::MoverAdmission>,
+    /// Under the movers policy, source `gameaction == ga_completed`: the exit switch
+    /// ran `G_ExitLevel` and every later tic is refused (`SimError::LevelExited`).
+    pub(crate) level_exit: bool,
+    /// Under the movers policy, the running switch buttons as far as the sound
+    /// origins of later switches need them (M3h7 decision 5: not DSIM35 state).
+    pub(crate) buttons: use_lines::Buttons,
 }
 /// Static-geometry table bounds a construction prepares against: the M3f2/M3h3
 /// constants for every historical profile, the WAD format's own bounds (M3h6 note
@@ -763,6 +778,8 @@ impl Simulation {
             line_specials: Vec::new(),
             spare_writes: staging::StagedWrites::default(),
             movers: None,
+            level_exit: false,
+            buttons: [None; mover_rules::MAX_BUTTONS],
         })
     }
     /// The sectors a type's dimensions are admitted against: the heights policy's
@@ -1208,6 +1225,13 @@ impl Simulation {
         // decision 12): no tic exists before the level's sector thinkers.
         if self.specials.as_ref().is_some_and(|s| !s.spawned) {
             return Err(MapSpawnError::LevelSpecials.into());
+        }
+        // G_Ticker runs a pending gameaction before anything else, paused or not.
+        if self.level_exit {
+            return Err(SimError::LevelExited);
+        }
+        if self.original_player.as_ref().is_some_and(|p| p.reborn) {
+            return Err(SimError::PlayerReborn);
         }
         if self.paused {
             return Ok(());

@@ -327,7 +327,7 @@ pub(crate) struct InterceptOverflow;
 /// witness (`Some(128)` under the real-map policy): the intercept that would be
 /// the `limit + 1`th is an overflow. Historical policies pass `None` and collect
 /// without bound, exactly as before.
-fn path(
+pub(crate) fn path(
     world: &StaticWorld,
     mut start: [Fixed; 2],
     end: [Fixed; 2],

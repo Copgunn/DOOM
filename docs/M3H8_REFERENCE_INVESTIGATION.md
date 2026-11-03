@@ -1254,4 +1254,38 @@ keeps the openings visited before a blocking line and none after a thing block, 
 missile's check keeps blocking two-sided lines. A partial replay of the C scenarios
 (`movers_replay.rs`: per op, every sector height and `specialdata` presence, every
 runtime line special, every `MX`/`MY` crossing in order) matches all 12 crossing-only
-scenarios (floors, lift and dense; 39 crossings). Next is step 10, use and switches.
+scenarios (floors, lift and dense; 39 crossings).
+
+Step 10 is done: `use_lines.rs` holds `P_UseLines` over `movement::path` (64 units along
+the body angle, the 128-intercept witness), `PTR_UseTraverse` (a line without a special
+continues on a positive opening, else `sfx_noway` at the player stops the trace; any
+special line is used from the side the center is on and stops the trace),
+`P_UseSpecialLine` (back side false; a monster false on `ML_SECRET` or anything but 1;
+1 `EV_VerticalDoor`; 11 the switch then `G_ExitLevel`; 63 `EV_DoDoor(normal)` and the
+switch only if a door was created; every other front-side use true and nothing),
+`P_ChangeSwitchTexture` (the special cleared before the exit-sound test, so the exit
+plays `sfx_swtchn`; the sound at `buttonlist[0].soundorg`: the slot's front sector, or a
+global sound when slot 0 is free; then `P_StartButton`, deduplicated per line) and the
+button countdown of `P_UpdateSpecials` (after the thinker pass, in the Specials phase:
+the restore sound names the address of the slot's `soundorg` field, origin 2). Switch
+textures are not simulated: every 11 and 63 line is taken to carry a switch texture,
+exactly the C harness's declared adapter; a map whose switch line has no switch texture
+would differ in sounds and button origins only (a follow-up: a load rule on the
+`SW1`/`SW2` names). The button list (`Simulation::buttons`, staged in the plan) is not
+DSIM35 state (M3h7 decision 5), yet the event stream depends on it: step 13 must state
+that a captured state does not determine later switch-sound origins. Under the movers
+policy `BT_USE` is admitted, `PlayerRuntime::use_down` starts true (`G_PlayerReborn`),
+and `P_PlayerThink` runs the weapon change, the use block, then `P_MovePsprites` (new
+weapon operations `WeaponChange` and `MovePsprites`); a door opened by a use joins the
+order's tail in the players phase and steps in the same tic. The exit sets
+`Simulation::level_exit` (staged); the tic completes and every later `advance`/`step`
+returns `SimError::LevelExited` with the state unchanged. `BT_USE` alone while dead (the
+only dead command admitted beside the empty one) sets `PlayerRuntime::reborn`, encoded
+as `original_player.0.state` 2 (`PST_REBORN`), with the sub-tag 14 record last in the
+players phase; later tics return `SimError::PlayerReborn`. Both checks run before the
+pause test, as `G_Ticker` runs a pending `gameaction` first. Events: sub-tags 0, 1, 2,
+13, 14. The partial replay now also compares `usedown`, the player state, the exit
+(`MZ`) and every `MU`/`MI` record: 14 use scenarios match through their last op;
+`door_gibs_drop_bonus` and `door_stuck_shootable` match through ops 215 and 5, and their
+next tic needs V′ cases (e) and (d) (step 12; refused with `MapScaleError::Vertical`
+until then). Next is step 11, monster door use.

@@ -375,6 +375,10 @@ struct DemonPlan {
     /// lazy full copy taken on its first write (M3h8 note §9), read through by every
     /// later query of the plan; nothing staged under every policy without movers.
     writes: staging::StagedWrites,
+    /// Under the movers policy, `G_ExitLevel` ran in this tic or before.
+    exit: bool,
+    /// Under the movers policy, the staged switch buttons.
+    buttons: use_lines::Buttons,
     events: Vec<Event>,
 }
 impl Simulation {
@@ -442,6 +446,8 @@ impl Simulation {
             sound_targets,
             specials,
             writes,
+            exit: self.level_exit,
+            buttons: self.buttons,
             events: Vec::new(),
         })
     }
@@ -556,6 +562,8 @@ impl Simulation {
         let mut writes = plan.writes;
         writes.commit(&mut self.sectors, &mut self.line_specials);
         self.spare_writes = writes;
+        self.level_exit = plan.exit;
+        self.buttons = plan.buttons;
         plan.events
     }
     /// New-policy THING setup stages the same bounded actor/RNG/statistics plan.
@@ -659,6 +667,9 @@ impl Simulation {
         self.preflight_actor_step()?;
         let mut plan = self.demon_plan()?;
         let control = SightControl::default();
+        let movers = self.player_policy().has_movers();
+        // What the use block requested, applied with the staged tables after it.
+        let mut used = use_lines::UseOutcome::default();
         if command_policy {
             plan.events.push(Event::Phase(Phase::Players));
             {
@@ -669,7 +680,7 @@ impl Simulation {
                     access: &mut plan.actors,
                     registry: self.registry.as_deref().ok_or(ActorError::InvalidType)?,
                     world: &self.world,
-                    sectors: plan.writes.sectors(&self.sectors),
+                    sectors: plan.writes.view(&self.sectors, &self.line_specials),
                     options: self.actor_options,
                     rng: &mut plan.rng,
                     spatial: &mut plan.spatial,
@@ -709,24 +720,59 @@ impl Simulation {
                     if let Some(error) = control.failure.get() {
                         return Err(self.policy_error(error));
                     }
-                    player_pistol::stage_operation(
+                    if movers {
+                        // The weapon change, the use block, then P_MovePsprites.
+                        player_pistol::stage_operation(
+                            &mut host,
+                            weapons::PlayerWeaponOperation::WeaponChange,
+                            command,
+                            self.tic,
+                            plan.sound_targets.as_mut_slice(),
+                        )
+                        .map_err(|error| self.policy_error(error))?;
+                        used = use_block(&mut host, &mut plan.buttons, command)?;
+                        player_pistol::stage_operation(
+                            &mut host,
+                            weapons::PlayerWeaponOperation::MovePsprites,
+                            command,
+                            self.tic,
+                            plan.sound_targets.as_mut_slice(),
+                        )
+                        .map_err(|error| self.policy_error(error))?;
+                    } else {
+                        player_pistol::stage_operation(
+                            &mut host,
+                            weapons::PlayerWeaponOperation::AfterSpecials,
+                            command,
+                            self.tic,
+                            plan.sound_targets.as_mut_slice(),
+                        )
+                        .map_err(|error| self.policy_error(error))?;
+                    }
+                } else if weapon_policy {
+                    let command = commands[usize::from(PlayerSlot::One.ordinal())];
+                    player_pistol::stage(
                         &mut host,
-                        weapons::PlayerWeaponOperation::AfterSpecials,
                         command,
                         self.tic,
                         plan.sound_targets.as_mut_slice(),
                     )
                     .map_err(|error| self.policy_error(error))?;
-                } else if weapon_policy {
-                    player_pistol::stage(
-                        &mut host,
-                        commands[usize::from(PlayerSlot::One.ordinal())],
-                        self.tic,
-                        plan.sound_targets.as_mut_slice(),
-                    )
-                    .map_err(|error| self.policy_error(error))?;
+                    // P_DeathThink's last statement: BT_USE while dead requests a
+                    // reborn (decision N3); the tic completes and the next is refused.
+                    if movers && !live && command.buttons & weapons::BT_USE != 0 {
+                        let p = host.player.as_deref_mut().ok_or(PlayerBodyError::Profile)?;
+                        p.reborn = true;
+                        host.events
+                            .push(Event::Mover(MoverEvent::Reborn { slot: 0 }));
+                    }
                 }
             }
+            if let Some(line) = used.cleared {
+                plan.writes
+                    .write_line_special(&self.line_specials, line, 0)?;
+            }
+            plan.exit |= used.exit;
             world_pickups::bonus_tick(plan.player.as_mut())?;
             plan.events.push(Event::Phase(Phase::Thinkers));
         } else {
@@ -782,15 +828,56 @@ impl Simulation {
                 }
             }
         }
+        // P_UpdateSpecials: the button countdown (movers policy), in its phase.
+        let mut special_events = Vec::new();
+        if movers {
+            use_lines::update_buttons(&mut plan.buttons, &mut special_events);
+        }
         let events = self.commit_demon_plan(plan);
         self.events = std::mem::take(&mut self.pending);
         self.events.extend(events);
-        self.events
-            .extend([Event::Phase(Phase::Specials), Event::Phase(Phase::Respawn)]);
+        self.events.push(Event::Phase(Phase::Specials));
+        self.events.extend(special_events);
+        self.events.push(Event::Phase(Phase::Respawn));
         self.commands = commands;
         self.tic += 1;
         Ok(())
     }
+}
+
+/// The use block of `P_PlayerThink` (p_user.c:322–331) under the movers policy:
+/// with `BT_USE` held and `usedown` clear, `P_UseLines` and set `usedown`; without
+/// `BT_USE`, clear it. A door the use opens joins the order's tail and steps in this
+/// tic's pass. The S1 clear and the exit are returned for the staged tables.
+fn use_block(
+    host: &mut LifeHost<'_, &mut ThinkerStore<Actor>>,
+    buttons: &mut use_lines::Buttons,
+    command: TicCommand,
+) -> Result<use_lines::UseOutcome, SimError> {
+    let p = host.player.as_deref_mut().ok_or(PlayerBodyError::Profile)?;
+    if command.buttons & weapons::BT_USE == 0 {
+        p.use_down = false;
+        return Ok(use_lines::UseOutcome::default());
+    }
+    if p.use_down {
+        return Ok(use_lines::UseOutcome::default());
+    }
+    p.use_down = true;
+    let id = p.mo.ok_or(PlayerBodyError::Binding)?;
+    let actor = *host.access.get(id).ok_or(PlayerBodyError::Binding)?;
+    use_lines::use_lines(
+        &mut movers::Starter {
+            world: host.world,
+            sectors: host.sectors,
+            store: &mut *host.access,
+            events: &mut *host.events,
+        },
+        buttons,
+        id,
+        actor.position(),
+        actor.angle(),
+        Some(player_map_scale::MAX_INTERCEPTS),
+    )
 }
 
 #[cfg(test)]

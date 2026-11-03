@@ -343,6 +343,37 @@ impl<'b> PlaneHost<'_, 'b> {
 /// and removals keep their existing events, before the clip's record.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MoverEvent {
+    /// Sub-tag 0: `P_UseLines` entry, in the players phase where the use block of
+    /// `P_PlayerThink` runs (after the weapon change, before `P_MovePsprites`).
+    Use {
+        /// The player's body.
+        player: ActorId,
+    },
+    /// Sub-tag 1: `PTR_UseTraverse` on a line, after the records of what that line's
+    /// use did.
+    UseIntercept {
+        /// The line.
+        line: u16,
+        /// The intercept fraction (16.16).
+        frac: Fixed,
+        /// Whether the trace continues (a special line or `sfx_noway` stops it).
+        continues: bool,
+    },
+    /// Sub-tag 2: `P_UseSpecialLine`, after the records of the line action.
+    SpecialUse {
+        /// The user.
+        user: ActorId,
+        /// The line.
+        line: u16,
+        /// 0 front, 1 back.
+        side: u8,
+        /// The runtime special at entry.
+        before: i16,
+        /// The return value.
+        result: bool,
+        /// The runtime special at exit.
+        after: i16,
+    },
     /// Sub-tag 3: `P_CrossSpecialLine` from the crossing loop of a successful
     /// `P_TryMove`, right after that move's attempt record and after the records of
     /// the line action; several crossings of one move follow in reverse `spechit`
@@ -398,6 +429,18 @@ pub enum MoverEvent {
         floor: Fixed,
         /// `ceilingz` (16.16).
         ceiling: Fixed,
+    },
+    /// Sub-tag 13: `G_ExitLevel`, inside the exit switch's use after the switch
+    /// sound and before that use's sub-tag 2 record.
+    Exit {
+        /// `secretexit` (always false for the admitted exit).
+        secret: bool,
+    },
+    /// Sub-tag 14: a dead player held `BT_USE` (`PST_REBORN`), the last record of
+    /// the players phase.
+    Reborn {
+        /// The player slot (0).
+        slot: u8,
     },
     /// Sub-tag 5: a mover created by an `EV_*` call, at the end of that call, after
     /// its sounds, one per created mover in creation order.

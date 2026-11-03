@@ -6,6 +6,8 @@ pub(crate) const AMMO_CAPACITIES: [i32; 4] = [200, 50, 300, 50];
 pub(crate) const MAX_BOB_BITS: i32 = 0x100000;
 /// Original command attack bit.
 pub const BT_ATTACK: u8 = 1;
+/// Original command use bit (admitted under the movers policy only).
+pub const BT_USE: u8 = 2;
 /// Original command weapon-change bit.
 pub const BT_CHANGE: u8 = 4;
 /// Original three-bit weapon selection mask.
@@ -489,13 +491,18 @@ impl<H: Host> Machine<'_, H> {
     /// `P_PlayerInSpecialSector` in `P_PlayerThink` and run even when it killed
     /// the player in this tic (the live branch was already taken).
     fn after_specials(&mut self, command: TicCommand) -> Result<(), SimError> {
+        self.weapon_change(command)?;
+        self.move_psprites()
+    }
+    /// The weapon change of `P_PlayerThink` (`BT_CHANGE`).
+    fn weapon_change(&mut self, command: TicCommand) -> Result<(), SimError> {
         if command.buttons & BT_CHANGE != 0 {
             let w = Weapon::from_number((command.buttons & BT_WEAPONMASK) >> 3)?;
             if self.player.owned & (1 << (w as u8)) != 0 && w != self.player.ready {
                 self.player.pending = Some(w);
             }
         }
-        self.move_psprites()
+        Ok(())
     }
     fn move_psprites(&mut self) -> Result<(), SimError> {
         for i in 0..2 {
@@ -522,6 +529,10 @@ pub(crate) enum PlayerWeaponOperation {
     /// first the bob, then the weapon change and the psprites.
     CalcHeight,
     AfterSpecials,
+    /// `AfterSpecials` split around the use block (movers policy): first the weapon
+    /// change, then `P_MovePsprites`.
+    WeaponChange,
+    MovePsprites,
     DeadAdvance,
     Drop,
 }
@@ -546,6 +557,8 @@ pub(crate) fn original_player<H: Host>(
         PlayerWeaponOperation::Advance => machine.after_motion(command)?,
         PlayerWeaponOperation::CalcHeight => machine.calc_height()?,
         PlayerWeaponOperation::AfterSpecials => machine.after_specials(command)?,
+        PlayerWeaponOperation::WeaponChange => machine.weapon_change(command)?,
+        PlayerWeaponOperation::MovePsprites => machine.move_psprites()?,
         PlayerWeaponOperation::DeadAdvance => machine.move_psprites()?,
         PlayerWeaponOperation::Drop => machine.enter(0, machine.player.ready.states()[1])?,
     }

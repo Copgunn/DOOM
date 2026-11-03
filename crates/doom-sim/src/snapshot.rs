@@ -210,6 +210,44 @@ fn event_bytes(event: &Event) -> Vec<u8> {
         Event::Mover(event) => {
             b.push(26);
             match *event {
+                crate::MoverEvent::Use { player } => {
+                    b.push(0);
+                    b.extend(id(player));
+                }
+                crate::MoverEvent::UseIntercept {
+                    line,
+                    frac,
+                    continues,
+                } => {
+                    b.push(1);
+                    b.extend(line.to_le_bytes());
+                    b.extend(frac.bits().to_le_bytes());
+                    b.push(u8::from(continues));
+                }
+                crate::MoverEvent::SpecialUse {
+                    user,
+                    line,
+                    side,
+                    before,
+                    result,
+                    after,
+                } => {
+                    b.push(2);
+                    b.extend(id(user));
+                    b.extend(line.to_le_bytes());
+                    b.push(side);
+                    b.extend(before.to_le_bytes());
+                    b.push(u8::from(result));
+                    b.extend(after.to_le_bytes());
+                }
+                crate::MoverEvent::Exit { secret } => {
+                    b.push(13);
+                    b.push(u8::from(secret));
+                }
+                crate::MoverEvent::Reborn { slot } => {
+                    b.push(14);
+                    b.push(slot);
+                }
                 crate::MoverEvent::Crossed {
                     actor,
                     line,
@@ -1048,7 +1086,12 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         field(
             &mut fields,
             "original_player.0.state",
-            [u8::from(p.state == crate::PlayerBodyState::Dead)],
+            // PST_LIVE 0, PST_DEAD 1, PST_REBORN 2 (reachable under movers only).
+            [if p.reborn {
+                2
+            } else {
+                u8::from(p.state == crate::PlayerBodyState::Dead)
+            }],
         );
         field(
             &mut fields,

@@ -113,6 +113,12 @@ pub(crate) struct PlayerRuntime {
     /// Source `player->secretcount`; changed only by the specials policy's secret
     /// sectors (encoded from DSIM34).
     pub secret_count: i32,
+    /// Source `player->usedown`: `G_PlayerReborn` starts it true, so a use held from
+    /// level start does nothing until released. Read only under the movers policy.
+    pub use_down: bool,
+    /// Source `playerstate == PST_REBORN`: a dead player held `BT_USE` (movers
+    /// policy, decision N3); `state` stays `Dead` and the next tic is refused.
+    pub reborn: bool,
 }
 impl std::ops::Deref for PlayerRuntime {
     type Target = OriginalPlayer;

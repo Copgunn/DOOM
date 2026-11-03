@@ -1022,6 +1022,8 @@ impl Simulation {
                     .then_some(PlayerPickupState::default()),
                 policy,
                 secret_count: 0,
+                use_down: true,
+                reborn: false,
             });
         }
         Ok(sim)

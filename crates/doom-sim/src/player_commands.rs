@@ -78,7 +78,9 @@ impl Simulation {
         }
         let command = commands[slot];
         if command.buttons
-            & !(if p.policy.has_weapon_pack() {
+            & !(if p.policy.has_movers() {
+                BT_ATTACK | BT_USE | BT_CHANGE | BT_WEAPONMASK
+            } else if p.policy.has_weapon_pack() {
                 BT_ATTACK | BT_CHANGE | BT_WEAPONMASK
             } else if p.policy == OriginalExecutionProfile::PlayerDemonPistolV1 {
                 BT_ATTACK
@@ -111,7 +113,15 @@ impl Simulation {
             return Err(PlayerBodyError::Invariant.into());
         }
         if p.state == PlayerBodyState::Dead {
-            return if command == TicCommand::default() {
+            // Under the movers policy a dead player may hold BT_USE alone: P_DeathThink
+            // requests a reborn (decision N3).
+            let dead_use = TicCommand {
+                buttons: BT_USE,
+                ..TicCommand::default()
+            };
+            return if command == TicCommand::default()
+                || (p.policy.has_movers() && command == dead_use)
+            {
                 Ok(None)
             } else {
                 Err(PlayerBodyError::Unsupported.into())
