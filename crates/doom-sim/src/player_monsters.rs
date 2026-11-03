@@ -25,6 +25,8 @@ pub const PLAYER_HEIGHTS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-HEIGHTS-1-MED
 pub const PLAYER_DIAGONAL_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-DIAGONAL-1-MEDIUM-v1";
 /// Explicit real-map-scale execution context; older contexts stay frozen.
 pub const PLAYER_REAL_MAP_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-REALMAP-1-MEDIUM-v1";
+/// Explicit sky and static-specials execution context; older contexts stay frozen.
+pub const PLAYER_SPECIALS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-SPECIALS-1-MEDIUM-v1";
 
 impl Simulation {
     /// Autonomous roster member: the native/original Demon owner or a policy
@@ -132,6 +134,28 @@ impl Simulation {
             map,
             crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS,
             OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersRealMapV1)?,
+            ActorOptions::default(),
+            context,
+        )
+        .map_err(Into::into)
+    }
+    /// The real-map world plus sky ceilings and the static sector specials (M3h7
+    /// note §4.2, wire 18, DSIM34): sector specials 1, 2, 3, 4, 5, 7, 8, 9, 12, 13,
+    /// 16 and 17, line special 48 on at most 64 one-sided lines, and `F_SKY1`
+    /// ceilings are admitted; every other special, a two-sided 48, sector
+    /// specials 10, 11 and 14 and `BT_USE` stay rejected. Roster, slots,
+    /// fireballs, certificates, boundary rules, witnesses and the checked
+    /// transaction are the real-map policy's. After `spawn_map_things` and
+    /// `spawn_player_body`, call [`Simulation::spawn_level_specials`] once
+    /// before the first tic.
+    pub fn original_player_specials_map(
+        map: Map,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        Self::with_original_registry(
+            map,
+            crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS,
+            OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersSpecialsV1)?,
             ActorOptions::default(),
             context,
         )
@@ -274,11 +298,18 @@ fn bullet<A: ActorAccess>(
         slope,
         damage,
     };
-    let (trace, (hit, position, traversed)) = {
+    let (trace, ((hit, position, traversed), sky)) = {
         let lookup = |i| h.access.get(i).copied();
         let trace = combat_trace::collect_in(h.world, h.spatial, &lookup, id, angle, attack.range)?;
-        let hit =
-            combat_trace::hit_trace(h.world, h.sectors, id, &trace, attack.range, slope, &lookup)?;
+        let hit = combat_trace::hit_trace_sky(
+            h.world,
+            h.sectors,
+            id,
+            &trace,
+            attack.range,
+            slope,
+            &lookup,
+        )?;
         (trace, hit)
     };
     let plan = match hit {
@@ -307,7 +338,8 @@ fn bullet<A: ActorAccess>(
             damage: None,
         },
         plan,
-    );
+    )
+    .with_sky(sky);
     h.access.reserve(prepared.spawn_count())?;
     let result = combat::execute_attack(h, prepared);
     if h.sight_failed() {

@@ -9,7 +9,8 @@ pub struct LevelStatistics {
     pub total_kills: i32,
     /// Original `totalitems`, incremented by admitted MF_COUNTITEM map placement.
     pub total_items: i32,
-    /// Original `totalsecret`, initialized but specials are excluded.
+    /// Original `totalsecret`: 0 under every policy before `PlayerMonstersSpecialsV1`,
+    /// which counts the type-9 sectors once in `spawn_level_specials`.
     pub total_secrets: i32,
     /// Original `players[0].killcount`: historical fallback for unbound/absent
     /// sources; the explicit one-player policy also credits its genuine owner.

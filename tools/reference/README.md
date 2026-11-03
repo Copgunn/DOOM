@@ -434,6 +434,37 @@ dropped before the chain. See [investigation](../../docs/M3H6_REFERENCE_INVESTIG
 [commands](../../docs/TESTING.md#original-monsters-at-classic-map-scale) and
 [observations](../../docs/validation/M3H6.md).
 
+## Sky and static sector specials (M3h7)
+
+[m3h7_reference.py](m3h7_reference.py) reuses every compiled M3h6 body, observer and
+controlled input unchanged and adds the genuine `P_SpawnSpecials`,
+`P_PlayerInSpecialSector`, `P_UpdateSpecials`, `P_ShootSpecialLine`, `getNextSector`,
+`P_FindMinSurroundingLight` and the `p_lights.c` spawners and thinkers.
+`P_SpawnSpecials` runs once after the THING spawns and the player body,
+`P_PlayerInSpecialSector` after `P_CalcHeight` and `P_UpdateSpecials` after the thinker
+pass; sector thinkers come from a separate harness store so actor idents keep their
+meaning, and `skyflatnum` is the declared index of `F_SKY1`.
+[m3h7_geometry.py](m3h7_geometry.py) is the M3h6 builder plus sector light, special, tag
+and flats and line specials; [m3h7_cases.py](m3h7_cases.py) builds the pools (twelve
+basins, one per Stage A sector special, a ledge over nukage, a dark gallery behind
+one-sided walls, three scrolling walls) and the sky courts (sky-hack blocks, a sky block
+against a one-sided wall, a tower in a low sky court and three windows whose line
+order and sides pin `ceilingline`). New observer rows (thinker list, sector light and
+special, light draws and changes, special-sector calls, secrets, sky refusals, removals,
+shots and ceiling hits) are documented in the contract's `row_formats`.
+[specials_snapshot.py](specials_snapshot.py) and
+[m3h7_snapshot_goldens.py](m3h7_snapshot_goldens.py) project DSIM34 from the C rows:
+the DSIM33 layout under version 34, policy 18 and the specials context, plus the shared
+thinker order and the sector-thinker store (`TK` rows), runtime sector light and special
+and the player's secret count (`SX` rows) and tag-25 secret, sky-removal and sky-shot
+events (`SE`, `KR`, `KS`); the generator also checks that the stream without tag 25 is
+the DSIM33 projection of the same rows. See
+[investigation](../../docs/M3H7_REFERENCE_INVESTIGATION.md), the
+[DSIM v34 schema](../../docs/STATE_FORMAT.md#dsim-v34--original-monsters-with-sky-and-static-specials),
+[commands](../../docs/TESTING.md#original-monsters-with-sky-and-static-specials) and
+[observations](../../docs/validation/M3H7.md). [check_player_specials.py](check_player_specials.py)
+runs the `player_specials` example in debug and release and asserts equal output.
+
 ## Historical raw-trace loading
 
 Selected large CSV traces now use standard zstd storage. Run frozen C/encoder

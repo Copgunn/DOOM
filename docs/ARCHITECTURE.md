@@ -755,7 +755,7 @@ per-operation budget `64 · (expanded + 5 · lines)` stored in `StaticWorld::
 sight_work_budget`, the compiled cell references and the preparation bytes (guarded
 by `REAL_MAP_MAX_PREPARED_REFERENCES` and `REAL_MAP_PREPARATION_BYTES`).
 `player_map_scale.rs` owns the new admission: `ArithmeticCertificate::derive` evaluates
-(i)–(vii) of the M3h6 note in exact integers, `slide_window_lines` the 2 × 2 window
+(i)–(viii) of the M3h6 note in exact integers, `slide_window_lines` the 2 × 2 window
 rule, `RoomBounds::derive_real_map` the closed-cell rule without the 95-line bound,
 `sector_lines` the `P_GroupLines` lists the noise flood reads from
 `StaticWorld::sector_lines`. `line_work::SeenLines` is the `validcount` of a trace: an
@@ -772,3 +772,47 @@ policy and `set_momentum` refuses pushes to items. See
 [support](COMPATIBILITY.md#original-monsters-at-classic-map-scale),
 [source matrix](M3H6_REFERENCE_INVESTIGATION.md) and
 [DSIM33](STATE_FORMAT.md#dsim-v33-original-monsters-at-classic-map-scale).
+
+## Sky and static specials
+
+The specials policy adds one thinker kind and one piece of mutable sector state; it
+changes no mover, collision, traversal or sight body. `ThinkerStore` (store.rs) has two
+slot classes, actors (`ActorId`) and sector thinkers (`SectorThinkerId`), and one linked
+processing order of `ThinkerId::{Actor, Sector}` entries, which is `P_RunThinkers`' list:
+appends run in the same pass and removal stays lazy. The sector-thinker class has a
+capacity fixed at construction, zero for every other policy and the light-sector count
+under this one (`install_specials` in `demon_expanded_map.rs`), so the 320-slot actor
+proof is untouched and the visit budget is the actor slots plus that capacity. The actor
+order, `store.head`/`tail` and each actor's neighbors are derived as the actor
+subsequence of the shared order, so every historical fixture and digest is unchanged.
+`thinkers::run` hands a sector visit to `sector_thinkers::visit`, which refuses
+explicitly when the policy has no runtime sectors.
+
+`sector_thinkers.rs` owns the four `p_lights.c` thinkers, `P_FindMinSurroundingLight`,
+the `P_SpawnSpecials` sector scan behind `Simulation::spawn_level_specials` and
+`P_PlayerInSpecialSector`. `Simulation::specials` holds the runtime light and special of
+every sector beside the static `SectorState` heights, which stay read-only. The checked
+transaction stages them like the RNG and the actors: `demon_plan` copies them into the
+plan's buffer, taken from `spare_specials` (the previous committed plan's vector, like the
+sound targets), and stages the sector-thinker slot class the same way in
+`spare_sector_slots`; the thinker pass and the player phase write only those buffers, and
+the commit swaps them in, keeping the replaced vectors as the next plan's buffers. After a
+committed tic neither needs an allocation once its capacity matches the sector or
+sector-thinker count; a refused tic drops them with the rest of the plan, so the next plan
+allocates each once. Other policies stage both as empty vectors that never allocate. The
+actor slots and the spatial order are still copied into fresh buffers every tic, as on
+every policy. The player phase is split
+for this policy, as `P_PlayerThink` is: the command stage, then `P_CalcHeight`
+(`PlayerWeaponOperation::CalcHeight`), then `player_in_special_sector`, then the weapon
+change and psprites (`AfterSpecials`); older weapon policies keep the single
+`player_pistol::stage`. Environmental damage is an ordinary `DamagePlan` with no
+inflictor and no source.
+
+Sky identity is a per-sector boolean in `StaticWorld::sky_ceilings`, present only under
+this policy. `projectiles::ceiling_line` derives the source's `ceilingline` from the
+refused attempt's openings (no new array), and the projectile mover removes a fireball
+whose `ceilingline` has a sky back sector; `combat_trace::hit_trace_sky` ends a trace at a
+front-sky line before the puff. Both emit the tag-25 events of DSIM34. See
+[support](COMPATIBILITY.md#original-monsters-with-sky-and-static-specials),
+[source matrix](M3H7_REFERENCE_INVESTIGATION.md) and
+[DSIM34](STATE_FORMAT.md#dsim-v34--original-monsters-with-sky-and-static-specials).

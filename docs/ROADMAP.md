@@ -79,7 +79,30 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3h6: Real-map scale — classic map limits toward E1M1
+### M3h7: Sky and static specials
+
+The separately selected PlayerMonstersSpecialsV1 is the real-map world plus the parts of
+E1M1's specials that move no plane: sky ceilings and the static sector specials. It
+admits the light sector specials 1, 2, 3, 8, 12, 13 and 17 (blinking, strobing, glowing
+and flickering lights, with their random draws), the damage floors 4, 5, 7 and 16 on the
+source's 32-tic gate, the secret 9, the scrolling wall 48 on at most 64 one-sided lines,
+and `F_SKY1` ceilings with their two game-code effects: a fireball refused at a sky
+ceiling line is removed without exploding, and a hitscan reaching a sky ceiling ends
+without a puff. Light thinkers share one processing order with the actors, in their own
+slot class bounded at load and spawned by an explicit `spawn_level_specials` after the
+THINGs and the player body; environmental damage and death go through the shared damage
+path with no source. Every other line special, a two-sided 48, sector specials 10, 11,
+14 and unknown values, `BT_USE` and every moving plane stay rejected; sector lights
+outside the range the light arithmetic needs are refused at load. DSIM34 adds the
+shared thinker order, the light thinkers, the runtime sector light and special and the
+player's secret count. E1M1 still needs the roster scale, eight decoration and barrel
+types and the doors, lifts, floors and exit switch of Stage B. This branch stops at owner
+review; exact commits and CI belong to GitHub. See
+[source investigation](M3H7_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-monsters-with-sky-and-static-specials) and
+[observations](validation/M3H7.md).
+
+### Previous gameplay foundation — M3h6: Real-map scale — classic map limits toward E1M1
 
 The separately selected PlayerMonstersRealMapV1 raises the static-geometry limits of the
 diagonal world from test-room size to the scale of classic maps. Every cap that stood in
@@ -96,7 +119,7 @@ so maps above 128 lines can fire, and the noise flood reads per-sector line list
 Roster, slots, fireballs, heights, specials, sky and the boundary rules are unchanged;
 E1M1's geometry, BLOCKMAP, REJECT, boundary and arithmetic are inside the new policy,
 its THING roster, decorations, sky and specials are not. DSIM33 adds no persistent
-field. This branch stops at owner review; exact commits and CI belong to GitHub. See
+field. M3h6 is merged. See
 [source investigation](M3H6_REFERENCE_INVESTIGATION.md),
 [support](COMPATIBILITY.md#original-monsters-at-classic-map-scale) and
 [observations](validation/M3H6.md).
@@ -240,14 +263,22 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Prioritize roster scale: derive monsters, pickups, drops, slots, fireballs and the
-sight budget from the loaded THINGs (E1M1 on UV needs 29 monsters and 53 pickups). Then
-the E1M1 feature list in dependency order: solid and non-solid decorations and barrels,
-sky, specials (lights, secrets, damage floors), then doors and lifts; and revisit the
-rules the 14 other IWAD maps break (13 with one-sided walls of odd degree, crossing or
-facing away from their sector, one BLOCKMAP with missing listings) and the 22 maps that fail the sight
-certificate. Require source-first evidence and unchanged earlier contracts. This is
-future work, not admission in M3h6.
+M3h8 is Stage B of the [M3h7 investigation](M3H7_REFERENCE_INVESTIGATION.md#43-stage-b-m3h8-doors-lifts-floors-switches-and-the-exit):
+doors, lifts, floors, switches and the level exit, which E1M1 needs (its seven line
+types DR 1, W1 36, W1 38, SR 63, WR 88, W1 109 and the S1 exit switch 11). Its policy
+identity `PlayerMonstersMoversV1`, wire 19 and DSIM35 are reserved. It needs mutable
+staged sector heights, `P_ChangeSector`, use and crossing, monster door use, the
+`spechit` load rule and runtime witness, and a re-proved vertical invariant, item witness
+and height certificate; the owner decisions already recorded for it are in the
+investigation's §7. Every new budget is written as a formula of the roster bounds.
+
+Roster scale stays independent and may come before or after M3h8: derive monsters,
+pickups, drops, slots, fireballs and the sight budget from the loaded THINGs (E1M1 on
+UV needs 29 monsters and 53 pickups), then the solid and non-solid decorations and
+barrels. Also revisit the rules the 14 other IWAD maps break (13 with one-sided walls of
+odd degree, crossing or facing away from their sector, one BLOCKMAP with missing
+listings) and the 22 maps that fail the sight certificate. Require source-first
+evidence and unchanged earlier contracts. This is future work, not admission in M3h7.
 
 ### Focused maintenance acceptance criteria
 

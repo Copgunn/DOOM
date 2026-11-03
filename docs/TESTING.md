@@ -1159,3 +1159,56 @@ only format-checks it, so the campaign is a local step. Run measurements alone, 
 builds or tests at the same time. Measurement summaries and limitations belong to
 [the engineering record](validation/M3H6.md). Leak detection is disabled in the
 documented ASan environment, not verified.
+
+## Original monsters with sky and static specials
+
+Sky and static-specials evidence has its own source/encoding contract and leaves
+historical expectations untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h7_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3h7_snapshot_goldens.py --check
+cargo test -p doom-sim player_specials_tests
+cargo run -p doom-sim --example player_specials --locked
+python3 tools/reference/check_player_specials.py
+python3 tools/measure_specials.py --check
+python3 tools/seed_player_specials_fuzz.py /tmp/doom-specials-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_specials /tmp/doom-specials-corpus --sanitizer address -- -runs=8653 -seed=501 -max_len=290 -timeout=15 -rss_limit_mb=1024
+```
+
+Run the fuzz campaign from `fuzz/` on a fresh copy of the seeds in
+`/tmp/doom-specials-corpus`, outside the working tree, and delete the corpus afterwards.
+libFuzzer counts the initial-corpus runs against `-runs`, so `-runs` must exceed the
+number of seeds plus one (the empty input) for any mutation to happen: the seed tool
+writes 4,556 seeds, a `-runs=4096` campaign ends after the seeds without a single
+mutation, and the recorded coverage-guided campaign used `-runs=8653` (the 4,557
+initial runs plus 4,096 mutations). `-runs=0` replays the seeds only.
+
+Add `--cases` to `m3h7_reference.py` to print the per-scenario inventory as JSON lines.
+The `specials_source_case_*` tests replay every committed scenario of the `pools` and
+`sky` rooms against the C rows, including every sector light and special (`SX`) and the
+shared thinker order with every light thinker's fields (`TK`), the independent DSIM34
+captures, the full-byte fixtures and the ordered events; no scenario is refused. The
+remaining `player_specials_tests` are Rust-only: admission of every committed room and
+rejection of every other special, a two-sided scroller, the 65th scroller, lights
+outside the range and an out-of-range height; the `F_SKY1` lookup-name rule; the load
+order of `spawn_level_specials`; `BT_USE` still refused; refused tics that keep the
+lights, thinkers and an unfound secret; a secret found on landing, not while the body
+is above the sector floor; the policy identity, the malformed-field rejections of
+`decode_specials` and its cross-checks against the encoded map; the sky-shot boundary at exactly the front ceiling; the
+sector-thinker slot and visit budget; and the `pools` and `sky` soaks, which assert
+Invariant Ω, the vertical invariant, every light within its thinker's bounds, the shared
+order and `secretcount ≤ totalsecret` after every tic for 1,200 tics on four seeds. The
+example replays every scenario, asserts the committed headline counts of the C rows in
+debug and release and prints one combined digest; `--measure <workload>
+advance|step|capture` times one full scripted timeline (`pools_lights_soak`,
+`pools_light_and_fireball`, `sky_hack_wall`, `sky_window_order`) and `--admit pools|sky`
+the admission, THING and body spawns and `spawn_level_specials` of one committed room
+with parsing excluded; `measure_specials.py` drives both with a native `wait4` launcher
+(`--check` is the CI smoke). The fuzz target admits one of the committed scenario spawns,
+runs `spawn_level_specials` and applies bounded operations under the M3h6 properties
+plus the light envelopes, the shared order and the secret bound. The fuzz workspace is
+nightly-only and CI only format-checks it, so the campaign is a local step. Run
+measurements alone, with no fuzzing, builds or tests at the same time. Observations
+belong to [the engineering record](validation/M3H7.md). Leak detection is disabled in
+the documented ASan environment (`detect_leaks=0`), not verified.

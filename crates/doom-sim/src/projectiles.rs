@@ -44,6 +44,41 @@ pub(crate) trait MissileWorld {
     fn strike(&mut self, request: DamageRequest);
     fn enter_missile_state(&mut self, id: ActorId, state: StateId);
     fn relink(&mut self, id: ActorId);
+    /// The static world, for the sky identity of the specials policy.
+    fn world(&self) -> &StaticWorld;
+    /// The runtime sector heights the refused check read.
+    fn sectors(&self) -> &[SectorState];
+    /// `P_RemoveMobj` of a missile (the sky hack of `P_XYMovement`).
+    fn remove_missile(&mut self, id: ActorId);
+}
+/// `ceilingline` of a refused `P_CheckPosition` (p_map.c:400, 406–407, 227–231):
+/// reset first; `tmceilingz` starts at the destination sector's ceiling; things are
+/// checked before lines (a thing-blocked check visits no line); every visited
+/// two-sided line whose opening top strictly lowers `tmceilingz` becomes it. The
+/// openings of the attempt are exactly those lines, in visit order.
+pub(crate) fn ceiling_line(sectors: &[SectorState], attempt: &SectorMoveAttempt) -> Option<u16> {
+    let mut ceiling = sectors[usize::from(attempt.location.sector)].ceiling;
+    let mut line = None;
+    for visit in &attempt.openings {
+        if visit.opening.top < ceiling {
+            ceiling = visit.opening.top;
+            line = Some(visit.line);
+        }
+    }
+    line
+}
+/// The sky test of `P_XYMovement` (p_mobj.c:173–187): the refused move's
+/// `ceilingline` whose **back** sector has a sky ceiling, whatever side the
+/// missile is on. Only the specials policy has sky ceilings.
+fn sky_line(
+    world: &StaticWorld,
+    sectors: &[SectorState],
+    attempt: &SectorMoveAttempt,
+) -> Option<u16> {
+    let sky = world.sky_ceilings.as_ref()?;
+    let line = ceiling_line(sectors, attempt)?;
+    let back = world.map().linedefs()[usize::from(line)].sides[1]?;
+    sky[usize::from(world.map().sidedefs()[usize::from(back)].sector)].then_some(line)
 }
 fn observed_draw<W: MissileWorld>(w: &mut W, kind: u8) -> u8 {
     let value = w.gameplay_draw();
@@ -129,7 +164,8 @@ fn finish_launch<W: MissileWorld>(
         tics,
     }));
     let target = w.missile(id).position();
-    if !try_move(w, id, target) {
+    // P_CheckMissileSpawn has no sky test (p_mobj.c:880–881).
+    if !try_move(w, id, target).0 {
         explode(w, id);
     }
 }
@@ -150,8 +186,9 @@ fn explode<W: MissileWorld>(w: &mut W, id: ActorId) {
     missile_sound(w, id, sound);
 }
 /// P_TryMove for a missile. Contact damage precedes the move result, as it runs
-/// inside the source block iterator.
-fn try_move<W: MissileWorld>(w: &mut W, id: ActorId, target: [Fixed; 2]) -> bool {
+/// inside the source block iterator. A refused move also returns its sky
+/// `ceilingline`, if any.
+fn try_move<W: MissileWorld>(w: &mut W, id: ActorId, target: [Fixed; 2]) -> (bool, Option<u16>) {
     let (attempt, hit) = w.contact(id, target);
     if let Some(victim) = hit {
         let life = w.missile(id).life.unwrap();
@@ -173,11 +210,17 @@ fn try_move<W: MissileWorld>(w: &mut W, id: ActorId, target: [Fixed; 2]) -> bool
         a.location = Some(attempt.location);
         w.relink(id);
     }
+    let sky = if allowed {
+        None
+    } else {
+        sky_line(w.world(), w.sectors(), &attempt)
+    };
     w.emit(Event::SectorMovement { actor: id, attempt });
-    allowed
+    (allowed, sky)
 }
-/// P_XYMovement for a thing that may stop being a missile mid-loop.
-fn move_xy<W: MissileWorld>(w: &mut W, id: ActorId) {
+/// P_XYMovement for a thing that may stop being a missile mid-loop. Returns
+/// whether the sky hack removed the missile.
+fn move_xy<W: MissileWorld>(w: &mut W, id: ActorId) -> bool {
     let a = w.missile_mut(id);
     let max = Fixed::from_map_units(MAX_MOVE);
     a.spec.momentum = a.spec.momentum.map(|m| m.clamp(-max, max));
@@ -195,14 +238,23 @@ fn move_xy<W: MissileWorld>(w: &mut W, id: ActorId) {
             }
             left = [Fixed::ZERO; 2];
         }
-        if !try_move(w, id, target) {
+        let (moved, sky) = try_move(w, id, target);
+        if !moved {
             if w.missile(id).life.unwrap().flags & MISSILE != 0 {
+                if let Some(line) = sky {
+                    // "Hack to prevent missiles exploding against the sky":
+                    // P_RemoveMobj, no P_ExplodeMissile and no draw.
+                    w.emit(Event::Special(SpecialEvent::SkyRemoval { actor: id, line }));
+                    w.remove_missile(id);
+                    return true;
+                }
                 explode(w, id);
             } else {
                 w.missile_mut(id).spec.momentum = [Fixed::ZERO; 2];
             }
         }
     }
+    false
 }
 /// P_ZMovement for a missile.
 fn move_z<W: MissileWorld>(w: &mut W, id: ActorId) {
@@ -257,12 +309,16 @@ fn move_z<W: MissileWorld>(w: &mut W, id: ActorId) {
         },
     });
 }
-/// P_MobjThinker movement half: state countdown belongs to the caller.
-pub(crate) fn fly<W: MissileWorld>(w: &mut W, id: ActorId) {
-    if w.missile(id).momentum() != [Fixed::ZERO; 2] {
-        move_xy(w, id);
+/// P_MobjThinker movement half: state countdown belongs to the caller. Returns
+/// whether `P_XYMovement` removed the missile, after which `P_MobjThinker`
+/// returns at once (no `P_ZMovement`, no countdown). `P_ZMovement` has no sky
+/// test: a missile reaching a sky ceiling explodes.
+pub(crate) fn fly<W: MissileWorld>(w: &mut W, id: ActorId) -> bool {
+    if w.missile(id).momentum() != [Fixed::ZERO; 2] && move_xy(w, id) {
+        return true;
     }
     move_z(w, id);
+    false
 }
 /// PIT_CheckThing/PIT_CheckLine over any actor lookup. Pure: the source draw
 /// and P_DamageMobj in the missile branch are the caller's, after this returns.
@@ -379,6 +435,19 @@ impl MissileWorld for Simulation {
     fn relink(&mut self, id: ActorId) {
         self.spatial.link(id);
     }
+    fn world(&self) -> &StaticWorld {
+        &self.world
+    }
+    fn sectors(&self) -> &[SectorState] {
+        &self.sectors
+    }
+    fn remove_missile(&mut self, id: ActorId) {
+        // Unreachable: this host's profile has no sky identity.
+        if self.actors.mark_remove(id).expect("live missile") {
+            self.spatial.unlink(id);
+            self.pending.push(Event::RemovalMarked(id));
+        }
+    }
 }
 impl<A: lifecycle::ActorAccess> MissileWorld for LifeHost<'_, A> {
     fn missile(&self, id: ActorId) -> Actor {
@@ -423,6 +492,15 @@ impl<A: lifecycle::ActorAccess> MissileWorld for LifeHost<'_, A> {
     }
     fn relink(&mut self, id: ActorId) {
         self.spatial.link(id);
+    }
+    fn world(&self) -> &StaticWorld {
+        self.world
+    }
+    fn sectors(&self) -> &[SectorState] {
+        self.sectors
+    }
+    fn remove_missile(&mut self, id: ActorId) {
+        self.mark(id);
     }
 }
 /// A_TroopAttack's P_SpawnMissile inside the checked transaction. The live cap
@@ -817,19 +895,22 @@ impl Simulation {
         )
     }
     pub(crate) fn projectile_thinkers_with(&mut self, mut before: impl FnMut(&mut Self, ActorId)) {
-        let mut cursor = self.actors.cursor(self.actors.max_slots as usize);
+        let mut cursor = self.actors.cursor(self.actors.visit_bound());
         while let Some(visit) = self
             .actors
             .next_visit(&mut cursor)
             .expect("bounded validated traversal")
         {
             match visit {
+                Visit::SectorThink(_) | Visit::SectorRetired(_) => {
+                    panic!("the historical projectile policy has no sector thinkers: {visit:?}")
+                }
                 Visit::Retired(id) => self.events.push(Event::Retired(id)),
                 Visit::Think(id) => {
                     self.events.push(Event::Think(id));
                     before(self, id);
                     if self.actor(id).unwrap().life.unwrap().actor_type == PLASMA {
-                        fly(self, id);
+                        let _removed = fly(self, id);
                     } else {
                         let mut a = *self.actor(id).unwrap();
                         let motion = movement::move_xy_multisector(

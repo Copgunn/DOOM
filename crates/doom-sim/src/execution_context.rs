@@ -418,8 +418,8 @@ mod tests {
         let last = ActorId::from_parts(initial.slot(), u64::MAX);
         // Bounded white-box setup of the otherwise impractically distant limit.
         store.slots.get_mut(0).unwrap().generation = u64::MAX;
-        store.head = Some(last);
-        store.tail = Some(last);
+        store.head = Some(ThinkerId::Actor(last));
+        store.tail = Some(ThinkerId::Actor(last));
         store.mark_remove(last).unwrap();
         store
             .run(2, |visit, _| assert_eq!(visit, Visit::Retired(last)))

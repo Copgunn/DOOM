@@ -416,6 +416,25 @@ pub(crate) fn stage(
         None,
     )
 }
+/// One half of a live player's weapon stage, around `P_PlayerInSpecialSector`
+/// (specials policy): `CalcHeight` or `AfterSpecials`.
+pub(crate) fn stage_operation(
+    host: &mut LifeHost<'_, &mut ThinkerStore<Actor>>,
+    operation: weapons::PlayerWeaponOperation,
+    command: TicCommand,
+    leveltime: u64,
+    sound: &mut [Option<ActorId>],
+) -> Result<(), SimError> {
+    run(
+        host,
+        operation,
+        command,
+        leveltime,
+        Some(fire_current),
+        Some(sound),
+        None,
+    )
+}
 pub(crate) fn drop_weapon<A: ActorAccess>(host: &mut LifeHost<'_, A>) -> Result<(), SimError> {
     if host.player.as_ref().is_some_and(|p| p.weapon.is_some()) {
         run(
@@ -497,7 +516,7 @@ fn line_current(
     let lookup = |id| host.access.get(id).copied();
     let trace =
         combat_trace::collect_in(host.world, host.spatial, &lookup, id, angle, attack.range)?;
-    let (hit, position, traversed) = combat_trace::hit_trace(
+    let ((hit, position, traversed), sky) = combat_trace::hit_trace_sky(
         host.world,
         host.sectors,
         id,
@@ -554,7 +573,7 @@ fn line_current(
         effect: None,
         damage: None,
     };
-    let prepared = combat::PreparedAttack::current(id, attack, result, plan);
+    let prepared = combat::PreparedAttack::current(id, attack, result, plan).with_sky(sky);
     host.access.reserve_spawns(prepared.spawn_count())?;
     combat::execute_attack(host, prepared);
     if host.sight_failed() {

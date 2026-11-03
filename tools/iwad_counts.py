@@ -9,6 +9,7 @@ of any object is printed (spans are differences). Nothing is written anywhere.
     python3 tools/iwad_counts.py                  # $DOOM_IWAD_DIR or /mnt/d/DoomIWADs, text report
     python3 tools/iwad_counts.py --markdown       # the committed counts table
     python3 tools/iwad_counts.py --readiness E1M1 # the §9 readiness counts of one slot
+    python3 tools/iwad_counts.py --specials-markdown  # the M3h7 §5.6 specials table
     python3 tools/iwad_counts.py DIR ...          # another read-only directory
 
 The rules evaluated are those of docs/M3H6_REFERENCE_INVESTIGATION.md: the arithmetic
@@ -53,6 +54,35 @@ CELL = 128
 # Perpendicular offset for the C3 parity probe: (dy, -dx) / 2**34 is shorter than the
 # least distance between a half-integer midpoint and any integer line it is not on.
 PROBE_SHIFT = 34
+
+# M3h7 §5.6 counts (docs/M3H7_REFERENCE_INVESTIGATION.md): the Stage A admission facts
+# of §4.2 and the pure-count Stage B facts of §4.4 and §4.6. They are printed as extra
+# lines of the text report and by --specials-markdown; --markdown and --readiness are
+# unchanged.
+# Stage A (§4.2): admitted sector and line specials, scroller bound and light spawners.
+STAGE_A_SECTOR_SPECIALS = frozenset((0, 1, 2, 3, 4, 5, 7, 8, 9, 12, 13, 16, 17))
+STAGE_A_LINE_SPECIALS = frozenset((0, 48))
+LIGHT_SECTOR_SPECIALS = frozenset((1, 2, 3, 4, 8, 12, 13, 17))
+SCROLLER = 48
+MAXLINEANIMS = 64
+# Stage B (§4.3, E1M1's seven types): DR door 1 acts on its back sector; the others act
+# on every sector whose tag equals the line's tag (P_FindSectorFromLineTag, so tag 0
+# selects every untagged sector, owner decision 11). 11 (exit) moves nothing.
+E1M1_LINE_TYPES = (1, 63, 109, 88, 36, 38, 11)
+DR_DOOR = 1
+TAGGED_DOOR = frozenset((63, 109))
+TAGGED_PLAT = frozenset((88,))
+TAGGED_FLOOR = frozenset((36, 38))
+TAG_USING = TAGGED_DOOR | TAGGED_PLAT | TAGGED_FLOOR
+MAXPLATS = 30
+MAXBUTTONS = 16
+MAXSPECIALCROSS = 8
+# Lines whose activation calls P_ChangeSwitchTexture(line, 1) and so can start a button:
+# the reusable use switches of P_UseSpecialLine (p_switch.c:514–647) and gun line 46 of
+# P_ShootSpecialLine (p_spec.c:988–991).
+REUSABLE_SWITCHES = frozenset(
+    (42, 43, 45, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 114, 115, 116, 123, 132, 99, 134, 136, 138, 139, 46)
+)
 
 
 def read_wad(path):
@@ -145,6 +175,7 @@ class MapCounts:
         self._blockmap(lumps["BLOCKMAP"], vertices, lines)
         self._boundary()
         self._certificate()
+        self._specials()
 
     # -- BLOCKMAP ------------------------------------------------------------------
 
@@ -280,6 +311,80 @@ class MapCounts:
             and self.window_ok
         )
 
+    # -- M3h7 §5.6 -----------------------------------------------------------------
+
+    def _specials(self):
+        lines, sides, sectors = self.lines, self.sides, self.sectors
+        self.line_types = collections.Counter(l[3] for l in lines if l[3])
+        self.sector_types = collections.Counter(s[5] for s in sectors if s[5])
+        self.tagged_lines = sum(1 for l in lines if l[4])
+        self.tagged_sectors = sum(1 for s in sectors if s[6])
+        sky = {i for i, s in enumerate(sectors) if s[3].rstrip(b"\0") == b"F_SKY1"}
+
+        # Stage A (§4.2).
+        self.sector_specials_a = all(s[5] in STAGE_A_SECTOR_SPECIALS for s in sectors)
+        self.line_specials_a = all(l[3] in STAGE_A_LINE_SPECIALS for l in lines)
+        scrollers = [l for l in lines if l[3] == SCROLLER]
+        self.scrollers = len(scrollers)
+        self.two_sided_scrollers = sum(1 for l in scrollers if l[6] != NO_SIDE)
+        self.scrollers_one_sided = self.two_sided_scrollers == 0
+        self.scrollers_ok = self.scrollers <= MAXLINEANIMS
+        self.light_sectors = sum(1 for s in sectors if s[5] in LIGHT_SECTOR_SPECIALS)
+        self.stage_a = (
+            self.geometry_admitted
+            and self.sector_specials_a
+            and self.line_specials_a
+            and self.scrollers_one_sided
+            and self.scrollers_ok
+        )
+
+        # Stage B pure counts (§4.4, §4.6), over E1M1's seven line types.
+        by_tag = collections.defaultdict(set)
+        for i, s in enumerate(sectors):
+            by_tag[s[6]].add(i)
+        door, plat, floor = set(), set(), set()
+        self.one_sided_dr = 0
+        self.tag0_tag_using = 0
+        for l in lines:
+            special, tag = l[3], l[4]
+            if special == DR_DOOR:
+                if l[6] == NO_SIDE:
+                    self.one_sided_dr += 1
+                else:
+                    door.add(sides[l[6]][5])
+            elif special in TAG_USING:
+                if tag == 0:
+                    self.tag0_tag_using += 1
+                family = door if special in TAGGED_DOOR else plat if special in TAGGED_PLAT else floor
+                family.update(by_tag.get(tag, ()))
+        movers = door | plat | floor
+        self.mover_sectors = len(movers)
+        self.door_sectors = len(door)
+        self.plat_sectors = len(plat)
+        self.floor_sectors = len(floor)
+        self.plats_ok = self.plat_sectors <= MAXPLATS
+        self.multi_family = sum(1 for i in movers if (i in door) + (i in plat) + (i in floor) > 1)
+        self_ref = {
+            sides[l[5]][5] for l in lines if l[6] != NO_SIDE and sides[l[5]][5] == sides[l[6]][5]
+        }
+        self.self_ref_doors = len(door & self_ref)
+        self.sky_movers = len(movers & sky)
+        self.reusable_switches = sum(1 for l in lines if l[3] in REUSABLE_SWITCHES)
+        self.switches_ok = self.reusable_switches <= MAXBUTTONS
+        # §4.6: distinct two-sided special lines in any 2 x 2 window, same windows as the
+        # slide-window rule above.
+        crossing = {i for i, l in enumerate(lines) if l[3] and l[6] != NO_SIDE}
+        self.window_specials = 0
+        for cy in range(max(self.height - 1, 1)):
+            for cx in range(max(self.width - 1, 1)):
+                distinct = set()
+                for wy in (cy, cy + 1):
+                    for wx in (cx, cx + 1):
+                        if wx < self.width and wy < self.height:
+                            distinct.update(crossing.intersection(self.cell_lists[wy * self.width + wx]))
+                self.window_specials = max(self.window_specials, len(distinct))
+        self.window_specials_ok = self.window_specials <= MAXSPECIALCROSS
+
     # -- §9 ------------------------------------------------------------------------
 
     def readiness(self):
@@ -399,7 +504,37 @@ def text_report(counts):
         f"sky ceilings {counts.sky_ceilings}, sky floors {counts.sky_floors}, line specials {counts.line_specials}, "
         f"sector specials {counts.sector_specials}; geometry admitted {flag(counts.geometry_admitted)}"
     )
+    specials_text(counts)
     print()
+
+
+def types(counter):
+    """Type → count as `type:count` pairs in type order, or `none`."""
+    return " ".join(f"{k}:{v}" for k, v in sorted(counter.items())) or "none"
+
+
+def specials_text(counts):
+    print(f"line special types {types(counts.line_types)}; tagged lines {counts.tagged_lines}")
+    print(f"sector special types {types(counts.sector_types)}; tagged sectors {counts.tagged_sectors}")
+    print(
+        f"stage A: sector specials in the Stage A set {flag(counts.sector_specials_a)}; "
+        f"line specials in {{0, 48}} {flag(counts.line_specials_a)}; "
+        f"scrollers {counts.scrollers}, two-sided {counts.two_sided_scrollers}, every scroller one-sided {flag(counts.scrollers_one_sided)}, "
+        f"≤ {MAXLINEANIMS} {flag(counts.scrollers_ok)}; light-thinker sectors {counts.light_sectors}; "
+        f"sky ceilings {counts.sky_ceilings}, sky floors {counts.sky_floors}; stage A all {flag(counts.stage_a)}"
+    )
+    print(
+        f"stage B: mover sectors {counts.mover_sectors} (door {counts.door_sectors}, plat {counts.plat_sectors}, "
+        f"floor {counts.floor_sectors}); plat sectors ≤ {MAXPLATS} {flag(counts.plats_ok)}; "
+        f"reusable switch lines {counts.reusable_switches} (≤ {MAXBUTTONS} {flag(counts.switches_ok)}); "
+        f"one-sided DR lines {counts.one_sided_dr}; sectors in more than one mover family {counts.multi_family}; "
+        f"door sectors with a self-referencing line {counts.self_ref_doors}; "
+        f"tag-0 lines with tag-using specials {counts.tag0_tag_using}; sky sectors that are mover sectors {counts.sky_movers}"
+    )
+    print(
+        f"stage B: 2x2 window max two-sided special lines {counts.window_specials} "
+        f"(≤ {MAXSPECIALCROSS} {flag(counts.window_specials_ok)}); reachable heights not computed"
+    )
 
 
 MARKDOWN_COLUMNS = (
@@ -500,11 +635,109 @@ def summary(all_counts, prefix="SUMMARY "):
           f"one-sided walls {max(len(c.one_sided) for c in all_counts)}")
 
 
+def specials_summary(all_counts, prefix="SUMMARY "):
+    n = len(all_counts)
+    def count(pred):
+        return sum(1 for c in all_counts if pred(c))
+    def total(attr):
+        return sum(getattr(c, attr) for c in all_counts)
+    def most(attr):
+        return max(getattr(c, attr) for c in all_counts)
+    line_types = sum((c.line_types for c in all_counts), collections.Counter())
+    sector_types = sum((c.sector_types for c in all_counts), collections.Counter())
+    print(f"{prefix}line special types over all maps {types(line_types)}")
+    print(f"{prefix}sector special types over all maps {types(sector_types)}")
+    print(f"{prefix}stage A: sector specials in the Stage A set for {count(lambda c: c.sector_specials_a)} of {n}")
+    print(f"{prefix}stage A: line specials in {{0, 48}} for {count(lambda c: c.line_specials_a)} of {n}")
+    print(f"{prefix}stage A: every scroller one-sided for {count(lambda c: c.scrollers_one_sided)} of {n}; two-sided scrollers {total('two_sided_scrollers')}")
+    print(f"{prefix}stage A: scrollers ≤ {MAXLINEANIMS} for {count(lambda c: c.scrollers_ok)} of {n}; maximum {most('scrollers')}")
+    print(f"{prefix}stage A: maxima: light-thinker sectors {most('light_sectors')}, sky ceilings {most('sky_ceilings')}, sky floors {most('sky_floors')}")
+    print(f"{prefix}stage A all (with geometry admitted) for {count(lambda c: c.stage_a)} of {n}")
+    print(f"{prefix}stage B: maxima: mover sectors {most('mover_sectors')}, plat sectors {most('plat_sectors')}, "
+          f"reusable switch lines {most('reusable_switches')}, 2x2 window two-sided special lines {most('window_specials')}")
+    print(f"{prefix}stage B: plat sectors ≤ {MAXPLATS} for {count(lambda c: c.plats_ok)} of {n}; "
+          f"reusable switch lines ≤ {MAXBUTTONS} for {count(lambda c: c.switches_ok)} of {n}; "
+          f"2x2 window ≤ {MAXSPECIALCROSS} two-sided special lines for {count(lambda c: c.window_specials_ok)} of {n}")
+    for attr, label in (
+        ("one_sided_dr", "one-sided DR lines"),
+        ("multi_family", "sectors in more than one mover family"),
+        ("self_ref_doors", "door sectors with a self-referencing line"),
+        ("tag0_tag_using", "tag-0 lines with tag-using specials"),
+        ("sky_movers", "sky sectors that are mover sectors"),
+    ):
+        print(f"{prefix}stage B: {label} {total(attr)} in all; none for {count(lambda c, a=attr: getattr(c, a) == 0)} of {n}")
+    print(f"{prefix}stage B: reachable heights not computed")
+
+
+SPECIALS_COLUMNS = (
+    "Slot",
+    "Line special types",
+    "Tagged lines",
+    "Sector special types",
+    "Tagged sectors",
+    "Sector specials A",
+    "Line specials A",
+    "Scrollers",
+    "Two-sided scrollers",
+    "Scrollers ≤ 64",
+    "Light sectors",
+    "Sky ceilings",
+    "Sky floors",
+    "Stage A all",
+    "Mover sectors",
+    "Plat sectors",
+    "Reusable switches",
+    "One-sided DR",
+    "Multi-family sectors",
+    "Self-ref door sectors",
+    "Tag-0 tag-using lines",
+    "Sky mover sectors",
+    "2x2 two-sided specials",
+)
+
+
+def specials_markdown_report(all_counts):
+    print("| " + " | ".join(SPECIALS_COLUMNS) + " |")
+    print("| " + " | ".join("---" for _ in SPECIALS_COLUMNS) + " |")
+    for c in all_counts:
+        cells = [
+            c.slot,
+            types(c.line_types),
+            c.tagged_lines,
+            types(c.sector_types),
+            c.tagged_sectors,
+            flag(c.sector_specials_a),
+            flag(c.line_specials_a),
+            c.scrollers,
+            c.two_sided_scrollers,
+            flag(c.scrollers_ok),
+            c.light_sectors,
+            c.sky_ceilings,
+            c.sky_floors,
+            flag(c.stage_a),
+            c.mover_sectors,
+            c.plat_sectors,
+            c.reusable_switches,
+            c.one_sided_dr,
+            c.multi_family,
+            c.self_ref_doors,
+            c.tag0_tag_using,
+            c.sky_movers,
+            c.window_specials,
+        ]
+        print("| " + " | ".join(str(x) for x in cells) + " |")
+    print()
+    specials_summary(all_counts, prefix="")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("directory", nargs="?", default=DEFAULT_DIR)
     parser.add_argument("--markdown", action="store_true", help="print the counts table as Markdown")
     parser.add_argument("--readiness", metavar="SLOT", help="print the §9 readiness counts of one map slot")
+    parser.add_argument(
+        "--specials-markdown", action="store_true", help="print the M3h7 §5.6 specials counts table as Markdown"
+    )
     args = parser.parse_args(argv)
     if not os.path.isdir(args.directory):
         print(f"iwad_counts: {args.directory} is absent; nothing to report (skipped)")
@@ -530,9 +763,13 @@ def main(argv=None):
     if args.markdown:
         markdown_report(all_counts)
         return 0
+    if args.specials_markdown:
+        specials_markdown_report(all_counts)
+        return 0
     for counts in all_counts:
         text_report(counts)
     summary(all_counts)
+    specials_summary(all_counts)
     return 0
 
 

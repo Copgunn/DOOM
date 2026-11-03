@@ -364,6 +364,11 @@ impl Simulation {
     /// enabled types; see `with_demon_map_spawn_registry` for its admission.
     pub fn spawn_map_things(&mut self) -> Result<MapSpawnReport, SimError> {
         let registry = self.registry_required()?;
+        // The specials policy's light thinkers follow every map THING (M3h7
+        // decision 12, P_SetupLevel order).
+        if self.level_specials_spawned() {
+            return Err(MapSpawnError::LevelSpecials.into());
+        }
         let map_demons = self.profile.uses_demon_map();
         if map_demons && (self.tic != 0 || !self.actors.slots.is_empty()) {
             return Err(MapSpawnError::Setup.into());
