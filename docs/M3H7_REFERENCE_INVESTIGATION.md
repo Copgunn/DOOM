@@ -909,3 +909,13 @@ refused check's openings) and the two sky returns of `PTR_ShootTraverse`; sky id
 is the `F_SKY1` lookup name of each ceiling, and sector lights outside
 `i16::MIN + 64 ..= i16::MAX - 64` are refused (`MapScaleError::Light`).
 
+Phase 2 step 7 (DSIM34 and replay): captures of the policy are DSIM34 exactly as
+[STATE_FORMAT](STATE_FORMAT.md#dsim-v34--original-monsters-with-sky-and-static-specials)
+specifies (the capture side landed with step 6 because the tag-25 events need an
+encoding); `Diagnostic::decode_specials` reads 34 only and every earlier reader rejects
+it; `player_specials_tests` replays all 17 committed scenarios against the C rows
+(actor, player, weapon, armor, pickup, statistics, every `SX` and `TK` value, RNG), the
+427 independent captures, the 9 full-byte fixtures and the ordered events, with `step`
+equal to `advance` at every tic and no scenario refused, plus Rust-only rejection,
+load-order, refused-tic and identity tests. No STATE_FORMAT error was found.
+

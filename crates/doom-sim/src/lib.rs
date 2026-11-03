@@ -1463,5 +1463,10 @@ mod player_map_scale_tests;
 #[cfg(test)]
 mod player_real_map_tests;
 #[cfg(test)]
+mod player_specials_tests;
+#[cfg(test)]
 #[path = "../../../tests/support/m3h6.rs"]
 mod real_map_evidence;
+#[cfg(test)]
+#[path = "../../../tests/support/m3h7.rs"]
+mod specials_evidence;
