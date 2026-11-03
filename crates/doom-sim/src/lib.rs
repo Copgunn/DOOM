@@ -1523,6 +1523,8 @@ mod player_heights_tests;
 #[cfg(test)]
 mod player_map_scale_tests;
 #[cfg(test)]
+mod player_movers_soak_tests;
+#[cfg(test)]
 mod player_movers_tests;
 #[cfg(test)]
 mod player_real_map_tests;

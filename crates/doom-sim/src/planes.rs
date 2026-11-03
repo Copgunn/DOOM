@@ -156,6 +156,8 @@ impl<'b> PlaneHost<'_, 'b> {
                     || direction == 1 && before + speed > dest;
                 if last {
                     self.set(sector, plane, dest)?;
+                    #[cfg(test)]
+                    injected_fault(FaultSite::PlaneStep)?;
                     if self.change_sector(sector)? {
                         self.set(sector, plane, before)?;
                         self.change_sector(sector)?;
@@ -169,6 +171,8 @@ impl<'b> PlaneHost<'_, 'b> {
                     };
                     self.set(sector, plane, next)?;
                     let nofit = self.change_sector(sector)?;
+                    #[cfg(test)]
+                    injected_fault(FaultSite::PlaneStep)?;
                     if nofit && !(plane == Plane::Ceiling && direction == 1) {
                         self.set(sector, plane, before)?;
                         self.change_sector(sector)?;
@@ -537,6 +541,48 @@ pub enum SoundOrigin {
     Sector = 1,
     /// 2: the address of `buttonlist[index].soundorg`.
     Button = 2,
+}
+
+/// Where a test may inject a refusal inside a tic (never outside `cfg(test)`): the
+/// rollback tests of the movers policy refuse a tic after a plane step has written
+/// its height and run `P_ChangeSector`, or after a use has started its line's action.
+#[cfg(test)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum FaultSite {
+    /// In `T_MovePlane`, after the step's write and its `P_ChangeSector`.
+    PlaneStep,
+    /// In `P_UseSpecialLine`, after the line's action, before the use record.
+    SpecialUse,
+}
+#[cfg(test)]
+thread_local! {
+    static INJECTED_FAULT: std::cell::Cell<Option<(FaultSite, usize)>> = const { std::cell::Cell::new(None) };
+}
+/// Arms a refusal (`StoreError::Capacity`) at the `nth` (1-based) next visit of
+/// `site` on this thread; `None` disarms.
+#[cfg(test)]
+pub(crate) fn inject_fault(fault: Option<(FaultSite, usize)>) {
+    INJECTED_FAULT.with(|f| f.set(fault));
+}
+/// Whether an injected refusal is still armed on this thread.
+#[cfg(test)]
+pub(crate) fn fault_armed() -> bool {
+    INJECTED_FAULT.with(|f| f.get().is_some())
+}
+#[cfg(test)]
+pub(crate) fn injected_fault(site: FaultSite) -> Result<(), SimError> {
+    INJECTED_FAULT.with(|f| match f.get() {
+        Some((armed, n)) if armed == site => {
+            if n <= 1 {
+                f.set(None);
+                Err(StoreError::Capacity.into())
+            } else {
+                f.set(Some((armed, n - 1)));
+                Ok(())
+            }
+        }
+        _ => Ok(()),
+    })
 }
 
 #[cfg(test)]

@@ -9,7 +9,7 @@ use crate::*;
 
 /// Asserts V′ for every non-impact actor and the relaxed item witness for every
 /// item, as the tic-boundary preflight checks them; returns the cases seen.
-fn assert_v_prime(s: &Simulation, label: &str, op: usize) -> [usize; 5] {
+pub(crate) fn assert_v_prime(s: &Simulation, label: &str, op: usize) -> [usize; 5] {
     let admission = s.movers.as_ref().unwrap();
     let policy = s.player_policy();
     let mut seen = [0; 5];
@@ -40,7 +40,7 @@ fn assert_v_prime(s: &Simulation, label: &str, op: usize) -> [usize; 5] {
 /// A deterministic command stream (xorshift): walking, turning, firing and using in
 /// bursts; a dead player gets the empty command (the only dead command admitted
 /// besides `BT_USE` alone, which requests the reborn and would end the run).
-struct Commands(u32);
+pub(crate) struct Commands(pub(crate) u32);
 impl Commands {
     fn next(&mut self) -> u32 {
         self.0 ^= self.0 << 13;
@@ -48,7 +48,7 @@ impl Commands {
         self.0 ^= self.0 << 5;
         self.0
     }
-    fn command(&mut self, dead: bool) -> [TicCommand; 4] {
+    pub(crate) fn command(&mut self, dead: bool) -> [TicCommand; 4] {
         let r = self.next();
         let mut commands = [TicCommand::default(); 4];
         if dead {

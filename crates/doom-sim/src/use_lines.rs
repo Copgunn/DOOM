@@ -213,6 +213,8 @@ pub(crate) fn use_special_line<M: MoverAccess + ?Sized>(
         }
         true
     };
+    #[cfg(test)]
+    crate::planes::injected_fault(crate::planes::FaultSite::SpecialUse)?;
     starter.events.push(Event::Mover(MoverEvent::SpecialUse {
         user,
         line,

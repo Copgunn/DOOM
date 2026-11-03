@@ -545,3 +545,232 @@ fn dsim35_reader_rejects_policy_and_field_violations() {
         Some(DiagnosticError::Structure)
     );
 }
+
+/// Loads `map` under the movers policy, expecting `expected`, and asserts that the
+/// refused load left its input untouched (the admission reads the map only).
+fn rejects_map(map: doom_map::Map, expected: SimError) {
+    let before = map.clone();
+    rejects(
+        Simulation::original_player_movers_map(map.clone(), options()),
+        expected,
+    );
+    assert_eq!(map, before);
+}
+/// The first one-sided linedef of `lumps`.
+fn one_sided_line(lumps: &mut Lumps) -> usize {
+    (0..lumps.line_count())
+        .find(|&l| line_field(lumps, l, 12) == u16::MAX)
+        .unwrap()
+}
+/// Whether `special` is one of the seven admitted tag/use/cross types (§7 rule 1).
+fn admitted_type(special: i16) -> bool {
+    use mover_rules::*;
+    [
+        LINE_DOOR_DR,
+        LINE_DOOR_SR,
+        LINE_DOOR_BLAZE,
+        LINE_LIFT,
+        LINE_FLOOR_TURBO,
+        LINE_FLOOR_LOWEST,
+        LINE_EXIT,
+    ]
+    .contains(&special)
+}
+
+/// §7 rule 1 by family (M3h8 note §15, deferred types): each family's original
+/// line types (p_spec.c `P_CrossSpecialLine`, `P_ShootSpecialLine`, p_switch.c
+/// `P_UseSpecialLine`) put on a two-sided DR line of `doorway` and on a one-sided
+/// wall are rejected with `PursuitError::Specials`, the map untouched; the same
+/// room with the line unchanged loads. Then every other value of the field in
+/// `-1..=300` and both `i16` extremes, on both sides, except the admitted types and
+/// a one-sided 48 (Stage A).
+#[test]
+fn movers_reject_every_deferred_line_family_on_either_side() {
+    let families: [(&str, &[i16]); 14] = [
+        ("crushers", &[6, 25, 49, 55, 56, 57, 73, 74, 77, 141]),
+        (
+            "locked doors",
+            &[26, 27, 28, 32, 33, 34, 99, 133, 134, 135, 136, 137],
+        ),
+        (
+            "other doors",
+            &[
+                2, 3, 4, 16, 29, 31, 42, 50, 61, 75, 76, 86, 90, 103, 105, 106, 107, 108, 110, 111,
+                112, 113, 114, 115, 116, 117, 118,
+            ],
+        ),
+        ("teleports", &[39, 97, 125, 126]),
+        ("stairs", &[7, 8, 100, 127]),
+        ("donuts", &[9]),
+        ("raiseToTexture", &[30, 96]),
+        ("perpetual and stopping plats", &[53, 54, 87, 89]),
+        (
+            "other plats",
+            &[
+                10, 14, 15, 20, 21, 22, 47, 62, 66, 67, 68, 95, 120, 121, 122, 123,
+            ],
+        ),
+        (
+            "other floors",
+            &[
+                5, 18, 19, 23, 37, 45, 58, 59, 60, 64, 65, 69, 70, 71, 82, 83, 84, 91, 92, 93, 94,
+                98, 101, 102, 119, 128, 129, 130, 131, 132, 140,
+            ],
+        ),
+        ("ceilings", &[40, 41, 43, 44, 72]),
+        ("light lines", &[12, 13, 17, 35, 79, 80, 81, 104, 138, 139]),
+        ("gun lines", &[24, 46, 47]),
+        ("other exits", &[51, 52, 124]),
+    ];
+    let mut lumps = room(0);
+    let wall = one_sided_line(&mut lumps);
+    movers(&lumps).unwrap();
+    let specials = SimError::Pursuit(PursuitError::Specials);
+    let check = |special: i16| {
+        for line in [2, wall] {
+            let mut lumps = room(0);
+            set_special(&mut lumps, line, special);
+            if special == 48 && line == wall {
+                // A one-sided scroller stays admitted (Stage A).
+                movers(&lumps).unwrap();
+            } else {
+                rejects_map(lumps.map(), specials);
+            }
+        }
+    };
+    for (family, types) in families {
+        for &special in types {
+            assert!(!admitted_type(special), "{family} {special}");
+            check(special);
+        }
+    }
+    for special in (-1..=300).chain([i16::MIN, i16::MAX]) {
+        if special != 0 && !admitted_type(special) {
+            check(special);
+        }
+    }
+}
+
+/// Decision N1 (iii), provisional: a two-sided scroller (48) stays rejected under
+/// the movers policy whether or not the line blocks, while the same special on a
+/// one-sided wall loads.
+#[test]
+fn movers_keep_rejecting_a_two_sided_scroller() {
+    for flags in [None, Some(1)] {
+        let mut lumps = room(0);
+        set_special(&mut lumps, 2, 48);
+        if let Some(f) = flags {
+            let old = line_field(&mut lumps, 2, 4);
+            set_line_field(&mut lumps, 2, 4, old | f);
+        }
+        rejects_map(lumps.map(), SimError::Pursuit(PursuitError::Specials));
+    }
+    let mut lumps = room(0);
+    let wall = one_sided_line(&mut lumps);
+    set_special(&mut lumps, wall, 48);
+    movers(&lumps).unwrap();
+}
+
+/// Rule 4, the exact bound: a reachable height of 513 (the turbo destination of
+/// `floors` sector 5 beside a neighbour floor of 505) is rejected; 512 loads (the
+/// `movers_reject_reachable_heights_beyond_512` control).
+#[test]
+fn movers_reject_a_reachable_height_of_513() {
+    let mut lumps = room(13);
+    set_heights(&mut lumps, 6, 505, 512);
+    rejects_map(lumps.map(), SimError::MapScale(MapScaleError::MoverHeights));
+}
+
+/// Rule 3 on a synthetic one-sector room (the M3h4 strip builder): a sector tagged
+/// by a one-sided 109, 36, 38 or 88 line has no `getNextSector` neighbour (no
+/// two-sided line) and is rejected; the same line in the two-sector strip, whose
+/// portal gives the target a neighbour, loads.
+#[test]
+fn movers_reject_a_mover_without_a_two_sided_neighbour() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let one = HeightsRoom::new(&[-512, 512], &[[0, 128]]);
+    let two = HeightsRoom::new(&[-512, 0, 512], &[[0, 128], [0, 128]]);
+    let load = |room: &HeightsRoom| Simulation::original_player_movers_map(room.map(), options());
+    load(&one).unwrap();
+    for special in [109, 36, 38, 88] {
+        let faults = [Fault::TaggedSpecial(1, special, 1), Fault::SectorTag(0, 1)];
+        rejects_map(
+            one.clone_with(&faults).map(),
+            SimError::MapScale(MapScaleError::MoverNeighbor),
+        );
+        let sim = load(&two.clone_with(&faults)).unwrap();
+        assert_eq!(sim.movers.as_ref().unwrap().movers, 1, "{special}");
+    }
+}
+
+/// Rule 4c on a synthetic strip: a two-sided line with the door sector on both
+/// sides makes the door its own neighbour (its closed top would be `floor − 4`) and
+/// is rejected; the same line in the other, unmoved sector, or in a floor target
+/// (rule 4c names doors only), loads.
+#[test]
+fn movers_reject_a_self_referencing_door_line() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let two = HeightsRoom::new(&[-512, 0, 512], &[[0, 128], [0, 128]]);
+    let load = |room: &HeightsRoom| Simulation::original_player_movers_map(room.map(), options());
+    let door = [Fault::TaggedSpecial(1, 109, 1), Fault::SectorTag(0, 1)];
+    load(&two.clone_with(&door)).unwrap();
+    let mut faults = door.to_vec();
+    faults.push(Fault::SelfReferencing(0));
+    rejects_map(
+        two.clone_with(&faults).map(),
+        SimError::MapScale(MapScaleError::SelfReferencingDoor),
+    );
+    faults[2] = Fault::SelfReferencing(1);
+    load(&two.clone_with(&faults)).unwrap();
+    let floor = [
+        Fault::TaggedSpecial(1, 38, 1),
+        Fault::SectorTag(0, 1),
+        Fault::SelfReferencing(0),
+    ];
+    load(&two.clone_with(&floor)).unwrap();
+}
+
+/// Rule 5, `MAXPLATS`: a synthetic strip of 32 sectors whose first 30 or 31 carry
+/// the tag of a one-sided WR 88 line; 30 plat sectors load, 31 are rejected.
+#[test]
+fn movers_reject_thirty_one_plat_sectors() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let spans: Vec<i16> = (0..=32).map(|k| -512 + 32 * k).collect();
+    let strip = HeightsRoom::new(&spans, &[[0, 128]; 32]);
+    let tagged = |n: usize| {
+        let mut faults = vec![Fault::TaggedSpecial(1, 88, 1)];
+        faults.extend((0..n).map(|s| Fault::SectorTag(s, 1)));
+        strip.clone_with(&faults)
+    };
+    let sim = Simulation::original_player_movers_map(tagged(30).map(), options()).unwrap();
+    assert_eq!(sim.movers.as_ref().unwrap().movers, 30);
+    rejects_map(
+        tagged(31).map(),
+        SimError::MapScale(MapScaleError::MoverCount),
+    );
+}
+
+/// Rule 5, `MAXLINEANIMS` (Stage A, kept by the movers policy): a synthetic room
+/// whose walls are cut into 32-unit pieces; 64 one-sided scrollers load, 65 are
+/// rejected with `PursuitError::Specials`.
+#[test]
+fn movers_reject_sixty_five_scrollers() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let mut walls = HeightsRoom::new(&[-512, 512], &[[0, 128]]);
+    walls.segment = 32;
+    let scrollers = |n: usize| {
+        let faults: Vec<_> = (0..n).map(|l| Fault::TaggedSpecial(l, 48, 0)).collect();
+        walls.clone_with(&faults)
+    };
+    let map = scrollers(64).map();
+    assert!(map.linedefs().len() >= 65);
+    assert_eq!(
+        map.linedefs().iter().filter(|l| l.special == 48).count(),
+        64
+    );
+    Simulation::original_player_movers_map(map, options()).unwrap();
+    rejects_map(
+        scrollers(65).map(),
+        SimError::Pursuit(PursuitError::Specials),
+    );
+}
