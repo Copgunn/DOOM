@@ -174,7 +174,7 @@ fn prepare_cells(
     Ok(())
 }
 
-fn cell(world: &StaticWorld, position: [Fixed; 2]) -> [i32; 2] {
+pub(crate) fn cell(world: &StaticWorld, position: [Fixed; 2]) -> [i32; 2] {
     let o = world.map().blockmap().origin();
     [
         (position[0] - Fixed::from_map_units(o.x)).bits() >> 23,

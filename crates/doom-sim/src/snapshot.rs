@@ -198,6 +198,50 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        // DSIM35 tag 26 (STATE_FORMAT "DSIM v35").
+        Event::Mover(event) => {
+            b.push(26);
+            match *event {
+                crate::MoverEvent::PlaneStep {
+                    sector,
+                    plane,
+                    direction,
+                    speed,
+                    dest,
+                    before,
+                    after,
+                    result,
+                } => {
+                    b.push(7);
+                    b.extend(sector.to_le_bytes());
+                    b.push(plane as u8);
+                    b.extend(direction.to_le_bytes());
+                    for v in [speed, dest, before, after] {
+                        b.extend(v.bits().to_le_bytes());
+                    }
+                    b.push(result as u8);
+                }
+                crate::MoverEvent::SectorChanged { sector, nofit } => {
+                    b.push(8);
+                    b.extend(sector.to_le_bytes());
+                    b.push(u8::from(nofit));
+                }
+                crate::MoverEvent::ThingClipped {
+                    actor,
+                    outcome,
+                    z,
+                    floor,
+                    ceiling,
+                } => {
+                    b.push(9);
+                    b.extend(id(actor));
+                    b.push(outcome as u8);
+                    for v in [z, floor, ceiling] {
+                        b.extend(v.bits().to_le_bytes());
+                    }
+                }
+            }
+        }
         // DSIM34 tag 25 (STATE_FORMAT "DSIM v34").
         Event::Special(event) => {
             b.push(25);

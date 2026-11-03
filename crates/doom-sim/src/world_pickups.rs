@@ -295,26 +295,51 @@ fn validate_definition_uncached(ty: ActorTypeId) -> Result<(), SimError> {
     }
     Ok(())
 }
-/// `sectors` is the static sector table under the heights policy, where an item
-/// sits on its own sector's floor under its own sector's ceiling; otherwise the
-/// flat world's `0/128`.
+/// The height rule of the item witness.
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum ItemHeights<'a> {
+    /// The flat world's `0/128`.
+    Flat,
+    /// The heights policies: the item sits on its own center sector's floor under
+    /// that sector's ceiling (static sectors).
+    Sector(crate::staging::Sectors<'a>),
+    /// The movers policy (M3h8 note §4.2): sector heights move and the item keeps
+    /// its own clipped `floorz`/`ceilingz`, so only `z == floorz` is required; an
+    /// item that does not fit under a closed door stays there (case (b)).
+    Own,
+}
+impl<'a> ItemHeights<'a> {
+    pub(crate) fn for_policy(
+        policy: OriginalExecutionProfile,
+        sectors: crate::staging::Sectors<'a>,
+    ) -> Self {
+        if policy.has_movers() {
+            Self::Own
+        } else if policy.has_heights() {
+            Self::Sector(sectors)
+        } else {
+            Self::Flat
+        }
+    }
+}
 pub(crate) fn validate_item(
     room: Option<crate::player_map_scale::RoomBounds>,
-    sectors: Option<crate::staging::Sectors<'_>>,
+    heights: ItemHeights<'_>,
     a: Actor,
 ) -> Result<(), SimError> {
     let l = a.life().ok_or(ActorError::InvalidType)?;
     let k = kind(l.actor_type).ok_or(ActorError::InvalidType)?;
     validate_definition(l.actor_type)?;
-    let [floor, ceiling] = match sectors {
-        Some(sectors) => {
+    let [floor, ceiling] = match heights {
+        ItemHeights::Sector(sectors) => {
             let location = a.location.ok_or(PlayerBodyError::Invariant)?;
             let sector = sectors
                 .get(usize::from(location.sector))
                 .ok_or(PlayerBodyError::Invariant)?;
             [sector.floor, sector.ceiling]
         }
-        None => [Fixed::ZERO, Fixed::from_map_units(128)],
+        ItemHeights::Own => [a.floor, a.ceiling],
+        ItemHeights::Flat => [Fixed::ZERO, Fixed::from_map_units(128)],
     };
     let state = l
         .state
@@ -516,7 +541,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
             }
             validate_item(
                 self.player.room,
-                self.player.policy.has_heights().then_some(self.sectors),
+                ItemHeights::for_policy(self.player.policy, self.sectors),
                 item,
             )?;
             let k = kind_for(self.player.policy, l.actor_type).ok_or(ActorError::InvalidType)?;

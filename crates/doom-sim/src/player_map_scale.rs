@@ -698,11 +698,14 @@ impl Simulation {
     pub(crate) fn room(&self) -> Option<RoomBounds> {
         self.original_player.and_then(|p| p.room)
     }
-    /// The sector table world items are validated against under heights.
-    pub(crate) fn item_sectors(&self) -> Option<crate::staging::Sectors<'_>> {
-        self.player_policy()
-            .has_heights()
-            .then_some(crate::staging::Sectors::committed(&self.sectors))
+    /// What world items' heights are validated against: the item's own stored
+    /// heights under the movers policy (the relaxed witness, M3h8 note §4.2), the
+    /// sector table under heights, the flat world otherwise.
+    pub(crate) fn item_sectors(&self) -> crate::world_pickups::ItemHeights<'_> {
+        crate::world_pickups::ItemHeights::for_policy(
+            self.player_policy(),
+            crate::staging::Sectors::committed(&self.sectors),
+        )
     }
     /// Rust-only spawn fit of the heights policy (§4.3 of the M3h4 note): the
     /// spawn's resulting `z` lies within `[floor, ceiling - height]` of the spawn

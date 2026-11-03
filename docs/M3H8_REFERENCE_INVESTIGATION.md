@@ -1194,4 +1194,23 @@ map's. Not covered by a fixture: a door without a two-sided neighbour, a
 self-referencing door line and 31 plat sectors (no committed room can be patched into
 them without rebuilding nodes; the rules are implemented and the switch count,
 window, family, height, inverting, one-sided DR and sky rules are tested). Captures of
-the policy still use the DSIM34 layout until step 13. Next is step 7, the planes.
+the policy still use the DSIM34 layout until step 13.
+
+Step 7 is done: `planes.rs` holds `T_MovePlane` (`PlaneHost::move_plane`, `crush`
+false: blocked last step stops short and returns `pastdest`, refused ordinary step
+undone as `crushed`, rising ceiling never restored), `P_ChangeSector`
+(`change_sector`, the per-sector `blockbox` cells `x` outer, `y` inner, link order,
+things removed by an earlier clip skipped), `PIT_ChangeSector` (gibs with height,
+radius and `MF_SOLID` cleared, dropped-item removal, non-shootables left, `nofit`) and
+`P_ThingHeightClip` (`height_clip`: a full position check at the thing's own position,
+the touch path for the player inside it, the center-subsector heights on a solid
+overlap and the partial heights on a blocking line, onfloor follow or ceiling push).
+Heights are written only through `StagedWrites::write_sector` and read through a fresh
+view after each write. Events are DSIM35 tag 26 sub-tags 7, 8 and 9 (`MoverEvent`).
+The item witness takes the relaxed §4.2 form under the movers policy
+(`ItemHeights::Own`, needed by pickups inside a clip); V′ itself remains step 12.
+Type admission keeps the static tallest-sector envelope: types are admitted at load
+and no runtime spawn re-admits dimensions, so moving heights do not reach it. Rust-only
+tests replay the pinned C facts on the committed rooms (stuck shootable and rising
+steps, closing at 14 then 12, turbo jump-up with a straddling item, pickup inside a
+clip). Next is step 8, the movers.

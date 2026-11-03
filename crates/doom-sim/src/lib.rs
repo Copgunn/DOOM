@@ -132,6 +132,7 @@ mod movement;
 mod mover_rules;
 mod multisector;
 mod noise;
+mod planes;
 pub use movement::{ActorMoveAttempt, Solidity};
 pub use multisector::{
     Gravity, Location, MoveFailure, Opening, OpeningVisit, SectorMoveAttempt, SectorState,
@@ -148,6 +149,7 @@ pub use actor::{Actor, ActorSpec, TicCommand};
 use doom_map::Map;
 use doom_types::{DoomRng, Fixed};
 pub use geometry::{Collision, GeometryError, LineGeometry, MoveAttempt, StaticWorld};
+pub use planes::{ClipOutcome, MoveResult, MoverEvent, Plane};
 pub use sector_thinkers::{
     FireFlicker, Glow, LightFlash, SectorThinker, SpecialEvent, StrobeFlash,
 };
@@ -363,6 +365,8 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
+    /// Movers-policy plane, sector-change and clip observations (DSIM35 tag 26).
+    Mover(MoverEvent),
     /// Specials-policy secret, sky-removal and sky-shot observations (DSIM34).
     Special(SpecialEvent),
     /// Original player armor absorption, DSIM26.
