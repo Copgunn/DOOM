@@ -1663,3 +1663,123 @@ rows, and the tag-25 events from the `SE`, `KR` (with its `KY` line) and `KS` ro
 other new observer rows are not events. Its full bytes and PBE1 ordered events preceded
 the matching Rust changes. Decoding remains observation, not executable world
 restoration.
+
+## DSIM v35 — original doors, lifts, floors, switches and the exit (draft)
+
+**Draft.** This section is the projection the Rust implementation of
+`PlayerMonstersMoversV1` must reproduce byte for byte. Only the independent Python
+encoder exists so far ([movers projection](../tools/reference/movers_snapshot.py) and
+[its generator](../tools/reference/m3h8_snapshot_goldens.py)); the Rust writer, the
+`Diagnostic::decode_movers` reader and their tests land in a later step of the
+[M3h8 plan](M3H8_REFERENCE_INVESTIGATION.md#12-implementation-plan-one-commit-per-step-evidence-before-the-runtime-change).
+Until then no Rust code emits or reads version 35.
+
+Version 35 selects policy 19 (`PlayerMonstersMoversV1`, wire 19), the unchanged original
+registry schema and context `PLAYER-MONSTERS-MOVERS-1-MEDIUM-v1`. Every earlier
+version-specific reader, `decode_specials` included, keeps its historical contract and
+rejects 35; the v35 reader reads 35 only. V20–34 bytes, encoders, fixtures and
+policy/context meanings are unchanged.
+
+V35 is the DSIM34 layout, event vocabulary, store and fireball bounds plus exactly the
+Stage B state of the
+[investigation](M3H8_REFERENCE_INVESTIGATION.md#10-dsim35--wire-19); the item witness a
+v35 reader applies is the relaxed one of
+[§4.2](M3H8_REFERENCE_INVESTIGATION.md#42-b3-the-relaxed-item-witness), since sector
+heights now move. Every DSIM34 field
+keeps its path, width and relative position; `thinker.order`, `store.*` and each actor's
+`previous`/`next` still list actors only. Changes, in stream order:
+
+| Position | Field | Value encoding |
+| --- | --- | --- |
+| right after `level.single_player_kill_count` | `level.exit` | u8 boolean: `G_ExitLevel` ran (`gameaction == ga_completed`; `secretexit` is always false) |
+| `thinker.shared_order` (same place) | now also lists movers | 13-byte entries as in v34; doors, plats, floors and removed movers are kind 1 (sector-thinker) entries |
+| sector-thinker store (same place) | `sector_thinkers.slot_count` and every slot `j` < count | see below; a slot may now be free |
+| `sector.{i}.floor`, `sector.{i}.ceiling` (same place) | the runtime heights | i32 16.16, moved by `T_MovePlane` |
+| right after the last `sector.{i}.special`, before `player.0.actor` | `line.{i}.special` for every line whose `map.linedefs` special is nonzero, in line order | i16 runtime `line->special` (W1 and S1 lines read 0 once cleared) |
+| right after `original_player.0.secret_count` | `original_player.0.use_down` | u8 boolean `player->usedown` |
+
+The sector-thinker store:
+
+| Slot state | Fields after `.generation` (u64) and `.occupied` (u8) |
+| --- | --- |
+| free | none; `.generation` is the generation its next occupant receives |
+| light (kinds 1–4) | exactly the v34 record |
+| door (kind 5) | `.sector` u16, `.type` u8 (`vldoor_e`: 0 `normal`, 6 `blazeOpen`), `.direction` i32 (−1, 0, 1), `.topheight` i32 16.16, `.topcountdown` i32 |
+| plat (kind 6) | `.sector` u16, `.status` u8 (`plat_e`: 0 up, 1 down, 2 waiting), `.count` i32, `.low` i32, `.high` i32 (16.16) |
+| floor (kind 7) | `.sector` u16, `.type` u8 (`floor_e`: 1 `lowerFloorToLowest`, 2 `turboLower`), `.floordestheight` i32 16.16 |
+| removed mover (kind 8) | `.sector` u16 (the sector it moved) |
+
+Implied and omitted mover fields (decision N6, mover allocations zero-filled): a door's
+`speed` (2 units for `normal`, 8 for `blazeOpen`) and `topwait` (150); a plat's `type`
+(`downWaitUpStay`), `speed` (4), `wait` (105), `crush` (false), `tag` (its sector's tag)
+and `oldstatus` (never written, 0); a floor's `direction` (−1), `speed` (1 for
+`lowerFloorToLowest`, 4 for `turboLower`), `crush` (false), `newspecial` and `texture`
+(never written, 0). `topcountdown` reads 0 until the door first waits. The projection
+asserts every implied value against the C record. Not encoded: `sector->specialdata`
+(derived: the one live door, plat or floor record naming the sector, or none; lights
+never set it; the projection checks it against the C value of every sector), the
+`activeplats` slots, button timers and switch textures (M3h7 decision 5) and the
+`P_ChangeSector` working flags.
+
+Thinker records and their order:
+
+- **Creation.** A mover is appended to `thinker.shared_order` when its `EV_*` body
+  creates it, after every thinker created before it (`P_AddThinker`): a door opened by a
+  use joins in the players phase and steps in the same tic; a mover created by a crossing
+  or a monster's use joins during the thinker pass and steps later in the same pass.
+- **Slots.** Light thinkers keep the load slots 0..L−1, generation 1, for the whole
+  level. A new mover takes the **lowest free slot**, or slot `slot_count` (which then
+  grows by one, generation 1) when none is free; `slot_count` never shrinks.
+- **Removal.** When a mover finishes (`pastdest`, or `P_RemoveActivePlat` for a lift),
+  `P_RemoveThinker` marks it: its slot stays occupied as kind 8, its entry keeps its place
+  in the shared order and the sector's `specialdata` is cleared at once, so a later thinker
+  of the same pass may create a replacement for the same sector (a sector then has two
+  entries, the removed one first). When the next pass reaches the marked entry it is
+  unlinked: the entry leaves the shared order, the slot becomes free and its generation
+  grows by one.
+- At most one live (kind 5–7) record names a sector at any time.
+
+Reborn request (decision N3): `BT_USE` held by a dead player sets the source
+`playerstate` to `PST_REBORN`, encoded as the existing `original_player.0.state` with the
+newly reachable value 2. The exit and the reborn request both refuse the next `advance`;
+the capture after the requesting tic is the last of the level.
+
+Events. One new tag, 26 (movers). Identities are 12-byte actor IDs (u32 slot + u64
+generation) for things and 12-byte sector-thinker IDs (u32 slot + u64 generation of the
+store above) for movers; heights, `frac` and speeds are i32 16.16.
+
+| Sub-tag | Meaning | Payload after tag and sub-tag | Position |
+| --- | --- | --- | --- |
+| 0 | Use started (`P_UseLines`) | player actor ID | players phase, after the weapon events, where the use block of `P_PlayerThink` runs |
+| 1 | Use intercept (`PTR_UseTraverse` on a line) | u16 line, i32 `frac`, u8 continues (0 stops the trace: a special line, or `sfx_noway` at a closed line) | after the records of what that line's use did |
+| 2 | Special line used (`P_UseSpecialLine`) | user actor ID, u16 line, u8 side, i16 special before, u8 result, i16 special after | after the records of the line action (mover starts and calls, sounds, the exit); a monster's use follows sub-tag 4 |
+| 3 | Line crossed (`P_CrossSpecialLine`) | crosser actor ID, u16 line, u8 old side, i16 special before, i16 special after | right after the movement-attempt event of the `P_TryMove` that crossed, after the records of the line action; several crossings of one move follow in the source's reverse `spechit` order |
+| 4 | Blocked with special lines (`P_Move` failure branch, `movedir = DI_NODIR`) | actor ID, u8 `numspechit` (1–8) | after the failed movement attempt, before that monster's sub-tag 2 uses |
+| 5 | Mover started | mover ID, u8 kind (5 door, 6 plat, 7 floor), u16 sector | at the end of its `EV_*` call, one per created mover in creation order, after that call's sounds |
+| 6 | Mover call (`EV_DoDoor` 1, `EV_VerticalDoor` 2, `EV_DoPlat` 3, `EV_DoFloor` 4) | u8 function, u16 line, i32 argument (door/plat/floor type; the line special for 2), i32 result (−1 for 2), u8 movers created | right after its sub-tag 5 records; a door reversed by `EV_VerticalDoor` creates none |
+| 7 | Plane step (`T_MovePlane`) | u16 sector, u8 plane (0 floor, 1 ceiling), i32 direction, i32 speed, i32 destination, i32 height before, i32 height after, u8 result (0 ok, 1 crushed, 2 pastdest) | in the thinker pass at the mover's entry, after that step's sub-tag 8 records |
+| 8 | Sector changed (`P_ChangeSector` exit) | u16 sector, u8 `nofit` | after the sub-tag 9 records of its things; a crushed step that moves back has two |
+| 9 | Thing clipped (`PIT_ChangeSector`) | actor ID, u8 outcome (0 fits, 1 corpse to `S_GIBS`, 2 dropped item removed, 3 non-shootable left as is, 4 `nofit`), i32 `z`, i32 `floorz`, i32 `ceilingz` after `P_ThingHeightClip` | after the existing pickup, state-entry or removal events the clip caused, in the source's blockbox and link order |
+| 10 | Mover removed (`P_RemoveThinker`) | mover ID | where the mover finishes |
+| 11 | Mover unlinked | mover ID | in the thinker pass where its marked entry is reached |
+| 12 | Sector sound | u8 origin (1 sector `soundorg`, 2 the address of `buttonlist[index].soundorg`), u16 index, u16 sound | where `S_StartSound` runs |
+| 13 | Exit (`G_ExitLevel`) | u8 secret exit (always 0) | inside the S1 exit switch's use, after the switch sound and before that use's sub-tag 2 record |
+| 14 | Reborn requested | u8 player slot (0) | last record of the players phase of the tic whose dead player held `BT_USE` |
+
+A height clip's own `P_CheckPosition` candidates and openings are not events; pickups,
+`S_GIBS` state entries and removals it causes keep their existing events. Sounds with a
+thing or no origin (`sfx_noway` at the player, the global switch sound when the button
+slot has none) keep the existing actor-state sound event. There is no event for a mover's
+run without a step (a waiting door or plat), for a `spechit` append, for `activeplats` or
+button bookkeeping, or for a switch texture change. Without its tag-26 records the event
+stream is exactly what the DSIM34 vocabulary gives for the same source behavior; the
+independent projection asserts this.
+
+Independent C rows feed the Python
+[movers projection](../tools/reference/movers_snapshot.py), which extends the specials
+projection without editing it. It takes the heights from `MH`, the line specials from
+`ML`, `use_down`, the exit and the player state from `MZ` and `P`, the shared order and
+the records from `TK` with the slots from `MM` and `SF`, and the tag-26 events from `MA`,
+`MI`, `MU`, `MX`/`MY`, `MP`, `MM`, `ME`, `MV`, `MC`, `HC`/`MT`, `SD`, `SF`, `SO` and `MG`
+rows. Its full bytes and PBE1 ordered events precede the matching Rust changes. Decoding
+remains observation, not executable world restoration.

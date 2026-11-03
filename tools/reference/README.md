@@ -492,8 +492,18 @@ in all; two-sided scrollers are not built (decision N1 keeps them rejected). The
 Rust-only nine-line lane is written as `m3h8_dense9.bin` and never run in C. New observer
 rows (sector heights, runtime line specials, mover records, `spechit` entries, use and
 crossing calls, plane steps, `P_ChangeSector` outcomes, sector sounds, the exit and the
-reborn request) are documented in the contract's `row_formats`. See
-[investigation](../../docs/M3H8_REFERENCE_INVESTIGATION.md) and
+reborn request) are documented in the contract's `row_formats`.
+[movers_snapshot.py](movers_snapshot.py) and
+[m3h8_snapshot_goldens.py](m3h8_snapshot_goldens.py) project the draft DSIM35 from the C
+rows: the DSIM34 layout under version 35, policy 19 and the movers context, plus
+`level.exit`, the moving sector heights (`MH`), the runtime line specials (`ML`), the
+player's `use_down` (`MZ`), door, plat, floor and removed-mover records in the
+sector-thinker store and the shared order (`TK`, `MM`, `SD`, `SF`) and tag-26 events for
+use, crossing, mover starts and calls, plane steps, `P_ChangeSector` clips, mover removal
+and unlinking, sector sounds, the exit and the reborn request; the generator also checks
+that the stream without tag 26 is the DSIM34 projection of the same rows. See
+[investigation](../../docs/M3H8_REFERENCE_INVESTIGATION.md), the
+[draft DSIM v35 schema](../../docs/STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit-draft) and
 [commands](../../docs/TESTING.md#original-doors-lifts-floors-switches-and-the-exit-c-evidence).
 
 ## Historical raw-trace loading

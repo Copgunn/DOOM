@@ -1014,5 +1014,15 @@ replaced by the same bodies on admitted lines (a monster's failed move with a WR
 in `spechit`, a use stopped by a W1 36 line, eight WR 88 lines); several listed scenarios
 are observed inside a combined one (the contract's per-case inventory names them);
 `exit_then_advance_refused` is Rust-only; the reversed `blazeOpen` door of N5 is
-evidenced (`blaze_reversed`); V′ case (e) is not constructed. Next is step 4, the DSIM35
-projection.
+evidenced (`blaze_reversed`); V′ case (e) is not constructed. Step 4 is done: the
+independent DSIM35 projection (`tools/reference/movers_snapshot.py`,
+`m3h8_snapshot_goldens.py`; outputs `tests/reference/m3h8_snapshots.csv`,
+`m3h8_events.dref`, 13 `m3h8_state_*.bin` fixtures, `m3h8_snapshot_contract.json`) from
+the C rows alone, with the byte layout recorded as a
+[draft DSIM v35 section](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit-draft)
+for the later Rust writer. Choices made there within §10: the reborn request is the
+source `playerstate` (`PST_REBORN`, value 2) in the existing `original_player.0.state`
+field rather than a second flag; a removed mover not yet unlinked is a store record of
+kind 8 naming its sector; movers take the lowest free sector-thinker slot and a slot's
+generation grows when its mover is unlinked; a case that requested an exit or a reborn
+ends at that tic. Next is step 5, the staging refactor.
