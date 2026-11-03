@@ -504,10 +504,12 @@ use, crossing, mover starts and calls, plane steps, `P_ChangeSector` clips, move
 and unlinking, sector sounds, the exit and the reborn request; the generator also checks
 that the stream without tag 26 is the DSIM34 projection of the same rows.
 [check_player_movers.py](check_player_movers.py) runs the full Rust replay against those
-rows and goldens in debug and release. See
+rows and goldens in debug and release, then the asserted `player_movers` example in
+both profiles, and asserts equal output. See
 [investigation](../../docs/M3H8_REFERENCE_INVESTIGATION.md), the
-[DSIM v35 schema](../../docs/STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit) and
-[commands](../../docs/TESTING.md#original-doors-lifts-floors-switches-and-the-exit-c-evidence).
+[DSIM v35 schema](../../docs/STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit),
+[commands](../../docs/TESTING.md#original-doors-lifts-floors-switches-and-the-exit-c-evidence) and
+[observations](../../docs/validation/M3H8.md).
 
 ## Historical raw-trace loading
 

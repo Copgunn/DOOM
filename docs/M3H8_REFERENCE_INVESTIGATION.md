@@ -7,7 +7,7 @@ implementation plan, the E1M1 readiness list and the owner decisions for Stage B
 doors, lifts, floors, switches and the level exit. It was written and committed before
 any runtime change (Phase 1). Support and limits belong to
 [COMPATIBILITY](COMPATIBILITY.md); DSIM schemas belong to [STATE_FORMAT](STATE_FORMAT.md);
-measured observations will belong to the evidence record written in Phase 2. All
+measured observations belong to the [evidence record](validation/M3H8.md). All
 references are to the preserved `linuxdoom-1.10/` sources at `a77dfb96`; every C fact
 below was re-read for this note, including those it shares with the M3h7 note, and
 corrections to that note are listed in §2.12. Every number is in map units unless it
@@ -398,7 +398,7 @@ Paths are under `crates/doom-sim/src/` unless stated.
 | --- | --- | --- |
 | Policy | `OriginalExecutionProfile` (`original_registry.rs:12`), `PlayerMonstersSpecialsV1` (62), `wire_id` 18 (85), `context_schema` (108), predicates `has_specials` (208) and the other `has_*` (111–291), `OriginalExecutionRegistry::new` (654), `validate` (705), `with_original_registry` (896, `specials:` at 969); context constant `PLAYER_SPECIALS_CONTEXT_SCHEMA` (`player_monsters.rs:29`); constructor `Simulation::original_player_specials_map` (`player_monsters.rs:151–163`) | New variant `PlayerMonstersMoversV1` (wire 19), `has_movers()`, `has_specials()` true for both; context `PLAYER-MONSTERS-MOVERS-1-MEDIUM-v1`; constructor `original_player_movers_map` |
 | Stage A load rules | `validate_specials` (`demon_expanded_map.rs:220–248`): admitted sector specials, **48 only if `line.sides[1].is_none()` (233)**, `MAX_LINE_ANIMS` (237–239), `LIGHT_RANGE` (240–246); errors `PursuitError::Specials` (`pursuit.rs:24`) and `MapScaleError::Light` | Under movers only: 48 two-sided (decision N1) and the seven types, plus the §7 rules; Stage A unchanged |
-| Errors | `MapScaleError` (`player_map_scale.rs:52–101`: `Walls` … `Intercepts`); no `Specials`, no `SpecialCross` | New `MapScaleError::SpecialCross` (runtime witness) and field-less load-rule variants (`Movers` or one per rule) |
+| Errors | `MapScaleError` (`player_map_scale.rs:52–101`: `Walls` … `Intercepts`); no `Specials`, no `SpecialCross` | New `MapScaleError::SpecialCross` (runtime witness) and field-less load-rule variants (as implemented, one per rule: `DoorLine`, `MoverFamily`, `MoverNeighbor`, `MoverHeights`, `InvertingDoor`, `SelfReferencingDoor`, `MoverCount`, `SpecialWindow`, `SkyMover`, `SwitchTexture`) |
 | Thinker store | `ThinkerStore<T, S = SectorThinker>` (`store.rs:268–276`), `ThinkerId::{Actor, Sector}` (51–56), `SectorThinkerId` (29), `Visit` (120–129), `with_sector_capacity` (297), `visit_bound = max_slots + max_sector_slots` (316–318), `spawn_sector` (412), `mark_remove_sector` (432), `shared_order` (439), `run` (550), `ThinkerContext::{sector_get_mut, spawn_sector}` (606, 622): one linked order, lazy removal, appends visible in the same pass | Unchanged mechanism; the sector slot class capacity becomes `L + 2M` (§8) |
 | Sector thinkers | `SectorThinker::{Flash, Strobe, Glow, Flicker}` (`sector_thinkers.rs:93–102`), `think` (137), `visit` (221); run from `thinkers::run` (`thinkers.rs:24`, sector arm 49–62); capacity from `install_specials` (`demon_expanded_map.rs:164–192`) | New variants `Door`, `Plat`, `Floor` |
 | Sector heights | `SectorState { floor, ceiling }` (`multisector.rs:16–21`), `Simulation::sectors` (`lib.rs:527`), built once (`lib.rs:703–713`); the plan borrows `&self.sectors` read-only (`demon_expanded_map.rs:529, 554, 614, 686`) | Written inside the pass, visible to later thinkers, staged with the plan (lazy full copy, §9) |
@@ -437,7 +437,8 @@ rules, witnesses and transaction, plus:
 - line specials **1, 63, 109, 88, 36, 38, 11** (exactly E1M1's tag/use/cross types,
   approved), under the load rules of §7;
 - line special **48 on two-sided lines** under this policy only, if decision N1 is
-  approved (Stage A keeps its one-sided rule);
+  approved (Stage A keeps its one-sided rule). As implemented, N1 is provisionally
+  adopted as option (iii): two-sided 48 stays rejected under every policy (§14);
 - `BT_USE` with the `usedown` latch;
 - moving floors and ceilings, `P_ChangeSector`, crossing, use, monster door use, the
   `spechit` window rule and `SpecialCross` witness, the exit.
@@ -588,8 +589,9 @@ neighbour definition, the inverting test and Δ match. Differences:
    changing after that cap it stops without a fixpoint. The proposed Rust admission
    treats W1 rules like the repeatable ones (applied every round to a global fixpoint),
    which is a sound over-approximation and never narrower. For E1M1 the measured result
-   (reachable [−136, 264], the static range) is expected to be unchanged; the Rust
-   admission will print its own result and Phase 2 records it.
+   (reachable [−136, 264], the static range) is expected to be unchanged. The Rust
+   admission derives its own result (public `mover_bounds`), but it has not been run on
+   E1M1: the IWAD stays outside the repository and E1M1 does not load (§13).
 2. The tool bounds divergence at 2¹⁶ and reports it; the Rust admission stops at ±512.
 3. Δ for non-shootable corpses is not Δ (they are covered by (e), §4.1); the tool's Δ is
    correct for (c), which is what it is used for.
@@ -626,9 +628,12 @@ rejected, never emulated. E1M1's maximum is exactly 8.
 ## 7. Mover load rules (refining M3h7 §4.4)
 
 All computed once at load from the static map in exact integers; each failure is a
-field-less error (`MapScaleError::Movers` or one variant per rule), state untouched.
+field-less error, state untouched (as implemented, one `MapScaleError` variant per rule,
+with `PursuitError::Specials` for rule 1's special values and the scroller count; the
+mapping is in [COMPATIBILITY](COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit)).
 
-1. **Types and sides.** Every line special is 0, 48 (one-sided, or two-sided if N1), or
+1. **Types and sides.** Every line special is 0, 48 (one-sided, or two-sided if N1; as
+   implemented one-sided only, N1 option iii), or
    one of 1, 63, 109, 88, 36, 38, 11. Every line with special 1 has a back side (no
    `sides[-1]`, §2.4).
 2. **Disjoint mover families.** No sector is in two of {door: back sectors of 1 and
@@ -691,8 +696,8 @@ sector `s`, and `Q` the collision work of one position check (M3h6 §4.1 row 15)
   precedes the new one and is freed first). The 320 actor slots are untouched (M3h7
   decision 4).
 - **Visits per pass**: `320 + L + 2M`.
-- **`activeplats`**: at most `P ≤ 30` live entries; **buttons**: not simulated, at most `R
-  ≤ 16` would be live.
+- **`activeplats`**: at most `P ≤ 30` live entries; **buttons**: at most `R ≤ 16` live
+  slots (DSIM35 state since decision N9).
 - **`P_ChangeSector`**: at most two steps per sector per tic, two calls per step:
   `≤ 4M` calls; work per tic `≤ Σ_{s ∈ movers} 4 · (B(s) + N · Q)`, computed at load and
   recorded with the M3h6 work values. With roster scale, `N` grows and the bound is
@@ -881,7 +886,9 @@ DSIM35 is DSIM34 plus, only where source state demands:
   live record per sector) and the decoder checks it; the `activeplats` slot is not
   encoded (unobservable, §2.5).
 - `original_player.0.use_down`.
-- `level.exit` (bool) and the reborn request (decision N3).
+- `level.exit` (bool) and the reborn request (decision N3; as implemented, the source
+  `playerstate` `PST_REBORN`, value 2, in the existing `original_player.0.state`, §15
+  step 4).
 - Events (one new tag): use (line, side, result), `sfx_noway` stop, crossing (line,
   side, actor), mover start, step result (`ok`/`crushed`/`pastdest`) and stop,
   `P_ChangeSector` outcomes (gibs, dropped-item removal, `nofit`), sector sounds as sound
@@ -889,6 +896,9 @@ DSIM35 is DSIM34 plus, only where source state demands:
   scroll offsets stay out (M3h7 decision 5); the `buttonlist` slots are encoded
   (decision N9: `btimer`, and the line and `soundorg` sector of a running button).
 
+This section is the proposal; the implemented layout, including the button slots of
+decision N9 and the store's kind-8 removed-mover records, is
+[DSIM v35](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit).
 Every earlier reader rejects 35; `decode_specials` stays 34-only; a new
 `decode_movers` reads 35 only and checks the encoded map: one live mover per mover
 sector at most, record kinds matching the sector's family, heights within the
@@ -923,7 +933,9 @@ outcome, use and crossing calls.
 | `floors` | W1 36 beside a higher neighbour (jump-up) and beside lower ones; W1 38; W1 109; things standing and items straddling steps near them |
 | `dense` | a lane with 8 two-sided special lines (scrollers and doors) in one 2 × 2 window (admitted); Rust-only 9 |
 
-Scenarios (about 32): `door_use`, `door_wait_close`, `door_reuse_closes`,
+Scenarios (about 32 proposed; 30 built, with the differences listed in §15 step 3,
+including the added one-door `hall` room and a `dense` lane of eight WR 88 lines under
+N1 option iii): `door_use`, `door_wait_close`, `door_reuse_closes`,
 `door_reverse_on_player`, `door_reverse_on_monster`, `door_monster_bump`,
 `door_monster_back_side`, `door_monster_cannot_close`, `door_monster_reopens_closing`,
 `door_gibs_corpse`, `door_removes_drop`, `door_traps_bonus`, `door_stuck_shootable`,
@@ -964,6 +976,10 @@ fixpoint and the window rules, the recorded per-tic `P_ChangeSector` work, and t
 staging comparison.
 
 ## 12. Implementation plan (one commit per step; evidence before the runtime change)
+
+Status and order: §15. Steps 1–15 are done; the independent review (18) runs before the
+timings (16) and the fuzz campaigns (17), so that its fixes precede the measurements,
+then the gates (19).
 
 Every older policy keeps exact admission, behaviour, digests and DSIM bytes at every
 step.
@@ -1019,7 +1035,8 @@ families 0, doors without neighbours 0, self-referencing door lines 0, inverting
 tag-using lines 0, B2 Δ 4). What would still block loading E1M1:
 
 1. **The two-sided scroller rule**: all 8 scrollers are two-sided; blocked unless
-   decision N1 admits them under this policy.
+   decision N1 admits them under this policy (provisionally adopted as option (iii), so
+   still blocked).
 2. **Roster scale**: on UV single player 29 monsters (shotgun guy 16, zombieman 9, imp
    4; all admitted types) against 8, and 53 pickups (all admitted kinds) against 16; the
    linked-thing bound 33 and every roster-formula budget of §8 follow.
@@ -1188,16 +1205,18 @@ below can be revised in review.
   `spechit` write, `sides[-1]` of a one-sided DR line, the door cast of a non-door
   `specialdata`, the 31st plat and 17th button, inverting doors.
 - **Spawn-origin states** (§4.1 (d), §2.7 consequences 2–4) are faithful but rare; the
-  `doorway` room must place a monster in (d) or the path goes unobserved.
+  `doorway` room places a monster in (d) (`door_stuck_shootable`, replayed to its last
+  op, step 12); case (e) is not constructed in C.
 - **Rust `openings` on a line failure** must keep the entries before the blocker
-  (§3); otherwise a monster's door use after a partial pass would differ.
+  (§3); otherwise a monster's door use after a partial pass would differ. Confirmed at
+  step 9.
 - **Performance**: `P_ChangeSector` runs a full position check per linked thing in the
-  blockbox per step; small at the current roster, multiplied by roster scale; measured
-  in Phase 2.
+  blockbox per step; small at the current roster, multiplied by roster scale; the
+  per-tic work and timings are step 16 (pending).
 - **IWAD tool**: the fixpoint round cap (§5, N7), the door-kind sharing count, the spawn
   rule count and a case-(d) count are not measured; adding them needs owner approval.
-- **CI headroom**: two generators and one fuzz target more; estimated when the harness
-  exists.
+- **CI headroom**: two generators, the replay, the example and the measurement smoke
+  more; observed with the exact-head CI of the PR (step 19, pending).
 
 **Status / next step.** Phase 1 is complete with this note. Step 2 of §12 is done: N1–N8
 are provisionally adopted (end of §14, N1 as option (iii)). Step 3 is done: the C
@@ -1483,4 +1502,21 @@ seed replay only (`-runs=0`, the default `cargo fuzz run` build, which is
 AddressSanitizer-instrumented, leak detection at its default) of all 4,428 seeds plus
 the empty input with no finding; the coverage-guided and sanitizer campaigns are step 17.
 CI runs the example on the hosts that skip the replay and the measurement smoke on
-Linux. Next is step 15.
+Linux.
+
+Step 15 is done: the support section
+([COMPATIBILITY](COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit),
+with its limits rows), the current-milestone and next-milestone text of
+[ROADMAP](ROADMAP.md), the architecture section on the six new modules and the staged
+sector and line writes, the README summary, the index, VALIDATION and tools README
+entries, the STATE_FORMAT wording (the button slots are encoded; only `where`,
+`btexture` and switch textures are not), the TESTING section's closing paragraph, the
+consistency pass over §1–§15 of this note (N1 option iii, the implemented error
+variants, buttons as state, the reborn encoding, the built scenarios, the closed risks)
+and the [evidence record](validation/M3H8.md) with the observations so far and
+placeholders for what is pending.
+
+**Next:** the independent review and its fixes (step 18), then the matched timings (16)
+and the coverage-guided and sanitizer fuzz campaigns (17), then the gates, the draft PR
+and its exact-head CI (19). The review moves ahead of the measurements because any fix
+it causes must be in the code that is timed and fuzzed.

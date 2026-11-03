@@ -1718,8 +1718,9 @@ and `oldstatus` (never written, 0); a floor's `direction` (−1), `speed` (1 for
 asserts every implied value against the C record. Not encoded: `sector->specialdata`
 (derived: the one live door, plat or floor record naming the sector, or none; lights
 never set it; the projection checks it against the C value of every sector), the
-`activeplats` slots, button timers and switch textures (M3h7 decision 5) and the
-`P_ChangeSector` working flags.
+`activeplats` slots, a button's `where` and `btexture` and every switch texture
+(presentation, M3h7 decision 5; the button timers, lines and sound origins are encoded
+above, decision N9) and the `P_ChangeSector` working flags.
 
 Thinker records and their order:
 

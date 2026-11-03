@@ -816,3 +816,61 @@ front-sky line before the puff. Both emit the tag-25 events of DSIM34. See
 [support](COMPATIBILITY.md#original-monsters-with-sky-and-static-specials),
 [source matrix](M3H7_REFERENCE_INVESTIGATION.md) and
 [DSIM34](STATE_FORMAT.md#dsim-v34--original-monsters-with-sky-and-static-specials).
+
+## Doors, lifts, floors, switches and the exit
+
+The movers policy makes sector heights and line specials mutable inside the checked
+tic; no collision, sight or traversal body changes, they read the heights through a view.
+Six modules own the new work, all under `crates/doom-sim/src/`:
+
+| Module | Owns |
+| --- | --- |
+| `staging.rs` | `StagedWrites` and the `Sectors` read-through view: the plan's staged sector heights and runtime line specials |
+| `mover_rules.rs` | `validate_movers`: the load rules, the reachable-height fixpoint, `R_min`, `R_max`, `Δ` and the mover-sector count (`MoverAdmission`, kept in `Simulation::movers`); the public `mover_bounds` and `special_window_lines` |
+| `planes.rs` | `T_MovePlane` (`PlaneHost::move_plane`), `P_ChangeSector`, `PIT_ChangeSector` (giblets, dropped-item removal, `nofit`) and the box-wide `P_ThingHeightClip`; the tag-26 `MoverEvent` vocabulary |
+| `movers.rs` | the `Door`, `Plat` and `FloorMove` records, their `EV_*` starters (`Starter`) and `T_*` thinkers, the derived `specialdata` and the live-lift count |
+| `line_triggers.rs` | `spechit` as the special subsequence of a position check's `openings`, the reverse crossing loop and `P_CrossSpecialLine` |
+| `use_lines.rs` | `P_UseLines` over `movement::path`, `PTR_UseTraverse`, `P_UseSpecialLine`, `P_ChangeSwitchTexture`, the button slots and their countdown, `G_ExitLevel` |
+
+**Sector thinker kinds.** `SectorThinker` gains `Door`, `Plat` and `Floor` beside the
+four lights, in the same slot class and the same shared order (`ThinkerStore`, see
+[sky and static specials](#sky-and-static-specials)). The class capacity is the light
+sectors plus twice the mover sectors (a finished mover keeps its slot until the next
+pass unlinks it while a replacement may already run); the 320-slot actor proof is
+untouched. A mover is appended at the tail when its `EV_*` runs and takes the lowest
+free slot; `thinkers::run` hands its visit to `movers::think` with a fresh `PlaneHost`.
+`specialdata` is not stored: it is the one live mover record naming the sector.
+
+**Per-sector block box.** `multisector::sector_block_boxes` computes `sector_t::blockbox`
+at load exactly as `P_GroupLines` does (the line bounding box ± `MAXRADIUS`, clamped to
+the grid) into `StaticWorld::sector_block_boxes`. `P_ChangeSector` iterates its cells
+`x` outer, `y` inner, in link order, skipping things an earlier clip removed.
+
+**How the transaction stages sector and line writes.** A plan never writes
+`Simulation::sectors` or `Simulation::line_specials`. `StagedWrites` holds two lazy full
+copies: the plan's first write of a table copies the committed table into a buffer taken
+from `Simulation::spare_writes`, later writes change the copy, and every later collision,
+sight, noise and clip query of the same pass reads it through the `Sectors` view (which
+reads the committed table until the first write). Heights are written only through
+`StagedWrites::write_sector`, and each clip after a write takes a fresh view, so later
+thinkers see the moved plane. A committed plan swaps the copies in and keeps the
+replaced tables as the next plan's buffers; a refused tic drops them with the rest of the
+plan, so the committed tables stay byte-identical. A tic that writes nothing copies
+nothing, so older policies never allocate these buffers. The M3h8 note's
+[§9](M3H8_REFERENCE_INVESTIGATION.md#9-sector-staging) records the measurement that chose
+the lazy copy over the approved sparse overlay. The button slots, `level_exit`,
+`use_down` and the reborn request are staged with the plan's player and level state.
+
+**Where the triggers run.** Every position check's `openings` already lists the
+two-sided lines visited before a blocker, so `spechit` needs no new array; a view without
+line specials (every older policy) collects nothing, and a ninth entry is the
+`SpecialCross` witness. The player's and knocked-back things' crossings are found during
+the motion and applied after it; a monster's `P_Move` applies them inline and, on a
+failed move, runs the `DI_NODIR` reset and the reverse use loop in `pursuit::move_actor`.
+The player phase runs the weapon change, then the use block, then `P_MovePsprites`, as
+`P_PlayerThink` does; the button countdown of `P_UpdateSpecials` runs in the Specials
+phase after the thinker pass. Under the movers policy the tic-boundary preflight checks
+V′ (`player_map_scale::v_prime_admitted`) instead of the M3h4 vertical invariant. See
+[support](COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit),
+[source matrix](M3H8_REFERENCE_INVESTIGATION.md) and
+[DSIM35](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit).

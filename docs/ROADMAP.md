@@ -79,7 +79,37 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3h7: Sky and static specials
+### M3h8: Doors, lifts, floors, switches and the exit (Stage B)
+
+The separately selected PlayerMonstersMoversV1 (wire 19, DSIM35) is the specials world
+plus E1M1's seven tag, use and crossing line types: the DR door 1, the SR door switch 63,
+the W1 blazing door 109, the WR lift 88, the W1 floors 36 and 38 and the S1 exit switch
+11. It adds `BT_USE` with the source's use latch, moving floors and ceilings staged with
+the checked tic, `P_ChangeSector` (re-clipping, giblets, dropped-item removal, pickups
+inside a clip), crossing through the source's `spechit`, monster door use, switches with
+their button slots and the exit. The exit tic completes and the next `advance` is refused
+with `SimError::LevelExited`; `BT_USE` held while dead completes its tic and the next is
+refused with `SimError::PlayerReborn`. Load rules reject what the source leaves undefined
+or what is deferred: one-sided DR lines, shared mover families, doors without neighbors,
+inverting and self-referencing doors, reachable heights beyond ±512, more than 30 lifts,
+16 SR switches or 8 special lines in a BLOCKMAP window, sky ceilings over movers,
+switches without a switch texture, crushers and every other line type; a two-sided
+scrolling wall stays rejected (decision N1, provisionally option iii). V′ and a relaxed
+item witness replace the vertical and item witnesses under this policy only, and the
+ninth `spechit` write is a refuse-the-tic witness (an M4 fidelity gap like the corner
+jump and the intercepts). Older policies keep their admission, digests and DSIM bytes.
+
+Status on `feat/m3h8-movers`: implementation, the C evidence (30 scenarios), the
+independent DSIM35 projection, the full replay, Rust-only tests, the example, the
+tools, the fuzz target and this documentation are complete; the independent review, the
+matched timings, the fuzz campaigns and the final gates are pending, in that order, and
+the decisions N1–N9a await owner confirmation. This branch stops at owner review; exact
+commits and CI belong to GitHub. See
+[source investigation](M3H8_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit)
+and [observations](validation/M3H8.md).
+
+### Previous gameplay foundation — M3h7: Sky and static specials
 
 The separately selected PlayerMonstersSpecialsV1 is the real-map world plus the parts of
 E1M1's specials that move no plane: sky ceilings and the static sector specials. It
@@ -96,8 +126,7 @@ path with no source. Every other line special, a two-sided 48, sector specials 1
 outside the range the light arithmetic needs are refused at load. DSIM34 adds the
 shared thinker order, the light thinkers, the runtime sector light and special and the
 player's secret count. E1M1 still needs the roster scale, eight decoration and barrel
-types and the doors, lifts, floors and exit switch of Stage B. This branch stops at owner
-review; exact commits and CI belong to GitHub. See
+types and the doors, lifts, floors and exit switch of Stage B. M3h7 is merged. See
 [source investigation](M3H7_REFERENCE_INVESTIGATION.md),
 [support](COMPATIBILITY.md#original-monsters-with-sky-and-static-specials) and
 [observations](validation/M3H7.md).
@@ -263,22 +292,20 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-M3h8 is Stage B of the [M3h7 investigation](M3H7_REFERENCE_INVESTIGATION.md#43-stage-b-m3h8-doors-lifts-floors-switches-and-the-exit):
-doors, lifts, floors, switches and the level exit, which E1M1 needs (its seven line
-types DR 1, W1 36, W1 38, SR 63, WR 88, W1 109 and the S1 exit switch 11). Its policy
-identity `PlayerMonstersMoversV1`, wire 19 and DSIM35 are reserved. It needs mutable
-staged sector heights, `P_ChangeSector`, use and crossing, monster door use, the
-`spechit` load rule and runtime witness, and a re-proved vertical invariant, item witness
-and height certificate; the owner decisions already recorded for it are in the
-investigation's §7. Every new budget is written as a formula of the roster bounds.
-
-Roster scale stays independent and may come before or after M3h8: derive monsters,
-pickups, drops, slots, fireballs and the sight budget from the loaded THINGs (E1M1 on
-UV needs 29 monsters and 53 pickups), then the solid and non-solid decorations and
-barrels. Also revisit the rules the 14 other IWAD maps break (13 with one-sided walls of
-odd degree, crossing or facing away from their sector, one BLOCKMAP with missing
-listings) and the 22 maps that fail the sight certificate. Require source-first
-evidence and unchanged earlier contracts. This is future work, not admission in M3h7.
+Roster scale, which now blocks E1M1 more than any line or sector behavior: derive
+monsters, pickups, drops, slots, fireballs, the linked-thing bound and the sight budget
+from the loaded THINGs (E1M1 on UV needs 29 monsters against the current 8 and 53 pickups
+against 16, all of admitted types), re-evaluating every movers budget written as a
+formula of those bounds (the `P_ChangeSector` work and the `spechit` window proof, which
+needs every admitted radius below 64). Then the solid and non-solid decorations and
+barrels (eight THING types, 33 THINGs on E1M1 UV), and the two-sided scrolling walls if
+the owner admits them (decision N1). With those, E1M1 would load under the movers
+policy; the remaining unmeasured items are listed in the M3h8 note's
+[§13](M3H8_REFERENCE_INVESTIGATION.md#13-e1m1-readiness-under-the-movers-policy). Also
+revisit the rules the 14 other IWAD maps break (13 with one-sided walls of odd degree,
+crossing or facing away from their sector, one BLOCKMAP with missing listings) and the
+22 maps that fail the sight certificate. Require source-first evidence and unchanged
+earlier contracts. This is future work, not admission in M3h8.
 
 ### Focused maintenance acceptance criteria
 

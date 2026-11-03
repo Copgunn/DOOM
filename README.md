@@ -66,9 +66,13 @@ behavior (the trace that would write the 129th intercept). A specials capability
 sky ceilings and the static sector specials to that world: blinking, strobing, glowing
 and flickering lights in the shared thinker order, damage floors, secrets and
 one-sided scrolling walls, with fireballs removed at sky lines and shots into the sky
-ending without a puff. Full player-thinker/view processing, remaining weapons and
-monsters, moving sectors (doors, lifts, floors), other line specials, use,
-soulspheres/powers and respawn remain excluded. See the
+ending without a puff. A movers capability adds E1M1's seven door, lift, floor, switch
+and exit line types to that world: the use key, walk-over and switch triggers, doors
+that monsters open, lifts, lowering floors, things re-clipped (or turned to giblets)
+as planes move, and the exit switch, after which the next tic is refused. Full
+player-thinker/view processing, remaining weapons and monsters, other line specials
+(crushers, locked doors, teleporters, stairs), two-sided scrolling walls,
+soulspheres/powers, the intermission and respawn remain excluded. See the
 [player contract](docs/COMPATIBILITY.md#original-player-body-lifecycle) and
 [command movement boundary](docs/COMPATIBILITY.md#original-player-command-movement) and
 [active-player/Demon contract](docs/COMPATIBILITY.md#active-original-player-and-demon-acquisition)
@@ -95,7 +99,9 @@ closed-boundary domain, its spawn rule and its one refused move, and the
 [real-map contract](docs/COMPATIBILITY.md#original-monsters-at-classic-map-scale) the
 format-sized limits, the arithmetic certificate and the intercept witness, and the
 [specials contract](docs/COMPATIBILITY.md#original-monsters-with-sky-and-static-specials)
-the admitted sky and sector specials and what stays rejected.
+the admitted sky and sector specials and what stays rejected, and the
+[movers contract](docs/COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit)
+the admitted line types, their load rules and the exit and reborn refusals.
 
 Call `Simulation::advance()` for a tic without an implicit diagnostic Snapshot.
 `step()` retains its Snapshot return, and `snapshot()` captures explicitly in
@@ -109,6 +115,8 @@ recoverable-error guarantees; gameplay may still allocate. See the
   (BSP) and collision grids (BLOCKMAP).
 - Deterministic 35 Hz headless simulation with [canonical identity metadata](docs/ACTOR_IDENTITIES.md).
 - Static-sector movement, collision, actor states and selected combat services.
+- Opt-in doors, lifts, floors, switches and the level exit (E1M1's seven line types) on
+  synthetic maps; see [supported limits](docs/COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit).
 - Original-C comparisons, independently encoded canonical snapshots, and safety
   tests for rejection, stale references and recoverable-error atomicity.
 - Opt-in larger static geometry, including bounded Demon gameplay composition; see [supported limits](docs/COMPATIBILITY.md#expanded-map-demon-profile).
@@ -118,8 +126,9 @@ recoverable-error guarantees; gameplay may still allocate. See the
 
 There is no game renderer, audio playback, complete player gameplay, general map
 loading, complete original monster support, multiplayer or verified vanilla demos.
-Doors, lifts and other moving sectors, switches, the level exit, resurrection and
-Nightmare respawning are excluded.
+Moving sectors beyond the seven line types of the movers capability (crushers,
+ceilings, stairs, locked doors, teleporters), the intermission and next map,
+resurrection and Nightmare respawning are excluded.
 A custom Vulkan-first rendering architecture is a future direction; rendering
 runtime is not implemented. The [roadmap](docs/ROADMAP.md) describes dependencies.
 
@@ -159,6 +168,7 @@ cargo run -p doom-sim --example player_heights --locked
 cargo run -p doom-sim --example player_diagonal --locked
 cargo run -p doom-sim --example player_real_map --locked
 cargo run -p doom-sim --example player_specials --locked
+cargo run -p doom-sim --example player_movers --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked

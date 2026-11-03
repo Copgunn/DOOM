@@ -854,7 +854,7 @@ locally by the owner**.
 ## 9. Status / next step
 
 Status: **Phase 2 Stage A is implemented and at owner review**; milestone status is
-kept in [ROADMAP](ROADMAP.md#m3h7-sky-and-static-specials) and exact review state in
+kept in [ROADMAP](ROADMAP.md#previous-gameplay-foundation--m3h7-sky-and-static-specials) and exact review state in
 GitHub. The paragraphs below are the history of each Phase 2 step of §6 as it landed.
 
 Phase 2 step 1 (decisions): the owner decisions of §7 are recorded.
@@ -938,7 +938,7 @@ the fuzz target `player_specials` with `tools/seed_player_specials_fuzz.py`, the
 `z == front ceiling` (fails under the `>=` mutation), the A7 slot and visit budget test
 and three CI steps; observations are in [the evidence record](validation/M3H7.md).
 
-Phase 2 step 9 (documentation): README, [ROADMAP](ROADMAP.md#m3h7-sky-and-static-specials)
+Phase 2 step 9 (documentation): README, [ROADMAP](ROADMAP.md#previous-gameplay-foundation--m3h7-sky-and-static-specials)
 (M3h7 current, M3h8 next), the
 [COMPATIBILITY section](COMPATIBILITY.md#original-monsters-with-sky-and-static-specials)
 with its limits rows and the corrected sky wording of the real-map section (only

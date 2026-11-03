@@ -1291,5 +1291,10 @@ properties plus V′ (from the public `mover_bounds`), the relaxed item witness,
 reach of every sector height, the transaction (a refused operation keeps every byte),
 the exit and reborn refusals and the DSIM35 round trip. Run the fuzz commands from
 `fuzz/` on a fresh copy of the seeds outside the working tree and delete the corpus
-afterwards; `-runs=0` replays the seeds only. Leak detection is disabled in the documented ASan environment
-(`detect_leaks=0`), not verified.
+afterwards; `-runs=0` replays the seeds only, and as for the specials target a
+coverage-guided campaign needs `-runs` above the seed count plus one (the seed tool
+writes 4,428 seeds). The fuzz workspace is nightly-only and CI only format-checks it, so
+the campaigns are a local step. Run measurements alone, with no fuzzing, builds or tests
+at the same time. Observations belong to [the engineering record](validation/M3H8.md).
+Leak detection is disabled in the documented ASan environment (`detect_leaks=0`), not
+verified.
