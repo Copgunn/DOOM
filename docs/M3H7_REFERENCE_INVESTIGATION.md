@@ -781,6 +781,41 @@ runtime steps keep their order.
 14. **Crushers** (and with them the crush-blood evaluation order of §2.10): deferred
     (**recommended**); E1M1 does not need them.
 
+**Owner decisions, recorded 2026-11-03 before any runtime change (Phase 2 implements
+Stage A exactly as §4.2 and §6 describe):**
+
+1. Approved: split. M3h7 is Stage A (sky and static specials); M3h8 is Stage B
+   (movers). Every new budget is written as a formula of the roster bounds.
+2. Approved: `PlayerMonstersSpecialsV1`, wire 18, DSIM34, context
+   `PLAYER-MONSTERS-SPECIALS-1-MEDIUM-v1` now; `PlayerMonstersMoversV1`, wire 19,
+   DSIM35, `PLAYER-MONSTERS-MOVERS-1-MEDIUM-v1` reserved for M3h8.
+3. Approved: Stage A admits every non-mover, non-exit sector special (1–5, 7–9, 12, 13,
+   16, 17) plus line special 48 on one-sided lines only. Stage B later admits exactly
+   E1M1's seven line types.
+4. Approved: sector thinkers live in the same ordered store as mobjs, with their own
+   handle kind and a slot class bounded at load; the 320-slot roster proof is untouched.
+5. Approved: scroll offsets are derived, not stored; sector sounds are recorded like
+   the existing sound requests; light changes are visible in the persistent fields and
+   get no extra event.
+6. Approved: sky in Stage A with the M3h6 §6 plan.
+7. Approved as recommended, for M3h8 (recorded, not implemented in M3h7): the `spechit`
+   2 × 2 window load rule plus the `SpecialCross` runtime witness.
+8. Approved as recommended, for M3h8: V′ and the relaxed item witness under the movers
+   policy only.
+9. Approved as recommended, for M3h8: the §4.4 mover load rules.
+10. Approved, for M3h8: the exit tic completes, `level.exit` is set and the next
+    `advance` returns a checked error that preserves the state.
+11. Approved: tag 0 is faithful, counted by the IWAD tool.
+12. Approved: an explicit `spawn_level_specials`, run once, after the THING spawns and
+    the player body.
+13. Approved as recommended, for M3h8: a sparse copy-on-write sector overlay.
+14. Approved: crushers deferred.
+
+Out of scope for M3h7: everything in Stage B, every other line special, sector specials
+10, 11 and 14, `BT_USE` and roster scale. No IWAD was available to the Phase 2 session
+(no owner-authorized Drive connector); the §5.6 measurements stay **to be measured
+locally by the owner**.
+
 ## 8. Follow-ups and risks
 
 - **Not needed by E1M1, deferred**: crushers and ceilings, locked doors and keys,
@@ -813,5 +848,6 @@ runtime steps keep their order.
 
 ## 9. Status / next step
 
-Status: **investigation complete** (Phase 1, documentation only; no runtime, test,
-generator, fixture or CI change). Phase 2 awaits the owner decisions of §7.
+Status: **investigation complete; owner decisions recorded (§7); Phase 2 Stage A in
+progress** on `feat/m3h7-doors-specials-sky`. Completed Phase 2 steps of §6 are listed
+here as they land: step 1 (decisions).
