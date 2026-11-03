@@ -387,3 +387,161 @@ fn the_switch_match_follows_the_source_scan_order() {
         );
     }
 }
+
+/// DSIM35 frame bytes with field `path` replaced by `value` (`None` removes it).
+fn dsim35_with(bytes: &[u8], path: &str, value: Option<&[u8]>) -> Vec<u8> {
+    let view = Diagnostic::decode_movers(bytes, DiagnosticLimits::default()).unwrap();
+    let mut fields = Vec::new();
+    let mut at = 16;
+    while at < bytes.len() {
+        let n = u32::from_le_bytes(bytes[at..at + 4].try_into().unwrap()) as usize;
+        let name = std::str::from_utf8(&bytes[at + 4..at + 4 + n]).unwrap();
+        at += 4 + n;
+        let m = u64::from_le_bytes(bytes[at..at + 8].try_into().unwrap()) as usize;
+        let v = &bytes[at + 8..at + 8 + m];
+        at += 8 + m;
+        assert_eq!(view.field(name), Some(v));
+        if name == path {
+            if let Some(value) = value {
+                fields.push((name, value.to_vec()));
+            }
+        } else {
+            fields.push((name, v.to_vec()));
+        }
+    }
+    let mut out = b"DSIM".to_vec();
+    out.extend(35_u32.to_le_bytes());
+    out.extend((fields.len() as u64).to_le_bytes());
+    for (name, v) in fields {
+        out.extend((name.len() as u32).to_le_bytes());
+        out.extend(name.as_bytes());
+        out.extend((v.len() as u64).to_le_bytes());
+        out.extend(v);
+    }
+    out
+}
+
+/// Every earlier reader rejects 35, `decode_specials` (34) included, and the v35
+/// reader rejects 34; a capture of the movers policy is version 35, policy 19.
+#[test]
+fn dsim35_readers_reject_other_versions_and_the_movers_capture_is_35() {
+    let limits = DiagnosticLimits::default();
+    let v35: &[u8] = include_bytes!("../../../tests/reference/m3h8_state_8_300.bin");
+    let v34: &[u8] = include_bytes!("../../../tests/reference/m3h7_state_0_0.bin");
+    type Reader =
+        fn(&'static [u8], DiagnosticLimits) -> Result<Diagnostic<'static>, DiagnosticError>;
+    let readers: [Reader; 15] = [
+        Diagnostic::decode,
+        Diagnostic::decode_v20,
+        Diagnostic::decode_player,
+        Diagnostic::decode_pistol,
+        Diagnostic::decode_weapons,
+        Diagnostic::decode_pickups,
+        Diagnostic::decode_armor,
+        Diagnostic::decode_bonuses,
+        Diagnostic::decode_monsters,
+        Diagnostic::decode_imps,
+        Diagnostic::decode_map_scale,
+        Diagnostic::decode_heights,
+        Diagnostic::decode_diagonal,
+        Diagnostic::decode_real_map,
+        Diagnostic::decode_specials,
+    ];
+    for read in readers {
+        assert_eq!(read(v35, limits).err(), Some(DiagnosticError::Version(35)));
+    }
+    assert!(Diagnostic::decode_specials(v34, limits).is_ok());
+    assert_eq!(
+        Diagnostic::decode_movers(v34, limits).err(),
+        Some(DiagnosticError::Version(34))
+    );
+    let view = Diagnostic::decode_movers(v35, limits).unwrap();
+    assert_eq!(view.version(), 35);
+    assert_eq!(view.field("profile"), Some(19_u32.to_le_bytes().as_slice()));
+    let sim = movers(&room(0)).unwrap();
+    let snap = sim.snapshot();
+    assert_eq!(snap.version(), 35);
+    let bytes = snap.diagnostic_bytes(limits).unwrap();
+    assert_eq!(
+        Diagnostic::decode_movers(&bytes, limits)
+            .unwrap()
+            .encode(limits)
+            .unwrap(),
+        bytes
+    );
+}
+
+/// The v35 reader checks the policy identity and the DSIM35 fields: a frame naming
+/// another policy or context, a button outside its domain or on a non-SR line, a
+/// runtime special a line cannot take, a missing button slot or line special,
+/// and non-boolean `use_down`/`level.exit` are rejected.
+#[test]
+fn dsim35_reader_rejects_policy_and_field_violations() {
+    let limits = DiagnosticLimits::default();
+    let v35: &[u8] = include_bytes!("../../../tests/reference/m3h8_state_8_300.bin");
+    let reject = |path: &str, value: Option<&[u8]>| {
+        Diagnostic::decode_movers(&dsim35_with(v35, path, value), limits).err()
+    };
+    assert!(Diagnostic::decode_movers(&dsim35_with(v35, "tic", None), limits).is_err());
+    assert_eq!(
+        reject("profile", Some(&18_u32.to_le_bytes())),
+        Some(DiagnosticError::Schema)
+    );
+    assert_eq!(
+        reject(
+            "context.schema",
+            Some(b"PLAYER-MONSTERS-SPECIALS-1-MEDIUM-v1")
+        ),
+        Some(DiagnosticError::Schema)
+    );
+    // Slot 0 runs on SR line 1 in this capture.
+    let view = Diagnostic::decode_movers(v35, limits).unwrap();
+    assert_eq!(
+        view.field("button.0.line"),
+        Some(1_u16.to_le_bytes().as_slice())
+    );
+    assert_eq!(
+        reject("button.0.btimer", Some(&36_i32.to_le_bytes())),
+        Some(DiagnosticError::Identity)
+    );
+    assert_eq!(
+        reject("button.0.line", Some(&10_u16.to_le_bytes())),
+        Some(DiagnosticError::Identity)
+    );
+    assert_eq!(
+        reject("button.0.soundorg", Some(&3_u16.to_le_bytes())),
+        Some(DiagnosticError::Identity)
+    );
+    assert_eq!(
+        reject("button.0.btimer", Some(&0_i32.to_le_bytes())),
+        Some(DiagnosticError::Structure)
+    );
+    assert_eq!(
+        reject("button.15.btimer", None),
+        Some(DiagnosticError::Structure)
+    );
+    // Line 1 is SR 63 (never cleared); line 10 is the S1 exit (may read 0).
+    assert_eq!(
+        reject("line.1.special", Some(&0_i16.to_le_bytes())),
+        Some(DiagnosticError::Identity)
+    );
+    assert!(
+        Diagnostic::decode_movers(
+            &dsim35_with(v35, "line.10.special", Some(&0_i16.to_le_bytes())),
+            limits
+        )
+        .is_ok()
+    );
+    assert_eq!(
+        reject("line.10.special", None),
+        Some(DiagnosticError::Structure)
+    );
+    assert_eq!(
+        reject("original_player.0.use_down", Some(&[2])),
+        Some(DiagnosticError::Structure)
+    );
+    assert_eq!(
+        reject("level.exit", Some(&[2])),
+        Some(DiagnosticError::Structure)
+    );
+}

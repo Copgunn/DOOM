@@ -1664,15 +1664,14 @@ other new observer rows are not events. Its full bytes and PBE1 ordered events p
 the matching Rust changes. Decoding remains observation, not executable world
 restoration.
 
-## DSIM v35 — original doors, lifts, floors, switches and the exit (draft)
+## DSIM v35 — original doors, lifts, floors, switches and the exit
 
-**Draft.** This section is the projection the Rust implementation of
-`PlayerMonstersMoversV1` must reproduce byte for byte. Only the independent Python
-encoder exists so far ([movers projection](../tools/reference/movers_snapshot.py) and
-[its generator](../tools/reference/m3h8_snapshot_goldens.py)); the Rust writer, the
-`Diagnostic::decode_movers` reader and their tests land in a later step of the
-[M3h8 plan](M3H8_REFERENCE_INVESTIGATION.md#12-implementation-plan-one-commit-per-step-evidence-before-the-runtime-change).
-Until then no Rust code emits or reads version 35.
+`PlayerMonstersMoversV1` captures are version 35; `Diagnostic::decode_movers` is its
+explicit reader. The Rust writer reproduces the independent Python projection
+([movers projection](../tools/reference/movers_snapshot.py) and
+[its generator](../tools/reference/m3h8_snapshot_goldens.py)) byte for byte at every
+committed capture, and its event stream frame for frame
+([full replay](TESTING.md#original-doors-lifts-floors-switches-and-the-exit-c-evidence)).
 
 Version 35 selects policy 19 (`PlayerMonstersMoversV1`, wire 19), the unchanged original
 registry schema and context `PLAYER-MONSTERS-MOVERS-1-MEDIUM-v1`. Every earlier
@@ -1763,7 +1762,7 @@ store above) for movers; heights, `frac` and speeds are i32 16.16.
 | 9 | Thing clipped (`PIT_ChangeSector`) | actor ID, u8 outcome (0 fits, 1 corpse to `S_GIBS`, 2 dropped item removed, 3 non-shootable left as is, 4 `nofit`), i32 `z`, i32 `floorz`, i32 `ceilingz` after `P_ThingHeightClip` | after the existing pickup, state-entry or removal events the clip caused, in the source's blockbox and link order |
 | 10 | Mover removed (`P_RemoveThinker`) | mover ID | where the mover finishes |
 | 11 | Mover unlinked | mover ID | in the thinker pass where its marked entry is reached |
-| 12 | Sector sound | u8 origin (1 sector `soundorg`, 2 the address of `buttonlist[index].soundorg`), u16 index, u16 sound | where `S_StartSound` runs |
+| 12 | Sector sound | u8 origin (1 sector `soundorg`, 2 the address of `buttonlist[index].soundorg`), u16 index, u16 sound | where `S_StartSound` runs; a button's restore sound (origin 2, only `P_UpdateSpecials` makes it) is in the Specials phase, after that phase's record |
 | 13 | Exit (`G_ExitLevel`) | u8 secret exit (always 0) | inside the S1 exit switch's use, after the switch sound and before that use's sub-tag 2 record |
 | 14 | Reborn requested | u8 player slot (0) | last record of the players phase of the tic whose dead player held `BT_USE` |
 
@@ -1782,5 +1781,22 @@ projection without editing it. It takes the heights from `MH`, the line specials
 `ML`, the button slots from `MB`, `use_down`, the exit and the player state from `MZ` and `P`, the shared order and
 the records from `TK` with the slots from `MM` and `SF`, and the tag-26 events from `MA`,
 `MI`, `MU`, `MX`/`MY`, `MP`, `MM`, `ME`, `MV`, `MC`, `HC`/`MT`, `SD`, `SF`, `SO` and `MG`
-rows. Its full bytes and PBE1 ordered events precede the matching Rust changes. Decoding
-remains observation, not executable world restoration.
+rows. Its full bytes and PBE1 ordered events were committed before the matching Rust
+changes. Decoding remains observation, not executable world restoration.
+
+The v35 reader applies every DSIM34 check that still holds (identity, schema, handles,
+pickups with the relaxed item witness of
+[§4.2](M3H8_REFERENCE_INVESTIGATION.md#42-b3-the-relaxed-item-witness), weapons, armor,
+bonus statistics, live fireballs, light records, sector lights and specials, the secret
+count) and checks the v35 fields against the encoded map: store slots at most three per
+sector; light records at generation 1, one per light sector of its kind; door, plat
+and floor records within their field domains with at most one live mover per sector;
+every occupied slot once in `thinker.shared_order` at its generation and the actor
+subsequence equal to `thinker.order`; `line.{i}.special` present exactly for the lines
+with a nonzero map special, equal to it or 0 on a W1 (36, 38, 109) or S1 (11) line; the
+16 button slots (a running one on a distinct SR 63 line, timer 1..35, `soundorg` the
+line's front sector; a free one with no further fields); booleans `use_down` and
+`level.exit`; `original_player.0.state` 2 only with health 0; tag-26 payload widths and
+their lines, sectors, handles and small domains; and `S_GIBS` actors (monsters or the
+player, admitted only by this reader) with height and radius 0, `MF_SOLID` clear and
+health at most 0.

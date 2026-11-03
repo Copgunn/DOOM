@@ -54,7 +54,7 @@
     "tools/reference/m3h8_snapshot_goldens.py": "3a8b28ca0626d20ece66caddf2bec3b5b6e6b80052f37749269043aa6221e1b5",
     "tools/reference/map_scale_snapshot.py": "93022a2fe5a30c02b4c56fdf9fa7be00809299bdec53881bf141ce3ca588024a",
     "tools/reference/monsters_snapshot.py": "19723c4ec5ede24693de0b83c842ec01fb33ae9d3a9076843245f190cfbcd153",
-    "tools/reference/movers_snapshot.py": "040d020e98ca97611def6caeb90345ae33636bf6d40d02c983bb3beec818e503",
+    "tools/reference/movers_snapshot.py": "a96152e4e5f5faf416e9deae3d6546ace34ef73a4e02acad79630f06ecf59692",
     "tools/reference/pickup_snapshot.py": "6abd238d983ac893d6473fe843a61daa15c2941b99aabc410f5ec74b59a8cbc9",
     "tools/reference/pistol_snapshot.py": "9119b1d55a4a18fb15f18bf673ed6204068e27ca20c0ad30559485a498333605",
     "tools/reference/player_execution_snapshot.py": "98a5c4a37cc43ce901636cd6504f891dbad19e86440efeb25b4596e69800e336",
@@ -83,8 +83,8 @@
   },
   "ordered_event_fields": 80382,
   "outputs_sha256": {
-    "tests/reference/m3h8_events.dref": "732e03f6a784ad03751a14a571872b4d7ee18ac3ae08be7279658c3d83aa3399",
-    "tests/reference/m3h8_snapshots.csv": "d23e5f7f406673537fb23bf4d36df0252913cbe50b59208b4efdb8e77aaba3d8",
+    "tests/reference/m3h8_events.dref": "3a05161b0112c36466f4e6faeafc0ad757b54cac9209480595689b109ac460ce",
+    "tests/reference/m3h8_snapshots.csv": "9ad94eba49e535176a896922473d8b8fb945aec88081e02e4974f85dbc78f6be",
     "tests/reference/m3h8_state_0_20.bin": "5f1dfdbae7b08f475593db7b4ef75dcf6db86751f71c772fdf60e980018d9a12",
     "tests/reference/m3h8_state_0_295.bin": "d03c599d83e1e694e154ee7cf838b31e3117aa96ec5d94dbb71f12bfd1d8bf8c",
     "tests/reference/m3h8_state_0_82.bin": "a0f1b63eedfd04fbccd6014cd98158508d8936d1b624a622ce66897d41606c92",
@@ -99,7 +99,7 @@
     "tests/reference/m3h8_state_8_300.bin": "d836c0183075a0717a0b2f4e35e693cc7a25b5c9e8ad51418e7f451fb0d58447",
     "tests/reference/m3h8_state_9_3.bin": "aba93f9833f7d10d83a4b916fed1835e2a4c0a99c914afd3f9548304eb9b919c"
   },
-  "packed_event_bytes": 118599,
+  "packed_event_bytes": 118601,
   "schema": "DSIM-v35",
   "scope": "Original C fields and source event order, independent schema/birth-generation projection. Bounded command/weapon stage then original thinkers, not full player/ticker execution. DSIM34 layout plus level.exit, the moving sector floor and ceiling (MH rows, sector specialdata checked against the store), the runtime line specials (ML rows), the player use_down (MZ rows), the 16 buttonlist slots (MB rows: btimer, and line and soundorg sector of a running button; decision N9), door/plat/floor records and removed movers in the sector-thinker store and the shared order (TK, MM, SD, SF rows; lowest free slot, generation + 1 at unlink) and tag-26 mover events (MA, MI, MU, MX/MY, MP, MM, ME, MV, MC exit, HC/MT, SD, SF, SO, MG exit, the reborn request). Use-trace traversal rows, the position checks of a height clip, MK, MB, MW, MQ, MN and mover LE rows are not events. A case that requested an exit or a reborn ends at that op. Without tag 26 the event stream equals the DSIM34 projection of the same rows. No Rust observations.",
   "store_slots": 320

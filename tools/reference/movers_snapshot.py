@@ -271,6 +271,36 @@ def movers(fields,case,op,thinkers,generations,mh,ml,mz,state,tags,mb=()):
     assert not inside
     return stored
 SECTORS={}
+RESTORE=bytes([MOVERS,SUBTAGS['sector_sound'],2])
+def specials_phase(values):
+    """P_UpdateSpecials runs in the Specials phase: a button's restore sound (sub-tag 12,
+    origin 2, the address of its buttonlist soundorg field; only P_UpdateSpecials makes
+    it) follows the frame's Specials phase record (b'\\0\\2'), which the frozen chain
+    appends after the op's thinker events."""
+    moved=[v for v in values if v[:3]==RESTORE]
+    if not moved:return values
+    rest=[v for v in values if v[:3]!=RESTORE];at=rest.index(b'\0\2')+1
+    return rest[:at]+moved+rest[at:]
+def phase_fields(fields):
+    """specials_phase over the events.last.* fields of one frame."""
+    last=[v for p,v in fields if p.startswith('events.last.')and not p.endswith('.count')]
+    moved=iter(specials_phase(last))
+    return [(p,next(moved))if p.startswith('events.last.')and not p.endswith('.count')else(p,v)for p,v in fields]
+def phase_stream(stream):
+    """specials_phase over the last family of every PBE1 frame."""
+    assert stream[:4]==b'PBE1';at=4;out=bytearray(b'PBE1')
+    while at<len(stream):
+        head=struct.unpack_from('<4I',stream,at);at+=16;families=[]
+        for count in head[2:]:
+            values=[]
+            for _ in range(count):
+                size,=struct.unpack_from('<I',stream,at);at+=4;values.append(stream[at:at+size]);at+=size
+            families.append(values)
+        families[0]=specials_phase(families[0])
+        out+=struct.pack('<4I',*head)
+        for values in families:
+            for v in values:out+=struct.pack('<I',len(v))+v
+    return bytes(out)
 def build(cases,rows,maps,prefix,full):
     """DSIM35 outputs of the stripped rows (strip() first); a case that requested an
     exit or a reborn ends at that op (its MG end-of-op row), so its frames end there."""
@@ -296,7 +326,7 @@ def build(cases,rows,maps,prefix,full):
             data=inner(fields);case,op=next(selected)
             version,old=inherited.decode(data);assert version==VERSION
             lump=dict(old)['map.sectors'];tags=[struct.unpack_from('<h',lump,26*i+24)[0]for i in range(len(lump)//26)]
-            new=movers(old,case,op,thinkers[case,op],tables[case,op],mh[case,op],ml[case,op],mz[case,op],state[case,op],tags,mb[case,op])
+            new=phase_fields(movers(old,case,op,thinkers[case,op],tables[case,op],mh[case,op],ml[case,op],mz[case,op],state[case,op],tags,mb[case,op]))
             added.append(len(new)-len(old));return inherited.encode(new)
         physical.frame=frame
         try:outputs,inventory=real(*a,**k)
@@ -312,6 +342,8 @@ def build(cases,rows,maps,prefix,full):
     try:outputs,inventory=inherited.build(cases,plain_thinkers(rows),maps,prefix,full)
     finally:inherited.VERSION,inherited.POLICY,inherited.CONTEXT,inherited.events,map_scale.execution.build=old
     assert next(selected,None)is None
+    path='tests/reference/'+prefix+'_events.bin'
+    outputs[path]=phase_stream(outputs[path])
     return outputs,inventory
 def plain_thinkers(rows):
     """The rows the DSIM34 layer sees: mover TK entries removed and the light/actor

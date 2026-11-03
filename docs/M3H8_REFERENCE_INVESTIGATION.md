@@ -1216,7 +1216,7 @@ independent DSIM35 projection (`tools/reference/movers_snapshot.py`,
 `m3h8_snapshot_goldens.py`; outputs `tests/reference/m3h8_snapshots.csv`,
 `m3h8_events.dref`, 13 `m3h8_state_*.bin` fixtures, `m3h8_snapshot_contract.json`) from
 the C rows alone, with the byte layout recorded as a
-[draft DSIM v35 section](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit-draft)
+[draft DSIM v35 section](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit)
 for the later Rust writer. Choices made there within §10: the reborn request is the
 source `playerstate` (`PST_REBORN`, value 2) in the existing `original_player.0.state`
 field rather than a second flag; a removed mover not yet unlinked is a store record of
@@ -1422,4 +1422,26 @@ the line specials, each `button.{k}.btimer` and, for a running button, `.line` a
 sound origin is the line's front sector); regenerating changed every capture's size
 and digest (16 to 48 fields more) and all 13 fixtures, while the event stream and its
 digest are unchanged. A running button appears in 13 captures (cases 8, 10 and 11, slot
-0 only), one of them the fixture `m3h8_state_8_300`. Next is step 13, DSIM35 in Rust.
+0 only), one of them the fixture `m3h8_state_8_300`.
+
+Step 13 is done: movers captures are DSIM35 (`snapshot.rs`): the DSIM34 layout plus
+`level.exit`, the runtime line specials and the 16 button slots before `player.0.actor`,
+and `use_down` after the secret count, with the moving heights, the door/plat/floor and
+kind-8 records, the reborn state 2 and the tag-26 events already in place.
+`Diagnostic::decode_movers` reads 35 only (STATE_FORMAT lists its checks; it admits
+`S_GIBS` for monsters and the player with height and radius 0 and `MF_SOLID` clear, and
+the relaxed item witness); every earlier reader, `decode_specials` included, rejects 35
+and `decode_movers` rejects 34 (tests). The full replay (`movers_replay::full`, run in
+debug and release by `tools/reference/check_player_movers.py`, CI step after the M3h8
+evidence steps) matches all 30 scenarios through their last op: 7,001 ops and event
+frames (80,382 event records, equal to the golden stream), all 1,514 captures (digest,
+size, field count, decode round trip), the 13 fixtures byte for byte, 16,657 thinker-list
+rows with every mover record and 108 button rows, plus the partial comparisons (44
+crossings, 234 uses and intercepts, 194 blocked moves). Two corrections found by it: the
+replay's setup now applies the declared `script` 30 (200 health, player and body; five
+scenarios), which the partial replay had not compared; and the independent encoder put
+a button's restore sound (sub-tag 12, origin 2) before the frame's Specials phase record,
+where the frozen DSIM34 chain appends that record after the thinker events, while
+`P_UpdateSpecials` runs in the Specials phase; the encoder now places it after the record
+(three events in cases 8, 10 and 11; their captures' digests changed with them). Next is
+step 14.

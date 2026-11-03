@@ -713,7 +713,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::MapExtent => 19,
         crate::Profile::DemonExpandedMap => 20,
         crate::Profile::OriginalDemon => {
-            if sim.player_policy().has_specials() {
+            if sim.player_policy().has_movers() {
+                35
+            } else if sim.player_policy().has_specials() {
                 34
             } else if sim.player_policy().has_real_map() {
                 33
@@ -747,7 +749,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     // Versions18/19 explicitly compose the untyped static-sector field layout.
     let layout = if matches!(version, 18 | 19) {
         3
-    } else if matches!(version, 20..=34) {
+    } else if matches!(version, 20..=35) {
         17
     } else {
         version
@@ -755,14 +757,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     field(
         &mut fields,
         "profile",
-        (if matches!(version, 21..=34) {
+        (if matches!(version, 21..=35) {
             sim.player_policy().wire_id()
         } else {
             version
         })
         .to_le_bytes(),
     );
-    if matches!(version, 21..=34) {
+    if matches!(version, 21..=35) {
         field(
             &mut fields,
             "registry.schema",
@@ -800,6 +802,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             ),
         ] {
             field(&mut fields, name, value.to_le_bytes());
+            if version == 35 && name == "level.single_player_kill_count" {
+                field(&mut fields, "level.exit", [u8::from(sim.level_exit)]);
+            }
         }
     }
     field(
@@ -821,7 +826,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     );
     let order = sim.actors.order().flat_map(id).collect::<Vec<_>>();
     field(&mut fields, "thinker.order", order);
-    if version == 34 {
+    if matches!(version, 34 | 35) {
         // DSIM34: the one P_RunThinkers list, kind-tagged (0 actor, 1 sector).
         let mut shared = Vec::new();
         for entry in sim.actors.shared_order() {
@@ -959,7 +964,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             }
         }
     }
-    if version == 34 {
+    if matches!(version, 34 | 35) {
         sector_thinker_fields(&mut fields, sim);
     }
     if layout >= 2 {
@@ -1027,7 +1032,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                     optional_id(sim.sound_targets[i]),
                 );
             }
-            if version == 34 {
+            if matches!(version, 34 | 35) {
                 let s = sim.specials.as_ref().expect("specials policy").sectors[i];
                 field(
                     &mut fields,
@@ -1041,6 +1046,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 );
             }
         }
+    }
+    if version == 35 {
+        line_and_button_fields(&mut fields, sim);
     }
     for i in 0..4 {
         field(
@@ -1062,7 +1070,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(layout, 8..=17) && !matches!(version, 22..=34) {
+    if matches!(layout, 8..=17) && !matches!(version, 22..=35) {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,
@@ -1121,14 +1129,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .and_then(|p| p.weapon.and_then(|w| w.pistol())),
         );
     }
-    if matches!(version, 24..=34) {
+    if matches!(version, 24..=35) {
         pack_fields(
             &mut fields,
             sim.original_player
                 .and_then(|p| p.weapon.and_then(|w| w.pack())),
         );
     }
-    if matches!(version, 25..=34) {
+    if matches!(version, 25..=35) {
         let state = sim.original_player.and_then(|p| p.pickups);
         field(
             &mut fields,
@@ -1153,7 +1161,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             );
         }
     }
-    if matches!(version, 26..=34) {
+    if matches!(version, 26..=35) {
         if let Some(armor) = sim.original_player.and_then(|p| p.armor) {
             field(
                 &mut fields,
@@ -1167,13 +1175,20 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             );
         }
     }
-    if version == 34 {
+    if matches!(version, 34 | 35) {
         field(
             &mut fields,
             "original_player.0.secret_count",
             sim.original_player
                 .map_or(0, |p| p.secret_count)
                 .to_le_bytes(),
+        );
+    }
+    if version == 35 {
+        field(
+            &mut fields,
+            "original_player.0.use_down",
+            [u8::from(sim.original_player.is_some_and(|p| p.use_down))],
         );
     }
     if layout == 6 {
@@ -1260,6 +1275,36 @@ fn sector_thinker_fields(fields: &mut Vec<StateField>, sim: &Simulation) {
         };
         for (name, value) in names.iter().zip(extra) {
             field(fields, format!("{prefix}.{name}"), value.to_le_bytes());
+        }
+    }
+}
+
+/// DSIM35 runtime line specials (every line whose map special is nonzero, in line
+/// order) and the 16 `buttonlist` slots (decision N9): `btimer`, then for a running
+/// button its line and `soundorg` sector (STATE_FORMAT "DSIM v35").
+fn line_and_button_fields(fields: &mut Vec<StateField>, sim: &Simulation) {
+    for (i, line) in sim.world.map().linedefs().iter().enumerate() {
+        if line.special != 0 {
+            field(
+                fields,
+                format!("line.{i}.special"),
+                sim.line_specials[i].to_le_bytes(),
+            );
+        }
+    }
+    for (k, slot) in sim.buttons.iter().enumerate() {
+        field(
+            fields,
+            format!("button.{k}.btimer"),
+            i32::from(slot.map_or(0, |b| b.timer)).to_le_bytes(),
+        );
+        if let Some(b) = slot {
+            field(fields, format!("button.{k}.line"), b.line.to_le_bytes());
+            field(
+                fields,
+                format!("button.{k}.soundorg"),
+                b.sector.to_le_bytes(),
+            );
         }
     }
 }

@@ -1222,6 +1222,7 @@ source contract and leaves every historical expectation untouched:
 ```sh
 ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h8_reference.py --check --overflow-check --address-check
 python3 tools/reference/m3h8_snapshot_goldens.py --check
+python3 tools/reference/check_player_movers.py
 ```
 
 The generator compiles the genuine door, plat, floor, switch, use, crossing and
@@ -1233,12 +1234,20 @@ nine-line lane `m3h8_dense9.bin` and `m3h8_contract.json`. `--overflow-check` an
 equals the strict one byte for byte; `spechit` keeps its source size of eight, so a ninth
 write would stop the sanitizer build. Add `--cases` to print the per-scenario inventory
 as JSON lines. `m3h8_snapshot_goldens.py` is the independent
-[draft DSIM35](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit-draft)
+[DSIM35](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit)
 projection of those rows (never of Rust output): it checks
 `tests/reference/m3h8_snapshots.csv`, the ordered events `m3h8_events.dref`, the
 full-byte `m3h8_state_*.bin` fixtures and `m3h8_snapshot_contract.json`, and asserts that
 the event stream without its tag-26 records equals the DSIM34 projection of the same
-rows. The Rust writer and reader, the Rust tests, the example, the fuzz target and the
-measurements of this milestone do not exist yet; their commands will be added here with
-them. Leak detection is disabled in the documented ASan environment
+rows. `check_player_movers.py` runs the full Rust replay (the library test
+`movers_replay::full::full_replay_matches_the_c_rows_and_the_independent_dsim35_goldens`)
+in debug and release and asserts that both pass and print the same summary: all 30
+scenarios through their last op, every C row the replay reads (heights, line specials,
+use latch, exit and player state, crossings, uses, blocked moves, the thinker list
+with every mover record, the button slots), every PBE1 event frame, and at all 1,514
+captures the independent digest, size and field count, the 13 fixtures byte for byte
+and the `Diagnostic::decode_movers` round trip. It is a library test because the
+replay's declared damage input uses the crate-internal checked transaction. The
+example, the fuzz target and the measurements of this milestone do not exist yet;
+their commands will be added here with them. Leak detection is disabled in the documented ASan environment
 (`detect_leaks=0`), not verified.

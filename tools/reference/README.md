@@ -495,16 +495,18 @@ rows (sector heights, runtime line specials, mover records, `spechit` entries, u
 crossing calls, plane steps, `P_ChangeSector` outcomes, sector sounds, the exit and the
 reborn request) are documented in the contract's `row_formats`.
 [movers_snapshot.py](movers_snapshot.py) and
-[m3h8_snapshot_goldens.py](m3h8_snapshot_goldens.py) project the draft DSIM35 from the C
+[m3h8_snapshot_goldens.py](m3h8_snapshot_goldens.py) project DSIM35 from the C
 rows: the DSIM34 layout under version 35, policy 19 and the movers context, plus
 `level.exit`, the moving sector heights (`MH`), the runtime line specials (`ML`), the
-player's `use_down` (`MZ`), door, plat, floor and removed-mover records in the
+player's `use_down` (`MZ`), the button slots (`MB`), door, plat, floor and removed-mover records in the
 sector-thinker store and the shared order (`TK`, `MM`, `SD`, `SF`) and tag-26 events for
 use, crossing, mover starts and calls, plane steps, `P_ChangeSector` clips, mover removal
 and unlinking, sector sounds, the exit and the reborn request; the generator also checks
-that the stream without tag 26 is the DSIM34 projection of the same rows. See
+that the stream without tag 26 is the DSIM34 projection of the same rows.
+[check_player_movers.py](check_player_movers.py) runs the full Rust replay against those
+rows and goldens in debug and release. See
 [investigation](../../docs/M3H8_REFERENCE_INVESTIGATION.md), the
-[draft DSIM v35 schema](../../docs/STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit-draft) and
+[DSIM v35 schema](../../docs/STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit) and
 [commands](../../docs/TESTING.md#original-doors-lifts-floors-switches-and-the-exit-c-evidence).
 
 ## Historical raw-trace loading
