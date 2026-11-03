@@ -198,6 +198,27 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        // DSIM34 tag 25 (STATE_FORMAT "DSIM v34").
+        Event::Special(event) => {
+            b.push(25);
+            match event {
+                crate::SpecialEvent::Secret { sector, count } => {
+                    b.push(0);
+                    b.extend(sector.to_le_bytes());
+                    b.extend(count.to_le_bytes());
+                }
+                crate::SpecialEvent::SkyRemoval { actor, line } => {
+                    b.push(1);
+                    b.extend(id(*actor));
+                    b.extend(line.to_le_bytes());
+                }
+                crate::SpecialEvent::SkyShot { reason, line, z } => {
+                    b.extend([2, *reason]);
+                    b.extend(line.to_le_bytes());
+                    b.extend(z.bits().to_le_bytes());
+                }
+            }
+        }
         Event::Armor(event) => {
             b.push(24);
             b.extend(id(event.target));
@@ -541,7 +562,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::MapExtent => 19,
         crate::Profile::DemonExpandedMap => 20,
         crate::Profile::OriginalDemon => {
-            if sim.player_policy().has_real_map() {
+            if sim.player_policy().has_specials() {
+                34
+            } else if sim.player_policy().has_real_map() {
                 33
             } else if sim.player_policy().has_diagonals() {
                 32
@@ -573,7 +596,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     // Versions18/19 explicitly compose the untyped static-sector field layout.
     let layout = if matches!(version, 18 | 19) {
         3
-    } else if matches!(version, 20..=33) {
+    } else if matches!(version, 20..=34) {
         17
     } else {
         version
@@ -581,14 +604,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     field(
         &mut fields,
         "profile",
-        (if matches!(version, 21..=33) {
+        (if matches!(version, 21..=34) {
             sim.player_policy().wire_id()
         } else {
             version
         })
         .to_le_bytes(),
     );
-    if matches!(version, 21..=33) {
+    if matches!(version, 21..=34) {
         field(
             &mut fields,
             "registry.schema",
@@ -647,6 +670,20 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     );
     let order = sim.actors.order().flat_map(id).collect::<Vec<_>>();
     field(&mut fields, "thinker.order", order);
+    if version == 34 {
+        // DSIM34: the one P_RunThinkers list, kind-tagged (0 actor, 1 sector).
+        let mut shared = Vec::new();
+        for entry in sim.actors.shared_order() {
+            let (kind, slot, generation) = match entry {
+                crate::ThinkerId::Actor(a) => (0, a.slot(), a.generation()),
+                crate::ThinkerId::Sector(s) => (1, s.slot(), s.generation()),
+            };
+            shared.push(kind);
+            shared.extend(slot.to_le_bytes());
+            shared.extend(generation.to_le_bytes());
+        }
+        field(&mut fields, "thinker.shared_order", shared);
+    }
     for (i, slot) in sim.actors.slots.iter().enumerate() {
         let prefix = format!("actor.{i}");
         field(
@@ -771,6 +808,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             }
         }
     }
+    if version == 34 {
+        sector_thinker_fields(&mut fields, sim);
+    }
     if layout >= 2 {
         field(
             &mut fields,
@@ -836,6 +876,19 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                     optional_id(sim.sound_targets[i]),
                 );
             }
+            if version == 34 {
+                let s = sim.specials.as_ref().expect("specials policy").sectors[i];
+                field(
+                    &mut fields,
+                    format!("sector.{i}.light"),
+                    s.light.to_le_bytes(),
+                );
+                field(
+                    &mut fields,
+                    format!("sector.{i}.special"),
+                    s.special.to_le_bytes(),
+                );
+            }
         }
     }
     for i in 0..4 {
@@ -858,7 +911,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(layout, 8..=17) && !matches!(version, 22..=33) {
+    if matches!(layout, 8..=17) && !matches!(version, 22..=34) {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,
@@ -912,14 +965,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .and_then(|p| p.weapon.and_then(|w| w.pistol())),
         );
     }
-    if matches!(version, 24..=33) {
+    if matches!(version, 24..=34) {
         pack_fields(
             &mut fields,
             sim.original_player
                 .and_then(|p| p.weapon.and_then(|w| w.pack())),
         );
     }
-    if matches!(version, 25..=33) {
+    if matches!(version, 25..=34) {
         let state = sim.original_player.and_then(|p| p.pickups);
         field(
             &mut fields,
@@ -944,7 +997,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             );
         }
     }
-    if matches!(version, 26..=33) {
+    if matches!(version, 26..=34) {
         if let Some(armor) = sim.original_player.and_then(|p| p.armor) {
             field(
                 &mut fields,
@@ -957,6 +1010,15 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 armor.points.to_le_bytes(),
             );
         }
+    }
+    if version == 34 {
+        field(
+            &mut fields,
+            "original_player.0.secret_count",
+            sim.original_player
+                .map_or(0, |p| p.secret_count)
+                .to_le_bytes(),
+        );
     }
     if layout == 6 {
         weapon_fields(&mut fields, sim.weapon_player.as_ref());
@@ -975,6 +1037,69 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         tic: sim.tic,
         state: fields,
         map: Arc::clone(&sim.map_fields),
+    }
+}
+
+/// DSIM34 sector-thinker store: slot count, then per slot generation, occupied and,
+/// when occupied, kind, sector, count (not for a glow), minlight, maxlight and the
+/// kind's own fields (STATE_FORMAT "DSIM v34").
+fn sector_thinker_fields(fields: &mut Vec<StateField>, sim: &Simulation) {
+    use crate::SectorThinker as T;
+    count(
+        fields,
+        "sector_thinkers.slot_count",
+        sim.actors.sector_slots.len(),
+    );
+    for (j, slot) in sim.actors.sector_slots.iter().enumerate() {
+        let prefix = format!("sector_thinker.{j}");
+        field(
+            fields,
+            format!("{prefix}.generation"),
+            slot.generation.to_le_bytes(),
+        );
+        field(
+            fields,
+            format!("{prefix}.occupied"),
+            [u8::from(slot.entry.is_some())],
+        );
+        let Some(entry) = &slot.entry else {
+            continue;
+        };
+        let (kind, sector, count, light, extra): (u8, u16, Option<i32>, [i32; 2], &[i32]) =
+            match &entry.value {
+                T::Flash(t) => (
+                    1,
+                    t.sector,
+                    Some(t.count),
+                    [t.minlight, t.maxlight],
+                    &[t.maxtime, t.mintime],
+                ),
+                T::Strobe(t) => (
+                    2,
+                    t.sector,
+                    Some(t.count),
+                    [t.minlight, t.maxlight],
+                    &[t.darktime, t.brighttime],
+                ),
+                T::Glow(t) => (3, t.sector, None, [t.minlight, t.maxlight], &[t.direction]),
+                T::Flicker(t) => (4, t.sector, Some(t.count), [t.minlight, t.maxlight], &[]),
+            };
+        field(fields, format!("{prefix}.kind"), [kind]);
+        field(fields, format!("{prefix}.sector"), sector.to_le_bytes());
+        if let Some(count) = count {
+            field(fields, format!("{prefix}.count"), count.to_le_bytes());
+        }
+        field(fields, format!("{prefix}.minlight"), light[0].to_le_bytes());
+        field(fields, format!("{prefix}.maxlight"), light[1].to_le_bytes());
+        let names: &[&str] = match kind {
+            1 => &["maxtime", "mintime"],
+            2 => &["darktime", "brighttime"],
+            3 => &["direction"],
+            _ => &[],
+        };
+        for (name, value) in names.iter().zip(extra) {
+            field(fields, format!("{prefix}.{name}"), value.to_le_bytes());
+        }
     }
 }
 

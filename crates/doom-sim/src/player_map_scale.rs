@@ -39,7 +39,7 @@ pub const HEIGHTS_Z_UNITS: u32 = MAP_SCALE_EXTENT_UNITS;
 /// `ML_DONTPEGBOTTOM`, `ML_SECRET`, `ML_DONTDRAW` and `ML_MAPPED` are renderer and
 /// automap data with no reader in this project (doomdata.h).
 pub const HEIGHTS_LINE_FLAGS: u16 = 1 | 2 | 8 | 16 | 32 | 64 | 128 | 256;
-const ML_TWOSIDED: u16 = 4;
+pub(crate) const ML_TWOSIDED: u16 = 4;
 /// sounds.h `sfx_oof`: the landing sound `P_ZMovement` requests for a player whose
 /// `momz` is below `-GRAVITY*8` on floor contact. A sound request only.
 pub(crate) const SFX_OOF: u16 = 34;
@@ -89,6 +89,10 @@ pub enum MapScaleError {
     /// leave the `short` range). `ArithmeticCertificate::evaluate` names the
     /// clause.
     Arithmetic,
+    /// Under the specials policy, a sector light level outside the range where
+    /// the `p_lights.c` arithmetic stays inside `short lightlevel`
+    /// (`i16::MIN + 64 ..= i16::MAX - 64`), refused at load.
+    Light,
     /// Under the real-map policy, a trace of this tic would write the source's
     /// 129th intercept (`MAXINTERCEPTS`, p_local.h), which the original writes past
     /// `intercepts[]` (undefined): the tic is refused and the state before it is

@@ -54,6 +54,12 @@ pub enum OriginalExecutionProfile {
     /// 129th intercept of one trace refused (`MapScaleError::Intercepts`), the
     /// second refused legal source behavior after the corner jump.
     PlayerMonstersRealMapV1,
+    /// The real-map world plus sky ceilings and the static sector specials of the
+    /// M3h7 note §4.2: light thinkers in the shared thinker order, damage floors,
+    /// secrets and one-sided scrolling walls (line special 48, presentation only),
+    /// with sky-ceiling fireball removal and sky-ended hitscans. Every other line
+    /// special, sector specials 10, 11, 14 and `BT_USE` stay rejected.
+    PlayerMonstersSpecialsV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -76,6 +82,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersHeightsV1 => 15,
             Self::PlayerMonstersDiagonalV1 => 16,
             Self::PlayerMonstersRealMapV1 => 17,
+            Self::PlayerMonstersSpecialsV1 => 18,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -98,6 +105,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersHeightsV1 => PLAYER_HEIGHTS_CONTEXT_SCHEMA,
             Self::PlayerMonstersDiagonalV1 => PLAYER_DIAGONAL_CONTEXT_SCHEMA,
             Self::PlayerMonstersRealMapV1 => PLAYER_REAL_MAP_CONTEXT_SCHEMA,
+            Self::PlayerMonstersSpecialsV1 => PLAYER_SPECIALS_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_armor(self) -> bool {
@@ -111,6 +119,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersHeightsV1
                 | Self::PlayerMonstersDiagonalV1
                 | Self::PlayerMonstersRealMapV1
+                | Self::PlayerMonstersSpecialsV1
         )
     }
     pub(crate) const fn has_player_bonuses(self) -> bool {
@@ -123,6 +132,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersHeightsV1
                 | Self::PlayerMonstersDiagonalV1
                 | Self::PlayerMonstersRealMapV1
+                | Self::PlayerMonstersSpecialsV1
         )
     }
     /// Original former humans, a bounded mixed roster, infighting and drops.
@@ -135,6 +145,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersHeightsV1
                 | Self::PlayerMonstersDiagonalV1
                 | Self::PlayerMonstersRealMapV1
+                | Self::PlayerMonstersSpecialsV1
         )
     }
     /// The original Imp and its fireball in the mixed roster.
@@ -146,6 +157,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersHeightsV1
                 | Self::PlayerMonstersDiagonalV1
                 | Self::PlayerMonstersRealMapV1
+                | Self::PlayerMonstersSpecialsV1
         )
     }
     /// Wall-derived travel bounds, 320 slots and 208 live fireballs inside a walled
@@ -157,6 +169,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersHeightsV1
                 | Self::PlayerMonstersDiagonalV1
                 | Self::PlayerMonstersRealMapV1
+                | Self::PlayerMonstersSpecialsV1
         )
     }
     /// Two-sided lines, static floor/ceiling heights, vertical movement, the
@@ -168,6 +181,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersHeightsV1
                 | Self::PlayerMonstersDiagonalV1
                 | Self::PlayerMonstersRealMapV1
+                | Self::PlayerMonstersSpecialsV1
         )
     }
     /// Linedefs of any direction inside a closed one-sided boundary, the parity
@@ -175,13 +189,24 @@ impl OriginalExecutionProfile {
     pub(crate) const fn has_diagonals(self) -> bool {
         matches!(
             self,
-            Self::PlayerMonstersDiagonalV1 | Self::PlayerMonstersRealMapV1
+            Self::PlayerMonstersDiagonalV1
+                | Self::PlayerMonstersRealMapV1
+                | Self::PlayerMonstersSpecialsV1
         )
     }
     /// The real-map policy: format-sized static geometry, the arithmetic and
     /// slide-window certificates, starts as records, the intercept witness.
     pub(crate) const fn has_real_map(self) -> bool {
-        matches!(self, Self::PlayerMonstersRealMapV1)
+        matches!(
+            self,
+            Self::PlayerMonstersRealMapV1 | Self::PlayerMonstersSpecialsV1
+        )
+    }
+    /// The specials policy (M3h7 Stage A): sky ceilings, the static sector
+    /// specials and their light thinkers, secrets, damage floors and one-sided
+    /// scrolling walls, under DSIM34. Every other policy rejects them at load.
+    pub(crate) const fn has_specials(self) -> bool {
+        matches!(self, Self::PlayerMonstersSpecialsV1)
     }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
@@ -195,6 +220,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersHeightsV1
                 | Self::PlayerMonstersDiagonalV1
                 | Self::PlayerMonstersRealMapV1
+                | Self::PlayerMonstersSpecialsV1
         )
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -216,6 +242,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersHeightsV1
                 | Self::PlayerMonstersDiagonalV1
                 | Self::PlayerMonstersRealMapV1
+                | Self::PlayerMonstersSpecialsV1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -236,6 +263,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersHeightsV1
                 | Self::PlayerMonstersDiagonalV1
                 | Self::PlayerMonstersRealMapV1
+                | Self::PlayerMonstersSpecialsV1
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -252,6 +280,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersHeightsV1
                 | Self::PlayerMonstersDiagonalV1
                 | Self::PlayerMonstersRealMapV1
+                | Self::PlayerMonstersSpecialsV1
         )
     }
     /// The four-weapon pack (fists, shotgun, chaingun, manual switching): every
@@ -276,6 +305,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersHeightsV1
                 | Self::PlayerMonstersDiagonalV1
                 | Self::PlayerMonstersRealMapV1
+                | Self::PlayerMonstersSpecialsV1
         )
     }
 }
@@ -620,7 +650,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersMapScaleV1
             | OriginalExecutionProfile::PlayerMonstersHeightsV1
             | OriginalExecutionProfile::PlayerMonstersDiagonalV1
-            | OriginalExecutionProfile::PlayerMonstersRealMapV1 => {
+            | OriginalExecutionProfile::PlayerMonstersRealMapV1
+            | OriginalExecutionProfile::PlayerMonstersSpecialsV1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -670,7 +701,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersMapScaleV1
             | OriginalExecutionProfile::PlayerMonstersHeightsV1
             | OriginalExecutionProfile::PlayerMonstersDiagonalV1
-            | OriginalExecutionProfile::PlayerMonstersRealMapV1 => {
+            | OriginalExecutionProfile::PlayerMonstersRealMapV1
+            | OriginalExecutionProfile::PlayerMonstersSpecialsV1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -937,6 +969,7 @@ impl Simulation {
                 actor_cap,
                 type_envelope: heights,
                 real_map,
+                specials: policy.has_specials(),
             },
         )?;
         sim.boundary = boundary;
@@ -953,6 +986,7 @@ impl Simulation {
                     .has_world_pickups()
                     .then_some(PlayerPickupState::default()),
                 policy,
+                secret_count: 0,
             });
         }
         Ok(sim)

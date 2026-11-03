@@ -110,6 +110,9 @@ pub(crate) struct PlayerRuntime {
     pub weapon: Option<crate::player_weapons::PlayerWeaponRuntime>,
     pub pickups: Option<PlayerPickupState>,
     pub armor: Option<PlayerArmorState>,
+    /// Source `player->secretcount`; changed only by the specials policy's secret
+    /// sectors (encoded from DSIM34).
+    pub secret_count: i32,
 }
 impl std::ops::Deref for PlayerRuntime {
     type Target = OriginalPlayer;
@@ -292,6 +295,10 @@ impl Simulation {
         position: [Fixed; 2],
     ) -> Result<ActorId, SimError> {
         self.original_player.ok_or(PlayerBodyError::Profile)?;
+        // The specials policy's light thinkers follow the body (M3h7 decision 12).
+        if self.level_specials_spawned() {
+            return Err(MapSpawnError::LevelSpecials.into());
+        }
         let id = self.spawn_type(
             ActorTypeId(OriginalActorType::MT_PLAYER.ordinal()),
             position,

@@ -894,3 +894,18 @@ and a separate `SectorThinkerId` slot class whose capacity is fixed at construct
 for every existing policy, payload `SectorThinker` still uninhabited), the actor order,
 `store.head`/`tail` and actor `previous`/`next` are derived as its actor subsequence, and
 every historical fixture, digest and the two-allocation tic plan are unchanged.
+
+Phase 2 step 6 (admission and bodies): `PlayerMonstersSpecialsV1` (wire 18, context
+`PLAYER-MONSTERS-SPECIALS-1-MEDIUM-v1`, `Simulation::original_player_specials_map`) is
+the real-map policy plus the §4.2 load rules, the runtime sector light and special
+staged with the checked plan through a reused spare buffer, the four light thinkers in
+a sector-thinker slot class bounded by the light-sector count (visit budget 320 plus
+that count), the explicit `Simulation::spawn_level_specials` (refused, state unchanged,
+before the player body, twice, after a tic or under another policy; `advance` is
+refused until it ran and THING or body spawns after it), `P_PlayerInSpecialSector`
+between `P_CalcHeight` and the weapon change, null-source environmental damage through
+the shared damage path, secrets, the `ceilingline` sky removal (derived from the
+refused check's openings) and the two sky returns of `PTR_ShootTraverse`; sky identity
+is the `F_SKY1` lookup name of each ceiling, and sector lights outside
+`i16::MIN + 64 ..= i16::MAX - 64` are refused (`MapScaleError::Light`).
+

@@ -17,6 +17,9 @@ pub(crate) struct Inputs<'a> {
     pub perception_inputs: Option<perception::PerceptionInputs<'a>>,
     /// The one-sided boundary of the diagonal policy (the escape witness).
     pub boundary: Option<&'a player_map_scale::Boundary>,
+    /// The specials policy's staged runtime sector lights and specials, written by
+    /// the light thinkers at their turn; `None` under every other policy.
+    pub specials: Option<&'a mut [sector_thinkers::SectorSpecial]>,
 }
 pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
     let Inputs {
@@ -35,6 +38,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
         commands,
         perception_inputs,
         boundary,
+        mut specials,
     } = input;
     let recoverable_refill = player.as_ref().is_some_and(|p| p.policy.has_imps());
     // A refused sector-thinker visit outside the checked transaction; the checked
@@ -43,11 +47,15 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
     actors
         .run(actors.visit_bound(), |visit, mut context| match visit {
             Visit::SectorThink(_) | Visit::SectorRetired(_) => {
-                if let Err(error) = sector_thinkers::visit(context, visit) {
-                    match perception_inputs.and_then(|p| p.checked) {
-                        Some(control) => control
-                            .failure
-                            .set(control.failure.get().or(Some(error.into()))),
+                let checked = perception_inputs.and_then(|p| p.checked);
+                if checked.is_some_and(|c| c.failure.get().is_some()) {
+                    return;
+                }
+                if let Err(error) =
+                    sector_thinkers::visit(context, visit, specials.as_deref_mut(), rng)
+                {
+                    match checked {
+                        Some(control) => control.failure.set(Some(error)),
                         None => refused = refused.or(Some(error)),
                     }
                 }
@@ -83,8 +91,12 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                         bindings: live_bindings,
                         events,
                     };
-                    projectiles::fly(&mut host, id);
-                    host.tick(id);
+                    // p_mobj.c P_MobjThinker: a missile removed by its own
+                    // P_XYMovement (the sky hack) returns before P_ZMovement and
+                    // the state countdown.
+                    if !projectiles::fly(&mut host, id) {
+                        host.tick(id);
+                    }
                     return;
                 }
                 let had_xy_momentum = actor.momentum().iter().any(|m| *m != Fixed::ZERO);

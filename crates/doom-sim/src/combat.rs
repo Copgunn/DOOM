@@ -202,6 +202,8 @@ pub(crate) struct PreparedAttack {
     attack: LineAttack,
     pub result: AttackResult,
     plan: Option<DamagePlan>,
+    /// The specials policy's sky-ended trace, emitted right after its trace record.
+    sky: Option<crate::SpecialEvent>,
 }
 impl DamagePlan {
     fn start(
@@ -466,7 +468,13 @@ impl PreparedAttack {
             attack,
             result,
             plan,
+            sky: None,
         }
+    }
+    /// The same attack whose trace ended at a sky ceiling (no hit, no puff).
+    pub(crate) fn with_sky(mut self, sky: Option<crate::SpecialEvent>) -> Self {
+        self.sky = sky;
+        self
     }
     pub fn parameters(&self) -> LineAttack {
         self.attack
@@ -774,6 +782,7 @@ impl Simulation {
             shooter,
             attack,
             plan,
+            sky: None,
             result: AttackResult {
                 trace,
                 hit,
@@ -1064,6 +1073,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
             attack,
             mut result,
             plan,
+            sky,
         } = prepared;
         let hit = result.hit;
         let position = result.position;
@@ -1071,6 +1081,9 @@ impl<A: ActorAccess> LifeHost<'_, A> {
         self.combat_event(CombatEvent::Trace {
             result: Box::new(result.clone()),
         });
+        if let Some(sky) = sky {
+            self.events.push(Event::Special(sky));
+        }
         if let Some(mut position) = position {
             let blood = matches!(hit,Some(TraceObject::Actor(id)) if self.access.get(id).unwrap().life.unwrap().flags&MF_NOBLOOD==0);
             let first = self.combat_random(3);

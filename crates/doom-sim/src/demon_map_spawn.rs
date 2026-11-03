@@ -33,6 +33,11 @@ pub enum MapSpawnError {
     Infighting,
     /// The owner-prefix or bounded late-damage planning proof does not hold.
     Ownership,
+    /// Under the specials policy, `spawn_level_specials` called under another
+    /// policy, after a tic, a second time or before the player body exists; a tic
+    /// stepped before it ran; or a map-THING or player-body spawn after it ran
+    /// (M3h7 decision 12). The state is unchanged.
+    LevelSpecials,
 }
 impl fmt::Display for MapSpawnError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

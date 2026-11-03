@@ -46,7 +46,7 @@ pub use player_map_scale::{
 pub use player_monsters::{
     MAX_PLAYER_MONSTERS, PLAYER_DIAGONAL_CONTEXT_SCHEMA, PLAYER_HEIGHTS_CONTEXT_SCHEMA,
     PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
-    PLAYER_REAL_MAP_CONTEXT_SCHEMA,
+    PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -146,7 +146,9 @@ pub use actor::{Actor, ActorSpec, TicCommand};
 use doom_map::Map;
 use doom_types::{DoomRng, Fixed};
 pub use geometry::{Collision, GeometryError, LineGeometry, MoveAttempt, StaticWorld};
-pub use sector_thinkers::SectorThinker;
+pub use sector_thinkers::{
+    FireFlicker, Glow, LightFlash, SectorThinker, SpecialEvent, StrobeFlash,
+};
 pub use snapshot::{Divergence, Snapshot, StateField, compare_traces};
 use std::{error::Error, fmt, sync::Arc};
 pub use store::{
@@ -359,6 +361,8 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
+    /// Specials-policy secret, sky-removal and sky-shot observations (DSIM34).
+    Special(SpecialEvent),
     /// Original player armor absorption, DSIM26.
     Armor(ArmorEvent),
     /// Source world-item contact and resource-grant observations (DSIM25).
@@ -546,6 +550,12 @@ pub struct Simulation {
     /// plan, kept as the next plan's staging buffer so a tic allocates nothing
     /// for it. Never read; not canonical state, not encoded, not compared.
     pub(crate) spare_sound_targets: Vec<Option<ActorId>>,
+    /// Under the specials policy, the runtime sector lights and specials and the
+    /// load-operation phase (canonical state from DSIM34); `None` otherwise.
+    pub(crate) specials: Option<sector_thinkers::LevelSpecials>,
+    /// The specials vector of the last committed plan, reused as the next plan's
+    /// staging buffer (like `spare_sound_targets`). Never read or encoded.
+    pub(crate) spare_specials: Vec<sector_thinkers::SectorSpecial>,
 }
 /// Static-geometry table bounds a construction prepares against: the M3f2/M3h3
 /// constants for every historical profile, the WAD format's own bounds (M3h6 note
@@ -557,6 +567,9 @@ pub(crate) struct GeometryCapacity {
     /// Subsectors and nodes.
     pub tree: usize,
     pub cells: usize,
+    /// Map line and sector specials pass geometry construction (the specials
+    /// policy validates its admitted set before construction).
+    pub specials: bool,
 }
 impl GeometryCapacity {
     pub const CLASSIC: Self = Self {
@@ -564,6 +577,7 @@ impl GeometryCapacity {
         sectors: MAP_SCALE_MAX_SECTORS,
         tree: 4096,
         cells: MAP_EXTENT_MAX_CELLS,
+        specials: false,
     };
     /// `short` references bound every table at 32,767 records; BLOCKMAP list
     /// offsets are `short` word indices, so the lump holds at most 32,768 words and
@@ -573,6 +587,7 @@ impl GeometryCapacity {
         sectors: player_map_scale::REAL_MAP_FORMAT_RECORDS,
         tree: player_map_scale::REAL_MAP_FORMAT_RECORDS,
         cells: 32_768,
+        specials: false,
     };
 }
 /// A simulation moves between threads and is shared by reference across them; the
@@ -652,7 +667,7 @@ impl Simulation {
             sight::validate_map(&map)?;
         }
         let mut world = if profile.uses_sectors() {
-            StaticWorld::new_multisector(map)?
+            StaticWorld::new_multisector(map, capacity.specials)?
         } else {
             StaticWorld::new(map)?
         };
@@ -718,6 +733,8 @@ impl Simulation {
             type_envelope: None,
             boundary: None,
             spare_sound_targets: Vec::new(),
+            specials: None,
+            spare_specials: Vec::new(),
         })
     }
     /// The sectors a type's dimensions are admitted against: the heights policy's
@@ -1154,6 +1171,11 @@ impl Simulation {
     /// transactional validation may still allocate. Call [`Self::snapshot`]
     /// explicitly when diagnostics are needed, including in release builds.
     pub fn advance(&mut self, commands: [TicCommand; 4]) -> Result<(), SimError> {
+        // The specials policy's explicit load operation must run first (M3h7
+        // decision 12): no tic exists before the level's sector thinkers.
+        if self.specials.as_ref().is_some_and(|s| !s.spawned) {
+            return Err(MapSpawnError::LevelSpecials.into());
+        }
         if self.paused {
             return Ok(());
         }
@@ -1281,6 +1303,7 @@ impl Simulation {
                     commands,
                     perception_inputs,
                     boundary: self.boundary.as_deref(),
+                    specials: None,
                 },
             );
         }

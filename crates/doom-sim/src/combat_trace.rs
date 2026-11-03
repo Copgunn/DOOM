@@ -456,6 +456,22 @@ pub(crate) fn hit_trace(
     slope: Fixed,
     lookup: &impl Fn(ActorId) -> Option<Actor>,
 ) -> Result<TraceHit, CombatError> {
+    hit_trace_sky(world, sectors, shooter, trace, range, slope, lookup).map(|(hit, _)| hit)
+}
+/// `PTR_ShootTraverse` with the sky test (p_map.c:956–965) of the specials policy:
+/// at a hit line whose **front** sector has a sky ceiling (whatever side the shot
+/// came from), the trace ends without a puff when `z` is above that ceiling or the
+/// back sector is sky too. The hit is then absent and the returned event names
+/// the reason, line and `z`. Without sky identity this is the historical trace.
+pub(crate) fn hit_trace_sky(
+    world: &crate::StaticWorld,
+    sectors: &[crate::SectorState],
+    shooter: ActorId,
+    trace: &HitscanTrace,
+    range: Fixed,
+    slope: Fixed,
+    lookup: &impl Fn(ActorId) -> Option<Actor>,
+) -> Result<(TraceHit, Option<crate::SpecialEvent>), CombatError> {
     let a = lookup(shooter).ok_or(CombatError::Reference)?;
     let z = a.z() + Fixed::from_bits(a.height().bits() >> 1) + Fixed::from_map_units(8);
     let mut visited = 0;
@@ -499,10 +515,33 @@ pub(crate) fn hit_trace(
                 trace.origin[1] + trace.delta[1] * frac,
                 z + slope * (frac * range),
             ];
-            return Ok((Some(intercept.object), Some(point), visited));
+            if let (TraceObject::Line(line), Some(sky)) = (intercept.object, &world.sky_ceilings) {
+                let sides = world.map().linedefs()[usize::from(line)].sides;
+                let sector =
+                    |side: u16| usize::from(world.map().sidedefs()[usize::from(side)].sector);
+                let front = sector(sides[0].expect("validated front side"));
+                if sky[front] {
+                    let reason = if point[2] > sectors[front].ceiling {
+                        Some(0)
+                    } else if sides[1].is_some_and(|back| sky[sector(back)]) {
+                        Some(1)
+                    } else {
+                        None
+                    };
+                    if let Some(reason) = reason {
+                        let event = crate::SpecialEvent::SkyShot {
+                            reason,
+                            line,
+                            z: point[2],
+                        };
+                        return Ok(((None, None, visited), Some(event)));
+                    }
+                }
+            }
+            return Ok(((Some(intercept.object), Some(point), visited), None));
         }
     }
-    Ok((None, None, visited))
+    Ok(((None, None, visited), None))
 }
 
 fn line_sectors(

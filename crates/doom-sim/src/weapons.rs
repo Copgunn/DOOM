@@ -475,9 +475,20 @@ impl<H: Host> Machine<'_, H> {
         self.after_motion(command)
     }
     fn after_motion(&mut self, command: TicCommand) -> Result<(), SimError> {
+        self.calc_height()?;
+        self.after_specials(command)
+    }
+    /// The `P_CalcHeight` part of `P_PlayerThink` (the momentum bob).
+    fn calc_height(&mut self) -> Result<(), SimError> {
         let a = self.host.actor()?;
         let [x, y] = a.momentum();
         self.player.bob = Fixed::from_bits(((x * x + y * y).bits() >> 2).min(MAX_BOB_BITS));
+        Ok(())
+    }
+    /// The weapon change and `P_MovePsprites`, which follow
+    /// `P_PlayerInSpecialSector` in `P_PlayerThink` and run even when it killed
+    /// the player in this tic (the live branch was already taken).
+    fn after_specials(&mut self, command: TicCommand) -> Result<(), SimError> {
         if command.buttons & BT_CHANGE != 0 {
             let w = Weapon::from_number((command.buttons & BT_WEAPONMASK) >> 3)?;
             if self.player.owned & (1 << (w as u8)) != 0 && w != self.player.ready {
@@ -507,6 +518,10 @@ impl<H: Host> Machine<'_, H> {
 pub(crate) enum PlayerWeaponOperation {
     Setup,
     Advance,
+    /// `Advance` split around `P_PlayerInSpecialSector` (specials policy):
+    /// first the bob, then the weapon change and the psprites.
+    CalcHeight,
+    AfterSpecials,
     DeadAdvance,
     Drop,
 }
@@ -529,6 +544,8 @@ pub(crate) fn original_player<H: Host>(
     match operation {
         PlayerWeaponOperation::Setup => machine.bring_up()?,
         PlayerWeaponOperation::Advance => machine.after_motion(command)?,
+        PlayerWeaponOperation::CalcHeight => machine.calc_height()?,
+        PlayerWeaponOperation::AfterSpecials => machine.after_specials(command)?,
         PlayerWeaponOperation::DeadAdvance => machine.move_psprites()?,
         PlayerWeaponOperation::Drop => machine.enter(0, machine.player.ready.states()[1])?,
     }

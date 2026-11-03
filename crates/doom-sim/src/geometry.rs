@@ -167,23 +167,29 @@ pub struct StaticWorld {
     /// 1,048,576, or `64 · (expanded_work + 5 · lines)` derived from the map by the
     /// real-map policy.
     pub(crate) sight_work_budget: usize,
+    /// Under the specials policy, per sector, whether its ceiling flat is
+    /// `F_SKY1` (`ceilingpic == skyflatnum`): the name up to its first NUL,
+    /// compared without case, as `R_FlatNumForName`/`W_CheckNumForName` look it
+    /// up. `None` under every other policy (sky is rejected at load there).
+    pub(crate) sky_ceilings: Option<Vec<bool>>,
     floor: Fixed,
     ceiling: Fixed,
 }
 impl StaticWorld {
     /// Rejects unsupported geometry before any simulation mutation.
     pub fn new(map: Map) -> Result<Self, GeometryError> {
-        Self::build(map, false)
+        Self::build(map, false, false)
     }
-    pub(crate) fn new_multisector(map: Map) -> Result<Self, GeometryError> {
-        Self::build(map, true)
+    pub(crate) fn new_multisector(map: Map, specials: bool) -> Result<Self, GeometryError> {
+        Self::build(map, true, specials)
     }
-    fn build(map: Map, multi: bool) -> Result<Self, GeometryError> {
+    fn build(map: Map, multi: bool, specials: bool) -> Result<Self, GeometryError> {
         if !multi && map.sectors().len() != 1 {
             return Err(GeometryError::Unsupported("multiple sectors/portals"));
         }
-        if map.sectors().iter().any(|s| s.special != 0)
-            || map.linedefs().iter().any(|l| l.special != 0)
+        if !specials
+            && (map.sectors().iter().any(|s| s.special != 0)
+                || map.linedefs().iter().any(|l| l.special != 0))
         {
             return Err(GeometryError::Unsupported("map specials"));
         }
@@ -228,6 +234,7 @@ impl StaticWorld {
             extent_sight_work: None,
             sector_lines: None,
             sight_work_budget: 1_048_576,
+            sky_ceilings: None,
             floor,
             ceiling,
         })

@@ -12,6 +12,8 @@ pub(crate) struct ExpandedSelection {
     pub type_envelope: bool,
     /// Format-sized static geometry with derived work values (real-map policy).
     pub real_map: bool,
+    /// Sky ceilings and the static sector specials (specials policy).
+    pub specials: bool,
 }
 impl Simulation {
     /// Profile 20: larger static maps with the exact map-context Demon registry.
@@ -35,6 +37,7 @@ impl Simulation {
                 actor_cap: 64,
                 type_envelope: false,
                 real_map: false,
+                specials: false,
             },
         )
     }
@@ -51,6 +54,7 @@ impl Simulation {
             actor_cap,
             type_envelope,
             real_map,
+            specials,
         } = selection;
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
@@ -66,7 +70,9 @@ impl Simulation {
         if !real_map && map.things().len() > MAX_DEMON_MAP_THINGS {
             return Err(MapSpawnError::WorkLimit.into());
         }
-        if map.linedefs().iter().any(|l| l.special != 0)
+        if specials {
+            validate_specials(&map)?;
+        } else if map.linedefs().iter().any(|l| l.special != 0)
             || map.sectors().iter().any(|s| s.special != 0)
         {
             return Err(PursuitError::Specials.into());
@@ -78,10 +84,11 @@ impl Simulation {
         {
             return Err(PerceptionError::Arithmetic.into());
         }
-        if map
-            .sectors()
-            .iter()
-            .any(|s| s.flats[1].as_bytes().eq_ignore_ascii_case(b"F_SKY1\0\0"))
+        if !specials
+            && map
+                .sectors()
+                .iter()
+                .any(|s| s.flats[1].as_bytes().eq_ignore_ascii_case(b"F_SKY1\0\0"))
         {
             return Err(CombatError::Sky.into());
         }
@@ -103,10 +110,16 @@ impl Simulation {
                 limit,
                 profile,
                 admission.references,
-                GeometryCapacity::FORMAT,
+                GeometryCapacity {
+                    specials,
+                    ..GeometryCapacity::FORMAT
+                },
             )?;
             sim.world.extent_sight_work = Some(admission.sight_work);
             sim.world.sight_work_budget = admission.sight_budget;
+            if specials {
+                sim.install_specials(limit)?;
+            }
             sim
         } else {
             let limits = MapExtentLimits {
@@ -143,6 +156,40 @@ impl Simulation {
         Ok(sim)
     }
 
+    /// The specials policy's load-time state: a sector-thinker slot class bounded by
+    /// the number of light sectors (the only sector thinkers this policy creates,
+    /// all at load), so the visit budget is the 320 actor slots plus that count;
+    /// the per-sector sky identity; and the runtime lights and specials, still the
+    /// map's until `spawn_level_specials` runs.
+    fn install_specials(&mut self, limit: u32) -> Result<(), SimError> {
+        let map = self.world.map();
+        let lights = map
+            .sectors()
+            .iter()
+            .filter(|s| matches!(s.special, 1 | 2 | 3 | 4 | 8 | 12 | 13 | 17))
+            .count();
+        let lights = u32::try_from(lights).map_err(|_| StoreError::InvalidLimit)?;
+        let sky = map
+            .sectors()
+            .iter()
+            .map(|s| is_sky_flat(&s.flats[1]))
+            .collect();
+        let sectors = map
+            .sectors()
+            .iter()
+            .map(|s| sector_thinkers::SectorSpecial {
+                light: s.light,
+                special: s.special,
+            })
+            .collect();
+        self.actors = ThinkerStore::with_sector_capacity(limit, lights)?;
+        self.world.sky_ceilings = Some(sky);
+        self.specials = Some(sector_thinkers::LevelSpecials {
+            sectors,
+            spawned: false,
+        });
+        Ok(())
+    }
     /// Derived prepared storage metrics; excluded from canonical state.
     pub fn demon_expanded_map_metrics(&self) -> Result<MapScaleMetrics, SimError> {
         if self.profile != Profile::DemonExpandedMap {
@@ -150,6 +197,54 @@ impl Simulation {
         }
         Ok(self.prepared_geometry_metrics())
     }
+}
+
+/// `ceilingpic == skyflatnum`: `skyflatnum = R_FlatNumForName("F_SKY1")` and a
+/// sector's `ceilingpic = R_FlatNumForName(name)` are the same flat exactly when
+/// `W_CheckNumForName` resolves both names to one lump, that is when the eight
+/// name bytes up to the first NUL equal `F_SKY1` ignoring ASCII case
+/// (`strncpy` then `strupr`, w_wad.c). The declared flat table of the C evidence
+/// (`skyflatnum` 2, the index of `F_SKY1`) is one instance of this rule.
+pub(crate) fn is_sky_flat(name: &doom_types::LumpName) -> bool {
+    let bytes = name.as_bytes();
+    let end = bytes.iter().position(|b| *b == 0).unwrap_or(bytes.len());
+    bytes[..end].eq_ignore_ascii_case(b"F_SKY1")
+}
+/// The specials policy's load rules (M3h7 note §4.2): every sector special is one
+/// of `ADMITTED_SECTOR_SPECIALS` or 0 (10, 11, 14 and unknown values stay
+/// rejected); every line special is 0 or 48, a 48 is one-sided (a two-sided
+/// special line would enter `spechit`, Stage B) and there are at most 64 of them
+/// (`MAXLINEANIMS`, filled without a bound check by the source): all
+/// `PursuitError::Specials`. Every sector light lies in `LIGHT_RANGE`
+/// (`MapScaleError::Light`). Tags are kept: no admitted special reads them.
+pub(crate) fn validate_specials(map: &Map) -> Result<(), SimError> {
+    use sector_thinkers::{ADMITTED_SECTOR_SPECIALS, LIGHT_RANGE, MAX_LINE_ANIMS, SCROLLING_WALL};
+    if map
+        .sectors()
+        .iter()
+        .any(|s| s.special != 0 && !ADMITTED_SECTOR_SPECIALS.contains(&s.special))
+    {
+        return Err(PursuitError::Specials.into());
+    }
+    let mut scrollers = 0;
+    for line in map.linedefs() {
+        match line.special {
+            0 => {}
+            SCROLLING_WALL if line.sides[1].is_none() => scrollers += 1,
+            _ => return Err(PursuitError::Specials.into()),
+        }
+    }
+    if scrollers > MAX_LINE_ANIMS {
+        return Err(PursuitError::Specials.into());
+    }
+    if map
+        .sectors()
+        .iter()
+        .any(|s| !LIGHT_RANGE.contains(&s.light))
+    {
+        return Err(MapScaleError::Light.into());
+    }
+    Ok(())
 }
 
 use crate::lifecycle::LifeHost;
@@ -228,6 +323,9 @@ struct DemonPlan {
     bindings: [Option<ActorId>; 4],
     /// Sound targets staged by the weapon noise.
     sound_targets: StagedSound,
+    /// Under the specials policy, the runtime sector lights and specials written
+    /// by the light thinkers and secrets of this tic (empty otherwise).
+    specials: Vec<sector_thinkers::SectorSpecial>,
     events: Vec<Event>,
 }
 impl Simulation {
@@ -255,6 +353,17 @@ impl Simulation {
         } else {
             StagedSound::One(self.sound_targets.first().copied().flatten())
         };
+        // The spare buffer of the last committed plan, as for the sound targets:
+        // no allocation once its capacity matches the sector count; empty (and
+        // never allocating) without the specials policy.
+        let mut specials = std::mem::take(&mut self.spare_specials);
+        specials.clear();
+        if let Some(level) = &self.specials {
+            specials
+                .try_reserve(level.sectors.len())
+                .map_err(|_| StoreError::Capacity)?;
+            specials.extend_from_slice(&level.sectors);
+        }
         Ok(DemonPlan {
             actors: ThinkerStore {
                 slots,
@@ -270,6 +379,7 @@ impl Simulation {
             player: self.original_player,
             bindings: self.bindings,
             sound_targets,
+            specials,
             events: Vec::new(),
         })
     }
@@ -377,6 +487,9 @@ impl Simulation {
             }
         }
         self.bindings = plan.bindings;
+        if let Some(level) = &mut self.specials {
+            self.spare_specials = std::mem::replace(&mut level.sectors, plan.specials);
+        }
         plan.events
     }
     /// New-policy THING setup stages the same bounded actor/RNG/statistics plan.
@@ -462,6 +575,7 @@ impl Simulation {
     ) -> Result<(), SimError> {
         let command_policy = self.player_policy().has_player_commands();
         let weapon_policy = self.player_policy().has_player_weapons();
+        let specials = self.specials.is_some();
         if weapon_policy
             && self
                 .original_player
@@ -504,7 +618,40 @@ impl Simulation {
                     )
                     .map_err(|error| self.policy_error(error))?;
                 }
-                if weapon_policy {
+                let live = host
+                    .player
+                    .as_ref()
+                    .is_some_and(|p| p.state == PlayerBodyState::Live);
+                if weapon_policy && specials && live {
+                    // P_PlayerThink: P_CalcHeight, then P_PlayerInSpecialSector,
+                    // then the weapon change and P_MovePsprites (M3h7 step 3 order).
+                    // The source leveltime of this tic is the completed-tic count.
+                    let command = commands[usize::from(PlayerSlot::One.ordinal())];
+                    player_pistol::stage_operation(
+                        &mut host,
+                        weapons::PlayerWeaponOperation::CalcHeight,
+                        command,
+                        self.tic,
+                        plan.sound_targets.as_mut_slice(),
+                    )
+                    .map_err(|error| self.policy_error(error))?;
+                    sector_thinkers::player_in_special_sector(
+                        &mut host,
+                        &mut plan.specials,
+                        self.tic,
+                    )?;
+                    if let Some(error) = control.failure.get() {
+                        return Err(self.policy_error(error));
+                    }
+                    player_pistol::stage_operation(
+                        &mut host,
+                        weapons::PlayerWeaponOperation::AfterSpecials,
+                        command,
+                        self.tic,
+                        plan.sound_targets.as_mut_slice(),
+                    )
+                    .map_err(|error| self.policy_error(error))?;
+                } else if weapon_policy {
                     player_pistol::stage(
                         &mut host,
                         commands[usize::from(PlayerSlot::One.ordinal())],
@@ -542,6 +689,7 @@ impl Simulation {
                 commands,
                 perception_inputs: Some(perception_inputs),
                 boundary: self.boundary.as_deref(),
+                specials: specials.then_some(plan.specials.as_mut_slice()),
             },
         );
         if let Some(error) = control.failure.get() {
