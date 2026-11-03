@@ -11,20 +11,27 @@ pair, or to `(special, tag, flags)` whose `flags` are OR-ed into the builder's
 survive the builder unsplit. Special lines may be one-sided (switches, exits) or
 two-sided (doors, walk-over triggers): the builder makes no distinction.
 
-What is added to the M3h7 output: the LINEDEFS lump carries the extra flags, and
-`switch_lines` lists the lines whose front side carries the declared switch texture
-(every line with special 11 or 63, the switch types of the admitted set). Textures are
-not part of the WAD lumps the Rust loader reads (there are no SIDEDEFS texture names
-beyond the builder's defaults); the C harness installs them as the declared texture
-numbers below, the stand-in for R_TextureNumForName and P_InitSwitchList.
-`SWITCH_TEXTURES` is the declared `switchlist` (one pair: off, on); 0 is the number of
-every other side texture and is never in the table. Geometry, vertices, segs, nodes,
-subsectors, REJECT and BLOCKMAP are the M3h6 builder's bytes unchanged. Nothing here
+What is added to the M3h7 output: the LINEDEFS lump carries the extra flags, and the
+SIDEDEFS lump names `SWITCH_NAME` (`SW1COMM`, the first episode-1 `alphSwitchList` name)
+as the middle texture of the front side of every line with special 11 or 63 (the switch
+types of the admitted set); every other side keeps the builder's `-`, `-`, `TESTWALL`.
+`switch_lines` lists those lines. The C harness reads the names back from the SIDEDEFS
+bytes and resolves them through the declared synthetic texture table `TEXTURES` (the
+stand-in for R_TextureNumForName: `-` is 0, a name is its table index); `SWITCH_TEXTURES`
+is the declared `switchlist` built from that table (one pair: off `SW1COMM`, on
+`SW2COMM`). `TESTWALL` takes table slot 0, the number vanilla shares between its first
+texture and `-`, so every other side texture is 0 and is never in `switchlist`. Geometry,
+vertices, segs, nodes, subsectors, REJECT and BLOCKMAP are the M3h6 builder's bytes
+unchanged. Nothing here
 reads Rust output."""
 import generate_m3b as old
 import m3h7_geometry as base
 from m3h7_geometry import FLATS, SKY, SKYFLATNUM, window_lines  # noqa: F401  (re-exported)
-SWITCH_TEXTURES = (1, 2)
+TEXTURES = ('TESTWALL', 'SW1COMM', 'SW2COMM')
+SWITCH_NAME = 'SW1COMM'
+SWITCH_TEXTURES = (TEXTURES.index('SW1COMM'), TEXTURES.index('SW2COMM'))
+SIDE_BYTES = 30  # mapsidedef_t: two offsets, then top, bottom and middle names, then the sector
+MIDDLE = 20
 SWITCH_SPECIALS = (11, 63)
 
 
@@ -48,4 +55,19 @@ def room(sectors, portals=None, reject=(), tree=None, segment=4096, lines=None):
         m['lumps']['LINEDEFS'] = linebytes
         m['bytes'] = old.wad(list(m['lumps'].items()))
     m['switch_lines'] = [i for i, (special, _) in enumerate(m['line_specials']) if special in SWITCH_SPECIALS]
+    if m['switch_lines']:
+        sides = bytearray(m['lumps']['SIDEDEFS'])
+        for i in m['switch_lines']:
+            at = m['lines'][i]['sides'][0] * SIDE_BYTES + MIDDLE
+            sides[at:at + 8] = old.name(SWITCH_NAME)
+        m['lumps']['SIDEDEFS'] = bytes(sides)
+        m['bytes'] = old.wad(list(m['lumps'].items()))
     return m
+
+
+def side_names(m):
+    """The (top, bottom, middle) names of every SIDEDEFS record, in lump order."""
+    data = m['lumps']['SIDEDEFS']
+    assert len(data) % SIDE_BYTES == 0
+    name = lambda raw: raw.split(b'\0', 1)[0].decode('ascii')
+    return [tuple(name(data[k + 4 + 8 * j:k + 12 + 8 * j]) for j in range(3)) for k in range(0, len(data), SIDE_BYTES)]

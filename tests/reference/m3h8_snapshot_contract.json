@@ -22,7 +22,7 @@
   "full_byte_fixtures": 13,
   "inputs_sha256": {
     "tests/reference/m3h8_cases.csv": "4f398d860eece30c2e44c52eff9cc90df4e0a45301ecb1906a3ec141192acb11",
-    "tests/reference/m3h8_contract.json": "ebca8fddfff6bba80075d6680a0384c78ab754d691c2618aa40c3a34c3a8a324",
+    "tests/reference/m3h8_contract.json": "688b974ca3bd26ea807f96f21298d91cd4497bf5aff02c2af42a1d6b8c9b1922",
     "tests/reference/m3h8_geometry_0.bin": "1adb5db9bd4f2ddc3e14c095458778bbccdb74d31faf65a981400e9caf21a165",
     "tests/reference/m3h8_geometry_1.bin": "415d7647857e4f3b2a62d7df6dff8093063d1343b00b2de667d4bcabd754471e",
     "tests/reference/m3h8_geometry_10.bin": "f079b0bcee257c6c648fc1b8dd2a7c7c1ac86794fb8738056855487713fa023b",
@@ -38,7 +38,7 @@
     "tests/reference/m3h8_geometry_3.bin": "6f945c3a78cb444858c7515d7d92e83f714cd48e0612261151cb6f3732702826",
     "tests/reference/m3h8_geometry_4.bin": "36060da1fbf849b226b0706465b94902ac07286844a7c511b0034f02d43df647",
     "tests/reference/m3h8_geometry_5.bin": "406fdd2e363108857b6fcae0d8d850a20eee964fa5bcd2e55f5d89a814709bf9",
-    "tests/reference/m3h8_geometry_6.bin": "d28ed47b9a52056b68f0681a6726200a4b17130662279148b81f31f9e84c4394",
+    "tests/reference/m3h8_geometry_6.bin": "d8c1e397b2bfb80c4ec1d8e1788d56fd06f2ae3bf7ce42aef91b1ea4a0751598",
     "tests/reference/m3h8_geometry_7.bin": "a4d7208fd511454b5ca449aef6304638a39481f6542cdfda1a8faef639856911",
     "tests/reference/m3h8_geometry_8.bin": "44117a3b0e6b273883e53a5877393c6eae5f2201b0c6c3aa0a72dcf3645ce59b",
     "tests/reference/m3h8_geometry_9.bin": "b42a4ce0b0a15c4305948147ba7a949c665b33900decadc5c964e137071de63e",
@@ -84,11 +84,11 @@
   "ordered_event_fields": 80382,
   "outputs_sha256": {
     "tests/reference/m3h8_events.dref": "732e03f6a784ad03751a14a571872b4d7ee18ac3ae08be7279658c3d83aa3399",
-    "tests/reference/m3h8_snapshots.csv": "1bbc03ea056a34b562112af19d63d7b2fbb2a36b93e45f036cd034f1bf6a7d89",
+    "tests/reference/m3h8_snapshots.csv": "f873ae3027087d53ac50f684be5b5b398bfee1576de31e311c4f0b74f15e292b",
     "tests/reference/m3h8_state_0_20.bin": "fa9fa00afaac93d8c2f5633c10a7a0edd99cc93819435961f4db61b8d4ca0309",
     "tests/reference/m3h8_state_0_295.bin": "064c8fa583eb0c1a0609162364171ee0517d58e389937e82bed0a7cab00bca2f",
     "tests/reference/m3h8_state_0_82.bin": "9aa9b14a2b4f6ae5fb24eba7cc4fb15f07c02dd1582878baa1809d9c7aa8462a",
-    "tests/reference/m3h8_state_15_20.bin": "8bfc557faf7705b8be0ba96d2134eb64a83086ac7229adf35d01581623e7e817",
+    "tests/reference/m3h8_state_15_20.bin": "270631058f5ae9770d6f79d3eb8731d2fecc8af7344326cf7b3e9c9bb08cbccd",
     "tests/reference/m3h8_state_16_31.bin": "5d5945abf316fa5f1f8a427349e2c681d1320fbda9bb727389588098bfee3f0c",
     "tests/reference/m3h8_state_1_320.bin": "c071882562e9fe5bf954dc07ccc9033a4f25df9f3aa16ebd5ea8ce2e792e63f4",
     "tests/reference/m3h8_state_22_23.bin": "e7877b4b4a966eb4b7e28e5a7d20568de8258c4cd69fa6b893d396b7e44035f8",
@@ -96,8 +96,8 @@
     "tests/reference/m3h8_state_3_10.bin": "918079a02b74ff671b1f67e193676018422120c57ee3d708014a8773043d01b0",
     "tests/reference/m3h8_state_4_215.bin": "f32abfea4a5d1b6fc356df8768648d90157922273b3b916c552962dffd69f42b",
     "tests/reference/m3h8_state_4_216.bin": "e306ad2c159c63b9420d6d6c151c853809ce62b0d0dc075f9fc8c11369c07d1f",
-    "tests/reference/m3h8_state_8_300.bin": "b001a09dcc3a89439360f185e8e03181dd48a8ccf32d41123e6c8dcfa15d7c72",
-    "tests/reference/m3h8_state_9_3.bin": "461fc38916444d79bcc9d3b63dc861b436206568157c61ca467ab2586a013a89"
+    "tests/reference/m3h8_state_8_300.bin": "f619498c2b9caa24be481e88758cbb62b77bcfbe16dbd193fa19d66f2c74219d",
+    "tests/reference/m3h8_state_9_3.bin": "69e7378eb6f76216f57f5030e1eadf0c56e7b7934ed3dce072ac7610817b7c1e"
   },
   "packed_event_bytes": 118599,
   "schema": "DSIM-v35",

@@ -479,10 +479,11 @@ block of `P_PlayerThink`, the `BT_USE` statement of `P_DeathThink` and the sound
 blockbox statements of `P_GroupLines`. The `P_TryMove` crossing loop and the `P_Move`
 failure branch, compiled since M3h2, now reach real bodies; `spechit` keeps its source
 size of eight. Declared adapters: sound origins are recorded (sector, button field, mobj or
-global), the switch texture table is a declared pair, `G_DoCompleted` and `G_DoReborn`
+global), side textures are resolved from the committed SIDEDEFS names through a
+declared synthetic texture table and the switch list is a declared pair, `G_DoCompleted` and `G_DoReborn`
 end the case instead of running, and mover allocations are zero-filled (decision N6).
-[m3h8_geometry.py](m3h8_geometry.py) is the M3h7 builder plus optional line flags and the
-list of switch lines; [m3h8_cases.py](m3h8_cases.py) builds the doorway (DR doors closed,
+[m3h8_geometry.py](m3h8_geometry.py) is the M3h7 builder plus optional line flags and
+`SW1COMM` on the front middle texture of every 11/63 line; [m3h8_cases.py](m3h8_cases.py) builds the doorway (DR doors closed,
 open and stepped), its one-door hall variant, the switchyard (SR 63 and its tagged door,
 the S1 exit, a plain wall, a DR door used from its back side), the lift at three
 ceilings (riders fit, the last step does not fit, an ordinary step does not fit), the

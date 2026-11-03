@@ -670,8 +670,8 @@ field-less error (`MapScaleError::Movers` or one variant per rule), state untouc
    which no episode-1 switch texture is in any IWAD (texture 0 is `AASTINKY`/`AASHITTY`).
    A map failing the rule would, in vanilla, use the line with no texture change, no
    sound and no button; it is rejected rather than emulated. The committed C geometry
-   names no textures; its declared adapter (front middle texture of every 11/63 line)
-   is mirrored by the Rust tests (§15).
+   names `SW1COMM` as the front middle texture of every 11/63 line, and the C harness
+   resolves every side's names through a declared synthetic texture table (§15).
 
 Tag 0 is faithful: a tag-0 63, 109, 88, 36 or 38 acts on every untagged sector, in index
 order (`P_FindSectorFromLineTag`); rules 2–5 and the fixpoint are evaluated with that
@@ -1153,10 +1153,13 @@ below can be revised in review.
   happens beyond the special's effect), which the Rust code does not implement, so
   such maps are rejected at load with the field-less `MapScaleError::SwitchTexture`.
   This is a rejection, not a new fidelity gap: every admitted map behaves as vanilla.
-  The committed C geometry carries no texture names (the C harness installs the
-  declared switch texture number on the front middle texture of every 11/63 line), so
-  the Rust tests load the committed rooms through the same declared adapter, writing
-  `SW1COMM` into those middle textures; the C evidence is unchanged.
+  The committed C geometry names `SW1COMM` as the front middle texture of every 11/63
+  line (`m3h8_geometry.py`); the C harness resolves every side's three names from those
+  SIDEDEFS bytes through a declared synthetic texture table (`TESTWALL` 0, `SW1COMM` 1,
+  `SW2COMM` 2, `-` 0: the `R_TextureNumForName` stand-in) and the Rust tests load the
+  raw committed bytes. The C trace is byte-identical to the earlier injected-number
+  harness; only the switchyard lump and the DSIM35 `map.sidedefs` digest of its
+  captures changed (§15).
 
 ## 15. Follow-ups, risks, status
 
@@ -1383,10 +1386,19 @@ The switch-texture follow-up of step 10 is closed by §7 rule 9 (decision N9a, p
 name on its front side's upper, lower or middle texture (`mover_rules::switch_match`,
 `MapScaleError::SwitchTexture`), so the Rust use code's assumption (texture found:
 sound, and for 63 the button) is the vanilla path on every admitted map. The committed
-geometry names no textures (front sides `-`, `-`, `TESTWALL`) and the committed
-switchyard is rejected as it stands; the C harness's declared adapter puts the switch
-texture on the front middle texture of every 11/63 line, and the Rust tests load every
-committed room through the same adapter (`player_movers_tests::room` writes `SW1COMM`
-there; `committed_room` is the raw bytes), with the C evidence unchanged. Step 14's
-example, checker and fuzz seeds must load the rooms through that adapter too. Next is
+geometry now names the texture itself: `m3h8_geometry.py` writes `SW1COMM` as the front
+middle texture of every 11/63 line (only the switchyard has any), and the C harness's
+`switch_world` resolves every side's top, bottom and middle names from the SIDEDEFS
+bytes through a declared synthetic texture table (`TESTWALL` 0, `SW1COMM` 1, `SW2COMM` 2,
+`-` 0; an unknown name aborts) instead of injecting a number, with `switchlist` the
+declared pair {1, 2}. Regenerated: the expanded C trace is byte-identical (same
+`expanded_trace_sha256`, every MW and MB texture row unchanged, since the resolved
+numbers equal the injected ones), strict and ASan/UBSan traces byte-identical
+(`ASAN_OPTIONS=detect_leaks=0`, leak detection disabled); `m3h8_geometry_6.bin`
+(switchyard) changed in its SIDEDEFS bytes only; in the DSIM35 goldens only the
+`map.sidedefs` digest field of the switchyard captures changed (73 rows of
+`m3h8_snapshots.csv`, cases 8–15, and the fixtures `m3h8_state_8_300`, `_9_3`,
+`_15_20`); the event stream is unchanged. The Rust test-side adapter is deleted:
+`player_movers_tests::room` and `movers_replay::setup` load the raw committed bytes,
+which pass the rule. Next is
 step 13, DSIM35.

@@ -122,7 +122,7 @@ pub(crate) fn command(c: &Case, op: usize) -> [TicCommand; 4] {
 /// The C driver's setup: admission, THINGs, the player body, weapons, then
 /// `P_SpawnSpecials`, as in the M3h7 harness.
 pub(crate) fn setup(c: &Case) -> (Simulation, ActorId, Vec<ActorId>) {
-    // The committed room with the C harness's declared switch textures.
+    // The committed room bytes, exactly as the C harness reads them.
     setup_map(c, crate::player_movers_tests::room(c.map).map())
 }
 pub(crate) fn setup_map(c: &Case, map: doom_map::Map) -> (Simulation, ActorId, Vec<ActorId>) {

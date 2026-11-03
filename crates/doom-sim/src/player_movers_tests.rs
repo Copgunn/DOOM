@@ -17,26 +17,10 @@ pub(crate) fn options() -> MapContextOptions {
     }
 }
 /// A committed M3h8 room: 0–3 `doorway`, 4–5 `hall`, 6 `switchyard`, 7–12 `lift`,
-/// 13–16 `floors`, 17–18 `dense`, as the C harness runs it: its declared adapter
-/// installs the switch texture on the front middle texture of every 11/63 line
-/// (`switch_world`, m3h8_reference.py), which the committed lumps do not name; the
-/// Rust side writes the episode-1 name `SW1COMM` there (§7 rule 9). Everything
-/// else is the committed bytes.
+/// 13–16 `floors`, 17–18 `dense`, exactly the committed bytes the C harness reads:
+/// the builder names `SW1COMM` as the front middle texture of every 11/63 line
+/// (§7 rule 9), which the harness resolves through its declared texture table.
 pub(crate) fn room(index: usize) -> Lumps {
-    let mut lumps = committed_room(index);
-    let lines = lump(&mut lumps, "LINEDEFS").clone();
-    for line in lines.chunks_exact(14) {
-        let special = i16::from_le_bytes([line[6], line[7]]);
-        if special == mover_rules::LINE_EXIT || special == mover_rules::LINE_DOOR_SR {
-            let front = usize::from(u16::from_le_bytes([line[10], line[11]]));
-            lump(&mut lumps, "SIDEDEFS")[30 * front + 20..30 * front + 28]
-                .copy_from_slice(b"SW1COMM\0");
-        }
-    }
-    lumps
-}
-/// The committed room bytes, without the declared switch textures.
-pub(crate) fn committed_room(index: usize) -> Lumps {
     Lumps::parse(maps::MAP_BYTES[index])
 }
 fn lump<'a>(lumps: &'a mut Lumps, name: &str) -> &'a mut Vec<u8> {
@@ -306,10 +290,10 @@ fn set_front_texture(lumps: &mut Lumps, line: usize, part: usize, name: &[u8; 8]
         .copy_from_slice(name);
 }
 
-/// Rule 9 (decision N9a): the committed switchyard names no texture (its sides are
-/// `-`, `-`, `TESTWALL`) and is rejected as it stands; with the C harness's
-/// declared switch texture on the front middle texture of its S1 11 and SR 63 lines
-/// it is admitted. An episode-1 name in any one of the three textures, in any ASCII
+/// Rule 9 (decision N9a): the committed switchyard names `SW1COMM` as the front
+/// middle texture of its S1 11 and SR 63 lines and is admitted; with those textures
+/// put back to the builder's plain `TESTWALL` (sides `-`, `-`, `TESTWALL`) it is
+/// rejected. An episode-1 name in any one of the three textures, in any ASCII
 /// case and in either column (`SW1`, `SW2`), admits; an episode-2 name (absent from
 /// the shareware `switchlist`), a near miss or a `-` name rejects with
 /// `MapScaleError::SwitchTexture`, before any simulation exists. A DR line (1)
@@ -317,8 +301,15 @@ fn set_front_texture(lumps: &mut Lumps, line: usize, part: usize, name: &[u8; 8]
 #[test]
 fn movers_reject_a_switch_line_without_an_episode_one_switch_texture() {
     let switch = SimError::MapScale(MapScaleError::SwitchTexture);
-    rejects(movers(&committed_room(6)), switch);
     movers(&room(6)).unwrap();
+    let plain = || {
+        let mut lumps = room(6);
+        for line in [1, 10] {
+            set_front_texture(&mut lumps, line, 2, b"TESTWALL");
+        }
+        lumps
+    };
+    rejects(movers(&plain()), switch);
     // Lines 1 (SR 63) and 10 (S1 11) of the switchyard.
     for line in [1, 10] {
         let other = 11 - line;
@@ -331,7 +322,7 @@ fn movers_reject_a_switch_line_without_an_episode_one_switch_texture() {
             (0, b"-SW1COMM", false),
             (0, b"SW1COM\0\0", false),
         ] {
-            let mut lumps = committed_room(6);
+            let mut lumps = plain();
             set_front_texture(&mut lumps, other, 2, b"SW1COMM\0");
             set_front_texture(&mut lumps, line, part, name);
             let map = lumps.map();
