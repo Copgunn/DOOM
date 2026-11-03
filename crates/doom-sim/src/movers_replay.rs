@@ -200,6 +200,8 @@ pub(crate) struct Compared {
     pub crossings: usize,
     /// `P_UseSpecialLine` and `PTR_UseTraverse` records compared (`MU`, `MI`).
     pub uses: usize,
+    /// `P_Move` failure branches with `spechit` compared (`MP`).
+    pub blocked: usize,
 }
 /// Replays `c` through op `upto`, comparing at every op the sector heights and
 /// `specialdata` presence (`MH`), the runtime line specials (`ML`) and the
@@ -309,11 +311,9 @@ pub(crate) fn replay(c: &Case, upto: usize) -> (Simulation, Compared) {
             c.label
         );
         // MU and MI: every P_UseSpecialLine and PTR_UseTraverse of the op, in order.
-        // Monster door use (an MP row's P_UseSpecialLine loop) is plan step 11.
-        let monster_uses = rows.iter().any(|(t, _)| t == "MP");
         let mu: Vec<_> = rows
             .iter()
-            .filter(|(t, _)| t == "MU" && !monster_uses)
+            .filter(|(t, _)| t == "MU")
             .map(|(_, v)| [v[1], v[2], v[3], v[4], v[5]])
             .collect();
         let uses: Vec<_> = events
@@ -336,9 +336,22 @@ pub(crate) fn replay(c: &Case, upto: usize) -> (Simulation, Compared) {
                 _ => None,
             })
             .collect();
-        if !monster_uses {
-            assert_eq!(uses, mu, "{} op{op} uses", c.label);
-        }
+        assert_eq!(uses, mu, "{} op{op} uses", c.label);
+        // MP: the P_Move failure branches with spechit, in order (numspechit).
+        let mp: Vec<_> = rows
+            .iter()
+            .filter(|(t, _)| t == "MP")
+            .map(|(_, v)| v[2])
+            .collect();
+        let blocked: Vec<_> = events
+            .iter()
+            .filter_map(|e| match e {
+                Event::Mover(MoverEvent::SpechitBlocked { count, .. }) => Some(i64::from(*count)),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(blocked, mp, "{} op{op} spechit-blocked moves", c.label);
+        compared.blocked += blocked.len();
         let mi: Vec<_> = rows
             .iter()
             .filter(|(t, _)| t == "MI")

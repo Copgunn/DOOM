@@ -239,3 +239,95 @@ fn the_specials_policy_still_rejects_use() {
     commands[0].buttons = BT_USE;
     assert_eq!(s.advance(commands), Err(SimError::UnsupportedButtons));
 }
+
+/// Monster door use (plan step 11), against the C rows at every op: every `P_Move`
+/// failure branch with `spechit` (`MP`, its count), every monster `P_UseSpecialLine`
+/// (`MU`), and the doors, heights and crossings that follow.
+/// `door_monster_back_side`: a monster inside the door sector presses against the DR
+/// line from its back and opens it (side 0 is always passed), then keeps pressing
+/// against the waiting door (each press returns true, so P_TryWalk draws movecount).
+/// `door_monster_bump`: a monster opens a closed door from its front.
+/// `lift_monster_cross`: failed moves against the WR 88 lines reset `movedir` though
+/// the use returns false. `dense_imp_fireballs`: one such reset in the dense lane.
+#[test]
+fn monster_door_use_matches_the_c_rows() {
+    for (label, blocked) in [
+        ("door_monster_back_side", 110),
+        ("door_monster_bump", 10),
+        ("lift_monster_cross", 73),
+        ("dense_imp_fireballs", 1),
+    ] {
+        let (_, compared) = run(label);
+        assert_eq!(compared.blocked, blocked, "{label}");
+        assert_eq!(compared.ops, case(label).tics + 1, "{label}");
+    }
+}
+
+/// `EV_VerticalDoor` by a monster: a closed door opens; a rising or waiting door is
+/// left alone ("bad guys never close doors"); a closing door goes back up with no
+/// sound. Every DR use by a monster returns true; an 88 use returns false; a
+/// back-side use returns false.
+#[test]
+fn a_monster_uses_only_dr_doors_and_never_closes_them() {
+    let (mut s, _, player) = crate::planes::tests::setup(0, [-200, 0]);
+    let use_door = |s: &mut Simulation, side: u8, special: i16| {
+        s.start_movers(|m| {
+            use_special_line(
+                m,
+                None,
+                player,
+                User::Monster,
+                4,
+                side,
+                special,
+                &mut UseOutcome::default(),
+            )
+        })
+        .unwrap()
+    };
+    // `doorway` line 4 is a DR line on door sector 2.
+    assert!(use_door(&mut s, 0, 1));
+    let door = |s: &Simulation| match movers::special_data(&s.actors, 2)
+        .and_then(|id| s.sector_thinker(id).copied())
+    {
+        Some(SectorThinker::Door(d)) => d,
+        other => panic!("{other:?}"),
+    };
+    assert_eq!(door(&s).direction, 1);
+    // Rising: a monster's use leaves it rising.
+    assert!(use_door(&mut s, 0, 1));
+    assert_eq!(door(&s).direction, 1);
+    // Closing: a monster's use sends it up with no sound.
+    s.start_movers(|m| {
+        if let Some(id) = movers::special_data(m.store, 2) {
+            if let Some(SectorThinker::Door(d)) = m.store.sector_get_mut(id) {
+                d.direction = -1;
+            }
+        }
+        Ok(())
+    })
+    .unwrap();
+    s.pending.clear();
+    assert!(use_door(&mut s, 0, 1));
+    assert_eq!(door(&s).direction, 1);
+    assert!(
+        !s.pending
+            .iter()
+            .any(|e| matches!(e, Event::Mover(MoverEvent::SectorSound { .. })))
+    );
+    // Waiting: left waiting.
+    s.start_movers(|m| {
+        if let Some(id) = movers::special_data(m.store, 2) {
+            if let Some(SectorThinker::Door(d)) = m.store.sector_get_mut(id) {
+                d.direction = 0;
+            }
+        }
+        Ok(())
+    })
+    .unwrap();
+    assert!(use_door(&mut s, 0, 1));
+    assert_eq!(door(&s).direction, 0);
+    // Back side, and a special a monster cannot use.
+    assert!(!use_door(&mut s, 1, 1));
+    assert!(!use_door(&mut s, 0, 88));
+}

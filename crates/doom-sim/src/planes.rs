@@ -430,6 +430,14 @@ pub enum MoverEvent {
         /// `ceilingz` (16.16).
         ceiling: Fixed,
     },
+    /// Sub-tag 4: the `P_Move` failure branch with a nonempty `spechit` (`movedir =
+    /// DI_NODIR`), after the failed attempt and before that monster's uses.
+    SpechitBlocked {
+        /// The monster.
+        actor: ActorId,
+        /// `numspechit` (1–8).
+        count: u8,
+    },
     /// Sub-tag 13: `G_ExitLevel`, inside the exit switch's use after the switch
     /// sound and before that use's sub-tag 2 record.
     Exit {

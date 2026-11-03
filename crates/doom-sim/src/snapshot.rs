@@ -240,6 +240,11 @@ fn event_bytes(event: &Event) -> Vec<u8> {
                     b.push(u8::from(result));
                     b.extend(after.to_le_bytes());
                 }
+                crate::MoverEvent::SpechitBlocked { actor, count } => {
+                    b.push(4);
+                    b.extend(id(actor));
+                    b.push(count);
+                }
                 crate::MoverEvent::Exit { secret } => {
                     b.push(13);
                     b.push(u8::from(secret));

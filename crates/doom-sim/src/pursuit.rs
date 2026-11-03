@@ -203,8 +203,58 @@ pub(crate) fn move_actor<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -
     if allowed && !hit.is_empty() {
         cross_lines(h, id, &hit, actor.position(), target);
     }
-    end(h, id, PursuitOperation::Move, allowed);
-    allowed
+    // p_enemy.c:310–324 (no admitted floater): a failed move with special lines in
+    // spechit resets movedir and uses each of them, in reverse, from side 0.
+    let result = allowed || (!hit.is_empty() && use_lines_blocked(h, id, &hit));
+    end(h, id, PursuitOperation::Move, result);
+    result
+}
+/// The `P_Move` failure branch with `numspechit > 0`: `movedir = DI_NODIR` (no
+/// direction event: the source assigns it outside any observed call), then
+/// `P_UseSpecialLine(actor, line, 0)` for every entry in reverse; true if any use
+/// returned true. A monster's DR use always returns true, so pressing against a door
+/// succeeds every time; any other special line still resets `movedir`.
+fn use_lines_blocked<A: ActorAccess>(
+    h: &mut LifeHost<'_, A>,
+    id: ActorId,
+    hit: &line_triggers::SpecHit,
+) -> bool {
+    h.events.push(Event::Mover(MoverEvent::SpechitBlocked {
+        actor: id,
+        count: hit.len() as u8,
+    }));
+    h.access.get_mut(id).unwrap().life.as_mut().unwrap().movedir = NODIR;
+    let mut good = false;
+    for &line in hit.lines().iter().rev() {
+        let special = h.sectors.line_special(line);
+        let Some(store) = h.access.movers() else {
+            h.fail_sight(StoreError::UnsupportedThinker.into());
+            return false;
+        };
+        let mut starter = movers::Starter {
+            world: h.world,
+            sectors: h.sectors,
+            store,
+            events: &mut *h.events,
+        };
+        match use_lines::use_special_line(
+            &mut starter,
+            None,
+            id,
+            use_lines::User::Monster,
+            line,
+            0,
+            special,
+            &mut use_lines::UseOutcome::default(),
+        ) {
+            Ok(used) => good |= used,
+            Err(error) => {
+                h.fail_sight(error);
+                return false;
+            }
+        }
+    }
+    good
 }
 /// The crossing loop of a monster's successful `P_TryMove` (a monster never clears
 /// a line, so the view stays current); a refused starter refuses the tic.

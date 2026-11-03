@@ -1288,4 +1288,20 @@ pause test, as `G_Ticker` runs a pending `gameaction` first. Events: sub-tags 0,
 (`MZ`) and every `MU`/`MI` record: 14 use scenarios match through their last op;
 `door_gibs_drop_bonus` and `door_stuck_shootable` match through ops 215 and 5, and their
 next tic needs V′ cases (e) and (d) (step 12; refused with `MapScaleError::Vertical`
-until then). Next is step 11, monster door use.
+until then).
+
+Step 11 is done: the `P_Move` failure branch in `pursuit::move_actor` (no admitted
+floater): with a nonempty `spechit` it records sub-tag 4 (`MoverEvent::SpechitBlocked`,
+the count), sets `movedir = DI_NODIR` without a direction event (the C trace has none),
+and calls `P_UseSpecialLine(actor, line, 0)` for every entry in reverse (`use_lines::
+use_special_line` with `User::Monster`); `P_Move` returns true if any use did. A monster
+inside a door sector therefore opens it from the back side of its line; a monster's DR
+use always returns true (so `P_TryWalk` draws `movecount` each time it presses against
+a waiting door), leaves a rising or waiting door alone and sends a closing door up with
+no sound; any special line in `spechit` resets `movedir` even when its use returns false
+(88). The partial replay now also compares every `MP` row: `door_monster_back_side`
+(110 failure branches), `door_monster_bump` (10), `lift_monster_cross` (73) and
+`dense_imp_fireballs` (1) match at every op, so 28 of the 30 C scenarios match through
+their last op and the other two up to the V′ tics. Not compared before step 13: the
+actors' fields, the RNG, the thinker records and the event stream as bytes. Next is
+step 12, V′ and the relaxed item witness.
