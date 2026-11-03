@@ -701,7 +701,9 @@ switch lines; scrollers, and how many are two-sided; one-sided DR lines; sectors
 door sectors with a self-referencing line or a reachable top below their floor; the
 reachable height range and whether it stays within ±512; tag-0 lines with tag-using
 specials; and the maximum number of two-sided special lines in a 2 × 2 window. For
-E1M1 none of these is committed beyond the counts of §1.
+E1M1 none of these is committed beyond the counts of §1. The tool now prints these
+counts (text report and `--specials-markdown`; the reachable-height fixpoint prints
+"not computed"), and their table awaits a local run by the owner.
 
 ## 6. Implementation plan (one commit per step; evidence before the runtime change)
 
