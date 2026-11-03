@@ -97,15 +97,16 @@ fn specials_plans_stage_the_sector_class_in_the_committed_buffer() {
 }
 
 #[test]
-fn plans_stage_sector_writes_in_a_sparse_overlay() {
+fn plans_stage_sector_writes_in_a_lazy_copy() {
     // No policy before the movers policy writes a sector height or a line special:
-    // a whole tic leaves the overlay empty, and it never allocates.
+    // a whole tic copies nothing, and the staging buffers never allocate.
     let mut sim = crate::specials_evidence::setup(&crate::specials_evidence::cases()[0]).0;
     for _ in 0..2 {
         sim.advance([TicCommand::default(); 4]).unwrap();
     }
     assert!(sim.spare_writes.is_empty());
     assert_eq!(sim.spare_writes, staging::StagedWrites::default());
+    assert_eq!(sim.spare_writes.buffer_capacities(), (0, 0));
     assert!(sim.line_specials.is_empty());
     let table = sim.sectors.clone();
     let before = sim.snapshot();
@@ -125,27 +126,45 @@ fn plans_stage_sector_writes_in_a_sparse_overlay() {
     drop(plan);
     assert_eq!(sim.sectors, table);
     assert_eq!(sim.snapshot(), before);
-    // A committed plan applies the overlay and keeps it as the next plan's buffer.
+    // A committed plan swaps the copy in and keeps the replaced table as the next
+    // plan's buffer, which then stages without allocating.
     let mut plan = sim.demon_plan().unwrap();
     plan.writes.write_sector(&sim.sectors, 0, moved).unwrap();
     let _ = sim.commit_demon_plan(plan);
     assert_eq!(sim.sectors[0], moved);
     assert!((1..table.len()).all(|i| sim.sectors[i] == table[i]));
-    assert!(!sim.spare_writes.is_empty());
-    let plan = sim.demon_plan().unwrap();
+    assert!(sim.spare_writes.is_empty());
+    let (capacity, lines) = sim.spare_writes.buffer_capacities();
+    assert!(capacity >= table.len());
+    assert_eq!(lines, 0);
+    let mut plan = sim.demon_plan().unwrap();
     assert!(plan.writes.is_empty());
+    assert_eq!(plan.writes.sectors(&sim.sectors)[0], moved);
+    plan.writes.write_sector(&sim.sectors, 1, moved).unwrap();
+    assert_eq!(plan.writes.buffer_capacities().0, capacity);
+    let view = plan.writes.sectors(&sim.sectors);
+    assert_eq!([view[0], view[1]], [moved, moved]);
+    // Refusing this plan leaves the committed table of the earlier commit intact.
+    let committed = sim.sectors.clone();
+    let before = sim.snapshot();
+    drop(plan);
+    assert_eq!(sim.sectors, committed);
+    assert_eq!(sim.snapshot(), before);
 }
 
-/// The M3h8 §9 staging measurement (opt-in, `DOOM_STAGING_COST=1`, release): one
-/// synthetic tic stages `k` sector writes, reads `reads` sectors through the staged
-/// view and commits, with the sparse overlay and with a full copy of the sector table
-/// into a reused spare buffer (the M3h7 `SectorSpecial` pattern), against a baseline
-/// that reads the committed table directly and stages nothing. A third, bench-only
-/// variant (`indexed`) adds to the sparse entries a reused per-sector position table
-/// (`u16::MAX` when unwritten), so a read is one lookup instead of a scan, and
-/// resets only the written positions at the next plan.
+/// The M3h8 §9 staging measurement (opt-in, `DOOM_STAGING_COST=1`, release). Sectors:
+/// one synthetic tic stages `k` sector writes, reads `reads` sectors through the staged
+/// view and commits, against a baseline that reads the committed table directly and
+/// stages nothing. Variants: `lazy`, the implementation (a full copy into a reused
+/// buffer taken on the first write, swapped in on commit); `sparse`, the step-5
+/// overlay (written entries, a linear scan per read), kept here for comparison;
+/// `full`, an eager full copy every tic (the M3h7 `SectorSpecial` pattern); and
+/// `indexed`, the sparse entries plus a reused per-sector position table (`u16::MAX`
+/// when unwritten) reset only at the written positions. Line specials: the same
+/// shape for the runtime line-special vector, `lazy` (the implementation) against a
+/// sparse overlay of `(line, special)` entries.
 #[test]
-fn staging_cost_sparse_overlay_against_full_copy() {
+fn staging_cost_overlays_against_lazy_copies() {
     if std::env::var_os("DOOM_STAGING_COST").is_none() {
         return;
     }
@@ -154,6 +173,12 @@ fn staging_cost_sparse_overlay_against_full_copy() {
     let median = |mut runs: Vec<u128>| {
         runs.sort_unstable();
         runs[runs.len() / 2]
+    };
+    let per_tic = |runs: Vec<u128>| median(runs) as f64 / TICS as f64;
+    let time = |runs: &mut Vec<u128>, f: &mut dyn FnMut() -> i64| {
+        let start = std::time::Instant::now();
+        black_box(f());
+        runs.push(start.elapsed().as_nanos());
     };
     for sectors in [88usize, 4096] {
         let mut table: Vec<SectorState> = (0..sectors)
@@ -171,99 +196,207 @@ fn staging_cost_sparse_overlay_against_full_copy() {
                     floor: Fixed::from_bits(t as i32 & 0xffff),
                     ceiling: Fixed::from_map_units(512),
                 };
-                let mut sparse = staging::StagedWrites::default();
+                let mut lazy = staging::StagedWrites::default();
                 let mut spare: Vec<SectorState> = Vec::new();
                 let mut lines: Vec<i16> = Vec::new();
-                let (mut base_ns, mut sparse_ns, mut full_ns, mut indexed_ns) =
-                    (vec![], vec![], vec![], vec![]);
+                let mut sparse: Vec<(u16, SectorState)> = Vec::new();
                 let mut position = vec![u16::MAX; sectors];
                 let mut entries: Vec<(u16, SectorState)> = Vec::new();
+                let [
+                    mut base,
+                    mut lazy_ns,
+                    mut sparse_ns,
+                    mut full_ns,
+                    mut indexed_ns,
+                ] = [(); 5].map(|()| Vec::new());
                 for _ in 0..REPEATS {
-                    let start = std::time::Instant::now();
-                    let mut sum = 0i64;
-                    for _ in 0..TICS {
-                        let view = staging::Sectors::committed(black_box(&table));
-                        for &i in &read {
-                            sum += i64::from(view[i].floor.bits());
-                        }
-                    }
-                    black_box(sum);
-                    base_ns.push(start.elapsed().as_nanos());
-
-                    let start = std::time::Instant::now();
-                    let mut sum = 0i64;
-                    for t in 0..TICS {
-                        sparse.clear();
-                        for &s in &written {
-                            sparse.write_sector(&table, s, state(t)).unwrap();
-                        }
-                        let view = sparse.sectors(black_box(&table));
-                        for &i in &read {
-                            sum += i64::from(view[i].floor.bits());
-                        }
-                        sparse.commit(&mut table, &mut lines);
-                    }
-                    black_box(sum);
-                    sparse_ns.push(start.elapsed().as_nanos());
-
-                    let start = std::time::Instant::now();
-                    let mut sum = 0i64;
-                    for t in 0..TICS {
-                        spare.clear();
-                        spare.try_reserve(table.len()).unwrap();
-                        spare.extend_from_slice(&table);
-                        for &s in &written {
-                            spare[usize::from(s)] = state(t);
-                        }
-                        let view = black_box(spare.as_slice());
-                        for &i in &read {
-                            sum += i64::from(view[i].floor.bits());
-                        }
-                        std::mem::swap(&mut table, &mut spare);
-                    }
-                    black_box(sum);
-                    full_ns.push(start.elapsed().as_nanos());
-
-                    let start = std::time::Instant::now();
-                    let mut sum = 0i64;
-                    for t in 0..TICS {
-                        for &(s, _) in &entries {
-                            position[usize::from(s)] = u16::MAX;
-                        }
-                        entries.clear();
-                        for &s in &written {
-                            let at = &mut position[usize::from(s)];
-                            if *at == u16::MAX {
-                                *at = entries.len() as u16;
-                                entries.push((s, state(t)));
-                            } else {
-                                entries[usize::from(*at)].1 = state(t);
+                    time(&mut base, &mut || {
+                        let mut sum = 0i64;
+                        for _ in 0..TICS {
+                            let view = staging::Sectors::committed(black_box(&table));
+                            for &i in &read {
+                                sum += i64::from(view[i].floor.bits());
                             }
                         }
-                        let (table_ref, position_ref) = (black_box(&table), black_box(&position));
-                        for &i in &read {
-                            let at = position_ref[i];
-                            let sector = if at == u16::MAX {
-                                &table_ref[i]
-                            } else {
-                                &entries[usize::from(at)].1
-                            };
-                            sum += i64::from(sector.floor.bits());
+                        sum
+                    });
+                    time(&mut lazy_ns, &mut || {
+                        let mut sum = 0i64;
+                        for t in 0..TICS {
+                            lazy.clear();
+                            for &s in &written {
+                                lazy.write_sector(&table, s, state(t)).unwrap();
+                            }
+                            let view = lazy.sectors(black_box(&table));
+                            for &i in &read {
+                                sum += i64::from(view[i].floor.bits());
+                            }
+                            lazy.commit(&mut table, &mut lines);
                         }
-                        for &(s, state) in &entries {
-                            table[usize::from(s)] = state;
+                        sum
+                    });
+                    time(&mut sparse_ns, &mut || {
+                        let mut sum = 0i64;
+                        for t in 0..TICS {
+                            sparse.clear();
+                            for &s in &written {
+                                match sparse.iter_mut().find(|(i, _)| *i == s) {
+                                    Some(entry) => entry.1 = state(t),
+                                    None => {
+                                        sparse.try_reserve(1).unwrap();
+                                        sparse.push((s, state(t)));
+                                    }
+                                }
+                            }
+                            let table_ref = black_box(&table);
+                            for &i in &read {
+                                let sector = match sparse.iter().find(|(s, _)| usize::from(*s) == i)
+                                {
+                                    Some((_, state)) => state,
+                                    None => &table_ref[i],
+                                };
+                                sum += i64::from(sector.floor.bits());
+                            }
+                            for &(s, state) in &sparse {
+                                table[usize::from(s)] = state;
+                            }
                         }
-                    }
-                    black_box(sum);
-                    indexed_ns.push(start.elapsed().as_nanos());
+                        sum
+                    });
+                    time(&mut full_ns, &mut || {
+                        let mut sum = 0i64;
+                        for t in 0..TICS {
+                            spare.clear();
+                            spare.try_reserve(table.len()).unwrap();
+                            spare.extend_from_slice(&table);
+                            for &s in &written {
+                                spare[usize::from(s)] = state(t);
+                            }
+                            let view = black_box(spare.as_slice());
+                            for &i in &read {
+                                sum += i64::from(view[i].floor.bits());
+                            }
+                            std::mem::swap(&mut table, &mut spare);
+                        }
+                        sum
+                    });
+                    time(&mut indexed_ns, &mut || {
+                        let mut sum = 0i64;
+                        for t in 0..TICS {
+                            for &(s, _) in &entries {
+                                position[usize::from(s)] = u16::MAX;
+                            }
+                            entries.clear();
+                            for &s in &written {
+                                let at = &mut position[usize::from(s)];
+                                if *at == u16::MAX {
+                                    *at = entries.len() as u16;
+                                    entries.push((s, state(t)));
+                                } else {
+                                    entries[usize::from(*at)].1 = state(t);
+                                }
+                            }
+                            let (table_ref, position_ref) =
+                                (black_box(&table), black_box(&position));
+                            for &i in &read {
+                                let at = position_ref[i];
+                                let sector = if at == u16::MAX {
+                                    &table_ref[i]
+                                } else {
+                                    &entries[usize::from(at)].1
+                                };
+                                sum += i64::from(sector.floor.bits());
+                            }
+                            for &(s, state) in &entries {
+                                table[usize::from(s)] = state;
+                            }
+                        }
+                        sum
+                    });
                 }
-                let per_tic = |runs: Vec<u128>| median(runs) as f64 / TICS as f64;
                 println!(
-                    "staging sectors={sectors} writes={k} reads={reads} baseline_ns_per_tic={:.1} sparse_ns_per_tic={:.1} full_copy_ns_per_tic={:.1} indexed_ns_per_tic={:.1}",
-                    per_tic(base_ns),
+                    "staging sectors={sectors} writes={k} reads={reads} baseline_ns_per_tic={:.1} lazy_ns_per_tic={:.1} sparse_ns_per_tic={:.1} full_copy_ns_per_tic={:.1} indexed_ns_per_tic={:.1}",
+                    per_tic(base),
+                    per_tic(lazy_ns),
                     per_tic(sparse_ns),
                     per_tic(full_ns),
                     per_tic(indexed_ns)
+                );
+            }
+        }
+    }
+    for line_count in [512usize, 4096] {
+        let mut specials: Vec<i16> = (0..line_count).map(|i| (i % 7 * 11) as i16).collect();
+        let mut no_sectors: Vec<SectorState> = Vec::new();
+        for k in [0usize, 1, 2, 4] {
+            for reads in [0usize, 16, 256] {
+                let written: Vec<u16> =
+                    (0..k).map(|j| ((j * 37 + 5) % line_count) as u16).collect();
+                let read: Vec<u16> = (0..reads)
+                    .map(|r| ((r * 7919 + 13) % line_count) as u16)
+                    .collect();
+                let mut lazy = staging::StagedWrites::default();
+                let mut sparse: Vec<(u16, i16)> = Vec::new();
+                let [mut base, mut lazy_ns, mut sparse_ns] = [(); 3].map(|()| Vec::new());
+                for _ in 0..REPEATS {
+                    time(&mut base, &mut || {
+                        let mut sum = 0i64;
+                        for _ in 0..TICS {
+                            let table = black_box(&specials);
+                            for &l in &read {
+                                sum += i64::from(table[usize::from(l)]);
+                            }
+                        }
+                        sum
+                    });
+                    time(&mut lazy_ns, &mut || {
+                        let mut sum = 0i64;
+                        for t in 0..TICS {
+                            lazy.clear();
+                            for &l in &written {
+                                lazy.write_line_special(&specials, l, t as i16).unwrap();
+                            }
+                            let table = black_box(&specials);
+                            for &l in &read {
+                                sum += i64::from(lazy.line_special(table, l).unwrap());
+                            }
+                            lazy.commit(&mut no_sectors, &mut specials);
+                        }
+                        sum
+                    });
+                    time(&mut sparse_ns, &mut || {
+                        let mut sum = 0i64;
+                        for t in 0..TICS {
+                            sparse.clear();
+                            for &l in &written {
+                                match sparse.iter_mut().find(|(i, _)| *i == l) {
+                                    Some(entry) => entry.1 = t as i16,
+                                    None => {
+                                        sparse.try_reserve(1).unwrap();
+                                        sparse.push((l, t as i16));
+                                    }
+                                }
+                            }
+                            let table = black_box(&specials);
+                            for &l in &read {
+                                let special = match sparse.iter().find(|(i, _)| *i == l) {
+                                    Some((_, special)) => *special,
+                                    None => table[usize::from(l)],
+                                };
+                                sum += i64::from(special);
+                            }
+                            for &(l, special) in &sparse {
+                                specials[usize::from(l)] = special;
+                            }
+                        }
+                        sum
+                    });
+                }
+                println!(
+                    "staging lines={line_count} writes={k} reads={reads} baseline_ns_per_tic={:.1} lazy_ns_per_tic={:.1} sparse_ns_per_tic={:.1}",
+                    per_tic(base),
+                    per_tic(lazy_ns),
+                    per_tic(sparse_ns)
                 );
             }
         }

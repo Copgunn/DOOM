@@ -1,4 +1,4 @@
-//! Private tests of the sparse sector overlay and the load-time sector `blockbox`.
+//! Private tests of the lazy sector and line-special copies and the load-time sector `blockbox`.
 use super::*;
 use crate::diagonal_room::Lumps;
 use crate::multisector::{SectorBlockBox, sector_block_boxes};
@@ -16,25 +16,40 @@ fn state(floor: i16, ceiling: i16) -> SectorState {
 }
 
 #[test]
-fn the_overlay_reads_through_replaces_and_commits_only_on_request() {
+fn the_copy_is_taken_on_the_first_write_and_committed_only_on_request() {
     let committed = vec![state(0, 128), state(8, 120), state(16, 112)];
     let mut writes = StagedWrites::default();
     let view = writes.sectors(&committed);
     assert_eq!(view.len(), 3);
     assert!((0..3).all(|i| view[i] == committed[i]));
     assert_eq!(view.get(3), None);
+    // Without writes nothing is copied or allocated.
+    assert!(writes.is_empty());
+    assert_eq!(writes.sectors.copy.capacity(), 0);
+
+    // Out of range before any write: refused, nothing copied.
+    assert_eq!(
+        writes.write_sector(&committed, 3, state(0, 0)),
+        Err(GeometryError::InvalidReference.into())
+    );
+    assert!(writes.is_empty());
+    assert_eq!(writes.sectors.copy.capacity(), 0);
 
     writes.write_sector(&committed, 1, state(4, 120)).unwrap();
+    assert!(!writes.is_empty());
+    assert_eq!(
+        writes.sectors.copy,
+        [committed[0], state(4, 120), committed[2]]
+    );
     writes.write_sector(&committed, 2, state(16, 64)).unwrap();
-    // A second write of one sector replaces its entry instead of adding one.
+    // A second write of one sector replaces the first.
     writes.write_sector(&committed, 1, state(2, 120)).unwrap();
     let view = writes.sectors(&committed);
     assert_eq!(
         [view[0], view[1], view[2]],
         [committed[0], state(2, 120), state(16, 64)]
     );
-    assert_eq!(writes.sectors.len(), 2);
-    // Out of range: refused, overlay unchanged.
+    // Out of range after writes: refused, staged state unchanged.
     let staged = writes.clone();
     assert_eq!(
         writes.write_sector(&committed, 3, state(0, 0)),
@@ -42,17 +57,43 @@ fn the_overlay_reads_through_replaces_and_commits_only_on_request() {
     );
     assert_eq!(writes, staged);
 
-    // Dropping the overlay leaves the table as it was; committing applies it.
+    // Dropping the staged copy (a refused plan) leaves the table byte-identical.
     let mut table = committed.clone();
+    let mut refused = writes.clone();
+    refused.clear();
+    refused.commit(&mut table, &mut Vec::new());
+    assert_eq!(table, committed);
+
+    // Committing swaps the copy in; the replaced table becomes the spare buffer.
     let mut lines: Vec<i16> = Vec::new();
     writes.commit(&mut table, &mut lines);
     assert_eq!(table, [committed[0], state(2, 120), state(16, 64)]);
-    // Clearing keeps the capacity for the next plan.
-    let capacity = writes.sectors.capacity();
-    writes.clear();
     assert!(writes.is_empty());
-    assert_eq!(writes.sectors.capacity(), capacity);
+    assert_eq!(writes, StagedWrites::default());
+    assert!(lines.is_empty());
+    let spare = writes.sectors.copy.as_ptr();
+    let capacity = writes.sectors.copy.capacity();
+    assert!(capacity >= 3);
     assert!(Sectors::committed(&table).get(1) == Some(&state(2, 120)));
+
+    // The next plan reads the new committed table, reuses the spare buffer without
+    // allocating, and copies the current table, not the stale buffer.
+    writes.clear();
+    assert_eq!(writes.sectors(&table)[2], state(16, 64));
+    writes.write_sector(&table, 0, state(-8, 128)).unwrap();
+    assert_eq!(writes.sectors.copy.as_ptr(), spare);
+    assert_eq!(writes.sectors.copy.capacity(), capacity);
+    let view = writes.sectors(&table);
+    assert_eq!(
+        [view[0], view[1], view[2]],
+        [state(-8, 128), state(2, 120), state(16, 64)]
+    );
+    // Clearing drops the staged write; a commit then changes nothing.
+    let before = table.clone();
+    writes.clear();
+    assert_eq!(writes.sectors(&table)[0], before[0]);
+    writes.commit(&mut table, &mut lines);
+    assert_eq!(table, before);
 }
 
 #[test]
@@ -65,15 +106,31 @@ fn line_specials_are_staged_like_sectors() {
     writes.write_line_special(&committed, 3, 0).unwrap();
     assert_eq!(writes.line_special(&committed, 1), Some(0));
     assert_eq!(writes.line_special(&committed, 2), Some(88));
+    assert_eq!(writes.line_special(&committed, 4), None);
+    let staged = writes.clone();
     assert_eq!(
         writes.write_line_special(&committed, 4, 0),
         Err(GeometryError::InvalidReference.into())
     );
+    assert_eq!(writes, staged);
+    // Line writes stage no sector copy.
+    assert!(!writes.sectors.live);
+    assert_eq!(writes.sectors.copy.capacity(), 0);
     // Without runtime line specials (every policy before movers) nothing is writable.
-    assert!(writes.write_line_special(&[], 0, 0).is_err());
+    let mut fresh = StagedWrites::default();
+    assert!(fresh.write_line_special(&[], 0, 0).is_err());
+    assert!(fresh.is_empty());
+    // A refused plan leaves the vector as it was; a committed one swaps the copy in.
     let mut lines = committed.clone();
-    writes.commit(&mut [], &mut lines);
+    let mut refused = writes.clone();
+    refused.clear();
+    refused.commit(&mut Vec::new(), &mut lines);
+    assert_eq!(lines, committed);
+    let mut sectors: Vec<SectorState> = vec![state(0, 128)];
+    writes.commit(&mut sectors, &mut lines);
     assert_eq!(lines, [0, 0, 88, 0]);
+    assert_eq!(sectors, [state(0, 128)]);
+    assert!(writes.is_empty());
 }
 
 /// An independent transliteration of `P_GroupLines` (p_setup.c 538–575): sector by

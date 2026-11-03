@@ -328,9 +328,9 @@ struct DemonPlan {
     /// Under the specials policy, the runtime sector lights and specials written
     /// by the light thinkers and secrets of this tic (empty otherwise).
     specials: Vec<sector_thinkers::SectorSpecial>,
-    /// The sparse overlay of the sector heights and line specials written in this
-    /// tic (M3h8 note §9), read through by every later query of the plan; empty
-    /// under every policy without movers.
+    /// The sector heights and line specials written in this tic, each table in a
+    /// lazy full copy taken on its first write (M3h8 note §9), read through by every
+    /// later query of the plan; nothing staged under every policy without movers.
     writes: staging::StagedWrites,
     events: Vec<Event>,
 }
@@ -377,9 +377,9 @@ impl Simulation {
                 .map_err(|_| StoreError::Capacity)?;
             specials.extend_from_slice(&level.sectors);
         }
-        // The overlay of the last committed plan, as for the specials: no
-        // allocation once its capacity covers a tic's writes; never allocating
-        // without writes.
+        // The staging buffers of the last committed plan: copied into only on a
+        // plan's first write, so no allocation without writes and none once their
+        // capacity matches the tables.
         let mut writes = std::mem::take(&mut self.spare_writes);
         writes.clear();
         Ok(DemonPlan {
@@ -510,9 +510,9 @@ impl Simulation {
         if let Some(level) = &mut self.specials {
             self.spare_specials = std::mem::replace(&mut level.sectors, plan.specials);
         }
-        plan.writes
-            .commit(&mut self.sectors, &mut self.line_specials);
-        self.spare_writes = plan.writes;
+        let mut writes = plan.writes;
+        writes.commit(&mut self.sectors, &mut self.line_specials);
+        self.spare_writes = writes;
         plan.events
     }
     /// New-policy THING setup stages the same bounded actor/RNG/statistics plan.

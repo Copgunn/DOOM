@@ -565,8 +565,9 @@ pub struct Simulation {
     /// lines; empty, and never allocating, under every policy without movers, whose
     /// line specials are the map's.
     pub(crate) line_specials: Vec<i16>,
-    /// The sector and line-special overlay of the last committed plan, reused as the
-    /// next plan's (like `spare_specials`). Never read or encoded.
+    /// The sector and line-special staging buffers of the last committed plan (the
+    /// tables a commit replaced), reused as the next plan's (like `spare_specials`).
+    /// Never read or encoded.
     pub(crate) spare_writes: staging::StagedWrites,
 }
 /// Static-geometry table bounds a construction prepares against: the M3f2/M3h3

@@ -401,9 +401,9 @@ Paths are under `crates/doom-sim/src/` unless stated.
 | Errors | `MapScaleError` (`player_map_scale.rs:52–101`: `Walls` … `Intercepts`); no `Specials`, no `SpecialCross` | New `MapScaleError::SpecialCross` (runtime witness) and field-less load-rule variants (`Movers` or one per rule) |
 | Thinker store | `ThinkerStore<T, S = SectorThinker>` (`store.rs:268–276`), `ThinkerId::{Actor, Sector}` (51–56), `SectorThinkerId` (29), `Visit` (120–129), `with_sector_capacity` (297), `visit_bound = max_slots + max_sector_slots` (316–318), `spawn_sector` (412), `mark_remove_sector` (432), `shared_order` (439), `run` (550), `ThinkerContext::{sector_get_mut, spawn_sector}` (606, 622): one linked order, lazy removal, appends visible in the same pass | Unchanged mechanism; the sector slot class capacity becomes `L + 2M` (§8) |
 | Sector thinkers | `SectorThinker::{Flash, Strobe, Glow, Flicker}` (`sector_thinkers.rs:93–102`), `think` (137), `visit` (221); run from `thinkers::run` (`thinkers.rs:24`, sector arm 49–62); capacity from `install_specials` (`demon_expanded_map.rs:164–192`) | New variants `Door`, `Plat`, `Floor` |
-| Sector heights | `SectorState { floor, ceiling }` (`multisector.rs:16–21`), `Simulation::sectors` (`lib.rs:527`), built once (`lib.rs:703–713`); the plan borrows `&self.sectors` read-only (`demon_expanded_map.rs:529, 554, 614, 686`) | Written inside the pass, visible to later thinkers, staged with the plan (sparse overlay, §9) |
+| Sector heights | `SectorState { floor, ceiling }` (`multisector.rs:16–21`), `Simulation::sectors` (`lib.rs:527`), built once (`lib.rs:703–713`); the plan borrows `&self.sectors` read-only (`demon_expanded_map.rs:529, 554, 614, 686`) | Written inside the pass, visible to later thinkers, staged with the plan (lazy full copy, §9) |
 | Runtime light/special | `SectorSpecial { light, special }` (`sector_thinkers.rs:118`), `Simulation::specials`/`spare_specials` (`lib.rs:555, 558`), staged in `DemonPlan::specials` | Unchanged; plus runtime line specials (W1/S1 clears) |
-| Checked tic plan | `DemonPlan` (`demon_expanded_map.rs:317–330`: actors, spatial, rng, statistics, player, bindings, sound targets, specials, events), `demon_plan` (332–392), `commit_demon_plan` (478–502), `advance_expanded_demons` (580–732), `preflight_expanded_demons_for` (419) | Gains the sector overlay, the line-special overlay, `level.exit`, the player's use latch |
+| Checked tic plan | `DemonPlan` (`demon_expanded_map.rs:317–330`: actors, spatial, rng, statistics, player, bindings, sound targets, specials, events), `demon_plan` (332–392), `commit_demon_plan` (478–502), `advance_expanded_demons` (580–732), `preflight_expanded_demons_for` (419) | Gains the staged sector and line-special tables (§9), `level.exit`, the player's use latch |
 | Collision | `multisector::opening` (283–301), `check_move` (303), `check_move_from_things` (315–396) returning `SectorMoveAttempt { …, openings: Vec<OpeningVisit> }` (95–112) in visit order; a thing block returns with no openings (335–338); a one-sided or blocking line returns at that line (361–366) | `spechit` = the special subsequence of `openings` (no new array); Phase 2 must confirm that a line failure keeps the openings before the blocker and that a missile's attempt keeps blocking two-sided lines |
 | `ceilingline` | derived from `openings` (`projectiles.rs:59–69`) | unchanged |
 | `P_Move` | `pursuit::move_actor` (`pursuit.rs:164–198`): on success sets position, heights, `z = floor`, relinks; on failure returns false — no `DI_NODIR` reset, no `spechit` loop; `try_walk` (199); chase failure → `new_direction` (`pursuit/chase.rs:64–66`) | The failure branch of §2.2 and the crossing loop on success |
@@ -680,13 +680,26 @@ sector `s`, and `Q` the collision work of one position check (M3h6 §4.1 row 15)
 
 ## 9. Sector staging
 
-Approved: a **sparse copy-on-write overlay** of the sectors written in the tic. The plan
-keeps a small vector of `(sector, SectorState)` written entries (and of line-special
-clears), read through by every collision, sight, noise and clip query of later thinkers
-in the same pass, and committed into `Simulation::sectors` with the rest of the plan; a
-refused tic drops it, leaving the table byte-identical. Older policies stage nothing and
-allocate nothing (as the M3h7 spare buffers). The alternative is a full copy of the
-sector table per tic into a reused spare buffer, as M3h7 does for `SectorSpecial`.
+Approved rule (§14): a sparse copy-on-write overlay of the sectors written in the tic,
+unless the measurement says a full copy is cheaper; the measurement is recorded either
+way. **The measurement below says the full copy is cheaper, so the approved rule selects
+the full copy**, taken lazily:
+
+- The plan's first sector write copies `Simulation::sectors` into a buffer reused across
+  tics; later writes change the copy, and every collision, sight, noise and clip query
+  of later thinkers in the same pass reads the copy (the `Sectors` view reads the
+  committed table until the first write). A committed plan swaps the copy in (the
+  replaced table becomes the next plan's buffer); a refused tic drops it, leaving the
+  table byte-identical.
+- A tic that writes nothing copies nothing, so every older policy stages nothing and its
+  buffers never allocate (as the M3h7 spare buffers); once a buffer has the table's
+  capacity a tic allocates nothing for it.
+- The runtime line specials (W1/S1 clears) are staged the same way, in a lazy copy of
+  the line-special vector, which the line measurement below supports.
+
+The step-5 implementation was the sparse overlay (a vector of `(sector, SectorState)`
+written entries with a linear scan per read, and likewise for line specials); it was
+replaced by the lazy copy after the owner's rule was applied to the measurement.
 
 The measurement (Phase 2, the measurement step of §12), alone on an idle host: matched
 release timings of `Simulation::advance` for the M3h7 workloads (must not move) and for
@@ -711,14 +724,15 @@ the two trees. Medians, parent → refactor, of the timeline: `pools_lights_soak
 `sky_hack_wall` advance 1.15–1.17 → 1.17–1.19 ms; `sky_window_order` advance 0.99–1.00 →
 1.02 ms; capture mode within ±2 %; admission 246–251 → 245–249 µs (`pools`), 267–269 →
 272–274 µs (`sky`); max RSS 51.9–52.0 MiB in every case. The refactor costs at most a
-few percent on `advance`; every read in a plan now passes through the (empty) overlay.
+few percent on `advance`; every read in a plan then passed through the (empty) overlay.
 
 *Synthetic stage/commit.* Opt-in test
 `DOOM_STAGING_COST=1 cargo test -p doom-sim --release --lib --locked -- staging_cost --nocapture`
 (`transaction_cost_tests.rs`): per synthetic tic, `k` sector writes, `reads` reads
 through the staged view, commit; 100,000 tics, median of 7; ns per tic. `sparse` is the
-overlay as implemented (linear scan per read), `full` a full copy into a reused spare
-buffer, `indexed` a bench-only sparse variant with a reused per-sector position table.
+overlay as implemented at step 5 (linear scan per read), `full` a full copy into a
+reused spare buffer, `indexed` a bench-only sparse variant with a reused per-sector
+position table.
 Two runs (the second after adding `indexed`, which changed the sparse codegen):
 
 | sectors | k | reads | baseline | sparse (run 1 / 2) | full (run 1 / 2) | indexed |
@@ -743,8 +757,85 @@ at most 4 sectors.** On the format-sized table the sparse overlay wins with 256 
 k ≤ 1 (k = 2 in run 1 only) and loses beyond; the indexed variant wins there at 256
 reads and loses to the full copy at 2,048.
 Under the approved rule (keep the overlay unless the full copy is cheaper on the
-E1M1-sized table) the measurement selects the full copy. The step did not switch: the
-choice is returned to the owner (§15).
+E1M1-sized table) the measurement selects the full copy; the follow-up below implements
+it as a lazy full copy.
+
+**Observed (lazy full copy, 2026-11-03).** Same host, toolchain and profile as above;
+every measurement ran alone (no concurrent build, test or fuzz job; load average 1–3
+from the idle agent and editor processes before each run). No CPU or frequency
+isolation; host observations, not budgets.
+
+*Synthetic stage/commit.* The same opt-in command (the test is now
+`staging_cost_overlays_against_lazy_copies`), same tics, repeats and index spread.
+`lazy` is the implementation (copy on the first write into the reused buffer, reads
+through the copy, swap on commit; `k = 0` copies nothing); `sparse` is the step-5
+overlay, kept in the benchmark as a local copy; `full` the eager copy every tic;
+`indexed` as above. Two runs; ns per tic, run 1 / run 2 where they differ by more than
+5 % (sub-nanosecond baseline differences aside), otherwise run 2:
+
+| sectors | k | reads | baseline | lazy | sparse | full | indexed |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 88 | 0 | 0 | 0.8 | 2.0 | 1.3 | 12.7 | 2.3 |
+| 88 | 0 | 256 | 115 | 130 | 215 | 208 | 329 |
+| 88 | 1 | 0 | 0.7 | 13.9 / 13.1 | 5.5 | 12.4 | 6.5 |
+| 88 | 1 | 256 | 113 | 141 | 339 | 211 | 350 |
+| 88 | 2 | 256 | 114 | 143 | 424 | 212 | 374 |
+| 88 | 4 | 0 | 0.7 | 14.9 | 12.5 | 14.3 | 14.8 |
+| 88 | 9 | 0 | 0.7 | 19.0 | 35.6 | 18.5 | 29.3 |
+| 88 | 9 | 256 | 115 | 149 | 944 | 216 | 346 |
+| 88 | 9 | 2,048 | 901 | 1,049 | 7,372 | 1,613 | 2,484 |
+| 88 | 18 | 2,048 | 902 | 1,053 | 12,274 | 1,610 | 2,343 |
+| 4,096 | 0 | 256 | 113 | 131 | 217 | 847 / 799 | 329 |
+| 4,096 | 1 | 0 | 0.7 | 639 | 5.4 | 690 | 6.4 |
+| 4,096 | 1 | 256 | 114 | 789 / 744 | 328 | 807 | 337 |
+| 4,096 | 9 | 256 | 114 | 755 | 891 | 804 | 357 |
+| 4,096 | 9 | 2,048 | 903 | 1,764 / 1,672 | 6,800 | 2,174 | 2,653 |
+
+The other rows of the 6 × 3 grid per table are in the run logs, not committed. On the
+E1M1-sized table the lazy copy is the cheapest strategy in every row with reads, in both
+runs (1.6–11.7× below the sparse overlay, 1.4–1.6× below the eager copy, 2.2–2.8×
+below the indexed variant); in a tic without writes or reads it costs 1.2–1.3 ns over the
+baseline. It loses only in tics that read nothing: to the sparse overlay at k ≤ 4 (by
+≤ 8.4 ns) and to the eager copy at k = 18 (27.4 against 21.0 ns). On the format-sized
+table a written tic pays the ≈ 640–670 ns copy, so the sparse overlay (k ≤ 1 with 256
+reads, k ≤ 4 without reads) or the indexed variant (otherwise, ≤ 256 reads) wins when
+the tic writes; the lazy copy wins at 2,048 reads and in every tic that reads without
+writing.
+
+*Line specials.* The same test, a runtime line-special vector of 512 (E1M1: 475 lines)
+or 4,096 lines, `k ∈ {0, 1, 2, 4}` writes and `reads ∈ {0, 16, 256}` reads per tic
+(run 2; run 1 within 5 % except 4,096 lines, k = 2, 16 reads, sparse 33.2 / 27.9, and
+sub-nanosecond differences):
+
+| lines | k | reads | baseline | lazy | sparse |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 512 | 0 | 16 | 8.3 | 9.7 | 14.7 |
+| 512 | 0 | 256 | 120 | 114 | 215 |
+| 512 | 1 | 0 | 1.0 | 15.2 | 2.8 |
+| 512 | 1 | 16 | 8.4 | 21.0 | 21.3 |
+| 512 | 4 | 16 | 8.3 | 22.9 | 55.0 |
+| 4,096 | 0 | 16 | 8.4 | 9.5 | 14.5 |
+| 4,096 | 1 | 0 | 1.0 | 74.4 | 2.8 |
+| 4,096 | 1 | 16 | 8.4 | 78.4 | 21.3 |
+| 4,096 | 1 | 256 | 120 | 180 | 297 |
+
+A line special is written only in a tic that triggers a W1 or S1 line (at most once per
+such line per level: four on E1M1), while crossing and use checks read line specials in
+any tic. In a tic without writes the lazy copy reads the committed vector directly and
+is cheaper than the sparse overlay (9.5–9.7 against 14.5–14.7 ns at 16 reads); it loses
+only in the rare written tics, by ≤ 13 ns at 512 lines and ≤ 72 ns at 4,096. **Line
+specials therefore use the lazy copy as well** (one mechanism for both tables).
+
+*M3h7 workloads (must not move).* `python3 tools/measure_specials.py` (11 interleaved
+process samples per workload and mode), alternating parent `68047b5` (sparse overlay,
+scratch worktree) / lazy copy / parent / lazy. Every workload and admission digest is
+identical across the four runs (and to the step-5 runs above). Medians, parent → lazy
+(ranges over the two runs each): `pools_lights_soak` advance 2.08–2.10 → 2.05–2.08 ms,
+step 45.7–45.9 → 46.0–46.1 ms; `pools_light_and_fireball` advance 4.58–4.64 → 4.52–4.56
+ms, step 49.0–49.2 → 48.8 ms; `sky_hack_wall` advance 1.15–1.17 → 1.14–1.16 ms;
+`sky_window_order` advance 1.00–1.01 → 1.00–1.01 ms; capture within ±1 %; admission
+254–260 → 247–251 µs (`pools`), 282–287 → 278–279 µs (`sky`); max RSS 51.9–52.0 MiB in
+every case. The lazy copy is within ±2 % of the parent on every M3h7 timeline.
 
 ## 10. DSIM35 / wire 19
 
@@ -855,8 +946,9 @@ step.
    `tests/reference/m3h8_trace.dref`, cases, geometry lumps, `m3h8_maps.rs`,
    `m3h8_contract.json`; strict and sanitizer builds compared.
 4. **DSIM35 projection**: `movers_snapshot.py`, `m3h8_snapshot_goldens.py`, outputs.
-5. **Staging refactor, no behaviour change**: the sparse sector and line-special overlay
-   in `DemonPlan`, read-through accessors replacing `&self.sectors` in the plan
+5. **Staging refactor, no behaviour change**: staged sector and line-special tables in
+   `DemonPlan` (the strategy the §9 measurement selects under the approved rule: a lazy
+   full copy), read-through accessors replacing `&self.sectors` in the plan
    (`demon_expanded_map.rs:529, 554, 614, 686`), the per-sector `blockbox`; the §9
    measurement recorded here.
 6. **Policy and admission**: `PlayerMonstersMoversV1` (wire 19), `has_movers`, context,
@@ -1075,11 +1167,13 @@ source `playerstate` (`PST_REBORN`, value 2) in the existing `original_player.0.
 field rather than a second flag; a removed mover not yet unlinked is a store record of
 kind 8 naming its sector; movers take the lowest free sector-thinker slot and a slot's
 generation grows when its mover is unlinked; a case that requested an exit or a reborn
-ends at that tic. Next is step 5, the staging refactor. Step 5 is implemented without behaviour change (the `Sectors`
-read-through view in every plan path, `StagedWrites` in `DemonPlan` with runtime line
-specials, the per-sector `blockbox` at load, the store's DSIM35 slot rules confirmed by
-a test with no store change), but **its sparse-overlay choice is blocked**: the §9
-measurement found the full copy cheaper on the E1M1-sized table, so the step stops for
-the owner's decision (keep sparse, switch to the full copy, or an indexed overlay, which
-measured between them) before step 6 (policy and admission). The view type serves either
-strategy unchanged.
+ends at that tic.
+
+Step 5 is done, without behaviour change: the `Sectors` read-through view in every plan
+path, `StagedWrites` in `DemonPlan` with runtime line specials, the per-sector
+`blockbox` at load, and the store's DSIM35 slot rules confirmed by a test with no store
+change. It was first implemented as the sparse overlay; the §9 measurement found the
+full copy cheaper on the E1M1-sized table, so the approved rule (§14) selects the full
+copy, and the staging now takes it lazily on a plan's first write (sectors and line
+specials alike; the measurement, the line-special comparison and the unchanged M3h7
+digests are in §9). Next is step 6, policy and admission.
