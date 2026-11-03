@@ -811,6 +811,7 @@ pub(crate) fn identity(slot: ActorTypeId) -> Result<DefinitionIdentity, Original
         .map(DefinitionIdentity::Original)
         .map_err(|_| OriginalRegistryError::Definition(slot.0))
 }
+#[inline]
 pub(crate) fn require_role_for(
     profile: OriginalExecutionProfile,
     slot: ActorTypeId,
