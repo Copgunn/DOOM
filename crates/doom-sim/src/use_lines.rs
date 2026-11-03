@@ -2,13 +2,15 @@
 //! `P_UseLines`, `PTR_UseTraverse`, `P_UseSpecialLine`, `P_ChangeSwitchTexture`,
 //! `P_StartButton`, the button countdown of `P_UpdateSpecials` and `G_ExitLevel`.
 //!
-//! Switch textures are not simulated (M3h7 decision 5): every 11 and 63 line is taken
-//! to carry a switch texture, which is what the C harness declares (its `switchlist`
-//! is the one declared pair, and every switch line's front side carries its "off"
-//! texture). The button list is kept only as far as the event stream demands it: a
-//! switch sound plays at `buttonlist[0].soundorg` (the first slot's line front
-//! sector, or a global sound when that slot is free) and a finished button's sound
-//! names its slot. None of it is DSIM35 state (decision 5).
+//! Switch textures themselves are presentation and not simulated: load rule 9
+//! (decision N9a, `mover_rules::switch_match`) guarantees that every 11 and 63 line
+//! carries an episode-1 switch texture on its front side, so `P_ChangeSwitchTexture`
+//! always finds its `switchlist` entry, makes its sound and (for 63) starts a button.
+//! The button list is kept as far as the simulation needs it: a switch sound plays at
+//! `buttonlist[0].soundorg` (the first slot's line front sector, or a global sound
+//! when that slot is free) and a finished button's sound names its slot. Each slot's
+//! `btimer`, and the line and `soundorg` sector of a running button, are DSIM35 state
+//! (decision N9); `where` and `btexture` only pick the restored texture.
 use crate::{
     ActorId, Event, MoverEvent, SimError, StaticWorld,
     lifecycle::ActorStateEvent,

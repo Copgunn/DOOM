@@ -222,9 +222,9 @@ pub(crate) fn tagged(map: &Map, tag: i16) -> impl Iterator<Item = usize> + '_ {
 /// 9. every switch line (11, 63) has an episode-1 switch texture on its front side
 ///    ([`MapScaleError::SwitchTexture`], decision N9a, [`switch_match`]).
 /// 10. every mover sector has a defined `blockbox` (the `P_GroupLines` arithmetic of
-///    `multisector::sector_block_boxes` stays inside `fixed_t`), so every
-///    `P_ChangeSector` of a plane step visits defined cells
-///    ([`MapScaleError::MoverBlockBox`]).
+///     `multisector::sector_block_boxes` stays inside `fixed_t`), so every
+///     `P_ChangeSector` of a plane step visits defined cells
+///     ([`MapScaleError::MoverBlockBox`]).
 pub(crate) fn validate_movers(map: &Map) -> Result<MoverAdmission, SimError> {
     use crate::sector_thinkers::{MAX_LINE_ANIMS, SCROLLING_WALL};
     crate::demon_expanded_map::validate_sector_specials(map)?;

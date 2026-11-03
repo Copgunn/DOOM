@@ -593,8 +593,8 @@ pub struct Simulation {
     /// Under the movers policy, source `gameaction == ga_completed`: the exit switch
     /// ran `G_ExitLevel` and every later tic is refused (`SimError::LevelExited`).
     pub(crate) level_exit: bool,
-    /// Under the movers policy, the running switch buttons as far as the sound
-    /// origins of later switches need them (M3h7 decision 5: not DSIM35 state).
+    /// Under the movers policy, the running switch buttons (`buttonlist`): timer,
+    /// line and sound-origin sector of each slot, DSIM35 state (decision N9).
     pub(crate) buttons: use_lines::Buttons,
 }
 /// Static-geometry table bounds a construction prepares against: the M3f2/M3h3

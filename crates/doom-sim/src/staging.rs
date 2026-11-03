@@ -130,11 +130,8 @@ impl StagedWrites {
         self.sectors.live = false;
         self.lines.live = false;
     }
-    /// Whether the plan wrote nothing.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "read by the M3h8 plane movers (plan step 7)")
-    )]
+    /// Whether the plan wrote nothing (tests only).
+    #[cfg(test)]
     pub(crate) fn is_empty(&self) -> bool {
         !self.sectors.live && !self.lines.live
     }
