@@ -13,4 +13,6 @@ pub const MAP_BYTES: &[&[u8]] = &[
     include_bytes!("m3h9_geometry_10.bin"),
     include_bytes!("m3h9_geometry_11.bin"),
     include_bytes!("m3h9_geometry_12.bin"),
+    include_bytes!("m3h9_geometry_13.bin"),
+    include_bytes!("m3h9_geometry_14.bin"),
 ];

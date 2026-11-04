@@ -157,8 +157,13 @@ effect (observed in `use_scroll_wall_stops_trace`); `PTR_UseTraverse` stops the 
 special (p_map.c:1113–1122). `P_CrossSpecialLine` has no case 48 (p_spec.c:503–534),
 `PTR_ShootTraverse` ignores specials other than through `P_ShootSpecialLine`
 (p_map.c:919–920, p_spec.c:966–999, no case 48), and sight, noise and `P_LineOpening`
-never read `special`. A two-sided 48 with `ML_BLOCKING` blocks like any blocking line
-and never enters `spechit` (PIT_CheckLine returns before the special test). The scroll
+never read `special`. A two-sided 48 with `ML_BLOCKING` blocks every non-missile like
+any blocking line and never enters its `spechit` (PIT_CheckLine returns before the
+special test). *Corrected in the independent review:* a missile skips the `ML_BLOCKING`
+and `ML_BLOCKMONSTERS` tests (p_map.c:214–221), so a blocking 48 enters a fireball's
+`spechit` (240–244) and the crossing loop calls `P_CrossSpecialLine`, which returns at
+once for `MT_TROOPSHOT` (p_spec.c:503–514); observed in `fireball_through_blocking_scroller`
+(§12). The scroll
 offset of a 48 line after `t` tics is its SIDEDEFS offset plus `t × FRACUNIT`: derivable
 from `leveltime`, never state.
 
@@ -403,7 +408,9 @@ see the split in §8.
 - *Scrollers.* M3h8 §2.9 and §2.4 here: `spechit` order matters only through the count
   (a 48 entry changes no other entry's effect), the `DI_NODIR` reset and the use stop
   are existing bodies, crossing is a no-op, shooting ignores it. Admitting blocking
-  two-sided 48 too costs nothing: `PIT_CheckLine` returns before the special test.
+  two-sided 48 too costs nothing: for a non-missile `PIT_CheckLine` returns before the
+  special test, and a missile's crossing is the no-op `P_CrossSpecialLine` return, an
+  existing body (corrected in the review, §2.4).
 - *Decorations.* Every per-tic body that could touch them already exists in Rust for
   monsters, pickups and the player (position checks, height clip, blockmap iteration,
   intercept collection, thinker run); what changes is only that a thing may be
@@ -767,5 +774,38 @@ in [ROADMAP](ROADMAP.md). Step by step:
   against `MTF_AMBUSH` (792–793), `lastlook < 4` (506) and the death request, and
   `decode_e1m1` rejects every skill but medium, while every reader before DSIM36
   leaves the skill unchecked.
+
+  Two C scenarios were added (appended, so every earlier case keeps its index; now 22
+  scenarios over 7 rooms, 1,372 tics, 20 replayed, 337 captures):
+  `fireball_through_blocking_scroller` (an Imp in `scrollblock` fires across the
+  `ML_BLOCKING` 48: the missile skips the blocking tests, p_map.c:214–221, so the line
+  enters its `spechit`, 240–244, and the crossing calls `P_CrossSpecialLine`, which
+  returns for `MT_TROOPSHOT`; §2.4 is corrected accordingly) and
+  `pillar_straddles_door_step` in the new `doorstep` room (a DR door, floor 0, with a
+  step, floor 8, east of it, and a techno pillar at (568, 64) whose box straddles the
+  door/step line). In C the pillar spawns at the door floor (z 0, `P_SpawnMobj` reads
+  the subsector), the first `P_ThingHeightClip` lifts it to the step floor (8) that
+  `P_CheckPosition` reads over its box, the door closes fully (`PIT_ChangeSector`
+  returns at the `MF_SHOOTABLE` test, 1290–1294, `nofit` never set) and the pillar's
+  floorz (8) stays above its ceilingz from op 64 to op 92 (the door is shut from op 68
+  and reopened by a use at op 90), with `z == floorz` throughout and no draw.
+
+  *Proof that the floorz > ceilingz pair is inert for a decoration* (the reason the
+  per-tic witness `actor.floor > actor.ceiling` → `MapSpawnError::Ownership` is relaxed
+  for decorations under wire 20 only): (1) a decoration has no momentum and `momz` 0
+  (nothing gives it any: §2.5; the API refuses both) and `z == floorz` (onfloor clip,
+  542–546), so `P_MobjThinker` runs neither `P_XYMovement` nor `P_ZMovement`
+  (p_mobj.c:418–436) and its state never cycles (`tics` −1); (2) no body reads another
+  thing's `floorz` or `ceilingz`: `PIT_CheckThing` reads `z` and `height` (252–345),
+  `PTR_AimTraverse`/`PTR_ShootTraverse` and `PIT_RadiusAttack` skip non-shootables
+  before any height (1013–1014, 1170–1171), sight and noise read no thing; (3) the only
+  writer is the next `P_ThingHeightClip`, which recomputes both from `P_CheckPosition`
+  and keeps `z = floorz`, and `PIT_ChangeSector` returns before `nofit` for a
+  non-shootable. So C's next tics depend on the pair only through the clip Rust already
+  performs, and the actor stays in V′ case (b) (non-shootable, `z == floor`,
+  `ceiling < top`). The Rust replay of `pillar_straddles_door_step` then matches every
+  op, event frame and capture through op 170. The relaxation requires a listed
+  decoration (so wire 20) with `z == floor` and no momentum; items, corpses and every
+  older policy keep the refusal (not evidenced in C here).
 
 Next: the step 10 campaigns, run alone, then steps 13–14.

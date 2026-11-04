@@ -3,12 +3,14 @@
 import argparse
 from pathlib import Path
 
-# The 18 distinct replayed M3h9 scenario starts of fuzz_targets/player_e1m1.rs: 0-4
+# The 20 distinct replayed M3h9 scenario starts of fuzz_targets/player_e1m1.rs: 0-4
 # scrollhall (crossing, the ledge Zombieman, the use through the scroller, the shot,
 # the Imp in the strip), 5 scrollblock, 6 dense8, 7-14 gallery (the lamps, the gore,
 # the pillar Zombieman, the alcove Zombieman, the two Imps, the pistol lane), 15-16
-# liftroom (riders on the lift, the pillar under the door), 17 census.
-SPAWNS = 18
+# liftroom (riders on the lift, the pillar under the door), 17 census, 18 scrollblock
+# with the Imp beyond the blocking scroller, 19 doorstep (the pillar straddling the
+# door and the step).
+SPAWNS = 20
 
 
 def main():

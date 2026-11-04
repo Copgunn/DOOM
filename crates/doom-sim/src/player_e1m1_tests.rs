@@ -24,11 +24,11 @@ pub(crate) fn e1m1(lumps: &Lumps) -> Result<Simulation, OriginalRegistryError> {
     Simulation::original_player_e1m1_map(lumps.map(), options())
 }
 
-/// The thirteen committed M3h9 rooms parse; the census room (no line special, one
+/// The fifteen committed M3h9 rooms parse; the census room (no line special, one
 /// sector-1 light) loads under the E1M1 policy with a DSIM36 capture.
 #[test]
 fn committed_m3h9_rooms_parse_and_the_census_room_loads() {
-    assert_eq!(maps::MAP_BYTES.len(), 13);
+    assert_eq!(maps::MAP_BYTES.len(), 15);
     for index in 0..maps::MAP_BYTES.len() {
         let lumps = room(index);
         assert!(lumps.try_map().is_ok(), "room {index}");
@@ -437,8 +437,9 @@ fn a_player_crossing_a_two_sided_scroller_is_a_no_op() {
 
 /// `blocking_scroller_wall`: a 48 line with `ML_BLOCKING` blocks the player walking
 /// west and the chasing Zombieman walking east in `PIT_CheckLine` before the
-/// special test (p_map.c:220–244): nothing enters `spechit`, no crossing, no
-/// `P_Move` failure branch with specials.
+/// special test (p_map.c:214–221, the test a missile skips): both attempt to cross
+/// and are refused with that line as the blocker (`MoveFailure::Line`), nothing
+/// enters `spechit`, no crossing, no `P_Move` failure branch with specials.
 #[test]
 fn a_blocking_two_sided_scroller_blocks_and_never_enters_spechit() {
     let (mut s, body, things) = setup(3, [48, 64]);
@@ -461,6 +462,25 @@ fn a_blocking_two_sided_scroller_blocks_and_never_enters_spechit() {
             | MoverEvent::SpechitBlocked { .. }
             | MoverEvent::SpecialUse { .. }
     )));
+    // Both movers attempted to cross: refused moves naming the blocking 48 line.
+    let line = s
+        .line_specials
+        .iter()
+        .position(|special| *special == 48)
+        .map(|i| u16::try_from(i).unwrap())
+        .unwrap();
+    let refused = |who: ActorId| {
+        log.iter()
+            .filter(|e| {
+                matches!(e, Event::SectorMovement { actor, attempt }
+                    if *actor == who
+                        && attempt.failure == MoveFailure::Line
+                        && attempt.movement.lines.blocked_by == Some(line))
+            })
+            .count()
+    };
+    assert!(refused(body) > 0);
+    assert!(refused(zombie) > 0);
 }
 
 /// `dense_spechit_8`: a position check whose box covers all eight 48 lines fills

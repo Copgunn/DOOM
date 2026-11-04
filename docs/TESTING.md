@@ -1406,7 +1406,7 @@ ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_e1m1 /tmp/doom-e1m1-c
 ```
 
 The generator reuses every compiled M3h8 body over the `scrollhall`, `scrollblock`,
-`dense8`, `gallery`, `liftroom` and `census` rooms and checks
+`dense8`, `gallery`, `liftroom`, `census` and `doorstep` rooms and checks
 `tests/reference/m3h9_trace.dref`, `m3h9_cases.csv`, the `m3h9_geometry_*.bin` lumps,
 `m3h9_maps.rs`, the Rust-only nine-scroller lane `m3h9_dense9.bin` and
 `m3h9_contract.json`; the sanitizer options and `--cases` work as for M3h8.
@@ -1417,7 +1417,7 @@ projection of those rows (never of Rust output): it checks
 full-byte `m3h9_state_*.bin` fixtures and `m3h9_snapshot_contract.json`.
 `check_player_e1m1.py` runs the full Rust replay (the library tests in
 `e1m1_replay`) in debug and release and asserts that both pass and print the same
-summary: all 18 medium-skill scenarios through their last op, every C row the replay
+summary: all 20 medium-skill scenarios through their last op, every C row the replay
 reads (heights, line specials, use latch, exit and player state, crossings, uses, use
 intercepts, blocked moves, the thinker list), every PBE1 event frame, and at every
 capture the independent digest, size and field count, the 15 fixtures byte for byte
@@ -1427,6 +1427,9 @@ easy and hard skill are not replayed. A second, Rust-only test rebuilds the
 `monster_hitscan_through_pillar` alcove in memory with its walls on the Zombieman's
 closed box and asserts that the diagonal spawn rule still refuses it with the state
 unchanged (`P_SpawnMapThing` checks no position; the committed alcove is wide enough).
+Two more replay the review scenarios: the fireball's crossing record at the blocking
+scroller, and the pillar whose floor stays above its ceiling while the door is shut on
+it, with a shut-door capture decoding under `decode_e1m1`.
 The example `player_e1m1` runs in the
 synthetic M3h9 rooms, not the real E1M1. Through the public API alone it replays the
 scenarios whose declared inputs are public (all but those with the controlled
@@ -1459,7 +1462,7 @@ soaks with four seeds on the five gallery and the two liftroom rooms asserting V
 every decoration's type, state, tics, health, flags, radius, height and `z == floorz`
 after every tic, `step == advance` every 10th tic and the DSIM36 `decode_e1m1` round
 trip every 100th; and the M3h9 note §5.3 budget formulas. The fuzz target
-`player_e1m1` starts from the 18 replayed scenario starts and applies bounded
+`player_e1m1` starts from the 20 replayed scenario starts and applies bounded
 operations (commands with `BT_USE` and `BT_ATTACK`, damage, retargeting, removal,
 pause, pushes, vertical momentum, each also aimed at a decoration, whose target,
 removal, nonzero push and nonzero vertical momentum must be refused, and direct spawns
@@ -1470,7 +1473,7 @@ with `decode_movers` rejecting the bytes, and mutated decodes of two pinned DSIM
 fixtures; `seed_player_e1m1_fuzz.py` writes its byte seeds without reading Rust
 output. Run the fuzz commands from `fuzz/` on a fresh copy of the seeds outside the
 working tree and delete the corpus afterwards. `-runs=0` replays the seeds only; the seed
-tool writes 4,824 seeds, so, as for the movers target, the campaigns are bounded by
+tool writes 5,360 seeds, so, as for the movers target, the campaigns are bounded by
 `-max_total_time` rather than `-runs`. The campaign without a sanitizer explores faster;
 the AddressSanitizer campaign is the sanitizer evidence. The fuzz workspace is
 nightly-only and CI only format-checks it, so the campaigns are a local step. Run

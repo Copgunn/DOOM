@@ -320,6 +320,46 @@ def run(check,overflow,address):
         hc=rows_of(mine,'HC',**{'3':pillar});assert hc and all(r[5]==r[6]==str(2*U)for r in hc)
         assert heights(mine,last_op[int(w)])[door]==(2*U,2*U)
         return dict(use_ops=[int(r[2])for r in uses],closing_steps=len(down),left_as_is=len(stuck),nofit=0,final_door_ceiling=2,pillar_z_unchanged=True)
+    def check_fireball_through_blocking_scroller(w,mine,m,p):
+        # PIT_CheckLine skips the ML_BLOCKING test for a missile (p_map.c:214-221): the
+        # blocking 48 line enters spechit (240-244), the move is accepted and the
+        # crossing loop calls P_CrossSpecialLine, which returns for MT_TROOPSHOT.
+        sc=m['scrollers'];assert len(sc)==1 and sc[0]['two_sided']and sc[0]['blocking'];s=str(sc[0]['line'])
+        launches=rows_of(mine,'MS',**{'3':5});assert len(launches)==1
+        mx=[r for r in mine if r[0]=='MX'and kind(w,r[3])=='missile'];assert len(mx)==1 and mx[0][4]==s and mx[0][6]=='48',mx
+        missile=mx[0][3]
+        stores=rows_of(mine,'MK',**{'3':missile,'4':s});assert stores and all(r[2]==mx[0][2]for r in stores)
+        accepted=[r for r in mine if r[0]=='M'and r[2]==mx[0][2]and r[4]==missile and r[7]=='1'];assert accepted
+        ns=[r for r in mine if r[0]=='NS'and r[2]==mx[0][2]and r[4]==missile];assert ns and all(r[5]=='-1'for r in ns)
+        assert not rows_of(mine,'M',**{'4':missile,'7':0}),'the missile is never refused'
+        beyond=[r for r in mine if r[0]=='M'and r[4]==missile and r[7]=='1'and int(r[5])<0];assert beyond
+        z=ident_of(w,IMP);assert not rows_of(mine,'MX',**{'3':z})and not rows_of(mine,'ME')
+        return dict(launch_op=int(launches[0][2]),spechit_stores=len(stores),crossing_op=int(mx[0][2]),crossing_special=48,missile_steps_west_of_line=len(beyond),missile_refusals=0,explosions=len(rows_of(mine,'MS',**{'3':0})),player_final_health=int(next(r for r in mine if r[0]=='P'and r[2]==str(last_op[int(w)]))[4]))
+    def check_pillar_straddles_door_step(w,mine,m,p):
+        # The pillar's box straddles the door/step line: P_SpawnMobj gives it the door
+        # floor (0), the first P_ThingHeightClip lifts it to the step floor read by
+        # P_CheckPosition (8). The door closes fully onto it (PIT_ChangeSector returns
+        # at the MF_SHOOTABLE test, p_map.c:1290-1294, nofit never set), leaving
+        # floorz 8 above ceilingz while it is shut; z stays on floorz throughout.
+        pillar=ident_of(w,PILLAR)
+        door=next(k for k,(f,c)in enumerate(m['heights'])if(f,c)==(0,124))
+        uses=rows_of(mine,'ME',**{'3':2});assert [int(r[2])for r in uses]==[3,6,90]
+        hc=rows_of(mine,'HC',**{'3':pillar});mt=rows_of(mine,'MT',**{'3':pillar})
+        assert hc[0][2]=='3'and int(hc[0][5])==0 and int(hc[0][6])==int(hc[0][7])==8*U,'first clip lifts the pillar to the step floor'
+        assert all(int(r[6])==int(r[7])==8*U for r in hc),'z == floorz == 8 at every clip'
+        inverted=[r for r in hc if int(r[8])<int(r[7])];assert inverted
+        assert all(r[4]=='0'for r in hc if int(r[8])-int(r[7])<16*U)and all(r[4]=='1'for r in hc if int(r[8])-int(r[7])>=16*U)
+        assert {r[4]for r in mt}=={'0','3'}and all(r[8]=='0'for r in mt),'no nofit'
+        assert not rows_of(mine,'MT',**{'4':4})and not rows_of(mine,'G')
+        closed=[r for r in rows_of(mine,'MV',**{'3':door,'4':1,'5':-1})if r[10]=='2'];assert len(closed)==1 and int(closed[0][9])==0
+        shut=[op for op in range(int(closed[0][2]),90)if heights(mine,op)[door]==(0,0)];assert shut
+        assert int(final_actor(mine,pillar,w)[8])==8*U and int(final_actor(mine,pillar,w)[22])==8*U
+        assert sum(r[0]=='E'and r[3]=='8'for r in mine)==2,'only the two op-0 lastlook draws'
+        return dict(use_ops=[int(r[2])for r in uses],spawn_z=0,first_clip_op=3,clip_z=8,
+                    floor_above_ceiling_ops=[int(inverted[0][2]),int(inverted[-1][2])],floor_above_ceiling_clips=len(inverted),
+                    does_not_fit_clips=sum(r[4]=='0'for r in hc),left_as_is=sum(r[4]=='3'for r in mt),nofit=0,
+                    door_closed_op=int(closed[0][2]),door_shut_ops=[shut[0],shut[-1]],reopened_fit_op=int(next(r[2]for r in hc if int(r[2])>90 and r[4]=='1')),
+                    door_ceiling_final=heights(mine,last_op[int(w)])[door][1]//U,pillar_final_z=8,gameplay_draws_after_load=0)
     def check_spawn_filter(w,mine,m,p,skill):
         things=LAYOUTS[core.CASES[int(w)]['layout']];recs=records[w];assert len(recs)==len(things)==40
         spawned=[];draws_per_record=[];before=int(core.CASES[int(w)]['seed'])
@@ -351,6 +391,7 @@ def run(check,overflow,address):
             'monster_path_around_pillar':check_monster_path_around_pillar,'monster_hitscan_through_pillar':check_monster_hitscan_through_pillar,
             'fireball_hits_candelabra':check_fireball_hits_candelabra,'fireball_over_corpse':check_fireball_over_corpse,'pistol_through_lamp':check_pistol_through_lamp,
             'decorations_ride_lift':check_decorations_ride_lift,'door_closes_on_pillar':check_door_closes_on_pillar,
+            'fireball_through_blocking_scroller':check_fireball_through_blocking_scroller,'pillar_straddles_door_step':check_pillar_straddles_door_step,
             'spawn_filter_medium':lambda w,mine,m,p:check_spawn_filter(w,mine,m,p,2),'spawn_filter_easy':lambda w,mine,m,p:check_spawn_filter(w,mine,m,p,1),'spawn_filter_hard':lambda w,mine,m,p:check_spawn_filter(w,mine,m,p,3)}
     assert set(CHECKS)=={c['label']for c in core.CASES}
     per_case=[]
@@ -412,12 +453,13 @@ def run(check,overflow,address):
       executed_function_entries=dict(sorted(functions.items())),
       inputs_sha256={'tools/reference/'+n:sha((ROOT/'tools/reference'/n).read_bytes())for n in inputs},
       outputs_sha256={n:sha(d)for n,d in outputs.items()},expanded_trace_sha256=sha(expanded),assumptions=[
-       f'Genuine player0 plus at most {MAX_MONSTERS} map-THING MT_TROOP/MT_POSSESSED, at most {MAX_PICKUPS} map-THING pickups and at most {MAX_DECORATIONS} map-THING decorations of the seven E1M1 types (DoomEd 2028, 48, 35, 24, 15, 10, 12) in six polygon rooms (scrollhall, scrollblock, dense8, gallery, liftroom, census) built by the M3h8 builder with declared sector heights, tags, specials and line specials 48 (on two-sided lines, blocking and non-blocking: decision E1), 1 and 88; no Rust expected observations.',
+       f'Genuine player0 plus at most {MAX_MONSTERS} map-THING MT_TROOP/MT_POSSESSED, at most {MAX_PICKUPS} map-THING pickups and at most {MAX_DECORATIONS} map-THING decorations of the seven E1M1 types (DoomEd 2028, 48, 35, 24, 15, 10, 12) in seven polygon rooms (scrollhall, scrollblock, dense8, gallery, liftroom, census, doorstep) built by the M3h8 builder with declared sector heights, tags, specials and line specials 48 (on two-sided lines, blocking and non-blocking: decision E1), 1 and 88; no Rust expected observations.',
        'Every compiled body, observer, declared adapter and controlled input of M3h2/M3h5/M3h6/M3h7/M3h8 is reused unchanged; no genuine body is added. The decoration types and their spawn states (S_COLU, S_TECHPILLAR, S_CANDELABRA, S_GIBS, S_PLAY_DIE7, S_PLAY_XDIE9) come from the pristine info.c tables the harness has compiled whole since M3f3 (definitions() has been empty since M3g2); the contract\'s `decorations` table is asserted against the op-0 actor capture of every spawned decoration (type, state, tics, health, radius, height, flags).',
        'Harness inputs: `skill` is the genuine gameskill of the case (2 medium for every scenario Rust replays; the census is also run at 1 easy and 3 hard as C-only rows, listed in inventory.c_only_scenarios); the census cases start the RNG at seed 0 as after M_ClearRandom, every other case keeps the M3h8 seed 6. The player body is still spawned by the harness at (px, py), so no record of type 1..4 or 11 is in any lump.',
        'Observers added (no source statement changed): DT in PIT_CheckThing (the first flag test when the box overlaps, the missile branch non-shootable return, the final solid return for non-shootable things), XT in PTR_AimTraverse and PTR_ShootTraverse (the non-shootable skip), NS before every M row (numspechit after P_CheckPosition). Every other row keeps its M3h8 meaning.',
        'spechit keeps its source size line_t* spechit[8] and PIT_CheckLine its unchecked append: the sanitizer build would report a ninth write. No room exceeds rule 6 (largest special window 8, the dense8 lane); the nine-scroller lane is written as m3h9_dense9.bin for the Rust-only SpecialCross witness and is never run in C.',
-       'A decoration standing on its floor is always onfloor in P_ThingHeightClip (ONFLOORZ spawn, the clip follows the floor), so the z push of a thing that does not fit (p_map.c:556-557) is unreachable for decorations in these rooms: the pillar under the closing door keeps z == floor and PIT_ChangeSector returns at the MF_SHOOTABLE test (MT code 3) with nofit untouched.',
+       'A decoration standing on its floor is always onfloor in P_ThingHeightClip (ONFLOORZ spawn, the clip follows the floor), so the z push of a thing that does not fit (p_map.c:556-557) is unreachable for decorations in these rooms: the pillar under the closing door keeps z == floor and PIT_ChangeSector returns at the MF_SHOOTABLE test (MT code 3) with nofit untouched. In doorstep the pillar\'s box straddles the door/step line: P_SpawnMobj gives it the door floor (z 0), the first P_ThingHeightClip lifts it to the step floor P_CheckPosition reads (8), and while the door is shut its floorz (8) stays above its ceilingz with z == floorz (review scenario pillar_straddles_door_step).',
+       'A missile skips the ML_BLOCKING and ML_BLOCKMONSTERS tests of PIT_CheckLine (p_map.c:214-221): in fireball_through_blocking_scroller the blocking 48 line enters the fireball\'s spechit and the crossing loop calls P_CrossSpecialLine (MX row, special 48), which returns for MT_TROOPSHOT. The imp stands at x = 133 so that the fireball\'s 10-unit step that crosses x = 0 ends with its box (radius 6) on the line; at x = 128 its box touched the line only on the step before, which did not cross, and the crossing step had no line in spechit, so no P_CrossSpecialLine call happened (a source property of every special line, not specific to 48).',
        'Source facts the scenarios pin that the M3h9 note states loosely: P_UseSpecialLine on a type-48 line returns false for a monster (the non-player filter, p_switch.c) but true with no effect for a player (no case 48, the trailing return true; PTR_UseTraverse ignores the value and stops the trace either way); after an accepted P_TryMove the crossing loop leaves numspechit at -1; a monster\'s first P_NewChaseDir never picks the opposite of its zero-initialised spawn movedir (DI_EAST), so the chasers that must walk toward a target are placed west of it.',
        'Bounded original command/weapon stage precedes original thinkers; not complete P_Ticker/PlayerThink/DeathThink or respawn. P_RespawnSpecials (deathmatch 2 only) is not called.',
        'All M3h1/M3h2/M3h4/M3h5/M3h6/M3h7/M3h8 assumptions and adapters apply, including the strict-build retyping of attack-angle int locals; every new row only observes genuine statements.'],

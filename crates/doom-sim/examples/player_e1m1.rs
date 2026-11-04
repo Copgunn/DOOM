@@ -2,7 +2,7 @@
 //! under `PlayerMonstersE1M1V1`: the committed C scenarios through the public API,
 //! and separate measurements. The rooms are the synthetic M3h9 rooms of the C
 //! evidence (`scrollhall`, `scrollblock`, `dense8`, `gallery`, `liftroom`,
-//! `census`), not the real E1M1: the policy is named for the map it prepares.
+//! `census`, `doorstep`), not the real E1M1: the policy is named for the map it prepares.
 #[path = "../../../tests/support/m3h9.rs"]
 mod source;
 use doom_sim::*;
@@ -100,9 +100,9 @@ fn main() -> ResultHost<()> {
         );
     }
     let cases = source::cases();
-    assert_eq!(source::all_cases().len(), 20);
-    assert_eq!(cases.len(), 18);
-    // Headline counts of the committed C rows over the 18 medium scenarios: mover
+    assert_eq!(source::all_cases().len(), 22);
+    assert_eq!(cases.len(), 20);
+    // Headline counts of the committed C rows over the 20 medium scenarios: mover
     // work, and the M3h9 observers (`DT`: PIT_CheckThing on a non-shootable thing;
     // `XT`: an aim or shoot trace skipping one).
     let (mut c_work, mut checks, mut skips) = (Work::default(), 0, 0);
@@ -117,11 +117,11 @@ fn main() -> ResultHost<()> {
     assert_eq!(
         c_work,
         Work {
-            steps: 95,
-            changes: 95,
-            clips: 222,
-            crossings: 11,
-            uses: 15,
+            steps: 222,
+            changes: 222,
+            clips: 476,
+            crossings: 12,
+            uses: 18,
             blocked: 10,
         }
     );
@@ -190,7 +190,7 @@ fn main() -> ResultHost<()> {
         digest = (digest ^ snapshot.digest()).wrapping_mul(0x100_0000_01b3);
         replayed += 1;
     }
-    assert_eq!((replayed, ops, captures), (11, 604, 160));
+    assert_eq!((replayed, ops, captures), (12, 774, 198));
     assert_eq!(OriginalExecutionProfile::PlayerMonstersE1M1V1.wire_id(), 20);
     assert_eq!(
         PLAYER_E1M1_CONTEXT_SCHEMA,
@@ -205,7 +205,7 @@ fn main() -> ResultHost<()> {
         assert!(older.map_or(true, |mut s| s.spawn_map_things().is_err()));
     }
     println!(
-        "player_e1m1: C scrollhall, scrollblock, dense8, gallery, liftroom and census rooms (synthetic, not the real E1M1), 18 medium scenarios: {} plane steps, {} P_ChangeSector calls, {} thing clips, {} crossings, {} uses, {} spechit-blocked moves, {checks} PIT_CheckThing non-shootable tests, {skips} trace skips in the C rows; {replayed} public-input scenarios replayed over {ops} ops with matching heights, work and line specials and {captures} captures matching the independent DSIM36 digests ({} plane steps, {} thing clips); DSIM36 digest={digest:016x}",
+        "player_e1m1: C scrollhall, scrollblock, dense8, gallery, liftroom, census and doorstep rooms (synthetic, not the real E1M1), 20 medium scenarios: {} plane steps, {} P_ChangeSector calls, {} thing clips, {} crossings, {} uses, {} spechit-blocked moves, {checks} PIT_CheckThing non-shootable tests, {skips} trace skips in the C rows; {replayed} public-input scenarios replayed over {ops} ops with matching heights, work and line specials and {captures} captures matching the independent DSIM36 digests ({} plane steps, {} thing clips); DSIM36 digest={digest:016x}",
         c_work.steps,
         c_work.changes,
         c_work.clips,

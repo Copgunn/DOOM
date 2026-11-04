@@ -579,12 +579,12 @@ fn a_decoration_refuses_a_target_and_a_removal() {
     s.mark_remove(zombie).unwrap();
 }
 
-/// `e1m1_mover_bounds` admits all thirteen committed M3h9 rooms; where the movers
+/// `e1m1_mover_bounds` admits all fifteen committed M3h9 rooms; where the movers
 /// rules also admit a room (no two-sided 48) the bounds are the same, and the
 /// rooms with a two-sided 48 are `PursuitError::Specials` under the movers rules.
 #[test]
 fn e1m1_mover_bounds_extend_the_movers_bounds_by_the_two_sided_scrollers() {
-    for index in 0..13 {
+    for index in 0..15 {
         let map = room(index).map();
         let bounds = crate::e1m1_mover_bounds(&map).unwrap();
         let two_sided_48 = map

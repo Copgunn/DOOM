@@ -34,6 +34,12 @@ and -90 rather than 180 and 270 (M3h8 convention). Rooms (M3h9 note §7):
   in [32, 96], floor 2, ceiling 124 = its top: the closet K behind it has ceiling 128)
   in the lower hall's east wall. A lamp and a dead player stand on the lift; a pillar
   stands inside the door sector.
+- **doorstep**: a hall H (x in [0, 512], y in [0, 128], floor 0, ceiling 128), a DR
+  door D (x in [512, 576], y in [32, 96], floor 0, ceiling 124: open at the top a DR
+  use computes) and east of it a step S (x in [576, 704], y in [0, 128], floor 8, higher
+  than the door floor, ceiling 128). A solid pillar (radius 16) stands at (568, 64), its
+  box straddling the D|S line, so P_CheckPosition over its box reads the step's floor:
+  when the door closes onto it the pillar's floorz (8) ends above its ceilingz.
 - **census**: a flat room with one sector of special 1 (light flash) and forty THINGs:
   one of every admitted kind with every skill bit (options 7) plus duplicates carrying
   easy-only (1), medium-only (2), hard-only (4), bit 16, `MTF_AMBUSH` (15 and 10) and
@@ -118,6 +124,17 @@ def liftroom():
     return (sectors, {}, (), None, 4096, lines)
 
 
+def doorstep():
+    """Sector order: 0 H (hall), 1 D (door x in [512, 576], y in [32, 96], floor 0,
+    ceiling 124), 2 S (step x in [576, 704], y in [0, 128], floor 8). The DR line faces
+    H only; the D|S line carries no special."""
+    hall = [(0, 128), (512, 128), (512, 96), (512, 32), (512, 0), (0, 0)]
+    door = [(512, 96), (576, 96), (576, 32), (512, 32)]
+    step = [(576, 128), (704, 128), (704, 0), (576, 0), (576, 32), (576, 96)]
+    sectors = [([hall], 0, 128), ([door], 0, 124), ([step], 8, 128)]
+    return (sectors, {}, (), None, 4096, {((512, 96), (512, 32)): (DR, 0)})
+
+
 def census():
     """Sector order: 0 M (x in [-512, 512], y in [-384, 384] minus the corner), 1 F (x in
     [384, 512], y in [256, 384], special 1: P_SpawnLightFlash draws once at spawn)."""
@@ -126,8 +143,8 @@ def census():
     return ([([main], 0, 128), ([flash], 0, 128, dict(special=1))], {}, (), None, 4096, {})
 
 
-ROOMS = [scrollhall(), scrollblock(), dense(), gallery(), liftroom(), census()]
-ROOM_NAMES = ['scrollhall', 'scrollblock', 'dense8', 'gallery', 'liftroom', 'census']
+ROOMS = [scrollhall(), scrollblock(), dense(), gallery(), liftroom(), census(), doorstep()]
+ROOM_NAMES = ['scrollhall', 'scrollblock', 'dense8', 'gallery', 'liftroom', 'census', 'doorstep']
 DENSE9 = dense(9)
 SPAWN_TICS_DRAW = {POSSESSED, IMP, GREENARMOR, BLUEARMOR, HEALTHBONUS, ARMORBONUS}  # spawn states with tics > 0 (M3h9 note §2.1)
 
@@ -211,7 +228,8 @@ def populate(pack):
     add('fireball_through_scroller', 0, [monster(IMP, 24, -160, -180)], px=-300, py=-160, attack_at=1, attack_thing=0, tics=45, **tough)
     # --- scrollblock ------------------------------------------------------------------
     # The 48 line with ML_BLOCKING: the player walking west and a chasing zombieman
-    # walking east are both refused by PIT_CheckLine before the special test; spechit
+    # walking east are both refused by PIT_CheckLine before the special test (a
+    # missile skips it: fireball_through_blocking_scroller below); spechit
     # stays empty (NS rows) and no P_Move failure branch runs. (A monster's first
     # P_NewChaseDir never picks the opposite of its spawn movedir 0 = DI_EAST, so the
     # chaser is placed west of the line.)
@@ -259,8 +277,21 @@ def populate(pack):
     add('door_closes_on_pillar', 4, [deco(PILLAR, 544, 64)], px=470, py=64, use_start=3, use_end=3, use2_start=6, use2_end=6, tics=80)
     # --- census -----------------------------------------------------------------------
     # Forty records of every admitted kind with every skill-bit combination, bit 16 and
-    # ambush; medium is replayed by Rust, easy and hard are C-only rows. seed 0 as after
-    # M_ClearRandom.
-    for label, skill in [('spawn_filter_medium', MEDIUM), ('spawn_filter_easy', EASY), ('spawn_filter_hard', HARD)]:
+    # ambush; medium is replayed by Rust, easy and hard are C-only rows (the trailing
+    # cases, after the two review scenarios below). seed 0 as after M_ClearRandom.
+    add('spawn_filter_medium', 5, census_things(), skill=MEDIUM, px=-448, py=-340, tics=4, seed=0)
+    # --- independent review (appended so that every earlier case keeps its index) ------
+    # scrollblock with an imp in B told to attack the player in A: PIT_CheckLine skips
+    # the ML_BLOCKING test for a missile (p_map.c:214-221), so the fireball's position
+    # checks put the blocking 48 line in spechit (240-244), the move is accepted and the
+    # crossing loop calls P_CrossSpecialLine, which returns at once for MT_TROOPSHOT.
+    add('fireball_through_blocking_scroller', 1, [monster(IMP, 133, 0, -180)], px=-200, py=0, attack_at=1, attack_thing=0, tics=45, **tough)
+    # doorstep: the player uses the open door (it waits), uses it again (it closes at
+    # once) onto the pillar straddling the door/step line, waits while it is shut and
+    # uses it a third time (it reopens). PIT_ChangeSector returns at the MF_SHOOTABLE test
+    # (p_map.c:1290-1294) and never sets nofit, so the door closes fully; the pillar's
+    # P_ThingHeightClip reads floorz 8 (the step) above ceilingz 0 (the shut door).
+    add('pillar_straddles_door_step', 6, [deco(PILLAR, 568, 64)], px=470, py=64, use_start=3, use_end=3, use2_start=6, use2_end=6, use3_start=90, use3_end=90, tics=170)
+    for label, skill in [('spawn_filter_easy', EASY), ('spawn_filter_hard', HARD)]:
         add(label, 5, census_things(), skill=skill, px=-448, py=-340, tics=4, seed=0)
     return layouts

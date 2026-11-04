@@ -1853,7 +1853,9 @@ table (16.16), `flags` equal to the info flags, plus `MF_AMBUSH` (32) when the T
 record carries `MTF_AMBUSH` (the bit survives into the flags word), `lastlook` from the
 one spawn draw (0..3), `spawnpoint` present with the THING record (x, y, angle, DoomEd
 type, options), `target` absent, `momx`/`momy`/`momz` 0, `z` equal to `floor` (spawned
-`ONFLOORZ`; a mover's clip keeps it on the floor), `threshold`, `movedir` and `movecount`
+`ONFLOORZ`; a mover's clip keeps it on the floor, and `floor` may exceed `ceiling` while
+a door is shut on a decoration whose box straddles a higher floor, as
+`P_ThingHeightClip` leaves it; no reader orders the two), `threshold`, `movedir` and `movecount`
 0, `player` 255 and `pending_removal` 0: a decoration is never removed, damaged, gibbed,
 pushed, targeted or sight-checked. It holds a slot of the one actor store (320 slots),
 appears once in `thinker.order`, `thinker.shared_order` (kind 0), `spatial.link_order`
@@ -1883,9 +1885,14 @@ a thing crossing the line gives the existing tag-26 sub-tag 3 record with specia
 before and after; a monster's failed move with 48 lines in `spechit` gives sub-tag 4 and,
 per line, sub-tag 2 with result 0; a use trace stopped at the line gives sub-tag 1
 (continues 0) and, for the player, sub-tag 2 with result 1 and the special unchanged;
-hitscans and fireballs cross it with no record of their own. A blocking (`ML_BLOCKING`)
-scroller refuses a move before the special test, so it appears only as the blocking line
-of the movement attempt (tag 10) and never in `spechit`.
+hitscans cross it with no record of their own. A fireball crossing it (blocking or not)
+gives the same sub-tag 3 crossing record as any thing, special 48 before and after: the
+source's crossing loop calls `P_CrossSpecialLine`, which returns at once for a missile
+(p_spec.c:503–514). A blocking (`ML_BLOCKING`) scroller refuses a player's or monster's
+move before the special test, so for them it appears only as the blocking line of the
+movement attempt (tag 10) and never in `spechit`; a missile skips that test
+(p_map.c:214–221), so a fireball's position checks put it in `spechit` and its crossing
+gives the sub-tag 3 record (review scenario `fireball_through_blocking_scroller`).
 
 **Collisions with decorations** use existing events: a movement attempt (tag 10) names a
 solid decoration as its blocking actor (walkers of any height: no height test); a missile

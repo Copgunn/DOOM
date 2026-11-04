@@ -8,8 +8,10 @@ use libfuzzer_sys::fuzz_target;
 // two-sided 48 lines in one window), 5-9 `gallery` (the ten decorations alone, with a
 // Zombieman beside the pillar or in the alcove, with an Imp before the candelabra or
 // the pool of blood), 10-11 `liftroom` (a lamp and a dead player on the lift, a pillar
-// under the door) and 12 `census` (forty records, every skill bit, bit 16, ambush).
-const MAPS: [&[u8]; 13] = [
+// under the door), 12 `census` (forty records, every skill bit, bit 16, ambush), 13
+// `scrollblock` with an Imp whose fireball crosses the blocking 48 and 14 `doorstep`
+// (a pillar straddling a door and a higher step).
+const MAPS: [&[u8]; 15] = [
     include_bytes!("../../tests/reference/m3h9_geometry_0.bin"),
     include_bytes!("../../tests/reference/m3h9_geometry_1.bin"),
     include_bytes!("../../tests/reference/m3h9_geometry_2.bin"),
@@ -23,10 +25,12 @@ const MAPS: [&[u8]; 13] = [
     include_bytes!("../../tests/reference/m3h9_geometry_10.bin"),
     include_bytes!("../../tests/reference/m3h9_geometry_11.bin"),
     include_bytes!("../../tests/reference/m3h9_geometry_12.bin"),
+    include_bytes!("../../tests/reference/m3h9_geometry_13.bin"),
+    include_bytes!("../../tests/reference/m3h9_geometry_14.bin"),
 ];
-/// Map and player spawn of each of the 18 replayed medium scenarios
+/// Map and player spawn of each of the 20 replayed medium scenarios
 /// (`m3h9_cases.csv`, skill 2; every start is distinct).
-const SPAWNS: [(usize, [i16; 2]); 18] = [
+const SPAWNS: [(usize, [i16; 2]); 20] = [
     (0, [-40, 0]),
     (1, [-200, 72]),
     (0, [-8, 0]),
@@ -45,6 +49,8 @@ const SPAWNS: [(usize, [i16; 2]); 18] = [
     (10, [256, 64]),
     (11, [470, 64]),
     (12, [-448, -340]),
+    (13, [-200, 0]),
+    (14, [470, 64]),
 ];
 const MF_SPECIAL: u32 = 0x1;
 const MF_SHOOTABLE: u32 = 0x4;

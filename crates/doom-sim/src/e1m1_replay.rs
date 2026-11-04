@@ -1,5 +1,5 @@
 //! The full replay of the committed M3h9 C scenarios (plan step 8): every one of
-//! the 18 medium-skill scenarios (`m3h9_cases.csv`; `spawn_filter_easy` and
+//! the 20 medium-skill scenarios (`m3h9_cases.csv`; `spawn_filter_easy` and
 //! `spawn_filter_hard` are C-only rows of other skills) that the E1M1 policy loads
 //! drives it through its declared setup and per-op commands, and at every op the C rows
 //! (sector heights and `specialdata`, runtime line specials, use latch, player
@@ -29,7 +29,7 @@ pub(crate) fn rows() -> &'static Rows {
     static DATA: OnceLock<Rows> = OnceLock::new();
     DATA.get_or_init(|| parse_rows(include_bytes!("../../../tests/reference/m3h9_trace.dref")))
 }
-/// The 18 scenarios run at medium skill (`skill` 2). The two C-only census rows at
+/// The 20 scenarios run at medium skill (`skill` 2). The two C-only census rows at
 /// easy and hard are excluded, as the snapshot contract lists
 /// (`c_only_scenarios_excluded`).
 pub(crate) fn medium_cases() -> Vec<Case> {
@@ -44,7 +44,7 @@ pub(crate) fn medium_cases() -> Vec<Case> {
         .filter(|c| skills[c.which])
         .collect()
 }
-/// The 18 replayed scenarios: every one of [`medium_cases`].
+/// The 20 replayed scenarios: every one of [`medium_cases`].
 pub(crate) fn cases() -> Vec<Case> {
     medium_cases()
 }
@@ -121,11 +121,11 @@ fn full_replay_matches_the_c_rows_and_the_independent_dsim36_goldens() {
         .keys()
         .filter(|(w, _)| replayed.contains(w))
         .count();
-    assert_eq!(t.cases, 18);
+    assert_eq!(t.cases, 20);
     assert_eq!(t.ops, frames);
     assert_eq!(t.event_frames, frames);
     assert_eq!(t.captures, captures);
-    assert_eq!(t.captures, 290);
+    assert_eq!(t.captures, 337);
     assert_eq!(t.fixtures, FIXTURES.len());
     assert_eq!(t.fixtures, 15);
     assert_eq!(t.thinker_rows, rows_named("TK"));
@@ -188,4 +188,91 @@ fn a_zombieman_box_touching_the_alcove_walls_is_refused_at_spawn() {
     assert_eq!(s.snapshot(), before);
     assert_eq!(s.rng(), rng);
     assert_eq!(s.actor_order().count(), 0);
+}
+
+fn medium_case(label: &str) -> Case {
+    medium_cases()
+        .into_iter()
+        .find(|c| c.label == label)
+        .unwrap()
+}
+
+/// `fireball_through_blocking_scroller` (review evidence): `PIT_CheckLine` skips the
+/// `ML_BLOCKING` test for a missile (p_map.c:214–221), so the Imp's fireball crosses
+/// the blocking 48 line of `scrollblock`: the replay reaches the last op, and the one
+/// crossing the C rows record (`MX`, special 48) is the fireball's
+/// `MoverEvent::Crossed` with the special unchanged (`P_CrossSpecialLine` returns at
+/// once for `MT_TROOPSHOT`).
+#[test]
+fn a_fireball_crosses_a_blocking_two_sided_scroller() {
+    let c = medium_case("fireball_through_blocking_scroller");
+    let mut crossings = Vec::new();
+    let (s, _) = crate::movers_replay::replay_in(&M3H9, &c, c.tics, |s, _| {
+        for e in s.events() {
+            if let Event::Mover(MoverEvent::Crossed {
+                actor,
+                line,
+                before,
+                after,
+                ..
+            }) = *e
+            {
+                crossings.push((actor, line, before, after));
+            }
+        }
+    });
+    assert_eq!(crossings.len(), 1);
+    let (actor, line, before, after) = crossings[0];
+    assert_eq!((before, after), (48, 48));
+    assert_eq!(s.line_specials[usize::from(line)], 48);
+    let ty = s.actor(actor).unwrap().life().unwrap().actor_type;
+    assert_eq!(
+        ty.0,
+        crate::identity::OriginalActorType::MT_TROOPSHOT.ordinal()
+    );
+}
+
+/// `pillar_straddles_door_step` (review evidence): the techno pillar's box straddles
+/// the line between a door (floor 0) and a step (floor 8). The door closes fully onto
+/// it (`PIT_ChangeSector` returns at the `MF_SHOOTABLE` test, p_map.c:1290–1294) and
+/// `P_ThingHeightClip` leaves its floorz (8) above its ceilingz while the door is
+/// shut, with `z == floorz`. Under wire 20 that inert state is admitted (the
+/// decoration stays in V′ case (b)); the replay runs every op through the reopening
+/// and the DSIM36 capture of a shut-door tic decodes.
+#[test]
+fn a_door_shut_on_a_straddling_pillar_leaves_its_floor_above_its_ceiling() {
+    let c = medium_case("pillar_straddles_door_step");
+    let mut inverted = Vec::new();
+    let mut shut = None;
+    let (s, _) = crate::movers_replay::replay_in(&M3H9, &c, c.tics, |s, op| {
+        let a = s
+            .actor_order()
+            .filter_map(|id| s.actor(id))
+            .find(|a| {
+                a.life().is_some_and(|l| {
+                    l.actor_type.0 == crate::identity::OriginalActorType::MT_MISC48.ordinal()
+                })
+            })
+            .unwrap();
+        if a.floor() > a.ceiling() {
+            assert_eq!(a.z(), a.floor());
+            assert_eq!(a.floor(), Fixed::from_map_units(8));
+            inverted.push(op);
+            if a.ceiling() == Fixed::ZERO && shut.is_none() {
+                shut = Some(
+                    s.snapshot()
+                        .diagnostic_bytes(DiagnosticLimits::default())
+                        .unwrap(),
+                );
+            }
+        }
+    });
+    assert_eq!(s.tic(), c.tics as u64);
+    // C: inverted from op 64 (ceiling 6) through the shut door (ops 68–89) to op 92
+    // (ceiling 6 on the way up).
+    assert_eq!(inverted.first(), Some(&64));
+    assert_eq!(inverted.last(), Some(&92));
+    assert_eq!(inverted.len(), 92 - 64 + 1);
+    let bytes = shut.unwrap();
+    Diagnostic::decode_e1m1(&bytes, DiagnosticLimits::default()).unwrap();
 }

@@ -527,12 +527,14 @@ per-case harness input, `skill`, the genuine `gameskill` the spawn filter reads.
 [m3h9_geometry.py](m3h9_geometry.py) is the M3h8 builder plus the two-sided scroller
 inventory and the declared decoration table; [m3h9_cases.py](m3h9_cases.py) builds the
 scroller hall, the blocking scroller, the eight-scroller lane, the decoration gallery,
-the lift room with a lamp, a corpse and a pillar under a door, and the census room, 20
-scenarios in all, 18 at medium skill and two C-only census rows at easy and hard. The
+the lift room with a lamp, a corpse and a pillar under a door, the census room and,
+from the independent review, the door-step room (a pillar straddling a door and a higher
+step) plus an Imp beyond the blocking scroller, 22 scenarios in all, 20 at medium skill
+and two C-only census rows at easy and hard. The
 Rust-only nine-scroller lane is written as `m3h9_dense9.bin` and never run in C.
 [e1m1_snapshot.py](e1m1_snapshot.py) and
 [m3h9_snapshot_goldens.py](m3h9_snapshot_goldens.py) project DSIM36 from the C rows of
-the 18 medium scenarios: the DSIM35 layout under version 36, policy 20 and the E1M1
+the 20 medium scenarios: the DSIM35 layout under version 36, policy 20 and the E1M1
 context with no new field or event, the decorations checked against the declared table
 and their lump order, after dropping the `DT`, `XT` and `NS` rows; the generator asserts
 that every capture equals the DSIM35 projection of the same rows except the version,

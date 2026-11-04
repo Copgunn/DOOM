@@ -106,7 +106,7 @@ pub fn all_cases() -> Vec<Case> {
         })
         .collect()
 }
-/// The 18 medium-skill cases (the policy's skill); the E1M1 policy loads every one.
+/// The 20 medium-skill cases (the policy's skill); the E1M1 policy loads every one.
 pub fn cases() -> Vec<Case> {
     all_cases().into_iter().filter(|c| c.skill == 2).collect()
 }

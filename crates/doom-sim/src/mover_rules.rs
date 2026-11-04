@@ -252,8 +252,12 @@ pub(crate) fn validate_movers(map: &Map) -> Result<MoverAdmission, SimError> {
 /// p_switch.c:301–319), a player's use reaches the trailing `return true` with no
 /// effect and `PTR_UseTraverse` stops at it (p_map.c:1113–1122), and
 /// `P_CrossSpecialLine` and `P_ShootSpecialLine` have no case 48. A blocking
-/// two-sided 48 blocks like any blocking line and never enters `spechit`
-/// (`PIT_CheckLine` returns before the special test). Rule 5 (at most 64 scrollers,
+/// two-sided 48 blocks every non-missile like any blocking line and never enters its
+/// `spechit` (`PIT_CheckLine` returns before the special test); a missile skips the
+/// `ML_BLOCKING` test (p_map.c:214–221), so the line enters the missile's `spechit`
+/// (240–244) and its crossing calls `P_CrossSpecialLine`, which returns at once for
+/// a missile (p_spec.c:503–514; review scenario
+/// `fireball_through_blocking_scroller`). Rule 5 (at most 64 scrollers,
 /// `MAXLINEANIMS`) counts it and rule 6 (the 2 × 2 window of `spechit`,
 /// `MAXSPECIALCROSS`) counts every two-sided special line, so both are unchanged.
 pub(crate) fn validate_e1m1(map: &Map) -> Result<MoverAdmission, SimError> {

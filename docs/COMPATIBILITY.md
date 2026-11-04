@@ -1876,7 +1876,13 @@ it has exactly the three game-code effects of the source (note
   use trace, so a door behind it is not opened.
 
 Crossing a 48 line does nothing, and shots and fireballs pass it as any two-sided line. A
-48 line with `ML_BLOCKING` blocks like any blocking line and never enters `spechit`.
+48 line with `ML_BLOCKING` blocks the player and monsters like any blocking line and
+never enters their `spechit`. A fireball is not blocked by it (`PIT_CheckLine` skips the
+`ML_BLOCKING` test for missiles, p_map.c:214–221): the line enters the fireball's
+`spechit` and counts toward its window, and a crossing calls `P_CrossSpecialLine`, which
+returns at once for a fireball, so the crossing is recorded and does nothing. A fireball
+whose box touches the line only on a step that does not cross it, and not on the step
+that does, crosses with no crossing call at all, as in the source.
 
 **Static decorations.** The seven decoration types E1M1 spawns are admitted, by an
 explicit list (`E1M1_DECORATIONS`); every other decoration type stays rejected:
@@ -1915,7 +1921,11 @@ and [§2.7](M3H9_REFERENCE_INVESTIGATION.md#27-decorations-under-movers-pit_chan
   targets a decoration.
 - **Under movers** a decoration rides a lift or floor on its sector. A door closing onto
   one simply stops its ceiling below the decoration's top, with no `nofit`, no damage and
-  no blood; a decoration is never gibbed, removed or damaged.
+  no blood; a decoration is never gibbed, removed or damaged. When its box straddles the
+  door and a higher neighbouring floor, the door still closes fully and the decoration
+  is left with its floor (the higher one, which it stands on) above its ceiling until
+  the door reopens, as in the source; the per-tic checks admit that state for a
+  decoration only (M3h9 note [§12](M3H9_REFERENCE_INVESTIGATION.md#12-follow-ups-risks-status)).
 
 | Limit (E1M1 policy) | Value |
 | --- | --- |
@@ -1974,7 +1984,10 @@ their exact behavior (M3h9 [evidence record](validation/M3H9.md#independent-revi
 
 Fidelity gaps: none new. The `SpecialCross`, escape, intercept and vertical witnesses and
 the exit and reborn refusals are the movers policy's, unchanged; the window rule keeps
-`SpecialCross` unreachable on admitted maps, two-sided 48 lines included.
+`SpecialCross` unreachable on admitted maps, two-sided 48 lines included. An item or a
+corpse whose floor would end above its ceiling (a door closing on one that straddles a
+higher floor) keeps the movers policy's refusal of the next tic
+(`MapSpawnError::Ownership`, state preserved); that case has no C evidence yet.
 
 **E1M1 does not load yet.** On skill 3 ("Hurt Me Plenty", the only skill the player
 policies accept) E1M1 spawns 6 exploding barrels, which stay `UnsupportedType`, and 52

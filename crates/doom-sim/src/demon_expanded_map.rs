@@ -508,10 +508,26 @@ impl Simulation {
             // exploding fireball's coordinates may lead its source location.
             let unlinked_blast = original_registry::is_fireball(life.actor_type)
                 && life.flags & original_player::MF_MISSILE == 0;
+            // Under the E1M1 policy a static decoration may hold `floorz > ceilingz`:
+            // a door closing onto one whose box straddles a higher neighbouring floor
+            // closes fully (PIT_ChangeSector returns at the MF_SHOOTABLE test,
+            // p_map.c:1290–1294, so nofit is never set) and P_ThingHeightClip stores
+            // P_CheckPosition's tmfloorz above its tmceilingz (530–558). That pair is
+            // inert for a decoration (M3h9 note §12, independent review): it stays on
+            // its floor (`z == floorz`, V′ case (b)) with no momentum, so P_MobjThinker
+            // runs neither P_XYMovement nor P_ZMovement (p_mobj.c:418–436), no other
+            // body reads a thing's own floorz or ceilingz (PIT_CheckThing reads z and
+            // height, 252–345; hitscan, aim and radius attacks skip non-shootables,
+            // 1013–1014, 1170–1171), and the next clip recomputes both. Every other
+            // actor, and every older policy, keeps the refusal.
+            let inert_decoration = e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
+                && actor.z == actor.floor
+                && actor.momz == Fixed::ZERO
+                && actor.momentum() == [Fixed::ZERO; 2];
             if !linked.contains(&id)
                 || (!unlinked_blast
                     && actor.location != Some(self.world.locate_validated(actor.position())))
-                || actor.floor > actor.ceiling
+                || (actor.floor > actor.ceiling && !inert_decoration)
                 || (actor.height() <= Fixed::ZERO && !self.gibbed(actor))
             {
                 return Err(MapSpawnError::Ownership.into());

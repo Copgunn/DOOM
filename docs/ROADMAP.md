@@ -94,7 +94,7 @@ DSIM35 layout with no new field or event. Barrels, more than 8 monsters or 16 pi
 every other THING type stay rejected at load, so **E1M1 itself still does not load**. No
 new fidelity gap is added. Older policies keep their admission, digests and DSIM bytes.
 
-Status on `feat/m3h9-e1m1`: in review, not merged. The C evidence (20 scenarios), the
+Status on `feat/m3h9-e1m1`: in review, not merged. The C evidence (22 scenarios), the
 independent DSIM36 projection, the policy, the full replay, the Rust-only tests, the
 example, the tools, the fuzz target with its seed replay and this documentation are
 complete. The bounded fuzz campaigns, the matched timings, the independent review and
