@@ -33,7 +33,9 @@ That makes it useful for exact-behavior work:
 
 Vanilla behavior, meaning that of the original unmodified game, isn't a checkbox in an
 options menu here. It's the default, quirks included, proven against the original C every
-tic.
+tic. Game math stays in Doom's original 16.16 fixed point, too, except for the one
+division where the original itself uses a floating-point number. No floating-point
+physics quietly rounds your rocket jumps differently than the original did.
 
 **It is not playable yet.** If you want to play Doom today, use an established source
 port such as [Chocolate Doom](https://www.chocolate-doom.org/). It needs your own game
@@ -81,8 +83,9 @@ These are ideas, not promises, grouped into three tracks. The
 **Track 1: Faithful.** Vanilla behavior stays exact forever; anything that changes it
 lives in a separate opt-in mode.
 
-- **Original demo playback.** Play back recorded vanilla demos (`.lmp` files) without
-  desyncing. That is the strongest end-to-end proof of exactness.
+- **Original demo playback.** Play back recorded vanilla demos (`.lmp` files) to the
+  last tic, the strongest end-to-end proof of exactness. If a port's answer to a 1994
+  demo is a desync, it isn't running Doom; it's running something Doom-shaped.
 - **Faster progress.** Port whole systems at once, such as all monsters or all weapons.
   Check them against the original by running real maps and demos.
 - **One vanilla profile, plus a limit-removing one.** Fold the step-by-step policies into
