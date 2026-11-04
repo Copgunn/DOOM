@@ -269,8 +269,12 @@ impl Simulation {
             return Err(MonsterError::Profile.into());
         }
         let life = self.active_typed(id)?;
-        if self.player_policy().has_world_pickups()
-            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
+        // An item never targets, and neither does a decoration under the E1M1
+        // policy (no state of the seven types has an action, M3h9 note §2.5): the
+        // tic preflight and the DSIM36 reader admit neither with a target.
+        if (self.player_policy().has_world_pickups()
+            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some())
+            || e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
@@ -313,8 +317,12 @@ impl Simulation {
             return Err(PlayerBodyError::Unsupported.into());
         }
         let life = self.active_typed(id)?;
-        if self.player_policy().has_world_pickups()
-            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
+        // An item never targets, and neither does a decoration under the E1M1
+        // policy (no state of the seven types has an action, M3h9 note §2.5): the
+        // tic preflight and the DSIM36 reader admit neither with a target.
+        if (self.player_policy().has_world_pickups()
+            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some())
+            || e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
         {
             return Err(PlayerBodyError::Unsupported.into());
         }

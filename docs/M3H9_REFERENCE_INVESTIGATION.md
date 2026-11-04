@@ -727,4 +727,11 @@ provisionally adopted (§6). Phase 2 progress (M3h9a):
   decodes under `decode_e1m1`. Rejecting it would be a reader change for the owner
   to decide.
 
+- API refusal added while writing the fuzz target: under wire 20,
+  `set_actor_target` on a decoration and `mark_remove` of a decoration were accepted,
+  after which every tic was refused (`PlayerBodyError::Invariant`) or the capture
+  failed `decode_e1m1` (`Identity`). Both now return `PlayerBodyError::Unsupported`
+  with the state unchanged, as a push, a state entry and damage already did; older
+  policies are unaffected (the gate is `has_e1m1`).
+
 Next: step 10 (fuzz).

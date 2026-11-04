@@ -522,3 +522,42 @@ fn the_section_5_3_budgets_hold_as_formulas() {
     assert_eq!(crate::world_pickups::MAX_BONUS, 96);
     assert_eq!(crate::sector_thinkers::MAX_LINE_ANIMS, 64);
 }
+/// The API refuses what the source never does to a decoration, as it refuses a push,
+/// a state entry and damage: a target (`set_actor_target`) and a removal
+/// (`mark_remove`) on any of the ten gallery decorations are
+/// `PlayerBodyError::Unsupported` with the state unchanged, and a monster may not
+/// target one (`PerceptionError::Roster`); the world then still runs and every
+/// capture decodes. Before this refusal both were accepted and left a state the tic
+/// preflight (`PlayerBodyError::Invariant`) or the DSIM36 reader (`Identity`)
+/// refused.
+#[test]
+fn a_decoration_refuses_a_target_and_a_removal() {
+    let (mut s, body, things) = crate::player_e1m1_tests::setup(6, [-128, 128]);
+    let zombie = things[10];
+    let limits = DiagnosticLimits::default();
+    for &id in &things[..10] {
+        let before = witness(&s);
+        for target in [Some(body), Some(zombie), None] {
+            assert_eq!(
+                s.set_actor_target(id, target),
+                Err(SimError::PlayerBody(PlayerBodyError::Unsupported))
+            );
+        }
+        assert_eq!(
+            s.mark_remove(id),
+            Err(SimError::PlayerBody(PlayerBodyError::Unsupported))
+        );
+        assert_eq!(
+            s.set_actor_target(zombie, Some(id)),
+            Err(SimError::Perception(PerceptionError::Roster))
+        );
+        assert_eq!(witness(&s), before);
+    }
+    s.advance([TicCommand::default(); 4]).unwrap();
+    assert_eq!(s.actor_order().count(), 12);
+    let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
+    Diagnostic::decode_e1m1(&bytes, limits).unwrap();
+    // The Zombieman itself may still be targeted and removed.
+    s.set_actor_target(zombie, Some(body)).unwrap();
+    s.mark_remove(zombie).unwrap();
+}

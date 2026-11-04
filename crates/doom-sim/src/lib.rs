@@ -1107,6 +1107,17 @@ impl Simulation {
         if self.uses_active_player_roster() && self.owns_player_body(id) {
             return Err(PlayerBodyError::Unsupported.into());
         }
+        // The E1M1 policy never removes a decoration (`P_RemoveMobj` is reached only
+        // through death, pickup or a missile's end, M3h9 note §5.1 item 2); the tic
+        // preflight and the DSIM36 reader admit no pending decoration.
+        if self.actors.is_pending(id) == Some(false)
+            && self
+                .actor(id)
+                .and_then(Actor::life)
+                .is_some_and(|l| e1m1_rules::is_decoration(self.player_policy(), l.actor_type))
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         // Removing a flying fireball's owner could never step again.
         self.preflight_owner_removal(id)?;
         if self.actors.mark_remove(id)? {
