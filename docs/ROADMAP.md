@@ -444,8 +444,9 @@ Vanilla behavior stays exact forever; everything here either proves it or builds
 How it looks and feels. None of this can change gameplay, because the renderer only
 reads game state, which the architecture already requires.
 
-- **A 1:1 vanilla-faithful software renderer first**, so the game looks exactly as it did
-  in 1993.
+- **A 1:1 vanilla-faithful software renderer first**, so the game looks exactly like the
+  original Linux DOOM 1.10 renderer, the same source reference the simulation follows. DOS
+  presentation claims would need their own reference.
 - **Then a modern renderer.** The simulation still runs at 35 tics per second while the
   renderer interpolates between tics, giving smooth high frame rates on any display, plus
   modern effects such as dynamic lighting.

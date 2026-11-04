@@ -93,7 +93,8 @@ exact forever; anything that changes it lives in a separate opt-in mode.
 **Track 2: Presentation.** How the planned renderer could look and feel. This can never
 change gameplay, because the renderer only reads the game state.
 
-- **A faithful software renderer first.** It would look exactly like DOOM did in 1993.
+- **A faithful software renderer first.** It would look exactly like the original Linux
+  DOOM 1.10, whose source id Software released in 1997.
 - **Then a modern renderer.** Smooth high frame rates by drawing extra frames between
   the game's 35 tics per second, plus modern effects such as dynamic lighting.
 - **VR.** A headset handles looking around while the mouse turns and aims. That suits
