@@ -386,9 +386,12 @@ monster/player behavior. Further stages require separate owner direction.
 
 ## Later
 
+- After the matched real-E1M1 run (M3h9c), the rest of Episode 1, map by map, with the
+  same source-first evidence.
 - Complete player/gameplay integration and broader monster/THING support.
-- Moving sectors and map specials (the established M3e direction): doors, lifts,
-  triggers and dynamic-sector interactions.
+- The remaining moving sectors and map specials (the established M3e direction) beyond
+  the doors, lifts, floors, switches and exit of M3h8: crushers, ceilings, stairs,
+  locked doors, teleporters and the other triggers.
 - **M4 — Demo compatibility:** version-specific playback and divergence diagnostics;
   keep DOS and Linux behavior claims separate.
 - **M5 — Rendering and platform integration:** presentation/input/audio and a

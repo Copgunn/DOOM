@@ -1,8 +1,11 @@
 # Rust DOOM
 
-An independent Rust-native rewrite of the original DOOM engine, focused on
-deterministic simulation and source-compatible gameplay. Development is early:
-the engine runs limited simulation examples without graphics, not a complete game.
+An independent Rust-native rewrite of the original DOOM engine. The goal is an engine
+that behaves identically to id Software's linuxdoom-1.10, tic for tic, so that it can
+one day play back original demos exactly. Every admitted behavior is checked against
+traces from the original C source and against independently encoded state snapshots.
+Development is early: the engine runs limited simulation examples without graphics,
+not a complete game.
 
 > **Machine-Maintained, Human-Directed Project**
 >
@@ -25,9 +28,18 @@ work, and opt-in original-ID execution policies, each a separate contract that l
 every older policy unchanged. The newest policy runs one genuine original player with
 four weapons, pickups, armor and bonuses against the Demon, former humans and the Imp,
 on synthetic maps up to classic-map size with static heights, diagonal walls, sky,
-static sector specials and E1M1's doors, lifts, floors, switches and exit. Admitted
+static sector specials, E1M1's doors, lifts, floors, switches and exit, two-sided
+scrolling walls and E1M1's seven static decoration types. The real E1M1 does not load
+yet: no policy admits its exploding barrels or more than 16 pickups (it has 52). Admitted
 behavior is checked against original-C source traces and independently encoded
 snapshots; [compatibility](docs/COMPATIBILITY.md) states the exact limits.
+
+`Simulation::advance()` runs one tic without capturing a diagnostic snapshot; see the
+[stepping contract](docs/COMPATIBILITY.md#stepping-and-diagnostics). Identity binding,
+scoped actor access and game-instance provenance are internal design, described in the
+[architecture guide](docs/ARCHITECTURE.md#actors-lifecycle-and-ordering).
+
+## Policies
 
 Numbered profiles 1–20 are listed under
 [versioned gameplay profiles](docs/COMPATIBILITY.md#versioned-gameplay-profiles).
@@ -55,11 +67,15 @@ each later policy extends the one above it.
 | `PlayerMonstersRealMapV1` (17) | WAD-format geometry limits (E1M1-sized) under a per-map arithmetic certificate | [Classic-map scale](docs/COMPATIBILITY.md#original-monsters-at-classic-map-scale) |
 | `PlayerMonstersSpecialsV1` (18) | Sky ceilings, light thinkers, damage floors, secrets and one-sided scrolling walls | [Sky and specials](docs/COMPATIBILITY.md#original-monsters-with-sky-and-static-specials) |
 | `PlayerMonstersMoversV1` (19) | E1M1's seven door, lift, floor, switch and exit line types; the tic after the exit is refused | [Movers](docs/COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit) |
+| `PlayerMonstersE1M1V1` (20) | Two-sided scrolling walls and E1M1's seven static decoration types (lamps, pillars, candelabras, corpses and gore) | [E1M1 decorations](docs/COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations) |
 
-`Simulation::advance()` runs one tic without capturing a diagnostic snapshot; see the
-[stepping contract](docs/COMPATIBILITY.md#stepping-and-diagnostics). Identity binding,
-scoped actor access and game-instance provenance are internal design, described in the
-[architecture guide](docs/ARCHITECTURE.md#actors-lifecycle-and-ordering).
+## Where it's headed
+
+The [roadmap](docs/ROADMAP.md) holds the plan and its dependencies. In order:
+
+- Run the real E1M1 headless and match the original C tic for tic.
+- Extend that to the rest of Episode 1.
+- Add a renderer and audio on top of the unchanged simulation.
 
 ## What works
 
@@ -68,7 +84,9 @@ scoped actor access and game-instance provenance are internal design, described 
 - Deterministic 35 Hz headless simulation with [canonical identity metadata](docs/ACTOR_IDENTITIES.md).
 - One original player with four weapons, pickups, armor and bonuses against the Demon,
   former humans and the Imp, on synthetic maps with heights, diagonal walls, sky,
-  static specials, doors, lifts, floors, switches and the exit (opt-in; see the table above).
+  static specials, doors, lifts, floors, switches, the exit, two-sided scrolling walls
+  and static decorations such as lamps, pillars and corpses (opt-in; see
+  [policies](#policies)).
 - Opt-in larger static geometry for the Demon profiles; see [supported limits](docs/COMPATIBILITY.md#expanded-map-demon-profile).
 - Original-C comparisons, independently encoded canonical snapshots, and safety
   tests for rejection, stale references and recoverable-error atomicity.
@@ -78,10 +96,10 @@ scoped actor access and game-instance provenance are internal design, described 
 
 There is no game renderer, audio playback, general map loading, multiplayer or
 verified vanilla demo playback. Gameplay still excludes full player-thinker and view
-processing, the remaining weapons and monsters, other line specials (crushers,
-ceilings, stairs, locked doors, teleporters), two-sided scrolling walls,
-soulspheres and powers, the intermission and next map, resurrection and Nightmare
-respawning. A custom Vulkan-first rendering architecture is a future direction; the
+processing, the remaining weapons and monsters, exploding barrels, other line specials
+(crushers, ceilings, stairs, locked doors, teleporters), soulspheres and powers, the
+intermission and next map, resurrection and Nightmare respawning. No policy loads the
+real E1M1 yet. A custom Vulkan-first rendering architecture is a future direction; the
 [roadmap](docs/ROADMAP.md) describes dependencies.
 
 ## Getting started
@@ -97,49 +115,16 @@ cargo test --workspace --locked
 
 ## Running a headless example
 
+Three recommended examples, each on synthetic public maps with asserted results:
+
 ```sh
-cargo run -p doom-sim --example demon_expanded_map --locked
-cargo run -p doom-sim --example canonical_demon --locked
-cargo run -p doom-sim --example runtime_identity --locked
-cargo run -p doom-sim --example original_registry --locked
-cargo run -p doom-sim --example context_ownership --locked
-cargo run -p doom-sim --example game_instance --locked
-cargo run -p doom-sim --example diagnostic_free --locked
-cargo run -p doom-sim --example original_player --locked
-cargo run -p doom-sim --example player_knockback --locked
-cargo run -p doom-sim --example player_commands --locked
-cargo run -p doom-sim --example player_demon --locked
-cargo run -p doom-sim --example player_demon_melee --locked
-cargo run -p doom-sim --example player_pistol --locked
-cargo run -p doom-sim --example player_weapon_pack --locked
-cargo run -p doom-sim --example player_world_pickups --locked
-cargo run -p doom-sim --example player_bonuses --locked
-cargo run -p doom-sim --example player_monsters --locked
-cargo run -p doom-sim --example player_imps --locked
-cargo run -p doom-sim --example player_heights --locked
-cargo run -p doom-sim --example player_diagonal --locked
-cargo run -p doom-sim --example player_real_map --locked
-cargo run -p doom-sim --example player_specials --locked
-cargo run -p doom-sim --example player_movers --locked
-cargo run -p doom-sim --example map_scale --locked
-cargo run -p doom-sim --example demon_map_context --locked
-cargo run -p doom-sim --example demon_map_spawn --locked
-cargo run -p doom-map --example parse_map --locked
+cargo run -p doom-sim --example player_movers --locked   # player, monsters, doors, lifts and the exit
+cargo run -p doom-sim --example player_imps --locked     # the Imp and its fireball
+cargo run -p doom-map --example parse_map --locked       # WAD and map parsing
 ```
 
-Examples use synthetic public maps, assert expected behavior and print diagnostic
-results. They require no commercial IWAD, GPU, audio device or network service.
-`demon_expanded_map` runs source-tested Demon gameplay on larger synthetic maps.
-`canonical_demon` drives that existing behavior with original MT_SERGEANT/SARG
-identities; it does not admit Spectre or resurrection.
-`runtime_identity` checks the [native identity boundary](docs/ACTOR_IDENTITIES.md#native-runtime-identity-boundary) against unchanged historical captures.
-`original_registry` checks [actual original-ID storage](docs/ACTOR_IDENTITIES.md#original-id-execution-registry) and bounded v20/v21 diagnostic reading.
-`context_ownership` checks scoped target operations and retirement against compact
-new C observations; see the [ownership contract](docs/COMPATIBILITY.md#context-and-target-lifetime-contract).
-`game_instance` demonstrates [qualified references](docs/COMPATIBILITY.md#game-instance-provenance)
-and reuses an existing C scenario without admitting new gameplay.
-`map_extent` separately demonstrates expanded unbound coordinates and spatial work.
-See [testing](docs/TESTING.md) for all examples and reproduction commands.
+They need no commercial IWAD, GPU, audio device or network service. Every example and
+its reproduction command is listed in [testing](docs/TESTING.md#asserted-headless-examples).
 
 ## Architecture
 
@@ -149,11 +134,6 @@ outcomes. Read the [architecture guide](docs/ARCHITECTURE.md) and
 [documentation index](docs/README.md).
 
 ## Compatibility and validation
-
-Historical source traces use bounded offline zstd loading, and preview/execution
-share original weapon formulas. These maintenance changes preserve gameplay and
-DSIM bytes. See the [storage contract](docs/EVIDENCE_STORAGE.md) and
-[formula contract](docs/WEAPON_FORMULAS.md).
 
 Original id Software Linux DOOM 1.10 is the behavioral authority. Matching an
 isolated source slice does not establish whole-game or DOS demo compatibility.

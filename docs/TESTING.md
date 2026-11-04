@@ -76,6 +76,79 @@ pursuit, selected attacks and Demon gameplay/map context. Assertions use committ
 original-C evidence and independent snapshots where applicable. Earlier examples
 and equality helpers retain their historical bytes.
 
+Every headless example, each on synthetic public maps with no commercial IWAD, GPU,
+audio device or network service, runs with one of these commands:
+
+```sh
+cargo run -p doom-map --example parse_map --locked
+cargo run -p doom-sim --example actor_states --locked
+cargo run -p doom-sim --example canonical_demon --locked
+cargo run -p doom-sim --example chaingunner_attacks --locked
+cargo run -p doom-sim --example combat_arena --locked
+cargo run -p doom-sim --example context_ownership --locked
+cargo run -p doom-sim --example demon_expanded_map --locked
+cargo run -p doom-sim --example demon_lifecycle --locked
+cargo run -p doom-sim --example demon_map_context --locked
+cargo run -p doom-sim --example demon_map_spawn --locked
+cargo run -p doom-sim --example demon_melee --locked
+cargo run -p doom-sim --example demon_stand_run --locked
+cargo run -p doom-sim --example diagnostic_free --locked
+cargo run -p doom-sim --example game_instance --locked
+cargo run -p doom-sim --example headless --locked
+cargo run -p doom-sim --example map_extent --locked
+cargo run -p doom-sim --example map_scale --locked
+cargo run -p doom-sim --example monster_attacks --locked
+cargo run -p doom-sim --example monster_perception --locked
+cargo run -p doom-sim --example monster_pursuit --locked
+cargo run -p doom-sim --example multisector_arena --locked
+cargo run -p doom-sim --example original_identity --locked
+cargo run -p doom-sim --example original_player --locked
+cargo run -p doom-sim --example original_registry --locked
+cargo run -p doom-sim --example player_arena --locked
+cargo run -p doom-sim --example player_armor --locked
+cargo run -p doom-sim --example player_bonuses --locked
+cargo run -p doom-sim --example player_commands --locked
+cargo run -p doom-sim --example player_demon --locked
+cargo run -p doom-sim --example player_demon_melee --locked
+cargo run -p doom-sim --example player_diagonal --locked
+cargo run -p doom-sim --example player_e1m1 --locked
+cargo run -p doom-sim --example player_heights --locked
+cargo run -p doom-sim --example player_imps --locked
+cargo run -p doom-sim --example player_knockback --locked
+cargo run -p doom-sim --example player_map_scale --locked
+cargo run -p doom-sim --example player_monsters --locked
+cargo run -p doom-sim --example player_movers --locked
+cargo run -p doom-sim --example player_pistol --locked
+cargo run -p doom-sim --example player_real_map --locked
+cargo run -p doom-sim --example player_specials --locked
+cargo run -p doom-sim --example player_weapon_pack --locked
+cargo run -p doom-sim --example player_weapons --locked
+cargo run -p doom-sim --example player_world_pickups --locked
+cargo run -p doom-sim --example projectiles --locked
+cargo run -p doom-sim --example runtime_identity --locked
+cargo run -p doom-sim --example shotgunner_attacks --locked
+```
+
+Each prints diagnostic results and asserts its expected behavior. A
+`tools/reference/check_*.py` helper runs each example in debug and release and asserts
+equal output (`check_headless.py` covers `headless`, `player_arena`,
+`multisector_arena`, `actor_states`, `combat_arena` and `player_weapons`; the others
+have a helper of their own name); the milestone sections below give each one's
+reproduction commands. A few notes on the less obvious ones: `demon_expanded_map` runs
+source-tested Demon gameplay on larger synthetic maps; `canonical_demon` drives that
+behavior with original MT_SERGEANT/SARG identities and does not admit Spectre or
+resurrection; `runtime_identity` checks the
+[native identity boundary](ACTOR_IDENTITIES.md#native-runtime-identity-boundary) against
+unchanged historical captures; `original_registry` checks
+[actual original-ID storage](ACTOR_IDENTITIES.md#original-id-execution-registry) and
+bounded v20/v21 diagnostic reading; `context_ownership` checks scoped target operations
+and retirement against compact C observations (see the
+[ownership contract](COMPATIBILITY.md#context-and-target-lifetime-contract));
+`game_instance` demonstrates [qualified references](COMPATIBILITY.md#game-instance-provenance)
+and reuses an existing C scenario without admitting new gameplay; `map_extent`
+demonstrates expanded unbound coordinates and spatial work; `player_e1m1` runs the
+synthetic M3h9 rooms, not the real E1M1.
+
 ## Fuzzing and sanitizers
 
 Install cargo-fuzz and a supported nightly Rust toolchain, then:

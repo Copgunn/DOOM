@@ -2,8 +2,10 @@
 
 Historical gameplay expectations retain their original byte interpretation.
 Storage compression changes how selected source traces reach test parsers; it
-does not regenerate them, change DSIM, or admit gameplay. Reproduction commands
-belong to [TESTING](TESTING.md#historical-zstd-evidence).
+does not regenerate them, change DSIM, or admit gameplay. Historical source traces are
+loaded through bounded offline zstd decoding; this maintenance change preserves gameplay
+and DSIM bytes. Reproduction commands belong to
+[TESTING](TESTING.md#historical-zstd-evidence).
 
 ## Selected raw traces
 

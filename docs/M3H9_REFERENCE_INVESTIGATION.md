@@ -753,6 +753,6 @@ in [ROADMAP](ROADMAP.md). Step by step:
   (which states the reader limitations above: the load rules are not re-run and
   `actors.options` is not validated), the TESTING commands, the ROADMAP entry, the
   ARCHITECTURE section, the documentation and validation indexes, the reference
-  tooling guide and the evidence record.
+  tooling guide, the README policy row and the evidence record.
 
 Next: the step 10 campaigns, run alone, then steps 12–14.
