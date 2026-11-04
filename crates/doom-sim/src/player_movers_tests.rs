@@ -9,6 +9,8 @@ mod maps {
     include!("../../../tests/reference/m3h8_maps.rs");
 }
 const DENSE9: &[u8] = include_bytes!("../../../tests/reference/m3h8_dense9.bin");
+/// The number of committed M3h8 rooms.
+pub(crate) const ROOM_COUNT: usize = maps::MAP_BYTES.len();
 
 pub(crate) fn options() -> MapContextOptions {
     MapContextOptions {

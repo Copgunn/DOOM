@@ -14,33 +14,34 @@ use std::{collections::BTreeMap, sync::OnceLock};
 #[path = "../../../tests/support/evidence_pack.rs"]
 mod packed;
 
-type Rows = BTreeMap<(usize, usize), Vec<(String, Vec<i64>)>>;
-/// Every trace row keyed by (case, op).
+pub(crate) type Rows = BTreeMap<(usize, usize), Vec<(String, Vec<i64>)>>;
+/// Every row of a packed C trace keyed by (case, op).
+pub(crate) fn parse_rows(packed_trace: &[u8]) -> Rows {
+    let text = packed::unpack(packed_trace).unwrap();
+    let text = std::str::from_utf8(&text).unwrap();
+    let mut rows = Rows::new();
+    for line in text.lines().skip(1) {
+        let mut fields = line.split(',');
+        let tag = fields.next().unwrap().to_string();
+        let values: Vec<i64> = fields.map(|f| f.parse().unwrap()).collect();
+        if values.len() < 2 {
+            continue;
+        }
+        rows.entry((values[0] as usize, values[1] as usize))
+            .or_default()
+            .push((tag, values[2..].to_vec()));
+    }
+    rows
+}
+/// Every M3h8 trace row keyed by (case, op).
 pub(crate) fn rows() -> &'static Rows {
     static DATA: OnceLock<Rows> = OnceLock::new();
-    DATA.get_or_init(|| {
-        let text =
-            packed::unpack(include_bytes!("../../../tests/reference/m3h8_trace.dref")).unwrap();
-        let text = std::str::from_utf8(&text).unwrap();
-        let mut rows = Rows::new();
-        for line in text.lines().skip(1) {
-            let mut fields = line.split(',');
-            let tag = fields.next().unwrap().to_string();
-            let values: Vec<i64> = fields.map(|f| f.parse().unwrap()).collect();
-            if values.len() < 2 {
-                continue;
-            }
-            rows.entry((values[0] as usize, values[1] as usize))
-                .or_default()
-                .push((tag, values[2..].to_vec()));
-        }
-        rows
-    })
+    DATA.get_or_init(|| parse_rows(include_bytes!("../../../tests/reference/m3h8_trace.dref")))
 }
-fn op_rows(which: usize, op: usize) -> &'static [(String, Vec<i64>)] {
-    rows().get(&(which, op)).map_or(&[], Vec::as_slice)
+fn rows_at(rows: &'static Rows, which: usize, op: usize) -> &'static [(String, Vec<i64>)] {
+    rows.get(&(which, op)).map_or(&[], Vec::as_slice)
 }
-fn row<'a>(rows: &'a [(String, Vec<i64>)], tag: &str) -> Option<&'a [i64]> {
+pub(crate) fn row<'a>(rows: &'a [(String, Vec<i64>)], tag: &str) -> Option<&'a [i64]> {
     rows.iter()
         .find(|(t, _)| t == tag)
         .map(|(_, v)| v.as_slice())
@@ -70,7 +71,14 @@ pub(crate) struct Case {
     pub script: u8,
 }
 pub(crate) fn cases() -> Vec<Case> {
-    let mut lines = include_str!("../../../tests/reference/m3h8_cases.csv").lines();
+    parse_cases(
+        include_str!("../../../tests/reference/m3h8_cases.csv"),
+        rows(),
+    )
+}
+/// The cases of a committed `cases.csv`, each ending at its last `UC` row in `rows`.
+pub(crate) fn parse_cases(csv: &str, rows: &Rows) -> Vec<Case> {
+    let mut lines = csv.lines();
     let header: Vec<_> = lines.next().unwrap().split(',').collect();
     lines
         .enumerate()
@@ -78,7 +86,7 @@ pub(crate) fn cases() -> Vec<Case> {
             let v: BTreeMap<_, _> = header.iter().copied().zip(line.split(',')).collect();
             let n = |k: &str| v[k].parse::<i64>().unwrap();
             // A case that requested an exit or a reborn ends at that op.
-            let last = rows()
+            let last = rows
                 .range((which, 0)..(which + 1, 0))
                 .filter(|(_, r)| r.iter().any(|(t, _)| t == "UC"))
                 .map(|((_, op), _)| *op)
@@ -117,7 +125,11 @@ pub(crate) fn case(label: &str) -> Case {
 }
 /// The case's command at `op` (its `UC` row).
 pub(crate) fn command(c: &Case, op: usize) -> [TicCommand; 4] {
-    let v = row(op_rows(c.which, op), "UC").expect("UC row");
+    command_in(rows(), c, op)
+}
+/// The case's command at `op` in `rows`.
+pub(crate) fn command_in(rows: &'static Rows, c: &Case, op: usize) -> [TicCommand; 4] {
+    let v = row(rows_at(rows, c.which, op), "UC").expect("UC row");
     let mut commands = [TicCommand::default(); 4];
     commands[0] = TicCommand {
         forward: v[0] as i8,
@@ -135,7 +147,16 @@ pub(crate) fn setup(c: &Case) -> (Simulation, ActorId, Vec<ActorId>) {
     setup_map(c, crate::player_movers_tests::room(c.map).map())
 }
 pub(crate) fn setup_map(c: &Case, map: doom_map::Map) -> (Simulation, ActorId, Vec<ActorId>) {
-    let mut s = Simulation::original_player_movers_map(
+    setup_map_with(c, map, Simulation::original_player_movers_map)
+}
+/// [`setup_map`] under the policy `construct` builds (the E1M1 superset tests run
+/// the same scenarios under wire 20).
+pub(crate) fn setup_map_with(
+    c: &Case,
+    map: doom_map::Map,
+    construct: fn(doom_map::Map, MapContextOptions) -> Result<Simulation, OriginalRegistryError>,
+) -> (Simulation, ActorId, Vec<ActorId>) {
+    let mut s = construct(
         map,
         MapContextOptions {
             initial_rng: DoomRng::from_indices(c.seed, 0),
@@ -237,15 +258,31 @@ pub(crate) fn replay(c: &Case, upto: usize) -> (Simulation, Compared) {
 pub(crate) fn replay_observed(
     c: &Case,
     upto: usize,
+    observe: impl FnMut(&Simulation, usize),
+) -> (Simulation, Compared) {
+    replay_in(&M3H8, c, upto, observe)
+}
+/// A committed C evidence set the replay reads: its trace rows and its setup.
+pub(crate) struct Evidence {
+    pub rows: fn() -> &'static Rows,
+    pub setup: fn(&Case) -> (Simulation, ActorId, Vec<ActorId>),
+}
+/// The M3h8 movers evidence.
+pub(crate) const M3H8: Evidence = Evidence { rows, setup };
+/// [`replay_observed`] over the evidence set `e`.
+pub(crate) fn replay_in(
+    e: &Evidence,
+    c: &Case,
+    upto: usize,
     mut observe: impl FnMut(&Simulation, usize),
 ) -> (Simulation, Compared) {
-    let (mut s, body, things) = setup(c);
+    let (mut s, body, things) = (e.setup)(c);
     let mut compared = Compared::default();
     for op in 0..=upto.min(c.tics) {
         let pending = s.pending_events().len();
         if op != 0 {
             controlled(&mut s, c, body, &things, op);
-            s.advance(command(c, op))
+            s.advance(command_in((e.rows)(), c, op))
                 .unwrap_or_else(|e| panic!("{} op{op}: {e}", c.label));
         }
         let events = if op == 0 {
@@ -253,7 +290,7 @@ pub(crate) fn replay_observed(
         } else {
             &s.events()[pending..]
         };
-        let rows = op_rows(c.which, op);
+        let rows = rows_at((e.rows)(), c.which, op);
         let mh = row(rows, "MH").unwrap_or_else(|| panic!("MH {} op{op}", c.label));
         assert_eq!(mh[0] as usize, s.sectors.len());
         for (i, sector) in s.sectors.iter().enumerate() {
@@ -473,13 +510,18 @@ pub(crate) mod full {
             include_bytes!("../../../tests/reference/m3h8_state_9_3.bin"),
         ),
     ];
-    type Frames = BTreeMap<(usize, usize), [Vec<Vec<u8>>; 2]>;
+    pub(crate) type Frames = BTreeMap<(usize, usize), [Vec<Vec<u8>>; 2]>;
     /// The PBE1 frames of `m3h8_events.dref`, keyed by (case, op).
     fn frames() -> &'static Frames {
         static DATA: OnceLock<Frames> = OnceLock::new();
         DATA.get_or_init(|| {
-            let bytes = packed::unpack(include_bytes!("../../../tests/reference/m3h8_events.dref"))
-                .unwrap();
+            parse_frames(include_bytes!("../../../tests/reference/m3h8_events.dref"))
+        })
+    }
+    /// The PBE1 frames of a packed independent event stream, keyed by (case, op).
+    pub(crate) fn parse_frames(packed_events: &[u8]) -> Frames {
+        {
+            let bytes = packed::unpack(packed_events).unwrap();
             let mut at = 0;
             let mut take = |n: usize| {
                 let v = bytes[at..at + n].to_vec();
@@ -507,14 +549,17 @@ pub(crate) mod full {
                 assert!(frames.insert(key, frame).is_none());
             }
             frames
-        })
+        }
     }
     /// `m3h8_snapshots.csv`: (case, op) to (digest, fixture, bytes, fields).
     /// A capture's independent digest, fixture name, size and field count.
-    type Capture = (u64, Option<&'static str>, usize, usize);
+    pub(crate) type Capture = (u64, Option<&'static str>, usize, usize);
     fn captures() -> BTreeMap<(usize, usize), Capture> {
-        include_str!("../../../tests/reference/m3h8_snapshots.csv")
-            .lines()
+        parse_captures(include_str!("../../../tests/reference/m3h8_snapshots.csv"))
+    }
+    /// A committed `snapshots.csv` index.
+    pub(crate) fn parse_captures(csv: &'static str) -> BTreeMap<(usize, usize), Capture> {
+        csv.lines()
             .skip(1)
             .map(|line| {
                 let v: Vec<&'static str> = line.split(',').collect();
@@ -547,8 +592,8 @@ pub(crate) mod full {
     }
 
     /// The ordered events of one op equal the independent PBE1 frame.
-    fn assert_events(snap: &Snapshot, which: usize, op: usize) -> usize {
-        let expected = &frames()[&(which, op)];
+    fn assert_events(frames: &Frames, snap: &Snapshot, which: usize, op: usize) -> usize {
+        let expected = &frames[&(which, op)];
         let mut fields = Vec::new();
         for (prefix, events) in ["events.last", "events.pending"].into_iter().zip(expected) {
             fields.push((
@@ -725,6 +770,7 @@ pub(crate) mod full {
     /// One committed capture: digest, size and field count from the independent
     /// index, full bytes for a fixture, and the explicit v35 reader's round trip.
     fn assert_capture(
+        spec: &Spec,
         snap: &Snapshot,
         expected: (u64, Option<&str>, usize, usize),
         which: usize,
@@ -734,8 +780,8 @@ pub(crate) mod full {
         let limits = DiagnosticLimits::default();
         let bytes = snap.diagnostic_bytes(limits).unwrap();
         let full = fixture.map(|name| {
-            let full = FIXTURES.iter().find(|(n, _)| *n == name).unwrap().1;
-            let view = Diagnostic::decode_movers(full, limits).unwrap();
+            let full = spec.fixtures.iter().find(|(n, _)| *n == name).unwrap().1;
+            let view = (spec.decode)(full, limits).unwrap();
             for f in snap.fields() {
                 assert_eq!(
                     Some(f.value()),
@@ -749,34 +795,68 @@ pub(crate) mod full {
         assert_eq!(snap.digest(), digest, "digest case{which} op{op}");
         assert_eq!(bytes.len(), size, "bytes case{which} op{op}");
         assert_eq!(snap.fields().count(), count, "fields case{which} op{op}");
-        let view = Diagnostic::decode_movers(&bytes, limits)
+        let view = (spec.decode)(&bytes, limits)
             .unwrap_or_else(|e| panic!("decode case{which} op{op}: {e:?}"));
         assert_eq!(view.encode(limits).unwrap(), bytes);
         assert_eq!(
-            Diagnostic::decode_specials(&bytes, limits).err(),
-            Some(DiagnosticError::Version(35))
+            (spec.older)(&bytes, limits).err(),
+            Some(DiagnosticError::Version(spec.version))
         );
         full.is_some()
     }
 
+    /// A DSIM reader.
+    pub(crate) type Reader =
+        for<'a> fn(&'a [u8], DiagnosticLimits) -> Result<Diagnostic<'a>, DiagnosticError>;
+    /// One committed evidence set with its independent goldens: the C rows and
+    /// setup, the PBE1 frames, the capture index, the pinned fixtures, the explicit
+    /// reader of its version and the previous reader, which must reject it.
+    pub(crate) struct Spec {
+        pub evidence: Evidence,
+        pub cases: fn() -> Vec<Case>,
+        pub frames: fn() -> &'static Frames,
+        pub captures: fn() -> BTreeMap<(usize, usize), Capture>,
+        pub fixtures: &'static [(&'static str, &'static [u8])],
+        pub decode: Reader,
+        pub older: Reader,
+        pub version: u32,
+    }
+    /// The M3h8 set: DSIM35 read by `decode_movers`, rejected by `decode_specials`.
+    pub(crate) const M3H8_SPEC: Spec = Spec {
+        evidence: M3H8,
+        cases,
+        frames,
+        captures,
+        fixtures: FIXTURES,
+        decode: |b, l| Diagnostic::decode_movers(b, l),
+        older: |b, l| Diagnostic::decode_specials(b, l),
+        version: 35,
+    };
+
     /// Replays every scenario: the partial per-op comparisons, the thinker list
     /// and buttons, the event stream, every capture and every fixture.
     pub(crate) fn replay_all() -> Totals {
-        let captures = captures();
+        replay_all_in(&M3H8_SPEC)
+    }
+    /// [`replay_all`] over the evidence set `spec`.
+    pub(crate) fn replay_all_in(spec: &Spec) -> Totals {
+        let captures = (spec.captures)();
+        let frames = (spec.frames)();
+        let rows_of = spec.evidence.rows;
         let mut t = Totals::default();
-        for c in cases() {
+        for c in (spec.cases)() {
             let mut failure = None;
-            let (s, compared) = replay_observed(&c, c.tics, |s, op| {
+            let (s, compared) = replay_in(&spec.evidence, &c, c.tics, |s, op| {
                 let snap = s.snapshot();
-                let rows = op_rows(c.which, op);
+                let rows = rows_at(rows_of(), c.which, op);
                 let (tk, mb) = assert_thinkers_and_buttons(s, c.which, op, rows);
                 t.thinker_rows += tk;
                 t.button_rows += mb;
-                t.event_records += assert_events(&snap, c.which, op);
+                t.event_records += assert_events(frames, &snap, c.which, op);
                 t.event_frames += 1;
                 if let Some(expected) = captures.get(&(c.which, op)) {
                     t.captures += 1;
-                    t.fixtures += usize::from(assert_capture(&snap, *expected, c.which, op));
+                    t.fixtures += usize::from(assert_capture(spec, &snap, *expected, c.which, op));
                 } else if failure.is_none() && op == c.tics {
                     failure = Some(op);
                 }

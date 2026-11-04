@@ -55,11 +55,10 @@
 
 - Inspect status, master and open PRs first. Implement on focused feature branches,
   never directly on master; preserve unrelated changes and shared history.
-- Do not force-push, squash/rebase-rewrite shared history, delete active/unmerged
-  branches or enable auto-merge. Merges require explicit owner authorization and
-  every applicable fresh local/exact-head gate; verify post-merge CI when required.
+- Merges require every applicable fresh local/exact-head gate; after the owner merges,
+  verify post-merge CI when required.
 - Open/update a focused PR with behavior, evidence, restrictions and unresolved
-  issues. Pending or blocked delivery stays draft. Do not claim unobserved passes.
+  issues. Do not claim unobserved passes.
 - Maintain human-readable README, architecture, compatibility, roadmap, testing,
   source investigation and schema documentation. Use the
   [documentation review checklist](docs/DOC_REVIEW_CHECKLIST.md). Archive historical
@@ -75,9 +74,34 @@
   link; never maintain duplicate status tables, hashes, test totals or logs.
   Before editing, identify the authoritative home and check existing information
   there rather than creating another copy because a milestone changed.
-- README describes current state only; a milestone adds or edits one row of the
-  capability table and never appends prose history (history lives in
-  [COMPATIBILITY.md](docs/COMPATIBILITY.md) and [ROADMAP.md](docs/ROADMAP.md)).
+- README describes current state only, in plain language for newcomers. A milestone
+  edits the "Where it stands" list and adds or edits one row of the policy table, and
+  never appends prose history (history lives in [COMPATIBILITY.md](docs/COMPATIBILITY.md)
+  and [ROADMAP.md](docs/ROADMAP.md)). "Where it's (maybe) going" changes only with the
+  owner's approval.
 - Keep the prominent machine-maintained/human-directed disclosure accurate. Do not
   imply universal manual review, absent human oversight or guaranteed correctness.
 - Stop at the assigned milestone's owner-review gate; no unrelated systems.
+
+## Session conventions
+
+- Commit identity comes from the repo-local git config set by the owner (a GitHub
+  noreply address, no personal name or email). Never add `Co-Authored-By` trailers,
+  "Generated with" lines or any AI attribution to commits, PR titles or PR bodies.
+- Never commit to or push `master`. Never force-push, rebase or squash shared history,
+  delete branches or enable auto-merge. Never merge a PR; merging is the owner's call.
+- Open one focused PR per milestone, draft until every gate passes; mark it ready only
+  after the gates, then leave it unmerged.
+- Run every performance measurement alone on an idle machine (no concurrent builds,
+  tests or fuzzing) and say so in the record.
+- Keep scratch builds, baseline checkouts and fuzz corpora outside the working tree;
+  delete them at the end of a milestone after their results are recorded.
+- Subagents default to Sonnet; spawn C-evidence, simulation-code, DSIM-encoder and
+  independent-review subagents with `model: opus`.
+- Report only observed results; distinguish target compiled, seed replay, coverage-guided
+  campaign and sanitizer campaign, and disclose disabled leak detection.
+- Push the branch to origin after every completed plan step (no PR until gates pass).
+- Check free disk space before large builds, baseline worktrees or fuzzing; keep at least
+  20 GB free; clean scratch first or stop and report. Under WSL, `df ~` reports the
+  virtual disk's ceiling, not real space: the real limit is the Windows drive that
+  hosts it. Check `df -h /mnt/c` and keep at least 20 GB free there at all times.

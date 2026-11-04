@@ -33,7 +33,7 @@ mod player_armor;
 mod player_bonuses;
 mod player_map_scale;
 mod player_monsters;
-pub use mover_rules::{MoverBounds, mover_bounds, special_window_lines};
+pub use mover_rules::{MoverBounds, e1m1_mover_bounds, mover_bounds, special_window_lines};
 pub use player_armor::{
     ArmorEvent, ArmorType, PLAYER_DEMON_ARMOR_CONTEXT_SCHEMA, PlayerArmorState,
 };
@@ -45,9 +45,10 @@ pub use player_map_scale::{
     REAL_MAP_FORMAT_RECORDS, RoomBounds, slide_window_lines,
 };
 pub use player_monsters::{
-    MAX_PLAYER_MONSTERS, PLAYER_DIAGONAL_CONTEXT_SCHEMA, PLAYER_HEIGHTS_CONTEXT_SCHEMA,
-    PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
-    PLAYER_MOVERS_CONTEXT_SCHEMA, PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
+    MAX_PLAYER_MONSTERS, PLAYER_DIAGONAL_CONTEXT_SCHEMA, PLAYER_E1M1_CONTEXT_SCHEMA,
+    PLAYER_HEIGHTS_CONTEXT_SCHEMA, PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA,
+    PLAYER_MONSTERS_CONTEXT_SCHEMA, PLAYER_MOVERS_CONTEXT_SCHEMA, PLAYER_REAL_MAP_CONTEXT_SCHEMA,
+    PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -131,6 +132,8 @@ pub use map_scale::{
     MAP_SCALE_MAX_LINES, MAP_SCALE_MAX_REFERENCES, MAP_SCALE_MAX_SECTORS, MapScaleLimits,
     MapScaleMetrics,
 };
+mod e1m1_rules;
+pub use e1m1_rules::{E1M1_DECORATIONS, E1M1_LINKED_THINGS, MAX_DECORATIONS};
 mod movement;
 mod mover_rules;
 mod movers;
@@ -1095,6 +1098,23 @@ impl Simulation {
         if self.profile == Profile::Projectiles && momentum.bits().unsigned_abs() > 64 * 65536 {
             return Err(ProjectileError::Arithmetic.into());
         }
+        // The E1M1 policy refuses vertical momentum on a decoration or an item
+        // (`MF_SPECIAL`) after the shared input bounds, as `set_momentum` refuses a
+        // push: both are spawned at `ONFLOORZ` (p_mobj.c:775–783) and nothing in the
+        // source gives them `momz` (`P_DamageMobj` needs `MF_SHOOTABLE`,
+        // p_inter.c:787–788), so `P_ZMovement` never runs for them (p_mobj.c:428–436)
+        // and neither the decoration witness (M3h9 note §2.5) nor the relaxed item
+        // witness (M3h8 note §4.2) admits one off its floor. Older policies keep
+        // their historical admission (M3h9 validation record, independent review).
+        if self.player_policy().has_e1m1()
+            && momentum != Fixed::ZERO
+            && self.actor(id).and_then(Actor::life).is_some_and(|l| {
+                l.flags & world_pickups::MF_SPECIAL != 0
+                    || e1m1_rules::is_decoration(self.player_policy(), l.actor_type)
+            })
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.actors.get_mut(id).unwrap().momz = momentum;
         Ok(())
     }
@@ -1102,6 +1122,17 @@ impl Simulation {
     /// The fixed-active capability rejects removal of its owned player body.
     pub fn mark_remove(&mut self, id: ActorId) -> Result<(), SimError> {
         if self.uses_active_player_roster() && self.owns_player_body(id) {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
+        // The E1M1 policy never removes a decoration (`P_RemoveMobj` is reached only
+        // through death, pickup or a missile's end, M3h9 note §5.1 item 2); the tic
+        // preflight and the DSIM36 reader admit no pending decoration.
+        if self.actors.is_pending(id) == Some(false)
+            && self
+                .actor(id)
+                .and_then(Actor::life)
+                .is_some_and(|l| e1m1_rules::is_decoration(self.player_policy(), l.actor_type))
+        {
             return Err(PlayerBodyError::Unsupported.into());
         }
         // Removing a flying fireball's owner could never step again.
@@ -1140,13 +1171,16 @@ impl Simulation {
         // The real-map policy refuses a push to an item (`MF_SPECIAL`): nothing in
         // the source gives a pickup momentum, and the DSIM31+ item witness and the
         // tic preflight never admit one that moves. The diagonal policy keeps its
-        // wider admission unchanged (M3h6 note §8.3).
+        // wider admission unchanged (M3h6 note §8.3). The E1M1 policy refuses a
+        // push to a decoration the same way: thrust comes only from `P_DamageMobj`,
+        // which needs `MF_SHOOTABLE` (p_map.c:304–305, 1013–1014, 1170–1171), and
+        // the decoration witness never admits one that moves.
         if self.player_policy().has_real_map()
             && momentum != [Fixed::ZERO; 2]
-            && self
-                .actor(id)
-                .and_then(Actor::life)
-                .is_some_and(|l| l.flags & world_pickups::MF_SPECIAL != 0)
+            && self.actor(id).and_then(Actor::life).is_some_and(|l| {
+                l.flags & world_pickups::MF_SPECIAL != 0
+                    || e1m1_rules::is_decoration(self.player_policy(), l.actor_type)
+            })
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
@@ -1504,6 +1538,8 @@ mod diagonal_evidence;
 #[cfg(test)]
 mod diagonal_room;
 #[cfg(test)]
+mod e1m1_replay;
+#[cfg(test)]
 #[path = "../../../tests/support/m3h4.rs"]
 mod heights_evidence;
 #[cfg(test)]
@@ -1520,6 +1556,10 @@ mod map_scale_evidence;
 mod movers_replay;
 #[cfg(test)]
 mod player_diagonal_tests;
+#[cfg(test)]
+mod player_e1m1_soak_tests;
+#[cfg(test)]
+mod player_e1m1_tests;
 #[cfg(test)]
 mod player_heights_tests;
 #[cfg(test)]

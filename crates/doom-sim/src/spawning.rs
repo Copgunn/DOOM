@@ -89,6 +89,13 @@ impl Simulation {
         {
             return Err(MapSpawnError::DirectSpawn.into());
         }
+        // A static decoration exists only as a THING spawned by `P_SpawnMapThing`
+        // (p_mobj.c:775–796: spawnpoint, angle, `MF_AMBUSH`); no action or body of
+        // the source spawns one, and the decoration witness requires the THING
+        // record. Under the E1M1 policy a direct spawn is refused like a pickup's.
+        if e1m1_rules::is_decoration(self.player_policy(), ty) {
+            return Err(MapSpawnError::DirectSpawn.into());
+        }
         self.player_spawn_guard(ty, position, height)?;
         if self.profile.uses_demon_map() && ty == self.demon_owner_type() {
             return Err(MapSpawnError::DirectSpawn.into());
@@ -236,9 +243,12 @@ impl Simulation {
             return Err(PlayerBodyError::Unsupported.into());
         }
         let life = self.active_typed(id)?;
-        if self.player_policy().has_world_pickups()
-            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
+        if (self.player_policy().has_world_pickups()
+            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some())
+            || e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
         {
+            // Nothing in the source re-enters an item's or a static decoration's
+            // state (tics −1, never killed): an explicit refusal, not a no-op.
             return Err(PlayerBodyError::Unsupported.into());
         }
         self.projectile_control(id)?;
@@ -266,8 +276,15 @@ impl Simulation {
             return Err(MonsterError::Profile.into());
         }
         let life = self.active_typed(id)?;
-        if self.player_policy().has_world_pickups()
-            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
+        // An item is never killed, and neither is a decoration under the E1M1
+        // policy (`P_KillMobj` is reached only through `P_DamageMobj`, which returns
+        // for a thing without `MF_SHOOTABLE`, p_inter.c:787–788; M3h9 note §2.5):
+        // neither has a death state to enter. Under the E1M1 policy the lifecycle
+        // profile check above refuses first (`MonsterError::Profile`); this check
+        // keeps the refusal explicit for any profile that reaches it.
+        if (self.player_policy().has_world_pickups()
+            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some())
+            || e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
@@ -310,8 +327,12 @@ impl Simulation {
             return Err(PlayerBodyError::Unsupported.into());
         }
         let life = self.active_typed(id)?;
-        if self.player_policy().has_world_pickups()
-            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
+        // An item never targets, and neither does a decoration under the E1M1
+        // policy (no state of the seven types has an action, M3h9 note §2.5): the
+        // tic preflight and the DSIM36 reader admit neither with a target.
+        if (self.player_policy().has_world_pickups()
+            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some())
+            || e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
@@ -419,8 +440,13 @@ impl Simulation {
                     && world_pickups::kind_for(self.player_policy(), ty).is_some();
                 let former = crate::original_registry::is_extended_monster(ty)
                     && crate::original_registry::is_policy_monster(self.player_policy(), ty);
+                // One of the seven static decoration types under the E1M1 policy
+                // (M3h9 note §2.5): spawned like any THING by `P_SpawnMapThing`
+                // (p_mobj.c:708–797), counted against `MAX_DECORATIONS` alone.
+                let decoration = e1m1_rules::is_decoration(self.player_policy(), ty);
                 if !pickup
                     && !former
+                    && !decoration
                     && ty
                         != crate::identity::OriginalActorType::MT_SERGEANT
                             .resolve(registry)
@@ -431,7 +457,17 @@ impl Simulation {
                 if self.profile.uses_checked_demons() && !(-4..=3).contains(&(thing.angle / 45)) {
                     return Err(MapSpawnError::Angle(thing.angle).into());
                 }
+                if decoration
+                    && selected
+                        .iter()
+                        .filter(|(_, ty)| e1m1_rules::is_decoration(self.player_policy(), *ty))
+                        .count()
+                        == MAX_DECORATIONS
+                {
+                    return Err(MapSpawnError::DecorationLimit.into());
+                }
                 if (!pickup
+                    && !decoration
                     && selected
                         .iter()
                         .filter(|(_, ty)| self.is_roster_monster(*ty))
@@ -466,7 +502,7 @@ impl Simulation {
                     ],
                     SpawnHeight::Floor,
                 )?;
-                if !pickup && !former {
+                if !pickup && !former && !decoration {
                     ty = self.demon_owner_type();
                 }
             }

@@ -29,6 +29,8 @@ pub const PLAYER_REAL_MAP_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-REALMAP-1-ME
 pub const PLAYER_SPECIALS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-SPECIALS-1-MEDIUM-v1";
 /// Explicit doors, lifts, floors, switches and exit context; older contexts stay frozen.
 pub const PLAYER_MOVERS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-MOVERS-1-MEDIUM-v1";
+/// Explicit E1M1 context (two-sided scrollers, static decorations); older contexts stay frozen.
+pub const PLAYER_E1M1_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-E1M1-1-MEDIUM-v1";
 
 impl Simulation {
     /// Autonomous roster member: the native/original Demon owner or a policy
@@ -178,6 +180,28 @@ impl Simulation {
             map,
             crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS,
             OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersMoversV1)?,
+            ActorOptions::default(),
+            context,
+        )
+        .map_err(Into::into)
+    }
+    /// The movers world plus the E1M1 admissions of the M3h9 note §5.1 (wire 20):
+    /// line special 48 on two-sided lines, blocking or not (decision E1; the three
+    /// game-code effects of a 48 line, `spechit` entry in `PIT_CheckLine`
+    /// p_map.c:240–244, the monster `DI_NODIR` reset with `P_UseSpecialLine` false
+    /// p_enemy.c:310–324 and the `PTR_UseTraverse` stop p_map.c:1113–1122, are the
+    /// M3h8 bodies), and the seven static decoration types of info.c (decision E2),
+    /// on top of everything [`Simulation::original_player_movers_map`] admits.
+    /// Captures are DSIM36. As for the specials policy, call
+    /// [`Simulation::spawn_level_specials`] once before the first tic.
+    pub fn original_player_e1m1_map(
+        map: Map,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        Self::with_original_registry(
+            map,
+            crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS,
+            OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersE1M1V1)?,
             ActorOptions::default(),
             context,
         )

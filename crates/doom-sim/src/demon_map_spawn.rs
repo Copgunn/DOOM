@@ -38,6 +38,10 @@ pub enum MapSpawnError {
     /// stepped before it ran; or a map-THING or player-body spawn after it ran
     /// (M3h7 decision 12). The state is unchanged.
     LevelSpecials,
+    /// Under the E1M1 policy, a 33rd static decoration in one map
+    /// ([`crate::MAX_DECORATIONS`], M3h9 note §5.1): the batch spawns nothing and
+    /// the state is unchanged.
+    DecorationLimit,
 }
 impl fmt::Display for MapSpawnError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -80,6 +84,7 @@ impl Simulation {
         self.preflight_world_pickups()?;
         let mut suffix = false;
         let mut owners = 0;
+        let mut decorations = 0;
         for id in self.actors.order() {
             if self.actors.is_pending(id) != Some(false) {
                 continue;
@@ -88,7 +93,17 @@ impl Simulation {
             let life = a.life.unwrap();
             // Validate complete future actions, not only this tic's next state.
             self.validate_combat_type(life.actor_type)?;
-            if self.player_policy().has_world_pickups()
+            if e1m1_rules::is_decoration(self.player_policy(), life.actor_type) {
+                // A static decoration (M3h9 note §2.5–§2.7) interleaves with the
+                // monsters and pickups in THINGS order (P_SpawnMapThing spawns the
+                // lump in order) and is never the suffix; nothing acts on it per
+                // tic, so the witness is its spawn record.
+                decorations += 1;
+                if decorations > MAX_DECORATIONS {
+                    return Err(MapSpawnError::DecorationLimit.into());
+                }
+                e1m1_rules::validate_decoration(self.room(), a)?;
+            } else if self.player_policy().has_world_pickups()
                 && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
             {
                 world_pickups::validate_item(self.room(), self.item_sectors(), a)?;

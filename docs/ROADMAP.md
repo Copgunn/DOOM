@@ -79,7 +79,37 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3h8: Doors, lifts, floors, switches and the exit (Stage B)
+### M3h9a: Two-sided scrolling walls and static decorations
+
+The separately selected PlayerMonstersE1M1V1 (wire 20, DSIM36) is the movers world plus
+two parts of E1M1 that need no new state: the scrolling wall 48 on two-sided lines,
+blocking or not, with the source's three game-code effects (a `spechit` entry, the
+monster's direction reset with a failed use, the player's use stopped with no effect),
+and the seven static decoration types E1M1 spawns (floor lamps, tech pillars and
+candelabras that block with no height test; pools of blood, dead players and bloody
+messes that everything passes through), at most 32 per map. Decorations spawn with
+their single `P_Random` draw in lump order, ride movers, stop fireballs when solid,
+let hitscans through and are never damaged, gibbed, removed or targeted. DSIM36 is the
+DSIM35 layout with no new field or event. Barrels, more than 8 monsters or 16 pickups,
+every other THING type and THING angles outside the inherited `[-4,3]` octants stay
+rejected at load, so **E1M1 itself still does not load**: on skill 3 its blockers are 6
+barrels, 52 pickups and 45 THINGs with angle octants 4..7, and its spawn-box rule is
+unmeasured. No
+new fidelity gap is added. Older policies keep their admission, digests and DSIM bytes.
+
+Status on `feat/m3h9-e1m1`: in review, not merged. The C evidence (22 scenarios), the
+independent DSIM36 projection, the policy, the full replay, the Rust-only tests, the
+example, the tools, the fuzz target with its seed replay and this documentation are
+complete, the independent review's findings are fixed, and the bounded fuzz campaigns,
+the matched timings and the local gates are recorded. The owner confirmed decisions E1–E9
+(E9 applies to M3h9b), kept wire 19 frozen with its pickup vertical-momentum gap as a
+known limitation, and kept damage with no inflictor and no source faithful (accepted
+and ignored). This branch stops at owner review; exact commits and CI belong to
+GitHub. See [source investigation](M3H9_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations)
+and [observations](validation/M3H9.md).
+
+### Previous gameplay foundation — M3h8: Doors, lifts, floors, switches and the exit (Stage B)
 
 The separately selected PlayerMonstersMoversV1 (wire 19, DSIM35) is the specials world
 plus E1M1's seven tag, use and crossing line types: the DR door 1, the SR door switch 63,
@@ -94,23 +124,12 @@ or what is deferred: one-sided DR lines, shared mover families, doors without ne
 inverting and self-referencing doors, reachable heights beyond ±512, more than 30 lifts,
 16 SR switches or 8 special lines in a BLOCKMAP window, sky ceilings over movers,
 switches without a switch texture, crushers and every other line type; a two-sided
-scrolling wall stays rejected (decision N1, provisionally option iii). V′ and a relaxed
+scrolling wall stays rejected under this policy (decision N1, option iii). V′ and a relaxed
 item witness replace the vertical and item witnesses under this policy only, and the
 ninth `spechit` write is a refuse-the-tic witness (an M4 fidelity gap like the corner
 jump and the intercepts). Older policies keep their admission, digests and DSIM bytes.
 
-Status on `feat/m3h8-movers`: implementation, the C evidence (33 scenarios), the
-independent DSIM35 projection, the full replay, Rust-only tests, the example, the
-tools, the fuzz target, this documentation and the independent review with its fixes
-are complete; the matched timings are recorded (every older-policy digest unchanged; the
-per-tic slowdown of the older player-and-monster policies seen in the first run was traced
-and removed, with a small `original_player` residual, in the
-[observations](validation/M3H8.md#matched-performance)); the bounded fuzz campaigns are
-recorded (one fuzz-harness finding, fixed, in the
-[observations](validation/M3H8.md#plan-step-17-campaigns)); the final gates are pending, and
-the decisions N1–N9a await owner confirmation. This branch stops at owner review; exact
-commits and CI belong to GitHub. See
-[source investigation](M3H8_REFERENCE_INVESTIGATION.md),
+M3h8 is merged. See [source investigation](M3H8_REFERENCE_INVESTIGATION.md),
 [support](COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit)
 and [observations](validation/M3H8.md).
 
@@ -297,20 +316,32 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Roster scale, which now blocks E1M1 more than any line or sector behavior: derive
-monsters, pickups, drops, slots, fireballs, the linked-thing bound and the sight budget
-from the loaded THINGs (E1M1 on UV needs 29 monsters against the current 8 and 53 pickups
-against 16, all of admitted types), re-evaluating every movers budget written as a
-formula of those bounds (the `P_ChangeSector` work and the `spechit` window proof, which
-needs every admitted radius below 64). Then the solid and non-solid decorations and
-barrels (eight THING types, 33 THINGs on E1M1 UV), and the two-sided scrolling walls if
-the owner admits them (decision N1). With those, E1M1 would load under the movers
-policy; the remaining unmeasured items are listed in the M3h8 note's
-[§13](M3H8_REFERENCE_INVESTIGATION.md#13-e1m1-readiness-under-the-movers-policy). Also
-revisit the rules the 14 other IWAD maps break (13 with one-sided walls of odd degree,
-crossing or facing away from their sector, one BLOCKMAP with missing listings) and the
-22 maps that fail the sight certificate. Require source-first evidence and unchanged
-earlier contracts. This is future work, not admission in M3h8.
+The M3h9 investigation's [§8](M3H9_REFERENCE_INVESTIGATION.md#8-size-estimate-and-split)
+splits the rest of the E1M1 run into two parts after M3h9a:
+
+- **M3h9b: barrels and pickup scale.** Exploding barrels (2035) with the radius attack,
+  its wrapping distance quirk, chain explosions, thrust, the pain draw and its
+  dependence on link order, with their own events; pickups raised to 64 (E1M1 spawns 52
+  on skill 3), which needs a policy-specific actor-slot count (384 recommended) and a
+  hitscan intercept argument that counts the things in the cells along a trace, and a
+  re-evaluated linked-thing bound and `P_ChangeSector` measurement; and, per decision
+  E9, every THING angle admitted as a declared wrap quirk (45 of E1M1's 91 skill-3
+  THINGs have octants 4..7, which the inherited rule refuses). Maintenance in the same
+  milestone (owner request, 2026-11-04): a docs-only CI fast path. A first
+  detect-changes job classifies the push; on a documentation-only change the heavy
+  steps are skipped inside each job, so all four required checks still run and report
+  success, and the documentation check still runs. Changing nothing else in the
+  workflow, its check names or the `macos-26-intel` runner.
+- **M3h9c: the real-E1M1 harness.** A local-only harness that builds a headless
+  linuxdoom-1.10 from genuine sources, loads the owner's E1M1 and compares it tic for
+  tic with the Rust run, committing only pass/fail, tic counts and digests, never IWAD
+  content; plus the spawn-rule count over every E1M1 THING (whether each closed box
+  stays clear of the walls), which decides whether E1M1 loads at all.
+
+Also revisit the rules the 14 other IWAD maps break (13 with one-sided walls of odd
+degree, crossing or facing away from their sector, one BLOCKMAP with missing listings)
+and the 22 maps that fail the sight certificate. Require source-first evidence and
+unchanged earlier contracts. This is future work, not admission in M3h9a.
 
 ### Focused maintenance acceptance criteria
 
@@ -367,9 +398,12 @@ monster/player behavior. Further stages require separate owner direction.
 
 ## Later
 
+- After the matched real-E1M1 run (M3h9c), the rest of Episode 1, map by map, with the
+  same source-first evidence.
 - Complete player/gameplay integration and broader monster/THING support.
-- Moving sectors and map specials (the established M3e direction): doors, lifts,
-  triggers and dynamic-sector interactions.
+- The remaining moving sectors and map specials (the established M3e direction) beyond
+  the doors, lifts, floors, switches and exit of M3h8: crushers, ceilings, stairs,
+  locked doors, teleporters and the other triggers.
 - **M4 — Demo compatibility:** version-specific playback and divergence diagnostics;
   keep DOS and Linux behavior claims separate.
 - **M5 — Rendering and platform integration:** presentation/input/audio and a
@@ -380,3 +414,64 @@ monster/player behavior. Further stages require separate owner direction.
 
 The established historical labels are retained; this order expresses dependencies,
 not old document append order. Current exclusions remain in [COMPATIBILITY](COMPATIBILITY.md#deferred-systems).
+
+## Ideas under consideration
+
+These are ideas, not commitments. None is scheduled, and each would need its own
+investigation, owner decision and evidence before it became a milestone. They are listed
+here so that the README can summarize them in one place; the README's "Where it's (maybe)
+going" list changes only with the owner's approval. They fall into three tracks.
+
+### Track 1: Faithful
+
+Vanilla behavior stays exact forever; everything here either proves it or builds on it.
+
+- **Original demo playback.** Play back recorded vanilla demos (`.lmp` files, the
+  original game's recordings of player input) without desyncing. A demo replays only if
+  every tic matches, so it is the strongest end-to-end proof of exactness. It builds on
+  the M4 demo-compatibility direction under [Later](#later), with DOS and Linux claims
+  kept separate.
+- **Porting whole systems at once.** Port complete systems in one step (all monsters, all
+  line types, all weapons) and check them by running real maps and demos against the
+  original C. The detailed per-mechanic C evidence would be kept for the tricky quirks
+  rather than written for every behavior.
+- **One complete vanilla profile, plus a limit-removing profile.** Eventually fold the
+  per-milestone policies into one complete vanilla profile. A separate limit-removing
+  profile would lift the original's hard limits (visplanes, intercepts, things and the
+  like) without otherwise changing gameplay. The per-milestone policies stay reproducible.
+- **An optional "fixed" mode.** A separate opt-in mode would correct known original bugs.
+  The fidelity gaps and quirks documented in [compatibility](COMPATIBILITY.md) become its
+  to-do list, much like the compatibility levels of other source ports.
+- **The full original game and Doom II.** After Episode 1, the remaining episodes and then
+  Doom II, each with the same source-first evidence and exactness.
+
+### Track 2: Presentation
+
+How it looks and feels. None of this can change gameplay, because the renderer only
+reads game state, which the architecture already requires.
+
+- **A 1:1 vanilla-faithful software renderer first**, so the game looks exactly like the
+  original Linux DOOM 1.10 renderer, the same source reference the simulation follows. DOS
+  presentation claims would need their own reference.
+- **Then a modern renderer.** The simulation still runs at 35 tics per second while the
+  renderer interpolates between tics, giving smooth high frame rates on any display, plus
+  sector-based dynamic lighting. Other ports already flood-fill exactly which sectors a
+  light touches, then shade every pixel in them anyway; this idea stops at the sector
+  step, changing each touched sector's light, which costs almost nothing.
+- **VR.** A headset handles looking around while the mouse turns and aims. This suits
+  Doom, whose original has no vertical aiming, so head movement need not change gameplay.
+- **A fully offline engine.** Play your own copy of Doom with your own game files, with
+  no internet connection, account, launcher or login ever required. (In 2019 the official
+  console and mobile re-releases briefly required an online account login to play; it was
+  reversed within days after player backlash.)
+
+### Track 3: Beyond vanilla
+
+A new engine built on the verified core, in separate opt-in modes so that vanilla is
+never affected. This is the reason for the painstaking verification: an exact Doom core
+that wild new things can be built on without losing what makes Doom feel like Doom.
+
+- **ZDoom-style features done cleanly**, without decades-old code underneath.
+- **Simulation features the original never had**, such as fluid simulation (water, blood
+  and nukage that flow) and very large monster crowds.
+- **A scripting layer** for new game logic, and **other platforms** such as mobile.

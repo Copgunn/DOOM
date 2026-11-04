@@ -6,7 +6,9 @@ and genuine-player execution invoke the same `gun_shot` / `punch_shot` helpers.
 The historical preview supplies its staged RNG; authoritative hosts retain their
 existing RNG/event adapters. Firing state, ammo, ownership, traces, effects,
 retaliation, pain/death and seven-pellet sequencing remain in their existing
-services. No execution capability or diagnostic interpretation changes.
+services. No execution capability or diagnostic interpretation changes: sharing the
+formulas between preview and execution is a maintenance change that preserves gameplay
+and DSIM bytes.
 
 ## Source and arithmetic
 

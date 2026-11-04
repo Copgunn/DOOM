@@ -1,8 +1,9 @@
 # Rust DOOM
 
-An independent Rust-native rewrite of the original DOOM engine, focused on
-deterministic simulation and source-compatible gameplay. Development is early:
-the engine runs limited simulation examples without graphics, not a complete game.
+A rewrite of the original DOOM engine in Rust that aims to behave exactly like id
+Software's code, down to every single step of game logic.
+
+Rust DOOM is a working title; the port's real name is still to be decided.
 
 > **Machine-Maintained, Human-Directed Project**
 >
@@ -15,24 +16,160 @@ the engine runs limited simulation examples without graphics, not a complete gam
 > not guarantee correctness. This project is not affiliated with id Software or
 > Bethesda.
 
-## Status
+## Why this exists
 
-The engine parses WAD files and classic maps and runs a deterministic, headless
-35 tic/second simulation with fixed-point arithmetic, original random-number streams
-and ordered actors; it has no renderer or audio. Gameplay is admitted only through
-explicitly selected configurations: frozen numbered profiles for the earlier Demon
-work, and opt-in original-ID execution policies, each a separate contract that leaves
-every older policy unchanged. The newest policy runs one genuine original player with
-four weapons, pickups, armor and bonuses against the Demon, former humans and the Imp,
-on synthetic maps up to classic-map size with static heights, diagonal walls, sky,
-static sector specials and E1M1's doors, lifts, floors, switches and exit. Admitted
-behavior is checked against original-C source traces and independently encoded
-snapshots; [compatibility](docs/COMPATIBILITY.md) states the exact limits.
+Most source ports (modern rewrites of a game's released source code) aim to be playable
+first and accurate second. This project works the other way round.
 
-Numbered profiles 1–20 are listed under
+It only accepts behavior that has been checked against the original Linux DOOM 1.10 C
+code. The check compares the entire game state after every tic, the 1/35-second step in
+which DOOM updates its world. Anything not yet proven identical is refused: the engine
+stops with an error instead of approximating.
+
+That makes it useful for exact-behavior work:
+
+- playing back recorded demos (files that replay a player's inputs), which only stay in
+  sync if every tic matches;
+- speedrun and tool-assisted (TAS) research;
+- studying how the original engine really behaves.
+
+Vanilla behavior, meaning that of the original unmodified game, isn't a checkbox in an
+options menu here. It's the default, quirks included, proven against the original C every
+tic. Game math stays in Doom's original 16.16 fixed point, too, except for the one
+division where the original itself uses a floating-point number. No floating-point
+physics quietly rounds your rocket jumps differently than the original did.
+
+**It is not playable yet.** If you want to play Doom today, use an established source
+port such as [Chocolate Doom](https://www.chocolate-doom.org/). It needs your own game
+files, such as those from a copy of Doom you bought.
+
+## Where it stands
+
+The engine runs DOOM's game logic without graphics. It is driven by tests and small
+example programs, on small test maps built for this project. Today it can simulate:
+
+- one player who moves, turns, uses switches and doors, takes damage and dies;
+- the fist, pistol, shotgun and chaingun, with ammunition and weapon switching;
+- the Demon, the Zombieman, the Shotgun Guy, the Chaingunner and the Imp, which see,
+  chase, attack and fight each other;
+- ammunition, health, armor and bonus pickups;
+- walls at any angle, steps and ledges, windows, sky, damaging floors, secret areas,
+  flickering lights and scrolling walls;
+- the doors, lifts, moving floors, switches and exit used by E1M1, the first map;
+- E1M1's lamps, pillars, candelabras, corpses and gore.
+
+What it cannot do yet:
+
+- show graphics, play sound or offer menus;
+- run the real E1M1 from start to finish, because the map has exploding barrels and 52
+  pickups, and both are still beyond what the engine supports;
+- handle the other monsters, the other weapons, or the remaining map features such as
+  crushers and teleporters;
+- play back demos.
+
+[Compatibility](docs/COMPATIBILITY.md) states the exact limits.
+
+## Where it's headed
+
+The committed plan, in order (details in the [roadmap](docs/ROADMAP.md)):
+
+1. Run the real E1M1 and match the original tic for tic.
+2. Extend that to the rest of Episode 1.
+3. Add a renderer and audio, so that it is actually playable.
+
+## Where it's (maybe) going
+
+These are ideas, not promises, grouped into three tracks. The
+[roadmap](docs/ROADMAP.md#ideas-under-consideration) describes them in a little more detail.
+
+**Track 1: Faithful.** Vanilla behavior stays exact forever; anything that changes it
+lives in a separate opt-in mode.
+
+- **Original demo playback.** Play back recorded vanilla demos (`.lmp` files) to the
+  last tic, the strongest end-to-end proof of exactness. If a port's answer to a 1994
+  demo is a desync, it isn't running Doom; it's running something Doom-shaped.
+- **Faster progress.** Port whole systems at once, such as all monsters or all weapons.
+  Check them against the original by running real maps and demos.
+- **One vanilla profile, plus a limit-removing one.** Fold the step-by-step policies into
+  one complete vanilla profile. A separate profile would lift the original's hard limits,
+  such as the most things or visible surfaces it can handle, without otherwise changing
+  gameplay.
+- **An optional "fixed" mode.** A separate opt-in mode would correct known original bugs.
+  The differences and quirks already recorded become its to-do list.
+- **The full game and Doom II.** After Episode 1, the remaining episodes and then Doom II,
+  held to the same exactness.
+
+**Track 2: Presentation.** How the planned renderer could look and feel. This can never
+change gameplay, because the renderer only reads the game state.
+
+- **A faithful software renderer first.** It would look exactly like the original Linux
+  DOOM 1.10, whose source id Software released in 1997.
+- **Then a modern renderer.** Smooth high frame rates by drawing extra frames between
+  the game's 35 tics per second, plus sector-based dynamic lighting. Other ports already
+  flood-fill exactly which sectors a light touches, then shade every pixel in them anyway.
+  We would stop at the part that was already free.
+- **VR.** A headset handles looking around while the mouse turns and aims. That suits
+  Doom, because the original has no vertical aiming.
+- **A fully offline engine.** Your own game files. No internet connection, no account, no
+  launcher, no login screen between you and E1M1. Remember 2019, when re-releases of a
+  1993 game briefly demanded an online login? The backlash undid it within days. Here it
+  never happens in the first place.
+
+**Track 3: Beyond vanilla.** A new engine built on the verified core. This is the payoff
+of all the careful checking: an exact Doom core you can build wild things on without
+losing what makes Doom feel like Doom. It would live in separate opt-in modes, so vanilla
+is never affected.
+
+- **Modern source-port features, done cleanly.** Features like those of ZDoom, a popular
+  advanced source port, without decades-old code underneath.
+- **Things the original never simulated.** Water, blood and nukage that actually flow,
+  and very large crowds of monsters.
+- **Scripting and more platforms.** A scripting layer for new game logic, and other
+  platforms such as mobile.
+
+## How it's verified
+
+The original C source is the ground truth. Each supported behavior is run in both the
+original code and the Rust code, and the whole game state is compared after every tic.
+The expected results are recorded by a separate program written from the C output alone,
+so Rust is never checked against its own output. Sanitizers catch hidden memory and
+arithmetic errors while the original C code runs. Fuzzing feeds in huge numbers of random
+inputs to find anything that slips through. When something is not proven identical, the
+engine refuses it rather than guessing. The [validation guide](docs/VALIDATION.md)
+explains the method, and [compatibility](docs/COMPATIBILITY.md) lists what is covered.
+
+## Try it
+
+You need Rust, installed through [rustup](https://rustup.rs/) (stable, or at least
+1.85.0), and a C compiler. The C compiler builds a small compression library used only by
+tests. No game files are needed, and it builds on Linux, Windows and macOS. From the
+repository root:
+
+```sh
+cargo build --workspace --locked
+cargo test --workspace --locked
+```
+
+Three examples worth running:
+
+```sh
+cargo run -p doom-sim --example player_movers --locked   # a player, monsters, doors, lifts and the exit
+cargo run -p doom-sim --example player_imps --locked     # the Imp and its dodgeable fireball
+cargo run -p doom-map --example parse_map --locked       # reading DOOM's map format
+```
+
+Each one runs a short scripted scene on a test map, checks the result and prints a
+one-line summary. None needs an IWAD (the main game data file, such as `doom.wad`), a
+graphics card, audio or a network.
+[Testing](docs/TESTING.md#asserted-headless-examples) lists every example and check.
+
+## Policies (for developers)
+
+New gameplay is switched on through opt-in policies. Each policy adds one slice of Doom
+on top of the one before it. Older policies never change, so earlier results stay exactly
+reproducible, much like compatibility levels. The number in brackets is the policy's
+identifier in saved test snapshots. The earlier numbered Demon profiles are listed under
 [versioned gameplay profiles](docs/COMPATIBILITY.md#versioned-gameplay-profiles).
-The opt-in original-ID policies follow in wire-ID order. Policy 1 stands alone;
-each later policy extends the one above it.
 
 | Policy (wire ID) | Adds | Contract |
 | --- | --- | --- |
@@ -55,124 +192,30 @@ each later policy extends the one above it.
 | `PlayerMonstersRealMapV1` (17) | WAD-format geometry limits (E1M1-sized) under a per-map arithmetic certificate | [Classic-map scale](docs/COMPATIBILITY.md#original-monsters-at-classic-map-scale) |
 | `PlayerMonstersSpecialsV1` (18) | Sky ceilings, light thinkers, damage floors, secrets and one-sided scrolling walls | [Sky and specials](docs/COMPATIBILITY.md#original-monsters-with-sky-and-static-specials) |
 | `PlayerMonstersMoversV1` (19) | E1M1's seven door, lift, floor, switch and exit line types; the tic after the exit is refused | [Movers](docs/COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit) |
+| `PlayerMonstersE1M1V1` (20) | Two-sided scrolling walls and E1M1's seven static decoration types (lamps, pillars, candelabras, corpses and gore) | [E1M1 decorations](docs/COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations) |
 
-`Simulation::advance()` runs one tic without capturing a diagnostic snapshot; see the
-[stepping contract](docs/COMPATIBILITY.md#stepping-and-diagnostics). Identity binding,
-scoped actor access and game-instance provenance are internal design, described in the
-[architecture guide](docs/ARCHITECTURE.md#actors-lifecycle-and-ordering).
+More developer reading:
 
-## What works
-
-- Validated WAD directories and classic maps, including their spatial partitions
-  (BSP) and collision grids (BLOCKMAP).
-- Deterministic 35 Hz headless simulation with [canonical identity metadata](docs/ACTOR_IDENTITIES.md).
-- One original player with four weapons, pickups, armor and bonuses against the Demon,
-  former humans and the Imp, on synthetic maps with heights, diagonal walls, sky,
-  static specials, doors, lifts, floors, switches and the exit (opt-in; see the table above).
-- Opt-in larger static geometry for the Demon profiles; see [supported limits](docs/COMPATIBILITY.md#expanded-map-demon-profile).
-- Original-C comparisons, independently encoded canonical snapshots, and safety
-  tests for rejection, stale references and recoverable-error atomicity.
-- Synthetic examples that run without commercial game data or presentation devices.
-
-## What does not work yet
-
-There is no game renderer, audio playback, general map loading, multiplayer or
-verified vanilla demo playback. Gameplay still excludes full player-thinker and view
-processing, the remaining weapons and monsters, other line specials (crushers,
-ceilings, stairs, locked doors, teleporters), two-sided scrolling walls,
-soulspheres and powers, the intermission and next map, resurrection and Nightmare
-respawning. A custom Vulkan-first rendering architecture is a future direction; the
-[roadmap](docs/ROADMAP.md) describes dependencies.
-
-## Getting started
-
-Install Rust through rustup. The workspace uses stable Rust and supports Rust
-1.85.0. Full workspace checks also need a host C compiler for the bundled
-test-only zstd library; no external zstd program is needed. From the repository root:
-
-```sh
-cargo build --workspace --locked
-cargo test --workspace --locked
-```
-
-## Running a headless example
-
-```sh
-cargo run -p doom-sim --example demon_expanded_map --locked
-cargo run -p doom-sim --example canonical_demon --locked
-cargo run -p doom-sim --example runtime_identity --locked
-cargo run -p doom-sim --example original_registry --locked
-cargo run -p doom-sim --example context_ownership --locked
-cargo run -p doom-sim --example game_instance --locked
-cargo run -p doom-sim --example diagnostic_free --locked
-cargo run -p doom-sim --example original_player --locked
-cargo run -p doom-sim --example player_knockback --locked
-cargo run -p doom-sim --example player_commands --locked
-cargo run -p doom-sim --example player_demon --locked
-cargo run -p doom-sim --example player_demon_melee --locked
-cargo run -p doom-sim --example player_pistol --locked
-cargo run -p doom-sim --example player_weapon_pack --locked
-cargo run -p doom-sim --example player_world_pickups --locked
-cargo run -p doom-sim --example player_bonuses --locked
-cargo run -p doom-sim --example player_monsters --locked
-cargo run -p doom-sim --example player_imps --locked
-cargo run -p doom-sim --example player_heights --locked
-cargo run -p doom-sim --example player_diagonal --locked
-cargo run -p doom-sim --example player_real_map --locked
-cargo run -p doom-sim --example player_specials --locked
-cargo run -p doom-sim --example player_movers --locked
-cargo run -p doom-sim --example map_scale --locked
-cargo run -p doom-sim --example demon_map_context --locked
-cargo run -p doom-sim --example demon_map_spawn --locked
-cargo run -p doom-map --example parse_map --locked
-```
-
-Examples use synthetic public maps, assert expected behavior and print diagnostic
-results. They require no commercial IWAD, GPU, audio device or network service.
-`demon_expanded_map` runs source-tested Demon gameplay on larger synthetic maps.
-`canonical_demon` drives that existing behavior with original MT_SERGEANT/SARG
-identities; it does not admit Spectre or resurrection.
-`runtime_identity` checks the [native identity boundary](docs/ACTOR_IDENTITIES.md#native-runtime-identity-boundary) against unchanged historical captures.
-`original_registry` checks [actual original-ID storage](docs/ACTOR_IDENTITIES.md#original-id-execution-registry) and bounded v20/v21 diagnostic reading.
-`context_ownership` checks scoped target operations and retirement against compact
-new C observations; see the [ownership contract](docs/COMPATIBILITY.md#context-and-target-lifetime-contract).
-`game_instance` demonstrates [qualified references](docs/COMPATIBILITY.md#game-instance-provenance)
-and reuses an existing C scenario without admitting new gameplay.
-`map_extent` separately demonstrates expanded unbound coordinates and spatial work.
-See [testing](docs/TESTING.md) for all examples and reproduction commands.
-
-## Architecture
-
-Small crates separate numeric types, WAD parsing, validated maps and authoritative
-simulation. Gameplay owns its RNG and ordered state; presentation cannot affect
-outcomes. Read the [architecture guide](docs/ARCHITECTURE.md) and
-[documentation index](docs/README.md).
-
-## Compatibility and validation
-
-Historical source traces use bounded offline zstd loading, and preview/execution
-share original weapon formulas. These maintenance changes preserve gameplay and
-DSIM bytes. See the [storage contract](docs/EVIDENCE_STORAGE.md) and
-[formula contract](docs/WEAPON_FORMULAS.md).
-
-Original id Software Linux DOOM 1.10 is the behavioral authority. Matching an
-isolated source slice does not establish whole-game or DOS demo compatibility.
-The [validation guide](docs/VALIDATION.md) distinguishes original-C evidence,
-independent DSIM simulation snapshots and Rust-specific safety policies. DSIM is
-a project diagnostic format, not an original demo or savegame. Historical evidence
-remains available in the [archive](docs/validation/archive/README.md).
+- [Architecture](docs/ARCHITECTURE.md): small crates for numbers, WAD files, maps and
+  simulation, and how [actors and their ordering](docs/ARCHITECTURE.md#actors-lifecycle-and-ordering) work.
+- [Stepping contract](docs/COMPATIBILITY.md#stepping-and-diagnostics) and
+  [actor identities](docs/ACTOR_IDENTITIES.md).
+- [Larger maps for the Demon profiles](docs/COMPATIBILITY.md#expanded-map-demon-profile).
+- The [documentation index](docs/README.md) and the
+  [historical evidence archive](docs/validation/archive/README.md).
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) for the development and review workflow.
-Feature work needs source evidence, appropriate tests, documentation and owner
-review. Agent-specific standing rules are in [AGENTS.md](AGENTS.md).
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow. Each change needs evidence from
+the original source, tests and documentation, and owner review. The Python tools under
+`tools/` are a gentle place to start. Standing rules for AI agents are in
+[AGENTS.md](AGENTS.md).
 
 ## License and attribution
 
-The project preserves id Software's original source, history and attribution.
-The Rust workspace is GPL-2.0-only; see the preserved
-[license notice](LICENSE.TXT) and [original release README](README.TXT).
-The source license does not grant rights to commercial game data. Such assets
-stay external, are never distributed here, and are unnecessary for public CI.
-The [external asset guide](docs/ASSETS.md) describes optional local loading.
+The project preserves id Software's original source, history and attribution. The Rust
+workspace is GPL-2.0-only; see the preserved [license notice](LICENSE.TXT) and the
+[original release README](README.TXT). The source license grants no rights to the
+commercial game data. Those files stay external, are never distributed here, and are not
+needed for the public tests. The [external asset guide](docs/ASSETS.md) describes
+optional local loading.

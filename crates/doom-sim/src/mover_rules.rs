@@ -171,6 +171,17 @@ pub fn mover_bounds(map: &Map) -> Result<MoverBounds, SimError> {
         movers: admission.movers,
     })
 }
+/// [`mover_bounds`] under the E1M1 policy's load rules: the same rules with a
+/// two-sided scroller (line special 48, blocking or not) admitted, as
+/// `Simulation::original_player_e1m1_map` runs them. Admission only.
+pub fn e1m1_mover_bounds(map: &Map) -> Result<MoverBounds, SimError> {
+    let admission = validate_e1m1(map)?;
+    Ok(MoverBounds {
+        reach: admission.reach,
+        delta: admission.delta,
+        movers: admission.movers,
+    })
+}
 
 /// `getNextSector` (p_spec.c:251–261) of `line` seen from `sector`: `None` without
 /// `ML_TWOSIDED`; the back sector when `sector` is the front (itself for a line with
@@ -200,8 +211,9 @@ pub(crate) fn tagged(map: &Map, tag: i16) -> impl Iterator<Item = usize> + '_ {
 /// The movers policy's load rules (M3h8 note §7), after the Stage A sector rules:
 ///
 /// 1. every line special is 0, a one-sided 48 (a two-sided 48 stays rejected,
-///    decision N1) or one of 1, 63, 109, 88, 36, 38, 11 — exactly E1M1's tag,
-///    use and cross types, M3h8 note §4.0 — (`PursuitError::Specials`),
+///    decision N1; the E1M1 policy admits it through [`validate_e1m1`]) or one of
+///    1, 63, 109, 88, 36, 38, 11 — exactly E1M1's tag, use and cross types, M3h8
+///    note §4.0 — (`PursuitError::Specials`),
 ///    and every DR line has a back side ([`MapScaleError::DoorLine`]);
 /// 2. no sector is in two mover families ([`MapScaleError::MoverFamily`]);
 /// 3. every mover sector has a `getNextSector` neighbour
@@ -226,6 +238,33 @@ pub(crate) fn tagged(map: &Map, tag: i16) -> impl Iterator<Item = usize> + '_ {
 ///     `P_ChangeSector` of a plane step visits defined cells
 ///     ([`MapScaleError::MoverBlockBox`]).
 pub(crate) fn validate_movers(map: &Map) -> Result<MoverAdmission, SimError> {
+    validate_movers_with(map, false)
+}
+/// The E1M1 policy's load rules (M3h9 note §5.1, decision E1): every rule of
+/// [`validate_movers`] with rule 1 relaxed for line special 48 on a two-sided line,
+/// blocking (`ML_BLOCKING`) or not. `P_SpawnSpecials` lists every 48 line in
+/// `linespeciallist` whatever its sides (p_spec.c:1336–1346) and `P_UpdateSpecials`
+/// only adds `FRACUNIT` to `sides[line->sidenum[0]].textureoffset` each tic
+/// (1114–1124), a field no game code reads; the game-code effects of the line are
+/// the M3h8 bodies: it enters `spechit` from `PIT_CheckLine` when it does not block
+/// (p_map.c:240–244), a monster's failed move resets `movedir` and
+/// `P_UseSpecialLine(actor, line, 0)` returns false (p_enemy.c:310–324,
+/// p_switch.c:301–319), a player's use reaches the trailing `return true` with no
+/// effect and `PTR_UseTraverse` stops at it (p_map.c:1113–1122), and
+/// `P_CrossSpecialLine` and `P_ShootSpecialLine` have no case 48. A blocking
+/// two-sided 48 blocks every non-missile like any blocking line and never enters its
+/// `spechit` (`PIT_CheckLine` returns before the special test); a missile skips the
+/// `ML_BLOCKING` test (p_map.c:214–221), so the line enters the missile's `spechit`
+/// (240–244) and its crossing calls `P_CrossSpecialLine`, which returns at once for
+/// a missile (p_spec.c:503–514; review scenario
+/// `fireball_through_blocking_scroller`). Rule 5 (at most 64 scrollers,
+/// `MAXLINEANIMS`) counts it and rule 6 (the 2 × 2 window of `spechit`,
+/// `MAXSPECIALCROSS`) counts every two-sided special line, so both are unchanged.
+pub(crate) fn validate_e1m1(map: &Map) -> Result<MoverAdmission, SimError> {
+    validate_movers_with(map, true)
+}
+/// [`validate_movers`], admitting a two-sided 48 when `two_sided_scrollers`.
+fn validate_movers_with(map: &Map, two_sided_scrollers: bool) -> Result<MoverAdmission, SimError> {
     use crate::sector_thinkers::{MAX_LINE_ANIMS, SCROLLING_WALL};
     crate::demon_expanded_map::validate_sector_specials(map)?;
     let sectors = map.sectors().len();
@@ -246,7 +285,7 @@ pub(crate) fn validate_movers(map: &Map) -> Result<MoverAdmission, SimError> {
         }
         match line.special {
             0 | LINE_EXIT => {}
-            SCROLLING_WALL if back.is_none() => scrollers += 1,
+            SCROLLING_WALL if back.is_none() || two_sided_scrollers => scrollers += 1,
             LINE_DOOR_DR => kinds[back.ok_or(MapScaleError::DoorLine)?].dr = true,
             special @ (LINE_DOOR_SR | LINE_DOOR_BLAZE | LINE_LIFT | LINE_FLOOR_TURBO
             | LINE_FLOOR_LOWEST) => {

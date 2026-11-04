@@ -76,6 +76,79 @@ pursuit, selected attacks and Demon gameplay/map context. Assertions use committ
 original-C evidence and independent snapshots where applicable. Earlier examples
 and equality helpers retain their historical bytes.
 
+Every headless example, each on synthetic public maps with no commercial IWAD, GPU,
+audio device or network service, runs with one of these commands:
+
+```sh
+cargo run -p doom-map --example parse_map --locked
+cargo run -p doom-sim --example actor_states --locked
+cargo run -p doom-sim --example canonical_demon --locked
+cargo run -p doom-sim --example chaingunner_attacks --locked
+cargo run -p doom-sim --example combat_arena --locked
+cargo run -p doom-sim --example context_ownership --locked
+cargo run -p doom-sim --example demon_expanded_map --locked
+cargo run -p doom-sim --example demon_lifecycle --locked
+cargo run -p doom-sim --example demon_map_context --locked
+cargo run -p doom-sim --example demon_map_spawn --locked
+cargo run -p doom-sim --example demon_melee --locked
+cargo run -p doom-sim --example demon_stand_run --locked
+cargo run -p doom-sim --example diagnostic_free --locked
+cargo run -p doom-sim --example game_instance --locked
+cargo run -p doom-sim --example headless --locked
+cargo run -p doom-sim --example map_extent --locked
+cargo run -p doom-sim --example map_scale --locked
+cargo run -p doom-sim --example monster_attacks --locked
+cargo run -p doom-sim --example monster_perception --locked
+cargo run -p doom-sim --example monster_pursuit --locked
+cargo run -p doom-sim --example multisector_arena --locked
+cargo run -p doom-sim --example original_identity --locked
+cargo run -p doom-sim --example original_player --locked
+cargo run -p doom-sim --example original_registry --locked
+cargo run -p doom-sim --example player_arena --locked
+cargo run -p doom-sim --example player_armor --locked
+cargo run -p doom-sim --example player_bonuses --locked
+cargo run -p doom-sim --example player_commands --locked
+cargo run -p doom-sim --example player_demon --locked
+cargo run -p doom-sim --example player_demon_melee --locked
+cargo run -p doom-sim --example player_diagonal --locked
+cargo run -p doom-sim --example player_e1m1 --locked
+cargo run -p doom-sim --example player_heights --locked
+cargo run -p doom-sim --example player_imps --locked
+cargo run -p doom-sim --example player_knockback --locked
+cargo run -p doom-sim --example player_map_scale --locked
+cargo run -p doom-sim --example player_monsters --locked
+cargo run -p doom-sim --example player_movers --locked
+cargo run -p doom-sim --example player_pistol --locked
+cargo run -p doom-sim --example player_real_map --locked
+cargo run -p doom-sim --example player_specials --locked
+cargo run -p doom-sim --example player_weapon_pack --locked
+cargo run -p doom-sim --example player_weapons --locked
+cargo run -p doom-sim --example player_world_pickups --locked
+cargo run -p doom-sim --example projectiles --locked
+cargo run -p doom-sim --example runtime_identity --locked
+cargo run -p doom-sim --example shotgunner_attacks --locked
+```
+
+Each prints diagnostic results and asserts its expected behavior. A
+`tools/reference/check_*.py` helper runs each example in debug and release and asserts
+equal output (`check_headless.py` covers `headless`, `player_arena`,
+`multisector_arena`, `actor_states`, `combat_arena` and `player_weapons`; the others
+have a helper of their own name); the milestone sections below give each one's
+reproduction commands. A few notes on the less obvious ones: `demon_expanded_map` runs
+source-tested Demon gameplay on larger synthetic maps; `canonical_demon` drives that
+behavior with original MT_SERGEANT/SARG identities and does not admit Spectre or
+resurrection; `runtime_identity` checks the
+[native identity boundary](ACTOR_IDENTITIES.md#native-runtime-identity-boundary) against
+unchanged historical captures; `original_registry` checks
+[actual original-ID storage](ACTOR_IDENTITIES.md#original-id-execution-registry) and
+bounded v20/v21 diagnostic reading; `context_ownership` checks scoped target operations
+and retirement against compact C observations (see the
+[ownership contract](COMPATIBILITY.md#context-and-target-lifetime-contract));
+`game_instance` demonstrates [qualified references](COMPATIBILITY.md#game-instance-provenance)
+and reuses an existing C scenario without admitting new gameplay; `map_extent`
+demonstrates expanded unbound coordinates and spatial work; `player_e1m1` runs the
+synthetic M3h9 rooms, not the real E1M1.
+
 ## Fuzzing and sanitizers
 
 Install cargo-fuzz and a supported nightly Rust toolchain, then:
@@ -1311,3 +1384,99 @@ the campaigns are a local step. Run measurements alone, with no fuzzing, builds 
 at the same time. Observations belong to [the engineering record](validation/M3H8.md).
 Leak detection is disabled in the documented ASan environment (`detect_leaks=0`), not
 verified.
+
+## Original two-sided scrollers, static decorations and the spawn filter (C evidence)
+
+The M3h9a C evidence of the
+[M3h9 investigation](M3H9_REFERENCE_INVESTIGATION.md#7-evidence-plan-c-first-genuine-bodies)
+has its own source contract and leaves every historical expectation untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h9_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3h9_snapshot_goldens.py --check
+python3 tools/reference/check_player_e1m1.py
+cargo test -p doom-sim e1m1
+cargo run -p doom-sim --example player_e1m1 --locked
+python3 tools/measure_e1m1.py --check
+python3 tools/seed_player_e1m1_fuzz.py /tmp/doom-e1m1-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_e1m1 /tmp/doom-e1m1-corpus --sanitizer address -- -runs=0 -max_len=290 -timeout=15 -rss_limit_mb=1024
+# Bounded campaigns, each on a fresh copy of the seeds:
+cargo +nightly fuzz run player_e1m1 /tmp/doom-e1m1-corpus --sanitizer none -- -seed=601 -max_total_time=1800 -max_len=290 -timeout=15 -rss_limit_mb=1024
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_e1m1 /tmp/doom-e1m1-corpus --sanitizer address -- -seed=602 -max_total_time=1800 -max_len=290 -timeout=15 -rss_limit_mb=1024
+```
+
+The generator reuses every compiled M3h8 body over the `scrollhall`, `scrollblock`,
+`dense8`, `gallery`, `liftroom`, `census` and `doorstep` rooms and checks
+`tests/reference/m3h9_trace.dref`, `m3h9_cases.csv`, the `m3h9_geometry_*.bin` lumps,
+`m3h9_maps.rs`, the Rust-only nine-scroller lane `m3h9_dense9.bin` and
+`m3h9_contract.json`; the sanitizer options and `--cases` work as for M3h8.
+`m3h9_snapshot_goldens.py` is the independent
+[DSIM36](STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations)
+projection of those rows (never of Rust output): it checks
+`tests/reference/m3h9_snapshots.csv`, the ordered events `m3h9_events.dref`, the 15
+full-byte `m3h9_state_*.bin` fixtures and `m3h9_snapshot_contract.json`.
+`check_player_e1m1.py` runs the full Rust replay (the library tests in
+`e1m1_replay`) in debug and release and asserts that both pass and print the same
+summary: all 20 medium-skill scenarios through their last op, every C row the replay
+reads (heights, line specials, use latch, exit and player state, crossings, uses, use
+intercepts, blocked moves, the thinker list), every PBE1 event frame, and at every
+capture the independent digest, size and field count, the 15 fixtures byte for byte
+and the `Diagnostic::decode_e1m1` round trip (with `decode_movers` rejecting the
+bytes). The comparison bodies are the M3h8 replay's. The two C-only census rows at
+easy and hard skill are not replayed. A second, Rust-only test rebuilds the
+`monster_hitscan_through_pillar` alcove in memory with its walls on the Zombieman's
+closed box and asserts that the diagonal spawn rule still refuses it with the state
+unchanged (`P_SpawnMapThing` checks no position; the committed alcove is wide enough).
+Two more replay the review scenarios: the fireball's crossing record at the blocking
+scroller, and the pillar whose floor stays above its ceiling while the door is shut on
+it, with a shut-door capture decoding under `decode_e1m1`.
+The example `player_e1m1` runs in the
+synthetic M3h9 rooms, not the real E1M1. Through the public API alone it replays the
+scenarios whose declared inputs are public (all but those with the controlled
+200 health), comparing every op's sector heights and work with the C rows, every
+capture digest with the independent index and the final runtime line specials, and
+asserts the C rows' headline counts; `--example-only` runs it alone (the CI step on
+the hosts that skip the replay). `--measure
+gallery_patrol|liftroom_ride|dense8_cross|scrollhall_fight advance|step|capture` times
+a 1,200-tic patrol in the gallery or the scroller hall, or the committed
+`decorations_ride_lift` or `dense_spechit_8` timeline, and `measure_e1m1.py` drives it
+with the native `wait4` launcher (`--check` is the CI smoke and asserts the same final
+digest in every mode). Run measurements alone, with no fuzzing, builds or tests at the
+same time.
+
+The `player_e1m1_soak_tests` are Rust-only: every info.c type with a DoomEd number
+that wire 20 does not admit (the barrel, the hanging corpses, the candle and the
+other unlisted decorations among them) refused as `UnsupportedType` after the ten
+gallery decorations; a bit-16 or skill-filtered record (a decoration or a barrel)
+filtered before its type is checked, with no draw; the fixed medium single-player
+options; 64 scrollers admitted and 65 refused; every crusher line on a two-sided or
+one-sided line; each decoration type refused under wires 18 and 19; a spawn batch
+with eight monsters, sixteen pickups and 32 decorations spawning all 56 while a 33rd
+decoration, a barrel or hanging corpse after the decorations and a ninth monster each
+leave the capture bytes, the RNG, the actor order, the events and the statistics
+unchanged; every nonzero push, vertical momentum, target and removal of a decoration
+refused, a direct spawn of each decoration type refused, a death request and damage
+with an inflictor refused and damage with neither ignored with no gameplay change, and
+nonzero vertical momentum on a census item refused; 2,400-tic
+soaks with four seeds on the five gallery and the two liftroom rooms asserting V′,
+every decoration's type, state, tics, health, flags, radius, height and `z == floorz`
+after every tic, `step == advance` every 10th tic and the DSIM36 `decode_e1m1` round
+trip every 100th; and the M3h9 note §5.3 budget formulas. The fuzz target
+`player_e1m1` starts from the 20 replayed scenario starts and applies bounded
+operations (commands with `BT_USE` and `BT_ATTACK`, damage, retargeting, removal,
+pause, pushes, vertical momentum, each also aimed at a decoration, whose target,
+removal, nonzero push and nonzero vertical momentum must be refused, and direct spawns
+of a decoration type, which must be `DirectSpawn`) under the movers target's properties (`step == advance`, a refused
+operation keeping the snapshot, V′, Ω, the item witness, the mover bounds, progress)
+plus the decorations' static fields, `z == floorz` and count, the DSIM36 round trip
+with `decode_movers` rejecting the bytes, and mutated decodes of two pinned DSIM36
+fixtures; `seed_player_e1m1_fuzz.py` writes its byte seeds without reading Rust
+output. Run the fuzz commands from `fuzz/` on a fresh copy of the seeds outside the
+working tree and delete the corpus afterwards. `-runs=0` replays the seeds only; the seed
+tool writes 5,360 seeds, so, as for the movers target, the campaigns are bounded by
+`-max_total_time` rather than `-runs`. The campaign without a sanitizer explores faster;
+the AddressSanitizer campaign is the sanitizer evidence. The fuzz workspace is
+nightly-only and CI only format-checks it, so the campaigns are a local step. Run
+measurements alone, with no fuzzing, builds or tests at the same time. Observations
+belong to [the engineering record](validation/M3H9.md). Leak detection is disabled in
+the documented ASan environment (`detect_leaks=0`), not verified.
