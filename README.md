@@ -26,7 +26,8 @@ stops with an error instead of approximating.
 
 That makes it useful for exact-behavior work:
 
-- playing back recorded demos, which only stay in sync if every tic matches;
+- playing back recorded demos (files that replay a player's inputs), which only stay in
+  sync if every tic matches;
 - speedrun and tool-assisted (TAS) research;
 - studying how the original engine really behaves.
 
@@ -70,36 +71,56 @@ The committed plan, in order (details in the [roadmap](docs/ROADMAP.md)):
 
 ## Where it's (maybe) going
 
-These are ideas, not promises. The [roadmap](docs/ROADMAP.md#ideas-under-consideration)
-describes them in a little more detail.
+These are ideas, not promises, grouped into three tracks. The
+[roadmap](docs/ROADMAP.md#ideas-under-consideration) describes them in a little more detail.
+
+**Track 1: Faithful.** Vanilla behavior (that of the original, unmodified game) stays
+exact forever; anything that changes it lives in a separate opt-in mode.
 
 - **Original demo playback.** Play back recorded vanilla demos (`.lmp` files) without
   desyncing. That is the strongest end-to-end proof of exactness.
 - **Faster progress.** Port whole systems at once, such as all monsters or all weapons.
-  Check them by running real maps and demos against the original, keeping detailed proofs
-  for the tricky quirks.
-- **An optional "fixed" mode.** Vanilla behavior stays exact forever. A separate opt-in
-  mode would fix known original bugs and limits, like the compatibility levels of other
-  source ports.
-- **Smooth high-frame-rate rendering.** The game still thinks at 35 tics per second,
-  while the renderer draws in-between frames. It looks smooth on any screen without
-  changing gameplay.
+  Check them against the original by running real maps and demos.
+- **One vanilla profile, plus a limit-removing one.** Fold the step-by-step policies into
+  one complete vanilla profile. A separate profile would lift the original's hard limits,
+  such as the most things or visible surfaces it can handle, without otherwise changing
+  gameplay.
+- **An optional "fixed" mode.** A separate opt-in mode would correct known original bugs.
+  The differences and quirks already recorded become its to-do list.
+- **The full game and Doom II.** After Episode 1, the remaining episodes and then Doom II,
+  held to the same exactness.
+
+**Track 2: Presentation.** How the planned renderer could look and feel. This can never
+change gameplay, because the renderer only reads the game state.
+
+- **A faithful software renderer first.** It would look exactly like DOOM did in 1993.
+- **Then a modern renderer.** Smooth high frame rates by drawing extra frames between
+  the game's 35 tics per second, plus modern effects such as dynamic lighting.
 - **VR.** A headset handles looking around while the mouse turns and aims. That suits
   Doom, because the original has no vertical aiming.
-- **A permanent offline engine.** Play your own copy of Doom, with your own game files.
-  No internet connection or account would ever be required.
-- **Later:** the full original game and Doom II.
+- **A fully offline engine.** Your own game files, with no internet connection or account
+  ever required.
+
+**Track 3: Beyond vanilla.** A new engine built on the verified core. It would live in
+separate opt-in modes, so vanilla is never affected.
+
+- **Modern source-port features, done cleanly.** Features like those of ZDoom, a popular
+  advanced source port, without decades-old code underneath.
+- **Things the original never simulated.** Water, blood and nukage that actually flow,
+  and very large crowds of monsters.
+- **Scripting and more platforms.** A scripting layer for new game logic, and other
+  platforms such as mobile.
 
 ## How it's verified
 
 The original C source is the ground truth. Each supported behavior is run in both the
 original code and the Rust code, and the whole game state is compared after every tic.
 The expected results are recorded by a separate program written from the C output alone,
-so Rust is never checked against its own output. Sanitizers (tools that catch memory and arithmetic
-errors in C) and fuzzing (feeding in huge numbers of random inputs) look for anything
-that slips through. When something is not proven identical, the engine refuses it rather
-than guessing. The [validation guide](docs/VALIDATION.md) explains the method, and
-[compatibility](docs/COMPATIBILITY.md) lists what is covered.
+so Rust is never checked against its own output. Sanitizers catch hidden memory and
+arithmetic errors while the original C code runs. Fuzzing feeds in huge numbers of random
+inputs to find anything that slips through. When something is not proven identical, the
+engine refuses it rather than guessing. The [validation guide](docs/VALIDATION.md)
+explains the method, and [compatibility](docs/COMPATIBILITY.md) lists what is covered.
 
 ## Try it
 
@@ -122,8 +143,8 @@ cargo run -p doom-map --example parse_map --locked       # reading DOOM's map fo
 ```
 
 Each one runs a short scripted scene on a test map, checks the result and prints a
-one-line summary. None needs an
-IWAD (the main game data file, such as `doom.wad`), a graphics card, audio or a network.
+one-line summary. None needs an IWAD (the main game data file, such as `doom.wad`), a
+graphics card, audio or a network.
 [Testing](docs/TESTING.md#asserted-headless-examples) lists every example and check.
 
 ## Policies (for developers)

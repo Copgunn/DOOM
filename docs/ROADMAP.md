@@ -414,7 +414,11 @@ not old document append order. Current exclusions remain in [COMPATIBILITY](COMP
 These are ideas, not commitments. None is scheduled, and each would need its own
 investigation, owner decision and evidence before it became a milestone. They are listed
 here so that the README can summarize them in one place; the README's "Where it's (maybe)
-going" list changes only with the owner's approval.
+going" list changes only with the owner's approval. They fall into three tracks.
+
+### Track 1: Faithful
+
+Vanilla behavior stays exact forever; everything here either proves it or builds on it.
 
 - **Original demo playback.** Play back recorded vanilla demos (`.lmp` files, the
   original game's recordings of player input) without desyncing. A demo replays only if
@@ -425,16 +429,37 @@ going" list changes only with the owner's approval.
   line types, all weapons) and check them by running real maps and demos against the
   original C. The detailed per-mechanic C evidence would be kept for the tricky quirks
   rather than written for every behavior.
-- **An optional "fixed" mode.** Vanilla behavior stays exact forever as the default. A
-  separate opt-in mode would correct known original bugs and limits. The fidelity gaps
-  and quirks documented in [compatibility](COMPATIBILITY.md) become its to-do list, much
-  like the compatibility levels of other source ports.
-- **Smooth high-frame-rate rendering.** The simulation still runs at its original 35 tics
-  per second, while the renderer interpolates between tics for any display refresh rate.
-  Presentation never changes gameplay, which the architecture already requires.
+- **One complete vanilla profile, plus a limit-removing profile.** Eventually fold the
+  per-milestone policies into one complete vanilla profile. A separate limit-removing
+  profile would lift the original's hard limits (visplanes, intercepts, things and the
+  like) without otherwise changing gameplay. The per-milestone policies stay reproducible.
+- **An optional "fixed" mode.** A separate opt-in mode would correct known original bugs.
+  The fidelity gaps and quirks documented in [compatibility](COMPATIBILITY.md) become its
+  to-do list, much like the compatibility levels of other source ports.
+- **The full original game and Doom II.** After Episode 1, the remaining episodes and then
+  Doom II, each with the same source-first evidence and exactness.
+
+### Track 2: Presentation
+
+How it looks and feels. None of this can change gameplay, because the renderer only
+reads game state, which the architecture already requires.
+
+- **A 1:1 vanilla-faithful software renderer first**, so the game looks exactly as it did
+  in 1993.
+- **Then a modern renderer.** The simulation still runs at 35 tics per second while the
+  renderer interpolates between tics, giving smooth high frame rates on any display, plus
+  modern effects such as dynamic lighting.
 - **VR.** A headset handles looking around while the mouse turns and aims. This suits
   Doom, whose original has no vertical aiming, so head movement need not change gameplay.
-- **A permanent offline engine.** Play your own copy of Doom with your own game files,
-  with no internet connection or account ever required.
-- **Later:** the full original game and Doom II, each with the same source-first
-  evidence.
+- **A fully offline engine.** Play your own copy of Doom with your own game files, with
+  no internet connection or account ever required.
+
+### Track 3: Beyond vanilla
+
+A new engine built on the verified core, in separate opt-in modes so that vanilla is
+never affected.
+
+- **ZDoom-style features done cleanly**, without decades-old code underneath.
+- **Simulation features the original never had**, such as fluid simulation (water, blood
+  and nukage that flow) and very large monster crowds.
+- **A scripting layer** for new game logic, and **other platforms** such as mobile.
