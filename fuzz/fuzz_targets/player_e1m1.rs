@@ -281,7 +281,18 @@ fn apply(
                 2 => match decoration(b[2]) {
                     Some(d) => {
                         let result = s.set_momentum(d, push);
-                        if push != [Fixed::ZERO; 2] {
+                        // The shared 64-unit input bound is checked before any role
+                        // (`map_scale::bounded`, the same precedence as an item push),
+                        // so an out-of-bound push to a decoration is that bound's
+                        // `Geometry(InvalidActor)`; an in-bound nonzero push is the
+                        // decoration refusal. Both keep every byte (asserted by the
+                        // caller's transaction check).
+                        if push.iter().any(|v| v.bits().unsigned_abs() > 64 << 16) {
+                            assert_eq!(
+                                result,
+                                Err(SimError::Geometry(GeometryError::InvalidActor))
+                            );
+                        } else if push != [Fixed::ZERO; 2] {
                             assert_eq!(result, unsupported);
                         }
                         result

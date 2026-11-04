@@ -356,6 +356,23 @@ fn set_momentum_is_refused_on_every_decoration() {
                 Err(SimError::PlayerBody(PlayerBodyError::Unsupported))
             );
         }
+        // The shared 64-unit input bound precedes the role check, as for an item:
+        // a push past it is that bound's error, found by the `player_e1m1` fuzz
+        // campaign (a 30,976-unit push); 64 units exactly is still the refusal.
+        assert_eq!(
+            s.set_momentum(id, [Fixed::from_map_units(64), Fixed::ZERO]),
+            Err(SimError::PlayerBody(PlayerBodyError::Unsupported))
+        );
+        for push in [
+            [Fixed::from_map_units(30976), Fixed::from_map_units(112)],
+            [Fixed::ZERO, Fixed::from_map_units(64) + Fixed::from_bits(1)],
+            [Fixed::from_map_units(-32768), Fixed::ZERO],
+        ] {
+            assert_eq!(
+                s.set_momentum(id, push),
+                Err(SimError::Geometry(GeometryError::InvalidActor))
+            );
+        }
         assert_eq!(witness(&s), before);
         s.set_momentum(id, [Fixed::ZERO; 2]).unwrap();
         assert_eq!(witness(&s), before);
