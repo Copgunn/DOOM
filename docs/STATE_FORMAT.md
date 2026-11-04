@@ -1,4 +1,4 @@
-# Canonical diagnostic state format: DSIM versions 1–26
+# Canonical diagnostic state format: DSIM versions 1–36
 
 This is a diagnostic/replay comparison format for explicit simulation profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
@@ -30,7 +30,8 @@ capture and encoding retain every historical byte and interpretation, including
 v20/v21. No format version or field changes accompany this API split. See the
 [stepping contract](COMPATIBILITY.md#stepping-and-diagnostics).
 
-Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d, `12` for M3d3e, `13` for M3d3f, `14` for M3d3g, `15` for M3d3h, `16` for M3d3i, `17` for M3d3j, `18` for M3f1, `19` for M3f2, `20` for M3f3, `21` for the original-ID profile),
+Header: ASCII `DSIM`, u32 schema version (`1` for M2, `2` for M3a, `3` for M3b, `4` for M3c, `5` for M3d1, `6` for M3d2, `7` for M3d2b, `8` for M3d3a, `9` for M3d3b, `10` for M3d3c, `11` for M3d3d, `12` for M3d3e, `13` for M3d3f, `14` for M3d3g, `15` for M3d3h, `16` for M3d3i, `17` for M3d3j, `18` for M3f1, `19` for M3f2, `20` for M3f3, `21` for the original-ID profile; `22` to `36` are the policy
+sections below, each naming the policy and context its version selects),
 u64 field count. Each ordered field is
 u32 path-byte length, UTF-8 path bytes, u64 value-byte length, then value bytes.
 Generated schema paths are shorter than u32 capacity. Value/count lengths fit
@@ -1801,3 +1802,118 @@ line's front sector; a free one with no further fields); booleans `use_down` and
 their lines, sectors, handles and small domains; and `S_GIBS` actors (monsters or the
 player, admitted only by this reader) with height and radius 0, `MF_SOLID` clear and
 health at most 0.
+
+## DSIM v36 — original two-sided scrollers and static decorations
+
+`PlayerMonstersE1M1V1` captures are version 36; `Diagnostic::decode_e1m1` is its
+explicit reader. The independent Python projection
+([E1M1 projection](../tools/reference/e1m1_snapshot.py) and
+[its generator](../tools/reference/m3h9_snapshot_goldens.py)) fixed every committed
+capture and the PBE1 event stream from the C rows alone before any Rust writer existed
+([plan](M3H9_REFERENCE_INVESTIGATION.md#9-implementation-plan-one-commit-per-step-pushed-evidence-before-runtime),
+step 3). *Status: draft of step 3; the Rust writer, `decode_e1m1` and the replay that
+matches these bytes byte for byte and frame for frame are steps 4–8, and this section is
+finalised with them.*
+
+Version 36 selects policy 20 (`PlayerMonstersE1M1V1`, wire 20), the unchanged original
+registry schema and context `PLAYER-MONSTERS-E1M1-1-MEDIUM-v1`. Every earlier
+version-specific reader, `decode_movers` included, keeps its historical contract and
+rejects 36; the v36 reader reads 36 only. V20–35 bytes, encoders, fixtures and
+policy/context meanings are unchanged.
+
+V36 is the DSIM35 layout, event vocabulary, item witness, store and fireball bounds with
+**no new field and no new event**
+([decision E8](M3H9_REFERENCE_INVESTIGATION.md#6-new-owner-decisions-e1e8)). Every
+DSIM35 field keeps its path, width, position and meaning, and every event keeps its tag,
+payload and position. A v36 capture is byte for byte the DSIM35 layout of the same state
+except the version word, the `profile` value (20) and the `context.schema` bytes; the
+generator asserts this for every capture of the M3h9 rooms, so a capture of a map
+without decorations differs from a DSIM35 capture in nothing else. What changes is what
+the layout may contain.
+
+**Static decorations** are ordinary actor records. The policy admits the seven E1M1
+decoration types by DoomEd number with the pristine `info.c` values
+([investigation §2.5](M3H9_REFERENCE_INVESTIGATION.md#25-the-seven-e1m1-decoration-types-infoc));
+the u16 `type` and `state` values are the `mobjtype_t` and `statenum_t` indices of
+[info.h](../linuxdoom-1.10/info.h), as for every actor:
+
+| DoomEd | `type` | Spawn `state` | `radius` / `height` (units) | info `flags` |
+| --- | --- | --- | --- | --- |
+| 2028 | `MT_MISC31` (81), floor lamp | `S_COLU` (886) | 16 / 16 | `MF_SOLID` |
+| 48 | `MT_MISC48` (98), tall techno pillar | `S_TECHPILLAR` (916) | 16 / 16 | `MF_SOLID` |
+| 35 | `MT_MISC50` (100), candelabra | `S_CANDELABRA` (912) | 16 / 16 | `MF_SOLID` |
+| 24 | `MT_MISC71` (121), pool of blood and flesh | `S_GIBS` (895) | 20 / 16 | 0 |
+| 15 | `MT_MISC62` (112), dead player | `S_PLAY_DIE7` (164) | 20 / 16 | 0 |
+| 10 | `MT_MISC68` (118), bloody mess | `S_PLAY_XDIE9` (173) | 20 / 16 | 0 |
+| 12 | `MT_MISC69` (119), bloody mess | `S_PLAY_XDIE9` (173) | 20 / 16 | 0 |
+
+A decoration record reads `type` and `state` from the table (the state never changes:
+`tics` −1, no action), `health` 1000, `reaction_time` 8, `radius` and `height` from the
+table (16.16), `flags` equal to the info flags, plus `MF_AMBUSH` (32) when the THING
+record carries `MTF_AMBUSH` (the bit survives into the flags word), `lastlook` from the
+one spawn draw (0..3), `spawnpoint` present with the THING record (x, y, angle, DoomEd
+type, options), `target` absent, `momx`/`momy`/`momz` 0, `z` equal to `floor` (spawned
+`ONFLOORZ`; a mover's clip keeps it on the floor), `threshold`, `movedir` and `movecount`
+0, `player` 255 and `pending_removal` 0: a decoration is never removed, damaged, gibbed,
+pushed, targeted or sight-checked. It holds a slot of the one actor store (320 slots),
+appears once in `thinker.order`, `thinker.shared_order` (kind 0), `spatial.link_order`
+and its sector's `actors`, and runs each tic (the existing tag-5 thinker update) doing
+nothing. At most 32 decorations per map (`MAX_DECORATIONS`; E1M1 has 27 on every skill).
+
+**Order.** `P_SpawnMapThing` spawns one actor per admitted THING record in lump order
+(a record filtered by skill or bit 16 spawns nothing and draws nothing, as before), the
+player body is spawned (by the harness after the lump in the M3h9 rooms, whose lumps hold
+no player start; a lump's own player start spawns it where the lump lists it), then
+`P_SpawnSpecials` creates the sector thinkers: `thinker.order` at load is the spawned
+records in lump order followed by the player body, decorations interleaved with monsters
+and pickups exactly as the lump lists them. A decoration is never removed, so the decoration subsequence of
+`thinker.order` stays the lump order for the whole level.
+
+**`S_GIBS`.** A decoration of type `MT_MISC71` spawns in `S_GIBS` with height 16, radius
+20, health 1000 and flags 0 (or `MF_AMBUSH`), unlike a corpse crunched by a mover
+(`PIT_ChangeSector`: `S_GIBS` with height and radius 0, `MF_SOLID` clear, health at most
+0). The v36 reader keys the `S_GIBS` rule by type: `MT_MISC71` keeps its info values; a
+monster or the player in `S_GIBS` keeps the DSIM35 crunch rule.
+
+**Two-sided scrolling walls (48).** A type-48 special on a two-sided linedef (blocking or
+not) is `line.{i}.special` = 48, exactly as any nonzero map special in DSIM35; it is never
+cleared (no W1/S1 path) and its texture offset (`leveltime × FRACUNIT`, `P_UpdateSpecials`)
+is derived, presentation only and never encoded. Nothing new is encoded for scrollers:
+a thing crossing the line gives the existing tag-26 sub-tag 3 record with special 48
+before and after; a monster's failed move with 48 lines in `spechit` gives sub-tag 4 and,
+per line, sub-tag 2 with result 0; a use trace stopped at the line gives sub-tag 1
+(continues 0) and, for the player, sub-tag 2 with result 1 and the special unchanged;
+hitscans and fireballs cross it with no record of their own. A blocking (`ML_BLOCKING`)
+scroller refuses a move before the special test, so it appears only as the blocking line
+of the movement attempt (tag 10) and never in `spechit`.
+
+**Collisions with decorations** use existing events: a movement attempt (tag 10) names a
+solid decoration as its blocking actor (walkers of any height: no height test); a missile
+exploding on a solid decoration gives the existing explosion record and no damage; a
+hitscan trace record (tag 13) lists the decorations the traverser skipped among its
+thing intercepts; a decoration under a mover gives the tag-26 sub-tag 9 clip record with
+outcome 0 (fits, riding the plane) or 3 (non-shootable left as is, no `nofit`).
+
+**Skill.** The policy is medium, single player, as `actors.options` has encoded since
+v20; the C rows evidence the spawn filter (skill bits, bit 16, ambush) per record and
+nothing new is encoded.
+
+Independent C rows feed the Python [E1M1 projection](../tools/reference/e1m1_snapshot.py),
+which extends the movers projection without editing it. It renames the identity, drops
+the M3h9 observer rows `DT` (`PIT_CheckThing` flag tests), `XT` (aim and shoot traverser
+skips) and `NS` (`numspechit` before each movement result) before every chain, and checks
+each capture: the decoration records against the declared table (enum indices read from
+info.h), their lump order in `thinker.order`, the bound of 32, `line.{i}.special` 48 on
+every two-sided scroller and, in the generator, the byte identity with the DSIM35
+projection of the same rows. Its full bytes and PBE1 ordered events were committed
+before the matching Rust changes. Decoding remains observation, not executable world
+restoration.
+
+The v36 reader applies every DSIM35 check (the relaxed item witness of
+[§4.2](M3H8_REFERENCE_INVESTIGATION.md#42-b3-the-relaxed-item-witness) included) and
+admits in addition: actor records whose `type` is one of the seven decoration types, in
+the spawn state of that type, with `tics` −1, `health` 1000, the `radius` and `height` of
+the table, `flags` equal to the info flags with or without `MF_AMBUSH`, no target and no
+momentum, at most 32 per capture; `line.{i}.special` 48 on a two-sided line (a map no
+earlier policy loads); and the type-keyed `S_GIBS` rule above. Every other actor type
+(barrels among them) is rejected as before.
