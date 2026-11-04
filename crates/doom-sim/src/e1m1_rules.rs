@@ -35,7 +35,7 @@ pub(crate) const MF_SPAWNCEILING: u32 = 256;
 /// Every spawn state has `tics` −1 and no action, every spawn health is 1000 and
 /// none is `MF_SHOOTABLE`, `MF_SPECIAL`, `MF_COUNTKILL`, `MF_COUNTITEM`,
 /// `MF_NOBLOCKMAP`, `MF_NOSECTOR`, `MF_SPAWNCEILING` or `MF_NOGRAVITY`
-/// ([`static_decoration`]). Admission is this list under wire 20 alone; a later
+/// (`static_decoration`). Admission is this list under wire 20 alone; a later
 /// policy that admits every static type (decision E2 option ii) is a list change
 /// with its own evidence (hanging corpses are `MF_SPAWNCEILING|MF_NOGRAVITY`, a
 /// new height path).
