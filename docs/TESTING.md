@@ -1339,18 +1339,19 @@ projection of those rows (never of Rust output): it checks
 full-byte `m3h9_state_*.bin` fixtures and `m3h9_snapshot_contract.json`.
 `check_player_e1m1.py` runs the full Rust replay (the library tests in
 `e1m1_replay`) in debug and release and asserts that both pass and print the same
-summary: every medium-skill scenario that the policy loads through its last op, every
-C row the replay reads (heights, line specials, use latch, exit and player state,
-crossings, uses, use intercepts, blocked moves, the thinker list), every PBE1 event
-frame, and at every capture the independent digest, size and field count, the 15
-fixtures byte for byte and the `Diagnostic::decode_e1m1` round trip (with
-`decode_movers` rejecting the bytes). The comparison bodies are the M3h8 replay's. The
-two C-only census rows at easy and hard skill are not replayed, and
-`monster_hitscan_through_pillar` is refused at load: its Zombieman's closed box touches
-the alcove walls, which the diagonal spawn rule refuses and `P_SpawnMapThing` never
-checks; a second test asserts that refusal. The example `player_e1m1` runs in the
+summary: all 18 medium-skill scenarios through their last op, every C row the replay
+reads (heights, line specials, use latch, exit and player state, crossings, uses, use
+intercepts, blocked moves, the thinker list), every PBE1 event frame, and at every
+capture the independent digest, size and field count, the 15 fixtures byte for byte
+and the `Diagnostic::decode_e1m1` round trip (with `decode_movers` rejecting the
+bytes). The comparison bodies are the M3h8 replay's. The two C-only census rows at
+easy and hard skill are not replayed. A second, Rust-only test rebuilds the
+`monster_hitscan_through_pillar` alcove in memory with its walls on the Zombieman's
+closed box and asserts that the diagonal spawn rule still refuses it with the state
+unchanged (`P_SpawnMapThing` checks no position; the committed alcove is wide enough).
+The example `player_e1m1` runs in the
 synthetic M3h9 rooms, not the real E1M1. Through the public API alone it replays the
-loadable scenarios whose declared inputs are public (all but those with the controlled
+scenarios whose declared inputs are public (all but those with the controlled
 200 health), comparing every op's sector heights and work with the C rows, every
 capture digest with the independent index and the final runtime line specials, and
 asserts the C rows' headline counts; `--example-only` runs it alone (the CI step on

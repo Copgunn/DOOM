@@ -1788,7 +1788,7 @@
     "r_main.c:R_PointToAngle": 24,
     "r_main.c:R_PointToAngle2": 24
   },
-  "expanded_trace_sha256": "f6e5e235e987110cacc0ab43a71dd6713cb7831f2819ecfe7e7fbb4c154e6ca4",
+  "expanded_trace_sha256": "c0faa5cf0023741fe713453788ebda160bb89317f0374ba393343f88923ea67c",
   "flags": [
     "-std=gnu89",
     "-O0",
@@ -2765,7 +2765,7 @@
     "tools/reference/m3h8_cases.py": "f5f09616b87f1746428a5a6f49ff339bf2ad2b9cd716075f1939c2f2d074d221",
     "tools/reference/m3h8_geometry.py": "14a65dff94d0cf4b5c1f2def7522e3665816da4570548d4ff8eafc965343b242",
     "tools/reference/m3h8_reference.py": "f2643823be45ea290bd713247eba1c4b780f16330f5e92acf76d563cc48436ec",
-    "tools/reference/m3h9_cases.py": "75ec1005b1a278e6d627d97edb522385aa7658f24e167bd2fb0158efe56ed0a9",
+    "tools/reference/m3h9_cases.py": "df6e08d72295419eff748c0c3aec4e9fbe455915e92b3200f751ffc5937b2cbe",
     "tools/reference/m3h9_geometry.py": "5c0703054b4c235d78a4bc4297be8f132b8ad3f46052c4fc056760df82e37f30",
     "tools/reference/m3h9_reference.py": "952070fd23540a2a58b88f201cac12e3ca9ac2ee57fb0f9c3b31edada91e14c9"
   },
@@ -2831,7 +2831,7 @@
     "new_genuine_bodies": 0,
     "nodir_resets": 10,
     "noway_stops": 0,
-    "packed_trace_bytes": 386809,
+    "packed_trace_bytes": 386812,
     "pass_throughs": {
       "decoration:15:decoration:15": 32,
       "missile:decoration:24": 5,
@@ -2915,13 +2915,13 @@
     "m3h9_geometry_2.bin": "1ba73b13ee05dbea0e619897e1f383d7725b1e26655923e8ec687df0ac04f75f",
     "m3h9_geometry_3.bin": "dfc17ca5602fe7d2d5278a9c0a9d0a591d8c923ed050ee49ff0ec29a67877607",
     "m3h9_geometry_4.bin": "a2da7d0d3a1c48a3937a2a892f5656bb0ecb2ca6feb9b8846287bf5fa98132df",
-    "m3h9_geometry_5.bin": "463d05e635c900ff14eecfdc49b807f18d21b125b15472b57aabb83d3277da6a",
-    "m3h9_geometry_6.bin": "bb08438cd6594f4d6cd711f9a8892a9e009361dd222223603e3e8f069f9a65fe",
-    "m3h9_geometry_7.bin": "1b0d81815fcbdbaf88e0833d270892e545a2bc3eded48f3fed7bc2b96b1242da",
-    "m3h9_geometry_8.bin": "2ff9635b4292b02f60154ec8b10930b83c44e4a1f092050779249027367d8ec4",
-    "m3h9_geometry_9.bin": "eb75c1978ca4719ffec94de03f7ae2f224e25b60d71db2c029b589d5ffe90deb",
+    "m3h9_geometry_5.bin": "cfe9cd0ed3251f3df643066622f67f1d0d51b4dced95d2c0a5960d8d564fb60f",
+    "m3h9_geometry_6.bin": "805c570d1452f49f2d0e333d982d777283085210727026eb7b628a457e26c8c5",
+    "m3h9_geometry_7.bin": "a62f54fdec2f306618e93af5866a1b00e7b86223cf9ec610a71814dfeb9ad800",
+    "m3h9_geometry_8.bin": "adc45db36332483a288ce7442b4b3543451ed8c0e570eb86c90253b064fdffda",
+    "m3h9_geometry_9.bin": "76c29f5973a6be4ed4c361860b66bd9dbc7d92043b018b2386d714bdd6d660c7",
     "m3h9_maps.rs": "589a2eb628c91182f46974329d5fa39ad35c48cc7e9aa76f29951c7d258e8729",
-    "m3h9_trace.dref": "e77afb680282fb3fe42f4834e807d494c3513ceb31e84c7c74193e0367fc747b"
+    "m3h9_trace.dref": "c02b037d5de7839a6df397d4f90351748f8e8010bfdebffd3dadca38d79518ca"
   },
   "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
   "row_formats": {
@@ -2959,7 +2959,7 @@
     "XT": "XT,case,op,code,shooter,thing,flags: PTR_AimTraverse (code 0) or PTR_ShootTraverse (code 1) skipped a non-shootable thing intercept (\"corpse or something\") and the trace continues"
   },
   "sanitizer_comparison": {
-    "raw_trace_sha256": "ad61652ab11d185e0c01cb6b57af8111a6d4ce0de3f495752380880ee93dc619",
+    "raw_trace_sha256": "b18cdaacbddd848735d15eb3bd3782f2b10eb8990c8205c7f7b4561dbec877bc",
     "rule": "--overflow-check rebuilds without -fwrapv under -fsanitize=signed-integer-overflow,integer-divide-by-zero,float-cast-overflow and --address-check under -fsanitize=address,undefined (both -fno-sanitize-recover=all); each run asserts its raw trace equals the strict trace byte for byte, so raw_trace_sha256 is the digest of all three"
   },
   "schema": "DOOM-PLAYER-E1M1-v1",

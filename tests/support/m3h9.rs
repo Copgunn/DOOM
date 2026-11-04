@@ -12,11 +12,6 @@ use doom_types::{DoomRng, Fixed};
 use std::{collections::BTreeMap, sync::OnceLock};
 include!("../reference/m3h9_maps.rs");
 
-/// The scenarios the E1M1 policy refuses at load: the Zombieman of
-/// `monster_hitscan_through_pillar` touches the alcove walls with its closed box
-/// (the diagonal spawn rule), which `P_SpawnMapThing` never checks.
-pub const REFUSED_AT_LOAD: [&str; 1] = ["monster_hitscan_through_pillar"];
-
 #[derive(Clone, Debug)]
 pub struct Case {
     pub which: usize,
@@ -111,16 +106,9 @@ pub fn all_cases() -> Vec<Case> {
         })
         .collect()
 }
-/// The 18 medium-skill cases (the policy's skill).
+/// The 18 medium-skill cases (the policy's skill); the E1M1 policy loads every one.
 pub fn cases() -> Vec<Case> {
     all_cases().into_iter().filter(|c| c.skill == 2).collect()
-}
-/// The 17 medium-skill cases the E1M1 policy loads.
-pub fn loadable_cases() -> Vec<Case> {
-    cases()
-        .into_iter()
-        .filter(|c| !REFUSED_AT_LOAD.contains(&c.label.as_str()))
-        .collect()
 }
 pub fn case(label: &str) -> Case {
     all_cases().into_iter().find(|c| c.label == label).unwrap()

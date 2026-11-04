@@ -10,14 +10,13 @@
 //! the M3h8 replay's ([`crate::movers_replay`]); expected values come only from the
 //! C rows and the independent goldens, never from Rust output.
 //!
-//! One scenario, `monster_hitscan_through_pillar`, is refused at load
-//! ([`REFUSED_AT_LOAD`]): its Zombieman stands in a 48 × 40 alcove whose walls its
-//! closed 40 × 40 box touches, which the diagonal policies' spawn rule (center
-//! inside `Ω` and the closed box meeting no wall, M3h5 note §4.1 item 4) refuses
-//! with `MonsterError::Arithmetic`, while `P_SpawnMapThing` checks no position.
-//! The refusal is a checked load error, not a divergence inside a tic; it is
-//! asserted below so that admitting the room (an owner decision) turns the test
-//! red until the scenario joins the replay.
+//! Every medium scenario loads. `monster_hitscan_through_pillar` places its
+//! Zombieman (radius 20) at (−536, −64) in a 48 × 48 alcove whose walls are four
+//! units clear of its box; an earlier 48 × 40 alcove, whose walls the closed box
+//! touched, was refused by the diagonal policies' spawn rule (center inside `Ω` and
+//! the closed box meeting no wall, M3h5 note §4.1 item 4) while `P_SpawnMapThing`
+//! checks no position, so the evidence was moved and the rule kept. The Rust-only
+//! test below rebuilds that touching-box room in memory and asserts the refusal.
 use crate::movers_replay::full::{
     Capture, Frames, Spec, Totals, parse_captures, parse_frames, replay_all_in,
 };
@@ -30,8 +29,6 @@ pub(crate) fn rows() -> &'static Rows {
     static DATA: OnceLock<Rows> = OnceLock::new();
     DATA.get_or_init(|| parse_rows(include_bytes!("../../../tests/reference/m3h9_trace.dref")))
 }
-/// The scenarios the E1M1 policy refuses at load (see the module documentation).
-pub(crate) const REFUSED_AT_LOAD: [&str; 1] = ["monster_hitscan_through_pillar"];
 /// The 18 scenarios run at medium skill (`skill` 2). The two C-only census rows at
 /// easy and hard are excluded, as the snapshot contract lists
 /// (`c_only_scenarios_excluded`).
@@ -47,12 +44,9 @@ pub(crate) fn medium_cases() -> Vec<Case> {
         .filter(|c| skills[c.which])
         .collect()
 }
-/// The 17 replayed scenarios: [`medium_cases`] minus [`REFUSED_AT_LOAD`].
+/// The 18 replayed scenarios: every one of [`medium_cases`].
 pub(crate) fn cases() -> Vec<Case> {
     medium_cases()
-        .into_iter()
-        .filter(|c| !REFUSED_AT_LOAD.contains(&c.label.as_str()))
-        .collect()
 }
 /// The C driver's setup in the committed M3h9 room of `c` under the E1M1 policy.
 pub(crate) fn setup(c: &Case) -> (Simulation, ActorId, Vec<ActorId>) {
@@ -127,11 +121,11 @@ fn full_replay_matches_the_c_rows_and_the_independent_dsim36_goldens() {
         .keys()
         .filter(|(w, _)| replayed.contains(w))
         .count();
-    assert_eq!(t.cases, 17);
+    assert_eq!(t.cases, 18);
     assert_eq!(t.ops, frames);
     assert_eq!(t.event_frames, frames);
     assert_eq!(t.captures, captures);
-    assert_eq!(t.captures, 268);
+    assert_eq!(t.captures, 290);
     assert_eq!(t.fixtures, FIXTURES.len());
     assert_eq!(t.fixtures, 15);
     assert_eq!(t.thinker_rows, rows_named("TK"));
@@ -141,35 +135,57 @@ fn full_replay_matches_the_c_rows_and_the_independent_dsim36_goldens() {
     assert_eq!(t.partial.uses, rows_named("MU") + rows_named("MI"));
 }
 
-/// `monster_hitscan_through_pillar` (gallery room 7) is refused at load: the
-/// Zombieman at (−536, −64), radius 20, touches the alcove walls y = −84 and
-/// y = −44 with its closed box, so the diagonal spawn rule refuses the batch with
-/// nothing spawned. The C harness spawns it (`P_SpawnMapThing` checks no
-/// position) and its 160 ops and 22 captures stay unreplayed in Rust.
+/// The closed-box spawn rule is unchanged under wire 20: the committed alcove room
+/// (gallery map 7) with its four alcove vertices moved back to y = −84 and y = −44
+/// (the 48 × 40 alcove of the first C evidence, rebuilt in memory) puts the
+/// Zombieman's closed box at (−536, −64), radius 20, on both alcove walls, and the
+/// spawn batch is refused with `MonsterError::Arithmetic`, nothing spawned and the
+/// snapshot unchanged. The committed 48 × 48 room spawns all eleven THINGs.
 #[test]
-fn the_alcove_scenario_is_refused_by_the_closed_box_spawn_rule() {
-    let medium = medium_cases();
-    assert_eq!(medium.len(), 18);
-    let refused: Vec<_> = medium
-        .iter()
-        .filter(|c| REFUSED_AT_LOAD.contains(&c.label.as_str()))
-        .collect();
-    assert_eq!(refused.len(), 1);
-    let c = refused[0];
-    let things = crate::player_e1m1_tests::room(c.map);
-    let mut s = Simulation::original_player_e1m1_map(
-        things.map(),
-        MapContextOptions {
-            initial_rng: doom_types::DoomRng::from_indices(c.seed, 0),
-            respawn_monsters: false,
-        },
+fn a_zombieman_box_touching_the_alcove_walls_is_refused_at_spawn() {
+    let c = medium_cases()
+        .into_iter()
+        .find(|c| c.label == "monster_hitscan_through_pillar")
+        .unwrap();
+    let options = || MapContextOptions {
+        initial_rng: doom_types::DoomRng::from_indices(c.seed, 0),
+        respawn_monsters: false,
+    };
+    let committed = crate::player_e1m1_tests::room(c.map);
+    let mut s = Simulation::original_player_e1m1_map(committed.map(), options()).unwrap();
+    assert_eq!(s.spawn_map_things().unwrap().spawned.len(), 11);
+    let mut touching = committed.clone();
+    let mut moved = 0;
+    let count = i16::try_from(
+        touching
+            .lumps
+            .iter()
+            .find(|(n, _)| n == "VERTEXES")
+            .unwrap()
+            .1
+            .len()
+            / 4,
     )
     .unwrap();
+    for index in 0..count {
+        let [x, y] = touching.vertex(index);
+        let to = match (x, y) {
+            (-512 | -560, -88) => -84,
+            (-512 | -560, -40) => -44,
+            _ => continue,
+        };
+        touching.set_vertex(index, [x, to]);
+        moved += 1;
+    }
+    assert_eq!(moved, 4);
+    let mut s = Simulation::original_player_e1m1_map(touching.map(), options()).unwrap();
     let before = s.snapshot();
+    let rng = s.rng();
     assert_eq!(
         s.spawn_map_things().map(|_| ()),
         Err(SimError::Monster(MonsterError::Arithmetic))
     );
     assert_eq!(s.snapshot(), before);
-    assert_eq!(captures().keys().filter(|(w, _)| *w == c.which).count(), 22);
+    assert_eq!(s.rng(), rng);
+    assert_eq!(s.actor_order().count(), 0);
 }

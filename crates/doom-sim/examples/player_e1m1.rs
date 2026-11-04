@@ -126,17 +126,7 @@ fn main() -> ResultHost<()> {
         }
     );
     assert_eq!((checks, skips), (205, 5));
-    // The alcove scenario is refused at load (the closed-box spawn rule) with the
-    // state unchanged.
-    for label in source::REFUSED_AT_LOAD {
-        let c = source::case(label);
-        let mut s =
-            Simulation::original_player_e1m1_map(source::case_map(c.map), source::options(c.seed))?;
-        let before = s.snapshot();
-        assert!(s.spawn_map_things().is_err());
-        assert_eq!(s.snapshot(), before);
-    }
-    // Every loadable scenario whose declared inputs are public: all but the
+    // Every scenario whose declared inputs are public: all but the
     // `script` 30 ones (the controlled 200 health, crate-internal, replayed by the
     // library test `e1m1_replay`; `check_player_e1m1.py`). At every op the sector
     // heights equal the C `MH` row and the op's work its C rows; at every committed
@@ -147,7 +137,7 @@ fn main() -> ResultHost<()> {
     let limits = DiagnosticLimits::default();
     let (mut replayed, mut ops, mut captures, mut digest) = (0, 0, 0, 0xcbf2_9ce4_8422_2325_u64);
     let mut rust_work = Work::default();
-    for c in source::loadable_cases().iter().filter(|c| c.script != 30) {
+    for c in source::cases().iter().filter(|c| c.script != 30) {
         let (mut s, body, things) = source::setup(c)?;
         for op in 0..=c.tics {
             if op != 0 {

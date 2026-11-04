@@ -1083,13 +1083,12 @@ fn spawned_puffs(s: &Simulation) -> Vec<[i32; 2]> {
 /// `monster_hitscan_through_pillar`: a pinned Zombieman's bullets pass the pillar
 /// between it and the player (`PTR_ShootTraverse` skips a non-shootable thing,
 /// p_map.c:1013–1014): every puff is east of the pillar, or the player is hit. The
-/// committed alcove room (7) places the Zombieman in a 40-unit alcove its box
-/// exactly fills, which the boundary rule refuses at spawn (a closed box meeting a
-/// wall, M3h5), so the pin uses the gallery (6) with a lane of lamps added north
-/// and south of the Zombieman, a lamp closing its west end and a second pillar
-/// closing its east end: it can only walk east and west (so `movecount` keeps
-/// being reset and `A_Chase` reaches its missile check), and every shot it takes
-/// at the player passes the pillar.
+/// committed alcove room (7) is replayed against the C rows by `e1m1_replay`; this
+/// Rust-only variant pins a Zombieman in the gallery (6) with a lane of lamps added
+/// north and south of it, a lamp closing its west end and a second pillar closing
+/// its east end: it can only walk east and west (so `movecount` keeps being reset
+/// and `A_Chase` reaches its missile check), and every shot it takes at the player
+/// passes the pillar.
 #[test]
 fn a_monster_hitscan_passes_through_a_pillar() {
     let mut lumps = room(6);

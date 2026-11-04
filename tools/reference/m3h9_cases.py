@@ -23,8 +23,10 @@ and -90 rather than 180 and 270 (M3h8 convention). Rooms (M3h9 note §7):
   the nine-line lane written as a Rust-only fixture, never run in C.
 - **gallery**: a flat hall (x in [-512, 512], y in [-384, 256], floor 0, ceiling 128)
   with a ledge E along the north (y in [256, 384], floor 32), two 64 x 64 pedestals P1
-  at (0, 0) and P2 at (0, -192) (floor 32) and a 48 x 40 alcove in the west wall (x in
-  [-560, -512], y in [-84, -44]) that pins a zombieman. Ten decorations stand in every
+  at (0, 0) and P2 at (0, -192) (floor 32) and a 48 x 48 alcove in the west wall (x in
+  [-560, -512], y in [-88, -40]) that pins a zombieman. The alcove is four units wider
+  on each side than the zombieman's box at (-536, -64), so that the box meets no wall
+  (the closed-box spawn rule the Rust policies share, M3h5 note §4.1 item 4). Ten decorations stand in every
   gallery scenario: lamps at (0, 128) and, just south of the ledge, (-256, 226);
   pillars at (-160, -64) and at the alcove mouth (-480, -64); the candelabra on P1; a pool of blood on P2; and a row of flags-0 gore at
   y = -300 (24, 15, 10, 12). Monsters and the player are placed per scenario.
@@ -84,10 +86,10 @@ def dense(count=8):
 
 
 def gallery():
-    """Sector order: 0 G (the hall, with the two pedestal holes and a 48 x 40 alcove
-    notched into its west wall at y in [-84, -44]), 1 E (north ledge, floor 32), 2 P1
+    """Sector order: 0 G (the hall, with the two pedestal holes and a 48 x 48 alcove
+    notched into its west wall at y in [-88, -40]), 1 E (north ledge, floor 32), 2 P1
     (pedestal at the origin, floor 32), 3 P2 (pedestal at (0, -192), floor 32)."""
-    outer = [(-512, 256), (512, 256), (512, -384), (-512, -384), (-512, -84), (-560, -84), (-560, -44), (-512, -44)]
+    outer = [(-512, 256), (512, 256), (512, -384), (-512, -384), (-512, -88), (-560, -88), (-560, -40), (-512, -40)]
     hole1 = [(-32, -32), (32, -32), (32, 32), (-32, 32)]
     hole2 = [(-32, -224), (32, -224), (32, -160), (-32, -160)]
     ledge = [(-512, 384), (512, 384), (512, 256), (-512, 256)]

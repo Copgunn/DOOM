@@ -696,17 +696,20 @@ provisionally adopted (§6). Phase 2 progress (M3h9a):
   cover each check.
 - Step 8 is done: `e1m1_replay` (the M3h8 comparison bodies over the M3h9 rows and
   goldens), `tests/support/m3h9.rs`, the example `player_e1m1` (synthetic rooms),
-  `check_player_e1m1.py`, `measure_e1m1.py` and their CI steps. 17 of the 18 medium
-  scenarios match the C rows, every event frame and all 268 of their captures (the 15
+  `check_player_e1m1.py`, `measure_e1m1.py` and their CI steps. All 18 medium
+  scenarios match the C rows, every event frame and all 290 of their captures (the 15
   fixtures byte for byte) with no Rust behaviour change.
-- **Open finding (owner decision).** `monster_hitscan_through_pillar` does not load in
-  Rust. Its Zombieman at (−536, −64), radius 20, has a closed box that touches the
-  alcove walls y = −84 and y = −44. The diagonal policies' spawn rule (closed box
-  meeting no wall, M3h5 note §4.1 item 4) refuses that with `MonsterError::Arithmetic`,
-  but `P_SpawnMapThing` checks no position, so C spawns it. As a local experiment (not
-  committed), shrinking only the boundary box test by one raw unit (open-box semantics)
-  made the scenario match C over all 160 ops and 22 captures. The options are to admit
-  the open box under wire 20 (with a proof that the travel invariant holds) or to move
-  the THING in the C evidence and regenerate it. Until then, a test asserts the refusal.
+- **Finding (resolved by moving the evidence).** `monster_hitscan_through_pillar` first
+  placed its Zombieman at (−536, −64), radius 20, in a 48 × 40 alcove whose walls
+  y = −84 and y = −44 its closed box touched. The diagonal policies' spawn rule (closed
+  box meeting no wall, M3h5 note §4.1 item 4) refuses that with
+  `MonsterError::Arithmetic`, while `P_SpawnMapThing` checks no position. Decision:
+  the spawn rule is unchanged; the alcove is now 48 × 48 (y in [−88, −40]), four units
+  clear of the box, and the C evidence was regenerated with the scenario's assertions
+  unchanged (one shot whose aim and shoot traces skip the pillar, 0 player hits). A
+  Rust-only test rebuilds the touching alcove in memory and asserts the refusal with
+  the state unchanged. Whether the real E1M1 THINGs satisfy the rule is the M3h9c
+  spawn-rule count (E7). No other scenario room has a THING whose box touches a
+  one-sided wall.
 
-Next: step 9 (tests), after the owner decides on the open finding.
+Next: step 9 (tests).
