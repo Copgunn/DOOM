@@ -18,4 +18,6 @@ adds session conventions that AGENTS.md does not state.
   campaign and sanitizer campaign, and disclose disabled leak detection.
 - Push the branch to origin after every completed plan step (no PR until gates pass).
 - Check free disk space before large builds, baseline worktrees or fuzzing; keep at least
-  20 GB free; clean scratch first or stop and report.
+  20 GB free; clean scratch first or stop and report. Under WSL, `df ~` reports the
+  virtual disk's ceiling, not real space: the real limit is the Windows drive that
+  hosts it. Check `df -h /mnt/c` and keep at least 20 GB free there at all times.
