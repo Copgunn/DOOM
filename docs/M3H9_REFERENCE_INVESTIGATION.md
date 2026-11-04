@@ -702,6 +702,10 @@ and behaviour identical, confirmed by the unchanged goldens and matched digests.
   dependence, `P_RadiusAttack`'s wrapping shift as a declared source quirk), pickups
   ≤ 64, policy-specific actor slots (384), the hitscan intercept argument with things
   per cell, `N` re-evaluation and the `P_ChangeSector` measurement; optional E4 (ii).
+  Also a docs-only CI fast path (owner request, 2026-11-04): a detect-changes job, with
+  the heavy steps skipped inside each required job on documentation-only changes so
+  every required check still reports; `paths-ignore` is not used because skipped
+  required checks would never report.
 - **M3h9c**: the harness of §10, the spawn-rule count, the E1M1-scale synthetic room,
   the matched run; the `walk_to_exit` script authoring is iterative and local.
 - **Step 1 audit result**: the collision (`movement.rs` `check_things`, `Solidity` from

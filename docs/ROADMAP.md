@@ -326,7 +326,12 @@ splits the rest of the E1M1 run into two parts after M3h9a:
   hitscan intercept argument that counts the things in the cells along a trace, and a
   re-evaluated linked-thing bound and `P_ChangeSector` measurement; and, per decision
   E9, every THING angle admitted as a declared wrap quirk (45 of E1M1's 91 skill-3
-  THINGs have octants 4..7, which the inherited rule refuses).
+  THINGs have octants 4..7, which the inherited rule refuses). Maintenance in the same
+  milestone (owner request, 2026-11-04): a docs-only CI fast path. A first
+  detect-changes job classifies the push; on a documentation-only change the heavy
+  steps are skipped inside each job, so all four required checks still run and report
+  success, and the documentation check still runs. Changing nothing else in the
+  workflow, its check names or the `macos-26-intel` runner.
 - **M3h9c: the real-E1M1 harness.** A local-only harness that builds a headless
   linuxdoom-1.10 from genuine sources, loads the owner's E1M1 and compares it tic for
   tic with the Rust run, committing only pass/fail, tic counts and digests, never IWAD
