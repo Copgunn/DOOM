@@ -101,8 +101,10 @@ change gameplay, because the renderer only reads the game state.
 - **A fully offline engine.** Your own game files, with no internet connection or account
   ever required.
 
-**Track 3: Beyond vanilla.** A new engine built on the verified core. It would live in
-separate opt-in modes, so vanilla is never affected.
+**Track 3: Beyond vanilla.** A new engine built on the verified core. This is the payoff
+of all the careful checking: an exact Doom core you can build wild things on without
+losing what makes Doom feel like Doom. It would live in separate opt-in modes, so vanilla
+is never affected.
 
 - **Modern source-port features, done cleanly.** Features like those of ZDoom, a popular
   advanced source port, without decades-old code underneath.

@@ -457,7 +457,8 @@ reads game state, which the architecture already requires.
 ### Track 3: Beyond vanilla
 
 A new engine built on the verified core, in separate opt-in modes so that vanilla is
-never affected.
+never affected. This is the reason for the painstaking verification: an exact Doom core
+that wild new things can be built on without losing what makes Doom feel like Doom.
 
 - **ZDoom-style features done cleanly**, without decades-old code underneath.
 - **Simulation features the original never had**, such as fluid simulation (water, blood
