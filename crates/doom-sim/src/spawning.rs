@@ -90,7 +90,7 @@ impl Simulation {
             return Err(MapSpawnError::DirectSpawn.into());
         }
         // A static decoration exists only as a THING spawned by `P_SpawnMapThing`
-        // (p_mobj.c:775–795: spawnpoint, angle, `MF_AMBUSH`); no action or body of
+        // (p_mobj.c:775–796: spawnpoint, angle, `MF_AMBUSH`); no action or body of
         // the source spawns one, and the decoration witness requires the THING
         // record. Under the E1M1 policy a direct spawn is refused like a pickup's.
         if e1m1_rules::is_decoration(self.player_policy(), ty) {
@@ -442,7 +442,7 @@ impl Simulation {
                     && crate::original_registry::is_policy_monster(self.player_policy(), ty);
                 // One of the seven static decoration types under the E1M1 policy
                 // (M3h9 note §2.5): spawned like any THING by `P_SpawnMapThing`
-                // (p_mobj.c:760–795), counted against `MAX_DECORATIONS` alone.
+                // (p_mobj.c:708–797), counted against `MAX_DECORATIONS` alone.
                 let decoration = e1m1_rules::is_decoration(self.player_policy(), ty);
                 if !pickup
                     && !former

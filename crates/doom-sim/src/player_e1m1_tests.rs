@@ -716,7 +716,7 @@ fn e1m1_admits_exactly_the_movers_roles_plus_the_seven_decorations() {
     );
 }
 
-/// `P_SpawnMapThing` (p_mobj.c:760–795) for the ten decorations of the gallery: each
+/// `P_SpawnMapThing` (p_mobj.c:708–797) for the ten decorations of the gallery: each
 /// is spawned by `P_SpawnMobj` with its info flags, radius, height, health 1000,
 /// spawn state and `tics` −1 (no tics draw), one `lastlook` draw (`P_Random() % 4`),
 /// at `ONFLOORZ`, with its angle and spawnpoint, in lump order; no counter moves.
@@ -803,7 +803,7 @@ fn gallery_decorations_spawn_as_p_spawnmapthing_does() {
 /// The census room (forty records of every admitted kind with each skill-bit
 /// combination, bit 16 and ambush) under medium: exactly the records whose
 /// options have bit 2 and not bit 16 spawn (p_mobj.c:740–750), in lump order; a
-/// decoration record's `MTF_AMBUSH` reaches its flags (792–793).
+/// decoration record's `MTF_AMBUSH` reaches its flags (795–796).
 #[test]
 fn the_census_room_spawns_the_medium_records_in_lump_order_with_ambush() {
     let mut s = Simulation::original_player_e1m1_map(room(12).map(), options()).unwrap();
@@ -1595,7 +1595,7 @@ fn decode_e1m1_rejects_each_mutated_decoration_check() {
     assert_eq!(field(lamp, "death_requested"), vec![0]);
     // The THING record and the actor agree on the angle and `MTF_AMBUSH`: rewriting
     // the lamp's record (in `map.things` and its spawnpoint) together with its angle
-    // and flags is admitted when they agree as p_mobj.c:791–793 makes them, and
+    // and flags is admitted when they agree as p_mobj.c:794–796 makes them, and
     // rejected otherwise. Negative angles truncate toward zero (C division):
     // -50 / 45 is -1, so ANG45 * -1 wraps to 0xE0000000, not 0xC0000000.
     let spawn = field(lamp, "spawnpoint");

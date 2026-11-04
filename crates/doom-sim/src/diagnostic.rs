@@ -1315,8 +1315,8 @@ impl<'a> Diagnostic<'a> {
     /// spawn reaction time and zero `threshold`, `movedir` and `movecount`, no
     /// player, not pending removal, and a spawnpoint whose DoomEd number is the
     /// type's and whose position is the actor's, with the angle
-    /// `ANG45 * (angle/45)` of that record (p_mobj.c:791), `MF_AMBUSH` set exactly
-    /// when its options carry `MTF_AMBUSH` (792–793), `lastlook` below
+    /// `ANG45 * (angle/45)` of that record (p_mobj.c:794), `MF_AMBUSH` set exactly
+    /// when its options carry `MTF_AMBUSH` (795–796), `lastlook` below
     /// `MAXPLAYERS` (the one `P_Random () % MAXPLAYERS` draw, 506) and no pending
     /// death request; at most `MAX_DECORATIONS` of them,
     /// and their spawnpoints, read in `thinker.order`, a subsequence of the THINGS

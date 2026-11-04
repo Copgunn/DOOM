@@ -2,11 +2,14 @@
 
 Output of `tools/iwad_counts.py --things-markdown` over the owner's two classic IWADs (68
 map slots), read locally and read-only on 2026-11-03 for the
-[M3h9 investigation](../M3H9_REFERENCE_INVESTIGATION.md) §3. The IWADs never enter the
+[M3h9 investigation](../M3H9_REFERENCE_INVESTIGATION.md) §3 and again on 2026-11-04,
+after the independent review added the angle-octant counts (every earlier line of the
+output was byte-identical). The IWADs never enter the
 repository, CI or logs; the script is local-only, is never run by CI, and is a no-op when
 the IWAD directory is absent. This page holds counts and type facts only: a map is named
 by its slot, a THING by its DoomEd number and `mobjinfo` entry (game-rule facts from
-`info.c`), and no coordinate, angle or lump datum of any object appears. It complements
+`info.c`), and no coordinate, angle or lump datum of any object appears; angles are
+summarized only as counts of records per octant. It complements
 the geometry table of [M3h6](M3H6_IWAD_COUNTS.md) and the movers table of
 [M3h8](M3H8_IWAD_COUNTS.md), both unchanged.
 
@@ -26,6 +29,10 @@ a type without a `mobjinfo` DoomEd number reaches `I_Error`. "Spawned" counts ev
 `MF_COUNTKILL` or `MT_SKULL` (the `-nomonsters` test); "Pickups" is `MF_SPECIAL`;
 decorations are every other type, split on `MF_SOLID` (corpses included); barrels are
 DoomEd 2035. Columns written `e/m/h` are the easy, medium and hard single-player values.
+The octant of a spawned record is `angle/45` with C's truncation toward zero, the
+factor of `ANG45` in `mobj->angle = ANG45 * (mthing->angle/45)` (p_mobj.c:794); the
+inherited `OriginalDemon` spawn admission (kept by `PlayerMonstersE1M1V1`) refuses an octant
+outside −4..3 (`MapSpawnError::Angle`).
 
 ## Census tables
 
@@ -141,3 +148,88 @@ E1M1: one row per doomednum
 | 2049 | MT_MISC23 | box of shells | pickup | SPECIAL | 20 | 16 | 6 | 6 | 6 | 6 | 1 | 3 | 3/3/3 |
 | 3001 | MT_TROOP | imp | monster | COUNTKILL SHOOTABLE SOLID | 20 | 56 | 4 | 2 | 2 | 4 | 4 | 0 | 2/2/4 |
 | 3004 | MT_POSSESSED | zombieman | monster | COUNTKILL SHOOTABLE SOLID | 20 | 56 | 9 | 2 | 4 | 9 | 9 | 0 | 2/4/9 |
+
+E1M1: spawned THINGs by angle octant (`angle/45` truncated toward zero, p_mobj.c:794); the inherited OriginalDemon admission refuses octants outside -4..3
+
+| Octant | Easy | Medium | Hard |
+| --- | --- | --- | --- |
+| 0 | 12 | 12 | 20 |
+| 2 | 32 | 33 | 40 |
+| 3 | 1 | 1 | 3 |
+| 4 | 26 | 27 | 32 |
+| 5 | 0 | 0 | 1 |
+| 6 | 18 | 18 | 19 |
+| outside -4..3 | 44 | 45 | 52 |
+
+Spawned THINGs whose angle octant is outside -4..3, per slot
+
+| Slot | Spawned e/m/h | Outside -4..3 e/m/h |
+| --- | --- | --- |
+| E1M1 | 89/91/115 | 44/45/52 |
+| E1M2 | 179/199/238 | 40/54/82 |
+| E1M3 | 256/309/364 | 202/253/300 |
+| E1M4 | 169/200/228 | 78/92/111 |
+| E1M5 | 151/215/256 | 53/98/124 |
+| E1M6 | 286/369/439 | 107/153/196 |
+| E1M7 | 211/266/329 | 92/114/145 |
+| E1M8 | 93/98/112 | 17/23/32 |
+| E1M9 | 152/191/222 | 138/159/182 |
+| E2M1 | 77/99/114 | 21/28/33 |
+| E2M2 | 229/260/285 | 27/47/62 |
+| E2M3 | 154/196/207 | 12/29/37 |
+| E2M4 | 199/225/231 | 38/58/63 |
+| E2M5 | 249/277/312 | 52/69/88 |
+| E2M6 | 223/265/304 | 41/59/86 |
+| E2M7 | 187/201/218 | 36/43/53 |
+| E2M8 | 35/39/55 | 19/21/29 |
+| E2M9 | 40/40/40 | 8/8/8 |
+| E3M1 | 64/70/80 | 9/16/25 |
+| E3M2 | 161/176/186 | 113/129/140 |
+| E3M3 | 139/164/182 | 15/30/43 |
+| E3M4 | 230/297/357 | 56/102/140 |
+| E3M5 | 213/244/264 | 22/42/57 |
+| E3M6 | 241/280/311 | 133/155/176 |
+| E3M7 | 114/125/126 | 11/20/28 |
+| E3M8 | 30/31/31 | 1/2/2 |
+| E3M9 | 169/175/183 | 68/75/84 |
+| E4M1 | 97/118/123 | 41/45/49 |
+| E4M2 | 158/192/213 | 89/106/119 |
+| E4M3 | 227/258/293 | 98/111/122 |
+| E4M4 | 86/101/115 | 16/23/30 |
+| E4M5 | 209/238/251 | 114/136/138 |
+| E4M6 | 232/266/273 | 190/204/209 |
+| E4M7 | 202/208/239 | 37/37/41 |
+| E4M8 | 209/245/278 | 82/99/107 |
+| E4M9 | 187/206/228 | 122/131/143 |
+| MAP01 | 33/43/51 | 20/25/29 |
+| MAP02 | 107/130/150 | 33/41/52 |
+| MAP03 | 74/101/123 | 24/37/45 |
+| MAP04 | 90/102/119 | 27/32/42 |
+| MAP05 | 117/157/188 | 55/68/80 |
+| MAP06 | 163/200/221 | 107/119/133 |
+| MAP07 | 63/69/76 | 2/5/8 |
+| MAP08 | 152/196/228 | 82/101/120 |
+| MAP09 | 161/273/370 | 66/153/202 |
+| MAP10 | 301/360/483 | 106/139/195 |
+| MAP11 | 161/193/220 | 63/86/105 |
+| MAP12 | 101/140/178 | 69/84/104 |
+| MAP13 | 223/263/295 | 108/133/153 |
+| MAP14 | 110/133/140 | 46/58/61 |
+| MAP15 | 273/341/360 | 117/144/155 |
+| MAP16 | 124/192/235 | 34/59/78 |
+| MAP17 | 319/368/405 | 129/150/172 |
+| MAP18 | 352/407/458 | 271/296/323 |
+| MAP19 | 300/385/420 | 194/252/275 |
+| MAP20 | 181/214/233 | 62/79/94 |
+| MAP21 | 112/161/201 | 35/69/93 |
+| MAP22 | 71/93/108 | 40/49/57 |
+| MAP23 | 339/383/415 | 130/158/177 |
+| MAP24 | 232/291/350 | 199/238/272 |
+| MAP25 | 171/236/251 | 18/45/46 |
+| MAP26 | 195/242/271 | 30/55/72 |
+| MAP27 | 338/415/467 | 208/246/278 |
+| MAP28 | 148/214/254 | 56/85/107 |
+| MAP29 | 196/239/264 | 89/104/114 |
+| MAP30 | 74/70/71 | 14/10/11 |
+| MAP31 | 189/226/301 | 80/100/140 |
+| MAP32 | 74/84/102 | 1/6/15 |

@@ -62,13 +62,13 @@ Control flow, in order:
    no `MF_SPECIAL` skip in deathmatch.
 7. `if (nomonsters && (i == MT_SKULL || (mobjinfo[i].flags & MF_COUNTKILL))) return;`
    (767–772).
-8. Spawn (775–783): `z = ONCEILINGZ` if `MF_SPAWNCEILING`, else `ONFLOORZ`
+8. Spawn (775–785): `z = ONCEILINGZ` if `MF_SPAWNCEILING`, else `ONFLOORZ`
    (p_local.h:95–96); `mobj = P_SpawnMobj(x, y, z, i); mobj->spawnpoint = *mthing;`.
-9. `if (mobj->tics > 0) mobj->tics = 1 + (P_Random () % mobj->tics);` (785–786).
-10. `totalkills++` for `MF_COUNTKILL`, `totalitems++` for `MF_COUNTITEM` (787–790),
+9. `if (mobj->tics > 0) mobj->tics = 1 + (P_Random () % mobj->tics);` (787–788).
+10. `totalkills++` for `MF_COUNTKILL`, `totalitems++` for `MF_COUNTITEM` (789–792),
     reading the live flags, which still equal the info flags here.
 11. `mobj->angle = ANG45 * (mthing->angle/45)`; `MTF_AMBUSH` sets `MF_AMBUSH`
-    (792–794), on every type, decorations included (E1M1 flags 4 floor lamps ambush;
+    (794–796), on every type, decorations included (E1M1 flags 4 floor lamps ambush;
     the bit is read only by `A_Look`, so it has no effect on a decoration but is part
     of its flags word).
 
@@ -267,7 +267,7 @@ see decision E3.
 
 ### 2.9 Counters
 
-`totalkills`/`totalitems` (p_mobj.c:787–790) and `totalsecret` (p_spec.c, sector 9) are
+`totalkills`/`totalitems` (p_mobj.c:789–792) and `totalsecret` (p_spec.c, sector 9) are
 level totals; the Rust `statistics` already records the first two per spawn
 (`spawning.rs`). `killcount` goes to `source->player` for `MF_COUNTKILL` targets, or to
 `players[0]` in single player when the source has no player (p_inter.c:683–697); a barrel
@@ -434,7 +434,7 @@ Symbols as in M3h8 §8, with `D` = decorations ≤ 32, `K` = monsters ≤ 8, `P`
 | Sector-thinker slots | `L + 2M` | unchanged | DSIM `sector_thinkers.slot_count` |
 | `P_ChangeSector` per tic | `Σ_movers 4·(B(s) + N·Q)` | `N` 33 → 65; E1M1 `Q` 3,462 | re-evaluated, not re-proved (M3h8 §8); measured in step 13 |
 | `spechit` | ≤ 8 per position check, every radius < 64 | radii 16, 20 | rule 6 unchanged |
-| Hitscan intercepts | lines of the cells along the trace + things in those cells ≤ 128 | E1M1 window 28 lines; crude bound 28 + 65 = 93 | the M3h6 intercept witness stays unreachable under the crude bound; no new load rule |
+| Hitscan intercepts | lines of every cell along the trace + things in those cells, against 128 | E1M1 estimate only: 28 + 65 = 93 (28 is E1M1's 2 × 2 window, the slide bound, not a hitscan bound: a 2,048-unit hitscan visits every BLOCKMAP cell along its line) | not a bound: the M3h6 intercept witness (refuse the tic, state preserved) stays reachable on admitted maps, unchanged; no new load rule |
 | Slide intercepts | window lines ≤ 128 | 28 | unchanged (lines only) |
 | Sight queries | 64 per operation, monsters only | unchanged | decorations never queried |
 | Scrollers | ≤ 64 | 8 | rule 5 unchanged |
@@ -444,10 +444,12 @@ Symbols as in M3h8 §8, with `D` = decorations ≤ 32, `K` = monsters ≤ 8, `P`
 
 No fixed-capacity store grows in M3h9a; no arithmetic certificate has a roster term.
 For M3h9b (pickups 64, §8): live actors `1 + 8 + 64 + 208 + 8 + 32 = 321 > 320`, so the
-slot count must become policy-specific (384 recommended) and `N` = 113 breaks the crude
-intercept bound (28 + 113 = 141 > 128), so the hitscan intercept argument must count
-things in the cells along a trace at load (a per-map rule) or accept the witness as
-reachable; both are M3h9b design items, recorded here so the owner sees them early.
+slot count must become policy-specific (384 recommended) and `N` = 113 raises the E1M1
+estimate to 28 + 113 = 141 > 128. The hitscan witness is reachable on admitted maps in
+any case (corrected in the independent review: the window counts the cells of a slide,
+not of a 2,048-unit hitscan), so M3h9b either counts lines and things along every trace
+at load (a per-map rule) or keeps the witness as a reachable refusal; both are M3h9b
+design items, recorded here so the owner sees them early.
 
 ## 6. New owner decisions (E1–E8)
 
@@ -519,10 +521,42 @@ offset is `t × FRACUNIT` (§2.4), derivable and presentation-only; a reader
 reader rejects 36; stripping nothing recovers DSIM35 for a capture without decorations
 (the same bytes except the version). A later part that adds barrels adds their events.
 
+**E9. THING angles outside −4..3 (recorded by the independent review, recommended for
+M3h9b).** Every player policy inherits the `OriginalDemon` spawn admission
+`!(-4..=3).contains(angle / 45)` → `MapSpawnError::Angle` (`spawning.rs`, M3f3 note
+"Original signed spawn-angle boundary"). On medium 45 of E1M1's 91 spawned THINGs have
+octant 4..7 (44/45/52 on easy/medium/hard;
+[census](validation/M3H9_IWAD_COUNTS.md)), so this rule alone keeps E1M1 from loading
+under wire 20 (a Rust test asserts it applies there). Options: (i) admit every `short`
+angle under the next policy, computing `((angle / 45) as u32).wrapping_mul(0x2000_0000)`
+as `spawn_placed_thing` already does; (ii) keep the rule. **Recommendation: (i), with
+a declared source quirk.** Justification: C computes `ANG45 * (mthing->angle/45)`
+(p_mobj.c:794) with `ANG45` the *signed* `int` literal `0x20000000` (tables.h:68) and
+`mthing->angle` a `short` (doomdata.h:207) promoted to `int`, so the quotient truncates
+toward zero (gcc on the original targets; C89 leaves negative division
+implementation-defined, C99 fixes truncation) and Rust's `i32` division is the same.
+The product is `int × int`: for quotients −4..3 it is representable (−4 gives
+`INT_MIN`) and its conversion to `angle_t` (`unsigned`) is the modulo-2³² value; for
+quotients 4..728 and −5..−728 it overflows `int`, which ISO C leaves undefined. That
+is why M3f3 bounded the quotient. Under the wrapping arithmetic of the original build
+(two's complement, no trap: the "legacy GNU wrap contract" of the older profiles and
+the `-fwrapv` strict build of every C harness) the product's low 32 bits are
+`q × 0x20000000 mod 2³²`, which converted to `unsigned` equals Rust's
+`(q as u32).wrapping_mul(0x2000_0000)` for every `q` of a `short` (a `u32`
+multiplication modulo 2³² of the same two's-complement bits). So (i) is faithful to
+the original executable's behavior, not to portable C, and must be recorded as a
+declared wrap quirk like `P_RadiusAttack`'s shift (§2.8). Its C evidence needs the
+`-fwrapv` strict build; the `--overflow-check` build would report the overflow, so
+either that statement gets a declared adapter there or angles 180..359 are evidenced
+in the strict and ASan builds only. Older policies keep the rule unchanged. (a) yes;
+(b) yes given the wrap quirk; (c) no; (d) yes.
+
 **Unattended rule.** Every decision above has a clear recommendation consistent with
 section 4, admits no silent divergence, adds no new kind of fidelity gap and needs no
 unbounded store; the split chooses the first part. **E1–E8 are provisionally adopted,
-pending owner confirmation (2026-11-03), and Phase 2 proceeds with M3h9a.**
+pending owner confirmation (2026-11-03), and Phase 2 proceeds with M3h9a.** E9 was added by the
+independent review (2026-11-04) as a recommendation for M3h9b only; nothing in M3h9a
+changes the angle rule.
 
 ## 7. Evidence plan (C first, genuine bodies)
 
@@ -770,8 +804,8 @@ in [ROADMAP](ROADMAP.md). Step by step:
   Source-level outcomes: vertical momentum and direct spawns of decorations are
   refused under wire 20 (and vertical momentum on items there); damage with no
   inflictor on a decoration is the source's own early return (p_inter.c:787–788);
-  `decode_e1m1` and the live witness also check the angle (p_mobj.c:791), `MF_AMBUSH`
-  against `MTF_AMBUSH` (792–793), `lastlook < 4` (506) and the death request, and
+  `decode_e1m1` and the live witness also check the angle (p_mobj.c:794), `MF_AMBUSH`
+  against `MTF_AMBUSH` (795–796), `lastlook < 4` (506) and the death request, and
   `decode_e1m1` rejects every skill but medium, while every reader before DSIM36
   leaves the skill unchecked.
 

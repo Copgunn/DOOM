@@ -68,7 +68,7 @@ pub const MAX_DECORATIONS: usize = 32;
 /// | Sector-thinker slots | `L + 2M` | unchanged | `sector_thinkers.slot_count` |
 /// | `P_ChangeSector` per tic | `Σ_movers 4·(B(s) + N·Q)` | `N` 33 → 65 | re-evaluated, not re-proved |
 /// | `spechit` | ≤ 8 per position check, every radius < 64 | radii 16, 20 | rule 6 unchanged |
-/// | Hitscan intercepts | window lines + things in those cells ≤ 128 | 28 + 65 = 93 (E1M1 window 28) | the intercept witness stays unreachable under this crude bound |
+/// | Hitscan intercepts | lines of every cell along the trace + things in those cells, against 128 | E1M1 estimate 28 + 65 = 93 (28 is E1M1's 2 × 2 slide window; a 2,048-unit hitscan visits every cell along its line) | not a bound: the intercept witness (refuse the tic) stays reachable on admitted maps, unchanged |
 /// | Slide intercepts | window lines ≤ 128 | 28 | unchanged (lines only) |
 /// | Sight queries | 64 per operation, monsters only | unchanged | decorations are never queried |
 /// | Scrollers | ≤ 64 | 8 | rule 5 unchanged |
@@ -138,7 +138,7 @@ pub(crate) fn validate_definition(ty: ActorTypeId) -> Result<(), ActorError> {
         None => compute(),
     }
 }
-/// `mobj->angle = ANG45 * (mthing->angle/45)` (p_mobj.c:791): the THING's `short`
+/// `mobj->angle = ANG45 * (mthing->angle/45)` (p_mobj.c:794): the THING's `short`
 /// angle divided by 45 with C's truncation toward zero, times `ANG45`
 /// (0x20000000, tables.h) in unsigned 32-bit arithmetic (the `int` quotient is
 /// converted to `unsigned` and the product wraps).
@@ -147,20 +147,20 @@ pub(crate) fn spawn_angle(thing_angle: i16) -> u32 {
 }
 /// `MF_AMBUSH` is set on a spawned thing exactly when its THING record carries
 /// `MTF_AMBUSH` (8): `if (mthing->options & MTF_AMBUSH) mobj->flags |= MF_AMBUSH;`
-/// (p_mobj.c:792–793), and nothing else sets or clears it on a decoration.
+/// (p_mobj.c:795–796), and nothing else sets or clears it on a decoration.
 pub(crate) fn spawn_ambush(options: u16) -> bool {
     options & 8 != 0
 }
-/// The live witness of a spawned decoration (`P_SpawnMapThing` p_mobj.c:760–795
-/// through `P_SpawnMobj` 797–870, then nothing per tic, §2.5): its listed type and
+/// The live witness of a spawned decoration (`P_SpawnMapThing` p_mobj.c:708–797
+/// through `P_SpawnMobj` 480–534, then nothing per tic, §2.5): its listed type and
 /// definition, the spawn state with the state's sprite and frame and `tics` −1,
 /// spawn health 1000, the type's reaction time, no target, threshold, `movedir`
 /// or `movecount`, `lastlook` from one `P_Random() % 4`, the type's radius and
 /// height, no momentum, `z == floorz` (spawned at `ONFLOORZ`, kept there by
 /// `P_ThingHeightClip`, §2.7), the type's flags with `MF_AMBUSH` added exactly when
-/// the THING record carries `MTF_AMBUSH` (p_mobj.c:792–793), no pending death,
+/// the THING record carries `MTF_AMBUSH` (p_mobj.c:795–796), no pending death,
 /// solidity from `MF_SOLID`, and the THING record it was spawned from at its own
-/// position (the spawnpoint, 795) with the angle `ANG45 * (angle/45)` (791).
+/// position (the spawnpoint, 785) with the angle `ANG45 * (angle/45)` (794).
 pub(crate) fn validate_decoration(
     room: Option<crate::player_map_scale::RoomBounds>,
     a: Actor,

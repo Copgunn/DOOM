@@ -1991,12 +1991,19 @@ higher floor) keeps the movers policy's refusal of the next tic
 
 **E1M1 does not load yet.** On skill 3 ("Hurt Me Plenty", the only skill the player
 policies accept) E1M1 spawns 6 exploding barrels, which stay `UnsupportedType`, and 52
-pickups against the bound of 16. The note's
+pickups against the bound of 16, and 45 of its 91 spawned THINGs have an angle octant
+(`angle/45`) of 4..7, which the inherited spawn-angle rule refuses
+(`MapSpawnError::Angle`, the "Selected THING angles" row of the
+[expanded-map Demon profile](#expanded-map-demon-profile); the
+[census](validation/M3H9_IWAD_COUNTS.md)). The note's
 [§8](M3H9_REFERENCE_INVESTIGATION.md#8-size-estimate-and-split) splits the remaining work:
-M3h9b adds barrels and the pickup scale, and M3h9c adds a local-only harness that runs
-the real E1M1 against the original C without committing any IWAD content
+M3h9b adds barrels and the pickup scale, and decision
+[E9](M3H9_REFERENCE_INVESTIGATION.md#6-new-owner-decisions-e1e8) recommends admitting
+every THING angle there as a declared wrap quirk; M3h9c adds a local-only harness that
+runs the real E1M1 against the original C without committing any IWAD content
 ([§12](M3H9_REFERENCE_INVESTIGATION.md#12-follow-ups-risks-status)). Whether every E1M1
-THING satisfies the spawn rule has not been measured yet. See
+THING satisfies the spawn-box rule (its closed box clear of the walls) has not been
+measured yet. See
 [source investigation](M3H9_REFERENCE_INVESTIGATION.md),
 [DSIM36](STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations)
 and [observed evidence](validation/M3H9.md).

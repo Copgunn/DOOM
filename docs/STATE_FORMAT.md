@@ -1922,11 +1922,11 @@ admits in addition actor records whose `type` is one of the seven decoration typ
 must hold the spawn state of its type with that state's `sprite` and `frame`, `tics` −1,
 `health` 1000, the `radius` and `height` of the table, `flags` equal to the info flags
 plus `MF_AMBUSH` exactly when the spawnpoint's options carry `MTF_AMBUSH` (8;
-`P_SpawnMapThing`, p_mobj.c:792–793), no target and no momentum, `z` equal to `floor`, the
+`P_SpawnMapThing`, p_mobj.c:795–796), no target and no momentum, `z` equal to `floor`, the
 type's `reaction_time` (8), `threshold`, `movedir` and `movecount` 0, `player` 255, not
 pending removal, `death_requested` 0, `lastlook` below 4 (`P_Random () % MAXPLAYERS`,
 p_mobj.c:506), and a present spawnpoint naming the type's DoomEd number at the actor's
-position, with `angle` equal to `ANG45 * (spawnpoint angle / 45)` (p_mobj.c:791: the
+position, with `angle` equal to `ANG45 * (spawnpoint angle / 45)` (p_mobj.c:794: the
 `short` divided by 45 truncating toward zero, times 0x20000000 in wrapping unsigned
 32-bit arithmetic); any other value is `DiagnosticError::Identity`. The reader also
 requires the skill byte of `actors.options` to be 2 (`sk_medium`), the only skill of

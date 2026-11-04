@@ -30,7 +30,9 @@ four weapons, pickups, armor and bonuses against the Demon, former humans and th
 on synthetic maps up to classic-map size with static heights, diagonal walls, sky,
 static sector specials, E1M1's doors, lifts, floors, switches and exit, two-sided
 scrolling walls and E1M1's seven static decoration types. The real E1M1 does not load
-yet: no policy admits its exploding barrels or more than 16 pickups (it has 52). Admitted
+yet: no policy admits its exploding barrels, more than 16 pickups (it has 52) or THING
+angles from 180 to 359 degrees (45 of its 91 things), and whether every THING clears
+the walls at its spawn spot has not been measured. Admitted
 behavior is checked against original-C source traces and independently encoded
 snapshots; [compatibility](docs/COMPATIBILITY.md) states the exact limits.
 

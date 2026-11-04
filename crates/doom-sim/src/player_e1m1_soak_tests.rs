@@ -500,13 +500,15 @@ fn soaks_keep_decorations_static_step_equality_and_the_dsim36_round_trip() {
     );
 }
 
-/// The §5.3 budgets as formulas over the policy's bounds (`D` = decorations, `K` =
-/// monsters, `P` = pickups, `R` = drops, `k` = Imps): `N = 1 + K + P + R + D` = 65;
-/// the live actors `1 + K + P + 26k + (K−k) + 8(K−k) + R + D` peak at 273 (`k` = 8)
-/// and, with the `39 − 3k` spawns of one pass, stay within the 320 actor slots for
-/// every `k` (288 at `k` = 8, 176 at `k` = 0; the crude 273 + 39 = 312 too); the crude hitscan intercept bound
-/// (E1M1 window 28 lines + `N` things) is 93 ≤ `MAX_INTERCEPTS`; `MAX_BONUS` is
-/// `6 × P` = 96; scrollers ≤ `MAXLINEANIMS` 64.
+/// The §5.3 budgets that relate code constants (`D` = decorations, `K` =
+/// monsters, `P` = pickups, `R` = drops, `k` = Imps), asserted over the constants
+/// themselves so that a change to any of them that breaks a budget fails here:
+/// `E1M1_LINKED_THINGS` is `1 + K + P + R + D`; for every `k` the live actors
+/// `1 + K + P + 26k + (K−k) + 8(K−k) + R + D` plus the `39 − 3k` spawns of one pass
+/// fit `MAP_SCALE_ACTOR_SLOTS`, and so does the crude bound (the most live actors
+/// plus the most spawns); `MAX_BONUS` is `6 × P`; the scroller bound is the source
+/// `MAXLINEANIMS` (64). The hitscan intercept row of §5.3 is an E1M1 estimate, not
+/// a bound (the witness stays reachable), so nothing is asserted for it.
 #[test]
 fn the_section_5_3_budgets_hold_as_formulas() {
     let (d, k_max, p, r) = (
@@ -515,28 +517,17 @@ fn the_section_5_3_budgets_hold_as_formulas() {
         crate::world_pickups::MAX_WORLD_PICKUPS,
         crate::player_monsters::MAX_PLAYER_MONSTERS,
     );
-    assert_eq!((d, k_max, p, r), (32, 8, 16, 8));
-    let n = 1 + k_max + p + r + d;
-    assert_eq!(n, E1M1_LINKED_THINGS);
-    assert_eq!(n, 65);
+    assert_eq!(E1M1_LINKED_THINGS, 1 + k_max + p + r + d);
     let slots = crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS as usize;
-    assert_eq!(slots, 320);
     let live = |k: usize| 1 + k_max + p + 26 * k + (k_max - k) + 8 * (k_max - k) + r + d;
     let spawns = |k: usize| 39 - 3 * k;
-    assert_eq!((live(8), spawns(8), live(0), spawns(0)), (273, 15, 137, 39));
-    assert_eq!((live(8) + spawns(8), live(0) + spawns(0)), (288, 176));
-    // The crude bound (the most live actors plus the most spawns) fits too.
-    assert!(live(8) + spawns(0) <= slots);
-    assert_eq!(live(8) + spawns(0), 312);
     for k in 0..=k_max {
-        assert!(live(k) <= 273, "{k}");
         assert!(live(k) + spawns(k) <= slots, "{k}");
     }
-    assert_eq!((0..=k_max).map(live).max(), Some(273));
-    assert!(28 + n <= crate::player_map_scale::MAX_INTERCEPTS);
-    assert_eq!(28 + n, 93);
+    let most_live = (0..=k_max).map(live).max().unwrap();
+    let most_spawns = (0..=k_max).map(spawns).max().unwrap();
+    assert!(most_live + most_spawns <= slots);
     assert_eq!(crate::world_pickups::MAX_BONUS, 6 * p as i32);
-    assert_eq!(crate::world_pickups::MAX_BONUS, 96);
     assert_eq!(crate::sector_thinkers::MAX_LINE_ANIMS, 64);
 }
 /// The API refuses what the source never does to a decoration, as it refuses a push,
@@ -758,5 +749,55 @@ fn a_decoration_refuses_a_death_request_and_ignores_damage() {
         );
         let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
         Diagnostic::decode_e1m1(&bytes, limits).unwrap();
+    }
+}
+
+/// The inherited OriginalDemon angle admission applies under wire 20
+/// (`spawning.rs`: `!(-4..=3).contains(angle / 45)` → `MapSpawnError::Angle`, Rust's
+/// `/` truncating toward zero as C's does): a decoration, a monster or a pickup whose
+/// THING angle has octant 4..7 or below −4 refuses the whole batch with the state
+/// unchanged, and octants −4..3 spawn with `ANG45 * (angle/45)` (p_mobj.c:794). On
+/// medium 45 of E1M1's 91 spawned THINGs have octant 4..7
+/// (`docs/validation/M3H9_IWAD_COUNTS.md`), so this rule alone keeps E1M1 from
+/// loading (decision E9 recommends admitting every `short` angle under the next
+/// policy).
+#[test]
+fn the_inherited_angle_rule_refuses_octants_outside_minus_4_to_3_under_wire_20() {
+    let with = |angle: i16, kind: i16| {
+        let mut lumps = room(5);
+        lumps.clear_things();
+        lumps.add_thing([-300, 180, angle, kind, 7]);
+        lumps
+    };
+    for kind in [2028, 24, 3004, 2011] {
+        for angle in [
+            180,
+            225,
+            270,
+            315,
+            359,
+            405,
+            -225,
+            -270,
+            -359,
+            i16::MIN,
+            i16::MAX,
+        ] {
+            spawn_refused(
+                &with(angle, kind),
+                SimError::MapSpawn(MapSpawnError::Angle(angle)),
+            );
+        }
+        for angle in [0, 44, 45, 90, 135, 179, -1, -44, -45, -180, -224] {
+            let mut s = e1m1(&with(angle, kind)).unwrap();
+            let id = s.spawn_map_things().unwrap().spawned[0];
+            let octant = i32::from(angle) / 45;
+            assert!((-4..=3).contains(&octant));
+            assert_eq!(
+                s.actor(id).unwrap().spec.angle,
+                (octant as u32).wrapping_mul(0x2000_0000),
+                "{kind} {angle}"
+            );
+        }
     }
 }

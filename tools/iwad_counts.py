@@ -197,6 +197,10 @@ SKILL_BITS = (("easy", MTF_EASY), ("medium", MTF_NORMAL), ("hard", MTF_HARD))
 # playerstarts out of range.
 DM_START = 11
 MAX_DM_STARTS = 10
+# The kinds P_SpawnMapThing turns into a mobj (the census's `spawned`).
+SPAWNED_KINDS = ("monster", "pickup", "barrel", "corpse", "obstacle", "decoration")
+# The octants `angle/45` the inherited OriginalDemon spawn admission accepts.
+ADMITTED_OCTANTS = range(-4, 4)
 PLAYER_STARTS = (1, 2, 3, 4)
 # Where mobjinfo[] lives: info.c:1106–4669 holds one brace block per mobjtype_t in the
 # enum order of info.h:1162–1303; the fields follow mobjinfo_t (info.h:1305–1331), so
@@ -1051,7 +1055,7 @@ class MapCounts:
                     continue
                 kind = r["kind"]
                 s[kind] += n
-                if kind in ("monster", "pickup", "barrel", "corpse", "obstacle", "decoration"):
+                if kind in SPAWNED_KINDS:
                     s["spawned"] += n
                     flags = r["info"][3]
                     if kind in ("corpse", "obstacle", "decoration"):
@@ -1066,6 +1070,21 @@ class MapCounts:
                     s["unknown"] += n  # reaches I_Error on this skill
             skills[skill] = s
         self.thing_skills = skills
+        # Angle octants of the spawned records: P_SpawnMapThing sets
+        # `mobj->angle = ANG45 * (mthing->angle/45)` (p_mobj.c:794) with C's `int`
+        # division of the `short` angle, truncating toward zero; the inherited
+        # OriginalDemon admission refuses an octant outside -4..3 (MapSpawnError::Angle).
+        octants = {skill: collections.Counter() for skill, _bit in SKILL_BITS}
+        for _x, _y, angle, dtype, options in self.things:
+            doomednum = dtype if dtype < 0x8000 else dtype - 0x10000
+            if rows[doomednum]["kind"] not in SPAWNED_KINDS or options & MTF_NOTSINGLE:
+                continue
+            signed = angle if angle < 0x8000 else angle - 0x10000
+            octant = signed // 45 if signed >= 0 else -(-signed // 45)
+            for skill, bit in SKILL_BITS:
+                if options & bit:
+                    octants[skill][octant] += 1
+        self.thing_octants = octants
         starts = collections.Counter()
         for r in self.thing_rows:
             if r["kind"] == "player start":
@@ -1682,6 +1701,25 @@ def things_detail(c):
         f"{sum(r['total'] for r in c.thing_rows if r['kind'] == 'corpse')}; "
         f"solid doomednums {' '.join(str(d) for d in c.solid_doomednums) or 'none'}"
     )
+    print(
+        "angle octants of the spawned records (mthing->angle/45 truncated toward zero as C does, "
+        "p_mobj.c:794), per skill e/m/h:"
+    )
+    print("  " + things_octant_text(c))
+
+
+def octants_outside(c, skill):
+    """Spawned records of `skill` whose octant the inherited admission refuses."""
+    return sum(n for q, n in c.thing_octants[skill].items() if q not in ADMITTED_OCTANTS)
+
+
+def things_octant_text(c):
+    present = sorted({q for skill, _bit in SKILL_BITS for q in c.thing_octants[skill]})
+    histogram = "; ".join(
+        f"octant {q} {'/'.join(str(c.thing_octants[skill][q]) for skill, _bit in SKILL_BITS)}" for q in present
+    )
+    outside = "/".join(str(octants_outside(c, skill)) for skill, _bit in SKILL_BITS)
+    return f"{histogram or 'none'}; outside -4..3 (refused by the OriginalDemon angle admission) {outside}"
 
 
 THINGS_COLUMNS = (
@@ -1773,6 +1811,30 @@ def things_markdown_report(all_counts, detail_slot="E1M1"):
             triple(r["spawn"]),
         ]
         print("| " + " | ".join(str(x) for x in cells) + " |")
+    print()
+    print(
+        f"{detail_slot}: spawned THINGs by angle octant (`angle/45` truncated toward zero, "
+        "p_mobj.c:794); the inherited OriginalDemon admission refuses octants outside -4..3"
+    )
+    print()
+    print("| Octant | Easy | Medium | Hard |")
+    print("| --- | --- | --- | --- |")
+    present = sorted({q for skill, _bit in SKILL_BITS for q in detail.thing_octants[skill]})
+    for q in present:
+        print(f"| {q} | " + " | ".join(str(detail.thing_octants[skill][q]) for skill, _bit in SKILL_BITS) + " |")
+    print(
+        "| outside -4..3 | "
+        + " | ".join(str(octants_outside(detail, skill)) for skill, _bit in SKILL_BITS)
+        + " |"
+    )
+    print()
+    print("Spawned THINGs whose angle octant is outside -4..3, per slot")
+    print()
+    print("| Slot | Spawned e/m/h | Outside -4..3 e/m/h |")
+    print("| --- | --- | --- |")
+    for c in all_counts:
+        outside = "/".join(str(octants_outside(c, skill)) for skill, _bit in SKILL_BITS)
+        print(f"| {c.slot} | {triple(c.thing_skills, 'spawned')} | {outside} |")
 
 
 def things_summary(all_counts, prefix="SUMMARY "):
