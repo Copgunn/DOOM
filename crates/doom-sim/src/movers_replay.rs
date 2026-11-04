@@ -135,7 +135,16 @@ pub(crate) fn setup(c: &Case) -> (Simulation, ActorId, Vec<ActorId>) {
     setup_map(c, crate::player_movers_tests::room(c.map).map())
 }
 pub(crate) fn setup_map(c: &Case, map: doom_map::Map) -> (Simulation, ActorId, Vec<ActorId>) {
-    let mut s = Simulation::original_player_movers_map(
+    setup_map_with(c, map, Simulation::original_player_movers_map)
+}
+/// [`setup_map`] under the policy `construct` builds (the E1M1 superset tests run
+/// the same scenarios under wire 20).
+pub(crate) fn setup_map_with(
+    c: &Case,
+    map: doom_map::Map,
+    construct: fn(doom_map::Map, MapContextOptions) -> Result<Simulation, OriginalRegistryError>,
+) -> (Simulation, ActorId, Vec<ActorId>) {
+    let mut s = construct(
         map,
         MapContextOptions {
             initial_rng: DoomRng::from_indices(c.seed, 0),
