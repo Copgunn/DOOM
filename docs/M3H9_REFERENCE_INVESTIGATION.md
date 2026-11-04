@@ -690,5 +690,23 @@ provisionally adopted (§6). Phase 2 progress (M3h9a):
   `MAX_DECORATIONS` 32 and `DecorationLimit`. The workspace tests pass and the M3h8
   goldens and replay are unchanged.
 
-Next: step 7, the Rust DSIM36 writer and reader matched byte for byte against the
-step 3 goldens; then step 8, the replay, example and CI check.
+- Step 7 is done: the Rust DSIM36 writer needed no change. `decode_e1m1` also checks
+  each decoration's reaction time, `threshold`, `movedir`, `movecount`, `player` and
+  pending removal, and that the decorations follow lump order. Reader negative tests
+  cover each check.
+- Step 8 is done: `e1m1_replay` (the M3h8 comparison bodies over the M3h9 rows and
+  goldens), `tests/support/m3h9.rs`, the example `player_e1m1` (synthetic rooms),
+  `check_player_e1m1.py`, `measure_e1m1.py` and their CI steps. 17 of the 18 medium
+  scenarios match the C rows, every event frame and all 268 of their captures (the 15
+  fixtures byte for byte) with no Rust behaviour change.
+- **Open finding (owner decision).** `monster_hitscan_through_pillar` does not load in
+  Rust. Its Zombieman at (−536, −64), radius 20, has a closed box that touches the
+  alcove walls y = −84 and y = −44. The diagonal policies' spawn rule (closed box
+  meeting no wall, M3h5 note §4.1 item 4) refuses that with `MonsterError::Arithmetic`,
+  but `P_SpawnMapThing` checks no position, so C spawns it. As a local experiment (not
+  committed), shrinking only the boundary box test by one raw unit (open-box semantics)
+  made the scenario match C over all 160 ops and 22 captures. The options are to admit
+  the open box under wire 20 (with a proof that the travel invariant holds) or to move
+  the THING in the C evidence and regenerate it. Until then, a test asserts the refusal.
+
+Next: step 9 (tests), after the owner decides on the open finding.

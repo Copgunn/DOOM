@@ -1510,6 +1510,8 @@ mod diagonal_evidence;
 #[cfg(test)]
 mod diagonal_room;
 #[cfg(test)]
+mod e1m1_replay;
+#[cfg(test)]
 #[path = "../../../tests/support/m3h4.rs"]
 mod heights_evidence;
 #[cfg(test)]

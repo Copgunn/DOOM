@@ -1311,3 +1311,53 @@ the campaigns are a local step. Run measurements alone, with no fuzzing, builds 
 at the same time. Observations belong to [the engineering record](validation/M3H8.md).
 Leak detection is disabled in the documented ASan environment (`detect_leaks=0`), not
 verified.
+
+## Original two-sided scrollers, static decorations and the spawn filter (C evidence)
+
+The M3h9a C evidence of the
+[M3h9 investigation](M3H9_REFERENCE_INVESTIGATION.md#7-evidence-plan-c-first-genuine-bodies)
+has its own source contract and leaves every historical expectation untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h9_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3h9_snapshot_goldens.py --check
+python3 tools/reference/check_player_e1m1.py
+cargo test -p doom-sim e1m1
+cargo run -p doom-sim --example player_e1m1 --locked
+python3 tools/measure_e1m1.py --check
+```
+
+The generator reuses every compiled M3h8 body over the `scrollhall`, `scrollblock`,
+`dense8`, `gallery`, `liftroom` and `census` rooms and checks
+`tests/reference/m3h9_trace.dref`, `m3h9_cases.csv`, the `m3h9_geometry_*.bin` lumps,
+`m3h9_maps.rs`, the Rust-only nine-scroller lane `m3h9_dense9.bin` and
+`m3h9_contract.json`; the sanitizer options and `--cases` work as for M3h8.
+`m3h9_snapshot_goldens.py` is the independent
+[DSIM36](STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations)
+projection of those rows (never of Rust output): it checks
+`tests/reference/m3h9_snapshots.csv`, the ordered events `m3h9_events.dref`, the 15
+full-byte `m3h9_state_*.bin` fixtures and `m3h9_snapshot_contract.json`.
+`check_player_e1m1.py` runs the full Rust replay (the library tests in
+`e1m1_replay`) in debug and release and asserts that both pass and print the same
+summary: every medium-skill scenario that the policy loads through its last op, every
+C row the replay reads (heights, line specials, use latch, exit and player state,
+crossings, uses, use intercepts, blocked moves, the thinker list), every PBE1 event
+frame, and at every capture the independent digest, size and field count, the 15
+fixtures byte for byte and the `Diagnostic::decode_e1m1` round trip (with
+`decode_movers` rejecting the bytes). The comparison bodies are the M3h8 replay's. The
+two C-only census rows at easy and hard skill are not replayed, and
+`monster_hitscan_through_pillar` is refused at load: its Zombieman's closed box touches
+the alcove walls, which the diagonal spawn rule refuses and `P_SpawnMapThing` never
+checks; a second test asserts that refusal. The example `player_e1m1` runs in the
+synthetic M3h9 rooms, not the real E1M1. Through the public API alone it replays the
+loadable scenarios whose declared inputs are public (all but those with the controlled
+200 health), comparing every op's sector heights and work with the C rows, every
+capture digest with the independent index and the final runtime line specials, and
+asserts the C rows' headline counts; `--example-only` runs it alone (the CI step on
+the hosts that skip the replay). `--measure
+gallery_patrol|liftroom_ride|dense8_cross|scrollhall_fight advance|step|capture` times
+a 1,200-tic patrol in the gallery or the scroller hall, or the committed
+`decorations_ride_lift` or `dense_spechit_8` timeline, and `measure_e1m1.py` drives it
+with the native `wait4` launcher (`--check` is the CI smoke and asserts the same final
+digest in every mode). Run measurements alone, with no fuzzing, builds or tests at the
+same time.
