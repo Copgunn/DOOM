@@ -171,6 +171,17 @@ pub fn mover_bounds(map: &Map) -> Result<MoverBounds, SimError> {
         movers: admission.movers,
     })
 }
+/// [`mover_bounds`] under the E1M1 policy's load rules: the same rules with a
+/// two-sided scroller (line special 48, blocking or not) admitted, as
+/// `Simulation::original_player_e1m1_map` runs them. Admission only.
+pub fn e1m1_mover_bounds(map: &Map) -> Result<MoverBounds, SimError> {
+    let admission = validate_e1m1(map)?;
+    Ok(MoverBounds {
+        reach: admission.reach,
+        delta: admission.delta,
+        movers: admission.movers,
+    })
+}
 
 /// `getNextSector` (p_spec.c:251–261) of `line` seen from `sector`: `None` without
 /// `ML_TWOSIDED`; the back sector when `sector` is the front (itself for a line with

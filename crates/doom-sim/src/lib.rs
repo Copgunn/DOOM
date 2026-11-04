@@ -33,7 +33,7 @@ mod player_armor;
 mod player_bonuses;
 mod player_map_scale;
 mod player_monsters;
-pub use mover_rules::{MoverBounds, mover_bounds, special_window_lines};
+pub use mover_rules::{MoverBounds, e1m1_mover_bounds, mover_bounds, special_window_lines};
 pub use player_armor::{
     ArmorEvent, ArmorType, PLAYER_DEMON_ARMOR_CONTEXT_SCHEMA, PlayerArmorState,
 };

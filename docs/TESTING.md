@@ -1325,6 +1325,11 @@ python3 tools/reference/check_player_e1m1.py
 cargo test -p doom-sim e1m1
 cargo run -p doom-sim --example player_e1m1 --locked
 python3 tools/measure_e1m1.py --check
+python3 tools/seed_player_e1m1_fuzz.py /tmp/doom-e1m1-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_e1m1 /tmp/doom-e1m1-corpus --sanitizer address -- -runs=0 -max_len=290 -timeout=15 -rss_limit_mb=1024
+# Bounded campaigns, each on a fresh copy of the seeds:
+cargo +nightly fuzz run player_e1m1 /tmp/doom-e1m1-corpus --sanitizer none -- -seed=601 -max_total_time=1800 -max_len=290 -timeout=15 -rss_limit_mb=1024
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_e1m1 /tmp/doom-e1m1-corpus --sanitizer address -- -seed=602 -max_total_time=1800 -max_len=290 -timeout=15 -rss_limit_mb=1024
 ```
 
 The generator reuses every compiled M3h8 body over the `scrollhall`, `scrollblock`,
@@ -1362,3 +1367,28 @@ a 1,200-tic patrol in the gallery or the scroller hall, or the committed
 with the native `wait4` launcher (`--check` is the CI smoke and asserts the same final
 digest in every mode). Run measurements alone, with no fuzzing, builds or tests at the
 same time.
+
+The `player_e1m1_soak_tests` are Rust-only: every info.c type with a DoomEd number
+that wire 20 does not admit (the barrel, the hanging corpses, the candle and the
+other unlisted decorations among them) refused as `UnsupportedType` after the ten
+gallery decorations; a bit-16 or skill-filtered record (a decoration or a barrel)
+filtered before its type is checked, with no draw; the fixed medium single-player
+options; 64 scrollers admitted and 65 refused; every crusher line on a two-sided or
+one-sided line; each decoration type refused under wires 18 and 19; a spawn batch
+with eight monsters, sixteen pickups and 32 decorations spawning all 56 while a 33rd
+decoration, a barrel or hanging corpse after the decorations and a ninth monster each
+leave the capture bytes, the RNG, the actor order, the events and the statistics
+unchanged; every nonzero push, target and removal of a decoration refused; 2,400-tic
+soaks with four seeds on the five gallery and the two liftroom rooms asserting V′,
+every decoration's type, state, tics, health, flags, radius, height and `z == floorz`
+after every tic, `step == advance` every 10th tic and the DSIM36 `decode_e1m1` round
+trip every 100th; and the M3h9 note §5.3 budget formulas. The fuzz target
+`player_e1m1` starts from the 18 replayed scenario starts and applies bounded
+operations (commands with `BT_USE` and `BT_ATTACK`, damage, retargeting, removal,
+pause, pushes, each also aimed at a decoration, whose target, removal and nonzero push
+must be refused) under the movers target's properties (`step == advance`, a refused
+operation keeping the snapshot, V′, Ω, the item witness, the mover bounds, progress)
+plus the decorations' static fields, `z == floorz` and count, the DSIM36 round trip
+with `decode_movers` rejecting the bytes, and mutated decodes of two pinned DSIM36
+fixtures; `seed_player_e1m1_fuzz.py` writes its byte seeds without reading Rust
+output.

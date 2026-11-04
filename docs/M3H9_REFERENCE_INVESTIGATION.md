@@ -734,4 +734,14 @@ provisionally adopted (§6). Phase 2 progress (M3h9a):
   with the state unchanged, as a push, a state entry and damage already did; older
   policies are unaffected (the gate is `has_e1m1`).
 
-Next: step 10 (fuzz).
+- Step 10 (target and seeder) is done: `fuzz/fuzz_targets/player_e1m1.rs` (the 18
+  replayed starts, bounded operations each also aimed at a decoration, the movers
+  properties plus the decorations' static fields, `z == floorz` and count, and the
+  DSIM36 round trip) and `tools/seed_player_e1m1_fuzz.py` (4,032 byte seeds). The
+  target needed the E1M1 load rules' bounds, so `e1m1_mover_bounds` is public beside
+  `mover_bounds`. Observed (target compiled and seed replay only, not a campaign): all
+  47 targets build with `--sanitizer address`; the ASan seed replay
+  (`detect_leaks=0`, so no LeakSanitizer coverage) ran 4,033 inputs in 882 s, cov
+  10,942, ft 32,947, no finding. The coverage-guided and ASan campaigns are pending.
+
+Next: step 11 (docs), with the step 10 campaigns run separately.

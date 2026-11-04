@@ -343,3 +343,10 @@ path = "fuzz_targets/player_movers.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_e1m1"
+path = "fuzz_targets/player_e1m1.rs"
+test = false
+doc = false
+bench = false
