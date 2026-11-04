@@ -147,3 +147,6 @@ original evidence and former guide contents with exact-byte copies and digests.
   [observations](validation/M3H9.md), [IWAD THING counts](validation/M3H9_IWAD_COUNTS.md),
   [support](COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations)
   and [DSIM36](STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations).
+- [M3h9b barrels, pickup scale and full thing angles investigation](M3H9B_REFERENCE_INVESTIGATION.md)
+  (the last E1M1 load blockers; Phase 1 note with the spawn-rule, height-fit and budget
+  census) and [observations](validation/M3H9B.md).

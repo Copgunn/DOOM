@@ -1220,7 +1220,9 @@ boundary, BLOCKMAP and window rules over every map of the configured IWADs and t
 admission time of E1M1's geometry with specials and sky stripped in memory; it never
 prints a name beyond the slot or a byte of the map, and `tools/iwad_counts.py` (local
 only, never run by CI, a no-op without `/mnt/d/DoomIWADs`) prints the same counts from
-Python. The fuzz target runs six rooms (town, gallery, extent, dense, wide, witness) under
+Python; its `--spawn-rule [SLOT]`, `--spawn-rule-markdown`, `--spawn-fit [SLOT]` and
+`--things-budget [SLOT]` modes (M3h9b) print the closed-box and S′ spawn-rule counts, the
+spawn height-fit counts and the per-cell BLOCKMAP budget facts, counts only. The fuzz target runs six rooms (town, gallery, extent, dense, wide, witness) under
 the M3h5 properties plus the intercept witness; a valid command may be refused only by
 the escape or intercept witness. The example asserts every scenario's source fields and
 complete ordered event frames in debug and release; `--measure <workload>
