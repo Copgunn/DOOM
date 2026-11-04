@@ -46,6 +46,15 @@ def main():
                 low,high=damage.to_bytes(2,'little',signed=True)
                 for kind in [0,1,2,3]:
                     seeds.append(bytes([room,rng,4,kind,1,0,2,low,0,1,high])+use+idle+use+run*8)
+            # Vertical momentum (the body, a monster, a decoration: refused, a zero
+            # value on a decoration: accepted, one past the 64-unit bound: that
+            # bound's error, a stale handle) and direct spawns of a decoration type
+            # (always refused). Op 9 reads momz as the little-endian i32 of b3-b5,b8 (16.16); op
+            # 10 the type from b1, the position from b2-b5 and the height from b8.
+            for operation in [bytes([9,0,0,0,1,0,0,1,0]),bytes([9,1,0,0,1,0,0,1,0]),bytes([9,2,0,0,1,0,0,1,0]),bytes([9,2,1,0,0xff,0xff,0,1,0xff]),
+                              bytes([9,2,0,0,0,0,0,1,0]),bytes([9,2,1,0,0,0x40,0,1,0]),bytes([9,2,1,1,0,0x40,0,1,0]),bytes([9,3,0,0,1,0,9,9,0]),
+                              bytes([10,0,0,0,0x38,0xff,0,1,0]),bytes([10,3,0,0,0x38,0xff,0,1,1]),bytes([10,6,0x80,0xfe,0x80,0x00,0,1,0])]:
+                seeds.append(bytes([room,rng])+walk*8+operation+use+walk*12)
             # Retarget (a monster at the player, at a decoration, a decoration at the
             # player: refused), removal (a monster, a decoration: refused, a stale
             # handle), pause, pushes (the body, a monster, a decoration: refused, a

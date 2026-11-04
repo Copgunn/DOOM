@@ -1947,11 +1947,25 @@ unchanged and nothing spawned from a failing batch:
 The setup options are fixed at medium skill, single player, as for every player policy;
 the constructor takes none, so other skills, netgame and Nightmare cannot be selected.
 
-Rust-only API calls that the source never makes on a decoration are refused with
-`PlayerBodyError::Unsupported` and the state unchanged: a nonzero push
-(`set_momentum`), a target (`set_actor_target`), a removal (`mark_remove`) and a state
-entry (`enter_actor_state`, and `enter_original_state` through it). A monster may not be
-given a decoration as its target (`PerceptionError::Roster`).
+Rust-only API calls that the source never makes on a decoration are refused with the
+state unchanged:
+
+| Call on a decoration (wire 20) | Result |
+| --- | --- |
+| A nonzero push (`set_momentum`) or nonzero vertical momentum (`set_vertical_momentum`), within the shared 64-unit input bound | `PlayerBodyError::Unsupported` (past the bound: that bound's error, checked first) |
+| A target (`set_actor_target`), a removal (`mark_remove`), a state entry (`enter_actor_state`, and `enter_original_state` through it) | `PlayerBodyError::Unsupported` |
+| A direct spawn of one of the seven types (`spawn_type`) | `MapSpawnError::DirectSpawn`, as for a pickup |
+| A death request (`request_actor_death`) | `MonsterError::Profile`, as for every actor under the player policies |
+| Damage with an inflictor (`damage_actor`) | `PlayerBodyError::Unsupported`, the physical-player rule for any target but the player |
+| Damage with no inflictor and no source | accepted and ignored, as `P_DamageMobj` returns for a thing without `MF_SHOOTABLE` (p_inter.c:787–788): no gameplay value changes; only the request and its `Ignored` record are written |
+| Making it a monster's target | `PerceptionError::Roster` |
+
+Under this policy nonzero vertical momentum on an item is refused the same way. The
+older policies are unchanged: under the movers policy (wire 19, observed in a committed
+M3h8 room) `set_vertical_momentum` still accepts nonzero momentum on an item, after
+which the next tic is refused (`PlayerBodyError::Invariant`) and the capture fails
+`decode_movers`; this Rust-only gap is left as it is so that the older policies keep
+their exact behavior (M3h9 [evidence record](validation/M3H9.md#independent-review)).
 
 Fidelity gaps: none new. The `SpecialCross`, escape, intercept and vertical witnesses and
 the exit and reborn refusals are the movers policy's, unchanged; the window rule keeps

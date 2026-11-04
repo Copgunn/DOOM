@@ -1451,22 +1451,26 @@ one-sided line; each decoration type refused under wires 18 and 19; a spawn batc
 with eight monsters, sixteen pickups and 32 decorations spawning all 56 while a 33rd
 decoration, a barrel or hanging corpse after the decorations and a ninth monster each
 leave the capture bytes, the RNG, the actor order, the events and the statistics
-unchanged; every nonzero push, target and removal of a decoration refused; 2,400-tic
+unchanged; every nonzero push, vertical momentum, target and removal of a decoration
+refused, a direct spawn of each decoration type refused, a death request and damage
+with an inflictor refused and damage with neither ignored with no gameplay change, and
+nonzero vertical momentum on a census item refused; 2,400-tic
 soaks with four seeds on the five gallery and the two liftroom rooms asserting V′,
 every decoration's type, state, tics, health, flags, radius, height and `z == floorz`
 after every tic, `step == advance` every 10th tic and the DSIM36 `decode_e1m1` round
 trip every 100th; and the M3h9 note §5.3 budget formulas. The fuzz target
 `player_e1m1` starts from the 18 replayed scenario starts and applies bounded
 operations (commands with `BT_USE` and `BT_ATTACK`, damage, retargeting, removal,
-pause, pushes, each also aimed at a decoration, whose target, removal and nonzero push
-must be refused) under the movers target's properties (`step == advance`, a refused
+pause, pushes, vertical momentum, each also aimed at a decoration, whose target,
+removal, nonzero push and nonzero vertical momentum must be refused, and direct spawns
+of a decoration type, which must be `DirectSpawn`) under the movers target's properties (`step == advance`, a refused
 operation keeping the snapshot, V′, Ω, the item witness, the mover bounds, progress)
 plus the decorations' static fields, `z == floorz` and count, the DSIM36 round trip
 with `decode_movers` rejecting the bytes, and mutated decodes of two pinned DSIM36
 fixtures; `seed_player_e1m1_fuzz.py` writes its byte seeds without reading Rust
 output. Run the fuzz commands from `fuzz/` on a fresh copy of the seeds outside the
 working tree and delete the corpus afterwards. `-runs=0` replays the seeds only; the seed
-tool writes 4,032 seeds, so, as for the movers target, the campaigns are bounded by
+tool writes 4,824 seeds, so, as for the movers target, the campaigns are bounded by
 `-max_total_time` rather than `-runs`. The campaign without a sanitizer explores faster;
 the AddressSanitizer campaign is the sanitizer evidence. The fuzz workspace is
 nightly-only and CI only format-checks it, so the campaigns are a local step. Run

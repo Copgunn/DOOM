@@ -1098,6 +1098,23 @@ impl Simulation {
         if self.profile == Profile::Projectiles && momentum.bits().unsigned_abs() > 64 * 65536 {
             return Err(ProjectileError::Arithmetic.into());
         }
+        // The E1M1 policy refuses vertical momentum on a decoration or an item
+        // (`MF_SPECIAL`) after the shared input bounds, as `set_momentum` refuses a
+        // push: both are spawned at `ONFLOORZ` (p_mobj.c:775–783) and nothing in the
+        // source gives them `momz` (`P_DamageMobj` needs `MF_SHOOTABLE`,
+        // p_inter.c:787–788), so `P_ZMovement` never runs for them (p_mobj.c:428–436)
+        // and neither the decoration witness (M3h9 note §2.5) nor the relaxed item
+        // witness (M3h8 note §4.2) admits one off its floor. Older policies keep
+        // their historical admission (M3h9 validation record, independent review).
+        if self.player_policy().has_e1m1()
+            && momentum != Fixed::ZERO
+            && self.actor(id).and_then(Actor::life).is_some_and(|l| {
+                l.flags & world_pickups::MF_SPECIAL != 0
+                    || e1m1_rules::is_decoration(self.player_policy(), l.actor_type)
+            })
+        {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         self.actors.get_mut(id).unwrap().momz = momentum;
         Ok(())
     }

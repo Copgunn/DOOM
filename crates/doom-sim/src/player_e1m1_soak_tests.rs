@@ -612,3 +612,151 @@ fn e1m1_mover_bounds_extend_the_movers_bounds_by_the_two_sided_scrollers() {
         Err(SimError::MapScale(MapScaleError::SpecialWindow))
     );
 }
+
+/// `Simulation::set_vertical_momentum` refuses nonzero `momz` on every gallery
+/// decoration, and on every census item, with `PlayerBodyError::Unsupported` and the state unchanged: a
+/// decoration is spawned at `ONFLOORZ` (p_mobj.c:775–783) and nothing gives it
+/// `momz` (`P_DamageMobj` returns for a non-shootable thing, p_inter.c:787–788). The
+/// shared 64-unit input bound precedes the role check (`PerceptionError::Arithmetic`),
+/// as for `set_momentum`; zero is accepted and changes nothing. Before the refusal a
+/// nonzero `momz` was accepted and every later tic was refused by the decoration
+/// witness, so the capture no longer decoded under `decode_e1m1`.
+#[test]
+fn set_vertical_momentum_is_refused_on_every_decoration() {
+    let (mut s, _, things) = crate::player_e1m1_tests::setup(5, [-128, 128]);
+    assert_eq!(things.len(), 10);
+    for id in things {
+        let before = witness(&s);
+        for momz in [
+            Fixed::from_bits(1),
+            Fixed::from_bits(-1),
+            Fixed::from_map_units(-30),
+            Fixed::from_map_units(64),
+        ] {
+            assert_eq!(
+                s.set_vertical_momentum(id, momz),
+                Err(SimError::PlayerBody(PlayerBodyError::Unsupported))
+            );
+        }
+        for momz in [
+            Fixed::from_map_units(64) + Fixed::from_bits(1),
+            Fixed::from_map_units(-32768),
+        ] {
+            assert_eq!(
+                s.set_vertical_momentum(id, momz),
+                Err(SimError::Perception(PerceptionError::Arithmetic))
+            );
+        }
+        assert_eq!(witness(&s), before);
+        s.set_vertical_momentum(id, Fixed::ZERO).unwrap();
+        assert_eq!(witness(&s), before);
+    }
+    s.advance([TicCommand::default(); 4]).unwrap();
+    let limits = DiagnosticLimits::default();
+    let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
+    Diagnostic::decode_e1m1(&bytes, limits).unwrap();
+    // The census room's items (`MF_SPECIAL`) get the same refusal under wire 20:
+    // found by the `player_e1m1` fuzz target's seeds, where a nonzero `momz` on a
+    // clip was accepted and the next tic refused (`PlayerBodyError::Invariant`).
+    let (mut s, _, things) = crate::player_e1m1_tests::setup(12, [-448, -340]);
+    let items: Vec<_> = things
+        .into_iter()
+        .filter(|id| s.actor(*id).unwrap().life().unwrap().flags & 1 != 0)
+        .collect();
+    assert!(!items.is_empty());
+    let before = witness(&s);
+    for &id in &items {
+        assert_eq!(
+            s.set_vertical_momentum(id, Fixed::from_bits(256)),
+            Err(SimError::PlayerBody(PlayerBodyError::Unsupported))
+        );
+        s.set_vertical_momentum(id, Fixed::ZERO).unwrap();
+    }
+    assert_eq!(witness(&s), before);
+    s.advance([TicCommand::default(); 4]).unwrap();
+    let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
+    Diagnostic::decode_e1m1(&bytes, limits).unwrap();
+}
+
+/// `Simulation::spawn_type` refuses a direct spawn of each of the seven decoration
+/// types under wire 20 with `MapSpawnError::DirectSpawn` and the state unchanged, as
+/// it refuses a pickup: a decoration exists only as a THING of `P_SpawnMapThing`
+/// (p_mobj.c:775–795, spawnpoint, angle, `MF_AMBUSH`). Before the refusal a direct
+/// spawn was accepted with no spawnpoint, which the decoration witness refuses.
+#[test]
+fn spawn_type_refuses_every_decoration_type() {
+    let (mut s, _, _) = crate::player_e1m1_tests::setup(5, [-128, 128]);
+    let before = witness(&s);
+    for ty in E1M1_DECORATIONS {
+        for height in [SpawnHeight::Floor, SpawnHeight::Ceiling] {
+            assert_eq!(
+                s.spawn_type(
+                    ActorTypeId(ty.ordinal()),
+                    [Fixed::from_map_units(0), Fixed::from_map_units(-200)],
+                    height,
+                ),
+                Err(SimError::MapSpawn(MapSpawnError::DirectSpawn))
+            );
+        }
+    }
+    assert_eq!(witness(&s), before);
+}
+
+/// Damage and a death request on a decoration. `request_actor_death` is refused by
+/// the lifecycle profile check (`MonsterError::Profile`, before the role check that
+/// also refuses an item or a decoration), and `damage_actor` with an inflictor is
+/// refused by the physical-player rule (`PlayerBodyError::Unsupported`), each with
+/// every byte unchanged. Damage with no inflictor and no source is the source's own
+/// early return of `P_DamageMobj` for a thing without `MF_SHOOTABLE`
+/// (p_inter.c:787–788): accepted as ignored, it changes no health, flag, momentum,
+/// actor or RNG value and records only the request and its `Ignored` result; the
+/// capture still decodes under `decode_e1m1`.
+#[test]
+fn a_decoration_refuses_a_death_request_and_ignores_damage() {
+    let (mut s, body, things) = crate::player_e1m1_tests::setup(6, [-128, 128]);
+    let zombie = things[10];
+    let limits = DiagnosticLimits::default();
+    for &id in &things[..10] {
+        let before = witness(&s);
+        assert_eq!(
+            s.request_actor_death(id),
+            Err(SimError::Monster(MonsterError::Profile))
+        );
+        for source in [body, zombie] {
+            assert_eq!(
+                s.damage_actor(DamageRequest {
+                    target: id,
+                    source: Some(source),
+                    inflictor: Some(source),
+                    amount: 10,
+                }),
+                Err(SimError::PlayerBody(PlayerBodyError::Unsupported))
+            );
+        }
+        assert_eq!(witness(&s), before);
+        let fixed = decoration_state(&s, id);
+        let pending = s.pending_events().len();
+        let request = DamageRequest {
+            target: id,
+            source: None,
+            inflictor: None,
+            amount: 1000,
+        };
+        let result = s.damage_actor(request).unwrap();
+        assert!(result.ignored && !result.killed && !result.pain);
+        assert_eq!(result.health, [1000, 1000]);
+        assert_eq!(decoration_state(&s, id), fixed);
+        assert_eq!(s.rng, before.rng);
+        assert_eq!(s.actor_order().collect::<Vec<_>>(), before.actors);
+        assert_eq!(s.actor(id).unwrap().momentum(), [Fixed::ZERO; 2]);
+        assert_eq!(
+            &s.pending_events()[pending..],
+            &[
+                Event::Combat(CombatEvent::Damage(request)),
+                Event::Combat(CombatEvent::Ignored(id)),
+            ]
+        );
+        let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
+        Diagnostic::decode_e1m1(&bytes, limits).unwrap();
+    }
+}

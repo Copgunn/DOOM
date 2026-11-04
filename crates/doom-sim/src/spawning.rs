@@ -89,6 +89,13 @@ impl Simulation {
         {
             return Err(MapSpawnError::DirectSpawn.into());
         }
+        // A static decoration exists only as a THING spawned by `P_SpawnMapThing`
+        // (p_mobj.c:775–795: spawnpoint, angle, `MF_AMBUSH`); no action or body of
+        // the source spawns one, and the decoration witness requires the THING
+        // record. Under the E1M1 policy a direct spawn is refused like a pickup's.
+        if e1m1_rules::is_decoration(self.player_policy(), ty) {
+            return Err(MapSpawnError::DirectSpawn.into());
+        }
         self.player_spawn_guard(ty, position, height)?;
         if self.profile.uses_demon_map() && ty == self.demon_owner_type() {
             return Err(MapSpawnError::DirectSpawn.into());
@@ -269,9 +276,12 @@ impl Simulation {
             return Err(MonsterError::Profile.into());
         }
         let life = self.active_typed(id)?;
-        // An item never targets, and neither does a decoration under the E1M1
-        // policy (no state of the seven types has an action, M3h9 note §2.5): the
-        // tic preflight and the DSIM36 reader admit neither with a target.
+        // An item is never killed, and neither is a decoration under the E1M1
+        // policy (`P_KillMobj` is reached only through `P_DamageMobj`, which returns
+        // for a thing without `MF_SHOOTABLE`, p_inter.c:787–788; M3h9 note §2.5):
+        // neither has a death state to enter. Under the E1M1 policy the lifecycle
+        // profile check above refuses first (`MonsterError::Profile`); this check
+        // keeps the refusal explicit for any profile that reaches it.
         if (self.player_policy().has_world_pickups()
             && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some())
             || e1m1_rules::is_decoration(self.player_policy(), life.actor_type)

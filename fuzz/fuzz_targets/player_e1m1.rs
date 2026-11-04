@@ -191,7 +191,9 @@ fn decoration_invariants(s: &Simulation, decorations: &[(ActorId, Static)]) {
 }
 /// One bounded operation. `decoration` is a spawned decoration (or the body when the
 /// room has none); the refusals the E1M1 policy owes a decoration are asserted
-/// here: a target, a removal and a nonzero push are `PlayerBodyError::Unsupported`.
+/// here: a target, a removal, a nonzero push and nonzero vertical momentum are
+/// `PlayerBodyError::Unsupported`, and a direct spawn of a decoration type is
+/// `MapSpawnError::DirectSpawn`.
 fn apply(
     s: &mut Simulation,
     body: ActorId,
@@ -208,7 +210,7 @@ fn apply(
             .copied()
     };
     let unsupported = Err(SimError::PlayerBody(PlayerBodyError::Unsupported));
-    match b[0] % 9 {
+    match b[0] % 11 {
         0..=3 => {
             let mut commands = [TicCommand::default(); 4];
             commands[usize::from(b[1] % 4)] = TicCommand {
@@ -267,6 +269,51 @@ fn apply(
         7 => {
             s.set_paused(b[1] & 1 != 0);
             Ok(())
+        }
+        // Vertical momentum: the player body, a monster or pickup (a pickup is
+        // refused unless it is zero), a candidate handle or a decoration (refused
+        // unless it is zero, after the shared 64-unit bound).
+        9 => {
+            let momz = Fixed::from_bits(i32::from_le_bytes([b[3], b[4], b[5], b[8]]));
+            match b[1] % 4 {
+                0 => s.set_vertical_momentum(body, momz),
+                1 => s.set_vertical_momentum(monster(b[2]), momz),
+                2 => match decoration(b[2]) {
+                    Some(d) => {
+                        let result = s.set_vertical_momentum(d, momz);
+                        if momz.bits().unsigned_abs() > 64 << 16 {
+                            assert_eq!(
+                                result,
+                                Err(SimError::Perception(PerceptionError::Arithmetic))
+                            );
+                        } else if momz != Fixed::ZERO {
+                            assert_eq!(result, unsupported);
+                        } else {
+                            assert_eq!(result, Ok(()));
+                        }
+                        result
+                    }
+                    None => s.set_vertical_momentum(candidate, momz),
+                },
+                _ => s.set_vertical_momentum(candidate, momz),
+            }
+        }
+        // A direct spawn of one of the seven decoration types: always refused, the
+        // first check of `spawn_type` (a decoration exists only as a THING).
+        10 => {
+            let ty = ActorTypeId(E1M1_DECORATIONS[usize::from(b[1]) % 7].ordinal());
+            let position = [
+                Fixed::from_map_units(i16::from_le_bytes([b[2], b[3]])),
+                Fixed::from_map_units(i16::from_le_bytes([b[4], b[5]])),
+            ];
+            let height = if b[8] & 1 == 0 {
+                SpawnHeight::Floor
+            } else {
+                SpawnHeight::Ceiling
+            };
+            let result = s.spawn_type(ty, position, height).map(|_| ());
+            assert_eq!(result, Err(SimError::MapSpawn(MapSpawnError::DirectSpawn)));
+            result
         }
         // The controlled push: the player body, a monster or pickup, a candidate
         // handle, or a decoration (refused unless the push is zero).
@@ -427,7 +474,7 @@ fuzz_target!(|data: &[u8]| {
         if result.is_err() {
             assert_eq!(s.snapshot(), before);
         }
-        if b[0] % 9 <= 3 {
+        if b[0] % 11 <= 3 {
             let command = TicCommand {
                 forward: i8::from_le_bytes([b[2]]),
                 side: i8::from_le_bytes([b[3]]),
