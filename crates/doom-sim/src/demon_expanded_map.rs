@@ -17,6 +17,9 @@ pub(crate) struct ExpandedSelection {
     /// Doors, lifts, floors, switches and the exit (movers policy, a superset of
     /// the specials policy: `specials` is set too).
     pub movers: bool,
+    /// Two-sided scrolling walls and static decorations (E1M1 policy, a superset
+    /// of the movers policy: `movers` is set too).
+    pub e1m1: bool,
 }
 impl Simulation {
     /// Profile 20: larger static maps with the exact map-context Demon registry.
@@ -42,6 +45,7 @@ impl Simulation {
                 real_map: false,
                 specials: false,
                 movers: false,
+                e1m1: false,
             },
         )
     }
@@ -60,6 +64,7 @@ impl Simulation {
             real_map,
             specials,
             movers,
+            e1m1,
         } = selection;
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
@@ -75,7 +80,9 @@ impl Simulation {
         if !real_map && map.things().len() > MAX_DEMON_MAP_THINGS {
             return Err(MapSpawnError::WorkLimit.into());
         }
-        let movers = if movers {
+        let movers = if e1m1 {
+            Some(mover_rules::validate_e1m1(&map)?)
+        } else if movers {
             Some(mover_rules::validate_movers(&map)?)
         } else {
             if specials {

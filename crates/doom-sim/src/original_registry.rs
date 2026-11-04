@@ -1044,6 +1044,7 @@ impl Simulation {
                 real_map,
                 specials: policy.has_specials(),
                 movers: policy.has_movers(),
+                e1m1: policy.has_e1m1(),
             },
         )?;
         sim.boundary = boundary;

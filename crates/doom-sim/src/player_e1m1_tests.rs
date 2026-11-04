@@ -4,6 +4,7 @@
 //! from Rust output.
 use super::*;
 use crate::diagonal_room::Lumps;
+use crate::identity::OriginalState;
 use crate::player_movers_tests::{options, room as m3h8_room};
 
 mod maps {
@@ -206,4 +207,322 @@ fn dsim36_is_rejected_by_every_older_reader_and_decode_e1m1_reads_36_only() {
     );
     Diagnostic::decode_movers(&v35, limits).unwrap();
     Diagnostic::decode_e1m1(&v36, limits).unwrap();
+}
+
+const DENSE9: &[u8] = include_bytes!("../../../tests/reference/m3h9_dense9.bin");
+/// The committed rooms with a two-sided 48 line: `scrollhall` (0–2, non-blocking),
+/// `scrollblock` (3, `ML_BLOCKING`) and `dense8` (4, eight in one window).
+const SCROLLER_ROOMS: [usize; 5] = [0, 1, 2, 3, 4];
+
+fn rejects(result: Result<Simulation, OriginalRegistryError>, expected: SimError) {
+    match result {
+        Err(OriginalRegistryError::Runtime(error)) => assert_eq!(error, expected),
+        Err(other) => panic!("unexpected error {other:?}, expected {expected:?}"),
+        Ok(_) => panic!("admitted, expected {expected:?}"),
+    }
+}
+
+/// Decision E1: a two-sided 48, blocking or not, loads under wire 20 alone; the
+/// movers and specials policies keep returning `PursuitError::Specials` (rule 1,
+/// decision N1), and the admission is otherwise the movers admission.
+#[test]
+fn two_sided_scrollers_load_under_e1m1_only() {
+    for index in SCROLLER_ROOMS {
+        let lumps = room(index);
+        let map = lumps.map();
+        let two_sided_48 = map
+            .linedefs()
+            .iter()
+            .filter(|l| l.special == 48 && l.sides[1].is_some())
+            .count();
+        assert!(two_sided_48 > 0, "room {index}");
+        rejects(
+            Simulation::original_player_movers_map(lumps.map(), options()),
+            SimError::Pursuit(PursuitError::Specials),
+        );
+        rejects(
+            Simulation::original_player_specials_map(lumps.map(), options()),
+            SimError::Pursuit(PursuitError::Specials),
+        );
+        let sim = e1m1(&lumps).unwrap_or_else(|e| panic!("room {index}: {e:?}"));
+        // The runtime line specials start as the map's: every 48 is a runtime 48.
+        assert_eq!(
+            sim.line_specials,
+            map.linedefs().iter().map(|l| l.special).collect::<Vec<_>>()
+        );
+        assert_eq!(
+            sim.line_specials.iter().filter(|s| **s == 48).count(),
+            map.linedefs().iter().filter(|l| l.special == 48).count()
+        );
+    }
+    // scrollblock: the blocking line keeps ML_BLOCKING and its special.
+    let block = room(3).map();
+    let line = block.linedefs().iter().find(|l| l.special == 48).unwrap();
+    assert_eq!(line.flags & 1, 1);
+    assert!(line.sides[1].is_some());
+    // Rule 1 is relaxed for 48 alone: another two-sided special still rejects.
+    let mut lumps = room(0);
+    let index = (0..lumps.line_count())
+        .find(|&i| {
+            let l = lumps.lumps.iter().find(|(n, _)| n == "LINEDEFS").unwrap();
+            i16::from_le_bytes([l.1[14 * i + 6], l.1[14 * i + 7]]) == 48
+        })
+        .unwrap();
+    lumps.set_line_special(index, 49);
+    rejects(e1m1(&lumps), SimError::Pursuit(PursuitError::Specials));
+}
+
+/// Rules 5 and 6 are unchanged: the nine-scroller lane exceeds the `spechit` window
+/// under the E1M1 policy too (`MapScaleError::SpecialWindow`), as the eight-line
+/// lane is the largest the C harness runs; the movers policy rejects it by rule 1.
+#[test]
+fn dense9_is_rejected_by_the_special_window_rule_under_e1m1() {
+    let lumps = Lumps::parse(DENSE9);
+    assert_eq!(crate::mover_rules::special_window_lines(&lumps.map()), 9);
+    rejects(
+        e1m1(&lumps),
+        SimError::MapScale(MapScaleError::SpecialWindow),
+    );
+    rejects(
+        Simulation::original_player_movers_map(lumps.map(), options()),
+        SimError::Pursuit(PursuitError::Specials),
+    );
+    assert_eq!(crate::mover_rules::special_window_lines(&room(4).map()), 8);
+    e1m1(&room(4)).unwrap();
+}
+
+/// The C driver's setup for a committed M3h9 room under the E1M1 policy: THINGs,
+/// the player body at `position` (facing east), the default weapons, then
+/// `P_SpawnSpecials`; seed 6 as every replayed scenario.
+pub(crate) fn setup(index: usize, position: [i16; 2]) -> (Simulation, ActorId, Vec<ActorId>) {
+    let mut s = Simulation::original_player_e1m1_map(room(index).map(), options()).unwrap();
+    let things = s.spawn_map_things().unwrap().spawned;
+    let body = s
+        .spawn_player_body(PlayerSlot::One, position.map(Fixed::from_map_units))
+        .unwrap();
+    s.initialize_player_weapons(PlayerSlot::One, WeaponInventory::default())
+        .unwrap();
+    s.spawn_level_specials().unwrap();
+    s.set_initial_player_reaction_time(PlayerSlot::One, 0)
+        .unwrap();
+    (s, body, things)
+}
+fn forward(forward: i8) -> [TicCommand; 4] {
+    let mut c = [TicCommand::default(); 4];
+    c[0].forward = forward;
+    c
+}
+fn turn(angle_turn: i16) -> [TicCommand; 4] {
+    let mut c = [TicCommand::default(); 4];
+    c[0].angle_turn = angle_turn;
+    c
+}
+fn use_button() -> [TicCommand; 4] {
+    let mut c = [TicCommand::default(); 4];
+    c[0].buttons = BT_USE;
+    c
+}
+/// Advances one tic and appends its events to `log` (`events()` holds the last
+/// tic's events only).
+fn step(s: &mut Simulation, log: &mut Vec<Event>, command: [TicCommand; 4]) {
+    s.advance(command).unwrap();
+    log.extend_from_slice(s.events());
+}
+fn mover_events(log: &[Event]) -> Vec<MoverEvent> {
+    log.iter()
+        .filter_map(|e| match e {
+            Event::Mover(m) => Some(*m),
+            _ => None,
+        })
+        .collect()
+}
+fn sounds(log: &[Event]) -> Vec<u16> {
+    log.iter()
+        .filter_map(|e| match e {
+            Event::ActorState(lifecycle::ActorStateEvent::Sound { sound, .. }) => Some(*sound),
+            _ => None,
+        })
+        .collect()
+}
+fn position(s: &Simulation, id: ActorId) -> [i32; 2] {
+    s.actor(id).unwrap().position().map(|v| v.bits() / 65536)
+}
+
+/// `use_scroll_wall_stops_trace`: `BT_USE` from (−8, 0) toward the door at x = 48:
+/// `PTR_UseTraverse` stops at the 48 line (p_map.c:1113–1122), whose
+/// `P_UseSpecialLine` reaches the trailing `return true` with no effect
+/// (p_switch.c, no case 48): the special stays 48, the door stays shut (no mover
+/// started), no `sfx_noway`.
+#[test]
+fn a_player_use_through_a_two_sided_scroller_stops_with_no_effect() {
+    let (mut s, body, _) = setup(0, [-8, 0]);
+    let mut log = Vec::new();
+    for _ in 0..2 {
+        step(&mut s, &mut log, [TicCommand::default(); 4]);
+    }
+    log.clear();
+    step(&mut s, &mut log, use_button());
+    let events = mover_events(&log);
+    assert_eq!(
+        events
+            .iter()
+            .find(|e| matches!(e, MoverEvent::SpecialUse { .. })),
+        Some(&MoverEvent::SpecialUse {
+            user: body,
+            line: s
+                .world
+                .map()
+                .linedefs()
+                .iter()
+                .position(|l| {
+                    l.special == 48 && {
+                        let a = s.world.map().vertices()[usize::from(l.vertices[0])];
+                        let b = s.world.map().vertices()[usize::from(l.vertices[1])];
+                        a.x == 0 && b.x == 0 && a.y.min(b.y) <= 0 && 0 <= a.y.max(b.y)
+                    }
+                })
+                .unwrap() as u16,
+            side: 0,
+            before: 48,
+            result: true,
+            after: 48,
+        })
+    );
+    assert!(events.iter().any(|e| matches!(
+        e,
+        MoverEvent::UseIntercept {
+            continues: false,
+            ..
+        }
+    )));
+    assert!(
+        !events
+            .iter()
+            .any(|e| matches!(e, MoverEvent::Started { .. }))
+    );
+    assert_eq!(sounds(&log), Vec::<u16>::new());
+    assert!(s.line_specials.iter().all(|s| matches!(s, 0 | 1 | 48)));
+    // The door sector (4) stays closed.
+    assert_eq!(s.sectors()[4].ceiling, s.sectors()[4].floor);
+}
+
+/// `scroll_cross_noop`: the player walks east across the non-blocking 48 line: it
+/// enters `spechit`, the crossing loop calls `P_CrossSpecialLine` (p_spec.c:503–534,
+/// no case 48) and nothing changes; the line keeps its special.
+#[test]
+fn a_player_crossing_a_two_sided_scroller_is_a_no_op() {
+    let (mut s, body, _) = setup(0, [-40, 0]);
+    let mut log = Vec::new();
+    for op in 1..=40 {
+        step(&mut s, &mut log, forward(if op <= 6 { 25 } else { 0 }));
+    }
+    // The center crossed x = 0 (the C row: the player stops at 8).
+    assert!(position(&s, body)[0] > 0, "{:?}", position(&s, body));
+    let crossings: Vec<_> = mover_events(&log)
+        .into_iter()
+        .filter(|e| matches!(e, MoverEvent::Crossed { .. }))
+        .collect();
+    assert_eq!(crossings.len(), 1);
+    assert!(matches!(
+        crossings[0],
+        MoverEvent::Crossed {
+            actor,
+            before: 48,
+            after: 48,
+            ..
+        } if actor == body
+    ));
+    assert_eq!(s.line_specials.iter().filter(|s| **s == 48).count(), 2);
+}
+
+/// `blocking_scroller_wall`: a 48 line with `ML_BLOCKING` blocks the player walking
+/// west and the chasing Zombieman walking east in `PIT_CheckLine` before the
+/// special test (p_map.c:220–244): nothing enters `spechit`, no crossing, no
+/// `P_Move` failure branch with specials.
+#[test]
+fn a_blocking_two_sided_scroller_blocks_and_never_enters_spechit() {
+    let (mut s, body, things) = setup(3, [48, 64]);
+    let zombie = things[0];
+    s.set_actor_target(zombie, Some(body)).unwrap();
+    s.enter_original_state(zombie, OriginalState::S_POSS_RUN1)
+        .unwrap();
+    let mut log = Vec::new();
+    step(&mut s, &mut log, turn(-32768));
+    for _ in 2..=60 {
+        step(&mut s, &mut log, forward(25));
+    }
+    // The player's center stays east of the line by its radius, the monster's west.
+    assert!(position(&s, body)[0] >= 16, "{:?}", position(&s, body));
+    assert!(position(&s, zombie)[0] <= -20, "{:?}", position(&s, zombie));
+    let events = mover_events(&log);
+    assert!(!events.iter().any(|e| matches!(
+        e,
+        MoverEvent::Crossed { .. }
+            | MoverEvent::SpechitBlocked { .. }
+            | MoverEvent::SpecialUse { .. }
+    )));
+}
+
+/// `dense_spechit_8`: a position check whose box covers all eight 48 lines fills
+/// `spechit` to its source size (`MAXSPECIALCROSS`) and no more; every crossing is
+/// a no-op and the tic is never refused.
+#[test]
+fn eight_two_sided_scrollers_in_one_window_fill_spechit_without_overflow() {
+    let (mut s, body, _) = setup(4, [200, 64]);
+    let mut log = Vec::new();
+    for op in 1..=60 {
+        step(&mut s, &mut log, forward(if op <= 12 { 25 } else { 0 }));
+    }
+    // The center passed the last line at x = 268.
+    assert!(position(&s, body)[0] > 268, "{:?}", position(&s, body));
+    let crossed: Vec<u16> = mover_events(&log)
+        .into_iter()
+        .filter_map(|e| match e {
+            MoverEvent::Crossed {
+                before: 48,
+                after: 48,
+                line,
+                ..
+            } => Some(line),
+            _ => None,
+        })
+        .collect();
+    let mut distinct = crossed.clone();
+    distinct.sort_unstable();
+    distinct.dedup();
+    assert_eq!((crossed.len(), distinct.len()), (8, 8));
+}
+
+/// `scroll_spechit_nodir`: the Zombieman on the ledge whose move into the hall is
+/// refused with the A|L 48 line in `spechit` resets `movedir` to `DI_NODIR` and
+/// `P_UseSpecialLine(actor, line, 0)` returns false (p_enemy.c:310–324; the monster
+/// filter of p_switch.c:301–319 admits 1, 32, 33, 34 only).
+#[test]
+fn a_monster_blocked_with_a_scroller_in_spechit_resets_its_direction() {
+    let (mut s, body, things) = setup(1, [-200, 72]);
+    let zombie = things[0];
+    s.set_actor_target(zombie, Some(body)).unwrap();
+    s.enter_original_state(zombie, OriginalState::S_POSS_RUN1)
+        .unwrap();
+    let mut log = Vec::new();
+    for _ in 1..=60 {
+        step(&mut s, &mut log, [TicCommand::default(); 4]);
+    }
+    let events = mover_events(&log);
+    let blocked = events
+        .iter()
+        .filter(|e| matches!(e, MoverEvent::SpechitBlocked { actor, count: 1 } if *actor == zombie))
+        .count();
+    assert!(blocked > 0);
+    assert!(events.iter().any(|e| matches!(
+        e,
+        MoverEvent::SpecialUse {
+            user,
+            side: 0,
+            before: 48,
+            result: false,
+            after: 48,
+            ..
+        } if *user == zombie
+    )));
 }
