@@ -3,7 +3,7 @@
 A rewrite of the original DOOM engine in Rust that aims to behave exactly like id
 Software's code, down to every single step of game logic.
 
-*"Rust DOOM" is a working title. The port's real name is still to be decided.*
+Rust DOOM is a working title; the port's real name is still to be decided.
 
 > **Machine-Maintained, Human-Directed Project**
 >
