@@ -195,9 +195,160 @@ fn actor_attempt_bytes(b: &mut Vec<u8>, actor: ActorId, attempt: &crate::ActorMo
     }
 }
 
+/// A 12-byte sector-thinker identity: u32 slot, u64 generation (DSIM35).
+fn sector_thinker_id(id: crate::SectorThinkerId) -> impl Iterator<Item = u8> {
+    id.slot()
+        .to_le_bytes()
+        .into_iter()
+        .chain(id.generation().to_le_bytes())
+}
+
 fn event_bytes(event: &Event) -> Vec<u8> {
     let mut b = Vec::new();
     match event {
+        // DSIM35 tag 26 (STATE_FORMAT "DSIM v35").
+        Event::Mover(event) => {
+            b.push(26);
+            match *event {
+                crate::MoverEvent::Use { player } => {
+                    b.push(0);
+                    b.extend(id(player));
+                }
+                crate::MoverEvent::UseIntercept {
+                    line,
+                    frac,
+                    continues,
+                } => {
+                    b.push(1);
+                    b.extend(line.to_le_bytes());
+                    b.extend(frac.bits().to_le_bytes());
+                    b.push(u8::from(continues));
+                }
+                crate::MoverEvent::SpecialUse {
+                    user,
+                    line,
+                    side,
+                    before,
+                    result,
+                    after,
+                } => {
+                    b.push(2);
+                    b.extend(id(user));
+                    b.extend(line.to_le_bytes());
+                    b.push(side);
+                    b.extend(before.to_le_bytes());
+                    b.push(u8::from(result));
+                    b.extend(after.to_le_bytes());
+                }
+                crate::MoverEvent::SpechitBlocked { actor, count } => {
+                    b.push(4);
+                    b.extend(id(actor));
+                    b.push(count);
+                }
+                crate::MoverEvent::Exit { secret } => {
+                    b.push(13);
+                    b.push(u8::from(secret));
+                }
+                crate::MoverEvent::Reborn { slot } => {
+                    b.push(14);
+                    b.push(slot);
+                }
+                crate::MoverEvent::Crossed {
+                    actor,
+                    line,
+                    side,
+                    before,
+                    after,
+                } => {
+                    b.push(3);
+                    b.extend(id(actor));
+                    b.extend(line.to_le_bytes());
+                    b.push(side);
+                    b.extend(before.to_le_bytes());
+                    b.extend(after.to_le_bytes());
+                }
+                crate::MoverEvent::PlaneStep {
+                    sector,
+                    plane,
+                    direction,
+                    speed,
+                    dest,
+                    before,
+                    after,
+                    result,
+                } => {
+                    b.push(7);
+                    b.extend(sector.to_le_bytes());
+                    b.push(plane as u8);
+                    b.extend(direction.to_le_bytes());
+                    for v in [speed, dest, before, after] {
+                        b.extend(v.bits().to_le_bytes());
+                    }
+                    b.push(result as u8);
+                }
+                crate::MoverEvent::SectorChanged { sector, nofit } => {
+                    b.push(8);
+                    b.extend(sector.to_le_bytes());
+                    b.push(u8::from(nofit));
+                }
+                crate::MoverEvent::ThingClipped {
+                    actor,
+                    outcome,
+                    z,
+                    floor,
+                    ceiling,
+                } => {
+                    b.push(9);
+                    b.extend(id(actor));
+                    b.push(outcome as u8);
+                    for v in [z, floor, ceiling] {
+                        b.extend(v.bits().to_le_bytes());
+                    }
+                }
+                crate::MoverEvent::Started {
+                    mover,
+                    kind,
+                    sector,
+                } => {
+                    b.push(5);
+                    b.extend(sector_thinker_id(mover));
+                    b.push(kind);
+                    b.extend(sector.to_le_bytes());
+                }
+                crate::MoverEvent::Call {
+                    function,
+                    line,
+                    argument,
+                    result,
+                    created,
+                } => {
+                    b.push(6);
+                    b.push(function as u8);
+                    b.extend(line.to_le_bytes());
+                    b.extend(argument.to_le_bytes());
+                    b.extend(result.to_le_bytes());
+                    b.push(created);
+                }
+                crate::MoverEvent::Removed { mover } => {
+                    b.push(10);
+                    b.extend(sector_thinker_id(mover));
+                }
+                crate::MoverEvent::Unlinked { mover } => {
+                    b.push(11);
+                    b.extend(sector_thinker_id(mover));
+                }
+                crate::MoverEvent::SectorSound {
+                    origin,
+                    index,
+                    sound,
+                } => {
+                    b.push(12);
+                    b.push(origin as u8);
+                    b.extend(index.to_le_bytes());
+                    b.extend(sound.to_le_bytes());
+                }
+            }
+        }
         // DSIM34 tag 25 (STATE_FORMAT "DSIM v34").
         Event::Special(event) => {
             b.push(25);
@@ -562,7 +713,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         crate::Profile::MapExtent => 19,
         crate::Profile::DemonExpandedMap => 20,
         crate::Profile::OriginalDemon => {
-            if sim.player_policy().has_specials() {
+            if sim.player_policy().has_movers() {
+                35
+            } else if sim.player_policy().has_specials() {
                 34
             } else if sim.player_policy().has_real_map() {
                 33
@@ -596,7 +749,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     // Versions18/19 explicitly compose the untyped static-sector field layout.
     let layout = if matches!(version, 18 | 19) {
         3
-    } else if matches!(version, 20..=34) {
+    } else if matches!(version, 20..=35) {
         17
     } else {
         version
@@ -604,14 +757,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     field(
         &mut fields,
         "profile",
-        (if matches!(version, 21..=34) {
+        (if matches!(version, 21..=35) {
             sim.player_policy().wire_id()
         } else {
             version
         })
         .to_le_bytes(),
     );
-    if matches!(version, 21..=34) {
+    if matches!(version, 21..=35) {
         field(
             &mut fields,
             "registry.schema",
@@ -649,6 +802,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             ),
         ] {
             field(&mut fields, name, value.to_le_bytes());
+            if version == 35 && name == "level.single_player_kill_count" {
+                field(&mut fields, "level.exit", [u8::from(sim.level_exit)]);
+            }
         }
     }
     field(
@@ -670,7 +826,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     );
     let order = sim.actors.order().flat_map(id).collect::<Vec<_>>();
     field(&mut fields, "thinker.order", order);
-    if version == 34 {
+    if matches!(version, 34 | 35) {
         // DSIM34: the one P_RunThinkers list, kind-tagged (0 actor, 1 sector).
         let mut shared = Vec::new();
         for entry in sim.actors.shared_order() {
@@ -808,7 +964,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             }
         }
     }
-    if version == 34 {
+    if matches!(version, 34 | 35) {
         sector_thinker_fields(&mut fields, sim);
     }
     if layout >= 2 {
@@ -876,7 +1032,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                     optional_id(sim.sound_targets[i]),
                 );
             }
-            if version == 34 {
+            if matches!(version, 34 | 35) {
                 let s = sim.specials.as_ref().expect("specials policy").sectors[i];
                 field(
                     &mut fields,
@@ -890,6 +1046,9 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 );
             }
         }
+    }
+    if version == 35 {
+        line_and_button_fields(&mut fields, sim);
     }
     for i in 0..4 {
         field(
@@ -911,7 +1070,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         );
         field(&mut fields, format!("player.{i}.buttons"), [c.buttons]);
     }
-    if matches!(layout, 8..=17) && !matches!(version, 22..=34) {
+    if matches!(layout, 8..=17) && !matches!(version, 22..=35) {
         for (i, p) in sim.perception_players.iter().enumerate() {
             field(
                 &mut fields,
@@ -940,7 +1099,12 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         field(
             &mut fields,
             "original_player.0.state",
-            [u8::from(p.state == crate::PlayerBodyState::Dead)],
+            // PST_LIVE 0, PST_DEAD 1, PST_REBORN 2 (reachable under movers only).
+            [if p.reborn {
+                2
+            } else {
+                u8::from(p.state == crate::PlayerBodyState::Dead)
+            }],
         );
         field(
             &mut fields,
@@ -965,14 +1129,14 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                 .and_then(|p| p.weapon.and_then(|w| w.pistol())),
         );
     }
-    if matches!(version, 24..=34) {
+    if matches!(version, 24..=35) {
         pack_fields(
             &mut fields,
             sim.original_player
                 .and_then(|p| p.weapon.and_then(|w| w.pack())),
         );
     }
-    if matches!(version, 25..=34) {
+    if matches!(version, 25..=35) {
         let state = sim.original_player.and_then(|p| p.pickups);
         field(
             &mut fields,
@@ -997,7 +1161,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             );
         }
     }
-    if matches!(version, 26..=34) {
+    if matches!(version, 26..=35) {
         if let Some(armor) = sim.original_player.and_then(|p| p.armor) {
             field(
                 &mut fields,
@@ -1011,13 +1175,20 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             );
         }
     }
-    if version == 34 {
+    if matches!(version, 34 | 35) {
         field(
             &mut fields,
             "original_player.0.secret_count",
             sim.original_player
                 .map_or(0, |p| p.secret_count)
                 .to_le_bytes(),
+        );
+    }
+    if version == 35 {
+        field(
+            &mut fields,
+            "original_player.0.use_down",
+            [u8::from(sim.original_player.is_some_and(|p| p.use_down))],
         );
     }
     if layout == 6 {
@@ -1065,6 +1236,10 @@ fn sector_thinker_fields(fields: &mut Vec<StateField>, sim: &Simulation) {
         let Some(entry) = &slot.entry else {
             continue;
         };
+        if let Some(sector) = entry.value.mover_sector() {
+            mover_fields(fields, &prefix, entry.pending, sector, &entry.value);
+            continue;
+        }
         let (kind, sector, count, light, extra): (u8, u16, Option<i32>, [i32; 2], &[i32]) =
             match &entry.value {
                 T::Flash(t) => (
@@ -1083,6 +1258,7 @@ fn sector_thinker_fields(fields: &mut Vec<StateField>, sim: &Simulation) {
                 ),
                 T::Glow(t) => (3, t.sector, None, [t.minlight, t.maxlight], &[t.direction]),
                 T::Flicker(t) => (4, t.sector, Some(t.count), [t.minlight, t.maxlight], &[]),
+                T::Door(_) | T::Plat(_) | T::Floor(_) => unreachable!("movers encoded above"),
             };
         field(fields, format!("{prefix}.kind"), [kind]);
         field(fields, format!("{prefix}.sector"), sector.to_le_bytes());
@@ -1100,6 +1276,84 @@ fn sector_thinker_fields(fields: &mut Vec<StateField>, sim: &Simulation) {
         for (name, value) in names.iter().zip(extra) {
             field(fields, format!("{prefix}.{name}"), value.to_le_bytes());
         }
+    }
+}
+
+/// DSIM35 runtime line specials (every line whose map special is nonzero, in line
+/// order) and the 16 `buttonlist` slots (decision N9): `btimer`, then for a running
+/// button its line and `soundorg` sector (STATE_FORMAT "DSIM v35").
+fn line_and_button_fields(fields: &mut Vec<StateField>, sim: &Simulation) {
+    for (i, line) in sim.world.map().linedefs().iter().enumerate() {
+        if line.special != 0 {
+            field(
+                fields,
+                format!("line.{i}.special"),
+                sim.line_specials[i].to_le_bytes(),
+            );
+        }
+    }
+    for (k, slot) in sim.buttons.iter().enumerate() {
+        field(
+            fields,
+            format!("button.{k}.btimer"),
+            i32::from(slot.map_or(0, |b| b.timer)).to_le_bytes(),
+        );
+        if let Some(b) = slot {
+            field(fields, format!("button.{k}.line"), b.line.to_le_bytes());
+            field(
+                fields,
+                format!("button.{k}.soundorg"),
+                b.sector.to_le_bytes(),
+            );
+        }
+    }
+}
+
+/// A DSIM35 mover record (STATE_FORMAT "DSIM v35"): kind 5 door, 6 plat, 7 floor,
+/// or 8 for a removed mover whose entry the next pass unlinks (sector only).
+fn mover_fields(
+    fields: &mut Vec<StateField>,
+    prefix: &str,
+    removed: bool,
+    sector: u16,
+    mover: &crate::SectorThinker,
+) {
+    use crate::SectorThinker as T;
+    let kind = if removed { 8 } else { mover.kind_code() };
+    field(fields, format!("{prefix}.kind"), [kind]);
+    field(fields, format!("{prefix}.sector"), sector.to_le_bytes());
+    if removed {
+        return;
+    }
+    let (kind_name, kind_value, values): (&str, u8, Vec<(&str, i32)>) = match mover {
+        T::Door(d) => (
+            "type",
+            d.kind as u8,
+            vec![
+                ("direction", d.direction),
+                ("topheight", d.topheight.bits()),
+                ("topcountdown", d.topcountdown),
+            ],
+        ),
+        T::Plat(p) => (
+            "status",
+            p.status as u8,
+            vec![
+                ("count", p.count),
+                ("low", p.low.bits()),
+                ("high", p.high.bits()),
+            ],
+        ),
+        T::Floor(f) => (
+            "type",
+            f.kind as u8,
+            vec![("floordestheight", f.floordestheight.bits())],
+        ),
+        _ => return,
+    };
+    field(fields, format!("{prefix}.{kind_name}"), [kind_value]);
+    for (name, value) in values {
+        field(fields, format!("{prefix}.{name}"), value.to_le_bytes());
     }
 }
 

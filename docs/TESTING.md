@@ -1212,3 +1212,102 @@ nightly-only and CI only format-checks it, so the campaign is a local step. Run
 measurements alone, with no fuzzing, builds or tests at the same time. Observations
 belong to [the engineering record](validation/M3H7.md). Leak detection is disabled in
 the documented ASan environment (`detect_leaks=0`), not verified.
+
+## Original doors, lifts, floors, switches and the exit (C evidence)
+
+The Stage B C evidence of the
+[M3h8 investigation](M3H8_REFERENCE_INVESTIGATION.md#11-evidence-plan) has its own
+source contract and leaves every historical expectation untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h8_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3h8_snapshot_goldens.py --check
+python3 tools/reference/check_player_movers.py
+cargo test -p doom-sim player_movers
+cargo run -p doom-sim --example player_movers --locked
+python3 tools/measure_movers.py --check
+python3 tools/seed_player_movers_fuzz.py /tmp/doom-movers-seeds
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_movers /tmp/doom-movers-corpus --sanitizer address -- -runs=0 -max_len=290 -timeout=15 -rss_limit_mb=1024
+# Bounded campaigns, each on a fresh copy of the seeds:
+cargo +nightly fuzz run player_movers /tmp/doom-movers-corpus --sanitizer none -- -seed=501 -max_total_time=1800 -max_len=290 -timeout=15 -rss_limit_mb=1024
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_movers /tmp/doom-movers-corpus --sanitizer address -- -seed=502 -max_total_time=1800 -max_len=290 -timeout=15 -rss_limit_mb=1024
+```
+
+The generator compiles the genuine door, plat, floor, switch, use, crossing and
+`P_ChangeSector` bodies over the `doorway`, `hall`, `switchyard`, `lift` (three lift
+ceilings), `floors` and `dense` rooms and checks `tests/reference/m3h8_trace.dref`,
+`m3h8_cases.csv`, the `m3h8_geometry_*.bin` lumps, `m3h8_maps.rs`, the Rust-only
+nine-line lane `m3h8_dense9.bin` and `m3h8_contract.json`. `--overflow-check` and
+`--address-check` rebuild the harness under the sanitizers and assert that each raw trace
+equals the strict one byte for byte; `spechit` keeps its source size of eight, so a ninth
+write would stop the sanitizer build. Add `--cases` to print the per-scenario inventory
+as JSON lines. `m3h8_snapshot_goldens.py` is the independent
+[DSIM35](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit)
+projection of those rows (never of Rust output): it checks
+`tests/reference/m3h8_snapshots.csv`, the ordered events `m3h8_events.dref`, the
+full-byte `m3h8_state_*.bin` fixtures and `m3h8_snapshot_contract.json`, and asserts that
+the event stream without its tag-26 records equals the DSIM34 projection of the same
+rows. `check_player_movers.py` runs the full Rust replay (the library test
+`movers_replay::full::full_replay_matches_the_c_rows_and_the_independent_dsim35_goldens`)
+in debug and release and asserts that both pass and print the same summary: all 33
+scenarios through their last op, every C row the replay reads (heights, line specials,
+use latch, exit and player state, crossings, uses, blocked moves, the thinker list
+with every mover record, the button slots), every PBE1 event frame, and at all 1,559
+captures the independent digest, size and field count, the 13 fixtures byte for byte
+and the `Diagnostic::decode_movers` round trip. It is a library test because the
+replay's declared damage input uses the crate-internal checked transaction. The
+replay applies the declared between-tic inputs before each op's tic: the damage, the
+attack entry and the see-state entry (`chase_at`: target assignment plus
+`S_POSS_RUN1`, whose `A_Chase` runs at once). It also runs
+the asserted example in debug and release and asserts equal output
+(`--example-only` runs the example alone, the CI step on the hosts that skip the
+replay). The example replays, through the public API alone, the 24 scenarios whose
+declared inputs are public (all but the seven with the controlled 200 health and the
+two whose controlled damage kills, both crate-internal inputs of the replay),
+comparing every op's sector heights and mover work (`T_MovePlane` steps,
+`P_ChangeSector` calls, `PIT_ChangeSector` clips, crossings, uses, blocked moves,
+exits) with the C rows and the final runtime line specials, and asserts the C rows'
+headline counts; `--measure doorway_patrol|lift_cycle|switch_cycle
+advance|step|capture` times a 1,200-tic patrol with `BT_USE` in the doorway room with
+monsters, the committed `lift_last_step_short` timeline or the committed
+`switch_sr_door` timeline and prints the per-tic `P_ChangeSector` work recorded from an
+unmeasured run, and `--admit doorway|switchyard|lift|floors|dense|pools` times the
+movers admission (with the fixpoint and the window rule; for the M3h7 `pools` room the
+specials-policy admission too); `measure_movers.py` drives both with the native
+`wait4` launcher (`--check` is the CI smoke).
+
+The `player_movers` tests (`player_movers_tests`, `player_movers_soak_tests`) are
+Rust-only: rejection, with the map untouched and the unpatched room admitted, of
+every deferred line family and every other special value on either side, the
+two-sided scroller (N1 iii), a one-sided DR line, a shared family, an inverting door,
+a reachable height of 513, 17 reusable switches, 9 special lines in a window, a sky
+mover, a missing switch texture and a mover sector without a defined blockbox (rule
+10, through `mover_bounds`) on the committed rooms; the turbo destination folded from
+−500 (`pit` room, admission and runtime); the between-tic see-state entries that use a
+DR line from a blocked move and cross a WR 88 line; and of a mover without a
+two-sided neighbour, a self-referencing door line, 31 plat sectors and 65 scrollers
+on synthetic strip rooms (`heights_room`); a tic refused, by a test-only fault site,
+after a plane step's write and `P_ChangeSector` (doors, lifts, floors) or after a
+use's line action, and at the `SpecialCross` witness, with every byte, the RNG, the
+sector, line-special and button tables, the thinkers and the events unchanged and the
+same tic then running as unfaulted; the exit and reborn refusals with any command; and
+1,200-tic soaks with four seeds on the doorway, switchyard, lift and floors rooms with
+`BT_USE`, asserting V′ and the item witness after every tic, `step == advance` every
+10th tic and the DSIM35 `decode_movers` round trip every 50th. The fuzz target admits
+one of 27 distinct scenario starts of the first 30 committed scenarios (the three
+added by the independent review are not fuzz starts) and applies bounded operations
+(commands with `BT_USE`, damage, retargeting, removal, pause, pushes) under the M3h6
+properties plus V′ (from the public `mover_bounds`), the relaxed item witness, the
+reach of every sector height, the transaction (a refused operation keeps every byte),
+the exit and reborn refusals and the DSIM35 round trip. Run the fuzz commands from
+`fuzz/` on a fresh copy of the seeds outside the working tree and delete the corpus
+afterwards; `-runs=0` replays the seeds only, and as for the specials target a
+`-runs` bound must exceed the seed count plus one (the seed tool writes 4,428 seeds)
+before any mutation happens, so the campaigns above are bounded by
+`-max_total_time` instead (libFuzzer counts the initial-corpus runs inside it too).
+The campaign without a sanitizer explores faster; the AddressSanitizer campaign is the
+sanitizer evidence. The fuzz workspace is nightly-only and CI only format-checks it, so
+the campaigns are a local step. Run measurements alone, with no fuzzing, builds or tests
+at the same time. Observations belong to [the engineering record](validation/M3H8.md).
+Leak detection is disabled in the documented ASan environment (`detect_leaks=0`), not
+verified.

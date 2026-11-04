@@ -134,6 +134,11 @@ original evidence and former guide contents with exact-byte copies and digests.
   [support](COMPATIBILITY.md#original-monsters-at-classic-map-scale)
   and [DSIM33](STATE_FORMAT.md#dsim-v33-original-monsters-at-classic-map-scale).
 - [M3h7 doors, lifts, line and sector specials and sky investigation](M3H7_REFERENCE_INVESTIGATION.md)
-  (Stage A, sky and static specials, implemented in M3h7; Stage B planned for M3h8),
+  (Stage A, sky and static specials, implemented in M3h7; Stage B implemented in M3h8),
   [observations](validation/M3H7.md), [support](COMPATIBILITY.md#original-monsters-with-sky-and-static-specials)
   and [DSIM34](STATE_FORMAT.md#dsim-v34--original-monsters-with-sky-and-static-specials).
+- [M3h8 doors, lifts, floors, switches and exit investigation](M3H8_REFERENCE_INVESTIGATION.md)
+  (Stage B), [observations](validation/M3H8.md),
+  [IWAD mover counts](validation/M3H8_IWAD_COUNTS.md),
+  [support](COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit)
+  and [DSIM35](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit).

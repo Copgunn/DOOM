@@ -127,6 +127,19 @@ jobs:
           python3 tools/reference/m3h7_snapshot_goldens.py --check
       - name: Original sky and static-specials debug/release comparison
         run: python3 tools/reference/check_player_specials.py
+      - name: Independent original doors, lifts, floors, switches and exit evidence
+        if: runner.os == 'Linux'
+        run: |
+          ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h8_reference.py --check --overflow-check --address-check
+      - name: Independent DSIM35 doors, lifts, floors, switches and exit projection
+        if: runner.os == 'Linux'
+        run: python3 tools/reference/m3h8_snapshot_goldens.py --check
+      - name: Original doors, lifts, floors, switches and exit full replay debug/release comparison
+        if: runner.os == 'Linux'
+        run: python3 tools/reference/check_player_movers.py
+      - name: Original doors, lifts, floors, switches and exit example debug/release comparison
+        if: runner.os != 'Linux'
+        run: python3 tools/reference/check_player_movers.py --example-only
       - name: Original bonus sustained combat debug/release comparison
         run: python3 tools/reference/check_player_bonuses.py
       - name: Original armor sustained combat debug/release comparison
@@ -184,6 +197,9 @@ jobs:
       - name: Sky and static-specials measurement smoke
         if: runner.os == 'Linux'
         run: python3 tools/measure_specials.py --check
+      - name: Doors, lifts, floors, switches and exit measurement smoke
+        if: runner.os == 'Linux'
+        run: python3 tools/measure_movers.py --check
       - name: Advisory autonomous melee allocation smoke
         if: runner.os == 'Linux'
         run: python3 tools/measure_player_demon_melee.py --smoke

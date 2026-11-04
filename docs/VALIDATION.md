@@ -225,3 +225,7 @@ See [source qualification](M3G9_REFERENCE_INVESTIGATION.md) and
 - [M3h7 sky and static specials](validation/M3H7.md): light thinkers, damage floors,
   a secret, scrolling walls, sky removals and sky shots in C, DSIM34 with the shared
   thinker order, the admission rejections, the load order, soaks and fuzzing.
+- [M3h8 doors, lifts, floors, switches and the exit](validation/M3H8.md): doors, lifts,
+  floors, switches, use, crossing, monster door use, giblets, the exit and the reborn
+  request in C, DSIM35 with the movers and button slots, the full replay, the load-rule
+  rejections, in-tic rollback, soaks and fuzzing.

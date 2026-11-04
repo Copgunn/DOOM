@@ -100,8 +100,8 @@ impl Simulation {
         for id in self.actor_order() {
             if self.actors.is_pending(id) == Some(false) {
                 let a = self.actor(id).expect("live map-scale actor");
-                bounded(a.position().into_iter().chain([a.z()]), 994)?;
-                bounded(a.momentum().into_iter().chain([a.vertical_momentum()]), 64)?;
+                bounded(crate::sight::xyz(a.position(), a.z()), 994)?;
+                bounded(crate::sight::xyz(a.momentum(), a.vertical_momentum()), 64)?;
             }
         }
         Ok(())
@@ -123,7 +123,7 @@ pub(crate) fn bounded(values: impl IntoIterator<Item = Fixed>, units: u32) -> Re
 }
 pub(crate) fn spawn_bounds(spec: ActorSpec, vertical: VerticalSpec) -> Result<(), SimError> {
     bounded(spec.position, 994)?;
-    bounded(spec.momentum.into_iter().chain([vertical.momentum]), 64)?;
+    bounded(crate::sight::xyz(spec.momentum, vertical.momentum), 64)?;
     if let SpawnHeight::Absolute(z) = vertical.height {
         bounded([z], 994)?;
     }

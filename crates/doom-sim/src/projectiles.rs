@@ -47,16 +47,22 @@ pub(crate) trait MissileWorld {
     /// The static world, for the sky identity of the specials policy.
     fn world(&self) -> &StaticWorld;
     /// The runtime sector heights the refused check read.
-    fn sectors(&self) -> &[SectorState];
+    fn sectors(&self) -> crate::staging::Sectors<'_>;
     /// `P_RemoveMobj` of a missile (the sky hack of `P_XYMovement`).
     fn remove_missile(&mut self, id: ActorId);
+    /// Refuses the tic (the movers policy's `spechit` witness); only a host whose
+    /// sector view carries line specials can reach it.
+    fn refuse(&mut self, error: SimError);
 }
 /// `ceilingline` of a refused `P_CheckPosition` (p_map.c:400, 406–407, 227–231):
 /// reset first; `tmceilingz` starts at the destination sector's ceiling; things are
 /// checked before lines (a thing-blocked check visits no line); every visited
 /// two-sided line whose opening top strictly lowers `tmceilingz` becomes it. The
 /// openings of the attempt are exactly those lines, in visit order.
-pub(crate) fn ceiling_line(sectors: &[SectorState], attempt: &SectorMoveAttempt) -> Option<u16> {
+pub(crate) fn ceiling_line(
+    sectors: crate::staging::Sectors<'_>,
+    attempt: &SectorMoveAttempt,
+) -> Option<u16> {
     let mut ceiling = sectors[usize::from(attempt.location.sector)].ceiling;
     let mut line = None;
     for visit in &attempt.openings {
@@ -72,7 +78,7 @@ pub(crate) fn ceiling_line(sectors: &[SectorState], attempt: &SectorMoveAttempt)
 /// missile is on. Only the specials policy has sky ceilings.
 fn sky_line(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     attempt: &SectorMoveAttempt,
 ) -> Option<u16> {
     let sky = world.sky_ceilings.as_ref()?;
@@ -201,6 +207,10 @@ fn try_move<W: MissileWorld>(w: &mut W, id: ActorId, target: [Fixed; 2]) -> (boo
             amount: (i32::from(draw % CONTACT_DAMAGE_CHOICES) + 1) * damage,
         });
     }
+    // The movers policy's spechit: a missile skips the blocking-flag tests, so a
+    // blocking two-sided special line is among its entries.
+    let hit = crate::line_triggers::spechit(w.sectors(), &attempt, &[]);
+    let old = w.missile(id).position();
     let allowed = attempt.allowed();
     if allowed {
         let a = w.missile_mut(id);
@@ -216,6 +226,26 @@ fn try_move<W: MissileWorld>(w: &mut W, id: ActorId, target: [Fixed; 2]) -> (boo
         sky_line(w.world(), w.sectors(), &attempt)
     };
     w.emit(Event::SectorMovement { actor: id, attempt });
+    match hit {
+        Err(overflow) => w.refuse(overflow.into()),
+        // P_CrossSpecialLine returns at once for MT_TROOPSHOT: each crossing is
+        // recorded with its special unchanged.
+        Ok(hit) if allowed && !hit.is_empty() => {
+            let found =
+                crate::line_triggers::crossings(w.world(), w.sectors(), &hit, old, target, &[])
+                    .collect::<Vec<_>>();
+            for crossing in found {
+                w.emit(Event::Mover(crate::MoverEvent::Crossed {
+                    actor: id,
+                    line: crossing.line,
+                    side: crossing.side,
+                    before: crossing.special,
+                    after: crossing.special,
+                }));
+            }
+        }
+        Ok(_) => {}
+    }
     (allowed, sky)
 }
 /// P_XYMovement for a thing that may stop being a missile mid-loop. Returns
@@ -323,7 +353,7 @@ pub(crate) fn fly<W: MissileWorld>(w: &mut W, id: ActorId) -> bool {
 /// PIT_CheckThing/PIT_CheckLine over any actor lookup. Pure: the source draw
 /// and P_DamageMobj in the missile branch are the caller's, after this returns.
 fn missile_contact(
-    (world, sectors): (&StaticWorld, &[SectorState]),
+    (world, sectors): (&StaticWorld, crate::staging::Sectors<'_>),
     spatial: &movement::SpatialIndex,
     lookup: &impl Fn(ActorId) -> Option<Actor>,
     id: ActorId,
@@ -438,8 +468,11 @@ impl MissileWorld for Simulation {
     fn world(&self) -> &StaticWorld {
         &self.world
     }
-    fn sectors(&self) -> &[SectorState] {
-        &self.sectors
+    fn sectors(&self) -> crate::staging::Sectors<'_> {
+        self.sector_view()
+    }
+    fn refuse(&mut self, error: SimError) {
+        unreachable!("the historical projectile host has no line specials: {error}")
     }
     fn remove_missile(&mut self, id: ActorId) {
         // Unreachable: this host's profile has no sky identity.
@@ -496,11 +529,16 @@ impl<A: lifecycle::ActorAccess> MissileWorld for LifeHost<'_, A> {
     fn world(&self) -> &StaticWorld {
         self.world
     }
-    fn sectors(&self) -> &[SectorState] {
+    fn sectors(&self) -> crate::staging::Sectors<'_> {
         self.sectors
     }
     fn remove_missile(&mut self, id: ActorId) {
         self.mark(id);
+    }
+    fn refuse(&mut self, error: SimError) {
+        if !self.sight_failed() {
+            self.fail_sight(error);
+        }
     }
 }
 /// A_TroopAttack's P_SpawnMissile inside the checked transaction. The live cap
@@ -729,9 +767,8 @@ impl Simulation {
                 continue;
             }
             let a = self.actor(id).unwrap();
-            if a.position()
+            if crate::sight::xyz(a.position(), a.z)
                 .into_iter()
-                .chain([a.z])
                 .any(|v| !within(v, 8192))
                 || a.momentum().into_iter().any(|v| !within(v, 8192))
                 || !within(a.momz, 1024)
@@ -803,9 +840,8 @@ impl Simulation {
         if self.bindings.contains(&Some(id)) {
             return Err(ProjectileError::Player.into());
         }
-        if a.position()
+        if crate::sight::xyz(a.position(), a.z)
             .into_iter()
-            .chain([a.z])
             .any(|v| !within(v, 4096))
         {
             return Err(ProjectileError::Arithmetic.into());
@@ -866,7 +902,7 @@ impl Simulation {
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),
             world: &self.world,
-            sectors: &self.sectors,
+            sectors: crate::staging::Sectors::committed(&self.sectors),
             options: self.actor_options,
             rng: &mut self.rng,
             spatial: &mut self.spatial,
@@ -887,7 +923,7 @@ impl Simulation {
         target: [Fixed; 2],
     ) -> (SectorMoveAttempt, Option<ActorId>) {
         missile_contact(
-            (&self.world, &self.sectors),
+            (&self.world, self.sector_view()),
             &self.spatial,
             &|id| self.actor(id).copied(),
             id,
@@ -920,7 +956,7 @@ impl Simulation {
                             &mut self.spatial,
                             |id| self.actors.get(id).copied(),
                             None,
-                            &self.sectors,
+                            crate::staging::Sectors::committed(&self.sectors),
                         );
                         for m in motion {
                             self.pending.push(match m {
@@ -934,6 +970,10 @@ impl Simulation {
                                 movement::MotionEvent::Attempt(attempt) => {
                                     Event::ActorMovement { actor: id, attempt }
                                 }
+                                movement::MotionEvent::Cross(_)
+                                | movement::MotionEvent::SpecialCross => unreachable!(
+                                    "the historical projectile policy has no line specials"
+                                ),
                             });
                         }
                         if let Some(update) = multisector::move_z(&mut a) {
@@ -949,7 +989,7 @@ impl Simulation {
                             access: &mut self.actors,
                             registry: self.registry.as_deref().unwrap(),
                             world: &self.world,
-                            sectors: &self.sectors,
+                            sectors: crate::staging::Sectors::committed(&self.sectors),
                             options: self.actor_options,
                             rng: &mut self.rng,
                             spatial: &mut self.spatial,

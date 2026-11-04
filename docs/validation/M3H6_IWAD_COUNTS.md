@@ -12,6 +12,8 @@ and says nothing about THINGs, specials or sky, which are rejected separately
 ([§9](../M3H6_REFERENCE_INVESTIGATION.md#9-e1m1-readiness-report)). The script is
 local-only and is never run by CI.
 
+The M3h8 mover and specials counts are in [M3H8_IWAD_COUNTS](M3H8_IWAD_COUNTS.md).
+
 | Slot | Vertices | Linedefs | Sidedefs | Sectors | THINGs | Segs | Subsectors | Nodes | Cells | Words | Max lines/cell | Span x | Span y | L1 | Max height | 2x2 window | C1 | C2 odd | C3 | Missing listings | REJECT | (i) | (ii) | (iii) | (iv) | (v) | (vi) | (vii) | Boundary | Geometry admitted |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | E1M1 | 470 | 486 | 666 | 88 | 143 | 747 | 239 | 238 | 828 | 3474 | 13 | 4576 | 2816 | 832 | 264 | 28 | 0 | 0 | 0 | 0 | pass | pass | pass | pass | pass | pass | pass | pass | pass | pass |

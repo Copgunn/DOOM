@@ -17,111 +17,72 @@ the engine runs limited simulation examples without graphics, not a complete gam
 
 ## Status
 
-The Rust workspace provides WAD and classic-map parsing, fixed-point arithmetic,
-original random-number streams, ordered actors and explicitly selected simulation
-configurations. The Demon example covers synthetic map spawning, stand/run,
-perception, pursuit, melee, pain, death, persistent corpses and map kill totals.
-Historical Demon profiles retain their explicit native identity binding. An
-opt-in original-ID registry/profile stores original Demon types and states directly,
-using the same bounded execution services and an explicitly versioned diagnostic
-contract. Scoped actor access adds explicit context admission and target-lifetime
-observations over that same owner. The restricted game context remains.
-An owning game-instance boundary qualifies references across execution scopes and
-rejects foreign or pre-restart references. Its opaque provenance is process-local;
-diagnostics remain local observations, not portable actor references or savegames.
-See [compatibility](docs/COMPATIBILITY.md) for the exact boundary.
+The engine parses WAD files and classic maps and runs a deterministic, headless
+35 tic/second simulation with fixed-point arithmetic, original random-number streams
+and ordered actors; it has no renderer or audio. Gameplay is admitted only through
+explicitly selected configurations: frozen numbered profiles for the earlier Demon
+work, and opt-in original-ID execution policies, each a separate contract that leaves
+every older policy unchanged. The newest policy runs one genuine original player with
+four weapons, pickups, armor and bonuses against the Demon, former humans and the Imp,
+on synthetic maps up to classic-map size with static heights, diagonal walls, sky,
+static sector specials and E1M1's doors, lifts, floors, switches and exit. Admitted
+behavior is checked against original-C source traces and independently encoded
+snapshots; [compatibility](docs/COMPATIBILITY.md) states the exact limits.
 
-A separate opt-in policy now executes one genuine original MT_PLAYER body with
-checked player/mo ownership, direct damage, pain, death and retained corpses.
-It shares the actor owner and combat/stepping core; synthetic bodies remain
-separate. Explicit capabilities add physical knockback and grounded collision,
-then command turning/thrust and reaction-time delays through the same movement
-services. A separate active-player capability lets a canonical Demon acquire that
-player visually and pursue through the shared thinker pass. An additional combat
-capability executes source-timed Demon melee, movement misses, physical damage,
-pain, death and retained corpses. The acquisition-only policy keeps its explicit
-melee rejection. A separate pistol capability adds original psprite cadence,
-ammunition, refire spread, real hitscan impacts, one-sector noise alerts and
-Demon damage/pain/death through that same combat loop. Older policies remain
-available. The four-weapon capability adds source fallback, genuine fists, manual
-switching, seven-pellet shotgun and chaingun firing in the same world. A separate world-pickup capability adds original bullet/shell supplies,
-stimpacks, medikits and world shotgun/chaingun acquisition through shared collision
-and inventory services. A separately selected armor capability adds genuine animated
-green/blue armor, source pickup thresholds, absorption and depletion through the same
-autonomous combat loop. A bonus capability adds animated health and armor bonuses
-(+1 up to 200) and counted-item statistics. A monster capability adds the original
-former humans beside the Demon, up to eight monsters at once, source infighting and
-item drops. An Imp capability adds the original Imp and its dodgeable fireball to that
-roster. A map-scale capability bounds that world by the loaded walls instead of fixed
-margins, in walled rooms up to 2,048 units, a heights capability adds axis-aligned
-sectors with static floor/ceiling heights joined by two-sided lines: steps, ledges,
-windows, fences, falls and landings, and a diagonal capability admits linedefs of any
-direction inside a closed boundary of one-sided walls: wall slides at any angle,
-diagonal corners, risers, windows, pillars and corridors, with one legal source move
-refused (a corner jump by a projected slide). A real-map capability raises that
-world's static-geometry limits to the WAD format's own bounds under a per-map
-arithmetic certificate, so geometry the size of E1M1 (hundreds of linedefs, dozens of
-sectors, thousands of BLOCKMAP cells) is admitted, with a second refused legal source
-behavior (the trace that would write the 129th intercept). A specials capability adds
-sky ceilings and the static sector specials to that world: blinking, strobing, glowing
-and flickering lights in the shared thinker order, damage floors, secrets and
-one-sided scrolling walls, with fireballs removed at sky lines and shots into the sky
-ending without a puff. Full player-thinker/view processing, remaining weapons and
-monsters, moving sectors (doors, lifts, floors), other line specials, use,
-soulspheres/powers and respawn remain excluded. See the
-[player contract](docs/COMPATIBILITY.md#original-player-body-lifecycle) and
-[command movement boundary](docs/COMPATIBILITY.md#original-player-command-movement) and
-[active-player/Demon contract](docs/COMPATIBILITY.md#active-original-player-and-demon-acquisition)
-and [autonomous melee boundary](docs/COMPATIBILITY.md#autonomous-original-demon-player-melee).
-See the [genuine pistol contract](docs/COMPATIBILITY.md#genuine-player-pistol-combat)
-for its separately admitted inputs, geometry, ammunition and source limits.
-The [weapon expansion contract](docs/COMPATIBILITY.md#original-player-weapon-expansion)
-describes controlled loadouts and the additional weapon actions. The
-[world pickup contract](docs/COMPATIBILITY.md#original-world-pickups) defines the
-separate source touch, collection and lifetime capability. The
-[armor contract](docs/COMPATIBILITY.md#original-armor-and-damage-absorption) defines
-that opt-in gameplay domain, and the
-[bonus contract](docs/COMPATIBILITY.md#original-health-and-armor-bonuses) its
-bonus superset and limits; the
-[monster contract](docs/COMPATIBILITY.md#original-former-humans-and-multi-monster-encounters)
-defines the mixed-roster superset, the
-[Imp contract](docs/COMPATIBILITY.md#original-imps-and-fireballs) its fireball limits,
-the [map-scale contract](docs/COMPATIBILITY.md#original-monsters-at-real-map-scale) the
-wall-derived bounds and the
-[heights contract](docs/COMPATIBILITY.md#original-monsters-with-static-heights) the
-static-heights domain and its exclusions, and the
-[diagonal contract](docs/COMPATIBILITY.md#original-monsters-among-diagonal-walls) the
-closed-boundary domain, its spawn rule and its one refused move, and the
-[real-map contract](docs/COMPATIBILITY.md#original-monsters-at-classic-map-scale) the
-format-sized limits, the arithmetic certificate and the intercept witness, and the
-[specials contract](docs/COMPATIBILITY.md#original-monsters-with-sky-and-static-specials)
-the admitted sky and sector specials and what stays rejected.
+Numbered profiles 1–20 are listed under
+[versioned gameplay profiles](docs/COMPATIBILITY.md#versioned-gameplay-profiles).
+The opt-in original-ID policies follow in wire-ID order. Policy 1 stands alone;
+each later policy extends the one above it.
 
-Call `Simulation::advance()` for a tic without an implicit diagnostic Snapshot.
-`step()` retains its Snapshot return, and `snapshot()` captures explicitly in
-debug or release. Both stepping APIs run the same gameplay and retain events and
-recoverable-error guarantees; gameplay may still allocate. See the
-[stepping contract](docs/COMPATIBILITY.md#stepping-and-diagnostics).
+| Policy (wire ID) | Adds | Contract |
+| --- | --- | --- |
+| `DemonNormalV1` (1) | The bounded Demon closure with original actor types and states stored directly | [Original-ID Demon](docs/COMPATIBILITY.md#original-id-demon-profile) |
+| `PlayerBodyLifecycleV1` (2) | One genuine original player body: direct damage, pain, death and a retained corpse | [Player body](docs/COMPATIBILITY.md#original-player-body-lifecycle) |
+| `PlayerBodyKnockbackV1` (3) | Physical knockback and grounded wall collision for that player | [Knockback](docs/COMPATIBILITY.md#original-player-grounded-knockback) |
+| `PlayerCommandMovementV1` (4) | Player commands (turning, thrust) and the source reaction-time delay | [Command movement](docs/COMPATIBILITY.md#original-player-command-movement) |
+| `PlayerDemonAcquisitionV1` (5) | One Demon that sees and pursues the active player, without melee | [Acquisition](docs/COMPATIBILITY.md#active-original-player-and-demon-acquisition) |
+| `PlayerDemonMeleeV1` (6) | Source-timed Demon melee against the player, with damage, pain and death | [Demon melee](docs/COMPATIBILITY.md#autonomous-original-demon-player-melee) |
+| `PlayerDemonPistolV1` (7) | The genuine pistol: psprites, ammunition, refire spread, hitscan and noise alerts | [Pistol](docs/COMPATIBILITY.md#genuine-player-pistol-combat) |
+| `PlayerDemonWeaponsV1` (8) | Fists, shotgun, chaingun, weapon fallback and manual switching | [Weapons](docs/COMPATIBILITY.md#original-player-weapon-expansion) |
+| `PlayerDemonPickupsV1` (9) | World ammunition, stimpacks, medikits and shotgun/chaingun pickups | [Pickups](docs/COMPATIBILITY.md#original-world-pickups) |
+| `PlayerDemonArmorV1` (10) | Green and blue armor with source absorption and depletion | [Armor](docs/COMPATIBILITY.md#original-armor-and-damage-absorption) |
+| `PlayerDemonBonusesV1` (11) | Health and armor bonuses (+1 up to 200) and counted-item statistics | [Bonuses](docs/COMPATIBILITY.md#original-health-and-armor-bonuses) |
+| `PlayerMonstersV1` (12) | Former humans beside the Demon, up to eight monsters, infighting and item drops | [Former humans](docs/COMPATIBILITY.md#original-former-humans-and-multi-monster-encounters) |
+| `PlayerMonstersImpV1` (13) | The Imp and its dodgeable fireball | [Imps](docs/COMPATIBILITY.md#original-imps-and-fireballs) |
+| `PlayerMonstersMapScaleV1` (14) | Travel bounded by the loaded walls in walled rooms up to 2,048 units | [Map scale](docs/COMPATIBILITY.md#original-monsters-at-real-map-scale) |
+| `PlayerMonstersHeightsV1` (15) | Static floor/ceiling heights joined by two-sided lines: steps, ledges, windows, falls | [Static heights](docs/COMPATIBILITY.md#original-monsters-with-static-heights) |
+| `PlayerMonstersDiagonalV1` (16) | Linedefs of any direction inside a closed boundary; one corner jump refused | [Diagonal walls](docs/COMPATIBILITY.md#original-monsters-among-diagonal-walls) |
+| `PlayerMonstersRealMapV1` (17) | WAD-format geometry limits (E1M1-sized) under a per-map arithmetic certificate | [Classic-map scale](docs/COMPATIBILITY.md#original-monsters-at-classic-map-scale) |
+| `PlayerMonstersSpecialsV1` (18) | Sky ceilings, light thinkers, damage floors, secrets and one-sided scrolling walls | [Sky and specials](docs/COMPATIBILITY.md#original-monsters-with-sky-and-static-specials) |
+| `PlayerMonstersMoversV1` (19) | E1M1's seven door, lift, floor, switch and exit line types; the tic after the exit is refused | [Movers](docs/COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit) |
+
+`Simulation::advance()` runs one tic without capturing a diagnostic snapshot; see the
+[stepping contract](docs/COMPATIBILITY.md#stepping-and-diagnostics). Identity binding,
+scoped actor access and game-instance provenance are internal design, described in the
+[architecture guide](docs/ARCHITECTURE.md#actors-lifecycle-and-ordering).
 
 ## What works
 
 - Validated WAD directories and classic maps, including their spatial partitions
   (BSP) and collision grids (BLOCKMAP).
 - Deterministic 35 Hz headless simulation with [canonical identity metadata](docs/ACTOR_IDENTITIES.md).
-- Static-sector movement, collision, actor states and selected combat services.
+- One original player with four weapons, pickups, armor and bonuses against the Demon,
+  former humans and the Imp, on synthetic maps with heights, diagonal walls, sky,
+  static specials, doors, lifts, floors, switches and the exit (opt-in; see the table above).
+- Opt-in larger static geometry for the Demon profiles; see [supported limits](docs/COMPATIBILITY.md#expanded-map-demon-profile).
 - Original-C comparisons, independently encoded canonical snapshots, and safety
   tests for rejection, stale references and recoverable-error atomicity.
-- Opt-in larger static geometry, including bounded Demon gameplay composition; see [supported limits](docs/COMPATIBILITY.md#expanded-map-demon-profile).
 - Synthetic examples that run without commercial game data or presentation devices.
 
 ## What does not work yet
 
-There is no game renderer, audio playback, complete player gameplay, general map
-loading, complete original monster support, multiplayer or verified vanilla demos.
-Doors, lifts and other moving sectors, switches, the level exit, resurrection and
-Nightmare respawning are excluded.
-A custom Vulkan-first rendering architecture is a future direction; rendering
-runtime is not implemented. The [roadmap](docs/ROADMAP.md) describes dependencies.
+There is no game renderer, audio playback, general map loading, multiplayer or
+verified vanilla demo playback. Gameplay still excludes full player-thinker and view
+processing, the remaining weapons and monsters, other line specials (crushers,
+ceilings, stairs, locked doors, teleporters), two-sided scrolling walls,
+soulspheres and powers, the intermission and next map, resurrection and Nightmare
+respawning. A custom Vulkan-first rendering architecture is a future direction; the
+[roadmap](docs/ROADMAP.md) describes dependencies.
 
 ## Getting started
 
@@ -159,6 +120,7 @@ cargo run -p doom-sim --example player_heights --locked
 cargo run -p doom-sim --example player_diagonal --locked
 cargo run -p doom-sim --example player_real_map --locked
 cargo run -p doom-sim --example player_specials --locked
+cargo run -p doom-sim --example player_movers --locked
 cargo run -p doom-sim --example map_scale --locked
 cargo run -p doom-sim --example demon_map_context --locked
 cargo run -p doom-sim --example demon_map_spawn --locked

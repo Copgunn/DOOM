@@ -86,9 +86,11 @@ pub struct FireFlicker {
     /// The sector's own light at spawn.
     pub maxlight: i32,
 }
-/// Payload of the sector-thinker slot class: the four `p_lights.c` light thinkers.
-/// Every existing policy builds its store with sector capacity zero and creates
-/// none; `PlayerMonstersSpecialsV1` creates them once, at load.
+/// Payload of the sector-thinker slot class: the four `p_lights.c` light thinkers
+/// and the three movers. Every policy before the specials policy builds its store
+/// with sector capacity zero and creates none; `PlayerMonstersSpecialsV1` creates
+/// the lights once, at load; `PlayerMonstersMoversV1` also creates movers during
+/// play (M3h8 note §2.4–§2.6).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SectorThinker {
     /// `T_LightFlash`.
@@ -99,6 +101,12 @@ pub enum SectorThinker {
     Glow(Glow),
     /// `T_FireFlicker`.
     Flicker(FireFlicker),
+    /// `T_VerticalDoor`.
+    Door(crate::Door),
+    /// `T_PlatRaise`.
+    Plat(crate::Plat),
+    /// `T_MoveFloor`.
+    Floor(crate::FloorMove),
 }
 impl SectorThinker {
     /// The sector this thinker changes.
@@ -108,6 +116,29 @@ impl SectorThinker {
             Self::Strobe(t) => t.sector,
             Self::Glow(t) => t.sector,
             Self::Flicker(t) => t.sector,
+            Self::Door(t) => t.sector,
+            Self::Plat(t) => t.sector,
+            Self::Floor(t) => t.sector,
+        }
+    }
+    /// The sector of a mover (the thinkers that set `specialdata`); `None` for a
+    /// light.
+    pub const fn mover_sector(&self) -> Option<u16> {
+        match self {
+            Self::Door(_) | Self::Plat(_) | Self::Floor(_) => Some(self.sector()),
+            _ => None,
+        }
+    }
+    /// The DSIM kind: 1 flash, 2 strobe, 3 glow, 4 flicker, 5 door, 6 plat, 7 floor.
+    pub const fn kind_code(&self) -> u8 {
+        match self {
+            Self::Flash(_) => 1,
+            Self::Strobe(_) => 2,
+            Self::Glow(_) => 3,
+            Self::Flicker(_) => 4,
+            Self::Door(_) => 5,
+            Self::Plat(_) => 6,
+            Self::Floor(_) => 7,
         }
     }
 }
@@ -209,6 +240,10 @@ pub(crate) fn think(
                 f.maxlight - amount
             })?;
             f.count = 4;
+        }
+        // Movers run through `movers::think`, never as a light.
+        SectorThinker::Door(_) | SectorThinker::Plat(_) | SectorThinker::Floor(_) => {
+            return Err(StoreError::UnsupportedThinker.into());
         }
     }
     Ok(())

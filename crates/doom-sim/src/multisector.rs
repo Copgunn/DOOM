@@ -280,9 +280,90 @@ fn node_side(point: [Fixed; 2], node: &doom_map::Node) -> u8 {
     u8::from(right >= left)
 }
 
+/// `sector_t::blockbox` (p_setup.c `P_GroupLines`, 538–575): the blockmap cells a
+/// moving sector's `P_ChangeSector` visits (p_map.c 1332–1334), inclusive, in source
+/// box order. Derived from the immutable map at load; never canonical state.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct SectorBlockBox {
+    /// `blockbox[BOXTOP]`: the highest cell row, at most `bmapheight − 1`.
+    pub top: i32,
+    /// `blockbox[BOXBOTTOM]`: the lowest cell row, at least 0.
+    pub bottom: i32,
+    /// `blockbox[BOXLEFT]`: the lowest cell column, at least 0.
+    pub left: i32,
+    /// `blockbox[BOXRIGHT]`: the highest cell column, at most `bmapwidth − 1`.
+    pub right: i32,
+}
+/// Every sector's [`SectorBlockBox`], exactly as `P_GroupLines` computes it: the
+/// `M_ClearBox` sentinels, `M_AddToBox` of `v1` then `v2` of each line whose front or
+/// back sector it is, in linedef order (the source's `else if`, which can leave a
+/// coordinate that was only ever a new minimum out of the maximum, is kept), then
+/// `± MAXRADIUS` (32 units), the shift by `MAPBLOCKSHIFT` and the one-sided clamps.
+/// `None` for a sector whose box arithmetic would overflow `fixed_t` (a sector without
+/// lines, for example), which the source leaves undefined.
+pub(crate) fn sector_block_boxes(
+    map: &doom_map::Map,
+) -> Result<Vec<Option<SectorBlockBox>>, crate::SimError> {
+    const MAXRADIUS: i64 = 32 << 16;
+    // [top, bottom, left, right] in 16.16, M_ClearBox.
+    let mut boxes = crate::line_work::reserved(map.sectors().len())?;
+    boxes.resize(
+        map.sectors().len(),
+        [i32::MIN, i32::MAX, i32::MAX, i32::MIN],
+    );
+    let mut out = crate::line_work::reserved(boxes.len())?;
+    let add = |b: &mut [i32; 4], x: i32, y: i32| {
+        if x < b[2] {
+            b[2] = x;
+        } else if x > b[3] {
+            b[3] = x;
+        }
+        if y < b[1] {
+            b[1] = y;
+        } else if y > b[0] {
+            b[0] = y;
+        }
+    };
+    for line in map.linedefs() {
+        let front = line.sides[0].map(|s| map.sidedefs()[usize::from(s)].sector);
+        let back = line.sides[1].map(|s| map.sidedefs()[usize::from(s)].sector);
+        for sector in [front, back.filter(|b| Some(*b) != front)]
+            .into_iter()
+            .flatten()
+        {
+            for v in line.vertices {
+                let v = map.vertices()[usize::from(v)];
+                add(
+                    &mut boxes[usize::from(sector)],
+                    i32::from(v.x) << 16,
+                    i32::from(v.y) << 16,
+                );
+            }
+        }
+    }
+    let origin = map.blockmap().origin();
+    let [width, height] = map.blockmap().dimensions().map(i32::from);
+    let [ox, oy] = [i64::from(origin.x) << 16, i64::from(origin.y) << 16];
+    // (bound − origin ± MAXRADIUS) >> MAPBLOCKSHIFT, each fixed_t step checked.
+    let cell = |bound: i32, origin: i64, radius: i64| {
+        let shifted = i32::try_from(i64::from(bound) - origin).ok()?;
+        let padded = i32::try_from(i64::from(shifted) + radius).ok()?;
+        Some(padded >> 23)
+    };
+    out.extend(boxes.into_iter().map(|[top, bottom, left, right]| {
+        Some(SectorBlockBox {
+            top: cell(top, oy, MAXRADIUS)?.min(height - 1),
+            bottom: cell(bottom, oy, -MAXRADIUS)?.max(0),
+            left: cell(left, ox, -MAXRADIUS)?.max(0),
+            right: cell(right, ox, MAXRADIUS)?.min(width - 1),
+        })
+    }));
+    Ok(out)
+}
+
 pub(crate) fn opening(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     index: usize,
 ) -> Option<Opening> {
     let line = &world.map().linedefs()[index];
@@ -301,7 +382,7 @@ pub(crate) fn opening(
 }
 
 pub(crate) fn check_move(
-    (world, sectors): (&StaticWorld, &[SectorState]),
+    (world, sectors): (&StaticWorld, crate::staging::Sectors<'_>),
     id: ActorId,
     actor: &Actor,
     target: [Fixed; 2],
@@ -313,7 +394,7 @@ pub(crate) fn check_move(
     check_move_from_things((world, sectors), actor, target, movement, player, false)
 }
 pub(crate) fn check_move_from_things(
-    (world, sectors): (&StaticWorld, &[SectorState]),
+    (world, sectors): (&StaticWorld, crate::staging::Sectors<'_>),
     actor: &Actor,
     target: [Fixed; 2],
     movement: ActorMoveAttempt,
@@ -396,7 +477,7 @@ pub(crate) fn check_move_from_things(
 }
 pub(crate) fn slide_blocks(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     index: usize,
     actor: &Actor,
 ) -> bool {

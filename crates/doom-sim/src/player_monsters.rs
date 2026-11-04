@@ -27,6 +27,8 @@ pub const PLAYER_DIAGONAL_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-DIAGONAL-1-M
 pub const PLAYER_REAL_MAP_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-REALMAP-1-MEDIUM-v1";
 /// Explicit sky and static-specials execution context; older contexts stay frozen.
 pub const PLAYER_SPECIALS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-SPECIALS-1-MEDIUM-v1";
+/// Explicit doors, lifts, floors, switches and exit context; older contexts stay frozen.
+pub const PLAYER_MOVERS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-MOVERS-1-MEDIUM-v1";
 
 impl Simulation {
     /// Autonomous roster member: the native/original Demon owner or a policy
@@ -156,6 +158,26 @@ impl Simulation {
             map,
             crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS,
             OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersSpecialsV1)?,
+            ActorOptions::default(),
+            context,
+        )
+        .map_err(Into::into)
+    }
+    /// The specials world plus doors, lifts, floors, switches and the exit (M3h8
+    /// note §4.0, wire 19): line specials 1, 63, 109, 88, 36, 38 and 11 under the
+    /// mover load rules of §7 (`validate_movers`), on top of everything
+    /// [`Simulation::original_player_specials_map`] admits; a two-sided scrolling
+    /// wall stays rejected (decision N1). The sector-thinker slot class holds the
+    /// light sectors plus twice the mover sectors. As for the specials policy,
+    /// call [`Simulation::spawn_level_specials`] once before the first tic.
+    pub fn original_player_movers_map(
+        map: Map,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        Self::with_original_registry(
+            map,
+            crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS,
+            OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersMoversV1)?,
             ActorOptions::default(),
             context,
         )

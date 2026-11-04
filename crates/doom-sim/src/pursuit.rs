@@ -181,6 +181,13 @@ pub(crate) fn move_actor<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -
         &|id| h.access.get(id).copied(),
         false,
     );
+    // The movers policy's spechit (empty for every other policy's view).
+    let Ok(hit) = line_triggers::spechit(h.sectors, &attempt, &[]) else {
+        h.events.push(Event::SectorMovement { actor: id, attempt });
+        h.fail_sight(MapScaleError::SpecialCross.into());
+        end(h, id, PursuitOperation::Move, false);
+        return false;
+    };
     let allowed = attempt.allowed();
     if allowed {
         let a = h.access.get_mut(id).unwrap();
@@ -193,8 +200,89 @@ pub(crate) fn move_actor<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -
         h.spatial.link(id);
     }
     h.events.push(Event::SectorMovement { actor: id, attempt });
-    end(h, id, PursuitOperation::Move, allowed);
-    allowed
+    if allowed && !hit.is_empty() {
+        cross_lines(h, id, &hit, actor.position(), target);
+    }
+    // p_enemy.c:310–324 (no admitted floater): a failed move with special lines in
+    // spechit resets movedir and uses each of them, in reverse, from side 0.
+    let result = allowed || (!hit.is_empty() && use_lines_blocked(h, id, &hit));
+    end(h, id, PursuitOperation::Move, result);
+    result
+}
+/// The `P_Move` failure branch with `numspechit > 0`: `movedir = DI_NODIR` (no
+/// direction event: the source assigns it outside any observed call), then
+/// `P_UseSpecialLine(actor, line, 0)` for every entry in reverse; true if any use
+/// returned true. A monster's DR use always returns true, so pressing against a door
+/// succeeds every time; any other special line still resets `movedir`.
+fn use_lines_blocked<A: ActorAccess>(
+    h: &mut LifeHost<'_, A>,
+    id: ActorId,
+    hit: &line_triggers::SpecHit,
+) -> bool {
+    h.events.push(Event::Mover(MoverEvent::SpechitBlocked {
+        actor: id,
+        count: hit.len() as u8,
+    }));
+    h.access.get_mut(id).unwrap().life.as_mut().unwrap().movedir = NODIR;
+    let mut good = false;
+    for &line in hit.lines().iter().rev() {
+        let special = h.sectors.line_special(line);
+        let Some(store) = h.access.movers() else {
+            h.fail_sight(StoreError::UnsupportedThinker.into());
+            return false;
+        };
+        let mut starter = movers::Starter {
+            world: h.world,
+            sectors: h.sectors,
+            store,
+            events: &mut *h.events,
+        };
+        match use_lines::use_special_line(
+            &mut starter,
+            None,
+            id,
+            use_lines::User::Monster,
+            line,
+            0,
+            special,
+            &mut use_lines::UseOutcome::default(),
+        ) {
+            Ok(used) => good |= used,
+            Err(error) => {
+                h.fail_sight(error);
+                return false;
+            }
+        }
+    }
+    good
+}
+/// The crossing loop of a monster's successful `P_TryMove` (a monster never clears
+/// a line, so the view stays current); a refused starter refuses the tic.
+fn cross_lines<A: ActorAccess>(
+    h: &mut LifeHost<'_, A>,
+    id: ActorId,
+    hit: &line_triggers::SpecHit,
+    old: [Fixed; 2],
+    new: [Fixed; 2],
+) {
+    for crossing in line_triggers::crossings(h.world, h.sectors, hit, old, new, &[]) {
+        let Some(store) = h.access.movers() else {
+            h.fail_sight(StoreError::UnsupportedThinker.into());
+            return;
+        };
+        let mut starter = movers::Starter {
+            world: h.world,
+            sectors: h.sectors,
+            store,
+            events: &mut *h.events,
+        };
+        if let Err(error) =
+            line_triggers::cross(&mut starter, id, line_triggers::Crosser::Monster, crossing)
+        {
+            h.fail_sight(error);
+            return;
+        }
+    }
 }
 pub(crate) fn try_walk<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -> bool {
     start(h, id, PursuitOperation::TryWalk);
@@ -431,7 +519,7 @@ impl Simulation {
             access: &mut self.actors,
             registry: self.registry.as_deref().unwrap(),
             world: &self.world,
-            sectors: &self.sectors,
+            sectors: crate::staging::Sectors::committed(&self.sectors),
             options: self.actor_options,
             rng: &mut self.rng,
             spatial: &mut self.spatial,

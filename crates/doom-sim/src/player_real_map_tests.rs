@@ -494,12 +494,12 @@ fn noise_flood_with_sector_lists_matches_the_linedef_scan() {
             .sum::<usize>()
     );
     let scanned: Vec<_> = (0..s.sectors.len() as u16)
-        .map(|start| noise::flood(&s.world, &s.sectors, start))
+        .map(|start| noise::flood(&s.world, s.sector_view(), start))
         .collect();
     s.world.sector_lines = Some(lists);
     for (start, expected) in scanned.iter().enumerate() {
         assert_eq!(
-            &noise::flood(&s.world, &s.sectors, start as u16),
+            &noise::flood(&s.world, s.sector_view(), start as u16),
             expected,
             "sector {start}"
         );

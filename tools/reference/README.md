@@ -465,6 +465,53 @@ the DSIM33 projection of the same rows. See
 [observations](../../docs/validation/M3H7.md). [check_player_specials.py](check_player_specials.py)
 runs the `player_specials` example in debug and release and asserts equal output.
 
+## Doors, lifts, floors, switches and the exit (M3h8)
+
+[m3h8_reference.py](m3h8_reference.py) reuses every compiled M3h7 body, observer and
+controlled input unchanged and adds the genuine `p_doors.c` (`T_VerticalDoor`,
+`EV_DoDoor`, `EV_VerticalDoor`), `p_plats.c` (`T_PlatRaise`, `EV_DoPlat`,
+`P_AddActivePlat`, `P_RemoveActivePlat`), `p_floor.c` (`T_MovePlane`, `T_MoveFloor`,
+`EV_DoFloor`), `p_switch.c` (`P_StartButton`, `P_ChangeSwitchTexture`,
+`P_UseSpecialLine`), `p_spec.c` (`P_CrossSpecialLine` and the `P_Find*` helpers), `p_map.c`
+(`P_ThingHeightClip`, `PIT_ChangeSector`, `P_ChangeSector`, `PTR_UseTraverse`,
+`P_UseLines`), `m_bbox.c` and `G_ExitLevel` bodies, plus three genuine fragments: the use
+block of `P_PlayerThink`, the `BT_USE` statement of `P_DeathThink` and the soundorg and
+blockbox statements of `P_GroupLines`. The `P_TryMove` crossing loop and the `P_Move`
+failure branch, compiled since M3h2, now reach real bodies; `spechit` keeps its source
+size of eight. Declared adapters: sound origins are recorded (sector, button field, mobj or
+global), side textures are resolved from the committed SIDEDEFS names through a
+declared synthetic texture table and the switch list is a declared pair, `G_DoCompleted` and `G_DoReborn`
+end the case instead of running, and mover allocations are zero-filled (decision N6).
+[m3h8_geometry.py](m3h8_geometry.py) is the M3h7 builder plus optional line flags and
+`SW1COMM` on the front middle texture of every 11/63 line; [m3h8_cases.py](m3h8_cases.py) builds the doorway (DR doors closed,
+open and stepped), its one-door hall variant, the switchyard (SR 63 and its tagged door,
+the S1 exit, a plain wall, a DR door used from its back side), the lift at three
+ceilings (riders fit, the last step does not fit, an ordinary step does not fit), the
+floors corridor (W1 36 jump-up and lowering, W1 38, W1 109 sharing its door with a DR
+line), the dense lane (eight two-sided WR 88 lines in one 2 × 2 window) and the pit (a
+W1 36 target whose only neighbour floor lies below −500), 33 scenarios in all, two of
+them with the controlled between-tic see-state entry `chase_at`; two-sided scrollers are not built (decision N1 keeps them rejected). The
+Rust-only nine-line lane is written as `m3h8_dense9.bin` and never run in C. New observer
+rows (sector heights, runtime line specials, mover records, `spechit` entries, use and
+crossing calls, plane steps, `P_ChangeSector` outcomes, sector sounds, the exit and the
+reborn request) are documented in the contract's `row_formats`.
+[movers_snapshot.py](movers_snapshot.py) and
+[m3h8_snapshot_goldens.py](m3h8_snapshot_goldens.py) project DSIM35 from the C
+rows: the DSIM34 layout under version 35, policy 19 and the movers context, plus
+`level.exit`, the moving sector heights (`MH`), the runtime line specials (`ML`), the
+player's `use_down` (`MZ`), the button slots (`MB`), door, plat, floor and removed-mover records in the
+sector-thinker store and the shared order (`TK`, `MM`, `SD`, `SF`) and tag-26 events for
+use, crossing, mover starts and calls, plane steps, `P_ChangeSector` clips, mover removal
+and unlinking, sector sounds, the exit and the reborn request; the generator also checks
+that the stream without tag 26 is the DSIM34 projection of the same rows.
+[check_player_movers.py](check_player_movers.py) runs the full Rust replay against those
+rows and goldens in debug and release, then the asserted `player_movers` example in
+both profiles, and asserts equal output. See
+[investigation](../../docs/M3H8_REFERENCE_INVESTIGATION.md), the
+[DSIM v35 schema](../../docs/STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit),
+[commands](../../docs/TESTING.md#original-doors-lifts-floors-switches-and-the-exit-c-evidence) and
+[observations](../../docs/validation/M3H8.md).
+
 ## Historical raw-trace loading
 
 Selected large CSV traces now use standard zstd storage. Run frozen C/encoder

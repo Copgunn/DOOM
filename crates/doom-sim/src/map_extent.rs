@@ -248,7 +248,7 @@ pub(crate) fn position(
 pub(crate) fn spawn_bounds(spec: ActorSpec, vertical: VerticalSpec) -> Result<(), SimError> {
     position(spec.position, STEP_XY_UNITS)?;
     position(
-        spec.momentum.into_iter().chain([vertical.momentum]),
+        crate::sight::xyz(spec.momentum, vertical.momentum),
         MOMENTUM_UNITS,
     )?;
     if let SpawnHeight::Absolute(z) = vertical.height {
@@ -288,7 +288,7 @@ impl Simulation {
                 position(a.position(), STEP_XY_UNITS)?;
                 position([a.z()], STEP_Z_UNITS)?;
                 position(
-                    a.momentum().into_iter().chain([a.vertical_momentum()]),
+                    crate::sight::xyz(a.momentum(), a.vertical_momentum()),
                     MOMENTUM_UNITS,
                 )?;
             }
@@ -300,7 +300,7 @@ impl Simulation {
             return Err(StoreError::InvalidHandle.into());
         }
         let a = *self.actor(id).ok_or(StoreError::InvalidHandle)?;
-        position(a.position().into_iter().chain([a.z()]), QUERY_UNITS)?;
+        position(crate::sight::xyz(a.position(), a.z()), QUERY_UNITS)?;
         Ok(a)
     }
 }

@@ -31,6 +31,14 @@ pub(crate) enum Fault {
     Heights(usize, [i16; 2]),
     /// Drop `ML_TWOSIDED` from this linedef while keeping its back side.
     InconsistentTwoSided(usize),
+    /// Give this linedef `special` and `tag` (the movers rules' fixtures).
+    TaggedSpecial(usize, i16, i16),
+    /// Give this sector `tag`.
+    SectorTag(usize, i16),
+    /// Add a two-sided line inside this sector with the sector on both sides (a
+    /// self-referencing line: `getNextSector` returns the sector itself), half the
+    /// room's height long on the sector's middle x, after every other line.
+    SelfReferencing(usize),
 }
 
 pub(crate) struct HeightsRoom {
@@ -55,6 +63,7 @@ struct Line {
     back: Option<usize>,
     flags: u16,
     special: i16,
+    tag: i16,
 }
 impl HeightsRoom {
     pub fn new(spans: &[i16], heights: &[[i16; 2]]) -> Self {
@@ -81,6 +90,21 @@ impl HeightsRoom {
     pub fn with_fault(mut self, fault: Fault) -> Self {
         self.faults.push(fault);
         self
+    }
+    /// A copy of this room with `faults` added.
+    pub fn clone_with(&self, faults: &[Fault]) -> Self {
+        let mut room = Self {
+            spans: self.spans.clone(),
+            heights: self.heights.clone(),
+            y: self.y,
+            portals: self.portals.clone(),
+            reject: self.reject.clone(),
+            things: self.things.clone(),
+            segment: self.segment,
+            faults: self.faults.clone(),
+        };
+        room.faults.extend_from_slice(faults);
+        room
     }
     fn has(&self, fault: Fault) -> bool {
         self.faults.contains(&fault)
@@ -117,6 +141,7 @@ impl HeightsRoom {
                         back,
                         flags,
                         special: 0,
+                        tag: 0,
                     });
                 }
                 lines.len() - 1
@@ -143,6 +168,12 @@ impl HeightsRoom {
                 )
             })
             .collect();
+        for fault in &self.faults {
+            if let Fault::SelfReferencing(k) = *fault {
+                let x = ((i32::from(self.spans[k]) + i32::from(self.spans[k + 1])) / 2) as i16;
+                add([x, y0 / 2], [x, y1 / 2], k, Some(k), 4);
+            }
+        }
         drop(add);
         for fault in &self.faults {
             match *fault {
@@ -160,7 +191,13 @@ impl HeightsRoom {
                 }
                 Fault::LineSpecial(i) => lines[i].special = 1,
                 Fault::InconsistentTwoSided(i) => lines[i].flags &= !4,
-                Fault::Unlisted(_)
+                Fault::TaggedSpecial(i, special, tag) => {
+                    lines[i].special = special;
+                    lines[i].tag = tag;
+                }
+                Fault::SectorTag(_, _)
+                | Fault::SelfReferencing(_)
+                | Fault::Unlisted(_)
                 | Fault::SectorSpecial(_)
                 | Fault::Sky(_)
                 | Fault::Heights(_, _) => {}
@@ -192,7 +229,7 @@ impl HeightsRoom {
                 l.b as i16,
                 l.flags as i16,
                 l.special,
-                0,
+                l.tag,
                 indexes[0],
                 indexes[1],
             ]));
@@ -259,8 +296,10 @@ impl HeightsRoom {
             let mut heights = *h;
             let mut ceiling = "TESTCEIL";
             let mut special = 0;
+            let mut tag = 0;
             for fault in &self.faults {
                 match *fault {
+                    Fault::SectorTag(s, t) if s == i => tag = t,
                     Fault::Heights(s, v) if s == i => heights = v,
                     Fault::Sky(s) if s == i => ceiling = "F_SKY1",
                     Fault::SectorSpecial(s) if s == i => special = 9,
@@ -270,7 +309,7 @@ impl HeightsRoom {
             sectors.extend(words(&heights));
             sectors.extend(name("TESTFLR0"));
             sectors.extend(name(ceiling));
-            sectors.extend(words(&[160, special, 0]));
+            sectors.extend(words(&[160, special, tag]));
         }
         let mut reject = vec![0_u8; (n * n).div_ceil(8)];
         for [a, b] in &self.reject {

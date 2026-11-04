@@ -98,6 +98,47 @@ pub enum MapScaleError {
     /// `intercepts[]` (undefined): the tic is refused and the state before it is
     /// kept. Reached only by construction (M3h6 note §4.4); never observed in C.
     Intercepts,
+    /// Under the movers policy, a DR door line (special 1) without a back side,
+    /// whose `EV_VerticalDoor` would read `sides[-1]` (M3h8 note §7 rule 1).
+    DoorLine,
+    /// Under the movers policy, a sector in two mover families (door, plat, floor),
+    /// whose `specialdata` cast could read a different thinker type (rule 2).
+    MoverFamily,
+    /// Under the movers policy, a mover sector without a `getNextSector`
+    /// neighbour (a `MAXINT − 4` door top or a −500 turbo destination, rule 3).
+    MoverNeighbor,
+    /// Under the movers policy, a reachable floor or ceiling height beyond ±512
+    /// (the §5 fixpoint, rule 4).
+    MoverHeights,
+    /// Under the movers policy, a door whose smallest possible top lies below its
+    /// floor (rule 4b).
+    InvertingDoor,
+    /// Under the movers policy, a door sector with a two-sided line that has the
+    /// sector on both sides (rule 4c).
+    SelfReferencingDoor,
+    /// Under the movers policy, more than 30 plat sectors (`MAXPLATS`) or more than
+    /// 16 reusable switch lines (`MAXBUTTONS`, rule 5).
+    MoverCount,
+    /// Under the movers policy, more than 8 distinct two-sided special lines in
+    /// one 2 × 2 window of BLOCKMAP cells (`MAXSPECIALCROSS`, rule 6).
+    SpecialWindow,
+    /// Under the movers policy, a mover sector with an `F_SKY1` ceiling (rule 8,
+    /// decision N4).
+    SkyMover,
+    /// Under the movers policy, a `P_CheckPosition` of this tic would store a ninth
+    /// `spechit` entry (`MAXSPECIALCROSS`), which the original writes past the
+    /// array (undefined): the tic is refused and the state before it is kept.
+    /// Unreachable on admitted maps (rule 6).
+    SpecialCross,
+    /// Under the movers policy, a switch line (special 11 or 63) whose front side
+    /// carries no episode-1 switch texture in its upper, lower or middle texture, so
+    /// `P_ChangeSwitchTexture` would find nothing in `switchlist` (no texture
+    /// change, no sound, no button; M3h8 note §7 rule 9, decision N9a).
+    SwitchTexture,
+    /// Under the movers policy, a mover sector whose `P_GroupLines` `blockbox`
+    /// arithmetic would overflow `fixed_t` (the box is undefined in the source, so
+    /// `P_ChangeSector` could visit no defined cells; M3h8 note §7 rule 10).
+    MoverBlockBox,
 }
 impl fmt::Display for MapScaleError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -563,7 +604,7 @@ pub(crate) fn validate_heights_geometry(map: &Map) -> Result<(), SimError> {
 /// not fit keeps the vertical invariant and costs no legal play.
 pub(crate) fn spawn_fits(
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     position: [Fixed; 2],
     spawn: SpawnHeight,
     height: Fixed,
@@ -608,6 +649,77 @@ pub(crate) fn vertical_admitted(actor: &Actor) -> Result<(), SimError> {
         return Err(MapScaleError::Vertical.into());
     }
     Ok(())
+}
+/// The largest admitted actor height `H_max` of the corpse envelope (V′ case (e)):
+/// the tallest admitted type (the demon, 56) bounds a corpse's pre-gib height.
+pub(crate) const V_PRIME_MAX_HEIGHT_UNITS: i32 = 56;
+/// Which case of the vertical invariant V′ (M3h8 note §4.1) a non-impact actor is
+/// in at a tic boundary under the movers policy, or `None` when it is in none.
+/// `reach` is the admission's `[R_min, R_max]` and `delta` its `Δ`, in map units.
+/// The cases are tried in order (a)–(e); (b) and (d) differ only in
+/// `MF_SHOOTABLE`. Every operand is bounded by the `z` and height witnesses checked
+/// first, so no sum overflows.
+pub(crate) fn v_prime_case(actor: &Actor, reach: [i32; 2], delta: i32) -> Option<char> {
+    let (z, floor, ceiling, height) = (actor.z, actor.floor, actor.ceiling, actor.spec.height);
+    let life = actor.life()?;
+    let shootable = life.flags & original_player::MF_SHOOTABLE != 0;
+    let top = z + height;
+    let units = |u: i32| Fixed::from_bits(u.saturating_mul(65536));
+    if floor <= z && top <= ceiling {
+        Some('a')
+    } else if !shootable && z == floor && ceiling < top {
+        Some('b')
+    } else if floor - units(delta) <= z && z < floor && top <= ceiling {
+        Some('c')
+    } else if shootable && z == floor && ceiling < top {
+        Some('d')
+    } else if life.health <= 0
+        && !shootable
+        && units(reach[0] - V_PRIME_MAX_HEIGHT_UNITS) <= z
+        && z < floor
+        && top <= ceiling
+    {
+        Some('e')
+    } else {
+        None
+    }
+}
+/// The vertical invariant V′ of the movers policy at a tic boundary (M3h8 note
+/// §4.1, decision N2), replacing [`vertical_admitted`] for that policy only: the
+/// `z` and `momz` witnesses of the heights policy, then one of the cases (a)–(e)
+/// of [`v_prime_case`] with the actor's own `floorz`/`ceilingz`.
+pub(crate) fn v_prime_admitted(
+    actor: &Actor,
+    admission: &mover_rules::MoverAdmission,
+) -> Result<(), SimError> {
+    if !sight::within(actor.z, HEIGHTS_Z_UNITS)
+        || !sight::within(actor.momz, HEIGHTS_MOMZ_UNITS)
+        || !sight::within(actor.floor, HEIGHTS_Z_UNITS)
+        || !sight::within(actor.ceiling, HEIGHTS_Z_UNITS)
+        || v_prime_case(actor, admission.reach, admission.delta).is_none()
+    {
+        return Err(MapScaleError::Vertical.into());
+    }
+    Ok(())
+}
+impl Simulation {
+    /// Whether `actor` is a gibbed corpse admitted by the movers policy
+    /// ([`planes::is_gibs`]); always false under every other policy.
+    #[inline]
+    pub(crate) fn gibbed(&self, actor: &Actor) -> bool {
+        self.player_policy().has_movers() && planes::is_gibs(actor)
+    }
+    /// The tic-boundary vertical invariant of the selected policy for one
+    /// non-impact actor: V′ under the movers policy, the heights invariant under
+    /// the other heights policies.
+    pub(crate) fn vertical_invariant(&self, actor: &Actor) -> Result<(), SimError> {
+        if self.player_policy().has_movers() {
+            let admission = self.movers.as_ref().ok_or(MapSpawnError::Context)?;
+            v_prime_admitted(actor, admission)
+        } else {
+            vertical_admitted(actor)
+        }
+    }
 }
 /// Position admission under the policy: the derived room, or the historical
 /// absolute margin when no room is admitted.
@@ -666,11 +778,14 @@ impl Simulation {
     pub(crate) fn room(&self) -> Option<RoomBounds> {
         self.original_player.and_then(|p| p.room)
     }
-    /// The sector table world items are validated against under heights.
-    pub(crate) fn item_sectors(&self) -> Option<&[SectorState]> {
-        self.player_policy()
-            .has_heights()
-            .then_some(self.sectors.as_slice())
+    /// What world items' heights are validated against: the item's own stored
+    /// heights under the movers policy (the relaxed witness, M3h8 note §4.2), the
+    /// sector table under heights, the flat world otherwise.
+    pub(crate) fn item_sectors(&self) -> crate::world_pickups::ItemHeights<'_> {
+        crate::world_pickups::ItemHeights::for_policy(
+            self.player_policy(),
+            crate::staging::Sectors::committed(&self.sectors),
+        )
     }
     /// Rust-only spawn fit of the heights policy (§4.3 of the M3h4 note): the
     /// spawn's resulting `z` lies within `[floor, ceiling - height]` of the spawn
@@ -690,7 +805,7 @@ impl Simulation {
             .and_then(|r| r.actor_type(ty))
             .ok_or(ActorError::InvalidType)?
             .height();
-        if spawn_fits(&self.world, &self.sectors, position, spawn, height) {
+        if spawn_fits(&self.world, self.sector_view(), position, spawn, height) {
             Ok(())
         } else {
             Err(MapScaleError::Fit.into())

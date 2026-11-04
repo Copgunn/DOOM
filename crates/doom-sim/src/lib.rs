@@ -33,6 +33,7 @@ mod player_armor;
 mod player_bonuses;
 mod player_map_scale;
 mod player_monsters;
+pub use mover_rules::{MoverBounds, mover_bounds, special_window_lines};
 pub use player_armor::{
     ArmorEvent, ArmorType, PLAYER_DEMON_ARMOR_CONTEXT_SCHEMA, PlayerArmorState,
 };
@@ -46,7 +47,7 @@ pub use player_map_scale::{
 pub use player_monsters::{
     MAX_PLAYER_MONSTERS, PLAYER_DIAGONAL_CONTEXT_SCHEMA, PLAYER_HEIGHTS_CONTEXT_SCHEMA,
     PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
-    PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
+    PLAYER_MOVERS_CONTEXT_SCHEMA, PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -100,7 +101,7 @@ pub use projectiles::{
 };
 mod weapons;
 pub use weapons::{
-    BT_ATTACK, BT_CHANGE, BT_WEAPONMASK, Psprite, Weapon, WeaponError, WeaponEvent,
+    BT_ATTACK, BT_CHANGE, BT_USE, BT_WEAPONMASK, Psprite, Weapon, WeaponError, WeaponEvent,
     WeaponInventory, WeaponPlayer,
 };
 mod combat;
@@ -117,9 +118,11 @@ pub use lifecycle::{
 };
 pub use spawning::MapSpawnReport;
 mod geometry;
+mod line_triggers;
 mod line_work;
 mod map_extent;
 mod map_scale;
+mod use_lines;
 pub use map_extent::{
     MAP_EXTENT_COLLISION_WORK, MAP_EXTENT_MAX_CELLS, MAP_EXTENT_PREPARATION_BYTES,
     MAP_EXTENT_SIGHT_WORK, MapExtentLimits,
@@ -129,8 +132,11 @@ pub use map_scale::{
     MapScaleMetrics,
 };
 mod movement;
+mod mover_rules;
+mod movers;
 mod multisector;
 mod noise;
+mod planes;
 pub use movement::{ActorMoveAttempt, Solidity};
 pub use multisector::{
     Gravity, Location, MoveFailure, Opening, OpeningVisit, SectorMoveAttempt, SectorState,
@@ -138,6 +144,7 @@ pub use multisector::{
 };
 mod sector_thinkers;
 mod snapshot;
+mod staging;
 mod store;
 mod thinkers;
 include!("fine_sine.rs");
@@ -146,6 +153,8 @@ pub use actor::{Actor, ActorSpec, TicCommand};
 use doom_map::Map;
 use doom_types::{DoomRng, Fixed};
 pub use geometry::{Collision, GeometryError, LineGeometry, MoveAttempt, StaticWorld};
+pub use movers::{Door, DoorKind, FloorKind, FloorMove, Plat, PlatStatus};
+pub use planes::{ClipOutcome, MoveResult, MoverEvent, MoverFunction, Plane, SoundOrigin};
 pub use sector_thinkers::{
     FireFlicker, Glow, LightFlash, SectorThinker, SpecialEvent, StrobeFlash,
 };
@@ -287,6 +296,14 @@ pub enum SimError {
     UnsupportedButtons,
     /// Logical u64 tic counter exhausted; no state is advanced.
     TicOverflow,
+    /// Under the movers policy, the exit switch ran `G_ExitLevel` in an earlier tic:
+    /// the next `G_Ticker` would run `G_DoCompleted` (intermission and next map are
+    /// out of scope); no state is advanced.
+    LevelExited,
+    /// Under the movers policy, a dead player held `BT_USE` in an earlier tic
+    /// (`PST_REBORN`): the next `G_Ticker` would run `G_DoReborn` (a level restart,
+    /// out of scope, decision N3); no state is advanced.
+    PlayerReborn,
 }
 impl fmt::Display for SimError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -361,6 +378,8 @@ pub enum Phase {
 /// Deterministic observations. Presentation may read but never consume/mutate them.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
+    /// Movers-policy plane, sector-change and clip observations (DSIM35 tag 26).
+    Mover(MoverEvent),
     /// Specials-policy secret, sky-removal and sky-shot observations (DSIM34).
     Special(SpecialEvent),
     /// Original player armor absorption, DSIM26.
@@ -560,6 +579,23 @@ pub struct Simulation {
     /// plan's staging buffer (like `spare_specials`). Empty, and never allocating,
     /// without sector thinkers. Never read or encoded.
     pub(crate) spare_sector_slots: Vec<store::Slot<sector_thinkers::SectorThinker>>,
+    /// The runtime special of every line (`line_t::special`), changed by W1 and S1
+    /// lines; empty, and never allocating, under every policy without movers, whose
+    /// line specials are the map's.
+    pub(crate) line_specials: Vec<i16>,
+    /// The sector and line-special staging buffers of the last committed plan (the
+    /// tables a commit replaced), reused as the next plan's (like `spare_specials`).
+    /// Never read or encoded.
+    pub(crate) spare_writes: staging::StagedWrites,
+    /// Under the movers policy, what its load rules derived from the immutable map
+    /// (families, `M`, reachable heights, `Δ`); never canonical state.
+    pub(crate) movers: Option<mover_rules::MoverAdmission>,
+    /// Under the movers policy, source `gameaction == ga_completed`: the exit switch
+    /// ran `G_ExitLevel` and every later tic is refused (`SimError::LevelExited`).
+    pub(crate) level_exit: bool,
+    /// Under the movers policy, the running switch buttons (`buttonlist`): timer,
+    /// line and sound-origin sector of each slot, DSIM35 state (decision N9).
+    pub(crate) buttons: use_lines::Buttons,
 }
 /// Static-geometry table bounds a construction prepares against: the M3f2/M3h3
 /// constants for every historical profile, the WAD format's own bounds (M3h6 note
@@ -740,6 +776,11 @@ impl Simulation {
             specials: None,
             spare_specials: Vec::new(),
             spare_sector_slots: Vec::new(),
+            line_specials: Vec::new(),
+            spare_writes: staging::StagedWrites::default(),
+            movers: None,
+            level_exit: false,
+            buttons: [None; mover_rules::MAX_BUTTONS],
         })
     }
     /// The sectors a type's dimensions are admitted against: the heights policy's
@@ -749,6 +790,12 @@ impl Simulation {
             Some(envelope) => std::slice::from_ref(envelope),
             None => &self.sectors,
         }
+    }
+    /// The committed runtime sectors as a read-through view without staged writes:
+    /// every query outside a checked plan, and every historical profile.
+    #[inline]
+    pub(crate) fn sector_view(&self) -> staging::Sectors<'_> {
+        staging::Sectors::committed(&self.sectors)
     }
     /// Historical service-family selection. For original-ID contexts, also use
     /// [`Self::original_execution_profile`] to distinguish the explicit policies.
@@ -819,7 +866,7 @@ impl Simulation {
         if index >= self.world.lines.len() {
             return Err(GeometryError::InvalidReference.into());
         }
-        Ok(multisector::opening(&self.world, &self.sectors, index))
+        Ok(multisector::opening(&self.world, self.sector_view(), index))
     }
     /// Read-only source TryMove decision, including step/dropoff/headroom checks.
     pub fn check_multisector_position(
@@ -862,7 +909,7 @@ impl Simulation {
         }
         let actor = self.actors.get(id).ok_or(StoreError::InvalidHandle)?;
         Ok(multisector::check_move(
-            (&self.world, &self.sectors),
+            (&self.world, self.sector_view()),
             id,
             actor,
             target,
@@ -1181,6 +1228,13 @@ impl Simulation {
         if self.specials.as_ref().is_some_and(|s| !s.spawned) {
             return Err(MapSpawnError::LevelSpecials.into());
         }
+        // G_Ticker runs a pending gameaction before anything else, paused or not.
+        if self.level_exit {
+            return Err(SimError::LevelExited);
+        }
+        if self.original_player.as_ref().is_some_and(|p| p.reborn) {
+            return Err(SimError::PlayerReborn);
+        }
         if self.paused {
             return Ok(());
         }
@@ -1294,7 +1348,10 @@ impl Simulation {
                 &mut self.actors,
                 thinkers::Inputs {
                     world: &self.world,
-                    sectors: &self.sectors,
+                    committed: &self.sectors,
+                    committed_lines: &[],
+                    writes: &mut staging::StagedWrites::default(),
+                    leveltime: self.tic,
                     profile: self.profile,
                     bindings: self.bindings,
                     live_bindings: &mut self.bindings,
@@ -1460,11 +1517,17 @@ mod imp_tests;
 #[path = "../../../tests/support/m3h3.rs"]
 mod map_scale_evidence;
 #[cfg(test)]
+mod movers_replay;
+#[cfg(test)]
 mod player_diagonal_tests;
 #[cfg(test)]
 mod player_heights_tests;
 #[cfg(test)]
 mod player_map_scale_tests;
+#[cfg(test)]
+mod player_movers_soak_tests;
+#[cfg(test)]
+mod player_movers_tests;
 #[cfg(test)]
 mod player_real_map_tests;
 #[cfg(test)]
@@ -1475,3 +1538,5 @@ mod real_map_evidence;
 #[cfg(test)]
 #[path = "../../../tests/support/m3h7.rs"]
 mod specials_evidence;
+#[cfg(test)]
+mod v_prime_tests;

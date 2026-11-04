@@ -166,6 +166,7 @@ all dependent representations and services.
 | Map Demon arithmetic margins | Absolute spawn coordinates 978, owner query margin 1,008, other actor coordinates 994, general actor/query range 1,024 map units; body initial XY momentum and admitted Z momentum at most 64 units | [map preflight](../crates/doom-sim/src/demon_map_spawn.rs), [spawn checks](../crates/doom-sim/src/spawning.rs), [sight](../crates/doom-sim/src/sight.rs) |
 | Real-map policy (wire 17) | The WAD format's own bounds (32,767 records per table, 32,768 BLOCKMAP words, fewer cells than words); sight and collision work computed from the map; compiled cell references at most 2²⁴ and preparation requests at most 64 MiB as allocation guards; see [the classic-map-scale section](#original-monsters-at-classic-map-scale) | [validate_real_map](../crates/doom-sim/src/map_extent.rs), [GeometryCapacity](../crates/doom-sim/src/lib.rs) |
 | Specials policy (wire 18) | The real-map bounds plus sector specials 1–5, 7–9, 12, 13, 16, 17 only; line special 48 on at most 64 one-sided lines; sector lights within `i16::MIN + 64 ..= i16::MAX - 64`; a sector-thinker slot class sized by the light-sector count at load; see [the sky and static-specials section](#original-monsters-with-sky-and-static-specials) | [validate_specials](../crates/doom-sim/src/demon_expanded_map.rs), [sector thinkers](../crates/doom-sim/src/sector_thinkers.rs) |
+| Movers policy (wire 19) | The specials bounds plus line specials 1, 63, 109, 88, 36, 38, 11 (no two-sided 48); at most 30 lift sectors, 16 SR switch lines and 8 two-sided special lines per 2 × 2 BLOCKMAP window; reachable heights within ±512; a sector-thinker slot class of light sectors + 2 × mover sectors; see [the movers section](#original-monsters-with-doors-lifts-floors-switches-and-the-exit) | [validate_movers](../crates/doom-sim/src/mover_rules.rs), [movers](../crates/doom-sim/src/movers.rs) |
 
 For example, collision and hitscan services contain fixed line-work buffers tied
 to the line bound; raising only the rejection constant would not be sufficient.
@@ -180,7 +181,8 @@ expand their declared slices while retaining historical admission.
 | Historical sight through profile 18 | 8,192 units of fully expanded BSP traversal work, including repeated children/segs | [sight work validation](../crates/doom-sim/src/sight.rs) |
 | Hitscan | 64 grid-cell iterations; candidate count bounded by `64 * (128 + 1024)` | [combat tracing](../crates/doom-sim/src/combat_trace.rs) |
 | State actions | 128 immediate entry work units, 8,192 planned step work units, and bounded child spawning | [lifecycle planning](../crates/doom-sim/src/lifecycle.rs) |
-| Thinker pass | One visit per slot of either class: the actor slots plus, under the specials policy, the light-sector count | [ThinkerStore](../crates/doom-sim/src/store.rs) |
+| Thinker pass | One visit per slot of either class: the actor slots plus, under the specials policy, the light-sector count, and under the movers policy the light-sector count plus twice the mover-sector count | [ThinkerStore](../crates/doom-sim/src/store.rs) |
+| Moving planes (movers policy) | At most two steps per mover sector per tic, two `P_ChangeSector` calls per step, each re-clipping the linked things of the sector's block box; one use trace per press | [planes](../crates/doom-sim/src/planes.rs), [use](../crates/doom-sim/src/use_lines.rs) |
 
 Some work bounds also preserve source semantics: the hitscan cell loop follows
 [original P_PathTraverse](../linuxdoom-1.10/p_maputl.c), so expanding it may change
@@ -366,9 +368,10 @@ requests as a Rust safety policy. Unsupported actions never silently no-op.
 ## Deferred systems
 
 Full player damage/inventory/armor/powers/scoring, multiplayer, Fast/Nightmare
-execution, respawning, resurrection, dynamic sectors, doors, line and sector specials
-beyond the static set of the
-[specials policy](#original-monsters-with-sky-and-static-specials), complete
+execution, respawning, resurrection, line and sector specials beyond the static set of
+the [specials policy](#original-monsters-with-sky-and-static-specials) and the seven
+door, lift, floor, switch and exit types of the
+[movers policy](#original-monsters-with-doors-lifts-floors-switches-and-the-exit), complete
 map/actor spawning, generalized monster interactions, demos and presentation remain
 unsupported. Spectre metadata recognition is not Spectre gameplay compatibility.
 Source undefined behavior is not a compatibility target; checked Rust rejection
@@ -1670,8 +1673,167 @@ still apply. Moving sectors, doors, lifts, floors, switches, the level exit, cru
 teleporters, light-switching lines, the view-height part of `P_CalcHeight`
 (`viewheight`, `deltaviewheight`, `viewz` and its bobbing; the explicit `CalcHeight` step
 computes only the momentum bob `player->bob`) and every other monster, weapon or item stay
-excluded. E1M1 is still not admitted: it needs the roster scale,
-eight decoration and barrel types and the doors, lifts, floors and exit switch of the
-next stage. See [source investigation](M3H7_REFERENCE_INVESTIGATION.md),
+excluded under this policy; the
+[movers policy](#original-monsters-with-doors-lifts-floors-switches-and-the-exit) admits
+E1M1's doors, lifts, floors, switches and exit. E1M1 is still not admitted: it needs the
+roster scale and eight decoration and barrel types. See [source investigation](M3H7_REFERENCE_INVESTIGATION.md),
 [DSIM34](STATE_FORMAT.md#dsim-v34--original-monsters-with-sky-and-static-specials) and
 [observed evidence](validation/M3H7.md).
+
+## Original monsters with doors, lifts, floors, switches and the exit
+
+`PlayerMonstersMoversV1` (wire 19, context `PLAYER-MONSTERS-MOVERS-1-MEDIUM-v1`,
+DSIM-v35) is a separate opt-in superset of `PlayerMonstersSpecialsV1`. Select it with
+`Simulation::original_player_movers_map`, which takes no slot limit, spawn the THINGs and
+the player body, then call `Simulation::spawn_level_specials` once before the first tic,
+exactly as for the specials policy. The roster (eight monsters, sixteen pickups, eight
+drops), weapons, items, fireballs, 320 actor slots, 208 live fireballs, arithmetic
+certificate, slide-window rule, boundary rules, spawn rule, escape and intercept
+witnesses, sky, lights, damage floors, secrets and whole-tic rollback are the specials
+policy's. Older policies, wires and DSIM20–34 are unchanged: under every earlier policy
+the line specials below, `BT_USE` and moving planes stay rejected and no sector height
+changes after construction.
+
+What changes is that sector floors and ceilings move, line specials become runtime state,
+the player can use lines and cross them, monsters open doors, and the exit switch ends
+the level (M3h8 note [§4.0](M3H8_REFERENCE_INVESTIGATION.md#40-the-admitted-domain)).
+
+| Admitted line special | Trigger | Source behavior |
+| --- | --- | --- |
+| 1 (DR door) | use, player or monster, front side | `EV_VerticalDoor` on the line's back sector: opens a closed door (speed 2 units, top at the lowest surrounding ceiling − 4, waits 150 tics, closes); a player's use reverses a door that is going up or waiting into closing and a closing door back up; a monster only sends a closing door up. Kept (repeatable) |
+| 63 (SR door) | use, player, front side | `EV_DoDoor(normal)` on every tagged sector without a mover; the switch sound and a 35-tic button only when a door was created. Kept |
+| 109 (W1 blazing door) | player crossing | `EV_DoDoor(blazeOpen)` (speed 8, stays open). Cleared |
+| 88 (WR lift) | player or monster crossing | `EV_DoPlat(downWaitUpStay)`: lowers at speed 4 to the lowest surrounding floor, waits 105 tics, rises to the height it started from. Kept |
+| 36 (W1 turbo floor) | player crossing | `EV_DoFloor(turboLower)`: speed 4 to the highest surrounding floor + 8 (in one tic if that is above). Cleared |
+| 38 (W1 floor to lowest) | player crossing | `EV_DoFloor(lowerFloorToLowest)`: speed 1 to the lowest surrounding floor. Cleared |
+| 11 (S1 exit switch) | use, player, front side | the special is cleared, the switch sound plays, `G_ExitLevel` runs |
+
+A W1 line is cleared even when its `EV_*` started nothing; tag 0 acts on every untagged
+sector, in sector order, as in the source. A use from the back side of any special line,
+and a monster's use of anything but 1 (or of an `ML_SECRET` line), does nothing but still
+stops the use trace. A shot never triggers an admitted line. Two-sided lines with no
+admitted special are crossed and used exactly as before.
+
+Load rules (M3h8 note [§7](M3H8_REFERENCE_INVESTIGATION.md#7-mover-load-rules-refining-m3h7-44)),
+all computed once from the static map in exact integers; a failing map is rejected by the
+constructor with a field-less error and no state is built, never during play:
+
+| Rule | Rejected with |
+| --- | --- |
+| Every line special is 0, a one-sided 48 or one of 1, 63, 109, 88, 36, 38, 11 (every other special, on either side, including a **two-sided 48**, decision N1 option iii) | `PursuitError::Specials` |
+| Every DR line (1) has a back side (no `sides[-1]` read) | `MapScaleError::DoorLine` |
+| No sector belongs to two mover families (doors: back sectors of 1 and targets of 63 and 109; lifts: targets of 88; floors: targets of 36 and 38); door kinds 1, 63 and 109 may share a sector | `MapScaleError::MoverFamily` |
+| Every mover sector has a two-sided neighbor (no `MAXINT − 4` door top; a turbo destination still folds from −500, so neighbor floors all below −500 give −492, as in the source) | `MapScaleError::MoverNeighbor` |
+| Every reachable floor and ceiling height (the note's §5 fixpoint over the admitted lines) stays within ±512 | `MapScaleError::MoverHeights` |
+| No door's smallest possible top lies below its floor (no inverting door) | `MapScaleError::InvertingDoor` |
+| No door sector has a two-sided line with the sector on both sides | `MapScaleError::SelfReferencingDoor` |
+| At most 30 lift sectors (`MAXPLATS`) and 16 SR switch lines (`MAXBUTTONS`) | `MapScaleError::MoverCount` |
+| At most 64 one-sided scrollers (`MAXLINEANIMS`, the Stage A rule) | `PursuitError::Specials` |
+| At most 8 distinct two-sided special lines in any 2 × 2 window of BLOCKMAP cells, so no position check can append a ninth `spechit` entry (`MAXSPECIALCROSS`) | `MapScaleError::SpecialWindow` |
+| No mover sector has an `F_SKY1` ceiling (decision N4) | `MapScaleError::SkyMover` |
+| Every 11 and 63 line's front side carries one of the 38 episode-1 `alphSwitchList` names as its upper, lower or middle texture, ignoring ASCII case (decision N9a) | `MapScaleError::SwitchTexture` |
+| Every mover sector has a defined `blockbox`: the `P_GroupLines` box arithmetic stays inside `fixed_t`, so every `P_ChangeSector` of a plane step walks defined BLOCKMAP cells (rule 10, added by the independent review; defensive, since the real-map arithmetic certificate already refuses every constructed counterexample) | `MapScaleError::MoverBlockBox` |
+
+No admitted line is a crusher; crushers are deferred, not emulated. The Stage A sector
+special, light and inherited real-map rejections still apply.
+
+Behavior during play:
+
+- **Movers.** Doors, lifts and floors are sector thinkers in the shared thinker order. A
+  mover joins at the tail of the order when it is created (in the players phase for a
+  use, so a door opened by a use steps in the same tic; during the thinker pass for a
+  crossing or a monster's use) and takes the lowest free sector-thinker slot. A finished
+  mover keeps its slot and its place until the next pass reaches it, while its sector
+  can already receive a replacement, so a sector can step twice in one tic. No mover,
+  trigger or plane path draws `P_Random`.
+- **Moving planes.** Each step re-clips every BLOCKMAP-linked thing in the sector's
+  block box (`P_ChangeSector`). A thing that still fits follows its floor or is pushed
+  under the ceiling; a shootable thing that does not fit refuses the step, which is
+  undone (a closing door reopens, a rising lift goes back down; a refused last step
+  stops the plane short of its destination and the mover ends there);
+  a corpse that does not fit becomes giblets (state `S_GIBS`, height and radius 0,
+  `MF_SOLID` cleared, final) and the step stands; a dropped item that does not fit is
+  removed; other non-shootable things stay as they are. A re-clipped player touches
+  overlapping pickups and collects them inside the clip. `crush` is false for every
+  admitted mover, so no crush damage is dealt.
+- **Crossing and `spechit`.** The two-sided special lines a position check visits form
+  the source's `spechit`; after an accepted move the crossed ones are triggered in the
+  source's reverse order. A monster's crossing acts only on 88; a fireball's crossings
+  do nothing.
+- **Monster door use.** A monster's failed move with special lines in `spechit` resets
+  its direction (`DI_NODIR`) and uses each line in reverse; the move counts as
+  successful if a use did, which is how monsters open DR doors.
+- **Use.** `BT_USE` is admitted. `use_down` starts true (`G_PlayerReborn`), so a use held
+  from the first tic does nothing until released; a use runs one 64-unit trace per press
+  after the weapon change; a closed non-special line plays `sfx_noway` and stops it.
+- **Switches and buttons.** The switch sound plays at the first button slot's sector (a
+  global sound when that slot is free); an
+  SR switch holds one of the 16 button slots for 35 tics, after which a restore sound
+  plays in the Specials phase. The slots are DSIM35 state; switch textures are not
+  simulated (the load rule above makes every admitted switch take the vanilla
+  texture-found path).
+- **Exit.** The tic in which the exit switch is used completes (thinkers, specials,
+  `leveltime`), `level.exit` is set, and every later `advance` or `step` returns
+  `SimError::LevelExited` with the state unchanged. The intermission and the next map are
+  out of scope.
+- **Reborn.** Under this policy a dead player may hold `BT_USE` alone (the only dead
+  command besides the empty one). That tic completes, the player state becomes
+  `PST_REBORN` (DSIM35 `original_player.0.state` 2), and every later `advance` or `step`
+  returns `SimError::PlayerReborn` with the state unchanged (decision N3). The level
+  restart is out of scope. Both refusals are checked before the pause test.
+- **Vertical invariant V′.** The M3h4 vertical invariant is replaced, under this policy
+  only, by V′ (note [§4.1](M3H8_REFERENCE_INVESTIGATION.md#41-b2-the-vertical-invariant-v)):
+  besides a thing between its floor and ceiling, it admits a non-shootable thing stuck
+  under a closed door on its floor, a thing sunk by at most one step `Δ` below its floor
+  (landed by its next move), a shootable thing stuck on its floor from a spawn
+  placement, and a corpse or giblets down to the lowest reachable height minus 56. A
+  state outside V′ refuses the tic with `MapScaleError::Vertical`, state kept.
+- **Item witness.** Items require `z == floorz` with their own stored heights instead of
+  equality with the center sector's heights (note
+  [§4.2](M3H8_REFERENCE_INVESTIGATION.md#42-b3-the-relaxed-item-witness)), since a clip
+  may lift an item onto a step its box overlaps.
+- **Staging.** Sector heights, runtime line specials, the button slots, `level.exit` and
+  the use latch are staged with the checked tic: a refused tic leaves them, the thinker
+  store and order, the RNG and the events byte-identical.
+
+| Limit (movers policy) | Value |
+| --- | --- |
+| Admitted line specials | 1, 63, 109, 88, 36, 38, 11, plus one-sided 48 (at most 64) |
+| Sector-thinker slots | light sectors + 2 × mover sectors, fixed at load; visits per pass 320 + that number |
+| Lift sectors / SR switch lines | 30 (`MAXPLATS`) / 16 (`MAXBUTTONS`) |
+| `spechit` per position check | 8 (`MAXSPECIALCROSS`), guaranteed by the window rule |
+| Reachable heights | within ±512 |
+| Use traces | one per press, 64 units, under the 128-intercept witness |
+
+The public `doom_sim::mover_bounds(&Map)` runs these line and sector load rules (not the
+geometry rules) and returns `MoverBounds { reach, delta, movers }`: the smallest and
+largest reachable height, the `Δ` of V′ and the number of sectors an admitted line can
+move; `doom_sim::special_window_lines(&Map)` returns the largest window count of the
+`spechit` rule. Both are admission queries; neither builds a simulation.
+
+Fidelity gaps and refusals:
+
+- **`SpecialCross` witness.** A position check that would append a ninth `spechit` entry
+  refuses the tic with `MapScaleError::SpecialCross`, state kept. The source writes past
+  `spechit[8]` (undefined; demo-compatible ports emulate the DOS layout). The window rule
+  makes it unreachable on admitted maps; it is reached only by a Rust-only test lane with
+  the rule bypassed. Like the corner jump and the 129th intercept, it is a known fidelity
+  gap to revisit for demo compatibility (M4).
+- **Undefined behavior refused rather than emulated.** The ninth `spechit` write, the
+  `sides[-1]` read of a one-sided DR line, the door cast of a non-door `specialdata`
+  (shared families), the 31st lift and the 17th button (`I_Error` in the source) and
+  inverting doors are rejected at load, never emulated.
+
+Still excluded: every other line special (locked doors and keys, the other door, lift,
+floor, stair, donut and ceiling types, crushers, teleporters, `raiseToTexture`,
+perpetual and stopping lifts, light-switching and gun lines, the other exits),
+two-sided scrolling walls, sector specials 10, 11 and 14, sky ceilings over movers, the
+intermission, the next map and the level restart, the view-height part of
+`P_CalcHeight` and every other monster, weapon or item. E1M1 is still not admitted: it
+needs the roster scale (29 monsters and 53 pickups on UV against 8 and 16), eight
+decoration and barrel types and, under decision N1 as provisionally adopted, its eight
+two-sided scrollers (note
+[§13](M3H8_REFERENCE_INVESTIGATION.md#13-e1m1-readiness-under-the-movers-policy)). See
+[source investigation](M3H8_REFERENCE_INVESTIGATION.md),
+[DSIM35](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit) and
+[observed evidence](validation/M3H8.md).

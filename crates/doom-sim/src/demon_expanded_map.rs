@@ -14,6 +14,9 @@ pub(crate) struct ExpandedSelection {
     pub real_map: bool,
     /// Sky ceilings and the static sector specials (specials policy).
     pub specials: bool,
+    /// Doors, lifts, floors, switches and the exit (movers policy, a superset of
+    /// the specials policy: `specials` is set too).
+    pub movers: bool,
 }
 impl Simulation {
     /// Profile 20: larger static maps with the exact map-context Demon registry.
@@ -38,6 +41,7 @@ impl Simulation {
                 type_envelope: false,
                 real_map: false,
                 specials: false,
+                movers: false,
             },
         )
     }
@@ -55,6 +59,7 @@ impl Simulation {
             type_envelope,
             real_map,
             specials,
+            movers,
         } = selection;
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
@@ -70,10 +75,17 @@ impl Simulation {
         if !real_map && map.things().len() > MAX_DEMON_MAP_THINGS {
             return Err(MapSpawnError::WorkLimit.into());
         }
-        if specials {
-            validate_specials(&map)?;
-        } else if map.linedefs().iter().any(|l| l.special != 0)
-            || map.sectors().iter().any(|s| s.special != 0)
+        let movers = if movers {
+            Some(mover_rules::validate_movers(&map)?)
+        } else {
+            if specials {
+                validate_specials(&map)?;
+            }
+            None
+        };
+        if !specials
+            && (map.linedefs().iter().any(|l| l.special != 0)
+                || map.sectors().iter().any(|s| s.special != 0))
         {
             return Err(PursuitError::Specials.into());
         }
@@ -118,7 +130,7 @@ impl Simulation {
             sim.world.extent_sight_work = Some(admission.sight_work);
             sim.world.sight_work_budget = admission.sight_budget;
             if specials {
-                sim.install_specials(limit)?;
+                sim.install_specials(limit, movers)?;
             }
             sim
         } else {
@@ -157,18 +169,31 @@ impl Simulation {
     }
 
     /// The specials policy's load-time state: a sector-thinker slot class bounded by
-    /// the number of light sectors (the only sector thinkers this policy creates,
-    /// all at load), so the visit budget is the 320 actor slots plus that count;
-    /// the per-sector sky identity; and the runtime lights and specials, still the
-    /// map's until `spawn_level_specials` runs.
-    fn install_specials(&mut self, limit: u32) -> Result<(), SimError> {
+    /// the number of light sectors `L` (the only sector thinkers this policy
+    /// creates, all at load), so the visit budget is the 320 actor slots plus that
+    /// count; the per-sector sky identity and `blockbox`; and the runtime lights and
+    /// specials, still the map's until `spawn_level_specials` runs.
+    ///
+    /// Under the movers policy the slot class holds `L + 2M` (`M` mover sectors: a
+    /// removed mover keeps its slot until the next pass while a replacement for its
+    /// sector can exist, decision N8), so the visit budget is `320 + L + 2M`; the
+    /// runtime line specials start as the map's, and the admission is kept.
+    fn install_specials(
+        &mut self,
+        limit: u32,
+        movers: Option<mover_rules::MoverAdmission>,
+    ) -> Result<(), SimError> {
         let map = self.world.map();
         let lights = map
             .sectors()
             .iter()
             .filter(|s| matches!(s.special, 1 | 2 | 3 | 4 | 8 | 12 | 13 | 17))
             .count();
-        let lights = u32::try_from(lights).map_err(|_| StoreError::InvalidLimit)?;
+        let movers_slots = movers.as_ref().map_or(Some(0), |m| m.movers.checked_mul(2));
+        let lights = movers_slots
+            .and_then(|m| m.checked_add(lights))
+            .and_then(|slots| u32::try_from(slots).ok())
+            .ok_or(StoreError::InvalidLimit)?;
         let sky = map
             .sectors()
             .iter()
@@ -182,12 +207,21 @@ impl Simulation {
                 special: s.special,
             })
             .collect();
+        let blockboxes = multisector::sector_block_boxes(map)?;
+        let line_specials = movers
+            .is_some()
+            .then(|| map.linedefs().iter().map(|l| l.special).collect());
         self.actors = ThinkerStore::with_sector_capacity(limit, lights)?;
         self.world.sky_ceilings = Some(sky);
+        self.world.sector_block_boxes = Some(blockboxes);
         self.specials = Some(sector_thinkers::LevelSpecials {
             sectors,
             spawned: false,
         });
+        if let Some(lines) = line_specials {
+            self.line_specials = lines;
+        }
+        self.movers = movers;
         Ok(())
     }
     /// Derived prepared storage metrics; excluded from canonical state.
@@ -218,14 +252,8 @@ pub(crate) fn is_sky_flat(name: &doom_types::LumpName) -> bool {
 /// `PursuitError::Specials`. Every sector light lies in `LIGHT_RANGE`
 /// (`MapScaleError::Light`). Tags are kept: no admitted special reads them.
 pub(crate) fn validate_specials(map: &Map) -> Result<(), SimError> {
-    use sector_thinkers::{ADMITTED_SECTOR_SPECIALS, LIGHT_RANGE, MAX_LINE_ANIMS, SCROLLING_WALL};
-    if map
-        .sectors()
-        .iter()
-        .any(|s| s.special != 0 && !ADMITTED_SECTOR_SPECIALS.contains(&s.special))
-    {
-        return Err(PursuitError::Specials.into());
-    }
+    use sector_thinkers::{MAX_LINE_ANIMS, SCROLLING_WALL};
+    validate_sector_specials(map)?;
     let mut scrollers = 0;
     for line in map.linedefs() {
         match line.special {
@@ -237,10 +265,27 @@ pub(crate) fn validate_specials(map: &Map) -> Result<(), SimError> {
     if scrollers > MAX_LINE_ANIMS {
         return Err(PursuitError::Specials.into());
     }
+    validate_lights(map)
+}
+/// Every sector special is one of `ADMITTED_SECTOR_SPECIALS` or 0
+/// (`PursuitError::Specials`): the sector rule of the specials and movers policies.
+pub(crate) fn validate_sector_specials(map: &Map) -> Result<(), SimError> {
+    use sector_thinkers::ADMITTED_SECTOR_SPECIALS;
     if map
         .sectors()
         .iter()
-        .any(|s| !LIGHT_RANGE.contains(&s.light))
+        .any(|s| s.special != 0 && !ADMITTED_SECTOR_SPECIALS.contains(&s.special))
+    {
+        return Err(PursuitError::Specials.into());
+    }
+    Ok(())
+}
+/// Every sector light lies in `LIGHT_RANGE` (`MapScaleError::Light`).
+pub(crate) fn validate_lights(map: &Map) -> Result<(), SimError> {
+    if map
+        .sectors()
+        .iter()
+        .any(|s| !sector_thinkers::LIGHT_RANGE.contains(&s.light))
     {
         return Err(MapScaleError::Light.into());
     }
@@ -268,7 +313,7 @@ impl Default for SightControl {
 pub(crate) fn action_sight(
     control: Option<&SightControl>,
     world: &StaticWorld,
-    sectors: &[SectorState],
+    sectors: crate::staging::Sectors<'_>,
     observer: Actor,
     target: Actor,
 ) -> Result<SightResult, SimError> {
@@ -326,6 +371,14 @@ struct DemonPlan {
     /// Under the specials policy, the runtime sector lights and specials written
     /// by the light thinkers and secrets of this tic (empty otherwise).
     specials: Vec<sector_thinkers::SectorSpecial>,
+    /// The sector heights and line specials written in this tic, each table in a
+    /// lazy full copy taken on its first write (M3h8 note §9), read through by every
+    /// later query of the plan; nothing staged under every policy without movers.
+    writes: staging::StagedWrites,
+    /// Under the movers policy, `G_ExitLevel` ran in this tic or before.
+    exit: bool,
+    /// Under the movers policy, the staged switch buttons.
+    buttons: use_lines::Buttons,
     events: Vec<Event>,
 }
 impl Simulation {
@@ -371,6 +424,11 @@ impl Simulation {
                 .map_err(|_| StoreError::Capacity)?;
             specials.extend_from_slice(&level.sectors);
         }
+        // The staging buffers of the last committed plan: copied into only on a
+        // plan's first write, so no allocation without writes and none once their
+        // capacity matches the tables.
+        let mut writes = std::mem::take(&mut self.spare_writes);
+        writes.clear();
         Ok(DemonPlan {
             actors: ThinkerStore {
                 slots,
@@ -387,6 +445,9 @@ impl Simulation {
             bindings: self.bindings,
             sound_targets,
             specials,
+            writes,
+            exit: self.level_exit,
+            buttons: self.buttons,
             events: Vec::new(),
         })
     }
@@ -444,7 +505,7 @@ impl Simulation {
                 || (!unlinked_blast
                     && actor.location != Some(self.world.locate_validated(actor.position())))
                 || actor.floor > actor.ceiling
-                || actor.height() <= Fixed::ZERO
+                || (actor.height() <= Fixed::ZERO && !self.gibbed(actor))
             {
                 return Err(MapSpawnError::Ownership.into());
             }
@@ -462,7 +523,7 @@ impl Simulation {
                 // fireball exploded by its own half-step is clipped by its next
                 // P_ZMovement (in the same pass for an in-tic launch), so only
                 // their z/momz witnesses apply.
-                player_map_scale::vertical_admitted(actor)?;
+                self.vertical_invariant(actor)?;
             } else {
                 map_scale::bounded([actor.momz], player_map_scale::momz_bound(policy))?;
                 if policy.has_heights() {
@@ -498,6 +559,11 @@ impl Simulation {
         if let Some(level) = &mut self.specials {
             self.spare_specials = std::mem::replace(&mut level.sectors, plan.specials);
         }
+        let mut writes = plan.writes;
+        writes.commit(&mut self.sectors, &mut self.line_specials);
+        self.spare_writes = writes;
+        self.level_exit = plan.exit;
+        self.buttons = plan.buttons;
         plan.events
     }
     /// New-policy THING setup stages the same bounded actor/RNG/statistics plan.
@@ -525,7 +591,7 @@ impl Simulation {
             access: &mut plan.actors,
             registry: self.registry.as_deref().ok_or(ActorError::InvalidType)?,
             world: &self.world,
-            sectors: &self.sectors,
+            sectors: plan.writes.view(&self.sectors, &self.line_specials),
             options: self.actor_options,
             rng: &mut plan.rng,
             spatial: &mut plan.spatial,
@@ -551,7 +617,7 @@ impl Simulation {
             access: &mut plan.actors,
             registry: self.registry.as_deref().unwrap(),
             world: &self.world,
-            sectors: &self.sectors,
+            sectors: plan.writes.view(&self.sectors, &self.line_specials),
             options: self.actor_options,
             rng: &mut plan.rng,
             spatial: &mut plan.spatial,
@@ -601,6 +667,9 @@ impl Simulation {
         self.preflight_actor_step()?;
         let mut plan = self.demon_plan()?;
         let control = SightControl::default();
+        let movers = self.player_policy().has_movers();
+        // What the use block requested, applied with the staged tables after it.
+        let mut used = use_lines::UseOutcome::default();
         if command_policy {
             plan.events.push(Event::Phase(Phase::Players));
             {
@@ -611,7 +680,7 @@ impl Simulation {
                     access: &mut plan.actors,
                     registry: self.registry.as_deref().ok_or(ActorError::InvalidType)?,
                     world: &self.world,
-                    sectors: &self.sectors,
+                    sectors: plan.writes.view(&self.sectors, &self.line_specials),
                     options: self.actor_options,
                     rng: &mut plan.rng,
                     spatial: &mut plan.spatial,
@@ -651,24 +720,59 @@ impl Simulation {
                     if let Some(error) = control.failure.get() {
                         return Err(self.policy_error(error));
                     }
-                    player_pistol::stage_operation(
+                    if movers {
+                        // The weapon change, the use block, then P_MovePsprites.
+                        player_pistol::stage_operation(
+                            &mut host,
+                            weapons::PlayerWeaponOperation::WeaponChange,
+                            command,
+                            self.tic,
+                            plan.sound_targets.as_mut_slice(),
+                        )
+                        .map_err(|error| self.policy_error(error))?;
+                        used = use_block(&mut host, &mut plan.buttons, command)?;
+                        player_pistol::stage_operation(
+                            &mut host,
+                            weapons::PlayerWeaponOperation::MovePsprites,
+                            command,
+                            self.tic,
+                            plan.sound_targets.as_mut_slice(),
+                        )
+                        .map_err(|error| self.policy_error(error))?;
+                    } else {
+                        player_pistol::stage_operation(
+                            &mut host,
+                            weapons::PlayerWeaponOperation::AfterSpecials,
+                            command,
+                            self.tic,
+                            plan.sound_targets.as_mut_slice(),
+                        )
+                        .map_err(|error| self.policy_error(error))?;
+                    }
+                } else if weapon_policy {
+                    let command = commands[usize::from(PlayerSlot::One.ordinal())];
+                    player_pistol::stage(
                         &mut host,
-                        weapons::PlayerWeaponOperation::AfterSpecials,
                         command,
                         self.tic,
                         plan.sound_targets.as_mut_slice(),
                     )
                     .map_err(|error| self.policy_error(error))?;
-                } else if weapon_policy {
-                    player_pistol::stage(
-                        &mut host,
-                        commands[usize::from(PlayerSlot::One.ordinal())],
-                        self.tic,
-                        plan.sound_targets.as_mut_slice(),
-                    )
-                    .map_err(|error| self.policy_error(error))?;
+                    // P_DeathThink's last statement: BT_USE while dead requests a
+                    // reborn (decision N3); the tic completes and the next is refused.
+                    if movers && !live && command.buttons & weapons::BT_USE != 0 {
+                        let p = host.player.as_deref_mut().ok_or(PlayerBodyError::Profile)?;
+                        p.reborn = true;
+                        host.events
+                            .push(Event::Mover(MoverEvent::Reborn { slot: 0 }));
+                    }
                 }
             }
+            if let Some(line) = used.cleared {
+                plan.writes
+                    .write_line_special(&self.line_specials, line, 0)?;
+            }
+            plan.exit |= used.exit;
             world_pickups::bonus_tick(plan.player.as_mut())?;
             plan.events.push(Event::Phase(Phase::Thinkers));
         } else {
@@ -683,7 +787,10 @@ impl Simulation {
             &mut plan.actors,
             thinkers::Inputs {
                 world: &self.world,
-                sectors: &self.sectors,
+                committed: &self.sectors,
+                committed_lines: &self.line_specials,
+                writes: &mut plan.writes,
+                leveltime: self.tic,
                 profile: self.profile,
                 bindings: plan.bindings,
                 live_bindings: &mut plan.bindings,
@@ -721,15 +828,64 @@ impl Simulation {
                 }
             }
         }
+        // P_UpdateSpecials: the button countdown (movers policy), in its phase.
+        let special_events = movers.then(|| {
+            let mut events = Vec::new();
+            use_lines::update_buttons(&mut plan.buttons, &mut events);
+            events
+        });
         let events = self.commit_demon_plan(plan);
         self.events = std::mem::take(&mut self.pending);
         self.events.extend(events);
-        self.events
-            .extend([Event::Phase(Phase::Specials), Event::Phase(Phase::Respawn)]);
+        match special_events {
+            Some(special_events) => {
+                self.events.push(Event::Phase(Phase::Specials));
+                self.events.extend(special_events);
+                self.events.push(Event::Phase(Phase::Respawn));
+            }
+            None => self
+                .events
+                .extend([Event::Phase(Phase::Specials), Event::Phase(Phase::Respawn)]),
+        }
         self.commands = commands;
         self.tic += 1;
         Ok(())
     }
+}
+
+/// The use block of `P_PlayerThink` (p_user.c:322–331) under the movers policy:
+/// with `BT_USE` held and `usedown` clear, `P_UseLines` and set `usedown`; without
+/// `BT_USE`, clear it. A door the use opens joins the order's tail and steps in this
+/// tic's pass. The S1 clear and the exit are returned for the staged tables.
+fn use_block(
+    host: &mut LifeHost<'_, &mut ThinkerStore<Actor>>,
+    buttons: &mut use_lines::Buttons,
+    command: TicCommand,
+) -> Result<use_lines::UseOutcome, SimError> {
+    let p = host.player.as_deref_mut().ok_or(PlayerBodyError::Profile)?;
+    if command.buttons & weapons::BT_USE == 0 {
+        p.use_down = false;
+        return Ok(use_lines::UseOutcome::default());
+    }
+    if p.use_down {
+        return Ok(use_lines::UseOutcome::default());
+    }
+    p.use_down = true;
+    let id = p.mo.ok_or(PlayerBodyError::Binding)?;
+    let actor = *host.access.get(id).ok_or(PlayerBodyError::Binding)?;
+    use_lines::use_lines(
+        &mut movers::Starter {
+            world: host.world,
+            sectors: host.sectors,
+            store: &mut *host.access,
+            events: &mut *host.events,
+        },
+        buttons,
+        id,
+        actor.position(),
+        actor.angle(),
+        Some(player_map_scale::MAX_INTERCEPTS),
+    )
 }
 
 #[cfg(test)]

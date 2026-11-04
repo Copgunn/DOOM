@@ -137,7 +137,7 @@ fn scanner_rejects_invalid_observers_and_lastlook_without_indexing_panics() {
     assert!(
         perception::scan(
             &s.world,
-            &s.sectors,
+            s.sector_view(),
             &roster,
             &|_| Some(actor),
             a.origin.unwrap(),
@@ -149,7 +149,7 @@ fn scanner_rejects_invalid_observers_and_lastlook_without_indexing_panics() {
     assert!(
         perception::scan(
             &s.world,
-            &s.sectors,
+            s.sector_view(),
             &roster,
             &|_| None,
             a.origin.unwrap(),

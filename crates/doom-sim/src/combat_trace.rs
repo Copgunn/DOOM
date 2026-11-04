@@ -346,11 +346,11 @@ pub(crate) fn aim_with(
     lookup: &impl Fn(ActorId) -> Option<Actor>,
 ) -> Result<AimResult, CombatError> {
     let trace = collect(sim, shooter, angle, range)?;
-    aim_trace(&sim.world, &sim.sectors, shooter, trace, range, lookup)
+    aim_trace(&sim.world, sim.sector_view(), shooter, trace, range, lookup)
 }
 pub(crate) fn aim_trace(
     world: &crate::StaticWorld,
-    sectors: &[crate::SectorState],
+    sectors: crate::staging::Sectors<'_>,
     shooter: ActorId,
     trace: HitscanTrace,
     range: Fixed,
@@ -437,7 +437,7 @@ pub(crate) fn hit_with(
 ) -> (Option<TraceObject>, Option<[Fixed; 3]>, u32) {
     hit_trace(
         &sim.world,
-        &sim.sectors,
+        sim.sector_view(),
         shooter,
         trace,
         range,
@@ -449,7 +449,7 @@ pub(crate) fn hit_with(
 pub(crate) type TraceHit = (Option<TraceObject>, Option<[Fixed; 3]>, u32);
 pub(crate) fn hit_trace(
     world: &crate::StaticWorld,
-    sectors: &[crate::SectorState],
+    sectors: crate::staging::Sectors<'_>,
     shooter: ActorId,
     trace: &HitscanTrace,
     range: Fixed,
@@ -465,7 +465,7 @@ pub(crate) fn hit_trace(
 /// the reason, line and `z`. Without sky identity this is the historical trace.
 pub(crate) fn hit_trace_sky(
     world: &crate::StaticWorld,
-    sectors: &[crate::SectorState],
+    sectors: crate::staging::Sectors<'_>,
     shooter: ActorId,
     trace: &HitscanTrace,
     range: Fixed,
@@ -546,7 +546,7 @@ pub(crate) fn hit_trace_sky(
 
 fn line_sectors(
     world: &crate::StaticWorld,
-    sectors: &[crate::SectorState],
+    sectors: crate::staging::Sectors<'_>,
     index: u16,
 ) -> [crate::SectorState; 2] {
     world.map().linedefs()[usize::from(index)]

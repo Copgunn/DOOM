@@ -172,6 +172,10 @@ pub struct StaticWorld {
     /// compared without case, as `R_FlatNumForName`/`W_CheckNumForName` look it
     /// up. `None` under every other policy (sky is rejected at load there).
     pub(crate) sky_ceilings: Option<Vec<bool>>,
+    /// Under the specials policy and its supersets, every sector's `blockbox`
+    /// (`P_GroupLines`), for the `P_ChangeSector` of a moving sector; `None`
+    /// otherwise. Derived from the immutable map; never canonical state.
+    pub(crate) sector_block_boxes: Option<Vec<Option<crate::multisector::SectorBlockBox>>>,
     floor: Fixed,
     ceiling: Fixed,
 }
@@ -235,6 +239,7 @@ impl StaticWorld {
             sector_lines: None,
             sight_work_budget: 1_048_576,
             sky_ceilings: None,
+            sector_block_boxes: None,
             floor,
             ceiling,
         })

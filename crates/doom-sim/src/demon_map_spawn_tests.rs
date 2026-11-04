@@ -81,7 +81,7 @@ fn native_after_target_suffix_and_removable_target_reject() {
         access: &mut s.actors,
         registry,
         world: &s.world,
-        sectors: &s.sectors,
+        sectors: crate::staging::Sectors::committed(&s.sectors),
         options: s.actor_options,
         rng: &mut s.rng,
         spatial: &mut s.spatial,

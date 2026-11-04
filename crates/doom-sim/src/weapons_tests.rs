@@ -83,3 +83,55 @@ fn pathological_zero_chain_is_bounded() {
     );
     assert_eq!(m.work, 129);
 }
+#[test]
+fn source_state_constants_are_the_named_source_states() {
+    // The constants replace a name search; each must be the index that search finds.
+    for (id, name) in [
+        (STATE_CHAIN1, "S_CHAIN1"),
+        (STATE_PLAY, "S_PLAY"),
+        (STATE_PLAY_ATK1, "S_PLAY_ATK1"),
+        (STATE_PLAY_ATK2, "S_PLAY_ATK2"),
+        (STATE_PLAY_RUN1, "S_PLAY_RUN1"),
+    ] {
+        assert_eq!(lifecycle::source_state_id(name), Some(id), "{name}");
+    }
+    let names = [
+        ["S_PUNCHUP", "S_PUNCHDOWN", "S_PUNCH", "S_PUNCH1", "S_NULL"],
+        [
+            "S_PISTOLUP",
+            "S_PISTOLDOWN",
+            "S_PISTOL",
+            "S_PISTOL1",
+            "S_PISTOLFLASH",
+        ],
+        [
+            "S_SGUNUP",
+            "S_SGUNDOWN",
+            "S_SGUN",
+            "S_SGUN1",
+            "S_SGUNFLASH1",
+        ],
+        [
+            "S_CHAINUP",
+            "S_CHAINDOWN",
+            "S_CHAIN",
+            "S_CHAIN1",
+            "S_CHAINFLASH1",
+        ],
+    ];
+    for (weapon, names) in [
+        Weapon::Fist,
+        Weapon::Pistol,
+        Weapon::Shotgun,
+        Weapon::Chaingun,
+    ]
+    .into_iter()
+    .zip(names)
+    {
+        assert_eq!(
+            weapon.states().map(Some),
+            names.map(lifecycle::source_state_id),
+            "{weapon:?}"
+        );
+    }
+}

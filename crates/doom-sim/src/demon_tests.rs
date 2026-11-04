@@ -37,7 +37,7 @@ fn original_component_range_uses_metadata_not_current_collision_radius() {
         b.spec.radius = Fixed::from_bits(row[1]);
         let result = crate::monsters::melee(
             &s.world,
-            &s.sectors,
+            s.sector_view(),
             s.registry.as_deref().unwrap(),
             a,
             Some(b),

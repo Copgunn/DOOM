@@ -2,7 +2,16 @@
 use crate::*;
 pub(crate) struct Inputs<'a> {
     pub world: &'a StaticWorld,
-    pub sectors: &'a [SectorState],
+    /// The committed sector table; every visit reads it through `writes`, so a
+    /// mover's height writes are visible to every later thinker of the pass.
+    pub committed: &'a [SectorState],
+    /// The committed runtime line specials (empty without movers); read and
+    /// written through `writes` like the sectors.
+    pub committed_lines: &'a [i16],
+    /// The plan's staged sector and line-special writes (empty outside movers).
+    pub writes: &'a mut crate::staging::StagedWrites,
+    /// The source `leveltime` of this tic (the completed-tic count).
+    pub leveltime: u64,
     pub profile: Profile,
     pub bindings: [Option<ActorId>; 4],
     pub live_bindings: &'a mut [Option<ActorId>; 4],
@@ -24,7 +33,10 @@ pub(crate) struct Inputs<'a> {
 pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
     let Inputs {
         world,
-        sectors,
+        committed,
+        committed_lines,
+        writes,
+        leveltime,
         profile,
         bindings,
         live_bindings,
@@ -51,9 +63,44 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                 if checked.is_some_and(|c| c.failure.get().is_some()) {
                     return;
                 }
-                if let Err(error) =
-                    sector_thinkers::visit(context, visit, specials.as_deref_mut(), rng)
-                {
+                let movers = player.as_ref().is_some_and(|p| p.policy.has_movers());
+                let mover = match visit {
+                    Visit::SectorThink(id) => context
+                        .sector_get(id)
+                        .and_then(SectorThinker::mover_sector)
+                        .map(|_| id),
+                    _ => None,
+                };
+                let result = match (visit, mover) {
+                    // T_VerticalDoor, T_PlatRaise, T_MoveFloor at their turn.
+                    (_, Some(id)) if movers => {
+                        let mut host = planes::PlaneHost {
+                            committed,
+                            committed_lines,
+                            writes: &mut *writes,
+                            access: context,
+                            player: player.as_deref_mut(),
+                            statistics: statistics.as_mut(),
+                            perception: perception_inputs,
+                            registry: registry.as_deref().expect("original registry"),
+                            world,
+                            options,
+                            rng: &mut *rng,
+                            spatial: &mut *spatial,
+                            bindings: &mut *live_bindings,
+                            events: &mut *events,
+                            boundary,
+                        };
+                        movers::think(&mut host, id, leveltime)
+                    }
+                    // Only movers are ever removed: the marked entry is unlinked now.
+                    (Visit::SectorRetired(id), _) if movers => {
+                        events.push(Event::Mover(MoverEvent::Unlinked { mover: id }));
+                        Ok(())
+                    }
+                    _ => sector_thinkers::visit(context, visit, specials.as_deref_mut(), rng),
+                };
+                if let Err(error) = result {
                     match checked {
                         Some(control) => control.failure.set(Some(error)),
                         None => refused = refused.or(Some(error)),
@@ -62,6 +109,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
             }
             Visit::Retired(id) => events.push(Event::Retired(id)),
             Visit::Think(id) => {
+                let sectors = writes.view(committed, committed_lines);
                 if perception_inputs
                     .and_then(|p| p.checked)
                     .is_some_and(|c| c.failure.get().is_some())
@@ -167,6 +215,11 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                             command,
                         )
                     };
+                    let crosser = if source_player {
+                        line_triggers::Crosser::Player
+                    } else {
+                        line_triggers::Crosser::Monster
+                    };
                     for event in motion {
                         events.push(match event {
                             movement::MotionEvent::Contact(event) => event.event(),
@@ -177,9 +230,49 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                             movement::MotionEvent::Sector(attempt) => {
                                 Event::SectorMovement { actor: id, attempt }
                             }
+                            // P_CrossSpecialLine after the accepted attempt, with the
+                            // staged tables; a W1 clear is staged after the call.
+                            movement::MotionEvent::Cross(crossing) => {
+                                let result = line_triggers::cross(
+                                    &mut movers::Starter {
+                                        world,
+                                        sectors: writes.view(committed, committed_lines),
+                                        store: &mut *context,
+                                        events: &mut *events,
+                                    },
+                                    id,
+                                    crosser,
+                                    crossing,
+                                )
+                                .and_then(|after| {
+                                    if after == crossing.special {
+                                        Ok(())
+                                    } else {
+                                        writes.write_line_special(
+                                            committed_lines,
+                                            crossing.line,
+                                            after,
+                                        )
+                                    }
+                                });
+                                if let Err(error) = result {
+                                    refuse(perception_inputs, &mut refused, error);
+                                    return;
+                                }
+                                continue;
+                            }
+                            movement::MotionEvent::SpecialCross => {
+                                refuse(
+                                    perception_inputs,
+                                    &mut refused,
+                                    MapScaleError::SpecialCross.into(),
+                                );
+                                return;
+                            }
                         });
                     }
                 }
+                let sectors = writes.view(committed, committed_lines);
                 if (profile == Profile::PlayerWeapons || source_player)
                     && had_xy_momentum
                     && actor.z <= actor.floor
@@ -276,6 +369,20 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
         })
         .expect("built-in traversal preserves links and is bounded by max slots");
     if let Some(error) = refused {
-        panic!("no admitted policy creates a sector thinker: {error}");
+        panic!(
+            "no admitted policy runs movers or sector thinkers outside the checked plan: {error}"
+        );
+    }
+}
+/// Records a refused visit: in the checked transaction's failure, which discards the
+/// tic, or (no admitted policy) in `refused`.
+fn refuse(
+    perception: Option<perception::PerceptionInputs<'_>>,
+    refused: &mut Option<SimError>,
+    error: SimError,
+) {
+    match perception.and_then(|p| p.checked) {
+        Some(control) => control.failure.set(Some(error)),
+        None => *refused = refused.or(Some(error)),
     }
 }
