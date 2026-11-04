@@ -219,10 +219,12 @@ flags unread); this feeds the intercept budget of §5.3.
 3. `if (thing->flags & MF_DROPPED) P_RemoveMobj` (1282–1288): never set on a decoration.
 4. `if (!(thing->flags & MF_SHOOTABLE)) return true;` (1290–1294, "assume it is bloody
    gibs"): every decoration returns here. A door or floor closing onto a decoration
-   never sets `nofit`, never damages it and never spawns blood; `P_ThingHeightClip`'s
-   partial fit then pushes its `z` down with the ceiling (556–557). The Rust `height_clip`
-   and `change_sector` of M3h8 (`planes.rs`) already gate on `health <= 0` and
-   `MF_SHOOTABLE` in this order.
+   never sets `nofit`, never damages it and never spawns blood. A decoration is always
+   on its floor (spawned at `ONFLOORZ`, never given `momz`), so `P_ThingHeightClip`
+   keeps `z = floorz` (542–546) and the ceiling simply ends below its top: V′ case (b)
+   of M3h8 §4.1, already admitted. The Rust `height_clip` and `change_sector` of M3h8
+   (`planes.rs`) already gate on `health <= 0` and `MF_SHOOTABLE` in this order (audit
+   of step 1, [evidence record](validation/M3H9.md)).
 
 ### 2.8 Barrels: `MT_BARREL` (2035) and the explosion chain
 
@@ -648,8 +650,20 @@ and behaviour identical, confirmed by the unchanged goldens and matched digests.
   per cell, `N` re-evaluation and the `P_ChangeSector` measurement; optional E4 (ii).
 - **M3h9c**: the harness of §10, the spawn-rule count, the E1M1-scale synthetic room,
   the matched run; the `walk_to_exit` script authoring is iterative and local.
-- **Risks**: the Rust `PIT_CheckThing` equivalent may special-case monsters and pickups
-  (step 1 decides); hitscan intercepts now include decorations, so a long trace through
+- **Step 1 audit result**: the collision (`movement.rs` `check_things`, `Solidity` from
+  `MF_SOLID`), missile (`projectiles.rs` `missile_contact`), hitscan and aim
+  (`combat_trace.rs`), change-sector and height-clip (`planes.rs`) and thinker
+  (`thinkers.rs`) paths already treat a non-shootable solid or flags-0 thing as C does;
+  every gap is a role or type gate: the per-tic monster preflights (`monsters.rs`
+  `monster_actor`, `demon_map_spawn.rs` pickup/roster/suffix order), spawn
+  classification (`spawning.rs:418–471`, the owner rewrite), `require_role_for` and
+  `state_role_for`, `validate_type_original`, the DSIM reader's `identity`,
+  `gibs_admitted` and the state-keyed `S_GIBS` rule (`diagnostic.rs:1256–1275`, which
+  must become type-keyed since `MT_MISC71` spawns in `S_GIBS` with height 16), and the
+  shared `MAX_LINKED_THINGS` static assert (a per-policy constant instead). The registry
+  already holds the seven types and their states. `Simulation::set_momentum` should
+  refuse a decoration push at the API as it does for items.
+- **Risks**: hitscan intercepts now include decorations, so a long trace through
   a crowded corridor adds thing intercepts (witness unchanged, budget in §5.3); the
   `MF_AMBUSH` bit on decorations must survive into the flags word of the digest.
 - **Quirks recorded, not emulated**: the `P_LoadThings` break on Doom II types (§2.2,
