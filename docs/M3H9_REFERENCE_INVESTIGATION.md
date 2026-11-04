@@ -674,5 +674,21 @@ and behaviour identical, confirmed by the unchanged goldens and matched digests.
   E1M6 has 11).
 
 **Status / next step.** Phase 1 is complete with this note and the census. E1–E8 are
-provisionally adopted (§6). Next: §9 step 1 (the read-only audit), then step 2 (C
-evidence).
+provisionally adopted (§6). Phase 2 progress (M3h9a):
+
+- Step 1 (audit) is recorded in §12 above.
+- Step 2 (C evidence) is done: `tools/reference/m3h9_{geometry,cases,reference}.py`,
+  outputs `tests/reference/m3h9_*`. It has 20 scenarios over 6 rooms and 1,157 tics, 18
+  replayed by Rust and 2 C-only (easy and hard spawn filters). The strict, UBSan and
+  ASan/UBSan traces are byte-identical. No new genuine body or adapter was needed.
+- Step 3 (DSIM36 projection) is done: `tools/reference/e1m1_snapshot.py` and
+  `m3h9_snapshot_goldens.py` produce 290 captures and 15 pinned fixtures. A DSIM36
+  capture differs from the DSIM35 projection of the same rows only in the version, the
+  profile and the context bytes. The draft section is in STATE_FORMAT.
+- Steps 4–6 are done: the profile (wire 20, `has_e1m1`, `decode_e1m1`, version 36),
+  two-sided 48 under wire 20 only, and the seven decoration types with
+  `MAX_DECORATIONS` 32 and `DecorationLimit`. The workspace tests pass and the M3h8
+  goldens and replay are unchanged.
+
+Next: step 7, the Rust DSIM36 writer and reader matched byte for byte against the
+step 3 goldens; then step 8, the replay, example and CI check.
