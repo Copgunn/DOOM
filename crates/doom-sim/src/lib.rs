@@ -132,6 +132,8 @@ pub use map_scale::{
     MAP_SCALE_MAX_LINES, MAP_SCALE_MAX_REFERENCES, MAP_SCALE_MAX_SECTORS, MapScaleLimits,
     MapScaleMetrics,
 };
+mod e1m1_rules;
+pub use e1m1_rules::{E1M1_DECORATIONS, E1M1_LINKED_THINGS, MAX_DECORATIONS};
 mod movement;
 mod mover_rules;
 mod movers;
@@ -1141,13 +1143,16 @@ impl Simulation {
         // The real-map policy refuses a push to an item (`MF_SPECIAL`): nothing in
         // the source gives a pickup momentum, and the DSIM31+ item witness and the
         // tic preflight never admit one that moves. The diagonal policy keeps its
-        // wider admission unchanged (M3h6 note §8.3).
+        // wider admission unchanged (M3h6 note §8.3). The E1M1 policy refuses a
+        // push to a decoration the same way: thrust comes only from `P_DamageMobj`,
+        // which needs `MF_SHOOTABLE` (p_map.c:304–305, 1013–1014, 1170–1171), and
+        // the decoration witness never admits one that moves.
         if self.player_policy().has_real_map()
             && momentum != [Fixed::ZERO; 2]
-            && self
-                .actor(id)
-                .and_then(Actor::life)
-                .is_some_and(|l| l.flags & world_pickups::MF_SPECIAL != 0)
+            && self.actor(id).and_then(Actor::life).is_some_and(|l| {
+                l.flags & world_pickups::MF_SPECIAL != 0
+                    || e1m1_rules::is_decoration(self.player_policy(), l.actor_type)
+            })
         {
             return Err(PlayerBodyError::Unsupported.into());
         }

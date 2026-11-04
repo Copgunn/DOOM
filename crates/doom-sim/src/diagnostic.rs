@@ -758,6 +758,14 @@ impl<'a> Diagnostic<'a> {
                             OriginalActorType::MT_MISC1,
                             OriginalActorType::MT_MISC2,
                             OriginalActorType::MT_MISC3,
+                            // The DSIM36 decorations (admitted by their policy alone).
+                            OriginalActorType::MT_MISC31,
+                            OriginalActorType::MT_MISC48,
+                            OriginalActorType::MT_MISC50,
+                            OriginalActorType::MT_MISC71,
+                            OriginalActorType::MT_MISC62,
+                            OriginalActorType::MT_MISC68,
+                            OriginalActorType::MT_MISC69,
                         ]
                         .into_iter()
                         .any(|ty| {
@@ -807,6 +815,9 @@ impl<'a> Diagnostic<'a> {
         }
         if matches!(self.version, 35 | 36) {
             self.validate_movers()?;
+        }
+        if self.version == 36 {
+            self.validate_decorations()?;
         }
         if matches!(self.version, 29..=36) {
             self.validate_live_projectiles()?;
@@ -1269,9 +1280,17 @@ impl<'a> Diagnostic<'a> {
             return Err(DiagnosticError::Structure);
         }
         // Giblets: PIT_ChangeSector's S_GIBS has height and radius 0, MF_SOLID clear.
+        // Type-keyed: MT_MISC71 (DSIM36) spawns in S_GIBS with height 16, radius 20
+        // and health 1000 (info.c:4255–4276) and is checked by `validate_decorations`.
         for slot in 0..self.slots()? {
             let prefix = format!("actor.{slot}");
             if self.required(&format!("{prefix}.occupied"))? != [1] {
+                continue;
+            }
+            let ty = ActorTypeId(u16::from_le_bytes(number(
+                self.required(&format!("{prefix}.type"))?,
+            )?));
+            if e1m1_rules::is_decoration(self.policy(), ty) {
                 continue;
             }
             let state = u16::from_le_bytes(number(self.required(&format!("{prefix}.state"))?)?);
@@ -1282,6 +1301,70 @@ impl<'a> Diagnostic<'a> {
                     || u32::from_le_bytes(number(self.required(&format!("{prefix}.flags"))?)?)
                         & crate::original_player::MF_SOLID
                         != 0)
+            {
+                return Err(DiagnosticError::Identity);
+            }
+        }
+        Ok(())
+    }
+    /// DSIM36: every occupied actor of one of the seven decoration types
+    /// (`E1M1_DECORATIONS`, M3h9 note §2.5) is the record `P_SpawnMapThing` made and
+    /// nothing changed since (§2.5–§2.7): its spawn state with that state's sprite
+    /// and frame, `tics` −1, health 1000, the type's radius and height, its flags
+    /// with at most `MF_AMBUSH` added, no momentum, `z == floorz`, no target, and a
+    /// spawnpoint whose DoomEd number is the type's and whose position is the
+    /// actor's; at most `MAX_DECORATIONS` of them.
+    fn validate_decorations(&self) -> Result<(), DiagnosticError> {
+        let mut count = 0;
+        for slot in 0..self.slots()? {
+            let prefix = format!("actor.{slot}");
+            if self.required(&format!("{prefix}.occupied"))? != [1] {
+                continue;
+            }
+            let ty = ActorTypeId(u16::from_le_bytes(number(
+                self.required(&format!("{prefix}.type"))?,
+            )?));
+            let Some(decoration) = e1m1_rules::decoration(ty) else {
+                continue;
+            };
+            count += 1;
+            if count > MAX_DECORATIONS {
+                return Err(DiagnosticError::Limit);
+            }
+            let d = decoration.descriptor();
+            let s = d.states.spawn.descriptor();
+            let i32field = |name: &str| -> Result<i32, DiagnosticError> {
+                Ok(i32::from_le_bytes(number(
+                    self.required(&format!("{prefix}.{name}"))?,
+                )?))
+            };
+            let u16field = |name: &str| -> Result<u16, DiagnosticError> {
+                Ok(u16::from_le_bytes(number(
+                    self.required(&format!("{prefix}.{name}"))?,
+                )?))
+            };
+            let flags = u32::from_le_bytes(number(self.required(&format!("{prefix}.flags"))?)?);
+            let spawn = self.required(&format!("{prefix}.spawnpoint"))?;
+            if u16field("state")? != d.states.spawn.ordinal()
+                || u16field("sprite")? != s.sprite.ordinal()
+                || u32::from_le_bytes(number(self.required(&format!("{prefix}.frame"))?)?)
+                    != s.frame
+                || i32field("tics")? != -1
+                || i32field("health")? != d.spawn_health
+                || i32field("radius")? != d.radius
+                || i32field("height")? != d.height
+                || flags & !(d.flags | world_pickups::MF_AMBUSH) != 0
+                || flags & d.flags != d.flags
+                || i32field("momx")? != 0
+                || i32field("momy")? != 0
+                || i32field("momz")? != 0
+                || i32field("z")? != i32field("floor")?
+                || self.required(&format!("{prefix}.target"))? != [0; 13]
+                || spawn.len() != 11
+                || spawn[0] != 1
+                || i32::from(i16::from_le_bytes([spawn[7], spawn[8]])) != d.doomed_number
+                || i32::from(i16::from_le_bytes([spawn[1], spawn[2]])) * 65536 != i32field("x")?
+                || i32::from(i16::from_le_bytes([spawn[3], spawn[4]])) * 65536 != i32field("y")?
             {
                 return Err(DiagnosticError::Identity);
             }

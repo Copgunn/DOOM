@@ -525,7 +525,9 @@ impl Simulation {
         }
         let state = l.state.ok_or(MonsterError::Definition)?;
         // p_map.c:1269–1279: under the movers policy a corpse a mover crunches
-        // enters S_GIBS, outside every monster type's own state graph.
+        // enters S_GIBS, outside every monster type's own state graph. A static
+        // decoration of the E1M1 policy passes the role gates above in its spawn
+        // state alone; its full record is witnessed by `preflight_map_demons`.
         if !self.gibbed(a) {
             self.monster_state_role(l.actor_type, state)?;
         }

@@ -929,6 +929,31 @@ impl ActorRegistry {
             }
             return Ok(());
         }
+        if crate::e1m1_rules::decoration(ty).is_some() {
+            // Caller already required the E1M1 role. A static decoration (M3h9 note
+            // §2.5): flags 0 or MF_SOLID, no look, chase, attack or melee action in
+            // its spawn or death graph (its spawn state has tics −1 and no action,
+            // its death state is S_NULL), and the compile-time definition satisfies
+            // the static predicate.
+            crate::e1m1_rules::validate_definition(ty)?;
+            self.admit_type(
+                ty,
+                sectors,
+                &mut BTreeSet::new(),
+                &mut BTreeSet::new(),
+                &mut 0,
+                Admission {
+                    flags: crate::original_player::MF_SOLID,
+                    look: false,
+                    chase: false,
+                    attacks: false,
+                    shotgun: false,
+                    chaingun: false,
+                    demon: false,
+                },
+            )?;
+            return Ok(());
+        }
         self.admit_type(
             ty,
             sectors,

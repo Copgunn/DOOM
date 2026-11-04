@@ -236,9 +236,12 @@ impl Simulation {
             return Err(PlayerBodyError::Unsupported.into());
         }
         let life = self.active_typed(id)?;
-        if self.player_policy().has_world_pickups()
-            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
+        if (self.player_policy().has_world_pickups()
+            && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some())
+            || e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
         {
+            // Nothing in the source re-enters an item's or a static decoration's
+            // state (tics −1, never killed): an explicit refusal, not a no-op.
             return Err(PlayerBodyError::Unsupported.into());
         }
         self.projectile_control(id)?;
@@ -419,8 +422,13 @@ impl Simulation {
                     && world_pickups::kind_for(self.player_policy(), ty).is_some();
                 let former = crate::original_registry::is_extended_monster(ty)
                     && crate::original_registry::is_policy_monster(self.player_policy(), ty);
+                // One of the seven static decoration types under the E1M1 policy
+                // (M3h9 note §2.5): spawned like any THING by `P_SpawnMapThing`
+                // (p_mobj.c:760–795), counted against `MAX_DECORATIONS` alone.
+                let decoration = e1m1_rules::is_decoration(self.player_policy(), ty);
                 if !pickup
                     && !former
+                    && !decoration
                     && ty
                         != crate::identity::OriginalActorType::MT_SERGEANT
                             .resolve(registry)
@@ -431,7 +439,17 @@ impl Simulation {
                 if self.profile.uses_checked_demons() && !(-4..=3).contains(&(thing.angle / 45)) {
                     return Err(MapSpawnError::Angle(thing.angle).into());
                 }
+                if decoration
+                    && selected
+                        .iter()
+                        .filter(|(_, ty)| e1m1_rules::is_decoration(self.player_policy(), *ty))
+                        .count()
+                        == MAX_DECORATIONS
+                {
+                    return Err(MapSpawnError::DecorationLimit.into());
+                }
                 if (!pickup
+                    && !decoration
                     && selected
                         .iter()
                         .filter(|(_, ty)| self.is_roster_monster(*ty))
@@ -466,7 +484,7 @@ impl Simulation {
                     ],
                     SpawnHeight::Floor,
                 )?;
-                if !pickup && !former {
+                if !pickup && !former && !decoration {
                     ty = self.demon_owner_type();
                 }
             }

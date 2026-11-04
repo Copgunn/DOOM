@@ -873,6 +873,13 @@ pub(crate) fn require_role_for(
             DefinitionIdentity::Original(
                 OriginalActorType::MT_TROOP | OriginalActorType::MT_TROOPSHOT,
             ) if profile.has_imps() => Ok(()),
+            // The seven static decoration types of E1M1 (info.c; M3h9 note §2.5),
+            // spawned by `P_SpawnMapThing` under the E1M1 policy alone.
+            DefinitionIdentity::Original(ty)
+                if profile.has_e1m1() && e1m1_rules::E1M1_DECORATIONS.contains(&ty) =>
+            {
+                Ok(())
+            }
             other => Err(OriginalRegistryError::Unsupported(other)),
         };
     }
@@ -895,6 +902,10 @@ pub(crate) fn state_role_for(
     let s = OriginalState::try_from(state.0).map_err(|_| OriginalRegistryError::State(state.0))?;
     let allowed = if world_pickups::kind_for(profile, ty).is_some() {
         world_pickups::state_allowed(ty, s)
+    } else if e1m1_rules::is_decoration(profile, ty) {
+        // A decoration holds its spawn state alone: `tics` −1 and no action
+        // (p_mobj.c:441–449), never killed or gibbed (health 1000, not shootable).
+        e1m1_rules::spawn_state(ty, s)
     } else if ty.0 == OriginalActorType::MT_PLAYER.ordinal() {
         player_policy()?.normal.contains(s)
             || (profile.has_player_weapons()
