@@ -715,9 +715,9 @@ and behaviour identical, confirmed by the unchanged goldens and matched digests.
   E1M6 has 11).
 
 **Status / next step.** Phase 1 is complete with this note and the census. E1–E8 are
-provisionally adopted (§6), pending owner confirmation. Phase 2 (M3h9a): steps 1–11 are
-done, step 10 without its two campaigns; the step 10 campaigns, the independent review
-(step 12), the matched timings (step 13) and the full gates (step 14) are pending. The
+provisionally adopted (§6), pending owner confirmation. Phase 2 (M3h9a): steps 1–14 are
+done, including the step 10 campaigns, the independent review (step 12), the matched
+timings (step 13) and the local gates (step 14); exact-head CI belongs to GitHub. The
 observed results are in the [evidence record](validation/M3H9.md); milestone status is
 in [ROADMAP](ROADMAP.md). Step by step:
 
@@ -790,7 +790,8 @@ in [ROADMAP](ROADMAP.md). Step by step:
   `mover_bounds`. Observed (target compiled and seed replay only, not a campaign): all
   47 targets build with `--sanitizer address`; the ASan seed replay
   (`detect_leaks=0`, so no LeakSanitizer coverage) ran 4,033 inputs in 882 s, cov
-  10,942, ft 32,947, no finding. The coverage-guided and ASan campaigns are pending.
+  10,942, ft 32,947, no finding. The coverage-guided and ASan campaigns, run after the
+  review on the final target, are in the [evidence record](validation/M3H9.md#fuzz-campaigns).
 
 - Step 11 (docs) is done: the [COMPATIBILITY section](COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations),
   the final [DSIM v36 section](STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations)

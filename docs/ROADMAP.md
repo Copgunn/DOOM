@@ -100,8 +100,8 @@ new fidelity gap is added. Older policies keep their admission, digests and DSIM
 Status on `feat/m3h9-e1m1`: in review, not merged. The C evidence (22 scenarios), the
 independent DSIM36 projection, the policy, the full replay, the Rust-only tests, the
 example, the tools, the fuzz target with its seed replay and this documentation are
-complete, and the independent review's findings are fixed. The bounded fuzz campaigns,
-the matched timings and the final gates are pending, and the decisions E1–E8 are
+complete, the independent review's findings are fixed, and the bounded fuzz campaigns,
+the matched timings and the local gates are recorded. The decisions E1–E8 are
 provisionally adopted (E9 is a recommendation for M3h9b), awaiting
 owner confirmation. This branch stops at owner review; exact commits and CI belong to
 GitHub. See [source investigation](M3H9_REFERENCE_INVESTIGATION.md),
