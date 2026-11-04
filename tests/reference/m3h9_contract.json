@@ -1,0 +1,3059 @@
+{
+  "assumptions": [
+    "Genuine player0 plus at most 8 map-THING MT_TROOP/MT_POSSESSED, at most 16 map-THING pickups and at most 32 map-THING decorations of the seven E1M1 types (DoomEd 2028, 48, 35, 24, 15, 10, 12) in six polygon rooms (scrollhall, scrollblock, dense8, gallery, liftroom, census) built by the M3h8 builder with declared sector heights, tags, specials and line specials 48 (on two-sided lines, blocking and non-blocking: decision E1), 1 and 88; no Rust expected observations.",
+    "Every compiled body, observer, declared adapter and controlled input of M3h2/M3h5/M3h6/M3h7/M3h8 is reused unchanged; no genuine body is added. The decoration types and their spawn states (S_COLU, S_TECHPILLAR, S_CANDELABRA, S_GIBS, S_PLAY_DIE7, S_PLAY_XDIE9) come from the pristine info.c tables the harness has compiled whole since M3f3 (definitions() has been empty since M3g2); the contract's `decorations` table is asserted against the op-0 actor capture of every spawned decoration (type, state, tics, health, radius, height, flags).",
+    "Harness inputs: `skill` is the genuine gameskill of the case (2 medium for every scenario Rust replays; the census is also run at 1 easy and 3 hard as C-only rows, listed in inventory.c_only_scenarios); the census cases start the RNG at seed 0 as after M_ClearRandom, every other case keeps the M3h8 seed 6. The player body is still spawned by the harness at (px, py), so no record of type 1..4 or 11 is in any lump.",
+    "Observers added (no source statement changed): DT in PIT_CheckThing (the first flag test when the box overlaps, the missile branch non-shootable return, the final solid return for non-shootable things), XT in PTR_AimTraverse and PTR_ShootTraverse (the non-shootable skip), NS before every M row (numspechit after P_CheckPosition). Every other row keeps its M3h8 meaning.",
+    "spechit keeps its source size line_t* spechit[8] and PIT_CheckLine its unchecked append: the sanitizer build would report a ninth write. No room exceeds rule 6 (largest special window 8, the dense8 lane); the nine-scroller lane is written as m3h9_dense9.bin for the Rust-only SpecialCross witness and is never run in C.",
+    "A decoration standing on its floor is always onfloor in P_ThingHeightClip (ONFLOORZ spawn, the clip follows the floor), so the z push of a thing that does not fit (p_map.c:556-557) is unreachable for decorations in these rooms: the pillar under the closing door keeps z == floor and PIT_ChangeSector returns at the MF_SHOOTABLE test (MT code 3) with nofit untouched.",
+    "Source facts the scenarios pin that the M3h9 note states loosely: P_UseSpecialLine on a type-48 line returns false for a monster (the non-player filter, p_switch.c) but true with no effect for a player (no case 48, the trailing return true; PTR_UseTraverse ignores the value and stops the trace either way); after an accepted P_TryMove the crossing loop leaves numspechit at -1; a monster's first P_NewChaseDir never picks the opposite of its zero-initialised spawn movedir (DI_EAST), so the chasers that must walk toward a target are placed west of it.",
+    "Bounded original command/weapon stage precedes original thinkers; not complete P_Ticker/PlayerThink/DeathThink or respawn. P_RespawnSpecials (deathmatch 2 only) is not called.",
+    "All M3h1/M3h2/M3h4/M3h5/M3h6/M3h7/M3h8 assumptions and adapters apply, including the strict-build retyping of attack-angle int locals; every new row only observes genuine statements."
+  ],
+  "cases": [
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {},
+      "clip_outcomes": {},
+      "crossings": [
+        [
+          19,
+          "player",
+          2,
+          48
+        ]
+      ],
+      "explosions": 0,
+      "gameplay_draws": 1,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "scroll_cross_noop",
+      "last_op": 40,
+      "launches": 0,
+      "map": {
+        "cells": 30,
+        "line_specials": [
+          1,
+          1,
+          48,
+          48
+        ],
+        "linedefs": 20,
+        "nodes": 4,
+        "scrollers": [
+          {
+            "blocking": false,
+            "line": 1,
+            "two_sided": true
+          },
+          {
+            "blocking": false,
+            "line": 2,
+            "two_sided": true
+          }
+        ],
+        "sector_specials": [],
+        "sectors": 5,
+        "special_window": 4,
+        "subsectors": 5
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "crossing_ops": [
+          19
+        ],
+        "gameplay_draws_after_load": 0,
+        "sector_heights_unchanged": true,
+        "spechit_stores": 31
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "scrollhall",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 1,
+      "things": {
+        "decorations": {},
+        "monsters": 0,
+        "pickups": 0,
+        "records": 0,
+        "spawned": 0
+      },
+      "tics": 40,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {
+        "monster:6": 2,
+        "monster:8": 1
+      },
+      "blocked_by_thing": {},
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 29,
+      "hitscan_skips": {},
+      "hitscans": 1,
+      "kills": 0,
+      "label": "scroll_spechit_nodir",
+      "last_op": 60,
+      "launches": 0,
+      "map": {
+        "cells": 30,
+        "line_specials": [
+          1,
+          1,
+          48,
+          48
+        ],
+        "linedefs": 20,
+        "nodes": 4,
+        "scrollers": [
+          {
+            "blocking": false,
+            "line": 1,
+            "two_sided": true
+          },
+          {
+            "blocking": false,
+            "line": 2,
+            "two_sided": true
+          }
+        ],
+        "sector_specials": [],
+        "sectors": 5,
+        "special_window": 4,
+        "subsectors": 5
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 12,
+      "movers_created": {},
+      "nodir_resets": 10,
+      "noway": 0,
+      "observed": {
+        "draws_after_reset": 27,
+        "monster_uses_false": 12,
+        "movedir_before_reset": [
+          3,
+          4,
+          5
+        ],
+        "nodir_resets": 10,
+        "reset_ops": [
+          6,
+          10,
+          30,
+          60
+        ]
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 197,
+        "playerstate": 0
+      },
+      "room": "scrollhall",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 2,
+      "things": {
+        "decorations": {},
+        "monsters": 1,
+        "pickups": 0,
+        "records": 1,
+        "spawned": 1
+      },
+      "tics": 60,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {},
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 1,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "use_scroll_wall_stops_trace",
+      "last_op": 10,
+      "launches": 0,
+      "map": {
+        "cells": 30,
+        "line_specials": [
+          1,
+          1,
+          48,
+          48
+        ],
+        "linedefs": 20,
+        "nodes": 4,
+        "scrollers": [
+          {
+            "blocking": false,
+            "line": 1,
+            "two_sided": true
+          },
+          {
+            "blocking": false,
+            "line": 2,
+            "two_sided": true
+          }
+        ],
+        "sector_specials": [],
+        "sectors": 5,
+        "special_window": 4,
+        "subsectors": 5
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "door_sector": 4,
+        "door_stayed_closed": true,
+        "noway": 0,
+        "player_use_result": 1,
+        "special_after": 48,
+        "trace_stopped_at_line": 2,
+        "use_op": 3
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "scrollhall",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {},
+        "monsters": 0,
+        "pickups": 0,
+        "records": 0,
+        "spawned": 0
+      },
+      "tics": 10,
+      "use_trace_stops": 1,
+      "uses": [
+        [
+          3,
+          2,
+          0,
+          48,
+          1
+        ]
+      ]
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {},
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 6,
+      "hitscan_skips": {},
+      "hitscans": 1,
+      "kills": 0,
+      "label": "shoot_through_scroller",
+      "last_op": 40,
+      "launches": 0,
+      "map": {
+        "cells": 30,
+        "line_specials": [
+          1,
+          1,
+          48,
+          48
+        ],
+        "linedefs": 20,
+        "nodes": 4,
+        "scrollers": [
+          {
+            "blocking": false,
+            "line": 1,
+            "two_sided": true
+          },
+          {
+            "blocking": false,
+            "line": 2,
+            "two_sided": true
+          }
+        ],
+        "sector_specials": [],
+        "sectors": 5,
+        "special_window": 4,
+        "subsectors": 5
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "impact_line": 9,
+        "puffs": 1,
+        "scroller_intercepts": 1,
+        "shot_op": 24
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "scrollhall",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {},
+        "monsters": 0,
+        "pickups": 0,
+        "records": 0,
+        "spawned": 0
+      },
+      "tics": 40,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {
+        "monster:10": 2
+      },
+      "blocked_by_thing": {
+        "missile:player": 1
+      },
+      "clip_outcomes": {},
+      "crossings": [
+        [
+          17,
+          "missile",
+          2,
+          48
+        ]
+      ],
+      "explosions": 1,
+      "gameplay_draws": 19,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "fireball_through_scroller",
+      "last_op": 45,
+      "launches": 1,
+      "map": {
+        "cells": 30,
+        "line_specials": [
+          1,
+          1,
+          48,
+          48
+        ],
+        "linedefs": 20,
+        "nodes": 4,
+        "scrollers": [
+          {
+            "blocking": false,
+            "line": 1,
+            "two_sided": true
+          },
+          {
+            "blocking": false,
+            "line": 2,
+            "two_sided": true
+          }
+        ],
+        "sector_specials": [],
+        "sectors": 5,
+        "special_window": 4,
+        "subsectors": 5
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "crossing_ops": [
+          17
+        ],
+        "explosions": 1,
+        "launch_op": 16,
+        "missile_steps_west_of_line": 21
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 197,
+        "playerstate": 0
+      },
+      "room": "scrollhall",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 1,
+      "things": {
+        "decorations": {},
+        "monsters": 1,
+        "pickups": 0,
+        "records": 1,
+        "spawned": 1
+      },
+      "tics": 45,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {
+        "monster:1": 2,
+        "player:1": 49
+      },
+      "blocked_by_thing": {},
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 22,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "blocking_scroller_wall",
+      "last_op": 60,
+      "launches": 0,
+      "map": {
+        "cells": 35,
+        "line_specials": [
+          48
+        ],
+        "linedefs": 7,
+        "nodes": 1,
+        "scrollers": [
+          {
+            "blocking": true,
+            "line": 1,
+            "two_sided": true
+          }
+        ],
+        "sector_specials": [],
+        "sectors": 2,
+        "special_window": 1,
+        "subsectors": 2
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "blocked_moves": {
+          "monster": 2,
+          "player": 49
+        },
+        "numspechit_at_refusals": 0,
+        "spechit_entries": 0
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 200,
+        "playerstate": 0
+      },
+      "room": "scrollblock",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {},
+        "monsters": 1,
+        "pickups": 0,
+        "records": 1,
+        "spawned": 1
+      },
+      "tics": 60,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {},
+      "clip_outcomes": {},
+      "crossings": [
+        [
+          12,
+          "player",
+          5,
+          48
+        ],
+        [
+          12,
+          "player",
+          1,
+          48
+        ],
+        [
+          13,
+          "player",
+          8,
+          48
+        ],
+        [
+          14,
+          "player",
+          11,
+          48
+        ],
+        [
+          15,
+          "player",
+          14,
+          48
+        ],
+        [
+          16,
+          "player",
+          17,
+          48
+        ],
+        [
+          17,
+          "player",
+          20,
+          48
+        ],
+        [
+          18,
+          "player",
+          23,
+          48
+        ]
+      ],
+      "explosions": 0,
+      "gameplay_draws": 1,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "dense_spechit_8",
+      "last_op": 60,
+      "launches": 0,
+      "map": {
+        "cells": 10,
+        "line_specials": [
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48
+        ],
+        "linedefs": 28,
+        "nodes": 8,
+        "scrollers": [
+          {
+            "blocking": false,
+            "line": 1,
+            "two_sided": true
+          },
+          {
+            "blocking": false,
+            "line": 5,
+            "two_sided": true
+          },
+          {
+            "blocking": false,
+            "line": 8,
+            "two_sided": true
+          },
+          {
+            "blocking": false,
+            "line": 11,
+            "two_sided": true
+          },
+          {
+            "blocking": false,
+            "line": 14,
+            "two_sided": true
+          },
+          {
+            "blocking": false,
+            "line": 17,
+            "two_sided": true
+          },
+          {
+            "blocking": false,
+            "line": 20,
+            "two_sided": true
+          },
+          {
+            "blocking": false,
+            "line": 23,
+            "two_sided": true
+          }
+        ],
+        "sector_specials": [],
+        "sectors": 9,
+        "special_window": 8,
+        "subsectors": 9
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "crossings": 8,
+        "numspechit_after_crossing_loop": -1,
+        "position_checks_with_eight": 1,
+        "spechit_max": 8
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "dense8",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 8,
+      "things": {
+        "decorations": {},
+        "monsters": 0,
+        "pickups": 0,
+        "records": 0,
+        "spawned": 0
+      },
+      "tics": 60,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {
+        "player:decoration:2028": 20
+      },
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 11,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "walk_into_lamp",
+      "last_op": 40,
+      "launches": 0,
+      "map": {
+        "cells": 63,
+        "line_specials": [],
+        "linedefs": 19,
+        "nodes": 11,
+        "scrollers": [],
+        "sector_specials": [],
+        "sectors": 4,
+        "special_window": 0,
+        "subsectors": 12
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "blocked_moves": 20,
+        "first_block_op": 20,
+        "solid_returns": 20
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "gallery",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {
+          "10": 1,
+          "12": 1,
+          "15": 1,
+          "2028": 2,
+          "24": 2,
+          "35": 1,
+          "48": 2
+        },
+        "monsters": 0,
+        "pickups": 0,
+        "records": 10,
+        "spawned": 10
+      },
+      "tics": 40,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {
+        "player:decoration:2028": 56
+      },
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 11,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "walk_into_lamp_from_ledge",
+      "last_op": 40,
+      "launches": 0,
+      "map": {
+        "cells": 63,
+        "line_specials": [],
+        "linedefs": 19,
+        "nodes": 11,
+        "scrollers": [],
+        "sector_specials": [],
+        "sectors": 4,
+        "special_window": 0,
+        "subsectors": 12
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "blocked_moves": 56,
+        "lamp_top": 16,
+        "solid_returns": 56,
+        "walker_z": 32
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "gallery",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {
+          "10": 1,
+          "12": 1,
+          "15": 1,
+          "2028": 2,
+          "24": 2,
+          "35": 1,
+          "48": 2
+        },
+        "monsters": 0,
+        "pickups": 0,
+        "records": 10,
+        "spawned": 10
+      },
+      "tics": 40,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {},
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 11,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "walk_over_gore",
+      "last_op": 60,
+      "launches": 0,
+      "map": {
+        "cells": 63,
+        "line_specials": [],
+        "linedefs": 19,
+        "nodes": 11,
+        "scrollers": [],
+        "sector_specials": [],
+        "sectors": 4,
+        "special_window": 0,
+        "subsectors": 12
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "blocked_moves": 0,
+        "pass_throughs": {
+          "decoration:10": 9,
+          "decoration:12": 10,
+          "decoration:15": 9,
+          "decoration:24": 10
+        }
+      },
+      "pass_throughs": {
+        "player:decoration:10": 9,
+        "player:decoration:12": 10,
+        "player:decoration:15": 9,
+        "player:decoration:24": 10
+      },
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "gallery",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {
+          "10": 1,
+          "12": 1,
+          "15": 1,
+          "2028": 2,
+          "24": 2,
+          "35": 1,
+          "48": 2
+        },
+        "monsters": 0,
+        "pickups": 0,
+        "records": 10,
+        "spawned": 10
+      },
+      "tics": 60,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {
+        "monster:decoration:48": 5
+      },
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 53,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "monster_path_around_pillar",
+      "last_op": 120,
+      "launches": 0,
+      "map": {
+        "cells": 63,
+        "line_specials": [],
+        "linedefs": 19,
+        "nodes": 11,
+        "scrollers": [],
+        "sector_specials": [],
+        "sectors": 4,
+        "special_window": 0,
+        "subsectors": 12
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "blocked_moves": 5,
+        "draws_after_blocks": 14,
+        "first_block_op": 20,
+        "player_final_health": 200,
+        "solid_returns": 5
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 200,
+        "playerstate": 0
+      },
+      "room": "gallery",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {
+          "10": 1,
+          "12": 1,
+          "15": 1,
+          "2028": 2,
+          "24": 2,
+          "35": 1,
+          "48": 2
+        },
+        "monsters": 1,
+        "pickups": 0,
+        "records": 11,
+        "spawned": 11
+      },
+      "tics": 120,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {
+        "monster:3": 24,
+        "monster:4": 16,
+        "monster:5": 31,
+        "monster:6": 32
+      },
+      "blocked_by_thing": {
+        "monster:decoration:48": 48
+      },
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 112,
+      "hitscan_skips": {
+        "aim:decoration:48": 2,
+        "shoot:decoration:48": 1
+      },
+      "hitscans": 1,
+      "kills": 0,
+      "label": "monster_hitscan_through_pillar",
+      "last_op": 160,
+      "launches": 0,
+      "map": {
+        "cells": 63,
+        "line_specials": [],
+        "linedefs": 19,
+        "nodes": 11,
+        "scrollers": [],
+        "sector_specials": [],
+        "sectors": 4,
+        "special_window": 0,
+        "subsectors": 12
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "monster_shots": 1,
+        "pillar_skips": 1,
+        "player_hits": 0,
+        "shots_through_pillar": 1
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 200,
+        "playerstate": 0
+      },
+      "room": "gallery",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {
+          "10": 1,
+          "12": 1,
+          "15": 1,
+          "2028": 2,
+          "24": 2,
+          "35": 1,
+          "48": 2
+        },
+        "monsters": 1,
+        "pickups": 0,
+        "records": 11,
+        "spawned": 11
+      },
+      "tics": 160,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {
+        "missile:decoration:35": 1
+      },
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 1,
+      "gameplay_draws": 30,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "fireball_hits_candelabra",
+      "last_op": 50,
+      "launches": 1,
+      "map": {
+        "cells": 63,
+        "line_specials": [],
+        "linedefs": 19,
+        "nodes": 11,
+        "scrollers": [],
+        "sector_specials": [],
+        "sectors": 4,
+        "special_window": 0,
+        "subsectors": 12
+      },
+      "missile_decoration_hits": 1,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "candelabra_height": 16,
+        "candelabra_z": 32,
+        "damage_requests": 0,
+        "explosion_op": 38,
+        "missile_z": 32
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 200,
+        "playerstate": 0
+      },
+      "room": "gallery",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {
+          "10": 1,
+          "12": 1,
+          "15": 1,
+          "2028": 2,
+          "24": 2,
+          "35": 1,
+          "48": 2
+        },
+        "monsters": 1,
+        "pickups": 0,
+        "records": 11,
+        "spawned": 11
+      },
+      "tics": 50,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {},
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 29,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "fireball_over_corpse",
+      "last_op": 50,
+      "launches": 1,
+      "map": {
+        "cells": 63,
+        "line_specials": [],
+        "linedefs": 19,
+        "nodes": 11,
+        "scrollers": [],
+        "sector_specials": [],
+        "sectors": 4,
+        "special_window": 0,
+        "subsectors": 12
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "missile_steps_beyond": 7,
+        "missile_z": 32,
+        "pass_op": 38,
+        "player_hits": 0,
+        "pool_z": 32
+      },
+      "pass_throughs": {
+        "missile:decoration:24": 5
+      },
+      "player_final": {
+        "health": 200,
+        "playerstate": 0
+      },
+      "room": "gallery",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {
+          "10": 1,
+          "12": 1,
+          "15": 1,
+          "2028": 2,
+          "24": 2,
+          "35": 1,
+          "48": 2
+        },
+        "monsters": 1,
+        "pickups": 0,
+        "records": 11,
+        "spawned": 11
+      },
+      "tics": 50,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {},
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 16,
+      "hitscan_skips": {
+        "aim:decoration:2028": 1,
+        "shoot:decoration:2028": 1
+      },
+      "hitscans": 1,
+      "kills": 0,
+      "label": "pistol_through_lamp",
+      "last_op": 40,
+      "launches": 0,
+      "map": {
+        "cells": 63,
+        "line_specials": [],
+        "linedefs": 19,
+        "nodes": 11,
+        "scrollers": [],
+        "sector_specials": [],
+        "sectors": 4,
+        "special_window": 0,
+        "subsectors": 12
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "aim_skips": 1,
+        "impact_line": 1,
+        "puffs": 1,
+        "shoot_skips": 1,
+        "shot_op": 24
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "gallery",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {
+          "10": 1,
+          "12": 1,
+          "15": 1,
+          "2028": 2,
+          "24": 2,
+          "35": 1,
+          "48": 2
+        },
+        "monsters": 0,
+        "pickups": 0,
+        "records": 10,
+        "spawned": 10
+      },
+      "tics": 40,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {},
+      "clip_outcomes": {
+        "fits": 96
+      },
+      "crossings": [
+        [
+          37,
+          "player",
+          0,
+          88
+        ]
+      ],
+      "explosions": 0,
+      "gameplay_draws": 3,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "decorations_ride_lift",
+      "last_op": 190,
+      "launches": 0,
+      "map": {
+        "cells": 36,
+        "line_specials": [
+          1,
+          1,
+          88,
+          88
+        ],
+        "linedefs": 27,
+        "nodes": 5,
+        "scrollers": [],
+        "sector_specials": [],
+        "sectors": 6,
+        "special_window": 3,
+        "subsectors": 6
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {
+        "EV_DoPlat": 1
+      },
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "gibs": 0,
+        "lift_steps": 32,
+        "nofit": 0,
+        "riders": {
+          "decoration:15": {
+            "clips": 32,
+            "lowest_z": 2
+          },
+          "decoration:2028": {
+            "clips": 32,
+            "lowest_z": 2
+          }
+        }
+      },
+      "pass_throughs": {
+        "decoration:15:decoration:15": 32
+      },
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "liftroom",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 1,
+      "things": {
+        "decorations": {
+          "15": 1,
+          "2028": 1
+        },
+        "monsters": 0,
+        "pickups": 0,
+        "records": 2,
+        "spawned": 2
+      },
+      "tics": 190,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {},
+      "clip_outcomes": {
+        "fits": 117,
+        "left_stuck": 9
+      },
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 2,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "door_closes_on_pillar",
+      "last_op": 80,
+      "launches": 0,
+      "map": {
+        "cells": 36,
+        "line_specials": [
+          1,
+          1,
+          88,
+          88
+        ],
+        "linedefs": 27,
+        "nodes": 5,
+        "scrollers": [],
+        "sector_specials": [],
+        "sectors": 6,
+        "special_window": 3,
+        "subsectors": 6
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {
+        "EV_VerticalDoor": 1
+      },
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "closing_steps": 62,
+        "final_door_ceiling": 2,
+        "left_as_is": 9,
+        "nofit": 0,
+        "pillar_z_unchanged": true,
+        "use_ops": [
+          3,
+          6
+        ]
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "liftroom",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {
+          "48": 1
+        },
+        "monsters": 0,
+        "pickups": 0,
+        "records": 1,
+        "spawned": 1
+      },
+      "tics": 80,
+      "use_trace_stops": 2,
+      "uses": [
+        [
+          3,
+          2,
+          0,
+          1,
+          1
+        ],
+        [
+          6,
+          2,
+          0,
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {},
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 48,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "spawn_filter_medium",
+      "last_op": 4,
+      "launches": 0,
+      "map": {
+        "cells": 63,
+        "line_specials": [],
+        "linedefs": 8,
+        "nodes": 2,
+        "scrollers": [],
+        "sector_specials": [
+          1
+        ],
+        "sectors": 2,
+        "special_window": 0,
+        "subsectors": 3
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "ambush_decorations": [
+          "decoration:2028",
+          "decoration:24"
+        ],
+        "filtered_bit16": 3,
+        "filtered_skill": 7,
+        "flash_spawn_draw": 1,
+        "prndindex_after_specials": 43,
+        "record_draws": 41,
+        "records": 40,
+        "skill": 2,
+        "spawned": 30,
+        "spawned_by_kind": {
+          "decorations": 10,
+          "monsters": 5,
+          "pickups": 15
+        },
+        "thinker_order": "lump order, player body, light flash",
+        "totalitems": 4,
+        "totalkills": 5,
+        "two_draw_records": 11
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "census",
+      "rust_replayed": true,
+      "skill": 2,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {
+          "10": 1,
+          "12": 1,
+          "15": 1,
+          "2028": 2,
+          "24": 2,
+          "35": 1,
+          "48": 2
+        },
+        "monsters": 5,
+        "pickups": 15,
+        "records": 40,
+        "spawned": 30
+      },
+      "tics": 4,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {},
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 48,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "spawn_filter_easy",
+      "last_op": 4,
+      "launches": 0,
+      "map": {
+        "cells": 63,
+        "line_specials": [],
+        "linedefs": 8,
+        "nodes": 2,
+        "scrollers": [],
+        "sector_specials": [
+          1
+        ],
+        "sectors": 2,
+        "special_window": 0,
+        "subsectors": 3
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "ambush_decorations": [
+          "decoration:2028"
+        ],
+        "filtered_bit16": 3,
+        "filtered_skill": 8,
+        "flash_spawn_draw": 1,
+        "prndindex_after_specials": 41,
+        "record_draws": 39,
+        "records": 40,
+        "skill": 1,
+        "spawned": 29,
+        "spawned_by_kind": {
+          "decorations": 9,
+          "monsters": 5,
+          "pickups": 15
+        },
+        "thinker_order": "lump order, player body, light flash",
+        "totalitems": 3,
+        "totalkills": 5,
+        "two_draw_records": 10
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "census",
+      "rust_replayed": false,
+      "skill": 1,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {
+          "10": 1,
+          "12": 1,
+          "15": 1,
+          "2028": 3,
+          "24": 1,
+          "35": 1,
+          "48": 1
+        },
+        "monsters": 5,
+        "pickups": 15,
+        "records": 40,
+        "spawned": 29
+      },
+      "tics": 4,
+      "use_trace_stops": 0,
+      "uses": []
+    },
+    {
+      "blocked_by_line": {},
+      "blocked_by_thing": {},
+      "clip_outcomes": {},
+      "crossings": [],
+      "explosions": 0,
+      "gameplay_draws": 49,
+      "hitscan_skips": {},
+      "hitscans": 0,
+      "kills": 0,
+      "label": "spawn_filter_hard",
+      "last_op": 4,
+      "launches": 0,
+      "map": {
+        "cells": 63,
+        "line_specials": [],
+        "linedefs": 8,
+        "nodes": 2,
+        "scrollers": [],
+        "sector_specials": [
+          1
+        ],
+        "sectors": 2,
+        "special_window": 0,
+        "subsectors": 3
+      },
+      "missile_decoration_hits": 0,
+      "monster_uses": 0,
+      "movers_created": {},
+      "nodir_resets": 0,
+      "noway": 0,
+      "observed": {
+        "ambush_decorations": [
+          "decoration:2028"
+        ],
+        "filtered_bit16": 3,
+        "filtered_skill": 8,
+        "flash_spawn_draw": 1,
+        "prndindex_after_specials": 41,
+        "record_draws": 39,
+        "records": 40,
+        "skill": 3,
+        "spawned": 29,
+        "spawned_by_kind": {
+          "decorations": 9,
+          "monsters": 5,
+          "pickups": 15
+        },
+        "thinker_order": "lump order, player body, light flash",
+        "totalitems": 3,
+        "totalkills": 5,
+        "two_draw_records": 10
+      },
+      "pass_throughs": {},
+      "player_final": {
+        "health": 100,
+        "playerstate": 0
+      },
+      "room": "census",
+      "rust_replayed": false,
+      "skill": 3,
+      "spechit_max": 0,
+      "things": {
+        "decorations": {
+          "10": 1,
+          "12": 1,
+          "15": 1,
+          "2028": 2,
+          "24": 1,
+          "35": 2,
+          "48": 1
+        },
+        "monsters": 5,
+        "pickups": 15,
+        "records": 40,
+        "spawned": 29
+      },
+      "tics": 4,
+      "use_trace_stops": 0,
+      "uses": []
+    }
+  ],
+  "decorations": {
+    "10": {
+      "description": "bloody mess",
+      "flags": 0,
+      "health": 1000,
+      "height": 16,
+      "mobjinfo": "MT_MISC68",
+      "mobjtype_index": 118,
+      "radius": 20,
+      "spawnstate": "S_PLAY_XDIE9",
+      "state_index": 173,
+      "tics": -1
+    },
+    "12": {
+      "description": "bloody mess",
+      "flags": 0,
+      "health": 1000,
+      "height": 16,
+      "mobjinfo": "MT_MISC69",
+      "mobjtype_index": 119,
+      "radius": 20,
+      "spawnstate": "S_PLAY_XDIE9",
+      "state_index": 173,
+      "tics": -1
+    },
+    "15": {
+      "description": "dead player",
+      "flags": 0,
+      "health": 1000,
+      "height": 16,
+      "mobjinfo": "MT_MISC62",
+      "mobjtype_index": 112,
+      "radius": 20,
+      "spawnstate": "S_PLAY_DIE7",
+      "state_index": 164,
+      "tics": -1
+    },
+    "2028": {
+      "description": "floor lamp",
+      "flags": 2,
+      "health": 1000,
+      "height": 16,
+      "mobjinfo": "MT_MISC31",
+      "mobjtype_index": 81,
+      "radius": 16,
+      "spawnstate": "S_COLU",
+      "state_index": 886,
+      "tics": -1
+    },
+    "24": {
+      "description": "pool of blood and flesh",
+      "flags": 0,
+      "health": 1000,
+      "height": 16,
+      "mobjinfo": "MT_MISC71",
+      "mobjtype_index": 121,
+      "radius": 20,
+      "spawnstate": "S_GIBS",
+      "state_index": 895,
+      "tics": -1
+    },
+    "35": {
+      "description": "candelabra",
+      "flags": 2,
+      "health": 1000,
+      "height": 16,
+      "mobjinfo": "MT_MISC50",
+      "mobjtype_index": 100,
+      "radius": 16,
+      "spawnstate": "S_CANDELABRA",
+      "state_index": 912,
+      "tics": -1
+    },
+    "48": {
+      "description": "tall techno pillar",
+      "flags": 2,
+      "health": 1000,
+      "height": 16,
+      "mobjinfo": "MT_MISC48",
+      "mobjtype_index": 98,
+      "radius": 16,
+      "spawnstate": "S_TECHPILLAR",
+      "state_index": 916,
+      "tics": -1
+    }
+  },
+  "executed_function_entries": {
+    "g_game.c:G_PlayerReborn": 20,
+    "m_bbox.c:M_AddToBox": 974,
+    "m_bbox.c:M_ClearBox": 86,
+    "m_random.c:P_Random": 502,
+    "p_doors.c:EV_VerticalDoor": 2,
+    "p_doors.c:T_VerticalDoor": 65,
+    "p_enemy.c:A_Chase": 124,
+    "p_enemy.c:A_FaceTarget": 13,
+    "p_enemy.c:A_Look": 6,
+    "p_enemy.c:A_Pain": 1,
+    "p_enemy.c:A_PosAttack": 2,
+    "p_enemy.c:A_TroopAttack": 3,
+    "p_enemy.c:P_CheckMeleeRange": 31,
+    "p_enemy.c:P_CheckMissileRange": 22,
+    "p_enemy.c:P_LookForPlayers": 6,
+    "p_enemy.c:P_Move": 299,
+    "p_enemy.c:P_NewChaseDir": 40,
+    "p_enemy.c:P_NoiseAlert": 2,
+    "p_enemy.c:P_RecursiveSound": 26,
+    "p_enemy.c:P_TryWalk": 199,
+    "p_floor.c:T_MovePlane": 95,
+    "p_inter.c:P_DamageMobj": 2,
+    "p_lights.c:P_SpawnLightFlash": 3,
+    "p_lights.c:T_LightFlash": 12,
+    "p_map.c:PIT_ChangeSector": 222,
+    "p_map.c:PIT_CheckLine": 3869,
+    "p_map.c:PIT_CheckThing": 1847,
+    "p_map.c:PTR_AimTraverse": 21,
+    "p_map.c:PTR_ShootTraverse": 12,
+    "p_map.c:PTR_SlideTraverse": 98,
+    "p_map.c:PTR_UseTraverse": 3,
+    "p_map.c:P_AimLineAttack": 8,
+    "p_map.c:P_ChangeSector": 95,
+    "p_map.c:P_CheckPosition": 1104,
+    "p_map.c:P_LineAttack": 4,
+    "p_map.c:P_SlideMove": 97,
+    "p_map.c:P_ThingHeightClip": 222,
+    "p_map.c:P_TryMove": 882,
+    "p_map.c:P_UseLines": 3,
+    "p_maputl.c:PIT_AddLineIntercepts": 609,
+    "p_maputl.c:PIT_AddThingIntercepts": 28,
+    "p_maputl.c:P_AproxDistance": 40,
+    "p_maputl.c:P_BlockLinesIterator": 2211,
+    "p_maputl.c:P_BlockThingsIterator": 3496,
+    "p_maputl.c:P_BoxOnLineSide": 375,
+    "p_maputl.c:P_InterceptVector": 157,
+    "p_maputl.c:P_LineOpening": 350,
+    "p_maputl.c:P_MakeDivline": 137,
+    "p_maputl.c:P_PathTraverse": 306,
+    "p_maputl.c:P_PointOnDivlineSide": 278,
+    "p_maputl.c:P_PointOnLineSide": 1263,
+    "p_maputl.c:P_SetThingPosition": 783,
+    "p_maputl.c:P_TraverseIntercepts": 306,
+    "p_maputl.c:P_UnsetThingPosition": 582,
+    "p_mobj.c:P_CheckMissileSpawn": 3,
+    "p_mobj.c:P_ExplodeMissile": 2,
+    "p_mobj.c:P_MobjThinker": 8266,
+    "p_mobj.c:P_RemoveMobj": 4,
+    "p_mobj.c:P_SetMobjState": 305,
+    "p_mobj.c:P_SpawnBlood": 1,
+    "p_mobj.c:P_SpawnMapThing": 210,
+    "p_mobj.c:P_SpawnMissile": 3,
+    "p_mobj.c:P_SpawnMobj": 205,
+    "p_mobj.c:P_SpawnPuff": 3,
+    "p_mobj.c:P_XYMovement": 455,
+    "p_mobj.c:P_ZMovement": 131,
+    "p_plats.c:EV_DoPlat": 1,
+    "p_plats.c:P_AddActivePlat": 1,
+    "p_plats.c:P_RemoveActivePlat": 1,
+    "p_plats.c:T_PlatRaise": 137,
+    "p_pspr.c:A_FirePistol": 2,
+    "p_pspr.c:A_Light0": 2,
+    "p_pspr.c:A_Light1": 2,
+    "p_pspr.c:A_Raise": 282,
+    "p_pspr.c:A_ReFire": 2,
+    "p_pspr.c:A_WeaponReady": 875,
+    "p_pspr.c:P_BringUpWeapon": 20,
+    "p_pspr.c:P_BulletSlope": 2,
+    "p_pspr.c:P_CheckAmmo": 4,
+    "p_pspr.c:P_FireWeapon": 2,
+    "p_pspr.c:P_GunShot": 2,
+    "p_pspr.c:P_MovePsprites": 1157,
+    "p_pspr.c:P_SetPsprite": 1169,
+    "p_pspr.c:P_SetupPsprites": 20,
+    "p_setup.c:P_LoadThings": 20,
+    "p_sight.c:P_CheckSight": 28,
+    "p_sight.c:P_CrossBSPNode": 184,
+    "p_sight.c:P_CrossSubsector": 76,
+    "p_sight.c:P_DivlineSide": 758,
+    "p_sight.c:P_InterceptVector2": 16,
+    "p_spec.c:P_CrossSpecialLine": 11,
+    "p_spec.c:P_FindLowestCeilingSurrounding": 1,
+    "p_spec.c:P_FindLowestFloorSurrounding": 1,
+    "p_spec.c:P_FindMinSurroundingLight": 3,
+    "p_spec.c:P_FindSectorFromLineTag": 2,
+    "p_spec.c:P_ShootSpecialLine": 3,
+    "p_spec.c:P_SpawnSpecials": 20,
+    "p_spec.c:P_UpdateSpecials": 1157,
+    "p_spec.c:getNextSector": 20,
+    "p_switch.c:P_UseSpecialLine": 15,
+    "p_tick.c:P_AddThinker": 210,
+    "p_tick.c:P_InitThinkers": 20,
+    "p_tick.c:P_RemoveThinker": 6,
+    "p_tick.c:P_RunThinkers": 1157,
+    "p_user.c:P_CalcHeight": 1157,
+    "p_user.c:P_MovePlayer": 1157,
+    "p_user.c:P_Thrust": 156,
+    "r_main.c:R_PointInSubsector": 1887,
+    "r_main.c:R_PointOnSide": 5038,
+    "r_main.c:R_PointToAngle": 24,
+    "r_main.c:R_PointToAngle2": 24
+  },
+  "expanded_trace_sha256": "f6e5e235e987110cacc0ab43a71dd6713cb7831f2819ecfe7e7fbb4c154e6ca4",
+  "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fwrapv",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char"
+  ],
+  "flats": [
+    "TESTFLR0",
+    "TESTCEIL",
+    "F_SKY1",
+    "NUKAGE1",
+    "FLOOR7_1",
+    "CEIL3_5"
+  ],
+  "function_sha256": {
+    "g_game.c:G_ExitLevel": "80e66a3dc6517bb81b82f366cf711181da8df37e74004b5fcd220527628bdb81",
+    "g_game.c:G_PlayerReborn": "3cea698f0ac9b7595f46eb8daa8cf6e7a4a591e272e385ae8e6995f7da27178f",
+    "m_bbox.c:M_AddToBox": "7f462b2096943589207faf4f85c6a2a18e43c825a614ccb39b61ea8229bee081",
+    "m_bbox.c:M_ClearBox": "7f283765b8ce7a239b6086b6c2ad430c83843a34c008b65bb57680ebd312186b",
+    "m_random.c:P_Random": "4bd1e4245f1c27c7a9c1cde25e85ad445f8ba7a38033217a183eae0b4928c2e4",
+    "p_doors.c:EV_DoDoor": "1ef1f00444a4ec4fbc18b43f8514614bbdc46e5e9c27c9681d983e3001c9227d",
+    "p_doors.c:EV_VerticalDoor": "aec0d3ad091382ce53814f019078e6033bc61e0ce4759ac273c7a219b4e40a82",
+    "p_doors.c:T_VerticalDoor": "bad78f4f5ffb6c7a2b8f2b35fd4e61cfe3509a1cdd906dd91f0bf4528c9e1cb4",
+    "p_enemy.c:A_CPosAttack": "97b51612228504176e1f24f2ec8680a28110697a9b8756a570fb44fc006d3c89",
+    "p_enemy.c:A_CPosRefire": "235db87a1934bc3bb6fc4fdcf4735383c0812b1af6854af081fd112d51062a4d",
+    "p_enemy.c:A_Chase": "e29c1764ba4328eb52e5ac8a60e361929d246e374064df1011b07ac9c5d88883",
+    "p_enemy.c:A_FaceTarget": "2aada2930edc5031b189779e518370dda33bf18620323426f76a2ef1999f0481",
+    "p_enemy.c:A_Fall": "11723ecad24d8c31b4ede008a358c21c68212365f97b439520128b1b7185d4ff",
+    "p_enemy.c:A_Look": "88762afe30f3ea7b512fdab5ba9dd08acd05858dd16fb2172ec7a196629f115b",
+    "p_enemy.c:A_Pain": "14c9d7e928acd41a3a311dcf9f88c868a8808c9327fd57ff3d613f3bfdfd49ac",
+    "p_enemy.c:A_PlayerScream": "c2d6c04d42fe8a620a1bde77e9c6055522e2208957b3d2fa9460e6dffe5557cd",
+    "p_enemy.c:A_PosAttack": "46f2b16bba94f90f2dec2a3c23c6c3999e0e74efe64cd76a6b707e08abd59d41",
+    "p_enemy.c:A_SPosAttack": "14b5a9f4db584085efba73ff2702088df74a9f90dfb1326e66bd2b6a2afb952f",
+    "p_enemy.c:A_SargAttack": "74a750f03dc05d8435b65f464c32a02cc66de289120346b1329d2df4bd53b9a9",
+    "p_enemy.c:A_Scream": "7501d046588e5c12c923d670a81a40b5e02023d898e006e13adbd34be75e053c",
+    "p_enemy.c:A_TroopAttack": "8964484a41312a20556a55f98223726230f9bf4317ea670fefe985a687c6087c",
+    "p_enemy.c:A_XScream": "85616509193c15210d33751425d92790b71593a7420b403b5bcf201d60db4e65",
+    "p_enemy.c:P_CheckMeleeRange": "6479f57374f3beb0742f460112e784dee76d0bef7ce8048383fe58fb2e9a294e",
+    "p_enemy.c:P_CheckMissileRange": "e2f2cbc7e4f6b5f7448b737fda8aa492c3215f6864e20ded05a6bf4323e8d901",
+    "p_enemy.c:P_LookForPlayers": "91ea2f9761160efc377edec95e4c754728d7c6a857134e4eaec04efb4c6404e2",
+    "p_enemy.c:P_Move": "e581789dbdc4841e70cf96c89f8e1e3228943e99525f9712ec536e8c8ea1923f",
+    "p_enemy.c:P_NewChaseDir": "a6120963a5e80662ae4cfbdfcf2d4be84f082c5b95ae6f7e83c42233561b97a2",
+    "p_enemy.c:P_NoiseAlert": "a915335edf5c5731e18f49aec57599015ad06263bd3b858a9cb6d2286f593f3f",
+    "p_enemy.c:P_RecursiveSound": "742edd56f80fa252fe1252c7d15bba19eb3001bd60a6238343c3308c3d93e615",
+    "p_enemy.c:P_TryWalk": "6f5ec5355cd1aaf11f5db3bf4f23b50acaf07f2c88ab4dcbe81bd58314f63438",
+    "p_floor.c:EV_DoFloor": "01c3fc608fecd1deb3c5a8d59537ed2c2a7a7c72d302b0cae65a557205ad4055",
+    "p_floor.c:T_MoveFloor": "9dda09d677acd98f2e915f4d5c0578f9a97a881460a4c1516341a1a9b1c649a1",
+    "p_floor.c:T_MovePlane": "0105f09d41903519d1e20eadb5c6636b40950dc331b3e1766866279bc638edd5",
+    "p_inter.c:P_DamageMobj": "fbca76ffdc30ef82bf3eea5f3f15f64159a13a0fcab4d20fa9fd905fc0bd8d4c",
+    "p_inter.c:P_GiveAmmo": "217b9382422593cf045421c0b1a6bd5c9b4a4e8040415b2311d7259c8bfb2813",
+    "p_inter.c:P_GiveArmor": "8175683a879cfd26f72324001872bdc8f28b093de896a83c9ecf0ac6ec57a9e2",
+    "p_inter.c:P_GiveBody": "1abc6d60e52435d215fc5dc39ec8c0484780c3bf4c0dedcd7547ab1c4ceb2802",
+    "p_inter.c:P_GiveWeapon": "eda5886280ed73307b5e58be3cbb7c834ad2ee9fde843df7bab540aa8eef16bd",
+    "p_inter.c:P_KillMobj": "b10e5409e5f1a0057dcb08aaaa306f52a971490a3d1b4028b1be39ea5ef8a345",
+    "p_inter.c:P_TouchSpecialThing": "2ed37f0dcaa1b9ccde6db786b5a74fcc7fb8d456a598c68f7fd15e52dda05f64",
+    "p_lights.c:P_SpawnFireFlicker": "441a3fd60beeee867ac5a01e83578f4bb4ebd9abea0a4a8f5180b1b0d1e647fd",
+    "p_lights.c:P_SpawnGlowingLight": "51f890ba98d7e48238e0147d6e6912c48e721b72277a6e9fdf66a7c506544b9b",
+    "p_lights.c:P_SpawnLightFlash": "82ca664c0f61f753b3e20b2f160d6441c16aab52c9a76737f37a2b3fda6f0fe9",
+    "p_lights.c:P_SpawnStrobeFlash": "dc47f89a8a85d3b66ad2b2cda766b9fb9da22802e4b05bbadb857e21b578c690",
+    "p_lights.c:T_FireFlicker": "3de2dc75255d117a3da443918189415c69d9405cd68d022e0cf14f5c82999c46",
+    "p_lights.c:T_Glow": "b90d02ed5cbe5a63bdbb7e8b1ba7e911f2ba6c2bd9fe7a4050f8dbce9b581b32",
+    "p_lights.c:T_LightFlash": "e87b93e01f8be246c474d98183fa0b201cd454430a87777bd0eb159a8a9f2c7e",
+    "p_lights.c:T_StrobeFlash": "68760dfeb2b137879b96d94a52d4879fef8e300255dd1fb146e7f371e1cd66cc",
+    "p_map.c:PIT_ChangeSector": "f4034a39f36382bbb0c5ffa55d32e05e41da7954822a1bd663bb4dabbc0d9a2f",
+    "p_map.c:PIT_CheckLine": "66f2e08a7bdd1aa4364f60d29d926596100be7f9a78bf236d3266f770402af07",
+    "p_map.c:PIT_CheckThing": "15704a9f9849d993e4824878ff081569391acc372705c1e0211897da189734da",
+    "p_map.c:PTR_AimTraverse": "a1f88990bff5cf347cfb636905d5e31024a7919941fd8d0a1066a1c25a56dd76",
+    "p_map.c:PTR_ShootTraverse": "3852294e57eca72f905cf1ab1bd16b5aa1180c525a76c85748ccf4d0a662da15",
+    "p_map.c:PTR_SlideTraverse": "232d380d8226eac1efb0896397b8bea5a981c5be31f99f1135010886b80de364",
+    "p_map.c:PTR_UseTraverse": "26a19251bca5f6afd0002a7766a888d8d130ea5710f37e65f006775116c6e97c",
+    "p_map.c:P_AimLineAttack": "edfe5a41eaf633408f1f2f38000b5a4d75a0c23a06b9b14abf8b0fde0a67ec71",
+    "p_map.c:P_ChangeSector": "42ffaec128f6689c09f4ca40fa6f16e09053442aab28d34d16cf15bf01f64f74",
+    "p_map.c:P_CheckPosition": "f509cc5252588b4d61c00242d54ff463e0c85c677edf691b1231be1ca5ad6bb5",
+    "p_map.c:P_HitSlideLine": "efaa4fc2acca2b72ad7e1f9b683724fd8e75ac2c0562ee478f8f034abfad0d60",
+    "p_map.c:P_LineAttack": "f12e880fc3569b2b9fc70006d481447c13dc7a61658e24e85098100c060c16e4",
+    "p_map.c:P_SlideMove": "e2fbcd720be5893e87668533c3b7f53ff117b72ae9e0007a3d469f6a226690be",
+    "p_map.c:P_ThingHeightClip": "98ae9f8e4d8c94ad9d6c5c3ffe0dbd888de0fc729603ff49308a96bdc0729234",
+    "p_map.c:P_TryMove": "220c77b687eee9e2912db23c9b0939fc3962e127e42487b340f4b8eb0034a4f3",
+    "p_map.c:P_UseLines": "3123e6c78852355086523c9815e9ade5e84ce6584fcb67ac8316708cd6552349",
+    "p_maputl.c:PIT_AddLineIntercepts": "55508a517cc3eb75de233466cbcaf09439eae2e1e203c0d608f84e93124ab7fd",
+    "p_maputl.c:PIT_AddThingIntercepts": "6bb442a05c0603ad53fbc0aa90bbc6746699dfe039af99fabe6495523bc7465d",
+    "p_maputl.c:P_AproxDistance": "7c7a32306847770af6bfed66215d0ced91858eaeba7dd26231d3ab9158e66699",
+    "p_maputl.c:P_BlockLinesIterator": "8fb540c7f31511f9ccfb94e0168e76b18121f30350d2f325aca92da395c0b9ab",
+    "p_maputl.c:P_BlockThingsIterator": "6693ae5ff21b3e51d80b8ac5d10e452c4aafe80e6480672d61392c7d1a96859e",
+    "p_maputl.c:P_BoxOnLineSide": "e91cd38e2d63537354524e96d5acc8287047291283b8561cee29aa6391e51c5d",
+    "p_maputl.c:P_InterceptVector": "b6fc71a4f2bea94b66a1a9d3e435f8f81656b47aa67d4b8a8e5cd441e6394ae3",
+    "p_maputl.c:P_LineOpening": "7ed95f9a3b9b611c72cd2e902728a8bae5a4658c5158b0824508d2c66b01a1ea",
+    "p_maputl.c:P_MakeDivline": "1d57f3a4e7c76678251cb67104d09195bc97ef65ca0117842e74b013ae52d453",
+    "p_maputl.c:P_PathTraverse": "a9acbda97d08b7bb435d53ba0bde2144a6108c7803b6fb6936b8fde565650de2",
+    "p_maputl.c:P_PointOnDivlineSide": "523954c4c38d483ed6495387ac0f01a1f3ea2952cb0031e397762584e4a212d1",
+    "p_maputl.c:P_PointOnLineSide": "80712b3f421e4e3c91469e81695dbb4d515e29e819b225d5c6e1d4f2a0dd0e7e",
+    "p_maputl.c:P_SetThingPosition": "c510796c4d41345c4af93a38dc5f0770b62fe12d9866e6a68a558c10f5b2de95",
+    "p_maputl.c:P_TraverseIntercepts": "6d5e33e5066e43bc8a13e2d9b4534b6ec9526f73e3819aee4667875589b47171",
+    "p_maputl.c:P_UnsetThingPosition": "4fdd013d952f301b4f87336eff6573d8c9a2f829d5f44fa954f6272ec28b9077",
+    "p_mobj.c:P_CheckMissileSpawn": "607f365fe33e6fa8fb26c9d11d054893c8a17cf9057a4572d656d5c37fbe1035",
+    "p_mobj.c:P_ExplodeMissile": "56f216130a0ebbcb2b2d72924e6b048dd359196f65b2b65b98b7c25a7a22cc71",
+    "p_mobj.c:P_MobjThinker": "d5b34a5e05ad8c76f6a8a3ab650e58ee6012f36552f89767f787fcf25c4bbc80",
+    "p_mobj.c:P_RemoveMobj": "fb68b1ffe5140b8d4deda823d9ff875119df0c1289874ee26f898cf8e6d2964b",
+    "p_mobj.c:P_SetMobjState": "d804d2f4fc2abf96cb59ee86d70225767f204c9570dbd1b63596017b53123707",
+    "p_mobj.c:P_SpawnBlood": "2632a614e9e158b24ecb6024ac47d23f7fbdce865fddf603b7c7dff5d4915645",
+    "p_mobj.c:P_SpawnMapThing": "2cff89689b2b9e7e8b487625f5b5166ca8c9bddd6406a0ed36448496ae7d7c99",
+    "p_mobj.c:P_SpawnMissile": "e55c5b697899206af3e62a9b2b15413268ea993ec2deefdb5f2ecf40b9418296",
+    "p_mobj.c:P_SpawnMobj": "ecec71c4d5d54e85ad0bcb99392726c8d970453e13e256aa9aa81a0908a533a7",
+    "p_mobj.c:P_SpawnPuff": "b1a7762c3f8394b48ca3c807063cae2b11401250f95dae96c8c8df61b738b660",
+    "p_mobj.c:P_XYMovement": "c4b15dbc1653705a802dd73bbe6a35c9a090d2461c9e3fe17f20686877adf7ee",
+    "p_mobj.c:P_ZMovement": "3d64d9840cd386f1ec7904005f468589b772602e11baa2d12288eedfb7eea427",
+    "p_plats.c:EV_DoPlat": "f1c340ba3d2a18745923638edbb93698bf855b895976ae7abf6c38a7484c57ab",
+    "p_plats.c:P_AddActivePlat": "d6580d08c3fcca9cfa9083196304fbdaafb0893f4e84ef8eb2509459e7960938",
+    "p_plats.c:P_RemoveActivePlat": "137546e8d6ba695d0095f86907868abfd38374ce6ceaff0df27833144ca5b527",
+    "p_plats.c:T_PlatRaise": "414b9e02fbcc0f6944bb98e8befa3ffe5b309bb35d2bbab0ac3a3d82ce90aff9",
+    "p_pspr.c:A_FireCGun": "2afa9389075a99f3a720383a6cd929d8d4d396df548a771d70209f8cdc1fde9e",
+    "p_pspr.c:A_FirePistol": "47c22683e0bb7b027694cc739fbde0e81aa9e489c73386ee7cb2e80037b739ec",
+    "p_pspr.c:A_FireShotgun": "b3b494dc2296be3c94790ab2f14e7dfda87ea7918bf89ad4e9551a911285c735",
+    "p_pspr.c:A_Light0": "c636046f86451986c0ecf05add525d8e57891fbee3501999822ecda9defe2e88",
+    "p_pspr.c:A_Light1": "1c25aec25d46c35c01d97d4076ab010e1168b42133797849a883e6387c90d90f",
+    "p_pspr.c:A_Light2": "f6f7c4c8b30163a438c4d28680a290ab7f20776b925e55ac35abee6d4c0b5ce8",
+    "p_pspr.c:A_Lower": "1d6dd7a2fef7c6c46d77289af6fd1b8ee91b66f53d938064bf929724a953c9f4",
+    "p_pspr.c:A_Punch": "7a0c5c8382df4796e7dbf6ea7d0d9fd5d339da6ff4b91a70e22d3829602c2e5e",
+    "p_pspr.c:A_Raise": "86c22ac67821b27699860b4ca2012f707ae306d0f37b06c8d6c6cbc05ffed519",
+    "p_pspr.c:A_ReFire": "2572cd7b89243890f8e3bc196c3ffdfe4534695769396f01e6f74b5441c7e6e2",
+    "p_pspr.c:A_WeaponReady": "6a2b5d2b48cc246c721b49e0ab72118d2f237dfa850319f380358ed76294e1ca",
+    "p_pspr.c:P_BringUpWeapon": "c98b1f1a6f0f3d8186fadc55febd34217f303d6f737ffb694ac064fd0363ac81",
+    "p_pspr.c:P_BulletSlope": "4086ee8aa96065fd645720ced35b725ad98fd589ac1961e966764ee7f7c7ff3c",
+    "p_pspr.c:P_CheckAmmo": "4a9658fe87550cf0b7dfcdfd4c890c2474e84b1de64165ab7d5c6103fea1733b",
+    "p_pspr.c:P_DropWeapon": "b3b0678cf7137677506b4a505b04f0067f49f7812f32e45b02d8a2abf6d019b2",
+    "p_pspr.c:P_FireWeapon": "5c1c83e423eba043191b979a786d7352fd247461afffd6448f60e90dc32108a3",
+    "p_pspr.c:P_GunShot": "e0b0c52da0c971c908b275c91ffb9e42ec9f46b55def72e23abd8fcb9ebb8ebb",
+    "p_pspr.c:P_MovePsprites": "45b5e03fa33a59cef77b92f8f1d2adf01b68c882275dfafde1291f20c2514a3e",
+    "p_pspr.c:P_SetPsprite": "93997fbc9efd3a42c29f0ac1120f14590227fcad2057d9c687bac683c0cccec9",
+    "p_pspr.c:P_SetupPsprites": "5ad1570b976629d7dfc363ee4d180647c997ed7285f78796a450f27ac6bc1e79",
+    "p_setup.c:P_LoadThings": "65a3f36f3315ef435ff8a6a0cccd15f6b86fae2be30544d7937a40b2363af02b",
+    "p_sight.c:P_CheckSight": "4b5a5b18c10d91522210eff8007202c927a4d1f5205b32889e78a7104d76ac01",
+    "p_sight.c:P_CrossBSPNode": "cfd3bb823051b6c98fdae1e1d54b072b1796d32425c77eb9276e6cca6c0938a3",
+    "p_sight.c:P_CrossSubsector": "67345d18cf2adaf4471af8afa056d690b9b6ab1ae60364d3be4b72875025405c",
+    "p_sight.c:P_DivlineSide": "c55a6505c1c40dba5fc16e194c89c07e1ec97000115c3326d62ff72d0e4b6f25",
+    "p_sight.c:P_InterceptVector2": "590ec7f8a464c70f743c9c69c3a9fcf0b6d6fb9087aa012db232b5217c632593",
+    "p_spec.c:P_CrossSpecialLine": "8fe2e51b62928129522f8b55f5721b8e24c789c83670ca86f0b689737b418d33",
+    "p_spec.c:P_FindHighestCeilingSurrounding": "cd71d71c53885ec7082dbf2c5ac1aa5634cce83248b8b6631e74f9b03ea41149",
+    "p_spec.c:P_FindHighestFloorSurrounding": "cf65f987f0dec14baf1095236cc218082b8e76d6fada8e98ce7362138a8ecde1",
+    "p_spec.c:P_FindLowestCeilingSurrounding": "47eddbc24e3b3abaf191d664e86ad6e2602fb26bc498e693f884f39e9160c72c",
+    "p_spec.c:P_FindLowestFloorSurrounding": "60040e882b6d4260082730798f62d37dafc285144211e8ea0c28790bbbb5a147",
+    "p_spec.c:P_FindMinSurroundingLight": "86936274a683a2aefea6f76cac1a3e074216e82709586069acd2546a79c2b30c",
+    "p_spec.c:P_FindNextHighestFloor": "6e991ef79a87d088773f8ef886f00093c7c4b98b42a58ecf07272d99b4c1c16b",
+    "p_spec.c:P_FindSectorFromLineTag": "0b74fc26f9bd479b3482a9e8e75c9bb92593dfeb03a7f6c9af688166eb58220f",
+    "p_spec.c:P_PlayerInSpecialSector": "0b38cc03c5c87249c18556e7532205d8d770ce15d680de2e6ae3c430e8774a5c",
+    "p_spec.c:P_ShootSpecialLine": "c8388bc54e23dc35c1117d3ab859b96816799e13eb3b08045239bb79aec828c8",
+    "p_spec.c:P_SpawnSpecials": "2e231462469c034ef69fdd639f32d54324a26de6aaf3152920d27a2af075e338",
+    "p_spec.c:P_UpdateSpecials": "033dad595693036db24301f209a630b767d27ec143dd41c6c2d54a9007187131",
+    "p_spec.c:getNextSector": "51a7575d45e35e406903e5c55087921d45c1283d138f0c9645e4d963aa5467a7",
+    "p_spec.c:getSector": "18559afe891b705b996bc4d8901e7fca9a4ee51fb75610b5138546530fbe9556",
+    "p_spec.c:getSide": "38770a3b944a132b0ced592490f560a6ef71aff7f5f78be929ec6353b41a290a",
+    "p_spec.c:twoSided": "c62668dc0a572c308efd10c1ad947b755eec18231588af8f667810dcab3f1769",
+    "p_switch.c:P_ChangeSwitchTexture": "ea951d0e072d9da2784ab789943d1ebbebb7ede9d3fc2fd9e9a0a79587908870",
+    "p_switch.c:P_StartButton": "9d30378deab5185f575d88a4bc559aac76ca9c07c44861de76aa46daf43a6d8b",
+    "p_switch.c:P_UseSpecialLine": "aa422b09a41cf34299ca34040cf36234c2f56f4a1b80d9fe5c6ba62ab904739e",
+    "p_tick.c:P_AddThinker": "c30567602c4ec6095303697a3875aa7f54f78f885974eb2b81425ab0c3742cfb",
+    "p_tick.c:P_InitThinkers": "65f448147f953e5f1f5459509ee9eb98322235fff30b29ae51551071ff84639b",
+    "p_tick.c:P_RemoveThinker": "15d836b3ea687ee911ae5a84f67bcdc671c852084624336fca31da80f58ab0d5",
+    "p_tick.c:P_RunThinkers": "a6db3d89282e7228b23af1bf5da3b0b854c468970b4e11dfd725c2400255b1ab",
+    "p_user.c:P_CalcHeight": "d9876ca89c38f081ba57b57020f6c9ab3ac0243206718dc1c2c93ebec73c86cb",
+    "p_user.c:P_MovePlayer": "54174a5f9a4cb589c4043205b228b7aa38b6b7d7573f1f4c474800c99b343024",
+    "p_user.c:P_Thrust": "e6c538ba6ec0e39efe892f35f5d6568019bf3707017db4c548ddb9c29dcb707c",
+    "r_main.c:R_PointInSubsector": "efc1ba17a5f2ffcb33d65ff061302adf0b7d48feb3d98c6bc9ce294f267d8b40",
+    "r_main.c:R_PointOnSide": "4f5f2ca961cd290f3cc4e8e4aa9e0a84be85a75b8889918b2b17447d4c79a4af",
+    "r_main.c:R_PointToAngle": "d82e2502adbba8cfbaa28876fc5c542e6483f9992ccc6f4408ed3144814c9d25",
+    "r_main.c:R_PointToAngle2": "f3c68fd85a77ef30f2390850a0e19e2f03f0b79bb0b2300f9cb6126a062b13d2"
+  },
+  "functions": [
+    [
+      "r_main.c",
+      "R_PointOnSide",
+      "int"
+    ],
+    [
+      "r_main.c",
+      "R_PointInSubsector",
+      "subsector_t*"
+    ],
+    [
+      "r_main.c",
+      "R_PointToAngle",
+      "angle_t"
+    ],
+    [
+      "r_main.c",
+      "R_PointToAngle2",
+      "angle_t"
+    ],
+    [
+      "p_maputl.c",
+      "P_AproxDistance",
+      "fixed_t"
+    ],
+    [
+      "p_maputl.c",
+      "P_PointOnLineSide",
+      "int"
+    ],
+    [
+      "p_maputl.c",
+      "P_BoxOnLineSide",
+      "int"
+    ],
+    [
+      "p_maputl.c",
+      "P_PointOnDivlineSide",
+      "int"
+    ],
+    [
+      "p_maputl.c",
+      "P_MakeDivline",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_InterceptVector",
+      "fixed_t"
+    ],
+    [
+      "p_maputl.c",
+      "P_LineOpening",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_SetThingPosition",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_UnsetThingPosition",
+      "void"
+    ],
+    [
+      "p_maputl.c",
+      "P_BlockLinesIterator",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "P_BlockThingsIterator",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "PIT_AddLineIntercepts",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "PIT_AddThingIntercepts",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "P_TraverseIntercepts",
+      "boolean"
+    ],
+    [
+      "p_maputl.c",
+      "P_PathTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PIT_CheckLine",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PIT_CheckThing",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_CheckPosition",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_TryMove",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PTR_AimTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PTR_ShootTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_AimLineAttack",
+      "fixed_t"
+    ],
+    [
+      "p_map.c",
+      "P_LineAttack",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_InitThinkers",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_AddThinker",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_RemoveThinker",
+      "void"
+    ],
+    [
+      "p_tick.c",
+      "P_RunThinkers",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SetMobjState",
+      "boolean"
+    ],
+    [
+      "p_mobj.c",
+      "P_MobjThinker",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnMobj",
+      "mobj_t*"
+    ],
+    [
+      "p_mobj.c",
+      "P_RemoveMobj",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnPuff",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnBlood",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_XYMovement",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_ZMovement",
+      "void"
+    ],
+    [
+      "p_inter.c",
+      "P_KillMobj",
+      "void"
+    ],
+    [
+      "p_inter.c",
+      "P_DamageMobj",
+      "void"
+    ],
+    [
+      "p_sight.c",
+      "P_DivlineSide",
+      "int"
+    ],
+    [
+      "p_sight.c",
+      "P_InterceptVector2",
+      "fixed_t"
+    ],
+    [
+      "p_sight.c",
+      "P_CrossSubsector",
+      "boolean"
+    ],
+    [
+      "p_sight.c",
+      "P_CrossBSPNode",
+      "boolean"
+    ],
+    [
+      "p_sight.c",
+      "P_CheckSight",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_LookForPlayers",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "A_Look",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_RecursiveSound",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_NoiseAlert",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_Move",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_TryWalk",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_NewChaseDir",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Chase",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "P_CheckMeleeRange",
+      "boolean"
+    ],
+    [
+      "p_enemy.c",
+      "P_CheckMissileRange",
+      "boolean"
+    ],
+    [
+      "p_setup.c",
+      "P_LoadThings",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnMapThing",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_DropWeapon",
+      "void"
+    ],
+    [
+      "p_map.c",
+      "P_HitSlideLine",
+      "void"
+    ],
+    [
+      "p_map.c",
+      "PTR_SlideTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_SlideMove",
+      "void"
+    ],
+    [
+      "p_user.c",
+      "P_Thrust",
+      "void"
+    ],
+    [
+      "p_user.c",
+      "P_MovePlayer",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_SetupPsprites",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_MovePsprites",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_SetPsprite",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_BringUpWeapon",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_CheckAmmo",
+      "boolean"
+    ],
+    [
+      "p_pspr.c",
+      "P_FireWeapon",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_BulletSlope",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "P_GunShot",
+      "void"
+    ],
+    [
+      "p_user.c",
+      "P_CalcHeight",
+      "void"
+    ],
+    [
+      "g_game.c",
+      "G_PlayerReborn",
+      "void"
+    ],
+    [
+      "p_inter.c",
+      "P_GiveAmmo",
+      "boolean"
+    ],
+    [
+      "p_inter.c",
+      "P_GiveBody",
+      "boolean"
+    ],
+    [
+      "p_inter.c",
+      "P_GiveWeapon",
+      "boolean"
+    ],
+    [
+      "p_inter.c",
+      "P_TouchSpecialThing",
+      "void"
+    ],
+    [
+      "p_inter.c",
+      "P_GiveArmor",
+      "boolean"
+    ],
+    [
+      "p_mobj.c",
+      "P_SpawnMissile",
+      "mobj_t*"
+    ],
+    [
+      "p_mobj.c",
+      "P_CheckMissileSpawn",
+      "void"
+    ],
+    [
+      "p_mobj.c",
+      "P_ExplodeMissile",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_TroopAttack",
+      "void"
+    ],
+    [
+      "p_spec.c",
+      "getNextSector",
+      "sector_t*"
+    ],
+    [
+      "p_spec.c",
+      "P_FindMinSurroundingLight",
+      "int"
+    ],
+    [
+      "p_lights.c",
+      "T_FireFlicker",
+      "void"
+    ],
+    [
+      "p_lights.c",
+      "P_SpawnFireFlicker",
+      "void"
+    ],
+    [
+      "p_lights.c",
+      "T_LightFlash",
+      "void"
+    ],
+    [
+      "p_lights.c",
+      "P_SpawnLightFlash",
+      "void"
+    ],
+    [
+      "p_lights.c",
+      "T_StrobeFlash",
+      "void"
+    ],
+    [
+      "p_lights.c",
+      "P_SpawnStrobeFlash",
+      "void"
+    ],
+    [
+      "p_lights.c",
+      "T_Glow",
+      "void"
+    ],
+    [
+      "p_lights.c",
+      "P_SpawnGlowingLight",
+      "void"
+    ],
+    [
+      "p_spec.c",
+      "P_PlayerInSpecialSector",
+      "void"
+    ],
+    [
+      "p_spec.c",
+      "P_ShootSpecialLine",
+      "void"
+    ],
+    [
+      "p_spec.c",
+      "P_UpdateSpecials",
+      "void"
+    ],
+    [
+      "p_spec.c",
+      "P_SpawnSpecials",
+      "void"
+    ],
+    [
+      "m_bbox.c",
+      "M_ClearBox",
+      "void"
+    ],
+    [
+      "m_bbox.c",
+      "M_AddToBox",
+      "void"
+    ],
+    [
+      "p_spec.c",
+      "twoSided",
+      "int"
+    ],
+    [
+      "p_spec.c",
+      "getSide",
+      "side_t*"
+    ],
+    [
+      "p_spec.c",
+      "getSector",
+      "sector_t*"
+    ],
+    [
+      "p_spec.c",
+      "P_FindLowestFloorSurrounding",
+      "fixed_t"
+    ],
+    [
+      "p_spec.c",
+      "P_FindHighestFloorSurrounding",
+      "fixed_t"
+    ],
+    [
+      "p_spec.c",
+      "P_FindNextHighestFloor",
+      "fixed_t"
+    ],
+    [
+      "p_spec.c",
+      "P_FindLowestCeilingSurrounding",
+      "fixed_t"
+    ],
+    [
+      "p_spec.c",
+      "P_FindHighestCeilingSurrounding",
+      "fixed_t"
+    ],
+    [
+      "p_spec.c",
+      "P_FindSectorFromLineTag",
+      "int"
+    ],
+    [
+      "p_map.c",
+      "P_ThingHeightClip",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "PIT_ChangeSector",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_ChangeSector",
+      "boolean"
+    ],
+    [
+      "p_floor.c",
+      "T_MovePlane",
+      "result_e"
+    ],
+    [
+      "p_floor.c",
+      "T_MoveFloor",
+      "void"
+    ],
+    [
+      "p_floor.c",
+      "EV_DoFloor",
+      "int"
+    ],
+    [
+      "p_doors.c",
+      "T_VerticalDoor",
+      "void"
+    ],
+    [
+      "p_doors.c",
+      "EV_DoDoor",
+      "int"
+    ],
+    [
+      "p_doors.c",
+      "EV_VerticalDoor",
+      "void"
+    ],
+    [
+      "p_plats.c",
+      "T_PlatRaise",
+      "void"
+    ],
+    [
+      "p_plats.c",
+      "EV_DoPlat",
+      "int"
+    ],
+    [
+      "p_plats.c",
+      "P_AddActivePlat",
+      "void"
+    ],
+    [
+      "p_plats.c",
+      "P_RemoveActivePlat",
+      "void"
+    ],
+    [
+      "g_game.c",
+      "G_ExitLevel",
+      "void"
+    ],
+    [
+      "p_switch.c",
+      "P_StartButton",
+      "void"
+    ],
+    [
+      "p_switch.c",
+      "P_ChangeSwitchTexture",
+      "void"
+    ],
+    [
+      "p_switch.c",
+      "P_UseSpecialLine",
+      "boolean"
+    ],
+    [
+      "p_spec.c",
+      "P_CrossSpecialLine",
+      "void"
+    ],
+    [
+      "p_map.c",
+      "PTR_UseTraverse",
+      "boolean"
+    ],
+    [
+      "p_map.c",
+      "P_UseLines",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_FaceTarget",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_PosAttack",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_SPosAttack",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_CPosAttack",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_CPosRefire",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_SargAttack",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Fall",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Pain",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_Scream",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_XScream",
+      "void"
+    ],
+    [
+      "p_enemy.c",
+      "A_PlayerScream",
+      "void"
+    ],
+    [
+      "m_random.c",
+      "P_Random",
+      "int"
+    ],
+    [
+      "p_pspr.c",
+      "A_WeaponReady",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_Lower",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_Raise",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_ReFire",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_FirePistol",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_Light0",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_Light1",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_Punch",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_FireShotgun",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_FireCGun",
+      "void"
+    ],
+    [
+      "p_pspr.c",
+      "A_Light2",
+      "void"
+    ]
+  ],
+  "inputs_sha256": {
+    "tools/reference/evidence_pack.py": "12854a2562cfc6407230b0b6d75491a2b2eea2303403e4dbbe5fff9379e84ffb",
+    "tools/reference/generate.py": "e80beb09a686c030a6229599f5e0c9e9fd9b109ecebdcb9dd474a2a78e01d6cf",
+    "tools/reference/generate_m3a.py": "97a6bb6117329ee3fbbb942c1f17af14c0f16f264ecda1d298e791e0bd09f725",
+    "tools/reference/generate_m3b.py": "613aeb1563573f1990314414c0e1086d1645c3afd4764c2316c8e7d4e828a374",
+    "tools/reference/generate_m3c.py": "caca6c42d0856c87878f22e65380bf9ef50d8070e721f2edbb2d6ad656667d64",
+    "tools/reference/generate_m3d1.py": "a2abea47bea8ace07c0091e87dcd2edc159b3e17abb8a52204e569cd53b23ce9",
+    "tools/reference/generate_m3d3a.py": "e44b12d5eaa820241ec91c5915e9a859fcabcd4161a878d834aa64f3c29507ff",
+    "tools/reference/generate_m3d3c.py": "b4b679350f9586b83a126bee04371bd046c6a525422fc856e1251a2ae6e4beaf",
+    "tools/reference/generate_m3d3h.py": "3419858a229589fb981db06f1ef233c6613265980966e3c40673f60dc8cfba5d",
+    "tools/reference/generate_m3d3j.py": "24f0916f5fb6223f6f32b4a115ec811d3f85ac72cba36d383ac07ad1e825c839",
+    "tools/reference/m3f1_reference.py": "9ba2e71746621c42dd2775a2af1fd2776d6ea5358636827138dcb59e42541f27",
+    "tools/reference/m3f2_reference.py": "bdffbb17cdeb4bcb1a043a8542d6827dd6db0a6d42a890e1f5763da8635309aa",
+    "tools/reference/m3f3_reference.py": "d4489880ae4ca0e5c8f22fe37c8a429a6e286b1781fe62056871116a0ef8bfe0",
+    "tools/reference/m3f5_reference.py": "d97a2d3a9642ac819e2012e01b1a32f519fdf0a657bada13833589a38ac95ae1",
+    "tools/reference/m3g10_cases.py": "1aeda7661e0cb684ff8c105fd5501e1cbcaa09593ee7018535375fd0550730d2",
+    "tools/reference/m3g10_components.py": "f04c68bd1b1bad8e95d2305a2b7e15bd3634f7d6823b2a934791c27d3f7742e1",
+    "tools/reference/m3g10_reference.py": "8a317f576abcba89bc2d4a953d5ca44f00133cd00ac876c9978727527db78074",
+    "tools/reference/m3g11_cases.py": "7ada49cbd81c3ba32913d41a6bdb3cb9911b56b5382adf99068d9069da0caeaf",
+    "tools/reference/m3g11_components.py": "3e176a4e8e795748a6062b976b341d620117fd48b574d7b8eda78f2a0451cd4d",
+    "tools/reference/m3g11_observers.py": "aa37fcb89ff5dc9a165d945bf7471f6f75f80839eedb2faffe8eb3f04be147d2",
+    "tools/reference/m3g11_reference.py": "c37b7d9939e707a17340a42f346548a6e8406efa328cd5e5296324a7e67c2659",
+    "tools/reference/m3g2_reference.py": "5a86885c69bdca9f8793b5ff2dcf90ad5f2c4b19dafbe6fea9cef551eb3460de",
+    "tools/reference/m3g3_reference.py": "cf14cc4e7cdb7223f7d8cc4d6032fa510da669722d8b4765908adb5d58074ae4",
+    "tools/reference/m3g4_reference.py": "6b3502782f7f06779c78df155515b863d5496aa93fe0cd2c03686f7e0e131634",
+    "tools/reference/m3g5_reference.py": "83cbcb8ddf4da4e07d9a1df92b3b16a3b0350766d82a6cc013a3dc9fcbc06f27",
+    "tools/reference/m3g6_reference.py": "72626936e7f2b7cd642abd0f968e4175de6275fcc923c8c21118051ff96fe817",
+    "tools/reference/m3g7_reference.py": "cd4e9555cc659cb23b3eff8fdb101086493e63d29f17abe3bcc3c45e803cf8ac",
+    "tools/reference/m3g8_reference.py": "c00fb03c856f5d45a7b9f01ee6edc71f70b2ece239bdd108e46b69bff3419d4a",
+    "tools/reference/m3g9_cases.py": "de5aacba267b6cb711edb05ee74b15bcc178efa013db0db9d2b00172bab7aca6",
+    "tools/reference/m3g9_components.py": "1620144183393e650ee47da0676484833f1a14ca41027309188d744a6ec79850",
+    "tools/reference/m3g9_observers.py": "4363d2a77d1c5f1e727f970430f6fd15653b758295ea251c050c37e53ab91144",
+    "tools/reference/m3g9_reference.py": "875682e61dc7474ba82f1e98ca450216b5b18f8b4859bc7e5bc98316a66ed6dc",
+    "tools/reference/m3h1_cases.py": "9f1dc94d14ba39cb6fdc5176f135bdfd57c969a7706c5d86263acde445e7560c",
+    "tools/reference/m3h1_observers.py": "5440124fc15b12a694b543b0621f8a838913e9471a33429bbf7406a5a13f345e",
+    "tools/reference/m3h1_reference.py": "8957db3b1d85574fef10f164d06874bc9c4942eb68c3d773c67826c68ec824cc",
+    "tools/reference/m3h2_cases.py": "a132039b2e5c23b9e86c65fce965cd4956735d1d5704f8611aaa029a1429e470",
+    "tools/reference/m3h2_observers.py": "53c7b7251dd0e9fd4fc9bc7790b6246ad2b07a51f811f043d58f3451f0fba4b3",
+    "tools/reference/m3h2_reference.py": "c0996344042ae3f2acd0c0c1fa8c68940795264f3a8c13e0c9d0a433b2b6f33f",
+    "tools/reference/m3h5_geometry.py": "6e4345159b758799c7df610ab27abf3fc9f3e64c969ce3393495089f55610a8d",
+    "tools/reference/m3h6_cases.py": "37afec661f191488dbc5c48ddcba1fe6bf710eca6d0f1f3d4d503b5e11b3e01b",
+    "tools/reference/m3h6_geometry.py": "f988cc2349175962808194e25f8bbeb987829f7617951aad634d0e0d9c1be2a2",
+    "tools/reference/m3h6_reference.py": "d26095d6db7f9f23863bd531e0f07f0fd1dd710aee73e6b347cd55912d315464",
+    "tools/reference/m3h7_cases.py": "650aed2cb8dc13bad295df377b6a0d1d54221c79befdbb06fd509109230dddce",
+    "tools/reference/m3h7_geometry.py": "ce4fdfe64fd05cc7cf01d6ebb6d0d77d5f1bf1a84a9f3983129af0fcbf536146",
+    "tools/reference/m3h7_reference.py": "73ba44277e63beb1cddb9d2ba5083bf01bb0d4aef9b995fc53183ba6abd0dd11",
+    "tools/reference/m3h8_cases.py": "f5f09616b87f1746428a5a6f49ff339bf2ad2b9cd716075f1939c2f2d074d221",
+    "tools/reference/m3h8_geometry.py": "14a65dff94d0cf4b5c1f2def7522e3665816da4570548d4ff8eafc965343b242",
+    "tools/reference/m3h8_reference.py": "f2643823be45ea290bd713247eba1c4b780f16330f5e92acf76d563cc48436ec",
+    "tools/reference/m3h9_cases.py": "75ec1005b1a278e6d627d97edb522385aa7658f24e167bd2fb0158efe56ed0a9",
+    "tools/reference/m3h9_geometry.py": "5c0703054b4c235d78a4bc4297be8f132b8ad3f46052c4fc056760df82e37f30",
+    "tools/reference/m3h9_reference.py": "952070fd23540a2a58b88f201cac12e3ca9ac2ee57fb0f9c3b31edada91e14c9"
+  },
+  "inventory": {
+    "blocked_by_blocking_scroller": 51,
+    "blocked_by_thing": {
+      "missile:decoration:35": 1,
+      "missile:player": 1,
+      "monster:decoration:48": 53,
+      "player:decoration:2028": 76
+    },
+    "c_only_scenarios": [
+      "spawn_filter_easy",
+      "spawn_filter_hard"
+    ],
+    "captures": 298,
+    "change_sector_calls": 95,
+    "clip_outcomes": {
+      "fits": 213,
+      "left_stuck": 9
+    },
+    "crossings": {
+      "missile:48": 1,
+      "player:48": 9,
+      "player:88": 1
+    },
+    "decoration_clips_pushing_z": 0,
+    "decoration_rows_checked_against_info": 111,
+    "decoration_spawns": 111,
+    "decoration_spawns_by_type": {
+      "10": 11,
+      "12": 11,
+      "15": 12,
+      "2028": 24,
+      "24": 20,
+      "35": 12,
+      "48": 21
+    },
+    "executed_tics": 1157,
+    "exercised_unique_functions": 111,
+    "expanded_trace_bytes": 1427983,
+    "filtered_records": 32,
+    "fireball_explosions": 2,
+    "fireball_launches": 3,
+    "function_entries": 48363,
+    "gameplay_draws": 502,
+    "height_clips": 222,
+    "hitscan_skips": {
+      "aim:decoration:2028": 1,
+      "aim:decoration:48": 2,
+      "shoot:decoration:2028": 1,
+      "shoot:decoration:48": 1
+    },
+    "hitscans": 4,
+    "kills": 0,
+    "largest_special_window": 8,
+    "maps": 13,
+    "missile_decoration_hits": 1,
+    "movers_created": {
+      "EV_DoPlat": 1,
+      "EV_VerticalDoor": 1
+    },
+    "new_genuine_bodies": 0,
+    "nodir_resets": 10,
+    "noway_stops": 0,
+    "packed_trace_bytes": 386809,
+    "pass_throughs": {
+      "decoration:15:decoration:15": 32,
+      "missile:decoration:24": 5,
+      "player:decoration:10": 9,
+      "player:decoration:12": 10,
+      "player:decoration:15": 9,
+      "player:decoration:24": 10
+    },
+    "plane_steps": {
+      "ceiling:down:ok": 61,
+      "ceiling:down:pastdest": 1,
+      "ceiling:up:pastdest": 1,
+      "floor:down:ok": 15,
+      "floor:down:pastdest": 1,
+      "floor:up:ok": 15,
+      "floor:up:pastdest": 1
+    },
+    "rooms": 6,
+    "rust_only_maps": {
+      "dense9": {
+        "linedefs": 31,
+        "path": "tests/reference/m3h9_dense9.bin",
+        "scrollers": 9,
+        "special_window": 9
+      }
+    },
+    "rust_replayed_scenarios": 18,
+    "scenarios": 20,
+    "scripted_tics": 1157,
+    "scrollers": {
+      "dense8": {
+        "blocking": 0,
+        "two_sided": 8
+      },
+      "scrollblock": {
+        "blocking": 1,
+        "two_sided": 1
+      },
+      "scrollhall": {
+        "blocking": 0,
+        "two_sided": 2
+      }
+    },
+    "selected_original_bodies": 151,
+    "solid_returns_without_height_test": 129,
+    "spechit_entries": 176,
+    "spechit_max": 8,
+    "thing_records": 210,
+    "thing_spawns": 178,
+    "use_trace_stops_at_scroller": 1,
+    "use_traces": 3,
+    "uses": {
+      "monster:48:false": 12,
+      "player:1:true": 2,
+      "player:48:true": 1
+    }
+  },
+  "maps": [
+    "tests/reference/m3h9_geometry_0.bin",
+    "tests/reference/m3h9_geometry_1.bin",
+    "tests/reference/m3h9_geometry_2.bin",
+    "tests/reference/m3h9_geometry_3.bin",
+    "tests/reference/m3h9_geometry_4.bin",
+    "tests/reference/m3h9_geometry_5.bin",
+    "tests/reference/m3h9_geometry_6.bin",
+    "tests/reference/m3h9_geometry_7.bin",
+    "tests/reference/m3h9_geometry_8.bin",
+    "tests/reference/m3h9_geometry_9.bin",
+    "tests/reference/m3h9_geometry_10.bin",
+    "tests/reference/m3h9_geometry_11.bin",
+    "tests/reference/m3h9_geometry_12.bin"
+  ],
+  "outputs_sha256": {
+    "m3h9_cases.csv": "3377f99a7bf2e9dbd8ac757861970326bb1d94a3d2a5564c988749bacee21d30",
+    "m3h9_dense9.bin": "b8790cda37f78728611cdb90f3f92279d3540895d26530b19c8b032456391033",
+    "m3h9_geometry_0.bin": "bf70f6798b2f5c1d371ec170d378e19e96cf56d726baa5c275f07a418f0fd16e",
+    "m3h9_geometry_1.bin": "7ed13c27ece7a5b9a401699ff5863e127f5058b6b0388ac5db961aa81f62aeb7",
+    "m3h9_geometry_10.bin": "4739b7306597acbe0855abf7b505e8e3935e93fd6725a6dac6218f586454d6af",
+    "m3h9_geometry_11.bin": "7fc258567130239cc86e7aeadc73fb95ecb932c6a3063dba48652f32920bdd51",
+    "m3h9_geometry_12.bin": "94badeb859f6c77b3c74d7134f556a2e43f6729804eb265d8af0b829560ff3d2",
+    "m3h9_geometry_2.bin": "1ba73b13ee05dbea0e619897e1f383d7725b1e26655923e8ec687df0ac04f75f",
+    "m3h9_geometry_3.bin": "dfc17ca5602fe7d2d5278a9c0a9d0a591d8c923ed050ee49ff0ec29a67877607",
+    "m3h9_geometry_4.bin": "a2da7d0d3a1c48a3937a2a892f5656bb0ecb2ca6feb9b8846287bf5fa98132df",
+    "m3h9_geometry_5.bin": "463d05e635c900ff14eecfdc49b807f18d21b125b15472b57aabb83d3277da6a",
+    "m3h9_geometry_6.bin": "bb08438cd6594f4d6cd711f9a8892a9e009361dd222223603e3e8f069f9a65fe",
+    "m3h9_geometry_7.bin": "1b0d81815fcbdbaf88e0833d270892e545a2bc3eded48f3fed7bc2b96b1242da",
+    "m3h9_geometry_8.bin": "2ff9635b4292b02f60154ec8b10930b83c44e4a1f092050779249027367d8ec4",
+    "m3h9_geometry_9.bin": "eb75c1978ca4719ffec94de03f7ae2f224e25b60d71db2c029b589d5ffe90deb",
+    "m3h9_maps.rs": "589a2eb628c91182f46974329d5fa39ad35c48cc7e9aa76f29951c7d258e8729",
+    "m3h9_trace.dref": "e77afb680282fb3fe42f4834e807d494c3513ceb31e84c7c74193e0367fc747b"
+  },
+  "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "row_formats": {
+    "DT": "DT,case,op,tmthing,thing,code,flags,result,tmthing z,thing z,thing height: PIT_CheckThing on a thing (flags = thing->flags). code 0: the first flag test passed a thing with none of MF_SOLID|MF_SPECIAL|MF_SHOOTABLE whose box the position check overlaps (printed only when it overlaps; result 1; a flags-0 thing clipping its own position inside P_ThingHeightClip passes itself here, before the self test); code 1: the missile branch met a non-shootable thing and returns !(flags & MF_SOLID) (0 explodes); code 2: the last line of the body for a non-shootable (hence non-special) solid thing returns !(flags & MF_SOLID) = 0 with no height test",
+    "E": "existing; E,case,op,7,actor|-1,sound now also records sfx_noway at the player and the global switch sound of P_ChangeSwitchTexture when buttonlist[0] has no origin",
+    "F": "F,case,0,index,x,y,angle,type,options,owned before,owned after,decision,prndindex: one row per THING record from the P_SpawnMapThing wrapper (decision 0 spawned, 16 options bit 16, 2 skill bit, 1 player start, 11 deathmatch start, 32 MF_NOTDMATCH, 64 nomonsters; prndindex after the record); the index -1 row sums the lump (owned, prndindex, totalkills, totalitems)",
+    "HC": "HC,case,op,thing,result,z before,z,floorz,ceilingz,height,numspechit: P_ThingHeightClip (its P_CheckPosition result is ignored by the source)",
+    "LE": "as M3h7: LE,case,op,kind,id when P_RunThinkers runs a sector thinker, now also kinds 5 door, 6 plat, 7 floor",
+    "M": "as M3h6: M,case,op,attempt,actor,x,y,ok,tmfloorz,tmceilingz,tmdropoffz,floatok,move_failure,subsector,sector,block_line,block_actor; move_failure 1 names the blocking thing (a decoration here), 2 the blocking line (the ML_BLOCKING scroller here)",
+    "MA": "MA,case,op,player,angle,x,y: P_UseLines entry; its P_PathTraverse rows (TR traverser 3, D/B/U/I/TI) carry trace stage 9",
+    "MB": "MB,case,op,slot,line,where,btexture,btimer,soundorg sector (-1 none): a buttonlist slot with a timer, line or sound origin after the op; presentation",
+    "MC": "MC,case,op,0,sector,crunch,floorheight,ceilingheight at P_ChangeSector entry; MC,case,op,1,sector,nofit,floorheight,ceilingheight at its exit",
+    "ME": "ME,case,op,fn,line,arg,thing,result,store count before,store count after: fn 1 EV_DoDoor(arg = vldoor_e), 2 EV_VerticalDoor(arg = line special; thing = user; result -1), 3 EV_DoPlat(arg = plattype_e), 4 EV_DoFloor(arg = floor_e); a mover was created when the store count grew",
+    "MG": "MG,case,op,0,gameaction,secretexit at G_ExitLevel; MG,case,op,code,playerstate at the end of the op when G_DoCompleted (code 1) or G_DoReborn (code 2) would run at the next G_Ticker: the case ends there",
+    "MH": "MH,case,op,numsectors,(floorheight,ceilingheight,specialdata) for every sector in index order after each op; heights raw 16.16, specialdata = the sector-thinker store index of sector->specialdata or -1",
+    "MI": "MI,case,op,line,frac,special,openrange (-1 when special),result: PTR_UseTraverse visited a line intercept (result 0 stops the trace)",
+    "MK": "MK,case,op,thing,line,index,inclip: PIT_CheckLine is about to store line at spechit[index] for tmthing; inclip 1 inside P_ThingHeightClip. spechit keeps its source size (8)",
+    "ML": "ML,case,op,(line,special)... for every line whose map special is nonzero, after each op (W1/S1 lines read 0 once cleared)",
+    "MM": "MM,case,op,id,kind,sector,entries: a mover just created by an EV_* body (kind 5 door, 6 plat, 7 floor) and the number of thinker-list entries of that sector at that moment, including a removed entry not yet unlinked (M3h8 note \u00a72.1, \u00a78)",
+    "MN": "MN,case,op: P_UseLines exit",
+    "MP": "MP,case,op,actor,movedir,numspechit: the P_Move failure branch with numspechit > 0, before movedir = DI_NODIR and the reverse P_UseSpecialLine loop",
+    "MQ": "MQ,case,op,slot,id: a nonnull activeplats slot after the op (id = sector-thinker store index)",
+    "MT": "MT,case,op,thing,code,z,height,radius,nofit: PIT_ChangeSector outcome after the clip: 0 fits, 1 health <= 0 -> S_GIBS (height and radius 0), 2 MF_DROPPED removed, 3 not shootable left as is, 4 nofit = true",
+    "MU": "MU,case,op,thing,line,side,special before,result,special after: P_UseSpecialLine (from PTR_UseTraverse or the P_Move failure branch)",
+    "MV": "MV,case,op,sector,plane,direction,speed,dest,before,after,result: T_MovePlane (plane 0 floor, 1 ceiling; result 0 ok, 1 crushed, 2 pastdest; heights raw)",
+    "MW": "MW,case,op,line,toptexture,midtexture,bottomtexture: the front side textures of a special line when one is nonzero (declared switch texture numbers); presentation",
+    "MX": "MX,case,op,thing,line,side,special: P_CrossSpecialLine entry from the P_TryMove crossing loop (side = the old side)",
+    "MY": "MY,case,op,thing,line,special: P_CrossSpecialLine exit (0 once a W1 line is cleared)",
+    "MZ": "MZ,case,op,usedown,playerstate,gameaction,secretexit,cmd.buttons of players[0] after each op (gameaction 6 = ga_completed)",
+    "NS": "NS,case,op,attempt,thing,numspechit: printed before every M row (P_TryMove outcome). For a refused move it is the count P_CheckPosition left (what the P_Move failure branch reads next); for an accepted move the crossing loop has already run `while (numspechit--)`, so it reads -1 (the source leaves numspechit at -1 until the next P_CheckPosition)",
+    "SD": "SD,case,op,id: P_RemoveThinker marks sector thinker id (the E code 2 row stays for actors)",
+    "SF": "SF,case,op,id: P_RunThinkers unlinks sector thinker id and calls Z_Free (the harness quarantines it; ids are never reused)",
+    "SO": "SO,case,op,kind,index,sound: S_StartSound with a sector origin (kind 1: &sectors[index].soundorg) or with the address of buttonlist[index].soundorg (kind 2: P_UpdateSpecials passes the address of the field); a NULL origin (global) or a mobj origin keeps the inherited E,case,op,7,actor|-1,sound row",
+    "TK": "as M3h7, plus kind 5 door: id,sector,type,direction,topheight,topcountdown,speed,topwait; kind 6 plat: id,sector,type,status,count,low,high,speed,wait,crush,tag,oldstatus; kind 7 floor: id,sector,type,direction,floordestheight,speed,crush,newspecial,texture; kind 8: id, a sector thinker removed by P_RemoveThinker and not yet unlinked. Mover allocations are zero-filled (declared adapter), so never-written fields print 0",
+    "XT": "XT,case,op,code,shooter,thing,flags: PTR_AimTraverse (code 0) or PTR_ShootTraverse (code 1) skipped a non-shootable thing intercept (\"corpse or something\") and the trace continues"
+  },
+  "sanitizer_comparison": {
+    "raw_trace_sha256": "ad61652ab11d185e0c01cb6b57af8111a6d4ce0de3f495752380880ee93dc619",
+    "rule": "--overflow-check rebuilds without -fwrapv under -fsanitize=signed-integer-overflow,integer-divide-by-zero,float-cast-overflow and --address-check under -fsanitize=address,undefined (both -fno-sanitize-recover=all); each run asserts its raw trace equals the strict trace byte for byte, so raw_trace_sha256 is the digest of all three"
+  },
+  "schema": "DOOM-PLAYER-E1M1-v1",
+  "skyflatnum": 2,
+  "source_sha256": {
+    "am_map.h": "75c3671cbc7f003e16cc50abe98fe824e595f1c3bf66c2c722e8597a015e40ed",
+    "d_englsh.h": "b018968e3aef65e0009d6ec676d40c8731b33e2882758640d3028c530c87a789",
+    "d_event.h": "24ba8629e157f4f76c4da0821a9f1bf71c34c2aec5cbc1ee4ec5898751225d22",
+    "d_french.h": "018e635134bb064b6c559407221629bc27bc400769d9074dc742510ac7d88086",
+    "d_items.c": "76531d5366de1157cf3d8510ef749617cfc46b6e721845bda4324cd697028fe6",
+    "d_items.h": "322a73acb345703c9f00ae7528900daa3a49bd27c670d5acee4196c1ded74bda",
+    "d_main.h": "adb0988d417528bdb689f5249cc650360f5a81936c797346d8390b80af0c4ca9",
+    "d_net.h": "54d77e10fe98e7ad640c711e7146f1440e4bd3f73e46d27905f9c19b8117ac3d",
+    "d_player.h": "9c9a342ab7c3661ab02d32890bd0d74ede94a0745ae0d622de83a9ae11046ffb",
+    "d_textur.h": "fac8baf1195a1a1a00f872271c7e159ad8b66a3632385128403ed99f99cf5ba1",
+    "d_think.h": "a8d3d4943495c729cd33b67eff1b56d801f1cf8cd0db74fb5d63b613c4eabddc",
+    "d_ticcmd.h": "2f70caa7c187365850e467254d8b0a31c07ea304d59339c68fde63d05274d146",
+    "doomdata.h": "f0504fd3926491ee56c61c8e9c732f0bf7e74306cba482eb267beda5022accca",
+    "doomdef.h": "643daca966fb762fa86f39ce9a1779355117578527bf2e295163647f9ad0d74e",
+    "doomstat.h": "c8b9eb311ec529a371c1c49dbd9a571ee07976dfd1bdc83d26b77ff6ba163355",
+    "doomtype.h": "e2b8da9ed44c6686a282af8e14a53b605ecc781d05ccd78579fcf57c720297e6",
+    "dstrings.h": "de1d24709df885ac93ddc5c1b86dbc2e0baad1027dde01ea09076d9e28778bc0",
+    "f_finale.h": "ee5cb17f104a894de9fed452dfad04df3e070a7bc70e65d9d336421f7dee9359",
+    "f_wipe.h": "fff2fb466d978eb4d482464899302830a377e305b0d31c9524072ec569cfaff0",
+    "g_game.c": "bc8e2e0d76a70f8120174946641a82c46f0116a624f51c011b292e2ffcb78a29",
+    "g_game.h": "ab47e29d7506cda9a702073c451d6e533204e49a064a0ccc6e98ae4c5e9faa60",
+    "hu_lib.h": "611143caa98ef13992845fde571be9a9c3d944fa850ee2f2d8b0406aae9ed02e",
+    "hu_stuff.h": "09a1c0ef0434b0b46e9ea3b43232898b7b939b07bf18f302458227948d98579c",
+    "i_net.h": "0c32e01a687cda4e8db3f87ec38db53b7c4c9826e69a128f6dc7a2121a622f5a",
+    "i_sound.h": "7a4171979ac20b40c02969be19d404cbc77e4493aa69bb22c0eeaf1f9b8c519b",
+    "i_system.h": "426ccb2f2b29facaa80e0a43165bb62395ceda6dbb8ed27d0a3cfc99a91a6abc",
+    "i_video.h": "d9af47ac4d55f1acb0dd1060b663b8d2c085688a39807b101a9ff082800b4e42",
+    "info.c": "e09631527669ee528bdae20a47be79e1cb33972b39964c33ac4814e1701a0949",
+    "info.h": "3e68ee6cc13323e69cbcf208e9a0af7b13867bead49e66d765abefa5d914b0dd",
+    "m_argv.h": "388205a8bda230f472caafac172a42621c72693f018e66c7c71389e4ea24c7b4",
+    "m_bbox.c": "98f3aea4f43d4d75fe452a25a65678fbd8368cfef3928b869767996e2165f42c",
+    "m_bbox.h": "fc041f774ff1f7b2b05d5bd8dd35a9496cf4dd4ca2a0a2df2420ac6f827b0b5d",
+    "m_cheat.h": "92f43c6df575a07bc394981f1beb1b901889f84bce67b557b8274f0379f0ae88",
+    "m_fixed.c": "a4472841bc8890c5d5a41b325ecf56d10d7026a7489967aa29100b5dee759fea",
+    "m_fixed.h": "67aa3925a905d448fb947fb7358093a39367f534c3e26e3f8b06228f553227ef",
+    "m_menu.h": "ccfc1f2abe50cbb78e83d2ec35eb3812003945f2d668e69551b5b2d56bfc4dfa",
+    "m_misc.h": "5cf237e545bd93d01a59f3696afa02073beedf8131ea23f30924fd5cc3891c7b",
+    "m_random.c": "8d89f5cfcbbd0170e46b55538c4c272b3cf5b5d7dce91023b8aa8d9b922b21ee",
+    "m_random.h": "31ec17387c9b7148f8e9762b71cccebaa199bffece76e1103bdb64f0ae615caa",
+    "m_swap.h": "04e76b9143f1d78a8f5cbb11b8d5022b2d5b0f18f644615384fa793f741ffd19",
+    "p_doors.c": "2e44a6051f27206971c7bf9629431db201e1dc3441d974119ec9d88655e5ec12",
+    "p_enemy.c": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0",
+    "p_floor.c": "c22ad7b7112d28c8b8c54a26ff611b98664a6d7a40d8d300680e6ca465468d47",
+    "p_inter.c": "72e9bbabe560ef548c2f2522494786347d5c831b0e1f0ecb5cb29d8d8e682356",
+    "p_inter.h": "348edaf0dbbac0b455e54823d3e8bdab72ac210bf22cd17cffc519596661fa2a",
+    "p_lights.c": "0ade56b8514b3e11fd13af2be7a787531e4ffb6b84c49e489d678d42b5abfdca",
+    "p_local.h": "8d71f591ed5f26580042d991558c89d674b683f9cd1c2801ac7714de04b0185f",
+    "p_map.c": "752c7873c81fe6b10b77a08b7ef5716fe49c3103f6caa02097ed299e6e04736c",
+    "p_maputl.c": "4d93e06d11160fb935e94750babbdcc9a4469d96f593764872db87cefd37c0a1",
+    "p_mobj.c": "21a39bdbd746d6fba38660500203216052f0723b8e0ab033ce2a650ada2b403f",
+    "p_mobj.h": "85be6ea83fc4b5f95df666c68c8999f7fe5745a5f503d3a441afd66b5f7e5db0",
+    "p_plats.c": "15f27dd1282ef9730ffce010b1fcaec1283a9cd37e143b863576a690aba514f6",
+    "p_pspr.c": "b47100f9c2c2c4f7913831c170bff55161af2d5d01f5467dbbc6be081c4f1af1",
+    "p_pspr.h": "21b95a0eb8b901287be5077b780b809e5e4e296393cb63c8e02970646a8f8e67",
+    "p_saveg.h": "31457a112b24c4bd91df919c9e2c81add41019194492d320f81f2d837ed00bac",
+    "p_setup.c": "cc56c3ef5eb73aaec4db8be855fd3c192af19bf8f775478d002e9b2e9225872d",
+    "p_setup.h": "ffffe92a94edde836ca5d2d5db311d003ce03e1dcfe542d948ee8094f1637be0",
+    "p_sight.c": "81014a71e4155db6da0af21e6ecf14687daf18075fb75322b63bdc254ce11120",
+    "p_spec.c": "1eed828498af033bd2322402a727e5b66913f5814e4d3fb002712fbcc8825cb1",
+    "p_spec.h": "95d93e2e3b803126b0ecf6ea42de41d2bce7b2d09ea701e03992f0cc6dae22a3",
+    "p_switch.c": "ac7effb3c4cfce1ecd8f7d25c93690c9b74cda99c639a47f76c4151a73010358",
+    "p_tick.c": "21a638b7b1ae4fcb6b6892a731cd27d20f44e2df12dd3325c8215ca4c9aee22f",
+    "p_tick.h": "a0512fd19e760d5d43e477bfe4fabf686542bc21bc27daa87108cb703fc562a7",
+    "p_user.c": "ecb5bab44ab9326c9c0d14bd607bc49c669bf048eecda27f7dc4634023a6c4a4",
+    "r_bsp.h": "08ca429757b65ac35798cf9f47ef9dea072e27a5b856fdf300c9fc2fcba5fac6",
+    "r_data.h": "4dbb1515b2e1be1e2496018365ebd37507f001ae449a181a54a894a70141ed1b",
+    "r_defs.h": "d8856503bea02282f5f338f3533885e87c6c430ce4f11511d6a04b5fc040db31",
+    "r_draw.h": "4ab1c0bbf7dba3712db71ba0ba7901184b2a35a8b6132db40bd0f6c87b74ccfe",
+    "r_local.h": "b92f15cbc8620b38de46512166244ba9f357de4fc8ef32be2f35088bc1cfd443",
+    "r_main.c": "2aae43cf807929a8758f71ed0205fc08017556541ba8df2ea9167c003d0dec5a",
+    "r_main.h": "9576bf120653af7127dcfd754f50e294b76be38bacb3b43f8686111a2dcd501b",
+    "r_plane.h": "abc99d0fc7845c8e9e73057b14a886b138046d5e432303c87fa5c34879f5903e",
+    "r_segs.h": "9343a51c57d93f13098118cfbc23377487b4063ec0dbf447c6aee8a7d0fd68ce",
+    "r_sky.h": "2c4a650afa36997ccb8ff97b7e1a5a0b25c1090a17c9e39b3d66e1d53ea9391e",
+    "r_state.h": "35a0d8f2e6a8f88ff100625708e54a6f04d22506319bef1c08033293e3ca22bd",
+    "r_things.h": "7e7a985f29f971e7e5c14c93c79f8d3462f4a42f5544d4c298a90df00561cf50",
+    "s_sound.h": "d747126bc8105ef540dee2f6f7e9f17db047dabb2c03a740ddc1bb9f98746b83",
+    "sounds.h": "fa5a6c19c689eeb6e4a2df08b1d4efe5c445b3d0cb4081dc3a7d28fdadfd39f8",
+    "st_lib.h": "8ae86cf219785672579e6dd75ce3a5abae2e9991c44af647d59f6bec384307c2",
+    "st_stuff.h": "0e2aad8828e13314e754c370da0c8cb61f08006c349fb1587ad28ea789ba4d85",
+    "tables.c": "db8759f4311654c63785dcffb8f73a00a61cfe2713e4284c238dea420b6e5f89",
+    "tables.h": "54e366ed33a0bd65e5cad6c5b6f7df77573909e5974b8af296fdb1503c77fcf2",
+    "v_video.h": "728500c3b693d1baff1a43c5df6d0c6d55d1ec343247becd7db33c1be747635b",
+    "w_wad.h": "1c5f7a0f6ba41f1f6ce22440fb020596d0ea7b16742f9f2a044e9bc7d66e8abb",
+    "wi_stuff.h": "57ab19c222d6e54158b3fff8ea6ea23d23e7646925aab830b06cf8cfc1e84f5e",
+    "z_zone.h": "46498575b14b5f5538d0d93f3d7c8325941b76f0e36b435bb895ecaac6f54cca"
+  },
+  "switch_textures": [
+    1,
+    2
+  ]
+}

@@ -150,8 +150,10 @@ button restore (1128–1154) is already modelled (M3h8). So a two-sided 48 has e
 three game-code effects of M3h8 §2.9: it enters `spechit` from `PIT_CheckLine`
 (p_map.c:240–244) when the position box crosses it and it does not block; a monster whose
 `P_TryMove` fails with it in `spechit` resets `movedir = DI_NODIR` and calls
-`P_UseSpecialLine(actor, line, 0)`, which returns false for 48 (p_enemy.c:310–324,
-p_switch.c:301–319); `PTR_UseTraverse` stops the use trace at any line with a nonzero
+`P_UseSpecialLine(actor, line, 0)`, which returns false for 48 because the monster
+filter admits only 1, 32, 33 and 34 (p_enemy.c:310–324, p_switch.c:301–319); for a
+player the switch has no case 48 and the trailing `return true` is reached with no
+effect (observed in `use_scroll_wall_stops_trace`); `PTR_UseTraverse` stops the use trace at any line with a nonzero
 special (p_map.c:1113–1122). `P_CrossSpecialLine` has no case 48 (p_spec.c:503–534),
 `PTR_ShootTraverse` ignores specials other than through `P_ShootSpecialLine`
 (p_map.c:919–920, p_spec.c:966–999, no case 48), and sight, noise and `P_LineOpening`
