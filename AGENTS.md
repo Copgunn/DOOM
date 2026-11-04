@@ -55,7 +55,8 @@
 
 - Inspect status, master and open PRs first. Implement on focused feature branches,
   never directly on master; preserve unrelated changes and shared history.
-- After the owner merges, verify post-merge CI when required.
+- Merges require every applicable fresh local/exact-head gate; after the owner merges,
+  verify post-merge CI when required.
 - Open/update a focused PR with behavior, evidence, restrictions and unresolved
   issues. Do not claim unobserved passes.
 - Maintain human-readable README, architecture, compatibility, roadmap, testing,
