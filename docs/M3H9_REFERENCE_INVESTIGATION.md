@@ -226,7 +226,7 @@ flags unread); this feeds the intercept budget of §5.3.
    keeps `z = floorz` (542–546) and the ceiling simply ends below its top: V′ case (b)
    of M3h8 §4.1, already admitted. The Rust `height_clip` and `change_sector` of M3h8
    (`planes.rs`) already gate on `health <= 0` and `MF_SHOOTABLE` in this order (audit
-   of step 1, [evidence record](validation/M3H9.md)).
+   of step 1, recorded in [§12](#12-follow-ups-risks-status)).
 
 ### 2.8 Barrels: `MT_BARREL` (2035) and the explosion chain
 
@@ -533,7 +533,7 @@ ASan/UBSan traces byte-identical. Rooms and scenarios:
 | `liftroom`: a lamp and a corpse on the M3h8 lift sector; a pillar under a door | `decorations_ride_lift`, `door_closes_on_pillar` (no `nofit`, ceiling push) | §2.7 |
 | `census`: THINGs of every admitted kind carrying each skill-bit combination, bit 16 and ambush, plus a sector-1 light | `spawn_filter_medium` (which records spawn, the draws per record, `totalkills`/`totalitems`, thinker order, `prndindex` after `P_SpawnSpecials`), and C-only `spawn_filter_easy`/`hard` rows for the record | §2.1–2.4 |
 
-Each scenario's room is also loaded by the Rust replay (`m3h9_replay`) and by the new
+Each scenario's room is also loaded by the Rust replay (implemented as `e1m1_replay`) and by the new
 example `player_e1m1` (name chosen for the policy, not a real-map claim). Independent
 DSIM36 projection: `tools/reference/e1m1_snapshot.py` extending `movers_snapshot.py`
 (version 36, policy 20, the decoration actor rows) and `m3h9_snapshot_goldens.py`
@@ -674,7 +674,11 @@ and behaviour identical, confirmed by the unchanged goldens and matched digests.
   E1M6 has 11).
 
 **Status / next step.** Phase 1 is complete with this note and the census. E1–E8 are
-provisionally adopted (§6). Phase 2 progress (M3h9a):
+provisionally adopted (§6), pending owner confirmation. Phase 2 (M3h9a): steps 1–11 are
+done, step 10 without its two campaigns; the step 10 campaigns, the independent review
+(step 12), the matched timings (step 13) and the full gates (step 14) are pending. The
+observed results are in the [evidence record](validation/M3H9.md); milestone status is
+in [ROADMAP](ROADMAP.md). Step by step:
 
 - Step 1 (audit) is recorded in §12 above.
 - Step 2 (C evidence) is done: `tools/reference/m3h9_{geometry,cases,reference}.py`,
@@ -744,4 +748,11 @@ provisionally adopted (§6). Phase 2 progress (M3h9a):
   (`detect_leaks=0`, so no LeakSanitizer coverage) ran 4,033 inputs in 882 s, cov
   10,942, ft 32,947, no finding. The coverage-guided and ASan campaigns are pending.
 
-Next: step 11 (docs), with the step 10 campaigns run separately.
+- Step 11 (docs) is done: the [COMPATIBILITY section](COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations),
+  the final [DSIM v36 section](STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations)
+  (which states the reader limitations above: the load rules are not re-run and
+  `actors.options` is not validated), the TESTING commands, the ROADMAP entry, the
+  ARCHITECTURE section, the documentation and validation indexes, the reference
+  tooling guide and the evidence record.
+
+Next: the step 10 campaigns, run alone, then steps 12–14.

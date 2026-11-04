@@ -1391,4 +1391,12 @@ operation keeping the snapshot, V′, Ω, the item witness, the mover bounds, pr
 plus the decorations' static fields, `z == floorz` and count, the DSIM36 round trip
 with `decode_movers` rejecting the bytes, and mutated decodes of two pinned DSIM36
 fixtures; `seed_player_e1m1_fuzz.py` writes its byte seeds without reading Rust
-output.
+output. Run the fuzz commands from `fuzz/` on a fresh copy of the seeds outside the
+working tree and delete the corpus afterwards. `-runs=0` replays the seeds only; the seed
+tool writes 4,032 seeds, so, as for the movers target, the campaigns are bounded by
+`-max_total_time` rather than `-runs`. The campaign without a sanitizer explores faster;
+the AddressSanitizer campaign is the sanitizer evidence. The fuzz workspace is
+nightly-only and CI only format-checks it, so the campaigns are a local step. Run
+measurements alone, with no fuzzing, builds or tests at the same time. Observations
+belong to [the engineering record](validation/M3H9.md). Leak detection is disabled in
+the documented ASan environment (`detect_leaks=0`), not verified.

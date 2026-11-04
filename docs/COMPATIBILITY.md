@@ -167,6 +167,7 @@ all dependent representations and services.
 | Real-map policy (wire 17) | The WAD format's own bounds (32,767 records per table, 32,768 BLOCKMAP words, fewer cells than words); sight and collision work computed from the map; compiled cell references at most 2²⁴ and preparation requests at most 64 MiB as allocation guards; see [the classic-map-scale section](#original-monsters-at-classic-map-scale) | [validate_real_map](../crates/doom-sim/src/map_extent.rs), [GeometryCapacity](../crates/doom-sim/src/lib.rs) |
 | Specials policy (wire 18) | The real-map bounds plus sector specials 1–5, 7–9, 12, 13, 16, 17 only; line special 48 on at most 64 one-sided lines; sector lights within `i16::MIN + 64 ..= i16::MAX - 64`; a sector-thinker slot class sized by the light-sector count at load; see [the sky and static-specials section](#original-monsters-with-sky-and-static-specials) | [validate_specials](../crates/doom-sim/src/demon_expanded_map.rs), [sector thinkers](../crates/doom-sim/src/sector_thinkers.rs) |
 | Movers policy (wire 19) | The specials bounds plus line specials 1, 63, 109, 88, 36, 38, 11 (no two-sided 48); at most 30 lift sectors, 16 SR switch lines and 8 two-sided special lines per 2 × 2 BLOCKMAP window; reachable heights within ±512; a sector-thinker slot class of light sectors + 2 × mover sectors; see [the movers section](#original-monsters-with-doors-lifts-floors-switches-and-the-exit) | [validate_movers](../crates/doom-sim/src/mover_rules.rs), [movers](../crates/doom-sim/src/movers.rs) |
+| E1M1 policy (wire 20) | The movers bounds with line special 48 also on two-sided lines (still at most 64 scrollers and 8 two-sided special lines per window); at most 32 decorations of seven listed types; see [the E1M1 section](#original-monsters-with-two-sided-scrolling-walls-and-static-decorations) | [validate_e1m1](../crates/doom-sim/src/mover_rules.rs), [decorations](../crates/doom-sim/src/e1m1_rules.rs) |
 
 For example, collision and hitscan services contain fixed line-work buffers tied
 to the line bound; raising only the rejection constant would not be sufficient.
@@ -371,7 +372,9 @@ Full player damage/inventory/armor/powers/scoring, multiplayer, Fast/Nightmare
 execution, respawning, resurrection, line and sector specials beyond the static set of
 the [specials policy](#original-monsters-with-sky-and-static-specials) and the seven
 door, lift, floor, switch and exit types of the
-[movers policy](#original-monsters-with-doors-lifts-floors-switches-and-the-exit), complete
+[movers policy](#original-monsters-with-doors-lifts-floors-switches-and-the-exit) (with
+two-sided scrolling walls under the
+[E1M1 policy](#original-monsters-with-two-sided-scrolling-walls-and-static-decorations)), complete
 map/actor spawning, generalized monster interactions, demos and presentation remain
 unsupported. Spectre metadata recognition is not Spectre gameplay compatibility.
 Source undefined behavior is not a compatibility target; checked Rust rejection
@@ -1831,9 +1834,137 @@ two-sided scrolling walls, sector specials 10, 11 and 14, sky ceilings over move
 intermission, the next map and the level restart, the view-height part of
 `P_CalcHeight` and every other monster, weapon or item. E1M1 is still not admitted: it
 needs the roster scale (29 monsters and 53 pickups on UV against 8 and 16), eight
-decoration and barrel types and, under decision N1 as provisionally adopted, its eight
-two-sided scrollers (note
-[§13](M3H8_REFERENCE_INVESTIGATION.md#13-e1m1-readiness-under-the-movers-policy)). See
+decoration and barrel types and, under decision N1, its eight two-sided scrollers (note
+[§13](M3H8_REFERENCE_INVESTIGATION.md#13-e1m1-readiness-under-the-movers-policy)); the
+[E1M1 policy](#original-monsters-with-two-sided-scrolling-walls-and-static-decorations)
+admits the scrollers and seven of those decoration types, and E1M1 still does not load
+under it. See
 [source investigation](M3H8_REFERENCE_INVESTIGATION.md),
 [DSIM35](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit) and
 [observed evidence](validation/M3H8.md).
+
+## Original monsters with two-sided scrolling walls and static decorations
+
+`PlayerMonstersE1M1V1` (wire 20, context `PLAYER-MONSTERS-E1M1-1-MEDIUM-v1`, DSIM-v36) is
+a separate opt-in superset of `PlayerMonstersMoversV1`. Select it with
+`Simulation::original_player_e1m1_map`, which takes no slot limit and no skill, spawn the
+THINGs and the player body, then call `Simulation::spawn_level_specials` once before the
+first tic, exactly as for the movers policy. Everything the movers policy admits, with its
+roster (eight monsters, sixteen pickups, eight drops), 320 actor slots, 208 live fireballs,
+arithmetic certificate, slide-window and boundary rules, spawn rule, load rules, V′, the
+relaxed item witness, the exit and reborn refusals and whole-tic rollback, applies
+unchanged. Older policies, wires and DSIM20–35 are unchanged: under every earlier policy a
+two-sided 48 stays `PursuitError::Specials` and every decoration type stays
+`MapSpawnError::UnsupportedType`.
+
+The name is chosen for the target map, not as a claim: **E1M1 itself still does not load
+under this policy** (see the end of this section). What changes is that two more parts of
+E1M1 are admitted, faithfully and with no new state (M3h9 note
+[§5.1](M3H9_REFERENCE_INVESTIGATION.md#51-the-domain), decisions E1 and E2):
+
+**Two-sided scrolling walls.** Line special 48 is admitted on two-sided lines, blocking or
+not. Its texture offset is the tic count times `FRACUNIT`, derived and never stored, and
+it has exactly the three game-code effects of the source (note
+[§2.4](M3H9_REFERENCE_INVESTIGATION.md#24-p_spawnspecials-and-p_updatespecials-p_specc)):
+
+- a non-blocking 48 enters `spechit` when a position check's box crosses it, and so
+  counts toward the eight-entry `spechit` window;
+- a monster whose move fails with a 48 line in `spechit` resets its direction
+  (`DI_NODIR`) and its use of the line returns false, so the move stays failed and the
+  next chase picks a new direction with its usual draws;
+- a player's use reaching a 48 line does nothing, plays no `sfx_noway` and stops the
+  use trace, so a door behind it is not opened.
+
+Crossing a 48 line does nothing, and shots and fireballs pass it as any two-sided line. A
+48 line with `ML_BLOCKING` blocks like any blocking line and never enters `spechit`.
+
+**Static decorations.** The seven decoration types E1M1 spawns are admitted, by an
+explicit list (`E1M1_DECORATIONS`); every other decoration type stays rejected:
+
+| DoomEd | `mobjinfo` | Spawn state | Radius / height | Solid |
+| --- | --- | --- | --- | --- |
+| 2028 | `MT_MISC31`, floor lamp | `S_COLU` | 16 / 16 | yes (`MF_SOLID`) |
+| 48 | `MT_MISC48`, tall techno pillar | `S_TECHPILLAR` | 16 / 16 | yes (`MF_SOLID`) |
+| 35 | `MT_MISC50`, candelabra | `S_CANDELABRA` | 16 / 16 | yes (`MF_SOLID`) |
+| 24 | `MT_MISC71`, pool of blood and flesh | `S_GIBS` | 20 / 16 | no (flags 0) |
+| 15 | `MT_MISC62`, dead player | `S_PLAY_DIE7` | 20 / 16 | no (flags 0) |
+| 10 | `MT_MISC68`, bloody mess | `S_PLAY_XDIE9` | 20 / 16 | no (flags 0) |
+| 12 | `MT_MISC69`, bloody mess | `S_PLAY_XDIE9` | 20 / 16 | no (flags 0) |
+
+Every spawn state has `tics` −1 and no action, every spawn health is 1000, and none of the
+seven is shootable, special, counted or spawned on the ceiling. A decoration is spawned by
+`P_SpawnMapThing` like any THING, in lump order: one `P_Random` draw for `lastlook` and no
+tics draw, health 1000, the THING's angle, `MF_AMBUSH` added to its flags when the THING
+carries the ambush bit (it has no effect on a decoration but is part of the flags word), on
+its floor, linked to the BLOCKMAP and its sector, and appended to the thinker order, where
+it does nothing each tic. A record filtered by skill or by the not-in-single-player bit
+spawns nothing and draws nothing, before its type is checked. Decorations do not change
+`total_kills` or `total_items`.
+
+During play (note [§2.6](M3H9_REFERENCE_INVESTIGATION.md#26-collision-with-decorations)
+and [§2.7](M3H9_REFERENCE_INVESTIGATION.md#27-decorations-under-movers-pit_changesector-p_mapc12571314)):
+
+- **Solid decorations** block the player and monsters with **no height test**: a 16-unit
+  lamp blocks like an infinitely tall pillar, and a monster blocked by one picks a new
+  direction as it would at a wall. A fireball that hits one explodes, dealing no damage
+  to it.
+- **Flags-0 decorations** (the corpses and gore) are passed through by everything,
+  fireballs included.
+- **Hitscans and autoaim** pass through every decoration; decorations still enter the
+  trace's intercept list like any linked thing. Sight is unaffected, and no monster ever
+  targets a decoration.
+- **Under movers** a decoration rides a lift or floor on its sector. A door closing onto
+  one simply stops its ceiling below the decoration's top, with no `nofit`, no damage and
+  no blood; a decoration is never gibbed, removed or damaged.
+
+| Limit (E1M1 policy) | Value |
+| --- | --- |
+| Decorations per map | 32 (`MAX_DECORATIONS`; E1M1 spawns 27 on every skill) |
+| Linked things | 65 (`E1M1_LINKED_THINGS`: player, 8 monsters, 16 pickups, 8 drops, 32 decorations) |
+| Live actors | at most 273 of the 320 actor slots |
+| Scrollers | 64 (`MAXLINEANIMS`), one-sided and two-sided together |
+| `spechit` per position check | 8, guaranteed by the window rule, which counts two-sided 48 lines |
+
+The budget formulas behind these values are in the note's
+[§5.3](M3H9_REFERENCE_INVESTIGATION.md#53-budgets-as-formulas-with-the-values-of-this-policy);
+no fixed-capacity store grows. The public `doom_sim::e1m1_mover_bounds(&Map)` is
+`mover_bounds` under this policy's load rules (a two-sided 48 admitted); it builds no
+simulation.
+
+Load rules: every movers load rule, with the line-special rule relaxed for 48 on a
+two-sided line. The scroller count (at most 64) and the `spechit` window (at most 8
+two-sided special lines in any 2 × 2 BLOCKMAP window, `MapScaleError::SpecialWindow`)
+are unchanged and count the newly admitted lines. On top of them, at load, with the state
+unchanged and nothing spawned from a failing batch:
+
+| Rejected | With |
+| --- | --- |
+| A 33rd decoration | `MapSpawnError::DecorationLimit` |
+| Barrels (2035), hanging corpses and every other THING type outside the admitted monsters, pickups and the seven decorations | `MapSpawnError::UnsupportedType` |
+| A ninth monster or a seventeenth pickup | `MapSpawnError::WorkLimit` |
+| A THING, decoration or not, whose closed box touches a wall (the inherited diagonal-policy spawn rule; `P_SpawnMapThing` checks no position) | `MonsterError::Arithmetic` |
+
+The setup options are fixed at medium skill, single player, as for every player policy;
+the constructor takes none, so other skills, netgame and Nightmare cannot be selected.
+
+Rust-only API calls that the source never makes on a decoration are refused with
+`PlayerBodyError::Unsupported` and the state unchanged: a nonzero push
+(`set_momentum`), a target (`set_actor_target`), a removal (`mark_remove`) and a state
+entry (`enter_actor_state`, and `enter_original_state` through it). A monster may not be
+given a decoration as its target (`PerceptionError::Roster`).
+
+Fidelity gaps: none new. The `SpecialCross`, escape, intercept and vertical witnesses and
+the exit and reborn refusals are the movers policy's, unchanged; the window rule keeps
+`SpecialCross` unreachable on admitted maps, two-sided 48 lines included.
+
+**E1M1 does not load yet.** On skill 3 ("Hurt Me Plenty", the only skill the player
+policies accept) E1M1 spawns 6 exploding barrels, which stay `UnsupportedType`, and 52
+pickups against the bound of 16. The note's
+[§8](M3H9_REFERENCE_INVESTIGATION.md#8-size-estimate-and-split) splits the remaining work:
+M3h9b adds barrels and the pickup scale, and M3h9c adds a local-only harness that runs
+the real E1M1 against the original C without committing any IWAD content
+([§12](M3H9_REFERENCE_INVESTIGATION.md#12-follow-ups-risks-status)). Whether every E1M1
+THING satisfies the spawn rule has not been measured yet. See
+[source investigation](M3H9_REFERENCE_INVESTIGATION.md),
+[DSIM36](STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations)
+and [observed evidence](validation/M3H9.md).

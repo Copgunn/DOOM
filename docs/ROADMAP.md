@@ -79,7 +79,32 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3h8: Doors, lifts, floors, switches and the exit (Stage B)
+### M3h9a: Two-sided scrolling walls and static decorations
+
+The separately selected PlayerMonstersE1M1V1 (wire 20, DSIM36) is the movers world plus
+two parts of E1M1 that need no new state: the scrolling wall 48 on two-sided lines,
+blocking or not, with the source's three game-code effects (a `spechit` entry, the
+monster's direction reset with a failed use, the player's use stopped with no effect),
+and the seven static decoration types E1M1 spawns (floor lamps, tech pillars and
+candelabras that block with no height test; pools of blood, dead players and bloody
+messes that everything passes through), at most 32 per map. Decorations spawn with
+their single `P_Random` draw in lump order, ride movers, stop fireballs when solid,
+let hitscans through and are never damaged, gibbed, removed or targeted. DSIM36 is the
+DSIM35 layout with no new field or event. Barrels, more than 8 monsters or 16 pickups and
+every other THING type stay rejected at load, so **E1M1 itself still does not load**. No
+new fidelity gap is added. Older policies keep their admission, digests and DSIM bytes.
+
+Status on `feat/m3h9-e1m1`: in review, not merged. The C evidence (20 scenarios), the
+independent DSIM36 projection, the policy, the full replay, the Rust-only tests, the
+example, the tools, the fuzz target with its seed replay and this documentation are
+complete. The bounded fuzz campaigns, the matched timings, the independent review and
+the final gates are pending, and the decisions E1–E8 are provisionally adopted, awaiting
+owner confirmation. This branch stops at owner review; exact commits and CI belong to
+GitHub. See [source investigation](M3H9_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations)
+and [observations](validation/M3H9.md).
+
+### Previous gameplay foundation — M3h8: Doors, lifts, floors, switches and the exit (Stage B)
 
 The separately selected PlayerMonstersMoversV1 (wire 19, DSIM35) is the specials world
 plus E1M1's seven tag, use and crossing line types: the DR door 1, the SR door switch 63,
@@ -94,23 +119,12 @@ or what is deferred: one-sided DR lines, shared mover families, doors without ne
 inverting and self-referencing doors, reachable heights beyond ±512, more than 30 lifts,
 16 SR switches or 8 special lines in a BLOCKMAP window, sky ceilings over movers,
 switches without a switch texture, crushers and every other line type; a two-sided
-scrolling wall stays rejected (decision N1, provisionally option iii). V′ and a relaxed
+scrolling wall stays rejected under this policy (decision N1, option iii). V′ and a relaxed
 item witness replace the vertical and item witnesses under this policy only, and the
 ninth `spechit` write is a refuse-the-tic witness (an M4 fidelity gap like the corner
 jump and the intercepts). Older policies keep their admission, digests and DSIM bytes.
 
-Status on `feat/m3h8-movers`: implementation, the C evidence (33 scenarios), the
-independent DSIM35 projection, the full replay, Rust-only tests, the example, the
-tools, the fuzz target, this documentation and the independent review with its fixes
-are complete; the matched timings are recorded (every older-policy digest unchanged; the
-per-tic slowdown of the older player-and-monster policies seen in the first run was traced
-and removed, with a small `original_player` residual, in the
-[observations](validation/M3H8.md#matched-performance)); the bounded fuzz campaigns are
-recorded (one fuzz-harness finding, fixed, in the
-[observations](validation/M3H8.md#plan-step-17-campaigns)); the final gates are pending, and
-the decisions N1–N9a await owner confirmation. This branch stops at owner review; exact
-commits and CI belong to GitHub. See
-[source investigation](M3H8_REFERENCE_INVESTIGATION.md),
+M3h8 is merged. See [source investigation](M3H8_REFERENCE_INVESTIGATION.md),
 [support](COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit)
 and [observations](validation/M3H8.md).
 
@@ -297,20 +311,25 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-Roster scale, which now blocks E1M1 more than any line or sector behavior: derive
-monsters, pickups, drops, slots, fireballs, the linked-thing bound and the sight budget
-from the loaded THINGs (E1M1 on UV needs 29 monsters against the current 8 and 53 pickups
-against 16, all of admitted types), re-evaluating every movers budget written as a
-formula of those bounds (the `P_ChangeSector` work and the `spechit` window proof, which
-needs every admitted radius below 64). Then the solid and non-solid decorations and
-barrels (eight THING types, 33 THINGs on E1M1 UV), and the two-sided scrolling walls if
-the owner admits them (decision N1). With those, E1M1 would load under the movers
-policy; the remaining unmeasured items are listed in the M3h8 note's
-[§13](M3H8_REFERENCE_INVESTIGATION.md#13-e1m1-readiness-under-the-movers-policy). Also
-revisit the rules the 14 other IWAD maps break (13 with one-sided walls of odd degree,
-crossing or facing away from their sector, one BLOCKMAP with missing listings) and the
-22 maps that fail the sight certificate. Require source-first evidence and unchanged
-earlier contracts. This is future work, not admission in M3h8.
+The M3h9 investigation's [§8](M3H9_REFERENCE_INVESTIGATION.md#8-size-estimate-and-split)
+splits the rest of the E1M1 run into two parts after M3h9a:
+
+- **M3h9b: barrels and pickup scale.** Exploding barrels (2035) with the radius attack,
+  its wrapping distance quirk, chain explosions, thrust, the pain draw and its
+  dependence on link order, with their own events; pickups raised to 64 (E1M1 spawns 52
+  on skill 3), which needs a policy-specific actor-slot count (384 recommended) and a
+  hitscan intercept argument that counts the things in the cells along a trace, and a
+  re-evaluated linked-thing bound and `P_ChangeSector` measurement.
+- **M3h9c: the real-E1M1 harness.** A local-only harness that builds a headless
+  linuxdoom-1.10 from genuine sources, loads the owner's E1M1 and compares it tic for
+  tic with the Rust run, committing only pass/fail, tic counts and digests, never IWAD
+  content; plus the spawn-rule count over every E1M1 THING (whether each closed box
+  stays clear of the walls), which decides whether E1M1 loads at all.
+
+Also revisit the rules the 14 other IWAD maps break (13 with one-sided walls of odd
+degree, crossing or facing away from their sector, one BLOCKMAP with missing listings)
+and the 22 maps that fail the sight certificate. Require source-first evidence and
+unchanged earlier contracts. This is future work, not admission in M3h9a.
 
 ### Focused maintenance acceptance criteria
 

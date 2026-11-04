@@ -874,3 +874,24 @@ V′ (`player_map_scale::v_prime_admitted`) instead of the M3h4 vertical invaria
 [support](COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit),
 [source matrix](M3H8_REFERENCE_INVESTIGATION.md) and
 [DSIM35](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit).
+
+## Two-sided scrolling walls and static decorations
+
+The E1M1 policy adds no runtime body: the collision, missile, hitscan, clip and thinker
+paths already treated a non-shootable solid thing and a flags-0 thing as the source does
+(the M3h9 note's step 1 audit in
+[§12](M3H9_REFERENCE_INVESTIGATION.md#12-follow-ups-risks-status)). What it adds is
+admission. `mover_rules::validate_e1m1` runs the movers load rules with a two-sided 48
+admitted (`e1m1_mover_bounds` is its public query), and one new module,
+`crates/doom-sim/src/e1m1_rules.rs`, owns the decorations: the explicit seven-type list
+`E1M1_DECORATIONS`, the static predicate every listed type satisfies, `MAX_DECORATIONS`,
+the linked-thing budget `E1M1_LINKED_THINGS` with the note's §5.3 table, and the
+per-actor witness the tic preflight applies (the DSIM36 reader checks the same fields
+from the encoded record). The policy gate is
+`OriginalExecutionProfile::has_e1m1`; the role, state, spawn and API-refusal sites ask
+`e1m1_rules::is_decoration`, so every older policy keeps its admission. Decorations are
+ordinary actors in the one store, the spatial links and the thinker order; no store or
+staging buffer changes. See
+[support](COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations),
+[source matrix](M3H9_REFERENCE_INVESTIGATION.md) and
+[DSIM36](STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations).

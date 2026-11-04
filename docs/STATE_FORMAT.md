@@ -1811,9 +1811,9 @@ explicit reader. The independent Python projection
 [its generator](../tools/reference/m3h9_snapshot_goldens.py)) fixed every committed
 capture and the PBE1 event stream from the C rows alone before any Rust writer existed
 ([plan](M3H9_REFERENCE_INVESTIGATION.md#9-implementation-plan-one-commit-per-step-pushed-evidence-before-runtime),
-step 3). *Status: draft of step 3; the Rust writer, `decode_e1m1` and the replay that
-matches these bytes byte for byte and frame for frame are steps 4–8, and this section is
-finalised with them.*
+step 3). The Rust writer needed no change to produce them: the full replay matches every
+capture's digest, size and field count, the 15 pinned fixtures byte for byte and every
+event frame ([observations](validation/M3H9.md)).
 
 Version 36 selects policy 20 (`PlayerMonstersE1M1V1`, wire 20), the unchanged original
 registry schema and context `PLAYER-MONSTERS-E1M1-1-MEDIUM-v1`. Every earlier
@@ -1911,12 +1911,23 @@ restoration.
 
 The v36 reader applies every DSIM35 check (the relaxed item witness of
 [§4.2](M3H8_REFERENCE_INVESTIGATION.md#42-b3-the-relaxed-item-witness) included) and
-admits in addition: actor records whose `type` is one of the seven decoration types, in
-the spawn state of that type, with `tics` −1, `health` 1000, the `radius` and `height` of
-the table, `flags` equal to the info flags with or without `MF_AMBUSH`, no target and no
-momentum, `z` equal to `floor`, `reaction_time` 8, `threshold`, `movedir` and `movecount`
-0, `player` 255, not pending removal, a spawnpoint naming the type's DoomEd number at the
-actor's position, at most 32 per capture, and the decorations of `thinker.order` reading
-their spawnpoints as a subsequence of `map.things` (lump order); `line.{i}.special` 48 on a two-sided line (a map no
-earlier policy loads); and the type-keyed `S_GIBS` rule above. Every other actor type
-(barrels among them) is rejected as before.
+admits in addition actor records whose `type` is one of the seven decoration types. Each
+must hold the spawn state of its type with that state's `sprite` and `frame`, `tics` −1,
+`health` 1000, the `radius` and `height` of the table, `flags` equal to the info flags
+with or without `MF_AMBUSH`, no target and no momentum, `z` equal to `floor`, the type's
+`reaction_time` (8), `threshold`, `movedir` and `movecount` 0, `player` 255, not pending
+removal, and a present spawnpoint naming the type's DoomEd number at the actor's position;
+any other value is `DiagnosticError::Identity`. A 33rd decoration in one capture is
+`DiagnosticError::Limit`. The decorations of `thinker.order` must read their spawnpoints
+(x, y, angle, type, options) as a subsequence of `map.things`, that is in lump order.
+`S_GIBS` follows the type-keyed rule above. Every other actor type (barrels among them)
+is rejected as before.
+
+Reader limitations. Like the v35 reader, the v36 reader does not re-run the load rules
+on the encoded map: a `line.{i}.special` of 48 is checked as any nonzero map special
+(present, equal to the map's value), whether its line is one-sided or two-sided, so it is
+the loader that keeps two-sided 48 lines out of DSIM35 captures. No `Diagnostic` reader
+validates `actors.options`: a capture forged with other skill or mode bytes decodes, although no
+player policy can produce one (investigation
+[§12](M3H9_REFERENCE_INVESTIGATION.md#12-follow-ups-risks-status), step 9). Rejecting it
+would be a reader change left to the owner.

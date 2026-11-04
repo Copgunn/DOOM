@@ -229,3 +229,8 @@ See [source qualification](M3G9_REFERENCE_INVESTIGATION.md) and
   floors, switches, use, crossing, monster door use, giblets, the exit and the reborn
   request in C, DSIM35 with the movers and button slots, the full replay, the load-rule
   rejections, in-tic rollback, soaks and fuzzing.
+- [M3h9 two-sided scrolling walls and static decorations](validation/M3H9.md): two-sided
+  scrollers, the seven E1M1 decoration types blocking, passed through and riding movers,
+  and the skill and bit-16 spawn filter in C, DSIM36, the full replay, the load
+  rejections, rollback, soaks and the fuzz seed replay, with the
+  [IWAD THING counts](validation/M3H9_IWAD_COUNTS.md).

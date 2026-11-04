@@ -512,6 +512,38 @@ both profiles, and asserts equal output. See
 [commands](../../docs/TESTING.md#original-doors-lifts-floors-switches-and-the-exit-c-evidence) and
 [observations](../../docs/validation/M3H8.md).
 
+## Two-sided scrolling walls, static decorations and the spawn filter (M3h9)
+
+[m3h9_reference.py](m3h9_reference.py) reuses every compiled M3h8 body, observer,
+declared adapter and controlled input unchanged and adds no genuine body: the two-sided
+type-48 effects, `P_SpawnMapThing` over the pristine `info.c` rows of the seven E1M1
+decoration types, their collision (`PIT_CheckThing`, `PTR_AimTraverse`,
+`PTR_ShootTraverse`) and their clipping under movers (`PIT_ChangeSector`,
+`P_ThingHeightClip`) are bodies compiled since M3d3, M3h2 and M3h8 reaching branches these
+rooms exercise for the first time. It adds three observer rows (`DT` for the
+`PIT_CheckThing` flag tests, `XT` for the aim and shoot traverser skips, `NS` for
+`numspechit` before each movement result; see the contract's `row_formats`) and one
+per-case harness input, `skill`, the genuine `gameskill` the spawn filter reads.
+[m3h9_geometry.py](m3h9_geometry.py) is the M3h8 builder plus the two-sided scroller
+inventory and the declared decoration table; [m3h9_cases.py](m3h9_cases.py) builds the
+scroller hall, the blocking scroller, the eight-scroller lane, the decoration gallery,
+the lift room with a lamp, a corpse and a pillar under a door, and the census room, 20
+scenarios in all, 18 at medium skill and two C-only census rows at easy and hard. The
+Rust-only nine-scroller lane is written as `m3h9_dense9.bin` and never run in C.
+[e1m1_snapshot.py](e1m1_snapshot.py) and
+[m3h9_snapshot_goldens.py](m3h9_snapshot_goldens.py) project DSIM36 from the C rows of
+the 18 medium scenarios: the DSIM35 layout under version 36, policy 20 and the E1M1
+context with no new field or event, the decorations checked against the declared table
+and their lump order, after dropping the `DT`, `XT` and `NS` rows; the generator asserts
+that every capture equals the DSIM35 projection of the same rows except the version,
+the profile value and the context bytes. [check_player_e1m1.py](check_player_e1m1.py)
+runs the full Rust replay against those rows and goldens in debug and release, then the
+asserted `player_e1m1` example in both profiles, and asserts equal output. See
+[investigation](../../docs/M3H9_REFERENCE_INVESTIGATION.md), the
+[DSIM v36 schema](../../docs/STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations),
+[commands](../../docs/TESTING.md#original-two-sided-scrollers-static-decorations-and-the-spawn-filter-c-evidence) and
+[observations](../../docs/validation/M3H9.md).
+
 ## Historical raw-trace loading
 
 Selected large CSV traces now use standard zstd storage. Run frozen C/encoder

@@ -142,3 +142,8 @@ original evidence and former guide contents with exact-byte copies and digests.
   [IWAD mover counts](validation/M3H8_IWAD_COUNTS.md),
   [support](COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit)
   and [DSIM35](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit).
+- [M3h9 two-sided scrolling walls, static decorations and the E1M1 run investigation](M3H9_REFERENCE_INVESTIGATION.md)
+  (part M3h9a implemented; barrels, pickup scale and the real-E1M1 harness are later parts),
+  [observations](validation/M3H9.md), [IWAD THING counts](validation/M3H9_IWAD_COUNTS.md),
+  [support](COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations)
+  and [DSIM36](STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations).
