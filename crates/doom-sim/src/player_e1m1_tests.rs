@@ -1390,7 +1390,7 @@ fn the_pinned_dsim36_fixtures_decode_under_decode_e1m1_alone() {
 }
 
 /// The fields of a DSIM capture in order (path, value).
-fn dsim_fields(bytes: &[u8]) -> Vec<(String, Vec<u8>)> {
+pub(crate) fn dsim_fields(bytes: &[u8]) -> Vec<(String, Vec<u8>)> {
     let word = |at: usize, n: usize| {
         let mut v = [0u8; 8];
         v[..n].copy_from_slice(&bytes[at..at + n]);
@@ -1412,7 +1412,7 @@ fn dsim_fields(bytes: &[u8]) -> Vec<(String, Vec<u8>)> {
         .collect()
 }
 /// `bytes` re-encoded with `edit` applied to every field (None keeps it).
-fn forge(bytes: &[u8], edit: impl Fn(&str, &[u8]) -> Option<Vec<u8>>) -> Vec<u8> {
+pub(crate) fn forge(bytes: &[u8], edit: impl Fn(&str, &[u8]) -> Option<Vec<u8>>) -> Vec<u8> {
     let fields = dsim_fields(bytes);
     let mut out = bytes[..8].to_vec();
     out.extend((fields.len() as u64).to_le_bytes());

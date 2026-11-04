@@ -422,7 +422,7 @@ Symbols as in M3h8 §8, with `D` = decorations ≤ 32, `K` = monsters ≤ 8, `P`
 | --- | --- | --- | --- |
 | Linked things `N` | `1 + K + P + R + D` | 65 (was 33) | `P_ChangeSector` work, intercept reasoning |
 | Live actors | `1 + K + P + 26k + (K−k) + 8(K−k) + R + D` | ≤ 273 at `k = 8` | `MAP_SCALE_ACTOR_SLOTS` 320 |
-| Spawns in one pass | `39 − 3k` | ≤ 39 | 273 + 15 = 288 ≤ 320 at `k = 8`; 241 + 39 = 280 at `k = 0` |
+| Spawns in one pass | `39 − 3k` | ≤ 39 | 273 + 15 = 288 ≤ 320 at `k = 8`; 137 + 39 = 176 at `k = 0`; crude 273 + 39 = 312 ≤ 320 |
 | Thinker visits per pass | `320 + L + 2M` | unchanged | visit budget (decorations are actors inside the 320) |
 | Sector-thinker slots | `L + 2M` | unchanged | DSIM `sector_thinkers.slot_count` |
 | `P_ChangeSector` per tic | `Σ_movers 4·(B(s) + N·Q)` | `N` 33 → 65; E1M1 `Q` 3,462 | re-evaluated, not re-proved (M3h8 §8); measured in step 13 |
@@ -712,4 +712,19 @@ provisionally adopted (§6). Phase 2 progress (M3h9a):
   spawn-rule count (E7). No other scenario room has a THING whose box touches a
   one-sided wall.
 
-Next: step 9 (tests).
+- Step 9 is done: `player_e1m1_soak_tests` adds the Rust-only rejections (every
+  unadmitted info.c type with a DoomEd number after the gallery decorations, 65
+  scrollers, every crusher line, the fixed medium single-player options, each
+  decoration type under wires 18 and 19), the bit-16 and skill filters (a filtered
+  decoration draws nothing; a filtered barrel is not type-checked), spawn-batch
+  rollback after accepted monsters, pickups and decorations (`DecorationLimit`,
+  `UnsupportedType`, `WorkLimit`), `set_momentum` on every decoration, 2,400-tic soaks
+  with four seeds on the five gallery and two liftroom rooms, and the §5.3 formulas.
+  The §5.3 spawn row said "241 + 39 = 280 at `k = 0`"; with `D` = 32 the live actors at
+  `k = 0` are 137, so it now reads 137 + 39 = 176 (the crude bound 273 + 39 = 312 also
+  fits 320). Finding, not changed here: the DSIM readers do not validate the
+  `actors.options` field, so a capture forged to options `[0, 0, 0]` (baby skill)
+  decodes under `decode_e1m1`. Rejecting it would be a reader change for the owner
+  to decide.
+
+Next: step 10 (fuzz).

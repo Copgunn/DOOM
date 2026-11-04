@@ -1529,6 +1529,8 @@ mod movers_replay;
 #[cfg(test)]
 mod player_diagonal_tests;
 #[cfg(test)]
+mod player_e1m1_soak_tests;
+#[cfg(test)]
 mod player_e1m1_tests;
 #[cfg(test)]
 mod player_heights_tests;

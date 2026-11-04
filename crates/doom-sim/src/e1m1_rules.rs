@@ -63,7 +63,7 @@ pub const MAX_DECORATIONS: usize = 32;
 /// | --- | --- | --- | --- |
 /// | Linked things `N` | `1 + K + P + R + D` | 65 (was 33) | `P_ChangeSector` work, intercept reasoning |
 /// | Live actors | `1 + K + P + 26k + (K−k) + 8(K−k) + R + D` | ≤ 273 at `k = 8` | `MAP_SCALE_ACTOR_SLOTS` 320 |
-/// | Spawns in one pass | `39 − 3k` | ≤ 39 | 273 + 15 = 288 ≤ 320 at `k = 8`; 241 + 39 = 280 at `k = 0` |
+/// | Spawns in one pass | `39 − 3k` | ≤ 39 | 273 + 15 = 288 ≤ 320 at `k = 8`; 137 + 39 = 176 at `k = 0`; crude 273 + 39 = 312 ≤ 320 |
 /// | Thinker visits per pass | `320 + L + 2M` | unchanged | the visit budget (decorations are actors inside the 320) |
 /// | Sector-thinker slots | `L + 2M` | unchanged | `sector_thinkers.slot_count` |
 /// | `P_ChangeSector` per tic | `Σ_movers 4·(B(s) + N·Q)` | `N` 33 → 65 | re-evaluated, not re-proved |
