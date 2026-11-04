@@ -1314,12 +1314,23 @@ impl<'a> Diagnostic<'a> {
     /// with at most `MF_AMBUSH` added, no momentum, `z == floorz`, no target, the
     /// spawn reaction time and zero `threshold`, `movedir` and `movecount`, no
     /// player, not pending removal, and a spawnpoint whose DoomEd number is the
-    /// type's and whose position is the actor's; at most `MAX_DECORATIONS` of them,
+    /// type's and whose position is the actor's, with the angle
+    /// `ANG45 * (angle/45)` of that record (p_mobj.c:791), `MF_AMBUSH` set exactly
+    /// when its options carry `MTF_AMBUSH` (792–793), `lastlook` below
+    /// `MAXPLAYERS` (the one `P_Random () % MAXPLAYERS` draw, 506) and no pending
+    /// death request; at most `MAX_DECORATIONS` of them,
     /// and their spawnpoints, read in `thinker.order`, a subsequence of the THINGS
     /// lump (`P_SpawnMapThing` spawns in lump order and a decoration is never
     /// removed, so the decoration subsequence of the thinker list is the lump
     /// order for the whole level).
     fn validate_decorations(&self) -> Result<(), DiagnosticError> {
+        // The E1M1 policy is medium skill, single player (M3h9 note §6, decision
+        // E4; owner decision of the independent review): `actors.options` must read
+        // skill 2 (`sk_medium`). Only this reader checks it; every reader before
+        // DSIM36 keeps its historical contract and leaves the skill unchecked.
+        if self.required("actors.options")?.first() != Some(&(crate::Skill::Medium as u8)) {
+            return Err(DiagnosticError::Identity);
+        }
         let mut count = 0;
         for slot in 0..self.slots()? {
             let prefix = format!("actor.{slot}");
@@ -1376,6 +1387,12 @@ impl<'a> Diagnostic<'a> {
                 || i32::from(i16::from_le_bytes([spawn[7], spawn[8]])) != d.doomed_number
                 || i32::from(i16::from_le_bytes([spawn[1], spawn[2]])) * 65536 != i32field("x")?
                 || i32::from(i16::from_le_bytes([spawn[3], spawn[4]])) * 65536 != i32field("y")?
+                || u32::from_le_bytes(number(self.required(&format!("{prefix}.angle"))?)?)
+                    != e1m1_rules::spawn_angle(i16::from_le_bytes([spawn[5], spawn[6]]))
+                || (flags & world_pickups::MF_AMBUSH != 0)
+                    != e1m1_rules::spawn_ambush(u16::from_le_bytes([spawn[9], spawn[10]]))
+                || !matches!(self.required(&format!("{prefix}.lastlook"))?, [0..=3])
+                || self.required(&format!("{prefix}.death_requested"))? != [0]
             {
                 return Err(DiagnosticError::Identity);
             }

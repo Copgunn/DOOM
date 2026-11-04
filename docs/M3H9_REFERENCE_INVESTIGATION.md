@@ -729,7 +729,10 @@ in [ROADMAP](ROADMAP.md). Step by step:
   fits 320). Finding, not changed here: the DSIM readers do not validate the
   `actors.options` field, so a capture forged to options `[0, 0, 0]` (baby skill)
   decodes under `decode_e1m1`. Rejecting it would be a reader change for the owner
-  to decide.
+  to decide. *Resolved in step 12:* the owner chose to reject every skill but medium
+  in `decode_e1m1` only; every reader before DSIM36 keeps its contract and leaves the
+  skill byte unchecked (a recorded limitation), and no reader checks the mode and
+  `nomonsters` bytes.
 
 - API refusal added while writing the fuzz target: under wire 20,
   `set_actor_target` on a decoration and `mark_remove` of a decoration were accepted,
@@ -755,4 +758,14 @@ in [ROADMAP](ROADMAP.md). Step by step:
   ARCHITECTURE section, the documentation and validation indexes, the reference
   tooling guide, the README policy row and the evidence record.
 
-Next: the step 10 campaigns, run alone, then steps 12–14.
+- Step 12 (independent review) findings are fixed on the branch; the findings table
+  with verdicts is in the [evidence record](validation/M3H9.md#independent-review).
+  Source-level outcomes: vertical momentum and direct spawns of decorations are
+  refused under wire 20 (and vertical momentum on items there); damage with no
+  inflictor on a decoration is the source's own early return (p_inter.c:787–788);
+  `decode_e1m1` and the live witness also check the angle (p_mobj.c:791), `MF_AMBUSH`
+  against `MTF_AMBUSH` (792–793), `lastlook < 4` (506) and the death request, and
+  `decode_e1m1` rejects every skill but medium, while every reader before DSIM36
+  leaves the skill unchecked.
+
+Next: the step 10 campaigns, run alone, then steps 13–14.

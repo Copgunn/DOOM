@@ -138,15 +138,29 @@ pub(crate) fn validate_definition(ty: ActorTypeId) -> Result<(), ActorError> {
         None => compute(),
     }
 }
+/// `mobj->angle = ANG45 * (mthing->angle/45)` (p_mobj.c:791): the THING's `short`
+/// angle divided by 45 with C's truncation toward zero, times `ANG45`
+/// (0x20000000, tables.h) in unsigned 32-bit arithmetic (the `int` quotient is
+/// converted to `unsigned` and the product wraps).
+pub(crate) fn spawn_angle(thing_angle: i16) -> u32 {
+    ((i32::from(thing_angle) / 45) as u32).wrapping_mul(0x2000_0000)
+}
+/// `MF_AMBUSH` is set on a spawned thing exactly when its THING record carries
+/// `MTF_AMBUSH` (8): `if (mthing->options & MTF_AMBUSH) mobj->flags |= MF_AMBUSH;`
+/// (p_mobj.c:792–793), and nothing else sets or clears it on a decoration.
+pub(crate) fn spawn_ambush(options: u16) -> bool {
+    options & 8 != 0
+}
 /// The live witness of a spawned decoration (`P_SpawnMapThing` p_mobj.c:760–795
 /// through `P_SpawnMobj` 797–870, then nothing per tic, §2.5): its listed type and
 /// definition, the spawn state with the state's sprite and frame and `tics` −1,
 /// spawn health 1000, the type's reaction time, no target, threshold, `movedir`
 /// or `movecount`, `lastlook` from one `P_Random() % 4`, the type's radius and
 /// height, no momentum, `z == floorz` (spawned at `ONFLOORZ`, kept there by
-/// `P_ThingHeightClip`, §2.7), the type's flags with at most `MF_AMBUSH` added
-/// (p_mobj.c:792–793), solidity from `MF_SOLID`, and the THING record it was
-/// spawned from at its own position (the spawnpoint, 795).
+/// `P_ThingHeightClip`, §2.7), the type's flags with `MF_AMBUSH` added exactly when
+/// the THING record carries `MTF_AMBUSH` (p_mobj.c:792–793), no pending death,
+/// solidity from `MF_SOLID`, and the THING record it was spawned from at its own
+/// position (the spawnpoint, 795) with the angle `ANG45 * (angle/45)` (791).
 pub(crate) fn validate_decoration(
     room: Option<crate::player_map_scale::RoomBounds>,
     a: Actor,
@@ -184,6 +198,8 @@ pub(crate) fn validate_decoration(
                         Fixed::from_map_units(p.position.x),
                         Fixed::from_map_units(p.position.y),
                     ]
+                || a.spec.angle != spawn_angle(p.angle)
+                || (l.flags & MF_AMBUSH != 0) != spawn_ambush(p.options)
         })
     {
         return Err(PlayerBodyError::Invariant.into());

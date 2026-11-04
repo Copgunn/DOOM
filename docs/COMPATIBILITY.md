@@ -1946,6 +1946,11 @@ unchanged and nothing spawned from a failing batch:
 
 The setup options are fixed at medium skill, single player, as for every player policy;
 the constructor takes none, so other skills, netgame and Nightmare cannot be selected.
+The DSIM36 reader `decode_e1m1` rejects a capture whose `actors.options` skill byte is not
+medium. Known limitation: every reader before DSIM36 keeps its historical contract and
+leaves that skill byte unchecked, so a DSIM20–35 capture forged with another skill
+decodes although no player policy can produce one; the mode and `nomonsters` bytes are
+unchecked by every reader ([DSIM v36](STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations)).
 
 Rust-only API calls that the source never makes on a decoration are refused with the
 state unchanged:

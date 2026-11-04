@@ -1896,7 +1896,7 @@ outcome 0 (fits, riding the plane) or 3 (non-shootable left as is, no `nofit`).
 
 **Skill.** The policy is medium, single player, as `actors.options` has encoded since
 v20; the C rows evidence the spawn filter (skill bits, bit 16, ambush) per record and
-nothing new is encoded.
+nothing new is encoded. The v36 reader rejects any skill byte but 2 (see below).
 
 Independent C rows feed the Python [E1M1 projection](../tools/reference/e1m1_snapshot.py),
 which extends the movers projection without editing it. It renames the identity, drops
@@ -1914,10 +1914,16 @@ The v36 reader applies every DSIM35 check (the relaxed item witness of
 admits in addition actor records whose `type` is one of the seven decoration types. Each
 must hold the spawn state of its type with that state's `sprite` and `frame`, `tics` −1,
 `health` 1000, the `radius` and `height` of the table, `flags` equal to the info flags
-with or without `MF_AMBUSH`, no target and no momentum, `z` equal to `floor`, the type's
-`reaction_time` (8), `threshold`, `movedir` and `movecount` 0, `player` 255, not pending
-removal, and a present spawnpoint naming the type's DoomEd number at the actor's position;
-any other value is `DiagnosticError::Identity`. A 33rd decoration in one capture is
+plus `MF_AMBUSH` exactly when the spawnpoint's options carry `MTF_AMBUSH` (8;
+`P_SpawnMapThing`, p_mobj.c:792–793), no target and no momentum, `z` equal to `floor`, the
+type's `reaction_time` (8), `threshold`, `movedir` and `movecount` 0, `player` 255, not
+pending removal, `death_requested` 0, `lastlook` below 4 (`P_Random () % MAXPLAYERS`,
+p_mobj.c:506), and a present spawnpoint naming the type's DoomEd number at the actor's
+position, with `angle` equal to `ANG45 * (spawnpoint angle / 45)` (p_mobj.c:791: the
+`short` divided by 45 truncating toward zero, times 0x20000000 in wrapping unsigned
+32-bit arithmetic); any other value is `DiagnosticError::Identity`. The reader also
+requires the skill byte of `actors.options` to be 2 (`sk_medium`), the only skill of
+the policy (decision E4); any other skill is `DiagnosticError::Identity`. A 33rd decoration in one capture is
 `DiagnosticError::Limit`. The decorations of `thinker.order` must read their spawnpoints
 (x, y, angle, type, options) as a subsequence of `map.things`, that is in lump order.
 `S_GIBS` follows the type-keyed rule above. Every other actor type (barrels among them)
@@ -1926,8 +1932,11 @@ is rejected as before.
 Reader limitations. Like the v35 reader, the v36 reader does not re-run the load rules
 on the encoded map: a `line.{i}.special` of 48 is checked as any nonzero map special
 (present, equal to the map's value), whether its line is one-sided or two-sided, so it is
-the loader that keeps two-sided 48 lines out of DSIM35 captures. No `Diagnostic` reader
-validates `actors.options`: a capture forged with other skill or mode bytes decodes, although no
-player policy can produce one (investigation
-[§12](M3H9_REFERENCE_INVESTIGATION.md#12-follow-ups-risks-status), step 9). Rejecting it
-would be a reader change left to the owner.
+the loader that keeps two-sided 48 lines out of DSIM35 captures. The v36 reader checks only
+the skill byte of `actors.options` (medium); its other two bytes (mode and
+`nomonsters`) stay unchecked, as in every reader. Every reader before DSIM36 keeps its
+historical contract and leaves `actors.options` entirely unchecked: a DSIM20–35 capture
+forged with another skill decodes under its reader, although no player policy can
+produce one (investigation [§12](M3H9_REFERENCE_INVESTIGATION.md#12-follow-ups-risks-status),
+step 9). Rejecting the skill in `decode_e1m1` only is the owner's decision of the
+independent review.

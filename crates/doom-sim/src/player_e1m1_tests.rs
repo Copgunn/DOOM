@@ -738,6 +738,19 @@ fn gallery_decorations_spawn_as_p_spawnmapthing_does() {
             ((i32::from(thing.angle) / 45) as u32).wrapping_mul(0x20000000)
         );
         e1m1_rules::validate_decoration(None, *a).unwrap();
+        // The live witness refuses an angle off `ANG45 * (angle/45)`, `MF_AMBUSH`
+        // disagreeing with `MTF_AMBUSH`, `lastlook` 4 and a pending death request.
+        let mut wrong = [*a; 4];
+        wrong[0].spec.angle ^= 0x2000_0000;
+        wrong[1].life.as_mut().unwrap().flags ^= 0x20;
+        wrong[2].lastlook = 4;
+        wrong[3].life.as_mut().unwrap().death_requested = true;
+        for w in wrong {
+            assert_eq!(
+                e1m1_rules::validate_decoration(None, w),
+                Err(SimError::PlayerBody(PlayerBodyError::Invariant))
+            );
+        }
     }
     // The pedestal decorations sit on their 32-unit floors.
     let candelabra = actors_of(&s, OriginalActorType::MT_MISC50)[0];
@@ -1521,6 +1534,32 @@ fn decode_e1m1_rejects_each_mutated_decoration_check() {
             "radius",
             i32v(0),
         ),
+        (
+            "an angle off ANG45 * (angle/45)",
+            lamp,
+            "angle",
+            (u32::from_le_bytes(field(lamp, "angle").try_into().unwrap()) ^ 1)
+                .to_le_bytes()
+                .to_vec(),
+        ),
+        (
+            "the next octant",
+            gibs,
+            "angle",
+            u32::from_le_bytes(field(gibs, "angle").try_into().unwrap())
+                .wrapping_add(0x2000_0000)
+                .to_le_bytes()
+                .to_vec(),
+        ),
+        (
+            "MF_AMBUSH without MTF_AMBUSH",
+            lamp,
+            "flags",
+            (lamp_flags | 0x20).to_le_bytes().to_vec(),
+        ),
+        ("lastlook 4 (MAXPLAYERS)", lamp, "lastlook", vec![4]),
+        ("lastlook 255", gibs, "lastlook", vec![255]),
+        ("a death request", lamp, "death_requested", vec![1]),
     ];
     for (what, slot, name, value) in cases {
         let path = format!("actor.{slot}.{name}");
@@ -1531,12 +1570,130 @@ fn decode_e1m1_rejects_each_mutated_decoration_check() {
             "{what} accepted"
         );
     }
-    // Adding MF_AMBUSH (an ambush THING record) is admitted.
-    let path = format!("actor.{lamp}.flags");
-    let ambush = forge(bytes, |p, _| {
-        (p == path).then(|| (lamp_flags | 0x20).to_le_bytes().to_vec())
-    });
-    Diagnostic::decode_e1m1(&ambush, limits).unwrap();
+    assert_eq!(field(lamp, "lastlook").len(), 1);
+    assert!(field(lamp, "lastlook")[0] < 4 && field(gibs, "lastlook")[0] < 4);
+    assert_eq!(field(lamp, "death_requested"), vec![0]);
+    // The THING record and the actor agree on the angle and `MTF_AMBUSH`: rewriting
+    // the lamp's record (in `map.things` and its spawnpoint) together with its angle
+    // and flags is admitted when they agree as p_mobj.c:791–793 makes them, and
+    // rejected otherwise. Negative angles truncate toward zero (C division):
+    // -50 / 45 is -1, so ANG45 * -1 wraps to 0xE0000000, not 0xC0000000.
+    let spawn = field(lamp, "spawnpoint");
+    let things = fields
+        .iter()
+        .find(|(p, _)| p == "map.things")
+        .unwrap()
+        .1
+        .clone();
+    let at = (0..things.len() / 10)
+        .find(|i| things[10 * i..10 * i + 10] == spawn[1..])
+        .unwrap();
+    let rewrite = |angle: i16, options: u16, actor_angle: u32, flags: u32| {
+        let mut record = spawn[1..].to_vec();
+        record[4..6].copy_from_slice(&angle.to_le_bytes());
+        record[8..10].copy_from_slice(&options.to_le_bytes());
+        let mut lump = things.clone();
+        lump[10 * at..10 * at + 10].copy_from_slice(&record);
+        let mut point = vec![1];
+        point.extend(&record);
+        forge(bytes, |p, _| match p {
+            "map.things" => Some(lump.clone()),
+            _ if p == format!("actor.{lamp}.spawnpoint") => Some(point.clone()),
+            _ if p == format!("actor.{lamp}.angle") => Some(actor_angle.to_le_bytes().to_vec()),
+            _ if p == format!("actor.{lamp}.flags") => Some(flags.to_le_bytes().to_vec()),
+            _ => None,
+        })
+    };
+    let options = u16::from_le_bytes([spawn[9], spawn[10]]);
+    let plain = lamp_flags & !0x20;
+    for (angle, actor_angle) in [
+        (0, 0),
+        (44, 0),
+        (45, 0x2000_0000),
+        (359, 0xE000_0000),
+        (-1, 0),
+        (-44, 0),
+        (-50, 0xE000_0000),
+        (-180, 0x8000_0000),
+        (405, 0x2000_0000),
+        (i16::MAX, 0),
+        (i16::MIN, 0),
+    ] {
+        assert_eq!(
+            crate::e1m1_rules::spawn_angle(angle),
+            actor_angle,
+            "{angle}"
+        );
+        let forged = rewrite(angle, options & !8, actor_angle, plain);
+        Diagnostic::decode_e1m1(&forged, limits).unwrap_or_else(|e| panic!("{angle}: {e:?}"));
+        let forged = rewrite(angle, options | 8, actor_angle, plain | 0x20);
+        Diagnostic::decode_e1m1(&forged, limits).unwrap_or_else(|e| panic!("{angle}: {e:?}"));
+        for wrong in [
+            rewrite(angle, options | 8, actor_angle, plain),
+            rewrite(angle, options & !8, actor_angle, plain | 0x20),
+            rewrite(
+                angle,
+                options & !8,
+                actor_angle.wrapping_sub(0x2000_0000),
+                plain,
+            ),
+        ] {
+            assert_eq!(
+                Diagnostic::decode_e1m1(&wrong, limits).map(|_| ()),
+                Err(DiagnosticError::Identity),
+                "{angle}"
+            );
+        }
+    }
+    // Floor division would give -2 for -50 / 45: rejected.
+    assert_eq!(
+        Diagnostic::decode_e1m1(&rewrite(-50, options & !8, 0xC000_0000, plain), limits)
+            .map(|_| ()),
+        Err(DiagnosticError::Identity)
+    );
+}
+
+/// The E1M1 policy is medium skill (decision E4, the owner's reader decision of the
+/// independent review): `decode_e1m1` rejects a pinned fixture whose
+/// `actors.options` skill byte is forged to baby (0), easy (1), hard (3) or
+/// nightmare (4), while every earlier reader keeps its contract and leaves the skill
+/// unchecked (a DSIM35 movers fixture forged the same way still decodes under
+/// `decode_movers`).
+#[test]
+fn decode_e1m1_rejects_every_skill_but_medium() {
+    let limits = DiagnosticLimits::default();
+    let movers = include_bytes!("../../../tests/reference/m3h8_state_0_20.bin").as_slice();
+    for (name, bytes) in FIXTURES {
+        let options = dsim_fields(bytes)
+            .into_iter()
+            .find(|(p, _)| p == "actors.options")
+            .unwrap()
+            .1;
+        assert_eq!(options, vec![2, 0, 0], "{name}");
+        for skill in [0u8, 1, 3, 4] {
+            let forged = forge(bytes, |p, v| {
+                (p == "actors.options").then(|| {
+                    let mut v = v.to_vec();
+                    v[0] = skill;
+                    v
+                })
+            });
+            assert_eq!(
+                Diagnostic::decode_e1m1(&forged, limits).map(|_| ()),
+                Err(DiagnosticError::Identity),
+                "{name} skill {skill}"
+            );
+            let older = forge(movers, |p, v| {
+                (p == "actors.options").then(|| {
+                    let mut v = v.to_vec();
+                    v[0] = skill;
+                    v
+                })
+            });
+            let view = Diagnostic::decode_movers(&older, limits).unwrap();
+            assert_eq!(view.encode(limits).unwrap(), older);
+        }
+    }
 }
 
 /// Lump order: the decorations of `thinker.order` read their spawnpoints as a
