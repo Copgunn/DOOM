@@ -449,7 +449,9 @@ reads game state, which the architecture already requires.
   presentation claims would need their own reference.
 - **Then a modern renderer.** The simulation still runs at 35 tics per second while the
   renderer interpolates between tics, giving smooth high frame rates on any display, plus
-  modern effects such as sector-based dynamic lighting.
+  sector-based dynamic lighting. Other ports already flood-fill exactly which sectors a
+  light touches, then shade every pixel in them anyway; this idea stops at the sector
+  step, changing each touched sector's light, which costs almost nothing.
 - **VR.** A headset handles looking around while the mouse turns and aims. This suits
   Doom, whose original has no vertical aiming, so head movement need not change gameplay.
 - **A fully offline engine.** Play your own copy of Doom with your own game files, with

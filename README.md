@@ -96,8 +96,9 @@ change gameplay, because the renderer only reads the game state.
 - **A faithful software renderer first.** It would look exactly like the original Linux
   DOOM 1.10, whose source id Software released in 1997.
 - **Then a modern renderer.** Smooth high frame rates by drawing extra frames between
-  the game's 35 tics per second, plus modern effects such as sector-based dynamic
-  lighting.
+  the game's 35 tics per second, plus sector-based dynamic lighting. Other ports already
+  flood-fill exactly which sectors a light touches, then shade every pixel in them anyway.
+  We would stop at the part that was already free.
 - **VR.** A headset handles looking around while the mouse turns and aims. That suits
   Doom, because the original has no vertical aiming.
 - **A fully offline engine.** Your own game files, with no internet connection or account
