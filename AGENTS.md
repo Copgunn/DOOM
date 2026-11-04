@@ -55,11 +55,9 @@
 
 - Inspect status, master and open PRs first. Implement on focused feature branches,
   never directly on master; preserve unrelated changes and shared history.
-- Do not force-push, squash/rebase-rewrite shared history, delete active/unmerged
-  branches or enable auto-merge. Merges require explicit owner authorization and
-  every applicable fresh local/exact-head gate; verify post-merge CI when required.
+- After the owner merges, verify post-merge CI when required.
 - Open/update a focused PR with behavior, evidence, restrictions and unresolved
-  issues. Pending or blocked delivery stays draft. Do not claim unobserved passes.
+  issues. Do not claim unobserved passes.
 - Maintain human-readable README, architecture, compatibility, roadmap, testing,
   source investigation and schema documentation. Use the
   [documentation review checklist](docs/DOC_REVIEW_CHECKLIST.md). Archive historical
@@ -81,3 +79,24 @@
 - Keep the prominent machine-maintained/human-directed disclosure accurate. Do not
   imply universal manual review, absent human oversight or guaranteed correctness.
 - Stop at the assigned milestone's owner-review gate; no unrelated systems.
+
+## Session conventions
+
+- Commit identity comes from the repo-local git config set by the owner (a GitHub
+  noreply address, no personal name or email). Never add `Co-Authored-By` trailers,
+  "Generated with" lines or any AI attribution to commits, PR titles or PR bodies.
+- Never commit to or push `master`. Never force-push, rebase or squash shared history,
+  delete branches or enable auto-merge. Never merge a PR; merging is the owner's call.
+- Open one focused PR per milestone, draft until every gate passes; mark it ready only
+  after the gates, then leave it unmerged.
+- Run every performance measurement alone on an idle machine (no concurrent builds,
+  tests or fuzzing) and say so in the record.
+- Keep scratch builds, baseline checkouts and fuzz corpora outside the working tree;
+  delete them at the end of a milestone after their results are recorded.
+- Report only observed results; distinguish target compiled, seed replay, coverage-guided
+  campaign and sanitizer campaign, and disclose disabled leak detection.
+- Push the branch to origin after every completed plan step (no PR until gates pass).
+- Check free disk space before large builds, baseline worktrees or fuzzing; keep at least
+  20 GB free; clean scratch first or stop and report. Under WSL, `df ~` reports the
+  virtual disk's ceiling, not real space: the real limit is the Windows drive that
+  hosts it. Check `df -h /mnt/c` and keep at least 20 GB free there at all times.
