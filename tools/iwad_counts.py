@@ -12,6 +12,8 @@ of any object is printed (spans are differences). Nothing is written anywhere.
     python3 tools/iwad_counts.py --specials-markdown  # the M3h7 §5.6 specials table
     python3 tools/iwad_counts.py --movers E1M1    # every M3h8 Stage B measurement of one slot
     python3 tools/iwad_counts.py --movers-markdown    # the M3h8 Stage B movers table
+    python3 tools/iwad_counts.py --things E1M1    # the M3h9 THING census of one slot
+    python3 tools/iwad_counts.py --things-markdown    # the M3h9 census tables (all slots, then E1M1)
     python3 tools/iwad_counts.py DIR ...          # another read-only directory
 
 The rules evaluated are those of docs/M3H6_REFERENCE_INVESTIGATION.md: the arithmetic
@@ -19,7 +21,8 @@ certificate (i)–(vii) of §4.2, the boundary rules C1–C3, the closed-cell BL
 grid coverage and REJECT length of §4.5, and the slide-window bound of §4.4; the M3h7
 §5.6 specials counts and the M3h8 Stage B mover measurements and load rules of
 docs/M3H7_REFERENCE_INVESTIGATION.md §4.3, §4.4 (with the reachable-height fixpoint) and
-§4.6, recorded in docs/validation/M3H8_IWAD_COUNTS.md.
+§4.6, recorded in docs/validation/M3H8_IWAD_COUNTS.md; and the M3h9 THING census under
+P_SpawnMapThing (p_mobj.c) with the mobjinfo facts of info.c.
 """
 
 from __future__ import annotations
@@ -169,6 +172,238 @@ NO_NEIGHBOR_FLOOR = -500
 # A fixpoint bound beyond this is reported as divergent (only an inverting door, which
 # rule 4 rejects anyway, can make the interval abstraction walk away).
 DIVERGED = 1 << 16
+
+# M3h9 THING census (--things SLOT, --things-markdown). The THINGS lump is an array of
+# mapthing_t (doomdata.h:203–210): x, y, angle, type, options as five shorts. Its options
+# flags are MTF_EASY 1, MTF_NORMAL 2, MTF_HARD 4 (doomdef.h:140–142) and MTF_AMBUSH 8
+# (doomdef.h:145); the single-player exclusion bit 16 has no macro and is tested as the
+# literal `mthing->options & 16` in P_SpawnMapThing (p_mobj.c:740–741, skipped only when
+# !netgame). Only counts of a slot are ever printed, never a record.
+MTF_EASY = 1
+MTF_NORMAL = 2
+MTF_HARD = 4
+MTF_AMBUSH = 8
+MTF_NOTSINGLE = 16
+# Skill → spawn bit of P_SpawnMapThing (p_mobj.c:743–751): sk_baby 1, sk_nightmare 4,
+# else 1 << (gameskill - 1), so sk_easy 1, sk_medium 2, sk_hard 4 over the skill enum of
+# doomdef.h:147–154. The census names them easy (skills 1–2), medium (3), hard (4–5).
+SKILL_BITS = (("easy", MTF_EASY), ("medium", MTF_NORMAL), ("hard", MTF_HARD))
+# Deathmatch starts (type 11) are stored before every other test, at most MAX_DM_STARTS
+# = 10 of them (p_mobj.c:717–726, doomstat.h:219); every type <= 4 is written to
+# playerstarts[type - 1] and handed to P_SpawnPlayer outside deathmatch (p_mobj.c:728–737),
+# which returns unless that player is in the game (p_mobj.c:654–655), so in single player
+# only type 1 spawns anything. Both branches precede the skill and type checks, so every
+# start record of a slot is handled on every skill, and a type <= 0 would index
+# playerstarts out of range.
+DM_START = 11
+MAX_DM_STARTS = 10
+PLAYER_STARTS = (1, 2, 3, 4)
+# Where mobjinfo[] lives: info.c:1106–4669 holds one brace block per mobjtype_t in the
+# enum order of info.h:1162–1303; the fields follow mobjinfo_t (info.h:1305–1331), so
+# field 0 is doomednum, 16 radius, 17 height (both N*FRACUNIT) and 21 flags (an MF_
+# expression of p_mobj.h:120–199, or 0).
+SOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, "linuxdoom-1.10")
+MOBJINFO_FIELDS = 23
+RADIUS_FIELD = 16
+HEIGHT_FIELD = 17
+FLAGS_FIELD = 21
+# Plain names of every mobjtype_t with a doomednum (the DOOM manual's names; no sprite or
+# lump name). Types with doomednum -1 (projectiles, puffs, the player) never spawn from a
+# THINGS record and are not listed.
+HUMAN_NAMES = {
+    "MT_POSSESSED": "zombieman",
+    "MT_SHOTGUY": "shotgun guy",
+    "MT_VILE": "arch-vile",
+    "MT_UNDEAD": "revenant",
+    "MT_FATSO": "mancubus",
+    "MT_CHAINGUY": "heavy weapon dude",
+    "MT_TROOP": "imp",
+    "MT_SERGEANT": "demon",
+    "MT_SHADOWS": "spectre",
+    "MT_HEAD": "cacodemon",
+    "MT_BRUISER": "baron of hell",
+    "MT_KNIGHT": "hell knight",
+    "MT_SKULL": "lost soul",
+    "MT_SPIDER": "spider mastermind",
+    "MT_BABY": "arachnotron",
+    "MT_CYBORG": "cyberdemon",
+    "MT_PAIN": "pain elemental",
+    "MT_WOLFSS": "wolfenstein ss",
+    "MT_KEEN": "commander keen",
+    "MT_BOSSBRAIN": "boss brain",
+    "MT_BOSSSPIT": "boss shooter",
+    "MT_BOSSTARGET": "boss spawn spot",
+    "MT_TELEPORTMAN": "teleport landing",
+    "MT_BARREL": "exploding barrel",
+    "MT_MISC0": "green armor",
+    "MT_MISC1": "blue armor",
+    "MT_MISC2": "health bonus",
+    "MT_MISC3": "armor bonus",
+    "MT_MISC4": "blue keycard",
+    "MT_MISC5": "red keycard",
+    "MT_MISC6": "yellow keycard",
+    "MT_MISC7": "yellow skull key",
+    "MT_MISC8": "red skull key",
+    "MT_MISC9": "blue skull key",
+    "MT_MISC10": "stimpack",
+    "MT_MISC11": "medikit",
+    "MT_MISC12": "soulsphere",
+    "MT_INV": "invulnerability",
+    "MT_MISC13": "berserk",
+    "MT_INS": "partial invisibility",
+    "MT_MISC14": "radiation suit",
+    "MT_MISC15": "computer area map",
+    "MT_MISC16": "light amplification visor",
+    "MT_MEGA": "megasphere",
+    "MT_CLIP": "ammo clip",
+    "MT_MISC17": "box of bullets",
+    "MT_MISC18": "rocket",
+    "MT_MISC19": "box of rockets",
+    "MT_MISC20": "energy cell",
+    "MT_MISC21": "energy cell pack",
+    "MT_MISC22": "shotgun shells",
+    "MT_MISC23": "box of shells",
+    "MT_MISC24": "backpack",
+    "MT_MISC25": "bfg 9000",
+    "MT_CHAINGUN": "chaingun",
+    "MT_MISC26": "chainsaw",
+    "MT_MISC27": "rocket launcher",
+    "MT_MISC28": "plasma gun",
+    "MT_SHOTGUN": "shotgun",
+    "MT_SUPERSHOTGUN": "super shotgun",
+    "MT_MISC29": "tall techno floor lamp",
+    "MT_MISC30": "short techno floor lamp",
+    "MT_MISC31": "floor lamp",
+    "MT_MISC32": "tall green pillar",
+    "MT_MISC33": "short green pillar",
+    "MT_MISC34": "tall red pillar",
+    "MT_MISC35": "short red pillar",
+    "MT_MISC36": "short red pillar with skull",
+    "MT_MISC37": "short green pillar with heart",
+    "MT_MISC38": "evil eye",
+    "MT_MISC39": "floating skull rock",
+    "MT_MISC40": "gray tree",
+    "MT_MISC41": "tall blue firestick",
+    "MT_MISC42": "tall green firestick",
+    "MT_MISC43": "tall red firestick",
+    "MT_MISC44": "short blue firestick",
+    "MT_MISC45": "short green firestick",
+    "MT_MISC46": "short red firestick",
+    "MT_MISC47": "stalagmite",
+    "MT_MISC48": "tall techno pillar",
+    "MT_MISC49": "candle",
+    "MT_MISC50": "candelabra",
+    "MT_MISC51": "hanging victim, twitching (solid)",
+    "MT_MISC52": "hanging victim, arms out (solid)",
+    "MT_MISC53": "hanging victim, one-legged (solid)",
+    "MT_MISC54": "hanging pair of legs (solid)",
+    "MT_MISC55": "hanging leg (solid)",
+    "MT_MISC56": "hanging victim, arms out",
+    "MT_MISC57": "hanging pair of legs",
+    "MT_MISC58": "hanging victim, one-legged",
+    "MT_MISC59": "hanging leg",
+    "MT_MISC60": "hanging victim, twitching",
+    "MT_MISC61": "dead cacodemon",
+    "MT_MISC62": "dead player",
+    "MT_MISC63": "dead zombieman",
+    "MT_MISC64": "dead demon",
+    "MT_MISC65": "dead lost soul (invisible)",
+    "MT_MISC66": "dead imp",
+    "MT_MISC67": "dead shotgun guy",
+    "MT_MISC68": "bloody mess",
+    "MT_MISC69": "bloody mess",
+    "MT_MISC70": "five skulls shish kebab",
+    "MT_MISC71": "pool of blood and flesh",
+    "MT_MISC72": "skull on a pole",
+    "MT_MISC73": "pile of skulls and candles",
+    "MT_MISC74": "impaled human",
+    "MT_MISC75": "twitching impaled human",
+    "MT_MISC76": "large brown tree",
+    "MT_MISC77": "burning barrel",
+    "MT_MISC78": "hanging victim, guts removed",
+    "MT_MISC79": "hanging victim, guts and brain removed",
+    "MT_MISC80": "hanging torso, looking down",
+    "MT_MISC81": "hanging torso, open skull",
+    "MT_MISC82": "hanging torso, looking up",
+    "MT_MISC83": "hanging torso, brain removed",
+    "MT_MISC84": "pool of blood",
+    "MT_MISC85": "pool of blood",
+    "MT_MISC86": "pool of brains",
+}
+# Corpses and gore (bodies, hanging victims, impaled humans, skull piles, pools): every
+# one is a plain decoration to the engine (no SPECIAL, SHOOTABLE or COUNTKILL flag), the
+# census only marks them so a slot's dead bodies can be counted.
+CORPSE_TYPES = frozenset(f"MT_MISC{n}" for n in range(51, 76)) | frozenset(
+    f"MT_MISC{n}" for n in range(78, 87)
+)
+# The -nomonsters test of P_SpawnMapThing (p_mobj.c:767–773) treats MF_COUNTKILL types
+# and MT_SKULL (the lost soul, not counted as a kill) as the monsters; so does the census.
+MONSTER_EXTRA = frozenset(("MT_SKULL",))
+_MOBJ_TABLE = None
+
+
+def mobj_table():
+    """doomednum → (mobjtype_t name, radius, height, flag names) parsed from info.c.
+
+    The parse is of the committed source only (see the layout notes above the constants):
+    the enum of info.h gives the type names in order, each `{ // MT_X ... }` block of
+    mobjinfo[] gives the 23 fields after its trailing `// field` comments are stripped.
+    Radius and height are N*FRACUNIT, returned as the integer N (map units); flags are
+    the MF_ names without the prefix (p_mobj.h:120–199).
+    """
+    global _MOBJ_TABLE
+    if _MOBJ_TABLE is not None:
+        return _MOBJ_TABLE
+    with open(os.path.join(SOURCE_DIR, "info.h"), encoding="ascii", errors="replace") as handle:
+        header = handle.read()
+    with open(os.path.join(SOURCE_DIR, "info.c"), encoding="ascii", errors="replace") as handle:
+        source = handle.read()
+    enum = re.search(r"typedef enum \{(.*?)NUMMOBJTYPES", header, re.S).group(1)
+    names = re.findall(r"\bMT_\w+", enum)
+    body = source[source.index("mobjinfo_t mobjinfo[NUMMOBJTYPES] = {") :]
+    blocks = re.findall(r"\{\s*//\s*(MT_\w+)\s*\n(.*?)\n\s*\}", body, re.S)
+    if len(blocks) != len(names):
+        raise SystemExit(f"iwad_counts: info.c has {len(blocks)} mobjinfo blocks for {len(names)} types")
+    table = {}
+    for (name, fields), enum_name in zip(blocks, names):
+        if name != enum_name:
+            raise SystemExit(f"iwad_counts: info.c block {name} is out of enum order ({enum_name})")
+        values = [line.split("//")[0].strip().rstrip(",").strip() for line in fields.strip().split("\n")]
+        if len(values) != MOBJINFO_FIELDS:
+            raise SystemExit(f"iwad_counts: {name} has {len(values)} mobjinfo fields")
+        doomednum = int(values[0])
+        if doomednum == -1:
+            continue
+        radius = int(values[RADIUS_FIELD].replace("*FRACUNIT", ""))
+        height = int(values[HEIGHT_FIELD].replace("*FRACUNIT", ""))
+        flags = frozenset(f[3:] for f in values[FLAGS_FIELD].split("|") if f.startswith("MF_"))
+        if doomednum in table:
+            raise SystemExit(f"iwad_counts: doomednum {doomednum} appears twice in info.c")
+        table[doomednum] = (name, radius, height, flags)
+    _MOBJ_TABLE = table
+    return table
+
+
+def thing_kind(doomednum, info):
+    """The census class of a doomednum, in the test order of P_SpawnMapThing."""
+    if doomednum == DM_START:
+        return "dm start"
+    if doomednum <= 4:
+        return "player start" if doomednum in PLAYER_STARTS else "non-positive type"
+    if info is None:
+        return "unknown"  # I_Error "Unknown type" (p_mobj.c:758–761)
+    name, _radius, _height, flags = info
+    if "COUNTKILL" in flags or name in MONSTER_EXTRA:
+        return "monster"
+    if "SPECIAL" in flags:
+        return "pickup"  # P_TouchSpecialThing items
+    if name == "MT_BARREL":
+        return "barrel"
+    if name in CORPSE_TYPES:
+        return "corpse"
+    if "SOLID" in flags:
+        return "obstacle"
+    return "decoration"
 
 
 def read_wad(path):
@@ -754,6 +989,98 @@ class MapCounts:
         rises += [4] if 88 in used else []
         self.vprime_delta = max(rises + [self.turbo_jump, self.door_drop])
 
+    # -- M3h9 THING census ---------------------------------------------------------
+
+    def things_census(self):
+        """Counts of the THINGS lump under P_SpawnMapThing (p_mobj.c:708–797), single player.
+
+        Per doomednum (`rows`): total records; records flagged MTF_EASY, MTF_NORMAL, MTF_HARD;
+        records with MTF_AMBUSH; records with bit 16; and the records P_SpawnMapThing handles
+        on each skill: a start (type 11 or <= 4) is stored on every skill before the flag
+        tests (p_mobj.c:717–737); any other record is dropped when bit 16 is set (:740–741)
+        or its skill bit is clear (:750–751), then looked up by doomednum (:754–761) and
+        spawned (:784). Per skill (`skills`): the handled counts by kind, totalkills and
+        totalitems (:789–792). The census is computed once, on demand, and never prints.
+        """
+        if hasattr(self, "thing_rows"):
+            return
+        table = mobj_table()
+        rows = {}
+        for _x, _y, _angle, dtype, options in self.things:
+            doomednum = dtype if dtype < 0x8000 else dtype - 0x10000  # mapthing_t.type is a short
+            row = rows.get(doomednum)
+            if row is None:
+                info = table.get(doomednum)
+                row = rows[doomednum] = dict(
+                    doomednum=doomednum,
+                    info=info,
+                    kind=thing_kind(doomednum, info),
+                    total=0,
+                    easy=0,
+                    medium=0,
+                    hard=0,
+                    ambush=0,
+                    notsingle=0,
+                    spawn={skill: 0 for skill, _bit in SKILL_BITS},
+                )
+            row["total"] += 1
+            for skill, bit in SKILL_BITS:
+                if options & bit:
+                    row[skill] += 1
+            if options & MTF_AMBUSH:
+                row["ambush"] += 1
+            if options & MTF_NOTSINGLE:
+                row["notsingle"] += 1
+            if row["kind"] in ("dm start", "player start", "non-positive type"):
+                for skill, _bit in SKILL_BITS:
+                    row["spawn"][skill] += 1
+                continue
+            if options & MTF_NOTSINGLE:
+                continue
+            for skill, bit in SKILL_BITS:
+                if options & bit:
+                    row["spawn"][skill] += 1
+        self.thing_rows = [rows[k] for k in sorted(rows)]
+        self.thing_kinds = collections.Counter(r["kind"] for r in self.thing_rows)
+        skills = {}
+        for skill, _bit in SKILL_BITS:
+            s = collections.Counter()
+            for r in self.thing_rows:
+                n = r["spawn"][skill]
+                if not n:
+                    continue
+                kind = r["kind"]
+                s[kind] += n
+                if kind in ("monster", "pickup", "barrel", "corpse", "obstacle", "decoration"):
+                    s["spawned"] += n
+                    flags = r["info"][3]
+                    if kind in ("corpse", "obstacle", "decoration"):
+                        s["solid decorations" if "SOLID" in flags else "non-solid decorations"] += n
+                        if kind == "corpse":
+                            s["solid corpses" if "SOLID" in flags else "non-solid corpses"] += n
+                    if "COUNTKILL" in flags:
+                        s["totalkills"] += n
+                    if "COUNTITEM" in flags:
+                        s["totalitems"] += n
+                elif kind == "unknown":
+                    s["unknown"] += n  # reaches I_Error on this skill
+            skills[skill] = s
+        self.thing_skills = skills
+        starts = collections.Counter()
+        for r in self.thing_rows:
+            if r["kind"] == "player start":
+                starts["player 1" if r["doomednum"] == 1 else "players 2-4"] += r["total"]
+            elif r["kind"] in ("dm start", "non-positive type", "unknown"):
+                starts[r["kind"]] += r["total"]
+        self.thing_starts = starts
+        self.dm_stored = min(starts["dm start"], MAX_DM_STARTS)
+        self.dm_dropped = starts["dm start"] - self.dm_stored
+        self.unknown_doomednums = sum(1 for r in self.thing_rows if r["kind"] == "unknown")
+        self.barrel_rows = [r for r in self.thing_rows if r["kind"] == "barrel"]
+        self.solid_doomednums = sorted(
+            r["doomednum"] for r in self.thing_rows if r["info"] is not None and "SOLID" in r["info"][3]
+        )
+
     # -- §9 ------------------------------------------------------------------------
 
     def readiness(self):
@@ -1288,6 +1615,199 @@ def movers_markdown_report(all_counts):
     movers_summary(all_counts, prefix="")
 
 
+def triple(row_or_counter, key=None):
+    """easy/medium/hard counts as `e/m/h`."""
+    if key is None:
+        return "/".join(str(row_or_counter[skill]) for skill, _bit in SKILL_BITS)
+    return "/".join(str(row_or_counter[skill][key]) for skill, _bit in SKILL_BITS)
+
+
+def thing_row_text(r):
+    """One doomednum of the census: type facts from info.c, then the slot's counts."""
+    if r["info"] is None:
+        facts = f"{r['kind']} (no mobjinfo doomednum)"
+    else:
+        name, radius, height, flags = r["info"]
+        facts = (
+            f"{name} \"{HUMAN_NAMES.get(name, name)}\" {r['kind']} "
+            f"[{' '.join(sorted(flags)) or 'no flags'}] radius {radius} height {height}"
+        )
+    return (
+        f"  {r['doomednum']} {facts}: total {r['total']}; flagged {triple(r)}; "
+        f"ambush {r['ambush']}; not-single {r['notsingle']}; handled {triple(r['spawn'])}"
+    )
+
+
+def things_skill_text(c, skill):
+    s = c.thing_skills[skill]
+    return (
+        f"{skill}: spawned {s['spawned']} (monsters {s['monster']}, pickups {s['pickup']}, "
+        f"decorations solid {s['solid decorations']} non-solid {s['non-solid decorations']} "
+        f"of which corpses {s['solid corpses'] + s['non-solid corpses']} (solid {s['solid corpses']}, non-solid {s['non-solid corpses']}), "
+        f"barrels {s['barrel']}); totalkills {s['totalkills']}; totalitems {s['totalitems']}; "
+        f"unknown types reaching I_Error {s['unknown']}"
+    )
+
+
+def things_detail(c):
+    """The M3h9 THING census of one slot in full (--things SLOT)."""
+    c.things_census()
+    st = c.thing_starts
+    print(f"slot {c.slot}")
+    print(
+        f"THINGS records {len(c.things)} (mapthing_t, doomdata.h:203–210); distinct doomednums {len(c.thing_rows)}; "
+        f"doomednums by kind {types(c.thing_kinds)}"
+    )
+    print(
+        "per doomednum (type facts from info.c; counts: total records, flagged easy/medium/hard, "
+        "MTF_AMBUSH, bit 16, records P_SpawnMapThing handles per skill in single player):"
+    )
+    for r in c.thing_rows:
+        print(thing_row_text(r))
+    print("single player, by skill (P_SpawnMapThing p_mobj.c:740–792):")
+    for skill, _bit in SKILL_BITS:
+        print(f"  {things_skill_text(c, skill)}")
+    print(
+        f"starts (handled before the skill check, every skill): player 1 starts {st['player 1']} (P_SpawnPlayer spawns the player), "
+        f"player 2-4 starts {st['players 2-4']} (stored, not spawned), deathmatch starts {st['dm start']} "
+        f"(stored {c.dm_stored}, beyond MAX_DM_STARTS {c.dm_dropped}), non-positive types {st['non-positive type']}"
+    )
+    print(
+        f"unknown types (no mobjinfo doomednum, p_mobj.c:758–761): doomednums {c.unknown_doomednums}, records {st['unknown']}, "
+        f"reaching I_Error per skill {triple(c.thing_skills, 'unknown')}"
+    )
+    print(
+        f"barrels (2035): records {sum(r['total'] for r in c.barrel_rows)}; "
+        f"corpse doomednums {sum(1 for r in c.thing_rows if r['kind'] == 'corpse')}, records "
+        f"{sum(r['total'] for r in c.thing_rows if r['kind'] == 'corpse')}; "
+        f"solid doomednums {' '.join(str(d) for d in c.solid_doomednums) or 'none'}"
+    )
+
+
+THINGS_COLUMNS = (
+    "Slot",
+    "THINGs",
+    "Spawned e/m/h",
+    "Monsters e/m/h",
+    "Pickups e/m/h",
+    "Solid deco e/m/h",
+    "Non-solid deco e/m/h",
+    "Barrels e/m/h",
+    "P1 start",
+    "P2-4 starts",
+    "DM starts",
+    "Unknown types",
+)
+THINGS_ROW_COLUMNS = (
+    "Doomednum",
+    "Type",
+    "Name",
+    "Kind",
+    "Flags",
+    "Radius",
+    "Height",
+    "Total",
+    "Easy",
+    "Medium",
+    "Hard",
+    "Ambush",
+    "Bit 16",
+    "Handled e/m/h",
+)
+
+
+def things_markdown_report(all_counts, detail_slot="E1M1"):
+    """The M3h9 census tables: every slot, then one row per doomednum of `detail_slot`."""
+    for c in all_counts:
+        c.things_census()
+    print("| " + " | ".join(THINGS_COLUMNS) + " |")
+    print("| " + " | ".join("---" for _ in THINGS_COLUMNS) + " |")
+    for c in all_counts:
+        sk = c.thing_skills
+        cells = [
+            c.slot,
+            len(c.things),
+            triple(sk, "spawned"),
+            triple(sk, "monster"),
+            triple(sk, "pickup"),
+            triple(sk, "solid decorations"),
+            triple(sk, "non-solid decorations"),
+            triple(sk, "barrel"),
+            c.thing_starts["player 1"],
+            c.thing_starts["players 2-4"],
+            c.thing_starts["dm start"],
+            c.unknown_doomednums,
+        ]
+        print("| " + " | ".join(str(x) for x in cells) + " |")
+    print()
+    things_summary(all_counts, prefix="")
+    detail = next((c for c in all_counts if c.slot == detail_slot), None)
+    if detail is None:
+        return
+    print()
+    print(f"{detail_slot}: one row per doomednum")
+    print()
+    print("| " + " | ".join(THINGS_ROW_COLUMNS) + " |")
+    print("| " + " | ".join("---" for _ in THINGS_ROW_COLUMNS) + " |")
+    for r in detail.thing_rows:
+        if r["info"] is None:
+            name, human, flags, radius, height = "-", "-", "-", "-", "-"
+        else:
+            name, radius, height, flag_set = r["info"]
+            human = HUMAN_NAMES.get(name, name)
+            flags = " ".join(sorted(flag_set)) or "none"
+        cells = [
+            r["doomednum"],
+            name,
+            human,
+            r["kind"],
+            flags,
+            radius,
+            height,
+            r["total"],
+            r["easy"],
+            r["medium"],
+            r["hard"],
+            r["ambush"],
+            r["notsingle"],
+            triple(r["spawn"]),
+        ]
+        print("| " + " | ".join(str(x) for x in cells) + " |")
+
+
+def things_summary(all_counts, prefix="SUMMARY "):
+    n = len(all_counts)
+    for c in all_counts:
+        c.things_census()
+
+    def most(key):
+        return "/".join(str(max(c.thing_skills[skill][key] for c in all_counts)) for skill, _bit in SKILL_BITS)
+
+    def count(pred):
+        return sum(1 for c in all_counts if pred(c))
+
+    print(f"{prefix}things: maps {n}; THINGS records in all {sum(len(c.things) for c in all_counts)}, maximum {max(len(c.things) for c in all_counts)}")
+    print(
+        f"{prefix}things: maxima per skill e/m/h: spawned {most('spawned')}, monsters {most('monster')}, pickups {most('pickup')}, "
+        f"solid decorations {most('solid decorations')}, non-solid decorations {most('non-solid decorations')}, "
+        f"barrels {most('barrel')}, totalkills {most('totalkills')}, totalitems {most('totalitems')}"
+    )
+    print(
+        f"{prefix}things: maxima: player 2-4 starts {max(c.thing_starts['players 2-4'] for c in all_counts)}, "
+        f"deathmatch starts {max(c.thing_starts['dm start'] for c in all_counts)} "
+        f"(beyond MAX_DM_STARTS on {count(lambda c: c.dm_dropped)} of {n})"
+    )
+    print(
+        f"{prefix}things: exactly one player 1 start for {count(lambda c: c.thing_starts['player 1'] == 1)} of {n}; "
+        f"no unknown type for {count(lambda c: c.unknown_doomednums == 0)} of {n}; "
+        f"no non-positive type for {count(lambda c: c.thing_starts['non-positive type'] == 0)} of {n}; "
+        f"barrels present on {count(lambda c: c.barrel_rows)} of {n}; "
+        f"corpses present on {count(lambda c: c.thing_kinds['corpse']) } of {n}"
+    )
+    doomednums = sorted({r["doomednum"] for c in all_counts for r in c.thing_rows})
+    print(f"{prefix}things: distinct doomednums over all maps {len(doomednums)}; unmatched {sorted(d for d in doomednums if d not in mobj_table() and d not in PLAYER_STARTS and d != DM_START) or 'none'}")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("directory", nargs="?", default=DEFAULT_DIR)
@@ -1299,6 +1819,10 @@ def main(argv=None):
     parser.add_argument("--movers", metavar="SLOT", help="print every M3h8 Stage B measurement of one map slot")
     parser.add_argument(
         "--movers-markdown", action="store_true", help="print the M3h8 Stage B movers table as Markdown"
+    )
+    parser.add_argument("--things", metavar="SLOT", help="print the M3h9 THING census of one map slot")
+    parser.add_argument(
+        "--things-markdown", action="store_true", help="print the M3h9 THING census tables as Markdown"
     )
     args = parser.parse_args(argv)
     if not os.path.isdir(args.directory):
@@ -1331,6 +1855,16 @@ def main(argv=None):
         return 1
     if args.movers_markdown:
         movers_markdown_report(all_counts)
+        return 0
+    if args.things:
+        for counts in all_counts:
+            if counts.slot == args.things:
+                things_detail(counts)
+                return 0
+        print(f"iwad_counts: slot {args.things} not found")
+        return 1
+    if args.things_markdown:
+        things_markdown_report(all_counts)
         return 0
     if args.markdown:
         markdown_report(all_counts)
