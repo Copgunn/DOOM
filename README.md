@@ -108,8 +108,10 @@ change gameplay, because the renderer only reads the game state.
   We would stop at the part that was already free.
 - **VR.** A headset handles looking around while the mouse turns and aims. That suits
   Doom, because the original has no vertical aiming.
-- **A fully offline engine.** Your own game files, with no internet connection or account
-  ever required.
+- **A fully offline engine.** Your own game files. No internet connection, no account, no
+  launcher, no login screen between you and E1M1. Remember 2019, when re-releases of a
+  1993 game briefly demanded an online login? The backlash undid it within days. Here it
+  never happens in the first place.
 
 **Track 3: Beyond vanilla.** A new engine built on the verified core. This is the payoff
 of all the careful checking: an exact Doom core you can build wild things on without

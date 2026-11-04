@@ -455,7 +455,9 @@ reads game state, which the architecture already requires.
 - **VR.** A headset handles looking around while the mouse turns and aims. This suits
   Doom, whose original has no vertical aiming, so head movement need not change gameplay.
 - **A fully offline engine.** Play your own copy of Doom with your own game files, with
-  no internet connection or account ever required.
+  no internet connection, account, launcher or login ever required. (In 2019 the official
+  console and mobile re-releases briefly required an online account login to play; it was
+  reversed within days after player backlash.)
 
 ### Track 3: Beyond vanilla
 
