@@ -94,6 +94,8 @@
   tests or fuzzing) and say so in the record.
 - Keep scratch builds, baseline checkouts and fuzz corpora outside the working tree;
   delete them at the end of a milestone after their results are recorded.
+- Subagents default to Sonnet; spawn C-evidence, simulation-code, DSIM-encoder and
+  independent-review subagents with `model: opus`.
 - Report only observed results; distinguish target compiled, seed replay, coverage-guided
   campaign and sanitizer campaign, and disclose disabled leak detection.
 - Push the branch to origin after every completed plan step (no PR until gates pass).
