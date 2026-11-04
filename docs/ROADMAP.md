@@ -408,3 +408,33 @@ monster/player behavior. Further stages require separate owner direction.
 
 The established historical labels are retained; this order expresses dependencies,
 not old document append order. Current exclusions remain in [COMPATIBILITY](COMPATIBILITY.md#deferred-systems).
+
+## Ideas under consideration
+
+These are ideas, not commitments. None is scheduled, and each would need its own
+investigation, owner decision and evidence before it became a milestone. They are listed
+here so that the README can summarize them in one place; the README's "Where it's (maybe)
+going" list changes only with the owner's approval.
+
+- **Original demo playback.** Play back recorded vanilla demos (`.lmp` files, the
+  original game's recordings of player input) without desyncing. A demo replays only if
+  every tic matches, so it is the strongest end-to-end proof of exactness. It builds on
+  the M4 demo-compatibility direction under [Later](#later), with DOS and Linux claims
+  kept separate.
+- **Porting whole systems at once.** Port complete systems in one step (all monsters, all
+  line types, all weapons) and check them by running real maps and demos against the
+  original C. The detailed per-mechanic C evidence would be kept for the tricky quirks
+  rather than written for every behavior.
+- **An optional "fixed" mode.** Vanilla behavior stays exact forever as the default. A
+  separate opt-in mode would correct known original bugs and limits. The fidelity gaps
+  and quirks documented in [compatibility](COMPATIBILITY.md) become its to-do list, much
+  like the compatibility levels of other source ports.
+- **Smooth high-frame-rate rendering.** The simulation still runs at its original 35 tics
+  per second, while the renderer interpolates between tics for any display refresh rate.
+  Presentation never changes gameplay, which the architecture already requires.
+- **VR.** A headset handles looking around while the mouse turns and aims. This suits
+  Doom, whose original has no vertical aiming, so head movement need not change gameplay.
+- **A permanent offline engine.** Play your own copy of Doom with your own game files,
+  with no internet connection or account ever required.
+- **Later:** the full original game and Doom II, each with the same source-first
+  evidence.
