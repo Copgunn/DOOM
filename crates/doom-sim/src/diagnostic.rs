@@ -1311,9 +1311,14 @@ impl<'a> Diagnostic<'a> {
     /// (`E1M1_DECORATIONS`, M3h9 note §2.5) is the record `P_SpawnMapThing` made and
     /// nothing changed since (§2.5–§2.7): its spawn state with that state's sprite
     /// and frame, `tics` −1, health 1000, the type's radius and height, its flags
-    /// with at most `MF_AMBUSH` added, no momentum, `z == floorz`, no target, and a
-    /// spawnpoint whose DoomEd number is the type's and whose position is the
-    /// actor's; at most `MAX_DECORATIONS` of them.
+    /// with at most `MF_AMBUSH` added, no momentum, `z == floorz`, no target, the
+    /// spawn reaction time and zero `threshold`, `movedir` and `movecount`, no
+    /// player, not pending removal, and a spawnpoint whose DoomEd number is the
+    /// type's and whose position is the actor's; at most `MAX_DECORATIONS` of them,
+    /// and their spawnpoints, read in `thinker.order`, a subsequence of the THINGS
+    /// lump (`P_SpawnMapThing` spawns in lump order and a decoration is never
+    /// removed, so the decoration subsequence of the thinker list is the lump
+    /// order for the whole level).
     fn validate_decorations(&self) -> Result<(), DiagnosticError> {
         let mut count = 0;
         for slot in 0..self.slots()? {
@@ -1359,6 +1364,12 @@ impl<'a> Diagnostic<'a> {
                 || i32field("momy")? != 0
                 || i32field("momz")? != 0
                 || i32field("z")? != i32field("floor")?
+                || i32field("reaction_time")? != d.reaction_time
+                || i32field("threshold")? != 0
+                || self.required(&format!("{prefix}.movedir"))? != [0]
+                || i32field("movecount")? != 0
+                || self.required(&format!("{prefix}.player"))? != [255]
+                || self.required(&format!("{prefix}.pending_removal"))? != [0]
                 || self.required(&format!("{prefix}.target"))? != [0; 13]
                 || spawn.len() != 11
                 || spawn[0] != 1
@@ -1366,6 +1377,24 @@ impl<'a> Diagnostic<'a> {
                 || i32::from(i16::from_le_bytes([spawn[1], spawn[2]])) * 65536 != i32field("x")?
                 || i32::from(i16::from_le_bytes([spawn[3], spawn[4]])) * 65536 != i32field("y")?
             {
+                return Err(DiagnosticError::Identity);
+            }
+        }
+        // Lump order: each decoration of the thinker list matches the next unused
+        // THINGS record with its spawnpoint bytes (x, y, angle, type, options).
+        let things = self.required("map.things")?;
+        let mut records = things.chunks_exact(10);
+        for handle in self.required("thinker.order")?.chunks_exact(12) {
+            let slot = u32::from_le_bytes(number(&handle[..4])?) as usize;
+            let prefix = format!("actor.{slot}");
+            let ty = ActorTypeId(u16::from_le_bytes(number(
+                self.required(&format!("{prefix}.type"))?,
+            )?));
+            if e1m1_rules::decoration(ty).is_none() {
+                continue;
+            }
+            let spawn = &self.required(&format!("{prefix}.spawnpoint"))?[1..];
+            if !records.any(|record| record == spawn) {
                 return Err(DiagnosticError::Identity);
             }
         }

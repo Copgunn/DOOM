@@ -1304,3 +1304,323 @@ fn decode_e1m1_validates_decoration_records() {
     });
     assert!(Diagnostic::decode_e1m1(&forged, limits).is_err());
 }
+
+/// The committed full-byte DSIM36 fixtures of the independent projection
+/// (`m3h9_snapshot_contract.json`).
+pub(crate) const FIXTURES: &[(&str, &[u8])] = &[
+    (
+        "m3h9_state_0_19.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_0_19.bin"),
+    ),
+    (
+        "m3h9_state_12_38.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_12_38.bin"),
+    ),
+    (
+        "m3h9_state_15_48.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_15_48.bin"),
+    ),
+    (
+        "m3h9_state_16_67.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_16_67.bin"),
+    ),
+    (
+        "m3h9_state_16_80.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_16_80.bin"),
+    ),
+    (
+        "m3h9_state_17_0.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_17_0.bin"),
+    ),
+    (
+        "m3h9_state_17_4.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_17_4.bin"),
+    ),
+    (
+        "m3h9_state_1_6.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_1_6.bin"),
+    ),
+    (
+        "m3h9_state_2_3.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_2_3.bin"),
+    ),
+    (
+        "m3h9_state_4_45.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_4_45.bin"),
+    ),
+    (
+        "m3h9_state_5_60.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_5_60.bin"),
+    ),
+    (
+        "m3h9_state_6_14.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_6_14.bin"),
+    ),
+    (
+        "m3h9_state_6_60.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_6_60.bin"),
+    ),
+    (
+        "m3h9_state_7_20.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_7_20.bin"),
+    ),
+    (
+        "m3h9_state_9_60.bin",
+        include_bytes!("../../../tests/reference/m3h9_state_9_60.bin"),
+    ),
+];
+
+/// The fifteen pinned DSIM36 fixtures of the independent projection
+/// (`m3h9_snapshot_contract.json`): each decodes under `decode_e1m1` alone and
+/// re-encodes to the same bytes; the Rust writer's bytes for the same states are
+/// compared with them by the full replay (`e1m1_replay`).
+#[test]
+fn the_pinned_dsim36_fixtures_decode_under_decode_e1m1_alone() {
+    let limits = DiagnosticLimits::default();
+    assert_eq!(FIXTURES.len(), 15);
+    for (name, bytes) in FIXTURES {
+        let view =
+            Diagnostic::decode_e1m1(bytes, limits).unwrap_or_else(|e| panic!("{name}: {e:?}"));
+        assert_eq!(view.encode(limits).unwrap(), *bytes, "{name}");
+        assert_eq!(
+            Diagnostic::decode_movers(bytes, limits).map(|_| ()),
+            Err(DiagnosticError::Version(36)),
+            "{name}"
+        );
+    }
+}
+
+/// The fields of a DSIM capture in order (path, value).
+fn dsim_fields(bytes: &[u8]) -> Vec<(String, Vec<u8>)> {
+    let word = |at: usize, n: usize| {
+        let mut v = [0u8; 8];
+        v[..n].copy_from_slice(&bytes[at..at + n]);
+        u64::from_le_bytes(v) as usize
+    };
+    let mut at = 16;
+    (0..word(8, 8))
+        .map(|_| {
+            let n = word(at, 4);
+            let path = std::str::from_utf8(&bytes[at + 4..at + 4 + n])
+                .unwrap()
+                .to_owned();
+            at += 4 + n;
+            let n = word(at, 8);
+            let value = bytes[at + 8..at + 8 + n].to_vec();
+            at += 8 + n;
+            (path, value)
+        })
+        .collect()
+}
+/// `bytes` re-encoded with `edit` applied to every field (None keeps it).
+fn forge(bytes: &[u8], edit: impl Fn(&str, &[u8]) -> Option<Vec<u8>>) -> Vec<u8> {
+    let fields = dsim_fields(bytes);
+    let mut out = bytes[..8].to_vec();
+    out.extend((fields.len() as u64).to_le_bytes());
+    for (path, value) in fields {
+        let value = edit(&path, &value).unwrap_or(value);
+        out.extend((path.len() as u32).to_le_bytes());
+        out.extend(path.as_bytes());
+        out.extend((value.len() as u64).to_le_bytes());
+        out.extend(value);
+    }
+    out
+}
+fn fixture(name: &str) -> &'static [u8] {
+    FIXTURES.iter().find(|(n, _)| *n == name).unwrap().1
+}
+/// The slot of the first occupied actor of type `ty` in a capture.
+fn slot_of(bytes: &[u8], ty: OriginalActorType) -> usize {
+    let fields = dsim_fields(bytes);
+    let value = |p: String| fields.iter().find(|(f, _)| *f == p).map(|(_, v)| v.clone());
+    (0..)
+        .find(|i| {
+            value(format!("actor.{i}.occupied")) == Some(vec![1])
+                && value(format!("actor.{i}.type")) == Some(ty.ordinal().to_le_bytes().to_vec())
+        })
+        .unwrap()
+}
+
+/// Every DSIM36 decoration check rejects a capture mutated in that one respect
+/// (STATE_FORMAT "DSIM v36"): the pinned `walk_into_lamp` fixture at op 20 (the ten
+/// gallery decorations) with one field of the floor lamp (`MT_MISC31`, solid) or the
+/// pool of blood (`MT_MISC71`, flags 0, `S_GIBS`) changed.
+#[test]
+fn decode_e1m1_rejects_each_mutated_decoration_check() {
+    let limits = DiagnosticLimits::default();
+    let bytes = fixture("m3h9_state_7_20.bin");
+    Diagnostic::decode_e1m1(bytes, limits).unwrap();
+    assert_eq!(forge(bytes, |_, _| None), bytes);
+    let lamp = slot_of(bytes, OriginalActorType::MT_MISC31);
+    let gibs = slot_of(bytes, OriginalActorType::MT_MISC71);
+    let i32v = |v: i32| v.to_le_bytes().to_vec();
+    let u16v = |v: u16| v.to_le_bytes().to_vec();
+    let fields = dsim_fields(bytes);
+    let field = |slot: usize, name: &str| {
+        let path = format!("actor.{slot}.{name}");
+        fields.iter().find(|(p, _)| *p == path).unwrap().1.clone()
+    };
+    let floor = i32::from_le_bytes(field(lamp, "floor").try_into().unwrap());
+    let mut target = vec![1];
+    target.extend(field(lamp, "previous")[1..].iter().copied());
+    let lamp_flags = u32::from_le_bytes(field(lamp, "flags").try_into().unwrap());
+    let cases: Vec<(&str, usize, &str, Vec<u8>)> = vec![
+        (
+            "not one of the seven types",
+            lamp,
+            "type",
+            u16v(OriginalActorType::MT_BARREL.ordinal()),
+        ),
+        (
+            "another decoration's spawn state",
+            lamp,
+            "state",
+            u16v(OriginalState::S_TECHPILLAR.ordinal()),
+        ),
+        ("tics other than -1", lamp, "tics", i32v(0)),
+        ("health other than 1000", lamp, "health", i32v(999)),
+        ("radius of another type", lamp, "radius", i32v(20 << 16)),
+        ("height other than 16", lamp, "height", i32v(0)),
+        (
+            "flags without MF_SOLID",
+            lamp,
+            "flags",
+            (lamp_flags & !2).to_le_bytes().to_vec(),
+        ),
+        (
+            "flags with MF_SHOOTABLE",
+            lamp,
+            "flags",
+            (lamp_flags | 4).to_le_bytes().to_vec(),
+        ),
+        (
+            "flags with MF_SOLID on gore",
+            gibs,
+            "flags",
+            2u32.to_le_bytes().to_vec(),
+        ),
+        ("z above the floor", lamp, "z", i32v(floor + 1)),
+        ("momx", lamp, "momx", i32v(1)),
+        ("momy", lamp, "momy", i32v(-1)),
+        ("momz", lamp, "momz", i32v(1 << 16)),
+        ("a target", lamp, "target", target),
+        ("reaction time", lamp, "reaction_time", i32v(7)),
+        ("threshold", lamp, "threshold", i32v(1)),
+        ("movedir", lamp, "movedir", vec![1]),
+        ("movecount", lamp, "movecount", i32v(1)),
+        ("a player", lamp, "player", vec![0]),
+        ("pending removal", lamp, "pending_removal", vec![1]),
+        (
+            "gore in S_GIBS with the crunch height",
+            gibs,
+            "height",
+            i32v(0),
+        ),
+        (
+            "gore in S_GIBS with the crunch radius",
+            gibs,
+            "radius",
+            i32v(0),
+        ),
+    ];
+    for (what, slot, name, value) in cases {
+        let path = format!("actor.{slot}.{name}");
+        let forged = forge(bytes, |p, _| (p == path).then(|| value.clone()));
+        assert_ne!(forged, bytes, "{what}");
+        assert!(
+            Diagnostic::decode_e1m1(&forged, limits).is_err(),
+            "{what} accepted"
+        );
+    }
+    // Adding MF_AMBUSH (an ambush THING record) is admitted.
+    let path = format!("actor.{lamp}.flags");
+    let ambush = forge(bytes, |p, _| {
+        (p == path).then(|| (lamp_flags | 0x20).to_le_bytes().to_vec())
+    });
+    Diagnostic::decode_e1m1(&ambush, limits).unwrap();
+}
+
+/// Lump order: the decorations of `thinker.order` read their spawnpoints as a
+/// subsequence of the THINGS lump. Swapping two decoration records of the lump, or
+/// changing one's options, leaves the order unmatched.
+#[test]
+fn decode_e1m1_rejects_decorations_out_of_lump_order() {
+    let limits = DiagnosticLimits::default();
+    let bytes = fixture("m3h9_state_7_20.bin");
+    let things = dsim_fields(bytes)
+        .into_iter()
+        .find(|(p, _)| p == "map.things")
+        .unwrap()
+        .1;
+    // Records 0 and 2 are the lamp at (0, 128) and the pillar at (-160, -64).
+    let record = |i: usize| things[10 * i..10 * i + 10].to_vec();
+    assert_eq!(i16::from_le_bytes([things[6], things[7]]), 2028);
+    assert_eq!(i16::from_le_bytes([things[26], things[27]]), 48);
+    let mut swapped = things.clone();
+    swapped[..10].copy_from_slice(&record(2));
+    swapped[20..30].copy_from_slice(&record(0));
+    let forged = forge(bytes, |p, _| (p == "map.things").then(|| swapped.clone()));
+    assert_eq!(
+        Diagnostic::decode_e1m1(&forged, limits).map(|_| ()),
+        Err(DiagnosticError::Identity)
+    );
+    let mut options = things.clone();
+    options[8] ^= 1;
+    let forged = forge(bytes, |p, _| (p == "map.things").then(|| options.clone()));
+    assert_eq!(
+        Diagnostic::decode_e1m1(&forged, limits).map(|_| ()),
+        Err(DiagnosticError::Identity)
+    );
+}
+
+/// At most `MAX_DECORATIONS` per capture: 32 lamps and a health bonus load; the
+/// bonus record rewritten into a 33rd lamp (type, state, sprite, frame, radius,
+/// height, flags, health, tics) is refused with `DiagnosticError::Limit`.
+#[test]
+fn decode_e1m1_rejects_a_thirty_third_decoration() {
+    let limits = DiagnosticLimits::default();
+    let mut lumps = room(5);
+    lumps.clear_things();
+    for i in 0..32 {
+        let (x, y) = (-480 + 64 * (i % 16) as i16, -340 + 64 * (i / 16) as i16);
+        lumps.add_thing([x, y, 0, 2028, 7]);
+    }
+    lumps.add_thing([200, 0, 0, 2014, 7]);
+    let mut s = e1m1(&lumps).unwrap();
+    assert_eq!(s.spawn_map_things().unwrap().spawned.len(), 33);
+    s.spawn_player_body(
+        PlayerSlot::One,
+        [Fixed::from_map_units(200), Fixed::from_map_units(100)],
+    )
+    .unwrap();
+    s.initialize_player_weapons(PlayerSlot::One, WeaponInventory::default())
+        .unwrap();
+    s.spawn_level_specials().unwrap();
+    let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
+    Diagnostic::decode_e1m1(&bytes, limits).unwrap();
+    let bonus = slot_of(&bytes, OriginalActorType::MT_MISC2);
+    let lamp = slot_of(&bytes, OriginalActorType::MT_MISC31);
+    let fields = dsim_fields(&bytes);
+    let copied: Vec<_> = [
+        "type", "state", "sprite", "frame", "radius", "height", "flags", "health", "tics",
+    ]
+    .into_iter()
+    .map(|name| {
+        let from = format!("actor.{lamp}.{name}");
+        (
+            format!("actor.{bonus}.{name}"),
+            fields.iter().find(|(p, _)| *p == from).unwrap().1.clone(),
+        )
+    })
+    .collect();
+    let forged = forge(&bytes, |p, _| {
+        copied
+            .iter()
+            .find(|(path, _)| path == p)
+            .map(|(_, v)| v.clone())
+    });
+    assert_eq!(
+        Diagnostic::decode_e1m1(&forged, limits).map(|_| ()),
+        Err(DiagnosticError::Limit)
+    );
+}

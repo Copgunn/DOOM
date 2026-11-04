@@ -1914,6 +1914,9 @@ The v36 reader applies every DSIM35 check (the relaxed item witness of
 admits in addition: actor records whose `type` is one of the seven decoration types, in
 the spawn state of that type, with `tics` −1, `health` 1000, the `radius` and `height` of
 the table, `flags` equal to the info flags with or without `MF_AMBUSH`, no target and no
-momentum, at most 32 per capture; `line.{i}.special` 48 on a two-sided line (a map no
+momentum, `z` equal to `floor`, `reaction_time` 8, `threshold`, `movedir` and `movecount`
+0, `player` 255, not pending removal, a spawnpoint naming the type's DoomEd number at the
+actor's position, at most 32 per capture, and the decorations of `thinker.order` reading
+their spawnpoints as a subsequence of `map.things` (lump order); `line.{i}.special` 48 on a two-sided line (a map no
 earlier policy loads); and the type-keyed `S_GIBS` rule above. Every other actor type
 (barrels among them) is rejected as before.
