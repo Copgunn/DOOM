@@ -31,6 +31,10 @@ That makes it useful for exact-behavior work:
 - speedrun and tool-assisted (TAS) research;
 - studying how the original engine really behaves.
 
+Vanilla behavior, meaning that of the original unmodified game, isn't a checkbox in an
+options menu here. It's the default, quirks included, proven against the original C every
+tic.
+
 **It is not playable yet.** If you want to play Doom today, use an established source
 port such as [Chocolate Doom](https://www.chocolate-doom.org/). It needs your own game
 files, such as those from a copy of Doom you bought.
@@ -74,8 +78,8 @@ The committed plan, in order (details in the [roadmap](docs/ROADMAP.md)):
 These are ideas, not promises, grouped into three tracks. The
 [roadmap](docs/ROADMAP.md#ideas-under-consideration) describes them in a little more detail.
 
-**Track 1: Faithful.** Vanilla behavior (that of the original, unmodified game) stays
-exact forever; anything that changes it lives in a separate opt-in mode.
+**Track 1: Faithful.** Vanilla behavior stays exact forever; anything that changes it
+lives in a separate opt-in mode.
 
 - **Original demo playback.** Play back recorded vanilla demos (`.lmp` files) without
   desyncing. That is the strongest end-to-end proof of exactness.
