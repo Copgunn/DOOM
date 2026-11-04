@@ -553,10 +553,21 @@ in the strict and ASan builds only. Older policies keep the rule unchanged. (a) 
 
 **Unattended rule.** Every decision above has a clear recommendation consistent with
 section 4, admits no silent divergence, adds no new kind of fidelity gap and needs no
-unbounded store; the split chooses the first part. **E1–E8 are provisionally adopted,
-pending owner confirmation (2026-11-03), and Phase 2 proceeds with M3h9a.** E9 was added by the
-independent review (2026-11-04) as a recommendation for M3h9b only; nothing in M3h9a
-changes the angle rule.
+unbounded store; the split chooses the first part. E1–E8 were provisionally adopted on 2026-11-03 and
+Phase 2 proceeded with M3h9a. E9 was added by the independent review (2026-11-04) as a
+recommendation for M3h9b only; nothing in M3h9a changes the angle rule. **The owner
+confirmed E1–E9 on 2026-11-04.**
+
+**Owner answers to the review's open questions (2026-11-04).**
+
+- *Pickup vertical momentum under the movers policy (wire 19).* Leave wire 19 frozen.
+  `set_vertical_momentum` accepting nonzero momentum on an item there (the next tic is
+  then refused) is a known limitation of that older policy, documented in
+  [COMPATIBILITY](COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations);
+  wire 20 refuses it.
+- *Damage with neither inflictor nor source on a decoration.* Keep it faithful: accepted
+  and ignored, as `P_DamageMobj` returns for a thing without `MF_SHOOTABLE`
+  (p_inter.c:787–788). No code change.
 
 ## 7. Evidence plan (C first, genuine bodies)
 
@@ -714,8 +725,8 @@ and behaviour identical, confirmed by the unchanged goldens and matched digests.
   the unguarded type 0 (rejected), the eleventh deathmatch start dropped (faithful;
   E1M6 has 11).
 
-**Status / next step.** Phase 1 is complete with this note and the census. E1–E8 are
-provisionally adopted (§6), pending owner confirmation. Phase 2 (M3h9a): steps 1–14 are
+**Status / next step.** Phase 1 is complete with this note and the census. E1–E9 are
+confirmed by the owner (§6). Phase 2 (M3h9a): steps 1–14 are
 done, including the step 10 campaigns, the independent review (step 12), the matched
 timings (step 13) and the local gates (step 14); exact-head CI belongs to GitHub. The
 observed results are in the [evidence record](validation/M3H9.md); milestone status is

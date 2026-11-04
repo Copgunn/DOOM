@@ -101,9 +101,10 @@ Status on `feat/m3h9-e1m1`: in review, not merged. The C evidence (22 scenarios)
 independent DSIM36 projection, the policy, the full replay, the Rust-only tests, the
 example, the tools, the fuzz target with its seed replay and this documentation are
 complete, the independent review's findings are fixed, and the bounded fuzz campaigns,
-the matched timings and the local gates are recorded. The decisions E1–E8 are
-provisionally adopted (E9 is a recommendation for M3h9b), awaiting
-owner confirmation. This branch stops at owner review; exact commits and CI belong to
+the matched timings and the local gates are recorded. The owner confirmed decisions E1–E9
+(E9 applies to M3h9b), kept wire 19 frozen with its pickup vertical-momentum gap as a
+known limitation, and kept damage with no inflictor and no source faithful (accepted
+and ignored). This branch stops at owner review; exact commits and CI belong to
 GitHub. See [source investigation](M3H9_REFERENCE_INVESTIGATION.md),
 [support](COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations)
 and [observations](validation/M3H9.md).

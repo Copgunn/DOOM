@@ -1827,6 +1827,13 @@ Fidelity gaps and refusals:
   (shared families), the 31st lift and the 17th button (`I_Error` in the source) and
   inverting doors are rejected at load, never emulated.
 
+Known limitation (Rust-only API, kept by owner decision so the policy stays frozen):
+`set_vertical_momentum` accepts nonzero vertical momentum on an item under this policy.
+The source never gives an item vertical momentum; the next tic is refused
+(`PlayerBodyError::Invariant`, state preserved) and the capture fails `decode_movers`.
+The [E1M1 policy](#original-monsters-with-two-sided-scrolling-walls-and-static-decorations)
+refuses the call itself.
+
 Still excluded: every other line special (locked doors and keys, the other door, lift,
 floor, stair, donut and ceiling types, crushers, teleporters, `raiseToTexture`,
 perpetual and stopping lifts, light-switching and gun lines, the other exits),
@@ -1979,8 +1986,10 @@ Under this policy nonzero vertical momentum on an item is refused the same way. 
 older policies are unchanged: under the movers policy (wire 19, observed in a committed
 M3h8 room) `set_vertical_momentum` still accepts nonzero momentum on an item, after
 which the next tic is refused (`PlayerBodyError::Invariant`) and the capture fails
-`decode_movers`; this Rust-only gap is left as it is so that the older policies keep
-their exact behavior (M3h9 [evidence record](validation/M3H9.md#independent-review)).
+`decode_movers`. Known limitation of the movers policy, kept by owner decision so that
+the older policies keep their exact behavior (M3h9 [evidence record](validation/M3H9.md#independent-review)).
+Damage with no inflictor and no source stays accepted and ignored, as in the source, also
+by owner decision.
 
 Fidelity gaps: none new. The `SpecialCross`, escape, intercept and vertical witnesses and
 the exit and reborn refusals are the movers policy's, unchanged; the window rule keeps
