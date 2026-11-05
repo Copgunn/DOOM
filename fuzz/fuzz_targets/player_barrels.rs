@@ -590,10 +590,21 @@ fn apply(s: &mut Simulation, cast: &Cast, b: &[u8; 9]) -> Result<(), SimError> {
                 Some(barrel) => {
                     let live = current(s, barrel);
                     let result = s.set_vertical_momentum(barrel, momz);
-                    if momz_out {
+                    if momz_out && live {
                         assert_eq!(
                             result,
                             Err(SimError::Perception(PerceptionError::Arithmetic))
+                        );
+                    } else if momz_out {
+                        // A stale handle (the barrel exploded and was retired) is
+                        // reported before the bound, as for every actor.
+                        assert!(
+                            matches!(
+                                result,
+                                Err(SimError::Perception(PerceptionError::Arithmetic))
+                                    | Err(SimError::Store(StoreError::InvalidHandle))
+                            ),
+                            "vertical momentum past the bound on a stale barrel: {result:?}"
                         );
                     } else if live {
                         assert_eq!(result, Ok(()));
