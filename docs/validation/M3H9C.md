@@ -201,18 +201,18 @@ campaign is exhaustive.
 
 ## Matched performance
 
-To be recorded (step 12).
+To be recorded (plan step 9, the matched timings).
 
 ## Independent review
 
-To be recorded (step 13).
+To be recorded (plan step 11, the independent review).
 
 ## Local gates
 
-To be recorded (step 14).
+To be recorded (plan step 12, the local gates).
 
 ## CI
 
-To be recorded (step 15). The workflow steps are listed in
+To be recorded from the pull request's checks. The workflow steps are listed in
 [testing](../TESTING.md#m3h9c-whole-engine-runner-and-the-real-e1m1-comparison); exact runs
 belong to GitHub.

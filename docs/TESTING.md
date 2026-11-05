@@ -1653,7 +1653,7 @@ and the commands below. The `stable` job of `.github/workflows/rust.yml` runs, i
 `check_player_level.py` (every OS). All are skipped for documentation-only pushes.
 
 ```sh
-python3 tools/reference/m3h9c_wad.py [--out DIR] [--check]   # synthetic WAD; --check compares the committed file
+python3 tools/reference/m3h9c_wad.py [--out FILE] [--check]  # synthetic WAD (default tests/reference/m3h9c_synthetic.wad); --check compares the committed file
 python3 tools/reference/m3h9c_reference.py [--work DIR] [--check] [--keep-dumps] [--cc CC]
 #   three-variant run of every tests/reference/m3h9c_scripts/*.lmp; --check compares
 #   tests/reference/m3h9c_synthetic_results.json; address variant uses detect_leaks=0
