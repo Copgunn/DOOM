@@ -377,8 +377,11 @@ impl Simulation {
                 }
                 // Under heights the vertical invariant of every actor is checked by
                 // the expanded-map preflight; a moving monster may be falling.
+                // A barrel thrust by `P_DamageMobj` slides like a monster (M3h9b
+                // note §2.6) under the barrels policy.
                 if !p.policy.has_player_weapons()
-                    || !original_registry::is_policy_monster(p.policy, l.actor_type)
+                    || !(original_registry::is_policy_monster(p.policy, l.actor_type)
+                        || crate::barrels::is_barrel(p.policy, l.actor_type))
                     || (!p.policy.has_heights() && (a.z != a.floor || a.momz != Fixed::ZERO))
                 {
                     return Err(PlayerBodyError::Unsupported.into());
@@ -395,6 +398,12 @@ impl Simulation {
             }
         }
         Ok(())
+    }
+    /// Whether `request` targets a barrel under the barrels policy.
+    fn damage_to_barrel(&self, request: DamageRequest) -> bool {
+        self.actor(request.target)
+            .and_then(Actor::life)
+            .is_some_and(|l| crate::barrels::is_barrel(self.player_policy(), l.actor_type))
     }
     pub(crate) fn preflight_player_damage(&self, request: DamageRequest) -> Result<(), SimError> {
         let Some(p) = self.original_player else {
@@ -415,8 +424,32 @@ impl Simulation {
                     .actor(request.target)
                     .and_then(Actor::life)
                     .is_some_and(|l| l.actor_type.0 == OriginalActorType::MT_SERGEANT.ordinal()))
+            && !self.damage_to_barrel(request)
         {
             return Err(PlayerBodyError::Unsupported.into());
+        }
+        // The barrels policy admits `damage_actor` with an inflictor on a barrel
+        // (M3h9b decision F4(v), how the C harness wounds barrels); its thrust is
+        // proved with the barrel's own mass (100) against the room and momentum
+        // bounds, as for any physical push.
+        if self.damage_to_barrel(request) {
+            if let Some(inflictor) = request.inflictor {
+                let target = self.actor(request.target).ok_or(CombatError::Reference)?;
+                let origin = self.actor(inflictor).ok_or(CombatError::Reference)?;
+                if target
+                    .life()
+                    .is_some_and(|life| life.health > 0 && life.flags & MF_SHOOTABLE != 0)
+                {
+                    preflight_grounded_impulse(
+                        p.room,
+                        p.policy.has_heights(),
+                        target,
+                        origin,
+                        request.amount,
+                        OriginalActorType::MT_BARREL.descriptor().mass,
+                    )?;
+                }
+            }
         }
         if p.policy.has_player_weapons()
             && request.inflictor == p.mo

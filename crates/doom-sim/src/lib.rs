@@ -132,6 +132,8 @@ pub use map_scale::{
     MAP_SCALE_MAX_LINES, MAP_SCALE_MAX_REFERENCES, MAP_SCALE_MAX_SECTORS, MapScaleLimits,
     MapScaleMetrics,
 };
+mod barrels;
+pub use barrels::EXPLOSION_SIGHT_QUERIES;
 mod e1m1_rules;
 pub use e1m1_rules::{
     BARRELS_LINKED_THINGS, E1M1_DECORATIONS, E1M1_LINKED_THINGS, MAX_BARRELS, MAX_DECORATIONS,
@@ -1130,11 +1132,13 @@ impl Simulation {
         // through death, pickup or a missile's end, M3h9 note §5.1 item 2); the tic
         // preflight and the DSIM36 reader admit no pending decoration.
         if self.actors.is_pending(id) == Some(false)
-            && self
-                .actor(id)
-                .and_then(Actor::life)
-                .is_some_and(|l| e1m1_rules::is_decoration(self.player_policy(), l.actor_type))
+            && self.actor(id).and_then(Actor::life).is_some_and(|l| {
+                e1m1_rules::is_decoration(self.player_policy(), l.actor_type)
+                    || barrels::is_barrel(self.player_policy(), l.actor_type)
+            })
         {
+            // The barrels policy removes a barrel only through its own `S_NULL`
+            // (p_mobj.c:62–66, M3h9b decision F4(v)).
             return Err(PlayerBodyError::Unsupported.into());
         }
         // Removing a flying fireball's owner could never step again.
@@ -1556,6 +1560,8 @@ mod imp_tests;
 mod map_scale_evidence;
 #[cfg(test)]
 mod movers_replay;
+#[cfg(test)]
+mod player_barrel_combat_tests;
 #[cfg(test)]
 mod player_barrels_tests;
 #[cfg(test)]

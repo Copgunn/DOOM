@@ -187,9 +187,12 @@ impl Simulation {
                 self.remember_admitted(ty);
                 return Ok(());
             }
-            if e1m1_rules::is_decoration(self.player_policy(), ty) {
-                // A static decoration of the E1M1 policy (M3h9 note §2.5): its type
-                // and spawn state resolve in the registry and the decoration branch
+            if e1m1_rules::is_decoration(self.player_policy(), ty)
+                || crate::barrels::is_barrel(self.player_policy(), ty)
+            {
+                // A static decoration of the E1M1 policy (M3h9 note §2.5) or the
+                // barrel of the barrels policy (M3h9b note §2.1): its type and spawn
+                // state resolve in the registry and the decoration or barrel branch
                 // of `validate_type_original` admits its flags and state graph.
                 let registry = self.registry.as_deref().ok_or(MonsterError::Definition)?;
                 let original = identity::OriginalActorType::try_from(ty.0)

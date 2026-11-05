@@ -919,6 +919,11 @@ pub(crate) fn require_role_for(
             {
                 Ok(())
             }
+            // The exploding barrel (info.c:1888–1912; M3h9b note §2.1, decision F4),
+            // spawned by `P_SpawnMapThing` under the barrels policy alone.
+            DefinitionIdentity::Original(OriginalActorType::MT_BARREL) if profile.has_barrels() => {
+                Ok(())
+            }
             other => Err(OriginalRegistryError::Unsupported(other)),
         };
     }
@@ -945,6 +950,10 @@ pub(crate) fn state_role_for(
         // A decoration holds its spawn state alone: `tics` −1 and no action
         // (p_mobj.c:441–449), never killed or gibbed (health 1000, not shootable).
         e1m1_rules::spawn_state(ty, s)
+    } else if crate::barrels::is_barrel(profile, ty) {
+        // `S_BAR1`/`S_BAR2` alive and the `S_BEXP` chain once killed; `S_GIBS`
+        // after a crunch is admitted by the type-keyed gibs rule, not the role.
+        crate::barrels::state_allowed(s)
     } else if ty.0 == OriginalActorType::MT_PLAYER.ordinal() {
         player_policy()?.normal.contains(s)
             || (profile.has_player_weapons()

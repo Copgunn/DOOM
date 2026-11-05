@@ -840,6 +840,7 @@ impl Simulation {
                     if let Some(actor) = plan.actors.get(id) {
                         if actor.life().is_some_and(|l| {
                             original_registry::is_policy_monster(self.player_policy(), l.actor_type)
+                                || crate::barrels::is_barrel(self.player_policy(), l.actor_type)
                         }) {
                             player_map_scale::travel_admitted(
                                 self.room(),
