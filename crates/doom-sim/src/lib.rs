@@ -134,12 +134,14 @@ pub use map_scale::{
 };
 mod barrels;
 pub use barrels::EXPLOSION_SIGHT_QUERIES;
+pub mod demo;
 mod e1m1_rules;
 mod level;
-pub mod demo;
+mod level_stats;
 pub use e1m1_rules::{
     BARRELS_LINKED_THINGS, E1M1_DECORATIONS, E1M1_LINKED_THINGS, MAX_BARRELS, MAX_DECORATIONS,
 };
+pub use level_stats::{LevelRunStats, take_level_run_stats};
 mod movement;
 mod mover_rules;
 mod movers;

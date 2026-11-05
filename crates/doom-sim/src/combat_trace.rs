@@ -316,11 +316,13 @@ fn collect_limited(
         return Err(CombatError::TraversalLimit);
     }
     out.intercepts.sort_by_key(|i| i.fraction);
+    crate::level_stats::observe_intercepts(out.intercepts.len());
     Ok(out)
 }
 fn add(out: &mut HitscanTrace, frac: Fixed, object: TraceObject) -> Result<(), CombatError> {
     if frac >= Fixed::ZERO {
         if out.intercepts.len() == 128 {
+            crate::level_stats::observe_intercepts(129);
             return Err(CombatError::InterceptLimit);
         }
         out.intercepts.push(Intercept {
