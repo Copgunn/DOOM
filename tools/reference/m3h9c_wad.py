@@ -157,8 +157,13 @@ def build_map():
         sectors.append(([[(a, CLOSET_Y1), (a + DOOR_W, CLOSET_Y1), (a + DOOR_W, 576), (a, 576)]], 0, 128, dict(light=160, floor='FLOOR7_1', ceiling='CEIL3_5')))
     lines = {}
     for a in DOOR_X:
-        lines[((a, 512), (a + DOOR_W, 512))] = (DR, 0)             # hall's edge (hall is sector 0)
-        lines[((a, 576), (a + DOOR_W, 576))] = (DR, 0)             # door's edge (door sector precedes closet)
+        # DR on the hall's edge only (front = hall, back = door; a front-side use raises the back
+        # sector, p_doors.c:413, back-side uses are ignored, p_switch.c:284-293). The door|closet
+        # edge stays a plain two-sided line: its front is the door (sector order), so a DR special
+        # there would raise the closet, and the closet
+        # and door tops would feed each other in the movers policy's reachable-height fixpoint
+        # (crates/doom-sim/src/mover_rules.rs rule 4).
+        lines[((a, 512), (a + DOOR_W, 512))] = (DR, 0)
     for x in ISLAND_X:                                              # 8 two-sided scrollers: hole bottom edges
         lines[((x, ISLAND_Y[0]), (x + 64, ISLAND_Y[0]))] = (SCROLL, 0)
     lines[((LIFT_S[1], y0), (LIFT_S[0], y0))] = (WR_LIFT, 1)       # WR lift trigger on the hall|S edge

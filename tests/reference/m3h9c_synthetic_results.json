@@ -1,6 +1,6 @@
 {
  "schema": "DOOM-M3H9C-SYNTHETIC-RESULTS-v1",
- "wad_sha256": "3b596b0c8d39706a6ea1547568cf68963af22f3833806ec39412a611c7457926",
+ "wad_sha256": "1180ed6a0070d841e20ae2a3fd136fe49f132082a2dba50b75106a10b58c5923",
  "runner_contract_sha256": "250dd1988cb1ddb0d95443de28f0873cca50c85508cdf1efe07afae6443d55b6",
  "variants": [
   "strict",
@@ -20,7 +20,7 @@
    "thinkers_at_load": 98,
    "mobjs_at_load": 92,
    "snapshots": 582,
-   "dumps_sha256": "6bc0b88707802d56a93caeead01e851738e36b2ab1f9e72c6bc9e91199624ae9"
+   "dumps_sha256": "01ab4a82b95289c28a44c908a88345fcbd5cee89ca75aa5fd4c136a211b938d9"
   },
   "SYNCHAOS": {
    "lmp_sha256": "5072d63e8ad1aa2509136b9f35d903cda0626e42cdd06099b481c9be5227d9df",
@@ -32,7 +32,7 @@
    "thinkers_at_load": 98,
    "mobjs_at_load": 92,
    "snapshots": 5001,
-   "dumps_sha256": "bbb66217b9a03cc465d08c72f904b6c7f1213e1536a44fc386199b815d487dbe"
+   "dumps_sha256": "1363568b6a11e5f9d5729ebdcbcbb361132e2157a82b2bfe7d5ef72a9b6311e9"
   },
   "SYNFIGHT": {
    "lmp_sha256": "77c17e0d4577281b91e992d4353dc4cd2e0525ec7b5d42469487b11b167b8149",
@@ -44,7 +44,7 @@
    "thinkers_at_load": 98,
    "mobjs_at_load": 92,
    "snapshots": 274,
-   "dumps_sha256": "a075c0654603e0dda929ee3488e31de982861a40009ab13e1990149387b0ec1e"
+   "dumps_sha256": "5ab65b45eed499bba03557d419c99be8815201317a553c445df592fda1495984"
   },
   "SYNIDLE": {
    "lmp_sha256": "a8730210d4c253c7d203dbf19dfa105a1d762811185339a36bc24fa038adb1f2",
@@ -56,7 +56,7 @@
    "thinkers_at_load": 98,
    "mobjs_at_load": 92,
    "snapshots": 2101,
-   "dumps_sha256": "58ab33a06f82eb05ac3f92101646ef783e3171fb53fa423d3ce128cd4f121525"
+   "dumps_sha256": "f0296bed45fb0e8b5052a859509608f9df486d8f76c58cf3ee7256fe83f9a392"
   },
   "SYNWALK": {
    "lmp_sha256": "9f9bd78e7ed582b5a0250fdc8f90eddb080e1e8b2870ae0f47c6d2f7934621c9",
@@ -68,7 +68,7 @@
    "thinkers_at_load": 98,
    "mobjs_at_load": 92,
    "snapshots": 1469,
-   "dumps_sha256": "b6f91016e736119783d79838406a4666627bf4c4245fa695b6c2fba2d526c5ee"
+   "dumps_sha256": "e61b54286d6300c5cd6484264e373cd20eb6c5a1ae675ab6361db0064db550fe"
   }
  }
 }

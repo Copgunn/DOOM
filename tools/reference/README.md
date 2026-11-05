@@ -656,7 +656,8 @@ builders (`m3h9b_geometry.room`, imported unchanged) and is E1M1-sized:
   53 subsectors, 52 nodes and a 19x12 BLOCKMAP;
 - 95 THINGs, of which 92 spawn on medium single player (52 pickups, 27 decorations,
   6 barrels, 6 monsters and the player, whose start is THING 52);
-- 8 closed DR doors, one WR lift, 8 two-sided scrollers, sector specials 1, 2, 3, 7, 8,
+- 8 closed DR doors (special on the hall side only, so the movers policy's
+  reachable-height rule admits the map), one WR lift, 8 two-sided scrollers, sector specials 1, 2, 3, 7, 8,
   9, 12 and 17, a sky ceiling and an S1 exit switch within use range of the start.
 
 [m3h9c_check_wad.py](m3h9c_check_wad.py) is an independent verifier: it imports nothing
