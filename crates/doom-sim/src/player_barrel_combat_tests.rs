@@ -157,6 +157,20 @@ fn entered(events: &[Event], id: ActorId) -> Vec<OriginalState> {
         })
         .collect()
 }
+/// The explosion's sight records `(observer, target, visible)`, in order.
+fn sights(events: &[Event]) -> Vec<(ActorId, ActorId, bool)> {
+    events
+        .iter()
+        .filter_map(|e| match e {
+            Event::Perception(PerceptionEvent::Sight {
+                observer,
+                target,
+                result,
+            }) => Some((*observer, *target, result.visible)),
+            _ => None,
+        })
+        .collect()
+}
 /// The source's `P_Random` stream from `seed`, for expected draw values.
 fn table(seed: u8) -> DoomRng {
     DoomRng::from_indices(seed, 0)
@@ -550,6 +564,8 @@ fn the_player_takes_128_minus_dist_inside_the_window_only() {
                     "{d}"
                 );
                 assert_eq!(player_health(&s), 100 - amount, "{d}");
+                // One sight record (the player looking at the barrel) before it.
+                assert_eq!(sights(&events), vec![(body, things[0], true)], "{d}");
                 let c = combat(&events);
                 assert!(
                     c.iter().any(|e| matches!(e,
@@ -568,6 +584,8 @@ fn the_player_takes_128_minus_dist_inside_the_window_only() {
             }
             None => {
                 assert!(hits.is_empty(), "{d}");
+                // Outside the window or out of range: no sight query, no record.
+                assert!(sights(&events).is_empty(), "{d}");
                 assert_eq!(player_health(&s), 100, "{d}");
             }
         }
@@ -752,7 +770,8 @@ fn a_chain_reaction_follows_the_timers_and_the_window_quirk_spares_a_fourth_cell
 /// away (`dist` 104, damage 24): the line from the eye (`h + 42`) to the barrel's
 /// top clears the edge iff `h < (10.5·120 + 31.5·11) / 109 ≈ 14.7`, so a 12-unit
 /// step lets the blast through and a 16-unit step blocks it, where the live
-/// barrel's 42 units would clear both.
+/// barrel's 42 units would clear both. Either way the query is recorded with the
+/// existing sight record (observer the player, target the barrel).
 #[test]
 fn the_dead_barrels_low_sight_window_is_blocked_by_a_step() {
     for (h, damaged) in [(12, true), (16, false)] {
@@ -764,6 +783,7 @@ fn the_dead_barrels_low_sight_window_is_blocked_by_a_step() {
         let (mut s, body, things) = world_in(&l, [0, 365], 6);
         let events = explode(&mut s, things[0], None);
         let d = damages(&events);
+        assert_eq!(sights(&events), vec![(body, things[0], damaged)], "{h}");
         if damaged {
             assert_eq!(
                 d,
@@ -1114,7 +1134,9 @@ fn barrel_invariants(s: &Simulation) {
 /// 2,400 tics under four seeds in the census room with twelve barrels, two
 /// Zombiemen and an Imp around the player, who walks, turns and fires: barrels are
 /// wounded, killed and chain-explode; after every tic the tic preflight (V′ and
-/// every witness, run by `advance`) passed and the barrel witness holds.
+/// every witness, run by `advance`) passed and the barrel witness holds; every
+/// 100th tic the DSIM37 capture decodes with `decode_barrels` and re-encodes to
+/// the same bytes.
 #[test]
 fn barrels_soak_2400_tics_under_four_seeds() {
     let mut things: Vec<[i16; 5]> = (0..12)
@@ -1146,6 +1168,9 @@ fn barrels_soak_2400_tics_under_four_seeds() {
                 })
                 .count();
             barrel_invariants(&s);
+            if n % 100 == 99 {
+                round_trip(&s);
+            }
         }
     }
     assert!(exploded > 0);
@@ -1213,4 +1238,205 @@ fn a_monster_relinked_mid_walk_makes_the_walk_revisit_its_cell() {
             (Some(zombie), if revisit { 99 } else { 100 })
         );
     }
+}
+
+// ---- DSIM37 barrel validation (plan step 7) -----------------------------------------
+
+/// The capture decodes with `decode_barrels` and re-encodes to the same bytes;
+/// `decode_e1m1` rejects it by version.
+fn round_trip(s: &Simulation) -> Vec<u8> {
+    let limits = DiagnosticLimits::default();
+    let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
+    let view = Diagnostic::decode_barrels(&bytes, limits).unwrap();
+    assert_eq!(view.encode(limits).unwrap(), bytes);
+    assert_eq!(
+        Diagnostic::decode_e1m1(&bytes, limits).map(|_| ()),
+        Err(DiagnosticError::Version(37))
+    );
+    bytes
+}
+fn field(bytes: &[u8], path: &str) -> Vec<u8> {
+    crate::player_e1m1_tests::dsim_fields(bytes)
+        .into_iter()
+        .find(|(p, _)| p == path)
+        .unwrap()
+        .1
+}
+/// `bytes` with `actor.{slot}.{name}` replaced by `value`.
+fn forged(bytes: &[u8], slot: u32, name: &str, value: Vec<u8>) -> Vec<u8> {
+    let path = format!("actor.{slot}.{name}");
+    crate::player_e1m1_tests::forge(bytes, |p, _| (p == path).then(|| value.clone()))
+}
+fn rejects(bytes: &[u8], why: &str) {
+    assert!(
+        Diagnostic::decode_barrels(bytes, DiagnosticLimits::default()).is_err(),
+        "{why}"
+    );
+}
+
+/// Every barrel state the source reaches round-trips through DSIM37: live,
+/// wounded (target, threshold 100, reaction time 0), dying (`S_BEXP` chain,
+/// flags and height 10.5), pending removal after its `S_NULL`, and `S_GIBS` after a
+/// door crunch.
+#[test]
+fn every_barrel_state_round_trips_through_dsim37() {
+    let (mut s, body, things) = world(
+        CENSUS,
+        &[[0, 0, 0, BARREL, 7], [-200, 0, 0, BARREL, 7 | 8]],
+        [-400, 200],
+    );
+    round_trip(&s);
+    hit(&mut s, things[1], None, Some(body), 5).unwrap();
+    round_trip(&s);
+    hit(&mut s, things[0], None, None, 20).unwrap();
+    round_trip(&s);
+    let mut pending = false;
+    for _ in 0..40 {
+        tic(&mut s, idle());
+        let bytes = round_trip(&s);
+        if s.actors.is_pending(things[0]) == Some(true) && !pending {
+            pending = true;
+            // The removed record: no state, the dying flags and height kept.
+            let slot = things[0].slot();
+            let i32v = |v: i32| v.to_le_bytes().to_vec();
+            rejects(
+                &forged(&bytes, slot, "height", i32v(42 << 16)),
+                "pending, live height",
+            );
+            rejects(&forged(&bytes, slot, "tics", i32v(1)), "pending, tics 1");
+            rejects(
+                &forged(&bytes, slot, "flags", BARREL_FLAGS.to_le_bytes().to_vec()),
+                "pending, live flags",
+            );
+        }
+    }
+    assert!(pending);
+    // The door crunch of the step 6 scenario.
+    let (mut s, _body, things) = world(LIFTROOM, &[[501, 65, 0, BARREL, 7]], [471, 65]);
+    let mut use_ = idle();
+    use_[0].buttons = BT_USE;
+    for n in 1..=200 {
+        tic(&mut s, if n == 3 || n == 6 { use_ } else { idle() });
+        if s.sectors[5].ceiling <= Fixed::from_map_units(22) {
+            break;
+        }
+    }
+    hit(&mut s, things[0], None, None, 20).unwrap();
+    s.set_momentum(things[0], [Fixed::from_map_units(4), Fixed::ZERO])
+        .unwrap();
+    for _ in 0..40 {
+        tic(&mut s, idle());
+    }
+    assert_eq!(state(&s, things[0]), Some(OriginalState::S_GIBS));
+    round_trip(&s);
+}
+
+/// Each barrel check of `validate_barrels` refuses a capture mutated in that field
+/// alone; the unmutated capture decodes. Every mutation below except the
+/// non-barrel state and the `S_GIBS` relabel is refused by `validate_barrels`
+/// alone (checked once with the call removed: the rest decode).
+#[test]
+fn dsim37_refuses_each_forged_barrel_field() {
+    let (mut s, body, things) = world(
+        CENSUS,
+        &[[0, 0, 0, BARREL, 7], [-200, 0, 0, BARREL, 7]],
+        [-400, 200],
+    );
+    hit(&mut s, things[1], None, Some(body), 5).unwrap();
+    tic(&mut s, idle());
+    let live = round_trip(&s);
+    let slot = things[0].slot();
+    let wounded = things[1].slot();
+    let i32v = |v: i32| v.to_le_bytes().to_vec();
+    let u16v = |v: u16| v.to_le_bytes().to_vec();
+    let state_id = |st: OriginalState| u16v(st.ordinal());
+    for (name, value, why) in [
+        (
+            "state",
+            state_id(OriginalState::S_PLAY),
+            "a non-barrel state",
+        ),
+        (
+            "state",
+            state_id(OriginalState::S_BEXP),
+            "a death state with health 20",
+        ),
+        ("sprite", u16v(0), "the sprite"),
+        ("frame", 7u32.to_le_bytes().to_vec(), "the frame"),
+        ("tics", i32v(7), "tics above the state's 6"),
+        ("tics", i32v(0), "tics 0"),
+        ("health", i32v(21), "health above 20"),
+        ("health", i32v(0), "health 0 while alive"),
+        (
+            "flags",
+            (BARREL_FLAGS & !MF_SHOOTABLE).to_le_bytes().to_vec(),
+            "flags",
+        ),
+        (
+            "flags",
+            (BARREL_FLAGS | MF_AMBUSH).to_le_bytes().to_vec(),
+            "ambush without MTF_AMBUSH",
+        ),
+        ("radius", i32v(11 << 16), "the radius"),
+        ("height", i32v(41 << 16), "the height"),
+        ("reaction_time", i32v(7), "the reaction time"),
+        ("threshold", i32v(50), "threshold 50"),
+        ("threshold", i32v(100), "threshold 100 without a target"),
+        ("movedir", vec![1], "movedir"),
+        ("movecount", i32v(1), "movecount"),
+        ("death_requested", vec![1], "a death request"),
+        ("lastlook", vec![4], "lastlook"),
+        ("angle", 0x2000_0000u32.to_le_bytes().to_vec(), "the angle"),
+        ("pending_removal", vec![1], "pending with a live state"),
+    ] {
+        rejects(&forged(&live, slot, name, value), why);
+    }
+    // The wounded barrel: a target without threshold 100.
+    assert_eq!(
+        field(&live, &format!("actor.{wounded}.threshold")),
+        i32v(100)
+    );
+    rejects(
+        &forged(&live, wounded, "threshold", i32v(0)),
+        "target with threshold 0",
+    );
+    let mut spawn = field(&live, &format!("actor.{slot}.spawnpoint"));
+    spawn[7..9].copy_from_slice(&3004i16.to_le_bytes());
+    rejects(
+        &forged(&live, slot, "spawnpoint", spawn),
+        "a non-2035 spawnpoint",
+    );
+    // Dying: the death flags, height 10.5 and a countdown in the state's tics.
+    hit(&mut s, things[0], None, None, 20).unwrap();
+    let dying = round_trip(&s);
+    for (name, value, why) in [
+        (
+            "flags",
+            BARREL_FLAGS.to_le_bytes().to_vec(),
+            "live flags while dying",
+        ),
+        ("height", i32v(42 << 16), "live height while dying"),
+        ("health", i32v(1), "positive health while dying"),
+        (
+            "state",
+            state_id(OriginalState::S_GIBS),
+            "S_GIBS with corpse dimensions",
+        ),
+    ] {
+        rejects(&forged(&dying, slot, name, value), why);
+    }
+}
+
+/// Under DSIM36 (wire 20) a barrel is no admitted identity at all; the per-event
+/// allow-list and the gibs rule admit `MT_BARREL` under DSIM37 only.
+#[test]
+fn older_readers_never_admit_a_barrel() {
+    let (s, _body, things) = world(CENSUS, &[[0, 0, 0, BARREL, 7]], [-400, 200]);
+    let bytes = round_trip(&s);
+    let limits = DiagnosticLimits::default();
+    // Relabeled as DSIM36 the capture fails (version, profile and the barrel).
+    let mut old = bytes.clone();
+    old[4..8].copy_from_slice(&36u32.to_le_bytes());
+    assert!(Diagnostic::decode_e1m1(&old, limits).is_err());
+    let _ = things;
 }

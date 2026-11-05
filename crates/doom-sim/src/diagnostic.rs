@@ -437,13 +437,14 @@ impl<'a> Diagnostic<'a> {
         self.identity(ty, state).map(Some)
     }
     /// DSIM35 to DSIM37 only: `S_GIBS` (`PIT_ChangeSector`'s giblets) for an
-    /// admitted monster type or `MT_PLAYER`; its dimensions are checked by
-    /// `validate_movers`.
+    /// admitted monster type or `MT_PLAYER`, and under DSIM37 a dying barrel
+    /// (p_map.c:1269–1279); its dimensions are checked by `validate_movers`.
     fn gibs_admitted(&self, actor: ActorTypeId, state: StateId) -> bool {
         matches!(self.version, 35..=37)
             && state.0 == OriginalState::S_GIBS.ordinal()
             && (actor.0 == OriginalActorType::MT_PLAYER.ordinal()
-                || original_registry::is_policy_monster(self.policy(), actor))
+                || original_registry::is_policy_monster(self.policy(), actor)
+                || crate::barrels::is_barrel(self.policy(), actor))
     }
     fn policy(&self) -> OriginalExecutionProfile {
         if self.version == 37 {
@@ -781,6 +782,8 @@ impl<'a> Diagnostic<'a> {
                             OriginalActorType::MT_MISC62,
                             OriginalActorType::MT_MISC68,
                             OriginalActorType::MT_MISC69,
+                            // The DSIM37 barrel (admitted by its policy alone).
+                            OriginalActorType::MT_BARREL,
                         ]
                         .into_iter()
                         .any(|ty| {
@@ -833,6 +836,9 @@ impl<'a> Diagnostic<'a> {
         }
         if matches!(self.version, 36 | 37) {
             self.validate_decorations()?;
+        }
+        if self.version == 37 {
+            self.validate_barrels()?;
         }
         if matches!(self.version, 29..=37) {
             self.validate_live_projectiles()?;
@@ -1423,6 +1429,143 @@ impl<'a> Diagnostic<'a> {
                 self.required(&format!("{prefix}.type"))?,
             )?));
             if e1m1_rules::decoration(ty).is_none() {
+                continue;
+            }
+            let spawn = &self.required(&format!("{prefix}.spawnpoint"))?[1..];
+            if !records.any(|record| record == spawn) {
+                return Err(DiagnosticError::Identity);
+            }
+        }
+        Ok(())
+    }
+    /// DSIM37: every occupied actor of type `MT_BARREL` (M3h9b note §2.1–§2.6,
+    /// decision F9) holds what the source can give it. Pending removal only after
+    /// its own `S_NULL` (state sentinel `u16::MAX`, `tics` 0, health at most 0,
+    /// the dying flags and height 10.5). Otherwise: a state
+    /// of `S_BAR1`, `S_BAR2`, `S_BEXP..S_BEXP5` (with that state's sprite and frame
+    /// and a countdown in `1..=tics`) or `S_GIBS` after a crunch (`tics` −1);
+    /// health at most 20, positive exactly in `S_BAR1`/`S_BAR2`; the info flags
+    /// (`MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD`) alive, `MF_SHOOTABLE` cleared and
+    /// `MF_CORPSE|MF_DROPOFF` set once dead (p_inter.c:675–680), `MF_SOLID` cleared
+    /// only by the crunch (p_map.c:1274), with `MF_AMBUSH` exactly when the THING
+    /// record carries `MTF_AMBUSH`; radius 10 (0 gibbed) and height 42 alive, 10.5
+    /// dead (`height >>= 2`, 681), 0 gibbed; reaction time 8, or 0 after a
+    /// non-lethal wound (`P_DamageMobj`, p_inter.c:902); threshold 0, or 100 with a
+    /// target (the retarget block, 904–915; nothing lowers a barrel's threshold);
+    /// no `movedir`, `movecount`, player or death request; `lastlook` below
+    /// `MAXPLAYERS`; a 2035 spawnpoint with the angle `ANG45 * (angle/45)` of its
+    /// record. At most `MAX_BARRELS` of them, their spawnpoints in `thinker.order`
+    /// a subsequence of the THINGS lump.
+    fn validate_barrels(&self) -> Result<(), DiagnosticError> {
+        use OriginalState as S;
+        let d = OriginalActorType::MT_BARREL.descriptor();
+        let dead_flags = (d.flags & !crate::original_player::MF_SHOOTABLE)
+            | crate::original_player::MF_CORPSE
+            | crate::original_player::MF_DROPOFF;
+        let mut count = 0;
+        for slot in 0..self.slots()? {
+            let prefix = format!("actor.{slot}");
+            if self.required(&format!("{prefix}.occupied"))? != [1] {
+                continue;
+            }
+            let u16field = |name: &str| -> Result<u16, DiagnosticError> {
+                Ok(u16::from_le_bytes(number(
+                    self.required(&format!("{prefix}.{name}"))?,
+                )?))
+            };
+            if !crate::barrels::is_barrel_type(ActorTypeId(u16field("type")?)) {
+                continue;
+            }
+            count += 1;
+            if count > crate::MAX_BARRELS {
+                return Err(DiagnosticError::Limit);
+            }
+            let raw = u16field("state")?;
+            let i32field = |name: &str| -> Result<i32, DiagnosticError> {
+                Ok(i32::from_le_bytes(number(
+                    self.required(&format!("{prefix}.{name}"))?,
+                )?))
+            };
+            match self.required(&format!("{prefix}.pending_removal"))? {
+                [0] => {}
+                // Removed by its own `S_NULL` this tic (p_mobj.c:62–66): still in the
+                // thinker list until the next pass, with the dying flags and height.
+                [1] if raw == u16::MAX
+                    && i32field("tics")? == 0
+                    && i32field("health")? <= 0
+                    && u32::from_le_bytes(number(self.required(&format!("{prefix}.flags"))?)?)
+                        & !world_pickups::MF_AMBUSH
+                        == dead_flags
+                    && i32field("height")? == d.height >> 2 =>
+                {
+                    continue;
+                }
+                _ => return Err(DiagnosticError::Identity),
+            }
+            let state = S::try_from(raw).map_err(|_| DiagnosticError::Identity)?;
+            let gibbed = state == S::S_GIBS;
+            if !gibbed && !crate::barrels::state_allowed(state) {
+                return Err(DiagnosticError::Identity);
+            }
+            let alive = crate::barrels::live_state(state);
+            let s = state.descriptor();
+            let (flags, radius, height) = if gibbed {
+                (dead_flags & !crate::original_player::MF_SOLID, 0, 0)
+            } else if alive {
+                (d.flags, d.radius, d.height)
+            } else {
+                (dead_flags, d.radius, d.height >> 2)
+            };
+            let tics = i32field("tics")?;
+            let health = i32field("health")?;
+            let actual = u32::from_le_bytes(number(self.required(&format!("{prefix}.flags"))?)?);
+            let threshold = i32field("threshold")?;
+            let target = self.required(&format!("{prefix}.target"))?;
+            let spawn = self.required(&format!("{prefix}.spawnpoint"))?;
+            if u16field("sprite")? != s.sprite.ordinal()
+                || u32::from_le_bytes(number(self.required(&format!("{prefix}.frame"))?)?)
+                    != s.frame
+                || !(if gibbed {
+                    tics == -1
+                } else {
+                    (1..=s.tics).contains(&tics)
+                })
+                || health > d.spawn_health
+                || (health > 0) != alive
+                || actual & !world_pickups::MF_AMBUSH != flags
+                || i32field("radius")? != radius
+                || i32field("height")? != height
+                || !matches!(i32field("reaction_time")?, 0 | 8)
+                || !(threshold == 0 || threshold == crate::original_player::BASETHRESHOLD)
+                || target.first() != Some(&u8::from(threshold != 0))
+                || (threshold == 0 && target != [0; 13])
+                || self.required(&format!("{prefix}.movedir"))? != [0]
+                || i32field("movecount")? != 0
+                || self.required(&format!("{prefix}.player"))? != [255]
+                || self.required(&format!("{prefix}.death_requested"))? != [0]
+                || !matches!(self.required(&format!("{prefix}.lastlook"))?, [0..=3])
+                || spawn.len() != 11
+                || spawn[0] != 1
+                || i32::from(i16::from_le_bytes([spawn[7], spawn[8]])) != d.doomed_number
+                || u32::from_le_bytes(number(self.required(&format!("{prefix}.angle"))?)?)
+                    != e1m1_rules::spawn_angle(i16::from_le_bytes([spawn[5], spawn[6]]))
+                || (actual & world_pickups::MF_AMBUSH != 0)
+                    != e1m1_rules::spawn_ambush(u16::from_le_bytes([spawn[9], spawn[10]]))
+            {
+                return Err(DiagnosticError::Identity);
+            }
+        }
+        // Lump order: each barrel of the thinker list matches the next unused THINGS
+        // record with its spawnpoint bytes (a barrel is spawned only from the lump).
+        let things = self.required("map.things")?;
+        let mut records = things.chunks_exact(10);
+        for handle in self.required("thinker.order")?.chunks_exact(12) {
+            let slot = u32::from_le_bytes(number(&handle[..4])?) as usize;
+            let prefix = format!("actor.{slot}");
+            let ty = ActorTypeId(u16::from_le_bytes(number(
+                self.required(&format!("{prefix}.type"))?,
+            )?));
+            if !crate::barrels::is_barrel_type(ty) {
                 continue;
             }
             let spawn = &self.required(&format!("{prefix}.spawnpoint"))?[1..];

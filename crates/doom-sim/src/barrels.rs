@@ -9,7 +9,9 @@
 //! target. Everything it does goes through existing bodies: `P_DamageMobj` (the
 //! shared [`crate::combat::DamagePlan`] and `LifeHost::apply_damage`), the
 //! thinker's movement, the state machine and `PIT_ChangeSector`. What is new is
-//! the role gates and the radius attack below.
+//! the role gates and the radius attack below. An explosion adds no event kind
+//! (decision F9): the `A_Explode` action record, then per candidate reaching
+//! `P_CheckSight` the existing sight record, then each victim's damage records.
 use crate::combat::{DamagePlan, DamageRequest};
 use crate::identity::{OriginalActorType, OriginalState};
 use crate::lifecycle::{ActorAccess, LifeHost};
@@ -403,8 +405,19 @@ fn pit_radius_attack<A: ActorAccess>(
     }
     // 1191: P_CheckSight (thing, bombspot), the candidate as looker; the dead
     // barrel's window is its bottom 10.5 units (height >>= 2, p_inter.c:681).
+    // Every query is recorded with the existing sight record (observer the
+    // candidate, target the barrel), blocked or not, before the victim's damage:
+    // the C projection pins one per candidate reaching P_CheckSight (decision F9).
     sight.charge(h.world)?;
-    if !crate::sight::checked_query(h.world, h.sectors, thing, bomb)?.visible {
+    let result = crate::sight::checked_query(h.world, h.sectors, thing, bomb)?;
+    let visible = result.visible;
+    h.events
+        .push(crate::Event::Perception(crate::PerceptionEvent::Sight {
+            observer: id,
+            target: spot,
+            result,
+        }));
+    if !visible {
         return Ok(());
     }
     // 1194: P_DamageMobj (thing, bombspot, bombsource, bombdamage - dist).
