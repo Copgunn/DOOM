@@ -280,6 +280,14 @@ fn radius_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, spot: ActorId) -> Resu
         queries: 0,
         work: 0,
     };
+    #[cfg(test)]
+    walk_trace::push(walk_trace::Row::Attack {
+        spot,
+        source,
+        window: [xl, xh, yl, yh],
+        position: [x, y, bomb.z().bits()],
+        dist: BLAST_WINDOW,
+    });
     // A defensive visit bound: every linked thing at most once per cell, plus one
     // more pass per relinking victim (only a monster entering its seestate
     // `A_Chase` relinks, at most once per explosion since its threshold becomes
@@ -294,10 +302,17 @@ fn radius_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, spot: ActorId) -> Resu
                 continue;
             }
             let mut next = first_in_cell(h, [bx, by]);
+            #[cfg(test)]
+            let mut ordinal = 0;
             while let Some(thing) = next {
                 visits += 1;
                 if visits > limit {
                     return Err(CombatError::WorkLimit.into());
+                }
+                #[cfg(test)]
+                {
+                    walk_trace::visit(by * width + bx, ordinal);
+                    ordinal += 1;
                 }
                 pit_radius_attack(h, thing, spot, source, &mut sight)?;
                 if h.sight_failed() {
@@ -371,16 +386,22 @@ fn pit_radius_attack<A: ActorAccess>(
 ) -> Result<(), SimError> {
     let thing = *h.access.get(id).ok_or(CombatError::Reference)?;
     let Some(life) = thing.life() else {
+        #[cfg(test)]
+        walk_trace::outcome(id, 0, -1);
         return Ok(());
     };
     // 1170: the exploding barrel itself is skipped here (P_KillMobj cleared it).
     if life.flags & MF_SHOOTABLE == 0 {
+        #[cfg(test)]
+        walk_trace::outcome(id, 0, -1);
         return Ok(());
     }
     // 1175: never present under this policy; kept for fidelity.
     if life.actor_type.0 == OriginalActorType::MT_CYBORG.ordinal()
         || life.actor_type.0 == OriginalActorType::MT_SPIDER.ordinal()
     {
+        #[cfg(test)]
+        walk_trace::outcome(id, 1, -1);
         return Ok(());
     }
     let bomb = *h.access.get(spot).ok_or(CombatError::Reference)?;
@@ -401,6 +422,8 @@ fn pit_radius_attack<A: ActorAccess>(
         .max(0);
     // 1188.
     if dist >= BOMB_DAMAGE {
+        #[cfg(test)]
+        walk_trace::outcome(id, 2, dist);
         return Ok(());
     }
     // 1191: P_CheckSight (thing, bombspot), the candidate as looker; the dead
@@ -418,8 +441,12 @@ fn pit_radius_attack<A: ActorAccess>(
             result,
         }));
     if !visible {
+        #[cfg(test)]
+        walk_trace::outcome(id, 3, dist);
         return Ok(());
     }
+    #[cfg(test)]
+    walk_trace::outcome(id, 4, dist);
     // 1194: P_DamageMobj (thing, bombspot, bombsource, bombdamage - dist).
     let plan = DamagePlan::current_original(
         h,
@@ -433,6 +460,83 @@ fn pit_radius_attack<A: ActorAccess>(
     h.access.reserve(plan.spawn_count())?;
     h.apply_damage(plan);
     Ok(())
+}
+
+/// A test-only observer of the radius attack (the M3h9b replay's `RA` and `RC`
+/// comparison rows, `barrels_replay`): when enabled on the current thread it
+/// records each `P_RadiusAttack` call and every `PIT_RadiusAttack` candidate in
+/// walk order with its BLOCKMAP list, its ordinal in that list's walk and its
+/// outcome. It reads values the walk already computed and never changes state;
+/// disabled (the default) it records nothing.
+#[cfg(test)]
+pub(crate) mod walk_trace {
+    use crate::ActorId;
+    use std::cell::RefCell;
+
+    /// One observed row.
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub(crate) enum Row {
+        /// `P_RadiusAttack`: spot, source, block window `[xl, xh, yl, yh]`, the
+        /// spot's raw position and the wrapped `dist`.
+        Attack {
+            spot: ActorId,
+            source: Option<ActorId>,
+            window: [i32; 4],
+            position: [i32; 3],
+            dist: i32,
+        },
+        /// `PIT_RadiusAttack`: candidate, block index `y·width + x`, ordinal in the
+        /// block's walk, outcome code (0 not shootable, 1 boss, 2 out of range,
+        /// 3 sight blocked, 4 damaged) and `dist` (−1 for codes 0 and 1).
+        Candidate {
+            thing: ActorId,
+            block: i32,
+            position: usize,
+            code: u8,
+            dist: i32,
+        },
+    }
+    thread_local! {
+        static ROWS: RefCell<Option<Vec<Row>>> = const { RefCell::new(None) };
+        static AT: RefCell<(i32, usize)> = const { RefCell::new((0, 0)) };
+    }
+    /// Starts recording on this thread (discarding anything recorded).
+    pub(crate) fn enable() {
+        ROWS.with(|r| *r.borrow_mut() = Some(Vec::new()));
+    }
+    /// Stops recording on this thread.
+    pub(crate) fn disable() {
+        ROWS.with(|r| *r.borrow_mut() = None);
+    }
+    /// The rows recorded since the last call (empty when disabled).
+    pub(crate) fn take() -> Vec<Row> {
+        ROWS.with(|r| {
+            r.borrow_mut()
+                .as_mut()
+                .map(std::mem::take)
+                .unwrap_or_default()
+        })
+    }
+    pub(super) fn push(row: Row) {
+        ROWS.with(|r| {
+            if let Some(rows) = r.borrow_mut().as_mut() {
+                rows.push(row);
+            }
+        });
+    }
+    pub(super) fn visit(block: i32, position: usize) {
+        AT.with(|a| *a.borrow_mut() = (block, position));
+    }
+    pub(super) fn outcome(thing: ActorId, code: u8, dist: i32) {
+        let (block, position) = AT.with(|a| *a.borrow());
+        push(Row::Candidate {
+            thing,
+            block,
+            position,
+            code,
+            dist,
+        });
+    }
 }
 
 #[cfg(test)]

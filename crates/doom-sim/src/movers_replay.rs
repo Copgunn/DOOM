@@ -228,11 +228,16 @@ pub(crate) fn controlled(
             .unwrap();
     }
     if op == c.chase_at {
-        // Every chase case declares a zombieman, whose see state is S_POSS_RUN1.
-        let zombie = things[c.chase_thing];
-        s.set_actor_target(zombie, Some(body)).unwrap();
-        s.enter_original_state(zombie, OriginalState::S_POSS_RUN1)
-            .unwrap();
+        // `P_SetMobjState (mo, mo->info->seestate)`: S_POSS_RUN1 for the Zombieman
+        // every M3h8/M3h9 chase case declares, S_TROO_RUN1 for an M3h9b Imp.
+        let monster = things[c.chase_thing];
+        let ty = s.actor(monster).unwrap().life().unwrap().actor_type;
+        let see = crate::identity::OriginalActorType::try_from(ty.0)
+            .unwrap()
+            .states()
+            .see;
+        s.set_actor_target(monster, Some(body)).unwrap();
+        s.enter_original_state(monster, see).unwrap();
     }
 }
 

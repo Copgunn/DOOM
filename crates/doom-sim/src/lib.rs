@@ -1530,6 +1530,8 @@ mod bonus_actor_tests;
 mod bonus_evidence;
 
 #[cfg(test)]
+mod barrels_replay;
+#[cfg(test)]
 mod bonus_tests;
 
 #[cfg(test)]
