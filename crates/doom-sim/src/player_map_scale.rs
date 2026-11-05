@@ -10,6 +10,23 @@ use std::{error::Error, fmt};
 /// live actors for `k` Imps, plus at most `39 - 3k` spawns in one pass, is at most
 /// 256 visits, so the store never fills and the visit budget keeps a 64-visit margin.
 pub const MAP_SCALE_ACTOR_SLOTS: u32 = 320;
+/// Actor slots of the barrels policy (`PlayerMonstersBarrelsV1`, M3h9b note §5.3,
+/// decision F2): with `K` 8 monsters, `P` 64 pickups, `R` 8 drops, `D` 32
+/// decorations and `B` 16 barrels, `1 + K + P + 26k + (K−k) + 8(K−k) + R + D + B`
+/// is at most 337 live actors (at `k = 8` Imps; 201 at `k = 0`), and even the crude
+/// bound 337 + 39 spawns in one pass is 376, within 384, so the store never fills.
+/// Encoded as `store.max_slots` in DSIM37; every older policy keeps 320.
+pub const BARRELS_ACTOR_SLOTS: u32 = 384;
+/// The actor slot count a map-scale policy requires of its constructor and encodes
+/// as `store.max_slots`: [`BARRELS_ACTOR_SLOTS`] under the barrels policy,
+/// [`MAP_SCALE_ACTOR_SLOTS`] under every other map-scale policy.
+pub const fn actor_slots(policy: OriginalExecutionProfile) -> u32 {
+    if policy.has_barrels() {
+        BARRELS_ACTOR_SLOTS
+    } else {
+        MAP_SCALE_ACTOR_SLOTS
+    }
+}
 /// Live fireballs: one Imp launches at most every 23 tics (its attack state cut
 /// short by pain, then the JUSTHIT shortcut of `P_CheckMissileRange`) and a fireball
 /// holds its slot for at most `ceil(5776/10) + 20 = 598` passes in the largest room,
@@ -76,7 +93,13 @@ pub enum MapScaleError {
     Boundary,
     /// Under the diagonal policy, a player's projected slide move was accepted by
     /// `P_TryMove` with its center outside the room (the corner jump, M3h5 note
-    /// §4.4): the one legal source move the policy refuses. The tic fails and the
+    /// §4.4): the one legal source move the policy refuses for the player. Under
+    /// the barrels policy also any accepted `P_TryMove` step of a barrel whose
+    /// center leaves the room: a barrel's radius is 10, and a negative
+    /// `P_XYMovement` step reaches 30 units per axis, more than its box width of
+    /// 20, so it can clear a wall corner the destination-only test does not see
+    /// (`barrels::BarrelMotion`). The player (box 32) and the admitted monsters
+    /// (box 40) cannot, so only barrels pay that check. The tic fails and the
     /// state before it is kept.
     Escape,
     /// Under the real-map policy, the arithmetic certificate of the M3h6 note §4.2
@@ -385,6 +408,24 @@ fn segment_meets_box(segment: [[i64; 2]; 2], lo: [i64; 2], hi: [i64; 2]) -> bool
     let corners = [lo, [hi[0], lo[1]], hi, [lo[0], hi[1]]].map(|p| orient(a, b, p));
     !(corners.iter().all(|c| *c > 0) || corners.iter().all(|c| *c < 0))
 }
+/// Whether the closed segment meets the open box `(lo, hi)`: the bounding boxes
+/// overlap strictly and the segment's line leaves corners strictly on both sides.
+/// Exact in integers, by the argument of [`segment_meets_box`] with open intervals
+/// (three pairwise-meeting intervals of one line share a point); a segment that
+/// only touches the box's boundary, at an edge, a corner or along a side, does not
+/// meet it.
+fn segment_meets_open_box(segment: [[i64; 2]; 2], lo: [i64; 2], hi: [i64; 2]) -> bool {
+    let [a, b] = segment;
+    if a[0].max(b[0]) <= lo[0]
+        || a[0].min(b[0]) >= hi[0]
+        || a[1].max(b[1]) <= lo[1]
+        || a[1].min(b[1]) >= hi[1]
+    {
+        return false;
+    }
+    let corners = [lo, [hi[0], lo[1]], hi, [lo[0], hi[1]]].map(|p| orient(a, b, p));
+    corners.iter().any(|c| *c > 0) && corners.iter().any(|c| *c < 0)
+}
 /// Whether the closed segments `ab` and `cd` share a point.
 fn segments_meet(a: [i64; 2], b: [i64; 2], c: [i64; 2], d: [i64; 2]) -> bool {
     let on = |p: [i64; 2], q: [i64; 2], r: [i64; 2]| {
@@ -547,6 +588,38 @@ impl Boundary {
     /// inside `Ω` and the closed box meeting no wall, so the open box lies in `Ω`.
     pub fn spawn_admitted(&self, position: [Fixed; 2], radius: Fixed) -> bool {
         self.inside(position) && !self.box_meets_wall(position, radius)
+    }
+    /// The spawn rule S′ of the barrels policy (M3h9b note decision F3): the center
+    /// inside `Ω` (odd ray parity); a static (pickup, decoration) needs nothing more,
+    /// since the M3h5 invariant asks only its center; a mover (monster, player body)
+    /// additionally needs, for every wall `W = (a, b)` its OPEN box
+    /// `(x − r, x + r) × (y − r, y + r)` meets, its center in front of `W`'s line by
+    /// at least `(31 − r)·w(θ)`, in exact integers
+    /// `|dx·(cy − ay) − dy·(cx − ax)| ≥ (31 − r)·(|dx| + |dy|)` with
+    /// `(dx, dy) = b − a`. A wall exactly on the closed box's edge imposes nothing.
+    /// Both sides are formed on raw fixed-point values in i128 (each is 2³² times its
+    /// map-unit value, so the comparison is the map-unit one, exact for fractional
+    /// centers too). The vertex-rectangle clause is the caller's.
+    pub fn spawn_admitted_relaxed(&self, position: [Fixed; 2], radius: Fixed, mover: bool) -> bool {
+        if !self.inside(position) {
+            return false;
+        }
+        if !mover {
+            return true;
+        }
+        let p = position.map(|v| i64::from(v.bits()));
+        let r = i64::from(radius.bits());
+        let (lo, hi) = ([p[0] - r, p[1] - r], [p[0] + r, p[1] + r]);
+        let reach = i128::from((31_i64 << 16) - r);
+        self.segments.iter().all(|[a, b]| {
+            let (a, b) = (raw(*a), raw(*b));
+            if !segment_meets_open_box([a, b], lo, hi) {
+                return true;
+            }
+            let (dx, dy) = (i128::from(b[0] - a[0]), i128::from(b[1] - a[1]));
+            let cross = dx * i128::from(p[1] - a[1]) - dy * i128::from(p[0] - a[0]);
+            cross.abs() >= reach * (dx.abs() + dy.abs())
+        })
     }
 }
 /// Map units to raw fixed point, in i64.
@@ -817,7 +890,26 @@ impl Simulation {
     /// Spawn admission: the rectangle rule of the map-scale policies, and under the
     /// diagonal policy also the boundary rule (center inside `Ω`, closed box meeting
     /// no wall).
-    pub(crate) fn spawn_admitted(&self, position: [Fixed; 2], radius: Fixed, margin: u32) -> bool {
+    ///
+    /// Under the barrels policy the rule is S′ (M3h9b note decision F3): the center
+    /// in the closed vertex rectangle (`RoomBounds::contains`) and
+    /// [`Boundary::spawn_admitted_relaxed`] with `mover` (monsters and the player
+    /// body: true; pickups and decorations: false). Every older policy ignores
+    /// `mover` and keeps the closed-box rule.
+    pub(crate) fn spawn_admitted(
+        &self,
+        position: [Fixed; 2],
+        radius: Fixed,
+        margin: u32,
+        mover: bool,
+    ) -> bool {
+        if self.player_policy().has_barrels() {
+            return self.room().is_some_and(|room| room.contains(position))
+                && self
+                    .boundary
+                    .as_deref()
+                    .is_some_and(|b| b.spawn_admitted_relaxed(position, radius, mover));
+        }
         spawn_admitted(self.room(), position, radius, margin)
             && self
                 .boundary

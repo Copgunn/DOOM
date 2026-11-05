@@ -512,6 +512,13 @@ pub(crate) trait MotionAccess {
     fn after_slide(&mut self, _actor: &Actor) -> Result<(), Self::Error> {
         Ok(())
     }
+    /// Called after every accepted `P_TryMove` attempt (each halved step, flush,
+    /// projected slide or stairstep), with the actor at its new position: the
+    /// barrel escape witness of the barrels policy
+    /// ([`crate::barrels::BarrelMotion`]). No-op elsewhere.
+    fn after_move(&mut self, _actor: &Actor) -> Result<(), Self::Error> {
+        Ok(())
+    }
     /// The slide trace's intercept witness: `Some(MAX_INTERCEPTS)` under the
     /// real-map policy, `None` (unbounded, the historical behavior) elsewhere.
     fn intercept_limit(&self) -> Option<usize> {
@@ -619,6 +626,9 @@ impl<F: MotionAccess> Mover<'_, F> {
                     self.events.push(MotionEvent::Cross(crossing));
                 }
             }
+            if allowed {
+                self.access.after_move(self.actor)?;
+            }
             return Ok(allowed);
         }
         if things.blocked_by_actor.is_none() {
@@ -634,6 +644,7 @@ impl<F: MotionAccess> Mover<'_, F> {
         if allowed {
             self.actor.spec.position = target;
             self.spatial.link(self.id);
+            self.access.after_move(self.actor)?;
         }
         Ok(allowed)
     }

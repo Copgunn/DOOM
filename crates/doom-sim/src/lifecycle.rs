@@ -231,10 +231,14 @@ struct Admission {
     shotgun: bool,
     chaingun: bool,
     demon: bool,
+    /// The exploding barrel of the barrels policy: `A_Explode` at `S_BEXP4` alone.
+    barrel: bool,
 }
 impl Admission {
     const fn special(self) -> SpecialActions {
-        if self.demon && self.chaingun {
+        if self.barrel {
+            SpecialActions::Barrel
+        } else if self.demon && self.chaingun {
             SpecialActions::OriginalMonsters
         } else if self.demon {
             SpecialActions::Demon
@@ -252,6 +256,10 @@ enum SpecialActions {
     Demon,
     /// Demon plus original former-human attacks (PlayerMonstersV1 only).
     OriginalMonsters,
+    /// `A_Explode` in `S_BEXP4`, the barrel's death chain (barrels policy only,
+    /// M3h9b decision F4(ii)): the rocket's `S_EXPLODE1` and every other state
+    /// naming it stay `UnsupportedAction`.
+    Barrel,
 }
 const ENTRY_LIMIT: usize = 128;
 const STEP_LIMIT: usize = 8192;
@@ -433,6 +441,9 @@ impl ActorRegistry {
                                     | "A_TroopAttack"
                             )
                         ))
+                    && !(specialized == SpecialActions::Barrel
+                        && id.0 == crate::identity::OriginalState::S_BEXP4.ordinal()
+                        && self.action_name(action) == Some("A_Explode"))
                     && !(specialized == SpecialActions::Chaingunner
                         && matches!(
                             self.action_name(action),
@@ -563,6 +574,7 @@ impl ActorRegistry {
                 shotgun: false,
                 chaingun: false,
                 demon: false,
+                barrel: false,
             },
         )
     }
@@ -649,6 +661,7 @@ impl ActorRegistry {
                 shotgun: false,
                 chaingun: false,
                 demon: false,
+                barrel: false,
             },
         )
     }
@@ -671,6 +684,7 @@ impl ActorRegistry {
                 shotgun: false,
                 chaingun: false,
                 demon: false,
+                barrel: false,
             },
         )
     }
@@ -700,6 +714,7 @@ impl ActorRegistry {
                 shotgun: false,
                 chaingun: false,
                 demon: false,
+                barrel: false,
             },
         )
     }
@@ -727,6 +742,7 @@ impl ActorRegistry {
                 shotgun: false,
                 chaingun: false,
                 demon: false,
+                barrel: false,
             },
         )
     }
@@ -752,6 +768,7 @@ impl ActorRegistry {
                 shotgun: false,
                 chaingun: false,
                 demon: false,
+                barrel: false,
             },
         )?;
         for state in self.actor_type(ty).unwrap().states() {
@@ -781,6 +798,7 @@ impl ActorRegistry {
                 shotgun: true,
                 chaingun: false,
                 demon: false,
+                barrel: false,
             },
         )?;
         for state in self.actor_type(ty).unwrap().states() {
@@ -810,6 +828,7 @@ impl ActorRegistry {
                 shotgun: false,
                 chaingun: true,
                 demon: false,
+                barrel: false,
             },
         )?;
         for state in self.actor_type(ty).unwrap().states() {
@@ -831,6 +850,12 @@ impl ActorRegistry {
             false,
             SpecialActions::OriginalMonsters,
         )
+    }
+    /// The barrel's state closure (M3h9b note §2.1): `S_BAR1`/`S_BAR2` without an
+    /// action, the `S_BEXP` chain with `A_Scream` and `A_Explode` (in `S_BEXP4`
+    /// only), no look, chase or attack.
+    pub(crate) fn validate_state_barrel(&self, state: StateId) -> Result<(), ActorError> {
+        self.validate_state_with(state, false, false, false, false, SpecialActions::Barrel)
     }
     pub(crate) fn validate_state_demon_melee(&self, state: StateId) -> Result<(), ActorError> {
         self.validate_state_with(state, true, true, false, false, SpecialActions::Demon)
@@ -871,6 +896,7 @@ impl ActorRegistry {
                 shotgun: false,
                 chaingun: false,
                 demon: true,
+                barrel: false,
             },
         )?;
         for state in self.actor_type(ty).unwrap().states() {
@@ -900,6 +926,7 @@ impl ActorRegistry {
                     shotgun: false,
                     chaingun: false,
                     demon: false,
+                    barrel: false,
                 },
             )?;
             return Ok(());
@@ -921,12 +948,40 @@ impl ActorRegistry {
                     shotgun: false,
                     chaingun: true,
                     demon: true,
+                    barrel: false,
                 },
             )?;
             let info = self.actor_type(ty).ok_or(ActorError::InvalidType)?;
             for state in info.states().into_iter().take(7) {
                 self.validate_state_original_monsters(state)?;
             }
+            return Ok(());
+        }
+        if ty.0 == crate::identity::OriginalActorType::MT_BARREL.ordinal() {
+            // Caller already required the barrels role (M3h9b note §2.1, decision
+            // F4): flags `MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD`, no look, chase or attack,
+            // `A_Scream` in `S_BEXP2` and `A_Explode` in `S_BEXP4` alone, and the
+            // compile-time definition is the info.c record.
+            crate::barrels::validate_definition(ty)?;
+            self.admit_type(
+                ty,
+                sectors,
+                &mut BTreeSet::new(),
+                &mut BTreeSet::new(),
+                &mut 0,
+                Admission {
+                    flags: crate::original_player::MF_SOLID
+                        | crate::original_player::MF_SHOOTABLE
+                        | crate::original_player::MF_NOBLOOD,
+                    look: false,
+                    chase: false,
+                    attacks: false,
+                    shotgun: false,
+                    chaingun: false,
+                    demon: false,
+                    barrel: true,
+                },
+            )?;
             return Ok(());
         }
         if crate::e1m1_rules::decoration(ty).is_some() {
@@ -950,6 +1005,7 @@ impl ActorRegistry {
                     shotgun: false,
                     chaingun: false,
                     demon: false,
+                    barrel: false,
                 },
             )?;
             return Ok(());
@@ -977,6 +1033,7 @@ impl ActorRegistry {
                 shotgun: false,
                 chaingun: false,
                 demon: true,
+                barrel: false,
             },
         )?;
         let info = self.actor_type(ty).ok_or(ActorError::InvalidType)?;
@@ -1567,6 +1624,8 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                         };
                         self.sound(if global { None } else { Some(id) }, chosen);
                     }
+                    // M3h9b decision F4(ii): admitted for MT_BARREL's S_BEXP4 alone.
+                    Some(OriginalAction::Explode) => crate::barrels::explode(self, id),
                     _ => unreachable!("unsupported action rejected before mutation"),
                 }
             }

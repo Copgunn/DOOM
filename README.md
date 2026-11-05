@@ -22,8 +22,8 @@ Most source ports (modern rewrites of a game's released source code) aim to be p
 first and accurate second. This project works the other way round.
 
 It only accepts behavior that has been checked against the original Linux DOOM 1.10 C
-code. The check compares the entire game state after every tic, the 1/35-second step in
-which DOOM updates its world. Anything not yet proven identical is refused: the engine
+code, id Software's 1997 source release. The check compares the entire game state after
+every tic. A tic is the 1/35-second step in which DOOM updates its world. Anything not yet proven identical is refused: the engine
 stops with an error instead of approximating.
 
 That makes it useful for exact-behavior work:
@@ -35,9 +35,9 @@ That makes it useful for exact-behavior work:
 
 Vanilla behavior, meaning that of the original unmodified game, isn't a checkbox in an
 options menu here. It's the default, quirks included, proven against the original C every
-tic. Game math stays in Doom's original 16.16 fixed point, too, except for the one
-division where the original itself uses a floating-point number. No floating-point
-physics quietly rounds your rocket jumps differently than the original did.
+tic. Game math also stays in Doom's original whole-number arithmetic, with no decimals,
+except for the one division where the original itself used them. Nothing quietly rounds
+your rocket jumps differently than the original did.
 
 **It is not playable yet.** If you want to play Doom today, use an established source
 port such as [Chocolate Doom](https://www.chocolate-doom.org/). It needs your own game
@@ -56,18 +56,18 @@ example programs, on small test maps built for this project. Today it can simula
 - walls at any angle, steps and ledges, windows, sky, damaging floors, secret areas,
   flickering lights and scrolling walls;
 - the doors, lifts, moving floors, switches and exit used by E1M1, the first map;
-- E1M1's lamps, pillars, candelabras, corpses and gore.
+- E1M1's lamps, pillars, candelabras, corpses and gore;
+- exploding barrels, with chain reactions, and maps with as many pickups as E1M1.
 
 What it cannot do yet:
 
 - show graphics, play sound or offer menus;
-- run the real E1M1 from start to finish, because the map has exploding barrels and 52
-  pickups, and both are still beyond what the engine supports;
+- run the real E1M1 map itself from start to finish: every feature it is known to need
+  is now accepted and checked, and loading it and matching a full run tic for tic is the
+  next milestone;
 - handle the other monsters, the other weapons, or the remaining map features such as
   crushers and teleporters;
 - play back demos.
-
-[Compatibility](docs/COMPATIBILITY.md) states the exact limits.
 
 ## Where it's headed
 
@@ -77,24 +77,46 @@ The committed plan, in order (details in the [roadmap](docs/ROADMAP.md)):
 2. Extend that to the rest of Episode 1.
 3. Add a renderer and audio, so that it is actually playable.
 
+## Which kind of Doom?
+
+People play classic Doom in four broad ways today. Here is where this project fits.
+
+- **Vanilla.** Exactly how the original 1993 game worked, its limits and quirks included.
+  This is what the project builds, and checks against the original, today.
+- **Limit-removing.** The same game and the same map features, but the original's hard
+  limits on map size and detail are lifted, so bigger and more detailed maps run.
+  Considered as a separate mode (Track 1 below).
+- **Boom, MBF21 and ID24.** Three generations of extensions to how Doom maps are built
+  that keep Doom feeling classic while adding map features: new kinds of doors and lifts,
+  scrolling floors, deep water and more. Most new community maps are built for this
+  family. ID24 is id Software's own 2024 extension of it. A possible later mode, not a
+  promise.
+- **Advanced, in the style of ZDoom and GZDoom.** Scripting, floors stacked above other
+  floors, sloped floors and ceilings, and full-scale mods (player-made changes to the
+  game). This project would go its own way here (Track 3 below) rather than copy ZDoom.
+
+Each of the other three kinds will be a separate mode you switch on, so vanilla never
+changes. Tracks 1 and 3 under [Where it's (maybe) going](#where-its-maybe-going) describe
+them.
+
 ## Where it's (maybe) going
 
 These are ideas, not promises, grouped into three tracks. The
 [roadmap](docs/ROADMAP.md#ideas-under-consideration) describes them in a little more detail.
 
-**Track 1: Faithful.** Vanilla behavior stays exact forever; anything that changes it
-lives in a separate opt-in mode.
+**Track 1: Faithful.** Vanilla behavior is meant to stay exact; anything that changes it
+lives in a separate optional mode.
 
 - **Original demo playback.** Play back recorded vanilla demos (`.lmp` files) to the
   last tic, the strongest end-to-end proof of exactness. If a port's answer to a 1994
   demo is a desync, it isn't running Doom; it's running something Doom-shaped.
 - **Faster progress.** Port whole systems at once, such as all monsters or all weapons.
   Check them against the original by running real maps and demos.
-- **One vanilla profile, plus a limit-removing one.** Fold the step-by-step policies into
-  one complete vanilla profile. A separate profile would lift the original's hard limits,
+- **One vanilla mode, plus a limit-removing one.** Fold the step-by-step policies into
+  one complete vanilla mode. A separate mode would lift the original's hard limits,
   such as the most things or visible surfaces it can handle, without otherwise changing
   gameplay.
-- **An optional "fixed" mode.** A separate opt-in mode would correct known original bugs.
+- **An optional "fixed" mode.** A separate mode, off unless you choose it, would correct known original bugs.
   The differences and quirks already recorded become its to-do list.
 - **The full game and Doom II.** After Episode 1, the remaining episodes and then Doom II,
   held to the same exactness.
@@ -111,13 +133,11 @@ change gameplay, because the renderer only reads the game state.
 - **VR.** A headset handles looking around while the mouse turns and aims. That suits
   Doom, because the original has no vertical aiming.
 - **A fully offline engine.** Your own game files. No internet connection, no account, no
-  launcher, no login screen between you and E1M1. Remember 2019, when re-releases of a
-  1993 game briefly demanded an online login? The backlash undid it within days. Here it
-  never happens in the first place.
+  launcher, no login screen between you and E1M1. Remember those?
 
 **Track 3: Beyond vanilla.** A new engine built on the verified core. This is the payoff
 of all the careful checking: an exact Doom core you can build wild things on without
-losing what makes Doom feel like Doom. It would live in separate opt-in modes, so vanilla
+losing what makes Doom feel like Doom. It would live in separate optional modes, so vanilla
 is never affected.
 
 - **Modern source-port features, done cleanly.** Features like those of ZDoom, a popular
@@ -135,15 +155,14 @@ The expected results are recorded by a separate program written from the C outpu
 so Rust is never checked against its own output. Sanitizers catch hidden memory and
 arithmetic errors while the original C code runs. Fuzzing feeds in huge numbers of random
 inputs to find anything that slips through. When something is not proven identical, the
-engine refuses it rather than guessing. The [validation guide](docs/VALIDATION.md)
-explains the method, and [compatibility](docs/COMPATIBILITY.md) lists what is covered.
+engine refuses it rather than guessing.
 
 ## Try it
 
 You need Rust, installed through [rustup](https://rustup.rs/) (stable, or at least
-1.85.0), and a C compiler. The C compiler builds a small compression library used only by
-tests. No game files are needed, and it builds on Linux, Windows and macOS. From the
-repository root:
+1.85.0), and a C compiler (on Windows, the Visual Studio build tools). The C compiler
+builds a small compression library used only by tests. No game files are needed, and it
+builds on Linux, Windows and macOS. After cloning this repository, from its top folder:
 
 ```sh
 cargo build --workspace --locked
@@ -153,19 +172,18 @@ cargo test --workspace --locked
 Three examples worth running:
 
 ```sh
+cargo run -p doom-sim --example player_barrels --locked  # exploding barrels, chain reactions, monsters
 cargo run -p doom-sim --example player_movers --locked   # a player, monsters, doors, lifts and the exit
-cargo run -p doom-sim --example player_imps --locked     # the Imp and its dodgeable fireball
 cargo run -p doom-map --example parse_map --locked       # reading DOOM's map format
 ```
 
 Each one runs a short scripted scene on a test map, checks the result and prints a
 one-line summary. None needs an IWAD (the main game data file, such as `doom.wad`), a
 graphics card, audio or a network.
-[Testing](docs/TESTING.md#asserted-headless-examples) lists every example and check.
 
 ## Policies (for developers)
 
-New gameplay is switched on through opt-in policies. Each policy adds one slice of Doom
+New gameplay is switched on through optional policies, each selected explicitly. Each policy adds one slice of Doom
 on top of the one before it. Older policies never change, so earlier results stay exactly
 reproducible, much like compatibility levels. The number in brackets is the policy's
 identifier in saved test snapshots. The earlier numbered Demon profiles are listed under
@@ -193,9 +211,13 @@ identifier in saved test snapshots. The earlier numbered Demon profiles are list
 | `PlayerMonstersSpecialsV1` (18) | Sky ceilings, light thinkers, damage floors, secrets and one-sided scrolling walls | [Sky and specials](docs/COMPATIBILITY.md#original-monsters-with-sky-and-static-specials) |
 | `PlayerMonstersMoversV1` (19) | E1M1's seven door, lift, floor, switch and exit line types; the tic after the exit is refused | [Movers](docs/COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit) |
 | `PlayerMonstersE1M1V1` (20) | Two-sided scrolling walls and E1M1's seven static decoration types (lamps, pillars, candelabras, corpses and gore) | [E1M1 decorations](docs/COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations) |
+| `PlayerMonstersBarrelsV1` (21) | Exploding barrels with the original's radius attack and chain reactions, 64 pickups, every map-thing angle and the relaxed spawn rule: the last things that stopped E1M1 from loading | [Barrels](docs/COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle) |
 
 More developer reading:
 
+- [Compatibility](docs/COMPATIBILITY.md) states the exact limits of every policy, the
+  [validation guide](docs/VALIDATION.md) explains the method, and
+  [Testing](docs/TESTING.md#asserted-headless-examples) lists every example and check.
 - [Architecture](docs/ARCHITECTURE.md): small crates for numbers, WAD files, maps and
   simulation, and how [actors and their ordering](docs/ARCHITECTURE.md#actors-lifecycle-and-ordering) work.
 - [Stepping contract](docs/COMPATIBILITY.md#stepping-and-diagnostics) and

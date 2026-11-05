@@ -382,6 +382,13 @@ impl DamagePlan {
             .inflictor
             .map(|id| host.access.get(id).copied().ok_or(CombatError::Reference))
             .transpose()?;
+        // The barrels policy's bomb source is a barrel's stored `target`, which may
+        // name an actor retired since the wound (C reads freed memory: undefined).
+        // A source that no longer resolves refuses the tic before any mutation of
+        // this victim (M3h9b decision F4(iv)); pending storage stays readable.
+        if policy.has_barrels() && request.source.is_some_and(|s| host.access.get(s).is_none()) {
+            return Err(PlayerBodyError::Invariant.into());
+        }
         let live = life.health > 0 && life.flags & MF_SHOOTABLE != 0;
         let impulse = |origin: &Actor, mass: i32| {
             let airborne = origin
@@ -424,7 +431,15 @@ impl DamagePlan {
                 policy,
             );
         }
-        if !crate::original_registry::is_policy_monster(policy, life.actor_type) {
+        // The exploding barrel of the barrels policy (M3h9b note §2.3, decision F4)
+        // is the one non-monster damage target: no armor; not `MF_COUNTKILL`, so no
+        // kill credit below; no drop (`source_drop` names former humans only); its
+        // death chain `S_BEXP..S_BEXP5` has no spawning action, so the spawn demand
+        // is 0. Its thrust uses the shared impulse proof with mass 100 and radius 10:
+        // `damage * 8192 * 100 / 100` is at most 1000 · 8192 (the request bound), and
+        // `travel_admitted` bounds the resulting momentum like any actor's.
+        let barrel = crate::barrels::is_barrel(policy, life.actor_type);
+        if !barrel && !crate::original_registry::is_policy_monster(policy, life.actor_type) {
             return Err(MonsterError::Target.into());
         }
         if let (true, Some(origin)) = (live, inflictor.as_ref()) {
@@ -449,7 +464,11 @@ impl DamagePlan {
             |state| {
                 crate::original_registry::state_role_for(policy, life.actor_type, state)
                     .map_err(|_| MonsterError::Definition)?;
-                host.registry.validate_state_original_monsters(state)?;
+                if barrel {
+                    host.registry.validate_state_barrel(state)?;
+                } else {
+                    host.registry.validate_state_original_monsters(state)?;
+                }
                 Ok(())
             },
             true,
@@ -672,9 +691,25 @@ impl Simulation {
     }
 
     /// Atomic supported P_DamageMobj operation. No full-simulation clone is used.
+    ///
+    /// Under the barrels policy a barrel is refused as the `source`
+    /// (`PlayerBodyError::Unsupported`, state unchanged): the source never passes
+    /// one (sources are a shooter, a missile's `target`, the bomb source or a skull;
+    /// `A_Explode` passes the barrel only as the inflictor, p_enemy.c:1600,
+    /// p_map.c:1194), and a barrel source would retarget its victim to the barrel,
+    /// which no admitted monster may target. A barrel stays admitted as the
+    /// inflictor and as the target (M3h9b decision F4(v)).
     pub fn damage_actor(&mut self, request: DamageRequest) -> Result<DamageResult, SimError> {
         if self.profile.uses_monsters() && !self.profile.uses_demon_lifecycle() {
             return Err(CombatError::Profile.into());
+        }
+        let policy = self.player_policy();
+        if request.source.is_some_and(|id| {
+            self.actor(id)
+                .and_then(Actor::life)
+                .is_some_and(|l| crate::barrels::is_barrel(policy, l.actor_type))
+        }) {
+            return Err(crate::PlayerBodyError::Unsupported.into());
         }
         if self.profile.uses_demon_lifecycle() {
             self.preflight_lifecycle_combat(&[
@@ -1044,7 +1079,23 @@ impl<A: ActorAccess> LifeHost<'_, A> {
         self.combat_event(CombatEvent::Reaction(id));
         if let Some(source) = request.source {
             let current = self.access.get(id).unwrap().life.unwrap();
-            let source_type = self.access.get(source).unwrap().life.unwrap().actor_type;
+            // Every planner proves the source readable: the historical ones through
+            // `combat_actor_with`, the barrels policy's `current_original` for a bomb
+            // source. A staged tic still refuses rather than panic if it is not.
+            let Some(source_type) = self
+                .access
+                .get(source)
+                .and_then(Actor::life)
+                .map(|l| l.actor_type)
+            else {
+                if self.perception.and_then(|p| p.checked).is_some() {
+                    if !self.sight_failed() {
+                        self.fail_sight(PlayerBodyError::Invariant.into());
+                    }
+                    return result;
+                }
+                unreachable!("planned damage source proved readable");
+            };
             if (current.threshold == 0 || lifecycle::source_type_is(current.actor_type, "MT_VILE"))
                 && source != id
                 && !lifecycle::source_type_is(source_type, "MT_VILE")

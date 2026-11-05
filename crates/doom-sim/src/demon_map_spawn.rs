@@ -42,6 +42,10 @@ pub enum MapSpawnError {
     /// ([`crate::MAX_DECORATIONS`], M3h9 note §5.1): the batch spawns nothing and
     /// the state is unchanged.
     DecorationLimit,
+    /// Under the barrels policy, a 17th exploding barrel in one map
+    /// ([`crate::MAX_BARRELS`], M3h9b note §5.1): the batch spawns nothing and the
+    /// state is unchanged.
+    BarrelLimit,
 }
 impl fmt::Display for MapSpawnError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -85,6 +89,7 @@ impl Simulation {
         let mut suffix = false;
         let mut owners = 0;
         let mut decorations = 0;
+        let mut barrels = 0;
         for id in self.actors.order() {
             if self.actors.is_pending(id) != Some(false) {
                 continue;
@@ -103,6 +108,15 @@ impl Simulation {
                     return Err(MapSpawnError::DecorationLimit.into());
                 }
                 e1m1_rules::validate_decoration(self.room(), a)?;
+            } else if crate::barrels::is_barrel(self.player_policy(), life.actor_type) {
+                // An exploding barrel (M3h9b note §2.1) interleaves with the other
+                // THINGs in lump order and is never the suffix; its witness covers
+                // every state it can hold, `S_GIBS` after a crunch included.
+                barrels += 1;
+                if barrels > MAX_BARRELS {
+                    return Err(MapSpawnError::BarrelLimit.into());
+                }
+                crate::barrels::validate_barrel(self.room(), a, self.gibbed(&a))?;
             } else if self.player_policy().has_world_pickups()
                 && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some()
             {

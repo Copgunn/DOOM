@@ -50,6 +50,7 @@ impl Simulation {
                 | OriginalExecutionProfile::PlayerMonstersSpecialsV1
                 | OriginalExecutionProfile::PlayerMonstersMoversV1
                 | OriginalExecutionProfile::PlayerMonstersE1M1V1
+                | OriginalExecutionProfile::PlayerMonstersBarrelsV1
         )
     }
 
@@ -138,6 +139,7 @@ impl PerceptionRoster<'_> {
                     | OriginalExecutionProfile::PlayerMonstersSpecialsV1
                     | OriginalExecutionProfile::PlayerMonstersMoversV1
                     | OriginalExecutionProfile::PlayerMonstersE1M1V1
+                    | OriginalExecutionProfile::PlayerMonstersBarrelsV1
             )
         )
     }

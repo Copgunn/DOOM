@@ -31,6 +31,9 @@ pub const PLAYER_SPECIALS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-SPECIALS-1-M
 pub const PLAYER_MOVERS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-MOVERS-1-MEDIUM-v1";
 /// Explicit E1M1 context (two-sided scrollers, static decorations); older contexts stay frozen.
 pub const PLAYER_E1M1_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-E1M1-1-MEDIUM-v1";
+/// Explicit barrels context (64 pickups, 384 slots, every angle, spawn rule S′);
+/// older contexts stay frozen.
+pub const PLAYER_BARRELS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-BARRELS-1-MEDIUM-v1";
 
 impl Simulation {
     /// Autonomous roster member: the native/original Demon owner or a policy
@@ -202,6 +205,26 @@ impl Simulation {
             map,
             crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS,
             OriginalExecutionRegistry::new(OriginalExecutionProfile::PlayerMonstersE1M1V1)?,
+            ActorOptions::default(),
+            context,
+        )
+        .map_err(Into::into)
+    }
+    /// The E1M1 world under the bounds and rules of the M3h9b note §5.1 (wire 21):
+    /// up to 64 pickups and 384 actor slots (decision F2), every THING angle
+    /// (decision F8) and the spawn rule S′ (decision F3), on top of everything
+    /// [`Simulation::original_player_e1m1_map`] admits. Captures are DSIM37, the
+    /// DSIM36 layout under policy 21 (decision F9). As for the specials policy,
+    /// call [`Simulation::spawn_level_specials`] once before the first tic.
+    pub fn original_player_barrels_map(
+        map: Map,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        let policy = OriginalExecutionProfile::PlayerMonstersBarrelsV1;
+        Self::with_original_registry(
+            map,
+            crate::player_map_scale::actor_slots(policy),
+            OriginalExecutionRegistry::new(policy)?,
             ActorOptions::default(),
             context,
         )

@@ -18,6 +18,15 @@ pub struct MapSpawnReport {
 }
 
 impl Simulation {
+    /// Whether a spawn of `ty` is a mover for the barrels policy's spawn rule S′
+    /// (M3h9b note decision F3): every type except the policy's pickups and static
+    /// decorations, whose boxes are never read against walls (they have no
+    /// momentum, and the API refuses pushes). Read only under the barrels policy.
+    pub(crate) fn spawn_mover(&self, ty: ActorTypeId) -> bool {
+        let policy = self.player_policy();
+        !((policy.has_world_pickups() && world_pickups::kind_for(policy, ty).is_some())
+            || e1m1_rules::is_decoration(policy, ty))
+    }
     /// Profile 4, all recognized source metadata, medium single-player skill,
     /// 1024 slots. Map THINGS are not spawned implicitly.
     pub fn actor_states(map: Map) -> Result<Self, SimError> {
@@ -96,6 +105,11 @@ impl Simulation {
         if e1m1_rules::is_decoration(self.player_policy(), ty) {
             return Err(MapSpawnError::DirectSpawn.into());
         }
+        // The barrel likewise exists only as a THING (M3h9b decision F4(v)): no
+        // admitted body spawns one, and its witness requires the 2035 spawnpoint.
+        if barrels::is_barrel(self.player_policy(), ty) {
+            return Err(MapSpawnError::DirectSpawn.into());
+        }
         self.player_spawn_guard(ty, position, height)?;
         if self.profile.uses_demon_map() && ty == self.demon_owner_type() {
             return Err(MapSpawnError::DirectSpawn.into());
@@ -108,6 +122,7 @@ impl Simulation {
                     .and_then(|r| r.actor_type(ty))
                     .map_or(Fixed::ZERO, ActorTypeDef::radius),
                 1024,
+                self.spawn_mover(ty),
             ) || matches!(height,SpawnHeight::Absolute(z) if !crate::sight::within(z,1024)))
         {
             return Err(PerceptionError::Arithmetic.into());
@@ -154,7 +169,15 @@ impl Simulation {
         let registry = self.registry_required()?;
         // The Imp's melee root is direct-entry, unlike any former-human attack.
         if self.player_policy().has_imps() {
-            registry.validate_state_original_monsters(state)?;
+            // The barrel's states, under the barrels policy only: its closure admits
+            // `A_Explode` in `S_BEXP4` and nothing a monster runs (M3h9b decision F4).
+            if self.player_policy().has_barrels()
+                && identity::OriginalState::try_from(state.0).is_ok_and(barrels::state_allowed)
+            {
+                registry.validate_state_barrel(state)?;
+            } else {
+                registry.validate_state_original_monsters(state)?;
+            }
             return Ok(());
         }
         if self.profile.uses_demon() {
@@ -246,6 +269,7 @@ impl Simulation {
         if (self.player_policy().has_world_pickups()
             && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some())
             || e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
+            || barrels::is_barrel(self.player_policy(), life.actor_type)
         {
             // Nothing in the source re-enters an item's or a static decoration's
             // state (tics −1, never killed): an explicit refusal, not a no-op.
@@ -285,6 +309,7 @@ impl Simulation {
         if (self.player_policy().has_world_pickups()
             && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some())
             || e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
+            || barrels::is_barrel(self.player_policy(), life.actor_type)
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
@@ -333,6 +358,7 @@ impl Simulation {
         if (self.player_policy().has_world_pickups()
             && world_pickups::kind_for(self.player_policy(), life.actor_type).is_some())
             || e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
+            || barrels::is_barrel(self.player_policy(), life.actor_type)
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
@@ -444,9 +470,14 @@ impl Simulation {
                 // (M3h9 note §2.5): spawned like any THING by `P_SpawnMapThing`
                 // (p_mobj.c:708–797), counted against `MAX_DECORATIONS` alone.
                 let decoration = e1m1_rules::is_decoration(self.player_policy(), ty);
+                // The exploding barrel under the barrels policy (M3h9b note §2.1,
+                // decision F4(i)): its own role, never a roster monster, never
+                // rewritten to the owner type, counted against `MAX_BARRELS` alone.
+                let barrel = barrels::is_barrel(self.player_policy(), ty);
                 if !pickup
                     && !former
                     && !decoration
+                    && !barrel
                     && ty
                         != crate::identity::OriginalActorType::MT_SERGEANT
                             .resolve(registry)
@@ -454,7 +485,14 @@ impl Simulation {
                 {
                     return Err(MapSpawnError::UnsupportedType(thing.kind).into());
                 }
-                if self.profile.uses_checked_demons() && !(-4..=3).contains(&(thing.angle / 45)) {
+                // Every older policy refuses octants outside −4..=3; the barrels policy
+                // admits every angle (decision F8): `spawn_placed_thing` converts it as
+                // p_mobj.c:794 does, `ANG45 × (angle / 45)` modulo 2³², which depends
+                // on `(angle / 45) mod 8` only.
+                if self.profile.uses_checked_demons()
+                    && !self.player_policy().has_barrels()
+                    && !(-4..=3).contains(&(thing.angle / 45))
+                {
                     return Err(MapSpawnError::Angle(thing.angle).into());
                 }
                 if decoration
@@ -466,8 +504,18 @@ impl Simulation {
                 {
                     return Err(MapSpawnError::DecorationLimit.into());
                 }
+                if barrel
+                    && selected
+                        .iter()
+                        .filter(|(_, ty)| barrels::is_barrel(self.player_policy(), *ty))
+                        .count()
+                        == MAX_BARRELS
+                {
+                    return Err(MapSpawnError::BarrelLimit.into());
+                }
                 if (!pickup
                     && !decoration
+                    && !barrel
                     && selected
                         .iter()
                         .filter(|(_, ty)| self.is_roster_monster(*ty))
@@ -480,7 +528,7 @@ impl Simulation {
                                 world_pickups::kind_for(self.player_policy(), *ty).is_some()
                             })
                             .count()
-                            == MAX_WORLD_PICKUPS)
+                            == world_pickups::max_pickups(self.player_policy()))
                 {
                     return Err(MapSpawnError::WorkLimit.into());
                 }
@@ -491,6 +539,7 @@ impl Simulation {
                     ],
                     info.radius(),
                     978,
+                    !pickup && !decoration,
                 ) {
                     return Err(MonsterError::Arithmetic.into());
                 }
@@ -502,7 +551,7 @@ impl Simulation {
                     ],
                     SpawnHeight::Floor,
                 )?;
-                if !pickup && !former && !decoration {
+                if !pickup && !former && !decoration && !barrel {
                     ty = self.demon_owner_type();
                 }
             }
@@ -514,6 +563,7 @@ impl Simulation {
                     ],
                     info.radius(),
                     1024,
+                    self.spawn_mover(ty),
                 ) {
                     return Err(PerceptionError::Arithmetic.into());
                 }
@@ -571,11 +621,8 @@ impl Simulation {
                 })
                 .count();
             let count = i32::try_from(count).map_err(|_| MapSpawnError::StatisticsOverflow)?;
-            if !(0..=MAX_WORLD_PICKUPS as i32).contains(&total)
-                || total
-                    .checked_add(count)
-                    .is_none_or(|n| n > MAX_WORLD_PICKUPS as i32)
-            {
+            let bound = world_pickups::max_pickups(self.player_policy()) as i32;
+            if !(0..=bound).contains(&total) || total.checked_add(count).is_none_or(|n| n > bound) {
                 return Err(MapSpawnError::StatisticsOverflow.into());
             }
             report.spawned = self.checked_map_spawn_batch(selected.len(), |host| {

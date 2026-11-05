@@ -39,16 +39,16 @@ pub use player_armor::{
 };
 pub use player_bonuses::PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA;
 pub use player_map_scale::{
-    ArithmeticCertificate, Boundary, HEIGHTS_LINE_FLAGS, HEIGHTS_MOMZ_UNITS, HEIGHTS_Z_UNITS,
-    MAP_SCALE_ACTOR_SLOTS, MAP_SCALE_EXTENT_UNITS, MAP_SCALE_MAX_LIVE_PROJECTILES,
+    ArithmeticCertificate, BARRELS_ACTOR_SLOTS, Boundary, HEIGHTS_LINE_FLAGS, HEIGHTS_MOMZ_UNITS,
+    HEIGHTS_Z_UNITS, MAP_SCALE_ACTOR_SLOTS, MAP_SCALE_EXTENT_UNITS, MAP_SCALE_MAX_LIVE_PROJECTILES,
     MAP_SCALE_MOMENTUM_UNITS, MAP_SCALE_WALL_LINES, MAX_INTERCEPTS, MapScaleError,
-    REAL_MAP_FORMAT_RECORDS, RoomBounds, slide_window_lines,
+    REAL_MAP_FORMAT_RECORDS, RoomBounds, actor_slots, slide_window_lines,
 };
 pub use player_monsters::{
-    MAX_PLAYER_MONSTERS, PLAYER_DIAGONAL_CONTEXT_SCHEMA, PLAYER_E1M1_CONTEXT_SCHEMA,
-    PLAYER_HEIGHTS_CONTEXT_SCHEMA, PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA,
-    PLAYER_MONSTERS_CONTEXT_SCHEMA, PLAYER_MOVERS_CONTEXT_SCHEMA, PLAYER_REAL_MAP_CONTEXT_SCHEMA,
-    PLAYER_SPECIALS_CONTEXT_SCHEMA,
+    MAX_PLAYER_MONSTERS, PLAYER_BARRELS_CONTEXT_SCHEMA, PLAYER_DIAGONAL_CONTEXT_SCHEMA,
+    PLAYER_E1M1_CONTEXT_SCHEMA, PLAYER_HEIGHTS_CONTEXT_SCHEMA, PLAYER_IMPS_CONTEXT_SCHEMA,
+    PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA, PLAYER_MOVERS_CONTEXT_SCHEMA,
+    PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -72,8 +72,8 @@ pub use player_pistol::{INITIAL_PISTOL_BULLETS, PLAYER_DEMON_PISTOL_CONTEXT_SCHE
 pub use player_roster::{PLAYER_DEMON_CONTEXT_SCHEMA, PLAYER_DEMON_MELEE_CONTEXT_SCHEMA};
 pub use player_weapons::{PLAYER_DEMON_WEAPONS_CONTEXT_SCHEMA, PlayerWeaponState};
 pub use world_pickups::{
-    MAX_WORLD_PICKUPS, PLAYER_DEMON_PICKUPS_CONTEXT_SCHEMA, PickupEvent, PickupKind, PickupMessage,
-    PickupOutcome, PlayerPickupState,
+    BARRELS_MAX_PICKUPS, MAX_WORLD_PICKUPS, PLAYER_DEMON_PICKUPS_CONTEXT_SCHEMA, PickupEvent,
+    PickupKind, PickupMessage, PickupOutcome, PlayerPickupState,
 };
 mod chaingunner;
 mod demon;
@@ -132,8 +132,12 @@ pub use map_scale::{
     MAP_SCALE_MAX_LINES, MAP_SCALE_MAX_REFERENCES, MAP_SCALE_MAX_SECTORS, MapScaleLimits,
     MapScaleMetrics,
 };
+mod barrels;
+pub use barrels::EXPLOSION_SIGHT_QUERIES;
 mod e1m1_rules;
-pub use e1m1_rules::{E1M1_DECORATIONS, E1M1_LINKED_THINGS, MAX_DECORATIONS};
+pub use e1m1_rules::{
+    BARRELS_LINKED_THINGS, E1M1_DECORATIONS, E1M1_LINKED_THINGS, MAX_BARRELS, MAX_DECORATIONS,
+};
 mod movement;
 mod mover_rules;
 mod movers;
@@ -1128,11 +1132,13 @@ impl Simulation {
         // through death, pickup or a missile's end, M3h9 note §5.1 item 2); the tic
         // preflight and the DSIM36 reader admit no pending decoration.
         if self.actors.is_pending(id) == Some(false)
-            && self
-                .actor(id)
-                .and_then(Actor::life)
-                .is_some_and(|l| e1m1_rules::is_decoration(self.player_policy(), l.actor_type))
+            && self.actor(id).and_then(Actor::life).is_some_and(|l| {
+                e1m1_rules::is_decoration(self.player_policy(), l.actor_type)
+                    || barrels::is_barrel(self.player_policy(), l.actor_type)
+            })
         {
+            // The barrels policy removes a barrel only through its own `S_NULL`
+            // (p_mobj.c:62–66, M3h9b decision F4(v)).
             return Err(PlayerBodyError::Unsupported.into());
         }
         // Removing a flying fireball's owner could never step again.
@@ -1524,6 +1530,8 @@ mod bonus_actor_tests;
 mod bonus_evidence;
 
 #[cfg(test)]
+mod barrels_replay;
+#[cfg(test)]
 mod bonus_tests;
 
 #[cfg(test)]
@@ -1554,6 +1562,10 @@ mod imp_tests;
 mod map_scale_evidence;
 #[cfg(test)]
 mod movers_replay;
+#[cfg(test)]
+mod player_barrel_combat_tests;
+#[cfg(test)]
+mod player_barrels_tests;
 #[cfg(test)]
 mod player_diagonal_tests;
 #[cfg(test)]

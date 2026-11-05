@@ -1220,7 +1220,9 @@ boundary, BLOCKMAP and window rules over every map of the configured IWADs and t
 admission time of E1M1's geometry with specials and sky stripped in memory; it never
 prints a name beyond the slot or a byte of the map, and `tools/iwad_counts.py` (local
 only, never run by CI, a no-op without `/mnt/d/DoomIWADs`) prints the same counts from
-Python. The fuzz target runs six rooms (town, gallery, extent, dense, wide, witness) under
+Python; its `--spawn-rule [SLOT]`, `--spawn-rule-markdown`, `--spawn-fit [SLOT]` and
+`--things-budget [SLOT]` modes (M3h9b) print the closed-box and S′ spawn-rule counts, the
+spawn height-fit counts and the per-cell BLOCKMAP budget facts, counts only. The fuzz target runs six rooms (town, gallery, extent, dense, wide, witness) under
 the M3h5 properties plus the intercept witness; a valid command may be refused only by
 the escape or intercept witness. The example asserts every scenario's source fields and
 complete ordered event frames in debug and release; `--measure <workload>
@@ -1480,3 +1482,111 @@ nightly-only and CI only format-checks it, so the campaigns are a local step. Ru
 measurements alone, with no fuzzing, builds or tests at the same time. Observations
 belong to [the engineering record](validation/M3H9.md). Leak detection is disabled in
 the documented ASan environment (`detect_leaks=0`), not verified.
+
+## Original exploding barrels, pickup scale and every thing angle (C evidence)
+
+The M3h9b C evidence of the
+[M3h9b investigation](M3H9B_REFERENCE_INVESTIGATION.md#7-evidence-plan-c-first-genuine-bodies)
+has its own source contract and leaves every historical expectation untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h9b_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3h9b_snapshot_goldens.py --check
+python3 tools/reference/check_player_barrels.py
+cargo test -p doom-sim barrel
+cargo run -p doom-sim --example player_barrels --locked
+python3 tools/measure_barrels.py --check
+python3 tools/seed_player_barrels_fuzz.py /tmp/doom-barrels-seeds      # 3,172 seeds, max_len 362
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_barrels /tmp/doom-barrels-corpus --sanitizer address -- -runs=0 -max_len=362 -timeout=15 -rss_limit_mb=1024
+# Bounded campaigns, each on a fresh copy of the seeds:
+cargo +nightly fuzz run player_barrels /tmp/doom-barrels-corpus --sanitizer none -- -seed=701 -max_total_time=1800 -max_len=362 -timeout=15 -rss_limit_mb=1024
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_barrels /tmp/doom-barrels-corpus --sanitizer address -- -seed=702 -max_total_time=1800 -max_len=362 -timeout=15 -rss_limit_mb=1024
+```
+
+The generator layers on the M3h9 pack and adds three genuine bodies, `P_RadiusAttack`,
+`PIT_RadiusAttack` (p_map.c) and `A_Explode` (p_enemy.c, replacing the abort stub), with
+observer rows for every radius attack (`RA`) and every candidate of its block walk (`RC`,
+in walk order with the outcome code). It runs 26 scenarios over the ten rooms `range`,
+`cluster`, `player_range`, `monsters`, `walls`, `door`, `fireball`, `dense64`, `angles` and
+`embedded`, and checks `tests/reference/m3h9b_trace.dref`, `m3h9b_cases.csv`, the
+`m3h9b_geometry_*.bin` lumps, `m3h9b_maps.rs`, the two Rust-only lanes
+`m3h9b_embedded_barrel.bin` and `m3h9b_intercepts129.bin` and `m3h9b_contract.json`. The
+strict build compiles the genuine text under `-fwrapv`; the two sanitizer builds apply
+two declared, cited adapters (the unsigned rewrites of the angle product at p_mobj.c:794,
+which the sanitizers otherwise report, and of the radius shift at p_map.c:1221, which
+under `-std=gnu89` they do not), and the three raw traces must be byte-identical.
+`m3h9b_snapshot_goldens.py` is the independent
+[DSIM37](STATE_FORMAT.md#dsim-v37--original-exploding-barrels-pickup-scale-and-every-thing-angle)
+projection of those rows (never of Rust output): `tests/reference/m3h9b_snapshots.csv`,
+the ordered events `m3h9b_events.dref`, the 16 full-byte `m3h9b_state_*.bin` fixtures and
+`m3h9b_snapshot_contract.json`, with the assertion that every capture equals the DSIM36
+projection of the same rows except the version, profile, context and `store.max_slots`.
+`check_player_barrels.py` runs the full Rust replay (the library tests in
+`barrels_replay`) in debug and release and asserts that both pass and print the same
+summary: all 26 scenarios through their last op, every C row the M3h9 replay reads plus
+the `RA` rows, every `RC` candidate in walk order with its outcome and damage, the
+`A_Explode` action rows and the contract's death chains, every PBE1 event frame, and at
+every capture the independent digest, size and field count, the 16 fixtures byte for byte
+and the `Diagnostic::decode_barrels` round trip (with `decode_e1m1` rejecting the bytes);
+the two Rust-only lanes assert the S′ refusal of an embedded barrel at load and the
+intercept witness on the 129-intercept trace. The example `player_barrels` replays the
+scenarios whose inputs are public through the public API alone, asserts the C headline
+counts (27 explosions, the candidates by outcome, 28 barrel deaths, 1 crunched) and the
+capture digests against the independent index; `--example-only` runs it alone on the hosts
+that skip the replay. `--measure cluster_chain|dense64_fight|range_patrol|liftroom_ride|dense64_lift
+advance|step|capture` times the chain-reaction timeline, a 1,200-tic fight in the dense
+room, a patrol without barrel damage, the M3h9 lift timeline under the new policy and the
+in-memory 121-THING lift room (the `P_ChangeSector` measurement at the 129 linked-thing
+bound), and `measure_barrels.py` drives them (`--check` is the CI smoke and asserts the same
+final digest in every mode). Run measurements alone.
+
+The Rust-only tests (`player_barrels_tests`, `player_barrel_combat_tests`) cover the policy
+plumbing (every M3h9 room under wires 20 and 21 with captures equal except the four
+identity fields; `decode_barrels` reading 37 only and every older reader rejecting it), the
+bounds (64 pickups and the 65th `WorkLimit`, 16 barrels and the 17th `BarrelLimit`, the
+§5.3 formulas as asserted constants), the angles (17 values against the wrapped product;
+wire 20 still `Angle`), the spawn rule S′ (an Imp embedded 4 units admitted, a deeper one
+refused, an embedded player and barrel refused, edge contact and overlapping statics
+admitted, even parity refused, wire 20 unchanged), every barrel path of the note's §2 with
+expected values derived from the C formulas, the stale-source witness, the API refusals,
+rollback of a 17th barrel, 2,400-tic soaks with four seeds and the DSIM37 round trip, and
+26 forged-field negatives of `decode_barrels`. The fuzz target `player_barrels` starts from
+the 26 scenario starts (an input is 2 header bytes and up to 40 nine-byte records, at most
+1,024 tics) and applies bounded operations: commands with `BT_USE` and `BT_ATTACK` through
+`advance` and `step`, damage with and without an inflictor aimed at the body, a monster, a
+decoration, a pickup and a barrel, the refused barrel calls (target, removal, state entry,
+death request, direct spawn), pushes and vertical momentum on a barrel, pause and runs of
+up to 256 tics, under the properties `step == advance` on a fresh clone every fourth
+operation, a refused operation leaving the snapshot and RNG unchanged, V′ and Ω (Ω's box
+clause once an actor has left its spawn position, since S′ admits an embedded Imp), the
+item witness, every live barrel passing the barrel witness with at most 16 barrels, a
+dying barrel solid, non-shootable and 10.5 units high or gibbed, the DSIM37 round trip
+after every operation and every 32nd tic of a run (with `decode_e1m1` rejecting it),
+progress, and every refused tic being a declared witness (`Intercepts`, `WorkLimit`,
+`SpecialCross`, `Vertical`, `Escape`, the exit, the reborn request, `Invariant` for a stale
+source) and never a panic.
+
+### Docs-only CI fast path
+
+The workflow starts with a `Detect changes` job that classifies a push as "documentation
+only since a green head": for a pull-request `synchronize` event or a push to `master` it
+takes the push's previous head and new head from the event, requires that the previous
+head has a successful run of this workflow (one `gh api` query of the workflow's runs,
+which is why the job has `actions: read`), lists the paths changed between the two heads
+with one `git diff --name-only --no-renames`, and sets `docs_only` when every path ends in
+`.md` and none lies under `docs/validation/`. The four required jobs (`Stable /
+ubuntu-latest`, `Stable / windows-latest`, `Stable / macos-latest`, `Minimum Rust /
+1.85.0`) `need` it and read it into `DOCS_ONLY`; on a documentation-only push every
+toolchain install, build, test, evidence, example and measurement step is skipped by a
+step-level `if`, while the checkout, the documentation link check and a one-line report
+always run, so every required check still runs and reports success without building or
+testing. A newly opened or reopened pull request, a base change, a code or mixed change,
+a push whose previous head cannot be found or whose run failed or was cancelled, and a
+manual run keep every step. A change under `docs/validation/` is never documentation-only,
+because the historical evidence records there are guarded by the migration check
+(`evidence_storage.py verify-git`), which must keep running on them. If the detect-changes
+job itself fails, the required jobs still run in full (`!cancelled()`), and renames are not
+detected, so a file renamed out of a code suffix cannot pass as documentation.
+`paths-ignore` is not used, because a skipped required check never reports. Job names, the
+`macos-26-intel` runner and the timeouts are unchanged. The proof (one docs-only commit and
+one code commit of the M3h9b pull request) is in the [evidence record](validation/M3H9B.md#ci).

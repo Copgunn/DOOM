@@ -13,6 +13,24 @@ pub(crate) const MF_AMBUSH: u32 = 0x20;
 const MF_PICKUP: u32 = 0x800;
 const BONUS_ADD: i32 = 6; // p_inter.c BONUSADD
 pub(crate) const MAX_BONUS: i32 = BONUS_ADD * MAX_WORLD_PICKUPS as i32;
+/// Placed plus controlled-dropped item budget of the barrels policy (M3h9b note
+/// §5.1 item 2, decision F2); every older policy keeps [`MAX_WORLD_PICKUPS`].
+pub const BARRELS_MAX_PICKUPS: usize = 64;
+/// The placed plus controlled-dropped item budget of `policy`:
+/// [`BARRELS_MAX_PICKUPS`] under the barrels policy, [`MAX_WORLD_PICKUPS`] under
+/// every other one.
+pub const fn max_pickups(policy: OriginalExecutionProfile) -> usize {
+    if policy.has_barrels() {
+        BARRELS_MAX_PICKUPS
+    } else {
+        MAX_WORLD_PICKUPS
+    }
+}
+/// The `bonuscount` bound of `policy`: `BONUSADD` (6, p_inter.c) per admitted
+/// item, 6 × 64 = 384 under the barrels policy and 6 × 16 = 96 otherwise.
+pub(crate) const fn max_bonus(policy: OriginalExecutionProfile) -> i32 {
+    BONUS_ADD * max_pickups(policy) as i32
+}
 
 /// Executable item definitions; each remains its original canonical actor.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -178,9 +196,9 @@ pub struct PlayerPickupState {
 }
 impl PlayerPickupState {
     fn validate(self, profile: OriginalExecutionProfile) -> Result<(), SimError> {
-        if !(0..=MAX_BONUS).contains(&self.bonus_count)
+        if !(0..=max_bonus(profile)).contains(&self.bonus_count)
             || if profile.has_player_bonuses() {
-                !(0..=MAX_WORLD_PICKUPS as i32).contains(&self.item_count)
+                !(0..=max_pickups(profile) as i32).contains(&self.item_count)
             } else {
                 self.item_count != 0
             }
@@ -805,7 +823,7 @@ impl Simulation {
                 .and_then(|p| p.pickups)
                 .ok_or(PlayerBodyError::Invariant)?
                 .item_count;
-            if !(0..=MAX_WORLD_PICKUPS as i32).contains(&total)
+            if !(0..=max_pickups(self.player_policy()) as i32).contains(&total)
                 || collected > total
                 || counted > (total - collected) as usize
                 || (total > 0 && total as usize != counted_map_things(self.world.map().things()))
@@ -842,13 +860,14 @@ impl Simulation {
                     .is_some_and(|l| kind_for(self.player_policy(), l.actor_type).is_some())
             })
             .count();
-        if items >= MAX_WORLD_PICKUPS {
+        if items >= max_pickups(self.player_policy()) {
             return Err(MapSpawnError::WorkLimit.into());
         }
         if !self.spawn_admitted(
             position,
             Fixed::from_bits(k.original_type().descriptor().radius),
             978,
+            false,
         ) {
             return Err(MonsterError::Arithmetic.into());
         }
@@ -886,13 +905,14 @@ impl Simulation {
     }
 }
 
-/// Live world-item bound: placed/controlled items plus, under PlayerMonstersV1,
-/// at most one P_KillMobj drop per admitted roster monster.
+/// Live world-item bound: placed/controlled items ([`max_pickups`]) plus, under
+/// PlayerMonstersV1 and later, at most one P_KillMobj drop per admitted roster
+/// monster.
 pub(crate) const fn max_world_items(policy: OriginalExecutionProfile) -> usize {
     if policy.has_monsters() {
-        MAX_WORLD_PICKUPS + crate::MAX_PLAYER_MONSTERS
+        max_pickups(policy) + crate::MAX_PLAYER_MONSTERS
     } else {
-        MAX_WORLD_PICKUPS
+        max_pickups(policy)
     }
 }
 /// DoomEd numbers of the COUNTITEM health/armor bonuses (info.c MT_MISC2/MT_MISC3).

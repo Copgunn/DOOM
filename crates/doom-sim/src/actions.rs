@@ -43,6 +43,7 @@ original_actions! {
     Light0 = "A_Light0",
     Light1 = "A_Light1",
     Light2 = "A_Light2",
+    Explode = "A_Explode",
 }
 const fn same(a: &str, b: &str) -> bool {
     let (a, b) = (a.as_bytes(), b.as_bytes());

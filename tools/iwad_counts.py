@@ -14,6 +14,11 @@ of any object is printed (spans are differences). Nothing is written anywhere.
     python3 tools/iwad_counts.py --movers-markdown    # the M3h8 Stage B movers table
     python3 tools/iwad_counts.py --things E1M1    # the M3h9 THING census of one slot
     python3 tools/iwad_counts.py --things-markdown    # the M3h9 census tables (all slots, then E1M1)
+    python3 tools/iwad_counts.py --spawn-rule     # the spawn-admission rule over every slot (counts only)
+    python3 tools/iwad_counts.py --spawn-rule E1M1    # the same with the per-doomednum violations of one slot
+    python3 tools/iwad_counts.py --spawn-rule-markdown    # the spawn-rule table (all slots)
+    python3 tools/iwad_counts.py --spawn-fit [SLOT]       # the spawn height fit via R_PointInSubsector (counts only)
+    python3 tools/iwad_counts.py --things-budget [SLOT]   # BLOCKMAP/intercept budget facts (counts only)
     python3 tools/iwad_counts.py DIR ...          # another read-only directory
 
 The rules evaluated are those of docs/M3H6_REFERENCE_INVESTIGATION.md: the arithmetic
@@ -29,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+from fractions import Fraction
 import math
 import os
 import re
@@ -466,6 +472,8 @@ class MapCounts:
             nodes=len(nodes),
         )
         self.things = things
+        self.vertices = vertices
+        self.nodes, self.segs, self.subsectors = nodes, segs, subsectors
         self.sectors = sectors
         self.lines = lines
         self.sides = sides
@@ -1170,6 +1178,14 @@ def non_endpoint_contact(p1, p2, q1, q2):
     return False
 
 
+def segment_meets_box(a, b, lo, hi):
+    """Closed segment ab meets the closed box [lo, hi] (the Rust `segment_meets_box`, exact)."""
+    if max(a[0], b[0]) < lo[0] or min(a[0], b[0]) > hi[0] or max(a[1], b[1]) < lo[1] or min(a[1], b[1]) > hi[1]:
+        return False
+    corners = [orient(a, b, q) for q in (lo, (hi[0], lo[1]), hi, (lo[0], hi[1]))]
+    return not (all(c > 0 for c in corners) or all(c < 0 for c in corners))
+
+
 def ray_parity(px, py, walls):
     """Parity of crossings of the ray from (px, py) toward +x with the scaled walls (exact)."""
     crossings = 0
@@ -1870,6 +1886,457 @@ def things_summary(all_counts, prefix="SUMMARY "):
     print(f"{prefix}things: distinct doomednums over all maps {len(doomednums)}; unmatched {sorted(d for d in doomednums if d not in mobj_table() and d not in PLAYER_STARTS and d != DM_START) or 'none'}")
 
 
+# -- Spawn-admission rule and budget facts (M3h9b) ---------------------------------------
+#
+# The Rust predicate (crates/doom-sim/src/spawning.rs, player_map_scale.rs) for every THING
+# P_SpawnMapThing would spawn under the E1M1 policy, and for the player body: with `r` the
+# mobjinfo radius in map units, the closed box [x-r, x+r] x [y-r, y+r] lies inside the closed
+# VERTEXES rectangle (RoomBounds::contains_box), the centre has odd ray parity against the
+# one-sided linedefs (Boundary::inside, half-open rule) and the box meets no one-sided linedef
+# (Boundary::box_meets_wall). A violation is any of the three.
+
+PLAYER_RADIUS = 16
+SPAWN_CATEGORIES = ("monster", "pickup", "solid decoration", "non-solid decoration", "barrel", "player")
+HITSCAN_CELL_WINDOW = 18  # cells a straight 2,177-unit trace can visit (2,177 / 128 = 17.01)
+
+
+def segment_meets_open_box(a, b, lo, hi):
+    """Closed segment ab meets the OPEN box (lo, hi) (exact clipping with fractions)."""
+    low, up = Fraction(0), Fraction(1)
+    low_strict = up_strict = False
+    for axis in (0, 1):
+        d = b[axis] - a[axis]
+        if d == 0:
+            if not lo[axis] < a[axis] < hi[axis]:
+                return False
+            continue
+        t1, t2 = sorted((Fraction(lo[axis] - a[axis], d), Fraction(hi[axis] - a[axis], d)))
+        if t1 >= low:
+            low, low_strict = t1, True
+        if t2 <= up:
+            up, up_strict = t2, True
+    return low < up or (low == up and not low_strict and not up_strict)
+
+
+def wall_depth(a, b, x, y, radius):
+    """floor(radius - L-infinity distance from (x, y) to segment ab): how far the wall intrudes into the box."""
+    least, most = 0, radius
+    while least < most:
+        mid = (least + most) // 2
+        if segment_meets_box(a, b, (x - mid, y - mid), (x + mid, y + mid)):
+            most = mid
+        else:
+            least = mid + 1
+    return radius - least
+
+
+MOVER_CATEGORIES = ("monster", "barrel", "player")
+DEPTH_BUCKETS = ("0", "1-4", "5-8", "9-12", "13+")
+
+
+def depth_bucket(depth):
+    return "0" if depth < 1 else "1-4" if depth <= 4 else "5-8" if depth <= 8 else "9-12" if depth <= 12 else "13+"
+
+
+def spawn_category(r):
+    """The report category of a census row, or None when the record is not spawned in single player."""
+    kind = r["kind"]
+    if kind == "player start":
+        return "player" if r["doomednum"] == 1 else None
+    if kind not in SPAWNED_KINDS:
+        return None
+    if kind in ("monster", "pickup", "barrel"):
+        return kind
+    return "solid decoration" if "SOLID" in r["info"][3] else "non-solid decoration"
+
+
+def spawn_rule_census(c):
+    """Per skill: spawned things, rule violations and BLOCKMAP links of one slot (cached; never prints)."""
+    if hasattr(c, "spawn_skills"):
+        return
+    c.things_census()
+    rows = {r["doomednum"]: r for r in c.thing_rows}
+    lines = [(c.vertices[l[0]], c.vertices[l[1]]) for l in c.lines]
+    walls = [(a, b) for (a, b), l in zip(lines, c.lines) if l[6] == NO_SIDE]
+    scaled = [((2 * a[0], 2 * a[1]), (2 * b[0], 2 * b[1])) for a, b in walls]  # doubled, as the C3 probe
+    grid = collections.defaultdict(list)  # coarse 128-unit grid of line bounding boxes
+    for index, (a, b) in enumerate(lines):
+        for gx in range(min(a[0], b[0]) // CELL, max(a[0], b[0]) // CELL + 1):
+            for gy in range(min(a[1], b[1]) // CELL, max(a[1], b[1]) // CELL + 1):
+                grid[(gx, gy)].append(index)
+    one_sided = {i for i, l in enumerate(c.lines) if l[6] == NO_SIDE}
+    skills = {skill: dict(spawned=collections.Counter(), violations=collections.Counter(),
+                          reasons=collections.Counter(), by_type=collections.Counter(), edge=collections.Counter(),
+                          overlap=collections.Counter(), depth=collections.Counter(),
+                          sp_viol=collections.Counter(), sp_reasons=collections.Counter(), sp_margin=[],
+                          cells=collections.Counter()) for skill, _bit in SKILL_BITS}
+    for x, y, _angle, dtype, options in c.things:
+        doomednum = dtype if dtype < 0x8000 else dtype - 0x10000
+        row = rows[doomednum]
+        category = spawn_category(row)
+        if category is None or (options & MTF_NOTSINGLE and category != "player"):
+            continue
+        radius = PLAYER_RADIUS if category == "player" else row["info"][1]
+        lo, hi = (x - radius, y - radius), (x + radius, y + radius)
+        inside_rect = c.min_x <= lo[0] and hi[0] <= c.max_x and c.min_y <= lo[1] and hi[1] <= c.max_y
+        odd = ray_parity(2 * x, 2 * y, scaled) == 1
+        near = {i for gx in range(lo[0] // CELL, hi[0] // CELL + 1) for gy in range(lo[1] // CELL, hi[1] // CELL + 1)
+                for i in grid.get((gx, gy), ())}
+        touched = [i for i in near if segment_meets_box(*lines[i], lo, hi)]
+        hits_wall = any(i in one_sided for i in touched)
+        walls_hit = [lines[i] for i in touched if i in one_sided]
+        overlap_walls = [w for w in walls_hit if segment_meets_open_box(*w, lo, hi)]
+        deepest = max((wall_depth(*w, x, y, radius) for w in overlap_walls), default=None)
+        reasons = {"wall": hits_wall, "even parity": not odd, "outside rectangle": not inside_rect,
+                   "any line": bool(touched)}
+        # S-prime: centre parity and rectangle; movers also keep the centre (31 - r) / L in front of
+        # every wall that meets the open box. Integer cross products, no division but the margin floor.
+        sp_geometry = not odd or not inside_rect
+        sp_depth = False
+        margin = None
+        if category in MOVER_CATEGORIES:
+            for (ax, ay), (bx, by) in overlap_walls:
+                dx, dy = bx - ax, by - ay
+                cross = abs(dx * (y - ay) - dy * (x - ax))
+                norm = abs(dx) + abs(dy)
+                if cross < (31 - radius) * norm:
+                    sp_depth = True
+                m = cross // norm
+                margin = m if margin is None else min(margin, m)
+        cx, cy = (x - c.org_x) >> 7, (y - c.org_y) >> 7
+        in_bm = 0 <= cx < c.width and 0 <= cy < c.height
+        linked = in_bm and "NOBLOCKMAP" not in (row["info"][3] if row["info"] else ())
+        for skill, bit in SKILL_BITS:
+            if category != "player" and not options & bit:
+                continue
+            s = skills[skill]
+            s["spawned"][category] += 1
+            for name, hit in reasons.items():
+                if hit:
+                    s["reasons"][name] += 1
+            if not in_bm:
+                s["reasons"]["outside BLOCKMAP"] += 1
+            if sp_geometry or sp_depth:
+                s["sp_viol"][category] += 1
+                s["sp_reasons"]["parity/rectangle"] += sp_geometry
+                s["sp_reasons"]["mover-depth"] += sp_depth
+            if margin is not None:
+                s["sp_margin"].append(margin)
+            if hits_wall:
+                if overlap_walls:
+                    s["overlap"][category] += 1
+                    s["depth"][depth_bucket(deepest)] += 1
+                else:
+                    s["edge"][category] += 1
+            if hits_wall or not odd or not inside_rect:
+                s["violations"][category] += 1
+                s["by_type"][doomednum] += 1
+            if linked:
+                s["cells"][(cx, cy)] += 1
+    c.spawn_skills = skills
+    c.spawn_rows = rows
+
+
+def spawn_pass(c, skill):
+    return not sum(c.spawn_skills[skill]["violations"].values())
+
+
+def edge_overlap_text(s):
+    over = s["overlap"]
+    movers = sum(over[k] for k in MOVER_CATEGORIES)
+    statics = sum(over.values()) - movers
+    depth = ", ".join(f"{b} {s['depth'][b]}" for b in DEPTH_BUCKETS)
+    return (f"edge-only {sum(s['edge'].values())}, overlap {sum(over.values())} (movers {movers}, statics {statics}); "
+            f"overlap depth {depth}")
+
+
+def sprime_text(c):
+    """S-prime result of one slot: pass/fail, violations by kind and reason, embedded-mover margin."""
+    spawn_rule_census(c)
+    parts = []
+    for skill, _bit in SKILL_BITS:
+        s = c.spawn_skills[skill]
+        by_kind = ", ".join(f"{k} {s['sp_viol'][k]}" for k in SPAWN_CATEGORIES if s["sp_viol"][k]) or "none"
+        margin = min(s["sp_margin"]) if s["sp_margin"] else None
+        parts.append(
+            f"{skill} {flag(not sum(s['sp_viol'].values()))} (violations {sum(s['sp_viol'].values())}: {by_kind}; "
+            f"parity/rectangle {s['sp_reasons']['parity/rectangle']}, mover-depth {s['sp_reasons']['mover-depth']}; "
+            f"min embedded-mover margin {margin})"
+        )
+    return f"{c.slot} S-prime: " + "; ".join(parts)
+
+
+def sprime_summary(all_counts):
+    for skill, _bit in SKILL_BITS:
+        bad, reasons = collections.Counter(), collections.Counter()
+        for c in all_counts:
+            bad.update(c.spawn_skills[skill]["sp_viol"])
+            reasons.update(c.spawn_skills[skill]["sp_reasons"])
+        passing = sum(1 for c in all_counts if not sum(c.spawn_skills[skill]["sp_viol"].values()))
+        kinds = ", ".join(f"{k} {bad[k]}" for k in SPAWN_CATEGORIES if bad[k]) or "none"
+        print(f"SUMMARY S-prime {skill}: {passing} of {len(all_counts)} slots pass; violations {sum(bad.values())} ({kinds}); "
+              f"parity/rectangle {reasons['parity/rectangle']}, mover-depth {reasons['mover-depth']}")
+
+
+def spawn_rule_text(c):
+    spawn_rule_census(c)
+    parts = []
+    for skill, _bit in SKILL_BITS:
+        s = c.spawn_skills[skill]
+        parts.append(
+            f"{skill} {flag(spawn_pass(c, skill))} (spawned {sum(s['spawned'].values())}, "
+            f"violations {sum(s['violations'].values())}, wall-touch {s['reasons']['wall']}, "
+            f"even-parity {s['reasons']['even parity']}, outside-rectangle {s['reasons']['outside rectangle']}, "
+            f"touching any line {s['reasons']['any line']}, centre outside BLOCKMAP {s['reasons']['outside BLOCKMAP']})"
+        )
+    return f"{c.slot}: " + "; ".join(parts)
+
+
+def spawn_rule_detail(c):
+    """Violation kinds of one slot (--spawn-rule SLOT): per skill by category and by doomednum."""
+    spawn_rule_census(c)
+    print(spawn_rule_text(c))
+    print(sprime_text(c))
+    for skill, _bit in SKILL_BITS:
+        s = c.spawn_skills[skill]
+        by_cat = ", ".join(f"{k} {s['violations'][k]}/{s['spawned'][k]}" for k in SPAWN_CATEGORIES if s["spawned"][k])
+        print(f"  {skill} violations/spawned by category: {by_cat or 'none'}")
+        print(f"  {skill} wall touches: {edge_overlap_text(s)}")
+        print("  " + skill + " edge/overlap by kind: " + (", ".join(
+            f"{k} {s['edge'][k]}/{s['overlap'][k]}" for k in SPAWN_CATEGORIES if s["edge"][k] or s["overlap"][k]) or "none"))
+        for doomednum, n in sorted(s["by_type"].items()):
+            info = c.spawn_rows[doomednum]["info"]
+            name = info[0] if info else "player 1 start"
+            print(f"  {skill} violating doomednum {doomednum} {name}: {n}")
+
+
+def spawn_rule_summary(all_counts):
+    for c in all_counts:
+        spawn_rule_census(c)
+    total = len(all_counts)
+    sprime_summary(all_counts)
+    for skill, _bit in SKILL_BITS:
+        passing = sum(1 for c in all_counts if spawn_pass(c, skill))
+        spawned = sum(sum(c.spawn_skills[skill]["spawned"].values()) for c in all_counts)
+        bad = collections.Counter()
+        for c in all_counts:
+            bad.update(c.spawn_skills[skill]["violations"])
+        kinds = ", ".join(f"{k} {bad[k]}" for k in SPAWN_CATEGORIES if bad[k]) or "none"
+        reasons = collections.Counter()
+        for c in all_counts:
+            reasons.update(c.spawn_skills[skill]["reasons"])
+        total_s = dict(edge=collections.Counter(), overlap=collections.Counter(), depth=collections.Counter())
+        for c in all_counts:
+            for key in total_s:
+                total_s[key].update(c.spawn_skills[skill][key])
+        print(f"SUMMARY spawn rule {skill} wall touches: {edge_overlap_text(total_s)}; "
+              + ", ".join(f"{k} {total_s['edge'][k]}/{total_s['overlap'][k]}" for k in SPAWN_CATEGORIES) + " (edge/overlap by kind)")
+        print(
+            f"SUMMARY spawn rule {skill}: {passing} of {total} slots pass; spawned {spawned}; violations {sum(bad.values())} "
+            f"({kinds}); wall-touch {reasons['wall']}, even-parity {reasons['even parity']}, "
+            f"outside-rectangle {reasons['outside rectangle']}, touching any line {reasons['any line']}, "
+            f"centre outside BLOCKMAP {reasons['outside BLOCKMAP']}"
+        )
+
+
+def spawn_rule_markdown_report(all_counts):
+    columns = ("Slot", "Spawned e/m/h", "Violations e/m/h", "Wall touch e/m/h", "Even parity e/m/h",
+               "Outside rectangle e/m/h", "Touching any line e/m/h", "Centre outside BLOCKMAP e/m/h", "Pass e/m/h")
+    print("| " + " | ".join(columns) + " |")
+    print("|" + "|".join("---" for _ in columns) + "|")
+    for c in all_counts:
+        spawn_rule_census(c)
+
+        def trio(f):
+            return "/".join(str(f(c.spawn_skills[skill])) for skill, _bit in SKILL_BITS)
+
+        passes = "/".join(flag(spawn_pass(c, skill)) for skill, _bit in SKILL_BITS)
+        cells = (
+            c.slot,
+            trio(lambda s: sum(s["spawned"].values())),
+            trio(lambda s: sum(s["violations"].values())),
+            trio(lambda s: s["reasons"]["wall"]),
+            trio(lambda s: s["reasons"]["even parity"]),
+            trio(lambda s: s["reasons"]["outside rectangle"]),
+            trio(lambda s: s["reasons"]["any line"]),
+            trio(lambda s: s["reasons"]["outside BLOCKMAP"]),
+            passes,
+        )
+        print("| " + " | ".join(cells) + " |")
+
+
+# -- Spawn height fit (M3h9b) -------------------------------------------------------------
+#
+# crates/doom-sim/src/spawning.rs calls `spawn_fits(ty, position, SpawnHeight::Floor)` after the
+# spawn rule; player_map_scale.rs `spawn_fits` finds the sector with `locate_validated` (the BSP walk
+# of R_PointInSubsector) and requires `sector.floor <= z && z + height <= sector.ceiling` with z the
+# floor (ceiling - height for SPAWNCEILING types), i.e. height <= ceiling - floor of that sector.
+
+PLAYER_HEIGHT = 56  # mobjinfo[MT_PLAYER].height (info.c)
+
+
+def fixed_i32(value):
+    value &= 0xFFFFFFFF
+    return value - 0x100000000 if value & 0x80000000 else value
+
+
+def point_on_side(x, y, node):
+    """R_PointOnSide (r_main.c:162-210) in 16.16 fixed point; node = a NODES record in map units."""
+    nx, ny, ndx, ndy = (v << 16 for v in node[:4])
+    x, y = x << 16, y << 16
+    if not ndx:
+        return int(ndy > 0) if x <= nx else int(ndy < 0)
+    if not ndy:
+        return int(ndx < 0) if y <= ny else int(ndx > 0)
+    dx, dy = fixed_i32(x - nx), fixed_i32(y - ny)  # 32-bit wrap as in C
+    if fixed_i32(ndy ^ ndx ^ dx ^ dy) < 0:
+        return 1 if fixed_i32(ndy ^ dx) < 0 else 0
+    left = ((ndy >> 16) * dx) >> 16
+    right = (dy * (ndx >> 16)) >> 16
+    return 0 if right < left else 1
+
+
+def point_in_sector(c, x, y):
+    """The sector of R_PointInSubsector (r_main.c:801-823) with ss->sector = first seg's sidedef sector."""
+    if not c.nodes:
+        child = 0
+    else:
+        child = len(c.nodes) - 1
+        while not child & 0x8000:
+            node = c.nodes[child]
+            child = node[12 + point_on_side(x, y, node)]
+        child &= 0x7FFF
+    _count, first = c.subsectors[child]
+    seg = c.segs[first]
+    line = c.lines[seg[3]]
+    return c.sides[line[5 + seg[4]]][5]
+
+
+def spawn_fit_census(c):
+    """Per skill: spawned things, fit failures by category and the minimum height of occupied sectors."""
+    if hasattr(c, "fit_skills"):
+        return
+    c.things_census()
+    rows = {r["doomednum"]: r for r in c.thing_rows}
+    skills = {skill: dict(spawned=collections.Counter(), failures=collections.Counter(), min_height=None)
+              for skill, _bit in SKILL_BITS}
+    for x, y, _angle, dtype, options in c.things:
+        doomednum = dtype if dtype < 0x8000 else dtype - 0x10000
+        row = rows[doomednum]
+        category = spawn_category(row)
+        if category is None or (options & MTF_NOTSINGLE and category != "player"):
+            continue
+        height = PLAYER_HEIGHT if category == "player" else row["info"][2]
+        sector = c.sectors[point_in_sector(c, x, y)]
+        room = sector[1] - sector[0]
+        for skill, bit in SKILL_BITS:
+            if category != "player" and not options & bit:
+                continue
+            s = skills[skill]
+            s["spawned"][category] += 1
+            if height > room:
+                s["failures"][category] += 1
+            s["min_height"] = room if s["min_height"] is None else min(s["min_height"], room)
+    c.fit_skills = skills
+
+
+def spawn_fit_text(c):
+    spawn_fit_census(c)
+    parts = []
+    for skill, _bit in SKILL_BITS:
+        s = c.fit_skills[skill]
+        by_cat = ", ".join(f"{k} {s['failures'][k]}" for k in SPAWN_CATEGORIES if s["failures"][k]) or "none"
+        parts.append(
+            f"{skill} {flag(not sum(s['failures'].values()))} (spawned {sum(s['spawned'].values())}, "
+            f"fit failures {sum(s['failures'].values())}: {by_cat}; min occupied-sector height {s['min_height']})"
+        )
+    return f"{c.slot}: " + "; ".join(parts)
+
+
+def spawn_fit_summary(all_counts):
+    for c in all_counts:
+        spawn_fit_census(c)
+    for skill, _bit in SKILL_BITS:
+        bad = collections.Counter()
+        for c in all_counts:
+            bad.update(c.fit_skills[skill]["failures"])
+        passing = sum(1 for c in all_counts if not sum(c.fit_skills[skill]["failures"].values()))
+        spawned = sum(sum(c.fit_skills[skill]["spawned"].values()) for c in all_counts)
+        kinds = ", ".join(f"{k} {bad[k]}" for k in SPAWN_CATEGORIES if bad[k]) or "none"
+        print(f"SUMMARY spawn fit {skill}: {passing} of {len(all_counts)} slots pass; spawned {spawned}; "
+              f"fit failures {sum(bad.values())} ({kinds})")
+
+
+def budget_facts(c, skill):
+    """BLOCKMAP/intercept budget numbers of one slot and skill (counts only)."""
+    spawn_rule_census(c)
+    w, h = c.width, c.height
+    things = c.spawn_skills[skill]["cells"]
+    lines_at = [[len(c.cell_lists[cy * w + cx]) for cx in range(w)] for cy in range(h)]
+    weight = [[lines_at[cy][cx] + things.get((cx, cy), 0) for cx in range(w)] for cy in range(h)]
+    paths = {"row": [], "column": [], "diagonal": [], "anti-diagonal": []}
+    for cy in range(h):
+        paths["row"].append([weight[cy][cx] for cx in range(w)])
+    for cx in range(w):
+        paths["column"].append([weight[cy][cx] for cy in range(h)])
+    for d in range(-(h - 1), w):
+        paths["diagonal"].append([weight[cy][cy + d] for cy in range(h) if 0 <= cy + d < w])
+    for d in range(w + h - 1):
+        paths["anti-diagonal"].append([weight[cy][d - cy] for cy in range(h) if 0 <= d - cy < w])
+
+    def best(path_list, window=None):
+        top = 0
+        for path in path_list:
+            if window is None or len(path) <= window:
+                top = max(top, sum(path))
+            else:
+                run = sum(path[:window])
+                top = max(top, run)
+                for i in range(window, len(path)):
+                    run += path[i] - path[i - window]
+                    top = max(top, run)
+        return top
+
+    full = {name: best(p) for name, p in paths.items()}
+    windowed = {name: best(p, HITSCAN_CELL_WINDOW) for name, p in paths.items()}
+    window_lines = 0
+    for cy in range(max(h - 1, 1)):
+        for cx in range(max(w - 1, 1)):
+            distinct = set()
+            for wy in (cy, cy + 1):
+                for wx in (cx, cx + 1):
+                    if wx < w and wy < h:
+                        distinct.update(c.cell_lists[wy * w + wx])
+            window_lines = max(window_lines, len(distinct))
+    return dict(
+        width=w, height=h,
+        max_things_per_cell=max(things.values(), default=0),
+        max_lines_per_cell=max(max(r) for r in lines_at),
+        max_line_row_sum=max(sum(r) for r in lines_at),
+        max_line_column_sum=max(sum(lines_at[cy][cx] for cy in range(h)) for cx in range(w)),
+        window_lines=window_lines,
+        full_paths=full, full_max=max(full.values()),
+        window_paths=windowed, window_max=max(windowed.values()),
+    )
+
+
+def budget_text(c):
+    out = [f"{c.slot}: BLOCKMAP {c.width}x{c.height} cells; max lines/cell {c.max_per_cell}; "
+           f"2x2 window distinct lines (Rust slide_window_lines) {budget_facts(c, 'medium')['window_lines']}"]
+    for skill, _bit in SKILL_BITS:
+        b = budget_facts(c, skill)
+        out.append(
+            f"  {skill}: max things/cell {b['max_things_per_cell']}; max lines/row {b['max_line_row_sum']}, "
+            f"lines/column {b['max_line_column_sum']}; hitscan estimate (lines + things along a straight cell path) "
+            f"full path max {b['full_max']} (row {b['full_paths']['row']}, column {b['full_paths']['column']}, "
+            f"diagonal {b['full_paths']['diagonal']}, anti-diagonal {b['full_paths']['anti-diagonal']}); "
+            f"{HITSCAN_CELL_WINDOW}-cell window max {b['window_max']} (row {b['window_paths']['row']}, "
+            f"column {b['window_paths']['column']}, diagonal {b['window_paths']['diagonal']}, "
+            f"anti-diagonal {b['window_paths']['anti-diagonal']})"
+        )
+    return "\n".join(out)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("directory", nargs="?", default=DEFAULT_DIR)
@@ -1885,6 +2352,21 @@ def main(argv=None):
     parser.add_argument("--things", metavar="SLOT", help="print the M3h9 THING census of one map slot")
     parser.add_argument(
         "--things-markdown", action="store_true", help="print the M3h9 THING census tables as Markdown"
+    )
+    parser.add_argument(
+        "--spawn-rule", nargs="?", const="*", metavar="SLOT",
+        help="print the spawn-admission rule counts of every slot, or the violations of one slot",
+    )
+    parser.add_argument(
+        "--spawn-rule-markdown", action="store_true", help="print the spawn-admission rule table as Markdown"
+    )
+    parser.add_argument(
+        "--spawn-fit", nargs="?", const="*", metavar="SLOT",
+        help="print the spawn height-fit counts of every slot, or of one slot",
+    )
+    parser.add_argument(
+        "--things-budget", nargs="?", const="*", metavar="SLOT",
+        help="print the BLOCKMAP and intercept budget facts of every slot, or of one slot",
     )
     args = parser.parse_args(argv)
     if not os.path.isdir(args.directory):
@@ -1927,6 +2409,36 @@ def main(argv=None):
         return 1
     if args.things_markdown:
         things_markdown_report(all_counts)
+        return 0
+    if args.spawn_rule_markdown:
+        spawn_rule_markdown_report(all_counts)
+        return 0
+    if args.spawn_fit:
+        chosen = [c for c in all_counts if args.spawn_fit in ("*", c.slot)]
+        if not chosen:
+            print(f"iwad_counts: slot {args.spawn_fit} not found")
+            return 1
+        for c in chosen:
+            print(spawn_fit_text(c))
+        if args.spawn_fit == "*":
+            spawn_fit_summary(all_counts)
+        return 0
+    if args.spawn_rule or args.things_budget:
+        slot = args.spawn_rule or args.things_budget
+        chosen = [c for c in all_counts if slot in ("*", c.slot)]
+        if not chosen:
+            print(f"iwad_counts: slot {slot} not found")
+            return 1
+        for c in chosen:
+            if args.things_budget:
+                print(budget_text(c))
+            elif slot == "*":
+                print(spawn_rule_text(c))
+                print(sprime_text(c))
+            else:
+                spawn_rule_detail(c)
+        if args.spawn_rule and slot == "*":
+            spawn_rule_summary(all_counts)
         return 0
     if args.markdown:
         markdown_report(all_counts)

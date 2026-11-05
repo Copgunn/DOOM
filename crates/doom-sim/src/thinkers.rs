@@ -195,6 +195,35 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                                 return;
                             }
                         }
+                    } else if let Some(boundary) = boundary.filter(|_| {
+                        actor.life.is_some_and(|l| {
+                            player
+                                .as_ref()
+                                .is_some_and(|p| barrels::is_barrel(p.policy, l.actor_type))
+                        })
+                    }) {
+                        // The barrel escape witness (barrels policy only): a radius-10
+                        // barrel can clear a wall corner in one accepted 30-unit step,
+                        // which the player (r 16) and the monsters (r 20) cannot;
+                        // see `barrels::BarrelMotion`.
+                        match movement::move_xy_contacts(
+                            world,
+                            id,
+                            &mut actor,
+                            spatial,
+                            barrels::BarrelMotion {
+                                get: |id| context.get(id).copied(),
+                                boundary,
+                            },
+                            command,
+                            sectors,
+                        ) {
+                            Ok(events) => events,
+                            Err(error) => {
+                                refuse(perception_inputs, &mut refused, error);
+                                return;
+                            }
+                        }
                     } else if profile.uses_sectors() {
                         movement::move_xy_multisector(
                             world,
