@@ -95,6 +95,7 @@ DRIVER_BEHAVIOUR = [
     'Sequence: Z_Init; W_InitMultipleFiles over --wad files added as D_AddFile does (IWAD, then the .lmp named by its base name); gamemode = registered (d_main.c:697-701); R_InitTextures; R_InitFlats; P_InitSwitchList; P_InitPicAnims; D_CheckNetGame single-player values; singledemo = true; G_DeferedPlayDemo; G_DoPlayDemo; dump "load"; then { G_Ticker; gametic++; dump } per tic.',
     'The demo header selects skill, episode and map (g_game.c:1596-1598); the driver has no map argument.',
     'I_Quit (vanilla exit(0), i_system.c:116-124) sets a flag and longjmps to the driver, so no statement after the call in G_CheckDemoStatus or G_Ticker runs, as with exit.',
+    'After each dumped tic the driver stops if gameaction is ga_completed, ga_victory or ga_worlddone (end=exit, set during P_Ticker by G_ExitLevel/G_SecretExitLevel, g_game.c:1002-1018): G_Ticker handles gameaction before reading the next ticcmd (g_game.c:617-652, 656-669), so the next call would run G_DoCompleted and enter the intermission (g_game.c:1133-1140), which the runner does not model; a demo that reaches its marker ends end=marker. WI_Start still aborts as a safety net.',
     'After every tic the driver calls the genuine Z_CheckHeap (z_zone.c:399-420), a read-only walk of the zone; vanilla calls it only in G_DoLoadLevel (g_game.c:488).',
     '--selftest-extra-draw TIC calls the public P_Random () once before G_Ticker of tic TIC (test only).',
     'The zone is 6 MiB (vanilla mb_used, i_system.c:51) unless --zone-mb is given.',

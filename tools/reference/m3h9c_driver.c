@@ -26,6 +26,16 @@
  *     d_main.c:1140). The stub I_Quit sets stub_quit_flag and longjmps back to the setjmp
  *     around G_Ticker below, so, as with exit, no later statement of G_CheckDemoStatus
  *     (Z_ChangeTag, the global resets) or of G_Ticker (P_Ticker) runs.
+ *   - End on the exit: G_Ticker runs its gameaction loop (g_game.c:617-652) before it reads
+ *     the tic's ticcmd (g_game.c:656-669), and G_ExitLevel / G_SecretExitLevel set
+ *     gameaction = ga_completed during P_Ticker (g_game.c:1002-1018, from the exit
+ *     switch or line, p_switch.c:359-363). So the G_Ticker after an exit always runs
+ *     G_DoCompleted (g_game.c:636-637, 1020-1141), which enters the intermission
+ *     (gamestate = GS_INTERMISSION and WI_Start, g_game.c:1133-1140), presentation the
+ *     runner does not model, and the demo marker is never reached. After dumping each
+ *     tic the driver therefore stops if gameaction is ga_completed, ga_victory or
+ *     ga_worlddone and reports end=exit with that tic; a demo that reaches its marker
+ *     reports end=marker. The WI_Start stub still aborts as a safety net.
  *   - After every tic the driver calls the genuine Z_CheckHeap (z_zone.c:399-420), a
  *     read-only walk of the zone block list that calls I_Error on corruption; vanilla
  *     calls it only in G_DoLoadLevel (g_game.c:488). --no-checkheap disables it.
@@ -276,7 +286,7 @@ static double now (void)
 
 int main (int argc, char** argv)
 {
-    char* demo = NULL; char* out = NULL; int extra_draw = -1, i, tic, checkheap = 1, nodump = 0;
+    char* demo = NULL; char* out = NULL; int extra_draw = -1, i, tic, checkheap = 1, nodump = 0, exited = 0, ran;
     double t0, tick_time = 0, dump_time = 0;
     for (i = 1; i < argc; i++) {
         if (!strcmp (argv[i], "--wad") && i + 1 < argc) { if (numwads == MAXWADS) { fprintf (stderr, "too many --wad\n"); return 2; } add_file (argv[++i]); }
@@ -331,10 +341,16 @@ int main (int argc, char** argv)
             dump (out, name, tic);
             dump_time += now () - t0;
         }
+        if (gameaction == ga_completed || gameaction == ga_victory || gameaction == ga_worlddone) {
+            exited = 1;                          /* the next G_Ticker would enter the intermission */
+            break;
+        }
     }
-    printf ("summary: tics %d quit_on_marker %d gamestate %d prndindex %d checkheap %s zone_mb %d "
+    ran = exited ? tic + 1 : tic;                /* tics whose G_Ticker completed and were dumped */
+    printf ("summary: tics %d end=%s end_tic %d gamestate %d prndindex %d checkheap %s zone_mb %d "
             "tick_seconds %.3f dump_seconds %.3f us_per_tic %.1f\n",
-            tic, stub_quit_flag, (int)gamestate, prndindex, checkheap ? "every-tic-ok" : "load-only", stub_zone_mb,
-            tick_time, dump_time, tic ? tick_time * 1e6 / tic : 0.0);
+            ran, exited ? "exit" : "marker", tic, (int)gamestate, prndindex,
+            checkheap ? "every-tic-ok" : "load-only", stub_zone_mb,
+            tick_time, dump_time, ran ? tick_time * 1e6 / ran : 0.0);
     return 0;
 }

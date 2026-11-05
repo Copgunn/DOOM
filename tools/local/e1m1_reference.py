@@ -28,7 +28,7 @@ import m3h9c_dump as dump    # noqa: E402
 
 SCRIPTS = ROOT / 'tests/reference/e1m1_scripts'
 VARIANTS = ['strict', 'overflow', 'address']
-SUMMARY = re.compile(r'^summary: tics (\d+) quit_on_marker (\d) gamestate (\d+) prndindex (\d+) .* us_per_tic ([\d.]+)$', re.M)
+SUMMARY = re.compile(r'^summary: tics (\d+) end=(marker|exit) end_tic (\d+) gamestate (\d+) prndindex (\d+) .* us_per_tic ([\d.]+)$', re.M)
 
 def run(binary, iwad, lmp, out, extra=()):
     out.mkdir(parents=True, exist_ok=True)
@@ -42,8 +42,8 @@ def run(binary, iwad, lmp, out, extra=()):
         sys.exit(f'FAILED: {binary.parent.name} {lmp.stem}: exit status {p.returncode}; log {log}')
     digest = hashlib.sha256()
     for name in dump.snapshot_names(out): digest.update((out / name).read_bytes())
-    return dict(tics=int(m[1]), quit_on_marker=m[2] == '1', prndindex_end=int(m[4]),
-                us_per_tic=float(m[5]), dumps_sha256=digest.hexdigest())
+    return dict(tics=int(m[1]), end=m[2], end_tic=int(m[3]), prndindex_end=int(m[5]),
+                us_per_tic=float(m[6]), dumps_sha256=digest.hexdigest())
 
 def build_name(lmp): return lmp.stem.upper()
 
@@ -83,14 +83,15 @@ def main():
         identical = len(digests) == 1
         counts = load_counts(work / 'runs' / f'strict_{lmp.stem}')
         result = dict(script=lmp.name, lmp_sha256=hashlib.sha256(lmp.read_bytes()).hexdigest(),
-                      tics=per['strict']['tics'], quit_on_marker=all(r['quit_on_marker'] for r in per.values()),
+                      tics=per['strict']['tics'], end=per['strict']['end'], end_tic=per['strict']['end_tic'],
+                      ends_agree=len({(r['end'], r['end_tic'], r['tics']) for r in per.values()}) == 1,
                       **counts, prndindex_end=per['strict']['prndindex_end'], variants_identical=identical,
                       dumps_sha256={v: r['dumps_sha256'] for v, r in per.items()},
                       us_per_tic={v: r['us_per_tic'] for v, r in per.items()},
                       timing_note='G_Ticker wall time only (dump writing excluded); not an idle-machine measurement',
                       asan_options='detect_leaks=0 (leak detection disabled)')
         (work / 'results' / f'{lmp.stem}.json').write_text(json.dumps(result, indent=1) + '\n')
-        print(f"{lmp.stem}: tics {result['tics']} quit_on_marker {'yes' if result['quit_on_marker'] else 'no'} "
+        print(f"{lmp.stem}: tics {result['tics']} end={result['end']} at tic {result['end_tic']} "
               f"prndindex load {result['prndindex_after_load']} end {result['prndindex_end']} "
               f"thinkers {result['thinkers_at_load']} mobjs {result['mobjs_at_load']} "
               f"variants_identical {'yes' if identical else 'NO'} dumps_sha256 {per['strict']['dumps_sha256']} "

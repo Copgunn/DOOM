@@ -615,8 +615,11 @@ variable. Stubs for paths the runner must never reach abort.
 then `G_Ticker` once per tic) and dumps the complete state after the level loads and
 after every tic. The format is documented in [m3h9c_dump.py](m3h9c_dump.py), which also
 reports the first differing tic, row and column without printing values. Two driver
-behaviours are declared: the `I_Quit` stub longjmps back to the driver where vanilla
-exits, and the genuine read-only `Z_CheckHeap` runs after every tic.
+behaviours are declared. The `I_Quit` stub longjmps back to the driver where vanilla
+exits (`end=marker`). The driver stops after the tic on which `gameaction` becomes
+`ga_completed`, `ga_victory` or `ga_worlddone` (`end=exit`), because the next `G_Ticker`
+would enter the intermission, which is presentation the runner does not model. The
+genuine read-only `Z_CheckHeap` runs after every tic.
 
 The adapters are exact one-line replacements, and the build fails unless each original
 text occurs exactly once at its declared line. Seven LP64 ABI adapters apply in every
