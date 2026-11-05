@@ -191,7 +191,10 @@ impl<G: Fn(ActorId) -> Option<Actor>> crate::movement::MotionAccess for BarrelMo
 /// height 42 alive, 10.5 dead (`height >>= 2`, 681), 0 gibbed; dropoff exactly
 /// when dead; reaction time 8 or 0 (`P_DamageMobj` zeroes it for a survivor,
 /// p_inter.c:902); threshold 0, or 100 with a target (the retarget block,
-/// 904–915, never lowered for a barrel); no `movedir`, `movecount` or death
+/// 904–915, never lowered for a barrel), and threshold 100 only with reaction
+/// time 0 (902 zeroes it before that block runs; threshold 0 keeps either, as a
+/// Rust-only `damage_actor` of amount 0 zeroes it without retargeting); no
+/// `movedir`, `movecount` or death
 /// request; `lastlook` from one `P_Random() % 4`; a 2035 spawnpoint; a position in
 /// the admitted room. The target handle itself is not resolved here: a stale one
 /// is the explosion's own witness (decision F4(iv)).
@@ -233,6 +236,7 @@ pub(crate) fn validate_barrel(
         || !(l.reaction_time == d.reaction_time || l.reaction_time == 0)
         || !(l.threshold == 0 || l.threshold == BASETHRESHOLD)
         || l.target.is_some() != (l.threshold == BASETHRESHOLD)
+        || (l.threshold == BASETHRESHOLD && l.reaction_time != 0)
         || l.movedir != 0
         || l.movecount != 0
         || l.death_requested

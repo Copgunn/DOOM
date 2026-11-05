@@ -35,7 +35,8 @@ pub(crate) const MF_SPAWNCEILING: u32 = 256;
 /// Every spawn state has `tics` −1 and no action, every spawn health is 1000 and
 /// none is `MF_SHOOTABLE`, `MF_SPECIAL`, `MF_COUNTKILL`, `MF_COUNTITEM`,
 /// `MF_NOBLOCKMAP`, `MF_NOSECTOR`, `MF_SPAWNCEILING` or `MF_NOGRAVITY`
-/// (`static_decoration`). Admission is this list under wire 20 alone; a later
+/// (`static_decoration`). Admission is this list under wire 20 and its barrels
+/// superset (wire 21, which keeps the list unchanged); a later
 /// policy that admits every static type (decision E2 option ii) is a list change
 /// with its own evidence (hanging corpses are `MF_SPAWNCEILING|MF_NOGRAVITY`, a
 /// new height path).
@@ -83,8 +84,7 @@ pub const E1M1_LINKED_THINGS: usize =
 const _: () = assert!(E1M1_LINKED_THINGS == 65);
 
 /// The most exploding barrels (`MT_BARREL`, DoomEd 2035) one map may spawn under
-/// the barrels policy (decision F2: E1M1 spawns 6 at medium); barrels themselves
-/// are admitted by a later step, until then DoomEd 2035 stays `UnsupportedType`.
+/// the barrels policy (decision F2: E1M1 spawns 6 at medium).
 /// The M3h9b note §5.3 budgets with the values of this policy (`K` = monsters ≤ 8,
 /// `k` = Imps ≤ `K`, `P` = pickups ≤ 64, `R` = drops ≤ 8, `D` = decorations ≤ 32,
 /// `B` = barrels ≤ 16, `L`/`M` light and mover sectors):
@@ -99,7 +99,7 @@ const _: () = assert!(E1M1_LINKED_THINGS == 65);
 /// | `spechit` | ≤ 8 per position check, every radius < 64 | radii 10, 16, 20 | rule 6 unchanged |
 /// | Hitscan intercepts | lines (with multiplicity) + things of the ≤ 18 cells of a trace | E1M1 ≤ 103 against 128 | not a bound: the intercept witness stays (decision F7) |
 /// | Explosions per tic | ≤ `B` | 16 | |
-/// | Sight queries per explosion | ≤ `1 + K + B − 1` | ≤ 24 | per-explosion control (decision F6) |
+/// | Sight queries per explosion | ≤ `24 × (1 + K)`, one revisit pass per woken monster | 216 = `EXPLOSION_SIGHT_QUERIES` | per-explosion control (decision F6) |
 /// | `P_DamageMobj` calls per tic | ≤ `B·(K + B)` + the attack bodies | ≤ 384 | each a bounded body |
 /// | `MAX_BONUS` | `6 × P` | 384 | pickup state range |
 /// | Barrel removals per tic | ≤ `B` | 16 | retirement list |

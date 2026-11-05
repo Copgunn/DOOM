@@ -222,7 +222,8 @@ fn rejects(result: Result<Simulation, OriginalRegistryError>, expected: SimError
     }
 }
 
-/// Decision E1: a two-sided 48, blocking or not, loads under wire 20 alone; the
+/// Decision E1: a two-sided 48, blocking or not, loads under wire 20 and no older
+/// policy; the
 /// movers and specials policies keep returning `PursuitError::Specials` (rule 1,
 /// decision N1), and the admission is otherwise the movers admission.
 #[test]
@@ -852,7 +853,8 @@ fn the_census_room_spawns_the_medium_records_in_lump_order_with_ambush() {
     assert_eq!(view.encode(limits).unwrap(), bytes);
 }
 
-/// Decorations load under wire 20 alone: the movers and specials policies refuse
+/// Decorations load under wire 20 and no older policy: the movers and specials
+/// policies refuse
 /// the gallery's first decoration (`UnsupportedType(2028)`) with the state
 /// unchanged; a barrel and a hanging corpse are `UnsupportedType` under E1M1 too.
 #[test]

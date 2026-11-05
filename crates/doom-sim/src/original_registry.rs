@@ -82,9 +82,8 @@ pub enum OriginalExecutionProfile {
     /// `P_SpawnMapThing`, p_mobj.c:794, does) and the relaxed spawn rule S′
     /// (decision F3: centre parity and the vertex rectangle for every spawn, a
     /// margin of `(31 − r)·(|dx| + |dy|)` against each one-sided wall a mover's
-    /// open box meets). Captures are DSIM37. Exploding barrels are the headline
-    /// admission of the policy and land in a later step; until then DoomEd 2035
-    /// stays `UnsupportedType`, as every other THING type outside the E1M1 roster.
+    /// open box meets). Captures are DSIM37. Exploding barrels (DoomEd 2035) are
+    /// the headline admission of the policy.
     PlayerMonstersBarrelsV1,
 }
 impl OriginalExecutionProfile {
@@ -284,8 +283,8 @@ impl OriginalExecutionProfile {
         )
     }
     /// The E1M1 policy (M3h9 note §5.1): two-sided scrolling walls (48) and the
-    /// seven static decoration types, under DSIM36. Every other policy rejects
-    /// them at load.
+    /// seven static decoration types, under DSIM36. Every policy before wire 20
+    /// rejects them at load; the barrels policy (wire 21) inherits the admission.
     pub(crate) const fn has_e1m1(self) -> bool {
         matches!(
             self,
@@ -913,7 +912,8 @@ pub(crate) fn require_role_for(
                 OriginalActorType::MT_TROOP | OriginalActorType::MT_TROOPSHOT,
             ) if profile.has_imps() => Ok(()),
             // The seven static decoration types of E1M1 (info.c; M3h9 note §2.5),
-            // spawned by `P_SpawnMapThing` under the E1M1 policy alone.
+            // spawned by `P_SpawnMapThing` under the E1M1 policy and its barrels
+            // superset.
             DefinitionIdentity::Original(ty)
                 if profile.has_e1m1() && e1m1_rules::E1M1_DECORATIONS.contains(&ty) =>
             {

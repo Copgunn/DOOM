@@ -1537,6 +1537,10 @@ impl<'a> Diagnostic<'a> {
                 || i32field("height")? != height
                 || !matches!(i32field("reaction_time")?, 0 | 8)
                 || !(threshold == 0 || threshold == crate::original_player::BASETHRESHOLD)
+                // p_inter.c:902 zeroes the reaction time before the retarget
+                // block (904–911) sets the threshold: 100 implies 0.
+                || (threshold == crate::original_player::BASETHRESHOLD
+                    && i32field("reaction_time")? != 0)
                 || target.first() != Some(&u8::from(threshold != 0))
                 || (threshold == 0 && target != [0; 13])
                 || self.required(&format!("{prefix}.movedir"))? != [0]

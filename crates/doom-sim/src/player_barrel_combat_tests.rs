@@ -1284,6 +1284,34 @@ fn barrel_invariants(s: &Simulation) {
     }
 }
 
+/// The live witness refuses threshold 100 with reaction time 8: `P_DamageMobj`
+/// zeroes the reaction time (p_inter.c:902) before the retarget block sets the
+/// threshold (904–911). Threshold 0 keeps accepting either reaction time.
+#[test]
+fn the_barrel_witness_ties_threshold_100_to_reaction_time_0() {
+    let (mut s, body, things) = world(
+        CENSUS,
+        &[[0, 0, 0, BARREL, 7], [-200, 0, 0, BARREL, 7]],
+        [-400, 200],
+    );
+    hit(&mut s, things[1], None, Some(body), 5).unwrap();
+    let fresh = *s.actor(things[0]).unwrap();
+    let wounded = *s.actor(things[1]).unwrap();
+    let l = wounded.life().unwrap();
+    assert_eq!((l.threshold, l.reaction_time), (100, 0));
+    assert!(l.target.is_some());
+    let witness = |a: Actor| crate::barrels::validate_barrel(s.room(), a, s.gibbed(&a));
+    witness(wounded).unwrap();
+    let mut forged = wounded;
+    forged.life.as_mut().unwrap().reaction_time = 8;
+    assert!(witness(forged).is_err());
+    assert_eq!(fresh.life().unwrap().reaction_time, 8);
+    witness(fresh).unwrap();
+    let mut awake = fresh;
+    awake.life.as_mut().unwrap().reaction_time = 0;
+    witness(awake).unwrap();
+}
+
 /// 2,400 tics under four seeds in the census room with twelve barrels, two
 /// Zombiemen and an Imp around the player, who walks, turns and fires: barrels are
 /// wounded, killed and chain-explode; after every tic the tic preflight (V′ and
@@ -1552,6 +1580,15 @@ fn dsim37_refuses_each_forged_barrel_field() {
     rejects(
         &forged(&live, wounded, "threshold", i32v(0)),
         "target with threshold 0",
+    );
+    // p_inter.c:902 zeroes the reaction time before 904–911 set threshold 100.
+    assert_eq!(
+        field(&live, &format!("actor.{wounded}.reaction_time")),
+        i32v(0)
+    );
+    rejects(
+        &forged(&live, wounded, "reaction_time", i32v(8)),
+        "threshold 100 and a target with reaction time 8",
     );
     let mut spawn = field(&live, &format!("actor.{slot}.spawnpoint"));
     spawn[7..9].copy_from_slice(&3004i16.to_le_bytes());
