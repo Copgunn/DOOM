@@ -1,0 +1,45 @@
+# output: SYNFIGHT.lmp
+# Authored closed loop against the strict runner: collect the shotgun and health, BT_CHANGE to the pistol (CHANGE|W1), kill three with it,
+# BT_CHANGE to the shotgun (CHANGE|W2), kill a fourth.
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+cmd 2 0 0 0 0
+cmd 32 50 0 0 0
+cmd 6 0 0 0 0
+cmd 1 0 0 0 12
+cmd 10 0 0 0 0
+cmd 1 0 0 57 1
+cmd 4 0 0 0 1
+cmd 8 0 0 0 0
+cmd 1 0 0 4 1
+cmd 4 0 0 0 1
+cmd 8 0 0 0 0
+cmd 1 0 0 1 1
+cmd 4 0 0 0 1
+cmd 8 0 0 0 0
+cmd 1 0 0 1 1
+cmd 4 0 0 0 1
+cmd 8 0 0 0 0
+cmd 1 0 0 35 1
+cmd 4 0 0 0 1
+cmd 8 0 0 0 0
+cmd 1 0 0 255 1
+cmd 4 0 0 0 1
+cmd 8 0 0 0 0
+cmd 1 0 0 190 1
+cmd 4 0 0 0 1
+cmd 8 0 0 0 0
+cmd 5 0 0 0 1
+cmd 8 0 0 0 0
+cmd 5 0 0 0 1
+cmd 8 0 0 0 0
+cmd 1 0 0 1 1
+cmd 4 0 0 0 1
+cmd 8 0 0 0 0
+cmd 1 0 0 0 20
+cmd 25 0 0 0 0
+cmd 1 0 0 231 1
+cmd 4 0 0 0 1
+cmd 8 0 0 0 0
+cmd 1 0 0 254 1
+cmd 4 0 0 0 1
+cmd 48 0 0 0 0

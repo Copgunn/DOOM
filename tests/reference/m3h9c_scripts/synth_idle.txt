@@ -1,0 +1,3 @@
+# output: SYNIDLE.lmp
+# 2100 idle tics on the synthetic E1M1 (medium skill, single player).
+idle 2100
