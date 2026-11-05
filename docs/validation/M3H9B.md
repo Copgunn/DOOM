@@ -312,7 +312,44 @@ not timings.
 
 ## Fuzz campaigns
 
-Recorded after the independent review, on the final target.
+All runs on 2026-11-05 on the local host, alone (no build, test, measurement or other job
+ran during them), with cargo-fuzz 0.13.2 and nightly cargo 1.101.0, from `fuzz/`, with
+the build and every corpus outside the working tree. Every AddressSanitizer run set
+`ASAN_OPTIONS=detect_leaks=0`, so LeakSanitizer was disabled, not passed; it is not leak
+coverage. Every run used `-max_len=362 -timeout=15 -rss_limit_mb=1024
+-print_final_stats=1` and started from a fresh copy of the 3,172 seeds of
+`python3 tools/seed_player_barrels_fuzz.py`. The `cov`/`ft` values of the uninstrumented
+build and the AddressSanitizer build are not comparable with each other.
+
+### First runs at `2dea148` (superseded)
+
+| Run | Observed |
+| --- | --- |
+| Coverage-guided, `--sanitizer none`, `-seed=701 -max_total_time=1800` | stopped by a target assertion after 6,253 runs in 316 s (22 exec/s), cov 7,895, ft 38,030, 693 new units, peak RSS 61 MB |
+| AddressSanitizer, `-seed=702 -max_total_time=1800` | the same assertion after 6,889 runs in 1,828 s (3 exec/s), cov 14,700, ft 70,770, 498 new units, peak RSS 807 MB |
+
+Both hit the same target assertion (`player_barrels.rs:594`): on a **stale barrel handle**
+(the barrel had exploded and been retired) `set_vertical_momentum` past the 64-unit bound
+returned `StoreError::InvalidHandle`, while the target demanded the bound's error
+`PerceptionError::Arithmetic`. The simulation is right: it reports the invalid handle
+before the bound for every actor, as the older targets expect, and the sibling push arm
+was right because `set_momentum` checks the bound first. The target was corrected in
+`d3f4c04` to accept either error on a stale handle; the two artifacts and the earlier
+corner-jump reproducer then pass (the latter in the declared `Escape` refusal). No
+simulation change. Two slow units (over 10 s, under the 15 s timeout) were saved by the
+seed replays; none timed out.
+
+### Final runs at `d3f4c04`
+
+| Run | Observed |
+| --- | --- |
+| Seed replay at `2a3d2cf`: 3,172 seeds, `-runs=0`, AddressSanitizer | 3,174 runs in 1,186 s, cov 14,355, ft 63,102, peak RSS 803 MB; no finding (recorded under [fuzzing](#fuzzing)) |
+| Coverage-guided campaign: `--sanitizer none`, `-seed=701 -max_total_time=1800` | 35,410 runs in 1,800 s (19 exec/s), cov 7,578 → 8,297, ft 32,801 → 43,426, 2,500 new units, peak RSS 69 MB; no crash, timeout, assertion or sanitizer report |
+| Sanitizer campaign: AddressSanitizer, `-seed=702 -max_total_time=1800` | 6,444 runs in 1,802 s (3 exec/s), cov 14,358 → 14,741, ft 63,103 → 71,938, 565 new units, peak RSS 816 MB (of the 1,024 MB limit); no crash, timeout, assertion or sanitizer report |
+
+The one-minute load average was 0.35 before the coverage-guided run and 1.00 (the
+campaign itself) between the two runs. Peak RSS of the AddressSanitizer build is within
+20% of the `-rss_limit_mb`, so a longer sanitizer campaign may need a higher limit.
 
 ## Matched performance
 
