@@ -36,6 +36,12 @@
  *     tic the driver therefore stops if gameaction is ga_completed, ga_victory or
  *     ga_worlddone and reports end=exit with that tic; a demo that reaches its marker
  *     reports end=marker. The WI_Start stub still aborts as a safety net.
+ *   - Linker-level observers (see the block above the wrappers below): P_AddThinker,
+ *     Z_Free, P_SetThingPosition and P_InitThinkers are wrapped with -Wl,--wrap; each
+ *     wrapper records thinker serials, link serials, frees and removed-mobj copies in
+ *     side tables and calls the genuine function unchanged. They add the T, K and RM rows.
+ *   - The HU_Ticker stub records players[consoleplayer].message before clearing it as
+ *     vanilla does; P rows report it as a pickup-message index.
  *   - After every tic the driver calls the genuine Z_CheckHeap (z_zone.c:399-420), a
  *     read-only walk of the zone block list that calls I_Error on corruption; vanilla
  *     calls it only in G_DoLoadLevel (g_game.c:488). --no-checkheap disables it.
@@ -60,6 +66,7 @@
 #include "p_local.h"
 #include "p_spec.h"
 #include "r_state.h"
+#include "dstrings.h"
 
 /* genuine definitions without header declarations */
 void R_InitTextures (void);
@@ -83,6 +90,138 @@ int layout_mappatch_size (void);
 /* stubs.c */
 extern int stub_quit_flag, stub_quit_armed, stub_zone_mb;
 extern jmp_buf stub_quit_jmp;
+extern char* stub_hu_message;   /* players[consoleplayer].message as HU_Ticker saw and cleared it */
+extern int stub_hu_ran;
+
+/* ---------------- linker-level observers ----------------
+ * Linked with -Wl,--wrap=P_AddThinker,--wrap=Z_Free,--wrap=P_SetThingPosition,
+ * --wrap=P_InitThinkers (m3h9c_build.py LINK_FLAGS): every call from another object
+ * file reaches __wrap_X, which records into the side tables below (never game memory,
+ * never the RNG) and then calls the genuine __real_X with the same arguments, returning
+ * its result. Every gameplay call of the four is cross-object (p_tick.c defines
+ * P_AddThinker/P_InitThinkers, p_maputl.c P_SetThingPosition, z_zone.c Z_Free); the only
+ * unwrapped calls are z_zone.c's internal Z_Free calls (Z_FreeTags z_zone.c:316 and the
+ * purge in Z_Malloc), which never free a live thinker except Z_FreeTags (PU_LEVEL) in
+ * P_SetupLevel (p_setup.c:618), immediately followed by P_InitThinkers (p_setup.c:622),
+ * whose wrapper drops every table entry (K rows with seq -1).
+ * Thinker lifecycle (genuine): P_AddThinker appends (p_tick.c:65-71); P_RemoveThinker
+ * only sets function.acv = -1 (p_tick.c:80-84; P_RemoveMobj first unlinks the mobj with
+ * P_UnsetThingPosition and stops its sound, p_mobj.c:546-570); the thinker stays in the
+ * list until P_RunThinkers reaches it, unlinks it and calls Z_Free (p_tick.c:101-122). The
+ * Z_Free wrapper copies a mobj (function -1, added as a P_MobjThinker: P_SpawnMobj sets
+ * the function before P_AddThinker, p_mobj.c:529-531) before the genuine free. */
+void __real_P_AddThinker (thinker_t* thinker);
+void __real_Z_Free (void* ptr);
+void __real_P_SetThingPosition (mobj_t* thing);
+void __real_P_InitThinkers (void);
+
+typedef struct { void* p; int serial, linkserial, mobj; } obs_t;
+#define OBS_CAP 65536                     /* power of two; far above any thinker count */
+static obs_t obs[OBS_CAP];               /* open addressing; p == NULL empty, p == OBS_DEAD deleted */
+static char obs_dead_marker;
+#define OBS_DEAD ((void*)&obs_dead_marker)
+static int obs_used, next_serial, next_linkserial;
+typedef struct { int serial, seq; } freed_t;
+static freed_t* freed; static int nfreed, capfreed, freeseq;
+typedef struct { int serial; mobj_t m; } removed_t;
+static removed_t* removed; static int nremoved, capremoved;
+static int unknown_messages, observer_misses;
+
+static unsigned obs_hash (void* p) { unsigned long v = (unsigned long)p >> 3; return (unsigned)(v ^ (v >> 17)) & (OBS_CAP - 1); }
+static obs_t* obs_find (void* p)
+{
+    unsigned h = obs_hash (p);
+    while (obs[h].p) { if (obs[h].p == p) return &obs[h]; h = (h + 1) & (OBS_CAP - 1); }
+    return NULL;
+}
+static void obs_rehash (void)
+{
+    static obs_t old[OBS_CAP];
+    int i;
+    memcpy (old, obs, sizeof obs); memset (obs, 0, sizeof obs); obs_used = 0;
+    for (i = 0; i < OBS_CAP; i++)
+        if (old[i].p && old[i].p != OBS_DEAD) {
+            unsigned h = obs_hash (old[i].p);
+            while (obs[h].p) h = (h + 1) & (OBS_CAP - 1);
+            obs[h] = old[i]; obs_used++;
+        }
+    if (obs_used >= OBS_CAP / 2) { fprintf (stderr, "observer table full\n"); abort (); }
+}
+static obs_t* obs_insert (void* p)        /* p is not in the table */
+{
+    unsigned h;
+    if (obs_used >= OBS_CAP / 2) obs_rehash ();   /* obs_used counts live and deleted slots */
+    h = obs_hash (p);
+    while (obs[h].p && obs[h].p != OBS_DEAD) h = (h + 1) & (OBS_CAP - 1);
+    if (!obs[h].p) obs_used++;
+    obs[h].p = p; obs[h].serial = -1; obs[h].linkserial = -1; obs[h].mobj = 0;
+    return &obs[h];
+}
+static void note_freed (int serial, int seq)
+{
+    if (nfreed == capfreed) { capfreed = capfreed ? capfreed * 2 : 64; freed = realloc (freed, capfreed * sizeof *freed); }
+    freed[nfreed].serial = serial; freed[nfreed].seq = seq; nfreed++;
+}
+void __wrap_P_AddThinker (thinker_t* thinker)
+{
+    obs_t* e = obs_find (thinker);
+    if (!e) e = obs_insert (thinker);
+    e->serial = next_serial++;
+    e->mobj = thinker->function.acp1 == (actionf_p1)P_MobjThinker;
+    __real_P_AddThinker (thinker);
+}
+void __wrap_P_SetThingPosition (mobj_t* thing)
+{
+    obs_t* e = obs_find (thing);
+    if (!e) e = obs_insert (thing);      /* a thing positioned before P_AddThinker (P_SpawnMobj, p_mobj.c:517) */
+    e->linkserial = next_linkserial++;
+    __real_P_SetThingPosition (thing);
+}
+void __wrap_Z_Free (void* ptr)
+{
+    obs_t* e = ptr ? obs_find (ptr) : NULL;
+    if (e) {
+        if (e->mobj && ((thinker_t*)ptr)->function.acv == (actionf_v)(-1)) {
+            if (nremoved == capremoved) { capremoved = capremoved ? capremoved * 2 : 16; removed = realloc (removed, capremoved * sizeof *removed); }
+            removed[nremoved].serial = e->serial;
+            memcpy (&removed[nremoved].m, ptr, sizeof (mobj_t));
+            nremoved++;
+        }
+        note_freed (e->serial, freeseq++);
+        e->p = OBS_DEAD;
+    }
+    __real_Z_Free (ptr);
+}
+static int cmp_serial (const void* a, const void* b) { return ((const obs_t*)a)->serial - ((const obs_t*)b)->serial; }
+void __wrap_P_InitThinkers (void)
+{
+    int i, n = 0; obs_t* live = malloc (sizeof (obs_t) * (obs_used ? obs_used : 1));
+    for (i = 0; i < OBS_CAP; i++) if (obs[i].p && obs[i].p != OBS_DEAD && obs[i].serial >= 0) live[n++] = obs[i];
+    qsort (live, n, sizeof *live, cmp_serial);
+    for (i = 0; i < n; i++) note_freed (live[i].serial, -1);
+    free (live);
+    memset (obs, 0, sizeof obs); obs_used = 0;
+    __real_P_InitThinkers ();
+}
+static int serial_of (void* p) { obs_t* e = obs_find (p); if (!e || e->serial < 0) { observer_misses++; return -1; } return e->serial; }
+static int linkserial_of (void* p) { obs_t* e = obs_find (p); return e ? e->linkserial : -1; }
+
+/* d_englsh.h GOTARMOR .. GOTSHOTGUN2 in header order; P rows report 1 + the index. */
+static const char* const PICKUP_MESSAGES[] = {
+    GOTARMOR, GOTMEGA, GOTHTHBONUS, GOTARMBONUS, GOTSTIM, GOTMEDINEED, GOTMEDIKIT, GOTSUPER,
+    GOTBLUECARD, GOTYELWCARD, GOTREDCARD, GOTBLUESKUL, GOTYELWSKUL, GOTREDSKULL,
+    GOTINVUL, GOTBERSERK, GOTINVIS, GOTSUIT, GOTMAP, GOTVISOR, GOTMSPHERE,
+    GOTCLIP, GOTCLIPBOX, GOTROCKET, GOTROCKBOX, GOTCELL, GOTCELLBOX, GOTSHELLS, GOTSHELLBOX, GOTBACKPACK,
+    GOTBFG9000, GOTCHAINGUN, GOTCHAINSAW, GOTLAUNCHER, GOTPLASMA, GOTSHOTGUN, GOTSHOTGUN2 };
+static int message_index (const char* m)
+{
+    unsigned i;
+    if (!m) return 0;
+    for (i = 0; i < sizeof PICKUP_MESSAGES / sizeof *PICKUP_MESSAGES; i++)
+        if (m == PICKUP_MESSAGES[i] || !strcmp (m, PICKUP_MESSAGES[i])) return (int)i + 1;
+    unknown_messages++;
+    return -1;
+}
 
 #define MAXWADS 20                       /* d_main.c MAXWADFILES */
 static char* wadfiles[MAXWADS + 1];
@@ -133,7 +272,7 @@ static int in_plats (void* p) { int i; for (i = 0; i < MAXPLATS; i++) if (active
 static int in_ceils (void* p) { int i; for (i = 0; i < MAXCEILINGS; i++) if (activeceilings[i] == p) return 1; return 0; }
 
 static const char* COLUMNS =
- "#columns,H,tic,leveltime,gametic,prndindex,rndindex,totalkills,totalitems,totalsecret,gameaction,gamestate,numthinkers,numlinespecials\n"
+ "#columns,H,tic,leveltime,gametic,prndindex,rndindex,totalkills,totalitems,totalsecret,gameaction,gamestate,numthinkers,numlinespecials,gameskill\n"
  "#columns,M,tic,idx,type,x,y,z,momx,momy,momz,health,state,tics,flags,height,radius,reactiontime,threshold,target,lastlook,floorz,ceilingz,subsector,angle,sprite,frame,movedir,movecount,tracer,sp_x,sp_y,sp_angle,sp_type,sp_options,player,bx,by,bpos,sector,spos\n"
  "#columns,R,tic,idx\n"
  "#columns,DR,tic,idx,type,sector,topheight,speed,direction,topwait,topcountdown\n"
@@ -145,6 +284,9 @@ static const char* COLUMNS =
  "#columns,LS,tic,idx,sector,count,minlight,maxlight,darktime,brighttime\n"
  "#columns,LG,tic,idx,sector,minlight,maxlight,direction\n"
  "#columns,X,tic,idx\n"
+ "#columns,T,tic,idx,serial,linkserial\n"
+ "#columns,K,tic,serial,seq\n"
+ "#columns,RM,tic,serial,type,x,y,z,momx,momy,momz,health,state,tics,flags,height,radius,reactiontime,threshold,target,lastlook,floorz,ceilingz,subsector,angle,sprite,frame,movedir,movecount,tracer,sp_x,sp_y,sp_angle,sp_type,sp_options,player,bx,by,bpos,sector,spos\n"
  "#columns,S,tic,idx,floorheight,ceilingheight,floorpic,ceilingpic,lightlevel,special,tag,soundtraversed,soundtarget,specialdata,linecount\n"
  "#columns,L,tic,idx,special,tag,flags,s0top,s0mid,s0bottom,s0textureoffset,s0rowoffset,s1top,s1mid,s1bottom\n"
  "#columns,B,tic,idx,line,where,btexture,btimer\n"
@@ -152,7 +294,7 @@ static const char* COLUMNS =
  "pw0,pw1,pw2,pw3,pw4,pw5,card0,card1,card2,card3,card4,card5,backpack,frag0,frag1,frag2,frag3,readyweapon,pendingweapon,"
  "wo0,wo1,wo2,wo3,wo4,wo5,wo6,wo7,wo8,ammo0,ammo1,ammo2,ammo3,maxammo0,maxammo1,maxammo2,maxammo3,attackdown,usedown,cheats,refire,"
  "killcount,itemcount,secretcount,damagecount,bonuscount,attacker,extralight,fixedcolormap,colormap,"
- "ps0state,ps0tics,ps0sx,ps0sy,ps1state,ps1tics,ps1sx,ps1sy,didsecret\n";
+ "ps0state,ps0tics,ps0sx,ps0sy,ps1state,ps1tics,ps1sx,ps1sy,didsecret,message\n";
 
 static void block_pos (mobj_t* m, int* bx, int* by, int* bpos)
 {
@@ -173,6 +315,22 @@ static int sector_pos (mobj_t* m)
     return -2;
 }
 
+/* One M row (kind "M", id = thinker-list index, linked) or RM row (kind "RM", id = serial,
+ * unlinked by P_RemoveMobj: bpos and spos -1). */
+static void print_mobj (FILE* f, const char* kind, int tic, int id, mobj_t* m, int linked)
+{
+    int bx = -1, by = -1, bp = -1, sp = -1;
+    if (linked) { block_pos (m, &bx, &by, &bp); sp = sector_pos (m); }
+    fprintf (f, "%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld,%u,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld,%d\n",
+        kind, tic, id, (int)m->type, m->x, m->y, m->z, m->momx, m->momy, m->momz, m->health, stidx (m->state), m->tics,
+        m->flags, m->height, m->radius, m->reactiontime, m->threshold, tidx (m->target), m->lastlook,
+        m->floorz, m->ceilingz, m->subsector ? (long)(m->subsector - subsectors) : -1L, (unsigned)m->angle,
+        (int)m->sprite, m->frame, m->movedir, m->movecount, tidx (m->tracer),
+        m->spawnpoint.x, m->spawnpoint.y, m->spawnpoint.angle, m->spawnpoint.type, m->spawnpoint.options,
+        m->player ? (int)(m->player - players) : -1, bx, by, bp,
+        ((m->flags & MF_NOSECTOR) || !m->subsector) ? -1L : sidx (m->subsector->sector), sp);
+}
+
 static void dump (const char* dir, const char* name, int tic)
 {
     char path[1024]; FILE* f; int i, j;
@@ -181,22 +339,14 @@ static void dump (const char* dir, const char* name, int tic)
     if (!f) { perror (path); exit (4); }
     walk_thinkers ();
     fputs (COLUMNS, f);
-    fprintf (f, "H,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", tic, leveltime, gametic, prndindex, rndindex,
-             totalkills, totalitems, totalsecret, (int)gameaction, (int)gamestate, numth, (int)numlinespecials);
+    fprintf (f, "H,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", tic, leveltime, gametic, prndindex, rndindex,
+             totalkills, totalitems, totalsecret, (int)gameaction, (int)gamestate, numth, (int)numlinespecials,
+             (int)gameskill);
     for (i = 0; i < numth; i++) {
         thinker_t* t = order[i];
         actionf_p1 fn = t->function.acp1;
         if (fn == (actionf_p1)P_MobjThinker) {
-            mobj_t* m = (mobj_t*)t; int bx, by, bp;
-            block_pos (m, &bx, &by, &bp);
-            fprintf (f, "M,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld,%u,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld,%d\n",
-                tic, i, (int)m->type, m->x, m->y, m->z, m->momx, m->momy, m->momz, m->health, stidx (m->state), m->tics,
-                m->flags, m->height, m->radius, m->reactiontime, m->threshold, tidx (m->target), m->lastlook,
-                m->floorz, m->ceilingz, m->subsector ? (long)(m->subsector - subsectors) : -1L, (unsigned)m->angle,
-                (int)m->sprite, m->frame, m->movedir, m->movecount, tidx (m->tracer),
-                m->spawnpoint.x, m->spawnpoint.y, m->spawnpoint.angle, m->spawnpoint.type, m->spawnpoint.options,
-                m->player ? (int)(m->player - players) : -1, bx, by, bp,
-                (m->flags & MF_NOSECTOR) ? -1L : sidx (m->subsector->sector), sector_pos (m));
+            print_mobj (f, "M", tic, i, (mobj_t*)t, 1);
         } else if (t->function.acv == (actionf_v)(-1)) {
             fprintf (f, "R,%d,%d\n", tic, i);
         } else if (fn == (actionf_p1)T_VerticalDoor) {
@@ -233,6 +383,11 @@ static void dump (const char* dir, const char* name, int tic)
             fprintf (f, "X,%d,%d\n", tic, i);
         }
     }
+    for (i = 0; i < numth; i++)
+        fprintf (f, "T,%d,%d,%d,%d\n", tic, i, serial_of (order[i]), linkserial_of (order[i]));
+    for (i = 0; i < nfreed; i++) fprintf (f, "K,%d,%d,%d\n", tic, freed[i].serial, freed[i].seq);
+    for (i = 0; i < nremoved; i++) print_mobj (f, "RM", tic, removed[i].serial, &removed[i].m, 0);
+    nfreed = nremoved = freeseq = 0;
     for (i = 0; i < numsectors; i++) {
         sector_t* s = &sectors[i];
         fprintf (f, "S,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", tic, i, s->floorheight, s->ceilingheight,
@@ -272,7 +427,8 @@ static void dump (const char* dir, const char* name, int tic)
                  p->extralight, p->fixedcolormap, p->colormap);
         for (j = 0; j < NUMPSPRITES; j++)
             fprintf (f, ",%ld,%d,%d,%d", stidx (p->psprites[j].state), p->psprites[j].tics, p->psprites[j].sx, p->psprites[j].sy);
-        fprintf (f, ",%d\n", (int)p->didsecret);
+        fprintf (f, ",%d,%d\n", (int)p->didsecret,
+                 message_index (i == consoleplayer && stub_hu_ran ? stub_hu_message : p->message));
     }
     fclose (f);
 }
@@ -348,9 +504,9 @@ int main (int argc, char** argv)
     }
     ran = exited ? tic + 1 : tic;                /* tics whose G_Ticker completed and were dumped */
     printf ("summary: tics %d end=%s end_tic %d gamestate %d prndindex %d checkheap %s zone_mb %d "
-            "tick_seconds %.3f dump_seconds %.3f us_per_tic %.1f\n",
+            "observer_misses %d unknown_messages %d tick_seconds %.3f dump_seconds %.3f us_per_tic %.1f\n",
             ran, exited ? "exit" : "marker", tic, (int)gamestate, prndindex,
-            checkheap ? "every-tic-ok" : "load-only", stub_zone_mb,
+            checkheap ? "every-tic-ok" : "load-only", stub_zone_mb, observer_misses, unknown_messages,
             tick_time, dump_time, ran ? tick_time * 1e6 / ran : 0.0);
     return 0;
 }

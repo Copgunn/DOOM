@@ -54,6 +54,10 @@ VARIANT_NOTES = {
                'LP64 memblock_t needs 8-byte alignment',
 }
 FILE_FLAGS = {'r_data.c': ['-include', 'stdint.h']}
+# Linker-level observers (m3h9c_driver.c __wrap_*): every cross-object call of these reaches
+# the driver's recording wrapper, which then calls the genuine function.
+WRAPPED = ['P_AddThinker', 'Z_Free', 'P_SetThingPosition', 'P_InitThinkers']
+LINK_FLAGS = ['-Wl,' + ','.join(f'--wrap={w}' for w in WRAPPED)]
 
 ABI_ADAPTERS = [
     dict(file='p_setup.c', line=536, original='    linebuffer = Z_Malloc (total*4, PU_LEVEL, 0);',
@@ -106,6 +110,8 @@ DRIVER_BEHAVIOUR = [
     'I_Quit (vanilla exit(0), i_system.c:116-124) sets a flag and longjmps to the driver, so no statement after the call in G_CheckDemoStatus or G_Ticker runs, as with exit.',
     'After each dumped tic the driver stops if gameaction is ga_completed, ga_victory or ga_worlddone (end=exit, set during P_Ticker by G_ExitLevel/G_SecretExitLevel, g_game.c:1002-1018): G_Ticker handles gameaction before reading the next ticcmd (g_game.c:617-652, 656-669), so the next call would run G_DoCompleted and enter the intermission (g_game.c:1133-1140), which the runner does not model; a demo that reaches its marker ends end=marker. WI_Start still aborts as a safety net.',
     'After every tic the driver calls the genuine Z_CheckHeap (z_zone.c:399-420), a read-only walk of the zone; vanilla calls it only in G_DoLoadLevel (g_game.c:488).',
+    'Linker-level observers (-Wl,--wrap): P_AddThinker gives each thinker a serial (T rows), P_SetThingPosition gives the thing a link serial (the global link order is the ascending current link serial), Z_Free of a known thinker records it as freed since the previous dump (K rows, in free order) and, for a removed mobj, a copy of the mobj taken before the genuine free (RM rows); P_InitThinkers (after Z_FreeTags at level setup) drops every entry (K rows with seq -1). Each wrapper only records and then calls the genuine function.',
+    'HU_Ticker records players[consoleplayer].message for the dump and clears it as vanilla does with the default show_messages 1; P rows report it as 0 (NULL), the 1-based index of the d_englsh.h GOTARMOR..GOTSHOTGUN2 pickup string, or -1 (any other).',
     '--selftest-extra-draw TIC calls the public P_Random () once before G_Ticker of tic TIC (test only).',
     'The zone is 6 MiB (vanilla mb_used, i_system.c:51) unless --zone-mb is given.',
 ]
@@ -197,7 +203,7 @@ def contract():
         source_sha256={f: sha((SOURCE / f).read_bytes()) for f in sorted(set(WHOLE) | {'r_main.c'})},
         header_sha256={p.name: sha(p.read_bytes()) for p in sorted(SOURCE.glob('*.h'))},
         adapted_sha256=dict(strict=adapted, sanitizer=san),
-        flags=VARIANTS, variant_notes=VARIANT_NOTES, file_flags=FILE_FLAGS,
+        flags=VARIANTS, variant_notes=VARIANT_NOTES, file_flags=FILE_FLAGS, link_flags=LINK_FLAGS, wrapped=WRAPPED,
         abi_adapters=adapter_table(ABI_ADAPTERS, ['strict', 'overflow', 'address']),
         sanitizer_adapters=adapter_table(SANITIZER_ADAPTERS, ['overflow', 'address']),
         r_main_extract=extract,
@@ -236,12 +242,12 @@ def build(variant, out, cc='cc'):
             warnings[f] = p.stderr.count('warning:'); (work / f'{f}.warnings.txt').write_text(p.stderr)
     nm = subprocess.run(['nm', '--defined-only', '-g', str(obj / 'm3h9c_stubs.o')], capture_output=True, text=True, check=True)
     defined = {l.split()[-1] for l in nm.stdout.splitlines() if l.strip() and '__odr_asan' not in l} - {'stub_quit_flag', 'stub_quit_jmp',
-              'stub_quit_armed', 'stub_zone_mb', 'stub_gettime_counter'}
+              'stub_quit_armed', 'stub_zone_mb', 'stub_gettime_counter', 'stub_hu_message', 'stub_hu_ran'}
     declared = {s['symbol'] for s in stubs()}
     if defined != declared: sys.exit(f'stub list FAILED: defined-not-declared {sorted(defined - declared)}, '
                                      f'declared-not-defined {sorted(declared - defined)}')
     binary = work / 'crunner'
-    p = subprocess.run([cc] + flags + [str(obj / (f[:-2] + '.o')) for f in units] + ['-o', str(binary)],
+    p = subprocess.run([cc] + flags + LINK_FLAGS + [str(obj / (f[:-2] + '.o')) for f in units] + ['-o', str(binary)],
                        capture_output=True, text=True)
     if p.returncode: sys.stderr.write(p.stderr); sys.exit('link FAILED')
     man = dict(contract(), variant=variant, compiler=subprocess.run([cc, '--version'], capture_output=True,

@@ -27,7 +27,7 @@ WAD = ROOT / 'tests/reference/m3h9c_synthetic.wad'
 SCRIPTS = ROOT / 'tests/reference/m3h9c_scripts'
 RESULTS = ROOT / 'tests/reference/m3h9c_synthetic_results.json'
 VARIANTS = ['strict', 'overflow', 'address']
-SUMMARY = re.compile(r'^summary: tics (\d+) end=(marker|exit) end_tic (\d+) gamestate (\d+) prndindex (\d+) .* us_per_tic ([\d.]+)$', re.M)
+SUMMARY = re.compile(r'^summary: tics (\d+) end=(marker|exit) end_tic (\d+) gamestate (\d+) prndindex (\d+) .* observer_misses (\d+) unknown_messages (\d+) .* us_per_tic ([\d.]+)$', re.M)
 sha = lambda b: hashlib.sha256(b).hexdigest()
 
 def run(binary, lmp, out):
@@ -40,10 +40,11 @@ def run(binary, lmp, out):
     if p.returncode or not m: sys.exit(f'FAILED: {binary.parent.name} {lmp.name}: exit status {p.returncode}; log {log}')
     digest = hashlib.sha256(); names = dump.snapshot_names(out)
     for n in names: digest.update((out / n).read_bytes())
+    if m[6] != '0': sys.exit(f'FAILED: {binary.parent.name} {lmp.name}: {m[6]} thinkers without an observer serial')
     rec = dump.records(out / 'load.txt')
     return dict(tics=int(m[1]), end=m[2], end_tic=int(m[3]), prndindex_after_load=rec['H'][0]['prndindex'],
                 prndindex_end=int(m[5]), thinkers_at_load=rec['H'][0]['numthinkers'], mobjs_at_load=len(rec.get('M', [])),
-                snapshots=len(names), dumps_sha256=digest.hexdigest()), float(m[6])
+                unknown_messages=int(m[7]), snapshots=len(names), dumps_sha256=digest.hexdigest()), float(m[8])
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)

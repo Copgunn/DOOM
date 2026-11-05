@@ -93,8 +93,15 @@ void S_ResumeSound (void) {}
 
 /* STUB HU_Start [reads] hu_stuff.c:419-484: widget setup from players[consoleplayer]. */
 void HU_Start (void) {}
-/* STUB HU_Ticker [writes] hu_stuff.c:505-578: may clear plr->message, which no p_*.c or g_game.c statement reads, and cmd.chatchar (netgame only); neither is observable by P_Ticker. */
-void HU_Ticker (void) {}
+/* STUB HU_Ticker [writes] hu_stuff.c:505-578: with the default show_messages 1 vanilla clears players[consoleplayer].message once displayed (hu_stuff.c:519-527); the stub records the pointer in stub_hu_message for the dump and clears it the same way. message is never read by p_*.c or g_game.c; the chat (netgame) and widget parts are not reproduced. */
+char* stub_hu_message;
+int stub_hu_ran;
+void HU_Ticker (void)
+{
+    stub_hu_ran = 1;
+    stub_hu_message = players[consoleplayer].message;
+    players[consoleplayer].message = 0;
+}
 /* STUB HU_Responder [io] hu_stuff.c:617: event responder; the runner has no events. */
 boolean HU_Responder (event_t* ev) { (void)ev; return false; }
 /* STUB HU_dequeueChatChar [io] hu_stuff.c:600-615: chat queue, read only by G_BuildTiccmd. */

@@ -8,7 +8,7 @@ kind (the contract's `dump_row_kinds`), followed by rows `KIND,tic,...` of raw i
 (fixed_t raw, angles unsigned):
 
   H   header: leveltime, gametic, prndindex, rndindex, totals, gameaction, gamestate,
-      numthinkers (a walk of thinkercap), numlinespecials
+      numthinkers (a walk of thinkercap), numlinespecials, gameskill
   one row per thinker in thinker-list order, `idx` = position in that list:
       M mobj_t (the existing A-row order, then tracer, spawnpoint, player, BLOCKMAP cell
         and position from the cell's head, sector thing-list sector and position),
@@ -16,8 +16,18 @@ kind (the contract's `dump_row_kinds`), followed by rows `KIND,tic,...` of raw i
         mover in stasis, found through activeplats/activeceilings), LF fireflicker_t,
       LL lightflash_t, LS strobe_t, LG glow_t, R removed but not yet freed (function -1),
       X unknown function
+  T   per thinker (idx as above): its serial (the order of P_AddThinker calls since the
+      start, never reused) and its link serial (the order of P_SetThingPosition calls; the
+      global link order is the ascending current link serial; -1 for a non-mobj)
+  K   per thinker freed since the previous snapshot, in free order: serial and sequence
+      number (seq -1: dropped at a level setup, after Z_FreeTags)
+  RM  per mobj removed and freed since the previous snapshot: the M columns with `serial`
+      in place of `idx`, copied just before the genuine Z_Free (bpos/spos -1: unlinked by
+      P_RemoveMobj)
   S   every sector; L every line whose special was nonzero at load; B the 16 buttons;
-  P   the four players.
+  P   the four players; the last column `message` is 0 (NULL), the 1-based index of the
+      d_englsh.h pickup string GOTARMOR..GOTSHOTGUN2 in header order, or -1 (another
+      string), as HU_Ticker saw it before clearing it.
 References are thinker-order indices (-1 NULL, -2 a pointer not in the thinker list);
 BLOCKMAP/sector positions are -1 when not linked and -2 when not found where expected.
 

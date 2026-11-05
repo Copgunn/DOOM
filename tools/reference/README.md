@@ -619,7 +619,13 @@ behaviours are declared. The `I_Quit` stub longjmps back to the driver where van
 exits (`end=marker`). The driver stops after the tic on which `gameaction` becomes
 `ga_completed`, `ga_victory` or `ga_worlddone` (`end=exit`), because the next `G_Ticker`
 would enter the intermission, which is presentation the runner does not model. The
-genuine read-only `Z_CheckHeap` runs after every tic.
+genuine read-only `Z_CheckHeap` runs after every tic. Linker-level observers
+(`-Wl,--wrap` of `P_AddThinker`, `Z_Free`, `P_SetThingPosition` and `P_InitThinkers`)
+record and then call the genuine function; the gameplay text is unchanged. They give
+every thinker its exact serial and link serial (`T` rows), list every free since the
+previous snapshot (`K`) and keep a copy of each removed mobj taken just before its free
+(`RM`). The `HU_Ticker` stub captures the player's pickup message before clearing it as
+vanilla does.
 
 The adapters are exact one-line replacements, and the build fails unless each original
 text occurs exactly once at its declared line. Seven LP64 ABI adapters apply in every

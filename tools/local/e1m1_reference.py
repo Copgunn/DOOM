@@ -28,7 +28,7 @@ import m3h9c_dump as dump    # noqa: E402
 
 SCRIPTS = ROOT / 'tests/reference/e1m1_scripts'
 VARIANTS = ['strict', 'overflow', 'address']
-SUMMARY = re.compile(r'^summary: tics (\d+) end=(marker|exit) end_tic (\d+) gamestate (\d+) prndindex (\d+) .* us_per_tic ([\d.]+)$', re.M)
+SUMMARY = re.compile(r'^summary: tics (\d+) end=(marker|exit) end_tic (\d+) gamestate (\d+) prndindex (\d+) .* observer_misses (\d+) unknown_messages (\d+) .* us_per_tic ([\d.]+)$', re.M)
 
 def run(binary, iwad, lmp, out, extra=()):
     out.mkdir(parents=True, exist_ok=True)
@@ -42,8 +42,9 @@ def run(binary, iwad, lmp, out, extra=()):
         sys.exit(f'FAILED: {binary.parent.name} {lmp.stem}: exit status {p.returncode}; log {log}')
     digest = hashlib.sha256()
     for name in dump.snapshot_names(out): digest.update((out / name).read_bytes())
-    return dict(tics=int(m[1]), end=m[2], end_tic=int(m[3]), prndindex_end=int(m[5]),
-                us_per_tic=float(m[6]), dumps_sha256=digest.hexdigest())
+    if m[6] != '0': sys.exit(f'FAILED: {binary.parent.name} {lmp.stem}: {m[6]} thinkers without an observer serial')
+    return dict(tics=int(m[1]), end=m[2], end_tic=int(m[3]), prndindex_end=int(m[5]), unknown_messages=int(m[7]),
+                us_per_tic=float(m[8]), dumps_sha256=digest.hexdigest())
 
 def build_name(lmp): return lmp.stem.upper()
 
