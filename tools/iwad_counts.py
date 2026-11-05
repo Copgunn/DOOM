@@ -2631,6 +2631,37 @@ def episode_markdown_report(data, lumps, episode):
         print(f"- {name}: " + ", ".join(f"{m} {thing_name(m)}" for m in members))
 
 
+def demo_command_counts(blob, tics, players):
+    """Counts over the ticcmds of one demo (G_ReadDemoTiccmd, g_game.c:1491-1505: forwardmove and
+    sidemove as signed chars, angleturn as an unsigned byte << 8, buttons; ticcmd.h, d_event.h:
+    BT_ATTACK 1, BT_USE 2, BT_CHANGE 4, weapon bits 8+16+32 shifted by 3, BT_SPECIAL 128).
+    Only counts and maxima are returned, never a byte."""
+    c = collections.Counter()
+    weapons = set()
+    max_turn = 0
+    for i in range(tics * players):
+        fwd, side, turn, buttons = struct.unpack_from("<bbBB", blob, 13 + 4 * i)
+        c["cmds"] += 1
+        c["fwd>50"] += abs(fwd) > 50
+        c["side>50"] += abs(side) > 50
+        c["fwd=-128"] += fwd == -128
+        c["special"] += bool(buttons & 0x80)
+        c["bit40"] += bool(buttons & 0x40)
+        c["attack"] += bool(buttons & 1)
+        c["use"] += bool(buttons & 2)
+        if buttons & 4:
+            weapon = (buttons & 56) >> 3
+            weapons.add(weapon)
+            c["change"] += 1
+            c["change>3"] += weapon > 3
+        c["turn!=0"] += turn != 0
+        max_turn = max(max_turn, abs((turn - 256 if turn > 127 else turn)) << 8)
+    c["max_weapon"] = max(weapons) if weapons else 0
+    c["distinct_weapons"] = len(weapons)
+    c["max_turn"] = max_turn
+    return c
+
+
 def demo_markdown_report(directory):
     print("# M4a census: demo lump headers\n")
     print(
@@ -2644,6 +2675,7 @@ def demo_markdown_report(directory):
         "| consoleplayer | playeringame[0..3] | players | ticcmds | seconds (35/s) | 0x80 at expected end | stray bytes |"
     )
     print("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- | ---: |")
+    command_rows = []
     for name in sorted(os.listdir(directory)):
         if not name.lower().endswith(".wad"):
             continue
@@ -2667,11 +2699,25 @@ def demo_markdown_report(directory):
             end = 13 + tics * per_tic
             marker = end < size and blob[end] == 0x80
             stray = size - end - (1 if marker else 0)
+            command_rows.append((name, lump, demo_command_counts(blob, tics, players)))
             print(
                 f"| {name} | {lump} | {size} | {version} | {skill} | {episode} | {mapno} | {dm} | {respawn} | {fast} "
                 f"| {nomon} | {console} | {'/'.join(str(p) for p in ingame)} | {players} | {tics} | {tics / 35:.1f} "
                 f"| {'yes' if marker else 'no'} | {stray} |"
             )
+    print("\n## Command-domain counts (ticcmds over all players; counts and maxima only)\n")
+    print(
+        "| WAD | lump | ticcmds | abs(forwardmove) > 50 | abs(sidemove) > 50 | forwardmove = -128 | buttons & 0x80 "
+        "| buttons & 0x40 | BT_CHANGE | BT_CHANGE weapon > 3 | max weapon index | distinct weapon indices "
+        "| BT_ATTACK | BT_USE | angleturn != 0 | max abs(angleturn) |"
+    )
+    print("| --- | --- | " + " | ".join("---:" for _ in range(14)) + " |")
+    for name, lump, c in command_rows:
+        print(
+            f"| {name} | {lump} | {c['cmds']} | {c['fwd>50']} | {c['side>50']} | {c['fwd=-128']} | {c['special']} "
+            f"| {c['bit40']} | {c['change']} | {c['change>3']} | {c['max_weapon']} | {c['distinct_weapons']} "
+            f"| {c['attack']} | {c['use']} | {c['turn!=0']} | {c['max_turn']} |"
+        )
 
 
 def main(argv=None):
