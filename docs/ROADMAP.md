@@ -85,7 +85,7 @@ Status: Phase 2 complete, in owner review. Phase 1 (the
 [investigation note](M3H9C_REFERENCE_INVESTIGATION.md)) is complete and Phase 2 steps 1-12 are
 done on `feat/m3h9c-e1m1-run` ([observations](validation/M3H9C.md)); pull request #56 is
 ready for review with every check green. The owner confirmed decisions G1-G13 on
-2026-11-06. The milestone is a local-only harness that runs the owner's E1M1 under
+2026-11-05. The milestone is a local-only harness that runs the owner's E1M1 under
 the genuine linuxdoom-1.10 engine and under the Rust simulation from the same version-110
 demo and compares them on every tic, committing only counts, pass/fail and digests, never
 IWAD content.
