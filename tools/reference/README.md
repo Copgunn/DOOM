@@ -571,3 +571,22 @@ frozen legacy generator/inventory globs. Historical tool/helper bytes and every 
 fixture remain unchanged. See [investigation](../../docs/M3G10_REFERENCE_INVESTIGATION.md),
 [commands](../../docs/TESTING.md#original-armor-and-sustained-combat) and
 [observations](../../docs/validation/M3G10.md).
+
+## Exploding barrels, the radius attack, pickup scale and every THING angle (M3h9b)
+
+[m3h9b_reference.py](m3h9b_reference.py) reuses every compiled M3h9 body, observer,
+declared adapter and controlled input unchanged and adds three genuine bodies:
+`PIT_RadiusAttack` and `P_RadiusAttack` (with the `bombsource`, `bombspot` and
+`bombdamage` globals copied verbatim from `p_map.c`) and `A_Explode`, which replaces the
+aborting stub. It adds two observer rows (`RA` for each `P_RadiusAttack` call with its
+window and the wrapped `dist`, `RC` for each `PIT_RadiusAttack` candidate in walk order
+with its block, list position, outcome, distance and damage; see the contract's
+`row_formats`) and two declared adapters applied only in the two sanitizer builds
+(`p_mobj.c:794` and `p_map.c:1221` in unsigned arithmetic; see the contract's
+`sanitizer_adapters`). [m3h9b_geometry.py](m3h9b_geometry.py) is the M3h9 builder plus the
+declared barrel table and the BLOCKMAP window arithmetic; [m3h9b_cases.py](m3h9b_cases.py)
+admits barrels (at most 16), 64 pickups and every `short` angle, and builds ten rooms and
+26 scenarios (a few start at a declared seed so a gameplay draw goes the way the
+scenario needs), plus two Rust-only lanes never run in C (`m3h9b_embedded_barrel.bin`,
+`m3h9b_intercepts129.bin`). Strict, `--overflow-check` and `--address-check` raw traces
+are byte-identical. See the [investigation](../../docs/M3H9B_REFERENCE_INVESTIGATION.md).
