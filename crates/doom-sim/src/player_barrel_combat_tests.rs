@@ -5,7 +5,9 @@
 //! thrusts, timers and the 3 × 3 block window are computed here from the cited
 //! formulas. The rooms are the committed M3h9 rooms with their THINGs replaced.
 use super::*;
-use crate::barrels::{BLAST_WINDOW, BOMB_DAMAGE, EXPLOSION_SIGHT_QUERIES};
+use crate::barrels::{
+    BLAST_WINDOW, BOMB_DAMAGE, EXPLOSION_SIGHT_CANDIDATES, EXPLOSION_SIGHT_QUERIES,
+};
 use crate::identity::{OriginalActorType, OriginalState};
 use crate::lifecycle::ActorStateEvent;
 use crate::original_player::{MF_CORPSE, MF_DROPOFF, MF_NOBLOOD, MF_SHOOTABLE, MF_SOLID};
@@ -496,7 +498,9 @@ fn a_player_hitscan_kill_explodes_nine_tics_after_the_timer() {
 
 /// p_map.c:1221 with the unparenthesized `MAXRADIUS`: the wrapped shift leaves
 /// `128 << 16` (decision F5), the 3 × 3 window; the per-explosion sight bound is
-/// `1 + K + B − 1` = 24 (decision F6).
+/// `1 + K + B − 1` = 24 distinct candidates, each queried at most once per walk
+/// pass, and at most `1 + K` passes (each of the `K` monsters relinks at most once
+/// per explosion): `24 × (1 + K)` = 216 queries (decision F6).
 #[test]
 fn the_blast_window_and_the_explosion_sight_bound_are_the_source_values() {
     assert_eq!(BOMB_DAMAGE, 128);
@@ -504,10 +508,16 @@ fn the_blast_window_and_the_explosion_sight_bound_are_the_source_values() {
     assert_eq!(BLAST_WINDOW, wrapped);
     assert_eq!(BLAST_WINDOW, 128 << 16);
     assert_eq!(
-        EXPLOSION_SIGHT_QUERIES,
+        EXPLOSION_SIGHT_CANDIDATES,
         1 + MAX_PLAYER_MONSTERS + MAX_BARRELS - 1
     );
-    assert_eq!(EXPLOSION_SIGHT_QUERIES, 24);
+    assert_eq!(EXPLOSION_SIGHT_CANDIDATES, 24);
+    assert_eq!(MAX_PLAYER_MONSTERS, 8);
+    assert_eq!(
+        EXPLOSION_SIGHT_QUERIES,
+        EXPLOSION_SIGHT_CANDIDATES * (1 + MAX_PLAYER_MONSTERS)
+    );
+    assert_eq!(EXPLOSION_SIGHT_QUERIES, 216);
     // Every spot sees exactly three cells per axis.
     for v in -1000i32..1000 {
         let fixed = v << 16;

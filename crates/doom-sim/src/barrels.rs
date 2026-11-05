@@ -45,13 +45,28 @@ pub(crate) const BLAST_WINDOW: i32 = (BOMB_DAMAGE as u32)
     .wrapping_add(MAXRADIUS as u32)
     .wrapping_shl(16) as i32;
 const _: () = assert!(BLAST_WINDOW == 128 << 16);
-/// The sight queries one explosion may make (decision F6): one per shootable
-/// candidate in the 3 × 3 window, at most the player, the `K` monsters and the
-/// other `B − 1` barrels (`1 + K + B − 1` = 24). Separate from the 64-query
-/// per-tic control the monsters share; exhaustion is `PerceptionError::WorkLimit`
-/// and refuses the tic.
-pub const EXPLOSION_SIGHT_QUERIES: usize = 1 + MAX_PLAYER_MONSTERS + MAX_BARRELS - 1;
-const _: () = assert!(EXPLOSION_SIGHT_QUERIES == 24);
+/// The distinct shootable candidates one explosion's 3 × 3 window can hold
+/// (decision F6): at most the player, the `K` monsters and the other `B − 1`
+/// barrels (`1 + K + B − 1` = 24).
+pub(crate) const EXPLOSION_SIGHT_CANDIDATES: usize = 1 + MAX_PLAYER_MONSTERS + MAX_BARRELS - 1;
+const _: () = assert!(EXPLOSION_SIGHT_CANDIDATES == 24);
+/// The sight queries one explosion may make (decision F6, widened for mid-walk
+/// relinks): `24 × (1 + K)` = 216. A walk without relinks queries each distinct
+/// candidate at most once, at most 24. A victim whose
+/// wound runs its seestate `A_Chase` (p_inter.c:912–914) is unlinked and relinked
+/// at the head of its cell (p_maputl.c:436–442), and the walk then follows its new
+/// `bnext` (p_maputl.c:529–535), so things already walked can be met and queried
+/// again: one relink makes the remaining walk revisit each candidate at most once
+/// more, at most 24 queries. Only a monster in its spawn state with threshold 0
+/// enters its seestate from `P_DamageMobj`, and afterwards it is in neither, so
+/// each of the `K` monsters relinks at most once per explosion (the player and
+/// barrels never relink inside the walk; a kill or a pain state does not move).
+/// Hence at most `24 · (1 + K)` queries and work at most that many times one
+/// query's bound `S`. Separate from the 64-query per-tic control the monsters
+/// share; exhaustion is `PerceptionError::WorkLimit` and refuses the tic, which
+/// this argument makes unreachable on an admitted map.
+pub const EXPLOSION_SIGHT_QUERIES: usize = EXPLOSION_SIGHT_CANDIDATES * (1 + MAX_PLAYER_MONSTERS);
+const _: () = assert!(EXPLOSION_SIGHT_QUERIES == 216);
 
 /// Whether `ty` is the barrel under `policy`: `MT_BARREL` (DoomEd 2035) and the
 /// policy has `has_barrels` (wire 21 only).
@@ -197,7 +212,7 @@ pub(crate) fn validate_barrel(
 }
 
 /// The per-explosion sight allowance (decision F6): at most
-/// [`EXPLOSION_SIGHT_QUERIES`] queries and that many times one query's work bound
+/// [`EXPLOSION_SIGHT_QUERIES`] (216) queries and that many times one query's work bound
 /// `S` (`extent_sight_work + 5·lines`, the per-query charge of the shared per-tic
 /// control). Transient, never canonical state.
 struct ExplosionSight {
@@ -543,11 +558,11 @@ pub(crate) mod walk_trace {
 mod tests {
     use super::*;
 
-    /// Decision F6: one explosion's allowance is exactly 24 queries of one query's
-    /// work each; the 25th is `PerceptionError::WorkLimit`, without touching the
-    /// counters.
+    /// Decision F6: one explosion's allowance is exactly `24 × (1 + K)` = 216
+    /// queries of one query's work each; the 217th is `PerceptionError::WorkLimit`,
+    /// without touching the counters.
     #[test]
-    fn the_explosion_sight_allowance_is_24_queries() {
+    fn the_explosion_sight_allowance_is_216_queries() {
         let map = crate::player_e1m1_tests::room(12).map();
         let sim = crate::Simulation::original_player_barrels_map(
             map,
@@ -562,13 +577,13 @@ mod tests {
             sight.charge(&sim.world).unwrap();
         }
         let (queries, work) = (sight.queries, sight.work);
-        assert_eq!(queries, 24);
+        assert_eq!(queries, 216);
         assert_eq!(
             sight.charge(&sim.world),
             Err(SimError::Perception(PerceptionError::WorkLimit))
         );
         assert_eq!((sight.queries, sight.work), (queries, work));
         let one = sim.world.extent_sight_work.unwrap() + 5 * sim.world.lines.len();
-        assert_eq!(work, 24 * one);
+        assert_eq!(work, 216 * one);
     }
 }
