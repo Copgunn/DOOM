@@ -350,3 +350,10 @@ path = "fuzz_targets/player_e1m1.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_barrels"
+path = "fuzz_targets/player_barrels.rs"
+test = false
+doc = false
+bench = false
