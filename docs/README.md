@@ -152,3 +152,6 @@ original evidence and former guide contents with exact-byte copies and digests.
   [observations](validation/M3H9B.md),
   [support](COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle)
   and [DSIM37](STATE_FORMAT.md#dsim-v37--original-exploding-barrels-pickup-scale-and-every-thing-angle).
+- [M3h9c real E1M1 against the genuine engine investigation](M3H9C_REFERENCE_INVESTIGATION.md)
+  (the headless genuine build, the demo-format input, the per-tic comparison and decisions G1–G12;
+  Phase 2 in progress, observations to follow in `docs/validation/M3H9C.md`).
