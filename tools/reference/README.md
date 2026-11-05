@@ -614,11 +614,15 @@ variable. Stubs for paths the runner must never reach abort.
 [m3h9c_driver.c](m3h9c_driver.c) follows the vanilla `-playdemo` path (`G_DoPlayDemo`,
 then `G_Ticker` once per tic) and dumps the complete state after the level loads and
 after every tic. The format is documented in [m3h9c_dump.py](m3h9c_dump.py), which also
-reports the first differing tic, row and column without printing values. Two driver
+reports the first differing tic, row and column without printing values. Three driver
 behaviours are declared. The `I_Quit` stub longjmps back to the driver where vanilla
 exits (`end=marker`). The driver stops after the tic on which `gameaction` becomes
 `ga_completed`, `ga_victory` or `ga_worlddone` (`end=exit`), because the next `G_Ticker`
-would enter the intermission, which is presentation the runner does not model. The
+would enter the intermission, which is presentation the runner does not model. It also
+stops after a tic that leaves a player in `PST_REBORN` (`end=reborn`: a dead player
+pressed USE, `P_DeathThink`), because the next `G_Ticker` would reload the level through
+`G_DoReborn` (g_game.c:612-614, 924-931), outside the admitted domain (decision G11);
+the Rust run accepts that tic and refuses the next with `PlayerReborn`. The
 genuine read-only `Z_CheckHeap` runs after every tic. Linker-level observers
 (`-Wl,--wrap` of `P_AddThinker`, `Z_Free`, `P_SetThingPosition` and `P_InitThinkers`)
 record and then call the genuine function; the gameplay text is unchanged. They give

@@ -11,8 +11,10 @@ tools/reference/m3h9c_driver.c); RUST_DIR the Rust runner's canonical captures
 N tics and the dump of tic N - 1 (`load.txt` for 0) is the same state. Every dump is
 projected to DSIM38 by the independent encoder (level_snapshot.py); both byte strings are
 read with the encoder's field reader and compared **without the `map.*` and `events.*`
-groups** (G5: the static map is compared separately, the event frames are Rust's own
-records, which the dump does not project). The first differing tic and field path are
+groups** (G5: the event frames are Rust's own records, which the dump does not project;
+the static map is compared separately, once: the `map.*` group of the load capture holds
+the bytes of the ten map lumps each side located, so comparing the two groups is the
+lump check of M3h9c note §5, and `match` requires it). The first differing tic and field path are
 reported; `--values` also prints both values and is for local use only (the values of a
 real-IWAD run are map-derived). The comparison stops at the first divergence, at the
 first tic the encoder cannot project (its `ProjectionError` kind and tic are reported:
@@ -20,11 +22,13 @@ a dump deficiency, an ambiguity or an unadmitted state), or where either side en
 
 The projection is exact (level_snapshot.py reads the driver's observer rows; a dump
 without them is refused) and there is no tolerance of any field. A run is complete when
-every C snapshot was compared: when C stopped on the exit tic (`end=exit`), Rust holds
-the same captures and refuses the following tic with `LevelExited`, which is not compared.
+every C snapshot was compared: when C stopped on the exit tic (`end=exit`) or on a
+reborn request (`end=reborn`), Rust holds the same captures and refuses the following
+tic (`LevelExited`, `PlayerReborn`), which is not compared.
 
 `--json OUT` writes the counts-only result: tics compared, match, first divergence (tic
-and field path), the projection stop, whether the `map.*` groups are equal, the SHA-256
+and field path), the projection stop, whether the `map.*` groups are equal and the
+SHA-256 of each side's group (in the DSIM field framing), the SHA-256
 of each side's per-tic stripped-byte sequence (the SHA-256 over the concatenated per-tic
 SHA-256 digests of the stripped captures, tics 0..last compared) and each side's final
 stripped digest. The stripped capture is the DSIM framing (`DSIM`, u32 version, u64 field
@@ -44,6 +48,7 @@ if str(HERE) not in sys.path: sys.path.insert(0, str(HERE))
 import level_snapshot as L
 
 SCHEMA = 'DOOM-M3H9C-COMPARE-v1'
+PST_REBORN = 2
 
 
 def stripped(version, fields):
@@ -89,12 +94,22 @@ def self_check(directory, mapdata, skill):
     return count, hashlib.sha256(b''.join(seq)).hexdigest()
 
 
+def map_bytes(fields):
+    """The `map.*` fields in the DSIM field framing (path length, path, value length, value)."""
+    out = bytearray()
+    for path, value in fields:
+        path = path.encode(); out += struct.pack('<I', len(path)) + path + struct.pack('<Q', len(value)) + value
+    return bytes(out)
+
+
 def end_kind(directory):
     """'exit' when the last dump has gameaction == ga_completed (the driver stops on the
     exit tic), else 'marker' (the demo ended)."""
     names = L.m3h9c_dump.snapshot_names(directory)
     last = L.Dump(os.path.join(directory, names[-1]))
-    return ('exit' if last.h['gameaction'] == L.GA_COMPLETED else 'marker'), last.tic
+    if last.h['gameaction'] == L.GA_COMPLETED: return 'exit', last.tic
+    if any(p['ingame'] and p['playerstate'] == PST_REBORN for p in last.players): return 'reborn', last.tic
+    return 'marker', last.tic
 
 
 def rust_end(rust_dir):
@@ -123,7 +138,10 @@ def compare(dump_dir, rust_dir, mapdata, skill, values=False):
             vr, fr = L.decode(Path(path).read_bytes())
             bc, kc = stripped(L.VERSION, fields); br, kr = stripped(vr, fr)
             if result['map_group_equal'] is None:
-                result['map_group_equal'] = [x for x in fields if x[0].startswith('map.')] == [x for x in fr if x[0].startswith('map.')]
+                mc = [x for x in fields if x[0].startswith('map.')]; mr = [x for x in fr if x[0].startswith('map.')]
+                result['map_group_equal'] = mc == mr
+                result['map_group_sha256'] = dict(c=hashlib.sha256(map_bytes(mc)).hexdigest(),
+                                                  rust=hashlib.sha256(map_bytes(mr)).hexdigest())
             seq_c.append(hashlib.sha256(bc).digest()); seq_r.append(hashlib.sha256(br).digest())
             last_c, last_r = seq_c[-1].hex(), seq_r[-1].hex()
             result['tics_compared'] += 1
@@ -142,7 +160,8 @@ def compare(dump_dir, rust_dir, mapdata, skill, values=False):
     # Rust may hold the same captures and refuse later (LevelExited after the exit tic)
     complete = result['tics_compared'] == len(L.m3h9c_dump.snapshot_names(dump_dir))
     result['complete'] = complete
-    result['match'] = complete and result['first_divergence'] is None and result['projection_stop'] is None
+    result['match'] = complete and result['map_group_equal'] is True and result['first_divergence'] is None \
+        and result['projection_stop'] is None
     result['c_sequence_sha256'] = hashlib.sha256(b''.join(seq_c)).hexdigest()
     result['rust_sequence_sha256'] = hashlib.sha256(b''.join(seq_r)).hexdigest()
     result['final'] = dict(c_stripped_sha256=last_c, rust_stripped_sha256=last_r)

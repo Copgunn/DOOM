@@ -28,7 +28,7 @@ import m3h9c_dump as dump    # noqa: E402
 
 SCRIPTS = ROOT / 'tests/reference/e1m1_scripts'
 VARIANTS = ['strict', 'overflow', 'address']
-SUMMARY = re.compile(r'^summary: tics (\d+) end=(marker|exit) end_tic (\d+) gamestate (\d+) prndindex (\d+) .* observer_misses (\d+) unknown_messages (\d+) .* us_per_tic ([\d.]+)$', re.M)
+SUMMARY = re.compile(r'^summary: tics (\d+) end=(marker|exit|reborn) end_tic (\d+) gamestate (\d+) prndindex (\d+) .* observer_misses (\d+) unknown_messages (\d+) .* us_per_tic ([\d.]+)$', re.M)
 
 def run(binary, iwad, lmp, out, extra=()):
     out.mkdir(parents=True, exist_ok=True)

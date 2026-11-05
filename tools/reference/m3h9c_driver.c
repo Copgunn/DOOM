@@ -36,6 +36,14 @@
  *     tic the driver therefore stops if gameaction is ga_completed, ga_victory or
  *     ga_worlddone and reports end=exit with that tic; a demo that reaches its marker
  *     reports end=marker. The WI_Start stub still aborts as a safety net.
+ *   - End on a reborn request: P_DeathThink sets playerstate = PST_REBORN when a dead
+ *     player presses BT_USE (p_user.c:227-228). The next G_Ticker would start with its
+ *     reborn loop (g_game.c:612-614), whose G_DoReborn sets gameaction = ga_loadlevel in
+ *     single player (g_game.c:924-931), and its gameaction loop would reload the level
+ *     (G_DoLoadLevel, g_game.c:621-623): outside the admitted domain (decision G11; Rust
+ *     refuses that tic with PlayerReborn). After dumping each tic the driver therefore
+ *     also stops if any player in the game is PST_REBORN and reports end=reborn with
+ *     that tic.
  *   - Linker-level observers (see the block above the wrappers below): P_AddThinker,
  *     Z_Free, P_SetThingPosition and P_InitThinkers are wrapped with -Wl,--wrap; each
  *     wrapper records thinker serials, link serials, frees and removed-mobj copies in
@@ -119,7 +127,8 @@ extern int stub_hu_ran;
  * --wrap=P_InitThinkers (m3h9c_build.py LINK_FLAGS): every call from another object
  * file reaches __wrap_X, which records into the side tables below (never game memory,
  * never the RNG) and then calls the genuine __real_X with the same arguments, returning
- * its result. Every gameplay call of the four is cross-object (p_tick.c defines
+ * its result. The one wrapper that writes game memory is ZeroFill's __wrap_Z_Malloc
+ * (declared in the header: it zero-fills each new block, nothing else). Every gameplay call of the four is cross-object (p_tick.c defines
  * P_AddThinker/P_InitThinkers, p_maputl.c P_SetThingPosition, z_zone.c Z_Free); the only
  * unwrapped calls are z_zone.c's internal Z_Free calls (Z_FreeTags z_zone.c:316 and the
  * purge in Z_Malloc), which never free a live thinker except Z_FreeTags (PU_LEVEL) in
@@ -474,7 +483,7 @@ static double now (void)
 
 int main (int argc, char** argv)
 {
-    char* demo = NULL; char* out = NULL; int extra_draw = -1, i, tic, checkheap = 1, nodump = 0, exited = 0, ran;
+    char* demo = NULL; char* out = NULL; int extra_draw = -1, i, tic, checkheap = 1, nodump = 0, exited = 0, reborn = 0, ran;
     double t0, tick_time = 0, dump_time = 0;
     for (i = 1; i < argc; i++) {
         if (!strcmp (argv[i], "--wad") && i + 1 < argc) { if (numwads == MAXWADS) { fprintf (stderr, "too many --wad\n"); return 2; } add_file (argv[++i]); }
@@ -533,11 +542,14 @@ int main (int argc, char** argv)
             exited = 1;                          /* the next G_Ticker would enter the intermission */
             break;
         }
+        for (i = 0; i < MAXPLAYERS; i++)
+            if (playeringame[i] && players[i].playerstate == PST_REBORN) reborn = 1;
+        if (reborn) break;                       /* the next G_Ticker would reload the level */
     }
-    ran = exited ? tic + 1 : tic;                /* tics whose G_Ticker completed and were dumped */
+    ran = exited || reborn ? tic + 1 : tic;      /* tics whose G_Ticker completed and were dumped */
     printf ("summary: tics %d end=%s end_tic %d gamestate %d prndindex %d checkheap %s zone_mb %d "
             "observer_misses %d unknown_messages %d tick_seconds %.3f dump_seconds %.3f us_per_tic %.1f\n",
-            ran, exited ? "exit" : "marker", tic, (int)gamestate, prndindex,
+            ran, exited ? "exit" : reborn ? "reborn" : "marker", tic, (int)gamestate, prndindex,
             checkheap ? "every-tic-ok" : "load-only", stub_zone_mb, observer_misses, unknown_messages,
             tick_time, dump_time, ran ? tick_time * 1e6 / ran : 0.0);
     return 0;

@@ -1,0 +1,7 @@
+# output: SYNDIE.lmp
+# SYNIDLE's idle start (the player dies at tic 885), then BT_USE while dead: P_DeathThink
+# sets PST_REBORN (p_user.c:227-228) and the runner stops (end=reborn); Rust refuses the
+# next tic with PlayerReborn.
+idle 1000
+cmd 1 0 0 0 USE
+idle 20

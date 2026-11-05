@@ -7,13 +7,18 @@ tests/reference/m3h9c_synthetic.wad in each variant, asserts that the three dump
 are byte-identical (SHA-256 of the concatenated snapshots, m3h9c_dump.py order) and that
 they end the same way, and writes tests/reference/m3h9c_synthetic_results.json:
 per script the tic count, the ending (marker: the demo marker reached; exit: the run
-stopped on the exit tic) and its tic, prndindex after the load and at the end, the
+stopped on the exit tic; reborn: the run stopped on the tic a dead player requested
+the reborn) and its tic, prndindex after the load and at the end, the
 thinker and mobj counts after the load, the snapshot count and the dump-set digest.
 --check compares the regenerated results with the committed file instead of writing.
 Everything here is synthetic. The address variant runs with ASAN_OPTIONS=detect_leaks=0
 (leak detection disabled). Dumps are deleted after hashing unless --keep-dumps is given.
 
-    m3h9c_reference.py [--work DIR] [--check] [--keep-dumps] [--cc CC]
+    m3h9c_reference.py [--work DIR] [--check] [--keep-dumps] [--cc CC] [--selftest TIC]
+
+--selftest TIC plants two differences in the strict build on SYNIDLE (an extra P_Random
+draw before G_Ticker TIC, and forwardmove 25 in command TIC of a copy of the demo) and
+checks that each is first seen in the dump of tic TIC (m3h9c_dump.first_difference).
 """
 import argparse, hashlib, json, os, re, shutil, subprocess, sys, time
 from pathlib import Path
@@ -27,13 +32,13 @@ WAD = ROOT / 'tests/reference/m3h9c_synthetic.wad'
 SCRIPTS = ROOT / 'tests/reference/m3h9c_scripts'
 RESULTS = ROOT / 'tests/reference/m3h9c_synthetic_results.json'
 VARIANTS = ['strict', 'overflow', 'address']
-SUMMARY = re.compile(r'^summary: tics (\d+) end=(marker|exit) end_tic (\d+) gamestate (\d+) prndindex (\d+) .* observer_misses (\d+) unknown_messages (\d+) .* us_per_tic ([\d.]+)$', re.M)
+SUMMARY = re.compile(r'^summary: tics (\d+) end=(marker|exit|reborn) end_tic (\d+) gamestate (\d+) prndindex (\d+) .* observer_misses (\d+) unknown_messages (\d+) .* us_per_tic ([\d.]+)$', re.M)
 sha = lambda b: hashlib.sha256(b).hexdigest()
 
-def run(binary, lmp, out):
+def run(binary, lmp, out, extra=()):
     if out.exists(): shutil.rmtree(out)
     out.mkdir(parents=True)
-    p = subprocess.run([str(binary), '--wad', str(WAD), '--wad', str(lmp), '--demo', lmp.stem.upper(), '--out', str(out)],
+    p = subprocess.run([str(binary), '--wad', str(WAD), '--wad', str(lmp), '--demo', lmp.stem.upper(), '--out', str(out), *extra],
                        capture_output=True, text=True, env=dict(os.environ, ASAN_OPTIONS='detect_leaks=0'))
     log = out.with_suffix('.log'); log.write_text(p.stdout + p.stderr)
     m = SUMMARY.search(p.stdout)
@@ -52,6 +57,9 @@ def main():
     ap.add_argument('--check', action='store_true')
     ap.add_argument('--keep-dumps', action='store_true')
     ap.add_argument('--cc', default='cc')
+    ap.add_argument('--selftest', type=int, metavar='TIC',
+                    help='also plant, on SYNIDLE in the strict build, an extra P_Random draw before G_Ticker TIC and '
+                         'separately a ticcmd change (forwardmove 25 at command TIC), and check each is first seen at tic TIC')
     a = ap.parse_args()
     work = a.work.resolve()
     if work == ROOT or ROOT in work.parents: sys.exit('--work must lie outside the repository')
@@ -90,6 +98,18 @@ def main():
         print(f'{RESULTS.relative_to(ROOT)} matches ({len(scripts)} scripts)')
     else:
         RESULTS.write_text(text); print(f'wrote {RESULTS.relative_to(ROOT)}')
+    if a.selftest is not None:
+        idle, t = SCRIPTS / 'SYNIDLE.lmp', a.selftest
+        plain = work / 'runs' / 'selftest_plain'; run(binaries['strict'], idle, plain)
+        drawn = work / 'runs' / 'selftest_draw'; run(binaries['strict'], idle, drawn, ['--selftest-extra-draw', str(t)])
+        data = bytearray(idle.read_bytes()); at = 13 + 4 * t
+        assert data[at] == 0, 'SYNIDLE command TIC has forwardmove 0'
+        data[at] = 25; changed = work / 'SYNIDLEC.lmp'; changed.write_bytes(data)
+        moved = work / 'runs' / 'selftest_cmd'; run(binaries['strict'], changed, moved)
+        draw = dump.first_difference(str(plain), str(drawn)); cmd = dump.first_difference(str(plain), str(moved))
+        ok = draw == f'tic {t}: row kind H #0 column prndindex' and cmd is not None and cmd.startswith(f'tic {t}:')
+        print(f'selftest: extra draw {draw!r}; ticcmd {cmd!r}: ' + ('pass' if ok else 'FAIL'))
+        if not ok: sys.exit(1)
 
 if __name__ == '__main__':
     main()

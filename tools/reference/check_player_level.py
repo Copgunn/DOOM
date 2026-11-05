@@ -15,7 +15,10 @@ sequence hash and the final digest. Each fixture's stripped bytes are compared w
 Rust capture of its tic, and the first differing field path is named. The C run that
 ended on the exit tic is matched through that tic (Rust refuses the next one). A script
 whose projection stopped (`projection_stop`) is checked over the tics projected and
-reported as partial. Exit status 0 only when every check passes."""
+reported as partial. A script whose golden ends `reborn` at tic N must have Rust's
+`refused.txt` name tic N + 1 with `PlayerReborn`; an `exit` script may have one naming
+tic N + 1 with `LevelExited` (demo commands after the exit); every other script must have
+no `refused.txt`. Exit status 0 only when every check passes."""
 import argparse, hashlib, json, os, sys
 from pathlib import Path
 
@@ -49,6 +52,17 @@ def main():
             if digests[-1].hex()[:16] != e['tic_digests'][tic]: mismatch = (tic, 'digest'); break
         ok = mismatch is None and hashlib.sha256(b''.join(digests)).hexdigest() == e['sequence_sha256'] \
             and (digests[-1].hex() if digests else None) == e['final_sha256']
+        refused = os.path.join(directory, 'refused.txt')
+        words = Path(refused).read_text().split() if os.path.exists(refused) else []
+        if e['end']['kind'] == 'reborn':
+            # Rust accepts the reborn-request tic and refuses the next one
+            want = str(e['end']['tic'] + 1)
+            if words[:1] != [want] or 'PlayerReborn' not in ' '.join(words[1:]):
+                ok = False; mismatch = mismatch or (int(want), 'expected refused.txt: that tic, PlayerReborn')
+        elif e['end']['kind'] == 'exit' and words[:1] == [str(e['end']['tic'] + 1)] and 'LevelExited' in ' '.join(words[1:]):
+            pass                                  # demo commands after the exit: Rust refuses the next tic
+        elif os.path.exists(refused):
+            ok = False; mismatch = mismatch or (int(Path(refused).read_text().split()[0]), 'unexpected refused.txt')
         partial = e['projection_stop'] is not None
         status = 'pass' if ok else f'FAIL at tic {mismatch[0]} ({mismatch[1]})' if mismatch else 'FAIL (sequence)'
         print(f"{script}: {status}; {len(digests)} of {e['snapshots']} tics checked; end {e['end']['kind']}"

@@ -139,12 +139,15 @@ fn unhex(text: &str) -> Vec<u8> {
         .collect()
 }
 
-#[test]
-fn synidle_replay_matches_the_encoder_goldens() {
-    let demo = parse_demo(&std::fs::read(reference("m3h9c_scripts/SYNIDLE.lmp")).expect("demo"))
-        .expect("version-110 demo");
-    let tics: usize = golden("SYNIDLE", "tics_projected").parse().unwrap();
-    assert_eq!(demo.commands.len() + 1, tics);
+/// Replays a synthetic script's demo and checks the per-tic stripped digest sequence
+/// and the final digest against the goldens; returns the first refused tic and its
+/// error text, if any.
+fn replay(script: &str) -> Option<(usize, String)> {
+    let demo = parse_demo(
+        &std::fs::read(reference(&format!("m3h9c_scripts/{script}.lmp"))).expect("demo"),
+    )
+    .expect("version-110 demo");
+    let tics: usize = golden(script, "tics_projected").parse().unwrap();
     let mut s = level();
     let digest = |s: &Simulation| {
         let (v, f) = fields(&s.snapshot().canonical_bytes());
@@ -152,23 +155,61 @@ fn synidle_replay_matches_the_encoder_goldens() {
     };
     let mut sequence = digest(&s);
     let mut last = sequence.clone();
-    for command in &demo.commands {
-        s.advance([
+    let mut refused = None;
+    for (i, command) in demo.commands.iter().enumerate() {
+        if let Err(e) = s.advance([
             *command,
             TicCommand::default(),
             TicCommand::default(),
             TicCommand::default(),
-        ])
-        .expect("an admitted tic");
+        ]) {
+            refused = Some((i + 1, format!("{e:?}")));
+            break;
+        }
         last = digest(&s);
         sequence.extend(&last);
     }
+    assert_eq!(sequence.len() / 32, tics, "{script}: captured tics");
     assert_eq!(
         doom_test_evidence::sha256(&sequence),
-        golden("SYNIDLE", "sequence_sha256")
+        golden(script, "sequence_sha256")
     );
     assert_eq!(
         last.iter().map(|b| format!("{b:02x}")).collect::<String>(),
-        golden("SYNIDLE", "final_sha256")
+        golden(script, "final_sha256")
     );
+    refused
+}
+
+#[test]
+fn synidle_replay_matches_the_encoder_goldens() {
+    assert_eq!(replay("SYNIDLE"), None);
+}
+
+#[test]
+fn syndie_replay_matches_the_encoder_goldens_and_refuses_the_reborn() {
+    // The golden ends `reborn` at tic N (C stops: the next G_Ticker would reload the
+    // level); Rust accepts tic N and refuses N + 1.
+    let (tic, error) = replay("SYNDIE").expect("the reborn tic is refused");
+    let end: usize = golden_end_tic("SYNDIE");
+    assert_eq!(tic, end + 1);
+    assert!(error.contains("PlayerReborn"), "{error}");
+}
+
+fn golden_end_tic(script: &str) -> usize {
+    let text = std::fs::read_to_string(reference("m3h9c_synthetic_goldens.json")).expect("goldens");
+    let at = text.find(&format!("\"{script}\": {{")).expect("script");
+    let tail = &text[at..];
+    let end = tail.find("\"end\": {").expect("end");
+    let kind = tail[end..]
+        .find("\"kind\": \"reborn\"")
+        .expect("a reborn end");
+    let rest = &tail[end + kind..];
+    let start = rest.find("\"tic\": ").expect("tic") + 7;
+    rest[start..]
+        .split(|c: char| !c.is_ascii_digit())
+        .next()
+        .unwrap()
+        .parse()
+        .unwrap()
 }

@@ -10,7 +10,7 @@ observer rows) on tests/reference/m3h9c_synthetic.wad; nothing here reads Rust o
 Outputs (synthetic, committable):
 
 - tests/reference/m3h9c_synthetic_goldens.json: per script the snapshot count, the end
-  (marker, or exit with its tic), the projection stop if the encoder refuses a tic
+  (marker, exit or reborn, with its tic), the projection stop if the encoder refuses a tic
   (kind and tic; the comparison then covers the tics before it), the per-tic digest list
   (the first 16 hex digits of the SHA-256 of each capture without `map.*` and `events.*`,
   the comparator's stripped form), the SHA-256 of the concatenated full per-tic SHA-256
@@ -44,11 +44,17 @@ def chosen(script, tic, value, state):
     """Fixture rules, evaluated on the projected fields of each tic (first match wins)."""
     picks = []
     if script == 'SYNIDLE' and tic == 0: picks.append('load')
+    if script == 'SYNDIE':                 # SYNIDLE's prefix: only its reborn tic is new
+        if value['original_player.0.state'] == bytes([2]) and 'reborn' not in state:
+            state['reborn'] = tic; picks.append('reborn request (PST_REBORN)')
+        return picks
     dead = value['original_player.0.state'] == bytes([PST_DEAD])
     if dead and 'death' not in state:
         state['death'] = tic; picks.append('player death')
     if 'death' in state and tic == state['death'] + 35 and 'deaththink' not in state:
         state['deaththink'] = tic; picks.append('P_DeathThink, 35 tics after the death')
+    if value['original_player.0.state'] == bytes([2]) and 'reborn' not in state:
+        state['reborn'] = tic; picks.append('reborn request (PST_REBORN)')
     if value['level.exit'] == b'\1' and 'exit' not in state:
         state['exit'] = tic; picks.append('exit tic')
     if 'barrel' not in state:

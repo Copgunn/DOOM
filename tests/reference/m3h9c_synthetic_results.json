@@ -1,7 +1,7 @@
 {
  "schema": "DOOM-M3H9C-SYNTHETIC-RESULTS-v1",
  "wad_sha256": "1180ed6a0070d841e20ae2a3fd136fe49f132082a2dba50b75106a10b58c5923",
- "runner_contract_sha256": "25cecec5b7bfeb952a5786bdd105ba66ccc6728493d2a317b8db5e2e06224111",
+ "runner_contract_sha256": "6d915e98a835e1b29a28735eeb2d36253468ba91f00b698e75f42401dab710aa",
  "variants": [
   "strict",
   "overflow",
@@ -35,6 +35,19 @@
    "unknown_messages": 0,
    "snapshots": 5001,
    "dumps_sha256": "1accfcf39650fe1aaaa72cf8ebab39a7e6a7d9be18905b45262c878158e9834b"
+  },
+  "SYNDIE": {
+   "lmp_sha256": "23986bcfbceca535649f09dab6ddfe08db3e31edb2227eddc39797384f715d73",
+   "tics": 1001,
+   "end": "reborn",
+   "end_tic": 1000,
+   "prndindex_after_load": 146,
+   "prndindex_end": 156,
+   "thinkers_at_load": 98,
+   "mobjs_at_load": 92,
+   "unknown_messages": 0,
+   "snapshots": 1002,
+   "dumps_sha256": "66af9268e6366ef328269a5111e4b6b433318c54e2a0ff9bb876c2cad8a7fc36"
   },
   "SYNFIGHT": {
    "lmp_sha256": "77c17e0d4577281b91e992d4353dc4cd2e0525ec7b5d42469487b11b167b8149",

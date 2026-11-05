@@ -34,10 +34,10 @@ Field sources (dump row kind and column):
 - Sector thinkers: LL/LS/LG/LF (kinds 1-4) and DR/PL/FL (kinds 5-7) rows; a removed mover
   (R row of a mover identity) is kind 8 with the sector of its last record. CE rows,
   stasis plats and X rows are outside the layout and raise `Unadmitted`. Mover fields the
-  genuine code has not written yet are projected as the schema's 0 (DSIM35 decision N6;
-  no statement reads them before the first write). The driver's declared ZeroFill now
-  zero-fills every zone block, so C reads 0 there too; for dumps of an earlier driver,
-  whose genuine Z_Malloc left zone bytes there, the rule still applies: a
+  genuine code has not written yet must read the schema's 0 (DSIM35 decision N6; no
+  statement reads them before the first write); the driver's declared ZeroFill
+  zero-fills every zone block, so the projection asserts 0 and refuses anything else
+  (only the `--infer` fallback, for dumps of earlier drivers, projects 0 there): a
   door's `topcountdown` until it first waits (T_VerticalDoor sets it at the top), a
   plat's `count` until it first waits (T_PlatRaise, status 2) and its `oldstatus`
   (P_StopPlat only), a floor's `newspecial` and `texture` (change types only).
@@ -746,28 +746,28 @@ class Projector:
                 handles[0, e.key] = self.sthinkers.handles[e.key]; sector_of[0, e.key] = e.sector
                 if e.kind == 'removed': rec = (8, e.key)
                 elif e.kind == 'DR':
-                    # Unwritten zone memory (Z_Malloc does not zero; the M3h8 harness's
-                    # calloc did, decision N6): EV_VerticalDoor/EV_DoDoor never set
-                    # topcountdown for the admitted types; T_VerticalDoor writes it when the
-                    # door reaches the top (direction 0), before any read. Until then the
-                    # schema value is 0.
+                    # EV_VerticalDoor/EV_DoDoor never set topcountdown for the admitted
+                    # types; T_VerticalDoor writes it when the door reaches the top
+                    # (direction 0), before any read. Until then the schema value is 0
+                    # (DSIM35 decision N6), which the driver's ZeroFill guarantees in C.
                     e.waited = e.waited or r['direction'] == 0
-                    rec = (5, e.key, r['sector'], r['type'], r['direction'], r['topheight'],
-                           r['topcountdown'] if e.waited else 0, r['speed'], r['topwait'])
+                    top = self._zero(tic, e, 'door topcountdown before the first wait', r['topcountdown'], not e.waited)
+                    rec = (5, e.key, r['sector'], r['type'], r['direction'], r['topheight'], top, r['speed'], r['topwait'])
                 elif e.kind == 'PL':
                     if not r['running']: raise ProjectionError('Unadmitted', tic, 'a plat in stasis')
                     # oldstatus is written only by P_StopPlat (stasis, not admitted) and count
                     # only by T_PlatRaise when the plat starts waiting (status 2, count = wait;
-                    # EV_DoPlat's downWaitUpStay sets neither): unwritten zone memory until
-                    # then, never read; the schema value is 0 (N6)
+                    # EV_DoPlat's downWaitUpStay sets neither): 0 until then (N6, ZeroFill)
                     e.waited = e.waited or r['status'] == 2
-                    rec = (6, e.key, r['sector'], r['type'], r['status'], r['count'] if e.waited else 0, r['low'], r['high'], r['speed'], r['wait'],
-                           r['crush'], r['tag'], 0)
+                    count = self._zero(tic, e, 'plat count before the first wait', r['count'], not e.waited)
+                    old = self._zero(tic, e, 'plat oldstatus', r['oldstatus'], True)
+                    rec = (6, e.key, r['sector'], r['type'], r['status'], count, r['low'], r['high'], r['speed'], r['wait'],
+                           r['crush'], r['tag'], old)
                 else:
-                    # newspecial/texture are written only for the change types (not admitted):
-                    # unwritten zone memory for lowerFloorToLowest/turboLower, never read; 0 (N6)
+                    # newspecial/texture are written only for the change types (not admitted): 0 (N6, ZeroFill)
                     rec = (7, e.key, r['sector'], r['type'], r['direction'], r['floordestheight'], r['speed'], r['crush'],
-                           0, 0)
+                           self._zero(tic, e, 'floor newspecial', r['newspecial'], True),
+                           self._zero(tic, e, 'floor texture', r['texture'], True))
                 if e.kind != 'removed':
                     if r['sector'] in live: raise ProjectionError('Unadmitted', tic, 'two live movers in one sector')
                     live[r['sector']] = e
@@ -826,6 +826,16 @@ class Projector:
                    ('events.last.count', n('Q', 0)), ('events.pending.count', n('Q', 0))]
         f += self.map.fields
         return f
+
+    def _zero(self, tic, e, what, value, unwritten):
+        """A mover field the genuine code has not written yet: the schema says 0 and the
+        driver's ZeroFill makes C read 0, so anything else is refused. The `--infer`
+        fallback (dumps of drivers without ZeroFill, whose zone bytes are leftovers)
+        projects 0 instead."""
+        if not unwritten: return value
+        if self.infer: return 0
+        if value != 0: raise ProjectionError('DumpDeficiency', tic, f'{what} is {value}, not the schema 0 (ZeroFill?)')
+        return 0
 
     def _target(self, tic, e):
         return self._ref(tic, e.row['target'], self.entries)
