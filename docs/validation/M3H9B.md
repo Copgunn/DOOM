@@ -508,5 +508,27 @@ pass `--check`; five accept only `--smoke`, one needs a baseline directory and
 
 ## CI
 
-Recorded when the pull request's checks have run on the exact head, including the
-docs-only fast path proof.
+Draft pull request #55 (`feat/m3h9b-barrels` → `master`), GitHub Actions workflow `Rust`,
+2026-11-05. Exact commits, logs and the final head belong to GitHub; what was observed
+while the branch was prepared:
+
+| Head | Change | Detect changes | Stable / ubuntu | Stable / macos (`macos-26-intel`) | Stable / windows | Minimum Rust / 1.85.0 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `2dea148` | code (the review fixes) | pass, 9 s | pass, 33m32s | pass, 22m16s | pass, 18m03s | pass, 7m09s |
+| `d3f4c04` | code (the fuzz target fix) | pass, 9 s | pass, 34m53s | pass, 28m43s | pass, 10m12s | pass, 4m08s |
+| `60d4e43` | documentation only (ROADMAP, the note), under the first classification | pass; `docs_only=false` | full run, cancelled by the next push | pass, 15m33s | pass, 17m59s | pass, 6m07s |
+| `bd6b3bd` | code (the fast-path fix) and TESTING | pass, 11 s | pass, 34m50s | pass, 22m54s | pass, 11m29s | pass, 4m10s |
+| `1c76474` | documentation only (the note), after the green head `bd6b3bd` | pass, 8 s; `docs_only=true` | **pass, 7 s** | **pass, 20 s** | **pass, 24 s** | **pass, 9 s** |
+
+**The fast-path proof.** The first classification diffed a pull request's base against its
+merge commit, that is the whole branch, so the documentation-only push `60d4e43` ran every
+check in full (independent of the review; found on the pull request and corrected in
+`bd6b3bd`, note §13). Under the corrected rule, "documentation only since a green head",
+the push `1c76474` was classified from its event: previous head `bd6b3bd` with one
+successful run of this workflow, changed paths `docs/M3H9B_REFERENCE_INVESTIGATION.md`
+only, `docs_only=true`; each `Stable` job skipped 58 of its 64 steps and the `Minimum
+Rust` job 2 of 7 (the checkout, the documentation link check and the one-line report
+ran), and all four required checks reported success within 24 seconds. The code pushes
+`2dea148`, `d3f4c04` and `bd6b3bd` ran every step (`docs_only=false` or no comparable
+previous head) and passed on all four jobs. The record commits that touch this file are
+never documentation-only by design and run in full.
