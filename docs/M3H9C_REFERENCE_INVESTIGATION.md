@@ -9,7 +9,7 @@ after every tic. It records the original C facts (function, file and line) for t
 playback path, level setup, the ticker and the player model; the headless genuine build
 with its stub inventory and the 64-bit (LP64) defects of the genuine loader; the Rust
 loading path, command domain and capture surface; the harness design; the new owner
-decisions G1–G12 with recommendations; and the evidence and implementation plans. It
+decisions G1–G13 with recommendations; and the evidence and implementation plans. It
 follows the conventions of the [M3h9b note](M3H9B_REFERENCE_INVESTIGATION.md).
 
 Source authority is `linuxdoom-1.10/` at the repository's upstream commit; line numbers
@@ -805,7 +805,7 @@ exits 0, as tools/iwad_counts.py does; the Rust test is `#[ignore]`. CI never ru
 local harness and no workflow step names the IWAD; CI runs the same runner on the
 synthetic WAD only (G8).
 
-## 6. New owner decisions (G1–G12) with recommendations
+## 6. New owner decisions (G1–G13) with recommendations
 
 Each: (a) consistent with the brief and F1–F11? (b) no silent divergence? (c) no new
 kind of fidelity gap beyond refuse-the-tic witnesses? (d) bounded stores?
@@ -948,6 +948,19 @@ pending owner confirmation.
 each runner, all alone on the idle machine. (a)–(d) yes. **Recommendation:** as stated.
 Provisionally adopted, pending owner confirmation.
 
+**G13. The Demon-profile codegen regression.** The matched timings (step 9) show
+`canonical_demon`, `demon_expanded_map` and `diagnostic_free` 6–13% slower than master with
+identical digests: `Simulation::advance` runs 13–14.5% more instructions, because the release
+build's codegen-unit split no longer lets `BTreeMap<StateId,_>::insert`/`remove` inline into
+`ActorRegistry::immediate_cycle` (the cause is in the
+[evidence record](validation/M3H9C.md#matched-performance)). Options: (i) accept as explained
+(no code change; identical digests; +0.012% Ir with one codegen unit); (ii) `codegen-units = 1`
+or LTO in the release profile (slower builds, and still 10.6% above master's favourable split
+on these workloads); (iii) replace the `BTreeSet`s in `immediate_cycle` with dense marks (a
+data-structure change in a frozen-policy path that needs its own evidence).
+**Recommendation:** (i) now; (iii) to be considered in a maintenance milestone with the owner.
+Provisionally adopted, pending owner confirmation.
+
 ## 7. Evidence plan (C first)
 
 1. **The whole-engine C runner** on the synthetic WAD first: strict, `--overflow-check`
@@ -1044,11 +1057,9 @@ successor section and the schema in [STATE_FORMAT](STATE_FORMAT.md) when Phase 2
 - **Later**: real 1.9 demo playback (the version-byte route of G1), easy and hard skill,
   the reborn reload as an admitted transition, the rest of Episode 1.
 
-**Status / next step.** Phase 1 complete with this note; decisions G1–G12 provisionally
-adopted pending owner confirmation; Phase 2 steps 1–8 and 10 done (the observations are
-in the [evidence record](validation/M3H9C.md)); step 9 (matched performance), step 11 (the
-independent review: its fixes are in progress), step 12 (the gates) and the owner's
-confirmation remain.
+**Status / next step.** Phase 2 complete: steps 1–12 done; decisions G1–G13 provisionally
+adopted pending owner confirmation; the draft pull request #56 awaits the final head's checks
+and the owner's review.
 
 ## 12. Corrections and findings from Phase 2
 
@@ -1081,3 +1092,9 @@ confirmation remain.
   `PlayerReborn`. The reload itself stays outside the domain (G11). The real chaos script did
   not die in 5,000 tics; the `walk_to_exit` demo ends exactly on the exit tic, so no refused
   tic is observed there.
+- **Demon-profile codegen regression (found by the matched timings).** The older Demon
+  workloads run 6–13% slower and `Simulation::advance` 13–14.5% more instructions, though
+  `lifecycle.rs` is unchanged: adding `pub mod demo` (commit `2130d9c`) changed the 16-unit
+  codegen split so `BTreeMap<StateId,_>::insert`/`remove` no longer inline into
+  `immediate_cycle`; with one codegen unit the trees differ by +0.012% Ir. Recorded as G13;
+  measurements are in the [evidence record](validation/M3H9C.md#matched-performance).

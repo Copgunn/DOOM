@@ -8,8 +8,9 @@ facts, the decisions (§6) and the plan (§9); [format](../STATE_FORMAT.md) owns
 the admitted behavior and [testing](../TESTING.md#m3h9c-whole-engine-runner-and-the-real-e1m1-comparison)
 the commands. Exact review state and CI belong to GitHub.
 
-All timings are rough: the local host was not idle for any of them. Nothing here is a
-performance measurement. The real-E1M1 runs are **local only** (commercial IWAD read in
+Timings in the earlier sections are rough: the local host was not guaranteed idle for them,
+and they are not performance measurements. Only the [matched performance](#matched-performance)
+section was measured alone on the idle host. The real-E1M1 runs are **local only** (commercial IWAD read in
 place from `DOOM_IWAD_DIR`, never copied); only counts, tic numbers and digests are recorded
 and no map-derived value (coordinates, angles, lump bytes, per-object data) appears. The
 claim is limited to the five scripted inputs below on medium skill; it is not a claim for
@@ -216,18 +217,169 @@ campaign is exhaustive.
 
 ## Matched performance
 
-To be recorded (plan step 9, the matched timings).
+Recorded 2026-11-06 (plan step 9), alone on the idle machine: one timing harness process
+and no other build, test, fuzzing or job during a round. The 1-minute load average was 0.94
+before, 1.00 to 1.11 at the ten round boundaries and 1.07 after (the harness itself is the one
+running process). Host: Intel Core i7-8750H, 6 cores / 12 logical CPUs, 7.7 GiB, Linux
+6.18.58.1 WSL2, rustc 1.99.1, the default release profile, no CPU, frequency or core
+isolation. These are host observations, not budgets.
+
+**Method** (as the M3h9b record): master `59a397e` (a fresh worktree with its own
+`CARGO_TARGET_DIR`) against the branch at `e5eafb5`; 239 matched workloads, the M3h9b 235 plus
+the four `player_barrels` workloads (now an older policy); 11 rounds, AB/BA alternating,
+5,258 samples; the timed field is each example's own timer. Every non-timing output line of
+every sample is identical between the trees (30,250 fields); a naive "only `ns`" filter
+would misreport the extra `*_ns` fields of the specials and movers examples.
+
+| Example | n | Timed field | Median delta of medians | Range of the delta | Median delta of minima |
+| --- | ---: | --- | ---: | --- | ---: |
+| canonical_demon | 1 | `step100_with_query_us` | +9.2% | +9.2..+9.2 | +8.7% |
+| context_ownership | 2 | `retirement100_us` | -0.2% | -0.3..-0.1 | +1.0% |
+| demon_expanded_map | 9 | `step100_us` | +6.2% | -2.2..+11.7 | +7.3% |
+| game_instance | 2 | `step100_us` | +0.2% | -0.1..+0.4 | -0.7% |
+| map_extent | 11 | `step100_us` | -1.2% | -4.1..+1.5 | -1.5% |
+| map_scale | 9 | `step100_us` | -1.6% | -2.5..+3.0 | -1.5% |
+| original_registry | 6 | `step100_us` | +0.5% | -2.2..+1.5 | +0.4% |
+| diagnostic_free | 10 | `ns` | +11.0% | -4.3..+13.4 | +11.5% |
+| original_player | 4 | `ns` | +0.5% | -0.3..+1.1 | -0.9% |
+| player_commands | 9 | `ns` | -2.0% | -5.6..-0.5 | +0.1% |
+| player_knockback | 6 | `ns` | -0.5% | -2.3..+3.5 | -0.3% |
+| player_demon | 11 | `ns` | -2.5% | -6.1..+3.8 | -2.2% |
+| player_demon_melee | 9 | `ns` | -2.9% | -3.3..+2.2 | -0.7% |
+| player_pistol | 15 | `ns` | +1.9% | -5.1..+9.4 | +1.6% |
+| player_weapon_pack | 25 | `ns` | +0.6% | -2.8..+3.7 | +1.2% |
+| player_world_pickups | 17 | `ns` | +1.1% | -1.2..+4.8 | +0.2% |
+| player_armor | 19 | `ns` | -1.5% | -5.2..+1.3 | -0.8% |
+| player_bonuses | 13 | `ns` | -3.4% | -4.5..+6.0 | -2.1% |
+| player_monsters | 7 | `ns` | +0.7% | -1.0..+4.3 | +0.1% |
+| player_imps | 7 | `ns` | +0.8% | -2.8..+2.4 | +0.4% |
+| player_map_scale | 8 | `ns` | -0.1% | -5.5..+1.0 | -0.3% |
+| player_heights | 6 | `ns` | +2.3% | -1.0..+3.2 | +1.8% |
+| player_diagonal | 3 | `ns` | +0.5% | 0.0..+2.1 | +0.3% |
+| player_real_map | 6 | `ns` | -0.7% | -4.1..-0.2 | -0.1% |
+| player_specials | 6 | `ns` | +2.3% | +1.6..+5.5 | +1.8% |
+| player_movers | 9 | `ns` | -1.3% | -4.5..+2.4 | -0.8% |
+| player_e1m1 | 4 | `ns` | +0.4% | -1.7..+2.8 | -0.5% |
+| legacy_pistol | 1 | `ns` | +1.0% | +1.0..+1.0 | +7.2% |
+| player_barrels | 4 | `ns` | +1.9% | +0.1..+2.1 | +1.6% |
+
+Over all 239 workloads the median of the median deltas is +0.1% and the median of the minimum
+deltas +0.0%.
+
+**Slowdowns over 3%.** 31 workloads slowed by more than 3%; callgrind ran once per tree for
+each. 16 are a real instruction-count change: `canonical_demon`, 7 of the 9
+`demon_expanded_map` and 8 of the 10 `diagnostic_free` workloads. In them
+`Simulation::advance` executes 13.1 to 14.5% more instructions (for example
+`diagnostic_free small_control 20`: 109,764,777 to 125,653,971; `canonical_demon`: 109,803,420
+to 125,692,614), attributed to `BTreeMap<StateId,_>::insert` and `remove` in
+`ActorRegistry::immediate_cycle` (`crates/doom-sim/src/lifecycle.rs`, unchanged on the branch)
+no longer being inlined. The other 15 are noise: whole-process Ir within 1% (at most +0.89%,
+and `advance` +0.5 to +0.7%) against +3 to +9% in time.
+
+**Cause of the 16** (follow-up experiments, no code committed). The release build uses 16
+codegen units. On master the btree code and `immediate_cycle` share one unit (`cgu.04`); on the
+branch they are in `cgu.06` and `cgu.09`. Bisection by building the library at each branch
+commit points to `2130d9c`, which adds `pub mod demo`. With
+`CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1` the trees differ by +0.012% Ir (master 121,432,498 and
+121,472,323; branch 121,446,511 and 121,486,336 for the two workloads), so master's 109.8M was
+itself a favourable split. Three source-level attempts did not restore it stably:
+`#[inline]` on the new accessors (no effect); `#[inline]` on `parse_demo` and `write_demo`
+(halved the gap to +7.0%); moving the demo items into an existing module (worse). The matched
+timings were not re-run after these experiments, which changed no committed code. The
+regression is recorded as explained (decision
+[G13](../M3H9C_REFERENCE_INVESTIGATION.md#6-new-owner-decisions-g1g13-with-recommendations)).
+
+**Real-E1M1 per-tic costs** (branch only, not matched; the IWAD read in place, five-run
+medians). The Rust runner `player_level_run` without captures: idle 1,684 us/tic (3.536 s for
+2,100 tics, about 60.8 ms of it fixed) and chaos 1,693 us/tic (8.465 s for 5,000 tics). The
+runner hashes a full DSIM38 capture every tic, which dominates; the simulation alone was about
+45 us/tic in the Phase 1 probe. With `--captures`: 1,929 and 1,944 us/tic, writing 417 MB and
+990 MB. The genuine strict build: `G_Ticker` 3.5 us/tic (idle) and 5.2 us/tic (chaos), the dump
+taking 0.513 s and 1.236 s.
+
+**CI budget** (alone, branch tree): `m3h9c_reference.py --check` 19.7 s (build 6.7 s, runs
+12.9 s); the six-script Rust loop with `--captures` 17.3 s (prebuilt, writes 1.4 GB);
+`check_player_level.py` 37.4 s.
 
 ## Independent review
 
-To be recorded (plan step 11, the independent review).
+Recorded 2026-11-06 (plan step 11). An Opus reviewer subagent without access to the authors'
+reasoning read the full diff against `origin/master` and the linuxdoom-1.10 source, with the
+specific question whether any stub or `--wrap` observer writes game state that `P_Ticker` or
+`G_Ticker` can observe.
+
+**Verdict: no blocker.** Wires up to 21 are unchanged (every new branch is gated on
+`has_level`); each runner adapter matches its source line and computes the 32-bit value; the
+`ZeroFill` claim holds; wire 22 is correct against p_mobj.c:642-737 and p_user.c:182-229,
+355-359; the encoder reads no Rust output and follows the frozen slot rule.
+
+**Stub and observer proof.** The wrappers `P_AddThinker`, `P_SetThingPosition`, `Z_Free`
+(copies from the block, never into it) and `P_InitThinkers` write only side tables;
+`Z_Malloc` zero-fills before the caller's first write; the driver sets only vanilla
+initialisation values (plus one `P_Random` under `--selftest-extra-draw`); 29 I/O stubs write no
+game state; 6 read-only stubs are empty; the 8 writers are `I_Quit` (vanilla's exit),
+`I_GetTime` (timing demo only), `HU_Ticker` (`message`, never read by gameplay), `AM_Stop`
+(unreachable) and `WI_Start`, `WI_Ticker`, `F_StartFinale`, `D_AdvanceDemo` (abort).
+
+The reviewer ran `check_docs`, the three static `--check` tools, `m3h9c_reference.py --check`
+(three variants identical), `m3h9c_snapshot_goldens.py --check`, `cargo test -p doom-sim`
+(1,039 passed), the six synthetic Rust runs with `check_player_level` (all pass) and a
+planted-difference check (first divergence at tic 501, `actor.52.x`).
+
+| ID | Severity | Finding | Outcome |
+| --- | --- | --- | --- |
+| R1 | major (docs) | ROADMAP and note status contradicted each other | fixed |
+| R2 | minor | stub counts 31/6/6 against the contract's 29/6/8 | fixed |
+| R3 | minor | the comparator's `match` did not require the map group | fixed (required; `map_group_sha256` reported) |
+| R4 | minor | only the extra-draw self-test was a committed tool | fixed (`m3h9c_reference.py --selftest TIC` plants both perturbations on SYNIDLE; the comparator-side half of the real run stays a manual procedure) |
+| R5 | minor | the encoder forced schema zeros instead of reading them | fixed (asserted from the dump) |
+| R6 | minor | no C evidence for the dead player's `BT_USE` tic | fixed (driver `end=reborn`, script `synth_die_use`/SYNDIE, golden and fixture) |
+| R7 | minor | commit order: the Rust writer before the goldens | disclosed |
+| R8 | minor | stale dead-player command-domain text | fixed |
+| R9 | note | ARCHITECTURE wording | fixed |
+| R10 | note | README "cannot play back demos" | fixed |
+| R11 | note | driver comment omitted ZeroFill | fixed |
+| R12 | note | fuzz `point_angle` differs from C only at an unreachable 2^31 difference | no change |
 
 ## Local gates
 
-To be recorded (plan step 12, the local gates).
+Recorded 2026-11-06 (plan step 12) at head `e5eafb5`, from clean (`cargo clean` of the
+workspace and `fuzz/target`). The diagnostics-only commit `c97f238` (the runner printing its log
+tail, and a failure-only artifact upload) landed 2.5 minutes into the 47-minute run: the Rust
+steps ran at `e5eafb5` and the whole-engine step at `c97f238`. Host rustc 1.99.1, cargo
++1.85.0, nightly cargo 1.101.0 (2026-10-27), GCC 15.2.0, Python 3.14.4. **66 of 66 steps
+passed in 2,825 s wall:**
+
+- format (workspace and fuzz manifest), Clippy with warnings denied, build;
+- `cargo test --workspace --locked`: 1,079 passed, 0 failed, 4 ignored over 87 suites (366 s);
+- release `doom-sim` and `doom-types`: 1,046 passed, 0 failed, 2 ignored over 75 suites (143 s);
+- `run_reference.py --suite --jobs 2`: 65 historical commands passed (724 s);
+- every reference and snapshot-golden `--check` from M3g10 through M3h9c (sanitizer runs with
+  `ASAN_OPTIONS=detect_leaks=0`: LeakSanitizer disabled, not passed);
+- the M3h9c static checks, the three-variant synthetic run, the DSIM38 projection (70 s), the
+  six-script Rust loop with `check_player_level` (55 s);
+- every `check_player_*` and `check_original_player` script, the `parse_map` and headless
+  examples, the 22 headless equality scripts (54 s; `python` was a symlink to `python3`, as
+  this host has no `python`), 6 measurement `--check` and 1 `--smoke`;
+- `check_docs` (124 files, 2,114 links, 484 anchors, 20 archives) and rustdoc with warnings
+  denied;
+- the MSRV job, `cargo +1.85.0 test --workspace --locked`: 1,079 passed, 0 failed, 4 ignored (394 s);
+- `check_examples.py`: 17 asserted examples, debug and release;
+- fuzz build with `--sanitizer address` (49 targets, 100 s) and the plain fuzz build.
+
+The working tree was unchanged afterwards. The verify-git step fetched `138c66b`.
 
 ## CI
 
-To be recorded from the pull request's checks. The workflow steps are listed in
+Draft pull request #56 (`feat/m3h9c-e1m1-run` to `master`), workflow `Rust`. The workflow
+steps are listed in
 [testing](../TESTING.md#m3h9c-whole-engine-runner-and-the-real-e1m1-comparison); exact runs
-belong to GitHub.
+belong to GitHub. Heads observed so far:
+
+| Head | Observed |
+| --- | --- |
+| `e5eafb5` (code) | Detect changes pass; Minimum Rust pass (4m17s); Stable/windows pass (19m48s); Stable/macos (`macos-26-intel`) pass (30m35s); Stable/ubuntu **failed** (35m12s) at "Genuine whole-engine run of the synthetic E1M1" (address variant, SYNBARRL, exit status -6, log not visible) |
+| `c97f238` (diagnostics only) | Minimum Rust pass (7m41s); windows pass (15m3s); macos pass (26m59s); ubuntu **failed** (19m31s) with `Error: Z_ChangeTag: an owner is required for purgable blocks`: the genuine z_zone.c:440 test `(unsigned)block->user < 0x100` truncates an LP64 pointer, under the runner's ASan heap layout (`W_CacheLumpNum` re-caching the synthetic WAD's single patch lump) |
+| `7141319` (the fifth LP64 adapter, z_zone.c:440 compares `(uintptr_t)`; the contract and the results JSON's contract hash regenerated; synthetic dumps unchanged) | pending; the final head's checks belong to GitHub |
+
+Earlier heads `ab79afb` and `0e565b9` were cancelled by the next push.

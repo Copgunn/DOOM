@@ -81,11 +81,11 @@ observations remain linked from the [evidence index](README.md).
 
 ### M3h9c: The real E1M1 run, tic for tic
 
-Phase 1 (the [investigation note](M3H9C_REFERENCE_INVESTIGATION.md)) is complete; Phase 2
-steps 1-8 and 10 are done on `feat/m3h9c-e1m1-run` ([observations](validation/M3H9C.md));
-step 9 (matched performance), step 11 (the independent review: its fixes are in
-progress), step 12 (the gates) and the owner's confirmation remain. Decisions G1-G12 are provisionally adopted, pending
-owner confirmation. The milestone is a local-only harness that runs the owner's E1M1 under
+Status: Phase 2 complete, in owner review. Phase 1 (the
+[investigation note](M3H9C_REFERENCE_INVESTIGATION.md)) is complete and Phase 2 steps 1-12 are
+done on `feat/m3h9c-e1m1-run` ([observations](validation/M3H9C.md)); draft pull request #56
+awaits the final head's checks. Decisions G1-G13 are provisionally adopted, pending owner
+confirmation. The milestone is a local-only harness that runs the owner's E1M1 under
 the genuine linuxdoom-1.10 engine and under the Rust simulation from the same version-110
 demo and compares them on every tic, committing only counts, pass/fail and digests, never
 IWAD content.
@@ -102,9 +102,7 @@ WAD with its CI steps; and the fuzz target `player_level`. All five scripted rea
 (idle, walking to the exit, fighting, barrels, random commands) matched the genuine engine
 tic for tic.
 
-Remaining: the matched performance (step 9), the fixes of the independent review
-(step 11), the local and exact-head gates (step 12), and the owner's confirmation of
-G1-G12. Support is in
+Remaining: the owner's review and confirmation of G1-G13. Support is in
 [COMPATIBILITY](COMPATIBILITY.md#original-level-runs-the-player-start-in-lump-order-and-the-full-player-think-wire-22);
 commands are in [TESTING](TESTING.md#m3h9c-whole-engine-runner-and-the-real-e1m1-comparison).
 
@@ -373,8 +371,11 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-- **M3h9c follow-ups.** The real-E1M1 harness is the current milestone (above). Still
-  open after it: the actual intercept maximum, the `P_ChangeSector` work at 129 linked
+- **M3h9c follow-ups.** The real-E1M1 harness is the current milestone (above). The
+  matched timings found a codegen-split regression of 6-13% in time on the older Demon-profile
+  workloads (`canonical_demon`, `demon_expanded_map`, `diagnostic_free`; identical digests),
+  accepted as explained in decision G13 and to be reconsidered with the owner in a maintenance
+  milestone. Still open after it: the actual intercept maximum, the `P_ChangeSector` work at 129 linked
   things and whether any per-tic witness fires on the real map, to be observed by the
   matched runs and recorded in its evidence record.
 - **Later bounds and skills.** Barrels beyond 16 and pickups beyond 64 for the rest of
