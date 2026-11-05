@@ -2140,7 +2140,16 @@ state unchanged and nothing spawned from a failing batch:
 
 Refused per tic with the state preserved (fidelity-gap witnesses): the inherited ones
 (the 129th intercept, the sight budgets, `SpecialCross`, `Vertical`, the exit and reborn
-tics) and one new witness: **a stale bomb source**. The barrel's `target` is a
+tics) and two new witnesses. **The barrel corner jump**: a dying barrel (radius 10) thrown
+more than 20 units per axis can clear a wall corner in one `P_TryMove`, because the source
+tests only the destination box and does not halve negative moves (p_mobj.c:150–164,
+p_map.c:451–517); the Rust move does the same, and then, as for the player's corner jump of
+the diagonal policy, an exact parity test after the accepted move refuses the tic with
+`MapScaleError::Escape` when the barrel's centre has left the room (state preserved). It
+needs momentum above 20 per axis: an API push or hit, or the 4× fall-forward thrust of a
+lethal hit on a barrel more than 64 units above its attacker; monsters (radius 20) and the
+player (radius 16, with its own witness) cannot clear a corner this way. **A stale bomb
+source**: The barrel's `target` is a
 generational handle; when `A_Explode` finds it unreadable (its actor was removed), the
 source would read freed memory, so the tic is refused with `PlayerBodyError::Invariant`
 instead (decision F4; unreachable in the admitted domain, where monster corpses and the

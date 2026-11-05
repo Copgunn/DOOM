@@ -1496,6 +1496,11 @@ python3 tools/reference/check_player_barrels.py
 cargo test -p doom-sim barrel
 cargo run -p doom-sim --example player_barrels --locked
 python3 tools/measure_barrels.py --check
+python3 tools/seed_player_barrels_fuzz.py /tmp/doom-barrels-seeds      # 3,172 seeds, max_len 362
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_barrels /tmp/doom-barrels-corpus --sanitizer address -- -runs=0 -max_len=362 -timeout=15 -rss_limit_mb=1024
+# Bounded campaigns, each on a fresh copy of the seeds:
+cargo +nightly fuzz run player_barrels /tmp/doom-barrels-corpus --sanitizer none -- -seed=701 -max_total_time=1800 -max_len=362 -timeout=15 -rss_limit_mb=1024
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_barrels /tmp/doom-barrels-corpus --sanitizer address -- -seed=702 -max_total_time=1800 -max_len=362 -timeout=15 -rss_limit_mb=1024
 ```
 
 The generator layers on the M3h9 pack and adds three genuine bodies, `P_RadiusAttack`,
@@ -1545,7 +1550,21 @@ refused, an embedded player and barrel refused, edge contact and overlapping sta
 admitted, even parity refused, wire 20 unchanged), every barrel path of the note's §2 with
 expected values derived from the C formulas, the stale-source witness, the API refusals,
 rollback of a 17th barrel, 2,400-tic soaks with four seeds and the DSIM37 round trip, and
-26 forged-field negatives of `decode_barrels`.
+26 forged-field negatives of `decode_barrels`. The fuzz target `player_barrels` starts from
+the 26 scenario starts (an input is 2 header bytes and up to 40 nine-byte records, at most
+1,024 tics) and applies bounded operations: commands with `BT_USE` and `BT_ATTACK` through
+`advance` and `step`, damage with and without an inflictor aimed at the body, a monster, a
+decoration, a pickup and a barrel, the refused barrel calls (target, removal, state entry,
+death request, direct spawn), pushes and vertical momentum on a barrel, pause and runs of
+up to 256 tics, under the properties `step == advance` on a fresh clone every fourth
+operation, a refused operation leaving the snapshot and RNG unchanged, V′ and Ω (Ω's box
+clause once an actor has left its spawn position, since S′ admits an embedded Imp), the
+item witness, every live barrel passing the barrel witness with at most 16 barrels, a
+dying barrel solid, non-shootable and 10.5 units high or gibbed, the DSIM37 round trip
+after every operation and every 32nd tic of a run (with `decode_e1m1` rejecting it),
+progress, and every refused tic being a declared witness (`Intercepts`, `WorkLimit`,
+`SpecialCross`, `Vertical`, `Escape`, the exit, the reborn request, `Invariant` for a stale
+source) and never a panic.
 
 ### Docs-only CI fast path
 

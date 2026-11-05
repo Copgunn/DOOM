@@ -261,7 +261,54 @@ passed, 0 failed, 1 ignored (73 suites).
 
 ## Fuzzing
 
-Recorded after plan step 10.
+Target `player_barrels` compiled: all 48 fuzz targets built with `--sanitizer address`
+(cargo-fuzz 0.13.2). The target starts from the 26 scenario starts and applies the bounded
+operations listed in
+[TESTING](../TESTING.md#original-exploding-barrels-pickup-scale-and-every-thing-angle-c-evidence)
+(`-max_len=362`: 2 header bytes plus 40 nine-byte records, at most 1,024 tics an input);
+`tools/seed_player_barrels_fuzz.py` writes 3,172 seeds (26 starts × 2 start bytes × 61
+patterns). Every AddressSanitizer run set `ASAN_OPTIONS=detect_leaks=0`, so LeakSanitizer
+was disabled, not passed. A seed replay is not a campaign.
+
+| Run | Observed |
+| --- | --- |
+| Seed replay at `ef20de8`, all 3,172 seeds, `-runs=0`, AddressSanitizer | stopped by finding 3 (seed 1367) after 1,463 units in 266 s, peak RSS 757 MB, cov 13,512, ft 54,395 |
+| Seed replay at `ef20de8`, the 3,166 seeds without finding 3's six reproducers | 3,168 runs in 830 s (3 exec/s), cov 14,217, ft 62,024, peak RSS 796 MB; no crash, timeout, assertion or sanitizer report |
+| Seed replay after the Escape witness, all 3,172 seeds | recorded below with the fix |
+| Coverage-guided and sanitizer campaigns on the final target | recorded under [fuzz campaigns](#fuzz-campaigns) |
+
+Findings of the seed replay, in the order found:
+
+1. **Simulation (fixed in `ebfaa77`).** `damage_actor` accepted a barrel as the damage
+   *source*; the wounded victim then targeted the barrel, a monster hurt by its explosion
+   targeted it too, and the next valid tic was refused with `PerceptionError::Roster`, not
+   a declared witness. The source never passes a barrel as a source (it is only ever an
+   inflictor), so the API now refuses it with `PlayerBodyError::Unsupported`, state
+   unchanged; pinning test `a_barrel_is_refused_as_a_damage_source`.
+2. **Target.** The embedded room failed the target's Ω box clause at spawn, which the
+   spawn rule S′ admits for an Imp overlapping a wall; the target now applies the box
+   clause once an actor has left its spawn position.
+3. **Policy (the barrel corner jump).** Six seeds, each a lethal 1,000-damage hit on the
+   corridor-hall barrel, left the barrel at (10, −30) with momentum (−27.19, −27.19) and
+   moved it in one step to (−17.19, −57.19), behind the corner at (0, −32): the source
+   tests only the destination box and does not halve negative moves, and the Rust move
+   matched it, but the barrel's centre left Ω, which the M3h5 proof assumed every mover
+   keeps (its step "`30·w < 2r·w`" fails for radius 10). Resolved as the player's corner jump
+   was: an exact parity test after every accepted barrel move refuses the tic with
+   `MapScaleError::Escape` (note [§13](../M3H9B_REFERENCE_INVESTIGATION.md#13-corrections-and-findings-from-phase-2-kept-with-the-original-text-above)).
+
+**The 121-thing lift room.** `player_barrels --measure dense64_lift` builds the M3h9
+liftroom in memory with 1 player, 8 monsters, 64 pickups, 32 decorations and 16 barrels
+(121 things linked at spawn, 120 inside the lift sector's blockbox; the bound of 129 is
+reached only through drops after kills, and nothing is killed here) and walks the player
+across the lift's WR 88 line for 1,200 tics: 272 `P_ChangeSector` calls (at most 1 per
+tic), 32,640 thing clips (at most 120 per tic), digest `775002081fb13dd7` in `advance`,
+`step` and `capture` alike (`measure_barrels.py --check`); smoke runs on a busy machine,
+not timings.
+
+## Fuzz campaigns
+
+Recorded after the independent review, on the final target.
 
 ## Matched performance
 

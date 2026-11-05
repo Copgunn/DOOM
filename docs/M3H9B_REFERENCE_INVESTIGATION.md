@@ -1075,3 +1075,18 @@ Recorded here rather than rewritten, so the Phase 1 reasoning stays readable:
   intercept, so the unchecked overflow of the source is never observed in C; the Rust-only
   lane `m3h9b_intercepts129.bin` exercises the witness.
 - **Chain timers** in `chain_reaction` were 5, 3, 5, 5, not all distinct as §7 assumed.
+- **F3, the step "`30·w < 2r·w`" (found by the fuzz target).** It holds for the player
+  (`r` 16) and the admitted monsters (`r` 20) but not for a barrel (`r` 10): a dying barrel
+  with momentum above 20 per axis (clamped at 30, negative moves not halved) can clear a
+  wall corner in one `P_TryMove`, since the source tests only the destination box, and
+  its centre leaves Ω. The Rust move matches the source; the invariant, not the behaviour,
+  was wrong. Resolution, as for the player's corner jump of M3h5: an exact parity test
+  after every accepted barrel move refuses the tic with `MapScaleError::Escape`, state
+  preserved. S′ itself is unaffected (an embedded barrel is refused in any case). Found by
+  seeds 1123, 1184, 1367, 1428, 1489 and 1550 of the fuzz seeder, each a lethal 1,000-damage
+  hit on the corridor-hall barrel.
+- **F4(v), a barrel as a damage source (found by the fuzz target).** `damage_actor`
+  accepted a barrel as the *source* of a request, which the source never produces (a
+  barrel is only ever an inflictor); the wounded victim then targeted the barrel and the
+  next tic was refused with `PerceptionError::Roster`, not a declared witness. The API now
+  refuses a barrel source with `PlayerBodyError::Unsupported`, state unchanged.
