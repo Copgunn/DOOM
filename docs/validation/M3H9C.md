@@ -380,6 +380,6 @@ belong to GitHub. Heads observed so far:
 | --- | --- |
 | `e5eafb5` (code) | Detect changes pass; Minimum Rust pass (4m17s); Stable/windows pass (19m48s); Stable/macos (`macos-26-intel`) pass (30m35s); Stable/ubuntu **failed** (35m12s) at "Genuine whole-engine run of the synthetic E1M1" (address variant, SYNBARRL, exit status -6, log not visible) |
 | `c97f238` (diagnostics only) | Minimum Rust pass (7m41s); windows pass (15m3s); macos pass (26m59s); ubuntu **failed** (19m31s) with `Error: Z_ChangeTag: an owner is required for purgable blocks`: the genuine z_zone.c:440 test `(unsigned)block->user < 0x100` truncates an LP64 pointer, under the runner's ASan heap layout (`W_CacheLumpNum` re-caching the synthetic WAD's single patch lump) |
-| `7141319` (the fifth LP64 adapter, z_zone.c:440 compares `(uintptr_t)`; the contract and the results JSON's contract hash regenerated; synthetic dumps unchanged) | pending; the final head's checks belong to GitHub |
+| `7141319` (the fifth LP64 adapter, z_zone.c:440 compares `(uintptr_t)`; the contract and the results JSON's contract hash regenerated; synthetic dumps unchanged) | Detect changes pass (9s); Minimum Rust pass (7m38s); Stable/windows pass (16m51s); Stable/macos pass (25m11s); Stable/ubuntu pass (36m58s): **all five checks green**. The documentation-only commits after it take the fast path; their runs belong to GitHub |
 
 Earlier heads `ab79afb` and `0e565b9` were cancelled by the next push.
