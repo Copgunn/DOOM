@@ -3156,7 +3156,7 @@
     "r_main.c:R_PointToAngle": 121,
     "r_main.c:R_PointToAngle2": 121
   },
-  "expanded_trace_sha256": "015d6e83d091115d4377dfbb3118c8bed5f46a8da381a974f2fbf39c27a91232",
+  "expanded_trace_sha256": "2b20c29847efd23fdff952685f9df0e2db62271d6deccbbba24610897a6c9dfb",
   "explode_action": 19,
   "flags": [
     "-std=gnu89",
@@ -4155,7 +4155,7 @@
     "tools/reference/m3h9_cases.py": "f240121a9acc782b9950810021e486cec1dfa712ad047c903f3ab8bfc446ed45",
     "tools/reference/m3h9_geometry.py": "5c0703054b4c235d78a4bc4297be8f132b8ad3f46052c4fc056760df82e37f30",
     "tools/reference/m3h9_reference.py": "c86241e32727825090c115df43753e37ce34382585f547cf938e925ac19ec328",
-    "tools/reference/m3h9b_cases.py": "6d2bfe1485d8c38c38d1134b1d5d2796cf61a9668641d71fd8a6dbde90176d3d",
+    "tools/reference/m3h9b_cases.py": "e3ec3f14b2e304ddf395e06c9a6b417d8f874d0b807da02f1205715756173d8c",
     "tools/reference/m3h9b_geometry.py": "41dd2ce62bb682243def963a1c4c30a76799407dda9fa559cb497bba9dd75f2f",
     "tools/reference/m3h9b_reference.py": "b28ed61280c1a52b08218a376b21413131d22e2aadbf4ced6146f6ff91499dce"
   },
@@ -4184,7 +4184,7 @@
       "p_map.c:P_RadiusAttack": 27
     },
     "new_genuine_bodies": 3,
-    "packed_trace_bytes": 787355,
+    "packed_trace_bytes": 787219,
     "radius_candidates": 79,
     "rooms": 10,
     "rust_only_lanes": {
@@ -4232,7 +4232,7 @@
     "tests/reference/m3h9b_geometry_21.bin"
   ],
   "outputs_sha256": {
-    "m3h9b_cases.csv": "356add4dfac7d34967ac24ea3a9cebd675210619584297172ca6c1bc0d357e62",
+    "m3h9b_cases.csv": "3fb6e6f6ea099ef1ca2fa2e77ece70bff5f4ab81c0b4a6331c53a04a940491a3",
     "m3h9b_embedded_barrel.bin": "4fa23eda66c229753cf619e6cd0ad13b5930fe2605f5e1e3ee64e23cdde52b0e",
     "m3h9b_geometry_0.bin": "6b0a3bb5b1b8943ae5de98332865f516301719d893460081f6e8ec12e83fab13",
     "m3h9b_geometry_1.bin": "16990d55c75ec1719d0022bc79afb7701c9d18df3b31877b854323b410ffd31b",
@@ -4258,7 +4258,7 @@
     "m3h9b_geometry_9.bin": "35fb052238e938b76578b2aa2edbcf3993d4079c198814b2cfd7da99fbd65e01",
     "m3h9b_intercepts129.bin": "7900a72799911bad1240e1745130316d36d794031ef9deaa8740c0d83391add7",
     "m3h9b_maps.rs": "97b21da788f1d01779ddce07e96734204dbadaa00aa45aa771eebb9f6d9beb43",
-    "m3h9b_trace.dref": "017fe9cea0390e3d5965087ebed06cebc1b96f366155110527826cca51ddfb04"
+    "m3h9b_trace.dref": "a21b477891b64e461565e464c43adc1f4e699de7256221b890551bc23ecc6828"
   },
   "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
   "row_formats": {
@@ -4330,7 +4330,7 @@
     }
   ],
   "sanitizer_comparison": {
-    "raw_trace_sha256": "83598233039c559a21638524c82e9e4c082f9cc400d49893ff1971b0c2c35877",
+    "raw_trace_sha256": "e02df372792a81948a517d1f4982c168dbc16dfed323b9473eec7ee965dee031",
     "rule": "--overflow-check rebuilds without -fwrapv under -fsanitize=signed-integer-overflow,integer-divide-by-zero,float-cast-overflow and --address-check under -fsanitize=address,undefined (both -fno-sanitize-recover=all), each with the declared sanitizer_adapters applied; each run asserts its raw trace equals the strict -fwrapv trace of the genuine text byte for byte, so raw_trace_sha256 is the digest of all three"
   },
   "schema": "DOOM-PLAYER-BARRELS-v1",

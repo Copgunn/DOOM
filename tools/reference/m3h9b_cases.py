@@ -246,11 +246,11 @@ def populate(pack):
     # never runs and its target stays NULL; the puff enters S_PUFF3 (attackrange ==
     # MELEERANGE). The explosion's bomb source is NULL; the player beside it is hurt
     # with attacker NULL.
-    add('fist_kills_barrel', 0, [thing(BARREL, 0, 0)], px=-36, py=0, ready=0, owned=1, attack_start=20, attack_end=20, tics=50, seed=FIST_SEED, **tough)
+    add('fist_kills_barrel', 0, [thing(BARREL, 0, 0)], px=-36, py=0, ready=0, attack_start=20, attack_end=20, tics=50, seed=FIST_SEED, **tough)
     # The same blow without the extra health; the player runs after the sliding barrel and
     # the explosion (110) kills him with a NULL source (frags[0]++, PST_DEAD, P_DropWeapon, no attacker); BT_USE afterwards
     # requests the reborn and the case ends (the C harness does not run G_DoReborn).
-    add('player_killed_by_barrel', 0, [thing(BARREL, 0, 0)], px=-36, py=0, ready=0, owned=1, attack_start=20, attack_end=20, forward2=50, move2_start=25, move2_hold=36, use_start=60, use_end=60, tics=70, seed=FIST_SEED)
+    add('player_killed_by_barrel', 0, [thing(BARREL, 0, 0)], px=-36, py=0, ready=0, attack_start=20, attack_end=20, forward2=50, move2_start=25, move2_hold=36, use_start=60, use_end=60, tics=70, seed=FIST_SEED)
     # The aim of every shot picks the first live barrel; once it dies the next shot's aim
     # passes it (XT, the non-shootable skip) and picks the second barrel 240 units behind.
     add('autoaim_barrel', 0, [thing(BARREL, 0, 0), thing(BARREL, 240, 0)], px=-256, py=0, tics=90, **twice)
