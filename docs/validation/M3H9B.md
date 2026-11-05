@@ -316,7 +316,104 @@ Recorded after the independent review, on the final target.
 
 ## Matched performance
 
-Recorded after plan step 13.
+Plan step 13, 2026-11-04, on the local host (Intel Core i7-8750H, 6 cores / 12 logical
+CPUs, 7.7 GiB, Linux 6.18.58.1 WSL2, rustc 1.99.1, the default release profile). Each
+measurement ran alone: no build, test, fuzzing or other agent job ran during it. There is
+no CPU, frequency or core isolation. These are host observations, not budgets, and only
+ratios within one table compare.
+
+**Method.** Master `43460e2` (the merged M3h9a head) is a fresh `git worktree` under the
+milestone's scratch with its own `CARGO_TARGET_DIR`; the branch head `2dea148` uses its own
+target directory. Both were built with `cargo build -p doom-sim --examples --release
+--locked` before any timing, and the `measure_legacy_weapons.py` program was compiled once
+per tree with that script's `rustc` command. The workloads are the M3h9a table's 231 (every
+`--measure` workload of the `tools/measure_*.py` scripts in `advance` mode, the examples
+without a script, the older `--admit` rooms and `legacy_pistol`) plus the 4 `player_e1m1`
+workloads (`gallery_patrol`, `liftroom_ride`, `dense8_cross`, `scrollhall_fight`), an older
+policy now: **235 matched workloads**. 11 rounds; each round runs every workload once per
+tree as a process pair, the order alternating AB/BA by workload and round, so each workload
+has 11 samples per tree. The examples were called directly with the measure scripts' own
+arguments (no `wait4` launcher, so no RSS). The timed field is the example's own timer.
+"Same digest" compares every non-timing output line of every sample of both trees,
+including the final snapshot digest where the example prints one. One-minute load average
+1.16 before the run (falling from the builds), 1.00–1.10 at every round boundary, 1.00
+after.
+
+| Example | Workloads | Timed field | Median Δ median | Δ median range | Median Δ minimum | Same digest / fields |
+| --- | ---: | --- | ---: | --- | ---: | --- |
+| canonical_demon | 1 | `step100_with_query_us` | -8.2% | -8.2% to -8.2% | -7.9% | all 1 |
+| context_ownership | 2 | `retirement100_us` | -1.5% | -2.3% to -0.7% | -1.5% | all 2 |
+| demon_expanded_map | 9 | `step100_us` | -6.6% | -9.6% to +2.2% | -5.1% | all 9 |
+| game_instance | 2 | `step100_us` | -0.3% | -0.5% to -0.2% | -0.2% | all 2 |
+| map_extent | 11 | `step100_us` | +1.0% | -1.8% to +5.1% | +1.3% | all 11 |
+| map_scale | 9 | `step100_us` | +3.0% | +0.8% to +6.6% | +1.6% | all 9 |
+| original_registry | 6 | `step100_us` | +0.9% | -1.2% to +3.0% | +1.0% | all 6 |
+| stepping (diagnostic_free) | 10 | `ns` | -10.1% | -11.2% to +7.8% | -9.5% | all 10 |
+| original_player | 4 | `ns` | -0.6% | -4.0% to +0.5% | -1.5% | all 4 |
+| player_commands | 9 | `ns` | +2.2% | -0.8% to +3.9% | +1.6% | all 9 |
+| player_knockback | 6 | `ns` | +1.0% | -0.9% to +2.3% | +0.9% | all 6 |
+| player_demon | 11 | `ns` | +1.2% | +0.1% to +3.6% | +1.1% | all 11 |
+| player_demon_melee | 9 | `ns` | +2.2% | +0.0% to +12.1% | +1.0% | all 9 |
+| player_pistol | 15 | `ns` | +1.4% | -4.2% to +9.3% | +0.7% | all 15 |
+| player_weapon_pack | 25 | `ns` | +3.5% | -2.6% to +11.4% | +2.7% | all 25 |
+| player_world_pickups | 17 | `ns` | +0.9% | -5.3% to +10.4% | +0.3% | all 17 |
+| player_armor | 19 | `ns` | +3.1% | -3.3% to +7.6% | +3.2% | all 19 |
+| player_bonuses | 13 | `ns` | +4.1% | +0.2% to +9.8% | +3.3% | all 13 |
+| player_monsters | 7 | `ns` | +2.3% | -1.9% to +3.6% | +1.6% | all 7 |
+| player_imps | 7 | `ns` | +0.9% | -1.8% to +3.0% | +0.4% | all 7 |
+| player_map_scale | 8 | `ns` | +0.8% | -2.6% to +4.4% | +0.9% | all 8 |
+| player_heights | 6 | `ns` | -0.5% | -1.7% to +5.3% | -1.6% | all 6 |
+| player_diagonal | 3 | `ns` | +0.2% | -2.6% to +2.5% | +1.0% | all 3 |
+| player_real_map | 6 | `ns` | +3.0% | +1.7% to +8.0% | +4.1% | all 6 |
+| player_specials | 6 | `ns` | +1.3% | -0.7% to +1.9% | +1.4% | all 6 |
+| player_movers | 9 | `ns` | +1.3% | -0.4% to +3.8% | +1.2% | all 9 |
+| player_e1m1 | 4 | `ns` | +0.0% | -1.1% to +5.8% | +0.9% | all 4 |
+| legacy_pistol | 1 | `ns` | -2.5% | -2.5% to -2.5% | +0.4% | all 1 |
+
+Across all 235 workloads: median of Δ medians +1.3%, median of Δ minimums +1.2%; Δ medians -11.2% to +12.1%, Δ minimums -10.1% to +8.7%.
+
+**Every output field and every digest of all 235 workloads is byte-identical between
+`43460e2` and `2dea148`** (5,170 samples, 28,842 non-timing fields; every workload stable
+across its 11 samples in each tree). Across all 235 workloads the median of the median
+deltas is +1.3% and the median of the minimum deltas +1.2%; medians range from −11.2% to
++12.1%. The Demon-profile examples (`canonical_demon`, `demon_expanded_map`, the
+`diagnostic_free` stepping) read 7–10% faster on the branch.
+
+**What reads above +3%, and why.** `map_scale` (+3.0%), `player_weapon_pack` (+3.5%),
+`player_armor` (+3.1%) and `player_bonuses` (+4.1%) read above +3% by example median
+(`player_real_map` +3.0% by median, +4.1% by minimum, just under). A confirmation run of
+only those four examples, alone, 11 rounds (load 0.73 → 1.04; 66 workloads, 1,452 samples,
+again byte-identical) read `map_scale` +3.4% / +2.1% (median Δ median / median Δ minimum),
+`player_weapon_pack` +3.4% / +2.9%, `player_armor` +2.3% / +4.1%, `player_bonuses` +3.9% /
++3.5%: the slowdown persists for three of them. `valgrind --tool=callgrind
+--toggle-collect='<doom_sim::Simulation>::advance'` (`step` for `map_scale`) on one
+representative workload per example, same binaries and arguments, counted instructions:
+
+| Workload | `43460e2` Ir | `2dea148` Ir | Δ |
+| --- | ---: | ---: | ---: |
+| `player_bonuses full_depletion` (1,536 tics) | 38,946,786 | 39,603,772 | +1.69% |
+| `player_weapon_pack chaingun_last` (100 tics) | 2,033,644 | 2,077,210 | +2.14% |
+| `player_armor full_depletion` (1,408 tics) | 66,337,272 | 67,622,066 | +1.94% |
+| `map_scale 9` (`step`, 100 tics) | 13,518,049 | 13,519,797 | +0.01% |
+
+About +2% more instructions per tic on the three player examples, spread over the per-tic
+preflight: `preflight_map_demons` now calls `memcpy` (about one call per live actor per tic;
+52% of the armor growth), the `BTreeSet<ActorId>` insertion is no longer inlined (about
+20%), and `advance_expanded_demons`, `validate_perception_reference`,
+`validate_combat_type`, `preflight_world_pickups` and `PlayerWeaponRuntime::validate` each
+grew a little; the new policy predicates (`is_barrel`, `has_barrels`) run in that loop for
+every policy. The timing agent's hypothesis that the `memcpy` was the barrel witness
+taking its `Actor` by value was tested: passing it by reference removed 16,896 of the
+1,284,794 extra instructions (67,605,170 Ir) with identical output, so the experiment was
+reverted and the reviewed tree kept. `map_scale` has no instruction growth; its +3% has no
+instruction-count counterpart and, with no hardware counters on this host (`perf` is not
+installed), can only be put down to code placement or host noise. No budget is claimed.
+
+**The barrels example** (branch only, alone, 11 samples each, `advance` mode): median and
+range: `cluster_chain` 0.613 ms (0.585–0.799), `dense64_fight` 49.481 ms (48.333–52.808),
+`range_patrol` 2.200 ms (2.103–2.285), `liftroom_ride` 0.393 ms (0.383–0.478),
+`dense64_lift` 107.565 ms (104.941–109.407; the 121-thing lift room, 272 `P_ChangeSector`
+calls and 32,640 thing clips over 1,200 tics).
 
 ## Independent review
 
