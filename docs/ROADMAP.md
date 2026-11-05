@@ -422,6 +422,15 @@ investigation, owner decision and evidence before it became a milestone. They ar
 here so that the README can summarize them in one place; the README's "Where it's (maybe)
 going" list changes only with the owner's approval. They fall into three tracks.
 
+The README's "Which kind of Doom?" section places the project among the four ways classic
+Doom is played today, and the tracks below map onto it: **vanilla** (the original's
+behavior, limits and quirks) is what the per-milestone policies implement and what Track
+1 keeps exact; **limit-removing** is Track 1's separate profile; **Boom, MBF21 and ID24**
+(the successive extensions of the original map format that most new community maps
+target, ID24 being id Software's 2024 extension) is a possible later profile under Track
+3, not a promise; and **advanced, ZDoom-style** engines are what Track 3 would build its
+own way rather than copy. Every kind is a separate opt-in mode, so vanilla never changes.
+
 ### Track 1: Faithful
 
 Vanilla behavior stays exact forever; everything here either proves it or builds on it.
@@ -471,7 +480,11 @@ A new engine built on the verified core, in separate opt-in modes so that vanill
 never affected. This is the reason for the painstaking verification: an exact Doom core
 that wild new things can be built on without losing what makes Doom feel like Doom.
 
-- **ZDoom-style features done cleanly**, without decades-old code underneath.
+- **Boom, MBF21 and ID24 map features** (new door, lift and scrolling-floor types, deep
+  water and the rest of those map-format extensions) as a possible later profile, not a
+  promise; the owner decides whether and when.
+- **ZDoom-style features done cleanly**, without decades-old code underneath, going the
+  project's own way rather than copying ZDoom.
 - **Simulation features the original never had**, such as fluid simulation (water, blood
   and nukage that flow) and very large monster crowds.
 - **A scripting layer** for new game logic, and **other platforms** such as mobile.

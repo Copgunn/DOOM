@@ -77,6 +77,27 @@ The committed plan, in order (details in the [roadmap](docs/ROADMAP.md)):
 2. Extend that to the rest of Episode 1.
 3. Add a renderer and audio, so that it is actually playable.
 
+## Which kind of Doom?
+
+People play classic Doom in four broad ways today. Here is where this project fits.
+
+- **Vanilla.** Exactly how the original 1993 game worked, its limits and quirks included.
+  This is what the project does today.
+- **Limit-removing.** The same game and the same map features, but the original's hard
+  limits on map size and detail are lifted, so bigger and more detailed maps run. Planned
+  as a separate mode (Track 1 below).
+- **Boom, MBF21 and ID24.** Three generations of extensions to the original map format
+  that keep Doom feeling classic while adding map features: new kinds of doors and lifts,
+  scrolling floors, deep water and more. Most new community maps are built for this
+  family. ID24 is id Software's own 2024 extension of it. A possible later mode, not a
+  promise.
+- **Advanced, in the style of ZDoom and GZDoom.** Scripting, floors stacked above other
+  floors, sloped floors and ceilings, and full-scale mods (player-made changes to the
+  game). This project would go its own way here (Track 3 below) rather than copy ZDoom.
+
+Each kind will be a separate opt-in mode, so vanilla never changes. The three tracks
+under [Where it's (maybe) going](#where-its-maybe-going) say more.
+
 ## Where it's (maybe) going
 
 These are ideas, not promises, grouped into three tracks. The
