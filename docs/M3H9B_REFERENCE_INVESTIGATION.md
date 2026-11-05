@@ -1076,6 +1076,14 @@ Recorded here rather than rewritten, so the Phase 1 reasoning stays readable:
   intercept, so the unchecked overflow of the source is never observed in C; the Rust-only
   lane `m3h9b_intercepts129.bin` exercises the witness.
 - **Chain timers** in `chain_reaction` were 5, 3, 5, 5, not all distinct as §7 assumed.
+- **F11, the fast path's base (found on the pull request).** The first detect-changes job
+  diffed a pull request's base against its merge commit, that is the whole branch, so a
+  pull request with any code in it could never be documentation-only, and the first
+  documentation-only push (`60d4e43`) ran every check in full. The classification is now
+  "documentation only since a green head": the push's previous head (the `synchronize`
+  event's `before`, or a push's `before`) must have a successful run of this workflow, and
+  every path changed since it must be `.md` outside `docs/validation/`; a newly opened
+  pull request, a base change or a failed or cancelled previous run keeps the full run.
 - **F3, the step "`30·w < 2r·w`" (found by the fuzz target).** It holds for the player
   (`r` 16) and the admitted monsters (`r` 20) but not for a barrel (`r` 10): a dying barrel
   with momentum above 20 per axis (clamped at 30, negative moves not halved) can clear a
