@@ -95,7 +95,7 @@ People play classic Doom in four broad ways today. Here is where this project fi
   floors, sloped floors and ceilings, and full-scale mods (player-made changes to the
   game). This project would go its own way here (Track 3 below) rather than copy ZDoom.
 
-Each kind will be a separate opt-in mode, so vanilla never changes. The three tracks
+Each kind will be a separate mode you switch on, so vanilla never changes. The three tracks
 under [Where it's (maybe) going](#where-its-maybe-going) say more.
 
 ## Where it's (maybe) going
@@ -104,7 +104,7 @@ These are ideas, not promises, grouped into three tracks. The
 [roadmap](docs/ROADMAP.md#ideas-under-consideration) describes them in a little more detail.
 
 **Track 1: Faithful.** Vanilla behavior stays exact forever; anything that changes it
-lives in a separate opt-in mode.
+lives in a separate optional mode.
 
 - **Original demo playback.** Play back recorded vanilla demos (`.lmp` files) to the
   last tic, the strongest end-to-end proof of exactness. If a port's answer to a 1994
@@ -115,7 +115,7 @@ lives in a separate opt-in mode.
   one complete vanilla profile. A separate profile would lift the original's hard limits,
   such as the most things or visible surfaces it can handle, without otherwise changing
   gameplay.
-- **An optional "fixed" mode.** A separate opt-in mode would correct known original bugs.
+- **An optional "fixed" mode.** A separate mode, off unless you choose it, would correct known original bugs.
   The differences and quirks already recorded become its to-do list.
 - **The full game and Doom II.** After Episode 1, the remaining episodes and then Doom II,
   held to the same exactness.
@@ -138,7 +138,7 @@ change gameplay, because the renderer only reads the game state.
 
 **Track 3: Beyond vanilla.** A new engine built on the verified core. This is the payoff
 of all the careful checking: an exact Doom core you can build wild things on without
-losing what makes Doom feel like Doom. It would live in separate opt-in modes, so vanilla
+losing what makes Doom feel like Doom. It would live in separate optional modes, so vanilla
 is never affected.
 
 - **Modern source-port features, done cleanly.** Features like those of ZDoom, a popular
@@ -186,7 +186,7 @@ graphics card, audio or a network.
 
 ## Policies (for developers)
 
-New gameplay is switched on through opt-in policies. Each policy adds one slice of Doom
+New gameplay is switched on through optional policies, each selected explicitly. Each policy adds one slice of Doom
 on top of the one before it. Older policies never change, so earlier results stay exactly
 reproducible, much like compatibility levels. The number in brackets is the policy's
 identifier in saved test snapshots. The earlier numbered Demon profiles are listed under
