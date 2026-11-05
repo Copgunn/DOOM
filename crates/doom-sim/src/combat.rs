@@ -691,9 +691,25 @@ impl Simulation {
     }
 
     /// Atomic supported P_DamageMobj operation. No full-simulation clone is used.
+    ///
+    /// Under the barrels policy a barrel is refused as the `source`
+    /// (`PlayerBodyError::Unsupported`, state unchanged): the source never passes
+    /// one (sources are a shooter, a missile's `target`, the bomb source or a skull;
+    /// `A_Explode` passes the barrel only as the inflictor, p_enemy.c:1600,
+    /// p_map.c:1194), and a barrel source would retarget its victim to the barrel,
+    /// which no admitted monster may target. A barrel stays admitted as the
+    /// inflictor and as the target (M3h9b decision F4(v)).
     pub fn damage_actor(&mut self, request: DamageRequest) -> Result<DamageResult, SimError> {
         if self.profile.uses_monsters() && !self.profile.uses_demon_lifecycle() {
             return Err(CombatError::Profile.into());
+        }
+        let policy = self.player_policy();
+        if request.source.is_some_and(|id| {
+            self.actor(id)
+                .and_then(Actor::life)
+                .is_some_and(|l| crate::barrels::is_barrel(policy, l.actor_type))
+        }) {
+            return Err(crate::PlayerBodyError::Unsupported.into());
         }
         if self.profile.uses_demon_lifecycle() {
             self.preflight_lifecycle_combat(&[

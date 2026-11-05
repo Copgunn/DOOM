@@ -1069,6 +1069,52 @@ fn barrel_api_refusals_and_admissions() {
     tic(&mut s, idle());
 }
 
+/// A barrel is never a damage source in the source (`A_Explode` passes it only as
+/// the inflictor), so `damage_actor` refuses one as the `source`, with or without an
+/// inflictor and whatever the target, keeping every byte and the RNG; the same
+/// barrel stays admitted as the inflictor. Found by the `player_barrels` fuzz seeds:
+/// an admitted barrel source made a monster wounded by its explosion target the
+/// barrel, and the next tic was refused with `PerceptionError::Roster`.
+#[test]
+fn a_barrel_is_refused_as_a_damage_source() {
+    let (mut s, body, things) = world(
+        CENSUS,
+        &[
+            [0, 0, 0, BARREL, 7],
+            [64, 0, 0, BARREL, 7],
+            [-200, 200, 0, ZOMBIE, 7],
+        ],
+        [-300, 0],
+    );
+    let (a, b, zombie) = (things[0], things[1], things[2]);
+    let unsupported = Err(SimError::PlayerBody(PlayerBodyError::Unsupported));
+    let before = s.snapshot();
+    let rng = s.rng();
+    for target in [b, zombie, body] {
+        for inflictor in [None, Some(a), Some(zombie)] {
+            let request = DamageRequest {
+                target,
+                inflictor,
+                source: Some(a),
+                amount: 5,
+            };
+            assert_eq!(s.damage_actor(request).map(|_| ()), unsupported);
+            assert_eq!(s.snapshot(), before);
+            assert_eq!(s.rng(), rng);
+        }
+    }
+    // The barrel as the inflictor with a monster source, and as the target.
+    s.damage_actor(DamageRequest {
+        target: b,
+        inflictor: Some(a),
+        source: Some(zombie),
+        amount: 5,
+    })
+    .unwrap();
+    assert_eq!(life(&s, b).target, Some(zombie));
+    tic(&mut s, idle());
+}
+
 /// Under wire 21 `A_Explode` is admitted for `MT_BARREL`'s `S_BEXP4` alone: the
 /// rocket's `S_EXPLODE1` stays `UnsupportedAction`, and older policies never admit
 /// the barrel's states.
