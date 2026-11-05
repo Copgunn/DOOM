@@ -13,7 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MODES = ['advance', 'step', 'capture']
-WORKLOADS = ['cluster_chain', 'dense64_fight', 'range_patrol', 'liftroom_ride']
+WORKLOADS = ['cluster_chain', 'dense64_fight', 'range_patrol', 'liftroom_ride', 'dense64_lift']
 
 
 def fields(line):
@@ -70,7 +70,7 @@ int main(int n,char **v){int status;struct rusage use;pid_t p;if(n<2)return 2;p=
                     output, rss = execute([binary, '--measure', label, mode])
                     row = fields(next(line for line in output.splitlines() if line.startswith('player_barrels ')))
                     digests.add(row['digest'])
-                    rows.append({'ns': row['ns'], 'max_rss_kib': rss, 'calls': row['calls'], 'peak_actors': row['peak_actors'],
+                    rows.append({'ns': row['ns'], 'max_rss_kib': rss, 'calls': row['calls'], 'linked_at_start': row['linked_at_start'], 'peak_actors': row['peak_actors'],
                                  'explosions': row['explosions'], 'sight_blocked': row['sight_blocked'], 'damaged': row['damaged'],
                                  'damaged_peak_tic': row['damaged_peak_tic'], 'barrel_deaths': row['barrel_deaths'],
                                  'change_sector': row['change_sector'], 'change_sector_peak_tic': row['change_sector_peak_tic'],
@@ -88,7 +88,7 @@ int main(int n,char **v){int status;struct rusage use;pid_t p;if(n<2)return 2;p=
                       'host': platform.platform(), 'libc': platform.libc_ver(),
                       'source_sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in sources}}
         print(json.dumps(dict(provenance=provenance, smoke=args.check,
-             method='Separate release processes per workload/mode; one full timeline per process in the synthetic M3h9b rooms (not the real E1M1), setup excluded: cluster_chain: the committed chain_reaction timeline (140 tics, seven explosions in three generations); dense64_fight: 1,200 tics in the dense64 room (64 pickups, 16 barrels, 6 monsters, 27 decorations), the player walking to the barrel rows and firing along them, then a fixed patrol with BT_USE; range_patrol: 1,200 tics of the same patrol without BT_ATTACK in the range hall with its barrel (no barrel damage); liftroom_ride: the committed M3h9 decorations_ride_lift timeline under the barrels policy (P_ChangeSector work of a lift; no committed room has a lift sector and 129 linked things, so the at-N P_ChangeSector measurement is not taken here). Per-tic work (explosions, candidates reaching P_CheckSight blocked and visible with the per-tic peak, barrel deaths, P_ChangeSector calls and PIT_ChangeSector thing clips with the per-tic peak) recorded from an unmeasured run of the same inputs. Native wait4 RSS includes setup and final digest. No CPU/frequency/host isolation, timing thresholds or universal performance claim.',
+             method='Separate release processes per workload/mode; one full timeline per process in the synthetic M3h9b rooms (not the real E1M1), setup excluded: cluster_chain: the committed chain_reaction timeline (140 tics, seven explosions in three generations); dense64_fight: 1,200 tics in the dense64 room (64 pickups, 16 barrels, 6 monsters, 27 decorations), the player walking to the barrel rows and firing along them, then a fixed patrol with BT_USE; range_patrol: 1,200 tics of the same patrol without BT_ATTACK in the range hall with its barrel (no barrel damage); liftroom_ride: the committed M3h9 decorations_ride_lift timeline under the barrels policy (P_ChangeSector work of a lift); dense64_lift: the P_ChangeSector measurement at the linked-thing bound N = 129, in the M3h9 liftroom geometry with its THINGS replaced in memory (121 linked at spawn: the player, 8 monsters, 64 pickups, 32 decorations and 16 barrels, every per-kind bound full; the 8 drops that make 129 come only from kills, none here), 120 of them inside the blockbox of the lift sector, the player crossing the WR 88 line back and forth for 1,200 tics so the lift cycles under its riders (Rust-only, not C evidence). Per-tic work (explosions, candidates reaching P_CheckSight blocked and visible with the per-tic peak, barrel deaths, P_ChangeSector calls and PIT_ChangeSector thing clips with the per-tic peak) recorded from an unmeasured run of the same inputs. Native wait4 RSS includes setup and final digest. No CPU/frequency/host isolation, timing thresholds or universal performance claim.',
              results=results), separators=(',', ':')))
 
 

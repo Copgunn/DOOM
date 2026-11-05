@@ -27,11 +27,12 @@ fn interval<T>(run: impl FnOnce() -> T) -> std::io::Result<(T, Duration)> {
     output.flush()?;
     Ok((result, elapsed))
 }
-const WORKLOADS: [&str; 4] = [
+const WORKLOADS: [&str; 5] = [
     "cluster_chain",
     "dense64_fight",
     "range_patrol",
     "liftroom_ride",
+    "dense64_lift",
 ];
 /// `A_Explode`'s index in the source action table (the C rows' `E` kind 5 value).
 const A_EXPLODE: i64 = 19;
@@ -130,7 +131,7 @@ fn main() -> ResultHost<()> {
     }
     if !args.is_empty() {
         return Err(
-            "use --measure cluster_chain|dense64_fight|range_patrol|liftroom_ride advance|step|capture"
+            "use --measure cluster_chain|dense64_fight|range_patrol|liftroom_ride|dense64_lift advance|step|capture"
                 .into(),
         );
     }
@@ -367,8 +368,14 @@ fn main() -> ResultHost<()> {
 /// - `liftroom_ride`: the committed M3h9 `decorations_ride_lift` timeline (a lamp
 ///   and a dead player ride the lift) under the barrels policy: the
 ///   `P_ChangeSector` work of a lift. No committed room has both a lift sector and
-///   129 linked things (`dense64` is one sector), so the at-`N` measurement of
-///   `P_ChangeSector` is not taken from a committed room.
+///   129 linked things (`dense64` is one sector).
+/// - `dense64_lift`: the `P_ChangeSector` measurement at the linked-thing bound
+///   `N` = 129 (M3h9b note §5.3), in a room built in memory: the committed M3h9
+///   `liftroom` geometry with its THINGS lump replaced by [`dense_lift_things`]
+///   (121 linked at spawn, every per-kind bound full; the 8 drops that make 129 come
+///   only from kills, and nothing is killed here). The player walks back and forth
+///   across the WR 88 line for 1,200 tics, so the lift runs cycle after cycle under
+///   its riders. Not C evidence: a Rust-only work and timing observation.
 fn workload(label: &str) -> ResultHost<(Simulation, Vec<[TicCommand; 4]>)> {
     match label {
         "cluster_chain" => {
@@ -445,8 +452,153 @@ fn workload(label: &str) -> ResultHost<(Simulation, Vec<[TicCommand; 4]>)> {
             s.set_initial_player_reaction_time(PlayerSlot::One, c.reaction)?;
             Ok((s, (1..=c.tics).map(|op| m3h9::command(&c, op)).collect()))
         }
+        "dense64_lift" => {
+            let c = m3h9::case("decorations_ride_lift");
+            let bytes = with_things(m3h9::MAP_BYTES[c.map], &dense_lift_things())?;
+            let wad = doom_wad::Wad::parse(&bytes, doom_wad::Limits::default())?;
+            let map = doom_map::Map::from_wad(&wad, "MAP01", doom_map::MapLimits::default())?;
+            let mut s = Simulation::original_player_barrels_map(map, m3h9::options(c.seed))?;
+            let spawned = s.spawn_map_things()?.spawned;
+            assert_eq!(spawned.len(), 120);
+            s.spawn_player_body(
+                PlayerSlot::One,
+                [48, 64].map(doom_types::Fixed::from_map_units),
+            )?;
+            s.initialize_player_weapons(
+                PlayerSlot::One,
+                WeaponInventory {
+                    ready: c.ready,
+                    owned: c.owned,
+                    ammo: [c.clips, 0, 0, 0],
+                },
+            )?;
+            s.spawn_level_specials()?;
+            assert_eq!(s.actor_order().count(), 121);
+            // Turn north, then walk 24 tics north and 24 tics south, crossing the
+            // WR 88 line (y = 128) at x = 48 twice per cycle; a crossing while the
+            // lift moves or waits does nothing (`EV_DoPlat` skips a sector with
+            // `specialdata`), so the lift restarts as soon as it is back up.
+            let commands = (0..1200)
+                .map(|tic| {
+                    let mut commands = [TicCommand::default(); 4];
+                    commands[0] = TicCommand {
+                        forward: if tic == 0 {
+                            0
+                        } else if (tic - 1) % 48 < 24 {
+                            25
+                        } else {
+                            -25
+                        },
+                        side: 0,
+                        angle_turn: if tic == 0 { 16384 } else { 0 },
+                        buttons: 0,
+                    };
+                    commands
+                })
+                .collect();
+            Ok((s, commands))
+        }
         _ => Err("unknown workload".into()),
     }
+}
+/// The THINGS of `dense64_lift` in the `liftroom` (sector 0 x in [0, 512], y in
+/// [0, 128]; 1 y in [128, 256]; 2 the upper ledge y in [384, 640], floor 64; 3 the
+/// lift x in [192, 320], y in [256, 384], floor 64, tag 1), all with skill bits 7:
+/// 16 barrels in a 4 × 4 grid on the lift; 32 pickups on the lift and 32 in sector 1
+/// (the `dense64` kinds: a shotgun, 4 clips, 4 shells, a stimpack, 3 medikits, 16
+/// health and 29 armor bonuses, the two armors, a clip box, 3 shell boxes); 32
+/// decorations (the seven E1M1 types) in sector 1; 8 monsters (4 Zombiemen, 4
+/// Imps) on the ledge facing north, so the player south of them is behind their
+/// field of view and never wakes them (he never fires). Everything stands in x
+/// in [136, 376], inside the BLOCKMAP columns the lift's `blockbox` covers; the
+/// player walks at x = 48, clear of every pickup.
+fn dense_lift_things() -> Vec<[i16; 5]> {
+    const ZOMBIE: i16 = 3004;
+    const IMP: i16 = 3001;
+    const BARREL: i16 = 2035;
+    let pickups: Vec<i16> = [(2001, 1), (2007, 4), (2008, 4), (2011, 1), (2012, 3)]
+        .into_iter()
+        .chain([
+            (2014, 16),
+            (2015, 29),
+            (2018, 1),
+            (2019, 1),
+            (2048, 1),
+            (2049, 3),
+        ])
+        .flat_map(|(kind, n)| std::iter::repeat_n(kind, n))
+        .collect();
+    assert_eq!(pickups.len(), 64);
+    let decorations: Vec<i16> = [
+        (2028, 5),
+        (48, 5),
+        (35, 4),
+        (24, 5),
+        (15, 5),
+        (10, 4),
+        (12, 4),
+    ]
+    .into_iter()
+    .flat_map(|(kind, n)| std::iter::repeat_n(kind, n))
+    .collect();
+    assert_eq!(decorations.len(), 32);
+    let mut things = Vec::with_capacity(120);
+    for i in 0..16 {
+        things.push([208 + 32 * (i % 4), 272 + 32 * (i / 4), 0, BARREL, 7]);
+    }
+    for (i, kind) in (0i16..).zip(pickups) {
+        things.push(if i < 32 {
+            [200 + 16 * (i % 8), 264 + 16 * (i / 8), 0, kind, 7]
+        } else {
+            [152 + 32 * (i % 8), 136 + 32 * ((i - 32) / 8), 0, kind, 7]
+        });
+    }
+    for (i, kind) in (0i16..).zip(decorations) {
+        things.push([136 + 32 * (i % 8), 152 + 32 * (i / 8), 0, kind, 7]);
+    }
+    for i in 0..8 {
+        let kind = if i % 2 == 0 { ZOMBIE } else { IMP };
+        things.push([160 + 48 * (i % 4), 432 + 48 * (i / 4), 90, kind, 7]);
+    }
+    things
+}
+/// `wad` (a PWAD) with its THINGS lump replaced by `things` (ten-byte
+/// `mapthing_t` records), every other lump and the directory order unchanged.
+fn with_things(wad: &[u8], things: &[[i16; 5]]) -> ResultHost<Vec<u8>> {
+    let word = |at: usize| -> ResultHost<usize> {
+        let bytes = wad.get(at..at + 4).ok_or("short WAD")?;
+        Ok(usize::try_from(u32::from_le_bytes(bytes.try_into()?))?)
+    };
+    let (count, directory) = (word(4)?, word(8)?);
+    let replacement: Vec<u8> = things
+        .iter()
+        .flatten()
+        .flat_map(|v| v.to_le_bytes())
+        .collect();
+    let mut out = wad.get(..4).ok_or("short WAD")?.to_vec();
+    let mut data = Vec::new();
+    let mut entries = Vec::new();
+    for i in 0..count {
+        let at = directory + 16 * i;
+        let name = wad.get(at + 8..at + 16).ok_or("short directory")?;
+        let lump = if name.starts_with(b"THINGS") {
+            replacement.as_slice()
+        } else {
+            let (pos, size) = (word(at)?, word(at + 4)?);
+            wad.get(pos..pos + size).ok_or("short lump")?
+        };
+        entries.push((12 + data.len(), lump.len(), name));
+        data.extend_from_slice(lump);
+    }
+    out.extend_from_slice(&u32::try_from(count)?.to_le_bytes());
+    out.extend_from_slice(&u32::try_from(12 + data.len())?.to_le_bytes());
+    out.extend_from_slice(&data);
+    for (pos, size, name) in entries {
+        out.extend_from_slice(&u32::try_from(pos)?.to_le_bytes());
+        out.extend_from_slice(&u32::try_from(size)?.to_le_bytes());
+        out.extend_from_slice(name);
+    }
+    Ok(out)
 }
 fn measure(label: &str, mode: &str) -> ResultHost<()> {
     if !["advance", "step", "capture"].contains(&mode) {
@@ -456,6 +608,7 @@ fn measure(label: &str, mode: &str) -> ResultHost<()> {
         return Err("unknown workload".into());
     }
     let (mut sim, commands) = workload(label)?;
+    let linked = sim.actor_order().count();
     // The recorded per-tic work, from an unmeasured run of the same inputs.
     let (mut total, mut peak_changes, mut peak_clips, mut peak_damaged) =
         (Work::default(), 0, 0, 0);
@@ -473,6 +626,7 @@ fn measure(label: &str, mode: &str) -> ResultHost<()> {
         "cluster_chain" => assert_eq!((total.explosions, total.deaths), (7, 7)),
         "dense64_fight" => assert!(total.explosions > 0, "the fight explodes barrels"),
         "range_patrol" => assert_eq!((total.explosions, total.deaths, total.damaged), (0, 0, 0)),
+        "dense64_lift" => assert!(total.changes > 0 && total.clips > 0),
         _ => assert!(total.changes > 0),
     }
     let mut peak = 0;
@@ -493,7 +647,7 @@ fn measure(label: &str, mode: &str) -> ResultHost<()> {
     result?;
     assert_eq!(sim.snapshot(), probe.snapshot());
     println!(
-        "player_barrels label={label} mode={mode} calls={} warmup=0 peak_actors={peak} explosions={} sight_blocked={} damaged={} damaged_peak_tic={peak_damaged} barrel_deaths={} change_sector={} change_sector_peak_tic={peak_changes} thing_clips={} thing_clips_peak_tic={peak_clips} ns={} digest={:016x}",
+        "player_barrels label={label} mode={mode} calls={} warmup=0 linked_at_start={linked} peak_actors={peak} explosions={} sight_blocked={} damaged={} damaged_peak_tic={peak_damaged} barrel_deaths={} change_sector={} change_sector_peak_tic={peak_changes} thing_clips={} thing_clips_peak_tic={peak_clips} ns={} digest={:016x}",
         commands.len(),
         total.explosions,
         total.sight_blocked,
