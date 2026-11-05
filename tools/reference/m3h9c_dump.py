@@ -15,12 +15,14 @@ kind (the contract's `dump_row_kinds`), followed by rows `KIND,tic,...` of raw i
       DR vldoor_t, PL plat_t, FL floormove_t, CE ceiling_t (PL/CE `running` = 0 for a
         mover in stasis, found through activeplats/activeceilings), LF fireflicker_t,
       LL lightflash_t, LS strobe_t, LG glow_t, R removed but not yet freed (function -1),
-      X unknown function
+      X unknown function; after the R row of a mobj, an RR row with the M columns (idx
+      the same list position, bpos/spos -1: unlinked by P_RemoveMobj)
   T   per thinker (idx as above): its serial (the order of P_AddThinker calls since the
       start, never reused) and its link serial (the order of P_SetThingPosition calls; the
       global link order is the ascending current link serial; -1 for a non-mobj)
-  K   per thinker freed since the previous snapshot, in free order: serial and sequence
-      number (seq -1: dropped at a level setup, after Z_FreeTags)
+  K   per thinker freed since the previous snapshot, in free order: serial, sequence
+      number (seq -1: dropped at a level setup, after Z_FreeTags) and adds, the number of
+      P_AddThinker calls made before the free (places the free among the spawns)
   RM  per mobj removed and freed since the previous snapshot: the M columns with `serial`
       in place of `idx`, copied just before the genuine Z_Free (bpos/spos -1: unlinked by
       P_RemoveMobj)

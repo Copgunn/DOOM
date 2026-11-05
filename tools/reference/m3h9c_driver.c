@@ -40,6 +40,11 @@
  *     Z_Free, P_SetThingPosition and P_InitThinkers are wrapped with -Wl,--wrap; each
  *     wrapper records thinker serials, link serials, frees and removed-mobj copies in
  *     side tables and calls the genuine function unchanged. They add the T, K and RM rows.
+ *   - K rows carry `adds`, the number of P_AddThinker calls made before the free (the
+ *     next thinker serial at that moment), which places each free among the tic's spawns.
+ *   - A pending removal (function -1, still in the list) keeps its R row; for a mobj an
+ *     RR row follows with the M columns (idx = list position; bpos/spos -1, unlinked by
+ *     P_RemoveMobj), so a run's last snapshot shows every pending mobj's fields.
  *   - The HU_Ticker stub records players[consoleplayer].message before clearing it as
  *     vanilla does; P rows report it as a pickup-message index.
  *   - ZeroFill: Z_Malloc is also wrapped (-Wl,--wrap=Z_Malloc) and every block it returns
@@ -146,7 +151,7 @@ static obs_t obs[OBS_CAP];               /* open addressing; p == NULL empty, p 
 static char obs_dead_marker;
 #define OBS_DEAD ((void*)&obs_dead_marker)
 static int obs_used, next_serial, next_linkserial;
-typedef struct { int serial, seq; } freed_t;
+typedef struct { int serial, seq, adds; } freed_t;
 static freed_t* freed; static int nfreed, capfreed, freeseq;
 typedef struct { int serial; mobj_t m; } removed_t;
 static removed_t* removed; static int nremoved, capremoved;
@@ -182,10 +187,10 @@ static obs_t* obs_insert (void* p)        /* p is not in the table */
     obs[h].p = p; obs[h].serial = -1; obs[h].linkserial = -1; obs[h].mobj = 0;
     return &obs[h];
 }
-static void note_freed (int serial, int seq)
+static void note_freed (int serial, int seq, int adds)
 {
     if (nfreed == capfreed) { capfreed = capfreed ? capfreed * 2 : 64; freed = realloc (freed, capfreed * sizeof *freed); }
-    freed[nfreed].serial = serial; freed[nfreed].seq = seq; nfreed++;
+    freed[nfreed].serial = serial; freed[nfreed].seq = seq; freed[nfreed].adds = adds; nfreed++;
 }
 void __wrap_P_AddThinker (thinker_t* thinker)
 {
@@ -212,7 +217,7 @@ void __wrap_Z_Free (void* ptr)
             memcpy (&removed[nremoved].m, ptr, sizeof (mobj_t));
             nremoved++;
         }
-        note_freed (e->serial, freeseq++);
+        note_freed (e->serial, freeseq++, next_serial);
         e->p = OBS_DEAD;
     }
     __real_Z_Free (ptr);
@@ -223,7 +228,7 @@ void __wrap_P_InitThinkers (void)
     int i, n = 0; obs_t* live = malloc (sizeof (obs_t) * (obs_used ? obs_used : 1));
     for (i = 0; i < OBS_CAP; i++) if (obs[i].p && obs[i].p != OBS_DEAD && obs[i].serial >= 0) live[n++] = obs[i];
     qsort (live, n, sizeof *live, cmp_serial);
-    for (i = 0; i < n; i++) note_freed (live[i].serial, -1);
+    for (i = 0; i < n; i++) note_freed (live[i].serial, -1, next_serial);
     free (live);
     memset (obs, 0, sizeof obs); obs_used = 0;
     __real_P_InitThinkers ();
@@ -300,6 +305,7 @@ static const char* COLUMNS =
  "#columns,H,tic,leveltime,gametic,prndindex,rndindex,totalkills,totalitems,totalsecret,gameaction,gamestate,numthinkers,numlinespecials,gameskill\n"
  "#columns,M,tic,idx,type,x,y,z,momx,momy,momz,health,state,tics,flags,height,radius,reactiontime,threshold,target,lastlook,floorz,ceilingz,subsector,angle,sprite,frame,movedir,movecount,tracer,sp_x,sp_y,sp_angle,sp_type,sp_options,player,bx,by,bpos,sector,spos\n"
  "#columns,R,tic,idx\n"
+ "#columns,RR,tic,idx,type,x,y,z,momx,momy,momz,health,state,tics,flags,height,radius,reactiontime,threshold,target,lastlook,floorz,ceilingz,subsector,angle,sprite,frame,movedir,movecount,tracer,sp_x,sp_y,sp_angle,sp_type,sp_options,player,bx,by,bpos,sector,spos\n"
  "#columns,DR,tic,idx,type,sector,topheight,speed,direction,topwait,topcountdown\n"
  "#columns,PL,tic,idx,running,sector,speed,low,high,wait,count,status,oldstatus,crush,tag,type\n"
  "#columns,FL,tic,idx,type,crush,sector,direction,newspecial,texture,floordestheight,speed\n"
@@ -310,7 +316,7 @@ static const char* COLUMNS =
  "#columns,LG,tic,idx,sector,minlight,maxlight,direction\n"
  "#columns,X,tic,idx\n"
  "#columns,T,tic,idx,serial,linkserial\n"
- "#columns,K,tic,serial,seq\n"
+ "#columns,K,tic,serial,seq,adds\n"
  "#columns,RM,tic,serial,type,x,y,z,momx,momy,momz,health,state,tics,flags,height,radius,reactiontime,threshold,target,lastlook,floorz,ceilingz,subsector,angle,sprite,frame,movedir,movecount,tracer,sp_x,sp_y,sp_angle,sp_type,sp_options,player,bx,by,bpos,sector,spos\n"
  "#columns,S,tic,idx,floorheight,ceilingheight,floorpic,ceilingpic,lightlevel,special,tag,soundtraversed,soundtarget,specialdata,linecount\n"
  "#columns,L,tic,idx,special,tag,flags,s0top,s0mid,s0bottom,s0textureoffset,s0rowoffset,s1top,s1mid,s1bottom\n"
@@ -374,6 +380,7 @@ static void dump (const char* dir, const char* name, int tic)
             print_mobj (f, "M", tic, i, (mobj_t*)t, 1);
         } else if (t->function.acv == (actionf_v)(-1)) {
             fprintf (f, "R,%d,%d\n", tic, i);
+            { obs_t* e = obs_find (t); if (e && e->mobj) print_mobj (f, "RR", tic, i, (mobj_t*)t, 0); }
         } else if (fn == (actionf_p1)T_VerticalDoor) {
             vldoor_t* d = (vldoor_t*)t;
             fprintf (f, "DR,%d,%d,%d,%ld,%d,%d,%d,%d,%d\n", tic, i, (int)d->type, sidx (d->sector), d->topheight, d->speed,
@@ -410,7 +417,7 @@ static void dump (const char* dir, const char* name, int tic)
     }
     for (i = 0; i < numth; i++)
         fprintf (f, "T,%d,%d,%d,%d\n", tic, i, serial_of (order[i]), linkserial_of (order[i]));
-    for (i = 0; i < nfreed; i++) fprintf (f, "K,%d,%d,%d\n", tic, freed[i].serial, freed[i].seq);
+    for (i = 0; i < nfreed; i++) fprintf (f, "K,%d,%d,%d,%d\n", tic, freed[i].serial, freed[i].seq, freed[i].adds);
     for (i = 0; i < nremoved; i++) print_mobj (f, "RM", tic, removed[i].serial, &removed[i].m, 0);
     nfreed = nremoved = freeseq = 0;
     for (i = 0; i < numsectors; i++) {

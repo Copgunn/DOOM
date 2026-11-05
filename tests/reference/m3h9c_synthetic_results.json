@@ -1,7 +1,7 @@
 {
  "schema": "DOOM-M3H9C-SYNTHETIC-RESULTS-v1",
  "wad_sha256": "1180ed6a0070d841e20ae2a3fd136fe49f132082a2dba50b75106a10b58c5923",
- "runner_contract_sha256": "1ca41be447e226708dfe2137b4ed945d2dcc6d690cc026afbeaf55d0659404a3",
+ "runner_contract_sha256": "25cecec5b7bfeb952a5786bdd105ba66ccc6728493d2a317b8db5e2e06224111",
  "variants": [
   "strict",
   "overflow",
@@ -21,7 +21,7 @@
    "mobjs_at_load": 92,
    "unknown_messages": 0,
    "snapshots": 582,
-   "dumps_sha256": "060ab8b7150d6ac3578cd6b7ed0e98567f62810adb762bba12a7029603aa38b5"
+   "dumps_sha256": "c94f21f685537bca3f19b833ff590c46a534d595d44e921732874192132e85c2"
   },
   "SYNCHAOS": {
    "lmp_sha256": "5072d63e8ad1aa2509136b9f35d903cda0626e42cdd06099b481c9be5227d9df",
@@ -34,7 +34,7 @@
    "mobjs_at_load": 92,
    "unknown_messages": 0,
    "snapshots": 5001,
-   "dumps_sha256": "c5538d871ed7e169dd81b50614bd6e02e2b8eaf321697725f85c5c6a7700fbf3"
+   "dumps_sha256": "1accfcf39650fe1aaaa72cf8ebab39a7e6a7d9be18905b45262c878158e9834b"
   },
   "SYNFIGHT": {
    "lmp_sha256": "77c17e0d4577281b91e992d4353dc4cd2e0525ec7b5d42469487b11b167b8149",
@@ -47,7 +47,7 @@
    "mobjs_at_load": 92,
    "unknown_messages": 0,
    "snapshots": 274,
-   "dumps_sha256": "602f39d029d93c3c3bc36ae3857c7469ee727b3b477f05d120008343938080be"
+   "dumps_sha256": "165d85be5ea06c0c39ffeb093fd20392422e43e64dfe89bc0993746682903aac"
   },
   "SYNIDLE": {
    "lmp_sha256": "a8730210d4c253c7d203dbf19dfa105a1d762811185339a36bc24fa038adb1f2",
@@ -60,7 +60,7 @@
    "mobjs_at_load": 92,
    "unknown_messages": 0,
    "snapshots": 2101,
-   "dumps_sha256": "460f8fd0f4b20ccbff4fa9dd20641476ecdd205ea76190cd71209b86a53050a5"
+   "dumps_sha256": "c774d7f42c337096d368a0fb81e36ded493fc8ccfd375aee9d40382be15b04cb"
   },
   "SYNWALK": {
    "lmp_sha256": "9f9bd78e7ed582b5a0250fdc8f90eddb080e1e8b2870ae0f47c6d2f7934621c9",
@@ -73,7 +73,7 @@
    "mobjs_at_load": 92,
    "unknown_messages": 0,
    "snapshots": 1469,
-   "dumps_sha256": "fac0153afa3ca9c83ad4338d259d74f1f584e7134a2bb758ea0758e60d88f356"
+   "dumps_sha256": "7297a677c897da48abcc720ad1b3557d604e882923870f4c7c1d7c24c6d89bb5"
   }
  }
 }

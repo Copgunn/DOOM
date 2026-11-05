@@ -623,8 +623,8 @@ genuine read-only `Z_CheckHeap` runs after every tic. Linker-level observers
 (`-Wl,--wrap` of `P_AddThinker`, `Z_Free`, `P_SetThingPosition` and `P_InitThinkers`)
 record and then call the genuine function; the gameplay text is unchanged. They give
 every thinker its exact serial and link serial (`T` rows), list every free since the
-previous snapshot (`K`) and keep a copy of each removed mobj taken just before its free
-(`RM`). The `HU_Ticker` stub captures the player's pickup message before clearing it as
+previous snapshot (`K`, with the add count at each free, which places it among the spawns) and keep a copy of each removed mobj taken just before its free
+(`RM`). A mobj still pending removal also gets its fields in an `RR` row. The `HU_Ticker` stub captures the player's pickup message before clearing it as
 vanilla does. A fifth wrapper, `Z_Malloc`, zero-fills every block after the genuine
 allocation ("ZeroFill", declared). Without it, the plat `count` and floor `newspecial`
 fields, which the genuine code leaves uninitialised until it first sets them, made the
