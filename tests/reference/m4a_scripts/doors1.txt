@@ -1,0 +1,123 @@
+# output: DOORS1.lmp
+# DOORS1 on tests/reference/m4a_wads/doors.wad (M4a). Authored closed loop against the strict runner.
+# Manual doors: USE MD0 (31, D1 open); USE MD1..MD6 without keys (26/27/28 DR and 32/34/33 D1 locked:
+# message and oof only); collect the three keys; USE MD1, MD2, MD3 (DR locked: normal doors; MD3 used again
+# while opening (player closes it) and while closing (reopens)), MD4, MD5, MD6 (D1 locked: open, line cleared);
+# shoot MD7's 46 line (gun door), kill the zombieman behind it, shoot the 46 switch in the west alcove.
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+# (a) MD0: 31 D1 open
+cmd 1 0 0 0 0   # walk to (-544,215)
+cmd 19 50 0 0 0   # run 19 tics
+cmd 26 0 0 0 0   # settle
+cmd 1 0 0 0 2   # USE MD0 (31)
+cmd 4 0 0 0 0
+# (b) MD1..MD6 without keys
+cmd 1 0 0 193 0   # walk to (-400,215)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 63 0   # face 90 deg
+cmd 1 0 0 0 2   # USE door at x=-400 (no key)
+cmd 3 0 0 0 0
+cmd 1 0 0 191 0   # walk to (-256,215)
+cmd 8 50 0 0 0   # run 8 tics
+cmd 22 0 0 0 0   # settle
+cmd 1 0 0 65 0   # face 90 deg
+cmd 1 0 0 0 2   # USE door at x=-256 (no key)
+cmd 3 0 0 0 0
+cmd 1 0 0 191 0   # walk to (-112,215)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 65 0   # face 90 deg
+cmd 1 0 0 0 2   # USE door at x=-112 (no key)
+cmd 3 0 0 0 0
+cmd 1 0 0 192 0   # walk to (32,215)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 64 0   # face 90 deg
+cmd 1 0 0 0 2   # USE door at x=32 (no key)
+cmd 3 0 0 0 0
+cmd 1 0 0 192 0   # walk to (176,215)
+cmd 8 50 0 0 0   # run 8 tics
+cmd 22 0 0 0 0   # settle
+cmd 1 0 0 64 0   # face 90 deg
+cmd 1 0 0 0 2   # USE door at x=176 (no key)
+cmd 3 0 0 0 0
+cmd 1 0 0 192 0   # walk to (320,215)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 64 0   # face 90 deg
+cmd 1 0 0 0 2   # USE door at x=320 (no key)
+cmd 3 0 0 0 0
+# (c) the three keys
+cmd 1 0 0 87 0   # walk to (-112,-60)
+cmd 31 50 0 0 0   # run 31 tics
+cmd 28 0 0 0 0   # settle
+cmd 1 0 0 234 0   # walk to (-256,-60)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 253 0   # walk to (-400,-60)
+cmd 8 50 0 0 0   # run 8 tics
+cmd 22 0 0 0 0   # settle
+# (d) locked DR doors with keys, MD3 three times, locked D1 doors
+cmd 1 0 0 196 0   # walk to (-400,215)
+cmd 17 50 0 0 0   # run 17 tics
+cmd 26 0 0 0 0   # settle
+cmd 1 0 0 254 0   # face 90 deg
+cmd 1 0 0 0 2   # USE MD1 (26 blue DR)
+cmd 3 0 0 0 0
+cmd 1 0 0 192 0   # walk to (-256,215)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 64 0   # face 90 deg
+cmd 1 0 0 0 2   # USE MD2 (27 yellow DR)
+cmd 3 0 0 0 0
+cmd 1 0 0 190 0   # walk to (-112,215)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 66 0   # face 90 deg
+cmd 1 0 0 0 2   # USE MD3 (28 red DR): opens
+cmd 20 0 0 0 0
+cmd 1 0 0 0 2   # USE MD3 again while it opens: the player closes it
+cmd 20 0 0 0 0
+cmd 1 0 0 0 2   # USE MD3 a third time while it closes: it reopens
+cmd 3 0 0 0 0
+cmd 1 0 0 192 0   # walk to (32,215)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 64 0   # face 90 deg
+cmd 1 0 0 0 2   # USE MD4 (32 blue D1)
+cmd 3 0 0 0 0
+cmd 1 0 0 192 0   # walk to (176,215)
+cmd 8 50 0 0 0   # run 8 tics
+cmd 22 0 0 0 0   # settle
+cmd 1 0 0 64 0   # face 90 deg
+cmd 1 0 0 0 2   # USE MD5 (34 yellow D1)
+cmd 3 0 0 0 0
+cmd 1 0 0 192 0   # walk to (320,215)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 64 0   # face 90 deg
+cmd 1 0 0 0 2   # USE MD6 (33 red D1)
+cmd 3 0 0 0 0
+# (e) the gun door MD7 (46), the zombieman behind it, the 46 switch
+cmd 1 0 0 175 0   # walk to (464,150)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 81 0   # face 90 deg
+cmd 1 0 0 0 1   # fire at the MD7 line (46: the door opens)
+cmd 30 0 0 0 0
+cmd 1 0 0 255 1   # aim and fire at (464,384)
+cmd 14 0 0 0 0
+cmd 1 0 0 0 1   # aim and fire at (464,389)
+cmd 14 0 0 0 0
+cmd 1 0 0 0 1   # aim and fire at (465,394)
+cmd 14 0 0 0 0
+# zombieman killed after 3 shots
+cmd 1 0 0 71 0   # walk to (-560,0)
+cmd 62 50 0 0 0   # run 62 tics
+cmd 28 0 0 0 0   # settle
+cmd 1 0 0 250 0   # face 180 deg
+cmd 1 0 0 0 1   # fire at the west alcove 46 switch (SW1BRCOM)
+cmd 40 0 0 0 0

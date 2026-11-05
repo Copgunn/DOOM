@@ -1,0 +1,40 @@
+# output: STAIRS1.lmp
+# STAIRS1 on tests/reference/m4a_wads/stairs.wad (M4a). Authored closed loop against the strict runner.
+# S1 7 stairs pressed while the tagged neighbour bA is busy (WR 82): the decoy dA (other flat) is not joined, the busy bA
+# bumps the height (p_floor.c:528-534); W1 8 stairs B ridden while rising; the player walks onto staircase A.
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 140 0   # walk to (-496,-150)
+cmd 31 50 0 0 0   # run 31 tics
+cmd 28 0 0 0 0   # settle
+cmd 1 0 0 47 0   # south over the WR 82 strip: bA starts lowering (busy for 64 tics)
+cmd 6 40 0 0 0   # run 6 tics
+cmd 18 0 0 0 0   # settle
+cmd 1 0 0 65 0   # walk to (-368,-234)
+cmd 8 50 0 0 0   # run 8 tics
+cmd 21 0 0 0 0   # settle
+cmd 1 0 0 196 0   # face 270 deg
+cmd 1 0 0 0 2   # USE the S1 7 switch while bA is busy: a1 8, a2 16, a3 24, bA skipped (+8), a4 40, a5 48, a6 56
+cmd 4 0 0 0 0
+cmd 1 0 0 90 0   # walk to (144,140)
+cmd 39 50 0 0 0   # run 39 tics
+cmd 28 0 0 0 0   # settle
+cmd 1 0 0 37 0   # north over the W1 8 strip: staircase B
+cmd 7 40 0 0 0   # run 7 tics
+cmd 19 0 0 0 0   # settle
+cmd 40 0 0 0 0
+cmd 1 0 0 2 0   # up staircase B while it rises
+cmd 29 25 0 0 0   # run 29 tics
+cmd 20 0 0 0 0   # settle
+cmd 120 0 0 0 0   # B finishes (160 tics)
+cmd 1 0 0 127 0   # walk to (144,200)
+cmd 13 50 0 0 0   # run 13 tics
+cmd 36 0 0 0 0   # settle
+cmd 1 0 0 216 0   # walk to (-528,-236)
+cmd 48 50 0 0 0   # run 48 tics
+cmd 28 0 0 0 0   # settle
+cmd 1 0 0 38 0   # down into staircase A (built while bA was busy)
+cmd 43 25 0 0 0   # run 43 tics
+cmd 21 0 0 0 0   # settle
+cmd 20 0 0 0 0

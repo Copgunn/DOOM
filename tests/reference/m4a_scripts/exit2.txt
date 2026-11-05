@@ -1,0 +1,12 @@
+# output: EXIT2.lmp
+# EXIT2 on tests/reference/m4a_wads/exits.wad (M4a). Authored closed loop against the strict runner.
+# The S1 51 secret exit (G_SecretExitLevel, g_game.c:1009-1018): end=exit with secretexit 1.
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 41 0   # walk to (-368,228)
+cmd 26 50 0 0 0   # run 26 tics
+cmd 27 0 0 0 0   # settle
+cmd 1 0 0 215 0   # face 90 deg
+cmd 1 0 0 0 2   # USE the S1 51 secret exit switch
+cmd 10 0 0 0 0

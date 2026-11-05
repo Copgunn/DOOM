@@ -1,0 +1,9 @@
+# output: SPECT2.lmp
+# SPECT2 on tests/reference/m4a_wads/spectre.wad (M4a). Authored closed loop against the strict runner.
+# The player waits at the west end; the imp's fireballs hit a Spectre, which retargets the imp and bites it; the imp
+# then attacks an MF_SHADOW target (the aim fuzz on A_FaceTarget and P_SpawnMissile).
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 0 0
+cmd 641 0 0 0 0   # the imp fires past the Spectres; a hit Spectre retargets the imp, bites it; the imp retargets a Spectre

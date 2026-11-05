@@ -1,0 +1,51 @@
+# output: DOORS2.lmp
+# DOORS2 on tests/reference/m4a_wads/doors.wad (M4a). Authored closed loop against the strict runner.
+# Walk-over doors: W1 2 (crossed twice), WR 86 (crossed again when open: one-tic thinker), WR 90 (crossed again
+# during its wait: busy); the S1 103 switch in the east alcove used twice.
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+# RD0 strip: W1 2 (open) crossed twice
+cmd 1 0 0 137 0   # RD0 strip (south over the strip)
+cmd 11 40 0 0 0   # run 11 tics
+cmd 22 0 0 0 0   # settle
+cmd 1 0 0 118 0   # RD0 strip (back north over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 18 0 0 0 0   # settle
+# RD1 strip: WR 86 (open) crossed, then again once the door is open (one-tic thinker)
+cmd 1 0 0 177 0   # RD1 strip (south over the strip)
+cmd 16 40 0 0 0   # run 16 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 79 0   # RD1 strip (back north over the strip)
+cmd 6 40 0 0 0   # run 6 tics
+cmd 17 0 0 0 0   # settle
+cmd 40 0 0 0 0   # RD1 reaches its top
+cmd 1 0 0 124 0   # RD1 strip again (south over the strip)
+cmd 6 40 0 0 0   # run 6 tics
+cmd 18 0 0 0 0   # settle
+cmd 1 0 0 133 0   # RD1 strip again (back north over the strip)
+cmd 6 40 0 0 0   # run 6 tics
+cmd 17 0 0 0 0   # settle
+# RD2 strip: WR 90 (normal), crossed again during the wait (busy: no new thinker)
+cmd 1 0 0 177 0   # RD2 strip (south over the strip)
+cmd 16 40 0 0 0   # run 16 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 77 0   # RD2 strip (back north over the strip)
+cmd 6 40 0 0 0   # run 6 tics
+cmd 17 0 0 0 0   # settle
+cmd 30 0 0 0 0
+cmd 1 0 0 125 0   # RD2 strip during the wait (south over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 19 0 0 0 0   # settle
+cmd 1 0 0 133 0   # RD2 strip during the wait (back north over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 18 0 0 0 0   # settle
+# east alcove: S1 103 (open RD3) used twice
+cmd 1 0 0 200 0   # walk to (624,0)
+cmd 46 50 0 0 0   # run 46 tics
+cmd 28 0 0 0 0   # settle
+cmd 1 0 0 248 0   # face 0 deg
+cmd 1 0 0 0 2   # USE the S1 103 switch
+cmd 40 0 0 0 0
+cmd 1 0 0 0 2   # USE again: nothing (special cleared, SW2COMM)
+cmd 80 0 0 0 0   # RD2 closes

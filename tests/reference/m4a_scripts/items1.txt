@@ -1,0 +1,19 @@
+# output: ITEMS1.lmp
+# ITEMS1 on tests/reference/m4a_wads/items.wad (M4a). Authored closed loop against the strict runner.
+# Every item along y = 150: shells to the cap, the backpack doubling maxammo, a box left at the full count, soulsphere,
+# light amplification, computer map, partial invisibility (MF_SHADOW), radiation suit, three keycards, rockets.
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 61 0   # to the west end of the pickup row, clear of it
+cmd 38 50 0 0 0   # run 38 tics
+cmd 28 0 0 0 0   # settle
+cmd 1 0 0 194 0   # walk to (-620,150)
+cmd 8 50 0 0 0   # run 8 tics
+cmd 20 0 0 0 0   # settle
+cmd 1 0 0 193 0   # face 0 deg
+cmd 65 30 0 0 0   # east along y = 150: 3 shell boxes (cap 50), backpack, 4 shell boxes (the last stays), soulsphere, light amp, map, invisibility, suit, keys, rockets
+cmd 1 0 0 0 0   # the rest of the row
+cmd 39 30 0 0 0   # run 39 tics
+cmd 23 0 0 0 0   # settle
+cmd 10 0 0 0 0

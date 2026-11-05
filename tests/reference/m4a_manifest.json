@@ -1,0 +1,1234 @@
+{
+ "schema": "DOOM-M4A-MANIFEST-v1",
+ "note": "M4a synthetic CI maps (tools/reference/m4a_wad.py), their scripts (tools/e1m1_scripts.py) and the genuine-engine expectations checked by tools/reference/m4a_reference.py. Event expressions are documented in m4a_reference.py; tics are dump tics (load = -1). rust: \"tbd\" until the wire-23 Rust runner exists; refusals name the expected Rust refusal and the C tic at which its condition first holds.",
+ "selftest": {
+  "wad": "DOORS",
+  "script": "DOORS1"
+ },
+ "wads": [
+  {
+   "name": "DOORS",
+   "file": "tests/reference/m4a_wads/doors.wad",
+   "slot": "E1M1",
+   "episode": 1,
+   "map": 1,
+   "sha256": "15d09c947d9700cb6f0fec2d689624f0ba24993541df07f5d055024776c2221c",
+   "bytes": 60237,
+   "sectors": 36,
+   "lines": 146,
+   "things": {
+    "1": 1,
+    "5": 1,
+    "6": 1,
+    "13": 1,
+    "2035": 1,
+    "3004": 1
+   },
+   "scripts": [
+    {
+     "lump": "DOORS1",
+     "source": "tests/reference/m4a_scripts/doors1.txt",
+     "lmp": "tests/reference/m4a_scripts/DOORS1.lmp",
+     "c_end": "marker",
+     "end_tic": 921,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "31 D1: open door thinker on MD0",
+       "event": "first DR sector=@MD0 type=3",
+       "tic": 46
+      },
+      {
+       "what": "31 line cleared (a thinker was created)",
+       "event": "first L special=0 tag=0",
+       "tic": 46
+      },
+      {
+       "what": "26 without the blue key: PD_BLUEK, no thinker",
+       "event": "first P idx=0 message=38",
+       "tic": 85
+      },
+      {
+       "what": "27 without the yellow key: PD_YELLOWK",
+       "event": "first P idx=0 message=39",
+       "tic": 121
+      },
+      {
+       "what": "28 without the red key: PD_REDK",
+       "event": "first P idx=0 message=40",
+       "tic": 159
+      },
+      {
+       "what": "blue keycard",
+       "event": "first P idx=0 card0=1",
+       "tic": 387
+      },
+      {
+       "what": "yellow keycard",
+       "event": "first P idx=0 card1=1",
+       "tic": 353
+      },
+      {
+       "what": "red keycard",
+       "event": "first P idx=0 card2=1",
+       "tic": 319
+      },
+      {
+       "what": "26 with the key: normal door on MD1",
+       "event": "first DR sector=@MD1 type=0",
+       "tic": 444
+      },
+      {
+       "what": "28 used while opening: the player closes it",
+       "event": "first DR sector=@MD3 direction=-1",
+       "tic": 541
+      },
+      {
+       "what": "32 with the key: open door on MD4",
+       "event": "first DR sector=@MD4 type=3",
+       "tic": 600
+      },
+      {
+       "what": "33 with the key: open door on MD6",
+       "event": "first DR sector=@MD6 type=3",
+       "tic": 674
+      },
+      {
+       "what": "46 gun line hit: MD7 opens",
+       "event": "first DR sector=@MD7",
+       "tic": 716
+      },
+      {
+       "what": "zombieman behind MD7 killed",
+       "event": "first P idx=0 killcount=1",
+       "tic": 777
+      },
+      {
+       "what": "46 switch in the west alcove: button started",
+       "event": "first B btimer>0",
+       "tic": 884
+      }
+     ]
+    },
+    {
+     "lump": "DOORS2",
+     "source": "tests/reference/m4a_scripts/doors2.txt",
+     "lmp": "tests/reference/m4a_scripts/DOORS2.lmp",
+     "c_end": "marker",
+     "end_tic": 558,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "W1 2: open door on RD0",
+       "event": "first DR sector=@RD0 type=3",
+       "tic": 16
+      },
+      {
+       "what": "W1 2 line cleared",
+       "event": "first L special=0 tag=2",
+       "tic": 16
+      },
+      {
+       "what": "WR 86: open door on RD1",
+       "event": "first DR sector=@RD1 type=3",
+       "tic": 110
+      },
+      {
+       "what": "WR 86 crossed again at the top: a one-tic thinker (the third pending-removal row)",
+       "event": "edge 3 R",
+       "tic": 174
+      },
+      {
+       "what": "WR 90: normal door on RD2",
+       "event": "first DR sector=@RD2 type=0",
+       "tic": 262
+      },
+      {
+       "what": "RD2 closed and removed after its wait",
+       "event": "gone DR sector=@RD2",
+       "tic": 537
+      },
+      {
+       "what": "S1 103: open door on RD3",
+       "event": "first DR sector=@RD3 type=3",
+       "tic": 436
+      },
+      {
+       "what": "S1 103 line cleared",
+       "event": "first L special=0 tag=5",
+       "tic": 436
+      }
+     ]
+    },
+    {
+     "lump": "DOORS3",
+     "source": "tests/reference/m4a_scripts/doors3.txt",
+     "lmp": "tests/reference/m4a_scripts/DOORS3.lmp",
+     "c_end": "marker",
+     "end_tic": 1335,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "W1 16: close-30-then-open on RD4",
+       "event": "first DR sector=@RD4 type=1",
+       "tic": 99
+      },
+      {
+       "what": "RD4 closed: 35*30-tic wait",
+       "event": "first DR sector=@RD4 topcountdown=1050",
+       "tic": 163
+      },
+      {
+       "what": "WR 76: close-30-then-open on RD5 (barrel in the doorway)",
+       "event": "first DR sector=@RD5 type=1",
+       "tic": 163
+      },
+      {
+       "what": "RD5 hits the barrel and reverses (crushed, default case)",
+       "event": "first DR sector=@RD5 direction=1",
+       "tic": 206
+      },
+      {
+       "what": "RD5 removed at the top (no retry)",
+       "event": "gone DR sector=@RD5",
+       "tic": 250
+      },
+      {
+       "what": "RD4 reopens after the wait",
+       "event": "first DR sector=@RD4 direction=1",
+       "tic": 1213
+      },
+      {
+       "what": "RD4 removed at the top",
+       "event": "gone DR sector=@RD4",
+       "tic": 1278
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "FLOORS",
+   "file": "tests/reference/m4a_wads/floors.wad",
+   "slot": "E1M1",
+   "episode": 1,
+   "map": 1,
+   "sha256": "f9f98508b0677f922232829f30cb82ea7824fed847196c6cf59df870e4190cb8",
+   "bytes": 64199,
+   "sectors": 48,
+   "lines": 173,
+   "things": {
+    "1": 1,
+    "2035": 1
+   },
+   "scripts": [
+    {
+     "lump": "FLOORS1",
+     "source": "tests/reference/m4a_scripts/floors1.txt",
+     "lmp": "tests/reference/m4a_scripts/FLOORS1.lmp",
+     "c_end": "marker",
+     "end_tic": 932,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "W1 5 raiseFloor to 48 (lowest ceiling around)",
+       "event": "first FL sector=@M5 type=3 floordestheight=48u",
+       "tic": 96
+      },
+      {
+       "what": "W1 5 line cleared",
+       "event": "first L special=0 tag=1",
+       "tic": 96
+      },
+      {
+       "what": "WR 91 raiseFloor to 48",
+       "event": "first FL sector=@M91 type=3 floordestheight=48u",
+       "tic": 166
+      },
+      {
+       "what": "WR 98 turboLower to 16+8",
+       "event": "first FL sector=@M98 type=2 floordestheight=24u",
+       "tic": 392
+      },
+      {
+       "what": "WR 82 lowerFloorToLowest to -32",
+       "event": "first FL sector=@M82 type=1 floordestheight=-32u",
+       "tic": 485
+      },
+      {
+       "what": "SR 70 turboLower to 24+8",
+       "event": "first FL sector=@M70 type=2 floordestheight=32u",
+       "tic": 690
+      },
+      {
+       "what": "SR 70 button",
+       "event": "first B btimer>0",
+       "tic": 690
+      },
+      {
+       "what": "SR 70 used again after the reset: second button",
+       "event": "edge 2 B btimer>0",
+       "tic": 739
+      },
+      {
+       "what": "S1 23 lowerFloorToLowest to -32",
+       "event": "first FL sector=@M23 type=1 floordestheight=-32u",
+       "tic": 792
+      },
+      {
+       "what": "S1 18 raiseFloorToNearest to 16",
+       "event": "first FL sector=@M18 type=4 floordestheight=16u",
+       "tic": 837
+      },
+      {
+       "what": "S1 18 line cleared",
+       "event": "first L special=0 tag=4",
+       "tic": 837
+      }
+     ]
+    },
+    {
+     "lump": "FLOORS2",
+     "source": "tests/reference/m4a_scripts/floors2.txt",
+     "lmp": "tests/reference/m4a_scripts/FLOORS2.lmp",
+     "c_end": "marker",
+     "end_tic": 284,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "WR 91 raiseFloor to the pad ceiling 64",
+       "event": "first FL sector=@M91B type=3 floordestheight=64u",
+       "tic": 37
+      },
+      {
+       "what": "the pad stalls under the barrel (floor restored every tic)",
+       "event": "stall @M91B",
+       "tic": 59
+      },
+      {
+       "what": "barrel shot dead",
+       "event": "first M type=MT_BARREL health<=0",
+       "tic": 147
+      },
+      {
+       "what": "the pad reaches 64",
+       "event": "first S idx=@M91B floorheight=64u",
+       "tic": 188
+      }
+     ]
+    },
+    {
+     "lump": "FLOORS3",
+     "source": "tests/reference/m4a_scripts/floors3.txt",
+     "lmp": "tests/reference/m4a_scripts/FLOORS3.lmp",
+     "c_end": "marker",
+     "end_tic": 180,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "S1 18 on the comb: destination 64 (the 21st neighbour, 8, is never read)",
+       "event": "first FL sector=@COMB type=4 floordestheight=64u",
+       "tic": 89
+      },
+      {
+       "what": "the comb reaches 64",
+       "event": "first S idx=@COMB floorheight=64u",
+       "tic": 152
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "PLATS",
+   "file": "tests/reference/m4a_wads/plats.wad",
+   "slot": "E1M1",
+   "episode": 1,
+   "map": 1,
+   "sha256": "b530cdaccfa2f8dfb614ba2eb1b725950591d092761e0da76a28d342988ab567",
+   "bytes": 50751,
+   "sectors": 12,
+   "lines": 51,
+   "things": {
+    "1": 1,
+    "2007": 1,
+    "2035": 1,
+    "3004": 1
+   },
+   "scripts": [
+    {
+     "lump": "PLATS1",
+     "source": "tests/reference/m4a_scripts/plats1.txt",
+     "lmp": "tests/reference/m4a_scripts/PLATS1.lmp",
+     "c_end": "marker",
+     "end_tic": 573,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "SR 62 downWaitUpStay on the lift",
+       "event": "first PL sector=@PL type=1",
+       "tic": 58
+      },
+      {
+       "what": "SR 62 button",
+       "event": "first B btimer>0",
+       "tic": 58
+      },
+      {
+       "what": "the lift reaches 0",
+       "event": "first S idx=@PL floorheight=0",
+       "tic": 69
+      },
+      {
+       "what": "the lift ends at the top",
+       "event": "gone PL sector=@PL",
+       "tic": 188
+      },
+      {
+       "what": "second cycle",
+       "event": "edge 2 PL sector=@PL",
+       "tic": 250
+      },
+      {
+       "what": "S1 20 raiseToNearestAndChange on P20",
+       "event": "first PL sector=@P20 type=3",
+       "tic": 318
+      },
+      {
+       "what": "P20 takes the alcove floor TESTFLR0",
+       "event": "first S idx=@P20 floorpic=%TESTFLR0",
+       "tic": 318
+      },
+      {
+       "what": "P20 special cleared",
+       "event": "first S idx=@P20 special=0",
+       "tic": 318
+      },
+      {
+       "what": "W1 22 on P22",
+       "event": "first PL sector=@P22 type=3",
+       "tic": 380
+      },
+      {
+       "what": "P22 takes the hall floor FLOOR7_1 (the line's front sector, not the strip)",
+       "event": "first S idx=@P22 floorpic=%FLOOR7_1",
+       "tic": 380
+      },
+      {
+       "what": "P20 reaches the next floor 40",
+       "event": "first S idx=@P20 floorheight=40u",
+       "tic": 397
+      }
+     ]
+    },
+    {
+     "lump": "PLATS2",
+     "source": "tests/reference/m4a_scripts/plats2.txt",
+     "lmp": "tests/reference/m4a_scripts/PLATS2.lmp",
+     "c_end": "marker",
+     "end_tic": 182,
+     "secretexit": false,
+     "rust": {
+      "refuse": "blocked raiseToNearestAndChange plat (H7)",
+      "tic": 91,
+      "event": "first PL sector=@P22B status=1"
+     },
+     "must_show": [
+      {
+       "what": "W1 22 on P22B (ceiling 64, barrel)",
+       "event": "first PL sector=@P22B type=3",
+       "tic": 47
+      },
+      {
+       "what": "the plat reaches low = 0 and waits (count below 0)",
+       "event": "first PL sector=@P22B status=2",
+       "tic": 136
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "STAIRS",
+   "file": "tests/reference/m4a_wads/stairs.wad",
+   "slot": "E1M1",
+   "episode": 1,
+   "map": 1,
+   "sha256": "0436baec21aaeb6597e21fdc6b47985f60c7cbdafacadee7be4ff0f9ed92de99",
+   "bytes": 56797,
+   "sectors": 28,
+   "lines": 101,
+   "things": {
+    "1": 1,
+    "2007": 1,
+    "2035": 1,
+    "3004": 1
+   },
+   "scripts": [
+    {
+     "lump": "STAIRS1",
+     "source": "tests/reference/m4a_scripts/stairs1.txt",
+     "lmp": "tests/reference/m4a_scripts/STAIRS1.lmp",
+     "c_end": "marker",
+     "end_tic": 638,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "WR 82 lowers bA (busy)",
+       "event": "first FL sector=@bA type=1",
+       "tic": 71
+      },
+      {
+       "what": "S1 7: a1 to 8",
+       "event": "first FL sector=@a1 floordestheight=8u",
+       "tic": 116
+      },
+      {
+       "what": "a3 to 24",
+       "event": "first FL sector=@a3 floordestheight=24u",
+       "tic": 116
+      },
+      {
+       "what": "busy bA skipped, height bumped: a4 to 40",
+       "event": "first FL sector=@a4 floordestheight=40u",
+       "tic": 116
+      },
+      {
+       "what": "a6 to 56",
+       "event": "first FL sector=@a6 floordestheight=56u",
+       "tic": 116
+      },
+      {
+       "what": "S1 7 line cleared",
+       "event": "first L special=0 tag=7",
+       "tic": 116
+      },
+      {
+       "what": "W1 8: b5 to 40",
+       "event": "first FL sector=@b5 floordestheight=40u",
+       "tic": 200
+      },
+      {
+       "what": "staircase A finished: a6 at 56",
+       "event": "first S idx=@a6 floorheight=56u",
+       "tic": 339
+      }
+     ]
+    },
+    {
+     "lump": "STAIRS2",
+     "source": "tests/reference/m4a_scripts/stairs2.txt",
+     "lmp": "tests/reference/m4a_scripts/STAIRS2.lmp",
+     "c_end": "marker",
+     "end_tic": 230,
+     "secretexit": false,
+     "rust": {
+      "refuse": "blocked stair step (H7)",
+      "tic": 153,
+      "event": "stall @c4"
+     },
+     "must_show": [
+      {
+       "what": "W1 8 on staircase C: c4 to 32",
+       "event": "first FL sector=@c4 floordestheight=32u",
+       "tic": 65
+      },
+      {
+       "what": "c5 finishes (c4 still blocked)",
+       "event": "gone FL sector=@c5",
+       "tic": 225
+      }
+     ]
+    },
+    {
+     "lump": "DONUT1",
+     "source": "tests/reference/m4a_scripts/donut1.txt",
+     "lmp": "tests/reference/m4a_scripts/DONUT1.lmp",
+     "c_end": "marker",
+     "end_tic": 332,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "S1 9: donutRaise on the ring",
+       "event": "first FL sector=@ring type=11 floordestheight=0",
+       "tic": 51
+      },
+      {
+       "what": "the pillar lowers to the pool floor",
+       "event": "first FL sector=@pillar direction=-1 floordestheight=0",
+       "tic": 51
+      },
+      {
+       "what": "the ring takes the pool flat",
+       "event": "first S idx=@ring floorpic=%FLOOR7_1",
+       "tic": 115
+      },
+      {
+       "what": "the ring special cleared",
+       "event": "first S idx=@ring special=0",
+       "tic": 115
+      },
+      {
+       "what": "the zombieman on the pillar killed",
+       "event": "first P idx=0 killcount=1",
+       "tic": 170
+      },
+      {
+       "what": "the pillar reaches 0",
+       "event": "first S idx=@pillar floorheight=0",
+       "tic": 146
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "EXITS",
+   "file": "tests/reference/m4a_wads/exits.wad",
+   "slot": "E1M1",
+   "episode": 1,
+   "map": 1,
+   "sha256": "20f10de817603047d3e76bdfe869a4d5df401c1f19f595d0cf5a6c1881f40915",
+   "bytes": 48840,
+   "sectors": 7,
+   "lines": 33,
+   "things": {
+    "1": 1,
+    "2035": 3
+   },
+   "scripts": [
+    {
+     "lump": "EXIT1",
+     "source": "tests/reference/m4a_scripts/exit1.txt",
+     "lmp": "tests/reference/m4a_scripts/EXIT1.lmp",
+     "c_end": "exit",
+     "end_tic": 152,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "W1 35: DK1 light 35",
+       "event": "first S idx=@DK1 lightlevel=35",
+       "tic": 29
+      },
+      {
+       "what": "W1 35 line cleared",
+       "event": "first L special=0 tag=3",
+       "tic": 29
+      },
+      {
+       "what": "S1 11: ga_completed",
+       "event": "first H gameaction=6",
+       "tic": 152
+      }
+     ]
+    },
+    {
+     "lump": "EXIT2",
+     "source": "tests/reference/m4a_scripts/exit2.txt",
+     "lmp": "tests/reference/m4a_scripts/EXIT2.lmp",
+     "c_end": "exit",
+     "end_tic": 55,
+     "secretexit": true,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "S1 51: secretexit set",
+       "event": "first H secretexit=1",
+       "tic": 55
+      }
+     ]
+    },
+    {
+     "lump": "SECT11",
+     "source": "tests/reference/m4a_scripts/sect11.txt",
+     "lmp": "tests/reference/m4a_scripts/SECT11.lmp",
+     "c_end": "exit",
+     "end_tic": 180,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "first 20-point floor hit",
+       "event": "first P idx=0 health=80",
+       "tic": 64
+      },
+      {
+       "what": "fourth floor hit",
+       "event": "first P idx=0 health=20",
+       "tic": 160
+      },
+      {
+       "what": "barrel blast capped to health - 1",
+       "event": "first P idx=0 health=1",
+       "tic": 179
+      },
+      {
+       "what": "health <= 10: G_ExitLevel",
+       "event": "first H gameaction=6",
+       "tic": 180
+      }
+     ]
+    },
+    {
+     "lump": "EXDIE",
+     "source": "tests/reference/m4a_scripts/exdie.txt",
+     "lmp": "tests/reference/m4a_scripts/EXDIE.lmp",
+     "c_end": "reborn",
+     "end_tic": 127,
+     "secretexit": false,
+     "rust": {
+      "refuse": "PlayerReborn",
+      "tic": 127,
+      "event": "first P idx=0 playerstate=2",
+      "note": "Rust refuses the tic after the reborn request (as for SYNDIE); the tic here is the request tic"
+     },
+     "must_show": [
+      {
+       "what": "barrel blasts kill the player outside sector 11",
+       "event": "first P idx=0 playerstate=1",
+       "tic": 106
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "WEAPONS",
+   "file": "tests/reference/m4a_wads/weapons.wad",
+   "slot": "E1M1",
+   "episode": 1,
+   "map": 1,
+   "sha256": "5353394439d0c5573eae6f0cbab38a00f84b62ff7fc9c50301a458c7bcd4f7bf",
+   "bytes": 47008,
+   "sectors": 2,
+   "lines": 13,
+   "things": {
+    "1": 1,
+    "2003": 1,
+    "2005": 1,
+    "2010": 3,
+    "2012": 1,
+    "2035": 6,
+    "2046": 1,
+    "3001": 2,
+    "3004": 3
+   },
+   "scripts": [
+    {
+     "lump": "SAW1",
+     "source": "tests/reference/m4a_scripts/saw1.txt",
+     "lmp": "tests/reference/m4a_scripts/SAW1.lmp",
+     "c_end": "marker",
+     "end_tic": 238,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "chainsaw pickup",
+       "event": "first P idx=0 message=33",
+       "tic": 8
+      },
+      {
+       "what": "chainsaw raised",
+       "event": "first P idx=0 readyweapon=7",
+       "tic": 29
+      },
+      {
+       "what": "A_Saw hit: next tic forwardmove 100 (MF_JUSTATTACKED)",
+       "event": "first P idx=0 cmd_forward=100",
+       "tic": 77
+      },
+      {
+       "what": "both zombiemen sawn",
+       "event": "first P idx=0 killcount=2",
+       "tic": 92
+      },
+      {
+       "what": "CHANGE|W1: pistol",
+       "event": "first P idx=0 readyweapon=1 killcount=2",
+       "tic": 119
+      },
+      {
+       "what": "CHANGE|W0 with the chainsaw owned: the chainsaw again",
+       "event": "edge 3 P idx=0 readyweapon=7",
+       "tic": 214
+      }
+     ]
+    },
+    {
+     "lump": "ROCKET1",
+     "source": "tests/reference/m4a_scripts/rocket1.txt",
+     "lmp": "tests/reference/m4a_scripts/ROCKET1.lmp",
+     "c_end": "marker",
+     "end_tic": 929,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "launcher pickup: 2 rockets",
+       "event": "first P idx=0 ammo3=2",
+       "tic": 25
+      },
+      {
+       "what": "10 rockets",
+       "event": "first P idx=0 ammo3=10",
+       "tic": 61
+      },
+      {
+       "what": "launcher raised",
+       "event": "first P idx=0 readyweapon=4",
+       "tic": 41
+      },
+      {
+       "what": "first rocket in flight",
+       "event": "first M type=MT_ROCKET",
+       "tic": 210
+      },
+      {
+       "what": "rocket explosion",
+       "event": "first M type=MT_ROCKET state=S_EXPLODE1",
+       "tic": 223
+      },
+      {
+       "what": "five monsters killed",
+       "event": "first P idx=0 killcount=5",
+       "tic": 589
+      },
+      {
+       "what": "sixth rocket fired (4 left)",
+       "event": "edge 2 P idx=0 ammo3=4",
+       "tic": 896
+      }
+     ]
+    },
+    {
+     "lump": "ROCKDIE",
+     "source": "tests/reference/m4a_scripts/rockdie.txt",
+     "lmp": "tests/reference/m4a_scripts/ROCKDIE.lmp",
+     "c_end": "reborn",
+     "end_tic": 122,
+     "secretexit": false,
+     "rust": {
+      "refuse": "PlayerReborn",
+      "tic": 122,
+      "event": "first P idx=0 playerstate=2",
+      "note": "Rust refuses the tic after the reborn request (as for SYNDIE); the tic here is the request tic"
+     },
+     "must_show": [
+      {
+       "what": "rocket fired",
+       "event": "first P idx=0 ammo3=1",
+       "tic": 101
+      },
+      {
+       "what": "killed by its own rocket",
+       "event": "first P idx=0 playerstate=1",
+       "tic": 101
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ITEMS",
+   "file": "tests/reference/m4a_wads/items.wad",
+   "slot": "E1M1",
+   "episode": 1,
+   "map": 1,
+   "sha256": "60f433cceeec2af7f19e3ee6421abe092372f51b7f50004219f9da88c6135e67",
+   "bytes": 48381,
+   "sectors": 5,
+   "lines": 22,
+   "things": {
+    "1": 1,
+    "5": 1,
+    "6": 1,
+    "8": 1,
+    "9": 1,
+    "13": 1,
+    "2001": 1,
+    "2010": 2,
+    "2013": 1,
+    "2024": 1,
+    "2025": 1,
+    "2026": 1,
+    "2045": 1,
+    "2046": 1,
+    "2049": 7,
+    "3001": 1,
+    "3004": 2
+   },
+   "scripts": [
+    {
+     "lump": "ITEMS1",
+     "source": "tests/reference/m4a_scripts/items1.txt",
+     "lmp": "tests/reference/m4a_scripts/ITEMS1.lmp",
+     "c_end": "marker",
+     "end_tic": 235,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "shells capped at 50",
+       "event": "first P idx=0 ammo1=50",
+       "tic": 115
+      },
+      {
+       "what": "backpack",
+       "event": "first P idx=0 backpack=1",
+       "tic": 120
+      },
+      {
+       "what": "maxammo doubled",
+       "event": "first P idx=0 maxammo1=100",
+       "tic": 120
+      },
+      {
+       "what": "shells at the doubled cap 100",
+       "event": "first P idx=0 ammo1=100",
+       "tic": 132
+      },
+      {
+       "what": "soulsphere: health 200",
+       "event": "first P idx=0 health=200",
+       "tic": 145
+      },
+      {
+       "what": "light amplification",
+       "event": "first P idx=0 pw5=4200",
+       "tic": 153
+      },
+      {
+       "what": "computer map",
+       "event": "first P idx=0 pw4=1",
+       "tic": 161
+      },
+      {
+       "what": "partial invisibility",
+       "event": "first P idx=0 pw2=2100",
+       "tic": 169
+      },
+      {
+       "what": "MF_SHADOW on the player",
+       "event": "first M type=MT_PLAYER flags&262144",
+       "tic": 169
+      },
+      {
+       "what": "radiation suit",
+       "event": "first P idx=0 pw3=2100",
+       "tic": 178
+      },
+      {
+       "what": "red keycard",
+       "event": "first P idx=0 card2=1",
+       "tic": 194
+      },
+      {
+       "what": "rocket box: 8 rockets",
+       "event": "first P idx=0 ammo3=8",
+       "tic": 207
+      }
+     ]
+    },
+    {
+     "lump": "TIMERS",
+     "source": "tests/reference/m4a_scripts/timers.txt",
+     "lmp": "tests/reference/m4a_scripts/TIMERS.lmp",
+     "c_end": "marker",
+     "end_tic": 2252,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "partial invisibility",
+       "event": "first P idx=0 pw2=2100",
+       "tic": 21
+      },
+      {
+       "what": "radiation suit",
+       "event": "first P idx=0 pw3=2100",
+       "tic": 44
+      },
+      {
+       "what": "light amplification",
+       "event": "first P idx=0 pw5=4200",
+       "tic": 84
+      },
+      {
+       "what": "invisibility runs out",
+       "event": "gone P idx=0 pw2>0",
+       "tic": 2121
+      },
+      {
+       "what": "MF_SHADOW cleared",
+       "event": "gone M type=MT_PLAYER flags&262144",
+       "tic": 2121
+      },
+      {
+       "what": "suit runs out",
+       "event": "gone P idx=0 pw3>0",
+       "tic": 2144
+      }
+     ]
+    },
+    {
+     "lump": "SUIT1",
+     "source": "tests/reference/m4a_scripts/suit1.txt",
+     "lmp": "tests/reference/m4a_scripts/SUIT1.lmp",
+     "c_end": "marker",
+     "end_tic": 302,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "radiation suit",
+       "event": "first P idx=0 pw3=2100",
+       "tic": 20
+      },
+      {
+       "what": "on the special-16 pond",
+       "event": "first M type=MT_PLAYER sector=@P16",
+       "tic": 149
+      }
+     ]
+    },
+    {
+     "lump": "SUITDIE",
+     "source": "tests/reference/m4a_scripts/suitdie.txt",
+     "lmp": "tests/reference/m4a_scripts/SUITDIE.lmp",
+     "c_end": "reborn",
+     "end_tic": 181,
+     "secretexit": false,
+     "rust": {
+      "refuse": "PlayerReborn",
+      "tic": 181,
+      "event": "first P idx=0 playerstate=2",
+      "note": "Rust refuses the tic after the reborn request (as for SYNDIE); the tic here is the request tic"
+     },
+     "must_show": [
+      {
+       "what": "first special-16 hit",
+       "event": "first P idx=0 health=80",
+       "tic": 32
+      },
+      {
+       "what": "dead on the special-16 pond",
+       "event": "first P idx=0 playerstate=1",
+       "tic": 160
+      }
+     ]
+    },
+    {
+     "lump": "INVIS1",
+     "source": "tests/reference/m4a_scripts/invis1.txt",
+     "lmp": "tests/reference/m4a_scripts/INVIS1.lmp",
+     "c_end": "marker",
+     "end_tic": 290,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "partial invisibility",
+       "event": "first P idx=0 pw2=2100",
+       "tic": 21
+      },
+      {
+       "what": "the invisible player is hit (imp attack with the shadow aim fuzz)",
+       "event": "first P idx=0 health<100",
+       "tic": 277
+      },
+      {
+       "what": "the imp killed",
+       "event": "first P idx=0 killcount=1",
+       "tic": 259
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "SPECTRE",
+   "file": "tests/reference/m4a_wads/spectre.wad",
+   "slot": "E1M1",
+   "episode": 1,
+   "map": 1,
+   "sha256": "59b5d2adcf4de7dd6f063c123c1781a4dd27e505a22979b0aecd6737275a5588",
+   "bytes": 46218,
+   "sectors": 2,
+   "lines": 7,
+   "things": {
+    "1": 1,
+    "58": 3,
+    "2001": 1,
+    "2012": 2,
+    "2018": 1,
+    "2049": 1,
+    "3001": 1
+   },
+   "scripts": [
+    {
+     "lump": "SPECT1",
+     "source": "tests/reference/m4a_scripts/spect1.txt",
+     "lmp": "tests/reference/m4a_scripts/SPECT1.lmp",
+     "c_end": "marker",
+     "end_tic": 608,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "shotgun raised",
+       "event": "first P idx=0 readyweapon=2",
+       "tic": 29
+      },
+      {
+       "what": "first kill",
+       "event": "first P idx=0 killcount=1",
+       "tic": 192
+      },
+      {
+       "what": "three Spectres and the imp killed",
+       "event": "first P idx=0 killcount=4",
+       "tic": 570
+      }
+     ]
+    },
+    {
+     "lump": "SPECT2",
+     "source": "tests/reference/m4a_scripts/spect2.txt",
+     "lmp": "tests/reference/m4a_scripts/SPECT2.lmp",
+     "c_end": "marker",
+     "end_tic": 642,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "an imp fireball hits a Spectre",
+       "event": "first M type=MT_SHADOWS health<150",
+       "tic": 373
+      },
+      {
+       "what": "a Spectre bites the imp (infighting)",
+       "event": "first M type=MT_TROOP health<60",
+       "tic": 581
+      }
+     ]
+    },
+    {
+     "lump": "SPECTD",
+     "source": "tests/reference/m4a_scripts/spectd.txt",
+     "lmp": "tests/reference/m4a_scripts/SPECTD.lmp",
+     "c_end": "reborn",
+     "end_tic": 521,
+     "secretexit": false,
+     "rust": {
+      "refuse": "PlayerReborn",
+      "tic": 521,
+      "event": "first P idx=0 playerstate=2",
+      "note": "Rust refuses the tic after the reborn request (as for SYNDIE); the tic here is the request tic"
+     },
+     "must_show": [
+      {
+       "what": "the idle player is killed",
+       "event": "first P idx=0 playerstate=1",
+       "tic": 500
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "SCALE",
+   "file": "tests/reference/m4a_wads/scale.wad",
+   "slot": "E1M1",
+   "episode": 1,
+   "map": 1,
+   "sha256": "c4182a2a132befc6c9808272f70e21f20b91edbf692d981d60401bc7a7fae8a2",
+   "bytes": 52804,
+   "sectors": 6,
+   "lines": 25,
+   "things": {
+    "1": 1,
+    "5": 1,
+    "6": 1,
+    "8": 2,
+    "9": 2,
+    "10": 2,
+    "13": 1,
+    "15": 2,
+    "24": 4,
+    "34": 10,
+    "35": 4,
+    "46": 8,
+    "48": 4,
+    "58": 3,
+    "2001": 2,
+    "2003": 1,
+    "2005": 1,
+    "2007": 6,
+    "2008": 6,
+    "2010": 6,
+    "2011": 6,
+    "2012": 6,
+    "2013": 2,
+    "2014": 8,
+    "2015": 8,
+    "2018": 2,
+    "2019": 2,
+    "2024": 2,
+    "2025": 2,
+    "2026": 2,
+    "2028": 6,
+    "2035": 24,
+    "2045": 2,
+    "2046": 4,
+    "2048": 4,
+    "2049": 6,
+    "3001": 3,
+    "3004": 4
+   },
+   "scripts": [
+    {
+     "lump": "SCALE1",
+     "source": "tests/reference/m4a_scripts/scale1.txt",
+     "lmp": "tests/reference/m4a_scripts/SCALE1.lmp",
+     "c_end": "marker",
+     "end_tic": 328,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "SR 62 on the 608-unit lift",
+       "event": "first PL sector=@PAD type=1 low=-48u high=560u",
+       "tic": 127
+      },
+      {
+       "what": "the lift reaches -48",
+       "event": "first S idx=@PAD floorheight=-48u",
+       "tic": 278
+      }
+     ]
+    },
+    {
+     "lump": "SCALE2",
+     "source": "tests/reference/m4a_scripts/scale2.txt",
+     "lmp": "tests/reference/m4a_scripts/SCALE2.lmp",
+     "c_end": "marker",
+     "end_tic": 600,
+     "secretexit": false,
+     "rust": "tbd",
+     "must_show": []
+    }
+   ]
+  }
+ ]
+}

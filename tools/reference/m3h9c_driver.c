@@ -78,6 +78,21 @@
  *     G_Ticker of tic TIC; it never touches gameplay code text.
  *   - --zone-mb N sets the zone size (vanilla mb_used = 6, i_system.c:51).
  *
+ * Columns added for M4a (appended at the end of their rows, so every earlier column keeps
+ * its position and name; readers select columns by name):
+ *   - H.secretexit: g_game.c's `boolean secretexit` (g_game.c:999), set by
+ *     G_SecretExitLevel (g_game.c:1009-1018, line special 51, p_switch.c:431-435) and
+ *     cleared by G_ExitLevel (g_game.c:1002-1006); it is what tells a secret exit
+ *     (end=exit, secretexit 1) from a normal one (secretexit 0) on the stopping tic.
+ *   - P.message codes 38..40: the three locked-door strings PD_BLUEK, PD_YELLOWK and
+ *     PD_REDK (d_englsh.h:128-130) that EV_VerticalDoor assigns to player->message
+ *     (p_doors.c:378, 392, 405), appended after GOTSHOTGUN2 so codes 1..37 are unchanged.
+ * Rows that already carried what M4a reads (no change): S.floorpic (sector_t.floorpic,
+ * written by EV_DoPlat raiseToNearestAndChange p_plats.c:185-195 and by the donut's
+ * T_MoveFloor pastdest p_floor.c:230-232), S.lightlevel (EV_LightTurnOn p_lights.c:271-306),
+ * P.pw0..pw5, card0..card5, backpack, ammo0..3, maxammo0..3 (player_t, d_player.h), and
+ * M.flags (MF_SHADOW, p_inter.c:300-305; MF_JUSTATTACKED, p_pspr.c:542).
+ *
  * Dumps are written only to --out: they hold map-derived values and stay local.
  * tools/reference/m3h9c_dump.py documents and reads the format.
  */
@@ -105,6 +120,7 @@ extern short numlinespecials;
 extern boolean singledemo;
 extern int rndindex, prndindex;
 extern gameaction_t gameaction;
+extern boolean secretexit;               /* g_game.c:999 */
 extern thinker_t thinkercap;
 extern button_t buttonlist[MAXBUTTONS];
 extern plat_t* activeplats[MAXPLATS];
@@ -245,13 +261,16 @@ void __wrap_P_InitThinkers (void)
 static int serial_of (void* p) { obs_t* e = obs_find (p); if (!e || e->serial < 0) { observer_misses++; return -1; } return e->serial; }
 static int linkserial_of (void* p) { obs_t* e = obs_find (p); return e ? e->linkserial : -1; }
 
-/* d_englsh.h GOTARMOR .. GOTSHOTGUN2 in header order; P rows report 1 + the index. */
+/* d_englsh.h GOTARMOR .. GOTSHOTGUN2 in header order, then (M4a) the locked-door strings
+ * PD_BLUEK, PD_YELLOWK, PD_REDK (d_englsh.h:128-130; p_doors.c:378, 392, 405); P rows
+ * report 1 + the index. */
 static const char* const PICKUP_MESSAGES[] = {
     GOTARMOR, GOTMEGA, GOTHTHBONUS, GOTARMBONUS, GOTSTIM, GOTMEDINEED, GOTMEDIKIT, GOTSUPER,
     GOTBLUECARD, GOTYELWCARD, GOTREDCARD, GOTBLUESKUL, GOTYELWSKUL, GOTREDSKULL,
     GOTINVUL, GOTBERSERK, GOTINVIS, GOTSUIT, GOTMAP, GOTVISOR, GOTMSPHERE,
     GOTCLIP, GOTCLIPBOX, GOTROCKET, GOTROCKBOX, GOTCELL, GOTCELLBOX, GOTSHELLS, GOTSHELLBOX, GOTBACKPACK,
-    GOTBFG9000, GOTCHAINGUN, GOTCHAINSAW, GOTLAUNCHER, GOTPLASMA, GOTSHOTGUN, GOTSHOTGUN2 };
+    GOTBFG9000, GOTCHAINGUN, GOTCHAINSAW, GOTLAUNCHER, GOTPLASMA, GOTSHOTGUN, GOTSHOTGUN2,
+    PD_BLUEK, PD_YELLOWK, PD_REDK };
 static int message_index (const char* m)
 {
     unsigned i;
@@ -311,7 +330,7 @@ static int in_plats (void* p) { int i; for (i = 0; i < MAXPLATS; i++) if (active
 static int in_ceils (void* p) { int i; for (i = 0; i < MAXCEILINGS; i++) if (activeceilings[i] == p) return 1; return 0; }
 
 static const char* COLUMNS =
- "#columns,H,tic,leveltime,gametic,prndindex,rndindex,totalkills,totalitems,totalsecret,gameaction,gamestate,numthinkers,numlinespecials,gameskill\n"
+ "#columns,H,tic,leveltime,gametic,prndindex,rndindex,totalkills,totalitems,totalsecret,gameaction,gamestate,numthinkers,numlinespecials,gameskill,secretexit\n"
  "#columns,M,tic,idx,type,x,y,z,momx,momy,momz,health,state,tics,flags,height,radius,reactiontime,threshold,target,lastlook,floorz,ceilingz,subsector,angle,sprite,frame,movedir,movecount,tracer,sp_x,sp_y,sp_angle,sp_type,sp_options,player,bx,by,bpos,sector,spos\n"
  "#columns,R,tic,idx\n"
  "#columns,RR,tic,idx,type,x,y,z,momx,momy,momz,health,state,tics,flags,height,radius,reactiontime,threshold,target,lastlook,floorz,ceilingz,subsector,angle,sprite,frame,movedir,movecount,tracer,sp_x,sp_y,sp_angle,sp_type,sp_options,player,bx,by,bpos,sector,spos\n"
@@ -379,9 +398,9 @@ static void dump (const char* dir, const char* name, int tic)
     if (!f) { perror (path); exit (4); }
     walk_thinkers ();
     fputs (COLUMNS, f);
-    fprintf (f, "H,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", tic, leveltime, gametic, prndindex, rndindex,
+    fprintf (f, "H,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", tic, leveltime, gametic, prndindex, rndindex,
              totalkills, totalitems, totalsecret, (int)gameaction, (int)gamestate, numth, (int)numlinespecials,
-             (int)gameskill);
+             (int)gameskill, (int)secretexit);
     for (i = 0; i < numth; i++) {
         thinker_t* t = order[i];
         actionf_p1 fn = t->function.acp1;

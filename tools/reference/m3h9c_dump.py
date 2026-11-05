@@ -8,7 +8,8 @@ kind (the contract's `dump_row_kinds`), followed by rows `KIND,tic,...` of raw i
 (fixed_t raw, angles unsigned):
 
   H   header: leveltime, gametic, prndindex, rndindex, totals, gameaction, gamestate,
-      numthinkers (a walk of thinkercap), numlinespecials, gameskill
+      numthinkers (a walk of thinkercap), numlinespecials, gameskill, secretexit (M4a,
+      g_game.c:999; absent from dumps of older drivers)
   one row per thinker in thinker-list order, `idx` = position in that list:
       M mobj_t (the existing A-row order, then tracer, spawnpoint, player, BLOCKMAP cell
         and position from the cell's head, sector thing-list sector and position),
@@ -28,8 +29,11 @@ kind (the contract's `dump_row_kinds`), followed by rows `KIND,tic,...` of raw i
       P_RemoveMobj)
   S   every sector; L every line whose special was nonzero at load; B the 16 buttons;
   P   the four players; the last column `message` is 0 (NULL), the 1-based index of the
-      d_englsh.h pickup string GOTARMOR..GOTSHOTGUN2 in header order, or -1 (another
-      string), as HU_Ticker saw it before clearing it.
+      d_englsh.h pickup string GOTARMOR..GOTSHOTGUN2 in header order (1..37), 38..40 for
+      the locked-door strings PD_BLUEK, PD_YELLOWK, PD_REDK (M4a), or -1 (another string),
+      as HU_Ticker saw it before clearing it.
+Columns are read by name from the `#columns` lines, so a row that gains columns at its end
+(as H did for M4a) parses unchanged; `records` maps every column present.
 References are thinker-order indices (-1 NULL, -2 a pointer not in the thinker list);
 BLOCKMAP/sector positions are -1 when not linked and -2 when not found where expected.
 
