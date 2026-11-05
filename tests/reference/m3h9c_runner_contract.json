@@ -268,13 +268,14 @@
   ]
  },
  "link_flags": [
-  "-Wl,--wrap=P_AddThinker,--wrap=Z_Free,--wrap=P_SetThingPosition,--wrap=P_InitThinkers"
+  "-Wl,--wrap=P_AddThinker,--wrap=Z_Free,--wrap=P_SetThingPosition,--wrap=P_InitThinkers,--wrap=Z_Malloc"
  ],
  "wrapped": [
   "P_AddThinker",
   "Z_Free",
   "P_SetThingPosition",
-  "P_InitThinkers"
+  "P_InitThinkers",
+  "Z_Malloc"
  ],
  "abi_adapters": [
   {
@@ -931,7 +932,7 @@
   "var": 17
  },
  "runner_sha256": {
-  "tools/reference/m3h9c_driver.c": "6a0d00a9c0be4132215dbca6488e3acbe8cce431f33a89ba32da9f73584f7b43",
+  "tools/reference/m3h9c_driver.c": "a15cced10a7c524ce67364785e5ec2fbf2a69e3838ee530afc93953dff186f67",
   "tools/reference/m3h9c_stubs.c": "c8c2b5bdbdfb37c67ae7f47be3e3c66bccb89ff57e94ad2ec260cfaf1e4cdb29"
  },
  "driver_behaviour": [
@@ -940,7 +941,8 @@
   "I_Quit (vanilla exit(0), i_system.c:116-124) sets a flag and longjmps to the driver, so no statement after the call in G_CheckDemoStatus or G_Ticker runs, as with exit.",
   "After each dumped tic the driver stops if gameaction is ga_completed, ga_victory or ga_worlddone (end=exit, set during P_Ticker by G_ExitLevel/G_SecretExitLevel, g_game.c:1002-1018): G_Ticker handles gameaction before reading the next ticcmd (g_game.c:617-652, 656-669), so the next call would run G_DoCompleted and enter the intermission (g_game.c:1133-1140), which the runner does not model; a demo that reaches its marker ends end=marker. WI_Start still aborts as a safety net.",
   "After every tic the driver calls the genuine Z_CheckHeap (z_zone.c:399-420), a read-only walk of the zone; vanilla calls it only in G_DoLoadLevel (g_game.c:488).",
-  "Linker-level observers (-Wl,--wrap): P_AddThinker gives each thinker a serial (T rows), P_SetThingPosition gives the thing a link serial (the global link order is the ascending current link serial), Z_Free of a known thinker records it as freed since the previous dump (K rows, in free order) and, for a removed mobj, a copy of the mobj taken before the genuine free (RM rows); P_InitThinkers (after Z_FreeTags at level setup) drops every entry (K rows with seq -1). Each wrapper only records and then calls the genuine function.",
+  "Linker-level observers (-Wl,--wrap): P_AddThinker gives each thinker a serial (T rows), P_SetThingPosition gives the thing a link serial (the global link order is the ascending current link serial), Z_Free of a known thinker records it as freed since the previous dump (K rows, in free order) and, for a removed mobj, a copy of the mobj taken before the genuine free (RM rows); P_InitThinkers (after Z_FreeTags at level setup) drops every entry (K rows with seq -1). Each of these wrappers only records and then calls the genuine function.",
+  "ZeroFill: the Z_Malloc wrapper zero-fills every block after the genuine allocation. Only values the original leaves undefined change: plat_t.count (EV_DoPlat, p_plats.c:173; read only in waiting after being set, p_plats.c:75, 84, 113, 120) and floormove_t.newspecial (EV_DoFloor, p_floor.c:282; set and read only for lowerAndChange and donutRaise, p_floor.c:231, 242, 422, 433, p_spec.c:1203) made the strict and address dumps differ. lowerAndChange without a neighbour at the destination height reads newspecial and texture uninitialised in vanilla (p_floor.c:242-243); the fill makes them 0 there.",
   "HU_Ticker records players[consoleplayer].message for the dump and clears it as vanilla does with the default show_messages 1; P rows report it as 0 (NULL), the 1-based index of the d_englsh.h GOTARMOR..GOTSHOTGUN2 pickup string, or -1 (any other).",
   "--selftest-extra-draw TIC calls the public P_Random () once before G_Ticker of tic TIC (test only).",
   "The zone is 6 MiB (vanilla mb_used, i_system.c:51) unless --zone-mb is given."

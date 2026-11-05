@@ -42,6 +42,22 @@
  *     side tables and calls the genuine function unchanged. They add the T, K and RM rows.
  *   - The HU_Ticker stub records players[consoleplayer].message before clearing it as
  *     vanilla does; P rows report it as a pickup-message index.
+ *   - ZeroFill: Z_Malloc is also wrapped (-Wl,--wrap=Z_Malloc) and every block it returns
+ *     is zero-filled after the genuine allocation. Finding (real-E1M1 barrels run): the
+ *     strict and address dumps differed only in plat_t.count and floormove_t.newspecial,
+ *     zone memory the genuine code never initialises before the dump reads it. EV_DoPlat
+ *     allocates the plat (p_plats.c:173) without setting count; T_PlatRaise reads count
+ *     only in the waiting state (p_plats.c:120) after setting it on every transition
+ *     into waiting (75, 84, 113). EV_DoFloor allocates the floor (p_floor.c:282) and
+ *     sets newspecial only for lowerAndChange when a neighbour with the destination
+ *     height exists (p_floor.c:422, 433) and donutRaise sets it (p_spec.c:1203); T_MoveFloor
+ *     reads it only for those two types (p_floor.c:231, 242). Vanilla demos play back
+ *     identically across machines, so gameplay never depends on uninitialised zone
+ *     contents; the fill fixes only values undefined in the original and keeps the
+ *     three-variant identity check meaningful. One genuine path does read undefined
+ *     memory: lowerAndChange with no neighbour at the destination height reads
+ *     newspecial and texture uninitialised (p_floor.c:242-243); the fill makes them 0
+ *     there (not reachable on E1M1, which has no lowerAndChange line).
  *   - After every tic the driver calls the genuine Z_CheckHeap (z_zone.c:399-420), a
  *     read-only walk of the zone block list that calls I_Error on corruption; vanilla
  *     calls it only in G_DoLoadLevel (g_game.c:488). --no-checkheap disables it.
@@ -114,6 +130,15 @@ void __real_P_AddThinker (thinker_t* thinker);
 void __real_Z_Free (void* ptr);
 void __real_P_SetThingPosition (mobj_t* thing);
 void __real_P_InitThinkers (void);
+void* __real_Z_Malloc (int size, int tag, void* user);
+
+/* ZeroFill (declared, see the header): the genuine allocation, then memset to 0. */
+void* __wrap_Z_Malloc (int size, int tag, void* user)
+{
+    void* block = __real_Z_Malloc (size, tag, user);
+    memset (block, 0, size);
+    return block;
+}
 
 typedef struct { void* p; int serial, linkserial, mobj; } obs_t;
 #define OBS_CAP 65536                     /* power of two; far above any thinker count */

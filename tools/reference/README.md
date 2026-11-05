@@ -625,7 +625,10 @@ record and then call the genuine function; the gameplay text is unchanged. They 
 every thinker its exact serial and link serial (`T` rows), list every free since the
 previous snapshot (`K`) and keep a copy of each removed mobj taken just before its free
 (`RM`). The `HU_Ticker` stub captures the player's pickup message before clearing it as
-vanilla does.
+vanilla does. A fifth wrapper, `Z_Malloc`, zero-fills every block after the genuine
+allocation ("ZeroFill", declared). Without it, the plat `count` and floor `newspecial`
+fields, which the genuine code leaves uninitialised until it first sets them, made the
+strict and address dumps of the real-E1M1 barrels run differ.
 
 The adapters are exact one-line replacements, and the build fails unless each original
 text occurs exactly once at its declared line. Seven LP64 ABI adapters apply in every

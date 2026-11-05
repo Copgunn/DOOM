@@ -1,7 +1,7 @@
 {
  "schema": "DOOM-M3H9C-SYNTHETIC-RESULTS-v1",
  "wad_sha256": "1180ed6a0070d841e20ae2a3fd136fe49f132082a2dba50b75106a10b58c5923",
- "runner_contract_sha256": "0c19a4f81b578ac77c07618d5fa0375d5f235ebb41a3656bd6cf70a6e368e58c",
+ "runner_contract_sha256": "1ca41be447e226708dfe2137b4ed945d2dcc6d690cc026afbeaf55d0659404a3",
  "variants": [
   "strict",
   "overflow",
@@ -73,7 +73,7 @@
    "mobjs_at_load": 92,
    "unknown_messages": 0,
    "snapshots": 1469,
-   "dumps_sha256": "6c96047b07c0964932aedf2873e3c130908ed76362abbf5087f9063602471b2c"
+   "dumps_sha256": "fac0153afa3ca9c83ad4338d259d74f1f584e7134a2bb758ea0758e60d88f356"
   }
  }
 }
