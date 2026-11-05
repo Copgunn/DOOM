@@ -274,7 +274,7 @@ was disabled, not passed. A seed replay is not a campaign.
 | --- | --- |
 | Seed replay at `ef20de8`, all 3,172 seeds, `-runs=0`, AddressSanitizer | stopped by finding 3 (seed 1367) after 1,463 units in 266 s, peak RSS 757 MB, cov 13,512, ft 54,395 |
 | Seed replay at `ef20de8`, the 3,166 seeds without finding 3's six reproducers | 3,168 runs in 830 s (3 exec/s), cov 14,217, ft 62,024, peak RSS 796 MB; no crash, timeout, assertion or sanitizer report |
-| Seed replay after the Escape witness, all 3,172 seeds | recorded below with the fix |
+| Seed replay at `2a3d2cf` (the Escape witness), all 3,172 seeds, `-runs=0`, AddressSanitizer | 3,174 runs in 1,186 s, cov 14,355, ft 63,102, peak RSS 803 MB; no crash, timeout, assertion or sanitizer report; the six finding-3 seeds end in the declared `Escape` refusal; two slow units (over 10 s, under the 15 s timeout) saved; the machine was not idle |
 | Coverage-guided and sanitizer campaigns on the final target | recorded under [fuzz campaigns](#fuzz-campaigns) |
 
 Findings of the seed replay, in the order found:
@@ -295,7 +295,11 @@ Findings of the seed replay, in the order found:
    matched it, but the barrel's centre left Ω, which the M3h5 proof assumed every mover
    keeps (its step "`30·w < 2r·w`" fails for radius 10). Resolved as the player's corner jump
    was: an exact parity test after every accepted barrel move refuses the tic with
-   `MapScaleError::Escape` (note [§13](../M3H9B_REFERENCE_INVESTIGATION.md#13-corrections-and-findings-from-phase-2-kept-with-the-original-text-above)).
+   `MapScaleError::Escape` (note [§13](../M3H9B_REFERENCE_INVESTIGATION.md#13-corrections-and-findings-from-phase-2-kept-with-the-original-text-above));
+   fixed in `2a3d2cf` (`BarrelMotion` in barrels.rs through the new `after_move` hook of the
+   movement path, barrels under wire 21 only), with the reproducer, a stopped-short control
+   and a fast-barrel-along-a-wall control as tests. Test totals after the fix: 1,062 passed,
+   0 failed, 3 ignored (85 suites); release 1,029 passed, 0 failed, 1 ignored.
 
 **The 121-thing lift room.** `player_barrels --measure dense64_lift` builds the M3h9
 liftroom in memory with 1 player, 8 monsters, 64 pickups, 32 decorations and 16 barrels
