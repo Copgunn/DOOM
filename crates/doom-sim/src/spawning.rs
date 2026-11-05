@@ -15,6 +15,9 @@ pub struct MapSpawnReport {
     pub deathmatch_starts: Vec<doom_map::Thing>,
     /// Placements skipped by single-player, skill or nomonsters rules.
     pub filtered: usize,
+    /// The player body the level policy spawned at its type-1 record (decision
+    /// G4); `None` under every other policy, whose caller spawns the body.
+    pub player_body: Option<ActorId>,
 }
 
 impl Simulation {
@@ -93,6 +96,32 @@ impl Simulation {
         position: [Fixed; 2],
         height: SpawnHeight,
     ) -> Result<ActorId, SimError> {
+        self.spawn_type_checks(ty, position, height)?;
+        self.reserve_actor_spawns(1)?;
+        Ok(LifeHost {
+            player: None,
+            statistics: self.statistics.as_mut(),
+            perception: None,
+            access: &mut self.actors,
+            registry: self.registry.as_deref().unwrap(),
+            world: &self.world,
+            sectors: crate::staging::Sectors::committed(&self.sectors),
+            options: self.actor_options,
+            rng: &mut self.rng,
+            spatial: &mut self.spatial,
+            bindings: &mut self.bindings,
+            events: &mut self.pending,
+        }
+        .spawn(ty, position, height))
+    }
+    /// Every check [`Simulation::spawn_type`] makes before reserving the slot, also
+    /// run by the level policy for the body it spawns in the THINGS batch.
+    fn spawn_type_checks(
+        &self,
+        ty: ActorTypeId,
+        position: [Fixed; 2],
+        height: SpawnHeight,
+    ) -> Result<(), SimError> {
         if self.player_policy().has_world_pickups()
             && world_pickups::kind_for(self.player_policy(), ty).is_some()
         {
@@ -148,22 +177,7 @@ impl Simulation {
         if self.profile.uses_monsters() {
             self.preflight_monster_spawn(ty, position, height)?;
         }
-        self.reserve_actor_spawns(1)?;
-        Ok(LifeHost {
-            player: None,
-            statistics: self.statistics.as_mut(),
-            perception: None,
-            access: &mut self.actors,
-            registry: self.registry.as_deref().unwrap(),
-            world: &self.world,
-            sectors: crate::staging::Sectors::committed(&self.sectors),
-            options: self.actor_options,
-            rng: &mut self.rng,
-            spatial: &mut self.spatial,
-            bindings: &mut self.bindings,
-            events: &mut self.pending,
-        }
-        .spawn(ty, position, height))
+        Ok(())
     }
     pub(crate) fn validate_entry(&self, state: StateId) -> Result<(), SimError> {
         let registry = self.registry_required()?;
@@ -426,6 +440,8 @@ impl Simulation {
         // `playerstarts`, up to ten type 11 in `deathmatchstarts`; the player body
         // is spawned by the caller); the earlier map-demon policies reject them.
         let starts_as_records = self.player_policy().has_real_map();
+        let level = self.player_policy().has_level();
+        let player_type = ActorTypeId(crate::identity::OriginalActorType::MT_PLAYER.ordinal());
         for thing in self.world.map().things() {
             if map_demons && !starts_as_records && (thing.kind <= 4 || thing.kind == 11) {
                 return Err(MapSpawnError::StartOrInvalidType(thing.kind).into());
@@ -438,6 +454,26 @@ impl Simulation {
             }
             if (1..=4).contains(&thing.kind) {
                 report.player_starts.push(*thing);
+                // The level policy (decision G4): `P_SpawnMapThing` stores the start
+                // and, single player, calls `P_SpawnPlayer` at once (p_mobj.c:
+                // 729–736), which returns for a start whose player is not in the
+                // game (655–656: types 2–4). The body joins the batch here, at its
+                // lump position, with the checks `spawn_type` makes; a second
+                // type-1 record (a voodoo doll) is refused.
+                if level && thing.kind == 1 {
+                    if selected.iter().any(|(_, ty)| *ty == player_type) {
+                        return Err(PlayerBodyError::Binding.into());
+                    }
+                    self.spawn_type_checks(
+                        player_type,
+                        [
+                            Fixed::from_map_units(thing.position.x),
+                            Fixed::from_map_units(thing.position.y),
+                        ],
+                        SpawnHeight::Floor,
+                    )?;
+                    selected.push((*thing, player_type));
+                }
                 continue;
             }
             let bit = match self.actor_options.skill {
@@ -590,6 +626,11 @@ impl Simulation {
             }
             selected.push((*thing, ty));
         }
+        // A level without its type-1 start has no body to bind (`players[0].mo`
+        // stays NULL in the source): refused.
+        if level && !selected.iter().any(|(_, ty)| *ty == player_type) {
+            return Err(PlayerBodyError::Binding.into());
+        }
         if let Some(stats) = self.statistics {
             let count = i32::try_from(
                 selected
@@ -625,9 +666,14 @@ impl Simulation {
             if !(0..=bound).contains(&total) || total.checked_add(count).is_none_or(|n| n > bound) {
                 return Err(MapSpawnError::StatisticsOverflow.into());
             }
+            let mut body = None;
             report.spawned = self.checked_map_spawn_batch(selected.len(), |host| {
                 let mut ids = line_work::reserved(selected.len())?;
                 for (thing, ty) in selected {
+                    if level && ty == player_type {
+                        body = Some(host.spawn_level_body(thing));
+                        continue;
+                    }
                     ids.push(host.spawn_placed_thing(thing, ty, true));
                     #[cfg(test)]
                     BONUS_MAP_FAIL_AFTER.with(|counter| {
@@ -652,6 +698,12 @@ impl Simulation {
                 }
                 Ok(ids)
             })?;
+            if let Some(id) = body {
+                if let Some(p) = &mut self.original_player {
+                    p.mo = Some(id);
+                }
+                report.player_body = Some(id);
+            }
         } else {
             self.reserve_actor_spawns(selected.len())?;
             // Legacy batches still have no recoverable work after reservation.
@@ -680,6 +732,33 @@ impl Simulation {
 }
 
 impl<A: lifecycle::ActorAccess> LifeHost<'_, A> {
+    /// `P_SpawnPlayer` for player 1 under the level policy (p_mobj.c:642–686),
+    /// inside the THINGS batch at the type-1 record's lump position:
+    /// `P_SpawnMobj (x, y, ONFLOORZ, MT_PLAYER)` (one `P_Random` for `lastlook`,
+    /// 506; `S_PLAY` has `tics` −1 and `P_SpawnMapThing` returned before its tics
+    /// draw, 736), then `mobj->angle = ANG45 * (mthing->angle/45)` (671), converted
+    /// as `spawn_placed_thing` converts a THING's (decision F8). No spawnpoint is
+    /// set (the source sets none). `mobj->health = p->health` (673) is the
+    /// `G_PlayerReborn` 100 the policy starts with (g_game.c:824), as are the
+    /// other player fields `P_SpawnPlayer` resets (676–684: `refire`,
+    /// `damagecount`, `bonuscount`, `extralight` 0, `usedown`/`attackdown` true);
+    /// `P_SetupPsprites` (686) is the caller's `initialize_player_weapons`, which
+    /// draws nothing. The `Bound` observation follows the spawn's.
+    fn spawn_level_body(&mut self, thing: doom_map::Thing) -> ActorId {
+        let id = self.spawn(
+            ActorTypeId(crate::identity::OriginalActorType::MT_PLAYER.ordinal()),
+            [
+                Fixed::from_map_units(thing.position.x),
+                Fixed::from_map_units(thing.position.y),
+            ],
+            SpawnHeight::Floor,
+        );
+        self.access.get_mut(id).unwrap().spec.angle = e1m1_rules::spawn_angle(thing.angle);
+        self.events.push(Event::PlayerBody(
+            crate::original_player::PlayerBodyEvent::Bound(id),
+        ));
+        id
+    }
     // All definitions and complete counter additions are proved before calling.
     // Both legacy and staged batches use this one original placement service.
     fn spawn_placed_thing(

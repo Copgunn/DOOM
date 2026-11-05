@@ -402,6 +402,7 @@ pub(crate) fn path(
                     let frac = intercept(trace, line);
                     if frac >= Fixed::ZERO {
                         if limit.is_some_and(|limit| hits.len() == limit) {
+                            crate::level_stats::observe_intercepts(hits.len() + 1);
                             return Err(InterceptOverflow);
                         }
                         hits.push((frac, i));
@@ -422,6 +423,7 @@ pub(crate) fn path(
     }
     // Stable sort reproduces the C repeated strict-minimum scan on ties.
     hits.sort_by_key(|hit| hit.0);
+    crate::level_stats::observe_intercepts(hits.len());
     Ok(hits)
 }
 

@@ -1,0 +1,2 @@
+# M3h9c idle: 2,100 tics of zero ticcmds (60 seconds of game time).
+idle 2100

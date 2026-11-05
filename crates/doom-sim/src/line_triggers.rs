@@ -67,10 +67,14 @@ pub(crate) fn spechit(
             continue;
         }
         let len = hit.len();
-        let slot = hit.lines.get_mut(len).ok_or(SpecialCrossOverflow)?;
+        let Some(slot) = hit.lines.get_mut(len) else {
+            crate::level_stats::observe_spechit(len + 1);
+            return Err(SpecialCrossOverflow);
+        };
         *slot = visit.line;
         hit.len += 1;
     }
+    crate::level_stats::observe_spechit(hit.len());
     Ok(hit)
 }
 /// The runtime special of `line`, 0 if it is in `cleared`.

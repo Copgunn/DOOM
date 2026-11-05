@@ -357,3 +357,10 @@ path = "fuzz_targets/player_barrels.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "player_level"
+path = "fuzz_targets/player_level.rs"
+test = false
+doc = false
+bench = false

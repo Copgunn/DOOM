@@ -57,17 +57,19 @@ example programs, on small test maps built for this project. Today it can simula
   flickering lights and scrolling walls;
 - the doors, lifts, moving floors, switches and exit used by E1M1, the first map;
 - E1M1's lamps, pillars, candelabras, corpses and gore;
-- exploding barrels, with chain reactions, and maps with as many pickups as E1M1.
+- exploding barrels, with chain reactions, and maps with as many pickups as E1M1;
+- the real E1M1, which runs in sync with the genuine engine for all five scripted runs (idle,
+  walking to the exit, fighting, barrels and random commands; the comparison harness is
+  local-only).
 
 What it cannot do yet:
 
 - show graphics, play sound or offer menus;
-- run the real E1M1 map itself from start to finish: every feature it is known to need
-  is now accepted and checked, and loading it and matching a full run tic for tic is the
-  next milestone;
+- yet claim a full tic-for-tic match of the real E1M1 for every input: only the scripted
+  runs recorded so far are matched;
 - handle the other monsters, the other weapons, or the remaining map features such as
   crushers and teleporters;
-- play back demos.
+- play back the original game's recorded demos.
 
 ## Where it's headed
 
@@ -212,6 +214,7 @@ identifier in saved test snapshots. The earlier numbered Demon profiles are list
 | `PlayerMonstersMoversV1` (19) | E1M1's seven door, lift, floor, switch and exit line types; the tic after the exit is refused | [Movers](docs/COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit) |
 | `PlayerMonstersE1M1V1` (20) | Two-sided scrolling walls and E1M1's seven static decoration types (lamps, pillars, candelabras, corpses and gore) | [E1M1 decorations](docs/COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations) |
 | `PlayerMonstersBarrelsV1` (21) | Exploding barrels with the original's radius attack and chain reactions, 64 pickups, every map-thing angle and the relaxed spawn rule: the last things that stopped E1M1 from loading | [Barrels](docs/COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle) |
+| `PlayerMonstersLevelV1` (22) | The player start at its place in the map's thing list, with its angle; the full player think, including damage-flash decay and the dead player's turn toward its attacker: the real E1M1 run | [Level runs](docs/COMPATIBILITY.md#original-level-runs-the-player-start-in-lump-order-and-the-full-player-think-wire-22) |
 
 More developer reading:
 

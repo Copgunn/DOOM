@@ -2176,3 +2176,53 @@ barrel, the angle wrap. Recorded, not emulated (unreachable here): crusher blood
 the MAP30 stomp (teleporters out of scope). Known limitation of the C evidence: the
 harness's `intercepts[]` carries an abort before a 129th entry, so the unchecked overflow
 of the source is never observed in C; the Rust-only lane refuses the tic.
+
+## Original level runs: the player start in lump order and the full player think (wire 22)
+
+`PlayerMonstersLevelV1` (wire 22, context `PLAYER-MONSTERS-LEVEL-1-MEDIUM-v1`, DSIM-v38) is a
+separate optional superset of `PlayerMonstersBarrelsV1`. Select it with
+`Simulation::original_player_level_map`, which takes no slot limit and no skill (medium only),
+then call `spawn_map_things`, `initialize_player_weapons` and `spawn_level_specials` once each
+before the first tic. Its admitted domain, bounds, load rules, witnesses and refusals are those
+of the barrels policy, unchanged; it differs in exactly three behaviours (M3h9c note
+[§6](M3H9C_REFERENCE_INVESTIGATION.md#6-new-owner-decisions-g1g13-with-recommendations), decision G4;
+the owner confirmed decisions G1-G13 on 2026-11-05). Older policies,
+wires and DSIM20-37 are unchanged, and `spawn_player_body` is refused under this policy.
+
+- **The player start is a THING in lump order.** `spawn_map_things` spawns the body when it
+  meets the type-1 record, with that record's position and `ANG45 * (angle/45)`, so the
+  body's actor slot and its place in the thinker and link orders follow the records before
+  it, and its single `lastlook` draw happens at that point of the RNG sequence
+  (`P_LoadThings`, `P_SpawnMapThing`, `P_SpawnPlayer`). A level without exactly one type-1
+  record is refused at load.
+- **The damage flash decays.** `P_PlayerThink` decrements `damagecount` by one per live tic
+  (`bonuscount` already decayed under wire 21).
+- **A dead player runs `P_DeathThink`.** It updates the bob and the psprites, turns toward the
+  attacker in `ANG5` steps (or exactly when within `ANG5`), decrements `damagecount` in the
+  tics it faces the attacker or has none, and sets `PST_REBORN` on `BT_USE`; the reborn tic is
+  still refused. A dead player accepts any admitted command, of which only `BT_USE` is read.
+  A stale attacker handle is refused with `PlayerBodyError::Invariant` and the state
+  preserved. The view height, its delta and the on-ground flag are not modelled (they never
+  reach a captured field).
+
+The capture is the DSIM37 layout with version 38, profile 22 and the level context; the
+[STATE_FORMAT section](STATE_FORMAT.md#dsim-v38--the-whole-level-the-body-at-its-things-record-damage-count-decay-and-p_deaththink)
+owns the schema and the reader's checks. Rust-only tests of the three behaviours are in
+`crates/doom-sim/src/player_level_tests.rs`. The demo-format reader and writer
+`doom_sim::demo` (`parse_demo`, `write_demo`, version-110 demos) and the `player_level_run`
+example drive a whole level from demo ticcmds; `crates/doom-sim/tests/private_level.rs` is an
+ignored test that needs `DOOM_IWAD_DIR`.
+
+**Status of the real E1M1.** Under this policy the owner's E1M1 on medium skill loads, and
+all five scripted real-E1M1 runs (idle, walking to the exit, fighting, barrels and random
+commands) matched tic for tic the genuine engine built whole from the preserved sources
+(see the [observations](validation/M3H9C.md) and the [roadmap entry](ROADMAP.md#m3h9c-the-real-e1m1-run-tic-for-tic)). That is evidence for those scripted inputs only: it is not a claim for
+every input, every skill or every map. The comparison needs
+the commercial IWAD, so it is local-only; CI uses a synthetic game WAD instead
+([testing](TESTING.md#m3h9c-whole-engine-runner-and-the-real-e1m1-comparison)).
+
+Limitations: the policy admits no new THING type, monster count, skill or special beyond the
+barrels policy, so a map outside those bounds is refused at load exactly as under wire 21;
+demos are limited to the admitted command domain (no turbo, pause, save or weapons 4-7); the
+events groups are Rust's own records and the static map is compared separately, so the
+per-tic comparison covers the rest of the capture.

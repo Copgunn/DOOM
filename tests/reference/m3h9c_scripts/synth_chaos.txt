@@ -1,0 +1,4 @@
+# output: SYNCHAOS.lmp
+# 5,000 tics of the committed chaos stream (splitmix64, tools/e1m1_scripts.py) without USE:
+# the start is beside the exit switch, and USE while dead would reload the level.
+seed 20261105 chaos 5000 nouse

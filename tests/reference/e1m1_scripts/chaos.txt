@@ -1,0 +1,3 @@
+# output: CHAOS.lmp
+# CHAOS: seed 20261105, 5000 tics of the fixed-seed generator.
+seed 20261105 chaos 5000

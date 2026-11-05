@@ -47,8 +47,8 @@ pub use player_map_scale::{
 pub use player_monsters::{
     MAX_PLAYER_MONSTERS, PLAYER_BARRELS_CONTEXT_SCHEMA, PLAYER_DIAGONAL_CONTEXT_SCHEMA,
     PLAYER_E1M1_CONTEXT_SCHEMA, PLAYER_HEIGHTS_CONTEXT_SCHEMA, PLAYER_IMPS_CONTEXT_SCHEMA,
-    PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA, PLAYER_MOVERS_CONTEXT_SCHEMA,
-    PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
+    PLAYER_LEVEL_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
+    PLAYER_MOVERS_CONTEXT_SCHEMA, PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -134,10 +134,14 @@ pub use map_scale::{
 };
 mod barrels;
 pub use barrels::EXPLOSION_SIGHT_QUERIES;
+pub mod demo;
 mod e1m1_rules;
+mod level;
+mod level_stats;
 pub use e1m1_rules::{
     BARRELS_LINKED_THINGS, E1M1_DECORATIONS, E1M1_LINKED_THINGS, MAX_BARRELS, MAX_DECORATIONS,
 };
+pub use level_stats::{LevelRunStats, take_level_run_stats};
 mod movement;
 mod mover_rules;
 mod movers;
@@ -1574,6 +1578,8 @@ mod player_e1m1_soak_tests;
 mod player_e1m1_tests;
 #[cfg(test)]
 mod player_heights_tests;
+#[cfg(test)]
+mod player_level_tests;
 #[cfg(test)]
 mod player_map_scale_tests;
 #[cfg(test)]
