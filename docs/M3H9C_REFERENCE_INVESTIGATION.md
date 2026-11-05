@@ -826,7 +826,7 @@ which routes later to real demo playback. Rejected: (i), which would give the C 
 sides two input paths and none of them genuine on the C side. (a)–(d) yes; the `.lmp` is
 public synthetic input, not IWAD data. **Recommendation:** (ii), the version-110 `.lmp`
 from `tools/e1m1_scripts.py`, sources and outputs under `tests/reference/e1m1_scripts/`.
-Provisionally adopted, pending owner confirmation.
+Provisionally adopted; confirmed by the owner on 2026-11-06.
 
 **G2. Headless build.** Whole genuine files (§3.1) + the stub list (§3.2) + the r_main.c
 declared extract + p_saveg.c's aborting stubs + the driver of §3.3. The gameplay code
@@ -834,7 +834,7 @@ text is unmodified; the stubs are declared adapters with cited vanilla bodies, h
 the contract with the genuine files. Alternative: extend the body-extraction harness to
 the whole engine (thousands of extracted bodies and a re-implemented loader, the
 opposite of the goal). (a)–(d) yes. **Recommendation:** whole genuine files with the
-declared stubs, extract and driver. Provisionally adopted, pending owner confirmation.
+declared stubs, extract and driver. Provisionally adopted; confirmed by the owner on 2026-11-06.
 
 **G3. Declared 64-bit ABI adapters.** Applied in every build, the strict one included:
 
@@ -889,14 +889,14 @@ profile and context bytes; the reader `decode_level` admits any player angle and
 requires the body's slot at its lump position. Rejected: changing wire 21 (frozen by the
 owner's rule) and an option flag on wire 21 (a profile must identify behaviour). (a)–(d)
 yes. **Recommendation:** `PlayerMonstersLevelV1`, wire 22, DSIM38, as above.
-Provisionally adopted, pending owner confirmation.
+Provisionally adopted; confirmed by the owner on 2026-11-06.
 
 **G5. Comparison surface.** As §5: per tic, the DSIM38 bytes minus `map.*` and
 `events.*`; the map lumps compared once by SHA-256; on mismatch the first differing
 field named with its tic and values. Alternatives: digests only (cannot name the
 field); the event frames too (the dump would have to re-derive Rust's event records, a
 second encoder of the same facts). (a)–(d) yes. **Recommendation:** the §5 surface.
-Provisionally adopted, pending owner confirmation.
+Provisionally adopted; confirmed by the owner on 2026-11-06.
 
 **G6. Committed results.** Exactly the brief's section 3: per script pass/fail, tic
 counts, the per-run final digest, the digest-sequence hash, witness names and tics, and
@@ -908,7 +908,7 @@ pending owner confirmation.
 build locally (the route is input, not IWAD data: it contains turns and durations, no
 coordinate); every script is committed as its source and its `.lmp`. (a)–(d) yes.
 **Recommendation:** the five scripts, committed as sources and `.lmp` files.
-Provisionally adopted, pending owner confirmation.
+Provisionally adopted; confirmed by the owner on 2026-11-06.
 
 **G8. CI coverage without IWAD content.** A generated synthetic game WAD
 (`tools/reference/m3h9c_wad.py`): `PNAMES`/`TEXTURE1` with blank patches named for every
@@ -922,13 +922,13 @@ with committed goldens (synthetic, committable). The C runner therefore has no I
 dependency, only a WAD argument. Rejected: a third extraction-based generator (it would
 re-adapt the player stage that the real run exercises genuinely). (a)–(d) yes.
 **Recommendation:** the synthetic WAD through the same runner, encoder and Rust runner,
-goldens committed. Provisionally adopted, pending owner confirmation.
+goldens committed. Provisionally adopted; confirmed by the owner on 2026-11-06.
 
 **G9. Fix policy.** On a divergence, find the cause. Rust fixes land under wire 22 only
 (older wires frozen), each with a synthetic scenario through the G8 path. A gameplay-code
 edit in C is never a fix. Behaviour outside wire 22's domain ends that script's
 comparison at that tic and is recorded. (a)–(c) yes; (d) unchanged. **Recommendation:**
-as stated. Provisionally adopted, pending owner confirmation.
+as stated. Provisionally adopted; confirmed by the owner on 2026-11-06.
 
 **G10. Zone size.** Vanilla's 6 MB default (`mb_used = 6`, i_system.c:51); raised only
 if `Z_Malloc` fails, and then recorded. Addresses are unobservable by gameplay: the
@@ -936,7 +936,7 @@ thinker list is a linked list in insertion order (`P_AddThinker` appends,
 p_tick.c:65–71; `P_RunThinkers` follows `next`, p_tick.c:105–121) and the sector and
 block lists are linked in `P_SetThingPosition`'s order (p_maputl.c:436), none ordered by
 address. (a)–(d) yes. **Recommendation:** 6 MB, raised only on failure and recorded.
-Provisionally adopted, pending owner confirmation.
+Provisionally adopted; confirmed by the owner on 2026-11-06.
 
 **G11. Witnesses.** A refusal ends the Rust run; the C run continues uncompared; the
 witness name, tic and script are recorded as a finding; a witness is never weakened to
@@ -946,7 +946,7 @@ pending owner confirmation.
 **G12. Timings.** Matched timings against master for every older-policy workload
 (digests equal), callgrind on any slowdown over 3 %, plus the per-real-E1M1-tic cost of
 each runner, all alone on the idle machine. (a)–(d) yes. **Recommendation:** as stated.
-Provisionally adopted, pending owner confirmation.
+Provisionally adopted; confirmed by the owner on 2026-11-06.
 
 **G13. The Demon-profile codegen regression.** The matched timings (step 9) show
 `canonical_demon`, `demon_expanded_map` and `diagnostic_free` 6–13% slower than master with
@@ -959,7 +959,7 @@ or LTO in the release profile (slower builds, and still 10.6% above master's fav
 on these workloads); (iii) replace the `BTreeSet`s in `immediate_cycle` with dense marks (a
 data-structure change in a frozen-policy path that needs its own evidence).
 **Recommendation:** (i) now; (iii) to be considered in a maintenance milestone with the owner.
-Provisionally adopted, pending owner confirmation.
+Provisionally adopted; confirmed by the owner on 2026-11-06.
 
 ## 7. Evidence plan (C first)
 
@@ -1057,9 +1057,9 @@ successor section and the schema in [STATE_FORMAT](STATE_FORMAT.md) when Phase 2
 - **Later**: real 1.9 demo playback (the version-byte route of G1), easy and hard skill,
   the reborn reload as an admitted transition, the rest of Episode 1.
 
-**Status / next step.** Phase 2 complete: steps 1–12 done; decisions G1–G13 provisionally
-adopted pending owner confirmation; the draft pull request #56 awaits the final head's checks
-and the owner's review.
+**Status / next step.** Phase 2 complete: steps 1–12 done. **The owner confirmed decisions
+G1–G13 on 2026-11-06.** Pull request #56 is ready for review with every check green on its
+head; merging is the owner's call.
 
 ## 12. Corrections and findings from Phase 2
 

@@ -2186,7 +2186,7 @@ then call `spawn_map_things`, `initialize_player_weapons` and `spawn_level_speci
 before the first tic. Its admitted domain, bounds, load rules, witnesses and refusals are those
 of the barrels policy, unchanged; it differs in exactly three behaviours (M3h9c note
 [§6](M3H9C_REFERENCE_INVESTIGATION.md#6-new-owner-decisions-g1g13-with-recommendations), decision G4;
-the decisions G1-G13 are provisionally adopted, pending owner confirmation). Older policies,
+the owner confirmed decisions G1-G13 on 2026-11-06). Older policies,
 wires and DSIM20-37 are unchanged, and `spawn_player_body` is refused under this policy.
 
 - **The player start is a THING in lump order.** `spawn_map_things` spawns the body when it

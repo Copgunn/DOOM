@@ -83,9 +83,9 @@ observations remain linked from the [evidence index](README.md).
 
 Status: Phase 2 complete, in owner review. Phase 1 (the
 [investigation note](M3H9C_REFERENCE_INVESTIGATION.md)) is complete and Phase 2 steps 1-12 are
-done on `feat/m3h9c-e1m1-run` ([observations](validation/M3H9C.md)); draft pull request #56
-awaits the final head's checks. Decisions G1-G13 are provisionally adopted, pending owner
-confirmation. The milestone is a local-only harness that runs the owner's E1M1 under
+done on `feat/m3h9c-e1m1-run` ([observations](validation/M3H9C.md)); pull request #56 is
+ready for review with every check green. The owner confirmed decisions G1-G13 on
+2026-11-06. The milestone is a local-only harness that runs the owner's E1M1 under
 the genuine linuxdoom-1.10 engine and under the Rust simulation from the same version-110
 demo and compares them on every tic, committing only counts, pass/fail and digests, never
 IWAD content.
@@ -102,7 +102,7 @@ WAD with its CI steps; and the fuzz target `player_level`. All five scripted rea
 (idle, walking to the exit, fighting, barrels, random commands) matched the genuine engine
 tic for tic.
 
-Remaining: the owner's review and confirmation of G1-G13. Support is in
+Remaining: the owner's review and merge. Support is in
 [COMPATIBILITY](COMPATIBILITY.md#original-level-runs-the-player-start-in-lump-order-and-the-full-player-think-wire-22);
 commands are in [TESTING](TESTING.md#m3h9c-whole-engine-runner-and-the-real-e1m1-comparison).
 
