@@ -30,7 +30,7 @@ Phase 1 probe (wire 21, the real E1M1, unstripped), 2026-11-05/06:
 ## Original-C evidence
 
 `tools/reference/m3h9c_build.py` builds the headless genuine runner: 34 whole genuine files,
-6 extracted `r_main.c` bodies, 7 declared LP64 ABI adapters in every build plus 6
+6 extracted `r_main.c` bodies, 8 declared LP64 ABI adapter lines (five sites; the z_zone.c:440 one was added after the first CI run, investigation §12) in every build plus 6
 sanitizer-only adapters (`p_mobj.c` lines 794 and 671 angle products, `p_map.c:1221`,
 `p_enemy.c` lines 816, 839 and 860 int angle spreads; the `p_enemy.c` ones were found by the
 UBSan build on the synthetic chaos run), and 43 function plus 17 variable stubs (the contract's `stub_counts`: 29 I/O-only or unreachable, 6 read-only, 8 writers whose

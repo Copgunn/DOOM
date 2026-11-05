@@ -176,7 +176,7 @@
    "doomstat.c": "12d068a8e82d2fa07baf608d8463d9a27dc0b609503d9ef76794de3c5edbf8d4",
    "doomdef.c": "ec38f30185ae4cd79e3ccfc1a1f22489afdadb5cf5aad2e1b2c46133613c2807",
    "w_wad.c": "a193860a2a1f671a680999aaa93ca294f90c9b1d6b5ba33152c0aa92000074a9",
-   "z_zone.c": "80174204a0a2c96e89ceb059e0922238046106be4fd5116f1c0a6a530df9010b",
+   "z_zone.c": "20a1304e28da07c73d72ad4aabdf6096b03138ac7ebb19ebdb36ad474addd5c4",
    "r_sky.c": "6bfc7d79c51943afc1acc774e7c50295d0640838f5e28ec8b6d5bff561ddc7b8",
    "r_data.c": "34d704ad38474ac35e4dfb3853f1ef3cc901d2e8b009f7358a8b44bfcacfcf16"
   },
@@ -212,7 +212,7 @@
    "doomstat.c": "12d068a8e82d2fa07baf608d8463d9a27dc0b609503d9ef76794de3c5edbf8d4",
    "doomdef.c": "ec38f30185ae4cd79e3ccfc1a1f22489afdadb5cf5aad2e1b2c46133613c2807",
    "w_wad.c": "a193860a2a1f671a680999aaa93ca294f90c9b1d6b5ba33152c0aa92000074a9",
-   "z_zone.c": "80174204a0a2c96e89ceb059e0922238046106be4fd5116f1c0a6a530df9010b",
+   "z_zone.c": "20a1304e28da07c73d72ad4aabdf6096b03138ac7ebb19ebdb36ad474addd5c4",
    "r_sky.c": "6bfc7d79c51943afc1acc774e7c50295d0640838f5e28ec8b6d5bff561ddc7b8",
    "r_data.c": "34d704ad38474ac35e4dfb3853f1ef3cc901d2e8b009f7358a8b44bfcacfcf16"
   }
@@ -263,6 +263,10 @@
  },
  "file_flags": {
   "r_data.c": [
+   "-include",
+   "stdint.h"
+  ],
+  "z_zone.c": [
    "-include",
    "stdint.h"
   ]
@@ -375,6 +379,20 @@
     "address"
    ],
    "reason": "R_InitColormaps truncates a pointer to int; the runner does not call it, the file is adapted so it compiles LP64-clean (stdint.h comes from -include on the command line)."
+  },
+  {
+   "file": "z_zone.c",
+   "line": 440,
+   "original": "    if (tag >= PU_PURGELEVEL && (unsigned)block->user < 0x100)",
+   "adapted": "    if (tag >= PU_PURGELEVEL && (uintptr_t)block->user < 0x100)",
+   "original_sha256": "49f144bd6387e859167fc9e58d67f78c0489d27e1808c38d162e4988c9ea6ed4",
+   "adapted_sha256": "bd7b6a7db69bca6029398b98ba22cfcbbe8cd871d44e5451442244b17d8e0470",
+   "builds": [
+    "strict",
+    "overflow",
+    "address"
+   ],
+   "reason": "Z_ChangeTag: the owner test truncates the 64-bit user pointer to 32 bits, so a valid owner whose address has small low 32 bits (observed under ASan on the CI runner: W_CacheLumpNum re-caching the one patch lump) raises \"an owner is required for purgable blocks\"; the 32-bit original compares the whole pointer, which uintptr_t does on LP64 (stdint.h comes from -include on the command line)."
   }
  ],
  "sanitizer_adapters": [

@@ -53,7 +53,7 @@ VARIANT_NOTES = {
                '-fno-sanitize=alignment because z_zone.c rounds block sizes to 4 (z_zone.c:195) while the '
                'LP64 memblock_t needs 8-byte alignment',
 }
-FILE_FLAGS = {'r_data.c': ['-include', 'stdint.h']}
+FILE_FLAGS = {'r_data.c': ['-include', 'stdint.h'], 'z_zone.c': ['-include', 'stdint.h']}
 # Linker-level observers (m3h9c_driver.c __wrap_*): every cross-object call of these reaches
 # the driver's recording wrapper, which then calls the genuine function.
 WRAPPED = ['P_AddThinker', 'Z_Free', 'P_SetThingPosition', 'P_InitThinkers', 'Z_Malloc']
@@ -81,6 +81,9 @@ ABI_ADAPTERS = [
     dict(file='r_data.c', line=642, original='    colormaps = (byte *)( ((int)colormaps + 255)&~0xff); ',
          adapted='    colormaps = (byte *)( ((intptr_t)colormaps + 255)&~0xff); ',
          reason='R_InitColormaps truncates a pointer to int; the runner does not call it, the file is adapted so it compiles LP64-clean (stdint.h comes from -include on the command line).'),
+    dict(file='z_zone.c', line=440, original='    if (tag >= PU_PURGELEVEL && (unsigned)block->user < 0x100)',
+         adapted='    if (tag >= PU_PURGELEVEL && (uintptr_t)block->user < 0x100)',
+         reason='Z_ChangeTag: the owner test truncates the 64-bit user pointer to 32 bits, so a valid owner whose address has small low 32 bits (observed under ASan on the CI runner: W_CacheLumpNum re-caching the one patch lump) raises "an owner is required for purgable blocks"; the 32-bit original compares the whole pointer, which uintptr_t does on LP64 (stdint.h comes from -include on the command line).'),
 ]
 SANITIZER_ADAPTERS = [
     dict(file='p_mobj.c', line=671, original='    mobj->angle\t= ANG45 * (mthing->angle/45);',

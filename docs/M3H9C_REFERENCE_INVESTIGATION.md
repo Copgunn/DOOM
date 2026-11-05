@@ -844,6 +844,7 @@ declared stubs, extract and driver. Provisionally adopted, pending owner confirm
 | r_data.c:90 | `void **columndirectory;` | a 4-byte field | the 32-bit original reads `patchcount`/`patches` at the same byte offsets (20/22) |
 | r_data.c:482–485 | `Z_Malloc (numtextures*4, …)` ×4 | `Z_Malloc (numtextures*sizeof(void*), …)` | exactly `numtextures` pointers, as on 32 bits |
 | r_data.c:642 | `((int)colormaps + 255)&~0xff` | `((intptr_t)colormaps + 255)&~0xff` | the same alignment arithmetic without truncation (the driver does not call `R_InitColormaps`; applied so no truncating text is compiled) |
+| z_zone.c:440 | `(unsigned)block->user < 0x100` | `(uintptr_t)block->user < 0x100` | `Z_ChangeTag`'s owner test compares the whole pointer on the 32-bit original; the truncation raised a false "an owner is required for purgable blocks" under ASan on the CI runner (added in Phase 2, §12) |
 
 The original and adapted text of each site is hashed in the contract and asserted to
 match the source line, as the existing sanitizer adapters are
@@ -854,16 +855,16 @@ and p_mobj.c:671 (the unsigned angle products), p_map.c:1221 (as declared today)
 check is disabled rather than the allocator changed, so block addresses stay those of
 the strict build). Alternative rejected on this host: `-m32` (no 32-bit libc headers, no
 package rights); it is recorded as a confirmation the owner can run later, since a
-32-bit strict build needs none of the four ABI adapters.
+32-bit strict build needs none of the five ABI adapters.
 
-**The judgment this hinges on.** These four adapters are allocation-size and
+**The judgment this hinges on.** These five adapters are allocation-size, record-layout and pointer-width
 record-layout edits in level-setup and texture-table code, not gameplay behaviour: on
 the 32-bit targets the original text computes exactly what the adapted text computes on
 LP64. The brief's STOP condition is "changing gameplay code". This note treats LP64
 allocation fixes as ABI adapters in the established sense (M3f1's "declared named-field
 synthetic ABI adapter", [tools/reference/README.md](../tools/reference/README.md#m3f1-map-scale)),
 and **flags the judgment for the owner**. (a) yes; (b) yes, each site is declared and
-hashed; (c) no gap; (d) yes. **Recommendation:** the four declared LP64 ABI adapters in
+hashed; (c) no gap; (d) yes. **Recommendation:** the five declared LP64 ABI adapters in
 every build, the three sanitizer-only adapters and `-fno-sanitize=alignment` in the
 sanitizer builds, `-m32` recorded as a later owner confirmation. Provisionally adopted,
 pending owner confirmation.
@@ -976,7 +977,7 @@ additions, DSIM38 writer and reader, the runner, tests, fuzz target) ≈ 4–5k;
 goldens are data. **About 10–12k lines, below the 25k split threshold.**
 
 Every decision G1–G12 has a recommendation consistent with the brief's section 5; the
-headless C needs only I/O stubs plus the four declared LP64 allocation and layout
+headless C needs only I/O stubs plus the five declared LP64 allocation, layout and pointer-width
 adapters (the judgment of G3, flagged); no gameplay code text changes; and the work fits
 one milestone. **Phase 2 therefore proceeds with the decisions provisionally adopted.**
 
@@ -1051,6 +1052,7 @@ confirmation remain.
 
 ## 12. Corrections and findings from Phase 2
 
+- **z_zone.c:440, a fifth LP64 adapter (found by CI).** `Z_ChangeTag` tests `(unsigned)block->user < 0x100`; on LP64 the truncated owner pointer can be small, and under ASan on the GitHub runner `W_CacheLumpNum`'s re-caching of the synthetic WAD's one patch lump raised "an owner is required for purgable blocks" (every local build and the other variants passed by address layout alone). The adapter compares the whole pointer as the 32-bit original does; the dumps are unchanged.
 - **Exit tic.** `G_Ticker` handles `gameaction` before the demo read, so the driver stops on
   `ga_completed`; `WI_Start` stays an aborting stub.
 - **Zone fill.** The runner zero-fills `Z_Malloc`; before that, uninitialised plat and floor

@@ -1,7 +1,7 @@
 {
  "schema": "DOOM-M3H9C-SYNTHETIC-RESULTS-v1",
  "wad_sha256": "1180ed6a0070d841e20ae2a3fd136fe49f132082a2dba50b75106a10b58c5923",
- "runner_contract_sha256": "6d915e98a835e1b29a28735eeb2d36253468ba91f00b698e75f42401dab710aa",
+ "runner_contract_sha256": "49cdef6759d9d4e5d86f2c2f193d4797b56efb01b03c52107279ff23a36c91aa",
  "variants": [
   "strict",
   "overflow",
