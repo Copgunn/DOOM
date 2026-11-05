@@ -92,8 +92,10 @@ keeping the M3h5 invariant (decision F3). DSIM37 is the DSIM36 layout with barre
 ordinary actor records and `store.max_slots` 384, no new field or event. **E1M1 on medium
 skill passes every load rule it is measured against** (the note's
 [§10](M3H9B_REFERENCE_INVESTIGATION.md#10-e1m1-medium-load-admission-under-the-new-policy));
-the real-map run that confirms it is M3h9c. One new fidelity-gap witness: an explosion
-whose bomb source handle is stale refuses the tic. Older policies keep their admission,
+the real-map run that confirms it is M3h9c. Two new fidelity-gap witnesses: an explosion
+whose bomb source handle is stale refuses the tic, and so does a barrel whose step would
+carry its centre through a wall corner (the barrel counterpart of the player's corner-jump
+witness). Older policies keep their admission,
 digests and DSIM bytes. Maintenance in the same milestone (owner request, 2026-11-04): the
 docs-only CI fast path, a detect-changes job that lets a documentation-only push skip the
 heavy steps inside each required job so every required check still reports.

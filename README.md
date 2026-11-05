@@ -62,8 +62,9 @@ example programs, on small test maps built for this project. Today it can simula
 What it cannot do yet:
 
 - show graphics, play sound or offer menus;
-- run the real E1M1 map itself from start to finish: every feature it needs now works
-  and is checked, and matching a full run tic for tic is the next milestone;
+- run the real E1M1 map itself from start to finish: every feature it is known to need
+  is now accepted and checked, and loading it and matching a full run tic for tic is the
+  next milestone;
 - handle the other monsters, the other weapons, or the remaining map features such as
   crushers and teleporters;
 - play back demos.

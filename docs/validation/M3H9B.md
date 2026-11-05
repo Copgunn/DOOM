@@ -320,7 +320,34 @@ Recorded after plan step 13.
 
 ## Independent review
 
-Recorded after plan step 14.
+Plan step 14, 2026-11-04: an independent reviewer (a fresh agent with the branch, the C
+source and the committed documents only, no access to the implementing sessions' notes)
+reviewed the full diff against `origin/master` (96 files, +15,593 / −209) against the
+original C, re-ran the M3h9b evidence, projection and replay checks and the M3h8 and M3h9
+replays (all passing, digests unchanged). **No blocker.** It verified the explosion walk,
+`PIT_RadiusAttack`, the barrel as a damage target, the `A_Explode` admission, the spawn
+classification and bounds, S′ (including an independent check of the proof and of the
+"step below 2r" condition for every admitted mover: player 16, monsters 20, sergeant 30,
+fireball 6; only the barrel fails it and is covered by the Escape witness), the C harness
+bodies, observers and adapters, the encoder's honesty and the reader's record rules
+against the C lines. Findings and their resolution:
+
+| # | Severity | Finding | Resolution |
+| --- | --- | --- | --- |
+| 1 | should fix | COMPATIBILITY and the note's §5.1 said `A_Explode` runs 9 tics after the death state's first tic; C gives `T + d + t0 + 9`, 11–14 tics after the kill | corrected; note §13 |
+| 2 | should fix | STATE_FORMAT said a barrel's spawnpoint is at the actor's position; a thrust barrel leaves it | corrected |
+| 3 | should fix | ROADMAP named one new witness; there are two (stale source, corner jump) | corrected |
+| 4 | should fix | README overclaimed "every feature it needs now works" | reworded: accepted and checked; loading and matching the run is next |
+| 5 | should fix | COMPATIBILITY's API table lacked the refusal of a barrel as a damage *source* | row added |
+| 6 | should fix | four stale code comments (barrels "land in a later step", sight bound 24, `has_e1m1` "every other policy rejects") | fixed in code |
+| 7 | should fix | a documentation-only change skipped the historical-evidence guard (`evidence_storage.py verify-git`), so a protected `docs/validation` record could change unguarded | paths under `docs/validation/` are never documentation-only |
+| 8 | note | a failing detect-changes job left the required jobs skipped or pending | both jobs run with `!cancelled()`; an empty output means a full run |
+| 9 | note | rename detection could make a code file renamed to `.md` look documentation-only | `--no-renames` |
+| 10 | note | the readers accepted threshold 100 with reaction time 8, which C never produces (p_inter.c:902 then 904–911) | both validators require reaction time 0 with threshold 100; negative test |
+| 11 | note | README "Which kind of Doom?" and the "Where it's (maybe) going" edits need the owner's approval cited; TESTING claimed "about a minute" for an unobserved run | approvals cited in the pull request; the claim removed |
+
+Verified and left untouched: everything in the reviewer's "found correct" list (the
+report is `review_report.md` in the milestone's scratch, summarised here).
 
 ## Local gates
 

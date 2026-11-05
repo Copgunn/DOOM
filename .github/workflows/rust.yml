@@ -47,8 +47,11 @@ jobs:
           esac
           docs_only=false
           if [ -n "$base" ] && git cat-file -e "$base^{commit}" 2>/dev/null; then
-            changed="$(git diff --name-only "$base" "$HEAD_SHA")"
-            if [ -n "$changed" ] && ! grep -qvE '\.md$' <<<"$changed"; then
+            changed="$(git diff --name-only --no-renames "$base" "$HEAD_SHA")"
+            # Documentation only: every path ends in .md and none is a protected
+            # validation record (those are guarded by the migration check, which
+            # must keep running on them).
+            if [ -n "$changed" ] && ! grep -qvE '\.md$' <<<"$changed" && ! grep -qE '^docs/validation/' <<<"$changed"; then
               docs_only=true
             fi
             printf 'base %s\nhead %s\nchanged paths:\n%s\n' "$base" "$HEAD_SHA" "$changed"
@@ -77,6 +80,8 @@ jobs:
     # 12 of 30. macOS gets 40 so an M3h5-sized test addition cannot time it out.
     timeout-minutes: ${{ matrix.os == 'ubuntu-latest' && 45 || (matrix.os == 'macos-latest' && 40 || 30) }}
     needs: changes
+    # Run even if the classification failed: an empty output means a full run.
+    if: ${{ !cancelled() }}
     env:
       # A documentation-only change (every changed path ends in .md) skips the heavy
       # steps below; the job itself still runs and reports, so the required check
@@ -319,6 +324,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: changes
+    if: ${{ !cancelled() }}
     env:
       DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
     steps:

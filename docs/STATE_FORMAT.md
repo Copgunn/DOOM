@@ -1988,8 +1988,8 @@ and dying `MF_SHOOTABLE` clear with `MF_CORPSE|MF_DROPOFF` set and `MF_SOLID` ke
 only when gibbed); `reaction_time` 8 until the first wound it survives, then 0
 (`P_DamageMobj`, p_inter.c:902); `threshold` 0, or 100 with `target` present once a
 non-lethal wound with a non-NULL source fixed it (never cleared); `momx`/`momy` from
-thrust, `momz` from a fall; `lastlook` below 4; a present spawnpoint with DoomEd 2035 at
-the actor's position; `player` 255. A barrel holds a slot of the one actor store (384
+thrust, `momz` from a fall; `lastlook` below 4; a present spawnpoint holding the THING
+record (DoomEd 2035 at the record's position, which a thrust barrel leaves); `player` 255. A barrel holds a slot of the one actor store (384
 slots), appears once in `thinker.order`, `thinker.shared_order` (kind 0), `spatial.link_order`
 (while linked) and its sector's `actors`. At most 16 barrels per capture. The barrels of
 `thinker.order` read their spawnpoints as a subsequence of `map.things` (lump order).

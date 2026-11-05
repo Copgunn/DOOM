@@ -1575,8 +1575,14 @@ jobs (`Stable / ubuntu-latest`, `Stable / windows-latest`, `Stable / macos-lates
 Rust / 1.85.0`) `need` it and read it into `DOCS_ONLY`; on a documentation-only change
 every build, test, evidence, example and measurement step is skipped by a step-level
 `if`, while the checkout, the documentation link check and a one-line report always run,
-so every required check still runs and reports success in about a minute. A code change,
+so every required check still runs and reports success without building or testing. A
+code change,
 a mixed change, a push whose base cannot be fetched or a manual run keeps every step.
-`paths-ignore` is not used, because a skipped required check never reports. Job names, the
+A change under `docs/validation/` is never documentation-only, because the historical
+evidence records there are guarded by the migration check (`evidence_storage.py
+verify-git`), which must keep running. If the detect-changes job itself fails, the required
+jobs still run in full (`!cancelled()`), and renames are not detected, so a file renamed
+out of a code suffix cannot pass as documentation. `paths-ignore` is not used, because a
+skipped required check never reports. Job names, the
 `macos-26-intel` runner and the timeouts are unchanged. The proof (one docs-only commit and
 one code commit of the M3h9b pull request) is in the [evidence record](validation/M3H9B.md#ci).

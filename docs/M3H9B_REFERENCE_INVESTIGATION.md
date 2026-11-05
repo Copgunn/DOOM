@@ -665,7 +665,7 @@ scrollers, decorations, skill (medium, single player) and monster bound, plus:
    and monster hitscans (puff, not blood), by fireballs and by explosions through the
    existing `P_DamageMobj` body (thrust, the unconditional pain draw, `target` fixed by
    the first non-lethal wounder); killed into the `S_BEXP` chain (`A_Scream` without a
-   draw, `A_Explode` nine tics later) while staying solid and non-shootable, and removed
+   draw, `A_Explode` ten tics after it, 11 to 14 after the kill) while staying solid and non-shootable, and removed
    at `S_NULL`; sliding under thrust with friction, the corpse rule, the dropoff rule and
    the walk-over crossings (an 88 line lowers the lift); gibbed by a closing door when
    dying; autoaim target while alive. `P_RadiusAttack` with the ±128-unit 3 × 3 block
@@ -1085,6 +1085,9 @@ Recorded here rather than rewritten, so the Phase 1 reasoning stays readable:
   preserved. S′ itself is unaffected (an embedded barrel is refused in any case). Found by
   seeds 1123, 1184, 1367, 1428, 1489 and 1550 of the fuzz seeder, each a lethal 1,000-damage
   hit on the corridor-hall barrel.
+- **§5.1, "`A_Explode` nine tics later" (independent review).** The explosion runs at
+  `T + d + t0 + 9`, 11 to 14 tics after the kill and 10 after `A_Scream` (§2.5 had it
+  right); the §5.1 sentence and COMPATIBILITY are corrected.
 - **F4(v), a barrel as a damage source (found by the fuzz target).** `damage_actor`
   accepted a barrel as the *source* of a request, which the source never produces (a
   barrel is only ever an inflictor); the wounded victim then targeted the barrel and the

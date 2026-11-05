@@ -2057,9 +2057,9 @@ never targeted by a monster, never drops anything and never credits a kill. Duri
   quartered to 10.5. While dying it still blocks movers, absorbs a fireball that overlaps
   its 10.5 units with no damage (a fireball on a common floor flies over it), lets bullets
   and autoaim through, slides with corpse friction and can now be pushed over a drop.
-  `A_Scream` (`sfx_barexp`, no draw) at `S_BEXP2`, **`A_Explode` at `S_BEXP4`**, 9 tics
-  after the death state's first tic, in the barrel's own thinker, and removal at `S_NULL`
-  20 tics later; a barrel killed by another barrel's explosion or by a fireball whose
+  `A_Scream` (`sfx_barexp`, no draw) at `S_BEXP2`, **`A_Explode` at `S_BEXP4`**, 11 to 14
+  tics after the killing tic (10 after `A_Scream`: `S_BEXP` lasts 2..5 tics, then 5 and 5),
+  in the barrel's own thinker, and removal at `S_NULL` 20 tics after the explosion; a barrel killed by another barrel's explosion or by a fireball whose
   thinker runs before the killer's explodes one tic later (`d` = 1).
 - **The explosion** is `P_RadiusAttack(barrel, barrel->target, 128)` with the source's
   arithmetic: `dist = (damage + MAXRADIUS) << FRACBITS` overflows and wraps to exactly
@@ -2164,6 +2164,7 @@ Rust-only API calls on a barrel under wire 21:
 | A target (`set_actor_target`), a removal (`mark_remove`), a state entry (`enter_actor_state`, `enter_original_state`), a death request (`request_actor_death`) | refused, state unchanged (`PlayerBodyError::Unsupported`; the death request as for every actor) |
 | A direct spawn of 2035 (`spawn_type`) | `MapSpawnError::DirectSpawn` |
 | Damage with an inflictor (`damage_actor`) | admitted: it wounds, thrusts and may kill the barrel as a shot would |
+| A barrel named as the *source* of a damage request | `PlayerBodyError::Unsupported`, state unchanged: the source only ever passes a barrel as the inflictor (p_enemy.c:1600, p_map.c:1194), never as a source |
 | A push (`set_momentum`) or vertical momentum within the shared bounds | admitted: a thrust barrel is ordinary play |
 
 Quirks reproduced, each with C evidence: the wrapped 3 × 3 window, the first-wounder bomb
