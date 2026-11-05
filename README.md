@@ -84,8 +84,8 @@ People play classic Doom in four broad ways today. Here is where this project fi
 - **Vanilla.** Exactly how the original 1993 game worked, its limits and quirks included.
   This is what the project builds, and checks against the original, today.
 - **Limit-removing.** The same game and the same map features, but the original's hard
-  limits on map size and detail are lifted, so bigger and more detailed maps run. Planned
-  as a separate mode (Track 1 below).
+  limits on map size and detail are lifted, so bigger and more detailed maps run.
+  Considered as a separate mode (Track 1 below).
 - **Boom, MBF21 and ID24.** Three generations of extensions to how Doom maps are built
   that keep Doom feeling classic while adding map features: new kinds of doors and lifts,
   scrolling floors, deep water and more. Most new community maps are built for this
@@ -104,7 +104,7 @@ them.
 These are ideas, not promises, grouped into three tracks. The
 [roadmap](docs/ROADMAP.md#ideas-under-consideration) describes them in a little more detail.
 
-**Track 1: Faithful.** Vanilla behavior stays exact forever; anything that changes it
+**Track 1: Faithful.** Vanilla behavior is meant to stay exact; anything that changes it
 lives in a separate optional mode.
 
 - **Original demo playback.** Play back recorded vanilla demos (`.lmp` files) to the
@@ -112,8 +112,8 @@ lives in a separate optional mode.
   demo is a desync, it isn't running Doom; it's running something Doom-shaped.
 - **Faster progress.** Port whole systems at once, such as all monsters or all weapons.
   Check them against the original by running real maps and demos.
-- **One vanilla profile, plus a limit-removing one.** Fold the step-by-step policies into
-  one complete vanilla profile. A separate profile would lift the original's hard limits,
+- **One vanilla mode, plus a limit-removing one.** Fold the step-by-step policies into
+  one complete vanilla mode. A separate mode would lift the original's hard limits,
   such as the most things or visible surfaces it can handle, without otherwise changing
   gameplay.
 - **An optional "fixed" mode.** A separate mode, off unless you choose it, would correct known original bugs.

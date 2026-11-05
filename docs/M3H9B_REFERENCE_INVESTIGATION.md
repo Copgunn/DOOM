@@ -892,7 +892,8 @@ one code commit in the PR, both observed on GitHub. **Recommendation: adopt.**
 admits no silent divergence (F3 admits spawns C admits; F5 and F8 reproduce the original
 executable's arithmetic; F4(iv), F6 and F7 are witnesses), adds no new kind of fidelity
 gap and no unbounded store, and the size estimate of §8 fits one milestone. Phase 2
-proceeds with F1–F11 **provisionally adopted, pending owner confirmation**.
+proceeds with F1–F11 **provisionally adopted, pending owner confirmation** (confirmed by
+the owner on 2026-11-05; §12).
 
 ## 7. Evidence plan (C first, genuine bodies)
 
@@ -1023,11 +1024,12 @@ digests.
   (witness).
 
 **Status / next step.** Phase 1 is complete with this note and the census additions.
-F1–F11 are provisionally adopted pending owner confirmation. Phase 2 is complete: the C
-evidence (26 scenarios), the DSIM37 projection, the policy, bounds, angles, S′, barrels,
-the reader, the replay (matching every row and golden on its first run), the example and
-scripts, the fuzz target with its campaigns, the CI fast path, the documentation, the
-matched timings, the independent review (no blocker, every finding fixed) and the local
+F1–F11 were provisionally adopted and the owner confirmed them on 2026-11-05. Phase 2 is
+complete: the C evidence (26 scenarios), the DSIM37 projection, the policy, bounds,
+angles, S′, barrels, the reader, the replay (matching every row and golden on its first
+run), the example and scripts, the fuzz target with its campaigns, the CI fast path, the
+documentation, the matched timings, the independent review (no blocker, every finding
+fixed) and the local
 gates; the draft pull request stops at the owner's review. Observed results are in the
 [evidence record](validation/M3H9B.md); the corrections found on the way are in §13.
 

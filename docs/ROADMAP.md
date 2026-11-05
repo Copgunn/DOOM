@@ -104,8 +104,8 @@ Status on `feat/m3h9b-barrels`: implemented and in owner review (draft pull requ
 not merged); every local gate, the matched timings, the fuzz campaigns and the independent
 review are recorded. See [source investigation](M3H9B_REFERENCE_INVESTIGATION.md),
 [support](COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle)
-and [observations](validation/M3H9B.md). Decisions F1–F11 are provisionally adopted,
-pending the owner's confirmation.
+and [observations](validation/M3H9B.md). Decisions F1–F11 are adopted; the owner
+confirmed them on 2026-11-05.
 
 ### Previous gameplay foundation — M3h9a: Two-sided scrolling walls and static decorations
 
