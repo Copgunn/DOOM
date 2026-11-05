@@ -113,6 +113,11 @@ impl Simulation {
             return Err(PlayerBodyError::Invariant.into());
         }
         if p.state == PlayerBodyState::Dead {
+            // Under the level policy `P_DeathThink` reads only `BT_USE` of the
+            // command (p_user.c:227); every admitted command is accepted.
+            if p.policy.has_level() {
+                return Ok(None);
+            }
             // Under the movers policy a dead player may hold BT_USE alone: P_DeathThink
             // requests a reborn (decision N3).
             let dead_use = TicCommand {

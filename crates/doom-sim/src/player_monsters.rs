@@ -34,6 +34,9 @@ pub const PLAYER_E1M1_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-E1M1-1-MEDIUM-v1
 /// Explicit barrels context (64 pickups, 384 slots, every angle, spawn rule S′);
 /// older contexts stay frozen.
 pub const PLAYER_BARRELS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-BARRELS-1-MEDIUM-v1";
+/// Explicit level context (the barrels world plus the body at its THINGS record,
+/// the `damagecount` decay and `P_DeathThink`); older contexts stay frozen.
+pub const PLAYER_LEVEL_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-LEVEL-1-MEDIUM-v1";
 
 impl Simulation {
     /// Autonomous roster member: the native/original Demon owner or a policy
@@ -221,6 +224,32 @@ impl Simulation {
         context: MapContextOptions,
     ) -> Result<Self, OriginalRegistryError> {
         let policy = OriginalExecutionProfile::PlayerMonstersBarrelsV1;
+        Self::with_original_registry(
+            map,
+            crate::player_map_scale::actor_slots(policy),
+            OriginalExecutionRegistry::new(policy)?,
+            ActorOptions::default(),
+            context,
+        )
+        .map_err(Into::into)
+    }
+    /// The barrels world (wire 21) plus the three behaviours of decision G4
+    /// (M3h9c, wire 22): [`Simulation::spawn_map_things`] spawns the player body
+    /// when it meets the type-1 THINGS record, in lump order, with that record's
+    /// angle (`P_LoadThings`, p_setup.c:313–346; `P_SpawnMapThing`,
+    /// p_mobj.c:729–736; `P_SpawnPlayer`, 642–686), and a level without exactly
+    /// one type-1 record is refused; the player's `damagecount` decays by one per
+    /// live tic (p_user.c:355–356); a dead player runs `P_DeathThink`
+    /// (p_user.c:182–228), turning toward its attacker, and accepts any admitted
+    /// command, of which only `BT_USE` is read. [`Simulation::spawn_player_body`]
+    /// is refused. Captures are DSIM38, the DSIM37 layout under policy 22. As for
+    /// the barrels policy, call [`Simulation::initialize_player_weapons`] and
+    /// [`Simulation::spawn_level_specials`] once before the first tic.
+    pub fn original_player_level_map(
+        map: Map,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        let policy = OriginalExecutionProfile::PlayerMonstersLevelV1;
         Self::with_original_registry(
             map,
             crate::player_map_scale::actor_slots(policy),

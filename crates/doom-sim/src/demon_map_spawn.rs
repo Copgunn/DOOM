@@ -138,7 +138,14 @@ impl Simulation {
                     }
                 }
             } else {
-                suffix = true;
+                // The level policy's body is spawned at its THINGS record (decision
+                // G4, p_mobj.c:729–736): it interleaves with the THINGs in lump
+                // order and does not start the player/impact suffix.
+                let level_body = self.player_policy().has_level()
+                    && self.original_player.is_some_and(|p| p.mo == Some(id));
+                if !level_body {
+                    suffix = true;
+                }
                 if !self.position_admitted(a.position(), 994) {
                     return Err(MonsterError::Arithmetic.into());
                 }

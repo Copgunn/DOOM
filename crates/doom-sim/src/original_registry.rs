@@ -85,6 +85,15 @@ pub enum OriginalExecutionProfile {
     /// open box meets). Captures are DSIM37. Exploding barrels (DoomEd 2035) are
     /// the headline admission of the policy.
     PlayerMonstersBarrelsV1,
+    /// The barrels world, byte for byte, plus the three behaviours of decision G4
+    /// (M3h9c) that let a whole `P_SetupLevel` and `P_Ticker` be compared tic for
+    /// tic: the player body spawned when `P_LoadThings` meets the type-1 THINGS
+    /// record, with `ANG45 * (angle/45)` (p_setup.c:313–346, p_mobj.c:642–686,
+    /// 729–736), the `damagecount` decay of `P_PlayerThink` (p_user.c:355–356)
+    /// and `P_DeathThink` (p_user.c:182–228: the turn toward the attacker, the
+    /// dead `damagecount` decay, any command admitted and only `BT_USE` read).
+    /// Captures are DSIM38, the DSIM37 layout under policy 22.
+    PlayerMonstersLevelV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -111,6 +120,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersMoversV1 => 19,
             Self::PlayerMonstersE1M1V1 => 20,
             Self::PlayerMonstersBarrelsV1 => 21,
+            Self::PlayerMonstersLevelV1 => 22,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -137,6 +147,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersMoversV1 => PLAYER_MOVERS_CONTEXT_SCHEMA,
             Self::PlayerMonstersE1M1V1 => PLAYER_E1M1_CONTEXT_SCHEMA,
             Self::PlayerMonstersBarrelsV1 => PLAYER_BARRELS_CONTEXT_SCHEMA,
+            Self::PlayerMonstersLevelV1 => PLAYER_LEVEL_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_armor(self) -> bool {
@@ -154,6 +165,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     pub(crate) const fn has_player_bonuses(self) -> bool {
@@ -170,6 +182,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     /// Original former humans, a bounded mixed roster, infighting and drops.
@@ -186,6 +199,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     /// The original Imp and its fireball in the mixed roster.
@@ -201,6 +215,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     /// Wall-derived travel bounds, 320 slots and 208 live fireballs inside a walled
@@ -216,6 +231,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     /// Two-sided lines, static floor/ceiling heights, vertical movement, the
@@ -231,6 +247,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     /// Linedefs of any direction inside a closed one-sided boundary, the parity
@@ -244,6 +261,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     /// The real-map policy: format-sized static geometry, the arithmetic and
@@ -256,6 +274,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     /// The specials policy (M3h7 Stage A) and its supersets: sky ceilings, the
@@ -268,6 +287,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     /// The movers policy (M3h8 Stage B) and its E1M1 superset: doors, lifts,
@@ -280,6 +300,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     /// The E1M1 policy (M3h9 note §5.1): two-sided scrolling walls (48) and the
@@ -288,14 +309,30 @@ impl OriginalExecutionProfile {
     pub(crate) const fn has_e1m1(self) -> bool {
         matches!(
             self,
-            Self::PlayerMonstersE1M1V1 | Self::PlayerMonstersBarrelsV1
+            Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     /// The barrels policy (M3h9b note §5.1): exploding barrels, up to 64 pickups,
     /// 384 actor slots, every THING angle and the spawn rule S′ (decision F3),
-    /// under DSIM37. Every other policy keeps its bounds and rules.
+    /// under DSIM37; the level policy (wire 22) inherits all of it. Every other
+    /// policy keeps its bounds and rules.
     pub(crate) const fn has_barrels(self) -> bool {
-        matches!(self, Self::PlayerMonstersBarrelsV1)
+        matches!(
+            self,
+            Self::PlayerMonstersBarrelsV1 | Self::PlayerMonstersLevelV1
+        )
+    }
+    /// The level policy (M3h9c, decision G4, wire 22 only): the barrels world with
+    /// the player body spawned at its THINGS record's lump position with its angle
+    /// (`P_LoadThings` → `P_SpawnMapThing` → `P_SpawnPlayer`, p_setup.c:313–346,
+    /// p_mobj.c:729–736 and 642–686), the `damagecount` decay of `P_PlayerThink`
+    /// (p_user.c:355–356) and `P_DeathThink` (p_user.c:182–228) for a dead player,
+    /// under DSIM38. Every older policy keeps its spawn order, counters and dead
+    /// player contract.
+    pub(crate) const fn has_level(self) -> bool {
+        matches!(self, Self::PlayerMonstersLevelV1)
     }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
@@ -313,6 +350,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -338,6 +376,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -362,6 +401,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -382,6 +422,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
     /// The four-weapon pack (fists, shotgun, chaingun, manual switching): every
@@ -410,6 +451,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
         )
     }
 }
@@ -758,7 +800,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersSpecialsV1
             | OriginalExecutionProfile::PlayerMonstersMoversV1
             | OriginalExecutionProfile::PlayerMonstersE1M1V1
-            | OriginalExecutionProfile::PlayerMonstersBarrelsV1 => {
+            | OriginalExecutionProfile::PlayerMonstersBarrelsV1
+            | OriginalExecutionProfile::PlayerMonstersLevelV1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -812,7 +855,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersSpecialsV1
             | OriginalExecutionProfile::PlayerMonstersMoversV1
             | OriginalExecutionProfile::PlayerMonstersE1M1V1
-            | OriginalExecutionProfile::PlayerMonstersBarrelsV1 => {
+            | OriginalExecutionProfile::PlayerMonstersBarrelsV1
+            | OriginalExecutionProfile::PlayerMonstersLevelV1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {

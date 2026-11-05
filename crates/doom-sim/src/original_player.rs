@@ -82,7 +82,8 @@ pub struct OriginalPlayer {
     pub state: PlayerBodyState,
     /// Last applied source, including None; retained if that actor retires.
     pub attacker: Option<ActorId>,
-    /// Source damagecount, capped100; no PlayerThink decay in this body-only policy.
+    /// Source damagecount, capped100; decays only under the level policy
+    /// (`P_PlayerThink` and `P_DeathThink`, decision G4).
     pub damage_count: i32,
     /// Source `frags[0]`; other player slots are unavailable.
     pub frags: i32,
@@ -301,7 +302,12 @@ impl Simulation {
         _slot: PlayerSlot,
         position: [Fixed; 2],
     ) -> Result<ActorId, SimError> {
-        self.original_player.ok_or(PlayerBodyError::Profile)?;
+        let p = self.original_player.ok_or(PlayerBodyError::Profile)?;
+        // The level policy spawns the body from its THINGS record inside
+        // `spawn_map_things` (decision G4); a caller-placed body is refused.
+        if p.policy.has_level() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
         // The specials policy's light thinkers follow the body (M3h7 decision 12).
         if self.level_specials_spawned() {
             return Err(MapSpawnError::LevelSpecials.into());

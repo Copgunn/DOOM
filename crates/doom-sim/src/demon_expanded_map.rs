@@ -695,6 +695,9 @@ impl Simulation {
         let mut used = use_lines::UseOutcome::default();
         if command_policy {
             plan.events.push(Event::Phase(Phase::Players));
+            // Whether `P_PlayerThink` took its live branch this tic (p_user.c:
+            // 258–262), read by the level policy's counter decays.
+            let think_live;
             {
                 let mut host = LifeHost {
                     player: plan.player.as_mut(),
@@ -722,6 +725,7 @@ impl Simulation {
                     .player
                     .as_ref()
                     .is_some_and(|p| p.state == PlayerBodyState::Live);
+                think_live = live;
                 if weapon_policy && specials && live {
                     // P_PlayerThink: P_CalcHeight, then P_PlayerInSpecialSector,
                     // then the weapon change and P_MovePsprites (M3h7 step 3 order).
@@ -781,6 +785,21 @@ impl Simulation {
                         plan.sound_targets.as_mut_slice(),
                     )
                     .map_err(|error| self.policy_error(error))?;
+                    // The level policy runs the rest of `P_DeathThink` (p_user.c:
+                    // 182–228) after its `P_MovePsprites` (187): `P_CalcHeight`'s
+                    // bob (198), then the turn toward the attacker and the dead
+                    // `damagecount` decay (200–224).
+                    if self.player_policy().has_level() && !live {
+                        player_pistol::stage_operation(
+                            &mut host,
+                            weapons::PlayerWeaponOperation::CalcHeight,
+                            command,
+                            self.tic,
+                            plan.sound_targets.as_mut_slice(),
+                        )
+                        .map_err(|error| self.policy_error(error))?;
+                        crate::level::death_turn(&mut host)?;
+                    }
                     // P_DeathThink's last statement: BT_USE while dead requests a
                     // reborn (decision N3); the tic completes and the next is refused.
                     if movers && !live && command.buttons & weapons::BT_USE != 0 {
@@ -796,7 +815,7 @@ impl Simulation {
                     .write_line_special(&self.line_specials, line, 0)?;
             }
             plan.exit |= used.exit;
-            world_pickups::bonus_tick(plan.player.as_mut())?;
+            world_pickups::bonus_tick(plan.player.as_mut(), think_live)?;
             plan.events.push(Event::Phase(Phase::Thinkers));
         } else {
             plan.events

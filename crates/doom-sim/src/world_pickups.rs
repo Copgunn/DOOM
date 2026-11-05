@@ -409,12 +409,28 @@ pub(crate) fn validate_item(
     }
     Ok(())
 }
+/// The counter countdowns at the end of `P_PlayerThink`'s live branch
+/// (p_user.c:355–359), after `P_MovePsprites` (334) and the power countdowns
+/// (339–353, not modelled): `damagecount` (355–356, the level policy only), then
+/// `bonuscount` (358–359, every pickup policy). `think_live` is whether the live
+/// branch ran this tic; the level policy reads it, as the source does, so a
+/// player killed by its own `P_PlayerInSpecialSector` (274–275) still counts
+/// down; every older policy keeps reading the state after the player stage.
 pub(crate) fn bonus_tick(
     player: Option<&mut original_player::PlayerRuntime>,
+    think_live: bool,
 ) -> Result<(), SimError> {
     if let Some(p) = player {
+        let level = p.policy.has_level();
+        if level && think_live && p.damage_count > 0 {
+            p.damage_count -= 1;
+        }
         if p.policy.has_world_pickups() {
-            let live = p.state == PlayerBodyState::Live;
+            let live = if level {
+                think_live
+            } else {
+                p.state == PlayerBodyState::Live
+            };
             let state = p.pickups.as_mut().ok_or(PlayerBodyError::Invariant)?;
             state.validate(p.policy)?;
             if live && state.bonus_count > 0 {
