@@ -2028,3 +2028,47 @@ counts and ranges of the encoded state), checks only the skill byte of `actors.o
 and does not verify that a barrel's `target` is its first wounder (that is a C-evidence and
 replay fact, not a per-capture invariant). Every reader before DSIM37 keeps its contract;
 `store.max_slots` 384 is rejected by all of them (`Limit`).
+
+## DSIM v38 — the whole level: the body at its THINGS record, damage-count decay and `P_DeathThink`
+
+`PlayerMonstersLevelV1` captures are version 38; `Diagnostic::decode_level` is its explicit
+reader. Version 38 selects policy 22 (`PlayerMonstersLevelV1`, wire 22), the unchanged
+original registry schema and context `PLAYER-MONSTERS-LEVEL-1-MEDIUM-v1`. Every earlier
+version-specific reader, `decode_barrels` included, keeps its historical contract and
+rejects 38; the v38 reader reads 38 only. V20–37 bytes, encoders, fixtures and
+policy/context meanings are unchanged.
+
+V38 is the DSIM37 layout, event vocabulary and bounds with **no new field and no new
+event**: every field keeps its path, width, position and meaning, and every event its tag,
+payload and position. Only the version word, the `profile` value (22) and the
+`context.schema` bytes name the policy. What changes is what the layout may contain,
+following the three behaviours of the policy (decision G4):
+
+- **The player body sits at its THINGS record.** `P_LoadThings` spawns the lump in order
+  and `P_SpawnMapThing` calls `P_SpawnPlayer` when it meets the type-1 record
+  (p_setup.c:313–346, p_mobj.c:729–736), so the body's slot and its place in
+  `thinker.order`, `thinker.shared_order` and `spatial.link_order` follow the records
+  before it, not every THING. The body has no spawnpoint (`spawnpoint` is the one byte
+  `0`: `P_SpawnPlayer` sets none) and its `angle` starts at `ANG45 * (angle/45)` of the
+  record, wrapped as for any THING (p_mobj.c:671).
+- **`original_player.0.damage_count` decays** by one per live tic (p_user.c:355–356) and,
+  while dead, by one per tic in which the body faces its attacker or has none
+  (p_user.c:200–224). Its domain stays 0–100; `bonus_count` keeps its DSIM37 domain and
+  decay.
+- **A dead body turns toward its attacker** by `ANG5` steps, or exactly when within `ANG5`
+  (p_user.c:200–222), so its `angle` is any value. `bob` follows `P_CalcHeight` while dead
+  (p_user.c:198).
+
+The v38 reader applies every DSIM37 check and in addition requires: exactly one type-1
+record in `map.things`; `original_player.0.mo` present and naming an occupied slot of the
+same generation that appears in `thinker.order` and has no spawnpoint; every actor before
+the body in `thinker.order` carrying a spawnpoint that matches, in lump order, a record
+before the type-1 record; and the body's slot at least the number of those actors and at
+most the number of those records. A failure is `DiagnosticError::Identity`. No check is
+made on the player body's `angle`.
+
+Reader limitations. As the v37 reader, the v38 reader does not re-run the load rules or
+the skill filter on the encoded map, so it checks the body's lump position only as the
+ordering above (it cannot tell a removed early THING from a filtered one), and it does not
+recompute the turn toward the attacker or the decay from the previous tic (those are
+replay and C-comparison facts, not per-capture invariants).
