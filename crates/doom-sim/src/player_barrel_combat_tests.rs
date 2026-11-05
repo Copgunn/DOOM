@@ -1158,6 +1158,103 @@ fn a_explode_is_admitted_for_the_barrel_state_alone() {
     assert!(crate::barrels::source_definition());
 }
 
+// ---- The barrel escape witness -------------------------------------------------
+
+/// The M3h9b corridor-hall room (`m3h9b_cases.py` `corridor_hall()`, map 6 of
+/// `m3h9b_cases.csv`, the room of case 9 and fuzz start 9): the
+/// hall `x ∈ [0, 512]`, `y ∈ [−320, 320]` entered at its west wall by the corridor
+/// `x ∈ [−512, 0]`, `y ∈ [−32, 32]`; the wall corner at (0, −32).
+const CORRIDOR_HALL: usize = 6;
+
+/// The corridor hall with one barrel at `at` and the player in the corridor.
+fn hall_barrel(at: [i16; 2]) -> (Simulation, ActorId) {
+    let mut l = crate::barrels_replay::room(CORRIDOR_HALL);
+    l.clear_things();
+    l.add_thing([at[0], at[1], 0, BARREL, 7]);
+    let (s, _body, things) = world_in(&l, [-300, 0], 6);
+    (s, things[0])
+}
+
+/// The momentum of the `player_barrels` fuzz seeds 1123/1184/1367/1428/1489/1550:
+/// about (−27.19, −27.19) per axis.
+const JUMP: Fixed = Fixed::from_bits(-(27 << 16) - 12_452);
+
+/// Fuzz finding 3 (M3h9b): a barrel (radius 10) at (10, −30) with momentum
+/// (−27.19, −27.19) is moved by `P_XYMovement` in one unhalved step (only positive
+/// steps above 15 are halved, p_mobj.c:150–164) to (−17.19, −57.19), whose box
+/// `x ∈ [−27.19, −7.19]`, `y ∈ [−67.19, −47.19]` touches neither the hall's west
+/// wall (`x = 0`, `y ≤ −32`) nor the corridor's south wall (`y = −32`, `x ≤ 0`):
+/// `P_TryMove` accepts it (p_map.c:451–517) behind the corner, outside the room.
+/// The source move is legal; the barrels policy refuses the tic with
+/// `MapScaleError::Escape` through `advance` and `step`, every byte and the RNG
+/// kept.
+#[test]
+fn a_barrel_jumping_the_wall_corner_refuses_the_tic_with_escape() {
+    for step in [false, true] {
+        let (mut s, b) = hall_barrel([10, -30]);
+        let boundary = s.boundary.clone().unwrap();
+        let destination = [
+            Fixed::from_map_units(10) + JUMP,
+            Fixed::from_map_units(-30) + JUMP,
+        ];
+        assert!(boundary.inside(s.actor(b).unwrap().position()));
+        assert!(!boundary.inside(destination));
+        s.set_momentum(b, [JUMP; 2]).unwrap();
+        let before = s.snapshot();
+        let rng = s.rng();
+        let result = if step {
+            s.step(idle()).map(|_| ())
+        } else {
+            s.advance(idle())
+        };
+        assert_eq!(result, Err(SimError::MapScale(MapScaleError::Escape)));
+        assert_eq!(s.snapshot(), before);
+        assert_eq!(s.rng(), rng);
+    }
+}
+
+/// The control: the same barrel with momentum (−15, −15) would put its box across
+/// the hall's west wall, so `P_TryMove` refuses the step and the barrel stops dead
+/// in the room (p_mobj.c:188–189); the tic is admitted. A step below the box width
+/// of 20 can never clear the corner.
+#[test]
+fn a_barrel_stopped_short_of_the_corner_is_admitted() {
+    let (mut s, b) = hall_barrel([10, -30]);
+    let fifteen = Fixed::from_map_units(-15);
+    s.set_momentum(b, [fifteen; 2]).unwrap();
+    s.advance(idle()).unwrap();
+    let a = *s.actor(b).unwrap();
+    assert_eq!(a.position(), [10, -30].map(Fixed::from_map_units));
+    assert_eq!(a.momentum(), [Fixed::ZERO; 2]);
+    assert!(s.boundary.as_ref().unwrap().inside(a.position()));
+}
+
+/// A barrel pushed at the same speed along the hall's west wall (no corner in
+/// reach) and across the open hall moves every tic and stays admitted: the witness
+/// refuses only a centre that left the room.
+#[test]
+fn a_fast_barrel_along_a_wall_or_in_the_open_is_admitted() {
+    for (at, momentum) in [
+        ([11, -100], [Fixed::ZERO, JUMP]),
+        ([11, 100], [Fixed::ZERO, -JUMP]),
+        ([200, 100], [JUMP, JUMP]),
+    ] {
+        let (mut s, b) = hall_barrel(at);
+        s.set_momentum(b, momentum).unwrap();
+        let start = s.actor(b).unwrap().position();
+        for _ in 0..3 {
+            s.advance(idle()).unwrap();
+            assert!(
+                s.boundary
+                    .as_ref()
+                    .unwrap()
+                    .inside(s.actor(b).unwrap().position())
+            );
+        }
+        assert_ne!(s.actor(b).unwrap().position(), start, "{at:?}");
+    }
+}
+
 // ---- Soak --------------------------------------------------------------------------
 
 /// The barrel witness every tic preflight reads (`validate_barrel`), plus the

@@ -93,7 +93,13 @@ pub enum MapScaleError {
     Boundary,
     /// Under the diagonal policy, a player's projected slide move was accepted by
     /// `P_TryMove` with its center outside the room (the corner jump, M3h5 note
-    /// §4.4): the one legal source move the policy refuses. The tic fails and the
+    /// §4.4): the one legal source move the policy refuses for the player. Under
+    /// the barrels policy also any accepted `P_TryMove` step of a barrel whose
+    /// center leaves the room: a barrel's radius is 10, and a negative
+    /// `P_XYMovement` step reaches 30 units per axis, more than its box width of
+    /// 20, so it can clear a wall corner the destination-only test does not see
+    /// (`barrels::BarrelMotion`). The player (box 32) and the admitted monsters
+    /// (box 40) cannot, so only barrels pay that check. The tic fails and the
     /// state before it is kept.
     Escape,
     /// Under the real-map policy, the arithmetic certificate of the M3h6 note §4.2

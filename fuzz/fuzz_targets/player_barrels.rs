@@ -393,9 +393,10 @@ fn command(s: &Simulation, b: &[u8; 9], t: usize) -> [TicCommand; 4] {
     commands
 }
 /// The witnesses a valid tic may be refused with, state preserved (M3h9b note
-/// §5.1): the 129th intercept, the corner jump, `SpecialCross`, the vertical
-/// witness, the per-explosion sight budget, the exit and reborn tics, and the
-/// stale bomb source (`Invariant`, decision F4(iv)).
+/// §5.1): the 129th intercept, the corner jump (a player's slide or a barrel's
+/// step, `Escape`), `SpecialCross`, the vertical witness, the per-explosion sight
+/// budget, the exit and reborn tics, and the stale bomb source (`Invariant`,
+/// decision F4(iv)).
 fn declared_witness(e: &SimError) -> bool {
     matches!(
         e,

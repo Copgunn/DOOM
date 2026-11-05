@@ -146,6 +146,41 @@ pub(crate) fn validate_definition(ty: ActorTypeId) -> Result<(), ActorError> {
     }
 }
 
+/// The motion access of a barrel's `P_XYMovement` under the barrels policy: the
+/// shared non-player movement plus the barrel escape witness.
+///
+/// The M3h5 Invariant Ω proof (M3h5 note §4.3) covers an accepted move from `c` to
+/// `c′` by the two boxes at `c` and `c′`, which needs the per-axis step below the
+/// box width `2r`. `P_XYMovement` clamps momentum to ±30 per axis and halves only
+/// a positive step above 15 (p_mobj.c:150–164), and `P_TryMove` tests only the
+/// destination box (p_map.c:451–517), so a negative step reaches 30 units. That is
+/// below `2r` for the player (32) and every admitted monster (40) but not for a
+/// barrel (radius 10, `2r` = 20): a fast barrel can clear a wall corner in one
+/// accepted step and leave the room exactly as the source lets it. After every
+/// accepted attempt the barrel's centre is tested against the one-sided boundary
+/// (`Boundary::inside`, exact integer ray parity); even parity refuses the tic with
+/// `MapScaleError::Escape` and the checked transaction keeps the state before it.
+/// The test is exact, so it never refuses a move that stays in Ω. The player keeps
+/// its own slide witness (`world_pickups::Contacts::after_slide`); monsters pay no
+/// check.
+pub(crate) struct BarrelMotion<'a, G> {
+    pub get: G,
+    pub boundary: &'a crate::player_map_scale::Boundary,
+}
+impl<G: Fn(ActorId) -> Option<Actor>> crate::movement::MotionAccess for BarrelMotion<'_, G> {
+    type Error = SimError;
+    fn get(&self, id: ActorId) -> Option<Actor> {
+        (self.get)(id)
+    }
+    fn after_move(&mut self, actor: &Actor) -> Result<(), SimError> {
+        if self.boundary.inside(actor.position()) {
+            Ok(())
+        } else {
+            Err(crate::MapScaleError::Escape.into())
+        }
+    }
+}
+
 /// The live witness of a barrel at a tic boundary (M3h9b note §2.1–§2.6): its
 /// definition; a role state (or `S_GIBS` after a crunch, `gibbed`) with the
 /// state's sprite and frame and a countdown inside the state's tics; health at
