@@ -79,7 +79,33 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3h9b: Exploding barrels, pickup scale and every thing angle
+### M3h9c: The real E1M1 run, tic for tic
+
+Phase 1 (the [investigation note](M3H9C_REFERENCE_INVESTIGATION.md)) is complete; Phase 2 is
+in progress on `feat/m3h9c-e1m1-run`. Decisions G1-G12 are provisionally adopted, pending
+owner confirmation. The milestone is a local-only harness that runs the owner's E1M1 under
+the genuine linuxdoom-1.10 engine and under the Rust simulation from the same version-110
+demo and compares them on every tic, committing only counts, pass/fail and digests, never
+IWAD content.
+
+Done on the branch: the new separately selected `PlayerMonstersLevelV1` (wire 22, DSIM38;
+the player start spawns at its place in the THINGS lump with its angle, the player think
+decays `damagecount`, and a dead player runs `P_DeathThink`); the demo reader and writer
+`doom_sim::demo`; the `player_level_run` example and the ignored `private_level` test; the
+whole-engine C runner (`m3h9c_build.py` with strict, overflow-checked and address-checked
+variants, the stubs, the driver, the dump reader and the runner contract); the demo script
+tool and its idle script; the local wrapper `tools/local/e1m1_reference.py`; the independent
+DSIM38 projection and the per-tic comparator; and the STATE_FORMAT section. The first matched
+runs on the real E1M1 (idle, pistol, walking and walking with use) are the evidence to be
+recorded.
+
+Remaining: the other scripted runs, the synthetic game WAD and scripts with their CI steps
+(so CI exercises the same runner without an IWAD), the independent review, the evidence
+record, the local and exact-head gates, and the owner's confirmation of G1-G12. Support is in
+[COMPATIBILITY](COMPATIBILITY.md#original-level-runs-the-player-start-in-lump-order-and-the-full-player-think-wire-22);
+commands are in [TESTING](TESTING.md#m3h9c-whole-engine-runner-and-the-real-e1m1-comparison).
+
+### Previous gameplay foundation — M3h9b: Exploding barrels, pickup scale and every thing angle
 
 The separately selected `PlayerMonstersBarrelsV1` (wire 21, DSIM37) is the E1M1 world plus
 the last four things that kept E1M1 from loading: exploding barrels in full (the source's
@@ -92,7 +118,7 @@ keeping the M3h5 invariant (decision F3). DSIM37 is the DSIM36 layout with barre
 ordinary actor records and `store.max_slots` 384, no new field or event. **E1M1 on medium
 skill passes every load rule it is measured against** (the note's
 [§10](M3H9B_REFERENCE_INVESTIGATION.md#10-e1m1-medium-load-admission-under-the-new-policy));
-the real-map run that confirms it is M3h9c. Two new fidelity-gap witnesses: an explosion
+the real-map run that confirms it is M3h9c (above). Two new fidelity-gap witnesses: an explosion
 whose bomb source handle is stale refuses the tic, and so does a barrel whose step would
 carry its centre through a wall corner (the barrel counterpart of the player's corner-jump
 witness). Older policies keep their admission,
@@ -344,14 +370,10 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-- **M3h9c: the real-E1M1 harness and the matched run.** A local-only harness that builds
-  a headless linuxdoom-1.10 from genuine sources, loads the owner's E1M1 under
-  `PlayerMonstersBarrelsV1` and compares it tic for tic with the Rust run, committing only
-  pass/fail, tic counts and digests, never IWAD content (M3h9 note
-  [§10](M3H9_REFERENCE_INVESTIGATION.md#10-real-e1m1-evidence-without-committing-the-iwad-design-for-m3h9c));
-  it also observes the actual intercept maximum, the `P_ChangeSector` work at 129 linked
-  things and whether any per-tic witness fires on the real map. The E1M1-scale synthetic
-  room of that design is the `dense64` room of M3h9b.
+- **M3h9c follow-ups.** The real-E1M1 harness is the current milestone (above). Still
+  open after it: the actual intercept maximum, the `P_ChangeSector` work at 129 linked
+  things and whether any per-tic witness fires on the real map, to be observed by the
+  matched runs and recorded in its evidence record.
 - **Later bounds and skills.** Barrels beyond 16 and pickups beyond 64 for the rest of
   Episode 1 need more actor slots (the M3h9b note's §5.3 formula) and their own evidence;
   easy and hard skill (E4 option ii, deferred by decision F10).
