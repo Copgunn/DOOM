@@ -18,12 +18,10 @@ real-IWAD run are map-derived). The comparison stops at the first divergence, at
 first tic the encoder cannot project (its `ProjectionError` kind and tic are reported:
 a dump deficiency, an ambiguity or an unadmitted state), or where either side ends.
 
-`spatial.link_order` is not in the dump and is sometimes underdetermined by it
-(level_snapshot.py, problem (6)): the projector then holds several C-admissible orders.
-When Rust's order is one of them, the comparator accepts it, continues from it, and counts
-the tic (`link_order_underdetermined_tics`, `link_order_resolved_by_candidate_tics`);
-`--strict-links` compares against the first candidate only. Rust's order outside the
-candidates is a divergence like any other.
+The projection is exact (level_snapshot.py reads the driver's observer rows; a dump
+without them is refused) and there is no tolerance of any field. A run is complete when
+every C snapshot was compared: when C stopped on the exit tic (`end=exit`), Rust holds
+the same captures and refuses the following tic with `LevelExited`, which is not compared.
 
 `--json OUT` writes the counts-only result: tics compared, match, first divergence (tic
 and field path), the projection stop, whether the `map.*` groups are equal, the SHA-256
@@ -91,50 +89,60 @@ def self_check(directory, mapdata, skill):
     return count, hashlib.sha256(b''.join(seq)).hexdigest()
 
 
-def compare(dump_dir, rust_dir, mapdata, skill, values=False, strict_links=False):
+def end_kind(directory):
+    """'exit' when the last dump has gameaction == ga_completed (the driver stops on the
+    exit tic), else 'marker' (the demo ended)."""
+    names = L.m3h9c_dump.snapshot_names(directory)
+    last = L.Dump(os.path.join(directory, names[-1]))
+    return ('exit' if last.h['gameaction'] == L.GA_COMPLETED else 'marker'), last.tic
+
+
+def rust_end(rust_dir):
+    refused = os.path.join(rust_dir, 'refused.txt')
+    tics = sorted(int(n[4:9]) for n in os.listdir(rust_dir) if n.startswith('tic_') and n.endswith('.bin'))
+    if os.path.exists(refused):
+        return 'refused', int(Path(refused).read_text().split()[0]), (tics[-1] if tics else None)
+    return 'last', None, (tics[-1] if tics else None)
+
+
+def compare(dump_dir, rust_dir, mapdata, skill, values=False):
     result = dict(schema=SCHEMA, tics_compared=0, match=False, first_divergence=None, projection_stop=None,
-                  rust_end=None, map_group_equal=None, link_order_underdetermined_tics=0,
-                  link_order_resolved_by_candidate_tics=0)
+                  map_group_equal=None)
+    kind, last_tic = end_kind(dump_dir)
+    rkind, refused_at, rust_last = rust_end(rust_dir)
+    result.update(c_end=dict(kind=kind, tic=last_tic), rust_end=dict(kind=rkind, refused_tic=refused_at, last_capture=rust_last))
     seq_c, seq_r = [], []; last_c = last_r = None; text = []
     proj = L.Projector(mapdata, skill)
     try:
-        for name in L.m3h9c_dump.snapshot_names(dump_dir):
-            dump = L.Dump(os.path.join(dump_dir, name)); tic = dump.tic
-            fields, _ = proj.step(dump)
+        for dump, following in L.snapshots(dump_dir):
+            tic = dump.tic
+            fields, _ = proj.step(dump, following)
             path = os.path.join(rust_dir, f'tic_{tic:05}.bin')
             if not os.path.exists(path):
-                result['rust_end'] = tic; break
+                text.append(f'tic {tic}: no Rust capture'); break
             vr, fr = L.decode(Path(path).read_bytes())
-            if len(proj.link_candidates) > 1:
-                result['link_order_underdetermined_tics'] += 1
-                rust_link = dict(fr).get('spatial.link_order')
-                chosen = next((c for c in proj.link_candidates if L.link_bytes(proj, c) == rust_link), None)
-                if chosen is not None and chosen is not proj.spatial and not strict_links:
-                    # the dump admits this order: continue from it (counted, never silent)
-                    proj.spatial = chosen; result['link_order_resolved_by_candidate_tics'] += 1
-                    fields = [(p, L.link_bytes(proj, chosen) if p == 'spatial.link_order' else v) for p, v in fields]
-            vc = L.VERSION
-            bc, kc = stripped(vc, fields); br, kr = stripped(vr, fr)
+            bc, kc = stripped(L.VERSION, fields); br, kr = stripped(vr, fr)
             if result['map_group_equal'] is None:
                 result['map_group_equal'] = [x for x in fields if x[0].startswith('map.')] == [x for x in fr if x[0].startswith('map.')]
             seq_c.append(hashlib.sha256(bc).digest()); seq_r.append(hashlib.sha256(br).digest())
             last_c, last_r = seq_c[-1].hex(), seq_r[-1].hex()
             result['tics_compared'] += 1
-            if vc != vr:
-                result['first_divergence'] = dict(tic=tic, field='version'); text.append(f'tic {tic}: version {vc} versus {vr}'); break
+            if vr != L.VERSION:
+                result['first_divergence'] = dict(tic=tic, field='version'); text.append(f'tic {tic}: version {L.VERSION} versus {vr}'); break
             diff = first_difference(kc, kr)
             if diff:
                 result['first_divergence'] = dict(tic=tic, field=diff[0])
                 line = f'tic {tic}: first differing field {diff[0]}'
-                if diff[0] == 'spatial.link_order' and len(proj.link_candidates) > 1:
-                    line += (f' (strict: compared with the first of {len(proj.link_candidates)} C-admissible orders)'
-                             if strict_links else f' (none of the {len(proj.link_candidates)} C-admissible orders)')
                 if values: line += f' (C {diff[1].hex() if diff[1] is not None else "-"} versus Rust {diff[2].hex() if diff[2] is not None else "-"})'
                 text.append(line); break
     except L.ProjectionError as err:
         result['projection_stop'] = dict(kind=err.kind, tic=err.tic, reason=err.text)
         text.append(f'projection stopped: {err.kind} at tic {err.tic}: {err.text}')
-    result['match'] = result['tics_compared'] > 0 and result['first_divergence'] is None
+    # complete: every C snapshot compared (through the exit tic when C stopped there);
+    # Rust may hold the same captures and refuse later (LevelExited after the exit tic)
+    complete = result['tics_compared'] == len(L.m3h9c_dump.snapshot_names(dump_dir))
+    result['complete'] = complete
+    result['match'] = complete and result['first_divergence'] is None and result['projection_stop'] is None
     result['c_sequence_sha256'] = hashlib.sha256(b''.join(seq_c)).hexdigest()
     result['rust_sequence_sha256'] = hashlib.sha256(b''.join(seq_r)).hexdigest()
     result['final'] = dict(c_stripped_sha256=last_c, rust_stripped_sha256=last_r)
@@ -147,7 +155,6 @@ def main():
     ap.add_argument('--wad', required=True); ap.add_argument('--map', default='E1M1'); ap.add_argument('--demo')
     ap.add_argument('--values', action='store_true', help='print the two differing values (local use only)')
     ap.add_argument('--json'); ap.add_argument('--self-check', action='store_true')
-    ap.add_argument('--strict-links', action='store_true', help='never resolve an underdetermined link order')
     a = ap.parse_args()
     mapdata = L.MapData(a.wad, a.map); skill = L.demo_skill(a.demo) if a.demo else 2
     if a.self_check:
@@ -158,14 +165,13 @@ def main():
         print(f'self-check passed: {count} snapshots round-trip through the field reader; projection deterministic; '
               f'sequence sha256 {digest}'); return 0
     if not a.rust: ap.error('RUST_DIR is required without --self-check')
-    result, text = compare(a.dump, a.rust, mapdata, skill, a.values, a.strict_links)
+    result, text = compare(a.dump, a.rust, mapdata, skill, a.values)
     for line in text: print(line)
     print(f"tics compared {result['tics_compared']}; match {'yes' if result['match'] else 'no'}; "
-          f"map group equal {result['map_group_equal']}; link order underdetermined at "
-          f"{result['link_order_underdetermined_tics']} tics, Rust's order a C-admissible candidate at "
-          f"{result['link_order_resolved_by_candidate_tics']} of them (other than the default)")
+          f"map group equal {result['map_group_equal']}; C end {result['c_end']['kind']} at tic "
+          f"{result['c_end']['tic']}; Rust end {result['rust_end']['kind']}")
     if a.json: Path(a.json).write_text(json.dumps(result, indent=1) + '\n')
-    return 0 if result['match'] and result['projection_stop'] is None else 1
+    return 0 if result['match'] else 1
 
 
 if __name__ == '__main__':

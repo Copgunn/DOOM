@@ -23,9 +23,7 @@ Field sources (dump row kind and column):
   `tic_{N+1}.bin`); `rng.gameplay` = H.prndindex, `rng.miscellaneous` = H.rndindex;
   `level.total_*` = H totals; `level.single_player_kill_count` = P[0].killcount;
   `level.exit` = H.gameaction == ga_completed (6).
-- `actors.options` = (skill, 0, 0): the dump has no skill column; the skill comes from the
-  demo header when `demo=` is given (byte 1 of a version-110 `.lmp`), else 2 (medium, the
-  only skill G1 admits).
+- `actors.options` = (H.gameskill, 0, 0).
 - Actors: the M rows in thinker order (x, y, z, momentum, radius, height, floorz/ceilingz,
   angle, lastlook, flags, type, state (-1 -> 65535), tics, health, reactiontime, sprite,
   frame, target, threshold, movedir, movecount, player, subsector); `sector` is the
@@ -35,7 +33,13 @@ Field sources (dump row kind and column):
   sets none), `death_requested` and `retired` are 0.
 - Sector thinkers: LL/LS/LG/LF (kinds 1-4) and DR/PL/FL (kinds 5-7) rows; a removed mover
   (R row of a mover identity) is kind 8 with the sector of its last record. CE rows,
-  stasis plats and X rows are outside the layout and raise `Unadmitted`.
+  stasis plats and X rows are outside the layout and raise `Unadmitted`. Mover fields the
+  genuine code has not written yet are projected as the schema's 0 (DSIM35 decision N6:
+  the M3h8 harness zero-filled mover allocations, the genuine Z_Malloc does not, so C
+  shows leftover zone bytes there; no statement reads them before the first write): a
+  door's `topcountdown` until it first waits (T_VerticalDoor sets it at the top), a
+  plat's `count` until it first waits (T_PlatRaise, status 2) and its `oldstatus`
+  (P_StopPlat only), a floor's `newspecial` and `texture` (change types only).
 - Sectors: S rows (runtime floor/ceiling, light, special, soundtarget); `specialdata` is
   checked against the store (the live mover naming the sector) but, as in DSIM35, not
   encoded. `sector.{i}.actors` is the projected link order filtered by sector and checked
@@ -47,100 +51,46 @@ Field sources (dump row kind and column):
 - `original_player.0`: P[0] mo, health, playerstate, attacker, damagecount, frag0,
   weapons (readyweapon, pendingweapon, owned bitmask of wo*, ammo0, ammo1, attackdown,
   refire, bob, extralight, both psprites), bonuscount, itemcount, armortype/armorpoints,
-  secretcount, usedown; `pickups.message` see (5).
+  secretcount, usedown; `pickups.message` is the last message P_TouchSpecialThing
+  assigned: P.message (the driver's HU_Ticker capture, 1 + the d_englsh.h index of its
+  table, mapped by DRIVER_MESSAGES to the pickup-message codes of the m3g9..m3g11
+  harness) when nonzero, else the previous value (HU_Ticker's clearing is presentation).
 - `events.last` / `events.pending`: not projected (decision G5); both are encoded with
   count 0 and the comparator strips `events.*` from both sides.
 - `map.*`: from the WAD's ten lumps; the comparator strips `map.*` for hashing (G5).
 
-Problems the dump format leaves open, and how they are solved here:
+Identity, removals and link order (exact; the driver's linker-level observers):
 
-(1) Slot assignment and identity. A capture names actors by store slot and generation.
-    The committed driver writes no per-thinker serial (M3h9c note §3.3 planned one via
-    `--wrap=Z_Malloc`; it is not in m3h9c_driver.c), so identity is derived from the
-    thinker-list invariants of the genuine code: `P_AddThinker` appends (p_tick.c:65-71),
-    `P_RunThinkers` unlinks a marked (`function == -1`) thinker when it reaches it
-    (p_tick.c:105-121), so between two dumps the list is the previous list minus the
-    freed thinkers, in order, plus the new thinkers appended. Every R thinker of the
-    previous dump is freed in the next pass. A previous thinker matches a current row
-    when kind and invariants agree (mobj: type, spawnpoint record and player; a
-    non-shootable mobj that had and has no momentum also keeps x and y; sector thinker:
-    kind and sector; an R row matches any removable thinker). The longest prefix of the
-    current list that embeds into the previous list is the survivors (greedy earliest
-    match is optimal), the rest are new; an embedding that is not unique raises
-    `Ambiguous`. A new R row (spawned and removed within one tic) raises
-    `DumpDeficiency`. Slots: at load in spawn order (lump order, the body at its record,
-    then the light thinkers in creation order); afterwards a new actor takes the lowest
-    free slot and an unlinked one frees its slot with generation + 1, the rule of the
-    frozen birth-identity simulation (`movers_snapshot.Store`, m3d3j `E` code 1/3). The
-    frees of one tic happen in previous-list order, the spawns in append order, but their
-    interleaving is not in the dump: every interleaving is enumerated and the projection
-    raises `Ambiguous` unless all give the same handles and store.
-    Residual risk without a serial log: a thinker added and freed within one tic between
-    two dumps is invisible (it would consume and free a slot); the bonus-count check of
-    (5) detects the one E1M1 instance (a drop picked up in its spawn tic).
-(2) Pending removal. An R row is a thinker marked by P_RemoveThinker and not yet freed.
-    For a mover it is the kind-8 record. For a mobj the frozen layout keeps the full
-    record (pending_removal 1, its values at removal); the R row carries no values, so the
-    record is reconstructed from the previous dump and the genuine P_MobjThinker steps:
-    (a) the S_NULL end of a state sequence in its own thinker: `P_ZMovement` for a
-    non-player, non-float, non-skullfly, non-missile mobj without x/y momentum
-    (p_mobj.c:217-340), then `tics--` and P_SetMobjState through zero-tic action-free
-    states to S_NULL (state none, tics 0; p_mobj.c:63-95, 405-457); (b) a pickup
-    (MF_SPECIAL) touched by the player: a pickup shown as R lies before the body in the
-    list (a later one is freed in the same pass), so its own thinker ran before the
-    touch: the state step of (a), without movement. Any
-    other case raises `DumpDeficiency`. These records are marked in `inferred`.
-(3) Fields the dump lacks: per-thinker serial, the R records, the global link order, the
-    skill, `player->message`, the button `soundorg` (derived, exact), the actor `sector`
-    of a sector-unlinked mobj (derived, exact). Fields Rust lacks and the dump has are
-    simply not projected: tracer, viewheight, deltaviewheight, powers, cards, backpack,
-    frags 1-3, maxammo, cheats, killcount (projected only as the level counter), colormap,
-    didsecret, the sector textures/tags/soundtraversed, line flags and side textures,
-    button `where`/`btexture`, door `speed`/`topwait` and the other implied mover values
-    (asserted by the frozen record encoder instead).
-(4) The player under wire 22: the body is the mobj with M.player == 0 at its THING
-    position in spawn order; its angle is whatever C has; `damage_count` is P.damagecount
-    (it decays in C, and must in Rust under wire 22).
-(5) `pickups.message`: the dump has no message column. It is derived from the pickups
-    of each tic: every MF_SPECIAL mobj that disappears (freed or marked R without an
-    S_NULL end) is one P_TouchSpecialThing; its type gives the message of p_inter.c
-    (the medikit's `health < 25` test runs after P_GiveBody, so GOTMEDINEED is
-    unreachable; table MESSAGES); several pickups of one tic must agree, and their count
-    must equal the bonus-count increments ((bonuscount - decayed previous) / BONUSADD),
-    otherwise `DumpDeficiency`.
-(6) `spatial.link_order` (the global P_SetThingPosition recency order, most recent
-    first; P_RemoveMobj takes the actor out) is not in the dump, only its projections on
-    each sector thing list and each BLOCKMAP cell. At load it is the reverse spawn order.
-    Per tic: survivors whose x/y changed relinked in their own thinker (pass position);
-    a new actor with momentum relinked in its own thinker after spawning; a puff, blood
-    or dropped item without momentum relinked when it was spawned, which the cause rule
-    fixes when exactly one hitscan ran this tic (the player's psprite or a monster that
-    entered a A_PosAttack/A_SPosAttack/A_CPosAttack state this tic; see `_shooters`);
-    any other new actor without momentum (or a caused one whose fixed time fits no list)
-    relinked at an unknown time, so every insertion gap is enumerated; a survivor with
-    momentum at either tic end, or a player body that this tic's command thrusts, but
-    unchanged x/y may or may not have relinked in place (a player against a
-    wall: P_SlideMove's stairstep `P_TryMove (mo, mo->x, mo->y + mo->momy)` succeeds at
-    the same position when `momy` is 0, p_map.c), so both are enumerated. Every
-    candidate is checked against every sector list and cell list of the dump. No
-    surviving order is `DumpDeficiency`; otherwise the projector keeps every surviving
-    order in `link_candidates` (fewest in-place relinks first) and encodes the first.
-    The dump does not decide between several: the comparator (level_compare.py) accepts
-    the other side's order only when it is one of these C-admissible candidates, counts
-    those tics separately and continues from that candidate (`--strict-links` stops
-    there instead). This is a dump limitation, not an equivalence proof of that field.
+- Each thinker's identity is its T.serial (P_AddThinker order). At load, actor slots
+  follow the serials (lump order, so the body sits at its THING record), the light
+  thinkers take sector-thinker slots 0..L-1 in creation order. Afterwards the frozen rule
+  of the birth-identity simulation applies (`movers_snapshot.Store`): a new actor or
+  mover takes the lowest free slot of its store, an unlinked one frees its slot with
+  generation + 1. The K rows name every thinker freed since the previous dump (K.seq is
+  their order), including one spawned and freed between two dumps, which also takes and
+  frees a slot. Where a free stands among the spawns of the tic is given by K.adds (the
+  add-serial counter at the free) when the dump has that column: exact. A dump without
+  it gets every interleaving tried, and the projection refuses (`Ambiguous`) unless all
+  give the same store; the synthetic SYNWALK and SYNBARRL scripts need K.adds.
+- An R row is a thinker marked by P_RemoveThinker and not yet freed: kind 8 for a mover;
+  for a mobj the full record (pending_removal 1) from the RM row of the next dump, the
+  Z_Free wrapper's copy of the same memory, which nothing writes between the mark and the
+  free. A pending mobj in the last dump of a run has no record (`DumpDeficiency`).
+- `spatial.link_order` lists the linked actors by descending T.linkserial (the last
+  P_SetThingPosition first; P_RemoveMobj unlinks, so pending actors are not listed) and is
+  checked against every sector thing list and BLOCKMAP cell list of the dump.
+- A dangling reference (-2) or a level reload (K.seq -1) is refused.
 
-Minimal driver addition that removes every inference above (proposed, not applied):
-`--wrap=P_AddThinker`, `--wrap=Z_Free` and `--wrap=P_SetThingPosition` observers keeping
-pointer-keyed side tables (one global event counter: the add serial; a per-mobj link
-serial), a `T,tic,idx,serial,linkserial` row per thinker, a `K,tic,serial,seq` row per
-freed thinker since the previous dump, an `RM` row (M columns) for an R thinker that was
-a mobj, `gameskill` in H, and the m3g9/m3g10/m3g11 `pickup_message (p->message)` index in
-P. A dangling reference (-2, a pointer to a freed thinker) is not resolved
-(`DumpDeficiency`); a T row with serials would identify it.
+A dump without the observer rows is refused by default. `--infer` (never used by the
+comparator) keeps the earlier fallback for such dumps: identities from the
+append-and-unlink invariants of the thinker list, pending mobj records rebuilt from the
+previous dump and the genuine P_MobjThinker steps for the S_NULL and pickup causes, the
+message from the type of the item taken (checked against the bonus count), and the link
+order enumerated among the orders the sector and cell lists admit (`link_candidates`;
+the first is encoded). It is not exact and is documented only as that fallback.
 
 The module is a library (`Projector`) plus a small CLI:
-    level_snapshot.py DUMP_DIR --wad WAD [--map E1M1] [--demo LMP] [--out DIR]
+    level_snapshot.py DUMP_DIR --wad WAD [--map E1M1] [--out DIR] [--infer [--demo LMP]]
 writes `tic_NNNNN.bin` (DSIM38, full bytes) per snapshot into --out (scratch only for an
 IWAD-derived dump) and prints counts and digests."""
 import argparse, copy, hashlib, itertools, os, struct, sys, tempfile
@@ -185,6 +135,11 @@ MESSAGES = {enum_index('mobjtype_t', t): m for t, m in [
     ('MT_CLIP', 1), ('MT_MISC17', 2), ('MT_MISC22', 3), ('MT_MISC23', 4), ('MT_MISC10', 5),
     ('MT_MISC11', 6), ('MT_SHOTGUN', 8), ('MT_CHAINGUN', 9), ('MT_MISC0', 10), ('MT_MISC1', 11),
     ('MT_MISC2', 12), ('MT_MISC3', 13)]}
+
+
+# The driver's P.message: 1 + the index of the d_englsh.h string in its PICKUP_MESSAGES
+# table (GOTARMOR .. GOTSHOTGUN2); mapped to the DSIM codes above.
+DRIVER_MESSAGES = {1: 10, 2: 11, 3: 12, 4: 13, 5: 5, 6: 7, 7: 6, 22: 1, 23: 2, 28: 3, 29: 4, 32: 9, 36: 8}
 
 
 class ProjectionError(Exception):
@@ -255,14 +210,24 @@ class Dump:
         self.buttons = [rec(r) for r in rows if r[0] == 'B']
         self.players = [rec(r) for r in rows if r[0] == 'P']
         self.tic = self.h['leveltime']
+        # observer rows (m3h9c_driver.c linker-level observers); absent in older dumps
+        self.observed = all(k in columns for k in ('T', 'K', 'RM')) and 'gameskill' in columns['H'] \
+            and 'message' in columns['P']
+        self.serials = {x['idx']: (x['serial'], x['linkserial']) for x in (rec(r) for r in rows if r[0] == 'T')}
+        self.freed = sorted(((x['seq'], x['serial']) for x in (rec(r) for r in rows if r[0] == 'K')))
+        # optional K.adds: the add-serial counter at the free (the frees' place among the spawns)
+        self.adds = {x['serial']: x['adds'] for x in (rec(r) for r in rows if r[0] == 'K')} \
+            if 'K' in columns and 'adds' in columns['K'] else None
+        self.removed = {x['serial']: x for x in (rec(r) for r in rows if r[0] == 'RM')}
 
 
 class Entry:
     """One thinker identity: `cls` actor/light/mover, the store `key`, the current row
     kind and record, pending flag."""
-    __slots__ = ('cls', 'key', 'kind', 'row', 'pending', 'inferred', 'sector')
+    __slots__ = ('cls', 'key', 'kind', 'row', 'pending', 'inferred', 'sector', 'serial', 'waited')
     def __init__(self, cls, key, kind, row):
         self.cls, self.key, self.kind, self.row, self.pending, self.inferred = cls, key, kind, row, False, False
+        self.serial = None; self.waited = False
         self.sector = row.get('sector')
 
 
@@ -273,8 +238,8 @@ def ident(handle):
 class Projector:
     """Feed the dumps of one run in order (load first); `step` returns (DSIM38 bytes,
     report) for each."""
-    def __init__(self, mapdata, skill=2):
-        self.map, self.skill = mapdata, skill
+    def __init__(self, mapdata, skill=2, infer=False):
+        self.map, self.skill, self.infer = mapdata, skill, infer
         self.entries = []; self.actors = None; self.sthinkers = None; self.next_key = 0
         self.spatial = []; self.message = 0; self.prev = None; self.link_candidates = []
 
@@ -328,9 +293,20 @@ class Projector:
         return [cand[j] for j in sols[0]], k
 
     # ---- stores ---------------------------------------------------------------------
-    def _allocate(self, tic, store, frees, spawns):
+    @staticmethod
+    def _merge(store, frees, spawns, adds):
+        """The exact order from K.adds: a free whose counter reads `a` follows every spawn
+        of serial < a and precedes every later one."""
+        events = [(e.key, 0, e) for e in spawns] + [(adds[e.key], 1, e) for e in frees]
+        for _, kind, e in sorted(events, key=lambda x: (x[0], 1 - x[1])):   # stable: frees in seq order
+            if kind: store.free(e.key)
+            else: store.create(e.key)
+        return store
+
+    def _allocate(self, tic, store, frees, spawns, hidden=frozenset()):
         """Apply frees (in pass order) and spawns (in append order) to `store` for every
-        interleaving; all must agree. Returns the resulting store."""
+        interleaving; all must agree. A `hidden` key (spawned and freed between two
+        dumps) is freed only after its spawn. Returns the resulting store."""
         if not frees or not spawns:
             for e in frees: store.free(e.key)
             for e in spawns: store.create(e.key)
@@ -341,11 +317,14 @@ class Projector:
         if combos > 20000: raise ProjectionError('Ambiguous', tic, f'{combos} free/spawn interleavings')
         result = None
         for positions in itertools.combinations(range(total), len(spawns)):
-            s = copy.deepcopy(store); fi = si = 0; spawnset = set(positions)
+            s = copy.deepcopy(store); fi = si = 0; spawnset = set(positions); valid = True
             for t in range(total):
                 if t in spawnset: s.create(spawns[si].key); si += 1
-                else: s.free(frees[fi].key); fi += 1
-            outcome = (s.generations, sorted(s.occupied), [s.handles[e.key] for e in spawns])
+                else:
+                    if frees[fi].key not in s.handles: valid = False; break
+                    s.free(frees[fi].key); fi += 1
+            if not valid: continue
+            outcome = (s.generations, sorted(s.occupied), [s.handles[e.key] for e in spawns if e.key not in hidden])
             if result is None: result, chosen = outcome, s
             elif outcome != result:
                 raise ProjectionError('Ambiguous', tic, 'slot assignment depends on the free/spawn interleaving')
@@ -449,7 +428,7 @@ class Projector:
 
     @staticmethod
     def _shooters(dump, entries):
-        """Relink times of the hitscans of this tic (the cause rule of (6)): the player's
+        """Relink times of the hitscans of this tic (the --infer cause rule): the player's
         when psprite 0 entered a hitscan action state this tic (P_MovePsprites runs in the
         players phase, before every thinker: time (-1, 0)), and each monster's that
         entered a hitscan attack state in its own thinker (time (index, 0), before its own
@@ -465,8 +444,124 @@ class Projector:
                 out.append((i, 0))
         return out
 
+    # ---- exact projection from the observer rows -----------------------------------
+    def _step_exact(self, dump, following):
+        tic = dump.tic; cur = dump.thinkers; report = {'inferred_records': 0, 'pickups': 0}
+        if not dump.observed:
+            raise ProjectionError('DumpDeficiency', tic, 'the dump has no observer rows (T, K, RM, H.gameskill, '
+                                  'P.message); only --infer projects such dumps')
+        if sorted(dump.serials) != list(range(len(cur))) or any(sv < 0 for sv, _ in dump.serials.values()):
+            raise ProjectionError('DumpDeficiency', tic, 'a thinker without its observer serial')
+        if any(seq < 0 for seq, _ in dump.freed) and self.prev is not None:
+            raise ProjectionError('Unadmitted', tic, 'a level reload (Z_FreeTags frees)')
+        self.skill = dump.h['gameskill']
+        serial = [dump.serials[i][0] for i in range(len(cur))]
+        if self.prev is None:
+            assert tic == 0
+            lights = sum(k in LIGHTS for k, _ in cur)
+            self.actors = movers_snapshot.Store(0); self.sthinkers = movers_snapshot.Store(lights)
+            slot = 0
+            for (kind, row), sv in zip(cur, serial):
+                if kind == 'M':
+                    e = Entry('actor', sv, kind, row); self.actors.create(sv)
+                elif kind in LIGHTS:
+                    e = Entry('light', slot, kind, row); slot += 1
+                else:
+                    raise ProjectionError('Unadmitted', tic, f'{kind} thinker at load')
+                e.serial = sv; self.entries.append(e)
+        else:
+            known = {e.serial: e for e in self.entries}
+            freed = [sv for seq, sv in dump.freed]
+            current = set(serial)
+            if current & set(freed): raise ProjectionError('DumpDeficiency', tic, 'a freed serial is still listed')
+            gone = [e for e in self.entries if e.serial not in current]
+            if sorted(e.serial for e in gone) != sorted(sv for sv in freed if sv in known):
+                raise ProjectionError('DumpDeficiency', tic, 'the K rows are not the thinkers that left the list')
+            if any(e.pending and e.serial in current for e in self.entries):
+                raise ProjectionError('DumpDeficiency', tic, 'a pending thinker survived a pass')
+            survivors = [sv for sv in serial if sv in known]
+            if survivors != [e.serial for e in self.entries if e.serial in current]:
+                raise ProjectionError('DumpDeficiency', tic, 'the survivors changed order')
+            fresh = [i for i, sv in enumerate(serial) if sv not in known]
+            if fresh != list(range(len(cur) - len(fresh), len(cur))) or [serial[i] for i in fresh] != sorted(serial[i] for i in fresh):
+                raise ProjectionError('DumpDeficiency', tic, 'new thinkers are not appended in serial order')
+            # spawns of this tic in serial order, including the ones freed before this dump
+            hidden = [sv for sv in freed if sv not in known]
+            spawns = sorted([serial[i] for i in fresh] + hidden)
+            if any(min(spawns) < sv for sv in known) if spawns else False:
+                raise ProjectionError('DumpDeficiency', tic, 'a new serial below a known one')
+            new = {}
+            for i in fresh:
+                kind, row = cur[i]
+                if kind == 'R': continue
+                if kind in LIGHTS: raise ProjectionError('Unadmitted', tic, 'a light thinker created after load')
+                if kind not in ('M',) + tuple(MOVERS): raise ProjectionError('Unadmitted', tic, f'{kind} thinker')
+                if kind == 'M' and row['sp_type']: raise ProjectionError('DumpDeficiency', tic, 'new mobj with a spawnpoint')
+            classes = {}
+            for sv in spawns:
+                if sv in dump.removed or (sv in current and cur[serial.index(sv)][0] == 'M'):
+                    classes[sv] = 'actor'
+                elif sv in current and cur[serial.index(sv)][0] in MOVERS:
+                    classes[sv] = 'mover'
+                elif sv in current and following is not None and sv in following.removed:
+                    classes[sv] = 'actor'           # spawned and marked this tic: its record is in the next RM rows
+                else:
+                    raise ProjectionError('DumpDeficiency', tic, 'the class of a new thinker is unknown')
+            for e in gone:
+                if e.cls == 'light': raise ProjectionError('Unadmitted', tic, 'a light thinker removed')
+                if e.cls == 'actor' and e.serial not in dump.removed:
+                    raise ProjectionError('DumpDeficiency', tic, 'a freed mobj without its RM row')
+            order = {sv: k for k, (seq, sv) in enumerate(dump.freed)}
+            for store_name, cls in (('actors', 'actor'), ('sthinkers', 'mover')):
+                fr = sorted([e for e in gone if e.cls == cls] + [Entry(cls, sv, '', {}) for sv in hidden if classes[sv] == cls],
+                            key=lambda e: order[e.key if e.cls != 'light' else e.serial])
+                sp = [Entry(cls, sv, '', {}) for sv in spawns if classes[sv] == cls]
+                if dump.adds is not None:
+                    setattr(self, store_name, self._merge(getattr(self, store_name), fr, sp, dump.adds))
+                else:
+                    setattr(self, store_name, self._allocate(tic, getattr(self, store_name), fr, sp, set(hidden)))
+            entries = []
+            for (kind, row), sv in zip(cur, serial):
+                e = known.get(sv)
+                if e is None:
+                    e = Entry(classes[sv], sv, kind, row); e.serial = sv
+                if kind == 'R':
+                    if not e.pending:
+                        e.pending = True
+                        if e.cls == 'actor':
+                            if following is None or sv not in following.removed:
+                                raise ProjectionError('DumpDeficiency', tic, 'a pending mobj without its RM row in the next dump')
+                            e.row = dict(following.removed[sv])
+                        else:
+                            e.kind = 'removed'
+                else:
+                    e.kind, e.row = kind, row
+                    if e.cls == 'mover': e.sector = row['sector']
+                entries.append(e)
+            self.entries = entries
+        # pickups.message: the last message P_TouchSpecialThing assigned (HU_Ticker's
+        # clearing is presentation, never read by p_*.c or g_game.c)
+        m = dump.players[0]['message']
+        if m < 0: raise ProjectionError('DumpDeficiency', tic, 'an unknown pickup message')
+        if m:
+            if m not in DRIVER_MESSAGES: raise ProjectionError('Unadmitted', tic, 'a pickup message outside the DSIM table')
+            self.message = DRIVER_MESSAGES[m]; report['pickups'] = 1
+        # link order: ascending link serial is P_SetThingPosition order; most recent first
+        live = [(e, dump.serials[i][1]) for i, e in enumerate(self.entries) if e.cls == 'actor' and not e.pending]
+        if any(ls < 0 for _, ls in live): raise ProjectionError('DumpDeficiency', tic, 'a linked actor without a link serial')
+        self.spatial = [e for e, _ in sorted(live, key=lambda x: x[1], reverse=True)]
+        self.link_candidates = [self.spatial]
+        if not self._links_consistent(self.spatial, [(e, e.row) for e, _ in live]):
+            raise ProjectionError('DumpDeficiency', tic, 'the link serials contradict the sector and cell lists')
+        self.prev = dump
+        return self._fields(dump), report
+
     # ---- one snapshot ---------------------------------------------------------------
-    def step(self, dump):
+    def step(self, dump, following=None):
+        """Project `dump`; `following` is the next dump of the run (its RM rows hold the
+        records of this dump's R mobjs), None at the last one."""
+        if not self.infer:
+            return self._step_exact(dump, following)
         tic = dump.tic; cur = dump.thinkers; report = {'inferred_records': 0, 'pickups': 0}
         player_index = next((i for i, (k, r) in enumerate(cur) if k == 'M' and r['player'] == 0), None)
         if self.prev is None:
@@ -531,7 +626,7 @@ class Projector:
                 entries.append(e)
             self.entries = entries
             report['inferred_records'] = sum(e.inferred for e in entries if e.pending)
-            # pickup message (5)
+            # pickup message (--infer)
             p = dump.players[0]
             decayed = prev_player['bonuscount'] - 1 if prev_player['bonuscount'] else 0
             count, rem = divmod(p['bonuscount'] - decayed, BONUSADD)
@@ -544,7 +639,7 @@ class Projector:
                     msgs.add(MESSAGES[e.row['type']])
                 if len(msgs) > 1: raise ProjectionError('Ambiguous', tic, 'several pickup messages in one tic')
                 self.message = msgs.pop(); report['pickups'] = len(picked)
-            # link order (6)
+            # link order (--infer)
             live = [(e, e.row) for e in entries if e.cls == 'actor' and not e.pending]
             moved, maybe, unknown, caused = [], [], [], []
             newset = {id(e) for e in new}
@@ -644,14 +739,28 @@ class Projector:
                 handles[0, e.key] = self.sthinkers.handles[e.key]; sector_of[0, e.key] = e.sector
                 if e.kind == 'removed': rec = (8, e.key)
                 elif e.kind == 'DR':
-                    rec = (5, e.key, r['sector'], r['type'], r['direction'], r['topheight'], r['topcountdown'], r['speed'], r['topwait'])
+                    # Unwritten zone memory (Z_Malloc does not zero; the M3h8 harness's
+                    # calloc did, decision N6): EV_VerticalDoor/EV_DoDoor never set
+                    # topcountdown for the admitted types; T_VerticalDoor writes it when the
+                    # door reaches the top (direction 0), before any read. Until then the
+                    # schema value is 0.
+                    e.waited = e.waited or r['direction'] == 0
+                    rec = (5, e.key, r['sector'], r['type'], r['direction'], r['topheight'],
+                           r['topcountdown'] if e.waited else 0, r['speed'], r['topwait'])
                 elif e.kind == 'PL':
                     if not r['running']: raise ProjectionError('Unadmitted', tic, 'a plat in stasis')
-                    rec = (6, e.key, r['sector'], r['type'], r['status'], r['count'], r['low'], r['high'], r['speed'], r['wait'],
-                           r['crush'], r['tag'], r['oldstatus'])
+                    # oldstatus is written only by P_StopPlat (stasis, not admitted) and count
+                    # only by T_PlatRaise when the plat starts waiting (status 2, count = wait;
+                    # EV_DoPlat's downWaitUpStay sets neither): unwritten zone memory until
+                    # then, never read; the schema value is 0 (N6)
+                    e.waited = e.waited or r['status'] == 2
+                    rec = (6, e.key, r['sector'], r['type'], r['status'], r['count'] if e.waited else 0, r['low'], r['high'], r['speed'], r['wait'],
+                           r['crush'], r['tag'], 0)
                 else:
+                    # newspecial/texture are written only for the change types (not admitted):
+                    # unwritten zone memory for lowerFloorToLowest/turboLower, never read; 0 (N6)
                     rec = (7, e.key, r['sector'], r['type'], r['direction'], r['floordestheight'], r['speed'], r['crush'],
-                           r['newspecial'], r['texture'])
+                           0, 0)
                 if e.kind != 'removed':
                     if r['sector'] in live: raise ProjectionError('Unadmitted', tic, 'two live movers in one sector')
                     live[r['sector']] = e
@@ -730,13 +839,23 @@ def encode(fields):
 decode = specials_snapshot.decode
 
 
-def project(directory, mapdata, skill=2):
+def snapshots(directory):
+    """(dump, following dump or None) pairs of a run, in order."""
+    names = m3h9c_dump.snapshot_names(directory)
+    following = Dump(os.path.join(directory, names[0])) if names else None
+    for k in range(len(names)):
+        dump = following
+        following = Dump(os.path.join(directory, names[k + 1])) if k + 1 < len(names) else None
+        yield dump, following
+
+
+def project(directory, mapdata, skill=2, infer=False):
     """Yield (dsim tic, DSIM38 bytes, report) for every snapshot of a dump directory, in
-    order; a ProjectionError propagates to the caller at the first unprojectable tic."""
-    proj = Projector(mapdata, skill)
-    for name in m3h9c_dump.snapshot_names(directory):
-        dump = Dump(os.path.join(directory, name))
-        fields, report = proj.step(dump)
+    order; a ProjectionError propagates to the caller at the first unprojectable tic.
+    The default is exact (observer rows required); `infer` selects the fallback."""
+    proj = Projector(mapdata, skill, infer)
+    for dump, following in snapshots(directory):
+        fields, report = proj.step(dump, following)
         yield dump.tic, encode(fields), report
 
 
@@ -744,12 +863,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('dump'); ap.add_argument('--wad', required=True); ap.add_argument('--map', default='E1M1')
     ap.add_argument('--demo'); ap.add_argument('--out')
+    ap.add_argument('--infer', action='store_true', help='fallback for dumps without observer rows (never used by the comparator)')
     a = ap.parse_args()
     mapdata = MapData(a.wad, a.map); skill = demo_skill(a.demo) if a.demo else 2
     if a.out: os.makedirs(a.out, exist_ok=True)
     count = 0; seq = hashlib.sha256(); last = None
     try:
-        for tic, data, _ in project(a.dump, mapdata, skill):
+        for tic, data, _ in project(a.dump, mapdata, skill, a.infer):
             count += 1; seq.update(hashlib.sha256(data).digest()); last = data
             if a.out: Path(a.out, f'tic_{tic:05}.bin').write_bytes(data)
     except ProjectionError as err:
