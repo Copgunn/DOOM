@@ -56,18 +56,18 @@ example programs, on small test maps built for this project. Today it can simula
 - walls at any angle, steps and ledges, windows, sky, damaging floors, secret areas,
   flickering lights and scrolling walls;
 - the doors, lifts, moving floors, switches and exit used by E1M1, the first map;
-- E1M1's lamps, pillars, candelabras, corpses and gore.
+- E1M1's lamps, pillars, candelabras, corpses and gore;
+- exploding barrels, with chain reactions, and maps with as many pickups as E1M1.
 
 What it cannot do yet:
 
 - show graphics, play sound or offer menus;
-- run the real E1M1 from start to finish, because the map has exploding barrels and 52
-  pickups, and both are still beyond what the engine supports;
+- run the real E1M1 from start to finish: every rule the map is checked against now
+  passes, but the run itself, matched tic for tic against the original, is the next
+  milestone;
 - handle the other monsters, the other weapons, or the remaining map features such as
   crushers and teleporters;
 - play back demos.
-
-[Compatibility](docs/COMPATIBILITY.md) states the exact limits.
 
 ## Where it's headed
 
@@ -132,9 +132,7 @@ change gameplay, because the renderer only reads the game state.
 - **VR.** A headset handles looking around while the mouse turns and aims. That suits
   Doom, because the original has no vertical aiming.
 - **A fully offline engine.** Your own game files. No internet connection, no account, no
-  launcher, no login screen between you and E1M1. Remember 2019, when re-releases of a
-  1993 game briefly demanded an online login? The backlash undid it within days. Here it
-  never happens in the first place.
+  launcher, no login screen between you and E1M1. Remember those?
 
 **Track 3: Beyond vanilla.** A new engine built on the verified core. This is the payoff
 of all the careful checking: an exact Doom core you can build wild things on without
@@ -156,8 +154,7 @@ The expected results are recorded by a separate program written from the C outpu
 so Rust is never checked against its own output. Sanitizers catch hidden memory and
 arithmetic errors while the original C code runs. Fuzzing feeds in huge numbers of random
 inputs to find anything that slips through. When something is not proven identical, the
-engine refuses it rather than guessing. The [validation guide](docs/VALIDATION.md)
-explains the method, and [compatibility](docs/COMPATIBILITY.md) lists what is covered.
+engine refuses it rather than guessing.
 
 ## Try it
 
@@ -174,15 +171,14 @@ cargo test --workspace --locked
 Three examples worth running:
 
 ```sh
+cargo run -p doom-sim --example player_barrels --locked  # exploding barrels, chain reactions, monsters
 cargo run -p doom-sim --example player_movers --locked   # a player, monsters, doors, lifts and the exit
-cargo run -p doom-sim --example player_imps --locked     # the Imp and its dodgeable fireball
 cargo run -p doom-map --example parse_map --locked       # reading DOOM's map format
 ```
 
 Each one runs a short scripted scene on a test map, checks the result and prints a
 one-line summary. None needs an IWAD (the main game data file, such as `doom.wad`), a
 graphics card, audio or a network.
-[Testing](docs/TESTING.md#asserted-headless-examples) lists every example and check.
 
 ## Policies (for developers)
 
@@ -214,9 +210,13 @@ identifier in saved test snapshots. The earlier numbered Demon profiles are list
 | `PlayerMonstersSpecialsV1` (18) | Sky ceilings, light thinkers, damage floors, secrets and one-sided scrolling walls | [Sky and specials](docs/COMPATIBILITY.md#original-monsters-with-sky-and-static-specials) |
 | `PlayerMonstersMoversV1` (19) | E1M1's seven door, lift, floor, switch and exit line types; the tic after the exit is refused | [Movers](docs/COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit) |
 | `PlayerMonstersE1M1V1` (20) | Two-sided scrolling walls and E1M1's seven static decoration types (lamps, pillars, candelabras, corpses and gore) | [E1M1 decorations](docs/COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations) |
+| `PlayerMonstersBarrelsV1` (21) | Exploding barrels with the original's radius attack and chain reactions, 64 pickups, every map-thing angle and the relaxed spawn rule: E1M1's last load blockers | [Barrels](docs/COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle) |
 
 More developer reading:
 
+- [Compatibility](docs/COMPATIBILITY.md) states the exact limits of every policy, the
+  [validation guide](docs/VALIDATION.md) explains the method, and
+  [Testing](docs/TESTING.md#asserted-headless-examples) lists every example and check.
 - [Architecture](docs/ARCHITECTURE.md): small crates for numbers, WAD files, maps and
   simulation, and how [actors and their ordering](docs/ARCHITECTURE.md#actors-lifecycle-and-ordering) work.
 - [Stepping contract](docs/COMPATIBILITY.md#stepping-and-diagnostics) and

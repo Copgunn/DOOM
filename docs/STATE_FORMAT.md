@@ -1947,3 +1947,84 @@ forged with another skill decodes under its reader, although no player policy ca
 produce one (investigation [§12](M3H9_REFERENCE_INVESTIGATION.md#12-follow-ups-risks-status),
 step 9). Rejecting the skill in `decode_e1m1` only is the owner's decision of the
 independent review.
+
+## DSIM v37 — original exploding barrels, pickup scale and every thing angle
+
+`PlayerMonstersBarrelsV1` captures are version 37; `Diagnostic::decode_barrels` is its
+explicit reader. The independent Python projection
+([barrels projection](../tools/reference/barrels_snapshot.py) and
+[its generator](../tools/reference/m3h9b_snapshot_goldens.py)) fixed every committed
+capture and the PBE1 event stream from the C rows alone before any Rust writer existed
+([plan](M3H9B_REFERENCE_INVESTIGATION.md#9-implementation-plan-one-commit-per-step-pushed-evidence-before-runtime),
+step 3); the Rust replay matches every capture's digest, size and field count, the 16
+pinned fixtures byte for byte and every event frame
+([observations](validation/M3H9B.md)).
+
+Version 37 selects policy 21 (`PlayerMonstersBarrelsV1`, wire 21), the unchanged original
+registry schema and context `PLAYER-MONSTERS-BARRELS-1-MEDIUM-v1`. Every earlier
+version-specific reader, `decode_e1m1` included, keeps its historical contract and rejects
+37; the v37 reader reads 37 only. V20–36 bytes, encoders, fixtures and policy/context
+meanings are unchanged.
+
+V37 is the DSIM36 layout and event vocabulary with **no new field and no new event**
+(decision [F9](M3H9B_REFERENCE_INVESTIGATION.md#6-new-owner-decisions-f1f11-with-recommendations)).
+Every DSIM36 field keeps its path, width, position and meaning, and every event its tag,
+payload and position. A v37 capture is byte for byte the DSIM36 layout of the same state
+except the version word, the `profile` value (21), the `context.schema` bytes and
+**`store.max_slots`, which is 384** (the policy's actor slots; 320 before); the generator
+asserts this for every capture of the M3h9b rooms (454 captures; a capture is 3 bytes
+longer and has the same field count). What changes is what the layout may contain: up to
+64 pickups (`level.total_items`, `pickups.item_count` and the pickup events range to 64,
+`bonus_count` to 384), spawnpoint angles of any `short` value with `angle` equal to their
+wrapped product, and barrel actor records.
+
+**Barrels** are ordinary actor records with the pristine `info.c` values: `type`
+`MT_BARREL` (the `mobjtype_t` index), `state` one of `S_BAR1`, `S_BAR2`, `S_BEXP`,
+`S_BEXP2`, `S_BEXP3`, `S_BEXP4`, `S_BEXP5` (the `statenum_t` indices), or `S_GIBS` (895)
+after a crunch, or none (65535) on the tic of its removal; `health` 20 down to ≤ 0;
+`radius` 10 and `height` 42 alive, `height` 10.5 (`42 >> 2`, raw `688128`) dying, both 0
+gibbed; `flags` `MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD` (+`MF_AMBUSH` from the record) alive,
+and dying `MF_SHOOTABLE` clear with `MF_CORPSE|MF_DROPOFF` set and `MF_SOLID` kept (clear
+only when gibbed); `reaction_time` 8 until the first wound it survives, then 0
+(`P_DamageMobj`, p_inter.c:902); `threshold` 0, or 100 with `target` present once a
+non-lethal wound with a non-NULL source fixed it (never cleared); `momx`/`momy` from
+thrust, `momz` from a fall; `lastlook` below 4; a present spawnpoint with DoomEd 2035 at
+the actor's position; `player` 255. A barrel holds a slot of the one actor store (384
+slots), appears once in `thinker.order`, `thinker.shared_order` (kind 0), `spatial.link_order`
+(while linked) and its sector's `actors`. At most 16 barrels per capture. The barrels of
+`thinker.order` read their spawnpoints as a subsequence of `map.things` (lump order).
+The tic a barrel enters `S_NULL` its record is still present with `state` none, `tics` 0,
+`pending_removal` set, the dying flags and height; the next pass retires it.
+
+**Explosions use existing events only.** The barrel's `S_BEXP4` entry gives the tag-12
+`Entered` record and the `Action` record of `A_Explode` (action index 19); then, per
+candidate of the 3 × 3 block walk in walk order: nothing for a candidate that is not
+shootable or out of range, the existing perception sight record (tag 16 sub-tag 10,
+observer the candidate, target the dying barrel) for every candidate that reaches
+`P_CheckSight`, and for a damaged candidate the existing tag-13 `Damage` record (inflictor
+the barrel, source the barrel's target or none) followed by its usual `Knockback`,
+`Health`, `Pain`/`Kill`/`DeathTimer`, `Reaction` and `Retarget` records. The walk order is
+therefore pinned by the order of these records and by the RNG stream; the candidates
+skipped by range or sight are C comparison rows (`RA`, `RC`), not state.
+
+Independent C rows feed the Python [barrels projection](../tools/reference/barrels_snapshot.py),
+which extends the E1M1 projection without editing it: it renames the identity, sets the
+slot bound to 384 and the item ranges to 64 and 384 for this version only, drops the
+M3h9b observer rows `RA` (each `P_RadiusAttack`) and `RC` (each candidate) before every
+chain, and checks each barrel record against the declared table, the lump order and the
+bound of 16. Its full bytes and PBE1 events were committed before the matching Rust
+changes. Decoding remains observation, not executable world restoration.
+
+The v37 reader applies every DSIM36 check (the decoration rules, the medium skill byte,
+the relaxed item witness) and admits in addition actor records of type `MT_BARREL`
+holding the values above; any other value is `DiagnosticError::Identity`, a 17th barrel
+`DiagnosticError::Limit`, `store.max_slots` above 384 `DiagnosticError::Limit`. `S_GIBS`
+follows the type-keyed rule (a barrel in `S_GIBS` has the crunch values). Every other
+actor type is rejected as before.
+
+Reader limitations. As the v36 reader, the v37 reader does not re-run the load rules on
+the encoded map (the spawn rule S′, the barrel and pickup bounds are checked only as
+counts and ranges of the encoded state), checks only the skill byte of `actors.options`,
+and does not verify that a barrel's `target` is its first wounder (that is a C-evidence and
+replay fact, not a per-capture invariant). Every reader before DSIM37 keeps its contract;
+`store.max_slots` 384 is rejected by all of them (`Limit`).

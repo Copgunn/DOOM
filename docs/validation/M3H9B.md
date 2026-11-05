@@ -136,3 +136,146 @@ Per-slot closed-box table (`--spawn-rule-markdown`):
 | MAP30 | 75/71/72 | 4/4/4 | 0/0/0 | 4/4/4 | 0/0/0 | 1/1/1 | 0/0/0 | FAIL/FAIL/FAIL |
 | MAP31 | 190/227/302 | 1/1/1 | 1/1/1 | 0/0/0 | 1/1/1 | 2/2/2 | 0/0/0 | FAIL/FAIL/FAIL |
 | MAP32 | 75/85/103 | 0/0/0 | 0/0/0 | 0/0/0 | 0/0/0 | 0/0/0 | 0/0/0 | pass/pass/pass |
+
+## Original-C evidence
+
+`tools/reference/m3h9b_reference.py --check --overflow-check --address-check` (with
+`ASAN_OPTIONS=detect_leaks=0`, so LeakSanitizer was disabled, not passed) compiles 154
+genuine bodies: the 151 of the M3h9 contract plus `PIT_RadiusAttack`, `P_RadiusAttack`
+and `A_Explode`, whose abort stub is removed; the globals `bombsource`, `bombspot` and
+`bombdamage` are copied verbatim from p_map.c. It runs 26 scenarios over the ten rooms
+`range`, `cluster`, `player_range`, `monsters`, `walls`, `door`, `fireball`, `dense64`,
+`angles` and `embedded` (22 distinct maps), 2,671 scripted tics of which 2,661 execute
+(`player_killed_by_barrel` ends at its reborn request), all at medium skill. The strict
+build and both sanitizer builds produced byte-identical raw traces, SHA-256
+`e02df372792a81948a517d1f4982c168dbc16dfed323b9473eec7ee965dee031` (the contract's
+`sanitizer_comparison.raw_trace_sha256`), in 14.7 s with a 398 MB peak. No sanitizer
+report was produced. Observed totals: 65 barrel spawns (each asserted against the info.c
+record), 27 explosions, 79 radius candidates (43 not shootable, 3 out of range, 1 sight
+blocked, 32 damaged, 0 boss), 28 barrel deaths (1 gibbed), 37 kills, 596 gameplay draws.
+Per explosion the generator asserts the wrapped distance (`128 << 16`, always a 3 × 3
+window), the `y` outer, `x` inner walk, that every damaged candidate's `P_DamageMobj` call
+matches its row, that the bomb source is the barrel's last target assignment, that every
+draw inside the explosion is accounted for, and the death-chain timing `T + d + t0 − 1 /
++4 / +9 / +19 / +29`.
+
+Two declared adapters apply in the sanitizer builds only: the unsigned rewrite of
+p_mobj.c:794 is needed (without it both builds abort with `signed integer overflow: 4 *
+536870912`); the rewrite of p_map.c:1221 is declared but observed not needed under
+`-std=gnu89`, where GCC checks `shift-base` only for C99 and later. Controlled hits
+(`hit_*`, inflictor NULL) are used in two scenarios only (`radius_blocked_by_step`,
+`fireball_on_dying_barrel`), with the reason in each case; five scenarios start at a
+declared seed. The harness's `intercepts[]` carries the M3d3 instrumentation's abort before
+a 129th entry, so the source's unchecked overflow is never observed in C; the Rust-only
+lane `m3h9b_intercepts129.bin` (≥ 135 intercepts by geometry) is never run in C.
+
+The two fist scenarios first gave the player the fist alone; the DSIM weapon layout cannot
+encode that, so they were regenerated with fist and pistol owned and the fist ready, every
+observed outcome unchanged (the first traces had raw digest
+`83598233039c559a21638524c82e9e4c082f9cc400d49893ff1971b0c2c35877`).
+
+Headline observations: a pistol wound costs exactly 6 draws (damage, 4 puff, pain) and
+fixes the barrel's target; `A_Explode` runs at `T + t0 + 9`; in `chain_reaction` a barrel
+at Chebyshev distance 136 (dist 125 < 128) in a fourth block is never visited; in
+`monster_wakes_mid_walk` an Imp whose pain draw fails relinks inside the walk and another
+Imp is damaged twice (39 + 39) and dies; in `barrel_infight` the Zombieman that wounded
+the barrel is the bomb source, is hurt 16 by its own explosion and is retargeted by the
+Imp; `fireball_kills_barrel` is the `d = 1` timing case; `door_gibs_dying_barrel` turns the
+dying barrel to `S_GIBS` under the door; the densest pistol trace collects 92 intercepts;
+all 17 test angles equal the wrapped product; the embedded Imp walks out and never through.
+
+## Independent DSIM37 projection
+
+`tools/reference/m3h9b_snapshot_goldens.py --check` projects DSIM37 from the C rows alone
+(`barrels_snapshot.py`, extending the frozen DSIM36 projection without editing it): 454
+captures of the 26 scenarios in `tests/reference/m3h9b_snapshots.csv`, 2,687 ordered
+event frames (45,529 fields) in `m3h9b_events.dref`, 16 full-byte `m3h9b_state_*.bin`
+fixtures (a live barrel, a wounded one with a target, each `S_BEXP` state, the `A_Explode`
+op, `S_NULL` pending removal, the first cluster explosion, the mid-walk relink, the
+`S_GIBS` crunch, the fist kill's explosion, `dense64`, the end of the intercept-heavy trace,
+`angles` and `embedded`) and `m3h9b_snapshot_contract.json`. The generator asserts that
+every capture equals the DSIM36 projection of the same rows except `version`, `profile`,
+`context.schema` and `store.max_slots` (384 against 320; each capture 3 bytes longer, equal
+field counts, identical event stream); for `dense_pickups` and `intercept_heavy_trace`,
+whose 45 counted items the frozen encoder refuses, the baseline is the frozen build with
+only its 16-item and 96-bonus ranges lifted, and that refusal is asserted. 875 barrel
+records (661 alive, 188 dying, 22 pending at `S_NULL`, 4 gibbed, 217 with a target), at
+most 16 barrels and 114 occupied slots in any capture; 27 explosions with 33 sight records
+and 32 damage records. These bytes were committed before the Rust writer and are never
+derived from Rust output.
+
+## Rust source replay
+
+`barrels_replay` runs the shared M3h9 comparison engine with `M3H9B_SPEC` (version 37)
+over the M3h9b rows and goldens, then a second pass over the barrel rows (spawn idents,
+every state entry and action row, every `RA` row, every `RC` candidate in walk order with
+the damage row after each damaged one, the contract's death chains), through
+`tools/reference/check_player_barrels.py`. **All 26 scenarios matched on the first run; no
+simulation bug was found and no fixture, encoder or golden was questioned.** The summary
+line, identical in debug and release:
+
+```text
+player_barrels full replay: cases=26 ops=2687 event_frames=2687 event_records=45529 captures=454 fixtures=16 thinker_rows=14369 crossings=2 uses=6 blocked=0 explosions=27 candidates=79 not_shootable=43 boss=0 out_of_range=3 sight_blocked=1 damaged=32 explosion_damage=32 spawns=375 state_entries=1802 actions=497 explode_actions=27 barrel_deaths=28 gibbed=1 digest=f421ecf6f6b0c1a3
+```
+
+The walk is observed through a test-only, thread-local `barrels::walk_trace` observer that
+reads values the walk already computes. The Rust-only lanes: `m3h9b_embedded_barrel.bin`
+loads and `spawn_map_things` refuses it with `MonsterError::Arithmetic` (snapshot, RNG
+and actor list unchanged; the same barrel moved 15 units out of the wall spawns);
+`m3h9b_intercepts129.bin` refuses tic 19 with `MapScaleError::Intercepts` through both
+`advance` and `step` with the snapshot and RNG unchanged, the tic on which the same lane
+without its 64 bonuses fires its first 2,048-unit shot and is admitted. The example
+`player_barrels` replays the 19 public-input cases over 1,621 ops (the controlled-damage
+cases 14 and 21 and the 200-health cases 2, 10, 18, 20 and 25 excluded), matches 328
+capture digests, asserts the C headline counts and that all 26 rooms are refused by the
+E1M1 policy; its `--measure` workloads `cluster_chain` (7 explosions), `dense64_fight` (16
+explosions), `range_patrol` (no barrel damage) and `liftroom_ride` (32 `P_ChangeSector`
+calls) give the same final digest in every mode (`measure_barrels.py --check`); these runs
+were not on an idle machine and are not timing evidence.
+
+## Rust-only policy tests
+
+Rust-only safety and policy tests, not source evidence (listed in
+[TESTING](../TESTING.md#original-exploding-barrels-pickup-scale-and-every-thing-angle-c-evidence)):
+the plumbing tests (every M3h9 room under wires 20 and 21 with 1,384 captures equal except
+the four identity fields; every older reader rejecting 37; a relabelled 36 failing
+`Schema`; `max_slots` 385 failing `Limit`), the bounds, angle and S′ tests (an Imp with
+margin 16 and 11 admitted and 10 refused; a player body with margin 12 and 14 refused and
+15 admitted; a lamp on its box edge and a bonus overlapping a wall admitted; even parity
+and out-of-rectangle centres refused for a THING and a dropped clip; the 17 angles; 64
+pickups and the 65th `WorkLimit`, 16 and the 17th under wire 20), the 23 barrel combat
+tests with expected values derived from the C formulas (the two spawn draws, the pistol
+wound's 6 draws and thrust, the kill's `t0 = 5 − (r & 3)` and chain timing, `A_Explode` at
+`T + t0 + 9`, the player at 60/80/127/129/150 units taking 84/64/17/none/none with the
+fourth-cell quirk at 129, armor, attacker, pain and death with the reborn tic refused,
+kill credit with a None and a player source, infighting, the chain reaction with the
+137-unit survivor, the 10.5-unit window against 12- and 16-unit ledges, the mid-walk
+relink on two seeds, a fireball killing a wounded barrel and passing over a dying one on a
+common floor, a fireball absorbed by a dying barrel on a 24-unit pedestal, a pushed barrel
+stopping at a wall and crossing the lift line, the door crunch to `S_GIBS`, the
+stale-source witness, the API refusals, `A_Explode` admitted for `S_BEXP4` only), 4 × 2,400-tic
+soaks with a DSIM37 round trip every 100 tics, every barrel state round-tripping and 26
+forged-field negatives of `decode_barrels`. Test totals after plan step 8: `cargo test
+--workspace --locked` 1,058 passed, 0 failed, 3 ignored (85 suites); the release run 1,025
+passed, 0 failed, 1 ignored (73 suites).
+
+## Fuzzing
+
+Recorded after plan step 10.
+
+## Matched performance
+
+Recorded after plan step 13.
+
+## Independent review
+
+Recorded after plan step 14.
+
+## Local gates
+
+Recorded after plan step 15.
+
+## CI
+
+Recorded when the pull request's checks have run on the exact head, including the
+docs-only fast path proof.

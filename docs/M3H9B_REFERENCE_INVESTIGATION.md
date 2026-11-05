@@ -729,7 +729,7 @@ work of one position check (E1M1 3,462), `S` = `sight_work + 5·lines` (one quer
 | `spechit` | ≤ 8 per position check; every radius < 64 (barrel 10) | | rule 6 unchanged |
 | Hitscan intercepts | lines (with multiplicity) + things of the ≤ 18 cells of a trace | E1M1 ≤ 103 (§3.3) against 128 | witness kept (F7), no load rule |
 | Explosions per tic | ≤ `B` | 16 | |
-| Sight queries per explosion | ≤ `1 + K + B − 1` shootable candidates in 3 × 3 blocks | ≤ 24; ≤ 384 per tic | per-explosion `SightControl` (F6), work ≤ `24·S` |
+| Sight queries per explosion | ≤ `(1 + K + B − 1)·(1 + K)`: the shootable candidates of 3 × 3 blocks, revisited after each of at most `K` wake-up relinks | ≤ 216; ≤ 3,456 per tic | per-explosion `SightControl` (F6, refined in §13), work ≤ `216·S` |
 | `P_DamageMobj` calls per tic | ≤ `B·(K + B)` + the existing attack bodies | ≤ 384 | each a bounded body |
 | `MAX_BONUS` | `6 × P` | 384 | pickup state range |
 | Barrel removals per tic | ≤ `B` | 16 | retirement list |
@@ -837,7 +837,9 @@ barrels with 6 monsters and the player could spend 6 × 13 = 78 and refuse the t
 (ii) a per-explosion control with at most `1 + K + B − 1` queries and work `≤ (1 + K +
 B − 1)·S`, exhausted only by a map that breaks the certificate. **Recommendation: (ii)**;
 exhaustion stays `PerceptionError::WorkLimit`, unreachable on admitted maps because every
-query's work is below `S` by the sight certificate. (a)–(d) yes.
+query's work is below `S` by the sight certificate. *Refined in Phase 2 (§13):* the bound
+is `24 × (1 + K)` = 216 queries, since a victim woken inside the walk relinks and makes
+the walk revisit things, at most once per monster. (a)–(d) yes.
 
 **F7. The hitscan intercept argument.** With `N` = 129 the crude M3h9 estimate (window
 lines + every thing) exceeds 128. Options: (i) a per-map load rule counting lines and
@@ -1021,4 +1023,55 @@ digests.
   (witness).
 
 **Status / next step.** Phase 1 is complete with this note and the census additions.
-F1–F11 are provisionally adopted pending owner confirmation; Phase 2 starts with step 1.
+F1–F11 are provisionally adopted pending owner confirmation. Phase 2: steps 1–8 and 11 are
+done (the C evidence with 26 scenarios, the DSIM37 projection, the policy, bounds, angles,
+S′, barrels, the reader, the replay matching every row and golden on its first run, the
+example and scripts, the CI fast path); steps 9–10 and 12–15 follow. Observed results are
+in the [evidence record](validation/M3H9B.md); the corrections found on the way are in
+§13.
+
+## 13. Corrections and findings from Phase 2 (kept with the original text above)
+
+Recorded here rather than rewritten, so the Phase 1 reasoning stays readable:
+
+- **F5, the sanitizer adapter for the shift.** The declared rewrite of p_map.c:1221 is
+  committed but was observed *not* to be needed: with `-std=gnu89` GCC checks `shift-base`
+  only for C99 and later, so neither sanitizer build reports the overflowing shift. The
+  rewrite of p_mobj.c:794 (F8) *is* needed: without it both sanitizer builds abort with
+  `signed integer overflow: 4 * 536870912`. The contract records both facts.
+- **F6, the per-explosion sight bound.** 24 counts distinct candidates; a victim relinked
+  by its own `A_Chase` makes the walk revisit things and query them again. Each monster can
+  wake at most once per explosion, so the queries are bounded by `24 × (1 + K)` = 216 and
+  the work by `216 × S`; the constants were raised to that bound (step 8) and the refusal
+  stays unreachable on admitted maps. The C projection has 33 sight records over 27
+  explosions.
+- **§2.2, a fireball on a dying barrel.** It explodes on the barrel only when their heights
+  overlap: on a common floor the fireball flies 32 units above the feet line and passes
+  over the 10.5-unit corpse (p_map.c:294–297). The C scenario `fireball_on_dying_barrel`
+  puts the barrel on a 24-unit pedestal; the Rust test lowers a gallery pedestal to 24.
+- **§2.6, a dying barrel under a door.** A live barrel holds a DR door at 42 units
+  (`nofit`), and a barrel killed in place explodes (11–14 tics) before the door, closing
+  at 2 units per tic, can crunch it (16 tics). Only a dying barrel that slides under an
+  already-low door is gibbed; the C scenario pushes it there with the killing thrust.
+- **§7, "a 12-unit step blocks".** With the eye at ¾ height and the barrel clear of the
+  step, blocking the 10.5-unit window needs a step of about 14 or more; the Rust test uses
+  12 (visible) against 16 (blocked), with the threshold derived in its comment.
+- **§2.3, reaction time.** A barrel that survives a wound has `reaction_time` 0
+  (p_inter.c:902); 8 only while untouched. The readers accept {8, 0}.
+- **§4.1, gaps not listed.** `preflight_player_body` refused any moving non-monster and the
+  post-tic travel loop skipped non-monsters (a thrust barrel failed the tic);
+  `preflight_player_damage` refused every inflictor request on a non-player under E1M1;
+  `validate_entry` refused the `S_BEXP` chain; the spawn-rule check has seven call sites,
+  not two. All follow S′ and the barrel role under wire 21.
+- **§7, the fist scenarios.** `fist_kills_barrel` and `player_killed_by_barrel` first gave
+  the player the fist alone, which the DSIM weapon layout cannot encode (DSIM v23 requires
+  fist and pistol owned); they now own both with the fist ready, with every observed
+  outcome unchanged (nothing on the punch path reads the pistol bit).
+- **§2.8, trace cells.** Things are offered to a trace only in the cell of their centre,
+  and a trace on a row boundary is nudged into one row (p_maputl.c:777–781): a pistol
+  trace at `y = −0.007` never sees barrels at `y = 0` linked in the next row. Not a quirk of
+  the harness but of `P_PathTraverse`; it matters for matching E1M1 hitscans.
+- **§7, the C harness's intercept array.** The M3d3 instrumentation aborts before a 129th
+  intercept, so the unchecked overflow of the source is never observed in C; the Rust-only
+  lane `m3h9b_intercepts129.bin` exercises the witness.
+- **Chain timers** in `chain_reaction` were 5, 3, 5, 5, not all distinct as §7 assumed.

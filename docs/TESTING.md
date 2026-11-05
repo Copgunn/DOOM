@@ -1482,3 +1482,82 @@ nightly-only and CI only format-checks it, so the campaigns are a local step. Ru
 measurements alone, with no fuzzing, builds or tests at the same time. Observations
 belong to [the engineering record](validation/M3H9.md). Leak detection is disabled in
 the documented ASan environment (`detect_leaks=0`), not verified.
+
+## Original exploding barrels, pickup scale and every thing angle (C evidence)
+
+The M3h9b C evidence of the
+[M3h9b investigation](M3H9B_REFERENCE_INVESTIGATION.md#7-evidence-plan-c-first-genuine-bodies)
+has its own source contract and leaves every historical expectation untouched:
+
+```sh
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m3h9b_reference.py --check --overflow-check --address-check
+python3 tools/reference/m3h9b_snapshot_goldens.py --check
+python3 tools/reference/check_player_barrels.py
+cargo test -p doom-sim barrel
+cargo run -p doom-sim --example player_barrels --locked
+python3 tools/measure_barrels.py --check
+```
+
+The generator layers on the M3h9 pack and adds three genuine bodies, `P_RadiusAttack`,
+`PIT_RadiusAttack` (p_map.c) and `A_Explode` (p_enemy.c, replacing the abort stub), with
+observer rows for every radius attack (`RA`) and every candidate of its block walk (`RC`,
+in walk order with the outcome code). It runs 26 scenarios over the ten rooms `range`,
+`cluster`, `player_range`, `monsters`, `walls`, `door`, `fireball`, `dense64`, `angles` and
+`embedded`, and checks `tests/reference/m3h9b_trace.dref`, `m3h9b_cases.csv`, the
+`m3h9b_geometry_*.bin` lumps, `m3h9b_maps.rs`, the two Rust-only lanes
+`m3h9b_embedded_barrel.bin` and `m3h9b_intercepts129.bin` and `m3h9b_contract.json`. The
+strict build compiles the genuine text under `-fwrapv`; the two sanitizer builds apply
+two declared, cited adapters (the unsigned rewrites of the angle product at p_mobj.c:794,
+which the sanitizers otherwise report, and of the radius shift at p_map.c:1221, which
+under `-std=gnu89` they do not), and the three raw traces must be byte-identical.
+`m3h9b_snapshot_goldens.py` is the independent
+[DSIM37](STATE_FORMAT.md#dsim-v37--original-exploding-barrels-pickup-scale-and-every-thing-angle)
+projection of those rows (never of Rust output): `tests/reference/m3h9b_snapshots.csv`,
+the ordered events `m3h9b_events.dref`, the 16 full-byte `m3h9b_state_*.bin` fixtures and
+`m3h9b_snapshot_contract.json`, with the assertion that every capture equals the DSIM36
+projection of the same rows except the version, profile, context and `store.max_slots`.
+`check_player_barrels.py` runs the full Rust replay (the library tests in
+`barrels_replay`) in debug and release and asserts that both pass and print the same
+summary: all 26 scenarios through their last op, every C row the M3h9 replay reads plus
+the `RA` rows, every `RC` candidate in walk order with its outcome and damage, the
+`A_Explode` action rows and the contract's death chains, every PBE1 event frame, and at
+every capture the independent digest, size and field count, the 16 fixtures byte for byte
+and the `Diagnostic::decode_barrels` round trip (with `decode_e1m1` rejecting the bytes);
+the two Rust-only lanes assert the S′ refusal of an embedded barrel at load and the
+intercept witness on the 129-intercept trace. The example `player_barrels` replays the
+scenarios whose inputs are public through the public API alone, asserts the C headline
+counts (27 explosions, the candidates by outcome, 28 barrel deaths, 1 crunched) and the
+capture digests against the independent index; `--example-only` runs it alone on the hosts
+that skip the replay. `--measure cluster_chain|dense64_fight|range_patrol|liftroom_ride|dense64_lift
+advance|step|capture` times the chain-reaction timeline, a 1,200-tic fight in the dense
+room, a patrol without barrel damage, the M3h9 lift timeline under the new policy and the
+in-memory 121-THING lift room (the `P_ChangeSector` measurement at the 129 linked-thing
+bound), and `measure_barrels.py` drives them (`--check` is the CI smoke and asserts the same
+final digest in every mode). Run measurements alone.
+
+The Rust-only tests (`player_barrels_tests`, `player_barrel_combat_tests`) cover the policy
+plumbing (every M3h9 room under wires 20 and 21 with captures equal except the four
+identity fields; `decode_barrels` reading 37 only and every older reader rejecting it), the
+bounds (64 pickups and the 65th `WorkLimit`, 16 barrels and the 17th `BarrelLimit`, the
+§5.3 formulas as asserted constants), the angles (17 values against the wrapped product;
+wire 20 still `Angle`), the spawn rule S′ (an Imp embedded 4 units admitted, a deeper one
+refused, an embedded player and barrel refused, edge contact and overlapping statics
+admitted, even parity refused, wire 20 unchanged), every barrel path of the note's §2 with
+expected values derived from the C formulas, the stale-source witness, the API refusals,
+rollback of a 17th barrel, 2,400-tic soaks with four seeds and the DSIM37 round trip, and
+26 forged-field negatives of `decode_barrels`.
+
+### Docs-only CI fast path
+
+The workflow starts with a `Detect changes` job that lists the paths changed by the pull
+request (against its base) or the push (against the previous commit) with one `git diff
+--name-only`, and sets `docs_only` when every changed path ends in `.md`. The four required
+jobs (`Stable / ubuntu-latest`, `Stable / windows-latest`, `Stable / macos-latest`, `Minimum
+Rust / 1.85.0`) `need` it and read it into `DOCS_ONLY`; on a documentation-only change
+every build, test, evidence, example and measurement step is skipped by a step-level
+`if`, while the checkout, the documentation link check and a one-line report always run,
+so every required check still runs and reports success in about a minute. A code change,
+a mixed change, a push whose base cannot be fetched or a manual run keeps every step.
+`paths-ignore` is not used, because a skipped required check never reports. Job names, the
+`macos-26-intel` runner and the timeouts are unchanged. The proof (one docs-only commit and
+one code commit of the M3h9b pull request) is in the [evidence record](validation/M3H9B.md#ci).

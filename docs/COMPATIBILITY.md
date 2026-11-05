@@ -1845,7 +1845,7 @@ decoration and barrel types and, under decision N1, its eight two-sided scroller
 [§13](M3H8_REFERENCE_INVESTIGATION.md#13-e1m1-readiness-under-the-movers-policy)); the
 [E1M1 policy](#original-monsters-with-two-sided-scrolling-walls-and-static-decorations)
 admits the scrollers and seven of those decoration types, and E1M1 still does not load
-under it. See
+under it; the [barrels policy](#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle) completes its load admission. See
 [source investigation](M3H8_REFERENCE_INVESTIGATION.md),
 [DSIM35](STATE_FORMAT.md#dsim-v35--original-doors-lifts-floors-switches-and-the-exit) and
 [observed evidence](validation/M3H8.md).
@@ -2010,9 +2010,158 @@ M3h9b adds barrels and the pickup scale, and decision
 [E9](M3H9_REFERENCE_INVESTIGATION.md#6-new-owner-decisions-e1e8) recommends admitting
 every THING angle there as a declared wrap quirk; M3h9c adds a local-only harness that
 runs the real E1M1 against the original C without committing any IWAD content
-([§12](M3H9_REFERENCE_INVESTIGATION.md#12-follow-ups-risks-status)). Whether every E1M1
-THING satisfies the spawn-box rule (its closed box clear of the walls) has not been
-measured yet. See
+([§12](M3H9_REFERENCE_INVESTIGATION.md#12-follow-ups-risks-status)). The M3h9b census
+measured the spawn-box rule: 16 E1M1 THINGs fail it at medium, and the
+[barrels policy](#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle) replaces it under wire 21 with the rule S′ that they pass. See
 [source investigation](M3H9_REFERENCE_INVESTIGATION.md),
 [DSIM36](STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations)
 and [observed evidence](validation/M3H9.md).
+
+## Original monsters with exploding barrels, pickup scale and every thing angle
+
+`PlayerMonstersBarrelsV1` (wire 21, context `PLAYER-MONSTERS-BARRELS-1-MEDIUM-v1`, DSIM-v37)
+is a separate optional superset of `PlayerMonstersE1M1V1`. Select it with
+`Simulation::original_player_barrels_map`, which takes no slot limit and no skill, spawn
+the THINGs and the player body, then call `Simulation::spawn_level_specials` once before
+the first tic, exactly as for the E1M1 policy. Everything the E1M1 policy admits (the
+movers world, two-sided scrollers, the seven decoration types, the arithmetic certificate,
+the slide-window and boundary rules, V′, the relaxed item witness, the exit and reborn
+refusals and whole-tic rollback) applies unchanged, with four changes that together let
+E1M1 on medium skill pass load admission (M3h9b note
+[§10](M3H9B_REFERENCE_INVESTIGATION.md#10-e1m1-medium-load-admission-under-the-new-policy);
+the real-map run itself is the next milestone). Older policies, wires and DSIM20–36 are
+unchanged: under every earlier policy the barrel stays `MapSpawnError::UnsupportedType`, a
+17th pickup `WorkLimit`, an angle octant outside −4..3 `MapSpawnError::Angle`, and a THING
+whose closed box touches a wall `MonsterError::Arithmetic`.
+
+**Exploding barrels** (`MT_BARREL`, DoomEd 2035; note
+[§2](M3H9B_REFERENCE_INVESTIGATION.md#2-original-c-facts)) are admitted in full, at most
+16 per map (`MAX_BARRELS`; E1M1 spawns 6 on every skill). A barrel is spawned by
+`P_SpawnMapThing` like any THING, in lump order, with its `info.c` record (health 20,
+radius 10, height 42, mass 100, `MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD`, `MF_AMBUSH` from the
+record), the `lastlook` draw and the tics draw (`1 + P_Random() % 6`), and cycles
+`S_BAR1`/`S_BAR2` every six tics with no draw. It is never a monster: it is not counted,
+never targeted by a monster, never drops anything and never credits a kill. During play:
+
+- **It blocks** the player, monsters and other barrels like any solid thing, and a live
+  barrel is an autoaim target; **it is damaged** by player and monster hitscans (a puff,
+  not blood, since `MF_NOBLOOD`), by fireballs and by other explosions, through the one
+  `P_DamageMobj` body: thrust away from the inflictor (mass 100: damage/8 units per tic),
+  the pain draw that every surviving target makes even with `painchance` 0, `reaction_time`
+  0 after a wound, and the retarget block, which fixes the barrel's `target` to its **first
+  non-lethal wounder** with a non-NULL source (threshold 100, never lowered) for the rest of
+  its life. A single bullet or pellet (5, 10 or 15) never kills a full-health barrel; a
+  fist blow of 20 does.
+- **It dies** at health ≤ 0 into `S_BEXP` with `tics -= P_Random() & 3` (so 2..5 tics),
+  `MF_SHOOTABLE` cleared, **`MF_SOLID` kept**, `MF_CORPSE|MF_DROPOFF` set and its height
+  quartered to 10.5. While dying it still blocks movers, absorbs a fireball that overlaps
+  its 10.5 units with no damage (a fireball on a common floor flies over it), lets bullets
+  and autoaim through, slides with corpse friction and can now be pushed over a drop.
+  `A_Scream` (`sfx_barexp`, no draw) at `S_BEXP2`, **`A_Explode` at `S_BEXP4`**, 9 tics
+  after the death state's first tic, in the barrel's own thinker, and removal at `S_NULL`
+  20 tics later; a barrel killed by another barrel's explosion or by a fireball whose
+  thinker runs before the killer's explodes one tic later (`d` = 1).
+- **The explosion** is `P_RadiusAttack(barrel, barrel->target, 128)` with the source's
+  arithmetic: `dist = (damage + MAXRADIUS) << FRACBITS` overflows and wraps to exactly
+  128 units, so the scan is always the **3 × 3 BLOCKMAP blocks around the barrel's block**
+  (a declared reproduced quirk, decision F5): a thing linked in a fourth block is never
+  visited even when its Chebyshev distance minus its radius is below 128. Blocks are
+  walked `y` outer, `x` inner, and each block's things newest-linked first, **re-reading
+  the next link after every victim**: a monster hit in its spawn state whose pain draw
+  fails enters `A_Chase` at once inside the walk, may move and relink, and so may be
+  revisited or make another thing be revisited, exactly as the source's list walk does.
+  Each shootable candidate (the dying barrel itself is skipped since `MF_SHOOTABLE` is
+  clear) within `max(|dx|, |dy|) − radius < 128` is sight-checked from its own eye (¾
+  height) to the dead barrel's **10.5-unit** window and damaged `128 − dist` with inflictor
+  the barrel and source the barrel's target: the player (armor, thrust, `attacker` = the
+  source or none, pain or death, the reborn tic refused as before), monsters (pain or
+  death with their drops; the kill is credited to the player when the source is the
+  player and to the single-player count when the source is NULL or a monster; a monster
+  hurt by an explosion whose source is another monster retargets that monster) and other
+  barrels (chain explosions with their own timers). There is no self-exclusion: a monster
+  that wounded the barrel is hurt by its own explosion. Nothing new is spawned by an
+  explosion and no new DSIM event is recorded (decision F9).
+- **Under movers** a live barrel holds a closing door like a monster (`nofit`, the door
+  reverses); a dying barrel that no longer fits becomes `S_GIBS` (radius and height 0,
+  not solid), never explodes and is never removed, as in the source. A sliding barrel
+  crossing a WR 88 line lowers the lift (`P_CrossSpecialLine` admits non-players on 88).
+
+| Limit (barrels policy) | Value |
+| --- | --- |
+| Barrels per map | 16 (`MAX_BARRELS`; `MapSpawnError::BarrelLimit`) |
+| Pickups per map | **64** (`world_pickups::max_pickups`; bonuses up to 6 × 64 = 384) |
+| Actor slots | **384** (`actor_slots`; encoded as `store.max_slots`) |
+| Live actors | at most 337 of the 384 slots, plus at most 39 spawns in one pass |
+| Linked things | 129 (`BARRELS_LINKED_THINGS`: player, 8 monsters, 64 pickups, 8 drops, 32 decorations, 16 barrels) |
+| Explosions per tic | at most 16; each at most 24 × (1 + 8) sight queries, its own sight control |
+| Hitscan intercepts | the witness (128, `MapScaleError::Intercepts`) unchanged; E1M1's 18-cell estimate is 103 |
+
+The budget formulas are in the note's
+[§5.3](M3H9B_REFERENCE_INVESTIGATION.md#53-budgets-as-formulas-values-of-this-policy).
+
+**Pickups up to 64.** The bound alone changes; every pickup kind E1M1 spawns was already
+admitted. `PlayerPickupState` ranges, the item witness and the drops (8) follow the
+policy's bound; older policies keep 16 and 96.
+
+**Every THING angle** (decision E9, confirmed). The spawn angle is
+`ANG45 * (mthing->angle / 45)` with the `short` quotient truncating toward zero and the
+`int` product wrapping as the original executable does, which equals
+`(q as u32).wrapping_mul(0x2000_0000)` for every `short`: 180 gives `0x80000000`, −45 gives
+`0xE0000000`, 400, 32767 and −32768 give 0. A declared reproduced quirk of the original
+build (the product is undefined in ISO C); the C evidence compiles the genuine statement
+under `-fwrapv` and a declared unsigned rewrite in the sanitizer builds, byte-identical.
+
+**The spawn rule S′** (decision
+[F3](M3H9B_REFERENCE_INVESTIGATION.md#6-new-owner-decisions-f1f11-with-recommendations)).
+`P_SpawnMapThing` checks no position, and 16 of E1M1's medium THINGs touch a one-sided
+wall with their closed box (six lamps and candelabras exactly on the edge, nine bonuses
+and one Imp overlapping it). Under this policy every spawn (THINGs, the player body,
+dropped pickups) requires only what the M3h5 invariant needs: the centre has odd parity
+against the one-sided walls and lies inside the vertex rectangle; a static (pickup or
+decoration) needs nothing more; an XY mover (monster, barrel, the player) whose open box
+meets a wall must have its centre at least `(31 − r)·(|cos θ| + |sin θ|)` units in front
+of that wall's line, in exact integer arithmetic, so that no single `MAXMOVE` step can
+carry its box through the wall and the `Escape`/`Position` witnesses stay unreachable. An
+embedded barrel (radius 10) or a player embedded by more than 1 unit is therefore still
+refused (`MonsterError::Arithmetic`; a player body `PlayerBodyError::Binding`), an Imp
+embedded up to 9 units is admitted, and edge contact is admitted for every kind. E1M1 has
+0 violations of S′ at every skill ([evidence](validation/M3H9B.md#iwad-counts)).
+
+Load rules: every E1M1-policy rule, with the four changes above. Rejected at load with the
+state unchanged and nothing spawned from a failing batch:
+
+| Rejected | With |
+| --- | --- |
+| A 17th barrel | `MapSpawnError::BarrelLimit` |
+| A 65th pickup, a ninth monster | `MapSpawnError::WorkLimit` |
+| A 33rd decoration | `MapSpawnError::DecorationLimit` |
+| Every THING type outside the monsters, pickups, decorations and the barrel (rockets and every other `A_Explode` caller among them) | `MapSpawnError::UnsupportedType` |
+| A spawn failing S′ | `MonsterError::Arithmetic` |
+
+Refused per tic with the state preserved (fidelity-gap witnesses): the inherited ones
+(the 129th intercept, the sight budgets, `SpecialCross`, `Vertical`, the exit and reborn
+tics) and one new witness: **a stale bomb source**. The barrel's `target` is a
+generational handle; when `A_Explode` finds it unreadable (its actor was removed), the
+source would read freed memory, so the tic is refused with `PlayerBodyError::Invariant`
+instead (decision F4; unreachable in the admitted domain, where monster corpses and the
+player are never removed). The per-explosion sight control refuses the tic with
+`PerceptionError::WorkLimit` only on a map outside the sight certificate.
+
+Rust-only API calls on a barrel under wire 21:
+
+| Call on a barrel | Result |
+| --- | --- |
+| A target (`set_actor_target`), a removal (`mark_remove`), a state entry (`enter_actor_state`, `enter_original_state`), a death request (`request_actor_death`) | refused, state unchanged (`PlayerBodyError::Unsupported`; the death request as for every actor) |
+| A direct spawn of 2035 (`spawn_type`) | `MapSpawnError::DirectSpawn` |
+| Damage with an inflictor (`damage_actor`) | admitted: it wounds, thrusts and may kill the barrel as a shot would |
+| A push (`set_momentum`) or vertical momentum within the shared bounds | admitted: a thrust barrel is ordinary play |
+
+Quirks reproduced, each with C evidence: the wrapped 3 × 3 window, the first-wounder bomb
+source, the unconditional pain draw, the conditional fall-forward draw, dying barrels
+solid and non-shootable, the 10.5-unit sight window, the `S_GIBS` crunch of a dying
+barrel, the positive-only halving of `P_XYMovement` steps, the lift line crossed by a
+barrel, the angle wrap. Recorded, not emulated (unreachable here): crusher blood on a
+`MF_NOBLOOD` barrel (crushers rejected), the chainsaw thrust exception (saw not admitted),
+the MAP30 stomp (teleporters out of scope). Known limitation of the C evidence: the
+harness's `intercepts[]` carries an abort before a 129th entry, so the unchecked overflow
+of the source is never observed in C; the Rust-only lane refuses the tic.

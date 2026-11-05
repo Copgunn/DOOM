@@ -895,3 +895,31 @@ staging buffer changes. See
 [support](COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations),
 [source matrix](M3H9_REFERENCE_INVESTIGATION.md) and
 [DSIM36](STATE_FORMAT.md#dsim-v36--original-two-sided-scrollers-and-static-decorations).
+
+## Exploding barrels, pickup scale and every thing angle
+
+`PlayerMonstersBarrelsV1` (wire 21, DSIM37; the M3h9b note's
+[§5](M3H9B_REFERENCE_INVESTIGATION.md#5-admitted-domain-of-playermonstersbarrelsv1-and-its-budgets))
+adds one actor role and one body set on top of the E1M1 policy. `crates/doom-sim/src/barrels.rs`
+owns the barrel: the role predicate (`is_barrel`, gated by `has_barrels`, never a policy
+monster), the `info.c` definition and state set, the live witness `validate_barrel`, and
+the explosion. The explosion is `A_Explode` → `P_RadiusAttack` → `PIT_RadiusAttack` run on
+the staged `LifeHost` of the tic, with the source's wrapped 3 × 3 block window
+(`BLAST_WINDOW`, statically asserted equal to `128 << 16`), the `y` outer, `x` inner walk,
+and each cell's things in link order: the spatial index keeps one newest-first order
+(`SpatialIndex::link` prepends), a cell's list is that order filtered by cell, and the
+walk re-reads the next link in the victim's *current* cell after each callback, so a
+monster relinked by its own `A_Chase` inside the walk changes the walk as the source's
+`bnext` chain does. Sight checks go through a per-explosion `ExplosionSight` control
+(independent of the per-tic monster budget); every victim is damaged through the shared
+`DamagePlan::current_original` → `reserve` → `apply_damage` path, which now accepts a
+barrel target (no armor, no credit, no drop) and refuses a stale bomb source with
+`PlayerBodyError::Invariant` before any mutation. Barrels move through the ordinary
+thinker path (thrust momentum, friction, the corpse and dropoff rules) and are gibbed by
+`planes.rs` like any `health <= 0` thing; `OriginalAction::Explode` is admitted for
+`MT_BARREL`'s `S_BEXP4` only. The per-policy bounds live beside the role: `actor_slots`
+(384), `world_pickups::max_pickups` and `max_bonus` (64, 384), `MAX_BARRELS` (16) and the
+spawn rule S′ (`Boundary::spawn_admitted_relaxed`, a sibling of the closed-box rule, used
+only under `has_barrels`). See
+[support](COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle)
+and [DSIM37](STATE_FORMAT.md#dsim-v37--original-exploding-barrels-pickup-scale-and-every-thing-angle).

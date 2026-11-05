@@ -79,7 +79,31 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3h9a: Two-sided scrolling walls and static decorations
+### M3h9b: Exploding barrels, pickup scale and every thing angle
+
+The separately selected `PlayerMonstersBarrelsV1` (wire 21, DSIM37) is the E1M1 world plus
+the last four things that kept E1M1 from loading: exploding barrels in full (the source's
+damage, death chain, `A_Explode` and `P_RadiusAttack` with its wrapped 3 × 3 block window,
+link-order walk, chain explosions, thrust, the first-wounder bomb source and the kill
+credit it implies), pickups raised to 64 with 384 actor slots under this policy only, every
+THING angle admitted as the original build's wrapped product (decision E9), and the
+spawn rule S′, which admits the 16 E1M1 THINGs whose closed box touches a wall while
+keeping the M3h5 invariant (decision F3). DSIM37 is the DSIM36 layout with barrels as
+ordinary actor records and `store.max_slots` 384, no new field or event. **E1M1 on medium
+skill passes every load rule it is measured against** (the note's
+[§10](M3H9B_REFERENCE_INVESTIGATION.md#10-e1m1-medium-load-admission-under-the-new-policy));
+the real-map run that confirms it is M3h9c. One new fidelity-gap witness: an explosion
+whose bomb source handle is stale refuses the tic. Older policies keep their admission,
+digests and DSIM bytes. Maintenance in the same milestone (owner request, 2026-11-04): the
+docs-only CI fast path, a detect-changes job that lets a documentation-only push skip the
+heavy steps inside each required job so every required check still reports.
+
+Status on `feat/m3h9b-barrels`: in progress. See [source investigation](M3H9B_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle)
+and [observations](validation/M3H9B.md). Decisions F1–F11 are provisionally adopted,
+pending the owner's confirmation.
+
+### Previous gameplay foundation — M3h9a: Two-sided scrolling walls and static decorations
 
 The separately selected PlayerMonstersE1M1V1 (wire 20, DSIM36) is the movers world plus
 two parts of E1M1 that need no new state: the scrolling wall 48 on two-sided lines,
@@ -97,7 +121,7 @@ barrels, 52 pickups and 45 THINGs with angle octants 4..7, and its spawn-box rul
 unmeasured. No
 new fidelity gap is added. Older policies keep their admission, digests and DSIM bytes.
 
-Status on `feat/m3h9-e1m1`: in review, not merged. The C evidence (22 scenarios), the
+Merged as PR #54. The C evidence (22 scenarios), the
 independent DSIM36 projection, the policy, the full replay, the Rust-only tests, the
 example, the tools, the fuzz target with its seed replay and this documentation are
 complete, the independent review's findings are fixed, and the bounded fuzz campaigns,
@@ -316,32 +340,22 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-The M3h9 investigation's [§8](M3H9_REFERENCE_INVESTIGATION.md#8-size-estimate-and-split)
-splits the rest of the E1M1 run into two parts after M3h9a:
-
-- **M3h9b: barrels and pickup scale.** Exploding barrels (2035) with the radius attack,
-  its wrapping distance quirk, chain explosions, thrust, the pain draw and its
-  dependence on link order, with their own events; pickups raised to 64 (E1M1 spawns 52
-  on skill 3), which needs a policy-specific actor-slot count (384 recommended) and a
-  hitscan intercept argument that counts the things in the cells along a trace, and a
-  re-evaluated linked-thing bound and `P_ChangeSector` measurement; and, per decision
-  E9, every THING angle admitted as a declared wrap quirk (45 of E1M1's 91 skill-3
-  THINGs have octants 4..7, which the inherited rule refuses). Maintenance in the same
-  milestone (owner request, 2026-11-04): a docs-only CI fast path. A first
-  detect-changes job classifies the push; on a documentation-only change the heavy
-  steps are skipped inside each job, so all four required checks still run and report
-  success, and the documentation check still runs. Changing nothing else in the
-  workflow, its check names or the `macos-26-intel` runner.
-- **M3h9c: the real-E1M1 harness.** A local-only harness that builds a headless
-  linuxdoom-1.10 from genuine sources, loads the owner's E1M1 and compares it tic for
-  tic with the Rust run, committing only pass/fail, tic counts and digests, never IWAD
-  content; plus the spawn-rule count over every E1M1 THING (whether each closed box
-  stays clear of the walls), which decides whether E1M1 loads at all.
+- **M3h9c: the real-E1M1 harness and the matched run.** A local-only harness that builds
+  a headless linuxdoom-1.10 from genuine sources, loads the owner's E1M1 under
+  `PlayerMonstersBarrelsV1` and compares it tic for tic with the Rust run, committing only
+  pass/fail, tic counts and digests, never IWAD content (M3h9 note
+  [§10](M3H9_REFERENCE_INVESTIGATION.md#10-real-e1m1-evidence-without-committing-the-iwad-design-for-m3h9c));
+  it also observes the actual intercept maximum, the `P_ChangeSector` work at 129 linked
+  things and whether any per-tic witness fires on the real map. The E1M1-scale synthetic
+  room of that design is the `dense64` room of M3h9b.
+- **Later bounds and skills.** Barrels beyond 16 and pickups beyond 64 for the rest of
+  Episode 1 need more actor slots (the M3h9b note's §5.3 formula) and their own evidence;
+  easy and hard skill (E4 option ii, deferred by decision F10).
 
 Also revisit the rules the 14 other IWAD maps break (13 with one-sided walls of odd
 degree, crossing or facing away from their sector, one BLOCKMAP with missing listings)
 and the 22 maps that fail the sight certificate. Require source-first evidence and
-unchanged earlier contracts. This is future work, not admission in M3h9a.
+unchanged earlier contracts. This is future work, not admission in M3h9b.
 
 ### Focused maintenance acceptance criteria
 
