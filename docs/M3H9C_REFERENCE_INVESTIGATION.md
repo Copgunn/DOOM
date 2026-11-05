@@ -866,8 +866,8 @@ synthetic ABI adapter", [tools/reference/README.md](../tools/reference/README.md
 and **flags the judgment for the owner**. (a) yes; (b) yes, each site is declared and
 hashed; (c) no gap; (d) yes. **Recommendation:** the five declared LP64 ABI adapters in
 every build, the three sanitizer-only adapters and `-fno-sanitize=alignment` in the
-sanitizer builds, `-m32` recorded as a later owner confirmation. Provisionally adopted,
-pending owner confirmation.
+sanitizer builds, `-m32` recorded as a later owner confirmation. Provisionally adopted;
+confirmed by the owner on 2026-11-06.
 
 **G4. Policy identity.** A new policy `OriginalExecutionProfile::PlayerMonstersLevelV1`,
 wire **22**, DSIM**38**, context **`PLAYER-MONSTERS-LEVEL-1-MEDIUM-v1`**, constructor
@@ -901,8 +901,8 @@ Provisionally adopted; confirmed by the owner on 2026-11-06.
 **G6. Committed results.** Exactly the brief's section 3: per script pass/fail, tic
 counts, the per-run final digest, the digest-sequence hash, witness names and tics, and
 counts; never map data. C dump rows and Rust captures stay in scratch and are deleted
-after the record. (a)–(d) yes. **Recommendation:** as stated. Provisionally adopted,
-pending owner confirmation.
+after the record. (a)–(d) yes. **Recommendation:** as stated. Provisionally adopted;
+confirmed by the owner on 2026-11-06.
 
 **G7. Scripts.** The five of §5; `walk_to_exit` is authored iteratively against the C
 build locally (the route is input, not IWAD data: it contains turns and durations, no
@@ -940,8 +940,8 @@ Provisionally adopted; confirmed by the owner on 2026-11-06.
 
 **G11. Witnesses.** A refusal ends the Rust run; the C run continues uncompared; the
 witness name, tic and script are recorded as a finding; a witness is never weakened to
-let a run continue. (a)–(d) yes. **Recommendation:** as stated. Provisionally adopted,
-pending owner confirmation.
+let a run continue. (a)–(d) yes. **Recommendation:** as stated. Provisionally adopted;
+confirmed by the owner on 2026-11-06.
 
 **G12. Timings.** Matched timings against master for every older-policy workload
 (digests equal), callgrind on any slowdown over 3 %, plus the per-real-E1M1-tic cost of
