@@ -76,6 +76,16 @@ pub enum OriginalExecutionProfile {
     /// decision E2), at most 32 per map. Barrels, every other THING type, crushers
     /// and the other deferred specials stay rejected at load.
     PlayerMonstersE1M1V1,
+    /// The E1M1 world plus the M3h9b admissions of the M3h9b note §5.1, with the
+    /// bounds of decision F2: up to 64 pickups (bonuses up to 6 × 64) and 384
+    /// actor slots, every THING angle (decision F8, converted as
+    /// `P_SpawnMapThing`, p_mobj.c:794, does) and the relaxed spawn rule S′
+    /// (decision F3: centre parity and the vertex rectangle for every spawn, a
+    /// margin of `(31 − r)·(|dx| + |dy|)` against each one-sided wall a mover's
+    /// open box meets). Captures are DSIM37. Exploding barrels are the headline
+    /// admission of the policy and land in a later step; until then DoomEd 2035
+    /// stays `UnsupportedType`, as every other THING type outside the E1M1 roster.
+    PlayerMonstersBarrelsV1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -101,6 +111,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersSpecialsV1 => 18,
             Self::PlayerMonstersMoversV1 => 19,
             Self::PlayerMonstersE1M1V1 => 20,
+            Self::PlayerMonstersBarrelsV1 => 21,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -126,6 +137,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersSpecialsV1 => PLAYER_SPECIALS_CONTEXT_SCHEMA,
             Self::PlayerMonstersMoversV1 => PLAYER_MOVERS_CONTEXT_SCHEMA,
             Self::PlayerMonstersE1M1V1 => PLAYER_E1M1_CONTEXT_SCHEMA,
+            Self::PlayerMonstersBarrelsV1 => PLAYER_BARRELS_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_armor(self) -> bool {
@@ -142,6 +154,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     pub(crate) const fn has_player_bonuses(self) -> bool {
@@ -157,6 +170,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     /// Original former humans, a bounded mixed roster, infighting and drops.
@@ -172,6 +186,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     /// The original Imp and its fireball in the mixed roster.
@@ -186,6 +201,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     /// Wall-derived travel bounds, 320 slots and 208 live fireballs inside a walled
@@ -200,6 +216,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     /// Two-sided lines, static floor/ceiling heights, vertical movement, the
@@ -214,6 +231,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     /// Linedefs of any direction inside a closed one-sided boundary, the parity
@@ -226,6 +244,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     /// The real-map policy: format-sized static geometry, the arithmetic and
@@ -237,6 +256,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     /// The specials policy (M3h7 Stage A) and its supersets: sky ceilings, the
@@ -248,6 +268,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     /// The movers policy (M3h8 Stage B) and its E1M1 superset: doors, lifts,
@@ -257,14 +278,25 @@ impl OriginalExecutionProfile {
     pub(crate) const fn has_movers(self) -> bool {
         matches!(
             self,
-            Self::PlayerMonstersMoversV1 | Self::PlayerMonstersE1M1V1
+            Self::PlayerMonstersMoversV1
+                | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     /// The E1M1 policy (M3h9 note §5.1): two-sided scrolling walls (48) and the
     /// seven static decoration types, under DSIM36. Every other policy rejects
     /// them at load.
     pub(crate) const fn has_e1m1(self) -> bool {
-        matches!(self, Self::PlayerMonstersE1M1V1)
+        matches!(
+            self,
+            Self::PlayerMonstersE1M1V1 | Self::PlayerMonstersBarrelsV1
+        )
+    }
+    /// The barrels policy (M3h9b note §5.1): exploding barrels, up to 64 pickups,
+    /// 384 actor slots, every THING angle and the spawn rule S′ (decision F3),
+    /// under DSIM37. Every other policy keeps its bounds and rules.
+    pub(crate) const fn has_barrels(self) -> bool {
+        matches!(self, Self::PlayerMonstersBarrelsV1)
     }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
@@ -281,6 +313,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -305,6 +338,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -328,6 +362,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -347,6 +382,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
     /// The four-weapon pack (fists, shotgun, chaingun, manual switching): every
@@ -374,6 +410,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersSpecialsV1
                 | Self::PlayerMonstersMoversV1
                 | Self::PlayerMonstersE1M1V1
+                | Self::PlayerMonstersBarrelsV1
         )
     }
 }
@@ -721,7 +758,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersRealMapV1
             | OriginalExecutionProfile::PlayerMonstersSpecialsV1
             | OriginalExecutionProfile::PlayerMonstersMoversV1
-            | OriginalExecutionProfile::PlayerMonstersE1M1V1 => {
+            | OriginalExecutionProfile::PlayerMonstersE1M1V1
+            | OriginalExecutionProfile::PlayerMonstersBarrelsV1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -774,7 +812,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersRealMapV1
             | OriginalExecutionProfile::PlayerMonstersSpecialsV1
             | OriginalExecutionProfile::PlayerMonstersMoversV1
-            | OriginalExecutionProfile::PlayerMonstersE1M1V1 => {
+            | OriginalExecutionProfile::PlayerMonstersE1M1V1
+            | OriginalExecutionProfile::PlayerMonstersBarrelsV1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -1002,13 +1041,15 @@ impl Simulation {
         } else if policy.has_physical_player() {
             original_player::validate_grounded_geometry(&map)?;
         }
-        // The map-scale proof needs its full slot budget and the walled rectangle,
-        // both decided here, before construction; historical policies keep 64.
+        // The map-scale proof needs its full slot budget (320, or 384 under the
+        // barrels policy) and the walled rectangle, both decided here, before
+        // construction; historical policies keep 64.
         let actor_cap = if policy.has_map_scale() {
-            if limit != player_map_scale::MAP_SCALE_ACTOR_SLOTS {
+            let slots = player_map_scale::actor_slots(policy);
+            if limit != slots {
                 return Err(StoreError::InvalidLimit.into());
             }
-            player_map_scale::MAP_SCALE_ACTOR_SLOTS
+            slots
         } else {
             64
         };

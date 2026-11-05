@@ -10,6 +10,23 @@ use std::{error::Error, fmt};
 /// live actors for `k` Imps, plus at most `39 - 3k` spawns in one pass, is at most
 /// 256 visits, so the store never fills and the visit budget keeps a 64-visit margin.
 pub const MAP_SCALE_ACTOR_SLOTS: u32 = 320;
+/// Actor slots of the barrels policy (`PlayerMonstersBarrelsV1`, M3h9b note §5.3,
+/// decision F2): with `K` 8 monsters, `P` 64 pickups, `R` 8 drops, `D` 32
+/// decorations and `B` 16 barrels, `1 + K + P + 26k + (K−k) + 8(K−k) + R + D + B`
+/// is at most 337 live actors (at `k = 8` Imps; 201 at `k = 0`), and even the crude
+/// bound 337 + 39 spawns in one pass is 376, within 384, so the store never fills.
+/// Encoded as `store.max_slots` in DSIM37; every older policy keeps 320.
+pub const BARRELS_ACTOR_SLOTS: u32 = 384;
+/// The actor slot count a map-scale policy requires of its constructor and encodes
+/// as `store.max_slots`: [`BARRELS_ACTOR_SLOTS`] under the barrels policy,
+/// [`MAP_SCALE_ACTOR_SLOTS`] under every other map-scale policy.
+pub const fn actor_slots(policy: OriginalExecutionProfile) -> u32 {
+    if policy.has_barrels() {
+        BARRELS_ACTOR_SLOTS
+    } else {
+        MAP_SCALE_ACTOR_SLOTS
+    }
+}
 /// Live fireballs: one Imp launches at most every 23 tics (its attack state cut
 /// short by pain, then the JUSTHIT shortcut of `P_CheckMissileRange`) and a fireball
 /// holds its slot for at most `ceil(5776/10) + 20 = 598` passes in the largest room,
