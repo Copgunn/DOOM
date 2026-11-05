@@ -16,7 +16,12 @@ run prints only the variant, the exit status and the log path (its text can hold
 values and stays in --work).
 
     DOOM_IWAD_DIR=/path tools/local/e1m1_reference.py [--work DIR] [--script NAME]...
-                                                       [--selftest TIC]
+                                                       [--selftest TIC] [--strict32]
+
+--strict32 also builds the opt-in strict32 variant (m3h9c_build.py OPTIONAL_VARIANTS: the
+strict flags plus -m32, the genuine text without any adapter) and asserts that its dump
+set is byte-identical with the other three (decision G3); it fails when the toolchain
+has no 32-bit support. Without it the run is the three-variant run described above.
 """
 import argparse, hashlib, json, os, re, subprocess, sys
 from pathlib import Path
@@ -58,6 +63,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--work', type=Path, default=Path(os.environ.get('HOME', '/tmp')) / 'scratch/doom-e1m1-reference')
     ap.add_argument('--script', action='append', help='script name (base name of a committed .lmp); default all')
+    ap.add_argument('--strict32', action='store_true', help='also build and compare the opt-in -m32 strict32 variant (no adapters)')
     ap.add_argument('--selftest', type=int, metavar='TIC', help='also check that an extra P_Random draw before TIC on idle is first seen at TIC')
     a = ap.parse_args()
     iwad_dir = os.environ.get('DOOM_IWAD_DIR')
@@ -71,15 +77,17 @@ def main():
     for p in lmps:
         if not p.is_file(): sys.exit(f'no committed script {p.name}')
     work.mkdir(parents=True, exist_ok=True); (work / 'results').mkdir(exist_ok=True)
+    variants = VARIANTS + (list(build.OPTIONAL_VARIANTS) if a.strict32 else [])
     binaries = {}
-    for v in VARIANTS:
+    for v in variants:
         with open(os.devnull, 'w') as quiet:
             stdout, sys.stdout = sys.stdout, quiet
             try: binaries[v] = build.build(v, work / 'build')
             finally: sys.stdout = stdout
+        if binaries[v] is None: sys.exit(f'FAILED: {v}: the toolchain cannot build -m32 programs (m3h9c_build.py --probe-m32)')
     print(f'built {len(binaries)} variants under {work / "build"}')
     for lmp in lmps:
-        per = {v: run(binaries[v], iwad, lmp, work / 'runs' / f'{v}_{lmp.stem}') for v in VARIANTS}
+        per = {v: run(binaries[v], iwad, lmp, work / 'runs' / f'{v}_{lmp.stem}') for v in variants}
         digests = {r['dumps_sha256'] for r in per.values()}
         identical = len(digests) == 1
         counts = load_counts(work / 'runs' / f'strict_{lmp.stem}')
@@ -91,13 +99,16 @@ def main():
                       us_per_tic={v: r['us_per_tic'] for v, r in per.items()},
                       timing_note='G_Ticker wall time only (dump writing excluded); not an idle-machine measurement',
                       asan_options='detect_leaks=0 (leak detection disabled)')
+        if a.strict32:
+            result.update(strict32_identical_to_strict=per['strict32']['dumps_sha256'] == per['strict']['dumps_sha256'],
+                          strict32_note='strict flags plus -m32, genuine text without any adapter (decision G3)')
         (work / 'results' / f'{lmp.stem}.json').write_text(json.dumps(result, indent=1) + '\n')
         print(f"{lmp.stem}: tics {result['tics']} end={result['end']} at tic {result['end_tic']} "
               f"prndindex load {result['prndindex_after_load']} end {result['prndindex_end']} "
               f"thinkers {result['thinkers_at_load']} mobjs {result['mobjs_at_load']} "
               f"variants_identical {'yes' if identical else 'NO'} dumps_sha256 {per['strict']['dumps_sha256']} "
               + ' '.join(f'{v}_us_per_tic {r["us_per_tic"]}' for v, r in per.items()))
-        if not identical: sys.exit(f'FAILED: {lmp.stem}: the three variants dump different bytes')
+        if not identical: sys.exit(f'FAILED: {lmp.stem}: the {len(variants)} variants dump different bytes')
     if a.selftest is not None:
         idle = SCRIPTS / 'idle.lmp'
         plain, planted = work / 'runs' / 'strict_idle', work / 'runs' / 'selftest_idle'

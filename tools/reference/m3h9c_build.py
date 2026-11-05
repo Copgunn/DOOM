@@ -9,7 +9,8 @@ LP64 ABI adapters (ABI_ADAPTERS, every build) and sanitizer adapters (SANITIZER_
 the two sanitizer builds only) are exact one-line text replacements: the build fails
 unless each original text occurs exactly once in its file and stands at its declared line.
 
-    m3h9c_build.py --variant strict|overflow|address|all [--out DIR] [--cc CC]
+    m3h9c_build.py --variant strict|overflow|address|all|strict32 [--out DIR] [--cc CC]
+    m3h9c_build.py --probe-m32 [--cc CC]
     m3h9c_build.py --contract tests/reference/m3h9c_runner_contract.json
     m3h9c_build.py --check
 
@@ -20,6 +21,12 @@ host-independent part (sources, adapters, extract, flags, stubs, driver behaviou
 row kinds) and --check regenerates it in memory and fails if the committed file differs;
 neither compiles anything. The runner itself reads a WAD and a demo lump at run time:
 tools/local/e1m1_reference.py runs it on a local IWAD, which never enters the repository.
+
+strict32 (OPTIONAL_VARIANTS, opt-in, never part of all or of the contract) is the strict
+flags plus -m32 built from the genuine text with no adapter at all: on an ILP32 target the
+five LP64 ABI adapters are not needed, so its dumps are the check that they change nothing
+(decision G3). It needs a 32-bit toolchain; --probe-m32 reports whether CC has one, and a
+strict32 build on a toolchain without one exits with a skip line (status 0, no binary).
 """
 import argparse, hashlib, json, os, re, shutil, subprocess, sys
 from pathlib import Path
@@ -53,6 +60,10 @@ VARIANT_NOTES = {
                '-fno-sanitize=alignment because z_zone.c rounds block sizes to 4 (z_zone.c:195) while the '
                'LP64 memblock_t needs 8-byte alignment',
 }
+# Opt-in, host-dependent variants: kept out of VARIANTS, of --variant all and of the contract.
+OPTIONAL_VARIANTS = {'strict32': BASE + ['-m32']}
+OPTIONAL_NOTES = {'strict32': 'genuine text, no ABI or sanitizer adapter (ILP32 target); needs a 32-bit '
+                              'toolchain (--probe-m32); the G3 check that the LP64 adapters change no dump byte'}
 FILE_FLAGS = {'r_data.c': ['-include', 'stdint.h'], 'z_zone.c': ['-include', 'stdint.h']}
 # Linker-level observers (m3h9c_driver.c __wrap_*): every cross-object call of these reaches
 # the driver's recording wrapper, which then calls the genuine function.
@@ -136,7 +147,8 @@ def adapter_table(adapters, builds):
                  reason=a['reason']) for a in adapters]
 
 def adapted_sources(variant):
-    applied = ABI_ADAPTERS + (SANITIZER_ADAPTERS if variant != 'strict' else [])
+    applied = ([] if variant in OPTIONAL_VARIANTS else
+               ABI_ADAPTERS + (SANITIZER_ADAPTERS if variant != 'strict' else []))
     out = {}
     for f in WHOLE:
         s = text(SOURCE / f)
@@ -223,9 +235,23 @@ def render(c): return json.dumps(c, indent=1, sort_keys=False) + '\n'
 
 def default_out(): return Path(os.environ.get('HOME', '/tmp')) / 'scratch/doom-m3h9c-build'
 
+def probe_m32(cc='cc'):
+    """True when CC compiles and links a C program with -m32 (and the --wrap link flags)."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        c = Path(d) / 'probe.c'
+        c.write_text('#include <stdio.h>\n#include <setjmp.h>\nint main (void) { jmp_buf j; '
+                     'return sizeof (void*) == 4 && !setjmp (j) ? 0 : 1; }\n')
+        try: p = subprocess.run([cc, '-m32', str(c), '-o', str(Path(d) / 'probe')], capture_output=True)
+        except OSError: return False
+        if p.returncode: return False
+        return subprocess.run([str(Path(d) / 'probe')], capture_output=True).returncode == 0
+
 def build(variant, out, cc='cc'):
     out = out.resolve()
     if out == ROOT or ROOT in out.parents: sys.exit('--out must lie outside the repository')
+    if variant in OPTIONAL_VARIANTS and not probe_m32(cc):
+        print(f'skip: {variant}: {cc} cannot build and run a -m32 program (no 32-bit toolchain)'); return None
     work = out / variant
     if work.exists(): shutil.rmtree(work)
     src, obj = work / 'src', work / 'obj'
@@ -238,7 +264,7 @@ def build(variant, out, cc='cc'):
     (src / 'layout_probe.c').write_text(layout_probe(sources['r_data.c']))
     shutil.copy2(DRIVER, src / 'm3h9c_driver.c'); shutil.copy2(STUBS, src / 'm3h9c_stubs.c')
     units = WHOLE + ['r_main_extract.c', 'layout_probe.c', 'm3h9c_stubs.c', 'm3h9c_driver.c']
-    flags, warnings = VARIANTS[variant], {}
+    flags, warnings = {**VARIANTS, **OPTIONAL_VARIANTS}[variant], {}
     for f in units:
         p = subprocess.run([cc] + flags + FILE_FLAGS.get(f, []) + ['-I', str(src), '-c', str(src / f), '-o',
                            str(obj / (f[:-2] + '.o'))], capture_output=True, text=True)
@@ -246,7 +272,8 @@ def build(variant, out, cc='cc'):
         if 'warning:' in p.stderr:
             warnings[f] = p.stderr.count('warning:'); (work / f'{f}.warnings.txt').write_text(p.stderr)
     nm = subprocess.run(['nm', '--defined-only', '-g', str(obj / 'm3h9c_stubs.o')], capture_output=True, text=True, check=True)
-    defined = {l.split()[-1] for l in nm.stdout.splitlines() if l.strip() and '__odr_asan' not in l} - {'stub_quit_flag', 'stub_quit_jmp',
+    defined = {l.split()[-1] for l in nm.stdout.splitlines() if l.strip() and '__odr_asan' not in l
+               and '__x86.get_pc_thunk.' not in l} - {'stub_quit_flag', 'stub_quit_jmp',
               'stub_quit_armed', 'stub_zone_mb', 'stub_gettime_counter', 'stub_hu_message', 'stub_hu_ran'}
     declared = {s['symbol'] for s in stubs()}
     if defined != declared: sys.exit(f'stub list FAILED: defined-not-declared {sorted(defined - declared)}, '
@@ -258,13 +285,20 @@ def build(variant, out, cc='cc'):
     man = dict(contract(), variant=variant, compiler=subprocess.run([cc, '--version'], capture_output=True,
                text=True).stdout.split('\n')[0], binary=str(binary), binary_sha256=sha(binary.read_bytes()),
                warnings=warnings)
+    if variant in OPTIONAL_VARIANTS:
+        man.update(optional_variant=dict(flags=flags, note=OPTIONAL_NOTES[variant], abi_adapters_applied=[],
+                                         sanitizer_adapters_applied=[],
+                                         source_sha256={f: sha(s) for f, s in sources.items()}),
+                   file=subprocess.run(['file', '-b', str(binary)], capture_output=True, text=True).stdout.strip())
     (out / f'manifest_{variant}.json').write_text(render(man))
     print(f'{variant}: built {binary}; {sum(warnings.values())} warnings in {len(warnings)} files')
     return binary
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--variant', choices=list(VARIANTS) + ['all'])
+    ap.add_argument('--variant', choices=list(VARIANTS) + ['all'] + list(OPTIONAL_VARIANTS),
+                    help='all builds the three contract variants; strict32 is opt-in')
+    ap.add_argument('--probe-m32', action='store_true', help='report whether CC builds and runs -m32 programs')
     ap.add_argument('--out', type=Path, default=default_out())
     ap.add_argument('--cc', default='cc')
     ap.add_argument('--contract', type=Path, help='write the host-independent contract to this path')
@@ -280,7 +314,9 @@ def main():
         a.contract.write_text(render(contract())); print(f'wrote {a.contract}')
     if a.variant:
         for v in (VARIANTS if a.variant == 'all' else [a.variant]): build(v, a.out, a.cc)
-    if not (a.check or a.contract or a.variant): ap.error('nothing to do')
+    if a.probe_m32:
+        ok = probe_m32(a.cc); print(f"-m32: {'available' if ok else 'not available'} with {a.cc}")
+    if not (a.check or a.contract or a.variant or a.probe_m32): ap.error('nothing to do')
 
 if __name__ == '__main__':
     main()
