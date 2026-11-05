@@ -100,7 +100,9 @@ digests and DSIM bytes. Maintenance in the same milestone (owner request, 2026-1
 docs-only CI fast path, a detect-changes job that lets a documentation-only push skip the
 heavy steps inside each required job so every required check still reports.
 
-Status on `feat/m3h9b-barrels`: in progress. See [source investigation](M3H9B_REFERENCE_INVESTIGATION.md),
+Status on `feat/m3h9b-barrels`: implemented and in owner review (draft pull request #55,
+not merged); every local gate, the matched timings, the fuzz campaigns and the independent
+review are recorded. See [source investigation](M3H9B_REFERENCE_INVESTIGATION.md),
 [support](COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle)
 and [observations](validation/M3H9B.md). Decisions F1–F11 are provisionally adopted,
 pending the owner's confirmation.

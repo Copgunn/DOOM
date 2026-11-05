@@ -1023,12 +1023,13 @@ digests.
   (witness).
 
 **Status / next step.** Phase 1 is complete with this note and the census additions.
-F1–F11 are provisionally adopted pending owner confirmation. Phase 2: steps 1–8 and 11 are
-done (the C evidence with 26 scenarios, the DSIM37 projection, the policy, bounds, angles,
-S′, barrels, the reader, the replay matching every row and golden on its first run, the
-example and scripts, the CI fast path); steps 9–10 and 12–15 follow. Observed results are
-in the [evidence record](validation/M3H9B.md); the corrections found on the way are in
-§13.
+F1–F11 are provisionally adopted pending owner confirmation. Phase 2 is complete: the C
+evidence (26 scenarios), the DSIM37 projection, the policy, bounds, angles, S′, barrels,
+the reader, the replay (matching every row and golden on its first run), the example and
+scripts, the fuzz target with its campaigns, the CI fast path, the documentation, the
+matched timings, the independent review (no blocker, every finding fixed) and the local
+gates; the draft pull request stops at the owner's review. Observed results are in the
+[evidence record](validation/M3H9B.md); the corrections found on the way are in §13.
 
 ## 13. Corrections and findings from Phase 2 (kept with the original text above)
 
