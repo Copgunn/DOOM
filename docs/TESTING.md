@@ -1568,21 +1568,25 @@ source) and never a panic.
 
 ### Docs-only CI fast path
 
-The workflow starts with a `Detect changes` job that lists the paths changed by the pull
-request (against its base) or the push (against the previous commit) with one `git diff
---name-only`, and sets `docs_only` when every changed path ends in `.md`. The four required
-jobs (`Stable / ubuntu-latest`, `Stable / windows-latest`, `Stable / macos-latest`, `Minimum
-Rust / 1.85.0`) `need` it and read it into `DOCS_ONLY`; on a documentation-only change
-every build, test, evidence, example and measurement step is skipped by a step-level
-`if`, while the checkout, the documentation link check and a one-line report always run,
-so every required check still runs and reports success without building or testing. A
-code change,
-a mixed change, a push whose base cannot be fetched or a manual run keeps every step.
-A change under `docs/validation/` is never documentation-only, because the historical
-evidence records there are guarded by the migration check (`evidence_storage.py
-verify-git`), which must keep running. If the detect-changes job itself fails, the required
-jobs still run in full (`!cancelled()`), and renames are not detected, so a file renamed
-out of a code suffix cannot pass as documentation. `paths-ignore` is not used, because a
-skipped required check never reports. Job names, the
+The workflow starts with a `Detect changes` job that classifies a push as "documentation
+only since a green head": for a pull-request `synchronize` event or a push to `master` it
+takes the push's previous head and new head from the event, requires that the previous
+head has a successful run of this workflow (one `gh api` query of the workflow's runs,
+which is why the job has `actions: read`), lists the paths changed between the two heads
+with one `git diff --name-only --no-renames`, and sets `docs_only` when every path ends in
+`.md` and none lies under `docs/validation/`. The four required jobs (`Stable /
+ubuntu-latest`, `Stable / windows-latest`, `Stable / macos-latest`, `Minimum Rust /
+1.85.0`) `need` it and read it into `DOCS_ONLY`; on a documentation-only push every
+toolchain install, build, test, evidence, example and measurement step is skipped by a
+step-level `if`, while the checkout, the documentation link check and a one-line report
+always run, so every required check still runs and reports success without building or
+testing. A newly opened or reopened pull request, a base change, a code or mixed change,
+a push whose previous head cannot be found or whose run failed or was cancelled, and a
+manual run keep every step. A change under `docs/validation/` is never documentation-only,
+because the historical evidence records there are guarded by the migration check
+(`evidence_storage.py verify-git`), which must keep running on them. If the detect-changes
+job itself fails, the required jobs still run in full (`!cancelled()`), and renames are not
+detected, so a file renamed out of a code suffix cannot pass as documentation.
+`paths-ignore` is not used, because a skipped required check never reports. Job names, the
 `macos-26-intel` runner and the timeouts are unchanged. The proof (one docs-only commit and
 one code commit of the M3h9b pull request) is in the [evidence record](validation/M3H9B.md#ci).
