@@ -249,6 +249,13 @@ jobs:
       - name: Genuine whole-engine run of the synthetic E1M1 (strict, UBSan and ASan/UBSan dumps identical)
         if: env.DOCS_ONLY != 'true' && (runner.os == 'Linux')
         run: python3 tools/reference/m3h9c_reference.py --check --keep-dumps --work "$RUNNER_TEMP/m3h9c"
+      - name: Whole-engine run logs (on failure only)
+        if: failure() && env.DOCS_ONLY != 'true' && (runner.os == 'Linux')
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3h9c-whole-engine-logs
+          path: ${{ runner.temp }}/m3h9c/runs/*.log
+          if-no-files-found: ignore
       - name: Independent DSIM38 whole-level projection
         if: env.DOCS_ONLY != 'true' && (runner.os == 'Linux')
         run: python3 tools/reference/m3h9c_snapshot_goldens.py --dumps "$RUNNER_TEMP/m3h9c/runs" --check

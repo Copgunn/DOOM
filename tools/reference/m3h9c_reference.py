@@ -42,7 +42,9 @@ def run(binary, lmp, out, extra=()):
                        capture_output=True, text=True, env=dict(os.environ, ASAN_OPTIONS='detect_leaks=0'))
     log = out.with_suffix('.log'); log.write_text(p.stdout + p.stderr)
     m = SUMMARY.search(p.stdout)
-    if p.returncode or not m: sys.exit(f'FAILED: {binary.parent.name} {lmp.name}: exit status {p.returncode}; log {log}')
+    if p.returncode or not m:
+        tail = '\n'.join((p.stdout + p.stderr).splitlines()[-40:])
+        sys.exit(f'FAILED: {binary.parent.name} {lmp.name}: exit status {p.returncode}; log {log}\n--- last lines of the run ---\n{tail}')
     digest = hashlib.sha256(); names = dump.snapshot_names(out)
     for n in names: digest.update((out / n).read_bytes())
     if m[6] != '0': sys.exit(f'FAILED: {binary.parent.name} {lmp.name}: {m[6]} thinkers without an observer serial')
