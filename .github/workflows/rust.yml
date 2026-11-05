@@ -240,6 +240,26 @@ jobs:
       - name: Original barrel example debug/release comparison
         if: env.DOCS_ONLY != 'true' && (runner.os != 'Linux')
         run: python3 tools/reference/check_player_barrels.py --example-only
+      - name: M3h9c whole-engine runner contract, synthetic game WAD and demo scripts
+        if: env.DOCS_ONLY != 'true'
+        run: |
+          python3 tools/reference/m3h9c_build.py --check
+          python3 tools/reference/m3h9c_wad.py --check
+          python3 tools/e1m1_scripts.py --check
+      - name: Genuine whole-engine run of the synthetic E1M1 (strict, UBSan and ASan/UBSan dumps identical)
+        if: env.DOCS_ONLY != 'true' && (runner.os == 'Linux')
+        run: python3 tools/reference/m3h9c_reference.py --check --keep-dumps --work "$RUNNER_TEMP/m3h9c"
+      - name: Independent DSIM38 whole-level projection
+        if: env.DOCS_ONLY != 'true' && (runner.os == 'Linux')
+        run: python3 tools/reference/m3h9c_snapshot_goldens.py --dumps "$RUNNER_TEMP/m3h9c/runs" --check
+      - name: Rust whole-level run of the synthetic scripts against the encoder goldens
+        if: env.DOCS_ONLY != 'true'
+        shell: bash
+        run: |
+          for s in SYNIDLE SYNWALK SYNFIGHT SYNBARRL SYNCHAOS; do
+            cargo +stable run -p doom-sim --release --locked --example player_level_run -- --wad tests/reference/m3h9c_synthetic.wad --map E1M1 --demo "tests/reference/m3h9c_scripts/$s.lmp" --out "$RUNNER_TEMP/m3h9c_rust/$s" --captures
+          done
+          python3 tools/reference/check_player_level.py "$RUNNER_TEMP/m3h9c_rust"
       - name: Original bonus sustained combat debug/release comparison
         if: env.DOCS_ONLY != 'true'
         run: python3 tools/reference/check_player_bonuses.py
