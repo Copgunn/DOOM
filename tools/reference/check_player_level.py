@@ -9,7 +9,7 @@ tests/reference/m3h9c_scripts/<SCRIPT>.lmp --out RUST_ROOT/<SCRIPT> --captures`.
 goldens (tests/reference/m3h9c_synthetic_goldens.json) were projected from the genuine
 engine's dumps by m3h9c_snapshot_goldens.py, never from Rust output. Per script every
 golden tic's Rust capture is stripped as the comparator strips it (no `map.*`, no
-`events.*`, the unrecorded pending records of the goldens removed) and its SHA-256
+`events.*`) and its SHA-256
 prefix compared with the golden digest; the first differing tic is reported, then the
 sequence hash and the final digest. Each fixture's stripped bytes are compared with the
 Rust capture of its tic, and the first differing field path is named. The C run that
@@ -28,9 +28,8 @@ from level_compare import stripped, first_difference
 GOLDENS = ROOT / 'tests/reference/m3h9c_synthetic_goldens.json'
 
 
-def rust_stripped(path, slots=()):
+def rust_stripped(path):
     version, fields = L.decode(Path(path).read_bytes())
-    if slots: fields = L.strip_unrecorded(fields, slots)
     return stripped(version, fields)
 
 
@@ -41,12 +40,11 @@ def main():
     goldens = json.loads(GOLDENS.read_text()); failures = 0
     for script, e in goldens['scripts'].items():
         directory = os.path.join(a.rust_root, script)
-        unrecorded = {u['tic']: u['slots'] for u in e['unrecorded']}
         digests = []; mismatch = None
         for tic in range(e['tics_projected']):
             path = os.path.join(directory, f'tic_{tic:05}.bin')
             if not os.path.exists(path): mismatch = (tic, 'missing Rust capture'); break
-            data, _ = rust_stripped(path, unrecorded.get(tic, ()))
+            data, _ = rust_stripped(path)
             digests.append(hashlib.sha256(data).digest())
             if digests[-1].hex()[:16] != e['tic_digests'][tic]: mismatch = (tic, 'digest'); break
         ok = mismatch is None and hashlib.sha256(b''.join(digests)).hexdigest() == e['sequence_sha256'] \
@@ -60,12 +58,11 @@ def main():
         fixture = ROOT / f['path']
         assert hashlib.sha256(fixture.read_bytes()).hexdigest() == f['sha256'], f['path']
         version, fields = L.decode(fixture.read_bytes())
-        slots = {u['tic']: u['slots'] for u in goldens['scripts'][f['script']]['unrecorded']}.get(f['tic'], ())
-        _, mine = stripped(version, L.strip_unrecorded(fields, slots))
+        _, mine = stripped(version, fields)
         path = os.path.join(a.rust_root, f['script'], f"tic_{f['tic']:05}.bin")
         if not os.path.exists(path):
             print(f"fixture {f['path']}: FAIL (no Rust capture)"); failures += 1; continue
-        _, theirs = rust_stripped(path, slots)
+        _, theirs = rust_stripped(path)
         diff = first_difference(mine, theirs)
         print(f"fixture {f['path']} ({f['why']}): " + ('pass' if diff is None else f'FAIL at field {diff[0]}'))
         failures += diff is not None

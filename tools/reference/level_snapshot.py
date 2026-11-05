@@ -70,21 +70,17 @@ Identity, removals and link order (exact; the driver's linker-level observers):
   generation + 1. The K rows name every thinker freed since the previous dump (K.seq is
   their order), including one spawned and freed between two dumps, which also takes and
   frees a slot. Where a free stands among the spawns of the tic is given by K.adds (the
-  add-serial counter at the free) when the dump has that column: exact. A dump without
-  it gets every interleaving tried, and the projection refuses (`Ambiguous`) unless all
-  give the same store; the synthetic SYNWALK and SYNBARRL scripts need K.adds.
+  add-serial counter at the free): a free reading `a` follows every spawn of serial < a.
+  (Trying every interleaving and refusing ambiguity is only the `--infer` fallback.)
 - An R row is a thinker marked by P_RemoveThinker and not yet freed: kind 8 for a mover;
-  for a mobj the full record (pending_removal 1) from the RM row of the next dump, the
-  Z_Free wrapper's copy of the same memory, which nothing writes between the mark and the
-  free (see the last item for the end of a run).
+  for a mobj the full record (pending_removal 1) from its RR row (the same dump), checked
+  equal to the next dump's RM row (the Z_Free wrapper's copy of the same memory, which
+  nothing writes between the mark and the free) except the link positions.
 - `spatial.link_order` lists the linked actors by descending T.linkserial (the last
   P_SetThingPosition first; P_RemoveMobj unlinks, so pending actors are not listed) and is
   checked against every sector thing list and BLOCKMAP cell list of the dump.
-- A dangling reference (-2) or a level reload (K.seq -1) is refused.
-- A pending mobj in the last dump of a run has no RM row to come: its record keeps the
-  last M row and its slot is listed in `Projector.unrecorded`; `strip_unrecorded` removes
-  those record values (identity, links and the pending flag stay) and the comparator and
-  the goldens compare that tic without them and count it.
+- A dangling reference (-2) or a level reload (K.seq -1) is refused. There is no
+  tolerance: every field of the capture comes from the dump and the lumps.
 
 A dump without the observer rows is refused by default. `--infer` (never used by the
 comparator) keeps the earlier fallback for such dumps: identities from the
@@ -216,14 +212,16 @@ class Dump:
         self.players = [rec(r) for r in rows if r[0] == 'P']
         self.tic = self.h['leveltime']
         # observer rows (m3h9c_driver.c linker-level observers); absent in older dumps
-        self.observed = all(k in columns for k in ('T', 'K', 'RM')) and 'gameskill' in columns['H'] \
-            and 'message' in columns['P']
+        self.observed = all(k in columns for k in ('T', 'K', 'RM', 'RR')) and 'gameskill' in columns['H'] \
+            and 'message' in columns['P'] and 'adds' in columns['K']
         self.serials = {x['idx']: (x['serial'], x['linkserial']) for x in (rec(r) for r in rows if r[0] == 'T')}
         self.freed = sorted(((x['seq'], x['serial']) for x in (rec(r) for r in rows if r[0] == 'K')))
         # optional K.adds: the add-serial counter at the free (the frees' place among the spawns)
         self.adds = {x['serial']: x['adds'] for x in (rec(r) for r in rows if r[0] == 'K')} \
             if 'K' in columns and 'adds' in columns['K'] else None
         self.removed = {x['serial']: x for x in (rec(r) for r in rows if r[0] == 'RM')}
+        # RR: the fields of each pending mobj (an R row), by its list position
+        self.pending = {x['idx']: x for x in (rec(r) for r in rows if r[0] == 'RR')}
 
 
 class Entry:
@@ -246,7 +244,7 @@ class Projector:
     def __init__(self, mapdata, skill=2, infer=False):
         self.map, self.skill, self.infer = mapdata, skill, infer
         self.entries = []; self.actors = None; self.sthinkers = None; self.next_key = 0
-        self.spatial = []; self.message = 0; self.prev = None; self.link_candidates = []; self.unrecorded = set()
+        self.spatial = []; self.message = 0; self.prev = None; self.link_candidates = []
 
     # ---- identity -------------------------------------------------------------------
     def _new(self, cls, kind, row):
@@ -453,14 +451,13 @@ class Projector:
     def _step_exact(self, dump, following):
         tic = dump.tic; cur = dump.thinkers; report = {'inferred_records': 0, 'pickups': 0}
         if not dump.observed:
-            raise ProjectionError('DumpDeficiency', tic, 'the dump has no observer rows (T, K, RM, H.gameskill, '
-                                  'P.message); only --infer projects such dumps')
+            raise ProjectionError('DumpDeficiency', tic, 'the dump lacks the observer rows (T, K with adds, RM, RR, '
+                                  'H.gameskill, P.message); only --infer projects such dumps')
         if sorted(dump.serials) != list(range(len(cur))) or any(sv < 0 for sv, _ in dump.serials.values()):
             raise ProjectionError('DumpDeficiency', tic, 'a thinker without its observer serial')
         if any(seq < 0 for seq, _ in dump.freed) and self.prev is not None:
             raise ProjectionError('Unadmitted', tic, 'a level reload (Z_FreeTags frees)')
         self.skill = dump.h['gameskill']
-        self.unrecorded = set()
         serial = [dump.serials[i][0] for i in range(len(cur))]
         if self.prev is None:
             assert tic == 0
@@ -509,8 +506,8 @@ class Projector:
                     classes[sv] = 'actor'
                 elif sv in current and cur[serial.index(sv)][0] in MOVERS:
                     classes[sv] = 'mover'
-                elif sv in current and following is not None and sv in following.removed:
-                    classes[sv] = 'actor'           # spawned and marked this tic: its record is in the next RM rows
+                elif sv in current and serial.index(sv) in dump.pending:
+                    classes[sv] = 'actor'           # spawned and marked this tic: its RR row
                 else:
                     raise ProjectionError('DumpDeficiency', tic, 'the class of a new thinker is unknown')
             for e in gone:
@@ -522,10 +519,7 @@ class Projector:
                 fr = sorted([e for e in gone if e.cls == cls] + [Entry(cls, sv, '', {}) for sv in hidden if classes[sv] == cls],
                             key=lambda e: order[e.key if e.cls != 'light' else e.serial])
                 sp = [Entry(cls, sv, '', {}) for sv in spawns if classes[sv] == cls]
-                if dump.adds is not None:
-                    setattr(self, store_name, self._merge(getattr(self, store_name), fr, sp, dump.adds))
-                else:
-                    setattr(self, store_name, self._allocate(tic, getattr(self, store_name), fr, sp, set(hidden)))
+                setattr(self, store_name, self._merge(getattr(self, store_name), fr, sp, dump.adds))
             entries = []
             for (kind, row), sv in zip(cur, serial):
                 e = known.get(sv)
@@ -535,14 +529,16 @@ class Projector:
                     if not e.pending:
                         e.pending = True
                         if e.cls == 'actor':
-                            if following is None:
-                                # the run's last dump: no RM row will follow; the record keeps
-                                # the last M row and is listed in `unrecorded`
-                                e.inferred = True
-                            elif sv not in following.removed:
-                                raise ProjectionError('DumpDeficiency', tic, 'a pending mobj without its RM row in the next dump')
-                            else:
-                                e.row = dict(following.removed[sv])
+                            i = serial.index(sv)
+                            if i not in dump.pending:
+                                raise ProjectionError('DumpDeficiency', tic, 'a pending mobj without its RR row')
+                            e.row = dict(dump.pending[i])
+                            if following is not None:
+                                # the next dump's RM row is the Z_Free copy of the same memory
+                                rm = following.removed.get(sv)
+                                skip = ('tic', 'idx', 'serial', 'bx', 'by', 'bpos', 'sector', 'spos')
+                                if rm is None or any(rm[k] != e.row[k] for k in rm if k not in skip):
+                                    raise ProjectionError('DumpDeficiency', tic, 'the RR record differs from the next RM row')
                         else:
                             e.kind = 'removed'
                 else:
@@ -550,7 +546,6 @@ class Projector:
                     if e.cls == 'mover': e.sector = row['sector']
                 entries.append(e)
             self.entries = entries
-        self.unrecorded = {self.actors.handles[e.key][0] for e in self.entries if e.cls == 'actor' and e.pending and e.inferred}
         # pickups.message: the last message P_TouchSpecialThing assigned (HU_Ticker's
         # clearing is presentation, never read by p_*.c or g_game.c)
         m = dump.players[0]['message']
@@ -834,16 +829,6 @@ class Projector:
 
     def _target(self, tic, e):
         return self._ref(tic, e.row['target'], self.entries)
-
-
-RECORD_KEPT = ('generation', 'retired', 'occupied', 'pending_removal', 'previous', 'next')
-
-
-def strip_unrecorded(fields, slots):
-    """`fields` without the record values of the pending actors in `slots` (identity,
-    occupancy, pending flag and list links stay)."""
-    prefixes = tuple(f'actor.{slot}.' for slot in slots)
-    return [(p, v) for p, v in fields if not (p.startswith(prefixes) and p.rsplit('.', 1)[1] not in RECORD_KEPT)]
 
 
 def link_bytes(proj, order):

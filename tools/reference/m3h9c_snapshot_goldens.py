@@ -14,8 +14,7 @@ Outputs (synthetic, committable):
   (kind and tic; the comparison then covers the tics before it), the per-tic digest list
   (the first 16 hex digits of the SHA-256 of each capture without `map.*` and `events.*`,
   the comparator's stripped form), the SHA-256 of the concatenated full per-tic SHA-256
-  digests, the final stripped SHA-256, and the tics whose pending records are unrecorded
-  (a pending mobj in a run's last dump; level_snapshot.strip_unrecorded);
+  digests and the final stripped SHA-256;
 - tests/reference/m3h9c_level_<SCRIPT>_<tic>.bin: full DSIM38 captures (map included,
   no events) at chosen tics (FIXTURES), listed with their SHA-256 in the JSON.
 
@@ -72,7 +71,7 @@ def generate(runs):
         names = L.m3h9c_dump.snapshot_names(directory)
         kind, last = end_kind(directory)
         entry = dict(lmp_sha256=hashlib.sha256(lmp.read_bytes()).hexdigest(), snapshots=len(names),
-                     end=dict(kind=kind, tic=last), projection_stop=None, unrecorded=[])
+                     end=dict(kind=kind, tic=last), projection_stop=None)
         proj = L.Projector(mapdata); digests = []; state = dict(last=last); final = None
         try:
             for dump, following in L.snapshots(directory):
@@ -85,9 +84,6 @@ def generate(runs):
                         outputs[path] = full
                         goldens['fixtures'].append(dict(path=path, script=script, tic=dump.tic, why=why,
                                                         sha256=hashlib.sha256(full).hexdigest()))
-                if proj.unrecorded:
-                    entry['unrecorded'].append(dict(tic=dump.tic, slots=sorted(proj.unrecorded)))
-                    fields = L.strip_unrecorded(fields, proj.unrecorded)
                 data, _ = stripped(L.VERSION, fields)
                 digests.append(hashlib.sha256(data).digest()); final = digests[-1].hex()
         except L.ProjectionError as err:

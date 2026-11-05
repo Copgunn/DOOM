@@ -18,8 +18,6 @@ real-IWAD run are map-derived). The comparison stops at the first divergence, at
 first tic the encoder cannot project (its `ProjectionError` kind and tic are reported:
 a dump deficiency, an ambiguity or an unadmitted state), or where either side ends.
 
-A pending mobj in the run's last dump has no RM row to come; that tic is compared
-without its record values (`unrecorded_pending_records` counts them).
 The projection is exact (level_snapshot.py reads the driver's observer rows; a dump
 without them is refused) and there is no tolerance of any field. A run is complete when
 every C snapshot was compared: when C stopped on the exit tic (`end=exit`), Rust holds
@@ -109,7 +107,7 @@ def rust_end(rust_dir):
 
 def compare(dump_dir, rust_dir, mapdata, skill, values=False):
     result = dict(schema=SCHEMA, tics_compared=0, match=False, first_divergence=None, projection_stop=None,
-                  map_group_equal=None, unrecorded_pending_records=0)
+                  map_group_equal=None)
     kind, last_tic = end_kind(dump_dir)
     rkind, refused_at, rust_last = rust_end(rust_dir)
     result.update(c_end=dict(kind=kind, tic=last_tic), rust_end=dict(kind=rkind, refused_tic=refused_at, last_capture=rust_last))
@@ -123,9 +121,6 @@ def compare(dump_dir, rust_dir, mapdata, skill, values=False):
             if not os.path.exists(path):
                 text.append(f'tic {tic}: no Rust capture'); break
             vr, fr = L.decode(Path(path).read_bytes())
-            if proj.unrecorded:
-                fields = L.strip_unrecorded(fields, proj.unrecorded); fr = L.strip_unrecorded(fr, proj.unrecorded)
-                result['unrecorded_pending_records'] += len(proj.unrecorded)
             bc, kc = stripped(L.VERSION, fields); br, kr = stripped(vr, fr)
             if result['map_group_equal'] is None:
                 result['map_group_equal'] = [x for x in fields if x[0].startswith('map.')] == [x for x in fr if x[0].startswith('map.')]
@@ -174,8 +169,7 @@ def main():
     for line in text: print(line)
     print(f"tics compared {result['tics_compared']}; match {'yes' if result['match'] else 'no'}; "
           f"map group equal {result['map_group_equal']}; C end {result['c_end']['kind']} at tic "
-          f"{result['c_end']['tic']}; Rust end {result['rust_end']['kind']}; unrecorded pending records "
-          f"{result['unrecorded_pending_records']}")
+          f"{result['c_end']['tic']}; Rust end {result['rust_end']['kind']}")
     if a.json: Path(a.json).write_text(json.dumps(result, indent=1) + '\n')
     return 0 if result['match'] else 1
 
