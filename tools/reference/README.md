@@ -625,9 +625,12 @@ The adapters are exact one-line replacements, and the build fails unless each or
 text occurs exactly once at its declared line. Seven LP64 ABI adapters apply in every
 build: `p_setup.c:536` and `r_data.c:482-485` size pointer arrays as pointers,
 `r_data.c:90` restores the 4-byte on-disk `maptexture_t` field (checked at run time) and
-`r_data.c:642` widens a pointer cast. Three sanitizer adapters apply only to the
-sanitizer builds: `p_mobj.c:671` and `:794`, plus `p_map.c:1221` as in M3h9b. The
-strict, `--overflow-check` and `--address-check` builds must dump byte-identical states.
+`r_data.c:642` widens a pointer cast. Six sanitizer adapters apply only to the
+sanitizer builds. Five compute an `int` sum or product in unsigned arithmetic, giving the
+same 32-bit value: `p_mobj.c:671` and `:794`, and the `int` angle spreads of
+`A_PosAttack`, `A_SPosAttack` and `A_CPosAttack` (`p_enemy.c:816`, `:839` and `:860`).
+The overflow build reports `p_enemy.c:816` on the synthetic chaos script. The sixth is
+`p_map.c:1221`, as in M3h9b. The strict, `--overflow-check` and `--address-check` builds must dump byte-identical states.
 [m3h9c_runner_contract.json](../../tests/reference/m3h9c_runner_contract.json) records the
 source, header and adapter hashes, flags, extract, stub table, driver behaviour and dump
 row kinds. `--check` regenerates the contract without compiling.

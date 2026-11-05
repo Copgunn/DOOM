@@ -184,7 +184,7 @@
    "g_game.c": "bc8e2e0d76a70f8120174946641a82c46f0116a624f51c011b292e2ffcb78a29",
    "p_ceilng.c": "0b4de846cef16d92f95275e70e568ffabef6d6ee1a2b60609604dce42f011907",
    "p_doors.c": "2e44a6051f27206971c7bf9629431db201e1dc3441d974119ec9d88655e5ec12",
-   "p_enemy.c": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0",
+   "p_enemy.c": "cd5c8bf35e2cdb4a9034dd2c553cd45dfd03c26c7c04ac24b5dfebb11c277f2e",
    "p_floor.c": "c22ad7b7112d28c8b8c54a26ff611b98664a6d7a40d8d300680e6ca465468d47",
    "p_inter.c": "72e9bbabe560ef548c2f2522494786347d5c831b0e1f0ecb5cb29d8d8e682356",
    "p_lights.c": "0ade56b8514b3e11fd13af2be7a787531e4ffb6b84c49e489d678d42b5abfdca",
@@ -406,6 +406,45 @@
     "address"
    ],
    "reason": "P_RadiusAttack: the declared M3h9b adapter (tools/reference/m3h9b_reference.py SANITIZER_ADAPTERS[1])."
+  },
+  {
+   "file": "p_enemy.c",
+   "line": 816,
+   "original": "    angle += (P_Random()-P_Random())<<20;",
+   "adapted": "    angle = (int)((unsigned)angle + (unsigned)((P_Random()-P_Random())<<20));",
+   "original_sha256": "82e04e42d2fe00c939f65f7d83344162c878587e062ab721a467f5ec0ca03ba0",
+   "adapted_sha256": "d277d2fdc751d9671cff8d03531660675e680a9e7a58f9a203894bf41b50ae71",
+   "builds": [
+    "overflow",
+    "address"
+   ],
+   "reason": "A_PosAttack: `int angle` holds the actor angle (angle_t converted to int) and the spread is added in int, which overflows for angles near the int limits; the original targets wrap it modulo 2^32, as the unsigned sum does (the P_Random subexpression is unchanged). Needed: the overflow build reports this statement on the synthetic chaos script."
+  },
+  {
+   "file": "p_enemy.c",
+   "line": 839,
+   "original": "\tangle = bangle + ((P_Random()-P_Random())<<20);",
+   "adapted": "\tangle = (int)((unsigned)bangle + (unsigned)((P_Random()-P_Random())<<20));",
+   "original_sha256": "2a40e1551686a71ade610df4c0a3fbd24e7b38cdaebc78ff7d9674a4162f3a3a",
+   "adapted_sha256": "d86e3643930981744cc77dee43970d61d0388a87d5d30c6d68298a505e0e32f0",
+   "builds": [
+    "overflow",
+    "address"
+   ],
+   "reason": "A_SPosAttack: the same int sum as p_enemy.c:816; declared for robustness."
+  },
+  {
+   "file": "p_enemy.c",
+   "line": 860,
+   "original": "    angle = bangle + ((P_Random()-P_Random())<<20);",
+   "adapted": "    angle = (int)((unsigned)bangle + (unsigned)((P_Random()-P_Random())<<20));",
+   "original_sha256": "3aeb02c39ac203f9b5e6d9429a9af6a4476bb7a1ddb182602da59783d5324cb7",
+   "adapted_sha256": "183315d780b44963f6a0b68687130a9fe025598223cef49ee820de8b89a2b1f9",
+   "builds": [
+    "overflow",
+    "address"
+   ],
+   "reason": "A_CPosAttack: the same int sum as p_enemy.c:816; declared for robustness."
   }
  ],
  "r_main_extract": {

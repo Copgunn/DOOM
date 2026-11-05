@@ -88,6 +88,15 @@ SANITIZER_ADAPTERS = [
     dict(file='p_map.c', line=1221, original='    dist = (damage+MAXRADIUS)<<FRACBITS;',
          adapted='    dist = (fixed_t)(((unsigned)damage + (unsigned)MAXRADIUS) << FRACBITS);',
          reason='P_RadiusAttack: the declared M3h9b adapter (tools/reference/m3h9b_reference.py SANITIZER_ADAPTERS[1]).'),
+    dict(file='p_enemy.c', line=816, original='    angle += (P_Random()-P_Random())<<20;',
+         adapted='    angle = (int)((unsigned)angle + (unsigned)((P_Random()-P_Random())<<20));',
+         reason='A_PosAttack: `int angle` holds the actor angle (angle_t converted to int) and the spread is added in int, which overflows for angles near the int limits; the original targets wrap it modulo 2^32, as the unsigned sum does (the P_Random subexpression is unchanged). Needed: the overflow build reports this statement on the synthetic chaos script.'),
+    dict(file='p_enemy.c', line=839, original='\tangle = bangle + ((P_Random()-P_Random())<<20);',
+         adapted='\tangle = (int)((unsigned)bangle + (unsigned)((P_Random()-P_Random())<<20));',
+         reason='A_SPosAttack: the same int sum as p_enemy.c:816; declared for robustness.'),
+    dict(file='p_enemy.c', line=860, original='    angle = bangle + ((P_Random()-P_Random())<<20);',
+         adapted='    angle = (int)((unsigned)bangle + (unsigned)((P_Random()-P_Random())<<20));',
+         reason='A_CPosAttack: the same int sum as p_enemy.c:816; declared for robustness.'),
 ]
 R_MAIN_FUNCS = ['R_PointOnSide', 'R_PointOnSegSide', 'R_PointToAngle', 'R_PointToAngle2', 'R_PointToDist',
                 'R_PointInSubsector']
