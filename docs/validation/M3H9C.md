@@ -33,9 +33,9 @@ Phase 1 probe (wire 21, the real E1M1, unstripped), 2026-11-05/06:
 6 extracted `r_main.c` bodies, 7 declared LP64 ABI adapters in every build plus 6
 sanitizer-only adapters (`p_mobj.c` lines 794 and 671 angle products, `p_map.c:1221`,
 `p_enemy.c` lines 816, 839 and 860 int angle spreads; the `p_enemy.c` ones were found by the
-UBSan build on the synthetic chaos run), and 43 function plus 17 variable stubs (31 I/O-only
-or unreachable, 6 read-only, 6 writers whose writes `P_Ticker` cannot observe; the contract
-lists them). `--wrap` observers cover `P_AddThinker`, `Z_Free`, `Z_Malloc` (zero-filling),
+UBSan build on the synthetic chaos run), and 43 function plus 17 variable stubs (the contract's `stub_counts`: 29 I/O-only or unreachable, 6 read-only, 8 writers whose
+writes `P_Ticker` cannot observe, among them `I_Quit` and `WI_Ticker`; the contract lists
+them). `--wrap` observers cover `P_AddThinker`, `Z_Free`, `Z_Malloc` (zero-filling),
 `P_SetThingPosition` and `P_InitThinkers`. The driver calls `G_DoPlayDemo` directly, loops
 `G_Ticker` with `gametic++`, stops on `ga_completed`, turns `I_Quit` into a `longjmp`, runs
 `Z_CheckHeap` every tic and uses a 6 MB zone that was never raised. `-m32` is not available
@@ -87,7 +87,7 @@ see the correction in the note's §12), 8 type-48 two-sided scrollers, sector sp
 special lines per 2 x 2 window.
 
 `tools/reference/m3h9c_reference.py` (about 19 to 22 s wall: build about 7 s, runs about 12
-to 15 s) ran the three variants: all five scripts byte-identical across variants; 98
+to 15 s) ran the three variants: all six scripts byte-identical across variants; 98
 thinkers, 92 mobjs and `prndindex` 146 after load.
 
 | Script | Tics | End | Events (tic numbers) |
@@ -97,17 +97,21 @@ thinkers, 92 mobjs and `prndindex` 146 after load.
 | SYNFIGHT | 273 | marker | 4 kills including one shotgun |
 | SYNBARRL | 581 | marker | chain explosion at 464 and 477, a zombieman killed, an imp hurt |
 | SYNCHAOS | 5,000 | marker | `nouse`, death at tic 816 |
+| SYNDIE | 1,001 | reborn at tic 1000 | SYNIDLE's start (death at tic 884/885), then USE while dead at tic 1000 (DSIM tic 1001) |
 
 ## Independent projection
 
 `tools/reference/level_snapshot.py` projects the C dumps to DSIM38 exactly from the observer
 rows (its `--infer` fallback is never used by the comparator);
 `tools/reference/level_compare.py` compares the bytes minus the `map.*` and `events.*`
-groups (the map groups are compared separately and are equal; no tolerance).
-`tests/reference/m3h9c_synthetic_goldens.json` and nine fixtures `m3h9c_level_*.bin`
-(SYNIDLE load, tic 885 death and tic 920 death-think; SYNCHAOS tics 816, 851 and 2500;
-SYNFIGHT 273; SYNWALK 1468, the exit tic; SYNBARRL 465, `A_Explode`) were produced from C
-dumps only. `m3h9c_snapshot_goldens.py --check` passes (10 files).
+groups; the `map.*` groups (the bytes of the ten lumps each side located, the lump check
+of the note's §5) are compared separately, must be equal for a match, and were equal; there
+is no tolerance: fields the genuine code has not yet written must read the schema's 0 and
+are asserted, not forced. `tests/reference/m3h9c_synthetic_goldens.json` and ten fixtures
+`m3h9c_level_*.bin` (SYNIDLE load, tic 885 death and tic 920 death-think; SYNCHAOS tics 816,
+851 and 2500; SYNFIGHT 273; SYNWALK 1468, the exit tic; SYNBARRL 465, `A_Explode`; SYNDIE
+1001, the reborn request) were produced from C dumps only. `m3h9c_snapshot_goldens.py
+--check` passes (11 files).
 
 | Script | Snapshots | Sequence SHA-256 | Final SHA-256 |
 | --- | --- | --- | --- |
@@ -116,10 +120,15 @@ dumps only. `m3h9c_snapshot_goldens.py --check` passes (10 files).
 | SYNFIGHT | 274 | `a9e005f3d5af7cde72284c169d31f5c57cc1f85a13d563d55b5d83a798e05fcf` | `fffa46e0f996884d51ea217a56c573f1753606dab01f00b4929855e84e41fc2d` |
 | SYNBARRL | 582 | `b519f64f91e0f4bf3c8620276cd6f321c43607971659007c3103d8d23a9d5fab` | `3dfd5a6f16a83bf134eabc2caceb5e58e30190c13be38e00248939b683e99466` |
 | SYNCHAOS | 5,001 | `9d4078400d715297aa993ecb8f0b15a8e530cc395eb4f24f425dc6fd4e13038b` | `0eba38f408a4c56ab2c744f49f14abc443067616ba612ed616c75a6772c15dea` |
+| SYNDIE | 1,002 | `716e3546a74d755a11b2cdeff0aa22adcbfceee48ac6df862abab963936ef84c` | `13d6d59416a3937349825a05e81f1f25a85448fd9f60b88589df27c303eadeab` |
 
-Encoder-side corrections found while matching (all in the encoder, none in Rust): a new
-door's `topcountdown` and a new plat's `count` read zone garbage in C before first use (the
-DSIM35 schema says 0, decision N6), so the encoder projects 0 until the first wait; the link
+Order of the commits: the wire-22 Rust writer (4e64d08) preceded the first committed goldens
+(cb99f8c), not the other way round as the plan intended. The encoder never reads Rust
+output; the corrections made to it while matching are listed here, and each cites C or the
+schema. Encoder-side corrections found while matching (all in the encoder, none in Rust): a
+new door's `topcountdown` and a new plat's `count` read zone garbage in C before first use
+(the DSIM35 schema says 0, decision N6), so the encoder first projected 0 there; with the
+driver's ZeroFill C reads 0 and the encoder now asserts it; the link
 order was first inferred and then made exact by the observers; the driver gained the add
 count at each free (`K.adds`) and `RR` rows to remove the last ambiguity (slot interleaving
 of frees and spawns; the pending record at a run's last dump).
@@ -154,16 +163,22 @@ Rust-side work maxima (`stats.txt`; the intercept budget is 128, spechit 8):
 Earlier matched runs with the prototype's demos: PISTOL 301, WALK 2,101 and WALKUSE 2,101
 tics.
 
-**Synthetic Rust against the goldens** (`tools/reference/check_player_level.py`): all five
-scripts and all 9 fixtures pass. The Rust test `crates/doom-sim/tests/level_fixtures.rs`
-decodes the fixtures, checks that the load capture equals the SYNIDLE load fixture field for
-field minus `events.*`, and that the SYNIDLE replay reproduces the golden hashes.
+**Synthetic Rust against the goldens** (`tools/reference/check_player_level.py`): all six
+scripts and all 10 fixtures pass. SYNDIE: the golden ends `reborn` at DSIM tic 1001 (1,002
+snapshots); Rust matches all 1,002 captures and refuses tic 1002 with `PlayerReborn`, which
+the checker requires; `level_compare.py` on SYNDIE: 1,002 tics, match, map groups equal. The
+Rust test `crates/doom-sim/tests/level_fixtures.rs` decodes the fixtures, checks that the load
+capture equals the SYNIDLE load fixture field for field minus `events.*`, and that the
+SYNIDLE and SYNDIE replays reproduce the golden hashes (SYNDIE also its refusal of tic 1002).
 
-**Self-tests** (committed tools; each plants a difference and requires the first reported
-divergence): real idle with ticcmd 500 `forwardmove` 0 to 25 on the C side only gives tic
-501, field `actor.0.x`; real idle with `--selftest-extra-draw 100` gives tic 101, field
-`rng.gameplay`. The same two on SYNIDLE give tic 501 `actor.52.x` and tic 101
-`rng.gameplay`.
+**Self-tests.** Committed C-side tool: `m3h9c_reference.py --selftest 500` plants, on
+SYNIDLE in the strict build, an extra `P_Random` draw before `G_Ticker` 500 and separately
+`forwardmove` 25 in command 500 of a copy of the demo, and requires both to be first seen
+in the dump of tic 500 (passed: `H prndindex`, and `M #52 x`). Comparator-side, by manual
+procedure (each plants a difference on the C side only and reads the comparator's first
+divergence): real idle with ticcmd 500 `forwardmove` 0 to 25 gives tic 501, field
+`actor.0.x`; real idle with `--selftest-extra-draw 100` gives tic 101, field `rng.gameplay`.
+The same two on SYNIDLE give tic 501 `actor.52.x` and tic 101 `rng.gameplay`.
 
 ## Rust-only policy tests
 

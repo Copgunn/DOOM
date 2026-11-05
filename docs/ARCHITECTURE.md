@@ -928,9 +928,11 @@ and [DSIM37](STATE_FORMAT.md#dsim-v37--original-exploding-barrels-pickup-scale-a
 
 `PlayerMonstersLevelV1` (wire 22, DSIM38; the M3h9c note's
 [§10](M3H9C_REFERENCE_INVESTIGATION.md#10-policy-proposal)) adds no actor role, store or
-field to the barrels policy. `crates/doom-sim/src/level.rs` holds its three behaviours (the
-body spawned by `spawn_map_things` at its type-1 record, the `damagecount` decay and
-`P_DeathThink`), gated by the policy predicate `has_level`; every older policy keeps its
+field to the barrels policy. Its three behaviours, gated by the policy predicate
+`has_level`, live with the code they extend: the body spawned by `spawn_map_things` at its
+type-1 record in `spawning.rs`, the live `damagecount` decay beside the bonus decay in
+`world_pickups.rs`, and `P_DeathThink`'s turn toward the attacker (`death_turn`) in
+`level.rs`; every older policy keeps its
 admission. `doom_sim::demo` reads and writes version-110 demos for the `player_level_run`
 example. The genuine side is a separate program, not part of the simulation: the C runner
 compiles the original files whole with declared stubs and adapters and dumps the state after

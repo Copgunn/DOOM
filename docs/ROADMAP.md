@@ -82,8 +82,9 @@ observations remain linked from the [evidence index](README.md).
 ### M3h9c: The real E1M1 run, tic for tic
 
 Phase 1 (the [investigation note](M3H9C_REFERENCE_INVESTIGATION.md)) is complete; Phase 2
-steps 1-8, 10 and 11 are done on `feat/m3h9c-e1m1-run` ([observations](validation/M3H9C.md));
-the matched performance, the independent review and the gates remain. Decisions G1-G12 are provisionally adopted, pending
+steps 1-8 and 10 are done on `feat/m3h9c-e1m1-run` ([observations](validation/M3H9C.md));
+step 9 (matched performance), step 11 (the independent review: its fixes are in
+progress), step 12 (the gates) and the owner's confirmation remain. Decisions G1-G12 are provisionally adopted, pending
 owner confirmation. The milestone is a local-only harness that runs the owner's E1M1 under
 the genuine linuxdoom-1.10 engine and under the Rust simulation from the same version-110
 demo and compares them on every tic, committing only counts, pass/fail and digests, never
@@ -101,9 +102,9 @@ WAD with its CI steps; and the fuzz target `player_level`. All five scripted rea
 (idle, walking to the exit, fighting, barrels, random commands) matched the genuine engine
 tic for tic.
 
-Remaining: the other scripted runs, the synthetic game WAD and scripts with their CI steps
-(so CI exercises the same runner without an IWAD), the independent review, the evidence
-record, the local and exact-head gates, and the owner's confirmation of G1-G12. Support is in
+Remaining: the matched performance (step 9), the fixes of the independent review
+(step 11), the local and exact-head gates (step 12), and the owner's confirmation of
+G1-G12. Support is in
 [COMPATIBILITY](COMPATIBILITY.md#original-level-runs-the-player-start-in-lump-order-and-the-full-player-think-wire-22);
 commands are in [TESTING](TESTING.md#m3h9c-whole-engine-runner-and-the-real-e1m1-comparison).
 

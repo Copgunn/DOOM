@@ -1649,17 +1649,21 @@ CI path (no IWAD): a synthetic game WAD (`tools/reference/m3h9c_wad.py`,
 and the commands below. The `stable` job of `.github/workflows/rust.yml` runs, in order:
 `m3h9c_build.py --check`, `m3h9c_wad.py --check` and `e1m1_scripts.py --check` (every OS);
 `m3h9c_reference.py --check --keep-dumps` and `m3h9c_snapshot_goldens.py --dumps DIR --check`
-(Linux only); and the Rust whole-level run of the five synthetic scripts followed by
-`check_player_level.py` (every OS). All are skipped for documentation-only pushes.
+(Linux only); and the Rust whole-level run of the six synthetic scripts followed by
+`check_player_level.py` (every OS). A script whose golden ends `reborn` (SYNDIE: the dead
+player presses USE) must leave Rust's `refused.txt` naming the next tic with
+`PlayerReborn`. All are skipped for documentation-only pushes.
 
 ```sh
 python3 tools/reference/m3h9c_wad.py [--out FILE] [--check]  # synthetic WAD (default tests/reference/m3h9c_synthetic.wad); --check compares the committed file
-python3 tools/reference/m3h9c_reference.py [--work DIR] [--check] [--keep-dumps] [--cc CC]
+python3 tools/reference/m3h9c_reference.py [--work DIR] [--check] [--keep-dumps] [--cc CC] [--selftest TIC]
 #   three-variant run of every tests/reference/m3h9c_scripts/*.lmp; --check compares
-#   tests/reference/m3h9c_synthetic_results.json; address variant uses detect_leaks=0
+#   tests/reference/m3h9c_synthetic_results.json; address variant uses detect_leaks=0;
+#   --selftest TIC plants an extra draw and a changed ticcmd on SYNIDLE (strict build)
+#   and requires both first seen in the dump of tic TIC
 python3 tools/reference/m3h9c_snapshot_goldens.py --dumps DIR/runs [--check]   # DSIM38 goldens and fixtures from kept dumps
 cargo run -p doom-sim --release --example player_level_run -- --wad tests/reference/m3h9c_synthetic.wad --map E1M1 --demo tests/reference/m3h9c_scripts/SYNIDLE.lmp --out OUT/SYNIDLE --captures
-python3 tools/reference/check_player_level.py OUT      # Rust runs of the five scripts against the goldens
+python3 tools/reference/check_player_level.py OUT      # Rust runs of the six scripts against the goldens
 
 # fuzzing (the 49th target); detect_leaks=0 means LeakSanitizer is disabled, not passed
 python3 tools/seed_player_level_fuzz.py /tmp/doom-level-seeds      # 1,508 seeds, max_len 1404

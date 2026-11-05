@@ -69,7 +69,7 @@ What it cannot do yet:
   runs recorded so far are matched;
 - handle the other monsters, the other weapons, or the remaining map features such as
   crushers and teleporters;
-- play back demos.
+- play back the original game's recorded demos.
 
 ## Where it's headed
 

@@ -491,7 +491,7 @@ reads game state only; **W** = writes game or loop state.
 | Vanilla file | Symbol | Class | Vanilla body and why the stub is faithful |
 | --- | --- | --- | --- |
 | i_system.c | `I_Error` | I | 162–183: prints and exits; the stub prints and exits nonzero |
-| i_system.c | `I_Quit` | I | 116–124: shutdowns then `exit(0)`; the stub flushes the dump and exits 0 |
+| i_system.c | `I_Quit` | W | 116–124: shutdowns then `exit(0)`; the stub sets a flag and longjmps to the driver, which ends the run (the contract classifies it as a writer of loop state) |
 | i_system.c | `I_Tactile` | I | 55–62: the vanilla body is empty |
 | i_system.c | `I_BaseTiccmd` | I | 65–68: used only by `G_BuildTiccmd` (g_game.c:249), not called |
 | i_system.c | `I_ZoneBase` | I | 76–80: `malloc (mb_used*1024*1024)`, `mb_used` 6 (i_system.c:51); the stub allocates the same size (G10) |
@@ -527,7 +527,8 @@ p_tick.c:140), `mouseSensitivity`, `save_p`, `setsizeneeded`, `sprites`, `numspr
 `screens`. The driver also sets what `D_CheckNetGame` (d_net.c:567–592) sets in single
 player: `consoleplayer = displayplayer = 0`, `ticdup`, `playeringame[0] = true`.
 
-**The six writers, and why `P_Ticker` cannot observe them.** `HU_Ticker`'s `message`
+**The eight writers, and why `P_Ticker` cannot observe them.** `I_Quit` writes only the
+driver's quit flag and ends the run at the demo marker, as vanilla's `exit` does. `HU_Ticker`'s `message`
 is never read by `p_*.c` or g_game.c (every site is a write: p_inter.c, p_doors.c,
 p_mobj.c:678, g_game.c:678, 1316), and `chatchar` is netgame-only; `I_GetTime` feeds
 `starttime`, read only by the timing demo; `D_AdvanceDemo` is unreachable with
@@ -654,7 +655,7 @@ button constants `BT_ATTACK` 1, `BT_USE` 2, `BT_CHANGE` 4, `BT_WEAPONMASK` 56
 | weapon bits without `BT_CHANGE` | `UnsupportedButtons` | ignored |
 | bit 64 or `BT_SPECIAL` 128 | `UnsupportedButtons` (80–93) | pause or save; `P_PlayerThink` clears the buttons |
 | nonzero slot 1–3 | `PlayerBody(Slot)` | other players |
-| dead: anything but zero or `BT_USE` alone | `PlayerBody(Unsupported)` (114–128) | movement ignored |
+| dead: anything but zero or `BT_USE` alone (wire 21; wire 22 lifts this, §12) | `PlayerBody(Unsupported)` (114–128) | movement ignored |
 | dead + `BT_USE` | admitted; the next `advance` → `SimError::PlayerReborn` | level reload |
 | exit switch used | admitted; the next `advance` → `SimError::LevelExited` | intermission |
 
@@ -767,7 +768,7 @@ asserts the two lists are equal before tic 0. Alignment: Rust capture `n` agains
 | `walk_to_exit` | a hand-authored route through the doors and the lift to the exit switch | the exit refusal (`LevelExited`) |
 | `fighting` | turns, fire at the monsters, weapon changes 0–3 | the last tic or the player's death |
 | `barrels` | shots at barrels, near monsters and the player | the last tic |
-| `chaos` | a fixed-seed pseudo-random stream inside the admitted domain (zero or `BT_USE` alone while dead) | the last tic or a refusal |
+| `chaos` | a fixed-seed pseudo-random stream inside the admitted domain (zero or `BT_USE` alone while dead; wire 21, wire 22 lifts this, §12) | the last tic or a refusal |
 
 **Runner components.**
 
@@ -818,7 +819,8 @@ own tool `tools/e1m1_scripts.py` from committed human-readable script sources. S
 and generated `.lmp` files are committed under `tests/reference/e1m1_scripts/`.
 Constraints checked by the tool: `forwardmove` never 0x80 (the marker), never button
 bits 0x80 or 0x40, |moves| ≤ 50, `BT_CHANGE` only to weapons 0–3, zero or `BT_USE` alone
-while the player may be dead: Rust's admitted domain, narrower than vanilla's (§4.2).
+while the player may be dead: Rust's admitted domain, narrower than vanilla's (§4.2) (wire 21;
+wire 22 lifts this, §12).
 A real 1.9 demo would need only its version byte patched 109 → 110 in the input copy,
 which routes later to real demo playback. Rejected: (i), which would give the C and Rust
 sides two input paths and none of them genuine on the C side. (a)–(d) yes; the `.lmp` is
@@ -1042,9 +1044,10 @@ successor section and the schema in [STATE_FORMAT](STATE_FORMAT.md) when Phase 2
   the reborn reload as an admitted transition, the rest of Episode 1.
 
 **Status / next step.** Phase 1 complete with this note; decisions G1–G12 provisionally
-adopted pending owner confirmation; Phase 2 steps 1–8, 10 and 11 done (the observations are
-in the [evidence record](validation/M3H9C.md)); the matched performance, the independent
-review and the gates remain.
+adopted pending owner confirmation; Phase 2 steps 1–8 and 10 done (the observations are
+in the [evidence record](validation/M3H9C.md)); step 9 (matched performance), step 11 (the
+independent review: its fixes are in progress), step 12 (the gates) and the owner's
+confirmation remain.
 
 ## 12. Corrections and findings from Phase 2
 
@@ -1062,6 +1065,17 @@ review and the gates remain.
 - **The body has no spawnpoint** (`p_mobj.c:736`), so `decode_level` checks lump order via
   the preceding actors.
 - **Dead-player bob.** Rust's `P_CalcHeight` bob is computed for a dead player too.
-- **Untested paths.** The real chaos script did not die in 5,000 tics, so the reborn reload
-  path was not exercised; the `walk_to_exit` demo ends exactly on the exit tic, so no refused
-  tic is observed.
+- **Dead-player command domain.** A dead player accepts any admitted command under wire 22
+  (`P_DeathThink`, p_user.c:182–229, reads only `BT_USE`); the zero-or-`BT_USE` limit of
+  §4.2 and G1 is wire 21's, and the script tool checks nothing about death.
+- **Order of the commits.** The plan (§7) put the goldens before the Rust writer; in fact
+  the wire-22 Rust writer (4e64d08) preceded the first committed goldens (cb99f8c). The
+  encoder never reads Rust output; every correction made to it while matching cites C or
+  the schema (the N6 zero projection, then the observer rows `T`/`K`/`RM`/`RR` and
+  `K.adds` that replaced its inferences) and is listed in the evidence record.
+- **Reborn tic.** The driver also stops on a reborn request (`end=reborn`: the next
+  `G_Ticker` would reload the level, g_game.c:612–614, 924–931); the synthetic `SYNDIE`
+  script (die, then USE) compares that tic, and Rust refuses the next one with
+  `PlayerReborn`. The reload itself stays outside the domain (G11). The real chaos script did
+  not die in 5,000 tics; the `walk_to_exit` demo ends exactly on the exit tic, so no refused
+  tic is observed there.
