@@ -20,6 +20,20 @@ const SLOWDARK: i32 = 35;
 /// `p_spec.c` `MAXLINEANIMS`: the `linespeciallist` size `P_SpawnSpecials` fills
 /// with type-48 lines without a bound check.
 pub(crate) const MAX_LINE_ANIMS: usize = 64;
+/// A flat name as DSIM39 encodes `floorpic` (decision D2): the bytes up to the
+/// first NUL, ASCII upper-cased, zero-padded to eight. Two flats resolve to one
+/// lump through `R_FlatNumForName` (`W_CheckNumForName`: `strncpy` then
+/// `strupr`, w_wad.c) exactly when their normalized names are equal.
+pub(crate) fn normalized_flat(name: &doom_types::LumpName) -> [u8; 8] {
+    let mut out = [0; 8];
+    for (o, b) in out
+        .iter_mut()
+        .zip(name.as_bytes().iter().take_while(|b| **b != 0))
+    {
+        *o = b.to_ascii_uppercase();
+    }
+    out
+}
 /// Sector specials admitted at load by the specials policy (M3h7 decision 3):
 /// lights 1, 2, 3, 8, 12, 13, 17, strobe-hurt 4, damage 5, 7, 16 and secret 9.
 pub(crate) const ADMITTED_SECTOR_SPECIALS: [i16; 12] = [1, 2, 3, 4, 5, 7, 8, 9, 12, 13, 16, 17];

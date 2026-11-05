@@ -39,16 +39,17 @@ pub use player_armor::{
 };
 pub use player_bonuses::PLAYER_DEMON_BONUSES_CONTEXT_SCHEMA;
 pub use player_map_scale::{
-    ArithmeticCertificate, BARRELS_ACTOR_SLOTS, Boundary, HEIGHTS_LINE_FLAGS, HEIGHTS_MOMZ_UNITS,
-    HEIGHTS_Z_UNITS, MAP_SCALE_ACTOR_SLOTS, MAP_SCALE_EXTENT_UNITS, MAP_SCALE_MAX_LIVE_PROJECTILES,
-    MAP_SCALE_MOMENTUM_UNITS, MAP_SCALE_WALL_LINES, MAX_INTERCEPTS, MapScaleError,
-    REAL_MAP_FORMAT_RECORDS, RoomBounds, actor_slots, slide_window_lines,
+    ArithmeticCertificate, BARRELS_ACTOR_SLOTS, Boundary, EPISODE1_ACTOR_SLOTS, HEIGHTS_LINE_FLAGS,
+    HEIGHTS_MOMZ_UNITS, HEIGHTS_Z_UNITS, MAP_SCALE_ACTOR_SLOTS, MAP_SCALE_EXTENT_UNITS,
+    MAP_SCALE_MAX_LIVE_PROJECTILES, MAP_SCALE_MOMENTUM_UNITS, MAP_SCALE_WALL_LINES, MAX_INTERCEPTS,
+    MapScaleError, REAL_MAP_FORMAT_RECORDS, RoomBounds, actor_slots, slide_window_lines,
 };
 pub use player_monsters::{
     MAX_PLAYER_MONSTERS, PLAYER_BARRELS_CONTEXT_SCHEMA, PLAYER_DIAGONAL_CONTEXT_SCHEMA,
-    PLAYER_E1M1_CONTEXT_SCHEMA, PLAYER_HEIGHTS_CONTEXT_SCHEMA, PLAYER_IMPS_CONTEXT_SCHEMA,
-    PLAYER_LEVEL_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
-    PLAYER_MOVERS_CONTEXT_SCHEMA, PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
+    PLAYER_E1M1_CONTEXT_SCHEMA, PLAYER_EPISODE1_CONTEXT_SCHEMA, PLAYER_HEIGHTS_CONTEXT_SCHEMA,
+    PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_LEVEL_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA,
+    PLAYER_MONSTERS_CONTEXT_SCHEMA, PLAYER_MOVERS_CONTEXT_SCHEMA, PLAYER_REAL_MAP_CONTEXT_SCHEMA,
+    PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -61,7 +62,7 @@ pub use game_instance::{GameInstance, InstanceActorRef, InstanceId, ProvenanceEr
 pub use native_demon::{NativeDemonState, NativeDemonType};
 pub use original_player::{
     OriginalPlayer, PLAYER_BODY_CONTEXT_SCHEMA, PLAYER_KNOCKBACK_CONTEXT_SCHEMA, PlayerBodyError,
-    PlayerBodyEvent, PlayerBodyState, PlayerSlot,
+    PlayerBodyEvent, PlayerBodyState, PlayerPowers, PlayerSlot,
 };
 pub use original_registry::{
     ContextRole, DefinitionIdentity, ORIGINAL_CONTEXT_SCHEMA, ORIGINAL_REGISTRY_SCHEMA,
@@ -136,6 +137,8 @@ mod barrels;
 pub use barrels::EXPLOSION_SIGHT_QUERIES;
 pub mod demo;
 mod e1m1_rules;
+mod episode1;
+pub use episode1::Episode1Bounds;
 mod level;
 mod level_stats;
 pub use e1m1_rules::{
@@ -604,6 +607,10 @@ pub struct Simulation {
     /// Under the movers policy, source `gameaction == ga_completed`: the exit switch
     /// ran `G_ExitLevel` and every later tic is refused (`SimError::LevelExited`).
     pub(crate) level_exit: bool,
+    /// Under the Episode 1 policy, source `secretexit`: the exit was
+    /// `G_SecretExitLevel` (special 51, g_game.c:1009–1018), so `level_exit` is
+    /// set too (DSIM39 `level.secret_exit`). False under every other policy.
+    pub(crate) level_secret_exit: bool,
     /// Under the movers policy, the running switch buttons (`buttonlist`): timer,
     /// line and sound-origin sector of each slot, DSIM35 state (decision N9).
     pub(crate) buttons: use_lines::Buttons,
@@ -791,6 +798,7 @@ impl Simulation {
             spare_writes: staging::StagedWrites::default(),
             movers: None,
             level_exit: false,
+            level_secret_exit: false,
             buttons: [None; mover_rules::MAX_BUTTONS],
         })
     }
@@ -1576,6 +1584,8 @@ mod player_diagonal_tests;
 mod player_e1m1_soak_tests;
 #[cfg(test)]
 mod player_e1m1_tests;
+#[cfg(test)]
+mod player_episode1_tests;
 #[cfg(test)]
 mod player_heights_tests;
 #[cfg(test)]

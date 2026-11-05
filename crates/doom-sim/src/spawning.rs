@@ -536,7 +536,7 @@ impl Simulation {
                         .iter()
                         .filter(|(_, ty)| e1m1_rules::is_decoration(self.player_policy(), *ty))
                         .count()
-                        == MAX_DECORATIONS
+                        == self.decoration_limit()
                 {
                     return Err(MapSpawnError::DecorationLimit.into());
                 }
@@ -545,7 +545,7 @@ impl Simulation {
                         .iter()
                         .filter(|(_, ty)| barrels::is_barrel(self.player_policy(), *ty))
                         .count()
-                        == MAX_BARRELS
+                        == self.barrel_limit()
                 {
                     return Err(MapSpawnError::BarrelLimit.into());
                 }
@@ -564,7 +564,10 @@ impl Simulation {
                                 world_pickups::kind_for(self.player_policy(), *ty).is_some()
                             })
                             .count()
-                            == world_pickups::max_pickups(self.player_policy()))
+                            == world_pickups::pickup_bound(
+                                self.player_policy(),
+                                self.world.episode1,
+                            ))
                 {
                     return Err(MapSpawnError::WorkLimit.into());
                 }
@@ -662,7 +665,8 @@ impl Simulation {
                 })
                 .count();
             let count = i32::try_from(count).map_err(|_| MapSpawnError::StatisticsOverflow)?;
-            let bound = world_pickups::max_pickups(self.player_policy()) as i32;
+            let bound =
+                world_pickups::pickup_bound(self.player_policy(), self.world.episode1) as i32;
             if !(0..=bound).contains(&total) || total.checked_add(count).is_none_or(|n| n > bound) {
                 return Err(MapSpawnError::StatisticsOverflow.into());
             }

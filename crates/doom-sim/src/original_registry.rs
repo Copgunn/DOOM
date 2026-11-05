@@ -94,6 +94,12 @@ pub enum OriginalExecutionProfile {
     /// dead `damagecount` decay, any command admitted and only `BT_USE` read).
     /// Captures are DSIM38, the DSIM37 layout under policy 22.
     PlayerMonstersLevelV1,
+    /// Episode 1, part 1 (M4a, decisions H2–H4): the level world of wire 22 with
+    /// the load-time proofs that refuse Episode 1 maps replaced by per-tic
+    /// witnesses (H3) and the fixed roster, pickup, decoration and barrel bounds
+    /// replaced by per-map values derived from the THINGS lump, with 1,024 actor
+    /// slots (H4). Captures are DSIM39, read by `Diagnostic::decode_episode1`.
+    PlayerMonstersEpisode1V1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -121,6 +127,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersE1M1V1 => 20,
             Self::PlayerMonstersBarrelsV1 => 21,
             Self::PlayerMonstersLevelV1 => 22,
+            Self::PlayerMonstersEpisode1V1 => 23,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -148,6 +155,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersE1M1V1 => PLAYER_E1M1_CONTEXT_SCHEMA,
             Self::PlayerMonstersBarrelsV1 => PLAYER_BARRELS_CONTEXT_SCHEMA,
             Self::PlayerMonstersLevelV1 => PLAYER_LEVEL_CONTEXT_SCHEMA,
+            Self::PlayerMonstersEpisode1V1 => PLAYER_EPISODE1_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_armor(self) -> bool {
@@ -166,6 +174,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     pub(crate) const fn has_player_bonuses(self) -> bool {
@@ -183,6 +192,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// Original former humans, a bounded mixed roster, infighting and drops.
@@ -200,6 +210,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The original Imp and its fireball in the mixed roster.
@@ -216,6 +227,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// Wall-derived travel bounds, 320 slots and 208 live fireballs inside a walled
@@ -232,6 +244,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// Two-sided lines, static floor/ceiling heights, vertical movement, the
@@ -248,6 +261,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// Linedefs of any direction inside a closed one-sided boundary, the parity
@@ -262,6 +276,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The real-map policy: format-sized static geometry, the arithmetic and
@@ -275,6 +290,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The specials policy (M3h7 Stage A) and its supersets: sky ceilings, the
@@ -288,6 +304,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The movers policy (M3h8 Stage B) and its E1M1 superset: doors, lifts,
@@ -301,6 +318,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The E1M1 policy (M3h9 note §5.1): two-sided scrolling walls (48) and the
@@ -312,6 +330,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The barrels policy (M3h9b note §5.1): exploding barrels, up to 64 pickups,
@@ -321,7 +340,9 @@ impl OriginalExecutionProfile {
     pub(crate) const fn has_barrels(self) -> bool {
         matches!(
             self,
-            Self::PlayerMonstersBarrelsV1 | Self::PlayerMonstersLevelV1
+            Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The level policy (M3h9c, decision G4, wire 22 only): the barrels world with
@@ -332,7 +353,20 @@ impl OriginalExecutionProfile {
     /// under DSIM38. Every older policy keeps its spawn order, counters and dead
     /// player contract.
     pub(crate) const fn has_level(self) -> bool {
-        matches!(self, Self::PlayerMonstersLevelV1)
+        matches!(
+            self,
+            Self::PlayerMonstersLevelV1 | Self::PlayerMonstersEpisode1V1
+        )
+    }
+    /// The Episode 1 policy (M4a, wire 23 only, decisions H2–H4): the level world
+    /// with the per-map bounds of `episode1::Episode1Bounds` and 1,024 actor slots,
+    /// the arithmetic certificate's clauses (i), (ii) and (vii) and the ±512
+    /// static-height rule replaced by checked per-tic arithmetic, an optional
+    /// one-sided boundary, and the mover load rules of
+    /// `mover_rules::validate_episode1`, under DSIM39. Every older policy keeps its
+    /// bounds, proofs and rules byte for byte.
+    pub(crate) const fn has_episode1(self) -> bool {
+        matches!(self, Self::PlayerMonstersEpisode1V1)
     }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
@@ -351,6 +385,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -377,6 +412,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -402,6 +438,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -423,6 +460,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The four-weapon pack (fists, shotgun, chaingun, manual switching): every
@@ -452,6 +490,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
 }
@@ -801,7 +840,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersMoversV1
             | OriginalExecutionProfile::PlayerMonstersE1M1V1
             | OriginalExecutionProfile::PlayerMonstersBarrelsV1
-            | OriginalExecutionProfile::PlayerMonstersLevelV1 => {
+            | OriginalExecutionProfile::PlayerMonstersLevelV1
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -856,7 +896,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersMoversV1
             | OriginalExecutionProfile::PlayerMonstersE1M1V1
             | OriginalExecutionProfile::PlayerMonstersBarrelsV1
-            | OriginalExecutionProfile::PlayerMonstersLevelV1 => {
+            | OriginalExecutionProfile::PlayerMonstersLevelV1
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -1109,14 +1150,26 @@ impl Simulation {
         // Under the real-map policy the arithmetic certificate (M3h6 note §4.2) and
         // the slide-window rule (§4.4) are admission requirements, checked before
         // the boundary so that a failing map names its arithmetic first.
+        // Under the Episode 1 policy (decision H3) clauses (i), (ii) and (vii)
+        // become the checked intercept and height arithmetic of the traces
+        // (`StaticWorld::checked_arithmetic`); the other clauses stay load rules.
         if real_map {
-            player_map_scale::ArithmeticCertificate::derive(&map)?;
+            if policy.has_episode1() {
+                player_map_scale::ArithmeticCertificate::derive_episode1(&map)?;
+            } else {
+                player_map_scale::ArithmeticCertificate::derive(&map)?;
+            }
             player_map_scale::validate_slide_window(&map)?;
         }
         // Under diagonals the boundary is the closed one-sided chain and the
         // BLOCKMAP follows the closed-cell rule; under heights only one-sided lines
         // may cover the rectangle; the map-scale policy keeps its original rule.
-        let boundary = if policy.has_diagonals() {
+        // Under the Episode 1 policy the boundary is optional (decision D4): a map
+        // whose one-sided lines fail C1–C3 has none, its escape witness is
+        // inactive and spawns fall back to room containment.
+        let boundary = if policy.has_episode1() {
+            player_map_scale::Boundary::derive(&map).ok().map(Arc::new)
+        } else if policy.has_diagonals() {
             Some(Arc::new(player_map_scale::Boundary::derive(&map)?))
         } else {
             None
@@ -1136,6 +1189,9 @@ impl Simulation {
             return Err(CombatError::InterceptLimit.into());
         }
         let sector_lines = real_map.then(|| player_map_scale::sector_lines(&map));
+        let episode1 = policy
+            .has_episode1()
+            .then(|| crate::episode1::Episode1Bounds::from_map(&map));
         let mut sim = Self::with_demon_expanded_profile(
             map,
             limit,
@@ -1150,6 +1206,7 @@ impl Simulation {
                 specials: policy.has_specials(),
                 movers: policy.has_movers(),
                 e1m1: policy.has_e1m1(),
+                episode1,
             },
         )?;
         sim.boundary = boundary;
@@ -1169,6 +1226,10 @@ impl Simulation {
                 secret_count: 0,
                 use_down: true,
                 reborn: false,
+                powers: policy
+                    .has_episode1()
+                    .then_some(original_player::PlayerPowers::default()),
+                episode1,
             });
         }
         Ok(sim)

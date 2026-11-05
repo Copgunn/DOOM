@@ -31,6 +31,41 @@ pub const fn max_pickups(policy: OriginalExecutionProfile) -> usize {
 pub(crate) const fn max_bonus(policy: OriginalExecutionProfile) -> i32 {
     BONUS_ADD * max_pickups(policy) as i32
 }
+/// The placed plus dropped item budget with the per-map bounds of the Episode 1
+/// policy (decision H4): `P` from its THINGS lump under that policy,
+/// [`max_pickups`] under every other one.
+pub(crate) fn pickup_bound(
+    policy: OriginalExecutionProfile,
+    bounds: Option<crate::episode1::Episode1Bounds>,
+) -> usize {
+    match bounds {
+        Some(b) if policy.has_episode1() => b.pickups,
+        _ => max_pickups(policy),
+    }
+}
+/// The `bonuscount` bound with the per-map bounds of the Episode 1 policy:
+/// `6·(P + R + keycards)` under that policy, [`max_bonus`] under every other one.
+pub(crate) fn bonus_bound(
+    policy: OriginalExecutionProfile,
+    bounds: Option<crate::episode1::Episode1Bounds>,
+) -> i32 {
+    match bounds {
+        Some(b) if policy.has_episode1() => i32::try_from(b.max_bonus()).unwrap_or(i32::MAX),
+        _ => max_bonus(policy),
+    }
+}
+/// The live world-item bound with the per-map bounds of the Episode 1 policy:
+/// `P + R` (every dropping monster drops once) under that policy,
+/// [`max_world_items`] under every other one.
+pub(crate) fn world_item_bound(
+    policy: OriginalExecutionProfile,
+    bounds: Option<crate::episode1::Episode1Bounds>,
+) -> usize {
+    match bounds {
+        Some(b) if policy.has_episode1() => b.world_items(),
+        _ => max_world_items(policy),
+    }
+}
 
 /// Executable item definitions; each remains its original canonical actor.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -195,10 +230,14 @@ pub struct PlayerPickupState {
     pub message: PickupMessage,
 }
 impl PlayerPickupState {
-    fn validate(self, profile: OriginalExecutionProfile) -> Result<(), SimError> {
-        if !(0..=max_bonus(profile)).contains(&self.bonus_count)
+    fn validate(
+        self,
+        profile: OriginalExecutionProfile,
+        bounds: Option<crate::episode1::Episode1Bounds>,
+    ) -> Result<(), SimError> {
+        if !(0..=bonus_bound(profile, bounds)).contains(&self.bonus_count)
             || if profile.has_player_bonuses() {
-                !(0..=max_pickups(profile) as i32).contains(&self.item_count)
+                !(0..=pickup_bound(profile, bounds) as i32).contains(&self.item_count)
             } else {
                 self.item_count != 0
             }
@@ -432,7 +471,7 @@ pub(crate) fn bonus_tick(
                 p.state == PlayerBodyState::Live
             };
             let state = p.pickups.as_mut().ok_or(PlayerBodyError::Invariant)?;
-            state.validate(p.policy)?;
+            state.validate(p.policy, p.episode1)?;
             if live && state.bonus_count > 0 {
                 state.bonus_count -= 1;
             }
@@ -544,6 +583,9 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
     }
     fn intercept_overflow(&self) -> SimError {
         crate::CombatError::InterceptLimit.into()
+    }
+    fn intercept_arithmetic(&self) -> SimError {
+        crate::MapScaleError::Arithmetic.into()
     }
     fn contacts(
         &mut self,
@@ -754,7 +796,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         .bonus_count
                         .checked_add(BONUS_ADD)
                         .ok_or(PlayerBodyError::Invariant)?;
-                    state.validate(self.player.policy)?;
+                    state.validate(self.player.policy, self.player.episode1)?;
                     observe(
                         events,
                         PickupEvent::Bonus(state.bonus_count, state.item_count),
@@ -809,7 +851,7 @@ impl Simulation {
             .as_ref()
             .and_then(|p| p.pickups)
             .ok_or(PlayerBodyError::Invariant)?
-            .validate(self.player_policy())?;
+            .validate(self.player_policy(), self.world.episode1)?;
         if self.player_policy().has_player_armor() {
             self.original_player_armor(PlayerSlot::One)?;
         }
@@ -839,7 +881,8 @@ impl Simulation {
                 .and_then(|p| p.pickups)
                 .ok_or(PlayerBodyError::Invariant)?
                 .item_count;
-            if !(0..=max_pickups(self.player_policy()) as i32).contains(&total)
+            if !(0..=pickup_bound(self.player_policy(), self.world.episode1) as i32)
+                .contains(&total)
                 || collected > total
                 || counted > (total - collected) as usize
                 || (total > 0 && total as usize != counted_map_things(self.world.map().things()))
@@ -847,7 +890,7 @@ impl Simulation {
                 return Err(PlayerBodyError::Invariant.into());
             }
         }
-        if count > max_world_items(self.player_policy()) {
+        if count > world_item_bound(self.player_policy(), self.world.episode1) {
             return Err(MapSpawnError::WorkLimit.into());
         }
         Ok(())
@@ -876,7 +919,7 @@ impl Simulation {
                     .is_some_and(|l| kind_for(self.player_policy(), l.actor_type).is_some())
             })
             .count();
-        if items >= max_pickups(self.player_policy()) {
+        if items >= pickup_bound(self.player_policy(), self.world.episode1) {
             return Err(MapSpawnError::WorkLimit.into());
         }
         if !self.spawn_admitted(

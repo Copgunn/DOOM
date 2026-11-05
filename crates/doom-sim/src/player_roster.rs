@@ -52,6 +52,7 @@ impl Simulation {
                 | OriginalExecutionProfile::PlayerMonstersE1M1V1
                 | OriginalExecutionProfile::PlayerMonstersBarrelsV1
                 | OriginalExecutionProfile::PlayerMonstersLevelV1
+                | OriginalExecutionProfile::PlayerMonstersEpisode1V1
         )
     }
 
@@ -80,7 +81,10 @@ impl Simulation {
     }
 
     pub(crate) fn map_demon_limit(&self) -> usize {
-        if self.player_policy().has_monsters() {
+        if let Some(bounds) = self.world.episode1 {
+            // The Episode 1 policy's roster is the map's own `K` (decision H4).
+            bounds.monsters
+        } else if self.player_policy().has_monsters() {
             MAX_PLAYER_MONSTERS
         } else if self.uses_active_player_roster() {
             1
@@ -142,6 +146,7 @@ impl PerceptionRoster<'_> {
                     | OriginalExecutionProfile::PlayerMonstersE1M1V1
                     | OriginalExecutionProfile::PlayerMonstersBarrelsV1
                     | OriginalExecutionProfile::PlayerMonstersLevelV1
+                    | OriginalExecutionProfile::PlayerMonstersEpisode1V1
             )
         )
     }

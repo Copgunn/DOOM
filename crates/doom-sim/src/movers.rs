@@ -105,8 +105,19 @@ pub struct FloorMove {
     /// `floordestheight` (16.16).
     pub floordestheight: Fixed,
 }
+impl Plat {
+    /// `plattype_e` (p_spec.h:274–281): every admitted plat is `downWaitUpStay`
+    /// (1) until the Episode 1 movers (M4a step 4).
+    pub(crate) const fn plat_type(self) -> u8 {
+        1
+    }
+}
 impl FloorMove {
-    fn speed(self) -> Fixed {
+    /// `direction`: every admitted floor lowers (−1) until the Episode 1 movers.
+    pub(crate) const fn direction(self) -> i32 {
+        -1
+    }
+    pub(crate) fn speed(self) -> Fixed {
         Fixed::from_map_units(match self.kind {
             FloorKind::LowerFloorToLowest => FLOORSPEED as i16,
             FloorKind::TurboLower => (FLOORSPEED * 4) as i16,

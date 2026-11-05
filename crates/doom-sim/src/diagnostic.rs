@@ -286,6 +286,26 @@ impl<'a> Diagnostic<'a> {
     ) -> Result<Self, DiagnosticError> {
         Self::decode_selected(bytes, limits, Some(38))
     }
+    /// Explicit DSIM39 Episode 1 reader (M4a, decisions H2–H4); every earlier
+    /// reader, `decode_level` included, rejects 39 and this reader rejects every
+    /// earlier version. DSIM39 is the DSIM38 layout, event vocabulary and
+    /// witnesses under policy 23 and the Episode 1 context, with these
+    /// differences: `store.max_slots` is 1,024; the roster, pickup, drop,
+    /// decoration and barrel bounds are the frame's own, counted from
+    /// `map.things` (`Episode1Bounds::from_thing_records`); and these fields are
+    /// added: `level.secret_exit` after `level.exit`; `sector.N.floorpic` (the
+    /// normalized floor flat name) after `sector.N.special`; a plat's `type` after
+    /// `high` and a floor's `direction` and `speed` after `floordestheight`;
+    /// `original_player.0.weapons.cells`, `.rockets` and `.max_ammo.0` to `.3`
+    /// after `.shells`; and `original_player.0.powers.0` to `.5`, `.cards.0` to
+    /// `.5` and `.backpack` after `original_player.0.use_down`. Pickup message
+    /// codes 14–29 are admitted.
+    pub fn decode_episode1(
+        bytes: &'a [u8],
+        limits: DiagnosticLimits,
+    ) -> Result<Self, DiagnosticError> {
+        Self::decode_selected(bytes, limits, Some(39))
+    }
     /// Explicit DSIM30 real-map-scale reader; every earlier reader rejects 30 and
     /// this reader rejects every earlier version.
     pub fn decode_map_scale(
@@ -395,6 +415,15 @@ impl<'a> Diagnostic<'a> {
     fn required(&self, path: &str) -> Result<&'a [u8], DiagnosticError> {
         self.field(path).ok_or(DiagnosticError::Structure)
     }
+    /// DSIM39: the per-map bounds counted from the frame's `map.things`; `None`
+    /// for every other version (and for a malformed lump, which the THINGS
+    /// validators refuse).
+    fn e1(&self) -> Option<Episode1Bounds> {
+        if self.version != 39 {
+            return None;
+        }
+        Episode1Bounds::from_thing_records(self.field("map.things")?)
+    }
     fn slot_bound(&self) -> u32 {
         slot_bound_for(self.version)
     }
@@ -408,7 +437,7 @@ impl<'a> Diagnostic<'a> {
     fn identity(&self, ty: u16, state: u16) -> Result<DiagnosticIdentity, DiagnosticError> {
         let actor = ActorTypeId(ty);
         let state = (state != u16::MAX).then_some(StateId(state));
-        if matches!(self.version, 21..=38) {
+        if matches!(self.version, 21..=39) {
             let policy = self.policy();
             original_registry::require_role_for(policy, actor)
                 .map_err(|_| DiagnosticError::Identity)?;
@@ -460,13 +489,16 @@ impl<'a> Diagnostic<'a> {
     /// admitted monster type or `MT_PLAYER`, and under DSIM37/38 a dying barrel
     /// (p_map.c:1269–1279); its dimensions are checked by `validate_movers`.
     fn gibs_admitted(&self, actor: ActorTypeId, state: StateId) -> bool {
-        matches!(self.version, 35..=38)
+        matches!(self.version, 35..=39)
             && state.0 == OriginalState::S_GIBS.ordinal()
             && (actor.0 == OriginalActorType::MT_PLAYER.ordinal()
                 || original_registry::is_policy_monster(self.policy(), actor)
                 || crate::barrels::is_barrel(self.policy(), actor))
     }
     fn policy(&self) -> OriginalExecutionProfile {
+        if self.version == 39 {
+            return OriginalExecutionProfile::PlayerMonstersEpisode1V1;
+        }
         if self.version == 38 {
             return OriginalExecutionProfile::PlayerMonstersLevelV1;
         }
@@ -515,7 +547,7 @@ impl<'a> Diagnostic<'a> {
         if self.version == 23 {
             return OriginalExecutionProfile::PlayerDemonPistolV1;
         }
-        if matches!(self.version, 22..=38)
+        if matches!(self.version, 22..=39)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerDemonMeleeV1
@@ -525,7 +557,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerDemonMeleeV1
-        } else if matches!(self.version, 22..=38)
+        } else if matches!(self.version, 22..=39)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerDemonAcquisitionV1
@@ -535,7 +567,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerDemonAcquisitionV1
-        } else if matches!(self.version, 22..=38)
+        } else if matches!(self.version, 22..=39)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerCommandMovementV1
@@ -545,7 +577,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerCommandMovementV1
-        } else if matches!(self.version, 22..=38)
+        } else if matches!(self.version, 22..=39)
             && self.field("profile")
                 == Some(
                     OriginalExecutionProfile::PlayerBodyKnockbackV1
@@ -555,7 +587,7 @@ impl<'a> Diagnostic<'a> {
                 )
         {
             OriginalExecutionProfile::PlayerBodyKnockbackV1
-        } else if matches!(self.version, 22..=38) {
+        } else if matches!(self.version, 22..=39) {
             OriginalExecutionProfile::PlayerBodyLifecycleV1
         } else {
             OriginalExecutionProfile::DemonNormalV1
@@ -567,7 +599,7 @@ impl<'a> Diagnostic<'a> {
             return Err(DiagnosticError::Schema);
         }
         number::<8>(self.required("tic")?)?;
-        if matches!(self.version, 21..=38) {
+        if matches!(self.version, 21..=39) {
             if profile != self.policy().wire_id()
                 || self.required("registry.schema")? != ORIGINAL_REGISTRY_SCHEMA
                 || self.required("context.schema")? != self.policy().context_schema()
@@ -628,7 +660,7 @@ impl<'a> Diagnostic<'a> {
                 || f.path.ends_with(".soundtarget")
                 || f.path.ends_with(".previous")
                 || f.path.ends_with(".next")
-                || matches!(self.version, 22..=38)
+                || matches!(self.version, 22..=39)
                     && matches!(
                         f.path,
                         "original_player.0.mo" | "original_player.0.attacker"
@@ -672,15 +704,15 @@ impl<'a> Diagnostic<'a> {
                 let event = self.required(&format!("{prefix}.{i}"))?;
                 let tag = *event.first().ok_or(DiagnosticError::Structure)?;
                 if tag
-                    > if matches!(self.version, 35..=38) {
+                    > if matches!(self.version, 35..=39) {
                         26
                     } else if self.version == 34 {
                         25
-                    } else if matches!(self.version, 26..=38) {
+                    } else if matches!(self.version, 26..=39) {
                         24
                     } else if self.version == 25 {
                         23
-                    } else if matches!(self.version, 22..=38) {
+                    } else if matches!(self.version, 22..=39) {
                         22
                     } else {
                         21
@@ -688,20 +720,21 @@ impl<'a> Diagnostic<'a> {
                 {
                     return Err(DiagnosticError::Structure);
                 }
-                if matches!(self.version, 27..=38) && tag == 21 {
+                if matches!(self.version, 27..=39) && tag == 21 {
                     if event.len() != 18 || !matches!(event[1], 0..=2) {
                         return Err(DiagnosticError::Structure);
                     }
                     validate_handle(&event[2..14], self.slot_bound())?;
                     let total = i32::from_le_bytes(number(&event[14..18])?);
                     if total < 0
-                        || (event[1] == 2 && !(1..=pickup_bound_for(self.version)).contains(&total))
+                        || (event[1] == 2
+                            && !(1..=pickup_bound_for(self.version, self.e1())).contains(&total))
                     {
                         return Err(DiagnosticError::Identity);
                     }
                 }
                 if tag == 23 {
-                    validate_pickup_event(event, self.version, self.slot_bound())?;
+                    validate_pickup_event(event, self.version, self.slot_bound(), self.e1())?;
                 }
                 if tag == 26 {
                     self.validate_mover_event(event)?;
@@ -721,25 +754,25 @@ impl<'a> Diagnostic<'a> {
                 if tag == 22 {
                     validate_player_event(
                         event,
-                        matches!(self.version, 24..=38),
-                        matches!(self.version, 27..=38),
+                        matches!(self.version, 24..=39),
+                        matches!(self.version, 27..=39),
                         self.slot_bound(),
                     )?;
                 }
-                if tag == 14 && matches!(self.version, 23..=38) {
-                    let sectors = if matches!(self.version, 31..=38) {
+                if tag == 14 && matches!(self.version, 23..=39) {
+                    let sectors = if matches!(self.version, 31..=39) {
                         Some(u32::from_le_bytes(number(self.required("sectors.count")?)?))
                     } else {
                         None
                     };
                     validate_weapon_event(
                         event,
-                        matches!(self.version, 24..=38),
+                        matches!(self.version, 24..=39),
                         self.slot_bound(),
                         sectors,
                     )?;
                 }
-                if tag == 15 && matches!(self.version, 29..=38) {
+                if tag == 15 && matches!(self.version, 29..=39) {
                     validate_projectile_event(event, self.slot_bound())?;
                 }
                 // Validate identity-bearing payloads without interpreting nested
@@ -758,20 +791,20 @@ impl<'a> Diagnostic<'a> {
                     )?);
                     if is_type {
                         self.identity(value, u16::MAX)?;
-                    } else if matches!(self.version, 21..=38) {
+                    } else if matches!(self.version, 21..=39) {
                         let state = OriginalState::try_from(value)
                             .map_err(|_| DiagnosticError::Identity)?;
                         // Entering S_NULL is a source removal event, not a live
                         // executable state. Real pistol impact thinkers expose
                         // this sentinel in23; historical readers stay unchanged.
-                        if matches!(self.version, 23..=38)
+                        if matches!(self.version, 23..=39)
                             && state == OriginalState::S_NULL
                             && event.get(..2) == Some(&[12, 1])
                         {
                             continue;
                         }
                         // DSIM35: a corpse crunched to giblets enters S_GIBS.
-                        if matches!(self.version, 35..=38) && state == OriginalState::S_GIBS {
+                        if matches!(self.version, 35..=39) && state == OriginalState::S_GIBS {
                             continue;
                         }
                         // Any admitted normal role; never original alias interpretation.
@@ -828,16 +861,16 @@ impl<'a> Diagnostic<'a> {
                 }
             }
         }
-        if matches!(self.version, 22..=38) {
+        if matches!(self.version, 22..=39) {
             self.validate_player()?;
         }
         if self.version == 23 {
             self.validate_pistol()?;
         }
-        if matches!(self.version, 24..=38) {
+        if matches!(self.version, 24..=39) {
             self.validate_weapons()?;
         }
-        if matches!(self.version, 26..=38) {
+        if matches!(self.version, 26..=39) {
             let kind = self.required("original_player.0.armor.type")?;
             if kind.len() != 1 {
                 return Err(DiagnosticError::Structure);
@@ -848,28 +881,31 @@ impl<'a> Diagnostic<'a> {
                 self.policy(),
             )?;
         }
-        if matches!(self.version, 27..=38) {
+        if matches!(self.version, 27..=39) {
             self.validate_bonus_statistics()?;
         }
         if self.version == 34 {
             self.validate_specials()?;
         }
-        if matches!(self.version, 35..=38) {
+        if matches!(self.version, 35..=39) {
             self.validate_movers()?;
         }
-        if matches!(self.version, 36..=38) {
+        if matches!(self.version, 36..=39) {
             self.validate_decorations()?;
         }
-        if matches!(self.version, 37 | 38) {
+        if matches!(self.version, 37..=39) {
             self.validate_barrels()?;
         }
-        if self.version == 38 {
+        if matches!(self.version, 38 | 39) {
             self.validate_level_body()?;
         }
-        if matches!(self.version, 29..=38) {
+        if self.version == 39 {
+            self.validate_episode1()?;
+        }
+        if matches!(self.version, 29..=39) {
             self.validate_live_projectiles()?;
         }
-        if matches!(self.version, 25..=38) {
+        if matches!(self.version, 25..=39) {
             self.validate_pickup_items()?;
             if self.required("original_player.0.pickups.present")? != [1] {
                 return Err(DiagnosticError::Structure);
@@ -881,15 +917,16 @@ impl<'a> Diagnostic<'a> {
                 self.required("original_player.0.pickups.item_count")?,
             )?);
             let message = self.required("original_player.0.pickups.message")?;
-            if !(0..=bonus_bound_for(self.version)).contains(&bonus)
-                || if matches!(self.version, 27..=38) {
-                    !(0..=pickup_bound_for(self.version)).contains(&items)
+            if !(0..=bonus_bound_for(self.version, self.e1())).contains(&bonus)
+                || if matches!(self.version, 27..=39) {
+                    !(0..=pickup_bound_for(self.version, self.e1())).contains(&items)
                 } else {
                     items != 0
                 }
                 || !(matches!(message, [0..=6] | [8..=9])
-                    || (matches!(self.version, 26..=38) && matches!(message, [10..=11]))
-                    || (matches!(self.version, 27..=38) && matches!(message, [12..=13])))
+                    || (matches!(self.version, 26..=39) && matches!(message, [10..=11]))
+                    || (matches!(self.version, 27..=39) && matches!(message, [12..=13]))
+                    || (self.version == 39 && matches!(message, [10..=29])))
             {
                 return Err(DiagnosticError::Structure);
             }
@@ -1391,7 +1428,7 @@ impl<'a> Diagnostic<'a> {
                 continue;
             };
             count += 1;
-            if count > MAX_DECORATIONS {
+            if count > self.e1().map_or(MAX_DECORATIONS, |b| b.statics) {
                 return Err(DiagnosticError::Limit);
             }
             let d = decoration.descriptor();
@@ -1503,7 +1540,7 @@ impl<'a> Diagnostic<'a> {
                 continue;
             }
             count += 1;
-            if count > crate::MAX_BARRELS {
+            if count > self.e1().map_or(crate::MAX_BARRELS, |b| b.barrels) {
                 return Err(DiagnosticError::Limit);
             }
             let raw = u16field("state")?;
@@ -1601,6 +1638,128 @@ impl<'a> Diagnostic<'a> {
             let spawn = &self.required(&format!("{prefix}.spawnpoint"))?[1..];
             if !records.any(|record| record == spawn) {
                 return Err(DiagnosticError::Identity);
+            }
+        }
+        Ok(())
+    }
+    /// DSIM39 witnesses of the Episode 1 fields (plan §A.7): `level.secret_exit`
+    /// is 0 or 1 and implies `level.exit`; every `sector.N.floorpic` is a
+    /// normalized flat name (upper-case ASCII bytes, then zero padding, at least
+    /// one byte); every live plat carries a `type` of 1 or 3 (`low` 0 for 3),
+    /// every live floor a `direction` of −1 or 1 and a positive `speed`, and
+    /// exactly the `donutRaise` floors (type 11) carry `texture` and
+    /// `newspecial`; the weapon maxima are the `G_PlayerReborn` values doubled
+    /// once by `backpack` and the cell and rocket counts are within them; the
+    /// power counters are in their source domains (no invulnerability or
+    /// strength in Episode 1, invisibility and the suit at most 2,100 tics, the
+    /// map 0 or 1, the visor at most 4,200); the skull keys are never held; and
+    /// the player body carries `MF_SHADOW` exactly while invisible.
+    fn validate_episode1(&self) -> Result<(), DiagnosticError> {
+        let byte = |name: &str| -> Result<u8, DiagnosticError> {
+            Ok(number::<1>(self.required(name)?)?[0])
+        };
+        let i32field = |name: &str| -> Result<i32, DiagnosticError> {
+            Ok(i32::from_le_bytes(number(self.required(name)?)?))
+        };
+        if u64::from_le_bytes(number(self.required("store.slot_count")?)?)
+            > u64::from(u32::from_le_bytes(number(
+                self.required("store.max_slots")?,
+            )?))
+        {
+            return Err(DiagnosticError::Limit);
+        }
+        let secret = byte("level.secret_exit")?;
+        if secret > 1 || (secret == 1 && byte("level.exit")? != 1) {
+            return Err(DiagnosticError::Structure);
+        }
+        let sectors = u32::from_le_bytes(number(self.required("sectors.count")?)?);
+        for i in 0..sectors {
+            let name = number::<8>(self.required(&format!("sector.{i}.floorpic"))?)?;
+            if !normalized_flat_name(&name) {
+                return Err(DiagnosticError::Structure);
+            }
+        }
+        let slots = u64::from_le_bytes(number(self.required("sector_thinkers.slot_count")?)?);
+        for slot in 0..slots {
+            let prefix = format!("sector_thinker.{slot}");
+            if self.required(&format!("{prefix}.occupied"))? != [1] {
+                continue;
+            }
+            match byte(&format!("{prefix}.kind"))? {
+                6 => {
+                    let ty = byte(&format!("{prefix}.type"))?;
+                    if !matches!(ty, 1 | 3) || (ty == 3 && i32field(&format!("{prefix}.low"))? != 0)
+                    {
+                        return Err(DiagnosticError::Identity);
+                    }
+                }
+                7 => {
+                    let donut = byte(&format!("{prefix}.type"))? == 11;
+                    let texture = self.field(&format!("{prefix}.texture"));
+                    let newspecial = self.field(&format!("{prefix}.newspecial"));
+                    if !matches!(i32field(&format!("{prefix}.direction"))?, -1 | 1)
+                        || i32field(&format!("{prefix}.speed"))? <= 0
+                        || texture.is_some() != donut
+                        || newspecial.is_some() != donut
+                    {
+                        return Err(DiagnosticError::Identity);
+                    }
+                    if let (Some(texture), Some(newspecial)) = (texture, newspecial) {
+                        if !normalized_flat_name(&number::<8>(texture)?) {
+                            return Err(DiagnosticError::Structure);
+                        }
+                        number::<2>(newspecial)?;
+                    }
+                }
+                _ => {}
+            }
+        }
+        let prefix = "original_player.0.weapons";
+        if self.required(&format!("{prefix}.present"))? == [1] {
+            let backpack = byte("original_player.0.backpack")?;
+            if backpack > 1 {
+                return Err(DiagnosticError::Structure);
+            }
+            let word = |name: &str| -> Result<u16, DiagnosticError> {
+                Ok(u16::from_le_bytes(number(
+                    self.required(&format!("{prefix}.{name}"))?,
+                )?))
+            };
+            let max = crate::weapons::AMMO_CAPACITIES.map(|m| m << backpack);
+            for (i, m) in max.into_iter().enumerate() {
+                if i32::from(word(&format!("max_ammo.{i}"))?) != m {
+                    return Err(DiagnosticError::Identity);
+                }
+            }
+            if i32::from(word("cells")?) > max[2] || i32::from(word("rockets")?) > max[3] {
+                return Err(DiagnosticError::Identity);
+            }
+        } else if byte("original_player.0.backpack")? != 0 {
+            return Err(DiagnosticError::Structure);
+        }
+        let limits = [0..=0, 0..=0, 0..=2100, 0..=2100, 0..=1, 0..=4200];
+        let mut powers = [0; 6];
+        for (i, range) in limits.into_iter().enumerate() {
+            powers[i] = i32field(&format!("original_player.0.powers.{i}"))?;
+            if !range.contains(&powers[i]) {
+                return Err(DiagnosticError::Identity);
+            }
+        }
+        for i in 0..6 {
+            let card = byte(&format!("original_player.0.cards.{i}"))?;
+            if card > 1 || (i >= 3 && card != 0) {
+                return Err(DiagnosticError::Identity);
+            }
+        }
+        let raw = self.required("original_player.0.mo")?;
+        if raw.len() == 13 && raw[0] == 1 {
+            let slot = u32::from_le_bytes(number(&raw[1..5])?);
+            let prefix = format!("actor.{slot}");
+            if self.required(&format!("{prefix}.occupied"))? == [1] {
+                let flags = u32::from_le_bytes(number(self.required(&format!("{prefix}.flags"))?)?);
+                if (flags & MF_SHADOW != 0) != (powers[2] > 0) {
+                    return Err(DiagnosticError::Identity);
+                }
             }
         }
         Ok(())
@@ -1803,7 +1962,7 @@ impl<'a> Diagnostic<'a> {
         let collected = i32::from_le_bytes(number(
             self.required("original_player.0.pickups.item_count")?,
         )?);
-        if !(0..=pickup_bound_for(self.version)).contains(&total)
+        if !(0..=pickup_bound_for(self.version, self.e1())).contains(&total)
             || !(0..=total).contains(&collected)
         {
             return Err(DiagnosticError::Identity);
@@ -1811,7 +1970,7 @@ impl<'a> Diagnostic<'a> {
         let things = self.required("map.things")?;
         // DSIM33 carries the THINGS lump of a real-size map, bounded by the WAD
         // format's 32,768 records; earlier versions keep the 256-THING cap.
-        let bound = if matches!(self.version, 33..=38) {
+        let bound = if matches!(self.version, 33..=39) {
             32_768 * 10
         } else {
             MAX_DEMON_MAP_THINGS * 10
@@ -1828,7 +1987,7 @@ impl<'a> Diagnostic<'a> {
             })
         };
         let expected = world_pickups::counted_things(raw(), &world_pickups::COUNTED_ITEM_DOOMED);
-        if matches!(self.version, 28..=38) {
+        if matches!(self.version, 28..=39) {
             // Every admitted COUNTKILL monster is a placed THING; credits never
             // exceed the map total. Zero again describes a pre-batch world.
             let kills = i32::from_le_bytes(number(self.required("level.total_kills")?)?);
@@ -1836,13 +1995,18 @@ impl<'a> Diagnostic<'a> {
                 i32::from_le_bytes(number(self.required("level.single_player_kill_count")?)?);
             let placed = world_pickups::counted_things(
                 raw(),
-                if matches!(self.version, 29..=38) {
+                if matches!(self.version, 29..=39) {
                     &world_pickups::COUNTED_KILL_DOOMED_IMPS
                 } else {
                     &world_pickups::COUNTED_KILL_DOOMED
                 },
             );
-            if !(0..=MAX_PLAYER_MONSTERS as i32).contains(&kills)
+            // DSIM39: every Episode 1 monster is COUNTKILL; `K` bounds the total.
+            let (placed, roster) = match self.e1() {
+                Some(b) => (b.monsters, b.monsters),
+                None => (placed, MAX_PLAYER_MONSTERS),
+            };
+            if !(0..=roster as i32).contains(&kills)
                 || (kills > 0 && kills as usize != placed)
                 || !(0..=kills).contains(&credited)
             {
@@ -1931,7 +2095,7 @@ impl<'a> Diagnostic<'a> {
             let dropped = flags & world_pickups::MF_DROPPED != 0;
             // DSIM31 items sit on their own sector's floor; earlier versions on the
             // flat world's floor 0 under ceiling 128.
-            let span = if matches!(self.version, 31..=38) {
+            let span = if matches!(self.version, 31..=39) {
                 // A collected or removed item is unlinked from its sector list at
                 // once and retired by the next pass; its sector field still holds.
                 let listed = self.required(&format!("{prefix}.pending_removal"))? == [0];
@@ -1959,7 +2123,7 @@ impl<'a> Diagnostic<'a> {
                 || i32field("z")? != i32field("floor")?
                 // DSIM35: the relaxed witness (§4.2 of the M3h8 note): `z == floorz` on
                 // the item's own fields, not the centre sector's heights.
-                || (!matches!(self.version, 35..=38)
+                || (!matches!(self.version, 35..=39)
                     && [i32field("floor")?, i32field("ceiling")?] != span)
                 || self.required(&format!("{prefix}.target"))? != [0; 13]
                 || flags
@@ -1982,7 +2146,7 @@ impl<'a> Diagnostic<'a> {
                 return Err(DiagnosticError::Identity);
             }
         }
-        if count > world_pickups::max_world_items(self.policy()) {
+        if count > world_pickups::world_item_bound(self.policy(), self.e1()) {
             return Err(DiagnosticError::Limit);
         }
         Ok(())
@@ -2054,6 +2218,17 @@ impl<'a> Diagnostic<'a> {
             owned: word("owned")?,
             bullets: word("bullets")?,
             shells: word("shells")?,
+            cells: if self.version == 39 {
+                word("cells")?
+            } else {
+                0
+            },
+            rockets: if self.version == 39 {
+                word("rockets")?
+            } else {
+                0
+            },
+            backpack: self.version == 39 && self.required("original_player.0.backpack")? == [1],
             attack_down: latch,
             refire: int("refire")?,
             bob: crate::Fixed::from_bits(int("bob")?),
@@ -2152,7 +2327,7 @@ impl<'a> Diagnostic<'a> {
         let damage = i32::from_le_bytes(number(self.required("original_player.0.damage_count")?)?);
         let frags = i32::from_le_bytes(number(self.required("original_player.0.frags")?)?);
         let state = self.required("original_player.0.state")?;
-        if !(0..=if matches!(self.version, 27..=38) {
+        if !(0..=if matches!(self.version, 27..=39) {
             200
         } else {
             100
@@ -2160,7 +2335,7 @@ impl<'a> Diagnostic<'a> {
             .contains(&hp)
             || !(0..=100).contains(&damage)
             || frags < 0
-            || !(matches!(state, [0] | [1]) || (matches!(self.version, 35..=38) && state == [2]))
+            || !(matches!(state, [0] | [1]) || (matches!(self.version, 35..=39) && state == [2]))
             || (state != [0]) != (hp == 0)
         {
             return Err(DiagnosticError::Identity);
@@ -2249,10 +2424,25 @@ fn validate_handle(bytes: &[u8], slots: u32) -> Result<(), DiagnosticError> {
     }
     Ok(())
 }
-/// Store capacity admitted by a DSIM version: 384 for DSIM37 and DSIM38 (the
-/// barrels and level policies), `MAP_SCALE_ACTOR_SLOTS` for DSIM30–36, 64 before.
+/// `MF_SHADOW` (p_mobj.h): partial invisibility.
+const MF_SHADOW: u32 = 0x40000;
+/// A DSIM39 normalized flat name (decision D2): at least one byte, upper-case
+/// ASCII graphic bytes up to the first NUL, NUL padding after it.
+fn normalized_flat_name(name: &[u8; 8]) -> bool {
+    let end = name.iter().position(|b| *b == 0).unwrap_or(8);
+    end > 0
+        && name[..end]
+            .iter()
+            .all(|b| b.is_ascii_graphic() && !b.is_ascii_lowercase())
+        && name[end..].iter().all(|b| *b == 0)
+}
+/// Store capacity admitted by a DSIM version: 1,024 for DSIM39 (the Episode 1
+/// policy), 384 for DSIM37 and DSIM38 (the barrels and level policies),
+/// `MAP_SCALE_ACTOR_SLOTS` for DSIM30–36, 64 before.
 const fn slot_bound_for(version: u32) -> u32 {
-    if matches!(version, 37 | 38) {
+    if version == 39 {
+        crate::player_map_scale::EPISODE1_ACTOR_SLOTS
+    } else if matches!(version, 37 | 38) {
         crate::player_map_scale::BARRELS_ACTOR_SLOTS
     } else if matches!(version, 30..=36) {
         crate::player_map_scale::MAP_SCALE_ACTOR_SLOTS
@@ -2261,18 +2451,27 @@ const fn slot_bound_for(version: u32) -> u32 {
     }
 }
 /// Item bound admitted by a DSIM version (`level.total_items`,
-/// `pickups.item_count` and the pickup events): 64 for DSIM37 and DSIM38, 16
-/// before.
-const fn pickup_bound_for(version: u32) -> i32 {
-    if matches!(version, 37 | 38) {
+/// `pickups.item_count` and the pickup events): the frame's own `P` for DSIM39
+/// (`e1`, counted from `map.things`), 64 for DSIM37 and DSIM38, 16 before.
+fn pickup_bound_for(version: u32, e1: Option<Episode1Bounds>) -> i32 {
+    if let (39, Some(b)) = (version, e1) {
+        i32::try_from(b.pickups).unwrap_or(i32::MAX)
+    } else if version == 39 {
+        0
+    } else if matches!(version, 37 | 38) {
         world_pickups::BARRELS_MAX_PICKUPS as i32
     } else {
         MAX_WORLD_PICKUPS as i32
     }
 }
-/// `bonuscount` bound admitted by a DSIM version: `BONUSADD` per admitted item.
-const fn bonus_bound_for(version: u32) -> i32 {
-    if matches!(version, 37 | 38) {
+/// `bonuscount` bound admitted by a DSIM version: `BONUSADD` per admitted item;
+/// for DSIM39 `6·(P + R + keycards)` of the frame's own THINGS.
+fn bonus_bound_for(version: u32, e1: Option<Episode1Bounds>) -> i32 {
+    if let (39, Some(b)) = (version, e1) {
+        i32::try_from(b.max_bonus()).unwrap_or(i32::MAX)
+    } else if version == 39 {
+        0
+    } else if matches!(version, 37 | 38) {
         world_pickups::max_bonus(OriginalExecutionProfile::PlayerMonstersBarrelsV1)
     } else {
         world_pickups::MAX_BONUS
@@ -2282,7 +2481,7 @@ impl Snapshot {
     /// Bounded Result-returning DSIM20/21/22/23/24 encoder. Trusted convenience APIs retain
     /// their old allocation policy; callers at input/output boundaries use this.
     pub fn diagnostic_bytes(&self, limits: DiagnosticLimits) -> Result<Vec<u8>, DiagnosticError> {
-        if !matches!(self.version(), 20..=38) {
+        if !matches!(self.version(), 20..=39) {
             return Err(DiagnosticError::Version(self.version()));
         }
         let mut size = 16_usize;
@@ -2588,7 +2787,9 @@ fn validate_armor_event(event: &[u8], version: u32, slots: u32) -> Result<(), Di
     let incoming = i32::from_le_bytes(number(&event[13..17])?);
     let saved = i32::from_le_bytes(number(&event[17..21])?);
     let effective = i32::from_le_bytes(number(&event[21..25])?);
-    let policy = if version == 38 {
+    let policy = if version == 39 {
+        OriginalExecutionProfile::PlayerMonstersEpisode1V1
+    } else if version == 38 {
         OriginalExecutionProfile::PlayerMonstersLevelV1
     } else if version == 37 {
         OriginalExecutionProfile::PlayerMonstersBarrelsV1
@@ -2633,10 +2834,17 @@ fn validate_armor_event(event: &[u8], version: u32, slots: u32) -> Result<(), Di
     Ok(())
 }
 // Independent DSIM25/26 widths and bounded source domains; no world restoration.
-fn validate_pickup_event(event: &[u8], version: u32, slots: u32) -> Result<(), DiagnosticError> {
-    let armor = matches!(version, 26..=38);
-    let bonuses = matches!(version, 27..=38);
-    let policy = if version == 38 {
+fn validate_pickup_event(
+    event: &[u8],
+    version: u32,
+    slots: u32,
+    e1: Option<Episode1Bounds>,
+) -> Result<(), DiagnosticError> {
+    let armor = matches!(version, 26..=39);
+    let bonuses = matches!(version, 27..=39);
+    let policy = if version == 39 {
+        OriginalExecutionProfile::PlayerMonstersEpisode1V1
+    } else if version == 38 {
         OriginalExecutionProfile::PlayerMonstersLevelV1
     } else if version == 37 {
         OriginalExecutionProfile::PlayerMonstersBarrelsV1
@@ -2735,13 +2943,15 @@ fn validate_pickup_event(event: &[u8], version: u32, slots: u32) -> Result<(), D
             event.len() == 3
                 && (matches!(event[2],1..=6|8..=9)
                     || (armor && matches!(event[2], 10..=11))
-                    || (bonuses && matches!(event[2], 12..=13)))
+                    || (bonuses && matches!(event[2], 12..=13))
+                    || (version == 39 && matches!(event[2], 14..=29)))
         }
         Some(5) => {
             event.len() == 10
-                && (0..=bonus_bound_for(version)).contains(&i32::from_le_bytes(number(get(2, 6)?)?))
+                && (0..=bonus_bound_for(version, e1))
+                    .contains(&i32::from_le_bytes(number(get(2, 6)?)?))
                 && if bonuses {
-                    (0..=pickup_bound_for(version))
+                    (0..=pickup_bound_for(version, e1))
                         .contains(&i32::from_le_bytes(number(get(6, 10)?)?))
                 } else {
                     get(6, 10)? == [0; 4]
@@ -2760,7 +2970,7 @@ fn validate_pickup_event(event: &[u8], version: u32, slots: u32) -> Result<(), D
             }
             let before = i32::from_le_bytes(number(get(2, 6)?)?);
             let after = i32::from_le_bytes(number(get(6, 10)?)?);
-            (0..pickup_bound_for(version)).contains(&before) && after == before + 1
+            (0..pickup_bound_for(version, e1)).contains(&before) && after == before + 1
         }
         Some(8) if bonuses => {
             if event.len() != 14 {

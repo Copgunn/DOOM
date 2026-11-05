@@ -19,6 +19,13 @@ pub struct PlayerWeaponState {
     pub bullets: u16,
     /// am_shell (maximum50).
     pub shells: u16,
+    /// am_cell; 0 under every policy before the Episode 1 policy (DSIM39).
+    pub cells: u16,
+    /// am_misl (rockets); 0 under every policy before the Episode 1 policy.
+    pub rockets: u16,
+    /// Source `player->backpack`; false under every policy before the Episode 1
+    /// policy. The maxima double once it is set (p_inter.c:589–595).
+    pub backpack: bool,
     /// Source attackdown.
     pub attack_down: bool,
     /// Source refire, checked on increment.
@@ -39,6 +46,9 @@ impl PlayerWeaponState {
             owned: inventory.owned,
             bullets: u16::try_from(inventory.ammo[0]).map_err(|_| WeaponError::Inventory)?,
             shells: u16::try_from(inventory.ammo[1]).map_err(|_| WeaponError::Inventory)?,
+            cells: u16::try_from(inventory.ammo[2]).map_err(|_| WeaponError::Inventory)?,
+            rockets: u16::try_from(inventory.ammo[3]).map_err(|_| WeaponError::Inventory)?,
+            backpack: false,
             attack_down: true,
             refire: 0,
             bob: Fixed::ZERO,
@@ -54,8 +64,8 @@ impl PlayerWeaponState {
             ready: self.ready,
             pending: self.pending,
             owned: self.owned,
-            ammo: [i32::from(self.bullets), i32::from(self.shells), 0, 0],
-            max_ammo: weapons::AMMO_CAPACITIES,
+            ammo: self.ammo(),
+            max_ammo: self.max_ammo(),
             attack_down: self.attack_down,
             refire: self.refire,
             bob: self.bob,
@@ -82,6 +92,9 @@ impl PlayerWeaponState {
             owned: value.owned,
             bullets: u16::try_from(value.ammo[0]).map_err(|_| WeaponError::Inventory)?,
             shells: u16::try_from(value.ammo[1]).map_err(|_| WeaponError::Inventory)?,
+            cells: u16::try_from(value.ammo[2]).map_err(|_| WeaponError::Inventory)?,
+            rockets: u16::try_from(value.ammo[3]).map_err(|_| WeaponError::Inventory)?,
+            backpack: false,
             attack_down: value.attack_down,
             refire: value.refire,
             bob: value.bob,
@@ -89,11 +102,29 @@ impl PlayerWeaponState {
             psprites: value.psprites,
         })
     }
+    /// `player->ammo` in `ammotype_t` order (clip, shell, cell, misl).
+    pub(crate) fn ammo(self) -> [i32; 4] {
+        [
+            i32::from(self.bullets),
+            i32::from(self.shells),
+            i32::from(self.cells),
+            i32::from(self.rockets),
+        ]
+    }
+    /// `player->maxammo`: the `G_PlayerReborn` maxima, doubled once by the first
+    /// backpack (p_inter.c:589–595).
+    pub(crate) fn max_ammo(self) -> [i32; 4] {
+        weapons::AMMO_CAPACITIES.map(|m| m << u32::from(self.backpack))
+    }
     pub(crate) fn validate(self) -> Result<(), SimError> {
+        // No policy before the Episode 1 weapon step (M4a step 6) gives a backpack.
+        if self.backpack {
+            return Err(WeaponError::Inventory.into());
+        }
         WeaponInventory {
             ready: self.ready,
             owned: self.owned,
-            ammo: [i32::from(self.bullets), i32::from(self.shells), 0, 0],
+            ammo: self.ammo(),
         }
         .validate()?;
         if let Some(pending) = self.pending {

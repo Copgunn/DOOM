@@ -20,6 +20,9 @@ pub(crate) struct ExpandedSelection {
     /// Two-sided scrolling walls and static decorations (E1M1 policy, a superset
     /// of the movers policy: `movers` is set too).
     pub e1m1: bool,
+    /// The per-map bounds of the Episode 1 policy (a superset of the E1M1 policy:
+    /// `e1m1` is set too); `None` under every other policy.
+    pub episode1: Option<crate::episode1::Episode1Bounds>,
 }
 impl Simulation {
     /// Profile 20: larger static maps with the exact map-context Demon registry.
@@ -46,6 +49,7 @@ impl Simulation {
                 specials: false,
                 movers: false,
                 e1m1: false,
+                episode1: None,
             },
         )
     }
@@ -65,6 +69,7 @@ impl Simulation {
             specials,
             movers,
             e1m1,
+            episode1,
         } = selection;
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
@@ -80,7 +85,9 @@ impl Simulation {
         if !real_map && map.things().len() > MAX_DEMON_MAP_THINGS {
             return Err(MapSpawnError::WorkLimit.into());
         }
-        let movers = if e1m1 {
+        let movers = if episode1.is_some() {
+            Some(mover_rules::validate_episode1(&map)?)
+        } else if e1m1 {
             Some(mover_rules::validate_e1m1(&map)?)
         } else if movers {
             Some(mover_rules::validate_movers(&map)?)
@@ -96,10 +103,15 @@ impl Simulation {
         {
             return Err(PursuitError::Specials.into());
         }
-        if map
-            .sectors()
-            .iter()
-            .any(|s| s.heights.iter().any(|h| h.unsigned_abs() > 512))
+        // The Episode 1 policy replaces the ±512 static-height rule (the twin of
+        // certificate clause (vii)) by the checked height arithmetic of the traces
+        // and the per-tic vertical witnesses (decision H3); the format envelope of
+        // `map_extent::validate_real_map` (±1,024) still applies.
+        if episode1.is_none()
+            && map
+                .sectors()
+                .iter()
+                .any(|s| s.heights.iter().any(|h| h.unsigned_abs() > 512))
         {
             return Err(PerceptionError::Arithmetic.into());
         }
@@ -123,7 +135,8 @@ impl Simulation {
         }
         registry.validate_impact_source()?;
         let mut sim = if real_map {
-            let admission = map_extent::validate_real_map(&map, actor_cap)?;
+            let sight_queries = episode1.map_or(64, |b| b.sight_queries());
+            let admission = map_extent::validate_real_map(&map, actor_cap, sight_queries)?;
             let mut sim = Self::create_bounded_with(
                 map,
                 limit,
@@ -136,6 +149,17 @@ impl Simulation {
             )?;
             sim.world.extent_sight_work = Some(admission.sight_work);
             sim.world.sight_work_budget = admission.sight_budget;
+            if let Some(bounds) = episode1 {
+                // One explosion's sight work (decision H4) must be representable.
+                admission
+                    .sight_work
+                    .checked_add(5 * sim.world.lines.len())
+                    .and_then(|w| w.checked_mul(bounds.explosion_sight_queries()))
+                    .ok_or(GeometryError::WorkLimit)?;
+                sim.world.episode1 = Some(bounds);
+                sim.world.sight_query_limit = sight_queries;
+                sim.world.checked_arithmetic = true;
+            }
             if specials {
                 sim.install_specials(limit, movers)?;
             }
@@ -196,7 +220,14 @@ impl Simulation {
             .iter()
             .filter(|s| matches!(s.special, 1 | 2 | 3 | 4 | 8 | 12 | 13 | 17))
             .count();
-        let movers_slots = movers.as_ref().map_or(Some(0), |m| m.movers.checked_mul(2));
+        // Under the Episode 1 policy stair and donut sectors are not tagged, so
+        // `M` is not known statically: the class holds `L + 2·numsectors` (the
+        // capacity is not DSIM state; only the high-water `slot_count` is).
+        let movers_slots = if self.world.episode1.is_some() {
+            map.sectors().len().checked_mul(2)
+        } else {
+            movers.as_ref().map_or(Some(0), |m| m.movers.checked_mul(2))
+        };
         let lights = movers_slots
             .and_then(|m| m.checked_add(lights))
             .and_then(|slots| u32::try_from(slots).ok())
@@ -334,7 +365,7 @@ pub(crate) fn action_sight(
             .get()
             .checked_add(world.extent_sight_work.expect("checked geometry") + 5 * world.lines.len())
             .ok_or(PerceptionError::WorkLimit)?;
-        if count > 64 || work > world.sight_work_budget {
+        if count > world.sight_query_limit || work > world.sight_work_budget {
             return Err(PerceptionError::WorkLimit.into());
         }
         control.queries.set(count);
@@ -662,6 +693,9 @@ impl Simulation {
             && error == SimError::Combat(CombatError::InterceptLimit)
         {
             MapScaleError::Intercepts.into()
+        } else if error == SimError::Combat(CombatError::Arithmetic) {
+            // Only the Episode 1 policy's checked traces raise it (decision H3).
+            MapScaleError::Arithmetic.into()
         } else {
             error
         }

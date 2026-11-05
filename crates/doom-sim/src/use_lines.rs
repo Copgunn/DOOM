@@ -67,11 +67,11 @@ fn switch_sound(events: &mut Vec<Event>, buttons: &Buttons, sound: u16) {
     });
 }
 
-/// p_switch.c `P_ChangeSwitchTexture` (201–263) with the switch texture always
-/// found: a non-reusable line's special is cleared **before** the exit-sound test,
+/// p_switch.c `P_ChangeSwitchTexture` (201–263) with the switch texture found
+/// (always, by rule 9, except under the Episode 1 policy, decision D3): a non-reusable line's special is cleared **before** the exit-sound test,
 /// so the exit switch plays `sfx_swtchn`; the sound plays at `buttonlist[0]`; a
 /// reusable line then starts its button (`P_StartButton`). Returns the special after.
-fn change_switch_texture(
+pub(crate) fn change_switch_texture(
     world: &StaticWorld,
     events: &mut Vec<Event>,
     buttons: &mut Buttons,
@@ -80,6 +80,14 @@ fn change_switch_texture(
     use_again: bool,
 ) -> Result<i16, SimError> {
     let after = if use_again { special } else { 0 };
+    // Decision D3 (Episode 1 policy): a front side with no episode-1 switch
+    // texture is searched in vain (p_switch.c:224–262): the special is cleared
+    // above for a non-reusable line, and there is no sound and no button.
+    if world.episode1.is_some()
+        && crate::mover_rules::line_switch_match(world.map(), usize::from(line)).is_none()
+    {
+        return Ok(after);
+    }
     let sound = crate::lifecycle::source_sound_id(if after == LINE_EXIT {
         "sfx_swtchx"
     } else {
@@ -252,8 +260,17 @@ pub(crate) fn use_lines<M: MoverAccess + ?Sized>(
         position[0] + reach(crate::FINE_SINE[fine + 2048]),
         position[1] + reach(crate::FINE_SINE[fine]),
     ];
-    let hits = crate::movement::path(starter.world, position, end, limit)
-        .map_err(|_| crate::MapScaleError::Intercepts)?;
+    let hits = crate::movement::path(
+        starter.world,
+        position,
+        end,
+        limit,
+        starter.world.checked_arithmetic,
+    )
+    .map_err(|e| match e {
+        crate::movement::PathError::Overflow => crate::MapScaleError::Intercepts,
+        crate::movement::PathError::Arithmetic => crate::MapScaleError::Arithmetic,
+    })?;
     for (frac, line) in hits {
         if frac > Fixed::ONE {
             break;

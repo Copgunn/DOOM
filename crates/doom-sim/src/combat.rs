@@ -40,6 +40,11 @@ pub enum CombatError {
     TraversalLimit,
     /// Conservative callback/trace work exceeded the supported bound.
     WorkLimit,
+    /// Under the Episode 1 policy, a trace intercept or height sum that the
+    /// source computes in signed `int` would overflow (decision H3: the checked
+    /// twin of certificate clauses (i) and (vii)); reported for the refused tic as
+    /// `MapScaleError::Arithmetic`.
+    Arithmetic,
 }
 impl fmt::Display for CombatError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
