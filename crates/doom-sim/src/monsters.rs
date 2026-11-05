@@ -625,7 +625,7 @@ impl Simulation {
             .as_deref()
             .and_then(|r| r.actor_type(ty))
             .map_or(Fixed::ZERO, ActorTypeDef::radius);
-        if !self.spawn_admitted(position, radius, 1008)
+        if !self.spawn_admitted(position, radius, 1008, true)
             || matches!(height,SpawnHeight::Absolute(z) if !crate::sight::within(z,1018))
         {
             return Err(MonsterError::Arithmetic.into());

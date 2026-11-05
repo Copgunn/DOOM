@@ -82,6 +82,41 @@ pub const E1M1_LINKED_THINGS: usize =
     1 + MAX_PLAYER_MONSTERS + MAX_WORLD_PICKUPS + MAX_PLAYER_MONSTERS + MAX_DECORATIONS;
 const _: () = assert!(E1M1_LINKED_THINGS == 65);
 
+/// The most exploding barrels (`MT_BARREL`, DoomEd 2035) one map may spawn under
+/// the barrels policy (decision F2: E1M1 spawns 6 at medium); barrels themselves
+/// are admitted by a later step, until then DoomEd 2035 stays `UnsupportedType`.
+/// The M3h9b note §5.3 budgets with the values of this policy (`K` = monsters ≤ 8,
+/// `k` = Imps ≤ `K`, `P` = pickups ≤ 64, `R` = drops ≤ 8, `D` = decorations ≤ 32,
+/// `B` = barrels ≤ 16, `L`/`M` light and mover sectors):
+///
+/// | Budget | Formula | Value | Store or certificate |
+/// | --- | --- | --- | --- |
+/// | Linked things `N` | `1 + K + P + R + D + B` | 129 (was 65) | `P_ChangeSector` work, intercept reasoning |
+/// | Live actors | `1 + K + P + 26k + (K−k) + 8(K−k) + R + D + B` | ≤ 337 at `k = 8` (201 at `k = 0`) | `BARRELS_ACTOR_SLOTS` 384 |
+/// | Spawns in one pass | `39 − 3k` | ≤ 39 | 337 + 15 = 352 at `k = 8`; 201 + 39 = 240 at `k = 0`; crude 337 + 39 = 376 ≤ 384 |
+/// | Thinker visits per pass | `384 + L + 2M` | | the visit budget |
+/// | `P_ChangeSector` per tic | `Σ_movers 4·(B(s) + N·Q)` | `N` 65 → 129 | re-evaluated, not re-proved |
+/// | `spechit` | ≤ 8 per position check, every radius < 64 | radii 10, 16, 20 | rule 6 unchanged |
+/// | Hitscan intercepts | lines (with multiplicity) + things of the ≤ 18 cells of a trace | E1M1 ≤ 103 against 128 | not a bound: the intercept witness stays (decision F7) |
+/// | Explosions per tic | ≤ `B` | 16 | |
+/// | Sight queries per explosion | ≤ `1 + K + B − 1` | ≤ 24 | per-explosion control (decision F6) |
+/// | `P_DamageMobj` calls per tic | ≤ `B·(K + B)` + the attack bodies | ≤ 384 | each a bounded body |
+/// | `MAX_BONUS` | `6 × P` | 384 | pickup state range |
+/// | Barrel removals per tic | ≤ `B` | 16 | retirement list |
+///
+/// The only grown stores are the actor slots (384, encoded as `store.max_slots`)
+/// and the per-policy counters; the arithmetic certificate has no roster term.
+pub const MAX_BARRELS: usize = 16;
+/// The linked things `N` of the barrels policy (M3h9b note §5.3):
+/// `1 + K + P + R + D + B` = 1 + 8 + 64 + 8 + 32 + 16.
+pub const BARRELS_LINKED_THINGS: usize = 1
+    + MAX_PLAYER_MONSTERS
+    + crate::world_pickups::BARRELS_MAX_PICKUPS
+    + MAX_PLAYER_MONSTERS
+    + MAX_DECORATIONS
+    + MAX_BARRELS;
+const _: () = assert!(BARRELS_LINKED_THINGS == 129);
+
 /// The listed decoration type of `ty`, policy-free (the policy gate is
 /// [`is_decoration`]).
 pub(crate) fn decoration(ty: ActorTypeId) -> Option<OriginalActorType> {

@@ -72,8 +72,8 @@ pub use player_pistol::{INITIAL_PISTOL_BULLETS, PLAYER_DEMON_PISTOL_CONTEXT_SCHE
 pub use player_roster::{PLAYER_DEMON_CONTEXT_SCHEMA, PLAYER_DEMON_MELEE_CONTEXT_SCHEMA};
 pub use player_weapons::{PLAYER_DEMON_WEAPONS_CONTEXT_SCHEMA, PlayerWeaponState};
 pub use world_pickups::{
-    MAX_WORLD_PICKUPS, PLAYER_DEMON_PICKUPS_CONTEXT_SCHEMA, PickupEvent, PickupKind, PickupMessage,
-    PickupOutcome, PlayerPickupState,
+    BARRELS_MAX_PICKUPS, MAX_WORLD_PICKUPS, PLAYER_DEMON_PICKUPS_CONTEXT_SCHEMA, PickupEvent,
+    PickupKind, PickupMessage, PickupOutcome, PlayerPickupState,
 };
 mod chaingunner;
 mod demon;
@@ -133,7 +133,9 @@ pub use map_scale::{
     MapScaleMetrics,
 };
 mod e1m1_rules;
-pub use e1m1_rules::{E1M1_DECORATIONS, E1M1_LINKED_THINGS, MAX_DECORATIONS};
+pub use e1m1_rules::{
+    BARRELS_LINKED_THINGS, E1M1_DECORATIONS, E1M1_LINKED_THINGS, MAX_BARRELS, MAX_DECORATIONS,
+};
 mod movement;
 mod mover_rules;
 mod movers;

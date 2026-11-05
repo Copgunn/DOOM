@@ -241,6 +241,7 @@ impl Simulation {
                 position,
                 Fixed::from_bits(OriginalActorType::MT_PLAYER.descriptor().radius),
                 PLAYER_BODY_COORDINATE_LIMIT,
+                true,
             ) || height != SpawnHeight::Floor
                 || self.original_player.is_some_and(|p| p.mo.is_some())
                 || self.actors.order().any(|id| {
@@ -283,7 +284,7 @@ impl Simulation {
             || l.movedir != 0
             || l.movecount != 0
             || a.angle() != 0
-            || !self.spawn_admitted(a.position(), a.radius(), PLAYER_BODY_COORDINATE_LIMIT)
+            || !self.spawn_admitted(a.position(), a.radius(), PLAYER_BODY_COORDINATE_LIMIT, true)
             || a.momentum() != [Fixed::ZERO; 2]
             || a.momz != Fixed::ZERO
             || a.z != a.floor

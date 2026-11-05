@@ -266,3 +266,292 @@ fn dsim37_is_rejected_by_every_older_reader_and_bounds_its_slots_at_384() {
     Diagnostic::decode_e1m1(&v36, limits).unwrap();
     Diagnostic::decode_barrels(&v37, limits).unwrap();
 }
+
+// --- Plan step 5: pickups to 64, every THING angle, the spawn rule S′ ---------------
+
+const IMP: i16 = 3001;
+const FLOOR_LAMP: i16 = 2028;
+const HEALTH_BONUS: i16 = 2014;
+
+/// A committed M3h9 room with its THINGs replaced by `things`
+/// (`[x, y, angle, type, options]`).
+fn with_things(index: usize, things: &[[i16; 5]]) -> crate::diagonal_room::Lumps {
+    let mut lumps = room(index);
+    lumps.clear_things();
+    for thing in things {
+        lumps.add_thing(*thing);
+    }
+    lumps
+}
+
+/// `spawn_map_things` under `construct`: the spawned count, or the error with the
+/// canonical state, the RNG and the actor list unchanged.
+fn spawn_under(
+    lumps: &crate::diagonal_room::Lumps,
+    construct: fn(doom_map::Map, MapContextOptions) -> Result<Simulation, OriginalRegistryError>,
+) -> Result<Vec<ActorId>, SimError> {
+    let mut s = construct(lumps.map(), replay_options()).unwrap();
+    let (before, rng) = (s.snapshot(), s.rng());
+    let result = s.spawn_map_things().map(|r| r.spawned);
+    if result.is_err() {
+        assert_eq!(s.snapshot(), before);
+        assert_eq!(s.rng(), rng);
+        assert_eq!(s.actor_order().count(), 0);
+    }
+    result
+}
+
+fn barrels(lumps: &crate::diagonal_room::Lumps) -> Result<Vec<ActorId>, SimError> {
+    spawn_under(lumps, Simulation::original_player_barrels_map)
+}
+fn e1m1(lumps: &crate::diagonal_room::Lumps) -> Result<Vec<ActorId>, SimError> {
+    spawn_under(lumps, Simulation::original_player_e1m1_map)
+}
+
+/// The gallery room (map 5): its west wall `x = −512` is one-sided from `y = −384`
+/// to the alcove at `y = −88`; every THING below stands at `y = −200`, so its box
+/// meets that wall alone. `d` is the center's distance in front of the wall.
+const GALLERY: usize = 5;
+const WALL_X: i16 = -512;
+const ARITHMETIC: SimError = SimError::Monster(MonsterError::Arithmetic);
+
+/// S′ for a mover (decision F3): an Imp (radius 20) whose box overlaps the wall
+/// by 4 units has `d` 16 ≥ 31 − 20 = 11 and spawns under wire 21; `d` 11 is the
+/// bound itself; `d` 10 is refused. Under wire 20 the closed-box rule refuses
+/// every overlap, and the Imp at `d` 16 too.
+#[test]
+fn s_prime_admits_an_imp_overlapping_a_wall_by_its_margin_only() {
+    let at = |d: i16| with_things(GALLERY, &[[WALL_X + d, -200, 0, IMP, 7]]);
+    assert_eq!(barrels(&at(16)).unwrap().len(), 1);
+    assert_eq!(barrels(&at(11)).unwrap().len(), 1);
+    assert_eq!(barrels(&at(10)), Err(ARITHMETIC));
+    assert_eq!(barrels(&at(1)), Err(ARITHMETIC));
+    assert_eq!(e1m1(&at(16)), Err(ARITHMETIC));
+    assert_eq!(e1m1(&at(20)), Err(ARITHMETIC));
+    // Clear of the wall (closed box one unit away), both policies spawn it.
+    assert_eq!(e1m1(&at(21)).unwrap().len(), 1);
+    assert_eq!(barrels(&at(21)).unwrap().len(), 1);
+}
+
+/// S′ for the player body (radius 16, margin 15): overlapping the wall by 4 units
+/// (`d` 12) is refused by `player_spawn_guard`; `d` 15 is admitted under wire 21
+/// and refused under wire 20 (its closed box overlaps).
+#[test]
+fn s_prime_refuses_a_player_body_embedded_below_its_margin() {
+    let body = |construct: fn(
+        doom_map::Map,
+        MapContextOptions,
+    ) -> Result<Simulation, OriginalRegistryError>,
+                d: i16| {
+        let mut s = construct(room(GALLERY).map(), replay_options()).unwrap();
+        s.spawn_map_things().unwrap();
+        let before = s.snapshot();
+        let result = s.spawn_player_body(
+            PlayerSlot::One,
+            [WALL_X + d, -200].map(Fixed::from_map_units),
+        );
+        if result.is_err() {
+            assert_eq!(s.snapshot(), before);
+        }
+        result.map(|_| ())
+    };
+    let binding = Err(SimError::PlayerBody(PlayerBodyError::Binding));
+    assert_eq!(body(Simulation::original_player_barrels_map, 12), binding);
+    assert_eq!(body(Simulation::original_player_barrels_map, 14), binding);
+    assert_eq!(body(Simulation::original_player_barrels_map, 15), Ok(()));
+    assert_eq!(body(Simulation::original_player_e1m1_map, 15), binding);
+    assert_eq!(body(Simulation::original_player_e1m1_map, 16), binding);
+    assert_eq!(body(Simulation::original_player_e1m1_map, 17), Ok(()));
+}
+
+/// Statics need only their center (decision F3): a floor lamp (radius 16) with the
+/// wall exactly on its box edge and a health bonus (radius 20) overlapping the wall
+/// by 8 units spawn under wire 21; wire 20 refuses both.
+#[test]
+fn s_prime_admits_statics_touching_or_overlapping_a_wall() {
+    let lamp = with_things(GALLERY, &[[WALL_X + 16, -200, 0, FLOOR_LAMP, 7]]);
+    let bonus = with_things(GALLERY, &[[WALL_X + 12, -200, 0, HEALTH_BONUS, 7]]);
+    let both = with_things(
+        GALLERY,
+        &[
+            [WALL_X + 16, -200, 0, FLOOR_LAMP, 7],
+            [WALL_X + 1, -260, 0, HEALTH_BONUS, 7],
+        ],
+    );
+    assert_eq!(barrels(&lamp).unwrap().len(), 1);
+    assert_eq!(barrels(&bonus).unwrap().len(), 1);
+    assert_eq!(barrels(&both).unwrap().len(), 2);
+    assert_eq!(e1m1(&lamp), Err(ARITHMETIC));
+    assert_eq!(e1m1(&bonus), Err(ARITHMETIC));
+}
+
+/// The center must have odd parity under every kind: a health bonus at (−540,
+/// −200) is inside the vertex rectangle (the alcove reaches `x = −560`) but outside
+/// the walls (even parity) and is refused; so is a center outside the rectangle,
+/// and a controlled dropped pickup outside the walls.
+#[test]
+fn s_prime_refuses_a_center_with_even_parity_or_outside_the_rectangle() {
+    let outside = with_things(GALLERY, &[[-540, -200, 0, HEALTH_BONUS, 7]]);
+    assert_eq!(barrels(&outside), Err(ARITHMETIC));
+    let beyond = with_things(GALLERY, &[[-570, -64, 0, HEALTH_BONUS, 7]]);
+    assert_eq!(barrels(&beyond), Err(ARITHMETIC));
+    // Inside the alcove (odd parity) the same bonus spawns.
+    let alcove = with_things(GALLERY, &[[-540, -64, 0, HEALTH_BONUS, 7]]);
+    assert_eq!(barrels(&alcove).unwrap().len(), 1);
+    let mut s =
+        Simulation::original_player_barrels_map(room(GALLERY).map(), replay_options()).unwrap();
+    s.spawn_map_things().unwrap();
+    let before = s.snapshot();
+    assert_eq!(
+        s.spawn_dropped_pickup(PickupKind::Clip, [-540, -200].map(Fixed::from_map_units))
+            .map(|_| ()),
+        Err(ARITHMETIC)
+    );
+    assert_eq!(s.snapshot(), before);
+    // A dropped clip overlapping the wall is a static: admitted under wire 21.
+    s.spawn_dropped_pickup(PickupKind::Clip, [-508, -200].map(Fixed::from_map_units))
+        .unwrap();
+}
+
+/// The open-box test is strict and the margin exact to the raw unit: on the census
+/// room's west wall (`x = −512`, full height) a radius-20 mover with the wall on its
+/// box edge is admitted (the open box is clear), the margin 11 is admitted, one raw
+/// unit (1/65536 map unit) less is refused, and a static needs only its center.
+#[test]
+fn s_prime_margin_is_exact_to_the_raw_unit() {
+    let p = |x: i16, y: i16| [x, y].map(Fixed::from_map_units);
+    let r20 = Fixed::from_map_units(20);
+    let boundary = Boundary::derive(&room(12).map()).unwrap();
+    assert!(boundary.spawn_admitted_relaxed(p(0, 0), r20, true));
+    assert!(boundary.spawn_admitted_relaxed(p(-492, 0), r20, true)); // edge contact
+    assert!(boundary.spawn_admitted_relaxed(p(-501, 0), r20, true)); // d 11
+    assert!(!boundary.spawn_admitted_relaxed(p(-502, 0), r20, true)); // d 10
+    assert!(boundary.spawn_admitted_relaxed(p(-502, 0), r20, false)); // static
+    // One raw unit short of the margin is refused; the margin itself admitted.
+    let raw = |x: i32| [Fixed::from_bits(x), Fixed::ZERO];
+    let margin = (-512 + 11) << 16;
+    assert!(boundary.spawn_admitted_relaxed(raw(margin), r20, true));
+    assert!(!boundary.spawn_admitted_relaxed(raw(margin - 1), r20, true));
+    // Outside the walls: refused for every kind.
+    assert!(!boundary.spawn_admitted_relaxed(p(-520, 0), r20, false));
+}
+
+/// Every THING angle is admitted under wire 21 (decision F8) and converted as
+/// p_mobj.c:794 does: `ANG45 × (angle / 45)` modulo 2³², i.e. `(q mod 8)·ANG45` for
+/// the truncated quotient `q`. Under wire 20 an angle of 180 (octant 4) is still
+/// `MapSpawnError::Angle` with the state unchanged.
+#[test]
+fn every_thing_angle_spawns_under_wire_21_with_the_source_angle_word() {
+    let angles: [i16; 17] = [
+        0, 45, 90, 135, 180, 225, 270, 315, 30, 100, 359, -1, -45, -100, 400, 32767, -32768,
+    ];
+    let things: Vec<[i16; 5]> = angles
+        .iter()
+        .enumerate()
+        .map(|(i, a)| [-400 + 40 * i as i16, 0, *a, HEALTH_BONUS, 7])
+        .collect();
+    let lumps = with_things(12, &things);
+    let mut s = Simulation::original_player_barrels_map(lumps.map(), replay_options()).unwrap();
+    let spawned = s.spawn_map_things().unwrap().spawned;
+    assert_eq!(spawned.len(), angles.len());
+    for (id, angle) in spawned.iter().zip(angles) {
+        let q = i32::from(angle) / 45;
+        let expected = (q.rem_euclid(8) as u32) * 0x2000_0000;
+        assert_eq!(s.actor(*id).unwrap().angle(), expected, "angle {angle}");
+    }
+    assert_eq!(
+        e1m1(&with_things(12, &[[0, 0, 180, HEALTH_BONUS, 7]])),
+        Err(SimError::MapSpawn(MapSpawnError::Angle(180)))
+    );
+    assert_eq!(
+        e1m1(&with_things(12, &[[0, 0, -225, HEALTH_BONUS, 7]])),
+        Err(SimError::MapSpawn(MapSpawnError::Angle(-225)))
+    );
+    assert_eq!(
+        e1m1(&with_things(12, &[[0, 0, 135, HEALTH_BONUS, 7]]))
+            .unwrap()
+            .len(),
+        1
+    );
+}
+
+/// The pickup bound is a policy value (decision F2): 64 placed pickups spawn under
+/// wire 21 and a 65th is `MapSpawnError::WorkLimit`; wire 20 keeps 16 and refuses
+/// the 17th, nothing spawned.
+#[test]
+fn sixty_four_pickups_spawn_under_wire_21_and_sixteen_under_wire_20() {
+    let grid = |n: usize| -> Vec<[i16; 5]> {
+        (0..n)
+            .map(|i| {
+                let (col, row) = ((i % 10) as i16, (i / 10) as i16);
+                [-400 + 64 * col, -320 + 64 * row, 0, HEALTH_BONUS, 7]
+            })
+            .collect()
+    };
+    let limit = Err(SimError::MapSpawn(MapSpawnError::WorkLimit));
+    assert_eq!(barrels(&with_things(12, &grid(64))).unwrap().len(), 64);
+    assert_eq!(barrels(&with_things(12, &grid(65))), limit);
+    assert_eq!(e1m1(&with_things(12, &grid(16))).unwrap().len(), 16);
+    assert_eq!(e1m1(&with_things(12, &grid(17))), limit);
+    assert_eq!(world_pickups::max_pickups(BARRELS), 64);
+    assert_eq!(world_pickups::max_pickups(E1M1), MAX_WORLD_PICKUPS);
+    assert_eq!(world_pickups::max_bonus(BARRELS), 384);
+    assert_eq!(world_pickups::max_bonus(E1M1), 96);
+    // A 64-pickup world advances and its capture is read by the DSIM37 reader.
+    let mut s =
+        Simulation::original_player_barrels_map(with_things(12, &grid(64)).map(), replay_options())
+            .unwrap();
+    s.spawn_map_things().unwrap();
+    s.spawn_player_body(PlayerSlot::One, [-448, 352].map(Fixed::from_map_units))
+        .unwrap();
+    // The census scenario's weapons (`spawn_filter_medium`).
+    let c = e1m1_replay::cases()
+        .into_iter()
+        .find(|c| c.label == "spawn_filter_medium")
+        .unwrap();
+    s.initialize_player_weapons(
+        PlayerSlot::One,
+        WeaponInventory {
+            ready: c.ready,
+            owned: c.owned,
+            ammo: [c.clips, 0, 0, 0],
+        },
+    )
+    .unwrap();
+    s.spawn_level_specials().unwrap();
+    s.advance([TicCommand::default(); 4]).unwrap();
+    let limits = DiagnosticLimits::default();
+    let bytes = s.snapshot().diagnostic_bytes(limits).unwrap();
+    let view = Diagnostic::decode_barrels(&bytes, limits).unwrap();
+    assert_eq!(
+        view.field("level.total_items"),
+        Some(64i32.to_le_bytes().as_slice())
+    );
+}
+
+/// The §5.3 budget formulas with the values of the barrels policy (M3h9b note).
+#[test]
+fn barrels_budget_formulas_hold() {
+    let (big_k, p, r, d, b) = (
+        MAX_PLAYER_MONSTERS,
+        world_pickups::BARRELS_MAX_PICKUPS,
+        MAX_PLAYER_MONSTERS,
+        MAX_DECORATIONS,
+        MAX_BARRELS,
+    );
+    assert_eq!((big_k, p, r, d, b), (8, 64, 8, 32, 16));
+    assert_eq!(BARRELS_LINKED_THINGS, 1 + big_k + p + r + d + b);
+    assert_eq!(BARRELS_LINKED_THINGS, 129);
+    let live = |k: usize| 1 + big_k + p + 26 * k + (big_k - k) + 8 * (big_k - k) + r + d + b;
+    let spawns = |k: usize| 39 - 3 * k;
+    assert_eq!(live(8), 337);
+    assert_eq!(live(0), 201);
+    assert_eq!(live(8) + spawns(8), 352);
+    assert_eq!(live(0) + spawns(0), 240);
+    let slots = BARRELS_ACTOR_SLOTS as usize;
+    assert!(live(8) + 39 <= slots);
+    for k in 0..=big_k {
+        assert!(live(k) <= live(8) && live(k) + spawns(k) <= slots, "k {k}");
+    }
+    assert_eq!(world_pickups::max_bonus(BARRELS), 6 * p as i32);
+}

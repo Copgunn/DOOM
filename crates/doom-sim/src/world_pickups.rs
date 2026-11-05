@@ -196,9 +196,9 @@ pub struct PlayerPickupState {
 }
 impl PlayerPickupState {
     fn validate(self, profile: OriginalExecutionProfile) -> Result<(), SimError> {
-        if !(0..=MAX_BONUS).contains(&self.bonus_count)
+        if !(0..=max_bonus(profile)).contains(&self.bonus_count)
             || if profile.has_player_bonuses() {
-                !(0..=MAX_WORLD_PICKUPS as i32).contains(&self.item_count)
+                !(0..=max_pickups(profile) as i32).contains(&self.item_count)
             } else {
                 self.item_count != 0
             }
@@ -823,7 +823,7 @@ impl Simulation {
                 .and_then(|p| p.pickups)
                 .ok_or(PlayerBodyError::Invariant)?
                 .item_count;
-            if !(0..=MAX_WORLD_PICKUPS as i32).contains(&total)
+            if !(0..=max_pickups(self.player_policy()) as i32).contains(&total)
                 || collected > total
                 || counted > (total - collected) as usize
                 || (total > 0 && total as usize != counted_map_things(self.world.map().things()))
@@ -860,13 +860,14 @@ impl Simulation {
                     .is_some_and(|l| kind_for(self.player_policy(), l.actor_type).is_some())
             })
             .count();
-        if items >= MAX_WORLD_PICKUPS {
+        if items >= max_pickups(self.player_policy()) {
             return Err(MapSpawnError::WorkLimit.into());
         }
         if !self.spawn_admitted(
             position,
             Fixed::from_bits(k.original_type().descriptor().radius),
             978,
+            false,
         ) {
             return Err(MonsterError::Arithmetic.into());
         }
@@ -904,13 +905,14 @@ impl Simulation {
     }
 }
 
-/// Live world-item bound: placed/controlled items plus, under PlayerMonstersV1,
-/// at most one P_KillMobj drop per admitted roster monster.
+/// Live world-item bound: placed/controlled items ([`max_pickups`]) plus, under
+/// PlayerMonstersV1 and later, at most one P_KillMobj drop per admitted roster
+/// monster.
 pub(crate) const fn max_world_items(policy: OriginalExecutionProfile) -> usize {
     if policy.has_monsters() {
-        MAX_WORLD_PICKUPS + crate::MAX_PLAYER_MONSTERS
+        max_pickups(policy) + crate::MAX_PLAYER_MONSTERS
     } else {
-        MAX_WORLD_PICKUPS
+        max_pickups(policy)
     }
 }
 /// DoomEd numbers of the COUNTITEM health/armor bonuses (info.c MT_MISC2/MT_MISC3).

@@ -18,6 +18,15 @@ pub struct MapSpawnReport {
 }
 
 impl Simulation {
+    /// Whether a spawn of `ty` is a mover for the barrels policy's spawn rule S′
+    /// (M3h9b note decision F3): every type except the policy's pickups and static
+    /// decorations, whose boxes are never read against walls (they have no
+    /// momentum, and the API refuses pushes). Read only under the barrels policy.
+    pub(crate) fn spawn_mover(&self, ty: ActorTypeId) -> bool {
+        let policy = self.player_policy();
+        !((policy.has_world_pickups() && world_pickups::kind_for(policy, ty).is_some())
+            || e1m1_rules::is_decoration(policy, ty))
+    }
     /// Profile 4, all recognized source metadata, medium single-player skill,
     /// 1024 slots. Map THINGS are not spawned implicitly.
     pub fn actor_states(map: Map) -> Result<Self, SimError> {
@@ -108,6 +117,7 @@ impl Simulation {
                     .and_then(|r| r.actor_type(ty))
                     .map_or(Fixed::ZERO, ActorTypeDef::radius),
                 1024,
+                self.spawn_mover(ty),
             ) || matches!(height,SpawnHeight::Absolute(z) if !crate::sight::within(z,1024)))
         {
             return Err(PerceptionError::Arithmetic.into());
@@ -454,7 +464,14 @@ impl Simulation {
                 {
                     return Err(MapSpawnError::UnsupportedType(thing.kind).into());
                 }
-                if self.profile.uses_checked_demons() && !(-4..=3).contains(&(thing.angle / 45)) {
+                // Every older policy refuses octants outside −4..=3; the barrels policy
+                // admits every angle (decision F8): `spawn_placed_thing` converts it as
+                // p_mobj.c:794 does, `ANG45 × (angle / 45)` modulo 2³², which depends
+                // on `(angle / 45) mod 8` only.
+                if self.profile.uses_checked_demons()
+                    && !self.player_policy().has_barrels()
+                    && !(-4..=3).contains(&(thing.angle / 45))
+                {
                     return Err(MapSpawnError::Angle(thing.angle).into());
                 }
                 if decoration
@@ -480,7 +497,7 @@ impl Simulation {
                                 world_pickups::kind_for(self.player_policy(), *ty).is_some()
                             })
                             .count()
-                            == MAX_WORLD_PICKUPS)
+                            == world_pickups::max_pickups(self.player_policy()))
                 {
                     return Err(MapSpawnError::WorkLimit.into());
                 }
@@ -491,6 +508,7 @@ impl Simulation {
                     ],
                     info.radius(),
                     978,
+                    !pickup && !decoration,
                 ) {
                     return Err(MonsterError::Arithmetic.into());
                 }
@@ -514,6 +532,7 @@ impl Simulation {
                     ],
                     info.radius(),
                     1024,
+                    self.spawn_mover(ty),
                 ) {
                     return Err(PerceptionError::Arithmetic.into());
                 }
@@ -571,11 +590,8 @@ impl Simulation {
                 })
                 .count();
             let count = i32::try_from(count).map_err(|_| MapSpawnError::StatisticsOverflow)?;
-            if !(0..=MAX_WORLD_PICKUPS as i32).contains(&total)
-                || total
-                    .checked_add(count)
-                    .is_none_or(|n| n > MAX_WORLD_PICKUPS as i32)
-            {
+            let bound = world_pickups::max_pickups(self.player_policy()) as i32;
+            if !(0..=bound).contains(&total) || total.checked_add(count).is_none_or(|n| n > bound) {
                 return Err(MapSpawnError::StatisticsOverflow.into());
             }
             report.spawned = self.checked_map_spawn_batch(selected.len(), |host| {
