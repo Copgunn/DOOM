@@ -19,6 +19,8 @@ of any object is printed (spans are differences). Nothing is written anywhere.
     python3 tools/iwad_counts.py --spawn-rule-markdown    # the spawn-rule table (all slots)
     python3 tools/iwad_counts.py --spawn-fit [SLOT]       # the spawn height fit via R_PointInSubsector (counts only)
     python3 tools/iwad_counts.py --things-budget [SLOT]   # BLOCKMAP/intercept budget facts (counts only)
+    python3 tools/iwad_counts.py --episode-markdown [E]   # the M4a episode census (DOOM.WAD, medium skill)
+    python3 tools/iwad_counts.py --demos-markdown # the M4a DEMOn lump header facts
     python3 tools/iwad_counts.py DIR ...          # another read-only directory
 
 The rules evaluated are those of docs/M3H6_REFERENCE_INVESTIGATION.md: the arithmetic
@@ -2337,6 +2339,341 @@ def budget_text(c):
     return "\n".join(out)
 
 
+# M4a episode census (--episode-markdown [E]) and demo-lump header census (--demos-markdown).
+# Counts and header facts only: no coordinate, angle, ticcmd byte or lump content is printed.
+# Wire 22 (PlayerMonstersLevelV1) admission, read from the Rust source: sector specials
+# STAGE_A_SECTOR_SPECIALS, line specials {0,1,11,36,38,48,63,88,109} (= STAGE_B_LINE_SPECIALS)
+# and the thing set below. The thing set is the union checked by the map-thing loop of
+# crates/doom-sim/src/spawning.rs:443-585 (starts 1..4/11 at 444-476; the skill/multiplayer
+# filter at 477-486; `pickup || former || decoration || barrel || MT_SERGEANT` at 505-518):
+#   pickups      world_pickups.rs:113-128 `kind` (PickupKind::original_type, 63-79): MT_CLIP 2007,
+#                MT_MISC17 2048, MT_MISC22 2008, MT_MISC23 2049, MT_MISC10 2011, MT_MISC11 2012,
+#                MT_SHOTGUN 2001, MT_CHAINGUN 2002, MT_MISC0 2018, MT_MISC1 2019, MT_MISC2 2014,
+#                MT_MISC3 2015;
+#   monsters     original_registry.rs:610-614 FORMER_HUMANS (3004, 9, 65), `is_imp` 714-716 (3001),
+#                and owner_slot 747-749 = MT_SERGEANT (3002, the demon);
+#   decorations  e1m1_rules.rs:34-42 E1M1_DECORATIONS: 2028, 48, 35, 24, 15, 10, 12;
+#   barrel       barrels.rs:71-74 `is_barrel`, DoomEd 2035.
+# Player start 1 is a body record (spawning.rs:458-474); 2-4 and 11 never spawn on this path.
+WIRE22_LINE_SPECIALS = frozenset((0, 1, 11, 36, 38, 48, 63, 88, 109))
+WIRE22_THINGS = frozenset(
+    (2007, 2048, 2008, 2049, 2011, 2012, 2001, 2002, 2018, 2019, 2014, 2015)  # pickups
+    + (3004, 9, 65, 3001, 3002)  # monsters
+    + (2028, 48, 35, 24, 15, 10, 12)  # decorations
+    + (2035,)  # barrel
+)
+NONSPAWNING_STARTS = (2, 3, 4, 11)
+# Line-special groups, each derived from the case labels of P_CrossSpecialLine
+# (p_spec.c:492-870), P_ShootSpecialLine (p_spec.c:959-1000) and P_UseSpecialLine
+# (p_switch.c:276-650); the LINE_KINDS table above carries the kind of each special.
+# Keyed doors: manual doors 26/27/28 (DR) and 32/33/34 (D1) call EV_VerticalDoor, which tests
+# the key cards (p_doors.c:440-480); 99, 133-137 call EV_DoLockedDoor (p_switch.c:495-503,
+# 627-634). Crusher ceilings: crushAndRaise 25, 73 (p_spec.c:620-623, 790-794) and 49
+# (p_switch.c:421), fastCrushAndRaise 6, 77, silentCrushAndRaise 141, lowerAndCrush 44, 72.
+# Ceiling movers that do not crush: 40 (raiseToHighest), 41, 43 (lowerToFloor). Crusher
+# stops: 57, 74. Teleports: EV_Teleport 39, 97, 125, 126 (p_spec.c:655-660, 765-769, 900-906,
+# 933-937). Exits: G_ExitLevel 11, 52; G_SecretExitLevel 51, 124 (kinds "exit").
+LOCKED_LINES = (26, 27, 28, 32, 33, 34, 99, 133, 134, 135, 136, 137)
+CRUSHER_LINES = (6, 25, 44, 49, 72, 73, 77, 141)
+CEILING_OTHER_LINES = (40, 41, 43)
+CRUSH_STOP_LINES = (57, 74)
+TELEPORT_LINES = (39, 97, 125, 126)
+EXIT_LINES = (11, 51, 52, 124)
+STAIR_LINES = (7, 8, 100, 127)
+LIGHT_LINES = (12, 13, 17, 35, 79, 80, 81, 104, 138, 139)
+LIFT_LINES = tuple(sorted(s for s, (k, _t) in LINE_KINDS.items() if k == "plat" or k == "plat stop"))
+DOOR_LINES = tuple(sorted(s for s, (k, _t) in LINE_KINDS.items() if k in ("door", "manual door")))
+FLOOR_LINES = tuple(sorted(s for s, (k, _t) in LINE_KINDS.items() if k in ("floor", "floor+ceiling")))
+LINE_GROUPS = (
+    ("locked doors", LOCKED_LINES),
+    ("doors, all (manual and tagged)", DOOR_LINES),
+    ("lifts and platforms (plat, plat stop)", LIFT_LINES),
+    ("floor movers", FLOOR_LINES),
+    ("crusher ceilings", CRUSHER_LINES),
+    ("other ceiling movers", CEILING_OTHER_LINES),
+    ("crusher stops", CRUSH_STOP_LINES),
+    ("stairs", STAIR_LINES),
+    ("donut", (9,)),
+    ("light line specials", LIGHT_LINES),
+    ("teleport lines", TELEPORT_LINES),
+    ("exit lines", EXIT_LINES),
+    ("scroller 48", (48,)),
+)
+# Thing groups by DoomEd number (names are read from info.c at run time). Keys MT_MISC4-9;
+# weapons are the SPECIAL weapon pickups; powerups are the p_inter.c P_TouchSpecialThing
+# cases of the spheres, the invulnerability and the other timed or map items (84 is the Wolf SS, a monster).
+KEY_THINGS = (5, 6, 13, 38, 39, 40)
+WEAPON_THINGS = (2001, 2002, 2003, 2004, 2005, 2006, 82)
+POWERUP_THINGS = (2013, 2022, 2023, 2024, 2025, 2026, 2045, 83)
+TELEPORT_DEST_THING = 14
+START_NAMES = {1: "player 1 start", 2: "player 2 start", 3: "player 3 start", 4: "player 4 start", 11: "deathmatch start"}
+
+
+def read_lump(data, lumps, name, index=0):
+    found = [(p, s) for n, p, s in lumps if n == name]
+    pos, size = found[index]
+    return data[pos : pos + size]
+
+
+def episode_census(data, lumps, slot):
+    """The raw lump facts of one slot as counters (no object is kept)."""
+    table = mobj_table()
+    blobs = map_lumps(data, lumps, slot)
+    things = records(blobs["THINGS"], "<hhHHH")
+    lines = records(blobs["LINEDEFS"], "<HHHHHHH")
+    sectors = records(blobs["SECTORS"], "<hh8s8sHHH")
+    medium = collections.Counter()
+    total = collections.Counter()
+    for _x, _y, _angle, dtype, options in things:
+        doomednum = dtype if dtype < 0x8000 else dtype - 0x10000
+        total[doomednum] += 1
+        if doomednum == DM_START or doomednum in (1, 2, 3, 4):
+            medium[doomednum] += 1  # stored before the skill test (p_mobj.c:717-737)
+        elif not (options & MTF_NOTSINGLE) and (options & MTF_NORMAL):
+            medium[doomednum] += 1
+    line_tags = [l[4] for l in lines if l[4]]
+    sector_tags = [s[6] for s in sectors if s[6]]
+    return dict(
+        slot=slot,
+        records=len(things),
+        total=total,
+        medium=medium,
+        unknown=sorted(d for d in medium if d not in table and d > 4 and d != DM_START),
+        line_specials=collections.Counter(l[3] for l in lines),
+        sector_specials=collections.Counter(s[5] for s in sectors),
+        lines=len(lines),
+        sectors=len(sectors),
+        tagged_lines=len(line_tags),
+        tagged_sectors=len(sector_tags),
+        line_tag_set=set(line_tags),
+        sector_tag_set=set(sector_tags),
+        tagged_special_lines=sum(1 for l in lines if l[3] and l[4]),
+        untagged_nonzero_special_lines=sum(1 for l in lines if l[3] and not l[4]),
+    )
+
+
+def thing_name(doomednum):
+    table = mobj_table()
+    if doomednum in START_NAMES:
+        return START_NAMES[doomednum]
+    info = table.get(doomednum)
+    return info[0] if info else "UNKNOWN to info.c"
+
+
+def thing_class(doomednum):
+    info = mobj_table().get(doomednum)
+    return thing_kind(doomednum, info)
+
+
+def fmt_nums(nums, named=False):
+    if not nums:
+        return "none"
+    return ", ".join(f"{n} {thing_name(n)}" if named else str(n) for n in sorted(nums))
+
+
+def wide_table(header, keys, label, cols, getter):
+    print("| " + " | ".join(header + [c["slot"] for c in cols]) + " |")
+    print("| " + " | ".join(["---"] * len(header) + ["---:"] * len(cols)) + " |")
+    for key in keys:
+        print("| " + " | ".join(label(key) + [str(getter(c, key)) for c in cols]) + " |")
+
+
+def episode_markdown_report(data, lumps, episode):
+    slots = [f"E{episode}M{m}" for m in range(1, 10)]
+    present = set(map_slots(lumps))
+    slots = [s for s in slots if s in present]
+    if not slots:
+        print(f"iwad_counts: episode {episode} has no map slots in DOOM.WAD (skipped)")
+        return
+    cols = [episode_census(data, lumps, s) for s in slots]
+    table = mobj_table()
+    print(f"# M4a census: DOOM.WAD episode {episode} on medium skill\n")
+    print(
+        "Counts only (no coordinate, angle or per-object datum). `medium` = the record is handled by\n"
+        "`P_SpawnMapThing` on medium skill (p_mobj.c:717-751): starts (types 1-4 and 11) on every skill,\n"
+        "any other type only when `options & 2` is set and `options & 16` (multiplayer only) is clear.\n"
+        "Names are the info.c `mobjinfo` entries of the doomednum (info.h enum order).\n"
+    )
+    print("## (a) THING doomednums on medium\n")
+    keys = sorted(set().union(*(c["medium"] for c in cols)))
+    wide_table(
+        ["doomednum", "info.c name", "class"],
+        keys,
+        lambda k: [str(k), thing_name(k), thing_class(k)],
+        cols,
+        lambda c, k: c["medium"].get(k, 0),
+    )
+    print("| | **handled on medium** | | " + " | ".join(str(sum(c["medium"].values())) for c in cols) + " |")
+    print("| | **records in lump (all skills)** | | " + " | ".join(str(c["records"]) for c in cols) + " |")
+    print("| | **distinct doomednums on medium** | | " + " | ".join(str(len(c["medium"])) for c in cols) + " |")
+    print()
+    print("## (b) LINEDEF specials (count of lines)\n")
+    keys = sorted(set().union(*(c["line_specials"] for c in cols)))
+    wide_table(
+        ["special", "kind, trigger", "wire 22"],
+        keys,
+        lambda k: [
+            str(k),
+            "-" if k == 0 else (" ".join(LINE_KINDS[k]) if k in LINE_KINDS else "UNKNOWN to LINE_KINDS"),
+            "admitted" if k in WIRE22_LINE_SPECIALS else "missing",
+        ],
+        cols,
+        lambda c, k: c["line_specials"].get(k, 0),
+    )
+    print("| | **linedefs** | | " + " | ".join(str(c["lines"]) for c in cols) + " |")
+    print()
+    print("## (c) SECTOR specials (count of sectors)\n")
+    keys = sorted(set().union(*(c["sector_specials"] for c in cols)))
+    wide_table(
+        ["special", "wire 22"],
+        keys,
+        lambda k: [str(k), "admitted" if k in STAGE_A_SECTOR_SPECIALS else "missing"],
+        cols,
+        lambda c, k: c["sector_specials"].get(k, 0),
+    )
+    print("| | **sectors** | " + " | ".join(str(c["sectors"]) for c in cols) + " |")
+    print("| | **sectors with a nonzero tag** | " + " | ".join(str(c["tagged_sectors"]) for c in cols) + " |")
+    print()
+    print("## (d) Tags\n")
+    rows = (
+        ("linedefs with a nonzero tag", lambda c: c["tagged_lines"]),
+        ("linedefs with a special and a nonzero tag", lambda c: c["tagged_special_lines"]),
+        ("linedefs with a nonzero special and tag 0", lambda c: c["untagged_nonzero_special_lines"]),
+        ("sectors with a nonzero tag", lambda c: c["tagged_sectors"]),
+        ("distinct nonzero line tags", lambda c: len(c["line_tag_set"])),
+        ("distinct nonzero sector tags", lambda c: len(c["sector_tag_set"])),
+        ("distinct nonzero tags (lines and sectors)", lambda c: len(c["line_tag_set"] | c["sector_tag_set"])),
+        ("line tags matching no sector tag", lambda c: len(c["line_tag_set"] - c["sector_tag_set"])),
+    )
+    print("| count | " + " | ".join(c["slot"] for c in cols) + " |")
+    print("| --- | " + " | ".join("---:" for _ in cols) + " |")
+    for name, fn in rows:
+        print(f"| {name} | " + " | ".join(str(fn(c)) for c in cols) + " |")
+    print()
+    print("## (e) Wire 22 classification\n")
+    print(
+        "Wire 22 admits: line specials {0, 1, 11, 36, 38, 48, 63, 88, 109}; sector specials\n"
+        "{0, 1, 2, 3, 4, 5, 7, 8, 9, 12, 13, 16, 17}; THING doomednums: player 1 start, plus\n"
+        f"{fmt_nums(WIRE22_THINGS, named=True)}.\n"
+        "Non-spawning on this path (stored, not spawned): deathmatch starts 11 and player starts 2-4.\n"
+    )
+    print("| map | missing thing types | missing line specials | missing sector specials | non-spawning starts (records) |")
+    print("| --- | --- | --- | --- | --- |")
+    for c in cols:
+        med = set(c["medium"])
+        miss_t = sorted(med - WIRE22_THINGS - {1, 2, 3, 4, 11})
+        miss_l = sorted(set(c["line_specials"]) - WIRE22_LINE_SPECIALS)
+        miss_s = sorted(set(c["sector_specials"]) - STAGE_A_SECTOR_SPECIALS)
+        non = ", ".join(f"{k} x{c['medium'][k]}" for k in NONSPAWNING_STARTS if c["medium"].get(k))
+        print(
+            f"| {c['slot']} | {len(miss_t)}: {fmt_nums(miss_t)} | {len(miss_l)}: {fmt_nums(miss_l)} "
+            f"| {len(miss_s)}: {fmt_nums(miss_s)} | {non or 'none'} |"
+        )
+    print()
+    print("Missing thing types with names and counts on medium:\n")
+    print("| map | missing thing types (doomednum name x count) |")
+    print("| --- | --- |")
+    for c in cols:
+        miss_t = sorted(set(c["medium"]) - WIRE22_THINGS - {1, 2, 3, 4, 11})
+        print(f"| {c['slot']} | " + (", ".join(f"{t} {thing_name(t)} x{c['medium'][t]}" for t in miss_t) or "none") + " |")
+    print()
+    print("Missing line specials with line counts:\n")
+    print("| map | missing line specials (special x lines) |")
+    print("| --- | --- |")
+    for c in cols:
+        miss_l = sorted(set(c["line_specials"]) - WIRE22_LINE_SPECIALS)
+        print(f"| {c['slot']} | " + (", ".join(f"{s} x{c['line_specials'][s]}" for s in miss_l) or "none") + " |")
+    print()
+    print("Missing sector specials with sector counts:\n")
+    print("| map | missing sector specials (special x sectors) |")
+    print("| --- | --- |")
+    for c in cols:
+        miss_s = sorted(set(c["sector_specials"]) - STAGE_A_SECTOR_SPECIALS)
+        print(f"| {c['slot']} | " + (", ".join(f"{s} x{c['sector_specials'][s]}" for s in miss_s) or "none") + " |")
+    print()
+    print("Unknown doomednums (would be `I_Error` in P_SpawnMapThing, p_mobj.c:758-761) after the filter: ", end="")
+    unknown = {c["slot"]: c["unknown"] for c in cols if c["unknown"]}
+    print(", ".join(f"{s}: {v}" for s, v in unknown.items()) if unknown else "none")
+    print()
+    print("## (f) Feature groups\n")
+    print("Line groups are counts of lines; thing groups are counts of medium records.\n")
+    print("| group | members | " + " | ".join(c["slot"] for c in cols) + " |")
+    print("| --- | --- | " + " | ".join("---:" for _ in cols) + " |")
+    for name, members in LINE_GROUPS:
+        print(
+            f"| line: {name} | {', '.join(map(str, members))} | "
+            + " | ".join(str(sum(c["line_specials"].get(m, 0) for m in members)) for c in cols)
+            + " |"
+        )
+    print()
+    thing_groups = (
+        ("keys", KEY_THINGS),
+        ("teleport destination", (TELEPORT_DEST_THING,)),
+        ("weapons", WEAPON_THINGS),
+        ("powerups", POWERUP_THINGS),
+        ("admitted monsters", (3004, 9, 65, 3001, 3002)),
+        ("monsters beyond the admitted set", tuple(sorted(d for d, i in mobj_table().items() if thing_kind(d, i) == "monster" and d not in WIRE22_THINGS))),
+        ("pickups beyond the admitted set", tuple(sorted(d for d, i in mobj_table().items() if thing_kind(d, i) == "pickup" and d not in WIRE22_THINGS))),
+        ("barrel", (2035,)),
+    )
+    print("| thing group | members | " + " | ".join(c["slot"] for c in cols) + " |")
+    print("| --- | --- | " + " | ".join("---:" for _ in cols) + " |")
+    for name, members in thing_groups:
+        label = ", ".join(f"{m} {thing_name(m)}" for m in members)
+        print(
+            f"| {name} | {label} | "
+            + " | ".join(str(sum(c["medium"].get(m, 0) for m in members)) for c in cols)
+            + " |"
+        )
+    print()
+    print("Names of the KEY, WEAPON and POWERUP members as info.c gives them (a member unknown to info.c is flagged):\n")
+    for name, members in (("keys", KEY_THINGS), ("weapons", WEAPON_THINGS), ("powerups", POWERUP_THINGS)):
+        print(f"- {name}: " + ", ".join(f"{m} {thing_name(m)}" for m in members))
+
+
+def demo_markdown_report(directory):
+    print("# M4a census: demo lump headers\n")
+    print(
+        "Header facts only (G_ReadDemoTiccmd layout, g_game.c: version, skill, episode, map, deathmatch,\n"
+        "respawn, fast, nomonsters, consoleplayer, playeringame[4]; then 4 bytes per tic per player;\n"
+        "then the 0x80 end marker). No ticcmd byte is printed. Skill is 0-based (0 = I'm too young to die,\n"
+        "2 = hurt me plenty).\n"
+    )
+    print(
+        "| WAD | lump | bytes | version | skill | episode | map | deathmatch | respawn | fast | nomonsters "
+        "| consoleplayer | playeringame[0..3] | players | ticcmds | seconds (35/s) | 0x80 at expected end | stray bytes |"
+    )
+    print("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- | ---: |")
+    for name in sorted(os.listdir(directory)):
+        if not name.lower().endswith(".wad"):
+            continue
+        data, lumps = read_wad(os.path.join(directory, name))
+        for lump, pos, size in lumps:
+            if not re.fullmatch(r"DEMO\d", lump):
+                continue
+            blob = data[pos : pos + size]
+            if size < 13:
+                print(f"| {name} | {lump} | {size} | (shorter than the 13-byte header) |")
+                continue
+            version, skill, episode, mapno, dm, respawn, fast, nomon, console = blob[:9]
+            ingame = list(blob[9:13])
+            players = sum(1 for p in ingame if p)
+            if players == 0:
+                print(f"| {name} | {lump} | {size} | {version} | {skill} | {episode} | {mapno} | no players in game |")
+                continue
+            body = size - 13
+            per_tic = 4 * players
+            tics = (body - 1) // per_tic if body >= 1 else 0
+            end = 13 + tics * per_tic
+            marker = end < size and blob[end] == 0x80
+            stray = size - end - (1 if marker else 0)
+            print(
+                f"| {name} | {lump} | {size} | {version} | {skill} | {episode} | {mapno} | {dm} | {respawn} | {fast} "
+                f"| {nomon} | {console} | {'/'.join(str(p) for p in ingame)} | {players} | {tics} | {tics / 35:.1f} "
+                f"| {'yes' if marker else 'no'} | {stray} |"
+            )
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("directory", nargs="?", default=DEFAULT_DIR)
@@ -2368,9 +2705,27 @@ def main(argv=None):
         "--things-budget", nargs="?", const="*", metavar="SLOT",
         help="print the BLOCKMAP and intercept budget facts of every slot, or of one slot",
     )
+    parser.add_argument(
+        "--episode-markdown", nargs="?", const="1", metavar="E",
+        help="print the M4a episode census of DOOM.WAD (default episode 1) on medium skill as Markdown",
+    )
+    parser.add_argument(
+        "--demos-markdown", action="store_true", help="print the header facts of every DEMOn lump as Markdown"
+    )
     args = parser.parse_args(argv)
     if not os.path.isdir(args.directory):
         print(f"iwad_counts: {args.directory} is absent; nothing to report (skipped)")
+        return 0
+    if args.demos_markdown:
+        demo_markdown_report(args.directory)
+        return 0
+    if args.episode_markdown:
+        path = os.path.join(args.directory, "DOOM.WAD")
+        if not os.path.isfile(path):
+            print(f"iwad_counts: {path} is absent; nothing to report (skipped)")
+            return 0
+        data, lumps = read_wad(path)
+        episode_markdown_report(data, lumps, int(args.episode_markdown))
         return 0
     all_counts = []
     for name in sorted(os.listdir(args.directory)):
