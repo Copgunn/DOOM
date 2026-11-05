@@ -136,6 +136,7 @@ mod barrels;
 pub use barrels::EXPLOSION_SIGHT_QUERIES;
 mod e1m1_rules;
 mod level;
+pub mod demo;
 pub use e1m1_rules::{
     BARRELS_LINKED_THINGS, E1M1_DECORATIONS, E1M1_LINKED_THINGS, MAX_BARRELS, MAX_DECORATIONS,
 };
