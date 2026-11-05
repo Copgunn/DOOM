@@ -599,6 +599,4 @@ C rows. The frozen chain's 16-item and 96-bonus range checks are lifted for that
 only, the `RA`/`RC` observer rows are dropped, and an explosion is the existing
 `A_Explode` action record followed by the existing sight and damage records. The
 generator asserts that every capture equals the DSIM36 projection except the version,
-`profile`, `context.schema` and `store.max_slots`. It excludes the two fist-only
-scenarios, whose player owns no pistol, which the DSIM weapon layout cannot hold (see
-the snapshot contract's `excluded_scenarios`).
+`profile`, `context.schema` and `store.max_slots`, for all 26 scenarios.

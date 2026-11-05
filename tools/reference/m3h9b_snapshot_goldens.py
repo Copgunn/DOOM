@@ -15,7 +15,7 @@ def first(rows,test,captures):
     return next((r[1],r[2])for r in rows if test(r)and(r[1],r[2])in captures)
 def fixtures(rows,cases):
     """The full-byte captures, chosen from the C rows (A rows of MT_BARREL, E action rows):
-    each names what it pins. Case numbers are the projected (renumbered) ones."""
+    each names what it pins."""
     captures={(r[1],r[2])for r in rows if r[0]=='P'}
     case={c['label']:i for i,c in enumerate(cases)}
     barrel=lambda r:r[0]=='A'and r[A_TYPE]==barrels_snapshot.MT_BARREL
@@ -32,6 +32,7 @@ def fixtures(rows,cases):
       (of('barrel_killed',lambda r:r[0]=='E'and r[3]==5 and r[5]==EXPLODE),'A_Explode op of barrel_killed: the S_BEXP4 entry and Action 19 records, no candidate but the barrel itself (not shootable: no record)'),
       (of('barrel_killed',state(S('S_BEXP5'))),'S_BEXP5'),
       (of('barrel_killed',state(-1)),'S_NULL entered: state 65535, tics 0, pending removal, still in the thinker order'),
+      (of('fist_kills_barrel',lambda r:r[0]=='E'and r[3]==5 and r[5]==EXPLODE),'explosion of the barrel the fist killed in one blow: no target, threshold 0, bomb source absent, the 200-health player damaged with no source'),
       (of('chain_reaction',lambda r:r[0]=='E'and r[3]==5 and r[5]==EXPLODE),'first explosion of the cluster: four barrels killed in walk order, the wounded barrel W retargeted to the player, Q out of the wrapped 3x3 window'),
       (of('monster_wakes_mid_walk',lambda r:r[0]=='E'and r[3]==5 and r[5]==EXPLODE),'explosion whose victim Imp relinks mid-walk: Imp 4 damaged twice and killed'),
       (of('door_gibs_dying_barrel',state(barrels_snapshot.S_GIBS)),'dying barrel crunched by the closing door: S_GIBS, radius and height 0, SOLID clear'),
@@ -66,45 +67,17 @@ def explosions(stream):
             if record[:2]==bytes([16,10])and record[14:26]==spot:sights+=1
             if record[:2]==bytes([13,2])and record[14:27]==b'\1'+spot:damage+=1
     return count,sights,damage
-def renumber(outputs,keep,prefix):
-    """Projected case numbers back to the C trace's case numbers in fixture names, the
-    snapshot index and the PBE1 frame headers."""
-    out={}
-    for path,data in outputs.items():
-        if '_state_'in path:
-            which,op=path.rsplit('_state_',1)[1][:-4].split('_');path=f'tests/reference/{prefix}_state_{keep[int(which)]}_{op}.bin'
-        elif path.endswith('_snapshots.csv'):
-            lines=data.decode().splitlines()
-            for i in range(1,len(lines)):
-                v=lines[i].split(',');v[0]=str(keep[int(v[0])])
-                if v[4]!='-':v[4]=f'{prefix}_state_{v[0]}_{v[1]}.bin'
-                lines[i]=','.join(v)
-            data=('\n'.join(lines)+'\n').encode()
-        elif path.endswith('_events.bin'):
-            stream=bytearray(data);at=4
-            while at<len(stream):
-                head=struct.unpack_from('<4I',stream,at);struct.pack_into('<I',stream,at,keep[head[0]]);at+=16
-                for _ in range(head[2]+head[3]):
-                    size,=struct.unpack_from('<I',stream,at);at+=4+size
-            data=bytes(stream)
-        out[path]=data
-    return out
 def run(check):
     lines=unpack((ROOT/'tests/reference/m3h9b_trace.dref').read_bytes()).decode().splitlines()
     assert lines.pop(0)=='DOOM-PLAYER-BARRELS-v1'
     raw=[[r[0],*map(int,r[1:])]for r in csv.reader(lines)if r[0]!='TI']
-    allcases=list(csv.DictReader((ROOT/'tests/reference/m3h9b_cases.csv').open()))
+    cases=list(csv.DictReader((ROOT/'tests/reference/m3h9b_cases.csv').open()))
     contract=json.loads((ROOT/'tests/reference/m3h9b_contract.json').read_text());maps=[ROOT/p for p in contract['maps']]
-    assert all(int(c['skill'])==MEDIUM for c in allcases)and len(allcases)==contract['inventory']['scenarios']
-    # The documented DSIM weapon layout (STATE_FORMAT, DSIM v23: `owned` "fist/pistol
-    # required") cannot hold a player who owns the fist only; the C rows of the two
-    # scenarios set up that way (WX owned 1) are not projectable without a schema change
-    # F9 does not make, so they are excluded and named in the contract.
-    unowned=sorted({r[1]for r in raw if r[0]=='WX'and r[5]&3!=3})
-    assert [allcases[i]['label']for i in unowned]==['fist_kills_barrel','player_killed_by_barrel'],unowned
-    keep=[i for i in range(len(allcases))if i not in unowned];index={o:i for i,o in enumerate(keep)}
-    cases=[allcases[i]for i in keep]
-    rows=barrels_snapshot.strip([[r[0],index[r[1]],*r[2:]]for r in raw if r[1]in index])
+    # Every scenario is medium and every player owns the fist and the pistol (the DSIM
+    # weapon layout requires both; STATE_FORMAT, DSIM v23), so every scenario is projected.
+    assert all(int(c['skill'])==MEDIUM for c in cases)and len(cases)==contract['inventory']['scenarios']
+    assert all(r[5]&3==3 for r in raw if r[0]=='WX')
+    rows=barrels_snapshot.strip(raw)
     chosen=fixtures(rows,cases)
     outputs,inventory=barrels_snapshot.build(cases,rows,maps,'m3h9b',set(chosen))
     events=outputs['tests/reference/m3h9b_events.bin']
@@ -162,24 +135,22 @@ def run(check):
     # The explosion's event mapping: one Action 19 record per A_Explode row, one sight
     # record per candidate that reached P_CheckSight (RC codes 3 and 4) and one Damage
     # record per damaged candidate (RC code 4), each G row of PIT_RadiusAttack's call.
-    projected=[r for r in raw if r[1]in index]
+    projected=raw
     rc=collections.Counter(r[6]for r in projected if r[0]=='RC')
     explode_rows=sum(1 for r in projected if r[0]=='E'and r[3]==5 and r[5]==EXPLODE)
     assert explode_rows==sum(1 for r in projected if r[0]=='RA')
     count,sights,damage=explosions(events)
     assert (count,sights,damage)==(explode_rows,rc[3]+rc[4],rc[4]),(count,sights,damage,explode_rows,rc)
-    outputs=renumber(outputs,keep,'m3h9b')
     events=outputs.pop('tests/reference/m3h9b_events.bin')
     outputs['tests/reference/m3h9b_events.dref']=pack(events)
     assert unpack(outputs['tests/reference/m3h9b_events.dref'])==events
-    fixture_names={f'm3h9b_state_{keep[c]}_{o}.bin':why for (c,o),why in sorted(chosen.items())}
+    fixture_names={f'm3h9b_state_{c}_{o}.bin':why for (c,o),why in sorted(chosen.items())}
     inventory.update(expanded_event_bytes=len(events),packed_event_bytes=len(outputs['tests/reference/m3h9b_events.dref']),
       new_event_tags=0,new_fields=0,largest_occupied_slots=largest,
       explosions=count,explosion_sight_records=sights,explosion_damage_records=damage,
       radius_candidates={('not_shootable','boss','out_of_range','sight_blocked','damaged')[k]:rc[k]for k in range(5)},
       projected_scenarios=[c['label']for c in cases],
       scenarios_beyond_dsim36_ranges=outside,
-      excluded_scenarios={allcases[i]['label']:'C rows set weaponowned to the fist only (WX owned 1); the DSIM weapon layout requires fist and pistol (STATE_FORMAT DSIM v23) and F9 adds no field or range for it' for i in unowned},
       fixtures=fixture_names)
     barrel=dict(doomednum=barrels_snapshot.BARREL,mobjtype_index=barrels_snapshot.MT_BARREL,
                 alive_states=sorted(barrels_snapshot.ALIVE),dying_states=sorted(barrels_snapshot.DYING),gibs_state=barrels_snapshot.S_GIBS,null_state=barrels_snapshot.S_NULL,
@@ -201,7 +172,7 @@ def run(check):
       comparison='Every capture equals the DSIM36 projection (e1m1_snapshot.build) of the same stripped rows field for field and byte for byte except the version (37), the profile value (21), the context.schema bytes and store.max_slots (384 for 320); the PBE1 event stream is identical. For the scenarios inside the DSIM36 ranges the baseline is the frozen build unchanged; for scenarios_beyond_dsim36_ranges it is the frozen build with only the 16-item and 96-bonus range assertions of map_scale_snapshot.build and bonus_snapshot.events lifted (the frozen build refuses those rows, asserted). No other field differs. Decision F9: no new field, no new event.',
       event_mapping='An explosion is the existing tag-12 Entered record of S_BEXP4 and the tag-12 Action record (original action 19, A_Explode), then for each P_RadiusAttack candidate in walk order: nothing for a candidate that is not shootable or out of range, the existing tag-16 sub-tag 10 sight record for a candidate that reaches P_CheckSight (RC codes 3 and 4), and for a damaged candidate (code 4) the existing tag-13 Damage record (inflictor the barrel, source its target or absent) followed by the Knockback/Health/Pain/Kill/DeathTimer/Retarget/Random records of P_DamageMobj, P_KillMobj and the victims state entries, exactly as the inherited chain encodes the C G/H/K/E rows. The RA and RC observer rows are comparison rows, not state and not events, and are removed before the chain.',
       dropped_rows=dict(RA='one per P_RadiusAttack: comparison only',RC='one per PIT_RadiusAttack candidate: comparison only',DT='M3h9 observer',XT='M3h9 observer',NS='M3h9 observer',TI='trace index rows'),
-      scope='Original C fields and source event order, independent schema/birth-generation projection. Bounded command/weapon stage then original thinkers, not full player/ticker execution. DSIM36 layout and event vocabulary under version 37, policy 21 and the barrels context, store.max_slots 384, items and total items at most 64 and bonus count at most 384, with exploding barrels (DoomEd 2035, MT_BARREL) as ordinary actor records checked against the C rows and the documented chain: S_BAR1/S_BAR2 alive with health 1..20, radius 10, height 42 and SOLID|SHOOTABLE|NOBLOOD; S_BEXP..S_BEXP5 dying (and S_NULL pending removal) with health <= 0, height 42 >> 2 and SOLID|NOBLOOD|CORPSE|DROPOFF; S_GIBS crunched with radius and height 0 and SOLID clear; MF_AMBUSH from the THING record; threshold 0 or 100 with target present exactly at 100; reaction_time 8 or 0 (P_DamageMobj on a survivor); spawnpoint from the THING record; at most 16 per capture; every MT_BARREL actor a spawned 2035 record. Only the 24 projectable scenarios are encoded (excluded_scenarios). No Rust observations.',
+      scope='Original C fields and source event order, independent schema/birth-generation projection. Bounded command/weapon stage then original thinkers, not full player/ticker execution. DSIM36 layout and event vocabulary under version 37, policy 21 and the barrels context, store.max_slots 384, items and total items at most 64 and bonus count at most 384, with exploding barrels (DoomEd 2035, MT_BARREL) as ordinary actor records checked against the C rows and the documented chain: S_BAR1/S_BAR2 alive with health 1..20, radius 10, height 42 and SOLID|SHOOTABLE|NOBLOOD; S_BEXP..S_BEXP5 dying (and S_NULL pending removal) with health <= 0, height 42 >> 2 and SOLID|NOBLOOD|CORPSE|DROPOFF; S_GIBS crunched with radius and height 0 and SOLID clear; MF_AMBUSH from the THING record; threshold 0 or 100 with target present exactly at 100; reaction_time 8 or 0 (P_DamageMobj on a survivor); spawnpoint from the THING record; at most 16 per capture; every MT_BARREL actor a spawned 2035 record. Every one of the 26 scenarios is encoded. No Rust observations.',
       inputs_sha256={p:sha((ROOT/p).read_bytes())for p in inputs},
       outputs_sha256={p:sha(data)for p,data in outputs.items()}),indent=2,sort_keys=True)+'\n').encode()
     for path,data in outputs.items():
