@@ -81,8 +81,9 @@ observations remain linked from the [evidence index](README.md).
 
 ### M3h9c: The real E1M1 run, tic for tic
 
-Phase 1 (the [investigation note](M3H9C_REFERENCE_INVESTIGATION.md)) is complete; Phase 2 is
-in progress on `feat/m3h9c-e1m1-run`. Decisions G1-G12 are provisionally adopted, pending
+Phase 1 (the [investigation note](M3H9C_REFERENCE_INVESTIGATION.md)) is complete; Phase 2
+steps 1-8, 10 and 11 are done on `feat/m3h9c-e1m1-run` ([observations](validation/M3H9C.md));
+the matched performance, the independent review and the gates remain. Decisions G1-G12 are provisionally adopted, pending
 owner confirmation. The milestone is a local-only harness that runs the owner's E1M1 under
 the genuine linuxdoom-1.10 engine and under the Rust simulation from the same version-110
 demo and compares them on every tic, committing only counts, pass/fail and digests, never
@@ -95,9 +96,10 @@ decays `damagecount`, and a dead player runs `P_DeathThink`); the demo reader an
 whole-engine C runner (`m3h9c_build.py` with strict, overflow-checked and address-checked
 variants, the stubs, the driver, the dump reader and the runner contract); the demo script
 tool and its idle script; the local wrapper `tools/local/e1m1_reference.py`; the independent
-DSIM38 projection and the per-tic comparator; and the STATE_FORMAT section. The first matched
-runs on the real E1M1 (idle, pistol, walking and walking with use) are the evidence to be
-recorded.
+DSIM38 projection and the per-tic comparator; the STATE_FORMAT section; the synthetic game
+WAD with its CI steps; and the fuzz target `player_level`. All five scripted real-E1M1 runs
+(idle, walking to the exit, fighting, barrels, random commands) matched the genuine engine
+tic for tic.
 
 Remaining: the other scripted runs, the synthetic game WAD and scripts with their CI steps
 (so CI exercises the same runner without an IWAD), the independent review, the evidence

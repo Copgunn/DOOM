@@ -58,9 +58,9 @@ example programs, on small test maps built for this project. Today it can simula
 - the doors, lifts, moving floors, switches and exit used by E1M1, the first map;
 - E1M1's lamps, pillars, candelabras, corpses and gore;
 - exploding barrels, with chain reactions, and maps with as many pickups as E1M1;
-- the real E1M1, which runs in sync with the genuine engine for the idle and walking inputs
-  tried so far (the comparison harness is local-only; the remaining scripted runs are in
-  progress).
+- the real E1M1, which runs in sync with the genuine engine for all five scripted runs (idle,
+  walking to the exit, fighting, barrels and random commands; the comparison harness is
+  local-only).
 
 What it cannot do yet:
 

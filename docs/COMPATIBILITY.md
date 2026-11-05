@@ -2216,9 +2216,10 @@ ignored test that needs `DOOM_IWAD_DIR`.
 **Status of the real E1M1.** Under this policy the owner's E1M1 on medium skill loads, and
 idle, pistol, walking and walking-and-using runs were compared tic for tic with the genuine
 engine built whole from the preserved sources; the matched runs are recorded in the M3h9c
-evidence record (see the [roadmap entry](ROADMAP.md#m3h9c-the-real-e1m1-run-tic-for-tic)).
-That is evidence for those scripted inputs only: it is not a claim for every input, every
-skill or every map, and the remaining scripted runs are in progress. The comparison needs
+evidence record (see the [observations](validation/M3H9C.md) and the [roadmap entry](ROADMAP.md#m3h9c-the-real-e1m1-run-tic-for-tic)).
+All five scripted real-E1M1 runs (idle, walking to the exit, fighting, barrels and random
+commands) matched. That is evidence for those scripted inputs only: it is not a claim for
+every input, every skill or every map. The comparison needs
 the commercial IWAD, so it is local-only; CI uses a synthetic game WAD instead
 ([testing](TESTING.md#m3h9c-whole-engine-runner-and-the-real-e1m1-comparison)).
 

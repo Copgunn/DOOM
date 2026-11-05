@@ -1042,4 +1042,26 @@ successor section and the schema in [STATE_FORMAT](STATE_FORMAT.md) when Phase 2
   the reborn reload as an admitted transition, the rest of Episode 1.
 
 **Status / next step.** Phase 1 complete with this note; decisions G1–G12 provisionally
-adopted pending owner confirmation; Phase 2 step 1 next.
+adopted pending owner confirmation; Phase 2 steps 1–8, 10 and 11 done (the observations are
+in the [evidence record](validation/M3H9C.md)); the matched performance, the independent
+review and the gates remain.
+
+## 12. Corrections and findings from Phase 2
+
+- **Exit tic.** `G_Ticker` handles `gameaction` before the demo read, so the driver stops on
+  `ga_completed`; `WI_Start` stays an aborting stub.
+- **Zone fill.** The runner zero-fills `Z_Malloc`; before that, uninitialised plat and floor
+  fields made the strict and address dumps differ on the barrels run.
+- **Closet DR lines.** The synthetic map's closet-side DR lines were refused by Rust mover
+  rule 4; DR lines are on the hall side only.
+- **p_enemy.c angle spreads.** Three int angle-spread overflows (lines 816, 839, 860) found
+  under UBSan became sanitizer-only adapters.
+- **Slot assignment.** `K.adds` and `RR` observer rows were needed for exact slot
+  assignment in the independent projection.
+- **bonuscount.** Already decayed in Rust under wire 21; only `damagecount` was new.
+- **The body has no spawnpoint** (`p_mobj.c:736`), so `decode_level` checks lump order via
+  the preceding actors.
+- **Dead-player bob.** Rust's `P_CalcHeight` bob is computed for a dead player too.
+- **Untested paths.** The real chaos script did not die in 5,000 tics, so the reborn reload
+  path was not exercised; the `walk_to_exit` demo ends exactly on the exit tic, so no refused
+  tic is observed.

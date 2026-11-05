@@ -1640,9 +1640,30 @@ that is disabled leak detection, not LeakSanitizer coverage.
 The ignored `private_iwad_e1m1_level_policy` test (and the older opt-in
 `private_iwad_real_map_counts`) read `DOOM_IWAD_DIR` and print counts and digests only.
 
-CI path (in preparation, marked for revision): a synthetic game WAD
-(`tools/reference/m3h9c_wad.py`, `tests/reference/m3h9c_synthetic.wad`), synthetic scripts
-(`tests/reference/m3h9c_scripts/`) and a driver (`tools/reference/m3h9c_reference.py`) run the
-same runner and comparator with no IWAD. The CI steps are added in this milestone.
+Script details: a script may name its output with a `# output: NAME.lmp` comment line (same
+directory), and `seed S chaos N nouse` draws the same stream with USE removed from every
+buttons entry.
 
-Observations of the matched runs belong to the M3h9c evidence record, not to this page.
+CI path (no IWAD): a synthetic game WAD (`tools/reference/m3h9c_wad.py`,
+`tests/reference/m3h9c_synthetic.wad`), synthetic scripts (`tests/reference/m3h9c_scripts/`)
+and the commands below. The `stable` job of `.github/workflows/rust.yml` runs, in order:
+`m3h9c_build.py --check`, `m3h9c_wad.py --check` and `e1m1_scripts.py --check` (every OS);
+`m3h9c_reference.py --check --keep-dumps` and `m3h9c_snapshot_goldens.py --dumps DIR --check`
+(Linux only); and the Rust whole-level run of the five synthetic scripts followed by
+`check_player_level.py` (every OS). All are skipped for documentation-only pushes.
+
+```sh
+python3 tools/reference/m3h9c_wad.py [--out DIR] [--check]   # synthetic WAD; --check compares the committed file
+python3 tools/reference/m3h9c_reference.py [--work DIR] [--check] [--keep-dumps] [--cc CC]
+#   three-variant run of every tests/reference/m3h9c_scripts/*.lmp; --check compares
+#   tests/reference/m3h9c_synthetic_results.json; address variant uses detect_leaks=0
+python3 tools/reference/m3h9c_snapshot_goldens.py --dumps DIR/runs [--check]   # DSIM38 goldens and fixtures from kept dumps
+cargo run -p doom-sim --release --example player_level_run -- --wad tests/reference/m3h9c_synthetic.wad --map E1M1 --demo tests/reference/m3h9c_scripts/SYNIDLE.lmp --out OUT/SYNIDLE --captures
+python3 tools/reference/check_player_level.py OUT      # Rust runs of the five scripts against the goldens
+
+# fuzzing (the 49th target); detect_leaks=0 means LeakSanitizer is disabled, not passed
+python3 tools/seed_player_level_fuzz.py /tmp/doom-level-seeds      # 1,508 seeds, max_len 1404
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_level /tmp/doom-level-corpus --sanitizer address -- -runs=0 -max_len=1404 -timeout=15 -rss_limit_mb=1024
+```
+
+Observations of the matched runs belong to the [M3h9c evidence record](validation/M3H9C.md), not to this page.
