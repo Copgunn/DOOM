@@ -351,7 +351,26 @@ report is `review_report.md` in the milestone's scratch, summarised here).
 
 ## Local gates
 
-Recorded after plan step 15.
+Plan step 15 at `2dea148`, 2026-11-04, from a clean build (`cargo clean` of the workspace
+and `fuzz/target`), on the local host (rustc 1.99.1 stable, 1.85.0, nightly cargo 1.101.0,
+GCC 15.2.0, Python 3.14.4), 2,682 s of wall time plus a 58 s rerun: every command of the
+CI `stable` job in the workflow's order (fmt for the workspace and the fuzz manifest, Clippy
+with warnings denied, build, `cargo test --workspace --locked` **1,063 passed, 0 failed, 3
+ignored** over 85 suites, `cargo test -p doom-sim -p doom-types --release --locked` **1,030
+passed, 0 failed, 1 ignored**, `run_reference.py --suite --jobs 2` in 733 s, the
+historical-migration `verify-git`, every reference and snapshot-golden `--check` from the
+weapon formulas and M3g10 through M3h9b with `ASAN_OPTIONS=detect_leaks=0` on the
+sanitizer runs, every `check_player_*` and `check_original_player` script, the `parse_map`
+and `headless` examples, the 22 headless debug/release equality scripts, every measurement
+smoke of the workflow, `check_docs.py` (122 files, 2,057 links, 460 anchors, 20 archives),
+rustdoc with warnings denied), the `msrv` job (`cargo +1.85.0 test --workspace --locked`
+1,063 passed, 0 failed, 3 ignored), `check_examples.py`, and the fuzz builds (`cargo +nightly
+fuzz build --sanitizer address`: 48 targets; the plain build reused them). All passed; the
+working tree was unchanged afterwards. The 22 equality scripts and `check_docs.py` first
+exited 127 because this host has no `python` binary (CI's runners do); they passed when
+`python` resolved to `python3`. Of the measurement scripts the workflow does not run, 12
+pass `--check`; five accept only `--smoke`, one needs a baseline directory and
+`measure_evidence.py` treats `--check` as a path, unchanged from before this milestone.
 
 ## CI
 
