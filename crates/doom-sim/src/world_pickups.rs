@@ -387,6 +387,12 @@ pub enum PickupMessage {
     YellowKeyNeeded = 28,
     /// PD_REDK (p_doors.c:405).
     RedKeyNeeded = 29,
+    /// `"%s is turbo!"` with `player_names[0]` (`HUSTR_PLRGREEN`): `G_Ticker`
+    /// assigns it to the console player's message when the command's
+    /// `forwardmove > TURBOTHRESHOLD` (50) on a gametic with `!(gametic & 31)`
+    /// and `((gametic >> 5) & 3) == 0` (g_game.c:671–679), before `P_Ticker`;
+    /// Episode 1 policy only (wire 23, M4a step 8).
+    Turbo = 30,
 }
 /// Source pickup-only fields; health, body and inventory retain their owners.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]

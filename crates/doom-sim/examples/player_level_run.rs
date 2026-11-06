@@ -21,7 +21,9 @@
 //! with `parse_demo_episode1`, whose header map must be the `--map` one
 //! (decision H10), `--write-idle` writes that map's header with
 //! `write_demo_episode1`, and `stats.txt` adds the exit tic (`exit_tic`, `none`
-//! without one) and whether the exit was the secret one (`secret_exit`).
+//! without one), whether the exit was the secret one (`secret_exit`) and the
+//! actor-store high-water mark (`store_high_water`: one past the highest slot
+//! `thinker.order` named on any capture).
 use doom_sim::{
     demo::{parse_demo, parse_demo_episode1, write_demo, write_demo_episode1},
     *,
@@ -64,6 +66,16 @@ fn field<'a>(snap: &'a Snapshot, path: &str) -> &'a [u8] {
     snap.fields()
         .find(|f| f.path() == path)
         .map_or(&[], StateField::value)
+}
+
+/// One past the highest actor-store slot `thinker.order` names (each entry a
+/// little-endian `u32` slot then the generation): the store high-water mark.
+fn store_high_water(snap: &Snapshot) -> usize {
+    field(snap, "thinker.order")
+        .chunks_exact(12)
+        .map(|id| u32::from_le_bytes([id[0], id[1], id[2], id[3]]) as usize + 1)
+        .max()
+        .unwrap_or(0)
 }
 
 /// One `digests.txt` line, plus the actor and thinker counts.
@@ -171,6 +183,7 @@ fn main() -> ResultHost<()> {
     let mut digests = String::new();
     let snap = s.snapshot();
     let (text, mut peak_actors, mut peak_thinkers) = line(&snap);
+    let mut high_water = store_high_water(&snap);
     writeln!(digests, "{text}")?;
     if a.captures {
         fs::write(out.join("tic_00000.bin"), snap.canonical_bytes())?;
@@ -203,6 +216,7 @@ fn main() -> ResultHost<()> {
         let (text, actors, thinkers) = line(&snap);
         peak_actors = peak_actors.max(actors);
         peak_thinkers = peak_thinkers.max(thinkers);
+        high_water = high_water.max(store_high_water(&snap));
         if exit.is_none() && field(&snap, "level.exit") == [1] {
             exit = Some((tic, field(&snap, "level.secret_exit") == [1]));
         }
@@ -228,6 +242,7 @@ fn main() -> ResultHost<()> {
             Some((tic, secret)) => writeln!(stats_text, "exit_tic {tic}\nsecret_exit {secret}")?,
             None => writeln!(stats_text, "exit_tic none\nsecret_exit false")?,
         }
+        writeln!(stats_text, "store_high_water {high_water}")?;
     }
     fs::write(out.join("stats.txt"), stats_text)?;
     println!(

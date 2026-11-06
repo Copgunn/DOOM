@@ -295,3 +295,70 @@ fn sustained_forward_127_reaches_maxmove() {
     decode(&s);
     assert_eq!(body(&s).position().map(Fixed::bits), [-12_821_580, 7_106]);
 }
+
+/// `G_Ticker`'s turbo message (g_game.c:671–679), read from the source:
+/// before `P_Ticker`, `players[consoleplayer].message` becomes
+/// `"%s is turbo!"` when the read command's `forwardmove > TURBOTHRESHOLD`
+/// (0x32) and `!(gametic & 31) && ((gametic >> 5) & 3) == 0` for player 0, so
+/// on gametics that are multiples of 128 only; gametic is the completed-tic
+/// count (`TryRunTics` increments it after `G_Ticker`, d_net.c:742–746). The
+/// message is kept until another assignment (DSIM39 `pickups.message` code 30);
+/// forward 50, negative forward and other gametics assign nothing.
+#[test]
+fn turbo_message_on_every_128th_gametic() {
+    let l = lumps(-256);
+    let mut s = sim(&l, EPISODE1);
+    let message = |s: &Simulation| runtime(s).pickups.unwrap().message;
+    // (gametic, forward) of every nonzero command; the others are zero.
+    let schedule = [
+        (0, 50),
+        (1, -50),
+        (64, 127),
+        (65, -127),
+        (128, -127),
+        (129, 127),
+        (256, 51),
+        (257, -51),
+        (384, 127),
+        (385, -127),
+    ];
+    let mut expected = PickupMessage::None;
+    for gametic in 0..400u64 {
+        assert_eq!(s.tic(), gametic);
+        let forward = schedule
+            .iter()
+            .find(|(g, _)| *g == gametic)
+            .map_or(0, |(_, f)| *f);
+        if forward > 50 && gametic % 128 == 0 {
+            expected = PickupMessage::Turbo;
+        }
+        s.advance(command(forward, 0, 0)).unwrap();
+        assert_eq!(message(&s), expected, "after gametic {gametic}");
+        if gametic == 255 {
+            assert_eq!(
+                expected,
+                PickupMessage::None,
+                "0, 64 and 128 assign nothing"
+            );
+        }
+    }
+    assert_eq!(message(&s), PickupMessage::Turbo);
+    let capture = s.snapshot().canonical_bytes();
+    let snap = s.snapshot();
+    let value = snap
+        .fields()
+        .find(|f| f.path() == "original_player.0.pickups.message")
+        .unwrap()
+        .value()
+        .to_vec();
+    assert_eq!(value, [30]);
+    Diagnostic::decode_episode1(&capture, DiagnosticLimits::default()).unwrap();
+    // A refused tic on a turbo gametic (forward 127, button 0x40) assigns nothing.
+    let mut t = sim(&l, EPISODE1);
+    refused(&mut t, command(127, 0, 0x40), SimError::UnsupportedButtons);
+    assert_eq!(message(&t), PickupMessage::None);
+    // Wire 22 never reaches it: forward 50 is its maximum.
+    let mut w = sim(&l, LEVEL);
+    w.advance(command(50, 0, 0)).unwrap();
+    assert_eq!(message(&w), PickupMessage::None);
+}

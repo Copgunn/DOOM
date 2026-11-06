@@ -755,6 +755,21 @@ impl Simulation {
         let mut special_exit = false;
         if command_policy {
             plan.events.push(Event::Phase(Phase::Players));
+            // G_Ticker, before P_Ticker (g_game.c:671–679): the turbo message on
+            // every 128th gametic when the read command's forward exceeds 50.
+            // Only the Episode 1 domain admits such a command.
+            if self.player_policy().has_episode1()
+                && player_commands::turbo_message(
+                    self.tic,
+                    commands[usize::from(PlayerSlot::One.ordinal())],
+                )
+            {
+                plan.player
+                    .as_mut()
+                    .and_then(|p| p.pickups.as_mut())
+                    .ok_or(crate::PlayerBodyError::Profile)?
+                    .message = PickupMessage::Turbo;
+            }
             // p_user.c:249–255, before the dead test: `A_Saw`'s `MF_JUSTATTACKED`
             // rewrites the command to the chainsaw lunge (turn 0, forward
             // 0xc800/512 = 100, side 0; buttons kept) and clears the flag. The

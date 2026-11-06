@@ -947,7 +947,7 @@ impl<'a> Diagnostic<'a> {
                 || !(matches!(message, [0..=6] | [8..=9])
                     || (matches!(self.version, 26..=39) && matches!(message, [10..=11]))
                     || (matches!(self.version, 27..=39) && matches!(message, [12..=13]))
-                    || (self.version == 39 && matches!(message, [10..=29])))
+                    || (self.version == 39 && matches!(message, [10..=30])))
             {
                 return Err(DiagnosticError::Structure);
             }

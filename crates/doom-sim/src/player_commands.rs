@@ -24,6 +24,19 @@ const fn max_command_move(policy: OriginalExecutionProfile) -> i8 {
         MAX_COMMAND_MOVE
     }
 }
+/// `TURBOTHRESHOLD` (g_game.c:83, `0x32`).
+const TURBO_THRESHOLD: i8 = 0x32;
+
+/// Whether `G_Ticker`'s turbo test fires for the console player (slot 0) on the
+/// tic run at gametic `gametic` (the completed-tic count) with `command`:
+/// `cmd->forwardmove > TURBOTHRESHOLD && !(gametic&31) && ((gametic>>5)&3) == 0`
+/// (g_game.c:671–679), i.e. every 128th gametic. It reads the command as read
+/// from the demo, before `P_PlayerThink`'s chainsaw rewrite, and then assigns
+/// `players[consoleplayer].message` before `P_Ticker`, so a later assignment in
+/// the same tic replaces it.
+pub(crate) const fn turbo_message(gametic: u64, command: TicCommand) -> bool {
+    command.forward > TURBO_THRESHOLD && gametic & 31 == 0 && (gametic >> 5) & 3 == 0
+}
 // M3G4_REFERENCE.md: conservative whole axis-slide pass, in raw fixed bits.
 const ATTEMPT_MOVE_MULTIPLIER: i64 = 4;
 const ATTEMPT_ROUNDING_MARGIN: i64 = 8;
@@ -112,9 +125,10 @@ impl Simulation {
         // policy: `P_PlayerThink` clears the buttons of a special command
         // (p_user.c:280–281) and `G_Ticker` runs pause/save from it
         // (g_game.c:700–720), both M4c. The turbo message of `G_Ticker`
-        // (`forwardmove > TURBOTHRESHOLD`, g_game.c:672–679) only assigns the
-        // console player's HUD message; it is not modelled (DSIM `pickups.message`
-        // holds the messages `P_TouchSpecialThing` and the locked doors assign).
+        // (`forwardmove > TURBOTHRESHOLD`, g_game.c:671–679) assigns the console
+        // player's message; under the Episode 1 policy it is the DSIM39
+        // `pickups.message` code 30 (`turbo_message`), elsewhere the domain
+        // (forward at most 50) never reaches it.
         let limit = max_command_move(p.policy);
         if !(-limit..=limit).contains(&command.forward) || !(-limit..=limit).contains(&command.side)
         {
