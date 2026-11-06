@@ -1,6 +1,6 @@
 {
  "schema": "DOOM-M4A-SYNTHETIC-RESULTS-v1",
- "manifest_sha256": "1c4060651c8e999ee3055edcdce66d8c90defd830d68ce3bab0f4572f1b2f336",
+ "manifest_sha256": "8bdbda79f6c04671b90b26fb2c3ba2b09e4808789361982cf00a3cc8b93d2ebb",
  "runner_contract_sha256": "b6c6707ec7652bede094b2f5581e00eaed5a2d0485198b77312ce1c166374800",
  "variants": [
   "strict",
@@ -601,7 +601,7 @@
    "mobjs_at_load": 160,
    "unknown_messages": 0,
    "snapshots": 329,
-   "dumps_sha256": "c840b018e65af21c9c8bec88a0e57abc05b0b108f130911a4524b9c2d98f1289",
+   "dumps_sha256": "5c5ba25617c90f7fcc00700c1e20bef8abde8dce4624b1764771ffa5a0db2067",
    "secretexit": false,
    "must_show": {
     "SR 62 on the 608-unit lift": 127,
@@ -620,7 +620,7 @@
    "mobjs_at_load": 160,
    "unknown_messages": 0,
    "snapshots": 601,
-   "dumps_sha256": "0c949de2f211f6809f06e7c6a8c11a12023b38cfbc91a9dc044ec5f33d4298b8",
+   "dumps_sha256": "05ecbbd7eb82924302fdb3e7d0ed4cff10b34fb91a479e59e5df744c7049ada9",
    "secretexit": false,
    "must_show": {}
   }
@@ -628,149 +628,149 @@
  "timing": {
   "note": "us/tic of G_Ticker per variant from the runner summary and the wall time of this run; measured on a machine that was not idle (informational, not compared by --check)",
   "wall_seconds": {
-   "build": 6.9,
-   "runs": 11.1
+   "build": 8.9,
+   "runs": 14.5
   },
   "us_per_tic": {
    "DOORS1": {
-    "strict": 1.5,
-    "overflow": 1.6,
-    "address": 5.4
+    "strict": 2.1,
+    "overflow": 2.1,
+    "address": 7.8
    },
    "DOORS2": {
-    "strict": 1.2,
-    "overflow": 1.5,
-    "address": 5.0
+    "strict": 1.7,
+    "overflow": 1.9,
+    "address": 8.9
    },
    "DOORS3": {
-    "strict": 0.8,
-    "overflow": 1.0,
-    "address": 3.6
+    "strict": 1.9,
+    "overflow": 1.5,
+    "address": 6.3
    },
    "FLOORS1": {
-    "strict": 1.1,
-    "overflow": 1.6,
-    "address": 5.1
+    "strict": 1.8,
+    "overflow": 2.1,
+    "address": 6.7
    },
    "FLOORS2": {
-    "strict": 1.3,
-    "overflow": 1.5,
-    "address": 6.2
+    "strict": 2.0,
+    "overflow": 6.2,
+    "address": 7.8
    },
    "FLOORS3": {
-    "strict": 1.2,
-    "overflow": 1.4,
-    "address": 5.0
+    "strict": 1.7,
+    "overflow": 2.3,
+    "address": 8.9
    },
    "PLATS1": {
-    "strict": 1.1,
-    "overflow": 1.2,
-    "address": 4.5
+    "strict": 2.4,
+    "overflow": 2.0,
+    "address": 6.7
    },
    "PLATS2": {
-    "strict": 1.2,
+    "strict": 2.4,
+    "overflow": 1.9,
+    "address": 5.8
+   },
+   "STAIRS1": {
+    "strict": 2.3,
+    "overflow": 2.5,
+    "address": 8.5
+   },
+   "STAIRS2": {
+    "strict": 2.6,
+    "overflow": 2.5,
+    "address": 13.7
+   },
+   "DONUT1": {
+    "strict": 2.6,
+    "overflow": 2.4,
+    "address": 9.0
+   },
+   "EXIT1": {
+    "strict": 1.4,
+    "overflow": 1.6,
+    "address": 6.0
+   },
+   "EXIT2": {
+    "strict": 1.3,
+    "overflow": 3.2,
+    "address": 6.5
+   },
+   "SECT11": {
+    "strict": 1.5,
     "overflow": 1.5,
     "address": 5.9
    },
-   "STAIRS1": {
-    "strict": 1.6,
-    "overflow": 1.9,
-    "address": 6.3
-   },
-   "STAIRS2": {
-    "strict": 1.8,
-    "overflow": 2.2,
-    "address": 7.0
-   },
-   "DONUT1": {
-    "strict": 1.6,
-    "overflow": 2.0,
-    "address": 6.5
-   },
-   "EXIT1": {
-    "strict": 1.0,
-    "overflow": 1.3,
-    "address": 5.5
-   },
-   "EXIT2": {
-    "strict": 1.1,
-    "overflow": 2.2,
-    "address": 5.2
-   },
-   "SECT11": {
-    "strict": 1.1,
-    "overflow": 1.4,
-    "address": 5.8
-   },
    "EXDIE": {
-    "strict": 1.3,
-    "overflow": 1.6,
-    "address": 6.6
+    "strict": 1.4,
+    "overflow": 2.0,
+    "address": 8.1
    },
    "SAW1": {
-    "strict": 1.5,
-    "overflow": 1.6,
-    "address": 6.3
+    "strict": 1.8,
+    "overflow": 2.6,
+    "address": 9.6
    },
    "ROCKET1": {
-    "strict": 1.4,
-    "overflow": 1.6,
-    "address": 6.1
-   },
-   "ROCKDIE": {
-    "strict": 1.6,
-    "overflow": 3.2,
-    "address": 7.9
-   },
-   "ITEMS1": {
-    "strict": 1.5,
-    "overflow": 2.0,
-    "address": 7.9
-   },
-   "TIMERS": {
-    "strict": 1.2,
-    "overflow": 1.3,
-    "address": 4.2
-   },
-   "SUIT1": {
-    "strict": 1.6,
-    "overflow": 1.6,
-    "address": 6.6
-   },
-   "SUITDIE": {
-    "strict": 1.3,
-    "overflow": 1.4,
-    "address": 5.8
-   },
-   "INVIS1": {
     "strict": 2.1,
     "overflow": 2.0,
-    "address": 7.2
+    "address": 7.9
+   },
+   "ROCKDIE": {
+    "strict": 3.4,
+    "overflow": 2.9,
+    "address": 9.5
+   },
+   "ITEMS1": {
+    "strict": 2.0,
+    "overflow": 2.6,
+    "address": 8.9
+   },
+   "TIMERS": {
+    "strict": 1.9,
+    "overflow": 1.9,
+    "address": 5.8
+   },
+   "SUIT1": {
+    "strict": 2.2,
+    "overflow": 2.6,
+    "address": 8.7
+   },
+   "SUITDIE": {
+    "strict": 1.9,
+    "overflow": 2.3,
+    "address": 6.9
+   },
+   "INVIS1": {
+    "strict": 2.7,
+    "overflow": 2.8,
+    "address": 10.0
    },
    "SPECT1": {
-    "strict": 1.6,
-    "overflow": 1.8,
-    "address": 6.8
+    "strict": 1.9,
+    "overflow": 2.6,
+    "address": 8.8
    },
    "SPECT2": {
-    "strict": 1.5,
-    "overflow": 1.9,
-    "address": 6.8
+    "strict": 2.3,
+    "overflow": 2.4,
+    "address": 8.5
    },
    "SPECTD": {
-    "strict": 1.6,
-    "overflow": 1.7,
-    "address": 6.6
+    "strict": 1.9,
+    "overflow": 2.4,
+    "address": 10.8
    },
    "SCALE1": {
-    "strict": 3.7,
-    "overflow": 3.8,
-    "address": 11.2
+    "strict": 6.2,
+    "overflow": 6.5,
+    "address": 24.3
    },
    "SCALE2": {
-    "strict": 5.3,
-    "overflow": 5.8,
-    "address": 16.1
+    "strict": 7.9,
+    "overflow": 8.1,
+    "address": 25.1
    }
   }
  }

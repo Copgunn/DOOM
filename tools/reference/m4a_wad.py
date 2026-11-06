@@ -13,7 +13,7 @@ linuxdoom-1.10 engine needs to load its map (slot E1M1 by default) in `registere
     weapons  chainsaw 2005, rocket launcher 2003 with rockets 2010/2046, a sky alcove
     items    backpack, soulsphere, light amp, map, invisibility, suit, keys; specials 7/16
     spectre  Spectre 58 fights and infighting
-    scale    12 monsters, 83 pickups, 24 barrels, 40 statics (no teleport landing 14), heights -640..1100, a
+    scale    12 monsters, 83 pickups, 24 barrels, 40 statics (no teleport landing 14), heights -640..1000, a
              608-unit lift and a 3,680-unit linedef
 
 The lump framing and the game data are the frozen M3h9c generator's (m3h9c_wad.py,
@@ -459,12 +459,12 @@ def spectre():
 
 
 def scale():
-    """The lifted bounds: a 3,680 x 2,016 hall, a -640 pit, a 544..1100 tower, a 608-unit
+    """The lifted bounds: a 3,680 x 2,016 hall, a -640 pit, a 544..1000 tower, a 608-unit
     lift, and 12 monsters, 83 pickups, 24 barrels and 40 statics (no teleport landing 14: M4b)."""
     p = Plan('scale')
     p.sector('HALL', [(-1840, -1008, 1840, 1008)])
     p.sector('PIT', [(-1504, -608, -1296, -400)], floor=-640)
-    p.sector('TOWER', [(1296, 400, 1504, 608)], floor=544, ceil=1100)
+    p.sector('TOWER', [(1296, 400, 1504, 608)], floor=544, ceil=1000)
     p.sector('PAD', [(192, 1008, 288, 1104)], floor=560, ceil=700, tag=1)
     p.sector('PD', [(288, 1008, 384, 1104)], floor=-48, ceil=700)
     alc = p.sector('ALC', [(-32, -1024, 32, -1008)])
