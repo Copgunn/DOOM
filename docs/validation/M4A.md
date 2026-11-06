@@ -8,7 +8,7 @@ part 1, proven against the genuine linuxdoom-1.10 engine. Only observations appe
 the admitted behavior and [testing](../TESTING.md#m4a-synthetic-mechanism-wads-and-the-episode-1-comparison)
 the commands. Exact review state and CI belong to GitHub.
 
-**Record in progress (Phase 2 steps 1–8 done on 2026-11-05; the fuzz target and its campaigns were recorded against the step-5 crates and are to be re-run on the final crates).** The real-IWAD runs are local
+**Record in progress (Phase 2 steps 1–8 done on 2026-11-05; the fuzz campaigns were re-run on the final crates).** The real-IWAD runs are local
 only (`DOOM_IWAD_DIR`, read in place); only counts, tic numbers and digests are recorded and no
 map-derived value appears. Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`, so
 LeakSanitizer was disabled, not passed. Timings quoted before the matched-performance section
@@ -137,9 +137,10 @@ tics (`-max_len=2404`). Properties: no panic; a refused tic leaves the canonical
 unchanged; a command inside the domain the step admits runs or hits a declared witness; the DSIM39
 `diagnostic_bytes` round trip at load, at each stride and at the end; the frozen `decode_level`
 refuses a DSIM39 capture; a second fresh simulation fed the same bytes agrees tic for tic. The seeder
-(`tools/seed_player_episode1_fuzz.py`) wrote **446 seeds** (max length 2,404) from the 28 scripts
-(six variants each, one more for scripts longer than 600 tics), 14 synthetic patterns on every WAD with
-two RNG settings, and header-only and odd-length inputs; it reads no Rust output.
+(`tools/seed_player_episode1_fuzz.py`) wrote **446 seeds** at step 5 (max length 2,404) from the 28 scripts
+then committed (six variants each, one more for scripts longer than 600 tics), 14 synthetic patterns on
+every WAD with two RNG settings, and header-only and odd-length inputs; it reads no Rust output. With
+`TURBO1` and `TARGET1` it writes **459 seeds**.
 
 | Run | Observed |
 | --- | --- |
@@ -162,6 +163,29 @@ that loaded, the endings were `PlatBlocked` (7), `StairBlocked` (8), `LevelExite
 `MoverFamily`, `Arithmetic` or `StoreError::Capacity`. **The campaigns are to be re-run against the final
 crates, after step 7, with all nine WADs admitted**; the numbers above must not be read as coverage of
 the chainsaw, launcher, Spectre or scale paths.
+
+**Re-run on the final crates** (2026-11-05, branch at 1f91d0e for the 446 seeds and at the seeder
+commit for the 13 new ones; the host was not idle, 1-minute load 1.5 to 2.5, so rates are indicative):
+
+| Run | Observed |
+| --- | --- |
+| Target compiled, plain and AddressSanitizer | yes, both |
+| Seed replay, plain, `-timeout=15` | 447 runs in 92 s, cov 8,492, ft 32,810, 395 inputs kept, no failure |
+| Coverage-guided campaign, plain, `-seed=811`, 600 s | 2,926 runs (447 initial included), about 4 exec/s; cov 8,492 to 8,743, ft 32,810 to 37,621, corpus 395 to 1,108 inputs (717 new units); 0 crashes, timeouts or out-of-memory; one slow unit (153 bytes on the scale WAD, 11 s) |
+| Seed replay, AddressSanitizer (`detect_leaks=0`), `-timeout=15` as then documented | **did not complete**: libFuzzer's timeout fired on a 2,404-byte scale-WAD seed after 8 min; replayed alone it runs clean, only slowly |
+| Sanitizer campaign, AddressSanitizer, `-seed=812`, `-timeout=15`, 600 s | **did not reach the end of the seed pass**: timeout on an 804-byte scale-WAD seed after 6 min; clean when replayed with a longer timeout |
+| Seed replay, AddressSanitizer (`detect_leaks=0`), `-timeout=120` | 448 runs in 517 s, cov 15,815, ft 61,290, 394 inputs kept, no failure |
+| Sanitizer campaign, AddressSanitizer (`detect_leaks=0`), `-seed=812`, `-timeout=120`, 600 s | 551 runs (448 initial included, so only 103 mutated inputs), cov 15,815 to 15,830, ft 61,290 to 62,249, 438 inputs (39 new units); 0 crashes or out-of-memory. Mostly the seed pass: thin as a campaign |
+| The 13 new `TURBO1`/`TARGET1` seeds, plain replay `-timeout=15` and AddressSanitizer replay `-timeout=120` | 14 and 15 runs, no failure (2 s plain, 12 s ASan) |
+
+No panic, assertion failure, sanitizer report or out-of-memory in any run. **Finding:** every input on the
+scale WAD (160 actors, the largest map) costs 2.2 to 3.8 s plain and 26 to 33 s under AddressSanitizer
+even for a 52-byte input, because a record's repeat count reaches 600 tics and the harness runs two
+simulations and clones the state before every tic for the refusal-preservation check; the map load
+itself is 10 to 30 ms (release example). 42 of the 446 seeds use that WAD. The documented ASan replay
+therefore uses `-timeout=120` ([testing](../TESTING.md)); the plain `-timeout=15` was never hit. No code
+changed for this. The campaign numbers are what a 10-minute run on a loaded host produced and are not a
+coverage claim for the Spectre, launcher or scale paths beyond the seeds that reach them.
 
 ## Real Episode 1 maps: genuine-engine runs (local only)
 

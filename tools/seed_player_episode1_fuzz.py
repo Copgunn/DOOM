@@ -29,6 +29,7 @@ SCRIPTS = {
     'EXIT1': 'exits', 'EXIT2': 'exits', 'SECT11': 'exits', 'EXDIE': 'exits',
     'SAW1': 'weapons', 'ROCKET1': 'weapons', 'ROCKDIE': 'weapons',
     'ITEMS1': 'items', 'TIMERS': 'items', 'SUIT1': 'items', 'SUITDIE': 'items', 'INVIS1': 'items',
+    'TURBO1': 'items', 'TARGET1': 'items',
     'SPECT1': 'spectre', 'SPECT2': 'spectre', 'SPECTD': 'spectre',
     'SCALE1': 'scale', 'SCALE2': 'scale',
 }
