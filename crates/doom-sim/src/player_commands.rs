@@ -7,6 +7,23 @@ pub const PLAYER_COMMAND_CONTEXT_SCHEMA: &[u8] = b"PLAYER-COMMAND-1-MEDIUM-GROUN
 pub(crate) const MF_JUSTATTACKED: u32 = 0x80;
 // g_game.c MAXPLMOVE=forwardmove[1], not arbitrary signed command bytes.
 const MAX_COMMAND_MOVE: i8 = 50;
+// Wire 23 (decision H5): the whole signed `forwardmove`/`sidemove` byte except
+// −128. A demo's 0x80 `forwardmove` byte is the end marker (g_game.c:1493), so
+// −128 never reaches `P_MovePlayer` as a forward move; −128 sideways is refused
+// alike (decision D9). `P_Thrust` (p_user.c:59–68) stays inside `i32` over the
+// whole range: |move·2048| ≤ 260,096 raw, `FixedMul` by |finecosine| ≤ 65,536
+// cannot exceed it, and the momentum it is added to is bounded by the room's
+// `MAP_SCALE_MOMENTUM_UNITS` (4,096 units, 2^28 raw) check of the previous tic.
+const EPISODE1_MAX_COMMAND_MOVE: i8 = 127;
+
+/// The largest admitted |`forward`| and |`side`| under `policy`.
+const fn max_command_move(policy: OriginalExecutionProfile) -> i8 {
+    if policy.has_episode1() {
+        EPISODE1_MAX_COMMAND_MOVE
+    } else {
+        MAX_COMMAND_MOVE
+    }
+}
 // M3G4_REFERENCE.md: conservative whole axis-slide pass, in raw fixed bits.
 const ATTEMPT_MOVE_MULTIPLIER: i64 = 4;
 const ATTEMPT_ROUNDING_MARGIN: i64 = 8;
@@ -91,8 +108,15 @@ impl Simulation {
         {
             return Err(SimError::UnsupportedButtons);
         }
-        if !(-MAX_COMMAND_MOVE..=MAX_COMMAND_MOVE).contains(&command.forward)
-            || !(-MAX_COMMAND_MOVE..=MAX_COMMAND_MOVE).contains(&command.side)
+        // Buttons 0x40 and `BT_SPECIAL` 0x80 stay refused above under every
+        // policy: `P_PlayerThink` clears the buttons of a special command
+        // (p_user.c:280–281) and `G_Ticker` runs pause/save from it
+        // (g_game.c:700–720), both M4c. The turbo message of `G_Ticker`
+        // (`forwardmove > TURBOTHRESHOLD`, g_game.c:672–679) only assigns the
+        // console player's HUD message; it is not modelled (DSIM `pickups.message`
+        // holds the messages `P_TouchSpecialThing` and the locked doors assign).
+        let limit = max_command_move(p.policy);
+        if !(-limit..=limit).contains(&command.forward) || !(-limit..=limit).contains(&command.side)
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
