@@ -10,9 +10,9 @@ not exist, or {"refuse": NAME, "tic": N[, "event": EVENT]}) and `must_show`, the
 the script exists to produce, each with the tic at which it first appears in the dump.
 
 The runner's strict, --overflow-check and --address-check variants are built with
-m3h9c_build.build() under --work; every script runs in each variant through
-m3h9c_reference.run() (imported; its module-level WAD is pointed at the script's WAD
-before each call), the three dump sets must be byte-identical (SHA-256 of the
+m4a_build.build() (the M4a driver fork, tools/reference/m4a_driver.c) under --work;
+every script runs in each variant through m3h9c_reference.run() (imported; its
+module-level WAD is pointed at the script's WAD before each call), the three dump sets must be byte-identical (SHA-256 of the
 concatenated snapshots) and end the same way, and every expectation is evaluated on the
 strict dumps. tests/reference/m4a_synthetic_results.json records per script the tic
 count, the ending and its tic, secretexit, prndindex after the load and at the end, the
@@ -54,7 +54,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools/reference'))
 sys.dont_write_bytecode = True
-import m3h9c_build as build       # noqa: E402
+import m4a_build as build         # noqa: E402
 import m3h9c_dump as dump         # noqa: E402
 import m3h9c_reference as ref     # noqa: E402
 import m3h9c_wad as W             # noqa: E402
@@ -222,7 +222,7 @@ def main():
         sys.exit('FAILED expectations:\n  ' + '\n  '.join(failures))
     if not a.only:
         doc = dict(schema=SCHEMA, manifest_sha256=sha(MANIFEST.read_bytes()),
-                   runner_contract_sha256=sha((ROOT / 'tests/reference/m3h9c_runner_contract.json').read_bytes()),
+                   runner_contract_sha256=sha(build.M4A.contract.read_bytes()),
                    variants=VARIANTS, variants_identical=True, asan_options='detect_leaks=0 (leak detection disabled)',
                    scripts=results)
         body = json.dumps(doc, indent=1)

@@ -272,15 +272,14 @@
   ]
  },
  "link_flags": [
-  "-Wl,--wrap=P_AddThinker,--wrap=Z_Free,--wrap=P_SetThingPosition,--wrap=P_InitThinkers,--wrap=Z_Malloc,--wrap=P_RemoveThinker"
+  "-Wl,--wrap=P_AddThinker,--wrap=Z_Free,--wrap=P_SetThingPosition,--wrap=P_InitThinkers,--wrap=Z_Malloc"
  ],
  "wrapped": [
   "P_AddThinker",
   "Z_Free",
   "P_SetThingPosition",
   "P_InitThinkers",
-  "Z_Malloc",
-  "P_RemoveThinker"
+  "Z_Malloc"
  ],
  "abi_adapters": [
   {
@@ -951,7 +950,7 @@
   "var": 17
  },
  "runner_sha256": {
-  "tools/reference/m3h9c_driver.c": "deda9d1d8451c3741224217dbe2cf823fc17a058195a110e2e9ad4c86a75f460",
+  "tools/reference/m3h9c_driver.c": "441e33d7e1c22de621f433d4608f00bbfcbf43d53e8d95c2dfbb749a842e1d50",
   "tools/reference/m3h9c_stubs.c": "c8c2b5bdbdfb37c67ae7f47be3e3c66bccb89ff57e94ad2ec260cfaf1e4cdb29"
  },
  "driver_behaviour": [
@@ -963,9 +962,7 @@
   "After every tic the driver calls the genuine Z_CheckHeap (z_zone.c:399-420), a read-only walk of the zone; vanilla calls it only in G_DoLoadLevel (g_game.c:488).",
   "Linker-level observers (-Wl,--wrap): P_AddThinker gives each thinker a serial (T rows), P_SetThingPosition gives the thing a link serial (the global link order is the ascending current link serial), Z_Free of a known thinker records it as freed since the previous dump (K rows, in free order) and, for a removed mobj, a copy of the mobj taken before the genuine free (RM rows); P_InitThinkers (after Z_FreeTags at level setup) drops every entry (K rows with seq -1). K rows also carry adds, the P_AddThinker count at the free; a pending mobj (R row) is followed by an RR row with its M columns. Each of these wrappers only records and then calls the genuine function.",
   "ZeroFill: the Z_Malloc wrapper zero-fills every block after the genuine allocation. Only values the original leaves undefined change: plat_t.count (EV_DoPlat, p_plats.c:173; read only in waiting after being set, p_plats.c:75, 84, 113, 120) and floormove_t.newspecial (EV_DoFloor, p_floor.c:282; set and read only for lowerAndChange and donutRaise, p_floor.c:231, 242, 422, 433, p_spec.c:1203) made the strict and address dumps differ. lowerAndChange without a neighbour at the destination height reads newspecial and texture uninitialised in vanilla (p_floor.c:242-243); the fill makes them 0 there.",
-  "HU_Ticker records players[consoleplayer].message for the dump and clears it as vanilla does with the default show_messages 1; P rows report it as 0 (NULL), the 1-based index of the d_englsh.h GOTARMOR..GOTSHOTGUN2 pickup string (1..37), 38..40 for the locked-door strings PD_BLUEK, PD_YELLOWK, PD_REDK (d_englsh.h:128-130, assigned at p_doors.c:378, 392, 405; added for M4a), or -1 (any other).",
-  "H rows end with secretexit (added for M4a): g_game.c's boolean secretexit (g_game.c:999), set by G_SecretExitLevel (g_game.c:1009-1018) and cleared by G_ExitLevel (g_game.c:1002-1006). New columns are appended at the end of their rows so every earlier column keeps its position.",
-  "R rows carry fn and sector (added for M4a): a -Wl,--wrap=P_RemoveThinker observer records, before the genuine P_RemoveThinker (p_tick.c:84-92) overwrites the function pointer, the kind of a removed non-mobj thinker (1 T_VerticalDoor, 2 T_PlatRaise, 3 T_MoveFloor, 4 T_MoveCeiling, 0 other) and its sector index, so a mover created and removed within one tic keeps its sector for the encoder; -1 when unknown.",
+  "HU_Ticker records players[consoleplayer].message for the dump and clears it as vanilla does with the default show_messages 1; P rows report it as 0 (NULL), the 1-based index of the d_englsh.h GOTARMOR..GOTSHOTGUN2 pickup string, or -1 (any other).",
   "--selftest-extra-draw TIC calls the public P_Random () once before G_Ticker of tic TIC (test only).",
   "The zone is 6 MiB (vanilla mb_used, i_system.c:51) unless --zone-mb is given."
  ],
@@ -983,8 +980,7 @@
    "gamestate",
    "numthinkers",
    "numlinespecials",
-   "gameskill",
-   "secretexit"
+   "gameskill"
   ],
   "M": [
    "tic",
@@ -1029,9 +1025,7 @@
   ],
   "R": [
    "tic",
-   "idx",
-   "fn",
-   "sector"
+   "idx"
   ],
   "RR": [
    "tic",

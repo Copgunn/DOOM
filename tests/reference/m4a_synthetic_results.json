@@ -1,7 +1,7 @@
 {
  "schema": "DOOM-M4A-SYNTHETIC-RESULTS-v1",
  "manifest_sha256": "1c4060651c8e999ee3055edcdce66d8c90defd830d68ce3bab0f4572f1b2f336",
- "runner_contract_sha256": "31f4615465336480079edb99c44038bd72852fbb70ea6cf8725839d5aacd05c2",
+ "runner_contract_sha256": "b6c6707ec7652bede094b2f5581e00eaed5a2d0485198b77312ce1c166374800",
  "variants": [
   "strict",
   "overflow",

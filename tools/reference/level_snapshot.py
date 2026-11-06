@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Independent DSIM38/DSIM39 projection of the M3h9c whole-engine runner's per-tic dumps.
 
-The genuine-engine runner (tools/reference/m3h9c_driver.c, read by m3h9c_dump.py) writes
+The genuine-engine runner (tools/reference/m3h9c_driver.c, or its M4a fork
+tools/reference/m4a_driver.c, both read by m3h9c_dump.py) writes
 the complete gameplay state after the load (`load.txt`) and after every `G_Ticker`
 (`tic_NNNNN.txt`). This module projects one such state to the bytes of a DSIM38 capture
 (M3h9c note §5 and decisions G4/G5; docs/STATE_FORMAT.md "DSIM v38"): the DSIM37 layout
@@ -95,7 +96,10 @@ M4a Phase 2 plan §A.6, decisions D1-D10; exact mode only). The DSIM38 fields at
 paths, plus, from the same dumps:
 
 - `level.secret_exit` (after `level.exit`) = H.secretexit, refused unless it implies the
-  exit request; `store.max_slots` = 1024 (D1).
+  exit request. A dump of the M3h9c driver has no H.secretexit (only the M4a fork,
+  m4a_driver.c, writes it): it projects 0 there, exactly, unless the map has a line with
+  special 51 or 124 (the only callers of G_SecretExitLevel, p_switch.c:431-434,
+  p_spec.c:760-762), which is a DumpDeficiency; `store.max_slots` = 1024 (D1).
 - `sector.{i}.floorpic` (after `sector.{i}.special`) = the normalized 8-byte name (D2) of
   flat S.floorpic, resolved in the WAD's own directory as R_InitFlats/R_FlatNumForName do
   (firstflat = last F_START + 1, last match of the upper-cased name, the demo lump
@@ -113,7 +117,8 @@ paths, plus, from the same dumps:
 - `pickups.message` codes 14..29 for the driver's indices 8..11, 17..20, 24, 25, 30, 33,
   34, 38..40 (EPISODE1_MESSAGES); `tracer` must be NULL on every actor (not encoded).
 
-Both profiles: when the driver's R rows carry `fn`/`sector` (a P_RemoveThinker observer),
+Both profiles: when the driver's R rows carry `fn`/`sector` (the M4a fork's
+P_RemoveThinker observer, m4a_driver.c; M3h9c-driver dumps lack them),
 a mover created and marked within one tic is a removed mover (kind 8) of that sector, and
 a known mover's R row must name its own kind and sector; without those columns such a
 thinker is a DumpDeficiency.
@@ -184,7 +189,7 @@ class Profile:
 
 
 LEVEL = Profile('level', VERSION, POLICY, CONTEXT, MAX_SLOTS, DRIVER_MESSAGES, False)
-# DSIM39 additions (plan §A.6). Driver message index (m3h9c_driver.c PICKUP_MESSAGES, 1-based:
+# DSIM39 additions (plan §A.6). Driver message index (m4a_driver.c PICKUP_MESSAGES, 1-based:
 # GOTSUPER 8, GOTBLUECARD 9, GOTYELWCARD 10, GOTREDCARD 11, GOTINVIS 17, GOTSUIT 18, GOTMAP 19,
 # GOTVISOR 20, GOTROCKET 24, GOTROCKBOX 25, GOTBACKPACK 30, GOTCHAINSAW 33, GOTLAUNCHER 34; the
 # locked-door strings PD_BLUEK 38, PD_YELLOWK 39, PD_REDK 40, set by EV_VerticalDoor,
@@ -845,9 +850,14 @@ class Projector:
         if ep:
             # H.secretexit (g_game.c:999-1018: G_SecretExitLevel sets it with ga_completed,
             # G_ExitLevel clears it); the flag implies the exit request
-            if h['secretexit'] not in (0, 1) or (h['secretexit'] and h['gameaction'] != GA_COMPLETED):
+            if 'secretexit' in h: se = h['secretexit']
+            elif any(s in (51, 124) for s in self.map.special):
+                # an M3h9c-driver dump (no H.secretexit) on a map that can reach G_SecretExitLevel
+                raise ProjectionError('DumpDeficiency', tic, 'H.secretexit is absent on a map with a secret exit line')
+            else: se = 0    # no line calls G_SecretExitLevel (p_switch.c:431-434, p_spec.c:760-762)
+            if se not in (0, 1) or (se and h['gameaction'] != GA_COMPLETED):
                 raise ProjectionError('Unadmitted', tic, 'secretexit without the exit request')
-            f.append(('level.secret_exit', n('B', h['secretexit'])))
+            f.append(('level.secret_exit', n('B', se)))
         f += [('store.max_slots', n('I', pr.max_slots)), ('store.slot_count', n('Q', len(self.actors.generations))),
              ('store.head', opt(aorder[0] if aorder else None)), ('store.tail', opt(aorder[-1] if aorder else None)),
              ('thinker.order', b''.join(ident(x) for x in aorder)),

@@ -1691,7 +1691,7 @@ python3 tools/reference/m4a_check_wad.py WAD [--name NAME] [--dump-counts]
 python3 tools/e1m1_scripts.py --check                      # also checks tests/reference/m4a_scripts (.txt -> .lmp)
 
 # the genuine runner (C; Linux only in CI)
-python3 tools/reference/m3h9c_build.py --check             # contract, including the driver columns
+python3 tools/reference/m4a_build.py --check               # M4a driver-fork contract (m4a_driver.c), including its columns
 python3 tools/reference/m4a_reference.py [--work DIR] [--check] [--keep-dumps] [--cc CC] [--only WAD] [--selftest TIC]
 python3 tools/reference/m4a_snapshot_goldens.py [--dumps DIR/runs | --work DIR] [--check]
 
@@ -1705,7 +1705,7 @@ python3 tools/reference/level_snapshot.py DUMP_DIR --wad WAD [--map E1M1] [--dem
 python3 tools/reference/level_compare.py DUMP_DIR RUST_DIR --wad WAD [--map E1M1] [--demo LMP] --profile episode1 [--values] [--json OUT]
 
 # opt-in ILP32 variant (needs a 32-bit toolchain; otherwise one skip line, exit 0)
-python3 tools/reference/m3h9c_build.py --variant strict32 [--out DIR]
+python3 tools/reference/m4a_build.py --variant strict32 [--out DIR]   # or m3h9c_build.py for the M3h9c driver
 DOOM_IWAD_DIR=/path tools/local/e1m1_reference.py --strict32   # local only; see the M3h9c section
 ```
 
@@ -1738,12 +1738,15 @@ What each asserts:
   `PlayerReborn` refusal, a witness refusal such as `PlatBlocked`, or `tbd` (informational).
   Without wire 23 in the example it prints "SKIP: example not available (no wire 23)" and
   exits 0; `--require` makes that a failure.
-- Driver columns: the `H` row ends with `secretexit` (`g_game.c:999`); `R` rows carry the removed
-  mover's kind and sector; the `P` message column holds 38..40 for the locked-door strings. The
-  contract hash covers the driver, so `m3h9c_build.py --check` fails on any change to them.
+- Driver columns: the M4a runner is built from `tools/reference/m4a_driver.c`, the M4a fork of
+  the merged `m3h9c_driver.c` (which is unchanged). In the fork the `H` row ends with
+  `secretexit` (`g_game.c:999`); `R` rows carry the removed mover's kind and sector; the `P`
+  message column holds 38..40 for the locked-door strings. `m4a_build.py --check` regenerates
+  `tests/reference/m4a_runner_contract.json`, whose hash covers the fork, so it fails on any
+  change to them; `m3h9c_build.py --check` still holds the merged M3h9c contract.
 
-CI path: the `stable` job of `.github/workflows/rust.yml` runs, in order, `m4a_wad.py --check`,
-`m4a_check_wad.py --check` and `e1m1_scripts.py --check` (every OS);
+CI path: the `stable` job of `.github/workflows/rust.yml` runs, in order, `m4a_build.py --check`,
+`m4a_wad.py --check`, `m4a_check_wad.py --check` and `e1m1_scripts.py --check` (every OS);
 `m4a_reference.py --check --keep-dumps --selftest 300` and
 `m4a_snapshot_goldens.py --dumps DIR/runs --check` (Linux only, one runner build); and a
 release build of `player_level_run` followed by `check_player_episode1.py --require` (every

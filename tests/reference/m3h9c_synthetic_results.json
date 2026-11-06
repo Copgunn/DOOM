@@ -1,7 +1,7 @@
 {
  "schema": "DOOM-M3H9C-SYNTHETIC-RESULTS-v1",
  "wad_sha256": "1180ed6a0070d841e20ae2a3fd136fe49f132082a2dba50b75106a10b58c5923",
- "runner_contract_sha256": "31f4615465336480079edb99c44038bd72852fbb70ea6cf8725839d5aacd05c2",
+ "runner_contract_sha256": "49cdef6759d9d4e5d86f2c2f193d4797b56efb01b03c52107279ff23a36c91aa",
  "variants": [
   "strict",
   "overflow",
@@ -21,7 +21,7 @@
    "mobjs_at_load": 92,
    "unknown_messages": 0,
    "snapshots": 582,
-   "dumps_sha256": "9d8118eca3ca9d8c80178861e9db3e93bcd95b2327309c263276362a957d5921"
+   "dumps_sha256": "c94f21f685537bca3f19b833ff590c46a534d595d44e921732874192132e85c2"
   },
   "SYNCHAOS": {
    "lmp_sha256": "5072d63e8ad1aa2509136b9f35d903cda0626e42cdd06099b481c9be5227d9df",
@@ -34,7 +34,7 @@
    "mobjs_at_load": 92,
    "unknown_messages": 0,
    "snapshots": 5001,
-   "dumps_sha256": "92b428e2c781f9637cf9e4387e09579461a80c13b634ea4df5d1ff386d9cd26c"
+   "dumps_sha256": "1accfcf39650fe1aaaa72cf8ebab39a7e6a7d9be18905b45262c878158e9834b"
   },
   "SYNDIE": {
    "lmp_sha256": "23986bcfbceca535649f09dab6ddfe08db3e31edb2227eddc39797384f715d73",
@@ -47,7 +47,7 @@
    "mobjs_at_load": 92,
    "unknown_messages": 0,
    "snapshots": 1002,
-   "dumps_sha256": "037fa3a6725464b6ca2d66289967db04a4d065398cf4b7dfc3963d14091d9318"
+   "dumps_sha256": "66af9268e6366ef328269a5111e4b6b433318c54e2a0ff9bb876c2cad8a7fc36"
   },
   "SYNFIGHT": {
    "lmp_sha256": "77c17e0d4577281b91e992d4353dc4cd2e0525ec7b5d42469487b11b167b8149",
@@ -60,7 +60,7 @@
    "mobjs_at_load": 92,
    "unknown_messages": 0,
    "snapshots": 274,
-   "dumps_sha256": "d8b352394776b1ae326d2bf1ad26dde1ed2e7cdadd1835dd33cfcf60415389f6"
+   "dumps_sha256": "165d85be5ea06c0c39ffeb093fd20392422e43e64dfe89bc0993746682903aac"
   },
   "SYNIDLE": {
    "lmp_sha256": "a8730210d4c253c7d203dbf19dfa105a1d762811185339a36bc24fa038adb1f2",
@@ -73,7 +73,7 @@
    "mobjs_at_load": 92,
    "unknown_messages": 0,
    "snapshots": 2101,
-   "dumps_sha256": "3542794ea1266da369de6912d476d3d4b693f98e3f622c0ac0220bcff1a43aec"
+   "dumps_sha256": "c774d7f42c337096d368a0fb81e36ded493fc8ccfd375aee9d40382be15b04cb"
   },
   "SYNWALK": {
    "lmp_sha256": "9f9bd78e7ed582b5a0250fdc8f90eddb080e1e8b2870ae0f47c6d2f7934621c9",
@@ -86,7 +86,7 @@
    "mobjs_at_load": 92,
    "unknown_messages": 0,
    "snapshots": 1469,
-   "dumps_sha256": "b5b423227c0cffdd249d6b096b1675d6605aa200e50b8a334e2f0d6644f98b8b"
+   "dumps_sha256": "7297a677c897da48abcc720ad1b3557d604e882923870f4c7c1d7c24c6d89bb5"
   }
  }
 }

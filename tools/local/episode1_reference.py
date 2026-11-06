@@ -9,13 +9,16 @@ and is never copied.
 For every selected map (--map E1Mn, repeatable; default every map of E1M1-E1M4, E1M6 and
 E1M7 whose tests/reference/e1mN_scripts/ directory exists) it discovers the committed
 demo lumps tests/reference/e1mN_scripts/*.lmp (--script NAME narrows them to base names),
-builds the runner variants (tools/reference/m3h9c_build.py: strict, --overflow-check,
---address-check, and with --strict32 the opt-in -m32 strict32 variant) under --work,
-runs every lump in every variant (the address variant with ASAN_OPTIONS=detect_leaks=0),
-asserts that the dump sets are byte-identical (SHA-256 of the concatenated snapshots)
-and writes <work>/results/<MAP>_<LUMP>.json. The demo header carries the map (byte 3;
-tools/e1m1_scripts.py `map ExMy`); a lump whose header names another map than its
-directory is refused.
+builds the runner variants (strict, --overflow-check, --address-check, and with
+--strict32 the opt-in -m32 strict32 variant) under --work/build/<driver>: E1M2-E1M7 use
+the M4a driver fork (tools/reference/m4a_build.py, m4a_driver.c); E1M1 uses the merged
+M3h9c driver (tools/reference/m3h9c_build.py, m3h9c_driver.c), the frozen wire-22
+evidence, whose dumps have no H.secretexit and no R fn/sector columns (secretexit is
+then reported as null), runs every lump in every variant (the address variant with
+ASAN_OPTIONS=detect_leaks=0), asserts that the dump sets are byte-identical (SHA-256
+of the concatenated snapshots) and writes <work>/results/<MAP>_<LUMP>.json. The demo
+header carries the map (byte 3; tools/e1m1_scripts.py `map ExMy`); a lump whose header
+names another map than its directory is refused.
 
 A result holds counts, tic numbers, yes/no facts, RNG indices, times and digests only:
 tics, end (marker, exit or reborn), end tic, prndindex after load and at the end,
@@ -44,10 +47,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools/reference'))
-import m3h9c_build as build  # noqa: E402
+import m3h9c_build            # noqa: E402
+import m4a_build              # noqa: E402
 import m3h9c_dump as dump    # noqa: E402
 
 MAPS = ['E1M1', 'E1M2', 'E1M3', 'E1M4', 'E1M6', 'E1M7']
+# E1M1 stays on the merged M3h9c driver (frozen wire-22 evidence); the other maps use the M4a fork.
+def builder(mapname): return m3h9c_build if mapname == 'E1M1' else m4a_build
 VARIANTS = ['strict', 'overflow', 'address']
 SUMMARY = re.compile(r'^summary: tics (\d+) end=(marker|exit|reborn) end_tic (\d+) gamestate (\d+) prndindex (\d+) .* '
                      r'observer_misses (\d+) unknown_messages (\d+) .* us_per_tic ([\d.]+)$', re.M)
@@ -171,19 +177,22 @@ def main():
         sys.exit(f'no committed script {sorted(set(a.script) - {p.stem for _, p in jobs})} under the selected maps')
     if not jobs: sys.exit('no scripts selected')
     work.mkdir(parents=True, exist_ok=True); (work / 'results').mkdir(exist_ok=True)
-    variants = VARIANTS + (list(build.OPTIONAL_VARIANTS) if a.strict32 else [])
-    binaries = {}
-    for v in variants:
-        with open(os.devnull, 'w') as quiet:
-            stdout, sys.stdout = sys.stdout, quiet
-            try: binaries[v] = build.build(v, work / 'build')
-            finally: sys.stdout = stdout
-        if binaries[v] is None: sys.exit(f'FAILED: {v}: the toolchain cannot build -m32 programs (m3h9c_build.py --probe-m32)')
-    print(f'built {len(binaries)} variants under {work / "build"}')
+    variants = VARIANTS + (list(m3h9c_build.OPTIONAL_VARIANTS) if a.strict32 else [])
+    built = {}
+    for mod in dict.fromkeys(builder(m) for m, _ in jobs):
+        name = mod.__name__.split('_')[0]
+        for v in variants:
+            with open(os.devnull, 'w') as quiet:
+                stdout, sys.stdout = sys.stdout, quiet
+                try: built[mod, v] = mod.build(v, work / 'build' / name)
+                finally: sys.stdout = stdout
+            if built[mod, v] is None: sys.exit(f'FAILED: {v}: the toolchain cannot build -m32 programs (m3h9c_build.py --probe-m32)')
+        print(f'built {len(variants)} variants of the {name} driver under {work / "build" / name}')
     failed = False
     for m, lmp in jobs:
         name = f'{m}_{lmp.stem}'
         dirs = {v: work / 'runs' / f'{v}_{name}' for v in variants}
+        binaries = {v: built[builder(m), v] for v in variants}
         with ThreadPoolExecutor(a.jobs) as pool:
             per = dict(zip(variants, pool.map(lambda v: run(binaries[v], iwad, lmp, dirs[v], v), variants)))
         bad = [r['failed'] for r in per.values() if 'failed' in r]

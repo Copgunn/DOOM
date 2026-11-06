@@ -78,21 +78,6 @@
  *     G_Ticker of tic TIC; it never touches gameplay code text.
  *   - --zone-mb N sets the zone size (vanilla mb_used = 6, i_system.c:51).
  *
- * Columns added for M4a (appended at the end of their rows, so every earlier column keeps
- * its position and name; readers select columns by name):
- *   - H.secretexit: g_game.c's `boolean secretexit` (g_game.c:999), set by
- *     G_SecretExitLevel (g_game.c:1009-1018, line special 51, p_switch.c:431-435) and
- *     cleared by G_ExitLevel (g_game.c:1002-1006); it is what tells a secret exit
- *     (end=exit, secretexit 1) from a normal one (secretexit 0) on the stopping tic.
- *   - P.message codes 38..40: the three locked-door strings PD_BLUEK, PD_YELLOWK and
- *     PD_REDK (d_englsh.h:128-130) that EV_VerticalDoor assigns to player->message
- *     (p_doors.c:378, 392, 405), appended after GOTSHOTGUN2 so codes 1..37 are unchanged.
- * Rows that already carried what M4a reads (no change): S.floorpic (sector_t.floorpic,
- * written by EV_DoPlat raiseToNearestAndChange p_plats.c:185-195 and by the donut's
- * T_MoveFloor pastdest p_floor.c:230-232), S.lightlevel (EV_LightTurnOn p_lights.c:271-306),
- * P.pw0..pw5, card0..card5, backpack, ammo0..3, maxammo0..3 (player_t, d_player.h), and
- * M.flags (MF_SHADOW, p_inter.c:300-305; MF_JUSTATTACKED, p_pspr.c:542).
- *
  * Dumps are written only to --out: they hold map-derived values and stay local.
  * tools/reference/m3h9c_dump.py documents and reads the format.
  */
@@ -120,7 +105,6 @@ extern short numlinespecials;
 extern boolean singledemo;
 extern int rndindex, prndindex;
 extern gameaction_t gameaction;
-extern boolean secretexit;               /* g_game.c:999 */
 extern thinker_t thinkercap;
 extern button_t buttonlist[MAXBUTTONS];
 extern plat_t* activeplats[MAXPLATS];
@@ -170,7 +154,7 @@ void* __wrap_Z_Malloc (int size, int tag, void* user)
     return block;
 }
 
-typedef struct { void* p; int serial, linkserial, mobj, rfn; long rsector; } obs_t;
+typedef struct { void* p; int serial, linkserial, mobj; } obs_t;
 #define OBS_CAP 65536                     /* power of two; far above any thinker count */
 static obs_t obs[OBS_CAP];               /* open addressing; p == NULL empty, p == OBS_DEAD deleted */
 static char obs_dead_marker;
@@ -209,7 +193,7 @@ static obs_t* obs_insert (void* p)        /* p is not in the table */
     h = obs_hash (p);
     while (obs[h].p && obs[h].p != OBS_DEAD) h = (h + 1) & (OBS_CAP - 1);
     if (!obs[h].p) obs_used++;
-    obs[h].p = p; obs[h].serial = -1; obs[h].linkserial = -1; obs[h].mobj = 0; obs[h].rfn = 0; obs[h].rsector = -1;
+    obs[h].p = p; obs[h].serial = -1; obs[h].linkserial = -1; obs[h].mobj = 0;
     return &obs[h];
 }
 static void note_freed (int serial, int seq, int adds)
@@ -261,16 +245,13 @@ void __wrap_P_InitThinkers (void)
 static int serial_of (void* p) { obs_t* e = obs_find (p); if (!e || e->serial < 0) { observer_misses++; return -1; } return e->serial; }
 static int linkserial_of (void* p) { obs_t* e = obs_find (p); return e ? e->linkserial : -1; }
 
-/* d_englsh.h GOTARMOR .. GOTSHOTGUN2 in header order, then (M4a) the locked-door strings
- * PD_BLUEK, PD_YELLOWK, PD_REDK (d_englsh.h:128-130; p_doors.c:378, 392, 405); P rows
- * report 1 + the index. */
+/* d_englsh.h GOTARMOR .. GOTSHOTGUN2 in header order; P rows report 1 + the index. */
 static const char* const PICKUP_MESSAGES[] = {
     GOTARMOR, GOTMEGA, GOTHTHBONUS, GOTARMBONUS, GOTSTIM, GOTMEDINEED, GOTMEDIKIT, GOTSUPER,
     GOTBLUECARD, GOTYELWCARD, GOTREDCARD, GOTBLUESKUL, GOTYELWSKUL, GOTREDSKULL,
     GOTINVUL, GOTBERSERK, GOTINVIS, GOTSUIT, GOTMAP, GOTVISOR, GOTMSPHERE,
     GOTCLIP, GOTCLIPBOX, GOTROCKET, GOTROCKBOX, GOTCELL, GOTCELLBOX, GOTSHELLS, GOTSHELLBOX, GOTBACKPACK,
-    GOTBFG9000, GOTCHAINGUN, GOTCHAINSAW, GOTLAUNCHER, GOTPLASMA, GOTSHOTGUN, GOTSHOTGUN2,
-    PD_BLUEK, PD_YELLOWK, PD_REDK };
+    GOTBFG9000, GOTCHAINGUN, GOTCHAINSAW, GOTLAUNCHER, GOTPLASMA, GOTSHOTGUN, GOTSHOTGUN2 };
 static int message_index (const char* m)
 {
     unsigned i;
@@ -329,26 +310,10 @@ static long stidx (state_t* s) { return s ? (long)(s - states) : -1L; }
 static int in_plats (void* p) { int i; for (i = 0; i < MAXPLATS; i++) if (activeplats[i] == p) return 1; return 0; }
 static int in_ceils (void* p) { int i; for (i = 0; i < MAXCEILINGS; i++) if (activeceilings[i] == p) return 1; return 0; }
 
-void __real_P_RemoveThinker (thinker_t* thinker);
-/* P_RemoveThinker observer: the kind (1 vldoor_t, 2 plat_t, 3 floormove_t, 4 ceiling_t, 0 other)
-   and sector of a non-mobj thinker, read before the genuine call overwrites its function. */
-void __wrap_P_RemoveThinker (thinker_t* thinker)
-{
-    obs_t* e = obs_find (thinker);
-    if (e && !e->mobj) {
-        actionf_p1 fn = thinker->function.acp1;
-        if (fn == (actionf_p1)T_VerticalDoor) { e->rfn = 1; e->rsector = sidx (((vldoor_t*)thinker)->sector); }
-        else if (fn == (actionf_p1)T_PlatRaise) { e->rfn = 2; e->rsector = sidx (((plat_t*)thinker)->sector); }
-        else if (fn == (actionf_p1)T_MoveFloor) { e->rfn = 3; e->rsector = sidx (((floormove_t*)thinker)->sector); }
-        else if (fn == (actionf_p1)T_MoveCeiling) { e->rfn = 4; e->rsector = sidx (((ceiling_t*)thinker)->sector); }
-    }
-    __real_P_RemoveThinker (thinker);
-}
-
 static const char* COLUMNS =
- "#columns,H,tic,leveltime,gametic,prndindex,rndindex,totalkills,totalitems,totalsecret,gameaction,gamestate,numthinkers,numlinespecials,gameskill,secretexit\n"
+ "#columns,H,tic,leveltime,gametic,prndindex,rndindex,totalkills,totalitems,totalsecret,gameaction,gamestate,numthinkers,numlinespecials,gameskill\n"
  "#columns,M,tic,idx,type,x,y,z,momx,momy,momz,health,state,tics,flags,height,radius,reactiontime,threshold,target,lastlook,floorz,ceilingz,subsector,angle,sprite,frame,movedir,movecount,tracer,sp_x,sp_y,sp_angle,sp_type,sp_options,player,bx,by,bpos,sector,spos\n"
- "#columns,R,tic,idx,fn,sector\n"
+ "#columns,R,tic,idx\n"
  "#columns,RR,tic,idx,type,x,y,z,momx,momy,momz,health,state,tics,flags,height,radius,reactiontime,threshold,target,lastlook,floorz,ceilingz,subsector,angle,sprite,frame,movedir,movecount,tracer,sp_x,sp_y,sp_angle,sp_type,sp_options,player,bx,by,bpos,sector,spos\n"
  "#columns,DR,tic,idx,type,sector,topheight,speed,direction,topwait,topcountdown\n"
  "#columns,PL,tic,idx,running,sector,speed,low,high,wait,count,status,oldstatus,crush,tag,type\n"
@@ -414,18 +379,17 @@ static void dump (const char* dir, const char* name, int tic)
     if (!f) { perror (path); exit (4); }
     walk_thinkers ();
     fputs (COLUMNS, f);
-    fprintf (f, "H,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", tic, leveltime, gametic, prndindex, rndindex,
+    fprintf (f, "H,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", tic, leveltime, gametic, prndindex, rndindex,
              totalkills, totalitems, totalsecret, (int)gameaction, (int)gamestate, numth, (int)numlinespecials,
-             (int)gameskill, (int)secretexit);
+             (int)gameskill);
     for (i = 0; i < numth; i++) {
         thinker_t* t = order[i];
         actionf_p1 fn = t->function.acp1;
         if (fn == (actionf_p1)P_MobjThinker) {
             print_mobj (f, "M", tic, i, (mobj_t*)t, 1);
         } else if (t->function.acv == (actionf_v)(-1)) {
-            { obs_t* e = obs_find (t);
-              fprintf (f, "R,%d,%d,%d,%ld\n", tic, i, e ? e->rfn : 0, e ? e->rsector : -1L);
-              if (e && e->mobj) print_mobj (f, "RR", tic, i, (mobj_t*)t, 0); }
+            fprintf (f, "R,%d,%d\n", tic, i);
+            { obs_t* e = obs_find (t); if (e && e->mobj) print_mobj (f, "RR", tic, i, (mobj_t*)t, 0); }
         } else if (fn == (actionf_p1)T_VerticalDoor) {
             vldoor_t* d = (vldoor_t*)t;
             fprintf (f, "DR,%d,%d,%d,%ld,%d,%d,%d,%d,%d\n", tic, i, (int)d->type, sidx (d->sector), d->topheight, d->speed,
