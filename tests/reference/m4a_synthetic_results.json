@@ -1,7 +1,7 @@
 {
  "schema": "DOOM-M4A-SYNTHETIC-RESULTS-v1",
  "manifest_sha256": "1c4060651c8e999ee3055edcdce66d8c90defd830d68ce3bab0f4572f1b2f336",
- "runner_contract_sha256": "a613ed6bb50f7a5e444a37bc7dae2f155b1da41dd17c5d8d84a0b64aaf4597dc",
+ "runner_contract_sha256": "31f4615465336480079edb99c44038bd72852fbb70ea6cf8725839d5aacd05c2",
  "variants": [
   "strict",
   "overflow",
@@ -22,7 +22,7 @@
    "mobjs_at_load": 6,
    "unknown_messages": 0,
    "snapshots": 922,
-   "dumps_sha256": "ce73b49492f6e45d16aeec0f40ab809a3f5fbf37cda3b0d234f3af7c59b8c2e9",
+   "dumps_sha256": "997bc4821206509b815ea376d47dce969885a53f666f34033f5b4f695159aadf",
    "secretexit": false,
    "must_show": {
     "31 D1: open door thinker on MD0": 46,
@@ -54,7 +54,7 @@
    "mobjs_at_load": 6,
    "unknown_messages": 0,
    "snapshots": 559,
-   "dumps_sha256": "73cdb73b8fad167673049ff9746e7469ccb28c7c9a37be511d06d36437a1e6f8",
+   "dumps_sha256": "a1f82ee33de99b97e7df0d308f3cfb32956b63f675f7f84f98b723d8cea41604",
    "secretexit": false,
    "must_show": {
     "W1 2: open door on RD0": 16,
@@ -79,7 +79,7 @@
    "mobjs_at_load": 6,
    "unknown_messages": 0,
    "snapshots": 1336,
-   "dumps_sha256": "fb4d7b6667f81bc691f357e59b519e0f5324b972c9e0fdc59d19ba1ed3b88813",
+   "dumps_sha256": "7f52db9e4b3a672b3400db4cde54b322ce773360314a8556fc5c0b6033e6e72e",
    "secretexit": false,
    "must_show": {
     "W1 16: close-30-then-open on RD4": 99,
@@ -103,7 +103,7 @@
    "mobjs_at_load": 2,
    "unknown_messages": 0,
    "snapshots": 933,
-   "dumps_sha256": "7c2465d66cad52eedd27d4eb5ec176c1324755f134ca0bf0b8a36caf0ca95a03",
+   "dumps_sha256": "a15f5d6de505c17d51c66715cad6aa047cbe1aa2a9f00caec308b395c2280296",
    "secretexit": false,
    "must_show": {
     "W1 5 raiseFloor to 48 (lowest ceiling around)": 96,
@@ -131,7 +131,7 @@
    "mobjs_at_load": 2,
    "unknown_messages": 0,
    "snapshots": 285,
-   "dumps_sha256": "c435d010459e87feaf67d9804c86686c68ceeba31ce2dfbcac385818fbb1c642",
+   "dumps_sha256": "7af4476843d3f31c3824878f3a596b404893f4a53ef09dcaaed998f17f85a405",
    "secretexit": false,
    "must_show": {
     "WR 91 raiseFloor to the pad ceiling 64": 37,
@@ -152,7 +152,7 @@
    "mobjs_at_load": 2,
    "unknown_messages": 0,
    "snapshots": 181,
-   "dumps_sha256": "7db817be86bf2b9574ffe6065e3725d2fa63252843099f0bf5c4d496ceecfa36",
+   "dumps_sha256": "6887f519383811e097468a7f97f6da091e73ae5443ea352d58ab3f7763967360",
    "secretexit": false,
    "must_show": {
     "S1 18 on the comb: destination 64 (the 21st neighbour, 8, is never read)": 89,
@@ -171,7 +171,7 @@
    "mobjs_at_load": 4,
    "unknown_messages": 0,
    "snapshots": 574,
-   "dumps_sha256": "512ea3137fe41730395aa6e6f1c29cb093dcf40acc518cb9b90eef366fb25e24",
+   "dumps_sha256": "f38584a95e8d9362faeeb7774bb93aff1c7bcbb3a3dd6ca8b7b9c9eb3ac8531b",
    "secretexit": false,
    "must_show": {
     "SR 62 downWaitUpStay on the lift": 58,
@@ -199,7 +199,7 @@
    "mobjs_at_load": 4,
    "unknown_messages": 0,
    "snapshots": 183,
-   "dumps_sha256": "c243a5462dfa1959940889e767c4e4b6916a350e71736a5f15383d45292ad60a",
+   "dumps_sha256": "33ec1c5c382e7d5ee6cb978fc1911c13b31b330f1f47e9d11e0103710027b20d",
    "secretexit": false,
    "must_show": {
     "W1 22 on P22B (ceiling 64, barrel)": 47,
@@ -219,7 +219,7 @@
    "mobjs_at_load": 4,
    "unknown_messages": 0,
    "snapshots": 639,
-   "dumps_sha256": "38aa90c36c34a57ffd11ff904c7349355c3d714c5fd27fc77af02e52e4ec6ae4",
+   "dumps_sha256": "00c3d6090788c998c8a1d8b33a30cba194dddea622d646c62514c237ed7bb13a",
    "secretexit": false,
    "must_show": {
     "WR 82 lowers bA (busy)": 71,
@@ -244,7 +244,7 @@
    "mobjs_at_load": 4,
    "unknown_messages": 0,
    "snapshots": 231,
-   "dumps_sha256": "dda392f2525af725fdb5cecf7080261b1b94e3e3d2e8aee6b20622c41bfe40d1",
+   "dumps_sha256": "a6d2481cec30176dadeee6e00b8d1bf534ff65e2805017e12e15e3ef5a3b3d27",
    "secretexit": false,
    "must_show": {
     "W1 8 on staircase C: c4 to 32": 65,
@@ -264,7 +264,7 @@
    "mobjs_at_load": 4,
    "unknown_messages": 0,
    "snapshots": 333,
-   "dumps_sha256": "4ae230ef76a6255cfb90c0e7cc12a1eaa96e77283bbdba033679936297e942b1",
+   "dumps_sha256": "41c5b274e86106c2a1c921b0496a4097a264b15d4f64ad428024c6b996be8fc4",
    "secretexit": false,
    "must_show": {
     "S1 9: donutRaise on the ring": 51,
@@ -287,7 +287,7 @@
    "mobjs_at_load": 4,
    "unknown_messages": 0,
    "snapshots": 154,
-   "dumps_sha256": "06122da987612437fee7ec7fcc9f90ec72acbe813f001e54b6d3c29c95a3b76c",
+   "dumps_sha256": "9f3b608b777c72d796361d0e39a30387f0a4270834ce011ec9b2f147312ee9e1",
    "secretexit": false,
    "must_show": {
     "W1 35: DK1 light 35": 29,
@@ -307,7 +307,7 @@
    "mobjs_at_load": 4,
    "unknown_messages": 0,
    "snapshots": 57,
-   "dumps_sha256": "6f9e02a6dc80d82d4a7bdcc17a45990cd981decc27ace9bb2b1d061958fbac7b",
+   "dumps_sha256": "e406c1d125b90fc845f3ccb42251f940a43fd5c8efe746e41f1aa17e18655c8c",
    "secretexit": true,
    "must_show": {
     "S1 51: secretexit set": 55
@@ -325,7 +325,7 @@
    "mobjs_at_load": 4,
    "unknown_messages": 0,
    "snapshots": 182,
-   "dumps_sha256": "1f4fbeaab622f7da18d81fa422f3c5efb977c414e3d8f30912a7772c86aac7fe",
+   "dumps_sha256": "c9b46896eff7ccdf6c5344365410b661dda334234d8c7969e221c14a25d87852",
    "secretexit": false,
    "must_show": {
     "first 20-point floor hit": 64,
@@ -346,7 +346,7 @@
    "mobjs_at_load": 4,
    "unknown_messages": 0,
    "snapshots": 129,
-   "dumps_sha256": "f57776d8614b8406e49836dfc8764646ded15aa632f5bdc95f97f27f2772ac40",
+   "dumps_sha256": "2ba54f60df1b72f413f1316e1640ec88bfc3566967a328751d7b71dab077cbee",
    "secretexit": false,
    "must_show": {
     "barrel blasts kill the player outside sector 11": 106
@@ -365,7 +365,7 @@
    "mobjs_at_load": 19,
    "unknown_messages": 0,
    "snapshots": 239,
-   "dumps_sha256": "532a847525d41b030f048da3eab8a602db28e2feb16b6c946d537ce0064004c7",
+   "dumps_sha256": "e34445338116c796e9484481eb1f8abcdb242d3072da755a1b6caf8375eab704",
    "secretexit": false,
    "must_show": {
     "chainsaw pickup": 8,
@@ -388,7 +388,7 @@
    "mobjs_at_load": 19,
    "unknown_messages": 0,
    "snapshots": 930,
-   "dumps_sha256": "343030c49598145bd3f1f1599accf17ca914ad6e720a0319ae648a09da2a7a19",
+   "dumps_sha256": "f3187c5ec5cec87a7ec639ce2c17cd1823a3bbee37a84639672913c7937bf379",
    "secretexit": false,
    "must_show": {
     "launcher pickup: 2 rockets": 25,
@@ -412,7 +412,7 @@
    "mobjs_at_load": 19,
    "unknown_messages": 0,
    "snapshots": 124,
-   "dumps_sha256": "c6f9b48b919b4c487a65cc4678f982f21ca07e08ee015a5b913d3d2af36108c8",
+   "dumps_sha256": "a813272dad6d00a50358994fbe64f26450128bf5769f8c0d9dfbdce28265ce4f",
    "secretexit": false,
    "must_show": {
     "rocket fired": 101,
@@ -432,7 +432,7 @@
    "mobjs_at_load": 25,
    "unknown_messages": 0,
    "snapshots": 236,
-   "dumps_sha256": "ed3ba252b60202f84c31f4cf1922773a0225b9389503e1c8485c1af9c9dbc5c2",
+   "dumps_sha256": "970d9b9e98658bd6da6714e031502d3c07a40d2b988d99dc0ef736e61b70c087",
    "secretexit": false,
    "must_show": {
     "shells capped at 50": 115,
@@ -461,7 +461,7 @@
    "mobjs_at_load": 25,
    "unknown_messages": 0,
    "snapshots": 2253,
-   "dumps_sha256": "1127a618af965d4dd5f04256c6dac958f093b31781775e488add3c49592a68f2",
+   "dumps_sha256": "110d13340ba79f402e4e38d0123b292b4e2d4bef45dac6793f2cb18ef0bde804",
    "secretexit": false,
    "must_show": {
     "partial invisibility": 21,
@@ -484,7 +484,7 @@
    "mobjs_at_load": 25,
    "unknown_messages": 0,
    "snapshots": 303,
-   "dumps_sha256": "9d9aebed86d8af437b3176bfba52ede75b2951a4f7c6f0065c2bb87cb4e971ec",
+   "dumps_sha256": "bf10ffce862754843b59e275eec921669a391abeb32eec51847049b573d6b71b",
    "secretexit": false,
    "must_show": {
     "radiation suit": 20,
@@ -503,7 +503,7 @@
    "mobjs_at_load": 25,
    "unknown_messages": 0,
    "snapshots": 183,
-   "dumps_sha256": "ce3deebb55fe24b2e54a32f334ac09b0811470edd532445ebb2dbc478790b8c7",
+   "dumps_sha256": "46a0e690a98c567116a9dfafa6395defeda0a5e1067059e8e3ce18712f06d261",
    "secretexit": false,
    "must_show": {
     "first special-16 hit": 32,
@@ -523,7 +523,7 @@
    "mobjs_at_load": 25,
    "unknown_messages": 0,
    "snapshots": 291,
-   "dumps_sha256": "275940c7b1a29ba6f13d49cddfef78a0fd7638716e69406085b8a11bfcda63bf",
+   "dumps_sha256": "697559d464111d3c92060c14457e3878a02d56bf6a839c0a983c1e0f8799cf51",
    "secretexit": false,
    "must_show": {
     "partial invisibility": 21,
@@ -543,7 +543,7 @@
    "mobjs_at_load": 10,
    "unknown_messages": 0,
    "snapshots": 609,
-   "dumps_sha256": "541c5946200882731d7fc4874b8a12062ba49ca288b2f2dc80238b42e1fa4aa1",
+   "dumps_sha256": "758e000f68921430ae5191cfc15b01c5be3539dea838e4ef29442c9c6ebf72df",
    "secretexit": false,
    "must_show": {
     "shotgun raised": 29,
@@ -563,7 +563,7 @@
    "mobjs_at_load": 10,
    "unknown_messages": 0,
    "snapshots": 643,
-   "dumps_sha256": "b46937136efec405e2cb16f01b5a7580ef80e3b9e6a23f270717c25144e1aee8",
+   "dumps_sha256": "4c6ee72d4531d5cb820578dea280d214eb88e1df7284f8d32c54eab9ef646a08",
    "secretexit": false,
    "must_show": {
     "an imp fireball hits a Spectre": 373,
@@ -582,7 +582,7 @@
    "mobjs_at_load": 10,
    "unknown_messages": 0,
    "snapshots": 523,
-   "dumps_sha256": "208c85571872f8f665daea4bc8ca195a9c290640f99348d23f411331284fc038",
+   "dumps_sha256": "1eef9693b300aff36ffba490e1aca0f4e073974c104e830a54c2ad5af0002a4d",
    "secretexit": false,
    "must_show": {
     "the idle player is killed": 500
@@ -601,7 +601,7 @@
    "mobjs_at_load": 160,
    "unknown_messages": 0,
    "snapshots": 329,
-   "dumps_sha256": "ab2f5e3ca4e5e842fa64df76a20ab9b5276486966c1a98b2c1200f6c580ec126",
+   "dumps_sha256": "c840b018e65af21c9c8bec88a0e57abc05b0b108f130911a4524b9c2d98f1289",
    "secretexit": false,
    "must_show": {
     "SR 62 on the 608-unit lift": 127,
@@ -620,7 +620,7 @@
    "mobjs_at_load": 160,
    "unknown_messages": 0,
    "snapshots": 601,
-   "dumps_sha256": "ee80db65b5df0ec7d7e768578e149d60e34b26d9c6ebaabaef4971fc573d436c",
+   "dumps_sha256": "0c949de2f211f6809f06e7c6a8c11a12023b38cfbc91a9dc044ec5f33d4298b8",
    "secretexit": false,
    "must_show": {}
   }
@@ -628,149 +628,149 @@
  "timing": {
   "note": "us/tic of G_Ticker per variant from the runner summary and the wall time of this run; measured on a machine that was not idle (informational, not compared by --check)",
   "wall_seconds": {
-   "build": 7.3,
-   "runs": 12.4
+   "build": 6.9,
+   "runs": 11.1
   },
   "us_per_tic": {
    "DOORS1": {
-    "strict": 1.6,
-    "overflow": 1.8,
-    "address": 5.6
+    "strict": 1.5,
+    "overflow": 1.6,
+    "address": 5.4
    },
    "DOORS2": {
-    "strict": 1.4,
-    "overflow": 1.6,
-    "address": 5.2
-   },
-   "DOORS3": {
-    "strict": 1.0,
-    "overflow": 1.3,
-    "address": 4.3
-   },
-   "FLOORS1": {
-    "strict": 1.2,
-    "overflow": 1.2,
-    "address": 5.3
-   },
-   "FLOORS2": {
     "strict": 1.2,
     "overflow": 1.5,
-    "address": 5.4
+    "address": 5.0
+   },
+   "DOORS3": {
+    "strict": 0.8,
+    "overflow": 1.0,
+    "address": 3.6
+   },
+   "FLOORS1": {
+    "strict": 1.1,
+    "overflow": 1.6,
+    "address": 5.1
+   },
+   "FLOORS2": {
+    "strict": 1.3,
+    "overflow": 1.5,
+    "address": 6.2
    },
    "FLOORS3": {
     "strict": 1.2,
-    "overflow": 1.5,
-    "address": 5.6
+    "overflow": 1.4,
+    "address": 5.0
    },
    "PLATS1": {
-    "strict": 1.2,
+    "strict": 1.1,
     "overflow": 1.2,
-    "address": 4.7
+    "address": 4.5
    },
    "PLATS2": {
-    "strict": 1.3,
-    "overflow": 1.6,
-    "address": 4.8
+    "strict": 1.2,
+    "overflow": 1.5,
+    "address": 5.9
    },
    "STAIRS1": {
     "strict": 1.6,
     "overflow": 1.9,
-    "address": 6.7
+    "address": 6.3
    },
    "STAIRS2": {
-    "strict": 2.2,
-    "overflow": 4.4,
-    "address": 9.0
-   },
-   "DONUT1": {
-    "strict": 1.7,
-    "overflow": 2.0,
+    "strict": 1.8,
+    "overflow": 2.2,
     "address": 7.0
    },
+   "DONUT1": {
+    "strict": 1.6,
+    "overflow": 2.0,
+    "address": 6.5
+   },
    "EXIT1": {
-    "strict": 1.1,
+    "strict": 1.0,
     "overflow": 1.3,
-    "address": 5.0
+    "address": 5.5
    },
    "EXIT2": {
-    "strict": 1.3,
-    "overflow": 1.8,
-    "address": 4.8
+    "strict": 1.1,
+    "overflow": 2.2,
+    "address": 5.2
    },
    "SECT11": {
     "strict": 1.1,
-    "overflow": 1.5,
-    "address": 5.7
+    "overflow": 1.4,
+    "address": 5.8
    },
    "EXDIE": {
     "strict": 1.3,
     "overflow": 1.6,
-    "address": 7.1
+    "address": 6.6
    },
    "SAW1": {
     "strict": 1.5,
-    "overflow": 1.7,
-    "address": 6.4
+    "overflow": 1.6,
+    "address": 6.3
    },
    "ROCKET1": {
-    "strict": 1.5,
-    "overflow": 1.7,
-    "address": 5.5
+    "strict": 1.4,
+    "overflow": 1.6,
+    "address": 6.1
    },
    "ROCKDIE": {
-    "strict": 1.8,
-    "overflow": 1.9,
-    "address": 8.1
+    "strict": 1.6,
+    "overflow": 3.2,
+    "address": 7.9
    },
    "ITEMS1": {
     "strict": 1.5,
-    "overflow": 1.8,
-    "address": 6.9
+    "overflow": 2.0,
+    "address": 7.9
    },
    "TIMERS": {
-    "strict": 1.3,
-    "overflow": 1.4,
-    "address": 4.4
+    "strict": 1.2,
+    "overflow": 1.3,
+    "address": 4.2
    },
    "SUIT1": {
-    "strict": 1.5,
-    "overflow": 1.8,
-    "address": 6.5
+    "strict": 1.6,
+    "overflow": 1.6,
+    "address": 6.6
    },
    "SUITDIE": {
-    "strict": 1.4,
-    "overflow": 1.7,
-    "address": 5.7
+    "strict": 1.3,
+    "overflow": 1.4,
+    "address": 5.8
    },
    "INVIS1": {
-    "strict": 1.7,
+    "strict": 2.1,
     "overflow": 2.0,
-    "address": 7.1
+    "address": 7.2
    },
    "SPECT1": {
     "strict": 1.6,
     "overflow": 1.8,
-    "address": 6.9
+    "address": 6.8
    },
    "SPECT2": {
-    "strict": 1.8,
+    "strict": 1.5,
     "overflow": 1.9,
-    "address": 6.9
+    "address": 6.8
    },
    "SPECTD": {
     "strict": 1.6,
-    "overflow": 2.0,
-    "address": 6.7
+    "overflow": 1.7,
+    "address": 6.6
    },
    "SCALE1": {
-    "strict": 3.8,
-    "overflow": 4.3,
-    "address": 12.3
+    "strict": 3.7,
+    "overflow": 3.8,
+    "address": 11.2
    },
    "SCALE2": {
-    "strict": 5.6,
-    "overflow": 6.2,
-    "address": 17.4
+    "strict": 5.3,
+    "overflow": 5.8,
+    "address": 16.1
    }
   }
  }

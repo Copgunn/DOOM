@@ -170,7 +170,7 @@ void* __wrap_Z_Malloc (int size, int tag, void* user)
     return block;
 }
 
-typedef struct { void* p; int serial, linkserial, mobj; } obs_t;
+typedef struct { void* p; int serial, linkserial, mobj, rfn; long rsector; } obs_t;
 #define OBS_CAP 65536                     /* power of two; far above any thinker count */
 static obs_t obs[OBS_CAP];               /* open addressing; p == NULL empty, p == OBS_DEAD deleted */
 static char obs_dead_marker;
@@ -209,7 +209,7 @@ static obs_t* obs_insert (void* p)        /* p is not in the table */
     h = obs_hash (p);
     while (obs[h].p && obs[h].p != OBS_DEAD) h = (h + 1) & (OBS_CAP - 1);
     if (!obs[h].p) obs_used++;
-    obs[h].p = p; obs[h].serial = -1; obs[h].linkserial = -1; obs[h].mobj = 0;
+    obs[h].p = p; obs[h].serial = -1; obs[h].linkserial = -1; obs[h].mobj = 0; obs[h].rfn = 0; obs[h].rsector = -1;
     return &obs[h];
 }
 static void note_freed (int serial, int seq, int adds)
@@ -329,10 +329,26 @@ static long stidx (state_t* s) { return s ? (long)(s - states) : -1L; }
 static int in_plats (void* p) { int i; for (i = 0; i < MAXPLATS; i++) if (activeplats[i] == p) return 1; return 0; }
 static int in_ceils (void* p) { int i; for (i = 0; i < MAXCEILINGS; i++) if (activeceilings[i] == p) return 1; return 0; }
 
+void __real_P_RemoveThinker (thinker_t* thinker);
+/* P_RemoveThinker observer: the kind (1 vldoor_t, 2 plat_t, 3 floormove_t, 4 ceiling_t, 0 other)
+   and sector of a non-mobj thinker, read before the genuine call overwrites its function. */
+void __wrap_P_RemoveThinker (thinker_t* thinker)
+{
+    obs_t* e = obs_find (thinker);
+    if (e && !e->mobj) {
+        actionf_p1 fn = thinker->function.acp1;
+        if (fn == (actionf_p1)T_VerticalDoor) { e->rfn = 1; e->rsector = sidx (((vldoor_t*)thinker)->sector); }
+        else if (fn == (actionf_p1)T_PlatRaise) { e->rfn = 2; e->rsector = sidx (((plat_t*)thinker)->sector); }
+        else if (fn == (actionf_p1)T_MoveFloor) { e->rfn = 3; e->rsector = sidx (((floormove_t*)thinker)->sector); }
+        else if (fn == (actionf_p1)T_MoveCeiling) { e->rfn = 4; e->rsector = sidx (((ceiling_t*)thinker)->sector); }
+    }
+    __real_P_RemoveThinker (thinker);
+}
+
 static const char* COLUMNS =
  "#columns,H,tic,leveltime,gametic,prndindex,rndindex,totalkills,totalitems,totalsecret,gameaction,gamestate,numthinkers,numlinespecials,gameskill,secretexit\n"
  "#columns,M,tic,idx,type,x,y,z,momx,momy,momz,health,state,tics,flags,height,radius,reactiontime,threshold,target,lastlook,floorz,ceilingz,subsector,angle,sprite,frame,movedir,movecount,tracer,sp_x,sp_y,sp_angle,sp_type,sp_options,player,bx,by,bpos,sector,spos\n"
- "#columns,R,tic,idx\n"
+ "#columns,R,tic,idx,fn,sector\n"
  "#columns,RR,tic,idx,type,x,y,z,momx,momy,momz,health,state,tics,flags,height,radius,reactiontime,threshold,target,lastlook,floorz,ceilingz,subsector,angle,sprite,frame,movedir,movecount,tracer,sp_x,sp_y,sp_angle,sp_type,sp_options,player,bx,by,bpos,sector,spos\n"
  "#columns,DR,tic,idx,type,sector,topheight,speed,direction,topwait,topcountdown\n"
  "#columns,PL,tic,idx,running,sector,speed,low,high,wait,count,status,oldstatus,crush,tag,type\n"
@@ -407,8 +423,9 @@ static void dump (const char* dir, const char* name, int tic)
         if (fn == (actionf_p1)P_MobjThinker) {
             print_mobj (f, "M", tic, i, (mobj_t*)t, 1);
         } else if (t->function.acv == (actionf_v)(-1)) {
-            fprintf (f, "R,%d,%d\n", tic, i);
-            { obs_t* e = obs_find (t); if (e && e->mobj) print_mobj (f, "RR", tic, i, (mobj_t*)t, 0); }
+            { obs_t* e = obs_find (t);
+              fprintf (f, "R,%d,%d,%d,%ld\n", tic, i, e ? e->rfn : 0, e ? e->rsector : -1L);
+              if (e && e->mobj) print_mobj (f, "RR", tic, i, (mobj_t*)t, 0); }
         } else if (fn == (actionf_p1)T_VerticalDoor) {
             vldoor_t* d = (vldoor_t*)t;
             fprintf (f, "DR,%d,%d,%d,%ld,%d,%d,%d,%d,%d\n", tic, i, (int)d->type, sidx (d->sector), d->topheight, d->speed,

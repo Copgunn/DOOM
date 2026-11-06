@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent DSIM38 projection of the M3h9c whole-engine runner's per-tic dumps.
+"""Independent DSIM38/DSIM39 projection of the M3h9c whole-engine runner's per-tic dumps.
 
 The genuine-engine runner (tools/reference/m3h9c_driver.c, read by m3h9c_dump.py) writes
 the complete gameplay state after the load (`load.txt`) and after every `G_Ticker`
@@ -90,8 +90,37 @@ message from the type of the item taken (checked against the bonus count), and t
 order enumerated among the orders the sector and cell lists admit (`link_candidates`;
 the first is encoded). It is not exact and is documented only as that fallback.
 
+Profile `episode1` (DSIM39, policy 23, context PLAYER-MONSTERS-EPISODE1-1-MEDIUM-v1; the
+M4a Phase 2 plan §A.6, decisions D1-D10; exact mode only). The DSIM38 fields at their
+paths, plus, from the same dumps:
+
+- `level.secret_exit` (after `level.exit`) = H.secretexit, refused unless it implies the
+  exit request; `store.max_slots` = 1024 (D1).
+- `sector.{i}.floorpic` (after `sector.{i}.special`) = the normalized 8-byte name (D2) of
+  flat S.floorpic, resolved in the WAD's own directory as R_InitFlats/R_FlatNumForName do
+  (firstflat = last F_START + 1, last match of the upper-cased name, the demo lump
+  included); at load every sector's number must equal its SECTORS name's lookup.
+- Sector-thinker records (`episode1_store_fields`): doors of vldoor_e 0/1/3/6 unchanged;
+  plats with `type` after `high` (downWaitUpStay 1, raiseToNearestAndChange 3, whose
+  `low` is never written and must read 0); floors with `direction`, `speed` after
+  `floordestheight`, and `texture` (flat name) and `newspecial` for donutRaise only; the
+  (type, direction, speed) domain of E1_FLOORS (stair steps are type 0, never written).
+  A plat's `count` counts as written once it waits or is blocked going up (p_plats.c:75,
+  84, 113).
+- The weapon block with `cells`, `rockets`, `max_ammo.0..3` after `shells` (P.ammo2/3,
+  P.maxammo0..3; max = base << backpack); after `use_down`: `powers.0..5` (P.pw0..5),
+  `cards.0..5` (P.card0..5), `backpack` (P.backpack), with the plan's domains.
+- `pickups.message` codes 14..29 for the driver's indices 8..11, 17..20, 24, 25, 30, 33,
+  34, 38..40 (EPISODE1_MESSAGES); `tracer` must be NULL on every actor (not encoded).
+
+Both profiles: when the driver's R rows carry `fn`/`sector` (a P_RemoveThinker observer),
+a mover created and marked within one tic is a removed mover (kind 8) of that sector, and
+a known mover's R row must name its own kind and sector; without those columns such a
+thinker is a DumpDeficiency.
+
 The module is a library (`Projector`) plus a small CLI:
-    level_snapshot.py DUMP_DIR --wad WAD [--map E1M1] [--out DIR] [--infer [--demo LMP]]
+    level_snapshot.py DUMP_DIR --wad WAD [--map E1M1] [--out DIR] [--profile level|episode1]
+                      [--infer] [--demo LMP]
 writes `tic_NNNNN.bin` (DSIM38, full bytes) per snapshot into --out (scratch only for an
 IWAD-derived dump) and prints counts and digests."""
 import argparse, copy, hashlib, itertools, os, struct, sys, tempfile
@@ -122,6 +151,9 @@ GRAVITY = 65536
 BONUSADD = 6
 THINKER_KINDS = ('M', 'R', 'DR', 'PL', 'FL', 'CE', 'LF', 'LL', 'LS', 'LG', 'X')
 LIGHTS = {'LL': 1, 'LS': 2, 'LG': 3, 'LF': 4}
+# R-row `fn` (the driver's P_RemoveThinker observer, when the dump has the column): the kind
+# of the removed non-mobj thinker; 4 is a ceiling (not admitted), 0 any other
+REMOVED_FN = {1: 'DR', 2: 'PL', 3: 'FL'}
 MOVERS = {'DR': 5, 'PL': 6, 'FL': 7}
 STATES = v4.metadata(0)[0]                  # sprite, frame, tics, action, next per state
 ACTIONS = v4.source.ACTIONS                 # 'None' then the sorted info.c action names
@@ -143,10 +175,59 @@ MESSAGES = {enum_index('mobjtype_t', t): m for t, m in [
 DRIVER_MESSAGES = {1: 10, 2: 11, 3: 12, 4: 13, 5: 5, 6: 7, 7: 6, 22: 1, 23: 2, 28: 3, 29: 4, 32: 9, 36: 8}
 
 
+class Profile:
+    """The capture contract a projection targets: DSIM38 (`level`, policy 22) or DSIM39
+    (`episode1`, policy 23; the M4a Phase 2 plan §A.6 and decisions D1-D10)."""
+    def __init__(self, name, version, policy, context, max_slots, messages, episode1):
+        self.name, self.version, self.policy, self.context = name, version, policy, context
+        self.max_slots, self.messages, self.episode1 = max_slots, messages, episode1
+
+
+LEVEL = Profile('level', VERSION, POLICY, CONTEXT, MAX_SLOTS, DRIVER_MESSAGES, False)
+# DSIM39 additions (plan §A.6). Driver message index (m3h9c_driver.c PICKUP_MESSAGES, 1-based:
+# GOTSUPER 8, GOTBLUECARD 9, GOTYELWCARD 10, GOTREDCARD 11, GOTINVIS 17, GOTSUIT 18, GOTMAP 19,
+# GOTVISOR 20, GOTROCKET 24, GOTROCKBOX 25, GOTBACKPACK 30, GOTCHAINSAW 33, GOTLAUNCHER 34; the
+# locked-door strings PD_BLUEK 38, PD_YELLOWK 39, PD_REDK 40, set by EV_VerticalDoor,
+# p_doors.c:378, 392, 405) -> the appended DSIM codes 14..29 (decision D7).
+EPISODE1_MESSAGES = {**DRIVER_MESSAGES, **{8: 14, 9: 15, 10: 16, 11: 17, 17: 18, 18: 19, 19: 20, 20: 21, 24: 22,
+                                             25: 23, 30: 24, 33: 25, 34: 26, 38: 27, 39: 28, 40: 29}}
+EPISODE1 = Profile('episode1', 39, 23, b'PLAYER-MONSTERS-EPISODE1-1-MEDIUM-v1', 1024, EPISODE1_MESSAGES, True)
+PROFILES = {'level': LEVEL, 'episode1': EPISODE1}
+FRAC = 65536
+# vldoor_e (p_spec.h:328-339): normal 0, close30ThenOpen 1, open 3, blazeOpen 6. Every admitted
+# door has topwait VDOORWAIT 150 (p_doors.c:291, 466) and speed VDOORSPEED 2 units (p_spec.h:364;
+# p_doors.c:292, 465), blazeOpen VDOORSPEED*4 (p_doors.c:325, 492).
+E1_DOOR_SPEED = {0: 2 * FRAC, 1: 2 * FRAC, 3: 2 * FRAC, 6: 8 * FRAC}
+# plattype_e (p_spec.h:274-281): downWaitUpStay 1 (speed PLATSPEED*4, wait 35*PLATWAIT,
+# p_plats.c:207-215), raiseToNearestAndChange 3 (speed PLATSPEED/2, wait 0, p_plats.c:185-189);
+# crush false for both (p_plats.c:180).
+E1_PLAT = {1: (4 * FRAC, 105), 3: (FRAC // 2, 0)}
+# (floor_e, direction, speed) of every admitted floor record (p_spec.h:537-570, FLOORSPEED FRACUNIT):
+E1_FLOORS = {(0, -1, FRAC),          # lowerFloor, EV_DoFloor p_floor.c:291-296
+             (0, -1, FRAC // 2),     # donut hole: lowerFloor at FLOORSPEED/2, p_spec.c:1210-1216
+             (0, 1, FRAC // 4),      # stair step build8 (type never written: zero fill, H7), p_floor.c:483-500
+             (0, 1, 4 * FRAC),       # stair step turbo16, p_floor.c:497-500
+             (1, -1, FRAC),          # lowerFloorToLowest, p_floor.c:299-304
+             (2, -1, 4 * FRAC),      # turboLower, p_floor.c:307-314
+             (3, 1, FRAC),           # raiseFloor, p_floor.c:319-327
+             (4, 1, FRAC),           # raiseFloorToNearest, p_floor.c:339-344
+             (11, 1, FRAC // 2)}     # donutRaise, p_spec.c:1196-1203
+DONUT_RAISE = 11
+# maxammo (p_inter.c:58), doubled once by the first backpack (p_inter.c:590-594)
+MAXAMMO = (200, 50, 300, 50)
+# power durations (doomdef.h:235-238): INVISTICS = IRONTICS = 60*TICRATE, INFRATICS = 120*TICRATE
+INVISTICS, IRONTICS, INFRATICS = 2100, 2100, 4200
+
+
 class ProjectionError(Exception):
     """The dump cannot be projected; `kind` is Ambiguous, DumpDeficiency or Unadmitted."""
     def __init__(self, kind, tic, text):
         super().__init__(f'{kind} at tic {tic}: {text}'); self.kind, self.tic, self.text = kind, tic, text
+
+
+def demo_lumps(path):
+    """The lump D_AddFile adds for the demo (ExtractFileBase: the upper-cased base name)."""
+    return (Path(path).stem.upper()[:8],) if path else ()
 
 
 def demo_skill(path):
@@ -158,7 +239,7 @@ def demo_skill(path):
 class MapData:
     """The ten lumps of one map slot of a WAD, the frozen `map_fields` of them, and the
     derived subsector sectors, line front sectors and line specials."""
-    def __init__(self, wad, slot):
+    def __init__(self, wad, slot, extra_lumps=()):
         data, directory = iwad_counts.read_wad(wad)
         lumps = iwad_counts.map_lumps(data, directory, slot)
         names = ['THINGS', 'LINEDEFS', 'SIDEDEFS', 'VERTEXES', 'SEGS', 'SSECTORS', 'NODES', 'SECTORS',
@@ -182,11 +263,56 @@ class MapData:
         segs = list(struct.iter_unpack('<HHHHHh', self.lumps[4]))
         self.sector_count = len(self.lumps[7]) // 26
         self.special = [struct.unpack_from('<h', self.lumps[1], 14 * i + 6)[0] for i in range(len(lines))]
+        self._flats(data, extra_lumps)
         self.front = [sides[l[5]][5] for l in lines]
         self.subsector_sector = []
         for count, first in struct.iter_unpack('<HH', self.lumps[5]):
             _, _, _, line, side, _ = segs[first]
             self.subsector_sector.append(sides[lines[line][5 + side]][5])
+
+    def _flats(self, data, extra_lumps):
+        """The flat directory as the genuine R_InitFlats/R_FlatNumForName see it (decision D2):
+        lump names as W_AddFile stores them (strncpy of 8 bytes: NUL-padded after the first
+        NUL, case kept, w_wad.c), then `extra_lumps` (the demo, added by D_AddFile as a single
+        lump named by its upper-cased base name). firstflat = W_GetNumForName("F_START") + 1,
+        lastflat = W_GetNumForName("F_END") - 1 (r_data.c R_InitFlats; W_CheckNumForName
+        returns the last match). Flat n is the lump firstflat + n."""
+        _, count, offset = struct.unpack_from('<4sii', data, 0)
+        stored = []
+        for k in range(count):
+            raw = struct.unpack_from('<8s', data, offset + 16 * k + 8)[0]
+            stored.append(raw.split(b'\0')[0].ljust(8, b'\0'))
+        stored += [x.encode().upper()[:8].ljust(8, b'\0') for x in extra_lumps]
+        self.lump_names = stored
+        last = {}
+        for k, name in enumerate(stored): last[name] = k
+        self.last_lump = last
+        self.firstflat = last[b'F_START'.ljust(8, b'\0')] + 1 if b'F_START'.ljust(8, b'\0') in last else None
+        self.lastflat = last[b'F_END'.ljust(8, b'\0')] - 1 if b'F_END'.ljust(8, b'\0') in last else None
+        # the SECTORS lump's floor names (offset 4, 8 bytes per sector record of 26)
+        self.sector_floor_names = [self.lumps[7][26 * i + 4:26 * i + 12] for i in range(len(self.lumps[7]) // 26)]
+
+    @staticmethod
+    def normalize(raw):
+        """The normalized 8-byte flat name (D2): bytes up to the first NUL, ASCII upper-cased,
+        zero-padded (R_FlatNumForName copies 8 bytes and W_CheckNumForName upper-cases them)."""
+        return raw.split(b'\0')[0][:8].upper().ljust(8, b'\0')
+
+    def flat_number(self, raw):
+        """R_FlatNumForName of a name (r_data.c): the last lump matching the upper-cased name,
+        minus firstflat; None when the lump does not exist (the genuine code calls I_Error)."""
+        k = self.last_lump.get(self.normalize(raw))
+        return None if k is None or self.firstflat is None else k - self.firstflat
+
+    def flat_name(self, number):
+        """The normalized name of flat `number` (D2), or None when the number is not one that
+        R_FlatNumForName can return: outside 0..numflats-1, or a lump whose stored name is not
+        upper case or is not the last lump of its name (W_CheckNumForName would not find it)."""
+        if self.firstflat is None or self.lastflat is None or not 0 <= number <= self.lastflat - self.firstflat:
+            return None
+        k = self.firstflat + number; name = self.lump_names[k]
+        if name != self.normalize(name) or self.last_lump.get(name) != k: return None
+        return name
 
     @staticmethod
     def _pwad(lumps):
@@ -227,10 +353,10 @@ class Dump:
 class Entry:
     """One thinker identity: `cls` actor/light/mover, the store `key`, the current row
     kind and record, pending flag."""
-    __slots__ = ('cls', 'key', 'kind', 'row', 'pending', 'inferred', 'sector', 'serial', 'waited')
+    __slots__ = ('cls', 'key', 'kind', 'row', 'pending', 'inferred', 'sector', 'serial', 'waited', 'seen_up')
     def __init__(self, cls, key, kind, row):
         self.cls, self.key, self.kind, self.row, self.pending, self.inferred = cls, key, kind, row, False, False
-        self.serial = None; self.waited = False
+        self.serial = None; self.waited = False; self.seen_up = False
         self.sector = row.get('sector')
 
 
@@ -241,8 +367,9 @@ def ident(handle):
 class Projector:
     """Feed the dumps of one run in order (load first); `step` returns (DSIM38 bytes,
     report) for each."""
-    def __init__(self, mapdata, skill=2, infer=False):
-        self.map, self.skill, self.infer = mapdata, skill, infer
+    def __init__(self, mapdata, skill=2, infer=False, profile=LEVEL):
+        self.map, self.skill, self.infer, self.profile = mapdata, skill, infer, profile
+        if profile.episode1 and infer: raise ValueError('the DSIM39 projection is exact only (no --infer)')
         self.entries = []; self.actors = None; self.sthinkers = None; self.next_key = 0
         self.spatial = []; self.message = 0; self.prev = None; self.link_candidates = []
 
@@ -508,6 +635,15 @@ class Projector:
                     classes[sv] = 'mover'
                 elif sv in current and serial.index(sv) in dump.pending:
                     classes[sv] = 'actor'           # spawned and marked this tic: its RR row
+                elif sv in current and cur[serial.index(sv)][0] == 'R' and 'fn' in cur[serial.index(sv)][1]:
+                    # created and marked by P_RemoveThinker within this tic (a one-tic mover):
+                    # the R row's fn/sector columns, read by the driver's P_RemoveThinker
+                    # observer before the genuine call overwrites the function
+                    row = cur[serial.index(sv)][1]
+                    if row['fn'] == 4: raise ProjectionError('Unadmitted', tic, 'a ceiling thinker')
+                    if row['fn'] not in REMOVED_FN or row['sector'] < 0:
+                        raise ProjectionError('DumpDeficiency', tic, 'a one-tic thinker of unknown kind')
+                    classes[sv] = 'mover'
                 else:
                     raise ProjectionError('DumpDeficiency', tic, 'the class of a new thinker is unknown')
             for e in gone:
@@ -540,6 +676,8 @@ class Projector:
                                 if rm is None or any(rm[k] != e.row[k] for k in rm if k not in skip):
                                     raise ProjectionError('DumpDeficiency', tic, 'the RR record differs from the next RM row')
                         else:
+                            if 'fn' in row and e.kind in MOVERS and (REMOVED_FN.get(row['fn']) != e.kind or row['sector'] != e.sector):
+                                raise ProjectionError('DumpDeficiency', tic, 'the R row names another mover kind or sector')
                             e.kind = 'removed'
                 else:
                     e.kind, e.row = kind, row
@@ -551,8 +689,8 @@ class Projector:
         m = dump.players[0]['message']
         if m < 0: raise ProjectionError('DumpDeficiency', tic, 'an unknown pickup message')
         if m:
-            if m not in DRIVER_MESSAGES: raise ProjectionError('Unadmitted', tic, 'a pickup message outside the DSIM table')
-            self.message = DRIVER_MESSAGES[m]; report['pickups'] = 1
+            if m not in self.profile.messages: raise ProjectionError('Unadmitted', tic, 'a pickup message outside the DSIM table')
+            self.message = self.profile.messages[m]; report['pickups'] = 1
         # link order: ascending link serial is P_SetThingPosition order; most recent first
         live = [(e, dump.serials[i][1]) for i, e in enumerate(self.entries) if e.cls == 'actor' and not e.pending]
         if any(ls < 0 for _, ls in live): raise ProjectionError('DumpDeficiency', tic, 'a linked actor without a link serial')
@@ -695,18 +833,27 @@ class Projector:
         actors = [e for e in entries if e.cls == 'actor']
         aorder = [self.handle(e) for e in actors]
         opt = lambda hd: bytes(13) if hd is None else b'\1' + ident(hd)
-        f = [('tic', n('Q', tic)), ('tic_rate', n('I', 35)), ('profile', n('I', POLICY)),
-             ('registry.schema', REGISTRY), ('context.schema', CONTEXT), ('paused', b'\0'),
+        pr = self.profile; ep = pr.episode1
+        if ep: self._episode1_checks(d, actors)
+        f = [('tic', n('Q', tic)), ('tic_rate', n('I', 35)), ('profile', n('I', pr.policy)),
+             ('registry.schema', REGISTRY), ('context.schema', pr.context), ('paused', b'\0'),
              ('rng.gameplay', n('B', h['prndindex'])), ('rng.miscellaneous', n('B', h['rndindex'])),
              ('actors.options', bytes([self.skill, 0, 0])),
              ('level.total_kills', n('i', h['totalkills'])), ('level.total_items', n('i', h['totalitems'])),
              ('level.total_secrets', n('i', h['totalsecret'])), ('level.single_player_kill_count', n('i', p0['killcount'])),
-             ('level.exit', n('B', h['gameaction'] == GA_COMPLETED)),
-             ('store.max_slots', n('I', MAX_SLOTS)), ('store.slot_count', n('Q', len(self.actors.generations))),
+             ('level.exit', n('B', h['gameaction'] == GA_COMPLETED))]
+        if ep:
+            # H.secretexit (g_game.c:999-1018: G_SecretExitLevel sets it with ga_completed,
+            # G_ExitLevel clears it); the flag implies the exit request
+            if h['secretexit'] not in (0, 1) or (h['secretexit'] and h['gameaction'] != GA_COMPLETED):
+                raise ProjectionError('Unadmitted', tic, 'secretexit without the exit request')
+            f.append(('level.secret_exit', n('B', h['secretexit'])))
+        f += [('store.max_slots', n('I', pr.max_slots)), ('store.slot_count', n('Q', len(self.actors.generations))),
              ('store.head', opt(aorder[0] if aorder else None)), ('store.tail', opt(aorder[-1] if aorder else None)),
              ('thinker.order', b''.join(ident(x) for x in aorder)),
              ('thinker.shared_order', b''.join((b'\0' if e.cls == 'actor' else b'\1') + ident(self.handle(e)) for e in entries))]
-        if len(self.actors.generations) > MAX_SLOTS: raise ProjectionError('Unadmitted', tic, 'more than 384 actor slots')
+        if len(self.actors.generations) > pr.max_slots:
+            raise ProjectionError('Unadmitted', tic, f'more than {pr.max_slots} actor slots')
         by_slot = {self.handle(e)[0]: (i, e) for i, e in enumerate(actors)}
         for slot, generation in enumerate(self.actors.generations):
             p = f'actor.{slot}'
@@ -742,6 +889,12 @@ class Projector:
                 elif e.kind == 'LS': rec = (2, e.key, r['sector'], r['count'], r['minlight'], r['maxlight'], r['darktime'], r['brighttime'])
                 elif e.kind == 'LG': rec = (3, e.key, r['sector'], -1, r['minlight'], r['maxlight'], r['direction'], 0)
                 else: rec = (4, e.key, r['sector'], r['count'], r['minlight'], r['maxlight'], 0, 0)
+            elif e.cls == 'mover' and ep:
+                handles[0, e.key] = self.sthinkers.handles[e.key]; sector_of[0, e.key] = e.sector
+                rec = self._episode1_mover(tic, e)
+                if e.kind != 'removed':
+                    if r['sector'] in live: raise ProjectionError('Unadmitted', tic, 'two live movers in one sector')
+                    live[r['sector']] = e
             elif e.cls == 'mover':
                 handles[0, e.key] = self.sthinkers.handles[e.key]; sector_of[0, e.key] = e.sector
                 if e.kind == 'removed': rec = (8, e.key)
@@ -775,7 +928,8 @@ class Projector:
                 continue
             records.append(rec)
         try:
-            store = movers_snapshot.store_fields(records, self.sthinkers.generations, handles, 0, sector_of, tags)
+            if ep: store = episode1_store_fields(records, self.sthinkers.generations, handles, sector_of)
+            else: store = movers_snapshot.store_fields(records, self.sthinkers.generations, handles, 0, sector_of, tags)
         except AssertionError as err:
             raise ProjectionError('Unadmitted', tic, f'sector-thinker record outside the DSIM35 domain ({err})')
         f += store
@@ -796,6 +950,11 @@ class Projector:
                   (f'sector.{i}.actors', b''.join(ident(self.handle(e)) for e in members)),
                   (f'sector.{i}.soundtarget', self._ref(tic, s['soundtarget'], entries)),
                   (f'sector.{i}.light', n('h', s['lightlevel'])), (f'sector.{i}.special', n('h', s['special']))]
+            if ep:
+                # S.floorpic, the flat number, as its normalized name (D2)
+                name = self.map.flat_name(s['floorpic'])
+                if name is None: raise ProjectionError('Unadmitted', tic, f'sector {i} floorpic {s["floorpic"]} names no flat')
+                f.append((f'sector.{i}.floorpic', name))
         selected = [i for i, s in enumerate(self.map.special) if s]
         if sorted(d.lines) != selected: raise ProjectionError('DumpDeficiency', tic, 'L rows are not the special lines of the map')
         f += [(f'line.{i}.special', n('h', d.lines[i]['special'])) for i in selected]
@@ -811,7 +970,11 @@ class Projector:
         weapons = [p0['readyweapon'], p0['pendingweapon'], owned, p0['ammo0'], p0['ammo1'], p0['attackdown'], p0['refire'],
                    p0['bob'], p0['extralight']] + [p0[f'ps{j}{c}'] for j in (0, 1) for c in ('state', 'tics', 'sx', 'sy')]
         try:
-            wf = weapon_snapshot.weapon_fields(weapons)
+            if ep:
+                wf = episode1_weapon_fields(weapons[:5] + [p0['ammo2'], p0['ammo3']] + [p0[f'maxammo{k}'] for k in range(4)]
+                                            + [p0['backpack']] + weapons[5:])
+            else:
+                wf = weapon_snapshot.weapon_fields(weapons)
         except AssertionError:
             raise ProjectionError('Unadmitted', tic, 'weapon state outside the DSIM37 domain')
         f += [('original_player.0.mo', self._ref(tic, p0['mo'], entries)), ('original_player.0.health', n('i', p0['health'])),
@@ -822,10 +985,98 @@ class Projector:
                    ('original_player.0.pickups.item_count', n('i', p0['itemcount'])),
                    ('original_player.0.pickups.message', n('B', self.message)),
                    ('original_player.0.armor.type', n('B', p0['armortype'])), ('original_player.0.armor.points', n('i', p0['armorpoints'])),
-                   ('original_player.0.secret_count', n('i', p0['secretcount'])), ('original_player.0.use_down', n('B', p0['usedown'])),
-                   ('events.last.count', n('Q', 0)), ('events.pending.count', n('Q', 0))]
+                   ('original_player.0.secret_count', n('i', p0['secretcount'])), ('original_player.0.use_down', n('B', p0['usedown']))]
+        if ep: f += self._episode1_player(tic, p0)
+        f += [('events.last.count', n('Q', 0)), ('events.pending.count', n('Q', 0))]
         f += self.map.fields
         return f
+
+    # ---- DSIM39 (episode1) --------------------------------------------------------------
+    def _episode1_checks(self, d, actors):
+        tic = d.tic
+        for e in actors:
+            # tracer: written only by A_Tracer, A_VileChase/A_Fire and the skull family, none
+            # admitted (plan §A.6); asserted NULL, not encoded
+            if e.row['tracer'] != -1: raise ProjectionError('Unadmitted', tic, 'an actor with a tracer')
+        if self.prev is d and tic == 0:
+            # load: every sector's floorpic is R_FlatNumForName of its SECTORS name (p_setup.c
+            # P_LoadSectors), which cross-checks the flat directory read here against the driver's
+            for i, s in enumerate(d.sectors):
+                if self.map.flat_number(self.map.sector_floor_names[i]) != s['floorpic']:
+                    raise ProjectionError('DumpDeficiency', tic, f'sector {i} floorpic differs from its SECTORS name')
+
+    def _episode1_mover(self, tic, e):
+        """One mover record of the DSIM39 sector-thinker store (plan §A.6) as a dict for
+        `episode1_store_fields`; fields the genuine code has not written read the schema's 0
+        (ZeroFill) and are asserted, never forced."""
+        r = e.row
+        if e.kind == 'removed': return dict(kind=8, key=e.key)
+        if e.kind == 'DR':
+            # topcountdown: written when the door starts waiting, direction 0 (T_VerticalDoor
+            # p_doors.c:144 close30ThenOpen at the bottom, :182 normal at the top); EV_DoDoor and
+            # EV_VerticalDoor never write it for the admitted types (p_doors.c:264-347, 354-499)
+            e.waited = e.waited or r['direction'] == 0
+            top = self._zero(tic, e, 'door topcountdown before the first wait', r['topcountdown'], not e.waited)
+            if r['type'] not in E1_DOOR_SPEED or r['speed'] != E1_DOOR_SPEED[r['type']] or r['topwait'] != 150 \
+                    or r['direction'] not in (-1, 0, 1):
+                raise ProjectionError('Unadmitted', tic, f'door type {r["type"]} outside the DSIM39 domain')
+            return dict(kind=5, key=e.key, sector=r['sector'], type=r['type'], direction=r['direction'],
+                        topheight=r['topheight'], topcountdown=top)
+        if e.kind == 'PL':
+            if not r['running']: raise ProjectionError('Unadmitted', tic, 'a plat in stasis')
+            if r['type'] not in E1_PLAT or (r['speed'], r['wait']) != E1_PLAT[r['type']] or r['crush'] != 0 \
+                    or r['status'] not in (0, 1, 2) or r['tag'] != self.prev.sectors[r['sector']]['tag']:
+                raise ProjectionError('Unadmitted', tic, f'plat type {r["type"]} outside the DSIM39 domain')
+            # count: written by T_PlatRaise when the plat starts waiting (status 2, p_plats.c:84,
+            # 113) or is blocked going up (status up -> down, p_plats.c:75); EV_DoPlat never
+            # writes it (p_plats.c:170-252). A raiseToNearestAndChange plat starts up, so a
+            # down status means it was blocked; a downWaitUpStay plat starts down, so down after
+            # up means blocked.
+            e.waited = e.waited or r['status'] == 2 or (r['status'] == 1 and (r['type'] == 3 or e.seen_up))
+            e.seen_up = e.seen_up or r['status'] == 0
+            count = self._zero(tic, e, 'plat count before the first wait', r['count'], not e.waited)
+            self._zero(tic, e, 'plat oldstatus', r['oldstatus'], True)      # P_StopPlat only
+            if r['type'] == 3:
+                # raiseToNearestAndChange never writes low (p_plats.c:185-195): the zero projection (H7)
+                low = self._zero(tic, e, 'raiseToNearestAndChange plat low', r['low'], True)
+            else:
+                low = r['low']
+                if low > r['high']: raise ProjectionError('Unadmitted', tic, 'a plat with low above high')
+            return dict(kind=6, key=e.key, sector=r['sector'], status=r['status'], count=count, low=low,
+                        high=r['high'], type=r['type'])
+        # FL: crush is false for every admitted floor (p_floor.c:287, p_spec.c:1198/1212) or
+        # never written (stairs, zero fill, H7); texture/newspecial are written only for
+        # donutRaise (p_spec.c:1202-1203) and otherwise read the schema's 0
+        if (r['type'], r['direction'], r['speed']) not in E1_FLOORS:
+            raise ProjectionError('Unadmitted', tic, f'floor type {r["type"]} direction {r["direction"]} speed '
+                                  f'{r["speed"]} outside the DSIM39 domain')
+        self._zero(tic, e, 'floor crush', r['crush'], True)
+        out = dict(kind=7, key=e.key, sector=r['sector'], type=r['type'], floordestheight=r['floordestheight'],
+                   direction=r['direction'], speed=r['speed'])
+        if r['type'] == DONUT_RAISE:
+            name = self.map.flat_name(r['texture'])
+            if name is None: raise ProjectionError('Unadmitted', tic, f'donut texture {r["texture"]} names no flat')
+            out.update(texture=name, newspecial=r['newspecial'])
+        else:
+            self._zero(tic, e, 'floor newspecial', r['newspecial'], True)
+            self._zero(tic, e, 'floor texture', r['texture'], True)
+        return out
+
+    def _episode1_player(self, tic, p0):
+        """powers[6] (powertype_t order, doomdef.h:214-222), cards[6] (card_t order,
+        doomdef.h:162-171) and backpack, from the P row's pw0..pw5, card0..card5, backpack."""
+        pw = [p0[f'pw{k}'] for k in range(6)]; cards = [p0[f'card{k}'] for k in range(6)]
+        # domains (plan §A.6): no invulnerability or berserk in Episode 1 single player; the
+        # timed powers start at their *TICS (P_GivePower, p_inter.c) and count down
+        # (p_user.c:339-353); allmap is the boolean 1
+        if pw[0] or pw[1] or not 0 <= pw[2] <= INVISTICS or not 0 <= pw[3] <= IRONTICS or pw[4] not in (0, 1) \
+                or not 0 <= pw[5] <= INFRATICS:
+            raise ProjectionError('Unadmitted', tic, 'a power outside the DSIM39 domain')
+        if any(c not in (0, 1) for c in cards) or any(cards[3:]) or p0['backpack'] not in (0, 1):
+            raise ProjectionError('Unadmitted', tic, 'a card or the backpack outside the DSIM39 domain')
+        return ([(f'original_player.0.powers.{k}', n('i', pw[k])) for k in range(6)]
+                + [(f'original_player.0.cards.{k}', n('B', cards[k])) for k in range(6)]
+                + [('original_player.0.backpack', n('B', p0['backpack']))])
 
     def _zero(self, tic, e, what, value, unwritten):
         """A mover field the genuine code has not written yet: the schema says 0 and the
@@ -845,9 +1096,88 @@ def link_bytes(proj, order):
     return b''.join(ident(proj.handle(e)) for e in order)
 
 
-def encode(fields):
-    """The DSIM byte string of `fields` under version 38 (the frozen framing)."""
-    data = bytearray(b'DSIM' + struct.pack('<IQ', VERSION, len(fields)))
+def episode1_record_fields(slot, rec, sector_of, lights):
+    """One occupied slot of the DSIM39 sector-thinker store (plan §A.6): the light records
+    unchanged (the frozen DSIM34 encoder), a door unchanged from DSIM35, a plat with `type`
+    after `high`, a floor with `direction` and `speed` after `floordestheight` and, for
+    donutRaise only, `texture` (normalized flat name) and `newspecial`."""
+    p = f'sector_thinker.{slot}'
+    kind = rec['kind'] if isinstance(rec, dict) else rec[0]
+    if kind < 5: return [(path, v) for path, v in lights if path.startswith(p + '.')]
+    out = [(p + '.generation', None), (p + '.occupied', b'\1'), (p + '.kind', n('B', kind))]
+    if kind == 8: return out + [(p + '.sector', n('H', sector_of))]
+    assert rec['sector'] == sector_of
+    out.append((p + '.sector', n('H', rec['sector'])))
+    if kind == 5:
+        out += [(p + '.type', n('B', rec['type'])), (p + '.direction', n('i', rec['direction'])),
+                (p + '.topheight', n('i', rec['topheight'])), (p + '.topcountdown', n('i', rec['topcountdown']))]
+    elif kind == 6:
+        out += [(p + '.status', n('B', rec['status'])), (p + '.count', n('i', rec['count'])), (p + '.low', n('i', rec['low'])),
+                (p + '.high', n('i', rec['high'])), (p + '.type', n('B', rec['type']))]
+    else:
+        assert kind == 7
+        out += [(p + '.type', n('B', rec['type'])), (p + '.floordestheight', n('i', rec['floordestheight'])),
+                (p + '.direction', n('i', rec['direction'])), (p + '.speed', n('i', rec['speed']))]
+        if rec['type'] == DONUT_RAISE:
+            assert len(rec['texture']) == 8
+            out += [(p + '.texture', rec['texture']), (p + '.newspecial', n('h', rec['newspecial']))]
+    return out
+
+
+def episode1_store_fields(records, generations, handles, sector_of):
+    """The DSIM39 sector-thinker store, framed as movers_snapshot.store_fields frames DSIM35:
+    `sector_thinkers.slot_count`, then per slot its generation and occupied flag and, when
+    occupied, its record. `records` holds the light tuples (kinds 1-4, slot = load order) and
+    the mover dicts of `Projector._episode1_mover`."""
+    by_slot = {}
+    for rec in records:
+        if isinstance(rec, dict): slot, generation = handles[0, rec['key']]
+        else: slot, generation = rec[1], 1
+        assert generations[slot] == generation and slot not in by_slot
+        by_slot[slot] = rec
+    lights = specials_snapshot.sector_thinker_fields([r for r in records if not isinstance(r, dict)])
+    out = [('sector_thinkers.slot_count', n('Q', len(generations)))]
+    for slot, generation in enumerate(generations):
+        p = f'sector_thinker.{slot}'
+        if slot not in by_slot:
+            out += [(p + '.generation', n('Q', generation)), (p + '.occupied', b'\0')]; continue
+        rec = by_slot[slot]
+        fields = episode1_record_fields(slot, rec, sector_of.get((0, rec['key'])) if isinstance(rec, dict) else None, lights)
+        out += [(path, n('Q', generation) if path.endswith('.generation') else v) for path, v in fields]
+    return out
+
+
+def episode1_weapon_fields(row):
+    """The DSIM39 weapon block (plan §A.6): the DSIM24 block with `cells`, `rockets` (ammo[2],
+    ammo[3], ammotype_t order am_clip, am_shell, am_cell, am_misl, doomdef.h) and
+    `max_ammo.0..3` after `shells`. weapontype_t (doomdef.h): fist 0 .. missile 4, chainsaw 7;
+    pending wp_nochange 10."""
+    ready, pending, owned, clips, shells, cells, rockets, *rest = row
+    maxammo, backpack, (latch, refire, bob, light, *sprites) = rest[:4], rest[4], rest[5:]
+    weapons = {0, 1, 2, 3, 4, 7}
+    assert ready in weapons and pending in weapons | {10}
+    assert owned & 3 == 3 and owned & ~sum(1 << w for w in weapons) == 0 and owned & (1 << ready)
+    assert backpack in (0, 1) and list(maxammo) == [m << backpack for m in MAXAMMO]
+    assert all(0 <= a <= m for a, m in zip((clips, shells, cells, rockets), maxammo))
+    assert latch in (0, 1) and 0 <= refire <= 2147483647 and 0 <= bob <= 0x100000 and light in (0, 1, 2)
+    prefix = 'original_player.0.weapons'
+    fields = [(prefix + '.present', b'\1'), (prefix + '.ready', n('B', ready)), (prefix + '.pending', n('B', pending)),
+              (prefix + '.owned', n('H', owned)), (prefix + '.bullets', n('H', clips)), (prefix + '.shells', n('H', shells)),
+              (prefix + '.cells', n('H', cells)), (prefix + '.rockets', n('H', rockets))]
+    fields += [(f'{prefix}.max_ammo.{k}', n('H', maxammo[k])) for k in range(4)]
+    fields += [(prefix + '.attack_down', n('B', latch)), (prefix + '.refire', n('i', refire)),
+               (prefix + '.bob', n('i', bob)), (prefix + '.extra_light', n('i', light))]
+    assert len(sprites) == 8
+    for i in range(2):
+        state, tics, x, y = sprites[4 * i:4 * i + 4]
+        for key, code, value in [('state', 'H', 65535 if state < 0 else state), ('tics', 'i', tics), ('x', 'i', x), ('y', 'i', y)]:
+            fields.append((f'{prefix}.psprite.{i}.{key}', n(code, value)))
+    return fields
+
+
+def encode(fields, version=VERSION):
+    """The DSIM byte string of `fields` under `version` (38 by default; the frozen framing)."""
+    data = bytearray(b'DSIM' + struct.pack('<IQ', version, len(fields)))
     for path, value in fields:
         path = path.encode(); data += n('I', len(path)) + path + n('Q', len(value)) + value
     return bytes(data)
@@ -866,14 +1196,15 @@ def snapshots(directory):
         yield dump, following
 
 
-def project(directory, mapdata, skill=2, infer=False):
-    """Yield (dsim tic, DSIM38 bytes, report) for every snapshot of a dump directory, in
+def project(directory, mapdata, skill=2, infer=False, profile=LEVEL):
+    """Yield (dsim tic, DSIM bytes, report) for every snapshot of a dump directory, in
     order; a ProjectionError propagates to the caller at the first unprojectable tic.
-    The default is exact (observer rows required); `infer` selects the fallback."""
-    proj = Projector(mapdata, skill, infer)
+    The default is exact (observer rows required); `infer` selects the fallback (DSIM38
+    only). `profile` selects DSIM38 (LEVEL) or DSIM39 (EPISODE1)."""
+    proj = Projector(mapdata, skill, infer, profile)
     for dump, following in snapshots(directory):
         fields, report = proj.step(dump, following)
-        yield dump.tic, encode(fields), report
+        yield dump.tic, encode(fields, profile.version), report
 
 
 def main():
@@ -881,12 +1212,15 @@ def main():
     ap.add_argument('dump'); ap.add_argument('--wad', required=True); ap.add_argument('--map', default='E1M1')
     ap.add_argument('--demo'); ap.add_argument('--out')
     ap.add_argument('--infer', action='store_true', help='fallback for dumps without observer rows (never used by the comparator)')
+    ap.add_argument('--profile', choices=sorted(PROFILES), default='level',
+                    help='level: DSIM38/policy 22 (default); episode1: DSIM39/policy 23')
     a = ap.parse_args()
-    mapdata = MapData(a.wad, a.map); skill = demo_skill(a.demo) if a.demo else 2
+    profile = PROFILES[a.profile]
+    mapdata = MapData(a.wad, a.map, demo_lumps(a.demo)); skill = demo_skill(a.demo) if a.demo else 2
     if a.out: os.makedirs(a.out, exist_ok=True)
     count = 0; seq = hashlib.sha256(); last = None
     try:
-        for tic, data, _ in project(a.dump, mapdata, skill, a.infer):
+        for tic, data, _ in project(a.dump, mapdata, skill, a.infer, profile):
             count += 1; seq.update(hashlib.sha256(data).digest()); last = data
             if a.out: Path(a.out, f'tic_{tic:05}.bin').write_bytes(data)
     except ProjectionError as err:
