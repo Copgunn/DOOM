@@ -32,7 +32,7 @@
      "c_end": "marker",
      "end_tic": 921,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "31 D1: open door thinker on MD0",
@@ -118,7 +118,7 @@
      "c_end": "marker",
      "end_tic": 558,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "W1 2: open door on RD0",
@@ -169,7 +169,7 @@
      "c_end": "marker",
      "end_tic": 1335,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "W1 16: close-30-then-open on RD4",
@@ -232,7 +232,7 @@
      "c_end": "marker",
      "end_tic": 932,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "W1 5 raiseFloor to 48 (lowest ceiling around)",
@@ -298,7 +298,7 @@
      "c_end": "marker",
      "end_tic": 284,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "WR 91 raiseFloor to the pad ceiling 64",
@@ -329,7 +329,7 @@
      "c_end": "marker",
      "end_tic": 180,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "S1 18 on the comb: destination 64 (the 21st neighbour, 8, is never read)",
@@ -369,7 +369,7 @@
      "c_end": "marker",
      "end_tic": 573,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "SR 62 downWaitUpStay on the lift",
@@ -479,7 +479,7 @@
      "c_end": "marker",
      "end_tic": 638,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "WR 82 lowers bA (busy)",
@@ -555,7 +555,7 @@
      "c_end": "marker",
      "end_tic": 332,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "S1 9: donutRaise on the ring",
@@ -613,7 +613,7 @@
      "c_end": "exit",
      "end_tic": 152,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "W1 35: DK1 light 35",
@@ -639,7 +639,7 @@
      "c_end": "exit",
      "end_tic": 55,
      "secretexit": true,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "S1 51: secretexit set",
@@ -655,7 +655,7 @@
      "c_end": "exit",
      "end_tic": 180,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "first 20-point floor hit",
@@ -731,7 +731,7 @@
      "c_end": "marker",
      "end_tic": 238,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "chainsaw pickup",
@@ -772,7 +772,7 @@
      "c_end": "marker",
      "end_tic": 929,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "launcher pickup: 2 rockets",
@@ -876,7 +876,7 @@
      "c_end": "marker",
      "end_tic": 235,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "shells capped at 50",
@@ -947,7 +947,7 @@
      "c_end": "marker",
      "end_tic": 2252,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "partial invisibility",
@@ -988,7 +988,7 @@
      "c_end": "marker",
      "end_tic": 302,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "radiation suit",
@@ -1035,7 +1035,7 @@
      "c_end": "marker",
      "end_tic": 290,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "partial invisibility",
@@ -1051,6 +1051,63 @@
        "what": "the imp killed",
        "event": "first P idx=0 killcount=1",
        "tic": 259
+      }
+     ]
+    },
+    {
+     "lump": "TURBO1",
+     "source": "tests/reference/m4a_scripts/turbo1.txt",
+     "lmp": "tests/reference/m4a_scripts/TURBO1.lmp",
+     "c_end": "marker",
+     "end_tic": 672,
+     "secretexit": false,
+     "rust": "match",
+     "must_show": [
+      {
+       "what": "forward 100 on gametic 0: G_Ticker's turbo message (driver index 41)",
+       "event": "first P idx=0 message=41",
+       "tic": 0
+      },
+      {
+       "what": "forward 100 held across gametic 128: the message on 128 only (none on 64)",
+       "event": "edge 2 P idx=0 message=41",
+       "tic": 128
+      },
+      {
+       "what": "forward 51 (> TURBOTHRESHOLD 50) across gametic 256",
+       "event": "edge 3 P idx=0 message=41",
+       "tic": 256
+      },
+      {
+       "what": "forward 127 on gametic 640 (none for forward 50 on 384 or -100 on 512)",
+       "event": "edge 4 P idx=0 message=41",
+       "tic": 640
+      }
+     ]
+    },
+    {
+     "lump": "TARGET1",
+     "source": "tests/reference/m4a_scripts/target1.txt",
+     "lmp": "tests/reference/m4a_scripts/TARGET1.lmp",
+     "c_end": "marker",
+     "end_tic": 480,
+     "secretexit": false,
+     "rust": "match",
+     "must_show": [
+      {
+       "what": "the imp's fireball marked for removal (RR row; its target is the imp)",
+       "event": "first RR type=MT_TROOPSHOT",
+       "tic": 448
+      },
+      {
+       "what": "the computer map (listed before the imp) taken and freed on the next tic",
+       "event": "gone M type=MT_MISC15",
+       "tic": 449
+      },
+      {
+       "what": "the fireball freed on the same tic (RM row): the imp one list place earlier",
+       "event": "first RM type=MT_TROOPSHOT",
+       "tic": 449
       }
      ]
     }
@@ -1083,7 +1140,7 @@
      "c_end": "marker",
      "end_tic": 608,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "shotgun raised",
@@ -1109,7 +1166,7 @@
      "c_end": "marker",
      "end_tic": 642,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "an imp fireball hits a Spectre",
@@ -1204,7 +1261,7 @@
      "c_end": "marker",
      "end_tic": 328,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": [
       {
        "what": "SR 62 on the 608-unit lift",
@@ -1225,7 +1282,7 @@
      "c_end": "marker",
      "end_tic": 600,
      "secretexit": false,
-     "rust": "tbd",
+     "rust": "match",
      "must_show": []
     }
    ]

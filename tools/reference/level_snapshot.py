@@ -114,8 +114,8 @@ paths, plus, from the same dumps:
 - The weapon block with `cells`, `rockets`, `max_ammo.0..3` after `shells` (P.ammo2/3,
   P.maxammo0..3; max = base << backpack); after `use_down`: `powers.0..5` (P.pw0..5),
   `cards.0..5` (P.card0..5), `backpack` (P.backpack), with the plan's domains.
-- `pickups.message` codes 14..29 for the driver's indices 8..11, 17..20, 24, 25, 30, 33,
-  34, 38..40 (EPISODE1_MESSAGES); `tracer` must be NULL on every actor (not encoded).
+- `pickups.message` codes 14..30 for the driver's indices 8..11, 17..20, 24, 25, 30, 33,
+  34, 38..41 (EPISODE1_MESSAGES; 41/30 is G_Ticker's turbo message); `tracer` must be NULL on every actor (not encoded).
 
 Both profiles: when the driver's R rows carry `fn`/`sector` (the M4a fork's
 P_RemoveThinker observer, m4a_driver.c; M3h9c-driver dumps lack them),
@@ -193,9 +193,11 @@ LEVEL = Profile('level', VERSION, POLICY, CONTEXT, MAX_SLOTS, DRIVER_MESSAGES, F
 # GOTSUPER 8, GOTBLUECARD 9, GOTYELWCARD 10, GOTREDCARD 11, GOTINVIS 17, GOTSUIT 18, GOTMAP 19,
 # GOTVISOR 20, GOTROCKET 24, GOTROCKBOX 25, GOTBACKPACK 30, GOTCHAINSAW 33, GOTLAUNCHER 34; the
 # locked-door strings PD_BLUEK 38, PD_YELLOWK 39, PD_REDK 40, set by EV_VerticalDoor,
-# p_doors.c:378, 392, 405) -> the appended DSIM codes 14..29 (decision D7).
+# p_doors.c:378, 392, 405) -> the appended DSIM codes 14..29 (decision D7); G_Ticker's turbo
+# message (driver index 41, "%s is turbo!" with player_names[0], g_game.c:671-679: assigned
+# when forwardmove > 50 on every 128th gametic, before P_Ticker) -> DSIM code 30 (M4a step 8).
 EPISODE1_MESSAGES = {**DRIVER_MESSAGES, **{8: 14, 9: 15, 10: 16, 11: 17, 17: 18, 18: 19, 19: 20, 20: 21, 24: 22,
-                                             25: 23, 30: 24, 33: 25, 34: 26, 38: 27, 39: 28, 40: 29}}
+                                             25: 23, 30: 24, 33: 25, 34: 26, 38: 27, 39: 28, 40: 29, 41: 30}}
 EPISODE1 = Profile('episode1', 39, 23, b'PLAYER-MONSTERS-EPISODE1-1-MEDIUM-v1', 1024, EPISODE1_MESSAGES, True)
 PROFILES = {'level': LEVEL, 'episode1': EPISODE1}
 FRAC = 65536
@@ -678,7 +680,15 @@ class Projector:
                                 # the next dump's RM row is the Z_Free copy of the same memory
                                 rm = following.removed.get(sv)
                                 skip = ('tic', 'idx', 'serial', 'bx', 'by', 'bpos', 'sector', 'spos')
-                                if rm is None or any(rm[k] != e.row[k] for k in rm if k not in skip):
+                                # target and tracer are thinker-list positions of their own
+                                # dump (tidx); compared as the serials they name, since the
+                                # list shifts between the dumps (the pending mobj itself
+                                # leaves it before a later-listed target: a barrel shot by
+                                # a thing after it in the list, real E1M3, M4a step 8)
+                                def ref(d, k):
+                                    return d.serials[k][0] if k >= 0 else k
+                                if rm is None or any(rm[k] != e.row[k] for k in rm if k not in skip + ('target', 'tracer')) \
+                                        or any(ref(following, rm[k]) != ref(dump, e.row[k]) for k in ('target', 'tracer')):
                                     raise ProjectionError('DumpDeficiency', tic, 'the RR record differs from the next RM row')
                         else:
                             if 'fn' in row and e.kind in MOVERS and (REMOVED_FN.get(row['fn']) != e.kind or row['sector'] != e.sector):

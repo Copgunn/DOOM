@@ -283,7 +283,9 @@ static int linkserial_of (void* p) { obs_t* e = obs_find (p); return e ? e->link
 
 /* d_englsh.h GOTARMOR .. GOTSHOTGUN2 in header order, then (M4a) the locked-door strings
  * PD_BLUEK, PD_YELLOWK, PD_REDK (d_englsh.h:128-130; p_doors.c:378, 392, 405); P rows
- * report 1 + the index. */
+ * report 1 + the index. After the table (index 41): G_Ticker's turbo message, built as
+ * g_game.c:675-678 builds it, sprintf ("%s is turbo!", player_names[0]) (player 0 is the
+ * only player in game, and ((gametic>>5)&3) == i selects it). */
 static const char* const PICKUP_MESSAGES[] = {
     GOTARMOR, GOTMEGA, GOTHTHBONUS, GOTARMBONUS, GOTSTIM, GOTMEDINEED, GOTMEDIKIT, GOTSUPER,
     GOTBLUECARD, GOTYELWCARD, GOTREDCARD, GOTBLUESKUL, GOTYELWSKUL, GOTREDSKULL,
@@ -291,12 +293,19 @@ static const char* const PICKUP_MESSAGES[] = {
     GOTCLIP, GOTCLIPBOX, GOTROCKET, GOTROCKBOX, GOTCELL, GOTCELLBOX, GOTSHELLS, GOTSHELLBOX, GOTBACKPACK,
     GOTBFG9000, GOTCHAINGUN, GOTCHAINSAW, GOTLAUNCHER, GOTPLASMA, GOTSHOTGUN, GOTSHOTGUN2,
     PD_BLUEK, PD_YELLOWK, PD_REDK };
+#define NPICKUP_MESSAGES ((int)(sizeof PICKUP_MESSAGES / sizeof *PICKUP_MESSAGES))
+static char turbo_message[80];
 static int message_index (const char* m)
 {
     unsigned i;
     if (!m) return 0;
     for (i = 0; i < sizeof PICKUP_MESSAGES / sizeof *PICKUP_MESSAGES; i++)
         if (m == PICKUP_MESSAGES[i] || !strcmp (m, PICKUP_MESSAGES[i])) return (int)i + 1;
+    if (!turbo_message[0]) {
+        extern char* player_names[4];
+        sprintf (turbo_message, "%s is turbo!", player_names[0]);   /* g_game.c:677 */
+    }
+    if (!strcmp (m, turbo_message)) return NPICKUP_MESSAGES + 1;
     unknown_messages++;
     return -1;
 }

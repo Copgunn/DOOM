@@ -11,9 +11,9 @@ A script is a text file; blank lines and text after '#' are ignored. Lines:
 
 FORWARD and SIDE are -127..127 (M4a decision H5: the full signed-char range except -128,
 which G_ReadDemoTiccmd would read as the 0x80 demo marker, g_game.c:1488,1493; the wire-22
-scripts of e1m1_scripts/ and m3h9c_scripts/ stay inside -50..50, and values above 50 in a
-live game would be the turbo check's territory, g_game.c:672-679, which demo playback
-never runs). TURN is the angleturn high byte, 0..255 or -128..-1 (G_ReadDemoTiccmd shifts
+scripts of e1m1_scripts/ and m3h9c_scripts/ stay inside -50..50; a forward above 50 on a
+gametic that is a multiple of 128 makes G_Ticker assign the turbo message, g_game.c:671-679,
+during demo playback too, DSIM39 pickups.message code 30). TURN is the angleturn high byte, 0..255 or -128..-1 (G_ReadDemoTiccmd shifts
 the unsigned byte << 8, g_game.c:1501). BUTTONS is an integer or names joined by '|' or
 '+': ATTACK (1), USE (2), CHANGE (4), W0..W7 (the weapon number << 3, d_event.h:75-88;
 P_PlayerThink reads it as (buttons & BT_WEAPONMASK) >> BT_WEAPONSHIFT, p_user.c:288, where

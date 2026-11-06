@@ -2142,10 +2142,15 @@ record; its effect is the `sector.N.light` values, and the shot and switch trigg
 | 19 | `GOTSUIT` | 27 | `PD_BLUEK` |
 | 20 | `GOTMAP` | 28 | `PD_YELLOWK` |
 | 21 | `GOTVISOR` | 29 | `PD_REDK` |
+| | | 30 | turbo message |
 
 The three `PD_*` locked-door messages (blue, yellow and red key needed) are the genuine
 driver's message indices 38–40; the projection maps them to DSIM codes 27–29, and the
-other new driver indices to 14–26. Codes 14–29 are admitted by the v39 reader only.
+other new driver indices to 14–26. Code 30 is `G_Ticker`'s turbo message (`"%s is turbo!"`
+with player 0's name, g_game.c:671–679): it is assigned before `P_Ticker` when the tic's
+`forwardmove` exceeds 50 on every 128th gametic (`gametic` a multiple of 128), so a pickup
+or locked door later in the same tic replaces it; the genuine driver reports it as index 41.
+Codes 14–30 are admitted by the v39 reader only.
 
 **Events.** No new tag. Pickup tag 23 gains four sub-tags and widens two:
 

@@ -1,0 +1,49 @@
+# output: TARGET1.lmp
+# TARGET1 on tests/reference/m4a_wads/items.wad (M4a step 8, decision G9): a pending mobj's target
+# shifts in the thinker list before the mobj is freed. Authored closed loop against the strict runner.
+# The imp in the pen wakes on the pistol shot and fires through the gap; its fireball explodes on the
+# player and is marked for removal (S_NULL, P_RemoveMobj) on tic 448; on tic 449 the player steps onto
+# the computer map, listed before the imp, which P_RunThinkers frees in the same pass before it frees
+# the fireball, so the imp (the fireball's target) is one place earlier in the list when the fireball's
+# memory is freed than it was in the previous dump. The encoder compares the pending mobj's RR row
+# with its RM copy by the serials target and tracer name (real E1M3 found the same shift with a barrel
+# whose first damager is listed after it).
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 17 0
+cmd 4 50 0 0 0
+idle 3
+cmd 1 50 0 0 0
+idle 3
+cmd 1 50 0 0 0
+idle 3
+cmd 1 0 0 -1 0
+cmd 3 25 0 0 0
+cmd 1 0 0 -1 0
+idle 3
+cmd 1 0 0 -125 0
+cmd 1 25 0 0 0
+cmd 1 0 0 -1 0
+cmd 6 25 0 0 0
+cmd 1 0 0 -1 0
+cmd 1 25 0 0 0
+idle 4
+cmd 1 0 0 -126 0
+cmd 1 25 0 0 0
+cmd 1 0 0 -1 0
+cmd 5 25 0 0 0
+idle 4
+cmd 1 0 0 239 0
+cmd 1 6 0 0 0
+idle 8
+cmd 1 6 0 0 0
+idle 8
+cmd 1 -6 0 0 0
+idle 8
+cmd 1 -6 0 0 0
+idle 8
+cmd 1 0 0 0 1
+idle 357
+cmd 4 50 0 0 0
+idle 30

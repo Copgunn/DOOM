@@ -1,7 +1,7 @@
 {
  "schema": "DOOM-M4A-SYNTHETIC-RESULTS-v1",
- "manifest_sha256": "8bdbda79f6c04671b90b26fb2c3ba2b09e4808789361982cf00a3cc8b93d2ebb",
- "runner_contract_sha256": "b6c6707ec7652bede094b2f5581e00eaed5a2d0485198b77312ce1c166374800",
+ "manifest_sha256": "169a258ae35cf92ab019360c2eb2027c85fb5ac6bf33fa21034baad85e60c23b",
+ "runner_contract_sha256": "f991e4848d042c25356129877917ee7e7ac60d78d34861aa666509d495c0f680",
  "variants": [
   "strict",
   "overflow",
@@ -531,6 +531,47 @@
     "the imp killed": 259
    }
   },
+  "TURBO1": {
+   "wad": "ITEMS",
+   "lmp_sha256": "4d732c101b651c42a0a64f8e43ba2110458a55c7e1df0327af6a7e97598cf7aa",
+   "tics": 672,
+   "end": "marker",
+   "end_tic": 672,
+   "prndindex_after_load": 36,
+   "prndindex_end": 36,
+   "thinkers_at_load": 25,
+   "mobjs_at_load": 25,
+   "unknown_messages": 0,
+   "snapshots": 673,
+   "dumps_sha256": "f841aef0458d6536ae8c2c47ac7a4183910e6e2fc94d5df2f84a68befaef2ebe",
+   "secretexit": false,
+   "must_show": {
+    "forward 100 on gametic 0: G_Ticker's turbo message (driver index 41)": 0,
+    "forward 100 held across gametic 128: the message on 128 only (none on 64)": 128,
+    "forward 51 (> TURBOTHRESHOLD 50) across gametic 256": 256,
+    "forward 127 on gametic 640 (none for forward 50 on 384 or -100 on 512)": 640
+   }
+  },
+  "TARGET1": {
+   "wad": "ITEMS",
+   "lmp_sha256": "cf4c1ee4ebf6c9f5728570fd509881137797e364efb77db35eebe7a572af2e84",
+   "tics": 480,
+   "end": "marker",
+   "end_tic": 480,
+   "prndindex_after_load": 36,
+   "prndindex_end": 54,
+   "thinkers_at_load": 25,
+   "mobjs_at_load": 25,
+   "unknown_messages": 0,
+   "snapshots": 481,
+   "dumps_sha256": "579984ad9b375370aaa2f44c02ee9f5eff4d8302af4aa575d1306ca0f0e40c00",
+   "secretexit": false,
+   "must_show": {
+    "the imp's fireball marked for removal (RR row; its target is the imp)": 448,
+    "the computer map (listed before the imp) taken and freed on the next tic": 449,
+    "the fireball freed on the same tic (RM row): the imp one list place earlier": 449
+   }
+  },
   "SPECT1": {
    "wad": "SPECTRE",
    "lmp_sha256": "01ee2ca538dce9d6c77dce7f101ca67ebea3dfaf00c50697f9b141180686cdad",
@@ -628,149 +669,159 @@
  "timing": {
   "note": "us/tic of G_Ticker per variant from the runner summary and the wall time of this run; measured on a machine that was not idle (informational, not compared by --check)",
   "wall_seconds": {
-   "build": 8.9,
-   "runs": 14.5
+   "build": 11.2,
+   "runs": 18.0
   },
   "us_per_tic": {
    "DOORS1": {
-    "strict": 2.1,
-    "overflow": 2.1,
-    "address": 7.8
+    "strict": 2.0,
+    "overflow": 2.3,
+    "address": 9.0
    },
    "DOORS2": {
-    "strict": 1.7,
-    "overflow": 1.9,
-    "address": 8.9
+    "strict": 2.0,
+    "overflow": 2.9,
+    "address": 8.7
    },
    "DOORS3": {
-    "strict": 1.9,
-    "overflow": 1.5,
-    "address": 6.3
+    "strict": 1.5,
+    "overflow": 1.9,
+    "address": 5.6
    },
    "FLOORS1": {
-    "strict": 1.8,
-    "overflow": 2.1,
-    "address": 6.7
+    "strict": 1.7,
+    "overflow": 1.7,
+    "address": 7.3
    },
    "FLOORS2": {
     "strict": 2.0,
-    "overflow": 6.2,
-    "address": 7.8
+    "overflow": 2.7,
+    "address": 7.7
    },
    "FLOORS3": {
-    "strict": 1.7,
+    "strict": 2.3,
     "overflow": 2.3,
-    "address": 8.9
+    "address": 9.3
    },
    "PLATS1": {
-    "strict": 2.4,
-    "overflow": 2.0,
-    "address": 6.7
+    "strict": 1.9,
+    "overflow": 1.7,
+    "address": 6.4
    },
    "PLATS2": {
-    "strict": 2.4,
-    "overflow": 1.9,
-    "address": 5.8
+    "strict": 1.8,
+    "overflow": 3.0,
+    "address": 7.8
    },
    "STAIRS1": {
-    "strict": 2.3,
-    "overflow": 2.5,
-    "address": 8.5
+    "strict": 2.7,
+    "overflow": 4.0,
+    "address": 10.7
    },
    "STAIRS2": {
-    "strict": 2.6,
-    "overflow": 2.5,
-    "address": 13.7
+    "strict": 2.8,
+    "overflow": 3.0,
+    "address": 11.3
    },
    "DONUT1": {
-    "strict": 2.6,
-    "overflow": 2.4,
-    "address": 9.0
+    "strict": 2.9,
+    "overflow": 2.7,
+    "address": 12.7
    },
    "EXIT1": {
-    "strict": 1.4,
-    "overflow": 1.6,
-    "address": 6.0
+    "strict": 2.0,
+    "overflow": 1.7,
+    "address": 8.0
    },
    "EXIT2": {
-    "strict": 1.3,
-    "overflow": 3.2,
-    "address": 6.5
+    "strict": 1.7,
+    "overflow": 3.1,
+    "address": 9.8
    },
    "SECT11": {
-    "strict": 1.5,
-    "overflow": 1.5,
-    "address": 5.9
+    "strict": 1.7,
+    "overflow": 2.0,
+    "address": 13.3
    },
    "EXDIE": {
-    "strict": 1.4,
-    "overflow": 2.0,
-    "address": 8.1
-   },
-   "SAW1": {
-    "strict": 1.8,
-    "overflow": 2.6,
-    "address": 9.6
-   },
-   "ROCKET1": {
-    "strict": 2.1,
-    "overflow": 2.0,
-    "address": 7.9
-   },
-   "ROCKDIE": {
-    "strict": 3.4,
-    "overflow": 2.9,
+    "strict": 1.5,
+    "overflow": 3.2,
     "address": 9.5
    },
-   "ITEMS1": {
-    "strict": 2.0,
+   "SAW1": {
+    "strict": 2.6,
     "overflow": 2.6,
-    "address": 8.9
+    "address": 11.5
+   },
+   "ROCKET1": {
+    "strict": 2.4,
+    "overflow": 2.5,
+    "address": 8.0
+   },
+   "ROCKDIE": {
+    "strict": 2.5,
+    "overflow": 3.2,
+    "address": 12.5
+   },
+   "ITEMS1": {
+    "strict": 2.8,
+    "overflow": 2.9,
+    "address": 9.4
    },
    "TIMERS": {
-    "strict": 1.9,
-    "overflow": 1.9,
-    "address": 5.8
+    "strict": 2.3,
+    "overflow": 2.0,
+    "address": 7.5
    },
    "SUIT1": {
-    "strict": 2.2,
-    "overflow": 2.6,
-    "address": 8.7
+    "strict": 3.0,
+    "overflow": 2.8,
+    "address": 11.5
    },
    "SUITDIE": {
-    "strict": 1.9,
-    "overflow": 2.3,
-    "address": 6.9
+    "strict": 2.2,
+    "overflow": 2.9,
+    "address": 12.3
    },
    "INVIS1": {
-    "strict": 2.7,
-    "overflow": 2.8,
-    "address": 10.0
+    "strict": 3.1,
+    "overflow": 3.5,
+    "address": 11.6
    },
-   "SPECT1": {
-    "strict": 1.9,
-    "overflow": 2.6,
-    "address": 8.8
-   },
-   "SPECT2": {
-    "strict": 2.3,
-    "overflow": 2.4,
+   "TURBO1": {
+    "strict": 2.1,
+    "overflow": 2.5,
     "address": 8.5
    },
+   "TARGET1": {
+    "strict": 2.3,
+    "overflow": 2.7,
+    "address": 10.2
+   },
+   "SPECT1": {
+    "strict": 2.6,
+    "overflow": 2.6,
+    "address": 9.5
+   },
+   "SPECT2": {
+    "strict": 2.4,
+    "overflow": 2.8,
+    "address": 10.8
+   },
    "SPECTD": {
-    "strict": 1.9,
-    "overflow": 2.4,
+    "strict": 2.1,
+    "overflow": 3.0,
     "address": 10.8
    },
    "SCALE1": {
-    "strict": 6.2,
-    "overflow": 6.5,
-    "address": 24.3
+    "strict": 7.3,
+    "overflow": 6.6,
+    "address": 23.4
    },
    "SCALE2": {
-    "strict": 7.9,
-    "overflow": 8.1,
-    "address": 25.1
+    "strict": 10.1,
+    "overflow": 9.2,
+    "address": 33.2
    }
   }
  }
