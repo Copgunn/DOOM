@@ -19,17 +19,19 @@ Rust DOOM is a working title; the port's real name is still to be decided.
 ## Why this exists
 
 Most source ports (modern rewrites of a game's released source code) aim to be playable
-first and accurate second. This project works the other way round. It only accepts behavior that has been checked
-against the original Linux DOOM 1.10 C code (id Software's 1997 source release), comparing
-the entire game state after every tic, the 1/35-second step in which DOOM updates its
-world. Anything not yet proven identical is refused: the engine stops with an error
-instead of approximating.
+first and accurate second. This project works the other way round. It only accepts
+behavior that has been checked against the original Linux DOOM 1.10 C code (id Software's
+1997 source release), comparing the entire game state after every tic, the 1/35-second
+step in which DOOM updates its world. Anything not yet proven identical is refused: the
+engine stops with an error instead of approximating.
 
 That makes it useful for exact-behavior work: playing back recorded demos (files that
 replay a player's inputs, which only stay in sync if every tic matches), speedrun and
-tool-assisted (TAS) research, and studying the original engine. Vanilla behavior, meaning that of the original unmodified game, is the default here,
-quirks included, and game math stays in Doom's original whole-number arithmetic. Nothing
-quietly rounds your rocket jumps differently.
+tool-assisted (TAS) research, and studying the original engine. Vanilla behavior, meaning
+that of the original unmodified game, is the default here, quirks included, and game math
+stays in Doom's original whole-number arithmetic, with no decimals, except for the one
+division where the original itself used them. Nothing quietly rounds your rocket jumps
+differently.
 
 **It is not playable yet.** If you want to play Doom today, use an established source
 port such as [Chocolate Doom](https://www.chocolate-doom.org/). It needs your own game
@@ -52,10 +54,10 @@ example programs, on small test maps built for this project. Today it can simula
   (idle, walking to the exit, fighting, barrels and random commands; the comparison
   harness is local-only).
 
-In progress (milestone M4a, being verified against the genuine engine): the rest of
-Episode 1's first half. Every Episode 1 door, floor, lift, stair, donut, light and exit
-special, keys and locked doors, powerups, the chainsaw, the rocket launcher and the
-Spectre, aimed at E1M2, E1M3 and E1M4, with E1M6 and E1M7 as secondary targets.
+In progress (milestone M4a, being verified against the genuine engine): most of Episode 1:
+E1M2–E1M4, with E1M6 and E1M7 as secondary targets. Every Episode 1 door, floor, lift,
+stair, donut, light and exit special, keys and locked doors, powerups, the chainsaw, the
+rocket launcher and the Spectre.
 
 What it cannot do yet:
 
@@ -74,8 +76,9 @@ separate mode you switch on, so vanilla never changes.
 
 - **Vanilla.** The original 1993 game, limits and quirks included: what this project builds.
 - **Limit-removing.** Same game, but the original's hard limits on map size are lifted (Track 1).
-- **Boom, MBF21 and ID24.** Extensions adding new doors, lifts and floors: a possible later mode (Track 3).
-- **Advanced, ZDoom-style.** Scripting, sloped floors and big mods: this project would go its own way (Track 3).
+- **Boom, MBF21 and ID24.** Extensions adding new doors, lifts and floors: a possible later mode.
+- **Advanced, ZDoom-style.** Scripting, sloped floors and big mods: this project would go
+  its own way (Track 3).
 
 ## Where it's (maybe) going
 
@@ -83,28 +86,40 @@ Ideas, not promises, in three tracks; the [roadmap](docs/ROADMAP.md#ideas-under-
 
 **Track 1: Faithful.** Vanilla stays exact; anything that changes it lives in a separate optional mode.
 
-- **Original demo playback.** Replay recorded vanilla demos to the last tic, the strongest proof of exactness.
-- **Faster progress.** Port whole systems at once (all monsters, all weapons), checked on real maps and demos.
-- **One vanilla mode, plus a limit-removing one.** Fold the policies into one mode; a separate one lifts the hard limits.
+- **Original demo playback.** Replay recorded vanilla demos to the last tic, the strongest
+  proof of exactness.
+- **Faster progress.** Port whole systems at once (all monsters, all weapons), checked on
+  real maps and demos.
+- **One vanilla mode, plus a limit-removing one.** Fold the policies into one mode; a
+  separate one lifts the hard limits.
 - **An optional "fixed" mode.** Off unless chosen, it would correct known original bugs.
-- **The full game and Doom II.** After Episode 1, the other episodes and Doom II, held to the same exactness.
+- **The full game and Doom II.** After Episode 1, the other episodes and Doom II, held to
+  the same exactness.
 
 **Track 2: Presentation.** The renderer only reads game state, so it can never change gameplay.
 
 - **A faithful software renderer first.** It would look exactly like the original Linux DOOM 1.10.
-- **Then a modern renderer.** Smooth high frame rates between the 35 tics per second, plus sector-based dynamic lighting.
+- **Then a modern renderer.** Smooth high frame rates between the 35 tics per second, plus
+  sector-based dynamic lighting.
 - **VR.** A headset handles looking around while the mouse turns and aims.
 - **A fully offline engine.** Your own game files, no internet, account or launcher.
 
 **Track 3: Beyond vanilla.** A new engine on the verified core, in separate optional modes.
 
-- **Modern source-port features, done cleanly.** ZDoom-style features without decades-old code underneath.
-- **Things the original never simulated.** Flowing water, blood and nukage, and very large crowds of monsters.
-- **Scripting and more platforms.** A scripting layer for new game logic, and platforms such as mobile.
-- **A live editor with rewind.** Change anything while the game runs, then rewind and replay from any moment.
-- **"Why did that happen?"** Click a monster and see the exact decisions and random rolls behind what it did.
-- **TAS tools that are vanilla-legal by construction.** Runs built frame by frame here play back on the original game.
-- **Map and demo checks.** See exactly which line breaks vanilla limits, and which demos a map change desyncs.
+- **Modern source-port features, done cleanly.** ZDoom-style features without decades-old
+  code underneath.
+- **Things the original never simulated.** Flowing water, blood and nukage, and very large
+  crowds of monsters.
+- **Scripting and more platforms.** A scripting layer for new game logic, and platforms
+  such as mobile.
+- **A live editor with rewind.** Change anything while the game runs, then rewind and
+  replay from any moment.
+- **"Why did that happen?"** Click a monster and see the exact decisions and random rolls
+  behind what it did.
+- **TAS tools that are vanilla-legal by construction.** Runs built frame by frame here
+  play back on the original game.
+- **Map and demo checks.** See exactly which line breaks vanilla limits, and which demos a
+  map change desyncs.
 
 ## How it's verified
 
@@ -188,8 +203,8 @@ More developer reading:
 ## Contributing
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md): each change needs evidence from the original
-source, tests, documentation and owner review. Standing rules for AI agents are in
-[AGENTS.md](AGENTS.md).
+source, tests, documentation and owner review. The Python tools under `tools/` are a gentle
+place to start. Standing rules for AI agents are in [AGENTS.md](AGENTS.md).
 
 ## License and attribution
 
