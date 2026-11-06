@@ -1749,6 +1749,48 @@ What each asserts:
   `tests/reference/m4a_runner_contract.json`, whose hash covers the fork, so it fails on any
   change to them; `m3h9c_build.py --check` still holds the merged M3h9c contract.
 
+### The real Episode 1 maps (local only)
+
+The M4a real-map comparison reads the commercial IWAD, so the rules of the
+[M3h9c section](#m3h9c-whole-engine-runner-and-the-real-e1m1-comparison) apply unchanged: it needs
+`DOOM_IWAD_DIR` naming a directory with `DOOM.WAD`, is never run by CI, prints one skip line and exits 0
+without the variable, and reads the IWAD in place. Dumps, captures, logs and binaries live under a
+`--work` directory outside the repository, and only counts, yes/no results, tic numbers, RNG indices,
+times and digests may be printed or committed. The committed inputs are the text scripts and demo lumps
+of `tests/reference/e1m{2,3,4,6,7}_scripts/` (and E1M1's); they hold no IWAD data.
+
+```sh
+# the genuine engine on the real maps: strict, overflow-checked and address-checked builds (plus -m32 with --strict32)
+DOOM_IWAD_DIR=/path tools/local/episode1_reference.py [--work DIR] [--map E1Mn]... [--script NAME]... [--strict32] [--jobs 1|2] [--keep-dumps]
+
+# the Rust side, one demo of one map (wire 23), then the per-tic comparison
+DOOM_IWAD_DIR=/path cargo run -p doom-sim --release --example player_level_run -- --wad "$DOOM_IWAD_DIR/DOOM.WAD" --map E1M2 --demo tests/reference/e1m2_scripts/M2IDLE.lmp --out RUST_DIR --captures --policy episode1
+python3 tools/reference/level_compare.py WORK/runs/strict_E1M2_M2IDLE RUST_DIR --wad "$DOOM_IWAD_DIR/DOOM.WAD" --map E1M2 --demo tests/reference/e1m2_scripts/M2IDLE.lmp --profile episode1 [--json OUT]
+```
+
+- `--map E1Mn` (repeatable; E1M1, E1M2, E1M3, E1M4, E1M6 or E1M7) selects maps; by default every map
+  with a `tests/reference/e1mN_scripts/` directory runs. `--script NAME` narrows to demo-lump base
+  names such as `M2IDLE`, `M2CHAOS`, `M2FIGHT`, `M2DIE` and `M2WALK`. A lump whose header names another
+  map than its directory is refused. E1M2-E1M7 use the M4a driver fork (`m4a_build.py`); E1M1 stays on the
+  merged M3h9c driver, the frozen wire-22 evidence, so its `secretexit` is reported as null.
+- `--strict32` adds the opt-in `-m32` variant (no adapters; the wrapper fails, naming `m3h9c_build.py --probe-m32`, when the toolchain cannot build `-m32`).
+  `--jobs 1|2` sets the C runs in parallel (at most 2; the default is 2). `--keep-dumps` keeps
+  `WORK/runs/<variant>_<MAP>_<script>/`, which `level_compare.py` and `level_snapshot.py` read; without it the
+  dumps are deleted once the digests and events are recorded.
+- The wrapper requires byte-identical dump sets in every variant and writes
+  `WORK/results/<MAP>_<LUMP>.json` (tics, end `marker`, `exit` or `reborn`, end tic, `prndindex` at load
+  and at the end, thinkers and mobjs, mover starts, pickups, key cards, weapons, damage tics, blocked
+  stair steps and raise-and-change plats, and the digests). It never records a coordinate, angle or lump
+  byte. A blocked stair step or raise-and-change plat is the H7 situation: the C side runs on and Rust
+  refuses the tic with `StairBlocked` or `PlatBlocked`.
+- `player_level_run --policy episode1` loads the map under wire 23 and writes `digests.txt`,
+  `stats.txt` and, on a refused tic, `refused.txt`; the comparator ends a complete run at the C side's
+  `exit` or `reborn` tic, where Rust refuses the next tic (`LevelExited`, `PlayerReborn`). Running a
+  demo whose header names a map other than E1M1 through the example needs the step-7 demo header; the
+  C side and the projection do not.
+- Timings are taken alone on an idle machine, with no concurrent build, test or fuzz job. `--values` of
+  the comparator prints map-derived values and stays local.
+
 CI path: the `stable` job of `.github/workflows/rust.yml` runs, in order, `m4a_build.py --check`,
 `m4a_wad.py --check`, `m4a_check_wad.py --check` and `e1m1_scripts.py --check` (every OS);
 `m4a_reference.py --check --keep-dumps --selftest 300` and
