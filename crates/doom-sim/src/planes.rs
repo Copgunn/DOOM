@@ -119,6 +119,7 @@ impl<'b> PlaneHost<'_, 'b> {
     /// The shared lifecycle services over the fresh sector view.
     fn life(&mut self) -> LifeHost<'_, &mut ThinkerContext<'b, Actor>> {
         LifeHost {
+            specials: self.specials.as_deref(),
             buttons: None,
             statistics: self.statistics.as_deref_mut(),
             player: self.player.as_deref_mut(),

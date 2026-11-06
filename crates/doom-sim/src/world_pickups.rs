@@ -11,6 +11,8 @@ pub(crate) const MF_COUNTKILL: u32 = 0x0040_0000;
 pub(crate) const MF_DROPPED: u32 = 0x0002_0000;
 pub(crate) const MF_AMBUSH: u32 = 0x20;
 const MF_PICKUP: u32 = 0x800;
+/// `MF_NOTDMATCH` (p_mobj.h): the keycards' "not in deathmatch" flag.
+pub(crate) const MF_NOTDMATCH: u32 = 0x0200_0000;
 const BONUS_ADD: i32 = 6; // p_inter.c BONUSADD
 pub(crate) const MAX_BONUS: i32 = BONUS_ADD * MAX_WORLD_PICKUPS as i32;
 /// Placed plus controlled-dropped item budget of the barrels policy (M3h9b note
@@ -94,6 +96,28 @@ pub enum PickupKind {
     HealthBonus,
     /// Canonical MT_MISC3, DoomEd2015, SPR_BON2.
     ArmorBonus,
+    /// MT_MISC4, DoomEd 5, SPR_BKEY (Episode 1 policy).
+    BlueCard,
+    /// MT_MISC6, DoomEd 6, SPR_YKEY (Episode 1 policy).
+    YellowCard,
+    /// MT_MISC5, DoomEd 13, SPR_RKEY (Episode 1 policy).
+    RedCard,
+    /// MT_MISC12, DoomEd 2013, SPR_SOUL (Episode 1 policy).
+    Soulsphere,
+    /// MT_INS, DoomEd 2024, SPR_PINS: partial invisibility (Episode 1 policy).
+    Invisibility,
+    /// MT_MISC14, DoomEd 2025, SPR_SUIT: radiation suit (Episode 1 policy).
+    RadSuit,
+    /// MT_MISC15, DoomEd 2026, SPR_PMAP: computer map (Episode 1 policy).
+    ComputerMap,
+    /// MT_MISC16, DoomEd 2045, SPR_PVIS: light amplification (Episode 1 policy).
+    LightAmp,
+    /// MT_MISC24, DoomEd 8, SPR_BPAK: backpack (Episode 1 policy).
+    Backpack,
+    /// MT_MISC18, DoomEd 2010, SPR_ROCK: one rocket (Episode 1 policy).
+    Rocket,
+    /// MT_MISC19, DoomEd 2046, SPR_BROK: box of rockets (Episode 1 policy).
+    RocketBox,
 }
 impl PickupKind {
     /// Original definition, never a synthetic pickup alias.
@@ -111,6 +135,17 @@ impl PickupKind {
             Self::BlueArmor => OriginalActorType::MT_MISC1,
             Self::HealthBonus => OriginalActorType::MT_MISC2,
             Self::ArmorBonus => OriginalActorType::MT_MISC3,
+            Self::BlueCard => OriginalActorType::MT_MISC4,
+            Self::YellowCard => OriginalActorType::MT_MISC6,
+            Self::RedCard => OriginalActorType::MT_MISC5,
+            Self::Soulsphere => OriginalActorType::MT_MISC12,
+            Self::Invisibility => OriginalActorType::MT_INS,
+            Self::RadSuit => OriginalActorType::MT_MISC14,
+            Self::ComputerMap => OriginalActorType::MT_MISC15,
+            Self::LightAmp => OriginalActorType::MT_MISC16,
+            Self::Backpack => OriginalActorType::MT_MISC24,
+            Self::Rocket => OriginalActorType::MT_MISC18,
+            Self::RocketBox => OriginalActorType::MT_MISC19,
         }
     }
     fn message(self) -> PickupMessage {
@@ -127,7 +162,59 @@ impl PickupKind {
             Self::BlueArmor => PickupMessage::BlueArmor,
             Self::HealthBonus => PickupMessage::HealthBonus,
             Self::ArmorBonus => PickupMessage::ArmorBonus,
+            Self::BlueCard => PickupMessage::BlueCard,
+            Self::YellowCard => PickupMessage::YellowCard,
+            Self::RedCard => PickupMessage::RedCard,
+            Self::Soulsphere => PickupMessage::Soulsphere,
+            Self::Invisibility => PickupMessage::Invisibility,
+            Self::RadSuit => PickupMessage::RadSuit,
+            Self::ComputerMap => PickupMessage::ComputerMap,
+            Self::LightAmp => PickupMessage::LightAmp,
+            Self::Backpack => PickupMessage::Backpack,
+            Self::Rocket => PickupMessage::Rocket,
+            Self::RocketBox => PickupMessage::RocketBox,
         }
+    }
+    /// One of the pickups admitted by the Episode 1 policy alone.
+    pub(crate) fn is_episode1(self) -> bool {
+        matches!(
+            self,
+            Self::BlueCard
+                | Self::YellowCard
+                | Self::RedCard
+                | Self::Soulsphere
+                | Self::Invisibility
+                | Self::RadSuit
+                | Self::ComputerMap
+                | Self::LightAmp
+                | Self::Backpack
+                | Self::Rocket
+                | Self::RocketBox
+        )
+    }
+    /// The keycard index (`card_t`: blue, yellow, red) of a keycard pickup.
+    pub(crate) fn card(self) -> Option<usize> {
+        match self {
+            Self::BlueCard => Some(0),
+            Self::YellowCard => Some(1),
+            Self::RedCard => Some(2),
+            _ => None,
+        }
+    }
+    /// The Episode 1 pickups whose spawn state loops through several timed
+    /// frames with no action (keycards 2 × 10 tics, soulsphere and computer map
+    /// 6 × 6, invisibility 4 × 6, light amplification 2 × 6; info.c:964–1005).
+    fn is_cycling(self) -> bool {
+        matches!(
+            self,
+            Self::BlueCard
+                | Self::YellowCard
+                | Self::RedCard
+                | Self::Soulsphere
+                | Self::Invisibility
+                | Self::ComputerMap
+                | Self::LightAmp
+        )
     }
     fn can_drop(self) -> bool {
         matches!(self, Self::Clip | Self::Shotgun | Self::Chaingun)
@@ -136,10 +223,20 @@ impl PickupKind {
         matches!(self, Self::HealthBonus | Self::ArmorBonus)
     }
     pub(crate) fn is_animated(self) -> bool {
-        self.is_armor() || self.is_bonus()
+        self.is_armor() || self.is_bonus() || self.is_cycling()
     }
     pub(crate) fn definition_flags(self) -> u32 {
-        MF_SPECIAL | if self.is_bonus() { MF_COUNTITEM } else { 0 }
+        MF_SPECIAL
+            | match self {
+                Self::HealthBonus
+                | Self::ArmorBonus
+                | Self::Soulsphere
+                | Self::Invisibility
+                | Self::ComputerMap
+                | Self::LightAmp => MF_COUNTITEM,
+                Self::BlueCard | Self::YellowCard | Self::RedCard => MF_NOTDMATCH,
+                _ => 0,
+            }
     }
     pub(crate) fn is_armor(self) -> bool {
         matches!(self, Self::GreenArmor | Self::BlueArmor)
@@ -159,6 +256,17 @@ pub(crate) fn kind(ty: ActorTypeId) -> Option<PickupKind> {
         OriginalActorType::MT_MISC1 => PickupKind::BlueArmor,
         OriginalActorType::MT_MISC2 => PickupKind::HealthBonus,
         OriginalActorType::MT_MISC3 => PickupKind::ArmorBonus,
+        OriginalActorType::MT_MISC4 => PickupKind::BlueCard,
+        OriginalActorType::MT_MISC6 => PickupKind::YellowCard,
+        OriginalActorType::MT_MISC5 => PickupKind::RedCard,
+        OriginalActorType::MT_MISC12 => PickupKind::Soulsphere,
+        OriginalActorType::MT_INS => PickupKind::Invisibility,
+        OriginalActorType::MT_MISC14 => PickupKind::RadSuit,
+        OriginalActorType::MT_MISC15 => PickupKind::ComputerMap,
+        OriginalActorType::MT_MISC16 => PickupKind::LightAmp,
+        OriginalActorType::MT_MISC24 => PickupKind::Backpack,
+        OriginalActorType::MT_MISC18 => PickupKind::Rocket,
+        OriginalActorType::MT_MISC19 => PickupKind::RocketBox,
         _ => return None,
     })
 }
@@ -171,6 +279,20 @@ pub(crate) fn kind_for(profile: OriginalExecutionProfile, ty: ActorTypeId) -> Op
     (!k.is_armor() || profile.has_player_armor())
         .then_some(k)
         .filter(|k| !k.is_bonus() || profile.has_player_bonuses())
+        .filter(|k| !k.is_episode1() || profile.has_episode1())
+}
+/// The spawn loop of a cycling Episode 1 pickup: its spawn state and each `next`
+/// until the loop closes (at most eight states, the longest is six).
+fn spawn_loop(root: OriginalState) -> impl Iterator<Item = OriginalState> {
+    let mut state = Some(root);
+    let mut steps = 0;
+    std::iter::from_fn(move || {
+        let current = state?;
+        steps += 1;
+        let next = current.descriptor().next;
+        state = (next != root && steps < 8).then_some(next);
+        Some(current)
+    })
 }
 pub(crate) fn state_allowed(ty: ActorTypeId, state: OriginalState) -> bool {
     kind(ty).is_some_and(|k| {
@@ -180,6 +302,8 @@ pub(crate) fn state_allowed(ty: ActorTypeId, state: OriginalState) -> bool {
                 .ordinal()
                 .checked_sub(root.ordinal())
                 .is_some_and(|offset| offset < 6)
+        } else if k.is_cycling() {
+            spawn_loop(root).any(|s| s == state)
         } else {
             state == root || (k.is_armor() && state == root.descriptor().next)
         }
@@ -218,6 +342,32 @@ pub enum PickupMessage {
     HealthBonus = 12,
     /// GOTARMBONUS.
     ArmorBonus = 13,
+    /// GOTSUPER (soulsphere; Episode 1 policy, DSIM39).
+    Soulsphere = 14,
+    /// GOTBLUECARD.
+    BlueCard = 15,
+    /// GOTYELWCARD.
+    YellowCard = 16,
+    /// GOTREDCARD.
+    RedCard = 17,
+    /// GOTINVIS.
+    Invisibility = 18,
+    /// GOTSUIT.
+    RadSuit = 19,
+    /// GOTMAP.
+    ComputerMap = 20,
+    /// GOTVISOR.
+    LightAmp = 21,
+    /// GOTROCKET.
+    Rocket = 22,
+    /// GOTROCKBOX.
+    RocketBox = 23,
+    /// GOTBACKPACK.
+    Backpack = 24,
+    /// GOTCHAINSAW (the chainsaw pickup arrives with the M4a weapons step).
+    Chainsaw = 25,
+    /// GOTLAUNCHER (likewise).
+    Launcher = 26,
     /// PD_BLUEK: a blue-locked door used without the key (`EV_VerticalDoor`,
     /// p_doors.c:378; Episode 1 policy, decision D7).
     BlueKeyNeeded = 27,
@@ -249,13 +399,7 @@ impl PlayerPickupState {
                 self.item_count != 0
             }
             || self.message == PickupMessage::MedikitNeeded
-            || (bounds.is_none()
-                && matches!(
-                    self.message,
-                    PickupMessage::BlueKeyNeeded
-                        | PickupMessage::YellowKeyNeeded
-                        | PickupMessage::RedKeyNeeded
-                ))
+            || (bounds.is_none() && self.message as u8 >= PickupMessage::Soulsphere as u8)
             || (!profile.has_player_bonuses()
                 && matches!(
                     self.message,
@@ -310,6 +454,18 @@ pub enum PickupEvent {
     ArmorBonus(PlayerArmorState, PlayerArmorState),
     /// Original COUNTITEM increment, after message and before source removal.
     Counted(i32, i32),
+    /// `P_GiveCard` (Episode 1 policy): the `card_t` index and whether the card
+    /// was already held (then nothing changes and no message is assigned).
+    Card(u8, bool),
+    /// `P_GivePower` (Episode 1 policy): the `powertype_t` index, accepted, and
+    /// the counter before and after.
+    Power(u8, bool, i32, i32),
+    /// `SPR_SOUL` (Episode 1 policy): player health before and after, and the
+    /// resulting mobj health.
+    Soulsphere(i32, i32, i32),
+    /// `SPR_BPAK` (Episode 1 policy): whether this backpack was the first (the
+    /// maxima doubled); the four `P_GiveAmmo` observations follow.
+    Backpack(bool),
 }
 pub(crate) enum ContactEvent {
     Pickup(PickupEvent),
@@ -351,6 +507,19 @@ fn validate_definition_uncached(ty: ActorTypeId) -> Result<(), SimError> {
             state = descriptor.next;
         }
         valid && state == d.states.spawn
+    } else if k.is_cycling() {
+        // Closed within eight states, every state timed, with the spawn sprite
+        // and no action (the keycard, soulsphere, invisibility, computer-map and
+        // light-amplification loops, info.c:964–1005).
+        let states: Vec<_> = spawn_loop(d.states.spawn).collect();
+        states.len() < 8
+            && states
+                .last()
+                .is_some_and(|l| l.descriptor().next == d.states.spawn)
+            && states.iter().all(|state| {
+                let descriptor = state.descriptor();
+                descriptor.tics > 0 && descriptor.sprite == s.sprite && descriptor.action.is_none()
+            })
     } else if k.is_armor() {
         let next = s.next.descriptor();
         s.tics > 0
@@ -496,65 +665,86 @@ pub(crate) fn bonus_tick(
 fn observe(events: &mut Vec<movement::MotionEvent>, event: PickupEvent) {
     events.push(movement::MotionEvent::Contact(ContactEvent::Pickup(event)));
 }
+/// `powertype_t` indices (doomdef.h:214–222) and the `P_GivePower` durations
+/// (doomdef.h:226–229: `INVISTICS`, `IRONTICS` 60·TICRATE, `INFRATICS` 120·TICRATE).
+pub(crate) const POWER_INVISIBILITY: usize = 2;
+pub(crate) const POWER_IRONFEET: usize = 3;
+pub(crate) const POWER_ALLMAP: usize = 4;
+pub(crate) const POWER_INFRARED: usize = 5;
+pub(crate) const INVISTICS: i32 = 60 * 35;
+pub(crate) const IRONTICS: i32 = 60 * 35;
+pub(crate) const INFRATICS: i32 = 120 * 35;
+/// `clipammo` (p_inter.c:45): the rounds of one clip load per `ammotype_t`.
+const CLIP_AMMO: [u16; 4] = [10, 4, 20, 1];
+/// `P_GiveAmmo` (p_inter.c:73–160) for `ammo` in `ammotype_t` order (clip,
+/// shell, cell, misl): refused at `maxammo`; `loads` clip loads, or half a clip
+/// for 0; no doubling at the medium skill; capped at `maxammo` (doubled once by
+/// the backpack); and from zero the weapon preference switch. Only the Episode 1
+/// policy reaches cells and rockets.
 fn ammo(
     p: &mut PlayerWeaponState,
-    shell: bool,
+    ammo: usize,
     loads: u16,
     events: &mut Vec<movement::MotionEvent>,
 ) -> Result<bool, SimError> {
-    let before = if shell { p.shells } else { p.bullets };
-    let cap = u16::try_from(
-        *weapons::AMMO_CAPACITIES
-            .get(usize::from(shell))
-            .ok_or(WeaponError::Inventory)?,
-    )
-    .map_err(|_| WeaponError::Inventory)?;
+    let counts = [p.bullets, p.shells, p.cells, p.rockets];
+    let before = *counts.get(ammo).ok_or(WeaponError::Inventory)?;
+    let cap = u16::try_from(*p.max_ammo().get(ammo).ok_or(WeaponError::Inventory)?)
+        .map_err(|_| WeaponError::Inventory)?;
     if before > cap {
         return Err(WeaponError::Inventory.into());
     }
     let accepted = before != cap;
+    let mut after = before;
     if accepted {
+        let clip = CLIP_AMMO[ammo];
         let count = if loads == 0 {
-            5
+            clip / 2
         } else {
-            loads
-                .checked_mul(if shell { 4 } else { 10 })
-                .ok_or(WeaponError::Inventory)?
+            loads.checked_mul(clip).ok_or(WeaponError::Inventory)?
         };
-        // Private callers supply at most five loads: before<=200 and count<=50,
+        // Private callers supply at most five loads: before<=600 and count<=100,
         // so the checked source addition is representable before capping.
-        let after = before
+        after = before
             .checked_add(count)
             .ok_or(WeaponError::Inventory)?
             .min(cap);
-        if shell {
-            p.shells = after;
-        } else {
-            p.bullets = after;
+        match ammo {
+            0 => p.bullets = after,
+            1 => p.shells = after,
+            2 => p.cells = after,
+            _ => p.rockets = after,
         }
         if before == 0 {
-            if shell
-                && matches!(p.ready, Weapon::Fist | Weapon::Pistol)
-                && p.owned & (1 << Weapon::Shotgun as u8) != 0
-            {
-                p.pending = Some(Weapon::Shotgun);
-            }
-            if !shell && p.ready == Weapon::Fist {
-                p.pending = Some(if p.owned & (1 << Weapon::Chaingun as u8) != 0 {
-                    Weapon::Chaingun
-                } else {
-                    Weapon::Pistol
-                });
+            let owns = |w: Weapon| p.owned & (1 << w as u8) != 0;
+            match ammo {
+                0 if p.ready == Weapon::Fist => {
+                    p.pending = Some(if owns(Weapon::Chaingun) {
+                        Weapon::Chaingun
+                    } else {
+                        Weapon::Pistol
+                    });
+                }
+                1 if matches!(p.ready, Weapon::Fist | Weapon::Pistol) && owns(Weapon::Shotgun) => {
+                    p.pending = Some(Weapon::Shotgun);
+                }
+                2 if matches!(p.ready, Weapon::Fist | Weapon::Pistol) && owns(Weapon::Plasma) => {
+                    p.pending = Some(Weapon::Plasma);
+                }
+                3 if p.ready == Weapon::Fist && owns(Weapon::Rocket) => {
+                    p.pending = Some(Weapon::Rocket);
+                }
+                _ => {}
             }
         }
     }
     observe(
         events,
         PickupEvent::Ammo(
-            u8::from(shell),
+            u8::try_from(ammo).map_err(|_| WeaponError::Inventory)?,
             accepted,
             i32::from(before),
-            i32::from(if shell { p.shells } else { p.bullets }),
+            i32::from(after),
             p.ready,
             p.pending,
         ),
@@ -656,6 +846,14 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                 let PlayerWeaponRuntime::Pack(w) = weapon else {
                     return Err(WeaponError::Inventory.into());
                 };
+                // The assigned message; a keycard already held assigns none
+                // (p_inter.c:421–443).
+                let mut message = Some(k.message());
+                let mut sound = if matches!(k, PickupKind::Shotgun | PickupKind::Chaingun) {
+                    "sfx_wpnup"
+                } else {
+                    "sfx_itemup"
+                };
                 let accepted = match k {
                     PickupKind::HealthBonus => {
                         let before = self.player.health;
@@ -713,15 +911,12 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         );
                         accepted
                     }
-                    PickupKind::Clip => ammo(
-                        w,
-                        false,
-                        if l.flags & MF_DROPPED != 0 { 0 } else { 1 },
-                        events,
-                    )?,
-                    PickupKind::BulletBox => ammo(w, false, 5, events)?,
-                    PickupKind::Shells => ammo(w, true, 1, events)?,
-                    PickupKind::ShellBox => ammo(w, true, 5, events)?,
+                    PickupKind::Clip => {
+                        ammo(w, 0, if l.flags & MF_DROPPED != 0 { 0 } else { 1 }, events)?
+                    }
+                    PickupKind::BulletBox => ammo(w, 0, 5, events)?,
+                    PickupKind::Shells => ammo(w, 1, 1, events)?,
+                    PickupKind::ShellBox => ammo(w, 1, 5, events)?,
                     PickupKind::Stimpack | PickupKind::Medikit => {
                         let before = self.player.health;
                         let accepted = before < 100;
@@ -749,6 +944,109 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         );
                         accepted
                     }
+                    PickupKind::BlueCard | PickupKind::YellowCard | PickupKind::RedCard => {
+                        // `if (!cards[c]) message = …; P_GiveCard`: a held card
+                        // changes nothing; a new one assigns `bonuscount = BONUSADD`
+                        // (p_inter.c:274–283). Single player then breaks to the tail.
+                        let card = k.card().ok_or(ActorError::InvalidType)?;
+                        let powers = self
+                            .player
+                            .powers
+                            .as_mut()
+                            .ok_or(PlayerBodyError::Profile)?;
+                        let held = powers.cards[card];
+                        if held {
+                            message = None;
+                        } else {
+                            powers.cards[card] = true;
+                            self.player
+                                .pickups
+                                .as_mut()
+                                .ok_or(PlayerBodyError::Invariant)?
+                                .bonus_count = BONUS_ADD;
+                        }
+                        observe(
+                            events,
+                            PickupEvent::Card(u8::try_from(card).unwrap_or(u8::MAX), held),
+                        );
+                        true
+                    }
+                    PickupKind::Soulsphere => {
+                        // p_inter.c:400–407: +100, capped at 200, always taken.
+                        let before = self.player.health;
+                        let after = before
+                            .checked_add(100)
+                            .ok_or(PlayerBodyError::Invariant)?
+                            .min(200);
+                        self.player.health = after;
+                        body.life.as_mut().ok_or(ActorError::InvalidType)?.health = after;
+                        self.access
+                            .get_mut(id)
+                            .and_then(|a| a.life.as_mut())
+                            .ok_or(StoreError::InvalidHandle)?
+                            .health = after;
+                        observe(events, PickupEvent::Soulsphere(before, after, after));
+                        sound = "sfx_getpow";
+                        true
+                    }
+                    PickupKind::Invisibility
+                    | PickupKind::RadSuit
+                    | PickupKind::ComputerMap
+                    | PickupKind::LightAmp => {
+                        // P_GivePower (p_inter.c:290–330): invisibility 2100 tics
+                        // and MF_SHADOW on the body, suit 2100, visor 4200; the map
+                        // is refused when already held, else set to 1.
+                        let (power, tics) = match k {
+                            PickupKind::Invisibility => (POWER_INVISIBILITY, INVISTICS),
+                            PickupKind::RadSuit => (POWER_IRONFEET, IRONTICS),
+                            PickupKind::ComputerMap => (POWER_ALLMAP, 1),
+                            _ => (POWER_INFRARED, INFRATICS),
+                        };
+                        let powers = self
+                            .player
+                            .powers
+                            .as_mut()
+                            .ok_or(PlayerBodyError::Profile)?;
+                        let before = powers.powers[power];
+                        let accepted = power != POWER_ALLMAP || before == 0;
+                        if accepted {
+                            powers.powers[power] = tics;
+                        }
+                        if power == POWER_INVISIBILITY {
+                            body.life.as_mut().ok_or(ActorError::InvalidType)?.flags |=
+                                original_player::MF_SHADOW;
+                            self.access
+                                .get_mut(id)
+                                .and_then(|a| a.life.as_mut())
+                                .ok_or(StoreError::InvalidHandle)?
+                                .flags |= original_player::MF_SHADOW;
+                        }
+                        observe(
+                            events,
+                            PickupEvent::Power(
+                                u8::try_from(power).unwrap_or(u8::MAX),
+                                accepted,
+                                before,
+                                powers.powers[power],
+                            ),
+                        );
+                        sound = "sfx_getpow";
+                        accepted
+                    }
+                    PickupKind::Rocket => ammo(w, 3, 1, events)?,
+                    PickupKind::RocketBox => ammo(w, 3, 5, events)?,
+                    PickupKind::Backpack => {
+                        // p_inter.c:589–599: the first backpack doubles every
+                        // maximum; then one clip load of each type, in order,
+                        // each with its own zero-ammo switch; always taken.
+                        let first = !w.backpack;
+                        w.backpack = true;
+                        observe(events, PickupEvent::Backpack(first));
+                        for ty in 0..4 {
+                            ammo(w, ty, 1, events)?;
+                        }
+                        true
+                    }
                     PickupKind::Shotgun | PickupKind::Chaingun => {
                         let weapon = if k == PickupKind::Shotgun {
                             Weapon::Shotgun
@@ -759,7 +1057,7 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         let pending = w.pending;
                         let gave = ammo(
                             w,
-                            weapon == Weapon::Shotgun,
+                            usize::from(weapon == Weapon::Shotgun),
                             if l.flags & MF_DROPPED != 0 { 1 } else { 2 },
                             events,
                         )?;
@@ -788,8 +1086,10 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         .pickups
                         .as_mut()
                         .ok_or(PlayerBodyError::Invariant)?;
-                    state.message = k.message();
-                    observe(events, PickupEvent::Message(state.message));
+                    if let Some(message) = message {
+                        state.message = message;
+                        observe(events, PickupEvent::Message(message));
+                    }
                     if l.flags & MF_COUNTITEM != 0 {
                         if !self.player.policy.has_player_bonuses() {
                             return Err(PlayerBodyError::Invariant.into());
@@ -815,11 +1115,6 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         events,
                         PickupEvent::Bonus(state.bonus_count, state.item_count),
                     );
-                    let sound = if matches!(k, PickupKind::Shotgun | PickupKind::Chaingun) {
-                        "sfx_wpnup"
-                    } else {
-                        "sfx_itemup"
-                    };
                     events.push(movement::MotionEvent::Contact(ContactEvent::Sound(
                         lifecycle::source_sound(sound).ok_or(ActorError::InvalidType)?,
                     )));
@@ -899,7 +1194,12 @@ impl Simulation {
                 .contains(&total)
                 || collected > total
                 || counted > (total - collected) as usize
-                || (total > 0 && total as usize != counted_map_things(self.world.map().things()))
+                || (total > 0
+                    && total as usize
+                        != counted_map_things(
+                            self.world.map().things(),
+                            self.world.episode1.is_some(),
+                        ))
             {
                 return Err(PlayerBodyError::Invariant.into());
             }
@@ -951,6 +1251,7 @@ impl Simulation {
         )?;
         self.reserve_actor_spawns(1)?;
         let id = lifecycle::LifeHost {
+            specials: None,
             buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
@@ -991,6 +1292,10 @@ pub(crate) const fn max_world_items(policy: OriginalExecutionProfile) -> usize {
 }
 /// DoomEd numbers of the COUNTITEM health/armor bonuses (info.c MT_MISC2/MT_MISC3).
 pub(crate) const COUNTED_ITEM_DOOMED: [i16; 2] = [2014, 2015];
+/// The same set under the Episode 1 policy: the bonuses plus the soulsphere,
+/// invisibility, computer map and light amplification (info.c MT_MISC12, MT_INS,
+/// MT_MISC15, MT_MISC16 carry `MF_COUNTITEM`).
+pub(crate) const COUNTED_ITEM_DOOMED_EPISODE1: [i16; 6] = [2014, 2015, 2013, 2024, 2026, 2045];
 /// DoomEd numbers of the admitted COUNTKILL monsters (info.c MT_SERGEANT,
 /// MT_POSSESSED, MT_SHOTGUY, MT_CHAINGUY).
 pub(crate) const COUNTED_KILL_DOOMED: [i16; 4] = [3002, 3004, 9, 65];
@@ -1007,9 +1312,13 @@ pub(crate) fn counted_things(things: impl IntoIterator<Item = (i16, u16)>, kinds
         .filter(|(kind, options)| kinds.contains(kind) && options & 16 == 0 && options & 2 != 0)
         .count()
 }
-pub(crate) fn counted_map_things(things: &[doom_map::Thing]) -> usize {
+pub(crate) fn counted_map_things(things: &[doom_map::Thing], episode1: bool) -> usize {
     counted_things(
         things.iter().map(|t| (t.kind, t.options)),
-        &COUNTED_ITEM_DOOMED,
+        if episode1 {
+            &COUNTED_ITEM_DOOMED_EPISODE1
+        } else {
+            &COUNTED_ITEM_DOOMED
+        },
     )
 }

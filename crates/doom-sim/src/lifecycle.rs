@@ -984,13 +984,13 @@ impl ActorRegistry {
             )?;
             return Ok(());
         }
-        if crate::e1m1_rules::decoration(ty).is_some() {
+        if crate::e1m1_rules::listed_decoration(ty).is_some() {
             // Caller already required the E1M1 role. A static decoration (M3h9 note
             // §2.5): flags 0 or MF_SOLID, no look, chase, attack or melee action in
             // its spawn or death graph (its spawn state has tics −1 and no action,
             // its death state is S_NULL), and the compile-time definition satisfies
             // the static predicate.
-            crate::e1m1_rules::validate_definition(ty)?;
+            crate::e1m1_rules::validate_listed_definition(ty)?;
             self.admit_type(
                 ty,
                 sectors,
@@ -1356,6 +1356,10 @@ pub(crate) struct LifeHost<'a, A> {
     /// Episode 1 policy) starts through `P_ShootSpecialLine`; `None` wherever no
     /// such shot can run.
     pub buttons: Option<&'a mut crate::use_lines::Buttons>,
+    /// The staged runtime sector specials, read by the Episode 1 policy's
+    /// special-11 damage cap (p_inter.c:837–842); `None` wherever the player
+    /// body cannot be damaged under that policy.
+    pub specials: Option<&'a [crate::sector_thinkers::SectorSpecial]>,
 }
 impl ThinkerStore<Actor> {
     pub(crate) fn live_of_type(&self, ty: ActorTypeId) -> usize {

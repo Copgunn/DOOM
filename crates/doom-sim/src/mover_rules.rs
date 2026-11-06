@@ -425,7 +425,7 @@ fn validate_movers_with(map: &Map, rules: Rules) -> Result<MoverAdmission, SimEr
     use crate::sector_thinkers::{MAX_LINE_ANIMS, SCROLLING_WALL};
     let two_sided_scrollers = rules != Rules::Movers;
     let episode1 = rules == Rules::Episode1;
-    crate::demon_expanded_map::validate_sector_specials(map)?;
+    crate::demon_expanded_map::validate_sector_specials_for(map, episode1)?;
     let sectors = map.sectors().len();
     let mut kinds = vec![Kinds::default(); sectors];
     let (mut scrollers, mut switches) = (0, 0);

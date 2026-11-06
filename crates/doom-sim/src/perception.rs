@@ -481,6 +481,7 @@ impl Simulation {
         )?;
         Ok(commit_scan(
             &mut crate::lifecycle::LifeHost {
+                specials: None,
                 buttons: None,
                 player: None,
                 statistics: self.statistics.as_mut(),
@@ -938,6 +939,7 @@ impl Simulation {
             return self.checked_demon_operation(|host| host.invoke_look(id));
         }
         Ok(crate::lifecycle::LifeHost {
+            specials: None,
             buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),

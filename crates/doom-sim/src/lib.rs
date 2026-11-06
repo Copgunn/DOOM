@@ -1586,6 +1586,8 @@ mod player_e1m1_soak_tests;
 #[cfg(test)]
 mod player_e1m1_tests;
 #[cfg(test)]
+mod player_episode1_items_tests;
+#[cfg(test)]
 mod player_episode1_movers_tests;
 #[cfg(test)]
 mod player_episode1_tests;

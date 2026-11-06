@@ -73,10 +73,12 @@ impl PlayerWeaponState {
             psprites: self.psprites,
         }
     }
-    pub(crate) fn from_adapter(value: WeaponPlayer, id: ActorId) -> Result<Self, SimError> {
+    /// The state after one weapon operation on `self`'s adapter: the backpack
+    /// is not a weapon field, so it is kept, and the maxima must be `self`'s.
+    pub(crate) fn after_adapter(self, value: WeaponPlayer, id: ActorId) -> Result<Self, SimError> {
         if value.actor != id
             || value.slot != PlayerSlot::One.ordinal()
-            || value.max_ammo != weapons::AMMO_CAPACITIES
+            || value.max_ammo != self.max_ammo()
         {
             return Err(WeaponError::Inventory.into());
         }
@@ -85,7 +87,10 @@ impl PlayerWeaponState {
             owned: value.owned,
             ammo: value.ammo,
         }
-        .validate()?;
+        .validate_with(
+            value.max_ammo,
+            self.backpack || self.cells != 0 || self.rockets != 0,
+        )?;
         Ok(Self {
             ready: value.ready,
             pending: value.pending,
@@ -94,7 +99,7 @@ impl PlayerWeaponState {
             shells: u16::try_from(value.ammo[1]).map_err(|_| WeaponError::Inventory)?,
             cells: u16::try_from(value.ammo[2]).map_err(|_| WeaponError::Inventory)?,
             rockets: u16::try_from(value.ammo[3]).map_err(|_| WeaponError::Inventory)?,
-            backpack: false,
+            backpack: self.backpack,
             attack_down: value.attack_down,
             refire: value.refire,
             bob: value.bob,
@@ -116,9 +121,11 @@ impl PlayerWeaponState {
     pub(crate) fn max_ammo(self) -> [i32; 4] {
         weapons::AMMO_CAPACITIES.map(|m| m << u32::from(self.backpack))
     }
-    pub(crate) fn validate(self) -> Result<(), SimError> {
-        // No policy before the Episode 1 weapon step (M4a step 6) gives a backpack.
-        if self.backpack {
+    /// The state's domain; `episode1` admits the backpack and the cell and
+    /// rocket counts the Episode 1 policy's pickups give (p_inter.c:553–599).
+    pub(crate) fn validate_for(self, episode1: bool) -> Result<(), SimError> {
+        // No policy before the Episode 1 policy gives a backpack.
+        if self.backpack && !episode1 {
             return Err(WeaponError::Inventory.into());
         }
         WeaponInventory {
@@ -126,7 +133,7 @@ impl PlayerWeaponState {
             owned: self.owned,
             ammo: self.ammo(),
         }
-        .validate()?;
+        .validate_with(self.max_ammo(), episode1)?;
         if let Some(pending) = self.pending {
             Weapon::from_number(pending as u8)?;
             if self.owned & (1 << pending as u8) == 0 {
@@ -212,10 +219,12 @@ impl PlayerWeaponRuntime {
             None
         }
     }
-    pub(crate) fn validate(self) -> Result<(), SimError> {
+    /// The runtime's domain; `episode1` selects the Episode 1 policy's wider
+    /// pack domain.
+    pub(crate) fn validate_for(self, episode1: bool) -> Result<(), SimError> {
         match self {
             Self::Pistol(p) => p.validate(),
-            Self::Pack(p) => p.validate(),
+            Self::Pack(p) => p.validate_for(episode1),
         }
     }
     pub(crate) fn adapter(self, id: ActorId, health: i32) -> WeaponPlayer {
@@ -231,7 +240,7 @@ impl PlayerWeaponRuntime {
     ) -> Result<Self, SimError> {
         match self {
             Self::Pistol(_) => PistolState::from_adapter(p, id).map(Self::Pistol),
-            Self::Pack(_) => PlayerWeaponState::from_adapter(p, id).map(Self::Pack),
+            Self::Pack(s) => s.after_adapter(p, id).map(Self::Pack),
         }
     }
 }

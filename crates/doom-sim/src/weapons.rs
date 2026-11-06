@@ -146,17 +146,17 @@ impl Default for WeaponInventory {
 }
 impl WeaponInventory {
     pub(crate) fn validate(self) -> Result<(), WeaponError> {
+        self.validate_with(AMMO_CAPACITIES, false)
+    }
+    /// The inventory check against the maxima `max`; `pickups` admits the cell
+    /// and rocket counts the Episode 1 policy's pickups give (M4a step 5).
+    pub(crate) fn validate_with(self, max: [i32; 4], pickups: bool) -> Result<(), WeaponError> {
         Weapon::from_number(self.ready as u8)?;
         if self.owned & !15 != 0
             || self.owned & 3 != 3
             || self.owned & (1 << (self.ready as u8)) == 0
-            || self
-                .ammo
-                .into_iter()
-                .zip(AMMO_CAPACITIES)
-                .any(|(a, m)| a < 0 || a > m)
-            || self.ammo[2] != 0
-            || self.ammo[3] != 0
+            || self.ammo.into_iter().zip(max).any(|(a, m)| a < 0 || a > m)
+            || (!pickups && (self.ammo[2] != 0 || self.ammo[3] != 0))
         {
             return Err(WeaponError::Inventory);
         }

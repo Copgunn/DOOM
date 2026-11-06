@@ -453,6 +453,20 @@ fn event_bytes(event: &Event) -> Vec<u8> {
                     b.push(after.kind.wire_id());
                     b.extend(after.points.to_le_bytes());
                 }
+                // DSIM39 (Episode 1 policy) sub-tags 11–14.
+                Card(card, held) => b.extend([11, *card, u8::from(*held)]),
+                Power(power, accepted, before, after) => {
+                    b.extend([12, *power, u8::from(*accepted)]);
+                    b.extend(before.to_le_bytes());
+                    b.extend(after.to_le_bytes());
+                }
+                Soulsphere(before, after, body) => {
+                    b.push(13);
+                    b.extend(before.to_le_bytes());
+                    b.extend(after.to_le_bytes());
+                    b.extend(body.to_le_bytes());
+                }
+                Backpack(first) => b.extend([14, u8::from(*first)]),
             }
         }
         Event::PlayerBody(event) => {

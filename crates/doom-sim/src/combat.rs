@@ -200,6 +200,11 @@ pub(crate) struct DamagePlan {
     demand: Demand,
     ignored: bool,
     credit: bool,
+    /// The damage after `P_DamageMobj`'s player-specific cap (the Episode 1
+    /// policy's sector special 11, p_inter.c:837–842) and before armor;
+    /// `request.amount` otherwise. The thrust keeps `request.amount` (806–832
+    /// precede the cap).
+    amount: i32,
 }
 #[derive(Clone, Debug)]
 pub(crate) struct PreparedAttack {
@@ -217,20 +222,29 @@ impl DamagePlan {
         armor: Option<PlayerArmorState>,
         policy: OriginalExecutionProfile,
     ) -> Result<Self, SimError> {
+        Self::start_capped(actor, request, request.amount, armor, policy)
+    }
+    fn start_capped(
+        actor: Actor,
+        request: DamageRequest,
+        amount: i32,
+        armor: Option<PlayerArmorState>,
+        policy: OriginalExecutionProfile,
+    ) -> Result<Self, SimError> {
         let life = actor.life().ok_or(CombatError::Metadata)?;
         let ignored = life.flags & MF_SHOOTABLE == 0 || life.health <= 0;
         let armor = if ignored {
             None
         } else {
             armor
-                .map(|a| ArmorEvent::plan_for(policy, request.target, request.amount, a))
+                .map(|a| ArmorEvent::plan_for(policy, request.target, amount, a))
                 .transpose()?
         };
         let after = if ignored {
             life.health
         } else {
             life.health
-                .checked_sub(armor.map_or(request.amount, |a| a.effective))
+                .checked_sub(armor.map_or(amount, |a| a.effective))
                 .ok_or(CombatError::Metadata)?
         };
         Ok(Self {
@@ -243,6 +257,7 @@ impl DamagePlan {
             demand: Demand::default(),
             ignored,
             credit: false,
+            amount,
         })
     }
     pub(crate) fn spawn_count(self) -> usize {
@@ -341,7 +356,19 @@ impl DamagePlan {
         armor: Option<PlayerArmorState>,
         policy: OriginalExecutionProfile,
     ) -> Result<Self, SimError> {
-        let plan = Self::start(actor, request, armor, policy)?;
+        Self::current_armored_body_capped(registry, actor, request, request.amount, armor, policy)
+    }
+    /// [`Self::current_armored_body`] with the pre-armor damage `amount` after
+    /// the player-specific cap.
+    fn current_armored_body_capped(
+        registry: &ActorRegistry,
+        actor: Actor,
+        request: DamageRequest,
+        amount: i32,
+        armor: Option<PlayerArmorState>,
+        policy: OriginalExecutionProfile,
+    ) -> Result<Self, SimError> {
+        let plan = Self::start_capped(actor, request, amount, armor, policy)?;
         if plan.ignored {
             return Ok(plan);
         }
@@ -369,6 +396,20 @@ impl DamagePlan {
     pub(crate) fn current_original<A: ActorAccess>(
         host: &LifeHost<'_, A>,
         request: DamageRequest,
+    ) -> Result<Self, SimError> {
+        Self::current_original_in(host, request, None)
+    }
+    /// [`Self::current_original`]; `special` is the runtime special of the
+    /// victim's sector when the caller holds the staged specials outside the host
+    /// (`P_PlayerInSpecialSector`), otherwise it is read from `host.specials`.
+    /// Only the Episode 1 policy reads it, for the player body: the "end of game
+    /// hell hack" caps a blow at `health − 1` when the body's sector special is
+    /// 11 (p_inter.c:837–842), for every damage source, before invulnerability
+    /// and armor. A host without the specials then refuses the damage.
+    pub(crate) fn current_original_in<A: ActorAccess>(
+        host: &LifeHost<'_, A>,
+        request: DamageRequest,
+        special: Option<i16>,
     ) -> Result<Self, SimError> {
         let player = host.player.as_deref().ok_or(PlayerBodyError::Profile)?;
         let policy = player.policy;
@@ -428,10 +469,28 @@ impl DamagePlan {
             if let (true, Some(origin)) = (live, inflictor.as_ref()) {
                 impulse(origin, mass)?;
             }
-            return Self::current_armored_body(
+            let mut amount = request.amount;
+            if policy.has_episode1() && live {
+                let sector = usize::from(victim.location.ok_or(PlayerBodyError::Invariant)?.sector);
+                let special = match special {
+                    Some(special) => special,
+                    None => {
+                        host.specials
+                            .ok_or(PlayerBodyError::Profile)?
+                            .get(sector)
+                            .ok_or(PlayerBodyError::Invariant)?
+                            .special
+                    }
+                };
+                if special == 11 && amount >= life.health {
+                    amount = life.health - 1;
+                }
+            }
+            return Self::current_armored_body_capped(
                 host.registry,
                 victim,
                 request,
+                amount,
                 player.armor,
                 policy,
             );
@@ -838,6 +897,7 @@ impl Simulation {
             return self.monster_host(None);
         }
         LifeHost {
+            specials: None,
             buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
@@ -922,7 +982,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                 momentum,
             });
         }
-        let effective = plan.armor.map_or(request.amount, |a| a.effective);
+        let effective = plan.armor.map_or(plan.amount, |a| a.effective);
         if let Some(armor) = plan.armor {
             if let Some(p) = self.player.as_deref_mut() {
                 p.armor = Some(armor.after);

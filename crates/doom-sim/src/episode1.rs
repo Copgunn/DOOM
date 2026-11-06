@@ -196,3 +196,70 @@ impl crate::Simulation {
             .map_or(crate::MAX_BARRELS, |b| b.barrels)
     }
 }
+
+/// The power countdowns of `P_PlayerThink`'s live branch (p_user.c:339–353),
+/// after `P_MovePsprites` and before the `damagecount`/`bonuscount` decays
+/// ([`crate::world_pickups::bonus_tick`]), under the Episode 1 policy only:
+/// strength grows while nonzero; invulnerability, invisibility, infrared and
+/// ironfeet count down; `pw_allmap` never counts. When invisibility runs out the
+/// body loses `MF_SHADOW` (1.10 clears it only then, 345–347; the blinking is
+/// the colormap's, 363–383, presentation). A dead player runs `P_DeathThink`
+/// and returns before the counters (258–262). The counters' domains are checked
+/// first, so a refused call changes nothing.
+pub(crate) fn powers_tick(
+    player: Option<&mut crate::original_player::PlayerRuntime>,
+    actors: &mut crate::ThinkerStore<crate::Actor>,
+    think_live: bool,
+) -> Result<(), crate::SimError> {
+    let Some(p) = player else {
+        return Ok(());
+    };
+    let mo = p.mo;
+    let Some(powers) = p.powers.as_mut() else {
+        return Ok(());
+    };
+    validate_powers(powers)?;
+    if !think_live {
+        return Ok(());
+    }
+    let id = mo.ok_or(crate::PlayerBodyError::Binding)?;
+    let expiring = powers.powers[2] == 1;
+    if expiring {
+        // Resolve the body before any write.
+        actors
+            .get(id)
+            .and_then(crate::Actor::life)
+            .ok_or(crate::PlayerBodyError::Binding)?;
+    }
+    if powers.powers[1] != 0 {
+        powers.powers[1] += 1;
+    }
+    for i in [0, 2, 5, 3] {
+        if powers.powers[i] != 0 {
+            powers.powers[i] -= 1;
+        }
+    }
+    if expiring {
+        if let Some(life) = actors.get_mut(id).and_then(|a| a.life.as_mut()) {
+            life.flags &= !crate::original_player::MF_SHADOW;
+        }
+    }
+    Ok(())
+}
+/// The Episode 1 domains of the power counters (no invulnerability or berserk in
+/// Episode 1 single player; `pw_allmap` 0 or 1). The cards are booleans; the
+/// skull keys, absent from Episode 1, are read by the locked doors as the source
+/// reads them and checked by the DSIM39 reader.
+pub(crate) fn validate_powers(p: &crate::PlayerPowers) -> Result<(), crate::SimError> {
+    use crate::world_pickups::{INFRATICS, INVISTICS, IRONTICS};
+    if p.powers[0] != 0
+        || p.powers[1] != 0
+        || !(0..=INVISTICS).contains(&p.powers[2])
+        || !(0..=IRONTICS).contains(&p.powers[3])
+        || !(0..=1).contains(&p.powers[4])
+        || !(0..=INFRATICS).contains(&p.powers[5])
+    {
+        return Err(crate::PlayerBodyError::Invariant.into());
+    }
+    Ok(())
+}

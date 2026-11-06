@@ -1004,6 +1004,12 @@ pub(crate) fn require_role_for(
             {
                 Ok(())
             }
+            // The candle and the firestick (M4a plan §E.6), Episode 1 policy only.
+            DefinitionIdentity::Original(ty)
+                if profile.has_episode1() && e1m1_rules::EPISODE1_DECORATIONS.contains(&ty) =>
+            {
+                Ok(())
+            }
             // The exploding barrel (info.c:1888–1912; M3h9b note §2.1, decision F4),
             // spawned by `P_SpawnMapThing` under the barrels policy alone.
             DefinitionIdentity::Original(OriginalActorType::MT_BARREL) if profile.has_barrels() => {

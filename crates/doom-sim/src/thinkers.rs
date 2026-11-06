@@ -131,6 +131,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                     // P_MobjThinker of a missile: its movement owns contact and
                     // explosion, then ordinary state countdown.
                     let mut host = lifecycle::LifeHost {
+                        specials: specials.as_deref(),
                         buttons: None,
                         player: player.as_deref_mut(),
                         statistics: statistics.as_mut(),
@@ -336,6 +337,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                         let play = StateId(identity::OriginalState::S_PLAY.ordinal());
                         *context.get_mut(id).unwrap() = actor;
                         lifecycle::LifeHost {
+                            specials: None,
                             buttons: None,
                             player: player.as_deref_mut(),
                             statistics: statistics.as_mut(),
@@ -377,6 +379,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                 *context.get_mut(id).expect("same live thinker handle") = actor;
                 if let Some(registry) = registry {
                     lifecycle::LifeHost {
+                        specials: specials.as_deref(),
                         buttons: buttons.as_deref_mut(),
                         player: player.as_deref_mut(),
                         statistics: statistics.as_mut(),

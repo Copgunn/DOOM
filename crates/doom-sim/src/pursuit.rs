@@ -502,6 +502,7 @@ impl Simulation {
             });
         }
         let mut host = LifeHost {
+            specials: None,
             buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),

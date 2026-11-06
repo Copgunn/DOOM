@@ -924,6 +924,7 @@ impl Simulation {
         shot: Option<&'a MonsterShotPlan>,
     ) -> LifeHost<'a, &'a mut ThinkerStore<Actor>> {
         LifeHost {
+            specials: None,
             buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),

@@ -309,12 +309,17 @@ pub(crate) fn validate_specials(map: &Map) -> Result<(), SimError> {
 /// Every sector special is one of `ADMITTED_SECTOR_SPECIALS` or 0
 /// (`PursuitError::Specials`): the sector rule of the specials and movers policies.
 pub(crate) fn validate_sector_specials(map: &Map) -> Result<(), SimError> {
+    validate_sector_specials_for(map, false)
+}
+/// [`validate_sector_specials`]; `episode1` also admits special 11 (the
+/// Episode 1 policy's EXIT SUPER DAMAGE, p_spec.c:1054–1063).
+pub(crate) fn validate_sector_specials_for(map: &Map, episode1: bool) -> Result<(), SimError> {
     use sector_thinkers::ADMITTED_SECTOR_SPECIALS;
-    if map
-        .sectors()
-        .iter()
-        .any(|s| s.special != 0 && !ADMITTED_SECTOR_SPECIALS.contains(&s.special))
-    {
+    if map.sectors().iter().any(|s| {
+        s.special != 0
+            && !ADMITTED_SECTOR_SPECIALS.contains(&s.special)
+            && !(episode1 && s.special == 11)
+    }) {
         return Err(PursuitError::Specials.into());
     }
     Ok(())
@@ -555,10 +560,20 @@ impl Simulation {
             // height, 252–345; hitscan, aim and radius attacks skip non-shootables,
             // 1013–1014, 1170–1171), and the next clip recomputes both. Every other
             // actor, and every older policy, keeps the refusal.
-            let inert_decoration = e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
-                && actor.z == actor.floor
-                && actor.momz == Fixed::ZERO
-                && actor.momentum() == [Fixed::ZERO; 2];
+            // The Episode 1 policy widens the same rule to every non-shootable
+            // thing (M4a step 5 ruling): PIT_ChangeSector returns true for
+            // `!(thing->flags & MF_SHOOTABLE)` ("assume it is bloody gibs or
+            // something", p_map.c:1290–1294) after gibbing corpses and crunching
+            // dropped items, so an undropped pickup (or a corpse, or a spent
+            // fireball) left under a mover with `floorz > ceilingz` is a legal,
+            // inert state on its floor. Shootable things keep the refusal.
+            let inert_decoration =
+                (e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
+                    || (self.world.episode1.is_some()
+                        && life.flags & original_player::MF_SHOOTABLE == 0))
+                    && actor.z == actor.floor
+                    && actor.momz == Fixed::ZERO
+                    && actor.momentum() == [Fixed::ZERO; 2];
             if !linked.contains(&id)
                 || (!unlinked_blast
                     && actor.location != Some(self.world.locate_validated(actor.position())))
@@ -644,6 +659,7 @@ impl Simulation {
             .try_reserve(count)
             .map_err(|_| StoreError::Capacity)?;
         let result = action(&mut LifeHost {
+            specials: None,
             buttons: None,
             player: None,
             statistics: plan.statistics.as_mut(),
@@ -671,6 +687,7 @@ impl Simulation {
         let mut plan = self.demon_plan()?;
         let control = SightControl::default();
         let result = action(&mut LifeHost {
+            specials: None,
             buttons: None,
             player: plan.player.as_mut(),
             statistics: plan.statistics.as_mut(),
@@ -734,6 +751,8 @@ impl Simulation {
         let movers = self.player_policy().has_movers();
         // What the use block requested, applied with the staged tables after it.
         let mut used = use_lines::UseOutcome::default();
+        // Whether sector special 11 requested `G_ExitLevel` (Episode 1 policy).
+        let mut special_exit = false;
         if command_policy {
             plan.events.push(Event::Phase(Phase::Players));
             // Whether `P_PlayerThink` took its live branch this tic (p_user.c:
@@ -741,6 +760,7 @@ impl Simulation {
             let think_live;
             {
                 let mut host = LifeHost {
+                    specials: None,
                     buttons: movers.then_some(&mut plan.buttons),
                     player: plan.player.as_mut(),
                     statistics: plan.statistics.as_mut(),
@@ -781,7 +801,7 @@ impl Simulation {
                         plan.sound_targets.as_mut_slice(),
                     )
                     .map_err(|error| self.policy_error(error))?;
-                    sector_thinkers::player_in_special_sector(
+                    special_exit = sector_thinkers::player_in_special_sector(
                         &mut host,
                         &mut plan.specials,
                         self.tic,
@@ -856,8 +876,9 @@ impl Simulation {
                 plan.writes
                     .write_line_special(&self.line_specials, line, 0)?;
             }
-            plan.exit |= used.exit;
+            plan.exit |= used.exit || special_exit;
             plan.secret_exit |= used.secret;
+            crate::episode1::powers_tick(plan.player.as_mut(), &mut plan.actors, think_live)?;
             world_pickups::bonus_tick(plan.player.as_mut(), think_live)?;
             plan.events.push(Event::Phase(Phase::Thinkers));
         } else {

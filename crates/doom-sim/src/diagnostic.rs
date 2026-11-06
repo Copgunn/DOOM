@@ -840,6 +840,20 @@ impl<'a> Diagnostic<'a> {
                             OriginalActorType::MT_MISC69,
                             // The DSIM37 barrel (admitted by its policy alone).
                             OriginalActorType::MT_BARREL,
+                            // The DSIM39 pickups and decorations (likewise).
+                            OriginalActorType::MT_MISC4,
+                            OriginalActorType::MT_MISC5,
+                            OriginalActorType::MT_MISC6,
+                            OriginalActorType::MT_MISC12,
+                            OriginalActorType::MT_INS,
+                            OriginalActorType::MT_MISC14,
+                            OriginalActorType::MT_MISC15,
+                            OriginalActorType::MT_MISC16,
+                            OriginalActorType::MT_MISC24,
+                            OriginalActorType::MT_MISC18,
+                            OriginalActorType::MT_MISC19,
+                            OriginalActorType::MT_MISC49,
+                            OriginalActorType::MT_MISC43,
                         ]
                         .into_iter()
                         .any(|ty| {
@@ -1429,6 +1443,15 @@ impl<'a> Diagnostic<'a> {
     /// lump (`P_SpawnMapThing` spawns in lump order and a decoration is never
     /// removed, so the decoration subsequence of the thinker list is the lump
     /// order for the whole level).
+    /// The decoration type of `ty` this version admits: the seven of E1M1, and
+    /// from DSIM39 the candle and the firestick.
+    fn decoration(&self, ty: ActorTypeId) -> Option<crate::identity::OriginalActorType> {
+        if self.version == 39 {
+            e1m1_rules::listed_decoration(ty)
+        } else {
+            e1m1_rules::decoration(ty)
+        }
+    }
     fn validate_decorations(&self) -> Result<(), DiagnosticError> {
         // The E1M1 policy is medium skill, single player (M3h9 note §6, decision
         // E4; owner decision of the independent review): `actors.options` must read
@@ -1446,7 +1469,7 @@ impl<'a> Diagnostic<'a> {
             let ty = ActorTypeId(u16::from_le_bytes(number(
                 self.required(&format!("{prefix}.type"))?,
             )?));
-            let Some(decoration) = e1m1_rules::decoration(ty) else {
+            let Some(decoration) = self.decoration(ty) else {
                 continue;
             };
             count += 1;
@@ -1454,7 +1477,17 @@ impl<'a> Diagnostic<'a> {
                 return Err(DiagnosticError::Limit);
             }
             let d = decoration.descriptor();
-            let s = d.states.spawn.descriptor();
+            // The firestick (DSIM39) may hold any state of its spawn loop.
+            let state = OriginalState::try_from(u16::from_le_bytes(number(
+                self.required(&format!("{prefix}.state"))?,
+            )?))
+            .map_err(|_| DiagnosticError::Identity)?;
+            if !e1m1_rules::decoration_states(decoration).contains(&state)
+                || (self.version != 39 && state != d.states.spawn)
+            {
+                return Err(DiagnosticError::Identity);
+            }
+            let s = state.descriptor();
             let i32field = |name: &str| -> Result<i32, DiagnosticError> {
                 Ok(i32::from_le_bytes(number(
                     self.required(&format!("{prefix}.{name}"))?,
@@ -1467,11 +1500,10 @@ impl<'a> Diagnostic<'a> {
             };
             let flags = u32::from_le_bytes(number(self.required(&format!("{prefix}.flags"))?)?);
             let spawn = self.required(&format!("{prefix}.spawnpoint"))?;
-            if u16field("state")? != d.states.spawn.ordinal()
-                || u16field("sprite")? != s.sprite.ordinal()
+            if u16field("sprite")? != s.sprite.ordinal()
                 || u32::from_le_bytes(number(self.required(&format!("{prefix}.frame"))?)?)
                     != s.frame
-                || i32field("tics")? != -1
+                || !e1m1_rules::decoration_tics(state, i32field("tics")?)
                 || i32field("health")? != d.spawn_health
                 || i32field("radius")? != d.radius
                 || i32field("height")? != d.height
@@ -1513,7 +1545,7 @@ impl<'a> Diagnostic<'a> {
             let ty = ActorTypeId(u16::from_le_bytes(number(
                 self.required(&format!("{prefix}.type"))?,
             )?));
-            if e1m1_rules::decoration(ty).is_none() {
+            if self.decoration(ty).is_none() {
                 continue;
             }
             let spawn = &self.required(&format!("{prefix}.spawnpoint"))?[1..];
@@ -2011,7 +2043,14 @@ impl<'a> Diagnostic<'a> {
                 )
             })
         };
-        let expected = world_pickups::counted_things(raw(), &world_pickups::COUNTED_ITEM_DOOMED);
+        let expected = world_pickups::counted_things(
+            raw(),
+            if self.version == 39 {
+                &world_pickups::COUNTED_ITEM_DOOMED_EPISODE1
+            } else {
+                &world_pickups::COUNTED_ITEM_DOOMED
+            },
+        );
         if matches!(self.version, 28..=39) {
             // Every admitted COUNTKILL monster is a placed THING; credits never
             // exceed the map total. Zero again describes a pre-batch world.
@@ -2049,8 +2088,11 @@ impl<'a> Diagnostic<'a> {
                 continue;
             }
             let ty = u16::from_le_bytes(number(self.required(&format!("{prefix}.type"))?)?);
-            if matches!(ty, 45 | 46) && self.required(&format!("{prefix}.pending_removal"))? == [0]
-            {
+            let counted = matches!(ty, 45 | 46)
+                || (self.version == 39
+                    && world_pickups::kind(crate::ActorTypeId(ty))
+                        .is_some_and(|k| k.definition_flags() & world_pickups::MF_COUNTITEM != 0));
+            if counted && self.required(&format!("{prefix}.pending_removal"))? == [0] {
                 live += 1;
             }
         }
@@ -2260,7 +2302,9 @@ impl<'a> Diagnostic<'a> {
             extra_light: int("extra_light")?,
             psprites,
         };
-        state.validate().map_err(|_| DiagnosticError::Schema)?;
+        state
+            .validate_for(self.version == 39)
+            .map_err(|_| DiagnosticError::Schema)?;
         if self.required("original_player.0.state")? != [0]
             && state.psprites[0].state != Some(state.ready.states()[1])
         {
@@ -2929,17 +2973,35 @@ fn validate_pickup_event(
                         OriginalSprite::SPR_BON2.ordinal(),
                     ]
                     .contains(&sprite))
+                || (version == 39
+                    && [
+                        OriginalSprite::SPR_BKEY,
+                        OriginalSprite::SPR_YKEY,
+                        OriginalSprite::SPR_RKEY,
+                        OriginalSprite::SPR_SOUL,
+                        OriginalSprite::SPR_PINS,
+                        OriginalSprite::SPR_SUIT,
+                        OriginalSprite::SPR_PMAP,
+                        OriginalSprite::SPR_PVIS,
+                        OriginalSprite::SPR_BPAK,
+                        OriginalSprite::SPR_ROCK,
+                        OriginalSprite::SPR_BROK,
+                    ]
+                    .map(OriginalSprite::ordinal)
+                    .contains(&sprite))
         }
         Some(1) => {
             event.len() == 14
-                && event[2] <= 1
+                && (event[2] <= 1 || (version == 39 && event[2] <= 3))
                 && event[3] <= 1
                 && event[12] <= 3
                 && matches!(event[13], 0..=3 | 10)
                 && {
                     let before = i32::from_le_bytes(number(get(4, 8)?)?);
                     let after = i32::from_le_bytes(number(get(8, 12)?)?);
-                    let max = if event[2] == 0 { 200 } else { 50 };
+                    // DSIM39: the backpack may have doubled the maximum.
+                    let max = crate::weapons::AMMO_CAPACITIES[usize::from(event[2])]
+                        << u32::from(version == 39);
                     (0..=max).contains(&before) && (before..=max).contains(&after)
                 }
         }
@@ -2989,6 +3051,33 @@ fn validate_pickup_event(
             validate_handle(get(2, 14)?, slots)?;
             event[14] <= 3
         }
+        // DSIM39: P_GiveCard, P_GivePower, the soulsphere and the backpack.
+        Some(11) if version == 39 => event.len() == 4 && event[2] <= 2 && event[3] <= 1,
+        Some(12) if version == 39 => {
+            event.len() == 12 && matches!(event[2], 2..=5) && event[3] <= 1 && {
+                let before = i32::from_le_bytes(number(get(4, 8)?)?);
+                let after = i32::from_le_bytes(number(get(8, 12)?)?);
+                let max = if event[2] == 5 {
+                    4200
+                } else if event[2] == 4 {
+                    1
+                } else {
+                    2100
+                };
+                (0..=max).contains(&before)
+                    && (0..=max).contains(&after)
+                    && (event[3] == 1 || after == before)
+            }
+        }
+        Some(13) if version == 39 => {
+            event.len() == 14 && {
+                let before = i32::from_le_bytes(number(get(2, 6)?)?);
+                let after = i32::from_le_bytes(number(get(6, 10)?)?);
+                let body = i32::from_le_bytes(number(get(10, 14)?)?);
+                (1..=200).contains(&before) && after == (before + 100).min(200) && body == after
+            }
+        }
+        Some(14) if version == 39 => event.len() == 3 && event[2] <= 1,
         Some(10) if bonuses => {
             if event.len() != 10 {
                 return Err(DiagnosticError::Structure);

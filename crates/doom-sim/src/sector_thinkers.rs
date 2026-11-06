@@ -437,6 +437,9 @@ impl Simulation {
                     }))
                 }
                 0 | 5 | 7 | 16 => None,
+                // Sector special 11 (Episode 1 policy, admitted at load only
+                // there): no thinker, special kept (p_spec.c P_SpawnSpecials).
+                11 if self.player_policy().has_episode1() => None,
                 // Rejected at load (10, 11, 14 and unknown values).
                 _ => return Err(PursuitError::Specials.into()),
             };
@@ -480,25 +483,29 @@ impl Simulation {
     }
 }
 
-/// `pw_ironfeet`: no admitted roster has the radiation suit, so no player ever
-/// carries the power and the `P_Random() < 5` of specials 4 and 16 is never drawn
-/// (`!ironfeet || …` short-circuits, p_spec.c:1041).
-const fn ironfeet(_player: &crate::original_player::PlayerRuntime) -> bool {
-    false
+/// `player->powers[pw_ironfeet]`: only the Episode 1 policy has the radiation
+/// suit; under every older policy no player carries the power, so the
+/// `P_Random() < 5` of specials 4 and 16 is never drawn (`!ironfeet || …`
+/// short-circuits, p_spec.c:1041).
+fn ironfeet(player: &crate::original_player::PlayerRuntime) -> bool {
+    player
+        .powers
+        .is_some_and(|p| p.powers[crate::world_pickups::POWER_IRONFEET] != 0)
 }
 
 /// p_spec.c `P_PlayerInSpecialSector`, at its `P_PlayerThink` position (after
 /// `P_CalcHeight`, before the weapon change), for a live player whose center
 /// subsector's sector has a nonzero runtime special. `leveltime` is the source
 /// `leveltime` of this tic (the completed-tic count before it, `Simulation::tic`).
+/// Returns whether special 11 requested `G_ExitLevel` (Episode 1 policy).
 pub(crate) fn player_in_special_sector<A: crate::lifecycle::ActorAccess>(
     host: &mut LifeHost<'_, A>,
     sectors: &mut [SectorSpecial],
     leveltime: u64,
-) -> Result<(), SimError> {
+) -> Result<bool, SimError> {
     let player = host.player.as_deref().ok_or(PlayerBodyError::Profile)?;
     if player.state != PlayerBodyState::Live {
-        return Ok(());
+        return Ok(false);
     }
     let id: ActorId = player.mo.ok_or(PlayerBodyError::Binding)?;
     let actor = *host.access.get(id).ok_or(PlayerBodyError::Binding)?;
@@ -509,24 +516,36 @@ pub(crate) fn player_in_special_sector<A: crate::lifecycle::ActorAccess>(
         .ok_or(PlayerBodyError::Invariant)?
         .special;
     if special == 0 {
-        return Ok(());
+        return Ok(false);
     }
     // "Falling, not all the way down yet?": the sector's floor, not mo->floorz.
     if actor.z != host.sectors[index].floor {
-        return Ok(());
+        return Ok(false);
     }
+    let episode1 = player.policy.has_episode1();
     let gate = leveltime & 0x1f == 0;
     let damage = match special {
         5 => (!ironfeet(player) && gate).then_some(10),
         7 => (!ironfeet(player) && gate).then_some(5),
         4 | 16 => {
             // Without the suit the draw is short-circuited away; with it the
-            // source would draw `P_Random() < 5`, which no admitted state reaches.
-            if ironfeet(player) {
-                return Err(PlayerBodyError::Unsupported.into());
-            }
-            gate.then_some(20)
+            // source draws `P_Random() < 5` every tic on the floor, whatever the
+            // leveltime gate (p_spec.c:1040–1045). Only the Episode 1 policy has
+            // the suit.
+            let hurt = if ironfeet(player) {
+                if !episode1 {
+                    return Err(PlayerBodyError::Unsupported.into());
+                }
+                host.rng.p_random() < 5
+            } else {
+                true
+            };
+            (hurt && gate).then_some(20)
         }
+        // EXIT SUPER DAMAGE (p_spec.c:1054–1063), Episode 1 policy: the godmode
+        // clear is moot (cheats are not modelled, always 0); 20 points on the
+        // gate, ignoring the suit; then `G_ExitLevel` once health is at most 10.
+        11 if episode1 => gate.then_some(20),
         9 => {
             let p = host.player.as_deref_mut().ok_or(PlayerBodyError::Profile)?;
             p.secret_count = p
@@ -547,7 +566,7 @@ pub(crate) fn player_in_special_sector<A: crate::lifecycle::ActorAccess>(
     };
     if let Some(amount) = damage {
         // P_DamageMobj(player->mo, NULL, NULL, amount): no inflictor, no source.
-        let plan = crate::combat::DamagePlan::current_original(
+        let plan = crate::combat::DamagePlan::current_original_in(
             host,
             DamageRequest {
                 target: id,
@@ -555,13 +574,23 @@ pub(crate) fn player_in_special_sector<A: crate::lifecycle::ActorAccess>(
                 source: None,
                 amount,
             },
+            Some(special),
         )?;
         host.access
             .reserve(plan.spawn_count())
             .map_err(|_| CombatError::WorkLimit)?;
         host.apply_damage(plan);
     }
-    Ok(())
+    if special == 11 {
+        let player = host.player.as_deref().ok_or(PlayerBodyError::Profile)?;
+        if player.health <= 10 {
+            // G_ExitLevel (g_game.c:1009–1012): secretexit false, ga_completed.
+            host.events
+                .push(Event::Mover(crate::MoverEvent::Exit { secret: false }));
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 /// Specials-policy observations (DSIM34 event tag 25). Light changes, light draws
