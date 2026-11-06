@@ -1,9 +1,7 @@
 # Rust DOOM
 
 A rewrite of the original DOOM engine in Rust that aims to behave exactly like id
-Software's code, down to every single step of game logic.
-
-Rust DOOM is a working title; the port's real name is still to be decided.
+Software's code, down to every single step of game logic. (Rust DOOM is a working title.)
 
 > **Machine-Maintained, Human-Directed Project**
 >
@@ -71,55 +69,41 @@ original before it's admitted, so progress is measured in proven features, not w
 
 ## Which kind of Doom?
 
-People play classic Doom in four broad ways today. Each of the other three would be a
-separate mode you switch on, so vanilla never changes.
+Four broad ways to play classic Doom; each non-vanilla one would be a separate optional mode.
 
 - **Vanilla.** The original 1993 game, limits and quirks included: what this project builds.
 - **Limit-removing.** Same game, but the original's hard limits on map size are lifted (Track 1).
 - **Boom, MBF21 and ID24.** Extensions adding new doors, lifts and floors: a possible later mode.
-- **Advanced, ZDoom-style.** Scripting, sloped floors and big mods: this project would go
-  its own way (Track 3).
+- **Advanced, ZDoom-style.** Scripting, slopes and big mods: this project would go its own way (Track 3).
 
 ## Where it's (maybe) going
 
-Ideas, not promises, in three tracks; the [roadmap](docs/ROADMAP.md#ideas-under-consideration) has more.
+Ideas, not promises, one line each; the [roadmap](docs/ROADMAP.md#ideas-under-consideration) has more.
 
 **Track 1: Faithful.** Vanilla stays exact; anything that changes it lives in a separate optional mode.
 
-- **Original demo playback.** Replay recorded vanilla demos to the last tic, the strongest
-  proof of exactness.
-- **Faster progress.** Port whole systems at once (all monsters, all weapons), checked on
-  real maps and demos.
-- **One vanilla mode, plus a limit-removing one.** Fold the policies into one mode; a
-  separate one lifts the hard limits.
+- **Original demo playback.** Replay vanilla demos to the last tic, the strongest proof of exactness.
+- **Faster progress.** Port whole systems at once, checked on real maps and demos.
+- **One vanilla mode, plus a limit-removing one.** Fold the policies into one; another lifts limits.
 - **An optional "fixed" mode.** Off unless chosen, it would correct known original bugs.
-- **The full game and Doom II.** After Episode 1, the other episodes and Doom II, held to
-  the same exactness.
+- **The full game and Doom II.** After Episode 1, the other episodes and Doom II, just as exact.
 
 **Track 2: Presentation.** The renderer only reads game state, so it can never change gameplay.
 
 - **A faithful software renderer first.** It would look exactly like the original Linux DOOM 1.10.
-- **Then a modern renderer.** Smooth high frame rates between the 35 tics per second, plus
-  sector-based dynamic lighting.
+- **Then a modern renderer.** Smooth high frame rates between tics, plus sector-based lighting.
 - **VR.** A headset handles looking around while the mouse turns and aims.
 - **A fully offline engine.** Your own game files, no internet, account or launcher.
 
 **Track 3: Beyond vanilla.** A new engine on the verified core, in separate optional modes.
 
-- **Modern source-port features, done cleanly.** ZDoom-style features without decades-old
-  code underneath.
-- **Things the original never simulated.** Flowing water, blood and nukage, and very large
-  crowds of monsters.
-- **Scripting and more platforms.** A scripting layer for new game logic, and platforms
-  such as mobile.
-- **A live editor with rewind.** Change anything while the game runs, then rewind and
-  replay from any moment.
-- **"Why did that happen?"** Click a monster and see the exact decisions and random rolls
-  behind what it did.
-- **TAS tools that are vanilla-legal by construction.** Runs built frame by frame here
-  play back on the original game.
-- **Map and demo checks.** See exactly which line breaks vanilla limits, and which demos a
-  map change desyncs.
+- **Modern source-port features, done cleanly.** ZDoom-style features on a fresh core.
+- **Things the original never simulated.** Flowing water, blood and nukage; huge monster crowds.
+- **Scripting and more platforms.** A scripting layer for new game logic; platforms such as mobile.
+- **A live editor with rewind.** Change anything while the game runs, then rewind and replay from any moment.
+- **"Why did that happen?"** Click a monster and see the exact decisions and random rolls behind what it did.
+- **TAS tools that are vanilla-legal by construction.** Runs built frame by frame here play back on the original game.
+- **Map and demo checks.** See exactly which line breaks vanilla limits, and which demos a map change desyncs.
 
 ## How it's verified
 
