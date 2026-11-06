@@ -1704,6 +1704,10 @@ python3 tools/reference/check_player_episode1.py --rust-root DIR   # captures al
 python3 tools/reference/level_snapshot.py DUMP_DIR --wad WAD [--map E1M1] [--demo LMP] --profile episode1 [--out DIR]
 python3 tools/reference/level_compare.py DUMP_DIR RUST_DIR --wad WAD [--map E1M1] [--demo LMP] --profile episode1 [--values] [--json OUT]
 
+# fuzzing (the 50th target); detect_leaks=0 means LeakSanitizer is disabled, not passed
+python3 tools/seed_player_episode1_fuzz.py /tmp/doom-episode1-seeds      # 446 seeds, max_len 2404
+ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run player_episode1 /tmp/doom-episode1-corpus --sanitizer address -- -runs=0 -max_len=2404 -timeout=15 -rss_limit_mb=1024
+
 # opt-in ILP32 variant (needs a 32-bit toolchain; otherwise one skip line, exit 0)
 python3 tools/reference/m4a_build.py --variant strict32 [--out DIR]   # or m3h9c_build.py for the M3h9c driver
 DOOM_IWAD_DIR=/path tools/local/e1m1_reference.py --strict32   # local only; see the M3h9c section
