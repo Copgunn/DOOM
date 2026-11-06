@@ -1077,7 +1077,11 @@ impl<'a> Diagnostic<'a> {
             let expected = if loaded && light_kind(original).is_some() {
                 special == if original == 4 { 4 } else { 0 }
             } else {
-                special == original || (original == 9 && special == 0)
+                special == original
+                    || (original == 9 && special == 0)
+                    // DSIM39: a raiseToNearestAndChange plat and a finished
+                    // donut ring set the special to 0.
+                    || (self.version == 39 && special == 0)
             };
             if !expected {
                 return Err(DiagnosticError::Identity);
@@ -1196,7 +1200,8 @@ impl<'a> Diagnostic<'a> {
                     };
                     let ok = match kind {
                         5 => {
-                            matches!(byte("type")?, 0 | 6)
+                            (matches!(byte("type")?, 0 | 6)
+                                || (self.version == 39 && matches!(byte("type")?, 1 | 3)))
                                 && (-1..=1).contains(&i32field(&format!("{prefix}.direction"))?)
                                 && i32field(&format!("{prefix}.topcountdown"))? >= 0
                                 && i32field(&format!("{prefix}.topheight")).is_ok()
@@ -1204,11 +1209,16 @@ impl<'a> Diagnostic<'a> {
                         6 => {
                             byte("status")? <= 2
                                 && i32field(&format!("{prefix}.count"))? >= 0
-                                && i32field(&format!("{prefix}.low"))?
+                                // A raiseToNearestAndChange plat (DSIM39 type 3)
+                                // never writes `low` (0); `validate_episode1`.
+                                && (i32field(&format!("{prefix}.low"))?
                                     <= i32field(&format!("{prefix}.high"))?
+                                    || (self.version == 39
+                                        && self.field(&format!("{prefix}.type")) == Some(&[3][..])))
                         }
                         _ => {
-                            matches!(byte("type")?, 1 | 2)
+                            (matches!(byte("type")?, 1 | 2)
+                                || (self.version == 39 && matches!(byte("type")?, 0 | 3 | 4 | 11)))
                                 && i32field(&format!("{prefix}.floordestheight")).is_ok()
                         }
                     };
@@ -1272,7 +1282,11 @@ impl<'a> Diagnostic<'a> {
             let expected = if loaded && light_kind(original).is_some() {
                 special == if original == 4 { 4 } else { 0 }
             } else {
-                special == original || (original == 9 && special == 0)
+                special == original
+                    || (original == 9 && special == 0)
+                    // DSIM39: a raiseToNearestAndChange plat and a finished
+                    // donut ring set the special to 0.
+                    || (self.version == 39 && special == 0)
             };
             if !expected {
                 return Err(DiagnosticError::Identity);
@@ -1304,7 +1318,14 @@ impl<'a> Diagnostic<'a> {
             }
             encoded += 1;
             let special = i16::from_le_bytes(number(field.ok_or(DiagnosticError::Structure)?)?);
-            if special != original && !(special == 0 && matches!(original, 11 | 36 | 38 | 109)) {
+            // DSIM39 adds the Episode 1 W1, S1 and D1 lines (decision H1).
+            let clearable = matches!(original, 11 | 36 | 38 | 109)
+                || (self.version == 39
+                    && matches!(
+                        original,
+                        2 | 5 | 7 | 8 | 9 | 16 | 18 | 20 | 22 | 23 | 31..=35 | 51 | 103
+                    ));
+            if special != original && !(special == 0 && clearable) {
                 return Err(DiagnosticError::Identity);
             }
         }
@@ -1335,7 +1356,8 @@ impl<'a> Diagnostic<'a> {
             let origin = u16::from_le_bytes(number(origin.ok_or(DiagnosticError::Structure)?)?);
             if !(1..=35).contains(&timer)
                 || line >= line_count
-                || line_word(line, 6) != 63
+                || !(line_word(line, 6) == 63
+                    || (self.version == 39 && matches!(line_word(line, 6), 46 | 62 | 70)))
                 || pressed.contains(&line)
             {
                 return Err(DiagnosticError::Identity);
@@ -1896,7 +1918,8 @@ impl<'a> Diagnostic<'a> {
             }
             6 => {
                 line(3)?;
-                (1..=4).contains(&event[2])
+                // DSIM39: `EV_BuildStairs` (5) and `EV_DoDonut` (6) too.
+                (1..=4).contains(&event[2]) || (self.version == 39 && (5..=6).contains(&event[2]))
             }
             7 => {
                 sector(2)?;
@@ -1922,7 +1945,9 @@ impl<'a> Diagnostic<'a> {
                 2 => usize::from(word(3)) < crate::mover_rules::MAX_BUTTONS,
                 _ => false,
             },
-            13 | 14 => event[2] == 0,
+            // DSIM39: the secret exit (S1 51) sets `secretexit`.
+            13 => event[2] == 0 || (self.version == 39 && event[2] == 1),
+            14 => event[2] == 0,
             _ => false,
         };
         if !ok {

@@ -1,8 +1,10 @@
-//! A whole level under `PlayerMonstersLevelV1` (wire 22) driven by a version-110
-//! demo, for a tic-for-tic comparison with the genuine engine (M3h9c).
+//! A whole level under `PlayerMonstersLevelV1` (wire 22) or, with `--policy
+//! episode1`, `PlayerMonstersEpisode1V1` (wire 23, DSIM39) driven by a version-110
+//! demo, for a tic-for-tic comparison with the genuine engine (M3h9c, M4a).
 //!
-//! `player_level_run --wad <path> --map E1M1 --demo <lmp> --out <dir> [--captures]`
-//! loads the map, builds `original_player_level_map` with default options
+//! `player_level_run --wad <path> --map E1M1 --demo <lmp> --out <dir> [--captures]
+//! [--policy level|episode1]` loads the map, builds `original_player_level_map`
+//! (or `original_player_episode1_map`) with default options
 //! (medium skill, single player, RNG indices 0), spawns the THINGs (the body at
 //! its record), the default weapons and the level specials, then runs one tic
 //! per demo command. It writes `digests.txt` (one line per capture: tic, SHA-256
@@ -23,7 +25,8 @@ use std::{error::Error, fmt::Write as _, fs, path::PathBuf};
 type ResultHost<T> = Result<T, Box<dyn Error>>;
 
 const USAGE: &str = "usage: player_level_run --wad <path> --map E1M1 --demo <lmp> --out <dir> \
-     [--captures] | --write-idle <tics> --demo <lmp>";
+     [--captures] [--policy level|episode1 (wire 22, default | wire 23)] \
+     | --write-idle <tics> --demo <lmp>";
 
 /// The canonical bytes of `snap` without its static `map.*` fields.
 fn without_map(snap: &Snapshot) -> Vec<u8> {
@@ -74,6 +77,8 @@ struct Args {
     out: Option<PathBuf>,
     captures: bool,
     write_idle: Option<usize>,
+    episode1: bool,
+    help: bool,
 }
 fn args() -> ResultHost<Args> {
     let mut a = Args {
@@ -88,6 +93,14 @@ fn args() -> ResultHost<Args> {
             "--demo" => a.demo = it.next().map(PathBuf::from),
             "--out" => a.out = it.next().map(PathBuf::from),
             "--captures" => a.captures = true,
+            "--help" => a.help = true,
+            "--policy" => {
+                a.episode1 = match it.next().as_deref() {
+                    Some("level") => false,
+                    Some("episode1") => true,
+                    _ => return Err(USAGE.into()),
+                }
+            }
             "--write-idle" => a.write_idle = Some(it.next().ok_or(USAGE)?.parse()?),
             _ => return Err(USAGE.into()),
         }
@@ -97,6 +110,10 @@ fn args() -> ResultHost<Args> {
 
 fn main() -> ResultHost<()> {
     let a = args()?;
+    if a.help {
+        println!("{USAGE}");
+        return Ok(());
+    }
     if let Some(tics) = a.write_idle {
         let demo = write_demo(&vec![TicCommand::default(); tics])?;
         fs::write(a.demo.ok_or(USAGE)?, &demo)?;
@@ -112,7 +129,11 @@ fn main() -> ResultHost<()> {
     let wad = doom_wad::Wad::parse(&bytes, doom_wad::Limits::default())?;
     let map = doom_map::Map::from_wad(&wad, &a.map, doom_map::MapLimits::default())?;
     let demo = parse_demo(&fs::read(demo_path)?)?;
-    let mut s = Simulation::original_player_level_map(map, MapContextOptions::default())?;
+    let mut s = if a.episode1 {
+        Simulation::original_player_episode1_map(map, MapContextOptions::default())?
+    } else {
+        Simulation::original_player_level_map(map, MapContextOptions::default())?
+    };
     let report = s.spawn_map_things()?;
     s.initialize_player_weapons(PlayerSlot::One, WeaponInventory::default())?;
     s.spawn_level_specials()?;

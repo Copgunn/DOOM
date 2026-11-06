@@ -1352,6 +1352,10 @@ pub(crate) struct LifeHost<'a, A> {
     pub spatial: &'a mut crate::movement::SpatialIndex,
     pub bindings: &'a mut [Option<ActorId>; 4],
     pub events: &'a mut Vec<crate::Event>,
+    /// The staged switch buttons a hitscan into a gun-triggered line (GR 46,
+    /// Episode 1 policy) starts through `P_ShootSpecialLine`; `None` wherever no
+    /// such shot can run.
+    pub buttons: Option<&'a mut crate::use_lines::Buttons>,
 }
 impl ThinkerStore<Actor> {
     pub(crate) fn live_of_type(&self, ty: ActorTypeId) -> usize {

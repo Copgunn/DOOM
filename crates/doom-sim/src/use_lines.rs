@@ -12,10 +12,10 @@
 //! `btimer`, and the line and `soundorg` sector of a running button, are DSIM35 state
 //! (decision N9); `where` and `btexture` only pick the restored texture.
 use crate::{
-    ActorId, Event, MoverEvent, SimError, StaticWorld,
+    ActorId, Event, MoverEvent, SimError, StaticWorld, StoreError,
     lifecycle::ActorStateEvent,
     mover_rules::{LINE_DOOR_DR, LINE_DOOR_SR, LINE_EXIT, MAX_BUTTONS},
-    movers::{DoorKind, MoverAccess, Starter},
+    movers::{DoorKind, FloorKind, MoverAccess, PlatType, Starter},
     planes::SoundOrigin,
 };
 use doom_types::Fixed;
@@ -52,6 +52,8 @@ pub(crate) struct UseOutcome {
     pub cleared: Option<u16>,
     /// `G_ExitLevel` ran (`gameaction = ga_completed`).
     pub exit: bool,
+    /// `G_SecretExitLevel` ran (`secretexit = true`; `exit` is set too).
+    pub secret: bool,
 }
 
 /// `S_StartSound` of a switch: at `buttonlist[0].soundorg`, a global sound when that
@@ -153,11 +155,19 @@ pub(crate) enum User {
 }
 
 /// p_switch.c `P_UseSpecialLine` (276–653) for the admitted specials: a back-side use
-/// returns false; a monster returns false on an `ML_SECRET` line or anything but 1;
-/// 1 runs `EV_VerticalDoor`; 11 changes the switch (clearing the line) and runs
-/// `G_ExitLevel`; 63 runs `EV_DoDoor(normal)` and changes the switch (starting its
-/// button) only if a door was created; every other front-side use does nothing and
-/// returns true. Records the use (sub-tag 2) after the line action's records.
+/// returns false; a monster returns false on an `ML_SECRET` line or anything but 1
+/// (and, Episode 1 policy, the locked D1 lines 32–34, where `EV_VerticalDoor`
+/// returns at once for it); 1 (and 26–28, 31–34) runs `EV_VerticalDoor`; 11 changes
+/// the switch (clearing the line) and runs `G_ExitLevel`; 63 runs
+/// `EV_DoDoor(normal)` and changes the switch (starting its button) only if a door
+/// was created. Under the Episode 1 policy the S1 switches 7 (stairs), 9 (donut),
+/// 18 (`raiseFloorToNearest`), 20 (`raiseToNearestAndChange`), 23
+/// (`lowerFloorToLowest`) and 103 (`open`) change their switch (clearing the line)
+/// only if their call returned nonzero, 51 changes it unconditionally and runs
+/// `G_SecretExitLevel`, and the SR switches 62 (`downWaitUpStay`) and 70
+/// (`turboLower`) change theirs (starting the button) only on success. Every other
+/// front-side use does nothing and returns true. Records the use (sub-tag 2) after
+/// the line action's records.
 #[expect(
     clippy::too_many_arguments,
     reason = "the source call's arguments plus the staged button list"
@@ -180,14 +190,17 @@ pub(crate) fn use_special_line<M: MoverAccess + ?Sized>(
         .ok_or(crate::GeometryError::InvalidReference)?
         .flags;
     let mut after = special;
-    let result = if side != 0
-        || (kind == User::Monster && (flags & ML_SECRET != 0 || special != LINE_DOOR_DR))
-    {
-        false
-    } else {
-        match special {
-            LINE_DOOR_DR => starter.vertical_door(line, kind == User::Player)?,
-            LINE_EXIT => {
+    let monster_line =
+        special == LINE_DOOR_DR || (starter.world.episode1.is_some() && matches!(special, 32..=34));
+    let result =
+        if side != 0 || (kind == User::Monster && (flags & ML_SECRET != 0 || !monster_line)) {
+            false
+        } else {
+            // A switch whose call succeeded: `P_ChangeSwitchTexture(line, use_again)`.
+            let mut switch = |starter: &mut Starter<'_, M>,
+                              buttons: Option<&mut Buttons>,
+                              use_again: bool|
+             -> Result<(), SimError> {
                 let buttons = buttons.ok_or(crate::PlayerBodyError::Profile)?;
                 after = change_switch_texture(
                     starter.world,
@@ -195,34 +208,62 @@ pub(crate) fn use_special_line<M: MoverAccess + ?Sized>(
                     buttons,
                     line,
                     special,
-                    false,
+                    use_again,
                 )?;
-                outcome.cleared = Some(line);
-                // g_game.c G_ExitLevel: secretexit = false, gameaction = ga_completed.
-                starter
-                    .events
-                    .push(Event::Mover(MoverEvent::Exit { secret: false }));
-                outcome.exit = true;
-            }
-            LINE_DOOR_SR => {
-                // The switch changes only if EV_DoDoor created a door.
-                let created = starter.do_door(line, DoorKind::Normal)?;
-                if created {
-                    let buttons = buttons.ok_or(crate::PlayerBodyError::Profile)?;
-                    after = change_switch_texture(
-                        starter.world,
-                        starter.events,
-                        buttons,
-                        line,
-                        special,
-                        true,
-                    )?;
+                if !use_again {
+                    outcome.cleared = Some(line);
+                }
+                Ok(())
+            };
+            if starter.world.episode1.is_none()
+                && !matches!(special, LINE_DOOR_DR | LINE_EXIT | LINE_DOOR_SR)
+            {
+                // Rule 1 admits nothing else before wire 23: no action.
+            } else {
+                match special {
+                    LINE_DOOR_DR | 26..=28 | 31..=34 => {
+                        if starter.vertical_door(line, kind == User::Player)? {
+                            after = 0;
+                            outcome.cleared = Some(line);
+                        }
+                    }
+                    LINE_EXIT | 51 => {
+                        switch(starter, buttons, false)?;
+                        // g_game.c G_ExitLevel / G_SecretExitLevel (1009–1018):
+                        // secretexit, then gameaction = ga_completed.
+                        let secret = special == 51;
+                        starter
+                            .events
+                            .push(Event::Mover(MoverEvent::Exit { secret }));
+                        outcome.exit = true;
+                        outcome.secret |= secret;
+                    }
+                    LINE_DOOR_SR => {
+                        // The switch changes only if EV_DoDoor created a door.
+                        if starter.do_door(line, DoorKind::Normal)? {
+                            switch(starter, buttons, true)?;
+                        }
+                    }
+                    7 | 9 | 18 | 20 | 23 | 103 | 62 | 70 => {
+                        let done = match special {
+                            7 => starter.build_stairs(line)?,
+                            9 => starter.do_donut(line)?,
+                            18 => starter.do_floor(line, FloorKind::RaiseFloorToNearest)?,
+                            20 => starter.do_plat(line, PlatType::RaiseToNearestAndChange)?,
+                            23 => starter.do_floor(line, FloorKind::LowerFloorToLowest)?,
+                            103 => starter.do_door(line, DoorKind::Open)?,
+                            62 => starter.do_plat(line, PlatType::DownWaitUpStay)?,
+                            _ => starter.do_floor(line, FloorKind::TurboLower)?,
+                        };
+                        if done {
+                            switch(starter, buttons, matches!(special, 62 | 70))?;
+                        }
+                    }
+                    _ => {}
                 }
             }
-            _ => {}
-        }
-        true
-    };
+            true
+        };
     #[cfg(test)]
     crate::planes::injected_fault(crate::planes::FaultSite::SpecialUse)?;
     starter.events.push(Event::Mover(MoverEvent::SpecialUse {
@@ -234,6 +275,67 @@ pub(crate) fn use_special_line<M: MoverAccess + ?Sized>(
         after,
     }));
     Ok(result)
+}
+
+/// p_spec.c `P_ShootSpecialLine` (959–1000) under the Episode 1 policy, from
+/// `PTR_ShootTraverse` for a line with a nonzero special (p_map.c:907–908): a
+/// non-player acts only on 46; 46 (GR) runs `EV_DoDoor(open)` and then
+/// `P_ChangeSwitchTexture(line, 1)` whatever the call returned, so every hit
+/// restarts the button when none holds the line (decision D3: nothing without an
+/// episode-1 switch texture). The other admitted specials have no case.
+pub(crate) fn shoot_special_line<M: MoverAccess + ?Sized>(
+    starter: &mut Starter<'_, M>,
+    buttons: Option<&mut Buttons>,
+    line: u16,
+    special: i16,
+) -> Result<(), SimError> {
+    if special != 46 {
+        return Ok(());
+    }
+    starter.do_door(line, DoorKind::Open)?;
+    let buttons = buttons.ok_or(crate::PlayerBodyError::Profile)?;
+    change_switch_texture(starter.world, starter.events, buttons, line, special, true)?;
+    Ok(())
+}
+
+/// The `P_ShootSpecialLine` calls of one `P_LineAttack` (Episode 1 policy): every
+/// line intercept the trace visited (up to and including the one that stopped
+/// it) whose runtime special is nonzero, in visit order, after the trace and
+/// before the puff or blood it spawns (the door thinker precedes that actor in the
+/// shared order). Nothing under every other policy.
+pub(crate) fn shoot_lines<A: crate::lifecycle::ActorAccess>(
+    host: &mut crate::lifecycle::LifeHost<'_, A>,
+    player: bool,
+    trace: &crate::HitscanTrace,
+    visited: u32,
+) -> Result<(), SimError> {
+    if host.world.episode1.is_none() {
+        return Ok(());
+    }
+    for intercept in trace.intercepts.iter().take(visited as usize) {
+        let crate::TraceObject::Line(line) = intercept.object else {
+            continue;
+        };
+        let special = host.sectors.line_special(line);
+        if special == 0 || (!player && special != 46) {
+            continue;
+        }
+        let store = host.access.movers().ok_or(StoreError::UnsupportedThinker)?;
+        shoot_special_line(
+            &mut Starter {
+                world: host.world,
+                sectors: host.sectors,
+                store,
+                events: &mut *host.events,
+                specials: None,
+                player: None,
+            },
+            host.buttons.as_deref_mut(),
+            line,
+            special,
+        )?;
+    }
+    Ok(())
 }
 
 /// p_map.c `P_UseLines` (1130–1148) and `PTR_UseTraverse` (1095–1123): a 64-unit

@@ -896,6 +896,7 @@ impl Simulation {
         self.pending
             .push(Event::Projectile(ProjectileEvent::Launch(request)));
         let id = LifeHost {
+            buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
             perception: None,
@@ -983,6 +984,7 @@ impl Simulation {
                     }
                     if self.actors.is_pending(id) == Some(false) {
                         LifeHost {
+                            buttons: None,
                             player: None,
                             statistics: self.statistics.as_mut(),
                             perception: None,

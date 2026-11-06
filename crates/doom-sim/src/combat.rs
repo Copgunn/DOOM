@@ -838,6 +838,7 @@ impl Simulation {
             return self.monster_host(None);
         }
         LifeHost {
+            buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
             perception: None,

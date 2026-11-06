@@ -218,6 +218,13 @@ pub enum PickupMessage {
     HealthBonus = 12,
     /// GOTARMBONUS.
     ArmorBonus = 13,
+    /// PD_BLUEK: a blue-locked door used without the key (`EV_VerticalDoor`,
+    /// p_doors.c:378; Episode 1 policy, decision D7).
+    BlueKeyNeeded = 27,
+    /// PD_YELLOWK (p_doors.c:392).
+    YellowKeyNeeded = 28,
+    /// PD_REDK (p_doors.c:405).
+    RedKeyNeeded = 29,
 }
 /// Source pickup-only fields; health, body and inventory retain their owners.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -242,6 +249,13 @@ impl PlayerPickupState {
                 self.item_count != 0
             }
             || self.message == PickupMessage::MedikitNeeded
+            || (bounds.is_none()
+                && matches!(
+                    self.message,
+                    PickupMessage::BlueKeyNeeded
+                        | PickupMessage::YellowKeyNeeded
+                        | PickupMessage::RedKeyNeeded
+                ))
             || (!profile.has_player_bonuses()
                 && matches!(
                     self.message,
@@ -937,6 +951,7 @@ impl Simulation {
         )?;
         self.reserve_actor_spawns(1)?;
         let id = lifecycle::LifeHost {
+            buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
             perception: None,

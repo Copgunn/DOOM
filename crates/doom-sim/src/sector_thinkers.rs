@@ -157,12 +157,17 @@ impl SectorThinker {
     }
 }
 
-/// Runtime light level and special of one sector (`sector_t::lightlevel`,
-/// `sector_t::special`); the map lumps keep the original values.
+/// Runtime light level, special and floor flat of one sector
+/// (`sector_t::lightlevel`, `sector_t::special`, `sector_t::floorpic`); the map
+/// lumps keep the original values.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub(crate) struct SectorSpecial {
     pub light: i16,
     pub special: i16,
+    /// `sector_t::floorpic` as its normalized flat name (decision D2): the map's
+    /// until a `raiseToNearestAndChange` plat or a finished `donutRaise` floor
+    /// changes it (Episode 1 policy); encoded from DSIM39 on.
+    pub floorpic: [u8; 8],
 }
 /// The specials policy's mutable sector state plus its setup phase. Only
 /// `sectors` changes during a tic; it is staged with the checked plan.

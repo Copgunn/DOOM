@@ -243,6 +243,7 @@ impl Simulation {
             .map(|s| sector_thinkers::SectorSpecial {
                 light: s.light,
                 special: s.special,
+                floorpic: sector_thinkers::normalized_flat(&s.flats[0]),
             })
             .collect();
         let blockboxes = multisector::sector_block_boxes(map)?;
@@ -415,6 +416,8 @@ struct DemonPlan {
     writes: staging::StagedWrites,
     /// Under the movers policy, `G_ExitLevel` ran in this tic or before.
     exit: bool,
+    /// Under the Episode 1 policy, `G_SecretExitLevel` ran (`secretexit`).
+    secret_exit: bool,
     /// Under the movers policy, the staged switch buttons.
     buttons: use_lines::Buttons,
     events: Vec<Event>,
@@ -485,6 +488,7 @@ impl Simulation {
             specials,
             writes,
             exit: self.level_exit,
+            secret_exit: self.level_secret_exit,
             buttons: self.buttons,
             events: Vec::new(),
         })
@@ -617,6 +621,7 @@ impl Simulation {
         writes.commit(&mut self.sectors, &mut self.line_specials);
         self.spare_writes = writes;
         self.level_exit = plan.exit;
+        self.level_secret_exit = plan.secret_exit;
         self.buttons = plan.buttons;
         plan.events
     }
@@ -639,6 +644,7 @@ impl Simulation {
             .try_reserve(count)
             .map_err(|_| StoreError::Capacity)?;
         let result = action(&mut LifeHost {
+            buttons: None,
             player: None,
             statistics: plan.statistics.as_mut(),
             perception: None,
@@ -665,6 +671,7 @@ impl Simulation {
         let mut plan = self.demon_plan()?;
         let control = SightControl::default();
         let result = action(&mut LifeHost {
+            buttons: None,
             player: plan.player.as_mut(),
             statistics: plan.statistics.as_mut(),
             perception: Some(self.checked_demon_inputs(&control)),
@@ -734,6 +741,7 @@ impl Simulation {
             let think_live;
             {
                 let mut host = LifeHost {
+                    buttons: movers.then_some(&mut plan.buttons),
                     player: plan.player.as_mut(),
                     statistics: plan.statistics.as_mut(),
                     perception: Some(self.checked_demon_inputs(&control)),
@@ -791,7 +799,7 @@ impl Simulation {
                             plan.sound_targets.as_mut_slice(),
                         )
                         .map_err(|error| self.policy_error(error))?;
-                        used = use_block(&mut host, &mut plan.buttons, command)?;
+                        used = use_block(&mut host, &mut plan.specials, command)?;
                         player_pistol::stage_operation(
                             &mut host,
                             weapons::PlayerWeaponOperation::MovePsprites,
@@ -849,6 +857,7 @@ impl Simulation {
                     .write_line_special(&self.line_specials, line, 0)?;
             }
             plan.exit |= used.exit;
+            plan.secret_exit |= used.secret;
             world_pickups::bonus_tick(plan.player.as_mut(), think_live)?;
             plan.events.push(Event::Phase(Phase::Thinkers));
         } else {
@@ -881,6 +890,7 @@ impl Simulation {
                 perception_inputs: Some(perception_inputs),
                 boundary: self.boundary.as_deref(),
                 specials: specials.then_some(plan.specials.as_mut_slice()),
+                buttons: movers.then_some(&mut plan.buttons),
             },
         );
         if let Some(error) = control.failure.get() {
@@ -933,10 +943,12 @@ impl Simulation {
 /// The use block of `P_PlayerThink` (p_user.c:322–331) under the movers policy:
 /// with `BT_USE` held and `usedown` clear, `P_UseLines` and set `usedown`; without
 /// `BT_USE`, clear it. A door the use opens joins the order's tail and steps in this
-/// tic's pass. The S1 clear and the exit are returned for the staged tables.
+/// tic's pass. The line clear and the exits are returned for the staged tables;
+/// the Episode 1 starters write the staged sector `specials` and the player's
+/// message directly.
 fn use_block(
     host: &mut LifeHost<'_, &mut ThinkerStore<Actor>>,
-    buttons: &mut use_lines::Buttons,
+    specials: &mut [sector_thinkers::SectorSpecial],
     command: TicCommand,
 ) -> Result<use_lines::UseOutcome, SimError> {
     let p = host.player.as_deref_mut().ok_or(PlayerBodyError::Profile)?;
@@ -950,12 +962,18 @@ fn use_block(
     p.use_down = true;
     let id = p.mo.ok_or(PlayerBodyError::Binding)?;
     let actor = *host.access.get(id).ok_or(PlayerBodyError::Binding)?;
+    let buttons = host
+        .buttons
+        .as_deref_mut()
+        .ok_or(PlayerBodyError::Profile)?;
     use_lines::use_lines(
         &mut movers::Starter {
             world: host.world,
             sectors: host.sectors,
             store: &mut *host.access,
             events: &mut *host.events,
+            specials: Some(specials),
+            player: host.player.as_deref_mut(),
         },
         buttons,
         id,

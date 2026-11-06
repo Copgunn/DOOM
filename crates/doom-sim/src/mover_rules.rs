@@ -44,22 +44,37 @@ pub(crate) enum Family {
 /// decision N5).
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 struct Kinds {
+    /// `normal` door by use (DR 1, 26–28).
     dr: bool,
+    /// `normal` door by tag (SR 63, WR 90).
     sr: bool,
     blaze: bool,
+    /// `downWaitUpStay` (WR 88, SR 62).
     lift: bool,
+    /// `turboLower` (W1 36, SR 70, WR 98).
     turbo: bool,
+    /// `lowerFloorToLowest` (W1 38, S1 23, WR 82).
     lowest: bool,
+    /// `open` door (W1 2, WR 86, S1 103, GR 46 by tag; D1 31–34 by use).
+    open: bool,
+    /// `close30ThenOpen` door (W1 16, WR 76).
+    close30: bool,
+    /// `raiseFloor` (W1 5, WR 91).
+    raise: bool,
+    /// `raiseFloorToNearest` (S1 18).
+    nearest: bool,
+    /// `raiseToNearestAndChange` plat (S1 20, W1 22).
+    change: bool,
 }
 impl Kinds {
     fn door(self) -> bool {
-        self.dr || self.sr || self.blaze
+        self.dr || self.sr || self.blaze || self.open || self.close30
     }
     fn families(self) -> impl Iterator<Item = Family> {
         [
             self.door().then_some(Family::Door),
-            self.lift.then_some(Family::Plat),
-            (self.turbo || self.lowest).then_some(Family::Floor),
+            (self.lift || self.change).then_some(Family::Plat),
+            (self.turbo || self.lowest || self.raise || self.nearest).then_some(Family::Floor),
         ]
         .into_iter()
         .flatten()
@@ -440,8 +455,36 @@ fn validate_movers_with(map: &Map, rules: Rules) -> Result<MoverAdmission, SimEr
         }
         match line.special {
             0 | LINE_EXIT => {}
+            // Episode 1 (decision H1): the light trigger, the secret exit, the
+            // stairs and the donut move no tagged family (their sectors are
+            // bounded below by `reachable` and checked by `donut_geometry`).
+            35 | 51 | 7 | 8 | 9 if episode1 => {}
             SCROLLING_WALL if back.is_none() || two_sided_scrollers => scrollers += 1,
             LINE_DOOR_DR => kinds[back.ok_or(MapScaleError::DoorLine)?].dr = true,
+            26..=28 if episode1 => kinds[back.ok_or(MapScaleError::DoorLine)?].dr = true,
+            31..=34 if episode1 => kinds[back.ok_or(MapScaleError::DoorLine)?].open = true,
+            special @ (2 | 5 | 16 | 18 | 20 | 22 | 23 | 46 | 62 | 70 | 76 | 82 | 86 | 90 | 91
+            | 98 | 103)
+                if episode1 =>
+            {
+                if matches!(special, 46 | 62 | 70) {
+                    switches += 1;
+                }
+                for i in tagged(map, line.tag) {
+                    let k = &mut kinds[i];
+                    match special {
+                        2 | 46 | 86 | 103 => k.open = true,
+                        16 | 76 => k.close30 = true,
+                        90 => k.sr = true,
+                        5 | 91 => k.raise = true,
+                        18 => k.nearest = true,
+                        20 | 22 => k.change = true,
+                        23 | 82 => k.lowest = true,
+                        62 => k.lift = true,
+                        _ => k.turbo = true,
+                    }
+                }
+            }
             special @ (LINE_DOOR_SR | LINE_DOOR_BLAZE | LINE_LIFT | LINE_FLOOR_TURBO
             | LINE_FLOOR_LOWEST) => {
                 if special == LINE_DOOR_SR {
@@ -505,11 +548,21 @@ fn validate_movers_with(map: &Map, rules: Rules) -> Result<MoverAdmission, SimEr
     {
         return Err(MapScaleError::MoverBlockBox.into());
     }
-    let plats = family.iter().filter(|f| **f == Some(Family::Plat)).count();
+    let plats = kinds.iter().filter(|k| k.lift || k.change).count();
     if plats > MAX_PLATS || switches > MAX_BUTTONS {
         return Err(MapScaleError::MoverCount.into());
     }
-    let (reach, delta) = reachable(map, &kinds, &neighbors, episode1)?;
+    let stairs = if episode1 {
+        stair_bounds(map, &lists)
+    } else {
+        Vec::new()
+    };
+    let donuts = if episode1 {
+        donut_triples(map, &lists)
+    } else {
+        Vec::new()
+    };
+    let (reach, delta) = reachable(map, &kinds, &neighbors, episode1, &stairs, &donuts)?;
     if episode1 {
         donut_geometry(map)?;
     } else if special_window_lines(map) > MAX_SPECIAL_CROSS && !window_rule_bypassed() {
@@ -565,11 +618,76 @@ const SATURATED_UNITS: i32 = i16::MAX as i32;
 /// With `saturate` (the Episode 1 policy) the intervals are clamped to
 /// ±[`SATURATED_UNITS`] instead of refused beyond ±512, and rule 4b refuses
 /// nothing.
+/// The sectors `EV_BuildStairs` can raise from each sector tagged by a stair
+/// line (S1 7, W1 8), with an upper bound on their final floors: the component
+/// reachable through two-sided lines, each floor at most the largest static
+/// floor of the component plus 8 per sector (each step adds 8 to the height of
+/// the one before, plus 8 per skipped busy sector). Conservative: a Rust-only
+/// input to the vertical invariant V′ (plan §C.10).
+fn stair_bounds(map: &Map, lists: &[Vec<u16>]) -> Vec<(Vec<usize>, i32)> {
+    let mut out = Vec::new();
+    for line in map.linedefs().iter().filter(|l| matches!(l.special, 7 | 8)) {
+        for start in tagged(map, line.tag) {
+            let mut seen = vec![false; map.sectors().len()];
+            let mut component = vec![start];
+            seen[start] = true;
+            let mut k = 0;
+            while let Some(&sector) = component.get(k) {
+                k += 1;
+                for &l in &lists[sector] {
+                    if let Some(n) = next_sector(map, usize::from(l), sector) {
+                        if !seen[n] {
+                            seen[n] = true;
+                            component.push(n);
+                        }
+                    }
+                }
+            }
+            let top = component
+                .iter()
+                .map(|&i| i32::from(map.sectors()[i].heights[0]))
+                .max()
+                .unwrap_or(0);
+            let steps = i32::try_from(component.len()).unwrap_or(i32::MAX);
+            out.push((component, top.saturating_add(steps.saturating_mul(8))));
+        }
+    }
+    out
+}
+/// The `(s1, s2, s3)` sectors of every donut (S1 9) tagged sector where
+/// `EV_DoDonut` finds them (see [`donut_geometry`]); skipped where the geometry
+/// rule will refuse the map.
+fn donut_triples(map: &Map, lists: &[Vec<u16>]) -> Vec<[usize; 3]> {
+    let back = |line: usize| {
+        map.linedefs()[line].sides[1].map(|s| usize::from(map.sidedefs()[usize::from(s)].sector))
+    };
+    let mut out = Vec::new();
+    for line in map.linedefs().iter().filter(|l| l.special == 9) {
+        for s1 in tagged(map, line.tag) {
+            let Some(&first) = lists[s1].first() else {
+                continue;
+            };
+            let Some(s2) = next_sector(map, usize::from(first), s1) else {
+                continue;
+            };
+            let ring = lists[s2]
+                .iter()
+                .find(|&&i| back(usize::from(i)) != Some(s1))
+                .and_then(|&i| back(usize::from(i)));
+            if let Some(s3) = ring {
+                out.push([s1, s2, s3]);
+            }
+        }
+    }
+    out
+}
 fn reachable<'m, I: Iterator<Item = usize> + 'm>(
     map: &'m Map,
     kinds: &[Kinds],
     neighbors: &impl Fn(usize) -> I,
     saturate: bool,
+    stairs: &[(Vec<usize>, i32)],
+    donuts: &[[usize; 3]],
 ) -> Result<([i32; 2], i32), SimError> {
     let static_heights = |i: usize, plane: usize| i32::from(map.sectors()[i].heights[plane]);
     let n = map.sectors().len();
@@ -593,6 +711,9 @@ fn reachable<'m, I: Iterator<Item = usize> + 'm>(
     };
     loop {
         let mut changed = false;
+        // Under saturation a widening past the clamp is undone by the clamp, so
+        // a round counts as a change only when the clamped intervals differ.
+        let previous = saturate.then(|| (f.clone(), c.clone()));
         for (i, k) in kinds.iter().enumerate() {
             if k.dr || k.sr {
                 // A normal door rises to its top and closes to its floor.
@@ -600,9 +721,27 @@ fn reachable<'m, I: Iterator<Item = usize> + 'm>(
                 let lo = f[i][0].min(t[0]);
                 changed |= widen(&mut c[i], lo, t[1]);
             }
-            if k.blaze {
+            if k.blaze || k.open {
                 let t = top(&c, i);
                 changed |= widen(&mut c[i], t[0], t[1]);
+            }
+            if k.close30 {
+                // Closes to its floor and reopens to the ceiling it had.
+                let lo = f[i][0].min(c[i][0]);
+                let hi = c[i][1];
+                changed |= widen(&mut c[i], lo, hi);
+            }
+            if k.raise {
+                // P_FindLowestCeilingSurrounding, at most the own ceiling.
+                let hi = c[i][1];
+                let lo = f[i][0];
+                changed |= widen(&mut f[i], lo, hi);
+            }
+            if k.nearest || k.change {
+                // P_FindNextHighestFloor: a neighbour floor (or the own floor).
+                let hi = neighbors(i).fold(f[i][1], |hi, m| hi.max(f[m][1]));
+                let lo = f[i][0];
+                changed |= widen(&mut f[i], lo, hi);
             }
             if k.lift || k.lowest {
                 // P_FindLowestFloorSurrounding starts at the sector's own floor.
@@ -622,10 +761,25 @@ fn reachable<'m, I: Iterator<Item = usize> + 'm>(
                 }
             }
         }
-        if saturate {
+        for (component, hi) in stairs {
+            for &i in component {
+                let lo = f[i][0];
+                changed |= widen(&mut f[i], lo, *hi);
+            }
+        }
+        for &[s1, s2, s3] in donuts {
+            // The hole lowers and the ring rises to the s3 floor.
+            let [lo, hi] = f[s3];
+            let own = f[s1][1];
+            changed |= widen(&mut f[s1], lo, own);
+            let own = f[s2][0];
+            changed |= widen(&mut f[s2], own, hi);
+        }
+        if let Some((pf, pc)) = previous {
             for r in f.iter_mut().chain(c.iter_mut()) {
                 *r = r.map(|v| v.clamp(-SATURATED_UNITS, SATURATED_UNITS));
             }
+            changed = f != pf || c != pc;
         } else if !in_bounds(&f) || !in_bounds(&c) {
             return Err(MapScaleError::MoverHeights.into());
         }
@@ -641,6 +795,15 @@ fn reachable<'m, I: Iterator<Item = usize> + 'm>(
         if k.lift {
             delta = delta.max(4);
         }
+        if k.open || k.close30 {
+            delta = delta.max(2);
+        }
+        if k.raise || k.nearest || k.change {
+            delta = delta.max(1);
+        }
+        if k.close30 {
+            delta = delta.max(c[i][1].saturating_sub(f[i][0]));
+        }
         if k.door() {
             let t = top(&c, i);
             if t[0] < f[i][1] && !saturate {
@@ -651,6 +814,10 @@ fn reachable<'m, I: Iterator<Item = usize> + 'm>(
         if k.turbo {
             delta = delta.max((highest_floor(&f, i)[1] + 8).saturating_sub(f[i][0]));
         }
+    }
+    if !stairs.is_empty() || !donuts.is_empty() {
+        // Stair steps rise at 1/4 unit, donut floors at 1/2.
+        delta = delta.max(1);
     }
     let lo = f.iter().chain(&c).map(|r| r[0]).min().unwrap_or(0);
     let hi = f.iter().chain(&c).map(|r| r[1]).max().unwrap_or(0);

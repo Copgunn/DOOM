@@ -170,11 +170,16 @@ impl crate::Simulation {
     pub fn episode1_bounds(&self) -> Option<Episode1Bounds> {
         self.world.episode1
     }
-    /// Sector `i`'s `floorpic` as DSIM39 encodes it (decision D2): the
-    /// normalized name of its floor flat. No admitted mover changes a floor flat
-    /// before the Episode 1 movers (M4a step 4), so it is the map's.
+    /// Sector `i`'s runtime `floorpic` as DSIM39 encodes it (decision D2): the
+    /// normalized name of its floor flat, changed by the Episode 1 movers.
     pub(crate) fn floorpic(&self, i: usize) -> [u8; 8] {
-        crate::sector_thinkers::normalized_flat(&self.world.map().sectors()[i].flats[0])
+        self.specials
+            .as_ref()
+            .and_then(|s| s.sectors.get(i))
+            .map_or_else(
+                || crate::sector_thinkers::normalized_flat(&self.world.map().sectors()[i].flats[0]),
+                |s| s.floorpic,
+            )
     }
     /// The decorations one map may spawn: `D` under the Episode 1 policy,
     /// [`crate::MAX_DECORATIONS`] under every other one.

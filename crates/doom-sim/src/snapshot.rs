@@ -1399,13 +1399,21 @@ fn mover_fields(
                 field(
                     fields,
                     format!("{prefix}.direction"),
-                    f.direction().to_le_bytes(),
+                    f.direction.to_le_bytes(),
                 );
                 field(
                     fields,
                     format!("{prefix}.speed"),
-                    f.speed().bits().to_le_bytes(),
+                    f.speed.bits().to_le_bytes(),
                 );
+                if f.kind == crate::FloorKind::DonutRaise {
+                    field(fields, format!("{prefix}.texture"), f.texture);
+                    field(
+                        fields,
+                        format!("{prefix}.newspecial"),
+                        f.newspecial.to_le_bytes(),
+                    );
+                }
             }
             _ => {}
         }

@@ -167,7 +167,7 @@ pub use actor::{Actor, ActorSpec, TicCommand};
 use doom_map::Map;
 use doom_types::{DoomRng, Fixed};
 pub use geometry::{Collision, GeometryError, LineGeometry, MoveAttempt, StaticWorld};
-pub use movers::{Door, DoorKind, FloorKind, FloorMove, Plat, PlatStatus};
+pub use movers::{Door, DoorKind, FloorKind, FloorMove, Plat, PlatStatus, PlatType};
 pub use planes::{ClipOutcome, MoveResult, MoverEvent, MoverFunction, Plane, SoundOrigin};
 pub use sector_thinkers::{
     FireFlicker, Glow, LightFlash, SectorThinker, SpecialEvent, StrobeFlash,
@@ -1418,6 +1418,7 @@ impl Simulation {
                     perception_inputs,
                     boundary: self.boundary.as_deref(),
                     specials: None,
+                    buttons: None,
                 },
             );
         }
@@ -1584,6 +1585,8 @@ mod player_diagonal_tests;
 mod player_e1m1_soak_tests;
 #[cfg(test)]
 mod player_e1m1_tests;
+#[cfg(test)]
+mod player_episode1_movers_tests;
 #[cfg(test)]
 mod player_episode1_tests;
 #[cfg(test)]

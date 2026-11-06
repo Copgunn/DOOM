@@ -525,6 +525,8 @@ fn line_current(
         slope,
         &lookup,
     )?;
+    // P_ShootSpecialLine for the special lines the trace visited (Episode 1).
+    crate::use_lines::shoot_lines(host, true, &trace, traversed)?;
     let monsters = host
         .player
         .as_ref()

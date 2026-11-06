@@ -236,6 +236,8 @@ fn use_lines_blocked<A: ActorAccess>(
             sectors: h.sectors,
             store,
             events: &mut *h.events,
+            specials: None,
+            player: None,
         };
         match use_lines::use_special_line(
             &mut starter,
@@ -275,6 +277,8 @@ fn cross_lines<A: ActorAccess>(
             sectors: h.sectors,
             store,
             events: &mut *h.events,
+            specials: None,
+            player: None,
         };
         if let Err(error) =
             line_triggers::cross(&mut starter, id, line_triggers::Crosser::Monster, crossing)
@@ -498,6 +502,7 @@ impl Simulation {
             });
         }
         let mut host = LifeHost {
+            buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
             perception: Some(crate::perception::PerceptionInputs {

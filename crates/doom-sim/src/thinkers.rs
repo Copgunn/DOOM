@@ -29,6 +29,9 @@ pub(crate) struct Inputs<'a> {
     /// The specials policy's staged runtime sector lights and specials, written by
     /// the light thinkers at their turn; `None` under every other policy.
     pub specials: Option<&'a mut [sector_thinkers::SectorSpecial]>,
+    /// The movers policy's staged switch buttons, which a monster's hitscan into a
+    /// gun-triggered line (GR 46, Episode 1 policy) starts; `None` otherwise.
+    pub buttons: Option<&'a mut use_lines::Buttons>,
 }
 pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
     let Inputs {
@@ -51,6 +54,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
         perception_inputs,
         boundary,
         mut specials,
+        mut buttons,
     } = input;
     let recoverable_refill = player.as_ref().is_some_and(|p| p.policy.has_imps());
     // A refused sector-thinker visit outside the checked transaction; the checked
@@ -90,6 +94,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                             bindings: &mut *live_bindings,
                             events: &mut *events,
                             boundary,
+                            specials: specials.as_deref_mut(),
                         };
                         movers::think(&mut host, id, leveltime)
                     }
@@ -126,6 +131,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                     // P_MobjThinker of a missile: its movement owns contact and
                     // explosion, then ordinary state countdown.
                     let mut host = lifecycle::LifeHost {
+                        buttons: None,
                         player: player.as_deref_mut(),
                         statistics: statistics.as_mut(),
                         perception: perception_inputs,
@@ -268,6 +274,8 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                                         sectors: writes.view(committed, committed_lines),
                                         store: &mut *context,
                                         events: &mut *events,
+                                        specials: specials.as_deref_mut(),
+                                        player: None,
                                     },
                                     id,
                                     crosser,
@@ -328,6 +336,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                         let play = StateId(identity::OriginalState::S_PLAY.ordinal());
                         *context.get_mut(id).unwrap() = actor;
                         lifecycle::LifeHost {
+                            buttons: None,
                             player: player.as_deref_mut(),
                             statistics: statistics.as_mut(),
                             perception: perception_inputs,
@@ -368,6 +377,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                 *context.get_mut(id).expect("same live thinker handle") = actor;
                 if let Some(registry) = registry {
                     lifecycle::LifeHost {
+                        buttons: buttons.as_deref_mut(),
                         player: player.as_deref_mut(),
                         statistics: statistics.as_mut(),
                         perception: perception_inputs,

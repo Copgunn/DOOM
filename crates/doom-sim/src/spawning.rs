@@ -99,6 +99,7 @@ impl Simulation {
         self.spawn_type_checks(ty, position, height)?;
         self.reserve_actor_spawns(1)?;
         Ok(LifeHost {
+            buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
             perception: None,
@@ -258,6 +259,7 @@ impl Simulation {
                 sound_targets: &self.sound_targets,
             });
         LifeHost {
+            buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
             perception,
@@ -712,6 +714,7 @@ impl Simulation {
             self.reserve_actor_spawns(selected.len())?;
             // Legacy batches still have no recoverable work after reservation.
             let mut host = LifeHost {
+                buttons: None,
                 player: None,
                 statistics: self.statistics.as_mut(),
                 perception: None,

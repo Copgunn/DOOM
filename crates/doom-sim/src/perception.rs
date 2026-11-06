@@ -481,6 +481,7 @@ impl Simulation {
         )?;
         Ok(commit_scan(
             &mut crate::lifecycle::LifeHost {
+                buttons: None,
                 player: None,
                 statistics: self.statistics.as_mut(),
                 perception: None,
@@ -937,6 +938,7 @@ impl Simulation {
             return self.checked_demon_operation(|host| host.invoke_look(id));
         }
         Ok(crate::lifecycle::LifeHost {
+            buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
             perception: Some(PerceptionInputs {

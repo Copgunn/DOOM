@@ -442,6 +442,8 @@ fn bullet<A: ActorAccess>(
         )?;
         (trace, hit)
     };
+    // P_ShootSpecialLine for the special lines the trace visited (Episode 1).
+    crate::use_lines::shoot_lines(h, false, &trace, traversed)?;
     let plan = match hit {
         Some(TraceObject::Actor(target)) if damage != 0 => {
             Some(combat::DamagePlan::current_original(
