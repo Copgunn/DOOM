@@ -48,16 +48,21 @@ synth_idle.txt -> SYNIDLE.lmp.
                                                  SCRIPT with .lmp
     e1m1_scripts.py --check                      regenerate every *.txt under
                                                  tests/reference/e1m1_scripts/,
-                                                 tests/reference/m3h9c_scripts/ and
-                                                 tests/reference/m4a_scripts/ in memory and
-                                                 compare with the committed .lmp next to it
+                                                 tests/reference/m3h9c_scripts/,
+                                                 tests/reference/m4a_scripts/ and the M4a
+                                                 real-map directories
+                                                 tests/reference/e1mN_scripts/ (N = 2, 3, 4,
+                                                 6, 7; those present) in memory and compare
+                                                 with the committed .lmp next to it
 """
 import argparse, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_DIRS = [ROOT / 'tests/reference/e1m1_scripts', ROOT / 'tests/reference/m3h9c_scripts',
-               ROOT / 'tests/reference/m4a_scripts']
+               ROOT / 'tests/reference/m4a_scripts'] + \
+              [ROOT / f'tests/reference/e1m{n}_scripts' for n in (2, 3, 4, 6, 7)
+               if (ROOT / f'tests/reference/e1m{n}_scripts').is_dir()]
 HEADER = bytes([110, 2, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0])
 MARKER = 0x80
 NAMES = {'ATTACK': 1, 'USE': 2, 'CHANGE': 4, **{f'W{w}': w << 3 for w in range(8)}}
