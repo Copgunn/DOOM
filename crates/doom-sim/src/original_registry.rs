@@ -747,6 +747,63 @@ fn fireball_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
         .as_ref()
         .map_err(|e| *e)
 }
+/// The rocket's spawn/explosion closure (info.c:250, 263–265, 1966–1990): `S_ROCKET`
+/// and `S_EXPLODE1..3`; `A_Explode` in `S_EXPLODE1` is the one action (Episode 1
+/// policy, M4a plan §E.4).
+fn rocket_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
+    static POLICY: OnceLock<Result<ActorPolicy, OriginalRegistryError>> = OnceLock::new();
+    POLICY
+        .get_or_init(|| {
+            let p = ActorPolicy::source(OriginalActorType::MT_ROCKET)?;
+            for s in OriginalState::all().filter(|s| p.normal.contains(*s)) {
+                let action = s.descriptor().action;
+                if !(action.is_none()
+                    || (s == OriginalState::S_EXPLODE1 && action == Some("A_Explode")))
+                {
+                    return Err(OriginalRegistryError::Graph);
+                }
+            }
+            Ok(p)
+        })
+        .as_ref()
+        .map_err(|e| *e)
+}
+/// The Spectre (`MT_SHADOWS`, info.c:1446–1470): field for field the Demon
+/// (`MT_SERGEANT`, info.c:1420–1444) except its DoomEd number (58) and the
+/// `MF_SHADOW` flag; the same `S_SARG_*` states, sounds and actions. Its closure
+/// must equal the Demon's (Episode 1 policy, M4a plan §E.5).
+fn spectre_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
+    static POLICY: OnceLock<Result<ActorPolicy, OriginalRegistryError>> = OnceLock::new();
+    POLICY
+        .get_or_init(|| {
+            let p = ActorPolicy::source(OriginalActorType::MT_SHADOWS)?;
+            let demon = demon_policy()?;
+            if p.normal.0 != demon.normal.0
+                || p.direct.0 != demon.direct.0
+                || p.death.0 != demon.death.0
+                || p.before_fall.0 != demon.before_fall.0
+            {
+                return Err(OriginalRegistryError::Graph);
+            }
+            Ok(p)
+        })
+        .as_ref()
+        .map_err(|e| *e)
+}
+/// `MT_SHADOWS`, policy-free (the Episode 1 role gates it).
+pub(crate) const fn is_spectre(ty: ActorTypeId) -> bool {
+    ty.0 == OriginalActorType::MT_SHADOWS.ordinal()
+}
+/// `MT_ROCKET`, policy-free (the Episode 1 role gates it).
+pub(crate) const fn is_rocket(ty: ActorTypeId) -> bool {
+    ty.0 == OriginalActorType::MT_ROCKET.ordinal()
+}
+/// A missile whose flight the checked thinker pass owns: the Imp fireball
+/// (`PlayerMonstersImpV1` and its supersets) and the rocket (Episode 1 policy).
+/// Policy-free: each type exists only where its role admits it.
+pub(crate) const fn is_missile_type(ty: ActorTypeId) -> bool {
+    is_fireball(ty) || is_rocket(ty)
+}
 pub(crate) fn is_former_human(ty: ActorTypeId) -> bool {
     FORMER_HUMANS.iter().any(|t| t.ordinal() == ty.0)
 }
@@ -763,17 +820,20 @@ pub(crate) const fn is_impact(ty: ActorTypeId) -> bool {
 }
 /// Original (non-owner-slot) roster definition with a registry-derived closure.
 pub(crate) fn is_extended_monster(ty: ActorTypeId) -> bool {
-    is_former_human(ty) || is_imp(ty)
+    is_former_human(ty) || is_imp(ty) || is_spectre(ty)
 }
 /// Autonomous monster definitions executable by the selected player policy.
 pub(crate) fn is_policy_monster(policy: OriginalExecutionProfile, ty: ActorTypeId) -> bool {
     ty == owner_slot()
         || (policy.has_monsters() && is_former_human(ty))
         || (policy.has_imps() && is_imp(ty))
+        || (policy.has_episode1() && is_spectre(ty))
 }
 fn extended_policy(ty: ActorTypeId) -> Result<&'static ActorPolicy, OriginalRegistryError> {
     if is_imp(ty) {
         imp_policy()
+    } else if is_spectre(ty) {
+        spectre_policy()
     } else {
         former_human_policy(
             OriginalActorType::try_from(ty.0).map_err(|_| OriginalRegistryError::Graph)?,
@@ -996,6 +1056,10 @@ pub(crate) fn require_role_for(
             DefinitionIdentity::Original(
                 OriginalActorType::MT_TROOP | OriginalActorType::MT_TROOPSHOT,
             ) if profile.has_imps() => Ok(()),
+            // The Spectre and the rocket (M4a plan §E.4–E.5), Episode 1 policy only.
+            DefinitionIdentity::Original(
+                OriginalActorType::MT_SHADOWS | OriginalActorType::MT_ROCKET,
+            ) if profile.has_episode1() => Ok(()),
             // The seven static decoration types of E1M1 (info.c; M3h9 note §2.5),
             // spawned by `P_SpawnMapThing` under the E1M1 policy and its barrels
             // superset.
@@ -1053,6 +1117,8 @@ pub(crate) fn state_role_for(
         extended_policy(ty)?.normal.contains(s)
     } else if is_fireball(ty) {
         fireball_policy()?.normal.contains(s)
+    } else if is_rocket(ty) {
+        rocket_policy()?.normal.contains(s)
     } else if ty == owner_slot() {
         demon_policy()?.normal.contains(s)
             && !(profile == OriginalExecutionProfile::PlayerDemonAcquisitionV1
@@ -1236,6 +1302,7 @@ impl Simulation {
                     .has_episode1()
                     .then_some(original_player::PlayerPowers::default()),
                 episode1,
+                weapon_stage: original_player::WeaponStage::Idle,
             });
         }
         Ok(sim)

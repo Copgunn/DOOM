@@ -302,8 +302,12 @@ pub(crate) fn explode<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
 fn radius_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, spot: ActorId) -> Result<(), SimError> {
     let bomb = *h.access.get(spot).ok_or(CombatError::Reference)?;
     let life = bomb.life().ok_or(ActorError::InvalidType)?;
-    if !is_barrel_type(life.actor_type) {
-        // Admission names A_Explode for MT_BARREL's S_BEXP4 alone.
+    // Admission names A_Explode for MT_BARREL's S_BEXP4 and, under the Episode 1
+    // policy, MT_ROCKET's S_EXPLODE1 (M4a plan §E.4): `P_RadiusAttack (rocket,
+    // rocket->target, 128)` with the shooter as the source (self damage included).
+    let rocket = crate::original_registry::is_rocket(life.actor_type)
+        && h.player.as_deref().is_some_and(|p| p.policy.has_episode1());
+    if !is_barrel_type(life.actor_type) && !rocket {
         return Err(
             ActorError::UnsupportedAction(crate::lifecycle::source_action_id("A_Explode")).into(),
         );

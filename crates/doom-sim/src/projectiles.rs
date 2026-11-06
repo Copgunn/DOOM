@@ -1,6 +1,9 @@
 //! Original missile launch, flight, contact and explosion. One algorithm serves the
 //! frozen plasma profile (M3d2b) and the checked player world (`PlayerMonstersImpV1`).
-use crate::{lifecycle::LifeHost, *};
+use crate::{
+    lifecycle::{ActorAccess as _, LifeHost},
+    *,
+};
 use crate::{
     original_player::{MF_MISSILE as MISSILE, MF_SHADOW, MF_SHOOTABLE, MF_SOLID},
     world_pickups::MF_SPECIAL,
@@ -584,6 +587,67 @@ pub(crate) fn launch_fireball<A: lifecycle::ActorAccess>(
     finish_launch(h, id, source, angle, momz, shadow);
     Ok(())
 }
+/// p_mobj.c:946–966 `P_SpawnPlayerMissile`'s aim range, `16*64*FRACUNIT`.
+const PLAYER_MISSILE_AIM_UNITS: i16 = 1024;
+/// The autoaim offset of `P_SpawnPlayerMissile` (p_mobj.c:951, 956): `1<<26`.
+const PLAYER_MISSILE_AIM_OFFSET: u32 = 1 << 26;
+/// `P_SpawnPlayerMissile (source, ty)` (p_mobj.c:935–987) inside the checked
+/// players phase (Episode 1 policy: `A_FireMissile`'s `MT_ROCKET`, M4a plan
+/// §E.4). Three `P_AimLineAttack` traces of 1,024 units at the source's angle,
+/// then `+1<<26`, then `-1<<26` (the net of `an -= 2<<26`); the angle of the first
+/// trace that found a `linetarget` is kept with its slope; with none, the source
+/// angle and slope 0. Then `P_SpawnMobj` at `z + 32` (its `lastlook` draw), the
+/// seesound, `target`, angle, momentum `FixedMul(speed, cos/sin)` and
+/// `momz = FixedMul(speed, slope)`, and `P_CheckMissileSpawn` (the tics draw, the
+/// half step and the move, exploding at once when it fails). No shadow fuzz: the
+/// player's missile has no `dest`. The slot is reserved before anything changes.
+pub(crate) fn launch_player_missile(
+    h: &mut LifeHost<'_, &mut ThinkerStore<Actor>>,
+    source: ActorId,
+    ty: ActorTypeId,
+) -> Result<(), SimError> {
+    if !original_registry::is_rocket(ty)
+        || !h.player.as_deref().is_some_and(|p| p.policy.has_episode1())
+    {
+        return Err(ProjectileError::UnsupportedType.into());
+    }
+    h.access.reserve(1)?;
+    let from = *h.access.get(source).ok_or(ProjectileError::Reference)?;
+    let range = Fixed::from_map_units(PLAYER_MISSILE_AIM_UNITS);
+    let base = from.angle();
+    let mut chosen = None;
+    for an in [
+        base,
+        base.wrapping_add(PLAYER_MISSILE_AIM_OFFSET),
+        base.wrapping_sub(PLAYER_MISSILE_AIM_OFFSET),
+    ] {
+        let lookup = |id| h.access.get(id).copied();
+        let trace =
+            crate::combat_trace::collect_in(h.world, h.spatial, &lookup, source, an, range)?;
+        let aim =
+            crate::combat_trace::aim_trace(h.world, h.sectors, source, trace, range, &lookup)?;
+        if aim.target.is_some() {
+            chosen = Some((an, aim.slope));
+            break;
+        }
+    }
+    let (angle, slope) = chosen.unwrap_or((base, Fixed::ZERO));
+    let speed = Fixed::from_bits(h.definition(ty).speed());
+    h.emit(Event::Projectile(ProjectileEvent::Launch(
+        ProjectileRequest {
+            source,
+            actor_type: ty,
+            aim: ProjectileAim::PlayerAutoAim,
+        },
+    )));
+    let id = h.spawn(
+        ty,
+        from.position(),
+        SpawnHeight::Absolute(from.z + Fixed::from_map_units(MISSILE_SPAWN_HEIGHT)),
+    );
+    finish_launch(h, id, source, angle, speed * slope, false);
+    Ok(())
+}
 /// Rejected projectile prerequisite; recoverable errors precede mutation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ProjectileError {
@@ -796,7 +860,7 @@ impl Simulation {
         }
         for id in self.actors.order() {
             let life = self.actor(id).and_then(Actor::life).unwrap();
-            if life.actor_type == FIREBALL
+            if original_registry::is_missile_type(life.actor_type)
                 && life.flags & MISSILE != 0
                 && self.actors.is_pending(id) == Some(false)
             {
@@ -815,7 +879,9 @@ impl Simulation {
         let owns_flight = self.actors.order().any(|id| {
             self.actors.is_pending(id) == Some(false)
                 && self.actor(id).and_then(Actor::life).is_some_and(|l| {
-                    l.actor_type == FIREBALL && l.flags & MISSILE != 0 && l.target == Some(owner)
+                    original_registry::is_missile_type(l.actor_type)
+                        && l.flags & MISSILE != 0
+                        && l.target == Some(owner)
                 })
         });
         if owns_flight {
@@ -826,7 +892,8 @@ impl Simulation {
     pub(crate) fn projectile_control(&self, id: ActorId) -> Result<(), SimError> {
         let ty = self.actor(id).and_then(Actor::life).map(|l| l.actor_type);
         if (self.profile == Profile::Projectiles && ty == Some(PLASMA))
-            || (self.player_policy().has_imps() && ty == Some(FIREBALL))
+            || (self.player_policy().has_imps()
+                && ty.is_some_and(original_registry::is_missile_type))
         {
             return Err(ProjectileError::Controlled.into());
         }

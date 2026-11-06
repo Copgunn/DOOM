@@ -126,7 +126,7 @@ pub(crate) fn run(actors: &mut ThinkerStore<Actor>, input: Inputs<'_>) {
                 if profile == Profile::OriginalDemon
                     && actor
                         .life
-                        .is_some_and(|l| original_registry::is_fireball(l.actor_type))
+                        .is_some_and(|l| original_registry::is_missile_type(l.actor_type))
                 {
                     // P_MobjThinker of a missile: its movement owns contact and
                     // explosion, then ordinary state countdown.

@@ -205,6 +205,11 @@ pub(crate) struct DamagePlan {
     /// `request.amount` otherwise. The thrust keeps `request.amount` (806–832
     /// precede the cap).
     amount: i32,
+    /// `P_DamageMobj`'s thrust block runs (p_inter.c:806–832): false only under
+    /// the Episode 1 policy when the source is the player and its ready weapon is
+    /// the chainsaw (811), whatever the inflictor (a rocket still in flight
+    /// included).
+    thrust: bool,
 }
 #[derive(Clone, Debug)]
 pub(crate) struct PreparedAttack {
@@ -258,6 +263,7 @@ impl DamagePlan {
             ignored,
             credit: false,
             amount,
+            thrust: true,
         })
     }
     pub(crate) fn spawn_count(self) -> usize {
@@ -436,10 +442,22 @@ impl DamagePlan {
             return Err(PlayerBodyError::Invariant.into());
         }
         let live = life.health > 0 && life.flags & MF_SHOOTABLE != 0;
+        // p_inter.c:806–811: no thrust when the source's player has the chainsaw
+        // ready (Episode 1 policy; no older policy gives the chainsaw). The weapon
+        // machine writes the ready weapon back only after its operation, and no
+        // operation fires after a change of the ready weapon (`A_Lower` then
+        // `A_Raise` from the bottom), so the stored value is the source's.
+        let thrust = !(policy.has_episode1()
+            && request.source.is_some()
+            && request.source == player.mo
+            && player
+                .weapon
+                .and_then(crate::player_weapons::PlayerWeaponRuntime::pack)
+                .is_some_and(|w| w.ready == Weapon::Chainsaw));
         let impulse = |origin: &Actor, mass: i32| {
             let airborne = origin
                 .life()
-                .is_some_and(|l| crate::original_registry::is_fireball(l.actor_type));
+                .is_some_and(|l| crate::original_registry::is_missile_type(l.actor_type));
             if airborne {
                 original_player::preflight_missile_impulse(
                     player.room,
@@ -466,7 +484,7 @@ impl DamagePlan {
             .ok_or(CombatError::Metadata)?
             .mass();
         if player.mo == Some(request.target) {
-            if let (true, Some(origin)) = (live, inflictor.as_ref()) {
+            if let (true, Some(origin)) = (live && thrust, inflictor.as_ref()) {
                 impulse(origin, mass)?;
             }
             let mut amount = request.amount;
@@ -493,7 +511,8 @@ impl DamagePlan {
                 amount,
                 player.armor,
                 policy,
-            );
+            )
+            .map(|plan| plan.with_thrust(thrust));
         }
         // The exploding barrel of the barrels policy (M3h9b note §2.3, decision F4)
         // is the one non-monster damage target: no armor; not `MF_COUNTKILL`, so no
@@ -506,7 +525,7 @@ impl DamagePlan {
         if !barrel && !crate::original_registry::is_policy_monster(policy, life.actor_type) {
             return Err(MonsterError::Target.into());
         }
-        if let (true, Some(origin)) = (live, inflictor.as_ref()) {
+        if let (true, Some(origin)) = (live && thrust, inflictor.as_ref()) {
             impulse(origin, mass)?;
         }
         let mut plan = Self::start(victim, request, None, policy)?;
@@ -537,6 +556,11 @@ impl DamagePlan {
             },
             true,
         )
+        .map(|plan| plan.with_thrust(thrust))
+    }
+    fn with_thrust(mut self, thrust: bool) -> Self {
+        self.thrust = thrust;
+        self
     }
 }
 impl PreparedAttack {
@@ -952,7 +976,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
         let old = *self.access.get(id).unwrap();
         let life = old.life.unwrap();
         let info = self.registry.actor_type(life.actor_type).unwrap().clone();
-        if let Some(inflictor) = request.inflictor {
+        if let Some(inflictor) = request.inflictor.filter(|_| plan.thrust) {
             let origin = *self.access.get(inflictor).unwrap();
             let delta = [
                 old.position()[0] - origin.position()[0],
@@ -1059,6 +1083,8 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                             Weapon::Fist => identity::OriginalState::S_PUNCHDOWN,
                             Weapon::Shotgun => identity::OriginalState::S_SGUNDOWN,
                             Weapon::Chaingun => identity::OriginalState::S_CHAINDOWN,
+                            Weapon::Rocket => identity::OriginalState::S_MISSILEDOWN,
+                            Weapon::Chainsaw => identity::OriginalState::S_SAWDOWN,
                             _ => identity::OriginalState::S_PISTOLDOWN,
                         },
                     ),

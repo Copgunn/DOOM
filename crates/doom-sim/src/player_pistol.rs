@@ -11,6 +11,15 @@ pub const PLAYER_DEMON_PISTOL_CONTEXT_SCHEMA: &[u8] = b"PLAYER-DEMON-1-MEDIUM-GR
 const AUTOAIM_UNITS: i16 = 1024;
 const BULLET_UNITS: i16 = 2048;
 const MELEE_UNITS: i16 = 64;
+/// p_pspr.c:516–517 `MELEERANGE+1`: one raw unit past 64 map units ("so the puff
+/// doesn't skip the flash"), not 65 units.
+pub(crate) const SAW_RANGE: Fixed = Fixed::from_bits(64 * 65536 + 1);
+/// tables.h:68–71 and p_pspr.c:527–539: `ANG180`, `-ANG90/20` (an `int`
+/// converted to `angle_t`), `ANG90/20` and `ANG90/21`.
+pub(crate) const ANG180: u32 = 0x8000_0000;
+pub(crate) const MINUS_ANG90_20: u32 = (-(0x4000_0000_i32 / 20)) as u32;
+pub(crate) const ANG90_20: u32 = 0x4000_0000 / 20;
+pub(crate) const ANG90_21: u32 = 0x4000_0000 / 21;
 const SHOTGUN_PELLETS: usize = 7;
 const AUTOAIM_OFFSET: u32 = 1 << 26;
 const OWNED_FIST_PISTOL: u16 = (1 << Weapon::Fist as u8) | (1 << Weapon::Pistol as u8);
@@ -228,17 +237,38 @@ impl<A: ActorAccess> weapons::Host for Host<'_, '_, A> {
             .is_some_and(|p| p.state == PlayerBodyState::Dead)
     }
     fn admit_weapon(&self, weapon: Weapon) -> Result<(), SimError> {
+        let policy = self.life.player.as_ref().map(|p| p.policy);
         if weapon == Weapon::Pistol
-            || (self
-                .life
-                .player
-                .as_ref()
-                .is_some_and(|p| p.policy.has_weapon_pack())
+            || (policy.is_some_and(|p| p.has_weapon_pack())
                 && matches!(weapon, Weapon::Fist | Weapon::Shotgun | Weapon::Chaingun))
+            || (policy.is_some_and(|p| p.has_episode1())
+                && matches!(weapon, Weapon::Rocket | Weapon::Chainsaw))
         {
             Ok(())
         } else {
             Err(WeaponError::UnsupportedWeapon.into())
+        }
+    }
+    fn episode1(&self) -> bool {
+        self.life
+            .player
+            .as_ref()
+            .is_some_and(|p| p.policy.has_episode1())
+    }
+    fn strength(&self) -> bool {
+        self.life
+            .player
+            .as_ref()
+            .and_then(|p| p.powers)
+            .is_some_and(|p| p.powers[0] != 0)
+    }
+    fn take_drop(&mut self) -> bool {
+        match self.life.player.as_deref_mut() {
+            Some(p) if p.weapon_stage == original_player::WeaponStage::DropRequested => {
+                p.weapon_stage = original_player::WeaponStage::Running;
+                true
+            }
+            _ => false,
         }
     }
     fn motion(&mut self, _command: TicCommand) -> Result<(), SimError> {
@@ -371,6 +401,10 @@ pub(crate) fn run<A: ActorAccess>(
     }
     let adapter = state.adapter(id, player.health);
     let registry = host.registry;
+    host.player
+        .as_deref_mut()
+        .ok_or(PlayerBodyError::Profile)?
+        .weapon_stage = original_player::WeaponStage::Running;
     let result = weapons::original_player(
         registry,
         adapter,
@@ -383,8 +417,16 @@ pub(crate) fn run<A: ActorAccess>(
         operation,
         command,
         leveltime,
-    )?;
-    let result = state.with_adapter_result(result, id)?;
+    );
+    let p = host.player.as_deref_mut().ok_or(PlayerBodyError::Profile)?;
+    let dropped = p.weapon_stage == original_player::WeaponStage::DropRequested;
+    p.weapon_stage = original_player::WeaponStage::Idle;
+    let result = result?;
+    // Every fire action applies a requested drop at once (`Machine::after_fire`).
+    if dropped {
+        return Err(PlayerBodyError::Invariant.into());
+    }
+    let result = state.with_adapter_result(result, id, episode1)?;
     result.validate_for(episode1)?;
     host.player
         .as_deref_mut()
@@ -437,6 +479,16 @@ pub(crate) fn stage_operation(
     )
 }
 pub(crate) fn drop_weapon<A: ActorAccess>(host: &mut LifeHost<'_, A>) -> Result<(), SimError> {
+    // Inside a running weapon operation the drop is the running machine's
+    // (`original_player::WeaponStage`).
+    if let Some(p) = host
+        .player
+        .as_deref_mut()
+        .filter(|p| p.weapon_stage != original_player::WeaponStage::Idle)
+    {
+        p.weapon_stage = original_player::WeaponStage::DropRequested;
+        return Ok(());
+    }
     if host.player.as_ref().is_some_and(|p| p.weapon.is_some()) {
         run(
             host,
@@ -467,7 +519,25 @@ fn fire_current(
         };
         let (angle, damage) = weapons::punch_shot(angle, &mut random);
         let slope = aim_current(host, id, angle, MELEE_UNITS)?;
-        return line_current(host, id, weapon, angle, slope, damage, MELEE_UNITS);
+        return line_current(
+            host,
+            id,
+            weapon,
+            angle,
+            slope,
+            damage,
+            Fixed::from_map_units(MELEE_UNITS),
+        );
+    }
+    if weapon == Weapon::Chainsaw {
+        return saw(host, id, angle);
+    }
+    if weapon == Weapon::Rocket {
+        return projectiles::launch_player_missile(
+            host,
+            id,
+            ActorTypeId(OriginalActorType::MT_ROCKET.ordinal()),
+        );
     }
     if !matches!(weapon, Weapon::Pistol | Weapon::Shotgun | Weapon::Chaingun) {
         return Err(WeaponError::UnsupportedWeapon.into());
@@ -488,7 +558,15 @@ fn fire_current(
         };
         let (bullet_angle, damage) =
             weapons::gun_shot(angle, weapon != Weapon::Shotgun && accurate, &mut random);
-        line_current(host, id, weapon, bullet_angle, slope, damage, BULLET_UNITS)?;
+        line_current(
+            host,
+            id,
+            weapon,
+            bullet_angle,
+            slope,
+            damage,
+            Fixed::from_map_units(BULLET_UNITS),
+        )?;
     }
     Ok(())
 }
@@ -499,7 +577,7 @@ fn line_current(
     angle: u32,
     slope: Fixed,
     damage: i32,
-    range: i16,
+    range: Fixed,
 ) -> Result<(), SimError> {
     let actor = *host.access.get(id).ok_or(WeaponError::Reference)?;
     host.events.push(Event::Weapon(WeaponEvent::Bullet {
@@ -510,7 +588,7 @@ fn line_current(
     }));
     let attack = LineAttack {
         angle,
-        range: Fixed::from_map_units(range),
+        range,
         slope,
         damage,
     };
@@ -598,6 +676,76 @@ fn line_current(
             body.spec.angle = movement::point_angle(delta);
         }
     }
+    Ok(())
+}
+
+/// `A_Saw` (p_pspr.c:502–543): the damage draw `2*(P_Random()%10+1)` (no
+/// berserk multiplier), then the spread `(P_Random()-P_Random())<<18`; one
+/// `P_AimLineAttack` and one `P_LineAttack` at `MELEERANGE+1` (raw: the trace
+/// endpoint still uses `range >> 16` = 64 units, and the puff is never forced to
+/// `S_PUFF3`). `linetarget` is the AIM trace's target (`P_LineAttack` never writes
+/// it): none plays `sfx_sawful` and returns; otherwise `sfx_sawhit`, the turn
+/// toward the target with the unsigned/`int` BAM constants of the source, and
+/// `MF_JUSTATTACKED` on the body, which `P_PlayerThink` turns into the lunge on
+/// the next tic. The victim gets no thrust (`P_DamageMobj`'s chainsaw rule,
+/// p_inter.c:806–811, in the shared damage plan).
+fn saw(
+    host: &mut LifeHost<'_, &mut ThinkerStore<Actor>>,
+    id: ActorId,
+    angle: u32,
+) -> Result<(), SimError> {
+    let mut random = |kind| {
+        let value = host.rng.p_random();
+        host.events
+            .push(Event::Weapon(WeaponEvent::Random { kind, value }));
+        value
+    };
+    let (angle, damage) = weapons::punch_shot(angle, &mut random);
+    let lookup = |id| host.access.get(id).copied();
+    let trace = combat_trace::collect_in(host.world, host.spatial, &lookup, id, angle, SAW_RANGE)?;
+    let aim = combat_trace::aim_trace(host.world, host.sectors, id, trace, SAW_RANGE, &lookup)?;
+    line_current(
+        host,
+        id,
+        Weapon::Chainsaw,
+        angle,
+        aim.slope,
+        damage,
+        SAW_RANGE,
+    )?;
+    let sound = |name| lifecycle::source_sound(name).ok_or(WeaponError::Definition);
+    let Some(target) = aim.target else {
+        host.events.push(Event::ActorState(ActorStateEvent::Sound {
+            actor: Some(id),
+            sound: sound("sfx_sawful")?,
+        }));
+        return Ok(());
+    };
+    host.events.push(Event::ActorState(ActorStateEvent::Sound {
+        actor: Some(id),
+        sound: sound("sfx_sawhit")?,
+    }));
+    let target = host
+        .access
+        .get(target)
+        .ok_or(WeaponError::Reference)?
+        .position();
+    let body = host.access.get_mut(id).ok_or(WeaponError::Reference)?;
+    let delta = [0, 1].map(|axis| target[axis] - body.position()[axis]);
+    let angle = movement::point_angle(delta);
+    let current = body.spec.angle;
+    body.spec.angle = if angle.wrapping_sub(current) > ANG180 {
+        if angle.wrapping_sub(current) < MINUS_ANG90_20 {
+            angle.wrapping_add(ANG90_21)
+        } else {
+            current.wrapping_sub(ANG90_20)
+        }
+    } else if angle.wrapping_sub(current) > ANG90_20 {
+        angle.wrapping_sub(ANG90_21)
+    } else {
+        current.wrapping_add(ANG90_20)
+    };
+    body.life.as_mut().ok_or(PlayerBodyError::Invariant)?.flags |= player_commands::MF_JUSTATTACKED;
     Ok(())
 }
 

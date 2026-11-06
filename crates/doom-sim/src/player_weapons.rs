@@ -75,7 +75,14 @@ impl PlayerWeaponState {
     }
     /// The state after one weapon operation on `self`'s adapter: the backpack
     /// is not a weapon field, so it is kept, and the maxima must be `self`'s.
-    pub(crate) fn after_adapter(self, value: WeaponPlayer, id: ActorId) -> Result<Self, SimError> {
+    /// `episode1` (the selected policy, never inferred from the values) admits
+    /// the cells, rockets and the two Episode 1 weapons.
+    pub(crate) fn after_adapter(
+        self,
+        value: WeaponPlayer,
+        id: ActorId,
+        episode1: bool,
+    ) -> Result<Self, SimError> {
         if value.actor != id
             || value.slot != PlayerSlot::One.ordinal()
             || value.max_ammo != self.max_ammo()
@@ -87,10 +94,7 @@ impl PlayerWeaponState {
             owned: value.owned,
             ammo: value.ammo,
         }
-        .validate_with(
-            value.max_ammo,
-            self.backpack || self.cells != 0 || self.rockets != 0,
-        )?;
+        .validate_with(value.max_ammo, episode1)?;
         Ok(Self {
             ready: value.ready,
             pending: value.pending,
@@ -135,7 +139,7 @@ impl PlayerWeaponState {
         }
         .validate_with(self.max_ammo(), episode1)?;
         if let Some(pending) = self.pending {
-            Weapon::from_number(pending as u8)?;
+            Weapon::from_number_for(pending as u8, episode1)?;
             if self.owned & (1 << pending as u8) == 0 {
                 return Err(WeaponError::Inventory.into());
             }
@@ -178,6 +182,9 @@ pub(crate) fn weapon_state(weapon: Weapon, state: OriginalState) -> bool {
         Weapon::Pistol => (OriginalState::S_PISTOL, OriginalState::S_PISTOL4),
         Weapon::Shotgun => (OriginalState::S_SGUN, OriginalState::S_SGUN9),
         Weapon::Chaingun => (OriginalState::S_CHAIN, OriginalState::S_CHAIN2),
+        // info.c:193–209: contiguous ordinals, the up and down states included.
+        Weapon::Rocket => (OriginalState::S_MISSILE, OriginalState::S_MISSILE3),
+        Weapon::Chainsaw => (OriginalState::S_SAW, OriginalState::S_SAW3),
         _ => return false,
     };
     (first.ordinal()..=last.ordinal()).contains(&state.ordinal())
@@ -188,6 +195,9 @@ pub(crate) fn flash_light(state: OriginalState) -> Option<i32> {
         | OriginalState::S_SGUNFLASH1
         | OriginalState::S_CHAINFLASH1 => Some(1),
         OriginalState::S_SGUNFLASH2 | OriginalState::S_CHAINFLASH2 => Some(2),
+        // info.c:199–202: `A_Light1`, no action (still 1), then `A_Light2` twice.
+        OriginalState::S_MISSILEFLASH1 | OriginalState::S_MISSILEFLASH2 => Some(1),
+        OriginalState::S_MISSILEFLASH3 | OriginalState::S_MISSILEFLASH4 => Some(2),
         _ => None,
     }
 }
@@ -237,16 +247,21 @@ impl PlayerWeaponRuntime {
         self,
         p: WeaponPlayer,
         id: ActorId,
+        episode1: bool,
     ) -> Result<Self, SimError> {
         match self {
             Self::Pistol(_) => PistolState::from_adapter(p, id).map(Self::Pistol),
-            Self::Pack(s) => s.after_adapter(p, id).map(Self::Pack),
+            Self::Pack(s) => s.after_adapter(p, id, episode1).map(Self::Pack),
         }
     }
 }
-pub(crate) fn validate_command(c: TicCommand) -> Result<(), SimError> {
+/// The weapon bits of a command; `episode1` admits every three-bit selection
+/// with `BT_CHANGE` (5 and 6 are ignored by the change: never owned).
+pub(crate) fn validate_command(c: TicCommand, episode1: bool) -> Result<(), SimError> {
     if c.buttons & BT_CHANGE != 0 {
-        Weapon::from_number((c.buttons & BT_WEAPONMASK) >> 3)?;
+        if !episode1 {
+            Weapon::from_number((c.buttons & BT_WEAPONMASK) >> 3)?;
+        }
     } else if c.buttons & BT_WEAPONMASK != 0 {
         return Err(SimError::UnsupportedButtons);
     }

@@ -233,11 +233,15 @@ struct Admission {
     demon: bool,
     /// The exploding barrel of the barrels policy: `A_Explode` at `S_BEXP4` alone.
     barrel: bool,
+    /// The rocket of the Episode 1 policy: `A_Explode` at `S_EXPLODE1` alone.
+    rocket: bool,
 }
 impl Admission {
     const fn special(self) -> SpecialActions {
         if self.barrel {
             SpecialActions::Barrel
+        } else if self.rocket {
+            SpecialActions::Rocket
         } else if self.demon && self.chaingun {
             SpecialActions::OriginalMonsters
         } else if self.demon {
@@ -260,6 +264,9 @@ enum SpecialActions {
     /// M3h9b decision F4(ii)): the rocket's `S_EXPLODE1` and every other state
     /// naming it stay `UnsupportedAction`.
     Barrel,
+    /// `A_Explode` in `S_EXPLODE1`, the rocket's death chain (Episode 1 policy
+    /// only, M4a plan §E.4).
+    Rocket,
 }
 const ENTRY_LIMIT: usize = 128;
 const STEP_LIMIT: usize = 8192;
@@ -444,6 +451,9 @@ impl ActorRegistry {
                     && !(specialized == SpecialActions::Barrel
                         && id.0 == crate::identity::OriginalState::S_BEXP4.ordinal()
                         && self.action_name(action) == Some("A_Explode"))
+                    && !(specialized == SpecialActions::Rocket
+                        && id.0 == crate::identity::OriginalState::S_EXPLODE1.ordinal()
+                        && self.action_name(action) == Some("A_Explode"))
                     && !(specialized == SpecialActions::Chaingunner
                         && matches!(
                             self.action_name(action),
@@ -575,6 +585,7 @@ impl ActorRegistry {
                 chaingun: false,
                 demon: false,
                 barrel: false,
+                rocket: false,
             },
         )
     }
@@ -662,6 +673,7 @@ impl ActorRegistry {
                 chaingun: false,
                 demon: false,
                 barrel: false,
+                rocket: false,
             },
         )
     }
@@ -685,6 +697,7 @@ impl ActorRegistry {
                 chaingun: false,
                 demon: false,
                 barrel: false,
+                rocket: false,
             },
         )
     }
@@ -715,6 +728,7 @@ impl ActorRegistry {
                 chaingun: false,
                 demon: false,
                 barrel: false,
+                rocket: false,
             },
         )
     }
@@ -743,6 +757,7 @@ impl ActorRegistry {
                 chaingun: false,
                 demon: false,
                 barrel: false,
+                rocket: false,
             },
         )
     }
@@ -769,6 +784,7 @@ impl ActorRegistry {
                 chaingun: false,
                 demon: false,
                 barrel: false,
+                rocket: false,
             },
         )?;
         for state in self.actor_type(ty).unwrap().states() {
@@ -799,6 +815,7 @@ impl ActorRegistry {
                 chaingun: false,
                 demon: false,
                 barrel: false,
+                rocket: false,
             },
         )?;
         for state in self.actor_type(ty).unwrap().states() {
@@ -829,6 +846,7 @@ impl ActorRegistry {
                 chaingun: true,
                 demon: false,
                 barrel: false,
+                rocket: false,
             },
         )?;
         for state in self.actor_type(ty).unwrap().states() {
@@ -856,6 +874,11 @@ impl ActorRegistry {
     /// only), no look, chase or attack.
     pub(crate) fn validate_state_barrel(&self, state: StateId) -> Result<(), ActorError> {
         self.validate_state_with(state, false, false, false, false, SpecialActions::Barrel)
+    }
+    /// The rocket's state closure (M4a plan §E.4): `S_ROCKET` and the
+    /// `S_EXPLODE` chain, `A_Explode` in `S_EXPLODE1` only.
+    pub(crate) fn validate_state_rocket(&self, state: StateId) -> Result<(), ActorError> {
+        self.validate_state_with(state, false, false, false, false, SpecialActions::Rocket)
     }
     pub(crate) fn validate_state_demon_melee(&self, state: StateId) -> Result<(), ActorError> {
         self.validate_state_with(state, true, true, false, false, SpecialActions::Demon)
@@ -897,6 +920,7 @@ impl ActorRegistry {
                 chaingun: false,
                 demon: true,
                 barrel: false,
+                rocket: false,
             },
         )?;
         for state in self.actor_type(ty).unwrap().states() {
@@ -927,6 +951,30 @@ impl ActorRegistry {
                     chaingun: false,
                     demon: false,
                     barrel: false,
+                    rocket: false,
+                },
+            )?;
+            return Ok(());
+        }
+        if crate::original_registry::is_rocket(ty) {
+            // Caller already required the Episode 1 role. MF_MISSILE as for the
+            // fireball; `A_Explode` in `S_EXPLODE1` alone.
+            self.admit_type(
+                ty,
+                sectors,
+                &mut BTreeSet::new(),
+                &mut BTreeSet::new(),
+                &mut 0,
+                Admission {
+                    flags: ALLOWED_FLAGS | crate::original_player::MF_MISSILE,
+                    look: false,
+                    chase: false,
+                    attacks: false,
+                    shotgun: false,
+                    chaingun: false,
+                    demon: false,
+                    barrel: false,
+                    rocket: true,
                 },
             )?;
             return Ok(());
@@ -949,6 +997,7 @@ impl ActorRegistry {
                     chaingun: true,
                     demon: true,
                     barrel: false,
+                    rocket: false,
                 },
             )?;
             let info = self.actor_type(ty).ok_or(ActorError::InvalidType)?;
@@ -980,6 +1029,7 @@ impl ActorRegistry {
                     chaingun: false,
                     demon: false,
                     barrel: true,
+                    rocket: false,
                 },
             )?;
             return Ok(());
@@ -1006,6 +1056,7 @@ impl ActorRegistry {
                     chaingun: false,
                     demon: false,
                     barrel: false,
+                    rocket: false,
                 },
             )?;
             return Ok(());
@@ -1034,6 +1085,7 @@ impl ActorRegistry {
                 chaingun: false,
                 demon: true,
                 barrel: false,
+                rocket: false,
             },
         )?;
         let info = self.actor_type(ty).ok_or(ActorError::InvalidType)?;

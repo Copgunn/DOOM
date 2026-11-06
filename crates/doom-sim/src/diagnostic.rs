@@ -756,6 +756,7 @@ impl<'a> Diagnostic<'a> {
                         event,
                         matches!(self.version, 24..=39),
                         matches!(self.version, 27..=39),
+                        self.version == 39,
                         self.slot_bound(),
                     )?;
                 }
@@ -768,12 +769,13 @@ impl<'a> Diagnostic<'a> {
                     validate_weapon_event(
                         event,
                         matches!(self.version, 24..=39),
+                        self.version == 39,
                         self.slot_bound(),
                         sectors,
                     )?;
                 }
                 if tag == 15 && matches!(self.version, 29..=39) {
-                    validate_projectile_event(event, self.slot_bound())?;
+                    validate_projectile_event(event, self.slot_bound(), self.version == 39)?;
                 }
                 // Validate identity-bearing payloads without interpreting nested
                 // untrusted collision/sight counts or allocating from them.
@@ -854,6 +856,11 @@ impl<'a> Diagnostic<'a> {
                             OriginalActorType::MT_MISC19,
                             OriginalActorType::MT_MISC49,
                             OriginalActorType::MT_MISC43,
+                            // The DSIM39 weapons, rocket and Spectre (M4a step 6).
+                            OriginalActorType::MT_MISC26,
+                            OriginalActorType::MT_MISC27,
+                            OriginalActorType::MT_ROCKET,
+                            OriginalActorType::MT_SHADOWS,
                         ]
                         .into_iter()
                         .any(|ty| {
@@ -2005,9 +2012,12 @@ impl<'a> Diagnostic<'a> {
             let slot = u32::from_le_bytes(number(&event[2..6])?);
             let prefix = format!("actor.{slot}");
             let fireball = OriginalActorType::MT_TROOPSHOT.ordinal().to_le_bytes();
+            // DSIM39: a rocket removed against the sky likewise (M4a step 6).
+            let rocket = OriginalActorType::MT_ROCKET.ordinal().to_le_bytes();
+            let ty = self.field(&format!("{prefix}.type"));
             if self.field(&format!("{prefix}.occupied")) != Some(&[1])
                 || self.field(&format!("{prefix}.generation")) != Some(&event[6..14])
-                || self.field(&format!("{prefix}.type")) != Some(&fireball)
+                || !(ty == Some(&fireball) || (self.version == 39 && ty == Some(&rocket)))
             {
                 return Err(DiagnosticError::Identity);
             }
@@ -2254,11 +2264,14 @@ impl<'a> Diagnostic<'a> {
                 self.required(&format!("{prefix}.{key}"))?,
             )?))
         };
-        let ready =
-            crate::Weapon::from_number(byte("ready")?).map_err(|_| DiagnosticError::Identity)?;
+        let ready = crate::Weapon::from_number_for(byte("ready")?, self.version == 39)
+            .map_err(|_| DiagnosticError::Identity)?;
         let pending = match byte("pending")? {
             crate::player_weapons::NO_CHANGE => None,
-            w => Some(crate::Weapon::from_number(w).map_err(|_| DiagnosticError::Identity)?),
+            w => Some(
+                crate::Weapon::from_number_for(w, self.version == 39)
+                    .map_err(|_| DiagnosticError::Identity)?,
+            ),
         };
         let latch = match byte("attack_down")? {
             0 => false,
@@ -2601,9 +2614,12 @@ impl Snapshot {
 
 /// `sectors` is the static sector count under DSIM31, where a noise flood visits any
 /// sector with `blocks` 0 or 1 (`P_RecursiveSound`); earlier versions flood sector 0.
+/// `episode1` (DSIM39) adds the rocket launcher and the chainsaw (their psprite
+/// states and actions, the rocket ammo, weapons 4 and 7) and the doubled maxima.
 fn validate_weapon_event(
     event: &[u8],
     pack: bool,
+    episode1: bool,
     slots: u32,
     sectors: Option<u32>,
 ) -> Result<(), DiagnosticError> {
@@ -2622,6 +2638,10 @@ fn validate_weapon_event(
                         ]
                         .into_iter()
                         .any(|w| crate::player_weapons::weapon_state(w, state)))
+                        || (episode1
+                            && [crate::Weapon::Rocket, crate::Weapon::Chainsaw]
+                                .into_iter()
+                                .any(|w| crate::player_weapons::weapon_state(w, state)))
                         || (pack && state == OriginalState::S_CHAIN3)
                         || matches!(
                             state,
@@ -2648,6 +2668,8 @@ fn validate_weapon_event(
                     .copied();
                 if event[3] == 0 {
                     (pack && matches!(name, Some("A_Punch" | "A_FireShotgun" | "A_FireCGun")))
+                        || (episode1
+                            && matches!(name, Some("A_Saw" | "A_FireMissile" | "A_GunFlash")))
                         || matches!(
                             name,
                             Some(
@@ -2666,11 +2688,15 @@ fn validate_weapon_event(
             if valid { Ok(()) } else { Err(invalid) }
         }
         Some(2)
-            if event.len() == 12 && event[2] == 0 && (event[3] == 0 || (pack && event[3] == 1)) =>
+            if event.len() == 12
+                && event[2] == 0
+                && (event[3] == 0 || (pack && event[3] == 1) || (episode1 && event[3] == 3)) =>
         {
             let before = i32::from_le_bytes(number(&event[4..8])?);
             let after = i32::from_le_bytes(number(&event[8..12])?);
-            if (1..=if event[3] == 1 { 50 } else { 200 }).contains(&before) && after == before - 1 {
+            // The backpack doubles the maxima under DSIM39.
+            let max = crate::weapons::AMMO_CAPACITIES[usize::from(event[3])] << u8::from(episode1);
+            if (1..=max).contains(&before) && after == before - 1 {
                 Ok(())
             } else {
                 Err(invalid)
@@ -2684,7 +2710,11 @@ fn validate_weapon_event(
             }
         }
         Some(4)
-            if event.len() == 8 && event[2] == 0 && (event[3] == 1 || (pack && event[3] <= 3)) =>
+            if event.len() == 8
+                && event[2] == 0
+                && (event[3] == 1
+                    || (pack && event[3] <= 3)
+                    || (episode1 && matches!(event[3], 4 | 7))) =>
         {
             if (0..=if pack { i32::MAX } else { 200 })
                 .contains(&i32::from_le_bytes(number(&event[4..8])?))
@@ -2726,9 +2756,22 @@ fn validate_weapon_event(
 
 /// Independent DSIM29 fireball event widths and source domains; plasma's optional
 /// autoaim form and every other missile type stay outside this reader.
-fn validate_projectile_event(event: &[u8], slots: u32) -> Result<(), DiagnosticError> {
+fn validate_projectile_event(
+    event: &[u8],
+    slots: u32,
+    episode1: bool,
+) -> Result<(), DiagnosticError> {
     const FIREBALL: u16 = OriginalActorType::MT_TROOPSHOT.ordinal();
     match (event.get(1), event.len()) {
+        // DSIM39: `P_SpawnPlayerMissile`'s rocket (aim kind 1, no destination).
+        (Some(5), 17) if episode1 && event[14] == 1 => {
+            validate_handle(&event[2..14], slots)?;
+            if u16::from_le_bytes(number(&event[15..17])?) != OriginalActorType::MT_ROCKET.ordinal()
+            {
+                return Err(DiagnosticError::Identity);
+            }
+            Ok(())
+        }
         (Some(0), 14) => validate_handle(&event[2..14], slots),
         (Some(1), 30) => validate_handle(&event[2..14], slots),
         // Spawn tics, shadow pair, contact damage and explosion tics.
@@ -2755,6 +2798,7 @@ fn validate_player_event(
     event: &[u8],
     pack: bool,
     bonuses: bool,
+    episode1: bool,
     slots: u32,
 ) -> Result<(), DiagnosticError> {
     match event.get(1) {
@@ -2792,6 +2836,12 @@ fn validate_player_event(
                         }
                         .into_iter()
                         .flatten(),
+                    )
+                    .chain(
+                        episode1
+                            .then_some([OriginalState::S_MISSILEDOWN, OriginalState::S_SAWDOWN])
+                            .into_iter()
+                            .flatten(),
                     )
                     .any(|s| s.ordinal() == u16::from_le_bytes([event[6], event[7]])))
             {
@@ -2911,6 +2961,11 @@ fn validate_pickup_event(
 ) -> Result<(), DiagnosticError> {
     let armor = matches!(version, 26..=39);
     let bonuses = matches!(version, 27..=39);
+    // A ready (`pending` false) or pending (`pending` true: 10 is wp_nochange)
+    // weapon number; DSIM39 adds the launcher (4) and the chainsaw (7).
+    let weapon = |w: u8, pending: bool| {
+        w <= 3 || (pending && w == 10) || (version == 39 && matches!(w, 4 | 7))
+    };
     let policy = if version == 39 {
         OriginalExecutionProfile::PlayerMonstersEpisode1V1
     } else if version == 38 {
@@ -2986,6 +3041,8 @@ fn validate_pickup_event(
                         OriginalSprite::SPR_BPAK,
                         OriginalSprite::SPR_ROCK,
                         OriginalSprite::SPR_BROK,
+                        OriginalSprite::SPR_CSAW,
+                        OriginalSprite::SPR_LAUN,
                     ]
                     .map(OriginalSprite::ordinal)
                     .contains(&sprite))
@@ -2994,8 +3051,8 @@ fn validate_pickup_event(
             event.len() == 14
                 && (event[2] <= 1 || (version == 39 && event[2] <= 3))
                 && event[3] <= 1
-                && event[12] <= 3
-                && matches!(event[13], 0..=3 | 10)
+                && weapon(event[12], false)
+                && weapon(event[13], true)
                 && {
                     let before = i32::from_le_bytes(number(get(4, 8)?)?);
                     let after = i32::from_le_bytes(number(get(8, 12)?)?);
@@ -3018,13 +3075,15 @@ fn validate_pickup_event(
             }
         }
         Some(3) => {
+            // DSIM39 also gives the launcher (4) and the chainsaw (7).
+            let owned = if version == 39 { 0x9f } else { 15 };
             event.len() == 10
-                && matches!(event[2], 2 | 3)
+                && (matches!(event[2], 2 | 3) || (version == 39 && matches!(event[2], 4 | 7)))
                 && event[3] <= 1
-                && u16::from_le_bytes(number(get(4, 6)?)?) <= 15
-                && u16::from_le_bytes(number(get(6, 8)?)?) <= 15
-                && matches!(event[8], 0..=3 | 10)
-                && matches!(event[9], 0..=3 | 10)
+                && u16::from_le_bytes(number(get(4, 6)?)?) & !owned == 0
+                && u16::from_le_bytes(number(get(6, 8)?)?) & !owned == 0
+                && weapon(event[8], true)
+                && weapon(event[9], true)
         }
         Some(4) => {
             event.len() == 3

@@ -546,7 +546,7 @@ impl Simulation {
             }
             // P_CheckMissileSpawn keeps a blocked half-step without relinking: an
             // exploding fireball's coordinates may lead its source location.
-            let unlinked_blast = original_registry::is_fireball(life.actor_type)
+            let unlinked_blast = original_registry::is_missile_type(life.actor_type)
                 && life.flags & original_player::MF_MISSILE == 0;
             // Under the E1M1 policy a static decoration may hold `floorz > ceilingz`:
             // a door closing onto one whose box straddles a higher neighbouring floor
@@ -726,7 +726,7 @@ impl Simulation {
     }
     pub(crate) fn advance_expanded_demons(
         &mut self,
-        commands: [TicCommand; 4],
+        mut commands: [TicCommand; 4],
     ) -> Result<(), SimError> {
         let command_policy = self.player_policy().has_player_commands();
         let weapon_policy = self.player_policy().has_player_weapons();
@@ -755,6 +755,26 @@ impl Simulation {
         let mut special_exit = false;
         if command_policy {
             plan.events.push(Event::Phase(Phase::Players));
+            // p_user.c:249–255, before the dead test: `A_Saw`'s `MF_JUSTATTACKED`
+            // rewrites the command to the chainsaw lunge (turn 0, forward
+            // 0xc800/512 = 100, side 0; buttons kept) and clears the flag. The
+            // rewritten command is the one every later reader sees, the stand test
+            // of `P_XYMovement` and the DSIM39 capture included (decision D5); the
+            // preflight checked the input command.
+            if self.player_policy().has_episode1() {
+                let body = plan.player.as_ref().and_then(|p| p.mo);
+                if let Some(life) = body
+                    .and_then(|id| plan.actors.get_mut(id))
+                    .and_then(|a| a.life.as_mut())
+                    .filter(|l| l.flags & player_commands::MF_JUSTATTACKED != 0)
+                {
+                    life.flags &= !player_commands::MF_JUSTATTACKED;
+                    let c = &mut commands[usize::from(PlayerSlot::One.ordinal())];
+                    c.angle_turn = 0;
+                    c.forward = 100;
+                    c.side = 0;
+                }
+            }
             // Whether `P_PlayerThink` took its live branch this tic (p_user.c:
             // 258–262), read by the level policy's counter decays.
             let think_live;
@@ -820,6 +840,9 @@ impl Simulation {
                         )
                         .map_err(|error| self.policy_error(error))?;
                         used = use_block(&mut host, &mut plan.specials, command)?;
+                        // The weapons' damage to the player body (a rocket
+                        // exploding at once) reads the sector special-11 cap.
+                        host.specials = Some(plan.specials.as_slice());
                         player_pistol::stage_operation(
                             &mut host,
                             weapons::PlayerWeaponOperation::MovePsprites,
@@ -829,6 +852,7 @@ impl Simulation {
                         )
                         .map_err(|error| self.policy_error(error))?;
                     } else {
+                        host.specials = Some(plan.specials.as_slice());
                         player_pistol::stage_operation(
                             &mut host,
                             weapons::PlayerWeaponOperation::AfterSpecials,

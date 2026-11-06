@@ -918,7 +918,7 @@ impl Simulation {
                 && self
                     .actor(id)
                     .and_then(Actor::life)
-                    .is_some_and(|l| original_registry::is_fireball(l.actor_type))
+                    .is_some_and(|l| original_registry::is_missile_type(l.actor_type))
             {
                 return Ok(self.query_projectile_move(id, target).0);
             }
@@ -1591,6 +1591,8 @@ mod player_episode1_items_tests;
 mod player_episode1_movers_tests;
 #[cfg(test)]
 mod player_episode1_tests;
+#[cfg(test)]
+mod player_episode1_weapons_tests;
 #[cfg(test)]
 mod player_heights_tests;
 #[cfg(test)]

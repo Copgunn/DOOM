@@ -110,12 +110,12 @@ fn units(v: i16) -> Fixed {
     Fixed::from_map_units(v)
 }
 
-/// Every new pickup and both new decorations load under wire 23 only; the
-/// chainsaw and the launcher stay refused until the weapons step.
+/// Every new pickup (the chainsaw and the launcher since the weapons step) and
+/// both new decorations load under wire 23 only.
 #[test]
 fn episode1_items_and_statics_load_only_under_wire_23() {
     for kind in [
-        5, 6, 13, 2013, 2024, 2025, 2026, 2045, 8, 2010, 2046, 34, 46,
+        5, 6, 13, 2013, 2024, 2025, 2026, 2045, 8, 2010, 2046, 2005, 2003, 34, 46,
     ] {
         let mut l = room();
         thing(&mut l, -32, 0, 1);
@@ -124,16 +124,6 @@ fn episode1_items_and_statics_load_only_under_wire_23() {
         decode(&s);
         assert_eq!(
             try_sim(&l, LEVEL).err(),
-            Some(SimError::MapSpawn(MapSpawnError::UnsupportedType(kind))),
-            "{kind}"
-        );
-    }
-    for kind in [2005, 2003] {
-        let mut l = room();
-        thing(&mut l, -32, 0, 1);
-        thing(&mut l, -128, 0, kind);
-        assert_eq!(
-            try_sim(&l, EPISODE1).err(),
             Some(SimError::MapSpawn(MapSpawnError::UnsupportedType(kind))),
             "{kind}"
         );

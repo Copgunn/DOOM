@@ -118,6 +118,10 @@ pub enum PickupKind {
     Rocket,
     /// MT_MISC19, DoomEd 2046, SPR_BROK: box of rockets (Episode 1 policy).
     RocketBox,
+    /// MT_MISC26, DoomEd 2005, SPR_CSAW: chainsaw (Episode 1 policy).
+    Chainsaw,
+    /// MT_MISC27, DoomEd 2003, SPR_LAUN: rocket launcher (Episode 1 policy).
+    RocketLauncher,
 }
 impl PickupKind {
     /// Original definition, never a synthetic pickup alias.
@@ -146,6 +150,8 @@ impl PickupKind {
             Self::Backpack => OriginalActorType::MT_MISC24,
             Self::Rocket => OriginalActorType::MT_MISC18,
             Self::RocketBox => OriginalActorType::MT_MISC19,
+            Self::Chainsaw => OriginalActorType::MT_MISC26,
+            Self::RocketLauncher => OriginalActorType::MT_MISC27,
         }
     }
     fn message(self) -> PickupMessage {
@@ -173,6 +179,8 @@ impl PickupKind {
             Self::Backpack => PickupMessage::Backpack,
             Self::Rocket => PickupMessage::Rocket,
             Self::RocketBox => PickupMessage::RocketBox,
+            Self::Chainsaw => PickupMessage::Chainsaw,
+            Self::RocketLauncher => PickupMessage::Launcher,
         }
     }
     /// One of the pickups admitted by the Episode 1 policy alone.
@@ -190,6 +198,8 @@ impl PickupKind {
                 | Self::Backpack
                 | Self::Rocket
                 | Self::RocketBox
+                | Self::Chainsaw
+                | Self::RocketLauncher
         )
     }
     /// The keycard index (`card_t`: blue, yellow, red) of a keycard pickup.
@@ -267,6 +277,8 @@ pub(crate) fn kind(ty: ActorTypeId) -> Option<PickupKind> {
         OriginalActorType::MT_MISC24 => PickupKind::Backpack,
         OriginalActorType::MT_MISC18 => PickupKind::Rocket,
         OriginalActorType::MT_MISC19 => PickupKind::RocketBox,
+        OriginalActorType::MT_MISC26 => PickupKind::Chainsaw,
+        OriginalActorType::MT_MISC27 => PickupKind::RocketLauncher,
         _ => return None,
     })
 }
@@ -849,7 +861,13 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                 // The assigned message; a keycard already held assigns none
                 // (p_inter.c:421–443).
                 let mut message = Some(k.message());
-                let mut sound = if matches!(k, PickupKind::Shotgun | PickupKind::Chaingun) {
+                let mut sound = if matches!(
+                    k,
+                    PickupKind::Shotgun
+                        | PickupKind::Chaingun
+                        | PickupKind::Chainsaw
+                        | PickupKind::RocketLauncher
+                ) {
                     "sfx_wpnup"
                 } else {
                     "sfx_itemup"
@@ -1047,20 +1065,29 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         }
                         true
                     }
-                    PickupKind::Shotgun | PickupKind::Chaingun => {
-                        let weapon = if k == PickupKind::Shotgun {
-                            Weapon::Shotgun
-                        } else {
-                            Weapon::Chaingun
+                    PickupKind::Shotgun
+                    | PickupKind::Chaingun
+                    | PickupKind::Chainsaw
+                    | PickupKind::RocketLauncher => {
+                        // P_GiveWeapon (p_inter.c:168–222), single player: two
+                        // clip loads of a found weapon (one if MF_DROPPED; the
+                        // chainsaw and launcher pass `dropped` false, 617, 624),
+                        // none for the chainsaw (am_noammo); then ownership and
+                        // the pending switch.
+                        let weapon = match k {
+                            PickupKind::Shotgun => Weapon::Shotgun,
+                            PickupKind::Chaingun => Weapon::Chaingun,
+                            PickupKind::Chainsaw => Weapon::Chainsaw,
+                            _ => Weapon::Rocket,
                         };
                         let before = w.owned;
                         let pending = w.pending;
-                        let gave = ammo(
-                            w,
-                            usize::from(weapon == Weapon::Shotgun),
-                            if l.flags & MF_DROPPED != 0 { 1 } else { 2 },
-                            events,
-                        )?;
+                        let dropped = l.flags & MF_DROPPED != 0
+                            && matches!(k, PickupKind::Shotgun | PickupKind::Chaingun);
+                        let gave = match weapon.ammo() {
+                            Some(kind) => ammo(w, kind, if dropped { 1 } else { 2 }, events)?,
+                            None => false,
+                        };
                         let fresh = before & (1 << weapon as u8) == 0;
                         if fresh {
                             w.owned |= 1 << weapon as u8;

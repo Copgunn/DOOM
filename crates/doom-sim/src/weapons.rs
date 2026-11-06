@@ -24,13 +24,13 @@ pub enum Weapon {
     Shotgun = 2,
     /// Source chaingun.
     Chaingun = 3,
-    /// Deferred rocket launcher.
+    /// Rocket launcher (Episode 1 policy).
     Rocket = 4,
     /// Deferred plasma rifle.
     Plasma = 5,
     /// Deferred BFG.
     Bfg = 6,
-    /// Deferred chainsaw.
+    /// Chainsaw (Episode 1 policy).
     Chainsaw = 7,
     /// Deferred double-barrel shotgun.
     SuperShotgun = 8,
@@ -45,11 +45,37 @@ impl Weapon {
             _ => Err(WeaponError::UnsupportedWeapon),
         }
     }
-    fn ammo(self) -> Option<usize> {
+    /// [`Self::from_number`], widened by the Episode 1 policy (`episode1`) to the
+    /// rocket launcher (4) and the chainsaw (7), the two other weapons it gives.
+    pub(crate) fn from_number_for(v: u8, episode1: bool) -> Result<Self, WeaponError> {
+        match v {
+            4 if episode1 => Ok(Self::Rocket),
+            7 if episode1 => Ok(Self::Chainsaw),
+            _ => Self::from_number(v),
+        }
+    }
+    /// The `weapontype_t` of a three-bit `BT_WEAPONMASK` selection (0–7), total.
+    pub(crate) const fn from_selection(v: u8) -> Self {
+        match v & 7 {
+            0 => Self::Fist,
+            1 => Self::Pistol,
+            2 => Self::Shotgun,
+            3 => Self::Chaingun,
+            4 => Self::Rocket,
+            5 => Self::Plasma,
+            6 => Self::Bfg,
+            _ => Self::Chainsaw,
+        }
+    }
+    /// `weaponinfo[w].ammo` (d_items.c): `am_noammo` (None) for the fist and the
+    /// chainsaw; clip 0, shell 1, cell 2, misl 3.
+    pub(crate) fn ammo(self) -> Option<usize> {
         match self {
-            Self::Fist => None,
-            Self::Shotgun => Some(1),
-            _ => Some(0),
+            Self::Fist | Self::Chainsaw => None,
+            Self::Pistol | Self::Chaingun => Some(0),
+            Self::Shotgun | Self::SuperShotgun => Some(1),
+            Self::Plasma | Self::Bfg => Some(2),
+            Self::Rocket => Some(3),
         }
     }
     pub(crate) fn states(self) -> [StateId; 5] {
@@ -83,6 +109,15 @@ impl Weapon {
                 S::S_CHAIN1,
                 S::S_CHAINFLASH1,
             ],
+            // d_items.c weaponinfo: missile launcher and chainsaw.
+            Self::Rocket => [
+                S::S_MISSILEUP,
+                S::S_MISSILEDOWN,
+                S::S_MISSILE,
+                S::S_MISSILE1,
+                S::S_MISSILEFLASH1,
+            ],
+            Self::Chainsaw => [S::S_SAWUP, S::S_SAWDOWN, S::S_SAW, S::S_SAW1, S::S_NULL],
             _ => unreachable!("weapon admission"),
         };
         states.map(source_state)
@@ -151,8 +186,11 @@ impl WeaponInventory {
     /// The inventory check against the maxima `max`; `pickups` admits the cell
     /// and rocket counts the Episode 1 policy's pickups give (M4a step 5).
     pub(crate) fn validate_with(self, max: [i32; 4], pickups: bool) -> Result<(), WeaponError> {
-        Weapon::from_number(self.ready as u8)?;
-        if self.owned & !15 != 0
+        Weapon::from_number_for(self.ready as u8, pickups)?;
+        // The Episode 1 policy also gives the rocket launcher (bit 4) and the
+        // chainsaw (bit 7).
+        let weapons: u16 = if pickups { 0x9f } else { 15 };
+        if self.owned & !weapons != 0
             || self.owned & 3 != 3
             || self.owned & (1 << (self.ready as u8)) == 0
             || self.ammo.into_iter().zip(max).any(|(a, m)| a < 0 || a > m)
@@ -264,6 +302,21 @@ pub(crate) trait Host {
     fn admit_weapon(&self, _weapon: Weapon) -> Result<(), SimError> {
         Ok(())
     }
+    /// The Episode 1 policy: weapon selections 0–7, the chainsaw and the missile
+    /// launcher in the change, ammo and fire rules (M4a plan §E.2).
+    fn episode1(&self) -> bool {
+        false
+    }
+    /// `player->powers[pw_strength] != 0` (never under any admitted policy).
+    fn strength(&self) -> bool {
+        false
+    }
+    /// After a fire action: whether the player died inside it and its
+    /// `P_KillMobj` asked for `P_DropWeapon` (p_inter.c:715), which the machine
+    /// then runs on its own psprite (the drop is deferred while it runs).
+    fn take_drop(&mut self) -> bool {
+        false
+    }
     fn motion(&mut self, command: TicCommand) -> Result<(), SimError>;
     fn body_state(&mut self, state: StateId) -> Result<(), SimError>;
     fn event(&mut self, event: WeaponEvent);
@@ -331,6 +384,11 @@ impl<H: Host> Machine<'_, H> {
     }
     fn bring_up(&mut self) -> Result<(), SimError> {
         let w = self.player.pending.unwrap_or(self.player.ready);
+        // p_pspr.c:145–146: `sfx_sawup` when the weapon coming up is the chainsaw.
+        if w == Weapon::Chainsaw {
+            self.host
+                .sound(lifecycle::source_sound("sfx_sawup").unwrap());
+        }
         self.player.pending = None;
         self.player.psprites[0].position[1] = Fixed::from_map_units(128);
         self.enter(0, w.states()[0])
@@ -350,6 +408,13 @@ impl<H: Host> Machine<'_, H> {
             Weapon::Shotgun
         } else if self.player.ammo[0] != 0 {
             Weapon::Pistol
+        } else if self.player.owned & (1 << Weapon::Chainsaw as u8) != 0 {
+            // p_pspr.c:213–221: the chainsaw, then the launcher with rockets; only
+            // the Episode 1 policy gives either (plasma, BFG and the super shotgun
+            // are never owned).
+            Weapon::Chainsaw
+        } else if self.player.owned & (1 << Weapon::Rocket as u8) != 0 && self.player.ammo[3] != 0 {
+            Weapon::Rocket
         } else {
             Weapon::Fist
         };
@@ -370,6 +435,16 @@ impl<H: Host> Machine<'_, H> {
         self.host.body_state(STATE_PLAY_ATK1)?;
         self.enter(0, self.player.ready.states()[3])?;
         self.host.noise()?;
+        Ok(())
+    }
+    /// `P_DropWeapon` from a `P_KillMobj` of the player inside a fire action
+    /// (the rocket's `P_CheckMissileSpawn` explosion): the weapon psprite enters
+    /// the ready weapon's down state now, so the action's own state loop then
+    /// stops on its tics (p_pspr.c:187–219 `P_SetPsprite`).
+    fn after_fire(&mut self) -> Result<(), SimError> {
+        if self.host.take_drop() {
+            self.enter(0, self.player.ready.states()[1])?;
+        }
         Ok(())
     }
     fn act(&mut self, position: usize, action: ActionId) -> Result<(), SimError> {
@@ -405,14 +480,28 @@ impl<H: Host> Machine<'_, H> {
                 {
                     self.host.body_state(STATE_PLAY)?;
                 }
+                // p_pspr.c:296–300: the chainsaw's idle sound in `S_SAW`.
+                if self.player.ready == Weapon::Chainsaw
+                    && self.player.psprites[position].state
+                        == Some(source_state(crate::identity::OriginalState::S_SAW))
+                {
+                    self.host
+                        .sound(lifecycle::source_sound("sfx_sawidl").unwrap());
+                }
                 if self.player.pending.is_some() || self.host.health() == 0 {
                     self.enter(0, self.player.ready.states()[1])?;
                     return Ok(());
                 }
                 if self.buttons & BT_ATTACK != 0 {
-                    self.player.attack_down = true;
-                    self.fire_weapon()?;
-                    return Ok(());
+                    // p_pspr.c:315–323: the missile launcher (and the BFG) do not
+                    // auto-fire: a held attack fires again only once released.
+                    if !self.player.attack_down
+                        || !matches!(self.player.ready, Weapon::Rocket | Weapon::Bfg)
+                    {
+                        self.player.attack_down = true;
+                        self.fire_weapon()?;
+                        return Ok(());
+                    }
                 } else {
                     self.player.attack_down = false;
                 }
@@ -470,6 +559,29 @@ impl<H: Host> Machine<'_, H> {
                 self.host.fire(w, self.player.refire == 0)?;
             }
             Some(A::Punch) => self.host.fire(Weapon::Fist, false)?,
+            // p_pspr.c:449–455 `A_GunFlash`: the body's attack frame, then the
+            // flash psprite of the ready weapon.
+            Some(A::GunFlash) => {
+                self.host.body_state(STATE_PLAY_ATK2)?;
+                self.enter(1, self.player.ready.states()[4])?;
+            }
+            // p_pspr.c:551–557 `A_FireMissile`: the ammo first, then
+            // `P_SpawnPlayerMissile (player->mo, MT_ROCKET)`.
+            Some(A::FireMissile) => {
+                let ammo = self.player.ready.ammo().ok_or(WeaponError::Definition)?;
+                let before = self.player.ammo[ammo];
+                self.player.ammo[ammo] -= 1;
+                self.emit(WeaponEvent::Ammo {
+                    slot: self.player.slot,
+                    ammo: ammo as u8,
+                    before,
+                    after: before - 1,
+                });
+                self.host.fire(Weapon::Rocket, false)?;
+                self.after_fire()?;
+            }
+            // p_pspr.c:502–543 `A_Saw`; the host runs the whole action.
+            Some(A::Saw) => self.host.fire(Weapon::Chainsaw, false)?,
             Some(A::Light0 | A::Light1 | A::Light2) => {
                 let value = match identity {
                     Some(A::Light0) => 0,
@@ -510,6 +622,24 @@ impl<H: Host> Machine<'_, H> {
     }
     /// The weapon change of `P_PlayerThink` (`BT_CHANGE`).
     fn weapon_change(&mut self, command: TicCommand) -> Result<(), SimError> {
+        if command.buttons & BT_CHANGE != 0 && self.host.episode1() {
+            // p_user.c:283–312: any three-bit selection; key 1 selects the chainsaw
+            // once owned, unless the chainsaw is ready with the berserk power;
+            // an unowned or ready selection is ignored (plasma and BFG are never
+            // owned; the super shotgun substitution is commercial only).
+            let owned = |w: Weapon| self.player.owned & (1 << (w as u8)) != 0;
+            let mut w = Weapon::from_selection((command.buttons & BT_WEAPONMASK) >> 3);
+            if w == Weapon::Fist
+                && owned(Weapon::Chainsaw)
+                && !(self.player.ready == Weapon::Chainsaw && self.host.strength())
+            {
+                w = Weapon::Chainsaw;
+            }
+            if owned(w) && w != self.player.ready {
+                self.player.pending = Some(w);
+            }
+            return Ok(());
+        }
         if command.buttons & BT_CHANGE != 0 {
             let w = Weapon::from_number((command.buttons & BT_WEAPONMASK) >> 3)?;
             if self.player.owned & (1 << (w as u8)) != 0 && w != self.player.ready {

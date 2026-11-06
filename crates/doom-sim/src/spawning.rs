@@ -160,7 +160,7 @@ impl Simulation {
         }
         // After the position bound: the fit lookup descends the BSP.
         self.spawn_fits(ty, position, height)?;
-        if self.player_policy().has_imps() && crate::original_registry::is_fireball(ty) {
+        if self.player_policy().has_imps() && crate::original_registry::is_missile_type(ty) {
             return Err(ProjectileError::Controlled.into());
         }
         if self.profile.uses_perception() {
@@ -191,6 +191,19 @@ impl Simulation {
                 && identity::OriginalState::try_from(state.0).is_ok_and(barrels::state_allowed)
             {
                 registry.validate_state_barrel(state)?;
+            } else if self.player_policy().has_episode1()
+                && identity::OriginalState::try_from(state.0).is_ok_and(|s| {
+                    matches!(
+                        s,
+                        identity::OriginalState::S_ROCKET
+                            | identity::OriginalState::S_EXPLODE1
+                            | identity::OriginalState::S_EXPLODE2
+                            | identity::OriginalState::S_EXPLODE3
+                    )
+                })
+            {
+                // The rocket's states (M4a plan §E.4): `A_Explode` in `S_EXPLODE1`.
+                registry.validate_state_rocket(state)?;
             } else {
                 registry.validate_state_original_monsters(state)?;
             }

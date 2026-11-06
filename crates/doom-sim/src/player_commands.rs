@@ -97,7 +97,7 @@ impl Simulation {
             return Err(PlayerBodyError::Unsupported.into());
         }
         if p.policy.has_weapon_pack() {
-            player_weapons::validate_command(command)?;
+            player_weapons::validate_command(command, p.policy.has_episode1())?;
         }
         let current = p.mo.filter(|id| self.actors.is_pending(*id) == Some(false));
         let Some(id) = current else {
