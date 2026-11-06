@@ -2226,3 +2226,16 @@ barrels policy, so a map outside those bounds is refused at load exactly as unde
 demos are limited to the admitted command domain (no turbo, pause, save or weapons 4-7); the
 events groups are Rust's own records and the static map is compared separately, so the
 per-tic comparison covers the rest of the capture.
+
+## Original Episode 1, part 1: every door, floor, plat, stair, donut, light and exit special, keys, items, powers, chainsaw, rocket launcher and Spectre (wire 23)
+
+**Status: Phase 2 of M4a in progress.** `OriginalExecutionProfile::PlayerMonstersEpisode1V1`
+(wire 23, DSIM39, context `PLAYER-MONSTERS-EPISODE1-1-MEDIUM-v1`, constructor
+`Simulation::original_player_episode1_map`) is being built on `feat/m4a-episode-1` as the
+superset of wire 22 described in the
+[M4a investigation](M4A_REFERENCE_INVESTIGATION.md#9-policy-proposal) under decisions
+[H1–H12](M4A_REFERENCE_INVESTIGATION.md#10-new-owner-decisions-h1h12-with-recommendations),
+which the owner confirmed on 2026-11-05. This section is completed, with the admitted
+sets, the bounds, the witnesses and the matched real-map runs, when the policy lands; until
+then the note's §8–§10 and the evidence record [validation/M4A.md](validation/M4A.md) hold
+the current state. Wires 1–22 are unchanged.

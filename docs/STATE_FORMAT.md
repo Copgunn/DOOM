@@ -1,4 +1,4 @@
-# Canonical diagnostic state format: DSIM versions 1–36
+# Canonical diagnostic state format: DSIM versions 1–39
 
 This is a diagnostic/replay comparison format for explicit simulation profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
@@ -2072,3 +2072,95 @@ the skill filter on the encoded map, so it checks the body's lump position only 
 ordering above (it cannot tell a removed early THING from a filtered one), and it does not
 recompute the turn toward the attacker or the decay from the previous tic (those are
 replay and C-comparison facts, not per-capture invariants).
+
+## DSIM v39 — Episode 1, part 1: every special, keys, items, powers and the rocket launcher
+
+`PlayerMonstersEpisode1V1` captures are version 39; `Diagnostic::decode_episode1` is its
+explicit reader. Version 39 selects policy 23 (`PlayerMonstersEpisode1V1`, wire 23), the
+unchanged original registry schema, layout selector 17 (as versions 20–38) and context
+`PLAYER-MONSTERS-EPISODE1-1-MEDIUM-v1`. **Frozen-reader rule:** every earlier
+version-specific reader, `decode_level` included, keeps its historical contract and rejects
+39; the v39 reader reads 39 only. V20–38 bytes, encoders, fixtures and policy/context
+meanings are unchanged. The Rust writer is checked against the independent Python
+projection of the genuine engine's per-tic dump; the field list below is the contract
+between the two. Support and limits are in
+[COMPATIBILITY](COMPATIBILITY.md#original-episode-1-part-1-every-door-floor-plat-stair-donut-light-and-exit-special-keys-items-powers-chainsaw-rocket-launcher-and-spectre-wire-23).
+
+V39 is the DSIM38 layout and event vocabulary plus the following, in emission order
+("after X" means immediately after field X). Every DSIM38 field keeps its path, width,
+position and meaning.
+
+| Position | Field | Value encoding |
+| --- | --- | --- |
+| after `level.exit` | `level.secret_exit` | u8 boolean: the exit request was `G_SecretExitLevel` (special 51); `level.exit` is then also 1 |
+| `store.max_slots` | same field | u32 `1024` (it was 384) |
+| after each `sector.N.special` | `sector.N.floorpic` | 8 bytes, the normalized flat name (the same normalization as the donut texture), for every sector; it changes when a donut copies a floor texture |
+| after `original_player.0.weapons.shells` | `original_player.0.weapons.cells`, `.rockets` | u16 each |
+| after those | `original_player.0.weapons.max_ammo.0` … `.3` | u16 each (bullets, shells, cells, rockets): 200, 50, 300, 50, each doubled after the first backpack |
+| after `original_player.0.use_down` | `original_player.0.powers.0` … `.5` | i32 each, in `powertype_t` order: invulnerability, strength, invisibility, ironfeet, allmap, infrared |
+| after the powers | `original_player.0.cards.0` … `.5` | u8 0/1, in `card_t` order: blue card, yellow card, red card, blue skull, yellow skull, red skull |
+| after the cards | `original_player.0.backpack` | u8 0/1 |
+
+Domains the v39 reader enforces: `powers.0` and `powers.1` are 0 (no invulnerability or
+berserk in Episode 1 single player), `powers.2` and `powers.3` are 0–2100, `powers.4` is
+0–1, `powers.5` is 0–4200; `cards.3` … `cards.5` are 0; `weapons.max_ammo` equals the base
+capacity shifted left by `backpack`, and each ammunition count is at most its maximum;
+`weapons.owned` uses only bits 0–4 and 7 (fist, pistol, shotgun, chaingun, rocket launcher,
+chainsaw), `weapons.ready` is one of 0–4 and 7, and `weapons.pending` is one of 0–4, 7 and
+10 (`wp_nochange`); `MF_SHADOW` is set on the player body exactly when `powers.2` is
+positive; `MF_JUSTATTACKED` appears only on the body and only while the chainsaw is ready;
+`level.secret_exit` implies `level.exit`; every `floorpic` is a normalized name. The
+player-command fields (`player.0.forward`, `.side`, `.angle_turn`, `.buttons`) hold the
+command after `P_PlayerThink`'s rewrite: on a chainsaw lunge tic `forward` is 100 and `side`
+and `angle_turn` are 0.
+
+**Sector-thinker records.** The kind codes are unchanged (5 door, 6 plat, 7 floor, 8
+removed mover); stairs and the donut are ordinary floor records, in thinker order.
+
+| Record | Fields after `.generation` and `.occupied` |
+| --- | --- |
+| door (kind 5) | unchanged (`sector, type, direction, topheight, topcountdown`); `type` is now 0 `normal`, 1 `close30ThenOpen`, 3 `open` or 6 `blazeOpen` |
+| plat (kind 6) | `sector, status, count, low, high` as before, then `type` u8 (`plattype_e`: 1 `downWaitUpStay`, 3 `raiseToNearestAndChange`). For type 3 `low` is never written by the original and is encoded as 0 (decision H7) |
+| floor (kind 7) | `sector, type, floordestheight` as before, then `direction` i32 (−1 or 1) and `speed` i32 (raw 16.16); **only when `type` is 11 (`donutRaise`)** also `texture` (8 bytes, normalized flat name) and `newspecial` i16. `type` is 0 `lowerFloor` (the donut hole and every stair step), 1 `lowerFloorToLowest`, 2 `turboLower`, 3 `raiseFloor`, 4 `raiseFloorToNearest` or 11 |
+| removed (kind 8) | unchanged |
+
+Implied and omitted: a door's `speed` and `topwait`, a plat's `speed`, `wait`, `crush` and
+`tag`, a floor's `crush`, and `texture` and `newspecial` for every floor that is not a
+donut. At most one live mover names a sector. The light trigger (special 35) creates no
+record; its effect is the `sector.N.light` values, and the shot and switch triggers change
+`line.N.special` as before.
+
+**Pickup messages** (`original_player.0.pickups.message`, codes 0–13 unchanged):
+
+| Code | Message | Code | Message |
+| --- | --- | --- | --- |
+| 14 | `GOTSUPER` | 22 | `GOTROCKET` |
+| 15 | `GOTBLUECARD` | 23 | `GOTROCKBOX` |
+| 16 | `GOTYELWCARD` | 24 | `GOTBACKPACK` |
+| 17 | `GOTREDCARD` | 25 | `GOTCHAINSAW` |
+| 18 | `GOTINVIS` | 26 | `GOTLAUNCHER` |
+| 19 | `GOTSUIT` | 27 | `PD_BLUEK` |
+| 20 | `GOTMAP` | 28 | `PD_YELLOWK` |
+| 21 | `GOTVISOR` | 29 | `PD_REDK` |
+
+The three `PD_*` locked-door messages (blue, yellow and red key needed) are the genuine
+driver's message indices 38–40; the projection maps them to DSIM codes 27–29, and the
+other new driver indices to 14–26. Codes 14–29 are admitted by the v39 reader only.
+
+**Events.** No new tag. Pickup tag 23 gains four sub-tags and widens two:
+
+| Sub-tag | Meaning | Payload after tag and sub-tag |
+| --- | --- | --- |
+| 11 | Key card touched | u8 card (0–2), u8 held before |
+| 12 | Power touched | u8 power, u8 accepted, i32 counter before, i32 counter after |
+| 13 | Soulsphere | i32 health before, i32 after, i32 body health after |
+| 14 | Backpack | u8 first (1 when it was the first backpack) |
+
+The existing Ammo (sub-tag 1) payload admits cells and rockets and the doubled maxima.
+Mover event records gain the builder functions `BuildStairs` (5) and `DoDonut` (6), and the
+exit event carries a secret flag for special 51. The projection strips the event stream on
+both sides; the events remain canonical in the Rust capture.
+
+The v39 reader applies every DSIM38 check (with `store.max_slots` 1024 in place of 384) and
+the domains above. Reader limitations as for v38: it does not re-run the load rules or
+replay the engine, so it cannot check a floor's destination or a power's history.
