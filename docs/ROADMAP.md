@@ -128,9 +128,12 @@ single player:
 - primary real-map targets E1M2, E1M3 and E1M4; E1M6 and E1M7 are secondary, admitted if
   they load and every script authored for them matches.
 
-Verified so far in Phase 2 (see the evidence record when it exists): the movers, items,
-keys and powers under wire 23 (steps 3-5); the chainsaw, rocket launcher, Spectre and the
-command domain and demo header are still in progress. Support is in
+Verified so far in Phase 2 (steps 1-8 done on 2026-11-05): the movers, items, keys, powers,
+chainsaw, rocket launcher, Spectre, command domain and demo header under wire 23, and Rust matching
+the genuine engine tic for tic on all 30 real scripts (E1M2-E1M4, E1M6, E1M7 and E1M1 re-run), with
+the `strict32` build identical; see the [evidence record](validation/M4A.md). In progress: the fuzz
+re-run on the final crates. Next: matched timings, the owner's mutation-testing step, independent
+review, the full gates and a draft PR. Support is in
 [COMPATIBILITY](COMPATIBILITY.md#original-episode-1-part-1-every-door-floor-plat-stair-donut-light-and-exit-special-keys-items-powers-chainsaw-rocket-launcher-and-spectre-wire-23);
 the schema is [DSIM v39](STATE_FORMAT.md#dsim-v39--episode-1-part-1-every-special-keys-items-powers-and-the-rocket-launcher).
 Remaining: the owner's review and merge.

@@ -2229,11 +2229,13 @@ per-tic comparison covers the rest of the capture.
 
 ## Original Episode 1, part 1: every door, floor, plat, stair, donut, light and exit special, keys, items, powers, chainsaw, rocket launcher and Spectre (wire 23)
 
-**Status: implemented through plan step 6 of 8 on `feat/m4a-episode-1`; not merged.** Steps 7 and 8
-(the command-domain lift, the version-110 demo header for maps 1-9, the real-map Rust runs) are
-open, so this page states what the code admits today and marks the rest as pending. No
-real-map claim is made here: the Rust side of the real Episode 1 maps has not been run
-(see [the evidence record](validation/M4A.md)).
+**Status: implemented through plan step 8 of 8 on `feat/m4a-episode-1`; not merged.** The command-domain
+lift, the version-110 demo header for maps 1-9 and the real-map Rust runs are done. Against the genuine
+engine, Rust matches tic for tic on the 25 authored scripts of E1M2, E1M3, E1M4, E1M6 and E1M7 and on the
+five E1M1 scripts re-run under wire 23, with no refuse-the-tic witness firing (see
+[the evidence record](validation/M4A.md#real-episode-1-maps-genuine-engine-runs-local-only)). That is evidence for those scripted
+inputs only. None of DOOM.WAD's original demos can run under wire 23: all are skill 3, which is M4b, and
+DEMO1 is E1M5, whose teleporters are also M4b; none was attempted.
 
 `OriginalExecutionProfile::PlayerMonstersEpisode1V1` (wire 23, DSIM39, context
 `PLAYER-MONSTERS-EPISODE1-1-MEDIUM-v1`) is a separate optional superset of
@@ -2391,10 +2393,16 @@ overflow occurs on any matched run.
   a level exit ends the run (`LevelExited` on the next tic), and the dead player's `BT_USE`
   reborn tic is refused (`PlayerReborn`).
 - **Commands:** `BT_SPECIAL` and button bit 0x40 are refused (`UnsupportedButtons`).
-  *Pending, step 7:* the `forward`/`side` bound is still +-50 (`PlayerBodyError::Unsupported`)
-  and the plan lifts it to -127..127, with -128 refused; the lunge rewrite
-  already runs with a forward value of 100 inside the engine, as the source does. The demo
-  reader still accepts the wire-22 header (map 1 of episode 1) until the step-7 header lands.
+  `forward` and `side` are admitted in -127..127 (-128 is the demo end marker and is refused) and
+  weapon indices 0-7 follow vanilla's rules; the chainsaw lunge rewrite runs with a forward value of
+  100 inside the engine, as the source does. The demo reader parses the version-110 header
+  (`parse_demo_episode1(bytes, map)`), so demos for maps 1-9 of episode 1 are readable; a map outside
+  the five above is still refused at load.
+- **The turbo message is modelled.** `G_Ticker` (g_game.c:671-679) assigns `"<name> is turbo!"` to the
+  player's message when `forwardmove` exceeds 50 on every 128th gametic, during demo playback too. Under
+  wire 23 this is message code 30 ([format](STATE_FORMAT.md#dsim-v39--episode-1-part-1-every-special-keys-items-powers-and-the-rocket-launcher)),
+  assigned before `P_Ticker` from the command as read, so a later pickup or door message in the same
+  tic replaces it. Older wires never see a forward value above 50.
 - **Presentation and cheats:** the view height, colormaps, the map display and `cheats` are not
   modelled; they never reach a captured field.
 - Rust-only departures: the checked-arithmetic, store-full and mover witnesses and the work
@@ -2409,7 +2417,7 @@ with DSIM39: the genuine engine (`tools/reference/m4a_driver.c`, schema
 independent encoder (`tools/reference/level_snapshot.py --profile episode1`) and compared
 with the Rust capture without the `map.*` and `events.*` groups
 (`level_compare.py --profile episode1`). `player.0.*` holds the command after the chainsaw
-rewrite (decision D5). The 28 synthetic scripts of the nine generated WADs run in CI with
+rewrite (decision D5). The 30 synthetic scripts of the nine generated WADs run in CI with
 no IWAD; real-map runs of E1M2-E1M4, E1M6 and E1M7 are local-only. Evidence for scripted
 inputs is not a claim for every input, every skill or every map.
 

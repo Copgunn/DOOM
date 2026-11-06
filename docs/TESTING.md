@@ -1677,7 +1677,7 @@ Observations of the matched runs belong to the [M3h9c evidence record](validatio
 The M4a [reference investigation](M4A_REFERENCE_INVESTIGATION.md) extends the M3h9c
 whole-engine runner to nine small synthetic mechanism WADs (doors, floors, platforms, stairs,
 exits, weapons, items, a Spectre fight and a scale map) and compares the Rust simulation, wire
-23 (`PlayerMonstersEpisode1V1`, DSIM39), with the genuine engine tic for tic on 28 scripts.
+23 (`PlayerMonstersEpisode1V1`, DSIM39), with the genuine engine tic for tic on 30 scripts.
 Everything on this page is synthetic: no IWAD is read, and every command below runs on a
 clean checkout. The tools are described in the
 [reference tools README](../tools/reference/README.md#m4a-synthetic-mechanism-wads-and-the-episode-1-comparison).
@@ -1739,7 +1739,8 @@ What each asserts:
 - `check_player_episode1.py` runs the Rust example on every script and compares each stripped
   capture (no `map.*`, no `events.*`) with the golden digest, then the fixtures field by field.
   The manifest's `rust` expectation decides the range and the ending: `match`, a
-  `PlayerReborn` refusal, a witness refusal such as `PlatBlocked`, or `tbd` (informational).
+  `PlayerReborn` refusal, a witness refusal such as `PlatBlocked`, or `tbd` (informational; no script uses it now, so
+  `--require` gates all 30 scripts and 18 fixtures).
   Without wire 23 in the example it prints "SKIP: example not available (no wire 23)" and
   exits 0; `--require` makes that a failure.
 - Driver columns: the M4a runner is built from `tools/reference/m4a_driver.c`, the M4a fork of
@@ -1785,9 +1786,11 @@ python3 tools/reference/level_compare.py WORK/runs/strict_E1M2_M2IDLE RUST_DIR -
   refuses the tic with `StairBlocked` or `PlatBlocked`.
 - `player_level_run --policy episode1` loads the map under wire 23 and writes `digests.txt`,
   `stats.txt` and, on a refused tic, `refused.txt`; the comparator ends a complete run at the C side's
-  `exit` or `reborn` tic, where Rust refuses the next tic (`LevelExited`, `PlayerReborn`). Running a
-  demo whose header names a map other than E1M1 through the example needs the step-7 demo header; the
-  C side and the projection do not.
+  `exit` or `reborn` tic, where Rust refuses the next tic (`LevelExited`, `PlayerReborn`). Under
+  `--policy episode1` only, `stats.txt` also has a `store_high_water` line (one past the highest
+  actor-store slot that `thinker.order` names on any capture); the wire-22 output is unchanged. The demo
+  reader parses the version-110 header (13 bytes, with the episode, map and skill fields) through
+  `parse_demo_episode1(bytes, map)`, so a demo of any of the five maps runs through the example.
 - Timings are taken alone on an idle machine, with no concurrent build, test or fuzz job. `--values` of
   the comparator prints map-derived values and stays local.
 
