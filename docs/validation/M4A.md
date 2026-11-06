@@ -277,3 +277,19 @@ or sanitizer campaigns, timings and exact-head CI.
 
 None of DOOM.WAD's original demos can run under wire 23: all are skill 3 (M4b), and DEMO1 is E1M5 with
 teleporters, also deferred to M4b. None was attempted.
+
+## README fresh-reader check
+
+Run on 2026-11-05 after the owner's README and ROADMAP edits, by a reviewer with no prior view of
+the project reading README.md cold, then applying [the documentation review checklist](../DOC_REVIEW_CHECKLIST.md).
+Asked which item made the project most interesting, the reader named the live editor with rewind
+("Change anything while the game runs, then rewind and replay from any moment"), as the concrete
+payoff of the strictness that the "Why this exists" section leaves abstract; the runner-up was
+"Why did that happen?". The reader could tell what exists today from what is a plan. Five
+sentences were found misleading or hard to read (demo playback presented as a present use, a
+rocket-jump sentence beside the then-unverified rocket launcher, an ambiguous "It", "small test
+maps" against the real E1M1 bullet, and a fragment in the in-progress paragraph) and were
+reworded; the forward references to Track 1 and Track 3 now say "below", "genuine engine" is
+defined where first used, and the history clause in the wire-21 policy row was cut. The
+owner-approved "Where it's (maybe) going" items and the long-term and mutation-testing sentences
+were not changed. The README is 197 lines; `tools/check_docs.py` is clean.

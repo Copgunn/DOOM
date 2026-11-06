@@ -23,22 +23,23 @@ behavior that has been checked against the original Linux DOOM 1.10 C code (id S
 step in which DOOM updates its world. Anything not yet proven identical is refused: the
 engine stops with an error instead of approximating.
 
-That makes it useful for exact-behavior work: playing back recorded demos (files that
-replay a player's inputs, which only stay in sync if every tic matches), speedrun and
-tool-assisted (TAS) research, and studying the original engine. Vanilla behavior, meaning
+That is what makes it fit for exact-behavior work once the ground is covered: replaying
+recorded demos (files that replay a player's inputs, which only stay in sync if every tic
+matches), speedrun and tool-assisted (TAS) research, and studying the original engine. Vanilla behavior, meaning
 that of the original unmodified game, is the default here, quirks included, and game math
 stays in Doom's original whole-number arithmetic, with no decimals, except for the one
-division where the original itself used them. Nothing quietly rounds your rocket jumps
-differently.
+division where the original itself used them. Once a behavior is admitted, nothing quietly
+rounds it differently.
 
 **It is not playable yet.** If you want to play Doom today, use an established source
-port such as [Chocolate Doom](https://www.chocolate-doom.org/). It needs your own game
-files, such as those from a copy of Doom you bought.
+port such as [Chocolate Doom](https://www.chocolate-doom.org/). Like every Doom engine,
+this one needs your own game files, such as those from a copy of Doom you bought.
 
 ## Where it stands
 
 The engine runs DOOM's game logic without graphics. It is driven by tests and small
-example programs, on small test maps built for this project. Today it can simulate:
+example programs, on small test maps built for this project and, locally, on the real
+Episode 1 maps. Today it can simulate:
 
 - one player who moves, uses switches and doors, takes damage and dies, with the fist,
   pistol, shotgun and chaingun;
@@ -48,14 +49,12 @@ example programs, on small test maps built for this project. Today it can simula
   flickering lights and scrolling walls;
 - the doors, lifts, moving floors, switches and exit, lamps, pillars, corpses and
   exploding barrels (with chain reactions) of E1M1, the first map;
-- the real E1M1, which runs in sync with the genuine engine for all five scripted runs
-  (idle, walking to the exit, fighting, barrels and random commands; the comparison
-  harness is local-only).
-
-In progress (milestone M4a, being verified against the genuine engine): most of Episode 1:
-E1M2–E1M4, with E1M6 and E1M7 as secondary targets. Every Episode 1 door, floor, lift,
-stair, donut, light and exit special, keys and locked doors, powerups, the chainsaw, the
-rocket launcher and the Spectre.
+- every Episode 1 door, floor, lift, stair, donut, light and exit special, keys and
+  locked doors, powerups, the chainsaw, the rocket launcher and the Spectre;
+- the real E1M1, E1M2, E1M3, E1M4, E1M6 and E1M7, which run in sync with the genuine
+  engine (the original C code, built and run alongside the Rust code) for all 30 scripted
+  runs: idle, walking to the exit, fighting, dying and random commands on each map. The
+  comparison harness is local-only.
 
 What it cannot do yet:
 
@@ -72,9 +71,9 @@ original before it's admitted, so progress is measured in proven features, not w
 Four broad ways to play classic Doom; each non-vanilla one would be a separate optional mode.
 
 - **Vanilla.** The original 1993 game, limits and quirks included: what this project builds.
-- **Limit-removing.** Same game, but the original's hard limits on map size are lifted (Track 1).
+- **Limit-removing.** Same game, but the original's hard limits on map size are lifted (Track 1 below).
 - **Boom, MBF21 and ID24.** Extensions adding new doors, lifts and floors: a possible later mode.
-- **Advanced, ZDoom-style.** Scripting, slopes and big mods: this project would go its own way (Track 3).
+- **Advanced, ZDoom-style.** Scripting, slopes and big mods: this project would go its own way (Track 3 below).
 
 ## Where it's (maybe) going
 
@@ -168,9 +167,9 @@ identifier in saved test snapshots; earlier Demon profiles are under
 | `PlayerMonstersSpecialsV1` (18) | Sky ceilings, light thinkers, damage floors, secrets and one-sided scrolling walls | [Sky and specials](docs/COMPATIBILITY.md#original-monsters-with-sky-and-static-specials) |
 | `PlayerMonstersMoversV1` (19) | E1M1's seven door, lift, floor, switch and exit line types; the tic after the exit is refused | [Movers](docs/COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit) |
 | `PlayerMonstersE1M1V1` (20) | Two-sided scrolling walls and E1M1's seven static decoration types (lamps, pillars, candelabras, corpses and gore) | [E1M1 decorations](docs/COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations) |
-| `PlayerMonstersBarrelsV1` (21) | Exploding barrels with the original's radius attack and chain reactions, 64 pickups, every map-thing angle and the relaxed spawn rule: the last things that stopped E1M1 from loading | [Barrels](docs/COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle) |
+| `PlayerMonstersBarrelsV1` (21) | Exploding barrels with the original's radius attack and chain reactions, 64 pickups, every map-thing angle and the relaxed spawn rule | [Barrels](docs/COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle) |
 | `PlayerMonstersLevelV1` (22) | The player start at its place in the map's thing list, with its angle; the full player think, including damage-flash decay and the dead player's turn toward its attacker: the real E1M1 run | [Level runs](docs/COMPATIBILITY.md#original-level-runs-the-player-start-in-lump-order-and-the-full-player-think-wire-22) |
-| `PlayerMonstersEpisode1V1` (23) | Episode 1, part 1: every door, floor, lift, stair, donut, light and exit special, keys, powerups, chainsaw, rocket launcher and Spectre (being verified) | [Episode 1, part 1](docs/COMPATIBILITY.md#original-episode-1-part-1-every-door-floor-plat-stair-donut-light-and-exit-special-keys-items-powers-chainsaw-rocket-launcher-and-spectre-wire-23) |
+| `PlayerMonstersEpisode1V1` (23) | Episode 1, part 1: every door, floor, lift, stair, donut, light and exit special, keys, powerups, chainsaw, rocket launcher and Spectre: the real E1M2-E1M4, E1M6 and E1M7 runs | [Episode 1, part 1](docs/COMPATIBILITY.md#original-episode-1-part-1-every-door-floor-plat-stair-donut-light-and-exit-special-keys-items-powers-chainsaw-rocket-launcher-and-spectre-wire-23) |
 
 More developer reading:
 
