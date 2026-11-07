@@ -1401,4 +1401,33 @@ mod tests {
             [Fixed::ONE, Fixed::ZERO]
         );
     }
+    /// A fixture type wider than `MAXRADIUS` (32 units, p_local.h:51; the BLOCKMAP
+    /// searches assume it) is refused when spawned: the projectile admission's
+    /// dimension check (`ActorError::Dimensions`) is the only check of a fixture
+    /// type's radius (M4a mutation-testing step).
+    #[test]
+    fn a_fixture_type_wider_than_maxradius_is_refused() {
+        let c = &fixtures::cases()[0];
+        let r = fixtures::registry(c);
+        let wide = |radius: i32| {
+            let mut types = r.types().to_vec();
+            types[15].properties[16] = radius << 16;
+            let registry = ActorRegistry::new(r.states().to_vec(), types).unwrap();
+            Simulation::with_projectile_registry(
+                fixtures::map(0),
+                64,
+                registry,
+                ActorOptions::default(),
+            )
+            .unwrap()
+        };
+        let mut sim = wide(32);
+        sim.spawn_type(ActorTypeId(15), [Fixed::ZERO; 2], SpawnHeight::Floor)
+            .unwrap();
+        let mut sim = wide(33);
+        assert_eq!(
+            sim.spawn_type(ActorTypeId(15), [Fixed::ZERO; 2], SpawnHeight::Floor),
+            Err(ActorError::Dimensions.into())
+        );
+    }
 }
