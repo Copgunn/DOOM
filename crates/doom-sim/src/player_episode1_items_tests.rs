@@ -598,3 +598,20 @@ fn rocket_pickup_switches_from_the_fist_only() {
         decode(&s);
     }
 }
+
+/// The wire-23 `bonuscount` bound is the map's own `6 * (P + R + C)`
+/// (docs/COMPATIBILITY.md, wire 23 "Bounds"), not wire 22's 384: 65 health
+/// bonuses overlapping the player are all touched in one step, each adding
+/// `BONUSADD` 6 (p_inter.c:51, 658), so `bonuscount` is 390, exactly the
+/// map's bound, and the next tic still runs.
+#[test]
+fn bonuscount_may_reach_the_maps_own_bound() {
+    let mut s = sim(&with_items(&[2014; 65]));
+    assert_eq!(s.episode1_bounds().unwrap().max_bonus(), 390);
+    s.advance(step()).unwrap();
+    assert_eq!(pickups(&s).bonus_count, 390);
+    assert_eq!(health(&s), 165);
+    s.advance(zero()).unwrap();
+    assert_eq!(pickups(&s).bonus_count, 389);
+    decode(&s);
+}
