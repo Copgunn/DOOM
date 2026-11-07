@@ -592,7 +592,13 @@ fn saw_turns_to_the_target_minus_ang90_21() {
 /// on the player's line, so `R_PointToAngle2` of the two is exactly 0
 /// (`tantoangle[SlopeDiv(0, dx)]` = `tantoangle[0]` = 0, tables.c:1870); the
 /// lunges slide along the walls (`P_HitSlideLine` zeroes `tmymove` on a
-/// horizontal line) and stop at the barrel, so the bearing stays 0. Facing 0,
+/// horizontal line) and stop at the barrel, so the bearing stays 0. The barrel
+/// starts 55 units ahead: a trace meets a thing on a diagonal through its
+/// centre (`PIT_AddThingIntercepts`, p_maputl.c:632–663), so the centre must be
+/// within about `MELEERANGE+1`. The chainsaw gives no thrust (p_inter.c:805–810), so the
+/// barrel stays put; it has 20 health (info.c:1891), and the seed is one whose
+/// first three saw hits (2–20 each, p_pspr.c:510) total less than 20, so it is
+/// still standing for the fourth. Facing 0,
 /// a hit has delta 0: `+= ANG90/20` (540). Then the delta is exactly −ANG90/20
 /// (`0xFCCCCCCD`): above `ANG180` and not below `-ANG90/20`, so `-= ANG90/20`
 /// (533), back to 0, not `angle + ANG90/21`. A turn of +1 (`angleturn` 1 << 16)
@@ -605,7 +611,7 @@ fn saw_turn_at_exactly_ang90_20_either_way() {
     let mut corridor = HeightsRoom::new(&[-512, 512], &[[0, 128]]).with_things(&[
         [-400, 0, 0, 1, 7],
         [-392, 0, 0, 2005, 7],
-        [-330, 0, 0, 2035, 7],
+        [-345, 0, 0, 2035, 7],
     ]);
     corridor.y = [-16, 16];
     let options = MapContextOptions {
@@ -639,7 +645,11 @@ fn saw_turn_at_exactly_ang90_20_either_way() {
         }
         s.advance(c).unwrap();
         if sounded(&s, "sfx_sawhit") {
-            assert_eq!(s.actor(player).unwrap().spec.angle, plan[hits].0, "hit {hits}");
+            assert_eq!(
+                s.actor(player).unwrap().spec.angle,
+                plan[hits].0,
+                "hit {hits}"
+            );
             assert_eq!(s.actor(player).unwrap().position()[1], Fixed::ZERO);
             hits += 1;
             if hits == plan.len() {
@@ -650,4 +660,4 @@ fn saw_turn_at_exactly_ang90_20_either_way() {
     }
     panic!("only {hits} saw hits");
 }
-const SAW_SEED: u8 = 6;
+const SAW_SEED: u8 = 11;
