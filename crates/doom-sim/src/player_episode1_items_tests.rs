@@ -450,3 +450,142 @@ fn squashed_non_shootable_things_are_admitted_under_wire_23() {
         Err(SimError::MapSpawn(MapSpawnError::Ownership))
     );
 }
+
+// ---- M4a mutation-testing step (run 1, shard 1) ---------------------------
+
+fn field(s: &Simulation, path: &str) -> Vec<u8> {
+    s.snapshot()
+        .fields()
+        .find(|f| f.path() == path)
+        .unwrap_or_else(|| panic!("no field {path}"))
+        .value()
+        .to_vec()
+}
+fn health(s: &Simulation) -> i32 {
+    i32::from_le_bytes(field(s, "original_player.0.health").try_into().unwrap())
+}
+fn weapons(s: &Simulation) -> PlayerWeaponState {
+    s.original_player_weapons(PlayerSlot::One).unwrap().unwrap()
+}
+fn loaded(l: &Lumps, gameplay: u8, inventory: WeaponInventory) -> Simulation {
+    let options = MapContextOptions {
+        initial_rng: DoomRng::from_indices(gameplay, 0),
+        respawn_monsters: false,
+    };
+    let mut s = Simulation::original_player_episode1_map(l.map(), options).unwrap();
+    s.spawn_map_things().unwrap();
+    s.initialize_player_weapons(PlayerSlot::One, inventory)
+        .unwrap();
+    s.spawn_level_specials().unwrap();
+    s
+}
+
+/// `Episode1Bounds::countitems` counts the placed pickups whose info.c
+/// definition carries `MF_COUNTITEM`: the soulsphere (info.c:2560,
+/// `MF_SPECIAL|MF_COUNTITEM`) does; the blue keycard (2352,
+/// `MF_SPECIAL|MF_NOTDMATCH`), the backpack (2976) and the radiation suit (2664,
+/// `MF_SPECIAL` alone) do not.
+#[test]
+fn episode1_bounds_count_only_mf_countitem_pickups() {
+    let record = |kind: i16| {
+        let mut r = [0u8; 10];
+        r[6..8].copy_from_slice(&kind.to_le_bytes());
+        r[8..10].copy_from_slice(&7u16.to_le_bytes());
+        r
+    };
+    let lump: Vec<u8> = [2013, 5, 8, 2025, 2013]
+        .into_iter()
+        .flat_map(record)
+        .collect();
+    let b = Episode1Bounds::from_thing_records(&lump).unwrap();
+    assert_eq!((b.pickups, b.keycards, b.countitems), (5, 1, 2));
+}
+
+/// The suit does not stop the special-16 damage when the gate tic's draw is
+/// below 5: `if (!player->powers[pw_ironfeet] || (P_Random()<5))`
+/// (p_spec.c:1040–1045). Derivation of the draw from the initial gameplay index
+/// 31: the load draws one `lastlook` per spawned thing (`P_SpawnMobj`,
+/// p_mobj.c:524), the player and the suit (33). Tic 0 is a gate tic before the
+/// touch (the body touches in its mobj thinker, after `P_PlayerThink`): the
+/// bare player takes 20 and draws its pain chance (p_inter.c:888–893; 34).
+/// From tic 1 the suited player on the floor draws once a tic, so gate tic 32
+/// draws index 66, `rndtable[66]` = 4 (m_random.c), below 5: 20 more points
+/// and a pain chance (67).
+#[test]
+fn suit_still_hurts_on_a_gate_draw_below_5() {
+    let mut l = with_items(&[2025]);
+    let sector = player_sector(&l);
+    set_sector_special(&mut l, sector, 16);
+    let mut s = loaded(&l, 31, WeaponInventory::default());
+    assert_eq!(s.rng().indices()[0], 33);
+    s.advance(step()).unwrap();
+    assert_eq!(health(&s), 80);
+    assert_eq!(powers(&s).powers[3], 2100);
+    assert_eq!(s.rng().indices()[0], 34);
+    for _ in 1..32 {
+        s.advance(zero()).unwrap();
+    }
+    assert_eq!((health(&s), s.rng().indices()[0]), (80, 65));
+    s.advance(zero()).unwrap();
+    assert_eq!((health(&s), s.rng().indices()[0]), (60, 67));
+    decode(&s);
+}
+
+/// `P_GiveAmmo` switches to the launcher on a rocket pickup only when the
+/// rockets were 0 (p_inter.c:104–114), the fist is ready and the launcher is
+/// owned (149–154): with the pistol ready instead, nothing is pending. The
+/// launcher's two rockets are fired at the far wall first; then the weapon is
+/// selected (key 1, no chainsaw: the fist; key 2: the pistol) and the player
+/// walks onto a rocket.
+#[test]
+fn rocket_pickup_switches_from_the_fist_only() {
+    for (key, ready, pending) in [(0, Weapon::Fist, Some(Weapon::Rocket)), (1, Weapon::Pistol, None)] {
+        let mut l = room();
+        l.add_thing([-32, 0, 180, 1, 7]);
+        thing(&mut l, -40, 0, 2003);
+        thing(&mut l, -200, 0, 2010);
+        let inventory = WeaponInventory {
+            ready: Weapon::Fist,
+            owned: 3,
+            ammo: [0; 4],
+        };
+        let mut s = loaded(&l, 6, inventory);
+        let fire = |attack: bool| {
+            let mut c = zero();
+            c[0].buttons = if attack { weapons::BT_ATTACK } else { 0 };
+            c
+        };
+        s.advance(step()).unwrap();
+        assert_eq!((weapons(&s).owned, weapons(&s).rockets), (3 | 1 << 4, 2));
+        for tic in 0..300 {
+            if weapons(&s).rockets == 0 {
+                break;
+            }
+            s.advance(fire(tic % 2 == 0)).unwrap();
+        }
+        assert_eq!(weapons(&s).rockets, 0);
+        let mut change = zero();
+        change[0].buttons = weapons::BT_CHANGE | key << 3;
+        for _ in 0..100 {
+            let w = weapons(&s);
+            if w.ready == ready && w.pending.is_none() {
+                break;
+            }
+            let c = if w.pending.is_none() && w.ready != ready { change } else { zero() };
+            s.advance(c).unwrap();
+        }
+        assert_eq!(weapons(&s).ready, ready);
+        let mut walked = false;
+        for _ in 0..200 {
+            s.advance(step()).unwrap();
+            if weapons(&s).rockets == 1 {
+                walked = true;
+                break;
+            }
+        }
+        assert!(walked);
+        assert_eq!(weapons(&s).pending, pending, "{ready:?}");
+        assert_eq!(health(&s), 100);
+        decode(&s);
+    }
+}
