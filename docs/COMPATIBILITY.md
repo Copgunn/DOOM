@@ -2330,7 +2330,7 @@ never canonical state; the DSIM39 reader derives the same values from `map.thing
 | Monsters `K`, droppers `R`, pickups `P`, keycards `C`, barrels `B`, statics `D` | counted from THINGS (monsters 3004, 9, 65, 3001, 3002, 58; droppers 3004, 9, 65; the 25 pickup numbers; barrel 2035; statics) |
 | World items | `P + R` |
 | `bonuscount` | `6 * (P + R + C)` |
-| Actor slots | 1,024 (`store.max_slots`, decision D1; the store-full witness replaces the live-actor proof) |
+| Actor slots | 1,024 (`store.max_slots`, decision D1; the store-full witness replaces the live-actor proof). The v39 reader refuses any other value of the field (found by the mutation-testing step). Readers before v39 check only an upper bound, so the v38 reader accepts values below its fixed 384: a documented older-schema gap, not patched |
 | Per-tic monster sight queries | `max(64, 8 * (K + 1))` |
 | Queries per explosion | `max(216, (1 + K + B) * (1 + K))`; the visit-bound roster term is `max(8, K)` |
 | Live missiles | no per-type cap; the full store is the witness |
