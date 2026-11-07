@@ -278,3 +278,34 @@ fn pure_sight_and_profile_boundaries_remain_deliberate() {
     assert!(s.check_sight(id(0), id(2)).is_ok());
     assert_eq!(s.snapshot(), before);
 }
+
+/// A fixture type that does not fit a static sector is refused: "exact
+/// registry/effect dimensions must fit static sectors" (docs/COMPATIBILITY.md,
+/// M3d bounds table), checked by the pursuit (wire-free M3d3b fixture) type admission
+/// (`ActorError::Dimensions`). Type 136 exactly as tall as the map's lowest
+/// sector loads and spawns; one unit taller is refused (M4a mutation-testing
+/// step).
+#[test]
+fn fixture_type_taller_than_a_sector_is_refused() {
+    let c = fixtures::cases()
+        .into_iter()
+        .find(|c| c.label == "spawn_defaults")
+        .unwrap();
+    let low = fixtures::map(0)
+        .sectors()
+        .iter()
+        .map(|s| i32::from(s.heights[1]) - i32::from(s.heights[0]))
+        .min()
+        .unwrap();
+    let attempt = |height: i32| -> Result<ActorId, SimError> {
+        let r = fixtures::registry(&c);
+        let mut types = r.types().to_vec();
+        types[136].properties[17] = height << 16;
+        let r = ActorRegistry::new(r.states().to_vec(), types).unwrap();
+        let mut s =
+            Simulation::with_pursuit_registry(fixtures::map(0), 64, r, ActorOptions::default())?;
+        s.spawn_type(ActorTypeId(136), [Fixed::ZERO; 2], SpawnHeight::Floor)
+    };
+    attempt(low).unwrap();
+    assert_eq!(attempt(low + 1), Err(ActorError::Dimensions.into()));
+}
