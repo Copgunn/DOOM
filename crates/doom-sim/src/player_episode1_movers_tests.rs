@@ -1389,7 +1389,7 @@ fn donut_whose_outer_scan_meets_a_one_sided_line_is_refused() {
 /// The donut room with its `s3` (sector 0, the ring's outer sector) also a
 /// turbo target (36 on its wall, tag 7): the ring (sector 1) may rise to
 /// `s3`'s floor and `s3` may move to its highest neighbour floor (the ring's)
-/// + 8 (§5 `H + 8`), so both ratchet up by 8 a round to the clamp:
+/// plus 8 (§5 `H + 8`), so both ratchet up by 8 a round to the clamp:
 /// `R_max` = 32 767.
 #[test]
 fn donut_ring_and_a_turbo_outer_sector_ratchet_to_the_clamp() {
