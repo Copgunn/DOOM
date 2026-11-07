@@ -615,3 +615,206 @@ fn bonuscount_may_reach_the_maps_own_bound() {
     assert_eq!(pickups(&s).bonus_count, 389);
     decode(&s);
 }
+
+// ---- M4a mutation-testing step (run 1, shard 1): the tic-preflight witnesses
+//
+// Rust-only safety tests, in the manner of the E1M1 decoration witness test
+// (player_e1m1_tests.rs): each corrupts one field of an otherwise valid wire-23
+// state from inside the crate (no public operation produces these values) and
+// checks that the witness refuses it. The domains are the written ones cited on
+// each test; a witness that accepted these values would let a corrupt state run.
+
+fn of_doomed(kind: i32) -> ActorTypeId {
+    ActorTypeId(
+        identity::OriginalActorType::all()
+            .find(|t| t.descriptor().doomed_number == kind)
+            .unwrap()
+            .ordinal(),
+    )
+}
+fn first_of(s: &Simulation, ty: ActorTypeId) -> ActorId {
+    s.actor_order()
+        .find(|id| {
+            s.actor(*id)
+                .and_then(Actor::life)
+                .is_some_and(|l| l.actor_type == ty)
+        })
+        .unwrap()
+}
+
+/// The power counters' Episode 1 domains (`validate_powers`' contract, from the
+/// source durations, doomdef.h:234–238 and M4A_REFERENCE_INVESTIGATION.md
+/// lines 988–1029): no invulnerability or berserk in Episode 1 single player
+/// (`powers[0]`, `powers[1]` = 0), invisibility and the suit at most 60·35,
+/// `pw_allmap` 0 or 1, infrared at most 120·35. Each counter one past its
+/// domain is refused alone; the domain bounds themselves are accepted.
+#[test]
+fn power_counters_outside_their_domains_are_refused_one_at_a_time() {
+    let s = sim(&with_items(&[]));
+    let valid = powers(&s);
+    assert_eq!(episode1::validate_powers(&valid), Ok(()));
+    let mut top = valid;
+    top.powers = [0, 0, 60 * 35, 60 * 35, 1, 120 * 35];
+    assert_eq!(episode1::validate_powers(&top), Ok(()));
+    for (i, bad) in [
+        (0, 1),
+        (1, 1),
+        (2, 60 * 35 + 1),
+        (3, 60 * 35 + 1),
+        (4, 2),
+        (5, 120 * 35 + 1),
+    ] {
+        let mut p = valid;
+        p.powers[i] = bad;
+        assert_eq!(
+            episode1::validate_powers(&p),
+            Err(SimError::PlayerBody(PlayerBodyError::Invariant)),
+            "powers[{i}] = {bad}"
+        );
+    }
+}
+
+/// STATE_FORMAT.md (v27, the bonus slice the later wires keep): `item_count` is
+/// `0..total` and a nonzero `level.total_items` equals the placed bonuses; the
+/// live COUNTITEM bonuses are the ones not yet collected. With two health
+/// bonuses placed and none taken, each corruption is refused by the tic
+/// preflight: `item_count` above the total, one collected while both still
+/// stand, and a total one above the placed count.
+#[test]
+fn item_statistics_outside_the_written_domain_are_refused() {
+    let mut l = room();
+    thing(&mut l, -32, 0, 1);
+    thing(&mut l, 200, 64, 2014);
+    thing(&mut l, 200, -64, 2014);
+    let s = sim(&l);
+    assert_eq!(s.statistics.unwrap().total_items, 2);
+    assert_eq!(s.preflight_world_pickups(), Ok(()));
+    let invariant = Err(SimError::PlayerBody(PlayerBodyError::Invariant));
+    for collected in [3, 1] {
+        let mut c = s.clone();
+        runtime_mut(&mut c).pickups.as_mut().unwrap().item_count = collected;
+        assert_eq!(
+            c.preflight_world_pickups(),
+            invariant,
+            "item_count {collected}"
+        );
+    }
+    let mut c = s.clone();
+    c.statistics.as_mut().unwrap().total_items = 3;
+    assert_eq!(c.preflight_world_pickups(), invariant, "total 3");
+}
+
+/// `bonuscount` is never negative: `P_PlayerThink` decrements it only while it
+/// is nonzero (p_user.c:358–359) and pickups add `BONUSADD` (p_inter.c:658). A
+/// negative count is refused by the pickup-state witness of the tic preflight.
+#[test]
+fn a_negative_bonus_count_is_refused() {
+    let mut s = sim(&with_items(&[]));
+    assert_eq!(s.preflight_world_pickups(), Ok(()));
+    runtime_mut(&mut s).pickups.as_mut().unwrap().bonus_count = -1;
+    assert_eq!(
+        s.preflight_world_pickups(),
+        Err(SimError::PlayerBody(PlayerBodyError::Invariant))
+    );
+}
+
+/// The item witness (STATE_FORMAT.md v27: an item record validates its current
+/// state within its own loop): a cycling item (the blue keycard, info.c:964–965 `S_BKEY`
+/// / `S_BKEY2`) accepts its two loop states and refuses a state outside it.
+#[test]
+fn a_cycling_item_accepts_only_its_own_loop_states() {
+    use identity::OriginalState;
+    let card = of_doomed(5);
+    assert!(world_pickups::state_allowed(card, OriginalState::S_BKEY));
+    assert!(world_pickups::state_allowed(card, OriginalState::S_BKEY2));
+    for other in [
+        OriginalState::S_PLAY,
+        OriginalState::S_YKEY,
+        OriginalState::S_NULL,
+    ] {
+        assert!(!world_pickups::state_allowed(card, other), "{other:?}");
+    }
+}
+
+/// The decoration witness (the E1M1 decoration witness test's rule: sprite and
+/// frame are written together with the state by state entry from info.c): a
+/// candle (DoomEd 34, `S_CANDLESTIK`) whose sprite alone, or frame alone,
+/// disagrees with its state is refused.
+#[test]
+fn a_decoration_whose_sprite_or_frame_disagrees_with_its_state_is_refused() {
+    let mut l = with_items(&[]);
+    thing(&mut l, 200, 0, 34);
+    let s = sim(&l);
+    let candle = *s.actor(first_of(&s, of_doomed(34))).unwrap();
+    assert_eq!(e1m1_rules::validate_decoration(None, candle), Ok(()));
+    let mut sprite = candle;
+    sprite.life.as_mut().unwrap().sprite ^= 1;
+    let mut frame = candle;
+    frame.life.as_mut().unwrap().frame ^= 1;
+    for (name, bad) in [("sprite", sprite), ("frame", frame)] {
+        assert_eq!(
+            e1m1_rules::validate_decoration(None, bad),
+            Err(SimError::PlayerBody(PlayerBodyError::Invariant)),
+            "{name}"
+        );
+    }
+}
+
+/// `MF_JUSTATTACKED` is set only by `A_Saw` (p_pspr.c:542) and cleared by the
+/// next `P_PlayerThink` (p_user.c:249–254), so at a tic boundary under wire 23
+/// it is admitted only with the chainsaw ready (the body preflight's written
+/// exception); with the pistol ready it is refused. The flag with the chainsaw
+/// ready is admitted.
+#[test]
+fn just_attacked_at_a_tic_boundary_needs_the_chainsaw_ready() {
+    let mut s = sim(&with_items(&[]));
+    assert_eq!(s.preflight_player_body(false), Ok(()));
+    let mo = runtime(&s).mo.unwrap();
+    s.actors.get_mut(mo).unwrap().life.as_mut().unwrap().flags |= player_commands::MF_JUSTATTACKED;
+    assert_eq!(
+        s.preflight_player_body(false),
+        Err(SimError::PlayerBody(PlayerBodyError::Invariant))
+    );
+    let Some(player_weapons::PlayerWeaponRuntime::Pack(w)) = runtime_mut(&mut s).weapon.as_mut()
+    else {
+        panic!("pack");
+    };
+    w.ready = Weapon::Chainsaw;
+    w.owned |= 1 << 7;
+    assert_eq!(s.preflight_player_body(false), Ok(()));
+}
+
+/// The body preflight's airborne-mover rule (original_player.rs: a flying
+/// missile is the one admitted non-monster, non-barrel mover with momentum at a
+/// tic boundary): a health bonus given momentum is refused as `Unsupported`
+/// under wire 23, which also admits imps.
+#[test]
+fn a_moving_item_at_a_tic_boundary_is_refused() {
+    let mut l = with_items(&[]);
+    thing(&mut l, 200, 0, 2014);
+    let mut s = sim(&l);
+    assert_eq!(s.preflight_player_body(false), Ok(()));
+    let bonus = first_of(&s, of_doomed(2014));
+    s.actors.get_mut(bonus).unwrap().spec.momentum[0] = units(1);
+    assert_eq!(
+        s.preflight_player_body(false),
+        Err(SimError::PlayerBody(PlayerBodyError::Unsupported))
+    );
+}
+
+/// STATE_FORMAT.md (v27): "zero also describes a constructed world before its
+/// THING batch". A wire-23 world with one placed health bonus, constructed but
+/// not yet spawned, has `level.total_items` 0 and passes the item-statistics
+/// witness; after the batch the total is the placed count, 1.
+#[test]
+fn a_zero_item_total_before_the_thing_batch_is_accepted() {
+    let mut l = room();
+    thing(&mut l, -32, 0, 1);
+    thing(&mut l, 200, 64, 2014);
+    let s = load(&l, EPISODE1).unwrap();
+    assert_eq!(s.statistics.unwrap().total_items, 0);
+    assert_eq!(s.preflight_world_pickups(), Ok(()));
+    let s = sim(&l);
+    assert_eq!(s.statistics.unwrap().total_items, 1);
+    assert_eq!(s.preflight_world_pickups(), Ok(()));
+}
