@@ -330,3 +330,250 @@ fn rocket_role_is_episode1_only() {
         original_registry::state_role_for(EPISODE1, rocket, state(OriginalState::S_BEXP4)).is_err()
     );
 }
+
+// ---- M4a mutation-testing step (run 1, shard 1) ---------------------------
+//
+// Observable-behaviour tests for mutants that survived the whole suite. The
+// loadouts come from pickups and weapon changes through `advance`; the reads are
+// the public `original_player_weapons`, `events`, `actor` and the snapshot.
+
+/// The empty loadout: pistol ready with no bullets, fist and pistol owned.
+const EMPTY: WeaponInventory = WeaponInventory {
+    ready: Weapon::Pistol,
+    owned: 3,
+    ammo: [0; 4],
+};
+fn armed(l: &Lumps, inventory: WeaponInventory) -> Simulation {
+    let mut s = Simulation::original_player_episode1_map(l.map(), options()).unwrap();
+    s.spawn_map_things().unwrap();
+    s.initialize_player_weapons(PlayerSlot::One, inventory)
+        .unwrap();
+    s.spawn_level_specials().unwrap();
+    s
+}
+fn weapons(s: &Simulation) -> PlayerWeaponState {
+    s.original_player_weapons(PlayerSlot::One).unwrap().unwrap()
+}
+/// `ready` is up (`WEAPONTOP`, 32 units, p_pspr.c `A_Raise`) with nothing pending.
+fn raised(s: &Simulation, ready: Weapon) -> bool {
+    let w = weapons(s);
+    w.ready == ready && w.pending.is_none() && w.psprites[0].position[1] == Fixed::from_map_units(32)
+}
+/// Advances with `commands` until `done` holds, at most `limit` tics.
+fn until(
+    s: &mut Simulation,
+    commands: [TicCommand; 4],
+    limit: usize,
+    done: impl Fn(&Simulation) -> bool,
+) {
+    for _ in 0..limit {
+        if done(s) {
+            return;
+        }
+        s.advance(commands).unwrap();
+        decode(s);
+    }
+    assert!(done(s), "not reached in {limit} tics");
+}
+fn select(weapon: u8) -> [TicCommand; 4] {
+    command(0, BT_CHANGE | weapon << 3)
+}
+fn sounded(s: &Simulation, name: &str) -> bool {
+    let id = lifecycle::source_sound_id(name);
+    s.events().iter().any(|e| {
+        matches!(e, Event::ActorState(lifecycle::ActorStateEvent::Sound { sound, .. }) if *sound == id)
+    })
+}
+
+/// `P_CheckAmmo`'s fallback order (p_pspr.c:197–229): with no clip and no shell
+/// the chainsaw comes before the launcher (211–214). The pistol is ready with
+/// no bullets after the chainsaw was picked up and the pistol selected again;
+/// firing it fails the ammo check and names the chainsaw.
+#[test]
+fn empty_pistol_falls_back_to_an_owned_chainsaw() {
+    let mut s = armed(&with(&[(-32, 0, 180, 1), (-40, 0, 0, 2005)]), EMPTY);
+    s.advance(command(1, 0)).unwrap();
+    assert_eq!(weapons(&s).owned, 3 | 1 << 7);
+    until(&mut s, command(0, 0), 100, |s| raised(s, Weapon::Chainsaw));
+    s.advance(select(1)).unwrap();
+    until(&mut s, command(0, 0), 100, |s| raised(s, Weapon::Pistol));
+    s.advance(command(0, BT_ATTACK)).unwrap();
+    assert_eq!(weapons(&s).pending, Some(Weapon::Chainsaw));
+    decode(&s);
+}
+
+/// `P_CheckAmmo` (p_pspr.c:215–219): the launcher is the fallback only when it
+/// is owned and has rockets. Owning it with two rockets (the pickup's two
+/// loads, p_inter.c `P_GiveWeapon`), an empty pistol falls back to it; with a
+/// rocket but no launcher (a rocket pickup does not switch from the pistol,
+/// p_inter.c:149–154) the fallback is the fist (225–228).
+#[test]
+fn empty_pistol_falls_back_to_the_launcher_only_with_both() {
+    let mut s = armed(&with(&[(-32, 0, 180, 1), (-40, 0, 0, 2003)]), EMPTY);
+    s.advance(command(1, 0)).unwrap();
+    assert_eq!((weapons(&s).owned, weapons(&s).rockets), (3 | 1 << 4, 2));
+    until(&mut s, command(0, 0), 100, |s| raised(s, Weapon::Rocket));
+    s.advance(select(1)).unwrap();
+    until(&mut s, command(0, 0), 100, |s| raised(s, Weapon::Pistol));
+    s.advance(command(0, BT_ATTACK)).unwrap();
+    assert_eq!(weapons(&s).pending, Some(Weapon::Rocket));
+    decode(&s);
+
+    let mut s = armed(&with(&[(-32, 0, 180, 1), (-40, 0, 0, 2010)]), EMPTY);
+    s.advance(command(1, 0)).unwrap();
+    assert_eq!((weapons(&s).owned, weapons(&s).rockets), (3, 1));
+    until(&mut s, command(0, 0), 100, |s| raised(s, Weapon::Pistol));
+    s.advance(command(0, BT_ATTACK)).unwrap();
+    assert_eq!(weapons(&s).pending, Some(Weapon::Fist));
+    decode(&s);
+}
+
+/// `A_WeaponReady` plays `sfx_sawidl` only when the chainsaw's psprite is in
+/// `S_SAW` (p_pspr.c:296–299). `S_SAW` and `S_SAWB` both run `A_WeaponReady`
+/// on entry, 4 tics each, and alternate (info.c:203–204), so the idle sound
+/// comes on every `S_SAW` entry (every 8 tics) and never on an `S_SAWB` one.
+#[test]
+fn chainsaw_idle_sound_only_on_s_saw_entries() {
+    let mut s = armed(&with(&[(-32, 0, 180, 1), (-40, 0, 0, 2005)]), EMPTY);
+    s.advance(command(1, 0)).unwrap();
+    let mut sounds = 0;
+    for _ in 0..80 {
+        s.advance(command(0, 0)).unwrap();
+        let w = weapons(&s);
+        let entered = |st: OriginalState| w.psprites[0].state == Some(state(st)) && w.psprites[0].tics == 4;
+        assert_eq!(sounded(&s, "sfx_sawidl"), entered(OriginalState::S_SAW));
+        assert!(!(entered(OriginalState::S_SAWB) && sounded(&s, "sfx_sawidl")));
+        sounds += usize::from(sounded(&s, "sfx_sawidl"));
+    }
+    assert!(raised(&s, Weapon::Chainsaw));
+    assert!(sounds >= 5, "{sounds}");
+}
+
+/// Key 1 with the chainsaw ready and no berserk (`pw_strength` is never given
+/// in Episode 1 single player): `newweapon` becomes the chainsaw again
+/// (p_user.c:290–296), which is the ready weapon, so nothing changes.
+#[test]
+fn key_1_with_the_chainsaw_ready_keeps_it() {
+    let mut s = armed(&with(&[(-32, 0, 180, 1), (-40, 0, 0, 2005)]), EMPTY);
+    s.advance(command(1, 0)).unwrap();
+    until(&mut s, command(0, 0), 100, |s| raised(s, Weapon::Chainsaw));
+    s.advance(select(0)).unwrap();
+    assert_eq!(weapons(&s).pending, None);
+    for _ in 0..30 {
+        s.advance(command(0, 0)).unwrap();
+    }
+    assert!(raised(&s, Weapon::Chainsaw));
+}
+
+/// The initial loadout names only the four weapons the older policies give
+/// (`WeaponInventory`: an initial *supported* ready weapon; the launcher and the
+/// chainsaw come from pickups under wire 23): a ready launcher (4) or chainsaw
+/// (7) is the unsupported-weapon error, under wire 23 too.
+#[test]
+fn initial_loadout_cannot_ready_the_launcher_or_the_chainsaw() {
+    for (ready, bit) in [(Weapon::Rocket, 4), (Weapon::Chainsaw, 7)] {
+        let mut s =
+            Simulation::original_player_episode1_map(with(&[(-32, 0, 0, 1)]).map(), options())
+                .unwrap();
+        s.spawn_map_things().unwrap();
+        let inventory = WeaponInventory {
+            ready,
+            owned: 3 | 1 << bit,
+            ammo: [50, 0, 0, 0],
+        };
+        assert_eq!(
+            s.initialize_player_weapons(PlayerSlot::One, inventory),
+            Err(SimError::Weapon(WeaponError::UnsupportedWeapon)),
+            "{ready:?}"
+        );
+    }
+}
+
+/// `P_KillMobj` asks for `P_DropWeapon` (p_inter.c:707), which sets the ready
+/// weapon's `downstate` (p_pspr.c:265–270): `S_SAWDOWN` for the chainsaw and
+/// `S_MISSILEDOWN` for the launcher (d_items.c:89, 116). Killed by the special-16
+/// floor (20 points every 32 tics, p_spec.c:1036–1047) with each weapon ready,
+/// the `Died` event names that state.
+#[test]
+fn death_names_the_chainsaw_and_launcher_downstates() {
+    for (pickup, weapon, down) in [
+        (2005, Weapon::Chainsaw, OriginalState::S_SAWDOWN),
+        (2003, Weapon::Rocket, OriginalState::S_MISSILEDOWN),
+    ] {
+        let mut l = with(&[(-32, 0, 180, 1), (-40, 0, 0, pickup)]);
+        let sectors = l
+            .lumps
+            .iter()
+            .find(|(n, _)| n == "SECTORS")
+            .unwrap()
+            .1
+            .len()
+            / 26;
+        for sector in 0..sectors {
+            let lump = &mut l.lumps.iter_mut().find(|(n, _)| n == "SECTORS").unwrap().1;
+            lump[26 * sector + 22..26 * sector + 24].copy_from_slice(&16i16.to_le_bytes());
+        }
+        let mut s = armed(&l, EMPTY);
+        s.advance(command(1, 0)).unwrap();
+        let mut died = None;
+        for _ in 0..200 {
+            s.advance(command(0, 0)).unwrap();
+            died = s.events().iter().find_map(|e| match e {
+                Event::PlayerBody(PlayerBodyEvent::Died { weapon_down, .. }) => Some(*weapon_down),
+                _ => None,
+            });
+            if died.is_some() {
+                assert_eq!(weapons(&s).ready, weapon);
+                break;
+            }
+        }
+        assert_eq!(died, Some(down), "{weapon:?}");
+    }
+}
+
+/// `A_Saw`'s turn (p_pspr.c:524–541): with the target more than `ANG90/20`
+/// counter-clockwise of the facing (and less than `ANG180`), the player turns to
+/// `angle - ANG90/21` (537–538), not by `ANG90/20`. The zombieman stands about
+/// 10° to the left of the east-facing player, inside the saw's reach; the
+/// expected angle is `R_PointToAngle2` of the two positions before the hit tic,
+/// taken here from `atan2` within 2²⁰ BAM (the tantoangle table's resolution is
+/// about 2¹⁸ there), minus `ANG90/21` = 51 130 563 (tables.h `ANG90` 0x40000000).
+#[test]
+fn saw_turns_to_the_target_minus_ang90_21() {
+    let mut s = armed(
+        &with(&[(-300, 0, 0, 1), (-292, 0, 0, 2005), (-246, 9, 0, 3004)]),
+        EMPTY,
+    );
+    let find = |s: &Simulation, ty: OriginalActorType| {
+        s.actor_order()
+            .find(|id| {
+                s.actor(*id)
+                    .and_then(Actor::life)
+                    .is_some_and(|l| l.actor_type.0 == ty.ordinal())
+            })
+            .unwrap()
+    };
+    let player = find(&s, OriginalActorType::MT_PLAYER);
+    let zombie = find(&s, OriginalActorType::MT_POSSESSED);
+    s.advance(command(1, 0)).unwrap();
+    until(&mut s, command(0, 0), 100, |s| raised(s, Weapon::Chainsaw));
+    for _ in 0..40 {
+        let (p, z) = (*s.actor(player).unwrap(), *s.actor(zombie).unwrap());
+        let current = p.spec.angle;
+        s.advance(command(0, BT_ATTACK)).unwrap();
+        if !sounded(&s, "sfx_sawhit") {
+            continue;
+        }
+        let [dx, dy] = [0, 1].map(|i| f64::from(z.position()[i].bits() - p.position()[i].bits()));
+        let bam = |radians: f64| (radians / std::f64::consts::TAU * 4_294_967_296.0).rem_euclid(4_294_967_296.0);
+        let angle = bam(dy.atan2(dx));
+        let delta = (angle - f64::from(current)).rem_euclid(4_294_967_296.0);
+        // Between 6° and 30° counter-clockwise: well inside the (ANG90/20, ANG180] branch.
+        assert!((71_582_788.0..357_913_941.0).contains(&delta), "{delta}");
+        let expected = angle - 51_130_563.0;
+        let turned = f64::from(s.actor(player).unwrap().spec.angle);
+        assert!((turned - expected).abs() < f64::from(1u32 << 20), "{turned} {expected}");
+        return;
+    }
+    panic!("no saw hit");
+}
