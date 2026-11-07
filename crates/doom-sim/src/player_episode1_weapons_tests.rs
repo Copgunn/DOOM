@@ -661,3 +661,71 @@ fn saw_turn_at_exactly_ang90_20_either_way() {
     panic!("only {hits} saw hits");
 }
 const SAW_SEED: u8 = 11;
+
+// ---- M4a mutation-testing step (run 1, shard 1): adapter and missile witnesses
+//
+// Rust-only safety tests: each corrupts one value from inside the crate (no
+// public operation produces it) and checks that the witness refuses it.
+
+/// The weapon adapter's identity rule (`PlayerWeaponState::after_adapter`: the
+/// weapon machine never changes the adapter's actor, slot or maxima): the
+/// unchanged adapter is accepted, and an adapter naming another actor, another
+/// slot or other maxima is refused alone as `WeaponError::Inventory`.
+#[test]
+fn a_weapon_adapter_with_another_actor_slot_or_maxima_is_refused() {
+    let s = sim(&with(&[(-32, 0, 0, 1), (200, 0, 0, 2014)]));
+    let mo = runtime(&s).mo.unwrap();
+    let other = s.actor_order().find(|id| *id != mo).unwrap();
+    let w = pack(&s);
+    assert!(w.after_adapter(w.adapter(mo, 100), mo, true).is_ok());
+    let mut actor = w.adapter(mo, 100);
+    actor.actor = other;
+    let mut slot = w.adapter(mo, 100);
+    slot.slot = PlayerSlot::One.ordinal() + 1;
+    let mut maxima = w.adapter(mo, 100);
+    maxima.max_ammo[0] += 1;
+    for (name, bad) in [("actor", actor), ("slot", slot), ("maxima", maxima)] {
+        assert_eq!(
+            w.after_adapter(bad, mo, true).err(),
+            Some(SimError::Weapon(WeaponError::Inventory)),
+            "{name}"
+        );
+    }
+}
+
+/// A flying rocket's owner: `P_SpawnPlayerMissile` sets `th->target = source`
+/// (p_mobj.c:978) and the owner-removal preflight keeps it live, so the
+/// live-missile witness of the tic preflight refuses a flying rocket without
+/// an owner as `ProjectileError::Owner`.
+#[test]
+fn a_flying_rocket_without_an_owner_is_refused() {
+    let mut s = sim(&with(&[(-32, 0, 180, 1)]));
+    arm(&mut s, Weapon::Rocket, 3 | 1 << 4, 5);
+    s.advance(command(0, 0)).unwrap();
+    let rocket = ActorTypeId(OriginalActorType::MT_ROCKET.ordinal());
+    let mut flying = None;
+    for _ in 0..20 {
+        s.advance(command(0, BT_ATTACK)).unwrap();
+        flying = s.actor_order().find(|id| {
+            s.actor(*id).and_then(Actor::life).is_some_and(|l| {
+                l.actor_type == rocket && l.flags & original_player::MF_MISSILE != 0
+            })
+        });
+        if flying.is_some() {
+            break;
+        }
+    }
+    let flying = flying.expect("a flying rocket");
+    assert_eq!(s.preflight_live_missiles(), Ok(()));
+    s.actors
+        .get_mut(flying)
+        .unwrap()
+        .life
+        .as_mut()
+        .unwrap()
+        .target = None;
+    assert_eq!(
+        s.preflight_live_missiles(),
+        Err(SimError::Projectile(ProjectileError::Owner))
+    );
+}
