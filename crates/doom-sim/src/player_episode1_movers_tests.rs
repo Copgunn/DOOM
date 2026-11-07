@@ -1362,3 +1362,40 @@ fn episode1_nearest_and_turbo_ratchet_to_the_clamp() {
     ]));
     assert_eq!(a.reach[1], 32_767);
 }
+
+/// `DonutGeometry` (decision H8, docs/COMPATIBILITY.md wire 23 "Load rules"):
+/// `EV_DoDonut` reads the back sector of the first line of `s2` whose back is
+/// not `s1`, one-sided lines included (p_spec.c:1184–1190; the
+/// `!flags & ML_TWOSIDED` test never skips one), so that line must have a back
+/// side. Lift room 7 with sector 1 as the donut's `s1`: its first line (0) leads
+/// to `s2` = sector 0, whose first line not backed by sector 1 is the one-sided
+/// wall 1: refused.
+#[test]
+fn donut_whose_outer_scan_meets_a_one_sided_line_is_refused() {
+    let mut l = room(7);
+    l.clear_things();
+    set_line(&mut l, 0, 0, 0);
+    set_sector_special(&mut l, 3, 0, 0);
+    set_sector_special(&mut l, 1, 0, 9);
+    set_line(&mut l, 12, 9, 9);
+    set_front_texture(&mut l, 12, b"SW1COMM\0");
+    thing(&mut l, 256, 64, 90, 1);
+    assert_eq!(
+        load(&l, EPISODE1).err(),
+        Some(SimError::MapScale(MapScaleError::DonutGeometry))
+    );
+}
+
+/// The donut room with its `s3` (sector 0, the ring's outer sector) also a
+/// turbo target (36 on its wall, tag 7): the ring (sector 1) may rise to
+/// `s3`'s floor and `s3` may move to its highest neighbour floor (the ring's)
+/// + 8 (§5 `H + 8`), so both ratchet up by 8 a round to the clamp:
+/// `R_max` = 32 767.
+#[test]
+fn donut_ring_and_a_turbo_outer_sector_ratchet_to_the_clamp() {
+    let mut l = donut_room();
+    set_line(&mut l, 1, 36, 7);
+    set_sector_special(&mut l, 0, 0, 7);
+    let s = load(&with_player(&l), EPISODE1).unwrap();
+    assert_eq!(s.movers.as_ref().unwrap().reach[1], 32_767);
+}
