@@ -837,3 +837,64 @@ fn movers_reject_a_mover_sector_without_a_defined_blockbox() {
     );
     assert!(movers(&room(0)).is_ok());
 }
+
+// ---- M4a mutation-testing step (run 1, shard 1) ---------------------------
+//
+// Wire-19 load rules (docs/COMPATIBILITY.md, "Original monsters with doors,
+// lifts, floors, switches and the exit", load-rule table; M3h8 note §5 and §7),
+// shared by the later policies up to wire 22; the expected outcomes follow
+// from the rules' written definitions there.
+
+/// "No sector belongs to two mover families (... lifts: targets of 88 ...)":
+/// a sector tagged by both a WR 88 lift line and a 109 door line is refused.
+#[test]
+fn a_lift_and_door_sector_is_mover_family() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let two = HeightsRoom::new(&[-512, 0, 512], &[[0, 128], [0, 128]]);
+    let lift = [Fault::TaggedSpecial(1, 88, 1), Fault::SectorTag(0, 1)];
+    Simulation::original_player_movers_map(two.clone_with(&lift).map(), options()).unwrap();
+    let mut both = lift.to_vec();
+    both.push(Fault::TaggedSpecial(2, 109, 1));
+    rejects_map(
+        two.clone_with(&both).map(),
+        SimError::MapScale(MapScaleError::MoverFamily),
+    );
+}
+
+/// "No door's smallest possible top lies below its floor": the top of a door is
+/// the lowest neighbour ceiling − 4 (p_doors.c `EV_DoDoor`), so next to a
+/// neighbour of ceiling 4 the top is 0, equal to the floor 0, and loads; next
+/// to a ceiling of 3 it is −1, below the floor, and is `InvertingDoor`.
+#[test]
+fn inverting_door_boundary_is_strictly_below_the_floor() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let door = [Fault::TaggedSpecial(1, 109, 1), Fault::SectorTag(0, 1)];
+    let room = |neighbour: i16| {
+        HeightsRoom::new(&[-512, 0, 512], &[[0, 128], [0, neighbour]]).clone_with(&door)
+    };
+    let bounds = mover_bounds(&room(4).map()).unwrap();
+    assert_eq!(bounds.movers, 1);
+    assert_eq!(
+        mover_bounds(&room(3).map()),
+        Err(SimError::MapScale(MapScaleError::InvertingDoor))
+    );
+}
+
+/// The §5 fixpoint widens a blaze door's ceiling down to its top, the lowest
+/// neighbour ceiling − 4, with no floor clamp (unlike a normal door, which
+/// closes to its floor). Two adjacent 109 doors are each other's neighbours, so
+/// each round lowers both by 4 more and the fixpoint passes −512:
+/// `MoverHeights`. One door alone loads.
+#[test]
+fn adjacent_blaze_doors_have_unbounded_heights() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let three = HeightsRoom::new(&[-512, -128, 128, 512], &[[0, 128]; 3]);
+    let one = [Fault::TaggedSpecial(1, 109, 1), Fault::SectorTag(1, 1)];
+    mover_bounds(&three.clone_with(&one).map()).unwrap();
+    let mut two = one.to_vec();
+    two.push(Fault::SectorTag(2, 1));
+    assert_eq!(
+        mover_bounds(&three.clone_with(&two).map()),
+        Err(SimError::MapScale(MapScaleError::MoverHeights))
+    );
+}

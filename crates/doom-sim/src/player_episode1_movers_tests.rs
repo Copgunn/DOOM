@@ -1009,3 +1009,285 @@ fn secret_exit_sets_secret_exit_and_ends_the_level() {
         .unwrap();
     assert_eq!(s.advance(zero()), Err(SimError::LevelExited));
 }
+
+// ---- M4a mutation-testing step (run 1, shard 1): load rules ---------------
+//
+// The kept wire-23 load rules (docs/COMPATIBILITY.md, "Original Episode 1, part
+// 1", "Load rules"), on synthetic strips; the expected boundaries come from the
+// rule's written definition there and in the wire-19 rule table it refers to.
+
+fn load_strip(room: &crate::heights_room::HeightsRoom) -> Result<Simulation, SimError> {
+    Simulation::original_player_episode1_map(room.map(), options()).map_err(|e| match e {
+        OriginalRegistryError::Runtime(e) => e,
+        other => panic!("{other:?}"),
+    })
+}
+
+/// "No door sector has a two-sided line with the sector on both sides"
+/// (`SelfReferencingDoor`, kept under wire 23). The door families of the Episode
+/// 1 tagged specials (decision H1): open (2, 46, 86, 103), close-30-then-open
+/// (16, 76) and the SR normal door (90) are doors; the same fault in the target
+/// of a floor (5, raise floor) loads, since the rule names doors only.
+#[test]
+fn episode1_self_referencing_door_targets_are_refused() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let two = HeightsRoom::new(&[-512, 0, 512], &[[0, 128], [0, 128]]);
+    for special in [2, 46, 86, 103, 16, 76, 90] {
+        let door = [Fault::TaggedSpecial(1, special, 1), Fault::SectorTag(0, 1)];
+        load_strip(&two.clone_with(&door)).unwrap_or_else(|e| panic!("{special}: {e:?}"));
+        let mut faults = door.to_vec();
+        faults.push(Fault::SelfReferencing(0));
+        assert_eq!(
+            load_strip(&two.clone_with(&faults)).err(),
+            Some(SimError::MapScale(MapScaleError::SelfReferencingDoor)),
+            "{special}"
+        );
+    }
+    let floor = [
+        Fault::TaggedSpecial(1, 5, 1),
+        Fault::SectorTag(0, 1),
+        Fault::SelfReferencing(0),
+    ];
+    load_strip(&two.clone_with(&floor)).unwrap();
+}
+
+/// "At most 30 lift sectors (`MAXPLATS`)" (`MoverCount`, kept under wire 23;
+/// p_spec.h `MAXPLATS` 30): the Episode 1 plats are the targets of 62 (SR lower
+/// lift) and of 20 and 22 (raise to nearest and change). A strip of 32 sectors
+/// whose first 30 or 31 carry the tag: 30 load, 31 are refused.
+#[test]
+fn episode1_thirty_one_plat_sectors_are_refused() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let spans: Vec<i16> = (0..=32).map(|k| -512 + 32 * k).collect();
+    let strip = HeightsRoom::new(&spans, &[[0, 128]; 32]);
+    for special in [62, 20, 22] {
+        let tagged = |n: usize| {
+            let mut faults = vec![Fault::TaggedSpecial(1, special, 1)];
+            faults.extend((0..n).map(|s| Fault::SectorTag(s, 1)));
+            strip.clone_with(&faults)
+        };
+        load_strip(&tagged(30)).unwrap_or_else(|e| panic!("{special}: {e:?}"));
+        assert_eq!(
+            load_strip(&tagged(31)).err(),
+            Some(SimError::MapScale(MapScaleError::MoverCount)),
+            "{special}"
+        );
+    }
+}
+
+/// "16 SR switch lines (`MAXBUTTONS`)" (`MoverCount`; p_spec.h `MAXBUTTONS` 16,
+/// p_switch.c:155–190): under wire 23 the reusable switch lines are 46 (GR,
+/// counted with them by the rule), 62 and 70. Sixteen SR 70 lines load, a
+/// seventeenth is refused.
+#[test]
+fn episode1_seventeen_reusable_switch_lines_are_refused() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let spans: Vec<i16> = (0..=8).map(|k| -512 + 128 * k).collect();
+    let strip = HeightsRoom::new(&spans, &[[0, 128]; 8]);
+    let lines = |n: usize| {
+        let mut faults = vec![Fault::SectorTag(0, 1)];
+        faults.extend((1..=n).map(|i| Fault::TaggedSpecial(i, 70, 1)));
+        strip.clone_with(&faults)
+    };
+    load_strip(&lines(16)).unwrap();
+    assert_eq!(
+        load_strip(&lines(17)).err(),
+        Some(SimError::MapScale(MapScaleError::MoverCount))
+    );
+}
+
+// ---- M4a mutation-testing step (run 1, shard 1): behaviour ----------------
+//
+// Started through `advance` (walking over or using a line); read through the
+// public snapshot, `events`, `shared_thinker_order` and `sector_thinker`.
+
+fn field_i32(s: &Simulation, path: &str) -> i32 {
+    let v = s
+        .snapshot()
+        .fields()
+        .find(|f| f.path() == path)
+        .unwrap_or_else(|| panic!("no field {path}"))
+        .value()
+        .to_vec();
+    i32::from_le_bytes(v[..4].try_into().unwrap())
+}
+fn tic_of(s: &Simulation) -> u64 {
+    let v = s
+        .snapshot()
+        .fields()
+        .find(|f| f.path() == "tic")
+        .unwrap()
+        .value()
+        .to_vec();
+    u64::from_le_bytes(v[..8].try_into().unwrap())
+}
+fn sector_sound(s: &Simulation, name: &str) -> bool {
+    s.events().iter().any(|e| {
+        matches!(e, Event::Mover(MoverEvent::SectorSound { sound, .. }) if *sound == sfx(name))
+    })
+}
+fn walk() -> [TicCommand; 4] {
+    let mut c = zero();
+    c[0].forward = 25;
+    c
+}
+fn live_plats(s: &Simulation) -> Vec<movers::Plat> {
+    s.shared_thinker_order()
+        .filter_map(ThinkerId::sector)
+        .filter_map(|id| s.sector_thinker(id).copied())
+        .filter_map(|t| match t {
+            SectorThinker::Plat(p) => Some(p),
+            _ => None,
+        })
+        .collect()
+}
+
+/// `EV_DoDoor` open (p_doors.c:280–300): the door rises to the lowest
+/// surrounding ceiling − 4 and plays `sfx_doropn` only `if (door->topheight !=
+/// sec->ceilingheight)`. The doorway's door sector (2, between two rooms with
+/// ceiling 128) is tagged by the W1 2 line 4 the player walks over: already at
+/// 124 there is no sound; at 72 there is.
+#[test]
+fn open_door_already_at_its_top_is_silent() {
+    for (ceiling, sound) in [(124, false), (72, true)] {
+        let mut l = room(0);
+        set_line(&mut l, 4, 2, 5);
+        set_heights(&mut l, 2, 0, ceiling);
+        set_sector_special(&mut l, 2, 0, 5);
+        thing(&mut l, -32, 0, 0, 1);
+        let mut s = sim(&l);
+        let mut heard = false;
+        let mut started = false;
+        for _ in 0..20 {
+            s.advance(walk()).unwrap();
+            heard |= sector_sound(&s, "sfx_doropn");
+            started |= s
+                .shared_thinker_order()
+                .filter_map(ThinkerId::sector)
+                .any(|id| matches!(s.sector_thinker(id), Some(SectorThinker::Door(_))));
+        }
+        assert!(started, "{ceiling}");
+        assert_eq!(heard, sound, "{ceiling}");
+    }
+}
+
+/// `T_PlatRaise` for `raiseToNearestAndChange` plays `sfx_stnmov` while
+/// rising on every tic with `!(leveltime&7)` (p_plats.c:62–70), `leveltime`
+/// being this tic's (the count of completed tics, p_tick.c `P_Ticker`). Lift
+/// room 7: the player walks over line 0 given W1 22 with tag 1 (sector 3,
+/// floor 2, between floors 2 and 64): the plat rises at 1/2 unit to 64.
+#[test]
+fn raise_and_change_plat_sounds_every_eighth_leveltime() {
+    let mut l = room(7);
+    l.clear_things();
+    set_heights(&mut l, 3, 2, 192);
+    set_line(&mut l, 0, 22, 1);
+    set_line(&mut l, 12, 0, 0);
+    thing(&mut l, 256, 64, 90, 1);
+    let mut s = sim(&l);
+    let mut rising = 0;
+    for _ in 0..300 {
+        let tic = tic_of(&s);
+        s.advance(walk()).unwrap();
+        let up = live_plats(&s)
+            .iter()
+            .any(|p| p.status == PlatStatus::Up && p.kind == PlatType::RaiseToNearestAndChange);
+        if up {
+            rising += 1;
+            assert_eq!(sector_sound(&s, "sfx_stnmov"), tic % 8 == 0, "tic {tic}");
+        }
+    }
+    assert!(rising > 64, "{rising}");
+}
+
+/// `EV_BuildStairs` resumes its tag search after the last step it built:
+/// `secnum = newsecnum` (p_floor.c:526) and `P_FindSectorFromLineTag(line,
+/// start)` scans from `start + 1` (p_spec.c:337–349), so a tagged sector whose
+/// index lies below the last step is never started. Floors room: sectors 0 and
+/// 4 tagged; the walk from 0 takes one step, 5 (sector 6's flat differs), so the
+/// search resumes at 6 and sector 4, where the player stands and uses its S1 7
+/// east wall, keeps its floor 0.
+#[test]
+fn stairs_skip_a_tagged_sector_below_the_last_step() {
+    let mut l = room(13);
+    set_sector_special(&mut l, 0, 0, 9);
+    set_sector_special(&mut l, 4, 0, 9);
+    set_floor_flat(&mut l, 6, b"OTHER\0\0\0");
+    set_line(&mut l, 24, 7, 9);
+    thing(&mut l, 1120, 64, 0, 1);
+    let mut s = sim(&l);
+    use_once(&mut s).unwrap();
+    let steps: Vec<u16> = movers(&s)
+        .into_iter()
+        .filter_map(|m| match m {
+            SectorThinker::Floor(f) if f.stair => Some(f.sector),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(steps, [0, 5]);
+    for _ in 0..200 {
+        s.advance(zero()).unwrap();
+    }
+    assert_eq!(field_i32(&s, "sector.0.floor"), 8 << 16);
+    assert_eq!(field_i32(&s, "sector.4.floor"), 0);
+}
+
+/// A monster's shot activates a shot line only if it is 46 (`P_ShootSpecialLine`
+/// returns for a non-player unless the special is 46, p_spec.c:966–978, then
+/// opens the tagged door, 988–992). The doorway's line 4 given G 46 with tag 5
+/// on the half-open door sector (ceiling 72); a zombieman in the east room shoots
+/// the player in the west room through the door, and its trace crosses line 4:
+/// the door opens towards 124.
+#[test]
+fn monster_shot_opens_a_46_door() {
+    let mut l = room(0);
+    set_line(&mut l, 4, 46, 5);
+    set_heights(&mut l, 2, 0, 72);
+    set_sector_special(&mut l, 2, 0, 5);
+    thing(&mut l, -32, 0, 0, 1);
+    thing(&mut l, 300, 0, 180, 3004);
+    let mut s = sim(&l);
+    for _ in 0..700 {
+        s.advance(zero()).unwrap();
+        if field_i32(&s, "sector.2.ceiling") > 72 << 16 {
+            assert!(field_i32(&s, "original_player.0.health") > 0);
+            return;
+        }
+    }
+    panic!("the door never opened");
+}
+
+/// `PTR_ShootTraverse` (p_map.c:928–935) hits a line where the floors differ
+/// only `if (slope > aimslope)`, `slope = FixedDiv (openbottom - shootz, dist)`.
+/// The player's `shootz` is `z + height/2 + 8` = 36 (p_map.c `P_LineAttack`,
+/// height 56); with no target the aim slope is 0 (`P_AimLineAttack` returns 0,
+/// p_map.c). The doorway's door sector raised to floor 36 makes `slope` exactly
+/// 0 at both its lines: the bullet passes over and its puff lands at the east
+/// room's far wall (x 576), not before line 4 (x 0).
+#[test]
+fn bullet_grazing_a_step_at_shoot_height_passes() {
+    let mut l = room(0);
+    set_heights(&mut l, 2, 36, 128);
+    thing(&mut l, -32, 0, 0, 1);
+    let mut s = sim(&l);
+    for _ in 0..8 {
+        s.advance(zero()).unwrap();
+    }
+    let puff = ActorTypeId(identity::OriginalActorType::MT_PUFF.ordinal());
+    let mut fire = zero();
+    fire[0].buttons = weapons::BT_ATTACK;
+    for _ in 0..20 {
+        s.advance(fire).unwrap();
+        let puffs: Vec<Fixed> = s
+            .actor_order()
+            .filter_map(|id| s.actor(id))
+            .filter(|a| a.life().is_some_and(|l| l.actor_type == puff))
+            .map(|a| a.position()[0])
+            .collect();
+        if let Some(&x) = puffs.first() {
+            assert!(x > units(500), "{x:?}");
+            return;
+        }
+    }
+    panic!("no puff");
+}
