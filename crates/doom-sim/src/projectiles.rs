@@ -1387,7 +1387,10 @@ mod tests {
         let mut sim = fixtures::setup(c);
         let missile = sim.launch_projectile(fixtures::request(c)).unwrap();
         let source = ActorId::from_parts(0, 1);
-        assert_ne!(sim.actor(source).unwrap().life().unwrap().actor_type, PLASMA);
+        assert_ne!(
+            sim.actor(source).unwrap().life().unwrap().actor_type,
+            PLASMA
+        );
         assert_eq!(
             sim.set_momentum(missile, [Fixed::ONE, Fixed::ZERO]),
             Err(ProjectileError::Controlled.into())

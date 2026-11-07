@@ -539,7 +539,10 @@ fn suit_still_hurts_on_a_gate_draw_below_5() {
 /// walks onto a rocket.
 #[test]
 fn rocket_pickup_switches_from_the_fist_only() {
-    for (key, ready, pending) in [(0, Weapon::Fist, Some(Weapon::Rocket)), (1, Weapon::Pistol, None)] {
+    for (key, ready, pending) in [
+        (0, Weapon::Fist, Some(Weapon::Rocket)),
+        (1, Weapon::Pistol, None),
+    ] {
         let mut l = room();
         l.add_thing([-32, 0, 180, 1, 7]);
         thing(&mut l, -40, 0, 2003);
@@ -571,13 +574,19 @@ fn rocket_pickup_switches_from_the_fist_only() {
             if w.ready == ready && w.pending.is_none() {
                 break;
             }
-            let c = if w.pending.is_none() && w.ready != ready { change } else { zero() };
+            let c = if w.pending.is_none() && w.ready != ready {
+                change
+            } else {
+                zero()
+            };
             s.advance(c).unwrap();
         }
         assert_eq!(weapons(&s).ready, ready);
         let mut walked = false;
+        let mut walk = zero();
+        walk[0].forward = 25;
         for _ in 0..200 {
-            s.advance(step()).unwrap();
+            s.advance(walk).unwrap();
             if weapons(&s).rockets == 1 {
                 walked = true;
                 break;

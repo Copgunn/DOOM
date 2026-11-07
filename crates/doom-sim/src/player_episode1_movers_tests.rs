@@ -1122,9 +1122,9 @@ fn tic_of(s: &Simulation) -> u64 {
     u64::from_le_bytes(v[..8].try_into().unwrap())
 }
 fn sector_sound(s: &Simulation, name: &str) -> bool {
-    s.events().iter().any(|e| {
-        matches!(e, Event::Mover(MoverEvent::SectorSound { sound, .. }) if *sound == sfx(name))
-    })
+    s.events().iter().any(
+        |e| matches!(e, Event::Mover(MoverEvent::SectorSound { sound, .. }) if *sound == sfx(name)),
+    )
 }
 fn walk() -> [TicCommand; 4] {
     let mut c = zero();
@@ -1193,16 +1193,21 @@ fn raise_and_change_plat_sounds_every_eighth_leveltime() {
             .iter()
             .any(|p| p.status == PlatStatus::Up && p.kind == PlatType::RaiseToNearestAndChange);
         if up {
+            // The start tic also has `EV_DoPlat`'s own sfx_stnmov (p_plats.c:194).
+            if rising > 0 {
+                assert_eq!(sector_sound(&s, "sfx_stnmov"), tic % 8 == 0, "tic {tic}");
+            } else {
+                assert!(sector_sound(&s, "sfx_stnmov"));
+            }
             rising += 1;
-            assert_eq!(sector_sound(&s, "sfx_stnmov"), tic % 8 == 0, "tic {tic}");
         }
     }
     assert!(rising > 64, "{rising}");
 }
 
 /// `EV_BuildStairs` resumes its tag search after the last step it built:
-/// `secnum = newsecnum` (p_floor.c:526) and `P_FindSectorFromLineTag(line,
-/// start)` scans from `start + 1` (p_spec.c:337–349), so a tagged sector whose
+/// `secnum = newsecnum` (p_floor.c:537) and `P_FindSectorFromLineTag(line,
+/// start)` scans from `start + 1` (p_spec.c:434–445), so a tagged sector whose
 /// index lies below the last step is never started. Floors room: sectors 0 and
 /// 4 tagged; the walk from 0 takes one step, 5 (sector 6's flat differs), so the
 /// search resumes at 6 and sector 4, where the player stands and uses its S1 7
@@ -1217,18 +1222,13 @@ fn stairs_skip_a_tagged_sector_below_the_last_step() {
     thing(&mut l, 1120, 64, 0, 1);
     let mut s = sim(&l);
     use_once(&mut s).unwrap();
-    let steps: Vec<u16> = movers(&s)
-        .into_iter()
-        .filter_map(|m| match m {
-            SectorThinker::Floor(f) if f.stair => Some(f.sector),
-            _ => None,
-        })
-        .collect();
-    assert_eq!(steps, [0, 5]);
     for _ in 0..200 {
         s.advance(zero()).unwrap();
     }
+    // The steps: sector 0 to 0 + 8, sector 5 (floor 32) to 16 (`EV_BuildStairs`
+    // sets `floordestheight = height` whatever the floor, p_floor.c:503–504, 531, 547).
     assert_eq!(field_i32(&s, "sector.0.floor"), 8 << 16);
+    assert_eq!(field_i32(&s, "sector.5.floor"), 16 << 16);
     assert_eq!(field_i32(&s, "sector.4.floor"), 0);
 }
 
@@ -1319,10 +1319,9 @@ fn episode1_delta_per_family() {
     use crate::heights_room::{Fault, HeightsRoom};
     let three = HeightsRoom::new(&[-512, -128, 128, 512], &[[0, 132], [0, 128], [0, 132]]);
     for (special, delta) in [(2, 2), (5, 1), (18, 1), (22, 1), (23, 0)] {
-        let a = admission(&three.clone_with(&[
-            Fault::TaggedSpecial(1, special, 1),
-            Fault::SectorTag(1, 1),
-        ]));
+        let a = admission(
+            &three.clone_with(&[Fault::TaggedSpecial(1, special, 1), Fault::SectorTag(1, 1)]),
+        );
         assert_eq!(a.delta, delta, "{special}");
     }
 }
@@ -1346,14 +1345,15 @@ fn episode1_donut_alone_gives_delta_1() {
     assert_eq!(s.movers.as_ref().unwrap().delta, 1);
 }
 
-/// A raise-to-nearest sector (18) next to a turbo target (36) on a strip
-/// [0, 128] × 3: the nearest floor may rise to the turbo floor's top, and the
-/// turbo floor to the nearest floor's top + 8, so the floor intervals grow by
-/// 8 every round and the fixpoint stops only at the clamp: `R_max` = 32 767.
+/// A raise-to-nearest sector (18, middle) next to a turbo target (36, east) on a
+/// strip whose west sector's floor is 16: the nearest floor may rise to 16, so
+/// the turbo floor's `H` is not one constant value and it may move to `H + 8`
+/// (§5); the nearest floor may then rise to that, and the turbo floor 8 above
+/// again, every round: the fixpoint stops only at the clamp, `R_max` = 32 767.
 #[test]
 fn episode1_nearest_and_turbo_ratchet_to_the_clamp() {
     use crate::heights_room::{Fault, HeightsRoom};
-    let three = HeightsRoom::new(&[-512, -128, 128, 512], &[[0, 128]; 3]);
+    let three = HeightsRoom::new(&[-512, -128, 128, 512], &[[16, 128], [0, 128], [0, 128]]);
     let a = admission(&three.clone_with(&[
         Fault::TaggedSpecial(1, 18, 1),
         Fault::SectorTag(1, 1),
