@@ -671,6 +671,11 @@ const SAW_SEED: u8 = 11;
 /// weapon machine never changes the adapter's actor, slot or maxima): the
 /// unchanged adapter is accepted, and an adapter naming another actor, another
 /// slot or other maxima is refused alone as `WeaponError::Inventory`.
+///
+/// Refusal witness below the public API: `PlayerWeaponState::after_adapter`
+/// (player_weapons.rs:87–88, the adapter identity rule). The weapon machine never
+/// changes the adapter's actor, slot or maxima, so the public API cannot produce such
+/// an adapter; it is built from inside the crate.
 #[test]
 fn a_weapon_adapter_with_another_actor_slot_or_maxima_is_refused() {
     let s = sim(&with(&[(-32, 0, 0, 1), (200, 0, 0, 2014)]));
@@ -697,6 +702,12 @@ fn a_weapon_adapter_with_another_actor_slot_or_maxima_is_refused() {
 /// (p_mobj.c:978) and the owner-removal preflight keeps it live, so the
 /// live-missile witness of the tic preflight refuses a flying rocket without
 /// an owner as `ProjectileError::Owner`.
+///
+/// Refusal witness below the public API: `Simulation::preflight_live_missiles`
+/// (projectiles.rs:855, the live-missile owner witness) via `advance`.
+/// `P_SpawnPlayerMissile` always sets the owner and the owner-removal preflight keeps
+/// it live, so no map yields an ownerless flying rocket; the owner is cleared from
+/// inside the crate.
 #[test]
 fn a_flying_rocket_without_an_owner_is_refused() {
     let mut s = sim(&with(&[(-32, 0, 180, 1)]));

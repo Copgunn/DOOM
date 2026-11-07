@@ -648,6 +648,12 @@ fn first_of(s: &Simulation, ty: ActorTypeId) -> ActorId {
 /// (`powers[0]`, `powers[1]` = 0), invisibility and the suit at most 60·35,
 /// `pw_allmap` 0 or 1, infrared at most 120·35. Each counter one past its
 /// domain is refused alone; the domain bounds themselves are accepted.
+///
+/// Refusal witness below the public API: `episode1::validate_powers`
+/// (episode1.rs:254–260) in the tic preflight via `advance`. `P_GivePower` and the
+/// per-tic countdown keep every counter in its source domain, and no invulnerability or
+/// berserk is placed in Episode 1 part 1, so the out-of-domain counters are written
+/// from inside the crate.
 #[test]
 fn power_counters_outside_their_domains_are_refused_one_at_a_time() {
     let s = sim(&with_items(&[]));
@@ -681,6 +687,12 @@ fn power_counters_outside_their_domains_are_refused_one_at_a_time() {
 /// each corruption is refused by the tic preflight: `item_count` above the
 /// total, one collected while both still stand, and a total of 3, inside the
 /// pickup bound but not the placed bonus count.
+///
+/// Refusal witness below the public API: `Simulation::preflight_world_pickups`
+/// (world_pickups.rs:1189, 1229–1230, the item-statistics witness) via `advance`. The
+/// THING batch and pickups keep `level.total_items` and `item_count` consistent by
+/// construction, so no constructible map reaches the corrupted counts; they are written
+/// from inside the crate.
 #[test]
 fn item_statistics_outside_the_written_domain_are_refused() {
     let mut l = room();
@@ -709,6 +721,11 @@ fn item_statistics_outside_the_written_domain_are_refused() {
 /// `bonuscount` is never negative: `P_PlayerThink` decrements it only while it
 /// is nonzero (p_user.c:358–359) and pickups add `BONUSADD` (p_inter.c:658). A
 /// negative count is refused by the pickup-state witness of the tic preflight.
+///
+/// Refusal witness below the public API: the pickup-state witness
+/// `PlayerPickupState::validate` in the tic preflight via `advance`. `bonuscount` only
+/// grows by `BONUSADD` and decays to 0, so no map makes it negative; it is written from
+/// inside the crate (another witness refuses it too).
 #[test]
 fn a_negative_bonus_count_is_refused() {
     let mut s = sim(&with_items(&[]));
@@ -724,6 +741,11 @@ fn a_negative_bonus_count_is_refused() {
 /// below 100 health and then leaves at least 26, so `player->health < 25` is
 /// never true after it (p_inter.c:476–483). A stored `MedikitNeeded` message is
 /// refused by the pickup-state witness of the tic preflight.
+///
+/// Refusal witness below the public API: the pickup-state witness
+/// `PlayerPickupState::validate` (world_pickups.rs:420) in the tic preflight via
+/// `advance`. `GOTMEDINEED` is unreachable (p_inter.c:476–483), so no map stores it;
+/// the message is written from inside the crate.
 #[test]
 fn a_stored_medikit_needed_message_is_refused() {
     let mut s = sim(&with_items(&[]));
@@ -738,6 +760,11 @@ fn a_stored_medikit_needed_message_is_refused() {
 /// The item witness (STATE_FORMAT.md v27: an item record validates its current
 /// state within its own loop): a cycling item (the blue keycard, info.c:964–965 `S_BKEY`
 /// / `S_BKEY2`) accepts its two loop states and refuses a state outside it.
+///
+/// Refusal witness below the public API: the item witness
+/// `world_pickups::state_allowed` (world_pickups.rs:318) in the tic preflight via
+/// `advance`. State entry only follows an item's own info.c loop, so no constructible
+/// map puts a keycard in another state; the state is written from inside the crate.
 #[test]
 fn a_cycling_item_accepts_only_its_own_loop_states() {
     use identity::OriginalState;
@@ -757,6 +784,12 @@ fn a_cycling_item_accepts_only_its_own_loop_states() {
 /// frame are written together with the state by state entry from info.c): a
 /// candle (DoomEd 34, `S_CANDLESTIK`) whose sprite alone, or frame alone,
 /// disagrees with its state is refused.
+///
+/// Refusal witness below the public API: the decoration witness
+/// `e1m1_rules::validate_decoration` (e1m1_rules.rs:291–292) in the tic preflight via
+/// `advance`. State entry writes sprite and frame together with the state from info.c,
+/// so no map produces a disagreeing decoration; the sprite or frame is written from
+/// inside the crate.
 #[test]
 fn a_decoration_whose_sprite_or_frame_disagrees_with_its_state_is_refused() {
     let mut l = with_items(&[]);
@@ -782,6 +815,12 @@ fn a_decoration_whose_sprite_or_frame_disagrees_with_its_state_is_refused() {
 /// it is admitted only with the chainsaw ready (the body preflight's written
 /// exception); with the pistol ready it is refused. The flag with the chainsaw
 /// ready is admitted.
+///
+/// Refusal witness below the public API: `Simulation::preflight_player_body`
+/// (original_player.rs:413, the `MF_JUSTATTACKED` exception) via `advance`. No public
+/// operation leaves `MF_JUSTATTACKED` set at a tic boundary with another weapon ready:
+/// only `A_Saw` sets it and the next `P_PlayerThink` clears it, so the flag is written
+/// from inside the crate.
 #[test]
 fn just_attacked_at_a_tic_boundary_needs_the_chainsaw_ready() {
     let mut s = sim(&with_items(&[]));
@@ -805,6 +844,11 @@ fn just_attacked_at_a_tic_boundary_needs_the_chainsaw_ready() {
 /// missile is the one admitted non-monster, non-barrel mover with momentum at a
 /// tic boundary): a health bonus given momentum is refused as `Unsupported`
 /// under wire 23, which also admits imps.
+///
+/// Refusal witness below the public API: `Simulation::preflight_player_body`
+/// (original_player.rs:422, the airborne-mover rule) via `advance`. No admitted
+/// operation gives a pickup momentum (items never move under wire 23; only missiles,
+/// monsters and barrels do), so the momentum is written from inside the crate.
 #[test]
 fn a_moving_item_at_a_tic_boundary_is_refused() {
     let mut l = with_items(&[]);
@@ -823,6 +867,12 @@ fn a_moving_item_at_a_tic_boundary_is_refused() {
 /// THING batch". A wire-23 world with one placed health bonus, constructed but
 /// not yet spawned, has `level.total_items` 0 and passes the item-statistics
 /// witness; after the batch the total is the placed count, 1.
+///
+/// Refusal witness below the public API: `Simulation::preflight_world_pickups`
+/// (world_pickups.rs:1230, the zero-total case) on a world constructed before its THING
+/// batch. Pins the accepting side of the same witness: the pre-batch world is public,
+/// but the witness is reached only through the crate-internal preflight entry used
+/// here.
 #[test]
 fn a_zero_item_total_before_the_thing_batch_is_accepted() {
     let mut l = room();
