@@ -1291,3 +1291,74 @@ fn bullet_grazing_a_step_at_shoot_height_passes() {
     }
     panic!("no puff");
 }
+
+// ---- M4a mutation-testing step (run 1, shard 1): the wire-23 fixpoint -----
+//
+// Under wire 23 the reachable-height fixpoint (M3h8 note §5, clamped to
+// ±32 767 under wire 23: docs/COMPATIBILITY.md, wire 23 "Load rules") is no
+// longer a refusal but still bounds the movers: its `[R_min, R_max]` and `Δ`
+// feed the V′ witness. The wire-23 rules are those of §5 extended to the new
+// families (mover_rules.rs `reachable`/`stair_bounds` docs, M4a plan §C.10):
+// Δ takes 2 for a door (`VDOORSPEED`, p_doors.c), 1 for a floor moving up at
+// `FLOORSPEED` (raise, nearest, change: p_floor.c, p_plats.c) and 1 when a
+// stair (1/4 unit a tic) or donut (1/2) exists; a lowering floor adds nothing;
+// a turbo target adds `H.hi + 8 − F.lo` (§5 `J`). Read from the admission the
+// constructor stores (as `movers_reject_thirty_one_plat_sectors` reads it).
+
+fn admission(room: &crate::heights_room::HeightsRoom) -> mover_rules::MoverAdmission {
+    load_strip(room).unwrap().movers.unwrap()
+}
+
+/// Δ of a lone family on a strip of three [0, 128] sectors whose middle one is
+/// the target and whose outer ceilings are 132, so a door's top (132 − 4)
+/// equals its ceiling and its top drop is 0: an open door (2) gives 2; a floor
+/// moving up (raise 5, nearest 18, change 22) gives 1; a lowering floor (23)
+/// gives 0.
+#[test]
+fn episode1_delta_per_family() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let three = HeightsRoom::new(&[-512, -128, 128, 512], &[[0, 132], [0, 128], [0, 132]]);
+    for (special, delta) in [(2, 2), (5, 1), (18, 1), (22, 1), (23, 0)] {
+        let a = admission(&three.clone_with(&[
+            Fault::TaggedSpecial(1, special, 1),
+            Fault::SectorTag(1, 1),
+        ]));
+        assert_eq!(a.delta, delta, "{special}");
+    }
+}
+
+/// A stair (S1 7) on a strip of three [0, 16] sectors: every sector of the
+/// start's two-sided component may rise to the component's largest static
+/// floor plus 8 per sector, 0 + 3 · 8 = 24 (`stair_bounds`), above every
+/// ceiling, so `R_max` is 24; the stair alone gives Δ = 1.
+#[test]
+fn episode1_stair_bounds_widen_the_whole_component() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let three = HeightsRoom::new(&[-512, -128, 128, 512], &[[0, 16]; 3]);
+    let a = admission(&three.clone_with(&[Fault::TaggedSpecial(1, 7, 1), Fault::SectorTag(0, 1)]));
+    assert_eq!((a.reach, a.delta), ([0, 24], 1));
+}
+
+/// The donut room alone (S1 9): Δ = 1 (the ring rises at 1/2 unit a tic).
+#[test]
+fn episode1_donut_alone_gives_delta_1() {
+    let s = load(&with_player(&donut_room()), EPISODE1).unwrap();
+    assert_eq!(s.movers.as_ref().unwrap().delta, 1);
+}
+
+/// A raise-to-nearest sector (18) next to a turbo target (36) on a strip
+/// [0, 128] × 3: the nearest floor may rise to the turbo floor's top, and the
+/// turbo floor to the nearest floor's top + 8, so the floor intervals grow by
+/// 8 every round and the fixpoint stops only at the clamp: `R_max` = 32 767.
+#[test]
+fn episode1_nearest_and_turbo_ratchet_to_the_clamp() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let three = HeightsRoom::new(&[-512, -128, 128, 512], &[[0, 128]; 3]);
+    let a = admission(&three.clone_with(&[
+        Fault::TaggedSpecial(1, 18, 1),
+        Fault::SectorTag(1, 1),
+        Fault::TaggedSpecial(2, 36, 2),
+        Fault::SectorTag(2, 2),
+    ]));
+    assert_eq!(a.reach[1], 32_767);
+}
