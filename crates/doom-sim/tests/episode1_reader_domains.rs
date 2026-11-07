@@ -246,6 +246,24 @@ fn level_fixture() -> Capture {
     c
 }
 
+/// Every committed independent DSIM39 fixture (`m4a_episode1_*.bin`, 18 files)
+/// decodes with `decode_episode1`, the exact `store.max_slots` rule included.
+#[test]
+fn every_committed_dsim39_fixture_decodes() {
+    let mut names: Vec<String> = std::fs::read_dir(reference(""))
+        .expect("reference directory")
+        .map(|e| e.expect("entry").file_name().into_string().expect("name"))
+        .filter(|n| n.starts_with("m4a_episode1_") && n.ends_with(".bin"))
+        .collect();
+    names.sort();
+    assert_eq!(names.len(), 18);
+    for name in names {
+        let c = Capture::fixture(&name);
+        assert_eq!(c.version, 39, "{name}");
+        assert_eq!(c.decode(), Ok(()), "{name}");
+    }
+}
+
 // --- Store and actor records -------------------------------------------------
 
 /// An actor's `.previous` and `.next` are optional identities (STATE_FORMAT
@@ -319,6 +337,32 @@ fn the_store_holds_at_most_max_slots() {
     }
     full.set("store.slot_count", 1024u64.to_le_bytes());
     assert_eq!(full.decode(), Ok(()));
+}
+
+/// `store.max_slots` is exactly 1,024 under wire 23 (STATE_FORMAT "DSIM v39":
+/// "`store.max_slots` | same field | u32 `1024`"; decision D1,
+/// docs/M4A_REFERENCE_INVESTIGATION.md §14: "`store.max_slots` is the constant
+/// 1,024 under wire 23"): 1,023 and 1,025 are refused, 1,024 is accepted. The
+/// DSIM38 reader keeps its historical upper-bound check (385 refused); that it
+/// accepts a value below 384 is a documented older-schema gap, not pinned here.
+#[test]
+fn max_slots_is_exactly_1024() {
+    let c = fixture("ITEMS1_121");
+    assert_eq!(c.with("store.max_slots", 1024u32.to_le_bytes()), Ok(()));
+    assert_eq!(
+        c.with("store.max_slots", 1023u32.to_le_bytes()),
+        Err(DiagnosticError::Limit)
+    );
+    assert_eq!(
+        c.with("store.max_slots", 1025u32.to_le_bytes()),
+        Err(DiagnosticError::Limit)
+    );
+    let level = level_fixture();
+    assert_eq!(level.get("store.max_slots"), 384u32.to_le_bytes());
+    assert_eq!(
+        level.with("store.max_slots", 385u32.to_le_bytes()),
+        Err(DiagnosticError::Limit)
+    );
 }
 
 /// The player record's domains (STATE_FORMAT "DSIM-v22" original player body,

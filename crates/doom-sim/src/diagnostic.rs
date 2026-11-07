@@ -1703,7 +1703,8 @@ impl<'a> Diagnostic<'a> {
         }
         Ok(())
     }
-    /// DSIM39 witnesses of the Episode 1 fields (plan §A.7): `level.secret_exit`
+    /// DSIM39 witnesses of the Episode 1 fields (plan §A.7): `store.max_slots` is
+    /// exactly 1,024 (decision D1); `level.secret_exit`
     /// is 0 or 1 and implies `level.exit`; every `sector.N.floorpic` is a
     /// normalized flat name (upper-case ASCII bytes, then zero padding, at least
     /// one byte); every live plat carries a `type` of 1 or 3 (`low` 0 for 3),
@@ -1726,6 +1727,14 @@ impl<'a> Diagnostic<'a> {
             > u64::from(u32::from_le_bytes(number(
                 self.required("store.max_slots")?,
             )?))
+        {
+            return Err(DiagnosticError::Limit);
+        }
+        // `store.max_slots` is exactly 1,024 under wire 23 (STATE_FORMAT "DSIM v39";
+        // decision D1, M4A_REFERENCE_INVESTIGATION.md §14). The older readers keep
+        // their historical upper-bound check only.
+        if u32::from_le_bytes(number(self.required("store.max_slots")?)?)
+            != crate::player_map_scale::EPISODE1_ACTOR_SLOTS
         {
             return Err(DiagnosticError::Limit);
         }

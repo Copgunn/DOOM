@@ -2101,8 +2101,9 @@ position and meaning.
 | after the powers | `original_player.0.cards.0` … `.5` | u8 0/1, in `card_t` order: blue card, yellow card, red card, blue skull, yellow skull, red skull |
 | after the cards | `original_player.0.backpack` | u8 0/1 |
 
-Domains the v39 reader enforces: `powers.0` and `powers.1` are 0 (no invulnerability or
-berserk in Episode 1 single player), `powers.2` and `powers.3` are 0–2100, `powers.4` is
+Domains the v39 reader enforces: `store.max_slots` is exactly 1,024 (decision D1; the
+older readers check only their upper bound); `powers.0` and `powers.1` are 0 (no
+invulnerability or berserk in Episode 1 single player), `powers.2` and `powers.3` are 0–2100, `powers.4` is
 0–1, `powers.5` is 0–4200; `cards.3` … `cards.5` are 0; `weapons.max_ammo` equals the base
 capacity shifted left by `backpack`, and each ammunition count is at most its maximum;
 `weapons.owned` uses only bits 0–4 and 7 (fist, pistol, shotgun, chaingun, rocket launcher,
