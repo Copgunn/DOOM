@@ -1399,3 +1399,32 @@ fn donut_ring_and_a_turbo_outer_sector_ratchet_to_the_clamp() {
     let s = load(&with_player(&l), EPISODE1).unwrap();
     assert_eq!(s.movers.as_ref().unwrap().reach[1], 32_767);
 }
+
+/// "Kept" under wire 23 (docs/COMPATIBILITY.md, Episode 1 load rules):
+/// `MapScaleError::MoverNeighbor`, every mover sector has a two-sided
+/// neighbour. A sector tagged only by a raise-floor line (W1 5, WR 91) or only
+/// by a raise-to-nearest line (S1 18) is a floor mover: in the one-sector room
+/// (no two-sided line) it is refused, and in the two-sector strip it loads as
+/// exactly one mover. Each special sets one floor kind alone, so the floor
+/// family must follow from any one of its kinds.
+#[test]
+fn a_raise_or_nearest_floor_sector_alone_is_a_mover() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let one = HeightsRoom::new(&[-512, 512], &[[0, 128]]);
+    let two = HeightsRoom::new(&[-512, 0, 512], &[[0, 128], [0, 128]]);
+    let episode1 =
+        |room: &HeightsRoom| Simulation::original_player_episode1_map(room.map(), options());
+    episode1(&one).unwrap();
+    for special in [5, 91, 18] {
+        let faults = [Fault::TaggedSpecial(1, special, 1), Fault::SectorTag(0, 1)];
+        assert_eq!(
+            episode1(&one.clone_with(&faults)).err(),
+            Some(OriginalRegistryError::Runtime(SimError::MapScale(
+                MapScaleError::MoverNeighbor
+            ))),
+            "{special}"
+        );
+        let s = episode1(&two.clone_with(&faults)).unwrap();
+        assert_eq!(s.movers.as_ref().unwrap().movers, 1, "{special}");
+    }
+}
