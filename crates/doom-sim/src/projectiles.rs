@@ -1378,4 +1378,24 @@ mod tests {
         assert_eq!(d.field, "paused");
         assert_eq!(a.snapshot().version(), 7);
     }
+    /// The between-tic controls refuse only the profile's projectile (the plasma
+    /// ball, `ProjectileError::Controlled`); its source, any other actor, still
+    /// takes a bounded momentum (M4a mutation-testing step).
+    #[test]
+    fn only_the_projectile_refuses_between_tic_control() {
+        let c = &fixtures::cases()[0];
+        let mut sim = fixtures::setup(c);
+        let missile = sim.launch_projectile(fixtures::request(c)).unwrap();
+        let source = ActorId::from_parts(0, 1);
+        assert_ne!(sim.actor(source).unwrap().life().unwrap().actor_type, PLASMA);
+        assert_eq!(
+            sim.set_momentum(missile, [Fixed::ONE, Fixed::ZERO]),
+            Err(ProjectileError::Controlled.into())
+        );
+        sim.set_momentum(source, [Fixed::ONE, Fixed::ZERO]).unwrap();
+        assert_eq!(
+            sim.actor(source).unwrap().momentum(),
+            [Fixed::ONE, Fixed::ZERO]
+        );
+    }
 }
