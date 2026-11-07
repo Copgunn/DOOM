@@ -413,6 +413,34 @@ fn flying_fireball_owner_cannot_be_removed() {
     s.advance(commands(c, 1)).unwrap();
 }
 
+/// Only a fireball still in flight (`MF_MISSILE` set) pins its owner:
+/// `P_ExplodeMissile` clears `MF_MISSILE` when it enters the death state
+/// (p_mobj.c:90–101), so once the fireball explodes the Imp may be removed
+/// while the explosion frames run (M4a mutation-testing step).
+#[test]
+fn exploded_fireball_no_longer_pins_its_owner() {
+    let c = &cases()[3];
+    let (mut s, a, things) = setup(c);
+    s.checked_demon_operation(|h| crate::projectiles::launch_fireball(h, things[0], a.body))
+        .unwrap()
+        .unwrap();
+    for _ in 0..200 {
+        let exploded = s.actor_order().any(|id| {
+            s.actors.is_pending(id) == Some(false)
+                && s.actor(id).and_then(Actor::life).is_some_and(|l| {
+                    l.actor_type == FIREBALL && l.flags & crate::original_player::MF_MISSILE == 0
+                })
+        });
+        if exploded {
+            assert_eq!(s.mark_remove(things[0]), Ok(()));
+            return;
+        }
+        assert_eq!(s.mark_remove(things[0]), Err(ProjectileError::Owner.into()));
+        s.advance([TicCommand::default(); 4]).unwrap();
+    }
+    panic!("the fireball never exploded");
+}
+
 #[test]
 fn raised_imp_launch_rejects_excess_vertical_momentum() {
     // Review regression: an off-floor source never commits an unsteppable fireball.
