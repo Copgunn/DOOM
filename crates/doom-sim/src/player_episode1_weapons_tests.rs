@@ -357,7 +357,9 @@ fn weapons(s: &Simulation) -> PlayerWeaponState {
 /// `ready` is up (`WEAPONTOP`, 32 units, p_pspr.c `A_Raise`) with nothing pending.
 fn raised(s: &Simulation, ready: Weapon) -> bool {
     let w = weapons(s);
-    w.ready == ready && w.pending.is_none() && w.psprites[0].position[1] == Fixed::from_map_units(32)
+    w.ready == ready
+        && w.pending.is_none()
+        && w.psprites[0].position[1] == Fixed::from_map_units(32)
 }
 /// Advances with `commands` until `done` holds, at most `limit` tics.
 fn until(
@@ -440,7 +442,8 @@ fn chainsaw_idle_sound_only_on_s_saw_entries() {
     for _ in 0..80 {
         s.advance(command(0, 0)).unwrap();
         let w = weapons(&s);
-        let entered = |st: OriginalState| w.psprites[0].state == Some(state(st)) && w.psprites[0].tics == 4;
+        let entered =
+            |st: OriginalState| w.psprites[0].state == Some(state(st)) && w.psprites[0].tics == 4;
         assert_eq!(sounded(&s, "sfx_sawidl"), entered(OriginalState::S_SAW));
         assert!(!(entered(OriginalState::S_SAWB) && sounded(&s, "sfx_sawidl")));
         sounds += usize::from(sounded(&s, "sfx_sawidl"));
@@ -533,15 +536,16 @@ fn death_names_the_chainsaw_and_launcher_downstates() {
 
 /// `A_Saw`'s turn (p_pspr.c:524–541): with the target more than `ANG90/20`
 /// counter-clockwise of the facing (and less than `ANG180`), the player turns to
-/// `angle - ANG90/21` (537–538), not by `ANG90/20`. The zombieman stands about
-/// 10° to the left of the east-facing player, inside the saw's reach; the
+/// `angle - ANG90/21` (537–538), not by `ANG90/20`. A barrel (shootable, and it
+/// never moves) stands about 10° to the left of the east-facing player, inside
+/// the saw's reach; the
 /// expected angle is `R_PointToAngle2` of the two positions before the hit tic,
 /// taken here from `atan2` within 2²⁰ BAM (the tantoangle table's resolution is
 /// about 2¹⁸ there), minus `ANG90/21` = 51 130 563 (tables.h `ANG90` 0x40000000).
 #[test]
 fn saw_turns_to_the_target_minus_ang90_21() {
     let mut s = armed(
-        &with(&[(-300, 0, 0, 1), (-292, 0, 0, 2005), (-246, 9, 0, 3004)]),
+        &with(&[(-300, 0, 0, 1), (-292, 0, 0, 2005), (-251, 9, 0, 2035)]),
         EMPTY,
     );
     let find = |s: &Simulation, ty: OriginalActorType| {
@@ -554,7 +558,7 @@ fn saw_turns_to_the_target_minus_ang90_21() {
             .unwrap()
     };
     let player = find(&s, OriginalActorType::MT_PLAYER);
-    let zombie = find(&s, OriginalActorType::MT_POSSESSED);
+    let zombie = find(&s, OriginalActorType::MT_BARREL);
     s.advance(command(1, 0)).unwrap();
     until(&mut s, command(0, 0), 100, |s| raised(s, Weapon::Chainsaw));
     for _ in 0..40 {
@@ -565,14 +569,19 @@ fn saw_turns_to_the_target_minus_ang90_21() {
             continue;
         }
         let [dx, dy] = [0, 1].map(|i| f64::from(z.position()[i].bits() - p.position()[i].bits()));
-        let bam = |radians: f64| (radians / std::f64::consts::TAU * 4_294_967_296.0).rem_euclid(4_294_967_296.0);
+        let bam = |radians: f64| {
+            (radians / std::f64::consts::TAU * 4_294_967_296.0).rem_euclid(4_294_967_296.0)
+        };
         let angle = bam(dy.atan2(dx));
         let delta = (angle - f64::from(current)).rem_euclid(4_294_967_296.0);
         // Between 6° and 30° counter-clockwise: well inside the (ANG90/20, ANG180] branch.
         assert!((71_582_788.0..357_913_941.0).contains(&delta), "{delta}");
         let expected = angle - 51_130_563.0;
         let turned = f64::from(s.actor(player).unwrap().spec.angle);
-        assert!((turned - expected).abs() < f64::from(1u32 << 20), "{turned} {expected}");
+        assert!(
+            (turned - expected).abs() < f64::from(1u32 << 20),
+            "{turned} {expected}"
+        );
         return;
     }
     panic!("no saw hit");
