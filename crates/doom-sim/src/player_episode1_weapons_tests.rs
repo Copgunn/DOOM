@@ -586,3 +586,68 @@ fn saw_turns_to_the_target_minus_ang90_21() {
     }
     panic!("no saw hit");
 }
+
+/// `A_Saw`'s turn at its two exact boundaries (p_pspr.c:524–541). In a
+/// corridor exactly as wide as the player (32 units), a barrel stands due east
+/// on the player's line, so `R_PointToAngle2` of the two is exactly 0
+/// (`tantoangle[SlopeDiv(0, dx)]` = `tantoangle[0]` = 0, tables.c:1870); the
+/// lunges slide along the walls (`P_HitSlideLine` zeroes `tmymove` on a
+/// horizontal line) and stop at the barrel, so the bearing stays 0. Facing 0,
+/// a hit has delta 0: `+= ANG90/20` (540). Then the delta is exactly −ANG90/20
+/// (`0xFCCCCCCD`): above `ANG180` and not below `-ANG90/20`, so `-= ANG90/20`
+/// (533), back to 0, not `angle + ANG90/21`. A turn of +1 (`angleturn` 1 << 16)
+/// and a hit (delta −2¹⁶: `-= ANG90/20`), then a turn of −1, leave the facing at
+/// −ANG90/20; the next delta is exactly +ANG90/20, not above it: `+= ANG90/20`
+/// (540), back to 0, not `angle − ANG90/21`.
+#[test]
+fn saw_turn_at_exactly_ang90_20_either_way() {
+    use crate::heights_room::HeightsRoom;
+    let mut corridor = HeightsRoom::new(&[-512, 512], &[[0, 128]]).with_things(&[
+        [-400, 0, 0, 1, 7],
+        [-392, 0, 0, 2005, 7],
+        [-330, 0, 0, 2035, 7],
+    ]);
+    corridor.y = [-16, 16];
+    let options = MapContextOptions {
+        initial_rng: DoomRng::from_indices(SAW_SEED, 0),
+        respawn_monsters: false,
+    };
+    let mut s = Simulation::original_player_episode1_map(corridor.map(), options).unwrap();
+    s.spawn_map_things().unwrap();
+    s.initialize_player_weapons(PlayerSlot::One, EMPTY).unwrap();
+    s.spawn_level_specials().unwrap();
+    let player = s
+        .actor_order()
+        .find(|id| {
+            s.actor(*id)
+                .and_then(Actor::life)
+                .is_some_and(|l| l.actor_type.0 == OriginalActorType::MT_PLAYER.ordinal())
+        })
+        .unwrap();
+    s.advance(command(1, 0)).unwrap();
+    until(&mut s, command(0, 0), 100, |s| raised(s, Weapon::Chainsaw));
+    const A: u32 = 53_687_091;
+    // Facing after each hit, and the turn applied two tics after it (the tic
+    // after a hit is the lunge, whose `angleturn` is rewritten to 0).
+    let plan: [(u32, i16); 4] = [(A, 0), (0, 1), (65_536u32.wrapping_sub(A), -1), (0, 0)];
+    let mut hits = 0;
+    let mut turn_at = None;
+    for tic in 0..200 {
+        let mut c = command(0, BT_ATTACK);
+        if turn_at == Some(tic) {
+            c[0].angle_turn = plan[hits - 1].1;
+        }
+        s.advance(c).unwrap();
+        if sounded(&s, "sfx_sawhit") {
+            assert_eq!(s.actor(player).unwrap().spec.angle, plan[hits].0, "hit {hits}");
+            assert_eq!(s.actor(player).unwrap().position()[1], Fixed::ZERO);
+            hits += 1;
+            if hits == plan.len() {
+                return;
+            }
+            turn_at = Some(tic + 2);
+        }
+    }
+    panic!("only {hits} saw hits");
+}
+const SAW_SEED: u8 = 6;
