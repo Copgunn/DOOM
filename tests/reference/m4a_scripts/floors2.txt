@@ -1,0 +1,24 @@
+# output: FLOORS2.lmp
+# FLOORS2 on tests/reference/m4a_wads/floors.wad (M4a). Authored closed loop against the strict runner.
+# WR 91 raiseFloor blocked by a barrel (the floor thinker retries every tic, p_floor.c:112-123 with crush false),
+# then released by shooting the barrel.
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+# M91B strip: WR 91 raiseFloor to the pad ceiling 64, blocked by the barrel at 22
+cmd 1 0 0 103 0   # M91B strip (north over the strip)
+cmd 30 40 0 0 0   # run 30 tics
+cmd 25 0 0 0 0   # settle
+cmd 1 0 0 88 0   # M91B strip (back south over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 18 0 0 0 0   # settle
+cmd 1 0 0 23 0   # walk to (-300,100)
+cmd 3 50 0 0 0   # run 3 tics
+cmd 16 0 0 0 0   # settle
+cmd 20 0 0 0 0   # the pad stalls at 22 under the barrel
+cmd 1 0 0 109 1   # aim and fire at (-320,304)
+cmd 20 0 0 0 0
+cmd 1 0 0 0 1   # aim and fire at (-320,309)
+cmd 20 0 0 0 0
+# barrel destroyed after 2 shots (the trace must cross the BLOCKMAP cell holding its centre)
+cmd 120 0 0 0 0   # the barrel explodes; the pad rises to 64

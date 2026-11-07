@@ -319,6 +319,8 @@ impl Simulation {
                 return Err(MonsterError::Arithmetic.into());
             }
             let mut host = LifeHost {
+                specials: None,
+                buttons: None,
                 player: None,
                 statistics: self.statistics.as_mut(),
                 perception: None,
@@ -355,6 +357,8 @@ impl Simulation {
         }
         let plan = self.prepare_shotgun(id)?;
         let mut host = LifeHost {
+            specials: None,
+            buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
             perception: Some(crate::perception::PerceptionInputs {

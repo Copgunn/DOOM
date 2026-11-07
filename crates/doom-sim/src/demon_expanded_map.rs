@@ -20,6 +20,9 @@ pub(crate) struct ExpandedSelection {
     /// Two-sided scrolling walls and static decorations (E1M1 policy, a superset
     /// of the movers policy: `movers` is set too).
     pub e1m1: bool,
+    /// The per-map bounds of the Episode 1 policy (a superset of the E1M1 policy:
+    /// `e1m1` is set too); `None` under every other policy.
+    pub episode1: Option<crate::episode1::Episode1Bounds>,
 }
 impl Simulation {
     /// Profile 20: larger static maps with the exact map-context Demon registry.
@@ -46,6 +49,7 @@ impl Simulation {
                 specials: false,
                 movers: false,
                 e1m1: false,
+                episode1: None,
             },
         )
     }
@@ -65,6 +69,7 @@ impl Simulation {
             specials,
             movers,
             e1m1,
+            episode1,
         } = selection;
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
@@ -80,7 +85,9 @@ impl Simulation {
         if !real_map && map.things().len() > MAX_DEMON_MAP_THINGS {
             return Err(MapSpawnError::WorkLimit.into());
         }
-        let movers = if e1m1 {
+        let movers = if episode1.is_some() {
+            Some(mover_rules::validate_episode1(&map)?)
+        } else if e1m1 {
             Some(mover_rules::validate_e1m1(&map)?)
         } else if movers {
             Some(mover_rules::validate_movers(&map)?)
@@ -96,10 +103,15 @@ impl Simulation {
         {
             return Err(PursuitError::Specials.into());
         }
-        if map
-            .sectors()
-            .iter()
-            .any(|s| s.heights.iter().any(|h| h.unsigned_abs() > 512))
+        // The Episode 1 policy replaces the ±512 static-height rule (the twin of
+        // certificate clause (vii)) by the checked height arithmetic of the traces
+        // and the per-tic vertical witnesses (decision H3); the format envelope of
+        // `map_extent::validate_real_map` (±1,024) still applies.
+        if episode1.is_none()
+            && map
+                .sectors()
+                .iter()
+                .any(|s| s.heights.iter().any(|h| h.unsigned_abs() > 512))
         {
             return Err(PerceptionError::Arithmetic.into());
         }
@@ -123,7 +135,8 @@ impl Simulation {
         }
         registry.validate_impact_source()?;
         let mut sim = if real_map {
-            let admission = map_extent::validate_real_map(&map, actor_cap)?;
+            let sight_queries = episode1.map_or(64, |b| b.sight_queries());
+            let admission = map_extent::validate_real_map(&map, actor_cap, sight_queries)?;
             let mut sim = Self::create_bounded_with(
                 map,
                 limit,
@@ -136,6 +149,17 @@ impl Simulation {
             )?;
             sim.world.extent_sight_work = Some(admission.sight_work);
             sim.world.sight_work_budget = admission.sight_budget;
+            if let Some(bounds) = episode1 {
+                // One explosion's sight work (decision H4) must be representable.
+                admission
+                    .sight_work
+                    .checked_add(5 * sim.world.lines.len())
+                    .and_then(|w| w.checked_mul(bounds.explosion_sight_queries()))
+                    .ok_or(GeometryError::WorkLimit)?;
+                sim.world.episode1 = Some(bounds);
+                sim.world.sight_query_limit = sight_queries;
+                sim.world.checked_arithmetic = true;
+            }
             if specials {
                 sim.install_specials(limit, movers)?;
             }
@@ -196,7 +220,14 @@ impl Simulation {
             .iter()
             .filter(|s| matches!(s.special, 1 | 2 | 3 | 4 | 8 | 12 | 13 | 17))
             .count();
-        let movers_slots = movers.as_ref().map_or(Some(0), |m| m.movers.checked_mul(2));
+        // Under the Episode 1 policy stair and donut sectors are not tagged, so
+        // `M` is not known statically: the class holds `L + 2·numsectors` (the
+        // capacity is not DSIM state; only the high-water `slot_count` is).
+        let movers_slots = if self.world.episode1.is_some() {
+            map.sectors().len().checked_mul(2)
+        } else {
+            movers.as_ref().map_or(Some(0), |m| m.movers.checked_mul(2))
+        };
         let lights = movers_slots
             .and_then(|m| m.checked_add(lights))
             .and_then(|slots| u32::try_from(slots).ok())
@@ -212,6 +243,7 @@ impl Simulation {
             .map(|s| sector_thinkers::SectorSpecial {
                 light: s.light,
                 special: s.special,
+                floorpic: sector_thinkers::normalized_flat(&s.flats[0]),
             })
             .collect();
         let blockboxes = multisector::sector_block_boxes(map)?;
@@ -277,12 +309,17 @@ pub(crate) fn validate_specials(map: &Map) -> Result<(), SimError> {
 /// Every sector special is one of `ADMITTED_SECTOR_SPECIALS` or 0
 /// (`PursuitError::Specials`): the sector rule of the specials and movers policies.
 pub(crate) fn validate_sector_specials(map: &Map) -> Result<(), SimError> {
+    validate_sector_specials_for(map, false)
+}
+/// [`validate_sector_specials`]; `episode1` also admits special 11 (the
+/// Episode 1 policy's EXIT SUPER DAMAGE, p_spec.c:1054–1063).
+pub(crate) fn validate_sector_specials_for(map: &Map, episode1: bool) -> Result<(), SimError> {
     use sector_thinkers::ADMITTED_SECTOR_SPECIALS;
-    if map
-        .sectors()
-        .iter()
-        .any(|s| s.special != 0 && !ADMITTED_SECTOR_SPECIALS.contains(&s.special))
-    {
+    if map.sectors().iter().any(|s| {
+        s.special != 0
+            && !ADMITTED_SECTOR_SPECIALS.contains(&s.special)
+            && !(episode1 && s.special == 11)
+    }) {
         return Err(PursuitError::Specials.into());
     }
     Ok(())
@@ -334,7 +371,7 @@ pub(crate) fn action_sight(
             .get()
             .checked_add(world.extent_sight_work.expect("checked geometry") + 5 * world.lines.len())
             .ok_or(PerceptionError::WorkLimit)?;
-        if count > 64 || work > world.sight_work_budget {
+        if count > world.sight_query_limit || work > world.sight_work_budget {
             return Err(PerceptionError::WorkLimit.into());
         }
         control.queries.set(count);
@@ -384,6 +421,8 @@ struct DemonPlan {
     writes: staging::StagedWrites,
     /// Under the movers policy, `G_ExitLevel` ran in this tic or before.
     exit: bool,
+    /// Under the Episode 1 policy, `G_SecretExitLevel` ran (`secretexit`).
+    secret_exit: bool,
     /// Under the movers policy, the staged switch buttons.
     buttons: use_lines::Buttons,
     events: Vec<Event>,
@@ -454,6 +493,7 @@ impl Simulation {
             specials,
             writes,
             exit: self.level_exit,
+            secret_exit: self.level_secret_exit,
             buttons: self.buttons,
             events: Vec::new(),
         })
@@ -506,7 +546,7 @@ impl Simulation {
             }
             // P_CheckMissileSpawn keeps a blocked half-step without relinking: an
             // exploding fireball's coordinates may lead its source location.
-            let unlinked_blast = original_registry::is_fireball(life.actor_type)
+            let unlinked_blast = original_registry::is_missile_type(life.actor_type)
                 && life.flags & original_player::MF_MISSILE == 0;
             // Under the E1M1 policy a static decoration may hold `floorz > ceilingz`:
             // a door closing onto one whose box straddles a higher neighbouring floor
@@ -520,10 +560,20 @@ impl Simulation {
             // height, 252–345; hitscan, aim and radius attacks skip non-shootables,
             // 1013–1014, 1170–1171), and the next clip recomputes both. Every other
             // actor, and every older policy, keeps the refusal.
-            let inert_decoration = e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
-                && actor.z == actor.floor
-                && actor.momz == Fixed::ZERO
-                && actor.momentum() == [Fixed::ZERO; 2];
+            // The Episode 1 policy widens the same rule to every non-shootable
+            // thing (M4a step 5 ruling): PIT_ChangeSector returns true for
+            // `!(thing->flags & MF_SHOOTABLE)` ("assume it is bloody gibs or
+            // something", p_map.c:1290–1294) after gibbing corpses and crunching
+            // dropped items, so an undropped pickup (or a corpse, or a spent
+            // fireball) left under a mover with `floorz > ceilingz` is a legal,
+            // inert state on its floor. Shootable things keep the refusal.
+            let inert_decoration =
+                (e1m1_rules::is_decoration(self.player_policy(), life.actor_type)
+                    || (self.world.episode1.is_some()
+                        && life.flags & original_player::MF_SHOOTABLE == 0))
+                    && actor.z == actor.floor
+                    && actor.momz == Fixed::ZERO
+                    && actor.momentum() == [Fixed::ZERO; 2];
             if !linked.contains(&id)
                 || (!unlinked_blast
                     && actor.location != Some(self.world.locate_validated(actor.position())))
@@ -586,6 +636,7 @@ impl Simulation {
         writes.commit(&mut self.sectors, &mut self.line_specials);
         self.spare_writes = writes;
         self.level_exit = plan.exit;
+        self.level_secret_exit = plan.secret_exit;
         self.buttons = plan.buttons;
         plan.events
     }
@@ -608,6 +659,8 @@ impl Simulation {
             .try_reserve(count)
             .map_err(|_| StoreError::Capacity)?;
         let result = action(&mut LifeHost {
+            specials: None,
+            buttons: None,
             player: None,
             statistics: plan.statistics.as_mut(),
             perception: None,
@@ -634,6 +687,8 @@ impl Simulation {
         let mut plan = self.demon_plan()?;
         let control = SightControl::default();
         let result = action(&mut LifeHost {
+            specials: None,
+            buttons: None,
             player: plan.player.as_mut(),
             statistics: plan.statistics.as_mut(),
             perception: Some(self.checked_demon_inputs(&control)),
@@ -662,13 +717,16 @@ impl Simulation {
             && error == SimError::Combat(CombatError::InterceptLimit)
         {
             MapScaleError::Intercepts.into()
+        } else if error == SimError::Combat(CombatError::Arithmetic) {
+            // Only the Episode 1 policy's checked traces raise it (decision H3).
+            MapScaleError::Arithmetic.into()
         } else {
             error
         }
     }
     pub(crate) fn advance_expanded_demons(
         &mut self,
-        commands: [TicCommand; 4],
+        mut commands: [TicCommand; 4],
     ) -> Result<(), SimError> {
         let command_policy = self.player_policy().has_player_commands();
         let weapon_policy = self.player_policy().has_player_weapons();
@@ -693,13 +751,52 @@ impl Simulation {
         let movers = self.player_policy().has_movers();
         // What the use block requested, applied with the staged tables after it.
         let mut used = use_lines::UseOutcome::default();
+        // Whether sector special 11 requested `G_ExitLevel` (Episode 1 policy).
+        let mut special_exit = false;
         if command_policy {
             plan.events.push(Event::Phase(Phase::Players));
+            // G_Ticker, before P_Ticker (g_game.c:671–679): the turbo message on
+            // every 128th gametic when the read command's forward exceeds 50.
+            // Only the Episode 1 domain admits such a command.
+            if self.player_policy().has_episode1()
+                && player_commands::turbo_message(
+                    self.tic,
+                    commands[usize::from(PlayerSlot::One.ordinal())],
+                )
+            {
+                plan.player
+                    .as_mut()
+                    .and_then(|p| p.pickups.as_mut())
+                    .ok_or(crate::PlayerBodyError::Profile)?
+                    .message = PickupMessage::Turbo;
+            }
+            // p_user.c:249–255, before the dead test: `A_Saw`'s `MF_JUSTATTACKED`
+            // rewrites the command to the chainsaw lunge (turn 0, forward
+            // 0xc800/512 = 100, side 0; buttons kept) and clears the flag. The
+            // rewritten command is the one every later reader sees, the stand test
+            // of `P_XYMovement` and the DSIM39 capture included (decision D5); the
+            // preflight checked the input command.
+            if self.player_policy().has_episode1() {
+                let body = plan.player.as_ref().and_then(|p| p.mo);
+                if let Some(life) = body
+                    .and_then(|id| plan.actors.get_mut(id))
+                    .and_then(|a| a.life.as_mut())
+                    .filter(|l| l.flags & player_commands::MF_JUSTATTACKED != 0)
+                {
+                    life.flags &= !player_commands::MF_JUSTATTACKED;
+                    let c = &mut commands[usize::from(PlayerSlot::One.ordinal())];
+                    c.angle_turn = 0;
+                    c.forward = 100;
+                    c.side = 0;
+                }
+            }
             // Whether `P_PlayerThink` took its live branch this tic (p_user.c:
             // 258–262), read by the level policy's counter decays.
             let think_live;
             {
                 let mut host = LifeHost {
+                    specials: None,
+                    buttons: movers.then_some(&mut plan.buttons),
                     player: plan.player.as_mut(),
                     statistics: plan.statistics.as_mut(),
                     perception: Some(self.checked_demon_inputs(&control)),
@@ -739,7 +836,7 @@ impl Simulation {
                         plan.sound_targets.as_mut_slice(),
                     )
                     .map_err(|error| self.policy_error(error))?;
-                    sector_thinkers::player_in_special_sector(
+                    special_exit = sector_thinkers::player_in_special_sector(
                         &mut host,
                         &mut plan.specials,
                         self.tic,
@@ -757,7 +854,10 @@ impl Simulation {
                             plan.sound_targets.as_mut_slice(),
                         )
                         .map_err(|error| self.policy_error(error))?;
-                        used = use_block(&mut host, &mut plan.buttons, command)?;
+                        used = use_block(&mut host, &mut plan.specials, command)?;
+                        // The weapons' damage to the player body (a rocket
+                        // exploding at once) reads the sector special-11 cap.
+                        host.specials = Some(plan.specials.as_slice());
                         player_pistol::stage_operation(
                             &mut host,
                             weapons::PlayerWeaponOperation::MovePsprites,
@@ -767,6 +867,7 @@ impl Simulation {
                         )
                         .map_err(|error| self.policy_error(error))?;
                     } else {
+                        host.specials = Some(plan.specials.as_slice());
                         player_pistol::stage_operation(
                             &mut host,
                             weapons::PlayerWeaponOperation::AfterSpecials,
@@ -814,7 +915,9 @@ impl Simulation {
                 plan.writes
                     .write_line_special(&self.line_specials, line, 0)?;
             }
-            plan.exit |= used.exit;
+            plan.exit |= used.exit || special_exit;
+            plan.secret_exit |= used.secret;
+            crate::episode1::powers_tick(plan.player.as_mut(), &mut plan.actors, think_live)?;
             world_pickups::bonus_tick(plan.player.as_mut(), think_live)?;
             plan.events.push(Event::Phase(Phase::Thinkers));
         } else {
@@ -847,6 +950,7 @@ impl Simulation {
                 perception_inputs: Some(perception_inputs),
                 boundary: self.boundary.as_deref(),
                 specials: specials.then_some(plan.specials.as_mut_slice()),
+                buttons: movers.then_some(&mut plan.buttons),
             },
         );
         if let Some(error) = control.failure.get() {
@@ -899,10 +1003,12 @@ impl Simulation {
 /// The use block of `P_PlayerThink` (p_user.c:322–331) under the movers policy:
 /// with `BT_USE` held and `usedown` clear, `P_UseLines` and set `usedown`; without
 /// `BT_USE`, clear it. A door the use opens joins the order's tail and steps in this
-/// tic's pass. The S1 clear and the exit are returned for the staged tables.
+/// tic's pass. The line clear and the exits are returned for the staged tables;
+/// the Episode 1 starters write the staged sector `specials` and the player's
+/// message directly.
 fn use_block(
     host: &mut LifeHost<'_, &mut ThinkerStore<Actor>>,
-    buttons: &mut use_lines::Buttons,
+    specials: &mut [sector_thinkers::SectorSpecial],
     command: TicCommand,
 ) -> Result<use_lines::UseOutcome, SimError> {
     let p = host.player.as_deref_mut().ok_or(PlayerBodyError::Profile)?;
@@ -916,12 +1022,18 @@ fn use_block(
     p.use_down = true;
     let id = p.mo.ok_or(PlayerBodyError::Binding)?;
     let actor = *host.access.get(id).ok_or(PlayerBodyError::Binding)?;
+    let buttons = host
+        .buttons
+        .as_deref_mut()
+        .ok_or(PlayerBodyError::Profile)?;
     use_lines::use_lines(
         &mut movers::Starter {
             world: host.world,
             sectors: host.sectors,
             store: &mut *host.access,
             events: &mut *host.events,
+            specials: Some(specials),
+            player: host.player.as_deref_mut(),
         },
         buttons,
         id,

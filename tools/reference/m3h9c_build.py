@@ -9,7 +9,8 @@ LP64 ABI adapters (ABI_ADAPTERS, every build) and sanitizer adapters (SANITIZER_
 the two sanitizer builds only) are exact one-line text replacements: the build fails
 unless each original text occurs exactly once in its file and stands at its declared line.
 
-    m3h9c_build.py --variant strict|overflow|address|all [--out DIR] [--cc CC]
+    m3h9c_build.py --variant strict|overflow|address|all|strict32 [--out DIR] [--cc CC]
+    m3h9c_build.py --probe-m32 [--cc CC]
     m3h9c_build.py --contract tests/reference/m3h9c_runner_contract.json
     m3h9c_build.py --check
 
@@ -20,6 +21,17 @@ host-independent part (sources, adapters, extract, flags, stubs, driver behaviou
 row kinds) and --check regenerates it in memory and fails if the committed file differs;
 neither compiles anything. The runner itself reads a WAD and a demo lump at run time:
 tools/local/e1m1_reference.py runs it on a local IWAD, which never enters the repository.
+
+strict32 (OPTIONAL_VARIANTS, opt-in, never part of all or of the contract) is the strict
+flags plus -m32 built from the genuine text with no adapter at all: on an ILP32 target the
+five LP64 ABI adapters are not needed, so its dumps are the check that they change nothing
+(decision G3). It needs a 32-bit toolchain; --probe-m32 reports whether CC has one, and a
+strict32 build on a toolchain without one exits with a skip line (status 0, no binary).
+
+A fork of the driver (tools/reference/m4a_build.py) reuses this module through a Runner:
+the driver file, extra wrapped symbols, extra driver-behaviour entries, the schema, the
+contract path and the default build directory. M3H9C holds this runner's own values, and
+every function defaults to it, so this file's contract is unchanged by the parameters.
 """
 import argparse, hashlib, json, os, re, shutil, subprocess, sys
 from pathlib import Path
@@ -53,6 +65,10 @@ VARIANT_NOTES = {
                '-fno-sanitize=alignment because z_zone.c rounds block sizes to 4 (z_zone.c:195) while the '
                'LP64 memblock_t needs 8-byte alignment',
 }
+# Opt-in, host-dependent variants: kept out of VARIANTS, of --variant all and of the contract.
+OPTIONAL_VARIANTS = {'strict32': BASE + ['-m32']}
+OPTIONAL_NOTES = {'strict32': 'genuine text, no ABI or sanitizer adapter (ILP32 target); needs a 32-bit '
+                              'toolchain (--probe-m32); the G3 check that the LP64 adapters change no dump byte'}
 FILE_FLAGS = {'r_data.c': ['-include', 'stdint.h'], 'z_zone.c': ['-include', 'stdint.h']}
 # Linker-level observers (m3h9c_driver.c __wrap_*): every cross-object call of these reaches
 # the driver's recording wrapper, which then calls the genuine function.
@@ -121,6 +137,25 @@ DRIVER_BEHAVIOUR = [
     'The zone is 6 MiB (vanilla mb_used, i_system.c:51) unless --zone-mb is given.',
 ]
 
+class Runner:
+    """One driver's build and contract parameters. A fork keeps the genuine sources,
+    adapters, extract, stubs and flags and changes only these."""
+    def __init__(self, name, driver, contract, schema, wrapped=(), behaviour=(), replace=(), out_name=None):
+        """wrapped and behaviour are appended to WRAPPED and DRIVER_BEHAVIOUR; replace is a
+        list of (prefix, text): the one DRIVER_BEHAVIOUR entry starting with prefix becomes text."""
+        self.name, self.driver, self.contract, self.schema = name, Path(driver), Path(contract), schema
+        self.wrapped = WRAPPED + [w for w in wrapped if w not in WRAPPED]
+        base = list(DRIVER_BEHAVIOUR)
+        for prefix, new in replace:
+            hits = [i for i, e in enumerate(base) if e.startswith(prefix)]
+            if len(hits) != 1: sys.exit(f'runner {name}: behaviour prefix {prefix!r} matches {len(hits)} entries')
+            base[hits[0]] = new
+        self.behaviour = base + list(behaviour)
+        self.link_flags = ['-Wl,' + ','.join(f'--wrap={w}' for w in self.wrapped)]
+        self.out_name = out_name or f'doom-{name}-build'
+
+M3H9C = Runner('m3h9c', DRIVER, CONTRACT, SCHEMA)
+
 def text(path): return Path(path).read_bytes().decode('latin-1')
 
 def apply_once(src, a):
@@ -136,7 +171,8 @@ def adapter_table(adapters, builds):
                  reason=a['reason']) for a in adapters]
 
 def adapted_sources(variant):
-    applied = ABI_ADAPTERS + (SANITIZER_ADAPTERS if variant != 'strict' else [])
+    applied = ([] if variant in OPTIONAL_VARIANTS else
+               ABI_ADAPTERS + (SANITIZER_ADAPTERS if variant != 'strict' else []))
     out = {}
     for f in WHOLE:
         s = text(SOURCE / f)
@@ -189,43 +225,57 @@ def stubs():
     if len({s['symbol'] for s in found}) != len(found): sys.exit('stub list FAILED: duplicate symbol')
     return found
 
-def dump_row_kinds():
-    src = text(DRIVER)
+def dump_row_kinds(runner=M3H9C):
+    src = text(runner.driver)
     block = src[src.index('static const char* COLUMNS ='):]; block = block[:block.index(';')]
     joined = ''.join(re.findall(r'"((?:[^"\\]|\\.)*)"', block)).replace('\\n', '\n')
     return {f[1]: f[2:] for f in (l.split(',') for l in joined.strip().split('\n'))}
 
-def contract():
+def contract(runner=M3H9C):
     _, extract = r_main_extract()
     st = stubs()
     adapted = {f: sha(s) for f, s in adapted_sources('strict').items()}
     san = {f: sha(s) for f, s in adapted_sources('overflow').items()}
     return dict(
-        schema=SCHEMA, revision=REVISION,
+        schema=runner.schema, revision=REVISION,
         purpose='Headless whole-file build of the genuine gameplay code driven through the vanilla -playdemo path; run locally on a real IWAD and in CI on a synthetic WAD. Expected observations come from the genuine code, never from Rust output.',
         whole_files=WHOLE, excluded=dict(p_saveg_c='aborting stubs for its eight P_(Un)Archive* functions and save_p',
                                          r_main_c='declared extract only (r_main_extract)'),
         source_sha256={f: sha((SOURCE / f).read_bytes()) for f in sorted(set(WHOLE) | {'r_main.c'})},
         header_sha256={p.name: sha(p.read_bytes()) for p in sorted(SOURCE.glob('*.h'))},
         adapted_sha256=dict(strict=adapted, sanitizer=san),
-        flags=VARIANTS, variant_notes=VARIANT_NOTES, file_flags=FILE_FLAGS, link_flags=LINK_FLAGS, wrapped=WRAPPED,
+        flags=VARIANTS, variant_notes=VARIANT_NOTES, file_flags=FILE_FLAGS, link_flags=runner.link_flags, wrapped=runner.wrapped,
         abi_adapters=adapter_table(ABI_ADAPTERS, ['strict', 'overflow', 'address']),
         sanitizer_adapters=adapter_table(SANITIZER_ADAPTERS, ['overflow', 'address']),
         r_main_extract=extract,
         stubs=st, stub_counts=dict(functions=sum(s['kind'] == 'function' for s in st),
                                    variables=sum(s['kind'] == 'variable' for s in st),
                                    **{c: sum(s['classification'] == c for s in st) for c in ('io', 'reads', 'writes', 'var')}),
-        runner_sha256={'tools/reference/m3h9c_driver.c': sha(DRIVER.read_bytes()),
+        runner_sha256={runner.driver.relative_to(ROOT).as_posix(): sha(runner.driver.read_bytes()),
                        'tools/reference/m3h9c_stubs.c': sha(STUBS.read_bytes())},
-        driver_behaviour=DRIVER_BEHAVIOUR, dump_row_kinds=dump_row_kinds())
+        driver_behaviour=runner.behaviour, dump_row_kinds=dump_row_kinds(runner))
 
 def render(c): return json.dumps(c, indent=1, sort_keys=False) + '\n'
 
-def default_out(): return Path(os.environ.get('HOME', '/tmp')) / 'scratch/doom-m3h9c-build'
+def default_out(runner=M3H9C): return Path(os.environ.get('HOME', '/tmp')) / 'scratch' / runner.out_name
 
-def build(variant, out, cc='cc'):
+def probe_m32(cc='cc'):
+    """True when CC compiles and links a C program with -m32 (and the --wrap link flags)."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        c = Path(d) / 'probe.c'
+        c.write_text('#include <stdio.h>\n#include <setjmp.h>\nint main (void) { jmp_buf j; '
+                     'return sizeof (void*) == 4 && !setjmp (j) ? 0 : 1; }\n')
+        try: p = subprocess.run([cc, '-m32', str(c), '-o', str(Path(d) / 'probe')], capture_output=True)
+        except OSError: return False
+        if p.returncode: return False
+        return subprocess.run([str(Path(d) / 'probe')], capture_output=True).returncode == 0
+
+def build(variant, out, cc='cc', runner=M3H9C):
     out = out.resolve()
     if out == ROOT or ROOT in out.parents: sys.exit('--out must lie outside the repository')
+    if variant in OPTIONAL_VARIANTS and not probe_m32(cc):
+        print(f'skip: {variant}: {cc} cannot build and run a -m32 program (no 32-bit toolchain)'); return None
     work = out / variant
     if work.exists(): shutil.rmtree(work)
     src, obj = work / 'src', work / 'obj'
@@ -236,9 +286,10 @@ def build(variant, out, cc='cc'):
     extract, _ = r_main_extract()
     (src / 'r_main_extract.c').write_bytes(extract.encode('latin-1'))
     (src / 'layout_probe.c').write_text(layout_probe(sources['r_data.c']))
-    shutil.copy2(DRIVER, src / 'm3h9c_driver.c'); shutil.copy2(STUBS, src / 'm3h9c_stubs.c')
-    units = WHOLE + ['r_main_extract.c', 'layout_probe.c', 'm3h9c_stubs.c', 'm3h9c_driver.c']
-    flags, warnings = VARIANTS[variant], {}
+    drv = runner.driver.name
+    shutil.copy2(runner.driver, src / drv); shutil.copy2(STUBS, src / 'm3h9c_stubs.c')
+    units = WHOLE + ['r_main_extract.c', 'layout_probe.c', 'm3h9c_stubs.c', drv]
+    flags, warnings = {**VARIANTS, **OPTIONAL_VARIANTS}[variant], {}
     for f in units:
         p = subprocess.run([cc] + flags + FILE_FLAGS.get(f, []) + ['-I', str(src), '-c', str(src / f), '-o',
                            str(obj / (f[:-2] + '.o'))], capture_output=True, text=True)
@@ -246,41 +297,52 @@ def build(variant, out, cc='cc'):
         if 'warning:' in p.stderr:
             warnings[f] = p.stderr.count('warning:'); (work / f'{f}.warnings.txt').write_text(p.stderr)
     nm = subprocess.run(['nm', '--defined-only', '-g', str(obj / 'm3h9c_stubs.o')], capture_output=True, text=True, check=True)
-    defined = {l.split()[-1] for l in nm.stdout.splitlines() if l.strip() and '__odr_asan' not in l} - {'stub_quit_flag', 'stub_quit_jmp',
+    defined = {l.split()[-1] for l in nm.stdout.splitlines() if l.strip() and '__odr_asan' not in l
+               and '__x86.get_pc_thunk.' not in l} - {'stub_quit_flag', 'stub_quit_jmp',
               'stub_quit_armed', 'stub_zone_mb', 'stub_gettime_counter', 'stub_hu_message', 'stub_hu_ran'}
     declared = {s['symbol'] for s in stubs()}
     if defined != declared: sys.exit(f'stub list FAILED: defined-not-declared {sorted(defined - declared)}, '
                                      f'declared-not-defined {sorted(declared - defined)}')
     binary = work / 'crunner'
-    p = subprocess.run([cc] + flags + LINK_FLAGS + [str(obj / (f[:-2] + '.o')) for f in units] + ['-o', str(binary)],
+    p = subprocess.run([cc] + flags + runner.link_flags + [str(obj / (f[:-2] + '.o')) for f in units] + ['-o', str(binary)],
                        capture_output=True, text=True)
     if p.returncode: sys.stderr.write(p.stderr); sys.exit('link FAILED')
-    man = dict(contract(), variant=variant, compiler=subprocess.run([cc, '--version'], capture_output=True,
+    man = dict(contract(runner), variant=variant, compiler=subprocess.run([cc, '--version'], capture_output=True,
                text=True).stdout.split('\n')[0], binary=str(binary), binary_sha256=sha(binary.read_bytes()),
                warnings=warnings)
+    if variant in OPTIONAL_VARIANTS:
+        man.update(optional_variant=dict(flags=flags, note=OPTIONAL_NOTES[variant], abi_adapters_applied=[],
+                                         sanitizer_adapters_applied=[],
+                                         source_sha256={f: sha(s) for f, s in sources.items()}),
+                   file=subprocess.run(['file', '-b', str(binary)], capture_output=True, text=True).stdout.strip())
     (out / f'manifest_{variant}.json').write_text(render(man))
     print(f'{variant}: built {binary}; {sum(warnings.values())} warnings in {len(warnings)} files')
     return binary
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--variant', choices=list(VARIANTS) + ['all'])
-    ap.add_argument('--out', type=Path, default=default_out())
+def main(runner=M3H9C, doc=__doc__):
+    ap = argparse.ArgumentParser(description=doc, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--variant', choices=list(VARIANTS) + ['all'] + list(OPTIONAL_VARIANTS),
+                    help='all builds the three contract variants; strict32 is opt-in')
+    ap.add_argument('--probe-m32', action='store_true', help='report whether CC builds and runs -m32 programs')
+    ap.add_argument('--out', type=Path, default=default_out(runner))
     ap.add_argument('--cc', default='cc')
     ap.add_argument('--contract', type=Path, help='write the host-independent contract to this path')
     ap.add_argument('--check', action='store_true', help='fail if the committed contract differs')
     a = ap.parse_args()
     if a.check:
-        if CONTRACT.read_text() != render(contract()): sys.exit(f'{CONTRACT.relative_to(ROOT)} differs from the regenerated contract')
-        c = json.loads(CONTRACT.read_text())
-        print(f"m3h9c runner contract matches: {len(c['whole_files'])} whole files, {len(c['abi_adapters'])} ABI + "
+        cpath = runner.contract
+        if cpath.read_text() != render(contract(runner)): sys.exit(f'{cpath.relative_to(ROOT)} differs from the regenerated contract')
+        c = json.loads(cpath.read_text())
+        print(f"{runner.name} runner contract matches: {len(c['whole_files'])} whole files, {len(c['abi_adapters'])} ABI + "
               f"{len(c['sanitizer_adapters'])} sanitizer adapters, {len(c['r_main_extract']['functions'])} extracted bodies, "
               f"{c['stub_counts']['functions']} function + {c['stub_counts']['variables']} variable stubs")
     if a.contract:
-        a.contract.write_text(render(contract())); print(f'wrote {a.contract}')
+        a.contract.write_text(render(contract(runner))); print(f'wrote {a.contract}')
     if a.variant:
-        for v in (VARIANTS if a.variant == 'all' else [a.variant]): build(v, a.out, a.cc)
-    if not (a.check or a.contract or a.variant): ap.error('nothing to do')
+        for v in (VARIANTS if a.variant == 'all' else [a.variant]): build(v, a.out, a.cc, runner)
+    if a.probe_m32:
+        ok = probe_m32(a.cc); print(f"-m32: {'available' if ok else 'not available'} with {a.cc}")
+    if not (a.check or a.contract or a.variant or a.probe_m32): ap.error('nothing to do')
 
 if __name__ == '__main__':
     main()

@@ -153,5 +153,9 @@ original evidence and former guide contents with exact-byte copies and digests.
   [support](COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle)
   and [DSIM37](STATE_FORMAT.md#dsim-v37--original-exploding-barrels-pickup-scale-and-every-thing-angle).
 - [M3h9c real E1M1 against the genuine engine investigation](M3H9C_REFERENCE_INVESTIGATION.md)
-  (the headless genuine build, the demo-format input, the per-tic comparison and decisions G1–G12;
-  Phase 2 in progress; [observations](validation/M3H9C.md)).
+  (the headless genuine build, the demo-format input, the per-tic comparison and decisions G1–G13;
+  merged; [observations](validation/M3H9C.md)).
+- [M4a Episode 1, map by map, against the genuine engine investigation](M4A_REFERENCE_INVESTIGATION.md)
+  (the Episode 1 census, the original C facts for every mechanism E1M2–E1M9 add, the command
+  domain, the original demos, the synthetic-WAD CI path, decisions H1–H12 and the part 1 /
+  M4b / M4c order of work; Phase 2 in progress).

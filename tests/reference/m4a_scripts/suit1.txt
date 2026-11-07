@@ -1,0 +1,18 @@
+# output: SUIT1.lmp
+# SUIT1 on tests/reference/m4a_wads/items.wad (M4a). Authored closed loop against the strict runner.
+# The radiation suit over special 7 (no draw) and special 16 (a P_Random draw every tic on the floor; damage when
+# the draw is below 5 on a 32-tic boundary).
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 229 0   # radiation suit
+cmd 12 50 0 0 0   # run 12 tics
+cmd 24 0 0 0 0   # settle
+cmd 1 0 0 126 0   # into the special-7 pond (the suit protects without a draw)
+cmd 23 50 0 0 0   # run 23 tics
+cmd 27 0 0 0 0   # settle
+cmd 40 0 0 0 0
+cmd 1 0 0 94 0   # into the special-16 pond
+cmd 17 50 0 0 0   # run 17 tics
+cmd 26 0 0 0 0   # settle
+cmd 130 0 0 0 0   # one P_Random draw per tic on the 16 floor with the suit (p_spec.c:1036-1046)

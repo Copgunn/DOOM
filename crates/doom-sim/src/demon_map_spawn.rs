@@ -104,7 +104,7 @@ impl Simulation {
                 // lump in order) and is never the suffix; nothing acts on it per
                 // tic, so the witness is its spawn record.
                 decorations += 1;
-                if decorations > MAX_DECORATIONS {
+                if decorations > self.decoration_limit() {
                     return Err(MapSpawnError::DecorationLimit.into());
                 }
                 e1m1_rules::validate_decoration(self.room(), a)?;
@@ -113,7 +113,7 @@ impl Simulation {
                 // THINGs in lump order and is never the suffix; its witness covers
                 // every state it can hold, `S_GIBS` after a crunch included.
                 barrels += 1;
-                if barrels > MAX_BARRELS {
+                if barrels > self.barrel_limit() {
                     return Err(MapSpawnError::BarrelLimit.into());
                 }
                 crate::barrels::validate_barrel(self.room(), a, self.gibbed(&a))?;

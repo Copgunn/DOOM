@@ -2226,3 +2226,203 @@ barrels policy, so a map outside those bounds is refused at load exactly as unde
 demos are limited to the admitted command domain (no turbo, pause, save or weapons 4-7); the
 events groups are Rust's own records and the static map is compared separately, so the
 per-tic comparison covers the rest of the capture.
+
+## Original Episode 1, part 1: every door, floor, plat, stair, donut, light and exit special, keys, items, powers, chainsaw, rocket launcher and Spectre (wire 23)
+
+**Status: implemented through plan step 8 of 8 on `feat/m4a-episode-1`; not merged.** The command-domain
+lift, the version-110 demo header for maps 1-9 and the real-map Rust runs are done. Against the genuine
+engine, Rust matches tic for tic on the 25 authored scripts of E1M2, E1M3, E1M4, E1M6 and E1M7 and on the
+five E1M1 scripts re-run under wire 23, with no refuse-the-tic witness firing (see
+[the evidence record](validation/M4A.md#real-episode-1-maps-genuine-engine-runs-local-only)). That is evidence for those scripted
+inputs only. None of DOOM.WAD's original demos can run under wire 23: all are skill 3, which is M4b, and
+DEMO1 is E1M5, whose teleporters are also M4b; none was attempted.
+
+`OriginalExecutionProfile::PlayerMonstersEpisode1V1` (wire 23, DSIM39, context
+`PLAYER-MONSTERS-EPISODE1-1-MEDIUM-v1`) is a separate optional superset of
+`PlayerMonstersLevelV1` (wire 22). Select it with `Simulation::original_player_episode1_map`
+(`crates/doom-sim/src/player_monsters.rs`), which takes no slot limit and no skill (medium
+only), then call `spawn_map_things`, `initialize_player_weapons` and `spawn_level_specials`
+once each before the first tic, exactly as for wire 22. The purpose is part 1 of Episode 1 of
+the original game: the mechanisms that E1M2, E1M3, E1M4, E1M6 and E1M7 need, proven against
+the genuine linuxdoom-1.10 engine. The owner confirmed decisions H1-H12 on 2026-11-05 (note
+[§10](M4A_REFERENCE_INVESTIGATION.md#10-new-owner-decisions-h1h12-with-recommendations)), and
+the Phase 2 rulings and plan decisions D1-D10 are in
+[§14](M4A_REFERENCE_INVESTIGATION.md#14-corrections-and-findings-from-phase-2). Wires 1-22,
+their goldens and DSIM20-38 are unchanged: every older policy still refuses each thing,
+special and bound below, and the wire-22 runs under the new tree match byte for byte
+(`check_player_level.py`, [testing](TESTING.md)). The canonical layout is the
+[STATE_FORMAT DSIM39 section](STATE_FORMAT.md#dsim-v39--episode-1-part-1-every-special-keys-items-powers-and-the-rocket-launcher).
+Metadata recognition, executable admission and compatibility are distinct claims: this
+section describes executable admission, with source equivalence shown only for the scripted
+inputs of the evidence record.
+
+### Admitted line specials
+
+Wire 22's eight specials (1, 11, 36, 38, 48, 63, 88, 109, with the behaviour of the
+[wire-19 table](#original-monsters-with-doors-lifts-floors-switches-and-the-exit)) are kept.
+Wire 23 adds these 29 (`mover_rules::validate_movers_with`, `use_lines.rs`, `line_triggers.rs`,
+`movers.rs`); W1 lines are cleared after the call whatever it started, S1 switches only when
+the source's call returned non-zero.
+
+| Special | Trigger | Source behavior |
+| --- | --- | --- |
+| 26, 27, 28 | use (DR), player | locked door: blue, yellow, red card or skull (`EV_VerticalDoor`, p_doors.c:354-499); without the key message 27/28/29 (`PD_BLUEK`, `PD_YELLOWK`, `PD_REDK`, a state field of DSIM39) and `sfx_oof`, no mover |
+| 31 | use (D1), player | open door (stays), special cleared only when a door thinker is created |
+| 32, 33, 34 | use (D1), player or monster | locked open door (32 blue, 33 red, 34 yellow); a monster's use returns with no change |
+| 2 | W1 | `EV_DoDoor(open)` |
+| 16 | W1 | `EV_DoDoor(close30ThenOpen)` |
+| 76 | WR | `EV_DoDoor(close30ThenOpen)` |
+| 86 | WR | `EV_DoDoor(open)` |
+| 90 | WR | `EV_DoDoor(normal)` |
+| 103 | S1 | `EV_DoDoor(open)` |
+| 5 | W1 | `EV_DoFloor(raiseFloor)` (to the lowest surrounding ceiling, clamped to the sector's own) |
+| 91 | WR | `EV_DoFloor(raiseFloor)` |
+| 18 | S1 | `EV_DoFloor(raiseFloorToNearest)`, with `P_FindNextHighestFloor`'s 20-neighbour cut-off reproduced |
+| 23 | S1 | `EV_DoFloor(lowerFloorToLowest)` |
+| 82 | WR | `EV_DoFloor(lowerFloorToLowest)` |
+| 70 | SR | `EV_DoFloor(turboLower)` |
+| 98 | WR | `EV_DoFloor(turboLower)` |
+| 20 | S1 | `EV_DoPlat(raiseToNearestAndChange)`: copies the trigger line's front flat and clears the sector special |
+| 22 | W1 | `EV_DoPlat(raiseToNearestAndChange)` |
+| 62 | SR | `EV_DoPlat(downWaitUpStay)` (a reusable lift switch) |
+| 7 | S1 | `EV_BuildStairs(build8)`: stair sectors, speed 16,384 raw, step 8 |
+| 8 | W1 | `EV_BuildStairs(build8)` |
+| 9 | S1 | `EV_DoDonut`: ring then hole, the flat and special applied at the end |
+| 35 | W1 | `EV_LightTurnOn(35)` on every tagged sector (no thinker; a glow thinker in the sector rewrites the level from the next tic) |
+| 46 | shot (GR) | `P_ShootSpecialLine`: `EV_DoDoor(open)` and a switch-texture button restart on every hit, by the player or a monster hitscan, the pistol and the chainsaw included |
+| 51 | use (S1) | the secret exit: special cleared, switch sound, `G_SecretExitLevel` (`level.secret_exit` set) |
+
+Unknown specials are still refused at load (`PursuitError::Specials`), among them 97 (the
+teleporter, M4b), 3, 4, 10, 24 and 47. A monster crossing or using any of the new lines
+does nothing (the source's own filter in `P_CrossSpecialLine` and `P_UseSpecialLine`). The
+switch-texture rule is generalised (decision D3): a switch line whose front texture matches
+no switch is a silent no-op in the source (no sound, no button, S1 cleared) and is admitted;
+a match only in another episode's switch list is still refused
+(`MapScaleError::SwitchTexture`).
+
+### Admitted sector specials, things and weapons
+
+| Set | Admitted under wire 23 (beyond wire 22) |
+| --- | --- |
+| Sector specials | 11 (`P_PlayerInSpecialSector`: 20 damage on the damage gate that ignores the suit, the one-tic cap that leaves the player at 1 health for any source in a special-11 sector, the exit at health 10 or less). Wire 22's 1, 2, 3, 4, 5, 7, 8, 9, 12, 13, 16 and 17 stay; a radiation suit now cancels 5, 7, 4 and 16 as in the source (4 and 16 draw `P_Random() < 5` every tic with the suit) |
+| Keys | 5 blue card, 6 yellow card, 13 red card (`P_GiveCard`; a second card of a colour adds only its `BONUSADD`) |
+| Items and powers | 2013 soulsphere (200 cap), 2024 partial invisibility (powers[2] = 2100, `MF_SHADOW` set on the body and cleared only when it expires), 2025 radiation suit (2100), 2026 computer map (refused while held), 2045 light amplification visor (4200), 8 backpack (maxima double once, then one clip of each ammunition in order) |
+| Ammunition | 2010 rocket, 2046 box of rockets; `P_GiveAmmo` for all four types with `maxammo` |
+| Weapons | 2005 chainsaw and 2003 rocket launcher; weapon selections 0-7 under `BT_CHANGE` (unowned selections ignored, 0 chooses the chainsaw once owned, 7 is the chainsaw, 5 and 6 are never owned) |
+| Statics | 34 candle, 46 tall red firestick (four-state loop); 14 (the teleport landing) is **not** admitted |
+| Monster | 58 Spectre: a Demon with `MF_SHADOW` and `MF_COUNTKILL`, with the Demon's exact state and action roles; the shadow aim fuzz applies when a monster attacks an invisible player |
+| Rocket | `MT_ROCKET` with `P_SpawnPlayerMissile` (three autoaim tries), `A_Explode` through the generalised `P_RadiusAttack` source and the sky removal of a missile; the chainsaw `A_Saw` lunge rewrite (p_user.c:249-255) and the no-thrust rule that keys on the stored ready weapon |
+
+Wire 22's things (zombieman, sergeant, chaingunner, Imp and Demon, the wire-22 pickups, the
+barrel, the seven E1M1 decorations and the player start in lump order) are unchanged.
+New events use DSIM39 sub-tags 11-14 and message codes 14-29.
+
+### Bounds
+
+Wire 22's fixed caps (8 monsters, 64 pickups, 16 barrels, 32 decorations, 384 actor slots)
+are replaced by values derived once at load from the map's THINGS lump with the
+single-player, medium-skill filter of `P_SpawnMapThing`
+(`crates/doom-sim/src/episode1.rs`, `Episode1Bounds::from_map`; decision H4). Immutable and
+never canonical state; the DSIM39 reader derives the same values from `map.things`.
+
+| Bound | Wire 23 value |
+| --- | --- |
+| Monsters `K`, droppers `R`, pickups `P`, keycards `C`, barrels `B`, statics `D` | counted from THINGS (monsters 3004, 9, 65, 3001, 3002, 58; droppers 3004, 9, 65; the 25 pickup numbers; barrel 2035; statics) |
+| World items | `P + R` |
+| `bonuscount` | `6 * (P + R + C)` |
+| Actor slots | 1,024 (`store.max_slots`, decision D1; the store-full witness replaces the live-actor proof). The v39 reader refuses any other value of the field (found by the mutation-testing step). Readers before v39 check only an upper bound, so the v38 reader accepts values below its fixed 384: a documented older-schema gap, not patched |
+| Per-tic monster sight queries | `max(64, 8 * (K + 1))` |
+| Queries per explosion | `max(216, (1 + K + B) * (1 + K))`; the visit-bound roster term is `max(8, K)` |
+| Live missiles | no per-type cap; the full store is the witness |
+| Sector heights | still within +-1,024 map units (`map_extent::validate_real_map`) |
+
+Heights above 512 now load under wire 23 and wire 22 still refuses them.
+
+### Load rules
+
+The mover rules of the wire-19 section apply as follows
+(`mover_rules::validate_episode1`). **Kept:** a DR or D1 line needs a back side
+(`MapScaleError::DoorLine`), `MapScaleError::MoverNeighbor`, `SelfReferencingDoor`, the
+plat and reusable-switch counts (`MoverCount`), a defined `blockbox` for **every** sector
+(`MoverBlockBox`), the +-1,024 sector heights, the switch-texture rule above, the light
+range, and `DonutGeometry` (decision H8): every sector tagged by a special-9 line must have a
+two-sided first line and an outer sector that `EV_DoDonut` finds without a null side or
+sector, because the source's `!flags & ML_TWOSIDED` test never skips a one-sided line. The
+boundary rules C1/C2 are **optional**: a map that fails them (E1M3's) loads with the Escape
+witness inactive and the Position witness kept (decision D4). **Bypassed, with a witness in
+their place** (H3, wire 23 only): one family per sector (`MoverFamily`), reachable heights
+(`MoverHeights`, `InvertingDoor`, the +-512 check), the 2 x 2 special-window (`SpecialWindow`)
+and the arithmetic certificate's clauses (i), (ii) and (vii). Rule 8, sky movers
+(`SkyMover`), no longer applies at all. The reachable-height computation is clamped to
++-32,767 units per round so that it terminates, and it is still used to bound the movers.
+
+### Runtime witnesses
+
+Each refuses the tic and preserves the complete canonical state (the whole-tic rollback
+of earlier wires); the next tic can be attempted. All but the store-full one are
+`MapScaleError` variants (`crates/doom-sim/src/player_map_scale.rs`) reported through
+`SimError`.
+
+| Variant | When |
+| --- | --- |
+| `SecondDoor` | a D1 line (31-34) is used on a sector that already holds a live mover: the source falls through and overwrites `specialdata` |
+| `MoverFamily` | at use time, a DR line (1, 26-28) used on a sector whose `specialdata` is not a door (the source casts the plat or floor to a door and reads an aliased field that differs between the 32-bit original and LP64) |
+| `StairBlocked` | a stair step's first `P_ChangeSector` is blocked: the source reads the uninitialised `crush` of the `EV_BuildStairs` thinker (decision H7) |
+| `PlatBlocked` | a `raiseToNearestAndChange` plat is blocked: it never initialised `low` (H7) |
+| `DonutBusy` | `EV_DoDonut`'s outer sector already holds a live mover (H8) |
+| `Arithmetic` | a checked `i64` recomputation of the source's `P_InterceptVector`/`P_InterceptVector2` sums, `FixedMul` narrowing, sight slope differences and trace heights would overflow or leave `fixed_t`; replaces the certificate clauses and the +-512 check (the same `Arithmetic` variant, now raised at the tic) |
+| `SpecialCross` | a `P_CheckPosition` would store a ninth `spechit`; it replaces the 2 x 2 window load rule that E1M5 and E1M9 fail (neither map is admitted) |
+| `StoreError::Capacity` | a spawn finds the 1,024-slot store full; nothing is spawned |
+| `Escape`, `Intercepts`, `Position`, `Vertical` | the wire-22 witnesses, unchanged |
+
+The blocked stair and the blocked raise-and-change plat are cases where the genuine C runner
+reads zero-filled zone memory (the declared driver behaviour) and runs on; Rust refuses the
+tic instead, because vanilla's behaviour there depends on zone contents no model can know.
+Observed at tic 91 (PLATS2) and tic 153 (STAIRS2) in the
+[evidence record](validation/M4A.md); the earlier tics match. The three genuine C builds
+(strict `-fwrapv`, overflow-checked, address-checked) remain the independent check that no
+overflow occurs on any matched run.
+
+### Explicitly not admitted
+
+- **Teleportation:** special 97 and thing 14 (the landing) - M4b with E1M5, E1M8 and E1M9.
+- **The Baron and `A_BossDeath`** (E1M8) and every thing outside the lists above; an
+  unsupported thing is `MapSpawnError::UnsupportedType`, an unsupported action is an explicit
+  rejection, never a silent no-op.
+- **Skills other than medium**, multiplayer, and the intermission or any level transition:
+  a level exit ends the run (`LevelExited` on the next tic), and the dead player's `BT_USE`
+  reborn tic is refused (`PlayerReborn`).
+- **Commands:** `BT_SPECIAL` and button bit 0x40 are refused (`UnsupportedButtons`).
+  `forward` and `side` are admitted in -127..127 (-128 is the demo end marker and is refused) and
+  weapon indices 0-7 follow vanilla's rules; the chainsaw lunge rewrite runs with a forward value of
+  100 inside the engine, as the source does. The demo reader parses the version-110 header
+  (`parse_demo_episode1(bytes, map)`), so demos for maps 1-9 of episode 1 are readable; a map outside
+  the five above is still refused at load.
+- **The turbo message is modelled.** `G_Ticker` (g_game.c:671-679) assigns `"<name> is turbo!"` to the
+  player's message when `forwardmove` exceeds 50 on every 128th gametic, during demo playback too. Under
+  wire 23 this is message code 30 ([format](STATE_FORMAT.md#dsim-v39--episode-1-part-1-every-special-keys-items-powers-and-the-rocket-launcher)),
+  assigned before `P_Ticker` from the command as read, so a later pickup or door message in the same
+  tic replaces it. Older wires never see a forward value above 50.
+- **Presentation and cheats:** the view height, colormaps, the map display and `cheats` are not
+  modelled; they never reach a captured field.
+- Rust-only departures: the checked-arithmetic, store-full and mover witnesses and the work
+  budgets above are safety bounds, not source behaviour. A mover or missile outside them
+  refuses the tic; none changes a tic that is admitted.
+
+### Comparison contract
+
+The per-tic comparison of [validation/M4A.md](validation/M4A.md) is the wire-22 contract
+with DSIM39: the genuine engine (`tools/reference/m4a_driver.c`, schema
+`DOOM-M4A-RUNNER-v1`, three variants and the opt-in 32-bit build) is projected by the
+independent encoder (`tools/reference/level_snapshot.py --profile episode1`) and compared
+with the Rust capture without the `map.*` and `events.*` groups
+(`level_compare.py --profile episode1`). `player.0.*` holds the command after the chainsaw
+rewrite (decision D5). The 30 synthetic scripts of the nine generated WADs run in CI with
+no IWAD; real-map runs of E1M2-E1M4, E1M6 and E1M7 are local-only. Evidence for scripted
+inputs is not a claim for every input, every skill or every map.
+
+Limitations: no map beyond the five above is claimed; E1M6 and E1M7 are secondary targets
+that are admitted only if every script authored for them matches. The sources of truth for
+the commands are [TESTING](TESTING.md#m4a-synthetic-mechanism-wads-and-the-episode-1-comparison)
+and for the observations [validation/M4A.md](validation/M4A.md); Rust-only tests are in
+`crates/doom-sim/src/player_episode1_*_tests.rs` and `crates/doom-sim/tests/episode1_synthetic.rs`.

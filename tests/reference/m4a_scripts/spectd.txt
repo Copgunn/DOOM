@@ -1,0 +1,13 @@
+# output: SPECTD.lmp
+# SPECTD on tests/reference/m4a_wads/spectre.wad (M4a). Authored closed loop against the strict runner.
+# The player steps off the ledge and waits; the Spectres and the imp kill it; USE while dead (end=reborn).
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 0 0   # down off the ledge into the lane
+cmd 11 30 0 0 0   # run 11 tics
+cmd 28 0 0 0 0   # settle
+cmd 461 0 0 0 0   # the idle player is killed
+cmd 20 0 0 0 0
+cmd 1 0 0 0 2   # USE while dead: PST_REBORN (end=reborn)
+cmd 20 0 0 0 0

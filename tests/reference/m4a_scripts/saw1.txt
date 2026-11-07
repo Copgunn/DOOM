@@ -1,0 +1,38 @@
+# output: SAW1.lmp
+# SAW1 on tests/reference/m4a_wads/weapons.wad (M4a). Authored closed loop against the strict runner.
+    # Chainsaw: pickup and auto-switch, A_Saw on two zombiemen (turn toward the target, MF_JUSTATTACKED: next tic
+    # forwardmove 100, p_user.c:249-255), weapon slots W1, W7 and W0 (the chainsaw once owned).
+    # format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 0 0   # over the chainsaw (auto-switch, sfx_sawup)
+cmd 8 30 0 0 0   # run 8 tics
+cmd 17 0 0 0 0   # settle
+cmd 1 0 0 0 0   # behind the sleeping zombiemen
+cmd 18 30 0 0 0   # run 18 tics
+cmd 21 0 0 0 0   # settle
+cmd 1 20 0 0 1   # aim, saw
+cmd 3 20 0 0 1
+cmd 1 20 0 0 1   # aim, saw
+cmd 3 20 0 0 1
+cmd 1 20 0 0 1   # aim, saw
+cmd 3 20 0 0 1
+cmd 1 0 0 3 1   # aim, saw
+cmd 3 0 0 0 1
+cmd 1 20 0 28 1   # aim, saw
+cmd 3 20 0 0 1
+cmd 1 20 0 251 1   # aim, saw
+cmd 3 20 0 0 1
+cmd 1 20 0 248 1   # aim, saw
+cmd 3 20 0 0 1
+# both zombiemen sawn: True
+cmd 10 0 0 0 0
+cmd 1 0 0 0 12   # CHANGE|W1: the pistol
+cmd 30 0 0 0 0
+cmd 1 0 0 0 60   # CHANGE|W7: the chainsaw (slot 7)
+cmd 30 0 0 0 0
+cmd 1 0 0 0 12   # CHANGE|W1: the pistol
+cmd 30 0 0 0 0
+cmd 1 0 0 0 4   # CHANGE|W0: key 1 selects the chainsaw once owned (p_user.c:290-296)
+cmd 30 0 0 0 0
+cmd 10 0 0 0 0

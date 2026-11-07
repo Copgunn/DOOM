@@ -1,0 +1,4 @@
+# output: M4CHAOS.lmp
+# M4CHAOS: E1M4 chaos, seed 20261109 (20261105 + 4), 5000 tics of the fixed-seed generator.
+map E1M4
+seed 20261109 chaos 5000

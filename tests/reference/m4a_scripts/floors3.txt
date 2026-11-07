@@ -1,0 +1,14 @@
+# output: FLOORS3.lmp
+# FLOORS3 on tests/reference/m4a_wads/floors.wad (M4a). Authored closed loop against the strict runner.
+# P_FindNextHighestFloor stops after 20 qualifying neighbours (MAX_ADJOINING_SECTORS, p_spec.c:326-360): the comb
+# rises to 64, not to the 21st neighbour's 8, and the engine prints "Sector with more than 20 adjoining sectors".
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+# the comb: S1 18 raiseFloorToNearest on a sector with 21 higher neighbours
+cmd 1 0 0 140 0   # walk to (-936,-288)
+cmd 59 50 0 0 0   # run 59 tics
+cmd 28 0 0 0 0   # settle
+cmd 1 0 0 244 0   # face 180 deg
+cmd 1 0 0 0 2   # USE the S1 18 switch on the comb west wall
+cmd 90 0 0 0 0   # the comb rises 64 units with the player on it

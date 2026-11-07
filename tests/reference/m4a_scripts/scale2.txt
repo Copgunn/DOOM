@@ -1,0 +1,6 @@
+# output: SCALE2.lmp
+# SCALE2 on tests/reference/m4a_wads/scale.wad (M4a): the single M4a chaos run.
+# 600 tics of the committed chaos stream (splitmix64, tools/e1m1_scripts.py) without USE (the chaos table is the
+# wire-22 one: weapon changes W0..W3 only).
+map E1M1
+seed 20260101 chaos 600 nouse

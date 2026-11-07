@@ -1,0 +1,25 @@
+# output: DOORS3.lmp
+# DOORS3 on tests/reference/m4a_wads/doors.wad (M4a). Authored closed loop against the strict runner.
+# W1 16 close-30-then-open (closes, waits 35*30 tics, reopens) and WR 76 closing onto a barrel (reverses at once,
+# removed at the top).
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+# RD4 strip: W1 16 close-30-then-open
+cmd 1 0 0 185 0   # RD4 strip (south over the strip)
+cmd 61 40 0 0 0   # run 61 tics
+cmd 26 0 0 0 0   # settle
+cmd 1 0 0 67 0   # RD4 strip (back north over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 19 0 0 0 0   # settle
+# RD5 strip: WR 76 close-30-then-open onto the barrel in the doorway (reverses at once)
+cmd 1 0 0 179 0   # RD5 strip (south over the strip)
+cmd 15 40 0 0 0   # run 15 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 76 0   # RD5 strip (back north over the strip)
+cmd 6 40 0 0 0   # run 6 tics
+cmd 17 0 0 0 0   # settle
+cmd 1 0 0 55 0   # walk to (0,0)
+cmd 29 50 0 0 0   # run 29 tics
+cmd 27 0 0 0 0   # settle
+cmd 1100 0 0 0 0   # RD4 waits 1050 tics closed, then reopens

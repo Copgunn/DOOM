@@ -6,6 +6,9 @@
   access unrelated private repositories, proprietary assets, private cloud
   storage, credentials or confidential files. Public tests use synthetic or
   legally redistributable fixtures; commercial IWADs never enter Git, CI or logs.
+- IWADs are read-only at `/mnt/d/DoomIWADs`, used locally only, with copies only in
+  scratch. Committed results are counts, pass/fail facts and state digests only: never
+  lump contents, names beyond the counts pages, coordinates or geometry.
 - Preserve all 165 original upstream files, original history, attribution,
   `README.TXT` and `LICENSE.TXT`. Keep the repository public and GPL-2.0-only.
   Never import GPLv3-only implementation code.
@@ -44,6 +47,10 @@
 - Run every original-C generator and independent DSIM encoder with `--check`,
   all historical/new asserted examples in debug/release, all fuzz builds and a
   bounded relevant sanitizer campaign. Commands are in [testing](docs/TESTING.md).
+- Evidence hierarchy (from M4a): primary evidence is the whole-engine harness (genuine
+  engine against Rust on real maps, tic for tic, local-only) plus synthetic WADs through
+  the same harness in CI; bespoke C scenarios cover quirks the maps do not reach; self-tests
+  must prove the harness can fail.
 - Expected C traces come from genuine source bodies and declared adapters;
   canonical expectations come from independent encoders, never Rust output.
   Preserve historical fixtures, helper bytes, provenance and qualified evidence.
@@ -56,7 +63,9 @@
 - Inspect status, master and open PRs first. Implement on focused feature branches,
   never directly on master; preserve unrelated changes and shared history.
 - Merges require every applicable fresh local/exact-head gate; after the owner merges,
-  verify post-merge CI when required.
+  verify post-merge CI when required. Exception: documentation-only commits after a
+  green exact head are covered by the CI fast path; batch docs fixes into one push.
+- Record dates in local time (America/Los_Angeles).
 - Open/update a focused PR with behavior, evidence, restrictions and unresolved
   issues. Do not claim unobserved passes.
 - Maintain human-readable README, architecture, compatibility, roadmap, testing,
@@ -105,3 +114,9 @@
   20 GB free; clean scratch first or stop and report. Under WSL, `df ~` reports the
   virtual disk's ceiling, not real space: the real limit is the Windows drive that
   hosts it. Check `df -h /mnt/c` and keep at least 20 GB free there at all times.
+- Long sessions: use fresh subagents per step, never two writers on one tree, and never
+  leave background jobs running across the end of a reply. Run the C reference suite with
+  at most 2 parallel jobs on the owner's machine.
+- Unattended rule: continue past an investigation phase only if every new decision has a
+  clear recommendation consistent with prior owner decisions and admits no silent
+  divergence; otherwise stop, commit, push and report.

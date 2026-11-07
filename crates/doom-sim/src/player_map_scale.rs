@@ -17,11 +17,20 @@ pub const MAP_SCALE_ACTOR_SLOTS: u32 = 320;
 /// bound 337 + 39 spawns in one pass is 376, within 384, so the store never fills.
 /// Encoded as `store.max_slots` in DSIM37; every older policy keeps 320.
 pub const BARRELS_ACTOR_SLOTS: u32 = 384;
+/// Actor slots of the Episode 1 policy (`PlayerMonstersEpisode1V1`, M4a decision
+/// H4 and plan decision D1): the store's hard cap, a constant so that
+/// `store.max_slots` is one value in DSIM39. No live-actor proof backs it: every
+/// spawn site reserves its slots before mutating, and a spawn that finds the store
+/// full refuses the tic with `StoreError::Capacity` (the store-full witness).
+pub const EPISODE1_ACTOR_SLOTS: u32 = 1024;
 /// The actor slot count a map-scale policy requires of its constructor and encodes
-/// as `store.max_slots`: [`BARRELS_ACTOR_SLOTS`] under the barrels policy,
+/// as `store.max_slots`: [`EPISODE1_ACTOR_SLOTS`] under the Episode 1 policy,
+/// [`BARRELS_ACTOR_SLOTS`] under the barrels and level policies,
 /// [`MAP_SCALE_ACTOR_SLOTS`] under every other map-scale policy.
 pub const fn actor_slots(policy: OriginalExecutionProfile) -> u32 {
-    if policy.has_barrels() {
+    if policy.has_episode1() {
+        EPISODE1_ACTOR_SLOTS
+    } else if policy.has_barrels() {
         BARRELS_ACTOR_SLOTS
     } else {
         MAP_SCALE_ACTOR_SLOTS
@@ -162,6 +171,32 @@ pub enum MapScaleError {
     /// arithmetic would overflow `fixed_t` (the box is undefined in the source, so
     /// `P_ChangeSector` could visit no defined cells; M3h8 note §7 rule 10).
     MoverBlockBox,
+    /// Under the Episode 1 policy, a D1 door line (31–34) used on a sector whose
+    /// `specialdata` already holds a live mover: `EV_VerticalDoor` falls through
+    /// and spawns a second thinker over the busy sector, overwriting
+    /// `specialdata` (p_doors.c:416–461). The tic is refused and the state before
+    /// it is kept (M4a decision H3, plan decision D1).
+    SecondDoor,
+    /// Under the Episode 1 policy, a stair step's `T_MovePlane` found the first
+    /// `P_ChangeSector` blocked: the source then reads the uninitialised `crush` of
+    /// an `EV_BuildStairs` thinker (p_floor.c:113–119, 516–528), so the tic is
+    /// refused and the state before it is kept (decision H7).
+    StairBlocked,
+    /// Under the Episode 1 policy, a `raiseToNearestAndChange` plat rising into a
+    /// thing (decision H7): its zero-projected fields keep their meaning only
+    /// while it moves freely, so the tic is refused and the state before it is
+    /// kept.
+    PlatBlocked,
+    /// Under the Episode 1 policy, an `EV_DoDonut` whose outer sector `s2` already
+    /// has a live mover (`specialdata`): the source spawns a second floor over it
+    /// and overwrites the pointer (p_spec.c:1163–1221). The tic is refused and the
+    /// state before it is kept (decision H8).
+    DonutBusy,
+    /// Under the Episode 1 policy, a sector tagged by a donut line (special 9)
+    /// whose topology makes `EV_DoDonut` dereference a null side or sector
+    /// (p_spec.c:1184–1190), refused at load (decision H8,
+    /// `mover_rules::donut_geometry`).
+    DonutGeometry,
 }
 impl fmt::Display for MapScaleError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -903,6 +938,14 @@ impl Simulation {
         margin: u32,
         mover: bool,
     ) -> bool {
+        if self.player_policy().has_episode1() {
+            // Decision D4: without a boundary, room containment alone.
+            return self.room().is_some_and(|room| room.contains(position))
+                && self
+                    .boundary
+                    .as_deref()
+                    .is_none_or(|b| b.spawn_admitted_relaxed(position, radius, mover));
+        }
         if self.player_policy().has_barrels() {
             return self.room().is_some_and(|room| room.contains(position))
                 && self
@@ -931,8 +974,14 @@ impl Simulation {
         live_projectile_bound(self.player_policy())
     }
 }
+/// Live fireball bound of `policy`: under the Episode 1 policy the store's own
+/// [`EPISODE1_ACTOR_SLOTS`] (decision D10: no per-type cap; the store-full
+/// witness covers every missile), [`MAP_SCALE_MAX_LIVE_PROJECTILES`] under the
+/// other map-scale policies, [`MAX_LIVE_PROJECTILES`] otherwise.
 pub(crate) const fn live_projectile_bound(policy: OriginalExecutionProfile) -> usize {
-    if policy.has_map_scale() {
+    if policy.has_episode1() {
+        EPISODE1_ACTOR_SLOTS as usize
+    } else if policy.has_map_scale() {
         MAP_SCALE_MAX_LIVE_PROJECTILES
     } else {
         MAX_LIVE_PROJECTILES
@@ -993,6 +1042,19 @@ impl ArithmeticCertificate {
     pub fn derive(map: &Map) -> Result<Self, SimError> {
         let (certificate, clauses) = Self::evaluate(map)?;
         if clauses.iter().all(|c| *c) {
+            Ok(certificate)
+        } else {
+            Err(MapScaleError::Arithmetic.into())
+        }
+    }
+    /// The Episode 1 policy's subset of [`Self::derive`] (decision H3): clauses
+    /// (iii), (iv), (v), (vi) and (viii) stay load rules; (i), (ii) and (vii)
+    /// are not required, because the traces of that policy compute the bounded
+    /// intercept and height sums checked and refuse the operation where the
+    /// source would overflow (`MapScaleError::Arithmetic`).
+    pub fn derive_episode1(map: &Map) -> Result<Self, SimError> {
+        let (certificate, clauses) = Self::evaluate(map)?;
+        if [2, 3, 4, 5, 7].iter().all(|&i| clauses[i]) {
             Ok(certificate)
         } else {
             Err(MapScaleError::Arithmetic.into())

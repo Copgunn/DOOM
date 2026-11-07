@@ -13,7 +13,7 @@ use crate::{
     mover_rules::{
         LINE_DOOR_BLAZE, LINE_FLOOR_LOWEST, LINE_FLOOR_TURBO, LINE_LIFT, MAX_SPECIAL_CROSS,
     },
-    movers::{DoorKind, FloorKind, MoverAccess, Starter},
+    movers::{DoorKind, FloorKind, MoverAccess, PlatType, Starter},
     multisector::SectorMoveAttempt,
     staging::Sectors,
 };
@@ -131,21 +131,27 @@ pub(crate) enum Crosser {
     Monster,
 }
 /// Whether `P_CrossSpecialLine` clears `special` for `crosser` (the admitted W1
-/// lines crossed by a player; cleared even when their `EV_*` started nothing).
+/// lines crossed by a player; cleared even when their `EV_*` started nothing):
+/// 36, 38 and 109, and under the Episode 1 policy 2, 5, 8, 16, 22 and 35.
 pub(crate) fn clears(crosser: Crosser, special: i16) -> bool {
     crosser == Crosser::Player
         && matches!(
             special,
-            LINE_FLOOR_TURBO | LINE_FLOOR_LOWEST | LINE_DOOR_BLAZE
+            LINE_FLOOR_TURBO | LINE_FLOOR_LOWEST | LINE_DOOR_BLAZE | 2 | 5 | 8 | 16 | 22 | 35
         )
 }
 
-/// p_spec.c `P_CrossSpecialLine` (492–) for the admitted line specials and a
+/// p_spec.c `P_CrossSpecialLine` (492–950) for the admitted line specials and a
 /// non-missile crosser: a monster acts only on 88 (`EV_DoPlat`); a player's switch has
 /// 36 (`turboLower`), 38 (`lowerFloorToLowest`) and 109 (`blazeOpen`), each cleared
-/// after its `EV_*`, and 88, kept; 1, 63, 11 and 48 have no case. Records the
-/// crossing (DSIM35 sub-tag 3) after the line action's records and returns the
-/// special after the call, which the caller stages when it changed.
+/// after its `EV_*`, and 88, kept; 1, 63, 11 and 48 have no case. Under the Episode
+/// 1 policy the player's switch also has the W1 lines 2 (`open`), 5
+/// (`raiseFloor`), 8 (`EV_BuildStairs`), 16 (`close30ThenOpen`), 22
+/// (`raiseToNearestAndChange`) and 35 (`EV_LightTurnOn(35)`), each cleared after
+/// its call, and the WR lines 76 (`close30ThenOpen`), 82 (`lowerFloorToLowest`),
+/// 86 (`open`), 90 (`normal`), 91 (`raiseFloor`) and 98 (`turboLower`), kept.
+/// Records the crossing (DSIM35 sub-tag 3) after the line action's records and
+/// returns the special after the call, which the caller stages when it changed.
 pub(crate) fn cross<M: MoverAccess + ?Sized>(
     starter: &mut Starter<'_, M>,
     actor: ActorId,
@@ -157,19 +163,48 @@ pub(crate) fn cross<M: MoverAccess + ?Sized>(
         side,
         special,
     } = crossing;
+    if matches!(
+        special,
+        2 | 5 | 8 | 16 | 22 | 35 | 76 | 82 | 86 | 90 | 91 | 98
+    ) && starter.world.episode1.is_none()
+    {
+        // Defence in depth: rule 1 admits these lines only under wire 23.
+        return Err(crate::PursuitError::Specials.into());
+    }
     match (crosser, special) {
         (_, LINE_LIFT) => {
-            starter.do_plat(line)?;
+            starter.do_plat(line, PlatType::DownWaitUpStay)?;
         }
         (Crosser::Monster, _) => {}
-        (Crosser::Player, LINE_FLOOR_TURBO) => {
+        (Crosser::Player, LINE_FLOOR_TURBO | 98) => {
             starter.do_floor(line, FloorKind::TurboLower)?;
         }
-        (Crosser::Player, LINE_FLOOR_LOWEST) => {
+        (Crosser::Player, LINE_FLOOR_LOWEST | 82) => {
             starter.do_floor(line, FloorKind::LowerFloorToLowest)?;
         }
         (Crosser::Player, LINE_DOOR_BLAZE) => {
             starter.do_door(line, DoorKind::BlazeOpen)?;
+        }
+        (Crosser::Player, 2 | 86) => {
+            starter.do_door(line, DoorKind::Open)?;
+        }
+        (Crosser::Player, 16 | 76) => {
+            starter.do_door(line, DoorKind::Close30ThenOpen)?;
+        }
+        (Crosser::Player, 90) => {
+            starter.do_door(line, DoorKind::Normal)?;
+        }
+        (Crosser::Player, 5 | 91) => {
+            starter.do_floor(line, FloorKind::RaiseFloor)?;
+        }
+        (Crosser::Player, 8) => {
+            starter.build_stairs(line)?;
+        }
+        (Crosser::Player, 22) => {
+            starter.do_plat(line, PlatType::RaiseToNearestAndChange)?;
+        }
+        (Crosser::Player, 35) => {
+            starter.light_turn_on(line, 35)?;
         }
         (Crosser::Player, _) => {}
     }

@@ -1,0 +1,98 @@
+# output: ROCKET1.lmp
+# ROCKET1 on tests/reference/m4a_wads/weapons.wad (M4a). Authored closed loop against the strict runner.
+# Rocket launcher: pickups (2 + 1 + 1 + 1 + 5 rockets), a rocket into the barrel cluster (chain explosions, monsters
+# hurt), at a far wall, into a sky alcove (removed), southwards (no split move), at a near wall (self damage); W1, W4.
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 49 0   # the rocket launcher (2 rockets, auto-switch)
+cmd 17 30 0 0 0   # run 17 tics
+cmd 21 0 0 0 0   # settle
+cmd 1 0 0 209 0   # three rockets and a rocket box (10 rockets)
+cmd 18 30 0 0 0   # run 18 tics
+cmd 21 0 0 0 0   # settle
+cmd 1 0 0 18 0   # walk to (-100,208)
+cmd 18 50 0 0 0   # run 18 tics
+cmd 26 0 0 0 0   # settle
+cmd 1 0 0 237 0   # through the corridor into the east room
+cmd 12 50 0 0 0   # run 12 tics
+cmd 25 0 0 0 0   # settle
+cmd 1 0 0 192 0   # walk to (100,-20)
+cmd 14 50 0 0 0   # run 14 tics
+cmd 25 0 0 0 0   # settle
+cmd 1 0 0 60 1   # rocket east at the barrel cluster (positive-x heading: split moves)
+cmd 30 0 0 0 0
+cmd 1 0 0 3 1   # a second rocket at the barrel cluster
+cmd 40 0 0 0 0
+cmd 1 0 0 0 12   # CHANGE|W1: the pistol for the imps
+cmd 25 0 0 0 0
+# imp from (580, -80) killed after 0 pistol shots
+# imp from (580, 80) killed after 0 pistol shots
+cmd 1 0 0 100 1   # aim and fire at (-86,135)
+cmd 14 0 0 0 0
+cmd 1 0 0 252 1   # aim and fire at (-86,167)
+cmd 14 0 0 0 0
+cmd 1 0 0 253 1   # aim and fire at (-86,191)
+cmd 14 0 0 0 0
+cmd 1 0 0 254 1   # aim and fire at (-74,195)
+cmd 14 0 0 0 0
+cmd 1 0 0 254 1   # aim and fire at (-47,184)
+cmd 14 0 0 0 0
+cmd 1 0 0 251 1   # aim and fire at (-15,184)
+cmd 14 0 0 0 0
+cmd 1 0 0 252 1   # aim and fire at (9,184)
+cmd 14 0 0 0 0
+cmd 1 0 0 250 1   # aim and fire at (41,184)
+cmd 14 0 0 0 0
+cmd 1 0 0 250 1   # aim and fire at (73,184)
+cmd 14 0 0 0 0
+cmd 1 0 0 249 1   # aim and fire at (105,184)
+cmd 14 0 0 0 0
+cmd 1 0 0 253 1   # aim and fire at (122,197)
+cmd 14 0 0 0 0
+cmd 1 0 0 0 1   # aim and fire at (123,202)
+cmd 14 0 0 0 0
+# imp from (-300, -100) killed after 12 pistol shots
+cmd 1 0 0 23 1   # aim and fire at (4,185)
+cmd 14 0 0 0 0
+cmd 1 0 0 250 1   # aim and fire at (36,185)
+cmd 14 0 0 0 0
+cmd 1 0 0 251 1   # aim and fire at (60,185)
+cmd 14 0 0 0 0
+cmd 1 0 0 0 1   # aim and fire at (60,185)
+cmd 14 0 0 0 0
+cmd 1 0 0 254 1   # aim and fire at (70,182)
+cmd 14 0 0 0 0
+cmd 1 0 0 250 1   # aim and fire at (102,186)
+cmd 14 0 0 0 0
+cmd 1 0 0 251 1   # aim and fire at (126,191)
+cmd 14 0 0 0 0
+cmd 1 0 0 250 1   # aim and fire at (158,193)
+cmd 14 0 0 0 0
+# imp from (-280, -60) killed after 8 pistol shots
+cmd 1 0 0 0 36   # CHANGE|W4: the rocket launcher
+cmd 30 0 0 0 0
+cmd 1 0 0 239 0   # walk to (240,150)
+cmd 13 50 0 0 0   # run 13 tics
+cmd 25 0 0 0 0   # settle
+cmd 1 0 0 222 0   # face 0 deg
+cmd 1 0 0 0 1   # rocket at the east wall from 400 units (no self damage)
+cmd 40 0 0 0 0
+cmd 1 0 0 126 0   # walk to (128,150)
+cmd 7 50 0 0 0   # run 7 tics
+cmd 21 0 0 0 0   # settle
+cmd 1 0 0 194 0   # face 90 deg
+cmd 1 0 0 0 1   # rocket north into the sky alcove: removed without exploding (p_mobj.c:176-184)
+cmd 40 0 0 0 0
+cmd 1 0 0 130 0   # walk to (128,0)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 254 0   # face 270 deg
+cmd 1 0 0 0 1   # rocket south at the wall 256 units away (negative-y heading: no split)
+cmd 40 0 0 0 0
+cmd 1 0 0 24 0   # walk to (196,-100)
+cmd 7 50 0 0 0   # run 7 tics
+cmd 21 0 0 0 0   # settle
+cmd 1 0 0 168 0   # face 180 deg
+cmd 1 0 0 0 1   # rocket at the dividing wall about 130 units west: self damage
+cmd 40 0 0 0 0

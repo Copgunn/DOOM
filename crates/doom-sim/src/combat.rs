@@ -40,6 +40,11 @@ pub enum CombatError {
     TraversalLimit,
     /// Conservative callback/trace work exceeded the supported bound.
     WorkLimit,
+    /// Under the Episode 1 policy, a trace intercept or height sum that the
+    /// source computes in signed `int` would overflow (decision H3: the checked
+    /// twin of certificate clauses (i) and (vii)); reported for the refused tic as
+    /// `MapScaleError::Arithmetic`.
+    Arithmetic,
 }
 impl fmt::Display for CombatError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -195,6 +200,16 @@ pub(crate) struct DamagePlan {
     demand: Demand,
     ignored: bool,
     credit: bool,
+    /// The damage after `P_DamageMobj`'s player-specific cap (the Episode 1
+    /// policy's sector special 11, p_inter.c:837–842) and before armor;
+    /// `request.amount` otherwise. The thrust keeps `request.amount` (806–832
+    /// precede the cap).
+    amount: i32,
+    /// `P_DamageMobj`'s thrust block runs (p_inter.c:806–832): false only under
+    /// the Episode 1 policy when the source is the player and its ready weapon is
+    /// the chainsaw (811), whatever the inflictor (a rocket still in flight
+    /// included).
+    thrust: bool,
 }
 #[derive(Clone, Debug)]
 pub(crate) struct PreparedAttack {
@@ -212,20 +227,29 @@ impl DamagePlan {
         armor: Option<PlayerArmorState>,
         policy: OriginalExecutionProfile,
     ) -> Result<Self, SimError> {
+        Self::start_capped(actor, request, request.amount, armor, policy)
+    }
+    fn start_capped(
+        actor: Actor,
+        request: DamageRequest,
+        amount: i32,
+        armor: Option<PlayerArmorState>,
+        policy: OriginalExecutionProfile,
+    ) -> Result<Self, SimError> {
         let life = actor.life().ok_or(CombatError::Metadata)?;
         let ignored = life.flags & MF_SHOOTABLE == 0 || life.health <= 0;
         let armor = if ignored {
             None
         } else {
             armor
-                .map(|a| ArmorEvent::plan_for(policy, request.target, request.amount, a))
+                .map(|a| ArmorEvent::plan_for(policy, request.target, amount, a))
                 .transpose()?
         };
         let after = if ignored {
             life.health
         } else {
             life.health
-                .checked_sub(armor.map_or(request.amount, |a| a.effective))
+                .checked_sub(armor.map_or(amount, |a| a.effective))
                 .ok_or(CombatError::Metadata)?
         };
         Ok(Self {
@@ -238,6 +262,8 @@ impl DamagePlan {
             demand: Demand::default(),
             ignored,
             credit: false,
+            amount,
+            thrust: true,
         })
     }
     pub(crate) fn spawn_count(self) -> usize {
@@ -336,7 +362,19 @@ impl DamagePlan {
         armor: Option<PlayerArmorState>,
         policy: OriginalExecutionProfile,
     ) -> Result<Self, SimError> {
-        let plan = Self::start(actor, request, armor, policy)?;
+        Self::current_armored_body_capped(registry, actor, request, request.amount, armor, policy)
+    }
+    /// [`Self::current_armored_body`] with the pre-armor damage `amount` after
+    /// the player-specific cap.
+    fn current_armored_body_capped(
+        registry: &ActorRegistry,
+        actor: Actor,
+        request: DamageRequest,
+        amount: i32,
+        armor: Option<PlayerArmorState>,
+        policy: OriginalExecutionProfile,
+    ) -> Result<Self, SimError> {
+        let plan = Self::start_capped(actor, request, amount, armor, policy)?;
         if plan.ignored {
             return Ok(plan);
         }
@@ -365,6 +403,20 @@ impl DamagePlan {
         host: &LifeHost<'_, A>,
         request: DamageRequest,
     ) -> Result<Self, SimError> {
+        Self::current_original_in(host, request, None)
+    }
+    /// [`Self::current_original`]; `special` is the runtime special of the
+    /// victim's sector when the caller holds the staged specials outside the host
+    /// (`P_PlayerInSpecialSector`), otherwise it is read from `host.specials`.
+    /// Only the Episode 1 policy reads it, for the player body: the "end of game
+    /// hell hack" caps a blow at `health − 1` when the body's sector special is
+    /// 11 (p_inter.c:837–842), for every damage source, before invulnerability
+    /// and armor. A host without the specials then refuses the damage.
+    pub(crate) fn current_original_in<A: ActorAccess>(
+        host: &LifeHost<'_, A>,
+        request: DamageRequest,
+        special: Option<i16>,
+    ) -> Result<Self, SimError> {
         let player = host.player.as_deref().ok_or(PlayerBodyError::Profile)?;
         let policy = player.policy;
         if !policy.has_monsters() {
@@ -390,10 +442,22 @@ impl DamagePlan {
             return Err(PlayerBodyError::Invariant.into());
         }
         let live = life.health > 0 && life.flags & MF_SHOOTABLE != 0;
+        // p_inter.c:806–811: no thrust when the source's player has the chainsaw
+        // ready (Episode 1 policy; no older policy gives the chainsaw). The weapon
+        // machine writes the ready weapon back only after its operation, and no
+        // operation fires after a change of the ready weapon (`A_Lower` then
+        // `A_Raise` from the bottom), so the stored value is the source's.
+        let thrust = !(policy.has_episode1()
+            && request.source.is_some()
+            && request.source == player.mo
+            && player
+                .weapon
+                .and_then(crate::player_weapons::PlayerWeaponRuntime::pack)
+                .is_some_and(|w| w.ready == Weapon::Chainsaw));
         let impulse = |origin: &Actor, mass: i32| {
             let airborne = origin
                 .life()
-                .is_some_and(|l| crate::original_registry::is_fireball(l.actor_type));
+                .is_some_and(|l| crate::original_registry::is_missile_type(l.actor_type));
             if airborne {
                 original_player::preflight_missile_impulse(
                     player.room,
@@ -420,16 +484,35 @@ impl DamagePlan {
             .ok_or(CombatError::Metadata)?
             .mass();
         if player.mo == Some(request.target) {
-            if let (true, Some(origin)) = (live, inflictor.as_ref()) {
+            if let (true, Some(origin)) = (live && thrust, inflictor.as_ref()) {
                 impulse(origin, mass)?;
             }
-            return Self::current_armored_body(
+            let mut amount = request.amount;
+            if policy.has_episode1() && live {
+                let sector = usize::from(victim.location.ok_or(PlayerBodyError::Invariant)?.sector);
+                let special = match special {
+                    Some(special) => special,
+                    None => {
+                        host.specials
+                            .ok_or(PlayerBodyError::Profile)?
+                            .get(sector)
+                            .ok_or(PlayerBodyError::Invariant)?
+                            .special
+                    }
+                };
+                if special == 11 && amount >= life.health {
+                    amount = life.health - 1;
+                }
+            }
+            return Self::current_armored_body_capped(
                 host.registry,
                 victim,
                 request,
+                amount,
                 player.armor,
                 policy,
-            );
+            )
+            .map(|plan| plan.with_thrust(thrust));
         }
         // The exploding barrel of the barrels policy (M3h9b note §2.3, decision F4)
         // is the one non-monster damage target: no armor; not `MF_COUNTKILL`, so no
@@ -442,7 +525,7 @@ impl DamagePlan {
         if !barrel && !crate::original_registry::is_policy_monster(policy, life.actor_type) {
             return Err(MonsterError::Target.into());
         }
-        if let (true, Some(origin)) = (live, inflictor.as_ref()) {
+        if let (true, Some(origin)) = (live && thrust, inflictor.as_ref()) {
             impulse(origin, mass)?;
         }
         let mut plan = Self::start(victim, request, None, policy)?;
@@ -473,6 +556,11 @@ impl DamagePlan {
             },
             true,
         )
+        .map(|plan| plan.with_thrust(thrust))
+    }
+    fn with_thrust(mut self, thrust: bool) -> Self {
+        self.thrust = thrust;
+        self
     }
 }
 impl PreparedAttack {
@@ -833,6 +921,8 @@ impl Simulation {
             return self.monster_host(None);
         }
         LifeHost {
+            specials: None,
+            buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
             perception: None,
@@ -886,7 +976,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
         let old = *self.access.get(id).unwrap();
         let life = old.life.unwrap();
         let info = self.registry.actor_type(life.actor_type).unwrap().clone();
-        if let Some(inflictor) = request.inflictor {
+        if let Some(inflictor) = request.inflictor.filter(|_| plan.thrust) {
             let origin = *self.access.get(inflictor).unwrap();
             let delta = [
                 old.position()[0] - origin.position()[0],
@@ -916,7 +1006,7 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                 momentum,
             });
         }
-        let effective = plan.armor.map_or(request.amount, |a| a.effective);
+        let effective = plan.armor.map_or(plan.amount, |a| a.effective);
         if let Some(armor) = plan.armor {
             if let Some(p) = self.player.as_deref_mut() {
                 p.armor = Some(armor.after);
@@ -993,6 +1083,8 @@ impl<A: ActorAccess> LifeHost<'_, A> {
                             Weapon::Fist => identity::OriginalState::S_PUNCHDOWN,
                             Weapon::Shotgun => identity::OriginalState::S_SGUNDOWN,
                             Weapon::Chaingun => identity::OriginalState::S_CHAINDOWN,
+                            Weapon::Rocket => identity::OriginalState::S_MISSILEDOWN,
+                            Weapon::Chainsaw => identity::OriginalState::S_SAWDOWN,
                             _ => identity::OriginalState::S_PISTOLDOWN,
                         },
                     ),

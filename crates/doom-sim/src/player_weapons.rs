@@ -19,6 +19,13 @@ pub struct PlayerWeaponState {
     pub bullets: u16,
     /// am_shell (maximum50).
     pub shells: u16,
+    /// am_cell; 0 under every policy before the Episode 1 policy (DSIM39).
+    pub cells: u16,
+    /// am_misl (rockets); 0 under every policy before the Episode 1 policy.
+    pub rockets: u16,
+    /// Source `player->backpack`; false under every policy before the Episode 1
+    /// policy. The maxima double once it is set (p_inter.c:589–595).
+    pub backpack: bool,
     /// Source attackdown.
     pub attack_down: bool,
     /// Source refire, checked on increment.
@@ -39,6 +46,9 @@ impl PlayerWeaponState {
             owned: inventory.owned,
             bullets: u16::try_from(inventory.ammo[0]).map_err(|_| WeaponError::Inventory)?,
             shells: u16::try_from(inventory.ammo[1]).map_err(|_| WeaponError::Inventory)?,
+            cells: u16::try_from(inventory.ammo[2]).map_err(|_| WeaponError::Inventory)?,
+            rockets: u16::try_from(inventory.ammo[3]).map_err(|_| WeaponError::Inventory)?,
+            backpack: false,
             attack_down: true,
             refire: 0,
             bob: Fixed::ZERO,
@@ -54,8 +64,8 @@ impl PlayerWeaponState {
             ready: self.ready,
             pending: self.pending,
             owned: self.owned,
-            ammo: [i32::from(self.bullets), i32::from(self.shells), 0, 0],
-            max_ammo: weapons::AMMO_CAPACITIES,
+            ammo: self.ammo(),
+            max_ammo: self.max_ammo(),
             attack_down: self.attack_down,
             refire: self.refire,
             bob: self.bob,
@@ -63,10 +73,19 @@ impl PlayerWeaponState {
             psprites: self.psprites,
         }
     }
-    pub(crate) fn from_adapter(value: WeaponPlayer, id: ActorId) -> Result<Self, SimError> {
+    /// The state after one weapon operation on `self`'s adapter: the backpack
+    /// is not a weapon field, so it is kept, and the maxima must be `self`'s.
+    /// `episode1` (the selected policy, never inferred from the values) admits
+    /// the cells, rockets and the two Episode 1 weapons.
+    pub(crate) fn after_adapter(
+        self,
+        value: WeaponPlayer,
+        id: ActorId,
+        episode1: bool,
+    ) -> Result<Self, SimError> {
         if value.actor != id
             || value.slot != PlayerSlot::One.ordinal()
-            || value.max_ammo != weapons::AMMO_CAPACITIES
+            || value.max_ammo != self.max_ammo()
         {
             return Err(WeaponError::Inventory.into());
         }
@@ -75,13 +94,16 @@ impl PlayerWeaponState {
             owned: value.owned,
             ammo: value.ammo,
         }
-        .validate()?;
+        .validate_with(value.max_ammo, episode1)?;
         Ok(Self {
             ready: value.ready,
             pending: value.pending,
             owned: value.owned,
             bullets: u16::try_from(value.ammo[0]).map_err(|_| WeaponError::Inventory)?,
             shells: u16::try_from(value.ammo[1]).map_err(|_| WeaponError::Inventory)?,
+            cells: u16::try_from(value.ammo[2]).map_err(|_| WeaponError::Inventory)?,
+            rockets: u16::try_from(value.ammo[3]).map_err(|_| WeaponError::Inventory)?,
+            backpack: self.backpack,
             attack_down: value.attack_down,
             refire: value.refire,
             bob: value.bob,
@@ -89,15 +111,35 @@ impl PlayerWeaponState {
             psprites: value.psprites,
         })
     }
-    pub(crate) fn validate(self) -> Result<(), SimError> {
+    /// `player->ammo` in `ammotype_t` order (clip, shell, cell, misl).
+    pub(crate) fn ammo(self) -> [i32; 4] {
+        [
+            i32::from(self.bullets),
+            i32::from(self.shells),
+            i32::from(self.cells),
+            i32::from(self.rockets),
+        ]
+    }
+    /// `player->maxammo`: the `G_PlayerReborn` maxima, doubled once by the first
+    /// backpack (p_inter.c:589–595).
+    pub(crate) fn max_ammo(self) -> [i32; 4] {
+        weapons::AMMO_CAPACITIES.map(|m| m << u32::from(self.backpack))
+    }
+    /// The state's domain; `episode1` admits the backpack and the cell and
+    /// rocket counts the Episode 1 policy's pickups give (p_inter.c:553–599).
+    pub(crate) fn validate_for(self, episode1: bool) -> Result<(), SimError> {
+        // No policy before the Episode 1 policy gives a backpack.
+        if self.backpack && !episode1 {
+            return Err(WeaponError::Inventory.into());
+        }
         WeaponInventory {
             ready: self.ready,
             owned: self.owned,
-            ammo: [i32::from(self.bullets), i32::from(self.shells), 0, 0],
+            ammo: self.ammo(),
         }
-        .validate()?;
+        .validate_with(self.max_ammo(), episode1)?;
         if let Some(pending) = self.pending {
-            Weapon::from_number(pending as u8)?;
+            Weapon::from_number_for(pending as u8, episode1)?;
             if self.owned & (1 << pending as u8) == 0 {
                 return Err(WeaponError::Inventory.into());
             }
@@ -140,6 +182,9 @@ pub(crate) fn weapon_state(weapon: Weapon, state: OriginalState) -> bool {
         Weapon::Pistol => (OriginalState::S_PISTOL, OriginalState::S_PISTOL4),
         Weapon::Shotgun => (OriginalState::S_SGUN, OriginalState::S_SGUN9),
         Weapon::Chaingun => (OriginalState::S_CHAIN, OriginalState::S_CHAIN2),
+        // info.c:193–209: contiguous ordinals, the up and down states included.
+        Weapon::Rocket => (OriginalState::S_MISSILE, OriginalState::S_MISSILE3),
+        Weapon::Chainsaw => (OriginalState::S_SAW, OriginalState::S_SAW3),
         _ => return false,
     };
     (first.ordinal()..=last.ordinal()).contains(&state.ordinal())
@@ -150,6 +195,9 @@ pub(crate) fn flash_light(state: OriginalState) -> Option<i32> {
         | OriginalState::S_SGUNFLASH1
         | OriginalState::S_CHAINFLASH1 => Some(1),
         OriginalState::S_SGUNFLASH2 | OriginalState::S_CHAINFLASH2 => Some(2),
+        // info.c:199–202: `A_Light1`, no action (still 1), then `A_Light2` twice.
+        OriginalState::S_MISSILEFLASH1 | OriginalState::S_MISSILEFLASH2 => Some(1),
+        OriginalState::S_MISSILEFLASH3 | OriginalState::S_MISSILEFLASH4 => Some(2),
         _ => None,
     }
 }
@@ -181,10 +229,12 @@ impl PlayerWeaponRuntime {
             None
         }
     }
-    pub(crate) fn validate(self) -> Result<(), SimError> {
+    /// The runtime's domain; `episode1` selects the Episode 1 policy's wider
+    /// pack domain.
+    pub(crate) fn validate_for(self, episode1: bool) -> Result<(), SimError> {
         match self {
             Self::Pistol(p) => p.validate(),
-            Self::Pack(p) => p.validate(),
+            Self::Pack(p) => p.validate_for(episode1),
         }
     }
     pub(crate) fn adapter(self, id: ActorId, health: i32) -> WeaponPlayer {
@@ -197,16 +247,21 @@ impl PlayerWeaponRuntime {
         self,
         p: WeaponPlayer,
         id: ActorId,
+        episode1: bool,
     ) -> Result<Self, SimError> {
         match self {
             Self::Pistol(_) => PistolState::from_adapter(p, id).map(Self::Pistol),
-            Self::Pack(_) => PlayerWeaponState::from_adapter(p, id).map(Self::Pack),
+            Self::Pack(s) => s.after_adapter(p, id, episode1).map(Self::Pack),
         }
     }
 }
-pub(crate) fn validate_command(c: TicCommand) -> Result<(), SimError> {
+/// The weapon bits of a command; `episode1` admits every three-bit selection
+/// with `BT_CHANGE` (5 and 6 are ignored by the change: never owned).
+pub(crate) fn validate_command(c: TicCommand, episode1: bool) -> Result<(), SimError> {
     if c.buttons & BT_CHANGE != 0 {
-        Weapon::from_number((c.buttons & BT_WEAPONMASK) >> 3)?;
+        if !episode1 {
+            Weapon::from_number((c.buttons & BT_WEAPONMASK) >> 3)?;
+        }
     } else if c.buttons & BT_WEAPONMASK != 0 {
         return Err(SimError::UnsupportedButtons);
     }

@@ -1,0 +1,4 @@
+# output: M3CHAOS.lmp
+# M3CHAOS: E1M3 chaos, seed 20261108 (20261105 + 3), 5000 tics of the fixed-seed generator.
+map E1M3
+seed 20261108 chaos 5000

@@ -1,0 +1,828 @@
+{
+ "schema": "DOOM-M4A-SYNTHETIC-RESULTS-v1",
+ "manifest_sha256": "169a258ae35cf92ab019360c2eb2027c85fb5ac6bf33fa21034baad85e60c23b",
+ "runner_contract_sha256": "f991e4848d042c25356129877917ee7e7ac60d78d34861aa666509d495c0f680",
+ "variants": [
+  "strict",
+  "overflow",
+  "address"
+ ],
+ "variants_identical": true,
+ "asan_options": "detect_leaks=0 (leak detection disabled)",
+ "scripts": {
+  "DOORS1": {
+   "wad": "DOORS",
+   "lmp_sha256": "a78962f521d731af786ee610fa649bd996a1e368c63bb211a5076b82740eb815",
+   "tics": 921,
+   "end": "marker",
+   "end_tic": 921,
+   "prndindex_after_load": 11,
+   "prndindex_end": 49,
+   "thinkers_at_load": 6,
+   "mobjs_at_load": 6,
+   "unknown_messages": 0,
+   "snapshots": 922,
+   "dumps_sha256": "997bc4821206509b815ea376d47dce969885a53f666f34033f5b4f695159aadf",
+   "secretexit": false,
+   "must_show": {
+    "31 D1: open door thinker on MD0": 46,
+    "31 line cleared (a thinker was created)": 46,
+    "26 without the blue key: PD_BLUEK, no thinker": 85,
+    "27 without the yellow key: PD_YELLOWK": 121,
+    "28 without the red key: PD_REDK": 159,
+    "blue keycard": 387,
+    "yellow keycard": 353,
+    "red keycard": 319,
+    "26 with the key: normal door on MD1": 444,
+    "28 used while opening: the player closes it": 541,
+    "32 with the key: open door on MD4": 600,
+    "33 with the key: open door on MD6": 674,
+    "46 gun line hit: MD7 opens": 716,
+    "zombieman behind MD7 killed": 777,
+    "46 switch in the west alcove: button started": 884
+   }
+  },
+  "DOORS2": {
+   "wad": "DOORS",
+   "lmp_sha256": "ba358eb5019208eb7b23fb4382fe7fd7533652ca15c029b79fa2357534b548bd",
+   "tics": 558,
+   "end": "marker",
+   "end_tic": 558,
+   "prndindex_after_load": 11,
+   "prndindex_end": 11,
+   "thinkers_at_load": 6,
+   "mobjs_at_load": 6,
+   "unknown_messages": 0,
+   "snapshots": 559,
+   "dumps_sha256": "a1f82ee33de99b97e7df0d308f3cfb32956b63f675f7f84f98b723d8cea41604",
+   "secretexit": false,
+   "must_show": {
+    "W1 2: open door on RD0": 16,
+    "W1 2 line cleared": 16,
+    "WR 86: open door on RD1": 110,
+    "WR 86 crossed again at the top: a one-tic thinker (the third pending-removal row)": 174,
+    "WR 90: normal door on RD2": 262,
+    "RD2 closed and removed after its wait": 537,
+    "S1 103: open door on RD3": 436,
+    "S1 103 line cleared": 436
+   }
+  },
+  "DOORS3": {
+   "wad": "DOORS",
+   "lmp_sha256": "fd6e9b6c1322e0902aa5c790dd0f04b65ed7b419b9752f1886afa10e58d8b091",
+   "tics": 1335,
+   "end": "marker",
+   "end_tic": 1335,
+   "prndindex_after_load": 11,
+   "prndindex_end": 11,
+   "thinkers_at_load": 6,
+   "mobjs_at_load": 6,
+   "unknown_messages": 0,
+   "snapshots": 1336,
+   "dumps_sha256": "7f52db9e4b3a672b3400db4cde54b322ce773360314a8556fc5c0b6033e6e72e",
+   "secretexit": false,
+   "must_show": {
+    "W1 16: close-30-then-open on RD4": 99,
+    "RD4 closed: 35*30-tic wait": 163,
+    "WR 76: close-30-then-open on RD5 (barrel in the doorway)": 163,
+    "RD5 hits the barrel and reverses (crushed, default case)": 206,
+    "RD5 removed at the top (no retry)": 250,
+    "RD4 reopens after the wait": 1213,
+    "RD4 removed at the top": 1278
+   }
+  },
+  "FLOORS1": {
+   "wad": "FLOORS",
+   "lmp_sha256": "31a5c0ddcf0d57ce2dda9b39ac31eb0f4545cf50e2ec2c4519e73219e362a24e",
+   "tics": 932,
+   "end": "marker",
+   "end_tic": 932,
+   "prndindex_after_load": 3,
+   "prndindex_end": 3,
+   "thinkers_at_load": 2,
+   "mobjs_at_load": 2,
+   "unknown_messages": 0,
+   "snapshots": 933,
+   "dumps_sha256": "a15f5d6de505c17d51c66715cad6aa047cbe1aa2a9f00caec308b395c2280296",
+   "secretexit": false,
+   "must_show": {
+    "W1 5 raiseFloor to 48 (lowest ceiling around)": 96,
+    "W1 5 line cleared": 96,
+    "WR 91 raiseFloor to 48": 166,
+    "WR 98 turboLower to 16+8": 392,
+    "WR 82 lowerFloorToLowest to -32": 485,
+    "SR 70 turboLower to 24+8": 690,
+    "SR 70 button": 690,
+    "SR 70 used again after the reset: second button": 739,
+    "S1 23 lowerFloorToLowest to -32": 792,
+    "S1 18 raiseFloorToNearest to 16": 837,
+    "S1 18 line cleared": 837
+   }
+  },
+  "FLOORS2": {
+   "wad": "FLOORS",
+   "lmp_sha256": "dc00438189026bc9dcfca04b171d17a0faf5f0dc953539d6989e012543277901",
+   "tics": 284,
+   "end": "marker",
+   "end_tic": 284,
+   "prndindex_after_load": 3,
+   "prndindex_end": 15,
+   "thinkers_at_load": 2,
+   "mobjs_at_load": 2,
+   "unknown_messages": 0,
+   "snapshots": 285,
+   "dumps_sha256": "7af4476843d3f31c3824878f3a596b404893f4a53ef09dcaaed998f17f85a405",
+   "secretexit": false,
+   "must_show": {
+    "WR 91 raiseFloor to the pad ceiling 64": 37,
+    "the pad stalls under the barrel (floor restored every tic)": 59,
+    "barrel shot dead": 147,
+    "the pad reaches 64": 188
+   }
+  },
+  "FLOORS3": {
+   "wad": "FLOORS",
+   "lmp_sha256": "687a01cc93161d7cf08a5c37cbf02a74205ba038d6812b40222005e0f31476eb",
+   "tics": 180,
+   "end": "marker",
+   "end_tic": 180,
+   "prndindex_after_load": 3,
+   "prndindex_end": 3,
+   "thinkers_at_load": 2,
+   "mobjs_at_load": 2,
+   "unknown_messages": 0,
+   "snapshots": 181,
+   "dumps_sha256": "6887f519383811e097468a7f97f6da091e73ae5443ea352d58ab3f7763967360",
+   "secretexit": false,
+   "must_show": {
+    "S1 18 on the comb: destination 64 (the 21st neighbour, 8, is never read)": 89,
+    "the comb reaches 64": 152
+   }
+  },
+  "PLATS1": {
+   "wad": "PLATS",
+   "lmp_sha256": "499e11a549eeadd877b4548006993f8ac3299b8653df002722749c77f0412ee4",
+   "tics": 573,
+   "end": "marker",
+   "end_tic": 573,
+   "prndindex_after_load": 6,
+   "prndindex_end": 6,
+   "thinkers_at_load": 4,
+   "mobjs_at_load": 4,
+   "unknown_messages": 0,
+   "snapshots": 574,
+   "dumps_sha256": "f38584a95e8d9362faeeb7774bb93aff1c7bcbb3a3dd6ca8b7b9c9eb3ac8531b",
+   "secretexit": false,
+   "must_show": {
+    "SR 62 downWaitUpStay on the lift": 58,
+    "SR 62 button": 58,
+    "the lift reaches 0": 69,
+    "the lift ends at the top": 188,
+    "second cycle": 250,
+    "S1 20 raiseToNearestAndChange on P20": 318,
+    "P20 takes the alcove floor TESTFLR0": 318,
+    "P20 special cleared": 318,
+    "W1 22 on P22": 380,
+    "P22 takes the hall floor FLOOR7_1 (the line's front sector, not the strip)": 380,
+    "P20 reaches the next floor 40": 397
+   }
+  },
+  "PLATS2": {
+   "wad": "PLATS",
+   "lmp_sha256": "546bec818d29f7c049f5768ebeb2a7fe173a349fbd53eb77289e9042f75f7fe0",
+   "tics": 182,
+   "end": "marker",
+   "end_tic": 182,
+   "prndindex_after_load": 6,
+   "prndindex_end": 6,
+   "thinkers_at_load": 4,
+   "mobjs_at_load": 4,
+   "unknown_messages": 0,
+   "snapshots": 183,
+   "dumps_sha256": "33ec1c5c382e7d5ee6cb978fc1911c13b31b330f1f47e9d11e0103710027b20d",
+   "secretexit": false,
+   "must_show": {
+    "W1 22 on P22B (ceiling 64, barrel)": 47,
+    "the plat reaches low = 0 and waits (count below 0)": 136
+   },
+   "rust_refusal_tic": 91
+  },
+  "STAIRS1": {
+   "wad": "STAIRS",
+   "lmp_sha256": "618443a509b0b4f66f25dc8a5daeace6396be1bb1d1baa55ac3aa0dee9e4a9e9",
+   "tics": 638,
+   "end": "marker",
+   "end_tic": 638,
+   "prndindex_after_load": 6,
+   "prndindex_end": 83,
+   "thinkers_at_load": 4,
+   "mobjs_at_load": 4,
+   "unknown_messages": 0,
+   "snapshots": 639,
+   "dumps_sha256": "00c3d6090788c998c8a1d8b33a30cba194dddea622d646c62514c237ed7bb13a",
+   "secretexit": false,
+   "must_show": {
+    "WR 82 lowers bA (busy)": 71,
+    "S1 7: a1 to 8": 116,
+    "a3 to 24": 116,
+    "busy bA skipped, height bumped: a4 to 40": 116,
+    "a6 to 56": 116,
+    "S1 7 line cleared": 116,
+    "W1 8: b5 to 40": 200,
+    "staircase A finished: a6 at 56": 339
+   }
+  },
+  "STAIRS2": {
+   "wad": "STAIRS",
+   "lmp_sha256": "090712672f6839d21ce1c9b4fbeeed266ff6cbb8969013c572c184556aed75f5",
+   "tics": 230,
+   "end": "marker",
+   "end_tic": 230,
+   "prndindex_after_load": 6,
+   "prndindex_end": 125,
+   "thinkers_at_load": 4,
+   "mobjs_at_load": 4,
+   "unknown_messages": 0,
+   "snapshots": 231,
+   "dumps_sha256": "a6d2481cec30176dadeee6e00b8d1bf534ff65e2805017e12e15e3ef5a3b3d27",
+   "secretexit": false,
+   "must_show": {
+    "W1 8 on staircase C: c4 to 32": 65,
+    "c5 finishes (c4 still blocked)": 225
+   },
+   "rust_refusal_tic": 153
+  },
+  "DONUT1": {
+   "wad": "STAIRS",
+   "lmp_sha256": "8149679f5d7e0015f55d51e68a51392d55223816126832343792b91eb5ca05c2",
+   "tics": 332,
+   "end": "marker",
+   "end_tic": 332,
+   "prndindex_after_load": 6,
+   "prndindex_end": 103,
+   "thinkers_at_load": 4,
+   "mobjs_at_load": 4,
+   "unknown_messages": 0,
+   "snapshots": 333,
+   "dumps_sha256": "41c5b274e86106c2a1c921b0496a4097a264b15d4f64ad428024c6b996be8fc4",
+   "secretexit": false,
+   "must_show": {
+    "S1 9: donutRaise on the ring": 51,
+    "the pillar lowers to the pool floor": 51,
+    "the ring takes the pool flat": 115,
+    "the ring special cleared": 115,
+    "the zombieman on the pillar killed": 170,
+    "the pillar reaches 0": 146
+   }
+  },
+  "EXIT1": {
+   "wad": "EXITS",
+   "lmp_sha256": "ccf0146bc87a7452a2245218a504e11e03b131ea340c1c24d13770472711ef3a",
+   "tics": 153,
+   "end": "exit",
+   "end_tic": 152,
+   "prndindex_after_load": 7,
+   "prndindex_end": 7,
+   "thinkers_at_load": 5,
+   "mobjs_at_load": 4,
+   "unknown_messages": 0,
+   "snapshots": 154,
+   "dumps_sha256": "9f3b608b777c72d796361d0e39a30387f0a4270834ce011ec9b2f147312ee9e1",
+   "secretexit": false,
+   "must_show": {
+    "W1 35: DK1 light 35": 29,
+    "W1 35 line cleared": 29,
+    "S1 11: ga_completed": 152
+   }
+  },
+  "EXIT2": {
+   "wad": "EXITS",
+   "lmp_sha256": "d48eec835e99465910d36210c5e330c999cf80c85965eb6aabf638cc5bd9b8a8",
+   "tics": 56,
+   "end": "exit",
+   "end_tic": 55,
+   "prndindex_after_load": 7,
+   "prndindex_end": 7,
+   "thinkers_at_load": 5,
+   "mobjs_at_load": 4,
+   "unknown_messages": 0,
+   "snapshots": 57,
+   "dumps_sha256": "e406c1d125b90fc845f3ccb42251f940a43fd5c8efe746e41f1aa17e18655c8c",
+   "secretexit": true,
+   "must_show": {
+    "S1 51: secretexit set": 55
+   }
+  },
+  "SECT11": {
+   "wad": "EXITS",
+   "lmp_sha256": "2e502ee5f1cbb24072cd3a02596021440c8d0eec5b4e8dffb5ea95f1d26da08a",
+   "tics": 181,
+   "end": "exit",
+   "end_tic": 180,
+   "prndindex_after_load": 7,
+   "prndindex_end": 24,
+   "thinkers_at_load": 5,
+   "mobjs_at_load": 4,
+   "unknown_messages": 0,
+   "snapshots": 182,
+   "dumps_sha256": "c9b46896eff7ccdf6c5344365410b661dda334234d8c7969e221c14a25d87852",
+   "secretexit": false,
+   "must_show": {
+    "first 20-point floor hit": 64,
+    "fourth floor hit": 160,
+    "barrel blast capped to health - 1": 179,
+    "health <= 10: G_ExitLevel": 180
+   }
+  },
+  "EXDIE": {
+   "wad": "EXITS",
+   "lmp_sha256": "a2513a0b9f1640b7dca7f9c978c12c7162fd160d9ff9a57ee4e6414e568018c5",
+   "tics": 128,
+   "end": "reborn",
+   "end_tic": 127,
+   "prndindex_after_load": 7,
+   "prndindex_end": 22,
+   "thinkers_at_load": 5,
+   "mobjs_at_load": 4,
+   "unknown_messages": 0,
+   "snapshots": 129,
+   "dumps_sha256": "2ba54f60df1b72f413f1316e1640ec88bfc3566967a328751d7b71dab077cbee",
+   "secretexit": false,
+   "must_show": {
+    "barrel blasts kill the player outside sector 11": 106
+   },
+   "rust_refusal_tic": 127
+  },
+  "SAW1": {
+   "wad": "WEAPONS",
+   "lmp_sha256": "250eac45ece98661a264bdc782f90f0f38b74eadb5ad5f5e4fd681eb3ee4853f",
+   "tics": 238,
+   "end": "marker",
+   "end_tic": 238,
+   "prndindex_after_load": 30,
+   "prndindex_end": 99,
+   "thinkers_at_load": 19,
+   "mobjs_at_load": 19,
+   "unknown_messages": 0,
+   "snapshots": 239,
+   "dumps_sha256": "e34445338116c796e9484481eb1f8abcdb242d3072da755a1b6caf8375eab704",
+   "secretexit": false,
+   "must_show": {
+    "chainsaw pickup": 8,
+    "chainsaw raised": 29,
+    "A_Saw hit: next tic forwardmove 100 (MF_JUSTATTACKED)": 77,
+    "both zombiemen sawn": 92,
+    "CHANGE|W1: pistol": 119,
+    "CHANGE|W0 with the chainsaw owned: the chainsaw again": 214
+   }
+  },
+  "ROCKET1": {
+   "wad": "WEAPONS",
+   "lmp_sha256": "aa328e020b74fc72326d5770983c91e4c89adb6b54445271dd546bef0973dad6",
+   "tics": 929,
+   "end": "marker",
+   "end_tic": 929,
+   "prndindex_after_load": 30,
+   "prndindex_end": 187,
+   "thinkers_at_load": 19,
+   "mobjs_at_load": 19,
+   "unknown_messages": 0,
+   "snapshots": 930,
+   "dumps_sha256": "f3187c5ec5cec87a7ec639ce2c17cd1823a3bbee37a84639672913c7937bf379",
+   "secretexit": false,
+   "must_show": {
+    "launcher pickup: 2 rockets": 25,
+    "10 rockets": 61,
+    "launcher raised": 41,
+    "first rocket in flight": 210,
+    "rocket explosion": 223,
+    "five monsters killed": 589,
+    "sixth rocket fired (4 left)": 896
+   }
+  },
+  "ROCKDIE": {
+   "wad": "WEAPONS",
+   "lmp_sha256": "759219505a3d55a22a5dd1673b08be9be485df3943dfa5e2eec6375d8215a6ef",
+   "tics": 123,
+   "end": "reborn",
+   "end_tic": 122,
+   "prndindex_after_load": 30,
+   "prndindex_end": 41,
+   "thinkers_at_load": 19,
+   "mobjs_at_load": 19,
+   "unknown_messages": 0,
+   "snapshots": 124,
+   "dumps_sha256": "a813272dad6d00a50358994fbe64f26450128bf5769f8c0d9dfbdce28265ce4f",
+   "secretexit": false,
+   "must_show": {
+    "rocket fired": 101,
+    "killed by its own rocket": 101
+   },
+   "rust_refusal_tic": 122
+  },
+  "ITEMS1": {
+   "wad": "ITEMS",
+   "lmp_sha256": "4c97fd5f0975e6bc03da21aa081b2631fc381a77deb9aa07cfc1049f400f0593",
+   "tics": 235,
+   "end": "marker",
+   "end_tic": 235,
+   "prndindex_after_load": 36,
+   "prndindex_end": 36,
+   "thinkers_at_load": 25,
+   "mobjs_at_load": 25,
+   "unknown_messages": 0,
+   "snapshots": 236,
+   "dumps_sha256": "970d9b9e98658bd6da6714e031502d3c07a40d2b988d99dc0ef736e61b70c087",
+   "secretexit": false,
+   "must_show": {
+    "shells capped at 50": 115,
+    "backpack": 120,
+    "maxammo doubled": 120,
+    "shells at the doubled cap 100": 132,
+    "soulsphere: health 200": 145,
+    "light amplification": 153,
+    "computer map": 161,
+    "partial invisibility": 169,
+    "MF_SHADOW on the player": 169,
+    "radiation suit": 178,
+    "red keycard": 194,
+    "rocket box: 8 rockets": 207
+   }
+  },
+  "TIMERS": {
+   "wad": "ITEMS",
+   "lmp_sha256": "c7518c44181cf9d6a0aa62c7cc5ca19ed83dd6033fbcc2939db60dbd339d3da1",
+   "tics": 2252,
+   "end": "marker",
+   "end_tic": 2252,
+   "prndindex_after_load": 36,
+   "prndindex_end": 36,
+   "thinkers_at_load": 25,
+   "mobjs_at_load": 25,
+   "unknown_messages": 0,
+   "snapshots": 2253,
+   "dumps_sha256": "110d13340ba79f402e4e38d0123b292b4e2d4bef45dac6793f2cb18ef0bde804",
+   "secretexit": false,
+   "must_show": {
+    "partial invisibility": 21,
+    "radiation suit": 44,
+    "light amplification": 84,
+    "invisibility runs out": 2121,
+    "MF_SHADOW cleared": 2121,
+    "suit runs out": 2144
+   }
+  },
+  "SUIT1": {
+   "wad": "ITEMS",
+   "lmp_sha256": "2ac825bb9ad1984632276ebf662fd5544c5f42c1d241052db3885e0df188b6fc",
+   "tics": 302,
+   "end": "marker",
+   "end_tic": 302,
+   "prndindex_after_load": 36,
+   "prndindex_end": 188,
+   "thinkers_at_load": 25,
+   "mobjs_at_load": 25,
+   "unknown_messages": 0,
+   "snapshots": 303,
+   "dumps_sha256": "bf10ffce862754843b59e275eec921669a391abeb32eec51847049b573d6b71b",
+   "secretexit": false,
+   "must_show": {
+    "radiation suit": 20,
+    "on the special-16 pond": 149
+   }
+  },
+  "SUITDIE": {
+   "wad": "ITEMS",
+   "lmp_sha256": "ac3813e44472c55719f0b8075b2bc87800f5c366203df010abbd1b0438199bdb",
+   "tics": 182,
+   "end": "reborn",
+   "end_tic": 181,
+   "prndindex_after_load": 36,
+   "prndindex_end": 41,
+   "thinkers_at_load": 25,
+   "mobjs_at_load": 25,
+   "unknown_messages": 0,
+   "snapshots": 183,
+   "dumps_sha256": "46a0e690a98c567116a9dfafa6395defeda0a5e1067059e8e3ce18712f06d261",
+   "secretexit": false,
+   "must_show": {
+    "first special-16 hit": 32,
+    "dead on the special-16 pond": 160
+   },
+   "rust_refusal_tic": 181
+  },
+  "INVIS1": {
+   "wad": "ITEMS",
+   "lmp_sha256": "6d697a2c68822bdf5cce39e9b9325017590b3f395ea71920c8c06edd857195c3",
+   "tics": 290,
+   "end": "marker",
+   "end_tic": 290,
+   "prndindex_after_load": 36,
+   "prndindex_end": 138,
+   "thinkers_at_load": 25,
+   "mobjs_at_load": 25,
+   "unknown_messages": 0,
+   "snapshots": 291,
+   "dumps_sha256": "697559d464111d3c92060c14457e3878a02d56bf6a839c0a983c1e0f8799cf51",
+   "secretexit": false,
+   "must_show": {
+    "partial invisibility": 21,
+    "the invisible player is hit (imp attack with the shadow aim fuzz)": 277,
+    "the imp killed": 259
+   }
+  },
+  "TURBO1": {
+   "wad": "ITEMS",
+   "lmp_sha256": "4d732c101b651c42a0a64f8e43ba2110458a55c7e1df0327af6a7e97598cf7aa",
+   "tics": 672,
+   "end": "marker",
+   "end_tic": 672,
+   "prndindex_after_load": 36,
+   "prndindex_end": 36,
+   "thinkers_at_load": 25,
+   "mobjs_at_load": 25,
+   "unknown_messages": 0,
+   "snapshots": 673,
+   "dumps_sha256": "f841aef0458d6536ae8c2c47ac7a4183910e6e2fc94d5df2f84a68befaef2ebe",
+   "secretexit": false,
+   "must_show": {
+    "forward 100 on gametic 0: G_Ticker's turbo message (driver index 41)": 0,
+    "forward 100 held across gametic 128: the message on 128 only (none on 64)": 128,
+    "forward 51 (> TURBOTHRESHOLD 50) across gametic 256": 256,
+    "forward 127 on gametic 640 (none for forward 50 on 384 or -100 on 512)": 640
+   }
+  },
+  "TARGET1": {
+   "wad": "ITEMS",
+   "lmp_sha256": "cf4c1ee4ebf6c9f5728570fd509881137797e364efb77db35eebe7a572af2e84",
+   "tics": 480,
+   "end": "marker",
+   "end_tic": 480,
+   "prndindex_after_load": 36,
+   "prndindex_end": 54,
+   "thinkers_at_load": 25,
+   "mobjs_at_load": 25,
+   "unknown_messages": 0,
+   "snapshots": 481,
+   "dumps_sha256": "579984ad9b375370aaa2f44c02ee9f5eff4d8302af4aa575d1306ca0f0e40c00",
+   "secretexit": false,
+   "must_show": {
+    "the imp's fireball marked for removal (RR row; its target is the imp)": 448,
+    "the computer map (listed before the imp) taken and freed on the next tic": 449,
+    "the fireball freed on the same tic (RM row): the imp one list place earlier": 449
+   }
+  },
+  "SPECT1": {
+   "wad": "SPECTRE",
+   "lmp_sha256": "01ee2ca538dce9d6c77dce7f101ca67ebea3dfaf00c50697f9b141180686cdad",
+   "tics": 608,
+   "end": "marker",
+   "end_tic": 608,
+   "prndindex_after_load": 15,
+   "prndindex_end": 87,
+   "thinkers_at_load": 10,
+   "mobjs_at_load": 10,
+   "unknown_messages": 0,
+   "snapshots": 609,
+   "dumps_sha256": "758e000f68921430ae5191cfc15b01c5be3539dea838e4ef29442c9c6ebf72df",
+   "secretexit": false,
+   "must_show": {
+    "shotgun raised": 29,
+    "first kill": 192,
+    "three Spectres and the imp killed": 570
+   }
+  },
+  "SPECT2": {
+   "wad": "SPECTRE",
+   "lmp_sha256": "d8950b6c5db55a096fdb6d29b40573f501cfea2fac5cd7ebed9cb8059623678b",
+   "tics": 642,
+   "end": "marker",
+   "end_tic": 642,
+   "prndindex_after_load": 15,
+   "prndindex_end": 198,
+   "thinkers_at_load": 10,
+   "mobjs_at_load": 10,
+   "unknown_messages": 0,
+   "snapshots": 643,
+   "dumps_sha256": "4c6ee72d4531d5cb820578dea280d214eb88e1df7284f8d32c54eab9ef646a08",
+   "secretexit": false,
+   "must_show": {
+    "an imp fireball hits a Spectre": 373,
+    "a Spectre bites the imp (infighting)": 581
+   }
+  },
+  "SPECTD": {
+   "wad": "SPECTRE",
+   "lmp_sha256": "6f46554dab5a695f0585098ce8dbc47f609f7c64de7ad72ff6c9ed023bcbf936",
+   "tics": 522,
+   "end": "reborn",
+   "end_tic": 521,
+   "prndindex_after_load": 15,
+   "prndindex_end": 29,
+   "thinkers_at_load": 10,
+   "mobjs_at_load": 10,
+   "unknown_messages": 0,
+   "snapshots": 523,
+   "dumps_sha256": "1eef9693b300aff36ffba490e1aca0f4e073974c104e830a54c2ad5af0002a4d",
+   "secretexit": false,
+   "must_show": {
+    "the idle player is killed": 500
+   },
+   "rust_refusal_tic": 521
+  },
+  "SCALE1": {
+   "wad": "SCALE",
+   "lmp_sha256": "53ac9fb5e87c5fb3876452d875fda1519c52c3b317e10b442d0859e76f3ae141",
+   "tics": 328,
+   "end": "marker",
+   "end_tic": 328,
+   "prndindex_after_load": 235,
+   "prndindex_end": 235,
+   "thinkers_at_load": 160,
+   "mobjs_at_load": 160,
+   "unknown_messages": 0,
+   "snapshots": 329,
+   "dumps_sha256": "5c5ba25617c90f7fcc00700c1e20bef8abde8dce4624b1764771ffa5a0db2067",
+   "secretexit": false,
+   "must_show": {
+    "SR 62 on the 608-unit lift": 127,
+    "the lift reaches -48": 278
+   }
+  },
+  "SCALE2": {
+   "wad": "SCALE",
+   "lmp_sha256": "5284d2cb1accfb9a82045abf63d771d774dd01c6093b2f8f05aeee642b75ac44",
+   "tics": 600,
+   "end": "marker",
+   "end_tic": 600,
+   "prndindex_after_load": 235,
+   "prndindex_end": 51,
+   "thinkers_at_load": 160,
+   "mobjs_at_load": 160,
+   "unknown_messages": 0,
+   "snapshots": 601,
+   "dumps_sha256": "05ecbbd7eb82924302fdb3e7d0ed4cff10b34fb91a479e59e5df744c7049ada9",
+   "secretexit": false,
+   "must_show": {}
+  }
+ },
+ "timing": {
+  "note": "us/tic of G_Ticker per variant from the runner summary and the wall time of this run; measured on a machine that was not idle (informational, not compared by --check)",
+  "wall_seconds": {
+   "build": 11.2,
+   "runs": 18.0
+  },
+  "us_per_tic": {
+   "DOORS1": {
+    "strict": 2.0,
+    "overflow": 2.3,
+    "address": 9.0
+   },
+   "DOORS2": {
+    "strict": 2.0,
+    "overflow": 2.9,
+    "address": 8.7
+   },
+   "DOORS3": {
+    "strict": 1.5,
+    "overflow": 1.9,
+    "address": 5.6
+   },
+   "FLOORS1": {
+    "strict": 1.7,
+    "overflow": 1.7,
+    "address": 7.3
+   },
+   "FLOORS2": {
+    "strict": 2.0,
+    "overflow": 2.7,
+    "address": 7.7
+   },
+   "FLOORS3": {
+    "strict": 2.3,
+    "overflow": 2.3,
+    "address": 9.3
+   },
+   "PLATS1": {
+    "strict": 1.9,
+    "overflow": 1.7,
+    "address": 6.4
+   },
+   "PLATS2": {
+    "strict": 1.8,
+    "overflow": 3.0,
+    "address": 7.8
+   },
+   "STAIRS1": {
+    "strict": 2.7,
+    "overflow": 4.0,
+    "address": 10.7
+   },
+   "STAIRS2": {
+    "strict": 2.8,
+    "overflow": 3.0,
+    "address": 11.3
+   },
+   "DONUT1": {
+    "strict": 2.9,
+    "overflow": 2.7,
+    "address": 12.7
+   },
+   "EXIT1": {
+    "strict": 2.0,
+    "overflow": 1.7,
+    "address": 8.0
+   },
+   "EXIT2": {
+    "strict": 1.7,
+    "overflow": 3.1,
+    "address": 9.8
+   },
+   "SECT11": {
+    "strict": 1.7,
+    "overflow": 2.0,
+    "address": 13.3
+   },
+   "EXDIE": {
+    "strict": 1.5,
+    "overflow": 3.2,
+    "address": 9.5
+   },
+   "SAW1": {
+    "strict": 2.6,
+    "overflow": 2.6,
+    "address": 11.5
+   },
+   "ROCKET1": {
+    "strict": 2.4,
+    "overflow": 2.5,
+    "address": 8.0
+   },
+   "ROCKDIE": {
+    "strict": 2.5,
+    "overflow": 3.2,
+    "address": 12.5
+   },
+   "ITEMS1": {
+    "strict": 2.8,
+    "overflow": 2.9,
+    "address": 9.4
+   },
+   "TIMERS": {
+    "strict": 2.3,
+    "overflow": 2.0,
+    "address": 7.5
+   },
+   "SUIT1": {
+    "strict": 3.0,
+    "overflow": 2.8,
+    "address": 11.5
+   },
+   "SUITDIE": {
+    "strict": 2.2,
+    "overflow": 2.9,
+    "address": 12.3
+   },
+   "INVIS1": {
+    "strict": 3.1,
+    "overflow": 3.5,
+    "address": 11.6
+   },
+   "TURBO1": {
+    "strict": 2.1,
+    "overflow": 2.5,
+    "address": 8.5
+   },
+   "TARGET1": {
+    "strict": 2.3,
+    "overflow": 2.7,
+    "address": 10.2
+   },
+   "SPECT1": {
+    "strict": 2.6,
+    "overflow": 2.6,
+    "address": 9.5
+   },
+   "SPECT2": {
+    "strict": 2.4,
+    "overflow": 2.8,
+    "address": 10.8
+   },
+   "SPECTD": {
+    "strict": 2.1,
+    "overflow": 3.0,
+    "address": 10.8
+   },
+   "SCALE1": {
+    "strict": 7.3,
+    "overflow": 6.6,
+    "address": 23.4
+   },
+   "SCALE2": {
+    "strict": 10.1,
+    "overflow": 9.2,
+    "address": 33.2
+   }
+  }
+ }
+}

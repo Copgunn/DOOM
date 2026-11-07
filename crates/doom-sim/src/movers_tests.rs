@@ -273,11 +273,21 @@ fn floors_lower_with_stone_sounds_and_stop() {
                 sector: 9,
                 kind: FloorKind::LowerFloorToLowest,
                 floordestheight: Fixed::ZERO,
+                direction: -1,
+                speed: units(1),
+                texture: [0; 8],
+                newspecial: 0,
+                stair: false,
             }),
             SectorThinker::Floor(FloorMove {
                 sector: 7,
                 kind: FloorKind::TurboLower,
                 floordestheight: units(72),
+                direction: -1,
+                speed: units(4),
+                texture: [0; 8],
+                newspecial: 0,
+                stair: false,
             }),
         ]
     );
@@ -322,7 +332,10 @@ fn floors_lower_with_stone_sounds_and_stop() {
 #[test]
 fn lift_lowers_waits_rises_and_is_removed() {
     let (mut s, _, _) = setup(7, [64, 600]);
-    assert!(s.start_movers(|m| m.do_plat(0)).unwrap());
+    assert!(
+        s.start_movers(|m| m.do_plat(0, PlatType::DownWaitUpStay))
+            .unwrap()
+    );
     assert_eq!(sounds(&s.pending), vec![sfx("sfx_pstart")]);
     let SectorThinker::Plat(plat) = movers(&s)[0].1 else {
         panic!()

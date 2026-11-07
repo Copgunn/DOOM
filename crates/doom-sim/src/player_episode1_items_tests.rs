@@ -1,0 +1,452 @@
+//! M4a Episode 1 policy, plan step 5: the keycards, the power-ups, the backpack
+//! and rockets (`P_TouchSpecialThing`, `P_GiveCard`, `P_GivePower`, `P_GiveAmmo`),
+//! the power countdowns of `P_PlayerThink`, the radiation suit and sector special
+//! 11 in `P_PlayerInSpecialSector` with the `P_DamageMobj` cap, the candle and
+//! firestick decorations, and the squashed non-shootable ruling. Rust-only policy
+//! tests: the expected values come from the source reading (p_inter.c, p_user.c,
+//! p_spec.c, p_map.c, info.c), never from the C engine; the C-side checks are the
+//! DSIM39 goldens of the M4a synthetic WADs (ITEMS1, TIMERS, SUIT1, SUITDIE,
+//! INVIS1, SECT11, DOORS1–3).
+use crate::diagonal_room::Lumps;
+use crate::world_pickups::PickupEvent;
+use crate::*;
+
+const EPISODE1: OriginalExecutionProfile = OriginalExecutionProfile::PlayerMonstersEpisode1V1;
+const LEVEL: OriginalExecutionProfile = OriginalExecutionProfile::PlayerMonstersLevelV1;
+
+fn room() -> Lumps {
+    crate::player_movers_tests::room(0)
+}
+fn lump<'a>(l: &'a mut Lumps, name: &str) -> &'a mut Vec<u8> {
+    &mut l.lumps.iter_mut().find(|(n, _)| n == name).unwrap().1
+}
+fn set_sector_special(l: &mut Lumps, sector: usize, special: i16) {
+    lump(l, "SECTORS")[26 * sector + 22..26 * sector + 24].copy_from_slice(&special.to_le_bytes());
+}
+fn thing(l: &mut Lumps, x: i16, y: i16, kind: i16) {
+    l.add_thing([x, y, 0, kind, 7]);
+}
+fn options() -> MapContextOptions {
+    MapContextOptions {
+        initial_rng: DoomRng::from_indices(6, 0),
+        respawn_monsters: false,
+    }
+}
+fn load(l: &Lumps, policy: OriginalExecutionProfile) -> Result<Simulation, SimError> {
+    let result = if policy == EPISODE1 {
+        Simulation::original_player_episode1_map(l.map(), options())
+    } else {
+        Simulation::original_player_level_map(l.map(), options())
+    };
+    result.map_err(|e| match e {
+        OriginalRegistryError::Runtime(e) => e,
+        other => panic!("{other:?}"),
+    })
+}
+fn try_sim(l: &Lumps, policy: OriginalExecutionProfile) -> Result<Simulation, SimError> {
+    let mut s = load(l, policy)?;
+    s.spawn_map_things()?;
+    s.initialize_player_weapons(PlayerSlot::One, WeaponInventory::default())?;
+    s.spawn_level_specials()?;
+    Ok(s)
+}
+fn sim(l: &Lumps) -> Simulation {
+    try_sim(l, EPISODE1).unwrap()
+}
+/// The doorway room (0) with the player at (−32, 0) facing east and `items`
+/// overlapping it from the west (8 units away, inside the 36-unit touch box).
+fn with_items(items: &[i16]) -> Lumps {
+    let mut l = room();
+    thing(&mut l, -32, 0, 1);
+    for &kind in items {
+        thing(&mut l, -40, 0, kind);
+    }
+    l
+}
+fn zero() -> [TicCommand; 4] {
+    [TicCommand::default(); 4]
+}
+fn step() -> [TicCommand; 4] {
+    let mut c = zero();
+    c[0].forward = 1;
+    c
+}
+fn runtime(s: &Simulation) -> &original_player::PlayerRuntime {
+    s.original_player.as_ref().unwrap()
+}
+fn runtime_mut(s: &mut Simulation) -> &mut original_player::PlayerRuntime {
+    s.original_player.as_mut().unwrap()
+}
+fn powers(s: &Simulation) -> PlayerPowers {
+    s.original_player_powers(PlayerSlot::One).unwrap()
+}
+fn pickups(s: &Simulation) -> world_pickups::PlayerPickupState {
+    s.original_player_pickups(PlayerSlot::One).unwrap()
+}
+fn pack(s: &Simulation) -> PlayerWeaponState {
+    runtime(s).weapon.unwrap().pack().unwrap()
+}
+fn body(s: &Simulation) -> Actor {
+    *s.actor(runtime(s).mo.unwrap()).unwrap()
+}
+fn decode(s: &Simulation) {
+    let capture = s.snapshot().canonical_bytes();
+    Diagnostic::decode_episode1(&capture, DiagnosticLimits::default()).unwrap();
+}
+fn pickup_events(s: &Simulation) -> Vec<PickupEvent> {
+    s.events
+        .iter()
+        .filter_map(|e| match e {
+            Event::Pickup(p) => Some(p.clone()),
+            _ => None,
+        })
+        .collect()
+}
+/// Live (not pending) actors of `kind`'s DoomEd type.
+fn live_of(s: &Simulation, ty: identity::OriginalActorType) -> usize {
+    s.actors.live_of_type(ActorTypeId(ty.ordinal()))
+}
+fn units(v: i16) -> Fixed {
+    Fixed::from_map_units(v)
+}
+
+/// Every new pickup (the chainsaw and the launcher since the weapons step) and
+/// both new decorations load under wire 23 only.
+#[test]
+fn episode1_items_and_statics_load_only_under_wire_23() {
+    for kind in [
+        5, 6, 13, 2013, 2024, 2025, 2026, 2045, 8, 2010, 2046, 2005, 2003, 34, 46,
+    ] {
+        let mut l = room();
+        thing(&mut l, -32, 0, 1);
+        thing(&mut l, -128, 0, kind);
+        let s = try_sim(&l, EPISODE1).unwrap_or_else(|e| panic!("{kind}: {e:?}"));
+        decode(&s);
+        assert_eq!(
+            try_sim(&l, LEVEL).err(),
+            Some(SimError::MapSpawn(MapSpawnError::UnsupportedType(kind))),
+            "{kind}"
+        );
+    }
+    // MF_COUNTITEM: soulsphere, invisibility, map and visor count; the keys, the
+    // suit, the backpack and the rockets do not (info.c).
+    let s = sim(&with_items(&[
+        5, 2013, 2024, 2025, 2026, 2045, 8, 2010, 2046,
+    ]));
+    assert_eq!(s.statistics.unwrap().total_items, 4);
+}
+
+/// A keycard sets its card and assigns `bonuscount = BONUSADD` before the tail
+/// adds another 6; a second card of the same colour assigns neither the message
+/// nor the bonus (p_inter.c:274–283, 421–443) but is still removed.
+#[test]
+fn keycards_assign_the_card_message_and_bonus_once() {
+    let mut s = sim(&with_items(&[5, 5]));
+    s.advance(step()).unwrap();
+    assert_eq!(powers(&s).cards, [true, false, false, false, false, false]);
+    let p = pickups(&s);
+    assert_eq!(p.message, PickupMessage::BlueCard);
+    // 6 (P_GiveCard) + 6 (tail) + 6 (second tail). The body moves (and
+    // touches) in its mobj thinker, after `P_PlayerThink`'s countdowns.
+    assert_eq!(p.bonus_count, 18);
+    assert_eq!(p.item_count, 0);
+    assert_eq!(live_of(&s, identity::OriginalActorType::MT_MISC4), 0);
+    let cards: Vec<_> = pickup_events(&s)
+        .into_iter()
+        .filter(|e| matches!(e, PickupEvent::Card(..)))
+        .collect();
+    assert_eq!(
+        cards,
+        [PickupEvent::Card(0, false), PickupEvent::Card(0, true)]
+    );
+    let messages = pickup_events(&s)
+        .into_iter()
+        .filter(|e| matches!(e, PickupEvent::Message(_)))
+        .count();
+    assert_eq!(messages, 1);
+    decode(&s);
+    // Yellow and red map to card_t 1 and 2.
+    let mut s = sim(&with_items(&[6, 13]));
+    s.advance(step()).unwrap();
+    assert_eq!(powers(&s).cards, [false, true, true, false, false, false]);
+    // Touched newest first: the red card, then the yellow one.
+    assert_eq!(pickups(&s).message, PickupMessage::YellowCard);
+}
+
+/// The soulsphere adds 100 up to 200; the powers set their durations (the body
+/// touches in its mobj thinker, after `P_PlayerThink`'s countdowns, so the first
+/// countdown is the next tic's); invisibility sets `MF_SHADOW` on the body; a
+/// second computer map is refused and stays (p_inter.c:290–330, 400–407,
+/// 504–530; p_user.c:339–353). Things overlapping one spot are touched newest
+/// first (each spawn is linked at the head of its block list).
+#[test]
+fn soulsphere_and_powers() {
+    let mut s = sim(&with_items(&[2013, 2024, 2025, 2026, 2045, 2026]));
+    s.advance(step()).unwrap();
+    assert_eq!(runtime(&s).health, 200);
+    assert_eq!(body(&s).life.unwrap().health, 200);
+    assert_eq!(powers(&s).powers, [0, 0, 2100, 2100, 1, 4200]);
+    assert_ne!(body(&s).life.unwrap().flags & original_player::MF_SHADOW, 0);
+    let p = pickups(&s);
+    assert_eq!(p.message, PickupMessage::Soulsphere);
+    assert_eq!(p.item_count, 4);
+    assert_eq!(s.statistics.unwrap().total_items, 5);
+    assert_eq!(live_of(&s, identity::OriginalActorType::MT_MISC15), 1);
+    assert!(pickup_events(&s).contains(&PickupEvent::Power(4, false, 1, 1)));
+    assert!(pickup_events(&s).contains(&PickupEvent::Soulsphere(100, 200, 200)));
+    decode(&s);
+    // A soulsphere caps at 200.
+    let mut s = sim(&with_items(&[2013, 2013]));
+    s.advance(step()).unwrap();
+    assert_eq!(runtime(&s).health, 200);
+}
+
+/// `pw_invisibility` counts down and clears `MF_SHADOW` only when it reaches 0
+/// (p_user.c:345–347); a dead player's counters do not move (258–262).
+#[test]
+fn invisibility_runs_out_and_clears_the_shadow() {
+    let mut s = sim(&with_items(&[2024]));
+    s.advance(step()).unwrap();
+    assert_eq!(powers(&s).powers[2], 2100);
+    s.advance(zero()).unwrap();
+    assert_eq!(powers(&s).powers[2], 2099);
+    runtime_mut(&mut s).powers.as_mut().unwrap().powers[2] = 2;
+    s.advance(zero()).unwrap();
+    assert_eq!(powers(&s).powers[2], 1);
+    assert_ne!(body(&s).life.unwrap().flags & original_player::MF_SHADOW, 0);
+    decode(&s);
+    s.advance(zero()).unwrap();
+    assert_eq!(powers(&s).powers[2], 0);
+    assert_eq!(body(&s).life.unwrap().flags & original_player::MF_SHADOW, 0);
+    decode(&s);
+    s.advance(zero()).unwrap();
+    assert_eq!(powers(&s).powers[2], 0);
+}
+
+/// The backpack doubles every maximum once and gives one clip load of each type
+/// in order (p_inter.c:589–599); a second one only gives the ammo.
+#[test]
+fn backpack_doubles_the_maxima_once() {
+    let mut s = sim(&with_items(&[8]));
+    s.advance(step()).unwrap();
+    let w = pack(&s);
+    assert!(w.backpack);
+    assert_eq!(w.max_ammo(), [400, 100, 600, 100]);
+    assert_eq!(w.ammo(), [60, 4, 20, 1]);
+    assert_eq!(pickups(&s).message, PickupMessage::Backpack);
+    decode(&s);
+    let mut s = sim(&with_items(&[8, 8]));
+    s.advance(step()).unwrap();
+    let w = pack(&s);
+    assert_eq!(w.max_ammo(), [400, 100, 600, 100]);
+    assert_eq!(w.ammo(), [70, 8, 40, 2]);
+    let backpacks: Vec<_> = pickup_events(&s)
+        .into_iter()
+        .filter(|e| matches!(e, PickupEvent::Backpack(_)))
+        .collect();
+    assert_eq!(
+        backpacks,
+        [PickupEvent::Backpack(true), PickupEvent::Backpack(false)]
+    );
+    decode(&s);
+}
+
+/// Rockets: one per rocket, five per box, refused at `maxammo` (the item stays).
+#[test]
+fn rockets_are_capped_at_the_maximum() {
+    let mut s = sim(&with_items(&[2046, 2010]));
+    s.advance(step()).unwrap();
+    assert_eq!(pack(&s).rockets, 6);
+    assert_eq!(pickups(&s).message, PickupMessage::RocketBox);
+    decode(&s);
+    let mut s = sim(&with_items(&[2010]));
+    if let Some(player_weapons::PlayerWeaponRuntime::Pack(w)) = runtime_mut(&mut s).weapon.as_mut()
+    {
+        w.rockets = 50;
+    }
+    s.advance(step()).unwrap();
+    assert_eq!(pack(&s).rockets, 50);
+    assert_eq!(live_of(&s, identity::OriginalActorType::MT_MISC18), 1);
+    assert_eq!(pickups(&s).message, PickupMessage::None);
+}
+
+/// The player's sector, read after a load.
+fn player_sector(l: &Lumps) -> usize {
+    let s = sim(l);
+    usize::from(body(&s).location.unwrap().sector)
+}
+fn set_health(s: &mut Simulation, health: i32) {
+    runtime_mut(s).source.health = health;
+    let id = runtime(s).mo.unwrap();
+    s.actors.get_mut(id).unwrap().life.as_mut().unwrap().health = health;
+}
+
+/// Sector special 11 (p_spec.c:1054–1063): 20 points on the leveltime gate, the
+/// `P_DamageMobj` cap at `health − 1` (p_inter.c:837–842), and `G_ExitLevel`
+/// once health is at most 10; the next tic is refused. Wire 22 refuses the
+/// special at load.
+#[test]
+fn sector_special_11_damages_caps_and_exits() {
+    let mut l = room();
+    thing(&mut l, -32, 0, 1);
+    let sector = player_sector(&l);
+    set_sector_special(&mut l, sector, 11);
+    assert_eq!(
+        load(&l, LEVEL).err(),
+        Some(SimError::Pursuit(PursuitError::Specials))
+    );
+    let mut s = sim(&l);
+    // Tic 0 is on the gate: 20 points.
+    s.advance(zero()).unwrap();
+    assert_eq!(runtime(&s).health, 80);
+    assert!(!s.level_exit);
+    for _ in 1..32 {
+        s.advance(zero()).unwrap();
+    }
+    assert_eq!(runtime(&s).health, 80);
+    // The cap: 20 ≥ 15 becomes 14 points, leaving health 1, at most 10: exit.
+    set_health(&mut s, 15);
+    s.advance(zero()).unwrap();
+    assert_eq!(runtime(&s).health, 1);
+    assert!(s.level_exit && !s.level_secret_exit);
+    assert!(
+        s.events
+            .iter()
+            .any(|e| matches!(e, Event::Mover(MoverEvent::Exit { secret: false })))
+    );
+    decode(&s);
+    assert_eq!(s.advance(zero()), Err(SimError::LevelExited));
+    // Uncapped (20 < 40) and above 10 afterwards: no exit.
+    let mut s = sim(&l);
+    s.advance(zero()).unwrap();
+    for _ in 1..32 {
+        s.advance(zero()).unwrap();
+    }
+    set_health(&mut s, 40);
+    s.advance(zero()).unwrap();
+    assert_eq!(runtime(&s).health, 20);
+    assert!(!s.level_exit);
+    // The exit test also runs off the gate: health already at 10.
+    let mut s = sim(&l);
+    s.advance(zero()).unwrap();
+    set_health(&mut s, 10);
+    s.advance(zero()).unwrap();
+    assert_eq!(runtime(&s).health, 10);
+    assert!(s.level_exit);
+}
+
+/// The suit: specials 5 and 7 do nothing; on 16 (and 4) the source draws
+/// `P_Random() < 5` every tic on the floor, whatever the gate, and damages only
+/// on the gate (p_spec.c:1020–1047).
+#[test]
+fn radiation_suit_on_the_damaging_floors() {
+    let mut l = room();
+    thing(&mut l, -32, 0, 1);
+    let sector = player_sector(&l);
+    for special in [5, 7] {
+        let mut l = l.clone();
+        set_sector_special(&mut l, sector, special);
+        let mut s = sim(&l);
+        runtime_mut(&mut s).powers.as_mut().unwrap().powers[3] = 100;
+        s.advance(zero()).unwrap();
+        assert_eq!(runtime(&s).health, 100, "{special}");
+        let mut s = sim(&l);
+        s.advance(zero()).unwrap();
+        assert!(runtime(&s).health < 100, "{special}");
+    }
+    let mut l16 = l.clone();
+    set_sector_special(&mut l16, sector, 16);
+    let mut bare = sim(&l16);
+    let mut suited = sim(&l16);
+    runtime_mut(&mut suited).powers.as_mut().unwrap().powers[3] = 100;
+    let start = suited.rng.indices()[0];
+    for _ in 0..40 {
+        bare.advance(zero()).unwrap();
+        suited.advance(zero()).unwrap();
+        decode(&suited);
+    }
+    // The bare player is hit on the gates (tics 0 and 32) and draws only its two
+    // pain chances; the suited one draws once every tic and, on this seed, is
+    // never below 5 on a gate tic, so it is never hurt and draws nothing else.
+    assert_eq!(runtime(&bare).health, 60);
+    assert_eq!(runtime(&suited).health, 100);
+    assert_eq!(bare.rng.indices()[0].wrapping_sub(start), 2);
+    assert_eq!(suited.rng.indices()[0].wrapping_sub(start), 40);
+    assert_eq!(runtime(&suited).powers.unwrap().powers[3], 60);
+}
+
+/// The firestick cycles its four `S_REDTORCH` states (4 tics each, no action);
+/// the candle stays in its spawn state; both are refused under wire 22.
+#[test]
+fn firestick_cycles_and_candle_stays() {
+    let mut l = room();
+    thing(&mut l, -32, 0, 1);
+    thing(&mut l, -160, 0, 46);
+    thing(&mut l, -160, 48, 34);
+    let mut s = sim(&l);
+    let find = |s: &Simulation, ty: identity::OriginalActorType| {
+        s.actors
+            .order()
+            .find(|id| {
+                s.actor(*id)
+                    .and_then(Actor::life)
+                    .is_some_and(|l| l.actor_type.0 == ty.ordinal())
+            })
+            .unwrap()
+    };
+    let torch = find(&s, identity::OriginalActorType::MT_MISC43);
+    let candle = find(&s, identity::OriginalActorType::MT_MISC49);
+    let mut seen = std::collections::BTreeSet::new();
+    for _ in 0..20 {
+        s.advance(zero()).unwrap();
+        let l = s.actor(torch).unwrap().life.unwrap();
+        seen.insert(l.state.unwrap().0);
+        assert!((1..=4).contains(&l.tics));
+        let c = s.actor(candle).unwrap().life.unwrap();
+        assert_eq!(c.tics, -1);
+        decode(&s);
+    }
+    assert_eq!(seen.len(), 4);
+    assert_eq!(s.actor(torch).unwrap().solidity, Solidity::Solid);
+}
+
+/// The step-5 ruling: under wire 23 a non-shootable thing whose clipped
+/// `floorz > ceilingz` (a mover closed over it, p_map.c:1290–1294) stays a legal
+/// state; a shootable one keeps the refusal, and wire 22 refuses both.
+#[test]
+fn squashed_non_shootable_things_are_admitted_under_wire_23() {
+    let squash = |s: &mut Simulation, ty: identity::OriginalActorType| {
+        let id = s
+            .actors
+            .order()
+            .find(|id| {
+                s.actor(*id)
+                    .and_then(Actor::life)
+                    .is_some_and(|l| l.actor_type.0 == ty.ordinal())
+            })
+            .unwrap();
+        let a = s.actors.get_mut(id).unwrap();
+        a.ceiling = a.floor - units(8);
+    };
+    let mut l = room();
+    thing(&mut l, -32, 0, 1);
+    thing(&mut l, -160, 0, 2011);
+    let mut s = sim(&l);
+    squash(&mut s, identity::OriginalActorType::MT_MISC10);
+    s.advance(zero()).unwrap();
+    let mut s = try_sim(&l, LEVEL).unwrap();
+    squash(&mut s, identity::OriginalActorType::MT_MISC10);
+    assert_eq!(
+        s.advance(zero()),
+        Err(SimError::MapSpawn(MapSpawnError::Ownership))
+    );
+    let mut l = room();
+    thing(&mut l, -32, 0, 1);
+    thing(&mut l, -160, 0, 2035);
+    let mut s = sim(&l);
+    squash(&mut s, identity::OriginalActorType::MT_BARREL);
+    assert_eq!(
+        s.advance(zero()),
+        Err(SimError::MapSpawn(MapSpawnError::Ownership))
+    );
+}

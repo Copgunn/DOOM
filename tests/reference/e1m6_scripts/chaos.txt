@@ -1,0 +1,4 @@
+# output: M6CHAOS.lmp
+# M6CHAOS: E1M6 chaos, seed 20261111 (20261105 + 6), 5000 tics of the fixed-seed generator.
+map E1M6
+seed 20261111 chaos 5000

@@ -94,6 +94,12 @@ pub enum OriginalExecutionProfile {
     /// dead `damagecount` decay, any command admitted and only `BT_USE` read).
     /// Captures are DSIM38, the DSIM37 layout under policy 22.
     PlayerMonstersLevelV1,
+    /// Episode 1, part 1 (M4a, decisions H2–H4): the level world of wire 22 with
+    /// the load-time proofs that refuse Episode 1 maps replaced by per-tic
+    /// witnesses (H3) and the fixed roster, pickup, decoration and barrel bounds
+    /// replaced by per-map values derived from the THINGS lump, with 1,024 actor
+    /// slots (H4). Captures are DSIM39, read by `Diagnostic::decode_episode1`.
+    PlayerMonstersEpisode1V1,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -121,6 +127,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersE1M1V1 => 20,
             Self::PlayerMonstersBarrelsV1 => 21,
             Self::PlayerMonstersLevelV1 => 22,
+            Self::PlayerMonstersEpisode1V1 => 23,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -148,6 +155,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersE1M1V1 => PLAYER_E1M1_CONTEXT_SCHEMA,
             Self::PlayerMonstersBarrelsV1 => PLAYER_BARRELS_CONTEXT_SCHEMA,
             Self::PlayerMonstersLevelV1 => PLAYER_LEVEL_CONTEXT_SCHEMA,
+            Self::PlayerMonstersEpisode1V1 => PLAYER_EPISODE1_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_armor(self) -> bool {
@@ -166,6 +174,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     pub(crate) const fn has_player_bonuses(self) -> bool {
@@ -183,6 +192,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// Original former humans, a bounded mixed roster, infighting and drops.
@@ -200,6 +210,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The original Imp and its fireball in the mixed roster.
@@ -216,6 +227,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// Wall-derived travel bounds, 320 slots and 208 live fireballs inside a walled
@@ -232,6 +244,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// Two-sided lines, static floor/ceiling heights, vertical movement, the
@@ -248,6 +261,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// Linedefs of any direction inside a closed one-sided boundary, the parity
@@ -262,6 +276,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The real-map policy: format-sized static geometry, the arithmetic and
@@ -275,6 +290,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The specials policy (M3h7 Stage A) and its supersets: sky ceilings, the
@@ -288,6 +304,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The movers policy (M3h8 Stage B) and its E1M1 superset: doors, lifts,
@@ -301,6 +318,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The E1M1 policy (M3h9 note §5.1): two-sided scrolling walls (48) and the
@@ -312,6 +330,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The barrels policy (M3h9b note §5.1): exploding barrels, up to 64 pickups,
@@ -321,7 +340,9 @@ impl OriginalExecutionProfile {
     pub(crate) const fn has_barrels(self) -> bool {
         matches!(
             self,
-            Self::PlayerMonstersBarrelsV1 | Self::PlayerMonstersLevelV1
+            Self::PlayerMonstersBarrelsV1
+                | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The level policy (M3h9c, decision G4, wire 22 only): the barrels world with
@@ -332,7 +353,20 @@ impl OriginalExecutionProfile {
     /// under DSIM38. Every older policy keeps its spawn order, counters and dead
     /// player contract.
     pub(crate) const fn has_level(self) -> bool {
-        matches!(self, Self::PlayerMonstersLevelV1)
+        matches!(
+            self,
+            Self::PlayerMonstersLevelV1 | Self::PlayerMonstersEpisode1V1
+        )
+    }
+    /// The Episode 1 policy (M4a, wire 23 only, decisions H2–H4): the level world
+    /// with the per-map bounds of `episode1::Episode1Bounds` and 1,024 actor slots,
+    /// the arithmetic certificate's clauses (i), (ii) and (vii) and the ±512
+    /// static-height rule replaced by checked per-tic arithmetic, an optional
+    /// one-sided boundary, and the mover load rules of
+    /// `mover_rules::validate_episode1`, under DSIM39. Every older policy keeps its
+    /// bounds, proofs and rules byte for byte.
+    pub(crate) const fn has_episode1(self) -> bool {
+        matches!(self, Self::PlayerMonstersEpisode1V1)
     }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
@@ -351,6 +385,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -377,6 +412,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -402,6 +438,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -423,6 +460,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
     /// The four-weapon pack (fists, shotgun, chaingun, manual switching): every
@@ -452,6 +490,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersE1M1V1
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
         )
     }
 }
@@ -708,6 +747,63 @@ fn fireball_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
         .as_ref()
         .map_err(|e| *e)
 }
+/// The rocket's spawn/explosion closure (info.c:250, 263–265, 1966–1990): `S_ROCKET`
+/// and `S_EXPLODE1..3`; `A_Explode` in `S_EXPLODE1` is the one action (Episode 1
+/// policy, M4a plan §E.4).
+fn rocket_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
+    static POLICY: OnceLock<Result<ActorPolicy, OriginalRegistryError>> = OnceLock::new();
+    POLICY
+        .get_or_init(|| {
+            let p = ActorPolicy::source(OriginalActorType::MT_ROCKET)?;
+            for s in OriginalState::all().filter(|s| p.normal.contains(*s)) {
+                let action = s.descriptor().action;
+                if !(action.is_none()
+                    || (s == OriginalState::S_EXPLODE1 && action == Some("A_Explode")))
+                {
+                    return Err(OriginalRegistryError::Graph);
+                }
+            }
+            Ok(p)
+        })
+        .as_ref()
+        .map_err(|e| *e)
+}
+/// The Spectre (`MT_SHADOWS`, info.c:1446–1470): field for field the Demon
+/// (`MT_SERGEANT`, info.c:1420–1444) except its DoomEd number (58) and the
+/// `MF_SHADOW` flag; the same `S_SARG_*` states, sounds and actions. Its closure
+/// must equal the Demon's (Episode 1 policy, M4a plan §E.5).
+fn spectre_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
+    static POLICY: OnceLock<Result<ActorPolicy, OriginalRegistryError>> = OnceLock::new();
+    POLICY
+        .get_or_init(|| {
+            let p = ActorPolicy::source(OriginalActorType::MT_SHADOWS)?;
+            let demon = demon_policy()?;
+            if p.normal.0 != demon.normal.0
+                || p.direct.0 != demon.direct.0
+                || p.death.0 != demon.death.0
+                || p.before_fall.0 != demon.before_fall.0
+            {
+                return Err(OriginalRegistryError::Graph);
+            }
+            Ok(p)
+        })
+        .as_ref()
+        .map_err(|e| *e)
+}
+/// `MT_SHADOWS`, policy-free (the Episode 1 role gates it).
+pub(crate) const fn is_spectre(ty: ActorTypeId) -> bool {
+    ty.0 == OriginalActorType::MT_SHADOWS.ordinal()
+}
+/// `MT_ROCKET`, policy-free (the Episode 1 role gates it).
+pub(crate) const fn is_rocket(ty: ActorTypeId) -> bool {
+    ty.0 == OriginalActorType::MT_ROCKET.ordinal()
+}
+/// A missile whose flight the checked thinker pass owns: the Imp fireball
+/// (`PlayerMonstersImpV1` and its supersets) and the rocket (Episode 1 policy).
+/// Policy-free: each type exists only where its role admits it.
+pub(crate) const fn is_missile_type(ty: ActorTypeId) -> bool {
+    is_fireball(ty) || is_rocket(ty)
+}
 pub(crate) fn is_former_human(ty: ActorTypeId) -> bool {
     FORMER_HUMANS.iter().any(|t| t.ordinal() == ty.0)
 }
@@ -724,17 +820,20 @@ pub(crate) const fn is_impact(ty: ActorTypeId) -> bool {
 }
 /// Original (non-owner-slot) roster definition with a registry-derived closure.
 pub(crate) fn is_extended_monster(ty: ActorTypeId) -> bool {
-    is_former_human(ty) || is_imp(ty)
+    is_former_human(ty) || is_imp(ty) || is_spectre(ty)
 }
 /// Autonomous monster definitions executable by the selected player policy.
 pub(crate) fn is_policy_monster(policy: OriginalExecutionProfile, ty: ActorTypeId) -> bool {
     ty == owner_slot()
         || (policy.has_monsters() && is_former_human(ty))
         || (policy.has_imps() && is_imp(ty))
+        || (policy.has_episode1() && is_spectre(ty))
 }
 fn extended_policy(ty: ActorTypeId) -> Result<&'static ActorPolicy, OriginalRegistryError> {
     if is_imp(ty) {
         imp_policy()
+    } else if is_spectre(ty) {
+        spectre_policy()
     } else {
         former_human_policy(
             OriginalActorType::try_from(ty.0).map_err(|_| OriginalRegistryError::Graph)?,
@@ -801,7 +900,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersMoversV1
             | OriginalExecutionProfile::PlayerMonstersE1M1V1
             | OriginalExecutionProfile::PlayerMonstersBarrelsV1
-            | OriginalExecutionProfile::PlayerMonstersLevelV1 => {
+            | OriginalExecutionProfile::PlayerMonstersLevelV1
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -856,7 +956,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersMoversV1
             | OriginalExecutionProfile::PlayerMonstersE1M1V1
             | OriginalExecutionProfile::PlayerMonstersBarrelsV1
-            | OriginalExecutionProfile::PlayerMonstersLevelV1 => {
+            | OriginalExecutionProfile::PlayerMonstersLevelV1
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V1 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -955,11 +1056,21 @@ pub(crate) fn require_role_for(
             DefinitionIdentity::Original(
                 OriginalActorType::MT_TROOP | OriginalActorType::MT_TROOPSHOT,
             ) if profile.has_imps() => Ok(()),
+            // The Spectre and the rocket (M4a plan §E.4–E.5), Episode 1 policy only.
+            DefinitionIdentity::Original(
+                OriginalActorType::MT_SHADOWS | OriginalActorType::MT_ROCKET,
+            ) if profile.has_episode1() => Ok(()),
             // The seven static decoration types of E1M1 (info.c; M3h9 note §2.5),
             // spawned by `P_SpawnMapThing` under the E1M1 policy and its barrels
             // superset.
             DefinitionIdentity::Original(ty)
                 if profile.has_e1m1() && e1m1_rules::E1M1_DECORATIONS.contains(&ty) =>
+            {
+                Ok(())
+            }
+            // The candle and the firestick (M4a plan §E.6), Episode 1 policy only.
+            DefinitionIdentity::Original(ty)
+                if profile.has_episode1() && e1m1_rules::EPISODE1_DECORATIONS.contains(&ty) =>
             {
                 Ok(())
             }
@@ -1006,6 +1117,8 @@ pub(crate) fn state_role_for(
         extended_policy(ty)?.normal.contains(s)
     } else if is_fireball(ty) {
         fireball_policy()?.normal.contains(s)
+    } else if is_rocket(ty) {
+        rocket_policy()?.normal.contains(s)
     } else if ty == owner_slot() {
         demon_policy()?.normal.contains(s)
             && !(profile == OriginalExecutionProfile::PlayerDemonAcquisitionV1
@@ -1109,14 +1222,26 @@ impl Simulation {
         // Under the real-map policy the arithmetic certificate (M3h6 note §4.2) and
         // the slide-window rule (§4.4) are admission requirements, checked before
         // the boundary so that a failing map names its arithmetic first.
+        // Under the Episode 1 policy (decision H3) clauses (i), (ii) and (vii)
+        // become the checked intercept and height arithmetic of the traces
+        // (`StaticWorld::checked_arithmetic`); the other clauses stay load rules.
         if real_map {
-            player_map_scale::ArithmeticCertificate::derive(&map)?;
+            if policy.has_episode1() {
+                player_map_scale::ArithmeticCertificate::derive_episode1(&map)?;
+            } else {
+                player_map_scale::ArithmeticCertificate::derive(&map)?;
+            }
             player_map_scale::validate_slide_window(&map)?;
         }
         // Under diagonals the boundary is the closed one-sided chain and the
         // BLOCKMAP follows the closed-cell rule; under heights only one-sided lines
         // may cover the rectangle; the map-scale policy keeps its original rule.
-        let boundary = if policy.has_diagonals() {
+        // Under the Episode 1 policy the boundary is optional (decision D4): a map
+        // whose one-sided lines fail C1–C3 has none, its escape witness is
+        // inactive and spawns fall back to room containment.
+        let boundary = if policy.has_episode1() {
+            player_map_scale::Boundary::derive(&map).ok().map(Arc::new)
+        } else if policy.has_diagonals() {
             Some(Arc::new(player_map_scale::Boundary::derive(&map)?))
         } else {
             None
@@ -1136,6 +1261,9 @@ impl Simulation {
             return Err(CombatError::InterceptLimit.into());
         }
         let sector_lines = real_map.then(|| player_map_scale::sector_lines(&map));
+        let episode1 = policy
+            .has_episode1()
+            .then(|| crate::episode1::Episode1Bounds::from_map(&map));
         let mut sim = Self::with_demon_expanded_profile(
             map,
             limit,
@@ -1150,6 +1278,7 @@ impl Simulation {
                 specials: policy.has_specials(),
                 movers: policy.has_movers(),
                 e1m1: policy.has_e1m1(),
+                episode1,
             },
         )?;
         sim.boundary = boundary;
@@ -1169,6 +1298,11 @@ impl Simulation {
                 secret_count: 0,
                 use_down: true,
                 reborn: false,
+                powers: policy
+                    .has_episode1()
+                    .then_some(original_player::PlayerPowers::default()),
+                episode1,
+                weapon_stage: original_player::WeaponStage::Idle,
             });
         }
         Ok(sim)

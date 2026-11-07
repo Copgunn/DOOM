@@ -1,0 +1,4 @@
+# output: M3IDLE.lmp
+# M4a E1M3 idle: 2,100 tics of zero ticcmds (60 seconds of game time).
+map E1M3
+idle 2100

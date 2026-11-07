@@ -37,6 +37,9 @@ pub const PLAYER_BARRELS_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-BARRELS-1-MED
 /// Explicit level context (the barrels world plus the body at its THINGS record,
 /// the `damagecount` decay and `P_DeathThink`); older contexts stay frozen.
 pub const PLAYER_LEVEL_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-LEVEL-1-MEDIUM-v1";
+/// Explicit Episode 1 context (the level world with per-map bounds, 1,024 actor
+/// slots and the H3 per-tic witnesses, M4a); older contexts stay frozen.
+pub const PLAYER_EPISODE1_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-1-MEDIUM-v1";
 
 impl Simulation {
     /// Autonomous roster member: the native/original Demon owner or a policy
@@ -259,6 +262,35 @@ impl Simulation {
         )
         .map_err(Into::into)
     }
+    /// Episode 1, part 1 (M4a, wire 23): the level world of
+    /// [`Simulation::original_player_level_map`] with the bounds of decision H4
+    /// derived from the map's own THINGS lump (monsters, pickups, drops,
+    /// decorations and barrels, counted with the `P_SpawnMapThing` skill and mode
+    /// filter) and [`crate::EPISODE1_ACTOR_SLOTS`] actor slots, the store-full
+    /// refusal (`StoreError::Capacity`) standing in for the older policies'
+    /// "the store never fills" proof; and the load proofs of decision H3 that
+    /// refuse Episode 1 maps replaced by per-tic witnesses: the arithmetic
+    /// certificate keeps only its clauses (iii)–(vi) and (viii), clauses (i), (ii)
+    /// and (vii) and the ±512 height rule becoming checked arithmetic on the
+    /// traced intercepts and heights; the one-sided boundary is optional; the
+    /// mover rules are those of `mover_rules::validate_episode1`. Captures are
+    /// DSIM39. As for the level policy, call [`Simulation::spawn_map_things`],
+    /// [`Simulation::initialize_player_weapons`] and
+    /// [`Simulation::spawn_level_specials`] once before the first tic.
+    pub fn original_player_episode1_map(
+        map: Map,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        let policy = OriginalExecutionProfile::PlayerMonstersEpisode1V1;
+        Self::with_original_registry(
+            map,
+            crate::player_map_scale::actor_slots(policy),
+            OriginalExecutionRegistry::new(policy)?,
+            ActorOptions::default(),
+            context,
+        )
+        .map_err(Into::into)
+    }
 }
 
 use crate::lifecycle::{ActorAccess, LifeHost};
@@ -410,6 +442,8 @@ fn bullet<A: ActorAccess>(
         )?;
         (trace, hit)
     };
+    // P_ShootSpecialLine for the special lines the trace visited (Episode 1).
+    crate::use_lines::shoot_lines(h, false, &trace, traversed)?;
     let plan = match hit {
         Some(TraceObject::Actor(target)) if damage != 0 => {
             Some(combat::DamagePlan::current_original(

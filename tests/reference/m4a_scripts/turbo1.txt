@@ -1,0 +1,29 @@
+# output: TURBO1.lmp
+# TURBO1 on tests/reference/m4a_wads/items.wad (M4a step 8, decision G9): G_Ticker's turbo message.
+# g_game.c:671-679 assigns players[consoleplayer].message = "%s is turbo!" (player_names[0])
+# when cmd->forwardmove > TURBOTHRESHOLD (50) and !(gametic&31) && ((gametic>>5)&3) == 0, i.e. on
+# every 128th gametic, before P_Ticker. The real E1M4/E1M6/E1M7 walk and fight scripts carry
+# forward 100 on such gametics. Gametic = command index (the first command runs at gametic 0).
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 100 0 0 0    # gametic 0: forward 100, the turbo message
+cmd 1 -100 0 0 0   # gametic 1: back (no message: forward is negative)
+idle 62            # to gametic 63
+cmd 1 100 0 0 0    # gametic 64: forward 100, no message (64 is not a multiple of 128)
+cmd 1 -100 0 0 0   # gametic 65
+idle 60            # to gametic 125
+cmd 4 100 0 0 0    # gametics 126-129: forward 100 held across gametic 128 (message at 128 only)
+cmd 4 -100 0 0 0   # gametics 130-133: back
+idle 120           # to gametic 253
+cmd 4 51 0 0 0     # gametics 254-257: forward 51 (> 50) held across gametic 256: message
+cmd 4 -51 0 0 0    # gametics 258-261: back
+idle 122           # to gametic 383
+cmd 1 50 0 0 0     # gametic 384: forward 50 (not > 50): no new message
+idle 127           # to gametic 511
+cmd 1 -100 0 0 0   # gametic 512: forward -100: no new message
+cmd 1 100 0 0 0    # gametic 513
+idle 126           # to gametic 639
+cmd 1 127 0 0 0    # gametic 640: forward 127, the message again
+cmd 1 -127 0 0 0   # gametic 641
+idle 30            # to gametic 671, then the marker

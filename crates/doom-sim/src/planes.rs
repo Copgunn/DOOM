@@ -95,6 +95,9 @@ pub(crate) struct PlaneHost<'a, 'b> {
     pub bindings: &'a mut [Option<ActorId>; 4],
     pub events: &'a mut Vec<Event>,
     pub boundary: Option<&'a crate::player_map_scale::Boundary>,
+    /// The staged runtime sector specials and floor flats (the specials policy),
+    /// written by a finished `donutRaise` floor; `None` without them.
+    pub specials: Option<&'a mut [crate::sector_thinkers::SectorSpecial]>,
 }
 impl<'b> PlaneHost<'_, 'b> {
     /// The current heights of `sector` under the plan's writes.
@@ -116,6 +119,8 @@ impl<'b> PlaneHost<'_, 'b> {
     /// The shared lifecycle services over the fresh sector view.
     fn life(&mut self) -> LifeHost<'_, &mut ThinkerContext<'b, Actor>> {
         LifeHost {
+            specials: self.specials.as_deref(),
+            buttons: None,
             statistics: self.statistics.as_deref_mut(),
             player: self.player.as_deref_mut(),
             perception: self.perception,
@@ -145,6 +150,20 @@ impl<'b> PlaneHost<'_, 'b> {
         plane: Plane,
         direction: i32,
     ) -> Result<MoveResult, SimError> {
+        self.move_plane_witnessed(sector, speed, dest, plane, direction, None)
+    }
+    /// [`Self::move_plane`], refusing with `witness` (when given) as soon as the
+    /// step's first `P_ChangeSector` reports `nofit`, before the restore: the stair
+    /// witness of decision H7, where the source passes a `crush` it never wrote.
+    pub(crate) fn move_plane_witnessed(
+        &mut self,
+        sector: u16,
+        speed: Fixed,
+        dest: Fixed,
+        plane: Plane,
+        direction: i32,
+        witness: Option<SimError>,
+    ) -> Result<MoveResult, SimError> {
         let height = |s: SectorState| match plane {
             Plane::Floor => s.floor,
             Plane::Ceiling => s.ceiling,
@@ -159,6 +178,9 @@ impl<'b> PlaneHost<'_, 'b> {
                     #[cfg(test)]
                     injected_fault(FaultSite::PlaneStep)?;
                     if self.change_sector(sector)? {
+                        if let Some(error) = witness {
+                            return Err(error);
+                        }
                         self.set(sector, plane, before)?;
                         self.change_sector(sector)?;
                     }
@@ -173,6 +195,9 @@ impl<'b> PlaneHost<'_, 'b> {
                     let nofit = self.change_sector(sector)?;
                     #[cfg(test)]
                     injected_fault(FaultSite::PlaneStep)?;
+                    if let (true, Some(error)) = (nofit, witness) {
+                        return Err(error);
+                    }
                     if nofit && !(plane == Plane::Ceiling && direction == 1) {
                         self.set(sector, plane, before)?;
                         self.change_sector(sector)?;
@@ -469,7 +494,7 @@ pub enum MoverEvent {
     /// Sub-tag 13: `G_ExitLevel`, inside the exit switch's use after the switch
     /// sound and before that use's sub-tag 2 record.
     Exit {
-        /// `secretexit` (always false for the admitted exit).
+        /// `secretexit`: true for the S1 51 secret exit (Episode 1 policy).
         secret: bool,
     },
     /// Sub-tag 14: a dead player held `BT_USE` (`PST_REBORN`), the last record of
@@ -494,7 +519,8 @@ pub enum MoverEvent {
         function: MoverFunction,
         /// The line.
         line: u16,
-        /// Door, plat or floor type; the line special for `EV_VerticalDoor`.
+        /// Door, plat or floor type; the line special for `EV_VerticalDoor`; 0 for
+        /// `EV_BuildStairs` and `EV_DoDonut`.
         argument: i32,
         /// The return value (−1 for `EV_VerticalDoor`, which returns nothing).
         result: i32,
@@ -533,6 +559,10 @@ pub enum MoverFunction {
     DoPlat = 3,
     /// 4: `EV_DoFloor`.
     DoFloor = 4,
+    /// 5: `EV_BuildStairs` (Episode 1 policy).
+    BuildStairs = 5,
+    /// 6: `EV_DoDonut` (Episode 1 policy).
+    DoDonut = 6,
 }
 /// The origin of a sector sound request.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
