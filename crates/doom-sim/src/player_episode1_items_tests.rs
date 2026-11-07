@@ -677,15 +677,17 @@ fn power_counters_outside_their_domains_are_refused_one_at_a_time() {
 /// STATE_FORMAT.md (v27, the bonus slice the later wires keep): `item_count` is
 /// `0..total` and a nonzero `level.total_items` equals the placed bonuses; the
 /// live COUNTITEM bonuses are the ones not yet collected. With two health
-/// bonuses placed and none taken, each corruption is refused by the tic
-/// preflight: `item_count` above the total, one collected while both still
-/// stand, and a total one above the placed count.
+/// bonuses and a clip placed (so the map's pickup bound is 3) and none taken,
+/// each corruption is refused by the tic preflight: `item_count` above the
+/// total, one collected while both still stand, and a total of 3, inside the
+/// pickup bound but not the placed bonus count.
 #[test]
 fn item_statistics_outside_the_written_domain_are_refused() {
     let mut l = room();
     thing(&mut l, -32, 0, 1);
     thing(&mut l, 200, 64, 2014);
     thing(&mut l, 200, -64, 2014);
+    thing(&mut l, 200, 0, 2007);
     let s = sim(&l);
     assert_eq!(s.statistics.unwrap().total_items, 2);
     assert_eq!(s.preflight_world_pickups(), Ok(()));
@@ -712,6 +714,21 @@ fn a_negative_bonus_count_is_refused() {
     let mut s = sim(&with_items(&[]));
     assert_eq!(s.preflight_world_pickups(), Ok(()));
     runtime_mut(&mut s).pickups.as_mut().unwrap().bonus_count = -1;
+    assert_eq!(
+        s.preflight_world_pickups(),
+        Err(SimError::PlayerBody(PlayerBodyError::Invariant))
+    );
+}
+
+/// `GOTMEDINEED` is never assigned: `P_GiveBody (player, 25)` succeeds only
+/// below 100 health and then leaves at least 26, so `player->health < 25` is
+/// never true after it (p_inter.c:476–483). A stored `MedikitNeeded` message is
+/// refused by the pickup-state witness of the tic preflight.
+#[test]
+fn a_stored_medikit_needed_message_is_refused() {
+    let mut s = sim(&with_items(&[]));
+    runtime_mut(&mut s).pickups.as_mut().unwrap().message =
+        world_pickups::PickupMessage::MedikitNeeded;
     assert_eq!(
         s.preflight_world_pickups(),
         Err(SimError::PlayerBody(PlayerBodyError::Invariant))
