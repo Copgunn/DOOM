@@ -1808,3 +1808,88 @@ release build of `player_level_run` followed by
 OS). All are skipped for documentation-only pushes. Local only: the opt-in `strict32` variant,
 which needs a 32-bit toolchain. Observations of the matched runs belong to the M4a evidence
 record, not to this page.
+## Mutation testing
+
+M4a used cargo-mutants 27.1.0 with cargo-nextest 0.9.151. These are separate
+developer tools, not production or MSRV dependencies. Run one campaign at a
+time, keep build/output directories outside the repository, and check free
+space first (`df -h /mnt/c` on this WSL host; retain at least 20 GB). Historical
+scope, outcomes, equivalence proofs and limitations are in the
+[M4a evidence record](validation/M4A.md#mutation-testing). Counts depend on the
+selected source revision; a listed mutation is not evidence that it was tested.
+
+Create the diff before switching to a scratch copy of the source:
+
+```sh
+git diff --no-ext-diff master...HEAD -- crates/doom-sim > /tmp/m4a-mutants.patch
+```
+
+Run 1 selects that diff in two content shards. Set the output and temporary
+paths to distinct scratch locations and use the same optimization settings for
+both commands:
+
+```sh
+export CARGO_PROFILE_DEV_OPT_LEVEL=1 CARGO_PROFILE_DEV_DEBUG=0
+export M4A_MUTANTS_SCRATCH="$HOME/scratch/doom-m4a-mutants"
+export TMPDIR="$M4A_MUTANTS_SCRATCH/tmp"
+unset CARGO_TARGET_DIR
+mkdir -p "$TMPDIR"
+cargo mutants -p doom-sim --test-tool nextest --jobs 3 \
+  --timeout 300 --build-timeout 900 --output "$M4A_MUTANTS_SCRATCH/behaviour" \
+  --in-diff /tmp/m4a-mutants.patch \
+  --exclude-re '^crates/doom-sim/src/(diagnostic|snapshot)\.rs:'
+cargo mutants -p doom-sim --test-tool nextest --jobs 3 \
+  --timeout 300 --build-timeout 900 --output "$M4A_MUTANTS_SCRATCH/reader" \
+  --in-diff /tmp/m4a-mutants.patch \
+  --re '^crates/doom-sim/src/(diagnostic|snapshot)\.rs:'
+```
+
+Choose concurrency for the available memory. The owner lifted M4a's temporary
+job/thread caps on 2026-11-08; earlier runs retain the settings reported in the
+evidence record. `CARGO_BUILD_JOBS` controls builds and `NEXTEST_TEST_THREADS`
+controls tests within each mutant job.
+
+For a targeted rerun, copy the full description from `missed.txt`, regex-escape
+it and anchor both ends. Use one `--re` per mutation and omit `--in-diff` so a
+later source diff does not silently omit the target. Limit files explicitly;
+the recorded 27.1.0 runs also included struct-field deletions outside their
+name filters. Check the actual listed and executed selections.
+
+```sh
+cargo mutants -p doom-sim --test-tool nextest --jobs 1 \
+  --timeout 1800 --build-timeout 900 --output "$M4A_MUTANTS_SCRATCH/rerun" \
+  -f crates/doom-sim/src/mover_rules.rs \
+  --re '^crates/doom-sim/src/mover_rules\.rs:786:12: delete ! in reachable$'
+```
+
+A timeout alone is unresolved: rerun it individually with a generous timeout
+and explain the loop from the code before counting nontermination as caught.
+For survivors, add a test with source- or rule-derived expectations or give a
+proof of equivalence. Identify internal refusal-witness tests explicitly;
+they do not establish reachability through valid public operations.
+
+
+The run-2 rejection/rollback selection used these Bash arguments (historical
+source positions can change; list and inspect the selection before running):
+
+```bash
+RUN2_ARGS=(
+ --re '^crates/doom-sim/src/episode1\.rs:'
+ --re '^crates/doom-sim/src/mover_rules\.rs:.*[ :](validate_episode1|validate_movers_with|donut_geometry|stair_bounds|donut_triples|reachable|widen|later_episode_switch|switch_match|line_switch_match)( |$)'
+ --re '^crates/doom-sim/src/movers\.rs:.*[ :](vertical_door|do_door|do_donut|do_plat|do_floor|build_stairs|plat_raise|move_floor|episode1)( |$)'
+ --re '^crates/doom-sim/src/lib\.rs:.*[ :]advance( |$)'
+ --re '^crates/doom-sim/src/player_commands\.rs:.*[ :](preflight_player_commands|max_command_move)( |$)'
+ --re '^crates/doom-sim/src/original_player\.rs:.*[ :]preflight_player_body( |$)'
+ --re '^crates/doom-sim/src/player_map_scale\.rs:.*[ :](derive_episode1|spawn_admitted|live_projectile_bound|actor_slots)( |$)'
+ --re '^crates/doom-sim/src/original_registry\.rs:.*[ :](with_original_registry|require_role_for|is_policy_monster|has_episode1)( |$)'
+ --re '^crates/doom-sim/src/player_monsters\.rs:.*[ :]original_player_episode1_map( |$)'
+ --re '^crates/doom-sim/src/store\.rs:.*[ :](claim|reserve)( |$)'
+ --re '^crates/doom-sim/src/spawning\.rs:.*[ :](validate_entry|reserve_actor_spawns)( |$)'
+ --re '^crates/doom-sim/src/world_pickups\.rs:.*[ :](bonus_bound|pickup_bound|world_item_bound)( |$)'
+ --re '^crates/doom-sim/src/demon_expanded_map\.rs:.*[ :](preflight_expanded_demons_for|validate_sector_specials_for)( |$)'
+)
+RUN2_ARGS+=( --exclude-re '^crates/doom-sim/src/lifecycle\.rs:' )
+cargo mutants -p doom-sim --test-tool nextest --jobs 2 \
+  --timeout 300 --build-timeout 900 \
+  --output "$M4A_MUTANTS_SCRATCH/refusals" "${RUN2_ARGS[@]}"
+```
