@@ -1630,3 +1630,98 @@ fn older_readers_never_admit_a_barrel() {
     assert!(Diagnostic::decode_e1m1(&old, limits).is_err());
     let _ = things;
 }
+
+/// Rust-only admission regression for the source-following blast walk (M3h9b
+/// investigation §5.2; M4a H4). BLOCKMAP membership uses centers, not whole boxes
+/// (p_maputl.c:428–442), so sixteen radius-20 Chaingunners can share a cell.
+/// Non-shootable clips remain untouched (PIT_RadiusAttack, p_map.c:1170–1194),
+/// including when a waking monster relinks and the callback walk revisits them
+/// (p_inter.c:904–915; p_maputl.c:529–535). This admitted workload must complete;
+/// a smaller defensive visit allowance must not turn it into a WorkLimit refusal.
+///
+/// Expectations are source-derived, not a Rust trace: all placed things pass the
+/// medium/single-player filter; the barrel retains its nonlethal wounder's target;
+/// BEXP3 enters BEXP4/A_Explode (info.c:946–947); clips stay in S_CLIP with health
+/// 1000 (info.c:1006, 2746–2770). P_SpawnMobj consumes one lastlook draw per thing
+/// (p_mobj.c:506), and P_SpawnMapThing another only for positive spawn tics
+/// (787–788). Thus player + barrel + sixteen monsters consume 1 + 2 + 32 draws;
+/// 256 static clips add one complete RNG period (m_random.c:57–60), so both cases
+/// finish setup at P index (21 + 35) & 255 = 56, M index 0.
+#[test]
+fn a_dense_barrel_walk_preserves_nonshootable_items() {
+    use crate::diagonal_room::Lumps;
+    use crate::heights_room::HeightsRoom;
+    for clips in [0, 256] {
+        // The closed middle strip blocks sight to the distant first wounder.
+        let room = HeightsRoom::new(&[-512, -320, -148, 512], &[[0, 128], [128, 128], [0, 128]]);
+        let mut l = Lumps::parse(&room.wad());
+        l.add_thing([-400, -300, 0, 1, 7]);
+        l.add_thing([152, 140, 0, BARREL, 7]);
+        for y in [127, 88, 48, 8] {
+            for x in [127, 88, 48, 8] {
+                l.add_thing([x, y, 45, 65, 7]);
+            }
+        }
+        for _ in 0..clips {
+            l.add_thing([64, 64, 0, 2007, 7]);
+        }
+        let mut s = Simulation::original_player_episode1_map(l.map(), options(21)).unwrap();
+        let bounds = s.episode1_bounds().unwrap();
+        assert_eq!(
+            (bounds.monsters, bounds.pickups, bounds.barrels),
+            (16, clips, 1)
+        );
+        let report = s.spawn_map_things().unwrap();
+        assert_eq!(report.spawned.len(), 17 + clips);
+        s.initialize_player_weapons(PlayerSlot::One, WeaponInventory::default())
+            .unwrap();
+        s.spawn_level_specials().unwrap();
+        assert_eq!(s.rng().indices(), [56, 0]);
+        let barrel = report.spawned[0];
+        let body = report.player_body.unwrap();
+        // A lethal first hit returns before the retarget assignment; wound first.
+        for amount in [5, 20] {
+            s.damage_actor(DamageRequest {
+                target: barrel,
+                inflictor: None,
+                source: Some(body),
+                amount,
+            })
+            .unwrap();
+            assert_eq!(s.actor(barrel).unwrap().life().unwrap().target, Some(body));
+        }
+        for _ in 0..20 {
+            let life = s.actor(barrel).unwrap().life().unwrap();
+            if life.state == Some(StateId(OriginalState::S_BEXP3.ordinal())) && life.tics == 1 {
+                break;
+            }
+            s.advance(idle()).unwrap();
+        }
+        let before = s.actor(barrel).unwrap().life().unwrap();
+        assert_eq!(
+            (before.state, before.tics),
+            (Some(StateId(OriginalState::S_BEXP3.ordinal())), 1)
+        );
+        // Immediate public state entry runs A_Look; the closed strip keeps each
+        // monster idle, ready for P_DamageMobj's source spawn-state retarget rule.
+        for &id in &report.spawned[1..17] {
+            s.enter_actor_state(id, StateId(OriginalState::S_CPOS_STND.ordinal()))
+                .unwrap();
+        }
+        s.advance(idle()).unwrap();
+        assert_eq!(state(&s, barrel), Some(OriginalState::S_BEXP4));
+        let hits: Vec<_> = damages(s.events())
+            .into_iter()
+            .filter(|r| r.inflictor == Some(barrel))
+            .collect();
+        assert!(!hits.is_empty());
+        assert!(hits.iter().all(|r| r.source == Some(body)));
+        for &id in &report.spawned[17..] {
+            let life = s.actor(id).unwrap().life().unwrap();
+            assert_eq!(
+                (life.state, life.health),
+                (Some(StateId(OriginalState::S_CLIP.ordinal())), 1000)
+            );
+        }
+    }
+}
