@@ -567,3 +567,44 @@ fn a_pre_heights_moving_monster_off_its_floor_or_with_vertical_momentum_is_refus
         );
     }
 }
+
+/// COMPATIBILITY.md, historical collision profiles and weapon intercept bounds:
+/// the pre-map-scale weapon policies admit 128 linedefs. The registry checks this
+/// before constructing the world. Additional copies of a one-sided wall remain
+/// axis aligned and reference valid sides; no geometry or actor work is required
+/// to decide the limit. At 128 the map loads; 129 and 130 are refused by the
+/// weapon intercept check, including its error precedence.
+#[test]
+fn historical_weapon_registry_admits_128_lines_and_refuses_more() {
+    use crate::diagonal_room::Lumps;
+    use crate::heights_room::HeightsRoom;
+    for count in [128, 129, 130] {
+        let room = HeightsRoom::new(&[-512, 512], &[[0, 128]]);
+        let mut lumps = Lumps::parse(&room.wad());
+        let lines = &mut lumps
+            .lumps
+            .iter_mut()
+            .find(|(n, _)| n == "LINEDEFS")
+            .unwrap()
+            .1;
+        let wall = lines[..14].to_vec();
+        while lines.len() / 14 < count {
+            lines.extend_from_slice(&wall);
+        }
+        let map = lumps.map();
+        assert_eq!(map.linedefs().len(), count);
+        let result =
+            Simulation::original_player_demon_weapons_map(map, 64, MapContextOptions::default())
+                .map(|_| ());
+        if count == 128 {
+            assert_eq!(result, Ok(()));
+        } else {
+            assert_eq!(
+                result,
+                Err(OriginalRegistryError::Runtime(SimError::Combat(
+                    CombatError::InterceptLimit
+                )))
+            );
+        }
+    }
+}
