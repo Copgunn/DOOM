@@ -455,9 +455,8 @@ fn a_noblood_spawn_child_is_refused_at_state_entry_outside_combat() {
                 child.properties[21] |= 0x80000;
             }
             t.push(child);
-            s[3].action = ActorAction::Probe(ProbeAction::SpawnTarget(ActorTypeId(
-                (t.len() - 1) as u16,
-            )));
+            s[3].action =
+                ActorAction::Probe(ProbeAction::SpawnTarget(ActorTypeId((t.len() - 1) as u16)));
         })
         .unwrap();
         let mut sim = Simulation::with_actor_registry(

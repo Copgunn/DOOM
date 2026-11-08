@@ -373,8 +373,8 @@ fn turbo_message_on_every_128th_gametic() {
 #[test]
 fn an_airborne_body_ignores_its_side_move() {
     use crate::heights_room::HeightsRoom;
-    let room = HeightsRoom::new(&[-512, 0, 512], &[[64, 256], [0, 256]])
-        .with_things(&[[-40, 0, 0, 1, 7]]);
+    let room =
+        HeightsRoom::new(&[-512, 0, 512], &[[64, 256], [0, 256]]).with_things(&[[-40, 0, 0, 1, 7]]);
     let mut s = sim(&Lumps::parse(&room.wad()), EPISODE1);
     let motion = |s: &Simulation| {
         let b = body(s);

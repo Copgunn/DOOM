@@ -961,7 +961,10 @@ fn a_door_below_zero_rises_to_its_neighbour_ceiling_minus_4() {
     let room = HeightsRoom::new(&[-512, 0, 512], &[[-300, -300], [-200, -100]])
         .clone_with(&[Fault::TaggedSpecial(6, 1, 0)]);
     let bounds = mover_bounds(&room.map()).unwrap();
-    assert_eq!((bounds.reach, bounds.delta, bounds.movers), ([-300, -100], 2, 1));
+    assert_eq!(
+        (bounds.reach, bounds.delta, bounds.movers),
+        ([-300, -100], 2, 1)
+    );
 }
 
 /// A turbo target T (sector 0) beside a chain of two lifts L0, L1 (sectors 1, 2,
@@ -987,5 +990,8 @@ fn lift_widenings_propagate_into_a_turbo_destination() {
         Fault::SectorTag(2, 1),
     ]);
     let bounds = mover_bounds(&room.map()).unwrap();
-    assert_eq!((bounds.reach, bounds.delta, bounds.movers), ([-64, 128], 64, 3));
+    assert_eq!(
+        (bounds.reach, bounds.delta, bounds.movers),
+        ([-64, 128], 64, 3)
+    );
 }
