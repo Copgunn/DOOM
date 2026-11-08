@@ -156,7 +156,14 @@ class Runner:
 
 M3H9C = Runner('m3h9c', DRIVER, CONTRACT, SCHEMA)
 
-def text(path): return Path(path).read_bytes().decode('latin-1')
+def text(path):
+    """Canonical LF source text, independent of Git's checkout line endings.
+
+    Latin-1 preserves every source byte outside newline translation. Universal
+    newlines undo Windows CRLF checkouts before extraction, adapter matching and
+    contract hashing; the preserved Linux sources and their hashes are unchanged.
+    """
+    return Path(path).read_text(encoding='latin-1')
 
 def apply_once(src, a):
     n = src.count(a['original'])
@@ -241,8 +248,8 @@ def contract(runner=M3H9C):
         purpose='Headless whole-file build of the genuine gameplay code driven through the vanilla -playdemo path; run locally on a real IWAD and in CI on a synthetic WAD. Expected observations come from the genuine code, never from Rust output.',
         whole_files=WHOLE, excluded=dict(p_saveg_c='aborting stubs for its eight P_(Un)Archive* functions and save_p',
                                          r_main_c='declared extract only (r_main_extract)'),
-        source_sha256={f: sha((SOURCE / f).read_bytes()) for f in sorted(set(WHOLE) | {'r_main.c'})},
-        header_sha256={p.name: sha(p.read_bytes()) for p in sorted(SOURCE.glob('*.h'))},
+        source_sha256={f: sha(text(SOURCE / f)) for f in sorted(set(WHOLE) | {'r_main.c'})},
+        header_sha256={p.name: sha(text(p)) for p in sorted(SOURCE.glob('*.h'))},
         adapted_sha256=dict(strict=adapted, sanitizer=san),
         flags=VARIANTS, variant_notes=VARIANT_NOTES, file_flags=FILE_FLAGS, link_flags=runner.link_flags, wrapped=runner.wrapped,
         abi_adapters=adapter_table(ABI_ADAPTERS, ['strict', 'overflow', 'address']),
@@ -251,8 +258,8 @@ def contract(runner=M3H9C):
         stubs=st, stub_counts=dict(functions=sum(s['kind'] == 'function' for s in st),
                                    variables=sum(s['kind'] == 'variable' for s in st),
                                    **{c: sum(s['classification'] == c for s in st) for c in ('io', 'reads', 'writes', 'var')}),
-        runner_sha256={runner.driver.relative_to(ROOT).as_posix(): sha(runner.driver.read_bytes()),
-                       'tools/reference/m3h9c_stubs.c': sha(STUBS.read_bytes())},
+        runner_sha256={runner.driver.relative_to(ROOT).as_posix(): sha(text(runner.driver)),
+                       'tools/reference/m3h9c_stubs.c': sha(text(STUBS))},
         driver_behaviour=runner.behaviour, dump_row_kinds=dump_row_kinds(runner))
 
 def render(c): return json.dumps(c, indent=1, sort_keys=False) + '\n'

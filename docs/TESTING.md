@@ -1690,14 +1690,17 @@ python3 tools/reference/m4a_check_wad.py --check           # independent verifie
 python3 tools/reference/m4a_check_wad.py WAD [--name NAME] [--dump-counts]
 python3 tools/e1m1_scripts.py --check                      # also checks tests/reference/m4a_scripts (.txt -> .lmp)
 
-# the genuine runner (C; Linux only in CI)
+# runner contracts and newline regression (no compiler; every OS in CI)
 python3 tools/reference/m4a_build.py --check               # M4a driver-fork contract (m4a_driver.c), including its columns
+python3 tools/reference/test_runner_newlines.py            # both frozen contracts from LF and CRLF source copies
+
+# genuine runner execution (C; Linux only in CI)
 python3 tools/reference/m4a_reference.py [--work DIR] [--check] [--keep-dumps] [--cc CC] [--only WAD] [--selftest TIC]
 python3 tools/reference/m4a_snapshot_goldens.py [--dumps DIR/runs | --work DIR] [--check]
 
 # the Rust side
 cargo build -p doom-sim --release --locked --example player_level_run
-python3 tools/reference/check_player_episode1.py --binary target/release/examples/player_level_run [--out DIR] [--example-args ARGS] [--require]
+python3 tools/reference/check_player_episode1.py --binary target/release/examples/player_level_run --example-args "--policy episode1" [--out DIR] [--require]
 python3 tools/reference/check_player_episode1.py --rust-root DIR   # captures already written to DIR/<SCRIPT>/
 
 # the independent projection and comparator, profile episode1 (DSIM39)
@@ -1796,10 +1799,12 @@ python3 tools/reference/level_compare.py WORK/runs/strict_E1M2_M2IDLE RUST_DIR -
   the comparator prints map-derived values and stays local.
 
 CI path: the `stable` job of `.github/workflows/rust.yml` runs, in order, `m4a_build.py --check`,
-`m4a_wad.py --check`, `m4a_check_wad.py --check` and `e1m1_scripts.py --check` (every OS);
+`test_runner_newlines.py`, `m4a_wad.py --check`, `m4a_check_wad.py --check` and
+`e1m1_scripts.py --check` (every OS, under Bash so every command's failure fails the step);
 `m4a_reference.py --check --keep-dumps --selftest 300` and
 `m4a_snapshot_goldens.py --dumps DIR/runs --check` (Linux only, one runner build); and a
-release build of `player_level_run` followed by `check_player_episode1.py --require` (every
+release build of `player_level_run` followed by
+`check_player_episode1.py --example-args "--policy episode1" --require` (every
 OS). All are skipped for documentation-only pushes. Local only: the opt-in `strict32` variant,
 which needs a 32-bit toolchain. Observations of the matched runs belong to the M4a evidence
 record, not to this page.
