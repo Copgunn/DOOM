@@ -748,3 +748,44 @@ fn dsim31_decodes_items_pending_removal_and_rejects_absolute_spawns_that_do_not_
     Diagnostic::decode_heights(&bytes, limits).unwrap();
     progresses(&mut s, |_, _| [TicCommand::default(); 4], 30);
 }
+
+/// COMPATIBILITY.md, map-scale bounds: "Linedefs ≤ `MAP_SCALE_WALL_LINES` = 95" (with at
+/// most 33 BLOCKMAP-linked things one trace stays within `MAXINTERCEPTS` 128), kept by
+/// the heights policy (`MapScaleError::Lines` beyond it). A walled two-sector strip
+/// split into 32-unit wall pieces has exactly 95 linedefs and loads; the same walls
+/// around three sectors have 96 and are refused.
+#[test]
+fn ninety_five_linedefs_load_and_ninety_six_are_refused() {
+    let load = |room: HeightsRoom| {
+        let map = room.map();
+        let lines = map.linedefs().len();
+        let result = Simulation::original_player_heights_map(
+            map,
+            MapContextOptions {
+                initial_rng: DoomRng::from_indices(6, 0),
+                respawn_monsters: false,
+            },
+        );
+        (lines, result.map(|_| ()))
+    };
+    // A 32-unit-high strip cut into 32-unit wall pieces: the west and east walls and
+    // each portal are one piece; top and bottom are 23 + 23 pieces each.
+    let mut two = HeightsRoom::new(&[-736, 0, 736], &[[0, 128], [0, 128]]);
+    two.y = [-16, 16];
+    two.segment = 32;
+    assert_eq!(load(two), (95, Ok(())));
+    // The same rectangle as three sectors: 23 + 12 + 11 pieces top and bottom, two
+    // portals.
+    let mut three = HeightsRoom::new(&[-736, 0, 384, 736], &[[0, 128]; 3]);
+    three.y = [-16, 16];
+    three.segment = 32;
+    assert_eq!(
+        load(three),
+        (
+            96,
+            Err(OriginalRegistryError::Runtime(SimError::MapScale(
+                MapScaleError::Lines
+            )))
+        )
+    );
+}

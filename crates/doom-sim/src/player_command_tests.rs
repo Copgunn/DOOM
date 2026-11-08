@@ -73,3 +73,20 @@ fn ordinary_commands_and_rejections_do_not_capture_implicit_snapshots() {
     s.advance(c).unwrap();
     assert_eq!(crate::snapshot::capture_count(), n + 1);
 }
+
+/// Refusal witness below the public API: `Simulation::preflight_player_commands`, the
+/// bound-body clause (player_commands.rs:150, `type != MT_PLAYER || state is none`).
+/// The bound body is spawned as `MT_PLAYER` in its spawn state, and source state entry
+/// never leaves a live typed actor without a state (`S_NULL` removes it), so no map or
+/// command reaches a stateless bound body; the state is cleared from inside the crate.
+#[test]
+fn a_bound_body_without_a_state_refuses_the_command_preflight() {
+    let (mut s, id) = fresh();
+    let commands = [TicCommand::default(); 4];
+    assert_eq!(s.preflight_player_commands(&commands), Ok(Some(id)));
+    s.actors.get_mut(id).unwrap().life.as_mut().unwrap().state = None;
+    assert_eq!(
+        s.preflight_player_commands(&commands),
+        Err(SimError::PlayerBody(PlayerBodyError::Invariant))
+    );
+}

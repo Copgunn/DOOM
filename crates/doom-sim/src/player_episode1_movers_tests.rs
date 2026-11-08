@@ -1428,3 +1428,36 @@ fn a_raise_or_nearest_floor_sector_alone_is_a_mover() {
         assert_eq!(s.movers.as_ref().unwrap().movers, 1, "{special}");
     }
 }
+
+// ---- M4a mutation-testing step (run 2): the active-plat bound -------------
+
+/// p_spec.h:306 `MAXPLATS` 30 and p_plats.c:288–299 `P_AddActivePlat`: the plat takes
+/// the first free of the 30 `activeplats` slots and `I_Error` fires only when none is
+/// free, so a 30th active plat is legal. Load rule 5 ("plat sectors ≤ 30") admits a
+/// strip whose 30 sectors carry the tag of one SR lift (62); one use starts all 30 at
+/// once (`EV_DoPlat`, p_plats.c:139–254, one plat per tagged non-busy sector) and the
+/// tic is accepted with 30 live plats.
+#[test]
+fn thirty_plats_started_by_one_switch_are_all_active() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let spans: Vec<i16> = (0..=32).map(|k| -512 + 32 * k).collect();
+    // The player in sector 31 (x 480..512) facing north, 32 units below its top
+    // wall (line 32), which carries 62 with tag 1; sectors 0..29 carry tag 1.
+    let mut faults = vec![Fault::TaggedSpecial(32, 62, 1)];
+    faults.extend((0..30).map(|s| Fault::SectorTag(s, 1)));
+    let room = HeightsRoom::new(&spans, &[[0, 128]; 32])
+        .with_things(&[[496, 480, 90, 1, 7]])
+        .clone_with(&faults);
+    let mut s = load_strip(&room).unwrap();
+    s.spawn_map_things().unwrap();
+    s.initialize_player_weapons(PlayerSlot::One, WeaponInventory::default())
+        .unwrap();
+    s.spawn_level_specials().unwrap();
+    assert!(movers(&s).is_empty());
+    s.advance(use_command()).unwrap();
+    let plats = movers(&s)
+        .iter()
+        .filter(|t| matches!(t, SectorThinker::Plat(_)))
+        .count();
+    assert_eq!(plats, 30);
+}

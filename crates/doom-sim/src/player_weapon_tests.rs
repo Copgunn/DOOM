@@ -507,3 +507,57 @@ fn weapon_storage_variant_must_match_the_explicit_execution_policy() {
     );
     assert_eq!(s.snapshot(), before);
 }
+
+// ---- M4a mutation-testing step (run 2): body preflight witnesses ----------
+
+/// Refusal witness below the public API: `Simulation::preflight_player_body`, the
+/// pre-heights vertical clause for the bound body (original_player.rs:406,
+/// `momz != 0 || z != floorz`). Under the policies before the heights policy (here
+/// the demon weapons policy) the room is one sector with static heights [0, 128] and
+/// nothing moves a body vertically (no heights, no falling, no vertical thrust), so no
+/// map or command produces either value; each is written alone from inside the crate.
+#[test]
+fn a_pre_heights_body_off_its_floor_or_with_vertical_momentum_is_refused() {
+    let (s, a) = warm(1, 0);
+    assert_eq!(s.preflight_player_body(false), Ok(()));
+    let raw = Fixed::from_bits(1);
+    for (name, edit) in [
+        ("z", (|b: &mut Actor, raw| b.z = b.z + raw) as fn(&mut Actor, Fixed)),
+        ("momz", |b: &mut Actor, raw| b.momz = raw),
+    ] {
+        let mut c = s.clone();
+        edit(c.actors.get_mut(a.body).unwrap(), raw);
+        assert_eq!(
+            c.preflight_player_body(false),
+            Err(SimError::PlayerBody(PlayerBodyError::Invariant)),
+            "{name}"
+        );
+    }
+}
+
+/// Refusal witness below the public API: `Simulation::preflight_player_body`, the
+/// moving-monster clause (original_player.rs:432, `!heights && (z != floorz || momz
+/// != 0)`). Under the demon weapons policy a damaged Demon slides on its floor
+/// (`P_DamageMobj` thrust, horizontal only); nothing moves it vertically, so no map or
+/// command produces a moving Demon off its floor or with vertical momentum. With one
+/// unit of momentum on its floor it is accepted; each vertical value alone is refused.
+#[test]
+fn a_pre_heights_moving_monster_off_its_floor_or_with_vertical_momentum_is_refused() {
+    let (mut s, a) = warm(1, 0);
+    let demon = a.origin.unwrap();
+    s.actors.get_mut(demon).unwrap().spec.momentum[0] = Fixed::from_map_units(1);
+    assert_eq!(s.preflight_player_body(false), Ok(()));
+    let raw = Fixed::from_bits(1);
+    for (name, edit) in [
+        ("z", (|b: &mut Actor, raw| b.z = b.z + raw) as fn(&mut Actor, Fixed)),
+        ("momz", |b: &mut Actor, raw| b.momz = raw),
+    ] {
+        let mut c = s.clone();
+        edit(c.actors.get_mut(demon).unwrap(), raw);
+        assert_eq!(
+            c.preflight_player_body(false),
+            Err(SimError::PlayerBody(PlayerBodyError::Unsupported)),
+            "{name}"
+        );
+    }
+}
