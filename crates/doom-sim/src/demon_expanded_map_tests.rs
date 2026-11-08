@@ -536,3 +536,27 @@ fn bounded_action_query_exhaustion_discards_the_entire_operation() {
     assert_eq!(result, Err(PerceptionError::WorkLimit.into()));
     assert_eq!(s.snapshot(), before);
 }
+
+/// Refusal witness below the public API: `Simulation::preflight_expanded_demons_for`,
+/// the ownership clause (demon_expanded_map.rs:528, `statistics.is_none() ||
+/// sound_targets.len() != sectors.len()`). The expanded-map constructor installs the
+/// level statistics and one sound target per sector, and nothing removes either, so
+/// no map or operation reaches the clause; each corruption is written alone from
+/// inside the crate.
+#[test]
+fn missing_statistics_or_a_short_sound_target_table_is_refused() {
+    let c = &fixtures::cases()[0];
+    let s = fixtures::setup(c);
+    assert_eq!(s.preflight_expanded_demons(), Ok(()));
+    let mut none = s.clone();
+    none.statistics = None;
+    let mut short = s.clone();
+    short.sound_targets.pop();
+    for (name, bad) in [("statistics", none), ("sound targets", short)] {
+        assert_eq!(
+            bad.preflight_expanded_demons(),
+            Err(SimError::MapSpawn(MapSpawnError::Ownership)),
+            "{name}"
+        );
+    }
+}

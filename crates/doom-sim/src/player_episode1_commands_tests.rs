@@ -362,3 +362,36 @@ fn turbo_message_on_every_128th_gametic() {
     w.advance(command(50, 0, 0)).unwrap();
     assert_eq!(message(&w), PickupMessage::None);
 }
+
+/// p_user.c:157–164: `onground = (player->mo->z <= player->mo->floorz)`, and the side
+/// move thrusts only `if (cmd->sidemove && onground)`; an airborne body has no friction
+/// either (p_mobj.c:205), so a side move changes nothing of its motion. The player
+/// walks east off a 64-unit ledge; at the first tic boundary with `z > floorz` a tic
+/// with side move 50 and a tic with no move leave the same position, angle and
+/// momentum. On the ground before the walk, the same side move does change the
+/// momentum (the test can fail).
+#[test]
+fn an_airborne_body_ignores_its_side_move() {
+    use crate::heights_room::HeightsRoom;
+    let room = HeightsRoom::new(&[-512, 0, 512], &[[64, 256], [0, 256]])
+        .with_things(&[[-40, 0, 0, 1, 7]]);
+    let mut s = sim(&Lumps::parse(&room.wad()), EPISODE1);
+    let motion = |s: &Simulation| {
+        let b = body(s);
+        (b.position(), b.spec.angle, b.spec.momentum, b.z, b.momz)
+    };
+    let (mut side, mut still) = (s.clone(), s.clone());
+    side.advance(command(0, 50, 0)).unwrap();
+    still.advance(command(0, 0, 0)).unwrap();
+    assert_ne!(motion(&side).2, motion(&still).2, "grounded side move");
+    let mut tics = 0;
+    while body(&s).z <= body(&s).floor {
+        s.advance(command(50, 0, 0)).unwrap();
+        tics += 1;
+        assert!(tics < 60, "the body never left the ledge");
+    }
+    let (mut side, mut still) = (s.clone(), s.clone());
+    side.advance(command(0, 50, 0)).unwrap();
+    still.advance(command(0, 0, 0)).unwrap();
+    assert_eq!(motion(&side), motion(&still));
+}

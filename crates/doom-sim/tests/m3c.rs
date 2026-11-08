@@ -439,3 +439,45 @@ fn source_admission_matrix_is_explicit() {
         .collect::<Vec<_>>();
     assert_eq!(admitted.len(), 67);
 }
+/// M3D1_REFERENCE.md: "NOBLOOD may be admitted only in profile 5" (combat; profile 7
+/// adds it for the plasma ball, M3D2B_REFERENCE.md). The actor-states profile (4)
+/// admits the children a state spawns with the type admission of a spawn (baseline
+/// lifecycle flags), so entering a state whose `SpawnTarget` child carries
+/// `MF_NOBLOOD` (0x80000) is refused before any mutation; the same child without the
+/// flag is admitted.
+#[test]
+fn a_noblood_spawn_child_is_refused_at_state_entry_outside_combat() {
+    for noblood in [false, true] {
+        let registry = change_registry(|s, t| {
+            let mut child = t[132].clone();
+            child.name = "NATIVE_CHILD".into();
+            if noblood {
+                child.properties[21] |= 0x80000;
+            }
+            t.push(child);
+            s[3].action = ActorAction::Probe(ProbeAction::SpawnTarget(ActorTypeId(
+                (t.len() - 1) as u16,
+            )));
+        })
+        .unwrap();
+        let mut sim = Simulation::with_actor_registry(
+            fixtures::map(&[]),
+            8,
+            registry,
+            ActorOptions::default(),
+        )
+        .unwrap();
+        let id = spawn(&mut sim, 132);
+        let before = sim.snapshot();
+        let result = sim.enter_actor_state(id, StateId(3));
+        if noblood {
+            assert_eq!(
+                result,
+                Err(SimError::Actor(ActorError::UnsupportedFlags(0x80000)))
+            );
+            assert_eq!(sim.snapshot(), before);
+        } else {
+            assert_eq!(result, Ok(()));
+        }
+    }
+}

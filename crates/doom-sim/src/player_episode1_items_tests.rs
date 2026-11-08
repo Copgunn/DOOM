@@ -885,3 +885,61 @@ fn a_zero_item_total_before_the_thing_batch_is_accepted() {
     assert_eq!(s.statistics.unwrap().total_items, 1);
     assert_eq!(s.preflight_world_pickups(), Ok(()));
 }
+
+// ---- M4a mutation-testing step (run 2): body preflight witnesses ----------
+//
+// The body preflight (`Simulation::preflight_player_body`, original_player.rs:378–410)
+// refuses a bound player body whose fields disagree with the source's death
+// bookkeeping. `P_KillMobj` writes them together (p_inter.c:675 clears
+// `MF_SHOOTABLE`, 680 sets `MF_CORPSE`, 681 quarters the height, 706 sets
+// `PST_DEAD`), so each corruption below changes exactly one of them on a live
+// body, from inside the crate.
+
+/// Refusal witness below the public API: `Simulation::preflight_player_body`, the
+/// `playerstate` clause (original_player.rs:380). `PST_DEAD` is written only by
+/// `P_KillMobj` together with the corpse fields (p_inter.c:675–706), so no map or
+/// command makes a live body's player dead; the state is written from inside the crate.
+#[test]
+fn a_dead_player_state_on_a_live_body_is_refused() {
+    let mut s = sim(&with_items(&[]));
+    assert_eq!(s.preflight_player_body(false), Ok(()));
+    runtime_mut(&mut s).source.state = PlayerBodyState::Dead;
+    assert_eq!(
+        s.preflight_player_body(false),
+        Err(SimError::PlayerBody(PlayerBodyError::Invariant))
+    );
+}
+
+/// Refusal witness below the public API: `Simulation::preflight_player_body`, the
+/// `MF_CORPSE` clause (original_player.rs:381). `MF_CORPSE` is set only by
+/// `P_KillMobj` (p_inter.c:680), with the health at or below zero, so no map or
+/// command puts it on a live body; the flag is written from inside the crate.
+#[test]
+fn a_corpse_flag_on_a_live_body_is_refused() {
+    let mut s = sim(&with_items(&[]));
+    let mo = runtime(&s).mo.unwrap();
+    s.actors.get_mut(mo).unwrap().life.as_mut().unwrap().flags |= original_player::MF_CORPSE;
+    assert_eq!(
+        s.preflight_player_body(false),
+        Err(SimError::PlayerBody(PlayerBodyError::Invariant))
+    );
+}
+
+/// Refusal witness below the public API: `Simulation::preflight_player_body`, the
+/// height clause (original_player.rs:384–393). A live body keeps `MT_PLAYER`'s
+/// height (56 units, info.c:1126); only `P_KillMobj` changes it (`height >>= 2`,
+/// p_inter.c:681) and a crunch zeroes a corpse's (p_map.c:1276), so no map or command
+/// shortens a live body. One raw unit off is written from inside the crate; the
+/// shorter body still fits its sector, so no other clause refuses it.
+#[test]
+fn a_live_body_one_raw_unit_short_is_refused() {
+    let mut s = sim(&with_items(&[]));
+    let mo = runtime(&s).mo.unwrap();
+    let height = s.actor(mo).unwrap().height();
+    assert_eq!(height, units(56));
+    s.actors.get_mut(mo).unwrap().spec.height = Fixed::from_bits(height.bits() - 1);
+    assert_eq!(
+        s.preflight_player_body(false),
+        Err(SimError::PlayerBody(PlayerBodyError::Invariant))
+    );
+}
