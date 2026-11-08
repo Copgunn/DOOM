@@ -522,7 +522,10 @@ fn a_pre_heights_body_off_its_floor_or_with_vertical_momentum_is_refused() {
     assert_eq!(s.preflight_player_body(false), Ok(()));
     let raw = Fixed::from_bits(1);
     for (name, edit) in [
-        ("z", (|b: &mut Actor, raw| b.z = b.z + raw) as fn(&mut Actor, Fixed)),
+        (
+            "z",
+            (|b: &mut Actor, raw| b.z = b.z + raw) as fn(&mut Actor, Fixed),
+        ),
         ("momz", |b: &mut Actor, raw| b.momz = raw),
     ] {
         let mut c = s.clone();
@@ -549,7 +552,10 @@ fn a_pre_heights_moving_monster_off_its_floor_or_with_vertical_momentum_is_refus
     assert_eq!(s.preflight_player_body(false), Ok(()));
     let raw = Fixed::from_bits(1);
     for (name, edit) in [
-        ("z", (|b: &mut Actor, raw| b.z = b.z + raw) as fn(&mut Actor, Fixed)),
+        (
+            "z",
+            (|b: &mut Actor, raw| b.z = b.z + raw) as fn(&mut Actor, Fixed),
+        ),
         ("momz", |b: &mut Actor, raw| b.momz = raw),
     ] {
         let mut c = s.clone();

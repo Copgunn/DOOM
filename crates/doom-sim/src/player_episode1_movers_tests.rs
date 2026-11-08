@@ -1454,6 +1454,8 @@ fn thirty_plats_started_by_one_switch_are_all_active() {
         .unwrap();
     s.spawn_level_specials().unwrap();
     assert!(movers(&s).is_empty());
+    // G_PlayerReborn starts usedown true (g_game.c:822); release it first.
+    s.advance(zero()).unwrap();
     s.advance(use_command()).unwrap();
     let plats = movers(&s)
         .iter()
