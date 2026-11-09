@@ -304,105 +304,210 @@ teleporters, also deferred to M4b. None was attempted.
 
 ## Matched performance
 
-Recorded 2026-11-05 to 2026-11-06 (local time, America/Los_Angeles), on the local host, one measurement at a time (plan step, decision H12). No build, test or fuzz job ran during a timing round, but the host was **not idle in the strict sense**: an orphan test process (pid 222172, `doom_sim-13f971279bca8f16 --exact player_episode1_movers_tests::rule_1_admits_exactly_the_29_part_1_specials`, running since 16:47) was pinned at 100% of one core throughout and could not be killed from the session (the owner kills it). It accounts for about 1.0 of every load average below; the harness is the other 1.0. 12 logical CPUs, so the pinned core did not share a CPU with the harness by construction, but this is not proven. The 1-minute load average was 3.92 before round 0 (still decaying from the two release builds, which had finished about 1.5 minutes earlier), 2.33 / 2.11 / 2.12 / 2.10 / 2.10 / 2.13 / 2.18 / 2.06 / 2.29 / 2.32 at the starts of rounds 1 to 10 and 2.05 after the last round. Host: Intel Core i7-8750H @ 2.20 GHz, 6 cores / 12 logical CPUs, 7.7 GiB, Linux 6.18.58.1 WSL2, rustc 1.99.1, the default release profile (no `[profile.release]` in `Cargo.toml`), no CPU, frequency or core isolation. `df -h /mnt/c` before: 90G available (63% used); after cleanup: 90G available (63% used). These are host observations, not budgets.
+Recorded **2026-11-09 PST** (America/Los_Angeles), on the idle local host, one workload at a time,
+uncapped. The earlier run was discarded because of an orphan test process; [its observations are
+archived](archive/M4A_PERFORMANCE_2026-11-06.md).
 
-**Method** (as the M3h9c record): master `0ecfe4b58da2bab67f56eb62ac442bb35d4060c7` (merge of PR #56; a fresh `git worktree add ~/scratch/m4a/wt-master origin/master` with `CARGO_TARGET_DIR=~/scratch/m4a/perf/target-master`) against the branch `feat/m4a-episode-1` at `08ac31c` (default target dir). Both built with `cargo build -p doom-sim --examples --release --locked` before any timing (clean worktree). The `measure_legacy_weapons.py` program was compiled once per tree with that script's `rustc` command (`--extern` rlibs of that tree's `release/deps`, newest by mtime; both trees print digest `63003ae3ffaa78af`). Harness (not committed): `~/scratch/m4a/perf/harness.py`, analysis `~/scratch/m4a/perf/analyze.py`; raw per-workload, per-sample JSON `~/scratch/m4a/perf/raw.json` (all 5,412 samples, per-sample non-timing signatures and the load averages), analysis output `~/scratch/m4a/perf/analysis.txt`. Run: `python3 harness.py run 11`.
+**Host and preparation.** Intel Core i7-8750H @ 2.20 GHz, 6 cores / 12 logical CPUs, 7.7 GiB, Linux
+6.18.58.1 WSL2, rustc 1.99.1, default release profile; no CPU, frequency or core isolation. After WSL
+startup settled, `uptime` was 0.58 / 0.88 / 0.41 and no cargo, rustc, nextest, cargo-mutants, test or
+timing process was running. Both trees were built release from fresh scratch targets before any
+measurements, with no build-job cap. After builds and the caller check finished, the harness waited for
+1-minute load below 1.0. No concurrent build, test or fuzz job was observed in the per-round process
+records; the owner had closed other apps. `/mnt/c` had 81 GB free before builds, 80 GB during
+measurements and 80 GB after cleanup (at least 20 GB throughout the observed checks).
 
-Workloads: **246 matched workloads**. The `tools/measure_*.py` scripts and the examples give 241, not the record's 239: the previous table counts `player_real_map` as 6 (the script lists 4 `--measure` workloads and 3 `--admit` rooms, 7) and `player_barrels` as 4 (the script lists 5, including `dense64_lift`). All 241 are included so nothing is dropped silently (which two the earlier record left out cannot be told from the record; the other 27 groups have exactly the earlier counts), plus 5 new wire-22 real-E1M1 workloads: `player_level_run --wad /mnt/d/DoomIWADs/DOOM.WAD --map E1M1 --demo <WALK|FIGHT|CHAOS|BARRELS|idle>.lmp --out <dir>` (default policy, no `--captures`), timed by a monotonic timer (`time.perf_counter`) around the process. 11 rounds; each round runs every workload once per tree as a process pair, order alternating AB/BA by workload and round (`(workload + round)` parity); 5,412 samples. The examples were called directly with the measure scripts' arguments (no `wait4` launcher, so no RSS). Timed field: each example's own timer; the `diagnostic_free` `--measure <label> <profile> advance` runs, the `--admit` rooms and everything else use `ns` (admit rooms: the `ns` field). "Non-timing" fields are every `key=value` token except `ns` and keys ending `_ns` or `_us`. For the five level runs the comparison is the SHA-256 of `digests.txt` and `stats.txt`.
+**Method.** Fresh detached master worktree at `0ecfe4b58da2bab67f56eb62ac442bb35d4060c7`, confirmed
+against origin/master, versus branch `6d10b5b5838eaafca178f2ce179b0758a030115d`. The timing caller is
+the one committed at `9aa7d6c2a81382250abd56e5edcc7e256cc0c416`; `git diff --exit-code 9aa7d6c -- crates
+tests/support Cargo.toml Cargo.lock` was clean. Both trees built with `cargo build -p doom-sim
+--examples --release --locked`, separate `CARGO_TARGET_DIR`s, and one legacy caller compiled per tree
+with the measure script’s rustc command. All 36 independent C-derived caller checks passed in release
+before timing. Scratch root: `~/scratch/m4a/perf-idle-nov09`, scripts `prepare_builds.py`, `harness.py`,
+`cg.py`, `pertic.py`; build provenance in `builds.json`.
 
-**Every non-timing output line of every sample is identical between the trees** (30,712 non-timing fields over the 241 example workloads; 5,412 samples; each workload stable across its 11 samples in each tree), and `digests.txt` and `stats.txt` of the five level runs are byte-identical.
+All **246 workloads** are retained: 241 from the existing measure scripts/examples and five default
+wire-22 real-E1M1 level runs. Eleven paired rounds, alternating master/branch order by workload and
+round parity, yield **5,412 samples**. Every non-timing stdout line is compared after removing `ns`,
+`_ns` and `_us` fields; the level runs additionally compare SHA-256 of `digests.txt` and `stats.txt`.
+All signatures were stable and identical across all 22 samples per workload. Example timers are their
+existing fields: `step100_with_query_us` for canonical_demon, `retirement100_us` for context_ownership,
+`step100_us` for demon_expanded_map/game_instance/map_extent/map_scale/original_registry, and `ns` for
+the other examples; the level runner uses monotonic whole-process wall time, including DSIM and hashing.
+No warmup or sample was discarded.
 
-| Example | n | Timed field | Median delta of medians | Range of the delta | Median delta of minima |
-| --- | ---: | --- | ---: | --- | ---: |
-| canonical_demon | 1 | `step100_with_query_us` | -2.1% | -2.1..-2.1 | +4.1% |
-| context_ownership | 2 | `retirement100_us` | -1.4% | -1.5..-1.3 | +0.6% |
-| demon_expanded_map | 9 | `step100_us` | +1.9% | -14.4..+19.1 | +0.7% |
-| game_instance | 2 | `step100_us` | +1.0% | +0.9..+1.2 | +0.7% |
-| map_extent | 11 | `step100_us` | -1.7% | -14.4..+10.9 | -0.8% |
-| map_scale | 9 | `step100_us` | +3.3% | -17.1..+15.0 | +3.8% |
-| original_registry | 6 | `step100_us` | -0.9% | -5.2..+2.9 | +1.3% |
-| diagnostic_free | 10 | `ns` | -0.1% | -8.8..+5.0 | +1.0% |
-| original_player | 4 | `ns` | -2.4% | -24.8..+1.9 | -2.0% |
-| player_commands | 9 | `ns` | +0.8% | -4.3..+8.0 | +1.5% |
-| player_knockback | 6 | `ns` | -3.3% | -5.3..+10.0 | +0.5% |
-| player_demon | 11 | `ns` | +3.1% | -10.2..+19.3 | +4.6% |
-| player_demon_melee | 9 | `ns` | +5.0% | -33.1..+9.5 | +0.5% |
-| player_pistol | 15 | `ns` | +0.3% | -7.4..+14.5 | +7.7% |
-| player_weapon_pack | 25 | `ns` | +0.0% | -16.1..+42.6 | -0.0% |
-| player_world_pickups | 17 | `ns` | +3.6% | -6.2..+19.1 | +3.8% |
-| player_armor | 19 | `ns` | -0.4% | -7.0..+13.0 | +1.6% |
-| player_bonuses | 13 | `ns` | +2.8% | -6.0..+11.6 | +1.7% |
-| player_monsters | 7 | `ns` | +2.4% | -5.4..+7.5 | +0.9% |
-| player_imps | 7 | `ns` | +1.5% | -7.4..+14.2 | +4.0% |
-| player_map_scale | 8 | `ns` | +2.3% | -7.9..+7.5 | +0.4% |
-| player_heights | 6 | `ns` | -1.4% | -5.7..+7.3 | +1.1% |
-| player_diagonal | 3 | `ns` | -0.9% | -6.7..+5.9 | -1.2% |
-| player_real_map | 7 | `ns` | +1.2% | -8.1..+18.2 | +6.8% |
-| player_specials | 6 | `ns` | +0.4% | -3.2..+7.8 | +2.6% |
-| player_movers | 9 | `ns` | +10.5% | -5.2..+22.4 | +9.9% |
-| player_e1m1 | 4 | `ns` | +16.1% | +1.5..+21.2 | +12.0% |
-| player_barrels | 5 | `ns` | +5.5% | -1.1..+15.0 | +3.7% |
-| legacy_pistol | 1 | `ns` | -7.0% | -7.0..-7.0 | -0.6% |
-| level_run_e1m1 | 5 | `wall time` | -2.9% | -3.7..+5.6 | +2.1% |
+Pre-run and per-round load averages (1 / 5 / 15 minutes):
 
-Over all 246 workloads the median of the median deltas is +1.5% and the median of the minimum deltas +2.0% (the same over the 241 example workloads). Host noise is much larger than in M3h9c: the load was about 2.1 instead of 1.0 and most timers are 0.1 to 1 ms, so single-example medians swing by tens of percent in both directions (for example `player_weapon_pack` -16.1..+42.6% with a median of +0.0%); the minimum deltas and the callgrind counts below are the better evidence. The `player_e1m1`, `player_movers` and `player_barrels` groups read +16.1%, +10.5% and +5.5% by median.
+| Observation | Load averages |
+| --- | --- |
+| before | 0.21 / 1.35 / 1.04 |
+| round0 start | 0.21 / 1.35 / 1.04 |
+| round1 start | 0.85 / 1.28 / 1.04 |
+| round2 start | 0.94 / 1.19 / 1.03 |
+| round3 start | 1.01 / 1.16 / 1.02 |
+| round4 start | 1.12 / 1.16 / 1.03 |
+| round5 start | 1.19 / 1.17 / 1.04 |
+| round6 start | 1.13 / 1.15 / 1.05 |
+| round7 start | 1.03 / 1.11 / 1.04 |
+| round8 start | 1.04 / 1.10 / 1.04 |
+| round9 start | 1.13 / 1.10 / 1.04 |
+| round10 start | 1.03 / 1.07 / 1.03 |
+| after | 1.06 / 1.08 / 1.04 |
 
-**Slowdowns over 3%.** 102 workloads (of 246) slowed by more than 3% by median (list in the scratch analysis, deleted with the scratch); callgrind (`valgrind --tool=callgrind`, same binary and arguments, once per tree; `cg.py`, output `~/scratch/m4a/perf/cg/*.out`, `res-*.json` and `cgA.log`/`cgB.log`) ran for each. Whole-process instruction counts differ by 1% or less in 98 of them (at most +0.98%, `player_demon_melee repeated`): noise by the M3h9c criterion. In 46 of those 98 the `Simulation::advance` inclusive count (where callgrind reports one) is 1.5% or more higher on the branch (for example `player_commands idle`: 659,388 to 681,288 of 2.4M total; `player_armor green_deplete` +4.1%), a small real per-tic cost below 1% of the process. Four are above 1% in total Ir and are a real instruction-count change:
+| Group | n | Median delta of medians | Range | Median delta of minima |
+| --- | ---: | ---: | ---: | ---: |
+| canonical_demon | 1 | -1.59% | -1.59% to -1.59% | -2.68% |
+| context_ownership | 2 | -0.47% | -0.64% to -0.31% | -0.31% |
+| demon_expanded_map | 9 | +1.09% | -0.52% to +1.59% | +1.14% |
+| game_instance | 2 | -2.69% | -3.28% to -2.11% | -3.99% |
+| map_extent | 11 | -0.25% | -2.78% to +6.55% | -0.51% |
+| map_scale | 9 | +1.87% | -1.32% to +4.83% | +2.25% |
+| original_registry | 6 | +0.71% | -2.90% to +2.17% | +0.94% |
+| diagnostic_free | 10 | +2.55% | +1.25% to +8.76% | +2.34% |
+| original_player | 4 | +0.19% | -1.43% to +1.87% | +2.44% |
+| player_commands | 9 | +2.93% | -0.13% to +4.48% | +2.27% |
+| player_knockback | 6 | +1.50% | -2.56% to +3.06% | +1.56% |
+| player_demon | 11 | +0.33% | -2.08% to +4.99% | +2.14% |
+| player_demon_melee | 9 | +2.92% | +1.84% to +12.54% | +4.16% |
+| player_pistol | 15 | +2.02% | +0.04% to +4.39% | +2.36% |
+| player_weapon_pack | 25 | -0.22% | -6.55% to +5.90% | +0.05% |
+| player_world_pickups | 17 | +3.03% | -2.20% to +5.96% | +2.79% |
+| player_armor | 19 | +3.12% | -0.05% to +4.40% | +2.73% |
+| player_bonuses | 13 | +1.74% | -3.45% to +4.27% | +1.38% |
+| player_monsters | 7 | +2.25% | +0.06% to +5.80% | +1.86% |
+| player_imps | 7 | +3.65% | +1.93% to +5.98% | +3.72% |
+| player_map_scale | 8 | +4.05% | +1.41% to +5.42% | +3.47% |
+| player_heights | 6 | +2.12% | -1.06% to +3.97% | +1.97% |
+| player_diagonal | 3 | +2.13% | -1.57% to +5.04% | +0.80% |
+| player_real_map | 7 | +1.68% | +0.58% to +5.92% | +1.21% |
+| player_specials | 6 | +3.37% | +0.10% to +5.74% | +3.04% |
+| player_movers | 9 | +5.04% | +2.11% to +8.29% | +3.61% |
+| player_e1m1 | 4 | +5.30% | +3.32% to +11.83% | +5.99% |
+| player_barrels | 5 | +5.21% | +1.47% to +8.57% | +4.85% |
+| legacy_pistol | 1 | -2.24% | -2.24% to -2.24% | -1.82% |
+| level_run_e1m1 | 5 | -0.06% | -4.10% to +0.69% | -0.09% |
 
-| Workload | Total Ir master | Total Ir branch | Delta | `Simulation::advance` Ir master to branch | Delta |
-| --- | ---: | ---: | ---: | --- | ---: |
-| player_e1m1 gallery_patrol | 452,465,336 | 477,404,376 | +5.51% | 222,702,689 to 248,022,697 | +11.37% |
-| player_barrels dense64_fight | 2,130,983,268 | 2,211,769,449 | +3.79% | 1,704,811,498 to 1,785,679,884 | +4.74% |
-| player_barrels dense64_lift | 2,622,550,724 | 2,700,323,722 | +2.97% | 2,365,775,605 to 2,443,644,279 | +3.29% |
-| player_demon_melee corpse_continuation | 8,694,990 | 8,815,190 | +1.38% | 6,462,515 to 6,585,909 | +1.91% |
+Over all 246 workloads, the median of median deltas is **+2.02%**, and the median of minimum deltas
+**+2.03%**. The five E1M1 whole-run workloads have a median delta of **−0.06%**. Short timers remain
+sensitive to scheduling and clock resolution even on an idle host; instruction counts below qualify the
+elapsed-time changes.
 
-(The two `player_level_run` rows are noise: `WALK` 12,866,164,425 to 12,961,615,985, +0.74% with `advance` 371,749,067 to 391,884,724, and `FIGHT` 21,856,383,032 to 21,850,269,719, -0.03% with `advance` 669,302,331 to 690,630,802.) Self-cost differences from `callgrind_annotate` (branch minus master) name the responsible functions: `doom_sim::original_registry::require_role_for` (+24.3M in dense64_fight, +18.8M in dense64_lift, +83k in corpse_continuation), `OriginalActorType::descriptor` (+18.1M, +14.3M, +6.7M in gallery_patrol), `doom_sim::e1m1_rules::decoration_states` (+4.2M in gallery_patrol, +9.0M in dense64_lift) and `PlayerWeaponState::validate_for` (+3.2M in gallery_patrol), plus a shift of 49M (dense64_fight) between two compiler-generated `Chain`/`Map` iterator instantiations (inlining, no net cost) and changes in the `advance_expanded_demons` closures. These are the role/descriptor checks of wire 23 on every actor of the large E1M1-style rooms (decorations and barrels); this is a measured per-tic instruction cost on the branch, not noise. The M3h9c codegen-unit cause (BTreeMap inlining) is not what is seen here: `diagnostic_free` and `demon_expanded_map` are within 0.1% in total Ir. Medians of up to +40% in the table for small workloads (`player_weapon_pack full_encounter` +42.6%) correspond to total Ir changes of -0.09% and are timer noise.
+**Callgrind, only for new >3% median slowdowns.** All 78 selected workloads ran once per tree under
+`valgrind --tool=callgrind`, sequentially after the matched rounds. In 74, whole-process Ir differs by
+at most 1%; this does not establish an instruction-count cause for their >3% elapsed slowdown. Small
+real simulation costs can still be masked by whole-process setup. Four exceed 1% total Ir:
 
-**Cause of the four** (source reading, no experiment): the per-actor validation tables shared by every
-wire gained wire-23 arms. `require_role_for` (`original_registry.rs`) checks `world_pickups::kind_for`
-and two further guarded arms (the Spectre and rocket, the candle and firestick) before the E1M1
-decoration arm; `OriginalActorType::descriptor` covers more types; `decoration_states` runs the same
-loop over a larger table; `PlayerWeaponState::validate_for` takes the `episode1` flag and validates
-the backpack and ammo bounds. On wires 19 to 21 every added arm evaluates to the same answer as
-before, so the output is identical, at a cost of up to 5.5% of the process instructions on the
-largest E1M1-style rooms. No code was changed for this after the matched runs; reordering the arms
-or caching the per-type answers is a follow-up for the owner to decide, as the M3h9c codegen
-finding was ([G13](../M3H9C_REFERENCE_INVESTIGATION.md)).
+| Workload | Time delta | Ir master | Ir branch | Ir delta | Advance Ir master → branch | Advance delta |
+| --- | ---: | ---: | ---: | ---: | --- | ---: |
+| player_e1m1 gallery_patrol | +11.83% | 452,507,984 | 477,401,020 | +5.50% | 222,745,889 → 248,021,949 | +11.35% |
+| player_barrels dense64_fight | +5.94% | 2,130,983,008 | 2,239,098,972 | +5.07% | 1,704,811,498 → 1,812,887,124 | +6.34% |
+| player_barrels dense64_lift | +5.21% | 2,622,550,340 | 2,700,324,178 | +2.97% | 2,365,775,605 → 2,443,649,619 | +3.29% |
+| player_demon_melee corpse_continuation | +12.54% | 8,694,788 | 8,812,899 | +1.36% | 6,462,515 → 6,584,145 | +1.88% |
 
-**Per-tic costs on real E1M1 to E1M7 runs** (branch only, not matched; the IWAD read in place; `player_level_run` without `--captures`, five runs each, median wall time; us/tic = median wall / tics, tics = the `digests.txt` line count; `~/scratch/m4a/perf/pertic.py`, raw `pertic.json`; load 2.0 to 2.2, the orphan process present). The runner hashes a full DSIM capture every tic, which dominates.
+**Cause (Callgrind self costs plus source reading, no code experiment).** Wire 23 extends the validation
+shared with older policies. `require_role_for` adds role/type checks (+24.27M self Ir in dense64_fight,
++18.85M in dense64_lift, +83,450 in corpse_continuation); `OriginalActorType::descriptor` adds +18.08M,
++14.29M and +6.70M in dense64_fight, dense64_lift and gallery_patrol respectively. `decoration_states`
+now builds a `Vec` of valid states during decoration validation: +11.38M, +8.99M and +4.21M self Ir in
+those three workloads, with additional malloc/free costs. `PlayerWeaponState::validate_for` adds +3.21M
+in gallery_patrol (partly offset by the older validate symbol disappearing). The new guarded cases and
+animated-decoration state membership run for older policies too, preserving their answers at a per-tic
+cost. Dense64_fight also has +13.71M self Ir in memcpy; this contributes to its measured total, without
+an experiment isolating its allocation/layout cause. The compiler shifts exactly 49,058,396 Ir between
+two iterator symbols in dense64_fight, 35,736,484 in dense64_lift and 7,873,514 in gallery_patrol; these
+offset and are not extra work. No simulation code was changed. Reordering/caching these validations
+remains an owner decision.
 
-| Policy | Map | Scripts | Tics (total) | us/tic range | us/tic median |
-| --- | --- | ---: | ---: | --- | ---: |
-| `episode1` | E1M1 | 5 | 10,034 | 2,436 to 3,115 | 2,785 |
-| `episode1` | E1M2 | 5 | 9,099 | 6,598 to 7,117 | 6,974 |
-| `episode1` | E1M3 | 5 | 13,755 | 9,048 to 10,505 | 9,372 |
-| `episode1` | E1M4 | 5 | 9,391 | 6,074 to 6,736 | 6,485 |
-| `episode1` | E1M6 | 5 | 12,747 | 11,268 to 11,972 | 11,576 |
-| `episode1` | E1M7 | 5 | 12,944 | 7,176 to 8,380 | 8,096 |
-| default (wire 22) | E1M1 | 5 | 10,034 | 2,454 to 2,839 | 2,608 |
+### Simulation-only real-map timings
 
-All 30 episode1 scripts together: 67,970 tics, median 7,146 us/tic. The largest single run was `M6WALK` (7,840 tics, 89.2 s, 11,374 us/tic); the cheapest `E1M1 CHAOS` (5,001 tics, 12.2 s, 2,436 us/tic). For the same five E1M1 scripts the episode1 policy costs 2,785 us/tic against 2,608 us/tic under the wire-22 default (+6.8% by median; individual scripts: BARRELS 2,531 vs 2,672, CHAOS 2,436 vs 2,466, FIGHT 3,012 vs 2,839, WALK 3,115 vs 2,608, idle 2,785 vs 2,454). No example prints a simulation-alone per-tic figure for these runs, so none is reported. The genuine strict C runner (from `~/scratch/m4a/real/keep/strict32/*.json`, field `us_per_tic`, not re-run): the five E1M1 scripts 10.0 to 15.5 us/tic (`strict32`; plain `strict` 10.0 to 13.5), E1M2 14.8 to 34.9, E1M3 41.9 to 48.6, E1M4 22.4 to 32.8, E1M6 31.6 to 54.2, E1M7 40.3 to 68.2 us/tic (`strict32`); the AddressSanitizer variant is 28 to 153 us/tic.
+Five repetitions of each of the **30** real-map cases, plus five wire-22 E1M1 control cases, were run
+sequentially with rotating full/advance/C order. The timing caller sums only successful
+`Simulation::advance` intervals: parsing, setup, spawning, final capture/hash and I/O are outside the
+sum; refused-call time is separate. There is no per-tic DSIM capture or hashing. No clock overhead is
+subtracted; all reported clock-floor/median probes were 0 ns at this host’s observed resolution, which
+does not mean the clock is free. Each observation is a run’s summed successful-call time divided by its
+successful tic count. “Median” is the median of the five script medians (each script has five
+repetitions); “worst” is the largest run-average across all 25 observations for that map, not the
+slowest individual tic.
 
-**CI budget** (branch tree, alone, one at a time, after the rounds; load 1.0 to 1.7 with the orphan present):
+All 150 advance-only final stripped SHA-256 values match the 30 existing independent genuine-C final
+projections in `~/scratch/m4a/real/keep/cmp_*.json`; full/advance counts, refusal boundaries and final
+FNV match in every repetition. Fresh C counts, RNG and end conditions match the historical C counts.
+This is final-state validation, not a new tic-for-tic comparison. The first per-tic attempt stopped
+after six cases because the scratch driver incorrectly required a refused call for a reborn-ending demo
+that exhausts its commands on the request tic (E1M2 death). Counts and RNG already matched. The
+scratch-only check was corrected to accept that exhausted-command boundary with `end_tic + 1 == tics`;
+the incomplete attempt is excluded, preserved separately in scratch, and all five rounds were restarted.
+No test, reference file or simulation code changed.
 
-| Command | Wall time | Result |
-| --- | ---: | --- |
-| `python3 -I tools/reference/m4a_reference.py --work ~/scratch/m4a/perf/ci --check --keep-dumps --selftest 300` | 33.6 s (build 11.1 s, runs 21.5 s) | exit 0; `m4a_synthetic_results.json` matches (30 scripts); selftest on DOORS1 passes |
-| `python3 -I tools/reference/m4a_snapshot_goldens.py --dumps ~/scratch/m4a/perf/ci/runs --check` | 32.7 s | exit 0; 18 fixtures, `check passed: 19 files` |
-| `python3 -I tools/reference/check_player_episode1.py --binary target/release/examples/player_level_run --out ~/scratch/m4a/perf/ci-rust --example-args "--policy episode1" --require` | 36.3 s | exit 0; all checks passed |
+| Map | Scripts | Successful tics | Advance median µs/tic | Advance worst µs/tic | Historical C strict32 range µs/tic | Fresh C median / worst µs/tic |
+| --- | ---: | ---: | ---: | ---: | --- | ---: |
+| E1M1 | 5 | 10,029 | 55.494 | 59.970 | 10.0–15.5 | 3.700 / 3.900 |
+| E1M2 | 5 | 9,094 | 134.216 | 142.774 | 14.8–34.9 | 5.800 / 6.900 |
+| E1M3 | 5 | 13,750 | 296.371 | 304.578 | 41.9–48.6 | 12.100 / 13.300 |
+| E1M4 | 5 | 9,386 | 214.708 | 226.845 | 22.4–32.8 | 6.800 / 7.800 |
+| E1M6 | 5 | 12,742 | 659.597 | 745.566 | 31.6–54.2 | 13.400 / 17.100 |
+| E1M7 | 5 | 12,939 | 305.888 | 352.794 | 40.3–68.2 | 11.500 / 17.300 |
 
-Cleanup: the master worktree and `~/scratch/m4a/perf/target-master` were removed; the raw JSON, harness, analysis, callgrind outputs (37 MB) and this report are kept. Limits: the orphan process and a load of about 2.1 (against 1.0 in M3h9c) make wall-time deltas of single small workloads unreliable; the first round started while the load average was still decaying from the builds; callgrind totals are exact instruction counts but are not time.
+Total: **67,940 successful tics** per repetition; the older 67,970 count included 30 initial snapshots.
+Historical C numbers above are retained from `real/keep/strict32/*.json`, not reinterpreted as current
+timings. Fresh C runs use genuine `G_Ticker`, strict32, diagnostic `--no-dump --no-checkheap`:
+dumping/heap walking and the marker-termination call are excluded, but the driver’s
+setjmp/arming/gametic increment remains inside its timer. C and Rust boundaries differ; these are
+descriptive costs, not an equivalent-work speed ratio. The historical AddressSanitizer range (28–153
+µs/tic) is not a fresh sanitizer measurement. IWADs were read in place at `/mnt/d/DoomIWADs`,
+local-only. No IWAD contents or geometry are committed.
+
+Full-run wall time, retained to show the DSIM/hash cost separately (median of script medians; µs per
+successful tic):
+
+| Map / policy | Full wall | Advance only |
+| --- | ---: | ---: |
+| E1M1 / episode1 | 1945.227 | 55.494 |
+| E1M2 / episode1 | 4369.735 | 134.216 |
+| E1M3 / episode1 | 5950.207 | 296.371 |
+| E1M4 / episode1 | 4078.606 | 214.708 |
+| E1M6 / episode1 | 7564.425 | 659.597 |
+| E1M7 / episode1 | 5356.233 | 305.888 |
+| E1M1 / level | 1799.719 | 54.301 |
+
+Per-tic campaign load averages (1 / 5 / 15 minutes):
+
+| Observation | Load averages |
+| --- | --- |
+| before | 0.27 / 0.11 / 0.25 |
+| round-0-start | 0.27 / 0.11 / 0.25 |
+| round-1-start | 1.06 / 0.78 / 0.52 |
+| round-2-start | 1.27 / 1.07 / 0.75 |
+| round-3-start | 1.02 / 1.07 / 0.88 |
+| round-4-start | 1.01 / 1.06 / 0.97 |
+| after | 1.26 / 1.11 / 1.02 |
+
+**Cleanup and provenance.** The fresh `wt-master-idle-nov09` worktree, its `target-master` and legacy
+caller were removed after measurements. Historical scratch/evidence and the new raw counts, state
+digests, observations and Callgrind reports remain local for review. No CI-budget or full validation
+gate was rerun here; those are Claude’s next step. Original archive SHA-256 is recorded in the archive
+above. Local result digests:
+
+| Scratch result | SHA-256 |
+| --- | --- |
+| `raw.json` | `0d275d0efe13f9ea460503ea5a41ea01074086a0dbb567c811f30d158511a019` |
+| `analysis.json` | `9c4363875c626c1d000662f858532ef8e1b34fc2c73ee7b6a9dedcd0e2fc11d2` |
+| `pertic.py` | `2b6098995f7c36b1c4a08d19696ea2cbc02073651c26b18bbc3716af36d8cf75` |
+| `pertic.json` | `1fe6a996ba9ed803abe9ae278174d487fb76b8f797606b9955b533ec1d8a5423` |
+| `pertic-analysis.json` | `9f8a8a3969631c193e78cba83e97d61b2d67af89d52ec8a0df84439134b4a1db` |
+| `cg/results.json` | `e4b720f7fb628fb91621a09dff818f11118cc42af07193387deb2b6b82a03960` |
+| `cg/self-deltas.json` | `902e7d963bdd5bd8d90c14ac2b3bcd05fef647f79c5e4e4819ff2d6acdbaa2e3` |
 
 ### Simulation-only caller validation (2026-11-08)
 
-The new `player_level_advance` companion leaves simulation code unchanged and
-uses the public setup and commands of the full runner. In debug, all **36**
-independent C-derived final-state and successful-call/refusal-boundary checks
-passed: six DSIM38 scripts and thirty DSIM39 scripts. The checker reads frozen
-C projections, using the independent pre-refusal fixtures for the two H7 cases;
-it does not use another Rust run as its oracle. This validates final states,
-not a newly observed complete C trace. Release validation and the idle-machine
-campaign are the next steps. Measurement boundaries and commands are in
+The new `player_level_advance` companion leaves simulation code unchanged and uses the public setup and
+commands of the full runner. In debug, all **36** independent C-derived final-state and
+successful-call/refusal-boundary checks passed: six DSIM38 scripts and thirty DSIM39 scripts. The
+checker reads frozen C projections, using the independent pre-refusal fixtures for the two H7 cases; it
+does not use another Rust run as its oracle. This validates final states, not a newly observed complete
+C trace. Release validation passed all 36 checks on 2026-11-09 before the completed idle-machine
+campaign recorded above. Measurement boundaries and commands are in
 [TESTING](../TESTING.md#whole-level-simulation-only-timing).
 
 ## README fresh-reader check
