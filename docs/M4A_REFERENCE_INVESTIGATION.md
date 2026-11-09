@@ -1832,7 +1832,56 @@ Risks and follow-ups from the two inventories (the hazards table in
 - **Not covered by Phase 1:** the real-map divergences (found in Phase 2), the performance record (measured alone on the idle machine in Phase 2,
   H12), and the continuous-episode and finale behavior (a later direction).
 
-**Status / next step (2026-11-08 PST; idle timing preparation).** Milestone pushed head **f6f65ba5d48840d6ca521250e2676245cd099efd** passed all five exact-head CI jobs (run 42546463760): Detect changes, Minimum Rust 1.85.0, Stable Ubuntu, Windows and macOS. No failures remain. Work head **f1a188e668ac45e28738388f00e54bad3ae5616a** is pushed and tested, with no applicable workflow run (not a CI pass). Mutation work is closed: all 49 run-2 miss records are dispositioned (20 test records / 19 unique kills, 29 equivalents), all seven timeout proofs are resolved and the last run-1 barrel target is killed. Compiled survivor commits and complete evidence are on the milestone branch. The owner now authorizes the idle matched-timings rerun and simulation-only per-tic figure. The new public-API timing caller passed all 36 C-derived synthetic final-state/call/refusal checks in debug; it changes no simulation implementation or historical fixture. Next: commit/push the caller, build exact baseline master 0ecfe4b and branch release examples, validate the caller in release, ensure the host is idle, then run the 246 matched workloads and the separate per-tic campaign sequentially. Fresh prepared harnesses are /tmp/m4a_idle_harness.py and /tmp/m4a_idle_cg.py, output root ~/scratch/m4a/perf-idle-codex; no timing campaign has run yet. The prior orphan process is gone; recheck host idleness after builds. Independent review, full local gates and PR work remain reserved for the owner. After every push, check CI on that head and record failures here.
+**Status / next step (2026-11-08 PST; owner reclaimed machine for gaming).** **CI green on f6f65ba5d48840d6ca521250e2676245cd099efd: all five jobs passed** in run 42546463760 (Detect changes, Minimum Rust 1.85.0, Stable Ubuntu, Windows and macOS). The timing caller is committed/pushed at **9aa7d6c2a81382250abd56e5edcc7e256cc0c416**; work branch `feat/m4a-rust` is **f1a188e668ac45e28738388f00e54bad3ae5616a**, pushed and clean. Mutation survivor work is complete and documented, including the targeted kills, seven timeout proofs and qualified equivalents/internal witnesses. **The idle timings rerun and simulation-only per-tic figure are NOT done: they require an idle machine.** No new matched run, per-tic campaign or Callgrind followup started; no partial timing results count as a run. Preparation had completed before the stop request: release examples and legacy callers exist for master 0ecfe4b58da2bab67f56eb62ac442bb35d4060c7 and branch 9aa7d6c, and all 36 C-derived final-state/call/refusal checks passed in debug and release. No release build or measurement process remained when checked with ps. The caller times only successful Simulation::advance calls, with parsing/setup/spawning, snapshots, hashing and I/O outside that sum; refused-call time is separate and clock overhead is reported without subtraction. Commands below are prepared but unexecuted; retain ~/scratch/m4a and historical evidence. After idle timings, **Claude does the independent review, full gates and PR text**; no PR/merge action was taken here. CI for 9aa7d6c (run 42555464063) was still in progress at the stop: Detect changes and Rust 1.85.0 passed; all three Stable jobs were running with no failed steps observed. This is not a claim of full CI green at 9aa7d6c. Check the exact pushed status-only head through the GitHub API after this handoff push; record any failures here.
+
+**Resume timing commands (idle machine only; one command/campaign at a time).**
+The scratch scripts are prepared and syntax-checked, not campaign-tested. The
+matched harness retains all 246 workloads and eleven paired AB/BA rounds;
+Callgrind selects every >3% median slowdown from its analysis. The separate
+per-tic driver uses five repetitions of thirty Episode 1 cases plus five
+wire-22 E1M1 cases, separating full Rust wall time, successful advance time and
+thirty genuine C strict32 ticker timings. IWADs remain read-only/local-only.
+The supplied release binaries were built from 9aa7d6c; the following diff guard
+permits a later documentation-only handoff head. If Rust, fixture helpers or
+build settings change, rebuild/relink the two trees and legacy callers before
+measuring, using a fresh output root; do not overwrite historical results.
+First verify no other builds/tests/fuzzing/benchmarks or gaming are active and
+that /mnt/c has at least 20 GB free. The old orphan process was absent at the
+last precheck; recheck rather than assume the machine is idle.
+
+```bash
+set -e
+cd /home/copgunn/src/DOOM
+df -h /mnt/c
+ps -eo pid,ppid,etimes,pcpu,comm --sort=-pcpu
+vmstat 1 6
+git diff --exit-code 9aa7d6c -- crates tests/support Cargo.toml Cargo.lock
+
+# One simulation-only case; JSON contains counts, digests and timings, no captures.
+/home/copgunn/scratch/m4a/perf-idle-codex/target-branch/release/examples/player_level_advance \
+  --wad /mnt/d/DoomIWADs/DOOM.WAD --map E1M1 \
+  --demo tests/reference/e1m1_scripts/WALK.lmp --policy episode1
+
+# Fresh independent final-state validation, if desired, before retaining timings.
+python3 -I tools/reference/check_player_level_advance.py \
+  --binary /home/copgunn/scratch/m4a/perf-idle-codex/target-branch/release/examples/player_level_advance
+
+python3 /home/copgunn/scratch/m4a/perf-idle-codex/harness.py run
+python3 /home/copgunn/scratch/m4a/perf-idle-codex/harness.py analyze
+python3 /home/copgunn/scratch/m4a/perf-idle-codex/pertic.py run
+python3 /home/copgunn/scratch/m4a/perf-idle-codex/pertic.py analyze
+python3 /home/copgunn/scratch/m4a/perf-idle-codex/cg.py
+```
+
+The prepared scripts refuse existing raw campaign results and check stable
+non-timing outputs; they do not establish host idleness automatically. Keep
+raw observations and signatures, check every slowdown, and update the
+[M4a evidence record](validation/M4A.md#matched-performance) with actual results
+and limitations. Preparation/build logs and exact compiled heads are in
+`~/scratch/m4a/perf-idle-codex/builds.json`; no `raw.json`, `pertic.json` or
+`cg/results.json` existed at this stop. Poll long runs no more often than every
+30 minutes. Before stopping a later session, stop its jobs and verify ps again.
+
 
 **Pre-budget-change CI slow steps (seconds, descending; 2e33c35).**
 
