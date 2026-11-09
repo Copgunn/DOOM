@@ -1893,3 +1893,38 @@ cargo mutants -p doom-sim --test-tool nextest --jobs 2 \
   --timeout 300 --build-timeout 900 \
   --output "$M4A_MUTANTS_SCRATCH/refusals" "${RUN2_ARGS[@]}"
 ```
+
+## Whole-level simulation-only timing
+
+The M4a H12 developer caller `player_level_advance` uses the same public setup
+and demo commands as `player_level_run`, with no per-tic capture, hashing or
+output. Build first, then stop other builds/tests/fuzzing and verify the machine
+is idle before measuring. Keep the target directory and local results in scratch:
+
+```sh
+cargo build -p doom-sim --examples --release --locked
+python3 -I tools/reference/check_player_level_advance.py \
+  --binary target/release/examples/player_level_advance
+target/release/examples/player_level_advance --wad "$IWAD" --map E1M1 \
+  --demo tests/reference/e1m1_scripts/WALK.lmp --policy episode1
+```
+
+`IWAD` is a local read-only path; never upload its bytes or captures. With a
+scratch `CARGO_TARGET_DIR`, use that directory's `release/examples` path instead.
+The check uses six DSIM38 and thirty DSIM39 synthetic cases. Successful call
+counts, refusal boundaries and final stripped hashes come from frozen genuine-C
+projections (the pre-refusal fixtures supply the two H7 prefixes), not Rust output.
+It checks final states, not the complete per-tic sequences covered by the existing
+comparators. No existing fixture changes.
+
+The JSON reports `advance_ns`, the sum around successful `Simulation::advance`
+calls, and `admitted`, their denominator. `refused_ns` is separate; the refused
+call is excluded from the successful-tic mean. `loop_ns` also includes input
+assembly, timer/counter bookkeeping and a possible refused call. Setup, parsing,
+spawning and the final snapshot/hash/output are outside both intervals. The
+caller reports the floor and median of 1,001 empty clock pairs in
+`clock_floor_ns`/`clock_median_ns`; overhead is not subtracted. Simulation runs
+without capture work between tics, so its cache behaviour can differ from the
+full capture pipeline. Report both boundaries rather than calling process wall
+time simulation-only. The final FNV and comparator-stripped SHA-256 permit
+checking that observation changes did not change state. No timing threshold gates CI.

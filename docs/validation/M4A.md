@@ -393,6 +393,18 @@ All 30 episode1 scripts together: 67,970 tics, median 7,146 us/tic. The largest 
 
 Cleanup: the master worktree and `~/scratch/m4a/perf/target-master` were removed; the raw JSON, harness, analysis, callgrind outputs (37 MB) and this report are kept. Limits: the orphan process and a load of about 2.1 (against 1.0 in M3h9c) make wall-time deltas of single small workloads unreliable; the first round started while the load average was still decaying from the builds; callgrind totals are exact instruction counts but are not time.
 
+### Simulation-only caller validation (2026-11-08)
+
+The new `player_level_advance` companion leaves simulation code unchanged and
+uses the public setup and commands of the full runner. In debug, all **36**
+independent C-derived final-state and successful-call/refusal-boundary checks
+passed: six DSIM38 scripts and thirty DSIM39 scripts. The checker reads frozen
+C projections, using the independent pre-refusal fixtures for the two H7 cases;
+it does not use another Rust run as its oracle. This validates final states,
+not a newly observed complete C trace. Release validation and the idle-machine
+campaign are the next steps. Measurement boundaries and commands are in
+[TESTING](../TESTING.md#whole-level-simulation-only-timing).
+
 ## README fresh-reader check
 
 Run on 2026-11-05 after the owner's README and ROADMAP edits, by a reviewer with no prior view of
