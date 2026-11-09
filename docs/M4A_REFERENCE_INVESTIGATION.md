@@ -1832,7 +1832,14 @@ Risks and follow-ups from the two inventories (the hazards table in
 - **Not covered by Phase 1:** the real-map divergences (found in Phase 2), the performance record (measured alone on the idle machine in Phase 2,
   H12), and the continuous-episode and finale behavior (a later direction).
 
-**Status / next step (2026-11-08 PST; assigned mutation step complete).** Milestone Rust head **4c3fa02**; work branch `feat/m4a-rust` **f1a188e**, pushed and tested. All survivor dispositions are closed: run 1 shard 1 has 1,120 caught, 90 equivalent and 2 observation-only harmless; shard 2 has 435 caught and 4 equivalent; run 2 has 652 caught and 29 equivalent among 681 unique viable mutations (705 execution records / 693 unique mutations, 12 unviable). Targeted reruns killed the barrel target and all 19 other new targets; seven individually rerun timeouts have written nontermination proofs. All four work commits are cherry-picked, with warnings-denied workspace/all-targets Clippy passing at each commit. Mutation evidence and commands are recorded in docs/validation/M4A.md and docs/TESTING.md. Pushed milestone head **2e33c35**: exact-head CI run 42537174727 has Detect changes, Rust 1.85.0, Linux and Windows passing. **macOS was cancelled during headless debug/release comparisons after about 40 minutes, consistent with its 40-minute job limit; this is not a pass.** Its tests, release deterministic checks and repaired M4a script/contract steps passed before cancellation. The macOS job alone has been rerun through the GitHub API; result pending. Final per-file closed-disposition tables are reconciled to the original outcome JSON; hold their documentation push until this run completes so it is not cancelled. Last completed full CI head 3e6cebe passed all five jobs. Work head f1a188e has no applicable workflow run (not a CI pass). Stop after final push/CI verification; owner retains independent review, idle-machine timings, simulation-only per-tic figure and full gates. After every push, check the exact head via the GitHub API and record any failures here.
+**Status / next step (2026-11-08 PST; mutation complete, CI budget update).** Pushed milestone head **2e33c355fe631c5367eb6b15e3fa74537a62d20f** passed all five jobs in run 42537174727 after the macOS-only retry. Its first macOS job was cancelled at 40m21s; the successful retry took 33m33s. Work head **f1a188e668ac45e28738388f00e54bad3ae5616a** is pushed and locally tested; it has no applicable workflow run, not a CI pass. All survivor dispositions and targeted kills are closed; the final Rust tree passed 1,218 doom-sim tests (two skipped), and each cherry-picked commit passed Clippy. This CI commit raises Stable timeouts to 60 minutes for macOS/Ubuntu and 45 for Windows, retaining every check. Next: push once, check all five jobs on that exact head via the API, then perform the owner-authorized idle-machine matched-timings rerun and simulation-only per-tic measurements (the 2026-11-08 instruction supersedes the prior timing hold). Independent review, full local gates and PR work remain reserved for the owner. Record any post-push CI failures here. Ten slowest steps per OS from the last full runs follow; §14 records the job links and method.
+
+**Last full CI slow steps (seconds, descending; 2e33c35).**
+
+- **macOS**: Test — 759s; Release deterministic checks — 489s; Rust whole-level run of the synthetic scripts against the encoder goldens — 199s; Headless debug/release equality — 113s; Clippy — 93s; Rust Episode 1 run of the M4a synthetic scripts against the encoder goldens — 87s; Original real-map-scale room debug/release comparison — 23s; Original Imp encounter debug/release comparison — 20s; Original armor sustained combat debug/release comparison — 19s; Original former-human encounter debug/release comparison — 17s.
+- **Ubuntu**: Reproduce isolated reference vectors and snapshot goldens — 425s; Test — 323s; Release deterministic checks — 147s; Independent original real-map-scale room evidence — 142s; Independent original Imp, fireball and mixed-roster evidence — 84s; Independent original real-map-scale evidence — 82s; Independent DSIM38 whole-level projection — 73s; Independent original former-human, mixed-roster and infighting evidence — 68s; Independent original armor, animation, pickup and absorption evidence — 45s; Independent original sky and static-specials evidence — 45s.
+- **Windows**: Test — 280s; Release deterministic checks — 186s; Rust whole-level run of the synthetic scripts against the encoder goldens — 44s; Clippy — 38s; Headless debug/release equality — 37s; Rust Episode 1 run of the M4a synthetic scripts against the encoder goldens — 21s; Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262 — 9s; Format — 8s; Build — 8s; Original former-human encounter debug/release comparison — 8s.
+
 
 **Mutation-testing handoff context.** Phase 2 steps 1–8 are done and recorded (30 real-map runs match tic for tic, strict32 identical; fuzz re-run clean; matched timings recorded, four explained slowdowns). Owner-requested mutation testing (cargo-mutants 27.1.0, nextest, opt-level 1), run 1 against master's diff in two shards: shard 1 (behaviour files, 1,336 mutants) 1,119 of 1,212 viable caught (89 by new tests), 90 equivalent, 2 harmless, 1 open (`barrels.rs:362:50`); shard 2 (reader and encoder, 444) 435 of 439 viable caught (105 by new tests), 4 equivalent; both shards' tests are on the milestone branch (20 commits cherry-picked, last 38a41b4) with the one reader-code change (v39 `store.max_slots` exactly 1,024). **Run 2** (the scoped rejection/rollback/refusal set, `~/scratch/m4a/mutants/run2_args.sh`, 693 mutants + 12 struct-field deletions; uncapped 08:51–12:06 for 387, then capped for 318): **637 caught, 49 missed (19 run 1 equivalents already proven in `run1_shard1_dispositions.json`, 30 new), 12 unviable, 7 timed out.** **Run 2 survivor state at the original pause (superseded by step 1 above):** no disposition recorded yet (`run2_dispositions.json` does not exist); WIP tests for the 30 new misses (player-body and command preflights, `reachable`, `do_plat`, registry and store bounds, expanded-demon preflight) are committed on the work branch `feat/m4a-rust` as **6873aaa, "WIP, not yet compiled"** (nine test files, 393 lines, never compiled or run); every earlier `feat/m4a-rust` commit up to c3d2192 is compiled, gated and cherry-picked. Timeout re-run (`~/scratch/m4a/mutants/run2_timeouts.sh`: `JOBS=1 TIMEOUT=1800 run.sh`, caps `CARGO_BUILD_JOBS=3 NEXTEST_TEST_THREADS=2`, ended 17:47 after 8,809 s): 4 of the 7 re-run, all timed out again at 1,800 s (`mover_rules.rs:607:5 widen -> true`, `610:15 != -> == in widen`, `636:19 += -> *= in stair_bounds`, `782:25 != -> == in reachable`); not re-run: `mover_rules.rs:782:36`, `786:12 delete ! in reachable`, `movers.rs:755:28`. The four known loops (636:19, 782:25, 782:36, 755:28) are the infinite loops explained in the scratch report; the three `widen`/`786:12` ones need their loop reason read from the code before they count as caught. **Exact re-check commands** (from `~/scratch/m4a/mutants`, after `rsync -a --delete --exclude target --exclude .git ~/scratch/m4a/wt-rust/ src-head/`): survivors `JOBS=2 TIMEOUT=300 ./run.sh <name> --re '^<re.escape(description)>$' …` with one `--re` per mutant from `run2_uncapped_part1/mutants.out/missed.txt` and `run2b/mutants.out/missed.txt` (no `--in-diff`; `run2b.sh` shows the form); timeouts `JOBS=1 TIMEOUT=1800 ./run.sh run2_timeouts …` as in `run2_timeouts.sh`; the wrapper exports the caps and `--jobs ${JOBS}` and logs them in `stages.txt`. **Remaining order:** finish run 2 survivors (compile the WIP tests, disposition the 30 with proofs or tests, resolve the 7 timeouts, targeted re-run, gates, `run2_dispositions.json` and the report's run 2 section) → cherry-pick `feat/m4a-rust` into `feat/m4a-episode-1` → evidence-record mutation section and TESTING entry (both runs' counts, commands, caps, the grouped equivalence tables, the 23 crate-internal witnesses, the `store.max_slots` gap) → per-commit Clippy over the cherry-picked commits → [Claude after reset: independent review, idle-machine timings re-run and simulation-only per-tic figure, full gates, draft PR]. Scratch: `~/scratch/m4a` (reports in `phase2/`, mutation outcomes in `mutants/*/mutants.out`).
 
@@ -1877,3 +1884,75 @@ Risks and follow-ups from the two inventories (the hazards table in
 - **The turbo message is not presentation (step 8; corrects §3.10.3).** `G_Ticker` (g_game.c:671-679) sets `players[i].message = "<name> is turbo!"` when `forwardmove > TURBOTHRESHOLD` (50), `!(gametic&31)` and `((gametic>>5)&3) == i`, so every 128th gametic for player 0, during demo playback as well. §3.10.3 called it message-only presentation and the Rust model did not assign it, but the message is a captured DSIM field. The first real run showed the difference at DSIM tic 1 of M4FIGHT and M4WALK (also M6FIGHT, M6WALK and M7WALK). Fix (wire 23 only): `PickupMessage::Turbo` is code 30, set before the ticker from the command as read with the simulation tic as `gametic`; the v39 diagnostic reader admits 30; the driver builds message index 41 with `sprintf("%s is turbo!", player_names[0])` and the encoder maps 41 to code 30. The earlier real-walk counts of 20 (M6WALK) and 23 (M7WALK) unknown messages were this message; all 30 C runs now report none. Reproduction: the synthetic script `TURBO1`.
 - **Encoder deficiency: `target` and `tracer` positions (step 8).** The driver prints `target` and `tracer` as thinker-list positions of its own dump. A barrel marked for removal whose first damager is listed after it leaves the list before the damager (`P_RunThinkers`), so the damager's position falls by one between consecutive dumps, and the E1M3 M3WALK projection stopped at DSIM tic 5216 with "the RR record differs from the next RM row" (column `target`). `level_snapshot.py` now compares those two columns as the serials they name. Rust was unchanged and matched all 5,794 snapshots. Reproduction: `TARGET1` (a pending imp fireball whose imp shifts down the list); a barrel version could not be authored because every synthetic WAD lists the player first and about 40 attempts on WEAPONS never got an imp to hit a barrel, so the real E1M3 run is the barrel evidence.
 - **Original demos (step 8).** None of DOOM.WAD's demos can run under wire 23: all are skill 3 (M4b) and DEMO1 is E1M5 with teleporters (M4b). None was attempted.
+
+### CI time budget and slow-step inventory (2026-11-08)
+
+The first full `2e33c35` macOS job was cancelled after 40m21s during
+headless debug/release equality, matching its 40-minute job limit. Its retry
+passed in 33m33s; Ubuntu passed in 32m33s and Windows in 11m57s. Thus the
+retry is green, but the original limit had insufficient margin. At the owner's
+request, Stable now allows 60 minutes on macOS and Ubuntu and 45 on Windows,
+with every existing validation step and runner name retained.
+
+The inventories below use GitHub API step `started_at`/`completed_at`
+timestamps from the last full executions on this exact Rust tree, with the
+corresponding job logs retrieved. Durations are integer wall seconds, sorted
+descending; ties retain step order. They include build and command overhead
+and are CI observations, not idle-machine simulation benchmarks. macOS uses
+the successful retry; the cancelled first attempt spent 964s in Test, 610s in
+Release deterministic checks, 237s in the Rust whole-level script comparison,
+144s in Clippy and 108s in the M4a Rust script comparison. Its cancelled
+headless comparison ran for 70s, a partial duration, not a completed timing.
+The largest costs are workspace tests, release checks and Ubuntu reference
+reproduction; the M4a checks are included rather than presumed dominant.
+
+#### macOS: ten slowest steps
+
+[Full job log](https://github.com/Copgunn/DOOM/actions/runs/42537174727/job/128920697787)
+
+| Rank | Step | Seconds |
+| ---: | --- | ---: |
+| 1 | Test | 759 |
+| 2 | Release deterministic checks | 489 |
+| 3 | Rust whole-level run of the synthetic scripts against the encoder goldens | 199 |
+| 4 | Headless debug/release equality | 113 |
+| 5 | Clippy | 93 |
+| 6 | Rust Episode 1 run of the M4a synthetic scripts against the encoder goldens | 87 |
+| 7 | Original real-map-scale room debug/release comparison | 23 |
+| 8 | Original Imp encounter debug/release comparison | 20 |
+| 9 | Original armor sustained combat debug/release comparison | 19 |
+| 10 | Original former-human encounter debug/release comparison | 17 |
+
+#### Ubuntu: ten slowest steps
+
+[Full job log](https://github.com/Copgunn/DOOM/actions/runs/42537174727/job/128903994549)
+
+| Rank | Step | Seconds |
+| ---: | --- | ---: |
+| 1 | Reproduce isolated reference vectors and snapshot goldens | 425 |
+| 2 | Test | 323 |
+| 3 | Release deterministic checks | 147 |
+| 4 | Independent original real-map-scale room evidence | 142 |
+| 5 | Independent original Imp, fireball and mixed-roster evidence | 84 |
+| 6 | Independent original real-map-scale evidence | 82 |
+| 7 | Independent DSIM38 whole-level projection | 73 |
+| 8 | Independent original former-human, mixed-roster and infighting evidence | 68 |
+| 9 | Independent original armor, animation, pickup and absorption evidence | 45 |
+| 10 | Independent original sky and static-specials evidence | 45 |
+
+#### Windows: ten slowest steps
+
+[Full job log](https://github.com/Copgunn/DOOM/actions/runs/42537174727/job/128903994560)
+
+| Rank | Step | Seconds |
+| ---: | --- | ---: |
+| 1 | Test | 280 |
+| 2 | Release deterministic checks | 186 |
+| 3 | Rust whole-level run of the synthetic scripts against the encoder goldens | 44 |
+| 4 | Clippy | 38 |
+| 5 | Headless debug/release equality | 37 |
+| 6 | Rust Episode 1 run of the M4a synthetic scripts against the encoder goldens | 21 |
+| 7 | Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262 | 9 |
+| 8 | Format | 8 |
+| 9 | Build | 8 |
+| 10 | Original former-human encounter debug/release comparison | 8 |
