@@ -585,6 +585,8 @@ controls, with no misses, timeouts or unviable results (1,347 seconds;
 1/1, with no misses, timeouts or unviable results (179 seconds;
 15:22:41–15:25:40 PST; concurrency 1/6/6).
 
+The remaining `barrels.rs:362:50` mutant (`*` to `+` in `radius_attack`)
+is killed by `player_barrel_combat_tests::a_dense_barrel_walk_preserves_nonshootable_items`.
 The barrel witness uses valid public operations with 16 monsters and either
 zero or 256 nonshootable clips. Its expected states, attribution and RNG draw
 counts derive from p_maputl.c:428–442,529–535, p_map.c:1170–1194,
