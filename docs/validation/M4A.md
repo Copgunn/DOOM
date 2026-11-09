@@ -419,7 +419,9 @@ the written Rust admission rule. Existing reference fixtures were unchanged.
 The campaigns used cargo-mutants 27.1.0 and cargo-nextest 0.9.151,
 `CARGO_PROFILE_DEV_OPT_LEVEL=1 CARGO_PROFILE_DEV_DEBUG=0`. Run 1 selects the
 milestone diff against master, split into behaviour and reader/encoder shards;
-run 2 selects the rejection, rollback and refusal functions, excluding lifecycle.
+run 2 selects the rejection, rollback and refusal functions. Its function-name
+filters exclude lifecycle; cargo-mutants also executes the struct-field deletion
+controls shown in the per-file counts.
 The original selections and full outcomes remain in the owner's authorized
 `~/scratch/m4a/mutants/` directory; each targeted rerun uses one exact, anchored
 `--re` per mutation. The working copy was synced before each run. Mutation locations below refer to the campaign source revision.
@@ -593,6 +595,84 @@ This is a Rust admission regression, not an independently executed C trace.
 Center-based BLOCKMAP membership invalidated the earlier nine-actors-per-cell
 packing argument; collision boxes need not fit inside their cells (§14 of the
 investigation records the correction).
+
+### Closed dispositions by file
+
+Caught includes the individually proven nontermination cases. Run 2 below counts
+execution records; the twelve duplicate records are reconciled in the unique
+totals above. These are final dispositions of the original campaign selections.
+
+#### Run 1 shard 1
+
+| File | Caught | Equivalent | Harmless | Unviable |
+| --- | ---: | ---: | ---: | ---: |
+| `barrels.rs` | 14 | 5 | 0 | 0 |
+| `combat.rs` | 15 | 2 | 0 | 21 |
+| `combat_trace.rs` | 47 | 0 | 0 | 11 |
+| `demo.rs` | 18 | 0 | 0 | 1 |
+| `demon.rs` | 4 | 1 | 0 | 0 |
+| `demon_expanded_map.rs` | 44 | 5 | 0 | 8 |
+| `demon_map_spawn.rs` | 9 | 2 | 0 | 0 |
+| `e1m1_rules.rs` | 54 | 20 | 0 | 2 |
+| `episode1.rs` | 108 | 6 | 0 | 0 |
+| `geometry.rs` | 0 | 0 | 0 | 1 |
+| `lib.rs` | 1 | 0 | 0 | 2 |
+| `lifecycle.rs` | 18 | 3 | 0 | 1 |
+| `line_triggers.rs` | 6 | 0 | 0 | 0 |
+| `map_extent.rs` | 0 | 0 | 0 | 1 |
+| `monsters.rs` | 1 | 0 | 0 | 14 |
+| `movement.rs` | 9 | 1 | 2 | 1 |
+| `mover_rules.rs` | 105 | 6 | 0 | 5 |
+| `movers.rs` | 108 | 2 | 0 | 6 |
+| `original_player.rs` | 11 | 0 | 0 | 0 |
+| `original_registry.rs` | 73 | 4 | 0 | 7 |
+| `perception.rs` | 4 | 0 | 0 | 0 |
+| `planes.rs` | 1 | 0 | 0 | 15 |
+| `player_commands.rs` | 23 | 0 | 0 | 1 |
+| `player_map_scale.rs` | 6 | 1 | 0 | 1 |
+| `player_monsters.rs` | 0 | 0 | 0 | 2 |
+| `player_pistol.rs` | 41 | 5 | 0 | 3 |
+| `player_roster.rs` | 6 | 0 | 0 | 0 |
+| `player_weapons.rs` | 33 | 0 | 0 | 4 |
+| `projectiles.rs` | 24 | 1 | 0 | 1 |
+| `pursuit.rs` | 5 | 0 | 0 | 0 |
+| `sector_thinkers.rs` | 21 | 3 | 0 | 0 |
+| `shotgunner.rs` | 2 | 0 | 0 | 1 |
+| `sight.rs` | 24 | 0 | 0 | 4 |
+| `spawning.rs` | 8 | 1 | 0 | 1 |
+| `thinkers.rs` | 1 | 0 | 0 | 0 |
+| `use_lines.rs` | 42 | 2 | 0 | 0 |
+| `weapons.rs` | 95 | 4 | 0 | 3 |
+| `world_pickups.rs` | 139 | 16 | 0 | 7 |
+| **Total** | 1120 | 90 | 2 | 124 |
+
+#### Run 1 shard 2
+
+| File | Caught | Equivalent | Harmless | Unviable |
+| --- | ---: | ---: | ---: | ---: |
+| `diagnostic.rs` | 416 | 4 | 0 | 4 |
+| `snapshot.rs` | 19 | 0 | 0 | 1 |
+| **Total** | 435 | 4 | 0 | 5 |
+
+#### Run 2
+
+| File | Caught | Equivalent | Harmless | Unviable |
+| --- | ---: | ---: | ---: | ---: |
+| `demon_expanded_map.rs` | 57 | 0 | 0 | 0 |
+| `episode1.rs` | 108 | 6 | 0 | 0 |
+| `lib.rs` | 42 | 0 | 0 | 0 |
+| `lifecycle.rs` | 6 | 0 | 0 | 0 |
+| `mover_rules.rs` | 154 | 6 | 0 | 2 |
+| `movers.rs` | 91 | 2 | 0 | 6 |
+| `original_player.rs` | 85 | 4 | 0 | 0 |
+| `original_registry.rs` | 40 | 0 | 0 | 1 |
+| `player_commands.rs` | 34 | 5 | 0 | 1 |
+| `player_map_scale.rs` | 16 | 1 | 0 | 1 |
+| `player_monsters.rs` | 0 | 0 | 0 | 1 |
+| `spawning.rs` | 7 | 1 | 0 | 0 |
+| `store.rs` | 14 | 1 | 0 | 0 |
+| `world_pickups.rs` | 10 | 3 | 0 | 0 |
+| **Total** | 664 | 29 | 0 | 12 |
 
 ### Run 2 survivor tests now killing their targets
 
