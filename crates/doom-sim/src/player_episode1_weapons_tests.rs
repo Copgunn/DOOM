@@ -910,7 +910,8 @@ fn sight_budget_room(early: usize, seed: u8) -> Simulation {
         owned: 3,
         ammo: [50, 0, 0, 0],
     };
-    s.initialize_player_weapons(PlayerSlot::One, loadout).unwrap();
+    s.initialize_player_weapons(PlayerSlot::One, loadout)
+        .unwrap();
     s.spawn_level_specials().unwrap();
     s
 }
