@@ -105,8 +105,7 @@
   tests or fuzzing) and say so in the record.
 - Keep scratch builds, baseline checkouts and fuzz corpora outside the working tree;
   delete them at the end of a milestone after their results are recorded.
-- Subagents default to Sonnet; spawn C-evidence, simulation-code, DSIM-encoder and
-  independent-review subagents with `model: opus`.
+- Subagent models follow [model routing](#model-routing-for-subagents).
 - Report only observed results; distinguish target compiled, seed replay, coverage-guided
   campaign and sanitizer campaign, and disclose disabled leak detection.
 - Push the branch to origin after every completed plan step (no PR until gates pass).
@@ -120,3 +119,22 @@
 - Unattended rule: continue past an investigation phase only if every new decision has a
   clear recommendation consistent with prior owner decisions and admits no silent
   divergence; otherwise stop, commit, push and report.
+
+## Model routing for subagents
+
+Agent definitions live in `.claude/agents/` (Claude Code) and `.codex/agents/` (Codex).
+
+| Role | Claude Code agent (model) | Codex agent (model, effort) |
+| --- | --- | --- |
+| Orchestrator (main session) | main session (whichever model the owner launched) | main session (gpt-6.1-sol, high) |
+| C evidence, simulation code, DSIM encoder; tests needing new C citations | c-evidence (opus) | c-evidence (gpt-6.1-sol, high) |
+| Independent review | reviewer (opus) | none: Claude only |
+| Tests from facts already cited; mutation-survivor tests | tester (sonnet) | tester (gpt-6.1-sol, medium) |
+| Docs, status lines, census/count tools, scripts, CI plumbing | docs-tools (sonnet) | docs-tools (gpt-6-luna, medium) |
+| Watching long runs, log tailing, file inventory | watcher (haiku) | watcher (gpt-6-luna, low) |
+
+- Name the agent on every spawn; no unnamed subagents for heavy work.
+- A subagent never upgrades its own model.
+- After two failed reviews or gates a piece may move up one tier, with the reason recorded.
+- Watchers poll at most every 30 minutes and do not re-read docs or code.
+- When stopping an agent, keep long-running jobs its shell owns alive.
