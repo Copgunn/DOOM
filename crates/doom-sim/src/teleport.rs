@@ -211,11 +211,7 @@ pub(crate) fn ev_teleport<A: ActorAccess>(
     // p_telept.c:113–118: fog 2 `20*finecosine[an]`, `20*finesine[an]` from the
     // landing (`finecosine = &finesine[FINEANGLES/4]`, r_main.c:113), at the new z.
     // The table's half-step offset makes it not exactly 20 units (M4b note §2 T2.9).
-    let an = (m.spec.angle >> 19) as usize;
-    let offset = [
-        Fixed::from_bits(FOG_OFFSET * crate::FINE_SINE[an + 2048]),
-        Fixed::from_bits(FOG_OFFSET * crate::FINE_SINE[an]),
-    ];
+    let offset = fog_offset(m.spec.angle);
     let z = h.access.get(id).ok_or(StoreError::InvalidHandle)?.z;
     let fog = h.spawn(
         ActorTypeId(OriginalActorType::MT_TFOG.ordinal()),
@@ -239,6 +235,17 @@ pub(crate) fn ev_teleport<A: ActorAccess>(
         old,
     }));
     Ok(Outcome::Teleported)
+}
+
+/// Fog 2's offset from a landing of angle `angle` (p_telept.c:113–115):
+/// `an = angle >> ANGLETOFINESHIFT`, then `20*finecosine[an]` and `20*finesine[an]`
+/// as `int` products (`finecosine = &finesine[FINEANGLES/4]`, r_main.c:113).
+pub(crate) fn fog_offset(angle: u32) -> [Fixed; 2] {
+    let an = (angle >> 19) as usize;
+    [
+        Fixed::from_bits(FOG_OFFSET * crate::FINE_SINE[an + 2048]),
+        Fixed::from_bits(FOG_OFFSET * crate::FINE_SINE[an]),
+    ]
 }
 
 fn not_taken<A: ActorAccess>(h: &mut LifeHost<'_, A>, actor: ActorId, line: u16, reason: u8) {
@@ -509,3 +516,7 @@ impl crate::movement::MotionAccess for Motion<'_, '_, '_> {
         Ok(ends)
     }
 }
+
+#[cfg(test)]
+#[path = "teleport_tests.rs"]
+mod tests;

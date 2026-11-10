@@ -375,6 +375,14 @@ fn run_with(script: &str, tweak: impl FnOnce(&mut Vec<TicCommand>)) {
         match s.advance(commands) {
             Ok(()) => check(tic, &s),
             Err(e) => {
+                // A refused tic keeps the canonical state, and a retry refuses again.
+                let before = s.snapshot().canonical_bytes();
+                assert_eq!(s.advance(commands).err(), Some(e), "{script}: retry");
+                assert_eq!(
+                    s.snapshot().canonical_bytes(),
+                    before,
+                    "{script}: retry state"
+                );
                 ended = Some((tic, e));
                 break;
             }

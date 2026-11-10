@@ -1772,6 +1772,20 @@ impl<'a> Diagnostic<'a> {
         if self.version == 40 && !crate::EPISODE1_MAP_NUMBERS.contains(&byte("level.map")?) {
             return Err(DiagnosticError::Structure);
         }
+        // DSIM40: the telefrag's health domain. One `P_DamageMobj` of 10,000
+        // (p_map.c:105) leaves a victim at no less than 1 − 10,000, and nothing
+        // damages a corpse (p_inter.c:790–791), so every actor's health is at least
+        // −9,999.
+        if self.version == 40 {
+            for slot in 0..self.slots()? {
+                let prefix = format!("actor.{slot}");
+                if self.required(&format!("{prefix}.occupied"))? == [1]
+                    && i32field(&format!("{prefix}.health"))? < 1 - crate::teleport::TELEFRAG_DAMAGE
+                {
+                    return Err(DiagnosticError::Identity);
+                }
+            }
+        }
         let sectors = u32::from_le_bytes(number(self.required("sectors.count")?)?);
         for i in 0..sectors {
             let name = number::<8>(self.required(&format!("sector.{i}.floorpic"))?)?;

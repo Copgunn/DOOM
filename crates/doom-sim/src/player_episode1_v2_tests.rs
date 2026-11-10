@@ -315,13 +315,11 @@ fn unadmitted_specials_and_things_refuse_at_load() {
     load(&l, V2, 1, 6).unwrap();
     let mut tele = l.clone();
     set_line(&mut tele, 4, 97, 5);
-    for policy in [V1] {
-        assert_eq!(
-            load(&tele, policy, 5, 6).err(),
-            Some(SimError::Pursuit(PursuitError::Specials)),
-            "{policy:?}"
-        );
-    }
+    assert_eq!(
+        load(&tele, V1, 5, 6).err(),
+        Some(SimError::Pursuit(PursuitError::Specials)),
+        "{V1:?}"
+    );
     for (doomednum, policies) in [(14, &[V1][..]), (3003, &[V1, V2][..])] {
         let mut l = l.clone();
         l.add_thing([1000, 128, 0, doomednum, 7]);
