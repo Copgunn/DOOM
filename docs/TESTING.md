@@ -1817,8 +1817,9 @@ WADs for teleportation, telefrags, monster and sliding teleports, the Baron of H
 `A_BossDeath` (one WAD in the E1M8 slot), the special-line (`spechit`) limit and the skill-3
 THING filter, with 18 scripts run through the genuine engine. Everything here is synthetic and
 runs on a clean checkout; the observations are recorded in
-[the M4b evidence record](validation/M4B.md#synthetic-mechanism-wads-ci-evidence). There is no
-Rust side yet (wire 24 does not exist).
+[the M4b evidence record](validation/M4B.md#synthetic-mechanism-wads-ci-evidence). The Rust side
+is wire 24 (`--policy episode1v2`): it runs the 30 M4a scripts against their DSIM40 projection
+now, and the M4b scripts as their mechanisms are admitted (plan steps 4-6).
 
 ```sh
 # generators and invariants (no compiler; every OS in CI)
@@ -1863,6 +1864,36 @@ What each asserts:
   except `profile`, `context.schema`, `actors.options` and `level.map`.
   `level_snapshot_m4b.py --compare39` runs that last check on any dump directory (for example
   the M4a runs, locally). `test_level_snapshot_m4b.py` needs no dumps.
+
+The Rust side (wire 24, DSIM40):
+
+```sh
+# DSIM40 goldens of the 30 M4a scripts, from the genuine M4a dumps (C; Linux only in CI)
+python3 tools/reference/m4a_reference.py --check --keep-dumps --work /mnt/d/scratch/m4b/m4a
+python3 tools/reference/m4b_m4a_goldens.py --dumps /mnt/d/scratch/m4b/m4a/runs --check [--compare39]
+
+# the Rust example under wire 24 against both goldens sets (every OS in CI)
+cargo build -p doom-sim --release --locked --example player_level_run
+python3 tools/reference/check_player_episode1v2.py --binary target/release/examples/player_level_run --out DIR --require
+python3 tools/reference/check_player_episode1v2.py --rust-root DIR [--require]   # captures already made
+
+# one run against its dumps, field by field (any dump directory; DSIM40)
+python3 tools/reference/level_compare_m4b.py DUMP_DIR RUST_DIR --wad WAD --demo LMP [--values] [--json OUT]
+```
+
+- `m4b_m4a_goldens.py --check` requires each strict M4a dump set to equal the frozen
+  `dumps_sha256` of `m4a_synthetic_results.json`, projects every M4a script to DSIM40 with the
+  skill and map of its header and compares `tests/reference/m4b_m4a_goldens.json` byte for
+  byte. `--compare39` also requires every snapshot's DSIM40 projection to equal its DSIM39
+  projection outside the four DSIM40 fields.
+- `check_player_episode1v2.py` runs every script of the M4a and M4b manifests with
+  `--policy episode1v2`, except the M4b scripts its `PENDING` table names with the step that
+  admits them, and compares each tic's stripped digest with the goldens. M4a scripts keep their
+  M4a manifest expectations; an M4b `tbd` must match, and `SPECH9` must then refuse its declared
+  tic with `SpecialCross`. With `--require` a missing wire 24 or a non-pending script without
+  captures fails. It prints each pending script and the step it waits for.
+- `level_compare_m4b.py` is `level_compare.py`'s method over the DSIM40 projection. It is a new
+  tool, because `level_compare.py` is frozen and has no DSIM40 profile.
 
 ## Mutation testing
 

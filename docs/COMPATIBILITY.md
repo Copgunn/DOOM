@@ -2427,3 +2427,45 @@ that are admitted only if every script authored for them matches. The sources of
 the commands are [TESTING](TESTING.md#m4a-synthetic-mechanism-wads-and-the-episode-1-comparison)
 and for the observations [validation/M4A.md](validation/M4A.md); Rust-only tests are in
 `crates/doom-sim/src/player_episode1_*_tests.rs` and `crates/doom-sim/tests/episode1_synthetic.rs`.
+
+## Original Episode 1, part 2: teleporters, the Baron of Hell, `A_BossDeath` and hard skill (wire 24)
+
+**Status: in progress (M4b, plan step 3 of the [note](M4B_REFERENCE_INVESTIGATION.md#6-plan-size-estimate-and-cap)); see
+[ROADMAP](ROADMAP.md).** So far wire 24 is wire 23 under a new identity. None of its new
+mechanisms is admitted yet; each is refused at load as listed below.
+
+`OriginalExecutionProfile::PlayerMonstersEpisode1V2` (wire 24, DSIM40, context
+`PLAYER-MONSTERS-EPISODE1-2-v1`) is a separate optional superset of `PlayerMonstersEpisode1V1`
+(wire 23), decision [I2](M4B_REFERENCE_INVESTIGATION.md#5-owner-decisions-i1i13-with-recommendations).
+Select it with `Simulation::original_player_episode1_v2_map(map, map_number, skill, context)`
+(`crates/doom-sim/src/player_monsters.rs`). `map_number` is the Episode 1 slot, 1-9; the
+simulation holds it for the run, and DSIM40 records it as `level.map`. `skill` becomes
+`actors.options`. Then call `spawn_map_things`, `initialize_player_weapons` and
+`spawn_level_specials` once each before the first tic, as for wire 23. The canonical layout is
+the [STATE_FORMAT DSIM40 section](STATE_FORMAT.md#dsim-v40--episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill),
+read by `Diagnostic::decode_episode1_v2`. Wires 1-23, their goldens and DSIM20-39 are unchanged.
+
+**Admitted now.** Everything wire 23 admits, with wire 23's bounds, load rules, runtime witnesses
+and comparison contract (the section above). Under the same inputs, a wire-24 capture is the
+wire-23 capture with `profile` 24, the new context and `level.map` added. The demo reader
+`parse_demo_episode1_v2(bytes, map)` reads a version-110 header with skill 2 or 3, episode 1 and
+maps 1-9. The runner `player_level_run --policy episode1v2` takes the map from `--map` and the
+skill from the header.
+
+**Refused now, each explicitly at load:**
+
+- skill 3 and every other skill but medium: `SimError::PlayerBody(PlayerBodyError::Unsupported)`
+  from the constructor; the runner reports a skill-3 demo before any tic. Hard skill is plan step 6;
+- a map number outside 1-9: the same error;
+- line special 97 (teleport): `PursuitError::Specials`, plan step 4;
+- the landing (doomednum 14, plan step 4) and the Baron of Hell (3003, plan step 5):
+  `MapSpawnError::UnsupportedType` from `spawn_map_things`, which then changes nothing.
+  `A_BossDeath` comes with the Baron;
+- the DSIM40 reader admits skill 2 only until step 6, and none of the new types, states or
+  event sub-tags until their steps.
+
+So E1M5, E1M8 and E1M9 are still refused, as under wire 23. The observations (the 30 M4a
+synthetic scripts compared with the genuine engine under wire 24) are in
+[the evidence record](validation/M4B.md); the commands are in
+[TESTING](TESTING.md#m4b-synthetic-mechanism-wads). Rust-only tests are in
+`crates/doom-sim/src/player_episode1_v2_tests.rs`.

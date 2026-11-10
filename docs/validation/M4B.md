@@ -8,8 +8,8 @@ owns the commands. Exact review state and CI belong to GitHub.
 
 **Scope of the record.** Phase 2 step 1 (2026-11-10, America/Los_Angeles): synthetic mechanism
 WADs run through the genuine engine. Phase 2 step 2 (2026-11-10): the independent DSIM40
-projection of those runs and its goldens. There is no Rust side yet (wire 24 does not exist), so
-nothing here is a Rust result. Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`,
+projection of those runs and its goldens. Phase 2 step 3 (2026-11-10): wire 24 plumbing; the
+Rust results are in [Wire 24 against the genuine engine](#wire-24-against-the-genuine-engine). Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`,
 so LeakSanitizer was disabled, not passed. Timings quoted here were taken on a host that was
 not idle and are not performance measurements.
 
@@ -202,3 +202,54 @@ existing file under `tests/reference` changed. `m3h9c_snapshot_goldens.py --chec
 - The closure rule is an independent domain check, not a replay. It cannot tell whether a state
   was entered at the right tic.
 - The Rust writer does not exist yet. Nothing here is a Rust result.
+  (Step 2 wording; the Rust writer arrived in step 3, below.)
+
+## Wire 24 against the genuine engine
+
+Phase 2 step 3 (2026-11-10). Wire 24 (`PlayerMonstersEpisode1V2`, DSIM40) so far is wire 23
+under a new identity, so the evidence asks one question: does wire 24 run every M4a synthetic
+script exactly as the genuine engine does, in DSIM40? No M4b script can run yet: every one
+needs special 97, doomednum 14, doomednum 3003 or skill 3. Each is refused at load, as
+[COMPATIBILITY](../COMPATIBILITY.md) lists, and `check_player_episode1v2.py` names each script
+with the step it waits for. Commands are in [TESTING](../TESTING.md#m4b-synthetic-mechanism-wads).
+
+**C expectations.** `m4a_reference.py --check --keep-dumps` ran on this host. All 30 scripts
+gave dump sets identical across the strict, overflow and address variants, and
+`m4a_synthetic_results.json` matched. `m4b_m4a_goldens.py --compare39` then checked each strict
+dump set against the frozen `dumps_sha256`. It projected all 15,116 snapshots of the 30 scripts
+to DSIM40 with no projection stop, into `tests/reference/m4b_m4a_goldens.json`. On every
+snapshot, DSIM40 equalled DSIM39 outside `profile`, `context.schema`, `actors.options` and
+`level.map`. It took 6.5 minutes, with the DSIM39 comparison included. No Rust output was read.
+
+**Rust.** `check_player_episode1v2.py --binary target/release/examples/player_level_run --require`
+matched all 30 scripts (14,948 compared tics). Each refusal fell on the tic its M4a expectation
+declares:
+
+- PLATS2 `PlatBlocked` and STAIRS2 `StairBlocked`;
+- EXDIE, ROCKDIE, SUITDIE and SPECTD `PlayerReborn`.
+
+18 M4b scripts are pending.
+
+**The check can fail.** On a copy of the captures, one DONUT1 capture was replaced by the next
+tic's. The tool reported `FAIL at tic 100 (digest)`. A script directory was deleted, and the
+tool reported `no Rust captures` under `--require`. It exited with 2 failures.
+
+**Comparator.** `level_compare_m4b.py` compared the strict DONUT1 dumps with a wire-24 run, field
+by field: 333 tics, a match, and the `map.*` groups equal.
+
+**Real map, local only.** The IWAD was read read-only from `/mnt/d/DoomIWADs`, and the dumps were
+kept in `/mnt/d/scratch/m4b` and deleted afterwards. `tools/local/episode1_reference.py` ran the
+genuine engine (M4a driver, three variants) on E1M2's committed M2IDLE and M2WALK scripts. Both
+dump sets were identical across the variants. M2IDLE ran 2,100 tics to the marker; M2WALK ended
+with the exit at dump tic 2,863. `player_level_run --policy episode1v2` then ran both scripts.
+`level_compare_m4b.py` matched every tic: 2,101 and 2,865 captures, with the `map.*` groups equal.
+The C stripped-sequence digests begin `9954ac3a7a912d0b` and `711ca14d043e977c`. E1M1 was not
+used, because its local runs use the frozen M3h9c driver, whose dumps the DSIM40 projection
+refuses (note §7, finding 12). Plan step 7 re-runs all 30 real-map scripts.
+
+**Limits.**
+
+- This is wire 23's behaviour under wire 24's identity. Teleport, the Baron, `A_BossDeath` and
+  hard skill have no Rust result yet.
+- The DSIM40 reader admits skill 2 only until step 6.
+
