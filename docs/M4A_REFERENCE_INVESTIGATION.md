@@ -1832,7 +1832,7 @@ Risks and follow-ups from the two inventories (the hazards table in
 - **Not covered by Phase 1:** the real-map divergences (found in Phase 2), the performance record (measured alone on the idle machine in Phase 2,
   H12), and the continuous-episode and finale behavior (a later direction).
 
-**Status / next step (2026-11-10 PST).** Mutation testing, the idle matched timings and the simulation-only per-tic campaign are done and recorded in the [evidence record](validation/M4A.md#matched-performance). Closing sequence: **(1) model routing for subagents: done** (AGENTS.md, `.claude/agents/`, `.codex/agents/`); **(2) independent review: next**; (3) roadmap performance entry; (4) full gates from clean; (5) PR text, exact-head CI, mark ready. [PR #57](https://github.com/Copgunn/DOOM/pull/57) stays a draft until step 5; no merge. Exact CI and history stay in GitHub.
+**Status / next step (2026-11-10 PST).** Closing sequence: (1) model routing: done; **(2) independent review: done**, findings, fixes and dispositions in the [evidence record](validation/M4A.md#independent-review-2026-11-10) (one major simulation finding fixed, ten "equivalent" mutants reclassified as caught, one visit-bound mutant left unresolved, two items flagged for the owner); **(3) roadmap performance entry: next**; (4) full gates from clean; (5) PR text, exact-head CI, mark ready. [PR #57](https://github.com/Copgunn/DOOM/pull/57) stays a draft until step 5; no merge. Exact CI and history stay in GitHub.
 
 **Historical preparation commands (superseded by the completed 2026-11-09 campaign).**
 These describe the earlier unexecuted preparation, not remaining work; the completed

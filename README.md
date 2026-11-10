@@ -38,8 +38,8 @@ this one needs your own game files, such as those from a copy of Doom you bought
 ## Where it stands
 
 The engine runs DOOM's game logic without graphics. It is driven by tests and small
-example programs, on small test maps built for this project and, locally, on the real
-Episode 1 maps. Today it can simulate:
+example programs, on small test maps built for this project and, locally, on six of the
+real Episode 1 maps. Today it can simulate:
 
 - one player who moves, uses switches and doors, takes damage and dies, with the fist,
   pistol, shotgun and chaingun;
@@ -53,7 +53,8 @@ Episode 1 maps. Today it can simulate:
   locked doors, powerups, the chainsaw, the rocket launcher and the Spectre;
 - the real E1M1, E1M2, E1M3, E1M4, E1M6 and E1M7, which run in sync with the genuine
   engine (the original C code, built and run alongside the Rust code) for all 30 scripted
-  runs: idle, walking to the exit, fighting, dying and random commands on each map. The
+  runs: idle, walking to the exit, fighting, dying and random commands on each map (on
+  E1M1, a barrels run instead of dying). The
   comparison harness is local-only.
 
 What it cannot do yet:

@@ -1693,6 +1693,8 @@ python3 tools/e1m1_scripts.py --check                      # also checks tests/r
 # runner contracts and newline regression (no compiler; every OS in CI)
 python3 tools/reference/m4a_build.py --check               # M4a driver-fork contract (m4a_driver.c), including its columns
 python3 tools/reference/test_runner_newlines.py            # both frozen contracts from LF and CRLF source copies
+# The contract hashes cover LF-normalised Latin-1 text, so they do not see a line-ending-only change
+# (lone CR is untested); Git object identity is the byte-level guard for the sources.
 
 # genuine runner execution (C; Linux only in CI)
 python3 tools/reference/m4a_reference.py [--work DIR] [--check] [--keep-dumps] [--cc CC] [--only WAD] [--selftest TIC]
@@ -1750,7 +1752,7 @@ What each asserts:
 - Driver columns: the M4a runner is built from `tools/reference/m4a_driver.c`, the M4a fork of
   the merged `m3h9c_driver.c` (which is unchanged). In the fork the `H` row ends with
   `secretexit` (`g_game.c:999`); `R` rows carry the removed mover's kind and sector; the `P`
-  message column holds 38..40 for the locked-door strings. `m4a_build.py --check` regenerates
+  message column holds 38..40 for the locked-door strings and 41 for the turbo message. `m4a_build.py --check` regenerates
   `tests/reference/m4a_runner_contract.json`, whose hash covers the fork, so it fails on any
   change to them; `m3h9c_build.py --check` still holds the merged M3h9c contract.
 

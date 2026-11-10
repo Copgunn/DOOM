@@ -2229,7 +2229,7 @@ per-tic comparison covers the rest of the capture.
 
 ## Original Episode 1, part 1: every door, floor, plat, stair, donut, light and exit special, keys, items, powers, chainsaw, rocket launcher and Spectre (wire 23)
 
-**Status: implemented through plan step 8 of 8 on `feat/m4a-episode-1`; not merged.** The command-domain
+**Status: not merged; see [ROADMAP](ROADMAP.md#m4a-episode-1-part-1-proven-against-the-genuine-engine).** The command-domain
 lift, the version-110 demo header for maps 1-9 and the real-map Rust runs are done. Against the genuine
 engine, Rust matches tic for tic on the 25 authored scripts of E1M2, E1M3, E1M4, E1M6 and E1M7 and on the
 five E1M1 scripts re-run under wire 23, with no refuse-the-tic witness firing (see
@@ -2354,7 +2354,8 @@ their place** (H3, wire 23 only): one family per sector (`MoverFamily`), reachab
 (`MoverHeights`, `InvertingDoor`, the +-512 check), the 2 x 2 special-window (`SpecialWindow`)
 and the arithmetic certificate's clauses (i), (ii) and (vii). Rule 8, sky movers
 (`SkyMover`), no longer applies at all. The reachable-height computation is clamped to
-+-32,767 units per round so that it terminates, and it is still used to bound the movers.
++-32,767 units per round so that it terminates; it now feeds only the vertical-position rule, and
+the heights movers actually write are bounded by the `Arithmetic` witness.
 
 ### Runtime witnesses
 

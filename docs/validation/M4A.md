@@ -8,7 +8,7 @@ part 1, proven against the genuine linuxdoom-1.10 engine. Only observations appe
 the admitted behavior and [testing](../TESTING.md#m4a-synthetic-mechanism-wads-and-the-episode-1-comparison)
 the commands. Exact review state and CI belong to GitHub.
 
-**Record in progress (Phase 2 steps 1–8 done on 2026-11-05; the fuzz campaigns were re-run on the final crates).** The real-IWAD runs are local
+**Scope of the record.** Phase 2 steps 1–8 (2026-11-05), the fuzz re-run, mutation testing, the idle-machine timings, the [independent review](#independent-review-2026-11-10) and the [final gates](#final-gates-from-clean) are recorded below. The real-IWAD runs are local
 only (`DOOM_IWAD_DIR`, read in place); only counts, tic numbers and digests are recorded and no
 map-derived value appears. Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`, so
 LeakSanitizer was disabled, not passed. Timings quoted before the matched-performance section
@@ -111,9 +111,9 @@ The step-6 run reported "all checks passed" for the 26 scripts that load, with t
 two scale scripts are the exception. SCALE.WAD originally had a tower ceiling of 1,100, above the
 +-1,024 sector-height rule that wire 23 keeps, so Rust refused the load (`Geometry(CoordinateOverflow)`).
 The committed WAD now has the ceiling at 1,000 and its goldens were regenerated from the genuine runs.
-**SCALE1 329/329 and SCALE2 601/601 were observed only in a scratch copy of the old WAD with the one
-ceiling lowered to 1,000 and the captured ceiling patched back before hashing; to be confirmed by the
-final run on the committed WAD.** In the same step all 930 scale captures, and 12,864 captures of the
+SCALE1 329/329 and SCALE2 601/601 were first observed in a scratch copy of the old WAD with the one
+ceiling lowered to 1,000 and the captured ceiling patched back before hashing; the committed WAD was
+confirmed by the step 8 `--require` run below (all 30 scripts) and again by the final gates. In the same step all 930 scale captures, and 12,864 captures of the
 whole set, decoded with the DSIM39 reader (the latter in an uncommitted scratch test).
 
 Facts observed on the way, in Rust-only tests rather than against C: pickups are counted down from the
@@ -160,9 +160,8 @@ WADs did not load: the weapons WAD (`MapSpawn(UnsupportedType(2005))`), the Spec
 executions (header byte 5, 7 or 8 modulo 9) therefore only exercised the load refusal. Of the seeds
 that loaded, the endings were `PlatBlocked` (7), `StairBlocked` (8), `LevelExited` (11), `PlayerReborn`
 (3 on exits, 5 on items) and the 600-tic budget; no seed reached `SecondDoor`, `DonutBusy`,
-`MoverFamily`, `Arithmetic` or `StoreError::Capacity`. **The campaigns are to be re-run against the final
-crates, after step 7, with all nine WADs admitted**; the numbers above must not be read as coverage of
-the chainsaw, launcher, Spectre or scale paths.
+`MoverFamily`, `Arithmetic` or `StoreError::Capacity`. The campaigns were therefore re-run against the final crates with all nine WADs admitted (next table);
+the numbers above must not be read as coverage of the chainsaw, launcher, Spectre or scale paths.
 
 **Re-run on the final crates** (2026-11-05, branch at 1f91d0e for the 446 seeds and at the seeder
 commit for the 13 new ones; the host was not idle, 1-minute load 1.5 to 2.5, so rates are indicative):
@@ -193,13 +192,13 @@ Scripts for E1M2, E1M3, E1M4, E1M6 and E1M7 (idle 2,100 tics; chaos 5,000 comman
 20261105 + map number; fighting; death ending `end=reborn`; walk_to_exit ending on the exit tic),
 all byte-identical across the four genuine builds, no sanitizer abort:
 
-| Map | Thinkers / mobjs at load | `prndindex` at load | walk_to_exit tics (exit) | fighting tics | chaos death tic | death script `end=reborn` |
+| Map | Thinkers / mobjs at load | `prndindex` at load | walk_to_exit tics (exit) | fighting tics | chaos reborn tic | death script `end=reborn` |
 | --- | --- | --- | --- | --- | --- | --- |
 | E1M2 | 226 / 200 | 64 | 2,863 | 1,581 | 1,549 | yes |
 | E1M3 | 322 / 310 | 9 | 5,792 (normal exit) | 1,495 | 3,361 | yes |
 | E1M4 | 213 / 201 | 85 | 3,443 | 1,771 | 1,668 | yes |
-| E1M6 | 382 / 370 | 111 | 7,839 | 1,435 | 1,017 | yes |
-| E1M7 | 283 / 267 | 207 | 7,736 | 1,221 | 1,514 | yes |
+| E1M6 | 382 / 370 | 111 | 7,838 | 1,435 | 1,017 | yes |
+| E1M7 | 283 / 267 | 207 | 7,735 | 1,221 | 1,514 | yes |
 
 No blocked stair step or blocked raise-and-change plat occurs in any of these runs. Rust matches the
 genuine engine tic for tic on all 25 of these scripts, and on the five real E1M1 scripts re-run under
@@ -486,7 +485,7 @@ Per-tic campaign load averages (1 / 5 / 15 minutes):
 **Cleanup and provenance.** The fresh `wt-master-idle-nov09` worktree, its `target-master` and legacy
 caller were removed after measurements. Historical scratch/evidence and the new raw counts, state
 digests, observations and Callgrind reports remain local for review. No CI-budget or full validation
-gate was rerun here; those are Claude’s next step. Original archive SHA-256 is recorded in the archive
+gate was rerun in this campaign; the later full run is under [final gates](#final-gates-from-clean). Original archive SHA-256 is recorded in the archive
 above. Local result digests:
 
 | Scratch result | SHA-256 |
@@ -644,7 +643,7 @@ validation durations, not idle-machine performance measurements.
 
 ### Refusal witnesses tested below the public API
 
-The 23 shard 1 survivor mutations reclassified "test" from "harmless" are killed by 10 crate-internal tests (one more, `a_negative_bonus_count_is_refused`, pins a witness without a survivor). Each test's doc comment now names its refusal path and why no constructible map reaches it through the public API (commit `c3d2192`).
+Of the 23 shard 1 survivor mutations reclassified "test" from "harmless", 22 are killed by nine crate-internal tests (one more, `a_negative_bonus_count_is_refused`, pins a witness without a survivor). The 23rd, `world_pickups.rs:1230:27` (`>=`), turned out to be reachable through the public API (review finding B12): `a_zero_item_total_before_the_thing_batch_is_accepted` stays as a direct test and the public `a_dropped_pickup_before_the_thing_batch_is_accepted` kills the same mutant, so the below-the-API count is 22 + 7 = 29, not 30. Each test's doc comment now names its refusal path and why no constructible map reaches it through the public API (commit `c3d2192`).
 
 | file | test | refusal path | survivors |
 |---|---|---|---|
@@ -654,7 +653,7 @@ The 23 shard 1 survivor mutations reclassified "test" from "harmless" are killed
 | `crates/doom-sim/src/player_episode1_items_tests.rs` | `a_cycling_item_accepts_only_its_own_loop_states` | item witness `world_pickups::state_allowed` (world_pickups.rs:318) in the tic preflight | world_pickups.rs:318:40 |
 | `crates/doom-sim/src/player_episode1_items_tests.rs` | `a_stored_medikit_needed_message_is_refused` | pickup-state witness `PlayerPickupState::validate` (world_pickups.rs:420) | world_pickups.rs:420:13 |
 | `crates/doom-sim/src/player_episode1_items_tests.rs` | `item_statistics_outside_the_written_domain_are_refused` | `Simulation::preflight_world_pickups`, the item-statistics witness (world_pickups.rs:1189, 1229–1230) | world_pickups.rs:1189:9, 1229:17, 1229:28, 1229:37, 1230:17, 1230:27 (`==`, `<`) |
-| `crates/doom-sim/src/player_episode1_items_tests.rs` | `a_zero_item_total_before_the_thing_batch_is_accepted` | `Simulation::preflight_world_pickups`, the zero-total case (world_pickups.rs:1230) | world_pickups.rs:1230:27 (`>=`) |
+| `crates/doom-sim/src/player_episode1_items_tests.rs` | `a_zero_item_total_before_the_thing_batch_is_accepted` | `Simulation::preflight_world_pickups`, the zero-total case (world_pickups.rs:1230); **publicly reachable**, see above | world_pickups.rs:1230:27 (`>=`) |
 | `crates/doom-sim/src/player_episode1_weapons_tests.rs` | `a_flying_rocket_without_an_owner_is_refused` | `Simulation::preflight_live_missiles`, the live-missile owner witness (projectiles.rs:855) | projectiles.rs:855:9 |
 | `crates/doom-sim/src/player_episode1_items_tests.rs` | `a_decoration_whose_sprite_or_frame_disagrees_with_its_state_is_refused` | decoration witness `e1m1_rules::validate_decoration` (e1m1_rules.rs:291–292) | e1m1_rules.rs:291:9, 292:9 |
 | `crates/doom-sim/src/player_episode1_items_tests.rs` | `power_counters_outside_their_domains_are_refused_one_at_a_time` | `episode1::validate_powers` (episode1.rs:254–260) in the tic preflight | episode1.rs:254:5, 256:9–260:9 |
@@ -673,10 +672,15 @@ older-reader gap, not a claim that the older format permits those values.
 
 | Campaign | Caught, including proven nontermination | Equivalent | Observation-only harmless | Unviable | Unresolved |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Run 1 shard 1 | 1120 | 90 | 2 | 124 | 0 |
+| Run 1 shard 1 | 1130 | 79 | 2 | 124 | 1 |
 | Run 1 shard 2 | 435 | 4 | 0 | 5 | 0 |
-| Run 2, execution records | 664 | 29 | 0 | 12 | 0 |
-| Run 2, unique mutations | 652 | 29 | 0 | 12 | 0 |
+| Run 2, execution records | 666 | 27 | 0 | 12 | 0 |
+| Run 2, unique mutations | 654 | 27 | 0 | 12 | 0 |
+
+These are the totals after the [independent review](#independent-review-2026-11-10), which overturned
+ten shard 1 equivalences (two of them also carried into run 2) and left one unresolved. Before it the
+rows read 1120 / 90 / 2 / 124 / 0, 664 / 29 and 652 / 29. The ten review reclassifications are counted as
+caught on the strength of a hand-applied mutant failing a named test, not a cargo-mutants rerun.
 
 Run 1 shard 1 added 90 survivor kills (89 earlier, one dense-barrel witness)
 and four nontermination catches. Shard 2 added 105 survivor kills. Run 2
@@ -725,18 +729,18 @@ totals above. These are final dispositions of the original campaign selections.
 
 | File | Caught | Equivalent | Harmless | Unviable |
 | --- | ---: | ---: | ---: | ---: |
-| `barrels.rs` | 14 | 5 | 0 | 0 |
-| `combat.rs` | 15 | 2 | 0 | 21 |
+| `barrels.rs` (one more unresolved) | 14 | 4 | 0 | 0 |
+| `combat.rs` | 17 | 0 | 0 | 21 |
 | `combat_trace.rs` | 47 | 0 | 0 | 11 |
 | `demo.rs` | 18 | 0 | 0 | 1 |
 | `demon.rs` | 4 | 1 | 0 | 0 |
-| `demon_expanded_map.rs` | 44 | 5 | 0 | 8 |
+| `demon_expanded_map.rs` | 47 | 2 | 0 | 8 |
 | `demon_map_spawn.rs` | 9 | 2 | 0 | 0 |
 | `e1m1_rules.rs` | 54 | 20 | 0 | 2 |
 | `episode1.rs` | 108 | 6 | 0 | 0 |
 | `geometry.rs` | 0 | 0 | 0 | 1 |
 | `lib.rs` | 1 | 0 | 0 | 2 |
-| `lifecycle.rs` | 18 | 3 | 0 | 1 |
+| `lifecycle.rs` | 19 | 2 | 0 | 1 |
 | `line_triggers.rs` | 6 | 0 | 0 | 0 |
 | `map_extent.rs` | 0 | 0 | 0 | 1 |
 | `monsters.rs` | 1 | 0 | 0 | 14 |
@@ -748,9 +752,9 @@ totals above. These are final dispositions of the original campaign selections.
 | `perception.rs` | 4 | 0 | 0 | 0 |
 | `planes.rs` | 1 | 0 | 0 | 15 |
 | `player_commands.rs` | 23 | 0 | 0 | 1 |
-| `player_map_scale.rs` | 6 | 1 | 0 | 1 |
+| `player_map_scale.rs` | 7 | 0 | 0 | 1 |
 | `player_monsters.rs` | 0 | 0 | 0 | 2 |
-| `player_pistol.rs` | 41 | 5 | 0 | 3 |
+| `player_pistol.rs` | 43 | 3 | 0 | 3 |
 | `player_roster.rs` | 6 | 0 | 0 | 0 |
 | `player_weapons.rs` | 33 | 0 | 0 | 4 |
 | `projectiles.rs` | 24 | 1 | 0 | 1 |
@@ -758,12 +762,12 @@ totals above. These are final dispositions of the original campaign selections.
 | `sector_thinkers.rs` | 21 | 3 | 0 | 0 |
 | `shotgunner.rs` | 2 | 0 | 0 | 1 |
 | `sight.rs` | 24 | 0 | 0 | 4 |
-| `spawning.rs` | 8 | 1 | 0 | 1 |
+| `spawning.rs` | 9 | 0 | 0 | 1 |
 | `thinkers.rs` | 1 | 0 | 0 | 0 |
 | `use_lines.rs` | 42 | 2 | 0 | 0 |
 | `weapons.rs` | 95 | 4 | 0 | 3 |
 | `world_pickups.rs` | 139 | 16 | 0 | 7 |
-| **Total** | 1120 | 90 | 2 | 124 |
+| **Total** (plus one unresolved) | 1130 | 79 | 2 | 124 |
 
 #### Run 1 shard 2
 
@@ -786,19 +790,19 @@ totals above. These are final dispositions of the original campaign selections.
 | `original_player.rs` | 85 | 4 | 0 | 0 |
 | `original_registry.rs` | 40 | 0 | 0 | 1 |
 | `player_commands.rs` | 34 | 5 | 0 | 1 |
-| `player_map_scale.rs` | 16 | 1 | 0 | 1 |
+| `player_map_scale.rs` | 17 | 0 | 0 | 1 |
 | `player_monsters.rs` | 0 | 0 | 0 | 1 |
-| `spawning.rs` | 7 | 1 | 0 | 0 |
+| `spawning.rs` | 8 | 0 | 0 | 0 |
 | `store.rs` | 14 | 1 | 0 | 0 |
 | `world_pickups.rs` | 10 | 3 | 0 | 0 |
-| **Total** | 664 | 29 | 0 | 12 |
+| **Total** | 666 | 27 | 0 | 12 |
 
 ### Run 2 survivor tests now killing their targets
 
 The seven tests marked internal below are owner-approved **refusal witnesses
 tested below the public API**. They inject otherwise unconstructible invalid
 state and call private preflights; they do not claim valid public-input coverage.
-Together with the earlier 23 mutations covered by ten functions above, this
+Together with the earlier 22 mutations covered by nine functions above, this
 qualification is part of the evidence, not an equivalence claim. Other new
 survivor tests exercise public operations. Expectations and source/rule citations
 are in the test comments; none use captured Rust output as their oracle.
@@ -849,7 +853,9 @@ are in `run2_timeouts`. These proofs also resolve the four run-1 timeout targets
 
 The following tables enumerate each campaign's equivalent survivors, including
 the 19 run-1 proofs carried into run 2. Repeated records are identified above.
-Reasons concern all reachable inputs, rather than a missing boundary test.
+Reasons concern all reachable inputs, rather than a missing boundary test. The independent review of
+2026-11-10 checked every row; the rows it overturned are listed under
+[independent review](#independent-review-2026-11-10) and no longer appear here.
 
 #### Run 1 shard 1: equivalences
 
@@ -859,12 +865,9 @@ Reasons concern all reachable inputs, rather than a missing boundary test.
 | `crates/doom-sim/src/original_registry.rs:784:17: replace \|\| with && in spectre_policy` | as 782:17. |
 | `crates/doom-sim/src/original_registry.rs:783:17: replace \|\| with && in spectre_policy` | as 782:17. |
 | `crates/doom-sim/src/original_registry.rs:782:17: replace \|\| with && in spectre_policy` | compile-time check: the Spectre's four closures equal the Demon's (info.c:1420–1470), so the widened predicate gives the same Ok. |
-| `crates/doom-sim/src/player_map_scale.rs:944:17: replace && with \|\| in Simulation::spawn_admitted` | unreachable (reclassified from harmless): every wire-23 spawn position is inside the room rectangle (a THING outside it is refused earlier at spawn, observed `Monster(Arithmetic)`; missiles, puffs, blood and drops spawn at an actor or a trace point inside the lines), so `room.contains` is always true and `&&`/`\|\|` agree on every reachable input. |
-| `crates/doom-sim/src/player_pistol.rs:240:9: replace <impl weapons::Host for Host<'_, '_, A>>::admit_weapon -> Result<(), SimError> with Ok(())` | the only caller (P_CheckAmmo's fallback) can name only owned weapons, and the fallback set (chaingun, shotgun, pistol, chainsaw, launcher, fist) is exactly what each policy owns; every call returns Ok. |
 | `crates/doom-sim/src/player_pistol.rs:245:17: replace && with \|\| in <impl weapons::Host for Host<'_, '_, A>>::admit_weapon` | as 240:9: Rocket/Chainsaw are never owned outside wire 23, and every fallback is admitted under wire 23. |
 | `crates/doom-sim/src/player_pistol.rs:253:9: replace <impl weapons::Host for Host<'_, '_, A>>::episode1 -> bool with true` | wire 22's command preflight refuses a selection above 3 before the machine runs (weapon_selections_under_wire_23 asserts it), and for selections 0–3 the two branches coincide without a chainsaw. |
-| `crates/doom-sim/src/player_pistol.rs:259:9: replace <impl weapons::Host for Host<'_, '_, A>>::strength -> bool with false` | powers[0] (pw_strength) is 0 under every admitted policy (validate_powers refuses anything else; no berserk is admitted), so strength() is always false. |
-| `crates/doom-sim/src/player_pistol.rs:737:54: replace > with >= in saw` | delta exactly ANG180 is impossible: A_Saw's linetarget lies on its aim line, within the ±(255<<18) spread plus the target's width of the facing, never opposite it. |
+| `crates/doom-sim/src/player_pistol.rs:259:9: replace <impl weapons::Host for Host<'_, '_, A>>::strength -> bool with false` | `strength()` reads `powers[1]` (`pw_strength`, doomdef.h:214–224), which is 0 under every admitted policy (`validate_powers` refuses anything else; no berserk is admitted), so it is always false. The review (A2/B9) found the function read index 0, the invulnerability counter, also forced to 0; the index was corrected. |
 | `crates/doom-sim/src/world_pickups.rs:44:20: replace match guard policy.has_episode1() with true in pickup_bound` | world.episode1 is Some only under wire 23, so `Some(b) if has_episode1()` and `Some(b)` match the same inputs. |
 | `crates/doom-sim/src/world_pickups.rs:55:20: replace match guard policy.has_episode1() with true in bonus_bound` | as 44:20. |
 | `crates/doom-sim/src/world_pickups.rs:67:20: replace match guard policy.has_episode1() with true in world_item_bound` | as 44:20. |
@@ -884,9 +887,6 @@ Reasons concern all reachable inputs, rather than a missing boundary test.
 | `crates/doom-sim/src/demon.rs:81:9: replace && with \|\| in strike_player` | the Spectre is admitted only under wire 23; under wire 23 the widened test passes any type, but the next clause requires S_SARG_ATK3, a state only the Demon and the Spectre can hold. |
 | `crates/doom-sim/src/demon_expanded_map.rs:156:36: replace * with + in Simulation::with_demon_expanded_profile` | an overflow guard whose value is discarded: (sight_work + 5·lines)·queries fits usize for every admitted map, and `5 + lines`/`5 / lines` are smaller, so both forms pass on every input. |
 | `crates/doom-sim/src/demon_expanded_map.rs:156:36: replace * with / in Simulation::with_demon_expanded_profile` | an overflow guard whose value is discarded: (sight_work + 5·lines)·queries fits usize for every admitted map, and `5 + lines`/`5 / lines` are smaller, so both forms pass on every input. |
-| `crates/doom-sim/src/demon_expanded_map.rs:374:18: replace > with == in action_sight` | the count never reaches the limit: per tic a monster runs its own action plus at most one damage-entered seestate A_Chase, each making at most 2 sight queries (A_Look: P_LookForPlayers stops after 2 players, p_enemy.c:520; A_Chase: either the re-look (≤ 2) or P_CheckMeleeRange + P_CheckMissileRange (≤ 2), p_enemy.c:174–201, 672–760), so ≤ 4K < max(64, 8(K+1)) under wire 23 and ≤ 32 < 64 under the older wires (K ≤ 8); barrel/rocket explosions charge their own control. `>`, `>=` and `==` are all false on every input. |
-| `crates/doom-sim/src/demon_expanded_map.rs:374:18: replace > with >= in action_sight` | the count never reaches the limit: per tic a monster runs its own action plus at most one damage-entered seestate A_Chase, each making at most 2 sight queries (A_Look: P_LookForPlayers stops after 2 players, p_enemy.c:520; A_Chase: either the re-look (≤ 2) or P_CheckMeleeRange + P_CheckMissileRange (≤ 2), p_enemy.c:174–201, 672–760), so ≤ 4K < max(64, 8(K+1)) under wire 23 and ≤ 32 < 64 under the older wires (K ≤ 8); barrel/rocket explosions charge their own control. `>`, `>=` and `==` are all false on every input. |
-| `crates/doom-sim/src/demon_expanded_map.rs:374:52: replace > with >= in action_sight` | work is the per-query charge times the count and the budget is the same charge times the limit (map_extent.rs:197–203), so `work >= budget` needs count ≥ limit, which never happens (see 374:18). |
 | `crates/doom-sim/src/demon_map_spawn.rs:106:29: replace += with *= in Simulation::preflight_map_demons` | redundant re-count: spawning.rs refuses the same DecorationLimit before any spawn (player_e1m1_tests.rs:917), and under wire 23 the limit is the THINGS lump's own count D, which the spawned count can never exceed. |
 | `crates/doom-sim/src/demon_map_spawn.rs:115:25: replace += with *= in Simulation::preflight_map_demons` | redundant re-count: spawning.rs refuses BarrelLimit before any spawn (player_barrel_combat_tests.rs:282); under wire 23 the limit is the lump's own B. |
 | `crates/doom-sim/src/projectiles.rs:610:9: replace \|\| with && in launch_player_missile` | launch_player_missile's only caller is A_FireMissile, which exists only in the wire-23 launcher and passes MT_ROCKET, so both forms pass. |
@@ -894,19 +894,14 @@ Reasons concern all reachable inputs, rather than a missing boundary test.
 | `crates/doom-sim/src/weapons.rs:318:9: replace Host::take_drop -> bool with true` | read only after A_FireMissile (after_fire), which the fixture hosts using the default never run. |
 | `crates/doom-sim/src/weapons.rs:312:9: replace Host::strength -> bool with true` | read only in the wire-23 branch (line 634), which the fixture hosts using the default never enter. |
 | `crates/doom-sim/src/weapons.rs:634:40: replace == with != in Machine<'_, H>::weapon_change` | strength() is always false under every admitted policy (see player_pistol.rs:259 false), so `!(x && false)` is true for either comparison. |
-| `crates/doom-sim/src/combat.rs:487:49: replace && with \|\| in DamagePlan::current_original_in` | both forms give the same result (reclassified from harmless): the condition gates only the `impulse()` bounds preflight, which applies nothing; a damaged player body is always live (P_DamageMobj callers skip non-shootable targets) and `thrust` is false only when the player saws himself, which A_Saw cannot do, so `live && thrust` = `live \|\| thrust` on every reachable call. |
-| `crates/doom-sim/src/combat.rs:528:45: replace && with \|\| in DamagePlan::current_original_in` | the extra check never refuses (reclassified from harmless): it gates only the `impulse()` bounds preflight (nothing applied); the extra preflight on a chainsaw hit (at most 20 damage, at most 2.5 units/tic) is far inside the travel bound, so it never refuses; the thrust itself is not applied (existing saw_hit_lunges_and_does_not_thrust). |
 | `crates/doom-sim/src/lifecycle.rs:881:9: replace ActorRegistry::validate_state_rocket -> Result<(), ActorError> with Ok(())` | the rocket's states come from the built-in info.c table, which original_registry's rocket_policy proves satisfy the rocket closure at first use; no other registry reaches validate_state_rocket. |
-| `crates/doom-sim/src/lifecycle.rs:936:9: replace ActorRegistry::validate_type_original -> Result<(), ActorError> with Ok(())` | validate_type_original runs only on the built-in original registry, whose types the original_registry policies prove admissible; every call returns Ok either way. |
 | `crates/doom-sim/src/lifecycle.rs:969:42: replace \| with ^ in ActorRegistry::validate_type_original` | ALLOWED_FLAGS lacks MF_MISSILE (admitted only here, per the comment), so `\|` and `^` give the same mask. |
-| `crates/doom-sim/src/spawning.rs:195:17: replace && with \|\| in Simulation::validate_entry` | unreachable (reclassified from harmless): validate_entry is not reached under wire 23 (monster entry routes to enter_monster_state, request_actor_death refuses the demon lifecycle; under the mutant every wire-23 entry would be checked against the rocket closure and refused, and the whole suite passed), and under the older imps policies no actor holds a rocket state. |
-| `crates/doom-sim/src/use_lines.rs:320:25: replace \|\| with && in shoot_lines` | shoot_special_line acts only on 46 (it returns for every other special), so continuing or not on a non-46 line is the same, and 46 proceeds under both forms. |
-| `crates/doom-sim/src/use_lines.rs:320:29: delete ! in shoot_lines` | as 320:25: with `!` removed only non-46 lines change routing, and those are no-ops. |
+| `crates/doom-sim/src/use_lines.rs:320:25: replace \|\| with && in shoot_lines` | `shoot_lines` returns at once unless `world.episode1` is set, which only the wire-23 constructor does, so no older wire reaches the line. Under wire 23 the mutant only reroutes non-46 lines to `shoot_special_line`, which returns Ok for every special but 46, and 46 proceeds under both forms; the added `movers()?` access is `Some` for both accesses a wire-23 host uses (reason completed by the review, B11). |
+| `crates/doom-sim/src/use_lines.rs:320:29: delete ! in shoot_lines` | as 320:25: with `!` removed only non-46 lines change routing, those are no-ops, and the extra `movers()?` access cannot fail under wire 23. |
 | `crates/doom-sim/src/barrels.rs:280:32: replace \|\| with && in ExplosionSight::charge` | `one` is fixed per map, so `work` is always `queries·one` and `budget` is `allowance·one`: `queries > allowance` holds exactly when `work > budget`. |
 | `crates/doom-sim/src/barrels.rs:309:9: replace && with \|\| in radius_attack` | MT_ROCKET is admitted only under wire 23, so `is_rocket` implies `has_episode1`; under wire 23 the widened test admits any type, but `A_Explode` is admitted only in S_BEXP4 and S_EXPLODE1, so only barrels and rockets reach the check. |
-| `crates/doom-sim/src/barrels.rs:362:19: replace * with + in radius_attack` | the refusal cannot fire under either form (reclassified from harmless): `9 + order·(K+2)` ≥ `order·(K+2)` > `order·(1+K)`, the most visits one explosion can make (one visit per thing plus one revisit pass per relinking monster). |
-| `crates/doom-sim/src/barrels.rs:362:60: replace + with - in radius_attack` | the refusal cannot fire under any form (reclassified from harmless): roster term K ≥ 8 (`visit_roster` floor), so `9·order·2K` and `9·order·(K−2)` (8K ≥ 19) both stay ≥ `order·(1+K)`, the most visits one explosion can make. |
-| `crates/doom-sim/src/barrels.rs:362:60: replace + with * in radius_attack` | the refusal cannot fire under any form (reclassified from harmless): roster term K ≥ 8 (`visit_roster` floor), so `9·order·2K` and `9·order·(K−2)` (8K ≥ 19) both stay ≥ `order·(1+K)`, the most visits one explosion can make. |
+| `crates/doom-sim/src/barrels.rs:362:60: replace + with - in radius_attack` | Visits ≤ (order + D)(1 + L) ≤ (2·order − 1)(1 + R): L ≤ K relinks (each monster at most once per explosion), D ≤ K drops linked during the walk, K ≤ order − 1 because corpses stay linked, and R = `visit_roster` ≥ max(K, 8). 9·order·(R − 2) ≥ 2·order·(1 + R) needs only 7R ≥ 20, and 9·order·2R ≥ 2·order·(1 + R) always holds, so neither form can refuse (reason corrected by the review, B8; investigation §14, 2026-11-10). |
+| `crates/doom-sim/src/barrels.rs:362:60: replace + with * in radius_attack` | Visits ≤ (order + D)(1 + L) ≤ (2·order − 1)(1 + R): L ≤ K relinks (each monster at most once per explosion), D ≤ K drops linked during the walk, K ≤ order − 1 because corpses stay linked, and R = `visit_roster` ≥ max(K, 8). 9·order·(R − 2) ≥ 2·order·(1 + R) needs only 7R ≥ 20, and 9·order·2R ≥ 2·order·(1 + R) always holds, so neither form can refuse (reason corrected by the review, B8; investigation §14, 2026-11-10). |
 | `crates/doom-sim/src/e1m1_rules.rs:157:75: replace < with <= in decoration_states` | compile-time table: every listed decoration's spawn loop closes on its spawn state within 4 states (info.c), so the `< 8`/`<= 8` cap never decides. |
 | `crates/doom-sim/src/e1m1_rules.rs:208:5: replace animated_decoration -> bool with true` | animated_decoration over the compile-time table: the firestick (MT_MISC43, info.c:3526–3550: 4 timed states, no action, MF_SOLID, health 1000, radius 16, height 16) is the only input reaching it and satisfies it; every mutant only widens acceptance. |
 | `crates/doom-sim/src/e1m1_rules.rs:223:9: replace && with \|\| in animated_decoration` | animated_decoration over the compile-time table: the firestick (MT_MISC43, info.c:3526–3550: 4 timed states, no action, MF_SOLID, health 1000, radius 16, height 16) is the only input reaching it and satisfies it; every mutant only widens acceptance. |
@@ -963,7 +958,6 @@ Reasons concern all reachable inputs, rather than a missing boundary test.
 | `crates/doom-sim/src/original_player.rs:398:73: replace \| with ^ in Simulation::preflight_player_body` | The source bit flags are pairwise disjoint, so XOR and OR form the same mask for every input (p_mobj.h:142-189 for actor flags; d_event.h:75-87 for button flags). |
 | `crates/doom-sim/src/original_player.rs:398:59: replace \| with ^ in Simulation::preflight_player_body` | The source bit flags are pairwise disjoint, so XOR and OR form the same mask for every input (p_mobj.h:142-189 for actor flags; d_event.h:75-87 for button flags). |
 | `crates/doom-sim/src/original_player.rs:398:46: replace \| with ^ in Simulation::preflight_player_body` | The source bit flags are pairwise disjoint, so XOR and OR form the same mask for every input (p_mobj.h:142-189 for actor flags; d_event.h:75-87 for button flags). |
-| `crates/doom-sim/src/player_map_scale.rs:944:17: replace && with \|\| in Simulation::spawn_admitted` | Run 1 carry-over: unreachable (reclassified from harmless): every wire-23 spawn position is inside the room rectangle (a THING outside it is refused earlier at spawn, observed `Monster(Arithmetic)`; missiles, puffs, blood and drops spawn at an actor or a trace point inside the lines), so `room.contains` is always true and `&&`/`\|\|` agree on every reachable input. |
 | `crates/doom-sim/src/player_commands.rs:112:48: replace \| with ^ in Simulation::preflight_player_commands` | The source bit flags are pairwise disjoint, so XOR and OR form the same mask for every input (p_mobj.h:142-189 for actor flags; d_event.h:75-87 for button flags). |
 | `crates/doom-sim/src/player_commands.rs:112:36: replace \| with ^ in Simulation::preflight_player_commands` | The source bit flags are pairwise disjoint, so XOR and OR form the same mask for every input (p_mobj.h:142-189 for actor flags; d_event.h:75-87 for button flags). |
 | `crates/doom-sim/src/player_commands.rs:112:27: replace \| with ^ in Simulation::preflight_player_commands` | The source bit flags are pairwise disjoint, so XOR and OR form the same mask for every input (p_mobj.h:142-189 for actor flags; d_event.h:75-87 for button flags). |
@@ -972,7 +966,6 @@ Reasons concern all reachable inputs, rather than a missing boundary test.
 | `crates/doom-sim/src/world_pickups.rs:44:20: replace match guard policy.has_episode1() with true in pickup_bound` | Run 1 carry-over: world.episode1 is Some only under wire 23, so `Some(b) if has_episode1()` and `Some(b)` match the same inputs. |
 | `crates/doom-sim/src/world_pickups.rs:55:20: replace match guard policy.has_episode1() with true in bonus_bound` | Run 1 carry-over: as 44:20. |
 | `crates/doom-sim/src/world_pickups.rs:67:20: replace match guard policy.has_episode1() with true in world_item_bound` | Run 1 carry-over: as 44:20. |
-| `crates/doom-sim/src/spawning.rs:195:17: replace && with \|\| in Simulation::validate_entry` | Run 1 carry-over: unreachable (reclassified from harmless): validate_entry is not reached under wire 23 (monster entry routes to enter_monster_state, request_actor_death refuses the demon lifecycle; under the mutant every wire-23 entry would be checked against the rocket closure and refused, and the whole suite passed), and under the older imps policies no actor holds a rocket state. |
 | `crates/doom-sim/src/episode1.rs:85:40: replace \|\| with && in Episode1Bounds::from_things` | Run 1 carry-over: kinds 1–4 and 11 are in none of the counted lists (monsters, pickups, barrel, statics), so skipping them or not gives the same counts. |
 | `crates/doom-sim/src/episode1.rs:118:20: replace > with >= in Episode1Bounds::sight_queries` | Run 1 carry-over: at equality (64) both branches return 64. |
 | `crates/doom-sim/src/episode1.rs:126:20: replace > with >= in Episode1Bounds::explosion_sight_queries` | Run 1 carry-over: at equality (216) both branches return 216. |
@@ -995,3 +988,90 @@ Reasons concern all reachable inputs, rather than a missing boundary test.
 |---|---|---|---|
 | `movement.rs:423:79` | replace + with * in path | `level_stats::observe_intercepts` records `hits.len()` (×1) instead of `hits.len() + 1` when a slide trace overflows its intercept limit. That changes the maximum `take_level_run_stats` reports for that refused trace. | `level_stats` is an observation side channel (module doc: never read by the simulation). It is not in the snapshot, any digest or any refusal decision: the `PathError::Overflow` refusal is returned either way. No admitted map reaches the overflow. |
 | `movement.rs:423:79` | replace + with - in path | the same, recording `hits.len() − 1` | as above |
+
+## Independent review (2026-11-10)
+
+Three reviewers with no access to the authors' reasoning read `git diff master...HEAD` at `980ff42`
+against `linuxdoom-1.10/`: the simulation crates (A), the mutation dispositions and the
+below-the-API tests (B), and the tools, frozen evidence, CI and documents (C). Reviewer A read and ran
+nothing; reviewer B ran six mutant experiments in a scratch copy; reviewer C ran the `--check` tools
+listed at the end of this section. Fix commits follow the order C evidence, fix, test; the source facts
+are in the investigation's
+[section 14](../M4A_REFERENCE_INVESTIGATION.md#14-corrections-and-findings-from-phase-2). Not covered by
+reviewer A, by its own statement: DSIM39 field order against STATE_FORMAT, the per-map bounds at every
+spawn site, firestick timing, the widened inert-decoration predicate and Spectre infighting.
+
+### Simulation code (A)
+
+| ID | Severity | Finding | Disposition |
+| --- | --- | --- | --- |
+| A1 | major | Under wire 23 a mover could write a sector height outside every checked bound. A repeatable turbo floor (SR 70, WR 98; p_floor.c:301–315, 66–78) or door top (p_doors.c:324, 335, 498) ratchets 8 or 4 units per use, the reachable-height clamp replaced the +-512 load refusal, and the sums wrapped. No real or synthetic run reaches it. | **Fixed** (`a565a77`, `b7216ce`, `3958126`): wire 23 refuses the tic with `Arithmetic` before the staged write when a height would leave +-1,024 units or a sum would overflow. This refuses earlier than the genuine engine misbehaves (about 32,767 units); the bound is the documented wire-23 sector-height domain and is **flagged for the owner**. Older wires unchanged. |
+| A2 | minor | `Host::strength()` read `powers[0]` (invulnerability) instead of `pw_strength`, index 1 (doomdef.h:214–224). Unobservable: both are forced to 0. | **Fixed** (`e02dffb`, `03f72ef`), named constants. No test: the state cannot be constructed. |
+| A3 | note | The reachable-height estimate ignores raiseFloor jumping down to a lower neighbour ceiling. | No change: it can only refuse more (`Vertical`), never diverge. |
+| A4 | note | `stair_bounds` uses static floors, so its upper bound is not sound. | No change: never read at run time; heights are now bounded by A1's witness. |
+| A5 | note | The turbo message uses the simulation tic as `gametic`. | Verified equal: the driver starts `G_Ticker` at gametic 0 (m4a_driver.c:582–596) and every admitted run starts at load. |
+| A6 | note | With the optional boundary the Escape witness is off. | Verified covered by the per-tic rectangle checks and checked arithmetic. |
+
+Read clean by reviewer A: every listed mechanism against its C body, refusals before any staged write,
+the gating of every shared-code change, determinism, and the v39-only `store.max_slots` rule with
+readers of v38 and below identical to master.
+
+### Mutation dispositions and below-the-API tests (B)
+
+Of 106 distinct equivalent or harmless mutations, the reviewer found 90 sound, 7 sound with a wrong or
+incomplete reason, 5 distinguishable (each shown by running) and 4 unproven. Follow-up work overturned
+five more of the "weak" and "unproven" ones. Each kill below was observed by applying the one mutation
+by hand in a scratch copy and watching the named test fail; none is a cargo-mutants rerun.
+
+| ID | Severity | Mutation (campaign location) | Finding | Disposition and killing test |
+| --- | --- | --- | --- | --- |
+| B1 | major | `spawning.rs:195:17` `&&`→`\|\|` in `validate_entry` (also run 2) | Not unreachable: wire-23 state entry goes through it. | **Caught** by the existing `a_dense_barrel_walk_preserves_nonshootable_items` and the new `a_wire_23_imp_can_enter_its_run_state` (`0165e6a`). |
+| B2 | major | `player_map_scale.rs:944:17` `&&`→`\|\|` in `spawn_admitted` (also run 2) | The reason was inverted; the mutant drops the boundary spawn rule. | **Caught**: `a_wire_23_imp_too_close_to_a_wall_is_refused_at_spawn` (`a4c3f10`). |
+| B3 | minor | `lifecycle.rs:936:9` `validate_type_original` → `Ok(())` | Also checks type height against the tallest sector. | **Caught**: `a_wire_23_room_shorter_than_the_puff_is_refused_at_construction` (`7b0d952`). |
+| B4 | minor | `player_pistol.rs:240:9` `admit_weapon` → `Ok(())` | A second caller exists; under `PistolV1` the fist fallback is not admitted. | **Caught**: `an_empty_pistol_refuses_the_unadmitted_fist_fallback` (`b745f13`). |
+| B5 | minor | `player_pistol.rs:737:54` `>`→`>=` in `saw` | A target centred on the player gives a delta of exactly ANG180 (p_pspr.c:529–541, r_main.c:299–300, p_maputl.c:665). | **Caught**: `a_saw_target_on_the_players_own_centre_turns_by_minus_ang90_21` (`06e7b4f`, `7ee035f`); Rust already agreed with C. |
+| B6 | minor | `demon_expanded_map.rs:374:18` (`==`, `>=`), `374:52` (`>=`) in `action_sight` | The "at most 4K queries" proof was false: corpse-sourced explosions repeat `A_Look` per hit, so a tic can make exactly the limit. Reaching it is a legitimate refuse-the-tic witness, not seen in the 30 real runs. | **Caught**: `corpse_sourced_explosions_reach_the_sight_allowance_exactly` (64 admitted, more refused with `Perception(WorkLimit)`, state unchanged; `f9642eb`, `4ef506b`). Not tested under the older barrels wires. |
+| B7 | minor | `barrels.rs:362:19` `*`→`+` in `radius_attack` | The visit bound omitted drops linked during the walk. | **Unresolved, untested boundary.** Visits ≤ (order + D)(1 + L) (L ≤ K relinks, D ≤ K drops). The mutant limit 9 + order·(R + 2) is provably enough when no dropper dies in the explosion, when D(1 + L) ≤ order·(R + 1 − L) + 9, and when every relink stays inside one cell; for relinks that cross into another cell neither a proof nor a counterexample is known (`e3fd47a`). The original limit never refuses a legal explosion. |
+| B8 | note | `barrels.rs:362:60` (`-`, `*`) | Same omission, still equivalent. | Reason corrected in the table above. |
+| B9 | minor | `player_pistol.rs:259:9` | Equivalent, but the code read the wrong counter (A2). | Code fixed; reason corrected. |
+| B10 | minor | `combat.rs:487:49`, `528:45` `&&`→`\|\|` in `DamagePlan::current_original_in` | Reviewed as equivalent with false premises; follow-up showed them **not** equivalent under the policies without a room: melee begun before its target died lands on the corpse (p_enemy.c:174–190; p_inter.c:675, 787–788), and the mutant's thrust preflight refuses a corpse at the travel edge. | **Caught**: `an_imp_claw_on_the_dead_player_at_the_travel_edge_changes_nothing` (487:49) and `a_demon_bite_on_a_corpse_at_the_travel_edge_changes_nothing` (528:45) (`5b6f01d`, `a78f2ef`). |
+| B11 | note | `use_lines.rs:320:25`, `320:29` | Equivalent; the reason omitted the added `movers()?` access. | Reason completed in the table above. |
+| B12 | minor | `a_zero_item_total_before_the_thing_batch_is_accepted` | Its guard is reachable through the public `spawn_dropped_pickup`. | Public test `a_dropped_pickup_before_the_thing_batch_is_accepted` added, comment corrected (`005d1e4`); the below-the-API count is 29. |
+| B13 | note | Three item-witness test comments said "via `advance`" but call the predicate directly. | Comments corrected (`0749a49`). |
+| B14 | note | `diagnostic.rs:1105` carries a DSIM39 clause inside `validate_specials`, which runs only for v34. | Dead clause; the equivalence stands. Left unchanged. |
+
+The other 17 below-the-API tests name their guard, are truly unreachable from the public API, take
+their expectation from C or a written rule and inject one violated condition. The nine public survivor
+tests checked use no Rust output as oracle, and the seven timeout proofs hold by reading.
+
+### Tools, frozen evidence, CI and documents (C)
+
+No critical or major finding. `level_snapshot.py` resolves each `target`/`tracer` position against its
+own dump's thinker rows, as the drivers print them (m3h9c_driver.c:300–307, m4a_driver.c:348); it reads
+no Rust output; a freed or reused target still mismatches; and one pair in the committed dumps needs
+it (TARGET1). No file under `tests/` that exists on master changed. The M3h9c contract is byte-identical
+to master and regenerates; all 165 upstream files equal the original commit; the CI diff only adds four
+steps and raises timeouts.
+
+| ID | Severity | Finding | Disposition |
+| --- | --- | --- | --- |
+| C1-1 | minor | The fork's header and TESTING say message codes 38..40; the fork also emits 41 (turbo). | TESTING corrected. The driver header and `tools/reference/README.md` are left: the header is under the frozen M4a runner contract hash. |
+| C2-1 | minor | Contract hashes are of LF-normalised Latin-1 text, so a CRLF, lone-CR or mixed-ending change no longer changes them; disclosed only in a docstring and §14. | Disclosed in TESTING; Git object identity is the byte-level guard. Lone CR remains untested. |
+| C5-1 | minor | E1M6/E1M7 walk_to_exit showed script lengths, not exit tics; "chaos death tic" mislabelled. | Corrected to 7,838 and 7,735; relabelled "reborn". |
+| C5-2…5 | minor | Stale "in progress", "to be confirmed", "to be re-run" and forward-looking sentences in this record. | Reworded. |
+| C5-6 | minor | ROADMAP said H1–H12 were pending. | Corrected: confirmed 2026-11-05. |
+| C5-7, C5-8 | minor, note | README: E1M1 has a barrels script, not a death script; "the real Episode 1 maps" could read as all nine. | Reworded in "Where it stands". |
+| C5-9 | note | The README diff goes beyond the milestone rule (several sections rewritten, the "going" list changed, the wire-21 row edited). Owner approval is asserted in this record and a commit message only. | **For the owner to confirm at review.** |
+| C5-10 | minor | COMPATIBILITY carried a milestone status line; the note carries a status block and superseded commands. | COMPATIBILITY's line cut to a ROADMAP pointer. The note's status line is kept at the owner's instruction; the superseded command block is left as marked. |
+| C5-11 | note | Real-map script comments describe routes in prose (no coordinates, angles or lump bytes), as master's E1M1 script does. | Owner awareness only. |
+
+Commands reviewer C ran, all passing: `m3h9c_build.py --check`, `m4a_build.py --check`,
+`test_runner_newlines.py` (and failing as expected with the old reader patched in), `e1m1_scripts.py
+--check`, `m3h9c_wad.py --check`, `m4a_wad.py --check`, `m4a_check_wad.py --check`, `check_docs.py`,
+`m3h9c_reference.py --check --keep-dumps` (6 scripts), `m3h9c_snapshot_goldens.py --check` (11 files),
+`m4a_reference.py --check --keep-dumps` (30 scripts) and with `--selftest 300`, `m4a_snapshot_goldens.py
+--check` (19 files). Address-checked builds ran with `detect_leaks=0`: LeakSanitizer disabled, not passed.
+
+## Final gates from clean
+
+Not yet run on the reviewed head; this section is filled by the closing gate run.
