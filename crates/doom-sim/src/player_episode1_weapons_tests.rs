@@ -822,3 +822,51 @@ fn a_wire_23_room_shorter_than_the_puff_is_refused_at_construction() {
         )))
     );
 }
+
+/// Pins the mutation `saw` `>` -> `>=` on the `ANG180` comparison
+/// (player_pistol.rs) recorded as equivalent in docs/validation/M4A.md: a delta
+/// of exactly `ANG180` is reachable when the saw's target stands on the
+/// player's own centre (docs/M4A_REFERENCE_INVESTIGATION.md §14, 2026-11-10).
+/// THINGs in spawn order: the player at (−32, 0) facing 180, a barrel and the
+/// chainsaw on the same spot. A forward move touches the chainsaw (spawned
+/// last, so first in the cell's thing list; `PIT_CheckThing` touches a special
+/// and returns `!solid`) and is then blocked by the barrel (p_map.c:252–343),
+/// so the player never leaves (−32, 0). `A_Saw`'s trace starts at the barrel's
+/// centre, the barrel's corner-to-corner diagonal crosses it at frac 0, which
+/// is kept (only `frac < 0` is skipped, p_maputl.c:665), and the aim at
+/// distance 0 makes it `linetarget`. `R_PointToAngle2` of a zero vector is 0
+/// (r_main.c:299–300), so `angle - player->mo->angle` is `0 - 0x80000000` =
+/// `0x80000000`, not above `ANG180`; the else branch's `> ANG90/20` holds, so
+/// the facing becomes `0 - ANG90/21` = `0xFCF3CF3D` (p_pspr.c:529–541). The
+/// mutant takes the first branch and gives `0 + ANG90/21` = `0x030C30C3`.
+#[test]
+fn a_saw_target_on_the_players_own_centre_turns_by_minus_ang90_21() {
+    let mut s = armed(
+        &with(&[(-32, 0, 180, 1), (-32, 0, 0, 2035), (-32, 0, 0, 2005)]),
+        EMPTY,
+    );
+    let player = s
+        .actor_order()
+        .find(|id| {
+            s.actor(*id)
+                .and_then(Actor::life)
+                .is_some_and(|l| l.actor_type.0 == OriginalActorType::MT_PLAYER.ordinal())
+        })
+        .unwrap();
+    let spot = [Fixed::from_map_units(-32), Fixed::ZERO];
+    s.advance(command(1, 0)).unwrap();
+    assert_eq!(live_of(&s, OriginalActorType::MT_MISC26), 0);
+    until(&mut s, command(0, 0), 100, |s| raised(s, Weapon::Chainsaw));
+    for _ in 0..40 {
+        let p = *s.actor(player).unwrap();
+        assert_eq!(p.position(), spot);
+        assert_eq!(p.spec.angle, player_pistol::ANG180);
+        s.advance(command(0, BT_ATTACK)).unwrap();
+        decode(&s);
+        if sounded(&s, "sfx_sawhit") {
+            assert_eq!(s.actor(player).unwrap().spec.angle, 0xFCF3_CF3D);
+            return;
+        }
+    }
+    panic!("no saw hit");
+}
