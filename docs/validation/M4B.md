@@ -9,7 +9,8 @@ owns the commands. Exact review state and CI belong to GitHub.
 **Scope of the record.** Phase 2 step 1 (2026-11-10, America/Los_Angeles): synthetic mechanism
 WADs run through the genuine engine. Phase 2 step 2 (2026-11-10): the independent DSIM40
 projection of those runs and its goldens. Phase 2 step 3 (2026-11-10): wire 24 plumbing; the
-Rust results are in [Wire 24 against the genuine engine](#wire-24-against-the-genuine-engine). Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`,
+Rust results are in [Wire 24 against the genuine engine](#wire-24-against-the-genuine-engine). Phase 2
+step 4 (2026-11-10): teleportation, in [Rust replay: teleportation](#rust-replay-teleportation). Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`,
 so LeakSanitizer was disabled, not passed. Timings quoted here were taken on a host that was
 not idle and are not performance measurements.
 
@@ -253,3 +254,68 @@ refuses (note §7, finding 12). Plan step 7 re-runs all 30 real-map scripts.
   hard skill have no Rust result yet.
 - The DSIM40 reader admits skill 2 only until step 6.
 
+
+## Rust replay: teleportation
+
+Phase 2 step 4 (2026-11-10). Wire 24 now admits line special 97, the landing (doomednum 14),
+the fog and the telefrag ([COMPATIBILITY](../COMPATIBILITY.md); decisions I3, I7, I8). The
+teleport runs inside the move, through a motion access of wire 24 that runs every crossing of
+`P_XYMovement` at its place in `P_TryMove`'s loop (note §7, finding 15); monsters' `P_Move`
+crossings were already immediate. No fallback witness was needed: sliding barrels and corpses
+teleport through the same access. Commands are in [TESTING](../TESTING.md#m4b-synthetic-mechanism-wads).
+
+**Synthetic scripts.** `check_player_episode1v2.py --binary target/release/examples/player_level_run --require`
+matched 40 scripts (16,073 compared tics): the 30 M4a scripts, unchanged, and ten M4b scripts,
+every capture of each:
+
+| Script | Captures | Shows |
+| --- | ---: | --- |
+| TELE1 | 174 | back-side crossing, teleport, the 18 frozen tics, fog removal |
+| TELE2 | 62 | the landing search order (sector index, then thinker order) |
+| TSPLIT | 66 | the split move's second half from the landing, with a pickup |
+| TSLIDE | 171 | the slide's zero-length try at the landing, with a pickup |
+| MTELE1 | 161 | a Demon teleport, then a blocked one (live barrel on the landing) |
+| SLIDEB | 101 | a sliding live barrel teleports |
+| SLIDEC | 124 | a sliding corpse teleports |
+| SPECH8 | 99 | eight special lines in one box |
+| SPECH9 | 76 | the last good tic; DSIM tic 76 refused with `SpecialCross` |
+| SKILL2 | 91 | the skill-2 filter (no landing; the 97 crossing does nothing) |
+
+SPECH9 ran on its overrun-probe demo (`SPECH8.lmp`, whose commands begin with SPECH9's): the
+captures through DSIM tic 75 match, and DSIM tic 76, the tic in which the genuine engine writes
+its ninth `spechit` entry (dump tic 75, the address variant's probe), is refused. The workspace
+test `episode1v2_mechanism_goldens` repeats the ten comparisons in `cargo test`, decodes every
+capture with the DSIM40 reader, compares the nine fixtures of these scripts byte for byte (event
+lists emptied, as in the fixtures), and checks that the refused SPECH9 tic keeps the canonical
+state and refuses again on retry; its self-test (TELE1 with one forward command removed) fails
+as required.
+
+**Still pending.** TFRAG1 and the six Baron scripts wait for step 5 (TFRAG1's WAD places a
+Baron), SKILL3 for step 6. The telefrag is covered meanwhile by `teleport_tests`: TFRAG's WAD
+with its Baron's THING removed reproduces the C-observed zombieman (health −9,980, xdeath,
+momentum (−3,979,285, −1,518)) and Demon (−9,850, (−994,821, −380)); neither value reads the
+RNG, so removing the Baron changes neither. The other ten fixtures (TFRAG1, the Baron
+scripts and SKILL3) are compared when those scripts are admitted.
+
+**Real maps, local only.** The IWAD was read read-only from `/mnt/d/DoomIWADs`; dumps were kept
+under `/mnt/d/scratch/m4b` and deleted after the digests below were taken. On skill 2, E1M5 and
+E1M9 now load under wire 24; E1M8 is refused at spawn with `MapSpawnError::UnsupportedType(3003)`
+(its Barons, step 5). A 2,100-tic idle demo of each loadable map (written by
+`player_level_run --write-idle` into scratch, not committed) ran through the genuine engine
+(M4b runner, three variants, byte-identical dump sets) and through wire 24:
+
+| Map | Captures compared | Result | `map.*` group | Stripped-sequence digest (C = Rust) |
+| --- | ---: | --- | --- | --- |
+| E1M5 | 2,101 | match | equal | `9c093d5b594e5982` |
+| E1M9 | 2,101 | match | equal | `ecf193bc16671152` |
+
+Idle demos cross no teleport line; walk scripts that use them are plan step 7.
+
+**Limits.**
+
+- No committed script makes a thing teleport twice in one tic. The path exists (the split
+  move's second half and a slide continue from the landing) but no synthetic WAD places a
+  second 97 line near a landing, so it has no genuine-engine observation.
+- The chainsaw case of the telefrag (no knockback, p_inter.c:806–810) is a Rust test on the
+  damage plan, not a genuine run.
+- The store-full witness at the fogs is shown on a store filled by the test (Rust only).

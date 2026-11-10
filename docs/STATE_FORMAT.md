@@ -2340,7 +2340,7 @@ reader only:
 
 | Sub-tag | Meaning | Payload after tag and sub-tag | Position |
 | --- | --- | --- | --- |
-| 15 | Teleported (`EV_Teleport` returned 1) | thing actor ID, u16 line, landing actor ID, i32 old x, i32 old y, i32 old z (16.16) | after the records of what the teleport caused (the stomp's combat records, then the two fog spawn records, tag 1), and before the sub-tag 3 record of the same crossing |
+| 15 | Teleported (`EV_Teleport` returned 1) | thing actor ID, u16 line, landing actor ID, i32 old x, i32 old y, i32 old z (16.16) | after the records of what the teleport caused (the stomp's combat records, then the two fog spawn records, tag 1, each followed by the fog's state-initialisation record and its `sfx_telept` sound record), and before the sub-tag 3 record of the same crossing |
 | 16 | Teleport not taken (`EV_Teleport` returned 0) | thing actor ID, u16 line, u8 reason: 0 crossed from the back side, 1 no landing in any sector with the line's tag, 2 `P_TeleportMove` refused (a non-player met a shootable thing) | the same position |
 | 17 | `A_BossDeath` ran | Baron actor ID, u8 outcome: 0 `level.map` is not 8, 1 no live player, 2 another Baron alive, 3 the tag-666 floor call was made | where the action runs, in the `S_BOSS_DIE7` state entry. Outcome 3 comes after the call's sub-tag 5 records and its sub-tag 6 record. That record has function 4 (`EV_DoFloor`), line 65535 (no line: the source passes a local line whose only field set is tag 666), argument 1 (`lowerFloorToLowest`), the call's result and the number of movers created |
 
@@ -2352,8 +2352,9 @@ Notes on the events:
   `S_BOSS_DIE7` names it.
 - A telefrag uses the existing combat records (tag 13): damage (sub-tag 2) with amount 10,000,
   inflictor and source the teleporting player; knockback (sub-tag 4) with the wrapped thrust
-  above; health, kill and death-timer records as for any kill. The v40 reader admits a damage
-  amount above 1,000 only in this form.
+  above; health, kill and death-timer records as for any kill. Like the v39 reader, the v40
+  reader does not check combat record amounts; it bounds the result, each actor's `health`
+  being at least −9,999.
 - The Baron's attacks use the existing combat and projectile records (tags 13 and 15) with
   `MT_BRUISERSHOT` (16) wherever the v39 forms name `MT_TROOPSHOT` (31).
 
@@ -2369,8 +2370,13 @@ The v40 reader applies every v39 check, with these changes:
 - `actors.options` is `[2, 0, 0]` or `[3, 0, 0]`;
 - every actor's `type`/`state` lies in the closures above. `MT_TELEPORTMAN` must be in state 0
   with `tics` −1 and is never pending;
-- a non-player's `health` is at least −9,999;
+- every actor's `health` is at least −9,999 (one telefrag of a live thing; the player is never
+  stomped, so this bounds it too);
 - the tag-26 sub-tags 15–17 and the widened damage form are admitted.
+
+**Admission so far (M4b step 4).** The v40 reader admits the `MT_TFOG` and `MT_TELEPORTMAN`
+closures, sub-tags 15 and 16 and the telefrag's health domain; the Baron's types and states and
+sub-tag 17 arrive with step 5, and skill 3 with step 6 (M4b note §7, finding 10).
 
 The per-map bounds come from `map.things` with the skill bit of `actors.options[0]`: bit 2 for
 skill 2 and bit 4 for skill 3, after the single-player filter. Doomednum 3003 counts as a monster

@@ -2430,9 +2430,9 @@ and for the observations [validation/M4A.md](validation/M4A.md); Rust-only tests
 
 ## Original Episode 1, part 2: teleporters, the Baron of Hell, `A_BossDeath` and hard skill (wire 24)
 
-**Status: in progress (M4b, plan step 3 of the [note](M4B_REFERENCE_INVESTIGATION.md#6-plan-size-estimate-and-cap)); see
-[ROADMAP](ROADMAP.md).** So far wire 24 is wire 23 under a new identity. None of its new
-mechanisms is admitted yet; each is refused at load as listed below.
+**Status: in progress (M4b, plan step 4 of the [note](M4B_REFERENCE_INVESTIGATION.md#6-plan-size-estimate-and-cap)); see
+[ROADMAP](ROADMAP.md).** Wire 24 is wire 23 plus teleportation. The Baron, `A_BossDeath` and
+hard skill are still refused at load, as listed below.
 
 `OriginalExecutionProfile::PlayerMonstersEpisode1V2` (wire 24, DSIM40, context
 `PLAYER-MONSTERS-EPISODE1-2-v1`) is a separate optional superset of `PlayerMonstersEpisode1V1`
@@ -2450,22 +2450,66 @@ and comparison contract (the section above). Under the same inputs, a wire-24 ca
 wire-23 capture with `profile` 24, the new context and `level.map` added. The demo reader
 `parse_demo_episode1_v2(bytes, map)` reads a version-110 header with skill 2 or 3, episode 1 and
 maps 1-9. The runner `player_level_run --policy episode1v2` takes the map from `--map` and the
-skill from the header.
+skill from the header. Plus teleportation (plan step 4; decisions I3, I7 and I8):
+
+- **Line special 97** (WR teleport, p_spec.c:904–907) for the player and for every non-missile
+  thing that crosses it: walking monsters (`P_Move`) and anything sliding with momentum
+  (monsters, corpses, barrels). `EV_Teleport` (p_telept.c:47–131) runs as in C: the back side
+  does nothing; the landing is the first `MT_TELEPORTMAN` in thinker order inside the
+  lowest-numbered sector with the line's tag (no tag-0 guard); `P_TeleportMove` takes the
+  centre sector's floor and ceiling with no line pass; the thing gets `z = floorz`, the landing's
+  angle and zero momentum; two `MT_TFOG` are spawned (old position, then 20 units along the
+  landing's angle by the fine-sine table, which is not exactly 20); a player gets
+  `reactiontime` 18, which skips the next 18 `P_MovePlayer` calls.
+- **Inside the move.** The teleport runs in `P_TryMove`'s crossing loop. Once `P_TeleportMove` was
+  reached (success or failure) the loop ends; the second half of a split move and the rest of a
+  slide carry on from the landing, so a thing can teleport twice in one tic. Under wire 24 every
+  crossing of `P_XYMovement` runs inside the move at its place in the loop (wire 23 keeps running
+  them after the move); the events and the shared thinker order come out as C orders them.
+- **The landing** (doomednum 14): spawned by `spawn_map_things` like any THING (one `lastlook`
+  draw, no tics draw), in state 0 (`S_NULL`, tics −1) forever, in `spatial.link_order` but in
+  no sector list and no block cell.
+- **Stomping** (`PIT_StompThing`, p_map.c:81–108; decision I8). A player telefrags every
+  shootable thing whose box overlaps the landing (no z test) with `P_DamageMobj(thing, player,
+  player, 10000)`. A non-player's teleport fails if any shootable thing overlaps (maps 1–9),
+  which changes nothing and spawns no fog. The telefrag's thrust is the wrapped 32-bit value
+  of `damage*(FRACUNIT>>3)*100/mass` that the genuine strict builds compute (−397,934,592/mass;
+  decision I3); no knockback when the player's ready weapon is the chainsaw. Damage above 1,000
+  stays refused everywhere else and on every older wire. A second player-1 start (a voodoo
+  doll) is refused at spawn, as under wire 22 and 23, so a victim is never a player.
+
+**Witnesses of the teleport (each refuses the tic; the checked transaction keeps the whole
+canonical state, as for every wire-23 mid-tic refusal):**
+
+- the ninth `spechit` entry of any position check (`MapScaleError::SpecialCross`, inherited
+  from wire 23; it covers every `P_TryMove`, `P_Move`, `P_ThingHeightClip` and missile move);
+- a full actor store when the drops of a telefrag and the two fogs need their slots
+  (`StoreError::Capacity`), checked after the landing search and the damage plans and before the
+  teleport's first mutation. The load rule behind it: wire 24 counts the landings `L` with the
+  same THING filter as the per-map bounds and refuses at load (`StoreError::Capacity`) a map whose
+  **transient allowance** `1024 − (1 + K + R + P + B + D + L)` is below 2, so that one teleport's
+  fogs fit when every placed thing and every drop is live (`Episode1Bounds::transient_allowance`);
+  wire 23's bounds are unchanged;
+- the 129th intercept of a trace (inherited);
+- the landing search is bounded by construction (one pass over the actor order, then at most
+  sectors × landings) and runs before any mutation; it refuses nothing.
 
 **Refused now, each explicitly at load:**
 
 - skill 3 and every other skill but medium: `SimError::PlayerBody(PlayerBodyError::Unsupported)`
   from the constructor; the runner reports a skill-3 demo before any tic. Hard skill is plan step 6;
 - a map number outside 1-9: the same error;
-- line special 97 (teleport): `PursuitError::Specials`, plan step 4;
-- the landing (doomednum 14, plan step 4) and the Baron of Hell (3003, plan step 5):
-  `MapSpawnError::UnsupportedType` from `spawn_map_things`, which then changes nothing.
-  `A_BossDeath` comes with the Baron;
-- the DSIM40 reader admits skill 2 only until step 6, and none of the new types, states or
-  event sub-tags until their steps.
+- line specials 39, 125 and 126 (the other teleports): `PursuitError::Specials`, as under every
+  wire (decision I1);
+- the Baron of Hell (3003, plan step 5): `MapSpawnError::UnsupportedType` from
+  `spawn_map_things`, which then changes nothing. `A_BossDeath` comes with the Baron;
+- the DSIM40 reader admits skill 2 only until step 6, and not yet the Baron's types and states.
 
-So E1M5, E1M8 and E1M9 are still refused, as under wire 23. The observations (the 30 M4a
-synthetic scripts compared with the genuine engine under wire 24) are in
+So E1M5 and E1M9 now load and run under wire 24 on skill 2; E1M8 is still refused (its Barons).
+The observations (the 30 M4a synthetic scripts and the M4b teleport scripts compared with the
+genuine engine under wire 24, and the local real-map runs) are in
 [the evidence record](validation/M4B.md); the commands are in
 [TESTING](TESTING.md#m4b-synthetic-mechanism-wads). Rust-only tests are in
-`crates/doom-sim/src/player_episode1_v2_tests.rs`.
+`crates/doom-sim/src/player_episode1_v2_tests.rs` and `crates/doom-sim/src/teleport_tests.rs`;
+`crates/doom-sim/tests/episode1v2_mechanism_goldens.rs` replays the admitted M4b scripts against
+the goldens and fixtures in `cargo test`.

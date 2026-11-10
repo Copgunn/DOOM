@@ -1768,7 +1768,7 @@ of `tests/reference/e1m{2,3,4,6,7}_scripts/` (and E1M1's); they hold no IWAD dat
 
 ```sh
 # the genuine engine on the real maps: strict, overflow-checked and address-checked builds (plus -m32 with --strict32)
-DOOM_IWAD_DIR=/path tools/local/episode1_reference.py [--work DIR] [--map E1Mn]... [--script NAME]... [--strict32] [--jobs 1|2] [--keep-dumps]
+DOOM_IWAD_DIR=/path tools/local/episode1_reference.py [--work DIR] [--map E1Mn]... [--script NAME]... [--strict32] [--jobs 1|2] [--keep-dumps] [--lmp PATH]...
 
 # the Rust side, one demo of one map (wire 23), then the per-tic comparison
 DOOM_IWAD_DIR=/path cargo run -p doom-sim --release --example player_level_run -- --wad "$DOOM_IWAD_DIR/DOOM.WAD" --map E1M2 --demo tests/reference/e1m2_scripts/M2IDLE.lmp --out RUST_DIR --captures --policy episode1
@@ -1890,8 +1890,28 @@ python3 tools/reference/level_compare_m4b.py DUMP_DIR RUST_DIR --wad WAD --demo 
   `--policy episode1v2`, except the M4b scripts its `PENDING` table names with the step that
   admits them, and compares each tic's stripped digest with the goldens. M4a scripts keep their
   M4a manifest expectations; an M4b `tbd` must match, and `SPECH9` must then refuse its declared
-  tic with `SpecialCross`. With `--require` a missing wire 24 or a non-pending script without
-  captures fails. It prints each pending script and the step it waits for.
+  tic with `SpecialCross`: since `SPECH9.lmp` ends just before that tic, the tool runs it on its
+  manifest `overrun_probe` demo (`SPECH8.lmp`, whose commands begin with SPECH9's). With
+  `--require` a missing wire 24 or a non-pending script without captures fails. It prints each
+  pending script and the step it waits for.
+- `cargo test -p doom-sim --test episode1v2_mechanism_goldens` (part of the workspace tests)
+  replays the admitted M4b scripts through the public API against the same goldens, decodes
+  every capture with the DSIM40 reader and compares each committed fixture byte for byte (with
+  the capture's event lists emptied, the fixtures' form).
+
+Real maps, local only (M4b step 4; never in CI): the local Episode 1 runner takes uncommitted
+demos with `--lmp`, E1M5, E1M8 and E1M9 included (those use the M4b runner). For example, an
+idle demo written into scratch, the genuine run and the comparison:
+
+```sh
+target/release/examples/player_level_run --write-idle 2100 --demo /mnt/d/scratch/m4b/M5IDLE.lmp --policy episode1v2 --map E1M5
+DOOM_IWAD_DIR=/mnt/d/DoomIWADs python3 tools/local/episode1_reference.py --work /mnt/d/scratch/m4b/real --lmp /mnt/d/scratch/m4b/M5IDLE.lmp --keep-dumps
+target/release/examples/player_level_run --wad /mnt/d/DoomIWADs/DOOM.WAD --map E1M5 --demo /mnt/d/scratch/m4b/M5IDLE.lmp --out /mnt/d/scratch/m4b/rust --captures --policy episode1v2
+python3 tools/reference/level_compare_m4b.py /mnt/d/scratch/m4b/real/runs/strict_E1M5_M5IDLE /mnt/d/scratch/m4b/rust --wad /mnt/d/DoomIWADs/DOOM.WAD --demo /mnt/d/scratch/m4b/M5IDLE.lmp --json OUT
+```
+
+A demo's base name becomes a WAD lump name in the genuine runner, so it must have at most eight
+characters. Delete the dumps once the counts and digests are recorded.
 - `level_compare_m4b.py` is `level_compare.py`'s method over the DSIM40 projection. It is a new
   tool, because `level_compare.py` is frozen and has no DSIM40 profile.
 
