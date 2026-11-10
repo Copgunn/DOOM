@@ -1990,6 +1990,44 @@ linuxdoom-1.10 before each piece):
     The Rust slide read the momentum captured before the move; it now re-reads it, which changes nothing
     for older wires (no attempt changes momentum there). TSLIDE shows the zero-length try's pickup.
 
+Findings of Phase 2 step 5 (2026-11-10), from porting the Baron of Hell and `A_BossDeath` under wire 24 (each C
+fact re-read in linuxdoom-1.10 before the code that relies on it):
+
+18. **The `P_SpawnMissile` shadow pair is observed (closes finding 1's open half).** It is not in any M4b scene, but the
+    M4a script INVIS1 reaches it: an Imp fires at the invisible player (`MF_SHADOW`) at dump tics 173 and 254. A local
+    re-run of the genuine engine (`m4a_reference.py --only ITEMS --keep-dumps`, strict, overflow and address variants
+    byte-identical, `ASAN_OPTIONS=detect_leaks=0`) made six draws in each of those tics: the `A_FaceTarget` pair,
+    `lastlook`, the `P_SpawnMissile` pair and the spawn tics (p_enemy.c:794–795; p_mobj.c:506, 909–910, 870). With the
+    Imp's own dumped angle giving `R_PointToAngle2` back, the fireball's dumped angle equals `base + ((r1 − r2) << 20)`,
+    r1 the first draw of the pair, at both tics (2,471,483,828 and 2,101,157,081); `(r2 − r1)` gives 1,949,292,980 and
+    2,143,100,121. GCC 15.2.0 evaluates the left `P_Random()` first here too. `P_SpawnMissile` reads the missile type
+    only through its info record (p_mobj.c:889–927), so the Baron's ball takes the same pair; the Rust launcher is one
+    function for both types (`projectiles::launch_missile`), and Rust matched INVIS1 in M4a. No witness is needed.
+19. **`A_BruisAttack` (p_enemy.c:979–996) confirmed as §3 fact 4**: no `A_FaceTarget`; the melee test is
+    `P_CheckMeleeRange` (no draw); the claw is one draw `(P_Random()%8+1)*10` with inflictor and source the Baron; the
+    missile is `P_SpawnMissile (actor, actor->target, MT_BRUISERSHOT)`. PIT_CheckThing's species rule (p_map.c:299–313)
+    is the one already ported, Knight/Baron clause included; the Rust test against `MT_PLAYER` is type 0.
+20. **`A_BossDeath`'s live-player test reads `players[i].health`** (p_enemy.c:1683–1688). `P_DamageMobj` mirrors the
+    damage into it and clamps it at 0 (p_inter.c:870–872), and every pickup copies it into the mobj (p_inter.c:239,
+    387), so `players[i].health > 0` and the body's `health > 0` agree; the port reads the player record.
+21. **The reachable-height fixpoint needs no boss-floor rule (correction to §4.1.4).** `lowerFloorToLowest` moves a
+    floor down to `P_FindLowestFloorSurrounding` (p_floor.c:299–305; p_spec.c:270–288), the minimum of current floors
+    of the sector and its neighbours. Every such value already lies inside the fixpoint's `[R_min, R_max]`, and a
+    lowering floor adds nothing to `Δ` (a fitting thing never sinks into a floor that moves away from it). So the tag-666
+    floor changes neither bound, and wire 24 keeps wire 23's derivation.
+22. **The ±1,024 sector-height witness (decision I6) covers the boss floor, and cannot fire on it.** The boss floor is an
+    ordinary `T_MoveFloor` step (`PlaneHost::set`, the same checked write as every mover). Its destination is a
+    current floor, inside the domain by the same witness, and the floor moves monotonically toward it by 1 unit per tic
+    (`FLOORSPEED`, p_spec.h:600), stopping on it (p_floor.c:66–79). So no boss-floor step can leave the domain: the
+    refusal is not constructible on this path. A test pins the path (a boss floor reaching −1,024 is not refused).
+23. **Per-map bounds under wire 24.** `K` counts doomednum 3003 as a monster that drops nothing (`P_KillMobj`'s drop
+    switch names no Baron, p_inter.c:737–754): `Episode1Bounds::from_map_v2`, and the DSIM40 reader derives the same.
+    Wire 23 and the DSIM39 reader keep `from_map`, unchanged.
+24. **DIE7 timing and the outcomes, as the C dumps show them.** Rust reproduces every C-observed `A_BossDeath`: BOSS1 and
+    BOSSM1 run it at dump tics 112 and 223 (outcome 2 then 3 on E1M8; 0 and 0 in the E1M1 slot), BOSS2 at 223 finds
+    the tag-666 sector busy (the call is made and creates nothing), BARON1 at 736 on E1M1 (outcome 0) and TFRAG1 at 271
+    (0). The floor's first step lands in the same tic (BOSS1 fixture 224).
+
 ### Open items carried from Phase 1
 
 These are places where the drafts of this note disagree, or leave a question open. None was resolved by choosing a side.
@@ -2013,4 +2051,8 @@ These are places where the drafts of this note disagree, or leave a question ope
 - Closed (owner ruling, 2026-11-10): a SHA-256 of the original, unpatched `DEMO1` lump may be committed as an input-identity
   digest (and that of the patched scratch copy, if useful); nothing else from the lump (decision I5).
 - Closed (2026-11-10): the shadow-fuzz draw order of `A_FaceTarget` and Baron-against-Baron infighting through barrel
-  splash were observed in Phase 2 step 1 (findings 1 and 2 above); the `P_SpawnMissile` shadow pair is still unobserved.
+  splash were observed in Phase 2 step 1 (findings 1 and 2 above); the `P_SpawnMissile` shadow pair was observed in M4a's
+  INVIS1 (finding 18, step 5).
+- Reminder for the independent review (step 14, owner request 2026-11-10): check the slide momentum re-read of
+  finding 17 (`P_SlideMove` reads `momx` after the move up to the wall, p_map.c:776) specifically, including that it
+  changes nothing for wires ≤23.
