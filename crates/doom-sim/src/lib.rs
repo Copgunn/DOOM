@@ -119,6 +119,7 @@ pub use lifecycle::{
     ActorStateDef, ActorStateEvent, ActorTypeDef, ActorTypeId, ProbeAction, Skill, StateId,
 };
 pub use spawning::MapSpawnReport;
+mod boss;
 mod geometry;
 mod line_triggers;
 mod line_work;

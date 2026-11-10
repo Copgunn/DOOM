@@ -1,6 +1,6 @@
 //! Wire 24 (`PlayerMonstersEpisode1V2`, DSIM40) on the M4b mechanism WADs
 //! (`tests/reference/m4b_wads/`), tic for tic against the genuine engine's goldens
-//! (M4b step 4: teleportation).
+//! (M4b step 4: teleportation; step 5: the Baron of Hell and `A_BossDeath`).
 //!
 //! `tools/reference/check_player_episode1v2.py` performs the same comparison on the
 //! release example's captures; this test makes it part of `cargo test`, through the
@@ -25,7 +25,10 @@
 //!   genuine engine writes a ninth `spechit` entry (p_map.c:242; the address
 //!   variant's probe).
 //!
-//! The scripts that need the Baron (step 5) or hard skill (step 6) are not here yet.
+//! - BOSS1 (declared end `exit`): every capture matches through the exit tic, and
+//!   the next tic is refused with `SimError::LevelExited`.
+//!
+//! The script that needs hard skill (SKILL3, step 6) is not here yet.
 use doom_sim::{demo::parse_demo_episode1_v2, *};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -466,4 +469,32 @@ fn spech8() {
 #[test]
 fn spech9() {
     run("SPECH9");
+}
+#[test]
+fn tfrag1() {
+    run("TFRAG1");
+}
+#[test]
+fn baron1() {
+    run("BARON1");
+}
+#[test]
+fn binf1() {
+    run("BINF1");
+}
+#[test]
+fn bvb1() {
+    run("BVB1");
+}
+#[test]
+fn boss1() {
+    run("BOSS1");
+}
+#[test]
+fn boss2() {
+    run("BOSS2");
+}
+#[test]
+fn bossm1() {
+    run("BOSSM1");
 }

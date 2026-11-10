@@ -39,6 +39,9 @@ pub(crate) const EPISODE1_BARREL: i16 = 2035;
 pub(crate) const EPISODE1_EXTRA_STATICS: [i16; 2] = [34, 46];
 /// DoomEd number of the teleport landing (info.c `MT_TELEPORTMAN`, wire 24).
 pub(crate) const LANDING: i16 = 14;
+/// DoomEd number of the Baron of Hell (info.c `MT_BRUISER`), a monster of wire 24
+/// alone; `P_KillMobj` drops nothing for it (p_inter.c:737–754).
+pub(crate) const BARON: i16 = 3003;
 /// `BONUSADD` (p_inter.c): the `bonuscount` one pickup adds.
 const BONUS_ADD: usize = 6;
 
@@ -66,6 +69,35 @@ impl Episode1Bounds {
     /// Count the bounds of a loaded map.
     pub fn from_map(map: &Map) -> Self {
         Self::from_things(map.things().iter().map(|t: &Thing| (t.kind, t.options)))
+    }
+    /// The bounds of wire 24 (M4b step 5): those of [`Self::from_map`] with the
+    /// Baron of Hell (doomednum 3003) counted in `K` as a monster that drops
+    /// nothing. Wire 23 refuses doomednum 3003 at spawn and keeps
+    /// [`Self::from_map`], so its bounds and the DSIM39 reader's are unchanged.
+    pub fn from_map_v2(map: &Map) -> Self {
+        Self::from_things_v2(map.things().iter().map(|t: &Thing| (t.kind, t.options)))
+    }
+    /// [`Self::from_thing_records`] for the DSIM40 reader: the wire-24 count of
+    /// [`Self::from_map_v2`].
+    pub fn from_thing_records_v2(records: &[u8]) -> Option<Self> {
+        if records.len() % 10 != 0 {
+            return None;
+        }
+        Some(Self::from_things_v2(records.chunks_exact(10).map(|r| {
+            (
+                i16::from_le_bytes([r[6], r[7]]),
+                u16::from_le_bytes([r[8], r[9]]),
+            )
+        })))
+    }
+    fn from_things_v2(things: impl IntoIterator<Item = (i16, u16)>) -> Self {
+        let things: Vec<(i16, u16)> = things.into_iter().collect();
+        let mut b = Self::from_things(things.iter().copied());
+        b.monsters += things
+            .iter()
+            .filter(|&&(kind, options)| kind == BARON && options & 16 == 0 && options & 2 != 0)
+            .count();
+        b
     }
     /// Count the bounds of a raw THINGS lump in the DSIM `map.things` layout (ten
     /// bytes per record: x, y, angle, type and options as little-endian `i16`);

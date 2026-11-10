@@ -411,16 +411,15 @@ impl OriginalExecutionProfile {
     pub(crate) const fn has_teleport(self) -> bool {
         matches!(self, Self::PlayerMonstersEpisode1V2)
     }
-    /// The Baron of Hell (`MT_BRUISER`, doomednum 3003) and its fireball
-    /// (`MT_BRUISERSHOT`): wire 24 only, admitted in M4b step 5. Until then
-    /// `spawn_map_things` refuses the thing under every policy.
-    #[cfg_attr(not(test), expect(dead_code, reason = "admitted in M4b step 5"))]
+    /// The Baron of Hell (`MT_BRUISER`, doomednum 3003), `A_BruisAttack`
+    /// (p_enemy.c:979–996) and its fireball (`MT_BRUISERSHOT`): wire 24 only,
+    /// admitted in M4b step 5. Every older policy refuses doomednum 3003 in
+    /// `spawn_map_things` (`MapSpawnError::UnsupportedType`).
     pub(crate) const fn has_baron(self) -> bool {
         matches!(self, Self::PlayerMonstersEpisode1V2)
     }
     /// `A_BossDeath` (p_enemy.c:1609–1757, decision I9): wire 24 only, admitted in
     /// M4b step 5 with the Baron, whose `S_BOSS_DIE7` alone names it.
-    #[cfg_attr(not(test), expect(dead_code, reason = "admitted in M4b step 5"))]
     pub(crate) const fn has_boss_death(self) -> bool {
         matches!(self, Self::PlayerMonstersEpisode1V2)
     }
@@ -832,6 +831,57 @@ fn tfog_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
         .as_ref()
         .map_err(|e| *e)
 }
+/// The Baron of Hell's closure (`MT_BRUISER`, info.c:663–684, 1498–1522): spawn,
+/// see, pain, melee = missile (`S_BOSS_ATK1`) and death, with `A_BruisAttack` at
+/// `S_BOSS_ATK3` and `A_BossDeath` at `S_BOSS_DIE7`; `S_BOSS_RAISE1`–`7` stay
+/// metadata (wire 24, M4b step 5).
+fn bruiser_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
+    static POLICY: OnceLock<Result<ActorPolicy, OriginalRegistryError>> = OnceLock::new();
+    POLICY
+        .get_or_init(|| {
+            let ty = OriginalActorType::MT_BRUISER;
+            let p = ActorPolicy::source(ty)?;
+            for s in OriginalState::all().filter(|s| p.normal.contains(*s)) {
+                let action = s.descriptor().action;
+                let ok = match action {
+                    None
+                    | Some(
+                        "A_Look" | "A_Chase" | "A_FaceTarget" | "A_Pain" | "A_Scream" | "A_Fall",
+                    ) => true,
+                    Some("A_BruisAttack") => s == OriginalState::S_BOSS_ATK3,
+                    Some("A_BossDeath") => s == OriginalState::S_BOSS_DIE7,
+                    Some(_) => false,
+                };
+                if !ok {
+                    return Err(OriginalRegistryError::Graph);
+                }
+            }
+            if p.normal.contains(ty.states().raise) {
+                return Err(OriginalRegistryError::Graph);
+            }
+            Ok(p)
+        })
+        .as_ref()
+        .map_err(|e| *e)
+}
+/// The Baron fireball's spawn/explosion closure (`MT_BRUISERSHOT`, info.c:658–662,
+/// 1524–1548): `S_BRBALL1`/`2` and `S_BRBALLX1`–`3`, no action (no `A_Explode`).
+fn bruisershot_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
+    static POLICY: OnceLock<Result<ActorPolicy, OriginalRegistryError>> = OnceLock::new();
+    POLICY
+        .get_or_init(|| {
+            let p = ActorPolicy::source(OriginalActorType::MT_BRUISERSHOT)?;
+            if OriginalState::all()
+                .filter(|s| p.normal.contains(*s))
+                .any(|s| s.descriptor().action.is_some())
+            {
+                return Err(OriginalRegistryError::Graph);
+            }
+            Ok(p)
+        })
+        .as_ref()
+        .map_err(|e| *e)
+}
 /// The rocket's spawn/explosion closure (info.c:250, 263–265, 1966–1990): `S_ROCKET`
 /// and `S_EXPLODE1..3`; `A_Explode` in `S_EXPLODE1` is the one action (Episode 1
 /// policy, M4a plan §E.4).
@@ -883,11 +933,20 @@ pub(crate) const fn is_spectre(ty: ActorTypeId) -> bool {
 pub(crate) const fn is_rocket(ty: ActorTypeId) -> bool {
     ty.0 == OriginalActorType::MT_ROCKET.ordinal()
 }
+/// `MT_BRUISER`, policy-free (the wire-24 role gates it).
+pub(crate) const fn is_bruiser(ty: ActorTypeId) -> bool {
+    ty.0 == OriginalActorType::MT_BRUISER.ordinal()
+}
+/// `MT_BRUISERSHOT`, policy-free (the wire-24 role gates it).
+pub(crate) const fn is_bruiser_shot(ty: ActorTypeId) -> bool {
+    ty.0 == OriginalActorType::MT_BRUISERSHOT.ordinal()
+}
 /// A missile whose flight the checked thinker pass owns: the Imp fireball
-/// (`PlayerMonstersImpV1` and its supersets) and the rocket (Episode 1 policy).
-/// Policy-free: each type exists only where its role admits it.
+/// (`PlayerMonstersImpV1` and its supersets), the rocket (Episode 1 policy) and
+/// the Baron's fireball (wire 24). Policy-free: each type exists only where its
+/// role admits it, and no reader of an older version consults this predicate.
 pub(crate) const fn is_missile_type(ty: ActorTypeId) -> bool {
-    is_fireball(ty) || is_rocket(ty)
+    is_fireball(ty) || is_rocket(ty) || is_bruiser_shot(ty)
 }
 pub(crate) fn is_former_human(ty: ActorTypeId) -> bool {
     FORMER_HUMANS.iter().any(|t| t.ordinal() == ty.0)
@@ -905,7 +964,7 @@ pub(crate) const fn is_impact(ty: ActorTypeId) -> bool {
 }
 /// Original (non-owner-slot) roster definition with a registry-derived closure.
 pub(crate) fn is_extended_monster(ty: ActorTypeId) -> bool {
-    is_former_human(ty) || is_imp(ty) || is_spectre(ty)
+    is_former_human(ty) || is_imp(ty) || is_spectre(ty) || is_bruiser(ty)
 }
 /// Autonomous monster definitions executable by the selected player policy.
 pub(crate) fn is_policy_monster(policy: OriginalExecutionProfile, ty: ActorTypeId) -> bool {
@@ -913,12 +972,15 @@ pub(crate) fn is_policy_monster(policy: OriginalExecutionProfile, ty: ActorTypeI
         || (policy.has_monsters() && is_former_human(ty))
         || (policy.has_imps() && is_imp(ty))
         || (policy.has_episode1() && is_spectre(ty))
+        || (policy.has_baron() && is_bruiser(ty))
 }
 fn extended_policy(ty: ActorTypeId) -> Result<&'static ActorPolicy, OriginalRegistryError> {
     if is_imp(ty) {
         imp_policy()
     } else if is_spectre(ty) {
         spectre_policy()
+    } else if is_bruiser(ty) {
+        bruiser_policy()
     } else {
         former_human_policy(
             OriginalActorType::try_from(ty.0).map_err(|_| OriginalRegistryError::Graph)?,
@@ -999,6 +1061,10 @@ impl OriginalExecutionRegistry {
                     imp_policy()?;
                     fireball_policy()?;
                 }
+                if profile.has_baron() {
+                    bruiser_policy()?;
+                    bruisershot_policy()?;
+                }
             }
         }
         Ok(Self {
@@ -1055,6 +1121,10 @@ impl OriginalExecutionRegistry {
                 if profile.has_imps() {
                     imp_policy()?;
                     fireball_policy()?;
+                }
+                if profile.has_baron() {
+                    bruiser_policy()?;
+                    bruisershot_policy()?;
                 }
             }
         }
@@ -1171,6 +1241,11 @@ pub(crate) fn require_role_for(
             DefinitionIdentity::Original(
                 OriginalActorType::MT_TFOG | OriginalActorType::MT_TELEPORTMAN,
             ) if profile.has_teleport() => Ok(()),
+            // The Baron of Hell and its fireball (info.c:1498–1548), wire 24 only
+            // (M4b step 5), likewise after every older arm.
+            DefinitionIdentity::Original(
+                OriginalActorType::MT_BRUISER | OriginalActorType::MT_BRUISERSHOT,
+            ) if profile.has_baron() => Ok(()),
             other => Err(OriginalRegistryError::Unsupported(other)),
         };
     }
@@ -1219,6 +1294,8 @@ pub(crate) fn state_role_for(
         fireball_policy()?.normal.contains(s)
     } else if is_rocket(ty) {
         rocket_policy()?.normal.contains(s)
+    } else if is_bruiser_shot(ty) {
+        bruisershot_policy()?.normal.contains(s)
     } else if ty == owner_slot() {
         demon_policy()?.normal.contains(s)
             && !(profile == OriginalExecutionProfile::PlayerDemonAcquisitionV1
@@ -1361,9 +1438,13 @@ impl Simulation {
             return Err(CombatError::InterceptLimit.into());
         }
         let sector_lines = real_map.then(|| player_map_scale::sector_lines(&map));
-        let episode1 = policy
-            .has_episode1()
-            .then(|| crate::episode1::Episode1Bounds::from_map(&map));
+        let episode1 = policy.has_episode1().then(|| {
+            if policy.has_baron() {
+                crate::episode1::Episode1Bounds::from_map_v2(&map)
+            } else {
+                crate::episode1::Episode1Bounds::from_map(&map)
+            }
+        });
         // Wire 24: room for at least one teleport's two fogs when every placed thing
         // is live (M4b step 4); the store-full witness covers everything beyond.
         if let (Some(bounds), true) = (episode1, policy.has_teleport()) {

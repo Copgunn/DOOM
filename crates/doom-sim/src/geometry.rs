@@ -185,6 +185,12 @@ pub struct StaticWorld {
     /// test of the crossing dispatch reads this flag, never `episode1`, which wire 23
     /// also sets. Derived from the policy at load; never canonical state.
     pub(crate) teleport: bool,
+    /// Under wire 24 alone, the map number of the Episode 1 slot (source
+    /// `gamemap`, 1–9), read by `A_BossDeath` (p_enemy.c:1629–1634; M4b step 5).
+    /// The same value as `Simulation::level_map`, which is the canonical copy
+    /// (DSIM40 `level.map`); set once by the wire-24 constructor and constant for
+    /// the run. `None` under every other policy.
+    pub(crate) map_number: Option<u8>,
     /// Per-operation monster sight-query allowance: the historical 64, or
     /// `8·(K + 1)` under the Episode 1 policy (decision D8).
     pub(crate) sight_query_limit: usize,
@@ -260,6 +266,7 @@ impl StaticWorld {
             sector_block_boxes: None,
             episode1: None,
             teleport: false,
+            map_number: None,
             sight_query_limit: 64,
             checked_arithmetic: false,
             floor,

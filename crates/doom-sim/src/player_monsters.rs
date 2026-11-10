@@ -298,19 +298,19 @@ impl Simulation {
         .map_err(Into::into)
     }
     /// Episode 1, part 2 (M4b, wire 24, decision I2): the world of
-    /// [`Simulation::original_player_episode1_map`], byte for byte in behaviour,
-    /// for the map `E1M<map_number>` at `skill`. The map number (1–9,
+    /// [`Simulation::original_player_episode1_map`] for the map `E1M<map_number>`
+    /// at `skill`, plus what M4b admits. The map number (1–9,
     /// [`EPISODE1_MAP_NUMBERS`]) is held for the run and captured as DSIM40
     /// `level.map`; the skill is `actors.options[0]`. Captures are DSIM40, read by
     /// [`crate::Diagnostic::decode_episode1_v2`].
     ///
-    /// Admitted so far (M4b step 3): skill 2 (medium) only, and exactly what wire
-    /// 23 admits. Refused at load, each explicitly: a map number outside 1–9 and
-    /// any skill but medium (`SimError::PlayerBody(PlayerBodyError::Unsupported)`,
-    /// as every older player policy refuses non-default options; skill 3 is M4b
-    /// step 6); line special 97 (`PursuitError::Specials`, step 4); the landing
-    /// (doomednum 14, step 4) and the Baron of Hell (3003, step 5) in
-    /// [`Simulation::spawn_map_things`] (`MapSpawnError::UnsupportedType`). As for
+    /// Admitted so far: teleportation (line special 97, the landing doomednum 14,
+    /// the fog and the telefrag; M4b step 4), the Baron of Hell (doomednum 3003,
+    /// `A_BruisAttack` and its fireball) and `A_BossDeath` with the E1M8 tag-666
+    /// floor (step 5). The per-map bounds count the Baron as a monster. Refused at
+    /// load, each explicitly: a map number outside 1–9 and any skill but medium
+    /// (`SimError::PlayerBody(PlayerBodyError::Unsupported)`, as every older
+    /// player policy refuses non-default options; skill 3 is M4b step 6). As for
     /// wire 23, call [`Simulation::spawn_map_things`],
     /// [`Simulation::initialize_player_weapons`] and
     /// [`Simulation::spawn_level_specials`] once before the first tic.
@@ -335,6 +335,7 @@ impl Simulation {
             context,
         )?;
         sim.level_map = Some(map_number);
+        sim.world.map_number = Some(map_number);
         Ok(sim)
     }
 }
@@ -570,6 +571,65 @@ fn troop_attack_checked<A: ActorAccess>(
         return Ok(());
     }
     projectiles::launch_fireball(h, id, target)
+}
+
+/// p_enemy.c A_BruisAttack: `(P_Random()%8+1)*10` (p_enemy.c:989), in the
+/// MonsterEvent draw namespace of the Imp's claw.
+const BARON_DAMAGE_CHOICES: i32 = 8;
+const BARON_DAMAGE_UNIT: i32 = 10;
+
+/// `A_BruisAttack` (p_enemy.c:979–996, wire 24): the Baron's `S_BOSS_ATK3`. Unlike
+/// `A_TroopAttack` it does not call `A_FaceTarget` (M4b note §3 fact 4); the
+/// claw-or-fireball choice is made again here from the current state. Any late
+/// error is latched and discards the whole staged tic.
+pub(crate) fn bruis_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
+    if let Err(error) = bruis_attack_checked(h, id) {
+        if !h.sight_failed() {
+            h.fail_sight(error);
+        }
+    }
+}
+fn bruis_attack_checked<A: ActorAccess>(
+    h: &mut LifeHost<'_, A>,
+    id: ActorId,
+) -> Result<(), SimError> {
+    if !h.player.as_deref().is_some_and(|p| p.policy.has_baron()) {
+        return Err(PlayerBodyError::Unsupported.into());
+    }
+    // `if (!actor->target) return;` (983–984).
+    let Some(target) = readable_target(h, id)? else {
+        return Ok(());
+    };
+    // `P_CheckMeleeRange` (986; p_enemy.c:174–191): no draw.
+    if crate::monsters::melee_host(h, id) {
+        let claw = lifecycle::source_sound("sfx_claw").ok_or(MonsterError::Definition)?;
+        h.sound(Some(id), claw);
+        let draw = crate::monsters::draw(h, id, IMP_DAMAGE_DRAW);
+        let amount = (i32::from(draw) % BARON_DAMAGE_CHOICES + 1) * BARON_DAMAGE_UNIT;
+        // `P_DamageMobj (actor->target, actor, actor, damage)` (990).
+        let plan = combat::DamagePlan::current_original(
+            h,
+            DamageRequest {
+                target,
+                inflictor: Some(id),
+                source: Some(id),
+                amount,
+            },
+        )?;
+        h.access.reserve(plan.spawn_count())?;
+        h.apply_damage(plan);
+        return Ok(());
+    }
+    if h.sight_failed() {
+        return Ok(());
+    }
+    // `P_SpawnMissile (actor, actor->target, MT_BRUISERSHOT)` (995).
+    projectiles::launch_missile(
+        h,
+        id,
+        target,
+        ActorTypeId(crate::identity::OriginalActorType::MT_BRUISERSHOT.ordinal()),
+    )
 }
 
 /// A_CPosRefire with the checked expanded sight query; decision order is the

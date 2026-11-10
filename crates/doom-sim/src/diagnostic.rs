@@ -436,6 +436,10 @@ impl<'a> Diagnostic<'a> {
         if !matches!(self.version, 39 | 40) {
             return None;
         }
+        if self.version == 40 {
+            // Wire 24 counts the Baron (doomednum 3003) in `K` (M4b step 5).
+            return Episode1Bounds::from_thing_records_v2(self.field("map.things")?);
+        }
         Episode1Bounds::from_thing_records(self.field("map.things")?)
     }
     fn slot_bound(&self) -> u32 {
@@ -796,6 +800,7 @@ impl<'a> Diagnostic<'a> {
                         event,
                         self.slot_bound(),
                         matches!(self.version, 39 | 40),
+                        self.version == 40,
                     )?;
                 }
                 // Validate identity-bearing payloads without interpreting nested
@@ -884,6 +889,9 @@ impl<'a> Diagnostic<'a> {
                             OriginalActorType::MT_SHADOWS,
                             // The DSIM40 teleport fog (admitted by its policy alone).
                             OriginalActorType::MT_TFOG,
+                            // The DSIM40 Baron of Hell and its fireball (likewise).
+                            OriginalActorType::MT_BRUISER,
+                            OriginalActorType::MT_BRUISERSHOT,
                         ]
                         .into_iter()
                         .any(|ty| {
@@ -1953,9 +1961,10 @@ impl<'a> Diagnostic<'a> {
             9 => 27,
             12 => 7,
             13 | 14 => 3,
-            // DSIM40: `EV_Teleport` returned 1 (15) or 0 (16).
+            // DSIM40: `EV_Teleport` returned 1 (15) or 0 (16); `A_BossDeath` (17).
             15 if self.version == 40 => 40,
             16 if self.version == 40 => 17,
+            17 if self.version == 40 => 15,
             _ => return Err(DiagnosticError::Structure),
         };
         if event.len() != len {
@@ -2012,7 +2021,15 @@ impl<'a> Diagnostic<'a> {
                 (5..=7).contains(&event[14])
             }
             6 => {
-                line(3)?;
+                // DSIM40: `A_BossDeath`'s `EV_DoFloor` (4) names no line (65535)
+                // and is `lowerFloorToLowest` (1).
+                if !(self.version == 40
+                    && word(3) == u16::MAX
+                    && event[2] == 4
+                    && i32::from_le_bytes([event[5], event[6], event[7], event[8]]) == 1)
+                {
+                    line(3)?;
+                }
                 // DSIM39: `EV_BuildStairs` (5) and `EV_DoDonut` (6) too.
                 (1..=4).contains(&event[2])
                     || (matches!(self.version, 39 | 40) && (5..=6).contains(&event[2]))
@@ -2057,6 +2074,12 @@ impl<'a> Diagnostic<'a> {
                 line(14)?;
                 event[16] <= 2
             }
+            // DSIM40: the Baron, outcome 0 not map 8, 1 no live player, 2 another
+            // Baron alive, 3 the tag-666 floor call.
+            17 => {
+                validate_handle(&event[2..14], self.slot_bound())?;
+                event[14] <= 3
+            }
             _ => false,
         };
         if !ok {
@@ -2084,11 +2107,14 @@ impl<'a> Diagnostic<'a> {
             let fireball = OriginalActorType::MT_TROOPSHOT.ordinal().to_le_bytes();
             // DSIM39: a rocket removed against the sky likewise (M4a step 6).
             let rocket = OriginalActorType::MT_ROCKET.ordinal().to_le_bytes();
+            // DSIM40: a Baron fireball removed against the sky likewise.
+            let baron_ball = OriginalActorType::MT_BRUISERSHOT.ordinal().to_le_bytes();
             let ty = self.field(&format!("{prefix}.type"));
             if self.field(&format!("{prefix}.occupied")) != Some(&[1])
                 || self.field(&format!("{prefix}.generation")) != Some(&event[6..14])
                 || !(ty == Some(&fireball)
-                    || (matches!(self.version, 39 | 40) && ty == Some(&rocket)))
+                    || (matches!(self.version, 39 | 40) && ty == Some(&rocket))
+                    || (self.version == 40 && ty == Some(&baron_ball)))
             {
                 return Err(DiagnosticError::Identity);
             }
@@ -2832,8 +2858,11 @@ fn validate_projectile_event(
     event: &[u8],
     slots: u32,
     episode1: bool,
+    baron: bool,
 ) -> Result<(), DiagnosticError> {
     const FIREBALL: u16 = OriginalActorType::MT_TROOPSHOT.ordinal();
+    // DSIM40: `A_BruisAttack`'s `P_SpawnMissile` names `MT_BRUISERSHOT` (16).
+    const BARON_BALL: u16 = OriginalActorType::MT_BRUISERSHOT.ordinal();
     match (event.get(1), event.len()) {
         // DSIM39: `P_SpawnPlayerMissile`'s rocket (aim kind 1, no destination).
         (Some(5), 17) if episode1 && event[14] == 1 => {
@@ -2858,7 +2887,8 @@ fn validate_projectile_event(
         (Some(5), 29) if event[14] == 0 => {
             validate_handle(&event[2..14], slots)?;
             validate_handle(&event[15..27], slots)?;
-            if u16::from_le_bytes(number(&event[27..29])?) != FIREBALL {
+            let ty = u16::from_le_bytes(number(&event[27..29])?);
+            if ty != FIREBALL && !(baron && ty == BARON_BALL) {
                 return Err(DiagnosticError::Identity);
             }
             Ok(())

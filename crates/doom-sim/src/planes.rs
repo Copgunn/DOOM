@@ -591,6 +591,15 @@ pub enum MoverEvent {
         /// thing).
         reason: u8,
     },
+    /// Sub-tag 17 (DSIM40, wire 24): `A_BossDeath` ran, on the Baron's entry into
+    /// `S_BOSS_DIE7`; for outcome 3 after the floor call's sub-tag 5 and 6 records.
+    BossDeath {
+        /// The Baron.
+        actor: ActorId,
+        /// 0 `level.map` is not 8, 1 no live player, 2 another Baron alive, 3 the
+        /// tag-666 floor call was made.
+        outcome: u8,
+    },
     /// Sub-tag 12: a sound request with a sector or button origin.
     SectorSound {
         /// The origin kind.

@@ -361,6 +361,11 @@ fn event_bytes(event: &Event) -> Vec<u8> {
                     b.extend(line.to_le_bytes());
                     b.push(reason);
                 }
+                crate::MoverEvent::BossDeath { actor, outcome } => {
+                    b.push(17);
+                    b.extend(id(actor));
+                    b.push(outcome);
+                }
                 crate::MoverEvent::SectorSound {
                     origin,
                     index,

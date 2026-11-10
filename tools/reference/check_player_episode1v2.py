@@ -59,12 +59,8 @@ SETS = [('M4a', ROOT / 'tests/reference/m4a_manifest.json', 'DOOM-M4A-MANIFEST-v
         ('M4b', ROOT / 'tests/reference/m4b_manifest.json', 'DOOM-M4B-MANIFEST-v1',
          ROOT / 'tests/reference/m4b_synthetic_goldens.json', 'DOOM-M4B-SYNTHETIC-GOLDENS-v1')]
 # M4b scripts whose mechanism wire 24 does not admit yet: script -> the M4b step that admits it
-# and why. Wire 24 refuses each at load today (doomednum 3003, skill 3).
+# and why. Wire 24 refuses each at load today (skill 3).
 PENDING = {
-    'TFRAG1': 'step 5 (the WAD places a Baron, doomednum 3003; its telefrags need step 4 too)',
-    'BARON1': 'step 5 (the Baron, doomednum 3003)', 'BINF1': 'step 5 (the Baron, doomednum 3003)',
-    'BVB1': 'step 5 (the Baron, doomednum 3003)', 'BOSS1': 'step 5 (the Baron and A_BossDeath)',
-    'BOSS2': 'step 5 (the Baron and A_BossDeath)', 'BOSSM1': 'step 5 (the Baron and A_BossDeath)',
     'SKILL3': 'step 6 (hard skill)',
 }
 REFUSAL_TOKENS = {'PlayerReborn': 'PlayerReborn',
