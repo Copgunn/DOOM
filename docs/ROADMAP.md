@@ -480,6 +480,11 @@ monster/player behavior. Further stages require separate owner direction.
   `DOOM.WAD` `DEMO1` (E1M5, skill 3) becomes runnable here.
 - **M4c (proposed, pending the owner).** Pause, easy skill and the reborn reload as an
   admitted transition; level transitions stay a later direction.
+- **Simulation performance (proposed by the owner, after M4b).** Profile
+  `Simulation::advance`, which costs 55–746 µs per tic on the real Episode 1 maps against
+  the genuine C engine's 3.7–13.4 µs ([measurements](validation/M4A.md#simulation-only-real-map-timings)),
+  and reduce it without changing any digest or DSIM byte. This includes the shared-validation
+  costs deferred from M4a.
 - Complete player/gameplay integration and broader monster/THING support.
 - The remaining moving sectors and map specials (the established M3e direction) beyond
   the doors, lifts, floors, switches and exit of M3h8: crushers, ceilings, teleporters
