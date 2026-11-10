@@ -740,3 +740,29 @@ fn a_flying_rocket_without_an_owner_is_refused() {
         Err(SimError::Projectile(ProjectileError::Owner))
     );
 }
+
+/// Pins the mutation `Simulation::validate_entry` `&&` -> `||` (spawning.rs)
+/// recorded as equivalent in docs/validation/M4A.md. Written admission rule:
+/// under the Imp-and-later policies a monster's states are admitted by the demon
+/// state-entry validator (`enter_demon_state`), and the wire-23 roster includes
+/// `PlayerMonstersEpisode1V1` (player_roster.rs), so entering an Imp's `S_TROO_RUN1` through
+/// the public `enter_actor_state` is `Ok`. Under the mutant every wire-23 state
+/// goes to the rocket validator, which refuses monster states
+/// (`Actor(UnsupportedAction(ActionId(15)))`).
+#[test]
+fn a_wire_23_imp_can_enter_its_run_state() {
+    let mut s = sim(&with(&[(-32, 0, 0, 1), (-300, 0, 0, 3001)]));
+    let imp = s
+        .actors
+        .order()
+        .find(|id| {
+            s.actor(*id)
+                .and_then(Actor::life)
+                .is_some_and(|l| l.actor_type.0 == OriginalActorType::MT_TROOP.ordinal())
+        })
+        .unwrap();
+    assert_eq!(
+        s.enter_actor_state(imp, state(OriginalState::S_TROO_RUN1)),
+        Ok(())
+    );
+}
