@@ -16,7 +16,7 @@ merge of PR #57). Milestone status lives in [ROADMAP](ROADMAP.md), support in [C
 It never contains an IWAD-derived coordinate, angle, lump byte or per-object datum: only counts, special numbers,
 doomednums with their `info.c` names, header values, tic counts and digests.
 
-**Status / next step (2026-11-10 PST).** Phase 1 done; the owner confirmed decisions I1–I13 on 2026-11-10 (I2's name `PlayerMonstersEpisode1V2`, I3's adapter, the I5 `DEMO1` digest ruling and the IWAD-naming ruling recorded in §5 and §7). Next: Phase 2 step 1 (synthetic mechanism WADs: tools/reference/m4b_wad.py, scripts, manifest, genuine runs in strict/overflow/address variants, self-test), in progress. Half-done work: none committed. Open divergences: none. Failing checks: none. Scratch root: /mnt/d/scratch/m4b (I13). Disk rule (owner, 2026-11-10): freed space inside the WSL disk is reused before the virtual disk grows, so the working limit is ext4 free space; after every step record `df -h /` and `df -h /mnt/c`; continue while /mnt/c stays at or above about 15 GB; stop, push and report if /mnt/c drops below 12 GB or `/` shows less than 15 GB free; delete large dumps as soon as digests are extracted. Last check (2026-11-10): / 930 GB free, /mnt/c 15 GB free. Resume: `git checkout feat/m4b-episode-1-complete && git pull`, read this line, AGENTS.md and §5–§6 of this note. Build/test caps: CARGO_BUILD_JOBS=3, NEXTEST_TEST_THREADS=2, at most 2 C jobs.
+**Status / next step (2026-11-10 PST).** Phase 1 done; the owner confirmed decisions I1–I13 on 2026-11-10 (I2's name `PlayerMonstersEpisode1V2`, I3's adapter, the I5 `DEMO1` digest ruling and the IWAD-naming ruling recorded in §5 and §7). Phase 2 step 1 (synthetic mechanism WADs and genuine-engine evidence) done at b42326d (code and data; docs and CI in the next commit): 14 WADs, 18 scripts, the declared telefrag adapter (tools/reference/m4b_build.py), three variants identical on every script and strict32 identical locally, the SPECH9 overrun probe; observations in [validation/M4B.md](validation/M4B.md#synthetic-mechanism-wads-ci-evidence), findings in §7. Next: Phase 2 step 2, the independent DSIM40 encoder projection and goldens from the C dumps only (a new `Profile` in tools/reference/level_snapshot.py after the frozen v38/v39 ones, map number from the demo header, TFOG/TELEPORTMAN/Baron domains; a new m4b_snapshot_goldens.py reading `m4b_reference.py --keep-dumps` output). Half-done work: none. Open items: the `P_SpawnMissile` shadow-fuzz pair is still unobserved (§7 finding 1); SPECH9's Rust expectation is a `SpecialCross` refusal at tic 75 (manifest). Open divergences: none. Failing checks: none known (CI pending on the pushed head). Scratch root: /mnt/d/scratch/m4b (I13). Disk rule (owner, 2026-11-10): freed space inside the WSL disk is reused before the virtual disk grows, so the working limit is ext4 free space; after every step record `df -h /` and `df -h /mnt/c`; continue while /mnt/c stays at or above about 15 GB; stop, push and report if /mnt/c drops below 12 GB or `/` shows less than 15 GB free; delete large dumps as soon as digests are extracted. Last check (after step 1, 2026-11-10): / 930 GB free, /mnt/c 15 GB free. Resume: `git checkout feat/m4b-episode-1-complete && git pull`; read this line, AGENTS.md, §5–§7 and validation/M4B.md; `python3 tools/reference/m4b_reference.py --work /mnt/d/scratch/m4b/ref --check --keep-dumps` gives the strict dumps for step 2. Build/test caps: CARGO_BUILD_JOBS=3, NEXTEST_TEST_THREADS=2, at most 2 C jobs.
 
 ## Summary
 
@@ -1875,7 +1875,40 @@ From the inventory (§4.8): Rust source 2.1k–3.6k lines, Rust tests 1.6k–3.0
 If the projection passes the cap (most likely because teleport forces a restructured movement pass), hard skill and DEMO1 move to a follow-up milestone and M4b closes with teleporters, the Baron, `A_BossDeath` and the three maps on medium skill.
 ## 7. Corrections and findings from Phase 2
 
-None yet.
+Findings of Phase 2 step 1 (2026-11-10, America/Los_Angeles), observed in the genuine engine on the synthetic WADs of
+`tools/reference/m4b_wad.py` (strict, overflow and address variants, and strict32 locally, all byte-identical); the per-scene
+observations are in [the evidence record](validation/M4B.md#synthetic-mechanism-wads-ci-evidence).
+
+1. **Shadow-fuzz draw order (§3 hazard 1, new observation).** For `A_FaceTarget` at a `MF_SHADOW` target
+   (linuxdoom-1.10/p_enemy.c:794–795), the Baron's angle after the call matched `(r1 − r2) << 21`, r1 being the first of
+   the two consecutive draws, at all four calls observed (BINF1); never `(r2 − r1)`. GCC 15.2.0 evaluates the left
+   `P_Random()` first in every variant, `-m32` included. The `P_SpawnMissile` pair (p_mobj.c:909–910) was not reached in
+   these scenes.
+2. **Baron against Baron through barrel splash (§3 fact 16, hazard 9): observed.** In BVB1 a Baron fireball wounds a barrel
+   (target that Baron), the next kills it, the splash (source = the barrel's target, p_enemy.c:1598–1601) wounds the
+   other Baron, which retargets the first; their fireballs then burst on each other without damage (p_map.c:299–313) and
+   their claws do damage. New detail seen while authoring: a monster hurt while in a standing state other than its
+   spawn state keeps the new target but does not wake, because `P_DamageMobj` enters `seestate` only from `spawnstate`
+   (p_inter.c:904–914); one authoring run left the second Baron standing with the first as its target.
+3. **Telefrag (§2 T8): confirmed.** The victims' momenta in the telefrag tic are (−3,979,285, −1,518), (−994,821, −380)
+   and (−397,928, −152) for masses 100, 400 and 1,000, the wrapped thrusts of T8.5 applied through `FixedMul`, pointing
+   towards the player's pre-teleport position (correction 4 of §2). The draws in the tic are 4 (zombieman: death tics,
+   clip, two fogs) and 3 (Demon, Baron), as T10.2. Each corpse's momentum is 0 one tic later: its move is blocked by the
+   overlapping player (T8.8).
+4. **Split and slide continuation (§2 T6.2–T6.3): reachable and observed.** The command domain reaches the split: at
+   forwardmove 127 the player's momentum before the move is 27.19 units/tic, the first half crosses the line, and the
+   second half continues from the landing (x = landing + 15) and picks up an item there in the same tic. A slide whose
+   move up to the wall (p_map.c:762) teleports runs the zero-length try at the landing (p_map.c:784), which also picks up
+   an item in the same tic. After an ordinary teleport an item on the landing is picked up only when the player next
+   moves (`P_TeleportMove` touches only shootable things, p_map.c:85–86).
+5. **The ninth `spechit` (§2 T9.1): observed in the address variant.** The report comes from the bounds check of
+   `-fsanitize=undefined`, `p_map.c:242:9: runtime error: index 8 out of bounds for type 'line_t *[8]'`, before ASan's
+   redzone, in the tic after the last dump. The strict and overflow variants were not run past that tic.
+6. **`A_BossDeath` and the busy sector (§3 facts 19–23): confirmed.** On E1M8 the first Baron's DIE7 with the other alive
+   does nothing; the second's DIE7 starts `lowerFloorToLowest` (type 1) in the same tic's dump. With the tag-666 sector
+   already moving (a W1 raiseFloor crossed 8 tics earlier) nothing is started. In the E1M1 slot nothing happens. DIE7
+   came 48 tics after each telefrag tic here (kill tic 64 → 112, 175 → 223): the telefrag is made by the player's thinker
+   after the Baron's (the Barons precede the player in THINGS), so this is fact 19's later case with `t1` = 8.
 
 ### Open items carried from Phase 1
 
@@ -1899,5 +1932,5 @@ These are places where the drafts of this note disagree, or leave a question ope
 - Open: whether the inventory's `for_things` margin (`radius + 32`) equals `P_TeleportMove`'s box (§4.2.3, against §2 T3.3). Not verified.
 - Closed (owner ruling, 2026-11-10): a SHA-256 of the original, unpatched `DEMO1` lump may be committed as an input-identity
   digest (and that of the patched scratch copy, if useful); nothing else from the lump (decision I5).
-- Open: the shadow-fuzz draw order (§3 hazard 1) and Baron-against-Baron infighting through barrel splash (§3 hazard 9) have no C
-  observation yet; both need a C witness before they are called covered.
+- Closed (2026-11-10): the shadow-fuzz draw order of `A_FaceTarget` and Baron-against-Baron infighting through barrel
+  splash were observed in Phase 2 step 1 (findings 1 and 2 above); the `P_SpawnMissile` shadow pair is still unobserved.

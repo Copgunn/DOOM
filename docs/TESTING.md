@@ -1810,6 +1810,41 @@ release build of `player_level_run` followed by
 OS). All are skipped for documentation-only pushes. Local only: the opt-in `strict32` variant,
 which needs a 32-bit toolchain. Observations of the matched runs belong to the M4a evidence
 record, not to this page.
+## M4b synthetic mechanism WADs
+
+The M4b [reference investigation](M4B_REFERENCE_INVESTIGATION.md) adds fourteen small synthetic
+WADs for teleportation, telefrags, monster and sliding teleports, the Baron of Hell,
+`A_BossDeath` (one WAD in the E1M8 slot), the special-line (`spechit`) limit and the skill-3
+THING filter, with 18 scripts run through the genuine engine. Everything here is synthetic and
+runs on a clean checkout; the observations are recorded in
+[the M4b evidence record](validation/M4B.md#synthetic-mechanism-wads-ci-evidence). There is no
+Rust side yet (wire 24 does not exist).
+
+```sh
+# generators and invariants (no compiler; every OS in CI)
+python3 tools/reference/m4b_build.py --check               # M4b runner contract: the M4a driver plus the telefrag adapter (p_inter.c:817, sanitizer builds only)
+python3 tools/reference/m4b_wad.py [--out-dir DIR] [--check]  # 14 WADs in tests/reference/m4b_wads/; --check compares bytes and manifest fields, then runs the verifier
+python3 tools/reference/m4b_check_wad.py --check           # independent verifier of every manifest WAD (teleport search order, special-line box, skill counts)
+python3 tools/reference/m4b_scripts.py --check             # tests/reference/m4b_scripts (.txt -> .lmp; adds the "skill N" directive)
+
+# genuine runner execution (C; Linux only in CI); ASAN_OPTIONS=detect_leaks=0 is set for the address variant (leak detection disabled)
+python3 tools/reference/m4b_reference.py [--work DIR] [--check] [--keep-dumps] [--cc CC] [--only WAD] [--selftest TIC] [--update-events]
+python3 tools/reference/m4b_reference.py --work DIR --strict32   # local opt-in: also the -m32 genuine-text build, dumps must be identical; writes nothing
+python3 tools/reference/m4b_build.py --variant strict|overflow|address|all|strict32 [--out DIR]
+```
+
+What each asserts:
+
+- `m4b_reference.py --check` builds the strict, overflow-checked and address-checked runners,
+  requires byte-identical dump sets for every script, the manifest's ending and `must_show`
+  tics (a `null` tic means the event must never happen), and the committed
+  `tests/reference/m4b_synthetic_results.json` (counts, digests, event tics and the per-script
+  observed facts; the `timing` block is not compared). For `SPECH9` it also runs the overrun
+  probe: the longer `SPECH8` demo on the nine-line WAD in the address variant must stop with
+  the sanitizer report at `p_map.c:242` after dumping tic 74. `--selftest TIC` plants an extra
+  `P_Random` draw and a changed command at tic TIC of `TELE1` and requires each to be first
+  reported at that tic.
+
 ## Mutation testing
 
 M4a used cargo-mutants 27.1.0 with cargo-nextest 0.9.151. These are separate
