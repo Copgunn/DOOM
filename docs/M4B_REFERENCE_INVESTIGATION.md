@@ -1955,6 +1955,41 @@ Findings of Phase 2 step 3 (2026-11-10), from wiring wire 24:
     re-run of the five E1M1 scripts needs those runs on the M4a or M4b driver, as a local-tool
     option, without editing the frozen M3h9c files.
 
+Findings of Phase 2 step 4 (2026-11-10), from porting teleportation under wire 24 (C facts re-read in
+linuxdoom-1.10 before each piece):
+
+13. **The ninth-`spechit` witness covers every `P_CheckPosition` caller that wire 24 reaches.** `spechit`
+    is computed and its ninth entry refused (`MapScaleError::SpecialCross`) in `movement::Mover::attempt`
+    (every `P_TryMove` of `P_XYMovement`: halved steps, the move up to the wall, the projected slide and
+    the stairstep tries, p_mobj.c:147–191, p_map.c:750–784), `pursuit::move_actor` (`P_Move`,
+    p_enemy.c:293–334), `planes` `P_ThingHeightClip` (p_map.c:536, from `P_ChangeSector`; the result is
+    otherwise ignored, as in C) and `projectiles::try_move` (missile flight and `P_CheckMissileSpawn`,
+    p_mobj.c:880). `G_CheckSpot` (g_game.c:868) is not reached (no reborn, no deathmatch). `P_TeleportMove`
+    appends nothing: it has no line pass and sets `numspechit = 0` (p_map.c:152). This closes the open item
+    on the `P_ThingHeightClip` path. SPECH9 shows the refusal on the tic where the genuine engine writes the
+    ninth entry (dump tic 75, DSIM tic 76).
+14. **`movement::for_things`' window equals `P_TeleportMove`'s.** Both take the cells of
+    `(dest ± (radius + MAXRADIUS) − bmaporg) >> MAPBLOCKSHIFT` (p_map.c:155–158; `MAXRADIUS` 32 units,
+    p_local.h:51), `bx` outer and `by` inner, each cell in most-recent-link order, and skip cells outside
+    the blockmap as `P_BlockThingsIterator` returns true for them (p_maputl.c:512–537). The stomp reuses it.
+    This closes the open item of §4.2.3.
+15. **The crossing loop runs inside the move under wire 24, for every special.** Teleport ordering forces
+    it: a crossing visited before a 97 line in the same `P_TryMove` loop (or in an earlier attempt of the
+    same `P_XYMovement`) starts its mover before `EV_Teleport` spawns its fogs, and both are appended to the
+    shared thinker order (`P_AddThinker`, p_tick.c:65–71). Wire 24's motion access therefore runs each
+    crossing at its place in the loop; the events land in the same order as wire 23's deferred processing,
+    and a W1 clear is still staged after the motion (later attempts read it through the motion's `cleared`
+    list, as before). Wire 23 keeps the deferred model unchanged. No `EV_*` starter reads a line special,
+    so the staging point is not observable.
+16. **The voodoo-doll case of §2 T3.9 cannot arise.** The level policy (inherited by wire 24) refuses a
+    second type-1 start at spawn (`PlayerBodyError::Binding`), so the only player-linked mobj is the body
+    and a telefrag victim is never a player. The stomp's damage plan refuses a player victim explicitly.
+17. **`P_SlideMove` after a teleport in the move up to the wall reads the zeroed momentum.**
+    `tmxmove = FixedMul (mo->momx, bestslidefrac)` (p_map.c:776–777) reads `momx` after the `P_TryMove` at
+    762, so the slide's remainder is 0 and its `P_TryMove` at 784 is the zero-length try at the landing.
+    The Rust slide read the momentum captured before the move; it now re-reads it, which changes nothing
+    for older wires (no attempt changes momentum there). TSLIDE shows the zero-length try's pickup.
+
 ### Open items carried from Phase 1
 
 These are places where the drafts of this note disagree, or leave a question open. None was resolved by choosing a side.
@@ -1970,11 +2005,11 @@ These are places where the drafts of this note disagree, or leave a question ope
   teleport-specific.
 - Open: provenance of the thrust figures. The inventory (§4.2.4) says −3,979,345 / −994,836 / −397,934 were computed and not
   observed; §2 T8.5 records the same values as observed in a gcc probe. The values agree.
-- Open: duplicate player-1 starts (voodoo dolls, §2 T3.9). The census (§1.6) counts one player-1 start on each of E1M5, E1M8 and
-  E1M9, which suggests none there, but the question was not asked of the lump directly. Tag-0 teleport lines (§2 T2.3) were not
+- Closed (step 4, 2026-11-10) for the port: duplicate player-1 starts (voodoo dolls, §2 T3.9) are refused at spawn under wire 24
+  (finding 16); E1M5 and E1M9 load under wire 24, so each has exactly one player-1 start. Tag-0 teleport lines (§2 T2.3) were not
   censused. Landings spawn on both skills (one each, §1.6).
-- Open: whether wire 23's `SpecialCross` witness covers the `P_ThingHeightClip` caller (§2 T9.1). Not verified.
-- Open: whether the inventory's `for_things` margin (`radius + 32`) equals `P_TeleportMove`'s box (§4.2.3, against §2 T3.3). Not verified.
+- Closed (step 4, 2026-11-10): wire 23's `SpecialCross` witness covers the `P_ThingHeightClip` caller (§2 T9.1); finding 13.
+- Closed (step 4, 2026-11-10): the inventory's `for_things` margin (`radius + 32`) equals `P_TeleportMove`'s box (§4.2.3, against §2 T3.3); finding 14.
 - Closed (owner ruling, 2026-11-10): a SHA-256 of the original, unpatched `DEMO1` lump may be committed as an input-identity
   digest (and that of the patched scratch copy, if useful); nothing else from the lump (decision I5).
 - Closed (2026-11-10): the shadow-fuzz draw order of `A_FaceTarget` and Baron-against-Baron infighting through barrel
