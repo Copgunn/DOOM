@@ -870,3 +870,155 @@ fn a_saw_target_on_the_players_own_centre_turns_by_minus_ang90_21() {
     }
     panic!("no saw hit");
 }
+
+/// The wire-23 sight-budget room of the `action_sight` boundary test: two
+/// sectors split at x = 0 with the REJECT pair (0, 1) set, so `P_CheckSight`
+/// between them returns false at its REJECT test (p_sight.c:259–270). THINGS
+/// in order: the player in sector 1 facing the east wall, the `early`
+/// Shotgun Guys, five barrels on one spot P = (−300, 0), a Demon `M`, then
+/// the remaining Shotgun Guys. All seven monsters are deaf (`MTF_AMBUSH`); the
+/// Shotgun Guys stand at Chebyshev distance 145 from P (`P_RadiusAttack`
+/// damage 128 − (145 − 20) = 3), inside the 3 × 3 BLOCKMAP cells around P's
+/// cell that the explosion's window covers (`MAXRADIUS` shifts out of
+/// `(damage+MAXRADIUS)<<FRACBITS`, p_map.c:1221–1225).
+fn sight_budget_room(early: usize, seed: u8) -> Simulation {
+    use crate::heights_room::HeightsRoom;
+    let guys = [
+        (-445, -100),
+        (-445, 0),
+        (-445, 100),
+        (-155, -100),
+        (-155, 0),
+        (-155, 100),
+    ];
+    let guy = |&(x, y): &(i16, i16)| [x, y, 0, 9, 7 | 8];
+    let mut things = vec![[300, 0, 0, 1, 7]];
+    things.extend(guys[..early].iter().map(guy));
+    things.extend([[-300, 0, 0, 2035, 7]; 5]);
+    things.push([-300, 400, 0, 3002, 7 | 8]);
+    things.extend(guys[early..].iter().map(guy));
+    let mut room = HeightsRoom::new(&[-512, 0, 512], &[[0, 128], [0, 128]]).with_things(&things);
+    room.reject = vec![[0, 1]];
+    let options = MapContextOptions {
+        initial_rng: DoomRng::from_indices(seed, 0),
+        respawn_monsters: false,
+    };
+    let mut s = Simulation::original_player_episode1_map(room.map(), options).unwrap();
+    s.spawn_map_things().unwrap();
+    let loadout = WeaponInventory {
+        ready: Weapon::Pistol,
+        owned: 3,
+        ammo: [50, 0, 0, 0],
+    };
+    s.initialize_player_weapons(PlayerSlot::One, loadout).unwrap();
+    s.spawn_level_specials().unwrap();
+    s
+}
+fn of_type(s: &Simulation, ty: OriginalActorType) -> Vec<ActorId> {
+    s.actor_order()
+        .filter(|id| {
+            s.actor(*id)
+                .and_then(Actor::life)
+                .is_some_and(|l| l.actor_type.0 == ty.ordinal())
+        })
+        .collect()
+}
+fn player_sights(s: &Simulation, player: ActorId) -> usize {
+    s.events()
+        .iter()
+        .filter(|e| {
+            matches!(e, Event::Perception(PerceptionEvent::Sight { target, .. }) if *target == player)
+        })
+        .count()
+}
+
+/// Pins the three mutations of `action_sight`'s refusal test (demon_expanded_map.rs:
+/// `count > limit` -> `count == limit` and -> `count >= limit`, `work > budget`
+/// -> `work >= budget`) recorded as equivalent in docs/validation/M4A.md: the
+/// per-tic monster sight allowance is reachable through corpse-sourced damage.
+/// The derivation, with every draw, is in docs/M4A_REFERENCE_INVESTIGATION.md
+/// §14 (2026-11-10). From gameplay index 16, after the pistol is raised (no
+/// draws), with W = wound a barrel by 1 with `M` as the source and K = kill a
+/// barrel, between tics 0, 1, 2 (counted from the first wound): W W W W K;
+/// K; K K W K (`P_KillMobj`'s `tics -= P_Random()&3` gives `S_BEXP` 5, 4, 3,
+/// 3, 3 tics, so all five barrels reach `A_Explode` in tic 15); tic 3 presses
+/// fire (`P_FireWeapon`'s `P_NoiseAlert` makes the player both sectors' sound
+/// target); then `M` is killed; between tics 5 and 6 the early Shotgun Guys
+/// enter `S_SPOS_STND2` and the others `S_SPOS_STND`; `A_FirePistol` (`S_PISTOL1`
+/// lasts 4 tics) makes its 5 draws in tic 7, so the explosions start at index 57. In tic 15 the early ones return to their spawn state
+/// with `A_Look` (3 queries each), then the five explosions hit every Shotgun
+/// Guy for 3 with the dead `M` as the source; 11 of the 30 pain draws find a
+/// Shotgun Guy still in its spawn state and draw at least 170, and each makes 5
+/// queries. K = 7 monsters gives the limit max(64, 8·(K + 1)) = 64 (decision
+/// D8). Three early: 9 + 55 = 64 queries, exactly the limit, admitted (the
+/// mutants refuse it). Six early: 18 + 55 = 73; the 65th query refuses the tic
+/// with `PerceptionError::WorkLimit`, and the canonical state is unchanged.
+#[test]
+fn corpse_sourced_explosions_reach_the_sight_allowance_exactly() {
+    for (early, expected) in [(3, Some(64)), (6, None)] {
+        let mut s = sight_budget_room(early, 16);
+        assert_eq!(s.world.sight_query_limit, 64);
+        let player = of_type(&s, OriginalActorType::MT_PLAYER)[0];
+        until(&mut s, command(0, 0), 100, |s| raised(s, Weapon::Pistol));
+        assert_eq!(s.rng().indices()[0], 16 + 25);
+        let b = of_type(&s, OriginalActorType::MT_BARREL);
+        let demon = of_type(&s, OriginalActorType::MT_SERGEANT)[0];
+        let damage = |s: &mut Simulation, target, source, amount| {
+            s.damage_actor(DamageRequest {
+                target,
+                inflictor: None,
+                source,
+                amount,
+            })
+            .unwrap()
+            .killed
+        };
+        for &barrel in &b[..4] {
+            assert!(!damage(&mut s, barrel, Some(demon), 1));
+        }
+        assert!(damage(&mut s, b[0], None, 20));
+        s.advance(command(0, 0)).unwrap();
+        assert!(damage(&mut s, b[1], None, 20));
+        s.advance(command(0, 0)).unwrap();
+        assert!(damage(&mut s, b[2], None, 20));
+        assert!(damage(&mut s, b[3], None, 20));
+        assert!(!damage(&mut s, b[4], Some(demon), 1));
+        assert!(damage(&mut s, b[4], None, 20));
+        s.advance(command(0, BT_ATTACK)).unwrap();
+        assert_eq!(weapons(&s).ammo()[0], 50);
+        assert!(damage(&mut s, demon, None, 1000));
+        s.advance(command(0, 0)).unwrap();
+        s.advance(command(0, 0)).unwrap();
+        let guys = of_type(&s, OriginalActorType::MT_SHOTGUY);
+        for (i, &g) in guys.iter().enumerate() {
+            let entry = if i < early {
+                OriginalState::S_SPOS_STND2
+            } else {
+                OriginalState::S_SPOS_STND
+            };
+            s.enter_actor_state(g, state(entry)).unwrap();
+        }
+        // Tic 6 also reports the six entries' `A_Look` (3 queries each, in
+        // their own operations); nothing in tics 7–14 queries the player.
+        s.advance(command(0, 0)).unwrap();
+        assert_eq!(player_sights(&s, player), 18);
+        for _ in 7..15 {
+            s.advance(command(0, 0)).unwrap();
+            assert_eq!(player_sights(&s, player), 0);
+        }
+        assert_eq!(weapons(&s).ammo()[0], 49);
+        assert_eq!(s.rng().indices()[0], 57);
+        let before = s.snapshot().canonical_bytes();
+        let result = s.advance(command(0, 0));
+        if let Some(queries) = expected {
+            assert_eq!(result, Ok(()));
+            assert_eq!(player_sights(&s, player), queries);
+        } else {
+            assert_eq!(
+                result,
+                Err(SimError::Perception(PerceptionError::WorkLimit))
+            );
+            assert_eq!(s.snapshot().canonical_bytes(), before);
+        }
+    }
+}
