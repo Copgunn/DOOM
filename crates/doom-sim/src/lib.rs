@@ -45,11 +45,11 @@ pub use player_map_scale::{
     MapScaleError, REAL_MAP_FORMAT_RECORDS, RoomBounds, actor_slots, slide_window_lines,
 };
 pub use player_monsters::{
-    MAX_PLAYER_MONSTERS, PLAYER_BARRELS_CONTEXT_SCHEMA, PLAYER_DIAGONAL_CONTEXT_SCHEMA,
-    PLAYER_E1M1_CONTEXT_SCHEMA, PLAYER_EPISODE1_CONTEXT_SCHEMA, PLAYER_HEIGHTS_CONTEXT_SCHEMA,
-    PLAYER_IMPS_CONTEXT_SCHEMA, PLAYER_LEVEL_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA,
-    PLAYER_MONSTERS_CONTEXT_SCHEMA, PLAYER_MOVERS_CONTEXT_SCHEMA, PLAYER_REAL_MAP_CONTEXT_SCHEMA,
-    PLAYER_SPECIALS_CONTEXT_SCHEMA,
+    EPISODE1_MAP_NUMBERS, MAX_PLAYER_MONSTERS, PLAYER_BARRELS_CONTEXT_SCHEMA,
+    PLAYER_DIAGONAL_CONTEXT_SCHEMA, PLAYER_E1M1_CONTEXT_SCHEMA, PLAYER_EPISODE1_CONTEXT_SCHEMA,
+    PLAYER_EPISODE1_V2_CONTEXT_SCHEMA, PLAYER_HEIGHTS_CONTEXT_SCHEMA, PLAYER_IMPS_CONTEXT_SCHEMA,
+    PLAYER_LEVEL_CONTEXT_SCHEMA, PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA,
+    PLAYER_MOVERS_CONTEXT_SCHEMA, PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
 mod player_commands;
 mod player_pistol;
@@ -611,6 +611,11 @@ pub struct Simulation {
     /// `G_SecretExitLevel` (special 51, g_game.c:1009–1018), so `level_exit` is
     /// set too (DSIM39 `level.secret_exit`). False under every other policy.
     pub(crate) level_secret_exit: bool,
+    /// Under the Episode 1 part 2 policy (wire 24) alone, source `gamemap`: the
+    /// map number 1–9 of the Episode 1 slot, given to the constructor and constant
+    /// for the run (DSIM40 `level.map`; read by `A_BossDeath`, p_enemy.c:1629–1634,
+    /// and `PIT_StompThing`, p_map.c:102). `None` under every other policy.
+    pub(crate) level_map: Option<u8>,
     /// Under the movers policy, the running switch buttons (`buttonlist`): timer,
     /// line and sound-origin sector of each slot, DSIM35 state (decision N9).
     pub(crate) buttons: use_lines::Buttons,
@@ -799,6 +804,7 @@ impl Simulation {
             movers: None,
             level_exit: false,
             level_secret_exit: false,
+            level_map: None,
             buttons: [None; mover_rules::MAX_BUTTONS],
         })
     }
@@ -1593,6 +1599,8 @@ mod player_episode1_items_tests;
 mod player_episode1_movers_tests;
 #[cfg(test)]
 mod player_episode1_tests;
+#[cfg(test)]
+mod player_episode1_v2_tests;
 #[cfg(test)]
 mod player_episode1_weapons_tests;
 #[cfg(test)]

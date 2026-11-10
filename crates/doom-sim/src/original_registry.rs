@@ -100,6 +100,13 @@ pub enum OriginalExecutionProfile {
     /// replaced by per-map values derived from the THINGS lump, with 1,024 actor
     /// slots (H4). Captures are DSIM39, read by `Diagnostic::decode_episode1`.
     PlayerMonstersEpisode1V1,
+    /// Episode 1, part 2 (M4b, decisions I1–I4): a strict superset of wire 23
+    /// whose constructor takes the map number (1–9) and the skill, recorded in
+    /// DSIM40 (`level.map`, `actors.options`), read by
+    /// `Diagnostic::decode_episode1_v2`. Its new behaviours (teleport, the Baron,
+    /// `A_BossDeath`, hard skill) each have their own predicate and are refused
+    /// until admitted.
+    PlayerMonstersEpisode1V2,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -128,6 +135,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersBarrelsV1 => 21,
             Self::PlayerMonstersLevelV1 => 22,
             Self::PlayerMonstersEpisode1V1 => 23,
+            Self::PlayerMonstersEpisode1V2 => 24,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -156,6 +164,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersBarrelsV1 => PLAYER_BARRELS_CONTEXT_SCHEMA,
             Self::PlayerMonstersLevelV1 => PLAYER_LEVEL_CONTEXT_SCHEMA,
             Self::PlayerMonstersEpisode1V1 => PLAYER_EPISODE1_CONTEXT_SCHEMA,
+            Self::PlayerMonstersEpisode1V2 => PLAYER_EPISODE1_V2_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_armor(self) -> bool {
@@ -175,6 +184,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     pub(crate) const fn has_player_bonuses(self) -> bool {
@@ -193,6 +203,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// Original former humans, a bounded mixed roster, infighting and drops.
@@ -211,6 +222,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// The original Imp and its fireball in the mixed roster.
@@ -228,6 +240,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// Wall-derived travel bounds, 320 slots and 208 live fireballs inside a walled
@@ -245,6 +258,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// Two-sided lines, static floor/ceiling heights, vertical movement, the
@@ -262,6 +276,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// Linedefs of any direction inside a closed one-sided boundary, the parity
@@ -277,6 +292,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// The real-map policy: format-sized static geometry, the arithmetic and
@@ -291,6 +307,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// The specials policy (M3h7 Stage A) and its supersets: sky ceilings, the
@@ -305,6 +322,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// The movers policy (M3h8 Stage B) and its E1M1 superset: doors, lifts,
@@ -319,6 +337,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// The E1M1 policy (M3h9 note §5.1): two-sided scrolling walls (48) and the
@@ -331,6 +350,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// The barrels policy (M3h9b note §5.1): exploding barrels, up to 64 pickups,
@@ -343,6 +363,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// The level policy (M3h9c, decision G4, wire 22 only): the barrels world with
@@ -355,7 +376,9 @@ impl OriginalExecutionProfile {
     pub(crate) const fn has_level(self) -> bool {
         matches!(
             self,
-            Self::PlayerMonstersLevelV1 | Self::PlayerMonstersEpisode1V1
+            Self::PlayerMonstersLevelV1
+                | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// The Episode 1 policy (M4a, wire 23 only, decisions H2–H4): the level world
@@ -364,9 +387,49 @@ impl OriginalExecutionProfile {
     /// static-height rule replaced by checked per-tic arithmetic, an optional
     /// one-sided boundary, and the mover load rules of
     /// `mover_rules::validate_episode1`, under DSIM39. Every older policy keeps its
-    /// bounds, proofs and rules byte for byte.
+    /// bounds, proofs and rules byte for byte. Wire 24 inherits all of it (M4b,
+    /// decision I2: a strict superset); a site that selects a schema or an exact
+    /// version tests [`Self::has_episode1_v2`] first.
     pub(crate) const fn has_episode1(self) -> bool {
-        matches!(self, Self::PlayerMonstersEpisode1V1)
+        matches!(
+            self,
+            Self::PlayerMonstersEpisode1V1 | Self::PlayerMonstersEpisode1V2
+        )
+    }
+    /// Episode 1, part 2 (M4b, wire 24 only, decision I2): the identity of the
+    /// policy: the map number (1–9) held by the simulation, DSIM40 captures
+    /// (`level.map` after `level.secret_exit`) and the
+    /// `PLAYER-MONSTERS-EPISODE1-2-v1` context. Every older policy carries no map
+    /// number and keeps its schema.
+    pub(crate) const fn has_episode1_v2(self) -> bool {
+        matches!(self, Self::PlayerMonstersEpisode1V2)
+    }
+    /// Line special 97 (`EV_Teleport`, p_telept.c:47–131), the landing
+    /// (`MT_TELEPORTMAN`, doomednum 14), the teleport fog and the telefrag (M4b
+    /// decisions I3, I7 and I8): wire 24 only, admitted in M4b step 4. Until then
+    /// the load rules refuse the special and the thing under every policy.
+    #[cfg_attr(not(test), expect(dead_code, reason = "admitted in M4b step 4"))]
+    pub(crate) const fn has_teleport(self) -> bool {
+        matches!(self, Self::PlayerMonstersEpisode1V2)
+    }
+    /// The Baron of Hell (`MT_BRUISER`, doomednum 3003) and its fireball
+    /// (`MT_BRUISERSHOT`): wire 24 only, admitted in M4b step 5. Until then
+    /// `spawn_map_things` refuses the thing under every policy.
+    #[cfg_attr(not(test), expect(dead_code, reason = "admitted in M4b step 5"))]
+    pub(crate) const fn has_baron(self) -> bool {
+        matches!(self, Self::PlayerMonstersEpisode1V2)
+    }
+    /// `A_BossDeath` (p_enemy.c:1609–1757, decision I9): wire 24 only, admitted in
+    /// M4b step 5 with the Baron, whose `S_BOSS_DIE7` alone names it.
+    #[cfg_attr(not(test), expect(dead_code, reason = "admitted in M4b step 5"))]
+    pub(crate) const fn has_boss_death(self) -> bool {
+        matches!(self, Self::PlayerMonstersEpisode1V2)
+    }
+    /// Skill 3 (hard, THING option bit 4; decision I4): wire 24 only, admitted in
+    /// M4b step 6. Until then the wire-24 constructor refuses it.
+    #[cfg_attr(not(test), expect(dead_code, reason = "admitted in M4b step 6"))]
+    pub(crate) const fn has_hard_skill(self) -> bool {
+        matches!(self, Self::PlayerMonstersEpisode1V2)
     }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
@@ -386,6 +449,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -413,6 +477,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -439,6 +504,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -461,6 +527,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
     /// The four-weapon pack (fists, shotgun, chaingun, manual switching): every
@@ -491,6 +558,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersBarrelsV1
                 | Self::PlayerMonstersLevelV1
                 | Self::PlayerMonstersEpisode1V1
+                | Self::PlayerMonstersEpisode1V2
         )
     }
 }
@@ -901,7 +969,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersE1M1V1
             | OriginalExecutionProfile::PlayerMonstersBarrelsV1
             | OriginalExecutionProfile::PlayerMonstersLevelV1
-            | OriginalExecutionProfile::PlayerMonstersEpisode1V1 => {
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V1
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V2 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -957,7 +1026,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersE1M1V1
             | OriginalExecutionProfile::PlayerMonstersBarrelsV1
             | OriginalExecutionProfile::PlayerMonstersLevelV1
-            | OriginalExecutionProfile::PlayerMonstersEpisode1V1 => {
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V1
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V2 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {

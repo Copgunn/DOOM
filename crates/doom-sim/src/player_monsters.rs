@@ -40,6 +40,12 @@ pub const PLAYER_LEVEL_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-LEVEL-1-MEDIUM-
 /// Explicit Episode 1 context (the level world with per-map bounds, 1,024 actor
 /// slots and the H3 per-tic witnesses, M4a); older contexts stay frozen.
 pub const PLAYER_EPISODE1_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-1-MEDIUM-v1";
+/// Explicit Episode 1 part 2 context (M4b, wire 24, DSIM40): no skill word,
+/// because the skill is the canonical `actors.options` field; older contexts stay
+/// frozen.
+pub const PLAYER_EPISODE1_V2_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-2-v1";
+/// The Episode 1 map numbers the wire-24 constructor admits (`E1M1`–`E1M9`).
+pub const EPISODE1_MAP_NUMBERS: std::ops::RangeInclusive<u8> = 1..=9;
 
 impl Simulation {
     /// Autonomous roster member: the native/original Demon owner or a policy
@@ -290,6 +296,46 @@ impl Simulation {
             context,
         )
         .map_err(Into::into)
+    }
+    /// Episode 1, part 2 (M4b, wire 24, decision I2): the world of
+    /// [`Simulation::original_player_episode1_map`], byte for byte in behaviour,
+    /// for the map `E1M<map_number>` at `skill`. The map number (1–9,
+    /// [`EPISODE1_MAP_NUMBERS`]) is held for the run and captured as DSIM40
+    /// `level.map`; the skill is `actors.options[0]`. Captures are DSIM40, read by
+    /// [`crate::Diagnostic::decode_episode1_v2`].
+    ///
+    /// Admitted so far (M4b step 3): skill 2 (medium) only, and exactly what wire
+    /// 23 admits. Refused at load, each explicitly: a map number outside 1–9 and
+    /// any skill but medium (`SimError::PlayerBody(PlayerBodyError::Unsupported)`,
+    /// as every older player policy refuses non-default options; skill 3 is M4b
+    /// step 6); line special 97 (`PursuitError::Specials`, step 4); the landing
+    /// (doomednum 14, step 4) and the Baron of Hell (3003, step 5) in
+    /// [`Simulation::spawn_map_things`] (`MapSpawnError::UnsupportedType`). As for
+    /// wire 23, call [`Simulation::spawn_map_things`],
+    /// [`Simulation::initialize_player_weapons`] and
+    /// [`Simulation::spawn_level_specials`] once before the first tic.
+    pub fn original_player_episode1_v2_map(
+        map: Map,
+        map_number: u8,
+        skill: Skill,
+        context: MapContextOptions,
+    ) -> Result<Self, OriginalRegistryError> {
+        let policy = OriginalExecutionProfile::PlayerMonstersEpisode1V2;
+        if !EPISODE1_MAP_NUMBERS.contains(&map_number) {
+            return Err(SimError::from(PlayerBodyError::Unsupported).into());
+        }
+        let mut sim = Self::with_original_registry(
+            map,
+            crate::player_map_scale::actor_slots(policy),
+            OriginalExecutionRegistry::new(policy)?,
+            ActorOptions {
+                skill,
+                ..ActorOptions::default()
+            },
+            context,
+        )?;
+        sim.level_map = Some(map_number);
+        Ok(sim)
     }
 }
 
