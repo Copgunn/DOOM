@@ -100,9 +100,11 @@ observations remain linked from the [evidence index](README.md).
 
 ### M4a: Episode 1, part 1, proven against the genuine engine
 
-Status: Phase 1 done (the [investigation note](M4A_REFERENCE_INVESTIGATION.md)); Phase 2
-in progress on `feat/m4a-episode-1` (observations: [validation/M4A.md](validation/M4A.md),
-Phase 2). The owner confirmed decisions H1-H12 of the note on 2026-11-05.
+Status: implemented on `feat/m4a-episode-1` and awaiting owner review in
+[PR #57](https://github.com/Copgunn/DOOM/pull/57); not merged. Facts are in the
+[investigation note](M4A_REFERENCE_INVESTIGATION.md), observations in
+[validation/M4A.md](validation/M4A.md). The owner confirmed decisions H1-H12 of the note on
+2026-11-05.
 
 **Strategy change.** Earlier mover, monster and weapon milestones proved each mechanism with
 bespoke C scenarios, one small mechanism at a time. With the whole-engine harness of M3h9c

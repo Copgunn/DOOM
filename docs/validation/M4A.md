@@ -1074,4 +1074,61 @@ Commands reviewer C ran, all passing: `m3h9c_build.py --check`, `m4a_build.py --
 
 ## Final gates from clean
 
-Not yet run on the reviewed head; this section is filled by the closing gate run.
+Recorded **2026-11-10 PST** (America/Los_Angeles) on head `e260d003db326bccbd280da3da9be1796533a84a`, with
+a clean tree. One sequential script ran every step from empty workspace and fuzz target directories
+(04:11 to 06:12), with rustc 1.99.1, rustc 1.85.0 for the MSRV step, nightly cargo 1.101.0 (2026-10-27)
+for fuzzing and gcc 15.2.0. **Every step exited 0.** The host was not idle (1-minute load about 2), so the
+times are wall-clock durations of a gate run and not performance measurements.
+
+| Gate | Result | Time |
+| --- | --- | ---: |
+| `cargo fmt --check`, workspace and fuzz workspace | clean | 7 s |
+| `cargo clippy --workspace --all-targets --locked -- -D warnings` | clean | 30 s |
+| `cargo build --workspace --locked` | built | 8 s |
+| `cargo test --workspace --locked` (debug) | 1,274 passed, 0 failed, 4 ignored (90 result lines) | 421 s |
+| `cargo test --workspace --release --locked` | 1,274 passed, 0 failed, 4 ignored | 175 s |
+| `cargo +1.85.0 test --workspace --locked` (MSRV) | 1,274 passed, 0 failed, 4 ignored | 495 s |
+| `cargo doc --workspace --no-deps --locked` with `RUSTDOCFLAGS="-D warnings"` | clean | 2 s |
+| `m3h9c_build.py --check`, `m4a_build.py --check` | both runner contracts match | under 1 s |
+| `test_runner_newlines.py`, `m3h9c_wad.py --check`, `m4a_wad.py --check`, `m4a_check_wad.py --check`, `e1m1_scripts.py --check` | all pass | 1 s |
+| `check_docs.py` | 132 Markdown files, 2,233 links and 556 anchors resolved, 20 archives verified | 2 s |
+| `m3h9c_reference.py --check --keep-dumps` | 6 scripts match, variants identical | 21 s |
+| `m3h9c_snapshot_goldens.py --check` | 11 files | 83 s |
+| `m4a_reference.py --check --keep-dumps --selftest 300` | 30 scripts match, variants identical; the self-test caught the planted extra draw and the perturbed command | 20 s |
+| `m4a_snapshot_goldens.py --check` | 19 files | 24 s |
+| `check_player_level.py` on release `player_level_run` output for the 6 synthetic scripts | all checks passed | 62 s |
+| `check_player_episode1.py --require` (release binary, `--policy episode1`) | all checks passed | 25 s |
+| `check_player_level_advance.py` (release binary) | 36 C-derived final states and call/refusal boundaries passed | 1 s |
+| Genuine C reference suite, `run_reference.py --suite --jobs 2` with `ASAN_OPTIONS=detect_leaks=0` | 65 commands passed with 2 workers | 785 s |
+| Real maps, genuine engine: `tools/local/episode1_reference.py --strict32 --jobs 2 --keep-dumps` | 30 scripts; strict, overflow, address and strict32 dumps identical for every script | 293 s |
+| Real maps, Rust against those dumps with `level_compare.py`: 30 runs under `--policy episode1`, 5 E1M1 runs under wire 22 | 35 of 35 match on every tic (67,970 and 10,034 tics compared), no divergence | 3,581 s |
+
+The other historical asserted-example checks (`check_player_*` for the older policies) were not run
+separately in this local pass; CI runs them on the exact head.
+
+**Real maps.** All 35 sequence digests equal the ones already recorded in this record and in the M3h9c
+record, so the review's fixes changed no compared byte. The only Rust refusals were the five expected
+`PlayerReborn` refusals on the tic after the reborn request (the chaos scripts on E1M2, E1M3, E1M4, E1M6
+and E1M7); no script reached the new sector-height bound or any other witness. The IWAD was read in
+place; the dumps were deleted after the comparison and only these counts are kept.
+
+**Fuzz**, because simulation code changed after the earlier campaigns. `cargo +nightly fuzz build`
+compiled every target (120 s). The seeder wrote 459 seeds (max length 2,404). All runs below are for
+`player_episode1` with `-max_len=2404 -timeout=120 -rss_limit_mb=1024`.
+
+| Run | Result |
+| --- | --- |
+| Seed replay, plain, `-runs=0` | 461 runs in 351 s; 0 crashes, timeouts or out-of-memory |
+| Seed replay, AddressSanitizer (`detect_leaks=0`), `-runs=0` | 461 runs in 353 s; 0 crashes, timeouts or out-of-memory |
+| AddressSanitizer (`detect_leaks=0`), `-seed=821`, 300 s | 461 runs in 358 s: the budget ended during the seed pass, so this is a third seed replay and **not a campaign** |
+| Sanitizer campaign, AddressSanitizer (`detect_leaks=0`), `-seed=822`, 1,000 s | 820 runs (461 initial, so 359 mutated inputs), under 1 exec/s; cov 15,821 to 15,960, ft 61,401 to 64,930, corpus 415 to 590 inputs (175 new units); 0 crashes, timeouts or out-of-memory |
+
+Leak detection was disabled in every AddressSanitizer run, so none of this is LeakSanitizer coverage. No
+plain coverage-guided campaign was re-run in this pass. libFuzzer reported five slow units (the slowest
+46 s under AddressSanitizer), none over the timeout. A 1,000-second campaign with 359 mutated inputs on
+a loaded host is short and bounded.
+
+**Disk.** `/mnt/c` had 69 GB free at the start and **16 GB at the end, below the 20 GB floor**: the kept
+real-map dumps took 49 GB of scratch. They were deleted as soon as the results were extracted, but the
+WSL virtual disk does not return freed space to Windows by itself, so `/mnt/c` still showed 16 GB
+afterwards. The gate script should have deleted each run's dumps after comparing it.
