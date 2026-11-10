@@ -100,8 +100,8 @@ observations remain linked from the [evidence index](README.md).
 
 ### M4a: Episode 1, part 1, proven against the genuine engine
 
-Status: implemented on `feat/m4a-episode-1` and awaiting owner review in
-[PR #57](https://github.com/Copgunn/DOOM/pull/57); not merged. Facts are in the
+Status: done; merged into master as
+[PR #57](https://github.com/Copgunn/DOOM/pull/57) on 2026-11-10. Facts are in the
 [investigation note](M4A_REFERENCE_INVESTIGATION.md), observations in
 [validation/M4A.md](validation/M4A.md). The owner confirmed decisions H1-H12 of the note on
 2026-11-05.
