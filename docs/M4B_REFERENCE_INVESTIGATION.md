@@ -3,7 +3,7 @@
 Phase 1 note for milestone M4b, the second of the Episode 1 milestones that follow the whole-engine harness
 ([M3h9c note](M3H9C_REFERENCE_INVESTIGATION.md), [M4a note](M4A_REFERENCE_INVESTIGATION.md)). M4a took the
 harness to E1M1–E1M4, E1M6 and E1M7 on medium skill. M4b adds what E1M5, E1M8 and E1M9 still need, hard skill, and the
-registered `DOOM.WAD` `DEMO1`. This note holds a counts-only census of those maps on skills 2 and 3, the original C facts
+`DEMO1` of the local four-episode `DOOM.WAD` (which the genuine engine runs as registered because of its file name, §1.1). This note holds a counts-only census of those maps on skills 2 and 3, the original C facts
 for every new mechanism (function, file and line), the Rust wire 23 inventory that wire 24 must extend, the
 owner decisions I1–I13 with recommendations, and the plan with a size estimate and cap.
 
@@ -16,7 +16,7 @@ merge of PR #57). Milestone status lives in [ROADMAP](ROADMAP.md), support in [C
 It never contains an IWAD-derived coordinate, angle, lump byte or per-object datum: only counts, special numbers,
 doomednums with their `info.c` names, header values, tic counts and digests.
 
-**Status / next step (2026-11-10 PST).** Phase 1 (this note) done at this commit; decisions I1–I13 are provisional recommendations pending the owner; unattended rule: proceed. Next: Phase 2 step 1 (synthetic mechanism WADs: tools/reference/m4b_wad.py, scripts, manifest, genuine runs in strict/overflow/address variants, self-test). Half-done work: none. Open divergences: none. Failing checks: none. Scratch: /mnt/d/scratch/m4b (owner directed scratch to D: because /mnt/c has 15 GB free, below the 20 GB floor). Resume: `git checkout feat/m4b-episode-1-complete && git pull`, read this line, AGENTS.md and §5–§6 of this note. Build/test caps: CARGO_BUILD_JOBS=3, NEXTEST_TEST_THREADS=2, at most 2 C jobs.
+**Status / next step (2026-11-10 PST).** Phase 1 done; the owner confirmed decisions I1–I13 on 2026-11-10 (I2's name `PlayerMonstersEpisode1V2`, I3's adapter, the I5 `DEMO1` digest ruling and the IWAD-naming ruling recorded in §5 and §7). Next: Phase 2 step 1 (synthetic mechanism WADs: tools/reference/m4b_wad.py, scripts, manifest, genuine runs in strict/overflow/address variants, self-test), in progress. Half-done work: none committed. Open divergences: none. Failing checks: none. Scratch root: /mnt/d/scratch/m4b (I13). Disk rule (owner, 2026-11-10): freed space inside the WSL disk is reused before the virtual disk grows, so the working limit is ext4 free space; after every step record `df -h /` and `df -h /mnt/c`; continue while /mnt/c stays at or above about 15 GB; stop, push and report if /mnt/c drops below 12 GB or `/` shows less than 15 GB free; delete large dumps as soon as digests are extracted. Last check (2026-11-10): / 930 GB free, /mnt/c 15 GB free. Resume: `git checkout feat/m4b-episode-1-complete && git pull`, read this line, AGENTS.md and §5–§6 of this note. Build/test caps: CARGO_BUILD_JOBS=3, NEXTEST_TEST_THREADS=2, at most 2 C jobs.
 
 ## Summary
 
@@ -50,7 +50,7 @@ The IWAD directory holds DOOM.WAD and DOOM2.WAD; this census uses DOOM.WAD only.
 | file | /mnt/d/DoomIWADs/DOOM.WAD (read in place, never copied) |
 | size | 12,408,292 bytes |
 | SHA-256 | 6fdf361847b46228cfebd9f3af09cd844282ac75f3edbb61ca4cb27103ce2e7f |
-| WAD header | IWAD, 2306 lumps (observed); it has episode 4 maps and DEMO4, so it is the four-episode (Ultimate DOOM) WAD, not the three-episode registered one. Version identification beyond size and contents was not attempted |
+| WAD header | IWAD, 2306 lumps (observed); it has episode 4 maps and DEMO4, so it is the four-episode (Ultimate DOOM) WAD, not the three-episode registered one. The genuine engine nevertheless runs it as `registered`: `IdentifyVersion` picks the game mode from the file name alone, trying `doomu.wad` (retail, linuxdoom-1.10/d_main.c:587-588, 690-695) before `doom.wad` (registered, 591-592, 697-702), so a file named `DOOM.WAD` gets `gamemode = registered`, as the C driver sets it (tools/reference/m4a_driver.c:573). Version identification beyond size and contents was not attempted |
 | other file in the directory | DOOM2.WAD, 14,604,584 bytes, SHA-256 10d67824b11025ddd9198e8cfc87ca335ee6e2d3e63af4180fa9b8a471893255 (not used) |
 
 Skill naming: this document uses the engine's 0-based gameskill. Skill 2 is "hurt me plenty" (THING option bit 2) and skill 3 is "ultra-violence" (bit 4); that is the brief's "skill 2 (medium) and skill 3 (hard)". A THING is handled when it is a start (types 1-4 and 11, every skill) or when bit 16 (multiplayer only) is clear and the skill bit is set (p_mobj.c:715-752, read from linuxdoom-1.10/p_mobj.c). The skill 2 numbers match the M4a census (docs/M4A_REFERENCE_INVESTIGATION.md §2) for every map.
@@ -1227,8 +1227,8 @@ committed census tables in `docs/M4A_REFERENCE_INVESTIGATION.md` §2, which were
 inferred from reading code that was not checked against a run. The C facts quoted come from the M4a note (§3, §6, §8 and §14) and must be
 re-cited from linuxdoom-1.10 in the M4b note before code relies on them.
 
-Working names in this section: wire 24 is `PlayerMonstersEpisode1CompleteV1` with the predicate `has_episode1_complete()` and DSIM40. These
-are placeholders; the owner decides the names (§5, I2 recommends `PlayerMonstersEpisode1V2`).
+Names in this section: wire 24 is `PlayerMonstersEpisode1V2` (decision I2, confirmed by the owner on 2026-11-10) with DSIM40;
+the predicate name `has_episode1_complete()` is a working name for the implementation step.
 
 ### 4.1 What wire 23 touches that wire 24 must extend
 
@@ -1829,37 +1829,37 @@ teleport hook cannot reuse the `MotionAccess`/`Contacts` pattern and the movemen
 
 Each is tested against four questions: (a) consistent with prior owner decisions (E1–E9, F1–F11, G1–G13, H1–H12)? (b) no silent divergence? (c) no new kind of fidelity gap beyond refuse-the-tic witnesses? (d) bounded stores?
 
-**I1. Scope.** M4b ports teleport line special 97 (the only teleport special Episode 1 uses; 39, 125 and 126 stay unadmitted), the landing thing (doomednum 14), the teleport fog, telefrags, the Baron of Hell and its fireball, `A_BossDeath` for E1M8 (tag 666), hard skill, and with them E1M5, E1M8 and E1M9, then replays `DOOM.WAD` `DEMO1`. Pause, easy skill, nightmare, the reborn reload and level transitions stay later work. (a)–(d) yes. **Recommendation:** as stated.
+**I1. Scope.** M4b ports teleport line special 97 (the only teleport special Episode 1 uses; 39, 125 and 126 stay unadmitted), the landing thing (doomednum 14), the teleport fog, telefrags, the Baron of Hell and its fireball, `A_BossDeath` for E1M8 (tag 666), hard skill, and with them E1M5, E1M8 and E1M9, then replays `DOOM.WAD` `DEMO1`. Pause, easy skill, nightmare, the reborn reload and level transitions stay later work. (a)–(d) yes. **Recommendation:** as stated. Confirmed by the owner on 2026-11-10.
 
-**I2. Policy identity.** A new policy `PlayerMonstersEpisode1V2`, wire 24, DSIM40, a strict superset of wire 23's behaviour. Its constructor takes the map number (1–9) and the skill (2 or 3), because `A_BossDeath` tests the map and the THING filter tests the skill; DSIM40 records both. Every new behaviour gets its own predicate, so wires ≤23 cannot change a byte. (a)–(d) yes. **Recommendation:** as stated.
+**I2. Policy identity.** A new policy `PlayerMonstersEpisode1V2`, wire 24, DSIM40, a strict superset of wire 23's behaviour. Its constructor takes the map number (1–9) and the skill (2 or 3), because `A_BossDeath` tests the map and the THING filter tests the skill; DSIM40 records both. Every new behaviour gets its own predicate, so wires ≤23 cannot change a byte. (a)–(d) yes. **Recommendation:** as stated. Confirmed by the owner on 2026-11-10.
 
-**I3. The telefrag thrust overflow.** `P_DamageMobj` computes `damage*(FRACUNIT>>3)*100/mass` in `int`; for a telefrag's 10,000 this overflows. The genuine `strict` (LP64) and `strict32` builds both wrap to −397,934,592 before the division (observed in a probe); the `overflow` and `address` variants abort there. Two ways to handle it:
+**I3. The telefrag thrust overflow.** `P_DamageMobj` computes `damage*(FRACUNIT>>3)*100/mass` in `int`; for a telefrag's 10,000 this overflows. The genuine `strict` (LP64) and `strict32` builds both wrap to −397,934,592 before the division (observed in a probe); the `overflow` and `address` variants abort there. Two ways to handle it: Confirmed by the owner on 2026-11-10.
 - (i) a declared adapter in the `overflow` and `address` variants only, computing the same product in unsigned arithmetic, plus a Rust wrapping rule for exactly this product under wire 24 only. `strict` and `strict32` stay genuine text and anchor the value.
 - (ii) a refuse-the-tic witness, which would make every player telefrag unmatchable, and E1M5's and DEMO1's teleporters only work while nothing stands on a landing.
 
 (a) (i) is an exception to H3's checked-arithmetic wording, but the M4a note already assigned this adapter to M4b, and the value is what both genuine unsanitised builds produce; (b) yes; (c) yes: no gap at all under (i); (d) yes. **Recommendation:** (i). Damage above 1,000 stays refused everywhere except the stomp call's 10,000 under wire 24.
 
-**I4. Hard skill.** Wire 24 admits skill 2 and skill 3. The source shows the THING filter (option bit 4 instead of bit 2) is the only single-player difference between them; per-map bounds are derived for the admitted skill. Skills 1, 4 and 5 are refused. The demo reader accepts skill byte 3 only under wire 24. (a)–(d) yes. **Recommendation:** as stated.
+**I4. Hard skill.** Wire 24 admits skill 2 and skill 3. The source shows the THING filter (option bit 4 instead of bit 2) is the only single-player difference between them; per-map bounds are derived for the admitted skill. Skills 1, 4 and 5 are refused. The demo reader accepts skill byte 3 only under wire 24. (a)–(d) yes. **Recommendation:** as stated. Confirmed by the owner on 2026-11-10.
 
-**I5. DEMO1.** `DEMO1` is version 109; linuxdoom-1.10 plays only 110. The lump is extracted to scratch with byte 0 patched to 110 and run through the genuine runner and the Rust runner, compared tic for tic. The Rust reader keeps accepting 110 only. Nothing from the demo is committed except its header values, command counts and bounds, the tic count and state digests. A match proves Rust agrees with linuxdoom-1.10 on that input; it does not prove the run reproduces the DOS 1.9 recording. (a)–(d) yes. **Recommendation:** as stated.
+**I5. DEMO1.** `DEMO1` is version 109; linuxdoom-1.10 plays only 110. The lump is extracted to scratch with byte 0 patched to 110 and run through the genuine runner and the Rust runner, compared tic for tic. The Rust reader keeps accepting 110 only. Nothing from the demo is committed except its header values, command counts and bounds, the tic count and state digests, plus (owner ruling, 2026-11-10) the SHA-256 of the original unpatched lump as an input-identity digest and, if useful, that of the patched scratch copy. A match proves Rust agrees with linuxdoom-1.10 on that input; it does not prove the run reproduces the DOS 1.9 recording. (a)–(d) yes. **Recommendation:** as stated. Confirmed by the owner on 2026-11-10.
 
-**I6. The ±1,024 sector-height bound stays.** It refuses earlier than vanilla misbehaves; widening it is a later C-evidence follow-up. Step 8 confirms it covers every new mover path (the tag-666 floor). (a)–(d) yes. **Recommendation:** stays.
+**I6. The ±1,024 sector-height bound stays.** It refuses earlier than vanilla misbehaves; widening it is a later C-evidence follow-up. Step 8 confirms it covers every new mover path (the tag-666 floor). (a)–(d) yes. **Recommendation:** stays. Confirmed by the owner on 2026-11-10.
 
-**I7. Teleport as vanilla runs it, with H3 witnesses.** The teleport runs inside the move, as in `P_TryMove`: it ends the crossing loop, and a split move or slide continues from the landing, so a thing can teleport twice in a tic. Witnesses, each refusing the tic with state preserved: the ninth special line of a move (already wire 23's `SpecialCross`), a full actor store when the two fogs spawn, and the intercept bound (inherited). The landing search is bounded work (sectors × thinkers) preflighted before mutation. If routing the teleport through the sliding path of barrels and corpses proves to need a restructured movement pass, the fallback is a witness that refuses the tic when such a slider crosses a line 97; the note records which was done. (a)–(d) yes. **Recommendation:** faithful port, with the named fallback.
+**I7. Teleport as vanilla runs it, with H3 witnesses.** The teleport runs inside the move, as in `P_TryMove`: it ends the crossing loop, and a split move or slide continues from the landing, so a thing can teleport twice in a tic. Witnesses, each refusing the tic with state preserved: the ninth special line of a move (already wire 23's `SpecialCross`), a full actor store when the two fogs spawn, and the intercept bound (inherited). The landing search is bounded work (sectors × thinkers) preflighted before mutation. If routing the teleport through the sliding path of barrels and corpses proves to need a restructured movement pass, the fallback is a witness that refuses the tic when such a slider crosses a line 97; the note records which was done. (a)–(d) yes. **Recommendation:** faithful port, with the named fallback. Confirmed by the owner on 2026-11-10.
 
-**I8. Stomping.** As vanilla on Episode 1 maps: a player telefrags whatever shootable overlaps the landing; a monster's or other thing's teleport fails if any shootable overlaps. No z test, as in C. (a)–(d) yes. **Recommendation:** as stated.
+**I8. Stomping.** As vanilla on Episode 1 maps: a player telefrags whatever shootable overlaps the landing; a monster's or other thing's teleport fails if any shootable overlaps. No z test, as in C. (a)–(d) yes. **Recommendation:** as stated. Confirmed by the owner on 2026-11-10.
 
-**I9. `A_BossDeath` and the E1M8 ending.** Under wire 24 the action runs its C checks in order; only E1M8 with a Baron acts (lower the tag-666 floor to the lowest neighbour). On other Episode 1 maps it returns, as in C. E1M8 then ends through sector special 11, already ported. As in M4a, the tic on which the level ends completes and every later tic is refused with `LevelExited`. (a)–(d) yes. **Recommendation:** as stated.
+**I9. `A_BossDeath` and the E1M8 ending.** Under wire 24 the action runs its C checks in order; only E1M8 with a Baron acts (lower the tag-666 floor to the lowest neighbour). On other Episode 1 maps it returns, as in C. E1M8 then ends through sector special 11, already ported. As in M4a, the tic on which the level ends completes and every later tic is refused with `LevelExited`. (a)–(d) yes. **Recommendation:** as stated. Confirmed by the owner on 2026-11-10.
 
-**I10. CI evidence.** A new generator `tools/reference/m4b_wad.py` (the M4a generator stays frozen for its WADs) writes synthetic WADs for teleport, telefrag, blocked landing, monster teleport, Baron melee, missile and infighting (including Baron against Baron through a barrel), `A_BossDeath`, the ninth spechit and the skill-3 filter; a new manifest drives genuine runs in the strict, overflow and address variants, goldens from an independent DSIM40 projection, and the self-test. The driver is forked to `m4b_driver.c` only if a new dump column or the I3 adapter needs it; M3h9c and M4a driver, contract and result files are never edited. (a)–(d) yes. **Recommendation:** as stated.
+**I10. CI evidence.** A new generator `tools/reference/m4b_wad.py` (the M4a generator stays frozen for its WADs) writes synthetic WADs for teleport, telefrag, blocked landing, monster teleport, Baron melee, missile and infighting (including Baron against Baron through a barrel), `A_BossDeath`, the ninth spechit and the skill-3 filter; a new manifest drives genuine runs in the strict, overflow and address variants, goldens from an independent DSIM40 projection, and the self-test. The driver is forked to `m4b_driver.c` only if a new dump column or the I3 adapter needs it; M3h9c and M4a driver, contract and result files are never edited. (a)–(d) yes. **Recommendation:** as stated. Confirmed by the owner on 2026-11-10.
 
-**I11. Real-map evidence.** Five scripts (idle, walk_to_exit, fighting, chaos, death) for each of E1M5, E1M8 and E1M9 on skill 2; all 30 M4a scripts and the five E1M1 scripts re-run under wire 24 and must match unchanged; skill-3 runs on at least the three new maps; then DEMO1. Dumps are deleted once digests are extracted. (a)–(d) yes. **Recommendation:** as stated.
+**I11. Real-map evidence.** Five scripts (idle, walk_to_exit, fighting, chaos, death) for each of E1M5, E1M8 and E1M9 on skill 2; all 30 M4a scripts and the five E1M1 scripts re-run under wire 24 and must match unchanged; skill-3 runs on at least the three new maps; then DEMO1. Dumps are deleted once digests are extracted. (a)–(d) yes. **Recommendation:** as stated. Confirmed by the owner on 2026-11-10.
 
-**I12. Mutation testing in CI.** A workflow that is not a required check runs cargo-mutants `--in-diff` against master in 8 shards. GitHub only offers `workflow_dispatch` for a workflow file that exists on the default branch, and this branch must not touch master, so the workflow also triggers when the label `run-mutants` is put on the pull request; that is how it is triggered before merge. (a)–(d) yes. **Recommendation:** `workflow_dispatch` plus the label trigger.
+**I12. Mutation testing in CI.** A workflow that is not a required check runs cargo-mutants `--in-diff` against master in 8 shards. GitHub only offers `workflow_dispatch` for a workflow file that exists on the default branch, and this branch must not touch master, so the workflow also triggers when the label `run-mutants` is put on the pull request; that is how it is triggered before merge. (a)–(d) yes. **Recommendation:** `workflow_dispatch` plus the label trigger. Confirmed by the owner on 2026-11-10.
 
-**I13. Scratch on D:.** On 2026-11-10 the owner directed scratch to `D:\` because `/mnt/c` had 15 GB free, below the 20 GB floor. Scratch lives in `/mnt/d/scratch/m4b`; `/mnt/c` is still checked after every step and the work stops if it falls further. Recorded as given, not a proposal.
+**I13. Scratch on D:.** On 2026-11-10 the owner directed scratch to `D:\` because `/mnt/c` had 15 GB free, below the 20 GB floor. Scratch lives in `/mnt/d/scratch/m4b`; `/mnt/c` is still checked after every step and the work stops if it falls further. Recorded as given, not a proposal. Confirmed by the owner on 2026-11-10.
 
-**Unattended-rule verdict.** Every decision above is consistent with prior decisions, has one clear recommendation and admits no silent divergence: each gap is a refuse-the-tic witness, and I3's adapter reproduces what both genuine unsanitised builds compute. Phase 2 proceeds on the recommendations, all provisional until the owner confirms them.
+**Unattended-rule verdict.** Every decision above is consistent with prior decisions, has one clear recommendation and admits no silent divergence: each gap is a refuse-the-tic witness, and I3's adapter reproduces what both genuine unsanitised builds compute. The owner confirmed all thirteen decisions on 2026-11-10 (I2's name `PlayerMonstersEpisode1V2` and I3's adapter included); Phase 2 proceeds on them.
 ## 6. Plan, size estimate and cap
 
 ### 6.1 Steps
@@ -1881,12 +1881,12 @@ None yet.
 
 These are places where the drafts of this note disagree, or leave a question open. None was resolved by choosing a side.
 
-- Open: IWAD identity. The census (§1.1) found 2,306 lumps, episode 4 maps and `DEMO4`, so the local `DOOM.WAD` is the
-  four-episode build, not the three-episode registered one. The roadmap, the M4a note and this note's `DEMO1` wording call it
-  the registered `DOOM.WAD`, and the C driver sets `gamemode = registered`. `A_BossDeath` takes the same non-commercial branch for
-  registered and retail (§3, fact 20), so no behavioural difference is known, but the naming is not reconciled.
-- Open: policy names. The Rust inventory (§4) uses the placeholders `PlayerMonstersEpisode1CompleteV1` and
-  `has_episode1_complete()`; decision I2 (§5) recommends `PlayerMonstersEpisode1V2`. The owner decides.
+- Closed (owner ruling, 2026-11-10): IWAD identity. The local `DOOM.WAD` is the four-episode build (§1.1), and the genuine
+  engine runs it as `registered` because `IdentifyVersion` decides by file name (linuxdoom-1.10/d_main.c:690-702; §1.1). That is
+  what the C driver does (`gamemode = registered`, tools/reference/m4a_driver.c:573), so no behaviour changes. `A_BossDeath`'s
+  game-mode test takes the same non-commercial branch for registered and retail (§3 part B, fact 20). The wording here and in the
+  roadmap now says "the four-episode `DOOM.WAD`, which the genuine engine runs as registered because of its file name".
+- Closed (owner ruling, 2026-11-10): policy names. Wire 24 is `PlayerMonstersEpisode1V2` (I2 confirmed); §4 now uses that name.
 - Open: `numspechit` after a teleport. The inventory (§4.2.1) repeats the M4a wording "−1 after the teleport" (M4a note §3.3.3).
   The C facts (§2 T6.1 and correction 3) show −1 is the normal exit value of every completed crossing loop and not
   teleport-specific.
@@ -1897,7 +1897,7 @@ These are places where the drafts of this note disagree, or leave a question ope
   censused. Landings spawn on both skills (one each, §1.6).
 - Open: whether wire 23's `SpecialCross` witness covers the `P_ThingHeightClip` caller (§2 T9.1). Not verified.
 - Open: whether the inventory's `for_things` margin (`radius + 32`) equals `P_TeleportMove`'s box (§4.2.3, against §2 T3.3). Not verified.
-- Open: whether a SHA-256 of a patched commercial `DEMO1` lump may appear in a committed result (§4.5). AGENTS.md permits counts,
-  pass/fail facts and state digests; decision I5 commits only header values, command counts and bounds, the tic count and state digests.
+- Closed (owner ruling, 2026-11-10): a SHA-256 of the original, unpatched `DEMO1` lump may be committed as an input-identity
+  digest (and that of the patched scratch copy, if useful); nothing else from the lump (decision I5).
 - Open: the shadow-fuzz draw order (§3 hazard 1) and Baron-against-Baron infighting through barrel splash (§3 hazard 9) have no C
   observation yet; both need a C witness before they are called covered.

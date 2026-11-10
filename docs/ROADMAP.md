@@ -477,10 +477,11 @@ monster/player behavior. Further stages require separate owner direction.
 
 ## Later
 
-- **M4b (in progress on `feat/m4b-episode-1-complete`; decisions pending the owner; see the
+- **M4b (in progress on `feat/m4b-episode-1-complete`; decisions I1–I13 confirmed by the owner on 2026-11-10; see the
   [investigation note](M4B_REFERENCE_INVESTIGATION.md)).** Teleportation (line 97 and the landing thing), the
-  Baron and `A_BossDeath`, hard skill, and with them E1M5, E1M8 and E1M9; the registered
-  `DOOM.WAD` `DEMO1` (E1M5, skill 3) becomes runnable here.
+  Baron and `A_BossDeath`, hard skill, and with them E1M5, E1M8 and E1M9; the `DEMO1`
+  (E1M5, skill 3) of the four-episode `DOOM.WAD`, which the genuine engine runs as registered because of its file
+  name, becomes runnable here.
 - **M4c (proposed, pending the owner).** Pause, easy skill and the reborn reload as an
   admitted transition; level transitions stay a later direction.
 - **Simulation performance (proposed by the owner, after M4b).** Profile
