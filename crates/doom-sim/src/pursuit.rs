@@ -268,6 +268,18 @@ fn cross_lines<A: ActorAccess>(
     new: [Fixed; 2],
 ) {
     for crossing in line_triggers::crossings(h.world, h.sectors, hit, old, new, &[]) {
+        // Wire 24: `EV_Teleport` inside the loop (p_map.c:511); once it reached
+        // `P_TeleportMove`, `numspechit` is 0 and the loop ends (p_map.c:152).
+        if crossing.special == teleport::LINE_TELEPORT {
+            match teleport::cross(h, id, line_triggers::Crosser::Monster, crossing) {
+                Ok(true) => return,
+                Ok(false) => continue,
+                Err(error) => {
+                    h.fail_sight(error);
+                    return;
+                }
+            }
+        }
         let Some(store) = h.access.movers() else {
             h.fail_sight(StoreError::UnsupportedThinker.into());
             return;

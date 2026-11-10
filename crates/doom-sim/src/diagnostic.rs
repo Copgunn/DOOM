@@ -882,6 +882,8 @@ impl<'a> Diagnostic<'a> {
                             OriginalActorType::MT_MISC27,
                             OriginalActorType::MT_ROCKET,
                             OriginalActorType::MT_SHADOWS,
+                            // The DSIM40 teleport fog (admitted by its policy alone).
+                            OriginalActorType::MT_TFOG,
                         ]
                         .into_iter()
                         .any(|ty| {
@@ -1937,6 +1939,9 @@ impl<'a> Diagnostic<'a> {
             9 => 27,
             12 => 7,
             13 | 14 => 3,
+            // DSIM40: `EV_Teleport` returned 1 (15) or 0 (16).
+            15 if self.version == 40 => 40,
+            16 if self.version == 40 => 17,
             _ => return Err(DiagnosticError::Structure),
         };
         if event.len() != len {
@@ -2025,6 +2030,19 @@ impl<'a> Diagnostic<'a> {
             // DSIM39: the secret exit (S1 51) sets `secretexit`.
             13 => event[2] == 0 || (matches!(self.version, 39 | 40) && event[2] == 1),
             14 => event[2] == 0,
+            // DSIM40: thing, line, landing, old x/y/z (any 16.16 value).
+            15 => {
+                validate_handle(&event[2..14], self.slot_bound())?;
+                line(14)?;
+                validate_handle(&event[16..28], self.slot_bound())?;
+                event[2..14] != event[16..28]
+            }
+            // DSIM40: thing, line, reason 0 back side, 1 no landing, 2 refused.
+            16 => {
+                validate_handle(&event[2..14], self.slot_bound())?;
+                line(14)?;
+                event[16] <= 2
+            }
             _ => false,
         };
         if !ok {

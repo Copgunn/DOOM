@@ -303,9 +303,11 @@ fn constructor_map_number_and_skill() {
 }
 
 /// What later M4b steps admit is refused at load under wire 24, as under wire
-/// 23: line special 97 by the mover load rules (step 4), the landing (14, step
-/// 4) and the Baron of Hell (3003, step 5) by the THING batch, which changes
-/// nothing when it refuses.
+/// 23: the Baron of Hell (3003, step 5) by the THING batch, which changes nothing
+/// when it refuses. Line special 97 and the landing (14) stay refused under wire 23
+/// with the same errors; M4b step 4 admits them under wire 24
+/// (`teleport_tests::wire_24_admits_97_and_the_landing`), so this test, written in
+/// step 3 for both wires, keeps its wire-23 cases and its 3003 case unchanged.
 #[test]
 fn unadmitted_specials_and_things_refuse_at_load() {
     let mut l = crate::player_movers_tests::room(13);
@@ -313,17 +315,17 @@ fn unadmitted_specials_and_things_refuse_at_load() {
     load(&l, V2, 1, 6).unwrap();
     let mut tele = l.clone();
     set_line(&mut tele, 4, 97, 5);
-    for policy in [V1, V2] {
+    for policy in [V1] {
         assert_eq!(
             load(&tele, policy, 5, 6).err(),
             Some(SimError::Pursuit(PursuitError::Specials)),
             "{policy:?}"
         );
     }
-    for doomednum in [14, 3003] {
+    for (doomednum, policies) in [(14, &[V1][..]), (3003, &[V1, V2][..])] {
         let mut l = l.clone();
         l.add_thing([1000, 128, 0, doomednum, 7]);
-        for policy in [V1, V2] {
+        for &policy in policies {
             let mut s = load(&l, policy, 8, 6).unwrap();
             let before = s.snapshot().canonical_bytes();
             assert_eq!(

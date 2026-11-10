@@ -180,6 +180,11 @@ pub struct StaticWorld {
     /// (decision H4); `None` under every other policy, whose bounds are constants.
     /// Derived from the immutable map; never canonical state.
     pub(crate) episode1: Option<crate::episode1::Episode1Bounds>,
+    /// Line special 97 and the teleport landing are admitted (wire 24 only,
+    /// `OriginalExecutionProfile::has_teleport`; M4b step 4). The defence-in-depth
+    /// test of the crossing dispatch reads this flag, never `episode1`, which wire 23
+    /// also sets. Derived from the policy at load; never canonical state.
+    pub(crate) teleport: bool,
     /// Per-operation monster sight-query allowance: the historical 64, or
     /// `8·(K + 1)` under the Episode 1 policy (decision D8).
     pub(crate) sight_query_limit: usize,
@@ -254,6 +259,7 @@ impl StaticWorld {
             sky_ceilings: None,
             sector_block_boxes: None,
             episode1: None,
+            teleport: false,
             sight_query_limit: 64,
             checked_arithmetic: false,
             floor,

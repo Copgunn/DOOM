@@ -408,7 +408,6 @@ impl OriginalExecutionProfile {
     /// (`MT_TELEPORTMAN`, doomednum 14), the teleport fog and the telefrag (M4b
     /// decisions I3, I7 and I8): wire 24 only, admitted in M4b step 4. Until then
     /// the load rules refuse the special and the thing under every policy.
-    #[cfg_attr(not(test), expect(dead_code, reason = "admitted in M4b step 4"))]
     pub(crate) const fn has_teleport(self) -> bool {
         matches!(self, Self::PlayerMonstersEpisode1V2)
     }
@@ -815,6 +814,24 @@ fn fireball_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
         .as_ref()
         .map_err(|e| *e)
 }
+/// The teleport fog's closure (`MT_TFOG`, info.c:266–277, 2122–2146): twelve
+/// states of 6 tics, none with an action (wire 24, M4b step 4).
+fn tfog_policy() -> Result<&'static ActorPolicy, OriginalRegistryError> {
+    static POLICY: OnceLock<Result<ActorPolicy, OriginalRegistryError>> = OnceLock::new();
+    POLICY
+        .get_or_init(|| {
+            let p = ActorPolicy::source(OriginalActorType::MT_TFOG)?;
+            if OriginalState::all()
+                .filter(|s| p.normal.contains(*s))
+                .any(|s| s.descriptor().action.is_some())
+            {
+                return Err(OriginalRegistryError::Graph);
+            }
+            Ok(p)
+        })
+        .as_ref()
+        .map_err(|e| *e)
+}
 /// The rocket's spawn/explosion closure (info.c:250, 263–265, 1966–1990): `S_ROCKET`
 /// and `S_EXPLODE1..3`; `A_Explode` in `S_EXPLODE1` is the one action (Episode 1
 /// policy, M4a plan §E.4).
@@ -1149,6 +1166,11 @@ pub(crate) fn require_role_for(
             DefinitionIdentity::Original(OriginalActorType::MT_BARREL) if profile.has_barrels() => {
                 Ok(())
             }
+            // The teleport landing and fog (info.c:2122–2146, 2174–2198), wire 24
+            // only (M4b step 4); after every older arm, so older policies pay nothing.
+            DefinitionIdentity::Original(
+                OriginalActorType::MT_TFOG | OriginalActorType::MT_TELEPORTMAN,
+            ) if profile.has_teleport() => Ok(()),
             other => Err(OriginalRegistryError::Unsupported(other)),
         };
     }
@@ -1179,6 +1201,14 @@ pub(crate) fn state_role_for(
         // `S_BAR1`/`S_BAR2` alive and the `S_BEXP` chain once killed; `S_GIBS`
         // after a crunch is admitted by the type-keyed gibs rule, not the role.
         crate::barrels::state_allowed(s)
+    } else if crate::teleport::is_landing(profile, ty) {
+        // `S_NULL`, its spawn state, forever: `P_SpawnMobj` assigns it directly and
+        // `tics` −1 never counts down (p_mobj.c:497–501, 441–449).
+        s == OriginalState::S_NULL
+    } else if crate::teleport::is_fog(profile, ty) {
+        // `S_TFOG` … `S_TFOG10` (info.c:266–277), no action; the chain ends in
+        // `S_NULL`, which removes the fog like a puff.
+        tfog_policy()?.normal.contains(s)
     } else if ty.0 == OriginalActorType::MT_PLAYER.ordinal() {
         player_policy()?.normal.contains(s)
             || (profile.has_player_weapons()
@@ -1334,6 +1364,17 @@ impl Simulation {
         let episode1 = policy
             .has_episode1()
             .then(|| crate::episode1::Episode1Bounds::from_map(&map));
+        // Wire 24: room for at least one teleport's two fogs when every placed thing
+        // is live (M4b step 4); the store-full witness covers everything beyond.
+        if let (Some(bounds), true) = (episode1, policy.has_teleport()) {
+            let landings = crate::episode1::Episode1Bounds::landings(&map);
+            if bounds
+                .transient_allowance(landings, actor_cap as usize)
+                .is_none_or(|n| n < 2)
+            {
+                return Err(StoreError::Capacity.into());
+            }
+        }
         let mut sim = Self::with_demon_expanded_profile(
             map,
             limit,
@@ -1349,6 +1390,7 @@ impl Simulation {
                 movers: policy.has_movers(),
                 e1m1: policy.has_e1m1(),
                 episode1,
+                teleport: policy.has_teleport(),
             },
         )?;
         sim.boundary = boundary;

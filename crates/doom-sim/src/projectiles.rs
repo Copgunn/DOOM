@@ -1040,7 +1040,9 @@ impl Simulation {
                                     Event::ActorMovement { actor: id, attempt }
                                 }
                                 movement::MotionEvent::Cross(_)
-                                | movement::MotionEvent::SpecialCross => unreachable!(
+                                | movement::MotionEvent::SpecialCross
+                                | movement::MotionEvent::Outer(_)
+                                | movement::MotionEvent::Stage { .. } => unreachable!(
                                     "the historical projectile policy has no line specials"
                                 ),
                             });

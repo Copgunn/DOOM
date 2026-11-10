@@ -39,7 +39,12 @@ Dumps are deleted once a script's digests and events are recorded (--keep-dumps 
 them). --work must lie outside the repository; delete it once the results are recorded.
 
     DOOM_IWAD_DIR=/path tools/local/episode1_reference.py [--work DIR] [--map E1Mn]...
-                       [--script NAME]... [--strict32] [--jobs 1|2] [--keep-dumps]
+                       [--script NAME]... [--strict32] [--jobs 1|2] [--keep-dumps] [--lmp PATH]...
+
+--lmp (M4b) runs uncommitted demos kept outside the repository (for example an idle demo
+written by `player_level_run --write-idle` into scratch) instead of the committed scripts;
+the header names the map, E1M5, E1M8 and E1M9 included, which use the M4b runner
+(tools/reference/m4b_build.py: the M4a driver plus the declared telefrag adapter).
 """
 import argparse, hashlib, json, os, re, shutil, subprocess, sys, time
 from concurrent.futures import ThreadPoolExecutor
@@ -49,11 +54,17 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools/reference'))
 import m3h9c_build            # noqa: E402
 import m4a_build              # noqa: E402
+import m4b_build              # noqa: E402
 import m3h9c_dump as dump    # noqa: E402
 
 MAPS = ['E1M1', 'E1M2', 'E1M3', 'E1M4', 'E1M6', 'E1M7']
-# E1M1 stays on the merged M3h9c driver (frozen wire-22 evidence); the other maps use the M4a fork.
-def builder(mapname): return m3h9c_build if mapname == 'E1M1' else m4a_build
+# The maps M4b admits (teleporters, the Baron): no committed scripts yet; --lmp runs an external demo.
+M4B_MAPS = ['E1M5', 'E1M8', 'E1M9']
+# E1M1 stays on the merged M3h9c driver (frozen wire-22 evidence); the M4b maps use the M4b runner
+# (the M4a driver plus the declared telefrag adapter); the other maps use the M4a fork.
+def builder(mapname):
+    if mapname == 'E1M1': return m3h9c_build
+    return m4b_build if mapname in M4B_MAPS else m4a_build
 VARIANTS = ['strict', 'overflow', 'address']
 SUMMARY = re.compile(r'^summary: tics (\d+) end=(marker|exit|reborn) end_tic (\d+) gamestate (\d+) prndindex (\d+) .* '
                      r'observer_misses (\d+) unknown_messages (\d+) .* us_per_tic ([\d.]+)$', re.M)
@@ -158,6 +169,9 @@ def main():
     ap.add_argument('--strict32', action='store_true', help='also build and compare the opt-in -m32 strict32 variant (no adapters)')
     ap.add_argument('--jobs', type=int, choices=[1, 2], default=2, help='C runs in parallel (at most 2)')
     ap.add_argument('--keep-dumps', action='store_true', help='keep the dump directories under --work/runs')
+    ap.add_argument('--lmp', action='append', type=Path,
+                    help='an uncommitted demo outside the repository (repeatable; its header names the map, '
+                         'which may also be E1M5, E1M8 or E1M9); replaces the committed scripts')
     a = ap.parse_args()
     iwad_dir = os.environ.get('DOOM_IWAD_DIR')
     iwad = Path(iwad_dir) / 'DOOM.WAD' if iwad_dir else None
@@ -167,7 +181,12 @@ def main():
     if work == ROOT or ROOT in work.parents: sys.exit('--work must lie outside the repository')
     maps = a.map or [m for m in MAPS if script_dir(m).is_dir()]
     jobs = []
-    for m in maps:
+    for p in a.lmp or []:
+        p = p.resolve()
+        if ROOT in p.parents: sys.exit(f'--lmp {p}: use the committed scripts for a demo inside the repository')
+        if header_map(p) not in MAPS + M4B_MAPS: sys.exit(f'--lmp {p}: the demo header names {header_map(p)}')
+        jobs.append((header_map(p), p))
+    for m in ([] if a.lmp else maps):
         lmps = sorted(script_dir(m).glob('*.lmp'))
         if a.script: lmps = [p for p in lmps if p.stem in a.script]
         for p in lmps:

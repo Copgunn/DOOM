@@ -337,6 +337,30 @@ fn event_bytes(event: &Event) -> Vec<u8> {
                     b.push(11);
                     b.extend(sector_thinker_id(mover));
                 }
+                crate::MoverEvent::Teleported {
+                    actor,
+                    line,
+                    landing,
+                    old,
+                } => {
+                    b.push(15);
+                    b.extend(id(actor));
+                    b.extend(line.to_le_bytes());
+                    b.extend(id(landing));
+                    for v in old {
+                        b.extend(v.bits().to_le_bytes());
+                    }
+                }
+                crate::MoverEvent::TeleportNotTaken {
+                    actor,
+                    line,
+                    reason,
+                } => {
+                    b.push(16);
+                    b.extend(id(actor));
+                    b.extend(line.to_le_bytes());
+                    b.push(reason);
+                }
                 crate::MoverEvent::SectorSound {
                     origin,
                     index,

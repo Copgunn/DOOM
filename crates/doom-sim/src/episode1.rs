@@ -37,6 +37,8 @@ pub(crate) const EPISODE1_BARREL: i16 = 2035;
 /// DoomEd numbers of the static things beyond E1M1's seven decorations: the candle
 /// (`MT_MISC49`, 34) and the firestick (`MT_MISC43`, 46).
 pub(crate) const EPISODE1_EXTRA_STATICS: [i16; 2] = [34, 46];
+/// DoomEd number of the teleport landing (info.c `MT_TELEPORTMAN`, wire 24).
+pub(crate) const LANDING: i16 = 14;
 /// `BONUSADD` (p_inter.c): the `bonuscount` one pickup adds.
 const BONUS_ADD: usize = 6;
 
@@ -78,6 +80,33 @@ impl Episode1Bounds {
                 u16::from_le_bytes([r[8], r[9]]),
             )
         })))
+    }
+    /// The teleport landings (doomednum 14) a map spawns under wire 24, counted
+    /// with the same single-player, medium-skill filter as the bounds above (M4b
+    /// step 4). Wire 23 refuses doomednum 14 at spawn and never counts it, so the
+    /// bounds of the struct stay those of wire 23.
+    pub fn landings(map: &Map) -> usize {
+        map.things()
+            .iter()
+            .filter(|t| t.kind == LANDING && t.options & 16 == 0 && t.options & 2 != 0)
+            .count()
+    }
+    /// The transient allowance of wire 24 (M4b step 4): the actor slots left for
+    /// actors no THING places (teleport fogs, puffs, blood, missiles) when the player,
+    /// every placed monster, its drop, every pickup, barrel, decoration and landing
+    /// are all live at once: `slots − (1 + K + R + P + B + D + L)`. `None` when the
+    /// placed things alone exceed `slots`. Wire 24 refuses at load a map whose
+    /// allowance is below 2, the two fogs of one teleport; beyond that the
+    /// store-full witness refuses the tic whose spawns find no slot.
+    pub const fn transient_allowance(&self, landings: usize, slots: usize) -> Option<usize> {
+        let placed = 1
+            + self.monsters
+            + self.droppers
+            + self.pickups
+            + self.barrels
+            + self.statics
+            + landings;
+        slots.checked_sub(placed)
     }
     fn from_things(things: impl IntoIterator<Item = (i16, u16)>) -> Self {
         let mut b = Self::default();

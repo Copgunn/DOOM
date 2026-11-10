@@ -1279,6 +1279,12 @@ pub(crate) trait ActorAccess {
     fn movers(&mut self) -> Option<&mut dyn crate::movers::MoverAccess> {
         None
     }
+    /// The nonpending actors in thinker order (`thinkercap.next` onward, removed
+    /// thinkers skipped), for `EV_Teleport`'s landing search (wire 24); `None` for
+    /// an access without one, which that search refuses.
+    fn live_order(&self) -> Option<Vec<ActorId>> {
+        None
+    }
 }
 impl ActorAccess for &mut ThinkerStore<Actor> {
     fn get(&self, id: ActorId) -> Option<&Actor> {
@@ -1302,6 +1308,13 @@ impl ActorAccess for &mut ThinkerStore<Actor> {
     fn movers(&mut self) -> Option<&mut dyn crate::movers::MoverAccess> {
         Some(&mut **self)
     }
+    fn live_order(&self) -> Option<Vec<ActorId>> {
+        Some(
+            self.order()
+                .filter(|id| self.is_pending(*id) == Some(false))
+                .collect(),
+        )
+    }
 }
 impl ActorAccess for &mut ThinkerContext<'_, Actor> {
     fn get(&self, id: ActorId) -> Option<&Actor> {
@@ -1324,6 +1337,15 @@ impl ActorAccess for &mut ThinkerContext<'_, Actor> {
     }
     fn movers(&mut self) -> Option<&mut dyn crate::movers::MoverAccess> {
         Some(&mut **self)
+    }
+    fn live_order(&self) -> Option<Vec<ActorId>> {
+        let store = self.store();
+        Some(
+            store
+                .order()
+                .filter(|id| store.is_pending(*id) == Some(false))
+                .collect(),
+        )
     }
 }
 pub(crate) fn make_actor(

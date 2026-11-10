@@ -15,7 +15,8 @@ Wire 24 (`PlayerMonstersEpisode1V2`, DSIM40, M4b decision I2). Two manifest-driv
   in PENDING below, each named with the M4b step that admits what it needs. The manifest's
   `tbd` expectation is compared as a required "match"; a script with a declared
   `after_last_capture` (SPECH9) must match every capture and then refuse the declared DSIM tic
-  with the named error.
+  with the named error. Such a script runs on its manifest `overrun_probe` demo (SPECH8.lmp, whose
+  commands begin with SPECH9's), so that the declared tic exists.
 
 Steps 4-6 admit scripts by deleting their PENDING entries; a new manifest script is checked
 automatically. With --binary (the built Rust example, for instance
@@ -58,14 +59,9 @@ SETS = [('M4a', ROOT / 'tests/reference/m4a_manifest.json', 'DOOM-M4A-MANIFEST-v
         ('M4b', ROOT / 'tests/reference/m4b_manifest.json', 'DOOM-M4B-MANIFEST-v1',
          ROOT / 'tests/reference/m4b_synthetic_goldens.json', 'DOOM-M4B-SYNTHETIC-GOLDENS-v1')]
 # M4b scripts whose mechanism wire 24 does not admit yet: script -> the M4b step that admits it
-# and why. Wire 24 refuses each at load today (special 97, doomednum 14 or 3003, skill 3).
+# and why. Wire 24 refuses each at load today (doomednum 3003, skill 3).
 PENDING = {
-    'TELE1': 'step 4 (teleport, special 97)', 'TELE2': 'step 4 (teleport, special 97)',
-    'TSPLIT': 'step 4 (teleport, special 97)', 'TSLIDE': 'step 4 (teleport, special 97)',
-    'TFRAG1': 'step 4 (telefrag; also the Baron, step 5)', 'MTELE1': 'step 4 (monster teleport, special 97)',
-    'SLIDEB': 'step 4 (sliding teleport, special 97)', 'SLIDEC': 'step 4 (sliding teleport, special 97)',
-    'SPECH8': 'step 4 (special 97 on the special lines)', 'SPECH9': 'step 4 (special 97 on the special lines)',
-    'SKILL2': 'step 4 (the landing, doomednum 14)',
+    'TFRAG1': 'step 5 (the WAD places a Baron, doomednum 3003; its telefrags need step 4 too)',
     'BARON1': 'step 5 (the Baron, doomednum 3003)', 'BINF1': 'step 5 (the Baron, doomednum 3003)',
     'BVB1': 'step 5 (the Baron, doomednum 3003)', 'BOSS1': 'step 5 (the Baron and A_BossDeath)',
     'BOSS2': 'step 5 (the Baron and A_BossDeath)', 'BOSSM1': 'step 5 (the Baron and A_BossDeath)',
@@ -127,7 +123,11 @@ def run_examples(binary, out, extra, todo):
     for _, w, s, _ in todo:
         target = out / s['lump']
         target.mkdir(parents=True, exist_ok=True)
-        cmd = [binary, '--wad', str(ROOT / w['file']), '--map', w['slot'], '--demo', str(ROOT / s['lmp']),
+        # A script with an overrun probe (SPECH9) ends just before the refused tic, so it runs on the
+        # probe's longer demo, whose first commands are the script's: the captures up to the script's
+        # end are compared and the next tic must be refused.
+        lmp = s.get('overrun_probe', {}).get('lmp', s['lmp'])
+        cmd = [binary, '--wad', str(ROOT / w['file']), '--map', w['slot'], '--demo', str(ROOT / lmp),
                '--out', str(target), '--captures'] + extra
         p = subprocess.run(cmd, capture_output=True, text=True)
         print(f"ran {s['lump']}: exit {p.returncode}" + (f" ({p.stderr.strip()})" if p.returncode else ''))

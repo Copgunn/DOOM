@@ -124,6 +124,7 @@ mod line_triggers;
 mod line_work;
 mod map_extent;
 mod map_scale;
+mod teleport;
 mod use_lines;
 pub use map_extent::{
     MAP_EXTENT_COLLISION_WORK, MAP_EXTENT_MAX_CELLS, MAP_EXTENT_PREPARATION_BYTES,
