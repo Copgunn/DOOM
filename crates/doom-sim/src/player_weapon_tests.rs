@@ -608,3 +608,41 @@ fn historical_weapon_registry_admits_128_lines_and_refuses_more() {
         }
     }
 }
+
+/// Pins the mutation `Host::admit_weapon` -> `Ok(())` (player_pistol.rs) recorded
+/// as equivalent in docs/validation/M4A.md. Written admission rule: the
+/// `PlayerDemonPistolV1` policy has no weapon pack, so only the pistol is admitted
+/// (`admit_weapon`), and "source CheckAmmo fallback requires an unadmitted weapon"
+/// (COMPATIBILITY.md; M3G7_REFERENCE.md: reject the unadmitted continuation
+/// atomically). `P_CheckAmmo` (p_pspr.c:197-229) falls back to the fist when
+/// nothing else is owned. With 0 bullets and the attack button held, the first
+/// refused tic therefore names `WeaponError::UnsupportedWeapon` (the fist is
+/// not admitted), and the refused tic leaves the canonical state unchanged.
+/// Under the mutant the fallback is let through and the refusal becomes
+/// `WeaponError::Inventory` from `PistolState::from_adapter`.
+#[test]
+fn an_empty_pistol_refuses_the_unadmitted_fist_fallback() {
+    let mut s = Simulation::original_player_demon_pistol_map(
+        source::case_map(0),
+        64,
+        MapContextOptions::default(),
+    )
+    .unwrap();
+    s.spawn_player_body(PlayerSlot::One, [Fixed::ZERO; 2])
+        .unwrap();
+    s.initialize_player_pistol(PlayerSlot::One, 0).unwrap();
+    let mut held = [TicCommand::default(); 4];
+    held[0].buttons = BT_ATTACK;
+    for _ in 0..40 {
+        let before = s.snapshot().canonical_bytes();
+        match s.advance(held) {
+            Ok(()) => {}
+            Err(e) => {
+                assert_eq!(e, SimError::Weapon(WeaponError::UnsupportedWeapon));
+                assert_eq!(s.snapshot().canonical_bytes(), before);
+                return;
+            }
+        }
+    }
+    panic!("the empty pistol never reached the fallback refusal");
+}
