@@ -16,7 +16,7 @@ merge of PR #57). Milestone status lives in [ROADMAP](ROADMAP.md), support in [C
 It never contains an IWAD-derived coordinate, angle, lump byte or per-object datum: only counts, special numbers,
 doomednums with their `info.c` names, header values, tic counts and digests.
 
-**Status / next step (2026-11-10 PST).** Phase 1 done; the owner confirmed decisions I1–I13 on 2026-11-10 (I2's name `PlayerMonstersEpisode1V2`, I3's adapter, the I5 `DEMO1` digest ruling and the IWAD-naming ruling recorded in §5 and §7). Phase 2 step 1 (synthetic mechanism WADs and genuine-engine evidence) done at b42326d (code and data; docs and CI in the next commit): 14 WADs, 18 scripts, the declared telefrag adapter (tools/reference/m4b_build.py), three variants identical on every script and strict32 identical locally, the SPECH9 overrun probe; observations in [validation/M4B.md](validation/M4B.md#synthetic-mechanism-wads-ci-evidence), findings in §7. Next: Phase 2 step 2, the independent DSIM40 encoder projection and goldens from the C dumps only (a new `Profile` in tools/reference/level_snapshot.py after the frozen v38/v39 ones, map number from the demo header, TFOG/TELEPORTMAN/Baron domains; a new m4b_snapshot_goldens.py reading `m4b_reference.py --keep-dumps` output). Half-done work: none. Open items: the `P_SpawnMissile` shadow-fuzz pair is still unobserved (§7 finding 1); SPECH9's Rust expectation is a `SpecialCross` refusal at tic 75 (manifest). Open divergences: none. Failing checks: none known (CI pending on the pushed head). Scratch root: /mnt/d/scratch/m4b (I13). Disk rule (owner, 2026-11-10): freed space inside the WSL disk is reused before the virtual disk grows, so the working limit is ext4 free space; after every step record `df -h /` and `df -h /mnt/c`; continue while /mnt/c stays at or above about 15 GB; stop, push and report if /mnt/c drops below 12 GB or `/` shows less than 15 GB free; delete large dumps as soon as digests are extracted. Last check (after step 1, 2026-11-10): / 930 GB free, /mnt/c 15 GB free. Resume: `git checkout feat/m4b-episode-1-complete && git pull`; read this line, AGENTS.md, §5–§7 and validation/M4B.md; `python3 tools/reference/m4b_reference.py --work /mnt/d/scratch/m4b/ref --check --keep-dumps` gives the strict dumps for step 2. Build/test caps: CARGO_BUILD_JOBS=3, NEXTEST_TEST_THREADS=2, at most 2 C jobs.
+**Status / next step (2026-11-10 PST).** Phase 1 done; the owner confirmed decisions I1–I13 on 2026-11-10 (I2's name `PlayerMonstersEpisode1V2`, I3's adapter, the I5 `DEMO1` digest ruling and the IWAD-naming ruling recorded in §5 and §7). Phase 2 step 1 (synthetic mechanism WADs and genuine-engine evidence) done at b42326d. Phase 2 step 2 (the independent DSIM40 projection and goldens) done at e526cee (code and data; docs and CI in the next commit): DSIM40 is defined in [STATE_FORMAT](STATE_FORMAT.md#dsim-v40--episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill) as DSIM39 plus `level.map` (u8 after `level.secret_exit`), skill 2 or 3 in `actors.options`, version 40, policy 24 and context `PLAYER-MONSTERS-EPISODE1-2-v1`, with no new per-actor or per-player field and three new tag-26 event sub-tags (15–17); the projection is a new module, tools/reference/level_snapshot_m4b.py (level_snapshot.py and level_compare.py untouched); tools/reference/m4b_snapshot_goldens.py projects all 4,802 snapshots of the 18 scripts with no stop, writes tests/reference/m4b_synthetic_goldens.json and 19 fixtures, and its `--selftest` passed 8 checks; observations in [validation/M4B.md](validation/M4B.md#independent-projection), findings in §7. Next: Phase 2 step 3, wire 24 plumbing: the `PlayerMonstersEpisode1V2` policy and constructor (map 1–9, skill 2 or 3), the DSIM40 writer and reader against the STATE_FORMAT section and these goldens, the version ladder and per-map admission, with wires ≤23 frozen byte for byte. Half-done work: none. Open items: the `P_SpawnMissile` shadow-fuzz pair is still unobserved (§7 finding 1); SPECH9's Rust expectation is a `SpecialCross` refusal of DSIM tic 76 (C dump tic 75), recorded as `after_last_capture` in the goldens; level_compare.py has no DSIM40 profile yet (the comparator for steps 3 and 7 needs one: a wrapper over level_snapshot_m4b, not an edit of the frozen file). Open divergences: none. Failing checks: none known (CI pending on the pushed head). Owner questions: none. Scratch root: /mnt/d/scratch/m4b (I13). Disk rule (owner, 2026-11-10): freed space inside the WSL disk is reused before the virtual disk grows, so the working limit is ext4 free space; after every step record `df -h /` and `df -h /mnt/c`; continue while /mnt/c stays at or above about 15 GB; stop, push and report if /mnt/c drops below 12 GB or `/` shows less than 15 GB free; delete large dumps as soon as digests are extracted. Last check (after step 2, 2026-11-10): / 930 GB free, /mnt/c 15 GB free. Resume: `git checkout feat/m4b-episode-1-complete && git pull`; read this line, AGENTS.md, §5–§7, validation/M4B.md and the STATE_FORMAT DSIM40 section; `python3 tools/reference/m4b_reference.py --work /mnt/d/scratch/m4b/ref --check --keep-dumps` then `python3 tools/reference/m4b_snapshot_goldens.py --dumps /mnt/d/scratch/m4b/ref/runs --check --selftest` reproduce step 2. Build/test caps: CARGO_BUILD_JOBS=3, NEXTEST_TEST_THREADS=2, at most 2 C jobs.
 
 ## Summary
 
@@ -1909,6 +1909,32 @@ observations are in [the evidence record](validation/M4B.md#synthetic-mechanism-
    already moving (a W1 raiseFloor crossed 8 tics earlier) nothing is started. In the E1M1 slot nothing happens. DIE7
    came 48 tics after each telefrag tic here (kill tic 64 → 112, 175 → 223): the telefrag is made by the player's thinker
    after the Baron's (the Barons precede the player in THINGS), so this is fact 19's later case with `t1` = 8.
+
+Findings of Phase 2 step 2 (2026-11-10), from projecting the step-1 dumps:
+
+7. **The frozen DSIM39 projection already accepts every M4b dump.** `level_snapshot.py`'s
+   `episode1` profile has no type or state domain. Projected unchanged, it encodes the
+   Baron, the fireball, both fogs and the landings without complaint. The DSIM40 module
+   therefore adds its own refusals:
+   - the driver's exact row kinds and columns;
+   - a single-player level;
+   - every actor state inside its type's normal closure.
+
+   One state outside every info.c closure is reached in ordinary play: the player's
+   `S_PLAY_ATK2`, which `A_GunFlash`, `A_FirePistol`, `A_FireShotgun`, `A_FireShotgun2` and
+   `A_FireCGun` set by name (p_pspr.c:453, 653, 676, 706, 742). It is admitted explicitly.
+   With it, the 30 M4a scripts (15,116 snapshots, locally) and the 18 M4b scripts project
+   with no stop.
+8. **The landing in the canonical orders.** A live `MT_TELEPORTMAN` is state 0 (`S_NULL` as an
+   index, distinct from the removal sentinel). It appears in `spatial.link_order`, because
+   `P_SpawnMobj` ran `P_SetThingPosition` for it (p_mobj.c:517, link serials in the dumps). It
+   appears in no sector thing list, because of NOSECTOR. A teleport relinks the thing ahead
+   of the two fogs that are spawned after it.
+9. **Telefrag health domain (§4.6 "verify").** A telefragged monster's health lies between
+   −9,999 and its spawn health minus 10,000. The observed values were −9,980, −9,850 and
+   −9,000. Only the player stomps on maps 1–9 (p_map.c:102). No knockback applies when the
+   player's ready weapon is the chainsaw (p_inter.c:806–810); this was not exercised by the
+   synthetic scripts.
 
 ### Open items carried from Phase 1
 

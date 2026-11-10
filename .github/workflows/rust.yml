@@ -294,9 +294,13 @@ jobs:
           python3 tools/reference/m4b_wad.py --check
           python3 tools/reference/m4b_check_wad.py --check
           python3 tools/reference/m4b_scripts.py --check
+          python3 tools/reference/test_level_snapshot_m4b.py
       - name: Genuine whole-engine runs of the M4b mechanism WADs (strict, UBSan and ASan/UBSan dumps identical), spechit overrun probe and self-test
         if: env.DOCS_ONLY != 'true' && (runner.os == 'Linux')
-        run: python3 tools/reference/m4b_reference.py --check --selftest 30 --work "$RUNNER_TEMP/m4b"
+        run: python3 tools/reference/m4b_reference.py --check --keep-dumps --selftest 30 --work "$RUNNER_TEMP/m4b"
+      - name: Independent DSIM40 projection of the M4b runs and its self-test
+        if: env.DOCS_ONLY != 'true' && (runner.os == 'Linux')
+        run: python3 tools/reference/m4b_snapshot_goldens.py --dumps "$RUNNER_TEMP/m4b/runs" --check --selftest
       - name: Original bonus sustained combat debug/release comparison
         if: env.DOCS_ONLY != 'true'
         run: python3 tools/reference/check_player_bonuses.py

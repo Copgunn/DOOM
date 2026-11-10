@@ -1826,11 +1826,18 @@ python3 tools/reference/m4b_build.py --check               # M4b runner contract
 python3 tools/reference/m4b_wad.py [--out-dir DIR] [--check]  # 14 WADs in tests/reference/m4b_wads/; --check compares bytes and manifest fields, then runs the verifier
 python3 tools/reference/m4b_check_wad.py --check           # independent verifier of every manifest WAD (teleport search order, special-line box, skill counts)
 python3 tools/reference/m4b_scripts.py --check             # tests/reference/m4b_scripts (.txt -> .lmp; adds the "skill N" directive)
+python3 tools/reference/test_level_snapshot_m4b.py          # DSIM40 tables against info.h/info.c, dump columns against m4a_driver.c, header rules
 
 # genuine runner execution (C; Linux only in CI); ASAN_OPTIONS=detect_leaks=0 is set for the address variant (leak detection disabled)
 python3 tools/reference/m4b_reference.py [--work DIR] [--check] [--keep-dumps] [--cc CC] [--only WAD] [--selftest TIC] [--update-events]
 python3 tools/reference/m4b_reference.py --work DIR --strict32   # local opt-in: also the -m32 genuine-text build, dumps must be identical; writes nothing
 python3 tools/reference/m4b_build.py --variant strict|overflow|address|all|strict32 [--out DIR]
+
+# the independent DSIM40 projection (profile episode1v2) and its goldens, from the strict dumps
+python3 tools/reference/m4b_reference.py --work /mnt/d/scratch/m4b/ref --check --keep-dumps
+python3 tools/reference/m4b_snapshot_goldens.py --dumps /mnt/d/scratch/m4b/ref/runs --check [--selftest]
+python3 tools/reference/m4b_snapshot_goldens.py [--work DIR] --check   # runs m4b_reference.py itself, deletes the dumps afterwards
+python3 tools/reference/level_snapshot_m4b.py DUMP_DIR --wad WAD --demo LMP [--out DIR] [--compare39]
 ```
 
 What each asserts:
@@ -1844,6 +1851,18 @@ What each asserts:
   the sanitizer report at `p_map.c:242` after dumping tic 74. `--selftest TIC` plants an extra
   `P_Random` draw and a changed command at tic TIC of `TELE1` and requires each to be first
   reported at that tic.
+- `m4b_snapshot_goldens.py --check` requires each strict dump set to equal the
+  `dumps_sha256` of `m4b_synthetic_results.json`, projects every script to DSIM40 with the
+  skill and map number of its demo header, checks each fixture's claim on its dump, and
+  compares `tests/reference/m4b_synthetic_goldens.json` and the 19
+  `tests/reference/m4b_episode1v2_*.bin` fixtures byte for byte. `--selftest` adds eight
+  checks: a changed field (`reactiontime` at the `TELE1` teleport) moves the first differing
+  digest to exactly that tic; an unknown row kind, an extra column, a landing out of `S_NULL`,
+  a Baron in a raise state and a skill that differs from the dump are refused; another map
+  number changes every digest; and every snapshot of every script projects to DSIM39 bytes
+  except `profile`, `context.schema`, `actors.options` and `level.map`.
+  `level_snapshot_m4b.py --compare39` runs that last check on any dump directory (for example
+  the M4a runs, locally). `test_level_snapshot_m4b.py` needs no dumps.
 
 ## Mutation testing
 

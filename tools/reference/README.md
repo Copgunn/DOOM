@@ -754,3 +754,16 @@ observations in [validation/M4B.md](../../docs/validation/M4B.md#synthetic-mecha
 - [m4b_reference.py](m4b_reference.py) is the manifest-driven three-variant run with per-script
   observed facts, the `SPECH9` overrun probe, the self-test and the opt-in `--strict32` check;
   it writes or `--check`s [m4b_synthetic_results.json](../../tests/reference/m4b_synthetic_results.json).
+- [level_snapshot_m4b.py](level_snapshot_m4b.py) is the independent DSIM40 projection (profile
+  `episode1v2`, [STATE_FORMAT](../../docs/STATE_FORMAT.md#dsim-v40--episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill)):
+  the frozen DSIM39 projection of `level_snapshot.py`, imported unchanged, with version 40,
+  policy 24, the new context, `level.map` from the demo header and skill 2 or 3. It adds
+  refusals of unknown dump rows and columns and of actor states outside their type's normal
+  closure. `--compare39` checks that DSIM40 equals DSIM39 outside the declared delta.
+  [test_level_snapshot_m4b.py](test_level_snapshot_m4b.py) checks its tables against
+  `info.h`/`info.c` and its column contract against `m4a_driver.c`.
+- [m4b_snapshot_goldens.py](m4b_snapshot_goldens.py) projects the kept strict dumps of
+  `m4b_reference.py` and writes or `--check`s
+  [m4b_synthetic_goldens.json](../../tests/reference/m4b_synthetic_goldens.json) and the
+  `m4b_episode1v2_*.bin` fixtures; `--selftest` proves the encoder can fail
+  ([observations](../../docs/validation/M4B.md#independent-projection)).

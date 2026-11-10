@@ -7,7 +7,8 @@ Observed results of the M4b milestone (Episode 1 completion: teleporters, the Ba
 owns the commands. Exact review state and CI belong to GitHub.
 
 **Scope of the record.** Phase 2 step 1 (2026-11-10, America/Los_Angeles): synthetic mechanism
-WADs run through the genuine engine. There is no Rust side yet (wire 24 does not exist), so
+WADs run through the genuine engine. Phase 2 step 2 (2026-11-10): the independent DSIM40
+projection of those runs and its goldens. There is no Rust side yet (wire 24 does not exist), so
 nothing here is a Rust result. Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`,
 so LeakSanitizer was disabled, not passed. Timings quoted here were taken on a host that was
 not idle and are not performance measurements.
@@ -74,3 +75,130 @@ waking, so the scene depends on its timing. The special-line box maximum (8 and 
 computed by the verifier from the lumps; the genuine engine's count is shown only by the probe
 (nine) and by its absence in SPECH8. The runs show what linuxdoom-1.10 built with gcc 15.2.0
 does, not what the 1993 binaries did.
+
+## Independent projection
+
+Phase 2 step 2 (2026-11-10). The strict dumps of the 18 scripts above are projected to DSIM40,
+the schema of wire 24 ([STATE_FORMAT](../STATE_FORMAT.md#dsim-v40--episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill)),
+by `tools/reference/level_snapshot_m4b.py` (profile `episode1v2`). That module imports the frozen
+DSIM39 projection of `level_snapshot.py` and does not edit it. It changes the version word,
+`profile` and `context.schema`, inserts `level.map`, admits skill 3, and adds refusals for
+anything in a dump it does not understand: a row kind or column outside the M4a driver's
+contract, a game state other than a single-player level, and an actor state outside its type's
+normal closure. No Rust output is read. Commands are in
+[TESTING](../TESTING.md#m4b-synthetic-mechanism-wads):
+
+```sh
+python3 tools/reference/m4b_reference.py --work /mnt/d/scratch/m4b/ref --check --keep-dumps
+python3 tools/reference/m4b_snapshot_goldens.py --dumps /mnt/d/scratch/m4b/ref/runs --check --selftest
+python3 tools/reference/test_level_snapshot_m4b.py
+```
+
+**What was projected.** Every snapshot of every script: 4,802 snapshots, with no projection stop.
+Each strict dump set matched the `dumps_sha256` recorded in step 1 before it was projected. The
+results are in `tests/reference/m4b_synthetic_goldens.json`, which holds, per script:
+
+- the skill and map number;
+- a 16-hex-digit digest of every snapshot;
+- the sequence digest and the final digest.
+
+The digests are of the comparator's stripped form, without `map.*` and `events.*`.
+
+| Script | WAD (slot) | Skill | Snapshots (DSIM tics 0..last) | End |
+| --- | --- | --- | --- | --- |
+| TELE1 | TELE (E1M1) | 2 | 174 | marker |
+| TELE2 | TELE (E1M1) | 2 | 62 | marker |
+| TSPLIT | TELEMOVE (E1M1) | 2 | 66 | marker |
+| TSLIDE | TELEMOVE (E1M1) | 2 | 171 | marker |
+| TFRAG1 | TFRAG (E1M1) | 2 | 283 | marker |
+| MTELE1 | MONTELE (E1M1) | 2 | 161 | marker |
+| SLIDEB | SLIDEB (E1M1) | 2 | 101 | marker |
+| SLIDEC | SLIDEC (E1M1) | 2 | 124 | marker |
+| BARON1 | BARON (E1M1) | 2 | 754 | marker |
+| BINF1 | INFIGHT (E1M1) | 2 | 301 | marker |
+| BVB1 | BVB (E1M1) | 2 | 736 | marker |
+| BOSS1 | BOSS8 (E1M8) | 2 | 546 | exit (the exit tic is DSIM tic 545) |
+| BOSS2 | BOSS8 (E1M8) | 2 | 365 | marker |
+| BOSSM1 | BOSSM1 (E1M1) | 2 | 601 | marker |
+| SPECH8 | SPECH8 (E1M1) | 2 | 99 | marker |
+| SPECH9 | SPECH9 (E1M1) | 2 | 76 (through DSIM tic 75 = dump tic 74) | marker; then a declared refusal |
+| SKILL2 | SKILL (E1M1) | 2 | 91 | marker |
+| SKILL3 | SKILL (E1M1) | 3 | 91 | marker |
+
+**SPECH9.** The goldens stop at the last good tic: DSIM tic 75, which is dump tic 74. What Rust
+must do next is recorded as a declared expectation (`after_last_capture`), not as a digest: refuse
+DSIM tic 76 (C dump tic 75) with `SpecialCross`. The tool derives it from the manifest's
+`overrun_probe` and Rust refusal, and checks it against the probe's recorded last dump. No genuine
+dump of that tic exists.
+
+**Fixtures.** Nineteen full DSIM40 captures (map included, no events), 322,993 bytes in all, at
+`tests/reference/m4b_episode1v2_<SCRIPT>_<tic>.bin`. Before writing each one, the tool checks
+its claim on the dump of that tic.
+
+| Fixture (DSIM tic) | What it shows |
+| --- | --- |
+| TELE1 89 | player teleport: two fogs, `reaction_time` 18, momentum 0, the landing's angle |
+| TELE1 98 | a frozen tic: `reaction_time` 9 while a forward command is received and ignored |
+| TSPLIT 37 | a split move whose second half continued from the landing |
+| TFRAG1 64 | telefrag of a zombieman: health −9,980, xdeath, momentum (−3,979,285, −1,518) from the wrapped thrust, the clip dropped |
+| TFRAG1 224 | telefrag of a Baron: health −9,000, momentum (−397,928, −152) |
+| MTELE1 87 | monster teleport (a Demon; no `reaction_time` change) |
+| MTELE1 118 | blocked monster teleport: a live barrel on the landing, no new fog |
+| SLIDEB 50 | a sliding live barrel teleports |
+| SLIDEC 74 | a sliding corpse teleports |
+| BARON1 67 | a Baron fireball in flight |
+| BARON1 506 | Baron melee: the claw, with no fireball spawned |
+| BARON1 553 | Baron pain |
+| BARON1 737 | Baron corpse in `S_BOSS_DIE7` on E1M1: `A_BossDeath` does nothing |
+| BOSS1 224 | E1M8: the last Baron's DIE7 starts the tag-666 floor, which steps in the same tic |
+| BOSS1 545 | the level-exit tic (sector 11), the last capture |
+| BOSS2 224 | E1M8 with the tag-666 sector already busy: DIE7 starts nothing |
+| SKILL2 0 | skill-2 load: no hard-only things, no landing |
+| SKILL3 0 | skill-3 load of the same WAD: the hard-only Baron and the landing |
+| SPECH9 75 | the last good tic before the ninth `spechit` entry |
+
+**Self-checks** (`--selftest`, all passed):
+
+1. Setting the player's `reactiontime` to 17 at the `TELE1` teleport dump moved the first
+   differing digest to exactly DSIM tic 89.
+2. Each of these was refused at the perturbed tic:
+   - an unknown row kind (`DumpDeficiency`);
+   - an extra H column (`DumpDeficiency`);
+   - a landing in state 1 (`Unadmitted`);
+   - a Baron in `S_BOSS_RAISE1` (`Unadmitted`);
+   - skill 3 claimed for a skill-2 dump (`DumpDeficiency` at the load).
+3. Map 8 in place of map 1 changed every `TELE1` digest.
+4. All 4,802 snapshots project to the DSIM39 bytes of the frozen `episode1` profile, except
+   `profile`, `context.schema`, `actors.options` and the inserted `level.map`.
+   (`actors.options` is identical at skill 2.)
+
+`test_level_snapshot_m4b.py` ran 9 unit checks, all passed. They check:
+
+- the type and state numbering against the enum order of `info.h`;
+- every `nextstate` against `info.c`;
+- the four new types' info records and closures against `info.c` text;
+- the numbers quoted in STATE_FORMAT;
+- the dump column contract against `m4a_driver.c`;
+- the demo-header rules.
+
+**Wire-23 compatibility, locally.** The M4a synthetic runs (`m4a_reference.py --keep-dumps
+--check`, 30 scripts) were projected with `level_snapshot_m4b.compare39`: 15,116 snapshots, no
+projection stop, and DSIM40 equal to DSIM39 outside the same four fields. This ran locally only;
+CI runs the M4b comparison.
+
+**Older outputs unchanged.** `level_snapshot.py` and `level_compare.py` were not edited, and no
+existing file under `tests/reference` changed. `m3h9c_snapshot_goldens.py --check` and
+`m4a_snapshot_goldens.py --check` passed on fresh dumps.
+
+**Timings (host not idle; not performance measurements).** On this host:
+
+- the projection of the 18 scripts with goldens generation took 48 s;
+- `--check --selftest` took about 2 minutes, half of it the DSIM39 comparison.
+
+**Limits.**
+
+- The projection covers what the M4a driver dumps. Events are not projected; the comparator
+  strips them on both sides.
+- The closure rule is an independent domain check, not a replay. It cannot tell whether a state
+  was entered at the right tic.
+- The Rust writer does not exist yet. Nothing here is a Rust result.
