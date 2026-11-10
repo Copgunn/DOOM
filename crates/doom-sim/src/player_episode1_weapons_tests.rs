@@ -793,3 +793,32 @@ fn a_wire_23_imp_too_close_to_a_wall_is_refused_at_spawn() {
     assert!(s.boundary.is_some());
     assert_eq!(s.spawn_map_things().map(|_| ()), Ok(()));
 }
+
+/// Pins the mutation `Simulation::validate_type_original` -> `Ok(())`
+/// (lifecycle.rs) recorded as equivalent in docs/validation/M4A.md. Written
+/// admission rule: under the heights policies, wire 23 included, actor
+/// dimensions are admitted against the tallest sector (the `type_envelope`
+/// comment at map construction), and the constructor validates `MT_PUFF` and
+/// `MT_BLOOD` (height 16, info.c) through this function. A wire-23 room whose every sector is floor 0 and
+/// ceiling 8, with no THINGs, is therefore refused at construction with
+/// `ActorError::Dimensions`; under the mutant the check is skipped and it loads.
+#[test]
+fn a_wire_23_room_shorter_than_the_puff_is_refused_at_construction() {
+    let mut l = room();
+    l.clear_things();
+    let map = l.map();
+    let flats: Vec<[u8; 8]> = map
+        .sectors()
+        .iter()
+        .map(|s| *s.flats[1].as_bytes())
+        .collect();
+    for (i, f) in flats.iter().enumerate() {
+        l.set_sector(i, [0, 8], 0, f);
+    }
+    assert_eq!(
+        Simulation::original_player_episode1_map(l.map(), options()).err(),
+        Some(OriginalRegistryError::Runtime(SimError::Actor(
+            ActorError::Dimensions
+        )))
+    );
+}
