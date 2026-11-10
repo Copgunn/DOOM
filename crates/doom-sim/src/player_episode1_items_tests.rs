@@ -650,7 +650,8 @@ fn first_of(s: &Simulation, ty: ActorTypeId) -> ActorId {
 /// domain is refused alone; the domain bounds themselves are accepted.
 ///
 /// Refusal witness below the public API: `episode1::validate_powers`
-/// (episode1.rs:254–260) in the tic preflight via `advance`. `P_GivePower` and the
+/// (episode1.rs:254–260), the predicate `advance`'s tic preflight calls; the test
+/// calls it directly on the corrupted counters. `P_GivePower` and the
 /// per-tic countdown keep every counter in its source domain, and no invulnerability or
 /// berserk is placed in Episode 1 part 1, so the out-of-domain counters are written
 /// from inside the crate.
@@ -762,9 +763,10 @@ fn a_stored_medikit_needed_message_is_refused() {
 /// / `S_BKEY2`) accepts its two loop states and refuses a state outside it.
 ///
 /// Refusal witness below the public API: the item witness
-/// `world_pickups::state_allowed` (world_pickups.rs:318) in the tic preflight via
-/// `advance`. State entry only follows an item's own info.c loop, so no constructible
-/// map puts a keycard in another state; the state is written from inside the crate.
+/// `world_pickups::state_allowed` (world_pickups.rs:318), the predicate `advance`'s
+/// tic preflight calls; the test calls it directly. State entry only follows an
+/// item's own info.c loop, so no constructible map puts a keycard in another
+/// state; the other states are passed to the predicate.
 #[test]
 fn a_cycling_item_accepts_only_its_own_loop_states() {
     use identity::OriginalState;
@@ -786,8 +788,9 @@ fn a_cycling_item_accepts_only_its_own_loop_states() {
 /// disagrees with its state is refused.
 ///
 /// Refusal witness below the public API: the decoration witness
-/// `e1m1_rules::validate_decoration` (e1m1_rules.rs:291–292) in the tic preflight via
-/// `advance`. State entry writes sprite and frame together with the state from info.c,
+/// `e1m1_rules::validate_decoration` (e1m1_rules.rs:291–292), the predicate
+/// `advance`'s tic preflight calls; the test calls it directly on the corrupted
+/// copy. State entry writes sprite and frame together with the state from info.c,
 /// so no map produces a disagreeing decoration; the sprite or frame is written from
 /// inside the crate.
 #[test]
