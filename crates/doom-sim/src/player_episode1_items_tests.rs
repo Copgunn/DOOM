@@ -868,11 +868,10 @@ fn a_moving_item_at_a_tic_boundary_is_refused() {
 /// not yet spawned, has `level.total_items` 0 and passes the item-statistics
 /// witness; after the batch the total is the placed count, 1.
 ///
-/// Refusal witness below the public API: `Simulation::preflight_world_pickups`
-/// (world_pickups.rs:1230, the zero-total case) on a world constructed before its THING
-/// batch. Pins the accepting side of the same witness: the pre-batch world is public,
-/// but the witness is reached only through the crate-internal preflight entry used
-/// here.
+/// Calls the crate-internal `Simulation::preflight_world_pickups`
+/// (world_pickups.rs:1230, the zero-total case) directly on a world constructed
+/// before its THING batch. The same guard is also reachable through the public
+/// API: see `a_dropped_pickup_before_the_thing_batch_is_accepted`.
 #[test]
 fn a_zero_item_total_before_the_thing_batch_is_accepted() {
     let mut l = room();
@@ -884,6 +883,28 @@ fn a_zero_item_total_before_the_thing_batch_is_accepted() {
     let s = sim(&l);
     assert_eq!(s.statistics.unwrap().total_items, 1);
     assert_eq!(s.preflight_world_pickups(), Ok(()));
+}
+
+/// Pins the mutation `>` -> `>=` in the zero-total clause of
+/// `Simulation::preflight_world_pickups` (world_pickups.rs:1230), recorded as
+/// reachable only below the public API in docs/validation/M4A.md. STATE_FORMAT.md
+/// (v27): "zero also describes a constructed world before its THING batch". The
+/// public `Simulation::spawn_dropped_pickup` calls the preflight at tic 0 on such
+/// a world, so on a wire-23 world constructed with a player start and one health
+/// bonus but not yet spawned, dropping a Clip is `Ok`; under the mutant the zero
+/// total is refused with `PlayerBodyError::Invariant`.
+#[test]
+fn a_dropped_pickup_before_the_thing_batch_is_accepted() {
+    let mut l = room();
+    thing(&mut l, -32, 0, 1);
+    thing(&mut l, 200, 64, 2014);
+    let mut s = load(&l, EPISODE1).unwrap();
+    assert_eq!(s.statistics.unwrap().total_items, 0);
+    assert_eq!(
+        s.spawn_dropped_pickup(world_pickups::PickupKind::Clip, [units(100), units(0)])
+            .map(|_| ()),
+        Ok(())
+    );
 }
 
 // ---- M4a mutation-testing step (run 2): body preflight witnesses ----------
