@@ -766,3 +766,30 @@ fn a_wire_23_imp_can_enter_its_run_state() {
         Ok(())
     );
 }
+
+/// Pins the mutation `Simulation::spawn_admitted` `&&` -> `||` in the
+/// `has_episode1()` branch (player_map_scale.rs) recorded as equivalent in
+/// docs/validation/M4A.md. Written admission rule: the spawn rule S′
+/// (COMPATIBILITY.md, "The spawn rule S′"; `Boundary::spawn_admitted_relaxed`):
+/// an XY mover (monster) whose open box meets a wall needs its center at least
+/// `(31 - r)` units in front of the wall's line for an axis-aligned wall; the Imp's
+/// radius is 20 (info.c MT_TROOP), so the minimum is 11. In the doorway room (west
+/// wall at x = -512) an Imp 5 units from the wall is refused with
+/// `MonsterError::Arithmetic`, and one 15 units from it is admitted. Wire 23
+/// derives a boundary here, and the boundary clause is optional (decision D4, so
+/// room containment alone applies without one); under the mutant the
+/// room-containment clause alone admits the spawn, so the 5-unit Imp is spawned.
+#[test]
+fn a_wire_23_imp_too_close_to_a_wall_is_refused_at_spawn() {
+    let near = with(&[(-32, 0, 0, 1), (-507, 0, 0, 3001)]);
+    let mut s = Simulation::original_player_episode1_map(near.map(), options()).unwrap();
+    assert!(s.boundary.is_some());
+    assert_eq!(
+        s.spawn_map_things().err(),
+        Some(SimError::Monster(MonsterError::Arithmetic))
+    );
+    let far = with(&[(-32, 0, 0, 1), (-497, 0, 0, 3001)]);
+    let mut s = Simulation::original_player_episode1_map(far.map(), options()).unwrap();
+    assert!(s.boundary.is_some());
+    assert_eq!(s.spawn_map_things().map(|_| ()), Ok(()));
+}
