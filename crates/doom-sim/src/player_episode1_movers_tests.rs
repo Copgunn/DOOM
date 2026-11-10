@@ -1463,3 +1463,89 @@ fn thirty_plats_started_by_one_switch_are_all_active() {
         .count();
     assert_eq!(plats, 30);
 }
+
+// ---- Runtime sector-height domain (review finding A1) ----------------------
+
+/// A three-sector strip: the player's room 0 (floor 0, ceiling 128) and two
+/// sectors A (1) and B (2), both tagged 1 by the SR 70 (`turboLower`) switch on
+/// room 0's north wall (line 1), with A's and B's floors `a` and `b` under
+/// ceilings `c`. The player stands 32 units below that wall facing it.
+fn turbo_pair(a: i16, b: i16, c: i16) -> crate::heights_room::HeightsRoom {
+    use crate::heights_room::{Fault, HeightsRoom};
+    HeightsRoom::new(&[-512, -128, 128, 512], &[[0, 128], [a, c], [b, c]])
+        .with_things(&[[-320, 480, 90, 1, 7]])
+        .clone_with(&[
+            Fault::TaggedSpecial(1, 70, 1),
+            Fault::SectorTag(1, 1),
+            Fault::SectorTag(2, 1),
+        ])
+}
+fn strip_sim(room: &crate::heights_room::HeightsRoom) -> Simulation {
+    let mut s = load_strip(room).unwrap();
+    s.spawn_map_things().unwrap();
+    s.initialize_player_weapons(PlayerSlot::One, WeaponInventory::default())
+        .unwrap();
+    s.spawn_level_specials().unwrap();
+    s
+}
+
+/// The turbo ratchet (docs/M4A_REFERENCE_INVESTIGATION.md §14, 2026-11-10):
+/// SR 70 is repeatable (p_switch.c:592–596). `EV_DoFloor(turboLower)` sets each
+/// tagged sector's destination to `P_FindHighestFloorSurrounding` (from −500,
+/// p_spec.c:297–315) plus 8 unless that equals its floor (p_floor.c:301–309),
+/// and `T_MovePlane`'s downward branch sets the floor to a destination above it
+/// in one step (`floorheight - speed < dest`, p_floor.c:66–78), in the same tic
+/// (`P_PlayerThink` then `P_RunThinkers`, p_tick.c:150–152). From A = 992,
+/// B = 1,008 (A's neighbours are room 0 and B, B's only A; each `EV_DoFloor`
+/// reads the floors before any of its movers has stepped):
+/// press 1: A → 1,008 + 8 = 1,016, B → 992 + 8 = 1,000;
+/// press 2: A → 1,000 + 8 = 1,008, B → 1,016 + 8 = 1,024;
+/// press 3: A → 1,024 + 8 = 1,032, beyond the ±1,024 sector-height domain of
+/// wire 23 (docs/COMPATIBILITY.md, "Sector heights"), so that tic refuses with
+/// `MapScaleError::Arithmetic` and keeps the complete canonical state (tic,
+/// RNG, every height); the next tic still advances.
+#[test]
+fn turbo_ratchet_past_the_sector_height_domain_refuses_the_tic() {
+    let mut s = strip_sim(&turbo_pair(992, 1008, 1024));
+    for (a, b) in [(1016, 1000), (1008, 1024)] {
+        use_once(&mut s).unwrap();
+        settle(&mut s, 40);
+        assert_eq!((floor(&s, 1), floor(&s, 2)), (units(a), units(b)));
+    }
+    s.advance(zero()).unwrap();
+    let (tic, rng) = (tic_of(&s), s.rng());
+    refuses(&mut s, use_command(), MapScaleError::Arithmetic);
+    assert_eq!((tic_of(&s), s.rng()), (tic, rng));
+    assert_eq!((floor(&s, 1), floor(&s, 2)), (units(1008), units(1024)));
+    assert!(movers(&s).is_empty());
+    s.advance(zero()).unwrap();
+    assert_eq!(tic_of(&s), tic + 1);
+}
+
+/// Older wires never reach the runtime witness: the construction is not
+/// admitted by wire 22. SR 70 is a wire-23 special (rule 1 admits only the W1
+/// 36 `turboLower` before it: `Pursuit(Specials)`); with the W1 36 line in its
+/// place, floors 0 and 16 (ceilings 128) make the reachable-height fixpoint
+/// ratchet past ±512 (`MoverHeights`, the wire-19 rule 4); from 992 and 1,008
+/// (ceilings 1,024) the static heights already exceed the real-map
+/// certificate's ±512 (`Arithmetic`, checked before the mover rules). Wire 23
+/// loads every SR 70 variant.
+#[test]
+fn the_turbo_ratchet_is_not_admitted_before_wire_23() {
+    use crate::heights_room::Fault;
+    for (a, b, c, special, error) in [
+        (0, 16, 128, 70, SimError::Pursuit(PursuitError::Specials)),
+        (0, 16, 128, 36, MapScaleError::MoverHeights.into()),
+        (992, 1008, 1024, 70, MapScaleError::Arithmetic.into()),
+    ] {
+        let room = turbo_pair(a, b, c).clone_with(&[Fault::TaggedSpecial(1, special, 1)]);
+        assert_eq!(
+            Simulation::original_player_level_map(room.map(), options()).err(),
+            Some(OriginalRegistryError::Runtime(error)),
+            "{a} {b} {special}"
+        );
+        if special == 70 {
+            Simulation::original_player_episode1_map(room.map(), options()).unwrap();
+        }
+    }
+}
