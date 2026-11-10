@@ -837,3 +837,161 @@ fn movers_reject_a_mover_sector_without_a_defined_blockbox() {
     );
     assert!(movers(&room(0)).is_ok());
 }
+
+// ---- M4a mutation-testing step (run 1, shard 1) ---------------------------
+//
+// Wire-19 load rules (docs/COMPATIBILITY.md, "Original monsters with doors,
+// lifts, floors, switches and the exit", load-rule table; M3h8 note §5 and §7),
+// shared by the later policies up to wire 22; the expected outcomes follow
+// from the rules' written definitions there.
+
+/// "No sector belongs to two mover families (... lifts: targets of 88 ...)":
+/// a sector tagged by both a WR 88 lift line and a 109 door line is refused.
+#[test]
+fn a_lift_and_door_sector_is_mover_family() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let two = HeightsRoom::new(&[-512, 0, 512], &[[0, 128], [0, 128]]);
+    let lift = [Fault::TaggedSpecial(1, 88, 1), Fault::SectorTag(0, 1)];
+    Simulation::original_player_movers_map(two.clone_with(&lift).map(), options()).unwrap();
+    let mut both = lift.to_vec();
+    both.push(Fault::TaggedSpecial(2, 109, 1));
+    rejects_map(
+        two.clone_with(&both).map(),
+        SimError::MapScale(MapScaleError::MoverFamily),
+    );
+}
+
+/// "No door's smallest possible top lies below its floor": the top of a door is
+/// the lowest neighbour ceiling − 4 (p_doors.c `EV_DoDoor`), so next to a
+/// neighbour of ceiling 4 the top is 0, equal to the floor 0, and loads; next
+/// to a ceiling of 3 it is −1, below the floor, and is `InvertingDoor`.
+#[test]
+fn inverting_door_boundary_is_strictly_below_the_floor() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let door = [Fault::TaggedSpecial(1, 109, 1), Fault::SectorTag(0, 1)];
+    let room = |neighbour: i16| {
+        HeightsRoom::new(&[-512, 0, 512], &[[0, 128], [0, neighbour]]).clone_with(&door)
+    };
+    let bounds = mover_bounds(&room(4).map()).unwrap();
+    assert_eq!(bounds.movers, 1);
+    assert_eq!(
+        mover_bounds(&room(3).map()),
+        Err(SimError::MapScale(MapScaleError::InvertingDoor))
+    );
+}
+
+/// The §5 fixpoint widens a blaze door's ceiling down to its top, the lowest
+/// neighbour ceiling − 4, with no floor clamp (unlike a normal door, which
+/// closes to its floor). Two adjacent 109 doors are each other's neighbours, so
+/// each round lowers both by 4 more and the fixpoint passes −512:
+/// `MoverHeights`. One door alone loads.
+#[test]
+fn adjacent_blaze_doors_have_unbounded_heights() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let three = HeightsRoom::new(&[-512, -128, 128, 512], &[[0, 128]; 3]);
+    let one = [Fault::TaggedSpecial(1, 109, 1), Fault::SectorTag(1, 1)];
+    mover_bounds(&three.clone_with(&one).map()).unwrap();
+    let mut two = one.to_vec();
+    two.push(Fault::SectorTag(2, 1));
+    assert_eq!(
+        mover_bounds(&three.clone_with(&two).map()),
+        Err(SimError::MapScale(MapScaleError::MoverHeights))
+    );
+}
+
+// ---- M4a mutation-testing step (run 2): the §5 fixpoint (`reachable`) -----
+//
+// Expected values come from the written definition in M3H8_REFERENCE_INVESTIGATION.md
+// §5 (the closure rules per special, `top(i)`, `H(i)`, and Δ = max(2 if 1 or 63 is
+// present, 4 if 88 is present, J, door top drop)) and rule 4 (MoverHeights beyond
+// ±512), never from Rust output. `HeightsRoom` line indices for `n` sectors: 0 the
+// west wall, `1 + i` the top wall of sector `i`, `n + 1` the east wall, then the `n`
+// bottom walls, then the portal between sectors `k − 1` and `k` at `2n + 1 + k`
+// (front `k`, back `k − 1`).
+
+/// Two adjacent DR doors (special 1 on the portals 0|1 and 1|2: the back sectors 0
+/// and 1 are doors). By §5 a door's `C[i].lo ≤ top(i).lo = min_n C[n].lo − 4`, and
+/// each door is the other's neighbour, so `C[0].lo ≤ C[1].lo − 4 ≤ C[0].lo − 8`: the
+/// least fixpoint is unbounded below and rule 4 refuses the map (`MoverHeights`),
+/// before rule 4b is evaluated. One DR door alone loads.
+#[test]
+fn adjacent_normal_doors_have_unbounded_heights() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let three = HeightsRoom::new(&[-512, -128, 128, 512], &[[0, 128]; 3]);
+    let one = [Fault::TaggedSpecial(8, 1, 0)];
+    mover_bounds(&three.clone_with(&one).map()).unwrap();
+    let two = [Fault::TaggedSpecial(8, 1, 0), Fault::TaggedSpecial(9, 1, 0)];
+    assert_eq!(
+        mover_bounds(&three.clone_with(&two).map()),
+        Err(SimError::MapScale(MapScaleError::MoverHeights))
+    );
+}
+
+/// Two adjacent 36 (turbo) targets with floors 0 and −16. By §5, `H` of each is the
+/// other's floor interval (both above −500), not one value equal to the own constant
+/// floor, so `F[0].hi ≥ F[1].hi + 8` and `F[1].hi ≥ F[0].hi + 8`: unbounded above,
+/// `MoverHeights`. With equal floors (0, 0) `H` is one value equal to each constant
+/// own floor (no + 8, no movement; p_floor.c:307–315) and the map loads.
+#[test]
+fn adjacent_turbo_floors_with_different_heights_are_unbounded() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let turbo = [
+        Fault::TaggedSpecial(1, 36, 1),
+        Fault::SectorTag(0, 1),
+        Fault::SectorTag(1, 1),
+    ];
+    let level = HeightsRoom::new(&[-512, 0, 512], &[[0, 128], [0, 128]]);
+    let bounds = mover_bounds(&level.clone_with(&turbo).map()).unwrap();
+    assert_eq!((bounds.reach, bounds.movers), ([0, 128], 2));
+    let step = HeightsRoom::new(&[-512, 0, 512], &[[0, 128], [-16, 128]]);
+    assert_eq!(
+        mover_bounds(&step.clone_with(&turbo).map()),
+        Err(SimError::MapScale(MapScaleError::MoverHeights))
+    );
+}
+
+/// A closed DR door (sector 0, floor = ceiling = −300) beside a room with floor −200
+/// and ceiling −100. By §5, `top(0) = [−100 − 4, −100 − 4]`, so `C[0] = [min(−300,
+/// −104), −104] = [−300, −104]`; `R = [−300, −100]` (the room's ceiling is the
+/// highest endpoint). Rule 4b holds (−104 ≥ −300). Δ = max(2 for special 1, door top
+/// drop `C[0].hi − top(0).lo` = 0) = 2.
+#[test]
+fn a_door_below_zero_rises_to_its_neighbour_ceiling_minus_4() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let room = HeightsRoom::new(&[-512, 0, 512], &[[-300, -300], [-200, -100]])
+        .clone_with(&[Fault::TaggedSpecial(6, 1, 0)]);
+    let bounds = mover_bounds(&room.map()).unwrap();
+    assert_eq!(
+        (bounds.reach, bounds.delta, bounds.movers),
+        ([-300, -100], 2, 1)
+    );
+}
+
+/// A turbo target T (sector 0) beside a chain of two lifts L0, L1 (sectors 1, 2,
+/// special 88) ending at a room S at floor −64 (sector 3); every other floor 0,
+/// ceilings 128. By §5 the lift rule `F[i] ⊇ [min_n F[n].lo, F[i].hi]` carries −64
+/// to L1 and then to L0 (`F[1] = F[2] = [−64, 0]`), so `H(T) = [max(−500, −64),
+/// max(−500, 0)] = [−64, 0]`, not one value: `F[T] ⊇ [−56, 8]`. Then J = `H.hi + 8 −
+/// F[T].lo` = 0 + 8 + 56 = 64 and Δ = max(4 for special 88, 64) = 64; `R = [−64, 128]`.
+/// The −64 reaches T only after two lift widenings, so the fixpoint must keep
+/// iterating while only lifts change.
+#[test]
+fn lift_widenings_propagate_into_a_turbo_destination() {
+    use crate::heights_room::{Fault, HeightsRoom};
+    let room = HeightsRoom::new(
+        &[-512, -256, 0, 256, 512],
+        &[[0, 128], [0, 128], [0, 128], [-64, 128]],
+    )
+    .clone_with(&[
+        Fault::TaggedSpecial(1, 36, 2),
+        Fault::SectorTag(0, 2),
+        Fault::TaggedSpecial(2, 88, 1),
+        Fault::SectorTag(1, 1),
+        Fault::SectorTag(2, 1),
+    ]);
+    let bounds = mover_bounds(&room.map()).unwrap();
+    assert_eq!(
+        (bounds.reach, bounds.delta, bounds.movers),
+        ([-64, 128], 64, 3)
+    );
+}

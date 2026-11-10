@@ -120,6 +120,30 @@ pub(crate) fn side(p: [Fixed; 2], d: Divline) -> u8 {
         1
     }
 }
+/// `P_InterceptVector` (p_maputl.c) and `P_InterceptVector2` (p_sight.c:109) of
+/// the Episode 1 policy's checked arithmetic (decision H3, certificate clauses
+/// (i) and (ii)): the same `FixedMul`/`FixedDiv` expression as [`fraction`], with
+/// every signed `int` subtraction and addition and every `FixedMul` result
+/// computed exactly. `None` where the source would overflow (undefined) or
+/// narrow a `FixedMul` product out of `fixed_t`; otherwise the value equals the
+/// wrapping computation's. `v2` is the trace, `v1` the line.
+pub(crate) fn checked_intercept(
+    v2_start: [Fixed; 2],
+    v2_delta: [Fixed; 2],
+    v1_start: [Fixed; 2],
+    v1_delta: [Fixed; 2],
+) -> Option<Fixed> {
+    let mul = |a: i32, b: i32| i32::try_from((i64::from(a) * i64::from(b)) >> 16).ok();
+    let den = mul(v1_delta[1].bits() >> 8, v2_delta[0].bits())?
+        .checked_sub(mul(v1_delta[0].bits() >> 8, v2_delta[1].bits())?)?;
+    if den == 0 {
+        return Some(Fixed::ZERO);
+    }
+    let x = v1_start[0].bits().checked_sub(v2_start[0].bits())?;
+    let y = v2_start[1].bits().checked_sub(v1_start[1].bits())?;
+    let num = mul(x >> 8, v1_delta[1].bits())?.checked_add(mul(y >> 8, v1_delta[0].bits())?)?;
+    Some(Fixed::from_bits(num) / Fixed::from_bits(den))
+}
 pub(crate) fn fraction(v2: Divline, v1: Divline) -> Fixed {
     let shift = |v: Fixed| Fixed::from_bits(v.bits() >> 8);
     let den = shift(v1.delta[1]) * v2.delta[0] - shift(v1.delta[0]) * v2.delta[1];
@@ -316,7 +340,22 @@ fn query_prepared(
         return Ok(out);
     }
     let eye = observer.z + observer.height() - Fixed::from_bits(observer.height().bits() >> 2);
-    let mut slopes = [target.z - eye, target.z + target.height() - eye];
+    // Under the Episode 1 policy the height differences of `P_CheckSight` and
+    // `P_CrossSubsector` are computed checked (certificate clause (vii)).
+    let height = |a: Fixed, b: Fixed| -> Result<Fixed, SimError> {
+        if world.checked_arithmetic {
+            a.bits()
+                .checked_sub(b.bits())
+                .map(Fixed::from_bits)
+                .ok_or_else(|| crate::MapScaleError::Arithmetic.into())
+        } else {
+            Ok(a - b)
+        }
+    };
+    let mut slopes = [
+        height(target.z, eye)?,
+        height(target.z + target.height(), eye)?,
+    ];
     out.eye = Some(eye);
     let ray = Divline {
         start: observer.position(),
@@ -432,7 +471,12 @@ fn query_prepared(
                         out.visible = false;
                         break 'walk;
                     }
-                    let frac = fraction(ray, div);
+                    let frac = if world.checked_arithmetic {
+                        checked_intercept(ray.start, ray.delta, div.start, div.delta)
+                            .ok_or(crate::MapScaleError::Arithmetic)?
+                    } else {
+                        fraction(ray, div)
+                    };
                     // The source intercept guard can saturate to INT_MIN even
                     // inside the coordinate envelope (quantized side tests).
                     // Original FixedDiv then evaluates abs(INT_MIN) on its
@@ -442,10 +486,10 @@ fn query_prepared(
                         return Err(PerceptionError::Arithmetic.into());
                     }
                     if front.floor != back.floor {
-                        slopes[0] = slopes[0].max((bottom - eye) / frac);
+                        slopes[0] = slopes[0].max(height(bottom, eye)? / frac);
                     }
                     if front.ceiling != back.ceiling {
-                        slopes[1] = slopes[1].min((top - eye) / frac);
+                        slopes[1] = slopes[1].min(height(top, eye)? / frac);
                     }
                     out.visits.push(SightVisit::Clip {
                         line: line_id,

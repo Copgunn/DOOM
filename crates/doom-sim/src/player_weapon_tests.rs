@@ -507,3 +507,142 @@ fn weapon_storage_variant_must_match_the_explicit_execution_policy() {
     );
     assert_eq!(s.snapshot(), before);
 }
+
+// ---- M4a mutation-testing step (run 2): body preflight witnesses ----------
+
+/// Refusal witness below the public API: `Simulation::preflight_player_body`, the
+/// pre-heights vertical clause for the bound body (original_player.rs:406,
+/// `momz != 0 || z != floorz`). Under the policies before the heights policy (here
+/// the demon weapons policy) the room is one sector with static heights [0, 128] and
+/// nothing moves a body vertically (no heights, no falling, no vertical thrust), so no
+/// map or command produces either value; each is written alone from inside the crate.
+#[test]
+fn a_pre_heights_body_off_its_floor_or_with_vertical_momentum_is_refused() {
+    let (s, a) = warm(1, 0);
+    assert_eq!(s.preflight_player_body(false), Ok(()));
+    let raw = Fixed::from_bits(1);
+    for (name, edit) in [
+        (
+            "z",
+            (|b: &mut Actor, raw| b.z = b.z + raw) as fn(&mut Actor, Fixed),
+        ),
+        ("momz", |b: &mut Actor, raw| b.momz = raw),
+    ] {
+        let mut c = s.clone();
+        edit(c.actors.get_mut(a.body).unwrap(), raw);
+        assert_eq!(
+            c.preflight_player_body(false),
+            Err(SimError::PlayerBody(PlayerBodyError::Invariant)),
+            "{name}"
+        );
+    }
+}
+
+/// Refusal witness below the public API: `Simulation::preflight_player_body`, the
+/// moving-monster clause (original_player.rs:432, `!heights && (z != floorz || momz
+/// != 0)`). Under the demon weapons policy a damaged Demon slides on its floor
+/// (`P_DamageMobj` thrust, horizontal only); nothing moves it vertically, so no map or
+/// command produces a moving Demon off its floor or with vertical momentum. With one
+/// unit of momentum on its floor it is accepted; each vertical value alone is refused.
+#[test]
+fn a_pre_heights_moving_monster_off_its_floor_or_with_vertical_momentum_is_refused() {
+    let (mut s, a) = warm(1, 0);
+    let demon = a.origin.unwrap();
+    s.actors.get_mut(demon).unwrap().spec.momentum[0] = Fixed::from_map_units(1);
+    assert_eq!(s.preflight_player_body(false), Ok(()));
+    let raw = Fixed::from_bits(1);
+    for (name, edit) in [
+        (
+            "z",
+            (|b: &mut Actor, raw| b.z = b.z + raw) as fn(&mut Actor, Fixed),
+        ),
+        ("momz", |b: &mut Actor, raw| b.momz = raw),
+    ] {
+        let mut c = s.clone();
+        edit(c.actors.get_mut(demon).unwrap(), raw);
+        assert_eq!(
+            c.preflight_player_body(false),
+            Err(SimError::PlayerBody(PlayerBodyError::Unsupported)),
+            "{name}"
+        );
+    }
+}
+
+/// COMPATIBILITY.md, historical collision profiles and weapon intercept bounds:
+/// the pre-map-scale weapon policies admit 128 linedefs. The registry checks this
+/// before constructing the world. Additional copies of a one-sided wall remain
+/// axis aligned and reference valid sides; no geometry or actor work is required
+/// to decide the limit. At 128 the map loads; 129 and 130 are refused by the
+/// weapon intercept check, including its error precedence.
+#[test]
+fn historical_weapon_registry_admits_128_lines_and_refuses_more() {
+    use crate::diagonal_room::Lumps;
+    use crate::heights_room::HeightsRoom;
+    for count in [128, 129, 130] {
+        let room = HeightsRoom::new(&[-512, 512], &[[0, 128]]);
+        let mut lumps = Lumps::parse(&room.wad());
+        let lines = &mut lumps
+            .lumps
+            .iter_mut()
+            .find(|(n, _)| n == "LINEDEFS")
+            .unwrap()
+            .1;
+        let wall = lines[..14].to_vec();
+        while lines.len() / 14 < count {
+            lines.extend_from_slice(&wall);
+        }
+        let map = lumps.map();
+        assert_eq!(map.linedefs().len(), count);
+        let result =
+            Simulation::original_player_demon_weapons_map(map, 64, MapContextOptions::default())
+                .map(|_| ());
+        if count == 128 {
+            assert_eq!(result, Ok(()));
+        } else {
+            assert_eq!(
+                result,
+                Err(OriginalRegistryError::Runtime(SimError::Combat(
+                    CombatError::InterceptLimit
+                )))
+            );
+        }
+    }
+}
+
+/// Pins the mutation `Host::admit_weapon` -> `Ok(())` (player_pistol.rs) recorded
+/// as equivalent in docs/validation/M4A.md. Written admission rule: the
+/// `PlayerDemonPistolV1` policy has no weapon pack, so only the pistol is admitted
+/// (`admit_weapon`), and "source CheckAmmo fallback requires an unadmitted weapon"
+/// (COMPATIBILITY.md; M3G7_REFERENCE.md: reject the unadmitted continuation
+/// atomically). `P_CheckAmmo` (p_pspr.c:197-229) falls back to the fist when
+/// nothing else is owned. With 0 bullets and the attack button held, the first
+/// refused tic therefore names `WeaponError::UnsupportedWeapon` (the fist is
+/// not admitted), and the refused tic leaves the canonical state unchanged.
+/// Under the mutant the fallback is let through and the refusal becomes
+/// `WeaponError::Inventory` from `PistolState::from_adapter`.
+#[test]
+fn an_empty_pistol_refuses_the_unadmitted_fist_fallback() {
+    let mut s = Simulation::original_player_demon_pistol_map(
+        source::case_map(0),
+        64,
+        MapContextOptions::default(),
+    )
+    .unwrap();
+    s.spawn_player_body(PlayerSlot::One, [Fixed::ZERO; 2])
+        .unwrap();
+    s.initialize_player_pistol(PlayerSlot::One, 0).unwrap();
+    let mut held = [TicCommand::default(); 4];
+    held[0].buttons = BT_ATTACK;
+    for _ in 0..40 {
+        let before = s.snapshot().canonical_bytes();
+        match s.advance(held) {
+            Ok(()) => {}
+            Err(e) => {
+                assert_eq!(e, SimError::Weapon(WeaponError::UnsupportedWeapon));
+                assert_eq!(s.snapshot().canonical_bytes(), before);
+                return;
+            }
+        }
+    }
+    panic!("the empty pistol never reached the fallback refusal");
+}

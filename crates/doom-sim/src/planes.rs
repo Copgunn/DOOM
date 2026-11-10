@@ -95,6 +95,9 @@ pub(crate) struct PlaneHost<'a, 'b> {
     pub bindings: &'a mut [Option<ActorId>; 4],
     pub events: &'a mut Vec<Event>,
     pub boundary: Option<&'a crate::player_map_scale::Boundary>,
+    /// The staged runtime sector specials and floor flats (the specials policy),
+    /// written by a finished `donutRaise` floor; `None` without them.
+    pub specials: Option<&'a mut [crate::sector_thinkers::SectorSpecial]>,
 }
 impl<'b> PlaneHost<'_, 'b> {
     /// The current heights of `sector` under the plan's writes.
@@ -105,7 +108,17 @@ impl<'b> PlaneHost<'_, 'b> {
             .copied()
             .ok_or_else(|| crate::GeometryError::InvalidReference.into())
     }
+    /// Stages `height` for `plane` of `sector`. Under the Episode 1 policy
+    /// (decision H3) a height outside the ±1,024-unit sector domain
+    /// (`map_extent::HEIGHT_UNITS`, the wire-23 bound the dropped ±512 reach
+    /// proof kept heights inside) refuses the tic with
+    /// [`crate::MapScaleError::Arithmetic`] before the write.
     fn set(&mut self, sector: u16, plane: Plane, height: Fixed) -> Result<(), SimError> {
+        if self.world.checked_arithmetic
+            && !crate::sight::within(height, u32::from(crate::map_extent::HEIGHT_UNITS))
+        {
+            return Err(crate::MapScaleError::Arithmetic.into());
+        }
         let mut state = self.sector(sector)?;
         match plane {
             Plane::Floor => state.floor = height,
@@ -116,6 +129,8 @@ impl<'b> PlaneHost<'_, 'b> {
     /// The shared lifecycle services over the fresh sector view.
     fn life(&mut self) -> LifeHost<'_, &mut ThinkerContext<'b, Actor>> {
         LifeHost {
+            specials: self.specials.as_deref(),
+            buttons: None,
             statistics: self.statistics.as_deref_mut(),
             player: self.player.as_deref_mut(),
             perception: self.perception,
@@ -145,6 +160,20 @@ impl<'b> PlaneHost<'_, 'b> {
         plane: Plane,
         direction: i32,
     ) -> Result<MoveResult, SimError> {
+        self.move_plane_witnessed(sector, speed, dest, plane, direction, None)
+    }
+    /// [`Self::move_plane`], refusing with `witness` (when given) as soon as the
+    /// step's first `P_ChangeSector` reports `nofit`, before the restore: the stair
+    /// witness of decision H7, where the source passes a `crush` it never wrote.
+    pub(crate) fn move_plane_witnessed(
+        &mut self,
+        sector: u16,
+        speed: Fixed,
+        dest: Fixed,
+        plane: Plane,
+        direction: i32,
+        witness: Option<SimError>,
+    ) -> Result<MoveResult, SimError> {
         let height = |s: SectorState| match plane {
             Plane::Floor => s.floor,
             Plane::Ceiling => s.ceiling,
@@ -152,27 +181,38 @@ impl<'b> PlaneHost<'_, 'b> {
         let before = height(self.sector(sector)?);
         let result = match direction {
             -1 | 1 => {
-                let last = direction == -1 && before - speed < dest
-                    || direction == 1 && before + speed > dest;
+                // `floorheight -= speed` / `+= speed` (and the same sum in the
+                // `pastdest` test), checked under the Episode 1 policy.
+                let next = if direction == -1 {
+                    height_sum(
+                        self.world,
+                        before,
+                        Fixed::from_bits(speed.bits().wrapping_neg()),
+                    )?
+                } else {
+                    height_sum(self.world, before, speed)?
+                };
+                let last = direction == -1 && next < dest || direction == 1 && next > dest;
                 if last {
                     self.set(sector, plane, dest)?;
                     #[cfg(test)]
                     injected_fault(FaultSite::PlaneStep)?;
                     if self.change_sector(sector)? {
+                        if let Some(error) = witness {
+                            return Err(error);
+                        }
                         self.set(sector, plane, before)?;
                         self.change_sector(sector)?;
                     }
                     MoveResult::PastDest
                 } else {
-                    let next = if direction == -1 {
-                        before - speed
-                    } else {
-                        before + speed
-                    };
                     self.set(sector, plane, next)?;
                     let nofit = self.change_sector(sector)?;
                     #[cfg(test)]
                     injected_fault(FaultSite::PlaneStep)?;
+                    if let (true, Some(error)) = (nofit, witness) {
+                        return Err(error);
+                    }
                     if nofit && !(plane == Plane::Ceiling && direction == 1) {
                         self.set(sector, plane, before)?;
                         self.change_sector(sector)?;
@@ -366,6 +406,19 @@ impl<'b> PlaneHost<'_, 'b> {
     }
 }
 
+/// The `fixed_t` height sum `a + b` of a mover (`T_MovePlane`'s step, an
+/// `EV_*` destination offset): wrapping as before under the older policies,
+/// whose load proof keeps every height within ±512; under the Episode 1 policy
+/// (decision H3) an `i32` overflow refuses the tic with
+/// [`crate::MapScaleError::Arithmetic`].
+pub(crate) fn height_sum(world: &StaticWorld, a: Fixed, b: Fixed) -> Result<Fixed, SimError> {
+    match a.bits().checked_add(b.bits()) {
+        Some(sum) => Ok(Fixed::from_bits(sum)),
+        None if world.checked_arithmetic => Err(crate::MapScaleError::Arithmetic.into()),
+        None => Ok(a + b),
+    }
+}
+
 /// Movers-policy observations (DSIM35 event tag 26, STATE_FORMAT "DSIM v35"). The
 /// clip's own position-check candidates are not events; pickups, `S_GIBS` entries
 /// and removals keep their existing events, before the clip's record.
@@ -469,7 +522,7 @@ pub enum MoverEvent {
     /// Sub-tag 13: `G_ExitLevel`, inside the exit switch's use after the switch
     /// sound and before that use's sub-tag 2 record.
     Exit {
-        /// `secretexit` (always false for the admitted exit).
+        /// `secretexit`: true for the S1 51 secret exit (Episode 1 policy).
         secret: bool,
     },
     /// Sub-tag 14: a dead player held `BT_USE` (`PST_REBORN`), the last record of
@@ -494,7 +547,8 @@ pub enum MoverEvent {
         function: MoverFunction,
         /// The line.
         line: u16,
-        /// Door, plat or floor type; the line special for `EV_VerticalDoor`.
+        /// Door, plat or floor type; the line special for `EV_VerticalDoor`; 0 for
+        /// `EV_BuildStairs` and `EV_DoDonut`.
         argument: i32,
         /// The return value (−1 for `EV_VerticalDoor`, which returns nothing).
         result: i32,
@@ -533,6 +587,10 @@ pub enum MoverFunction {
     DoPlat = 3,
     /// 4: `EV_DoFloor`.
     DoFloor = 4,
+    /// 5: `EV_BuildStairs` (Episode 1 policy).
+    BuildStairs = 5,
+    /// 6: `EV_DoDonut` (Episode 1 policy).
+    DoDonut = 6,
 }
 /// The origin of a sector sound request.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

@@ -1,8 +1,10 @@
-//! A whole level under `PlayerMonstersLevelV1` (wire 22) driven by a version-110
-//! demo, for a tic-for-tic comparison with the genuine engine (M3h9c).
+//! A whole level under `PlayerMonstersLevelV1` (wire 22) or, with `--policy
+//! episode1`, `PlayerMonstersEpisode1V1` (wire 23, DSIM39) driven by a version-110
+//! demo, for a tic-for-tic comparison with the genuine engine (M3h9c, M4a).
 //!
-//! `player_level_run --wad <path> --map E1M1 --demo <lmp> --out <dir> [--captures]`
-//! loads the map, builds `original_player_level_map` with default options
+//! `player_level_run --wad <path> --map E1M1 --demo <lmp> --out <dir> [--captures]
+//! [--policy level|episode1]` loads the map, builds `original_player_level_map`
+//! (or `original_player_episode1_map`) with default options
 //! (medium skill, single player, RNG indices 0), spawns the THINGs (the body at
 //! its record), the default weapons and the level specials, then runs one tic
 //! per demo command. It writes `digests.txt` (one line per capture: tic, SHA-256
@@ -14,8 +16,16 @@
 //! Without `--wad` it prints its usage and exits successfully.
 //! `player_level_run --write-idle <tics> --demo <lmp>` instead writes a demo of
 //! `tics` zero commands with `write_demo` and exits.
+//!
+//! With `--policy episode1` the map must be `E1M1`..`E1M9`; the demo is read
+//! with `parse_demo_episode1`, whose header map must be the `--map` one
+//! (decision H10), `--write-idle` writes that map's header with
+//! `write_demo_episode1`, and `stats.txt` adds the exit tic (`exit_tic`, `none`
+//! without one), whether the exit was the secret one (`secret_exit`) and the
+//! actor-store high-water mark (`store_high_water`: one past the highest slot
+//! `thinker.order` named on any capture).
 use doom_sim::{
-    demo::{parse_demo, write_demo},
+    demo::{parse_demo, parse_demo_episode1, write_demo, write_demo_episode1},
     *,
 };
 use std::{error::Error, fmt::Write as _, fs, path::PathBuf};
@@ -23,7 +33,16 @@ use std::{error::Error, fmt::Write as _, fs, path::PathBuf};
 type ResultHost<T> = Result<T, Box<dyn Error>>;
 
 const USAGE: &str = "usage: player_level_run --wad <path> --map E1M1 --demo <lmp> --out <dir> \
-     [--captures] | --write-idle <tics> --demo <lmp>";
+     [--captures] [--policy level|episode1 (wire 22, default | wire 23)] \
+     | --write-idle <tics> --demo <lmp> [--policy episode1 --map E1Mn]";
+
+/// `n` of `E1M<n>`, `n` in 1..=9, for the Episode 1 policy.
+fn episode1_map(name: &str) -> ResultHost<u8> {
+    match name.as_bytes() {
+        [b'E', b'1', b'M', n @ b'1'..=b'9'] => Ok(n - b'0'),
+        _ => Err(format!("--policy episode1 needs --map E1M1..E1M9, not {name}").into()),
+    }
+}
 
 /// The canonical bytes of `snap` without its static `map.*` fields.
 fn without_map(snap: &Snapshot) -> Vec<u8> {
@@ -47,6 +66,16 @@ fn field<'a>(snap: &'a Snapshot, path: &str) -> &'a [u8] {
     snap.fields()
         .find(|f| f.path() == path)
         .map_or(&[], StateField::value)
+}
+
+/// One past the highest actor-store slot `thinker.order` names (each entry a
+/// little-endian `u32` slot then the generation): the store high-water mark.
+fn store_high_water(snap: &Snapshot) -> usize {
+    field(snap, "thinker.order")
+        .chunks_exact(12)
+        .map(|id| u32::from_le_bytes([id[0], id[1], id[2], id[3]]) as usize + 1)
+        .max()
+        .unwrap_or(0)
 }
 
 /// One `digests.txt` line, plus the actor and thinker counts.
@@ -74,6 +103,8 @@ struct Args {
     out: Option<PathBuf>,
     captures: bool,
     write_idle: Option<usize>,
+    episode1: bool,
+    help: bool,
 }
 fn args() -> ResultHost<Args> {
     let mut a = Args {
@@ -88,6 +119,14 @@ fn args() -> ResultHost<Args> {
             "--demo" => a.demo = it.next().map(PathBuf::from),
             "--out" => a.out = it.next().map(PathBuf::from),
             "--captures" => a.captures = true,
+            "--help" => a.help = true,
+            "--policy" => {
+                a.episode1 = match it.next().as_deref() {
+                    Some("level") => false,
+                    Some("episode1") => true,
+                    _ => return Err(USAGE.into()),
+                }
+            }
             "--write-idle" => a.write_idle = Some(it.next().ok_or(USAGE)?.parse()?),
             _ => return Err(USAGE.into()),
         }
@@ -97,8 +136,17 @@ fn args() -> ResultHost<Args> {
 
 fn main() -> ResultHost<()> {
     let a = args()?;
+    if a.help {
+        println!("{USAGE}");
+        return Ok(());
+    }
     if let Some(tics) = a.write_idle {
-        let demo = write_demo(&vec![TicCommand::default(); tics])?;
+        let idle = vec![TicCommand::default(); tics];
+        let demo = if a.episode1 {
+            write_demo_episode1(episode1_map(&a.map)?, &idle)?
+        } else {
+            write_demo(&idle)?
+        };
         fs::write(a.demo.ok_or(USAGE)?, &demo)?;
         println!("wrote an idle demo of {tics} tics ({} bytes)", demo.len());
         return Ok(());
@@ -108,11 +156,24 @@ fn main() -> ResultHost<()> {
         return Ok(());
     };
     let (demo_path, out) = (a.demo.ok_or(USAGE)?, a.out.ok_or(USAGE)?);
+    let map_number = if a.episode1 {
+        Some(episode1_map(&a.map)?)
+    } else {
+        None
+    };
+    let demo_bytes = fs::read(demo_path)?;
+    let demo = match map_number {
+        Some(n) => parse_demo_episode1(&demo_bytes, n)?.1,
+        None => parse_demo(&demo_bytes)?,
+    };
     let bytes = fs::read(wad_path)?;
     let wad = doom_wad::Wad::parse(&bytes, doom_wad::Limits::default())?;
     let map = doom_map::Map::from_wad(&wad, &a.map, doom_map::MapLimits::default())?;
-    let demo = parse_demo(&fs::read(demo_path)?)?;
-    let mut s = Simulation::original_player_level_map(map, MapContextOptions::default())?;
+    let mut s = if a.episode1 {
+        Simulation::original_player_episode1_map(map, MapContextOptions::default())?
+    } else {
+        Simulation::original_player_level_map(map, MapContextOptions::default())?
+    };
     let report = s.spawn_map_things()?;
     s.initialize_player_weapons(PlayerSlot::One, WeaponInventory::default())?;
     s.spawn_level_specials()?;
@@ -122,12 +183,14 @@ fn main() -> ResultHost<()> {
     let mut digests = String::new();
     let snap = s.snapshot();
     let (text, mut peak_actors, mut peak_thinkers) = line(&snap);
+    let mut high_water = store_high_water(&snap);
     writeln!(digests, "{text}")?;
     if a.captures {
         fs::write(out.join("tic_00000.bin"), snap.canonical_bytes())?;
     }
     let (mut changes, mut clips, mut admitted) = (0usize, 0usize, 0usize);
     let mut refused = None;
+    let mut exit = None;
     let mut last = snap.digest();
     for (i, command) in demo.commands.iter().enumerate() {
         let tic = i + 1;
@@ -153,6 +216,10 @@ fn main() -> ResultHost<()> {
         let (text, actors, thinkers) = line(&snap);
         peak_actors = peak_actors.max(actors);
         peak_thinkers = peak_thinkers.max(thinkers);
+        high_water = high_water.max(store_high_water(&snap));
+        if exit.is_none() && field(&snap, "level.exit") == [1] {
+            exit = Some((tic, field(&snap, "level.secret_exit") == [1]));
+        }
         writeln!(digests, "{text}")?;
         if a.captures {
             fs::write(
@@ -164,15 +231,20 @@ fn main() -> ResultHost<()> {
     }
     fs::write(out.join("digests.txt"), digests)?;
     let stats = take_level_run_stats();
-    fs::write(
-        out.join("stats.txt"),
-        format!(
-            "max_intercepts {}\nmax_spechit {}\nmax_change_sector_calls_per_tic {changes}\n\
-             max_change_sector_thing_clips_per_tic {clips}\npeak_actors {peak_actors}\n\
-             peak_thinkers {peak_thinkers}\n",
-            stats.max_intercepts, stats.max_spechit
-        ),
-    )?;
+    let mut stats_text = format!(
+        "max_intercepts {}\nmax_spechit {}\nmax_change_sector_calls_per_tic {changes}\n\
+         max_change_sector_thing_clips_per_tic {clips}\npeak_actors {peak_actors}\n\
+         peak_thinkers {peak_thinkers}\n",
+        stats.max_intercepts, stats.max_spechit
+    );
+    if a.episode1 {
+        match exit {
+            Some((tic, secret)) => writeln!(stats_text, "exit_tic {tic}\nsecret_exit {secret}")?,
+            None => writeln!(stats_text, "exit_tic none\nsecret_exit false")?,
+        }
+        writeln!(stats_text, "store_high_water {high_water}")?;
+    }
+    fs::write(out.join("stats.txt"), stats_text)?;
     println!(
         "spawned {} body {} commands {} admitted {admitted} refused {} final_fnv {last:016x}",
         report.spawned.len(),

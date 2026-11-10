@@ -318,9 +318,16 @@ fn intercept(trace: Divline, line: &LineGeometry) -> Fixed {
     num / den
 }
 
-/// The source's 129th intercept of one trace (p_local.h `MAXINTERCEPTS`), which it
-/// writes past `intercepts[]`; refused by the real-map policy.
-pub(crate) struct InterceptOverflow;
+/// Why a slide or use trace was refused.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum PathError {
+    /// The source's 129th intercept of one trace (p_local.h `MAXINTERCEPTS`),
+    /// which it writes past `intercepts[]`; refused by the real-map policy.
+    Overflow,
+    /// Under the Episode 1 policy's checked arithmetic (`checked` set), a
+    /// `P_InterceptVector` the source would overflow (decision H3).
+    Arithmetic,
+}
 /// P_PathTraverse with PT_ADDLINES for a slide trace: every line listed in a
 /// visited cell whose endpoints straddle the infinite trace line with a
 /// non-negative fraction, in fraction order. `limit` is the policy's intercept
@@ -332,7 +339,8 @@ pub(crate) fn path(
     mut start: [Fixed; 2],
     end: [Fixed; 2],
     limit: Option<usize>,
-) -> Result<Vec<(Fixed, usize)>, InterceptOverflow> {
+    checked: bool,
+) -> Result<Vec<(Fixed, usize)>, PathError> {
     let o = world.map().blockmap().origin();
     let origin = [Fixed::from_map_units(o.x), Fixed::from_map_units(o.y)];
     for axis in 0..2 {
@@ -399,11 +407,21 @@ pub(crate) fn path(
                     [line.point_side(start), line.point_side(end)]
                 };
                 if sides[0] != sides[1] {
-                    let frac = intercept(trace, line);
+                    let frac = if checked {
+                        crate::sight::checked_intercept(
+                            trace.start,
+                            trace.delta,
+                            line.start,
+                            line.delta,
+                        )
+                        .ok_or(PathError::Arithmetic)?
+                    } else {
+                        intercept(trace, line)
+                    };
                     if frac >= Fixed::ZERO {
                         if limit.is_some_and(|limit| hits.len() == limit) {
                             crate::level_stats::observe_intercepts(hits.len() + 1);
-                            return Err(InterceptOverflow);
+                            return Err(PathError::Overflow);
                         }
                         hits.push((frac, i));
                     }
@@ -530,6 +548,11 @@ pub(crate) trait MotionAccess {
     /// `intercept_limit` is `Some`.
     fn intercept_overflow(&self) -> Self::Error {
         unreachable!("no intercept limit without a policy error")
+    }
+    /// The error of a slide trace whose checked intercept overflowed; called only
+    /// when `intercept_limit` is `Some` under the Episode 1 policy.
+    fn intercept_arithmetic(&self) -> Self::Error {
+        unreachable!("no checked arithmetic without a policy error")
     }
 }
 impl<F: Fn(ActorId) -> Option<Actor>> MotionAccess for F {
@@ -689,9 +712,14 @@ impl<F: MotionAccess> Mover<'_, F> {
             let mut blocker = None;
             for start in [lead, [trail[0], lead[1]], [lead[0], trail[1]]] {
                 let end = [start[0] + mom[0], start[1] + mom[1]];
-                let hits = match path(self.world, start, end, self.access.intercept_limit()) {
+                // Only an access with an intercept limit (the player of the real-map
+                // policies) can carry the Episode 1 policy's checked arithmetic.
+                let limit = self.access.intercept_limit();
+                let checked = self.world.checked_arithmetic && limit.is_some();
+                let hits = match path(self.world, start, end, limit, checked) {
                     Ok(hits) => hits,
-                    Err(InterceptOverflow) => return Err(self.access.intercept_overflow()),
+                    Err(PathError::Overflow) => return Err(self.access.intercept_overflow()),
+                    Err(PathError::Arithmetic) => return Err(self.access.intercept_arithmetic()),
                 };
                 for (frac, i) in hits {
                     if frac > Fixed::ONE {

@@ -44,22 +44,37 @@ pub(crate) enum Family {
 /// decision N5).
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 struct Kinds {
+    /// `normal` door by use (DR 1, 26–28).
     dr: bool,
+    /// `normal` door by tag (SR 63, WR 90).
     sr: bool,
     blaze: bool,
+    /// `downWaitUpStay` (WR 88, SR 62).
     lift: bool,
+    /// `turboLower` (W1 36, SR 70, WR 98).
     turbo: bool,
+    /// `lowerFloorToLowest` (W1 38, S1 23, WR 82).
     lowest: bool,
+    /// `open` door (W1 2, WR 86, S1 103, GR 46 by tag; D1 31–34 by use).
+    open: bool,
+    /// `close30ThenOpen` door (W1 16, WR 76).
+    close30: bool,
+    /// `raiseFloor` (W1 5, WR 91).
+    raise: bool,
+    /// `raiseFloorToNearest` (S1 18).
+    nearest: bool,
+    /// `raiseToNearestAndChange` plat (S1 20, W1 22).
+    change: bool,
 }
 impl Kinds {
     fn door(self) -> bool {
-        self.dr || self.sr || self.blaze
+        self.dr || self.sr || self.blaze || self.open || self.close30
     }
     fn families(self) -> impl Iterator<Item = Family> {
         [
             self.door().then_some(Family::Door),
-            self.lift.then_some(Family::Plat),
-            (self.turbo || self.lowest).then_some(Family::Floor),
+            (self.lift || self.change).then_some(Family::Plat),
+            (self.turbo || self.lowest || self.raise || self.nearest).then_some(Family::Floor),
         ]
         .into_iter()
         .flatten()
@@ -89,6 +104,52 @@ pub(crate) const EPISODE1_SWITCHES: [[&[u8]; 2]; 19] = [
     [b"SW1STON2", b"SW2STON2"],
     [b"SW1STONE", b"SW2STONE"],
     [b"SW1STRTN", b"SW2STRTN"],
+];
+/// The registered-episode (2 and 3) and commercial entries of `alphSwitchList`
+/// (p_switch.c:71–95), first columns then second, in table order. Under the
+/// Episode 1 policy a switch line whose front side matches one of these and no
+/// episode-1 entry is refused (decision D3): which of them `P_InitSwitchList`
+/// keeps depends on the game mode (p_switch.c:107–148).
+pub(crate) const LATER_EPISODE_SWITCHES: [[&[u8]; 2]; 21] = [
+    [b"SW1BLUE", b"SW2BLUE"],
+    [b"SW1CMT", b"SW2CMT"],
+    [b"SW1GARG", b"SW2GARG"],
+    [b"SW1GSTON", b"SW2GSTON"],
+    [b"SW1HOT", b"SW2HOT"],
+    [b"SW1LION", b"SW2LION"],
+    [b"SW1SATYR", b"SW2SATYR"],
+    [b"SW1SKIN", b"SW2SKIN"],
+    [b"SW1VINE", b"SW2VINE"],
+    [b"SW1WOOD", b"SW2WOOD"],
+    [b"SW1PANEL", b"SW2PANEL"],
+    [b"SW1ROCK", b"SW2ROCK"],
+    [b"SW1MET2", b"SW2MET2"],
+    [b"SW1WDMET", b"SW2WDMET"],
+    [b"SW1BRIK", b"SW2BRIK"],
+    [b"SW1MOD1", b"SW2MOD1"],
+    [b"SW1ZIM", b"SW2ZIM"],
+    [b"SW1STON6", b"SW2STON6"],
+    [b"SW1TEK", b"SW2TEK"],
+    [b"SW1MARB", b"SW2MARB"],
+    [b"SW1SKULL", b"SW2SKULL"],
+];
+/// The line specials whose `P_UseSpecialLine` or `P_ShootSpecialLine` arm calls
+/// `P_ChangeSwitchTexture` (p_switch.c:276–653, p_spec.c:959–1000) among the
+/// specials the Episode 1 policy admits or will admit (decision H1): the S1, SR
+/// and G1-style switch lines. Rule 9 (D3) reads the front texture of each.
+pub(crate) const EPISODE1_SWITCH_SPECIALS: [i16; 12] = [
+    LINE_EXIT,
+    LINE_DOOR_SR,
+    7,
+    9,
+    18,
+    20,
+    23,
+    46,
+    51,
+    62,
+    70,
+    103,
 ];
 /// Whether a sidedef texture name resolves to the same texture as `candidate`:
 /// `R_CheckTextureNumForName` (r_data.c:696–710) maps a name starting with `-` to
@@ -128,6 +189,25 @@ pub(crate) fn switch_match(textures: &[doom_types::LumpName; 3]) -> Option<(usiz
                 .find(|(texture, _)| same_texture(texture, name))
                 .map(|(_, part)| (slot, part))
         })
+}
+
+/// Whether a front side's textures match a registered-episode or commercial
+/// switch entry ([`LATER_EPISODE_SWITCHES`]), in either column.
+fn later_episode_switch(textures: &[doom_types::LumpName; 3]) -> bool {
+    LATER_EPISODE_SWITCHES
+        .iter()
+        .flatten()
+        .any(|name| textures.iter().any(|t| same_texture(t, name)))
+}
+/// The switch slot `P_ChangeSwitchTexture` finds for `line`'s front side under the
+/// Episode 1 policy (decision D3): `None` when its front textures match no
+/// episode-1 entry, which the source handles as a texture search that finds
+/// nothing (no texture change, no sound, no button; a non-reusable line's
+/// special is still cleared, p_switch.c:211–263). The load rule has already
+/// refused a front side that matches only a later-episode entry.
+pub(crate) fn line_switch_match(map: &Map, line: usize) -> Option<(usize, u8)> {
+    let side = map.linedefs().get(line)?.sides[0]?;
+    switch_match(&map.sidedefs().get(usize::from(side))?.textures)
 }
 
 /// What the movers admission derived from the loaded map; immutable, never
@@ -238,7 +318,7 @@ pub(crate) fn tagged(map: &Map, tag: i16) -> impl Iterator<Item = usize> + '_ {
 ///     `P_ChangeSector` of a plane step visits defined cells
 ///     ([`MapScaleError::MoverBlockBox`]).
 pub(crate) fn validate_movers(map: &Map) -> Result<MoverAdmission, SimError> {
-    validate_movers_with(map, false)
+    validate_movers_with(map, Rules::Movers)
 }
 /// The E1M1 policy's load rules (M3h9 note §5.1, decision E1): every rule of
 /// [`validate_movers`] with rule 1 relaxed for line special 48 on a two-sided line,
@@ -261,19 +341,109 @@ pub(crate) fn validate_movers(map: &Map) -> Result<MoverAdmission, SimError> {
 /// `MAXLINEANIMS`) counts it and rule 6 (the 2 × 2 window of `spechit`,
 /// `MAXSPECIALCROSS`) counts every two-sided special line, so both are unchanged.
 pub(crate) fn validate_e1m1(map: &Map) -> Result<MoverAdmission, SimError> {
-    validate_movers_with(map, true)
+    validate_movers_with(map, Rules::E1M1)
 }
-/// [`validate_movers`], admitting a two-sided 48 when `two_sided_scrollers`.
-fn validate_movers_with(map: &Map, two_sided_scrollers: bool) -> Result<MoverAdmission, SimError> {
+/// The Episode 1 policy's load rules (M4a decision H3, plan §B.4): every rule of
+/// [`validate_e1m1`] except that
+///
+/// - rule 2 (one family per sector) is not a load rule: `EV_DoDoor`,
+///   `EV_DoPlat` and `EV_DoFloor` skip a busy sector as the source does, and a
+///   DR line whose back sector holds a non-door thinker refuses its tic with
+///   [`MapScaleError::MoverFamily`] (the per-tic witness of `movers.rs`);
+/// - rule 4's reachable-height fixpoint is still computed for the vertical
+///   invariant V′ (saturated at the `short` map-unit range so it terminates) but
+///   its ±512 bound ([`MapScaleError::MoverHeights`]) and the inverting-door rule
+///   ([`MapScaleError::InvertingDoor`]) refuse nothing: heights beyond ±512 are
+///   covered by the checked trace arithmetic and the per-tic vertical witnesses;
+/// - rule 6 (the 2 × 2 `spechit` window) is replaced by the ninth-`spechit`
+///   witness [`MapScaleError::SpecialCross`], already a per-tic refusal;
+/// - rule 8 (sky movers) is dropped: both sky bodies read runtime heights;
+/// - rule 9 is generalised (decision D3): a switch line whose front side matches
+///   no episode-1 switch is admitted (the source's texture search finds nothing:
+///   see [`line_switch_match`]), and one that matches only a registered-episode or
+///   commercial entry is refused ([`MapScaleError::SwitchTexture`]);
+/// - rule 10 (a defined `blockbox`) holds for every sector, since stair and
+///   donut sectors are not tagged;
+/// - and every sector tagged by a donut line (special 9) passes
+///   [`donut_geometry`] ([`MapScaleError::DonutGeometry`]).
+///
+/// The `ML_TWOSIDED`-implies-a-back-side rule `getNextSector` and
+/// `EV_BuildStairs` rely on is already the diagonal geometry rule
+/// (`MapScaleError::Geometry`). Rule 1's special set is the E1M1 policy's.
+pub(crate) fn validate_episode1(map: &Map) -> Result<MoverAdmission, SimError> {
+    validate_movers_with(map, Rules::Episode1)
+}
+/// Which policy's load rules [`validate_movers_with`] runs.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum Rules {
+    /// The movers policy (wire 19).
+    Movers,
+    /// The E1M1 policy and its supersets up to the level policy (wires 20–22).
+    E1M1,
+    /// The Episode 1 policy (wire 23).
+    Episode1,
+}
+/// The donut load rule of decision H8 for every sector `s1` tagged by a line with
+/// special 9: `EV_DoDonut` (p_spec.c:1163–1221) reads `s1->lines[0]` through
+/// `getNextSector` without a null test, so `s1`'s first line must be two-sided
+/// with a back side and its next sector `s2` must differ from `s1`; it then scans
+/// `s2->lines` for the first line `i` whose back sector is not `s1` (one-sided
+/// lines included: the source's `!s2->lines[i]->flags & ML_TWOSIDED` is
+/// `(!flags) & 4`, always 0, p_spec.c:1187–1189) and reads its back sector, which
+/// must exist. Topology is static, so the rule is exact.
+pub(crate) fn donut_geometry(map: &Map) -> Result<(), SimError> {
+    let lists = crate::player_map_scale::sector_lines(map);
+    let back = |line: usize| {
+        map.linedefs()[line].sides[1].map(|s| usize::from(map.sidedefs()[usize::from(s)].sector))
+    };
+    for line in map.linedefs().iter().filter(|l| l.special == 9) {
+        for s1 in tagged(map, line.tag) {
+            let first = *lists[s1].first().ok_or(MapScaleError::DonutGeometry)?;
+            let first = usize::from(first);
+            if back(first).is_none() {
+                return Err(MapScaleError::DonutGeometry.into());
+            }
+            let s2 = next_sector(map, first, s1).ok_or(MapScaleError::DonutGeometry)?;
+            if s2 == s1 {
+                return Err(MapScaleError::DonutGeometry.into());
+            }
+            if let Some(&i) = lists[s2]
+                .iter()
+                .find(|&&i| back(usize::from(i)) != Some(s1))
+            {
+                if back(usize::from(i)).is_none() {
+                    return Err(MapScaleError::DonutGeometry.into());
+                }
+            }
+        }
+    }
+    Ok(())
+}
+/// [`validate_movers`] under `rules`: a two-sided 48 is admitted from the E1M1
+/// policy on, and the Episode 1 policy runs the rules of [`validate_episode1`].
+fn validate_movers_with(map: &Map, rules: Rules) -> Result<MoverAdmission, SimError> {
     use crate::sector_thinkers::{MAX_LINE_ANIMS, SCROLLING_WALL};
-    crate::demon_expanded_map::validate_sector_specials(map)?;
+    let two_sided_scrollers = rules != Rules::Movers;
+    let episode1 = rules == Rules::Episode1;
+    crate::demon_expanded_map::validate_sector_specials_for(map, episode1)?;
     let sectors = map.sectors().len();
     let mut kinds = vec![Kinds::default(); sectors];
     let (mut scrollers, mut switches) = (0, 0);
     for line in map.linedefs() {
         let back = line.sides[1].map(|s| usize::from(map.sidedefs()[usize::from(s)].sector));
-        // Rule 9: every switch line finds its front texture in `switchlist`.
-        if matches!(line.special, LINE_EXIT | LINE_DOOR_SR) {
+        // Rule 9: every switch line finds its front texture in `switchlist`;
+        // under the Episode 1 policy, no front texture is a later-episode switch
+        // without being an episode-1 one (decision D3).
+        if episode1 && EPISODE1_SWITCH_SPECIALS.contains(&line.special) {
+            let front = line.sides[0].ok_or(MapScaleError::SwitchTexture)?;
+            let side = map
+                .sidedefs()
+                .get(usize::from(front))
+                .ok_or(MapScaleError::SwitchTexture)?;
+            if switch_match(&side.textures).is_none() && later_episode_switch(&side.textures) {
+                return Err(MapScaleError::SwitchTexture.into());
+            }
+        } else if matches!(line.special, LINE_EXIT | LINE_DOOR_SR) {
             let front = line.sides[0].ok_or(MapScaleError::SwitchTexture)?;
             let side = map
                 .sidedefs()
@@ -285,8 +455,36 @@ fn validate_movers_with(map: &Map, two_sided_scrollers: bool) -> Result<MoverAdm
         }
         match line.special {
             0 | LINE_EXIT => {}
+            // Episode 1 (decision H1): the light trigger, the secret exit, the
+            // stairs and the donut move no tagged family (their sectors are
+            // bounded below by `reachable` and checked by `donut_geometry`).
+            35 | 51 | 7 | 8 | 9 if episode1 => {}
             SCROLLING_WALL if back.is_none() || two_sided_scrollers => scrollers += 1,
             LINE_DOOR_DR => kinds[back.ok_or(MapScaleError::DoorLine)?].dr = true,
+            26..=28 if episode1 => kinds[back.ok_or(MapScaleError::DoorLine)?].dr = true,
+            31..=34 if episode1 => kinds[back.ok_or(MapScaleError::DoorLine)?].open = true,
+            special @ (2 | 5 | 16 | 18 | 20 | 22 | 23 | 46 | 62 | 70 | 76 | 82 | 86 | 90 | 91
+            | 98 | 103)
+                if episode1 =>
+            {
+                if matches!(special, 46 | 62 | 70) {
+                    switches += 1;
+                }
+                for i in tagged(map, line.tag) {
+                    let k = &mut kinds[i];
+                    match special {
+                        2 | 46 | 86 | 103 => k.open = true,
+                        16 | 76 => k.close30 = true,
+                        90 => k.sr = true,
+                        5 | 91 => k.raise = true,
+                        18 => k.nearest = true,
+                        20 | 22 => k.change = true,
+                        23 | 82 => k.lowest = true,
+                        62 => k.lift = true,
+                        _ => k.turbo = true,
+                    }
+                }
+            }
             special @ (LINE_DOOR_SR | LINE_DOOR_BLAZE | LINE_LIFT | LINE_FLOOR_TURBO
             | LINE_FLOOR_LOWEST) => {
                 if special == LINE_DOOR_SR {
@@ -314,7 +512,9 @@ fn validate_movers_with(map: &Map, two_sided_scrollers: bool) -> Result<MoverAdm
     for k in &kinds {
         let mut f = k.families();
         let first = f.next();
-        if f.next().is_some() {
+        // Rule 2; under the Episode 1 policy a per-tic witness (the first family
+        // is recorded).
+        if f.next().is_some() && !episode1 {
             return Err(MapScaleError::MoverFamily.into());
         }
         family.push(first);
@@ -327,7 +527,7 @@ fn validate_movers_with(map: &Map, two_sided_scrollers: bool) -> Result<MoverAdm
     };
     for (i, f) in family.iter().enumerate() {
         let Some(f) = f else { continue };
-        if crate::demon_expanded_map::is_sky_flat(&map.sectors()[i].flats[1]) {
+        if !episode1 && crate::demon_expanded_map::is_sky_flat(&map.sectors()[i].flats[1]) {
             return Err(MapScaleError::SkyMover.into());
         }
         if neighbors(i).next().is_none() {
@@ -338,20 +538,34 @@ fn validate_movers_with(map: &Map, two_sided_scrollers: bool) -> Result<MoverAdm
         }
     }
     // Rule 10: the box `P_ChangeSector` walks is defined for every mover sector.
+    // Under the Episode 1 policy for every sector (stair and donut sectors are
+    // not tagged).
     let boxes = crate::multisector::sector_block_boxes(map)?;
     if family
         .iter()
         .zip(&boxes)
-        .any(|(f, b)| f.is_some() && b.is_none())
+        .any(|(f, b)| (episode1 || f.is_some()) && b.is_none())
     {
         return Err(MapScaleError::MoverBlockBox.into());
     }
-    let plats = family.iter().filter(|f| **f == Some(Family::Plat)).count();
+    let plats = kinds.iter().filter(|k| k.lift || k.change).count();
     if plats > MAX_PLATS || switches > MAX_BUTTONS {
         return Err(MapScaleError::MoverCount.into());
     }
-    let (reach, delta) = reachable(map, &kinds, &neighbors)?;
-    if special_window_lines(map) > MAX_SPECIAL_CROSS && !window_rule_bypassed() {
+    let stairs = if episode1 {
+        stair_bounds(map, &lists)
+    } else {
+        Vec::new()
+    };
+    let donuts = if episode1 {
+        donut_triples(map, &lists)
+    } else {
+        Vec::new()
+    };
+    let (reach, delta) = reachable(map, &kinds, &neighbors, episode1, &stairs, &donuts)?;
+    if episode1 {
+        donut_geometry(map)?;
+    } else if special_window_lines(map) > MAX_SPECIAL_CROSS && !window_rule_bypassed() {
         return Err(MapScaleError::SpecialWindow.into());
     }
     Ok(MoverAdmission {
@@ -396,12 +610,84 @@ fn widen(interval: &mut [i32; 2], lo: i32, hi: i32) -> bool {
     *interval != before
 }
 
+/// The `short` map-unit range the Episode 1 policy saturates its reachable-height
+/// fixpoint to (the fixpoint then terminates without the ±512 refusal).
+const SATURATED_UNITS: i32 = i16::MAX as i32;
 /// The §5 least fixpoint of the floor and ceiling intervals of every sector under
 /// the admitted rules, then rule 4b and `Δ`. Returns `[R_min, R_max]` and `Δ`.
+/// With `saturate` (the Episode 1 policy) the intervals are clamped to
+/// ±[`SATURATED_UNITS`] instead of refused beyond ±512, and rule 4b refuses
+/// nothing.
+/// The sectors `EV_BuildStairs` can raise from each sector tagged by a stair
+/// line (S1 7, W1 8), with an upper bound on their final floors: the component
+/// reachable through two-sided lines, each floor at most the largest static
+/// floor of the component plus 8 per sector (each step adds 8 to the height of
+/// the one before, plus 8 per skipped busy sector). Conservative: a Rust-only
+/// input to the vertical invariant V′ (plan §C.10).
+fn stair_bounds(map: &Map, lists: &[Vec<u16>]) -> Vec<(Vec<usize>, i32)> {
+    let mut out = Vec::new();
+    for line in map.linedefs().iter().filter(|l| matches!(l.special, 7 | 8)) {
+        for start in tagged(map, line.tag) {
+            let mut seen = vec![false; map.sectors().len()];
+            let mut component = vec![start];
+            seen[start] = true;
+            let mut k = 0;
+            while let Some(&sector) = component.get(k) {
+                k += 1;
+                for &l in &lists[sector] {
+                    if let Some(n) = next_sector(map, usize::from(l), sector) {
+                        if !seen[n] {
+                            seen[n] = true;
+                            component.push(n);
+                        }
+                    }
+                }
+            }
+            let top = component
+                .iter()
+                .map(|&i| i32::from(map.sectors()[i].heights[0]))
+                .max()
+                .unwrap_or(0);
+            let steps = i32::try_from(component.len()).unwrap_or(i32::MAX);
+            out.push((component, top.saturating_add(steps.saturating_mul(8))));
+        }
+    }
+    out
+}
+/// The `(s1, s2, s3)` sectors of every donut (S1 9) tagged sector where
+/// `EV_DoDonut` finds them (see [`donut_geometry`]); skipped where the geometry
+/// rule will refuse the map.
+fn donut_triples(map: &Map, lists: &[Vec<u16>]) -> Vec<[usize; 3]> {
+    let back = |line: usize| {
+        map.linedefs()[line].sides[1].map(|s| usize::from(map.sidedefs()[usize::from(s)].sector))
+    };
+    let mut out = Vec::new();
+    for line in map.linedefs().iter().filter(|l| l.special == 9) {
+        for s1 in tagged(map, line.tag) {
+            let Some(&first) = lists[s1].first() else {
+                continue;
+            };
+            let Some(s2) = next_sector(map, usize::from(first), s1) else {
+                continue;
+            };
+            let ring = lists[s2]
+                .iter()
+                .find(|&&i| back(usize::from(i)) != Some(s1))
+                .and_then(|&i| back(usize::from(i)));
+            if let Some(s3) = ring {
+                out.push([s1, s2, s3]);
+            }
+        }
+    }
+    out
+}
 fn reachable<'m, I: Iterator<Item = usize> + 'm>(
     map: &'m Map,
     kinds: &[Kinds],
     neighbors: &impl Fn(usize) -> I,
+    saturate: bool,
+    stairs: &[(Vec<usize>, i32)],
+    donuts: &[[usize; 3]],
 ) -> Result<([i32; 2], i32), SimError> {
     let static_heights = |i: usize, plane: usize| i32::from(map.sectors()[i].heights[plane]);
     let n = map.sectors().len();
@@ -425,6 +711,9 @@ fn reachable<'m, I: Iterator<Item = usize> + 'm>(
     };
     loop {
         let mut changed = false;
+        // Under saturation a widening past the clamp is undone by the clamp, so
+        // a round counts as a change only when the clamped intervals differ.
+        let previous = saturate.then(|| (f.clone(), c.clone()));
         for (i, k) in kinds.iter().enumerate() {
             if k.dr || k.sr {
                 // A normal door rises to its top and closes to its floor.
@@ -432,9 +721,27 @@ fn reachable<'m, I: Iterator<Item = usize> + 'm>(
                 let lo = f[i][0].min(t[0]);
                 changed |= widen(&mut c[i], lo, t[1]);
             }
-            if k.blaze {
+            if k.blaze || k.open {
                 let t = top(&c, i);
                 changed |= widen(&mut c[i], t[0], t[1]);
+            }
+            if k.close30 {
+                // Closes to its floor and reopens to the ceiling it had.
+                let lo = f[i][0].min(c[i][0]);
+                let hi = c[i][1];
+                changed |= widen(&mut c[i], lo, hi);
+            }
+            if k.raise {
+                // P_FindLowestCeilingSurrounding, at most the own ceiling.
+                let hi = c[i][1];
+                let lo = f[i][0];
+                changed |= widen(&mut f[i], lo, hi);
+            }
+            if k.nearest || k.change {
+                // P_FindNextHighestFloor: a neighbour floor (or the own floor).
+                let hi = neighbors(i).fold(f[i][1], |hi, m| hi.max(f[m][1]));
+                let lo = f[i][0];
+                changed |= widen(&mut f[i], lo, hi);
             }
             if k.lift || k.lowest {
                 // P_FindLowestFloorSurrounding starts at the sector's own floor.
@@ -454,7 +761,26 @@ fn reachable<'m, I: Iterator<Item = usize> + 'm>(
                 }
             }
         }
-        if !in_bounds(&f) || !in_bounds(&c) {
+        for (component, hi) in stairs {
+            for &i in component {
+                let lo = f[i][0];
+                changed |= widen(&mut f[i], lo, *hi);
+            }
+        }
+        for &[s1, s2, s3] in donuts {
+            // The hole lowers and the ring rises to the s3 floor.
+            let [lo, hi] = f[s3];
+            let own = f[s1][1];
+            changed |= widen(&mut f[s1], lo, own);
+            let own = f[s2][0];
+            changed |= widen(&mut f[s2], own, hi);
+        }
+        if let Some((pf, pc)) = previous {
+            for r in f.iter_mut().chain(c.iter_mut()) {
+                *r = r.map(|v| v.clamp(-SATURATED_UNITS, SATURATED_UNITS));
+            }
+            changed = f != pf || c != pc;
+        } else if !in_bounds(&f) || !in_bounds(&c) {
             return Err(MapScaleError::MoverHeights.into());
         }
         if !changed {
@@ -469,16 +795,29 @@ fn reachable<'m, I: Iterator<Item = usize> + 'm>(
         if k.lift {
             delta = delta.max(4);
         }
+        if k.open || k.close30 {
+            delta = delta.max(2);
+        }
+        if k.raise || k.nearest || k.change {
+            delta = delta.max(1);
+        }
+        if k.close30 {
+            delta = delta.max(c[i][1].saturating_sub(f[i][0]));
+        }
         if k.door() {
             let t = top(&c, i);
-            if t[0] < f[i][1] {
+            if t[0] < f[i][1] && !saturate {
                 return Err(MapScaleError::InvertingDoor.into());
             }
-            delta = delta.max(c[i][1] - t[0]);
+            delta = delta.max(c[i][1].saturating_sub(t[0]));
         }
         if k.turbo {
-            delta = delta.max(highest_floor(&f, i)[1] + 8 - f[i][0]);
+            delta = delta.max((highest_floor(&f, i)[1] + 8).saturating_sub(f[i][0]));
         }
+    }
+    if !stairs.is_empty() || !donuts.is_empty() {
+        // Stair steps rise at 1/4 unit, donut floors at 1/2.
+        delta = delta.max(1);
     }
     let lo = f.iter().chain(&c).map(|r| r[0]).min().unwrap_or(0);
     let hi = f.iter().chain(&c).map(|r| r[1]).max().unwrap_or(0);

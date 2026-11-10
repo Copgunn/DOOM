@@ -1,0 +1,41 @@
+# output: INVIS1.lmp
+# INVIS1 on tests/reference/m4a_wads/items.wad (M4a). Authored closed loop against the strict runner.
+# Partial invisibility, then a fight at the pen gap with the imp that wakes: every attack aimed at the MF_SHADOW player draws the aim fuzz
+# (A_FaceTarget +2, P_SpawnMissile +2, p_enemy.c).
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 245 0   # partial invisibility (MF_SHADOW)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 140 0   # walk to (40,40)
+cmd 6 50 0 0 0   # run 6 tics
+cmd 19 0 0 0 0   # settle
+cmd 1 0 0 55 0   # in front of the pen gap
+cmd 17 50 0 0 0   # run 17 tics
+cmd 26 0 0 0 0   # settle
+cmd 1 0 0 8 0   # face 0 deg
+cmd 1 0 0 0 1   # fire into the pen: noise wakes the sleeping monsters (line of sight through the gap)
+cmd 15 0 0 0 0
+cmd 1 0 0 1 1   # aim and fire at (644,0)
+cmd 14 0 0 0 0
+cmd 1 0 0 253 1   # aim and fire at (629,-23)
+cmd 14 0 0 0 0
+cmd 1 0 0 4 1   # aim and fire at (632,3)
+cmd 14 0 0 0 0
+cmd 1 0 0 2 1   # aim and fire at (636,19)
+cmd 14 0 0 0 0
+cmd 1 0 0 255 1   # aim and fire at (644,14)
+cmd 14 0 0 0 0
+cmd 1 0 0 253 1   # aim and fire at (621,-14)
+cmd 14 0 0 0 0
+cmd 1 0 0 255 1   # aim and fire at (601,-20)
+cmd 14 0 0 0 0
+cmd 1 0 0 0 1   # aim and fire at (589,-20)
+cmd 14 0 0 0 0
+cmd 1 0 0 255 1   # aim and fire at (577,-20)
+cmd 14 0 0 0 0
+cmd 1 0 0 0 1   # aim and fire at (577,-20)
+cmd 14 0 0 0 0
+# the imp (the one monster that sees the player through the gap) killed: True; the others stay asleep
+cmd 20 0 0 0 0

@@ -1,0 +1,13 @@
+# output: SCALE1.lmp
+# SCALE1 on tests/reference/m4a_wads/scale.wad (M4a). Authored closed loop against the strict runner.
+# Idle at the lifted bounds, then the long SR 62 lift (range 608).
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 100 0 0 0 0   # counts at the lifted bounds (12 monsters, 83 pickups, 24 barrels, 40 statics)
+cmd 1 0 0 128 0   # to the lift switch alcove on the south wall
+cmd 8 30 0 0 0   # run 8 tics
+cmd 17 0 0 0 0   # settle
+cmd 1 0 0 0 0   # face 270 deg
+cmd 1 0 0 0 2   # USE the SR 62 switch: the 608-unit lift (560 -> -48, 152 tics each way)
+cmd 200 0 0 0 0

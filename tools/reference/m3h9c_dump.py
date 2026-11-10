@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 """Reader and comparator for the M3h9c runner's per-tic dumps.
 
-The runner (m3h9c_driver.c) writes one text file per snapshot into its --out directory:
-`load.txt` after G_DoPlayDemo (tic -1) and `tic_NNNNN.txt` after G_Ticker number N
-(0-based) and gametic++. Each file starts with one `#columns,KIND,name,...` line per row
+The runner (m3h9c_driver.c, or its M4a fork m4a_driver.c) writes one text file per
+snapshot into its --out directory: `load.txt` after G_DoPlayDemo (tic -1) and
+`tic_NNNNN.txt` after G_Ticker number N (0-based) and gametic++. Each file starts with one `#columns,KIND,name,...` line per row
 kind (the contract's `dump_row_kinds`), followed by rows `KIND,tic,...` of raw integers
 (fixed_t raw, angles unsigned):
 
   H   header: leveltime, gametic, prndindex, rndindex, totals, gameaction, gamestate,
-      numthinkers (a walk of thinkercap), numlinespecials, gameskill
+      numthinkers (a walk of thinkercap), numlinespecials, gameskill, secretexit (M4a
+      fork m4a_driver.c only, g_game.c:999; absent from m3h9c_driver.c dumps)
   one row per thinker in thinker-list order, `idx` = position in that list:
       M mobj_t (the existing A-row order, then tracer, spawnpoint, player, BLOCKMAP cell
         and position from the cell's head, sector thing-list sector and position),
       DR vldoor_t, PL plat_t, FL floormove_t, CE ceiling_t (PL/CE `running` = 0 for a
         mover in stasis, found through activeplats/activeceilings), LF fireflicker_t,
-      LL lightflash_t, LS strobe_t, LG glow_t, R removed but not yet freed (function -1),
+      LL lightflash_t, LS strobe_t, LG glow_t, R removed but not yet freed (function -1;
+      the M4a fork adds fn and sector, the removed mover's kind and sector),
       X unknown function; after the R row of a mobj, an RR row with the M columns (idx
       the same list position, bpos/spos -1: unlinked by P_RemoveMobj)
   T   per thinker (idx as above): its serial (the order of P_AddThinker calls since the
@@ -28,8 +30,11 @@ kind (the contract's `dump_row_kinds`), followed by rows `KIND,tic,...` of raw i
       P_RemoveMobj)
   S   every sector; L every line whose special was nonzero at load; B the 16 buttons;
   P   the four players; the last column `message` is 0 (NULL), the 1-based index of the
-      d_englsh.h pickup string GOTARMOR..GOTSHOTGUN2 in header order, or -1 (another
-      string), as HU_Ticker saw it before clearing it.
+      d_englsh.h pickup string GOTARMOR..GOTSHOTGUN2 in header order (1..37), 38..40 for
+      the locked-door strings PD_BLUEK, PD_YELLOWK, PD_REDK (M4a fork only), or -1 (another string),
+      as HU_Ticker saw it before clearing it.
+Columns are read by name from the `#columns` lines, so a row that gains columns at its end
+(as H and R did in the M4a fork) parses unchanged; `records` maps every column present.
 References are thinker-order indices (-1 NULL, -2 a pointer not in the thinker list);
 BLOCKMAP/sector positions are -1 when not linked and -2 when not found where expected.
 

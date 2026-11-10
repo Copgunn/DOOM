@@ -87,6 +87,32 @@ fn fraction(trace: Div, line: Div) -> Fixed {
         + shift(trace.start[1] - line.start[1], 8) * dx;
     num / den
 }
+/// [`fraction`], computed checked under the Episode 1 policy (decision H3,
+/// `StaticWorld::checked_arithmetic`): `CombatError::Arithmetic` where the
+/// source's `P_InterceptVector` would overflow.
+fn fraction_in(world: &crate::StaticWorld, trace: Div, line: Div) -> Result<Fixed, CombatError> {
+    if world.checked_arithmetic {
+        crate::sight::checked_intercept(trace.start, trace.delta, line.start, line.delta)
+            .ok_or(CombatError::Arithmetic)
+    } else {
+        Ok(fraction(trace, line))
+    }
+}
+/// A height difference of the aim and shoot traces (`P_AimLineAttack`,
+/// `PTR_ShootTraverse`), computed checked under the Episode 1 policy
+/// (certificate clause (vii)): `CombatError::Arithmetic` where the source's
+/// signed `int` subtraction would overflow; the historical wrapping value
+/// otherwise.
+fn height_sub(world: &crate::StaticWorld, a: Fixed, b: Fixed) -> Result<Fixed, CombatError> {
+    if world.checked_arithmetic {
+        a.bits()
+            .checked_sub(b.bits())
+            .map(Fixed::from_bits)
+            .ok_or(CombatError::Arithmetic)
+    } else {
+        Ok(a - b)
+    }
+}
 fn checked_add(a: Fixed, b: Fixed) -> Result<Fixed, CombatError> {
     a.bits()
         .checked_add(b.bits())
@@ -248,13 +274,14 @@ fn collect_limited(
                 if sides[0] != sides[1] {
                     add(
                         &mut out,
-                        fraction(
+                        fraction_in(
+                            world,
                             trace,
                             Div {
                                 start: line.start,
                                 delta: line.delta,
                             },
-                        ),
+                        )?,
                         object,
                     )?;
                 }
@@ -288,13 +315,14 @@ fn collect_limited(
                 if side(trace, p) != side(trace, q) {
                     add(
                         &mut out,
-                        fraction(
+                        fraction_in(
+                            world,
                             trace,
                             Div {
                                 start: p,
                                 delta: [q[0] - p[0], q[1] - p[1]],
                             },
-                        ),
+                        )?,
                         object,
                     )?;
                 }
@@ -382,10 +410,12 @@ pub(crate) fn aim_trace(
                     if open.bottom < open.top {
                         let [front, back] = line_sectors(world, sectors, index);
                         if front.floor != back.floor {
-                            result.window[0] = result.window[0].max((open.bottom - z) / dist);
+                            result.window[0] =
+                                result.window[0].max(height_sub(world, open.bottom, z)? / dist);
                         }
                         if front.ceiling != back.ceiling {
-                            result.window[1] = result.window[1].min((open.top - z) / dist);
+                            result.window[1] =
+                                result.window[1].min(height_sub(world, open.top, z)? / dist);
                         }
                         blocked = result.window[1] <= result.window[0];
                     }
@@ -403,8 +433,8 @@ pub(crate) fn aim_trace(
                 if actor.life().ok_or(CombatError::Metadata)?.flags & 4 == 0 {
                     continue;
                 }
-                let top = (actor.z() + actor.height() - z) / dist;
-                let bottom = (actor.z() - z) / dist;
+                let top = height_sub(world, actor.z() + actor.height(), z)? / dist;
+                let bottom = height_sub(world, actor.z(), z)? / dist;
                 if top < result.window[0] || bottom > result.window[1] {
                     continue;
                 }
@@ -489,8 +519,9 @@ pub(crate) fn hit_trace_sky(
                     None => true,
                     Some(open) => {
                         let [f, b] = line_sectors(world, sectors, index);
-                        f.floor != b.floor && (open.bottom - z) / dist > slope
-                            || f.ceiling != b.ceiling && (open.top - z) / dist < slope
+                        f.floor != b.floor && height_sub(world, open.bottom, z)? / dist > slope
+                            || f.ceiling != b.ceiling
+                                && height_sub(world, open.top, z)? / dist < slope
                     }
                 }
             }
@@ -500,8 +531,8 @@ pub(crate) fn hit_trace_sky(
                 } else {
                     let a = lookup(id).ok_or(CombatError::Reference)?;
                     a.life().ok_or(CombatError::Metadata)?.flags & 4 != 0
-                        && (a.z() + a.height() - z) / dist >= slope
-                        && (a.z() - z) / dist <= slope
+                        && height_sub(world, a.z() + a.height(), z)? / dist >= slope
+                        && height_sub(world, a.z(), z)? / dist <= slope
                 }
             }
         };
@@ -512,10 +543,18 @@ pub(crate) fn hit_trace_sky(
                 10
             }) / range;
             let frac = intercept.fraction - back;
+            let rise = slope * (frac * range);
             let point = [
                 trace.origin[0] + trace.delta[0] * frac,
                 trace.origin[1] + trace.delta[1] * frac,
-                z + slope * (frac * range),
+                if world.checked_arithmetic {
+                    z.bits()
+                        .checked_add(rise.bits())
+                        .map(Fixed::from_bits)
+                        .ok_or(CombatError::Arithmetic)?
+                } else {
+                    z + rise
+                },
             ];
             if let (TraceObject::Line(line), Some(sky)) = (intercept.object, &world.sky_ceilings) {
                 let sides = world.map().linedefs()[usize::from(line)].sides;

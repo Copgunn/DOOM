@@ -100,6 +100,18 @@ impl Default for OriginalPlayer {
         }
     }
 }
+/// The source `player->powers[NUMPOWERS]` and `player->cards[NUMCARDS]` of the
+/// Episode 1 policy (doomdef.h:162–171, 214–222): `powers` in `powertype_t`
+/// order (invulnerability, strength, invisibility, ironfeet, allmap, infrared),
+/// `cards` in `card_t` order (blue, yellow, red card; blue, yellow, red skull).
+/// `G_PlayerReborn` clears both (g_game.c); encoded from DSIM39.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct PlayerPowers {
+    /// Power tic counters (`powers[pw_allmap]` is 0 or 1).
+    pub powers: [i32; 6],
+    /// Owned keys.
+    pub cards: [bool; 6],
+}
 // Store the selected capability once beside source state. ActorLife remains the
 // sole actor definition/state storage; this is not a second player/actor owner.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -120,6 +132,29 @@ pub(crate) struct PlayerRuntime {
     /// Source `playerstate == PST_REBORN`: a dead player held `BT_USE` (movers
     /// policy, decision N3); `state` stays `Dead` and the next tic is refused.
     pub reborn: bool,
+    /// Source `powers` and `cards`: `Some` only under the Episode 1 policy.
+    pub powers: Option<PlayerPowers>,
+    /// The per-map bounds of the Episode 1 policy (the same value as
+    /// `StaticWorld::episode1`, kept here for the player-state validators);
+    /// `None` under every other policy.
+    pub episode1: Option<crate::episode1::Episode1Bounds>,
+    /// Transient, never canonical: `Idle` between weapon operations. While the
+    /// weapon machine runs on its own copy of the psprites, a `P_KillMobj` of the
+    /// player (a rocket exploding in `P_CheckMissileSpawn`, p_mobj.c:880–881)
+    /// requests its `P_DropWeapon` here instead of running a second machine; the
+    /// running machine applies it after the fire action (M4a step 6).
+    pub weapon_stage: WeaponStage,
+}
+/// See [`PlayerRuntime::weapon_stage`].
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub(crate) enum WeaponStage {
+    /// No weapon operation is running.
+    #[default]
+    Idle,
+    /// A weapon operation is running.
+    Running,
+    /// A weapon operation is running and the player's death asked for the drop.
+    DropRequested,
 }
 impl std::ops::Deref for PlayerRuntime {
     type Target = OriginalPlayer;
@@ -371,14 +406,20 @@ impl Simulation {
                         a.momz != Fixed::ZERO || a.z != a.floor
                     }
                     || (p.policy.has_player_commands()
-                        && (l.flags & player_commands::MF_JUSTATTACKED != 0
+                        && ((l.flags & player_commands::MF_JUSTATTACKED != 0
+                            // A_Saw's flag, consumed by the next P_PlayerThink
+                            // (Episode 1 policy, the chainsaw ready).
+                            && !(p.policy.has_episode1()
+                                && p.weapon
+                                    .and_then(crate::player_weapons::PlayerWeaponRuntime::pack)
+                                    .is_some_and(|w| w.ready == crate::Weapon::Chainsaw)))
                             || !(0..=i32::from(u8::MAX)).contains(&l.reaction_time)))
                 {
                     return Err(PlayerBodyError::Invariant.into());
                 }
             } else if p.policy.has_physical_player() && a.momentum() != [Fixed::ZERO; 2] {
                 // A flying fireball is the one admitted airborne mover.
-                if p.policy.has_imps() && original_registry::is_fireball(l.actor_type) {
+                if p.policy.has_imps() && original_registry::is_missile_type(l.actor_type) {
                     continue;
                 }
                 // Under heights the vertical invariant of every actor is checked by

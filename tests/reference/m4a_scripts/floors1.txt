@@ -1,0 +1,79 @@
+# output: FLOORS1.lmp
+# FLOORS1 on tests/reference/m4a_wads/floors.wad (M4a). Authored closed loop against the strict runner.
+# Walk-over floors W1 5, WR 91, WR 98, WR 82 (each crossed twice) and switched floors SR 70 (twice), S1 23, S1 18 (twice).
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+# M5 strip: W1 5 raiseFloor (crossed twice: cleared after the first)
+cmd 1 0 0 117 0   # M5 strip (north over the strip)
+cmd 62 40 0 0 0   # run 62 tics
+cmd 26 0 0 0 0   # settle
+cmd 1 0 0 68 0   # M5 strip (back south over the strip)
+cmd 6 40 0 0 0   # run 6 tics
+cmd 18 0 0 0 0   # settle
+# M91 strip: WR 91 raiseFloor (crossed again once risen: one-tic thinker)
+cmd 1 0 0 83 0   # M91 strip (north over the strip)
+cmd 20 40 0 0 0   # run 20 tics
+cmd 24 0 0 0 0   # settle
+cmd 1 0 0 183 0   # M91 strip (back south over the strip)
+cmd 6 40 0 0 0   # run 6 tics
+cmd 17 0 0 0 0   # settle
+cmd 30 0 0 0 0   # M91 pad reaches 48
+cmd 1 0 0 130 0   # M91 strip again (north over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 19 0 0 0 0   # settle
+cmd 1 0 0 123 0   # M91 strip again (back south over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 18 0 0 0 0   # settle
+# M98 strip: WR 98 turboLower (crossed twice)
+cmd 1 0 0 67 0   # M98 strip (north over the strip)
+cmd 90 40 0 0 0   # run 90 tics
+cmd 26 0 0 0 0   # settle
+cmd 1 0 0 196 0   # M98 strip (back south over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 19 0 0 0 0   # settle
+cmd 1 0 0 126 0   # M98 strip again (north over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 18 0 0 0 0   # settle
+cmd 1 0 0 122 0   # M98 strip again (back south over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 18 0 0 0 0   # settle
+# M82 strip: WR 82 lowerFloorToLowest (crossed again once lowered)
+cmd 1 0 0 78 0   # M82 strip (north over the strip)
+cmd 19 40 0 0 0   # run 19 tics
+cmd 24 0 0 0 0   # settle
+cmd 1 0 0 185 0   # M82 strip (back south over the strip)
+cmd 6 40 0 0 0   # run 6 tics
+cmd 18 0 0 0 0   # settle
+cmd 40 0 0 0 0   # M82 pad reaches -32
+cmd 1 0 0 126 0   # M82 strip again (north over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 19 0 0 0 0   # settle
+cmd 1 0 0 123 0   # M82 strip again (back south over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 18 0 0 0 0   # settle
+# south alcoves: SR 70 turboLower twice (after the button reset), S1 23, S1 18 twice
+cmd 1 0 0 220 0   # walk to (400,-232)
+cmd 36 50 0 0 0   # run 36 tics
+cmd 28 0 0 0 0   # settle
+cmd 1 0 0 37 0   # face 270 deg
+cmd 1 0 0 0 2   # USE the SR 70 switch (M70 pad 64 -> 32)
+cmd 3 0 0 0 0
+cmd 45 0 0 0 0   # the button resets after 35 tics
+cmd 1 0 0 0 2   # USE SR 70 again (M70 at 32: dest 24+8 = 32, one-tic thinker)
+cmd 10 0 0 0 0
+cmd 1 0 0 192 0   # walk to (160,-232)
+cmd 15 50 0 0 0   # run 15 tics
+cmd 25 0 0 0 0   # settle
+cmd 1 0 0 64 0   # face 270 deg
+cmd 1 0 0 0 2   # USE the S1 23 switch (M23 pad 32 -> -32)
+cmd 3 0 0 0 0
+cmd 1 0 0 192 0   # walk to (-80,-232)
+cmd 14 50 0 0 0   # run 14 tics
+cmd 25 0 0 0 0   # settle
+cmd 1 0 0 64 0   # face 270 deg
+cmd 1 0 0 0 2   # USE the S1 18 switch (M18 pad 0 -> 16)
+cmd 3 0 0 0 0
+cmd 20 0 0 0 0
+cmd 1 0 0 0 2   # USE S1 18 again: nothing (special cleared)
+cmd 70 0 0 0 0   # M23 and M18 finish

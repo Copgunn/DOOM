@@ -1,0 +1,30 @@
+# output: PLATS1.lmp
+# PLATS1 on tests/reference/m4a_wads/plats.wad (M4a). Authored closed loop against the strict runner.
+# SR 62 lift (used, used while busy, used again), S1 20 and W1 22 raiseToNearestAndChange (floorpic from the line's
+# front sector, special cleared, p_plats.c:185-195).
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 139 0   # walk to (-464,-232)
+cmd 29 50 0 0 0   # run 29 tics
+cmd 27 0 0 0 0   # settle
+cmd 1 0 0 53 0   # face 270 deg
+cmd 1 0 0 0 2   # USE the SR 62 lift switch (the zombieman rides down)
+cmd 40 0 0 0 0
+cmd 1 0 0 0 2   # USE again while the lift runs: busy, no thinker, no texture change
+cmd 150 0 0 0 0   # the lift waits 105 and returns
+cmd 1 0 0 0 2   # USE again: a second cycle
+cmd 20 0 0 0 0
+cmd 1 0 0 64 0   # walk to (-144,-232)
+cmd 19 50 0 0 0   # run 19 tics
+cmd 26 0 0 0 0   # settle
+cmd 1 0 0 192 0   # face 270 deg
+cmd 1 0 0 0 2   # USE the S1 20 switch (alcove floor TESTFLR0 copied to P20, special cleared)
+cmd 10 0 0 0 0
+cmd 1 0 0 105 0   # M22 strip: W1 22 (front sector = hall: FLOOR7_1 copied to P22) (north over the strip)
+cmd 41 40 0 0 0   # run 41 tics
+cmd 26 0 0 0 0   # settle
+cmd 1 0 0 154 0   # M22 strip: W1 22 (front sector = hall: FLOOR7_1 copied to P22) (back south over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 18 0 0 0 0   # settle
+cmd 150 0 0 0 0   # P20 and P22 reach 40; the lift finishes its second cycle

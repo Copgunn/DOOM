@@ -1,0 +1,67 @@
+# output: SPECT1.lmp
+# SPECT1 on tests/reference/m4a_wads/spectre.wad (M4a). Authored closed loop against the strict runner.
+# Shotgun and shells on the ledge, then a fight from the ledge against three Spectres (MT_SHADOWS: a Demon with MF_SHADOW) and an imp.
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 56 0   # the shotgun (on the ledge)
+cmd 6 20 0 0 0   # run 6 tics
+cmd 11 0 0 0 0   # settle
+cmd 1 0 0 137 0   # the shell box (on the ledge)
+cmd 12 20 0 0 0   # run 12 tics
+cmd 14 0 0 0 0   # settle
+cmd 1 0 0 144 0   # back to the middle of the ledge: out of the Spectres' reach
+cmd 7 20 0 0 0   # run 7 tics
+cmd 10 0 0 0 0   # settle
+cmd 1 0 0 174 1   # aim and fire at (-385,-14)
+cmd 20 0 0 0 0
+cmd 1 0 0 255 1   # aim and fire at (-442,-7)
+cmd 20 0 0 0 0
+cmd 1 0 0 254 1   # aim and fire at (-541,-7)
+cmd 20 0 0 0 0
+cmd 1 0 0 28 1   # aim and fire at (-543,56)
+cmd 20 0 0 0 0
+cmd 1 0 0 239 1   # aim and fire at (-545,14)
+cmd 20 0 0 0 0
+cmd 1 0 0 225 1   # aim and fire at (-525,-66)
+cmd 20 0 0 0 0
+cmd 1 0 0 14 1   # aim and fire at (-501,-30)
+cmd 20 0 0 0 0
+cmd 1 0 0 10 1   # aim and fire at (-286,0)
+cmd 20 0 0 0 0
+cmd 1 0 0 0 1   # aim and fire at (-342,0)
+cmd 20 0 0 0 0
+cmd 1 0 0 0 1   # aim and fire at (-398,0)
+cmd 20 0 0 0 0
+cmd 1 0 0 246 1   # aim and fire at (-355,-66)
+cmd 20 0 0 0 0
+cmd 1 0 0 11 1   # aim and fire at (-427,6)
+cmd 20 0 0 0 0
+cmd 1 0 0 4 1   # aim and fire at (-506,13)
+cmd 20 0 0 0 0
+cmd 1 0 0 6 1   # aim and fire at (-521,29)
+cmd 20 0 0 0 0
+cmd 1 0 0 3 1   # aim and fire at (-520,36)
+cmd 20 0 0 0 0
+cmd 1 0 0 215 1   # aim and fire at (-541,-65)
+cmd 20 0 0 0 0
+cmd 1 0 0 12 1   # aim and fire at (-451,-65)
+cmd 20 0 0 0 0
+cmd 1 0 0 8 1   # aim and fire at (-420,-37)
+cmd 20 0 0 0 0
+cmd 1 0 0 2 1   # aim and fire at (-499,-15)
+cmd 20 0 0 0 0
+cmd 1 0 0 5 1   # aim and fire at (-254,-0)
+cmd 20 0 0 0 0
+cmd 1 0 0 0 1   # aim and fire at (-354,-0)
+cmd 20 0 0 0 0
+cmd 1 0 0 0 1   # aim and fire at (-464,-0)
+cmd 20 0 0 0 0
+cmd 1 0 0 0 1   # aim and fire at (-534,-0)
+cmd 20 0 0 0 0
+cmd 1 0 0 17 1   # aim and fire at (-528,43)
+cmd 20 0 0 0 0
+cmd 1 0 0 214 1   # aim and fire at (-545,-55)
+cmd 20 0 0 0 0
+# all monsters killed: True
+cmd 20 0 0 0 0

@@ -1,0 +1,4 @@
+# output: M2CHAOS.lmp
+# M2CHAOS: E1M2 chaos, seed 20261107 (20261105 + 2), 5000 tics of the fixed-seed generator.
+map E1M2
+seed 20261107 chaos 5000

@@ -1,9 +1,7 @@
 # Rust DOOM
 
 A rewrite of the original DOOM engine in Rust that aims to behave exactly like id
-Software's code, down to every single step of game logic.
-
-Rust DOOM is a working title; the port's real name is still to be decided.
+Software's code, down to every single step of game logic. (Rust DOOM is a working title.)
 
 > **Machine-Maintained, Human-Directed Project**
 >
@@ -19,135 +17,93 @@ Rust DOOM is a working title; the port's real name is still to be decided.
 ## Why this exists
 
 Most source ports (modern rewrites of a game's released source code) aim to be playable
-first and accurate second. This project works the other way round.
+first and accurate second. This project works the other way round. It only accepts
+behavior that has been checked against the original Linux DOOM 1.10 C code (id Software's
+1997 source release), comparing the entire game state after every tic, the 1/35-second
+step in which DOOM updates its world. Anything not yet proven identical is refused: the
+engine stops with an error instead of approximating.
 
-It only accepts behavior that has been checked against the original Linux DOOM 1.10 C
-code, id Software's 1997 source release. The check compares the entire game state after
-every tic. A tic is the 1/35-second step in which DOOM updates its world. Anything not yet proven identical is refused: the engine
-stops with an error instead of approximating.
-
-That makes it useful for exact-behavior work:
-
-- playing back recorded demos (files that replay a player's inputs), which only stay in
-  sync if every tic matches;
-- speedrun and tool-assisted (TAS) research;
-- studying how the original engine really behaves.
-
-Vanilla behavior, meaning that of the original unmodified game, isn't a checkbox in an
-options menu here. It's the default, quirks included, proven against the original C every
-tic. Game math also stays in Doom's original whole-number arithmetic, with no decimals,
-except for the one division where the original itself used them. Nothing quietly rounds
-your rocket jumps differently than the original did.
+That is what makes it fit for exact-behavior work once the ground is covered: replaying
+recorded demos (files that replay a player's inputs, which only stay in sync if every tic
+matches), speedrun and tool-assisted (TAS) research, and studying the original engine. Vanilla behavior, meaning
+that of the original unmodified game, is the default here, quirks included, and game math
+stays in Doom's original whole-number arithmetic, with no decimals, except for the one
+division where the original itself used them. Once a behavior is admitted, nothing quietly
+rounds it differently.
 
 **It is not playable yet.** If you want to play Doom today, use an established source
-port such as [Chocolate Doom](https://www.chocolate-doom.org/). It needs your own game
-files, such as those from a copy of Doom you bought.
+port such as [Chocolate Doom](https://www.chocolate-doom.org/). Like every Doom engine,
+this one needs your own game files, such as those from a copy of Doom you bought.
 
 ## Where it stands
 
 The engine runs DOOM's game logic without graphics. It is driven by tests and small
-example programs, on small test maps built for this project. Today it can simulate:
+example programs, on small test maps built for this project and, locally, on six of the
+real Episode 1 maps. Today it can simulate:
 
-- one player who moves, turns, uses switches and doors, takes damage and dies;
-- the fist, pistol, shotgun and chaingun, with ammunition and weapon switching;
-- the Demon, the Zombieman, the Shotgun Guy, the Chaingunner and the Imp, which see,
-  chase, attack and fight each other;
-- ammunition, health, armor and bonus pickups;
+- one player who moves, uses switches and doors, takes damage and dies, with the fist,
+  pistol, shotgun and chaingun;
+- the Demon, Zombieman, Shotgun Guy, Chaingunner and Imp, which see, chase, attack and
+  fight each other, plus ammunition, health, armor and bonus pickups;
 - walls at any angle, steps and ledges, windows, sky, damaging floors, secret areas,
   flickering lights and scrolling walls;
-- the doors, lifts, moving floors, switches and exit used by E1M1, the first map;
-- E1M1's lamps, pillars, candelabras, corpses and gore;
-- exploding barrels, with chain reactions, and maps with as many pickups as E1M1;
-- the real E1M1, which runs in sync with the genuine engine for all five scripted runs (idle,
-  walking to the exit, fighting, barrels and random commands; the comparison harness is
-  local-only).
+- the doors, lifts, moving floors, switches and exit, lamps, pillars, corpses and
+  exploding barrels (with chain reactions) of E1M1, the first map;
+- every Episode 1 door, floor, lift, stair, donut, light and exit special, keys and
+  locked doors, powerups, the chainsaw, the rocket launcher and the Spectre;
+- the real E1M1, E1M2, E1M3, E1M4, E1M6 and E1M7, which run in sync with the genuine
+  engine (the original C code, built and run alongside the Rust code) for all 30 scripted
+  runs: idle, walking to the exit, fighting, dying and random commands on each map (on
+  E1M1, a barrels run instead of dying). The
+  comparison harness is local-only.
 
 What it cannot do yet:
 
-- show graphics, play sound or offer menus;
-- yet claim a full tic-for-tic match of the real E1M1 for every input: only the scripted
-  runs recorded so far are matched;
-- handle the other monsters, the other weapons, or the remaining map features such as
-  crushers and teleporters;
-- play back the original game's recorded demos.
+- show graphics, play sound or offer menus, or play back the original's recorded demos;
+- claim a tic-for-tic match of any map for every input: only the scripted runs recorded
+  so far are matched;
+- handle teleporters, the Baron, E1M5, E1M8, E1M9 or the other episodes.
 
-## Where it's headed
-
-The committed plan, in order (details in the [roadmap](docs/ROADMAP.md)):
-
-1. Run the real E1M1 and match the original tic for tic.
-2. Extend that to the rest of Episode 1.
-3. Add a renderer and audio, so that it is actually playable.
+This is a long-term project, not a quick rewrite. Every behavior is checked against the
+original before it's admitted, so progress is measured in proven features, not weeks.
 
 ## Which kind of Doom?
 
-People play classic Doom in four broad ways today. Here is where this project fits.
+Four broad ways to play classic Doom; each non-vanilla one would be a separate optional mode.
 
-- **Vanilla.** Exactly how the original 1993 game worked, its limits and quirks included.
-  This is what the project builds, and checks against the original, today.
-- **Limit-removing.** The same game and the same map features, but the original's hard
-  limits on map size and detail are lifted, so bigger and more detailed maps run.
-  Considered as a separate mode (Track 1 below).
-- **Boom, MBF21 and ID24.** Three generations of extensions to how Doom maps are built
-  that keep Doom feeling classic while adding map features: new kinds of doors and lifts,
-  scrolling floors, deep water and more. Most new community maps are built for this
-  family. ID24 is id Software's own 2024 extension of it. A possible later mode, not a
-  promise.
-- **Advanced, in the style of ZDoom and GZDoom.** Scripting, floors stacked above other
-  floors, sloped floors and ceilings, and full-scale mods (player-made changes to the
-  game). This project would go its own way here (Track 3 below) rather than copy ZDoom.
-
-Each of the other three kinds will be a separate mode you switch on, so vanilla never
-changes. Tracks 1 and 3 under [Where it's (maybe) going](#where-its-maybe-going) describe
-them.
+- **Vanilla.** The original 1993 game, limits and quirks included: what this project builds.
+- **Limit-removing.** Same game, but the original's hard limits on map size are lifted (Track 1 below).
+- **Boom, MBF21 and ID24.** Extensions adding new doors, lifts and floors: a possible later mode.
+- **Advanced, ZDoom-style.** Scripting, slopes and big mods: this project would go its own way (Track 3 below).
 
 ## Where it's (maybe) going
 
-These are ideas, not promises, grouped into three tracks. The
-[roadmap](docs/ROADMAP.md#ideas-under-consideration) describes them in a little more detail.
+Ideas, not promises, one line each; the [roadmap](docs/ROADMAP.md#ideas-under-consideration) has more.
 
-**Track 1: Faithful.** Vanilla behavior is meant to stay exact; anything that changes it
-lives in a separate optional mode.
+**Track 1: Faithful.** Vanilla stays exact; anything that changes it lives in a separate optional mode.
 
-- **Original demo playback.** Play back recorded vanilla demos (`.lmp` files) to the
-  last tic, the strongest end-to-end proof of exactness. If a port's answer to a 1994
-  demo is a desync, it isn't running Doom; it's running something Doom-shaped.
-- **Faster progress.** Port whole systems at once, such as all monsters or all weapons.
-  Check them against the original by running real maps and demos.
-- **One vanilla mode, plus a limit-removing one.** Fold the step-by-step policies into
-  one complete vanilla mode. A separate mode would lift the original's hard limits,
-  such as the most things or visible surfaces it can handle, without otherwise changing
-  gameplay.
-- **An optional "fixed" mode.** A separate mode, off unless you choose it, would correct known original bugs.
-  The differences and quirks already recorded become its to-do list.
-- **The full game and Doom II.** After Episode 1, the remaining episodes and then Doom II,
-  held to the same exactness.
+- **Original demo playback.** Replay vanilla demos to the last tic, the strongest proof of exactness.
+- **Faster progress.** Port whole systems at once, checked on real maps and demos.
+- **One vanilla mode, plus a limit-removing one.** Fold the policies into one; another lifts limits.
+- **An optional "fixed" mode.** Off unless chosen, it would correct known original bugs.
+- **The full game and Doom II.** After Episode 1, the other episodes and Doom II, just as exact.
 
-**Track 2: Presentation.** How the planned renderer could look and feel. This can never
-change gameplay, because the renderer only reads the game state.
+**Track 2: Presentation.** The renderer only reads game state, so it can never change gameplay.
 
-- **A faithful software renderer first.** It would look exactly like the original Linux
-  DOOM 1.10, whose source id Software released in 1997.
-- **Then a modern renderer.** Smooth high frame rates by drawing extra frames between
-  the game's 35 tics per second, plus sector-based dynamic lighting. Other ports already
-  flood-fill exactly which sectors a light touches, then shade every pixel in them anyway.
-  We would stop at the part that was already free.
-- **VR.** A headset handles looking around while the mouse turns and aims. That suits
-  Doom, because the original has no vertical aiming.
-- **A fully offline engine.** Your own game files. No internet connection, no account, no
-  launcher, no login screen between you and E1M1. Remember those?
+- **A faithful software renderer first.** It would look exactly like the original Linux DOOM 1.10.
+- **Then a modern renderer.** Smooth high frame rates between tics, plus sector-based lighting.
+- **VR.** A headset handles looking around while the mouse turns and aims.
+- **A fully offline engine.** Your own game files, no internet, account or launcher.
 
-**Track 3: Beyond vanilla.** A new engine built on the verified core. This is the payoff
-of all the careful checking: an exact Doom core you can build wild things on without
-losing what makes Doom feel like Doom. It would live in separate optional modes, so vanilla
-is never affected.
+**Track 3: Beyond vanilla.** A new engine on the verified core, in separate optional modes.
 
-- **Modern source-port features, done cleanly.** Features like those of ZDoom, a popular
-  advanced source port, without decades-old code underneath.
-- **Things the original never simulated.** Water, blood and nukage that actually flow,
-  and very large crowds of monsters.
-- **Scripting and more platforms.** A scripting layer for new game logic, and other
-  platforms such as mobile.
+- **Modern source-port features, done cleanly.** ZDoom-style features on a fresh core.
+- **Things the original never simulated.** Flowing water, blood and nukage; huge monster crowds.
+- **Scripting and more platforms.** A scripting layer for new game logic; platforms such as mobile.
+- **A live editor with rewind.** Change anything while the game runs, then rewind and replay from any moment.
+- **"Why did that happen?"** Click a monster and see the exact decisions and random rolls behind what it did.
+- **TAS tools that are vanilla-legal by construction.** Runs built frame by frame here play back on the original game.
+- **Map and demo checks.** See exactly which line breaks vanilla limits, and which demos a map change desyncs.
 
 ## How it's verified
 
@@ -156,15 +112,15 @@ original code and the Rust code, and the whole game state is compared after ever
 The expected results are recorded by a separate program written from the C output alone,
 so Rust is never checked against its own output. Sanitizers catch hidden memory and
 arithmetic errors while the original C code runs. Fuzzing feeds in huge numbers of random
-inputs to find anything that slips through. When something is not proven identical, the
-engine refuses it rather than guessing.
+inputs to find anything that slips through. Mutation testing, which deliberately breaks
+the code, checks that the tests themselves notice. When something is not proven identical,
+the engine refuses it rather than guessing.
 
 ## Try it
 
-You need Rust, installed through [rustup](https://rustup.rs/) (stable, or at least
-1.85.0), and a C compiler (on Windows, the Visual Studio build tools). The C compiler
-builds a small compression library used only by tests. No game files are needed, and it
-builds on Linux, Windows and macOS. After cloning this repository, from its top folder:
+You need Rust via [rustup](https://rustup.rs/) (stable, or at least 1.85.0) and a C compiler
+(on Windows, the Visual Studio build tools) for a small test-only compression library. No
+game files are needed; it builds on Linux, Windows and macOS. From the cloned top folder:
 
 ```sh
 cargo build --workspace --locked
@@ -179,16 +135,15 @@ cargo run -p doom-sim --example player_movers --locked   # a player, monsters, d
 cargo run -p doom-map --example parse_map --locked       # reading DOOM's map format
 ```
 
-Each one runs a short scripted scene on a test map, checks the result and prints a
-one-line summary. None needs an IWAD (the main game data file, such as `doom.wad`), a
-graphics card, audio or a network.
+Each runs a short scripted scene on a test map and prints a one-line summary. None needs
+an IWAD (the main game data file, such as `doom.wad`), a graphics card, audio or a network.
 
 ## Policies (for developers)
 
-New gameplay is switched on through optional policies, each selected explicitly. Each policy adds one slice of Doom
-on top of the one before it. Older policies never change, so earlier results stay exactly
+New gameplay is switched on through optional policies, each selected explicitly and adding
+one slice of Doom to the one before. Older policies never change, so earlier results stay
 reproducible, much like compatibility levels. The number in brackets is the policy's
-identifier in saved test snapshots. The earlier numbered Demon profiles are listed under
+identifier in saved test snapshots; earlier Demon profiles are under
 [versioned gameplay profiles](docs/COMPATIBILITY.md#versioned-gameplay-profiles).
 
 | Policy (wire ID) | Adds | Contract |
@@ -213,34 +168,31 @@ identifier in saved test snapshots. The earlier numbered Demon profiles are list
 | `PlayerMonstersSpecialsV1` (18) | Sky ceilings, light thinkers, damage floors, secrets and one-sided scrolling walls | [Sky and specials](docs/COMPATIBILITY.md#original-monsters-with-sky-and-static-specials) |
 | `PlayerMonstersMoversV1` (19) | E1M1's seven door, lift, floor, switch and exit line types; the tic after the exit is refused | [Movers](docs/COMPATIBILITY.md#original-monsters-with-doors-lifts-floors-switches-and-the-exit) |
 | `PlayerMonstersE1M1V1` (20) | Two-sided scrolling walls and E1M1's seven static decoration types (lamps, pillars, candelabras, corpses and gore) | [E1M1 decorations](docs/COMPATIBILITY.md#original-monsters-with-two-sided-scrolling-walls-and-static-decorations) |
-| `PlayerMonstersBarrelsV1` (21) | Exploding barrels with the original's radius attack and chain reactions, 64 pickups, every map-thing angle and the relaxed spawn rule: the last things that stopped E1M1 from loading | [Barrels](docs/COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle) |
+| `PlayerMonstersBarrelsV1` (21) | Exploding barrels with the original's radius attack and chain reactions, 64 pickups, every map-thing angle and the relaxed spawn rule | [Barrels](docs/COMPATIBILITY.md#original-monsters-with-exploding-barrels-pickup-scale-and-every-thing-angle) |
 | `PlayerMonstersLevelV1` (22) | The player start at its place in the map's thing list, with its angle; the full player think, including damage-flash decay and the dead player's turn toward its attacker: the real E1M1 run | [Level runs](docs/COMPATIBILITY.md#original-level-runs-the-player-start-in-lump-order-and-the-full-player-think-wire-22) |
+| `PlayerMonstersEpisode1V1` (23) | Episode 1, part 1: every door, floor, lift, stair, donut, light and exit special, keys, powerups, chainsaw, rocket launcher and Spectre: the real E1M2-E1M4, E1M6 and E1M7 runs | [Episode 1, part 1](docs/COMPATIBILITY.md#original-episode-1-part-1-every-door-floor-plat-stair-donut-light-and-exit-special-keys-items-powers-chainsaw-rocket-launcher-and-spectre-wire-23) |
 
 More developer reading:
 
-- [Compatibility](docs/COMPATIBILITY.md) states the exact limits of every policy, the
-  [validation guide](docs/VALIDATION.md) explains the method, and
-  [Testing](docs/TESTING.md#asserted-headless-examples) lists every example and check.
-- [Architecture](docs/ARCHITECTURE.md): small crates for numbers, WAD files, maps and
-  simulation, and how [actors and their ordering](docs/ARCHITECTURE.md#actors-lifecycle-and-ordering) work.
-- [Stepping contract](docs/COMPATIBILITY.md#stepping-and-diagnostics) and
-  [actor identities](docs/ACTOR_IDENTITIES.md).
-- [Larger maps for the Demon profiles](docs/COMPATIBILITY.md#expanded-map-demon-profile).
+- [Compatibility](docs/COMPATIBILITY.md) states the limits of every policy, the
+  [validation guide](docs/VALIDATION.md) the method, and
+  [Testing](docs/TESTING.md#asserted-headless-examples) every example and check.
+- [Architecture](docs/ARCHITECTURE.md): the small crates and how
+  [actors and their ordering](docs/ARCHITECTURE.md#actors-lifecycle-and-ordering) work.
+- [Stepping contract](docs/COMPATIBILITY.md#stepping-and-diagnostics),
+  [actor identities](docs/ACTOR_IDENTITIES.md) and the [roadmap](docs/ROADMAP.md).
 - The [documentation index](docs/README.md) and the
   [historical evidence archive](docs/validation/archive/README.md).
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow. Each change needs evidence from
-the original source, tests and documentation, and owner review. The Python tools under
-`tools/` are a gentle place to start. Standing rules for AI agents are in
-[AGENTS.md](AGENTS.md).
+Read [CONTRIBUTING.md](CONTRIBUTING.md): each change needs evidence from the original
+source, tests, documentation and owner review. The Python tools under `tools/` are a gentle
+place to start. Standing rules for AI agents are in [AGENTS.md](AGENTS.md).
 
 ## License and attribution
 
 The project preserves id Software's original source, history and attribution. The Rust
-workspace is GPL-2.0-only; see the preserved [license notice](LICENSE.TXT) and the
-[original release README](README.TXT). The source license grants no rights to the
-commercial game data. Those files stay external, are never distributed here, and are not
-needed for the public tests. The [external asset guide](docs/ASSETS.md) describes
-optional local loading.
+workspace is GPL-2.0-only; see the [license notice](LICENSE.TXT) and the
+[original release README](README.TXT). Commercial game data stays external and is never
+distributed here; see the [external asset guide](docs/ASSETS.md).

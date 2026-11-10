@@ -1,0 +1,20 @@
+# output: TIMERS.lmp
+# TIMERS on tests/reference/m4a_wads/items.wad (M4a). Authored closed loop against the strict runner.
+# Power timers (p_user.c:339-359): invisibility (MF_SHADOW cleared at 0) and the suit expire after 2100 tics, light
+# amplification keeps counting.
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 245 0   # partial invisibility
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 1 0 0 210 0   # radiation suit
+cmd 5 50 0 0 0   # run 5 tics
+cmd 19 0 0 0 0   # settle
+cmd 1 0 0 122 0   # light amplification
+cmd 15 50 0 0 0   # run 15 tics
+cmd 25 0 0 0 0   # settle
+cmd 1 0 0 62 0   # walk to (-120,0)
+cmd 9 50 0 0 0   # run 9 tics
+cmd 23 0 0 0 0   # settle
+cmd 2120 0 0 0 0   # invisibility and ironfeet run out (2100 tics); infrared continues (4200)

@@ -1,0 +1,14 @@
+# output: STAIRS2.lmp
+# STAIRS2 on tests/reference/m4a_wads/stairs.wad (M4a). Authored closed loop against the strict runner.
+# A blocked stair step (H7): stair thinkers never get type or crush written (p_floor.c:485-547; zero under the runner's
+# declared Z_Malloc zero fill), so c4 retries every tic under the barrel. Rust refuses the first blocked tic.
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 14 0   # walk to (400,140)
+cmd 25 50 0 0 0   # run 25 tics
+cmd 27 0 0 0 0   # settle
+cmd 1 0 0 43 0   # north over the W1 8 strip of staircase C (ceiling 64, barrel on c4)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 19 0 0 0 0   # settle
+cmd 150 0 0 0 0   # c4 stalls at 22 under the barrel; the other steps finish

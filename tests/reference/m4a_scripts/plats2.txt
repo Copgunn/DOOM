@@ -1,0 +1,15 @@
+# output: PLATS2.lmp
+# PLATS2 on tests/reference/m4a_wads/plats.wad (M4a). Authored closed loop against the strict runner.
+# A raiseToNearestAndChange plat blocked while rising (H7): T_PlatRaise sets status down and moves to plat->low, which
+# EV_DoPlat never writes (p_plats.c:73-79, 109; zero under the runner's declared Z_Malloc zero fill). Rust refuses the
+# blocked tic.
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 28 0   # M22B strip: W1 22 raiseToNearestAndChange under a barrel (north over the strip)
+cmd 39 40 0 0 0   # run 39 tics
+cmd 26 0 0 0 0   # settle
+cmd 1 0 0 167 0   # M22B strip: W1 22 raiseToNearestAndChange under a barrel (back south over the strip)
+cmd 7 40 0 0 0   # run 7 tics
+cmd 18 0 0 0 0   # settle
+cmd 90 0 0 0 0   # the plat is blocked at 22, reverses to low = 0 (zero-filled) and waits with count running below 0

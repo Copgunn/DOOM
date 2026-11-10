@@ -264,15 +264,20 @@ impl ExplosionSight {
             .extent_sight_work
             .and_then(|w| w.checked_add(world.lines.len().checked_mul(5)?))
             .ok_or(PerceptionError::WorkLimit)?;
+        // The Episode 1 policy derives the allowance from the map's own `K` and
+        // `B` (decision H4): `(1 + K + B)·(1 + K)`.
+        let allowance = world
+            .episode1
+            .map_or(EXPLOSION_SIGHT_QUERIES, |b| b.explosion_sight_queries());
         let budget = one
-            .checked_mul(EXPLOSION_SIGHT_QUERIES)
+            .checked_mul(allowance)
             .ok_or(PerceptionError::WorkLimit)?;
         let queries = self.queries + 1;
         let work = self
             .work
             .checked_add(one)
             .ok_or(PerceptionError::WorkLimit)?;
-        if queries > EXPLOSION_SIGHT_QUERIES || work > budget {
+        if queries > allowance || work > budget {
             return Err(PerceptionError::WorkLimit.into());
         }
         self.queries = queries;
@@ -297,8 +302,12 @@ pub(crate) fn explode<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) {
 fn radius_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, spot: ActorId) -> Result<(), SimError> {
     let bomb = *h.access.get(spot).ok_or(CombatError::Reference)?;
     let life = bomb.life().ok_or(ActorError::InvalidType)?;
-    if !is_barrel_type(life.actor_type) {
-        // Admission names A_Explode for MT_BARREL's S_BEXP4 alone.
+    // Admission names A_Explode for MT_BARREL's S_BEXP4 and, under the Episode 1
+    // policy, MT_ROCKET's S_EXPLODE1 (M4a plan §E.4): `P_RadiusAttack (rocket,
+    // rocket->target, 128)` with the shooter as the source (self damage included).
+    let rocket = crate::original_registry::is_rocket(life.actor_type)
+        && h.player.as_deref().is_some_and(|p| p.policy.has_episode1());
+    if !is_barrel_type(life.actor_type) && !rocket {
         return Err(
             ActorError::UnsupportedAction(crate::lifecycle::source_action_id("A_Explode")).into(),
         );
@@ -346,7 +355,11 @@ fn radius_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, spot: ActorId) -> Resu
     // more pass per relinking victim (only a monster entering its seestate
     // `A_Chase` relinks, at most once per explosion since its threshold becomes
     // 100). Unreachable on an admitted map; exhaustion refuses the tic.
-    let limit = 9 * h.spatial.order.len().max(1) * (MAX_PLAYER_MONSTERS + 2);
+    let roster = h
+        .world
+        .episode1
+        .map_or(MAX_PLAYER_MONSTERS, |b| b.visit_roster());
+    let limit = 9 * h.spatial.order.len().max(1) * (roster + 2);
     let mut visits = 0usize;
     // `y` outer, `x` inner (1230–1231), unlike P_CheckPosition and P_ChangeSector.
     for by in yl..=yh {

@@ -12,7 +12,9 @@ pub const MAP_EXTENT_PREPARATION_BYTES: usize = 4 * 1024 * 1024;
 pub const MAP_EXTENT_COLLISION_WORK: usize = 16384;
 pub(crate) const QUERY_UNITS: u32 = 2048;
 const LINE_NORM_UNITS: u32 = 1536;
-const HEIGHT_UNITS: u16 = 1024;
+/// The sector-height domain (map units): static heights at load and, under the
+/// Episode 1 policy, every height a mover writes (`planes::PlaneHost`).
+pub(crate) const HEIGHT_UNITS: u16 = 1024;
 const MOMENTUM_UNITS: u32 = 64;
 const STEP_XY_UNITS: u32 = QUERY_UNITS - 30;
 const STEP_Z_UNITS: u32 = QUERY_UNITS - MOMENTUM_UNITS;
@@ -159,7 +161,14 @@ pub struct RealMapAdmission {
 /// The real-map admission (M3h6 note §4.1): format bounds, heights within the M3f2
 /// vertical envelope, and the derived work values. The arithmetic certificate,
 /// the boundary and the BLOCKMAP rules are checked by the caller.
-pub(crate) fn validate_real_map(map: &Map, actor_cap: u32) -> Result<RealMapAdmission, SimError> {
+/// `sight_queries` is the per-operation sight-query allowance the work budget is
+/// sized for: 64 for every older policy, `8·(K + 1)` under the Episode 1 policy
+/// (decision D8).
+pub(crate) fn validate_real_map(
+    map: &Map,
+    actor_cap: u32,
+    sight_queries: usize,
+) -> Result<RealMapAdmission, SimError> {
     let records = crate::player_map_scale::REAL_MAP_FORMAT_RECORDS;
     let blockmap = map.blockmap();
     let cells = blockmap.cell_ranges().len();
@@ -187,7 +196,7 @@ pub(crate) fn validate_real_map(map: &Map, actor_cap: u32) -> Result<RealMapAdmi
     let tree_bound = 2 * map.nodes().len() + map.subsectors().len() + map.segs().len();
     let sight_work = sight::expanded_work(map, tree_bound)?;
     let lines = map.linedefs().len();
-    let sight_budget = 64_usize
+    let sight_budget = sight_queries
         .checked_mul(
             sight_work
                 .checked_add(5 * lines)

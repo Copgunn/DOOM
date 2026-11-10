@@ -395,3 +395,185 @@ fn former_human_direct_entry_rejects_death_and_pain_states() {
     }
     s.enter_original_state(possessed, roots.see).unwrap();
 }
+
+// ---- Independent review B10 (2026-11-10): melee on a corpse at the edge of the
+// historical travel envelope. The source rule (docs/M4A_REFERENCE_INVESTIGATION.md
+// §14): `P_CheckMeleeRange` has no `MF_SHOOTABLE` test (p_enemy.c:174–190), so a
+// melee attack begun before its target died still lands; `P_KillMobj` cleared
+// `MF_SHOOTABLE` (p_inter.c:675) and `P_DamageMobj` returns at its first test
+// (p_inter.c:787–788): nothing changes but the attack's damage draw. The flat
+// policies' Rust-only travel envelope (|position| + ⌈160/3 · |momentum|⌉ ≤ 994
+// units, `original_player::travel_bounds`) applies only to thrust C applies.
+
+/// A single-sector walled room of 2,048 × 1,024 units with these THINGs.
+fn edge_room(things: &[[i16; 5]]) -> doom_map::Map {
+    crate::heights_room::HeightsRoom::new(&[-1024, 1024], &[[0, 128]])
+        .with_things(things)
+        .map()
+}
+fn edge_options() -> MapContextOptions {
+    MapContextOptions {
+        initial_rng: DoomRng::from_indices(0, 0),
+        respawn_monsters: false,
+    }
+}
+fn arm_pistol(s: &mut Simulation) -> ActorId {
+    let body = s
+        .spawn_player_body(PlayerSlot::One, [Fixed::from_map_units(-100), Fixed::ZERO])
+        .unwrap();
+    s.initialize_player_weapons(
+        PlayerSlot::One,
+        WeaponInventory {
+            ready: Weapon::Pistol,
+            owned: 3,
+            ammo: [50, 0, 0, 0],
+        },
+    )
+    .unwrap();
+    body
+}
+/// What a damage would change: position, momentum, health and flags.
+fn unchanged_of(a: &Actor) -> ([Fixed; 2], [Fixed; 2], i32, u32) {
+    let life = a.life.unwrap();
+    (a.position(), a.momentum(), life.health, life.flags)
+}
+fn unchanged(s: &Simulation, id: ActorId) -> ([Fixed; 2], [Fixed; 2], i32, u32) {
+    unchanged_of(s.actor(id).unwrap())
+}
+fn ignored(s: &Simulation, target: ActorId, attacker: ActorId) -> bool {
+    let damaged = s.events().iter().any(|e| {
+        matches!(e, Event::Combat(combat::CombatEvent::Damage(r))
+            if r.target == target && r.inflictor == Some(attacker))
+    });
+    let ignored = s
+        .events()
+        .iter()
+        .any(|e| matches!(e, Event::Combat(combat::CombatEvent::Ignored(t)) if *t == target));
+    damaged && ignored
+}
+
+/// Pins the mutation `DamagePlan::current_original_in` `live && thrust` ->
+/// `live || thrust` in the monster branch (combat.rs) recorded as equivalent
+/// in docs/validation/M4A.md. `PlayerMonstersV1`: a Demon at (960, 50) is
+/// wounded by 1 with a Zombieman at (960, 0) as the source, so it targets the
+/// Zombieman (pre-wounded to 5 health) and starts `A_SargAttack`'s
+/// `S_SARG_ATK1`–`ATK3`; during `S_SARG_ATK2` the raised pistol fires one shot
+/// along y = 0 from (−100, 0), and `A_FirePistol` 4 tics later kills the
+/// Zombieman (any of 5, 10, 15 damage). At `S_SARG_ATK3` the Demon bites the
+/// corpse: the tic is admitted and the corpse is unchanged. The mutant runs the
+/// thrust preflight for the corpse too, and the travel envelope refuses it
+/// (960 + 160/3 · the bite's thrust > 994).
+#[test]
+fn a_demon_bite_on_a_corpse_at_the_travel_edge_changes_nothing() {
+    let mut s = Simulation::original_player_monsters_map(
+        edge_room(&[[960, 50, 0, 3002, 7], [960, 0, 0, 3004, 7]]),
+        64,
+        edge_options(),
+    )
+    .unwrap();
+    let spawned = s.spawn_map_things().unwrap().spawned;
+    let (demon, zombie) = (spawned[0], spawned[1]);
+    arm_pistol(&mut s);
+    for _ in 0..40 {
+        let w = s.original_player_weapons(PlayerSlot::One).unwrap().unwrap();
+        if !w.attack_down && w.psprites[0].position[1] == Fixed::from_map_units(32) {
+            break;
+        }
+        s.advance([TicCommand::default(); 4]).unwrap();
+    }
+    let damage = |s: &mut Simulation, target, source, amount| {
+        s.damage_actor(DamageRequest {
+            target,
+            inflictor: None,
+            source,
+            amount,
+        })
+        .unwrap()
+    };
+    assert_eq!(damage(&mut s, zombie, None, 15).health, [20, 5]);
+    damage(&mut s, demon, Some(zombie), 1);
+    let state = |s: &Simulation, id| s.actor(id).unwrap().life.unwrap();
+    let atk2 = StateId(crate::identity::OriginalState::S_SARG_ATK2.ordinal());
+    let atk3 = StateId(crate::identity::OriginalState::S_SARG_ATK3.ordinal());
+    let mut pressed = false;
+    for _ in 0..60 {
+        let mut c = [TicCommand::default(); 4];
+        // Fire inside the bite window, and not within 4 tics of the
+        // Zombieman's next `A_Look` (the shot's noise would wake it).
+        if !pressed
+            && state(&s, demon).state == Some(atk2)
+            && state(&s, demon).tics > 5
+            && state(&s, zombie).tics > 5
+        {
+            c[0].buttons = BT_ATTACK;
+            pressed = true;
+        }
+        let before = *s.actor(zombie).unwrap();
+        s.advance(c).unwrap();
+        if state(&s, demon).state == Some(atk3) && ignored(&s, zombie, demon) {
+            assert_eq!(before.life.unwrap().health, 0);
+            assert_eq!(before.position(), [Fixed::from_map_units(960), Fixed::ZERO]);
+            assert_eq!(unchanged(&s, zombie), unchanged_of(&before));
+            return;
+        }
+    }
+    panic!("no bite on the corpse");
+}
+
+/// Pins the mutation `DamagePlan::current_original_in` `live && thrust` ->
+/// `live || thrust` in the player branch (combat.rs) recorded as equivalent in
+/// docs/validation/M4A.md. `PlayerMonstersImpV1`: the player stands at (976, 0)
+/// and an Imp at (976, 40) wakes and starts `S_TROO_ATK1`–`ATK3`; during
+/// `S_TROO_ATK1` the player is killed by 100 environment damage (no
+/// inflictor, so no thrust). At `S_TROO_ATK3` `A_TroopAttack` claws the dead
+/// player: the tic is admitted and the body is unchanged. The mutant runs the
+/// thrust preflight for the dead body, and the travel envelope refuses it
+/// (976 + 160/3 · the claw's thrust > 994 for every claw of 3 to 24).
+#[test]
+fn an_imp_claw_on_the_dead_player_at_the_travel_edge_changes_nothing() {
+    let mut s = Simulation::original_player_imps_map(
+        edge_room(&[[976, 40, 0, 3001, 7]]),
+        64,
+        edge_options(),
+    )
+    .unwrap();
+    let imp = s.spawn_map_things().unwrap().spawned[0];
+    let body = s
+        .spawn_player_body(PlayerSlot::One, [Fixed::from_map_units(976), Fixed::ZERO])
+        .unwrap();
+    s.initialize_player_weapons(
+        PlayerSlot::One,
+        WeaponInventory {
+            ready: Weapon::Pistol,
+            owned: 3,
+            ammo: [50, 0, 0, 0],
+        },
+    )
+    .unwrap();
+    let atk1 = StateId(crate::identity::OriginalState::S_TROO_ATK1.ordinal());
+    let atk3 = StateId(crate::identity::OriginalState::S_TROO_ATK3.ordinal());
+    let mut killed = false;
+    for _ in 0..60 {
+        if !killed && s.actor(imp).unwrap().life.unwrap().state == Some(atk1) {
+            let result = s
+                .damage_actor(DamageRequest {
+                    target: body,
+                    inflictor: None,
+                    source: None,
+                    amount: 100,
+                })
+                .unwrap();
+            assert!(result.killed);
+            killed = true;
+        }
+        let before = *s.actor(body).unwrap();
+        s.advance([TicCommand::default(); 4]).unwrap();
+        if s.actor(imp).unwrap().life.unwrap().state == Some(atk3) && ignored(&s, body, imp) {
+            assert_eq!(before.life.unwrap().health, 0);
+            assert_eq!(before.position(), [Fixed::from_map_units(976), Fixed::ZERO]);
+            assert_eq!(unchanged(&s, body), unchanged_of(&before));
+            return;
+        }
+    }
+    panic!("no claw on the dead player");
+}

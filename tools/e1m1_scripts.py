@@ -1,19 +1,29 @@
 #!/usr/bin/env python3
-"""Generate version-110 demo lumps (.lmp) for the M3h9c E1M1 runs from text scripts.
+"""Generate version-110 demo lumps (.lmp) for the M3h9c and M4a runs from text scripts.
 
 A script is a text file; blank lines and text after '#' are ignored. Lines:
 
+  map ExMy                             the demo header's episode and map (at most once,
+                                       before the first tic; default E1M1)
   idle N                               N tics of zero ticcmds
   cmd N FORWARD SIDE TURN BUTTONS      N tics of one ticcmd
   seed S chaos N [nouse]               N tics from a fixed-seed pseudo-random stream
 
-FORWARD and SIDE are -50..50 (the admitted domain: larger values reach the turbo check,
-g_game.c:672-679, and -128 would be the 0x80 demo marker, g_game.c:1488,1493). TURN is
-the angleturn high byte, 0..255 or -128..-1 (G_ReadDemoTiccmd shifts the unsigned byte
-<< 8, g_game.c:1501). BUTTONS is an integer or names joined by '|' or '+': ATTACK (1),
-USE (2), CHANGE (4), W0..W3 (the weapon number << 3, d_event.h:75-88). Refused: bit 0x80
-(BT_SPECIAL: pause or save game, g_game.c:702-722), bit 0x40, weapon numbers 4..7 (bit
-0x20) and weapon bits without CHANGE.
+FORWARD and SIDE are -127..127 (M4a decision H5: the full signed-char range except -128,
+which G_ReadDemoTiccmd would read as the 0x80 demo marker, g_game.c:1488,1493; the wire-22
+scripts of e1m1_scripts/ and m3h9c_scripts/ stay inside -50..50; a forward above 50 on a
+gametic that is a multiple of 128 makes G_Ticker assign the turbo message, g_game.c:671-679,
+during demo playback too, DSIM39 pickups.message code 30). TURN is the angleturn high byte, 0..255 or -128..-1 (G_ReadDemoTiccmd shifts
+the unsigned byte << 8, g_game.c:1501). BUTTONS is an integer or names joined by '|' or
+'+': ATTACK (1), USE (2), CHANGE (4), W0..W7 (the weapon number << 3, d_event.h:75-88;
+P_PlayerThink reads it as (buttons & BT_WEAPONMASK) >> BT_WEAPONSHIFT, p_user.c:288, where
+W0 is the fist, or the chainsaw once owned, and W7 the chainsaw, d_event.h, doomdef.h:180-195).
+Refused: bit 0x80 (BT_SPECIAL: pause or save game, g_game.c:702-722), bit 0x40 (outside the
+weapon mask) and weapon bits without CHANGE.
+
+`map ExMy` (x 1..4, y 1..9) sets header bytes 2 and 3 (G_DoPlayDemo reads episode and map
+there, g_game.c:1596-1598); without it the header is the E1M1 one below, so every script
+written before the directive existed generates the same bytes.
 
 `chaos` draws every field independently from splitmix64 seeded with S (state += 0x9E3779B97F4A7C15;
 z = state; z = (z ^ z>>30) * 0xBF58476D1CE4E5B9; z = (z ^ z>>27) * 0x94D049BB133111EB;
@@ -26,7 +36,7 @@ ATTACK|USE -> ATTACK): on a map whose start is near the exit switch a chaos run 
 otherwise end at the first USE that reaches it, and USE while dead triggers the reborn
 reload (P_DeathThink, p_user.c:227-228).
 
-Output: the 13-byte header (110, skill 2, episode 1, map 1, deathmatch 0, respawn 0,
+Output: the 13-byte header (110, skill 2, episode 1 (or x), map 1 (or y), deathmatch 0, respawn 0,
 fast 0, nomonsters 0, consoleplayer 0, playeringame 1 0 0 0; g_game.c:1555-1566 and
 1589-1606), four bytes per tic (forwardmove, sidemove, angleturn >> 8, buttons) and the
 0x80 marker. The lump name is the upper-cased base name (W_AddFile, w_wad.c:172-180),
@@ -37,18 +47,25 @@ synth_idle.txt -> SYNIDLE.lmp.
     e1m1_scripts.py SCRIPT.txt [-o OUT.lmp]      default OUT: the `# output:` name, else
                                                  SCRIPT with .lmp
     e1m1_scripts.py --check                      regenerate every *.txt under
-                                                 tests/reference/e1m1_scripts/ and
-                                                 tests/reference/m3h9c_scripts/ in memory and
-                                                 compare with the committed .lmp next to it
+                                                 tests/reference/e1m1_scripts/,
+                                                 tests/reference/m3h9c_scripts/,
+                                                 tests/reference/m4a_scripts/ and the M4a
+                                                 real-map directories
+                                                 tests/reference/e1mN_scripts/ (N = 2, 3, 4,
+                                                 6, 7; those present) in memory and compare
+                                                 with the committed .lmp next to it
 """
-import argparse, sys
+import argparse, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT_DIRS = [ROOT / 'tests/reference/e1m1_scripts', ROOT / 'tests/reference/m3h9c_scripts']
+SCRIPT_DIRS = [ROOT / 'tests/reference/e1m1_scripts', ROOT / 'tests/reference/m3h9c_scripts',
+               ROOT / 'tests/reference/m4a_scripts'] + \
+              [ROOT / f'tests/reference/e1m{n}_scripts' for n in (2, 3, 4, 6, 7)
+               if (ROOT / f'tests/reference/e1m{n}_scripts').is_dir()]
 HEADER = bytes([110, 2, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0])
 MARKER = 0x80
-NAMES = {'ATTACK': 1, 'USE': 2, 'CHANGE': 4, 'W0': 0 << 3, 'W1': 1 << 3, 'W2': 2 << 3, 'W3': 3 << 3}
+NAMES = {'ATTACK': 1, 'USE': 2, 'CHANGE': 4, **{f'W{w}': w << 3 for w in range(8)}}
 CHAOS_BUTTONS = [0, 1, 2, 3, 4 | (0 << 3), 4 | (1 << 3), 4 | (2 << 3), 4 | (3 << 3)]
 CHAOS_BUTTONS_NOUSE = [b & ~2 for b in CHAOS_BUTTONS]
 MASK = (1 << 64) - 1
@@ -74,20 +91,38 @@ def buttons_value(token):
 
 def checked(forward, side, turn, buttons):
     for name, v in (('forward', forward), ('side', side)):
-        if not -50 <= v <= 50: raise ScriptError(f'{name} {v} outside -50..50')
+        if v == -128: raise ScriptError(f'{name} -128 refused (the 0x80 demo marker)')
+        if not -127 <= v <= 127: raise ScriptError(f'{name} {v} outside -127..127')
     if not -128 <= turn <= 255: raise ScriptError(f'turn {turn} outside -128..255')
     if not 0 <= buttons <= 255: raise ScriptError(f'buttons {buttons} outside 0..255')
     if buttons & 0x80: raise ScriptError('buttons bit 0x80 (BT_SPECIAL) refused')
     if buttons & 0x40: raise ScriptError('buttons bit 0x40 refused')
-    if buttons & 0x20: raise ScriptError('weapon numbers 4..7 refused (bit 0x20)')
-    if buttons & 0x18 and not buttons & 4: raise ScriptError('weapon bits without CHANGE refused')
+    if buttons & 0x38 and not buttons & 4: raise ScriptError('weapon bits without CHANGE refused')
     return bytes([forward & 0xff, side & 0xff, turn & 0xff, buttons])
 
-def ticcmds(lines):
-    """Yield the 4-byte ticcmd of every tic of a script."""
+MAP = re.compile(r'E([1-4])M([1-9])')
+
+def header(lines):
+    """The 13-byte header: HEADER with the episode and map of the script's `map` line."""
+    found, seen_tic = None, False
     for number, raw in enumerate(lines, 1):
         words = raw.split('#', 1)[0].split()
         if not words: continue
+        if words[0] != 'map': seen_tic = True; continue
+        m = MAP.fullmatch(words[1]) if len(words) == 2 else None
+        if not m: raise ScriptError(f'line {number}: expected "map ExMy" with x 1..4 and y 1..9')
+        if found: raise ScriptError(f'line {number}: a second map line')
+        if seen_tic: raise ScriptError(f'line {number}: the map line must precede every tic line')
+        found = (int(m[1]), int(m[2]))
+    out = bytearray(HEADER)
+    if found: out[2], out[3] = found
+    return bytes(out)
+
+def ticcmds(lines):
+    """Yield the 4-byte ticcmd of every tic of a script (map lines are read by header())."""
+    for number, raw in enumerate(lines, 1):
+        words = raw.split('#', 1)[0].split()
+        if not words or words[0] == 'map': continue
         try:
             if words[0] == 'idle' and len(words) == 2:
                 yield from [bytes(4)] * count(words[1])
@@ -110,8 +145,10 @@ def count(token):
     return n
 
 def lump(script_text):
-    cmds = list(ticcmds(script_text.splitlines()))
-    return HEADER + b''.join(cmds) + bytes([MARKER]), len(cmds)
+    lines = script_text.splitlines()
+    head = header(lines)
+    cmds = list(ticcmds(lines))
+    return head + b''.join(cmds) + bytes([MARKER]), len(cmds)
 
 def lump_name(path):
     base = Path(path).name.split('.')[0]

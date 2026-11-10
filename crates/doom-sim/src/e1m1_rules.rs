@@ -49,6 +49,15 @@ pub const E1M1_DECORATIONS: [OriginalActorType; 7] = [
     OriginalActorType::MT_MISC68,
     OriginalActorType::MT_MISC69,
 ];
+/// The static things the Episode 1 policy admits beyond [`E1M1_DECORATIONS`]
+/// (M4a plan §E.6): the candle (`MT_MISC49`, DoomEd 34, info.c:3682–3706: spawn
+/// state `S_CANDLESTIK` with `tics` −1, flags 0, radius 20) and the tall red
+/// firestick (`MT_MISC43`, DoomEd 46, info.c:3526–3550: `MF_SOLID`, radius 16, the
+/// four-state `S_REDTORCH` loop of 4 tics each with no action, info.c:1070–1073).
+/// The firestick is the one animated decoration: the general thinker countdown
+/// cycles it (`P_MobjThinker`, p_mobj.c:441–449) and nothing else ever changes it.
+pub const EPISODE1_DECORATIONS: [OriginalActorType; 2] =
+    [OriginalActorType::MT_MISC49, OriginalActorType::MT_MISC43];
 /// The most decorations one map may spawn under the E1M1 policy (E1M1 spawns 27 on
 /// every skill, M3h9 note §3); the next is `MapSpawnError::DecorationLimit` and the
 /// batch spawns nothing.
@@ -122,10 +131,44 @@ const _: () = assert!(BARRELS_LINKED_THINGS == 129);
 pub(crate) fn decoration(ty: ActorTypeId) -> Option<OriginalActorType> {
     E1M1_DECORATIONS.into_iter().find(|d| d.ordinal() == ty.0)
 }
+/// [`decoration`] widened by the Episode 1 policy's [`EPISODE1_DECORATIONS`],
+/// policy-free (the policy gate is [`is_decoration`]).
+pub(crate) fn listed_decoration(ty: ActorTypeId) -> Option<OriginalActorType> {
+    decoration(ty).or_else(|| {
+        EPISODE1_DECORATIONS
+            .into_iter()
+            .find(|d| d.ordinal() == ty.0)
+    })
+}
 /// Whether `ty` is an admitted decoration under `policy`: one of
-/// [`E1M1_DECORATIONS`] and the policy has `has_e1m1`.
+/// [`E1M1_DECORATIONS`] and the policy has `has_e1m1`, or one of
+/// [`EPISODE1_DECORATIONS`] and the policy has `has_episode1`.
 pub(crate) fn is_decoration(policy: OriginalExecutionProfile, ty: ActorTypeId) -> bool {
-    policy.has_e1m1() && decoration(ty).is_some()
+    policy.has_e1m1()
+        && (E1M1_DECORATIONS.iter().any(|d| d.ordinal() == ty.0)
+            || (policy.has_episode1() && EPISODE1_DECORATIONS.iter().any(|d| d.ordinal() == ty.0)))
+}
+/// The states a decoration may hold: its spawn state, or for an animated one
+/// ([`animated_decoration`]) every state of its spawn loop.
+pub(crate) fn decoration_states(ty: OriginalActorType) -> Vec<OriginalState> {
+    let root = ty.descriptor().states.spawn;
+    let mut states = vec![root];
+    let mut state = root.descriptor().next;
+    while state != root && state != OriginalState::S_NULL && states.len() < 8 {
+        states.push(state);
+        state = state.descriptor().next;
+    }
+    states
+}
+/// Whether a decoration in `state` may hold the countdown `tics`: −1 in a static
+/// spawn state, `1..=` the state's tics in an animated loop.
+pub(crate) fn decoration_tics(state: OriginalState, tics: i32) -> bool {
+    let limit = state.descriptor().tics;
+    if limit == -1 {
+        tics == -1
+    } else {
+        (1..=limit).contains(&tics)
+    }
 }
 /// The static predicate every listed type satisfies (M3h9 note §2.5, decision E2):
 /// a DoomEd number, spawn state with `tics` −1 and no action (so `P_MobjThinker`
@@ -157,6 +200,28 @@ pub(crate) fn static_decoration(ty: OriginalActorType) -> bool {
         && (d.radius == 16 * 65536 || d.radius == 20 * 65536)
         && d.height == 16 * 65536
 }
+/// The animated variant of [`static_decoration`] (the Episode 1 firestick, M4a
+/// plan §E.6): the same flags, health, radius and height, but a spawn loop of at
+/// most eight timed states with the spawn sprite and no action that closes on the
+/// spawn state.
+pub(crate) fn animated_decoration(ty: OriginalActorType) -> bool {
+    let d = ty.descriptor();
+    let root = d.states.spawn;
+    let s = root.descriptor();
+    let states = decoration_states(ty);
+    d.doomed_number > 0
+        && states.len() > 1
+        && states.len() < 8
+        && states.last().is_some_and(|l| l.descriptor().next == root)
+        && states.iter().all(|state| {
+            let x = state.descriptor();
+            x.tics > 0 && x.action.is_none() && x.sprite == s.sprite
+        })
+        && d.flags & !MF_SOLID == 0
+        && d.spawn_health == 1000
+        && (d.radius == 16 * 65536 || d.radius == 20 * 65536)
+        && d.height == 16 * 65536
+}
 /// `ty` is a listed decoration whose compile-time definition satisfies
 /// [`static_decoration`]; computed once per type ordinal.
 pub(crate) fn validate_definition(ty: ActorTypeId) -> Result<(), ActorError> {
@@ -172,6 +237,18 @@ pub(crate) fn validate_definition(ty: ActorTypeId) -> Result<(), ActorError> {
         Some(cell) => *cell.get_or_init(compute),
         None => compute(),
     }
+}
+/// [`validate_definition`] over [`listed_decoration`]: an Episode 1 decoration
+/// satisfies [`static_decoration`] (the candle) or [`animated_decoration`] (the
+/// firestick).
+pub(crate) fn validate_listed_definition(ty: ActorTypeId) -> Result<(), ActorError> {
+    if decoration(ty).is_some() {
+        return validate_definition(ty);
+    }
+    listed_decoration(ty)
+        .filter(|d| static_decoration(*d) || animated_decoration(*d))
+        .map(|_| ())
+        .ok_or(ActorError::InvalidType)
 }
 /// `mobj->angle = ANG45 * (mthing->angle/45)` (p_mobj.c:794): the THING's `short`
 /// angle divided by 45 with C's truncation toward zero, times `ANG45`
@@ -201,14 +278,18 @@ pub(crate) fn validate_decoration(
     a: Actor,
 ) -> Result<(), SimError> {
     let l = a.life().ok_or(ActorError::InvalidType)?;
-    let ty = decoration(l.actor_type).ok_or(ActorError::InvalidType)?;
-    validate_definition(l.actor_type)?;
+    let ty = listed_decoration(l.actor_type).ok_or(ActorError::InvalidType)?;
+    validate_listed_definition(l.actor_type)?;
     let d = ty.descriptor();
-    let s = d.states.spawn.descriptor();
-    if l.state != Some(crate::StateId(d.states.spawn.ordinal()))
+    let state = l
+        .state
+        .and_then(|v| OriginalState::try_from(v.0).ok())
+        .ok_or(ActorError::InvalidState)?;
+    let s = state.descriptor();
+    if !decoration_states(ty).contains(&state)
         || l.sprite != s.sprite.ordinal()
         || l.frame != s.frame
-        || l.tics != -1
+        || !decoration_tics(state, l.tics)
         || l.health != d.spawn_health
         || l.reaction_time != d.reaction_time
         || l.target.is_some()
@@ -241,8 +322,9 @@ pub(crate) fn validate_decoration(
     }
     Ok(())
 }
-/// Whether `state` is the spawn state of the listed decoration `ty`: the only state
-/// a decoration ever holds (`tics` −1, no successor entered, never killed).
+/// Whether `state` is a state the listed decoration `ty` may hold: its spawn state
+/// (`tics` −1, no successor entered, never killed), or a state of the Episode 1
+/// firestick's spawn loop.
 pub(crate) fn spawn_state(ty: ActorTypeId, state: OriginalState) -> bool {
-    decoration(ty).is_some_and(|d| d.states().spawn == state)
+    listed_decoration(ty).is_some_and(|d| decoration_states(d).contains(&state))
 }

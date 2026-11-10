@@ -75,7 +75,14 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
         .player
         .as_deref()
         .is_some_and(|p| p.policy.has_heights());
-    if life.actor_type.0 != OriginalActorType::MT_SERGEANT.ordinal()
+    // The Spectre shares the Demon's `S_SARG_ATK3` and `A_SargAttack` (info.c:
+    // 1446–1470; Episode 1 policy, M4a plan §E.5).
+    let spectre = crate::original_registry::is_spectre(life.actor_type)
+        && host
+            .player
+            .as_deref()
+            .is_some_and(|p| p.policy.has_episode1());
+    if (life.actor_type.0 != OriginalActorType::MT_SERGEANT.ordinal() && !spectre)
         || life.health <= 0
         || life.state != Some(StateId(OriginalState::S_SARG_ATK3.ordinal()))
         || (!heights && (owner.z() != Fixed::ZERO || owner.vertical_momentum() != Fixed::ZERO))

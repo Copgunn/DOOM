@@ -2,14 +2,23 @@
 """Per-tic comparator of the M3h9c whole-level run (decision G5, M3h9c note §5).
 
     level_compare.py DUMP_DIR RUST_DIR --wad WAD [--map E1M1] [--demo LMP]
-                     [--values] [--json OUT]
+                     [--profile level|episode1] [--values] [--json OUT]
     level_compare.py DUMP_DIR --self-check --wad WAD [--map E1M1] [--demo LMP]
+                     [--profile level|episode1]
+
+`--profile` selects the capture contract the dumps are projected to: `level` (the
+default) is DSIM38, policy 22, context PLAYER-MONSTERS-LEVEL-1-MEDIUM-v1 (wire 22,
+M3h9c); `episode1` is DSIM39, policy 23, context PLAYER-MONSTERS-EPISODE1-1-MEDIUM-v1
+(wire 23, M4a: level.secret_exit, sector floorpic, the new mover records, the widened
+weapon block, powers, cards and backpack). The method is the same for both; a Rust
+capture whose version word differs from the profile's is a divergence at field
+`version` on the first tic.
 
 DUMP_DIR holds the genuine-engine runner's dumps (`load.txt`, `tic_NNNNN.txt`;
 tools/reference/m3h9c_driver.c); RUST_DIR the Rust runner's canonical captures
 (`tic_NNNNN.bin`, `player_level_run --captures`), where Rust capture N is the state after
 N tics and the dump of tic N - 1 (`load.txt` for 0) is the same state. Every dump is
-projected to DSIM38 by the independent encoder (level_snapshot.py); both byte strings are
+projected to DSIM38 (or DSIM39) by the independent encoder (level_snapshot.py); both byte strings are
 read with the encoder's field reader and compared **without the `map.*` and `events.*`
 groups** (G5: the event frames are Rust's own records, which the dump does not project;
 the static map is compared separately, once: the `map.*` group of the load capture holds
@@ -36,8 +45,8 @@ count, then per field u32 path length, path, u64 value length, value) of the rem
 fields in their order.
 
 `--self-check` needs no Rust captures: every dump is projected, decoded with the frozen
-field reader (specials_snapshot.decode), re-encoded and asserted identical, with version
-38, profile 22, the level context, unique field paths and the actor/thinker-order
+field reader (specials_snapshot.decode), re-encoded and asserted identical, with the
+profile's version, policy and context (38/22/level or 39/23/episode1), unique field paths and the actor/thinker-order
 cross-references consistent; a second projection of the whole directory must give the
 same bytes (determinism)."""
 import argparse, hashlib, json, os, struct, sys
@@ -69,14 +78,14 @@ def first_difference(a, b):
     return None
 
 
-def self_check(directory, mapdata, skill):
+def self_check(directory, mapdata, skill, profile=L.LEVEL):
     count = 0; seq = []
-    for tic, data, _ in L.project(directory, mapdata, skill):
+    for tic, data, _ in L.project(directory, mapdata, skill, profile=profile):
         version, fields = L.decode(data)
         value = dict(fields)
-        assert version == L.VERSION and L.encode(fields) == data, tic
+        assert version == profile.version and L.encode(fields, version) == data, tic
         assert len(value) == len(fields), 'unique field paths'
-        assert value['profile'] == L.n('I', L.POLICY) and value['context.schema'] == L.CONTEXT
+        assert value['profile'] == L.n('I', profile.policy) and value['context.schema'] == profile.context
         assert value['tic'] == L.n('Q', tic)
         order = value['thinker.order']; ids = [order[k:k + 12] for k in range(0, len(order), 12)]
         shared = value['thinker.shared_order']
@@ -89,7 +98,7 @@ def self_check(directory, mapdata, skill):
         link = value['spatial.link_order']
         assert set(link[k:k + 12] for k in range(0, len(link), 12)) <= set(ids)
         count += 1; seq.append(hashlib.sha256(data).digest())
-    again = [hashlib.sha256(data).digest() for _, data, _ in L.project(directory, mapdata, skill)]
+    again = [hashlib.sha256(data).digest() for _, data, _ in L.project(directory, mapdata, skill, profile=profile)]
     assert again == seq, 'the projection is deterministic'
     return count, hashlib.sha256(b''.join(seq)).hexdigest()
 
@@ -120,14 +129,14 @@ def rust_end(rust_dir):
     return 'last', None, (tics[-1] if tics else None)
 
 
-def compare(dump_dir, rust_dir, mapdata, skill, values=False):
+def compare(dump_dir, rust_dir, mapdata, skill, values=False, profile=L.LEVEL):
     result = dict(schema=SCHEMA, tics_compared=0, match=False, first_divergence=None, projection_stop=None,
                   map_group_equal=None)
     kind, last_tic = end_kind(dump_dir)
     rkind, refused_at, rust_last = rust_end(rust_dir)
     result.update(c_end=dict(kind=kind, tic=last_tic), rust_end=dict(kind=rkind, refused_tic=refused_at, last_capture=rust_last))
     seq_c, seq_r = [], []; last_c = last_r = None; text = []
-    proj = L.Projector(mapdata, skill)
+    proj = L.Projector(mapdata, skill, profile=profile)
     try:
         for dump, following in L.snapshots(dump_dir):
             tic = dump.tic
@@ -136,7 +145,7 @@ def compare(dump_dir, rust_dir, mapdata, skill, values=False):
             if not os.path.exists(path):
                 text.append(f'tic {tic}: no Rust capture'); break
             vr, fr = L.decode(Path(path).read_bytes())
-            bc, kc = stripped(L.VERSION, fields); br, kr = stripped(vr, fr)
+            bc, kc = stripped(profile.version, fields); br, kr = stripped(vr, fr)
             if result['map_group_equal'] is None:
                 mc = [x for x in fields if x[0].startswith('map.')]; mr = [x for x in fr if x[0].startswith('map.')]
                 result['map_group_equal'] = mc == mr
@@ -145,8 +154,8 @@ def compare(dump_dir, rust_dir, mapdata, skill, values=False):
             seq_c.append(hashlib.sha256(bc).digest()); seq_r.append(hashlib.sha256(br).digest())
             last_c, last_r = seq_c[-1].hex(), seq_r[-1].hex()
             result['tics_compared'] += 1
-            if vr != L.VERSION:
-                result['first_divergence'] = dict(tic=tic, field='version'); text.append(f'tic {tic}: version {L.VERSION} versus {vr}'); break
+            if vr != profile.version:
+                result['first_divergence'] = dict(tic=tic, field='version'); text.append(f'tic {tic}: version {profile.version} versus {vr}'); break
             diff = first_difference(kc, kr)
             if diff:
                 result['first_divergence'] = dict(tic=tic, field=diff[0])
@@ -174,17 +183,20 @@ def main():
     ap.add_argument('--wad', required=True); ap.add_argument('--map', default='E1M1'); ap.add_argument('--demo')
     ap.add_argument('--values', action='store_true', help='print the two differing values (local use only)')
     ap.add_argument('--json'); ap.add_argument('--self-check', action='store_true')
+    ap.add_argument('--profile', choices=sorted(L.PROFILES), default='level',
+                    help='level: DSIM38/policy 22 (default); episode1: DSIM39/policy 23')
     a = ap.parse_args()
-    mapdata = L.MapData(a.wad, a.map); skill = L.demo_skill(a.demo) if a.demo else 2
+    profile = L.PROFILES[a.profile]
+    mapdata = L.MapData(a.wad, a.map, L.demo_lumps(a.demo)); skill = L.demo_skill(a.demo) if a.demo else 2
     if a.self_check:
         try:
-            count, digest = self_check(a.dump, mapdata, skill)
+            count, digest = self_check(a.dump, mapdata, skill, profile)
         except L.ProjectionError as err:
             print(f'self-check stopped: {err.kind} at tic {err.tic}: {err.text}'); return 1
         print(f'self-check passed: {count} snapshots round-trip through the field reader; projection deterministic; '
               f'sequence sha256 {digest}'); return 0
     if not a.rust: ap.error('RUST_DIR is required without --self-check')
-    result, text = compare(a.dump, a.rust, mapdata, skill, a.values)
+    result, text = compare(a.dump, a.rust, mapdata, skill, a.values, profile)
     for line in text: print(line)
     print(f"tics compared {result['tics_compared']}; match {'yes' if result['match'] else 'no'}; "
           f"map group equal {result['map_group_equal']}; C end {result['c_end']['kind']} at tic "

@@ -1,0 +1,20 @@
+# output: EXDIE.lmp
+# EXDIE on tests/reference/m4a_wads/exits.wad (M4a). Authored closed loop against the strict runner.
+# A barrel blast kills the player outside sector 11; USE while dead requests the reborn (end=reborn).
+# format: idle N | cmd N FORWARD SIDE TURN BUTTONS (tools/e1m1_scripts.py); turn byte t = t*1.40625 degrees
+# counter-clockwise; buttons 1 ATTACK, 2 USE, 4 CHANGE + weapon<<3
+map E1M1
+cmd 1 0 0 181 0   # beside the hall barrel (outside sector 11)
+cmd 28 50 0 0 0   # run 28 tics
+cmd 27 0 0 0 0   # settle
+cmd 1 0 0 12 1   # aim and fire at (480,-120)
+cmd 10 0 0 0 0
+cmd 1 0 0 3 1   # aim and fire at (483,-120)
+cmd 10 0 0 0 0
+cmd 1 0 0 1 1   # aim and fire at (486,-120)
+cmd 10 0 0 0 0
+# barrel shot 3 times; its blast kills the player (no cap outside sector 11)
+cmd 18 0 0 0 0   # dead
+cmd 20 0 0 0 0
+cmd 1 0 0 0 2   # USE while dead: PST_REBORN (end=reborn)
+cmd 20 0 0 0 0

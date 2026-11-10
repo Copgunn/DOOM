@@ -217,7 +217,7 @@ campaign is exhaustive.
 
 ## Matched performance
 
-Recorded 2026-11-06 (plan step 9), alone on the idle machine: one timing harness process
+Recorded 2026-11-05 (plan step 9), alone on the idle machine: one timing harness process
 and no other build, test, fuzzing or job during a round. The 1-minute load average was 0.94
 before, 1.00 to 1.11 at the ten round boundaries and 1.07 after (the harness itself is the one
 running process). Host: Intel Core i7-8750H, 6 cores / 12 logical CPUs, 7.7 GiB, Linux
@@ -303,7 +303,7 @@ taking 0.513 s and 1.236 s.
 
 ## Independent review
 
-Recorded 2026-11-06 (plan step 11). An Opus reviewer subagent without access to the authors'
+Recorded 2026-11-05 (plan step 11). An Opus reviewer subagent without access to the authors'
 reasoning read the full diff against `origin/master` and the linuxdoom-1.10 source, with the
 specific question whether any stub or `--wrap` observer writes game state that `P_Ticker` or
 `G_Ticker` can observe.
@@ -343,7 +343,7 @@ planted-difference check (first divergence at tic 501, `actor.52.x`).
 
 ## Local gates
 
-Recorded 2026-11-06 (plan step 12) at head `e5eafb5`, from clean (`cargo clean` of the
+Recorded 2026-11-05 (plan step 12) at head `e5eafb5`, from clean (`cargo clean` of the
 workspace and `fuzz/target`). The diagnostics-only commit `c97f238` (the runner printing its log
 tail, and a failure-only artifact upload) landed 2.5 minutes into the 47-minute run: the Rust
 steps ran at `e5eafb5` and the whole-engine step at `c97f238`. Host rustc 1.99.1, cargo

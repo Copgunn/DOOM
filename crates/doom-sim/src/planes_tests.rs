@@ -64,6 +64,7 @@ pub(crate) fn with_planes<R>(
                     bindings,
                     events: &mut events,
                     boundary: boundary.as_deref(),
+                    specials: None,
                 };
                 out = Some(f(&mut host));
             }

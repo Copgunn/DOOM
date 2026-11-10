@@ -99,6 +99,8 @@ impl Simulation {
         self.spawn_type_checks(ty, position, height)?;
         self.reserve_actor_spawns(1)?;
         Ok(LifeHost {
+            specials: None,
+            buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
             perception: None,
@@ -158,7 +160,7 @@ impl Simulation {
         }
         // After the position bound: the fit lookup descends the BSP.
         self.spawn_fits(ty, position, height)?;
-        if self.player_policy().has_imps() && crate::original_registry::is_fireball(ty) {
+        if self.player_policy().has_imps() && crate::original_registry::is_missile_type(ty) {
             return Err(ProjectileError::Controlled.into());
         }
         if self.profile.uses_perception() {
@@ -189,6 +191,19 @@ impl Simulation {
                 && identity::OriginalState::try_from(state.0).is_ok_and(barrels::state_allowed)
             {
                 registry.validate_state_barrel(state)?;
+            } else if self.player_policy().has_episode1()
+                && identity::OriginalState::try_from(state.0).is_ok_and(|s| {
+                    matches!(
+                        s,
+                        identity::OriginalState::S_ROCKET
+                            | identity::OriginalState::S_EXPLODE1
+                            | identity::OriginalState::S_EXPLODE2
+                            | identity::OriginalState::S_EXPLODE3
+                    )
+                })
+            {
+                // The rocket's states (M4a plan §E.4): `A_Explode` in `S_EXPLODE1`.
+                registry.validate_state_rocket(state)?;
             } else {
                 registry.validate_state_original_monsters(state)?;
             }
@@ -258,6 +273,8 @@ impl Simulation {
                 sound_targets: &self.sound_targets,
             });
         LifeHost {
+            specials: None,
+            buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
             perception,
@@ -536,7 +553,7 @@ impl Simulation {
                         .iter()
                         .filter(|(_, ty)| e1m1_rules::is_decoration(self.player_policy(), *ty))
                         .count()
-                        == MAX_DECORATIONS
+                        == self.decoration_limit()
                 {
                     return Err(MapSpawnError::DecorationLimit.into());
                 }
@@ -545,7 +562,7 @@ impl Simulation {
                         .iter()
                         .filter(|(_, ty)| barrels::is_barrel(self.player_policy(), *ty))
                         .count()
-                        == MAX_BARRELS
+                        == self.barrel_limit()
                 {
                     return Err(MapSpawnError::BarrelLimit.into());
                 }
@@ -564,7 +581,10 @@ impl Simulation {
                                 world_pickups::kind_for(self.player_policy(), *ty).is_some()
                             })
                             .count()
-                            == world_pickups::max_pickups(self.player_policy()))
+                            == world_pickups::pickup_bound(
+                                self.player_policy(),
+                                self.world.episode1,
+                            ))
                 {
                     return Err(MapSpawnError::WorkLimit.into());
                 }
@@ -662,7 +682,8 @@ impl Simulation {
                 })
                 .count();
             let count = i32::try_from(count).map_err(|_| MapSpawnError::StatisticsOverflow)?;
-            let bound = world_pickups::max_pickups(self.player_policy()) as i32;
+            let bound =
+                world_pickups::pickup_bound(self.player_policy(), self.world.episode1) as i32;
             if !(0..=bound).contains(&total) || total.checked_add(count).is_none_or(|n| n > bound) {
                 return Err(MapSpawnError::StatisticsOverflow.into());
             }
@@ -708,6 +729,8 @@ impl Simulation {
             self.reserve_actor_spawns(selected.len())?;
             // Legacy batches still have no recoverable work after reservation.
             let mut host = LifeHost {
+                specials: None,
+                buttons: None,
                 player: None,
                 statistics: self.statistics.as_mut(),
                 perception: None,

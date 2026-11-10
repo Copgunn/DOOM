@@ -567,7 +567,7 @@ impl Simulation {
     pub(crate) fn monster_reference(&self, id: ActorId) -> Result<Actor, SimError> {
         let a = self.monster_actor(id, 1008)?;
         if [37, 38].contains(&a.life.unwrap().actor_type.0)
-            || original_registry::is_fireball(a.life.unwrap().actor_type)
+            || original_registry::is_missile_type(a.life.unwrap().actor_type)
             || (self.player_policy().has_world_pickups()
                 && world_pickups::kind_for(self.player_policy(), a.life.unwrap().actor_type)
                     .is_some())
@@ -924,6 +924,8 @@ impl Simulation {
         shot: Option<&'a MonsterShotPlan>,
     ) -> LifeHost<'a, &'a mut ThinkerStore<Actor>> {
         LifeHost {
+            specials: None,
+            buttons: None,
             player: None,
             statistics: self.statistics.as_mut(),
             perception: Some(crate::perception::PerceptionInputs {

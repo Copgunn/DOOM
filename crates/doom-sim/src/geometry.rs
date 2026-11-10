@@ -176,6 +176,19 @@ pub struct StaticWorld {
     /// (`P_GroupLines`), for the `P_ChangeSector` of a moving sector; `None`
     /// otherwise. Derived from the immutable map; never canonical state.
     pub(crate) sector_block_boxes: Option<Vec<Option<crate::multisector::SectorBlockBox>>>,
+    /// Under the Episode 1 policy, the per-map bounds counted from the THINGS lump
+    /// (decision H4); `None` under every other policy, whose bounds are constants.
+    /// Derived from the immutable map; never canonical state.
+    pub(crate) episode1: Option<crate::episode1::Episode1Bounds>,
+    /// Per-operation monster sight-query allowance: the historical 64, or
+    /// `8·(K + 1)` under the Episode 1 policy (decision D8).
+    pub(crate) sight_query_limit: usize,
+    /// Under the Episode 1 policy, whether the intercept and height sums the
+    /// arithmetic certificate's clauses (i), (ii) and (vii) bound for older
+    /// policies are computed checked, refusing the operation where the source
+    /// would overflow (decision H3). False under every other policy, whose
+    /// certificate proves the wrapping arithmetic never wraps.
+    pub(crate) checked_arithmetic: bool,
     floor: Fixed,
     ceiling: Fixed,
 }
@@ -240,6 +253,9 @@ impl StaticWorld {
             sight_work_budget: 1_048_576,
             sky_ceilings: None,
             sector_block_boxes: None,
+            episode1: None,
+            sight_query_limit: 64,
+            checked_arithmetic: false,
             floor,
             ceiling,
         })

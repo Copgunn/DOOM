@@ -651,3 +651,69 @@ fn armor_retirement_and_effect_slot_reuse_do_not_redirect_old_item_identity() {
         assert_eq!(snapshot::capture_count(), captures);
     }
 }
+/// DSIM26 armor domains in the two armor event payloads, read by `decode_armor`
+/// under the armor policy alone: green armor is 1..=100 here (STATE_FORMAT
+/// "DSIM-v26": "None requires0, green1..100, blue1..200"; `P_GiveArmor` sets
+/// at most `armortype * 100`, p_inter.c:258), and only the bonus-capable
+/// policies from DSIM27 admit green up to 200 (STATE_FORMAT "DSIM-v27"). The
+/// tag-24 absorption event and the tag-23/7 grant event each accept a green 100
+/// and refuse a green 150, which a later policy would admit. Expected values: the
+/// absorption is `saved = damage / 3` for armortype 1 (p_inter.c:857), and a
+/// refused grant leaves the armor unchanged (`P_GiveArmor` returns false when
+/// `armorpoints >= hits`, p_inter.c:259). Run 1 shard 2 survivors
+/// `diagnostic.rs:2909:29`, `2911:23` (armor event) and `2969:29`, `2971:23`
+/// (pickup event): the policy chosen by the DSIM version.
+#[test]
+fn v26_armor_events_keep_the_green_100_bound() {
+    let limits = DiagnosticLimits::default();
+    let (mut s, a) = component(1, 100, 100, 0);
+    damage(&mut s, a, 60, true);
+    let snap = s.snapshot();
+    let bytes = snap.diagnostic_bytes(limits).unwrap();
+    assert_eq!(snap.version(), 26);
+    let f = snap
+        .fields()
+        .find(|f| f.path().starts_with("events.pending.") && f.value().first() == Some(&24))
+        .unwrap();
+    let absorption = |before: i32| {
+        // incoming 60 against green `before`: saved 20, effective 40.
+        let mut v = f.value().to_vec();
+        v[13..17].copy_from_slice(&60i32.to_le_bytes());
+        v[17..21].copy_from_slice(&20i32.to_le_bytes());
+        v[21..25].copy_from_slice(&40i32.to_le_bytes());
+        v[25] = 1;
+        v[26..30].copy_from_slice(&before.to_le_bytes());
+        v[30] = 1;
+        v[31..35].copy_from_slice(&(before - 20).to_le_bytes());
+        let mut out = bytes.clone();
+        replace_field(&mut out, f.path(), &v);
+        Diagnostic::decode_armor(&out, limits).map(|_| ())
+    };
+    assert_eq!(absorption(100), Ok(()));
+    assert_eq!(absorption(150), Err(DiagnosticError::Identity));
+
+    let (mut s, _) = fresh(8);
+    s.advance(armor_evidence::commands(&armor_evidence::cases()[8], 1))
+        .unwrap();
+    let snap = s.snapshot();
+    let bytes = snap.diagnostic_bytes(limits).unwrap();
+    let f = snap
+        .fields()
+        .find(|f| f.path().starts_with("events.last.") && f.value().starts_with(&[23, 7]))
+        .unwrap();
+    let grant = |before: i32| {
+        // A green grant refused because `before` is already at least 100.
+        let mut v = f.value().to_vec();
+        v[2] = 1;
+        v[3] = 0;
+        v[4] = 1;
+        v[5..9].copy_from_slice(&before.to_le_bytes());
+        v[9] = 1;
+        v[10..14].copy_from_slice(&before.to_le_bytes());
+        let mut out = bytes.clone();
+        replace_field(&mut out, f.path(), &v);
+        Diagnostic::decode_armor(&out, limits).map(|_| ())
+    };
+    assert_eq!(grant(100), Ok(()));
+    assert_eq!(grant(150), Err(DiagnosticError::Identity));
+}

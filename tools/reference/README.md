@@ -689,3 +689,46 @@ outside the tree, runs every script on the synthetic WAD in each variant and req
 byte-identical dump sets. It writes counts and digests to
 [m3h9c_synthetic_results.json](../../tests/reference/m3h9c_synthetic_results.json);
 `--check` compares them instead. Because the WAD is synthetic, this run can be a CI step.
+
+## M4a synthetic mechanism WADs and the Episode 1 comparison
+
+M4a reuses the [M3h9c runner](#m3h9c-whole-engine-runner) on nine synthetic mechanism WADs.
+Commands are in [TESTING](../../docs/TESTING.md#m4a-synthetic-mechanism-wads-and-the-episode-1-comparison).
+
+- [m4a_wad.py](m4a_wad.py) writes the nine WADs of
+  [m4a_wads](../../tests/reference/m4a_wads) (doors, floors, plats, stairs, exits, weapons,
+  items, spectre, scale). Lump framing and game data come from the frozen `m3h9c_wad.py`;
+  geometry from the repository's room builders through a grid painter. `--check` compares the
+  committed bytes and runs the verifier.
+- [m4a_check_wad.py](m4a_check_wad.py) is the independent verifier (stdlib only, imports nothing
+  from the repository). `--check` verifies every WAD of
+  [m4a_manifest.json](../../tests/reference/m4a_manifest.json).
+- [e1m1_scripts.py](../e1m1_scripts.py) also generates and checks the 28 demo lumps of
+  [m4a_scripts](../../tests/reference/m4a_scripts).
+- [m4a_reference.py](m4a_reference.py) is the manifest-driven three-variant run. It requires
+  byte-identical dumps, the declared endings and `secretexit` flags and every `must_show` event
+  tic, and writes or `--check`s
+  [m4a_synthetic_results.json](../../tests/reference/m4a_synthetic_results.json).
+  `--only WAD` and `--selftest TIC` are described in its docstring.
+- [m4a_snapshot_goldens.py](m4a_snapshot_goldens.py) projects the strict dumps to DSIM39
+  (policy 23) with [level_snapshot.py](level_snapshot.py) and writes or `--check`s
+  [m4a_synthetic_goldens.json](../../tests/reference/m4a_synthetic_goldens.json) and the 18
+  `m4a_episode1_*.bin` fixtures. `level_snapshot.py` and [level_compare.py](level_compare.py)
+  take `--profile level|episode1` (default `level`, DSIM38/policy 22; `episode1` is
+  DSIM39/policy 23); a capture whose version differs from the profile's is a divergence.
+- [check_player_episode1.py](check_player_episode1.py) runs the Rust example on every script
+  (`--binary`, or reads captures with `--rust-root`) and compares them with the goldens;
+  it skips with exit 0 when the example lacks wire 23, unless `--require`.
+- [m4a_driver.c](m4a_driver.c) is the M4a fork of the merged [m3h9c_driver.c](m3h9c_driver.c),
+  which stays as merged (frozen wire-22 evidence). The fork appends columns, read by name so
+  M3h9c-driver dumps still parse: `secretexit` on the `H` row, the removed mover's kind and
+  sector on `R` rows (a `--wrap=P_RemoveThinker` observer), and pickup-message codes 38..40
+  (locked-door strings). [m4a_build.py](m4a_build.py) builds it through `m3h9c_build.py` with
+  the same genuine sources, adapters, stubs and flags, and writes or `--check`s
+  [m4a_runner_contract.json](../../tests/reference/m4a_runner_contract.json).
+  `m4a_reference.py` and `tools/local/episode1_reference.py` (E1M2-E1M7) use it;
+  `tools/local/e1m1_reference.py` and `episode1_reference.py --map E1M1` keep the M3h9c driver,
+  whose dumps the `episode1` profile projects with `level.secret_exit` 0 (exact when the map
+  has no special 51 or 124 line, otherwise a `DumpDeficiency`). The opt-in `strict32` variant
+  (`--variant strict32` of either build, `e1m1_reference.py --strict32`) is never part of `all`
+  or a contract.

@@ -6,6 +6,10 @@ history belong to GitHub; supported behavior and limits belong to [COMPATIBILITY
 
 ## Done
 
+Method since M4a: whole systems, proven by the whole-engine harness on the real maps
+(local-only) and by synthetic WADs through the same harness in CI; bespoke C scenarios
+only for quirks the maps do not reach.
+
 The merged baseline provides:
 
 - WAD and classic-map parsing with checked references and resource budgets.
@@ -62,6 +66,21 @@ see [design](M3F9_REFERENCE.md) and [observations](validation/M3F9.md).
 These foundations support controlled headless tests, not a complete playable game.
 Earlier findings and milestones are retained in the [historical records](validation/archive/README.md).
 
+### M3h9c: The real E1M1 run, tic for tic
+
+Merged 2026-11-05 (PR #56). The separately selected `PlayerMonstersLevelV1` (wire 22,
+DSIM38) spawns the player at its place in the THINGS lump, runs the full player think
+(damage-count decay, `P_DeathThink`), and the local-only whole-engine harness runs the
+owner's E1M1 under the genuine linuxdoom-1.10 engine and the Rust simulation from one
+version-110 demo, comparing every tic and committing only counts, pass/fail and digests.
+All five scripted runs (idle, walking to the exit, fighting, barrels, random commands)
+matched tic for tic. See the [source investigation](M3H9C_REFERENCE_INVESTIGATION.md),
+[support](COMPATIBILITY.md#original-level-runs-the-player-start-in-lump-order-and-the-full-player-think-wire-22),
+[observations](validation/M3H9C.md) and
+[commands](TESTING.md#m3h9c-whole-engine-runner-and-the-real-e1m1-comparison). The
+timing regression and the still-open intercept and `P_ChangeSector` observations are
+carried in the M3h9c follow-ups below.
+
 ### M3g5: Active original-player roster and canonical Demon acquisition
 
 Opt-in PlayerDemonAcquisitionV1 composes one active genuine player and at most one
@@ -79,32 +98,48 @@ observations remain linked from the [evidence index](README.md).
 
 ## Current milestone
 
-### M3h9c: The real E1M1 run, tic for tic
+### M4a: Episode 1, part 1, proven against the genuine engine
 
-Status: Phase 2 complete, in owner review. Phase 1 (the
-[investigation note](M3H9C_REFERENCE_INVESTIGATION.md)) is complete and Phase 2 steps 1-12 are
-done on `feat/m3h9c-e1m1-run` ([observations](validation/M3H9C.md)); pull request #56 is
-ready for review with every check green. The owner confirmed decisions G1-G13 on
-2026-11-05. The milestone is a local-only harness that runs the owner's E1M1 under
-the genuine linuxdoom-1.10 engine and under the Rust simulation from the same version-110
-demo and compares them on every tic, committing only counts, pass/fail and digests, never
-IWAD content.
+Status: implemented on `feat/m4a-episode-1` and awaiting owner review in
+[PR #57](https://github.com/Copgunn/DOOM/pull/57); not merged. Facts are in the
+[investigation note](M4A_REFERENCE_INVESTIGATION.md), observations in
+[validation/M4A.md](validation/M4A.md). The owner confirmed decisions H1-H12 of the note on
+2026-11-05.
 
-Done on the branch: the new separately selected `PlayerMonstersLevelV1` (wire 22, DSIM38;
-the player start spawns at its place in the THINGS lump with its angle, the player think
-decays `damagecount`, and a dead player runs `P_DeathThink`); the demo reader and writer
-`doom_sim::demo`; the `player_level_run` example and the ignored `private_level` test; the
-whole-engine C runner (`m3h9c_build.py` with strict, overflow-checked and address-checked
-variants, the stubs, the driver, the dump reader and the runner contract); the demo script
-tool and its idle script; the local wrapper `tools/local/e1m1_reference.py`; the independent
-DSIM38 projection and the per-tic comparator; the STATE_FORMAT section; the synthetic game
-WAD with its CI steps; and the fuzz target `player_level`. All five scripted real-E1M1 runs
-(idle, walking to the exit, fighting, barrels, random commands) matched the genuine engine
-tic for tic.
+**Strategy change.** Earlier mover, monster and weapon milestones proved each mechanism with
+bespoke C scenarios, one small mechanism at a time. With the whole-engine harness of M3h9c
+in place, M4a ports whole systems (every Episode 1 door, floor and plat kind, not the
+census-minimal subset), proves them with the whole-engine harness on the real maps
+(local-only; genuine engine against Rust, tic for tic), and covers CI with synthetic
+WADs run through the same harness. Bespoke C scenarios remain only for quirks the maps do
+not reach, and the self-tests must prove the harness can fail.
 
-Remaining: the owner's review and merge. Support is in
-[COMPATIBILITY](COMPATIBILITY.md#original-level-runs-the-player-start-in-lump-order-and-the-full-player-think-wire-22);
-commands are in [TESTING](TESTING.md#m3h9c-whole-engine-runner-and-the-real-e1m1-comparison).
+**Targets.** A new separately selected `PlayerMonstersEpisode1V1` (wire 23, DSIM39, context
+`PLAYER-MONSTERS-EPISODE1-1-MEDIUM-v1`; wires 22 and below stay frozen) for medium skill,
+single player:
+
+- the 29 Episode 1 line specials as whole systems (every door kind including locked,
+  D1 and the shot door, every floor kind, the three plat kinds, stairs, the donut, the light
+  trigger, the secret exit) and sector special 11;
+- the Spectre, the chainsaw and the rocket launcher, with the generalised missile and
+  explosion paths;
+- keys and locked doors, backpack, soulsphere, invisibility, radiation suit, computer map and
+  light amplifier, and the candle and tall red firestick;
+- load-time proofs that real maps fail become per-tic witnesses, bounds are derived per
+  map, and the command domain widens to the full byte range with weapon indices 0-7 (H3-H5);
+- primary real-map targets E1M2, E1M3 and E1M4; E1M6 and E1M7 are secondary, admitted if
+  they load and every script authored for them matches.
+
+Verified so far in Phase 2 (steps 1-8 done on 2026-11-05): the movers, items, keys, powers,
+chainsaw, rocket launcher, Spectre, command domain and demo header under wire 23, and Rust matching
+the genuine engine tic for tic on all 30 real scripts (E1M2-E1M4, E1M6, E1M7 and E1M1 re-run), with
+the `strict32` build identical; see the [evidence record](validation/M4A.md). The fuzz campaigns were
+re-run clean on the final crates. Mutation survivor work, idle matched timings and simulation-only
+per-tic measurements are recorded. Next: independent review, full gates from clean and the text
+of the existing draft PR. Support is in
+[COMPATIBILITY](COMPATIBILITY.md#original-episode-1-part-1-every-door-floor-plat-stair-donut-light-and-exit-special-keys-items-powers-chainsaw-rocket-launcher-and-spectre-wire-23);
+the schema is [DSIM v39](STATE_FORMAT.md#dsim-v39--episode-1-part-1-every-special-keys-items-powers-and-the-rocket-launcher).
+Remaining: the owner's review and merge.
 
 ### Previous gameplay foundation — M3h9b: Exploding barrels, pickup scale and every thing angle
 
@@ -371,7 +406,7 @@ commits and CI belong to GitHub. See
 
 ### Next narrow gameplay milestone
 
-- **M3h9c follow-ups.** The real-E1M1 harness is the current milestone (above). The
+- **M3h9c follow-ups.** The real-E1M1 harness is merged (M3h9c, above). The
   matched timings found a codegen-split regression of 6-13% in time on the older Demon-profile
   workloads (`canonical_demon`, `demon_expanded_map`, `diagnostic_free`; identical digests),
   accepted as explained in decision G13 and to be reconsidered with the owner in a maintenance
@@ -442,12 +477,21 @@ monster/player behavior. Further stages require separate owner direction.
 
 ## Later
 
-- After the matched real-E1M1 run (M3h9c), the rest of Episode 1, map by map, with the
-  same source-first evidence.
+- **M4b (proposed, pending the owner).** Teleportation (line 97 and the landing thing), the
+  Baron and `A_BossDeath`, hard skill, and with them E1M5, E1M8 and E1M9; the registered
+  `DOOM.WAD` `DEMO1` (E1M5, skill 3) becomes runnable here.
+- **M4c (proposed, pending the owner).** Pause, easy skill and the reborn reload as an
+  admitted transition; level transitions stay a later direction.
+- **Simulation performance (proposed by the owner, after M4b).** Profile
+  `Simulation::advance`, which costs 55–746 µs per tic on the real Episode 1 maps against
+  the genuine C engine's 3.7–13.4 µs ([measurements](validation/M4A.md#simulation-only-real-map-timings)),
+  and reduce it without changing any digest or DSIM byte. This includes the shared-validation
+  costs deferred from M4a.
 - Complete player/gameplay integration and broader monster/THING support.
 - The remaining moving sectors and map specials (the established M3e direction) beyond
-  the doors, lifts, floors, switches and exit of M3h8: crushers, ceilings, stairs,
-  locked doors, teleporters and the other triggers.
+  the doors, lifts, floors, switches and exit of M3h8: crushers, ceilings, teleporters
+  and the other triggers (stairs, locked doors and the other Episode 1 door, floor and plat
+  kinds belong to M4a).
 - **M4 — Demo compatibility:** version-specific playback and divergence diagnostics;
   keep DOS and Linux behavior claims separate.
 - **M5 — Rendering and platform integration:** presentation/input/audio and a
@@ -532,3 +576,28 @@ that wild new things can be built on without losing what makes Doom feel like Do
 - **Simulation features the original never had**, such as fluid simulation (water, blood
   and nukage that flow) and very large monster crowds.
 - **A scripting layer** for new game logic, and **other platforms** such as mobile.
+- **A live editor with rewind.** Change anything while the game runs (move a monster, edit
+  a sector, alter a rule), then rewind and replay from any moment. Because the simulation
+  is deterministic with a small, fully canonical state, a rewind is a restore plus a replay
+  of recorded commands.
+- **"Why did that happen?"** Click a monster and see the exact decisions and random rolls
+  behind what it did: which sound woke it, which state it chose, which draw of the random
+  stream set its damage. The canonical state and event streams already record much of this.
+- **TAS tools that are vanilla-legal by construction.** Build a run frame by frame here, with
+  every input restricted to what the original game accepts, so the result plays back on the
+  original executable as a demo.
+- **Map and demo checks.** Report exactly which line, sector or thing breaks a vanilla limit,
+  and which recorded demos a map change would desync, by replaying them before and after.
+- **Headless bot playthroughs.** Thousands of automated runs of a map, aggregated into
+  encounter heatmaps (where players die, which fights are decisive, which areas go unseen).
+- **Edits as replayable operations, with bisect.** Record each edit as an operation applied
+  to a timeline, so a set of edits can be replayed, reordered and bisected to find the one
+  that broke a demo or a run.
+- **A divergence view.** Compare a modded timeline against verified vanilla and show the
+  first tic and the first state that differ, and why.
+
+Edits made through any of these tools always live in a mod layer or a branched timeline,
+never in vanilla: the verified vanilla core stays unchanged and every branch can be
+compared with it. On prior art, deterministic rewind editors already exist inside
+proprietary engines; what is proposed here is an open-source one built on a Doom core whose
+vanilla behavior is verified against the original.

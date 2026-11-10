@@ -7,6 +7,36 @@ pub const PLAYER_COMMAND_CONTEXT_SCHEMA: &[u8] = b"PLAYER-COMMAND-1-MEDIUM-GROUN
 pub(crate) const MF_JUSTATTACKED: u32 = 0x80;
 // g_game.c MAXPLMOVE=forwardmove[1], not arbitrary signed command bytes.
 const MAX_COMMAND_MOVE: i8 = 50;
+// Wire 23 (decision H5): the whole signed `forwardmove`/`sidemove` byte except
+// −128. A demo's 0x80 `forwardmove` byte is the end marker (g_game.c:1493), so
+// −128 never reaches `P_MovePlayer` as a forward move; −128 sideways is refused
+// alike (decision D9). `P_Thrust` (p_user.c:59–68) stays inside `i32` over the
+// whole range: |move·2048| ≤ 260,096 raw, `FixedMul` by |finecosine| ≤ 65,536
+// cannot exceed it, and the momentum it is added to is bounded by the room's
+// `MAP_SCALE_MOMENTUM_UNITS` (4,096 units, 2^28 raw) check of the previous tic.
+const EPISODE1_MAX_COMMAND_MOVE: i8 = 127;
+
+/// The largest admitted |`forward`| and |`side`| under `policy`.
+const fn max_command_move(policy: OriginalExecutionProfile) -> i8 {
+    if policy.has_episode1() {
+        EPISODE1_MAX_COMMAND_MOVE
+    } else {
+        MAX_COMMAND_MOVE
+    }
+}
+/// `TURBOTHRESHOLD` (g_game.c:83, `0x32`).
+const TURBO_THRESHOLD: i8 = 0x32;
+
+/// Whether `G_Ticker`'s turbo test fires for the console player (slot 0) on the
+/// tic run at gametic `gametic` (the completed-tic count) with `command`:
+/// `cmd->forwardmove > TURBOTHRESHOLD && !(gametic&31) && ((gametic>>5)&3) == 0`
+/// (g_game.c:671–679), i.e. every 128th gametic. It reads the command as read
+/// from the demo, before `P_PlayerThink`'s chainsaw rewrite, and then assigns
+/// `players[consoleplayer].message` before `P_Ticker`, so a later assignment in
+/// the same tic replaces it.
+pub(crate) const fn turbo_message(gametic: u64, command: TicCommand) -> bool {
+    command.forward > TURBO_THRESHOLD && gametic & 31 == 0 && (gametic >> 5) & 3 == 0
+}
 // M3G4_REFERENCE.md: conservative whole axis-slide pass, in raw fixed bits.
 const ATTEMPT_MOVE_MULTIPLIER: i64 = 4;
 const ATTEMPT_ROUNDING_MARGIN: i64 = 8;
@@ -91,13 +121,21 @@ impl Simulation {
         {
             return Err(SimError::UnsupportedButtons);
         }
-        if !(-MAX_COMMAND_MOVE..=MAX_COMMAND_MOVE).contains(&command.forward)
-            || !(-MAX_COMMAND_MOVE..=MAX_COMMAND_MOVE).contains(&command.side)
+        // Buttons 0x40 and `BT_SPECIAL` 0x80 stay refused above under every
+        // policy: `P_PlayerThink` clears the buttons of a special command
+        // (p_user.c:280–281) and `G_Ticker` runs pause/save from it
+        // (g_game.c:700–720), both M4c. The turbo message of `G_Ticker`
+        // (`forwardmove > TURBOTHRESHOLD`, g_game.c:671–679) assigns the console
+        // player's message; under the Episode 1 policy it is the DSIM39
+        // `pickups.message` code 30 (`turbo_message`), elsewhere the domain
+        // (forward at most 50) never reaches it.
+        let limit = max_command_move(p.policy);
+        if !(-limit..=limit).contains(&command.forward) || !(-limit..=limit).contains(&command.side)
         {
             return Err(PlayerBodyError::Unsupported.into());
         }
         if p.policy.has_weapon_pack() {
-            player_weapons::validate_command(command)?;
+            player_weapons::validate_command(command, p.policy.has_episode1())?;
         }
         let current = p.mo.filter(|id| self.actors.is_pending(*id) == Some(false));
         let Some(id) = current else {

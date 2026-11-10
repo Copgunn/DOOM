@@ -81,16 +81,10 @@ jobs:
     # Keep the required check name; use supported Intel macOS while arm64
     # hosted-runner acquisition is capacity constrained (see VALIDATION.md).
     runs-on: ${{ matrix.os == 'macos-latest' && 'macos-26-intel' || matrix.os }}
-    # Preserve the complete growing reference/encoder suite on Linux.
-    # Native Intel post-merge CI reached the 15-minute limit after its examples.
-    # Keep every check; M3g6 exact-master Linux took almost28 minutes.
-    # New pistol reference/codec/example checks require additional headroom.
-    # M3g10 Windows reached its15-minute limit during historical examples after
-    # workspace/release tests and the armor example passed. Retain every check.
-    # Measured on master 5e711be (run 41378833526): Ubuntu 30 of 45 before the
-    # parallel suite, macOS Intel 17 of 30 with its test suites alone over 14, Windows
-    # 12 of 30. macOS gets 40 so an M3h5-sized test addition cannot time it out.
-    timeout-minutes: ${{ matrix.os == 'ubuntu-latest' && 45 || (matrix.os == 'macos-latest' && 40 || 30) }}
+    # Retain every validation step. M4a's first 2e33c35 macOS attempt hit
+    # its 40-minute limit; the retry took 33m33s. Ubuntu took 32m33s of 45,
+    # and Windows 11m57s of 30. Give the growing suite explicit headroom.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 45 || 60 }}
     needs: changes
     # Run even if the classification failed: an empty output means a full run.
     if: ${{ !cancelled() }}
@@ -108,6 +102,7 @@ jobs:
         run: rustup toolchain install stable --profile minimal --component rustfmt --component clippy
       - name: Format
         if: env.DOCS_ONLY != 'true'
+        shell: bash
         run: |
           cargo +stable fmt --all -- --check
           cargo +stable fmt --manifest-path fuzz/Cargo.toml --all -- --check
@@ -242,6 +237,7 @@ jobs:
         run: python3 tools/reference/check_player_barrels.py --example-only
       - name: M3h9c whole-engine runner contract, synthetic game WAD and demo scripts
         if: env.DOCS_ONLY != 'true'
+        shell: bash
         run: |
           python3 tools/reference/m3h9c_build.py --check
           python3 tools/reference/m3h9c_wad.py --check
@@ -267,6 +263,29 @@ jobs:
             cargo +stable run -p doom-sim --release --locked --example player_level_run -- --wad tests/reference/m3h9c_synthetic.wad --map E1M1 --demo "tests/reference/m3h9c_scripts/$s.lmp" --out "$RUNNER_TEMP/m3h9c_rust/$s" --captures
           done
           python3 tools/reference/check_player_level.py "$RUNNER_TEMP/m3h9c_rust"
+      - name: M4a runner contract, synthetic mechanism WADs, their invariants and demo scripts
+        if: env.DOCS_ONLY != 'true'
+        shell: bash
+        run: |
+          python3 tools/reference/m4a_build.py --check
+          python3 tools/reference/test_runner_newlines.py
+          python3 tools/reference/m4a_wad.py --check
+          python3 tools/reference/m4a_check_wad.py --check
+          python3 tools/e1m1_scripts.py --check
+      - name: Genuine whole-engine runs of the M4a mechanism WADs (strict, UBSan and ASan/UBSan dumps identical) and self-test
+        if: env.DOCS_ONLY != 'true' && (runner.os == 'Linux')
+        run: python3 tools/reference/m4a_reference.py --check --keep-dumps --selftest 300 --work "$RUNNER_TEMP/m4a"
+      - name: Independent DSIM39 projection of the M4a runs
+        if: env.DOCS_ONLY != 'true' && (runner.os == 'Linux')
+        run: python3 tools/reference/m4a_snapshot_goldens.py --dumps "$RUNNER_TEMP/m4a/runs" --check
+      - name: Rust Episode 1 run of the M4a synthetic scripts against the encoder goldens
+        if: env.DOCS_ONLY != 'true'
+        shell: bash
+        run: |
+          cargo +stable build -p doom-sim --release --locked --example player_level_run
+          EXE=target/release/examples/player_level_run
+          if [ -f "$EXE.exe" ]; then EXE="$EXE.exe"; fi
+          python3 tools/reference/check_player_episode1.py --binary "$EXE" --out "$RUNNER_TEMP/m4a_rust" --example-args "--policy episode1" --require
       - name: Original bonus sustained combat debug/release comparison
         if: env.DOCS_ONLY != 'true'
         run: python3 tools/reference/check_player_bonuses.py
@@ -305,6 +324,7 @@ jobs:
         run: cargo +stable run -p doom-sim --example headless --locked -- 12
       - name: Headless debug/release equality
         if: env.DOCS_ONLY != 'true'
+        shell: bash
         run: |
           python tools/reference/check_headless.py
           python tools/reference/check_projectiles.py
