@@ -260,7 +260,7 @@ impl<A: ActorAccess> weapons::Host for Host<'_, '_, A> {
             .player
             .as_ref()
             .and_then(|p| p.powers)
-            .is_some_and(|p| p.powers[0] != 0)
+            .is_some_and(|p| p.powers[crate::world_pickups::POWER_STRENGTH] != 0)
     }
     fn take_drop(&mut self) -> bool {
         match self.life.player.as_deref_mut() {

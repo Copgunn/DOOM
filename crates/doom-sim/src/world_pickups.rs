@@ -685,6 +685,8 @@ fn observe(events: &mut Vec<movement::MotionEvent>, event: PickupEvent) {
 }
 /// `powertype_t` indices (doomdef.h:214–222) and the `P_GivePower` durations
 /// (doomdef.h:226–229: `INVISTICS`, `IRONTICS` 60·TICRATE, `INFRATICS` 120·TICRATE).
+pub(crate) const POWER_INVULNERABILITY: usize = 0;
+pub(crate) const POWER_STRENGTH: usize = 1;
 pub(crate) const POWER_INVISIBILITY: usize = 2;
 pub(crate) const POWER_IRONFEET: usize = 3;
 pub(crate) const POWER_ALLMAP: usize = 4;

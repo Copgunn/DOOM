@@ -251,9 +251,11 @@ pub(crate) fn powers_tick(
 /// skull keys, absent from Episode 1, are read by the locked doors as the source
 /// reads them and checked by the DSIM39 reader.
 pub(crate) fn validate_powers(p: &crate::PlayerPowers) -> Result<(), crate::SimError> {
-    use crate::world_pickups::{INFRATICS, INVISTICS, IRONTICS};
-    if p.powers[0] != 0
-        || p.powers[1] != 0
+    use crate::world_pickups::{
+        INFRATICS, INVISTICS, IRONTICS, POWER_INVULNERABILITY, POWER_STRENGTH,
+    };
+    if p.powers[POWER_INVULNERABILITY] != 0
+        || p.powers[POWER_STRENGTH] != 0
         || !(0..=INVISTICS).contains(&p.powers[2])
         || !(0..=IRONTICS).contains(&p.powers[3])
         || !(0..=1).contains(&p.powers[4])
