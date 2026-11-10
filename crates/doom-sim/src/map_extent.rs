@@ -12,7 +12,9 @@ pub const MAP_EXTENT_PREPARATION_BYTES: usize = 4 * 1024 * 1024;
 pub const MAP_EXTENT_COLLISION_WORK: usize = 16384;
 pub(crate) const QUERY_UNITS: u32 = 2048;
 const LINE_NORM_UNITS: u32 = 1536;
-const HEIGHT_UNITS: u16 = 1024;
+/// The sector-height domain (map units): static heights at load and, under the
+/// Episode 1 policy, every height a mover writes (`planes::PlaneHost`).
+pub(crate) const HEIGHT_UNITS: u16 = 1024;
 const MOMENTUM_UNITS: u32 = 64;
 const STEP_XY_UNITS: u32 = QUERY_UNITS - 30;
 const STEP_Z_UNITS: u32 = QUERY_UNITS - MOMENTUM_UNITS;

@@ -2334,7 +2334,7 @@ never canonical state; the DSIM39 reader derives the same values from `map.thing
 | Per-tic monster sight queries | `max(64, 8 * (K + 1))` |
 | Queries per explosion | `max(216, (1 + K + B) * (1 + K))`; the visit-bound roster term is `max(8, K)` |
 | Live missiles | no per-type cap; the full store is the witness |
-| Sector heights | still within +-1,024 map units (`map_extent::validate_real_map`) |
+| Sector heights | still within +-1,024 map units: the static heights at load (`map_extent::validate_real_map`), and every height a mover writes, through the `Arithmetic` witness below |
 
 Heights above 512 now load under wire 23 and wire 22 still refuses them.
 
@@ -2370,7 +2370,7 @@ of earlier wires); the next tic can be attempted. All but the store-full one are
 | `StairBlocked` | a stair step's first `P_ChangeSector` is blocked: the source reads the uninitialised `crush` of the `EV_BuildStairs` thinker (decision H7) |
 | `PlatBlocked` | a `raiseToNearestAndChange` plat is blocked: it never initialised `low` (H7) |
 | `DonutBusy` | `EV_DoDonut`'s outer sector already holds a live mover (H8) |
-| `Arithmetic` | a checked `i64` recomputation of the source's `P_InterceptVector`/`P_InterceptVector2` sums, `FixedMul` narrowing, sight slope differences and trace heights would overflow or leave `fixed_t`; replaces the certificate clauses and the +-512 check (the same `Arithmetic` variant, now raised at the tic) |
+| `Arithmetic` | a checked `i64` recomputation of the source's `P_InterceptVector`/`P_InterceptVector2` sums, `FixedMul` narrowing, sight slope differences and trace heights would overflow or leave `fixed_t`; or a mover would write a sector height beyond +-1,024 units (a repeatable turbo floor or door can ratchet heights past any bound; C runs on until `fixed_t` overflows), or its `T_MovePlane` step or `EV_*` destination offset would overflow `fixed_t`. Replaces the certificate clauses and the +-512 checks (the same `Arithmetic` variant, now raised at the tic) |
 | `SpecialCross` | a `P_CheckPosition` would store a ninth `spechit`; it replaces the 2 x 2 window load rule that E1M5 and E1M9 fail (neither map is admitted) |
 | `StoreError::Capacity` | a spawn finds the 1,024-slot store full; nothing is spawned |
 | `Escape`, `Intercepts`, `Position`, `Vertical` | the wire-22 witnesses, unchanged |

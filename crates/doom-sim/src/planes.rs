@@ -108,7 +108,17 @@ impl<'b> PlaneHost<'_, 'b> {
             .copied()
             .ok_or_else(|| crate::GeometryError::InvalidReference.into())
     }
+    /// Stages `height` for `plane` of `sector`. Under the Episode 1 policy
+    /// (decision H3) a height outside the ±1,024-unit sector domain
+    /// (`map_extent::HEIGHT_UNITS`, the wire-23 bound the dropped ±512 reach
+    /// proof kept heights inside) refuses the tic with
+    /// [`crate::MapScaleError::Arithmetic`] before the write.
     fn set(&mut self, sector: u16, plane: Plane, height: Fixed) -> Result<(), SimError> {
+        if self.world.checked_arithmetic
+            && !crate::sight::within(height, u32::from(crate::map_extent::HEIGHT_UNITS))
+        {
+            return Err(crate::MapScaleError::Arithmetic.into());
+        }
         let mut state = self.sector(sector)?;
         match plane {
             Plane::Floor => state.floor = height,
@@ -171,8 +181,18 @@ impl<'b> PlaneHost<'_, 'b> {
         let before = height(self.sector(sector)?);
         let result = match direction {
             -1 | 1 => {
-                let last = direction == -1 && before - speed < dest
-                    || direction == 1 && before + speed > dest;
+                // `floorheight -= speed` / `+= speed` (and the same sum in the
+                // `pastdest` test), checked under the Episode 1 policy.
+                let next = if direction == -1 {
+                    height_sum(
+                        self.world,
+                        before,
+                        Fixed::from_bits(speed.bits().wrapping_neg()),
+                    )?
+                } else {
+                    height_sum(self.world, before, speed)?
+                };
+                let last = direction == -1 && next < dest || direction == 1 && next > dest;
                 if last {
                     self.set(sector, plane, dest)?;
                     #[cfg(test)]
@@ -186,11 +206,6 @@ impl<'b> PlaneHost<'_, 'b> {
                     }
                     MoveResult::PastDest
                 } else {
-                    let next = if direction == -1 {
-                        before - speed
-                    } else {
-                        before + speed
-                    };
                     self.set(sector, plane, next)?;
                     let nofit = self.change_sector(sector)?;
                     #[cfg(test)]
@@ -388,6 +403,19 @@ impl<'b> PlaneHost<'_, 'b> {
         }
         *self.access.get_mut(id).ok_or(StoreError::InvalidHandle)? = actor;
         Ok(actor.ceiling - actor.floor >= height)
+    }
+}
+
+/// The `fixed_t` height sum `a + b` of a mover (`T_MovePlane`'s step, an
+/// `EV_*` destination offset): wrapping as before under the older policies,
+/// whose load proof keeps every height within ±512; under the Episode 1 policy
+/// (decision H3) an `i32` overflow refuses the tic with
+/// [`crate::MapScaleError::Arithmetic`].
+pub(crate) fn height_sum(world: &StaticWorld, a: Fixed, b: Fixed) -> Result<Fixed, SimError> {
+    match a.bits().checked_add(b.bits()) {
+        Some(sum) => Ok(Fixed::from_bits(sum)),
+        None if world.checked_arithmetic => Err(crate::MapScaleError::Arithmetic.into()),
+        None => Ok(a + b),
     }
 }
 

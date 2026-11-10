@@ -445,9 +445,10 @@ impl<M: MoverAccess + ?Sized> Starter<'_, M> {
             let (direction, topheight) = if kind == DoorKind::Close30ThenOpen {
                 (-1, ceiling)
             } else {
+                let lowest = self.surrounding().lowest_ceiling(sector)?;
                 (
                     1,
-                    self.surrounding().lowest_ceiling(sector)? - Fixed::from_map_units(4),
+                    crate::planes::height_sum(self.world, lowest, Fixed::from_map_units(-4))?,
                 )
             };
             let door = SectorThinker::Door(Door {
@@ -567,7 +568,8 @@ impl<M: MoverAccess + ?Sized> Starter<'_, M> {
             return Ok(false);
         }
         self.sector_sound(sector, "sfx_doropn");
-        let topheight = self.surrounding().lowest_ceiling(sector)? - Fixed::from_map_units(4);
+        let lowest = self.surrounding().lowest_ceiling(sector)?;
+        let topheight = crate::planes::height_sum(world, lowest, Fixed::from_map_units(-4))?;
         let open = special >= 31;
         let door = SectorThinker::Door(Door {
             sector,
@@ -697,7 +699,7 @@ impl<M: MoverAccess + ?Sized> Starter<'_, M> {
                 FloorKind::TurboLower => {
                     let dest = self.surrounding().highest_floor(sector)?;
                     if dest != own.floor {
-                        dest + Fixed::from_map_units(8)
+                        crate::planes::height_sum(self.world, dest, Fixed::from_map_units(8))?
                     } else {
                         dest
                     }
