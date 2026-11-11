@@ -4,7 +4,7 @@
     check_player_episode1v2.py --binary EXAMPLE [--out DIR] [--example-args ARGS] [--require]
     check_player_episode1v2.py --rust-root DIR [--require]
 
-Wire 24 (`PlayerMonstersEpisode1V2`, DSIM40, M4b decision I2). Two manifest-driven sets:
+Wire 24 (`PlayerMonstersEpisode1V2`, DSIM40, M4b decision I2). Three manifest-driven sets:
 
 - every script of tests/reference/m4a_manifest.json (the 30 M4a scripts, frozen M4a
   evidence) against tests/reference/m4b_m4a_goldens.json (m4b_m4a_goldens.py: the DSIM40
@@ -16,7 +16,9 @@ Wire 24 (`PlayerMonstersEpisode1V2`, DSIM40, M4b decision I2). Two manifest-driv
   `tbd` expectation is compared as a required "match"; a script with a declared
   `after_last_capture` (SPECH9) must match every capture and then refuse the declared DSIM tic
   with the named error. Such a script runs on its manifest `overrun_probe` demo (SPECH8.lmp, whose
-  commands begin with SPECH9's), so that the declared tic exists.
+  commands begin with SPECH9's), so that the declared tic exists;
+- every script of tests/reference/m4b_manifest2.json (the second M4b set, step 5: TELE2X)
+  against tests/reference/m4b_synthetic_goldens2.json, as the first M4b set.
 
 Steps 4-6 admit scripts by deleting their PENDING entries; a new manifest script is checked
 automatically. With --binary (the built Rust example, for instance
@@ -57,7 +59,10 @@ from level_compare import stripped
 SETS = [('M4a', ROOT / 'tests/reference/m4a_manifest.json', 'DOOM-M4A-MANIFEST-v1',
          ROOT / 'tests/reference/m4b_m4a_goldens.json', 'DOOM-M4B-M4A-GOLDENS-v1'),
         ('M4b', ROOT / 'tests/reference/m4b_manifest.json', 'DOOM-M4B-MANIFEST-v1',
-         ROOT / 'tests/reference/m4b_synthetic_goldens.json', 'DOOM-M4B-SYNTHETIC-GOLDENS-v1')]
+         ROOT / 'tests/reference/m4b_synthetic_goldens.json', 'DOOM-M4B-SYNTHETIC-GOLDENS-v1'),
+        # The second M4b set (step 5): new files only, so the first set's stay byte-identical.
+        ('M4b2', ROOT / 'tests/reference/m4b_manifest2.json', 'DOOM-M4B-MANIFEST-v1',
+         ROOT / 'tests/reference/m4b_synthetic_goldens2.json', 'DOOM-M4B-SYNTHETIC-GOLDENS-v1')]
 # M4b scripts whose mechanism wire 24 does not admit yet: script -> the M4b step that admits it
 # and why. Wire 24 refuses each at load today (skill 3).
 PENDING = {
@@ -95,7 +100,7 @@ def scripts():
 def expectation(label, s, g):
     """(last capture to compare, required refusal (tic, tokens) or None)."""
     last = g['snapshots'] - 1
-    if label == 'M4b':
+    if label.startswith('M4b'):
         after = g.get('after_last_capture')
         if after: return last, (after['dsim_tic'], {after['refuse']})
         return last, None

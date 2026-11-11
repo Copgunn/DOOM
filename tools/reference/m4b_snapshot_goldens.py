@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Synthetic DSIM40 goldens of the M4b synthetic WADs, from the genuine-engine dumps.
 
-    m4b_snapshot_goldens.py [--dumps RUNS_DIR | --work DIR] [--check] [--selftest]
+    m4b_snapshot_goldens.py [--dumps RUNS_DIR | --work DIR] [--check] [--selftest] [--set 1|2]
+
+`--set 2` projects the second set instead (tests/reference/m4b_manifest2.json,
+m4b_synthetic_results2.json; writes m4b_synthetic_goldens2.json and m4b2_episode1v2_*.bin;
+added in M4b step 5 so that the first set's files stay byte-identical; the self-test
+perturbs the first set's TELE1 and BARON1 dumps and so needs the first set).
 
 Manifest-driven (tests/reference/m4b_manifest.json, schema DOOM-M4B-MANIFEST-v1): every
 script of every WAD is projected by the independent DSIM40 encoder (level_snapshot_m4b.py:
@@ -55,6 +60,12 @@ MANIFEST = ROOT / 'tests/reference/m4b_manifest.json'
 RESULTS = ROOT / 'tests/reference/m4b_synthetic_results.json'
 OUT = ROOT / 'tests/reference/m4b_synthetic_goldens.json'
 PREFIX = 'tests/reference/m4b_episode1v2_'
+# The second set (M4b step 5; `--set 2`): its own manifest, results, goldens and fixture prefix, so that
+# every file of the first set stays byte-identical.
+SET_FILES = {1: (MANIFEST, RESULTS, OUT, PREFIX),
+             2: (ROOT / 'tests/reference/m4b_manifest2.json', ROOT / 'tests/reference/m4b_synthetic_results2.json',
+                 ROOT / 'tests/reference/m4b_synthetic_goldens2.json', 'tests/reference/m4b2_episode1v2_')}
+SET = 1
 T = lambda name: enum_index('mobjtype_t', name)
 S = lambda name: enum_index('statenum_t', name)
 
@@ -131,6 +142,9 @@ FIXTURES = [
     ('SKILL3', ('load',), 0,
      'skill-3 load of the same WAD: the hard and all-skill things and the landing',
      lambda d: d.h['gameskill'] == 3 and len(mobjs(d, 'MT_TELEPORTMAN')) == 1),
+    ('TELE2X', ('event', 'two teleports in one tic (four fogs)'), 1,
+     'two teleports in one tic: four fogs, the player on the second landing with reactiontime 18',
+     lambda d: len(mobjs(d, 'MT_TFOG')) == 4 and player(d)['reactiontime'] == 18 and player(d)['momx'] == 0),
     ('SPECH9', ('last',), 0,
      'the last good tic before the ninth spechit entry (Rust refuses the next tic)',
      lambda d: True),
@@ -152,7 +166,10 @@ def fixture_tics(man, res):
     """{script: {dsim tic or 'last': (why, check)}}."""
     scripts = {s['lump']: s for w in man['wads'] for s in w['scripts']}
     out = {}
+    every = {s['lump'] for m, _, _, _ in SET_FILES.values() for w in json.loads(m.read_text())['wads'] for s in w['scripts']}
     for script, anchor, offset, why, check in FIXTURES:
+        if script not in every: sys.exit(f'fixture names an unknown script {script}')
+        if script not in scripts: continue          # a fixture of the other set
         s = scripts[script]
         if anchor[0] == 'load': tic = 0
         elif anchor[0] == 'last': tic = 'last'
@@ -327,8 +344,8 @@ def selftest(runs, goldens):
 def reference_runs(work):
     work = work.resolve()
     if work == ROOT or ROOT in work.parents: sys.exit('--work must lie outside the repository')
-    subprocess.run([sys.executable, str(HERE / 'm4b_reference.py'), '--work', str(work), '--keep-dumps', '--check'],
-                   check=True, stdout=subprocess.DEVNULL)
+    subprocess.run([sys.executable, str(HERE / 'm4b_reference.py'), '--work', str(work), '--keep-dumps', '--check',
+                    '--set', str(SET)], check=True, stdout=subprocess.DEVNULL)
     return work / 'runs'
 
 
@@ -339,7 +356,12 @@ def main():
                     help='scratch directory for the reference run when --dumps is not given')
     ap.add_argument('--check', action='store_true')
     ap.add_argument('--selftest', action='store_true')
+    ap.add_argument('--set', type=int, choices=sorted(SET_FILES), default=1,
+                    help='1: tests/reference/m4b_manifest.json (default); 2: the second set (m4b_manifest2.json)')
     a = ap.parse_args()
+    global MANIFEST, RESULTS, OUT, PREFIX, SET
+    MANIFEST, RESULTS, OUT, PREFIX = SET_FILES[a.set]
+    SET = a.set
     runs = a.dumps or str(reference_runs(a.work))
     try:
         outputs, goldens = generate(runs)
@@ -357,7 +379,7 @@ def main():
     print(f"fixtures: {len(goldens['fixtures'])} ({sum(f['bytes'] for f in goldens['fixtures'])} bytes)")
     for line in tests: print(f'selftest: {line}')
     if a.selftest: print(f'selftest passed: {len(tests)} checks')
-    committed = {str(p.relative_to(ROOT)) for p in (ROOT / 'tests/reference').glob('m4b_episode1v2_*.bin')}
+    committed = {str(p.relative_to(ROOT)) for p in (ROOT / 'tests/reference').glob(Path(PREFIX).name + '*.bin')}
     if a.check:
         bad = [p for p, b in outputs.items() if not (ROOT / p).exists() or (ROOT / p).read_bytes() != b]
         extra = committed - set(outputs)

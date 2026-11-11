@@ -1,0 +1,45 @@
+{
+ "schema": "DOOM-M4B-MANIFEST-v1",
+ "wads": [
+  {
+   "name": "TELE2X",
+   "file": "tests/reference/m4b_wads/tele2x.wad",
+   "slot": "E1M1",
+   "episode": 1,
+   "map": 1,
+   "sha256": "dee6c2b603a3848246df79f9f1119350fc5c5212d4d5b50230a15d44c1d3e8d3",
+   "bytes": 47929,
+   "sectors": 5,
+   "lines": 18,
+   "things": {
+    "2": {
+     "1": 1,
+     "14": 2,
+     "2014": 1
+    },
+    "3": {
+     "1": 1,
+     "14": 2,
+     "2014": 1
+    }
+   },
+   "scripts": [
+    {
+     "lump": "TELE2X",
+     "source": "tests/reference/m4b_scripts/tele2x.txt",
+     "lmp": "tests/reference/m4b_scripts/TELE2X.lmp",
+     "c_end": "marker",
+     "end_tic": 65,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "two teleports in one tic (four fogs)",
+       "event": "first M type=MT_TFOG",
+       "tic": 36
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

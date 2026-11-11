@@ -34,7 +34,11 @@ Everything here is synthetic. The address variant runs with ASAN_OPTIONS=detect_
 evaluation unless --keep-dumps is given.
 
     m4b_reference.py [--work DIR] [--check] [--keep-dumps] [--cc CC] [--only WAD]
-                     [--selftest TIC] [--update-events] [--strict32]
+                     [--selftest TIC] [--update-events] [--strict32] [--set 1|2]
+
+--set 2 runs the second set instead (tests/reference/m4b_manifest2.json and
+m4b_synthetic_results2.json, added in M4b step 5 so that the first set's files stay
+byte-identical; it has no selftest script).
 
 --check compares the regenerated results (minus `timing`) with the committed file.
 --selftest TIC plants an extra P_Random draw before G_Ticker TIC and a changed command TIC
@@ -59,6 +63,10 @@ from m3h9_geometry import enum_index  # noqa: E402
 
 MANIFEST = ROOT / 'tests/reference/m4b_manifest.json'
 RESULTS = ROOT / 'tests/reference/m4b_synthetic_results.json'
+# The second set (M4b step 5): new WADs and scripts in their own manifest and results, so that the
+# first set's files stay byte-identical. `--set 2` selects it.
+SET_FILES = {1: (MANIFEST, RESULTS),
+             2: (ROOT / 'tests/reference/m4b_manifest2.json', ROOT / 'tests/reference/m4b_synthetic_results2.json')}
 VARIANTS = ref.VARIANTS
 SCHEMA = 'DOOM-M4B-SYNTHETIC-RESULTS-v1'
 sha = lambda b: hashlib.sha256(b).hexdigest()
@@ -325,10 +333,22 @@ def facts_skill(d):
                 teleports=f_teleport(d))
 
 
+def facts_tele2x(d):
+    """Two teleports in one tic: the fogs spawned per tic, the draws, the momentum before the tic and
+    the player's position after it."""
+    tel = f_teleport(d)
+    t = tel[0]['tic']
+    pm1, _ = player(d, t - 1)
+    pm, _ = player(d, t)
+    return dict(teleports=tel, momentum_before=(units(pm1['momx']), units(pm1['momy'])),
+                split_threshold_exceeded_before=pm1['momx'] > 15 * U or pm1['momy'] > 15 * U,
+                fogs_in_tic=len(tel[0]['fogs']), draws_in_tic=tel[0]['draws'], position_after=(units(pm['x']), units(pm['y'])))
+
+
 FACTS = {'TELE1': facts_tele1, 'TELE2': facts_tele2, 'TSPLIT': facts_move, 'TSLIDE': facts_move, 'TFRAG1': facts_tfrag,
          'MTELE1': facts_mtele, 'SLIDEB': facts_slideb, 'SLIDEC': facts_slidec, 'BARON1': facts_baron1, 'BINF1': facts_binf1,
          'BVB1': facts_bvb1, 'BOSS1': facts_boss, 'BOSS2': facts_boss, 'BOSSM1': facts_boss, 'SPECH8': facts_spech,
-         'SPECH9': facts_spech, 'SKILL2': facts_skill, 'SKILL3': facts_skill}
+         'SPECH9': facts_spech, 'SKILL2': facts_skill, 'SKILL3': facts_skill, 'TELE2X': facts_tele2x}
 
 
 # ---------------------------------------------------------------- runs ------------------------
@@ -370,7 +390,11 @@ def main():
     ap.add_argument('--selftest', type=int, metavar='TIC')
     ap.add_argument('--update-events', action='store_true')
     ap.add_argument('--strict32', action='store_true', help='also run the opt-in strict32 build and require identical dumps')
+    ap.add_argument('--set', type=int, choices=sorted(SET_FILES), default=1,
+                    help='1: tests/reference/m4b_manifest.json (default); 2: the second set, m4b_manifest2.json')
     a = ap.parse_args()
+    global MANIFEST, RESULTS
+    MANIFEST, RESULTS = SET_FILES[a.set]
     work = a.work.resolve()
     if work == ROOT or ROOT in work.parents: sys.exit('--work must lie outside the repository')
     man = json.loads(MANIFEST.read_text())

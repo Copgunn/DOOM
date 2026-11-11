@@ -3,7 +3,8 @@
 the generator m4b_wad.py, the M4a generator or the room builders).
 
     m4b_check_wad.py WAD [--name NAME]     exits nonzero on the first violated rule
-    m4b_check_wad.py --check               every WAD of tests/reference/m4b_manifest.json
+    m4b_check_wad.py --check               every WAD of tests/reference/m4b_manifest.json and
+                                           tests/reference/m4b_manifest2.json
 
 The lump parser and the format rules are the frozen M4a checker's (m4a_check_wad.Map and
 mobjinfo, imported read-only: directory, resources, textures, switches, record sizes, index
@@ -37,6 +38,7 @@ import m4a_check_wad as C   # noqa: E402  frozen M4a parser and format rules (re
 from m4a_check_wad import need, fail  # noqa: E402,F401
 
 MANIFEST = ROOT / 'tests/reference/m4b_manifest.json'
+MANIFEST2 = ROOT / 'tests/reference/m4b_manifest2.json'
 SPECIALS = C.PART1 | {97}
 LANDING, BARON, PLAYER1 = 14, 3003, 1
 # Per-WAD expectations: the landing picked per tag on (skill 2, skill 3) as a THINGS index (None: no
@@ -56,6 +58,8 @@ EXPECT = {
     'SPECH8': dict(pick={9: (None, None)}, box=8),
     'SPECH9': dict(pick={9: (None, None)}, box=9),
     'SKILL': dict(pick={1: (None, 1)}, box=1),
+    # The second set (tests/reference/m4b_manifest2.json, M4b step 5).
+    'TELE2X': dict(pick={1: (1, 1), 2: (2, 2)}, box=1),
 }
 
 
@@ -170,14 +174,14 @@ def check(path, name, slot, expect_things):
 
 def main():
     args = sys.argv[1:]
-    man = json.loads(MANIFEST.read_text())
+    wads = [w for m in (MANIFEST, MANIFEST2) for w in json.loads(m.read_text())['wads']]
     if '--check' in args:
-        for w in man['wads']: check(ROOT / w['file'], w['name'], w['slot'], w['things'])
+        for w in wads: check(ROOT / w['file'], w['name'], w['slot'], w['things'])
         return
     if not args or args[0].startswith('--'): sys.exit(__doc__)
     path = Path(args[0])
     rel = path.resolve().relative_to(ROOT).as_posix() if path.resolve().is_relative_to(ROOT) else str(path)
-    w = {x['file']: x for x in man['wads']}.get(rel)
+    w = {x['file']: x for x in wads}.get(rel)
     name = args[args.index('--name') + 1] if '--name' in args else (w['name'] if w else path.stem.upper())
     check(path, name, w['slot'] if w else 'E1M1', w['things'] if w else None)
 

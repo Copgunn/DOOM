@@ -311,6 +311,12 @@ jobs:
       - name: Independent DSIM40 projection of the M4b runs and its self-test
         if: env.DOCS_ONLY != 'true' && (runner.os == 'Linux')
         run: python3 tools/reference/m4b_snapshot_goldens.py --dumps "$RUNNER_TEMP/m4b/runs" --check --selftest
+      - name: Genuine whole-engine runs of the second M4b set (two teleports in one tic; strict, UBSan and ASan/UBSan dumps identical)
+        if: env.DOCS_ONLY != 'true' && (runner.os == 'Linux')
+        run: python3 tools/reference/m4b_reference.py --set 2 --check --keep-dumps --work "$RUNNER_TEMP/m4b2"
+      - name: Independent DSIM40 projection of the second M4b set
+        if: env.DOCS_ONLY != 'true' && (runner.os == 'Linux')
+        run: python3 tools/reference/m4b_snapshot_goldens.py --set 2 --dumps "$RUNNER_TEMP/m4b2/runs" --check
       - name: Original bonus sustained combat debug/release comparison
         if: env.DOCS_ONLY != 'true'
         run: python3 tools/reference/check_player_bonuses.py

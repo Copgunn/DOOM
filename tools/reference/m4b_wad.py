@@ -26,6 +26,12 @@ headless genuine linuxdoom-1.10 engine needs to load it in `registered` mode:
     spech9    the same with a ninth (the genuine engine writes past spechit[8])
     skill     things for skill bits 1, 2, 4, all and multiplayer-only, and a hard-only landing
 
+and the second set (tests/reference/m4b_manifest2.json, added in M4b step 5 so that the first set's files
+stay byte-identical):
+
+    tele2x    two teleports in one tic: a split move's first half crosses one 97 line, its second half
+              continues from the landing across a second 97 line
+
 The lump framing, game data, grid painter, side textures and builder chain are the frozen
 M4a generator's (tools/reference/m4a_wad.py, imported read-only, which itself imports
 m3h9c_wad.py and m3h9b_geometry.py); its WADs are untouched. This file adds the M4b maps,
@@ -274,20 +280,45 @@ def skill():
     return p
 
 
+def tele2x():
+    """Two teleports in one tic (owner request, 2026-11-10): TSPLIT's hall and run, so the first half of
+    P_XYMovement's split move crosses the first 97 line; its landing stands 8 units west of a second 97
+    line (tag 2), which the second half (continued from the landing, p_mobj.c:147-191) crosses."""
+    p = Plan('tele2x')
+    hall = p.sector('HALL', [(-1024, -128, 0, 128)])
+    pad = p.sector('PAD', [(0, -128, 128, 128)])
+    da = p.sector('DA', [(1024, -128, 1200, 128)], tag=1)
+    db = p.sector('DB', [(1200, -128, 1456, 128)])
+    p.sector('D2', [(1024, 512, 1280, 768)], tag=2)
+    p.special(hall, pad, (0, 0), TELEPORT, 1)
+    p.special(da, db, (1200, 0), TELEPORT, 2)                  # front DA: east-bound crossings teleport
+    p.thing(-952, 0, EAST, PLAYER1)
+    p.thing(1192, 0, EAST, TELEPORTMAN)                        # DA, 8 units west of the second line
+    p.thing(1152, 640, NORTH, TELEPORTMAN)                     # D2
+    p.thing(1152, 704, EAST, HEALTHBONUS)                      # off the path (the player start is not the last THING)
+    return p
+
+
 MAPS = {'tele': (tele, 'E1M1'), 'telemove': (telemove, 'E1M1'), 'tfrag': (tfrag, 'E1M1'), 'montele': (montele, 'E1M1'),
         'slideb': (slideb, 'E1M1'), 'slidec': (slidec, 'E1M1'), 'baron': (baron, 'E1M1'), 'infight': (infight, 'E1M1'), 'bvb': (bvb, 'E1M1'),
         'boss8': (boss8, 'E1M8'), 'bossm1': (boss8, 'E1M1'), 'spech8': (spech(8), 'E1M1'), 'spech9': (spech(9), 'E1M1'),
         'skill': (skill, 'E1M1')}
+# The second M4b set (owner request, 2026-11-10): new WADs listed in tests/reference/m4b_manifest2.json, so
+# that tests/reference/m4b_manifest.json and every file of the first set stay byte-identical.
+MAPS2 = {'tele2x': (tele2x, 'E1M1')}
+MANIFEST2 = ROOT / 'tests/reference/m4b_manifest2.json'
+SETS = [(MAPS, MANIFEST), (MAPS2, MANIFEST2)]
+ALL_MAPS = {**MAPS, **MAPS2}
 
 
 def labels(name):
     """Sector label -> index for a map (used by the event expressions of m4b_reference.py)."""
-    return {s['label']: k for k, s in enumerate(MAPS[name][0]().sectors)}
+    return {s['label']: k for k, s in enumerate(ALL_MAPS[name][0]().sectors)}
 
 
 def wad_bytes(name):
     """The WAD of one map in its slot, with the m4a_wad/m3h9c_wad lump framing."""
-    plan_fn, slot = MAPS[name]
+    plan_fn, slot = ALL_MAPS[name]
     plan = plan_fn()
     m = A.build_map(plan)
     A.fix_sides(plan, m)
@@ -328,12 +359,20 @@ def wad_fields(name, data, plan, m, slot):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--out-dir', type=Path, default=OUT_DIR)
-    ap.add_argument('--only', choices=list(MAPS))
+    ap.add_argument('--only', choices=list(ALL_MAPS))
     ap.add_argument('--list', action='store_true')
     ap.add_argument('--manifest', action='store_true')
     ap.add_argument('--check', action='store_true')
     a = ap.parse_args()
-    names = [a.only] if a.only else list(MAPS)
+    status = 0
+    for maps, manifest in SETS:
+        names = [n for n in maps if not a.only or n == a.only]
+        if names: status |= run_set(a, names, manifest)
+    sys.exit(status)
+
+
+def run_set(a, names, manifest):
+    """One set: its maps and its manifest (write, list, refresh the manifest, or check)."""
     fields, bad = {}, []
     for n in names:
         data, plan, m, slot = wad_bytes(n)
@@ -350,10 +389,10 @@ def main():
             a.out_dir.mkdir(parents=True, exist_ok=True)
             (a.out_dir / f'{n}.wad').write_bytes(data)
             print(f"wrote {a.out_dir / (n + '.wad')}: {len(data)} bytes")
-    if a.list: return
+    if a.list: return 0
     if a.check:
         if bad: sys.exit('differs or missing: ' + ', '.join(bad))
-        man = json.loads(MANIFEST.read_text())
+        man = json.loads(manifest.read_text())
         if man.get('schema') != MANIFEST_SCHEMA: sys.exit('manifest schema')
         by = {w['name']: w for w in man['wads']}
         for n in names:
@@ -361,22 +400,23 @@ def main():
             if w is None: sys.exit(f'{n}: not in the manifest')
             for k, v in fields[n].items():
                 if w.get(k) != v: sys.exit(f'{n}: manifest field {k} differs from the regenerated WAD')
-        print(f'{MANIFEST.relative_to(ROOT)}: wad fields match ({len(names)} WADs)', flush=True)
+        print(f'{manifest.relative_to(ROOT)}: wad fields match ({len(names)} WADs)', flush=True)
         status = 0
         for n in names:
             status |= subprocess.run([sys.executable, str(CHECKER), fields[n]['file']], cwd=ROOT).returncode
-        sys.exit(status)
+        return status
     if a.manifest:
-        man = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else dict(schema=MANIFEST_SCHEMA, wads=[])
+        man = json.loads(manifest.read_text()) if manifest.exists() else dict(schema=MANIFEST_SCHEMA, wads=[])
         by = {w['name']: w for w in man['wads']}
         for n in names:
             w = by.setdefault(n.upper(), {})
             scripts = w.pop('scripts', [])
             w.clear(); w.update(fields[n]); w['scripts'] = scripts
-        order = [n.upper() for n in MAPS]
+        order = [n.upper() for n in ALL_MAPS]
         man['wads'] = sorted(by.values(), key=lambda w: order.index(w['name']))
-        MANIFEST.write_text(json.dumps(man, indent=1) + '\n')
-        print(f'updated {MANIFEST.relative_to(ROOT)}')
+        manifest.write_text(json.dumps(man, indent=1) + '\n')
+        print(f'updated {manifest.relative_to(ROOT)}')
+    return 0
 
 
 if __name__ == '__main__':
