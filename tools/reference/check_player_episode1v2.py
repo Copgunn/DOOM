@@ -64,10 +64,8 @@ SETS = [('M4a', ROOT / 'tests/reference/m4a_manifest.json', 'DOOM-M4A-MANIFEST-v
         ('M4b2', ROOT / 'tests/reference/m4b_manifest2.json', 'DOOM-M4B-MANIFEST-v1',
          ROOT / 'tests/reference/m4b_synthetic_goldens2.json', 'DOOM-M4B-SYNTHETIC-GOLDENS-v1')]
 # M4b scripts whose mechanism wire 24 does not admit yet: script -> the M4b step that admits it
-# and why. Wire 24 refuses each at load today (skill 3).
-PENDING = {
-    'SKILL3': 'step 6 (hard skill)',
-}
+# and why. Empty since step 6 admitted hard skill (SKILL3).
+PENDING = {}
 REFUSAL_TOKENS = {'PlayerReborn': 'PlayerReborn',
                   'blocked raiseToNearestAndChange plat (H7)': 'PlatBlocked',
                   'blocked stair step (H7)': 'StairBlocked'}

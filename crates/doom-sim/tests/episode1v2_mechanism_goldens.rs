@@ -1,6 +1,7 @@
 //! Wire 24 (`PlayerMonstersEpisode1V2`, DSIM40) on the M4b mechanism WADs
 //! (`tests/reference/m4b_wads/`), tic for tic against the genuine engine's goldens
-//! (M4b step 4: teleportation; step 5: the Baron of Hell and `A_BossDeath`).
+//! (M4b step 4: teleportation; step 5: the Baron of Hell and `A_BossDeath`; step
+//! 6: hard skill).
 //!
 //! `tools/reference/check_player_episode1v2.py` performs the same comparison on the
 //! release example's captures; this test makes it part of `cargo test`, through the
@@ -29,8 +30,9 @@
 //!   the next tic is refused with `SimError::LevelExited`.
 //!
 //! TELE2X, of the second M4b set (`m4b_synthetic_goldens2.json`, step 5), makes the
-//! player teleport twice in one tic. The script that needs hard skill (SKILL3,
-//! step 6) is not here yet.
+//! player teleport twice in one tic. SKILL3 (step 6) loads SKILL2's WAD at hard
+//! skill (demo skill byte 3): the THING filter takes option bit 4 instead of 2
+//! (p_mobj.c:743–751), and its tic-0 fixture holds the hard-only things.
 use doom_sim::{demo::parse_demo_episode1_v2, *};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -300,7 +302,6 @@ fn run_with(script: &str, tweak: impl FnOnce(&mut Vec<TicCommand>)) {
         g.get("lmp_sha256").text(),
         "{script}: the demo differs from the goldens'"
     );
-    assert_eq!(g.get("skill").number(), 2);
     let slot = g.get("slot").text();
     let map_number = u8::try_from(g.get("map").number()).expect("map");
     assert!(matches!(g.get("projection_stop"), Json::Null), "{script}");
@@ -336,12 +337,23 @@ fn run_with(script: &str, tweak: impl FnOnce(&mut Vec<TicCommand>)) {
 
     let wad = doom_wad::Wad::parse(&wad_bytes, doom_wad::Limits::default()).expect("WAD");
     let map = doom_map::Map::from_wad(&wad, slot, doom_map::MapLimits::default()).expect("map");
-    let (_, mut demo) = parse_demo_episode1_v2(&demo_bytes, map_number).expect("demo");
+    let (header, mut demo) = parse_demo_episode1_v2(&demo_bytes, map_number).expect("demo");
+    // The goldens' skill is the genuine run's `gameskill`; the demo header carries it.
+    assert_eq!(
+        usize::from(header.skill),
+        g.get("skill").number(),
+        "{script}"
+    );
+    let skill = match header.skill {
+        2 => Skill::Medium,
+        3 => Skill::Hard,
+        other => panic!("{script}: skill {other}"),
+    };
     tweak(&mut demo.commands);
     let mut s = Simulation::original_player_episode1_v2_map(
         map,
         map_number,
-        Skill::Medium,
+        skill,
         MapContextOptions::default(),
     )
     .expect("admission");
@@ -472,6 +484,10 @@ fn slidec() {
 #[test]
 fn skill2() {
     run("SKILL2");
+}
+#[test]
+fn skill3() {
+    run("SKILL3");
 }
 #[test]
 fn spech8() {
