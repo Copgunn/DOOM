@@ -12,7 +12,8 @@ projection of those runs and its goldens. Phase 2 step 3 (2026-11-10): wire 24 p
 Rust results are in [Wire 24 against the genuine engine](#wire-24-against-the-genuine-engine). Phase 2
 step 4 (2026-11-10): teleportation, in [Rust replay: teleportation](#rust-replay-teleportation). Phase 2 step 5
 (2026-11-10): the Baron and `A_BossDeath`, in [Rust replay: the Baron and A_BossDeath](#rust-replay-the-baron-and-a_bossdeath),
-and the second synthetic set (two teleports in one tic). Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`,
+and the second synthetic set (two teleports in one tic). Phase 2 step 6 (2026-11-10): hard skill, in
+[Rust replay: hard skill](#rust-replay-hard-skill). Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`,
 so LeakSanitizer was disabled, not passed. Timings quoted here were taken on a host that was
 not idle and are not performance measurements.
 
@@ -254,7 +255,7 @@ refuses (note §7, finding 12). Plan step 7 re-runs all 30 real-map scripts.
 
 - This is wire 23's behaviour under wire 24's identity. Teleport, the Baron, `A_BossDeath` and
   hard skill have no Rust result yet.
-- The DSIM40 reader admits skill 2 only until step 6.
+- The DSIM40 reader admitted skill 2 only at this step (closed in step 6, [below](#rust-replay-hard-skill)).
 
 
 ## Rust replay: teleportation
@@ -331,7 +332,7 @@ Phase 2 step 5 (2026-11-10). Wire 24 now admits the Baron of Hell (doomednum 300
 **Synthetic scripts.** `check_player_episode1v2.py --binary target/release/examples/player_level_run --require`
 matched 48 scripts (19,725 compared tics): the 30 M4a scripts and the ten step-4 scripts,
 unchanged; the seven scripts below, every capture of each, matched on the first run of the
-step-5 code; and TELE2X of the second set (next section). SKILL3 waits for step 6.
+step-5 code; and TELE2X of the second set (next section). SKILL3 waited for step 6 ([below](#rust-replay-hard-skill)).
 
 | Script | Captures | Shows |
 | --- | ---: | --- |
@@ -411,3 +412,56 @@ fixture at DSIM tic 37 checks the four fogs on its dump. Wire 24 matched all 66 
 fixture byte for byte, in `check_player_episode1v2.py` and in `episode1v2_mechanism_goldens`;
 `teleport_tests::two_teleports_in_one_tic` checks the two `Teleported` records, four fogs and four
 draws of that tic.
+
+## Rust replay: hard skill
+
+Phase 2 step 6 (2026-11-10, America/Los_Angeles). Wire 24 now admits skill byte 3 (hard,
+THING option bit 4) beside skill 2; skills 1, 4 and 5 stay refused, and wires 23 and below are
+unchanged ([COMPATIBILITY](../COMPATIBILITY.md); decision I4; note §7, findings 10 and 11). The
+code is in commit 92b6369, the SKILL3 wiring of the replay tools in f9128c8, the tests in d199d01.
+Commands are in [TESTING](../TESTING.md#m4b-synthetic-mechanism-wads).
+
+**Synthetic script.** `check_player_episode1v2.py --binary target/release/examples/player_level_run --require`
+matched 49 of 49 scripts (19,816 compared tics, 0 pending): the 48 scripts of step 5, unchanged, and
+SKILL3, whose 91 captures all matched on the first run of the step-6 code (SKILL3 is the skill-3 load
+of the SKILL WAD: the hard-only Baron and the landing spawn, `totalkills` 3, the player teleports at
+tic 64). Its fixture `m4b_episode1v2_SKILL3_0.bin` matched byte for byte in the workspace test
+`episode1v2_mechanism_goldens`, which passed with 20 tests before the tests commit; that commit added
+one test there (`harness_detects_the_wrong_skill`: SKILL3's WAD, demo and goldens replayed at medium
+skill must fail, the same call at hard passes), so the harness is shown able to fail on the skill.
+
+**Rust-only tests.** `hard_skill_tests.rs` holds 13 tests: the constructor domain (default options
+or `{skill: Hard}` only; `no_monsters` and every other skill refused with `PlayerBody(Unsupported)`),
+the older policies refusing hard, the DSIM36-39 readers refusing a skill-3 frame, the DSIM40 reader's
+skill domain (2 and 3 admitted, 0, 1, 4 and 5 refused with `Identity`; the SKILL3 fixture
+round-trips), a frame relabelled with the other skill refused because its placed totals are derived
+with its own skill bit, the per-skill bounds, landings and totals on the SKILL WAD, the record-form
+bounds on hand-built lumps, and the spawn filter. A hard-skill case in
+`player_episode1_v2_tests.rs` (`refused_tic_keeps_the_state_under_wire_24_at_hard_skill`) checks that
+the plat-blocked tic refused at skill 3 is the same refusal as at skill 2 and keeps the whole state. These are Rust-only safety and domain tests, not source equivalence; the C evidence for
+the option bit is `P_SpawnMapThing` (p_mobj.c:743-751).
+
+**Local test counts (this host, 2026-11-10).** Before the tests commit, `cargo test --workspace` in
+debug and in release: 91 suites, 1,331 passed, 0 failed, 4 ignored. After it, `cargo test -p doom-sim`
+in debug and in release: 1,305 passed, 0 failed, 2 ignored. The workspace was not re-run after the
+tests commit.
+
+**Real map, local only.** The IWAD was read read-only from `/mnt/d/DoomIWADs`; dumps were kept under
+`/mnt/d/scratch/m4b` and deleted after the digests were taken. E1M5 loads under wire 24 on skill 3.
+A 2,100-tic idle demo (written by `player_level_run --write-idle` into scratch, its skill byte then
+patched to 3; not committed) ran through the genuine engine (M4b runner, its three variants
+identical) and through wire 24: `level_compare_m4b.py` matched 2,101 captures, complete, and the C
+and Rust stripped-sequence digest is `a39c77514fd637b7` for both.
+
+| Map, skill | Captures compared | Result | Stripped-sequence digest (C = Rust) |
+| --- | ---: | --- | --- |
+| E1M5, 3 | 2,101 | match | `a39c77514fd637b7` |
+
+**Limits.**
+
+- One idle run on one map at skill 3. An idle player crosses no teleport line and meets no monster
+  attack, so the hard-skill THING filter is shown on a real map only by the load, the spawn and 2,100
+  tics of the waiting map. The scripted skill-3 runs on E1M5, E1M8 and E1M9 and `DEMO1` are plan
+  step 7.
+- Nothing here claims that hard skill differs from medium in any way but the option bit; that is
+  the source reading of the note (§3 part C), confirmed on the synthetic SKILL scripts only.

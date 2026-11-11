@@ -2374,14 +2374,17 @@ The v40 reader applies every v39 check, with these changes:
   stomped, so this bounds it too);
 - the tag-26 sub-tags 15–17 and the widened damage form are admitted.
 
-**Admission so far (M4b step 5).** The v40 reader admits the `MT_TFOG`, `MT_TELEPORTMAN`,
+**Admission so far (M4b step 6).** The v40 reader admits the `MT_TFOG`, `MT_TELEPORTMAN`,
 `MT_BRUISER` and `MT_BRUISERSHOT` closures (the Baron's raise states refused), sub-tags 15, 16
 and 17, the sub-tag 6 record of `A_BossDeath`'s floor call (function 4, line 65535, argument 1),
 `MT_BRUISERSHOT` in the projectile launch record and the sky removal, and the telefrag's health
-domain; skill 3 arrives with step 6 (M4b note §7, finding 10).
+domain, and, since step 6, `actors.options[0]` 2 or 3 (any other value is refused with `Identity`;
+the DSIM36-39 readers admit 2 only; M4b note §7, finding 10, closed).
 
-The per-map bounds come from `map.things` with the skill bit of `actors.options[0]`: bit 2 for
-skill 2 and bit 4 for skill 3, after the single-player filter. Doomednum 3003 counts as a monster
+The per-map bounds, and the placed totals (`level.total_kills`, `level.total_items`) the reader
+re-derives, come from `map.things` with the skill bit of `actors.options[0]` (2 for skill 2, 4 for
+skill 3, p_mobj.c:743-751), after the single-player filter, so a frame whose skill byte
+disagrees with its totals is refused. Doomednum 3003 counts as a monster
 that drops nothing, and doomednum 14 as a landing. The bound formulas and the store-full witness
 are wire 24's and are documented in
 [COMPATIBILITY](COMPATIBILITY.md) with the policy.

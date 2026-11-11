@@ -2430,16 +2430,16 @@ and for the observations [validation/M4A.md](validation/M4A.md); Rust-only tests
 
 ## Original Episode 1, part 2: teleporters, the Baron of Hell, `A_BossDeath` and hard skill (wire 24)
 
-**Status: in progress (M4b, plan step 5 of the [note](M4B_REFERENCE_INVESTIGATION.md#6-plan-size-estimate-and-cap)); see
-[ROADMAP](ROADMAP.md).** Wire 24 is wire 23 plus teleportation, the Baron of Hell and
-`A_BossDeath`. Hard skill is still refused at load, as listed below.
+**Status: in progress (M4b, plan step 6 of the [note](M4B_REFERENCE_INVESTIGATION.md#6-plan-size-estimate-and-cap)); see
+[ROADMAP](ROADMAP.md).** Wire 24 is wire 23 plus teleportation, the Baron of Hell, `A_BossDeath`
+and hard skill (skills 2 and 3, decision I4). Skills 1, 4 and 5 are refused at load, as listed below.
 
 `OriginalExecutionProfile::PlayerMonstersEpisode1V2` (wire 24, DSIM40, context
 `PLAYER-MONSTERS-EPISODE1-2-v1`) is a separate optional superset of `PlayerMonstersEpisode1V1`
 (wire 23), decision [I2](M4B_REFERENCE_INVESTIGATION.md#5-owner-decisions-i1i13-with-recommendations).
 Select it with `Simulation::original_player_episode1_v2_map(map, map_number, skill, context)`
 (`crates/doom-sim/src/player_monsters.rs`). `map_number` is the Episode 1 slot, 1-9; the
-simulation holds it for the run, and DSIM40 records it as `level.map`. `skill` becomes
+simulation holds it for the run, and DSIM40 records it as `level.map`. `skill` (medium or hard) becomes
 `actors.options`. Then call `spawn_map_things`, `initialize_player_weapons` and
 `spawn_level_specials` once each before the first tic, as for wire 23. The canonical layout is
 the [STATE_FORMAT DSIM40 section](STATE_FORMAT.md#dsim-v40--episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill),
@@ -2526,22 +2526,34 @@ canonical state, as for every wire-23 mid-tic refusal):**
 
 **Refused now, each explicitly at load:**
 
-- skill 3 and every other skill but medium: `SimError::PlayerBody(PlayerBodyError::Unsupported)`
-  from the constructor; the runner reports a skill-3 demo before any tic. Hard skill is plan step 6;
+- every skill but medium (2) and hard (3), and any other non-default option (such as
+  `no_monsters`): `SimError::PlayerBody(PlayerBodyError::Unsupported)` from the constructor; the
+  runner reports such a demo header before any tic. Wires 23 and below still refuse hard skill
+  (`has_hard_skill()` is wire 24 only);
 - a map number outside 1-9: the same error;
 - line specials 39, 125 and 126 (the other teleports): `PursuitError::Specials`, as under every
   wire (decision I1);
-- the DSIM40 reader admits skill 2 only until step 6.
+- the DSIM40 reader refuses `actors.options[0]` other than 2 or 3 with `Identity`; DSIM36-39 admit 2
+  only.
 
 The Baron's fireball launch, its claw and `A_BossDeath`'s floor use the witnesses above (the
 store-full witness before a spawn, the height witness on every floor step); `A_BossDeath`'s
 thinker walk is one read per actor and runs before any mutation.
 
-So E1M5, E1M8 and E1M9 now load and run under wire 24 on skill 2.
+**Hard skill (plan step 6).** In single player nothing but `P_SpawnMapThing`'s option bit differs
+between skills 2 and 3: bit 2 for medium, bit 4 for hard (p_mobj.c:743-751). Wire 24 therefore
+counts the per-map bounds (`K`, the landings, the transient allowance) and the item and kill
+totals with the bit of the run's skill (`Episode1Bounds::from_map_v2`, `landings`,
+`world_pickups::counted_things_with_bit`); wires 23 and below keep bit 2. The demo reader already
+read skill 3, and the runners now run a skill-3 demo.
+
+So E1M5, E1M8 and E1M9 now load and run under wire 24 on skills 2 and 3. The evidence for skill 3 is
+the SKILL3 synthetic script and one idle run of E1M5; the scripted skill-3 runs on the real maps and
+`DEMO1` are plan step 7 ([evidence record](validation/M4B.md#rust-replay-hard-skill)).
 The observations (the 30 M4a synthetic scripts and the M4b teleport scripts compared with the
 genuine engine under wire 24, and the local real-map runs) are in
 [the evidence record](validation/M4B.md); the commands are in
 [TESTING](TESTING.md#m4b-synthetic-mechanism-wads). Rust-only tests are in
 `crates/doom-sim/src/player_episode1_v2_tests.rs`, `crates/doom-sim/src/teleport_tests.rs` and
-`crates/doom-sim/src/baron_tests.rs`; `crates/doom-sim/tests/episode1v2_mechanism_goldens.rs` replays the admitted M4b scripts against
+`crates/doom-sim/src/baron_tests.rs` and `crates/doom-sim/src/hard_skill_tests.rs`; `crates/doom-sim/tests/episode1v2_mechanism_goldens.rs` replays the admitted M4b scripts against
 the goldens and fixtures in `cargo test`.

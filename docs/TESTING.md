@@ -1819,7 +1819,8 @@ THING filter, with 18 scripts run through the genuine engine. Everything here is
 runs on a clean checkout; the observations are recorded in
 [the M4b evidence record](validation/M4B.md#synthetic-mechanism-wads-ci-evidence). The Rust side
 is wire 24 (`--policy episode1v2`): it runs the 30 M4a scripts against their DSIM40 projection
-now, and the M4b scripts as their mechanisms are admitted (plan steps 4-6).
+now, and every M4b script (plan steps 4-6 admitted them all; the `PENDING` table of
+`check_player_episode1v2.py` is empty).
 
 ```sh
 # generators and invariants (no compiler; every OS in CI)
@@ -1895,8 +1896,8 @@ python3 tools/reference/level_compare_m4b.py DUMP_DIR RUST_DIR --wad WAD --demo 
   byte. `--compare39` also requires every snapshot's DSIM40 projection to equal its DSIM39
   projection outside the four DSIM40 fields.
 - `check_player_episode1v2.py` runs every script of the M4a manifest and both M4b manifests with
-  `--policy episode1v2`, except the M4b scripts its `PENDING` table names with the step that
-  admits them, and compares each tic's stripped digest with the goldens. M4a scripts keep their
+  `--policy episode1v2`, except the scripts its `PENDING` table names with the step that
+  admits them (empty since step 6), and compares each tic's stripped digest with the goldens. M4a scripts keep their
   M4a manifest expectations; an M4b `tbd` must match, and `SPECH9` must then refuse its declared
   tic with `SpecialCross`: since `SPECH9.lmp` ends just before that tic, the tool runs it on its
   manifest `overrun_probe` demo (`SPECH8.lmp`, whose commands begin with SPECH9's). With
@@ -1920,6 +1921,12 @@ python3 tools/reference/level_compare_m4b.py /mnt/d/scratch/m4b/real/runs/strict
 
 A demo's base name becomes a WAD lump name in the genuine runner, so it must have at most eight
 characters. Delete the dumps once the counts and digests are recorded.
+
+Skill 3 (step 6): `--write-idle` writes a skill-2 header, so for a hard-skill run patch the demo's
+skill byte (byte 1 of the 13-byte header; 2 becomes 3) in scratch before both runs; the genuine
+engine and wire 24 both read the skill from that header. The commands are otherwise those above
+(for example `M5IDL3.lmp` in place of `M5IDLE.lmp`), and the dumps and the demo are deleted after
+the digests are recorded.
 - `level_compare_m4b.py` is `level_compare.py`'s method over the DSIM40 projection. It is a new
   tool, because `level_compare.py` is frozen and has no DSIM40 profile.
 
