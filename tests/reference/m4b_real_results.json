@@ -1,0 +1,1383 @@
+{
+ "schema": "DOOM-M4B-REAL-RESULTS-v1",
+ "note": "WIP: M4b step 7 wire-24 re-run of the M4a real-map scripts and the E1M1 scripts (E1M1 on the M4a driver); 24 of 30 runs; E1M6 M6WALK and the five E1M7 scripts not run",
+ "runs": [
+  {
+   "map": "E1M1",
+   "script": "BARRELS.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "72382f3c4012560a2f9767796ca6cf2569f78d023f40d19b46f489650342aeea",
+   "tics": 882,
+   "end": "marker",
+   "end_tic": 882,
+   "ends_agree": true,
+   "prndindex_after_load": 144,
+   "thinkers_at_load": 96,
+   "mobjs_at_load": 92,
+   "prndindex_end": 187,
+   "thinker_peak": 99,
+   "final_health": 82,
+   "final_killcount": 1,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 883,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "308f57e79a9673f6224efc048fd7e4b4e8fa4f69e39a8730f265147da1608454",
+    "overflow": "308f57e79a9673f6224efc048fd7e4b4e8fa4f69e39a8730f265147da1608454",
+    "address": "308f57e79a9673f6224efc048fd7e4b4e8fa4f69e39a8730f265147da1608454"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 1,
+   "rust_compare": {
+    "tics_compared": 883,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 882
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 882
+    },
+    "c_sequence_sha256": "01b180b28baaefeb67a6000e9aa3e9d4d70a82397e85c88a38b525afa53d755d",
+    "rust_sequence_sha256": "01b180b28baaefeb67a6000e9aa3e9d4d70a82397e85c88a38b525afa53d755d",
+    "final": {
+     "c_stripped_sha256": "e9eebb70cd7cefbaa7b3af55fcdbe8feeb43f062dc4b72a39107c7ae93a0a688",
+     "rust_stripped_sha256": "e9eebb70cd7cefbaa7b3af55fcdbe8feeb43f062dc4b72a39107c7ae93a0a688"
+    }
+   }
+  },
+  {
+   "map": "E1M1",
+   "script": "CHAOS.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "0895f4edc9352a3912237d155f2afb0d77d3e1ee2c7fd874ee5bc2e079ecd281",
+   "tics": 5000,
+   "end": "marker",
+   "end_tic": 5000,
+   "ends_agree": true,
+   "prndindex_after_load": 144,
+   "thinkers_at_load": 96,
+   "mobjs_at_load": 92,
+   "prndindex_end": 227,
+   "thinker_peak": 97,
+   "final_health": 102,
+   "final_killcount": 0,
+   "final_itemcount": 4,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 5001,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "858e78effe6b07d44fb70841b2f4bf8f4ea5b9642006b7ad2f4323120cbff07e",
+    "overflow": "858e78effe6b07d44fb70841b2f4bf8f4ea5b9642006b7ad2f4323120cbff07e",
+    "address": "858e78effe6b07d44fb70841b2f4bf8f4ea5b9642006b7ad2f4323120cbff07e"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 5001,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 5000
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 5000
+    },
+    "c_sequence_sha256": "0531735d08d85e64fba2852ce8e1b4c60dc388fbaa02b2f5f2e9d91335dc0b61",
+    "rust_sequence_sha256": "0531735d08d85e64fba2852ce8e1b4c60dc388fbaa02b2f5f2e9d91335dc0b61",
+    "final": {
+     "c_stripped_sha256": "ea418e8a4ce5d0791856204c4d1046f7f07de1951627b124a721eb17dd8ee978",
+     "rust_stripped_sha256": "ea418e8a4ce5d0791856204c4d1046f7f07de1951627b124a721eb17dd8ee978"
+    }
+   }
+  },
+  {
+   "map": "E1M1",
+   "script": "FIGHT.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "d1e26c20c179d01e37948221d7763cd1291f464e498522deb5403c17ea73289f",
+   "tics": 1281,
+   "end": "marker",
+   "end_tic": 1281,
+   "ends_agree": true,
+   "prndindex_after_load": 144,
+   "thinkers_at_load": 96,
+   "mobjs_at_load": 92,
+   "prndindex_end": 89,
+   "thinker_peak": 103,
+   "final_health": 75,
+   "final_killcount": 6,
+   "final_itemcount": 0,
+   "final_secretcount": 1,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 1282,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "2008c1fa76949dc2df5099bd77088c42e9956ee70d87fba49146aa68b87d4e01",
+    "overflow": "2008c1fa76949dc2df5099bd77088c42e9956ee70d87fba49146aa68b87d4e01",
+    "address": "2008c1fa76949dc2df5099bd77088c42e9956ee70d87fba49146aa68b87d4e01"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 6,
+   "rust_compare": {
+    "tics_compared": 1282,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 1281
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 1281
+    },
+    "c_sequence_sha256": "d6fbacf41646888280a4a3c792b4ad3b03dfeff23534b8ddb208b7e768fa16a9",
+    "rust_sequence_sha256": "d6fbacf41646888280a4a3c792b4ad3b03dfeff23534b8ddb208b7e768fa16a9",
+    "final": {
+     "c_stripped_sha256": "5b6c2284198d1d468186e3fb51f2ce89bab6c7016a3c90c2f8ca17567524628c",
+     "rust_stripped_sha256": "5b6c2284198d1d468186e3fb51f2ce89bab6c7016a3c90c2f8ca17567524628c"
+    }
+   }
+  },
+  {
+   "map": "E1M1",
+   "script": "WALK.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "5ee2edbe3a38b3882858092a76a514565d31827ec541403489c3f25f85f6c8c7",
+   "tics": 766,
+   "end": "exit",
+   "end_tic": 765,
+   "ends_agree": true,
+   "prndindex_after_load": 144,
+   "thinkers_at_load": 96,
+   "mobjs_at_load": 92,
+   "prndindex_end": 127,
+   "thinker_peak": 99,
+   "final_health": 78,
+   "final_killcount": 1,
+   "final_itemcount": 2,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 767,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "f57da18837108b22fe2cb2beca12de76fe8f1644f0a08b34b6e6092a9d700e61",
+    "overflow": "f57da18837108b22fe2cb2beca12de76fe8f1644f0a08b34b6e6092a9d700e61",
+    "address": "f57da18837108b22fe2cb2beca12de76fe8f1644f0a08b34b6e6092a9d700e61"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 1,
+   "rust_compare": {
+    "tics_compared": 767,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "exit",
+     "tic": 766
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 766
+    },
+    "c_sequence_sha256": "a1ac472f422240af7bd9f639244fb37a720dd8659b11308a4a788ef91464f7e7",
+    "rust_sequence_sha256": "a1ac472f422240af7bd9f639244fb37a720dd8659b11308a4a788ef91464f7e7",
+    "final": {
+     "c_stripped_sha256": "e00e087e93656e09c8faf3a08593934fb9706ac830c2db5233e077b186f9584d",
+     "rust_stripped_sha256": "e00e087e93656e09c8faf3a08593934fb9706ac830c2db5233e077b186f9584d"
+    }
+   }
+  },
+  {
+   "map": "E1M1",
+   "script": "idle.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "a8730210d4c253c7d203dbf19dfa105a1d762811185339a36bc24fa038adb1f2",
+   "tics": 2100,
+   "end": "marker",
+   "end_tic": 2100,
+   "ends_agree": true,
+   "prndindex_after_load": 144,
+   "thinkers_at_load": 96,
+   "mobjs_at_load": 92,
+   "prndindex_end": 253,
+   "thinker_peak": 96,
+   "final_health": 100,
+   "final_killcount": 0,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 2101,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "3d048ce1c05dbb999145dd83451a6e7c338bac88a259d1e39bc182158658f7b3",
+    "overflow": "3d048ce1c05dbb999145dd83451a6e7c338bac88a259d1e39bc182158658f7b3",
+    "address": "3d048ce1c05dbb999145dd83451a6e7c338bac88a259d1e39bc182158658f7b3"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 2101,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 2100
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 2100
+    },
+    "c_sequence_sha256": "b06ae9252a69c500cb82c4a21fec9eaf5036d40924b2721addab7373d1bb629c",
+    "rust_sequence_sha256": "b06ae9252a69c500cb82c4a21fec9eaf5036d40924b2721addab7373d1bb629c",
+    "final": {
+     "c_stripped_sha256": "3f57c7fd7e962e4318bc94a8328ea42fb10a18b8c0edaedb7d3a10a86a41d733",
+     "rust_stripped_sha256": "3f57c7fd7e962e4318bc94a8328ea42fb10a18b8c0edaedb7d3a10a86a41d733"
+    }
+   }
+  },
+  {
+   "map": "E1M2",
+   "script": "M2CHAOS.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "c7df1ecc23c7de77863acdf8bb49001187d89cdce2da4a9aecd992fd458436c7",
+   "tics": 1550,
+   "end": "reborn",
+   "end_tic": 1549,
+   "ends_agree": true,
+   "prndindex_after_load": 64,
+   "thinkers_at_load": 226,
+   "mobjs_at_load": 200,
+   "prndindex_end": 247,
+   "thinker_peak": 227,
+   "final_health": 0,
+   "final_killcount": 0,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 1545,
+   "secretexit": 0,
+   "snapshots": 1551,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "0b5571552844d3fe72225a6f2d107a6266a38866bc8ac4ac80999f7b18df89c3",
+    "overflow": "0b5571552844d3fe72225a6f2d107a6266a38866bc8ac4ac80999f7b18df89c3",
+    "address": "0b5571552844d3fe72225a6f2d107a6266a38866bc8ac4ac80999f7b18df89c3"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 1551,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 1550
+    },
+    "rust_end": {
+     "kind": "refused",
+     "refused_tic": 1551,
+     "last_capture": 1550
+    },
+    "rust_refusal": "PlayerReborn",
+    "c_sequence_sha256": "7c82266bbad759e32b6de900ddfb79190752f6bab862eb96cbbddd1b0f63edd7",
+    "rust_sequence_sha256": "7c82266bbad759e32b6de900ddfb79190752f6bab862eb96cbbddd1b0f63edd7",
+    "final": {
+     "c_stripped_sha256": "a501da563b6f29ff7ff6d1fd1df1416ae1c7afdfd848ec3fe10be4698c5a54f4",
+     "rust_stripped_sha256": "a501da563b6f29ff7ff6d1fd1df1416ae1c7afdfd848ec3fe10be4698c5a54f4"
+    }
+   }
+  },
+  {
+   "map": "E1M2",
+   "script": "M2DIE.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "9b87292c8497ff88befd10942da4e65e98c38afbe2708d50931e83f4b14a026e",
+   "tics": 999,
+   "end": "reborn",
+   "end_tic": 998,
+   "ends_agree": true,
+   "prndindex_after_load": 64,
+   "thinkers_at_load": 226,
+   "mobjs_at_load": 200,
+   "prndindex_end": 143,
+   "thinker_peak": 229,
+   "final_health": 0,
+   "final_killcount": 1,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 955,
+   "secretexit": 0,
+   "snapshots": 1000,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "d63c676276f029128d963b7857eae099154d1fcbbf7eb9cd2a228e676c53e40a",
+    "overflow": "d63c676276f029128d963b7857eae099154d1fcbbf7eb9cd2a228e676c53e40a",
+    "address": "d63c676276f029128d963b7857eae099154d1fcbbf7eb9cd2a228e676c53e40a"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 1,
+   "rust_compare": {
+    "tics_compared": 1000,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 999
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 999
+    },
+    "c_sequence_sha256": "d006755512f563f393305063d082b550b365ed428ed782acc6ae04c763b55241",
+    "rust_sequence_sha256": "d006755512f563f393305063d082b550b365ed428ed782acc6ae04c763b55241",
+    "final": {
+     "c_stripped_sha256": "2120498d45e36d7e1acc7ee9f6be5246fd91e5a84853c79efc7c13ea35cf7db0",
+     "rust_stripped_sha256": "2120498d45e36d7e1acc7ee9f6be5246fd91e5a84853c79efc7c13ea35cf7db0"
+    }
+   }
+  },
+  {
+   "map": "E1M2",
+   "script": "M2FIGHT.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "ee8870e9f23d43670d86e3bf3a9dc0cfa4c9879da0432a4944708edb8f2bf049",
+   "tics": 1581,
+   "end": "marker",
+   "end_tic": 1581,
+   "ends_agree": true,
+   "prndindex_after_load": 64,
+   "thinkers_at_load": 226,
+   "mobjs_at_load": 200,
+   "prndindex_end": 138,
+   "thinker_peak": 236,
+   "final_health": 100,
+   "final_killcount": 10,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 1582,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "cee3313ab4fce02376aca821a28871fbec635df6a2711170716de8902d120181",
+    "overflow": "cee3313ab4fce02376aca821a28871fbec635df6a2711170716de8902d120181",
+    "address": "cee3313ab4fce02376aca821a28871fbec635df6a2711170716de8902d120181"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 10,
+   "rust_compare": {
+    "tics_compared": 1582,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 1581
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 1581
+    },
+    "c_sequence_sha256": "4fb97dd7b1429bfd720ebf8300bc38ac1de1705f64a7ce76c51ed8463b5ce0eb",
+    "rust_sequence_sha256": "4fb97dd7b1429bfd720ebf8300bc38ac1de1705f64a7ce76c51ed8463b5ce0eb",
+    "final": {
+     "c_stripped_sha256": "e5e154cdbc5bd3f18d4a6585ff3b1f8f2145ec555d511bb632ab87ab3c55ed3f",
+     "rust_stripped_sha256": "e5e154cdbc5bd3f18d4a6585ff3b1f8f2145ec555d511bb632ab87ab3c55ed3f"
+    }
+   }
+  },
+  {
+   "map": "E1M2",
+   "script": "M2IDLE.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "d68b0ae5a852ee4643b666616149bd21cbdf88c40a89d0f816ac8cb617c3e9da",
+   "tics": 2100,
+   "end": "marker",
+   "end_tic": 2100,
+   "ends_agree": true,
+   "prndindex_after_load": 64,
+   "thinkers_at_load": 226,
+   "mobjs_at_load": 200,
+   "prndindex_end": 154,
+   "thinker_peak": 226,
+   "final_health": 100,
+   "final_killcount": 0,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 2101,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "0de76d06f4b02ded67b948da841c2a06fe7c76bc9f15e55afa7c51017fff84f9",
+    "overflow": "0de76d06f4b02ded67b948da841c2a06fe7c76bc9f15e55afa7c51017fff84f9",
+    "address": "0de76d06f4b02ded67b948da841c2a06fe7c76bc9f15e55afa7c51017fff84f9"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 2101,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 2100
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 2100
+    },
+    "c_sequence_sha256": "9954ac3a7a912d0bb3eb26b1695acf755cc34b3355c54b3fa9b0fc53d05dc85b",
+    "rust_sequence_sha256": "9954ac3a7a912d0bb3eb26b1695acf755cc34b3355c54b3fa9b0fc53d05dc85b",
+    "final": {
+     "c_stripped_sha256": "72ac62c4f2b9f97a11ffad4335f9e87011527e3a835bf06afeb1bee737323d44",
+     "rust_stripped_sha256": "72ac62c4f2b9f97a11ffad4335f9e87011527e3a835bf06afeb1bee737323d44"
+    }
+   }
+  },
+  {
+   "map": "E1M2",
+   "script": "M2WALK.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "0e8626d5200ee9d1c61d8625ac7d1ba9c2914247696c35c991aed61dc7231c6c",
+   "tics": 2864,
+   "end": "exit",
+   "end_tic": 2863,
+   "ends_agree": true,
+   "prndindex_after_load": 64,
+   "thinkers_at_load": 226,
+   "mobjs_at_load": 200,
+   "prndindex_end": 86,
+   "thinker_peak": 232,
+   "final_health": 71,
+   "final_killcount": 22,
+   "final_itemcount": 2,
+   "final_secretcount": 1,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 2865,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "37c31439cc526690fc2ffc9cc6d8c117d1f34b62195ee9cc52dd5fb2b60c9104",
+    "overflow": "37c31439cc526690fc2ffc9cc6d8c117d1f34b62195ee9cc52dd5fb2b60c9104",
+    "address": "37c31439cc526690fc2ffc9cc6d8c117d1f34b62195ee9cc52dd5fb2b60c9104"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 22,
+   "rust_compare": {
+    "tics_compared": 2865,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "exit",
+     "tic": 2864
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 2864
+    },
+    "c_sequence_sha256": "711ca14d043e977ca4688c3950563e189e5943581f69ba0ac264ca6af9a8bf5f",
+    "rust_sequence_sha256": "711ca14d043e977ca4688c3950563e189e5943581f69ba0ac264ca6af9a8bf5f",
+    "final": {
+     "c_stripped_sha256": "3342519938d3295145610e7f9182aee83b70fb79ffbfe74f754b58b9e24625df",
+     "rust_stripped_sha256": "3342519938d3295145610e7f9182aee83b70fb79ffbfe74f754b58b9e24625df"
+    }
+   }
+  },
+  {
+   "map": "E1M3",
+   "script": "M3CHAOS.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "ecc287cfc46da06a00c224ae49b7dcda151c4a5cc39007bc98a31d003e23f1fb",
+   "tics": 3362,
+   "end": "reborn",
+   "end_tic": 3361,
+   "ends_agree": true,
+   "prndindex_after_load": 9,
+   "thinkers_at_load": 322,
+   "mobjs_at_load": 310,
+   "prndindex_end": 138,
+   "thinker_peak": 325,
+   "final_health": 0,
+   "final_killcount": 4,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 3360,
+   "secretexit": 0,
+   "snapshots": 3363,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "7bf35fe9bc7dabbc859966fb6c5f7dd960155276189d042e8c8f379b8804d844",
+    "overflow": "7bf35fe9bc7dabbc859966fb6c5f7dd960155276189d042e8c8f379b8804d844",
+    "address": "7bf35fe9bc7dabbc859966fb6c5f7dd960155276189d042e8c8f379b8804d844"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 4,
+   "rust_compare": {
+    "tics_compared": 3363,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 3362
+    },
+    "rust_end": {
+     "kind": "refused",
+     "refused_tic": 3363,
+     "last_capture": 3362
+    },
+    "rust_refusal": "PlayerReborn",
+    "c_sequence_sha256": "647319ba1fb09e626e910baf44ab518f3b1788b8d456e35fe826a2bb52dc7a28",
+    "rust_sequence_sha256": "647319ba1fb09e626e910baf44ab518f3b1788b8d456e35fe826a2bb52dc7a28",
+    "final": {
+     "c_stripped_sha256": "c04ff2d08363ef94d6b2f9fd667044a7b802a0d5dbf94619df603061b390fe28",
+     "rust_stripped_sha256": "c04ff2d08363ef94d6b2f9fd667044a7b802a0d5dbf94619df603061b390fe28"
+    }
+   }
+  },
+  {
+   "map": "E1M3",
+   "script": "M3DIE.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "0eb3a776f93bae720732eb016f166aefd4b814f3def27434606e58bb6077244f",
+   "tics": 1000,
+   "end": "reborn",
+   "end_tic": 999,
+   "ends_agree": true,
+   "prndindex_after_load": 9,
+   "thinkers_at_load": 322,
+   "mobjs_at_load": 310,
+   "prndindex_end": 32,
+   "thinker_peak": 325,
+   "final_health": 0,
+   "final_killcount": 3,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 958,
+   "secretexit": 0,
+   "snapshots": 1001,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "9086f689649ea25b5a194576302fe333635a644fdabedb250ce1aed3bca90a5e",
+    "overflow": "9086f689649ea25b5a194576302fe333635a644fdabedb250ce1aed3bca90a5e",
+    "address": "9086f689649ea25b5a194576302fe333635a644fdabedb250ce1aed3bca90a5e"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 3,
+   "rust_compare": {
+    "tics_compared": 1001,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 1000
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 1000
+    },
+    "c_sequence_sha256": "92d016324db6ad819a20d07771e207755bd9c469f60f5296b2456621850892a1",
+    "rust_sequence_sha256": "92d016324db6ad819a20d07771e207755bd9c469f60f5296b2456621850892a1",
+    "final": {
+     "c_stripped_sha256": "56e9121809c23efcaf14745ba1ace4c2c4af4879a9daa4a0c6aa62eb38343379",
+     "rust_stripped_sha256": "56e9121809c23efcaf14745ba1ace4c2c4af4879a9daa4a0c6aa62eb38343379"
+    }
+   }
+  },
+  {
+   "map": "E1M3",
+   "script": "M3FIGHT.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "6d3a9ebe05be039b33fbb2dab797afcf7be1ae7a5b267fe971606dbfb165b6cd",
+   "tics": 1495,
+   "end": "marker",
+   "end_tic": 1495,
+   "ends_agree": true,
+   "prndindex_after_load": 9,
+   "thinkers_at_load": 322,
+   "mobjs_at_load": 310,
+   "prndindex_end": 118,
+   "thinker_peak": 328,
+   "final_health": 57,
+   "final_killcount": 12,
+   "final_itemcount": 2,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 1496,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "6573bf2307feaf3d414dcf09660d3cc8b55fef93819cc587e708a4cb576ea5df",
+    "overflow": "6573bf2307feaf3d414dcf09660d3cc8b55fef93819cc587e708a4cb576ea5df",
+    "address": "6573bf2307feaf3d414dcf09660d3cc8b55fef93819cc587e708a4cb576ea5df"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 12,
+   "rust_compare": {
+    "tics_compared": 1496,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 1495
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 1495
+    },
+    "c_sequence_sha256": "9d98d94556ef40bb8709fa0b4a34a9759cd7164622ba0744f6aa12b02d65b26e",
+    "rust_sequence_sha256": "9d98d94556ef40bb8709fa0b4a34a9759cd7164622ba0744f6aa12b02d65b26e",
+    "final": {
+     "c_stripped_sha256": "bd91cf96a648442b42b818a126e58bea69fb468f2a48a939fb7a9e865effc43a",
+     "rust_stripped_sha256": "bd91cf96a648442b42b818a126e58bea69fb468f2a48a939fb7a9e865effc43a"
+    }
+   }
+  },
+  {
+   "map": "E1M3",
+   "script": "M3IDLE.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "0625d8262ef9998dd910a7c2e11f5ecaba5d633ae53ab8df41098511c8e79b64",
+   "tics": 2100,
+   "end": "marker",
+   "end_tic": 2100,
+   "ends_agree": true,
+   "prndindex_after_load": 9,
+   "thinkers_at_load": 322,
+   "mobjs_at_load": 310,
+   "prndindex_end": 145,
+   "thinker_peak": 322,
+   "final_health": 100,
+   "final_killcount": 0,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 2101,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "debe8b90435924f8fa1776ccc9e36069ab23d1194cb03e00ea231a4a5195c9fd",
+    "overflow": "debe8b90435924f8fa1776ccc9e36069ab23d1194cb03e00ea231a4a5195c9fd",
+    "address": "debe8b90435924f8fa1776ccc9e36069ab23d1194cb03e00ea231a4a5195c9fd"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 2101,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 2100
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 2100
+    },
+    "c_sequence_sha256": "f5218b00aca5521207a9f600b5145adc8e4ceeeffd5eac2e15245bd83340f341",
+    "rust_sequence_sha256": "f5218b00aca5521207a9f600b5145adc8e4ceeeffd5eac2e15245bd83340f341",
+    "final": {
+     "c_stripped_sha256": "aa875656d00aa636167f17b5c186e3257532b191334b1085c667c41e6147c916",
+     "rust_stripped_sha256": "aa875656d00aa636167f17b5c186e3257532b191334b1085c667c41e6147c916"
+    }
+   }
+  },
+  {
+   "map": "E1M3",
+   "script": "M3WALK.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "d4b91fbb5fdae77a38bb28be551ee4e984b234429434b7c0a8b3f465d83095f8",
+   "tics": 5793,
+   "end": "exit",
+   "end_tic": 5792,
+   "ends_agree": true,
+   "prndindex_after_load": 9,
+   "thinkers_at_load": 322,
+   "mobjs_at_load": 310,
+   "prndindex_end": 205,
+   "thinker_peak": 334,
+   "final_health": 97,
+   "final_killcount": 49,
+   "final_itemcount": 11,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 5794,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [
+    [
+     1121,
+     1
+    ]
+   ],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "88af49d4a8b556a74f622b4be52c300c9014f58236721f81208d2df7fcde60ef",
+    "overflow": "88af49d4a8b556a74f622b4be52c300c9014f58236721f81208d2df7fcde60ef",
+    "address": "88af49d4a8b556a74f622b4be52c300c9014f58236721f81208d2df7fcde60ef"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 49,
+   "rust_compare": {
+    "tics_compared": 5794,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "exit",
+     "tic": 5793
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 5793
+    },
+    "c_sequence_sha256": "79e5829165d91ea74c06a10547cabdddbc4cbb7c2a1d4d010ca4fae1645369b7",
+    "rust_sequence_sha256": "79e5829165d91ea74c06a10547cabdddbc4cbb7c2a1d4d010ca4fae1645369b7",
+    "final": {
+     "c_stripped_sha256": "763a3d88fce00aae0c99596255fb18766baa0c49c940987c9d466388259fa686",
+     "rust_stripped_sha256": "763a3d88fce00aae0c99596255fb18766baa0c49c940987c9d466388259fa686"
+    }
+   }
+  },
+  {
+   "map": "E1M4",
+   "script": "M4CHAOS.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "6d4d45c0c8ee71ed429edc83eb025437be25bffa477820b588ae7de44c85204a",
+   "tics": 1669,
+   "end": "reborn",
+   "end_tic": 1668,
+   "ends_agree": true,
+   "prndindex_after_load": 85,
+   "thinkers_at_load": 213,
+   "mobjs_at_load": 201,
+   "prndindex_end": 74,
+   "thinker_peak": 222,
+   "final_health": 0,
+   "final_killcount": 6,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 1663,
+   "secretexit": 0,
+   "snapshots": 1670,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "60ced0eeaba68dbab6bfa733a96039271d8ea73a942fafc79701b0c28e1e0946",
+    "overflow": "60ced0eeaba68dbab6bfa733a96039271d8ea73a942fafc79701b0c28e1e0946",
+    "address": "60ced0eeaba68dbab6bfa733a96039271d8ea73a942fafc79701b0c28e1e0946"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 6,
+   "rust_compare": {
+    "tics_compared": 1670,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 1669
+    },
+    "rust_end": {
+     "kind": "refused",
+     "refused_tic": 1670,
+     "last_capture": 1669
+    },
+    "rust_refusal": "PlayerReborn",
+    "c_sequence_sha256": "863fe7bac4479dedc92dc3148b5e1b20c68799d8f1307bd98de306a60fe7d61c",
+    "rust_sequence_sha256": "863fe7bac4479dedc92dc3148b5e1b20c68799d8f1307bd98de306a60fe7d61c",
+    "final": {
+     "c_stripped_sha256": "d2955cc14ed3765cb075eec86562ed92a6cf133366c3e358786f69d0e4851dec",
+     "rust_stripped_sha256": "d2955cc14ed3765cb075eec86562ed92a6cf133366c3e358786f69d0e4851dec"
+    }
+   }
+  },
+  {
+   "map": "E1M4",
+   "script": "M4DIE.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "6b363f9743e3a0ebcbb2dc89c771eed5d0bfe0c2a63bea62040d33003c3ebb61",
+   "tics": 402,
+   "end": "reborn",
+   "end_tic": 401,
+   "ends_agree": true,
+   "prndindex_after_load": 85,
+   "thinkers_at_load": 213,
+   "mobjs_at_load": 201,
+   "prndindex_end": 197,
+   "thinker_peak": 221,
+   "final_health": 0,
+   "final_killcount": 2,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 360,
+   "secretexit": 0,
+   "snapshots": 403,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "61bee728011e102dae329c0c38e5f62a30462574ee96522033d0a9b1a4198618",
+    "overflow": "61bee728011e102dae329c0c38e5f62a30462574ee96522033d0a9b1a4198618",
+    "address": "61bee728011e102dae329c0c38e5f62a30462574ee96522033d0a9b1a4198618"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 2,
+   "rust_compare": {
+    "tics_compared": 403,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 402
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 402
+    },
+    "c_sequence_sha256": "06d0a6efbabf81ca732ce836cc7658e287c37d3ba280341cec0473fe7b7c199e",
+    "rust_sequence_sha256": "06d0a6efbabf81ca732ce836cc7658e287c37d3ba280341cec0473fe7b7c199e",
+    "final": {
+     "c_stripped_sha256": "a08a040f4694536b2b1717428a57b2aed5b61abaf44c0b9f3e003729e4887381",
+     "rust_stripped_sha256": "a08a040f4694536b2b1717428a57b2aed5b61abaf44c0b9f3e003729e4887381"
+    }
+   }
+  },
+  {
+   "map": "E1M4",
+   "script": "M4FIGHT.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "9b1c7bde53ced81f7f446b2143b2747b26ddee244bb35dd781500511402bab46",
+   "tics": 1771,
+   "end": "marker",
+   "end_tic": 1771,
+   "ends_agree": true,
+   "prndindex_after_load": 85,
+   "thinkers_at_load": 213,
+   "mobjs_at_load": 201,
+   "prndindex_end": 123,
+   "thinker_peak": 220,
+   "final_health": 78,
+   "final_killcount": 6,
+   "final_itemcount": 3,
+   "final_secretcount": 1,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 1772,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "8856ef81e7ccda17b642af5c32cd0b170d8617f2fcaba9791a7da581a1b72f7e",
+    "overflow": "8856ef81e7ccda17b642af5c32cd0b170d8617f2fcaba9791a7da581a1b72f7e",
+    "address": "8856ef81e7ccda17b642af5c32cd0b170d8617f2fcaba9791a7da581a1b72f7e"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 6,
+   "rust_compare": {
+    "tics_compared": 1772,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 1771
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 1771
+    },
+    "c_sequence_sha256": "cc241624166aa4624ab41ffc39879729d07d04b5238585f238ecfbf6cd0498cd",
+    "rust_sequence_sha256": "cc241624166aa4624ab41ffc39879729d07d04b5238585f238ecfbf6cd0498cd",
+    "final": {
+     "c_stripped_sha256": "4709c4be2419b78b36d2debb19561912c864bc0da62a519742a6636eadb1e8ab",
+     "rust_stripped_sha256": "4709c4be2419b78b36d2debb19561912c864bc0da62a519742a6636eadb1e8ab"
+    }
+   }
+  },
+  {
+   "map": "E1M4",
+   "script": "M4IDLE.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "1db3fc89493c1637e4be7821e5bc5e70365c4fd124f6297576b1f98ac0420bef",
+   "tics": 2100,
+   "end": "marker",
+   "end_tic": 2100,
+   "ends_agree": true,
+   "prndindex_after_load": 85,
+   "thinkers_at_load": 213,
+   "mobjs_at_load": 201,
+   "prndindex_end": 40,
+   "thinker_peak": 213,
+   "final_health": 100,
+   "final_killcount": 0,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 2101,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "e1833fbf3ccd81d2f053d5ee11871dc31cb09d172988363668ec671861edfa16",
+    "overflow": "e1833fbf3ccd81d2f053d5ee11871dc31cb09d172988363668ec671861edfa16",
+    "address": "e1833fbf3ccd81d2f053d5ee11871dc31cb09d172988363668ec671861edfa16"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 2101,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 2100
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 2100
+    },
+    "c_sequence_sha256": "cf5ec68d68a155be67653b627de42f58f1467c0ed05fc3392aa36271a9960fe0",
+    "rust_sequence_sha256": "cf5ec68d68a155be67653b627de42f58f1467c0ed05fc3392aa36271a9960fe0",
+    "final": {
+     "c_stripped_sha256": "12a0bf42e166f319dedbcbb0f137d8753e90ee57e626d67a0c934b2b10e53e7d",
+     "rust_stripped_sha256": "12a0bf42e166f319dedbcbb0f137d8753e90ee57e626d67a0c934b2b10e53e7d"
+    }
+   }
+  },
+  {
+   "map": "E1M4",
+   "script": "M4WALK.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "b7e88b8a527a1647591114c44241dcc93666f9c6fe389c533a0e2fde663d00a9",
+   "tics": 3444,
+   "end": "exit",
+   "end_tic": 3443,
+   "ends_agree": true,
+   "prndindex_after_load": 85,
+   "thinkers_at_load": 213,
+   "mobjs_at_load": 201,
+   "prndindex_end": 200,
+   "thinker_peak": 229,
+   "final_health": 75,
+   "final_killcount": 17,
+   "final_itemcount": 5,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 3445,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "c3c9b90608cd1dfb013acc09fec23454aa04060e9156d0cf75f456c3cec11828",
+    "overflow": "c3c9b90608cd1dfb013acc09fec23454aa04060e9156d0cf75f456c3cec11828",
+    "address": "c3c9b90608cd1dfb013acc09fec23454aa04060e9156d0cf75f456c3cec11828"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 17,
+   "rust_compare": {
+    "tics_compared": 3445,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "exit",
+     "tic": 3444
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 3444
+    },
+    "c_sequence_sha256": "3dc94cf92b216fa4633c1f615776a919283b342ddad52b59c31e40c63e13a4d8",
+    "rust_sequence_sha256": "3dc94cf92b216fa4633c1f615776a919283b342ddad52b59c31e40c63e13a4d8",
+    "final": {
+     "c_stripped_sha256": "b3b3825adc512f217640a9c37fe84fadc0d0522c3da1ffb86349ff5f01eea221",
+     "rust_stripped_sha256": "b3b3825adc512f217640a9c37fe84fadc0d0522c3da1ffb86349ff5f01eea221"
+    }
+   }
+  },
+  {
+   "map": "E1M6",
+   "script": "M6CHAOS.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "eaa9c783f9f0c4dc04b74d9097a71aae6176dde763c0debc7b02ae838a21abc7",
+   "tics": 1018,
+   "end": "reborn",
+   "end_tic": 1017,
+   "ends_agree": true,
+   "prndindex_after_load": 111,
+   "thinkers_at_load": 382,
+   "mobjs_at_load": 370,
+   "prndindex_end": 126,
+   "thinker_peak": 386,
+   "final_health": 0,
+   "final_killcount": 1,
+   "final_itemcount": 1,
+   "final_secretcount": 0,
+   "death_tic": 1014,
+   "secretexit": 0,
+   "snapshots": 1019,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "ba9da533b4d5368622bb497e1088666d1182c9ae432e3233ebabc84d4a273a82",
+    "overflow": "ba9da533b4d5368622bb497e1088666d1182c9ae432e3233ebabc84d4a273a82",
+    "address": "ba9da533b4d5368622bb497e1088666d1182c9ae432e3233ebabc84d4a273a82"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 1,
+   "rust_compare": {
+    "tics_compared": 1019,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 1018
+    },
+    "rust_end": {
+     "kind": "refused",
+     "refused_tic": 1019,
+     "last_capture": 1018
+    },
+    "rust_refusal": "PlayerReborn",
+    "c_sequence_sha256": "a22eb19450a5e298b590deeee9de12a72b12270b910fa5785e626d58828a1628",
+    "rust_sequence_sha256": "a22eb19450a5e298b590deeee9de12a72b12270b910fa5785e626d58828a1628",
+    "final": {
+     "c_stripped_sha256": "36f61b2910e2ca58c7ef36216290ac18df0c6aeaf555cb4b0753b217722270c5",
+     "rust_stripped_sha256": "36f61b2910e2ca58c7ef36216290ac18df0c6aeaf555cb4b0753b217722270c5"
+    }
+   }
+  },
+  {
+   "map": "E1M6",
+   "script": "M6DIE.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "ae29ac629c883b8ca2a361da62a90c9011c451c615335558884864798ff86d8d",
+   "tics": 350,
+   "end": "reborn",
+   "end_tic": 349,
+   "ends_agree": true,
+   "prndindex_after_load": 111,
+   "thinkers_at_load": 382,
+   "mobjs_at_load": 370,
+   "prndindex_end": 45,
+   "thinker_peak": 388,
+   "final_health": 0,
+   "final_killcount": 1,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 304,
+   "secretexit": 0,
+   "snapshots": 351,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "fa118330a8e6f66bbc58ba31b9cfad5d37a92e9665454cbb0384b11ec063d12f",
+    "overflow": "fa118330a8e6f66bbc58ba31b9cfad5d37a92e9665454cbb0384b11ec063d12f",
+    "address": "fa118330a8e6f66bbc58ba31b9cfad5d37a92e9665454cbb0384b11ec063d12f"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 1,
+   "rust_compare": {
+    "tics_compared": 351,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 350
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 350
+    },
+    "c_sequence_sha256": "82349b74d9e95b2bccdcbcf72dfd1871e6a14e9c5eb491dfde58903c349b9756",
+    "rust_sequence_sha256": "82349b74d9e95b2bccdcbcf72dfd1871e6a14e9c5eb491dfde58903c349b9756",
+    "final": {
+     "c_stripped_sha256": "a1bc0e01cc03459c0c0826da56e048dc0ca34324e143b4929189bffe3f7113ba",
+     "rust_stripped_sha256": "a1bc0e01cc03459c0c0826da56e048dc0ca34324e143b4929189bffe3f7113ba"
+    }
+   }
+  },
+  {
+   "map": "E1M6",
+   "script": "M6FIGHT.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "365d68d851f47de9aa96a8408929e1114ef01f275a1045b7906ad8d332332d04",
+   "tics": 1435,
+   "end": "marker",
+   "end_tic": 1435,
+   "ends_agree": true,
+   "prndindex_after_load": 111,
+   "thinkers_at_load": 382,
+   "mobjs_at_load": 370,
+   "prndindex_end": 40,
+   "thinker_peak": 393,
+   "final_health": 18,
+   "final_killcount": 19,
+   "final_itemcount": 2,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 1436,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "94416dfea68340ef0b9b207a2e38dedaa0d2856197c3b2b8b89153ce05dec537",
+    "overflow": "94416dfea68340ef0b9b207a2e38dedaa0d2856197c3b2b8b89153ce05dec537",
+    "address": "94416dfea68340ef0b9b207a2e38dedaa0d2856197c3b2b8b89153ce05dec537"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 19,
+   "rust_compare": {
+    "tics_compared": 1436,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 1435
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 1435
+    },
+    "c_sequence_sha256": "1203e92253b9b1b09293ed18d5518ada6e155bb6036f69fb928127ea49fe8658",
+    "rust_sequence_sha256": "1203e92253b9b1b09293ed18d5518ada6e155bb6036f69fb928127ea49fe8658",
+    "final": {
+     "c_stripped_sha256": "0be72077d221643ffd9e6002ee3d8f78ee89b44fdbbc1bd23d511b365d11ac1a",
+     "rust_stripped_sha256": "0be72077d221643ffd9e6002ee3d8f78ee89b44fdbbc1bd23d511b365d11ac1a"
+    }
+   }
+  },
+  {
+   "map": "E1M6",
+   "script": "M6IDLE.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "11df27770b127ceb5327d4f062d1c565db991d0fbea620d0b6c310612b56aac4",
+   "tics": 2100,
+   "end": "marker",
+   "end_tic": 2100,
+   "ends_agree": true,
+   "prndindex_after_load": 111,
+   "thinkers_at_load": 382,
+   "mobjs_at_load": 370,
+   "prndindex_end": 141,
+   "thinker_peak": 382,
+   "final_health": 100,
+   "final_killcount": 0,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 2101,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "39aa0fa1e939f7c4786d5548c42e24816b664d91632396a04220642a9f5396bd",
+    "overflow": "39aa0fa1e939f7c4786d5548c42e24816b664d91632396a04220642a9f5396bd",
+    "address": "39aa0fa1e939f7c4786d5548c42e24816b664d91632396a04220642a9f5396bd"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 2101,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 2100
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 2100
+    },
+    "c_sequence_sha256": "a9ffebf4c4d0154f62240b85908cade7670dd07d8a319ca46509f24c18a48d6f",
+    "rust_sequence_sha256": "a9ffebf4c4d0154f62240b85908cade7670dd07d8a319ca46509f24c18a48d6f",
+    "final": {
+     "c_stripped_sha256": "f6cf28583d95a13de623d71b36949528b3dbc06c6c4fc06a8f52ea00181dc67d",
+     "rust_stripped_sha256": "f6cf28583d95a13de623d71b36949528b3dbc06c6c4fc06a8f52ea00181dc67d"
+    }
+   }
+  }
+ ]
+}
