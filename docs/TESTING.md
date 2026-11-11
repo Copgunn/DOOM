@@ -1824,8 +1824,8 @@ now, and the M4b scripts as their mechanisms are admitted (plan steps 4-6).
 ```sh
 # generators and invariants (no compiler; every OS in CI)
 python3 tools/reference/m4b_build.py --check               # M4b runner contract: the M4a driver plus the telefrag adapter (p_inter.c:817, sanitizer builds only)
-python3 tools/reference/m4b_wad.py [--out-dir DIR] [--check]  # 14 WADs in tests/reference/m4b_wads/; --check compares bytes and manifest fields, then runs the verifier
-python3 tools/reference/m4b_check_wad.py --check           # independent verifier of every manifest WAD (teleport search order, special-line box, skill counts)
+python3 tools/reference/m4b_wad.py [--out-dir DIR] [--check]  # 15 WADs in tests/reference/m4b_wads/ (14 of the first set, tele2x of the second); --check compares bytes and both manifests' fields, then runs the verifier
+python3 tools/reference/m4b_check_wad.py --check           # independent verifier of every WAD of both manifests (teleport search order, special-line box, skill counts)
 python3 tools/reference/m4b_scripts.py --check             # tests/reference/m4b_scripts (.txt -> .lmp; adds the "skill N" directive)
 python3 tools/reference/test_level_snapshot_m4b.py          # DSIM40 tables against info.h/info.c, dump columns against m4a_driver.c, header rules
 
@@ -1838,6 +1838,10 @@ python3 tools/reference/m4b_build.py --variant strict|overflow|address|all|stric
 python3 tools/reference/m4b_reference.py --work /mnt/d/scratch/m4b/ref --check --keep-dumps
 python3 tools/reference/m4b_snapshot_goldens.py --dumps /mnt/d/scratch/m4b/ref/runs --check [--selftest]
 python3 tools/reference/m4b_snapshot_goldens.py [--work DIR] --check   # runs m4b_reference.py itself, deletes the dumps afterwards
+
+# the second M4b set (step 5: TELE2X, two teleports in one tic), the same tools with --set 2
+python3 tools/reference/m4b_reference.py --set 2 --work /mnt/d/scratch/m4b/ref2 --check --keep-dumps
+python3 tools/reference/m4b_snapshot_goldens.py --set 2 --dumps /mnt/d/scratch/m4b/ref2/runs --check
 python3 tools/reference/level_snapshot_m4b.py DUMP_DIR --wad WAD --demo LMP [--out DIR] [--compare39]
 ```
 
@@ -1852,6 +1856,10 @@ What each asserts:
   the sanitizer report at `p_map.c:242` after dumping tic 74. `--selftest TIC` plants an extra
   `P_Random` draw and a changed command at tic TIC of `TELE1` and requires each to be first
   reported at that tic.
+- `--set 2` selects the second M4b set: `tests/reference/m4b_manifest2.json`,
+  `m4b_synthetic_results2.json`, `m4b_synthetic_goldens2.json` and the `m4b2_episode1v2_*.bin`
+  fixtures. It exists so that every file of the first set stays byte-identical when scripts are
+  added; it has no self-test script of its own (the first set's self-tests cover the tools).
 - `m4b_snapshot_goldens.py --check` requires each strict dump set to equal the
   `dumps_sha256` of `m4b_synthetic_results.json`, projects every script to DSIM40 with the
   skill and map number of its demo header, checks each fixture's claim on its dump, and
@@ -1886,7 +1894,7 @@ python3 tools/reference/level_compare_m4b.py DUMP_DIR RUST_DIR --wad WAD --demo 
   skill and map of its header and compares `tests/reference/m4b_m4a_goldens.json` byte for
   byte. `--compare39` also requires every snapshot's DSIM40 projection to equal its DSIM39
   projection outside the four DSIM40 fields.
-- `check_player_episode1v2.py` runs every script of the M4a and M4b manifests with
+- `check_player_episode1v2.py` runs every script of the M4a manifest and both M4b manifests with
   `--policy episode1v2`, except the M4b scripts its `PENDING` table names with the step that
   admits them, and compares each tic's stripped digest with the goldens. M4a scripts keep their
   M4a manifest expectations; an M4b `tbd` must match, and `SPECH9` must then refuse its declared

@@ -2430,9 +2430,9 @@ and for the observations [validation/M4A.md](validation/M4A.md); Rust-only tests
 
 ## Original Episode 1, part 2: teleporters, the Baron of Hell, `A_BossDeath` and hard skill (wire 24)
 
-**Status: in progress (M4b, plan step 4 of the [note](M4B_REFERENCE_INVESTIGATION.md#6-plan-size-estimate-and-cap)); see
-[ROADMAP](ROADMAP.md).** Wire 24 is wire 23 plus teleportation. The Baron, `A_BossDeath` and
-hard skill are still refused at load, as listed below.
+**Status: in progress (M4b, plan step 5 of the [note](M4B_REFERENCE_INVESTIGATION.md#6-plan-size-estimate-and-cap)); see
+[ROADMAP](ROADMAP.md).** Wire 24 is wire 23 plus teleportation, the Baron of Hell and
+`A_BossDeath`. Hard skill is still refused at load, as listed below.
 
 `OriginalExecutionProfile::PlayerMonstersEpisode1V2` (wire 24, DSIM40, context
 `PLAYER-MONSTERS-EPISODE1-2-v1`) is a separate optional superset of `PlayerMonstersEpisode1V1`
@@ -2478,6 +2478,36 @@ skill from the header. Plus teleportation (plan step 4; decisions I3, I7 and I8)
   stays refused everywhere else and on every older wire. A second player-1 start (a voodoo
   doll) is refused at spawn, as under wire 22 and 23, so a victim is never a player.
 
+Plus the Baron of Hell and `A_BossDeath` (plan step 5; decision I9):
+
+- **The Baron** (doomednum 3003, `MT_BRUISER`) with its whole normal state closure
+  (`S_BOSS_STND` … `S_BOSS_DIE7`; the raise states stay metadata) and the shared look, chase,
+  face, pain, scream and fall actions. `A_Chase` takes its melee branch without a `movecount`
+  test and without setting `MF_JUSTATTACKED`, its missile branch only at `movecount` 0 and with
+  the flag (p_enemy.c:725–749). **`A_BruisAttack`** (p_enemy.c:979–996) does not face the target;
+  in melee range it claws (`sfx_claw`, one draw, `(P_Random()%8+1)*10` damage with inflictor and
+  source the Baron), otherwise it fires an `MT_BRUISERSHOT` through the same `P_SpawnMissile` as
+  the Imp (one launcher parametrised by type; the Imp's path is unchanged). The fireball is speed
+  15, damage `((P_Random()%8)+1)*8`, no splash; it never splits a step. A contact during the
+  spawn half step draws the damage, runs `P_DamageMobj` and then explodes (with its draw). A
+  Baron fireball explodes on another Baron without damage (the species rule); it hurts every
+  other shootable thing, which may then fight back (infighting), and the shadow fuzz applies at
+  an `MF_SHADOW` target in both `A_FaceTarget` and `P_SpawnMissile` (left draw first, as observed
+  in the genuine engine). Death: `S_BOSS_DIE1` with its tics draw, `A_Scream`, `A_Fall`, no drop.
+- **`A_BossDeath`** runs on entry into `S_BOSS_DIE7` and makes the source's checks in order: the
+  map number must be 8, the player's health above 0, and no other Baron in the thinker list may
+  have health above 0. Then `EV_DoFloor(lowerFloorToLowest)` on every sector tagged 666, in index
+  order; a sector that already has a mover is skipped; each new floor is appended to the thinker
+  order and moves in the same tic. The call names no line (the source passes a local line whose
+  only field is the tag). On every other map, or when a check fails, nothing happens; it never
+  exits the level. E1M8 ends through sector special 11, as wire 23 already models: the exit tic
+  completes and every later tic is refused with `LevelExited`. The ±1,024 sector-height witness
+  covers the boss floor (it is an ordinary floor step); it cannot fire there, because the floor
+  only moves down to a current neighbour height.
+- **Per-map bounds.** Wire 24 counts doomednum 3003 in `K` (placed monsters) as a monster that
+  drops nothing; everything derived from `K` follows (the roster, the sight allowances, the
+  transient allowance). Wire 23's bounds and the DSIM39 reader's count are unchanged.
+
 **Witnesses of the teleport (each refuses the tic; the checked transaction keeps the whole
 canonical state, as for every wire-23 mid-tic refusal):**
 
@@ -2501,15 +2531,17 @@ canonical state, as for every wire-23 mid-tic refusal):**
 - a map number outside 1-9: the same error;
 - line specials 39, 125 and 126 (the other teleports): `PursuitError::Specials`, as under every
   wire (decision I1);
-- the Baron of Hell (3003, plan step 5): `MapSpawnError::UnsupportedType` from
-  `spawn_map_things`, which then changes nothing. `A_BossDeath` comes with the Baron;
-- the DSIM40 reader admits skill 2 only until step 6, and not yet the Baron's types and states.
+- the DSIM40 reader admits skill 2 only until step 6.
 
-So E1M5 and E1M9 now load and run under wire 24 on skill 2; E1M8 is still refused (its Barons).
+The Baron's fireball launch, its claw and `A_BossDeath`'s floor use the witnesses above (the
+store-full witness before a spawn, the height witness on every floor step); `A_BossDeath`'s
+thinker walk is one read per actor and runs before any mutation.
+
+So E1M5, E1M8 and E1M9 now load and run under wire 24 on skill 2.
 The observations (the 30 M4a synthetic scripts and the M4b teleport scripts compared with the
 genuine engine under wire 24, and the local real-map runs) are in
 [the evidence record](validation/M4B.md); the commands are in
 [TESTING](TESTING.md#m4b-synthetic-mechanism-wads). Rust-only tests are in
-`crates/doom-sim/src/player_episode1_v2_tests.rs` and `crates/doom-sim/src/teleport_tests.rs`;
-`crates/doom-sim/tests/episode1v2_mechanism_goldens.rs` replays the admitted M4b scripts against
+`crates/doom-sim/src/player_episode1_v2_tests.rs`, `crates/doom-sim/src/teleport_tests.rs` and
+`crates/doom-sim/src/baron_tests.rs`; `crates/doom-sim/tests/episode1v2_mechanism_goldens.rs` replays the admitted M4b scripts against
 the goldens and fixtures in `cargo test`.

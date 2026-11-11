@@ -2374,9 +2374,11 @@ The v40 reader applies every v39 check, with these changes:
   stomped, so this bounds it too);
 - the tag-26 sub-tags 15–17 and the widened damage form are admitted.
 
-**Admission so far (M4b step 4).** The v40 reader admits the `MT_TFOG` and `MT_TELEPORTMAN`
-closures, sub-tags 15 and 16 and the telefrag's health domain; the Baron's types and states and
-sub-tag 17 arrive with step 5, and skill 3 with step 6 (M4b note §7, finding 10).
+**Admission so far (M4b step 5).** The v40 reader admits the `MT_TFOG`, `MT_TELEPORTMAN`,
+`MT_BRUISER` and `MT_BRUISERSHOT` closures (the Baron's raise states refused), sub-tags 15, 16
+and 17, the sub-tag 6 record of `A_BossDeath`'s floor call (function 4, line 65535, argument 1),
+`MT_BRUISERSHOT` in the projectile launch record and the sky removal, and the telefrag's health
+domain; skill 3 arrives with step 6 (M4b note §7, finding 10).
 
 The per-map bounds come from `map.things` with the skill bit of `actors.options[0]`: bit 2 for
 skill 2 and bit 4 for skill 3, after the single-player filter. Doomednum 3003 counts as a monster

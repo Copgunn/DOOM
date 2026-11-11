@@ -10,7 +10,9 @@ owns the commands. Exact review state and CI belong to GitHub.
 WADs run through the genuine engine. Phase 2 step 2 (2026-11-10): the independent DSIM40
 projection of those runs and its goldens. Phase 2 step 3 (2026-11-10): wire 24 plumbing; the
 Rust results are in [Wire 24 against the genuine engine](#wire-24-against-the-genuine-engine). Phase 2
-step 4 (2026-11-10): teleportation, in [Rust replay: teleportation](#rust-replay-teleportation). Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`,
+step 4 (2026-11-10): teleportation, in [Rust replay: teleportation](#rust-replay-teleportation). Phase 2 step 5
+(2026-11-10): the Baron and `A_BossDeath`, in [Rust replay: the Baron and A_BossDeath](#rust-replay-the-baron-and-a_bossdeath),
+and the second synthetic set (two teleports in one tic). Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`,
 so LeakSanitizer was disabled, not passed. Timings quoted here were taken on a host that was
 not idle and are not performance measurements.
 
@@ -290,7 +292,7 @@ lists emptied, as in the fixtures), and checks that the refused SPECH9 tic keeps
 state and refuses again on retry; its self-test (TELE1 with one forward command removed) fails
 as required.
 
-**Still pending.** TFRAG1 and the six Baron scripts wait for step 5 (TFRAG1's WAD places a
+**Still pending at step 4** (all but SKILL3 admitted in step 5, below). TFRAG1 and the six Baron scripts waited for step 5 (TFRAG1's WAD places a
 Baron), SKILL3 for step 6. The telefrag is covered meanwhile by `teleport_tests`: TFRAG's WAD
 with its Baron's THING removed reproduces the C-observed zombieman (health −9,980, xdeath,
 momentum (−3,979,285, −1,518)) and Demon (−9,850, (−994,821, −380)); neither value reads the
@@ -313,9 +315,99 @@ Idle demos cross no teleport line; walk scripts that use them are plan step 7.
 
 **Limits.**
 
-- No committed script makes a thing teleport twice in one tic. The path exists (the split
-  move's second half and a slide continue from the landing) but no synthetic WAD places a
-  second 97 line near a landing, so it has no genuine-engine observation.
+- (Closed in step 5.) No step-4 script made a thing teleport twice in one tic; TELE2X of the
+  second set does, below.
 - The chainsaw case of the telefrag (no knockback, p_inter.c:806–810) is a Rust test on the
   damage plan, not a genuine run.
 - The store-full witness at the fogs is shown on a store filled by the test (Rust only).
+
+## Rust replay: the Baron and A_BossDeath
+
+Phase 2 step 5 (2026-11-10). Wire 24 now admits the Baron of Hell (doomednum 3003),
+`A_BruisAttack` and its fireball, and `A_BossDeath` with the E1M8 tag-666 floor
+([COMPATIBILITY](../COMPATIBILITY.md); decision I9; note §7, findings 18–24). Commands are in
+[TESTING](../TESTING.md#m4b-synthetic-mechanism-wads).
+
+**Synthetic scripts.** `check_player_episode1v2.py --binary target/release/examples/player_level_run --require`
+matched 48 scripts (19,725 compared tics): the 30 M4a scripts and the ten step-4 scripts,
+unchanged; the seven scripts below, every capture of each, matched on the first run of the
+step-5 code; and TELE2X of the second set (next section). SKILL3 waits for step 6.
+
+| Script | Captures | Shows |
+| --- | ---: | --- |
+| TFRAG1 | 283 | three telefrags, the Baron's included; its DIE7 on E1M1 does nothing |
+| BARON1 | 754 | fireballs, a claw, pain, death, DIE7 on E1M1 |
+| BINF1 | 301 | a fireball hits the Spectre, infighting, claws, the `A_FaceTarget` shadow fuzz |
+| BVB1 | 736 | Baron against Baron through barrel splash; fireballs burst harmlessly on a Baron |
+| BOSS1 | 546 | E1M8: the first DIE7 finds the other Baron alive, the second starts the floor; exit at DSIM tic 545, then `LevelExited` |
+| BOSS2 | 365 | E1M8 with the tag-666 sector busy: the floor call creates nothing |
+| BOSSM1 | 601 | the BOSS1 map in the E1M1 slot: nothing happens |
+
+The workspace test `episode1v2_mechanism_goldens` repeats these comparisons in `cargo test`,
+decodes every capture with the DSIM40 reader (events included: the sub-tag 17 records and the
+floor call with line 65535) and compares the seven fixtures of these scripts byte for byte;
+for BOSS1 it checks that the tic after the exit is refused with `LevelExited` and keeps the
+state. `baron_tests` pins the mechanisms on these runs (C-observed tics; DSIM tic = dump tic
++ 1): the BARON1 fireball at DSIM 65 (no face in `A_BruisAttack`, momentum from speed 15, one
+spawn-tics draw and no shadow pair), the claw at 506 (`(r%8+1)*10`, no fireball), the contact
+at 120 (`(r%8+1)*8`, then the explosion draw), the harmless burst on a Baron (BVB1, 323), the
+Spectre's retarget (BINF1, 82), the chase branches over all three Baron scripts, and the
+`A_BossDeath` outcomes at DSIM 113 and 224 (BOSS1, BOSS2, BOSSM1), 737 (BARON1) and 272
+(TFRAG1). Rust-only edits of these WADs add: the tag-666 sector untagged (the call creates
+nothing), a spawn-step hit (contact draw, damage, pain draw, explosion draw in that order),
+a full store at the fireball (`StoreError::Capacity`, state kept, retry refused), and the
+order of the checks (map, player, thinker walk) on the decision function.
+
+**The `P_SpawnMissile` shadow pair.** No M4b scene reaches it; M4a's INVIS1 does (an Imp
+firing at the invisible player). Re-run locally (`m4a_reference.py --only ITEMS --keep-dumps`,
+three variants byte-identical), dump tics 173 and 254 each make six draws, and the fireball's
+angle equals the left-draw-first value `(r1 − r2) << 20`, not the reverse (note §7, finding
+18). `P_SpawnMissile` reads the type only through its info record, and the Rust launcher is one
+function for the Imp's and the Baron's missiles, so no witness was added. The dumps were
+deleted.
+
+**Real map, local only.** The IWAD was read read-only from `/mnt/d/DoomIWADs`; dumps were kept
+under `/mnt/d/scratch/m4b` and deleted after the digests were taken. E1M8 now loads under wire
+24 on skill 2. A 2,100-tic idle demo (written by `player_level_run --write-idle` into scratch,
+not committed) ran through the genuine engine (M4b runner, three variants, byte-identical dump
+sets) and through wire 24:
+
+| Map | Captures compared | Result | `map.*` group | Stripped-sequence digest (C = Rust) |
+| --- | ---: | --- | --- | --- |
+| E1M8 | 2,101 | match | equal | `ebab259ce3ad3008` |
+
+An idle player meets neither Baron, so this run shows the load, the spawn and 2,100 tics of the
+waiting map, not the Baron's attacks; walk and fight scripts are plan step 7.
+
+**Limits.**
+
+- Hell Knights are not admitted, so the Knight half of the species rule is ported but not run.
+- The gibbed-corpse case (a Baron crushed before DIE7 never runs `A_BossDeath`) and a dead player
+  at DIE7 have no genuine-engine scene; the first is the shared crush path, the second is the
+  decision function's test.
+- The height witness cannot fire on the boss floor (note §7, finding 22); no test constructs it.
+
+## Second synthetic set: two teleports in one tic
+
+Phase 2 step 5 (2026-11-10, owner request). A second manifest, `tests/reference/m4b_manifest2.json`,
+holds new WADs and scripts so that every file of the first set stays byte-identical; its results,
+goldens and fixture are `m4b_synthetic_results2.json`, `m4b_synthetic_goldens2.json` and
+`m4b2_episode1v2_TELE2X_37.bin`, and the tools take `--set 2`
+([TESTING](../TESTING.md#m4b-synthetic-mechanism-wads)). CI runs it after the first set.
+
+**TELE2X (tele2x, E1M1, 65 tics, marker).** TSPLIT's hall and run (forwardmove 127): before dump
+tic 36 the momentum is (27.1875, 0.0141) units/tic, above `MAXMOVE/2`, so `P_XYMovement` splits
+the move. The first half crosses the first 97 line (tag 1); the landing stands 8 units west of a
+second 97 line (tag 2), and the second half, continued from the landing, crosses it. In dump
+tic 36 the genuine engine spawned four fogs with four draws: at the old position (7.36, 0.43), 20
+units east of the first landing (1,212.00, 0.01), at the position the second half reached
+(1,207.00, 0.01) and 20 units north of the second landing (1,151.99, 660.00); the player stands on
+the second landing (1,152, 640) at angle 90 with `reactiontime` 18 and momentum 0. The strict,
+overflow and address dump sets were byte-identical (`ASAN_OPTIONS=detect_leaks=0`, leak detection
+disabled). The geometry was built at the first attempt.
+
+**Projection and Rust.** The independent encoder projected all 66 snapshots with no stop; the
+fixture at DSIM tic 37 checks the four fogs on its dump. Wire 24 matched all 66 captures, and the
+fixture byte for byte, in `check_player_episode1v2.py` and in `episode1v2_mechanism_goldens`;
+`teleport_tests::two_teleports_in_one_tic` checks the two `Teleported` records, four fogs and four
+draws of that tic.
