@@ -485,15 +485,10 @@ fn chase_melee_and_missile_branches_differ() {
                 let Some(&(_, movecount)) = before.iter().find(|(id, _)| id == actor) else {
                     continue;
                 };
-                let flagged = matches!(
-                    events.get(i + 1..).and_then(|r| {
-                        r.iter().find(|e| {
-                            matches!(e,
+                let flagged = events[i + 1..].iter().any(|e| {
+                    matches!(e,
                         Event::Monster(MonsterEvent::JustAttacked { actor: a, .. }) if a == actor)
-                        })
-                    }),
-                    Some(_)
-                );
+                });
                 kinds[usize::from(*kind)] += 1;
                 if *kind == 1 {
                     assert_eq!(movecount, 0, "{script}");
