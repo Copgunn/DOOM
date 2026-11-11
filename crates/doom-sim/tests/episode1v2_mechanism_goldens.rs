@@ -286,6 +286,12 @@ fn run(script: &str) {
 
 /// [`run`] with the demo's commands changed by `tweak` first (the self-test).
 fn run_with(script: &str, tweak: impl FnOnce(&mut Vec<TicCommand>)) {
+    run_at(script, None, tweak);
+}
+
+/// [`run_with`] with the skill forced to `skill` instead of the demo header's
+/// (the skill self-test); `None` keeps the header's.
+fn run_at(script: &str, forced: Option<Skill>, tweak: impl FnOnce(&mut Vec<TicCommand>)) {
     let all = goldens(script);
     assert_eq!(all.get("dsim").get("version").number(), 40);
     let g = all.get("scripts").get(script);
@@ -349,6 +355,7 @@ fn run_with(script: &str, tweak: impl FnOnce(&mut Vec<TicCommand>)) {
         3 => Skill::Hard,
         other => panic!("{script}: skill {other}"),
     };
+    let skill = forced.unwrap_or(skill);
     tweak(&mut demo.commands);
     let mut s = Simulation::original_player_episode1_v2_map(
         map,
@@ -451,6 +458,16 @@ fn harness_detects_a_changed_command() {
         })
     });
     assert!(changed.is_err());
+}
+
+/// The harness can fail on the skill: SKILL3's WAD, demo and goldens replayed at
+/// medium no longer match (the hard-only Baron, Imp and landing are not spawned and
+/// the demo's teleport never happens), while the same call at hard passes.
+#[test]
+fn harness_detects_the_wrong_skill() {
+    run_at("SKILL3", Some(Skill::Hard), |_| {});
+    let wrong = std::panic::catch_unwind(|| run_at("SKILL3", Some(Skill::Medium), |_| {}));
+    assert!(wrong.is_err());
 }
 
 #[test]

@@ -15,7 +15,7 @@ const V1: OriginalExecutionProfile = OriginalExecutionProfile::PlayerMonstersEpi
 const V2: OriginalExecutionProfile = OriginalExecutionProfile::PlayerMonstersEpisode1V2;
 
 /// Every policy, in wire order.
-const ALL: [OriginalExecutionProfile; 24] = {
+pub(crate) const ALL: [OriginalExecutionProfile; 24] = {
     use OriginalExecutionProfile as P;
     [
         P::DemonNormalV1,
@@ -98,13 +98,18 @@ fn load(
     map_number: u8,
     seed: u8,
 ) -> Result<Simulation, SimError> {
+    load_at(l, policy, map_number, seed, Skill::Medium)
+}
+/// [`load`] with the wire-24 skill given (wire 23 has none and ignores it).
+fn load_at(
+    l: &Lumps,
+    policy: OriginalExecutionProfile,
+    map_number: u8,
+    seed: u8,
+    skill: Skill,
+) -> Result<Simulation, SimError> {
     let result = if policy == V2 {
-        Simulation::original_player_episode1_v2_map(
-            l.map(),
-            map_number,
-            Skill::Medium,
-            options(seed),
-        )
+        Simulation::original_player_episode1_v2_map(l.map(), map_number, skill, options(seed))
     } else {
         Simulation::original_player_episode1_map(l.map(), options(seed))
     };
@@ -114,7 +119,16 @@ fn load(
     })
 }
 fn setup(l: &Lumps, policy: OriginalExecutionProfile, map_number: u8, seed: u8) -> Simulation {
-    let mut s = load(l, policy, map_number, seed).unwrap();
+    setup_at(l, policy, map_number, seed, Skill::Medium)
+}
+fn setup_at(
+    l: &Lumps,
+    policy: OriginalExecutionProfile,
+    map_number: u8,
+    seed: u8,
+    skill: Skill,
+) -> Simulation {
+    let mut s = load_at(l, policy, map_number, seed, skill).unwrap();
     s.spawn_map_things().unwrap();
     s.initialize_player_weapons(PlayerSlot::One, WeaponInventory::default())
         .unwrap();
@@ -156,6 +170,12 @@ fn v40_is_v39_plus_map(s23: &Simulation, s24: &Simulation, map: u8) {
             "context.schema" => {
                 assert_eq!(v23, PLAYER_EPISODE1_CONTEXT_SCHEMA);
                 assert_eq!(v24, PLAYER_EPISODE1_V2_CONTEXT_SCHEMA);
+            }
+            // The one field the wire-24 skill may change (M4b step 6): wire 23 is
+            // always medium (2); wire 24 holds its run's skill.
+            "actors.options" => {
+                assert_eq!(v23, &[2, 0, 0]);
+                assert_eq!(v24, &[s24.actor_options.skill as u8, 0, 0]);
             }
             _ => assert_eq!(v23, v24, "{p23}"),
         }
@@ -395,6 +415,19 @@ fn every_mover_room_runs_under_wire_24_as_under_wire_23() {
 /// does not fit under the ceiling) is `PlatBlocked` on the same tic for both.
 #[test]
 fn refused_tic_keeps_the_state_under_wire_24() {
+    refused_plat_keeps_the_state(Skill::Medium);
+}
+
+/// The same refusal at hard skill (M4b step 6): the skill changes only the THING
+/// filter's bit (p_mobj.c:743-751; note §3 part C item 29), so the refused tic is
+/// the same tic with the same error, and it keeps the canonical state. The room's
+/// things are all-skill (options 7), so wire 23 at medium is the twin.
+#[test]
+fn refused_tic_keeps_the_state_under_wire_24_at_hard_skill() {
+    refused_plat_keeps_the_state(Skill::Hard);
+}
+
+fn refused_plat_keeps_the_state(skill: Skill) {
     // Lift room 7: sector 3 (tag 1) between sectors 1 and 2; line 12 a 20 switch.
     let mut l = crate::player_movers_tests::room(7);
     l.clear_things();
@@ -407,7 +440,8 @@ fn refused_tic_keeps_the_state_under_wire_24() {
     l.add_thing([256, 64, 90, 1, 7]);
     l.add_thing([256, 320, 0, 2035, 7]);
     let mut a = setup(&l, V1, 2, 6);
-    let mut b = setup(&l, V2, 2, 6);
+    let mut b = setup_at(&l, V2, 2, 6, skill);
+    assert_eq!(b.actor_options.skill, skill);
     for s in [&mut a, &mut b] {
         assert!(
             s.start_movers(|m| m.do_plat(12, PlatType::RaiseToNearestAndChange))

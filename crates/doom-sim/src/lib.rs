@@ -1569,6 +1569,8 @@ mod diagonal_room;
 #[cfg(test)]
 mod e1m1_replay;
 #[cfg(test)]
+mod hard_skill_tests;
+#[cfg(test)]
 #[path = "../../../tests/support/m3h4.rs"]
 mod heights_evidence;
 #[cfg(test)]
