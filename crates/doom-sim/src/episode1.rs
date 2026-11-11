@@ -90,7 +90,7 @@ impl Episode1Bounds {
     }
     /// The bounds of wire 24 at `skill` (M4b steps 5 and 6): those of
     /// [`Self::from_map`], counted with the option bit of `skill`
-    /// ([`skill_bit`]: 2 for medium, 4 for hard; p_mobj.c:743–751) instead of the
+    /// (`skill_bit`: 2 for medium, 4 for hard; p_mobj.c:743–751) instead of the
     /// fixed medium bit, and with the Baron of Hell (doomednum 3003) counted in
     /// `K` as a monster that drops nothing. Wire 23 refuses doomednum 3003 at
     /// spawn and any skill but medium at load, and keeps [`Self::from_map`], so
