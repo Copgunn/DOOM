@@ -12,11 +12,13 @@ same lump layout) plus one directive:
 
 so a script without `skill` produces exactly the bytes tools/e1m1_scripts.py produces.
 tools/e1m1_scripts.py itself is unchanged and keeps checking its own directories; this
-tool checks tests/reference/m4b_scripts/ only.
+tool checks tests/reference/m4b_scripts/ and the M4b real-map script directories
+tests/reference/e1m5_scripts/, e1m8_scripts/ and e1m9_scripts/ (M4b step 7; those
+present), which tools/e1m1_scripts.py does not read.
 
     m4b_scripts.py SCRIPT.txt [-o OUT.lmp]
-    m4b_scripts.py --check            regenerate every tests/reference/m4b_scripts/*.txt in
-                                      memory and compare with the committed .lmp next to it
+    m4b_scripts.py --check            regenerate every *.txt of those directories in memory
+                                      and compare with the committed .lmp next to it
 """
 import argparse, sys
 from pathlib import Path
@@ -27,6 +29,7 @@ sys.path.insert(0, str(ROOT / 'tools'))
 import e1m1_scripts as E   # noqa: E402  frozen script format (read-only)
 
 SCRIPT_DIR = ROOT / 'tests/reference/m4b_scripts'
+REAL_DIRS = [ROOT / f'tests/reference/e1m{n}_scripts' for n in (5, 8, 9)]
 SKILLS = (2, 3)
 
 
@@ -67,6 +70,11 @@ def main():
         if a.check:
             sources = sorted(SCRIPT_DIR.glob('*.txt'))
             if not sources: sys.exit(f'no scripts under {SCRIPT_DIR.relative_to(ROOT)}')
+            for d in REAL_DIRS:
+                if d.is_dir():
+                    real = sorted(d.glob('*.txt'))
+                    if not real: sys.exit(f'no scripts under {d.relative_to(ROOT)}')
+                    sources += real
             bad = []
             for src in sources:
                 out = E.default_output(src); E.lump_name(out)
