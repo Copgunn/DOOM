@@ -59,6 +59,10 @@ M4b step 7 adds:
     `rust_compare`); the captures are deleted with the dumps;
   - --summary PATH: write the counts-only records of this invocation (no timing) as one JSON
     file (schema DOOM-M4B-REAL-RESULTS-v1), sorted by map and script.
+  - two more counts in every record: teleport_fog_spawns (the sum of the increases of the live
+    MT_TFOG count between snapshots; EV_Teleport spawns two fogs per teleport, p_telept.c:111-116)
+    and player_teleports (snapshots in which the player's mobj moved more than 100 units in
+    one tic; only a teleport does that within the command domain).
 """
 import argparse, hashlib, json, os, re, shutil, subprocess, sys, time
 from concurrent.futures import ThreadPoolExecutor
@@ -88,6 +92,7 @@ VARIANTS = ['strict', 'overflow', 'address']
 SUMMARY = re.compile(r'^summary: tics (\d+) end=(marker|exit|reborn) end_tic (\d+) gamestate (\d+) prndindex (\d+) .* '
                      r'observer_misses (\d+) unknown_messages (\d+) .* us_per_tic ([\d.]+)$', re.M)
 PST_DEAD = 1           # playerstate_t, d_player.h
+MT_TFOG = 39           # mobjtype_t, info.h:1203 (teleport fog: two per EV_Teleport, p_telept.c)
 PLAT_UP, PLAT_DOWN = 0, 1  # plat_e, p_spec.h
 
 def script_dir(mapname): return ROOT / 'tests/reference' / f'{mapname.lower()}_scripts'
@@ -126,9 +131,11 @@ MOVERS = {'DR': 'door', 'PL': 'plat', 'FL': 'floor', 'CE': 'ceiling'}
 def events(out):
     """Tic-numbered events of the strict dump set (counts and tic numbers only)."""
     names = dump.snapshot_names(out)
-    kinds = ('H', 'P', 'T', 'S') + tuple(MOVERS)
+    kinds = ('H', 'P', 'T', 'S', 'M') + tuple(MOVERS)
     ev = dict(mover_starts={v: [] for v in MOVERS.values()}, kill_tics=[], item_tics=[], card_tics=[], weapon_tics=[],
-              damage_tics=0, death_tic=None, secret_tics=[], blocked_floor_tics=[], blocked_plat_tics=[], thinker_peak=0)
+              damage_tics=0, death_tic=None, secret_tics=[], blocked_floor_tics=[], blocked_plat_tics=[], thinker_peak=0,
+              teleport_fog_spawns=0, player_teleports=0)
+    prev_fogs, prev_xy = None, None
     seen, prev_p, prev_floor, prev_fl, prev_pl = set(), None, {}, {}, {}
     load = None
     for name in names:
@@ -157,6 +164,12 @@ def events(out):
                         and floor[m['sector']] != m['high']:
                     ev['blocked_plat_tics'].append([tic, m['type']]); break
         p = r['P'][0]
+        fogs = sum(1 for m in r['M'] if m['type'] == MT_TFOG)
+        mo = next((m for m in r['M'] if m['idx'] == p['mo']), None)
+        xy = (mo['x'], mo['y']) if mo else None
+        if prev_fogs is not None and fogs > prev_fogs: ev['teleport_fog_spawns'] += fogs - prev_fogs
+        if prev_xy and xy and abs(xy[0] - prev_xy[0]) + abs(xy[1] - prev_xy[1]) > 100 * 65536: ev['player_teleports'] += 1
+        prev_fogs, prev_xy = fogs, xy
         if prev_p is not None:
             if p['killcount'] > prev_p['killcount']: ev['kill_tics'] += [tic] * (p['killcount'] - prev_p['killcount'])
             if p['itemcount'] > prev_p['itemcount']: ev['item_tics'] += [tic] * (p['itemcount'] - prev_p['itemcount'])
@@ -298,7 +311,7 @@ def main():
         keep = ('map', 'script', 'skill', 'driver', 'lmp_sha256', 'tics', 'end', 'end_tic', 'ends_agree', 'prndindex_after_load',
                 'thinkers_at_load', 'mobjs_at_load', 'prndindex_end', 'thinker_peak', 'kill_tics', 'final_health',
                 'final_killcount', 'final_itemcount', 'final_secretcount', 'death_tic', 'secretexit', 'snapshots',
-                'unknown_messages', 'blocked_floor_tics', 'blocked_plat_tics', 'variants_identical', 'dumps_sha256',
+                'unknown_messages', 'blocked_floor_tics', 'blocked_plat_tics', 'teleport_fog_spawns', 'player_teleports', 'variants_identical', 'dumps_sha256',
                 'asan_options')
         out = []
         for r in sorted(records, key=lambda r: (r['map'], r['script'])):
