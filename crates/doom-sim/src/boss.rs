@@ -71,13 +71,9 @@ fn boss_death_checked<A: ActorAccess>(
         // Only `S_BOSS_DIE7` names the action among the admitted types.
         return Err(PlayerBodyError::Unsupported.into());
     }
-    let outcome = if map != BOSS_MAP {
-        Outcome::NotBossMap
-    } else if player.health <= 0 {
-        Outcome::NoLivePlayer
-    } else if other_alive(h, id, ty)? {
-        Outcome::OtherBossAlive
-    } else {
+    let health = player.health;
+    let outcome = decide(map, health, || other_alive(h, id, ty))?;
+    if outcome == Outcome::FloorCalled {
         let store = h.access.movers().ok_or(StoreError::UnsupportedThinker)?;
         let mut starter = crate::movers::Starter {
             world: h.world,
@@ -88,13 +84,31 @@ fn boss_death_checked<A: ActorAccess>(
             player: None,
         };
         starter.boss_floor()?;
-        Outcome::FloorCalled
-    };
+    }
     h.events.push(Event::Mover(MoverEvent::BossDeath {
         actor: id,
         outcome: outcome as u8,
     }));
     Ok(outcome)
+}
+
+/// The source's checks in order (p_enemy.c:1629–1705): the map, then the live
+/// player (`players[0].health`), then the thinker walk, run only when the first
+/// two pass, as the source returns before it.
+fn decide(
+    map: u8,
+    player_health: i32,
+    other_alive: impl FnOnce() -> Result<bool, SimError>,
+) -> Result<Outcome, SimError> {
+    Ok(if map != BOSS_MAP {
+        Outcome::NotBossMap
+    } else if player_health <= 0 {
+        Outcome::NoLivePlayer
+    } else if other_alive()? {
+        Outcome::OtherBossAlive
+    } else {
+        Outcome::FloorCalled
+    })
 }
 
 /// Whether a mobj other than `id` of type `ty` with `health > 0` is in the
@@ -118,3 +132,7 @@ fn other_alive<A: ActorAccess>(
                 .is_some_and(|l| l.actor_type == ty && l.health > 0)
     }))
 }
+
+#[cfg(test)]
+#[path = "baron_tests.rs"]
+mod tests;
