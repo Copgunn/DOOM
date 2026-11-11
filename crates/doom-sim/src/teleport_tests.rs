@@ -523,3 +523,28 @@ fn damage_above_1000_stays_refused_outside_the_stomp() {
         }
     }
 }
+
+/// TELE2X (second M4b set), C-observed at dump tic 36 (DSIM 37): the split move's
+/// first half teleports the player, the second half continues from the landing
+/// across the second 97 line and teleports it again (p_mobj.c:147–191): four fogs
+/// and four draws in one tic, the player on the second landing at angle 90 with
+/// `reaction_time` 18 and momentum 0.
+#[test]
+fn two_teleports_in_one_tic() {
+    let commands = demo("TELE2X");
+    let mut s = setup(&wad("tele2x"));
+    run_to(&mut s, &commands, 36);
+    let rng = s.rng.indices()[0];
+    step(&mut s, commands[36]).unwrap();
+    assert!(matches!(
+        teleport_events(&s)[..],
+        [MoverEvent::Teleported { .. }, MoverEvent::Teleported { .. }]
+    ));
+    assert_eq!(of_type(&s, OriginalActorType::MT_TFOG).len(), 4);
+    assert_eq!(usize::from(s.rng.indices()[0].wrapping_sub(rng)), 4);
+    let b = body(&s);
+    assert_eq!(b.position().map(Fixed::bits), [1152 << 16, 640 << 16]);
+    assert_eq!(b.angle(), 0x4000_0000);
+    assert_eq!(b.life.unwrap().reaction_time, 18);
+    assert_eq!(b.momentum(), [Fixed::ZERO; 2]);
+}

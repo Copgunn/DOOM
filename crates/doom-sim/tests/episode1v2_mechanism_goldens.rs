@@ -28,7 +28,9 @@
 //! - BOSS1 (declared end `exit`): every capture matches through the exit tic, and
 //!   the next tic is refused with `SimError::LevelExited`.
 //!
-//! The script that needs hard skill (SKILL3, step 6) is not here yet.
+//! TELE2X, of the second M4b set (`m4b_synthetic_goldens2.json`, step 5), makes the
+//! player teleport twice in one tic. The script that needs hard skill (SKILL3,
+//! step 6) is not here yet.
 use doom_sim::{demo::parse_demo_episode1_v2, *};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -206,13 +208,22 @@ impl Parser<'_> {
         }
     }
 }
-fn goldens() -> Json {
-    let bytes = std::fs::read(reference("m4b_synthetic_goldens.json")).expect("goldens");
+fn goldens_file(name: &str) -> Json {
+    let bytes = std::fs::read(reference(name)).expect("goldens");
     Parser {
         bytes: &bytes,
         at: 0,
     }
     .value()
+}
+/// The goldens holding `script`: the first M4b set's, or the second set's
+/// (`m4b_synthetic_goldens2.json`, M4b step 5: TELE2X).
+fn goldens(script: &str) -> Json {
+    let first = goldens_file("m4b_synthetic_goldens.json");
+    match first.get("scripts") {
+        Json::Object(m) if m.contains_key(script) => first,
+        _ => goldens_file("m4b_synthetic_goldens2.json"),
+    }
 }
 
 /// The canonical bytes of `snap` without its `map.*` and `events.*` fields
@@ -273,7 +284,7 @@ fn run(script: &str) {
 
 /// [`run`] with the demo's commands changed by `tweak` first (the self-test).
 fn run_with(script: &str, tweak: impl FnOnce(&mut Vec<TicCommand>)) {
-    let all = goldens();
+    let all = goldens(script);
     assert_eq!(all.get("dsim").get("version").number(), 40);
     let g = all.get("scripts").get(script);
     let wad_file = format!("m4b_wads/{}.wad", g.get("wad").text().to_ascii_lowercase());
@@ -497,4 +508,8 @@ fn boss2() {
 #[test]
 fn bossm1() {
     run("BOSSM1");
+}
+#[test]
+fn tele2x() {
+    run("TELE2X");
 }
