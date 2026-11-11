@@ -307,10 +307,14 @@ impl Simulation {
     /// Admitted so far: teleportation (line special 97, the landing doomednum 14,
     /// the fog and the telefrag; M4b step 4), the Baron of Hell (doomednum 3003,
     /// `A_BruisAttack` and its fireball) and `A_BossDeath` with the E1M8 tag-666
-    /// floor (step 5). The per-map bounds count the Baron as a monster. Refused at
-    /// load, each explicitly: a map number outside 1–9 and any skill but medium
+    /// floor (step 5), and hard skill (step 6, decision I4): `skill` is
+    /// [`Skill::Medium`] or [`Skill::Hard`], and the per-map bounds, the landing
+    /// count and the item total's cross-check count the THINGs with that skill's
+    /// option bit (2 or 4, p_mobj.c:743–751), as the spawner does. The per-map
+    /// bounds count the Baron as a monster. Refused at load, each explicitly: a map
+    /// number outside 1–9 and any skill but medium or hard
     /// (`SimError::PlayerBody(PlayerBodyError::Unsupported)`, as every older
-    /// player policy refuses non-default options; skill 3 is M4b step 6). As for
+    /// player policy refuses non-default options). As for
     /// wire 23, call [`Simulation::spawn_map_things`],
     /// [`Simulation::initialize_player_weapons`] and
     /// [`Simulation::spawn_level_specials`] once before the first tic.

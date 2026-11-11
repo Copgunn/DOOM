@@ -14,7 +14,7 @@ use std::{error::Error, fs, hint::black_box, path::PathBuf, time::Instant};
 type HostResult<T> = Result<T, Box<dyn Error>>;
 const USAGE: &str = "player_level_advance --wad PATH --map E1Mn --demo PATH \
     [--policy level|episode1|episode1v2] (wire 22 default, wire 23 episode1, wire 24 \
-    episode1v2: skill 2 until M4b step 6); no captures";
+    episode1v2: skill 2 or 3 from the demo header); no captures";
 
 #[derive(Default)]
 struct Args {
@@ -80,11 +80,15 @@ fn main() -> HostResult<()> {
         _ if args.episode1 => return Err("episode1 needs E1M1..E1M9".into()),
         _ => 0,
     };
+    let mut skill = Skill::Medium;
     let demo = if args.v2 {
         let (header, demo) = parse_demo_episode1_v2(&demo_bytes, number)?;
-        if header.skill != 2 {
-            return Err("episode1v2: skill 3 (hard) is not admitted yet (M4b step 6)".into());
-        }
+        // The reader admits skill bytes 2 and 3 only (M4b decision I4).
+        skill = match header.skill {
+            2 => Skill::Medium,
+            3 => Skill::Hard,
+            other => return Err(format!("episode1v2: skill {other} is not admitted").into()),
+        };
         demo
     } else if args.episode1 {
         parse_demo_episode1(&demo_bytes, number)?.1
@@ -98,7 +102,7 @@ fn main() -> HostResult<()> {
         Simulation::original_player_episode1_v2_map(
             map,
             number,
-            Skill::Medium,
+            skill,
             MapContextOptions::default(),
         )?
     } else if args.episode1 {

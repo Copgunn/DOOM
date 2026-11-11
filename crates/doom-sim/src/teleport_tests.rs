@@ -373,7 +373,10 @@ fn transient_allowance_formula() {
         })
         .count();
     assert!(expected > 0);
-    assert_eq!(crate::Episode1Bounds::landings(&map), expected);
+    assert_eq!(
+        crate::Episode1Bounds::landings(&map, Skill::Medium),
+        expected
+    );
 }
 
 /// TFRAG (C-observed, validation/M4B.md) without its Baron (step 5): the

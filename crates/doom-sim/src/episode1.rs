@@ -13,6 +13,7 @@
 //! state, and the DSIM39 reader derives the same values from `map.things`
 //! (`Episode1Bounds::from_thing_records`).
 use crate::identity::OriginalActorType;
+use crate::lifecycle::Skill;
 use doom_map::{Map, Thing};
 
 /// DoomEd numbers of the monsters an Episode 1 map may place: the former human,
@@ -44,6 +45,23 @@ pub(crate) const LANDING: i16 = 14;
 pub(crate) const BARON: i16 = 3003;
 /// `BONUSADD` (p_inter.c): the `bonuscount` one pickup adds.
 const BONUS_ADD: usize = 6;
+/// The THING option bit of the medium skill (`MTF_NORMAL`, doomdef.h:140–145):
+/// the bit every policy before wire 24 counts with.
+const MEDIUM_BIT: u16 = 2;
+
+/// The THING option bit `P_SpawnMapThing` requires at `skill` in single player
+/// (p_mobj.c:743–751): 1 for baby and easy, `1<<(gameskill−1)` = 2 for medium,
+/// 4 for hard and nightmare (`MTF_EASY`, `MTF_NORMAL`, `MTF_HARD`,
+/// doomdef.h:140–145). The spawner applies the same mapping
+/// (`Simulation::spawn_map_things`). Wire 24 admits medium and hard (M4b
+/// decision I4); every older policy is medium only and counts with bit 2.
+pub(crate) const fn skill_bit(skill: Skill) -> u16 {
+    match skill {
+        Skill::Baby | Skill::Easy => 1,
+        Skill::Medium => 2,
+        Skill::Hard | Skill::Nightmare => 4,
+    }
+}
 
 /// The per-map bounds of the Episode 1 policy, counted from a THINGS lump with
 /// the single-player, medium-skill `P_SpawnMapThing` filter.
@@ -70,32 +88,41 @@ impl Episode1Bounds {
     pub fn from_map(map: &Map) -> Self {
         Self::from_things(map.things().iter().map(|t: &Thing| (t.kind, t.options)))
     }
-    /// The bounds of wire 24 (M4b step 5): those of [`Self::from_map`] with the
-    /// Baron of Hell (doomednum 3003) counted in `K` as a monster that drops
-    /// nothing. Wire 23 refuses doomednum 3003 at spawn and keeps
-    /// [`Self::from_map`], so its bounds and the DSIM39 reader's are unchanged.
-    pub fn from_map_v2(map: &Map) -> Self {
-        Self::from_things_v2(map.things().iter().map(|t: &Thing| (t.kind, t.options)))
+    /// The bounds of wire 24 at `skill` (M4b steps 5 and 6): those of
+    /// [`Self::from_map`], counted with the option bit of `skill`
+    /// ([`skill_bit`]: 2 for medium, 4 for hard; p_mobj.c:743–751) instead of the
+    /// fixed medium bit, and with the Baron of Hell (doomednum 3003) counted in
+    /// `K` as a monster that drops nothing. Wire 23 refuses doomednum 3003 at
+    /// spawn and any skill but medium at load, and keeps [`Self::from_map`], so
+    /// its bounds and the DSIM39 reader's are unchanged.
+    pub fn from_map_v2(map: &Map, skill: Skill) -> Self {
+        Self::from_things_v2(
+            map.things().iter().map(|t: &Thing| (t.kind, t.options)),
+            skill_bit(skill),
+        )
     }
     /// [`Self::from_thing_records`] for the DSIM40 reader: the wire-24 count of
-    /// [`Self::from_map_v2`].
-    pub fn from_thing_records_v2(records: &[u8]) -> Option<Self> {
+    /// [`Self::from_map_v2`] at `skill`.
+    pub fn from_thing_records_v2(records: &[u8], skill: Skill) -> Option<Self> {
         if records.len() % 10 != 0 {
             return None;
         }
-        Some(Self::from_things_v2(records.chunks_exact(10).map(|r| {
-            (
-                i16::from_le_bytes([r[6], r[7]]),
-                u16::from_le_bytes([r[8], r[9]]),
-            )
-        })))
+        Some(Self::from_things_v2(
+            records.chunks_exact(10).map(|r| {
+                (
+                    i16::from_le_bytes([r[6], r[7]]),
+                    u16::from_le_bytes([r[8], r[9]]),
+                )
+            }),
+            skill_bit(skill),
+        ))
     }
-    fn from_things_v2(things: impl IntoIterator<Item = (i16, u16)>) -> Self {
+    fn from_things_v2(things: impl IntoIterator<Item = (i16, u16)>, bit: u16) -> Self {
         let things: Vec<(i16, u16)> = things.into_iter().collect();
-        let mut b = Self::from_things(things.iter().copied());
+        let mut b = Self::from_things_with(things.iter().copied(), bit);
         b.monsters += things
             .iter()
-            .filter(|&&(kind, options)| kind == BARON && options & 16 == 0 && options & 2 != 0)
+            .filter(|&&(kind, options)| kind == BARON && options & 16 == 0 && options & bit != 0)
             .count();
         b
     }
@@ -113,14 +140,16 @@ impl Episode1Bounds {
             )
         })))
     }
-    /// The teleport landings (doomednum 14) a map spawns under wire 24, counted
-    /// with the same single-player, medium-skill filter as the bounds above (M4b
-    /// step 4). Wire 23 refuses doomednum 14 at spawn and never counts it, so the
-    /// bounds of the struct stay those of wire 23.
-    pub fn landings(map: &Map) -> usize {
+    /// The teleport landings (doomednum 14) a map spawns under wire 24 at
+    /// `skill`, counted with the same single-player filter and skill bit as
+    /// [`Self::from_map_v2`] (M4b steps 4 and 6). Wire 23 refuses doomednum 14 at
+    /// spawn and never counts it, so the bounds of the struct stay those of wire
+    /// 23.
+    pub fn landings(map: &Map, skill: Skill) -> usize {
+        let bit = skill_bit(skill);
         map.things()
             .iter()
-            .filter(|t| t.kind == LANDING && t.options & 16 == 0 && t.options & 2 != 0)
+            .filter(|t| t.kind == LANDING && t.options & 16 == 0 && t.options & bit != 0)
             .count()
     }
     /// The transient allowance of wire 24 (M4b step 4): the actor slots left for
@@ -141,9 +170,12 @@ impl Episode1Bounds {
         slots.checked_sub(placed)
     }
     fn from_things(things: impl IntoIterator<Item = (i16, u16)>) -> Self {
+        Self::from_things_with(things, MEDIUM_BIT)
+    }
+    fn from_things_with(things: impl IntoIterator<Item = (i16, u16)>, bit: u16) -> Self {
         let mut b = Self::default();
         for (kind, options) in things {
-            if (1..=4).contains(&kind) || kind == 11 || options & 16 != 0 || options & 2 == 0 {
+            if (1..=4).contains(&kind) || kind == 11 || options & 16 != 0 || options & bit == 0 {
                 continue;
             }
             if EPISODE1_MONSTERS.contains(&kind) {

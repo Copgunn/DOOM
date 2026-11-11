@@ -424,8 +424,9 @@ impl OriginalExecutionProfile {
         matches!(self, Self::PlayerMonstersEpisode1V2)
     }
     /// Skill 3 (hard, THING option bit 4; decision I4): wire 24 only, admitted in
-    /// M4b step 6. Until then the wire-24 constructor refuses it.
-    #[cfg_attr(not(test), expect(dead_code, reason = "admitted in M4b step 6"))]
+    /// M4b step 6. In single player nothing but `P_SpawnMapThing`'s option bit
+    /// (p_mobj.c:743–751) differs between skills 2 and 3 (M4b note §3 part C);
+    /// every older player policy refuses any options but the default (medium).
     pub(crate) const fn has_hard_skill(self) -> bool {
         matches!(self, Self::PlayerMonstersEpisode1V2)
     }
@@ -1369,8 +1370,15 @@ impl Simulation {
         let policy = registry.profile;
         let heights = policy.has_heights();
         let real_map = policy.has_real_map();
+        // Player policies run the default options (medium skill); wire 24 alone
+        // also admits hard skill (M4b decision I4), and no other option.
+        let hard = ActorOptions {
+            skill: Skill::Hard,
+            ..ActorOptions::default()
+        };
         if policy.has_player_body()
-            && (options != ActorOptions::default()
+            && ((options != ActorOptions::default()
+                && !(policy.has_hard_skill() && options == hard))
                 || (!heights
                     && (map.sectors().len() != 1
                         || map.sectors().iter().any(|s| s.heights != [0, 128]))))
@@ -1440,7 +1448,7 @@ impl Simulation {
         let sector_lines = real_map.then(|| player_map_scale::sector_lines(&map));
         let episode1 = policy.has_episode1().then(|| {
             if policy.has_baron() {
-                crate::episode1::Episode1Bounds::from_map_v2(&map)
+                crate::episode1::Episode1Bounds::from_map_v2(&map, options.skill)
             } else {
                 crate::episode1::Episode1Bounds::from_map(&map)
             }
@@ -1448,7 +1456,7 @@ impl Simulation {
         // Wire 24: room for at least one teleport's two fogs when every placed thing
         // is live (M4b step 4); the store-full witness covers everything beyond.
         if let (Some(bounds), true) = (episode1, policy.has_teleport()) {
-            let landings = crate::episode1::Episode1Bounds::landings(&map);
+            let landings = crate::episode1::Episode1Bounds::landings(&map, options.skill);
             if bounds
                 .transient_allowance(landings, actor_cap as usize)
                 .is_none_or(|n| n < 2)

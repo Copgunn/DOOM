@@ -29,8 +29,8 @@
 //! (`PlayerMonstersEpisode1V2`, wire 24, DSIM40; M4b decision I2) as for
 //! `episode1`, with the map number of `--map` and the skill of the demo header,
 //! read with `parse_demo_episode1_v2` (skill 2 or 3; the header map must be the
-//! `--map` one). Until M4b step 6 admits hard skill a skill-3 demo is refused
-//! before any tic with a message saying so. `--write-idle` writes a skill-2
+//! `--map` one); a skill-3 demo runs at hard skill (M4b step 6, decision I4).
+//! `--write-idle` writes a skill-2
 //! header with `write_demo_episode1_v2`; `stats.txt` is `episode1`'s.
 use doom_sim::{
     demo::{
@@ -191,13 +191,14 @@ fn main() -> ResultHost<()> {
         Policy::Episode1V2 => {
             let (header, demo) =
                 parse_demo_episode1_v2(&demo_bytes, episode1_map(&a.map, "episode1v2")?)?;
+            // The reader admits skill bytes 2 and 3 only (decision I4).
             let skill = match header.skill {
                 2 => Skill::Medium,
-                _ => {
+                3 => Skill::Hard,
+                other => {
                     return Err(format!(
-                        "--policy episode1v2: the demo header's skill {} (hard) is not admitted \
-                         yet (M4b step 6); wire 24 runs skill 2 only",
-                        header.skill
+                        "--policy episode1v2: the demo header's skill {other} is not admitted; \
+                         wire 24 runs skills 2 and 3"
                     )
                     .into());
                 }

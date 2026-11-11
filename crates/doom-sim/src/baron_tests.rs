@@ -152,7 +152,7 @@ fn wire_24_admits_the_baron_wire_23_refuses_it() {
     let l = wad("baron");
     let map = map_of(&l, "E1M1");
     let v1 = Episode1Bounds::from_map(&map);
-    let v2 = Episode1Bounds::from_map_v2(&map);
+    let v2 = Episode1Bounds::from_map_v2(&map, Skill::Medium);
     let placed = map.things().iter().filter(|t| t.kind == 3003).count();
     assert_eq!(placed, 1);
     assert_eq!(v2.monsters, v1.monsters + 1);

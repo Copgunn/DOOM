@@ -311,9 +311,11 @@ impl<'a> Diagnostic<'a> {
     /// earlier version. DSIM40 is the DSIM39 layout, event vocabulary, bounds and
     /// witnesses under policy 24 and the `PLAYER-MONSTERS-EPISODE1-2-v1` context,
     /// plus `level.map` (u8, 1–9) right after `level.secret_exit` (STATE_FORMAT
-    /// "DSIM v40"). Until M4b step 6 admits hard skill, `actors.options` must read
-    /// skill 2, as for DSIM36–39; the new types, states and event sub-tags of
-    /// the format are admitted with their behaviours in M4b steps 4–6.
+    /// "DSIM v40"). `actors.options` must read skill 2 or 3 (DSIM36–39 admit 2
+    /// only), and the per-map bounds and the placed totals are counted with that
+    /// skill's THING option bit (2 or 4, p_mobj.c:743–751; M4b step 6); the new
+    /// types, states and event sub-tags of the format are admitted with their
+    /// behaviours in M4b steps 4–6.
     pub fn decode_episode1_v2(
         bytes: &'a [u8],
         limits: DiagnosticLimits,
@@ -437,10 +439,25 @@ impl<'a> Diagnostic<'a> {
             return None;
         }
         if self.version == 40 {
-            // Wire 24 counts the Baron (doomednum 3003) in `K` (M4b step 5).
-            return Episode1Bounds::from_thing_records_v2(self.field("map.things")?);
+            // Wire 24 counts the Baron (doomednum 3003) in `K` (M4b step 5), and
+            // counts with the option bit of the frame's skill (step 6).
+            return Episode1Bounds::from_thing_records_v2(
+                self.field("map.things")?,
+                self.v40_skill(),
+            );
         }
         Episode1Bounds::from_thing_records(self.field("map.things")?)
+    }
+    /// DSIM40: the skill the frame's bounds are counted at, from
+    /// `actors.options[0]`: hard for 3, otherwise medium. A frame whose skill is
+    /// neither 2 nor 3 (or that lacks the field) is refused by
+    /// `validate_decorations`; counting it at medium keeps the step-5 behaviour
+    /// for such frames until that refusal.
+    fn v40_skill(&self) -> crate::Skill {
+        match self.field("actors.options").and_then(|o| o.first()) {
+            Some(&b) if b == crate::Skill::Hard as u8 => crate::Skill::Hard,
+            _ => crate::Skill::Medium,
+        }
     }
     fn slot_bound(&self) -> u32 {
         slot_bound_for(self.version)
@@ -1498,7 +1515,11 @@ impl<'a> Diagnostic<'a> {
         // E4; owner decision of the independent review): `actors.options` must read
         // skill 2 (`sk_medium`). Only this reader checks it; every reader before
         // DSIM36 keeps its historical contract and leaves the skill unchecked.
-        if self.required("actors.options")?.first() != Some(&(crate::Skill::Medium as u8)) {
+        // DSIM40 (wire 24, M4b decision I4) also admits skill 3 (`sk_hard`).
+        let skill = self.required("actors.options")?.first().copied();
+        let admitted = skill == Some(crate::Skill::Medium as u8)
+            || (self.version == 40 && skill == Some(crate::Skill::Hard as u8));
+        if !admitted {
             return Err(DiagnosticError::Identity);
         }
         let mut count = 0;
@@ -2150,13 +2171,21 @@ impl<'a> Diagnostic<'a> {
                 )
             })
         };
-        let expected = world_pickups::counted_things(
+        // DSIM40 counts with the option bit of the frame's skill (M4b step 6);
+        // every older version with the medium bit.
+        let bit = if self.version == 40 {
+            crate::episode1::skill_bit(self.v40_skill())
+        } else {
+            2
+        };
+        let expected = world_pickups::counted_things_with_bit(
             raw(),
             if matches!(self.version, 39 | 40) {
                 &world_pickups::COUNTED_ITEM_DOOMED_EPISODE1
             } else {
                 &world_pickups::COUNTED_ITEM_DOOMED
             },
+            bit,
         );
         if matches!(self.version, 28..=40) {
             // Every admitted COUNTKILL monster is a placed THING; credits never

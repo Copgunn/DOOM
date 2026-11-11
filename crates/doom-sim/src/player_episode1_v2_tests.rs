@@ -268,7 +268,8 @@ fn wire_24_identity_and_predicates() {
 
 /// The constructor holds the map number for the run and captures it as
 /// `level.map`; wire 23 holds none. Map numbers outside 1–9 and every skill but
-/// medium (hard is M4b step 6) are refused before anything is built.
+/// medium and hard (hard admitted in M4b step 6, decision I4) are refused before
+/// anything is built.
 #[test]
 fn constructor_map_number_and_skill() {
     let c = &cases()[0];
@@ -293,13 +294,17 @@ fn constructor_map_number_and_skill() {
     for map in [0, 10, 255] {
         assert_eq!(load(&l, V2, map, c.seed).err(), Some(unsupported));
     }
-    for skill in [Skill::Baby, Skill::Easy, Skill::Hard, Skill::Nightmare] {
+    for skill in [Skill::Baby, Skill::Easy, Skill::Nightmare] {
         assert_eq!(
             Simulation::original_player_episode1_v2_map(l.map(), 1, skill, options(c.seed)).err(),
             Some(OriginalRegistryError::Runtime(unsupported)),
             "{skill:?}"
         );
     }
+    let hard =
+        Simulation::original_player_episode1_v2_map(l.map(), 1, Skill::Hard, options(c.seed))
+            .unwrap();
+    assert_eq!(hard.actor_options.skill, Skill::Hard);
 }
 
 /// What M4b admits under wire 24 stays refused at load under wire 23: line
@@ -432,7 +437,7 @@ fn refused_tic_keeps_the_state_under_wire_24() {
 /// The DSIM40 writer and reader: round trip; the frozen readers (DSIM39
 /// included) refuse 40 and the DSIM40 reader refuses 39 and every earlier
 /// version; a DSIM39 capture relabelled 40 lacks `level.map`; `level.map` is
-/// 1–9; the context, `profile` and the skill (2 until M4b step 6) are checked.
+/// 1–9; the context, `profile` and the skill (2 or 3 since M4b step 6) are checked.
 #[test]
 fn dsim40_round_trip_and_refusals() {
     let limits = DiagnosticLimits::default();
@@ -546,8 +551,8 @@ fn dsim40_round_trip_and_refusals() {
         read(&with("profile", 23u32.to_le_bytes().to_vec())).err(),
         Some(DiagnosticError::Schema)
     );
-    // Skill 3 is admitted with hard skill in M4b step 6; skill 1 never.
-    for skill in [1u8, 3] {
+    // Skills 2 and 3 alone are admitted (skill 3 since M4b step 6).
+    for skill in [0u8, 1, 4, 5] {
         assert!(
             read(&with("actors.options", vec![skill, 0, 0])).is_err(),
             "{skill}"
