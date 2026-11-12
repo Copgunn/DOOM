@@ -1,6 +1,6 @@
 {
  "schema": "DOOM-M4B-REAL-RESULTS-v1",
- "note": "WIP: M4b step 7 real-map runs under wire 24 (genuine engine against Rust over DSIM40): 24 of the 30 older scripts (E1M1 on the M4a driver) and the 10 E1M8 scripts on skills 2 and 3; not yet recorded: E1M6 M6WALK, E1M7, E1M5, E1M9, DEMO1",
+ "note": "WIP: M4b step 7 real-map runs under wire 24 (genuine engine against Rust over DSIM40): 24 of the 30 older scripts (E1M1 on the M4a driver), the 10 E1M8 scripts, the 9 E1M5 scripts and the 10 E1M9 scripts on skills 2 and 3 (M9WALK3 is the partial walk of a25138d and will be replaced); not yet recorded: E1M6 M6WALK, E1M7, the E1M5 skill-3 walk, DEMO1",
  "runs": [
   {
    "map": "E1M1",
@@ -1151,6 +1151,539 @@
    }
   },
   {
+   "map": "E1M5",
+   "script": "M5CHAOS.lmp",
+   "skill": 2,
+   "driver": "m4b",
+   "lmp_sha256": "a8bc5804fe2f0d5ff1e83bdd71922d89ee5f9941b8510e13bfd53d13a330c5b3",
+   "tics": 699,
+   "end": "reborn",
+   "end_tic": 698,
+   "ends_agree": true,
+   "prndindex_after_load": 120,
+   "thinkers_at_load": 230,
+   "mobjs_at_load": 216,
+   "prndindex_end": 142,
+   "thinker_peak": 233,
+   "final_health": 0,
+   "final_killcount": 1,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 688,
+   "secretexit": 0,
+   "snapshots": 700,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "bcad58f4bbc696039631d74a133a317d3970906b011cefe0c58730d712e2cace",
+    "overflow": "bcad58f4bbc696039631d74a133a317d3970906b011cefe0c58730d712e2cace",
+    "address": "bcad58f4bbc696039631d74a133a317d3970906b011cefe0c58730d712e2cace"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 1,
+   "rust_compare": {
+    "tics_compared": 700,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 699
+    },
+    "rust_end": {
+     "kind": "refused",
+     "refused_tic": 700,
+     "last_capture": 699
+    },
+    "rust_refusal": "PlayerReborn",
+    "c_sequence_sha256": "2b302bb2dbdf08797b59a600328e39d273cd09b26c9fc0dec97609181e8708a8",
+    "rust_sequence_sha256": "2b302bb2dbdf08797b59a600328e39d273cd09b26c9fc0dec97609181e8708a8",
+    "final": {
+     "c_stripped_sha256": "0b6ccdb1561588a57dc9218f467361ef50c7703a7456d0556b9f9e1c31317c7a",
+     "rust_stripped_sha256": "0b6ccdb1561588a57dc9218f467361ef50c7703a7456d0556b9f9e1c31317c7a"
+    }
+   }
+  },
+  {
+   "map": "E1M5",
+   "script": "M5CHAOS3.lmp",
+   "skill": 3,
+   "driver": "m4b",
+   "lmp_sha256": "52affdbc8ea7f20a06c2fa904e2baca4b602bfd850097cfdad3f057be13cc077",
+   "tics": 648,
+   "end": "reborn",
+   "end_tic": 647,
+   "ends_agree": true,
+   "prndindex_after_load": 201,
+   "thinkers_at_load": 271,
+   "mobjs_at_load": 257,
+   "prndindex_end": 77,
+   "thinker_peak": 275,
+   "final_health": 0,
+   "final_killcount": 0,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 640,
+   "secretexit": 0,
+   "snapshots": 649,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "17c62d3a543513f204161d2c364609b3f6a92bf09bf641f97561478eff53ccee",
+    "overflow": "17c62d3a543513f204161d2c364609b3f6a92bf09bf641f97561478eff53ccee",
+    "address": "17c62d3a543513f204161d2c364609b3f6a92bf09bf641f97561478eff53ccee"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 649,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 648
+    },
+    "rust_end": {
+     "kind": "refused",
+     "refused_tic": 649,
+     "last_capture": 648
+    },
+    "rust_refusal": "PlayerReborn",
+    "c_sequence_sha256": "f466f37b5408cadf867158e435288c8ea64915402292edd44205f67c4eedbefb",
+    "rust_sequence_sha256": "f466f37b5408cadf867158e435288c8ea64915402292edd44205f67c4eedbefb",
+    "final": {
+     "c_stripped_sha256": "7206a0259dd9955c57d850529557ea9aa803cc6b14eba5b299b4d70647c1d9b4",
+     "rust_stripped_sha256": "7206a0259dd9955c57d850529557ea9aa803cc6b14eba5b299b4d70647c1d9b4"
+    }
+   }
+  },
+  {
+   "map": "E1M5",
+   "script": "M5DIE.lmp",
+   "skill": 2,
+   "driver": "m4b",
+   "lmp_sha256": "31b9924709a3b2aea72cb13cd43f78961790930930548a2b351ba0a7f3a2c8fd",
+   "tics": 333,
+   "end": "reborn",
+   "end_tic": 332,
+   "ends_agree": true,
+   "prndindex_after_load": 120,
+   "thinkers_at_load": 230,
+   "mobjs_at_load": 216,
+   "prndindex_end": 249,
+   "thinker_peak": 234,
+   "final_health": 0,
+   "final_killcount": 0,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 291,
+   "secretexit": 0,
+   "snapshots": 334,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "5746f0593a5307549cd19d78dc9c81a4c13852ce11b8bf8840354407a96dac3d",
+    "overflow": "5746f0593a5307549cd19d78dc9c81a4c13852ce11b8bf8840354407a96dac3d",
+    "address": "5746f0593a5307549cd19d78dc9c81a4c13852ce11b8bf8840354407a96dac3d"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 334,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 333
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 333
+    },
+    "c_sequence_sha256": "13456d9943d0de5b67a134772afa90ba0f5317051e48523cd19ac28aaef55996",
+    "rust_sequence_sha256": "13456d9943d0de5b67a134772afa90ba0f5317051e48523cd19ac28aaef55996",
+    "final": {
+     "c_stripped_sha256": "6c57eb7d13e2e1923acab59705f5b60fca406c1da6b23f1a036a96e303a934b5",
+     "rust_stripped_sha256": "6c57eb7d13e2e1923acab59705f5b60fca406c1da6b23f1a036a96e303a934b5"
+    }
+   }
+  },
+  {
+   "map": "E1M5",
+   "script": "M5DIE3.lmp",
+   "skill": 3,
+   "driver": "m4b",
+   "lmp_sha256": "e045e8cc1939eabee0f141caeaefb40af2d2ba30b078b665dc8740c6a4aaf3ef",
+   "tics": 431,
+   "end": "reborn",
+   "end_tic": 430,
+   "ends_agree": true,
+   "prndindex_after_load": 201,
+   "thinkers_at_load": 271,
+   "mobjs_at_load": 257,
+   "prndindex_end": 171,
+   "thinker_peak": 278,
+   "final_health": 0,
+   "final_killcount": 1,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 389,
+   "secretexit": 0,
+   "snapshots": 432,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "8647eba198d60e071aaf42771d67fc1494cf6b472d2c0e2423429f5c2517074d",
+    "overflow": "8647eba198d60e071aaf42771d67fc1494cf6b472d2c0e2423429f5c2517074d",
+    "address": "8647eba198d60e071aaf42771d67fc1494cf6b472d2c0e2423429f5c2517074d"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 1,
+   "rust_compare": {
+    "tics_compared": 432,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 431
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 431
+    },
+    "c_sequence_sha256": "646f2639fbc09a1bdab1d072ba55a8e6898eb399595fcb0a8f9a9385cebd87c1",
+    "rust_sequence_sha256": "646f2639fbc09a1bdab1d072ba55a8e6898eb399595fcb0a8f9a9385cebd87c1",
+    "final": {
+     "c_stripped_sha256": "32e414ad32f79e040595d9d370f548bed8e96bcaa80641f9ea4758ce73ae6d3b",
+     "rust_stripped_sha256": "32e414ad32f79e040595d9d370f548bed8e96bcaa80641f9ea4758ce73ae6d3b"
+    }
+   }
+  },
+  {
+   "map": "E1M5",
+   "script": "M5FIGHT.lmp",
+   "skill": 2,
+   "driver": "m4b",
+   "lmp_sha256": "99e2648369306b398acb87df5d274efded80bc7f5e60f9a50c800f9c20eb54c2",
+   "tics": 1257,
+   "end": "marker",
+   "end_tic": 1257,
+   "ends_agree": true,
+   "prndindex_after_load": 120,
+   "thinkers_at_load": 230,
+   "mobjs_at_load": 216,
+   "prndindex_end": 105,
+   "thinker_peak": 240,
+   "final_health": 11,
+   "final_killcount": 13,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 1258,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "111e5f28f67dee6a273865df9b7a1811bbfe24dd163607425c98f689689d927d",
+    "overflow": "111e5f28f67dee6a273865df9b7a1811bbfe24dd163607425c98f689689d927d",
+    "address": "111e5f28f67dee6a273865df9b7a1811bbfe24dd163607425c98f689689d927d"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 13,
+   "rust_compare": {
+    "tics_compared": 1258,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 1257
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 1257
+    },
+    "c_sequence_sha256": "fc14c5a12f58a24c90442f0e33189b90b58196aae649e8113490e638fe697190",
+    "rust_sequence_sha256": "fc14c5a12f58a24c90442f0e33189b90b58196aae649e8113490e638fe697190",
+    "final": {
+     "c_stripped_sha256": "935f89fbdc2908bea5c6a5a4b7a0e7bd3fcb3f6ddd0181394e4d3fee26c9bd9a",
+     "rust_stripped_sha256": "935f89fbdc2908bea5c6a5a4b7a0e7bd3fcb3f6ddd0181394e4d3fee26c9bd9a"
+    }
+   }
+  },
+  {
+   "map": "E1M5",
+   "script": "M5FIGHT3.lmp",
+   "skill": 3,
+   "driver": "m4b",
+   "lmp_sha256": "2255166a2820e80c9192dd39a6ed3c359d19164dec68188545d12c5c0858272f",
+   "tics": 1256,
+   "end": "marker",
+   "end_tic": 1256,
+   "ends_agree": true,
+   "prndindex_after_load": 201,
+   "thinkers_at_load": 271,
+   "mobjs_at_load": 257,
+   "prndindex_end": 224,
+   "thinker_peak": 286,
+   "final_health": 2,
+   "final_killcount": 20,
+   "final_itemcount": 1,
+   "final_secretcount": 1,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 1257,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "7be39699669a0caddae29246a1d706175b7e2c3cdf8c3c8cfae2f27ec98bd435",
+    "overflow": "7be39699669a0caddae29246a1d706175b7e2c3cdf8c3c8cfae2f27ec98bd435",
+    "address": "7be39699669a0caddae29246a1d706175b7e2c3cdf8c3c8cfae2f27ec98bd435"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 20,
+   "rust_compare": {
+    "tics_compared": 1257,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 1256
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 1256
+    },
+    "c_sequence_sha256": "caceb2ac7020220a25cd35c3b4806ba87c87953b1c1c1a87a47427ed708dcd1a",
+    "rust_sequence_sha256": "caceb2ac7020220a25cd35c3b4806ba87c87953b1c1c1a87a47427ed708dcd1a",
+    "final": {
+     "c_stripped_sha256": "065ff10df318efc933ac01e734b0ff199b1d1c613cc77b5ae5dce7a9a76bc248",
+     "rust_stripped_sha256": "065ff10df318efc933ac01e734b0ff199b1d1c613cc77b5ae5dce7a9a76bc248"
+    }
+   }
+  },
+  {
+   "map": "E1M5",
+   "script": "M5IDLE.lmp",
+   "skill": 2,
+   "driver": "m4b",
+   "lmp_sha256": "839bc80b5d5a448364b893ed34871ead347a289aad8568697b9f9f09d226e213",
+   "tics": 2100,
+   "end": "marker",
+   "end_tic": 2100,
+   "ends_agree": true,
+   "prndindex_after_load": 120,
+   "thinkers_at_load": 230,
+   "mobjs_at_load": 216,
+   "prndindex_end": 106,
+   "thinker_peak": 230,
+   "final_health": 100,
+   "final_killcount": 0,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 2101,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "ccdb889228f25716ddfaa8e03c1071363381efd929555defba43b9d756ffcc57",
+    "overflow": "ccdb889228f25716ddfaa8e03c1071363381efd929555defba43b9d756ffcc57",
+    "address": "ccdb889228f25716ddfaa8e03c1071363381efd929555defba43b9d756ffcc57"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 2101,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 2100
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 2100
+    },
+    "c_sequence_sha256": "9c093d5b594e5982be2b49dfb7c29be702f166076db03307b2739197fbb0c116",
+    "rust_sequence_sha256": "9c093d5b594e5982be2b49dfb7c29be702f166076db03307b2739197fbb0c116",
+    "final": {
+     "c_stripped_sha256": "fab3834cf9e28919b2c3b6e20266bdf0fe340c20e4274eaa8f0c7423e3631dd4",
+     "rust_stripped_sha256": "fab3834cf9e28919b2c3b6e20266bdf0fe340c20e4274eaa8f0c7423e3631dd4"
+    }
+   }
+  },
+  {
+   "map": "E1M5",
+   "script": "M5IDLE3.lmp",
+   "skill": 3,
+   "driver": "m4b",
+   "lmp_sha256": "443f52269bbbd8123db8361852314f24be355c798bb9a6a296daaa1f44f5ab4b",
+   "tics": 2100,
+   "end": "marker",
+   "end_tic": 2100,
+   "ends_agree": true,
+   "prndindex_after_load": 201,
+   "thinkers_at_load": 271,
+   "mobjs_at_load": 257,
+   "prndindex_end": 160,
+   "thinker_peak": 271,
+   "final_health": 100,
+   "final_killcount": 0,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 2101,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "d5bd48fb2795d18da6f71fe0db5260b41f46872388400fd89af7044ad55ccc51",
+    "overflow": "d5bd48fb2795d18da6f71fe0db5260b41f46872388400fd89af7044ad55ccc51",
+    "address": "d5bd48fb2795d18da6f71fe0db5260b41f46872388400fd89af7044ad55ccc51"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 2101,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 2100
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 2100
+    },
+    "c_sequence_sha256": "a39c77514fd637b72788fc862fb804f224656fceecb4e3089938652c20fad18b",
+    "rust_sequence_sha256": "a39c77514fd637b72788fc862fb804f224656fceecb4e3089938652c20fad18b",
+    "final": {
+     "c_stripped_sha256": "38e9e4da5c082824ca16dc6e9e3c60684e721ce97fe9b9a96a0783f88c6c6d4a",
+     "rust_stripped_sha256": "38e9e4da5c082824ca16dc6e9e3c60684e721ce97fe9b9a96a0783f88c6c6d4a"
+    }
+   }
+  },
+  {
+   "map": "E1M5",
+   "script": "M5WALK.lmp",
+   "skill": 2,
+   "driver": "m4b",
+   "lmp_sha256": "7a07a02656d9f8834c69bd464f89cf24e451ebfa049bfa1069b22ca4328b0ab4",
+   "tics": 7238,
+   "end": "exit",
+   "end_tic": 7237,
+   "ends_agree": true,
+   "prndindex_after_load": 120,
+   "thinkers_at_load": 230,
+   "mobjs_at_load": 216,
+   "prndindex_end": 47,
+   "thinker_peak": 250,
+   "final_health": 28,
+   "final_killcount": 79,
+   "final_itemcount": 7,
+   "final_secretcount": 3,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 7239,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 2,
+   "player_teleports": 1,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "7ac57ca6108218a0077b3f6ed2c2b176cbb70781a8cf7514e3e0d4cd6962d1fa",
+    "overflow": "7ac57ca6108218a0077b3f6ed2c2b176cbb70781a8cf7514e3e0d4cd6962d1fa",
+    "address": "7ac57ca6108218a0077b3f6ed2c2b176cbb70781a8cf7514e3e0d4cd6962d1fa"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 79,
+   "rust_compare": {
+    "tics_compared": 7239,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "exit",
+     "tic": 7238
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 7238
+    },
+    "c_sequence_sha256": "4ef2c395e6800bfb0e5f367d85b7cf163c87d1d77cb726e2928fd5d001ec17ef",
+    "rust_sequence_sha256": "4ef2c395e6800bfb0e5f367d85b7cf163c87d1d77cb726e2928fd5d001ec17ef",
+    "final": {
+     "c_stripped_sha256": "526201db6833664493fc09665ea1364df8cfe8615347e16440958b459b738bc3",
+     "rust_stripped_sha256": "526201db6833664493fc09665ea1364df8cfe8615347e16440958b459b738bc3"
+    }
+   }
+  },
+  {
    "map": "E1M6",
    "script": "M6CHAOS.lmp",
    "skill": 2,
@@ -1968,6 +2501,598 @@
     "final": {
      "c_stripped_sha256": "863a32830030e11164b0d9ba669fe4a87afedc8edc5096aab0c9dcc6f73450b2",
      "rust_stripped_sha256": "863a32830030e11164b0d9ba669fe4a87afedc8edc5096aab0c9dcc6f73450b2"
+    }
+   }
+  },
+  {
+   "map": "E1M9",
+   "script": "M9CHAOS.lmp",
+   "skill": 2,
+   "driver": "m4b",
+   "lmp_sha256": "27a4cceecb435a272b4da8653054f3f72fa4f849456b28b9604f290d3f30675b",
+   "tics": 832,
+   "end": "reborn",
+   "end_tic": 831,
+   "ends_agree": true,
+   "prndindex_after_load": 79,
+   "thinkers_at_load": 196,
+   "mobjs_at_load": 192,
+   "prndindex_end": 165,
+   "thinker_peak": 204,
+   "final_health": 0,
+   "final_killcount": 4,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 828,
+   "secretexit": 0,
+   "snapshots": 833,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "fcbf4bc259c75350a93077ca379b5a19039db9068ea412197348f5e7687ae963",
+    "overflow": "fcbf4bc259c75350a93077ca379b5a19039db9068ea412197348f5e7687ae963",
+    "address": "fcbf4bc259c75350a93077ca379b5a19039db9068ea412197348f5e7687ae963"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 4,
+   "rust_compare": {
+    "tics_compared": 833,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 832
+    },
+    "rust_end": {
+     "kind": "refused",
+     "refused_tic": 833,
+     "last_capture": 832
+    },
+    "rust_refusal": "PlayerReborn",
+    "c_sequence_sha256": "e126afe99ff23f9e25455410a8e974bee9f907b7bd54b3fa55a8475af38f0ab7",
+    "rust_sequence_sha256": "e126afe99ff23f9e25455410a8e974bee9f907b7bd54b3fa55a8475af38f0ab7",
+    "final": {
+     "c_stripped_sha256": "61ce8e893878cc756348f651f86aa7d07f98592d4bcbe266eeacef239e3cbe81",
+     "rust_stripped_sha256": "61ce8e893878cc756348f651f86aa7d07f98592d4bcbe266eeacef239e3cbe81"
+    }
+   }
+  },
+  {
+   "map": "E1M9",
+   "script": "M9CHAOS3.lmp",
+   "skill": 3,
+   "driver": "m4b",
+   "lmp_sha256": "dbf4b34820e28072ca6535173486cd763ba8326ca7bac6551a3d93fca7bb57ef",
+   "tics": 977,
+   "end": "reborn",
+   "end_tic": 976,
+   "ends_agree": true,
+   "prndindex_after_load": 141,
+   "thinkers_at_load": 227,
+   "mobjs_at_load": 223,
+   "prndindex_end": 188,
+   "thinker_peak": 238,
+   "final_health": 0,
+   "final_killcount": 7,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 964,
+   "secretexit": 0,
+   "snapshots": 978,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "24117f4b25085608aaf0326a54b3596e4a6a348ad242df42445eb5edc264de64",
+    "overflow": "24117f4b25085608aaf0326a54b3596e4a6a348ad242df42445eb5edc264de64",
+    "address": "24117f4b25085608aaf0326a54b3596e4a6a348ad242df42445eb5edc264de64"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 7,
+   "rust_compare": {
+    "tics_compared": 978,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 977
+    },
+    "rust_end": {
+     "kind": "refused",
+     "refused_tic": 978,
+     "last_capture": 977
+    },
+    "rust_refusal": "PlayerReborn",
+    "c_sequence_sha256": "893299db4109972723bf4f1d9111e6227e9950589614d743d66b7b422356b5d3",
+    "rust_sequence_sha256": "893299db4109972723bf4f1d9111e6227e9950589614d743d66b7b422356b5d3",
+    "final": {
+     "c_stripped_sha256": "096d43102294d9f4f26a6e3c2ebfbd7c19a24b7f17aff259405b09e0d50f3274",
+     "rust_stripped_sha256": "096d43102294d9f4f26a6e3c2ebfbd7c19a24b7f17aff259405b09e0d50f3274"
+    }
+   }
+  },
+  {
+   "map": "E1M9",
+   "script": "M9DIE.lmp",
+   "skill": 2,
+   "driver": "m4b",
+   "lmp_sha256": "a3f79c8f1095a4f169f5fc65095acef47716b51ce121f6bdb9cac70bab2b6a9c",
+   "tics": 338,
+   "end": "reborn",
+   "end_tic": 337,
+   "ends_agree": true,
+   "prndindex_after_load": 79,
+   "thinkers_at_load": 196,
+   "mobjs_at_load": 192,
+   "prndindex_end": 217,
+   "thinker_peak": 204,
+   "final_health": 0,
+   "final_killcount": 2,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 296,
+   "secretexit": 0,
+   "snapshots": 339,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "311ebabbc1fb5f04e7643526e942ceca9b9ff38801152141d34c9d975e198bd4",
+    "overflow": "311ebabbc1fb5f04e7643526e942ceca9b9ff38801152141d34c9d975e198bd4",
+    "address": "311ebabbc1fb5f04e7643526e942ceca9b9ff38801152141d34c9d975e198bd4"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 2,
+   "rust_compare": {
+    "tics_compared": 339,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 338
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 338
+    },
+    "c_sequence_sha256": "a23dde6efb4dcdc2f5cd70b4d09fec3744e809c153bd95fe15e2d8232927e320",
+    "rust_sequence_sha256": "a23dde6efb4dcdc2f5cd70b4d09fec3744e809c153bd95fe15e2d8232927e320",
+    "final": {
+     "c_stripped_sha256": "4117b746e236dd791a871c9bf897f74842dbf45a4a0509a4178e0d0c200d0342",
+     "rust_stripped_sha256": "4117b746e236dd791a871c9bf897f74842dbf45a4a0509a4178e0d0c200d0342"
+    }
+   }
+  },
+  {
+   "map": "E1M9",
+   "script": "M9DIE3.lmp",
+   "skill": 3,
+   "driver": "m4b",
+   "lmp_sha256": "4e19563282f2e1999f2ba42593f43cabbb2efd6640bac2a13bf2d2fbb05f2834",
+   "tics": 417,
+   "end": "reborn",
+   "end_tic": 416,
+   "ends_agree": true,
+   "prndindex_after_load": 141,
+   "thinkers_at_load": 227,
+   "mobjs_at_load": 223,
+   "prndindex_end": 63,
+   "thinker_peak": 240,
+   "final_health": 0,
+   "final_killcount": 6,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": 375,
+   "secretexit": 0,
+   "snapshots": 418,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "28dc5ccb85304cce220fa5eb80b27ed6c94ad08577fc2003b1cf38364e4e2b54",
+    "overflow": "28dc5ccb85304cce220fa5eb80b27ed6c94ad08577fc2003b1cf38364e4e2b54",
+    "address": "28dc5ccb85304cce220fa5eb80b27ed6c94ad08577fc2003b1cf38364e4e2b54"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 6,
+   "rust_compare": {
+    "tics_compared": 418,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "reborn",
+     "tic": 417
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 417
+    },
+    "c_sequence_sha256": "7b9c599284dce99f41bec80bd3636ba43965fe7f84f0c539542a57df3e1de695",
+    "rust_sequence_sha256": "7b9c599284dce99f41bec80bd3636ba43965fe7f84f0c539542a57df3e1de695",
+    "final": {
+     "c_stripped_sha256": "b866481dbb85a53012093e1c97ea1da9e5742ccc20a7eccd05d8664a7c27eb4f",
+     "rust_stripped_sha256": "b866481dbb85a53012093e1c97ea1da9e5742ccc20a7eccd05d8664a7c27eb4f"
+    }
+   }
+  },
+  {
+   "map": "E1M9",
+   "script": "M9FIGHT.lmp",
+   "skill": 2,
+   "driver": "m4b",
+   "lmp_sha256": "33a6afc8bd8952eff8dea5f0d1fae3a2c7bac78d00eaf09aec943112ce56ae11",
+   "tics": 1043,
+   "end": "marker",
+   "end_tic": 1043,
+   "ends_agree": true,
+   "prndindex_after_load": 79,
+   "thinkers_at_load": 196,
+   "mobjs_at_load": 192,
+   "prndindex_end": 188,
+   "thinker_peak": 209,
+   "final_health": 56,
+   "final_killcount": 12,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 1044,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 16,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "74ccc263f80759a67cf76abf383b4612af6c33edde9f8b456aa5d2ae9b40ef4b",
+    "overflow": "74ccc263f80759a67cf76abf383b4612af6c33edde9f8b456aa5d2ae9b40ef4b",
+    "address": "74ccc263f80759a67cf76abf383b4612af6c33edde9f8b456aa5d2ae9b40ef4b"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 12,
+   "rust_compare": {
+    "tics_compared": 1044,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 1043
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 1043
+    },
+    "c_sequence_sha256": "8cfb79909710316eb91f5d40e844d286794f0f73511eb250cff9edce0dff0927",
+    "rust_sequence_sha256": "8cfb79909710316eb91f5d40e844d286794f0f73511eb250cff9edce0dff0927",
+    "final": {
+     "c_stripped_sha256": "bd00ee3ce6440cebaa41cda21aa931ebd989235ed243644f111b95f6c5bf70a1",
+     "rust_stripped_sha256": "bd00ee3ce6440cebaa41cda21aa931ebd989235ed243644f111b95f6c5bf70a1"
+    }
+   }
+  },
+  {
+   "map": "E1M9",
+   "script": "M9FIGHT3.lmp",
+   "skill": 3,
+   "driver": "m4b",
+   "lmp_sha256": "1e24874b423568bbe3ce592cf1943a4ad52fb7dc58b1bfc78b7a364ad04a874d",
+   "tics": 1095,
+   "end": "marker",
+   "end_tic": 1095,
+   "ends_agree": true,
+   "prndindex_after_load": 141,
+   "thinkers_at_load": 227,
+   "mobjs_at_load": 223,
+   "prndindex_end": 42,
+   "thinker_peak": 239,
+   "final_health": 20,
+   "final_killcount": 8,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 1096,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 14,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "bf5c4a6c7256627ef57bbd3b28c66ead8c463523e6b403410a3ec7b88cd2fc4e",
+    "overflow": "bf5c4a6c7256627ef57bbd3b28c66ead8c463523e6b403410a3ec7b88cd2fc4e",
+    "address": "bf5c4a6c7256627ef57bbd3b28c66ead8c463523e6b403410a3ec7b88cd2fc4e"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 8,
+   "rust_compare": {
+    "tics_compared": 1096,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 1095
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 1095
+    },
+    "c_sequence_sha256": "b139bee239d4f601e0e2e301715b05110963597277b8c43ad22eb8600aaa303a",
+    "rust_sequence_sha256": "b139bee239d4f601e0e2e301715b05110963597277b8c43ad22eb8600aaa303a",
+    "final": {
+     "c_stripped_sha256": "d472fb9f1f49a7f77a183ad8c331557c4724d9d760893234d82b129fbc1e21d9",
+     "rust_stripped_sha256": "d472fb9f1f49a7f77a183ad8c331557c4724d9d760893234d82b129fbc1e21d9"
+    }
+   }
+  },
+  {
+   "map": "E1M9",
+   "script": "M9IDLE.lmp",
+   "skill": 2,
+   "driver": "m4b",
+   "lmp_sha256": "6241a16afa205692911648ec65975d2c5dd0a1ff1d2c9832874b318d26ba4633",
+   "tics": 2100,
+   "end": "marker",
+   "end_tic": 2100,
+   "ends_agree": true,
+   "prndindex_after_load": 79,
+   "thinkers_at_load": 196,
+   "mobjs_at_load": 192,
+   "prndindex_end": 79,
+   "thinker_peak": 196,
+   "final_health": 100,
+   "final_killcount": 0,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 2101,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "be3ec12e3a9f955ba3fd4da99cdb56cbb08a2055888f3a8914fae496741bbe1f",
+    "overflow": "be3ec12e3a9f955ba3fd4da99cdb56cbb08a2055888f3a8914fae496741bbe1f",
+    "address": "be3ec12e3a9f955ba3fd4da99cdb56cbb08a2055888f3a8914fae496741bbe1f"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 2101,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 2100
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 2100
+    },
+    "c_sequence_sha256": "ecf193bc16671152cc015132dbad11dc36ff4cac9f592c196c7c132bf360de63",
+    "rust_sequence_sha256": "ecf193bc16671152cc015132dbad11dc36ff4cac9f592c196c7c132bf360de63",
+    "final": {
+     "c_stripped_sha256": "8e1df13f0488260092ab1b9fad3645f50bd581214af3e3ca619c1a11eef98ee8",
+     "rust_stripped_sha256": "8e1df13f0488260092ab1b9fad3645f50bd581214af3e3ca619c1a11eef98ee8"
+    }
+   }
+  },
+  {
+   "map": "E1M9",
+   "script": "M9IDLE3.lmp",
+   "skill": 3,
+   "driver": "m4b",
+   "lmp_sha256": "8da6ade2cf07f3d7935fbe909c401ab576c2c803fb9613b9ba232a0a5f3b158a",
+   "tics": 2100,
+   "end": "marker",
+   "end_tic": 2100,
+   "ends_agree": true,
+   "prndindex_after_load": 141,
+   "thinkers_at_load": 227,
+   "mobjs_at_load": 223,
+   "prndindex_end": 141,
+   "thinker_peak": 227,
+   "final_health": 100,
+   "final_killcount": 0,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 2101,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "d2b4d8ee815588a21366455d5487e39b4a45f0b80ede283a26223d142f4cbccd",
+    "overflow": "d2b4d8ee815588a21366455d5487e39b4a45f0b80ede283a26223d142f4cbccd",
+    "address": "d2b4d8ee815588a21366455d5487e39b4a45f0b80ede283a26223d142f4cbccd"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 0,
+   "rust_compare": {
+    "tics_compared": 2101,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 2100
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 2100
+    },
+    "c_sequence_sha256": "ea7d32ae580bbf9d015be32296e4786facbc3aca39534bfbb7df534ecf6e6da7",
+    "rust_sequence_sha256": "ea7d32ae580bbf9d015be32296e4786facbc3aca39534bfbb7df534ecf6e6da7",
+    "final": {
+     "c_stripped_sha256": "6bbffb59eaf7a9f1d716aff83d67c6ee6c4d743771f0833bada17e9b9061c965",
+     "rust_stripped_sha256": "6bbffb59eaf7a9f1d716aff83d67c6ee6c4d743771f0833bada17e9b9061c965"
+    }
+   }
+  },
+  {
+   "map": "E1M9",
+   "script": "M9WALK.lmp",
+   "skill": 2,
+   "driver": "m4b",
+   "lmp_sha256": "fb808ecc79e7c47ecccfc5004374913b57c2de1b5546928bc90aa8392000e095",
+   "tics": 5963,
+   "end": "exit",
+   "end_tic": 5962,
+   "ends_agree": true,
+   "prndindex_after_load": 79,
+   "thinkers_at_load": 196,
+   "mobjs_at_load": 192,
+   "prndindex_end": 197,
+   "thinker_peak": 210,
+   "final_health": 36,
+   "final_killcount": 51,
+   "final_itemcount": 4,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 5964,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 20,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "7012c176f9d69fa867fd936ca78cf836b522e61e5d5880ad9538e9efc55fa701",
+    "overflow": "7012c176f9d69fa867fd936ca78cf836b522e61e5d5880ad9538e9efc55fa701",
+    "address": "7012c176f9d69fa867fd936ca78cf836b522e61e5d5880ad9538e9efc55fa701"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 51,
+   "rust_compare": {
+    "tics_compared": 5964,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "exit",
+     "tic": 5963
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 5963
+    },
+    "c_sequence_sha256": "1532f67eae4e1d0b14cb15e32135dda05053a42bf92e63c054620ea750601531",
+    "rust_sequence_sha256": "1532f67eae4e1d0b14cb15e32135dda05053a42bf92e63c054620ea750601531",
+    "final": {
+     "c_stripped_sha256": "25243ac5841e0c3601ea52188630f73d03b4dda699234a6555c37467fc306681",
+     "rust_stripped_sha256": "25243ac5841e0c3601ea52188630f73d03b4dda699234a6555c37467fc306681"
+    }
+   }
+  },
+  {
+   "map": "E1M9",
+   "script": "M9WALK3.lmp",
+   "skill": 3,
+   "driver": "m4b",
+   "lmp_sha256": "e00f5a7b784c033b6da64b83c819a151cf24984b672b484b4d307ba6d43e1ada",
+   "tics": 3557,
+   "end": "marker",
+   "end_tic": 3557,
+   "ends_agree": true,
+   "prndindex_after_load": 141,
+   "thinkers_at_load": 227,
+   "mobjs_at_load": 223,
+   "prndindex_end": 135,
+   "thinker_peak": 249,
+   "final_health": 9,
+   "final_killcount": 55,
+   "final_itemcount": 0,
+   "final_secretcount": 0,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 3558,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 30,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "7b0d9dbca98f8bb53897bf605c50403ce0f69f0a584f85a5616ae2147982c5e5",
+    "overflow": "7b0d9dbca98f8bb53897bf605c50403ce0f69f0a584f85a5616ae2147982c5e5",
+    "address": "7b0d9dbca98f8bb53897bf605c50403ce0f69f0a584f85a5616ae2147982c5e5"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 55,
+   "rust_compare": {
+    "tics_compared": 3558,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 3557
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 3557
+    },
+    "c_sequence_sha256": "f89f5f26ef1f2bb678ca63de1c61a5a49c15c5af69a6e886ba9e9eeb69cac994",
+    "rust_sequence_sha256": "f89f5f26ef1f2bb678ca63de1c61a5a49c15c5af69a6e886ba9e9eeb69cac994",
+    "final": {
+     "c_stripped_sha256": "f74cadb2cd97d13aafb8487c7e5bc96402149b1b089ecd63a537f6f14b8f9dd2",
+     "rust_stripped_sha256": "f74cadb2cd97d13aafb8487c7e5bc96402149b1b089ecd63a537f6f14b8f9dd2"
     }
    }
   }
