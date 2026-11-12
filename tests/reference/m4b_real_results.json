@@ -1,6 +1,6 @@
 {
  "schema": "DOOM-M4B-REAL-RESULTS-v1",
- "note": "WIP: M4b step 7 real-map runs under wire 24 (genuine engine against Rust over DSIM40): 24 of the 30 older scripts (E1M1 on the M4a driver), the 10 E1M8 scripts, the 9 E1M5 scripts and the 10 E1M9 scripts on skills 2 and 3 (M9WALK3 is the partial walk of a25138d and will be replaced); not yet recorded: E1M6 M6WALK, E1M7, the E1M5 skill-3 walk, DEMO1",
+ "note": "WIP: M4b step 7 real-map runs under wire 24 (genuine engine against Rust over DSIM40): 25 of the 30 older scripts (E1M1 on the M4a driver), the 10 E1M8 scripts, the 9 E1M5 scripts and the 10 E1M9 scripts on skills 2 and 3 (M9WALK3 is the partial walk of a25138d and will be replaced), and DEMO1 (the IWAD's lump with its version byte patched from 109 to 110 in scratch, never committed; skill 3, E1M5); not yet recorded: E1M7, the E1M5 skill-3 walk",
  "runs": [
   {
    "map": "E1M1",
@@ -1272,6 +1272,65 @@
   },
   {
    "map": "E1M5",
+   "script": "M5DEMO1.lmp",
+   "skill": 3,
+   "driver": "m4b",
+   "lmp_sha256": "92e4f162f5db252a028876e9498f0cfeeb69214d7811bbcf4a6c98c27e5000fb",
+   "tics": 1710,
+   "end": "marker",
+   "end_tic": 1710,
+   "ends_agree": true,
+   "prndindex_after_load": 201,
+   "thinkers_at_load": 271,
+   "mobjs_at_load": 257,
+   "prndindex_end": 148,
+   "thinker_peak": 273,
+   "final_health": 0,
+   "final_killcount": 18,
+   "final_itemcount": 5,
+   "final_secretcount": 1,
+   "death_tic": 1631,
+   "secretexit": 0,
+   "snapshots": 1711,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "54b700504696257af7cb07c43753546b72b701d0f69b25e92e63c176d41a5b86",
+    "overflow": "54b700504696257af7cb07c43753546b72b701d0f69b25e92e63c176d41a5b86",
+    "address": "54b700504696257af7cb07c43753546b72b701d0f69b25e92e63c176d41a5b86"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 18,
+   "rust_compare": {
+    "tics_compared": 1711,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "marker",
+     "tic": 1710
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 1710
+    },
+    "c_sequence_sha256": "7ffc537af88a6f32c9126e5d36ac71188c97af426e355afd9c620f34f87536c8",
+    "rust_sequence_sha256": "7ffc537af88a6f32c9126e5d36ac71188c97af426e355afd9c620f34f87536c8",
+    "final": {
+     "c_stripped_sha256": "fbcf6fc33020bc994a7c4510c2262e68c30cd22f58f1ea67d9c0fc8acfffe12f",
+     "rust_stripped_sha256": "fbcf6fc33020bc994a7c4510c2262e68c30cd22f58f1ea67d9c0fc8acfffe12f"
+    }
+   }
+  },
+  {
+   "map": "E1M5",
    "script": "M5DIE.lmp",
    "skill": 2,
    "driver": "m4b",
@@ -1909,6 +1968,65 @@
     "final": {
      "c_stripped_sha256": "f6cf28583d95a13de623d71b36949528b3dbc06c6c4fc06a8f52ea00181dc67d",
      "rust_stripped_sha256": "f6cf28583d95a13de623d71b36949528b3dbc06c6c4fc06a8f52ea00181dc67d"
+    }
+   }
+  },
+  {
+   "map": "E1M6",
+   "script": "M6WALK.lmp",
+   "skill": 2,
+   "driver": "m4a",
+   "lmp_sha256": "0f4c85d7ec0a0ed1cf5d73a53171af31de15a492a0669e874ee06c8d5004375a",
+   "tics": 7839,
+   "end": "exit",
+   "end_tic": 7838,
+   "ends_agree": true,
+   "prndindex_after_load": 111,
+   "thinkers_at_load": 382,
+   "mobjs_at_load": 370,
+   "prndindex_end": 255,
+   "thinker_peak": 395,
+   "final_health": 61,
+   "final_killcount": 106,
+   "final_itemcount": 16,
+   "final_secretcount": 1,
+   "death_tic": null,
+   "secretexit": 0,
+   "snapshots": 7840,
+   "unknown_messages": 0,
+   "blocked_floor_tics": [],
+   "blocked_plat_tics": [],
+   "teleport_fog_spawns": 0,
+   "player_teleports": 0,
+   "variants_identical": true,
+   "dumps_sha256": {
+    "strict": "5f0548f9a20399f0baa6319495a1d8764767f71066cbe9f7cc8d52b7d90d0b48",
+    "overflow": "5f0548f9a20399f0baa6319495a1d8764767f71066cbe9f7cc8d52b7d90d0b48",
+    "address": "5f0548f9a20399f0baa6319495a1d8764767f71066cbe9f7cc8d52b7d90d0b48"
+   },
+   "asan_options": "detect_leaks=0 (leak detection disabled)",
+   "kills": 106,
+   "rust_compare": {
+    "tics_compared": 7840,
+    "complete": true,
+    "match": true,
+    "first_divergence": null,
+    "projection_stop": null,
+    "map_group_equal": true,
+    "c_end": {
+     "kind": "exit",
+     "tic": 7839
+    },
+    "rust_end": {
+     "kind": "last",
+     "refused_tic": null,
+     "last_capture": 7839
+    },
+    "c_sequence_sha256": "84cd07dd7dbb0b225245868676a481cc610df1b3cec02815d9e11900b8862dbb",
+    "rust_sequence_sha256": "84cd07dd7dbb0b225245868676a481cc610df1b3cec02815d9e11900b8862dbb",
+    "final": {
+     "c_stripped_sha256": "2f850675018d27ed37555e1158b7969c73d66d597abd859f39ae62482a0034a4",
+     "rust_stripped_sha256": "2f850675018d27ed37555e1158b7969c73d66d597abd859f39ae62482a0034a4"
     }
    }
   },
