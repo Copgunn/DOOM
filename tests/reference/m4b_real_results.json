@@ -1,6 +1,6 @@
 {
  "schema": "DOOM-M4B-REAL-RESULTS-v1",
- "note": "WIP: M4b step 7 real-map runs under wire 24 (genuine engine against Rust over DSIM40): all 30 older scripts (E1M1 on the M4a driver), the 10 E1M8 scripts, the 9 E1M5 scripts and the 10 E1M9 scripts on skills 2 and 3 (the E1M5 and E1M8 fighting records are those of the strengthened scripts; M9WALK3 is the partial walk of a25138d and will be replaced), and DEMO1 (the IWAD's lump with its version byte patched from 109 to 110 in scratch, never committed; skill 3, E1M5); not yet recorded: the E1M5 skill-3 walk and the finished E1M9 skill-3 walk",
+ "note": "WIP: M4b step 7 real-map runs under wire 24 (genuine engine against Rust over DSIM40), 60 matched runs: all 30 older scripts (E1M1 on the M4a driver), the 10 E1M8 scripts, 9 of the 10 E1M5 scripts and 9 of the 10 current E1M9 scripts on skills 2 and 3 (the E1M5 and E1M8 fighting records are those of the strengthened scripts; the M9WALK3 record is the old partial walk of a25138d and is stale), and DEMO1 (the IWAD's lump with its version byte patched from 109 to 110 in scratch, never committed; skill 3, E1M5). Not recorded: M5WALK3 (Rust refuses tic 9,153 where the genuine engine runs on to the exit: an open divergence) and the finished M9WALK3 (not yet run)",
  "runs": [
   {
    "map": "E1M1",
