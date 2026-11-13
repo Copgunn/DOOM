@@ -101,11 +101,10 @@ fn biter(s: &Simulation) -> ActorId {
         })
         .collect();
     assert_eq!(demons.len(), 2);
-    let east = demons
+    demons
         .into_iter()
         .max_by_key(|id| s.actor(*id).unwrap().position()[0])
-        .unwrap();
-    east
+        .unwrap()
 }
 
 /// Wire 24 runs both C-observed bites on the flagged body: after each the body still
