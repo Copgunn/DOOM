@@ -58,8 +58,9 @@ EXPECT = {
     'SPECH8': dict(pick={9: (None, None)}, box=8),
     'SPECH9': dict(pick={9: (None, None)}, box=9),
     'SKILL': dict(pick={1: (None, 1)}, box=1),
-    # The second set (tests/reference/m4b_manifest2.json, M4b step 5).
+    # The second set (tests/reference/m4b_manifest2.json, M4b steps 5 and 7).
     'TELE2X': dict(pick={1: (1, 1), 2: (2, 2)}, box=1),
+    'SAWBITE': dict(pick={}, box=0),
 }
 
 

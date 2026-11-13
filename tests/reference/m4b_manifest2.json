@@ -40,6 +40,53 @@
      ]
     }
    ]
+  },
+  {
+   "name": "SAWBITE",
+   "file": "tests/reference/m4b_wads/sawbite.wad",
+   "slot": "E1M1",
+   "episode": 1,
+   "map": 1,
+   "sha256": "f883d0ba649e3139fe77b9e8bff09f267e1d6c17b18de5598807ec6f04235561",
+   "bytes": 46354,
+   "sectors": 1,
+   "lines": 12,
+   "things": {
+    "2": {
+     "1": 1,
+     "2005": 1,
+     "2019": 1,
+     "3002": 2
+    },
+    "3": {
+     "1": 1,
+     "2005": 1,
+     "2019": 1,
+     "3002": 2
+    }
+   },
+   "scripts": [
+    {
+     "lump": "SAWBITE",
+     "source": "tests/reference/m4b_scripts/sawbite.txt",
+     "lmp": "tests/reference/m4b_scripts/SAWBITE.lmp",
+     "c_end": "marker",
+     "end_tic": 116,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "an A_Saw hit sets MF_JUSTATTACKED on the player",
+       "event": "first M type=MT_PLAYER flags&128",
+       "tic": 45
+      },
+      {
+       "what": "a Demon bite on the body A_Saw flagged in the same tic",
+       "event": "bite flags&128",
+       "tic": 73
+      }
+     ]
+    }
+   ]
   }
  ]
 }

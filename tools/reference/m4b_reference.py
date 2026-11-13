@@ -9,7 +9,15 @@ expected C ending (`c_end`, `end_tic`), the Rust expectation (`rust`: "tbd" whil
 does not exist, or {"refuse": NAME, "tic": N}) and `must_show`, the events the script exists
 to produce, each with the tic at which it first appears in the dump ("tic": null means the
 event must never happen). Event expressions are m4a_reference.py's (first, gone, edge,
-stall; @LABEL resolves through m4b_wad.labels).
+stall; @LABEL resolves through m4b_wad.labels), plus one added here (M4b step 7):
+
+  bite COND...   the first tic at which the player's mobj row satisfies every COND (m4a_reference
+                 conditions), its health is below its health on the previous dumped tic, and the
+                 player's `attacker` (player->attacker = source, p_inter.c:874) is a Demon or Spectre
+                 row that entered S_SARG_ATK3 in that tic (its tics are the state's full 8, info.c:623;
+                 the state's action is A_SargAttack). `bite flags&128` is a bite on a body that still
+                 carries MF_JUSTATTACKED, which only A_Saw sets (p_pspr.c:542) and the next
+                 P_PlayerThink clears (p_user.c:249-255): a bite in the tic of an A_Saw hit.
 
 The runner's strict, overflow and address variants are built with m4b_build.build() (the
 M4a driver with the declared M4b telefrag adapter in the two sanitizer builds) under --work;
@@ -345,14 +353,52 @@ def facts_tele2x(d):
                 fogs_in_tic=len(tel[0]['fogs']), draws_in_tic=tel[0]['draws'], position_after=(units(pm['x']), units(pm['y'])))
 
 
+def facts_sawbite(d):
+    """A_Saw hits (MF_JUSTATTACKED at the end of the tic) and every bite: its tic, the health lost,
+    whether the body carried MF_JUSTATTACKED, the attacker's type and the player's health after it."""
+    hits = [t for t in d.tics if t >= 0 and player(d, t)[0]['flags'] & 128]
+    return dict(saw_hit_tics=hits,
+                bites=[dict(tic=t, health_lost=lost, justattacked=bool(pm['flags'] & 128),
+                            attacker='MT_SHADOWS' if a['type'] == MT('MT_SHADOWS') else 'MT_SERGEANT',
+                            health_after=pm['health'])
+                       for t, pm, a, lost in bites(d)])
+
+
 FACTS = {'TELE1': facts_tele1, 'TELE2': facts_tele2, 'TSPLIT': facts_move, 'TSLIDE': facts_move, 'TFRAG1': facts_tfrag,
          'MTELE1': facts_mtele, 'SLIDEB': facts_slideb, 'SLIDEC': facts_slidec, 'BARON1': facts_baron1, 'BINF1': facts_binf1,
          'BVB1': facts_bvb1, 'BOSS1': facts_boss, 'BOSS2': facts_boss, 'BOSSM1': facts_boss, 'SPECH8': facts_spech,
-         'SPECH9': facts_spech, 'SKILL2': facts_skill, 'SKILL3': facts_skill, 'TELE2X': facts_tele2x}
+         'SPECH9': facts_spech, 'SKILL2': facts_skill, 'SKILL3': facts_skill, 'TELE2X': facts_tele2x, 'SAWBITE': facts_sawbite}
 
 
 # ---------------------------------------------------------------- runs ------------------------
+SARG_ATK3_TICS = 8   # info.c:623, S_SARG_ATK3 {SPR_SARG,6,8,{A_SargAttack},S_SARG_RUN1}
+
+
+def bites(d, conds=(), labels=None):
+    """Tics of Demon/Spectre bites on the player (see `bite` in the module docstring): (tic, the
+    player mobj row, the attacker row, the health lost)."""
+    ok = R.matcher(list(conds), labels or {})
+    out, prev = [], None
+    for t in d.tics:
+        r = d.rows(t)
+        if not r.get('P'):
+            continue
+        p = r['P'][0]
+        pm = r['M'][p['mo']]
+        if prev is not None and pm['health'] < prev and ok(pm):
+            att = [m for m in r['M'] if m['idx'] == p['attacker']]
+            if (att and att[0]['type'] in (MT('MT_SERGEANT'), MT('MT_SHADOWS'))
+                    and att[0]['state'] == ST('S_SARG_ATK3') and att[0]['tics'] == SARG_ATK3_TICS):
+                out.append((t, pm, att[0], prev - pm['health']))
+        prev = pm['health']
+    return out
+
+
 def event_tic(d, expr, labels):
+    words = expr.split()
+    if words[0] == 'bite':
+        b = bites(d, words[1:], labels)
+        return b[0][0] if b else None
     return R.event_tic(d, expr, labels)
 
 

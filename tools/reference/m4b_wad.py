@@ -31,6 +31,8 @@ stay byte-identical):
 
     tele2x    two teleports in one tic: a split move's first half crosses one 97 line, its second half
               continues from the landing across a second 97 line
+    sawbite   a chainsaw and two Demons in a short hall: one Demon bites the player in a tic in which
+              A_Saw hit the other and set MF_JUSTATTACKED on the player (M4b step 7)
 
 The lump framing, game data, grid painter, side textures and builder chain are the frozen
 M4a generator's (tools/reference/m4a_wad.py, imported read-only, which itself imports
@@ -68,6 +70,7 @@ TELEPORTMAN, BARREL = 14, 2035
 LAUNCHER, ROCKET, ROCKETBOX, SHOTGUN = 2003, 2010, 2046, 2001
 SHELLS, CLIP, STIMPACK, MEDIKIT, HEALTHBONUS = 2008, 2007, 2011, 2012, 2014
 SOULSPHERE, BLUEARMOR, BACKPACK = 2013, 2019, 8
+CHAINSAW = 2005
 ALL_SKILLS, AMBUSH, NOTSINGLE = 7, 8, 16
 EAST, NORTH, WEST, SOUTH = 0, 90, 180, 270
 TELEPORT = 97
@@ -299,13 +302,30 @@ def tele2x():
     return p
 
 
+def sawbite():
+    """A Demon bite on a body A_Saw flagged in the same tic (M4b step 7, the E1M5 M5WALK3 refusal): a
+    hub between a west and an east corridor, a Demon in each. The player, facing west, picks up the
+    chainsaw and blue armor and saws the west Demon; each A_Saw hit sets MF_JUSTATTACKED (p_pspr.c:542)
+    in P_PlayerThink, which P_Ticker runs before the thinkers (p_tick.c:150-152), so the east Demon's
+    A_SargAttack (p_enemy.c:935-948) bites the flagged body later in that tic. A spawned mobj's movedir
+    is DI_EAST (0), so the east Demon starts near its corridor's east wall and turns back at once."""
+    p = Plan('sawbite')
+    p.sector('HALL', [(-48, -48, 48, 48), (-448, -32, -48, 32), (48, -32, 320, 32)])
+    p.thing(0, 0, WEST, PLAYER1)
+    p.thing(-32, 0, EAST, CHAINSAW)
+    p.thing(-32, -32, EAST, BLUEARMOR)
+    p.thing(-160, 0, EAST, DEMON)
+    p.thing(288, 0, WEST, DEMON)
+    return p
+
+
 MAPS = {'tele': (tele, 'E1M1'), 'telemove': (telemove, 'E1M1'), 'tfrag': (tfrag, 'E1M1'), 'montele': (montele, 'E1M1'),
         'slideb': (slideb, 'E1M1'), 'slidec': (slidec, 'E1M1'), 'baron': (baron, 'E1M1'), 'infight': (infight, 'E1M1'), 'bvb': (bvb, 'E1M1'),
         'boss8': (boss8, 'E1M8'), 'bossm1': (boss8, 'E1M1'), 'spech8': (spech(8), 'E1M1'), 'spech9': (spech(9), 'E1M1'),
         'skill': (skill, 'E1M1')}
 # The second M4b set (owner request, 2026-11-10): new WADs listed in tests/reference/m4b_manifest2.json, so
 # that tests/reference/m4b_manifest.json and every file of the first set stay byte-identical.
-MAPS2 = {'tele2x': (tele2x, 'E1M1')}
+MAPS2 = {'tele2x': (tele2x, 'E1M1'), 'sawbite': (sawbite, 'E1M1')}
 MANIFEST2 = ROOT / 'tests/reference/m4b_manifest2.json'
 SETS = [(MAPS, MANIFEST), (MAPS2, MANIFEST2)]
 ALL_MAPS = {**MAPS, **MAPS2}
