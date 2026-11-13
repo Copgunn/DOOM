@@ -13,7 +13,9 @@ Rust results are in [Wire 24 against the genuine engine](#wire-24-against-the-ge
 step 4 (2026-11-10): teleportation, in [Rust replay: teleportation](#rust-replay-teleportation). Phase 2 step 5
 (2026-11-10): the Baron and `A_BossDeath`, in [Rust replay: the Baron and A_BossDeath](#rust-replay-the-baron-and-a_bossdeath),
 and the second synthetic set (two teleports in one tic). Phase 2 step 6 (2026-11-10): hard skill, in
-[Rust replay: hard skill](#rust-replay-hard-skill). Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`,
+[Rust replay: hard skill](#rust-replay-hard-skill). Phase 2 step 7 (2026-11-13): the real-map runs, `DEMO1`
+and the saw-bite fix, in [Real maps and DEMO1](#real-maps-and-demo1), with SAWBITE added to the second
+synthetic set. Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`,
 so LeakSanitizer was disabled, not passed. Timings quoted here were taken on a host that was
 not idle and are not performance measurements.
 
@@ -413,6 +415,10 @@ fixture byte for byte, in `check_player_episode1v2.py` and in `episode1v2_mechan
 `teleport_tests::two_teleports_in_one_tic` checks the two `Teleported` records, four fogs and four
 draws of that tic.
 
+**SAWBITE (step 7).** The second set gained a scene, SAWBITE (a Demon bite on a body that `A_Saw`
+flagged in the same tic), found by a real-map divergence; it is described in
+[The M5WALK3 divergence and its fix](#the-m5walk3-divergence-and-its-fix).
+
 ## Rust replay: hard skill
 
 Phase 2 step 6 (2026-11-10, America/Los_Angeles). Wire 24 now admits skill byte 3 (hard,
@@ -465,3 +471,185 @@ and Rust stripped-sequence digest is `a39c77514fd637b7` for both.
   step 7.
 - Nothing here claims that hard skill differs from medium in any way but the option bit; that is
   the source reading of the note (§3 part C), confirmed on the synthetic SKILL scripts only.
+
+## Real maps and DEMO1
+
+Phase 2 step 7 (2026-11-10 to 2026-11-13, America/Los_Angeles; decisions I5 and I11 of the
+[investigation](../M4B_REFERENCE_INVESTIGATION.md)). All results are local-only: the IWAD was read
+read-only from `/mnt/d/DoomIWADs` and no lump content, name, coordinate or geometry is committed,
+only counts, pass/fail facts and digests. The per-run records are in
+`tests/reference/m4b_real_results.json` (schema `DOOM-M4B-REAL-RESULTS-v1`, 61 records).
+
+**Method.** `tools/local/episode1_reference.py --e1m1-driver m4a --compare-rust target/release/examples/player_level_run`
+with `DOOM_IWAD_DIR` set ran the genuine linuxdoom-1.10 engine (strict, overflow and address
+variants) and Rust under wire 24 (`--policy episode1v2`) over DSIM40, comparing every tic with
+`level_compare_m4b.py` ([TESTING](../TESTING.md#m4b-synthetic-mechanism-wads)). Address-checked
+builds ran with `ASAN_OPTIONS=detect_leaks=0`, so LeakSanitizer was disabled, not passed. E1M1 ran on
+the M4a driver, which settles finding 12 (the frozen M3h9c driver's dumps are refused by the DSIM40
+projection). This is source equivalence of Rust against the genuine engine on those scripts only; it is
+not a claim for any other input.
+
+**Result.** 61 runs, 61 matched: in every record the three genuine variants were byte-identical, the
+C and Rust stripped-sequence digests were equal, the final stripped digests were equal, the `map.*`
+groups were equal, the comparison was complete, and the captures compared equal the genuine snapshot
+count (159,027 captures over 158,966 tics in all, summed from the records). The 61 are:
+
+- the 30 older real-map scripts: E1M1 (five, M4a driver), E1M2, E1M3, E1M4, E1M6 and E1M7 (five each),
+  all skill 2;
+- E1M5, E1M8 and E1M9: ten scripts each (idle, chaos, death, fighting and walk-to-exit, on skills 2
+  and 3), 30 in all;
+- `DEMO1` (skill 3, E1M5), below.
+
+**Reconciling decision I11.** I11 says "all 30 M4a scripts and the five E1M1 scripts". The 30 M4a
+scripts there are the 30 synthetic scripts gated in CI by `check_player_episode1v2.py` (matched at
+step 3, [above](#wire-24-against-the-genuine-engine)). The real-map set re-run here is 25 M4a
+real-map scripts (E1M2, E1M3, E1M4, E1M6, E1M7) plus the five E1M1 scripts, 30 in all, all matched.
+Then 30 new scripts plus `DEMO1`: 30 + 30 + 1 = 61.
+
+**What the strengthened scripts reach.** E1M8, all ten: both walks kill both Barons, pass
+`A_BossDeath` and exit (5,813 and 5,505 tics); the fighting scripts kill both Barons and run past the
+start of the tag-666 lowering (M8FIGHT 5,740 tics, M8FIGHT3 3,822 tics, ending alive at the marker).
+E1M5: the skill-2 walk (7,238 tics) makes one player teleport and exits; the fighting scripts cross
+the map's one teleporter once (M5FIGHT 6,446 tics, M5FIGHT3 7,332 tics). E1M9 skill 2 walk: 5,963
+tics, exit. M6WALK ran 7,839 tics and M7WALK 7,736 tics to the exit. The fighting scripts of E1M8 end alive at the marker, past the start of the tag-666 lowering;
+the records do not show the lowering run to its end in any of them.
+
+**Table.** `End` is the genuine engine's end and dump tic from the record (exit; marker; reborn,
+where the genuine engine reached `G_PlayerReborn` after the death at the tic named); `Rust end` is
+`last` when Rust ran to the last capture, or the tic it refused. `Dumps` is the strict variant's
+dump-set SHA-256 (the overflow and address variants have the same digest in every record), `Seq` the
+stripped-sequence SHA-256 (C equals Rust in every row) and `Final` the SHA-256 of the final stripped
+snapshot (C equals Rust); each is shown by its first 16 hex digits. Skill is the run's skill (2 medium,
+3 hard). Variants identical: yes in all 61, so that column is not repeated.
+
+| Map | Script | Skill | Tics | End (genuine) | Dumps | Captures | Rust end | Seq | Final |
+| --- | --- | ---: | ---: | --- | --- | ---: | --- | --- | --- |
+| E1M1 | BARRELS | 2 | 882 | marker 882 | `308f57e79a9673f6` | 883 | last | `01b180b28baaefeb` | `e9eebb70cd7cefba` |
+| E1M1 | CHAOS | 2 | 5,000 | marker 5,000 | `858e78effe6b07d4` | 5,001 | last | `0531735d08d85e64` | `ea418e8a4ce5d079` |
+| E1M1 | FIGHT | 2 | 1,281 | marker 1,281 | `2008c1fa76949dc2` | 1,282 | last | `d6fbacf416468882` | `5b6c2284198d1d46` |
+| E1M1 | WALK | 2 | 766 | exit 765 | `f57da18837108b22` | 767 | last | `a1ac472f422240af` | `e00e087e93656e09` |
+| E1M1 | idle | 2 | 2,100 | marker 2,100 | `3d048ce1c05dbb99` | 2,101 | last | `b06ae9252a69c500` | `3f57c7fd7e962e43` |
+| E1M2 | M2CHAOS | 2 | 1,550 | reborn 1,549; dies 1,545 | `0b5571552844d3fe` | 1,551 | refused 1,551 | `7c82266bbad759e3` | `a501da563b6f29ff` |
+| E1M2 | M2DIE | 2 | 999 | reborn 998; dies 955 | `d63c676276f02912` | 1,000 | last | `d006755512f563f3` | `2120498d45e36d7e` |
+| E1M2 | M2FIGHT | 2 | 1,581 | marker 1,581 | `cee3313ab4fce023` | 1,582 | last | `4fb97dd7b1429bfd` | `e5e154cdbc5bd3f1` |
+| E1M2 | M2IDLE | 2 | 2,100 | marker 2,100 | `0de76d06f4b02ded` | 2,101 | last | `9954ac3a7a912d0b` | `72ac62c4f2b9f97a` |
+| E1M2 | M2WALK | 2 | 2,864 | exit 2,863 | `37c31439cc526690` | 2,865 | last | `711ca14d043e977c` | `3342519938d32951` |
+| E1M3 | M3CHAOS | 2 | 3,362 | reborn 3,361; dies 3,360 | `7bf35fe9bc7dabbc` | 3,363 | refused 3,363 | `647319ba1fb09e62` | `c04ff2d08363ef94` |
+| E1M3 | M3DIE | 2 | 1,000 | reborn 999; dies 958 | `9086f689649ea25b` | 1,001 | last | `92d016324db6ad81` | `56e9121809c23efc` |
+| E1M3 | M3FIGHT | 2 | 1,495 | marker 1,495 | `6573bf2307feaf3d` | 1,496 | last | `9d98d94556ef40bb` | `bd91cf96a648442b` |
+| E1M3 | M3IDLE | 2 | 2,100 | marker 2,100 | `debe8b90435924f8` | 2,101 | last | `f5218b00aca55212` | `aa875656d00aa636` |
+| E1M3 | M3WALK | 2 | 5,793 | exit 5,792 | `88af49d4a8b556a7` | 5,794 | last | `79e5829165d91ea7` | `763a3d88fce00aae` |
+| E1M4 | M4CHAOS | 2 | 1,669 | reborn 1,668; dies 1,663 | `60ced0eeaba68dba` | 1,670 | refused 1,670 | `863fe7bac4479ded` | `d2955cc14ed3765c` |
+| E1M4 | M4DIE | 2 | 402 | reborn 401; dies 360 | `61bee728011e102d` | 403 | last | `06d0a6efbabf81ca` | `a08a040f4694536b` |
+| E1M4 | M4FIGHT | 2 | 1,771 | marker 1,771 | `8856ef81e7ccda17` | 1,772 | last | `cc241624166aa462` | `4709c4be2419b78b` |
+| E1M4 | M4IDLE | 2 | 2,100 | marker 2,100 | `e1833fbf3ccd81d2` | 2,101 | last | `cf5ec68d68a155be` | `12a0bf42e166f319` |
+| E1M4 | M4WALK | 2 | 3,444 | exit 3,443 | `c3c9b90608cd1dfb` | 3,445 | last | `3dc94cf92b216fa4` | `b3b3825adc512f21` |
+| E1M5 | M5CHAOS | 2 | 699 | reborn 698; dies 688 | `bcad58f4bbc69603` | 700 | refused 700 | `2b302bb2dbdf0879` | `0b6ccdb1561588a5` |
+| E1M5 | M5CHAOS3 | 3 | 648 | reborn 647; dies 640 | `17c62d3a543513f2` | 649 | refused 649 | `f466f37b5408cadf` | `7206a0259dd9955c` |
+| E1M5 | M5DEMO1 | 3 | 1,710 | marker 1,710; dies 1,631 | `54b700504696257a` | 1,711 | last | `7ffc537af88a6f32` | `fbcf6fc33020bc99` |
+| E1M5 | M5DIE | 2 | 333 | reborn 332; dies 291 | `5746f0593a530754` | 334 | last | `13456d9943d0de5b` | `6c57eb7d13e2e192` |
+| E1M5 | M5DIE3 | 3 | 431 | reborn 430; dies 389 | `8647eba198d60e07` | 432 | last | `646f2639fbc09a1b` | `32e414ad32f79e04` |
+| E1M5 | M5FIGHT | 2 | 6,446 | marker 6,446 | `6dc0fe800d2e16d1` | 6,447 | last | `98e9351b03df2850` | `83f612e7ec7abac4` |
+| E1M5 | M5FIGHT3 | 3 | 7,332 | marker 7,332 | `4452970b429bc782` | 7,333 | last | `52d06e7256b833cd` | `566832b1a0213c48` |
+| E1M5 | M5IDLE | 2 | 2,100 | marker 2,100 | `ccdb889228f25716` | 2,101 | last | `9c093d5b594e5982` | `fab3834cf9e28919` |
+| E1M5 | M5IDLE3 | 3 | 2,100 | marker 2,100 | `d5bd48fb2795d18d` | 2,101 | last | `a39c77514fd637b7` | `38e9e4da5c082824` |
+| E1M5 | M5WALK | 2 | 7,238 | exit 7,237 | `7ac57ca6108218a0` | 7,239 | last | `4ef2c395e6800bfb` | `526201db68336644` |
+| E1M5 | M5WALK3 | 3 | 9,456 | exit 9,455 | `f33603c62b08e1c1` | 9,457 | last | `2141ef338da10ec0` | `0638e73803a49fab` |
+| E1M6 | M6CHAOS | 2 | 1,018 | reborn 1,017; dies 1,014 | `ba9da533b4d53686` | 1,019 | refused 1,019 | `a22eb19450a5e298` | `36f61b2910e2ca58` |
+| E1M6 | M6DIE | 2 | 350 | reborn 349; dies 304 | `fa118330a8e6f66b` | 351 | last | `82349b74d9e95b2b` | `a1bc0e01cc03459c` |
+| E1M6 | M6FIGHT | 2 | 1,435 | marker 1,435 | `94416dfea68340ef` | 1,436 | last | `1203e92253b9b1b0` | `0be72077d221643f` |
+| E1M6 | M6IDLE | 2 | 2,100 | marker 2,100 | `39aa0fa1e939f7c4` | 2,101 | last | `a9ffebf4c4d0154f` | `f6cf28583d95a13d` |
+| E1M6 | M6WALK | 2 | 7,839 | exit 7,838 | `5f0548f9a20399f0` | 7,840 | last | `84cd07dd7dbb0b22` | `2f850675018d27ed` |
+| E1M7 | M7CHAOS | 2 | 1,515 | reborn 1,514; dies 1,513 | `d67e9d1efe27a76f` | 1,516 | refused 1,516 | `95b8bb670cd97064` | `f707c7526ca3560b` |
+| E1M7 | M7DIE | 2 | 367 | reborn 366; dies 322 | `d56d50b6c8412304` | 368 | last | `31a92caa0b2bc925` | `49aad0e3b7ab2e1f` |
+| E1M7 | M7FIGHT | 2 | 1,221 | marker 1,221 | `35299a0fab047a4d` | 1,222 | last | `aff56bc29aa71089` | `e33b63096e83a8d6` |
+| E1M7 | M7IDLE | 2 | 2,100 | marker 2,100 | `6ee10bc4aa1ced11` | 2,101 | last | `22e82e8369fc5947` | `780a882e7fc44e27` |
+| E1M7 | M7WALK | 2 | 7,736 | exit 7,735 | `0e8df9c68ac8c779` | 7,737 | last | `11cf14352e2f4c3b` | `54ee9368b167eabf` |
+| E1M8 | M8CHAOS | 2 | 2,439 | reborn 2,438; dies 2,432 | `23420a3d756b1bdf` | 2,440 | refused 2,440 | `d0bc576c9cd08948` | `2a3177ce23bbc968` |
+| E1M8 | M8CHAOS3 | 3 | 2,424 | reborn 2,423; dies 2,420 | `971b1b030f811b03` | 2,425 | refused 2,425 | `67871c207c6fd6fd` | `868c0cd261619f75` |
+| E1M8 | M8DIE | 2 | 553 | reborn 552; dies 511 | `0750640a9c15a814` | 554 | last | `eca87dbf523755d2` | `413d0613627e4497` |
+| E1M8 | M8DIE3 | 3 | 344 | reborn 343; dies 302 | `be9c6db77f78c8d9` | 345 | last | `caacd019a457dd1e` | `b0cafa57fc8e83ee` |
+| E1M8 | M8FIGHT | 2 | 5,740 | marker 5,740 | `b93cbbf3f2d8c87b` | 5,741 | last | `f9eb0e20a277bb39` | `f55f3ec8bb95944e` |
+| E1M8 | M8FIGHT3 | 3 | 3,822 | marker 3,822 | `0841afd2db462bab` | 3,823 | last | `bd325d3247eededb` | `acc5d943fa017bf5` |
+| E1M8 | M8IDLE | 2 | 2,100 | marker 2,100 | `ab2f777f0f4ffe64` | 2,101 | last | `ebab259ce3ad3008` | `3d25e4a5bbecb26e` |
+| E1M8 | M8IDLE3 | 3 | 2,100 | marker 2,100 | `239e492b5059a877` | 2,101 | last | `ba82b5b20947eda1` | `e556b365838c2efa` |
+| E1M8 | M8WALK | 2 | 5,813 | exit 5,812 | `dd8dad759676563c` | 5,814 | last | `7b44c5a97527cfaa` | `97d7261f27e3d712` |
+| E1M8 | M8WALK3 | 3 | 5,505 | exit 5,504 | `bf7a450a8f4df3e7` | 5,506 | last | `3f084fd67515ad69` | `863a32830030e111` |
+| E1M9 | M9CHAOS | 2 | 832 | reborn 831; dies 828 | `fcbf4bc259c75350` | 833 | refused 833 | `e126afe99ff23f9e` | `61ce8e893878cc75` |
+| E1M9 | M9CHAOS3 | 3 | 977 | reborn 976; dies 964 | `24117f4b25085608` | 978 | refused 978 | `893299db41099727` | `096d43102294d9f4` |
+| E1M9 | M9DIE | 2 | 338 | reborn 337; dies 296 | `311ebabbc1fb5f04` | 339 | last | `a23dde6efb4dcdc2` | `4117b746e236dd79` |
+| E1M9 | M9DIE3 | 3 | 417 | reborn 416; dies 375 | `28dc5ccb85304cce` | 418 | last | `7b9c599284dce99f` | `b866481dbb85a530` |
+| E1M9 | M9FIGHT | 2 | 1,043 | marker 1,043 | `74ccc263f80759a6` | 1,044 | last | `8cfb79909710316e` | `bd00ee3ce6440ceb` |
+| E1M9 | M9FIGHT3 | 3 | 1,095 | marker 1,095 | `bf5c4a6c7256627e` | 1,096 | last | `b139bee239d4f601` | `d472fb9f1f49a7f7` |
+| E1M9 | M9IDLE | 2 | 2,100 | marker 2,100 | `be3ec12e3a9f955b` | 2,101 | last | `ecf193bc16671152` | `8e1df13f04882600` |
+| E1M9 | M9IDLE3 | 3 | 2,100 | marker 2,100 | `d2b4d8ee815588a2` | 2,101 | last | `ea7d32ae580bbf9d` | `6bbffb59eaf7a9f1` |
+| E1M9 | M9WALK | 2 | 5,963 | exit 5,962 | `7012c176f9d69fa8` | 5,964 | last | `1532f67eae4e1d0b` | `25243ac5841e0c36` |
+| E1M9 | M9WALK3 | 3 | 6,828 | exit 6,827 | `20d57e331a7bc2f6` | 6,829 | last | `f0384d9614ba562c` | `e6f8d4bd04b008f3` |
+
+**`DEMO1` (decision I5).** The IWAD's `DEMO1` lump has version byte 109 (DOS 1.9); linuxdoom-1.10
+registers only 110 and refuses it. The genuine runner therefore ran a scratch copy with byte 0
+patched from 109 to 110 and nothing else changed; the patched copy exists in scratch only and is
+never committed. Input identities (committed with the owner's permission): original lump SHA-256
+`7c3817081eb5cf32a118195492dd8b134e7617f142ecd1eed028cdfa60927679`, patched copy
+`92e4f162f5db252a028876e9498f0cfeeb69214d7811bbcf4a6c98c27e5000fb`. It is the E1M5, skill 3 demo:
+1,710 tics, the player dies at tic 1,631, 1,711 captures matched (row `M5DEMO1` above, Rust ran to the
+last capture). **Caveat.** A match proves that Rust agrees with linuxdoom-1.10 on this input. It does
+not prove agreement with the DOS 1.9 executable that recorded the demo: that run may diverge, and
+nothing here claims otherwise.
+
+### The M5WALK3 divergence and its fix
+
+The walk-to-exit script on E1M5, skill 3 (`tests/reference/e1m5_scripts/walk_to_exit_skill3.txt`,
+9,456 tics) matched the genuine engine through capture 9,152. Rust then refused tic 9,153 with
+`PlayerBody(Invariant)`, while the genuine engine continued to the exit at tic 9,455 (variants
+identical). It was an explicit refusal, not a silent difference.
+
+**Cause (found by instrumentation).** The player holds the chainsaw; `A_Saw` sets `MF_JUSTATTACKED`
+(0x80) on the player's body, only on a hit (p_pspr.c:542). `P_PlayerThink` runs before
+`P_RunThinkers` (p_tick.c:150-152), so a Demon or Spectre that bites in the same tic finds the flag
+set; the flag is cleared at the next tic (p_user.c:249-255). The wire-23 bite path, `strike_player`
+in `crates/doom-sim/src/demon.rs`, admitted only the pristine player flags plus `MF_JUSTHIT` and
+`MF_CORPSE`, so the body failed its flag check. Nothing on the C bite path reads
+`MF_JUSTATTACKED`: `A_SargAttack` (p_enemy.c:935-948), `A_FaceTarget` (782-796, reads only
+`MF_SHADOW`), `P_CheckMeleeRange` (174-192) and `P_DamageMobj` (p_inter.c:775-918). A suspect that
+instrumentation ruled out was the wire-24 item-total cross-check.
+
+**Fix (2dd986c).** `has_bite_on_lunging_body()` admits that one extra flag under wire 24 only; wires
+23 and below keep refusing it. It is a source-equivalence change, with the C citations above.
+
+**Synthetic reproduction SAWBITE (663d92b, second set).** `tests/reference/m4b_manifest2.json` holds
+the scene: a 116-tic script plus marker (117 snapshots), `A_Saw` hits from tic 45, and two Demon bites
+on the flagged body at dump tics 73 and 97 (`bite flags&128` is a must-show at tic 73). The three
+genuine variants were byte-identical (dump digest
+`cef27e453e2eb1df2026a6ea0206d9b2f32331ef4f4cde9926b4e301d946c1e3` in `m4b_synthetic_results2.json`,
+`ASAN_OPTIONS=detect_leaks=0`). The independent DSIM40 projection covers all 117 snapshots, sequence
+digest `06769c5acd5530cd`, final `7ec7fd385562fa09`; the fixture is `m4b2_episode1v2_SAWBITE_74.bin`.
+The harness was shown able to fail here: the 484fade binary (before the fix) refuses DSIM tic 74
+with `PlayerBody(Invariant)`, and with `demon.rs` reverted the mechanism goldens test fails on
+SAWBITE only. SAWBITE is in `episode1v2_mechanism_goldens` (3444334).
+
+**Rust-only tests (56d3551, 87fded2).** `crates/doom-sim/src/saw_bite_tests.rs` holds 3 tests:
+wire 24 admits both bites; wire 23 refuses tic 74 with `Invariant` and leaves the state unchanged;
+any other unadmitted flag still refuses under wire 24. These are Rust-only safety and domain tests.
+
+**After the fix.** M5WALK3: 9,456 tics, exit at tic 9,455, 9,457 captures matched (sequence digest
+begins `2141ef338da10ec0`). M9WALK3 (the finished script, 1dde567; first run against the genuine
+engine in this step): 6,828 tics, exit at 6,827, 6,829 captures matched (`f0384d9614ba562c`).
+`check_player_episode1v2.py --require`, run by the orchestrator at 87fded2: 50 of 50 scripts,
+19,933 compared tics, 0 pending (49 before, plus SAWBITE).
+
+**Clippy (26b24e6).** Stable Clippy 1.100 newly flagged `needless_range_loop` in `perception.rs` and
+`projectiles.rs` (existing code, unrelated to the saw bite); both now iterate with `zip`/`enumerate`
+over the same fixed `[i32; 23]` arrays, with no behaviour change. CI on 87fded2 failed on Clippy
+for that reason on all three stable jobs; the MSRV job passed. CI on 26b24e6 and cc37283 was not
+observed when this record was written; GitHub holds it.
+
+**Limits.**
+
+- Real-map evidence is the scripted runs above and `DEMO1` only, local-only, on E1M1 to
+  E1M9 (all nine maps of Episode 1); no other input is claimed.
+- The lethal flagged bite (a bite that kills the body while `MF_JUSTATTACKED` is set) was reasoned
+  from the source but not observed in any run, synthetic or real.
+- Leak detection was disabled in every address-checked genuine run.
+- The only Rust changes in step 7 are 2dd986c (the fix), 56d3551 (its test module) and 26b24e6 (Clippy); no matched timings were taken in
+  this step.

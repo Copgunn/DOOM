@@ -481,9 +481,10 @@ monster/player behavior. Further stages require separate owner direction.
   [investigation note](M4B_REFERENCE_INVESTIGATION.md)).** Teleportation (line 97 and the landing thing), the
   Baron and `A_BossDeath`, hard skill, and with them E1M5, E1M8 and E1M9; the `DEMO1`
   (E1M5, skill 3) of the four-episode `DOOM.WAD`, which the genuine engine runs as registered because of its file
-  name, becomes runnable here. Plan steps 1–6 are done: wire 24 (`PlayerMonstersEpisode1V2`, DSIM40) admits
+  name, becomes runnable here. Plan steps 1–7 are done: wire 24 (`PlayerMonstersEpisode1V2`, DSIM40) admits
   teleportation, the Baron, `A_BossDeath` and hard skill, and E1M5, E1M8 and E1M9 load on skills 2 and 3; the
-  real-map runs and `DEMO1` (step 7) are next.
+  real-map runs (61, all matched against the genuine engine, local-only) and `DEMO1` are recorded in the
+  [evidence record](validation/M4B.md#real-maps-and-demo1). Step 8 is next.
 - **M4c (proposed, pending the owner).** Pause, easy skill and the reborn reload as an
   admitted transition; level transitions stay a later direction.
 - **Simulation performance (proposed by the owner, after M4b).** Profile

@@ -2430,7 +2430,7 @@ and for the observations [validation/M4A.md](validation/M4A.md); Rust-only tests
 
 ## Original Episode 1, part 2: teleporters, the Baron of Hell, `A_BossDeath` and hard skill (wire 24)
 
-**Status: in progress (M4b, plan step 6 of the [note](M4B_REFERENCE_INVESTIGATION.md#6-plan-size-estimate-and-cap)); see
+**Status: in progress (M4b, plan step 7 of the [note](M4B_REFERENCE_INVESTIGATION.md#6-plan-size-estimate-and-cap)); see
 [ROADMAP](ROADMAP.md).** Wire 24 is wire 23 plus teleportation, the Baron of Hell, `A_BossDeath`
 and hard skill (skills 2 and 3, decision I4). Skills 1, 4 and 5 are refused at load, as listed below.
 
@@ -2548,9 +2548,23 @@ totals with the bit of the run's skill (`Episode1Bounds::from_map_v2`, `landings
 read skill 3, and the runners now run a skill-3 demo.
 
 So E1M5, E1M8 and E1M9 now load and run under wire 24 on skills 2 and 3. The evidence for skill 3 is
-the SKILL3 synthetic script and one idle run of E1M5; the scripted skill-3 runs on the real maps and
-`DEMO1` are plan step 7 ([evidence record](validation/M4B.md#rust-replay-hard-skill)).
-The observations (the 30 M4a synthetic scripts and the M4b teleport scripts compared with the
+the SKILL3 synthetic script ([evidence record](validation/M4B.md#rust-replay-hard-skill)) and the
+scripted real-map runs of plan step 7.
+
+**A bite on a body `A_Saw` flagged (plan step 7).** `A_Saw` sets `MF_JUSTATTACKED` on the player's
+body on a hit (p_pspr.c:542), and `P_PlayerThink` runs before the thinkers (p_tick.c:150-152), so a
+Demon or Spectre can bite a body that carries that flag in the same tic. Nothing on the bite path
+reads it. Wire 24 admits the bite on such a body (`has_bite_on_lunging_body()`); wires 23 and below
+still refuse it with `PlayerBody(Invariant)`, and any other unadmitted body flag still refuses under
+wire 24. The case found a real divergence on E1M5 (skill 3 walk), reproduced by the synthetic scene
+SAWBITE; see [the evidence record](validation/M4B.md#the-m5walk3-divergence-and-its-fix). The bite that
+kills the body while the flag is set was reasoned from the source and has not been observed.
+
+**Real-map evidence (plan step 7, local-only).** Rust under wire 24 matched the genuine engine tic for
+tic on 61 scripted runs over E1M1 to E1M9 on skills 2 and 3, and on `DEMO1` run by linuxdoom-1.10
+(a match with that engine, not with the DOS 1.9 executable that recorded the demo); other inputs are
+not claimed ([evidence record](validation/M4B.md#real-maps-and-demo1)).
+The observations (the 30 M4a synthetic scripts and the M4b synthetic scripts compared with the
 genuine engine under wire 24, and the local real-map runs) are in
 [the evidence record](validation/M4B.md); the commands are in
 [TESTING](TESTING.md#m4b-synthetic-mechanism-wads). Rust-only tests are in
