@@ -505,3 +505,7 @@ fn current_map_melee<A: ActorAccess>(host: &LifeHost<'_, A>, id: ActorId) -> Mel
         damage: Some((amount, damage)),
     }
 }
+
+#[cfg(test)]
+#[path = "saw_bite_tests.rs"]
+mod saw_bite_tests;
