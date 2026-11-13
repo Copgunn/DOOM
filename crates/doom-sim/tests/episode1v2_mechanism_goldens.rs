@@ -33,6 +33,12 @@
 //! player teleport twice in one tic. SKILL3 (step 6) loads SKILL2's WAD at hard
 //! skill (demo skill byte 3): the THING filter takes option bit 4 instead of 2
 //! (p_mobj.c:743–751), and its tic-0 fixture holds the hard-only things.
+//!
+//! SAWBITE, of the second set (step 7), has a Demon bite the player in a tic in
+//! which `A_Saw` hit the other Demon and set `MF_JUSTATTACKED` on the player
+//! (p_pspr.c:542; DSIM tics 74 and 98): wire 24 admits that bite, every older
+//! policy refuses it with `PlayerBodyError::Invariant`. Its fixture is the capture
+//! of the first such bite.
 use doom_sim::{demo::parse_demo_episode1_v2, *};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -219,7 +225,7 @@ fn goldens_file(name: &str) -> Json {
     .value()
 }
 /// The goldens holding `script`: the first M4b set's, or the second set's
-/// (`m4b_synthetic_goldens2.json`, M4b step 5: TELE2X).
+/// (`m4b_synthetic_goldens2.json`, M4b step 5: TELE2X; step 7: SAWBITE).
 fn goldens(script: &str) -> Json {
     let first = goldens_file("m4b_synthetic_goldens.json");
     match first.get("scripts") {
@@ -545,4 +551,8 @@ fn bossm1() {
 #[test]
 fn tele2x() {
     run("TELE2X");
+}
+#[test]
+fn sawbite() {
+    run("SAWBITE");
 }
