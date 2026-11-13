@@ -430,6 +430,22 @@ impl OriginalExecutionProfile {
     pub(crate) const fn has_hard_skill(self) -> bool {
         matches!(self, Self::PlayerMonstersEpisode1V2)
     }
+    /// A Demon or Spectre bite (`A_SargAttack`, p_enemy.c:935–948) on a body that
+    /// carries `A_Saw`'s `MF_JUSTATTACKED`: wire 24 only (M4b step 7, the E1M5
+    /// `M5WALK3` refusal). `A_Saw` sets the flag (p_pspr.c:542) only after a hit
+    /// (519–523) during `P_PlayerThink`, which `P_Ticker` runs before every thinker
+    /// (p_tick.c:150–152), so a Demon can bite the flagged body later in the same
+    /// tic; the next `P_PlayerThink` clears it before its dead test
+    /// (p_user.c:249–255). Nothing on the bite path reads the flag: `A_FaceTarget`
+    /// reads only `MF_SHADOW` (p_enemy.c:782–796), `P_CheckMeleeRange` no flag
+    /// (174–192), `P_DamageMobj` `MF_SHOOTABLE`, `MF_SKULLFLY` and `MF_NOCLIP`
+    /// (p_inter.c:775–918), and `P_KillMobj` leaves it set (668–770); the only
+    /// readers are `P_PlayerThink` and `A_Chase` on its own actor (p_enemy.c:716).
+    /// Every older policy keeps refusing such a bite with
+    /// `PlayerBodyError::Invariant`.
+    pub(crate) const fn has_bite_on_lunging_body(self) -> bool {
+        matches!(self, Self::PlayerMonstersEpisode1V2)
+    }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
             self,

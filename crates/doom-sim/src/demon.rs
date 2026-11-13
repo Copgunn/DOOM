@@ -100,9 +100,19 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
     let body_life = body.life().ok_or(PlayerBodyError::Invariant)?;
     // Powers/SHADOW, cheats and arbitrary player flag mutations are unadmitted.
     // JUSTHIT and CORPSE are the source damage/death additions to pristine flags.
+    // Wire 24 also admits `A_Saw`'s MF_JUSTATTACKED, set by the player's think
+    // earlier in the same tic (p_pspr.c:542) and read by nothing on this path
+    // (`has_bite_on_lunging_body`); `apply_damage` keeps it on a kill, as
+    // `P_KillMobj` does (p_inter.c:675–680).
+    let lunge = if player.policy.has_bite_on_lunging_body() {
+        player_commands::MF_JUSTATTACKED
+    } else {
+        0
+    };
     let allowed = OriginalActorType::MT_PLAYER.descriptor().flags
         | original_player::MF_JUSTHIT
-        | original_player::MF_CORPSE;
+        | original_player::MF_CORPSE
+        | lunge;
     if player.mo != Some(target)
         || body_life.actor_type.0 != OriginalActorType::MT_PLAYER.ordinal()
         || player.health != body_life.health.max(0)
