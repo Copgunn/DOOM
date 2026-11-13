@@ -776,10 +776,13 @@ impl Simulation {
             if ![15, 17, 136].contains(&i) {
                 return Err(ProjectileError::Definition.into());
             }
-            for j in 0..23 {
-                if ![0, 2, 5, 8, 16, 17, 18, 21].contains(&j)
-                    && t.properties[j] != source.types()[0].properties[j]
-                {
+            for (j, (value, base)) in t
+                .properties
+                .iter()
+                .zip(source.types()[0].properties.iter())
+                .enumerate()
+            {
+                if ![0, 2, 5, 8, 16, 17, 18, 21].contains(&j) && value != base {
                     return Err(ProjectileError::Definition.into());
                 }
             }
