@@ -39,6 +39,14 @@
 //! (p_pspr.c:542; DSIM tics 74 and 98): wire 24 admits that bite, every older
 //! policy refuses it with `PlayerBodyError::Invariant`. Its fixture is the capture
 //! of the first such bite.
+//!
+//! BTUNNEL, of the second set (step 9), has a Baron fireball (speed 15, radius 6,
+//! info.c:1524–1548) step wholly past a 1-unit inner one-sided wall in one
+//! unsplit step, because `P_CheckPosition` tests only the destination box
+//! (p_map.c:191–195, 374–442); it flies on and explodes on the far wall (dump tics
+//! 161–162 and 170). Wire 24 admits it, as the genuine engine does: the fireball
+//! stays inside the vertex rectangle. Its fixture is the capture one step past the
+//! wall (DSIM tic 163).
 use doom_sim::{demo::parse_demo_episode1_v2, *};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -225,7 +233,7 @@ fn goldens_file(name: &str) -> Json {
     .value()
 }
 /// The goldens holding `script`: the first M4b set's, or the second set's
-/// (`m4b_synthetic_goldens2.json`, M4b step 5: TELE2X; step 7: SAWBITE).
+/// (`m4b_synthetic_goldens2.json`, M4b step 5: TELE2X; step 7: SAWBITE; step 9: BTUNNEL).
 fn goldens(script: &str) -> Json {
     let first = goldens_file("m4b_synthetic_goldens.json");
     match first.get("scripts") {
@@ -555,4 +563,8 @@ fn tele2x() {
 #[test]
 fn sawbite() {
     run("SAWBITE");
+}
+#[test]
+fn btunnel() {
+    run("BTUNNEL");
 }
