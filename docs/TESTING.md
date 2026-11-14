@@ -2016,6 +2016,23 @@ cargo mutants -p doom-sim --test-tool nextest --jobs 2 \
   --output "$M4A_MUTANTS_SCRATCH/refusals" "${RUN2_ARGS[@]}"
 ```
 
+### CI mutation workflow (M4b)
+
+The [`Mutants` workflow](../.github/workflows/mutants.yml) runs cargo-mutants
+27.1.0 with cargo-nextest 0.9.151 (the M4a versions, installed pinned) over the
+diff of `crates/` against `master`, `-p doom-sim --test-tool nextest --in-diff`,
+in 8 matrix shards (`--shard k/8`). It is informational and not a required
+check. Start it by adding the `run-mutants` label to the pull request (the
+trigger that works before merge; a push does not re-run it, so remove and
+re-add the label for a new head), or with `workflow_dispatch` from the Actions
+tab once the file is on `master`. Each shard uploads `outcomes.json` and the
+`missed`, `caught`, `timeout` and `unviable` lists as artifacts
+`mutants-shard-k`; the `Mutants summary` job prints combined counts and the
+missed and timed-out lists in the run's step summary. A shard fails only for a
+usage error or a failing baseline; missed mutants and timeouts are findings,
+triaged as above (the local procedure and the M4a rules for timeouts and
+equivalent mutants apply unchanged).
+
 ## Whole-level simulation-only timing
 
 The M4a H12 developer caller `player_level_advance` uses the same public setup
