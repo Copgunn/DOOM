@@ -17,7 +17,8 @@ Wire 24 (`PlayerMonstersEpisode1V2`, DSIM40, M4b decision I2). Three manifest-dr
   `after_last_capture` (SPECH9) must match every capture and then refuse the declared DSIM tic
   with the named error. Such a script runs on its manifest `overrun_probe` demo (SPECH8.lmp, whose
   commands begin with SPECH9's), so that the declared tic exists;
-- every script of tests/reference/m4b_manifest2.json (the second M4b set: TELE2X, step 5; SAWBITE, step 7)
+- every script of tests/reference/m4b_manifest2.json (the second M4b set: TELE2X, step 5; SAWBITE, step 7;
+  BTUNNEL, step 9)
   against tests/reference/m4b_synthetic_goldens2.json, as the first M4b set.
 
 Steps 4-6 admit scripts by deleting their PENDING entries; a new manifest script is checked

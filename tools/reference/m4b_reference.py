@@ -364,10 +364,56 @@ def facts_sawbite(d):
                        for t, pm, a, lost in bites(d)])
 
 
+SLAB = (368, 369)            # tools/reference/m4b_wad.py btunnel(): the 1-unit void slab's south and north faces
+RECT = (-128, -64, 192, 496)   # its vertex rectangle (the hall)
+BALL_RADIUS = 6                # MT_BRUISERSHOT radius (info.c:1524-1548)
+
+
+def fireballs(d):
+    """Every MT_BRUISERSHOT by thinker serial (T rows, never reused): its rows by tic."""
+    out = {}
+    for t in d.tics:
+        if t < 0: continue
+        r = d.rows(t)
+        serial = {x['idx']: x['serial'] for x in r.get('T', [])}
+        for m in r.get('M', []):
+            if m['type'] == MT('MT_BRUISERSHOT'): out.setdefault(serial[m['idx']], {})[t] = m
+    return out
+
+
+def facts_btunnel(d):
+    """Each Baron fireball (in spawn order): its spawn tic, the Baron's x then, its momentum, the last tic
+    its box is wholly south of the slab and the first tic wholly north of it (tunnel_tics; the tunnel is
+    one step if the second is the next tic), any tic whose box overlaps the slab's y range (must be
+    none), its explosion tic and position (S_BRBALLX1, entered on P_ExplodeMissile, p_mobj.c:90-104),
+    and whether any row of it lies outside the vertex rectangle; and the tics the player lost health."""
+    out = []
+    for serial, rows in sorted(fireballs(d).items()):
+        tics = sorted(rows)
+        t0 = tics[0]
+        baron = [b for b in mobjs(d, t0, 'MT_BRUISER') if b['idx'] == rows[t0]['target']]
+        fly = [t for t in tics if rows[t]['flags'] & 0x10000]                      # MF_MISSILE still set
+        south = [t for t in fly if rows[t]['y'] + BALL_RADIUS * U <= SLAB[0] * U]
+        north = [t for t in fly if rows[t]['y'] - BALL_RADIUS * U >= SLAB[1] * U]
+        overlap = [t for t in fly if t not in south and t not in north and
+                   rows[t]['y'] - BALL_RADIUS * U < SLAB[1] * U and rows[t]['y'] + BALL_RADIUS * U > SLAB[0] * U]
+        boom = [t for t in tics if rows[t]['state'] == ST('S_BRBALLX1')]
+        outside = [t for t in tics if not (RECT[0] * U < rows[t]['x'] < RECT[2] * U and RECT[1] * U < rows[t]['y'] < RECT[3] * U)]
+        out.append(dict(spawn_tic=t0, baron_x=units(baron[0]['x']) if baron else None,
+                        mom=(rows[t0]['momx'], rows[t0]['momy'], rows[t0]['momz']),
+                        tunnel_tics=(south[-1], north[0]) if south and north and north[0] > south[-1] else None,
+                        slab_overlap_tics=overlap,
+                        explodes=dict(tic=boom[0], x=units(rows[boom[0]]['x']), y=units(rows[boom[0]]['y'])) if boom else None,
+                        outside_rectangle_tics=outside))
+    hits = [t for t in d.tics if t > 0 and player(d, t)[1]['health'] < player(d, t - 1)[1]['health']]
+    return dict(fireballs=out, player_hit_tics=hits)
+
+
 FACTS = {'TELE1': facts_tele1, 'TELE2': facts_tele2, 'TSPLIT': facts_move, 'TSLIDE': facts_move, 'TFRAG1': facts_tfrag,
          'MTELE1': facts_mtele, 'SLIDEB': facts_slideb, 'SLIDEC': facts_slidec, 'BARON1': facts_baron1, 'BINF1': facts_binf1,
          'BVB1': facts_bvb1, 'BOSS1': facts_boss, 'BOSS2': facts_boss, 'BOSSM1': facts_boss, 'SPECH8': facts_spech,
-         'SPECH9': facts_spech, 'SKILL2': facts_skill, 'SKILL3': facts_skill, 'TELE2X': facts_tele2x, 'SAWBITE': facts_sawbite}
+         'SPECH9': facts_spech, 'SKILL2': facts_skill, 'SKILL3': facts_skill, 'TELE2X': facts_tele2x, 'SAWBITE': facts_sawbite,
+         'BTUNNEL': facts_btunnel}
 
 
 # ---------------------------------------------------------------- runs ------------------------

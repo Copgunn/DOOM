@@ -33,6 +33,8 @@ stay byte-identical):
               continues from the landing across a second 97 line
     sawbite   a chainsaw and two Demons in a short hall: one Demon bites the player in a tic in which
               A_Saw hit the other and set MF_JUSTATTACKED on the player (M4b step 7)
+    btunnel   a caged Baron's fireball steps wholly past a 1-unit inner void slab (the tunnel
+              window of a 15-unit step and radius 6) and explodes on the far wall (M4b step 9)
 
 The lump framing, game data, grid painter, side textures and builder chain are the frozen
 M4a generator's (tools/reference/m4a_wad.py, imported read-only, which itself imports
@@ -78,11 +80,43 @@ SPECIALS = A.PART1 | {TELEPORT}
 
 
 class Plan(A.Plan):
-    """m4a_wad.Plan with the M4b special set (part 1 plus the WR teleport 97)."""
+    """m4a_wad.Plan with the M4b special set (part 1 plus the WR teleport 97) and thin void holes."""
+
+    def __init__(self, name):
+        super().__init__(name)
+        self.voids = []
 
     def special(self, front, back, at, special, tag=0):
         assert special in SPECIALS, special
         self.specials.append((front, back, at, special, tag))
+
+    def void(self, sector, x0, y0, x1, y1):
+        """A void hole (x0, y0)-(x1, y1) of any integer size inside one sector, bounded by four one-sided
+        walls; the grid painter's rectangles are multiples of 16, so a wall thinner than that (BTUNNEL's
+        1-unit slab) is added here (M4b step 9). Nothing else may touch it: the hole and a 1-unit margin
+        lie inside one rectangle of `sector` and meet no rectangle of another sector."""
+        assert x0 < x1 and y0 < y1 and not self.specials, (x0, y0, x1, y1)
+        inside = lambda r: r[0] < x0 and r[1] < y0 and x1 < r[2] and y1 < r[3]
+        meets = lambda r: r[0] <= x1 + 1 and x0 - 1 <= r[2] and r[1] <= y1 + 1 and y0 - 1 <= r[3]
+        assert any(inside(r) for r in self.sectors[sector]['rects']), 'void outside its sector'
+        assert not any(meets(r) for k, s in enumerate(self.sectors) if k != sector for r in s['rects']), 'void meets another sector'
+        self.voids.append((sector, (x0, y0, x1, y1)))
+
+
+def build_map(plan):
+    """m4a_wad.build_map, plus the plan's void holes; a plan without one goes through m4a_wad.build_map
+    unchanged, so every earlier WAD stays byte-identical. Each hole is a counter-clockwise ring starting
+    at its top-left vertex (the painter's hole convention: the sector on the right of every edge, so
+    each edge is a one-sided wall facing into the sector), appended after the painter's rings."""
+    if not plan.voids:
+        return A.build_map(plan)
+    rs = A.rings(plan)
+    for s, (x0, y0, x1, y1) in plan.voids:
+        rs[s].append([((x0, y1), None), ((x0, y0), None), ((x1, y0), None), ((x1, y1), None)])
+    sectors = [([[v for v, _ in r] for r in sr], s['floor'], s['ceil'], dict(s['attrs'])) for s, sr in zip(plan.sectors, rs)]
+    m = A.G.room(sectors, portals={}, reject=(), tree=None, segment=4096, lines={})
+    m['rings'] = rs
+    return m
 
 
 def tele():
@@ -319,13 +353,39 @@ def sawbite():
     return p
 
 
+def btunnel():
+    """A Baron fireball stepping wholly past an inner one-sided wall (M4b step 9, owner ruling 2026-11-13).
+    MT_BRUISERSHOT moves 15 units a tic unsplit (speed 15, radius 6, info.c:1524-1548; p_mobj.c:150-164)
+    and P_CheckPosition tests only the destination box (p_map.c:191-195, 374-442), so a wall thinner
+    than 15 - 2*6 = 3 units can be stepped over. The Baron stands in a 64x48 cage ringed by a 32-unit
+    moat, which it cannot enter (tmfloorz - tmdropoffz > 24, p_map.c:481-483); with speed 8
+    (info.c:1514) it can only step east or west, to x = 24, 32 or 40, so its y stays 24. It must be able
+    to step at all: P_TryWalk sets movecount only after a successful P_Move (p_enemy.c:349-357), so a
+    Baron that can never move keeps movecount nonzero and never fires (p_enemy.c:738-742, 762-766).
+    Cage and hall floors are both 0, so momz is 0 (p_mobj.c:917-923). The player stands due north; the
+    fireball (y = 24 + (momy >> 1) + n*momy, p_mobj.c:876-878, 152-164) reaches the 1-unit void slab at
+    y = 368 with half a unit to spare on each side of the tunnel window for all three Baron positions,
+    and its box straddles the north wall (y = 496) on the first step that reaches it, so it explodes
+    there (p_mobj.c:166-186). tools/reference/m4b_check_wad.py re-derives all of this from the WAD. The
+    script stands still until the first fireball is spawned, then strafes out of its path."""
+    p = Plan('btunnel')
+    hall = p.sector('HALL', [(-128, -64, 192, 496)])
+    p.sector('MOAT', [(-16, -16, 80, 64)], floor=-32)
+    p.sector('CAGE', [(0, 0, 64, 48)])
+    p.void(hall, -32, 368, 96, 369)
+    p.thing(32, 312, SOUTH, PLAYER1)
+    p.thing(32, 24, NORTH, BARON)
+    return p
+
+
 MAPS = {'tele': (tele, 'E1M1'), 'telemove': (telemove, 'E1M1'), 'tfrag': (tfrag, 'E1M1'), 'montele': (montele, 'E1M1'),
         'slideb': (slideb, 'E1M1'), 'slidec': (slidec, 'E1M1'), 'baron': (baron, 'E1M1'), 'infight': (infight, 'E1M1'), 'bvb': (bvb, 'E1M1'),
         'boss8': (boss8, 'E1M8'), 'bossm1': (boss8, 'E1M1'), 'spech8': (spech(8), 'E1M1'), 'spech9': (spech(9), 'E1M1'),
         'skill': (skill, 'E1M1')}
 # The second M4b set (owner request, 2026-11-10): new WADs listed in tests/reference/m4b_manifest2.json, so
 # that tests/reference/m4b_manifest.json and every file of the first set stay byte-identical.
-MAPS2 = {'tele2x': (tele2x, 'E1M1'), 'sawbite': (sawbite, 'E1M1')}
+MAPS2 = {'tele2x': (tele2x, 'E1M1'), 'sawbite': (sawbite, 'E1M1'),
+         'btunnel': (btunnel, 'E1M1')}
 MANIFEST2 = ROOT / 'tests/reference/m4b_manifest2.json'
 SETS = [(MAPS, MANIFEST), (MAPS2, MANIFEST2)]
 ALL_MAPS = {**MAPS, **MAPS2}
@@ -340,7 +400,7 @@ def wad_bytes(name):
     """The WAD of one map in its slot, with the m4a_wad/m3h9c_wad lump framing."""
     plan_fn, slot = ALL_MAPS[name]
     plan = plan_fn()
-    m = A.build_map(plan)
+    m = build_map(plan)
     A.fix_sides(plan, m)
     lumps = dict(m['lumps'])
     lumps['THINGS'] = b''.join(struct.pack('<hhhhh', *t) for t in plan.things)

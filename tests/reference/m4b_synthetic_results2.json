@@ -1,6 +1,6 @@
 {
  "schema": "DOOM-M4B-SYNTHETIC-RESULTS-v1",
- "manifest_sha256": "d53ffb664465f1387ef55c4390ab4660fd92927c539a0208f991017596fa92ce",
+ "manifest_sha256": "8864272771a3f0f9657630b672e67fbfa7c1a68ae69e0fd1f91173927de5dbd3",
  "runner_contract_sha256": "8f2ea3817f1823dcf832dfb5b90803a42ef12182b58d893560b1070ffbdbd034",
  "variants": [
   "strict",
@@ -121,24 +121,75 @@
      }
     ]
    }
+  },
+  "BTUNNEL": {
+   "wad": "BTUNNEL",
+   "lmp_sha256": "0499f1e97dabd268b6f7090f06c83933a759767c4c86a8b68c4e08453e889c79",
+   "tics": 190,
+   "end": "marker",
+   "end_tic": 190,
+   "prndindex_after_load": 3,
+   "prndindex_end": 148,
+   "thinkers_at_load": 2,
+   "mobjs_at_load": 2,
+   "unknown_messages": 0,
+   "snapshots": 191,
+   "dumps_sha256": "29ff6354084bb7056c01853a53e30f0276015085201614b431278c04d7a9d1b8",
+   "must_show": {
+    "a Baron fireball is spawned, aimed due north at the standing player": 140,
+    "a flying Baron fireball wholly north of the 1-unit slab (y - 6 >= 369): it stepped past the inner one-sided wall": 162,
+    "a Baron fireball explodes on the north wall beyond the slab": 170,
+    "no Baron fireball outside the vertex rectangle (the outer-wall tunnel Rust refuses)": null,
+    "no Baron fireball explodes against the slab": null
+   },
+   "facts": {
+    "fireballs": [
+     {
+      "spawn_tic": 140,
+      "baron_x": 32.0,
+      "mom": [
+       375,
+       983025,
+       0
+      ],
+      "tunnel_tics": [
+       161,
+       162
+      ],
+      "slab_overlap_tics": [],
+      "explodes": {
+       "tic": 170,
+       "x": 32.1745,
+       "y": 481.493
+      },
+      "outside_rectangle_tics": []
+     }
+    ],
+    "player_hit_tics": []
+   }
   }
  },
  "timing": {
   "note": "us/tic of G_Ticker per variant from the runner summary and the wall time of this run; measured on a machine that was not idle (informational, not compared by --check)",
   "wall_seconds": {
-   "build": 45.0,
-   "runs": 4.5
+   "build": 44.1,
+   "runs": 8.8
   },
   "us_per_tic": {
    "TELE2X": {
-    "strict": 14.8,
-    "overflow": 4.4,
-    "address": 12.4
+    "strict": 16.7,
+    "overflow": 4.8,
+    "address": 13.1
    },
    "SAWBITE": {
-    "strict": 10.5,
-    "overflow": 7.6,
-    "address": 28.0
+    "strict": 10.0,
+    "overflow": 7.3,
+    "address": 27.6
+   },
+   "BTUNNEL": {
+    "strict": 6.6,
+    "overflow": 4.8,
+    "address": 14.5
    }
   }
  }

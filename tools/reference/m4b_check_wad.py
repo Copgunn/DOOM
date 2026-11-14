@@ -26,9 +26,11 @@ them this file checks, from the parsed map and the genuine linuxdoom-1.10/info.c
   these axis-aligned lines, P_BoxOnLineSide), which is what one P_CheckPosition can append to
   spechit (p_map.c:240-244); 8 is the most the array holds; SPECH9 is built to reach 9;
 - E1M8: the slot named by the manifest, a tag-666 sector and two Barons (A_BossDeath,
-  p_enemy.c:1629-1635, 1729-1734).
+  p_enemy.c:1629-1635, 1729-1734);
+- BTUNNEL (M4b step 9): the Baron fireball's tunnel through an inner one-sided wall, re-derived
+  from the parsed map and the genuine tables (see `tunnel`).
 """
-import json, sys
+import json, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -58,10 +60,158 @@ EXPECT = {
     'SPECH8': dict(pick={9: (None, None)}, box=8),
     'SPECH9': dict(pick={9: (None, None)}, box=9),
     'SKILL': dict(pick={1: (None, 1)}, box=1),
-    # The second set (tests/reference/m4b_manifest2.json, M4b steps 5 and 7).
+    # The second set (tests/reference/m4b_manifest2.json, M4b steps 5, 7 and 9).
     'TELE2X': dict(pick={1: (1, 1), 2: (2, 2)}, box=1),
     'SAWBITE': dict(pick={}, box=0),
+    # M4b step 9: the fireball tunnel; the Baron x positions the cage allows (see `tunnel`).
+    'BTUNNEL': dict(pick={}, box=0, tunnel=(24, 32, 40)),
 }
+
+FRACUNIT, MAXMOVE = 65536, 30 * 65536      # m_fixed.h; p_local.h:54
+SRC = ROOT / 'linuxdoom-1.10'
+
+
+def table(name):
+    """An initialised array of linuxdoom-1.10/tables.c (finesine, tantoangle)."""
+    text = (SRC / 'tables.c').read_text(encoding='latin-1')
+    body = text[text.index(name + ' ='):]
+    body = body[body.index('{') + 1:body.index('}')]
+    return [int(v) for v in re.findall(r'-?\d+', re.sub(r'//[^\n]*', '', body))]
+
+
+def info_row(member):
+    """speed and radius of one mobjinfo row of linuxdoom-1.10/info.c, in fixed point."""
+    text = (SRC / 'info.c').read_text(encoding='latin-1')
+    block = text[text.index('// ' + member + '\n'):]
+    block = block[:block.index('\n    }')]
+    f = {k: v.strip() for v, k in re.findall(r'^\t(.*?),?\t+// (\w+)\s*$', block, re.M)}
+    fixed = lambda v: int(v.replace('*FRACUNIT', '')) * (FRACUNIT if 'FRACUNIT' in v else 1)
+    return fixed(f['speed']), fixed(f['radius'])
+
+
+def point_to_angle2(x1, y1, x2, y2, tan):
+    """R_PointToAngle2 (r_main.c:292-388) with SlopeDiv (tables.c:50-62), on fixed-point values."""
+    def slope(num, den):
+        return 2048 if den < 512 else min(((num << 3) & 0xFFFFFFFF) // (den >> 8), 2048)
+    x, y, m = x2 - x1, y2 - y1, 0xFFFFFFFF
+    if not x and not y: return 0
+    if x >= 0:
+        if y >= 0: return tan[slope(y, x)] if x > y else 0x40000000 - 1 - tan[slope(x, y)]
+        return -tan[slope(-y, x)] & m if x > -y else 0xC0000000 + tan[slope(x, -y)]
+    if y >= 0: return 0x80000000 - 1 - tan[slope(y, -x)] if -x > y else 0x40000000 + tan[slope(-x, y)]
+    return 0x80000000 + tan[slope(-y, -x)] if -x > -y else 0xC0000000 - 1 - tan[slope(-x, -y)]
+
+
+def tunnel(m, th, expect):
+    """The BTUNNEL design, from the parsed map only. The Baron's sector must be an axis-aligned
+    rectangle exactly as tall as its box, ringed by two-sided lines whose other side is more than 24
+    lower (P_TryMove's dropoff test, p_map.c:481-483): it can then only step east or west by its speed
+    (P_Move, p_enemy.c:289-292), to the expected x positions. For each, the fireball aimed at the player
+    start (P_SpawnMissile, p_mobj.c:900-923; P_CheckMissileSpawn's half step, 876-878; one unsplit step
+    a tic, 150-164) is stepped through PIT_CheckLine's tests on every line (bbox, p_map.c:191-195;
+    P_BoxOnLineSide for axis-aligned lines, p_maputl.c:110-153; one-sided blocks, p_map.c:209-210)
+    with a fixed z clear of every floor and ceiling it passes. Required: the Baron-to-player segment
+    crosses no one-sided line (P_CheckSight can succeed), exactly one step's centre segment crosses a
+    one-sided line without being blocked, that line lies strictly inside the vertex rectangle, the
+    step lands inside a sector's area (even-odd over that sector's lines) and inside the rectangle,
+    and the first blocked step straddles a one-sided line on the rectangle's edge. Returns report lines
+    with the smallest margins (units)."""
+    fs, tan = table('int finesine[10240]'), table('angle_t tantoangle[2049]')
+    need(len(fs) == 10240 and len(tan) == 2049, 'tables.c arrays')
+    speed, radius = info_row('MT_BRUISERSHOT')
+    bspeed, bradius = info_row('MT_BRUISER')
+    barons = [t for t in th if t[3] == BARON]
+    start = next(t for t in th if t[3] == PLAYER1)
+    need(len(barons) == 1, 'one Baron')
+    bx, by = barons[0][0], barons[0][1]
+    V = m.verts
+    seg = lambda L: (V[L['a']], V[L['b']])
+    xs = [v[0] for v in V]; ys = [v[1] for v in V]
+    rect = (min(xs), min(ys), max(xs), max(ys))
+    cage = locate(m, bx, by)
+    cl = [m.lines[i] for i in m.sector_lines(cage)]
+    cx = sorted({p[0] for L in cl for p in seg(L)}); cy = sorted({p[1] for L in cl for p in seg(L)})
+    need(len(cl) == 4 and len(cx) == 2 and len(cy) == 2, 'the Baron sector is one rectangle')
+    r = bradius // FRACUNIT
+    need(by - r == cy[0] and by + r == cy[1], 'the Baron box spans the cage height')
+    for L in cl:
+        need(L['s1'] != -1, 'cage line one-sided')
+        other = L['back'] if L['front'] == cage else L['front']
+        need(m.secs[cage]['floor'] - m.secs[other]['floor'] > 24, 'cage neighbour within a step')
+    step = bspeed
+    pos = sorted({bx + k * step for k in range(-8, 9) if cx[0] <= bx + k * step - r and bx + k * step + r <= cx[1]})
+    need(tuple(pos) == expect, 'cage x positions %s, expected %s' % (pos, expect))
+    one = [L for L in m.lines if L['s1'] == -1]
+    def crosses(p, q, L):
+        (ax, ay), (bx_, by_) = seg(L)
+        d = lambda o, a, b: (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+        A, B = (ax * FRACUNIT, ay * FRACUNIT), (bx_ * FRACUNIT, by_ * FRACUNIT)
+        return d(p, q, A) * d(p, q, B) < 0 and d(A, B, p) * d(A, B, q) < 0
+    sx, sy = start[0] * FRACUNIT, start[1] * FRACUNIT
+    need(not any(crosses((bx * FRACUNIT, by * FRACUNIT), (sx, sy), L) for L in one), 'a one-sided line blocks the sight segment')
+    floor = m.secs[cage]['floor']
+    z = (floor + 32) * FRACUNIT                                   # P_SpawnMissile's source->z + 32 (p_mobj.c:897-899)
+    need(m.secs[locate(m, start[0], start[1])]['floor'] == floor, 'momz is not 0')
+    def blocked(x, y):
+        """The one-sided line straddled by the box at (x, y), if any (axis-aligned lines only)."""
+        l, rr, b, t = x - radius, x + radius, y - radius, y + radius
+        for L in one:
+            (x0, y0), (x1, y1) = seg(L)
+            need(x0 == x1 or y0 == y1, 'one-sided line not axis-aligned')
+            lo_x, hi_x, lo_y, hi_y = min(x0, x1) * FRACUNIT, max(x0, x1) * FRACUNIT, min(y0, y1) * FRACUNIT, max(y0, y1) * FRACUNIT
+            if rr <= lo_x or l >= hi_x or t <= lo_y or b >= hi_y: continue
+            if (y0 == y1 and b <= lo_y < t) or (x0 == x1 and l <= lo_x < rr): return L
+        return None
+    def inside(x, y, s):
+        n = 0
+        for i in m.sector_lines(s):
+            (x0, y0), (x1, y1) = seg(m.lines[i])
+            if x0 == x1 and (y0 * FRACUNIT <= y) != (y1 * FRACUNIT <= y) and x < x0 * FRACUNIT: n += 1
+        return n % 2 == 1
+    on_edge = lambda L: all(p[0] in (rect[0], rect[2]) for p in seg(L)) or all(p[1] in (rect[1], rect[3]) for p in seg(L))
+    strictly_in = lambda L: all(rect[0] < p[0] < rect[2] and rect[1] < p[1] < rect[3] for p in seg(L))
+    report, margins = [], []
+    for x0 in pos:
+        an = point_to_angle2(x0 * FRACUNIT, by * FRACUNIT, sx, sy, tan) >> 19
+        mx, my = (speed * fs[an + 2048]) >> 16, (speed * fs[an]) >> 16
+        need(abs(mx) <= MAXMOVE // 2 and abs(my) <= MAXMOVE // 2, 'the step splits')
+        x, y = x0 * FRACUNIT + (mx >> 1), by * FRACUNIT + (my >> 1)
+        need(blocked(x, y) is None, 'the spawn half step is blocked')
+        tunnels, n = [], 0
+        while True:
+            n += 1
+            need(n < 1000, 'the fireball never stops')
+            nx, ny = x + mx, y + my
+            L = blocked(nx, ny)
+            if L is not None:
+                need(on_edge(L), 'blocked by an inner line')
+                (lx0, ly0), (lx1, ly1) = seg(L)
+                wall = (ly0 * FRACUNIT, ny) if ly0 == ly1 else (lx0 * FRACUNIT, nx)
+                margins.append(min(wall[1] + radius - wall[0], wall[0] - (wall[1] - radius)))
+                break
+            s = locate(m, nx / FRACUNIT, ny / FRACUNIT)
+            need(m.secs[s]['floor'] * FRACUNIT <= z and z + 8 * FRACUNIT <= m.secs[s]['ceil'] * FRACUNIT, 'z leaves the sector')
+            hit = [L for L in one if crosses((x, y), (nx, ny), L)]
+            if hit:
+                need(all(strictly_in(L) for L in hit), 'tunnel through an outer wall')
+                need(inside(nx, ny, s) and rect[0] * FRACUNIT < nx < rect[2] * FRACUNIT
+                     and rect[1] * FRACUNIT < ny < rect[3] * FRACUNIT, 'the tunnel lands outside a sector')
+                for L in hit:
+                    (lx0, ly0), (lx1, ly1) = seg(L)
+                    need(ly0 == ly1, 'the tunnelled wall is not horizontal')
+                    tunnels.append((n, ly0))
+            x, y = nx, ny
+        need(len(tunnels) == 2, 'expected the two faces of one slab in one step, got %s' % tunnels)
+        (n1, w1), (n2, w2) = tunnels
+        need(n1 == n2, 'the slab faces are crossed in different steps')
+        lo, hi = min(w1, w2) * FRACUNIT, max(w1, w2) * FRACUNIT
+        prev = y - (n - n1) * my                                  # the centre before the tunnelling step
+        margins.append(min(lo - (prev + radius), (prev + my - radius) - hi))
+        report.append('Baron x %d: angle %d, mom (%d, %d), tunnel at step %d past the slab y %d..%d, explodes at step %d'
+                      % (x0, an, mx, my, n1, lo // FRACUNIT, hi // FRACUNIT, n))
+    need(min(margins) > 0, 'no margin')
+    report.append('smallest margin %.4f units' % (min(margins) / FRACUNIT))
+    return report
 
 
 def spawned(things, skill):
@@ -164,6 +314,8 @@ def check(path, name, slot, expect_things):
         need(tuple(picks) == exp['pick'][tag], 'tag %d picks %s, expected %s' % (tag, picks, exp['pick'][tag]))
     bm = box_max(m)
     need(bm == exp['box'], 'special-line box maximum %d, expected %d' % (bm, exp['box']))
+    if exp.get('tunnel'):
+        report += tunnel(m, th, exp['tunnel'])
     if exp.get('boss'):
         need(any(s['tag'] == 666 for s in m.secs), 'no tag-666 sector')
         need(sum(t[3] == BARON for t in spawned(th, 2)) == 2, 'two Barons')

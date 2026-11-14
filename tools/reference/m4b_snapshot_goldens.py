@@ -6,7 +6,8 @@
 `--set 2` projects the second set instead (tests/reference/m4b_manifest2.json,
 m4b_synthetic_results2.json; writes m4b_synthetic_goldens2.json and m4b2_episode1v2_*.bin;
 added in M4b step 5 so that the first set's files stay byte-identical; the self-test
-perturbs the first set's TELE1 and BARON1 dumps and so needs the first set; M4b step 7 added SAWBITE).
+perturbs the first set's TELE1 and BARON1 dumps and so needs the first set; M4b step 7 added SAWBITE,
+step 9 BTUNNEL).
 
 Manifest-driven (tests/reference/m4b_manifest.json, schema DOOM-M4B-MANIFEST-v1): every
 script of every WAD is projected by the independent DSIM40 encoder (level_snapshot_m4b.py:
@@ -149,6 +150,9 @@ FIXTURES = [
      'a Demon bite on the body A_Saw flagged in the same tic: MF_JUSTATTACKED kept, health 80, the biter in S_SARG_ATK3',
      lambda d: player(d)['flags'] & 128 != 0 and player(d)['health'] == 80
      and any(r['state'] == S('S_SARG_ATK3') and r['tics'] == 8 for r in mobjs(d, 'MT_SERGEANT'))),
+    ('BTUNNEL', ('event', 'a flying Baron fireball wholly north of the 1-unit slab (y - 6 >= 369): it stepped past the inner one-sided wall'), 1,
+     'a Baron fireball one step past the inner one-sided slab: MF_MISSILE kept, its box wholly north of y = 369',
+     lambda d: any(r['flags'] & 0x10000 and r['y'] - 6 * 65536 >= 369 * 65536 for r in mobjs(d, 'MT_BRUISERSHOT'))),
     ('SPECH9', ('last',), 0,
      'the last good tic before the ninth spechit entry (Rust refuses the next tic)',
      lambda d: True),
