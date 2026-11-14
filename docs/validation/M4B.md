@@ -966,3 +966,68 @@ the tunnel statement "matches or refuses" accurate, with no diverging admitted c
 equivalence proofs sound and diagnostic 1548 plausible; the survivor tests sampled, none derived from Rust
 output; determinism clean. The reviewer's own release test run: 1,342 passed, 0 failed, 2 ignored. After the fixes, step 15 widened the fuzz seeder, the
 `player_episode1_v2` target and the wire-24 soak to all eighteen synthetic WADs (BTUNNEL and TELEZ were missing).
+
+## Final gates from clean (step 15)
+
+Recorded **2026-11-14 PST** (America/Los_Angeles) on exact head `58b7f94678aae1585d71a6f522ace94731316512`,
+from a fresh detached worktree and empty target directories under `/mnt/d/scratch/m4b/s15` (main tree
+untouched). Toolchains: stable rustc/cargo 1.100.0, rustc 1.85.0 for the MSRV step, nightly cargo 1.101.0
+(2026-10-27) for fuzzing, gcc 15.2.0. One sequential script ran the gates (05:14 to 07:46, one gate at a time,
+the C reference suite with 2 workers); the campaign ran alone afterwards. The host was not idle (the owner's
+session was open), so times are wall-clock durations of a gate and not performance measurements. Exact-head CI
+is GitHub's record, not this page's. `/mnt/c` had 72 GB free at the start and 73 GB at the end.
+
+| Gate | Result |
+| --- | --- |
+| `cargo fmt --check`, workspace and fuzz workspace | clean |
+| `cargo clippy --workspace --all-targets --locked -- -D warnings` | clean |
+| `cargo build --workspace --locked` | built |
+| `cargo test --workspace --locked` (debug) | 1,383 passed, 0 failed, 4 ignored (93 result lines) |
+| `cargo test --workspace --release --locked` | 1,383 passed, 0 failed, 4 ignored (93 result lines) |
+| `cargo test -p doom-sim -p doom-types --release --locked` | 1,350 passed, 0 failed, 2 ignored (81 result lines) |
+| `cargo +1.85.0 test --workspace --locked` (MSRV) | 1,383 passed, 0 failed, 4 ignored (93 result lines) |
+| `cargo doc --workspace --no-deps --locked`, `RUSTDOCFLAGS="-D warnings"` | clean |
+| `check_docs.py` | 134 Markdown files, 2,343 links, 627 anchors, 20 archives verified |
+| `git diff --check` | clean |
+| M3h9c and M4a runner contracts, `test_runner_newlines.py`, `m3h9c_wad.py`, `m4a_wad.py`, `m4a_check_wad.py`, `e1m1_scripts.py` with `--check` | all pass |
+| `m4b_build.py`, `m4b_wad.py`, `m4b_check_wad.py`, `m4b_scripts.py` with `--check`, `test_level_snapshot_m4b.py` | all pass (9 unit tests) |
+| `run_reference.py --suite --jobs 2` (`detect_leaks=0`) | 65 unchanged historical source/encoder commands passed |
+| `weapon_formulas_reference.py --check --sanitize` | 393,728 function entries observed, passed |
+| `m3g10` to `m3h9b` references (`--check --overflow-check --address-check`, `detect_leaks=0`) and their snapshot goldens | 24 gates, 0 failed |
+| `m3h9c_reference.py --check --keep-dumps` and `m3h9c_snapshot_goldens.py` | 6 scripts match; 11 files |
+| `check_player_level.py` on release `player_level_run` output (6 scripts) | all checks passed |
+| `check_player_level_advance.py --binary .../player_level_advance` | 36 C-derived final states and boundaries passed |
+| `m4a_reference.py --check --keep-dumps --selftest 300`, `m4a_snapshot_goldens.py` | 30 scripts match, self-test caught both plants; 19 files |
+| `check_player_episode1.py --require` (`--policy episode1`) | all checks passed |
+| `m4b_m4a_goldens.py --check --compare39` | 30 scripts, 15,116 snapshots; 1 file |
+| `check_player_episode1v2.py --require` | 52 of 52 scripts matched (20,205 tics), 0 pending |
+| `m4b_reference.py --check --keep-dumps --selftest 30` (set 1) | 18 scripts match, self-test caught both plants |
+| `m4b_snapshot_goldens.py --check --selftest` (set 1) | 20 files, 8 self-test checks passed (4,802 snapshots) |
+| `m4b_reference.py --set 2 --check`, `m4b_snapshot_goldens.py --set 2` | 4 scripts match; 5 files |
+| `cargo test -p doom-sim --release --test episode1v2_soak` | 1 passed |
+| 47 debug/release `check_*.py` helpers of the CI list, plus `check_examples.py` (17 examples) | all pass |
+| `parse_map` and `demon_map_context` examples; `measure_*` smokes; `evidence_storage.py verify-git` | all exit 0 (verify-git: 19 trace identities, 6,342 protected paths) |
+| `cargo +nightly fuzz build --sanitizer address` | all 51 targets built |
+
+**Harness setup errors (not results, both re-run correctly).** (1) The first `run_reference.py --suite` attempt
+exited 1 at 61 s with `FileNotFoundError` for `wt/target/debug/evidence`: `evidence_storage.py` looks under
+`<root>/target`, not `CARGO_TARGET_DIR`. A symlink `wt/target` to the scratch target directory fixed it and the
+suite was re-run (the table's row). No other gate used that path before the symlink. (2) The first
+`check_player_level_advance.py` call passed `player_level_run` (the wrong example) and exited 2; it was re-run
+with `player_level_advance`.
+
+**Sanitizer campaign** (`player_episode1_v2`, AddressSanitizer, **leak detection on**: `ASAN_OPTIONS` unset),
+`cargo +nightly fuzz run ... --sanitizer address -- -max_total_time=1200 -seed=1501 -max_len=2404 -timeout=180
+-rss_limit_mb=2048`, seeded from a fresh copy of the 694 seeds written by `seed_player_episode1_v2_fuzz.py`,
+run alone on a quiet host: **3,286 runs in 1,202 s** (about 2 to 5 exec/s), coverage 14,369 to 14,744, features
+53,840 to 60,556, corpus 526 to 1,156 inputs after the initial pass (about 630 new units; 633 new files on
+disk), peak RSS 816 MB. **0 crashes, 0 timeouts, 0 out-of-memory, 0 leak reports, 0 slow-unit reports; the
+artifact directory is empty.** A first campaign attempt overlapped the gate script by mistake and was aborted
+before any result; it is not counted.
+
+**Limitations.** Run time was 20 minutes with about 3,000 executions: a bounded campaign, not exhaustive. No plain
+(non-sanitizer) campaign and no ILP32 (`--strict32`) run were done in this pass. The worktree is on a Windows
+drive, so every file showed a mode-only change (100644 to 100755, 0 content changes); `git diff` content was
+empty and `git diff --check` was clean. Real-map IWAD comparisons, mutation testing and timing runs were not
+repeated here (their records stand). The `measure_*` smokes are advisory counts, not timings. The reference dumps
+were deleted after each comparison.
