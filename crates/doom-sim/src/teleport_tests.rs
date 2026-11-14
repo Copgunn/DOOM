@@ -765,3 +765,372 @@ fn telefrag_thrust_preflight_runs_only_where_the_thrust_runs() {
         Ok(())
     );
 }
+
+/// Pins `stomped`'s reach test (p_map.c:88–95, T3.4): a shootable thing is stomped
+/// exactly when `|thing.x − tmx| < blockdist` and `|thing.y − tmy| < blockdist`,
+/// `blockdist` being the SUM of the two radii (a zombieman's 20 and the player's
+/// 16, info.c), strictly. Below the public API: the whole-tic tests land on the
+/// landings' exact spots, which overlap fully; the boundary of the reach is not
+/// otherwise visited.
+#[test]
+fn stomp_reach_is_the_strict_sum_of_the_radii() {
+    let s = setup(&wad("tfrag"));
+    let mo = s.original_player.unwrap().mo.unwrap();
+    let thing = *s.actor(mo).unwrap();
+    let zombie = id_of(&s, OriginalActorType::MT_POSSESSED);
+    let z = s.actor(zombie).unwrap().position();
+    let reach = Fixed::from_map_units(20 + 16).bits();
+    let at = |dx: i32, dy: i32| {
+        let mut t = s.clone();
+        let dest = [
+            Fixed::from_bits(z[0].bits() + dx),
+            Fixed::from_bits(z[1].bits() + dy),
+        ];
+        t.checked_demon_operation(|host| stomped(host, mo, &thing, dest))
+            .unwrap()
+    };
+    assert_eq!(at(0, 0), [zombie]);
+    assert_eq!(at(reach - 1, 0), [zombie]);
+    assert_eq!(at(0, -(reach - 1)), [zombie]);
+    assert_eq!(at(reach - 1, reach - 1), [zombie]);
+    // Exactly the summed radii on either axis, and beyond, on each side: not stomped.
+    for (dx, dy) in [
+        (reach, 0),
+        (-reach, 0),
+        (0, reach),
+        (0, -reach),
+        (reach, reach),
+    ] {
+        assert_eq!(at(dx, dy), [], "({dx}, {dy})");
+    }
+    // A product of the radii in place of the sum would reach everything near.
+    assert_eq!(at(reach * 2, 0), []);
+}
+
+/// Pins `ev_teleport`'s check of the latched failure after each victim's damage
+/// (`latched`): a failure latched while a telefrag's death state ran (a refused
+/// state entry) aborts the teleport before the relink instead of letting the thing
+/// land. Below the public API because every Episode 1 victim's first death state has
+/// nonzero tics and no action (M4b note §2 T3.8), so no whole-tic run latches there;
+/// the failure is latched here by hand, before the call.
+#[test]
+fn a_failure_latched_during_a_stomp_aborts_the_teleport() {
+    let l = wad("tfrag");
+    let commands = demo("TFRAG1");
+    let mut s = setup(&l);
+    run_to(&mut s, &commands, 63);
+    let mo = s.original_player.unwrap().mo.unwrap();
+    let line = map_of(&l)
+        .linedefs()
+        .iter()
+        .position(|d| d.special == LINE_TELEPORT)
+        .expect("a 97 line") as u16;
+    let planted: SimError = crate::CombatError::Reference.into();
+    let mut inner = None;
+    let outer = s.clone().checked_demon_operation(|host| {
+        host.fail_sight(planted);
+        inner = Some(ev_teleport(host, mo, line, 0));
+    });
+    // The call itself refuses with the planted failure (not `Teleported`), and the
+    // staged tic is discarded, as for every latched refusal.
+    assert_eq!(inner, Some(Err(planted)));
+    assert_eq!(outer, Err(planted));
+    // Control: without the planted failure the same call teleports.
+    let control = s
+        .clone()
+        .checked_demon_operation(|host| ev_teleport(host, mo, line, 0))
+        .unwrap();
+    assert_eq!(control, Ok(Outcome::Teleported));
+}
+
+/// Pins `cross`'s defence in depth: only special 97 under a teleport world is
+/// serviced here (the dispatcher admits nothing else, rule 1); a crossing of any
+/// other special is `PursuitError::Specials`, not a teleport. Below the public API
+/// because the dispatcher in `Motion::cross` sends only 97 to this function.
+#[test]
+fn teleport_cross_refuses_any_other_special() {
+    let l = wad("tfrag");
+    let s = setup(&l);
+    let mo = s.original_player.unwrap().mo.unwrap();
+    let line = map_of(&l)
+        .linedefs()
+        .iter()
+        .position(|d| d.special == LINE_TELEPORT)
+        .expect("a 97 line") as u16;
+    let mut t = s.clone();
+    let result = t
+        .checked_demon_operation(|host| {
+            cross(
+                host,
+                mo,
+                crate::line_triggers::Crosser::Player,
+                crate::line_triggers::Crossing {
+                    line,
+                    side: 0,
+                    special: LINE_TELEPORT + 1,
+                },
+            )
+        })
+        .unwrap();
+    assert_eq!(result, Err(PursuitError::Specials.into()));
+}
+
+/// Pins `validate_landing` (the tic-boundary witness of a landing): the record is
+/// exactly what `P_SpawnMapThing` left (state `S_NULL`, tics −1, health 1,000, the
+/// info flags plus at most `MF_AMBUSH`, no target, no momentum, inside the room;
+/// info.c:2174–2198, p_mobj.c:479–534, 708–797). Each case breaks exactly one clause
+/// of an accepted record. Below the public API because the reader of whole-tic
+/// states never presents a landing that was edited this way.
+#[test]
+fn a_landing_must_be_exactly_as_spawned() {
+    let s = setup(&wad("tele"));
+    let room = s.original_player.unwrap().room;
+    let landing = of_type(&s, OriginalActorType::MT_TELEPORTMAN)[0].1;
+    assert_eq!(validate_landing(room, landing), Ok(()));
+    let invariant = Err(PlayerBodyError::Invariant.into());
+    // `MF_AMBUSH` (p_mobj.h:131) is the one flag a THING may add.
+    let mut ambush = landing;
+    ambush.life.as_mut().unwrap().flags |= crate::world_pickups::MF_AMBUSH;
+    assert_eq!(validate_landing(room, ambush), Ok(()));
+    type Edit = fn(&mut crate::Actor);
+    let edits: [(&str, Edit); 8] = [
+        ("state", |a| {
+            a.life.as_mut().unwrap().state = Some(crate::StateId(1))
+        }),
+        ("tics", |a| a.life.as_mut().unwrap().tics = 1),
+        ("health", |a| a.life.as_mut().unwrap().health = 999),
+        ("flags", |a| a.life.as_mut().unwrap().flags |= MF_SHOOTABLE),
+        ("target", |a| {
+            a.life.as_mut().unwrap().target = Some(a_handle())
+        }),
+        ("momentum", |a| {
+            a.spec.momentum = [Fixed::from_bits(1), Fixed::ZERO]
+        }),
+        ("momz", |a| a.momz = Fixed::from_bits(1)),
+        ("position", |a| {
+            a.spec.position = [Fixed::from_map_units(20_000), Fixed::ZERO];
+        }),
+    ];
+    for (name, edit) in edits {
+        let mut broken = landing;
+        edit(&mut broken);
+        assert_eq!(validate_landing(room, broken), invariant, "{name}");
+    }
+    assert_eq!(
+        validate_landing(
+            room,
+            crate::Actor {
+                life: None,
+                ..landing
+            }
+        ),
+        invariant
+    );
+}
+fn a_handle() -> ActorId {
+    ActorId::from_parts(0, 1)
+}
+
+/// Runs `f` on a [`Motion`] of `mover` over the committed state of `s`, inside a
+/// real thinker traversal (the only way to hold the `ThinkerContext` it borrows).
+fn with_motion<R>(
+    s: &mut Simulation,
+    mover: Mover,
+    f: impl FnOnce(&mut Motion<'_, '_, '_>) -> R,
+) -> R {
+    let mut actors = s.actors.clone();
+    let budget = actors.visit_bound();
+    let mut f = Some(f);
+    let mut out = None;
+    let registry = s.registry.clone().unwrap();
+    actors
+        .run(budget, |visit, context| {
+            if matches!(visit, crate::Visit::Think(_)) {
+                if let Some(f) = f.take() {
+                    let mut motion = Motion {
+                        mover,
+                        access: context,
+                        player: s.original_player.as_mut(),
+                        statistics: s.statistics.as_mut(),
+                        perception: None,
+                        registry: &registry,
+                        world: &s.world,
+                        sectors: crate::staging::Sectors::committed(&s.sectors),
+                        options: s.actor_options,
+                        rng: &mut s.rng,
+                        bindings: &mut s.bindings,
+                        specials: None,
+                        boundary: s.boundary.as_deref(),
+                    };
+                    out = Some(f(&mut motion));
+                }
+            }
+        })
+        .unwrap();
+    out.expect("a live thinker")
+}
+
+/// Pins `Motion`'s three witnesses of wire 24 (teleport.rs): the slide escape
+/// witness (the player only: M3h5 note §4.5, `Contacts::after_slide`), the
+/// post-move escape witness (a barrel on a map with a one-sided boundary only:
+/// `BarrelMotion::after_move`, decision F3 of M3h9b) and the real-map intercept
+/// witness of the player's slide (`MAX_INTERCEPTS`, M3h6 note §4.4). Below the public
+/// API because each witness guards a position the world's walls cannot produce
+/// (Theorem B of M3h5 §4.5; a thing outside the boundary), so a whole-tic run never
+/// presents it; the actor handed to the witness here is placed outside by hand.
+#[test]
+fn motion_witnesses_belong_to_their_movers() {
+    use crate::movement::MotionAccess;
+    let s = setup(&wad("tele"));
+    assert!(s.boundary.is_some(), "the TELE map has a closed boundary");
+    let mo = s.original_player.unwrap().mo.unwrap();
+    let inside = *s.actor(mo).unwrap();
+    let mut outside = inside;
+    outside.spec.position = [Fixed::from_map_units(20_000), Fixed::from_map_units(20_000)];
+    let escape = Err(crate::MapScaleError::Escape.into());
+    for (mover, slide, step) in [
+        (Mover::Player, escape, Ok(())),
+        (Mover::Barrel, Ok(()), escape),
+        (Mover::Other, Ok(()), Ok(())),
+    ] {
+        let mut t = s.clone();
+        let (a, b, c, d) = with_motion(&mut t, mover, |m| {
+            (
+                m.after_slide(&outside),
+                m.after_slide(&inside),
+                m.after_move(&outside),
+                m.after_move(&inside),
+            )
+        });
+        assert_eq!(a, slide, "{mover:?} after_slide outside");
+        assert_eq!(b, Ok(()), "{mover:?} after_slide inside");
+        assert_eq!(c, step, "{mover:?} after_move outside");
+        assert_eq!(d, Ok(()), "{mover:?} after_move inside");
+    }
+    for (mover, limit) in [
+        (Mover::Player, Some(crate::player_map_scale::MAX_INTERCEPTS)),
+        (Mover::Barrel, None),
+        (Mover::Other, None),
+    ] {
+        let mut t = s.clone();
+        assert_eq!(
+            with_motion(&mut t, mover, |m| m.intercept_limit()),
+            limit,
+            "{mover:?}"
+        );
+    }
+    assert_eq!(crate::player_map_scale::MAX_INTERCEPTS, 128);
+}
+
+/// Pins the load rule of wire 24 (`with_original_registry`): the map is admitted
+/// when its transient allowance, `1024 − (1 + K + R + P + B + D + L)`, is at least 2
+/// (the two fogs of one teleport), and refused with `StoreError::Capacity` below it
+/// (M4b note §4.1 on the allowance; `transient_allowance`'s own contract). The map
+/// is the TELE map with its THINGS replaced by one player start and `L` landings
+/// (doomednum 14, all skills), so the allowance is `1023 − L` by the formula.
+#[test]
+fn the_load_admits_an_allowance_of_exactly_two() {
+    let with_landings = |landings: usize| {
+        let mut l = wad("tele");
+        let mut records = Vec::new();
+        for (kind, n) in [(1_i16, 1), (14, landings)] {
+            for _ in 0..n {
+                for v in [0_i16, 0, 0, kind, 7] {
+                    records.extend(v.to_le_bytes());
+                }
+            }
+        }
+        *things(&mut l) = records;
+        load(&l, V2).map(|_| ())
+    };
+    assert_eq!(with_landings(1020), Ok(()), "allowance 3");
+    assert_eq!(with_landings(1021), Ok(()), "allowance 2");
+    assert_eq!(
+        with_landings(1022),
+        Err(StoreError::Capacity.into()),
+        "allowance 1"
+    );
+    assert_eq!(
+        with_landings(1023),
+        Err(StoreError::Capacity.into()),
+        "allowance 0"
+    );
+    assert_eq!(
+        with_landings(1024),
+        Err(StoreError::Capacity.into()),
+        "placed things alone exceed the slots"
+    );
+}
+
+/// Pins the default `MotionAccess::cross` (movement.rs): an access that does not run
+/// crossings inside the move (`crosses_in_move()` false, the default of every access
+/// but wire 24's `Motion`) is never asked to, and its `cross` is the explicit
+/// `unreachable!`, not a quiet `Ok`, so a future access that claims `crosses_in_move`
+/// without implementing `cross` fails loudly instead of skipping a teleport. Below
+/// the public API because the only caller is guarded by `crosses_in_move`.
+#[test]
+#[should_panic(expected = "no crossing inside the move without the teleport policy")]
+fn the_default_access_never_crosses_inside_the_move() {
+    use crate::movement::MotionAccess;
+    let mut s = setup(&wad("tele"));
+    let mo = s.original_player.unwrap().mo.unwrap();
+    let mut actor = *s.actor(mo).unwrap();
+    let mut access = |_: ActorId| -> Option<crate::Actor> { None };
+    assert!(!access.crosses_in_move());
+    let mut events = Vec::new();
+    let _ = access.cross(
+        mo,
+        &mut actor,
+        crate::line_triggers::Crosser::Player,
+        crate::line_triggers::Crossing {
+            line: 0,
+            side: 0,
+            special: LINE_TELEPORT,
+        },
+        crate::staging::Sectors::committed(&s.sectors),
+        &mut s.spatial,
+        &mut events,
+    );
+}
+
+/// Pins which movers carry the escape witness under wire 24 (`Mover` of
+/// `thinkers::run`: a barrel on a map with a one-sided boundary is `Mover::Barrel`;
+/// a monster, a corpse or a barrel without a boundary is `Mover::Other`, "no
+/// witness"; teleport.rs). The witness refuses a tic whose accepted move leaves
+/// the boundary's inside (`BarrelMotion::after_move`, M3h9b decision F3). On the TFRAG
+/// map, which has a boundary, a zombieman and a barrel are each put by hand into the
+/// void above the first room (outside the boundary, inside the vertex
+/// rectangle: nothing the walls would let a thing reach) with a one-unit momentum:
+/// the zombieman's tic is accepted and it slides on; the barrel's is refused with
+/// `MapScaleError::Escape`. Below the public API because no admitted capture holds a
+/// thing outside the boundary; the surgery is the only way to show which witness each
+/// mover has.
+#[test]
+fn only_a_barrel_carries_the_escape_witness() {
+    let in_the_void = |ty: OriginalActorType| {
+        let mut s = tfrag_with_barrel();
+        assert!(s.boundary.is_some());
+        let victim = id_of(&s, ty);
+        let at = [Fixed::from_map_units(-400), Fixed::from_map_units(200)];
+        assert!(!s.boundary.as_ref().unwrap().inside(at), "the void");
+        let location = s.world.locate_validated(at);
+        let sector = s.sectors[usize::from(location.sector)];
+        {
+            let a = s.actors.get_mut(victim).unwrap();
+            a.spec.position = at;
+            a.spec.momentum = [Fixed::from_map_units(1), Fixed::ZERO];
+            a.floor = sector.floor;
+            a.ceiling = sector.ceiling;
+            a.z = sector.floor;
+            a.location = Some(location);
+        }
+        s.spatial.link(victim);
+        let result = step(&mut s, TicCommand::default());
+        (result, s.actor(victim).map(|a| a.position()))
+    };
+    let (zombie, moved) = in_the_void(OriginalActorType::MT_POSSESSED);
+    assert_eq!(zombie, Ok(()));
+    assert_eq!(moved.unwrap()[0], Fixed::from_map_units(-399));
+    let (barrel, _) = in_the_void(OriginalActorType::MT_BARREL);
+    assert_eq!(barrel, Err(crate::MapScaleError::Escape.into()));
+}
