@@ -1150,6 +1150,13 @@ impl<'a> Diagnostic<'a> {
                     || (original == 9 && special == 0)
                     // DSIM39: a raiseToNearestAndChange plat and a finished
                     // donut ring set the special to 0.
+                    //
+                    // Dead in this function: `validate_specials` runs for version
+                    // 34 only (the call in `validate`), so `matches!(self.version,
+                    // 39 | 40)` is false here and the mutant `special == 0` →
+                    // `special != 0` of Mutants run 43543402068 (this clause) is
+                    // equivalent. The live copy is `validate_movers`' (versions
+                    // 35–40), pinned by `tests/episode1v2_reader_domains.rs`.
                     || (matches!(self.version, 39 | 40) && special == 0)
             };
             if !expected {
@@ -1544,6 +1551,12 @@ impl<'a> Diagnostic<'a> {
                 self.required(&format!("{prefix}.state"))?,
             )?))
             .map_err(|_| DiagnosticError::Identity)?;
+            // Redundant with the generic per-actor check that ran first
+            // (`identity` → `state_role_for` → `e1m1_rules::spawn_state`, the same
+            // `decoration_states` predicate), so only a loop state reaches here and
+            // the mutant `||` → `&&` (Mutants run 43543402068) is equivalent:
+            // `tests/episode1v2_reader_domains.rs`
+            // (`a_decoration_holds_a_state_of_its_own_loop_only`) sweeps the states.
             if !e1m1_rules::decoration_states(decoration).contains(&state)
                 || (!matches!(self.version, 39 | 40) && state != d.states.spawn)
             {
