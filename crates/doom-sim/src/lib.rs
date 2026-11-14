@@ -1629,3 +1629,5 @@ mod real_map_evidence;
 mod specials_evidence;
 #[cfg(test)]
 mod v_prime_tests;
+#[cfg(test)]
+mod wire24_rejection_tests;
