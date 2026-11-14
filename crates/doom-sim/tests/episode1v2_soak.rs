@@ -1,4 +1,4 @@
-//! Wire 24 (`PlayerMonstersEpisode1V2`, DSIM40) soaks over the fifteen committed M4b
+//! Wire 24 (`PlayerMonstersEpisode1V2`, DSIM40) soaks over the sixteen committed M4b
 //! synthetic WADs (no IWAD), M4b plan step 9. Rust-only safety properties through the
 //! public API; no expectation is a captured digest. Each run loads one WAD at skill 2
 //! or 3 under its map number (BOSS8 is map 8, every other WAD map 1), plays the
@@ -27,7 +27,7 @@ const ROUND_TRIP: usize = 100;
 const TAIL: usize = 300;
 
 /// (WAD file, map number, the committed script of its mechanism).
-const RUNS: [(&str, u8, &str); 15] = [
+const RUNS: [(&str, u8, &str); 16] = [
     ("tele", 1, "TELE1"),
     ("telemove", 1, "TSPLIT"),
     ("tfrag", 1, "TFRAG1"),
@@ -40,6 +40,7 @@ const RUNS: [(&str, u8, &str); 15] = [
     ("boss8", 8, "BOSS1"),
     ("bossm1", 1, "BOSSM1"),
     ("spech8", 1, "SPECH8"),
+    ("spech9", 1, "SPECH9"),
     ("skill", 1, "SKILL3"),
     ("tele2x", 1, "TELE2X"),
     ("sawbite", 1, "SAWBITE"),
@@ -268,7 +269,7 @@ fn wire_24_soaks_over_the_m4b_wads_hold_the_safety_properties() {
     println!("wire 24 soaks: {t:?}");
     // The soak is not vacuous: it ran thousands of tics, round-tripped captures and
     // reached the teleport on the teleport WADs.
-    assert_eq!(t.runs, 15 * 2 * 2);
+    assert_eq!(t.runs, 16 * 2 * 2);
     assert!(t.tics > 10_000, "{t:?}");
     assert!(t.round_trips > 100, "{t:?}");
     assert!(t.teleports > 0, "{t:?}");
