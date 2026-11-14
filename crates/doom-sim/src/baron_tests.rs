@@ -832,3 +832,202 @@ fn spawn_step_hit_draws_damage_pain_and_explosion() {
     .expect("explosion draw");
     assert!(launch < contact && contact < damage && damage < pain && pain < explode);
 }
+
+// --- Mutation-survivor tests (M4b step 11, Mutants run 43543402068) -----------
+//
+// Expectations come from the citations at each test (linuxdoom-1.10 and the M4b
+// note) and from the written contracts of the functions; none from Rust output.
+
+type Host<'a, 'b> = crate::lifecycle::LifeHost<'a, &'b mut crate::ThinkerStore<crate::Actor>>;
+
+fn two_barons() -> (Simulation, ActorId, ActorId) {
+    let s = setup(&wad("boss8"), "E1M8", 8);
+    let barons = of_type(&s, BARON);
+    assert_eq!(barons.len(), 2, "BOSS1's map places two Barons");
+    let (a, b) = (barons[0].0, barons[1].0);
+    (s, a, b)
+}
+
+/// Pins `other_alive` (boss.rs): `A_BossDeath`'s thinker walk counts another mobj of
+/// the Baron's type only with `health > 0` (p_enemy.c:1692–1705: `if (mo2 != mo &&
+/// mo2->type == mo->type && mo2->health > 0) return`). A Baron at exactly 0 health
+/// (a thinker still listed, e.g. one killed by 1,000 damage) is not alive; 1 is.
+/// Below the public API because a whole-tic run reaches the walk only with the
+/// other Baron's health far from the boundary (−9,980 after a telefrag, or
+/// 1,000).
+#[test]
+fn another_baron_counts_only_with_positive_health() {
+    let (s, a, b) = two_barons();
+    let ty = ActorTypeId(BARON.ordinal());
+    let alive_with = |health: i32| {
+        let mut t = s.clone();
+        t.checked_demon_operation(|host| {
+            host.access
+                .get_mut(b)
+                .unwrap()
+                .life
+                .as_mut()
+                .unwrap()
+                .health = health;
+            other_alive(host, a, ty)
+        })
+        .unwrap()
+        .unwrap()
+    };
+    assert!(alive_with(1000));
+    assert!(alive_with(1));
+    assert!(!alive_with(0));
+    assert!(!alive_with(-1));
+    assert!(!alive_with(-9_980));
+}
+
+/// Pins `boss_death`'s latching (boss.rs): a refusal of `A_BossDeath` is latched
+/// for the whole-tic rollback unless a failure is already latched, which stays (the
+/// first refusal of a tic is the one reported, as for every action callback). Here
+/// the action is run on a non-Baron actor, which `boss_death_checked` refuses
+/// (`PlayerBodyError::Unsupported`, "only `S_BOSS_DIE7` names the action"). Below the
+/// public API because the state machine only runs the action on a Baron.
+#[test]
+fn boss_death_latches_its_first_refusal() {
+    let (s, _, _) = two_barons();
+    let mo = s.original_player.unwrap().mo.unwrap();
+    let refused = |planted: Option<SimError>| {
+        s.clone().checked_demon_operation(|host| {
+            if let Some(error) = planted {
+                host.fail_sight(error);
+            }
+            boss_death(host, mo);
+        })
+    };
+    assert_eq!(refused(None), Err(PlayerBodyError::Unsupported.into()));
+    let first: SimError = crate::CombatError::Reference.into();
+    assert_eq!(refused(Some(first)), Err(first));
+}
+
+/// Pins the state closure admitted for wire 24's two Baron callbacks
+/// (`validate_state_with`, the clause "each at the one state that names it"):
+/// `A_BruisAttack` is admitted at `S_BOSS_ATK3` only, not at the Hell Knight's
+/// `S_BOS2_ATK3`, and `A_BossDeath` at `S_BOSS_DIE7` only, not at the other bosses'
+/// `S_FATT_DIE10`, `S_SPID_DIE11`, `S_BSPI_DIE7` and `S_CYBER_DIE10` (info.c:675,
+/// 684, 704, 533, 767, 795, 836: the same callbacks sit at those states).
+#[test]
+fn baron_callbacks_are_admitted_at_their_own_states_only() {
+    let s = setup(&wad("baron"), "E1M1", 1);
+    let registry = s.registry.as_deref().unwrap();
+    let admitted = |name: &str| {
+        let state = OriginalState::from_name(name).expect(name);
+        registry
+            .validate_state_original_monsters(crate::StateId(state.ordinal()))
+            .is_ok()
+    };
+    assert!(admitted("S_BOSS_ATK3"));
+    assert!(admitted("S_BOSS_DIE7"));
+    for other in [
+        "S_BOS2_ATK3",
+        "S_FATT_DIE10",
+        "S_SPID_DIE11",
+        "S_BSPI_DIE7",
+        "S_CYBER_DIE10",
+    ] {
+        assert!(!admitted(other), "{other}");
+    }
+}
+
+/// Pins `launch_missile`'s type gate (projectiles.rs): the Imp fireball under every
+/// policy, the Baron's `MT_BRUISERSHOT` under wire 24 only (M4b note §3 fact 7:
+/// `P_SpawnMissile` for `A_BruisAttack`); every other type, and the Baron's under
+/// wire 23, is `ProjectileError::UnsupportedType`. Below the public API because the
+/// state machine launches only the type its own action names.
+#[test]
+fn launch_missile_admits_the_baron_ball_under_wire_24_only() {
+    let unsupported = Err(crate::ProjectileError::UnsupportedType.into());
+    let ball = ActorTypeId(BALL.ordinal());
+    let launch = |s: &Simulation, ty: ActorTypeId| {
+        let mo = s.original_player.unwrap().mo.unwrap();
+        let source = of_type(s, BARON).first().map_or(mo, |(id, _)| *id);
+        s.clone()
+            .checked_demon_operation(|host: &mut Host<'_, '_>| {
+                crate::projectiles::launch_missile(host, source, mo, ty)
+            })
+            .unwrap()
+    };
+    let s = setup(&wad("baron"), "E1M1", 1);
+    assert_eq!(launch(&s, ball), Ok(()));
+    // The rocket (the player's missile) and the Baron ball's explosion-free kin are
+    // not launched by a monster.
+    assert_eq!(
+        launch(&s, ActorTypeId(OriginalActorType::MT_ROCKET.ordinal())),
+        unsupported
+    );
+    let mut room = crate::player_movers_tests::room(13);
+    room.add_thing([1000, 64, 180, 1, 7]);
+    let mut wire23 =
+        Simulation::original_player_episode1_map(room.map(), MapContextOptions::default()).unwrap();
+    wire23.spawn_map_things().unwrap();
+    wire23
+        .initialize_player_weapons(PlayerSlot::One, WeaponInventory::default())
+        .unwrap();
+    wire23.spawn_level_specials().unwrap();
+    assert_eq!(launch(&wire23, ball), unsupported);
+}
+
+/// Pins `ActorAccess::live_order` of the staged store (lifecycle.rs): the actors
+/// that are not pending removal, in thinker order (`thinkercap.next` onward, with a
+/// removed thinker's function −1 skipping it: p_tick.c:80–84), which is what
+/// `EV_Teleport`'s landing search (p_telept.c:74–97) and `A_BossDeath`'s walk
+/// (p_enemy.c:1692–1705) iterate. Below the public API because a whole-tic run
+/// reaches the staged store's order only through those two services run from a
+/// state entry, whose iteration the access type fixes.
+#[test]
+fn live_order_is_the_thinker_order_without_pending_removals() {
+    use crate::lifecycle::ActorAccess;
+    let (s, a, _) = two_barons();
+    let all: Vec<ActorId> = s.actors.order().collect();
+    assert!(all.len() > 3 && all.contains(&a));
+    let mut t = s.clone();
+    let (before, after) = t
+        .checked_demon_operation(|host| {
+            let before = host.access.live_order();
+            assert!(host.access.mark(a).unwrap());
+            (before, host.access.live_order())
+        })
+        .unwrap();
+    assert_eq!(before, Some(all.clone()));
+    let without: Vec<ActorId> = all.iter().copied().filter(|id| *id != a).collect();
+    assert_eq!(after, Some(without));
+}
+
+/// Pins the default `ActorAccess::live_order`: an access with no thinker list
+/// reports `None`, which `EV_Teleport`'s landing search and `A_BossDeath` refuse
+/// (`StoreError::UnsupportedThinker`), rather than an empty list, which would read as
+/// "no landing" and "no other Baron". The historical blast preview's projection is the
+/// one such access in the crate and is private to its module, so a stand-in access
+/// that overrides nothing but the required methods is used.
+#[test]
+fn an_access_without_a_thinker_list_has_no_live_order() {
+    use crate::lifecycle::ActorAccess;
+    struct Bare;
+    impl ActorAccess for &mut Bare {
+        fn get(&self, _: ActorId) -> Option<&crate::Actor> {
+            None
+        }
+        fn get_mut(&mut self, _: ActorId) -> Option<&mut crate::Actor> {
+            None
+        }
+        fn spawn(&mut self, _: crate::Actor) -> Result<ActorId, StoreError> {
+            unreachable!()
+        }
+        fn mark(&mut self, _: ActorId) -> Result<bool, StoreError> {
+            unreachable!()
+        }
+        fn reserve(&mut self, _: usize) -> Result<(), StoreError> {
+            unreachable!()
+        }
+        fn live_of_type(&self, _: ActorTypeId) -> usize {
+            unreachable!()
+        }
+    }
+    let mut bare = Bare;
+    let access = &mut bare;
+    assert_eq!(access.live_order(), None);
+}
