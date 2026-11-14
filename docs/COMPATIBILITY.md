@@ -2393,6 +2393,14 @@ overflow occurs on any matched run.
 - **Skills other than medium**, multiplayer, and the intermission or any level transition:
   a level exit ends the run (`LevelExited` on the next tic), and the dead player's `BT_USE`
   reborn tic is refused (`PlayerReborn`).
+- **Known gap: a Demon or Spectre bite on a body `A_Saw` flagged.** When a chainsaw hit sets
+  `MF_JUSTATTACKED` on the player's body (p_pspr.c:542) and a Demon or Spectre bites in the same
+  tic, the genuine engine runs the bite as on any live body, but wire 23 refuses the tic with
+  `PlayerBody(Invariant)`. It is an explicit refusal, never a silent difference. Found in M4b on
+  E1M5 (see [the evidence record](validation/M4B.md#the-m5walk3-divergence-and-its-fix)); it is fixed
+  under wire 24 only and stays unpatched in wire 23 by rule, because historical profiles keep
+  their behaviour. Wire 23 is the only older wire that admits the chainsaw, so no earlier wire
+  can reach it.
 - **Commands:** `BT_SPECIAL` and button bit 0x40 are refused (`UnsupportedButtons`).
   `forward` and `side` are admitted in -127..127 (-128 is the demo end marker and is refused) and
   weapon indices 0-7 follow vanilla's rules; the chainsaw lunge rewrite runs with a forward value of
@@ -2554,9 +2562,11 @@ scripted real-map runs of plan step 7.
 **A bite on a body `A_Saw` flagged (plan step 7).** `A_Saw` sets `MF_JUSTATTACKED` on the player's
 body on a hit (p_pspr.c:542), and `P_PlayerThink` runs before the thinkers (p_tick.c:150-152), so a
 Demon or Spectre can bite a body that carries that flag in the same tic. Nothing on the bite path
-reads it. Wire 24 admits the bite on such a body (`has_bite_on_lunging_body()`); wires 23 and below
-still refuse it with `PlayerBody(Invariant)`, and any other unadmitted body flag still refuses under
-wire 24. The case found a real divergence on E1M5 (skill 3 walk), reproduced by the synthetic scene
+reads it. Wire 24 admits the bite on such a body (`has_bite_on_lunging_body()`), and any other
+unadmitted body flag still refuses under wire 24. Wire 23 still refuses the bite with
+`PlayerBody(Invariant)`: a known wire-23 gap, left unpatched by rule because historical profiles
+keep their behaviour (listed under wire 23's [explicitly not admitted](#explicitly-not-admitted)).
+Wires below 23 do not admit the chainsaw, so they cannot reach it. The case found a real divergence on E1M5 (skill 3 walk), reproduced by the synthetic scene
 SAWBITE; see [the evidence record](validation/M4B.md#the-m5walk3-divergence-and-its-fix). The bite that
 kills the body while the flag is set was reasoned from the source and has not been observed.
 

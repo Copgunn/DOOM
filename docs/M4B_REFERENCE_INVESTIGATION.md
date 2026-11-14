@@ -2037,6 +2037,31 @@ fact re-read in linuxdoom-1.10 before the code that relies on it):
     genuine engine spawned four fogs with four draws and left the player on the second landing (angle 90,
     `reactiontime` 18, momentum 0), identically in the three variants; Rust matches all 66 captures
     ([evidence](validation/M4B.md#second-synthetic-set-two-teleports-in-one-tic)). This closes step 4's open item.
+26. **A Demon or Spectre bite on a body `A_Saw` flagged (step 7, the M5WALK3 refusal).** `A_Saw` sets
+    `MF_JUSTATTACKED` on a hit (p_pspr.c:542); `P_PlayerThink` runs before the thinkers (p_tick.c:150–152) and clears
+    it on the next tic (p_user.c:249–255); nothing on the bite path reads it (p_enemy.c:935–948, 782–796, 174–192;
+    p_inter.c:775–918). Rust's `strike_player` refused such a bite with `PlayerBody(Invariant)`. Wire 24 admits it
+    (2dd986c), reproduced by SAWBITE ([evidence](validation/M4B.md#the-m5walk3-divergence-and-its-fix)). Wire 23 admits
+    the chainsaw and Demons too, so the same tic can arise there; it is a **known wire-23 gap, left unpatched by rule**
+    (historical profiles keep their behaviour; it refuses explicitly and never differs silently), listed in
+    [COMPATIBILITY](COMPATIBILITY.md#explicitly-not-admitted). Wires below 23 do not admit the chainsaw.
+27. **The `barrels.rs:362:19` mutant is equivalent (step 8, 61c8379; closes M4A B7).** The explosion walk is a series of
+    `bnext` segments, one per base cell and one per relink; nothing unlinks, only drops are linked, and each monster
+    relinks at most once, at its first visit (a wire-24 teleport inside the chase relinks the same monster again and
+    the walk follows only its final link). Counting the segments that can reach each thing gives visits ≤ n(1+L) + L +
+    D′(1+L) ≤ n(R+2) − 2 (n the linked things, L the relinkers, D′ the other drops, R the visit roster), below the
+    mutant's limit 9 + n(R+2), so the mutant refuses nothing and no test can kill it. The argument does not depend on
+    the cell a relink lands in, which was M4a's open case. The proof is a comment above `limit`; behaviour is unchanged.
+    Owner ruling (2026-11-13): no exclusion in the mutation workflow unless the mutant appears in it (decision I12 runs
+    `--in-diff`, and line 362 is unchanged on this branch). The step-14 review should check the proof.
+28. **The height bound and the boss floor, refined (step 8, 750b307).** Finding 22 stands and is now tested: a BOSS1
+    edit whose tag-666 step has its lowest neighbour at −1,024 descends one unit per tic to it unrefused; at −1,025 the
+    map is refused at load (`GeometryError::CoordinateOverflow`). Finding 21 is refined: the global `[R_min, R_max]`
+    is unchanged, but the per-sector interval of a tag-666 sector misses the lowered floor, which can make `Δ` too
+    small through the close30 or turbo terms of sectors whose lowest floor depends on it (mover_rules.rs:820–841).
+    `Δ` and `R_min` are read only by V′ cases (c) and (e) (player_map_scale.rs:770–795), so this can only refuse more,
+    never admit wrongly. On E1M1–E1M9 a temporary rule left `(reach, Δ)` unchanged (E1M8: one tag-666 sector). Owner
+    ruling (2026-11-13): no change to the map-8 rule; recorded here.
 
 ### Open items carried from Phase 1
 

@@ -614,8 +614,16 @@ in `crates/doom-sim/src/demon.rs`, admitted only the pristine player flags plus 
 `MF_SHADOW`), `P_CheckMeleeRange` (174-192) and `P_DamageMobj` (p_inter.c:775-918). A suspect that
 instrumentation ruled out was the wire-24 item-total cross-check.
 
-**Fix (2dd986c).** `has_bite_on_lunging_body()` admits that one extra flag under wire 24 only; wires
-23 and below keep refusing it. It is a source-equivalence change, with the C citations above.
+**Fix (2dd986c).** `has_bite_on_lunging_body()` admits that one extra flag under wire 24 only. It is a
+source-equivalence change, with the C citations above.
+
+**Known wire-23 gap, unpatched by rule.** Wire 23 admits the chainsaw and Demons, so the same tic can
+arise under it, and wire 23 still refuses it with `PlayerBody(Invariant)` (asserted by
+`saw_bite_tests.rs`, which replays SAWBITE under wire 23 and sees tic 74 refused with state unchanged).
+It is not patched there, because historical profiles keep their behaviour. It is an explicit
+refusal, never a silent difference. None of the wire-23 real-map or synthetic runs reached it. Wires
+below 23 do not admit the chainsaw. [COMPATIBILITY](../COMPATIBILITY.md#explicitly-not-admitted) lists it
+under wire 23.
 
 **Synthetic reproduction SAWBITE (663d92b, second set).** `tests/reference/m4b_manifest2.json` holds
 the scene: a 116-tic script plus marker (117 snapshots), `A_Saw` hits from tic 45, and two Demon bites
