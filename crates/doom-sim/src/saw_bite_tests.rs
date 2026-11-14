@@ -191,3 +191,30 @@ fn wire_24_still_refuses_any_other_unadmitted_flag_on_the_bitten_body() {
         }
     }
 }
+
+/// Pins the disjointness `strike_player`'s `allowed` mask relies on: MT_PLAYER's own
+/// flags (info.c:1130: `MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH`),
+/// `MF_JUSTHIT` (p_mobj.h:133, 64), `MF_JUSTATTACKED` (135, 128) and `MF_CORPSE`
+/// (173, 0x100000) share no bit, so OR and XOR of them agree. The expected bit
+/// values are the header's, written out.
+#[test]
+fn the_allowed_flag_terms_are_disjoint() {
+    let player = OriginalActorType::MT_PLAYER.descriptor().flags;
+    assert_eq!(player, 0x2 | 0x4 | 0x400 | 0x800 | 0x200_0000);
+    let terms = [
+        player,
+        crate::original_player::MF_JUSTHIT,
+        MF_JUSTATTACKED,
+        crate::original_player::MF_CORPSE,
+    ];
+    assert_eq!(terms[1..], [0x40, 0x80, 0x10_0000]);
+    for (i, a) in terms.iter().enumerate() {
+        for b in &terms[i + 1..] {
+            assert_eq!(a & b, 0);
+        }
+    }
+    assert_eq!(
+        terms.iter().fold(0, |m, t| m | t),
+        terms.iter().fold(0, |m, t| m ^ t)
+    );
+}

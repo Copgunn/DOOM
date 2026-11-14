@@ -175,6 +175,9 @@ impl Episode1Bounds {
     fn from_things_with(things: impl IntoIterator<Item = (i16, u16)>, bit: u16) -> Self {
         let mut b = Self::default();
         for (kind, options) in things {
+            // The first two clauses only skip early: kinds 1–4 and 11 are in no
+            // counted category below (`tests::starts_are_in_no_counted_category`), so
+            // the filter counts the same without them (p_mobj.c:718–737).
             if (1..=4).contains(&kind) || kind == 11 || options & 16 != 0 || options & bit == 0 {
                 continue;
             }
@@ -357,4 +360,32 @@ pub(crate) fn validate_powers(p: &crate::PlayerPowers) -> Result<(), crate::SimE
         return Err(crate::PlayerBodyError::Invariant.into());
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Pins why the first two clauses of the single-player filter in
+    /// `from_things_with` (`(1..=4).contains(&kind) || kind == 11`) never change a
+    /// count: the deathmatch start 11 and the player starts 1–4 are
+    /// `P_SpawnMapThing`'s own early-return cases (p_mobj.c:718–737), not spawned
+    /// things, and they are in no category the loop counts after the filter, so
+    /// skipping them early and falling through to the empty `else` count the same.
+    /// This is also the equivalence proof of the mutant `||` → `&&` at that filter
+    /// (Mutants run 43543402068).
+    #[test]
+    fn starts_are_in_no_counted_category() {
+        for kind in [1_i16, 2, 3, 4, 11] {
+            assert!(!EPISODE1_MONSTERS.contains(&kind), "{kind}");
+            assert!(!EPISODE1_PICKUPS.contains(&kind), "{kind}");
+            assert_ne!(kind, EPISODE1_BARREL);
+            assert!(!is_static(kind), "{kind}");
+            // Hence a lump of nothing but starts counts as an empty map.
+            assert_eq!(
+                Episode1Bounds::from_things_with([(kind, 7)], 2),
+                Episode1Bounds::default()
+            );
+        }
+    }
 }
