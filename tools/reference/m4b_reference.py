@@ -409,11 +409,27 @@ def facts_btunnel(d):
     return dict(fireballs=out, player_hit_tics=hits)
 
 
+def facts_telez(d):
+    """The Demon's teleport tic (first dump with it on the landing); its x, z, floorz and the box's
+    highest floor on the dump before (z below floorz is the straddling spawn: floorz is the centre
+    sector's, p_mobj.c:517-525, but P_TryMove's tmfloorz is the box's); and each MT_TFOG spawned in the
+    teleport tic with its x, y and z: fog 1 at the moved x, y with the pre-move z (EV_Teleport's oldz,
+    p_telept.c:100-111, runs inside P_TryMove before P_Move sets z, p_enemy.c:327-328), fog 2 beside the
+    landing at the landing floor."""
+    tic = first(d, lambda u: any(m['x'] == 1152 * U for m in mobjs(d, u, 'MT_SERGEANT')))
+    if tic is None: return dict(teleport_tic=None)
+    before = mobjs(d, tic - 1, 'MT_SERGEANT')[0]
+    fogs = [f for f in mobjs(d, tic, 'MT_TFOG') if f['state'] == ST('S_TFOG')]
+    return dict(teleport_tic=tic, demon_before=dict(x=units(before['x']), z=units(before['z']), floorz=units(before['floorz'])),
+                demon_after=[dict(x=units(m['x']), z=units(m['z']), floorz=units(m['floorz'])) for m in mobjs(d, tic, 'MT_SERGEANT')],
+                fogs=[dict(x=units(f['x']), y=units(f['y']), z=units(f['z']), tics=f['tics']) for f in fogs])
+
+
 FACTS = {'TELE1': facts_tele1, 'TELE2': facts_tele2, 'TSPLIT': facts_move, 'TSLIDE': facts_move, 'TFRAG1': facts_tfrag,
          'MTELE1': facts_mtele, 'SLIDEB': facts_slideb, 'SLIDEC': facts_slidec, 'BARON1': facts_baron1, 'BINF1': facts_binf1,
          'BVB1': facts_bvb1, 'BOSS1': facts_boss, 'BOSS2': facts_boss, 'BOSSM1': facts_boss, 'SPECH8': facts_spech,
          'SPECH9': facts_spech, 'SKILL2': facts_skill, 'SKILL3': facts_skill, 'TELE2X': facts_tele2x, 'SAWBITE': facts_sawbite,
-         'BTUNNEL': facts_btunnel}
+         'BTUNNEL': facts_btunnel, 'TELEZ': facts_telez}
 
 
 # ---------------------------------------------------------------- runs ------------------------

@@ -28,7 +28,9 @@ them this file checks, from the parsed map and the genuine linuxdoom-1.10/info.c
 - E1M8: the slot named by the manifest, a tag-666 sector and two Barons (A_BossDeath,
   p_enemy.c:1629-1635, 1729-1734);
 - BTUNNEL (M4b step 9): the Baron fireball's tunnel through an inner one-sided wall, re-derived
-  from the parsed map and the genuine tables (see `tunnel`).
+  from the parsed map and the genuine tables (see `tunnel`);
+- TELEZ (M4b step 14): the Demon's first step crosses the 97 line while its box reaches a floor 24
+  above its spawn z, and the line's back sector floor is not above that z (see `straddle`).
 """
 import json, re, sys
 from pathlib import Path
@@ -65,7 +67,10 @@ EXPECT = {
     'SAWBITE': dict(pick={}, box=0),
     # M4b step 9: the fireball tunnel; the Baron x positions the cage allows (see `tunnel`).
     'BTUNNEL': dict(pick={}, box=0, tunnel=(24, 32, 40)),
+    # M4b step 14 (review finding F1): the first fog's z after a step-up teleport (see `straddle`).
+    'TELEZ': dict(pick={1: (2, 2)}, box=1, straddle=24),
 }
+DEMON = 3002
 
 FRACUNIT, MAXMOVE = 65536, 30 * 65536      # m_fixed.h; p_local.h:54
 SRC = ROOT / 'linuxdoom-1.10'
@@ -214,6 +219,55 @@ def tunnel(m, th, expect):
     return report
 
 
+def straddle(m, th, rise):
+    """The TELEZ design, from the parsed map only. One Demon, its centre in sector F; one 97 line, vertical,
+    front F (side 0: EV_Teleport acts, p_telept.c:68-71), back sector M, east of the Demon's centre and
+    inside its box (radius from info.c), its y span covering the centre; the player start east of the
+    Demon by more than 10 units with |dy| <= 10, so the Demon's first P_Move is DI_EAST (P_NewChaseDir,
+    p_enemy.c); the Demon's speed (info.c) takes its centre into M in that step. For the box after that
+    step, P_TryMove's tmfloorz (the highest floor over the centre sector and both sides of every
+    two-sided line the box straddles, PIT_CheckLine, p_map.c:191-262; axis-aligned lines) is exactly
+    `rise` (1..24, the step-up test p_map.c:477-479) above F's floor, the Demon's spawn z (P_SpawnMobj,
+    p_mobj.c:517-525), and the lowest floor is within 24 of it (p_map.c:481-483); the box meets no
+    one-sided line; M's floor is at or below F's, so fog 1 (spawned at the pre-move z in M) is not lifted
+    by its own P_ZMovement (p_mobj.c:284-311): the fog's z tells the pre-move z from tmfloorz."""
+    dspeed, dradius = info_row('MT_SERGEANT')
+    demons = [t for t in th if t[3] == DEMON]
+    start = next(t for t in th if t[3] == PLAYER1)
+    need(len(demons) == 1, 'one Demon')
+    dx, dy = demons[0][0], demons[0][1]
+    r, step = dradius // FRACUNIT, dspeed          # a monster's speed is in units: P_Move multiplies it by xspeed (FRACUNIT), p_enemy.c:290-291
+    tele = [L for L in m.lines if L['special'] == 97]
+    need(len(tele) == 1, 'one 97 line')
+    L = tele[0]
+    (x0, y0), (x1, y1) = m.verts[L['a']], m.verts[L['b']]
+    need(x0 == x1, 'the 97 line is vertical')
+    f = locate(m, dx, dy)
+    mid = locate(m, dx + step, dy)
+    need(L['front'] == f and L['back'] == mid, 'the step does not go from the 97 line front sector to its back sector')
+    need(dx < x0 < dx + r and dx + step > x0 and min(y0, y1) < dy < max(y0, y1), 'the Demon box does not straddle the line, or one step does not cross it')
+    need(start[0] - dx > 10 and abs(start[1] - dy) <= 10, 'the player is not due east')
+    nx = dx + step
+    one = [(m.verts[K['a']], m.verts[K['b']]) for K in m.lines if K['s1'] == -1]
+    need(not any(C.box_meets(p, q, nx, dy, r) for p, q in one), 'the step meets a one-sided wall')
+    floors = [m.secs[mid]['floor']]
+    for K in m.lines:
+        if K['s1'] == -1: continue
+        (a0, b0), (a1, b1) = m.verts[K['a']], m.verts[K['b']]
+        need(a0 == a1 or b0 == b1, 'two-sided line not axis-aligned')
+        lo_x, hi_x, lo_y, hi_y = min(a0, a1), max(a0, a1), min(b0, b1), max(b0, b1)
+        if nx + r <= lo_x or nx - r >= hi_x or dy + r <= lo_y or dy - r >= hi_y: continue      # bbox, p_map.c:191-195
+        if (a0 == a1 and nx - r < a0 < nx + r) or (b0 == b1 and dy - r < b0 < dy + r):         # P_BoxOnLineSide == -1
+            floors += [m.secs[K['front']]['floor'], m.secs[K['back']]['floor']]
+    z = m.secs[f]['floor']
+    need(1 <= rise <= 24 and max(floors) - z == rise, 'tmfloorz - z is %d, expected %d' % (max(floors) - z, rise))
+    need(max(floors) - min(floors) <= 24, 'a dropoff')
+    need(m.secs[mid]['floor'] <= z, 'the fog sector floor is above the pre-move z')
+    need(min(m.secs[s]['ceil'] for s in (f, mid)) - max(floors) >= 56, 'no headroom')
+    return ['Demon at x %d (box %d..%d) z %d, 97 line x %d (sector %d to %d), one step to x %d: tmfloorz %d, fog sector floor %d'
+            % (dx, dx - r, dx + r, z, x0, f, mid, nx, max(floors), m.secs[mid]['floor'])]
+
+
 def spawned(things, skill):
     bit = 1 if skill <= 1 else 4 if skill >= 3 else 1 << (skill - 1)
     return [t for t in things if t[3] == PLAYER1 or (not t[4] & 16 and t[4] & bit)]
@@ -316,6 +370,8 @@ def check(path, name, slot, expect_things):
     need(bm == exp['box'], 'special-line box maximum %d, expected %d' % (bm, exp['box']))
     if exp.get('tunnel'):
         report += tunnel(m, th, exp['tunnel'])
+    if exp.get('straddle'):
+        report += straddle(m, th, exp['straddle'])
     if exp.get('boss'):
         need(any(s['tag'] == 666 for s in m.secs), 'no tag-666 sector')
         need(sum(t[3] == BARON for t in spawned(th, 2)) == 2, 'two Barons')

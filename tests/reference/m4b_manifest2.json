@@ -145,6 +145,56 @@
      ]
     }
    ]
+  },
+  {
+   "name": "TELEZ",
+   "file": "tests/reference/m4b_wads/telez.wad",
+   "slot": "E1M1",
+   "episode": 1,
+   "map": 1,
+   "sha256": "6fbdaf62e910dc4d45c22dec8c80cb33998c27139962d76973d174e032db93a6",
+   "bytes": 46913,
+   "sectors": 4,
+   "lines": 14,
+   "things": {
+    "2": {
+     "1": 1,
+     "14": 1,
+     "3002": 1
+    },
+    "3": {
+     "1": 1,
+     "14": 1,
+     "3002": 1
+    }
+   },
+   "scripts": [
+    {
+     "lump": "TELEZ",
+     "source": "tests/reference/m4b_scripts/telez.txt",
+     "lmp": "tests/reference/m4b_scripts/TELEZ.lmp",
+     "c_end": "marker",
+     "end_tic": 80,
+     "rust": "tbd",
+     "must_show": [
+      {
+       "what": "the Demon teleports: it stands on the landing",
+       "event": "first M type=MT_SERGEANT x=1152u",
+       "tic": 10
+      },
+      {
+       "what": "the first teleport fog, at the pre-move z of the Demon (0, below the 24-unit step it moved onto)",
+       "event": "first M type=MT_TFOG x<=64u z=0u",
+       "tic": 10
+      },
+      {
+       "what": "no teleport fog at the source above z = 0 (Rust before the fix put it at the step floor, 24)",
+       "event": "first M type=MT_TFOG x<=64u z>=1u",
+       "tic": null
+      }
+     ]
+    }
+   ]
   }
  ]
 }

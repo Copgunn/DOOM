@@ -378,6 +378,33 @@ def btunnel():
     return p
 
 
+def telez():
+    """A monster teleport whose first fog keeps the monster's pre-move z (M4b step 14, review finding F1).
+    P_Move calls P_TryMove (p_enemy.c:293), whose crossing loop runs EV_Teleport (p_map.c:500-514) after
+    x, y and floorz are set (p_map.c:490-495) but before P_Move sets z = floorz (p_enemy.c:327-328);
+    EV_Teleport spawns fog 1 at oldz = thing->z (p_telept.c:100-102, 111). The fog is appended to the
+    thinker list (P_AddThinker, p_tick.c:65-71) and runs P_ZMovement in the same tic, which lifts it to
+    its own centre sector's floor if it is below (p_mobj.c:428-436, 284-311), so oldz shows only when
+    that floor is at or below oldz and the box's highest floor (tmfloorz) is above it. The Demon spawns
+    at its centre sector's floor (P_SpawnMobj, p_mobj.c:517-525) in LOW (floor 0), 8 units west of a 97
+    line to MID (floor 0); HIGH (floor 24) lies north of MID and LOW from y = 16, inside the Demon's box
+    (radius 30, info.c) before and after the step. z stays 0 until the Demon first moves (P_MobjThinker
+    runs P_ZMovement only if z != floorz, p_mobj.c:428-436, and floorz is the centre sector's). The step
+    up of exactly 24 passes P_TryMove (p_map.c:473-483). The player stands due east in MID, so the
+    Demon's first P_Move (DI_EAST either way in P_NewChaseDir) crosses the 97 line from its front side
+    and teleports; fog 1 stands at (2, 0) in MID at z 0 (the C order) and not at the box's floor 24."""
+    p = Plan('telez')
+    low = p.sector('LOW', [(-256, -128, 0, 16)])
+    mid = p.sector('MID', [(0, -128, 512, 16)])
+    p.sector('HIGH', [(-256, 16, 512, 128)], floor=24)
+    p.sector('DEST', [(1024, -128, 1280, 128)], tag=1)
+    p.special(low, mid, (0, 0), TELEPORT, 1)                   # front LOW: the east-bound Demon teleports
+    p.thing(448, -8, WEST, PLAYER1)
+    p.thing(-8, 0, EAST, DEMON)
+    p.thing(1152, 0, EAST, TELEPORTMAN)
+    return p
+
+
 MAPS = {'tele': (tele, 'E1M1'), 'telemove': (telemove, 'E1M1'), 'tfrag': (tfrag, 'E1M1'), 'montele': (montele, 'E1M1'),
         'slideb': (slideb, 'E1M1'), 'slidec': (slidec, 'E1M1'), 'baron': (baron, 'E1M1'), 'infight': (infight, 'E1M1'), 'bvb': (bvb, 'E1M1'),
         'boss8': (boss8, 'E1M8'), 'bossm1': (boss8, 'E1M1'), 'spech8': (spech(8), 'E1M1'), 'spech9': (spech(9), 'E1M1'),
@@ -385,7 +412,7 @@ MAPS = {'tele': (tele, 'E1M1'), 'telemove': (telemove, 'E1M1'), 'tfrag': (tfrag,
 # The second M4b set (owner request, 2026-11-10): new WADs listed in tests/reference/m4b_manifest2.json, so
 # that tests/reference/m4b_manifest.json and every file of the first set stay byte-identical.
 MAPS2 = {'tele2x': (tele2x, 'E1M1'), 'sawbite': (sawbite, 'E1M1'),
-         'btunnel': (btunnel, 'E1M1')}
+         'btunnel': (btunnel, 'E1M1'), 'telez': (telez, 'E1M1')}
 MANIFEST2 = ROOT / 'tests/reference/m4b_manifest2.json'
 SETS = [(MAPS, MANIFEST), (MAPS2, MANIFEST2)]
 ALL_MAPS = {**MAPS, **MAPS2}

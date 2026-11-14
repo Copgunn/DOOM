@@ -7,7 +7,7 @@
 m4b_synthetic_results2.json; writes m4b_synthetic_goldens2.json and m4b2_episode1v2_*.bin;
 added in M4b step 5 so that the first set's files stay byte-identical; the self-test
 perturbs the first set's TELE1 and BARON1 dumps and so needs the first set; M4b step 7 added SAWBITE,
-step 9 BTUNNEL).
+step 9 BTUNNEL, step 14 TELEZ).
 
 Manifest-driven (tests/reference/m4b_manifest.json, schema DOOM-M4B-MANIFEST-v1): every
 script of every WAD is projected by the independent DSIM40 encoder (level_snapshot_m4b.py:
@@ -153,6 +153,9 @@ FIXTURES = [
     ('BTUNNEL', ('event', 'a flying Baron fireball wholly north of the 1-unit slab (y - 6 >= 369): it stepped past the inner one-sided wall'), 1,
      'a Baron fireball one step past the inner one-sided slab: MF_MISSILE kept, its box wholly north of y = 369',
      lambda d: any(r['flags'] & 0x10000 and r['y'] - 6 * 65536 >= 369 * 65536 for r in mobjs(d, 'MT_BRUISERSHOT'))),
+    ('TELEZ', ('event', 'the first teleport fog, at the pre-move z of the Demon (0, below the 24-unit step it moved onto)'), 1,
+     'a monster teleport whose box reached a floor 24 up: fog 1 at the moved x, y with the pre-move z 0',
+     lambda d: len(mobjs(d, 'MT_TFOG')) == 2 and any(r['x'] == 2 * 65536 and r['z'] == 0 for r in mobjs(d, 'MT_TFOG'))),
     ('SPECH9', ('last',), 0,
      'the last good tic before the ninth spechit entry (Rust refuses the next tic)',
      lambda d: True),
