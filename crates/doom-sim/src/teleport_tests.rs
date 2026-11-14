@@ -552,6 +552,46 @@ fn two_teleports_in_one_tic() {
     assert_eq!(b.momentum(), [Fixed::ZERO; 2]);
 }
 
+/// TELEZ (M4b step 14, review finding F1): a monster's fog 1 has its pre-move z.
+/// `P_Move` calls `P_TryMove` (p_enemy.c:293), whose crossing loop runs
+/// `EV_Teleport` (p_map.c:500–514) before `P_Move` sets `z = floorz`
+/// (p_enemy.c:327–328), and `EV_Teleport` spawns fog 1 at `oldz = thing->z`
+/// (p_telept.c:100–111). The Demon spawned at its centre sector's floor 0
+/// (p_mobj.c:517–525) while its box reaches HIGH's floor 24, so its first step's
+/// `tmfloorz` is 24 and its z is still 0 when it teleports; fog 1 lands in MID
+/// (floor 0) and its own `P_ZMovement` leaves it there (p_mobj.c:284–311).
+/// C-observed (tests/reference/m4b_synthetic_results2.json, TELEZ facts): the
+/// teleport in dump tic 10 (DSIM tic 11), the Demon before it at x −8, z 0,
+/// floorz 0; fog 1 at (2, 0, 0); the Demon on the landing at z 0. Before the
+/// fix the move set z to 24 ahead of the crossing and fog 1 stood at 24.
+#[test]
+fn a_monster_fog_keeps_the_pre_move_z() {
+    let commands = demo("TELEZ");
+    let mut s = setup(&wad("telez"));
+    run_to(&mut s, &commands, 10);
+    let [(demon, before)] = of_type(&s, OriginalActorType::MT_SERGEANT)[..] else {
+        panic!("one Demon");
+    };
+    assert_eq!(before.position().map(Fixed::bits), [-8 << 16, 0]);
+    assert_eq!((before.z, before.floor), (Fixed::ZERO, Fixed::ZERO));
+    step(&mut s, commands[10]).unwrap();
+    let events = teleport_events(&s);
+    let [MoverEvent::Teleported { actor, old, .. }] = events[..] else {
+        panic!("{events:?}");
+    };
+    assert_eq!(actor, demon);
+    assert_eq!(old.map(Fixed::bits), [2 << 16, 0, 0]);
+    let fogs: Vec<_> = of_type(&s, OriginalActorType::MT_TFOG)
+        .into_iter()
+        .map(|(_, f)| (f.position().map(Fixed::bits), f.z.bits()))
+        .collect();
+    assert_eq!(fogs.len(), 2);
+    assert!(fogs.contains(&([2 << 16, 0], 0)), "{fogs:?}");
+    let after = *s.actor(demon).unwrap();
+    assert_eq!(after.position().map(Fixed::bits), [1152 << 16, 0]);
+    assert_eq!((after.z, after.floor), (Fixed::ZERO, Fixed::ZERO));
+}
+
 // --- Mutation-survivor tests (M4b step 11, Mutants run 43543402068) -----------
 //
 // Every expectation below comes from a citation already in the code comments or the

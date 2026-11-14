@@ -47,6 +47,12 @@
 //! 161–162 and 170). Wire 24 admits it, as the genuine engine does: the fireball
 //! stays inside the vertex rectangle. Its fixture is the capture one step past the
 //! wall (DSIM tic 163).
+//!
+//! TELEZ, of the second set (step 14, review finding F1), has a Demon whose spawn
+//! box reaches a floor 24 above its z cross a 97 line on its first step: `P_Move`
+//! sets `z = floorz` only after `P_TryMove`'s crossing loop (p_enemy.c:293,
+//! 327–328; p_map.c:500–514), so `EV_Teleport` spawns fog 1 at the pre-move z 0
+//! (p_telept.c:100–111). Its fixture is the capture of the teleport (DSIM tic 11).
 use doom_sim::{demo::parse_demo_episode1_v2, *};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -233,7 +239,8 @@ fn goldens_file(name: &str) -> Json {
     .value()
 }
 /// The goldens holding `script`: the first M4b set's, or the second set's
-/// (`m4b_synthetic_goldens2.json`, M4b step 5: TELE2X; step 7: SAWBITE; step 9: BTUNNEL).
+/// (`m4b_synthetic_goldens2.json`, M4b step 5: TELE2X; step 7: SAWBITE; step 9: BTUNNEL;
+/// step 14: TELEZ).
 fn goldens(script: &str) -> Json {
     let first = goldens_file("m4b_synthetic_goldens.json");
     match first.get("scripts") {
@@ -567,4 +574,8 @@ fn sawbite() {
 #[test]
 fn btunnel() {
     run("BTUNNEL");
+}
+#[test]
+fn telez() {
+    run("TELEZ");
 }
