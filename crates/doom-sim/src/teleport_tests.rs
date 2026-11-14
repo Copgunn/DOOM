@@ -551,3 +551,217 @@ fn two_teleports_in_one_tic() {
     assert_eq!(b.life.unwrap().reaction_time, 18);
     assert_eq!(b.momentum(), [Fixed::ZERO; 2]);
 }
+
+// --- Mutation-survivor tests (M4b step 11, Mutants run 43543402068) -----------
+//
+// Every expectation below comes from a citation already in the code comments or the
+// M4b note (§2 T3, T8) or from the written contract of the function under test;
+// none comes from Rust output. Tests that call below the public API name the guard
+// and why a whole-tic run cannot reach it.
+
+type Host<'a, 'b> = crate::lifecycle::LifeHost<'a, &'b mut crate::ThinkerStore<crate::Actor>>;
+
+/// `tfrag` after its load, with an extra barrel (doomednum 2035, all skills) at an
+/// open spot of the first room, as a victim for the plans below.
+fn tfrag_with_barrel() -> Simulation {
+    let mut l = wad("tfrag");
+    let mut record = Vec::new();
+    for v in [-300_i16, 60, 0, 2035, 7] {
+        record.extend(v.to_le_bytes());
+    }
+    things(&mut l).extend(record);
+    setup(&l)
+}
+fn id_of(s: &Simulation, ty: OriginalActorType) -> ActorId {
+    of_type(s, ty)[0].0
+}
+fn request(
+    target: ActorId,
+    inflictor: Option<ActorId>,
+    source: Option<ActorId>,
+    amount: i32,
+) -> DamageRequest {
+    DamageRequest {
+        target,
+        inflictor,
+        source,
+        amount,
+    }
+}
+/// `DamagePlan::telefrag` of `request` on a copy of `s` after `prepare` changed the
+/// copy's staged host. Only the decision is returned.
+fn telefrag_decision(
+    s: &Simulation,
+    prepare: impl FnOnce(&mut Host<'_, '_>),
+    request: DamageRequest,
+) -> Result<(), SimError> {
+    let mut t = s.clone();
+    t.checked_demon_operation(|host| {
+        prepare(host);
+        crate::combat::DamagePlan::telefrag(host, request).map(|_| ())
+    })
+    .unwrap()
+}
+fn ready_chainsaw(host: &mut Host<'_, '_>) {
+    if let Some(crate::player_weapons::PlayerWeaponRuntime::Pack(w)) =
+        host.player.as_deref_mut().and_then(|p| p.weapon.as_mut())
+    {
+        w.ready = crate::Weapon::Chainsaw;
+    }
+}
+
+/// Pins the six-way request guard of `DamagePlan::telefrag` (combat.rs, the first
+/// `if`): the stomp's damage is exactly 10,000 (p_map.c:105), its inflictor and
+/// source are the same present actor (`tmthing` twice) and that actor is the player
+/// body (p_map.c:102, `tmthing->player`), which is never the victim (T3.9). Each
+/// case breaks exactly one clause of an otherwise accepted request (the first is
+/// the accepted request itself) and expects `CombatError::Damage`. Below the public
+/// API because the public stomp only ever builds sound requests; a refusal here is
+/// the defence in depth of decision I3 ("every other damage keeps the 1,000 bound").
+#[test]
+fn telefrag_plan_refuses_each_unsound_request() {
+    let s = setup(&wad("tfrag"));
+    let mo = s.original_player.unwrap().mo.unwrap();
+    let zombie = id_of(&s, OriginalActorType::MT_POSSESSED);
+    let baron = id_of(&s, OriginalActorType::MT_BRUISER);
+    let landing = id_of(&s, OriginalActorType::MT_TELEPORTMAN);
+    let refused = Err(crate::CombatError::Damage.into());
+    let sound = request(zombie, Some(mo), Some(mo), TELEFRAG_DAMAGE);
+    assert_eq!(telefrag_decision(&s, |_| {}, sound), Ok(()));
+    // Amount 9,999: the thrust is skipped (chainsaw ready, p_inter.c:806–811) so
+    // the later `telefrag_thrust` check cannot supply the same refusal.
+    assert_eq!(
+        telefrag_decision(
+            &s,
+            ready_chainsaw,
+            request(zombie, Some(mo), Some(mo), TELEFRAG_DAMAGE - 1)
+        ),
+        refused
+    );
+    // No inflictor and no source, with the player having no body: only the
+    // `inflictor.is_none()` clause holds.
+    assert_eq!(
+        telefrag_decision(
+            &s,
+            |host| host.player.as_deref_mut().unwrap().mo = None,
+            request(zombie, None, None, TELEFRAG_DAMAGE)
+        ),
+        refused
+    );
+    // Inflictor and source differ, the source being the player body.
+    assert_eq!(
+        telefrag_decision(
+            &s,
+            |_| {},
+            request(zombie, Some(baron), Some(mo), TELEFRAG_DAMAGE)
+        ),
+        refused
+    );
+    // Inflictor and source are the same actor but not the player body.
+    assert_eq!(
+        telefrag_decision(
+            &s,
+            |_| {},
+            request(zombie, Some(baron), Some(baron), TELEFRAG_DAMAGE)
+        ),
+        refused
+    );
+    // The victim is the player body itself.
+    assert_eq!(
+        telefrag_decision(&s, |_| {}, request(mo, Some(mo), Some(mo), TELEFRAG_DAMAGE)),
+        refused
+    );
+    // A victim that is neither a monster nor a barrel (the landing is shootable by
+    // neither): `MonsterError::Target`, not a plan.
+    assert_eq!(
+        telefrag_decision(
+            &s,
+            |_| {},
+            request(landing, Some(mo), Some(mo), TELEFRAG_DAMAGE)
+        ),
+        Err(crate::MonsterError::Target.into())
+    );
+}
+
+/// Pins the victim classes of `DamagePlan::telefrag`: a barrel is a legal victim
+/// (`PIT_StompThing` stomps any `MF_SHOOTABLE` thing, p_map.c:85–86, and a barrel
+/// is one, T3.4) and, not being `MF_COUNTKILL` (info.c, MT_BARREL flags), earns no
+/// kill credit (p_inter.c:683–691), whereas a zombieman earns one.
+#[test]
+fn telefrag_credits_a_kill_only_for_a_counted_monster() {
+    let s = tfrag_with_barrel();
+    let mo = s.original_player.unwrap().mo.unwrap();
+    let kills = |ty: OriginalActorType| {
+        let target = id_of(&s, ty);
+        let mut t = s.clone();
+        t.checked_demon_operation(|host| {
+            let before = host.statistics.as_deref().unwrap().single_player_kill_count;
+            let plan = crate::combat::DamagePlan::telefrag(
+                host,
+                request(target, Some(mo), Some(mo), TELEFRAG_DAMAGE),
+            )
+            .unwrap();
+            host.apply_damage(plan);
+            host.statistics.as_deref().unwrap().single_player_kill_count - before
+        })
+        .unwrap()
+    };
+    assert_eq!(kills(OriginalActorType::MT_BARREL), 0);
+    assert_eq!(kills(OriginalActorType::MT_POSSESSED), 1);
+    assert_eq!(kills(OriginalActorType::MT_BRUISER), 1);
+}
+
+/// Pins the thrust preflight of `DamagePlan::telefrag` (its `if life.health > 0 &&
+/// life.flags & MF_SHOOTABLE != 0 && thrust`): `P_DamageMobj` returns before the
+/// thrust block for a victim that is not shootable (p_inter.c:787–788) or has
+/// `health <= 0` (790–791), and the block is skipped with the chainsaw ready
+/// (806–811). The preflight is the Rust-only refusal of a knockback whose momentum
+/// would leave the admitted travel bound, so a victim whose momentum already
+/// exceeds every bound is refused exactly when the thrust block runs: live and
+/// shootable, saw not ready. Below the public API because no admitted capture holds
+/// a monster with such a momentum; the plan's preflight is the guard.
+#[test]
+fn telefrag_thrust_preflight_runs_only_where_the_thrust_runs() {
+    let s = setup(&wad("tfrag"));
+    let mo = s.original_player.unwrap().mo.unwrap();
+    let zombie = id_of(&s, OriginalActorType::MT_POSSESSED);
+    let stomp = request(zombie, Some(mo), Some(mo), TELEFRAG_DAMAGE);
+    let overweight = |host: &mut Host<'_, '_>, health: Option<i32>, shootable: bool| {
+        let a = host.access.get_mut(zombie).unwrap();
+        a.spec.momentum = [Fixed::from_bits(i32::MIN); 2];
+        let l = a.life.as_mut().unwrap();
+        if let Some(health) = health {
+            l.health = health;
+        }
+        if !shootable {
+            l.flags &= !MF_SHOOTABLE;
+        }
+    };
+    // Live, shootable, no saw: the preflight runs and refuses the momentum.
+    assert!(telefrag_decision(&s, |h| overweight(h, None, true), stomp).is_err());
+    // Health exactly 0, below 0, and not shootable: `P_DamageMobj` ignores the hit
+    // before any thrust, so the plan is accepted (as an ignored plan).
+    for health in [0, -1] {
+        assert_eq!(
+            telefrag_decision(&s, |h| overweight(h, Some(health), true), stomp),
+            Ok(()),
+            "health {health}"
+        );
+    }
+    assert_eq!(
+        telefrag_decision(&s, |h| overweight(h, None, false), stomp),
+        Ok(())
+    );
+    // Chainsaw ready: no thrust block, no preflight.
+    assert_eq!(
+        telefrag_decision(
+            &s,
+            |h| {
+                overweight(h, None, true);
+                ready_chainsaw(h);
+            },
+            stomp
+        ),
+        Ok(())
+    );
+}
