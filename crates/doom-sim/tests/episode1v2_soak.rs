@@ -9,8 +9,10 @@
 //! - every tic is admitted or refused only by a declared wire-24 witness (the
 //!   mover family, checked arithmetic, the store-full, work-limit and invariant
 //!   witnesses, the exit and reborn tics: M4B_REFERENCE_INVESTIGATION.md §5
-//!   decisions I3, I7 and I9 and the M4a witnesses wire 24 inherits); anything
-//!   else fails the test;
+//!   decisions I3, I7 and I9 and the M4a witnesses wire 24 inherits), or by the
+//!   position check refusing a Baron fireball that tunnelled out of the vertex
+//!   rectangle in the tic before, recognised by [`bruiser_tunnel`] and nothing
+//!   else; anything else fails the test;
 //! - a refused tic keeps the complete canonical state, the RNG and the tic, and
 //!   refuses again on a retry (AGENTS.md: recoverable errors preserve state);
 //! - after the level's exit tic every later tic is `LevelExited`, as in M4a;
@@ -21,6 +23,7 @@
 //!   the same per-tic results, the same digests at the round-trip points and the
 //!   same final snapshot.
 use doom_sim::{demo::parse_demo_episode1_v2, *};
+use doom_types::Fixed;
 
 const ROUND_TRIP: usize = 100;
 /// Random commands appended after a script.
@@ -90,12 +93,72 @@ impl Stream {
     }
 }
 
-fn load(name: &str, map: u8, skill: Skill) -> Simulation {
+/// The closed vertex rectangle (minimum and maximum x and y over all VERTEXES, in
+/// fixed point): the room every actor centre is checked against under wire 24.
+type Room = [[i32; 2]; 2];
+
+fn room_of(m: &doom_map::Map) -> Room {
+    let v = m.vertices();
+    let fixed = |f: fn(&doom_map::Vertex) -> i16| -> [i32; 2] {
+        let (lo, hi) = (v.iter().map(f).min(), v.iter().map(f).max());
+        [lo.unwrap(), hi.unwrap()].map(|u| Fixed::from_map_units(u).bits())
+    };
+    let (x, y) = (fixed(|v| v.x), fixed(|v| v.y));
+    [[x[0], y[0]], [x[1], y[1]]]
+}
+
+/// The one declared case of `Monster(Arithmetic)`: the state the refused tic kept
+/// holds at least one actor centre outside the vertex rectangle, and every such
+/// actor is a Baron fireball (`MT_BRUISERSHOT`, speed 15, radius 6: info.c:1524–1548)
+/// that is still a flying missile (`MF_MISSILE`, cleared by `P_ExplodeMissile`,
+/// p_mobj.c:101), whose momentum is at most 15 per axis (one unsplit
+/// `P_XYMovement` step: p_mobj.c:150–164), whose centre one momentum step back lay
+/// inside the rectangle, and whose box now lies wholly beyond a rectangle edge.
+/// That is the genuine engine's wall tunnel: `PIT_CheckLine` ignores a line whose
+/// bbox the destination box does not strictly overlap (p_map.c:191–195), so a
+/// one-sided wall never blocks a step that carries the 12-unit box clean across it
+/// (`P_CheckPosition` tests only the destination, p_map.c:374–442); the fireball
+/// then keeps flying through the void (observed with the genuine engine on INFIGHT,
+/// M4b step 9: a fireball at x = -776.25 still flying at x = -6664 393 tics later).
+/// Rust admits the tunnelling tic, matching C, and the position check
+/// of the next tic's preflight refuses with the state kept.
+fn bruiser_tunnel(s: &Simulation, room: Room) -> bool {
+    let ball = ActorTypeId(identity::OriginalActorType::MT_BRUISERSHOT.ordinal());
+    let inside = |p: [i32; 2]| (0..2).all(|i| room[0][i] <= p[i] && p[i] <= room[1][i]);
+    let mut tunnels = 0;
+    for id in s.actor_order() {
+        let a = s.actor(id).unwrap();
+        let p = a.position().map(Fixed::bits);
+        if inside(p) {
+            continue;
+        }
+        let m = a.momentum().map(Fixed::bits);
+        let r = a.radius().bits();
+        let flying = a
+            .life()
+            .is_some_and(|l| l.actor_type == ball && l.flags & 0x1_0000 != 0);
+        let step = m.iter().all(|v| v.unsigned_abs() <= 15 << 16);
+        let before = [0, 1].map(|i| p[i].checked_sub(m[i]));
+        let came_from_inside = before[0].zip(before[1]).is_some_and(|b| inside([b.0, b.1]));
+        let clear = (0..2).any(|i| {
+            p[i].checked_add(r).is_some_and(|e| e <= room[0][i])
+                || p[i].checked_sub(r).is_some_and(|e| e >= room[1][i])
+        });
+        if !(flying && step && came_from_inside && clear) {
+            return false;
+        }
+        tunnels += 1;
+    }
+    tunnels > 0
+}
+
+fn load(name: &str, map: u8, skill: Skill) -> (Simulation, Room) {
     let bytes = reference(&format!("m4b_wads/{name}.wad"));
     let wad = doom_wad::Wad::parse(&bytes, doom_wad::Limits::default()).unwrap();
     let m = doom_map::Map::from_wad(&wad, "E1M1", doom_map::MapLimits::default())
         .or_else(|_| doom_map::Map::from_wad(&wad, "E1M8", doom_map::MapLimits::default()))
         .unwrap();
+    let room = room_of(&m);
     let mut s =
         Simulation::original_player_episode1_v2_map(m, map, skill, MapContextOptions::default())
             .unwrap_or_else(|e| panic!("{name}: {e:?}"));
@@ -103,15 +166,11 @@ fn load(name: &str, map: u8, skill: Skill) -> Simulation {
     s.initialize_player_weapons(PlayerSlot::One, WeaponInventory::default())
         .unwrap();
     s.spawn_level_specials().unwrap();
-    s
+    (s, room)
 }
 
-/// The declared refusals of an admitted tic. `Monster(Arithmetic)` is the checked
-/// position witness (decision H3) as reached by a Baron fireball: INFIGHT's soak
-/// refuses a `MT_BRUISERSHOT` whose spawn half step (`P_CheckMissileSpawn`, up to 7.5
-/// units, p_mobj.c:868-881) leaves the map's vertex rectangle (x = -775 against the
-/// wall at -768). The refusal keeps the state; it is reported as an observed
-/// witness, not documented in the M4b note.
+/// The declared refusals of an admitted tic, except the Baron fireball tunnel
+/// ([`bruiser_tunnel`]), which needs the kept state.
 fn witness(e: &SimError) -> bool {
     matches!(
         e,
@@ -128,7 +187,6 @@ fn witness(e: &SimError) -> bool {
                 | MapScaleError::Vertical
         ) | SimError::Store(StoreError::Capacity)
             | SimError::Perception(PerceptionError::WorkLimit)
-            | SimError::Monster(MonsterError::Arithmetic)
             | SimError::PlayerBody(PlayerBodyError::Invariant)
             | SimError::LevelExited
             | SimError::PlayerReborn
@@ -143,6 +201,7 @@ struct Totals {
     exits: usize,
     round_trips: usize,
     teleports: usize,
+    tunnels: usize,
 }
 
 type Trace = Vec<(Result<(), SimError>, Option<u64>)>;
@@ -150,6 +209,7 @@ type Trace = Vec<(Result<(), SimError>, Option<u64>)>;
 /// One run. With `checks` the per-tic and round-trip properties are asserted.
 fn run(
     s: &mut Simulation,
+    room: Room,
     commands: &[TicCommand],
     label: &str,
     checks: bool,
@@ -195,7 +255,13 @@ fn run(
             }
             Err(e) => {
                 if let Some(before) = before {
-                    assert!(witness(&e), "{label} tic {i}: {c:?} refused with {e:?}");
+                    let tunnel =
+                        e == SimError::Monster(MonsterError::Arithmetic) && bruiser_tunnel(s, room);
+                    assert!(
+                        witness(&e) || tunnel,
+                        "{label} tic {i}: {c:?} refused with {e:?}"
+                    );
+                    t.tunnels += usize::from(tunnel);
                     assert_eq!(
                         s.snapshot().canonical_bytes(),
                         before.0,
@@ -251,16 +317,16 @@ fn wire_24_soaks_over_the_m4b_wads_hold_the_safety_properties() {
                 let mut commands = demo.commands.clone();
                 // The tail is drawn without knowing whether the body is live: a dead
                 // body's BT_USE requests the reborn, which is the declared `PlayerReborn`.
-                let mut s = load(name, map, skill);
-                let mut again = load(name, map, skill);
+                let (mut s, room) = load(name, map, skill);
+                let (mut again, _) = load(name, map, skill);
                 t.runs += 1;
                 let mut tail = Vec::new();
                 for _ in 0..TAIL {
                     tail.push(stream.command(true));
                 }
                 commands.extend(tail);
-                let first = run(&mut s, &commands, &label, true, &mut t);
-                let second = run(&mut again, &commands, &label, false, &mut t);
+                let first = run(&mut s, room, &commands, &label, true, &mut t);
+                let second = run(&mut again, room, &commands, &label, false, &mut t);
                 assert_eq!(first, second, "{label}: determinism");
                 assert_eq!(s.snapshot(), again.snapshot(), "{label}: final state");
             }
