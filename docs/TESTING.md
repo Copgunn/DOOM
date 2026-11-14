@@ -1840,7 +1840,7 @@ python3 tools/reference/m4b_reference.py --work /mnt/d/scratch/m4b/ref --check -
 python3 tools/reference/m4b_snapshot_goldens.py --dumps /mnt/d/scratch/m4b/ref/runs --check [--selftest]
 python3 tools/reference/m4b_snapshot_goldens.py [--work DIR] --check   # runs m4b_reference.py itself, deletes the dumps afterwards
 
-# the second M4b set (step 5: TELE2X, two teleports in one tic; step 7: SAWBITE, a bite on an A_Saw-flagged body; step 9: BTUNNEL, a Baron fireball through an inner wall), the same tools with --set 2
+# the second M4b set (step 5: TELE2X, two teleports in one tic; step 7: SAWBITE, a bite on an A_Saw-flagged body; step 9: BTUNNEL, a Baron fireball through an inner wall; step 14: TELEZ, a walking monster's teleport fog z), the same tools with --set 2
 python3 tools/reference/m4b_reference.py --set 2 --work /mnt/d/scratch/m4b/ref2 --check --keep-dumps
 python3 tools/reference/m4b_snapshot_goldens.py --set 2 --dumps /mnt/d/scratch/m4b/ref2/runs --check
 python3 tools/reference/level_snapshot_m4b.py DUMP_DIR --wad WAD --demo LMP [--out DIR] [--compare39]

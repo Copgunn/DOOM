@@ -16,7 +16,8 @@ and the second synthetic set (two teleports in one tic). Phase 2 step 6 (2026-11
 [Rust replay: hard skill](#rust-replay-hard-skill). Phase 2 step 7 (2026-11-13): the real-map runs, `DEMO1`
 and the saw-bite fix, in [Real maps and DEMO1](#real-maps-and-demo1), with SAWBITE added to the second
 synthetic set. Phase 2 step 9 (2026-11-13 to 2026-11-14): the BTUNNEL scene and the fireball wall tunnel
-witness, in [The Baron fireball wall tunnel](#the-baron-fireball-wall-tunnel). Steps 11 to 13
+witness, in [The Baron fireball wall tunnel](#the-baron-fireball-wall-tunnel). Step 14 (2026-11-14): the
+[independent review](#independent-review-step-14) and the TELEZ scene. Steps 11 to 13
 (2026-11-13 to 2026-11-14): [mutation testing](#mutation-testing-step-11),
 [fuzzing](#fuzzing-step-12) and [matched performance](#matched-performance). Address-checked genuine-engine
 runs ran with `ASAN_OPTIONS=detect_leaks=0`, so LeakSanitizer was disabled, not passed; the step 12 fuzz
@@ -421,6 +422,23 @@ draws of that tic.
 
 **BTUNNEL (step 9).** The second set also holds a scene in which a Baron fireball tunnels through an inner
 wall; it is described in [The Baron fireball wall tunnel](#the-baron-fireball-wall-tunnel).
+
+**TELEZ (step 14, review finding F1).** The second set gained a scene, TELEZ (047b2e5), in which a
+walking Demon whose spawn box reaches a floor 24 units above its z crosses a 97 line on its first step. The
+genuine engine spawns the teleport fog 1 at the monster's pre-move z, 0, because `P_Move` sets z only after
+`P_TryMove`'s crossing loop; Rust set z first (source facts: finding 30 in
+[the investigation](../M4B_REFERENCE_INVESTIGATION.md#7-corrections-and-findings-from-phase-2)). The fog
+shows the difference only when its sector floor is at or below the old z while the box's highest floor is above
+it; a first scene without that condition showed z 24 in C too. Genuine strict, overflow and address variants were
+byte-identical (`ASAN_OPTIONS=detect_leaks=0`, leak detection disabled); the teleport is at dump tic 10 and fog 1
+stands at z 0. Before the fix (324efa8) `check_player_episode1v2.py --require` passed 51 of 52: TELEZ failed at
+tic 11, first differing field `actor.3.z` (C 0, Rust 0x1800 in the high word, 24 << 16). After it: 52 of 52
+scripts, 20,205 tics, 0 pending. The fix is ungated, since no older policy reads the crosser's z or flags inside
+the crossing loop, and all historical goldens pass. Tests ea3a592 (TELEZ in the mechanism goldens test and a unit
+test of the pre-move z) both fail on the old order. Fixture `m4b2_episode1v2_TELEZ_11.bin`. On the real maps the
+Rust side of all 61 runs was re-checked against the committed digests (61 of 61, 159,027 tics), and the genuine
+engine and Rust were re-run on the four E1M9 runs with monster teleports (M9FIGHT, M9FIGHT3, M9WALK, M9WALK3):
+all match, records unchanged. No real-map run reached the condition.
 
 **SAWBITE (step 7).** The second set gained a scene, SAWBITE (a Demon bite on a body that `A_Saw`
 flagged in the same tic), found by a real-map divergence; it is described in
@@ -906,6 +924,12 @@ instruction-level difference exists to attribute. The pattern (100 cold-process 
 microseconds each, large and reproducible gaps in two runs three hours apart) is consistent with a layout- or
 cold-start-dependent effect of the changed binaries (the examples are 3.38 and 3.49 MB, and 4.11 and 4.22 MB),
 **but that is a hypothesis**; no `perf` or `strace` exists on this host and no code experiment was made.
+The step 14 reviewer added a second hypothesis, **not established**: both trees' targets were on `/mnt/d` (a 9p
+drvfs mount), so executable pages are demand-faulted through 9p round trips, and which first-touch faults land
+inside a short timed region depends on code layout (binaries of 3.38 and 3.49 MB). That fits equal instruction
+counts, some groups running faster, and no effect on long runs; whole-process minor fault counts do not rule it
+out. A test: re-time with the binaries on ext4, or read `getrusage` around the timed region. Carried to the
+performance milestone.
 The whole-level runs and the long real-map advance timings, which spread any cold start over thousands of tics,
 show no corresponding slowdown. In M4a the matching groups moved 3 to 5% and extra validation instructions
 explained it; no such increase exists here. **This is carried to the step 14 review and to the
@@ -921,3 +945,24 @@ owner-proposed [performance milestone](../ROADMAP.md).**
   allocation instrumentation were not run.
 - Callgrind covers the run-1 set only; the 16 workloads that were above 3% only in run 2 were not run under it.
 - Worktrees and target directories were removed after the run, so the binaries need rebuilding for a re-run.
+
+## Independent review (step 14)
+
+One reviewer with no access to the authors' reasoning read the branch at `aafe328` against `linuxdoom-1.10/`,
+covering the slide momentum re-read, the `barrels.rs:362:19` proof, the timing anomaly, the new tests and the
+documents. Fix commits follow the order C evidence, fix, test.
+
+| ID | Finding | Outcome |
+| --- | --- | --- |
+| F1 | A walking monster's teleport fog 1 had Rust's post-move z, not the pre-move z (p_enemy.c:293, 319-328; p_telept.c:100-111) | **Fixed** (047b2e5 scene, 324efa8 fix, ea3a592 tests); see [TELEZ](#second-synthetic-set-two-teleports-in-one-tic) and finding 30 |
+| F2 | COMPATIBILITY and finding 29 cited `demon_map_spawn.rs:154-156` | Corrected to 155-157 |
+| F3 | COMPATIBILITY's inner-wall sentence generalised from one scene (BTUNNEL) | Reworded: while the ball stays inside the vertex rectangle Rust applies the same destination-box checks and BSP location, so it matches or another witness refuses; BTUNNEL is the observed instance |
+| F4 | The visit bound `n >= K + 2` of finding 27 also holds for a rocket under `episode1` | **Fixed** (6543a46, comment only); noted in finding 27 |
+| F5 | The short-workload slowdown has a further candidate cause | Recorded as an unestablished hypothesis in [matched performance](#matched-performance); carried to the performance milestone |
+| F6 | README: wrong "last three" wording and a duplicated "cannot do yet" bullet | Fixed |
+
+Verified sound by the reviewer: finding 17 (the slide momentum re-read) confirmed; the finding 27 proof sound;
+the tunnel statement "matches or refuses" accurate, with no diverging admitted case found; the mutation
+equivalence proofs sound and diagnostic 1548 plausible; the survivor tests sampled, none derived from Rust
+output; determinism clean. The reviewer's own release test run: 1,342 passed, 0 failed, 2 ignored. After the fixes, step 15 widened the fuzz seeder, the
+`player_episode1_v2` target and the wire-24 soak to all eighteen synthetic WADs (BTUNNEL and TELEZ were missing).

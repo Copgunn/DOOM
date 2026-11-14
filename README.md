@@ -39,7 +39,7 @@ this one needs your own game files, such as those from a copy of Doom you bought
 
 The engine runs DOOM's game logic without graphics. It is driven by tests and small
 example programs, on small test maps built for this project and, locally, on all nine
-real Episode 1 maps (the last three are work in progress, still under review). Today it can simulate:
+real Episode 1 maps (E1M5, E1M8 and E1M9 are work in progress, still under review). Today it can simulate:
 
 - one player who moves, uses switches and doors, takes damage and dies, with the fist,
   pistol, shotgun and chaingun;
@@ -67,7 +67,7 @@ What it cannot do yet:
   is covered);
 - claim a tic-for-tic match of any map for every input: only the scripted runs recorded
   so far are matched;
-- handle the other episodes, easy or nightmare skill, or the tic-for-tic play of every input.
+- handle the other episodes, or easy or nightmare skill.
 
 This is a long-term project, not a quick rewrite. Every behavior is checked against the
 original before it's admitted, so progress is measured in proven features, not weeks.

@@ -2438,7 +2438,7 @@ and for the observations [validation/M4A.md](validation/M4A.md); Rust-only tests
 
 ## Original Episode 1, part 2: teleporters, the Baron of Hell, `A_BossDeath` and hard skill (wire 24)
 
-**Status: in progress (M4b, plan steps 1-13 done and step 14, the independent review, next; see the
+**Status: in progress (M4b, plan steps 1-14 done, step 15, the full gates, next; see the
 [note](M4B_REFERENCE_INVESTIGATION.md#6-plan-size-estimate-and-cap) and [ROADMAP](ROADMAP.md)).** Wire 24 is wire 23 plus teleportation, the Baron of Hell, `A_BossDeath`
 and hard skill (skills 2 and 3, decision I4). Skills 1, 4 and 5 are refused at load, as listed below.
 
@@ -2545,9 +2545,11 @@ and the earlier wording that assumed it was corrected in the
 
 Under wire 24 Rust admits the tunnelling tic. If the ball has left the map's vertex rectangle, the next
 tic is refused with `SimError::Monster(MonsterError::Arithmetic)` by the position check on the spawned
-actor (`demon_map_spawn.rs:154-156`) and the whole canonical state is kept, like every other refused tic.
-If the wall is an inner one-sided wall, the ball stays inside the rectangle and every tic is admitted and
-matches the genuine engine (the BTUNNEL scene). This is a declared witness, not a difference from the
+actor (`demon_map_spawn.rs:155-157`) and the whole canonical state is kept, like every other refused tic.
+While the ball stays inside the vertex rectangle, Rust applies the same destination-box checks and the same
+BSP location as the genuine engine, so it matches or another witness refuses; BTUNNEL (a ball past an inner
+one-sided wall) is the observed instance, and a ball that passes an inner wall may still leave the rectangle
+later and be refused. This is a declared witness, not a difference from the
 original: for this case Rust either matches the genuine engine or refuses the tic (owner ruling,
 2026-11-13). Wire 23 cannot reach it, since every wire-23 missile meets the step bound. It is reachable on
 E1M8 in principle; none of the 61 real-map runs hit it. The soak and fuzz target accept exactly this
