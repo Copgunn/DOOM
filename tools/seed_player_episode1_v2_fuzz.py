@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 # Input layout (see the target's module documentation):
-#   byte 0  the WAD (% 16), in the order of WADS below;
+#   byte 0  the WAD (% 18), in the order of WADS below;
 #   byte 1  bit 0 the skill (0 skill 2, 1 skill 3); bits 1-7 0 for the default context
 #           (as the committed scripts run), otherwise the gameplay RNG index of the start;
 #   byte 2  the low byte of every command's angleturn;
@@ -21,7 +21,8 @@ from pathlib import Path
 # Only the first 600 tics fit the target's budget, so longer scripts are cut there. The
 # WAD of each script is the one the two manifests name; its skill is demo header byte 1.
 WADS = ['tele', 'telemove', 'tfrag', 'montele', 'slideb', 'slidec', 'baron', 'infight',
-        'bvb', 'boss8', 'bossm1', 'spech8', 'spech9', 'skill', 'tele2x', 'sawbite']
+        'bvb', 'boss8', 'bossm1', 'spech8', 'spech9', 'skill', 'tele2x', 'sawbite',
+        'btunnel', 'telez']
 HEADER = 4
 TIC_BUDGET = 600
 MAX_LEN = HEADER + 4 * TIC_BUDGET

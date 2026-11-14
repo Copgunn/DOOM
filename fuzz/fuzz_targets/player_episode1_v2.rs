@@ -1,6 +1,6 @@
 #![no_main]
 //! Bounded public command streams under `PlayerMonstersEpisode1V2` (wire 24,
-//! DSIM40) on the sixteen committed M4b synthetic mechanism WADs
+//! DSIM40) on the eighteen committed M4b synthetic mechanism WADs
 //! (`tests/reference/m4b_wads/*.wad`, map E1M1, BOSS8 in the E1M8 slot; no IWAD):
 //! teleporters, telefrags, monster and sliding teleports, the Baron of Hell and its
 //! fireball, `A_BossDeath`, the ninth special line, the skill-3 THING filter and the
@@ -11,7 +11,7 @@
 //! `advance` with a byte-derived slot-One command stream.
 //!
 //! Input: a four-byte header, then four-byte command records. Byte 0 picks the WAD
-//! (`data[0] % 16`, order of [`WADS`]; the map number is 8 for BOSS8 and 1 for the
+//! (`data[0] % 18`, order of [`WADS`]; the map number is 8 for BOSS8 and 1 for the
 //! others, as the committed scripts run them); byte 1 the skill and the start (bit 0:
 //! skill 2 when clear, skill 3 when set; the other seven bits: 0 the default context
 //! as the committed scripts run, any other value gameplay RNG index `data[1] >> 1`);
@@ -39,8 +39,8 @@ use doom_types::{DoomRng, Fixed};
 use libfuzzer_sys::fuzz_target;
 use std::sync::OnceLock;
 
-/// The sixteen M4b synthetic mechanism WADs (`tests/reference/m4b_manifest.json`, `m4b_manifest2.json`).
-const WADS: [&[u8]; 16] = [
+/// The eighteen M4b synthetic mechanism WADs (`tests/reference/m4b_manifest.json`, `m4b_manifest2.json`).
+const WADS: [&[u8]; 18] = [
     include_bytes!("../../tests/reference/m4b_wads/tele.wad"),
     include_bytes!("../../tests/reference/m4b_wads/telemove.wad"),
     include_bytes!("../../tests/reference/m4b_wads/tfrag.wad"),
@@ -57,9 +57,11 @@ const WADS: [&[u8]; 16] = [
     include_bytes!("../../tests/reference/m4b_wads/skill.wad"),
     include_bytes!("../../tests/reference/m4b_wads/tele2x.wad"),
     include_bytes!("../../tests/reference/m4b_wads/sawbite.wad"),
+    include_bytes!("../../tests/reference/m4b_wads/btunnel.wad"),
+    include_bytes!("../../tests/reference/m4b_wads/telez.wad"),
 ];
 /// The map number each WAD runs under (BOSS8 is the E1M8 slot).
-const MAP_NUMBERS: [u8; 16] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 8, 1, 1, 1, 1, 1, 1];
+const MAP_NUMBERS: [u8; 18] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 8, 1, 1, 1, 1, 1, 1, 1, 1];
 const HEADER: usize = 4;
 const RECORD: usize = 4;
 const TIC_BUDGET: usize = 600;

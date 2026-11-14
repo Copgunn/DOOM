@@ -30,7 +30,7 @@ const ROUND_TRIP: usize = 100;
 const TAIL: usize = 300;
 
 /// (WAD file, map number, the committed script of its mechanism).
-const RUNS: [(&str, u8, &str); 16] = [
+const RUNS: [(&str, u8, &str); 18] = [
     ("tele", 1, "TELE1"),
     ("telemove", 1, "TSPLIT"),
     ("tfrag", 1, "TFRAG1"),
@@ -47,6 +47,8 @@ const RUNS: [(&str, u8, &str); 16] = [
     ("skill", 1, "SKILL3"),
     ("tele2x", 1, "TELE2X"),
     ("sawbite", 1, "SAWBITE"),
+    ("btunnel", 1, "BTUNNEL"),
+    ("telez", 1, "TELEZ"),
 ];
 
 fn reference(name: &str) -> Vec<u8> {
@@ -335,7 +337,7 @@ fn wire_24_soaks_over_the_m4b_wads_hold_the_safety_properties() {
     println!("wire 24 soaks: {t:?}");
     // The soak is not vacuous: it ran thousands of tics, round-tripped captures and
     // reached the teleport on the teleport WADs.
-    assert_eq!(t.runs, 16 * 2 * 2);
+    assert_eq!(t.runs, 18 * 2 * 2);
     assert!(t.tics > 10_000, "{t:?}");
     assert!(t.round_trips > 100, "{t:?}");
     assert!(t.teleports > 0, "{t:?}");
