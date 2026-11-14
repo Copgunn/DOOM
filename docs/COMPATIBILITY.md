@@ -2438,8 +2438,8 @@ and for the observations [validation/M4A.md](validation/M4A.md); Rust-only tests
 
 ## Original Episode 1, part 2: teleporters, the Baron of Hell, `A_BossDeath` and hard skill (wire 24)
 
-**Status: in progress (M4b, plan step 7 of the [note](M4B_REFERENCE_INVESTIGATION.md#6-plan-size-estimate-and-cap)); see
-[ROADMAP](ROADMAP.md).** Wire 24 is wire 23 plus teleportation, the Baron of Hell, `A_BossDeath`
+**Status: in progress (M4b, plan steps 1-13 done and step 14, the independent review, next; see the
+[note](M4B_REFERENCE_INVESTIGATION.md#6-plan-size-estimate-and-cap) and [ROADMAP](ROADMAP.md)).** Wire 24 is wire 23 plus teleportation, the Baron of Hell, `A_BossDeath`
 and hard skill (skills 2 and 3, decision I4). Skills 1, 4 and 5 are refused at load, as listed below.
 
 `OriginalExecutionProfile::PlayerMonstersEpisode1V2` (wire 24, DSIM40, context
@@ -2530,7 +2530,29 @@ canonical state, as for every wire-23 mid-tic refusal):**
   wire 23's bounds are unchanged;
 - the 129th intercept of a trace (inherited);
 - the landing search is bounded by construction (one pass over the actor order, then at most
-  sectors × landings) and runs before any mutation; it refuses nothing.
+  sectors × landings) and runs before any mutation; it refuses nothing;
+- **the Baron fireball wall tunnel** (below), refused on the tic after the ball leaves the map.
+
+#### The Baron fireball wall tunnel (wire 24)
+
+A Baron fireball (`MT_BRUISERSHOT`, speed 15, radius 6; info.c:1524-1548) moves up to 15 units in one
+step and is never split. `P_CheckPosition` tests only the box at the destination (p_map.c:191-195,
+374-442), so a step can carry the ball wholly past a one-sided wall thinner than the step. The step bound
+of the M3h5 position proof (2r - 2 = 10 units for radius 6) does not hold for this ball: 15 is more than 10,
+and the earlier wording that assumed it was corrected in the
+[note](M4B_REFERENCE_INVESTIGATION.md#3-c-facts-the-baron-a_bossdeath-hard-skill-and-demo-version)
+(finding 29). The genuine engine keeps such a ball flying in the void.
+
+Under wire 24 Rust admits the tunnelling tic. If the ball has left the map's vertex rectangle, the next
+tic is refused with `SimError::Monster(MonsterError::Arithmetic)` by the position check on the spawned
+actor (`demon_map_spawn.rs:154-156`) and the whole canonical state is kept, like every other refused tic.
+If the wall is an inner one-sided wall, the ball stays inside the rectangle and every tic is admitted and
+matches the genuine engine (the BTUNNEL scene). This is a declared witness, not a difference from the
+original: for this case Rust either matches the genuine engine or refuses the tic (owner ruling,
+2026-11-13). Wire 23 cannot reach it, since every wire-23 missile meets the step bound. It is reachable on
+E1M8 in principle; none of the 61 real-map runs hit it. The soak and fuzz target accept exactly this
+refusal and no other `Monster(Arithmetic)`. Evidence:
+[the evidence record](validation/M4B.md#the-baron-fireball-wall-tunnel).
 
 **Refused now, each explicitly at load:**
 

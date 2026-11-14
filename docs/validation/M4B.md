@@ -15,9 +15,13 @@ step 4 (2026-11-10): teleportation, in [Rust replay: teleportation](#rust-replay
 and the second synthetic set (two teleports in one tic). Phase 2 step 6 (2026-11-10): hard skill, in
 [Rust replay: hard skill](#rust-replay-hard-skill). Phase 2 step 7 (2026-11-13): the real-map runs, `DEMO1`
 and the saw-bite fix, in [Real maps and DEMO1](#real-maps-and-demo1), with SAWBITE added to the second
-synthetic set. Address-checked builds ran with `ASAN_OPTIONS=detect_leaks=0`,
-so LeakSanitizer was disabled, not passed. Timings quoted here were taken on a host that was
-not idle and are not performance measurements.
+synthetic set. Phase 2 step 9 (2026-11-13 to 2026-11-14): the BTUNNEL scene and the fireball wall tunnel
+witness, in [The Baron fireball wall tunnel](#the-baron-fireball-wall-tunnel). Steps 11 to 13
+(2026-11-13 to 2026-11-14): [mutation testing](#mutation-testing-step-11),
+[fuzzing](#fuzzing-step-12) and [matched performance](#matched-performance). Address-checked genuine-engine
+runs ran with `ASAN_OPTIONS=detect_leaks=0`, so LeakSanitizer was disabled, not passed; the step 12 fuzz
+ASan campaigns kept leak detection on. Timings quoted before the [matched performance](#matched-performance)
+section were taken on a host that was not idle and are not performance measurements.
 
 ## Synthetic mechanism WADs (CI evidence)
 
@@ -415,6 +419,9 @@ fixture byte for byte, in `check_player_episode1v2.py` and in `episode1v2_mechan
 `teleport_tests::two_teleports_in_one_tic` checks the two `Teleported` records, four fogs and four
 draws of that tic.
 
+**BTUNNEL (step 9).** The second set also holds a scene in which a Baron fireball tunnels through an inner
+wall; it is described in [The Baron fireball wall tunnel](#the-baron-fireball-wall-tunnel).
+
 **SAWBITE (step 7).** The second set gained a scene, SAWBITE (a Demon bite on a body that `A_Saw`
 flagged in the same tic), found by a real-map divergence; it is described in
 [The M5WALK3 divergence and its fix](#the-m5walk3-divergence-and-its-fix).
@@ -661,3 +668,256 @@ observed when this record was written; GitHub holds it.
 - Leak detection was disabled in every address-checked genuine run.
 - The only Rust changes in step 7 are 2dd986c (the fix), 56d3551 (its test module) and 26b24e6 (Clippy); no matched timings were taken in
   this step.
+
+## The Baron fireball wall tunnel
+
+Phase 2 step 9 and step 10 (2026-11-13 to 2026-11-14, America/Los_Angeles). The rule, the C citations
+and the owner ruling are in [COMPATIBILITY](../COMPATIBILITY.md#the-baron-fireball-wall-tunnel-wire-24)
+and [finding 29](../M4B_REFERENCE_INVESTIGATION.md); this section holds what was observed.
+
+**How it was found.** The wire-24 soak (`crates/doom-sim/tests/episode1v2_soak.rs`, a1df9e2: 64 runs, each
+a committed script then a seeded random tail, over the sixteen synthetic WADs that have a script of their own,
+checking that every refusal is a declared witness, that a refused tic keeps the whole state, determinism and
+DSIM40 round trips) met a refusal it did not recognise: `Monster(Arithmetic)` on the tic after a Baron
+fireball had stepped wholly past a one-sided wall and left the vertex rectangle. 8223b49 narrows the soak and
+the `player_episode1_v2` fuzz target to admit exactly this case (`bruiser_tunnel`) and nothing else.
+
+**Outside the rectangle (observed, genuine engine and Rust).** On a synthetic INFIGHT-based stream the
+genuine engine (all three variants, `ASAN_OPTIONS=detect_leaks=0`, no leak detection) kept the fireball
+flying in the void, with identical dumps. Rust matched every tic it was compared on (4 genuine comparisons)
+and refused the tic after the ball left the rectangle, as the ruling declares. No real-map run (61, all
+matched) reached it.
+
+**Inside the rectangle (BTUNNEL, second set, 2b2ebe9, a994737).** A synthetic E1M1-slot WAD (3 sectors,
+16 lines, 1 player, 1 Baron) with a 1-unit inner one-sided wall between the Baron and the standing player.
+Genuine engine, strict, overflow and address variants, byte-identical dumps (`ASAN_OPTIONS=detect_leaks=0`,
+no leak detection), 190 tics, `prndindex` 3 to 148:
+
+| Dump tic | Observation |
+| ---: | --- |
+| 140 | the first fireball is spawned |
+| 161 | the fireball is wholly on the near side of the wall |
+| 162 | wholly on the far side: the step carried it past the wall, with no tic in which it overlapped the wall |
+| 170 | it explodes on the far outer wall |
+
+The ball never leaves the vertex rectangle and the player is never hit. Rust under wire 24 matched 191 of
+191 captures and the fixture `tests/reference/m4b2_episode1v2_BTUNNEL_163.bin`; BTUNNEL is in
+`episode1v2_mechanism_goldens` (a994737). The independent WAD checker (`m4b_check_wad.py`, `tunnel`) re-derives
+the design from the parsed map and the genuine tables; it was shown able to fail by moving the wall to three
+other positions, each rejected. `check_player_episode1v2.py --require`: 51 of 51 scripts, 20,124 compared
+tics, 0 pending.
+
+**Limits.** The outside-the-rectangle case rests on the four genuine comparisons above and on the soak and
+fuzz admission; BTUNNEL is the committed scene and fixture for the inside case only. The leaving-the-map
+refusal is Rust's declared witness, not something the genuine engine does (it has no such refusal).
+
+## Mutation testing (step 11)
+
+2026-11-13 to 2026-11-14. The informational [mutants workflow](../../.github/workflows/mutants.yml) (ce00f06;
+cargo-mutants `--in-diff` over `crates/` against `master`, 8 shards, commands in
+[TESTING](../TESTING.md#ci-mutation-workflow-m4b)) ran as run 43543402068 on ce00f06: all 8 shards succeeded.
+
+| Outcome | Mutants |
+| --- | ---: |
+| generated | 711 |
+| caught | 598 |
+| missed | 63 |
+| unviable | 50 |
+| timeout | 0 |
+
+`barrels.rs:362:19` did not appear in the run, so no exclusion was needed (owner ruling 2026-11-13; its
+proof is finding 27). All 63 missed mutants were addressed: **55 killed by new tests** (e3607ad, 364b739,
+90da9dc, 961f94b; each kill was checked against its mutant locally with cargo-mutants in a scratch copy) and
+**8 proved equivalent**, with the proof in a comment and a test pinning it (dbac5e1, 364b739): `demon.rs`
+113 to 115 (the four player flag terms are disjoint bit sets, so `|` and `^` agree), `episode1.rs` 178:40
+(the start kinds are in no counted category), `diagnostic.rs` 1153:68 (dead code in the version-34
+validator) and `diagnostic.rs` 1548:17 (repeats the generic per-actor state check). The new tests assert
+behaviour already cited in the note (T3 and T8 for telefrags, the teleport and Baron facts); no simulation
+behaviour changed. **Not run:** the workflow itself was not re-run after the new tests, so the 55 kills are
+confirmed per mutant in the scratch copy only; the step 14 review should check the equivalence proofs.
+
+## Fuzzing (step 12)
+
+2026-11-13, local (nightly cargo 1.101.0, cargo-fuzz 0.13.2); `-max_len=2404`, `rss_limit` 2048 MB. The plain
+stage began before the owner said the machine was in use; the ASan stage ran with 6 build jobs and 2 parallel
+jobs. All runs exited 0 with no crash, no timeout, no leak report and no out-of-memory. Targets:
+`player_episode1_v2` (wire 24, DSIM40) and `player_episode1` (wire 23). Seed replay runs each committed
+and generated seed once; coverage-guided runs mutate inputs for a fixed time; the ASan runs build the target
+with AddressSanitizer. **Leak detection was on (the default) in both ASan stages.**
+
+| Target | Stage | Kind | Executions | New units |
+| --- | --- | --- | ---: | ---: |
+| wire 24 | plain, 26 s | seed replay (622 seeds) | 623 | 0 |
+| wire 24 | plain, 1,800 s, seed 1201 | coverage-guided | 12,898 | 1,541 |
+| wire 24 | ASan, 1,220 s | seed replay | 2,090 | 0 |
+| wire 24 | ASan, 1,800 s, seed 1202 | coverage-guided, sanitizer | 2,650 | 36 |
+| wire 23 | plain, 65 s | seed replay (459 seeds) | 460 | 0 |
+| wire 23 | plain, 1,800 s, seed 1201 | coverage-guided | 6,134 | 1,165 |
+| wire 23 | ASan, 3,509 s | seed replay | 1,595 | 0 |
+| wire 23 | ASan, 1,800 s, seed 1202 | corpus load only | 1,595 | 0 |
+
+The last row is **not a coverage-guided campaign**: the corpus load used the whole budget, so it
+re-executed the same 1,595 units a second time and produced no new unit. Peak resident memory was 52 MB
+(wire 24 plain), 56 MB (wire 23 plain) and 740 MB (wire 24 ASan). libFuzzer reported slow units (over
+10 s, below the 180 s timeout) only on the wire-23 target under ASan, up to 107 s in the replay and
+73 s in the corpus-load run; six are kept in scratch. **Limits:** one seed per campaign and 30 minutes
+each; the wire-23 ASan stage added no coverage-guided exploration; the fuzz corpora stay outside the
+repository.
+
+## Matched performance
+
+Recorded **2026-11-13 PST** (America/Los_Angeles, 20:23 to 23:53), on the local host, uncapped. Counts,
+timings and digests only; the scratch write-up and raw samples stay outside the repository.
+
+**Host and preparation.** Intel Core i7-8750H @ 2.20 GHz, 6 cores / 12 logical CPUs, 7.7 GiB, Linux
+6.18.58.1 WSL2, rustc 1.100.0, default release profile; no CPU, frequency or core isolation and no
+build-job cap. Fresh detached worktrees of origin/master `7cd62858596e65fe1882aff1d4eafff51ea45eca` (M4a
+merged) and branch `ce00f0670f7c6193c76710e195fa649a48e8db0f`, each built with `cargo build -p doom-sim
+--examples --release --locked` into its own target directory under scratch; the main tree was not
+touched. Between the two trees only `player_level_advance.rs` and `player_level_run.rs` differ among
+the examples, measure scripts and test support. Before timing, `check_player_level_advance.py` passed
+on both trees (36 C-derived final states and boundaries each). The IWAD was a scratch copy; the patched
+`DEMO1` copy matches the digest recorded in `tests/reference/m4b_real_results.json`. `/mnt/c` had 75 GB
+free before builds, during every measurement and after cleanup (at least 20 GB throughout).
+
+**Method.** 241 example workloads (the lists of M4a, with identical group counts), one process per
+sample, the same timer fields as M4a, eleven paired rounds alternating master/branch order: 5,302
+samples per run. Non-timing stdout lines, compared after removing `ns`, `_ns` and `_us` fields, were
+identical in all 22 samples of every workload and between the trees (0 unstable). Wire-23 level
+runs: `player_level_run --policy episode1` on the 30 M4a real-map scripts, whole-process wall time, **7
+paired rounds** (420 samples; one round took about 11 minutes, so the planned 11 would have exceeded the
+time budget); digests and statistics identical in every round and between trees. Wire 24 has no master
+equivalent: whole-process wall time of `player_level_run --policy episode1v2` on 61 cases, 3 rounds (183
+samples), and simulation-only timing of `player_level_advance --policy episode1v2` (5 repetitions of
+61 cases, 305 observations). Delta is branch over master by per-workload medians; group values are medians
+of those deltas.
+
+**Idle status of each wall-clock stage.** Windows-side load is invisible to `uptime` in WSL. The owner
+reported about 30 minutes of browser use on the Windows side after 22:00.
+
+| Stage | Time | Status |
+| --- | --- | --- |
+| examples run 1 | 20:31 to 20:44 | idle |
+| wire-23 level rounds (7) | 20:45 to 22:04 | idle (before 22:00) |
+| first real-map advance run | 22:04 to 22:09 | overlapped the browser use; **discarded** and re-run |
+| first wire-24 level run | 22:07 to 22:45 | overlapped the browser use; **discarded** and re-run |
+| Callgrind runs | 22:48 to 22:59 | instruction counts, unaffected by load |
+| real-map advance re-run (5 repetitions) | 22:59 to 23:04 | idle |
+| wire-24 level re-run (3 rounds) | 23:04 to 23:38 | idle |
+| examples run 2 (confirmation) | 23:39 to 23:51 | idle |
+
+Before each round, no cargo, rustc, nextest, mutants, fuzz, doom, valgrind, cc or other python process
+was running, and the harness waited for the 1-minute load to fall below 1.0 (waits of 0 to 20 s). The
+1-minute load at round starts ranged from 0.24 to 0.99 (examples run 1 and the wire-23 level rounds), 0.87
+to 1.01 (the re-runs) and 0.89 to 0.99 (examples run 2); no out-of-memory kill and no foreign process
+was observed. The discarded runs gave real-map medians within about 1 microsecond per tic of the re-runs.
+
+**Example workloads, master versus branch** (median delta of medians; run 1 / run 2):
+
+| Group | n | Run 1 | Run 2 |
+| --- | ---: | ---: | ---: |
+| canonical_demon | 1 | -3.20% | -3.70% |
+| context_ownership | 2 | +11.77% | +9.41% |
+| demon_expanded_map | 9 | +1.40% | +1.95% |
+| game_instance | 2 | +23.34% | +22.77% |
+| map_extent | 11 | +11.01% | +11.64% |
+| map_scale | 9 | -8.16% | -9.25% |
+| original_registry | 6 | +11.00% | +12.27% |
+| diagnostic_free | 10 | +5.17% | +3.99% |
+| original_player | 4 | -2.71% | -3.28% |
+| player_commands | 9 | +45.06% | +47.38% |
+| player_knockback | 6 | -0.04% | -0.54% |
+| player_demon | 11 | +138.54% | +144.55% |
+| player_demon_melee | 9 | +163.23% | +164.52% |
+| player_pistol | 15 | +2.14% | +6.14% |
+| player_weapon_pack | 25 | -0.32% | +1.29% |
+| player_world_pickups | 17 | +0.32% | +0.56% |
+| player_armor | 19 | -3.43% | -3.92% |
+| player_barrels | 5 | -1.48% | -0.05% |
+| player_e1m1 | 4 | +3.13% | +1.74% |
+| player_movers | 9 | +5.25% | +4.03% |
+| player_specials | 6 | -1.69% | -1.47% |
+| player_real_map | 7 | -17.29% | -9.19% |
+| player_bonuses | 13 | +28.40% | +34.54% |
+| player_monsters | 7 | +6.50% | +7.72% |
+| player_imps | 7 | -15.62% | -17.01% |
+| player_heights | 6 | -21.30% | -18.66% |
+| player_diagonal | 3 | +16.03% | +12.47% |
+| player_map_scale | 8 | -7.78% | -9.35% |
+| legacy_pistol | 1 | -26.57% | -28.42% |
+
+Over all 241 workloads the median of median deltas is **+1.72%** (run 1) and **+1.78%** (run 2); the median
+of minimum deltas is +0.99% and +1.44% (M4a: +2.02% and +2.03%). Workloads with a median slowdown above 3%:
+102 in run 1, 106 in run 2, 90 in both. Above 30%: 36 in run 1, 39 in run 2, 36 in both. The median absolute
+difference between the two runs' per-workload deltas is 2.17 percentage points, so deltas of a few percent
+are within run-to-run variation, and the large slowdowns **reproduce**. They concentrate in player_demon
+(11 of 11, +32% to +187%), player_demon_melee (7 of 9, up to +194%), player_commands (7 of 9, up to +126%),
+player_bonuses (6 of 13, up to +226%) and the idle player_pistol workload (about 92 to 93 microseconds for
+100 updates on master, 434 to 452 on the branch). Several groups also got faster (map_scale, player_real_map,
+player_imps, player_heights, legacy_pistol, some single workloads by up to 68%); these are as unexplained
+as the slowdowns.
+
+**Whole-level wire-23 runs, 30 scripts, 7 paired rounds:** per-map medians of the per-script deltas are
+-0.43% (E1M1), -0.36% (E1M2), +0.42% (E1M3), -0.18% (E1M4), -0.89% (E1M6) and +2.21% (E1M7); over all 30
+scripts the median delta is **-0.07%**. Per-script median wall time ranged from 1.6 s to 54 s.
+
+**Wire 24 (branch only, absolute numbers).** All 61 real-map cases (E1M1 to E1M9 and `DEMO1`; 158,966
+admitted tics per repetition) in 3 whole-process rounds and 5 advance-only repetitions; digests and
+statistics were identical in every round, and all 305 advance-only final digests equal the recorded ones
+(`m4b_real_results.json`); end tics match in all 61 cases. This is final-state validation, not a tic-for-tic
+comparison.
+
+| Map | Cases | Tics | Whole-process, median us/tic | Advance only, median us/tic | Advance only, worst run us/tic |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| E1M1 | 5 | 10,029 | 1,982 | 58.4 | 62.4 |
+| E1M2 | 5 | 9,094 | 4,478 | 133.2 | 144.2 |
+| E1M3 | 5 | 13,750 | 5,921 | 283.9 | 301.3 |
+| E1M4 | 5 | 9,386 | 4,042 | 222.1 | 240.6 |
+| E1M5 | 10 | 36,783 | 4,805 | 387.7 | 620.4 |
+| E1M6 | 5 | 12,742 | 7,515 | 640.5 | 682.1 |
+| E1M7 | 5 | 12,939 | 5,490 | 297.6 | 355.3 |
+| E1M8 | 10 | 30,840 | 2,269 | 255.5 | 367.0 |
+| E1M9 | 10 | 21,693 | 4,441 | 514.9 | 789.4 |
+| `DEMO1` | 1 | 1,710 | 5,137 | 563.3 | 584.3 |
+
+For the six older maps the advance-only medians differ from the M4a wire-23 record by +5.3%, -0.7%, -4.2%,
++3.4%, -2.9% and -2.7% (E1M1, E1M2, E1M3, E1M4, E1M6, E1M7); different sessions and a different wire, so this
+is context, not a matched comparison. Fresh C timings were not run.
+
+**Callgrind** (once per tree, sequentially, for the 102 workloads that were more than 3% slower in run 1).
+Whole-process instruction counts differ by at most 1% in 84; 18 differ by more, 16 of them **decreases** of
+1.0% to 2.9% and two increases (+1.35%, +1.2%). Inside the timed `Simulation::advance` of the worst groups:
+
+| Workload | Time delta (run 1 / run 2) | Advance instructions, master to branch |
+| --- | ---: | --- |
+| player_commands idle | +127% / +124% | 675,088 to 648,493 (-3.9%) |
+| player_demon retirement | +187% / +169% | 920,771 to 895,817 (-2.7%) |
+| player_demon_melee hit_followthrough | +175% / +165% | 1,567,496 to 1,565,026 (-0.2%) |
+| game_instance scoped | +23% / +21% | 2,780,579 to 2,799,818 (+0.7%) |
+| context_ownership raw | +12% / +7% | 2,571,445 to 2,586,067 (+0.6%) |
+| original_registry case0 | +28% / +26% | 2,592,475 to 2,592,540 (0.0%) |
+| map_extent 3 | +4% / +4% | 491,766 to 479,722 (-2.4%) |
+
+**Cause: not established.** The slowdowns of the short workloads are not explained by instruction counts: the
+branch executes the same or fewer instructions in the timed region and in total, with equal system-call counts
+(87 each for player_commands idle), nearly equal minor page-fault counts (for example 184 and 187) and
+near-identical simulated cache and branch behaviour. No source cause was identified, because no
+instruction-level difference exists to attribute. The pattern (100 cold-process calls of a few to ten
+microseconds each, large and reproducible gaps in two runs three hours apart) is consistent with a layout- or
+cold-start-dependent effect of the changed binaries (the examples are 3.38 and 3.49 MB, and 4.11 and 4.22 MB),
+**but that is a hypothesis**; no `perf` or `strace` exists on this host and no code experiment was made.
+The whole-level runs and the long real-map advance timings, which spread any cold start over thousands of tics,
+show no corresponding slowdown. In M4a the matching groups moved 3 to 5% and extra validation instructions
+explained it; no such increase exists here. **This is carried to the step 14 review and to the
+owner-proposed [performance milestone](../ROADMAP.md).**
+
+**Limits.**
+
+- Wire-23 level rounds: 7 paired rounds, not 11; wire-24 level runs: 3 rounds, branch only.
+- The first real-map and wire-24 level runs overlapped Windows-side browser use and were discarded; Windows
+  load cannot be seen from WSL, and nothing else is known to have shared the host. No CPU, frequency or core
+  isolation; timers of tens of microseconds are sensitive to scheduling and clock resolution.
+- The real-map check is final-state validation, not tic-for-tic comparison. Fresh C timings, native RSS and
+  allocation instrumentation were not run.
+- Callgrind covers the run-1 set only; the 16 workloads that were above 3% only in run 2 were not run under it.
+- Worktrees and target directories were removed after the run, so the binaries need rebuilding for a re-run.

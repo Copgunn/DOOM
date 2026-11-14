@@ -1812,10 +1812,10 @@ which needs a 32-bit toolchain. Observations of the matched runs belong to the M
 record, not to this page.
 ## M4b synthetic mechanism WADs
 
-The M4b [reference investigation](M4B_REFERENCE_INVESTIGATION.md) adds fourteen small synthetic
-WADs for teleportation, telefrags, monster and sliding teleports, the Baron of Hell,
+The M4b [reference investigation](M4B_REFERENCE_INVESTIGATION.md) adds small synthetic
+WADs (listed in `tests/reference/m4b_manifest.json` and `m4b_manifest2.json`) for teleportation, telefrags, monster and sliding teleports, the Baron of Hell,
 `A_BossDeath` (one WAD in the E1M8 slot), the special-line (`spechit`) limit and the skill-3
-THING filter, with 18 scripts run through the genuine engine. Everything here is synthetic and
+THING filter, with their scripts run through the genuine engine. Everything here is synthetic and
 runs on a clean checkout; the observations are recorded in
 [the M4b evidence record](validation/M4B.md#synthetic-mechanism-wads-ci-evidence). The Rust side
 is wire 24 (`--policy episode1v2`): it runs the 30 M4a scripts against their DSIM40 projection
@@ -1825,7 +1825,7 @@ now, and every M4b script (plan steps 4-6 admitted them all; the `PENDING` table
 ```sh
 # generators and invariants (no compiler; every OS in CI)
 python3 tools/reference/m4b_build.py --check               # M4b runner contract: the M4a driver plus the telefrag adapter (p_inter.c:817, sanitizer builds only)
-python3 tools/reference/m4b_wad.py [--out-dir DIR] [--check]  # 15 WADs in tests/reference/m4b_wads/ (14 of the first set, tele2x of the second); --check compares bytes and both manifests' fields, then runs the verifier
+python3 tools/reference/m4b_wad.py [--out-dir DIR] [--check]  # every WAD of both manifests, in tests/reference/m4b_wads/; --check compares bytes and both manifests' fields, then runs the verifier
 python3 tools/reference/m4b_check_wad.py --check           # independent verifier of every WAD of both manifests (teleport search order, special-line box, skill counts)
 python3 tools/reference/m4b_scripts.py --check             # tests/reference/m4b_scripts (.txt -> .lmp; adds the "skill N" directive)
 python3 tools/reference/test_level_snapshot_m4b.py          # DSIM40 tables against info.h/info.c, dump columns against m4a_driver.c, header rules
@@ -1840,7 +1840,7 @@ python3 tools/reference/m4b_reference.py --work /mnt/d/scratch/m4b/ref --check -
 python3 tools/reference/m4b_snapshot_goldens.py --dumps /mnt/d/scratch/m4b/ref/runs --check [--selftest]
 python3 tools/reference/m4b_snapshot_goldens.py [--work DIR] --check   # runs m4b_reference.py itself, deletes the dumps afterwards
 
-# the second M4b set (step 5: TELE2X, two teleports in one tic; step 7: SAWBITE, a bite on an A_Saw-flagged body), the same tools with --set 2
+# the second M4b set (step 5: TELE2X, two teleports in one tic; step 7: SAWBITE, a bite on an A_Saw-flagged body; step 9: BTUNNEL, a Baron fireball through an inner wall), the same tools with --set 2
 python3 tools/reference/m4b_reference.py --set 2 --work /mnt/d/scratch/m4b/ref2 --check --keep-dumps
 python3 tools/reference/m4b_snapshot_goldens.py --set 2 --dumps /mnt/d/scratch/m4b/ref2/runs --check
 python3 tools/reference/level_snapshot_m4b.py DUMP_DIR --wad WAD --demo LMP [--out DIR] [--compare39]
@@ -1885,6 +1885,11 @@ python3 tools/reference/m4b_m4a_goldens.py --dumps /mnt/d/scratch/m4b/m4a/runs -
 cargo build -p doom-sim --release --locked --example player_level_run
 python3 tools/reference/check_player_episode1v2.py --binary target/release/examples/player_level_run --out DIR --require
 python3 tools/reference/check_player_episode1v2.py --rust-root DIR [--require]   # captures already made
+
+# wire-24 soak (Rust-only, in the workspace tests) and fuzz target (M4b step 9 and 12)
+cargo test -p doom-sim --release --locked --test episode1v2_soak
+python3 tools/seed_player_episode1_v2_fuzz.py /tmp/doom-episode1v2-seeds      # seed corpus, max_len 2404
+cd fuzz && cargo +nightly fuzz run player_episode1_v2 /tmp/doom-episode1v2-corpus --sanitizer address -- -runs=0 -max_len=2404 -timeout=180 -rss_limit_mb=2048   # replay; add -max_total_time=1800 -seed=N for a coverage-guided run
 
 # one run against its dumps, field by field (any dump directory; DSIM40)
 python3 tools/reference/level_compare_m4b.py DUMP_DIR RUST_DIR --wad WAD --demo LMP [--values] [--json OUT]
