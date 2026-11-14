@@ -611,6 +611,84 @@ fn boss_death_without_a_tagged_sector() {
     ));
 }
 
+/// The ±1,024 sector-height bound (decision I6) on the boss floor's path. The
+/// floor's destination is `P_FindLowestFloorSurrounding`, the least current floor
+/// of the sector and its neighbours (p_floor.c:299–305; p_spec.c:270–288), and it
+/// moves down by `FLOORSPEED` (one unit, p_spec.h:600) per step, the last step
+/// landing on the destination exactly (p_floor.c:68–84). Every height it writes
+/// therefore lies between its start and a floor that already exists, so the only
+/// way to give it an out-of-bound destination is a static floor outside ±1,024,
+/// which the format envelope refuses at load (`map_extent::validate_real_map`).
+/// Rust-only edit of the C-run BOSS1 WAD: the `END` sector (special 11), the
+/// tag-666 `BLOCK` step's lowest neighbour, at −1,024 and at −1,025. At −1,024
+/// the floor called at DSIM tic 224 descends one unit per tic from 64 to −1,024,
+/// unrefused, reaching it at tic 224 + 1,087 and finishing with the next step; at
+/// −1,025 the map is refused before any state exists.
+#[test]
+fn the_boss_floor_stays_inside_the_height_bound() {
+    let edited = |floor: i16| {
+        let mut l = wad("boss8");
+        let sectors = lump(&mut l, "SECTORS");
+        let mut set = 0;
+        for r in sectors.chunks_exact_mut(26) {
+            if i16::from_le_bytes([r[22], r[23]]) == 11 {
+                r[0..2].copy_from_slice(&floor.to_le_bytes());
+                set += 1;
+            }
+        }
+        assert_eq!(set, 1);
+        l
+    };
+    assert_eq!(
+        Simulation::original_player_episode1_v2_map(
+            map_of(&edited(-1025), "E1M8"),
+            8,
+            Skill::Medium,
+            MapContextOptions::default(),
+        )
+        .err(),
+        Some(OriginalRegistryError::Runtime(
+            crate::GeometryError::CoordinateOverflow.into()
+        ))
+    );
+    let l = edited(-1024);
+    let block = {
+        let map = map_of(&l, "E1M8");
+        let tagged: Vec<usize> = crate::mover_rules::tagged(&map, 666).collect();
+        assert_eq!(tagged.len(), 1);
+        tagged[0]
+    };
+    let commands = demo("BOSS1", 8);
+    let mut s = setup(&l, "E1M8", 8);
+    run_to(&mut s, &commands, 223);
+    assert_eq!(s.sectors[block].floor, Fixed::from_map_units(64));
+    step(&mut s, commands[223]).unwrap();
+    assert_eq!(boss_events(&s).last().map(|e| e.1), Some(3));
+    let mut floor = 63;
+    assert_eq!(s.sectors[block].floor, Fixed::from_map_units(floor));
+    while floor > -1024 {
+        step(&mut s, TicCommand::default()).unwrap();
+        floor -= 1;
+        assert_eq!(s.sectors[block].floor, Fixed::from_map_units(floor));
+    }
+    assert!(s.events().iter().all(|e| !matches!(
+        e,
+        Event::Mover(MoverEvent::PlaneStep {
+            result: crate::planes::MoveResult::PastDest,
+            ..
+        })
+    )));
+    step(&mut s, TicCommand::default()).unwrap();
+    assert_eq!(s.sectors[block].floor, Fixed::from_map_units(-1024));
+    assert!(s.events().iter().any(|e| matches!(
+        e,
+        Event::Mover(MoverEvent::PlaneStep {
+            result: crate::planes::MoveResult::PastDest,
+            ..
+        })
+    )));
+}
+
 /// BOSS1, C-observed: the exit at dump tic 544 completes (DSIM 545) through sector
 /// special 11 and every later tic is refused with `LevelExited`, state preserved
 /// (as in M4a).
