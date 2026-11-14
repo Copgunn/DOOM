@@ -382,8 +382,10 @@ fn radius_attack<A: ActorAccess>(h: &mut LifeHost<'_, A>, spot: ActorId) -> Resu
     // drop of the i-th relinker (spawned after relink i) at most 1 + L − i, any
     // other drop at most 1 + L. Summed, visits ≤
     // n(1 + L) + L + D′(1 + L). With K monsters (L + D′ ≤ K, K ≤ R by the
-    // roster limit, `map_demon_limit`; n ≥ K + 2 for the player and the barrel)
-    // that is at most n(R + 2) − 2.
+    // roster limit, `map_demon_limit`; n ≥ K + 2 for the player and the exploding
+    // barrel or, under episode1, the exploding rocket, which `spatial.order` holds
+    // although it is NOBLOCKMAP: `LifeHost::spawn` links every thing) that is at
+    // most n(R + 2) − 2.
     let roster = h
         .world
         .episode1
