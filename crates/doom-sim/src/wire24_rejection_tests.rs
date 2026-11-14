@@ -101,8 +101,10 @@ fn wire_24_refuses_the_129th_intercept_and_keeps_the_state() {
     let mut hall = Lumps::parse(include_bytes!("../../../tests/reference/m3h6_witness.bin"));
     assert_eq!(hall.map().linedefs().len(), 200);
     hall.add_thing([-1000, 100, 0, 1, 7]);
-    let mut fire = TicCommand::default();
-    fire.buttons = BT_ATTACK;
+    let fire = TicCommand {
+        buttons: BT_ATTACK,
+        ..TicCommand::default()
+    };
     let mut first_refusal = [None, None];
     for (slot, policy) in [V1, V2].into_iter().enumerate() {
         let mut s = setup(&hall, policy);
