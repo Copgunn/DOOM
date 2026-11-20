@@ -610,6 +610,11 @@ monster/player behavior. Further stages require separate owner direction.
     ruling:** the mouse-forwarding logic moves out of `crates/doom-play/src/input_log.rs` into a file named for what it does, and the review's three minor
     points are closed (M1: the log gains a line for each committed tic's command or fire bit and names the session; M2: the stale test comment at
     `crates/doom-play/src/audio.rs:601`; M3: the log's module comment states the exceptions to its pump rule and what position a button line carries on Windows).
+- **M6a (Episode 1 from start to finish, in one session).** Phase 1 is written (2026-11-20, branch
+  `feat/m6a-episode1-continuous`) and waits for the owner's rulings on decisions U1–U15 of the
+  [investigation note](M6A_REFERENCE_INVESTIGATION.md#5-owner-decisions-u1u15-with-recommendations); until then only
+  genuine-engine tools proceed, and Phase 2's code starts after M5d (the first item above, in progress on its own
+  branch) is merged.
 - **Simulation follow-up (decided: the THING-loading truncation is closed under wire 25 only).** `P_LoadThings` ends the
   whole THINGS loop at the first Doom II type (doomednums 64-69, 71, 84, 88, 89) when `gamemode != commercial`
   (p_setup.c:317-337). Wire 25 (decision T4, confirmed 2026-11-18) stops loading there, with a synthetic map and

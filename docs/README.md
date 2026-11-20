@@ -178,3 +178,7 @@ original evidence and former guide contents with exact-byte copies and digests.
   level-start wipe, the two genuine-engine harness prototypes, what the simulation gives today, the Rust
   design, a measured audio-library comparison, decisions T1–T16 (confirmed 2026-11-18) and the plan;
   in progress; [support](COMPATIBILITY.md#sound-effects-m5c) and [observations](validation/M5C.md)).
+- [M6a Episode 1 from start to finish in one session investigation](M6A_REFERENCE_INVESTIGATION.md)
+  (the original C facts of level completion, the carried player, the intermission, the finale, the single-player
+  reborn, demos across levels and the wipes; what the Rust code does today; the genuine-engine prototype run across
+  levels; the Rust design; decisions U1–U15 with recommendations, waiting for the owner; and the plan).
