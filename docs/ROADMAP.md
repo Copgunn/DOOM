@@ -619,6 +619,11 @@ monster/player behavior. Further stages require separate owner direction.
     pause box can still be wrong until exit, and a panic inside the rewrite at exit has no test). (3) **Code signing of the Windows build, for the first
     release:** Windows Smart App Control refused to start the unsigned build on the owner's machine
     ([limit](COMPATIBILITY.md#windows-smart-app-control-blocks-the-unsigned-build)).
+- **M6a (Episode 1 from start to finish, in one session).** Phase 1 is written (2026-11-20, branch
+  `feat/m6a-episode1-continuous`) and waits for the owner's rulings on decisions U1–U15 of the
+  [investigation note](M6A_REFERENCE_INVESTIGATION.md#5-owner-decisions-u1u15-with-recommendations); until then only
+  genuine-engine tools proceed, and Phase 2's code starts after M5d (the first item above, in progress on its own
+  branch) is merged.
 - **Simulation follow-up (decided: the THING-loading truncation is closed under wire 25 only).** `P_LoadThings` ends the
   whole THINGS loop at the first Doom II type (doomednums 64-69, 71, 84, 88, 89) when `gamemode != commercial`
   (p_setup.c:317-337). Wire 25 (decision T4, confirmed 2026-11-18) stops loading there, with a synthetic map and

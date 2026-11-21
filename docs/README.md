@@ -181,3 +181,7 @@ original evidence and former guide contents with exact-byte copies and digests.
 - M5d play fixes (stuck fire on Windows, sound-latency statistics, a session file that Ctrl+C cannot lose):
   at the owner's review gate; no separate investigation note, by the owner's instruction ([observations](validation/M5D.md);
   [ROADMAP](ROADMAP.md)).
+- [M6a Episode 1 from start to finish in one session investigation](M6A_REFERENCE_INVESTIGATION.md)
+  (the original C facts of level completion, the carried player, the intermission, the finale, the single-player
+  reborn, demos across levels and the wipes; what the Rust code does today; the genuine-engine prototype run across
+  levels; the Rust design; decisions U1–U15 with recommendations, waiting for the owner; and the plan).
