@@ -57,7 +57,7 @@
 //! the command but the turbo test below. The finale is still a typed "not yet" refusal; the Doom 1
 //! finale reads no command (`F_Ticker`, f_finale.c:207-249, reads one for Doom II only), so the
 //! same rule (`BT_SPECIAL` refused, everything else accepted) applies there when it is built
-//! ([`command_domain`]).
+//! (`command_domain`).
 //!
 //! **The turbo message** (g_game.c:671-679; owner's ruling 1 of 2026-11-22) tests `gametic`, the
 //! session's tic count: wire 26 reads the load's `gametic` plus the level tic, so a level after a
