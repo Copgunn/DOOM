@@ -35,6 +35,11 @@ public examples and checks use synthetic or redistributable inputs.
 
 ## Short glossary
 
+- **Tic:** the 1/35-second step in which DOOM updates its world; game logic runs at 35 tics a second.
+- **Vanilla:** the original unmodified game, limits and quirks included.
+- **Source port:** a modern rewrite or adaptation of a game's released source code.
+- **Demo:** a file of a player's recorded inputs; it replays in sync only if every tic matches.
+- **TAS:** tool-assisted speedrun, a run built input by input with tools.
 - **Deterministic simulation:** the same inputs and initial state produce the same results.
 - **Fixed-point arithmetic:** integer-based fractions with explicit rounding and overflow rules.
 - **RNG:** random-number generator; gameplay owns its sequence rather than using global randomness.
