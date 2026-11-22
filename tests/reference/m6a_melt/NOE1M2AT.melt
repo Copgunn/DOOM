@@ -1,0 +1,6 @@
+#schema,DOOM-M6A-MELT-v1
+#claim,none: melt pictures under the runner's --melt-clock unit evidence switch; the declared melt schedule is settled by a later section of docs/M6A_REFERENCE_INVESTIGATION.md, and the original's in-between pictures depended on machine speed
+#melt_steps,-
+#columns,V,tic,step,tics,done,sha256
+#columns,Y,tic,wipe,gamestate,start_sha256,end_sha256,palette,palette_set,clock
+#columns,W,tic,draws,steps

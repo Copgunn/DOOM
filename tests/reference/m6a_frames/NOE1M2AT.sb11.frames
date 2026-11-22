@@ -1,0 +1,19 @@
+#schema,DOOM-M5C-FRAMES-v1
+#columns,F,tic,sha256,masked_sha256,fuzzpos,mapped,columns,visplanes,drawsegs,vissprites,openings,solidsegs_peak,drawseg_drops,vissprite_drop,whole
+#columns,M,tic,lines
+#columns,N,origin,name
+#columns,U,tic,x,origins
+#columns,O,tic,witness,visplanes,openings,solidsegs_peak
+#columns,E,tic,message
+#columns,P,tic,palette,palette_set,face,message_on,rndindex
+#columns,X,tic,code,text
+#columns,D,tic,st_draws,other_draws,bar_undef_px,skipped_patches,beyond_rows,lump_overrun,view_sha256
+#columns,W,kind,x,y,calls,first,min,max,changes
+#columns,Z,totals
+#columns,Q,tic,noface_sha256,snd_draws,wipe_draws,face_x0,face_y0,face_x1,face_y1
+#config,screenblocks,11,detail,0,render,every
+#config-m5c,sound,on,wipe,genuine,handle,integrated,schedule,tic
+#schema-m6a,DOOM-M6A-FRAMES-v1
+#columns,G,tic,gamestate,sha256,palette,palette_set,rndindex,skipped_patches,beyond_rows,lump_overrun
+#config-m6a,game_mode,registered,melt_clock,counter
+E,-1,W_GetNumForName: d_e1m2 not found!
