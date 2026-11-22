@@ -6,7 +6,7 @@ The behavioural authority is the original id Software Linux DOOM 1.10 at `a77dfb
 
 Each statement is labelled: **(read)** read in the source; **(observed)** seen by running a scratch prototype, with the command in [§1.15](#115-what-was-run-and-what-was-not) or [§3](#3-harness-design-evidence-first); **(inferred)** reasoned from cited lines and not run. The facts come from two Phase 1 research reports (C facts; the Rust code and harness), kept with their prototypes under `~/scratch/m6a/` until the milestone ends; the writer of this note re-read a sample of their citations against the source ([§1.15](#115-what-was-run-and-what-was-not)).
 
-**Status / next step (2026-11-21 17:50 PST).** **The owner's rulings on U1–U15 were received on 2026-11-21 and are recorded under each decision in [§5](#5-owner-decisions-u1u15-with-recommendations); Phase 2 is in progress.** U4 and U9 were ruled differently from the recommendations. **Step 1, the genuine `m6a` runner, is done** (`tools/reference/m6a_build.py`, `m6a_session.c`, `m6a_wi_access.c`, `m6a_reference.py`; commands in [TESTING](TESTING.md#the-genuine-m6a-runner-phase-2-step-1)). **Step 2's level-chain part is done**: the synthetic multi-map WADs, pictures, music and variants (`tools/reference/m6a_wad.py`), 18 items for exits, intermission paths, the carried player, reborns, the secret route, the reborn-beats-a-same-tic-exit witness (U8 item 12, now observed: [§1.9](#19-death-and-reborn-in-single-player)) and three music refusals, with goldens from the genuine engine only (`tools/reference/m6a_goldens.py`; commands in [TESTING](TESTING.md#the-synthetic-session-items-and-their-goldens-phase-2-step-2)); the finale, melt-picture and skill items of step 2 follow. The order of work is the owner's ([§6.5](#65-order-of-work-owners-ruling-2026-11-21)): the playable chain first, then a stop for the owner's hand test, then the finale, the melt pictures and the easy skills. No Rust source, `Cargo.toml`, frozen tool, golden or existing file under `tests/reference` has changed; steps 1 and 2 added new `m6a_*` files only. This branch starts at master `d637f7d` and has since merged master; M5d is merged.
+**Status / next step (2026-11-21 18:55 PST).** **The owner's rulings on U1–U15 were received on 2026-11-21 and are recorded under each decision in [§5](#5-owner-decisions-u1u15-with-recommendations); Phase 2 is in progress.** U4 and U9 were ruled differently from the recommendations. **Steps 1 and 2 are done.** Step 1: the genuine `m6a` runner (`tools/reference/m6a_build.py`, `m6a_session.c`, `m6a_wi_access.c`, `m6a_reference.py`; [TESTING](TESTING.md#the-genuine-m6a-runner-phase-2-step-1)). Step 2: the synthetic multi-map WADs (`m6a_wad.py`) and 26 items with goldens from the genuine engine only (`m6a_goldens.py`; [TESTING](TESTING.md#the-synthetic-session-items-and-their-goldens-phase-2-step-2)); its open points are in [§6.6](#66-open-items-from-step-2-and-what-keeps-them-open). **Step 3 is partly done**: the `HELP2` stop is observed in registered mode and `CREDIT` in retail ([§1.5](#15-game-modes-and-how-the-owners-doomwad-is-identified)); the retail comparison of the 61 runs is **running** (first tool 61 of 61, second tool not finished; nothing relies on retail until all 61 are compared). The melt is settled in [§1.16](#116-the-melt-settled-for-u9) and the map-by-skill load report is in [§1.17](#117-maps-and-skills-the-load-report). **Step 4 (wire 26) is in progress** on a side worktree. **Next:** steps 5 to 9 for the level chain, then the windows-artifact label on the draft PR and the stop for the owner's hand test; after it the finale, the melt pictures, the easy skills and E1M7 on skill 3. The order of work is the owner's ([§6.5](#65-order-of-work-owners-ruling-2026-11-21)). Nothing here has changed Rust source, `Cargo.toml`, a frozen tool, a golden or an existing file under `tests/reference`; steps 1 and 2 added new `m6a_*` files only. This branch starts at master `d637f7d` and has since merged master.
 
 ## Summary
 
@@ -74,9 +74,10 @@ Single player, one tic per `G_Ticker`.
 
 - (read) `IdentifyVersion` (d_main.c:563-717) tests only file names, in order: the Doom II names, then `doomu.wad` → **retail** (690-695), `doom.wad` → **registered** (697-702), `doom1.wad` → shareware (704-709). No lump probe upgrades registered to retail. So the owner's four-episode `DOOM.WAD`, found as `doom.wad`, runs as **registered**; named `doomu.wad` it runs as retail. The Rust app mirrors this (crates/doom-play/src/main.rs:236-248: lower-cased name; `doom1.wad` shareware, `doomu.wad` retail, anything else registered; `GameMode` in crates/doom-render/src/r_data.rs:361-369), and the M5c runner hard-codes registered (tools/reference/m5c_driver.c:1903).
 - Along the Episode 1 path the modes differ only in:
-  1. (read) **The finale's art screen**: retail draws `CREDIT`, every other Doom 1 mode `HELP2` (f_finale.c:714-720). (observed) The owner's `DOOM.WAD` has `CREDIT` and **does not have `HELP2`** (68 of the 69 finale, music, font and palette names the C needs are present; `HELP2` is the one missing). (inferred, not run) Run as `doom.wad`, the genuine engine would stop with `W_GetNumForName: HELP2 not found!` (w_wad.c:399-409) at the first display of finale stage 1, about 1,571 tics after E1M8 ends.
+  1. (read) **The finale's art screen**: retail draws `CREDIT`, every other Doom 1 mode `HELP2` (f_finale.c:714-720). (observed) The owner's `DOOM.WAD` has `CREDIT` and **does not have `HELP2`** (68 of the 69 finale, music, font and palette names the C needs are present; `HELP2` is the one missing). (observed, step 3) Run on a scratch copy named `doom.wad` (registered), the genuine engine stops with `W_GetNumForName: HELP2 not found!` (w_wad.c:399-409) on finale tic 1,571, in that tic's display, in `F_Drawer`'s registered branch (f_finale.c:714-721), after `wipe_StartScreen` captured the start screen and before any melt (skills 2 and 3, strict and address builds, 0 sanitizer reports; leak detection disabled); on a scratch copy named `doomu.wad` (retail) it wipes into `CREDIT`. This turns the earlier inference into an observation.
   2. (read) The switch list: registered has episodes 1–2, retail only episode 1 (p_switch.c:113-119). (observed) None of the nine Episode 1 maps of the owner's IWAD names an episode-2 switch texture (0 of 9), so this changes nothing on those maps.
   3. The title loop, banners and menus: not in M6a; they move to a later milestone, to be named by the owner (not optional). The episode clamp, the intermission (same lumps and code for episode 1), the par times and the finale text are the same in registered and retail.
+- **Retail runs of the 61 (observed, 2026-11-21 18:50 PST; counts only).** The two one-line mode edits (the driver's `gamemode` and the Rust rows' `GameMode`) live only in scratch copies of the frozen tools; nothing of them is committed, and the committed tools get the mode as a switch in the new `m6a` files only. The first tool (sound rows, frames at both screen sizes, the mixer; Rust retail against genuine retail) finished **61 of 61 with exit 0** (17:40-18:19): 158,966 tics, 26,077 sound starts compared with 0 differing rows, frames at screenblocks 10 and 11 with 0 mismatched rows, the mixer equal in 61 of 61 runs. The second tool (state dumps and frame digests against the committed registered results) **was still running at the time of writing**. By the owner's ruling, **nothing relies on retail until all 61 are compared, including state dumps and frame digests**; this is not yet met.
 
 ### 1.6 The intermission (single player, episode 1)
 
@@ -110,7 +111,7 @@ Single player, one tic per `G_Ticker`.
 - (read) `G_DoCompleted` on map 8 finishes the players and returns with `ga_victory` (1026-1038); the same `G_Ticker` calls `F_StartFinale` (f_finale.c:96-191: `gamestate = GS_FINALE`, `S_ChangeMusic(mus_victor)`, the flat `FLOOR4_8` and the episode-1 text, stage 0, count 0), and the first `F_Ticker` runs in that same `G_Ticker` (g_game.c:740-742).
 - (read) E1M8 ends through an exit line or switch or sector special 11, which removes god mode, damages 20 every 32 tics and exits when health is 10 or less (p_spec.c:1054-1063); invulnerability still blocks its damage (p_inter.c:847-852).
 - (read, observed) `F_Ticker` (207-249): the button skip is Doom II only (212-227); `finalecount++`; stage 1 begins when `finalecount > strlen(text)*3 + 250` (241-248). The episode-1 text is 440 characters, so **stage 1 begins on finale tic 1,571**, counting the `G_Ticker` that ran `G_DoCompleted` as 1 (observed with the genuine `f_finale.c`), with a forced wipe (245). The text crawl draws `(finalecount-10)/3` characters (261-327; 69 characters of the episode-1 text fall outside the font and are drawn as 4-pixel gaps).
-- (read) Stage 1 draws `CREDIT` (retail) or `HELP2` (other Doom 1 modes) every frame, forever ([§1.5](#15-game-modes-and-how-the-owners-doomwad-is-identified)).
+- (read) Stage 1 draws `CREDIT` (retail) or `HELP2` (other Doom 1 modes) every frame, forever ([§1.5](#15-game-modes-and-how-the-owners-doomwad-is-identified)). (observed, step 3) Registered on the owner's IWAD the engine stops at finale tic 1,571 with `HELP2 not found!`; retail shows one unchanging `CREDIT` picture from that tic for the 630 tics that followed in the run.
 - (read) **The finale never ends by itself in Doom 1**: no Doom 1 path writes `gameaction` or `gamestate` (207-249), and `F_Responder` serves only the Doom II cast (195-201). The way out is the menu, which is not in M6a (the menus move to a later milestone, to be named by the owner; not optional). (inferred) A session therefore ends in the finale only when the player quits; a recording keeps one command per tic for as long as it runs.
 - (read, observed) The episode-1 finale starts no sound and draws no random number (0 `M_Random` draws in 4,000 finale tics apart from the wipes).
 
@@ -136,7 +137,8 @@ Single player, one tic per `G_Ticker`.
 - (read) Transitions that wipe on this path: level → intermission; intermission → level; level → finale; the finale's text → art screen (`wipegamestate = -1`, f_finale.c:245); the reborn reload (forced, g_game.c:472-473); the session start (M5c T6). Nothing wipes inside the intermission.
 - (inferred) The normal route E1M1…E1M8 makes 1 + 7×2 + 1 + 1 = **17 wipes**; with the secret route 19; plus one per reborn. Each moves the `M_Random` index by 64 (320 mod 256). (observed) The prototype's synthetic run made 10 wipes, each of exactly 320 draws.
 - (inferred) Under M5c's declared one-tic-per-display schedule, each wipe's draws fall after the frame of the first tic in the new state: after intermission tic 1 (after its 10 animation draws); after the load tic of a new or reloaded map (after tic 0's sound and status bar draws, and after a chainsaw `sfx_sawup` at the load); after finale tic 1; after finale tic 1,571. Two state changes cannot fall between two displays on this path under that schedule.
-- **A side note on M5c, read and not run.** M5c §1.4.4 item 8 says no `I_SetPalette` has run when the first melt starts, reasoning from `st_palette`'s static initial value 0. But `ST_Start` → `ST_initData` sets `st_palette = -1` (st_stuff.c:1266) before the first frame, and `ST_Drawer` calls `ST_doPaletteStuff` unconditionally (st_stuff.c:1115), which calls `I_SetPalette` when the palette differs (1045-1050). The first level display after tic 0 (`gametic` is then 1, so d_main.c:238-239 do not skip it) therefore sets palette 0 before `wipe_EndScreen` (d_main.c:327) and the melt. The start screen is still captured before any palette is set (d_main.c:226). This matters only for the melt's colours, which no claim covers; it is recorded here and the M5c note is left as written.
+- **Settled in [§1.16](#116-the-melt-settled-for-u9)** (the clock, the first melt's source, the palette, sound and input during a melt). The side note below is now **observed** there: the first melt shows tic 0's status-bar palette in every run (1.16.3).
+- **A side note on M5c, read and not run** (now observed, see above). M5c §1.4.4 item 8 says no `I_SetPalette` has run when the first melt starts, reasoning from `st_palette`'s static initial value 0. But `ST_Start` → `ST_initData` sets `st_palette = -1` (st_stuff.c:1266) before the first frame, and `ST_Drawer` calls `ST_doPaletteStuff` unconditionally (st_stuff.c:1115), which calls `I_SetPalette` when the palette differs (1045-1050). The first level display after tic 0 (`gametic` is then 1, so d_main.c:238-239 do not skip it) therefore sets palette 0 before `wipe_EndScreen` (d_main.c:327) and the melt. The start screen is still captured before any palette is set (d_main.c:226). This matters only for the melt's colours, which no claim covers; it is recorded here and the M5c note is left as written.
 
 ### 1.12 Skills, sized
 
@@ -184,7 +186,326 @@ Each has its decision in [§5](#5-owner-decisions-u1u15-with-recommendations).
 - **IWAD counts** (read-only scan of the owner's `DOOM.WAD`): 2,306 lumps; 79 of 79 intermission names; 68 of 69 finale, music, font and palette names (missing: `HELP2`); E1M1–E1M9 present; 0 of 9 maps use an episode-2 switch texture.
 - The harness prototype and its runs are in [§3](#3-harness-design-evidence-first).
 - **Citations re-checked by the writer of this note** against the source: g_game.c:445-497, 605-650, 812-832, 920-933, 1002-1018, 1030-1066, 1084-1120, 1145-1180, 1412-1415, 1512-1520, 1536-1541, 1586-1589; p_setup.c:592-618, 646; m_random.c:50-72; p_pspr.c:138-154; p_mobj.c:504-507, 655-662, 740-752; p_inter.c:93-102, 797-801, 836-843; p_spec.c:492-540, 670-682, 1054-1063; p_map.c:495-515; p_user.c:225-229; wi_stuff.c:224-240, 296-300, 518-526, 584-590, 745-770, 786-804, 810-816, 1410-1425, 1460-1467, 1474-1498, 1503-1518, 1822-1836; f_finale.c:52-57, 108-121, 238-249, 708-720; d_main.c:207-211, 220-262, 270-276, 390-393, 686-710; s_sound.c:205-214, 606-613, 649-686; i_sound.c:838-846, 884-890; st_stuff.c:384, 1040-1052, 1105-1122, 1262-1268, 1440-1456; hu_stuff.c:103; d_event.h:78-92; p_switch.c:113-119; and the Rust lines of §2.1–§2.3. **Corrected**: the finale's art switch is f_finale.c:714-720 (one report gave 712-718, another 714-720); state 10 is wi_stuff.c:1413-1424 (one report gave 1408-1416); `S_ChangeMusic(mus_victor)` is f_finale.c:114 (one report gave 113); and `attackdown` does exist in the Rust simulation, as `attack_down` in the weapon state (crates/doom-sim/src/weapons.rs:235), canonical in the capture (crates/doom-sim/src/diagnostic.rs:2612-2649), though one report had not found it.
-- **Not run**: the genuine engine on E1M8 or the finale with the owner's IWAD, so the `HELP2` stop stays inferred; the retail mode; the genuine mixer across a boundary; the reborn-beats-exit case; any timing or memory measurement.
+- **Not run in Phase 1** (later observations: the `HELP2` stop and the retail finale are observed in [§1.5](#15-game-modes-and-how-the-owners-doomwad-is-identified) and [§1.16](#116-the-melt-settled-for-u9); the reborn-beats-exit case in [§1.9](#19-death-and-reborn-in-single-player)): the genuine engine on E1M8 or the finale with the owner's IWAD, the retail mode, the genuine mixer across a boundary, the reborn-beats-exit case, any timing or memory measurement. Still not run: the genuine mixer across real-map melts and any timing.
+
+### 1.16 The melt, settled for U9
+
+The owner ruled on U9 ([§5](#5-owner-decisions-u1u15-with-recommendations)) that the melt is in M6a and compared step by step, and asked for this section first. It is
+written from linuxdoom-1.10 and from genuine runs of the M6a runner (step-1 builds, strict and address) with its
+melt switch `--melt-clock unit` (one `wipe_ScreenWipe` call per melt step, each with `ticks = 1`). **The original's
+in-between pictures depended on the speed of the machine; what the port can claim is identity under the declared
+schedule of 1.16.1, not what any particular 1997 machine showed.** The C settles all five points under
+the declared schedule; the owner then ruled on sound and on input during a melt (Rulings, below). The section corrects
+one statement of the M5c note (§1.4.4 item 8, see 1.16.3) and leaves that note as written.
+
+Runs used (observed; commands at the end of the step-3 report): **SPAN** (the Phase 1 synthetic six-map WAD: 588 tics,
+10 melts, under both clocks); **MELTPAL** (a new scratch synthetic WAD of three corridors: an exit 8 tics after a 20%
+floor hit, an exit with a clip's bonus flash, a death on a damage floor with use held and a reborn on a safe start;
+702 tics, 4 loads, 6 melts); and on the owner's IWAD, counts only, **M8WALK and M8WALK3 extended with idle tics** (E1M8
+to the sector-11 exit, then the finale) in both game modes (3 melts each in retail, 2 in registered before the `HELP2`
+stop). 24 melts in all.
+
+#### 1.16.1 The clock: one melt step per tic
+
+- (read) The loop that presents the melt is `wipestart = I_GetTime () - 1; do { do { nowtime = I_GetTime (); tics =
+  nowtime - wipestart; } while (!tics); wipestart = nowtime; done = wipe_ScreenWipe (wipe_Melt, ..., tics);
+  I_UpdateNoBlit (); M_Drawer (); I_FinishUpdate (); } while (!done);` (d_main.c:329-344). `I_GetTime` is
+  wall-clock 1/35 s (i_system.c:88-100), so `tics` is the number of tics that passed since the previous call: at least
+  1, and 1 on the first call when the clock has not moved since line 329 (the `- 1`). How many tics each call got
+  depended on how long a pass (the melt step, the blit and the X sync) took on that machine.
+- (read) `wipe_doMelt` runs its whole per-tic body once per tic inside `while (ticks--)` (f_wipe.c:188-220); the
+  column positions `y[]` and `screens[0]` carry over between iterations and between calls alike, `wipe_initMelt`
+  runs once per melt (`go`, f_wipe.c:280-286), and only the returned `done` flag is computed over the call
+  (f_wipe.c:184, 194, 217, 222). (inferred from those lines) So **a call with `ticks = k` leaves exactly the picture of
+  k calls with `ticks = 1`**; `ticks = 1` is the finest granularity the C can produce; a machine that drew each step
+  in less than a tic produced exactly the `ticks = 1` schedule (first call included, because of the `- 1`); and a
+  slower machine showed a subsequence of those pictures, the ones at its cumulative tick counts, always ending with
+  the end screen. (The one exception is a clock that steps backwards, which makes `tics` negative: M5c §1.4.8 item
+  5, outside any schedule.)
+- (read, inferred) **How many steps.** `wipe_initMelt` makes the 320 `M_Random` draws and sets column offsets
+  `y0[i]` in -15..0 for the 160 two-pixel columns used (f_wipe.c:158-166; M5c §1.4.3 item 6). A column then waits
+  `-y0[i]` tics and moves 27 tics (1, 3, 7, 15, 31, then 8 a tic to 199, then 1: f_wipe.c:196-208), and the call that
+  returns done is the first in which nothing moved. With `ticks = 1` that is **N = 28 + max over i < 160 of (-y0[i])**
+  calls, a function of the `M_Random` index at the melt's start only. (observed, recomputed here from `rndtable`,
+  m_random.c) Over the 256 starting indices N is 34 to 43 (34:3, 35:46, 36:4, 37:10, 38:63, 39:17, 40:16, 41:20,
+  42:15, 43:62 indices), as M5c §1.4.3 item 11 found; about 0.97 to 1.23 s at 35 a second.
+- (observed) In **24 of 24 melts** the number of steps under `--melt-clock unit` equals N predicted from `rndtable`
+  and the index before the wipe (the session row's `rndindex` minus 320); `done` is returned on the last step only.
+- **The picture after step k** (read, f_wipe.c:192-216): column pair i (pixels 2i and 2i+1, moved as one `short`)
+  shows end-screen rows 0..y_k[i]-1 at the top and start-screen rows 0..199-y_k[i] pushed down below them, where
+  y_k[i] is the column's position after k tics; a column still waiting shows the start screen. (observed) In all 24
+  melts the **last two pictures are identical and equal the end screen**, which is the composed frame of that tic
+  (the `Y` row's end digest; for level frames also equal to the frame's whole digest). The first picture equals the
+  start screen when no column starts at 0 (36 of the 256 indices); observed once (MELTPAL tic 218, index 120: every
+  column waits at least 6 tics, so pictures 1 to 6 equal the start screen and the melt shows 37 distinct pictures in
+  43 steps).
+- **Why the step-1 "unit" clock gives one more step than the "counter" clock** (read): the M5c runner's clock is a stub
+  that returns a counter incremented on every call (tools/reference/m5c_stubs.c:104-105). Line 329 then reads c+1 and
+  sets `wipestart = c`; the first read in the busy wait returns c+2, so the first call gets `ticks = 2`, and every
+  later call 1 (each read advances the counter by one). The counter clock therefore covers ticks 1 and 2 in one call
+  and needs one call fewer; it is the case of a machine on which one tic passed between lines 329 and 335. (observed,
+  SPAN) In 10 of 10 melts the counter run has exactly one step fewer, and every counter picture equals the unit
+  picture at the same cumulative tick count.
+- **Rule the port declares** (settled by the C): during a melt, one `wipe_ScreenWipe` step with `ticks = 1` per tic of
+  wall time; a melt started by the display of tic t shows its N pictures, one per tic, the last two both equal to
+  tic t's composed frame, and then tic t+1 runs. This is the original on a machine fast enough to draw a melt step
+  within a tic; the claim is identity of every picture under this schedule. **No ruling needed.**
+
+#### 1.16.2 What the first melt of a session melts from
+
+- (read) `wipe_StartScreen` copies `screens[0]` (f_wipe.c:243-244; `I_ReadScreen`, i_video.c:527-530) at the start of
+  the display, before anything of the new frame is drawn (d_main.c:223-227). Nothing draws into `screens[0]` between
+  start-up and the first display (M5c §1.4.4 item 8).
+- (read) In the original, `I_InitGraphics` (d_main.c:367) replaces `screens[0]` with the X image buffer
+  (i_video.c:910-913). On a local display that is a MIT-SHM segment (`doShm`, i_video.c:776, 787) obtained by
+  `grabsharedmemory` (i_video.c:595-690): a segment it creates, which the kernel hands out zero-filled (inferred, OS
+  behaviour, not in this repository), or a stale segment left by another user and reused with its old contents
+  (i_video.c:641-646, "will use %d's stale shared memory"). Without MIT-SHM it is a `malloc` of indeterminate contents
+  (i_video.c:898-907), as with `-2`, `-3` or `-4` (913).
+- (observed) The runner does not call `I_InitGraphics`; its `screens[0]` is `V_Init`'s zero-filled allocation
+  (v_video.c:482-493, `I_AllocLow`'s `memset`, i_system.c:147-154). The first melt's start screen has the SHA-256 of
+  64,000 zero bytes in every run (SPAN, MELTPAL, the four IWAD runs and step 1's).
+- **What differs from an original started with `-warp` or `-playdemo`:** nothing in the usual local case (a fresh
+  zero-filled segment); the original differs only when it reused a stale segment or ran without shared memory, where
+  its start screen was other or indeterminate bytes. A session started at any map is the `-warp` case. **An original
+  started normally** (no `-warp`, no `-playdemo`) runs the title loop and the menu first (d_main.c:1163-1166,
+  `D_StartTitle`), so its first level melts from the last title-loop picture with the menu drawn on it (the menu is
+  drawn into `screens[0]` on every display, d_main.c:315). The title loop and the menus are not in M6a; they move to a
+  later milestone, to be named by the owner (not optional).
+- **Rule:** the first melt melts from an all-zero screen (R8's zeroed buffer; the original's fresh-segment case).
+  Settled; **no ruling needed**: the original's other cases depend on the machine's environment, and zero is the
+  genuine outcome on a local display with a fresh segment.
+
+#### 1.16.3 Which palette is active for each melt
+
+- (read) linuxdoom draws only to an 8-bit PseudoColor visual (i_video.c:771-772); the picture holds palette indices
+  and `I_SetPalette` stores the 256 colours into the window's colormap (i_video.c:538-585), which recolours whatever
+  the window shows. The melt loop calls no `I_SetPalette` (d_main.c:331-344; `M_Drawer` draws nothing without a menu or
+  message, m_menu.c:1749-1782). So **every picture of a melt, start-screen columns included, is shown under the
+  palette in force when that display reaches the melt**, which is the palette its end frame is drawn for; the start
+  columns were drawn, and last shown, under the palette of the previous frame. No picture of a melt is ever shown
+  under the previous palette, because a display that wipes calls `I_FinishUpdate` only inside the melt loop
+  (d_main.c:320-324).
+- (read) Which `I_SetPalette` call precedes each kind of melt:
+  - **Session start**: `ST_Drawer` → `ST_doPaletteStuff` (st_stuff.c:1115, 1000-1050) with `st_palette = -1` from
+    `ST_initData` (st_stuff.c:1266) sets the palette of tic 0's player (red for damage, gold for a bonus, green for
+    the suit, else 0). Before it no `I_SetPalette` has run (the first `ST_Start` skips `ST_Stop`,
+    st_stuff.c:1447-1448, 1456-1461), so no picture is ever shown under an unset colormap. **This corrects M5c §1.4.4 item 8**
+    ("the colours on screen during the melt ... are whatever that colormap holds"), as the side note of §1.11 already
+    said; M5c §1.4.7(b) item 5's proposal (PLAYPAL 0) is therefore not the original either: the melt shows tic 0's
+    status-bar palette.
+  - **Level → intermission** and **level → finale**: `I_SetPalette (PLAYPAL)`, palette 0, in that display
+    (d_main.c:274-275: the state changed and is not a level). `G_PlayerFinishLevel` has zeroed `damagecount` and
+    `bonuscount` (g_game.c:790-791), but the last level frame may have been drawn red or gold.
+  - **Intermission → level**: the load's `P_SpawnPlayer` → `ST_Start` → `ST_Stop` (p_mobj.c:696; st_stuff.c:1444-1464)
+    sets palette 0 inside the tic, then the display's `ST_doPaletteStuff` (`st_palette = -1`) sets the new player's
+    palette (0 unless tic 0 hurt or rewarded the player).
+  - **Finale text → art screen** (`wipegamestate = -1`, f_finale.c:245): no call; palette 0 from the finale's entry
+    stays (the state did not change, d_main.c:274).
+  - **Reborn reload** (`wipegamestate = -1`, g_game.c:472-473): as intermission → level: `ST_Stop` sets palette 0 in
+    the load tic and the display sets the reborn player's palette. A dead player's red fades (`P_DeathThink`
+    decrements `damagecount`, p_user.c:213-224) but a bonus flash does not (the decrement is after the dead player's
+    return, p_user.c:258-261, 358-359), so the frame before a quick reborn is usually red.
+- (observed, the `Y` row: palette at the melt and whether it was set in that display; the previous frame's palette from
+  its `P` or `G` row):
+
+  | Melt | Run | Previous frame's palette | Melt palette (set in the display?) |
+  | --- | --- | --- | --- |
+  | session start | MELTPAL, IWAD (4 runs) | none (zero screen) | 0 (set) |
+  | session start, clip touched on tic 0 | SPAN | none | 10 (set) |
+  | level → intermission, 8 tics after a 20% hit | MELTPAL tic 72 | 3 (damagecount 12) | 0 (set) |
+  | level → intermission, bonus flash at the exit | MELTPAL tic 218 | 10 (bonuscount 5) | 0 (set) |
+  | intermission → level | MELTPAL tics 141, 287; SPAN | 0 | 0 (set); 4 on SPAN tic 83 (damage floor at tic 0) |
+  | level → finale, sector-11 exit on the damage tic | IWAD M8WALK tic 5,813 | 4 (damagecount 19) | 0 (set) |
+  | finale text → art | IWAD retail tics 7,383, 7,075 | 0 | 0 (not set) |
+  | reborn, use held, dead and red | MELTPAL tic 449 | 4 (damagecount 18) | 0 (set) |
+  | reborn onto a damage floor | SPAN tic 289 | (level frame) | 4 (set) |
+
+- **Rule:** every picture of a melt is converted with the palette in force at the end of the display that started it
+  (the end frame's palette), through the declared gamma table (S13); the palette does not change during a melt.
+  Settled by the C; **no ruling needed**. (inferred) One effect of the original falls outside every picture: on the
+  original's display, the `ST_Stop` call in a load tic and the call at d_main.c:275 recolour the frame already on
+  screen a few milliseconds before the first melt picture; under one picture per tic that interval holds no picture.
+
+#### 1.16.4 Sound and the mixer while a melt runs
+
+- (read) The melt loop calls no `S_UpdateSounds`, `I_UpdateSound`, `I_SubmitSound`, `NetUpdate` or `G_Ticker`
+  (d_main.c:331-344). In `D_DoomLoop` the order is tics, `S_UpdateSounds` (392), `D_Display` (395, the melt inside),
+  then `I_UpdateSound` (397-400, compiled without `SNDSERV`) and `I_SubmitSound` (402-405, without `SNDINTR`). No sound
+  starts during a melt: starts happen only inside tics (M5c §1.2).
+- (read) What that does in each build (M5c §1.3.0):
+  - **The reference build** (decision T2: the in-process sound code, `SNDSERV` removed, `SNDINTR` undefined): nothing
+    is mixed or written for the whole melt. The mixer's channels keep their positions; the next buffer, mixed after
+    `D_Display` returns, continues them where they stood. The device, asked for two fragments of 2,048 bytes
+    (i_sound.c:775-776), plays what it holds (at most about 93 ms) and is then starved: **silence for the rest of the
+    melt**, about 1 s.
+  - The shipped build (`SNDSERV`, doomdef.h:84): the separate `sndserver` process mixes on its own and the sounds
+    already started play on through the melt. The timer build (`SNDINTR`): the timer keeps calling `I_UpdateSound`.
+    The owner declined both on 2026-11-21 (the separate sound server; timer-driven sound), and T2 fixed the
+    in-process build as the reference, so neither is a candidate.
+- (read, observed) **The repository's mixer harness today.** Its declared schedule (`ticbuffers`, M5c T5;
+  tools/reference/m5c_mixer_driver.c:44-48) mixes buffer k after tic floor(512k/315): the number of buffers is a
+  function of tics only, and the M5c session-start melt, which takes no time under T6, adds none. (observed) The
+  genuine mixer driver fed the start list of MELTPAL's sound stream (6 melts, 702 tics): 432 buffers, exactly the
+  number the formula gives for 702 tics; the melts contributed none.
+- **The two options under one melt step per tic:** (a) no mixer buffer during melt steps; the buffers due after tic t
+  are mixed after the melt's last picture (the original's order, d_main.c:395-405), the sequence of mixed buffers is
+  unchanged, and the device is starved for most of the melt (an audible gap of about 1 s after the queued audio); (b)
+  buffers continue, one per melt step's worth of time, for the sounds already started, with no `S_UpdateSounds`.
+  **The reference build does (a)**, unambiguously, under the declared schedule; (b) is what the two declined builds
+  did. **Rule:** (a); the compared signal (the sequence of mixed buffers, M5c T5) needs no change to the harness. How
+  the port's audio sink behaves while starved (it must play silence, not repeat a buffer) and how it restarts after
+  the melt (the two-buffer start threshold) are presentation, judged by ear as M5c's second ruling set item 4
+  accepted. **No ruling needed.**
+
+#### 1.16.5 Input during a melt: kept or lost
+
+- (read) The melt loop reads no input: no `I_StartTic`, `D_ProcessEvents` or `G_BuildTiccmd` (d_main.c:331-344).
+  X events wait in the X queue. The next `NetUpdate` (from `TryRunTics`, d_net.c:648-650, or the singletics loop,
+  d_main.c:375-379) calls `I_StartTic`, which reads every pending X event into the 64-entry event ring
+  (i_video.c:309-342, the loop at 315-316; `D_PostEvent`, d_main.c:150-154; `MAXEVENTS`, d_event.h:108), then `D_ProcessEvents` hands them,
+  in order, to the responders (d_main.c:161-177; `G_Responder`, g_game.c:504-597), and only then is the first command
+  after the melt built (d_net.c:402-408).
+- (read) So in the genuine game path: **every key and button change made during a melt is kept, folded into the
+  first command after it**: `gamekeydown[]` and `mousebuttons[]` end as the last event left them (g_game.c:566-578).
+  A key pressed and released inside the melt never shows in a command (both events are handled before the build),
+  except where a responder acts on the press itself: `KEY_PAUSE` latches `sendpause` (g_game.c:561-565, 426-428; the
+  pause is M6b), F12, the cheat matcher and the menu keys (not passed by the app, M5b S5). Mouse motion is
+  **assigned**, not added (g_game.c:579-580), so of several motion events only the last counts, as within any tic
+  (M5b S4). (inferred) The ring is not checked for overflow (d_main.c:152-153): more than 63 X events pending at one
+  `I_StartTic` would lose whole multiples of 64; on X that needs a fast stream of motion events, which linuxdoom
+  receives only with `-grabmouse` (M5b S4 fact 1).
+- (read) **Demos and replay:** a demo command is read only inside a tic (`G_ReadDemoTiccmd`, g_game.c:666-667), and a
+  recording writes the command of each tic that runs (668-669). (observed) MELTPAL's demo of 702 commands ran exactly
+  702 tics to its end marker through 6 melts: **no command is read during a melt**.
+- (read) **Tics after a melt.** In real time the original then drops most of the melt's time: `NetUpdate` sets
+  `gametime = nowtime` (d_net.c:378-379) and builds commands only until 5 are waiting (`BACKUPTICS/2-1`,
+  d_net.c:404-405; `BACKUPTICS` 12, d_net.h:49), and `TryRunTics` runs at most those (d_net.c:666-677, 736-766): a
+  burst of up to 5 tics, every one with the same key state, the mouse motion in the first only (`mousex = mousey = 0`,
+  g_game.c:411). With `-timedemo` (singletics, d_main.c:375-386) none is skipped and there is no burst. Under the
+  declared schedule nothing is skipped and the next tic runs at the normal pace: the singletics case, as M5c T5
+  declared for the session start. A demo replays identically under either; only the displayed frames differ.
+- (read) Related, not the melt: every load clears the game path's input state (`G_DoLoadLevel`: `gamekeydown[]`,
+  `mousex`/`mousey`, `mousebuttons[]`, `sendpause`, g_game.c:491-496), so a key held through an intermission → level
+  or reborn melt counts as up until it is pressed again (the app's `load_level` already models this,
+  COMPATIBILITY "Input evidence").
+- **Rule** (settled by the C at the game path; the app's event layer is M5b S4 and S5 as confirmed): no command is
+  built and no event is posted to the game path during melt steps; the events received during the melt are posted, in
+  order, before the first command after it; the app's existing rules apply unchanged, with the melt counted as time
+  between two command builds (motion accumulated since the previous build, clamped to ±319 per S4; a release held
+  back only when it arrives in the same pump as its press). **No ruling needed.** **Superseded for mouse motion by the owner's ruling below**: motion made during a melt is ignored, not
+  accumulated.
+
+#### 1.16.6 What this settles for the port, and its size
+
+- All five points are settled by the C under the declared schedule; the rules to declare, as the owner then ruled on sound and input (Rulings below): one
+  melt step per tic (N = 28 + max(-y0) pictures, the last two equal to the end frame, then the next tic); the first
+  melt from an all-zero screen; every melt picture under the end frame's palette; no mixer buffer and no
+  `S_UpdateSounds` during melt steps, the buffers of the melt's tic mixed after it; no command built or demo command
+  read during melt steps, the melt's events folded into the next command.
+- Size (inferred, hand-written lines): the melt pictures in Rust (the 160 column offsets from the 320 draws already
+  accounted, start and end screens, the step, the done test, the palette, the app loop's melt steps with no tic, no
+  buffer and the input rule, the display's saved state while a melt is in progress in `DDSP` v3) about 450–750
+  lines; the runner and golden side (the runner already writes one `V` digest per step under `--melt-clock unit`;
+  goldens of the synthetic sessions with `V` rows, the comparators of the session and local real tools reading them)
+  about 150–300 lines; tests (every melt's step count and every picture against the genuine digests, the palette per
+  melt, no buffer and no command during melt steps, a restore in mid-melt, planted faults such as a column off by one
+  and a step dropped) about 300–500 lines. **About 900–1,550 in all** (inferred), added to the [§6.3](#63-size) projection, which did not contain the melt.
+- (observed, scratch) Not run: the melt pictures in Rust (none exist); the genuine mixer across real-map melts; a
+  picture-by-picture comparison other than digests (the runner writes digests, not pixels); screenblocks 11 on these
+  scripts; the strict32 and overflow builds on the melt scripts.
+
+#### Rulings (owner, 2026-11-21)
+
+- **Sound during a melt: as the in-process build does it.** Nothing is mixed or submitted while the melt runs; sound
+  resumes after it, and nothing is skipped. COMPATIBILITY is to declare this, including that the sound-server and DOS
+  builds played on through the wipe. The owner will judge it by ear at the hand test; a continuous-sound option, if he
+  wants one, is a later presentation toggle outside the proof.
+- **Mouse motion during a melt is ignored**, the same as while the app is paused, and not accumulated across the melt;
+  it is logged in the input log the way paused motion is logged. Key and button state changes are kept and applied on
+  the first tic after the melt.
+- **Accepted as stated:** the clock (one melt step per tic, 1.16.1), the first melt of a session from an all-zero screen
+  (1.16.2) and the palette rule (1.16.3).
+- **For the record, plainly:** the original's in-between pictures depended on the speed of the machine. The claim is
+  identity under the declared schedule, not what any particular machine showed.
+
+#### 1.16.7 Evidence and commands
+
+Observed: step counts, **24 of 24** melts: the number of steps under `--melt-clock unit` equals N = 28 + max(-y0[i])
+predicted from `rndtable` and the `M_Random` index before the wipe (the session row's `rndindex` minus 320), across SPAN
+(10 melts), MELTPAL (6) and the owner's IWAD runs (the rest). The scripts below are scratch tools
+(`~/scratch/m6a/s3`, not committed, about 280 lines); the pictures were compared as digests, not pixels. Commands:
+
+```sh
+python3 s3/mp.py s3/data && s3/runs.sh c_meltpal strict MELTPAL registered --melt-clock unit   # MELTPAL, 6 melts
+python3 s3/melt_facts.py RUN/frames.txt [COUNTER_RUN/frames.txt]   # steps per melt, last-two-equal, start source, palette
+python3 s3/steps_check.py RUN...                                   # predicted against observed steps (24 of 24), 256-index histogram
+python3 s3/cmpf.py A/frames.txt B/frames.txt [UPTO]                # frame stream differences, flagged-frame check
+m5c_mixer --wad tests/reference/m5c_sfx.wad --starts starts.txt --schedule ticbuffers --out mixer.txt   # 432 buffers for 702 tics
+```
+
+*Citations re-checked by the writer of this section against the source in the repository:* d_main.c:272-276, 327-345;
+i_system.c:88-100; f_wipe.c:156-168, 184-222, 278-288; st_stuff.c:1264-1267, 1115, 1445-1449; g_game.c:491-496,
+576-581, 785-792; d_net.c:376-380, 402-406, 648-650; p_user.c:213-224, 258-261, 356-360; w_wad.c:399-409;
+f_finale.c:241-247, 714-721; i_sound.c:773-777; i_video.c:909-913; doomdef.h:84. All matched what the text says. Not
+re-checked: m_menu.c:1749-1782, i_video.c:309-342, 538-585, 595-690, 771-787, 898-907, d_net.c:666-766 and the M5c
+and M5b items cited.
+
+
+### 1.17 Maps and skills: the load report
+
+The owner asked (2026-11-21) for a report, for every map E1M1 to E1M9 and every skill 0 to 3, of whether it loads, and
+for each refusal which thing and which rule; counts and rule names only. (observed; a scratch probe of master `cc78cc3`,
+wire 25, not committed; the registered and retail modes identical in all 72 cells, 72 of 72.)
+
+| Map | Skill 0 | Skill 1 | Skill 2 | Skill 3 |
+| --- | --- | --- | --- | --- |
+| E1M1–E1M6, E1M8, E1M9 (eight maps) | refused (domain gate); loads with it lifted | refused (domain gate); loads with it lifted | loads | loads |
+| E1M7 | refused (domain gate); loads with it lifted | refused (domain gate); loads with it lifted | loads | **refused**: one Imp (type 3001), spawn rule S′ |
+
+- Master: skills 0 and 1 are refused on all nine maps by the app's domain check (`LoadError::Domain`, app/mod.rs:410)
+  and by the player-policy check under wires 24 and 25; skill 2 loads 9 of 9; skill 3 loads 8 of 9. With the two gates
+  lifted in a scratch copy (skill 0 to `Skill::Baby`, 1 to `Skill::Easy`; the policy check passed), skills 0 and 1 load
+  9 of 9. Every loading cell then ran set-up, tic 0 and 35 idle tics without refusal (70 of 70). Loading is not
+  admission: skill 0 would diverge at the first ammunition pickup or damage to the player until the two baby rules
+  exist (p_inter.c:95-101, 799-800; none in the Rust code).
+- **The one refusal.** E1M7 on skill 3: one Imp (`MT_TROOP`, doomednum 3001) is refused by spawn rule S′, the mover's
+  wall margin, M3h9b decision F3 ([M3H9B note](M3H9B_REFERENCE_INVESTIGATION.md#6-new-owner-decisions-f1f11-with-recommendations), "F3"): an open box that meets a
+  one-sided wall needs a distance of at least (31 − r) wall lengths, 11 for an Imp (r = 20), and this Imp's is less.
+  Error: `Admission(Monster(Arithmetic))`. (observed)
+  An independent Python census (`tools/iwad_counts.py --spawn-rule E1M7`) finds the same single monster failing the
+  margin clause. (observed) The genuine engine loads this map on skill 3 and runs 35 idle tics (strict runner, exit 0);
+  so the C handles the Imp; only the Rust proof's margin does not admit it. No thing index, coordinate or geometry
+  is recorded here (the owner's condition).
+- (inferred) What the C does with it: spawn checks no position (p_mobj.c:708-797); walking steps of 8 (about 5.7
+  diagonally) are all blocked while the box overlaps the wall; the escape is a single move whose component across the
+  wall is at least the Imp's distance plus 20, which damage thrust can give (`damage·(FRACUNIT>>3)·100/mass`,
+  p_inter.c:817): roughly 28 or more units of momentum toward the wall in one tic, about 224 damage in that tic at mass
+  100. The body then ends up behind the wall, which is legal in C.
+
+**Ruling (owner, 2026-11-21): option 1.** The margin clause is dropped for monsters under wire 26 only (spawn rule
+S″), with an after-move escape check as a refuse-the-tic witness (the barrel resolution: after every accepted XY move of
+a non-player mover, the exact parity test; even parity refuses the tic with complete canonical state). Barrels and the
+player keep the margin, and wires 1 to 25 keep refusing, byte for byte. Done in M6a **after the owner's hand test of the
+level chain**. Conditions:
+
+1. State in this record and in COMPATIBILITY what in ordinary play can trigger the refusal: which weapons and
+   combinations available in Episode 1 can reach the shove, by arithmetic from the C, marked inferred until a genuine
+   run shows it. (Not yet worked out; the paragraph above gives only the threshold.)
+2. A checklist row for the original's behaviour itself (a monster or corpse behind a one-sided wall and the game
+   continuing): not optional, sized when possible, milestone proposed; until then "not started, milestone to be named".
+   The row was added in PR #73 and is on the [ROADMAP](ROADMAP.md) checklist.
+3. The timing of the per-move check is taken on an idle machine and reported, not gated.
+4. Nothing from the owner's IWAD's thing list or geometry is committed: no thing index, no coordinates. The thing's
+   type and the rule's name are fine.
+
+Planned evidence (M4a hierarchy): a synthetic room with Imps embedded below the margin (one at the boundary value, one
+well inside, one against a diagonal wall) through the genuine engine, idle and chasing, stuck in place tic for tic; small
+thrust (pistol, shotgun) with no escape; a planned one-tic thrust from adjacent barrels, where the corpse leaves the
+region in C and Rust refuses that tic with state intact, with a self-test that fails when the witness is removed; E1M7 on
+skill 3 through the whole-engine harness on the owner's IWAD, local only; and Rust-only tests that wire 26 admits the
+Imp, wire 25 refuses it, and the witness is exact on both sides of its boundary. Size (inferred): **600–950 hand-written
+lines**. It is the step 10a of [§6.1](#61-steps).
 
 ## 2. What the Rust code does today
 
@@ -380,6 +701,8 @@ The findings of [§1.14](#114-findings-that-contradict-or-go-beyond-the-brief) t
 
 **U4. The game mode for the owner's DOOM.WAD, and the finale's art screen.** Facts ([§1.5](#15-game-modes-and-how-the-owners-doomwad-is-identified)): linuxdoom decides the mode by file name only; `doom.wad` is registered; his IWAD lacks `HELP2` and has `CREDIT`; along Episode 1 the modes differ only in that picture and in a switch list that none of his nine maps uses. Options: (i) **keep identification by file name** (as now in `doom-play` and every recorded run); a registered session whose IWAD has no `HELP2` is refused at the first stage-1 frame, as the genuine engine would stop there (a display refusal: the tic stays committed, the frame stays at the last good one); to see the art screen, the IWAD is given to `doom-play` as `doomu.wad` (a copy or link with that name), which is retail and draws `CREDIT`; (ii) upgrade to retail when the IWAD has a fourth episode (a lump probe linuxdoom does not make); (iii) draw `CREDIT` in registered mode when `HELP2` is missing (an adapter no build of the original has). (a) (i) is linuxdoom and the M4b and M5a practice; (ii) and (iii) diverge from it. (b) (i) yes; (ii) and (iii) diverge silently or by declaration from every genuine run made as `doom.wad`. (c) (i) adds only a declared refusal. (d) yes. **Recommendation: (i)**, with the local whole-episode evidence run both ways (registered up to the refusal at finale tic 1,571, which turns the inference into an observation; retail through the art screen).
 
+**Observed since (step 3):** item (5) is met: registered stops at finale tic 1,571 with `HELP2 not found!`, retail goes through `CREDIT` ([§1.5](#15-game-modes-and-how-the-owners-doomwad-is-identified)); item (4), the 61 runs in retail, is partly done (first tool 61 of 61, second tool running).
+
 **Ruled (owner, 2026-11-21):** **Not as recommended.** The game mode is an explicit, declared setting of the session, not read from the IWAD's file name. (1) The default is retail when the IWAD has a fourth episode and registered otherwise; a flag forces either; the mode is printed at launch, shown on the exit line and recorded with the session, so a replay or a check uses the same mode. (2) The genuine engine runs on a scratch copy named for the mode (`doomu.wad` or `doom.wad`); the owner's file is never renamed, moved or written. (3) Forced registered on the owner's IWAD keeps the declared refusal at the first stage-1 frame, as option (i) above describes. (4) Before any session work relies on it, the 61 real runs are re-run in retail mode and their counts and digests reported against the registered results. (5) Local evidence both ways: registered up to the refusal (turning the `HELP2` inference into an observation) and retail through `CREDIT`. (6) The frozen single-level configurations keep identifying by file name, unchanged. (7) COMPATIBILITY states that linuxdoom makes no such probe and that this is a declared rule. The recommendation text above (keep identification by file name) is left as history.
 
 *Where the mode is recorded (proposal, a design to be confirmed at steps 7 and 9, not done).* The demo header has no room: it is `version, skill, episode, map` and the player flags only. No sidecar or exit record exists today. What `doom-play` writes for a session is one file, the demo, named `E1M<map>-skill<n>-<yyyymmdd-hhmmss>.lmp` by `session_name` (crates/doom-game/src/app/recorder.rs:178-185) in the `--sessions` directory (crates/doom-play/src/main.rs:51, 115-118); its exit lines report write counts and failures, not the setting (crates/doom-play/src/closing.rs:282-296), and today the mode is derived from the IWAD's file name by `game_mode` (main.rs:321-331) and stored nowhere. Proposal: the mode is a declared field of the session state `DSES` v1, and the session demo's file name carries it as a token (`...-retail-...` or `...-registered-...`), so a demo file alone tells a replay or a check which mode to use (the replay tools also accept an explicit flag, which must agree with the token or the check refuses). The exit line prints it. The single-level `session_name` and its files stay unchanged.
@@ -406,7 +729,7 @@ The findings of [§1.14](#114-findings-that-contradict-or-go-beyond-the-brief) t
 
 **U9. The wipe in the frame contract.** Facts ([§1.11](#111-the-screen-wipe)): 17 to 19 wipes per episode plus one per reborn, each 320 `M_Random` draws, no tic run during the melt. Options: (i) **T6 extended**: every transition's 320 draws accounted at the declared point (after the frame of the first tic in the new state), the genuine `f_wipe.c` in the runner, the melt not shown and taking no time; the frame shown is the composed frame; (ii) show the melt as presentation, outside every claim: 34–43 extra pictures per transition, about a second each with no tic, needing a declared clock and start screen (and the palette question of §1.11), about 800–1,200 more lines; (iii) model the melt's pictures as compared frames under a declared tick schedule. (a) (i) is T6; (ii) and (iii) change pacing the owner has not seen. (b)–(d) yes for (i). **Recommendation: (i).** The melt picture is original behaviour, so not optional: it moves to a later milestone, to be named by the owner, as T6 left it; the palette side note is checked when the melt is shown.
 
-**Ruled (owner, 2026-11-21):** **Not as recommended.** The melt is in M6a and compared: option (iii). Before step 5 a short section is added to this note, written from the C and from genuine runs, settling: the clock (one melt step per tic, each step's picture compared with the genuine `f_wipe.c` output); what the first melt of a session melts from; which palette is active for each melt; what sound and the mixer do while a melt runs, since no game tic runs then; and whether input during a melt is kept or lost. If any of these needs the owner's ruling, work stops there; otherwise it goes on. The record says plainly that the original's in-between pictures depended on machine speed and that the claim is identity under the declared schedule. The recommendation text above (option (i), the melt moving to a later milestone) is left as history.
+**Ruled (owner, 2026-11-21):** **Not as recommended.** The melt is in M6a and compared: option (iii). Before step 5 a short section is added to this note, written from the C and from genuine runs, settling: the clock (one melt step per tic, each step's picture compared with the genuine `f_wipe.c` output); what the first melt of a session melts from; which palette is active for each melt; what sound and the mixer do while a melt runs, since no game tic runs then; and whether input during a melt is kept or lost. If any of these needs the owner's ruling, work stops there; otherwise it goes on. The record says plainly that the original's in-between pictures depended on machine speed and that the claim is identity under the declared schedule. The recommendation text above (option (i), the melt moving to a later milestone) is left as history. **Section written:** [§1.16](#116-the-melt-settled-for-u9); the C settled all five points, and the owner then ruled on sound and on input during a melt (Rulings in 1.16).
 
 **U10. Missing music lumps.** Facts ([§1.7](#17-music-and-what-its-absence-changes), [§2.7](#27-frozen-wires-at-the-boundary-what-the-first-comparison-found)): the genuine engine stops when it first needs a music lump that is missing: the first map's at its load (before tic 0), a later map's at its load tic, `D_INTER` on the intermission's first tic, `D_VICTOR` on the finale's first tic; it does not look again for a music already playing or already found. M5c's app load plays on without them. Options: (i) **under the session configuration only, refuse at the moment the genuine engine stops**: a load error for the first map's music (the original's first load aborts before any tic, so refusing the session at load is exactly the original), and a refuse-the-tic witness with the state preserved at the load tic, the intermission's first tic or the finale's first tic; M5c's single-level load keeps its behaviour and COMPATIBILITY records it as a known pre-existing gap with this evidence; (ii) refuse the session at load if any of the eleven lumps is missing (stricter than the original, which plays until it needs one); (iii) also change M5c's single-level load (changes an existing configuration). (a) (i) follows T11 (refuse where the original stops) and the frozen-configuration rule; (ii) refuses sessions the original plays in part; (iii) breaks the rule. (b) (i) yes, and the M5c gap becomes declared. (c) (i) adds only declared refusals. (d) yes. **Recommendation: (i).** No IWAD session is affected; each refusal gets a synthetic witness.
 
@@ -458,6 +781,7 @@ One commit per step (C evidence, then the fix, then a test, each its own commit 
 | 8 | Rust against the genuine engine: every synthetic script (state, session rows, frames, sound rows, mixer buffers); then the local chained runs and the 61 runs; every divergence explained from the C, fixed and reproduced by a synthetic script | c-evidence | step 7 |
 | 9 | `doom-play`: the session by default, the declared game mode and its flag, the end at quit, the restart from the pause screen; a Windows artifact for the owner's hand test (the label on the draft PR) | c-evidence | steps 7, 8 |
 | 10 | Both easy skills (U12 (iii)), after the hand-test gate | c-evidence | the owner's hand test |
+| 10a | E1M7 on skill 3 (the owner's option 1, [§1.17](#117-maps-and-skills-the-load-report)): spawn rule S″ for monsters and the after-move escape witness under wire 26 only, the evidence listed there, the arithmetic of what can trigger it, the timing on an idle machine; about 600–950 lines (inferred) | c-evidence | the owner's hand test, step 4 |
 | 11 | Restore-and-continue tests across every boundary (mid-intermission, the load tic, the reborn, the finale); fuzz targets for DSIM42, `DSES` v1, `DDSP` v3 and `DSND` v2 with seed replay, coverage-guided and AddressSanitizer campaigns reported separately | tester | steps 4–7 |
 | 12 | CI: Rust goldens on three systems; the genuine `m6a` job on Linux, named without a "(not required)" suffix | docs-tools | steps 1–9 |
 | 13 | Docs: COMPATIBILITY, STATE_FORMAT, ARCHITECTURE, TESTING, ROADMAP, README, the evidence record; the animation | docs-tools | steps 1–12 |
@@ -483,7 +807,7 @@ Hand-written lines, projected (central figures; the inputs are the crate and fil
 | Tools: the runner fork and wrapper (about 950 with the build), the synthetic WAD generator and scripts (900), the DSIM42 and session-row encoders and comparators (550), the local tools (600), CI wiring (100) | 3,100 | the prototype (328 lines, with about 70 of C), M5c's runner (1,983 + 214 + 274) |
 | Docs: this note (Phase 1, written), the evidence record, COMPATIBILITY, STATE_FORMAT (four new versions), ARCHITECTURE, TESTING, ROADMAP, README | 3,000 | M5c's docs, minus its 6,000-line note |
 
-**Projection: 14,900 lines, ±30% = about 10,400–19,400.** Easy skills (U12, ruled into M6a) add about 550–850 and are not in the projection above; the melt pictures (U9 (iii), ruled into M6a) are not in it either (U9 (ii)'s estimate for showing them was 800–1,200 lines; comparing them step by step adds to that and is to be re-estimated when the melt section is written). The cap is checked against all of it. M5b's and M5c's Rust landed above their estimates (M5c: about 1.5 times for source and 3 times for tests), which is the main risk to this projection. Generated data checked by `--check` tools (goldens, results files, the synthetic WADs) is reported separately.
+**Projection of the table above: 14,900 lines, ±30% = about 10,400–19,400.** Added after the rulings and not in the table (inferred, and any overlap with the table's display and test lines is not removed): easy skills (U12) about 550–850; the melt pictures (U9, [§1.16.6](#1166-what-this-settles-for-the-port-and-its-size)) about 900–1,550; E1M7 on skill 3 ([§1.17](#117-maps-and-skills-the-load-report)) about 600–950. **New total: central about 17,600 (14,900 + 700 + 1,225 + 775), range about 12,450–22,750.** **The upper end passes the 22,000 cap by about 750 lines**; the central figure is about 4,400 under it. If the count reaches the cap, work stops and the owner names the milestone for the remainder; nothing is dropped ([§6.4](#64-cap-and-fallback)). Running count of hand-written lines: about 2,122 after steps 1 and 2 (not counting this note's edits since). The cap is checked against all of it. M5b's and M5c's Rust landed above their estimates (M5c: about 1.5 times for source and 3 times for tests), which is the main risk to this projection. Generated data checked by `--check` tools (goldens, results files, the synthetic WADs) is reported separately.
 
 ### 6.4 Cap and fallback
 
@@ -496,6 +820,15 @@ The owner wants to play through the episode early. The order is: (1) the playabl
 | Phase | Work |
 | --- | --- |
 | Before the hand-test gate | Step 1 (the genuine runner) and step 2 (the synthetic WADs, both modes). The U4 pre-work inside step 3: the 61 real runs re-run in retail mode on a scratch copy named `doomu.wad` and compared with the registered results (local evidence both ways, counts and digests only). The **melt section** of this note (U9): written by a c-evidence step before step 5, from the C and from genuine runs, settling the clock, the first melt's source, the palette per melt, sound and the mixer during a melt, and input during a melt; work stops for a ruling if any needs one. Then steps 4 to 9 restricted to the chain, with the display and saved-state versions (`DDSP` v3, `DSND` v2, `DSES` v1) designed so the melt pictures and the finale fit without another version bump. Last, the windows artifact and the stop. |
-| After the hand-test gate | The finale (step 7's finale part and its comparison), the melt pictures compared step by step, the easy skills (step 10), then steps 11 to 17. |
+| After the hand-test gate | The finale (step 7's finale part and its comparison), the melt pictures compared step by step, the easy skills (step 10), E1M7 on skill 3 (step 10a), then steps 11 to 17. |
 
 The cap of 22,000 lines applies to all of it ([§6.4](#64-cap-and-fallback)).
+
+### 6.6 Open items from step 2 and what keeps them open
+
+None is dropped; each says what it waits for.
+
+- **Percentages above 100** in the intermission need nightmare's respawns: **M6b** (U13).
+- **"Sucks" (above 61:59, at least 125,966 level tics)** has no golden yet, because a stream that long is too big for the repository. **Open: a golden format for it.** Proposal: digests of the long prefix plus the full rows of the tail; the owner has not chosen it.
+- **Quirk 9's audible part** (level sounds heard into the intermission) waits for the mixer comparison; the sound rows are compared, the mixer buffers across that boundary are not yet.
+- **The `address_bounds` build** (the address build with only the bounds check recoverable) is a declared evidence-tooling choice: the genuine engine forms `&ammo[5]` into `int ammo[4]` (st_stuff.c:1288-1294) at every level start with the fist or chainsaw ready, and UBSan's bounds check stops the plain address build there. The choice is declared in [TESTING](TESTING.md#the-synthetic-session-items-and-their-goldens-phase-2-step-2) and in `m6a_goldens.py`.

@@ -2947,8 +2947,11 @@ floors, keys, powers, the chainsaw, things flagged per skill), `rbx.wad` (the re
 `m6a_gfx.wad` (the intermission pictures, `FLOOR4_8`, `HELP2`, `CREDIT`), `m6a_music.wad` (the eleven music
 placeholders) and four variants each missing one lump for the refusal witnesses; the scripts under
 `tests/reference/m6a_scripts/` and the manifest `tests/reference/m6a_manifest.json` (`DOOM-M6A-MANIFEST-v1`), which
-gives every item its WAD set and declared game mode. `tools/reference/m6a_goldens.py` runs every item through the
-genuine `m6a` runner and writes the goldens.
+gives every item its WAD set and declared game mode. The 26 items: 18 for the level chain (the carried player, every
+intermission path, reborns, the secret route, the reborn-beats-a-same-tic-exit witness and its controls, three music
+refusals), E1M8 into the finale in registered and retail mode with its two refusals (`HELP2`, `D_VICTOR`), and the
+same commands at skills 0 to 3. `tools/reference/m6a_goldens.py` runs every item through the genuine `m6a` runner and
+writes the goldens.
 
 ```sh
 # the WADs, scripts and manifest (Python only)
@@ -2973,7 +2976,7 @@ Notes:
   other game mode, identical apart from the lines that print the mode. Goldens: `tests/reference/m6a_session/`,
   `m6a_sound/`, `m6a_frames/` (screenblocks 10 and 11, without the melt rows) and `tests/reference/m6a_results.json`
   (`DOOM-M6A-RESULTS-v1`: inputs and tools by digest, counts, the dump-set digest per level load, the golden digests,
-  the variant and melt facts and the U8 witnesses observed).
+  the variant and melt facts, the melts counted by kind of transition, and the U8 witnesses observed).
 - The genuine engine forms an out-of-bounds pointer (`&ammo[5]` into `int ammo[4]`, st_stuff.c:1288-1294) at every
   level start with the fist or the chainsaw ready, which a carried player can do; it is replaced before any read
   (st_stuff.c:926-935). UBSan's bounds check stops the address build there, so the address build is compared through

@@ -318,7 +318,8 @@ def witness(name, r, buttons=None):
         K = table(r['sound'], 'K') if 'K,' in r['sound'] else []
         R = {int(x['tic']): x for x in table(r['sound'], 'R')}
         need(not [k for k in K if e <= int(k['tic']) < nxt and k['reason'] == 'level_start'], f'exit tic {e}: no channel stopped by the completion')
-        cut = [k for k in K if e < int(k['tic']) < nxt and k['reason'] == 'same_origin']
+        started_at = lambda k: max([int(x['tic']) for x in S if x['sfx'] == k['sfx'] and int(x['tic']) <= int(k['tic'])], default=e + 1)
+        cut = [k for k in K if e < int(k['tic']) < nxt and k['reason'] == 'same_origin' and started_at(k) <= e]
         add(9, f'exit tic {e}: {", ".join("sfx " + s["sfx"] for s in started)} started on the exit tic; {R[e + 1]["occupied"]} channel(s) '
                f'still occupied after the first intermission tic {e + 1}'
                + ''.join(f'; the level\'s sfx {k["sfx"]} still playing on tic {k["tic"]}, cut by a tally sound (no origin, s_sound.c:471-483)'
@@ -425,6 +426,11 @@ def item_record(item, bins, runs, other_mode=False):
              f'tests/reference/m6a_frames/{N}.sb11.frames': golden_frames(s11['frames']),
              f'tests/reference/m6a_melt/{N}.melt': melt_rows(unit['frames'], unit['sound'])}
     rec['goldens'] = {p: sha(t.encode()) for p, t in texts.items()}
+    if item['name'].startswith('SKILL') and 'I,' in s10['session']:        # the skill differences (U12, a later step)
+        i0, C = table(s10['session'], 'I')[0], {int(c['tic']): c for c in table(s10['session'], 'C')}
+        ex = int(i0['tic']) - 1
+        rec['skill_facts'] = dict(skill=item['skill'], e1m1_maxitems=int(i0['maxitems']), exit_tic=ex, exit_health=int(C[ex]['health']),
+                                  exit_bullets=int(C[ex]['ammo0']), last_health=int(C[max(C)]['health']))
     try:
         rec['witnesses'] = witness(N, s10, lmp_buttons(item))
     except SystemExit as e:
