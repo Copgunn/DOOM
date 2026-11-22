@@ -48,7 +48,7 @@ struct GoldenLevel {
 
 /// The golden levels of every item, in load order.
 fn golden() -> BTreeMap<String, Vec<GoldenLevel>> {
-    let text = std::fs::read_to_string(m6a::root("tests/reference/m6a_state.txt")).expect("golden");
+    let text = std::fs::read_to_string(m6a::reference("m6a_state.txt")).expect("golden");
     let mut out: BTreeMap<String, Vec<GoldenLevel>> = BTreeMap::new();
     assert!(text.starts_with("#schema,DOOM-M6A-STATE-v1\n"));
     for line in text.lines().filter(|l| !l.starts_with('#')) {
@@ -331,4 +331,81 @@ fn the_state_comparison_catches_the_turbo_leveltime_fault() {
         d.contains("TURBO load 1: session tic 192 (level tic 0, load): state differs"),
         "{d}"
     );
+}
+
+/// Local only (never in CI): every run of the real-map goldens of
+/// `tools/local/m6a_session_real.py` (the genuine engine on a scratch copy of the owner's IWAD),
+/// through this same state gate. Run with `M6A_REFERENCE_DIR=<its --out> cargo test --release
+/// -p doom-game --test m6a_state -- --ignored real_maps`; without the variable it does nothing.
+#[test]
+#[ignore = "local only: needs M6A_REFERENCE_DIR from tools/local/m6a_session_real.py"]
+fn real_maps_state_local() {
+    if !m6a::real_maps() {
+        eprintln!("skip: M6A_REFERENCE_DIR is not set");
+        return;
+    }
+    let golden = golden();
+    let mut total = Outcome::default();
+    let mut failures = Vec::new();
+    let items = m6a::real_items();
+    for item in &items {
+        let g = golden.get(&item.name).map_or(&[][..], Vec::as_slice);
+        let o = compare(item, None, g);
+        eprintln!(
+            "{}: {} levels, {} captures, {} points{}",
+            item.name,
+            o.levels,
+            o.captures,
+            o.points,
+            o.first_difference
+                .as_deref()
+                .map_or(String::new(), |d| format!(" DIFFERENCE {d}"))
+        );
+        failures.extend(o.first_difference);
+        total.levels += o.levels;
+        total.captures += o.captures;
+        total.points += o.points;
+    }
+    eprintln!(
+        "real maps, {} runs: {} levels, {} captures, {} points",
+        items.len(),
+        total.levels,
+        total.captures,
+        total.points
+    );
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+/// Local only (never in CI): the real-map state gate can fail where the row gate cannot. A
+/// carried start's `bob` one unit off (`PlantedFault::CarriedBob`, which passes the session
+/// gate's rows, frames, sound and mixer: `a_carried_bob_fault_passes_the_row_gate`) is caught
+/// in every real run whose golden has a carried start, and there is at least one. Run as
+/// [`real_maps_state_local`]; `M6A_REAL_ONLY` narrows it.
+#[test]
+#[ignore = "local only: needs M6A_REFERENCE_DIR from tools/local/m6a_session_real.py"]
+fn real_maps_state_local_catches_a_planted_fault() {
+    if !m6a::real_maps() {
+        eprintln!("skip: M6A_REFERENCE_DIR is not set");
+        return;
+    }
+    let golden = golden();
+    let carried = m6a::carried_items();
+    let mut caught = 0;
+    let mut missed = Vec::new();
+    for item in m6a::real_items() {
+        if !carried.contains(&item.name) {
+            continue;
+        }
+        let o = compare(&item, Some(PlantedFault::CarriedBob), &golden[&item.name]);
+        match o.first_difference {
+            Some(d) => {
+                eprintln!("{} CarriedBob: {d}", item.name);
+                caught += 1;
+            }
+            None => missed.push(item.name.clone()),
+        }
+    }
+    eprintln!("real maps, CarriedBob: caught in {caught} runs, missed in {missed:?}");
+    assert!(caught > 0, "no real run with a carried start");
+    assert!(missed.is_empty(), "not caught: {missed:?}");
 }

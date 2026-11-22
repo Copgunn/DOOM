@@ -17,6 +17,22 @@ pub fn root(path: &str) -> PathBuf {
         .join(path)
 }
 
+/// The directory of the goldens: `tests/reference`, or for the local real-map gates (the
+/// `real_maps_*` tests, never in CI) the directory `M6A_REFERENCE_DIR` names, which
+/// `tools/local/m6a_session_real.py` writes in the same layout from the genuine engine on a
+/// scratch copy of the owner's IWAD.
+pub fn reference(path: &str) -> PathBuf {
+    match std::env::var_os("M6A_REFERENCE_DIR") {
+        Some(dir) => PathBuf::from(dir).join(path),
+        None => root("tests/reference").join(path),
+    }
+}
+
+/// Whether the goldens are the local real-map ones (`M6A_REFERENCE_DIR` set).
+pub fn real_maps() -> bool {
+    std::env::var_os("M6A_REFERENCE_DIR").is_some()
+}
+
 /// One manifest item.
 #[derive(Clone, Debug)]
 pub struct Item {
@@ -46,14 +62,14 @@ pub const CHAIN_ITEMS: [&str; 18] = [
 ];
 
 fn json(path: &str) -> serde_json::Value {
-    serde_json::from_str(&std::fs::read_to_string(root(path)).expect(path)).expect("JSON")
+    serde_json::from_str(&std::fs::read_to_string(reference(path)).expect(path)).expect("JSON")
 }
 
 /// Every manifest item, in manifest order.
 pub fn items() -> Vec<Item> {
-    let m = json("tests/reference/m6a_manifest.json");
+    let m = json("m6a_manifest.json");
     assert_eq!(m["schema"], "DOOM-M6A-MANIFEST-v1");
-    let results = json("tests/reference/m6a_results.json");
+    let results = json("m6a_results.json");
     let sets = &m["wadsets"];
     m["items"]
         .as_array()
@@ -79,6 +95,40 @@ pub fn items() -> Vec<Item> {
             }
         })
         .collect()
+}
+
+/// The items of a local real-map gate: every manifest item, or only those `M6A_REAL_ONLY` names
+/// (comma-separated), so that a gate can be split into runs that each fit a time limit.
+pub fn real_items() -> Vec<Item> {
+    let all = items();
+    match std::env::var("M6A_REAL_ONLY") {
+        Ok(only) => {
+            let want: Vec<&str> = only.split(',').collect();
+            let out: Vec<Item> = all
+                .into_iter()
+                .filter(|i| want.contains(&i.name.as_str()))
+                .collect();
+            assert_eq!(out.len(), want.len(), "M6A_REAL_ONLY names an unknown item");
+            out
+        }
+        Err(_) => all,
+    }
+}
+
+/// The names of the items whose state golden (`m6a_state.txt`, L rows) has a carried start: a
+/// level loaded by `G_DoWorldDone` with the player of the level before (the planted faults of
+/// the carried start can show only there).
+pub fn carried_items() -> Vec<String> {
+    let text = std::fs::read_to_string(reference("m6a_state.txt")).expect("state golden");
+    let mut out: Vec<String> = text
+        .lines()
+        .filter(|l| l.starts_with("L,"))
+        .map(|l| l.split(',').collect::<Vec<_>>())
+        .filter(|f| f[5] == "carried")
+        .map(|f| f[1].to_owned())
+        .collect();
+    out.dedup();
+    out
 }
 
 /// The named item.
@@ -156,7 +206,7 @@ impl Rows {
 
     /// Reads `tests/reference/<path>`.
     pub fn read(path: &str) -> Self {
-        Self::parse(&std::fs::read_to_string(root(&format!("tests/reference/{path}"))).expect(path))
+        Self::parse(&std::fs::read_to_string(reference(path)).expect(path))
     }
 
     /// Every row of a kind.
@@ -209,15 +259,25 @@ pub struct GoldenFrame {
     pub noface: String,
     /// See [`GoldenFrame::noface`].
     pub q: [i64; 6],
+    /// Real maps only (the synthetic goldens have none, asserted): the renderer's tracker
+    /// flagged columns of undefined reads (U rows), and the digest with them zeroed.
+    pub flagged: Vec<u16>,
+    /// See [`GoldenFrame::flagged`]: the masked digest (`-` when no column is flagged).
+    pub masked: String,
+    /// Real maps only: a frame the genuine runner excludes as a whole (F `whole` = 1).
+    pub whole_excluded: bool,
 }
 
 /// Reads `tests/reference/m6a_frames/<name>.sb<sb>.frames`: the frames by tic, and the E row
 /// (the genuine engine's stop) if any.
 pub fn read_frames(name: &str, sb: u8) -> (BTreeMap<i64, GoldenFrame>, Option<String>) {
-    let path = format!("tests/reference/m6a_frames/{name}.sb{sb}.frames");
-    let text = std::fs::read_to_string(root(&path)).expect("frames");
+    let path = format!("m6a_frames/{name}.sb{sb}.frames");
+    let text = std::fs::read_to_string(reference(&path)).expect("frames");
+    let real = real_maps();
     let mut out: BTreeMap<i64, GoldenFrame> = BTreeMap::new();
     let mut error = None;
+    // Real maps: each F row's flagged-column count, checked against its U rows below.
+    let mut columns: BTreeMap<i64, i64> = BTreeMap::new();
     for l in text.lines() {
         let c: Vec<&str> = l.split(',').collect();
         if c[0].starts_with('#') {
@@ -231,6 +291,8 @@ pub fn read_frames(name: &str, sb: u8) -> (BTreeMap<i64, GoldenFrame>, Option<St
             "F" => {
                 let g = GoldenFrame {
                     sha256: c[2].into(),
+                    masked: c[3].into(),
+                    whole_excluded: c[14] == "1",
                     f: [4, 5, 7, 8, 9, 10, 11, 12]
                         .into_iter()
                         .map(n)
@@ -238,11 +300,15 @@ pub fn read_frames(name: &str, sb: u8) -> (BTreeMap<i64, GoldenFrame>, Option<St
                         .collect(),
                     ..GoldenFrame::default()
                 };
-                assert_eq!(
-                    c[6], "0",
-                    "{name}: no flagged column in the M6a goldens: {l}"
-                );
-                assert_eq!(c[14], "0", "{name}: no whole-frame exclusion: {l}");
+                if real {
+                    columns.insert(n(1), n(6));
+                } else {
+                    assert_eq!(
+                        c[6], "0",
+                        "{name}: no flagged column in the M6a goldens: {l}"
+                    );
+                    assert_eq!(c[14], "0", "{name}: no whole-frame exclusion: {l}");
+                }
                 assert!(out.insert(n(1), g).is_none(), "{name}: {l}");
             }
             "M" => {
@@ -265,9 +331,21 @@ pub fn read_frames(name: &str, sb: u8) -> (BTreeMap<i64, GoldenFrame>, Option<St
                 assert!(out.insert(n(1), g).is_none(), "{name}: {l}");
             }
             "E" => error = Some(c[2..].join(",")),
+            "U" if real => out
+                .get_mut(&n(1))
+                .expect("U after F")
+                .flagged
+                .push(c[2].parse().expect("column")),
             "U" | "O" | "D" | "W" => panic!("{name}: unexpected row {l}"),
             _ => {}
         }
+    }
+    for (tic, count) in columns {
+        assert_eq!(
+            out[&tic].flagged.len() as i64,
+            count,
+            "{name}: U rows at {tic}"
+        );
     }
     (out, error)
 }
@@ -286,9 +364,12 @@ pub struct GenuineSound {
 
 /// Reads an item's genuine sound stream.
 pub fn read_sound(name: &str) -> GenuineSound {
-    let path = format!("tests/reference/m6a_sound/{name}.sound");
+    let path = format!("m6a_sound/{name}.sound");
     let mut g = GenuineSound::default();
-    for l in std::fs::read_to_string(root(&path)).expect("sound").lines() {
+    for l in std::fs::read_to_string(reference(&path))
+        .expect("sound")
+        .lines()
+    {
         if l.starts_with('#') || l.starts_with("Z,") || l.starts_with("W,") {
             continue;
         }

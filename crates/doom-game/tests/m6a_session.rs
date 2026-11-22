@@ -75,6 +75,8 @@ struct Counts {
     s_listener_unchecked: usize,
     buffers: u64,
     mixer_rows: usize,
+    masked_frames: usize,
+    uncomparable_frames: usize,
 }
 
 impl Counts {
@@ -93,6 +95,8 @@ impl Counts {
         self.s_listener_unchecked += o.s_listener_unchecked;
         self.buffers += o.buffers;
         self.mixer_rows += o.mixer_rows;
+        self.masked_frames += o.masked_frames;
+        self.uncomparable_frames += o.uncomparable_frames;
     }
 }
 
@@ -452,18 +456,48 @@ impl Run<'_> {
                 if g.gamestate != 0 || g.f.is_empty() {
                     return Err(d("a level frame where the genuine frame is not one".into()));
                 }
-                if sha256(px) != g.sha256 {
-                    return Err(d("level frame differs".into()));
-                }
-                let mut nf = px.to_vec();
                 let q = g.q;
-                for y in q[3] as usize..(q[5] as usize).min(SCREENHEIGHT) {
-                    for x in q[2] as usize..(q[4] as usize).min(SCREENWIDTH) {
-                        nf[y * SCREENWIDTH + x] = 0;
+                // Real maps only (the synthetic goldens have neither, asserted by read_frames,
+                // and their frames keep the comparison below unchanged): a frame whose switch
+                // parity the Rust renderer reports unknown, or that the genuine runner excludes
+                // whole, is counted and not compared by digest; a frame with tracker flagged
+                // columns (undefined reads) on either side is compared by its masked digest, as
+                // tools/local/m5c_real_full.py compares them (decision R4).
+                let real = m6a::real_maps();
+                if real && (f.view.switch_parity_unknown || g.whole_excluded) {
+                    self.counts.uncomparable_frames += 1;
+                } else if real && (!g.flagged.is_empty() || !f.view.flagged_columns.is_empty()) {
+                    let mut m = px.to_vec();
+                    for x in &f.view.flagged_columns {
+                        for y in 0..SCREENHEIGHT {
+                            m[y * SCREENWIDTH + usize::from(*x)] = 0;
+                        }
+                    }
+                    if g.sha256 != "undefined" || sha256(&m) != g.masked {
+                        return Err(d("masked digest or flag differs".into()));
+                    }
+                    self.counts.masked_frames += 1;
+                } else {
+                    if sha256(px) != g.sha256 {
+                        return Err(d("level frame differs".into()));
+                    }
+                    let mut nf = px.to_vec();
+                    for y in q[3] as usize..(q[5] as usize).min(SCREENHEIGHT) {
+                        for x in q[2] as usize..(q[4] as usize).min(SCREENWIDTH) {
+                            nf[y * SCREENWIDTH + x] = 0;
+                        }
+                    }
+                    if sha256(&nf) != g.noface {
+                        return Err(d("face-zeroed digest differs".into()));
                     }
                 }
-                if sha256(&nf) != g.noface {
-                    return Err(d("face-zeroed digest differs".into()));
+                // Real maps: the flagged columns themselves, in every frame (m5c_real_full.py
+                // compares the U rows of every frame).
+                if real && f.view.flagged_columns != g.flagged {
+                    return Err(d(format!(
+                        "flagged columns {:?} genuine {:?}",
+                        f.view.flagged_columns, g.flagged
+                    )));
                 }
                 if [q[0], q[1]] != [self.snd_draws, self.wipe_draws] {
                     return Err(d(format!(
@@ -484,11 +518,9 @@ impl Run<'_> {
                     i64::from(c.drawseg_drops),
                     i64::from(c.vissprite_drop),
                 ];
-                if got != g.f
-                    || f.view.newly_mapped != g.mapped
-                    || f.view.switch_parity_unknown
-                    || !f.view.flagged_columns.is_empty()
-                {
+                let unexpected =
+                    !real && (f.view.switch_parity_unknown || !f.view.flagged_columns.is_empty());
+                if got != g.f || f.view.newly_mapped != g.mapped || unexpected {
                     return Err(d(format!("F {got:?} genuine {:?}", g.f)));
                 }
                 let status = vec![
@@ -655,6 +687,15 @@ fn settings(item: &Item, sb: u8) -> SessionSettings {
 /// The genuine stop of an item as the session's refusal: (the refused session tic, whether the
 /// witness is the expected missing music).
 fn expected_stop(item: &Item, end: &Refusal) -> bool {
+    if item.end == "victory" {
+        // A real-map run cut at the finale's first tic (tools/local/m6a_session_real.py): the
+        // session's typed refusal there (the finale is built after the hand test).
+        return end.tic == item.session_tics as u64
+            && matches!(
+                end.witness,
+                SessionWitness::NotYet(doom_game::session::NotYet::Victory)
+            );
+    }
     let music = item
         .end
         .strip_prefix("error:W_GetNumForName: ")
@@ -788,8 +829,8 @@ fn run_item_in(
             drain(session.sound().sound(), &mut gate.golden);
             run.counts.buffers = gate.golden.buffers();
             let got = gate.golden.finish();
-            let path = format!("tests/reference/m6a_mixer/goldens/{}.golden", item.name);
-            let want: Vec<String> = std::fs::read_to_string(m6a::root(&path))
+            let path = format!("m6a_mixer/goldens/{}.golden", item.name);
+            let want: Vec<String> = std::fs::read_to_string(m6a::reference(&path))
                 .expect("mixer golden")
                 .lines()
                 .filter(|l| !l.starts_with("d ") && !l.starts_with("q "))
@@ -876,6 +917,82 @@ fn the_comparisons_can_fail() {
         eprintln!("{name} {fault:?}: {}", d.lines().next().unwrap_or(""));
         assert!(d.contains(at), "{name} {fault:?}: caught elsewhere: {d}");
     }
+}
+
+/// Local only (never in CI): every run of the real-map goldens that
+/// `tools/local/m6a_session_real.py` wrote from the genuine engine on a scratch copy of the
+/// owner's IWAD, at screenblocks 10 and 11, through this same gate. Run with
+/// `M6A_REFERENCE_DIR=<its --out> cargo test --release -p doom-game --test m6a_session --
+/// --ignored real_maps`; without the variable it does nothing.
+#[test]
+#[ignore = "local only: needs M6A_REFERENCE_DIR from tools/local/m6a_session_real.py"]
+fn real_maps_session_local() {
+    if !m6a::real_maps() {
+        eprintln!("skip: M6A_REFERENCE_DIR is not set");
+        return;
+    }
+    let mut total = Counts::default();
+    let mut failures = Vec::new();
+    let items = m6a::real_items();
+    for item in &items {
+        for sb in [10, 11] {
+            let o = run_item(item, sb, None);
+            eprintln!(
+                "{} sb{sb}: {:?} end {:?}{}",
+                item.name,
+                o.counts,
+                o.end.as_ref().map(ToString::to_string),
+                o.first_difference
+                    .as_deref()
+                    .map_or(String::new(), |d| format!(" DIFFERENCE {d}"))
+            );
+            if let Some(d) = o.first_difference {
+                failures.push(d);
+            }
+            total.add(&o.counts);
+        }
+    }
+    eprintln!(
+        "real maps, {} runs x 2 screen sizes: {total:?}",
+        items.len()
+    );
+    assert!(
+        failures.is_empty(),
+        "{} differences:\n{}",
+        failures.len(),
+        failures.join("\n")
+    );
+}
+
+/// Local only (never in CI): the real-map gate can fail. A carried start one point of health
+/// short (`PlantedFault::CarriedHealth`) is caught, at screenblocks 10, in every real run whose
+/// state golden has a carried start, and there is at least one. Run as
+/// [`real_maps_session_local`]; `M6A_REAL_ONLY` narrows it.
+#[test]
+#[ignore = "local only: needs M6A_REFERENCE_DIR from tools/local/m6a_session_real.py"]
+fn real_maps_session_local_catches_a_planted_fault() {
+    if !m6a::real_maps() {
+        eprintln!("skip: M6A_REFERENCE_DIR is not set");
+        return;
+    }
+    let carried = m6a::carried_items();
+    let mut caught = 0;
+    let mut missed = Vec::new();
+    for item in m6a::real_items() {
+        if !carried.contains(&item.name) {
+            continue;
+        }
+        match run_item(&item, 10, Some(PlantedFault::CarriedHealth)).first_difference {
+            Some(d) => {
+                eprintln!("{} CarriedHealth: {d}", item.name);
+                caught += 1;
+            }
+            None => missed.push(item.name.clone()),
+        }
+    }
+    eprintln!("real maps, CarriedHealth: caught in {caught} runs, missed in {missed:?}");
+    assert!(caught > 0, "no real run with a carried start");
+    assert!(missed.is_empty(), "not caught: {missed:?}");
 }
 
 /// A carried start's `bob` one unit off passes every comparison of this gate (rows, frames at
