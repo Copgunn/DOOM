@@ -2980,10 +2980,28 @@ Notes:
 - The genuine engine forms an out-of-bounds pointer (`&ammo[5]` into `int ammo[4]`, st_stuff.c:1288-1294) at every
   level start with the fist or the chainsaw ready, which a carried player can do; it is replaced before any read
   (st_stuff.c:926-935). UBSan's bounds check stops the address build there, so the address build is compared through
-  the last tic before that one report, and `address_bounds` (the address build with only the bounds check
-  recoverable, declared in `m6a_goldens.py`) runs every item to its end; every report it prints must be that one.
+  the last tic before that one report, and `address_bounds` runs every item to its end.
+- **The fourth build, `address_bounds`, declared.** It is the address build (AddressSanitizer and UBSan, the address
+  build's flags) plus `-fsanitize-recover=bounds`, added to the flag table in memory by `m6a_goldens.py`, nothing on
+  disk. **The allowance is one site only, by file and line: `st_stuff.c:1292`**, the report
+  `st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'` (with its stack frames, an optional
+  `SUMMARY` line naming the same site and one blank line). Everything else the build writes to stderr must be exactly
+  the strict build's stderr of the same run, so any other report (another file or line, any AddressSanitizer report,
+  any other sanitizer output) fails the run (`bounds_check` in `m6a_goldens.py`). `--selftest` proves it: the genuine
+  CHAIN run passes; a scratch build of `address_bounds` with a second, real bounds error planted at another line of
+  `st_stuff.c` (the inner index of a `[2][2]` array, in the build's copy only) fails; and a copy of the passing stderr
+  with an AddressSanitizer report appended fails. **The build adds no sanitizer coverage beyond what it reports**: it
+  is the address build continuing past the one declared report, and leak detection is disabled
+  (`ASAN_OPTIONS=detect_leaks=0`), so it is not LeakSanitizer coverage.
+- **Melt step counts over the committed goldens** (Python only, reads committed files, builds nothing):
+  `python3 tools/reference/m6a_melt_steps.py --check` recomputes every melt's step count from `rndtable`
+  (m_random.c) and `wipe_initMelt`/`wipe_doMelt` (f_wipe.c:158-166, 184-222, one call with `ticks = 1` per step) and the
+  `M_Random` index before the melt (the session golden's `rndindex` minus 320), compares it with the melt golden's `V`
+  rows and requires the last two pictures to equal the end screen: 113 of 113 melts of the 26 items. `--selftest`
+  plants a dropped step, a moved index and an extra step in memory copies; each must be caught.
 - `--selftest` plants a started sound's volume, an extra `P_Random` draw and a flipped level pixel in the runner, and a
-  changed session value and whole-frame digest in copies of the goldens; each must be caught at its place.
+  changed session value and whole-frame digest in copies of the goldens; each must be caught at its place; and it runs
+  the `address_bounds` allowance's three cases above.
 - `ASAN_OPTIONS=detect_leaks=0`: the address runs are not LeakSanitizer coverage. `--work` must lie outside the
   repository. The default is one runner process at a time (`--jobs 1`).
 
