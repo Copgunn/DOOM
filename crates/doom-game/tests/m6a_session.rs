@@ -878,6 +878,18 @@ fn the_comparisons_can_fail() {
     }
 }
 
+/// A carried start's `bob` one unit off passes every comparison of this gate (rows, frames at
+/// screenblocks 10, sound rows and the mixer): `P_CalcHeight` rewrites the player's `bob` in tic
+/// 0 (p_user.c:83-87), so only the `DSIM` 42 start group keeps it, and `tests/m6a_state.rs`
+/// (`the_state_comparison_catches_what_the_rows_miss`) catches it there. This is the step-8
+/// proof that the whole-state comparison sees what the rows cannot.
+#[test]
+fn a_carried_bob_fault_passes_the_row_gate() {
+    let o = run_item(&m6a::item("CHAIN"), 10, Some(PlantedFault::CarriedBob));
+    assert_eq!(o.first_difference, None);
+    assert_eq!((o.counts.tics, o.counts.loads), (831, 7));
+}
+
 /// CHAIN in retail (ruling U4): the genuine retail run of CHAIN is identical to the registered
 /// goldens apart from the mode lines (`tests/reference/m6a_results.json`, `other_mode`:
 /// `identical_but_the_mode_lines`), so the Rust session forced retail is compared with the same

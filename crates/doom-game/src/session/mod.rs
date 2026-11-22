@@ -67,7 +67,7 @@ use doom_sim::{
 };
 use doom_sound::chain::{ChainConfig, ChainRefusal, ChainSound, ChainTic, IntermissionSound};
 use doom_sound::lumps::{SoundCaps, SoundLoadError, SoundSet};
-use doom_types::DoomRng;
+use doom_types::{DoomRng, Fixed};
 use intermission::{Intermission, Latches, PARS_E1, WbPlayer, WbStart, next_map};
 use sound::{Music, MusicLumps, SoundWitness};
 use std::fmt;
@@ -480,6 +480,9 @@ pub enum PlantedFault {
     SkippedAnimationDraw,
     /// The kill count of the tally one too high after each step in `sp_state` 2.
     TallyOffByOne,
+    /// A carried start's `bob` one unit off (one lower, or 1 for 0): `P_CalcHeight` rewrites
+    /// the player's `bob` in tic 0 (p_user.c:83-87), so only the `DSIM` 42 start group keeps it.
+    CarriedBob,
 }
 
 /// One single-player Episode 1 session (module documentation).
@@ -1084,6 +1087,12 @@ impl Session {
                     use_down: carried.latches.usedown,
                     p_random,
                     health: c.health - planted,
+                    bob: if self.fault == Some(PlantedFault::CarriedBob) {
+                        let b = c.bob.bits();
+                        Fixed::from_bits(if b > 0 { b - 1 } else { 1 })
+                    } else {
+                        c.bob
+                    },
                     ..c
                 }),
                 carried.deltaviewheight,
