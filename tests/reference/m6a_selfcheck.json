@@ -1,0 +1,4960 @@
+{
+ "schema": "DOOM-M6A-SELFCHECK-v1",
+ "runner_contract_sha256": "77184f1bec516862d789c61b9935c96e34ef5727e93b406d1d330e4526d42cd1",
+ "m5c_runner_contract_sha256": "f9bff96b8c50427017c6e709c600cbcbf40ddd32f27e7eebaaa7ee354bb639aa",
+ "tools_sha256": {
+  "tools/reference/m6a_build.py": "db8a4c558b6aa0039e1aaff87de67e054c3e6bffbdc5315b78bf4d8b27e2c7cb",
+  "tools/reference/m6a_session.c": "22057830b73b3b31a5e48b0077b05b55a6cab657ebdff8fecc6451c0ff3d8bdc",
+  "tools/reference/m6a_wi_access.c": "2195c82be97d008fb2162e11ab86256bd86bc9c19dfde1e306406bd2b41358dd",
+  "tools/reference/m6a_reference.py": "bf69a3f64a363d56048518f0328a837c570360a4e777e6bf42eb6914d0c94c49"
+ },
+ "switches": {
+  "--handle": "integrated",
+  "--update-schedule": "tic",
+  "--wipe": "genuine",
+  "--sound": "on",
+  "--game-mode": "registered"
+ },
+ "views": [
+  10,
+  11
+ ],
+ "claim": "the M6a runner (strict) reproduces the frozen M5c runner (strict) row for row through the frozen run's last row, and with its end rows where both end alike, on every item listed; and its normalised streams reproduce the committed M5c goldens the same way",
+ "totals": {
+  "items": 65,
+  "frame_rows": 206248,
+  "sound_rows": 60580,
+  "view_rows": 68806,
+  "dump_snapshots": 22930,
+  "items_ending_alike": 64,
+  "items_continued_past_frozen_end": 1
+ },
+ "items": {
+  "M5PEG": {
+   "wad": "tests/reference/m5a_wads/peg.wad",
+   "lmp_sha256": "9736190f1ba16fdc612217df32ece5ba1ff629dff9c3ab417f7126af5a3a66b6",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 218,
+    "m6a_end": "marker",
+    "m6a_last_tic": 218,
+    "frames": {
+     "rows": 968,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 236,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "76ca7e7c6d3571745c33da681d1fbcc0e7721c5d64152b18e57b18f60882f200",
+    "frozen_sound_sha256": "23be8c010050ef26fab77263bdfadbbdaa96eeb0920d20fb243309854c6018cd",
+    "view": {
+     "rows": 664,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 220,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 219,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 725,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 236,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 218,
+    "m6a_end": "marker",
+    "m6a_last_tic": 218,
+    "frames": {
+     "rows": 968,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 236,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "622f7eb6ecd1c08509b2ea6478d36d67f1172476c6e73a1ac1eeaeb236763659",
+    "frozen_sound_sha256": "23be8c010050ef26fab77263bdfadbbdaa96eeb0920d20fb243309854c6018cd",
+    "golden_frames": {
+     "rows": 725,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5MASK": {
+   "wad": "tests/reference/m5a_wads/mask.wad",
+   "lmp_sha256": "743038c72ca3cb75fc98186b7e38695bbcb191e2b039167ab966d9ad859e61a6",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 159,
+    "m6a_end": "marker",
+    "m6a_last_tic": 159,
+    "frames": {
+     "rows": 722,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 174,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "caf8abc61ef9cb78b49339a7492bbeac6f8e515d00fb672ba37f4668f2460b03",
+    "frozen_sound_sha256": "862734f8106f421c9809ceb8c21c774dab15839a40fa5c3edcb005919aa0ce9c",
+    "view": {
+     "rows": 476,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 161,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 160,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 538,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 174,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 159,
+    "m6a_end": "marker",
+    "m6a_last_tic": 159,
+    "frames": {
+     "rows": 722,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 174,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "5a58f197a7a5cccf14987bd66b9dce07aa28aee1718a8e261c29542b3361e61b",
+    "frozen_sound_sha256": "862734f8106f421c9809ceb8c21c774dab15839a40fa5c3edcb005919aa0ce9c",
+    "golden_frames": {
+     "rows": 538,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5PLANE": {
+   "wad": "tests/reference/m5a_wads/planes.wad",
+   "lmp_sha256": "a020d2b53d7871481a745f5bb7fc9780e67a0ec7561b387bbf44e53f94b750c3",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 167,
+    "m6a_end": "marker",
+    "m6a_last_tic": 167,
+    "frames": {
+     "rows": 755,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 182,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "f0ff3af5ff9b37f018e514c3fbe61c4053a0d16eef0aec8b7af14ef54b47f4ff",
+    "frozen_sound_sha256": "5a11287d09812705e5b101132ae834ab9f62cb419a592189478b1aca82529bb3",
+    "view": {
+     "rows": 508,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 169,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 168,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 563,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 182,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 167,
+    "m6a_end": "marker",
+    "m6a_last_tic": 167,
+    "frames": {
+     "rows": 755,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 182,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "18148952c93ee7ee506d2a3f75a44795c83ce3d1b5d1d1d8ea77c5df7743dc67",
+    "frozen_sound_sha256": "5a11287d09812705e5b101132ae834ab9f62cb419a592189478b1aca82529bb3",
+    "golden_frames": {
+     "rows": 563,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5SKY": {
+   "wad": "tests/reference/m5a_wads/sky.wad",
+   "lmp_sha256": "d06f990b8ac82f89e7ab67b9920e8b6663624add60db93044384eacfe978a2f9",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 287,
+    "m6a_end": "marker",
+    "m6a_last_tic": 287,
+    "frames": {
+     "rows": 1237,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 302,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "c11ee0fdda85b464aaaca0bd67b2329d7f0cbdfb623ad393a3969017f6416c9d",
+    "frozen_sound_sha256": "9f54e3b83ce29903cd5a5d27e50494bde6b46a6606bda937d132bcbb8855ed68",
+    "view": {
+     "rows": 868,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 289,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 288,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 925,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 302,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 287,
+    "m6a_end": "marker",
+    "m6a_last_tic": 287,
+    "frames": {
+     "rows": 1237,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 302,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "b6c335af3015893640e9ba2ffe3d7e36fc52cac7fb011d08d740df08f169faa8",
+    "frozen_sound_sha256": "9f54e3b83ce29903cd5a5d27e50494bde6b46a6606bda937d132bcbb8855ed68",
+    "golden_frames": {
+     "rows": 925,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5LIGHT": {
+   "wad": "tests/reference/m5a_wads/light.wad",
+   "lmp_sha256": "ade6be85e8818e580bd5c73e973d21e2ad1a2607ee0304b5512e390f3694947b",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 207,
+    "m6a_end": "marker",
+    "m6a_last_tic": 207,
+    "frames": {
+     "rows": 921,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 222,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "2500bee222d864841d9dd036ac813e51f3b85d320d8702a7b3e320f37927691a",
+    "frozen_sound_sha256": "9d45cf3406628ba8eb0f27326a1cc68ff19370eab42ce5ff875783ccca6baa2c",
+    "view": {
+     "rows": 620,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 209,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 208,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 689,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 222,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 207,
+    "m6a_end": "marker",
+    "m6a_last_tic": 207,
+    "frames": {
+     "rows": 921,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 222,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "846152201f9442f5d719aafeb2155a5d38f4a1cd3a07d1cae22295ac57841299",
+    "frozen_sound_sha256": "9d45cf3406628ba8eb0f27326a1cc68ff19370eab42ce5ff875783ccca6baa2c",
+    "golden_frames": {
+     "rows": 689,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5CONTR": {
+   "wad": "tests/reference/m5a_wads/contrast.wad",
+   "lmp_sha256": "8fb6233507ff0f7fa6c532bb99671c54f1139313cb1c45971bdae67eaf12dd32",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 127,
+    "m6a_end": "marker",
+    "m6a_last_tic": 127,
+    "frames": {
+     "rows": 599,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 142,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "65f1f8e4c88f16d1e993260c5d201b6843be8875fe80fc81a6f47479c9753238",
+    "frozen_sound_sha256": "970a81a6132b6b86bc2568c945a6e48b0c7bb478a794acda424a20b18f532c34",
+    "view": {
+     "rows": 396,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 129,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 128,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 447,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 142,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 127,
+    "m6a_end": "marker",
+    "m6a_last_tic": 127,
+    "frames": {
+     "rows": 599,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 142,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "1d615098af32ed5d7610ec271a45bab671aaf87547abe8bf63194192a8bea07e",
+    "frozen_sound_sha256": "970a81a6132b6b86bc2568c945a6e48b0c7bb478a794acda424a20b18f532c34",
+    "golden_frames": {
+     "rows": 447,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5DIST": {
+   "wad": "tests/reference/m5a_wads/dist.wad",
+   "lmp_sha256": "898094548b97da1d1d11676e75767b108cbea63273dfd4969efd195b11153d00",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 201,
+    "m6a_end": "marker",
+    "m6a_last_tic": 201,
+    "frames": {
+     "rows": 891,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 216,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "670c6ea3079b7513a3094608acbde5e933141340e22e45b9d3ec9e72742f6cff",
+    "frozen_sound_sha256": "4710a356e95f280fe3a03526063e5e618beedb8f320e7b45fa999f871e4440ea",
+    "view": {
+     "rows": 614,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 203,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 202,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 665,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 216,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 201,
+    "m6a_end": "marker",
+    "m6a_last_tic": 201,
+    "frames": {
+     "rows": 891,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 216,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "bcd5a85b14f8b3c8aec8bd2fb4de59b715f8094e8e43394d9b8bde9043f6a5e9",
+    "frozen_sound_sha256": "4710a356e95f280fe3a03526063e5e618beedb8f320e7b45fa999f871e4440ea",
+    "golden_frames": {
+     "rows": 665,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5SPRIT": {
+   "wad": "tests/reference/m5a_wads/sprites.wad",
+   "lmp_sha256": "63f039729688e6cff97022d8bf572f45ace8fcdeb5341f2f043534b6e76ecfb9",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 135,
+    "m6a_end": "marker",
+    "m6a_last_tic": 135,
+    "frames": {
+     "rows": 628,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 150,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "e4e652d73b4458d99505dd5ce1955d86b642c4ac4681a9bb18687938c9dd247e",
+    "frozen_sound_sha256": "eed9d2ad98aef09bdfdbb4e460e81e910a29bbb968079625d6ec5faa278222de",
+    "view": {
+     "rows": 404,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 137,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 136,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 468,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 150,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 135,
+    "m6a_end": "marker",
+    "m6a_last_tic": 135,
+    "frames": {
+     "rows": 628,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 150,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "08c8da3025f123f8c9ff7bc0b9380895ceb9d86a3482bbc7eb16d23e750d1c24",
+    "frozen_sound_sha256": "eed9d2ad98aef09bdfdbb4e460e81e910a29bbb968079625d6ec5faa278222de",
+    "golden_frames": {
+     "rows": 468,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5CLIP": {
+   "wad": "tests/reference/m5a_wads/clip.wad",
+   "lmp_sha256": "fa25ba4733445cdb8e0ad7b436a17b8f9e053e672bbf04f21a4991fa62fb4065",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 183,
+    "m6a_end": "marker",
+    "m6a_last_tic": 183,
+    "frames": {
+     "rows": 823,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 198,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "9766ae1c9b355ac49320dee7f33f5dcf2a160c86435256f3b1231f4efefb31b2",
+    "frozen_sound_sha256": "a69f088e700162d719b5f3f3ff4c05dc3d6d75928c3833d0f2d505e9ba2a29a1",
+    "view": {
+     "rows": 548,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 185,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 184,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 615,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 198,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 183,
+    "m6a_end": "marker",
+    "m6a_last_tic": 183,
+    "frames": {
+     "rows": 823,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 198,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "8ff1ffb8d62580571f086f4d8fb49a9f9d504cb1ae9cd03159af2144bac6e935",
+    "frozen_sound_sha256": "a69f088e700162d719b5f3f3ff4c05dc3d6d75928c3833d0f2d505e9ba2a29a1",
+    "golden_frames": {
+     "rows": 615,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5WEAP": {
+   "wad": "tests/reference/m5a_wads/weapon.wad",
+   "lmp_sha256": "fe32eedcff3835814bf8c0d4e8f09b1baca27ce000fcd8ea05cc9765a48bf948",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 395,
+    "m6a_end": "marker",
+    "m6a_last_tic": 395,
+    "frames": {
+     "rows": 1673,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 596,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "145a5723052dd3833aa07a630492fb9765c759a526e6187321998e95a7b2f8fe",
+    "frozen_sound_sha256": "0dc4d3bf2406f81821a64d597f06140960a47f2ac2c1fe1bb969903fd34aae97",
+    "view": {
+     "rows": 1192,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 397,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 396,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 1253,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 596,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 395,
+    "m6a_end": "marker",
+    "m6a_last_tic": 395,
+    "frames": {
+     "rows": 1673,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 596,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "df7eecc777d89ba640ec77a8db8cd78ea809b6b4359b8bc31d432f11875ee152",
+    "frozen_sound_sha256": "0dc4d3bf2406f81821a64d597f06140960a47f2ac2c1fe1bb969903fd34aae97",
+    "golden_frames": {
+     "rows": 1253,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5FUZZ": {
+   "wad": "tests/reference/m5a_wads/fuzz.wad",
+   "lmp_sha256": "55d73ed310d5d7e21d56fbd7f13519975a8fbeadf5ca94786aa3107260056bf9",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 155,
+    "m6a_end": "marker",
+    "m6a_last_tic": 155,
+    "frames": {
+     "rows": 708,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 203,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "d6dea454f6569c48063138a6b7f933070e4d4cfd18ba4807154376f74375f9a7",
+    "frozen_sound_sha256": "74693224e1f61a824df8d30a44e43dfda67ee906a89b6289850191ecb3f3a686",
+    "view": {
+     "rows": 472,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 157,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 156,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 528,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 203,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 155,
+    "m6a_end": "marker",
+    "m6a_last_tic": 155,
+    "frames": {
+     "rows": 708,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 203,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "ddbc46061b808acc8bc74891e695be77d421f7d94c4ac32eb37c3de317c2d390",
+    "frozen_sound_sha256": "74693224e1f61a824df8d30a44e43dfda67ee906a89b6289850191ecb3f3a686",
+    "golden_frames": {
+     "rows": 528,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5AMP": {
+   "wad": "tests/reference/m5a_wads/amp.wad",
+   "lmp_sha256": "f164a09261fbb66d00e42a3668527d3724821b948943a32ce911dd6d31fd677e",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 123,
+    "m6a_end": "marker",
+    "m6a_last_tic": 123,
+    "frames": {
+     "rows": 580,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 211,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "13b2c3c3dbf3eee7d79c77ba91c36323cf664f38af7f717b50715c8e68c72dc8",
+    "frozen_sound_sha256": "7a3319f8d6bc96655c3142b5775dc52d65a5805013a1af868b2a62682fa7d88a",
+    "view": {
+     "rows": 380,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 125,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 124,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 432,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 211,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 123,
+    "m6a_end": "marker",
+    "m6a_last_tic": 123,
+    "frames": {
+     "rows": 580,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 211,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "d4be56ebf283e047f2d7796e59e03129fdd070caaec1abda2b73a2b2c38aed9a",
+    "frozen_sound_sha256": "7a3319f8d6bc96655c3142b5775dc52d65a5805013a1af868b2a62682fa7d88a",
+    "golden_frames": {
+     "rows": 432,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5HOM": {
+   "wad": "tests/reference/m5a_wads/hom.wad",
+   "lmp_sha256": "559065f8dd7a2b45fbfabe2e7f35825218154f4b16bfa7ddaf669a9b138e2f5b",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 131,
+    "m6a_end": "marker",
+    "m6a_last_tic": 131,
+    "frames": {
+     "rows": 612,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 146,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "3846e222eb2d5fef937656e69aaaaeaddff5c00fef5a8b61b4826a102f5d6c98",
+    "frozen_sound_sha256": "91241b017cec39694c27a556019928e298f955a241451cc7ab389b20ae1ccdf2",
+    "view": {
+     "rows": 400,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 133,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 132,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 456,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 146,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 131,
+    "m6a_end": "marker",
+    "m6a_last_tic": 131,
+    "frames": {
+     "rows": 612,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 146,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "b6d239bc7a9484077a3e75587da3c3f29426eb769c5009bbc609a43b46ac6457",
+    "frozen_sound_sha256": "91241b017cec39694c27a556019928e298f955a241451cc7ab389b20ae1ccdf2",
+    "golden_frames": {
+     "rows": 456,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5SHORT": {
+   "wad": "tests/reference/m5a_wads/short.wad",
+   "lmp_sha256": "aca3622f679bd4ac41deca25e3d363bdc77d99c960f58d110c4b50c4c3fdef4b",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 135,
+    "m6a_end": "marker",
+    "m6a_last_tic": 135,
+    "frames": {
+     "rows": 6577,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 150,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "f2897ad97559d601c7b934244b896eb61927c04a0e4a13a51a3b11acf9cd313a",
+    "frozen_sound_sha256": "eed9d2ad98aef09bdfdbb4e460e81e910a29bbb968079625d6ec5faa278222de",
+    "view": {
+     "rows": 404,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 137,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 136,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 6417,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 150,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 135,
+    "m6a_end": "marker",
+    "m6a_last_tic": 135,
+    "frames": {
+     "rows": 6577,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 150,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "54e8898d8de841bd676205485697999ff857248d79bddcfe57af7ecba8bb7473",
+    "frozen_sound_sha256": "eed9d2ad98aef09bdfdbb4e460e81e910a29bbb968079625d6ec5faa278222de",
+    "golden_frames": {
+     "rows": 6417,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5VIEW": {
+   "wad": "tests/reference/m5a_wads/view.wad",
+   "lmp_sha256": "4b4e5389d4fdd0425e5274a74a0d4a8e04b45cb2636fc5f746ab0b899e05bbff",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 39,
+    "m6a_end": "marker",
+    "m6a_last_tic": 39,
+    "frames": {
+     "rows": 242,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 54,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "6b8f2771853ce60348adbf07a6c5b152f35efb6619eced00b8f8ac80023b6f35",
+    "frozen_sound_sha256": "5ac5c261580d94f06faccdf3f9495275cda0b8899291d0db138fc208edf8248f",
+    "view": {
+     "rows": 116,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 41,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 40,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 178,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 54,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 39,
+    "m6a_end": "marker",
+    "m6a_last_tic": 39,
+    "frames": {
+     "rows": 242,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 54,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "fbda5f5334b13df697b86a55e7afaab6a4ce6e415783d8db621d1a1ac126aa5c",
+    "frozen_sound_sha256": "5ac5c261580d94f06faccdf3f9495275cda0b8899291d0db138fc208edf8248f",
+    "golden_frames": {
+     "rows": 178,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5VPLAN": {
+   "wad": "tests/reference/m5a_wads/vplanes.wad",
+   "lmp_sha256": "39c60cd78cb49e903108b92591bb3c2af16cbb75ebd463a2e832d726aeb793fa",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "error:R_FindPlane: no more visplanes",
+    "frozen_last_tic": 48,
+    "m6a_end": "error:R_FindPlane: no more visplanes",
+    "m6a_last_tic": 48,
+    "frames": {
+     "rows": 301,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 63,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "c61bcbbc23f63ed14c9aebea3accbbc829088ec2ffd6caf8d60aa90fbe1007b8",
+    "frozen_sound_sha256": "48eea7ef438f10805ee75ddf915eebbcc9011bb6d51b6360f1a545918b9054ae",
+    "view": {
+     "rows": 156,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 51,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 49,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 251,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 62,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "error:R_FindPlane: no more visplanes",
+    "frozen_last_tic": 48,
+    "m6a_end": "error:R_FindPlane: no more visplanes",
+    "m6a_last_tic": 48,
+    "frames": {
+     "rows": 301,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 63,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "f8f2c4582977d923348a247cf53d1c41be2122c61abe1b246ea39b43132407f9",
+    "frozen_sound_sha256": "48eea7ef438f10805ee75ddf915eebbcc9011bb6d51b6360f1a545918b9054ae",
+    "golden_frames": {
+     "rows": 251,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5DSEG": {
+   "wad": "tests/reference/m5a_wads/dsegs.wad",
+   "lmp_sha256": "39c60cd78cb49e903108b92591bb3c2af16cbb75ebd463a2e832d726aeb793fa",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 81,
+    "m6a_end": "marker",
+    "m6a_last_tic": 81,
+    "frames": {
+     "rows": 488,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 96,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "40e8bc4bf6243d4bca27b7c2780a5a2d43b58dbf7af96fa3bd2b06fb4bf6049e",
+    "frozen_sound_sha256": "164d7e5a85c8661caff2cb96d8352421dda23f53f021dde08b378a4fd75baac9",
+    "view": {
+     "rows": 254,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 83,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 82,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 382,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 96,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 81,
+    "m6a_end": "marker",
+    "m6a_last_tic": 81,
+    "frames": {
+     "rows": 488,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 96,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "94d98cc564f0bf25ecbb641e9decc8e51b13544d492c047c6697fa2893f0d58f",
+    "frozen_sound_sha256": "164d7e5a85c8661caff2cb96d8352421dda23f53f021dde08b378a4fd75baac9",
+    "golden_frames": {
+     "rows": 382,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5VSPR": {
+   "wad": "tests/reference/m5a_wads/vsprites.wad",
+   "lmp_sha256": "39c60cd78cb49e903108b92591bb3c2af16cbb75ebd463a2e832d726aeb793fa",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 81,
+    "m6a_end": "marker",
+    "m6a_last_tic": 81,
+    "frames": {
+     "rows": 412,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 96,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "9279068b087522c9efee89d6c63a5d568cd536a24edab10b1f0eedf96dea544a",
+    "frozen_sound_sha256": "164d7e5a85c8661caff2cb96d8352421dda23f53f021dde08b378a4fd75baac9",
+    "view": {
+     "rows": 254,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 83,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 82,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 306,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 96,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 81,
+    "m6a_end": "marker",
+    "m6a_last_tic": 81,
+    "frames": {
+     "rows": 412,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 96,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "c00224da9bf09065c30c6acac48cd49a740f1dad58f8658e65f8cf88662064ea",
+    "frozen_sound_sha256": "164d7e5a85c8661caff2cb96d8352421dda23f53f021dde08b378a4fd75baac9",
+    "golden_frames": {
+     "rows": 306,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5OPEN": {
+   "wad": "tests/reference/m5a_wads/openings.wad",
+   "lmp_sha256": "39c60cd78cb49e903108b92591bb3c2af16cbb75ebd463a2e832d726aeb793fa",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "refused:OpeningOverflow",
+    "frozen_last_tic": 39,
+    "m6a_end": "refused:OpeningOverflow",
+    "m6a_last_tic": 39,
+    "compared_through_tic": 38,
+    "frames": {
+     "rows": 214,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 52,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "a6931801e55043d052c6e5b5fdc45191dabf9c7917eb3ef08d5f4997602c5be6",
+    "frozen_sound_sha256": "b82c13cc6454dd271b81724961e6ebaae33644dcbb18291cd08aed8c6fa5d849",
+    "view": {
+     "rows": 120,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 42,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 40,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 178,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 53,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "refused:OpeningOverflow",
+    "frozen_last_tic": 39,
+    "m6a_end": "refused:OpeningOverflow",
+    "m6a_last_tic": 39,
+    "compared_through_tic": 38,
+    "frames": {
+     "rows": 214,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 52,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "1faad97e746d17dd7943a543f457c7d700b5f371026e11238520ef32f1009440",
+    "frozen_sound_sha256": "b82c13cc6454dd271b81724961e6ebaae33644dcbb18291cd08aed8c6fa5d849",
+    "golden_frames": {
+     "rows": 178,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5SSEG": {
+   "wad": "tests/reference/m5a_wads/solidsegs.wad",
+   "lmp_sha256": "39c60cd78cb49e903108b92591bb3c2af16cbb75ebd463a2e832d726aeb793fa",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "refused:SolidSegOverflow",
+    "frozen_last_tic": 15,
+    "m6a_end": "refused:SolidSegOverflow",
+    "m6a_last_tic": 15,
+    "compared_through_tic": 14,
+    "frames": {
+     "rows": 131,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 28,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "0ff118463a90020fad7f65782ddd3c94a838196dc73c0fb494632eafcbf84c75",
+    "frozen_sound_sha256": "99cab12ff33ec493c4f193eb5b1c1160aa135dff91b8eaa38827672c49f522e8",
+    "view": {
+     "rows": 44,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 17,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 16,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 116,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 29,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "refused:SolidSegOverflow",
+    "frozen_last_tic": 15,
+    "m6a_end": "refused:SolidSegOverflow",
+    "m6a_last_tic": 15,
+    "compared_through_tic": 14,
+    "frames": {
+     "rows": 131,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 28,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "9f34cf768e7437698a8fdcbeff37e5fc3481e42ad450dc3bed027771d11eff0f",
+    "frozen_sound_sha256": "99cab12ff33ec493c4f193eb5b1c1160aa135dff91b8eaa38827672c49f522e8",
+    "golden_frames": {
+     "rows": 116,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5AMPFL": {
+   "wad": "tests/reference/m5a_wads/ampflick.wad",
+   "lmp_sha256": "491c6c4614be20fba5195283397d7af271b70be007c0696debdebc97e0a94344",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 4229,
+    "m6a_end": "marker",
+    "m6a_last_tic": 4229,
+    "frames": {
+     "rows": 17003,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 4334,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "3659b49f5b2548582bff50c0bb23eb100168498ec8eba1ecd4c7517ef6afcaed",
+    "frozen_sound_sha256": "754878dce96512d9850dfd13e469ab2080a55db1261b054f36936238f4483fcc",
+    "view": {
+     "rows": 12700,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 4231,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 4230,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 12749,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 4334,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 4229,
+    "m6a_end": "marker",
+    "m6a_last_tic": 4229,
+    "frames": {
+     "rows": 17003,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 4334,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "519c30cd7e223ee04c52892afdadd3fe7771c2f3f912512e266268ce2fda8c47",
+    "frozen_sound_sha256": "754878dce96512d9850dfd13e469ab2080a55db1261b054f36936238f4483fcc",
+    "golden_frames": {
+     "rows": 12749,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5VIEWZ": {
+   "wad": "tests/reference/m5a_wads/viewz.wad",
+   "lmp_sha256": "af196bb4e2b2f98374aabaf20eb81577bd3b9db91dac14aad5fdc8758c2e37b2",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 567,
+    "m6a_end": "marker",
+    "m6a_last_tic": 567,
+    "frames": {
+     "rows": 2354,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 657,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "59b8b2ad240975511c9bd91e0f6404b97d33c71f805f563b65d10c5a07e602bd",
+    "frozen_sound_sha256": "53d144ce8728dc2b605c560d7999ddde4db84b85a051189b411ff13a5c599668",
+    "view": {
+     "rows": 1700,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 569,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 568,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 1762,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 657,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 567,
+    "m6a_end": "marker",
+    "m6a_last_tic": 567,
+    "frames": {
+     "rows": 2354,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 657,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "0fcd593e5a7664b3d4c9b69d93f0c814d3f77313921113ea10aa0046b00d1fd4",
+    "frozen_sound_sha256": "53d144ce8728dc2b605c560d7999ddde4db84b85a051189b411ff13a5c599668",
+    "golden_frames": {
+     "rows": 1762,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5SWTCH": {
+   "wad": "tests/reference/m5a_wads/switch.wad",
+   "lmp_sha256": "fff4f49428768b760a8b3d50197b9f4dbc7f5c3736bbdade6d9d11e5ed39fd5a",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 212,
+    "m6a_end": "marker",
+    "m6a_last_tic": 212,
+    "frames": {
+     "rows": 938,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 537,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "ce3b66b93ca0bc9525a319f3135926ae3d8d00d2e8a41710812ddf6c9a3903bf",
+    "frozen_sound_sha256": "38fdf6b0e60f6f50737da01843f4c6791b0d8e839febb648408d7930fa45bff8",
+    "view": {
+     "rows": 640,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 214,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 213,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 701,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 537,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 212,
+    "m6a_end": "marker",
+    "m6a_last_tic": 212,
+    "frames": {
+     "rows": 938,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 537,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "fba09f956c48120e4e2576915e8658921cb3cb1310a487c1adfff1eccbfe6535",
+    "frozen_sound_sha256": "38fdf6b0e60f6f50737da01843f4c6791b0d8e839febb648408d7930fa45bff8",
+    "golden_frames": {
+     "rows": 701,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5LAND": {
+   "wad": "tests/reference/m5a_wads/landing.wad",
+   "lmp_sha256": "c4f07bacae3f4be9b8a16ebeb5b01e3c569038bdf8cbce5b803b11f4bee134fd",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 143,
+    "m6a_end": "marker",
+    "m6a_last_tic": 143,
+    "frames": {
+     "rows": 658,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 158,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "f33228314833bfcfe02ef65fc547660d7533967cdc52d950364409c640f57b00",
+    "frozen_sound_sha256": "3ad900b15de0415e05c446ab9bb27f524c90ba252a9565534ca5647932368954",
+    "view": {
+     "rows": 436,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 145,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 144,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 490,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 158,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 143,
+    "m6a_end": "marker",
+    "m6a_last_tic": 143,
+    "frames": {
+     "rows": 658,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 158,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "2baf7d3fa15c398a25d4f7400d50f3359a8ebf91a382911e269155baa21cf870",
+    "frozen_sound_sha256": "3ad900b15de0415e05c446ab9bb27f524c90ba252a9565534ca5647932368954",
+    "golden_frames": {
+     "rows": 490,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5SEGANG": {
+   "wad": "tests/reference/m5a_wads/segangle.wad",
+   "lmp_sha256": "7ff07434ae577e485a6f3efd42e28ec2700e65bea7446db258789ff71fac2425",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 39,
+    "m6a_end": "marker",
+    "m6a_last_tic": 39,
+    "frames": {
+     "rows": 243,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 54,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "f3f094042829e24f9815fee241bf75c8090c73dede5642382a5cd8d992809320",
+    "frozen_sound_sha256": "5ac5c261580d94f06faccdf3f9495275cda0b8899291d0db138fc208edf8248f",
+    "view": {
+     "rows": 116,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 41,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 40,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 179,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 54,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 39,
+    "m6a_end": "marker",
+    "m6a_last_tic": 39,
+    "frames": {
+     "rows": 243,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 54,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "6ad5adc51b9dd30772db83015815b995e5be01de249e731f28bf2bc41db52fed",
+    "frozen_sound_sha256": "5ac5c261580d94f06faccdf3f9495275cda0b8899291d0db138fc208edf8248f",
+    "golden_frames": {
+     "rows": 179,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5MSKPAD": {
+   "wad": "tests/reference/m5a_wads/maskpad.wad",
+   "lmp_sha256": "706e1fe1d1a8738401b265c33e10d5080d370319ec2f891db34b7c3f24bc7816",
+   "kind": "m5a",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 15,
+    "m6a_end": "marker",
+    "m6a_last_tic": 15,
+    "frames": {
+     "rows": 307,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 30,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "76a6e42376472bd6fc0cc27615a634bd00d432657a308634129f88bbe506089e",
+    "frozen_sound_sha256": "3c1bec7bbadf3b63b91b352c28cb1a2ad8c64e1084bfec7976199d279ec954cf",
+    "view": {
+     "rows": 44,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 17,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 16,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 267,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 30,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 15,
+    "m6a_end": "marker",
+    "m6a_last_tic": 15,
+    "frames": {
+     "rows": 307,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 30,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "197fa4dcc2ca89812d1c963688541a6aea8ad45dc5e3086127b0e9f764e689a7",
+    "frozen_sound_sha256": "3c1bec7bbadf3b63b91b352c28cb1a2ad8c64e1084bfec7976199d279ec954cf",
+    "golden_frames": {
+     "rows": 267,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "TELE1": {
+   "wad": "tests/reference/m4b_wads/tele.wad",
+   "lmp_sha256": "68fb62ef514948c3efa96d3368173e79434c2ab5548348715cb335f548b8da88",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 172,
+    "m6a_end": "marker",
+    "m6a_last_tic": 172,
+    "frames": {
+     "rows": 780,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 208,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "0a649753bbcd06272d7738bc3936101844c59007840e5587da45a8a93e9607d0",
+    "frozen_sound_sha256": "70e39520daa56366325397e47b4eab5dc5bb8e3bdb366dd2a3ec7a15bf4c06d0",
+    "view": {
+     "rows": 528,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 174,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 173,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 583,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 208,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 172,
+    "m6a_end": "marker",
+    "m6a_last_tic": 172,
+    "frames": {
+     "rows": 780,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 208,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "55ab88454c16bc90547797e6e8f3d0862582e9c4347bb3d9196d2c973099b65b",
+    "frozen_sound_sha256": "70e39520daa56366325397e47b4eab5dc5bb8e3bdb366dd2a3ec7a15bf4c06d0",
+    "golden_frames": {
+     "rows": 583,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "TELE2": {
+   "wad": "tests/reference/m4b_wads/tele.wad",
+   "lmp_sha256": "eca90774303e5f62d2001d3a90a2a6ff3203fc107db2bef265fc870c1526c9fc",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 60,
+    "m6a_end": "marker",
+    "m6a_last_tic": 60,
+    "frames": {
+     "rows": 327,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 114,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "8dc298012be7d3b40d29457f1df4c4d9d18a6d7815cab34687e53878cee4ff60",
+    "frozen_sound_sha256": "a95c298efa3f4990bc88cabd7417ea92dfaabde7936ad5471f84de186a48d5c1",
+    "view": {
+     "rows": 185,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 62,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 61,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 242,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 114,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 60,
+    "m6a_end": "marker",
+    "m6a_last_tic": 60,
+    "frames": {
+     "rows": 327,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 114,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "4f0cbc07fbb0ad01424cb0f5152e9f1527e28561d23788c4b18e08a6c7dc791e",
+    "frozen_sound_sha256": "a95c298efa3f4990bc88cabd7417ea92dfaabde7936ad5471f84de186a48d5c1",
+    "golden_frames": {
+     "rows": 242,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "TSPLIT": {
+   "wad": "tests/reference/m4b_wads/telemove.wad",
+   "lmp_sha256": "a597822bd7b06e4baec859ab626245b556e9a48db50f84e0f514e32b23c1a623",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 64,
+    "m6a_end": "marker",
+    "m6a_last_tic": 64,
+    "frames": {
+     "rows": 345,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 143,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "91ad0a554edfc15bd2926e8b7f116a043cf304f5a64d3d1cf38933f652b4a513",
+    "frozen_sound_sha256": "329cda7fdae5fbdcdb9349038a0b97ac7abf55dceaceb81d30e5c651d5c2cac9",
+    "view": {
+     "rows": 192,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 66,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 65,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 256,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 143,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 64,
+    "m6a_end": "marker",
+    "m6a_last_tic": 64,
+    "frames": {
+     "rows": 345,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 143,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "73024e00c719919d0b4ca00a5c5e2106a1d6b6e0e0ae78c733c89507615614b5",
+    "frozen_sound_sha256": "329cda7fdae5fbdcdb9349038a0b97ac7abf55dceaceb81d30e5c651d5c2cac9",
+    "golden_frames": {
+     "rows": 256,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "TSLIDE": {
+   "wad": "tests/reference/m4b_wads/telemove.wad",
+   "lmp_sha256": "b1e84eecd03c83fec6bf1be2ff1504f0160d5ebdd84726c0e2ce321a54601653",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 169,
+    "m6a_end": "marker",
+    "m6a_last_tic": 169,
+    "frames": {
+     "rows": 765,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 192,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "10f00c5e7601aa42744d9df56bebe866b7568d4b41331482eb97ca50daea5725",
+    "frozen_sound_sha256": "ef7dea5b5226ddf0fee339b004a87637085206b9451e40ec172bcd60c94dc71a",
+    "view": {
+     "rows": 516,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 171,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 170,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 571,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 192,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 169,
+    "m6a_end": "marker",
+    "m6a_last_tic": 169,
+    "frames": {
+     "rows": 765,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 192,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "7de19dc5fc1f2881131d2b1cf794a208f90302abfb1db7361e30ec00349f5ad2",
+    "frozen_sound_sha256": "ef7dea5b5226ddf0fee339b004a87637085206b9451e40ec172bcd60c94dc71a",
+    "golden_frames": {
+     "rows": 571,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "TFRAG1": {
+   "wad": "tests/reference/m4b_wads/tfrag.wad",
+   "lmp_sha256": "9f76009795e409987e122af10e6018269d151e79ad6b2b1acb3530851606b650",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 281,
+    "m6a_end": "marker",
+    "m6a_last_tic": 281,
+    "frames": {
+     "rows": 1214,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 410,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "96c86ec6b0d28e7a6ef01489c6d397cf95d05d1daaf8622c8b8508f85cd5ed08",
+    "frozen_sound_sha256": "3b3fd46b22ede14b7a93805f586737bb5ea079c815c5ab812ffcec91726de267",
+    "view": {
+     "rows": 844,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 283,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 282,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 908,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 410,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 281,
+    "m6a_end": "marker",
+    "m6a_last_tic": 281,
+    "frames": {
+     "rows": 1214,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 410,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "6636301a5270c1efd05a1b02a0f8ca34caeb54b686f6498cd4e509e32a2a624b",
+    "frozen_sound_sha256": "3b3fd46b22ede14b7a93805f586737bb5ea079c815c5ab812ffcec91726de267",
+    "golden_frames": {
+     "rows": 908,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "MTELE1": {
+   "wad": "tests/reference/m4b_wads/montele.wad",
+   "lmp_sha256": "eb51557d4699b030bef3520e5b54015527ca476ac8499b46d643a19d517813d5",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 159,
+    "m6a_end": "marker",
+    "m6a_last_tic": 159,
+    "frames": {
+     "rows": 722,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 381,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "dd55e5aacfa8e0aaf33c0822504d76220078c598fbcb0aa895982b54e20a31a4",
+    "frozen_sound_sha256": "bf6264df67a5934365a6d40ec7326a642d4f10c3b629b02799cfd56c03f17ebf",
+    "view": {
+     "rows": 476,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 161,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 160,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 538,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 381,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 159,
+    "m6a_end": "marker",
+    "m6a_last_tic": 159,
+    "frames": {
+     "rows": 722,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 381,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "b6dfdae3b1f8d4662dc0d1462b4a88bf158ce1e7467c1747f3bf51880a94b721",
+    "frozen_sound_sha256": "bf6264df67a5934365a6d40ec7326a642d4f10c3b629b02799cfd56c03f17ebf",
+    "golden_frames": {
+     "rows": 538,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "SLIDEB": {
+   "wad": "tests/reference/m4b_wads/slideb.wad",
+   "lmp_sha256": "fd1f41575744a68e9e23f5f2425b6349481e3d58c7ad3a9dd3a7634704d1cce2",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 99,
+    "m6a_end": "marker",
+    "m6a_last_tic": 99,
+    "frames": {
+     "rows": 482,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 290,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "a3a12ca422ecba53a0fa184e1219d996f37f673212f59f16254e1655433ba118",
+    "frozen_sound_sha256": "64bba658c384bad1a5af02906bc55fa87da28ef4a30c8f74c9903abdde4f36b7",
+    "view": {
+     "rows": 308,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 101,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 100,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 358,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 290,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 99,
+    "m6a_end": "marker",
+    "m6a_last_tic": 99,
+    "frames": {
+     "rows": 482,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 290,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "2a2d071368165ff7fec0c8f4e1f26204424af2ab7362170887afdfa5954a7206",
+    "frozen_sound_sha256": "64bba658c384bad1a5af02906bc55fa87da28ef4a30c8f74c9903abdde4f36b7",
+    "golden_frames": {
+     "rows": 358,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "SLIDEC": {
+   "wad": "tests/reference/m4b_wads/slidec.wad",
+   "lmp_sha256": "8229344209d7687e0679b4ceb3c3a422c808a08e4187b0648b991569c9eee161",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 122,
+    "m6a_end": "marker",
+    "m6a_last_tic": 122,
+    "frames": {
+     "rows": 574,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 300,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "bc680ccff4e712ab959ace760239f47acbf6070e0cafe5011e4ac04674843a80",
+    "frozen_sound_sha256": "6d79b539303428bceed27e7452b65cf0ce6da2ee003ab0b8ef54af19be0328e4",
+    "view": {
+     "rows": 376,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 124,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 123,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 427,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 300,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 122,
+    "m6a_end": "marker",
+    "m6a_last_tic": 122,
+    "frames": {
+     "rows": 574,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 300,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "4581c11fa211de25d64cd22104da0e3613453662561880f8b7fce62a402df550",
+    "frozen_sound_sha256": "6d79b539303428bceed27e7452b65cf0ce6da2ee003ab0b8ef54af19be0328e4",
+    "golden_frames": {
+     "rows": 427,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "BARON1": {
+   "wad": "tests/reference/m4b_wads/baron.wad",
+   "lmp_sha256": "32bbbd4f8f9c6fa1a0e11327a019f54b26f935e25afa206a8fb85b0dc152e4a9",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 752,
+    "m6a_end": "marker",
+    "m6a_last_tic": 752,
+    "frames": {
+     "rows": 3100,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 1025,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "d9822a19cbce27ee44ef6259b640c8da489ec1d8d73e9e2da87dc3506f6bf938",
+    "frozen_sound_sha256": "b958adffcbb78dd769116b5e9a795436b8c548703539046e62656093808bf088",
+    "view": {
+     "rows": 2269,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 754,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 753,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 2323,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 1025,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 752,
+    "m6a_end": "marker",
+    "m6a_last_tic": 752,
+    "frames": {
+     "rows": 3100,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 1025,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "d9ec59a9e2107d11bdee7b2f24aae4736deeb7e797b50b3070b9e38956e44e13",
+    "frozen_sound_sha256": "b958adffcbb78dd769116b5e9a795436b8c548703539046e62656093808bf088",
+    "golden_frames": {
+     "rows": 2323,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "BINF1": {
+   "wad": "tests/reference/m4b_wads/infight.wad",
+   "lmp_sha256": "8b5caa33468932ab2df8154d79ea3d3bbfc161e21d85c39ab3a9538658e69ef2",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 299,
+    "m6a_end": "marker",
+    "m6a_last_tic": 299,
+    "frames": {
+     "rows": 1282,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 372,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "efec6a0b830dbc83066f09c131406c8eec11428e8e6f9201d1a3412631591685",
+    "frozen_sound_sha256": "b74f006c514728b6c38f3732aae31b40fb6f749b8ce5dce37c56b9b7034a8f73",
+    "view": {
+     "rows": 904,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 301,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 300,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 958,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 372,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 299,
+    "m6a_end": "marker",
+    "m6a_last_tic": 299,
+    "frames": {
+     "rows": 1282,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 372,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "47e50f202b07e01e3ffa08ce9abae2155637cc5bda7ff3e8d4ea93a35c32aa2b",
+    "frozen_sound_sha256": "b74f006c514728b6c38f3732aae31b40fb6f749b8ce5dce37c56b9b7034a8f73",
+    "golden_frames": {
+     "rows": 958,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "BVB1": {
+   "wad": "tests/reference/m4b_wads/bvb.wad",
+   "lmp_sha256": "0e508112e94e6306965b537c42d6ac5657086b1ce6b4b380a0746cb25d5dd1d4",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 734,
+    "m6a_end": "marker",
+    "m6a_last_tic": 734,
+    "frames": {
+     "rows": 3027,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 948,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "80e3f87dd10f4c06044664726e0cb397a82e38b060d40a32f0fdf2c7603ed6a3",
+    "frozen_sound_sha256": "20fc20697c9b8dec2e82d7978f0b19b58f81f4fbc2908c5a87d5db1d063a79a9",
+    "view": {
+     "rows": 2203,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 736,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 735,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 2268,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 948,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 734,
+    "m6a_end": "marker",
+    "m6a_last_tic": 734,
+    "frames": {
+     "rows": 3027,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 948,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "4c65e508a4cc49b4b77a4ef068aaabfe3de7cb999c8d638cc718b30483588f40",
+    "frozen_sound_sha256": "20fc20697c9b8dec2e82d7978f0b19b58f81f4fbc2908c5a87d5db1d063a79a9",
+    "golden_frames": {
+     "rows": 2268,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "BOSS1": {
+   "wad": "tests/reference/m4b_wads/boss8.wad",
+   "lmp_sha256": "2e795f1e00a9b286e64407a207eefac0dc72f9192b897829771853b1a01dd2fc",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "exit",
+    "frozen_last_tic": 544,
+    "m6a_end": "error:W_GetNumForName: d_victor not found!",
+    "m6a_last_tic": 544,
+    "frames": {
+     "rows": 2242,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 1
+    },
+    "sound": {
+     "rows": 711,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 1
+    },
+    "frozen_frames_sha256": "903f6338ddb70a256a294c3ea01ccd8fe826acef3a121a730efb0c8e1cce3b95",
+    "frozen_sound_sha256": "40b0858254d78be17e4e921a143efc4b6a151130cf2e3548ff632cac8398ed52",
+    "view": {
+     "rows": 1632,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 546,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 545,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 1697,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 1
+    },
+    "golden_sound": {
+     "rows": 711,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 1
+    }
+   },
+   "sb11": {
+    "frozen_end": "exit",
+    "frozen_last_tic": 544,
+    "m6a_end": "error:W_GetNumForName: d_victor not found!",
+    "m6a_last_tic": 544,
+    "frames": {
+     "rows": 2242,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 1
+    },
+    "sound": {
+     "rows": 711,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 1
+    },
+    "frozen_frames_sha256": "54a01ae9e41104fa766e897b3efb8dbf0d3fd86f0fdeb4efd75ba578db52b1d2",
+    "frozen_sound_sha256": "40b0858254d78be17e4e921a143efc4b6a151130cf2e3548ff632cac8398ed52",
+    "golden_frames": {
+     "rows": 1697,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 1
+    }
+   }
+  },
+  "BOSS2": {
+   "wad": "tests/reference/m4b_wads/boss8.wad",
+   "lmp_sha256": "726e7e88e2323a3e29c69044c5ab20753a19fc15d48a374d1fc68320ac142bf3",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 363,
+    "m6a_end": "marker",
+    "m6a_last_tic": 363,
+    "frames": {
+     "rows": 1541,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 516,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "2620ca464b010e44e5915ea6df1dbe7278a58c96f25f776a0b3f27bf49a0b5c0",
+    "frozen_sound_sha256": "e0421d4b5ef689ea9cb3c8dabbaacd2552a7da700ca77d8eda13f1b778628a16",
+    "view": {
+     "rows": 1100,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 365,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 364,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 1153,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 516,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 363,
+    "m6a_end": "marker",
+    "m6a_last_tic": 363,
+    "frames": {
+     "rows": 1541,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 516,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "ce0d5b0b01b7325a663a9de32397bf97e9ec5ac6f0eba849b58a862eb9c4af3c",
+    "frozen_sound_sha256": "e0421d4b5ef689ea9cb3c8dabbaacd2552a7da700ca77d8eda13f1b778628a16",
+    "golden_frames": {
+     "rows": 1153,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "BOSSM1": {
+   "wad": "tests/reference/m4b_wads/bossm1.wad",
+   "lmp_sha256": "7d51d19d4304f7c96a67526b08b991b039411e248276e461cadc8cc74b88ecd1",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 599,
+    "m6a_end": "marker",
+    "m6a_last_tic": 599,
+    "frames": {
+     "rows": 2486,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 699,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "85915008f47b6fc44b9719d25d8322965dd60a185fc5e515d97d48d143f6d734",
+    "frozen_sound_sha256": "1de0db2e3c39a16a7542d09c5703a5c4bedede6b588c28d82d3e8c755aa3e840",
+    "view": {
+     "rows": 1804,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 601,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 600,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 1862,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 699,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 599,
+    "m6a_end": "marker",
+    "m6a_last_tic": 599,
+    "frames": {
+     "rows": 2486,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 699,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "69e4ed004a652e24ce2fe9a201e61505b231fc600c131de24988a4a93cddd399",
+    "frozen_sound_sha256": "1de0db2e3c39a16a7542d09c5703a5c4bedede6b588c28d82d3e8c755aa3e840",
+    "golden_frames": {
+     "rows": 1862,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "SPECH8": {
+   "wad": "tests/reference/m4b_wads/spech8.wad",
+   "lmp_sha256": "9a262ff7d632f841ddd1e2d3c19ed0e7124ed65e436cbc4cd4d988a86d19ec4c",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 97,
+    "m6a_end": "marker",
+    "m6a_last_tic": 97,
+    "frames": {
+     "rows": 474,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 112,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "5d11b51fbd96eabc037169f54acf78e3462d931a4743a41411609233f4b17815",
+    "frozen_sound_sha256": "75906d6a91496fbaf40f47e3a248a5f62b4dacaccba4ca3bf604e8a52c9a7066",
+    "view": {
+     "rows": 300,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 99,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 98,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 352,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 112,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 97,
+    "m6a_end": "marker",
+    "m6a_last_tic": 97,
+    "frames": {
+     "rows": 474,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 112,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "fefc81d489538fdda0d28ca088acc1b8776f96d89be718430ee8cfe0b3f78eec",
+    "frozen_sound_sha256": "75906d6a91496fbaf40f47e3a248a5f62b4dacaccba4ca3bf604e8a52c9a7066",
+    "golden_frames": {
+     "rows": 352,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "SPECH9": {
+   "wad": "tests/reference/m4b_wads/spech9.wad",
+   "lmp_sha256": "fe29fac23acfbc574d92a8b9179afb80bc8f2f87569f5cacd0ff2064c5c879c9",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 74,
+    "m6a_end": "marker",
+    "m6a_last_tic": 74,
+    "frames": {
+     "rows": 382,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 89,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "e343334f32d5b55bdebb7a51cf2ad265a979e956fb738090c262d3ab7529d754",
+    "frozen_sound_sha256": "9885ee1f93613b405bd309d9d423d23fe82f60cbe25eefb46db90144aeafbd4c",
+    "view": {
+     "rows": 232,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 76,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 75,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 283,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 89,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 74,
+    "m6a_end": "marker",
+    "m6a_last_tic": 74,
+    "frames": {
+     "rows": 382,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 89,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "099c3914a8827bbcb1848806afa811e7b0954393465cd32487a2e692cd4ba402",
+    "frozen_sound_sha256": "9885ee1f93613b405bd309d9d423d23fe82f60cbe25eefb46db90144aeafbd4c",
+    "golden_frames": {
+     "rows": 283,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "SKILL2": {
+   "wad": "tests/reference/m4b_wads/skill.wad",
+   "lmp_sha256": "6bd2caac2b6e80bce346ac9508242c545205fb6423add9365407a1e3ce3950f9",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 89,
+    "m6a_end": "marker",
+    "m6a_last_tic": 89,
+    "frames": {
+     "rows": 442,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 104,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "a6753e129d0c45f40fcd28155cbd1cf6927e08dd4664314e624667248a4912be",
+    "frozen_sound_sha256": "2177f4fde2e11a9c2eededfa0caaffcfb47e4ebde646f511dbb6f6ae4c843fd1",
+    "view": {
+     "rows": 268,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 91,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 90,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 328,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 104,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 89,
+    "m6a_end": "marker",
+    "m6a_last_tic": 89,
+    "frames": {
+     "rows": 442,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 104,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "4aeeb981554a9d7ac091069af423d89f56a0e92ed29f67a1a5245614f08e1233",
+    "frozen_sound_sha256": "2177f4fde2e11a9c2eededfa0caaffcfb47e4ebde646f511dbb6f6ae4c843fd1",
+    "golden_frames": {
+     "rows": 328,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "SKILL3": {
+   "wad": "tests/reference/m4b_wads/skill.wad",
+   "lmp_sha256": "fca5133374d183623ef1431071d5274ab2ff447a89d0018cab5b71c567848fe3",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 89,
+    "m6a_end": "marker",
+    "m6a_last_tic": 89,
+    "frames": {
+     "rows": 443,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 133,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "8e1762a630dbb9d72c83298ba427b9d096aeefc9b730a8474f7ae7048d32258f",
+    "frozen_sound_sha256": "33029a60472bc4d65fd0f9f4b2a1c07b1f6f1ea48d267fdb511dd6c41e45a67b",
+    "view": {
+     "rows": 268,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 91,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 90,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 329,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 133,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 89,
+    "m6a_end": "marker",
+    "m6a_last_tic": 89,
+    "frames": {
+     "rows": 443,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 133,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "88c3811e72521844f96229e54f2666fbaacedbd6e151a7cb5fffb27d7f72bfc1",
+    "frozen_sound_sha256": "33029a60472bc4d65fd0f9f4b2a1c07b1f6f1ea48d267fdb511dd6c41e45a67b",
+    "golden_frames": {
+     "rows": 329,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "TELE2X": {
+   "wad": "tests/reference/m4b_wads/tele2x.wad",
+   "lmp_sha256": "a597822bd7b06e4baec859ab626245b556e9a48db50f84e0f514e32b23c1a623",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 64,
+    "m6a_end": "marker",
+    "m6a_last_tic": 64,
+    "frames": {
+     "rows": 344,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 171,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "7228f344e9fe74519b94488235c67c837ee870cd0ac2c30a3fa6255b81a4947c",
+    "frozen_sound_sha256": "72352edb89744ba5a81ecac21b961f4289147ec1f7c0b29ad3ea534b067cffbe",
+    "view": {
+     "rows": 192,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 66,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 65,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 255,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 171,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 64,
+    "m6a_end": "marker",
+    "m6a_last_tic": 64,
+    "frames": {
+     "rows": 344,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 171,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "4d65edff750838a8d0e48f3e5e9b5cab0a404c96d79eb0b57d8ed2ae1f14c83d",
+    "frozen_sound_sha256": "72352edb89744ba5a81ecac21b961f4289147ec1f7c0b29ad3ea534b067cffbe",
+    "golden_frames": {
+     "rows": 255,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "SAWBITE": {
+   "wad": "tests/reference/m4b_wads/sawbite.wad",
+   "lmp_sha256": "671d9b88ab0e86aeaf9e58baea7b4e6a098d29134260fcc6daeaf17b0760047c",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 115,
+    "m6a_end": "marker",
+    "m6a_last_tic": 115,
+    "frames": {
+     "rows": 547,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 560,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "5970b3d552dc902c522c883053b89722f6731ed0a0038a87b4291625864841f4",
+    "frozen_sound_sha256": "e9d2630ee73dff6f54eddc5399e48306bafb9d133bba6425c70cd46e5fdb2e9d",
+    "view": {
+     "rows": 348,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 117,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 116,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 407,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 560,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 115,
+    "m6a_end": "marker",
+    "m6a_last_tic": 115,
+    "frames": {
+     "rows": 547,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 560,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "b0ff71b513a4299ef794ad8753b9db272e11a209993bb9f4e86c734bd0522205",
+    "frozen_sound_sha256": "e9d2630ee73dff6f54eddc5399e48306bafb9d133bba6425c70cd46e5fdb2e9d",
+    "golden_frames": {
+     "rows": 407,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "BTUNNEL": {
+   "wad": "tests/reference/m4b_wads/btunnel.wad",
+   "lmp_sha256": "0499f1e97dabd268b6f7090f06c83933a759767c4c86a8b68c4e08453e889c79",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 189,
+    "m6a_end": "marker",
+    "m6a_last_tic": 189,
+    "frames": {
+     "rows": 842,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 306,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "48c19fe3c7e68bacc062d49e0a3d4f3979173dd6b23fac4e6dbe25aa060dd11f",
+    "frozen_sound_sha256": "8e90927099ac1bf313fdd74bb81e89a17ebae35cf4b1921f0fa619aee2926b20",
+    "view": {
+     "rows": 572,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 191,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 190,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 628,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 306,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 189,
+    "m6a_end": "marker",
+    "m6a_last_tic": 189,
+    "frames": {
+     "rows": 842,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 306,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "2e4a2fea184814e2a2f729636df29e723cd22701e2fbe5974209d465650b0771",
+    "frozen_sound_sha256": "8e90927099ac1bf313fdd74bb81e89a17ebae35cf4b1921f0fa619aee2926b20",
+    "golden_frames": {
+     "rows": 628,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "TELEZ": {
+   "wad": "tests/reference/m4b_wads/telez.wad",
+   "lmp_sha256": "1ebddfce103b663f2f0073eefaf2cea3f7be37c1dece0f71c466d9b50986a307",
+   "kind": "m4b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 79,
+    "m6a_end": "marker",
+    "m6a_last_tic": 79,
+    "frames": {
+     "rows": 402,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 309,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "2206b2e3ad9212479ee636da91b49293954438e552dd0b94cf943f73f87a79c9",
+    "frozen_sound_sha256": "54bc88a86c22933acd767d69df8c5d7b72761b7197c7e6c3f9a6a148b2c07f91",
+    "view": {
+     "rows": 252,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 81,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 80,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 298,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 309,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 79,
+    "m6a_end": "marker",
+    "m6a_last_tic": 79,
+    "frames": {
+     "rows": 402,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 309,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "d3be5e6b3ca870af2795a00c2a877660f5b54e930de48ee7682350b004f35a06",
+    "frozen_sound_sha256": "54bc88a86c22933acd767d69df8c5d7b72761b7197c7e6c3f9a6a148b2c07f91",
+    "golden_frames": {
+     "rows": 298,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5STDIG": {
+   "wad": "tests/reference/m5b_wads/stdigit.wad",
+   "lmp_sha256": "f118a40ad4328e3d9012fecce0c241d80065f3158bcf404428d84cde6a0d00b5",
+   "kind": "m5b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 876,
+    "m6a_end": "marker",
+    "m6a_last_tic": 876,
+    "frames": {
+     "rows": 3600,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 1366,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "91b67df4ab9727dd1596bc1f0e26d1dc23a408a2ef9398a084d4317ea3ec1d84",
+    "frozen_sound_sha256": "0251d249903a54726ecae59424455f6373406c000d4c2d6898193582d09baa44",
+    "view": {
+     "rows": 2633,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 878,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 877,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 2699,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 1366,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 876,
+    "m6a_end": "marker",
+    "m6a_last_tic": 876,
+    "frames": {
+     "rows": 3600,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 1366,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "331f3d438784cef24f5f906f97e78ba261e96517cf9f0df38f21df501d452c87",
+    "frozen_sound_sha256": "0251d249903a54726ecae59424455f6373406c000d4c2d6898193582d09baa44",
+    "golden_frames": {
+     "rows": 2699,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5STARM": {
+   "wad": "tests/reference/m5b_wads/starms.wad",
+   "lmp_sha256": "c00d859fe739375cdcbdc42aa453a4e6f5c59545032011d07171d75cbf16ad1e",
+   "kind": "m5b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 272,
+    "m6a_end": "marker",
+    "m6a_last_tic": 272,
+    "frames": {
+     "rows": 1186,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 513,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "78617dea5b9e516076a8dd32aa8f37681e23739f0e92142c6cbf420f3dd6f61c",
+    "frozen_sound_sha256": "ade49fd34dab5bb1ba04da36c0aa542ade8ee9471dd688ec6f9905d4ca190ee9",
+    "view": {
+     "rows": 829,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 274,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 273,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 889,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 513,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 272,
+    "m6a_end": "marker",
+    "m6a_last_tic": 272,
+    "frames": {
+     "rows": 1186,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 513,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "1afc30cdfcf2f43d89c3b0f50ce921eaa8d386fd1b8ff8113564fa1a76d8de3d",
+    "frozen_sound_sha256": "ade49fd34dab5bb1ba04da36c0aa542ade8ee9471dd688ec6f9905d4ca190ee9",
+    "golden_frames": {
+     "rows": 889,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5EVIL": {
+   "wad": "tests/reference/m5b_wads/faceevil.wad",
+   "lmp_sha256": "d7613c997cf8d649ddf089c088c2061a1efdd920dcbdc8ee520ead8b37c8d4ad",
+   "kind": "m5b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 412,
+    "m6a_end": "marker",
+    "m6a_last_tic": 412,
+    "frames": {
+     "rows": 1738,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 550,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "970e0a8f1c2185d6b88160681b5ecdf75eb3f11c663dc104517003920242d9ec",
+    "frozen_sound_sha256": "124972c5f4404231d271910e676e35109b7c622fcd93536f310af698b6ce07bd",
+    "view": {
+     "rows": 1248,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 414,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 413,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 1301,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 550,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 412,
+    "m6a_end": "marker",
+    "m6a_last_tic": 412,
+    "frames": {
+     "rows": 1738,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 550,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "71ea957b40c268604b84ca2a927a12c088e867b507647b27d379048dde1faf7b",
+    "frozen_sound_sha256": "124972c5f4404231d271910e676e35109b7c622fcd93536f310af698b6ce07bd",
+    "golden_frames": {
+     "rows": 1301,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5OUCH": {
+   "wad": "tests/reference/m5b_wads/faceouch.wad",
+   "lmp_sha256": "e8f7887b5fb5a459ef4fb0daa7cc0c46c2c7562cdae164f219b51e33284a7ded",
+   "kind": "m5b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 658,
+    "m6a_end": "marker",
+    "m6a_last_tic": 658,
+    "frames": {
+     "rows": 2722,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 821,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "10b04c15433ef168e230b7f2a81275d04f04e32d21274c3ba6c6b21573488de0",
+    "frozen_sound_sha256": "93793a6579ff2f4c25ea01939ef0ab61c351b14b2e41f98e7cba864b2d900e4f",
+    "view": {
+     "rows": 1983,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 660,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 659,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 2039,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 821,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 658,
+    "m6a_end": "marker",
+    "m6a_last_tic": 658,
+    "frames": {
+     "rows": 2722,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 821,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "fdb7910992ba53e37cf9a9f3bbe706fe45493276cc084781dee747822ee3e289",
+    "frozen_sound_sha256": "93793a6579ff2f4c25ea01939ef0ab61c351b14b2e41f98e7cba864b2d900e4f",
+    "golden_frames": {
+     "rows": 2039,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5LOOK": {
+   "wad": "tests/reference/m5b_wads/facelook.wad",
+   "lmp_sha256": "0674fa71130fd22bc5b256036265308498a1c0b55eb0b1205469b962778a125b",
+   "kind": "m5b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 965,
+    "m6a_end": "marker",
+    "m6a_last_tic": 965,
+    "frames": {
+     "rows": 3946,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 991,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "aa906e0c641079dd856bd405a798c3a26107f55d21a3a13f5c7c0663395c53fb",
+    "frozen_sound_sha256": "c044bb7d9c98df28ecfb1df31e6666c1fcc505007d6ffca82002e06a8008f701",
+    "view": {
+     "rows": 2908,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 967,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 966,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 2956,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 991,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 965,
+    "m6a_end": "marker",
+    "m6a_last_tic": 965,
+    "frames": {
+     "rows": 3946,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 991,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "6ca32d5c2a653dd402412cfac86bcc45f1ea141e6b1cd63f06bbf0ece3b8da70",
+    "frozen_sound_sha256": "c044bb7d9c98df28ecfb1df31e6666c1fcc505007d6ffca82002e06a8008f701",
+    "golden_frames": {
+     "rows": 2956,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5FACED": {
+   "wad": "tests/reference/m5b_wads/facedir.wad",
+   "lmp_sha256": "39956015c4ceef9579f71799bea35ac0e7b9607babec4036b2dc56f70fda609e",
+   "kind": "m5b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 547,
+    "m6a_end": "marker",
+    "m6a_last_tic": 547,
+    "frames": {
+     "rows": 2276,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 910,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "8d520c9242c98b80dc92293058824fb55ed8b25cab45f6c69b2c007a2efd7ce1",
+    "frozen_sound_sha256": "b1c4d798804f854763e23a20920e95d88c113f74c8e42f7be42ffaa0629602fb",
+    "view": {
+     "rows": 1644,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 549,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 548,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 1704,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 910,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 547,
+    "m6a_end": "marker",
+    "m6a_last_tic": 547,
+    "frames": {
+     "rows": 2276,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 910,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "62b4e9087f8be0c1b9631d05b37a98b3a3461958f2420a7dfb978a6b779f788d",
+    "frozen_sound_sha256": "b1c4d798804f854763e23a20920e95d88c113f74c8e42f7be42ffaa0629602fb",
+    "golden_frames": {
+     "rows": 1704,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5PALRD": {
+   "wad": "tests/reference/m5b_wads/palred.wad",
+   "lmp_sha256": "afff85f1181226a47312c4d578b8d268deaef87aeafefc60ec517816cc79fe2a",
+   "kind": "m5b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 174,
+    "m6a_end": "marker",
+    "m6a_last_tic": 174,
+    "frames": {
+     "rows": 783,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 407,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "bb71b126fd7ebf6089cda35412097f49b7a9d09a04f988d8e4492e34b0d68079",
+    "frozen_sound_sha256": "1088bce10072d9201c4d85c45bfbb3e73662d0ee2356449f88186575183ceea4",
+    "view": {
+     "rows": 536,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 176,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 175,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 584,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 407,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 174,
+    "m6a_end": "marker",
+    "m6a_last_tic": 174,
+    "frames": {
+     "rows": 783,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 407,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "95949af660c6f52a8d01aeb0bfc324653bc50346ac784d2f9e5c852ca3ec3ce4",
+    "frozen_sound_sha256": "1088bce10072d9201c4d85c45bfbb3e73662d0ee2356449f88186575183ceea4",
+    "golden_frames": {
+     "rows": 584,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5PALBN": {
+   "wad": "tests/reference/m5b_wads/palbonus.wad",
+   "lmp_sha256": "22d57f2f1ed36025a7e022d122a85e23e3342769149a3fc9b0f2462c4ccd44de",
+   "kind": "m5b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 129,
+    "m6a_end": "marker",
+    "m6a_last_tic": 129,
+    "frames": {
+     "rows": 606,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 252,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "b96e8b1fa77fd654ce2556d754a988a85ec6c16b93d5e7619e18760a058e2f70",
+    "frozen_sound_sha256": "335b14e66dc5c7283207748bcc2907d9c1eb6df18d89da69f1095c6164b8404b",
+    "view": {
+     "rows": 398,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 131,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 130,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 452,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 252,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 129,
+    "m6a_end": "marker",
+    "m6a_last_tic": 129,
+    "frames": {
+     "rows": 606,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 252,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "4f609b6a077aab2925469df84cb85be8d32cd03d1f2d1bd2722b6faf0965d65d",
+    "frozen_sound_sha256": "335b14e66dc5c7283207748bcc2907d9c1eb6df18d89da69f1095c6164b8404b",
+    "golden_frames": {
+     "rows": 452,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5PALST": {
+   "wad": "tests/reference/m5b_wads/palsuit.wad",
+   "lmp_sha256": "976ccde8ab842d81cebe836a93d35ce2ec7ec9faaface94359cb248e4c41e3af",
+   "kind": "m5b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 2147,
+    "m6a_end": "marker",
+    "m6a_last_tic": 2147,
+    "frames": {
+     "rows": 8675,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 2238,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "dc557bb8114de4618a9e08986a137828eb9c1d15c46f0a36d9a3b2ab88fa0ef7",
+    "frozen_sound_sha256": "82db7334e37f590b4b7619a82c584bfef6b15fc3c02d3554ef2b3a8098b04d21",
+    "view": {
+     "rows": 6448,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 2149,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 2148,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 6503,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 2238,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 2147,
+    "m6a_end": "marker",
+    "m6a_last_tic": 2147,
+    "frames": {
+     "rows": 8675,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 2238,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "1168b6757a5d5922f451b390079040ded28ee4578062dae8967b196a3bbc3777",
+    "frozen_sound_sha256": "82db7334e37f590b4b7619a82c584bfef6b15fc3c02d3554ef2b3a8098b04d21",
+    "golden_frames": {
+     "rows": 6503,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5MSG": {
+   "wad": "tests/reference/m5b_wads/message.wad",
+   "lmp_sha256": "55e8c933bb190f6e529c5ba6ddd2e3b2d6874d81d695ec55e187a7a9153911c3",
+   "kind": "m5b",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 695,
+    "m6a_end": "marker",
+    "m6a_last_tic": 695,
+    "frames": {
+     "rows": 2896,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 859,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "818c931c89b46be9b937e969568823ae9f8e9975eb006a7f0a2a70d1f797a4cb",
+    "frozen_sound_sha256": "2605e589e338ade0289e20a1e7e7f980ddddff024d3f1906163fb74da5a02a26",
+    "view": {
+     "rows": 2092,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 697,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 696,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 2176,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 859,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 695,
+    "m6a_end": "marker",
+    "m6a_last_tic": 695,
+    "frames": {
+     "rows": 2896,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 859,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "5ccde9fb3f5df486eadf87a420432426480efede4faa075f5767150d69f292af",
+    "frozen_sound_sha256": "2605e589e338ade0289e20a1e7e7f980ddddff024d3f1906163fb74da5a02a26",
+    "golden_frames": {
+     "rows": 2176,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "M5CHEAT": {
+   "wad": "tests/reference/m5b_wads/cheats.wad",
+   "lmp_sha256": "db719ada66a2646d932974ea06ce89c45a86c0ca040fb7abef481110f349edff",
+   "kind": "bespoke",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 899,
+    "m6a_end": "marker",
+    "m6a_last_tic": 899,
+    "frames": {
+     "rows": 3684,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 914,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "441790c6f33b6be124c052e8875f2364afc307d81d48804adcd66f6556c49ab0",
+    "frozen_sound_sha256": "88bb6dcf12b169e9ee5cfd29821f78b33054683bcc5d85c59e6841a1477837eb",
+    "view": {
+     "rows": 2704,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 901,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 900,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 2760,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 914,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 899,
+    "m6a_end": "marker",
+    "m6a_last_tic": 899,
+    "frames": {
+     "rows": 3684,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 914,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "47c8f0e0f0466b28dffcf6e794d9138e497dbd883c2f42d9880a921c9a5fbbbe",
+    "frozen_sound_sha256": "88bb6dcf12b169e9ee5cfd29821f78b33054683bcc5d85c59e6841a1477837eb",
+    "golden_frames": {
+     "rows": 2760,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "SNDDIST": {
+   "wad": "tests/reference/m5c_wads/snddist.wad",
+   "lmp_sha256": "b8c883af8b4820b76169928ef4209b0ca2822479429107a4932fc964a2e2cc17",
+   "kind": "m5c",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 47,
+    "m6a_end": "marker",
+    "m6a_last_tic": 47,
+    "frames": {
+     "rows": 274,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 241,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "82de54bdaa86de9207e8b4b776096d00bfae2d86a554fb3f4461382086602556",
+    "frozen_sound_sha256": "fb22c94407d4db4cddb2dc0fb35accd17d6ee305fbb999151bf2dd7b11b1b0b9",
+    "view": {
+     "rows": 148,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 49,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 48,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 202,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 241,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 47,
+    "m6a_end": "marker",
+    "m6a_last_tic": 47,
+    "frames": {
+     "rows": 274,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 241,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "37b93edc40676fad23c771602be8289940bad699f2e8667f8a28b14dfdafafcc",
+    "frozen_sound_sha256": "fb22c94407d4db4cddb2dc0fb35accd17d6ee305fbb999151bf2dd7b11b1b0b9",
+    "golden_frames": {
+     "rows": 202,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "SNDBUSY": {
+   "wad": "tests/reference/m5c_wads/sndbusy.wad",
+   "lmp_sha256": "385ffeea280a13675f3ed4a44ea559aee6d130017ead890b69a8671c14d37525",
+   "kind": "m5c",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 124,
+    "m6a_end": "marker",
+    "m6a_last_tic": 124,
+    "frames": {
+     "rows": 586,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 426,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "5ca8045fddc8de85ff05cb4ac1d33a3e4f03ed523e75f8e8f86aa57ceb10aa10",
+    "frozen_sound_sha256": "7a4ffca432bfdb9ba2ca2e1f134319e837cfa594fca4c7a8a5527f22c7d91ab1",
+    "view": {
+     "rows": 384,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 126,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 125,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 437,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 426,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 124,
+    "m6a_end": "marker",
+    "m6a_last_tic": 124,
+    "frames": {
+     "rows": 586,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 426,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "62de7d929999ac9b336dad2b3f7f2ffb715034ef5211505d0d53b7f092bdc4c4",
+    "frozen_sound_sha256": "7a4ffca432bfdb9ba2ca2e1f134319e837cfa594fca4c7a8a5527f22c7d91ab1",
+    "golden_frames": {
+     "rows": 437,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "SNDMONST": {
+   "wad": "tests/reference/m5c_wads/sndmonst.wad",
+   "lmp_sha256": "e057f091b7cfbf50576ea0ff7705652d0f8c8eff9f9afc0276d6a291368b586f",
+   "kind": "m5c",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 451,
+    "m6a_end": "marker",
+    "m6a_last_tic": 451,
+    "frames": {
+     "rows": 1897,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 1091,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "46ce59a34255b21399c7df0fbcc1f63383a56650d2d736e25918a1b15d08595f",
+    "frozen_sound_sha256": "4bae1a7d75c066fe82d35b86e9c4e6d3ee66ed0181513fc587749226c73a9a40",
+    "view": {
+     "rows": 1356,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 453,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 452,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 1421,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 1091,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 451,
+    "m6a_end": "marker",
+    "m6a_last_tic": 451,
+    "frames": {
+     "rows": 1897,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 1091,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "6cc74efe1adfe4f6117fdc18131ff7a833dfcd79767224dfade049a899fc9a7b",
+    "frozen_sound_sha256": "4bae1a7d75c066fe82d35b86e9c4e6d3ee66ed0181513fc587749226c73a9a40",
+    "golden_frames": {
+     "rows": 1421,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "SNDBTN1": {
+   "wad": "tests/reference/m5c_wads/sndbtn.wad",
+   "lmp_sha256": "7b1b63377b9aeb629e47ba59e0d35c9d6a69727a651096223ddd30f4d3e7471d",
+   "kind": "m5c",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 720,
+    "m6a_end": "marker",
+    "m6a_last_tic": 720,
+    "frames": {
+     "rows": 2976,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 778,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "2e65ef083f8f9c29dd962949e916c6c05ebc83deeaab47ce37c599dd64ae180d",
+    "frozen_sound_sha256": "dff4170907932aaded10893dcd16def113b019b5d6e1c572af827f9c400adde7",
+    "view": {
+     "rows": 2168,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 722,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 721,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 2231,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 778,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 720,
+    "m6a_end": "marker",
+    "m6a_last_tic": 720,
+    "frames": {
+     "rows": 2976,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 778,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "ceca7f71876aed48f74439e452107e50a6251dfe04c1532a44d98d8cd6f5f2cc",
+    "frozen_sound_sha256": "dff4170907932aaded10893dcd16def113b019b5d6e1c572af827f9c400adde7",
+    "golden_frames": {
+     "rows": 2231,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "SNDBTN2": {
+   "wad": "tests/reference/m5c_wads/sndbtn.wad",
+   "lmp_sha256": "ce97ee5cfaf90de3cd74dd1e313c960f82d4ead9cf5420263ce4843b72e8086f",
+   "kind": "m5c",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 247,
+    "m6a_end": "marker",
+    "m6a_last_tic": 247,
+    "frames": {
+     "rows": 1081,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 298,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "88c1446e3d706c229f441561d9e34ae5d8a49b32371a3e1d6d97a2fe0859d014",
+    "frozen_sound_sha256": "6f842f7c6e1a36248fa5550413804f6ed915fef319ca12cd69dd7e3e53f13a4d",
+    "view": {
+     "rows": 756,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 249,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 248,
+    "session_loads": 1,
+    "golden_frames": {
+     "rows": 809,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "golden_sound": {
+     "rows": 298,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 247,
+    "m6a_end": "marker",
+    "m6a_last_tic": 247,
+    "frames": {
+     "rows": 1081,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 298,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "3526a314ec45a2366954821249f472f3e6a52da99866616bcb3f64a915cf043f",
+    "frozen_sound_sha256": "6f842f7c6e1a36248fa5550413804f6ed915fef319ca12cd69dd7e3e53f13a4d",
+    "golden_frames": {
+     "rows": 809,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    }
+   }
+  },
+  "TRUNC": {
+   "wad": "tests/reference/m5c_t4/truncate.wad",
+   "lmp_sha256": "afefdb4727eb8dbbaeeb4f40fcf41a894a861426a72373429a3b588f8169b0cc",
+   "kind": "m5c_t4",
+   "sb10": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 91,
+    "m6a_end": "marker",
+    "m6a_last_tic": 91,
+    "frames": {
+     "rows": 450,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 255,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "91439d93306d45cb1389c38e9fd209e48fa5cb445314197d1016b0ff6aa2b018",
+    "frozen_sound_sha256": "8a92ed4d796886eb7c5eab97486c05ffcddf4889cf1a1b796614d9c829811440",
+    "view": {
+     "rows": 276,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "dumps": {
+     "snapshots": 93,
+     "equal": true,
+     "snapshots_after": 0
+    },
+    "session_tics": 92,
+    "session_loads": 1
+   },
+   "sb11": {
+    "frozen_end": "marker",
+    "frozen_last_tic": 91,
+    "m6a_end": "marker",
+    "m6a_last_tic": 91,
+    "frames": {
+     "rows": 450,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "sound": {
+     "rows": 255,
+     "equal": true,
+     "first_difference": null,
+     "rows_after": 0
+    },
+    "frozen_frames_sha256": "63afbaf51912d1bc88cf6d51f8416ded498f5dab97122691d938030f3a3a347c",
+    "frozen_sound_sha256": "8a92ed4d796886eb7c5eab97486c05ffcddf4889cf1a1b796614d9c829811440"
+   }
+  }
+ }
+}
