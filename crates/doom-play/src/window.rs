@@ -260,10 +260,7 @@ impl EventHandler for Stage {
         let now = self.now();
         let play = &mut self.play;
         let ended_before = matches!(play.app.mode(), Mode::Ended(_));
-        let u = play.app.update(now, &mut play.host);
-        if let Some(s) = &mut play.stats {
-            s.record(now, u.ran, u.dropped);
-        }
+        let u = play.update(now);
         // no tic runs from here to the next update: the session file is settled into the app
         // when it is not playing (waiting up to closing::END_WAIT at a session's end)
         play.settle_after_update(ended_before);
@@ -391,7 +388,8 @@ impl EventHandler for Stage {
 /// the tic interval summary; whenever a device is open (with or without `--tic-stats`;
 /// milestone M5d) the device's lines ([`crate::audio::DeviceSink::exit_lines`]: what it
 /// reported, the settings asked for, the callbacks' sizes, the queue's depth, underruns and
-/// overruns), which replace the counters line `--tic-stats` printed before; the run's
+/// overruns, and after an underrun the session and tic of each), which
+/// replace the counters line `--tic-stats` printed before; the run's
 /// layout-dependence line when a session of the run was labelled by the detector of decision
 /// T12 (always, with or without `--tic-stats`); then where the session's demo went.
 pub(crate) fn exit_lines(app: &App, host: &FsHost, stats: Option<&TicStats>) -> Vec<String> {

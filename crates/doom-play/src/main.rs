@@ -56,7 +56,10 @@ usage: doom-play --iwad PATH [options]
   --screenblocks N     10 (default, status bar row) or 11 (full view)
   --quit-after-tics N  measurement aid: save and quit after N tics (or at a session end)
   --tic-stats          measurement aid: print, on exit, the intervals between executed tics
-                       (taken from the loop's monotonic clock) to stderr; no other effect
+                       (taken from the loop's monotonic clock) to stderr; no other effect.
+                       Pauses and the end screen between sessions are not intervals: the
+                       line gives their number and their time separately (a stall
+                       right at a pause is inside that time)
   --input-log FILE     diagnostic: write to FILE (replaced if it exists) one line for every
                        raw input the window library delivers (mouse buttons, motion and
                        cursor position, keys, focus) and for every event sent to the game,
@@ -127,6 +130,12 @@ starting [INFO]: the backend, the device, its sample rate, and the period and bu
 granted) is printed on standard error. On exit, lines starting \"audio\" give the device's
 name and native sample rates, the settings asked for, the sizes of the device's callbacks,
 how full the sound queue was when they came, and the gaps (underruns) and overruns counted.
+When a gap was counted, one more line lists each (the first 32): the session of this
+launch, its tics at the loop's last update before the gap, the frames of silence in that
+callback, and how many mixer buffers had been queued since the queue last began to fill
+(after the session's start, a resume or the gap before). While playing, a gap a few buffers
+after a start or a resume is the start-up fill running dry. A session that ended runs out
+of sound once; that is counted as a gap too and the line marks it as no gap in play.
 
 Session files: the demo is written by a thread of its own, so a slow disk never holds up
 the game; a session ended without its quit (Ctrl+C, a closed window or console, a lost

@@ -122,8 +122,8 @@ actors or map features. Detailed older limits remain available in the complete
 | Player statistics | Only genuine players[0].killcount fallback for absent/unbound sources; no player-pointer scoring |
 | Damage/death | Existing shared services, pain chance 180, delayed sounds, ordinary death/Fall/quarter height |
 | Terminal corpse | COUNTKILL retained; respawn disabled, no extra terminal RNG/movecount work |
-| Respawn/raise | Explicitly unsupported; no Nightmare respawn or arch-vile resurrection |
-| Complete original actor | Deferred: native type 136 identity, state aliases and disabled raise remain adaptations |
+| Respawn/raise | Explicitly unsupported under this profile; no Nightmare respawn or arch-vile resurrection (original behaviour with no milestone named yet: [checklist](ROADMAP.md#vanilla-completeness-checklist)) |
+| Complete original actor | Deferred as of this profile: native type 136 identity, state aliases and disabled raise remain adaptations (the original identities came with the [original-ID profile](#original-id-demon-profile)) |
 
 Only the old COUNTKILL flag projection is removed. Profile 17 uses
 `ActorRegistry::demon_map_context_fixture`, not complete original actor admission.
@@ -329,8 +329,9 @@ bound and fallibly reserves bounded tasks/observations. REJECT returns before BS
 work or scratch reservation. No query consumes RNG or changes canonical state.
 
 Use existing unbound XY/Z, gravity, static openings, spatial storage and read-only
-sight only. Player binding, typed actors, map spawning, AI/hearing, combat/hitscan,
-sliding, dynamic sectors, specials and complete game/map admission remain excluded.
+sight only. As of this profile, player binding, typed actors, map spawning, AI/hearing,
+combat/hitscan, sliding, dynamic sectors, specials and complete game/map admission remain
+excluded ([what came later](#deferred-systems)).
 Original 64-cell `P_PathTraverse` and 128-intercept behavior is unchanged.
 [Source analysis](M3F2_REFERENCE.md) owns the arithmetic derivation;
 [observations](validation/M3F2.md) distinguish genuine C comparisons, independent
@@ -403,16 +404,35 @@ requests as a Rust safety policy. Unsupported actions never silently no-op.
 
 ## Deferred systems
 
-Full player damage/inventory/armor/powers/scoring, multiplayer, Fast/Nightmare
-execution, respawning, resurrection, line and sector specials beyond the static set of
-the [specials policy](#original-monsters-with-sky-and-static-specials) and the seven
-door, lift, floor, switch and exit types of the
-[movers policy](#original-monsters-with-doors-lifts-floors-switches-and-the-exit) (with
-two-sided scrolling walls under the
-[E1M1 policy](#original-monsters-with-two-sided-scrolling-walls-and-static-decorations)), complete
-map/actor spawning, generalized monster interactions, demos and presentation beyond the
-[M5a 3D-view renderer](#software-renderer-m5a) remain
-unsupported. Spectre metadata recognition is not Spectre gameplay compatibility.
+Every policy is frozen: its own section says what it admits and refuses, and it keeps
+refusing what it refused when it was written, even where a later policy admits it. A
+sentence in an older section that begins "as of this policy" or "as of this profile" is
+true of that policy only. This section says where the newest ones stand
+([wire 25](#original-episode-1-part-3-canonical-sound-records-wire-25) and the
+[playable build](#playable-build-m5b) with [sound effects](#sound-effects-m5c)).
+
+**Admitted since the older sections were written, under the later policies only:**
+
+- real players with damage, armor, pickups and weapons (the player policies from
+  [the player body lifecycle](#original-player-body-lifecycle) on);
+- every line and sector special Episode 1 uses, keys, the Spectre and most powers, not
+  invulnerability or berserk
+  ([wire 23](#original-episode-1-part-1-every-door-floor-plat-stair-donut-light-and-exit-special-keys-items-powers-chainsaw-rocket-launcher-and-spectre-wire-23));
+- teleporters, the Baron, hard skill and the one local `DEMO1`
+  ([wire 24](#original-episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill-wire-24));
+- the 3D view ([M5a](#software-renderer-m5a)), the status bar, HUD messages, palette
+  flashes, window and input ([M5b](#playable-build-m5b)) and sound effects
+  ([M5c](#sound-effects-m5c)).
+
+**Still unsupported under every policy:** scoring and the intermission, multiplayer,
+Fast/Nightmare execution, respawning, resurrection, ceilings and crushers and every other
+line and sector special no Episode 1 map uses, things and monsters outside Episode 1,
+general demo playback, and the presentation the playable build does not have (music,
+menus, the automap among it). All of it is original behaviour, so none of it is optional:
+the [vanilla completeness checklist](ROADMAP.md#vanilla-completeness-checklist) lists every such item with the
+milestone named for it, or says that none is named yet.
+
+Spectre metadata recognition is not Spectre gameplay compatibility.
 Source undefined behavior is not a compatibility target; checked Rust rejection
 and adapter-defined evaluation order are recorded separately.
 
@@ -436,8 +456,9 @@ Altered records, reordered names and fixture replacements reject. Native Demon
 136 and state aliases remain explicit fixture adaptations. The separate binding
 below connects MT_SERGEANT to its already admitted subset. MT_SHADOWS, players,
 raise states and other unimplemented dependencies remain metadata without new
-gameplay permission. Spectre gameplay, real
-players, infighting, resurrection and Nightmare/respawn remain deferred.
+gameplay permission. As of M3f4, Spectre gameplay, real
+players, infighting, resurrection and Nightmare/respawn remain deferred
+([what came later](#deferred-systems)).
 
 ## Canonical Demon execution requests
 
@@ -455,9 +476,9 @@ unsupported identity/state requests, wrong owners and stale handles reject safel
 MT_SHADOWS (Spectre) and MT_SHOTGUY (Shotgun Guy) are explicitly excluded.
 
 Canonical definition queries are projections through a validated correspondence,
-not raw original IDs in ActorLife/DSIM. Full actor compatibility, real players,
-generalized infighting, Nightmare/respawn, resurrection, dynamic sectors, new
-hitscan/projectiles and rendering remain deferred. See the
+not raw original IDs in ActorLife/DSIM. As of this binding, full actor compatibility,
+real players, generalized infighting, Nightmare/respawn, resurrection, dynamic sectors, new
+hitscan/projectiles and rendering remain deferred ([what came later](#deferred-systems)). See the
 [mapping](ACTOR_IDENTITIES.md#canonical-demon-execution-binding),
 [source investigation](M3F5_REFERENCE.md) and [observations](validation/M3F5.md).
 
@@ -671,7 +692,8 @@ canonical Demon can be a controlled direct damage source between tics, then must
 be explicitly killed or marked for removal before stepping. Dead-but-allocated
 sources and Demon death/corpse actions remain supported. Player-to-Demon damage is
 restricted to lethal input, avoiding unsupported nonlethal retarget/infighting.
-Automatic targeting and physical Demon melee against the player remain future work.
+As of this policy, automatic targeting and physical Demon melee against the player remain
+future work ([what came later](#deferred-systems)).
 
 mo/attacker retain their original opaque handles after pending removal, retirement
 and reuse. New damage/binding cannot use pending or unavailable actors. Death alone
@@ -753,9 +775,10 @@ represents these observations. Wire policy 3 and a distinct grounded context sch
 select the new behavior with unchanged field/event layout. Old v20/v21/v22 policy 2
 fixtures/readers retain their meanings. advance remains diagnostic-free, and step
 captures only after the same core. [Evidence](validation/M3G3.md) distinguishes new
-C observations, reused history and Rust-only safety policies. Full player controls,
-PlayerThink, roster/automatic Demon attacks, view/camera, weapons, inventory,
-armor/powers, air movement, respawn and multiplayer remain unsupported.
+C observations, reused history and Rust-only safety policies. As of this policy, full
+player controls, PlayerThink, roster/automatic Demon attacks, view/camera, weapons,
+inventory, armor/powers, air movement, respawn and multiplayer remain unsupported
+([what came later](#deferred-systems)).
 
 
 ## Original player command movement
@@ -815,10 +838,10 @@ identity/health/state rejects. Pause retains its historical precedence. `advance
 remains diagnostic-free; `step` uses the same core and captures once on success.
 
 This is a declared P_PlayerThink movement conditional plus P_MovePlayer, not full
-PlayerThink, P_Ticker, P_DeathThink or player roster execution. View/camera/bob,
-weapons/buttons, inventory/powers/cheats, special sectors, airborne controls,
-respawn/multiplayer, arbitrary angled/two-sided walls and automatic Demon
-perception/acquisition remain unsupported. Dying/corpse Demon origins retain
+PlayerThink, P_Ticker, P_DeathThink or player roster execution. As of this policy,
+view/camera/bob, weapons/buttons, inventory/powers/cheats, special sectors, airborne
+controls, respawn/multiplayer, arbitrary angled/two-sided walls and automatic Demon
+perception/acquisition remain unsupported ([what came later](#deferred-systems)). Dying/corpse Demon origins retain
 existing controlled interaction semantics; no live AI/roster is silently enabled.
 
 ## Active original player and Demon acquisition
@@ -895,10 +918,10 @@ Snapshot; `step` captures once after successful advancement. DSIM22 policy5/cont
 select the fixed active contract with unchanged layout; [STATE_FORMAT](STATE_FORMAT.md#dsim-v22-active-player-demon-policy)
 owns its precise identifiers.
 
-Full P_PlayerThink/P_Ticker/P_DeathThink, view/camera, weapons, inventory, powers,
-armor/cheats, roster changes, respawn/multiplayer, generalized targeting/infighting,
-other monster species, sound propagation, arbitrary geometry and autonomous combat
-remain unsupported. [Source findings](M3G5_REFERENCE.md) and
+As of this policy, full P_PlayerThink/P_Ticker/P_DeathThink, view/camera, weapons,
+inventory, powers, armor/cheats, roster changes, respawn/multiplayer, generalized
+targeting/infighting, other monster species, sound propagation, arbitrary geometry and
+autonomous combat remain unsupported ([what came later](#deferred-systems)). [Source findings](M3G5_REFERENCE.md) and
 [observed evidence](validation/M3G5.md) qualify this bounded gameplay composition.
 
 ## Autonomous original Demon-player melee
@@ -1051,9 +1074,10 @@ tic. `advance` constructs no implicit Snapshot; `step` captures once from the
 same execution. [DSIM23](STATE_FORMAT.md#dsim-v23-genuine-player-pistol) adds only
 the required dynamic weapon fields; historical20/21/22 remain intact.
 
-Other weapons, switching, pickups, armor/powers/cheats, respawn, multiplayer,
-other monsters, infighting, full player thinkers, airborne/general geometry,
-dynamic sectors, generalized sound propagation and rendering remain unsupported.
+As of this policy, other weapons, switching, pickups, armor/powers/cheats, respawn,
+multiplayer, other monsters, infighting, full player thinkers, airborne/general geometry,
+dynamic sectors, generalized sound propagation and rendering remain unsupported
+([what came later](#deferred-systems)).
 New source scenarios use defined map angles0/-180 and nonnegative turns; inherited
 negative-turn and ordered spread/jitter qualifications are not new portable
 ISO-C evidence. [Investigation](M3G7_REFERENCE.md),
@@ -1188,9 +1212,9 @@ respawning are outside this executable/diagnostic contract. Audio requests do no
 implement playback or active-sound ownership.
 
 Historical no-pickup policies and DSIM20–24 remain unchanged. DSIM25 separately
-records pickup fields/events; decoding never restores a game. Armor, powers,
-keys, backpacks, other items/weapons, player rebirth, multiplayer, generalized
-specials and dynamic geometry remain excluded. Source evidence, explicit harness
+records pickup fields/events; decoding never restores a game. As of this policy, armor,
+powers, keys, backpacks, other items/weapons, player rebirth, multiplayer, generalized
+specials and dynamic geometry remain excluded ([what came later](#deferred-systems)). Source evidence, explicit harness
 adapters, generation/provenance safety and rollback are separate claims; see
 [investigation](M3G9_REFERENCE_INVESTIGATION.md), [schema](STATE_FORMAT.md#dsim-v25-original-world-pickups)
 and [observations](validation/M3G9.md).
@@ -1280,8 +1304,9 @@ increases after the pickup message and before removal, matching
 `P_TouchSpecialThing`. Recoverable failures roll back RNG, statistics, player
 state, spatial links and events together.
 
-Soulspheres, MegaSpheres, powers, keys, backpacks, item respawn, dropped bonuses,
-new weapons/monsters, multiplayer and dynamic geometry remain excluded. Physical
+As of this policy, soulspheres, MegaSpheres, powers, keys, backpacks, item respawn, dropped
+bonuses, new weapons/monsters, multiplayer and dynamic geometry remain excluded
+([what came later](#deferred-systems)). Physical
 component T40's post-hit result (raw 300 damage exceeding the 30-unit momentum
 admission) stays source-only; its pickup is compared and the hit is atomically
 rejected. See [source investigation](M3G11_REFERENCE_INVESTIGATION.md) and
@@ -1321,8 +1346,9 @@ A dead former human drops MT_CLIP / MT_SHOTGUN / MT_CHAINGUN at its position wit
 MF_DROPPED; dropped ammo is halved by the existing pickup rules. Drops are
 appended after the player in thinker order and are not counted items.
 
-Raise/resurrection, MT_VILE and every other monster type, projectiles, nightmare
-and fast monsters, respawn, multiplayer and dynamic geometry remain excluded.
+As of this policy, raise/resurrection, MT_VILE and every other monster type, projectiles,
+nightmare and fast monsters, respawn, multiplayer and dynamic geometry remain excluded
+([what came later](#deferred-systems)).
 The original attack actions store BAM angles in `int` locals; `angle += spread`
 is signed overflow near 180°. The default original-C build keeps that text under
 the declared GNU wrapping interpretation, and strict audits retype only those
@@ -1384,8 +1410,9 @@ vertical momentum. Floor and ceiling contact, the sky hack, line openings and th
 SHADOW spread are unreachable here; this policy makes no observation claim for them.
 Actor coordinates keep the existing 994-unit preflight bound, so a map whose walls
 lie beyond it rejects a fireball that reaches that distance. A blocked spawn check
-needs overlapping THINGs. Every other projectile and monster, raise, nightmare and fast
-monsters, respawn, multiplayer and dynamic geometry remain excluded. See
+needs overlapping THINGs. As of this policy, every other projectile and monster, raise,
+nightmare and fast monsters, respawn, multiplayer and dynamic geometry remain excluded
+([what came later](#deferred-systems)). See
 [source investigation](M3H2_REFERENCE_INVESTIGATION.md) and
 [observed evidence](validation/M3H2.md).
 
@@ -1439,8 +1466,8 @@ wall reject with the historical spawn errors and unchanged state.
 E1M1-sized rectangles (about 3,900 × 3,200 units) fit when their long walls are
 split at vertices. Non-axis walls stay excluded: with `P_AproxDistance(30,30) = 45`,
 a 22.5° slide can move a player 38 units, more than its 32-unit box, so the wall
-argument does not hold for them. Two-sided lines, height changes, moving sectors,
-other monsters and projectiles remain excluded. See
+argument does not hold for them. As of this policy, two-sided lines, height changes,
+moving sectors, other monsters and projectiles remain excluded ([what came later](#deferred-systems)). See
 [source investigation](M3H3_REFERENCE_INVESTIGATION.md) and
 [observed evidence](validation/M3H3.md).
 
@@ -1490,10 +1517,10 @@ Legal source moves are never rejected. A map that fails a load check is rejected
 the constructor with `MapScaleError::{Geometry, Walls, Blockmap, Lines}`, the inherited
 specials, sky, height-range and inverted-sector rejections, never during play; a spawn
 that does not fit rejects with `MapScaleError::Fit` and unchanged state, and a
-`P_KillMobj` drop that would not fit fails its checked tic. Moving sectors, doors,
-lifts, crushers, line and sector specials, damaging floors, teleporters, sky ceilings,
-non-axis walls, `P_CalcHeight`/view bobbing and every other monster or weapon stay
-excluded. See [source investigation](M3H4_REFERENCE_INVESTIGATION.md) and
+`P_KillMobj` drop that would not fit fails its checked tic. As of this policy, moving
+sectors, doors, lifts, crushers, line and sector specials, damaging floors, teleporters,
+sky ceilings, non-axis walls, `P_CalcHeight`/view bobbing and every other monster or
+weapon stay excluded ([what came later](#deferred-systems)). See [source investigation](M3H4_REFERENCE_INVESTIGATION.md) and
 [observed evidence](validation/M3H4.md).
 
 ## Original monsters among diagonal walls
@@ -1539,10 +1566,10 @@ momentum admission; fireballs stay refused by the projectile control, so every p
 mover is one the proof's clamp covers. A map that fails a load check is
 rejected by the constructor with `MapScaleError::{Geometry, Boundary, Walls, Blockmap,
 Lines}` or the inherited rejections, never during play; a spawn whose box meets a wall
-or whose center lies outside rejects with unchanged state. Moving sectors, doors, lifts,
-crushers, line and sector specials, damaging floors, teleporters, sky ceilings,
-`P_CalcHeight`/view bobbing, cap increases and every other monster, weapon or item stay
-excluded. See [source investigation](M3H5_REFERENCE_INVESTIGATION.md) and
+or whose center lies outside rejects with unchanged state. As of this policy, moving
+sectors, doors, lifts, crushers, line and sector specials, damaging floors, teleporters,
+sky ceilings, `P_CalcHeight`/view bobbing, cap increases and every other monster, weapon
+or item stay excluded ([what came later](#deferred-systems)). See [source investigation](M3H5_REFERENCE_INVESTIGATION.md) and
 [observed evidence](validation/M3H5.md).
 
 ## Original monsters at classic-map scale
@@ -1773,7 +1800,10 @@ constructor with a field-less error and no state is built, never during play:
 | Every 11 and 63 line's front side carries one of the 38 episode-1 `alphSwitchList` names as its upper, lower or middle texture, ignoring ASCII case (decision N9a) | `MapScaleError::SwitchTexture` |
 | Every mover sector has a defined `blockbox`: the `P_GroupLines` box arithmetic stays inside `fixed_t`, so every `P_ChangeSector` of a plane step walks defined BLOCKMAP cells (rule 10, added by the independent review; defensive, since the real-map arithmetic certificate already refuses every constructed counterexample) | `MapScaleError::MoverBlockBox` |
 
-No admitted line is a crusher; crushers are deferred, not emulated. The Stage A sector
+No admitted line is a crusher: under this policy crushers are deferred, not emulated. No
+later policy admits one either (none of wires 20 to 25 adds a crusher line), and ceilings
+and crushers are original behaviour with no milestone named yet
+([checklist](ROADMAP.md#simulation-systems)). The Stage A sector
 special, light and inherited real-map rejections still apply.
 
 Behavior during play:
@@ -1814,12 +1844,15 @@ Behavior during play:
 - **Exit.** The tic in which the exit switch is used completes (thinkers, specials,
   `leveltime`), `level.exit` is set, and every later `advance` or `step` returns
   `SimError::LevelExited` with the state unchanged. The intermission and the next map are
-  out of scope.
+  not part of this policy, nor of any later one so far; they are original behaviour, and
+  the [checklist](ROADMAP.md#intermission-and-finale) says where they stand.
 - **Reborn.** Under this policy a dead player may hold `BT_USE` alone (the only dead
   command besides the empty one). That tic completes, the player state becomes
   `PST_REBORN` (DSIM35 `original_player.0.state` 2), and every later `advance` or `step`
   returns `SimError::PlayerReborn` with the state unchanged (decision N3). The level
-  restart is out of scope. Both refusals are checked before the pause test.
+  restart is not part of this policy, nor of any later one so far; it is original
+  behaviour, and the [checklist](ROADMAP.md#playing-a-single-player-game) says where the
+  reborn reload stands. Both refusals are checked before the pause test.
 - **Vertical invariant V′.** The M3h4 vertical invariant is replaced, under this policy
   only, by V′ (note [§4.1](M3H8_REFERENCE_INVESTIGATION.md#41-b2-the-vertical-invariant-v)):
   besides a thing between its floor and ceiling, it admits a non-shootable thing stuck
@@ -1870,7 +1903,7 @@ The source never gives an item vertical momentum; the next tic is refused
 The [E1M1 policy](#original-monsters-with-two-sided-scrolling-walls-and-static-decorations)
 refuses the call itself.
 
-Still excluded: every other line special (locked doors and keys, the other door, lift,
+Still excluded as of this policy ([what came later](#deferred-systems)): every other line special (locked doors and keys, the other door, lift,
 floor, stair, donut and ceiling types, crushers, teleporters, `raiseToTexture`,
 perpetual and stopping lifts, light-switching and gun lines, the other exits),
 two-sided scrolling walls, sector specials 10, 11 and 14, sky ceilings over movers, the
@@ -2209,7 +2242,9 @@ solid and non-shootable, the 10.5-unit sight window, the `S_GIBS` crunch of a dy
 barrel, the positive-only halving of `P_XYMovement` steps, the lift line crossed by a
 barrel, the angle wrap. Recorded, not emulated (unreachable here): crusher blood on a
 `MF_NOBLOOD` barrel (crushers rejected), the chainsaw thrust exception (saw not admitted),
-the MAP30 stomp (teleporters out of scope). Known limitation of the C evidence: the
+the MAP30 stomp (no teleporters under this policy; Episode 1's came with
+[wire 24](#original-episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill-wire-24),
+and MAP30 is Doom II, which is on the [checklist](ROADMAP.md#doom-ii)). Known limitation of the C evidence: the
 harness's `intercepts[]` carries an abort before a 129th entry, so the unchecked overflow
 of the source is never observed in C; the Rust-only lane refuses the tic.
 
@@ -2265,7 +2300,7 @@ per-tic comparison covers the rest of the capture.
 
 ## Original Episode 1, part 1: every door, floor, plat, stair, donut, light and exit special, keys, items, powers, chainsaw, rocket launcher and Spectre (wire 23)
 
-**Status: not merged; see [ROADMAP](ROADMAP.md#m4a-episode-1-part-1-proven-against-the-genuine-engine).** The command-domain
+**Status: merged (M4a, PR #57, 2026-11-10; see [ROADMAP](ROADMAP.md#m4a-episode-1-part-1-proven-against-the-genuine-engine)).** The command-domain
 lift, the version-110 demo header for maps 1-9 and the real-map Rust runs are done. Against the genuine
 engine, Rust matches tic for tic on the 25 authored scripts of E1M2, E1M3, E1M4, E1M6 and E1M7 and on the
 five E1M1 scripts re-run under wire 23, with no refuse-the-tic witness firing (see
@@ -2644,7 +2679,7 @@ the goldens and fixtures in `cargo test`.
 
 ## Original Episode 1, part 3: canonical sound records (wire 25)
 
-**Status: on the milestone branch `feat/m5c-sound` (draft [PR #63](https://github.com/Copgunn/DOOM/pull/63)), not merged; milestone status is in [ROADMAP](ROADMAP.md).** Wire 25 is wire 24 plus
+**Status: merged (M5c, [PR #63](https://github.com/Copgunn/DOOM/pull/63), 2026-11-19); milestone status is in [ROADMAP](ROADMAP.md).** Wire 25 is wire 24 plus
 what sound needs, and **nothing else** (decisions T3 and T4, confirmed by the owner on 2026-11-18). It makes no
 sound: it lets the simulation say, tic by tic, which sounds the original would start and stop and from where, so
 that [the sound logic](#sound-effects-m5c) can run on them.
@@ -2710,8 +2745,8 @@ rulings 2026-11-15), the observations in the [evidence record](validation/M5A.md
 | --- | --- |
 | Source equivalence of the frame | The Rust frame equals the genuine renderer's frame, byte for byte, on every comparable synthetic frame in CI (the committed rooms at screenblocks 9, 10 and 11) and on every frame of the 61 scripted Episode 1 runs at screenblocks 11 and 10 (local only; frame counts in the evidence record; DEMO1 as run by the original code, not the DOS 1.9 executable). Two exclusions apply (below): screen columns the genuine read tracker flags as reading undefined memory (R4) are left out of a frame's comparison, and frames with an unknown switch parity (R7) are not compared at all; those are 105 synthetic frames (M5SWTCH, 35 per configuration) and no real-map frame. It is not a claim for other maps, scripts or settings. |
 | Configurations (R2) | Screenblocks 9 (synthetic rooms only), 10 and 11, **high detail**. **Low detail is refused** (the original's `R_DrawColumnLow` is broken in this source); other screenblocks are refused. |
-| Out of scope (R1, M5b) | Status bar, HUD, automap, menus, palette flashes (the palette is chosen by the caller), window, input, sound; the border is never drawn. Player colour translation (players 2-4) is refused (`PlayerTranslation`). |
-| Invulnerability | Not admitted by the simulation (DoomEd 2022, `INVERSECOLORMAP`), so no frame uses fixed colour map 32; it is out of M5a. Light amplification (fixed colour map 1) is covered. |
+| Not part of M5a (R1) | Status bar, HUD, automap, menus, palette flashes (the palette is chosen by the caller), window, input, sound; the border is never drawn. The status bar, HUD, palette flashes, window and input came with [M5b](#playable-build-m5b) and sound effects with [M5c](#sound-effects-m5c); the automap, the menus and the view border are original behaviour with no milestone named yet ([checklist](ROADMAP.md#vanilla-completeness-checklist)). Player colour translation (players 2-4) is refused (`PlayerTranslation`). |
+| Invulnerability | Not admitted by the simulation (DoomEd 2022, `INVERSECOLORMAP`), so no frame uses fixed colour map 32; it is out of M5a, and it is original behaviour with no milestone named yet ([checklist](ROADMAP.md#simulation-systems)). Light amplification (fixed colour map 1) is covered. |
 
 **Vanilla limits (R3).** Reproduced exactly because they are deterministic: `MAXDRAWSEGS` (256) and
 `MAXVISSPRITES` (128) drop silently, as the original does. Refused with a named witness, because the
@@ -2762,7 +2797,9 @@ frames as an uninterrupted run (rewind).
 
 Not claimed: any renderer or presentation behaviour beyond these, the DOS executable's picture, speed (no
 timing gate), or a modern renderer. The window, status bar, HUD and input of M5b are under
-[Playable build (M5b)](#playable-build-m5b); the automap and sound remain out of scope.
+[Playable build (M5b)](#playable-build-m5b) and sound effects under [Sound effects (M5c)](#sound-effects-m5c);
+the automap is not built: it is original behaviour with no milestone named yet
+([checklist](ROADMAP.md#in-game-screen)).
 
 ## Playable build (M5b)
 
@@ -2830,7 +2867,8 @@ treats its lumps by the original's rules; the committed tests use our own genera
 - **Unreachable under wire 24, so not exercised by any level run:** the berserk palette term, the god-mode
   face (covered by unit tests and the one bespoke cheat scenario only, whose cheats are applied through a test
   hook, not by keys), the plasma and BFG arms icons, the skull-key icons 3-5 and the minus sign. The simulation
-  does not admit invulnerability or berserk.
+  does not admit invulnerability or berserk (original behaviour with no milestone named yet:
+  [checklist](ROADMAP.md#simulation-systems)).
 - **Screenblocks 10 and 11 only**, chosen at launch and fixed for the session. At these sizes no border is
   drawn and the HUD erase does nothing, which keeps the frame contract small. Screenblocks 9 and below and low
   detail are refused (M5a decisions R1, R2, S14).
@@ -2984,6 +3022,11 @@ fault ([evidence](validation/M5B.md#step-7b-full-resolution-unrecorded-turning))
   or quit; nothing is approximated. **Which tics are in the demo:** a tic the simulation refuses is not (its
   command is dropped); a tic whose frame is refused after the simulation committed it **is**, so the demo
   reproduces the refusal and its replay ends the same way (the test refuses tic 15 and saves a 16-tic demo).
+  **A dead player gets no hint.** After a death the game keeps running with the view on the floor until the
+  player presses use; nothing on screen says so, and the owner took it for a freeze (his report of 2026-11-21). The
+  original shows no prompt there either (`P_DeathThink` only tests the use button, p_user.c:227-228), so nothing
+  is changed; what use does after a death is taken up by milestone M6a (decision U6 of its investigation note, which
+  is on pull request #65 and not yet on master).
 - **Restart is a new game** (decision S11): a fresh simulation at tic 0, both random indices 0, every status bar,
   HUD and input variable as at process start, a new demo file; the old session is saved first. This differs from
   vanilla's reload after death, which keeps process state and is not modelled.
@@ -3047,11 +3090,13 @@ the next tic is due and keeps the library's default swap interval. The mouse is 
   audio library `maudio` is a second dependency of `doom-play` only. `doom-sim`, `doom-sound` and `doom-game` have no
   windowing, audio-device, thread or wall-clock dependency.
 
-### Not in M5b (out of scope, later milestones)
+### Not in M5b (later milestones)
 
 (Sound effects came with [M5c](#sound-effects-m5c); the glance fix and the level-start wipe's draws too.) Music, menus, the automap, save and load, the intermission and level-to-level carry-over, the title
 screen and demo loop, the screen wipe's picture, cheats, vanilla's in-game pause, easy and nightmare skill, low
-detail, screenblocks below 10, multiplayer and joystick input. The modern renderer is listed in
+detail, screenblocks below 10, multiplayer and joystick input. All of these are original behaviour, so none
+is optional: the [vanilla completeness checklist](ROADMAP.md#vanilla-completeness-checklist) gives each one's milestone, says
+that none is named yet or, for the joystick, that it needs the owner's ruling. The modern renderer, which is not original behaviour, is listed in
 [ROADMAP](ROADMAP.md).
 
 ## Sound effects (M5c)
@@ -3417,29 +3462,60 @@ Nothing here was measured. Each figure is arithmetic from our code or from the l
 from a library's source; what depends on the operating system's audio engine, the drivers, WSLg's remote-desktop audio,
 clocks and timer resolution is not known without measuring on a machine.
 
+**The table is for the 128-frame device period, the default since 2026-11-21, with the two-buffer start. It was recomputed on
+2026-11-21 by the link model of the [M5c record](validation/M5C.md#sound-latency-the-arithmetic-in-full) with the period changed from
+512 to 128 frames. It is arithmetic, not measured, and assumes the back end grants the period asked for.**
+
 | From the call that starts a sound to | linuxdoom-1.10 built with its in-process sound code | doom-play under PulseAudio (WSLg) | doom-play under WASAPI (Windows) |
 |---|---|---|---|
-| the hand-over to the operating system | above 0 to 46.4 ms (about 46.4 ms on a fast machine) | 28.6 to 121.3 ms | 75.0 to 167.7 ms |
-| the end of the device buffer it asks for | above 0 to 92.9 ms (about 92.9 ms) | 75.0 to 167.7 ms | 167.9 to 260.6 ms |
+| the hand-over to the operating system | above 0 to 46.4 ms (about 46.4 ms on a fast machine) | 28.6 to 86.4 ms | 40.2 to 98.0 ms |
+| the end of the device buffer it asks for | above 0 to 92.9 ms (about 92.9 ms) | 40.2 to 98.0 ms | 63.4 to 121.3 ms |
 
-**The plain answer: doom-play does not sit inside the original's range.** Under PulseAudio the low end is inside it and
-the top is above it (by 74.8 ms); under WASAPI the whole range is above it (by 28.6 ms at the low end and 121.3 ms at the
-top, to the hand-over). Sound on Windows is therefore, by arithmetic, later than the original's. **What accounts for it:**
+How the doom-play figures are made, link by link (frames at 11,025 Hz, where one frame is 0.0907 ms; arithmetic, not measured):
+
+| Link, at a period of 128 frames | Least | Most |
+|---|---|---|
+| The declared schedule and the two-buffer start (`315 + d`; the period does not change it) | 315 frames, 28.6 ms | 826 frames, 74.9 ms |
+| The callback's phase: 0 to one frame less than a period | 0 | 127 frames, 11.5 ms |
+| WASAPI only: a pulled chunk waits for one period of room | 128 frames, 11.6 ms | 128 frames, 11.6 ms |
+| **Sum to the hand-over, PulseAudio** | **315 frames, 28.6 ms** | **953 frames, 86.4 ms** |
+| **Sum to the hand-over, WASAPI** | **443 frames, 40.2 ms** | **1,081 frames, 98.0 ms** |
+| Buffer ahead, PulseAudio: one period (`tlength`) | 128 frames, 11.6 ms | 128 frames, 11.6 ms |
+| Buffer ahead, WASAPI: two of the three periods asked for | 256 frames, 23.2 ms | 256 frames, 23.2 ms |
+| **Total to the end of the buffer asked for, PulseAudio** | **443 frames, 40.2 ms** | **1,081 frames, 98.0 ms** |
+| **Total to the end of the buffer asked for, WASAPI** | **699 frames, 63.4 ms** | **1,337 frames, 121.3 ms** |
+
+**The plain answer: at this default doom-play's ranges overlap the original's and reach above it; they do not sit inside it.**
+On both back ends the low end is inside the original's range and the top is above it: under PulseAudio by 40.0 ms (441 frames) to
+the hand-over and 5.2 ms (57 frames) to the end of the buffer; under WASAPI by 51.6 ms (569 frames) to the hand-over and 28.4 ms
+(313 frames) to the end of the buffer. So the arithmetic no longer says that every sound on Windows is later than the original's
+(it said so for the 512-frame period, below); it says a sound can be later: by up to those amounts measured top against top, and by more
+against an original on a machine slow enough to sit low in its own range. **What accounts for it:**
 in the original the mix happens in the same pass of the main loop as the call, and a blocking write paces the loop, so no
 queue lies between game and device. doom-play adds a queue between a loop paced by tics and a callback paced by the device:
-the two-buffer start plus the wait for the next buffer boundary of the declared schedule, and the callback's phase (up to
-one 512-frame callback); on WASAPI, miniaudio pulls a chunk one period before the engine has room for it and the three
-requested periods keep two ahead, which add 46.4 ms and 46.4 ms beyond the original's.
+the two-buffer start plus the wait for the next buffer boundary of the declared schedule (up to 74.9 ms, the largest link, which
+the period does not change), and the callback's phase (up to one 128-frame callback); on WASAPI, miniaudio pulls a chunk one period
+before the engine has room for it and the three requested periods keep two ahead (11.6 ms and 23.2 ms at this period).
 
-**These figures, and "the whole range is above it" for WASAPI, are arithmetic for the 512-frame period that was the default until
-2026-11-21. The table has not been recomputed for the 128-frame default that replaced it.** One cell exists for 128, by the same
-arithmetic and likewise not measured: to the end of the device buffer under WASAPI,
-[63.4 to 121.3 ms](validation/M5D.md#a2-sound-latency-on-windows-statistics-and-trial-options) against the original's above 0 to 92.9 ms,
-so at the current default the two ranges overlap and the arithmetic no longer says that every sound on Windows is later than the
-original's. The model queue depths for both periods are in the
-[M5d record](validation/M5D.md#ruling-3-withdrawn-the-arithmetic-as-a-report) (at a callback, two-buffer start: minimum 384, mean 791.5,
-maximum 1,152 frames for 128, against 512, 980.5 and 1,536 for 512; four of the owner's five later runs at 128 had a deepest queue
-above that maximum, which is not explained); the owner heard 128 as quicker, by ear, and no number of milliseconds is claimed.
+**What this arithmetic leaves out.** It assumes the device's callbacks arrive evenly and the back end grants what is asked. Neither
+is shown: in one scratch probe WSLg's sink granted three quarters of the length asked for
+([record](validation/M5D.md#observed-on-this-machine-linux-under-wslg-silence-only)), and the model's queue depth at a callback for
+this period (two-buffer start: minimum 384, mean 791.5, maximum 1,152 frames;
+[M5d record](validation/M5D.md#ruling-3-withdrawn-the-arithmetic-as-a-report)) was exceeded in four of the owner's five later runs
+at 128, whose deepest queue was above that maximum, which is not explained; a deeper queue means more delay than the table gives.
+The owner heard 128 as quicker than 512, by ear, and no number of milliseconds is claimed.
+
+**The 512-frame period, the default until 2026-11-21** (the same arithmetic, in full in the
+[M5c record](validation/M5C.md#sound-latency-the-arithmetic-in-full); not measured; it can still be chosen with
+`--experimental-audio-period-frames 512`):
+
+| From the call that starts a sound to | doom-play under PulseAudio (WSLg) | doom-play under WASAPI (Windows) |
+|---|---|---|
+| the hand-over to the operating system | 28.6 to 121.3 ms | 75.0 to 167.7 ms |
+| the end of the device buffer it asks for | 75.0 to 167.7 ms | 167.9 to 260.6 ms |
+
+At that period the whole WASAPI range was above the original's (by 28.6 ms at the low end and 121.3 ms at the top, to the
+hand-over), and under PulseAudio the top was above it by 74.8 ms.
 
 **The owner's judgement stands beside this and is not reconciled with it.** He heard a delay on every sound, judged it
 normal for the original, and ruled on 2026-11-18 (M5c) that nothing changes (the two-buffer start stays; the period became 128
@@ -3452,12 +3528,18 @@ later and the unknowns are in the [evidence record](validation/M5C.md#sound-late
 queue depth, and offers two experimental trial options, `--experimental-audio-start-buffers` and
 `--experimental-audio-period-frames`, which change only how finished sound reaches the device (presentation only; M5d left the defaults
 unchanged, and nothing is promised to be shorter). The audio library's own `[INFO]` device report is printed only with `--audio-report`.
+Since 2026-11-21, when at least one underrun was counted, one more exit line lists each of the first 32: the session of the launch, the
+session's tics at the loop's last update before it, the frames of silence in that one callback, and how many mixer buffers had been
+queued since the queue last began to fill, after the session's start, a resume or the underrun before. It is a diagnostic so that a run
+shows whether its underruns are the start-up fill running dry (while playing, a few buffers after a start or a resume). A session that
+has ended sends no more sound and its queue runs out once: that has always been counted as an underrun, is no gap in play, and the line
+marks it. No run with the diagnostic has been reported yet, and it changes nothing that is played or counted.
 The owner's first trial on 2026-11-20 was by ear on Bluetooth headphones with the sessions recorded to a slow disk, so its underrun counts
 are contaminated by disk stalls. He reran three trials the same day on wired output with the sessions on an SSD, one run each, by ear
 (not a latency measurement): a period of 128 frames sounded quicker than the default with no underrun, and a one-buffer start added
 nothing he could hear and gave one underrun ([figures](validation/M5D.md#the-retest)). **He chose a period of 128 frames with the
 two-buffer start as the future default; that change was not in M5d, which left the default at 512 frames.** Since 2026-11-21 (its own
-pull request, awaiting his review: [ROADMAP](ROADMAP.md)) **the default period is 128 frames with the two-buffer start kept**; 256 and 512
+pull request, [#67](https://github.com/Copgunn/DOOM/pull/67), which he merged that day) **the default period is 128 frames with the two-buffer start kept**; 256 and 512
 remain available through the experimental option and are marked `EXPERIMENTAL` on the exit line. The figures, from six runs on one machine
 and one device, by ear and by counters, are in the [M5d record](validation/M5D.md#the-default-period-becomes-128-frames-2026-11-21-its-own-pull-request). The WASAPI period count is not offered: the audio library's safe API
 cannot set it. Their arithmetic and the one run on this machine are in the [M5d record](validation/M5D.md#a2-sound-latency-on-windows-statistics-and-trial-options);
