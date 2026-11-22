@@ -2,13 +2,13 @@
  "schema": "DOOM-M6A-RESULTS-v1",
  "runner_contract_sha256": "77184f1bec516862d789c61b9935c96e34ef5727e93b406d1d330e4526d42cd1",
  "tools_sha256": {
-  "tools/reference/m6a_goldens.py": "cb20b5c9ab1f3af5a41f9ba704bc2aeed1ec1823ea64ce85ac7a71965a921fb9",
-  "tools/reference/m6a_wad.py": "8068e846a4ec8b7dcf574ed84c4a9e1fce4b82d9bca40acebeec68446de9f66d",
+  "tools/reference/m6a_goldens.py": "0d89e6abbd89c2c822f7df3c638580c85f704e7a82d7777536163e6fc24e9c0a",
+  "tools/reference/m6a_wad.py": "eafd6f014fe8db63caaf9f62823418cc9b2a67ce973f18d489bbbcfd55b61a96",
   "tools/reference/m6a_build.py": "db8a4c558b6aa0039e1aaff87de67e054c3e6bffbdc5315b78bf4d8b27e2c7cb",
   "tools/reference/m6a_session.c": "22057830b73b3b31a5e48b0077b05b55a6cab657ebdff8fecc6451c0ff3d8bdc",
   "tools/reference/m6a_wi_access.c": "2195c82be97d008fb2162e11ab86256bd86bc9c19dfde1e306406bd2b41358dd"
  },
- "manifest_sha256": "7aa831fd99554517d1a0292ce778f6413cf265cc0e02a546d23b9a97f225a9fa",
+ "manifest_sha256": "508bc35825cd8f0ef56497e898a140035de14d912413c409f72bd649e030be8c",
  "inputs_sha256": {
   "tests/reference/m6a_wads/episode.wad": "23c052fda9dfbf4b23cd5c2f6af75ea1d27c4a5b1a1096f6c313b766950ef94b",
   "tests/reference/m6a_wads/rbx.wad": "93fbb1398f93b559f573e25f4655f9e82f56bce6effe9cce50759b1080a5bdc0",
@@ -44,16 +44,21 @@
  "asan_options": "detect_leaks=0 (leak detection disabled; not LeakSanitizer coverage)",
  "claim": "every golden is the genuine engine's stream (strict build), identical in the overflow and address builds; the melt files make no claim",
  "totals": {
-  "items": 18,
-  "session_tics": 7712,
-  "loads": 55,
-  "wipes": 92,
-  "level_frames": 4889,
-  "other_frames": 2823,
-  "sound_starts": 515,
-  "dumps": 4906
+  "items": 26,
+  "session_tics": 15282,
+  "loads": 67,
+  "wipes": 113,
+  "level_frames": 7565,
+  "other_frames": 7717,
+  "sound_starts": 803,
+  "dumps": 7590
  },
  "witnessed_by": {
+  "1": [
+   "FINREG",
+   "FINRET",
+   "NOHELP2"
+  ],
   "2": [
    "INTIDLE",
    "INTHELD",
@@ -72,7 +77,11 @@
    "REBSECRT",
    "USEAT132",
    "RBXDEAD",
-   "NOE1M2"
+   "NOE1M2",
+   "SKILL0",
+   "SKILL1",
+   "SKILL2",
+   "SKILL3"
   ],
   "4": [
    "CHAIN",
@@ -85,7 +94,11 @@
    "SECRET",
    "REBSECRT",
    "RBXDEAD",
-   "NOE1M2"
+   "NOE1M2",
+   "SKILL0",
+   "SKILL1",
+   "SKILL2",
+   "SKILL3"
   ],
   "5": [
    "SECRET",
@@ -101,12 +114,20 @@
    "REBLATE",
    "SECRET",
    "REBSECRT",
-   "RBXDEAD"
+   "RBXDEAD",
+   "SKILL0",
+   "SKILL1",
+   "SKILL2",
+   "SKILL3"
   ],
   "8": [
    "CHAIN",
    "INTSTA",
-   "INTHELD"
+   "INTHELD",
+   "SKILL0",
+   "SKILL1",
+   "SKILL2",
+   "SKILL3"
   ],
   "9": [
    "CHAIN",
@@ -115,7 +136,11 @@
    "INTHELD",
    "SECRET",
    "REBSECRT",
-   "NOE1M2"
+   "NOE1M2",
+   "SKILL0",
+   "SKILL1",
+   "SKILL2",
+   "SKILL3"
   ],
   "10": [
    "REBHELD",
@@ -123,6 +148,10 @@
    "REBSECRT",
    "USEAT130",
    "USEAT131"
+  ],
+  "11": [
+   "FINREG",
+   "FINRET"
   ],
   "12": [
    "PROBE",
@@ -133,21 +162,29 @@
   ]
  },
  "melt_kinds": {
-  "intermission to level": {
-   "melts": 33,
-   "start_differs_from_end": 33
+  "finale text to art screen": {
+   "melts": 2,
+   "start_differs_from_end": 2
   },
-  "level to intermission": {
+  "intermission to level": {
    "melts": 37,
    "start_differs_from_end": 37
+  },
+  "level to finale": {
+   "melts": 3,
+   "start_differs_from_end": 3
+  },
+  "level to intermission": {
+   "melts": 41,
+   "start_differs_from_end": 41
   },
   "reborn reload": {
    "melts": 5,
    "start_differs_from_end": 5
   },
   "session start": {
-   "melts": 17,
-   "start_differs_from_end": 17
+   "melts": 25,
+   "start_differs_from_end": 25
   }
  },
  "items": {
@@ -480,9 +517,9 @@
     ],
     "9": [
      "exit tic 125: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 126; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step",
-     "exit tic 392: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 393; the level's sfx 1 still playing on tic 428, cut by a tally sound (no origin, s_sound.c:471-483); no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step",
+     "exit tic 392: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 393; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step",
      "exit tic 732: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 733; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step",
-     "exit tic 966: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 967; the level's sfx 1 still playing on tic 1002, cut by a tally sound (no origin, s_sound.c:471-483); no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step"
+     "exit tic 966: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 967; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step"
     ]
    }
   },
@@ -622,7 +659,7 @@
      "exit tic 1405 -> load tic 1422: health 61, armor 0, weapons 7, ammo 55/8/0/0, backpack 0 carried"
     ],
     "9": [
-     "exit tic 359: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 360; the level's sfx 1 still playing on tic 395, cut by a tally sound (no origin, s_sound.c:471-483); no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step",
+     "exit tic 359: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 360; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step",
      "exit tic 1082: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 1083; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step",
      "exit tic 1333: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 1334; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step"
     ]
@@ -806,7 +843,7 @@
      "load tic 436 with the chainsaw ready: sfx_sawup started on the load tic"
     ],
     "9": [
-     "exit tic 125: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 126; the level's sfx 1 still playing on tic 161, cut by a tally sound (no origin, s_sound.c:471-483); no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step"
+     "exit tic 125: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 126; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step"
     ]
    }
   },
@@ -1210,7 +1247,7 @@
      "exit tic 514: deltaviewheight -40960 (a landing); load tic 560: -24576"
     ],
     "9": [
-     "exit tic 96: sfx 23 started on the exit tic; 1 channel(s) still occupied after the first intermission tic 97; the level's sfx 23 still playing on tic 98, cut by a tally sound (no origin, s_sound.c:471-483); the level's sfx 82 still playing on tic 100, cut by a tally sound (no origin, s_sound.c:471-483); no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step",
+     "exit tic 96: sfx 23 started on the exit tic; 1 channel(s) still occupied after the first intermission tic 97; the level's sfx 23 still playing on tic 98, cut by a tally sound (no origin, s_sound.c:471-483); no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step",
      "exit tic 225: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 226; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step",
      "exit tic 367: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 368; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step"
     ]
@@ -1335,7 +1372,7 @@
      "exit tic 599: deltaviewheight -40960 (a landing); load tic 645: -24576"
     ],
     "9": [
-     "exit tic 96: sfx 23 started on the exit tic; 1 channel(s) still occupied after the first intermission tic 97; the level's sfx 23 still playing on tic 98, cut by a tally sound (no origin, s_sound.c:471-483); the level's sfx 82 still playing on tic 100, cut by a tally sound (no origin, s_sound.c:471-483); no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step",
+     "exit tic 96: sfx 23 started on the exit tic; 1 channel(s) still occupied after the first intermission tic 97; the level's sfx 23 still playing on tic 98, cut by a tally sound (no origin, s_sound.c:471-483); no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step",
      "exit tic 238: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 239; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step"
     ],
     "10": [
@@ -1902,6 +1939,697 @@
     "tests/reference/m6a_melt/NOE1M2AT.melt": "e866b27efdd2c8f86e007024ab283e98bba5b565f14400a78ab404878205cc1d"
    },
    "witnesses": {}
+  },
+  "FINREG": {
+   "mode": "registered",
+   "wadset": "episode",
+   "lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c",
+   "end": "marker",
+   "session_tics": 1951,
+   "loads": 1,
+   "wipes": 3,
+   "level_frames": 321,
+   "other_frames": 1630,
+   "sound_starts": 16,
+   "dumps": 322,
+   "variants": {
+    "overflow": {
+     "identical_to_strict": true
+    },
+    "address": {
+     "identical_to_strict": true
+    },
+    "address_bounds": {
+     "identical_to_strict": true,
+     "bounds_reports": []
+    }
+   },
+   "melt": {
+    "claim": "none",
+    "melts": 3,
+    "steps": [
+     42,
+     38,
+     38
+    ],
+    "start_differs_from_end": 3,
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "level to finale": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "finale text to art screen": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     }
+    },
+    "other_rows_equal_to_counter_clock": true
+   },
+   "whole_frames_2d_undefined": 0,
+   "flagged_level_frames": 0,
+   "other_draws": 0,
+   "dump_set_sha256": "f2571fe82a585faf0f179b4b37e0a8a924a90e8b3971bdd804af8d17ee53e374",
+   "dumps_per_load": [
+    {
+     "load": 0,
+     "snapshots": 322,
+     "sha256": "f2571fe82a585faf0f179b4b37e0a8a924a90e8b3971bdd804af8d17ee53e374"
+    }
+   ],
+   "goldens": {
+    "tests/reference/m6a_session/FINREG.session": "0f8103a624f28a26517dce4a831ed02310f06d357393e38da2b499abcc185fc5",
+    "tests/reference/m6a_sound/FINREG.sound": "4e51aa9d9e998260718d65a053abc855bcae1442246495d2cd617e45bbe9ee69",
+    "tests/reference/m6a_frames/FINREG.sb10.frames": "4befcb94ccde4b967937038503ca14171350936150885a214c75587c40fd59d8",
+    "tests/reference/m6a_frames/FINREG.sb11.frames": "bdd744cb7d06e785cdde42809461cd147f108fcab0b31b60ab9d4fbac29f028d",
+    "tests/reference/m6a_melt/FINREG.melt": "3294ceaa1801eba6e02870cf7fa3bfbe818cc38c91c19a426fb8b96ce9d43b30"
+   },
+   "witnesses": {
+    "1": [
+     "E1M8 exit on tic 320; tic 321 is the finale (gamestate 2): no intermission, no intermission draws"
+    ],
+    "11": [
+     "finale tics 321-1950: stage 1 from tic 1891 (finale tic 1571), still stage 1 with no game action at the last tic; presses on tics [421, 521, 1891] changed nothing; no finale M_Random draw"
+    ]
+   }
+  },
+  "FINRET": {
+   "mode": "retail",
+   "wadset": "episode",
+   "lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c",
+   "end": "marker",
+   "session_tics": 1951,
+   "loads": 1,
+   "wipes": 3,
+   "level_frames": 321,
+   "other_frames": 1630,
+   "sound_starts": 16,
+   "dumps": 322,
+   "variants": {
+    "overflow": {
+     "identical_to_strict": true
+    },
+    "address": {
+     "identical_to_strict": true
+    },
+    "address_bounds": {
+     "identical_to_strict": true,
+     "bounds_reports": []
+    }
+   },
+   "melt": {
+    "claim": "none",
+    "melts": 3,
+    "steps": [
+     42,
+     38,
+     38
+    ],
+    "start_differs_from_end": 3,
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "level to finale": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "finale text to art screen": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     }
+    },
+    "other_rows_equal_to_counter_clock": true
+   },
+   "whole_frames_2d_undefined": 0,
+   "flagged_level_frames": 0,
+   "other_draws": 0,
+   "dump_set_sha256": "f2571fe82a585faf0f179b4b37e0a8a924a90e8b3971bdd804af8d17ee53e374",
+   "dumps_per_load": [
+    {
+     "load": 0,
+     "snapshots": 322,
+     "sha256": "f2571fe82a585faf0f179b4b37e0a8a924a90e8b3971bdd804af8d17ee53e374"
+    }
+   ],
+   "goldens": {
+    "tests/reference/m6a_session/FINRET.session": "62a673b2cbf93d76748e2422f734d1fa18a935e63f8afb3616f8fabce9a2a503",
+    "tests/reference/m6a_sound/FINRET.sound": "0f74963b5acc63c35d6aca9957dd657761ecec89f5abffb47f4bd84ae315b4af",
+    "tests/reference/m6a_frames/FINRET.sb10.frames": "573def63c7a70075d4a46d9bf219a0f5c7b8a96f0af0283aba873f9cb39087a7",
+    "tests/reference/m6a_frames/FINRET.sb11.frames": "2adc3f0ded0fdd1bad82a08ef220bc9fde9289ba2c3e8db247ffdc5996d30402",
+    "tests/reference/m6a_melt/FINRET.melt": "521f4510a081cd22b3adc0b234d7c9f638b5d4078da5c783c818adb0f932a109"
+   },
+   "witnesses": {
+    "1": [
+     "E1M8 exit on tic 320; tic 321 is the finale (gamestate 2): no intermission, no intermission draws"
+    ],
+    "11": [
+     "finale tics 321-1950: stage 1 from tic 1891 (finale tic 1571), still stage 1 with no game action at the last tic; presses on tics [421, 521, 1891] changed nothing; no finale M_Random draw"
+    ]
+   }
+  },
+  "NOHELP2": {
+   "mode": "registered",
+   "wadset": "nohelp2",
+   "lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c",
+   "end": "error:W_GetNumForName: HELP2 not found!",
+   "session_tics": 1891,
+   "loads": 1,
+   "wipes": 2,
+   "level_frames": 321,
+   "other_frames": 1570,
+   "sound_starts": 16,
+   "dumps": 322,
+   "variants": {
+    "overflow": {
+     "identical_to_strict": true
+    },
+    "address": {
+     "identical_to_strict": true
+    },
+    "address_bounds": {
+     "identical_to_strict": true,
+     "bounds_reports": []
+    }
+   },
+   "melt": {
+    "claim": "none",
+    "melts": 2,
+    "steps": [
+     42,
+     38
+    ],
+    "start_differs_from_end": 2,
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "level to finale": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     }
+    },
+    "other_rows_equal_to_counter_clock": true
+   },
+   "whole_frames_2d_undefined": 0,
+   "flagged_level_frames": 0,
+   "other_draws": null,
+   "dump_set_sha256": "f2571fe82a585faf0f179b4b37e0a8a924a90e8b3971bdd804af8d17ee53e374",
+   "dumps_per_load": [
+    {
+     "load": 0,
+     "snapshots": 322,
+     "sha256": "f2571fe82a585faf0f179b4b37e0a8a924a90e8b3971bdd804af8d17ee53e374"
+    }
+   ],
+   "goldens": {
+    "tests/reference/m6a_session/NOHELP2.session": "e75858b66c0c4cd251bacefae18093976e0f1d8712446581c1099dc3c89cf27b",
+    "tests/reference/m6a_sound/NOHELP2.sound": "1df69306ba7299ac691e8e6ddf451d06dc300f2e7e1e1373d94b3da20af484cb",
+    "tests/reference/m6a_frames/NOHELP2.sb10.frames": "52f39825630c6e000b3a8c41c2b3632807ab1d54390f56be25e19bc30789ab89",
+    "tests/reference/m6a_frames/NOHELP2.sb11.frames": "cfb4761ca809928be47c3d1c5b03ec5a11ab20eb3dc572514bef2c3707540589",
+    "tests/reference/m6a_melt/NOHELP2.melt": "f1c9ca9633de48bdf86f7fdaf14f8875c59ce2119597b39ad0a4cd44fe138900"
+   },
+   "witnesses": {
+    "1": [
+     "E1M8 exit on tic 320; tic 321 is the finale (gamestate 2): no intermission, no intermission draws"
+    ]
+   }
+  },
+  "NOVICTOR": {
+   "mode": "registered",
+   "wadset": "novictor",
+   "lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c",
+   "end": "error:W_GetNumForName: d_victor not found!",
+   "session_tics": 321,
+   "loads": 1,
+   "wipes": 1,
+   "level_frames": 321,
+   "other_frames": 0,
+   "sound_starts": 16,
+   "dumps": 322,
+   "variants": {
+    "overflow": {
+     "identical_to_strict": true
+    },
+    "address": {
+     "identical_to_strict": true
+    },
+    "address_bounds": {
+     "identical_to_strict": true,
+     "bounds_reports": []
+    }
+   },
+   "melt": {
+    "claim": "none",
+    "melts": 1,
+    "steps": [
+     42
+    ],
+    "start_differs_from_end": 1,
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     }
+    },
+    "other_rows_equal_to_counter_clock": true
+   },
+   "whole_frames_2d_undefined": 0,
+   "flagged_level_frames": 0,
+   "other_draws": null,
+   "dump_set_sha256": "f2571fe82a585faf0f179b4b37e0a8a924a90e8b3971bdd804af8d17ee53e374",
+   "dumps_per_load": [
+    {
+     "load": 0,
+     "snapshots": 322,
+     "sha256": "f2571fe82a585faf0f179b4b37e0a8a924a90e8b3971bdd804af8d17ee53e374"
+    }
+   ],
+   "goldens": {
+    "tests/reference/m6a_session/NOVICTOR.session": "f5ba177d894f4d3c4cd51c78dbbaf895bc3fc4f78dcddc9c9cb01e1eadaa6ace",
+    "tests/reference/m6a_sound/NOVICTOR.sound": "80dc27b7e00348c048283742f88686ce8d36e10792e776e61255182325416bc6",
+    "tests/reference/m6a_frames/NOVICTOR.sb10.frames": "6f3c5c7f8730cde971ef3b676df7599c0afd4ffe00d22e04a26c157bb2025b44",
+    "tests/reference/m6a_frames/NOVICTOR.sb11.frames": "1d0bd77984a0f4fa2e1033903fd8a34c7ac4e3ab8de98663f3f7a4a27b0adb84",
+    "tests/reference/m6a_melt/NOVICTOR.melt": "517295d024cca362171b3c27e9ec88cbd732568be04fb7e1b82009b72c060a51"
+   },
+   "witnesses": {}
+  },
+  "SKILL0": {
+   "mode": "registered",
+   "wadset": "episode",
+   "lmp_sha256": "06ce870c45df7eb08acdc7b40aa96c22d217d0e877ac3e62339eb07dd88f63eb",
+   "end": "marker",
+   "session_tics": 364,
+   "loads": 2,
+   "wipes": 3,
+   "level_frames": 348,
+   "other_frames": 16,
+   "sound_starts": 56,
+   "dumps": 349,
+   "variants": {
+    "overflow": {
+     "identical_to_strict": true
+    },
+    "address": {
+     "identical_to_strict": true,
+     "stopped_by": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+     "compared_through_tic": 141
+    },
+    "address_bounds": {
+     "identical_to_strict": true,
+     "bounds_reports": [
+      "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'"
+     ]
+    }
+   },
+   "melt": {
+    "claim": "none",
+    "melts": 3,
+    "steps": [
+     42,
+     39,
+     38
+    ],
+    "start_differs_from_end": 3,
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "level to intermission": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "intermission to level": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     }
+    },
+    "other_rows_equal_to_counter_clock": true
+   },
+   "whole_frames_2d_undefined": 0,
+   "flagged_level_frames": 0,
+   "other_draws": 0,
+   "dump_set_sha256": "c1a8c472aa725212641daca37efa850061870e266814e2554ad82f69b2dde23e",
+   "dumps_per_load": [
+    {
+     "load": 0,
+     "snapshots": 127,
+     "sha256": "ba0fb36cd2f5e6638a19e44c0617200e92c9bb00296c590f386006cb68a9b171"
+    },
+    {
+     "load": 1,
+     "snapshots": 222,
+     "sha256": "01eee4f082a82996c2260197dd13c295cffabeeeed6b12e39d15f1355d49753a"
+    }
+   ],
+   "goldens": {
+    "tests/reference/m6a_session/SKILL0.session": "700e7611f0bcd36a7f04b3886cb015d1e68fdd4fa2cace56476881824b759d23",
+    "tests/reference/m6a_sound/SKILL0.sound": "b9330aa8b474bc13f75cf63a88a80f3ce63539d9a23a818d946563284a482f75",
+    "tests/reference/m6a_frames/SKILL0.sb10.frames": "0572cedf2dccf7c8da7bf40d23000983361353b9da63ea39d4e5ff68809623b0",
+    "tests/reference/m6a_frames/SKILL0.sb11.frames": "fe0ac0bc99f68e5cce7c80b2e1b34685b50f6e31976ea9cb82f02f2eb4819b8c",
+    "tests/reference/m6a_melt/SKILL0.melt": "a3eb8bb1d85e3a7fa75b22611a5136303ea6ad0e0e3f0af5fe545bcf04139fc4"
+   },
+   "skill_facts": {
+    "skill": 0,
+    "e1m1_maxitems": 3,
+    "exit_tic": 125,
+    "exit_health": 100,
+    "exit_bullets": 70,
+    "last_health": 58
+   },
+   "witnesses": {
+    "3": [
+     "intermission 126-141: 20 intermission M_Random draws (10 at WI_Start, 10 at the sgcock tic)"
+    ],
+    "4": [
+     "intermission 1 (tic 126): snl_pointeron 0 on the frame of the sgcock tic 129 (the first of the process: hidden)"
+    ],
+    "7": [
+     "exit tic 125 -> load tic 142: health 100, armor 100, weapons 131, ammo 70/8/40/2, backpack 1 carried",
+     "exit tic 125: cards 1, powers 0,0,0,2041,0,0; cards and powers 0 from the next tic"
+    ],
+    "8": [
+     "load tic 142 with the chainsaw ready: sfx_sawup started on the load tic"
+    ],
+    "9": [
+     "exit tic 125: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 126; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step"
+    ]
+   }
+  },
+  "SKILL1": {
+   "mode": "registered",
+   "wadset": "episode",
+   "lmp_sha256": "6ad71715b82f77ec70133ea6217f6845650468ad65118c462b4c86b96e814f29",
+   "end": "marker",
+   "session_tics": 364,
+   "loads": 2,
+   "wipes": 3,
+   "level_frames": 348,
+   "other_frames": 16,
+   "sound_starts": 56,
+   "dumps": 349,
+   "variants": {
+    "overflow": {
+     "identical_to_strict": true
+    },
+    "address": {
+     "identical_to_strict": true,
+     "stopped_by": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+     "compared_through_tic": 141
+    },
+    "address_bounds": {
+     "identical_to_strict": true,
+     "bounds_reports": [
+      "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'"
+     ]
+    }
+   },
+   "melt": {
+    "claim": "none",
+    "melts": 3,
+    "steps": [
+     42,
+     39,
+     38
+    ],
+    "start_differs_from_end": 3,
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "level to intermission": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "intermission to level": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     }
+    },
+    "other_rows_equal_to_counter_clock": true
+   },
+   "whole_frames_2d_undefined": 0,
+   "flagged_level_frames": 0,
+   "other_draws": 0,
+   "dump_set_sha256": "ae8cfe0d9c9a86fb9e53f1ed4d768e0dac09ab1f1698485f53887f8a327298ee",
+   "dumps_per_load": [
+    {
+     "load": 0,
+     "snapshots": 127,
+     "sha256": "32c98e08b275ec0362bcb54a93acce417c3a27db3c18b89d85373279854bbaad"
+    },
+    {
+     "load": 1,
+     "snapshots": 222,
+     "sha256": "306802b20cb13c1f70922a2060be1fd0c9dffc408b9a2a3febbc67f7122232bd"
+    }
+   ],
+   "goldens": {
+    "tests/reference/m6a_session/SKILL1.session": "5216f9062771e6aefc0d6ff708678839267e296a62c866ecd4d2c3af06c1a4f8",
+    "tests/reference/m6a_sound/SKILL1.sound": "1c2cd7eb74c65edf31d3c33c195b547568b6d39c3234608894bc39e58d88b5b6",
+    "tests/reference/m6a_frames/SKILL1.sb10.frames": "058b711c342eec0bab20366f09c86269b06d2173cb6b02149b35cb1997dba9c6",
+    "tests/reference/m6a_frames/SKILL1.sb11.frames": "0a20edbc47aabf4fd3c67d924d62b21c7a0e2516571d33e9e6f858cf0f81174d",
+    "tests/reference/m6a_melt/SKILL1.melt": "9bf1c759fcf670d10be5f6c1c6a747d178f867e18028f983de83443a6ff65c95"
+   },
+   "skill_facts": {
+    "skill": 1,
+    "e1m1_maxitems": 3,
+    "exit_tic": 125,
+    "exit_health": 97,
+    "exit_bullets": 60,
+    "last_health": 13
+   },
+   "witnesses": {
+    "3": [
+     "intermission 126-141: 20 intermission M_Random draws (10 at WI_Start, 10 at the sgcock tic)"
+    ],
+    "4": [
+     "intermission 1 (tic 126): snl_pointeron 0 on the frame of the sgcock tic 129 (the first of the process: hidden)"
+    ],
+    "7": [
+     "exit tic 125 -> load tic 142: health 97, armor 100, weapons 131, ammo 60/4/20/1, backpack 1 carried",
+     "exit tic 125: cards 1, powers 0,0,0,2041,0,0; cards and powers 0 from the next tic"
+    ],
+    "8": [
+     "load tic 142 with the chainsaw ready: sfx_sawup started on the load tic"
+    ],
+    "9": [
+     "exit tic 125: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 126; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step"
+    ]
+   }
+  },
+  "SKILL2": {
+   "mode": "registered",
+   "wadset": "episode",
+   "lmp_sha256": "a94d77a1188165f8a3032a2b81104618189769120467be2741f24332b41ad0e6",
+   "end": "marker",
+   "session_tics": 364,
+   "loads": 2,
+   "wipes": 3,
+   "level_frames": 348,
+   "other_frames": 16,
+   "sound_starts": 56,
+   "dumps": 349,
+   "variants": {
+    "overflow": {
+     "identical_to_strict": true
+    },
+    "address": {
+     "identical_to_strict": true,
+     "stopped_by": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+     "compared_through_tic": 141
+    },
+    "address_bounds": {
+     "identical_to_strict": true,
+     "bounds_reports": [
+      "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'"
+     ]
+    }
+   },
+   "melt": {
+    "claim": "none",
+    "melts": 3,
+    "steps": [
+     42,
+     39,
+     38
+    ],
+    "start_differs_from_end": 3,
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "level to intermission": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "intermission to level": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     }
+    },
+    "other_rows_equal_to_counter_clock": true
+   },
+   "whole_frames_2d_undefined": 0,
+   "flagged_level_frames": 0,
+   "other_draws": 0,
+   "dump_set_sha256": "011a0b855ae030acb2efae953e18ac2281f79dc6ce3f1c172139b70c0fe7fecb",
+   "dumps_per_load": [
+    {
+     "load": 0,
+     "snapshots": 127,
+     "sha256": "c85d615667db1cbb40c860821a3bcfb4cbb2df5853e7b242b160d05f5b1ea22f"
+    },
+    {
+     "load": 1,
+     "snapshots": 222,
+     "sha256": "3f59f61ba435d7f63a306de3cac53652b6a8dfb996b598d594d1efb6362fc10c"
+    }
+   ],
+   "goldens": {
+    "tests/reference/m6a_session/SKILL2.session": "373a068fd335e103d29e41e0861fd458f2756e9558f02b8de264b6ebb1e7fe24",
+    "tests/reference/m6a_sound/SKILL2.sound": "427c724cab6e99063dd9701e1c355eaf08e69e8394d5e3f134cf5d57f689d977",
+    "tests/reference/m6a_frames/SKILL2.sb10.frames": "055c71c8a34be25b5b5a78c98d878f69162dd5214833d8852c65af17af8f247b",
+    "tests/reference/m6a_frames/SKILL2.sb11.frames": "5957aebe4c1c41084861aa2e82292157beae3be51bc62a106b5514926c630bc9",
+    "tests/reference/m6a_melt/SKILL2.melt": "4d56029ba5aa3495d62d07f94337a164116a7d03f84ca72ccd71ffde4c3e817d"
+   },
+   "skill_facts": {
+    "skill": 2,
+    "e1m1_maxitems": 2,
+    "exit_tic": 125,
+    "exit_health": 97,
+    "exit_bullets": 60,
+    "last_health": 13
+   },
+   "witnesses": {
+    "3": [
+     "intermission 126-141: 20 intermission M_Random draws (10 at WI_Start, 10 at the sgcock tic)"
+    ],
+    "4": [
+     "intermission 1 (tic 126): snl_pointeron 0 on the frame of the sgcock tic 129 (the first of the process: hidden)"
+    ],
+    "7": [
+     "exit tic 125 -> load tic 142: health 97, armor 100, weapons 131, ammo 60/4/20/1, backpack 1 carried",
+     "exit tic 125: cards 1, powers 0,0,0,2041,0,0; cards and powers 0 from the next tic"
+    ],
+    "8": [
+     "load tic 142 with the chainsaw ready: sfx_sawup started on the load tic"
+    ],
+    "9": [
+     "exit tic 125: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 126; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step"
+    ]
+   }
+  },
+  "SKILL3": {
+   "mode": "registered",
+   "wadset": "episode",
+   "lmp_sha256": "d627a2dbd2da349d1f4f83619a14ed0618688385efd684697f9ad58e29ffd10b",
+   "end": "marker",
+   "session_tics": 364,
+   "loads": 2,
+   "wipes": 3,
+   "level_frames": 348,
+   "other_frames": 16,
+   "sound_starts": 56,
+   "dumps": 349,
+   "variants": {
+    "overflow": {
+     "identical_to_strict": true
+    },
+    "address": {
+     "identical_to_strict": true,
+     "stopped_by": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+     "compared_through_tic": 141
+    },
+    "address_bounds": {
+     "identical_to_strict": true,
+     "bounds_reports": [
+      "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'"
+     ]
+    }
+   },
+   "melt": {
+    "claim": "none",
+    "melts": 3,
+    "steps": [
+     42,
+     39,
+     38
+    ],
+    "start_differs_from_end": 3,
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "level to intermission": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "intermission to level": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     }
+    },
+    "other_rows_equal_to_counter_clock": true
+   },
+   "whole_frames_2d_undefined": 0,
+   "flagged_level_frames": 0,
+   "other_draws": 0,
+   "dump_set_sha256": "ee312a5cefc010639a89e3ab1ccd63c18080fae75ea810291e27475da5801102",
+   "dumps_per_load": [
+    {
+     "load": 0,
+     "snapshots": 127,
+     "sha256": "7893502a5faf569556ecb1cbb426f14cb0831dd517ba5bdb51c3b3ce10c65f0e"
+    },
+    {
+     "load": 1,
+     "snapshots": 222,
+     "sha256": "d779265aa8da86f8ebe22c10863e80103384f7095d6a54aae3ea5d8c980ecc1b"
+    }
+   ],
+   "goldens": {
+    "tests/reference/m6a_session/SKILL3.session": "ae8d7737ece059948de86781f6d8184dc3990726d99c6a6d369a673479c8f0f5",
+    "tests/reference/m6a_sound/SKILL3.sound": "2269c6d49f18b6632c314fcd61bef80e9ef715a302885bd1af48af0f7449a1da",
+    "tests/reference/m6a_frames/SKILL3.sb10.frames": "3f28b8a859082046be51cee6dbab7025ee1e6385ace004719368efc1edd0ee08",
+    "tests/reference/m6a_frames/SKILL3.sb11.frames": "52db80ac52540084fb0c1ba1b09ab309c6ebc3f338b1eba0391ef32de4838248",
+    "tests/reference/m6a_melt/SKILL3.melt": "665c1910ae923fef3b6190c6eecc479c25c351aab080495b270a788db9ac63ba"
+   },
+   "skill_facts": {
+    "skill": 3,
+    "e1m1_maxitems": 3,
+    "exit_tic": 125,
+    "exit_health": 97,
+    "exit_bullets": 60,
+    "last_health": 13
+   },
+   "witnesses": {
+    "3": [
+     "intermission 126-141: 20 intermission M_Random draws (10 at WI_Start, 10 at the sgcock tic)"
+    ],
+    "4": [
+     "intermission 1 (tic 126): snl_pointeron 0 on the frame of the sgcock tic 129 (the first of the process: hidden)"
+    ],
+    "7": [
+     "exit tic 125 -> load tic 142: health 97, armor 100, weapons 131, ammo 60/4/20/1, backpack 1 carried",
+     "exit tic 125: cards 1, powers 0,0,0,2041,0,0; cards and powers 0 from the next tic"
+    ],
+    "8": [
+     "load tic 142 with the chainsaw ready: sfx_sawup started on the load tic"
+    ],
+    "9": [
+     "exit tic 125: sfx 23 started on the exit tic; 0 channel(s) still occupied after the first intermission tic 126; no channel stopped by the completion (S_Start stops them at the next load, s_sound.c:209-211); the mixer was not run in this step"
+    ]
+   }
   }
  }
 }
