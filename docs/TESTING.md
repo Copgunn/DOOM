@@ -2886,6 +2886,58 @@ would share one target directory and a mutant could be tested with another mutan
 test harness. The mutants in the window's event handlers and in `audio::probe` cannot be caught without a display or a real audio device;
 the dispositions are in the [M5d record](validation/M5D.md#the-local-mutation-run-on-doom-play).
 
+## M6a Episode 1 in one session (in progress)
+
+The M6a [reference investigation](M6A_REFERENCE_INVESTIGATION.md) (the owner's rulings on U1-U15 of 2026-11-21) is
+under way on the branch `feat/m6a-episode1-continuous`. This section lists the commands of the pieces done so far.
+
+### The genuine M6a runner (Phase 2 step 1)
+
+`tools/reference/m6a_build.py` builds the M5c runner carried past the level boundary
+([note section 3.1](M6A_REFERENCE_INVESTIGATION.md#31-design-of-the-genuine-side)): the M5c runner's genuine files
+plus `f_finale.c` whole and `wi_stuff.c` whole through the accessor unit `tools/reference/m6a_wi_access.c`; the driver
+is generated from the frozen `m5c_driver.c` by exact-once patches and `tools/reference/m6a_session.c`. G_Ticker runs
+every tic, through exits, intermissions, loads, reborns and the finale. The game mode is declared
+(`--game-mode registered|retail`, required: ruling U4); the runner refuses an IWAD file named for the other mode
+(`doom.wad` is registered, `doomu.wad` retail). `--session-out FILE` writes the session stream
+(`DOOM-M6A-SESSION-v1`); `--melt-clock counter|unit` selects the clock of the melt pictures (evidence only).
+
+```sh
+# the contract (Python only, no compiler)
+python3 tools/reference/m6a_build.py --check                               # tests/reference/m6a_runner_contract.json (DOOM-M6A-RUNNER-v1)
+python3 tools/reference/m6a_build.py --contract tests/reference/m6a_runner_contract.json   # regenerate it
+
+# build the runner alone (C; Linux); strict32 needs a 32-bit toolchain and prints one skip line otherwise
+python3 tools/reference/m6a_build.py --variant strict|overflow|address|all|strict32 --out DIR
+
+# the fork against the frozen M5c runner: every M5c item and TRUNC, screenblocks 10 and 11 (C; Linux)
+python3 tools/reference/m6a_reference.py --work DIR --check [--selftest] [--jobs N]   # tests/reference/m6a_selfcheck.json
+python3 tools/reference/m6a_reference.py --work DIR [--jobs N]                         # no --check: regenerates m6a_selfcheck.json
+python3 tools/reference/m6a_reference.py --work DIR --only NAME[,NAME]                 # a subset; writes nothing
+
+# the four builds on any demos (strict, overflow, address and, with a -m32 toolchain, strict32); writes nothing
+ASAN_OPTIONS=detect_leaks=0 python3 tools/reference/m6a_reference.py --variants --work DIR --game-mode registered \
+  --wad IWAD [--wad PWAD ...] --demo DEMO.lmp [--demo DEMO2.lmp ...] [--melt-clock unit]
+```
+
+Notes:
+
+- The self-check compares the M6a runner's streams, with their declared additions removed (frame rows `G` and `Y`,
+  sound rows `LV` and the `#schema-m6a`, `#config-m6a` and added `#columns` lines), with the frozen M5c runner's row
+  for row, and the normalised streams with the committed M5c goldens. Where the frozen runner stops at an exit, the
+  M6a runner carries on; a refused item is compared through the tic before its refusal (that tic's witness values
+  are read past a renderer array and vary run to run) and on its end kind. `--selftest` plants three faults (a sound
+  volume, an extra `P_Random` draw, a flipped pixel) and requires each to be caught.
+- `--variants` takes any WADs and demos, including scratch ones, until the synthetic multi-map WAD generator (step 2)
+  is committed. A runner command line has the M5c runner's options plus `--game-mode`, `--session-out` and
+  `--melt-clock`; past a level boundary the WAD set also needs the intermission and finale lumps and `D_INTER` and
+  `D_VICTOR`, or the genuine engine stops with `W_GetNumForName` as the original does.
+- `ASAN_OPTIONS=detect_leaks=0` means LeakSanitizer is disabled for the address variant: those runs are not
+  LeakSanitizer coverage. `--work` and `--out` must lie outside the repository. Use `--jobs 2` on the owner's machine
+  unless told it is idle.
+- Local only (reads an IWAD): run the genuine engine on a scratch copy named for the mode, `doom.wad` for
+  `--game-mode registered` or `doomu.wad` for `--game-mode retail`; never rename, move or write the original file.
+
 ## Mutation testing
 
 M4a used cargo-mutants 27.1.0 with cargo-nextest 0.9.151. These are separate
