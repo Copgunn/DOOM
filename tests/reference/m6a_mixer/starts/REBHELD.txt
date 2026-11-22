@@ -1,0 +1,14 @@
+# Start list of REBHELD.sound (sha256 40633cfad1f4f17cadf15be38d1236cacff62ee3393b2365e72ec40f178a92a5), written by tools/reference/m5c_starts.py:
+# the 8 S rows with outcome started, in stream order; 8 S rows in all; 307 R rows.
+# handle convention: integrated (stated by the stream).
+schema DOOM-M5C-STARTS-v1
+config integrated
+tics 307
+s 35 1 35 25 8 128 124 64 100
+s 67 2 67 25 8 128 139 64 101
+s 99 3 99 25 8 128 137 64 102
+s 131 4 131 25 8 128 142 64 103
+s 197 5 197 25 8 128 116 64 104
+s 270 7 270 33 8 128 127 64 105
+s 282 8 282 82 8 128 120 64 106
+s 284 9 284 3 8 128 139 64 107

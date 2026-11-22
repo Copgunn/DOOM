@@ -1,0 +1,8 @@
+schema DOOM-M6A-MIXER-MELTS-v1
+# INTHELD: w TIC STEPS K, the melt started by the display of session tic TIC (STEPS steps, one per tic under the
+# declared schedule) falls between buffer K-1 and buffer K: no buffer is mixed during it (d_main.c:331-344).
+w 0 42 0
+w 126 39 78
+w 222 39 137
+w 340 37 210
+w 436 38 269
