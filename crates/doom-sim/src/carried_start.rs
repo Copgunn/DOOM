@@ -13,6 +13,13 @@
 //! start kinds of [`LevelStart`], the refusals of carried values the C cannot
 //! hold, the start record DSIM42 encodes, and the read-only [`LevelFinish`] the
 //! session layer takes from a finished level.
+//!
+//! The load also fixes the level's `gametic`: `G_Ticker`'s turbo test reads
+//! `gametic`, not `leveltime` (g_game.c:671-679; owner's ruling 1 of
+//! 2026-11-22), and a level loaded inside a `G_Ticker` runs its tic 0 at the
+//! `gametic` of that `G_Ticker` (`levelstarttic = gametic`, g_game.c:470), so
+//! the test reads that `gametic` plus the level tic. Wires 22 to 25 load at
+//! gametic 0 and read the tic count, which is the same number.
 use crate::{
     player_weapons::{PlayerWeaponRuntime, PlayerWeaponState},
     weapons::{AMMO_CAPACITIES, MAX_BOB_BITS},
@@ -172,6 +179,9 @@ pub enum LevelStartError {
     Context,
     /// The map, policy or skill was refused by wire 25's constructor.
     Registry(OriginalRegistryError),
+    /// A start `gametic` above `i32::MAX`: the C's `gametic` is an `int`
+    /// (g_game.c:123).
+    Gametic,
     /// A load step (`P_LoadThings`, `P_SetupPsprites`, `P_SpawnSpecials`) refused.
     Setup(SimError),
 }
@@ -277,6 +287,10 @@ pub(crate) struct StartRecord {
     /// The sound records the load made (`P_BringUpWeapon`'s `sfx_sawup`,
     /// p_pspr.c:145-146), in call order.
     pub sounds: Vec<sound::SoundRecord>,
+    /// `gametic` in the `G_Ticker` that runs the load and the level's tic 0
+    /// (`levelstarttic`, g_game.c:470): the turbo test of level tic `t` reads
+    /// `gametic + t` (g_game.c:671-679).
+    pub gametic: u64,
 }
 
 /// `G_PlayerReborn`'s player (g_game.c:815-831): health 100, no armour, fist and
@@ -368,6 +382,10 @@ impl Simulation {
     ///
     /// `context.initial_rng` must be the default: the start alone gives the index
     /// (0 for a new game, `M_ClearRandom`). A refused start constructs nothing.
+    ///
+    /// The level is loaded at `gametic` 0 (the first `G_Ticker` of a session; a
+    /// new game is wire 25's start exactly): [`Self::original_player_episode1_v4_level_at`]
+    /// with 0.
     pub fn original_player_episode1_v4_level(
         map: Map,
         map_number: u8,
@@ -375,8 +393,26 @@ impl Simulation {
         context: MapContextOptions,
         start: LevelStart,
     ) -> Result<Self, LevelStartError> {
+        Self::original_player_episode1_v4_level_at(map, map_number, skill, context, start, 0)
+    }
+    /// [`Self::original_player_episode1_v4_level`] for a load in the `G_Ticker`
+    /// whose `gametic` is `gametic` (`levelstarttic`, g_game.c:470; DSIM42
+    /// `level.start.gametic`): the turbo test of level tic `t` reads `gametic + t`
+    /// (g_game.c:671-679). At most `i32::MAX` (`int gametic`, g_game.c:123), else
+    /// [`LevelStartError::Gametic`].
+    pub fn original_player_episode1_v4_level_at(
+        map: Map,
+        map_number: u8,
+        skill: Skill,
+        context: MapContextOptions,
+        start: LevelStart,
+        gametic: u64,
+    ) -> Result<Self, LevelStartError> {
         if context.initial_rng != DoomRng::default() {
             return Err(LevelStartError::Context);
+        }
+        if gametic > MAX_START_GAMETIC {
+            return Err(LevelStartError::Gametic);
         }
         let player = match start {
             LevelStart::NewGame => reborn_player(0),
@@ -450,8 +486,25 @@ impl Simulation {
             kind: start.kind(),
             player,
             sounds: sim.pending_sounds.clone(),
+            gametic,
         });
         Ok(sim)
+    }
+    /// Wire 26: the `gametic` of the load's `G_Ticker` (DSIM42
+    /// `level.start.gametic`); `None` under every other policy.
+    pub fn level_start_gametic(&self) -> Option<u64> {
+        self.level_start.as_ref().map(|s| s.gametic)
+    }
+    /// `gametic` as the level sees it: the C's count of completed `G_Ticker`s
+    /// (d_net.c:745-746), which is the tic count under every policy but wire 26
+    /// (a level loaded at gametic 0) and the load's `gametic` plus the tic count
+    /// under wire 26. Inside a tic it is that tic's `gametic`, which `G_Ticker`'s
+    /// turbo test reads (g_game.c:671-679); after it, the next tic's. The sum
+    /// wraps: its readers use only bits 0 to 6.
+    pub fn gametic(&self) -> u64 {
+        self.level_start
+            .as_ref()
+            .map_or(self.tic, |s| s.gametic.wrapping_add(self.tic))
     }
     /// Wire 26: how the level began; `None` under every other policy.
     pub fn level_start_kind(&self) -> Option<StartKind> {
@@ -537,8 +590,12 @@ impl Simulation {
     }
 }
 
+/// The largest start `gametic`: the C's `int gametic` (g_game.c:123).
+pub(crate) const MAX_START_GAMETIC: u64 = i32::MAX as u64;
+
 /// The DSIM42 start group (STATE_FORMAT "DSIM v42"), appended after the last
-/// `events.sounds.pending` field.
+/// `events.sounds.pending` field; `level.start.gametic` closes it, after the
+/// load's sound records.
 pub(crate) fn start_fields(record: &StartRecord) -> Vec<(String, Vec<u8>)> {
     let p = &record.player;
     let i = |v: i32| v.to_le_bytes().to_vec();
@@ -587,11 +644,16 @@ pub(crate) fn start_fields(record: &StartRecord) -> Vec<(String, Vec<u8>)> {
     for (k, r) in record.sounds.iter().enumerate() {
         f.push((format!("level.start.sounds.{k}"), sound::record_bytes(r)));
     }
+    f.push((
+        "level.start.gametic".into(),
+        record.gametic.to_le_bytes().to_vec(),
+    ));
     f
 }
 
-/// The fixed names of the start group, in their order (without the records).
-pub(crate) const START_FIELDS: [&str; 25] = [
+/// The fixed names of the start group, in their order (without the records,
+/// which come before `level.start.gametic`).
+pub(crate) const START_FIELDS: [&str; 26] = [
     "level.start.kind",
     "level.start.p_random",
     "level.start.health",
@@ -617,6 +679,7 @@ pub(crate) const START_FIELDS: [&str; 25] = [
     "level.start.flash_x",
     "level.start.flash_y",
     "level.start.sounds.count",
+    "level.start.gametic",
 ];
 
 /// DSIM42's reader rules for the start group (see
@@ -625,8 +688,10 @@ pub(crate) const START_FIELDS: [&str; 25] = [
 /// 0, for a reborn player that player with any index, for a carried player the
 /// checks of [`CarriedStart::validate`]; the load's records exactly the
 /// `sfx_sawup` start at the player's body (unplaced, s_sound.c:304) when a carried
-/// ready weapon is the chainsaw and none otherwise; and no other `level.start.`
-/// field. `field` reads a field by name; `mo` is `original_player.0.mo`.
+/// ready weapon is the chainsaw and none otherwise; a `gametic` of at most
+/// `i32::MAX` (any kind: `G_InitNew` does not reset `gametic`, g_game.c:1365-1482);
+/// and no other `level.start.` field. `field` reads a field by name; `mo` is
+/// `original_player.0.mo`.
 pub(crate) fn validate_start_group<'a>(
     field: impl Fn(&str) -> Option<&'a [u8]>,
     mo: Option<&[u8]>,
@@ -691,6 +756,11 @@ pub(crate) fn validate_start_group<'a>(
         }
         StartKind::Carried if player.validate().is_err() => return Err(DiagnosticError::Schema),
         _ => {}
+    }
+    let gametic = get("level.start.gametic", 8)?;
+    let gametic = u64::from_le_bytes(gametic.try_into().map_err(|_| DiagnosticError::Structure)?);
+    if gametic > MAX_START_GAMETIC {
+        return Err(DiagnosticError::Schema);
     }
     let count = get("level.start.sounds.count", 8)?;
     let count = u64::from_le_bytes(count.try_into().map_err(|_| DiagnosticError::Structure)?);

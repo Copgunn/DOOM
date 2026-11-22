@@ -818,10 +818,12 @@ impl Simulation {
             plan.events.push(Event::Phase(Phase::Players));
             // G_Ticker, before P_Ticker (g_game.c:671–679): the turbo message on
             // every 128th gametic when the read command's forward exceeds 50.
-            // Only the Episode 1 domain admits such a command.
+            // Only the Episode 1 domain admits such a command. `gametic` is the
+            // tic count under wires 22 to 25 (a level loaded at gametic 0) and the
+            // load's `gametic` plus the level tic under wire 26.
             if self.player_policy().has_episode1()
                 && player_commands::turbo_message(
-                    self.tic,
+                    self.gametic(),
                     commands[usize::from(PlayerSlot::One.ordinal())],
                 )
             {

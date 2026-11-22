@@ -655,9 +655,9 @@ pub struct Simulation {
     /// `events.sounds.pending`), as `pending` is for events.
     pub(crate) pending_sounds: Vec<sound::SoundRecord>,
     /// Under wire 26 alone, how the level began (DSIM42 `level.start.*`): the
-    /// start kind, the `P_Random` index of the load, the player the load set up
-    /// and the sound records the load made. Constant for the run; `None` under
-    /// every other policy.
+    /// start kind, the `P_Random` index of the load, the player the load set up,
+    /// the sound records the load made and the `gametic` of the load's `G_Ticker`.
+    /// Constant for the run; `None` under every other policy.
     pub(crate) level_start: Option<carried_start::StartRecord>,
 }
 /// Static-geometry table bounds a construction prepares against: the M3f2/M3h3

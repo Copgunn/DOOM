@@ -25,6 +25,9 @@
 //!    reborn start (g_game.c:477-480); then its tic 0 with this tic's command.
 //! 4. Otherwise the level's tic (`advance`) or `WI_Ticker`.
 //!
+//! Every load passes wire 26 the session's `gametic` of its tic (`levelstarttic = gametic`,
+//! g_game.c:470), so the level's turbo test reads `gametic` as the C does (below).
+//!
 //! Then the sound (`S_UpdateSounds` and the due buffer, with the finished level's listener and
 //! origins outside a level, d_main.c:392) and the display (`D_Display`, d_main.c:395, the wipe's
 //! 320 `M_Random` draws after the frame of the first tic in a new state), as M5c orders them.
@@ -36,21 +39,34 @@
 //! after the frame. It is checked against the genuine session rows' `rndindex` on every tic.
 //!
 //! **Refusals** (note §4.8): every refusal of the session layer itself (a `BT_SPECIAL` or other
-//! inadmissible command, the turbo-message case below, a map that does not load or is not
-//! admitted at its load tic, a missing music lump, a missing intermission picture, the E1M8
-//! victory) is made before anything changes: the whole session is as before the tic. A load tic
+//! inadmissible command, see below, a map that does not load or is not admitted at its load
+//! tic, a missing music lump, a missing intermission picture, the E1M8 victory) is made before
+//! anything changes: the whole session is as before the tic. A load tic
 //! builds and runs the new level on the side and commits only when everything succeeded. In a
 //! level tic the simulation commits its tic before the sound and the display run; a sound or
 //! display refusal there leaves the simulation's tic committed and the sound and display at the
 //! last good tic (M5c's second-set rule 2), and the session takes no further tic.
 //!
-//! **The turbo message** (g_game.c:671-679) tests `gametic`, the session's tic count, while the
-//! simulation tests its own tic count, which is `leveltime`: the two differ on every level after
-//! a load. A level tic whose command's `forward` exceeds `TURBOTHRESHOLD` (50, g_game.c:173) and
-//! where the two tests disagree is refused ([`SessionWitness::Turbo`]); a command the app builds
-//! never exceeds 50 (`MAXPLMOVE`, g_game.c:413-420), so only a foreign demo can reach it. Outside
-//! a level the message goes to the finished level's player, which `P_SpawnPlayer` clears
-//! (`p->message = NULL`, p_mobj.c:676) before any `HU_Ticker` reads it, so nothing is refused.
+//! **The command domain** (owner's ruling 2 of 2026-11-22): a command is judged by what reads it
+//! in its `G_Ticker`. `BT_SPECIAL` (the original's pause and save, g_game.c:698-724) is refused in
+//! every game state. A command that reaches `P_Ticker` (a level tic, or the new level's tic 0 of
+//! a load tic) must be in wire 24's domain ([`crate::app::wire24_admits`]), as before. A command
+//! read by `WI_Ticker` (the completion tic and every later intermission tic) is otherwise
+//! accepted whatever it holds: `WI_checkForAccelerate` reads only bits 0 (`BT_ATTACK`) and 1
+//! (`BT_USE`) of its buttons (wi_stuff.c:1470-1498), and nothing else in the intermission reads
+//! the command but the turbo test below. The finale is still a typed "not yet" refusal; the Doom 1
+//! finale reads no command (`F_Ticker`, f_finale.c:207-249, reads one for Doom II only), so the
+//! same rule (`BT_SPECIAL` refused, everything else accepted) applies there when it is built
+//! ([`command_domain`]).
+//!
+//! **The turbo message** (g_game.c:671-679; owner's ruling 1 of 2026-11-22) tests `gametic`, the
+//! session's tic count: wire 26 reads the load's `gametic` plus the level tic, so a level after a
+//! load gets the message on the C's tics, a load tic included (the load's `P_SpawnPlayer` clears
+//! `message`, p_mobj.c:676, before the test sets it in the same `G_Ticker`, g_game.c:617-650 then
+//! 671-679). Outside a level the test still runs (it precedes the game-state switch) and sets the
+//! finished level's player's `message`, which nothing reads there (`HU_Ticker` and `HU_Drawer` run
+//! in a level only, g_game.c:729-733, d_main.c:270-271) and which the next load's `P_SpawnPlayer`
+//! clears before any `HU_Ticker`; the session therefore keeps no message outside a level.
 pub mod demo;
 pub mod intermission;
 pub mod sound;
@@ -75,8 +91,6 @@ use std::sync::Arc;
 
 /// `BT_SPECIAL` (d_event.h:78).
 pub const BT_SPECIAL: u8 = 0x80;
-/// `TURBOTHRESHOLD` (g_game.c:173).
-pub const TURBOTHRESHOLD: i8 = 0x32;
 /// The `M_Random` draws of one wipe (f_wipe.c:159-166), modulo the 256 entries of the index.
 const WIPE_INDEX_STEP: u8 = (320 % 256) as u8;
 
@@ -336,10 +350,9 @@ pub enum SessionWitness {
     /// The command holds `BT_SPECIAL` (g_game.c:698-724: the original's pause, M6b, and save,
     /// a later milestone): never recorded, refused in a replayed demo.
     Special,
-    /// The command is outside the admitted command domain (wire 24's, in every game state).
+    /// A command that reaches `P_Ticker` (a level tic or a load tic) is outside wire 24's domain
+    /// (module documentation; the intermission accepts it).
     Command,
-    /// The turbo message would differ between `gametic` and `leveltime` (module documentation).
-    Turbo,
     /// Not yet built.
     NotYet(NotYet),
     /// The map of a load tic does not load.
@@ -483,6 +496,33 @@ pub enum PlantedFault {
     /// A carried start's `bob` one unit off (one lower, or 1 for 0): `P_CalcHeight` rewrites
     /// the player's `bob` in tic 0 (p_user.c:83-87), so only the `DSIM` 42 start group keeps it.
     CarriedBob,
+    /// Every load at `gametic` 0, so the turbo test reads `leveltime` (step 7's model, without
+    /// its refusal).
+    TurboLeveltime,
+    /// Wire 24's command domain applied in every game state (step 7's rule).
+    IntermissionDomain,
+}
+
+/// Which domain judges a command, by the part of `G_Ticker` that reads it (module
+/// documentation).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum Reader {
+    /// `P_Ticker`: a level tic, or a load tic's tic 0.
+    Level,
+    /// `WI_Ticker` (and, when it is built, the Doom 1 `F_Ticker`).
+    NonLevel,
+}
+
+/// The command check of ruling 2: `BT_SPECIAL` in every game state, wire 24's domain only for a
+/// command `P_Ticker` reads.
+fn command_domain(cmd: &TicCommand, reader: Reader) -> Result<(), SessionWitness> {
+    if cmd.buttons & BT_SPECIAL != 0 {
+        return Err(SessionWitness::Special);
+    }
+    if reader == Reader::Level && !crate::app::wire24_admits(cmd) {
+        return Err(SessionWitness::Command);
+    }
+    Ok(())
 }
 
 /// One single-player Episode 1 session (module documentation).
@@ -693,48 +733,52 @@ impl Session {
         if self.ended.is_some() {
             return Err(refuse(SessionWitness::Ended));
         }
-        if cmd.buttons & BT_SPECIAL != 0 {
-            return Err(refuse(SessionWitness::Special));
-        }
-        if !crate::app::wire24_admits(&cmd) {
-            return Err(refuse(SessionWitness::Command));
-        }
+        let fault = self.fault;
+        let check = |reader| {
+            let reader = if fault == Some(PlantedFault::IntermissionDomain) {
+                Reader::Level
+            } else {
+                reader
+            };
+            command_domain(&cmd, reader)
+        };
         let r = match self.gamestate() {
             GameState::Level => {
                 let exit_first = self.fault == Some(PlantedFault::ExitBeforeReborn)
                     && self.level.level_exit_request().is_some();
                 if self.level.reborn_requested() && !exit_first {
                     let p_random = self.level.rng().indices()[0];
-                    self.load_tic(
-                        cmd,
-                        self.map,
-                        LevelStart::Reborn { p_random },
-                        LevelChange::Reborn,
-                        0,
-                    )
+                    check(Reader::Level).and_then(|()| {
+                        self.load_tic(
+                            cmd,
+                            self.map,
+                            LevelStart::Reborn { p_random },
+                            LevelChange::Reborn,
+                            0,
+                        )
+                    })
                 } else if let Some(exit) = self.level.level_exit_request() {
-                    self.completion_tic(cmd, exit)
+                    check(Reader::NonLevel).and_then(|()| self.completion_tic(cmd, exit))
                 } else {
-                    self.level_tic(cmd)
+                    check(Reader::Level).and_then(|()| self.level_tic(cmd))
                 }
             }
-            GameState::Intermission if self.world_done => self.world_done_tic(cmd),
-            GameState::Intermission => self.intermission_tic(cmd),
-            GameState::Finale => Err(SessionWitness::NotYet(NotYet::Victory)),
+            GameState::Intermission if self.world_done => {
+                check(Reader::Level).and_then(|()| self.world_done_tic(cmd))
+            }
+            GameState::Intermission => {
+                check(Reader::NonLevel).and_then(|()| self.intermission_tic(cmd))
+            }
+            // When the finale is built its tics take `Reader::NonLevel` (module documentation).
+            GameState::Finale => {
+                check(Reader::NonLevel).and(Err(SessionWitness::NotYet(NotYet::Victory)))
+            }
         };
         r.map_err(refuse)
     }
 
-    /// The turbo test of the module documentation for a level tic whose level is at `level_tic`.
-    fn turbo_differs(&self, cmd: &TicCommand, level_tic: u64) -> bool {
-        cmd.forward > TURBOTHRESHOLD && (self.gametic % 128 == 0) != (level_tic % 128 == 0)
-    }
-
     /// A level tic: `P_Ticker`, then sound and display (rule 2 on their refusal).
     fn level_tic(&mut self, cmd: TicCommand) -> Result<TicReport, SessionWitness> {
-        if self.turbo_differs(&cmd, self.level.tic()) {
-            return Err(SessionWitness::Turbo);
-        }
         let none = TicCommand::default();
         self.level
             .advance([cmd, none, none, none])
@@ -808,9 +852,6 @@ impl Session {
         change: LevelChange,
         deltaviewheight: i32,
     ) -> Result<TicReport, SessionWitness> {
-        if self.turbo_differs(&cmd, 0) {
-            return Err(SessionWitness::Turbo);
-        }
         // S_Start's music lookup comes first in P_SetupLevel (p_setup.c:607), before the map's
         // lumps are read (p_setup.c:618-650).
         if sound::music_lookup_fails(&self.sound, Music::Level(map)) {
@@ -820,12 +861,19 @@ impl Session {
             .data
             .map(map)
             .map_err(|error| SessionWitness::Map { map, error })?;
-        let mut sim = Simulation::original_player_episode1_v4_level(
+        // `levelstarttic = gametic` (g_game.c:470): this tic's `gametic`.
+        let gametic = if self.fault == Some(PlantedFault::TurboLeveltime) {
+            0
+        } else {
+            self.gametic
+        };
+        let mut sim = Simulation::original_player_episode1_v4_level_at(
             m.clone(),
             map,
             self.skill,
             MapContextOptions::default(),
             start,
+            gametic,
         )
         .map_err(|error| SessionWitness::Admission { map, error })?;
         let mut display = self.display.clone();

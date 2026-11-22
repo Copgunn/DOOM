@@ -646,8 +646,9 @@ impl Session {
     /// state's tic (in the intermission the finished level's after its last tic), whose capture
     /// must be the embedded one. Checked besides [`SessionState::check`]: the declared mode
     /// against the data's, the capture, the map, `gameaction` and `secretexit` against the
-    /// level's exit request, the carried player against the level's, and the display's and the
-    /// sound's own restores against the level. On an error nothing is built.
+    /// level's exit request, the carried player against the level's, the display's and the
+    /// sound's own restores against the level, and the level's start `gametic` (`DSIM` 42
+    /// `level.start.gametic`) against the sound's `levelstarttic`. On an error nothing is built.
     pub fn restore(
         data: Arc<SessionData>,
         state: &SessionState,
@@ -710,6 +711,12 @@ impl Session {
             ChainConfig::fresh(data.textures),
         )
         .map_err(DsesError::SoundRestore)?;
+        // `levelstarttic = gametic` at the load (g_game.c:470), which wire 26 keeps for the turbo
+        // test (owner's ruling 1 of 2026-11-22).
+        rule(
+            level.level_start_gametic() == Some(sound.level_start()),
+            "the level's start gametic and levelstarttic",
+        )?;
         let mut carried = state.carried;
         if let Some(CarriedPlayer { start: Some(s), .. }) = carried.as_mut() {
             // Neither index is reset between levels (m_random.c:69-72 has one caller,

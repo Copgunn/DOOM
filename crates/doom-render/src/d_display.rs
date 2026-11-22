@@ -466,7 +466,9 @@ impl Display {
         }
         let mut inputs = status_inputs(sim)?;
         let stored = stored_message(sim)?;
-        let gametic = sim.tic().wrapping_sub(1);
+        // The tic's `gametic` (the turbo test's, g_game.c:671-679): the tic count before the
+        // tic, plus the load's `gametic` under wire 26 (owner's ruling 1 of 2026-11-22).
+        let gametic = sim.gametic().wrapping_sub(1);
         let mut message =
             hu_stuff::derive_message(sim.events(), gametic, fed.forward, self.hud.stored, stored)
                 .map_err(DisplayObserveError::MessageUnderivable)?
