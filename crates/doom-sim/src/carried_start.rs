@@ -100,8 +100,16 @@ impl LevelStart {
 /// model them: `viewheight` (set to `VIEWHEIGHT` at p_mobj.c:683), `deltaviewheight`
 /// and `viewz` are the display's (doom-render's view state; crates/doom-sim/src/level.rs
 /// keeps none of them), `didsecret` and `cmd` are the session's, and the stale
-/// `attacker` (a pointer into the freed level, never read before `P_DamageMobj`
-/// writes it, p_inter.c:874-875) starts as NULL.
+/// `attacker` (a pointer into the freed level) starts as NULL, because the C never
+/// reads it before it is overwritten or wiped: its readers are the status bar's
+/// face (st_stuff.c:800-817), which needs `damagecount` non-zero, and
+/// `P_DeathThink` (p_user.c:200-205, called only at p_user.c:258-261), which needs
+/// `PST_DEAD`. The load zeroes `damagecount` (g_game.c:790, p_mobj.c:679) and only
+/// p_inter.c:875 raises it, the line after the write at 874; `PST_DEAD` is set only
+/// by `P_KillMobj` (p_inter.c:706), called only at p_inter.c:890, after that write
+/// in the same `P_DamageMobj`; and a player dead at the exit is reborn
+/// (g_game.c:479-480, p_mobj.c:659-660), which wipes the whole `player_t`
+/// (g_game.c:815).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CarriedStart {
     /// `player->health`, also the new mobj's health (p_mobj.c:673): 1..=200.
