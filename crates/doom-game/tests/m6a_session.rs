@@ -45,7 +45,8 @@ mod rows;
 
 use doom_game::session::demo::SessionDemo;
 use doom_game::session::{
-    PlantedFault, Refusal, Session, SessionSettings, SessionWitness, StartError, TicKind, TicReport,
+    PlantedFault, Refusal, Session, SessionMode, SessionSettings, SessionWitness, StartError,
+    TicKind, TicReport,
 };
 use doom_render::{GameState, SCREENHEIGHT, SCREENWIDTH};
 use doom_sim::{ActorId, PlayerBodyState, PlayerSlot, Simulation};
@@ -657,7 +658,20 @@ fn expected_stop(item: &Item, end: &Refusal) -> bool {
 
 /// Runs one item at screenblocks `sb` from its demo, with an optional planted fault.
 fn run_item(item: &Item, sb: u8, fault: Option<PlantedFault>) -> Outcome {
-    let data = m6a::data(item, None);
+    run_item_in(item, sb, fault, None)
+}
+
+/// [`run_item`] in the game mode `mode` (None: the item's own).
+fn run_item_in(
+    item: &Item,
+    sb: u8,
+    fault: Option<PlantedFault>,
+    mode: Option<SessionMode>,
+) -> Outcome {
+    let data = m6a::data(item, mode);
+    if let Some(m) = mode {
+        assert_eq!(data.mode().mode, m);
+    }
     let lmp = std::fs::read(m6a::root(&item.lmp)).expect("demo");
     let demo = SessionDemo::parse(&lmp).expect("session demo");
     assert_eq!((demo.map, demo.skill), (item.map, item.skill));
@@ -853,5 +867,28 @@ fn the_comparisons_can_fail() {
             .unwrap_or_else(|| panic!("{name}: {fault:?} not caught"));
         eprintln!("{name} {fault:?}: {}", d.lines().next().unwrap_or(""));
         assert!(d.contains(at), "{name} {fault:?}: caught elsewhere: {d}");
+    }
+}
+
+/// CHAIN in retail (ruling U4): the genuine retail run of CHAIN is identical to the registered
+/// goldens apart from the mode lines (`tests/reference/m6a_results.json`, `other_mode`:
+/// `identical_but_the_mode_lines`), so the Rust session forced retail is compared with the same
+/// goldens, at both screen sizes. Nothing relies on retail beyond this comparison until the
+/// owner's condition on the 61 real runs is met.
+#[test]
+fn chain_in_retail_against_the_genuine_goldens() {
+    let item = m6a::item("CHAIN");
+    let results: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(m6a::root("tests/reference/m6a_results.json")).expect("results"),
+    )
+    .expect("JSON");
+    let other = &results["items"]["CHAIN"]["other_mode"];
+    assert_eq!(other["mode"], "retail");
+    assert_eq!(other["identical_but_the_mode_lines"], true);
+    for sb in [10, 11] {
+        let o = run_item_in(&item, sb, None, Some(SessionMode::Retail));
+        eprintln!("CHAIN retail sb{sb}: {:?}", o.counts);
+        assert!(o.first_difference.is_none(), "{:?}", o.first_difference);
+        assert_eq!(o.counts.tics, 831);
     }
 }
