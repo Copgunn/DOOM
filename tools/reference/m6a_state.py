@@ -48,16 +48,20 @@ The projection (declared rules, beyond those of level_snapshot_m6a.py):
     wiped (note section 1.2, the attacker row). A -2 in P[0].attacker is projected as NULL only when all four hold:
     (a) it is player 0's attacker (no other reference); (b) the level was entered by a carried load
     (start_from_rows kind 'carried'); (c) the previous level's last dump had a non-NULL attacker (not -1, before
-    this rule); (d) the value has not changed since the load: P[0].attacker is -2 and P[0].damagecount is 0 in the
-    load dump and in every dump of the level up to this one. (d) is checked through damagecount because the dump
-    names no address: the load zeroes damagecount (g_game.c:790, p_mobj.c:679) and every write of attacker
-    (p_inter.c:874) is followed in the same call by damagecount += damage (875), with damage >= 1 there; P_Ticker
-    runs the player think before the other thinkers (p_tick.c:147-150), and the only damage inside the player think,
-    P_PlayerInSpecialSector (p_user.c:275), writes NULL (p_spec.c:1026-1059) before the decrement (p_user.c:355-356);
-    so any write after the load leaves P[0] in that tic's dump with damagecount >= 1 or attacker not -2. The one
-    write a dump cannot show: at skill 0 a 1-point blast (p_map.c:1188-1194) is halved to 0 (p_inter.c:799-800), so
-    damagecount stays 0, and only if its source is also freed later in the same tic does attacker stay -2. Any other
-    -2 is still refused by the encoder (level_snapshot.py:841). The loads it fired on are counted and printed, per
+    this rule); (d) the value has not changed since the load: in the load dump and in every dump of the level up to
+    this one, P[0].attacker is -2, P[0].playerstate is PST_LIVE, every mobj whose player is player 0 (M and RR rows:
+    players[0].mo and any earlier body a second player-1 start left) has threshold 0, and no mobj is an MT_VILE
+    (owner's ruling of 2026-11-22: the body's threshold, not damagecount). (d) is read from the dump this way because
+    the dump names no address. Every write of attacker is p_inter.c:874 (player = target->player, 798); after it, a
+    killing hit returns at 888-892 through P_KillMobj, which sets PST_DEAD (706), and every other hit reaches 904-911,
+    which sets target->threshold to BASETHRESHOLD (100, p_local.h:61) when it was 0, whatever the damage (also a hit
+    halved to 0 damage on skill 0, sk_baby, at 799-800), unless the source is NULL (attacker written NULL, not -2),
+    the target itself (attacker its own live body) or an MT_VILE (904-906). A player body's threshold starts at 0
+    (P_SpawnMobj's memset, p_mobj.c:490-491; a new body every level) and only A_Look (p_enemy.c:608) and A_Chase
+    (681-689), monster actions a player body never runs, lower it; and a dead player is live again only through
+    G_PlayerReborn's wipe. MT_VILE is a Doom II thing (P_SpawnMapThing skips it outside commercial mode,
+    p_setup.c:318-331); the rule refuses any level in which one is present. The history check (-2 since the load)
+    is kept as well. Any other -2 is still refused by the encoder (level_snapshot.py:841). The loads it fired on are counted and printed, per
     item and in total;
   - the session points: every capture j >= 1 (the state after each level tic) is in its level's sequence digest
     (SHA-256 of the captures' state digests, 32 bytes each, in order); D rows name capture 1 (the load tic), every
@@ -74,8 +78,8 @@ left in (the serial rule off) are refused by the projection. The stale-attacker 
 memory (the first carried level's previous level ends with the player's own body as attacker): with P[0].attacker -2
 in every dump of the carried level the rule fires on that load only and the level's captures equal NULL's; refused
 with "a dangling reference": a -2 appearing at level tic 10 (mid-level), a -2 sector soundtarget at the load (a),
-no attacker at the previous level's end (c), damagecount raised at level tic 10 and a live attacker at level tic
-10 that is -2 again at 11 (d), and the same -2 attacker on REBHELD's reborn reload (b).
+no attacker at the previous level's end (c), a threshold of 100 on players[0].mo at level tic 10 with
+damagecount 0 and a live attacker at level tic 10 that is -2 again at 11 (d), and the same -2 attacker on REBHELD's reborn reload (b).
 
     m6a_state.py [--check] [--selftest] [--only ITEM[,ITEM]] [--work DIR] [--jobs N] [--cc CC]
 """
@@ -92,6 +96,7 @@ import level_snapshot_m6a as S     # noqa: E402
 import level_compare as K      # noqa: E402
 import m6a_build as B          # noqa: E402
 import m6a_goldens as G        # noqa: E402  (read-only: items, the recommended switches, golden_* and segments)
+from m3h9_geometry import enum_index   # noqa: E402
 
 RESULTS = ROOT / 'tests/reference/m6a_state.txt'
 SCHEMA = 'DOOM-M6A-STATE-v1'
@@ -100,6 +105,8 @@ CHAIN_ITEMS = ['CHAIN', 'INTSTA', 'INTSTB', 'INTIDLE', 'INTHELD', 'INTFAST', 'RE
 RULING_ITEMS = ['TURBO', 'INTCMD']
 ITEMS = CHAIN_ITEMS + RULING_ITEMS
 STRIDE = 35
+PST_LIVE = enum_index('playerstate_t', 'PST_LIVE', 'd_player.h')          # 0
+MT_VILE = enum_index('mobjtype_t', 'MT_VILE', 'info.h')                   # 3
 UNRECORDED = dict(bob='bob', weapon_x='ps0sx', flash_tics='ps1tics', flash_x='ps1sx', flash_y='ps1sy')
 sha = lambda b: hashlib.sha256(b).hexdigest()
 
@@ -215,9 +222,19 @@ class StaleAttacker:
     def apply(self, d):
         p = p_row(d)
         d.raw_attacker = p['attacker']
-        if p['attacker'] != -2 or p['damagecount'] != 0: self.armed = False
+        if not untouched(d): self.armed = False
         elif self.armed: p['attacker'] = -1; self.fired = True
         return d
+
+
+def untouched(d):
+    """Condition (d) on one dump (module text): P[0].attacker -2, P[0] PST_LIVE, threshold 0 on every mobj of
+    player 0 (M and RR rows), no MT_VILE."""
+    p = p_row(d)
+    mobjs = [r for k, r in d.thinkers if k == 'M'] + list(d.pending.values())
+    return (p['attacker'] == -2 and p['playerstate'] == PST_LIVE
+            and all(r['threshold'] == 0 for r in mobjs if r['player'] == 0)
+            and not any(r['type'] == MT_VILE for r in mobjs))
 
 
 def levels(r, item, rule=True, bob_delta=0, plant=None):
@@ -358,17 +375,19 @@ def attacker_selftest(binary, items_by_name, work, base, lv):
     out, it = [], items_by_name['CHAIN']
     K = next(i for i, v in enumerate(lv) if v['kind'] == 'carried'); KL = lv[K]['load']
 
-    def planter(prev_live=True, dangling_from=0, extra=None, level=KL):
-        # as the C would hold it: the stale value from the load (or `dangling_from`) up to the level's first write of
-        # attacker (p_inter.c:874-875: the genuine dump's first P[0] with attacker not NULL or damagecount raised)
-        untouched = [True]
+    def planter(prev_live=True, dangling_from=0, extra=None, level=KL, body=False):
+        # as the C would hold it: the stale value (or, with `body`, the player's own body) from the load (or
+        # `dangling_from`) up to the level's first write of attacker (p_inter.c:874-875: the genuine dump's first P[0]
+        # with attacker not NULL, damagecount raised, a threshold on a body of player 0 or the player dead)
+        quiet = [True]
 
         def plant(k, j, last, d):
             p = p_row(d)
             if k == level - 1 and last and prev_live: p['attacker'] = p['mo']    # a live thinker of that dump
             if k == level:
-                untouched[0] = untouched[0] and p['attacker'] == -1 and p['damagecount'] == 0
-                if j >= dangling_from and untouched[0]: p['attacker'] = -2
+                quiet[0] = quiet[0] and p['attacker'] == -1 and p['damagecount'] == 0 and p['playerstate'] == PST_LIVE \
+                    and all(r['threshold'] == 0 for x, r in d.thinkers if x == 'M' and r['player'] == 0)
+                if j >= dangling_from and quiet[0]: p['attacker'] = p['mo'] if body else -2
                 if extra: extra(j, d)
         return plant
 
@@ -390,8 +409,10 @@ def attacker_selftest(binary, items_by_name, work, base, lv):
         ok = e is not None and e.text == 'a dangling reference' and e.tic == tic
         out.append((what, 'not refused' if e is None else f'refused: {e.kind} at tic {e.tic}: {e.text} (want tic {tic})', ok))
 
-    def bump(j, d):
-        if j == 10: p_row(d)['damagecount'] = 3
+    def hit(j, d):
+        # a sourced hit on players[0].mo halved to 0 damage (skill 0, p_inter.c:799-800): damagecount stays 0 and
+        # p_inter.c:904-911 sets the body's threshold
+        if j == 10: next(r for x, r in d.thinkers if x == 'M' and r['idx'] == p_row(d)['mo'])['threshold'] = 100
     def write(j, d):
         if j == 10: p_row(d)['attacker'] = p_row(d)['mo']
     def other(j, d):
@@ -400,7 +421,8 @@ def attacker_selftest(binary, items_by_name, work, base, lv):
     refused_case('(a) a dangling pointer that is not player 0\'s attacker (sector 0 soundtarget)', base, it,
                  planter(extra=other), 0)
     refused_case('(c) the previous level ended with a NULL attacker', base, it, planter(prev_live=False), 0)
-    refused_case('(d) changed since the load: damagecount raised at level tic 10', base, it, planter(extra=bump), 10)
+    refused_case('(d) changed since the load: threshold 100 on players[0].mo at level tic 10, damagecount 0', base, it,
+                 planter(extra=hit), 10)
     refused_case('(d) changed since the load: a live attacker at level tic 10, dangling again at 11', base, it,
                  planter(extra=write), 11)
     reb = items_by_name['REBHELD']
