@@ -325,6 +325,12 @@ impl Display {
         self.status.rndindex
     }
 
+    /// Whether a wipe is due: `gamestate != wipegamestate` (d_main.c:223), so the next frame is
+    /// followed by the melt's [`WIPE_DRAWS`] (M6a step 7 reports where each wipe falls).
+    pub fn wipe_due(&self) -> bool {
+        self.wipe
+    }
+
     /// A level start inside a session that keeps the `M_Random` index (`change` says which, and
     /// must fit the current state: [`LevelChange::WorldDone`] from the intermission,
     /// [`LevelChange::Reborn`] from a level), over `level` and the simulation constructed for it
@@ -356,6 +362,23 @@ impl Display {
         sim: &Simulation,
         change: LevelChange,
     ) -> Result<(), SessionError> {
+        self.begin_next_level_carried(level, sim, change, 0)
+    }
+
+    /// [`Self::begin_next_level`] with the `deltaviewheight` the new level's player starts with
+    /// (M6a step 7). `P_SpawnPlayer` sets `viewheight = VIEWHEIGHT` (p_mobj.c:683) but leaves
+    /// `deltaviewheight` alone, and neither `G_PlayerFinishLevel` (g_game.c:779-792) nor
+    /// `G_DoLoadLevel` (g_game.c:445-497) touches it, so a carried start keeps the exit tic's
+    /// value (a landing just before the exit squats at the next start, through `P_CalcHeight`,
+    /// p_user.c:113-136); a reborn player's is 0 (the `memset` of `G_PlayerReborn`,
+    /// g_game.c:815). [`Self::begin_next_level`] is this with 0. On an error nothing changes.
+    pub fn begin_next_level_carried(
+        &mut self,
+        level: Arc<Level>,
+        sim: &Simulation,
+        change: LevelChange,
+        deltaviewheight: i32,
+    ) -> Result<(), SessionError> {
         let s = self.session.as_deref().ok_or(SessionError::NotSession)?;
         let from = match change {
             LevelChange::WorldDone => GameState::Intermission,
@@ -384,6 +407,7 @@ impl Display {
         start.taint = carried.taint;
         start.fuzzpos = carried.fuzzpos;
         start.wall_steps = carried.wall_steps;
+        start.view.deltaviewheight = deltaviewheight;
         renderer.restore(start).expect("the level's own start");
         let old = self.status;
         let mut status = StatusBarState::level_start(inputs.weaponowned);
@@ -406,6 +430,16 @@ impl Display {
         s.carried = None;
         s.wi = None;
         Ok(())
+    }
+
+    /// The view shadow (decision R6: `viewheight`, `deltaviewheight` and the rest) after the last
+    /// observed level tic of a session display, or `None` outside a level (M6a step 7: the
+    /// session carries the exit tic's `deltaviewheight` to the next level start).
+    pub fn level_view(&self) -> Option<&crate::view::ViewShadow> {
+        let s = self.session.as_deref()?;
+        (s.gamestate == GameState::Level)
+            .then(|| self.renderer.state().map(|r| &r.view))
+            .flatten()
     }
 
     /// `G_DoCompleted`'s `gamestate = GS_INTERMISSION` and `WI_Start` (g_game.c:1133-1140) for

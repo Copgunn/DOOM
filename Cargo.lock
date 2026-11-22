@@ -67,7 +67,9 @@ dependencies = [
  "doom-sim",
  "doom-sound",
  "doom-test-evidence",
+ "doom-types",
  "doom-wad",
+ "serde_json",
 ]
 
 [[package]]
