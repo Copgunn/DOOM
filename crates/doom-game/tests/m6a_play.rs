@@ -581,3 +581,50 @@ fn refusals_are_reported_plainly_and_replay_to_the_same_end() {
     };
     assert_eq!(d.app.session().unwrap().settings(), want);
 }
+
+/// A session no committed item holds, for the local genuine check
+/// (`tools/local/m6a_play_check.py`): REBHELD played by keys (start E1M2, the death, the reborn,
+/// the exit, the carried E1M3), then SECRET's E1M3 part to its first turn (the secret exit, the
+/// intermission, the load of E1M9), then the quit. The demo replays through the session to the same
+/// quit; with `M6A_PLAY_OUT` set, the session file is written into that directory under its own
+/// name.
+#[test]
+fn a_session_through_the_secret_exit_replays_to_its_quit() {
+    let item = m6a::item("REBHELD");
+    let mut script = script_keys(&item);
+    script.extend(script_keys(&m6a::item("SECRET")));
+    let mut d = Driver::new(load(&item, ModeSetting::Probe), 10);
+    d.play(&script);
+    assert_eq!(d.app.mode(), &Mode::Playing);
+    d.app.quit(&mut d.host);
+    let demo = d.demo();
+    assert_eq!(commands_of(&demo).len(), script.len());
+    let loads: Vec<u8> = d
+        .host
+        .seen
+        .iter()
+        .filter_map(|s| match s.kind {
+            TicKind::Load { map, .. } => Some(map),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(
+        loads,
+        [2, 3, 9],
+        "the reborn, E1M3, then E1M9 by the secret exit"
+    );
+    let (s, end) = replay(&d.app, &demo, &d.host.seen, None).unwrap();
+    assert_eq!(end, None);
+    let live = d.app.session().unwrap();
+    assert_eq!(s.save().unwrap().encode(), live.save().unwrap().encode());
+    if let Some(dir) = std::env::var_os("M6A_PLAY_OUT") {
+        let path = std::path::Path::new(&dir).join(d.app.session_name());
+        std::fs::write(&path, &demo).unwrap();
+        eprintln!("wrote {}", path.display());
+    }
+    eprintln!(
+        "{} tics; {}",
+        script.len(),
+        d.app.session_summary().unwrap()
+    );
+}
