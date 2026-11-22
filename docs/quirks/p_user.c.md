@@ -18,3 +18,4 @@
 
 - **Q-p_user-290**: M4A §14 A2 found the Rust `strength()` read the wrong power index (latent, Rust-only); not a quirk of the original.
 - **Q-p_user-200**: One sweep entry said the dangling-pointer framing is only in the code comment; on re-check COMPATIBILITY.md:2276, M4A:1189 and M5B:2806 record it.
+- **Q-p_user-200**: see also Q-g_game-779, the same pointer left stale across a level exit (never read while stale).

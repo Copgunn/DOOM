@@ -34,3 +34,4 @@
 - **Q-st_stuff-1292**: an out-of-bounds pointer formation (undefined in C) without a read.
 - **Q-st_stuff-384**: The stale-face example is labelled an inference in M5B.
 - **Q-st_stuff-816**: COMPAT adds that in one state (dead player, attacker retired) the Rust refusal is wider than the original's read.
+- **Q-st_stuff-816**: see also Q-g_game-779, the same pointer left stale across a level exit (never read while stale).

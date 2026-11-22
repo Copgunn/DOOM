@@ -45,11 +45,12 @@ original updates its row in the register (this index and the pages under
 
 Built and revised on 2026-11-21 (America/Los_Angeles); these are counts of that day's build, not a live count.
 
-- **Rows: 429**, of which 420 are on the 53 C-file pages and 9 are on the [64-bit build only](quirks/64-bit-only.md) page.
+- **Rows: 430**, of which 421 are on the 53 C-file pages and 9 are on the [64-bit build only](quirks/64-bit-only.md) page.
 - How the number came about: the sweep wrote 890 raw entries; the merge made 443 rows; the first assembly (commit 2c2ee84) joined 23 pairs into 420 rows; the revision after the independent review and the owner's rulings joined 10 more (listed below), split 10 of the 11 mixed-status rows into 23 rows by status (one row per status; the 11th, Q-p_setup-536, became a row of the 64-bit page), moved 3 rows to the 64-bit page and added 6 rows there: 420 - 10 + 13 + 6 = 429.
+- Added on 2026-11-22 (America/Los_Angeles) at the owner's ruling: one row, Q-g_game-779 (the stale `attacker` pointer across a level exit; status not reproduced (declared)), taking the counts of 2026-11-21 to 430 rows, 421 on the C-file pages and 9 on the 64-bit page.
 - The separate lists: [recorded in only one place and in no note](quirks/only-one-place.md) (12 whole or partial rows and a list of readings); [not traced to a C line](quirks/not-traced.md) (none left); [dropped, and why](quirks/dropped.md) (54 entries); [where the documents disagree](quirks/disagreements.md) (75 entries, 7 marked policy claim, 1 unsettled); [the 64-bit build only](quirks/64-bit-only.md) (9 rows).
 
-### Status of the 420 rows on the C-file pages
+### Status of the 421 rows on the C-file pages
 
 The first word of a row's status is one of the words explained under "How to read a row"; the 11 rows that began with another phrase were split, one row per status (ids with a letter suffix, `a`, `b`, `c`). In 24 further rows, found by a word search of the status text, the text also names a second status for a narrower part of the same situation (for example a limit beyond which the row is refused); the first word is the row's status and those 24 were not split, because the owner's ruling covered the 11. The 64-bit page has no status column: it says whether the reference harness is affected.
 
@@ -58,9 +59,9 @@ The first word of a row's status is one of the words explained under "How to rea
 | reproduced | 240 |
 | refused | 68 |
 | not yet ported | 35 |
-| not reproduced (declared ...) | 29 |
+| not reproduced (declared ...) | 30 |
 | not determined from the documents | 48 |
-| Total | 420 |
+| Total | 421 |
 
 ## Rows by C file
 
@@ -72,7 +73,7 @@ One page per C file (a header counts as its own file); each page carries its own
 | [d_net.c](quirks/d_net.c.md) | 5 |
 | [doomdef.h](quirks/doomdef.h.md) | 1 |
 | [f_wipe.c](quirks/f_wipe.c.md) | 2 |
-| [g_game.c](quirks/g_game.c.md) | 29 |
+| [g_game.c](quirks/g_game.c.md) | 30 |
 | [hu_lib.c](quirks/hu_lib.c.md) | 3 |
 | [hu_stuff.c](quirks/hu_stuff.c.md) | 6 |
 | [i_sound.c](quirks/i_sound.c.md) | 21 |
@@ -123,7 +124,7 @@ One page per C file (a header counts as its own file); each page carries its own
 | [wi_stuff.c](quirks/wi_stuff.c.md) | 2 |
 
 No page: p_local.h (its two rows were joined into rows of p_map.c and p_maputl.c; see the lists below).
-| | **420** |
+| | **421** |
 
 Other pages: [recorded in only one place](quirks/only-one-place.md), [not traced to a C line](quirks/not-traced.md), [dropped, and why](quirks/dropped.md), [where the documents disagree](quirks/disagreements.md) and [the 64-bit build only](quirks/64-bit-only.md).
 
@@ -198,7 +199,7 @@ This register is only as complete as its sources and the sweeps, and the sweeps 
 - **Tools.** The comments and docstrings of 371 files under `tools/` were read (about 9,400 lines kept after dropping empty ones); the code bodies, the two `source_suite*.json` data files and the pure data tables were not read.
 - **Commit messages.** Three passes read the log of master's commit messages, newest first. The local clone is shallow: its log holds 898 commits and ends at the merge of PR #39. *Pass 1* read the first 1,600 log lines (the newest commits; the passes count them as 150 and as 127 commits, because they counted differently) in full, and read the remaining older commits of the clone only through filters (a C citation, or one of the words quirk, undefined, overflow, uninitialised, stale, bug, surprise, accident, "does not match", contradict, `I_Error`, crash, "the original" or "genuine engine"), plus the subject lines of some of them. *Pass 2* then read every subject and body in full, with no filter, from log line 1,590 to the end of the clone's log, which covers every commit from about the 128th newest on. *Pass 3* read the 325 commits older than the clone's log, back to the original release, from a full log obtained separately; almost all of them are subject-only. So every commit message was read in full at least once; the newest 127 to 150 were read in full by one pass only.
 - **STATE_FORMAT and TESTING.** Searched with a keyword grep only (quirk, undefined, overflow, uninitialised, stale, dangling, freed, accident, out of bounds, `I_Error`, never reset, zero-fill), not read. Every hit is either a Rust policy or already a row (the never-reset wall-step globals, the zero-filled mover allocations, the diagonal-wall reading quirks, the THING angle overflow); the grep found no new quirk.
-- **Not yet in the register.** The quirk list of milestone M6a ("U8") is not in yet; it goes in as rows when pull request #65 lands, and #65 is not edited for it.
+- **Not yet in the register.** The quirk list of milestone M6a ("U8") is not in yet; it goes in as rows when pull request #65 lands, and #65 is not edited for it. One M6a row, Q-g_game-779, was added on 2026-11-22 at the owner's ruling.
 
 ## How to read a row
 
