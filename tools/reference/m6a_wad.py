@@ -434,7 +434,7 @@ def check_layout(lumps):
 
 
 # ---------------------------------------------------------------- scripts --------------------------------
-SKILL_OVERRIDE = {}                                      # lump -> 0 or 1 (header byte 1, g_game.c:1596)
+SKILL_OVERRIDE = {'SKILL0': 0, 'SKILL1': 1}              # lump -> 0 or 1 (header byte 1, g_game.c:1596)
 
 # The WAD sets: the item's IWAD, the M5b and M5c sets, the M6a pictures and music (or a variant).
 WADSETS = {
@@ -537,6 +537,39 @@ SCRIPTS = [
     ("NOE1M2AT", "NOE1M2AT", "registered", "noe1m2",
      "refusal witness: D_E1M2 missing and the session starts at E1M2; the genuine engine stops at the first load, before tic 0",
      ["map E1M2", "idle 10"]),
+    # After the level chain (owner's order of work): the finale in both modes and its refusals, and the four skills.
+    ("FINREG", "FINALE", "registered", "episode",
+     "E1M8 (a session started at map 8) into the finale in registered mode: the telefragged Baron, A_BossDeath lowering the sector-11 floor, the exit at health 10 or less, the text stage with a use and a fire press that do nothing, the stage-1 wipe on finale tic 1571 and 60 tics of HELP2",
+     ["map E1M8", "cmd 30 25 0 0 0", "idle 120", "cmd 30 25 0 0 0", "idle 141", "idle 100", "cmd 1 0 0 0 USE", "idle 99",
+     "cmd 1 0 0 0 ATTACK", "idle 1369", "cmd 1 0 0 0 USE", "idle 59"]),
+    ("FINRET", "FINALE", "retail", "episode",
+     "the same commands in retail mode: the art screen is CREDIT",
+     ["map E1M8", "cmd 30 25 0 0 0", "idle 120", "cmd 30 25 0 0 0", "idle 141", "idle 100", "cmd 1 0 0 0 USE", "idle 99",
+     "cmd 1 0 0 0 ATTACK", "idle 1369", "cmd 1 0 0 0 USE", "idle 59"]),
+    ("NOHELP2", "FINALE", "registered", "nohelp2",
+     "refusal witness: HELP2 missing in registered mode; the genuine engine stops at the first stage-1 frame",
+     ["map E1M8", "cmd 30 25 0 0 0", "idle 120", "cmd 30 25 0 0 0", "idle 141", "idle 100", "cmd 1 0 0 0 USE", "idle 99",
+     "cmd 1 0 0 0 ATTACK", "idle 1369", "cmd 1 0 0 0 USE", "idle 59"]),
+    ("NOVICTOR", "FINALE", "registered", "novictor",
+     "refusal witness: D_VICTOR missing; the genuine engine stops on the finale's first tic",
+     ["map E1M8", "cmd 30 25 0 0 0", "idle 120", "cmd 30 25 0 0 0", "idle 141", "idle 100", "cmd 1 0 0 0 USE", "idle 99",
+     "cmd 1 0 0 0 ATTACK", "idle 1369", "cmd 1 0 0 0 USE", "idle 59"]),
+    ("SKILL0", "SKILL0", "registered", "episode",
+     "skill 0 (sk_baby): E1M1 (the easy-only thing spawned; double ammunition from the backpack; half damage from the floor), its exit, then E1M2's 20-damage floor for 200 tics",
+     ["map E1M1", "cmd 125 25 0 0 0", "cmd 1 0 0 0 USE", "idle 1", "cmd 1 0 0 0 USE", "idle 1", "cmd 1 0 0 0 USE", "idle 1",
+     "cmd 1 0 0 0 USE", "idle 10", "cmd 22 25 0 0 0", "idle 200"]),
+    ("SKILL1", "SKILL1", "registered", "episode",
+     "skill 1 (sk_easy): the same commands; the easy-only thing spawned, ammunition and damage as medium",
+     ["map E1M1", "cmd 125 25 0 0 0", "cmd 1 0 0 0 USE", "idle 1", "cmd 1 0 0 0 USE", "idle 1", "cmd 1 0 0 0 USE", "idle 1",
+     "cmd 1 0 0 0 USE", "idle 10", "cmd 22 25 0 0 0", "idle 200"]),
+    ("SKILL2", "SKILL2", "registered", "episode",
+     "skill 2 (sk_medium): the same commands; the medium-only thing spawned",
+     ["map E1M1", "cmd 125 25 0 0 0", "cmd 1 0 0 0 USE", "idle 1", "cmd 1 0 0 0 USE", "idle 1", "cmd 1 0 0 0 USE", "idle 1",
+     "cmd 1 0 0 0 USE", "idle 10", "cmd 22 25 0 0 0", "idle 200"]),
+    ("SKILL3", "SKILL3", "registered", "episode",
+     "skill 3 (sk_hard): the same commands; the hard-only thing spawned",
+     ["skill 3", "map E1M1", "cmd 125 25 0 0 0", "cmd 1 0 0 0 USE", "idle 1", "cmd 1 0 0 0 USE", "idle 1", "cmd 1 0 0 0 USE",
+     "idle 1", "cmd 1 0 0 0 USE", "idle 10", "cmd 22 25 0 0 0", "idle 200"]),
 ]
 
 
@@ -567,15 +600,15 @@ def script_lump(lump, what, lines):
 
 
 def scripts():
-    """(lump, txt, lmp, tics) per distinct lump, in first-use order."""
+    """(lump, txt, lmp, tics) per distinct lump, in first-use order (the text carries the first item's description)."""
     out, seen = [], {}
     for item in SCRIPTS:
         name, lump, mode, wadset, what, lines = item
-        txt = script_text(lump, what, lines)
-        if lump in seen:
-            assert seen[lump] == txt, f'{lump}: two items give one lump different text'
+        if lump in seen:                                 # an item sharing a lump (another mode or WAD set): same commands
+            assert seen[lump] == lines, f'{lump}: two items give one lump different commands'
             continue
-        seen[lump] = txt
+        seen[lump] = lines
+        txt = script_text(lump, what, lines)
         lmp, tics = script_lump(lump, what, lines)
         out.append((lump, txt, lmp, tics))
     return out
