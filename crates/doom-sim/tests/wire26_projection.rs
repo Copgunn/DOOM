@@ -86,7 +86,31 @@ fn wire26_new_game_projects_to_wire25_on_every_m5c_item() {
     );
 }
 
-/// The table above is the committed set of M6a session goldens.
+/// The committed M6a session goldens that are not level-chain items, with why each is not in
+/// [`M6A_ITEMS`] yet: the finale items start on E1M8 and reach `F_StartFinale`, which comes
+/// after the owner's hand test of the level chain (M6a note §6.5); the skill items belong to
+/// the easy-skill step (step 10), SKILL0 and SKILL1 because wire 26 and the version-2 demo
+/// reader admit skills 2 and 3 only, SKILL2 and SKILL3 as their controls.
+const M6A_NOT_CHAIN: [(&str, &str); 8] = [
+    ("FINREG", "the finale (registered), after the hand test"),
+    ("FINRET", "the finale (retail), after the hand test"),
+    (
+        "NOHELP2",
+        "the finale's art-screen refusal, after the hand test",
+    ),
+    (
+        "NOVICTOR",
+        "the finale's music refusal, after the hand test",
+    ),
+    ("SKILL0", "sk_baby, step 10"),
+    ("SKILL1", "sk_easy, step 10"),
+    ("SKILL2", "the medium control of step 10"),
+    ("SKILL3", "the hard control of step 10"),
+];
+
+/// The table above holds the level-chain items of the committed M6a session goldens, and
+/// [`M6A_NOT_CHAIN`] names every other one: together exactly the committed set, with no
+/// item in both.
 #[test]
 fn the_m6a_item_table_is_the_session_golden_set() {
     let mut goldens: Vec<String> = std::fs::read_dir(root().join("tests/reference/m6a_session"))
@@ -95,9 +119,22 @@ fn the_m6a_item_table_is_the_session_golden_set() {
         .filter_map(|n| n.strip_suffix(".session").map(str::to_owned))
         .collect();
     goldens.sort();
-    let mut lumps: Vec<String> = M6A_ITEMS.iter().map(|i| i.0.to_owned()).collect();
+    let mut lumps: Vec<String> = M6A_ITEMS
+        .iter()
+        .map(|i| i.0)
+        .chain(M6A_NOT_CHAIN.iter().map(|i| i.0))
+        .map(str::to_owned)
+        .collect();
     lumps.sort();
+    let named = lumps.len();
+    lumps.dedup();
+    assert_eq!(
+        lumps.len(),
+        named,
+        "an item is both a chain item and named apart"
+    );
     assert_eq!(goldens, lumps);
+    assert_eq!((M6A_ITEMS.len(), goldens.len()), (18, 26));
 }
 
 /// The first level of every M6a chain item (its demo runs on past the level; both
