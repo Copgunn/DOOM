@@ -409,3 +409,47 @@ fn real_maps_state_local_catches_a_planted_fault() {
     assert!(caught > 0, "no real run with a carried start");
     assert!(missed.is_empty(), "not caught: {missed:?}");
 }
+
+/// The stale-attacker item `ATTACK` (owner's ruling of 2026-11-22): every level tic of both
+/// levels, whole state, equal to the genuine digests. The genuine E1M2 load holds
+/// `players[0].attacker` as a pointer into the freed E1M1, which the independent encoder projects
+/// as NULL (`tools/reference/m6a_state.py`'s rule); the carried start's NULL equals it.
+#[test]
+fn the_stale_attacker_item_level_state_equals_the_genuine_engine() {
+    let golden = golden();
+    let g = &golden["ATTACK"];
+    assert_eq!(
+        g.iter()
+            .map(|l| (l.tic, l.map, l.kind.as_str()))
+            .collect::<Vec<_>>(),
+        [(-1, 1, "new"), (235, 2, "carried")]
+    );
+    let o = compare(&m6a::item("ATTACK"), None, g);
+    eprintln!(
+        "ATTACK: {} levels, {} captures, {} points",
+        o.levels, o.captures, o.points
+    );
+    assert!(o.first_difference.is_none(), "{:?}", o.first_difference);
+    assert_eq!((o.levels, o.captures), (2, 254));
+}
+
+/// The stale-attacker rule's record (`tests/reference/m6a_stale_attacker.txt`, written by
+/// `tools/reference/m6a_state.py` from the genuine dumps): it fired on exactly one load of all
+/// the committed items, ATTACK's carried load into E1M2 at session tic 235, which the state
+/// golden holds as a carried level.
+#[test]
+fn the_stale_attacker_rule_fired_on_attacks_carried_load_only() {
+    if m6a::real_maps() {
+        eprintln!("skip: M6A_REFERENCE_DIR is set (the record is the synthetic set's)");
+        return;
+    }
+    let text =
+        std::fs::read_to_string(m6a::reference("m6a_stale_attacker.txt")).expect("fired record");
+    let mut lines = text.lines();
+    assert_eq!(lines.next(), Some("#schema,DOOM-M6A-STALE-ATTACKER-v1"));
+    let rows: Vec<&str> = lines.filter(|l| !l.starts_with('#')).collect();
+    assert_eq!(rows, ["A,ATTACK,1,235", "T,1"]);
+    let golden = golden();
+    let level = &golden["ATTACK"][1];
+    assert_eq!((level.tic, level.kind.as_str()), (235, "carried"));
+}

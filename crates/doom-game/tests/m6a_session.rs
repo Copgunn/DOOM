@@ -1089,3 +1089,23 @@ fn the_ruling_faults_are_caught() {
         "the early end is a difference"
     );
 }
+
+/// The stale-attacker item `ATTACK` (owner's ruling of 2026-11-22) through the same gate as the
+/// level chain, at both screen sizes: a zombieman hurts the player on E1M1, the player exits by
+/// the walk line, the intermission is skipped and E1M2 loads with the player carried. Every G,
+/// C, I and J row, every level and intermission frame, every sound row and mixer buffer (screen
+/// size 10) and the demo's end equal the genuine goldens.
+#[test]
+fn the_stale_attacker_item_against_the_genuine_goldens() {
+    let item = m6a::item("ATTACK");
+    for sb in [10, 11] {
+        let o = run_item(&item, sb, None);
+        eprintln!("ATTACK sb{sb}: {:?}", o.counts);
+        assert!(o.first_difference.is_none(), "{:?}", o.first_difference);
+        assert_eq!(o.counts.tics, item.session_tics, "every tic");
+        assert_eq!(
+            (o.counts.loads, o.counts.wipes, o.counts.other_frames),
+            (1, 3, 18)
+        );
+    }
+}
