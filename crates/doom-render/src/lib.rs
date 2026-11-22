@@ -47,6 +47,10 @@ pub mod v_video;
 pub mod view;
 pub mod wi_stuff;
 
+pub use d_display::session::{
+    Carried, FinaleView, GameState, LevelChange, MeltState, NonLevelFrame, NotYet, Scene,
+    SessionDisplayState, SessionError, SessionRestoreError,
+};
 pub use d_display::{
     Display, DisplayConfig, DisplayFrame, DisplayObserveError, DisplayRefusal, DisplayState,
     RandomContract, WIPE_DRAWS,
