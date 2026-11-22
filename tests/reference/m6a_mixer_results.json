@@ -23,12 +23,12 @@
   "tools/reference/m5c_starts.py": "757cfcda4392220aaa3e0da111c5162fe8a2e1aa3d74692ff7c759d6f8460235",
   "tools/reference/m5c_mixer_driver.c": "8712383a896c7ff4a9be330e1457c7e321262180f215568ea211ee78b2b15af3"
  },
- "items": 26,
- "starts": 791,
- "tics": 15282,
- "buffers": 9413,
- "melts": 113,
- "goldens_sha256": "73daf9703759662296900d63cf24f252d064a59384afceb3fb7a0e739eec0565",
+ "items": 28,
+ "starts": 878,
+ "tics": 16653,
+ "buffers": 10257,
+ "melts": 122,
+ "goldens_sha256": "ccb627bc18cae756153deff8c21506d6ebacaf0acf9a67c136389bc2c7425ff1",
  "per_item": {
   "CHAIN": {
    "sound_sha256": "57baef4d34d72cd1f4603ee159e680429af6814524280c9ec0f032cb120cab72",
@@ -193,6 +193,41 @@
     "buffers": 1951,
     "stream_sha256": "a76c5956630abdf0f354d49909dbd3dfbfbc04758d25e854c54fce2f618e4edb",
     "rows_sha256": "de4185ca23cd68d08977acd65dfdfd08d4650f64c2fcb1b124db6cf8e3018a55"
+   }
+  },
+  "INTCMD": {
+   "sound_sha256": "916fd4c5cbb34ff1fa3d61a8c0e390f51137c0faf1f2cf13fc3ae77297c640d1",
+   "starts": 2,
+   "tics": 188,
+   "starts_sha256": "73301e0ebbec6c0b745f46bd61fd3c889043fb82e846d326d123be92608b7028",
+   "buffers": 116,
+   "stream_sha256": "c6d01302c39027e90c63b0d839358055c19bcdaa482801fd3557fca7136bd276",
+   "golden_sha256": "dddd64e2e47a3bc1ca05c3e453d8eb0546f9d0012d95a2e0bd5fbeb2a1e3d5d8",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     56,
+     38,
+     35
+    ],
+    [
+     167,
+     43,
+     103
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 188,
+    "stream_sha256": "651765c04e576dd84a2d3f2cbdab1b906f177ae09fcf2977910dfd3a1ba43c65",
+    "rows_sha256": "907218aa75c7ef192e44a7ae40ece2232d91726681cc0c8a4f9d6ea01072a342"
    }
   },
   "INTFAST": {
@@ -1022,6 +1057,56 @@
     "buffers": 364,
     "stream_sha256": "0bbcc74450c0bcf721c741b9230728754f6fe818ce17205fc4d6fdacfc9aebb0",
     "rows_sha256": "3b2a1243054613ac42ec7d2965f4448fc253f644ae058a481f39fc12b8093c79"
+   }
+  },
+  "TURBO": {
+   "sound_sha256": "93e58acff7f3729c266e16c9d53e4c48d11a38a7fc1aa0ad02dd13ed9eb5e449",
+   "starts": 85,
+   "tics": 1183,
+   "starts_sha256": "5c107f1d9f5ce697bd4c3b9519794848af72d814f6031ed71e2cc2eb3a0169c7",
+   "buffers": 728,
+   "stream_sha256": "4d17625612648f43c8b3aeb285475d8f8f5cec22060b51cbe9f45d1b25cf275e",
+   "golden_sha256": "05f2e41ed7fa84098fe0395527afe673a0b111756b24f41581139b950cf6bea4",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     126,
+     39,
+     78
+    ],
+    [
+     192,
+     38,
+     119
+    ],
+    [
+     672,
+     40,
+     414
+    ],
+    [
+     1020,
+     38,
+     628
+    ],
+    [
+     1152,
+     43,
+     709
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 1183,
+    "stream_sha256": "f46e1adeb6ef7208b311ade4d9c4738238acac228f14aa3376cdd98b9cf738e2",
+    "rows_sha256": "b3bfb4309e0d140057fe69eb1dfd1ad5e02dbe32aaeeb985738e8a79b93276b7"
    }
   },
   "USEAT130": {

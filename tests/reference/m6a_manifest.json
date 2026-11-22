@@ -660,6 +660,32 @@
    "txt": "tests/reference/m6a_scripts/SKILL3.txt",
    "lmp": "tests/reference/m6a_scripts/SKILL3.lmp",
    "lmp_sha256": "d627a2dbd2da349d1f4f83619a14ed0618688385efd684697f9ad58e29ffd10b"
+  },
+  {
+   "name": "TURBO",
+   "lump": "TURBO",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "the turbo message across loads (G_Ticker tests gametic, g_game.c:671-679): E1M1 as CHAIN with the intermission held in tally state 10 so that E1M2 loads on tic 192 (gametic mod 128 = 64); a forward move of 100, facing north, on its load tic (no message), around leveltime 128 (gametic mod 128 = 64: no message) and around gametic 384 (the message); death on the 20-damage floor and a reborn reload on tic 672 (gametic mod 128 = 32) with a forward of 100 on the reload tic (no message), around leveltime 128 (none) and around gametic 896 (the message); the E1M2 exit and E1M3 loaded on tic 1152 with a forward of 100 on its load tic (the message, set after P_SpawnPlayer's clear in the load's own G_Ticker)",
+   "map": 1,
+   "skill": 2,
+   "tics": 1183,
+   "txt": "tests/reference/m6a_scripts/TURBO.txt",
+   "lmp": "tests/reference/m6a_scripts/TURBO.lmp",
+   "lmp_sha256": "fefe393600f3058d1fdacd127f55d17c2621dc3191eaeb78fcbc854f21f4a9e7"
+  },
+  {
+   "name": "INTCMD",
+   "lump": "INTCMD",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "commands outside wire 24's level domain on every tic of the intermission after the E1M7 exit (WI_checkForAccelerate reads bits 0 and 1 only, wi_stuff.c:1470-1498): sides of -128, turns, forward moves up to 127 (100 across gametic 128: the turbo message set outside a level, cleared by P_SpawnPlayer at the next load, p_mobj.c:676, never shown), buttons with bit 0x40 and weapon bits without BT_CHANGE; the presses are 0x43 (accelerates), 0x41 held (no new press), 0x49 in tally state 10 and 0x7e in ShowNextLoc; E1M8 loads on tic 167 with a command in the level domain",
+   "map": 7,
+   "skill": 2,
+   "tics": 188,
+   "txt": "tests/reference/m6a_scripts/INTCMD.txt",
+   "lmp": "tests/reference/m6a_scripts/INTCMD.lmp",
+   "lmp_sha256": "ebaf08f6211426fa2344b3c1cf922182ffe52dee8585e4ec1b13c9d563146da8"
   }
  ]
 }

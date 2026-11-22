@@ -2,7 +2,9 @@
 """Whole simulation state of the M6a level-chain items from the genuine engine: DSIM42 digests (M6a Phase 2 step 8).
 
 The goldens of tools/reference/m6a_goldens.py hold session, frame and sound rows but no per-level state. This tool
-runs every level-chain item of tests/reference/m6a_manifest.json (CHAIN_ITEMS) through the genuine M6a runner with
+runs every level-chain item of tests/reference/m6a_manifest.json (CHAIN_ITEMS, then RULING_ITEMS: the items of the
+owner's rulings of 2026-11-22, the turbo message across loads and intermission commands outside the level domain)
+through the genuine M6a runner with
 dumps, projects every dump with the INDEPENDENT DSIM42 encoder (tools/reference/level_snapshot_m6a.py, itself the
 frozen DSIM41 projection of level_snapshot_m5c.py plus wire 26's start group) and writes digests only. Never from
 Rust output.
@@ -71,6 +73,8 @@ RESULTS = ROOT / 'tests/reference/m6a_state.txt'
 SCHEMA = 'DOOM-M6A-STATE-v1'
 CHAIN_ITEMS = ['CHAIN', 'INTSTA', 'INTSTB', 'INTIDLE', 'INTHELD', 'INTFAST', 'REBHELD', 'REBLATE', 'SECRET', 'REBSECRT',
                'PROBE', 'USEAT130', 'USEAT131', 'USEAT132', 'RBXDEAD', 'NOINTER', 'NOE1M2', 'NOE1M2AT']
+RULING_ITEMS = ['TURBO', 'INTCMD']
+ITEMS = CHAIN_ITEMS + RULING_ITEMS
 STRIDE = 35
 UNRECORDED = dict(bob='bob', weapon_x='ps0sx', flash_tics='ps1tics', flash_x='ps1sx', flash_y='ps1sy')
 sha = lambda b: hashlib.sha256(b).hexdigest()
@@ -262,7 +266,7 @@ def results_text(per_item):
             f'D: capture 1 (load), every leveltime multiple of {STRIDE} (stride) and the level\'s last capture (last)',
             '#columns,L,item,load,tic,map,kind,captures,map_sha256,sequence_sha256',
             '#columns,D,item,load,tic,leveltime,why,state_sha256']
-    return '\n'.join(head + [l for name in CHAIN_ITEMS for l in per_item.get(name, [])]) + '\n'
+    return '\n'.join(head + [l for name in ITEMS for l in per_item.get(name, [])]) + '\n'
 
 
 def selftest(binary, items_by_name, work, results):
@@ -300,8 +304,8 @@ def main():
     if work == ROOT or ROOT in work.parents: sys.exit('--work must lie outside the repository')
     binary = build(work, a.cc)
     results = json.loads(G.RESULTS.read_text())
-    items = {i['name']: i for i in G.items() if i['name'] in CHAIN_ITEMS}
-    want = [n for n in CHAIN_ITEMS if not a.only or n in {x.upper() for x in a.only.split(',')}]
+    items = {i['name']: i for i in G.items() if i['name'] in ITEMS}
+    want = [n for n in ITEMS if not a.only or n in {x.upper() for x in a.only.split(',')}]
     per, fails, total = {}, [], [0, 0]
     with cf.ThreadPoolExecutor(max_workers=max(1, min(a.jobs, 2))) as ex:
         for name, rows, f, caps, nlv in ex.map(lambda n: run_item(binary, items[n], work, results), want):
