@@ -70,7 +70,12 @@ Results: tests/reference/m6a_state.txt (DOOM-M6A-STATE-v1), written without --ch
 --selftest proves the digests can fail: a planted extra P_Random draw at session tic 300 of CHAIN changes the
 sequence digest of exactly the level holding tic 300 and the later ones; a bob one unit off (lower, or 1 for 0) in
 the carried start groups changes every capture digest of the first carried level; and the previous level's K rows
-left in (the serial rule off) are refused by the projection.
+left in (the serial rule off) are refused by the projection. The stale-attacker rule, on CHAIN's dumps changed in
+memory (the first carried level's previous level ends with the player's own body as attacker): with P[0].attacker -2
+in every dump of the carried level the rule fires on that load only and the level's captures equal NULL's; refused
+with "a dangling reference": a -2 appearing at level tic 10 (mid-level), a -2 sector soundtarget at the load (a),
+no attacker at the previous level's end (c), damagecount raised at level tic 10 and a live attacker at level tic
+10 that is -2 again at 11 (d), and the same -2 attacker on REBHELD's reborn reload (b).
 
     m6a_state.py [--check] [--selftest] [--only ITEM[,ITEM]] [--work DIR] [--jobs N] [--cc CC]
 """
@@ -341,7 +346,69 @@ def selftest(binary, items_by_name, work, results):
         levels(base, it, rule=False); refused = None
     except L.ProjectionError as e: refused = f'{e.kind} at tic {e.tic}: {e.text}'
     out.append(('previous level\'s K rows kept', f'refused: {refused}', refused is not None))
+    out += attacker_selftest(binary, items_by_name, work, base, lv)
     for d in ('self_base', 'self_draw'): shutil.rmtree(work / d, ignore_errors=True)
+    return out
+
+
+def attacker_selftest(binary, items_by_name, work, base, lv):
+    """The stale-attacker rule (module text) on dumps changed in memory: it fires on a carried load whose previous
+    level ended with a non-NULL attacker and gives that level the captures of NULL; a dangling attacker appearing
+    mid-level is refused; and so is a dangling pointer that fails any one of the four conditions."""
+    out, it = [], items_by_name['CHAIN']
+    K = next(i for i, v in enumerate(lv) if v['kind'] == 'carried'); KL = lv[K]['load']
+
+    def planter(prev_live=True, dangling_from=0, extra=None, level=KL):
+        # as the C would hold it: the stale value from the load (or `dangling_from`) up to the level's first write of
+        # attacker (p_inter.c:874-875: the genuine dump's first P[0] with attacker not NULL or damagecount raised)
+        untouched = [True]
+
+        def plant(k, j, last, d):
+            p = p_row(d)
+            if k == level - 1 and last and prev_live: p['attacker'] = p['mo']    # a live thinker of that dump
+            if k == level:
+                untouched[0] = untouched[0] and p['attacker'] == -1 and p['damagecount'] == 0
+                if j >= dangling_from and untouched[0]: p['attacker'] = -2
+                if extra: extra(j, d)
+        return plant
+
+    def refusal(r, item, plant):
+        try:
+            levels(r, item, plant=plant); return None
+        except L.ProjectionError as e: return e
+
+    try:
+        got = levels(base, it, plant=planter()); fired = [v['load'] for v in got if v['stale_attacker']]
+        same = [c[2] for c in got[K]['captures']] == [c[2] for c in lv[K]['captures']]
+        out.append(('stale attacker at a carried load (all four conditions)',
+                    f'fired on loads {fired} (want [{KL}]), level {K} captures equal to NULL\'s: {same}', fired == [KL] and same))
+    except L.ProjectionError as e:
+        out.append(('stale attacker at a carried load (all four conditions)', f'refused: {e.kind} at tic {e.tic}: {e.text}', False))
+
+    def refused_case(what, r, item, plant, tic):
+        e = refusal(r, item, plant)
+        ok = e is not None and e.text == 'a dangling reference' and e.tic == tic
+        out.append((what, 'not refused' if e is None else f'refused: {e.kind} at tic {e.tic}: {e.text} (want tic {tic})', ok))
+
+    def bump(j, d):
+        if j == 10: p_row(d)['damagecount'] = 3
+    def write(j, d):
+        if j == 10: p_row(d)['attacker'] = p_row(d)['mo']
+    def other(j, d):
+        if j == 0: d.sectors[0]['soundtarget'] = -2
+    refused_case('dangling attacker appearing mid-level (level tic 10)', base, it, planter(dangling_from=10), 10)
+    refused_case('(a) a dangling pointer that is not player 0\'s attacker (sector 0 soundtarget)', base, it,
+                 planter(extra=other), 0)
+    refused_case('(c) the previous level ended with a NULL attacker', base, it, planter(prev_live=False), 0)
+    refused_case('(d) changed since the load: damagecount raised at level tic 10', base, it, planter(extra=bump), 10)
+    refused_case('(d) changed since the load: a live attacker at level tic 10, dangling again at 11', base, it,
+                 planter(extra=write), 11)
+    reb = items_by_name['REBHELD']
+    r = run(binary, reb, work / 'self_rebheld')
+    rl = levels(r, reb)
+    R = next(i for i, v in enumerate(rl) if v['kind'] == 'reborn')
+    refused_case('(b) not a carried load (REBHELD\'s reborn reload)', r, reb, planter(level=rl[R]['load']), 0)
+    shutil.rmtree(work / 'self_rebheld', ignore_errors=True)
     return out
 
 
