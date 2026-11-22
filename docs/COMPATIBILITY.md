@@ -22,6 +22,18 @@ Loading a WAD, recognizing MT_SERGEANT or matching an isolated hash does not
 establish the last level. [Reference notes](README.md) describe each admitted
 slice and the [validation guide](VALIDATION.md) distinguishes evidence families.
 
+**What the exactness is for.** Most source ports (modern rewrites of a game's released source code) aim to be
+playable first and accurate second; this project works the other way round. It only accepts behavior checked
+against the original Linux DOOM 1.10 C code (id Software's 1997 source release), comparing the entire game state
+after every tic, the 1/35-second step in which DOOM updates its world. Anything not yet proven identical is
+refused: the engine stops with an error instead of approximating. That makes it fit for exact-behavior work once
+the ground is covered: replaying recorded demos (files of a player's inputs, which stay in sync only if every tic
+matches), speedrun and tool-assisted (TAS) research, and studying the original engine. Vanilla behavior (the
+original unmodified game, quirks included) is the default, and game math stays in Doom's whole-number arithmetic,
+with no decimals except the one division where the original used them (`FixedDiv2`, m_fixed.c:69-87, divides as
+`double`). Once a behavior is admitted, nothing quietly rounds it differently. (Moved here from the root README on
+2026-11-22, when the README was shortened.)
+
 ## Stepping and diagnostics
 
 `Simulation::advance([TicCommand; 4]) -> Result<(), SimError>` completes one tic
@@ -3394,7 +3406,8 @@ player's volume and mute, and the device itself. Of these the app's code is Rust
   the same face. Demos recorded by M5b builds stay valid; replayed here they give the same game and the genuine
   glance of this contract.
 - **The device.** The first audio backend that opens plays the stream (Linux: PulseAudio, then ALSA, which need the
-  system's `libpulse.so.0` or `libasound.so.2`; Windows: WASAPI, DirectSound, then WinMM; macOS: Core Audio); nothing
+  system's `libpulse.so.0` or `libasound.so.2`, so under Linux or WSLg install the PulseAudio client library once
+  with `sudo apt install libpulse0`, while Windows needs nothing installed; Windows: WASAPI, DirectSound, then WinMM; macOS: Core Audio); nothing
   falls back to a silent device. If none opens, **one line on standard error** says so and names every backend tried, and
   the game runs exactly the same without sound output. The queue (512-frame buffers; the device takes nothing until **two
   buffers, 1,024 frames, 92.9 ms at 11,025 Hz, are queued**, and again after every underrun and every pause; at most four
