@@ -40,6 +40,8 @@ The projection (declared rules, beyond those of level_snapshot_m6a.py):
     followed by the `events.sounds.*` fields in the same per-field framing; its SHA-256 is the capture's state
     digest. `events.last` and `events.pending` (the encoder writes both with count 0, as DSIM40, M5c note 4.4.4)
     are left out; `map.*` is digested once per level (capture 1) in the per-field framing;
+  - a last load with no capture (the demo's end marker read in the load's own G_Ticker, after the gameaction
+    loop: g_game.c:617-650, then 667 and 1493-1496) is no level of the comparison: no P_Ticker runs for it;
   - the session points: every capture j >= 1 (the state after each level tic) is in its level's sequence digest
     (SHA-256 of the captures' state digests, 32 bytes each, in order); D rows name capture 1 (the load tic), every
     capture whose leveltime is a multiple of STRIDE, the last capture of each level (the tic before a boundary or
@@ -194,29 +196,38 @@ def levels(r, item, rule=True, bob_delta=0):
     for k, l in enumerate(loads):
         T = l['tic']; end = loads[k + 1]['tic'] if k + 1 < len(loads) else 1 << 30
         names = (['load.txt'] if k == 0 else [f'loads/load_{T:05}.txt']) + [f'tic_{t:05}.txt' for t in tics if max(T, 0) <= t < end]
-        ds = [L.Dump(str(ddir / n)) for n in names]
-        if k:
-            first = min(s for s, _ in ds[0].serials.values())
-            if rule: ds = [drop_previous(d, first) for d in ds]
+        load = L.Dump(str(ddir / names[0]))
+        first = min(s for s, _ in load.serials.values()) if k else None
+
+        def dump_at(j):
+            d = load if j == 0 else L.Dump(str(ddir / names[j]))
+            return drop_previous(d, first) if k and rule else d
         kind, p, _h, _s = S.start_from_rows(session, sound, k, str(item['wads'][0]))
         if kind == 'carried':
             want = {f: p_row(previous)[c] for f, c in UNRECORDED.items()}
-            if {f: p_row(ds[0])[c] for f, c in UNRECORDED.items()} != want:
+            if {f: p_row(load)[c] for f, c in UNRECORDED.items()} != want:
                 raise L.ProjectionError('DumpDeficiency', 0, f'load {k}: the load dump does not hold the carried bob and psprites')
             p.update(want)
             if bob_delta: p['bob'] = p['bob'] - 1 if p['bob'] > 0 else 1
         mapdata = L.MapData(str(item['wads'][0]), f'E1M{l["map"]}', lumps)
         proj = S.Projector(mapdata, skill, l['map'], Shifted(stream, max(T, 0)), (kind, p))
-        caps, mapg = [], None
-        for j, d in enumerate(ds):
-            fields, _ = proj.step(d, ds[j + 1] if j + 1 < len(ds) else None)
+        caps, mapg, following = [], None, dump_at(0)
+        for j in range(len(names)):
+            d, following = following, dump_at(j + 1) if j + 1 < len(names) else None
+            fields, _ = proj.step(d, following)
+            last = d
             if d.tic == 0: continue
             if mapg is None: mapg = sha(framed([x for x in fields if x[0].startswith('map.')]))
             caps.append((d.tic, d.h['tic'], state_digest(fields)))
         if [c[0] for c in caps] != list(range(1, len(caps) + 1)):
             raise L.ProjectionError('DumpDeficiency', 0, f'load {k}: level tics not consecutive')
+        if not caps:
+            # a load whose G_Ticker never completed: the demo's end marker is read after the gameaction loop
+            # in the same G_Ticker, before any P_Ticker (g_game.c:617-650, then 667 and 1493-1496)
+            if k != len(loads) - 1: raise L.ProjectionError('DumpDeficiency', 0, f'load {k}: no capture')
+            break
         out.append(dict(load=k, tic=T, map=l['map'], kind=kind, captures=caps, mapg=mapg))
-        previous = ds[-1]
+        previous = last
     return out
 
 
