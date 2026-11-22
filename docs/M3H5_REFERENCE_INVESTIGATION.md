@@ -66,7 +66,7 @@ witness, and the evidence. It adds no mover, collision, traversal or scheduler c
   - a point in front with `0 < cross < 1` reads front or back depending on the
     fractional parts (the "sliver", perpendicular width `1/L` units, at most 0.71 for
     a `(1,1)` wall and 0.00065 for a 1,536-unit wall).
-- **`P_BoxOnLineSide`** ([p_maputl.c:110](../linuxdoom-1.10/p_maputl.c)): horizontal and
+- **`P_BoxOnLineSide`** ([p_maputl.c:110–152](../linuxdoom-1.10/p_maputl.c)): horizontal and
   vertical lines compare the box edges exactly (119–137): a box touching an axis wall
   is on one side. `ST_POSITIVE` tests the corners (left, top) and (right, bottom),
   `ST_NEGATIVE` (right, top) and (left, bottom) (139–147): the two corners extreme along
@@ -90,7 +90,7 @@ witness, and the evidence. It adds no mover, collision, traversal or scheduler c
 
 ### 2.3 Sliding
 
-- **`P_XYMovement`** ([p_mobj.c:114](../linuxdoom-1.10/p_mobj.c)): clamp to `±MAXMOVE`
+- **`P_XYMovement`** ([p_mobj.c:114–191](../linuxdoom-1.10/p_mobj.c)): clamp to `±MAXMOVE`
   (137–146); `xmove > MAXMOVE/2 || ymove > MAXMOVE/2` halves the attempt (152–161, only
   positive components); `P_TryMove` (166); a blocked player calls `P_SlideMove(mo)`
   (171) with the **full clamped momentum**, not the halved attempt; the loop then

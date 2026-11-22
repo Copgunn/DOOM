@@ -32,7 +32,7 @@ P_MobjThinker updates XY/Z before decrement/entry. Real P_SetMobjState actions
 run immediately, and return to supported Chase can select another positive attack
 state in that same callback without immediately striking.
 
-G_InitNew (g_game.c:1423) halves SARG_RUN1..SARG_PAIN2 timers for fast/nightmare.
+G_InitNew (g_game.c:1421–1436) halves SARG_RUN1..SARG_PAIN2 timers for fast/nightmare.
 This profile promises the unmodified normal 8/8/8 table. Global fast/nightmare
 initialization is outside the admitted fixture; reject Skill::Nightmare here
 rather than imply complete original Nightmare Demon behavior. Older profiles and

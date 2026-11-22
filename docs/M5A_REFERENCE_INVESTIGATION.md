@@ -969,7 +969,7 @@ and returns (not fatal).
    colofs points at the first post's pixel bytes (skips topdelta, length, pad).
 3. For each `x` (r_data.c:349-373): if `!patchcount[x]`, `printf("R_GenerateLookup: column
    without a patch (%s)\n")` and **return** - the remaining columns are not processed at all
-   (r_data.c:351-356). If `patchcount[x] > 1`: `collump[x] = -1`, `colofs[x] = current
+   (r_data.c:351-355). If `patchcount[x] > 1`: `collump[x] = -1`, `colofs[x] = current
    compositesize`, I_Error if `compositesize > 0x10000 - height` (r_data.c:365-369), then
    `compositesize += height` (r_data.c:371). `patchcount` is a byte: 256 covering patches would
    wrap to 0.
@@ -1268,7 +1268,7 @@ screens[0] outside the pixels drawn this frame.
    a frame never reaches them or refuse that frame with a witness.
 7. R_DrawColumnInCache top clip does not advance `source` (r_data.c:204-208): negative-originy
    patches in multi-patch columns paint shifted pixels. Reproduce.
-8. R_GenerateLookup returns at the first patchless column (r_data.c:351-356): later columns
+8. R_GenerateLookup returns at the first patchless column (r_data.c:351-355): later columns
    keep last-patch collump/colofs even if multiply covered (never composited), and uncovered
    columns keep uninitialised zone values.
 9. Fatal RANGECHECK paths (sprite texturecolumn, column y range, invalid sprite/frame) must map
@@ -2018,7 +2018,7 @@ C: `R_SetupFrame` (`linuxdoom-1.10/r_main.c:830-863`) reads `player->mo->x/y`,
     entries precede the others in `alphSwitchList` (`p_switch.c:50-71`), the episode-1 subset
     gives the same answer for every admitted map; no game-mode input is needed.
   - **Non-reusable (S1, and every `useAgain = 0` call): (b).** `P_ChangeSwitchTexture(line, 0)`
-    zeroes `line->special` first (`p_switch.c:212-213`) and nothing else clears a switch
+    zeroes `line->special` first (`p_switch.c:211-212`) and nothing else clears a switch
     line's special, so: the front side is flipped iff the map special is one of the
     `P_ChangeSwitchTexture(line,0)` cases in `P_UseSpecialLine`/`P_ShootSpecialLine`
     (`p_switch.c:350-510`, `p_spec.c:985, 997`) **and** `line.{i}.special` reads 0. (D1 manual
@@ -2028,7 +2028,7 @@ C: `R_SetupFrame` (`linuxdoom-1.10/r_main.c:830-863`) reads `player->mo->x/y`,
     re-press.** A running `button.{k}` with `line == L` means L's front side shows
     `switchlist[i^1]`; on expiry it is restored to `btexture` (the pre-press texture). But a
     second `P_ChangeSwitchTexture(L, 1)` while L's button runs flips the texture back and
-    `P_StartButton` returns without a new slot (`p_switch.c:162-169`). GR 46 calls it on every
+    `P_StartButton` returns without a new slot (`p_switch.c:164-171`). GR 46 calls it on every
     hit whatever `EV_DoDoor` returned (`p_spec.c:988-991`; Rust
     `crates/doom-sim/src/use_lines.rs:283-297`), so one shotgun blast can flip it several times
     in one tic; a fast SR 70 floor can finish and be re-pressed inside 35 tics. The texture is
@@ -2128,7 +2128,7 @@ following the C's own failure points as load refusals:
   checks (`r_data.c:520, 544`); width mask (`r_data.c:552`).
 - `R_GenerateLookup` (`r_data.c:296-374`) exactly: single-patch columns point into the patch
   lump at `columnofs+3` (and ignore `originy`), multi-patch columns get composite offsets;
-  the `column without a patch` early `return` (`r_data.c:353-358`) leaves later columns
+  the `column without a patch` early `return` (`r_data.c:351-355`) leaves later columns
   unset; `>64k` `I_Error` (`:367`).
 - Composites (`R_GenerateComposite`, `r_data.c:228-289`) with a parallel defined-byte mask
   (the buffer is `Z_Malloc`ed and never cleared).
@@ -2382,7 +2382,7 @@ side, not estimated here).
   (`r_draw.c:142, 247`), so short single-patch columns read past the post into the rest of the
   patch lump and possibly past its end (zone memory), and multi-patch composites read bytes no
   patch wrote (`R_GenerateComposite`, `r_data.c:228-289`, `Z_Malloc` not cleared) or columns
-  left unset after "column without a patch" (`r_data.c:353-358`). Reads inside the lump are
+  left unset after "column without a patch" (`r_data.c:351-355`). Reads inside the lump are
   deterministic and reproducible; reads past the lump or of unwritten composite bytes are not.
   Recommendation: reproduce in-lump reads exactly, refuse the frame (`UndefinedTexel`) on the
   rest. Needs owner confirmation because a frame of a real map may hit it (vanilla can show such artefacts).
@@ -2539,7 +2539,7 @@ settles it or "open".
     renderer reads both from the WAD as the C does (`P_LoadSegs`, p_setup.c:181-182), so the genuine
     frames of the 22 M4b scripts are the output for those bytes; the M5a rooms rewrite them
     (`m5a_wad.fix_segs`).
-32. **"Column without a patch" (r_data.c:353-358) leaves that column's lump and offset uninitialised**
+32. **"Column without a patch" (r_data.c:351-355) leaves that column's lump and offset uninitialised**
     (Z_Malloc memory; the M5a runner's declared ZeroFill makes them 0). The Rust renderer marks such a
     column undefined (every read flagged, decision R4) and gives later columns the last patch's lump
     and offset, as the early `return` leaves them (step 2a, `ColumnEntry::Undefined`). No synthetic

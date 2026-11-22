@@ -1692,8 +1692,8 @@ separate process in `sndserv/`.
 #### 1.3.0 Which code is compiled: the build configuration (read this first)
 
 1. **The shipped build defines `SNDSERV`.** The Makefile build line is
-   `CFLAGS=-g -Wall -DNORMALUNIX -DLINUX # -DUSEASM` (Makefile:8), `CC= gcc`
-   (Makefile:6), `LIBS=-lXext -lX11 -lnsl -lm` (Makefile:10). It defines neither
+   `CFLAGS=-g -Wall -DNORMALUNIX -DLINUX # -DUSEASM` (Makefile:9), `CC= gcc`
+   (Makefile:7), `LIBS=-lXext -lX11 -lnsl -lm` (Makefile:11). It defines neither
    `SNDSERV` nor `SNDINTR` nor `USE_TIMER` on the command line. But doomdef.h:84 says
    `#define SNDSERV  1` and doomdef.h:85 is the comment `//#define SNDINTR  1` **[src]**.
    i_sound.c includes `i_sound.h` (i_sound.c:54), which includes `doomdef.h` at
@@ -1820,8 +1820,8 @@ separate process in `sndserv/`.
    sprintf(namebuf, "ds%s", sfx->name); return W_GetNumForName(namebuf);`. The longest name in
    `S_sfx` is 6 characters (checked over sounds.c:114-230), so "ds" + 6 + NUL fits in 9.
    `W_GetNumForName` calls `W_CheckNumForName` and on -1 calls
-   `I_Error ("W_GetNumForName: %s not found!", name)` (w_wad.c:399-409). Lookup is
-   case-insensitive (`strupr`, w_wad.c:370) and scans from the last lump backward, so later
+   `I_Error ("W_GetNumForName: %s not found!", name)` (w_wad.c:399-409). Lookup
+   uppercases only the query (`strupr`, w_wad.c:370) and scans from the last lump backward, so later
    (PWAD) lumps win (w_wad.c:376-386). **There is no fallback here.** It is called by
    `S_StartSoundAtVolume` when `sfx->lumpnum < 0` (s_sound.c:364-365), which `S_Init` sets for
    every sfx (s_sound.c:190-191). Hence, in every configuration, the first start of a sound
@@ -4118,7 +4118,7 @@ the prototype, **[inf]** = inference.
 
 1. **[src]** The Makefile passes only `-DNORMALUNIX -DLINUX` (Makefile:8), but doomdef.h:84 is
    `#define SNDSERV  1` (doomdef.h:85 is the comment `//#define SNDINTR  1`). doomdef.h's comment
-   (doomdef.h:76-83) calls the integrated sound "experimental, and unfinished". i_sound.c includes
+   (doomdef.h:80-81) calls the integrated sound "experimental, and unfinished". i_sound.c includes
    doomdef.h through i_sound.h:26 (i_sound.c:54) and again at i_sound.c:59, so `SNDSERV` is defined
    at every `#ifdef SNDSERV` in i_sound.c (62, 482, 695, 740).
 2. **[src]** What the shipped build does instead:
@@ -4160,7 +4160,7 @@ the prototype, **[inf]** = inference.
      (soundsrv.c:320-378, grabdata), and ignores the game's `-file` PWADs.
    - Lump lookup is a forward scan (wadread.c:203-207), where w_wad.c scans backwards.
    - A missing lump has **no pistol fallback**: `loadlump` returns 0 and leaves `size`
-     unassigned (wadread.c:209-214), so `getsfx` reallocs from an uninitialised size
+     unassigned (wadread.c:212-217), so `getsfx` reallocs from an uninitialised size
      (wadread.c:245-249). That is undefined behaviour, for example for Doom II names in a Doom 1 IWAD.
    - Priority is not sent, and the handle never travels back to the game.
    **[inf]** For the same starts landing in the same buffers, from the same lump bytes, with no

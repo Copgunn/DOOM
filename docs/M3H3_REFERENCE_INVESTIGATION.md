@@ -54,7 +54,7 @@ reuses the result; no check is removed.
 
 ## 2. Original C facts
 
-- **`P_XYMovement`** ([p_mobj.c:114](../linuxdoom-1.10/p_mobj.c)): clamps `momx`/`momy`
+- **`P_XYMovement`** ([p_mobj.c:114–191](../linuxdoom-1.10/p_mobj.c)): clamps `momx`/`momy`
   to `±MAXMOVE` (30 units) first. Then it loops: if `xmove > MAXMOVE/2 || ymove > MAXMOVE/2`
   it tries half of each component (`xmove/2`, then `>>= 1`), otherwise the whole remainder.
   Only *positive* components trigger the split, so `(-30, -30)` is one 30-unit attempt.
@@ -68,7 +68,7 @@ reuses the result; no check is removed.
   entirely on one side. A one-sided line always blocks; `ML_BLOCKING` blocks
   non-missiles. So a destination is blocked exactly when the **open** destination bbox
   contains a point of a one-sided wall segment. Touching a wall is allowed.
-- **`P_SlideMove`** ([p_map.c:560–740](../linuxdoom-1.10/p_map.c)): three corner
+- **`P_SlideMove`** ([p_map.c:560–788](../linuxdoom-1.10/p_map.c)): three corner
   traces of length `mom`, a flush move `FixedMul(mom, bestslidefrac - 0x800)`, then
   `P_HitSlideLine`, then one more `P_TryMove`, at most two retries, finally the
   stairstep (`y` then `x`). For `ST_HORIZONTAL`/`ST_VERTICAL` lines `P_HitSlideLine`
@@ -86,7 +86,7 @@ reuses the result; no check is removed.
   per tic with each component at most 10; the half-step is 5. Its momentum never changes
   until it explodes, so the `MAXMOVE/2` split is unreachable for it.
 - **BLOCKMAP** ([p_setup.c:479–487](../linuxdoom-1.10/p_setup.c),
-  [p_maputl.c:376–430](../linuxdoom-1.10/p_maputl.c)): `bmaporgx = blockmaplump[0]<<FRACBITS`,
+  [p_maputl.c:428–448, 481–486, 520–525](../linuxdoom-1.10/p_maputl.c)): `bmaporgx = blockmaplump[0]<<FRACBITS`,
   cell = `(x - bmaporgx) >> MAPBLOCKSHIFT`. `P_BlockLinesIterator`/`P_BlockThingsIterator`
   return true (nothing to check) for a cell outside `[0,bmapwidth)×[0,bmapheight)`, and
   `P_SetThingPosition` does not link a thing whose cell is outside the grid. A wall
