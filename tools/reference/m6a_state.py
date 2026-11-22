@@ -42,6 +42,23 @@ The projection (declared rules, beyond those of level_snapshot_m6a.py):
     are left out; `map.*` is digested once per level (capture 1) in the per-field framing;
   - a last load with no capture (the demo's end marker read in the load's own G_Ticker, after the gameaction
     loop: g_game.c:617-650, then 667 and 1493-1496) is no level of the comparison: no P_Ticker runs for it;
+  - the stale attacker (owner's ruling of 2026-11-22): after an exit the C leaves players[0].attacker pointing into
+    the freed level (G_PlayerFinishLevel, g_game.c:779-792, and P_SpawnPlayer, p_mobj.c:675-683, leave it), where
+    the dump writes -2 (a pointer to no thinker of the dump, tidx); it is never read before it is overwritten or
+    wiped (note section 1.2, the attacker row). A -2 in P[0].attacker is projected as NULL only when all four hold:
+    (a) it is player 0's attacker (no other reference); (b) the level was entered by a carried load
+    (start_from_rows kind 'carried'); (c) the previous level's last dump had a non-NULL attacker (not -1, before
+    this rule); (d) the value has not changed since the load: P[0].attacker is -2 and P[0].damagecount is 0 in the
+    load dump and in every dump of the level up to this one. (d) is checked through damagecount because the dump
+    names no address: the load zeroes damagecount (g_game.c:790, p_mobj.c:679) and every write of attacker
+    (p_inter.c:874) is followed in the same call by damagecount += damage (875), with damage >= 1 there; P_Ticker
+    runs the player think before the other thinkers (p_tick.c:147-150), and the only damage inside the player think,
+    P_PlayerInSpecialSector (p_user.c:275), writes NULL (p_spec.c:1026-1059) before the decrement (p_user.c:355-356);
+    so any write after the load leaves P[0] in that tic's dump with damagecount >= 1 or attacker not -2. The one
+    write a dump cannot show: at skill 0 a 1-point blast (p_map.c:1188-1194) is halved to 0 (p_inter.c:799-800), so
+    damagecount stays 0, and only if its source is also freed later in the same tic does attacker stay -2. Any other
+    -2 is still refused by the encoder (level_snapshot.py:841). The loads it fired on are counted and printed, per
+    item and in total;
   - the session points: every capture j >= 1 (the state after each level tic) is in its level's sequence digest
     (SHA-256 of the captures' state digests, 32 bytes each, in order); D rows name capture 1 (the load tic), every
     capture whose leveltime is a multiple of STRIDE, the last capture of each level (the tic before a boundary or
@@ -183,8 +200,24 @@ def p_row(d):
     return next(p for p in d.players if p['idx'] == 0)
 
 
-def levels(r, item, rule=True, bob_delta=0):
-    """Project every level of a run: [dict(load, tic, map, kind, captures [(leveltime, session tic, digest)], map)]."""
+class StaleAttacker:
+    """The stale-attacker rule of one level (module text): armed by (a) to (c) at the load, disarmed for the rest of
+    the level by the first dump that shows a change (d); `apply` projects P[0].attacker -2 as NULL while armed."""
+    def __init__(self, kind, previous_raw):
+        self.armed = kind == 'carried' and previous_raw is not None and previous_raw != -1
+        self.fired = False
+
+    def apply(self, d):
+        p = p_row(d)
+        d.raw_attacker = p['attacker']
+        if p['attacker'] != -2 or p['damagecount'] != 0: self.armed = False
+        elif self.armed: p['attacker'] = -1; self.fired = True
+        return d
+
+
+def levels(r, item, rule=True, bob_delta=0, plant=None):
+    """Project every level of a run: [dict(load, tic, map, kind, captures [(leveltime, session tic, digest)], map,
+    stale_attacker)]. `plant(k, j, last, dump)` (self-tests only) changes dump j of level k in memory first."""
     session, sound = r['session'], r['sound']
     stream = M5C.SoundStream(text=sound)
     loads = S.rows(session, 'L')
@@ -198,11 +231,13 @@ def levels(r, item, rule=True, bob_delta=0):
         names = (['load.txt'] if k == 0 else [f'loads/load_{T:05}.txt']) + [f'tic_{t:05}.txt' for t in tics if max(T, 0) <= t < end]
         load = L.Dump(str(ddir / names[0]))
         first = min(s for s, _ in load.serials.values()) if k else None
+        kind, p, _h, _s = S.start_from_rows(session, sound, k, str(item['wads'][0]))
+        stale = StaleAttacker(kind, previous.raw_attacker if previous is not None else None)
 
         def dump_at(j):
             d = load if j == 0 else L.Dump(str(ddir / names[j]))
-            return drop_previous(d, first) if k and rule else d
-        kind, p, _h, _s = S.start_from_rows(session, sound, k, str(item['wads'][0]))
+            if plant: plant(k, j, j == len(names) - 1, d)
+            return stale.apply(drop_previous(d, first) if k and rule else d)
         if kind == 'carried':
             want = {f: p_row(previous)[c] for f, c in UNRECORDED.items()}
             if {f: p_row(load)[c] for f, c in UNRECORDED.items()} != want:
@@ -226,7 +261,7 @@ def levels(r, item, rule=True, bob_delta=0):
             # in the same G_Ticker, before any P_Ticker (g_game.c:617-650, then 667 and 1493-1496)
             if k != len(loads) - 1: raise L.ProjectionError('DumpDeficiency', 0, f'load {k}: no capture')
             break
-        out.append(dict(load=k, tic=T, map=l['map'], kind=kind, captures=caps, mapg=mapg))
+        out.append(dict(load=k, tic=T, map=l['map'], kind=kind, captures=caps, mapg=mapg, stale_attacker=stale.fired))
         previous = last
     return out
 
@@ -264,7 +299,12 @@ def run_item(binary, item, work, results):
     fails = check_run(r, item, results)
     lv = levels(r, item) if (r['dumps'] / 'load.txt').exists() else []
     shutil.rmtree(work / 'runs' / name)
-    return name, rows_of(name, lv), fails, sum(len(v['captures']) for v in lv), len(lv)
+    return name, rows_of(name, lv), fails, sum(len(v['captures']) for v in lv), len(lv), stale_fired(lv)
+
+
+def stale_fired(lv):
+    """The loads of a projected run on which the stale-attacker rule fired."""
+    return sum(1 for v in lv if v['stale_attacker'])
 
 
 def results_text(per_item):
@@ -317,17 +357,18 @@ def main():
     results = json.loads(G.RESULTS.read_text())
     items = {i['name']: i for i in G.items() if i['name'] in ITEMS}
     want = [n for n in ITEMS if not a.only or n in {x.upper() for x in a.only.split(',')}]
-    per, fails, total = {}, [], [0, 0]
+    per, fails, total = {}, [], [0, 0, 0]
     with cf.ThreadPoolExecutor(max_workers=max(1, min(a.jobs, 2))) as ex:
-        for name, rows, f, caps, nlv in ex.map(lambda n: run_item(binary, items[n], work, results), want):
-            per[name] = rows; fails += f; total[0] += caps; total[1] += nlv
-            print(f'{name}: {nlv} levels, {caps} captures, {sum(r.startswith("D,") for r in rows)} D rows'
-                  + ('' if not f else '; ' + '; '.join(f)))
+        for name, rows, f, caps, nlv, fired in ex.map(lambda n: run_item(binary, items[n], work, results), want):
+            per[name] = rows; fails += f; total[0] += caps; total[1] += nlv; total[2] += fired
+            print(f'{name}: {nlv} levels, {caps} captures, {sum(r.startswith("D,") for r in rows)} D rows, '
+                  f'stale-attacker rule fired on {fired} loads' + ('' if not f else '; ' + '; '.join(f)))
     if a.selftest:
         for what, detail, ok in selftest(binary, items, work, results):
             print(f'selftest {"pass" if ok else "FAIL"}: {what}: {detail}')
             if not ok: fails.append(f'selftest: {what}')
-    print(f'{len(want)} items, {total[1]} levels, {total[0]} captures projected')
+    print(f'{len(want)} items, {total[1]} levels, {total[0]} captures projected; stale-attacker rule fired on '
+          f'{total[2]} loads')
     if fails:
         print('\n'.join(['FAILURES:'] + fails)); return 1
     if a.only:

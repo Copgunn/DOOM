@@ -160,8 +160,10 @@ def genuine(binary, mbin, item, work):
     line = (f'{name}: {item["mode"]} E1M{item["map"]} skill {item["skill"]}: genuine end {end}, compared to {res_end} after '
             f'{tics} tics; {len(G.rows(session, "L"))} loads, {len(lv)} levels, {caps} level tics, '
             f'{len(G.rows(f10, "F"))} level and {len(G.rows(f10, "G"))} other frames, {len(G.rows(sound, "S"))} sound starts, '
-            f'{sum(1 for l in mixer.splitlines() if l.startswith("b "))} buffers' + ('' if not fails else '; ' + '; '.join(fails)))
-    return dict(files=files, end=res_end, tics=tics, state=ST.rows_of(name, lv), line=line, fails=fails)
+            f'{sum(1 for l in mixer.splitlines() if l.startswith("b "))} buffers, stale-attacker rule fired on '
+            f'{ST.stale_fired(lv)} loads' + ('' if not fails else '; ' + '; '.join(fails)))
+    return dict(files=files, end=res_end, tics=tics, state=ST.rows_of(name, lv), line=line, fails=fails,
+                fired=ST.stale_fired(lv))
 
 
 def main():
@@ -200,7 +202,7 @@ def main():
             p = build_chain(binary, spec, a.mode, iwad, demos, work)
             items.append(item_for(spec[0], p, a.mode, iwad, spec[2], spec[1]))
     jobs = max(1, min(a.jobs, 2))
-    results, manifest, state, fails = {}, [], [], []
+    results, manifest, state, fails, fired = {}, [], [], [], 0
 
     def index():
         (out / 'm6a_manifest.json').write_text(json.dumps(dict(schema='DOOM-M6A-MANIFEST-v1', wadsets={'iwad': [str(iwad)]},
@@ -216,10 +218,11 @@ def main():
             results[it['name']] = dict(end=g['end'], session_tics=g['tics'])
             manifest.append(dict(name=it['name'], lump=it['lump'], mode=a.mode, wadset='iwad', map=it['map'],
                                  skill=it['skill'], lmp=str(it['lmp_path'])))
-            state += g['state']; fails += [f"{it['name']}: {f}" for f in g['fails']]
+            state += g['state']; fails += [f"{it['name']}: {f}" for f in g['fails']]; fired += g['fired']
             index()
     index()
-    print(f'{len(items)} runs, {sum(r["session_tics"] for r in results.values())} session tics compared; {len(fails)} failures')
+    print(f'{len(items)} runs, {sum(r["session_tics"] for r in results.values())} session tics compared; {len(fails)} failures; '
+          f'stale-attacker rule fired on {fired} loads')
     for f in fails: print(f)
     return 1 if fails else 0
 
