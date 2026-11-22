@@ -165,9 +165,17 @@ fn player_columns(s: &Simulation, intermission: bool) -> BTreeMap<&'static str, 
     m.insert("bonuscount", i64::from(pickups.bonus_count) * keep);
     if !intermission {
         m.insert("attackdown", i64::from(w.attack_down));
-        if let Some(c) = finish.carried {
-            m.insert("usedown", i64::from(c.use_down));
-        }
+        // A living player's `usedown` is what it carries; a dead one's is read from the capture
+        // (`P_PlayerThink` returns through `P_DeathThink` before its use block, p_user.c:249-262).
+        let usedown = match finish.carried {
+            Some(c) => c.use_down,
+            None => s
+                .snapshot()
+                .fields()
+                .find(|f| f.path() == "original_player.0.use_down")
+                .is_some_and(|f| f.value() == [1]),
+        };
+        m.insert("usedown", i64::from(usedown));
     }
     m
 }
