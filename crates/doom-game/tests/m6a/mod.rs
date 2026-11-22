@@ -304,3 +304,10 @@ pub fn read_sound(name: &str) -> GenuineSound {
     }
     g
 }
+
+/// The items of the owner's rulings of 2026-11-22 (`tools/reference/m6a_wad.py`, goldens from the
+/// genuine engine like every other item): `TURBO` (ruling 1: the turbo message tests the session's
+/// `gametic`, g_game.c:671-679, across a world-done load, a reborn reload and on load tics) and
+/// `INTCMD` (ruling 2: intermission commands outside wire 24's level domain, which the C ignores
+/// but for bits 0 and 1 of the buttons, wi_stuff.c:1470-1498).
+pub const RULING_ITEMS: [&str; 2] = ["TURBO", "INTCMD"];

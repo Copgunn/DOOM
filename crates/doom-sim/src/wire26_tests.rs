@@ -372,3 +372,79 @@ fn dsim42_reader_round_trip_and_refusals() {
     set(&mut g, "level.start.health", 99_i32.to_le_bytes().to_vec());
     assert_eq!(read(&g), Some(DiagnosticError::Schema));
 }
+
+/// Owner's ruling 1 of 2026-11-22: under wire 26 the turbo test (`forwardmove > 50` on a
+/// `gametic` that is a multiple of 128, g_game.c:671-679) reads the load's `gametic` (the
+/// `G_Ticker` that runs the load and tic 0, `levelstarttic`, g_game.c:470) plus the level tic.
+/// A forward of 60 at level tic 0, 64 or 128 of a level loaded at gametic 0 assigns the message
+/// at tics 0 and 128 (wire 25's count); of the same level loaded at gametic 64, at tic 64 only.
+/// DSIM42 records the start gametic as `level.start.gametic`, the group's last field (after the
+/// load's records); a value above `i32::MAX` (`int gametic`, g_game.c:123) is refused by the
+/// constructor and by the reader, and the reader refuses the group without it.
+#[test]
+fn the_turbo_test_reads_the_start_gametic() {
+    let at = |gametic| {
+        Simulation::original_player_episode1_v4_level_at(
+            base().map(),
+            1,
+            Skill::Medium,
+            MapContextOptions::default(),
+            LevelStart::Reborn { p_random: 3 },
+            gametic,
+        )
+    };
+    let turbo = TicCommand {
+        forward: 60,
+        ..TicCommand::default()
+    };
+    for start in [0_u64, 64] {
+        for probe in [0_u64, 64, 128] {
+            let mut s = at(start).unwrap();
+            assert_eq!(s.level_start_gametic(), Some(start));
+            for _ in 0..probe {
+                step(&mut s).unwrap();
+            }
+            s.advance([
+                turbo,
+                TicCommand::default(),
+                TicCommand::default(),
+                TicCommand::default(),
+            ])
+            .unwrap();
+            let message = s.original_player.as_ref().unwrap().pickups.unwrap().message;
+            assert_eq!(
+                message == PickupMessage::Turbo,
+                (start + probe) % 128 == 0,
+                "start {start}, level tic {probe}: {message:?}"
+            );
+        }
+    }
+    assert_eq!(at(1 << 31).err(), Some(LevelStartError::Gametic));
+    let s = at(i32::MAX as u64).unwrap();
+    let f = fields(&s);
+    let last = f
+        .iter()
+        .rposition(|(p, _)| p.starts_with("level.start."))
+        .unwrap();
+    assert_eq!(f[last].0, "level.start.gametic");
+    assert_eq!(f[last].1, (i32::MAX as u64).to_le_bytes());
+    let limits = DiagnosticLimits::default();
+    let read =
+        |f: &[(String, Vec<u8>)]| Diagnostic::decode_episode1_v4(&encode(42, f), limits).err();
+    assert_eq!(read(&f), None);
+    let mut x = f.clone();
+    set(
+        &mut x,
+        "level.start.gametic",
+        (1_u64 << 31).to_le_bytes().to_vec(),
+    );
+    assert_eq!(read(&x), Some(DiagnosticError::Schema));
+    let mut x = f;
+    x.retain(|(p, _)| p != "level.start.gametic");
+    assert_eq!(read(&x), Some(DiagnosticError::Structure));
+    // The constructor without a gametic loads at 0: a new game is wire 25's start.
+    assert_eq!(
+        level(LevelStart::NewGame).unwrap().level_start_gametic(),
+        Some(0)
+    );
+}

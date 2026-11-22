@@ -12,9 +12,13 @@
 //! - **refusals** leave the session unchanged (its encoding equal before and after): the genuine
 //!   stops (a missing `D_INTER` on the intermission's first tic, a missing later map's music on
 //!   its load tic), `BT_SPECIAL` in a replayed command, the E1M8 victory (the finale is built after
-//!   the owner's hand test), a later map that does not load or is not admitted at its load tic, a
-//!   missing intermission picture (`WI_loadData`'s `I_Error`), and the turbo message whose
-//!   `gametic` and `leveltime` tests disagree;
+//!   the owner's hand test), a later map that does not load or is not admitted at its load tic, and
+//!   a missing intermission picture (`WI_loadData`'s `I_Error`); the turbo message whose `gametic`
+//!   and `leveltime` tests disagree is no longer refused (owner's ruling 1 of 2026-11-22);
+//! - **the command domain** (owner's ruling 2 of 2026-11-22): wire 24's on a level or load tic,
+//!   everything but `BT_SPECIAL` on an intermission tic, the completion tic included;
+//! - **`DSES` and the start `gametic`**: a level whose `level.start.gametic` is not the sound's
+//!   `levelstarttic` is refused at restore;
 //! - **the declared game mode** (ruling U4): the probe, the forced setting, and the mode token of
 //!   a session demo's file name.
 mod m6a;
@@ -380,19 +384,18 @@ fn refusals_leave_the_session_unchanged() {
         assert_eq!(w, SessionWitness::Special);
     }
     // The turbo message where gametic and leveltime disagree (E1M2's level tic 0 is session
-    // tic 142, so session tic 256 is level tic 114): refused; the same command at a tic where
-    // both tests agree is not.
+    // tic 142, so session tic 256 is level tic 114) is not refused (owner's ruling 1 of
+    // 2026-11-22: the level tests the session's gametic; the genuine comparison is the TURBO
+    // item, tests/m6a_session.rs).
     let turbo = TicCommand {
         forward: 60,
         ..TicCommand::default()
     };
-    let w = refused_at(new_session(&chain, data.clone()), &cmds, 256, Some(turbo));
-    assert_eq!(w, SessionWitness::Turbo);
     let mut s = new_session(&chain, data.clone());
-    for &c in &cmds[..150] {
+    for &c in &cmds[..256] {
         s.tic(c).expect("tic");
     }
-    s.tic(turbo).expect("both tests agree: no refusal");
+    s.tic(turbo).expect("ruling 1: no refusal");
     // A later map that does not load at its load tic (E1M2's marker renamed).
     let mut broken = wads.clone();
     broken[0] = rename(broken[0].clone(), "E1M2", "E1MX");
@@ -613,4 +616,113 @@ fn the_session_demo_across_levels() {
         end.map(|e| (e.tic, e.witness)),
         Some((200, SessionWitness::Special))
     );
+}
+
+/// Owner's ruling 2 of 2026-11-22: a command is judged by what reads it. On a level tic (CHAIN
+/// tic 100) and a load tic (tic 142, E1M2's) a command outside wire 24's domain is refused; on
+/// the completion tic (126) and every later intermission tic (127 to 141) the same kind of
+/// command is accepted and ignored but for bits 0 and 1 of its buttons
+/// (`WI_checkForAccelerate`, wi_stuff.c:1470-1498): CHAIN with each intermission command
+/// replaced by one with a forward of 100, a side of -128, a turn with a low byte and the buttons
+/// bits 2 to 6 set (its press bits kept) gives byte-equal saved sessions and frames on every tic
+/// from the first intermission tic to the end of the demo. `BT_SPECIAL` stays refused in the
+/// intermission (`refusals_leave_the_session_unchanged`, tics 130 and 141).
+#[test]
+fn the_command_domain_follows_the_reader() {
+    let chain = m6a::item("CHAIN");
+    let cmds = commands(&chain);
+    let data = data_of(
+        &chain,
+        &wad_bytes(&chain),
+        ModeSetting::Force(SessionMode::Registered),
+    );
+    let odd = |c: TicCommand| TicCommand {
+        forward: 100,
+        side: i8::MIN,
+        angle_turn: 0x1234,
+        buttons: (c.buttons & 3) | 0x7c,
+    };
+    for upto in [100, 142] {
+        let w = refused_at(
+            new_session(&chain, data.clone()),
+            &cmds,
+            upto,
+            Some(odd(TicCommand::default())),
+        );
+        assert_eq!(w, SessionWitness::Command, "tic {upto}");
+    }
+    let (mut plain, mut bent) = (
+        new_session(&chain, data.clone()),
+        new_session(&chain, data.clone()),
+    );
+    let mut intermission = 0;
+    for (t, &c) in cmds.iter().enumerate() {
+        let in_wi = (126..142).contains(&t);
+        plain.tic(c).expect("tic");
+        bent.tic(if in_wi { odd(c) } else { c })
+            .unwrap_or_else(|e| panic!("tic {t}: {e}"));
+        intermission += usize::from(in_wi);
+        if t >= 126 {
+            assert_eq!(
+                sha256(bent.frame().pixels()),
+                sha256(plain.frame().pixels()),
+                "tic {t}: frame"
+            );
+            if t <= 160 || t + 1 == cmds.len() {
+                assert_eq!(
+                    bent.save().expect("save").encode(),
+                    plain.save().expect("save").encode(),
+                    "tic {t}: saved session"
+                );
+            }
+        }
+    }
+    assert_eq!(intermission, 16);
+}
+
+/// `DSES` restore checks the level's `level.start.gametic` (wire 26, owner's ruling 1 of
+/// 2026-11-22) against the sound's `levelstarttic` (`levelstarttic = gametic`, g_game.c:470):
+/// INTFAST's first level (E1M7, a new game at session tic 0) rebuilt at gametic 128 and run with
+/// the same 30 commands has a capture that differs in that field alone, and its restore is
+/// refused.
+#[test]
+fn dses_refuses_a_start_gametic_that_is_not_levelstarttic() {
+    let (data, _wi, _frozen, lv, level) = intfast_states();
+    let st = SessionState::decode(&lv).expect("decode");
+    assert!(Session::restore(data.clone(), &st, level.clone()).is_ok());
+    let item = m6a::item("INTFAST");
+    let wads = wad_bytes(&item);
+    let wad = doom_wad::Wad::parse(&wads[0], doom_wad::Limits::default()).expect("wad");
+    let map = doom_map::Map::from_wad(&wad, "E1M7", doom_map::MapLimits::default()).expect("map");
+    let mut sim = doom_sim::Simulation::original_player_episode1_v4_level_at(
+        map,
+        7,
+        doom_sim::Skill::Medium,
+        doom_sim::MapContextOptions::default(),
+        doom_sim::LevelStart::NewGame,
+        128,
+    )
+    .expect("level");
+    let none = TicCommand::default();
+    for &c in &commands(&item)[..30] {
+        sim.advance([c, none, none, none]).expect("tic");
+    }
+    assert_eq!(level.level_start_gametic(), Some(0));
+    assert_eq!(sim.level_start_gametic(), Some(128));
+    let differing: Vec<String> = level
+        .snapshot()
+        .fields()
+        .zip(sim.snapshot().fields())
+        .filter(|(a, b)| a.value() != b.value())
+        .map(|(a, _)| a.path().to_owned())
+        .collect();
+    assert_eq!(differing, ["level.start.gametic"]);
+    let mut forged = st.clone();
+    forged.level = sim.snapshot().canonical_bytes();
+    assert!(matches!(
+        Session::restore(data, &forged, sim),
+        Err(DsesError::Inconsistent(
+            "the level's start gametic and levelstarttic"
+        ))
+    ));
 }

@@ -6,7 +6,7 @@
 //! What each test proves, and what it does not:
 //!
 //! - **The drawer alone** (`intermission_frames_against_the_genuine_digests`): every intermission
-//!   frame of the 26 items at screenblocks 10 and 11, drawn from the intermission state the
+//!   frame of the 28 items at screenblocks 10 and 11, drawn from the intermission state the
 //!   genuine session rows record (the J and I rows: an explicit fixture projection, since the
 //!   Rust intermission logic is the next step), against the genuine whole-frame digest. The
 //!   pointer state `snl_pointeron` is not taken from the rows: it follows the logic's rule
@@ -95,8 +95,10 @@ fn intermission_frames_against_the_genuine_digests() {
 
 /// Intermission frames in the committed goldens (both screen sizes), and ShowNextLoc entry frames
 /// with the pointer hidden (the first of each process) and shown (later ones), both screen sizes.
-const INTERMISSION_FRAMES: usize = 5774;
-const POINTER_ENTRIES: (usize, usize) = (30, 46);
+/// The ruling items TURBO and INTCMD (2026-11-22) add 2 x 198 and 2 x 111 frames and (2 x 2, 2 x 1)
+/// entries (counted from their genuine G and J rows).
+const INTERMISSION_FRAMES: usize = 6392;
+const POINTER_ENTRIES: (usize, usize) = (34, 48);
 
 /// The first WAD of an item holds its maps. With `carrier`, every W1 exit line (special 52,
 /// g_game.c:1002-1006 through p_spec.c:677-680) is cleared, the one line special of the synthetic
@@ -376,15 +378,18 @@ fn random_index_through_the_chain() {
     assert_eq!(not_driven, NOT_DRIVEN);
 }
 
-/// What the drive of the 23 items compares (screenblocks 10): every tic's index, the 102 wipes up
+/// What the drive of the 25 items compares (screenblocks 10): every tic's index, the 111 wipes up
 /// to the first finale frame, every intermission frame through the display, and the level frames
-/// of the items whose start map the wire-25 simulation admits unmodified.
+/// of the items whose start map the wire-25 simulation admits unmodified. The ruling items
+/// (2026-11-22) add TURBO's 1,183 tics, 6 wipes, 198 intermission frames and its first level's
+/// 126 frames (E1M1), and INTCMD's 188 tics, 3 wipes and 111 intermission frames (its E1M7 holds a
+/// walk exit, so it is a carrier), counted from their genuine rows.
 const CHAIN_COUNTS: Counts = Counts {
-    tics: 9724,
-    index_equal: 9724,
-    wipes: 102,
-    intermission_frames: 2855,
-    level_frames: 2234,
+    tics: 11095,
+    index_equal: 11095,
+    wipes: 111,
+    intermission_frames: 3164,
+    level_frames: 2360,
     level_flagged: 0,
     finales: 3,
 };

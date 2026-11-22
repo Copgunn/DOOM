@@ -912,3 +912,63 @@ fn chain_in_retail_against_the_genuine_goldens() {
         assert_eq!(o.counts.tics, 831);
     }
 }
+
+/// The items of the owner's rulings of 2026-11-22 ([`m6a::RULING_ITEMS`]) through the same gate
+/// as the level chain, at both screen sizes: every G, C, I and J row, every level and
+/// intermission frame (whole digest; `message_on` in the P row, so the turbo message's tics are
+/// compared), every sound row and mixer buffer, and the demo's end.
+///
+/// - `TURBO`: a forward move of 100 on E1M2's load tic (session tic 192, `gametic` mod 128 = 64,
+///   so no message), around its leveltime 128 (no message) and around `gametic` 384 (the
+///   message); the same after the reborn reload on tic 672 (`gametic` mod 128 = 32: no message on
+///   the reload tic or around leveltime 128, the message at `gametic` 896); and E1M3's load tic
+///   1152 with the message, set after `P_SpawnPlayer`'s clear (p_mobj.c:676) in the load's own
+///   `G_Ticker` (g_game.c:617-650, then 671-679).
+/// - `INTCMD`: every tic of the intermission after the E1M7 exit carries a command outside wire
+///   24's level domain (sides of -128, turns, forward moves up to 127, buttons with bit 0x40 and
+///   weapon bits without `BT_CHANGE`; forward 100 across `gametic` 128, whose turbo message no
+///   frame shows), and its presses are rising edges of bits 0 and 1 only.
+#[test]
+fn the_ruling_items_against_the_genuine_goldens() {
+    let mut total = Counts::default();
+    for name in m6a::RULING_ITEMS {
+        let item = m6a::item(name);
+        for sb in [10, 11] {
+            let o = run_item(&item, sb, None);
+            eprintln!("{name} sb{sb}: {:?}", o.counts);
+            assert!(o.first_difference.is_none(), "{:?}", o.first_difference);
+            assert_eq!(o.counts.tics, item.session_tics, "{name}: every tic");
+            total.add(&o.counts);
+        }
+    }
+    eprintln!("ruling items, 2 items x 2 screen sizes: {total:?}");
+}
+
+/// The rulings' comparisons can fail, each at the first place the old behaviour shows:
+/// `PlantedFault::TurboLeveltime` (every load at `gametic` 0, so the turbo test reads
+/// `leveltime`, step 7's model without its refusal) shows the message on TURBO's E1M2 load tic
+/// 192, where the genuine frame has none; `PlantedFault::IntermissionDomain` (wire 24's domain in
+/// every game state, step 7's rule) refuses INTCMD's first intermission tic 56, which the genuine
+/// engine runs.
+#[test]
+fn the_ruling_faults_are_caught() {
+    let o = run_item(&m6a::item("TURBO"), 10, Some(PlantedFault::TurboLeveltime));
+    let d = o.first_difference.expect("TurboLeveltime caught");
+    eprintln!("TURBO TurboLeveltime: {}", d.lines().next().unwrap_or(""));
+    assert!(
+        d.starts_with("TURBO sb10 tic 192:"),
+        "caught elsewhere: {d}"
+    );
+    let o = run_item(
+        &m6a::item("INTCMD"),
+        10,
+        Some(PlantedFault::IntermissionDomain),
+    );
+    let end = o.end.expect("refused");
+    eprintln!("INTCMD IntermissionDomain: {end}");
+    assert_eq!((end.tic, end.witness), (56, SessionWitness::Command));
+    assert!(
+        o.first_difference.is_some(),
+        "the early end is a difference"
+    );
+}

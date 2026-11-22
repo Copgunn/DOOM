@@ -45,6 +45,14 @@ const M6A_ITEMS: [(&str, &str); 18] = [
     ("NOE1M2AT", "m6a_wads/episode.wad"),
 ];
 
+/// The items of the owner's rulings of 2026-11-22 (TURBO, the turbo message on the session's
+/// gametic; INTCMD, intermission commands outside the level domain), whose first level is a new
+/// game like the chain items'.
+const M6A_RULING_ITEMS: [(&str, &str); 2] = [
+    ("TURBO", "m6a_wads/episode.wad"),
+    ("INTCMD", "m6a_wads/episode.wad"),
+];
+
 fn run(wad: &str, lmp: &str) -> wire26::Outcome {
     let reference = root().join("tests/reference");
     let bytes = std::fs::read(reference.join(wad)).expect("wad");
@@ -121,6 +129,7 @@ fn the_m6a_item_table_is_the_session_golden_set() {
     goldens.sort();
     let mut lumps: Vec<String> = M6A_ITEMS
         .iter()
+        .chain(M6A_RULING_ITEMS.iter())
         .map(|i| i.0)
         .chain(M6A_NOT_CHAIN.iter().map(|i| i.0))
         .map(str::to_owned)
@@ -134,7 +143,7 @@ fn the_m6a_item_table_is_the_session_golden_set() {
         "an item is both a chain item and named apart"
     );
     assert_eq!(goldens, lumps);
-    assert_eq!((M6A_ITEMS.len(), goldens.len()), (18, 26));
+    assert_eq!((M6A_ITEMS.len(), goldens.len()), (18, 28));
 }
 
 /// The first level of every M6a chain item (its demo runs on past the level; both
@@ -159,4 +168,17 @@ fn wire26_new_game_projects_to_wire25_on_every_m6a_first_level() {
          walk exit refused by wire 25 alone",
         M6A_ITEMS.len()
     );
+}
+
+/// The first level of each ruling item, as the chain items' above.
+#[test]
+fn wire26_new_game_projects_to_wire25_on_the_ruling_items_first_levels() {
+    for (lump, wad) in M6A_RULING_ITEMS {
+        let out = run(wad, &format!("m6a_scripts/{lump}.lmp"));
+        println!(
+            "{lump}: {} captures, refused {:?}, load refused {:?}, wire 25 alone refused {:?}",
+            out.captures, out.refused, out.load_refused, out.wire25_only_refused
+        );
+        assert_eq!(out.load_refused, None, "{lump}");
+    }
 }

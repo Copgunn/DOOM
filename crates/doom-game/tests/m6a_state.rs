@@ -236,7 +236,10 @@ fn hex(d: &[u8; 32]) -> String {
 fn the_session_level_state_equals_the_genuine_engine() {
     let golden = golden();
     assert_eq!(
-        golden.keys().cloned().collect::<Vec<_>>().len(),
+        golden
+            .keys()
+            .filter(|k| m6a::CHAIN_ITEMS.contains(&k.as_str()))
+            .count(),
         m6a::CHAIN_ITEMS.len() - 1,
         "every chain item but NOE1M2AT (no level) has levels in the golden"
     );
@@ -282,6 +285,50 @@ fn the_state_comparison_catches_what_the_rows_miss() {
     eprintln!("CHAIN CarriedBob: {d}");
     assert!(
         d.contains("CHAIN load 1: session tic 142 (level tic 0, load): state differs"),
+        "{d}"
+    );
+}
+
+/// The items of the owner's rulings of 2026-11-22 ([`m6a::RULING_ITEMS`]: TURBO, the turbo
+/// message on the C's `gametic` across loads, and INTCMD, intermission commands outside the
+/// level domain), every level tic, whole state; and the golden holds exactly the chain items and
+/// these.
+#[test]
+fn the_ruling_items_level_state_equals_the_genuine_engine() {
+    let golden = golden();
+    let mut names: Vec<&str> = m6a::CHAIN_ITEMS
+        .iter()
+        .chain(m6a::RULING_ITEMS.iter())
+        .copied()
+        .filter(|n| *n != "NOE1M2AT")
+        .collect();
+    names.sort_unstable();
+    assert_eq!(golden.keys().map(String::as_str).collect::<Vec<_>>(), names);
+    for name in m6a::RULING_ITEMS {
+        let o = compare(&m6a::item(name), None, &golden[name]);
+        eprintln!(
+            "{name}: {} levels, {} captures, {} points",
+            o.levels, o.captures, o.points
+        );
+        assert!(o.first_difference.is_none(), "{:?}", o.first_difference);
+        assert_eq!(o.levels, golden[name].len());
+    }
+}
+
+/// `PlantedFault::TurboLeveltime` (every load at `gametic` 0): the state gate catches it at
+/// TURBO's first later load, where `level.start.gametic` and the turbo message both differ.
+#[test]
+fn the_state_comparison_catches_the_turbo_leveltime_fault() {
+    let golden = golden();
+    let o = compare(
+        &m6a::item("TURBO"),
+        Some(PlantedFault::TurboLeveltime),
+        &golden["TURBO"],
+    );
+    let d = o.first_difference.expect("caught");
+    eprintln!("TURBO TurboLeveltime: {d}");
+    assert!(
+        d.contains("TURBO load 1: session tic 192 (level tic 0, load): state differs"),
         "{d}"
     );
 }

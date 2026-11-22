@@ -401,12 +401,14 @@ fn replay_item_with(lump: &str, wad_path: &str, counts: &mut Counts, fault: Faul
             doom_map::MapLimits::default(),
         )
         .expect("map");
-        let mut sim = match Simulation::original_player_episode1_v4_level(
+        // The load's `gametic` (`levelstarttic`, g_game.c:470) from the genuine L row.
+        let mut sim = match Simulation::original_player_episode1_v4_level_at(
             map,
             map_number,
             wire26::skill(skill),
             MapContextOptions::default(),
             start,
+            int(l, "levelstarttic") as u64,
         ) {
             Ok(sim) => sim,
             Err(LevelStartError::Registry(e)) => {
