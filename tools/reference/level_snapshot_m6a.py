@@ -29,6 +29,8 @@ imports as a library and never edits, with exactly these differences:
     level.start.flash_y       i32  psprites[ps_flash].sy
     level.start.sounds.count  u64
     level.start.sounds.<i>         a DSIM41 sound record each
+    level.start.gametic       u64  gametic in the G_Ticker of the load and the level's tic 0 (levelstarttic,
+                                   g_game.c:470); at most INT_MAX (int gametic, g_game.c:123)
 
 What the fields hold (linuxdoom-1.10):
 
@@ -41,7 +43,13 @@ What the fields hold (linuxdoom-1.10):
   (p_setup.c:594-604), P_SpawnPlayer (p_mobj.c:642-700) and P_SetupPsprites (p_pspr.c:831-842) leave;
 - the load's sound records: exactly one, `sfx_sawup` at the player's mobj without a placement
   (P_BringUpWeapon, p_pspr.c:145-146; an origin that is the listener is not placed, s_sound.c:302),
-  when a carried ready weapon is the chainsaw, none otherwise (a fresh player's is the pistol).
+  when a carried ready weapon is the chainsaw, none otherwise (a fresh player's is the pistol);
+- the start gametic (owner's ruling 1 of 2026-11-22): G_Ticker's turbo test reads gametic
+  (g_game.c:671-679), and a level loaded inside a G_Ticker runs its tic 0 at that G_Ticker's gametic,
+  so the level's future turbo messages depend on it. From the session stream it is the load's L row
+  `levelstarttic` (written at g_game.c:470 before P_SetupLevel, 484); from dumps it is the H row's
+  gametic minus leveltime, the same for every dump of a level (the runner dumps after gametic++, and
+  P_Ticker counts leveltime once per level tic), which the projector requires.
 
 From genuine rows (`start_from_rows`): the session stream (DOOM-M6A-SESSION-v1) gives each load's L row
 (map, skill, prndindex_before) and the C row of the tic before the load (the last intermission tic,
@@ -135,9 +143,10 @@ def sawup_record(handle):
     return b'\1' + n('H', SFX_SAWUP) + b'\1' + struct.pack('<IQ', *handle) + b'\0'
 
 
-def start_fields(kind, p, handle):
+def start_fields(kind, p, handle, gametic):
     """The DSIM42 start group of a load: `kind` in KINDS, `p` the player dict, `handle` the player's
-    (slot, generation)."""
+    (slot, generation), `gametic` the load's (module text)."""
+    if not 0 <= gametic <= 0x7fffffff: raise ProjectionError('Unadmitted', 'load', f'a start gametic {gametic}')
     if kind == 'new': assert p == fresh(0), 'a new game holds the fresh player and index 0'
     elif kind == 'reborn': assert p == fresh(p['p_random']), 'a reborn start holds the fresh player'
     else: check_carried(p, 'load')
@@ -155,6 +164,7 @@ def start_fields(kind, p, handle):
           (START + 'flash_tics', i(p['flash_tics'])), (START + 'flash_x', i(p['flash_x'])),
           (START + 'flash_y', i(p['flash_y'])), (START + 'sounds.count', n('Q', int(saw)))]
     if saw: f.append((START + 'sounds.0', sawup_record(handle)))
+    f.append((START + 'gametic', n('Q', gametic)))
     return f
 
 
@@ -235,6 +245,11 @@ def start_from_rows(session, sound, load_index, wad):
     return kind, p, handle, saws
 
 
+def start_gametic(session, load_index):
+    """The start gametic of load `load_index`: its L row's levelstarttic (module text)."""
+    return rows(session, 'L')[load_index]['levelstarttic']
+
+
 def items():
     man = json.loads(MANIFEST.read_text())
     out = []
@@ -256,7 +271,7 @@ def results():
         session, sound = session_path.read_text(), sound_path.read_text()
         for k, l in enumerate(rows(session, 'L')):
             kind, p, handle, saws = start_from_rows(session, sound, k, wad)
-            fields = start_fields(kind, p, handle)
+            fields = start_fields(kind, p, handle, start_gametic(session, k))
             want = int(kind == 'carried' and p['ready'] == WP_CHAINSAW)
             if saws != want:
                 raise ProjectionError('Unadmitted', l['tic'], f'{name}: {saws} load sawup rows, expected {want}')
@@ -268,21 +283,27 @@ def results():
 class Projector(M5C.Projector):
     """The DSIM42 projector of one level's dumps: the DSIM41 projection with the DSIM42 header, the
     secretexit rule of the module text and the start group `start` = (kind, player) appended after the
-    last `events.sounds` field; the player's handle comes from the projection's store."""
+    last `events.sounds` field; the player's handle comes from the projection's store and the start
+    gametic from the dumps (H gametic - leveltime, constant over the level)."""
     def __init__(self, mapdata, skill, map_number, sounds, start):
         super().__init__(mapdata, skill, map_number, sounds)
         self.profile = EPISODE1V4
         self.start = start
+        self.gametic = None
 
     def step(self, dump, following=None):
         h = dump.h
         if h.get('secretexit') and h['gameaction'] != L.GA_COMPLETED: h['secretexit'] = 0
+        g = h['gametic'] - h['leveltime']
+        if self.gametic is None: self.gametic = g
+        elif g != self.gametic:
+            raise ProjectionError('DumpDeficiency', dump.tic, f'start gametic {g}, the level\'s first dump {self.gametic}')
         fields, report = super().step(dump, following)
         player = next((e for e in self.entries if e.cls == 'actor' and e.row.get('player') == 0), None)
         if player is None: raise ProjectionError('DumpDeficiency', dump.tic, 'no player mobj')
         k = 1 + max(i for i, (p, _) in enumerate(fields) if p.startswith('events.sounds.'))
         kind, p = self.start
-        return fields[:k] + start_fields(kind, p, self.actors.handles[player.serial]) + fields[k:], report
+        return fields[:k] + start_fields(kind, p, self.actors.handles[player.serial], self.gametic) + fields[k:], report
 
 
 def compare41(f42, f41):
@@ -300,17 +321,22 @@ def selftest():
     checks = 0
     base = dict(fresh(9), health=150, armor_points=200, armor_type=1, owned=0b10001111, ready=7,
                 ammo=[400, 7, 0, 3], max_ammo=[400, 100, 600, 100], backpack=1, attack_down=0, flash_tics=7)
-    f = start_fields('carried', base, (3, 1))
-    assert len(f) == 26 and f[-1] == (START + 'sounds.0', sawup_record((3, 1))); checks += 1
-    assert len(start_fields('carried', dict(base, ready=1), (3, 1))) == 25; checks += 1
+    f = start_fields('carried', base, (3, 1), 7)
+    assert len(f) == 27 and f[-2] == (START + 'sounds.0', sawup_record((3, 1))) and f[-1] == (START + 'gametic', n('Q', 7))
+    checks += 1
+    assert len(start_fields('carried', dict(base, ready=1), (3, 1), 0)) == 26; checks += 1
+    for g in (-1, 0x80000000):
+        try: start_fields('carried', base, (3, 1), g)
+        except ProjectionError: checks += 1
+        else: raise AssertionError(f'not refused: start gametic {g}')
     for change in [dict(health=0), dict(health=201), dict(armor_type=0), dict(armor_points=201), dict(owned=0b10001101),
                    dict(ready=5), dict(ammo=[401, 7, 0, 3]), dict(max_ammo=list(MAXAMMO)), dict(cheats=1),
                    dict(bob=MAXBOB + 1), dict(flash_tics=8), dict(weapon_x=18 * 65536)]:
-        try: start_fields('carried', dict(base, **change), (3, 1))
+        try: start_fields('carried', dict(base, **change), (3, 1), 0)
         except ProjectionError: checks += 1
         else: raise AssertionError(f'not refused: {change}')
     for kind, p in [('new', fresh(1)), ('reborn', dict(fresh(4), health=99))]:
-        try: start_fields(kind, p, (0, 1))
+        try: start_fields(kind, p, (0, 1), 0)
         except AssertionError: checks += 1
         else: raise AssertionError(f'not refused: {kind}')
     things = b''.join(struct.pack('<hhhhh', 0, 0, 0, t, o) for t, o in [(11, 7), (2, 7), (3001, 16 | 7), (3001, 4),
