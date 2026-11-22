@@ -132,7 +132,8 @@ impl Rows {
                     .or_insert_with(|| f[2..].iter().map(|s| (*s).to_owned()).collect());
                 continue;
             }
-            if f[0].starts_with('#') {
+            if f[0].starts_with('#') || f[0] == "Z" {
+                // Z: the totals row, name-value pairs of its own width.
                 continue;
             }
             let Some(names) = columns.get(f[0]) else {
@@ -185,4 +186,121 @@ pub fn list(row: &BTreeMap<String, String>, name: &str) -> Vec<i64> {
         .split(' ')
         .map(|v| v.parse().expect("number"))
         .collect()
+}
+
+/// One frame of an M6a frames golden (DOOM-M5C-FRAMES-v1 with the M6a `G` rows): a level frame
+/// (the M5c F, M, P and Q rows) or a frame outside a level (the M6a G row).
+#[derive(Clone, Debug, Default)]
+pub struct GoldenFrame {
+    /// `gamestate` (0 for a level frame).
+    pub gamestate: i64,
+    /// The whole-frame digest.
+    pub sha256: String,
+    /// A level frame's F row: `fuzzpos`, `mapped`, `visplanes`, `drawsegs`, `vissprites`,
+    /// `openings`, `solidsegs_peak`, `drawseg_drops`, `vissprite_drop` (flagged columns and the
+    /// whole-frame exclusion are 0 in every M6a golden, asserted).
+    pub f: Vec<i64>,
+    /// The lines newly mapped (M rows).
+    pub mapped: Vec<u16>,
+    /// P row: palette, palette set, face, `message_on`, `rndindex` (level frames); for a G row
+    /// palette, palette set and `rndindex` only.
+    pub status: Vec<i64>,
+    /// Q row: the face-zeroed digest, cumulative sound and wipe draws, the face rectangle.
+    pub noface: String,
+    /// See [`GoldenFrame::noface`].
+    pub q: [i64; 6],
+}
+
+/// Reads `tests/reference/m6a_frames/<name>.sb<sb>.frames`: the frames by tic, and the E row
+/// (the genuine engine's stop) if any.
+pub fn read_frames(name: &str, sb: u8) -> (BTreeMap<i64, GoldenFrame>, Option<String>) {
+    let path = format!("tests/reference/m6a_frames/{name}.sb{sb}.frames");
+    let text = std::fs::read_to_string(root(&path)).expect("frames");
+    let mut out: BTreeMap<i64, GoldenFrame> = BTreeMap::new();
+    let mut error = None;
+    for l in text.lines() {
+        let c: Vec<&str> = l.split(',').collect();
+        if c[0].starts_with('#') {
+            continue;
+        }
+        let n = |i: usize| {
+            c[i].parse::<i64>()
+                .unwrap_or_else(|_| panic!("{name}: {l}"))
+        };
+        match c[0] {
+            "F" => {
+                let g = GoldenFrame {
+                    sha256: c[2].into(),
+                    f: [4, 5, 7, 8, 9, 10, 11, 12]
+                        .into_iter()
+                        .map(n)
+                        .chain([i64::from(c[13] == "1")])
+                        .collect(),
+                    ..GoldenFrame::default()
+                };
+                assert_eq!(
+                    c[6], "0",
+                    "{name}: no flagged column in the M6a goldens: {l}"
+                );
+                assert_eq!(c[14], "0", "{name}: no whole-frame exclusion: {l}");
+                assert!(out.insert(n(1), g).is_none(), "{name}: {l}");
+            }
+            "M" => {
+                out.get_mut(&n(1)).expect("M after F").mapped =
+                    c[2].split(' ').map(|v| v.parse().expect("line")).collect();
+            }
+            "P" => out.get_mut(&n(1)).expect("P after F").status = (2..=6).map(n).collect(),
+            "Q" => {
+                let g = out.get_mut(&n(1)).expect("Q after F");
+                g.noface = c[2].into();
+                g.q = std::array::from_fn(|i| n(3 + i));
+            }
+            "G" => {
+                let g = GoldenFrame {
+                    gamestate: n(2),
+                    sha256: c[3].into(),
+                    status: vec![n(4), n(5), n(6)],
+                    ..GoldenFrame::default()
+                };
+                assert!(out.insert(n(1), g).is_none(), "{name}: {l}");
+            }
+            "E" => error = Some(c[2..].join(",")),
+            "U" | "O" | "D" | "W" => panic!("{name}: unexpected row {l}"),
+            _ => {}
+        }
+    }
+    (out, error)
+}
+
+/// The genuine sound stream of an item (`tests/reference/m6a_sound/<name>.sound`): the S, T, K,
+/// L, C and R rows by tic, the loads (LV rows: tic → map) and the E row (tic, message).
+#[derive(Default)]
+pub struct GenuineSound {
+    /// Rows by tic.
+    pub by_tic: BTreeMap<i64, Vec<String>>,
+    /// Loads after the first.
+    pub loads: BTreeMap<i64, u8>,
+    /// The stop, if any.
+    pub error: Option<(i64, String)>,
+}
+
+/// Reads an item's genuine sound stream.
+pub fn read_sound(name: &str) -> GenuineSound {
+    let path = format!("tests/reference/m6a_sound/{name}.sound");
+    let mut g = GenuineSound::default();
+    for l in std::fs::read_to_string(root(&path)).expect("sound").lines() {
+        if l.starts_with('#') || l.starts_with("Z,") || l.starts_with("W,") {
+            continue;
+        }
+        let f: Vec<&str> = l.split(',').collect();
+        let tic: i64 = f[1].parse().expect("tic");
+        match f[0] {
+            "LV" => {
+                g.loads.insert(tic, f[3].parse().expect("map"));
+            }
+            "E" => g.error = Some((tic, f[2..].join(","))),
+            _ => g.by_tic.entry(tic).or_default().push(l.to_owned()),
+        }
+    }
+    g
 }
