@@ -4,7 +4,8 @@
 playable level chain (exits, intermission, carried start, reborn, secret route) is built and compared; the PR stops next for the
 owner's hand test. Not built yet, each a typed refusal or a declared gap: the finale after E1M8, the melt pictures (the wipe's
 draws are made and compared, the picture changes at once), the easy skills 0 and 1, and E1M7 on skill 3. Steps 10 to 17 follow
-the hand test and will extend this record. **CI is not observed green on the final head** (see [Not run](#not-run-and-limits)).
+the hand test and will extend this record. The gates run at the final code head are in [§4](#4-gates-at-the-final-code-head);
+what was not run is in [Not run](#not-run-and-limits).
 
 Observations only. [TESTING](../TESTING.md#the-playable-level-chain-steps-4-to-9) owns the commands,
 [COMPATIBILITY](../COMPATIBILITY.md#episode-1-as-one-session-m6a) the support statement, the
@@ -19,9 +20,9 @@ mode (his file only read), `--jobs 2`, then the Rust gates `real_maps_session_lo
 goldens (`M6A_REFERENCE_DIR`, release build). Per run the gates compare the session rows, every frame at screenblocks 10 and 11,
 sound rows, the genuine mixer's buffers and the DSIM42 state digest of every level tic. All runs used the committed 61 real runs
 (**singles**: each started at its map, a new game) or the nine **chains** (CH1 to CH9: a walk to the exit, the intermission,
-the next map's walk from its load). Wall time 04:09 to 10:25 PST (the first singles batch started before); the logs do not
-record the head: by the report times the tool and tests were those after `1229b0ce` (the stale-attacker threshold rule) and before
-the ATTACK item (`369d6c97`), which is inferred, not logged.
+the next map's walk from its load). Wall time 03:55 to 10:25 PST. The logs do not
+record the head; by the commit times it was `1229b0ce` (the stale-attacker threshold rule, committed 03:45): the next commit on
+the branch is the ATTACK item (`369d6c97`, 10:36). The Rust gates were run again at the final head ([§4](#4-gates-at-the-final-code-head)).
 
 | Set | Runs | Session tics | State: levels / captures / points | Session gate | State gate | Stale-attacker rule fired on | Result digest (size) |
 | --- | ---: | ---: | --- | --- | --- | --- | --- |
@@ -76,16 +77,34 @@ stops are expected: E1M8's exit (finale not built) and, on skill 3, the load of 
 is checked against the genuine engine with `tools/local/m6a_play_check.py` ([TESTING](../TESTING.md#the-playable-level-chain-steps-4-to-9)).
 No session has yet been played on the owner's IWAD with the real binary; his hand test and its results are not part of this record.
 
+## 4. Gates at the final code head
+
+Local, 2026-11-22, one command at a time. The code head is `f4f9bce0`; `9ab8c3b3` after it changes documents and the artifact's
+README text only (no file under `crates`, `tools` or the Cargo files differs).
+
+| Gate | Head | Observed |
+| --- | --- | --- |
+| Build, `cargo fmt --check` (workspace and fuzz workspace), Clippy with warnings denied, rustdoc with warnings denied | `f4f9bce0` | clean |
+| Workspace tests (debug) | `f4f9bce0` | 2,087 passed, 0 failed, 10 ignored (149 targets) |
+| Release simulation and type tests | `f4f9bce0` | 1,412 passed, 0 failed, 2 ignored (87 targets) |
+| Rust 1.85.0 workspace tests | `f4f9bce0` | 2,087 passed, 0 failed, 10 ignored |
+| The Rust real-map gates again, against the kept genuine result sets of §1 (11:53 to 14:50 PST) | `9ab8c3b3` | session and state gates pass on all 5 sets; the two planted-fault gates pass on both chain sets (14 gate runs, 0 failures) |
+| CI | `9ab8c3b3` | all nine jobs green (the full suite, not the docs fast path) |
+| Windows artifact (the `windows-artifact` label) | `9ab8c3b3` | built: `doom-play-windows-x86_64`, 1,636,887 bytes |
+
+The re-run did **not** regenerate the genuine side: the genuine engine's result files are those of §1, made with the tools at
+`1229b0ce`. Since then `m6a_state.py`, `m6a_wad.py` and `m6a_session_real.py` changed for the ATTACK item and the fired-count
+record; the real sets were not regenerated with the changed tools. A later push does not rebuild the artifact (it is built on
+the label event only), and CI on any later head is GitHub's to show, not this record's.
+
 ## Not run, and limits
 
 - **Local only.** Every real-map figure is from the owner's IWAD on his WSL2 machine on 2026-11-22; it cannot run in CI and nobody
   else can repeat it without the same file. Nothing here was measured for time.
-- **Not rerun at the final head** (`f4f9bce0`): the real-map sets above, nor after the ATTACK item was appended to the indexes.
-- **Not run** (per the step reports): the workspace-wide tests, workspace Clippy and rustdoc on the final head, the release
-  simulation and type tests, MSRV 1.85.0, any fuzz target or sanitizer campaign for the new formats (`DSES`, `DDSP` v3,
-  `DSND` v2, DSIM42), the Windows build, macOS and Windows CI. **CI was not observed green on the final head:** at 11:00 on
-  2026-11-22 the Actions API showed no run for three of the heads (the PR then conflicted with master; step 9 later reported it
-  mergeable), and no run on the final head has been observed.
+- **Not regenerated after `1229b0ce`:** the genuine side of the real-map sets (see [§4](#4-gates-at-the-final-code-head)).
+- **Not run:** any fuzz build, fuzz target or sanitizer campaign for the new formats (`DSES`, `DDSP` v3, `DSND` v2, DSIM42);
+  the original-C generators' `--check` locally other than the M6a ones (CI runs them); `tools/local/m5d_lost_display.py` after
+  step 9 changed `doom-play`. No CI job runs the genuine M6a engine yet (ruling U15, a later step).
 - **Not covered by any run:** the finale, the melt pictures, the easy skills and E1M7 on skill 3 (not built); a quirk-6 witness
   (no golden for percentages above 100 or "sucks"); a genuine run of the reborn-beats-exit case on the owner's IWAD.
 - **Sanitizers.** The genuine runs used the strict build; the address-sanitizer variants and the `address_bounds` build belong

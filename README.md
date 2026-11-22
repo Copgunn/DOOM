@@ -42,7 +42,8 @@ the runs recorded so far ([what is missing](docs/ROADMAP.md#vanilla-completeness
 
 ## Play it
 
-`doom-play` opens one Episode 1 map (E1M1 to E1M9, skill `hmp` or `uv`) with your own `DOOM.WAD`. To really play
+`doom-play` plays Episode 1 from the map you pick (E1M1 to E1M9, skill `hmp` or `uv`) with your own `DOOM.WAD`: each exit
+leads to the tally screen and the next map, and it stops at the exit of E1M8 (the ending is not built yet). To really play
 Doom, use an established source port such as [Chocolate Doom](https://www.chocolate-doom.org/). From the cloned top folder:
 
 ```sh
@@ -51,7 +52,7 @@ cargo run --release -p doom-play -- --iwad /path/to/DOOM.WAD --map 1 --skill hmp
 
 - **Controls.** The original's defaults: arrows move and turn, right Ctrl fires, Space uses, right Shift runs, `1`-`8`
   pick weapons, mouse left fires (`--bindings modern` gives WASD). Esc pauses (R restarts, Q quits), End mutes.
-- **Limits.** Needs an OpenGL 2.1 driver; no menus, saving or cheat codes; E1M7 on `uv` is refused
+- **Limits.** Needs an OpenGL 2.1 driver; no menus, saving or cheat codes; no screen melt between pictures yet; E1M7 on `uv` is refused
   ([every limit, and what has been tried](docs/COMPATIBILITY.md#playable-build-m5b)).
 
 ## How it's verified
