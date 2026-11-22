@@ -58,18 +58,18 @@ pub mod state;
 
 use doom_map::Map;
 use doom_render::{
-    Display, DisplayConfig, DisplayFrame, DisplayRefusal, Frame, GameMode, GameState, Level, LevelChange,
-    LumpDirectory, ResourceError, Resources, SessionError,
+    Display, DisplayConfig, DisplayFrame, DisplayRefusal, Frame, GameMode, GameState, Level,
+    LevelChange, LumpDirectory, ResourceError, Resources, SessionError,
 };
 use doom_sim::{
-    CarriedStart, LevelExit, LevelStart, LevelStartError, MapContextOptions,
-    SimError, Simulation, Skill, StartKind, TicCommand,
+    CarriedStart, LevelExit, LevelStart, LevelStartError, MapContextOptions, SimError, Simulation,
+    Skill, StartKind, TicCommand,
 };
+use doom_sound::chain::{ChainConfig, ChainRefusal, ChainSound, ChainTic, IntermissionSound};
 use doom_sound::lumps::{SoundCaps, SoundLoadError, SoundSet};
-use doom_sound::session::TicSound;
 use doom_types::DoomRng;
 use intermission::{Intermission, Latches, PARS_E1, WbPlayer, WbStart, next_map};
-use sound::{MusicLumps, SessionSound, SoundWitness};
+use sound::{Music, MusicLumps, SoundWitness};
 use std::fmt;
 use std::sync::Arc;
 
@@ -141,7 +141,10 @@ pub enum ModeSetting {
 /// registered otherwise. Later WADs are not looked at.
 pub fn probe_game_mode(iwad: &[u8]) -> Result<SessionMode, doom_wad::WadError> {
     let wad = doom_wad::Wad::parse(iwad, doom_wad::Limits::default())?;
-    let fourth = wad.lumps().iter().any(|l| l.name().as_bytes() == b"E4M1\0\0\0\0");
+    let fourth = wad
+        .lumps()
+        .iter()
+        .any(|l| l.name().as_bytes() == b"E4M1\0\0\0\0");
     Ok(if fourth {
         SessionMode::Retail
     } else {
@@ -240,10 +243,10 @@ impl SessionData {
                 .map_err(DataError::Resources)?;
         }
         let music = MusicLumps::from_directory(&dir);
-        let sound_set = Arc::new(
-            SoundSet::load(&dir, SoundCaps::default()).map_err(DataError::SoundData)?,
-        );
-        let res = Arc::new(Resources::load(dir, mode.mode.game_mode()).map_err(DataError::Resources)?);
+        let sound_set =
+            Arc::new(SoundSet::load(&dir, SoundCaps::default()).map_err(DataError::SoundData)?);
+        let res =
+            Arc::new(Resources::load(dir, mode.mode.game_mode()).map_err(DataError::Resources)?);
         // numtextures (r_data.c:480), for the layout detector of decision T12.
         let textures = u32::try_from(res.textures.len()).unwrap_or(u32::MAX);
         let set = doom_wad::WadSet::new(&parsed);
@@ -438,8 +441,11 @@ pub struct TicReport {
     /// The intermission's animation draws of `M_Random` (`WI_initAnimatedBack`, ten per call;
     /// the sound starts' draws are in `sound.draws`).
     pub wi_draws: u16,
+    /// The intermission's sound starts, in call order (empty in a level tic; the level's are
+    /// the simulation's records).
+    pub wi_starts: Vec<IntermissionSound>,
     /// What the sound did.
-    pub sound: TicSound,
+    pub sound: ChainTic,
 }
 
 /// The carried player between levels: what `G_PlayerFinishLevel` (g_game.c:779-792) leaves of the
@@ -458,6 +464,22 @@ pub struct CarriedPlayer {
     /// `deltaviewheight` after the exit tic: carried to the next start (p_mobj.c:642-700 leaves
     /// it alone).
     pub deltaviewheight: i32,
+}
+
+/// A fault planted by the evidence self-tests (`tests/m6a_session.rs`), to prove that the
+/// comparison with the genuine goldens fails when the session is wrong. Never set by the app;
+/// a session holding one cannot be saved.
+#[doc(hidden)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PlantedFault {
+    /// A carried start with one point of health less.
+    CarriedHealth,
+    /// The exit checked before the reborn (the reverse of g_game.c:611-623).
+    ExitBeforeReborn,
+    /// The tenth animation draw of `WI_Start` skipped.
+    SkippedAnimationDraw,
+    /// The kill count of the tally one too high after each step in `sp_state` 2.
+    TallyOffByOne,
 }
 
 /// One single-player Episode 1 session (module documentation).
@@ -485,10 +507,12 @@ pub struct Session {
     /// The current level, or outside a level the finished one (read only).
     level: Simulation,
     display: Display,
-    sound: SessionSound,
+    sound: ChainSound,
     frame: Frame,
     /// Set by a rule-2 refusal (module documentation).
     ended: Option<Refusal>,
+    /// A planted fault (self-tests only).
+    fault: Option<PlantedFault>,
 }
 
 fn skill_of(byte: u8) -> Result<Skill, StartError> {
@@ -509,13 +533,13 @@ impl Session {
             return Err(StartError::Domain);
         }
         let skill = skill_of(settings.skill)?;
-        let sound = SessionSound::new(
+        let sound = ChainSound::new(
             data.sound_set.clone(),
-            data.textures,
             data.music,
-            settings.map,
+            ChainConfig::fresh(data.textures),
+            i32::from(settings.map),
         )
-        .map_err(StartError::Sound)?;
+        .map_err(|e| StartError::Sound(SoundWitness::Chain(e)))?;
         let (map, level) = data.map(settings.map).map_err(StartError::Map)?;
         let sim = Simulation::original_player_episode1_v4_level(
             map.clone(),
@@ -549,6 +573,7 @@ impl Session {
             sound,
             frame: Frame::new(),
             ended: None,
+            fault: None,
             data,
         })
     }
@@ -633,8 +658,13 @@ impl Session {
     }
 
     /// The sound.
-    pub fn sound(&self) -> &SessionSound {
+    pub fn sound(&self) -> &ChainSound {
         &self.sound
+    }
+
+    /// `levelstarttic` (g_game.c:470): the session tic of the current (or finished) level's load.
+    pub fn levelstarttic(&self) -> u64 {
+        self.sound.level_start()
     }
 
     /// The last frame.
@@ -645,6 +675,12 @@ impl Session {
     /// The refusal that ended the session after its simulation committed a tic, if any.
     pub fn ended(&self) -> Option<&Refusal> {
         self.ended.as_ref()
+    }
+
+    /// Plants a fault (self-tests only, [`PlantedFault`]).
+    #[doc(hidden)]
+    pub fn plant_fault(&mut self, fault: PlantedFault) {
+        self.fault = Some(fault);
     }
 
     /// Runs one session tic with `cmd` (module documentation).
@@ -662,7 +698,9 @@ impl Session {
         }
         let r = match self.gamestate() {
             GameState::Level => {
-                if self.level.reborn_requested() {
+                let exit_first = self.fault == Some(PlantedFault::ExitBeforeReborn)
+                    && self.level.level_exit_request().is_some();
+                if self.level.reborn_requested() && !exit_first {
                     let p_random = self.level.rng().indices()[0];
                     self.load_tic(
                         cmd,
@@ -721,18 +759,17 @@ impl Session {
         let mut display = prepared.unwrap_or_else(|| self.display.clone());
         let before = display.random_index();
         let mut sound = self.sound.clone();
-        let ts = sound
-            .level_tic(load, &self.level, before)
+        let ts = sound::level_tic(&mut sound, load, &self.level, before)
             .map_err(SessionWitness::Sound)?;
-        let expected = before.wrapping_add((ts.draws & 0xff) as u8);
-        if expected != ts.rndindex {
+        let expected = before.wrapping_add((ts.sound.draws & 0xff) as u8);
+        if expected != ts.sound.rndindex {
             return Err(SessionWitness::RandomIndex {
                 expected,
-                display: ts.rndindex,
+                display: ts.sound.rndindex,
             });
         }
         display
-            .observe_after(&self.level, &cmd, ts.draws)
+            .observe_after(&self.level, &cmd, ts.sound.draws)
             .map_err(|e| SessionWitness::Display(SessionError::Observe(e)))?;
         let wiped = display.wipe_due();
         let mut frame = std::mem::take(&mut self.frame);
@@ -753,6 +790,7 @@ impl Session {
             wiped,
             level_frame: Some(f),
             wi_draws: 0,
+            wi_starts: Vec::new(),
             sound: ts,
         })
     }
@@ -771,10 +809,10 @@ impl Session {
             return Err(SessionWitness::Turbo);
         }
         // S_Start's music lookup comes first in P_SetupLevel (p_setup.c:607), before the map's
-        // lumps are read.
-        self.sound
-            .check_load_music(map)
-            .map_err(SessionWitness::Sound)?;
+        // lumps are read (p_setup.c:618-650).
+        if sound::music_lookup_fails(&self.sound, Music::Level(map)) {
+            return Err(self.music_missing(Music::Level(map)));
+        }
         let (m, level) = self
             .data
             .map(map)
@@ -831,13 +869,14 @@ impl Session {
     fn present_intermission(
         &mut self,
         mut display: Display,
-        sound: SessionSound,
+        sound: ChainSound,
         wi: &mut Intermission,
         wminfo: &WbStart,
         rng_after: u8,
         draws: u16,
         kind: TicKind,
-        ts: TicSound,
+        ts: ChainTic,
+        wi_starts: Vec<IntermissionSound>,
     ) -> Result<TicReport, SessionWitness> {
         display
             .observe_non_level(draws)
@@ -872,7 +911,8 @@ impl Session {
             palette_set: f.palette_set,
             wiped,
             level_frame: None,
-            wi_draws: draws - ts.draws,
+            wi_draws: draws - ts.sound.draws,
+            wi_starts,
             sound: ts,
         })
     }
@@ -890,12 +930,9 @@ impl Session {
             .level
             .level_finish()
             .map_err(|e| SessionWitness::Simulation(e.into()))?;
-        let view = self
-            .display
-            .level_view()
-            .ok_or(SessionWitness::Display(SessionError::WrongGameState(
-                GameState::Level,
-            )))?;
+        let view = self.display.level_view().ok_or(SessionWitness::Display(
+            SessionError::WrongGameState(GameState::Level),
+        ))?;
         let latches = match finish.carried {
             Some(c) => Latches {
                 attackdown: c.attack_down,
@@ -934,17 +971,20 @@ impl Session {
         display
             .begin_intermission()
             .map_err(SessionWitness::Display)?;
-        self.sound
-            .check_intermission_music()
-            .map_err(SessionWitness::Sound)?;
+        if sound::music_lookup_fails(&self.sound, Music::Inter) {
+            return Err(self.music_missing(Music::Inter));
+        }
         let mut wi = self.wi;
         let mut rng = DoomRng::from_indices(0, display.random_index());
-        let pre = wi.start(&mut wminfo, &mut rng);
+        let mut pre = wi.start(&mut wminfo, &mut rng);
+        if self.fault == Some(PlantedFault::SkippedAnimationDraw) {
+            rng = DoomRng::from_indices(0, rng.indices()[1].wrapping_sub(1));
+            pre -= 1;
+        }
         let mut latches = carried.latches;
         let out = wi.ticker(&wminfo, cmd.buttons, &mut latches, &mut rng);
         let mut sound = self.sound.clone();
-        let ts = sound
-            .intermission_tic(true, &out.starts, out.sound_index, &self.level)
+        let ts = sound::intermission_tic(&mut sound, &out.starts, out.sound_index, &self.level)
             .map_err(SessionWitness::Sound)?;
         let r = self.present_intermission(
             display,
@@ -955,6 +995,7 @@ impl Session {
             pre + out.draws,
             TicKind::Completion,
             ts,
+            out.starts,
         )?;
         self.wi = wi;
         self.wminfo = wminfo;
@@ -987,9 +1028,11 @@ impl Session {
         let mut rng = DoomRng::from_indices(0, self.display.random_index());
         let mut latches = carried.latches;
         let out = wi.ticker(&self.wminfo, cmd.buttons, &mut latches, &mut rng);
+        if self.fault == Some(PlantedFault::TallyOffByOne) && wi.sp_state == 2 {
+            wi.cnt_kills += 1;
+        }
         let mut sound = self.sound.clone();
-        let ts = sound
-            .intermission_tic(false, &out.starts, out.sound_index, &self.level)
+        let ts = sound::intermission_tic(&mut sound, &out.starts, out.sound_index, &self.level)
             .map_err(SessionWitness::Sound)?;
         let wminfo = self.wminfo;
         let display = self.display.clone();
@@ -1002,11 +1045,20 @@ impl Session {
             out.draws,
             TicKind::Intermission,
             ts,
+            out.starts,
         )?;
         self.wi = wi;
         self.carried = Some(CarriedPlayer { latches, ..carried });
         self.apply_world_done(out.world_done);
         Ok(r)
+    }
+
+    /// The genuine engine's stop at a missing music lump in this tic (U10 (i)).
+    fn music_missing(&self, music: Music) -> SessionWitness {
+        SessionWitness::Sound(SoundWitness::Chain(ChainRefusal::MusicMissing {
+            music,
+            tic: Some(self.gametic),
+        }))
     }
 
     /// `G_DoWorldDone` (g_game.c:1172-1179) and the new level's tic 0.
@@ -1024,12 +1076,14 @@ impl Session {
                 error: MapLoadError::Level(ResourceError::LumpNotFound(format!("E1M{map}"))),
             });
         }
+        let planted = i32::from(self.fault == Some(PlantedFault::CarriedHealth));
         let (start, dvh) = match carried.start {
             Some(c) => (
                 LevelStart::Carried(CarriedStart {
                     attack_down: carried.latches.attackdown,
                     use_down: carried.latches.usedown,
                     p_random,
+                    health: c.health - planted,
                     ..c
                 }),
                 carried.deltaviewheight,

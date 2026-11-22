@@ -21,6 +21,7 @@
 //! background is never drawn (wi_stuff.c:588), but its draws and counters run.
 use doom_render::{IntermissionView, WiState};
 use doom_sim::{BT_ATTACK, BT_USE};
+use doom_sound::chain::IntermissionSound;
 use doom_types::DoomRng;
 
 /// `TICRATE` (doomdef.h:122).
@@ -33,13 +34,6 @@ pub const NUM_ANIMS: usize = 10;
 const ANIM_PERIOD: i32 = TICRATE / 3;
 /// `nanims` of every episode 1 animation (wi_stuff.c:226-238).
 const ANIM_FRAMES: i32 = 3;
-
-/// `sfx_pistol` (sounds.h:180, number 1).
-pub const SFX_PISTOL: u16 = 1;
-/// `sfx_sgcock` (sounds.h:182, number 3).
-pub const SFX_SGCOCK: u16 = 3;
-/// `sfx_barexp` (sounds.h:261, number 82).
-pub const SFX_BAREXP: u16 = 82;
 
 /// The par times of episode 1 in seconds (`pars[1][1..=9]`, g_game.c:978-984).
 pub const PARS_E1: [i32; 9] = [30, 75, 120, 90, 165, 180, 180, 30, 165];
@@ -130,7 +124,7 @@ pub struct Intermission {
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct WiTic {
     /// The sound starts, in call order (`S_StartSound(0, sfx)`, all with no origin).
-    pub starts: Vec<u16>,
+    pub starts: Vec<IntermissionSound>,
     /// The `M_Random` index just before the first start (the sound session draws their pitches
     /// from it; no other draw falls between two starts of one tic).
     pub sound_index: u8,
@@ -256,7 +250,7 @@ impl Intermission {
     }
 
     /// `S_StartSound(0, sfx)`: the request, and its one pitch draw (module documentation).
-    fn start_sound(sfx: u16, rng: &mut DoomRng, out: &mut WiTic) {
+    fn start_sound(sfx: IntermissionSound, rng: &mut DoomRng, out: &mut WiTic) {
         if out.starts.is_empty() {
             out.sound_index = rng.indices()[1];
         }
@@ -281,7 +275,7 @@ impl Intermission {
             self.cnt_secret = secret;
             self.cnt_time = time;
             self.cnt_par = par;
-            Self::start_sound(SFX_BAREXP, rng, out);
+            Self::start_sound(IntermissionSound::Barexp, rng, out);
             self.sp_state = 10;
         }
         let pistol = self.bcnt & 3 == 0;
@@ -294,17 +288,17 @@ impl Intermission {
                 };
                 *count = count.wrapping_add(2);
                 if pistol {
-                    Self::start_sound(SFX_PISTOL, rng, out);
+                    Self::start_sound(IntermissionSound::Pistol, rng, out);
                 }
                 if *count >= target {
                     *count = target;
-                    Self::start_sound(SFX_BAREXP, rng, out);
+                    Self::start_sound(IntermissionSound::Barexp, rng, out);
                     self.sp_state += 1;
                 }
             }
             8 => {
                 if pistol {
-                    Self::start_sound(SFX_PISTOL, rng, out);
+                    Self::start_sound(IntermissionSound::Pistol, rng, out);
                 }
                 self.cnt_time = self.cnt_time.wrapping_add(3);
                 if self.cnt_time >= time {
@@ -314,14 +308,14 @@ impl Intermission {
                 if self.cnt_par >= par {
                     self.cnt_par = par;
                     if self.cnt_time >= time {
-                        Self::start_sound(SFX_BAREXP, rng, out);
+                        Self::start_sound(IntermissionSound::Barexp, rng, out);
                         self.sp_state += 1;
                     }
                 }
             }
             10 => {
                 if self.acceleratestage != 0 {
-                    Self::start_sound(SFX_SGCOCK, rng, out);
+                    Self::start_sound(IntermissionSound::Sgcock, rng, out);
                     // `gamemode != commercial` (1419-1422).
                     self.init_show_next_loc(rng, out);
                 }
@@ -407,7 +401,9 @@ impl Intermission {
             ((0..=1).contains(&self.firstrefresh), "firstrefresh"),
             (self.bcnt >= 0, "bcnt"),
             (
-                self.anims.iter().all(|a| (-1..ANIM_FRAMES).contains(&a.ctr)),
+                self.anims
+                    .iter()
+                    .all(|a| (-1..ANIM_FRAMES).contains(&a.ctr)),
                 "anim ctr",
             ),
         ];
@@ -465,15 +461,23 @@ mod tests {
         while wi.sp_state != 10 {
             tic += 1;
             let t = wi.ticker(&w, 0, &mut latches, &mut rng);
-            pistols += t.starts.iter().filter(|s| **s == SFX_PISTOL).count();
-            barexps += t.starts.iter().filter(|s| **s == SFX_BAREXP).count();
+            pistols += t
+                .starts
+                .iter()
+                .filter(|s| **s == IntermissionSound::Pistol)
+                .count();
+            barexps += t
+                .starts
+                .iter()
+                .filter(|s| **s == IntermissionSound::Barexp)
+                .count();
         }
         // n2 = ceil(51/2) = 26, n4 = ceil(76/2) = 38, n6 = 26, n8 = ceil(46/3) = 16: 175 + 106.
         assert_eq!(tic, 281);
         assert_eq!((pistols, barexps), (26, 4));
         // A press then: sgcock and ten more animation draws on the same tic.
         let t = wi.ticker(&w, BT_USE, &mut latches, &mut rng);
-        assert_eq!(t.starts, vec![SFX_SGCOCK]);
+        assert_eq!(t.starts, vec![IntermissionSound::Sgcock]);
         assert_eq!(t.draws, 11);
         assert_eq!(wi.state, 1);
     }
@@ -494,7 +498,10 @@ mod tests {
         wi.ticker(&w, 0, &mut latches, &mut rng);
         assert!(!latches.attackdown);
         let t = wi.ticker(&w, BT_ATTACK, &mut latches, &mut rng);
-        assert_eq!((wi.sp_state, t.starts.clone()), (10, vec![SFX_BAREXP]));
+        assert_eq!(
+            (wi.sp_state, t.starts.clone()),
+            (10, vec![IntermissionSound::Barexp])
+        );
     }
 
     #[test]

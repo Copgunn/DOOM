@@ -43,9 +43,7 @@ impl SessionDemo {
     /// the marker (`G_ReadDemoTiccmd`, g_game.c:1491-1503), with no level boundary. The commands'
     /// buttons are not judged here: a replayed `BT_SPECIAL` is refused at its tic by the session.
     pub fn parse(bytes: &[u8]) -> Result<Self, DemoError> {
-        let header = bytes
-            .get(..DEMO_HEADER.len())
-            .ok_or(DemoError::Truncated)?;
+        let header = bytes.get(..DEMO_HEADER.len()).ok_or(DemoError::Truncated)?;
         let map = header[DEMO_MAP_INDEX];
         if !EPISODE1_DEMO_MAPS.contains(&map) {
             return Err(DemoError::Header {
