@@ -190,6 +190,7 @@ python3 tools/reference/blockmap_corner_wad.py --check
 python3 tools/reference/blockmap_corner_probe.py
 cargo test --locked -p doom-sim --test blockmap_corner
 cargo test --locked -p doom-sim --test blockmap_corner --release
+cargo test --locked -p doom-sim --test blockmap_corner_fixture
 ```
 
 The fixture check compares bytes in memory and returns nonzero on a difference
