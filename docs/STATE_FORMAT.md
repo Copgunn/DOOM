@@ -1,4 +1,4 @@
-# Canonical diagnostic state format: DSIM versions 1–41
+# Canonical diagnostic state format: DSIM versions 1–42
 
 This is a diagnostic/replay comparison format for explicit simulation profiles,
 not a DOOM savegame or network/demo format. A field schema change requires an
@@ -9,8 +9,9 @@ encoded. Shared immutable map storage uses Arc internally; reference counts and
 addresses are excluded. The M5a renderer's own, separate `DRST` format is at the
 [end of this page](#render-state-drst-version-2-m5a); it is not a DSIM version and no DSIM
 reader decodes it. The same holds for the display state `DDSP` ([version 1](#display-state-ddsp-version-1-m5b),
-[version 2](#display-state-ddsp-version-2-m5c)) and for the sound session's
-saved state `DSND` ([DSND version 1](#sound-session-state-dsnd-version-1-m5c)).
+[version 2](#display-state-ddsp-version-2-m5c), [version 3](#display-state-ddsp-version-3-m6a)) and for the sound session's
+saved state `DSND` ([version 1](#sound-session-state-dsnd-version-1-m5c), [version 2](#sound-session-state-dsnd-version-2-m6a)).
+The M6a session's own saved state `DSES` is [version 1](#session-state-dses-version-1-m6a).
 
 M3f8's execution-scope brands and derived target availability are API observations,
 not persistent fields. V20/v21, profile/registry/context schema identifiers, stored
@@ -2496,6 +2497,50 @@ not a per-capture invariant. The writer places the group after the last `events.
 comparator (`level_compare_m5c.py`) checks the frame layout of every capture, so a group moved elsewhere is reported
 there, not by the reader.
 
+## DSIM v42 — wire 26: the level start
+
+`PlayerMonstersEpisode1V4` captures are version 42. Version 42 selects policy 26 (wire 26, owner's ruling U2 = B1 of the
+[M6a investigation](M6A_REFERENCE_INVESTIGATION.md#5-owner-decisions-u1u15-with-recommendations)), the unchanged registry schema,
+layout selector 17 and context `PLAYER-MONSTERS-EPISODE1-4-v1` (29 bytes). **Frozen-reader rule:** every earlier reader,
+the v41 reader included, rejects 42, and the v42 reader (`Diagnostic::decode_episode1_v4`) reads 42 only. DSIM1-41 bytes,
+encoders, fixtures and meanings are unchanged; older readers were not changed to refuse a frame that holds `level.start.*` fields (as step 4 left them). What wire 26 does is in
+[COMPATIBILITY](COMPATIBILITY.md#episode-1-as-one-session-m6a). The Rust writer is checked against the independent encoder
+`tools/reference/level_snapshot_m6a.py`, which builds the group from the genuine session and sound goldens
+([TESTING](TESTING.md#the-playable-level-chain-steps-4-to-9)).
+
+### Layout: DSIM41 plus one group
+
+V42 is the DSIM41 layout field for field (version word 42, `profile` 26, the v42 context) plus, right after the last
+`events.sounds.pending` field, the start group, constant for the run:
+
+| Field | Encoding | Meaning |
+| --- | --- | --- |
+| `level.start.kind` | u8 | 0 new game, 1 carried, 2 reborn |
+| `level.start.p_random` | u8 | `prndindex` when the load began |
+| `level.start.health` | i32 | `player->health`, also the mobj's (p_mobj.c:673) |
+| `level.start.armor_points`, `level.start.armor_type` | i32, u8 | armour; type 0-2 |
+| `level.start.weapons_owned`, `level.start.ready_weapon` | u16 (bit i = weapon i), u8 | |
+| `level.start.ammo.0` to `.3`, `level.start.max_ammo.0` to `.3` | i32 each | `ammotype_t` order |
+| `level.start.backpack`, `level.start.cheats` | u8, i32 | cheats always 0 (not modelled) |
+| `level.start.attack_down`, `level.start.use_down` | u8 each | |
+| `level.start.bob`, `level.start.weapon_x` | i32 each | raw 16.16; `psprites[ps_weapon].sx` |
+| `level.start.flash_tics`, `level.start.flash_x`, `level.start.flash_y` | i32 each | the null flash psprite's count and coordinates |
+| `level.start.sounds.count`, then `level.start.sounds.<i>` | u64, then DSIM41 sound records | the load's sound calls in call order |
+| `level.start.gametic` | u64, at most `i32::MAX` | the `gametic` of the `G_Ticker` that ran the load (`levelstarttic`, g_game.c:470); the turbo test reads this plus the level tic (owner's ruling 1 of 2026-11-22) |
+
+A new game holds `G_PlayerReborn`'s player (health 100, no armour, fist and pistol, pistol ready, 50 bullets, the table
+maxima, both latches set, bob and coordinates 0) with index 0; a reborn start the same player with any index; a carried start
+what `G_PlayerFinishLevel`, `G_DoLoadLevel`, `P_SpawnPlayer` and `P_SetupPsprites` leave. The load's records: exactly one,
+`sfx_sawup` at `original_player.0.mo` unplaced, when a carried ready weapon is the chainsaw; none otherwise (the same record is also
+in `events.sounds.pending` at the load capture and first in tic 0's `events.sounds.last`).
+
+**What the v42 reader checks:** every v41 check; every start field present with its width; kind 0-2; a new game exactly the
+fresh player with index 0 and `gametic` within bounds, a reborn start the fresh player, a carried start the bounds of
+`CarriedStart::validate` (health 1-200, armour 0-200 with type matching points, weapons, ammunition within maxima = table doubled
+with the backpack, cheats 0, bob in range, psprite domain, flash tics 0-7); the sound list as above; no other `level.start.`
+field. Under v42 a null flash psprite may hold 1-7 tics (wire 26 only). It does not replay the load. The `secretexit` flag is a
+session global, not level state: the encoder counts it only with the exit request.
+
 ## Sound session state (`DSND` version 1, M5c)
 
 Not a DSIM version and not a change to `DRST` or `DDSP`. `DSND` is the saved state of one sound session
@@ -2674,3 +2719,108 @@ decoded state gives back the same bytes. `Display::restore` is as for version 1 
 decoded contract. These rules are tested in `crates/doom-render/tests/m5c_contract.rs` (round trip, forgeries,
 restore and continue) and, with the sound session and the simulation, in `crates/doom-game/tests/m5c_restore.rs`
 ([evidence](validation/M5C.md#step-5-part-1-the-frame-gate-restore-and-continue-and-the-headless-app-tests)).
+
+## Display state (`DDSP` version 3, M6a)
+
+Written only by a session display (`Display::new_session`, owner's ruling U3 (i)), which keeps the M5c contract with sound
+through a single-player session: level changes and reborn reloads that keep the `M_Random` index, the intermission, the
+finale and every wipe. **Versions 1 and 2 keep their bytes and rules**: `DisplayState::decode` and `decode_any` refuse
+version 3 (`Version(3)`), and `SessionDisplayState::decode` reads version 3 only. Little endian.
+
+| Field | Encoding | Meaning |
+| --- | --- | --- |
+| magic, version | 4 bytes `DDSP`, u32 = 3 | |
+| session tic, entered | u64, u64 (entered at most the tic) | session tics observed; the tic count at the latest state entry, level start or forced wipe |
+| game state | u8: 0 level, 1 intermission, 2 finale | `gamestate_t` |
+| old game state | u8: 0 to 2, or 255 for -1 | `D_Display`'s `oldgamestate` (d_main.c:196, 215-220, 300) |
+| scene, level | u32 length n, n bytes | a complete `DRST` version 2 |
+| scene, intermission or finale | u32 `fuzzpos` (0 to 49), 4 x i32 wall steps, 64,000 bytes, taint runs | `screens[0]` and the renderer globals that outlive a level |
+| melt | u8: 0 none, 1 in progress; 1 is followed by u8 steps shown (1 to 42), the 64,000-byte start screen and its taint runs | the writer never writes 1 yet |
+| status bar and HUD | exactly version 1's rows from `screenblocks` to the message line | as version 1 |
+
+Taint runs are as in `DRST`: u32 run count n, then n x (u32 count > 0, u32 origin), the counts summing to 64,000. A melt in
+progress stores the start screen and the steps shown and reconstructs the rest (the column offsets from the 320 draws at the
+stored index minus 320, the end screen from the scene, the palette). **The decoder** rejects a wrong magic or version,
+truncation, trailing bytes, a game state above 2, an old game state other than 0 to 2 or 255, `entered` above the tic, a bad
+embedded `DRST`, `fuzzpos` at or above 50, runs that do not cover the screen, a melt byte above 1, melt steps outside 1 to 42,
+and version 1's checks on its rows. **`check`** and `Display::restore_session` additionally refuse a melt in progress
+(`NotYet(MeltPictures)`), a wipe flag that disagrees with the session tics since `entered` (clear at 0, set from 2, either
+at 1), a level scene whose `DRST` tic is not those tics, and a tainted carried pixel with no wipe due.
+
+## Sound session state (`DSND` version 2, M6a)
+
+The saved state of a session across levels, for restore-and-continue at any session tic (owner's ruling U3 (i)). **Version 1
+keeps its bytes and rules**: `SoundState::decode` refuses version 2 and `ChainSoundState::decode` reads version 2 only. What
+changes: the tic count is the session's `gametic`, the map is state (it changes at every load), and the state records where
+the session stands and whether a melt is in progress. Little endian, at most `MAX_BYTES` (the header, 64 occupied actor channels of 19 bytes, the counter
+and 8 busy mixer channels of 28 bytes).
+
+| Offset | Size | Field |
+| --- | --- | --- |
+| 0 | 4 | magic `DSND` |
+| 4 | 2 | version, 2 |
+| 6 | 8 | session tics run |
+| 14 | 8 | buffers mixed: `ceil(315 * tics / 512)`; with a melt in progress `ceil(315 * (tics - 1) / 512)` |
+| 22 | 1 | `snd_SfxVolume` (0 to 127) |
+| 23 | 1 | `numChannels` N (0 to 64) |
+| 24 | 4 | texture count of the detector (0 to 65536) |
+| 28 | 1 | game state: 0 level, 1 intermission, 2 finale |
+| 29 | 4 | `gamemap` (i32, 1 to 9): the level's map, or the finished level's |
+| 33 | 8 | level start: the session tic of the level's tic 0 |
+| 41 | 8 | level end: 0 in a level; outside one, the session tic of its first tic |
+| 49 | 1 | melt: 0 none, 1 in progress (its buffer not yet mixed) |
+| 50 | 1 | detector label: 0 none, 1 layout-dependent |
+| 51 | 8 | the first tic the detector fired (0 without a label) |
+| 59 | 8 | the number of firings (0 exactly without a label) |
+| 67 | | the "lump looked up" flags, the N sound-logic channels, the mixer's `handlenums` and the 8 mixer channels, exactly as version 1 from its offset 49 |
+
+A melt in progress decodes, and restoring it is `NotYet::MeltInProgress` until the melt steps exist. Restoring checks the state
+against the caller's configuration and music lumps, the loaded sound set and the level simulation (in a level) or the finished
+level's, held read-only (outside one): consistency checks, not proof that a run reaches the state.
+
+## Session state (`DSES` version 1, M6a)
+
+Written by `Session::save` (`doom-game`, owner's ruling U2 = B1), read by `SessionState::decode`, restored by
+`Session::restore(data, state, level)`. It holds the session group (what exists only between levels in the C) and embeds the
+level's `DSIM` version 42 capture, `DDSP` version 3 and `DSND` version 2. `doom-sim` has no restore from its capture, so a
+restore takes the level's simulation (in the intermission the finished level's, kept alive read-only) and requires its
+`canonical_bytes` to equal the embedded capture byte for byte. Little endian, at most 64 MiB; nothing follows the last field.
+
+| Field | Encoding | Meaning |
+| --- | --- | --- |
+| magic, version | 4 bytes `DSES`, u16 = 1 | |
+| mode, mode source | u8 (0 registered, 1 retail), u8 (0 probed, 1 forced) | the declared game mode (ruling U4) |
+| start map, skill, screenblocks | u8, u8, u8 | 1 to 9, 2 to 3, 10 to 11 |
+| `gametic` | u64 | session tics run |
+| `gamestate` | u8: 0 level, 1 intermission, 2 finale | 2 is refused (not built yet) |
+| `gamemap` | u8, 1 to 9 | the current or finished level's map |
+| `gameaction` | u8: 0, 6 or 8 | 6 only in a level that requested an exit; 8 only in the intermission after `G_WorldDone` |
+| `secretexit`, `didsecret` | u8, u8 (0 or 1) | g_game.c:1000; the console player's |
+| `wminfo` | i32 `epsd`, u8 `didsecret`, then 10 x i32: `last`, `next`, `maxkills`, `maxitems`, `maxsecret`, `partime`, `skills`, `sitems`, `ssecret`, `stime` | d_player.h:173-211 |
+| wi_stuff.c statics | 12 x i32 (`state`, `acceleratestage`, `cnt`, `bcnt`, `firstrefresh`, `sp_state`, the five counts, `cnt_pause`), u8 `snl_pointeron`, 10 x (i32 `ctr`, i32 `nexttic`) | process statics, kept across levels |
+| carried player | u8: 0 none (in a level), 1 alive, 2 dead at the exit | |
+| carried, 1 | i32 health, u8 armour type, i32 armour points, u16 weapons, u8 ready weapon, 4 x i32 ammo, 4 x i32 maxima, u8 backpack, i32 cheats, u8 `attackdown`, u8 `usedown`, i32 bob, i32 weapon x, i32 flash tics, 2 x i32 flash x, y | `CarriedStart` as the exit tic left it, without its `P_Random` index |
+| carried, 1 or 2 | u8 `attackdown`, u8 `usedown`, i32 `viewheight`, i32 `deltaviewheight` | the latches as the intermission rewrote them; the exit tic's view |
+| finale | u8: 0 none, 1 followed by i32 `finalestage`, i32 `finalecount` | room for the finale; 1 is refused (not built yet) |
+| level | u32 length n, n bytes | `DSIM` version 42 |
+| display | u32 length n, n bytes | `DDSP` version 3 |
+| sound | u8 kind = 2, u32 length n, n bytes | `DSND` version 2 (the kind names the embedded format; 2 is the only one) |
+
+**The decoder** rejects a wrong magic or version, more than 64 MiB, truncation, trailing bytes, a byte outside its values, a
+finale (state or slot), an embedded state its own reader refuses, and then checks the settings, `gamemap`, `gameaction` against
+the game state, the wi_stuff.c bounds, the display's and the sound's game state, tics and map, a carried player exactly outside a
+level, and outside a level `wminfo` as `G_DoCompleted` and `WI_initVariables` write it. **Restore** also checks the declared
+mode, the capture, `gameaction` 6 against the level's exit request, the level's start `gametic` against the sound's level start,
+and the display's and sound's own restores. A melt in progress is the display's and sound's (each refuses it, not built yet);
+input held during a melt belongs to the app's event layer, not to the session.
+
+## M6a golden files that hold state digests
+
+| File | Schema | Rows |
+| --- | --- | --- |
+| `tests/reference/m6a_state.txt` | `DOOM-M6A-STATE-v1` | `L,item,load,tic,map,kind,captures,map_sha256,sequence_sha256`: one per level (SHA-256 of the 32-byte digests of every capture after the load); `D,item,load,tic,leveltime,why,state_sha256`: the DSIM42 capture digest at the load, every 35th level tic and the last. `tic` is the session tic; `why` is `load`, `stride` or `last` |
+| `tests/reference/m6a_stale_attacker.txt` | `DOOM-M6A-STALE-ATTACKER-v1` | `A,item,load,tic`: a load on which the stale-attacker rule projected `players[0].attacker` as NULL; `T,total`: their number |
+| `tests/reference/m6a_dsim42_starts.txt` | `DOOM-M6A-DSIM42-STARTS-v1` | the encoder's start group per load, in hex |
+
+Both digests come from the genuine runner's dumps through the independent encoder, never from Rust output. The state file's
+schema is unchanged by the stale-attacker rule; the fired loads have their own file so that the Rust tests can require them.

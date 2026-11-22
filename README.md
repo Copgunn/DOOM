@@ -31,10 +31,14 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
 - **Picture.** Renderer, status bar, messages and palette flashes: frames equal the original's wherever compared ([what is and is not](docs/COMPATIBILITY.md#playable-build-m5b)).
 - **Sound.** Effects, no music: sounds started and samples mixed equal the original's own sound code on the runs
   checked ([which build, which runs](docs/COMPATIBILITY.md#sound-effects-m5c)).
-- **Playable, in a limited way.** One Episode 1 map at a time, at 35 tics a second.
+- **Playable, in a limited way.** One Episode 1 session at 35 tics a second, from any start map: both exits, the
+  intermission, the next map with what the player carries, dying and coming back, the secret route
+  ([what it supports](docs/COMPATIBILITY.md#episode-1-as-one-session-m6a)). The chain is compared with the original's
+  own engine tic by tic, on synthetic maps and locally on real ones ([evidence](docs/validation/M6A.md)).
 
-Not yet: the automap, music, menus, the intermission, a next level, general demo playback, other episodes, easy or
-nightmare skill, or any claim of a match beyond the scripted runs recorded so far ([what is missing](docs/ROADMAP.md#vanilla-completeness-checklist)).
+Not yet: the finale after E1M8 (the session stops there), the screen melt (the new picture appears at once), E1M7 on `uv`,
+the automap, music, menus, general demo playback, other episodes, easy or nightmare skill, or any claim of a match beyond
+the runs recorded so far ([what is missing](docs/ROADMAP.md#vanilla-completeness-checklist)).
 
 ## Play it
 

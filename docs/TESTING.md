@@ -2964,10 +2964,11 @@ floors, keys, powers, the chainsaw, things flagged per skill), `rbx.wad` (the re
 `m6a_gfx.wad` (the intermission pictures, `FLOOR4_8`, `HELP2`, `CREDIT`), `m6a_music.wad` (the eleven music
 placeholders) and four variants each missing one lump for the refusal witnesses; the scripts under
 `tests/reference/m6a_scripts/` and the manifest `tests/reference/m6a_manifest.json` (`DOOM-M6A-MANIFEST-v1`), which
-gives every item its WAD set and declared game mode. The 26 items: 18 for the level chain (the carried player, every
+gives every item its WAD set and declared game mode. The 29 items (the committed manifest): 18 for the level chain (the carried player, every
 intermission path, reborns, the secret route, the reborn-beats-a-same-tic-exit witness and its controls, three music
-refusals), E1M8 into the finale in registered and retail mode with its two refusals (`HELP2`, `D_VICTOR`), and the
-same commands at skills 0 to 3. `tools/reference/m6a_goldens.py` runs every item through the genuine `m6a` runner and
+refusals), E1M8 into the finale in registered and retail mode with its two refusals (`HELP2`, `D_VICTOR`), the
+same commands at skills 0 to 3, and three items of the owner's rulings of 2026-11-22 (`TURBO`, `INTCMD` and `ATTACK`, the
+stale-attacker item with its own small WAD `attack.wad`). `tools/reference/m6a_goldens.py` runs every item through the genuine `m6a` runner and
 writes the goldens.
 
 ```sh
@@ -3014,7 +3015,7 @@ Notes:
   `python3 tools/reference/m6a_melt_steps.py --check` recomputes every melt's step count from `rndtable`
   (m_random.c) and `wipe_initMelt`/`wipe_doMelt` (f_wipe.c:158-166, 184-222, one call with `ticks = 1` per step) and the
   `M_Random` index before the melt (the session golden's `rndindex` minus 320), compares it with the melt golden's `V`
-  rows and requires the last two pictures to equal the end screen: 113 of 113 melts of the 26 items. `--selftest`
+  rows and requires the last two pictures to equal the end screen: 125 of 125 melts of the 29 items (observed on the committed files, 2026-11-22). `--selftest`
   plants a dropped step, a moved index and an extra step in memory copies; each must be caught.
 - `--selftest` plants a started sound's volume, an extra `P_Random` draw and a flipped level pixel in the runner, and a
   changed session value and whole-frame digest in copies of the goldens; each must be caught at its place; and it runs
@@ -3055,6 +3056,61 @@ cargo test -p doom-sound --test m6a_chain                              # the Rus
   replays every M6a start list through the Rust mixer against the genuine mixer goldens and checks every melt row's
   place; and it tests `DSND` version 2 (round trip, restore-and-continue at every kind of point, forgeries, refusals
   leaving the session unchanged, planted faults).
+
+### The playable level chain (steps 4 to 9)
+
+Commands for the wire, the independent encoders, the session layer and `doom-play`'s session. Formats are in
+[STATE_FORMAT](STATE_FORMAT.md#dsim-v42--wire-26-the-level-start); observations in the [M6a record](validation/M6A.md).
+
+```sh
+# Python only, reads committed files (no compiler needed)
+python3 tools/reference/m6a_melt_steps.py --check [--selftest]
+python3 tools/reference/level_snapshot_m6a.py --check --selftest        # the independent DSIM42 encoder: tests/reference/m6a_dsim42_starts.txt
+# genuine engine (C; Linux; --work outside the repository)
+python3 tools/reference/m6a_state.py --work DIR --check [--selftest] [--jobs N]   # tests/reference/m6a_state.txt and m6a_stale_attacker.txt
+python3 tools/reference/m6a_state.py --work DIR [--jobs N]                        # no --check: rewrite both
+# the Rust side (each also with --release)
+cargo test -p doom-sim --test wire26_projection --test wire26_chain
+cargo test -p doom-render --test m6a_display
+cargo test -p doom-sound --test m6a_chain
+cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_state --test m6a_play
+```
+
+- **Generators.** `m6a_wad.py`, `m6a_goldens.py`, `m6a_mixer.py` and `m6a_reference.py` take `--check` (and `--selftest`) as
+  above; `m6a_state.py` runs the genuine runner with dumps through the independent encoder and writes digests only.
+  `m6a_state.py --selftest` plants faults in memory copies of the genuine dumps (an extra `P_Random` draw, a carried `bob`,
+  a previous level's rows kept, and the cases of the stale-attacker rule below); each must be caught.
+- **The stale-attacker rule** (owner's ruling of 2026-11-22; [note §5](M6A_REFERENCE_INVESTIGATION.md#owner-rulings-of-2026-11-22-the-stale-attacker)):
+  `m6a_state.py` projects the C's dangling `players[0].attacker` as NULL only when four conditions hold, prints the loads
+  it fired on and writes them to `tests/reference/m6a_stale_attacker.txt`. The Rust test
+  `the_stale_attacker_rule_fired_on_attacks_carried_load_only` requires exactly those rows, so a rule that stops firing fails.
+  The genuine-side planted fault is in the same `--selftest`: the attacker set to the player's own body from the carried load
+  to the first genuine write makes the load capture differ from the committed digest.
+- **What the Rust targets compare.** `wire26_projection` (wire 26 changes nothing else: wire-25 bytes equal on the new-game
+  start), `wire26_chain` (carried starts against the genuine rows), `m6a_display` (the intermission drawer's frames and the
+  `M_Random` index through the chain), `m6a_chain` (sound across levels, `DSND` v2), `m6a_session` (every item's rows,
+  frames at screenblocks 10 and 11, sound and mixer through the session), `m6a_session_rules` (`DSES` restore, forgeries,
+  refusals, the game mode), `m6a_state` (the session's level state equals the genuine engine's on every level tic, the
+  stale-attacker record), `m6a_play` (the app played by keys; see below). Planted-fault tests: `wire26_chain`, `m6a_session`, `m6a_state` and `m6a_play`.
+- **Real maps, local only** (reads the owner's IWAD, never in CI): `tools/local/m6a_session_real.py --set single|chains --mode
+  registered|retail --out DIR [--work DIR] [--only NAME,..] [--jobs N]` runs the genuine engine on a scratch copy of the IWAD
+  named for the mode and writes goldens in the layout of `tests/reference`. The gates then read them:
+  `M6A_REFERENCE_DIR=DIR cargo test --release -p doom-game --test m6a_session --test m6a_state -- --ignored real_maps`.
+  `M6A_REAL_ONLY=NAME,..` runs only the named runs, to split a gate. The `*_catches_a_planted_fault` tests (carried health,
+  carried bob) must catch the fault on every run that has a carried start. `--out` and `--work` must not exist.
+- **The played session** (`m6a_play`): `GameData::load_session` driven by key presses through the headless `App`; its demo
+  is compared byte for byte or by prefix with the committed genuine demos, every tic's picture and `G` columns against the
+  genuine goldens, and a replay through a fresh session must reach the same `DSES` bytes or refusal. Set `M6A_PLAY_OUT=DIR`
+  to write the secret-exit session's demo there. To check a session `doom-play` (or that test) wrote against the genuine
+  engine, local only:
+
+  ```sh
+  python3 tools/local/m6a_play_check.py --wad IWAD [--wad PWAD ..] --demo FILE --out DIR [--mode retail|registered] [--work DIR]
+  M6A_REFERENCE_DIR=DIR cargo test --release -p doom-game --test m6a_session --test m6a_state -- --ignored real_maps
+  ```
+
+  `--wad` takes the files `doom-play` was given in its order (the IWAD first, copied under the mode's name in `--work`; never
+  written). The mode is the demo file name's token. Sessions that reach E1M8's exit are compared up to the finale's first tic.
 
 ## Mutation testing
 
