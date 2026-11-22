@@ -356,7 +356,7 @@ impl Simulation {
             context,
         )
     }
-    fn episode1_v2_with(
+    pub(crate) fn episode1_v2_with(
         policy: OriginalExecutionProfile,
         map: Map,
         map_number: u8,

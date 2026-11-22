@@ -20,6 +20,10 @@ pub(crate) const LINE_FLOOR_TURBO: i16 = 36;
 pub(crate) const LINE_FLOOR_LOWEST: i16 = 38;
 /// S1 exit switch, `G_ExitLevel` (use).
 pub(crate) const LINE_EXIT: i16 = 11;
+/// W1 exit (`G_ExitLevel`, p_spec.c:677-680), wire 26 only.
+pub(crate) const LINE_WALK_EXIT: i16 = 52;
+/// W1 secret exit (`G_SecretExitLevel`, p_spec.c:760-763), wire 26 only.
+pub(crate) const LINE_WALK_SECRET_EXIT: i16 = 124;
 /// p_spec.h `MAXPLATS`: `activeplats` slots (`P_AddActivePlat` `I_Error`s past it).
 pub(crate) const MAX_PLATS: usize = 30;
 /// p_spec.h `MAXBUTTONS`: `buttonlist` slots (`P_StartButton` `I_Error`s past it).
@@ -380,6 +384,12 @@ pub(crate) fn validate_episode1(map: &Map) -> Result<MoverAdmission, SimError> {
 pub(crate) fn validate_episode1_teleport(map: &Map) -> Result<MoverAdmission, SimError> {
     validate_movers_with(map, Rules::Episode1Teleport)
 }
+/// Wire 26's load rules (M6a): those of [`validate_episode1_teleport`] plus the
+/// walk exits 52 (`G_ExitLevel`, p_spec.c:677-680) and 124 (`G_SecretExitLevel`,
+/// 760-763), which move no sector and are never cleared.
+pub(crate) fn validate_episode1_walk_exits(map: &Map) -> Result<MoverAdmission, SimError> {
+    validate_movers_with(map, Rules::Episode1WalkExits)
+}
 /// Which policy's load rules [`validate_movers_with`] runs.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Rules {
@@ -391,6 +401,8 @@ enum Rules {
     Episode1,
     /// Wire 24: the Episode 1 rules plus line special 97.
     Episode1Teleport,
+    /// Wire 26: wire 24's rules plus line specials 52 and 124.
+    Episode1WalkExits,
 }
 /// The donut load rule of decision H8 for every sector `s1` tagged by a line with
 /// special 9: `EV_DoDonut` (p_spec.c:1163–1221) reads `s1->lines[0]` through
@@ -433,8 +445,12 @@ pub(crate) fn donut_geometry(map: &Map) -> Result<(), SimError> {
 fn validate_movers_with(map: &Map, rules: Rules) -> Result<MoverAdmission, SimError> {
     use crate::sector_thinkers::{MAX_LINE_ANIMS, SCROLLING_WALL};
     let two_sided_scrollers = rules != Rules::Movers;
-    let episode1 = matches!(rules, Rules::Episode1 | Rules::Episode1Teleport);
-    let teleport = rules == Rules::Episode1Teleport;
+    let episode1 = matches!(
+        rules,
+        Rules::Episode1 | Rules::Episode1Teleport | Rules::Episode1WalkExits
+    );
+    let teleport = matches!(rules, Rules::Episode1Teleport | Rules::Episode1WalkExits);
+    let walk_exits = rules == Rules::Episode1WalkExits;
     crate::demon_expanded_map::validate_sector_specials_for(map, episode1)?;
     let sectors = map.sectors().len();
     let mut kinds = vec![Kinds::default(); sectors];
@@ -471,6 +487,8 @@ fn validate_movers_with(map: &Map, rules: Rules) -> Result<MoverAdmission, SimEr
             35 | 51 | 7 | 8 | 9 if episode1 => {}
             // Wire 24: the WR teleport moves no sector (M4b step 4).
             crate::teleport::LINE_TELEPORT if teleport => {}
+            // Wire 26: the walk exits move no sector (p_spec.c:677-680, 760-763).
+            LINE_WALK_EXIT | LINE_WALK_SECRET_EXIT if walk_exits => {}
             SCROLLING_WALL if back.is_none() || two_sided_scrollers => scrollers += 1,
             LINE_DOOR_DR => kinds[back.ok_or(MapScaleError::DoorLine)?].dr = true,
             26..=28 if episode1 => kinds[back.ok_or(MapScaleError::DoorLine)?].dr = true,

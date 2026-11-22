@@ -78,6 +78,8 @@ pub struct Diagnostic<'a> {
     version: u32,
     /// DSIM41 (wire 25): the DSIM40 layout plus `events.sounds`.
     sounds: bool,
+    /// DSIM42 (wire 26): DSIM41 plus the start group `level.start.*`.
+    start: bool,
     fields: Vec<Field<'a>>,
     sorted: Vec<usize>,
 }
@@ -353,6 +355,30 @@ impl<'a> Diagnostic<'a> {
     ) -> Result<Self, DiagnosticError> {
         Self::decode_selected(bytes, limits, Some(41))
     }
+    /// Explicit DSIM42 Episode 1 part 4 reader (M6a, wire 26, ruling U2 = B1);
+    /// every earlier reader, `decode_episode1_v3` included, rejects 42 and this
+    /// reader rejects every earlier version. DSIM42 is DSIM41, field for field and
+    /// with every DSIM41 rule, under policy 26 and the
+    /// `PLAYER-MONSTERS-EPISODE1-4-v1` context, plus the start group after the last
+    /// `events.sounds.pending` field: `level.start.kind` (u8: 0 new game, 1
+    /// carried, 2 reborn), `.p_random` (u8), `.health`, `.armor_points` (i32),
+    /// `.armor_type` (u8), `.weapons_owned` (u16 bits), `.ready_weapon` (u8),
+    /// `.ammo.0` to `.3` and `.max_ammo.0` to `.3` (i32), `.backpack` (u8),
+    /// `.cheats` (i32), `.attack_down`, `.use_down` (u8), `.bob`, `.weapon_x`,
+    /// `.flash_tics`, `.flash_x`, `.flash_y` (i32), `.sounds.count` (u64) and
+    /// `.sounds.N` (DSIM41 sound records). The reader requires a new game to hold
+    /// `G_PlayerReborn`'s player with index 0, a reborn start that player with any
+    /// index, a carried start the bounds of [`crate::CarriedStart::validate`], and
+    /// exactly one record, `sfx_sawup` at `original_player.0.mo` unplaced, when a
+    /// carried ready weapon is the chainsaw, none otherwise. A flash psprite with
+    /// a null state may hold 1..=7 tics (what `P_SetupPsprites` leaves,
+    /// p_pspr.c:836-837).
+    pub fn decode_episode1_v4(
+        bytes: &'a [u8],
+        limits: DiagnosticLimits,
+    ) -> Result<Self, DiagnosticError> {
+        Self::decode_selected(bytes, limits, Some(42))
+    }
     /// Explicit DSIM30 real-map-scale reader; every earlier reader rejects 30 and
     /// this reader rejects every earlier version.
     pub fn decode_map_scale(
@@ -431,11 +457,13 @@ impl<'a> Diagnostic<'a> {
         {
             return Err(DiagnosticError::Structure);
         }
-        let sounds = version == 41;
+        let sounds = matches!(version, 41 | 42);
+        let start = version == 42;
         let result = Self {
             bytes,
             version: if sounds { 40 } else { version },
             sounds,
+            start,
             fields,
             sorted,
         };
@@ -452,7 +480,13 @@ impl<'a> Diagnostic<'a> {
     }
     /// Explicit format version, separate from the execution profile field.
     pub const fn version(&self) -> u32 {
-        if self.sounds { 41 } else { self.version }
+        if self.start {
+            42
+        } else if self.sounds {
+            41
+        } else {
+            self.version
+        }
     }
     /// Borrow a field without reordering the original capture/event sequence.
     pub fn field(&self, path: &str) -> Option<&'a [u8]> {
@@ -578,6 +612,9 @@ impl<'a> Diagnostic<'a> {
                 || crate::barrels::is_barrel(self.policy(), actor))
     }
     fn policy(&self) -> OriginalExecutionProfile {
+        if self.start {
+            return OriginalExecutionProfile::PlayerMonstersEpisode1V4;
+        }
         if self.sounds {
             return OriginalExecutionProfile::PlayerMonstersEpisode1V3;
         }
@@ -917,6 +954,16 @@ impl<'a> Diagnostic<'a> {
                     return Err(DiagnosticError::Identity);
                 }
             }
+        }
+        if self.start {
+            crate::carried_start::validate_start_group(
+                |path| self.field(path),
+                self.field("original_player.0.mo"),
+                self.fields
+                    .iter()
+                    .filter(|f| f.path.starts_with("level.start."))
+                    .count(),
+            )?;
         }
         if self.sounds {
             self.validate_sound_records()?;
@@ -2652,9 +2699,12 @@ impl<'a> Diagnostic<'a> {
             extra_light: int("extra_light")?,
             psprites,
         };
-        state
-            .validate_for(matches!(self.version, 39 | 40))
-            .map_err(|_| DiagnosticError::Schema)?;
+        if self.start {
+            state.validate_for_policy(OriginalExecutionProfile::PlayerMonstersEpisode1V4)
+        } else {
+            state.validate_for(matches!(self.version, 39 | 40))
+        }
+        .map_err(|_| DiagnosticError::Schema)?;
         if self.required("original_player.0.state")? != [0]
             && state.psprites[0].state != Some(state.ready.states()[1])
         {

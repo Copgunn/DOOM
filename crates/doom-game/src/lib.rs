@@ -13,7 +13,10 @@
 //! - [`app`]: the session, the 35 Hz loop step on a clock the platform supplies, the session
 //!   recorder, the app's pause and its own end and refusal screens, and restart (decisions S3,
 //!   S8–S12, S21). Time and files come in from the platform through [`app::Host`] and
-//!   [`app::App::update`]'s argument.
+//!   [`app::App::update`]'s argument;
+//! - [`session`] (M6a): one single-player Episode 1 session across levels, the intermission
+//!   logic, the reborn, the session demo and its replay, and the saved session `DSES` v1.
 
 pub mod app;
 pub mod input;
+pub mod session;

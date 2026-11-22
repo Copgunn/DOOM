@@ -128,6 +128,20 @@ impl PlayerWeaponState {
     /// The state's domain; `episode1` admits the backpack and the cell and
     /// rocket counts the Episode 1 policy's pickups give (p_inter.c:553–599).
     pub(crate) fn validate_for(self, episode1: bool) -> Result<(), SimError> {
+        self.validate_domain(episode1, false)
+    }
+    /// [`Self::validate_for`] for `policy`: wire 26 alone (M6a) also admits a flash
+    /// psprite with a null state and a tic count up to
+    /// `carried_start::MAX_CARRIED_FLASH_TICS`, which `P_SetupPsprites` leaves at a
+    /// carried start (p_pspr.c:836-837) and nothing reads (`P_MovePsprites` skips a
+    /// null state, p_pspr.c:851-883) until a flash state sets it.
+    pub(crate) fn validate_for_policy(
+        self,
+        policy: OriginalExecutionProfile,
+    ) -> Result<(), SimError> {
+        self.validate_domain(policy.has_episode1(), policy.has_carried_start())
+    }
+    fn validate_domain(self, episode1: bool, carried_flash: bool) -> Result<(), SimError> {
         // No policy before the Episode 1 policy gives a backpack.
         if self.backpack && !episode1 {
             return Err(WeaponError::Inventory.into());
@@ -157,7 +171,9 @@ impl PlayerWeaponState {
                 return Err(WeaponError::Definition.into());
             }
             if channel == 1 && ps.state.is_none() {
-                if ps.tics != 0 || self.extra_light != 0 {
+                let carried = carried_flash
+                    && (1..=crate::carried_start::MAX_CARRIED_FLASH_TICS).contains(&ps.tics);
+                if (ps.tics != 0 && !carried) || self.extra_light != 0 {
                     return Err(WeaponError::Definition.into());
                 }
                 continue;
@@ -229,12 +245,16 @@ impl PlayerWeaponRuntime {
             None
         }
     }
-    /// The runtime's domain; `episode1` selects the Episode 1 policy's wider
-    /// pack domain.
-    pub(crate) fn validate_for(self, episode1: bool) -> Result<(), SimError> {
+    /// The runtime's domain under `policy`: the Episode 1 policy's wider pack
+    /// domain, and the wire-26 flash rule of
+    /// [`PlayerWeaponState::validate_for_policy`].
+    pub(crate) fn validate_for_policy(
+        self,
+        policy: OriginalExecutionProfile,
+    ) -> Result<(), SimError> {
         match self {
             Self::Pistol(p) => p.validate(),
-            Self::Pack(p) => p.validate_for(episode1),
+            Self::Pack(p) => p.validate_for_policy(policy),
         }
     }
     pub(crate) fn adapter(self, id: ActorId, health: i32) -> WeaponPlayer {
