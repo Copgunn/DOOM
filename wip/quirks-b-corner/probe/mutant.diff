@@ -1,0 +1,57 @@
+--- crates/doom-sim/src/movement.rs	2026-11-15 21:50:15.547398771 -0800
++++ /home/copgunn/scratch/quirks/followup-b/corner/repo-mutant/crates/doom-sim/src/movement.rs	2026-11-22 00:29:39.903421079 -0800
+@@ -469,7 +469,9 @@
+     let [w, h] = world.map().blockmap().dimensions().map(i32::from);
+     let mut seen = crate::line_work::SeenLines::for_lines(world.lines.len());
+     let mut hits = Vec::new();
++    let mut probe_cells: Vec<[i32; 2]> = Vec::new();
+     for _ in 0..64 {
++        probe_cells.push(map);
+         if map[0] >= 0 && map[1] >= 0 && map[0] < w && map[1] < h {
+             for n in world.line_candidates(map[0] as usize, map[1] as usize) {
+                 let i = usize::from(n);
+@@ -523,8 +525,15 @@
+         } else if crossings[1].bits() >> 16 == map[0] {
+             crossings[1] = crossings[1] + increments[1];
+             map[1] += steps[1];
++        } else {
++            // MUTANT (self-test only): never stall at a corner; step both axes.
++            crossings[0] = crossings[0] + increments[0];
++            map[0] += steps[0];
++            crossings[1] = crossings[1] + increments[1];
++            map[1] += steps[1];
+         }
+     }
++    crate::corner_probe::log("path", start, end, &probe_cells, map == last, hits.len());
+     // Stable sort reproduces the C repeated strict-minimum scan on ties.
+     hits.sort_by_key(|hit| hit.0);
+     crate::level_stats::observe_intercepts(hits.len());
+--- crates/doom-sim/src/lib.rs	2026-11-20 00:10:47.234176155 -0800
++++ /home/copgunn/scratch/quirks/followup-b/corner/repo-mutant/crates/doom-sim/src/lib.rs	2026-11-22 00:21:05.714681813 -0800
+@@ -109,6 +109,8 @@
+ };
+ mod combat;
+ mod combat_trace;
++mod corner_probe;
++pub use corner_probe::corner_direct_paths;
+ pub use combat::{AttackResult, CombatError, CombatEvent, DamageRequest, DamageResult, LineAttack};
+ pub use combat_trace::{AimResult, HitscanTrace, Intercept, TraceObject};
+ /// Canonical original metadata identities, distinct from executable registry slots.
+--- crates/doom-sim/src/combat_trace.rs	2026-11-10 09:01:29.221803509 -0800
++++ /home/copgunn/scratch/quirks/followup-b/corner/repo-mutant/crates/doom-sim/src/combat_trace.rs	2026-11-22 00:29:39.903105479 -0800
+@@ -338,8 +338,15 @@
+         } else if crossings[1].bits() >> 16 == cell[0] {
+             crossings[1] = crossings[1] + increments[1];
+             cell[1] += steps[1];
++        } else {
++            // MUTANT (self-test only): never stall at a corner; step both axes.
++            crossings[0] = crossings[0] + increments[0];
++            cell[0] += steps[0];
++            crossings[1] = crossings[1] + increments[1];
++            cell[1] += steps[1];
+         }
+     }
++    crate::corner_probe::log(if require_endpoint { "hitscan_req" } else { "hitscan" }, start, end, &out.cells, complete, out.intercepts.len());
+     if require_endpoint && !complete {
+         return Err(CombatError::TraversalLimit);
+     }

@@ -1,0 +1,13 @@
+[package]
+name = "corner-harness-probe"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+doom-sim = { path = "/home/copgunn/scratch/quirks/followup-b/corner/repo-copy/crates/doom-sim" }
+doom-map = { path = "/home/copgunn/scratch/quirks/followup-b/corner/repo-copy/crates/doom-map" }
+doom-wad = { path = "/home/copgunn/scratch/quirks/followup-b/corner/repo-copy/crates/doom-wad" }
+doom-types = { path = "/home/copgunn/scratch/quirks/followup-b/corner/repo-copy/crates/doom-types" }
+
+[workspace]

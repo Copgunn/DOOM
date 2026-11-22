@@ -1,0 +1,13 @@
+[package]
+name = "corner-harness"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+doom-sim = { path = "/home/copgunn/src/DOOM/crates/doom-sim" }
+doom-map = { path = "/home/copgunn/src/DOOM/crates/doom-map" }
+doom-wad = { path = "/home/copgunn/src/DOOM/crates/doom-wad" }
+doom-types = { path = "/home/copgunn/src/DOOM/crates/doom-types" }
+
+[workspace]
