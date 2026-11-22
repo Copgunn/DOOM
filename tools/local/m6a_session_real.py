@@ -148,7 +148,8 @@ def genuine(binary, mbin, item, work):
         lv = []; fails.append(f'the independent encoder refused the state: {e}')
     starts = m5c_starts.convert(sound, name)
     lst = work / 'starts.txt'; lst.write_text(starts)
-    p = subprocess.run([str(mbin), '--wad', str(item['wads'][0]), '--starts', str(lst), '--schedule', MR.GOLDEN_SCHEDULE,
+    wads = [x for w in item['wads'] for x in ('--wad', str(w))]   # every WAD in order (the IWAD sets have one)
+    p = subprocess.run([str(mbin), *wads, '--starts', str(lst), '--schedule', MR.GOLDEN_SCHEDULE,
                         '--out', str(work / 'mixer.txt')], capture_output=True, text=True, env=G.ENV, cwd=work)
     if p.returncode or MR.SANITIZER.search(p.stderr): fails.append(f'mixer exit {p.returncode}')
     mixer = (work / 'mixer.txt').read_text()
