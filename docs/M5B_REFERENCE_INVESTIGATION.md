@@ -432,7 +432,7 @@ Esc, Enter, Tab, `-`, `=` and the F-keys are hard-coded, not bindable.
     keysyms, which equal ISO 8859-1 code points; that is external knowledge, not
     from this repository, and whether a layout produces them at index 0 is
     inference.) There is no separate left/right Shift, Ctrl or Alt.
-27. **KeyPress / KeyRelease** (i_video.c:203-214): `ev_keydown` / `ev_keyup`
+27. **KeyPress / KeyRelease** (i_video.c:197-214): `ev_keydown` / `ev_keyup`
     with `data1 = xlatekey()`; `data2`/`data3` of the local `event` are **left
     uninitialised** (no responder reads them for key events).
 28. **ButtonPress** (i_video.c:215-227): `data1` = bits of buttons 1-3 held in
@@ -493,8 +493,8 @@ Esc, Enter, Tab, `-`, `=` and the F-keys are hard-coded, not bindable.
     gives atoi = 0, clamped to 10); clamped to [10, 400]; then
     `forwardmove[0..1]` and `sidemove[0..1]` are multiplied by scale/100 with int
     truncation. Without `-turbo` the tables are untouched (off by default).
-    Because `MAXPLMOVE` is `forwardmove[1]`, turbo also raises the clamp; above
-    scale 254 `forwardmove[1]` exceeds 127 and the `char` assignment wraps.
+    Because `MAXPLMOVE` is `forwardmove[1]`, turbo also raises the clamp. From
+    scale 256, `forwardmove[1]` exceeds 127 and a full-speed forward command wraps on assignment to `char`.
 37. Cross-reference: G_Ticker prints "%s is turbo!" when `cmd->forwardmove >
     TURBOTHRESHOLD && !(gametic&31) && ((gametic>>5)&3) == i`
     (g_game.c:671-679). Without turbo forward never exceeds 50, so it never
@@ -519,7 +519,7 @@ Esc, Enter, Tab, `-`, `=` and the F-keys are hard-coded, not bindable.
     outside -1..2, `joyb_*` outside -1..3 (no validation, m_misc.c:388-393).
 43. `sizeof(mousebuttons)` is the pointer size (g_game.c:495-496): a
     platform-dependent partial clear.
-44. Uninitialised `data2`/`data3` in key events (i_video.c:199-214); never read.
+44. Uninitialised `data2`/`data3` in key events (i_video.c:197-214); never read.
 45. First call: every variable G_BuildTiccmd reads is either a zero-initialised
     static or assigned before use; no uninitialised read.
 
@@ -1996,7 +1996,7 @@ p_inter.c:846-851.
   attacker it reads freed memory.
 - Status bar drawing does nothing before the first tic (`gametic` must be nonzero) and
   only in `GS_LEVEL`. Under `-devparm`, I_FinishUpdate writes dots into FG row 199
-  (i_video.c:361-372), which the diff drawing never repairs.
+  (i_video.c:361-374), which the diff drawing never repairs.
 - `attackdown` is written during the intermission (wi_stuff.c:1482-1487) and is not reset
   at the next spawn, so it feeds `lastattackdown` at the start of the next level.
 
@@ -2234,7 +2234,7 @@ game is paused or the menu is open, because those only make `P_Ticker` return ea
    clears in `P_SpawnPlayer` (`p->message = NULL`, p_mobj.c:678) and
    `P_UnArchivePlayers` (`players[i].message = NULL`, p_saveg.c:96), and the whole-struct
    `memset` in `G_PlayerReborn` (g_game.c:815). The savegame writer does copy it:
-   `P_ArchivePlayers` `memcpy`s the whole `player_t` (p_saveg.c:59-60), so the raw pointer
+   `P_ArchivePlayers` `memcpy`s the whole `player_t` (p_saveg.c:60-61), so the raw pointer
    value is written into the save file and discarded on load.
    (b) **What this means for a per-tic state dump.** Within one `G_Ticker` call the
    message is assigned (by `P_Ticker`, or earlier in `G_Ticker` by the turbo check or
@@ -2577,7 +2577,7 @@ Related: `G_BuildTiccmd` calls `HU_dequeueChatChar()` for every ticcmd
    rewritten by every later trigger; HU_Ticker copies the text when it takes it, so only a
    pending (untaken) message could change under the pointer, and in single player the
    text is always the same (*inference*).
-3. `P_ArchivePlayers` writes the raw `message` pointer into the save (p_saveg.c:59-60), so
+3. `P_ArchivePlayers` writes the raw `message` pointer into the save (p_saveg.c:60-61), so
    save bytes depend on whether a message is pending and on the address layout. Out of
    scope (save), but it is a reason not to model the pointer value.
 4. `if (french)` (hu_stuff.c:399, 730) tests the enumerator `french` of `Language_t`

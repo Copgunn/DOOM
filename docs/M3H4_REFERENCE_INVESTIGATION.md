@@ -119,7 +119,7 @@ cross-sector noise), and the evidence. It adds no second mover, collision or sch
   applies; `S_PLAY_RUN1` entry needs a nonzero move command (166–170). `P_PlayerThink`
   ([p_user.c:236](../linuxdoom-1.10/p_user.c)) runs it behind the reaction-time gate that
   the player command stage already executes.
-- **`P_SpawnMobj`** ([p_mobj.c:480](../linuxdoom-1.10/p_mobj.c)): `floorz`/`ceilingz` from
+- **`P_SpawnMobj`** ([p_mobj.c:479](../linuxdoom-1.10/p_mobj.c)): `floorz`/`ceilingz` from
   the spawn subsector's sector (519–520); `ONFLOORZ` → `z = floorz`, `ONCEILINGZ` →
   `ceilingz - height`, else the given `z` (522–527). Nothing checks that the thing fits.
 
@@ -439,7 +439,7 @@ Two source facts shaped the placements, and both are observations worth keeping:
   monster first walks east by `olddir` ([p_enemy.c:441](../linuxdoom-1.10/p_enemy.c)) until
   blocked or until `movecount` expires. The high sides therefore lie west and the player
   east, so that the first move heads for the edge.
-- `P_PathTraverse` ([p_maputl.c:632](../linuxdoom-1.10/p_maputl.c)) follows the exact trace
+- `P_PathTraverse` ([p_maputl.c:743](../linuxdoom-1.10/p_maputl.c)) follows the exact trace
   end point: at angle 180° `finesine[4096] = −25`, so a 1,024-unit autoaim trace ends 0.39
   units below its start, and together with the `y1 += FRACUNIT` nudge the block walk steps
   down one block row before reaching the target's block. Things are linked only in the

@@ -783,7 +783,7 @@ Killed, by area (each test names what it pins and the C line):
   120, 112, 100 and 96 (r_things.c:716-736).
 - **From the independent review** (four tests, adopted from the reviewer's patch): `R_PointToAngle` at `x == -y == 2^29`,
   where `SlopeDiv`'s unsigned `num<<3` wraps (tables.c:50-62) and octant 7 gives ANG270 against octant 8's 0
-  (r_main.c:320-335); `rw_offset` not negated at exactly `rw_normalangle - rw_angle1 == ANG180` (r_segs.c:617-633); the
+  (r_main.c:320-335); `rw_offset` not negated at exactly `rw_normalangle - rw_angle1 == ANG180` (r_segs.c:623-633); the
   taint labels of a masked-midtexture and of a sprite texel read past the end of its lump (the `&127` wrap of a
   slightly negative frac, r_draw.c:105-148; r_segs.c:162-188, r_things.c:351-443, 560).
 
