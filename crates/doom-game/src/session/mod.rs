@@ -297,7 +297,7 @@ impl SessionData {
         self.music
     }
 
-    fn map(&self, n: u8) -> Result<&(Map, Arc<Level>), MapLoadError> {
+    pub(crate) fn map(&self, n: u8) -> Result<&(Map, Arc<Level>), MapLoadError> {
         self.maps[usize::from(n - 1)].as_ref().map_err(Clone::clone)
     }
 }

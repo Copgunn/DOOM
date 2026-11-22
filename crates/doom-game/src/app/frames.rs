@@ -80,6 +80,16 @@ impl FrameAssets {
         })
     }
 
+    /// The assets of an M6a session's start map from its loaded parts (`GameData::load_session`):
+    /// the resources, the start map's level tables and the display's PLAYPAL.
+    pub(crate) fn from_parts(res: Arc<Resources>, level: Arc<Level>, playpal: Vec<u8>) -> Self {
+        Self {
+            res,
+            level,
+            playpal,
+        }
+    }
+
     /// Palette `number` of PLAYPAL (0..=13), as the display keeps it.
     pub fn palette(&self, number: u8) -> Option<&[u8]> {
         let at = usize::from(number) * PALETTE_BYTES;

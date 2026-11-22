@@ -25,6 +25,7 @@ mod write_stats;
 use audio::{Output, Trial, Volume};
 use doom_game::app::{App, AudioSink, GameData, Host, SessionConfig, Timestamp, UNRECORDED_LABEL};
 use doom_game::input::Preset;
+use doom_game::session::{ModeSetting, ModeSource, SessionMode};
 use doom_render::GameMode;
 #[cfg(test)]
 use session_file::claim_new;
@@ -34,7 +35,7 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const HELP: &str = "\
-doom-play: play one Episode 1 map of DOOM in a window, with the Linux DOOM 1.10 game rules
+doom-play: play Episode 1 of DOOM from any of its maps, with the Linux DOOM 1.10 game rules
 and the sound effects of linuxdoom-1.10 built with its in-process sound code (one define
 removed); no cheats, menu or music (see Sound and Limits).
 
@@ -43,11 +44,18 @@ usage: doom-play --iwad PATH [options]
 
   --iwad PATH          the IWAD (required; read only, never copied)
   --wad PATH           an extra WAD loaded after the IWAD (repeatable; later files win)
-  --map N              E1M<N>, 1-9 (default 1); E1M1..E1M9 is also accepted
+  --map N              the start map E1M<N>, 1-9 (default 1); E1M1..E1M9 is also accepted.
+                       The session goes on from there as the original does after a warp
+  --game-mode NAME     retail or registered: forces the game mode. By default it is retail
+                       when the IWAD has a fourth episode (a lump named E4M1) and registered
+                       otherwise. linuxdoom-1.10 makes no such probe (it decides by the
+                       file name); this is a declared rule. The mode is printed at launch,
+                       given on the exit line and written into the demo's file name
   --skill N            2 or hmp: Hurt Me Plenty (default); 3 or uv: Ultra-Violence.
                        N is the skill value stored in the demo header and the file
                        name. Vanilla's own -skill option counts from 1, so these are
-                       its -skill 3 and -skill 4.
+                       its -skill 3 and -skill 4. The easy skills (0 and 1) are not built
+                       yet.
   --sessions DIR       where session demos are written (default doom-sessions/)
   --bindings NAME      vanilla (default) or modern (WASD, E use, always run)
   --gamma N            gamma table 0-4 (default 0, as the original)
@@ -106,14 +114,16 @@ the mixer, the picture or the demo. They do nothing without an audio device (or 
                        backend may not grant it.
   On exit, the lines starting \"audio\" echo a setting that is not at its default.
 
-Keys: Esc or Pause pauses (then Esc or Pause resumes, R restarts, Q quits); on an end screen
-R restarts and Q or Esc quits. End mutes and unmutes the sound (the player's own key, never
+Keys: Esc or Pause pauses (then Esc or Pause resumes, R restarts, Q quits); on a refusal
+screen R restarts and Q or Esc quits. R starts a new game at the start map, as a new
+session with its own demo. End mutes and unmutes the sound (the player's own key, never
 seen by the game); pausing also silences it. When the window library reports that the window
 was minimised or lost focus, the game pauses and every held key is released. Under WSLg the
 window now and then reports a focus loss in its first moments, so the game can open already
 paused (the PAUSED box shows): Esc or Pause resumes. Every session
-(unless --unrecorded-full-turning) is recorded as a version-110 demo named
-E1M<map>-skill<n>-<yyyymmdd-hhmmss>.lmp (the time is UTC) in the sessions directory; an
+(unless --unrecorded-full-turning) is recorded as one version-110 demo, every tic of every
+level and intermission, named E1M<map>-skill<n>-<retail|registered>-<yyyymmdd-hhmmss>.lmp
+(the start map, the game mode, the time in UTC) in the sessions directory; an
 existing file is never replaced (a suffix -2, -3, ... is added). If writing the demo fails,
 the pause box says so, the end screen and the exit message give the reason, and the write
 is tried again on quit and restart.
@@ -150,10 +160,20 @@ and with --input-log a line starting \"input log writes\" does the same for the 
 that an earlier run left in the sessions directory (NAME.PID.tmp, NAME.PID.claim.tmp) and
 that are more than an hour old are removed, and their count is printed.
 
+The session: an exit shows the intermission (presses of fire or use move it on), then the
+next map starts with what the player carries; when the dead player presses use, the map
+starts again (the original's reborn); the secret exit of E1M3 leads to E1M9, which returns
+to E1M4. The session ends only when the player quits (or at a refusal, or after 1,048,576
+tics). On exit, a line starting \"session:\" names the game mode, the start and where the
+session was.
+
 Limits: an OpenGL 2.1 (or OpenGL ES 2) driver is required. There is no music, menu,
-automap, intermission or next level; the session ends at the level's exit, or when the
-dead player presses use. Cheat codes have no effect: their keys reach the game as ordinary
-keys. The status bar face's idle glance follows the sound's random draws as the genuine
+automap or saving. Not built yet (after the hand test of the level chain): the finale
+after E1M8, the screen melt (the new picture appears at once; the melt's random draws are
+made), the easy skills, and E1M7 on skill 3, which the simulation does not admit yet.
+Where the game reaches one of them it stops with a screen saying so (NOT BUILT YET or TIC
+REFUSED) rather than play differently from the original; the demo is kept. Cheat codes
+have no effect: their keys reach the game as ordinary keys. The status bar face's idle glance follows the sound's random draws as the genuine
 engine replaying the session's demo does, under the declared schedule and build; a vanilla
 player's menu keys (Esc, -, =, F1-F10), which start menu sounds, are not part of a demo and
 are not modelled.";
@@ -165,6 +185,8 @@ struct Options {
     wads: Vec<PathBuf>,
     map: u8,
     skill: u8,
+    /// `--game-mode`: forced, or the declared probe (ruling U4).
+    game_mode: ModeSetting,
     sessions: PathBuf,
     preset: Preset,
     gamma: usize,
@@ -204,6 +226,7 @@ fn parse(args: impl IntoIterator<Item = String>) -> Result<Option<Options>, Stri
         wads: Vec::new(),
         map: 1,
         skill: 2,
+        game_mode: ModeSetting::Probe,
         sessions: PathBuf::from("doom-sessions"),
         preset: Preset::Vanilla,
         gamma: 0,
@@ -238,7 +261,17 @@ fn parse(args: impl IntoIterator<Item = String>) -> Result<Option<Options>, Stri
                 o.skill = match value()?.as_str() {
                     "hmp" => 2,
                     "uv" => 3,
+                    "0" | "1" => {
+                        return Err("--skill: the easy skills (0, 1) are not built yet".into());
+                    }
                     v => number(&flag, v, |s| (2..=3).contains(s))?,
+                }
+            }
+            "--game-mode" => {
+                o.game_mode = match value()?.as_str() {
+                    "retail" => ModeSetting::Force(SessionMode::Retail),
+                    "registered" => ModeSetting::Force(SessionMode::Registered),
+                    v => return Err(format!("--game-mode: {v:?} is not retail or registered")),
                 }
             }
             "--sessions" => o.sessions = PathBuf::from(value()?),
@@ -327,6 +360,22 @@ fn game_mode(iwad: &Path) -> GameMode {
         Some("doomu.wad") => GameMode::Retail,
         _ => GameMode::Registered,
     }
+}
+
+/// The launch line of the declared game mode (ruling U4): the mode, how it was chosen, and the
+/// mode linuxdoom-1.10 would give the IWAD's file name ([`game_mode`]), which made no probe.
+fn mode_line(m: doom_game::session::DeclaredMode, iwad: &Path) -> String {
+    let how = match m.source {
+        ModeSource::Forced => "forced by --game-mode",
+        ModeSource::Probed if m.mode == SessionMode::Retail => "the IWAD has a fourth episode",
+        ModeSource::Probed => "the IWAD has no fourth episode",
+    };
+    let by_name = format!("{:?}", game_mode(iwad)).to_ascii_lowercase();
+    format!(
+        "game mode {} ({how}); linuxdoom-1.10 decides by the file name only and would run this \
+         file as {by_name}",
+        m.mode.word()
+    )
 }
 
 /// The sessions directory on disk and the sound output, writing on the caller's thread. In play
@@ -427,10 +476,13 @@ fn run(o: Options) -> Result<(), String> {
         files.push(std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?);
     }
     let refs: Vec<&[u8]> = files.iter().map(Vec::as_slice).collect();
-    // wire 25 with sound (decision T15)
-    let data = GameData::load_with_sound(&refs, game_mode(&o.iwad), o.map, o.skill)
-        .map_err(|e| e.to_string())?;
+    // the M6a session (wire 26 with sound across levels; rulings U2, U4, U6)
+    let data =
+        GameData::load_session(&refs, o.game_mode, o.map, o.skill).map_err(|e| e.to_string())?;
     drop(files);
+    if let Some(line) = data.session_mode().map(|m| mode_line(m, &o.iwad)) {
+        eprintln!("doom-play: {line}");
+    }
     if !display_available() {
         return Err("no display: neither DISPLAY nor WAYLAND_DISPLAY is set".into());
     }
@@ -893,6 +945,69 @@ mod tests {
         assert_eq!(game_mode(Path::new("doomu.wad")), GameMode::Retail);
         assert_eq!(game_mode(Path::new("DOOM.WAD")), GameMode::Registered);
         assert_eq!(game_mode(Path::new("other.wad")), GameMode::Registered);
+    }
+
+    /// M6a step 9: `--game-mode` (ruling U4), the easy skills' refusal, the launch line and the
+    /// help's account of the session.
+    #[test]
+    fn the_game_mode_flag_and_the_session_in_the_help() {
+        use doom_game::session::DeclaredMode;
+        let o = parse(args("--iwad a.wad")).unwrap().unwrap();
+        assert_eq!(
+            o.game_mode,
+            ModeSetting::Probe,
+            "the declared probe by default"
+        );
+        for (v, mode) in [
+            ("retail", SessionMode::Retail),
+            ("registered", SessionMode::Registered),
+        ] {
+            let o = parse(args(&format!("--iwad a.wad --game-mode {v}")))
+                .unwrap()
+                .unwrap();
+            assert_eq!(o.game_mode, ModeSetting::Force(mode));
+            assert_eq!((o.map, o.skill, o.screenblocks), (1, 2, 10), "nothing else");
+        }
+        for bad in ["--game-mode shareware", "--game-mode", "--game-mode Retail"] {
+            assert!(
+                parse(args(&format!("--iwad a.wad {bad}"))).is_err(),
+                "{bad}"
+            );
+        }
+        for easy in ["0", "1"] {
+            let e = parse(args(&format!("--iwad a.wad --skill {easy}"))).unwrap_err();
+            assert!(e.contains("easy skills (0, 1) are not built yet"), "{e}");
+        }
+        let line = |mode, source, file| mode_line(DeclaredMode { mode, source }, Path::new(file));
+        assert_eq!(
+            line(SessionMode::Retail, ModeSource::Probed, "/x/DOOM.WAD"),
+            "game mode retail (the IWAD has a fourth episode); linuxdoom-1.10 decides by the \
+             file name only and would run this file as registered"
+        );
+        assert!(
+            line(SessionMode::Registered, ModeSource::Probed, "doom.wad")
+                .starts_with("game mode registered (the IWAD has no fourth episode); ")
+        );
+        assert!(
+            line(SessionMode::Registered, ModeSource::Forced, "doomu.wad").starts_with(
+                "game mode registered (forced by --game-mode); linuxdoom-1.10 decides by the \
+             file name only and would run this file as retail"
+            )
+        );
+        for want in [
+            "--game-mode NAME     retail or registered",
+            "linuxdoom-1.10 makes no such probe",
+            "E1M<map>-skill<n>-<retail|registered>-<yyyymmdd-hhmmss>.lmp",
+            "when the dead player presses use, the map\nstarts again",
+            "line starting \"session:\"",
+            "the finale\nafter E1M8, the screen melt",
+            "E1M7 on skill 3",
+            "NOT BUILT YET",
+            "R starts a new game at the start map",
+        ] {
+            assert!(HELP.contains(want), "{want}");
+        }
+        assert!(!HELP.contains("no music, menu,\nautomap, intermission or next level"));
     }
 
     #[test]

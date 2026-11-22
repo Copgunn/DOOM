@@ -64,8 +64,9 @@
 use crate::FsHost;
 use crate::keys::Mute;
 use crate::write_stats::{Kind, Timed, WriteTimes};
-use doom_game::app::{App, AudioSink, Host, Mode, TicReport, Timestamp};
+use doom_game::app::{App, AudioSink, Host, Mode, SessionTicReport, TicReport, Timestamp};
 use doom_game::input::Event;
+use doom_game::input::TicCommand;
 use std::fmt;
 use std::io::Write;
 use std::path::Path;
@@ -368,19 +369,22 @@ impl InputLog {
 
     /// The events a committed tic's command was built after.
     pub(crate) fn game_events(&mut self, report: &TicReport<'_>) {
+        self.game_events_at(report.tic, report.events);
+    }
+
+    /// [`InputLog::game_events`] of tic `tic` (an M6a session tic too).
+    pub(crate) fn game_events_at(&mut self, tic: u64, events: &[Event]) {
         if !self.is_on() {
             return;
         }
         self.busy = true;
-        for e in report.events {
+        for e in events {
             match *e {
-                Event::KeyDown(k) => {
-                    self.write("game", report.tic, format_args!("keydown 0x{k:02x}"))
-                }
-                Event::KeyUp(k) => self.write("game", report.tic, format_args!("keyup 0x{k:02x}")),
+                Event::KeyDown(k) => self.write("game", tic, format_args!("keydown 0x{k:02x}")),
+                Event::KeyUp(k) => self.write("game", tic, format_args!("keyup 0x{k:02x}")),
                 Event::Mouse { buttons, dx, dy } => self.write(
                     "game",
-                    report.tic,
+                    tic,
                     format_args!("mouse buttons={buttons} dx={dx} dy={dy}"),
                 ),
             }
@@ -389,15 +393,19 @@ impl InputLog {
 
     /// The command a committed tic executed and its fire bit.
     pub(crate) fn executed(&mut self, report: &TicReport<'_>) {
+        self.executed_at(report.tic, report.executed);
+    }
+
+    /// [`InputLog::executed`] of tic `tic` (an M6a session tic too).
+    pub(crate) fn executed_at(&mut self, tic: u64, c: TicCommand) {
         if !self.is_on() {
             return;
         }
         self.busy = true;
-        let c = report.executed;
         let fire = u8::from(c.buttons & BT_ATTACK != 0);
         self.write(
             "tic",
-            report.tic,
+            tic,
             format_args!(
                 "cmd forward={} side={} turn={} buttons={} fire={fire}",
                 c.forward, c.side, c.angle_turn, c.buttons
@@ -503,6 +511,13 @@ impl<H: Host> Host for LoggedHost<H> {
     }
     fn audio(&mut self) -> Option<&mut dyn AudioSink> {
         self.host.audio()
+    }
+    /// The same lines as [`Host::tic`]'s for an M6a session tic.
+    fn session_tic(&mut self, r: &SessionTicReport<'_>) {
+        let tic = r.report.tic;
+        self.log.game_events_at(tic, r.events);
+        self.log.executed_at(tic, r.executed);
+        self.host.session_tic(r);
     }
 }
 
