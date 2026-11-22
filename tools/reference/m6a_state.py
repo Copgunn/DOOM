@@ -69,7 +69,9 @@ The projection (declared rules, beyond those of level_snapshot_m6a.py):
     capture whose leveltime is a multiple of STRIDE, the last capture of each level (the tic before a boundary or
     the run's last level tic). Capture 0 of a later level is no session state (its tic 0 runs in the same tic).
 
-Results: tests/reference/m6a_state.txt (DOOM-M6A-STATE-v1), written without --check, compared byte for byte with
+Results: tests/reference/m6a_state.txt (DOOM-M6A-STATE-v1) and tests/reference/m6a_stale_attacker.txt
+(DOOM-M6A-STALE-ATTACKER-v1: one A row per load the stale-attacker rule fired on, item, load index and session tic,
+in item and load order, then a T row with their total), written without --check, compared byte for byte with
 --check (which writes nothing). Counts and digests only.
 
 --selftest proves the digests can fail: a planted extra P_Random draw at session tic 300 of CHAIN changes the
@@ -82,8 +84,8 @@ with "a dangling reference": a -2 appearing at level tic 10 (mid-level), a -2 se
 no attacker at the previous level's end (c), a threshold of 100 on players[0].mo at level tic 10 with
 damagecount 0 and a live attacker at level tic 10 that is -2 again at 11 (d), and the same -2 attacker on REBHELD's reborn reload (b); on the carried load dump itself, condition (d) fails with a
 threshold on another body of player 0, a dead player or an MT_VILE present; and with P[0].attacker the player's own
-body at CHAIN's carried load (a live thinker: the rule does not fire) the load capture differs from the committed
-D row, which the unchanged projection equals (the gate compares the field).
+body at ATTACK's carried load (a live thinker: the rule does not fire) the load capture differs from the committed
+D row, which the unchanged projection equals and on which the rule fires (the gate compares the field).
 
     m6a_state.py [--check] [--selftest] [--only ITEM[,ITEM]] [--work DIR] [--jobs N] [--cc CC]
 """
@@ -104,6 +106,8 @@ from m3h9_geometry import enum_index   # noqa: E402
 
 RESULTS = ROOT / 'tests/reference/m6a_state.txt'
 SCHEMA = 'DOOM-M6A-STATE-v1'
+STALE = ROOT / 'tests/reference/m6a_stale_attacker.txt'
+STALE_SCHEMA = 'DOOM-M6A-STALE-ATTACKER-v1'
 CHAIN_ITEMS = ['CHAIN', 'INTSTA', 'INTSTB', 'INTIDLE', 'INTHELD', 'INTFAST', 'REBHELD', 'REBLATE', 'SECRET', 'REBSECRT',
                'PROBE', 'USEAT130', 'USEAT131', 'USEAT132', 'RBXDEAD', 'NOINTER', 'NOE1M2', 'NOE1M2AT']
 RULING_ITEMS = ['TURBO', 'INTCMD', 'ATTACK']     # ATTACK: the stale attacker (ruling of 2026-11-22)
@@ -325,7 +329,8 @@ def run_item(binary, item, work, results):
     fails = check_run(r, item, results)
     lv = levels(r, item) if (r['dumps'] / 'load.txt').exists() else []
     shutil.rmtree(work / 'runs' / name)
-    return name, rows_of(name, lv), fails, sum(len(v['captures']) for v in lv), len(lv), stale_fired(lv)
+    return name, rows_of(name, lv), fails, sum(len(v['captures']) for v in lv), len(lv), \
+        [(v['load'], v['tic']) for v in lv if v['stale_attacker']]
 
 
 def stale_fired(lv):
@@ -344,6 +349,17 @@ def results_text(per_item):
             '#columns,L,item,load,tic,map,kind,captures,map_sha256,sequence_sha256',
             '#columns,D,item,load,tic,leveltime,why,state_sha256']
     return '\n'.join(head + [l for name in ITEMS for l in per_item.get(name, [])]) + '\n'
+
+
+def stale_text(fired):
+    """The fired record (module text): fired is {item: [(load, session tic)]}."""
+    rows = [f'A,{name},{k},{tic}' for name in ITEMS for k, tic in fired.get(name, [])]
+    head = [f'#schema,{STALE_SCHEMA}',
+            '#generator,tools/reference/m6a_state.py: the loads of the committed M6a items on which the stale-attacker '
+            'rule (owner\'s ruling of 2026-11-22) projected players[0].attacker as NULL; the genuine M6a runner and the '
+            'independent DSIM42 encoder, never from Rust output',
+            '#columns,A,item,load,tic', '#columns,T,total']
+    return '\n'.join(head + rows + [f'T,{len(rows)}']) + '\n'
 
 
 def selftest(binary, items_by_name, work, results):
@@ -382,14 +398,16 @@ def attacker_selftest(binary, items_by_name, work, base, lv):
     def planter(prev_live=True, dangling_from=0, extra=None, level=KL, body=False):
         # as the C would hold it: the stale value (or, with `body`, the player's own body) from the load (or
         # `dangling_from`) up to the level's first write of attacker (p_inter.c:874-875: the genuine dump's first P[0]
-        # with attacker not NULL, damagecount raised, a threshold on a body of player 0 or the player dead)
+        # with attacker neither NULL nor the stale -2, damagecount raised, a threshold on a body of player 0 or the
+        # player dead)
         quiet = [True]
 
         def plant(k, j, last, d):
             p = p_row(d)
             if k == level - 1 and last and prev_live: p['attacker'] = p['mo']    # a live thinker of that dump
             if k == level:
-                quiet[0] = quiet[0] and p['attacker'] == -1 and p['damagecount'] == 0 and p['playerstate'] == PST_LIVE \
+                quiet[0] = quiet[0] and p['attacker'] in (-1, -2) and p['damagecount'] == 0 \
+                    and p['playerstate'] == PST_LIVE \
                     and all(r['threshold'] == 0 for x, r in d.thinkers if x == 'M' and r['player'] == 0)
                 if j >= dangling_from and quiet[0]: p['attacker'] = p['mo'] if body else -2
                 if extra: extra(j, d)
@@ -453,21 +471,29 @@ def attacker_selftest(binary, items_by_name, work, base, lv):
     rule_case('(d) player 0 dead (a killing hit returns before p_inter.c:904)', dead)
     rule_case('(d) an MT_VILE present (exempt from the threshold at p_inter.c:904-906)', vile)
 
-    # the gate compares the field: CHAIN's carried load with P[0].attacker the player's own body (a live thinker, so
-    # the rule must not fire) from the load to the first genuine write; the load capture must differ from the
-    # committed D row, which the unchanged projection (and Rust) equals
+    # the gate compares the field, on ATTACK (whose genuine carried load holds the stale attacker and fires the rule):
+    # players[0].attacker the player's own body (a live thinker, so the rule must not fire) from that load to the
+    # level's first genuine write; the load capture must differ from the committed D row, which the unchanged
+    # projection (and Rust, tests/m6a_state.rs) equals
     committed = {(f[1], int(f[2]), int(f[4])): f[6] for f in (l.split(',') for l in RESULTS.read_text().splitlines())
                  if f[0] == 'D'}
-    want = committed[('CHAIN', KL, 1)]
+    atk = items_by_name['ATTACK']
+    ra = run(binary, atk, work / 'self_attack')
+    what = 'genuine-side fault: attacker = the player\'s own body at ATTACK\'s carried load'
     try:
-        got = levels(base, it, plant=planter(body=True)); fired = [v['load'] for v in got if v['stale_attacker']]
-        planted, plain = got[K]['captures'][0][2].hex(), lv[K]['captures'][0][2].hex()
-        out.append(('genuine-side fault: attacker = the player\'s own body at CHAIN\'s carried load',
-                    f'fired on {fired}; load capture {"differs from" if planted != want else "EQUALS"} the committed row; '
-                    f'unchanged projection equals it: {plain == want}', not fired and planted != want and plain == want))
+        al = levels(ra, atk)
+        A = next(i for i, v in enumerate(al) if v['kind'] == 'carried'); AL = al[A]['load']
+        want = committed[('ATTACK', AL, 1)]
+        got = levels(ra, atk, plant=planter(prev_live=False, body=True, level=AL))
+        plain_fired = [v['load'] for v in al if v['stale_attacker']]
+        fired = [v['load'] for v in got if v['stale_attacker']]
+        planted, plain = got[A]['captures'][0][2].hex(), al[A]['captures'][0][2].hex()
+        out.append((what, f'unchanged: fired on {plain_fired}, load capture equals the committed row: {plain == want}; '
+                          f'planted: fired on {fired}, load capture {"differs from" if planted != want else "EQUALS"} it',
+                    plain_fired == [AL] and plain == want and not fired and planted != want))
     except L.ProjectionError as e:
-        out.append(('genuine-side fault: attacker = the player\'s own body at CHAIN\'s carried load',
-                    f'refused: {e.kind} at tic {e.tic}: {e.text}', False))
+        out.append((what, f'refused: {e.kind} at tic {e.tic}: {e.text}', False))
+    shutil.rmtree(work / 'self_attack', ignore_errors=True)
     reb = items_by_name['REBHELD']
     r = run(binary, reb, work / 'self_rebheld')
     rl = levels(r, reb)
@@ -489,12 +515,12 @@ def main():
     results = json.loads(G.RESULTS.read_text())
     items = {i['name']: i for i in G.items() if i['name'] in ITEMS}
     want = [n for n in ITEMS if not a.only or n in {x.upper() for x in a.only.split(',')}]
-    per, fails, total = {}, [], [0, 0, 0]
+    per, fails, total, stale = {}, [], [0, 0, 0], {}
     with cf.ThreadPoolExecutor(max_workers=max(1, min(a.jobs, 2))) as ex:
         for name, rows, f, caps, nlv, fired in ex.map(lambda n: run_item(binary, items[n], work, results), want):
-            per[name] = rows; fails += f; total[0] += caps; total[1] += nlv; total[2] += fired
+            per[name] = rows; fails += f; total[0] += caps; total[1] += nlv; total[2] += len(fired); stale[name] = fired
             print(f'{name}: {nlv} levels, {caps} captures, {sum(r.startswith("D,") for r in rows)} D rows, '
-                  f'stale-attacker rule fired on {fired} loads' + ('' if not f else '; ' + '; '.join(f)))
+                  f'stale-attacker rule fired on {len(fired)} loads {fired}' + ('' if not f else '; ' + '; '.join(f)))
     if a.selftest:
         for what, detail, ok in selftest(binary, items, work, results):
             print(f'selftest {"pass" if ok else "FAIL"}: {what}: {detail}')
@@ -505,13 +531,15 @@ def main():
         print('\n'.join(['FAILURES:'] + fails)); return 1
     if a.only:
         print('--only: the results file is neither written nor compared'); return 0
-    text = results_text(per)
+    texts = {RESULTS: results_text(per), STALE: stale_text(stale)}
     if a.check:
-        if not RESULTS.exists() or RESULTS.read_text() != text:
-            print(f'{RESULTS.relative_to(ROOT)} differs from the regenerated digests'); return 1
-        print(f'{RESULTS.relative_to(ROOT)} matches ({total[1]} levels, {total[0]} captures)')
+        bad = [f for f, x in texts.items() if not f.exists() or f.read_text() != x]
+        if bad:
+            print(f'differs from the regenerated text: {", ".join(str(f.relative_to(ROOT)) for f in bad)}'); return 1
+        print(f'{RESULTS.relative_to(ROOT)} matches ({total[1]} levels, {total[0]} captures); '
+              f'{STALE.relative_to(ROOT)} matches ({total[2]} fired loads)')
     else:
-        RESULTS.write_text(text); print(f'wrote {RESULTS.relative_to(ROOT)}')
+        for f, x in texts.items(): f.write_text(x); print(f'wrote {f.relative_to(ROOT)}')
     return 0
 
 

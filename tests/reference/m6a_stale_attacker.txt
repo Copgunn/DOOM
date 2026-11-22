@@ -1,0 +1,6 @@
+#schema,DOOM-M6A-STALE-ATTACKER-v1
+#generator,tools/reference/m6a_state.py: the loads of the committed M6a items on which the stale-attacker rule (owner's ruling of 2026-11-22) projected players[0].attacker as NULL; the genuine M6a runner and the independent DSIM42 encoder, never from Rust output
+#columns,A,item,load,tic
+#columns,T,total
+A,ATTACK,1,235
+T,1
