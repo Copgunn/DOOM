@@ -390,5 +390,8 @@ pub fn read_sound(name: &str) -> GenuineSound {
 /// genuine engine like every other item): `TURBO` (ruling 1: the turbo message tests the session's
 /// `gametic`, g_game.c:671-679, across a world-done load, a reborn reload and on load tics) and
 /// `INTCMD` (ruling 2: intermission commands outside wire 24's level domain, which the C ignores
-/// but for bits 0 and 1 of the buttons, wi_stuff.c:1470-1498).
-pub const RULING_ITEMS: [&str; 2] = ["TURBO", "INTCMD"];
+/// but for bits 0 and 1 of the buttons, wi_stuff.c:1470-1498); and `ATTACK` (the stale attacker: a
+/// zombieman hurts the player, who exits, and the next level loads with `players[0].attacker`
+/// pointing into the freed level, which the C never reads before it is overwritten or wiped; the
+/// independent encoder projects it as NULL under a narrow rule, `tools/reference/m6a_state.py`).
+pub const RULING_ITEMS: [&str; 3] = ["TURBO", "INTCMD", "ATTACK"];

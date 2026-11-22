@@ -41,6 +41,11 @@
    "file": "tests/reference/m6a_wads/m6a_music_noe1m2.wad",
    "bytes": 1045,
    "sha256": "ba20e56ed007f8babeb83cbcb34616b52deb0a3fc64342d3c3258e8e1db0d558"
+  },
+  {
+   "file": "tests/reference/m6a_wads/attack.wad",
+   "bytes": 88133,
+   "sha256": "40ee27889e1735e7f3b6d8bec33573f4436c40338a11fe4ccbb001ab474f6b16"
   }
  ],
  "episode_maps": [
@@ -320,6 +325,13 @@
    "tests/reference/m5c_sfx.wad",
    "tests/reference/m6a_wads/m6a_gfx.wad",
    "tests/reference/m6a_wads/m6a_music_noe1m2.wad"
+  ],
+  "attack": [
+   "tests/reference/m6a_wads/attack.wad",
+   "tests/reference/m5b_gfx.wad",
+   "tests/reference/m5c_sfx.wad",
+   "tests/reference/m6a_wads/m6a_gfx.wad",
+   "tests/reference/m6a_wads/m6a_music.wad"
   ]
  },
  "items": [
@@ -686,6 +698,19 @@
    "txt": "tests/reference/m6a_scripts/INTCMD.txt",
    "lmp": "tests/reference/m6a_scripts/INTCMD.lmp",
    "lmp_sha256": "ebaf08f6211426fa2344b3c1cf922182ffe52dee8585e4ec1b13c9d563146da8"
+  },
+  {
+   "name": "ATTACK",
+   "lump": "ATTACK",
+   "mode": "registered",
+   "wadset": "attack",
+   "what": "the stale attacker: on E1M1 the zombieman on the ledge wakes and shoots the player (15 damage on tic 92, so players[0].attacker is its thinker); the player walks on and exits by the W1 line on tic 216 with the attacker still set; the intermission skipped by presses; E1M2 loads carried on tic 235 with the attacker pointing into the freed E1M1 (p_inter.c:874; never read before it is overwritten or wiped, note section 1.2), then 37 tics of E1M2",
+   "map": 1,
+   "skill": 2,
+   "tics": 272,
+   "txt": "tests/reference/m6a_scripts/ATTACK.txt",
+   "lmp": "tests/reference/m6a_scripts/ATTACK.lmp",
+   "lmp_sha256": "e79945a3359617988ab921a701b8429503563a6c34c704fb3c096b41aa97dad5"
   }
  ]
 }

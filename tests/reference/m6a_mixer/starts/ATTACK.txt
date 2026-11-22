@@ -1,0 +1,13 @@
+# Start list of ATTACK.sound (sha256 88daa0fd81aa1a96655884d57d5ef69a326f0641c258ecc033ac21f04ed36fca), written by tools/reference/m5c_starts.py:
+# the 7 S rows with outcome started, in stream order; 7 S rows in all; 272 R rows.
+# handle convention: integrated (stated by the stream).
+schema DOOM-M5C-STARTS-v1
+config integrated
+tics 272
+s 30 1 30 36 7 77 137 64 100
+s 92 2 92 1 8 36 113 64 101
+s 96 3 96 25 8 128 133 64 102
+s 138 5 138 1 8 33 122 64 103
+s 184 7 184 1 7 76 141 64 104
+s 220 9 220 82 8 128 138 64 105
+s 222 10 222 3 8 128 130 64 106

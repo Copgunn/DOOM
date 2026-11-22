@@ -96,9 +96,10 @@ fn intermission_frames_against_the_genuine_digests() {
 /// Intermission frames in the committed goldens (both screen sizes), and ShowNextLoc entry frames
 /// with the pointer hidden (the first of each process) and shown (later ones), both screen sizes.
 /// The ruling items TURBO and INTCMD (2026-11-22) add 2 x 198 and 2 x 111 frames and (2 x 2, 2 x 1)
-/// entries (counted from their genuine G and J rows).
-const INTERMISSION_FRAMES: usize = 6392;
-const POINTER_ENTRIES: (usize, usize) = (34, 48);
+/// entries (counted from their genuine G and J rows). ATTACK (2026-11-22) adds 2 x 18 frames and
+/// (2 x 1, 0) entries, counted the same way.
+const INTERMISSION_FRAMES: usize = 6428;
+const POINTER_ENTRIES: (usize, usize) = (36, 48);
 
 /// The first WAD of an item holds its maps. With `carrier`, every W1 exit line (special 52,
 /// g_game.c:1002-1006 through p_spec.c:677-680) is cleared, the one line special of the synthetic
@@ -378,17 +379,19 @@ fn random_index_through_the_chain() {
     assert_eq!(not_driven, NOT_DRIVEN);
 }
 
-/// What the drive of the 25 items compares (screenblocks 10): every tic's index, the 111 wipes up
+/// What the drive of the 26 items compares (screenblocks 10): every tic's index, the 111 wipes up
 /// to the first finale frame, every intermission frame through the display, and the level frames
 /// of the items whose start map the wire-25 simulation admits unmodified. The ruling items
 /// (2026-11-22) add TURBO's 1,183 tics, 6 wipes, 198 intermission frames and its first level's
 /// 126 frames (E1M1), and INTCMD's 188 tics, 3 wipes and 111 intermission frames (its E1M7 holds a
-/// walk exit, so it is a carrier), counted from their genuine rows.
+/// walk exit, so it is a carrier), counted from their genuine rows. ATTACK (2026-11-22) adds 272
+/// tics, 3 wipes and 18 intermission frames, and no level frames (its E1M1 holds a walk exit, so
+/// it is a carrier, and every level after a load is carried), counted the same way.
 const CHAIN_COUNTS: Counts = Counts {
-    tics: 11095,
-    index_equal: 11095,
-    wipes: 111,
-    intermission_frames: 3164,
+    tics: 11367,
+    index_equal: 11367,
+    wipes: 114,
+    intermission_frames: 3182,
     level_frames: 2360,
     level_flagged: 0,
     finales: 3,

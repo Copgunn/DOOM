@@ -46,11 +46,12 @@ const M6A_ITEMS: [(&str, &str); 18] = [
 ];
 
 /// The items of the owner's rulings of 2026-11-22 (TURBO, the turbo message on the session's
-/// gametic; INTCMD, intermission commands outside the level domain), whose first level is a new
-/// game like the chain items'.
-const M6A_RULING_ITEMS: [(&str, &str); 2] = [
+/// gametic; INTCMD, intermission commands outside the level domain; ATTACK, the stale attacker
+/// carried into the next level), whose first level is a new game like the chain items'.
+const M6A_RULING_ITEMS: [(&str, &str); 3] = [
     ("TURBO", "m6a_wads/episode.wad"),
     ("INTCMD", "m6a_wads/episode.wad"),
+    ("ATTACK", "m6a_wads/attack.wad"),
 ];
 
 fn run(wad: &str, lmp: &str) -> wire26::Outcome {
@@ -143,7 +144,7 @@ fn the_m6a_item_table_is_the_session_golden_set() {
         "an item is both a chain item and named apart"
     );
     assert_eq!(goldens, lumps);
-    assert_eq!((M6A_ITEMS.len(), goldens.len()), (18, 28));
+    assert_eq!((M6A_ITEMS.len(), goldens.len()), (18, 29));
 }
 
 /// The first level of every M6a chain item (its demo runs on past the level; both

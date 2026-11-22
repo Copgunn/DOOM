@@ -3,7 +3,8 @@
 
 The goldens of tools/reference/m6a_goldens.py hold session, frame and sound rows but no per-level state. This tool
 runs every level-chain item of tests/reference/m6a_manifest.json (CHAIN_ITEMS, then RULING_ITEMS: the items of the
-owner's rulings of 2026-11-22, the turbo message across loads and intermission commands outside the level domain)
+owner's rulings of 2026-11-22, the turbo message across loads, intermission commands outside the level domain and the
+stale attacker)
 through the genuine M6a runner with
 dumps, projects every dump with the INDEPENDENT DSIM42 encoder (tools/reference/level_snapshot_m6a.py, itself the
 frozen DSIM41 projection of level_snapshot_m5c.py plus wire 26's start group) and writes digests only. Never from
@@ -105,7 +106,7 @@ RESULTS = ROOT / 'tests/reference/m6a_state.txt'
 SCHEMA = 'DOOM-M6A-STATE-v1'
 CHAIN_ITEMS = ['CHAIN', 'INTSTA', 'INTSTB', 'INTIDLE', 'INTHELD', 'INTFAST', 'REBHELD', 'REBLATE', 'SECRET', 'REBSECRT',
                'PROBE', 'USEAT130', 'USEAT131', 'USEAT132', 'RBXDEAD', 'NOINTER', 'NOE1M2', 'NOE1M2AT']
-RULING_ITEMS = ['TURBO', 'INTCMD']
+RULING_ITEMS = ['TURBO', 'INTCMD', 'ATTACK']     # ATTACK: the stale attacker (ruling of 2026-11-22)
 ITEMS = CHAIN_ITEMS + RULING_ITEMS
 STRIDE = 35
 PST_LIVE = enum_index('playerstate_t', 'PST_LIVE', 'd_player.h')          # 0

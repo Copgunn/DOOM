@@ -37,6 +37,12 @@ M6a music PWAD and the demo lump. Written under tests/reference/m6a_wads/ and te
   rbx.wad       the reborn-beats-a-same-tic-exit witness (U8 item 12, observed in Phase 2 step 1): E1M1 and E1M2
                 are one corridor whose west part is a 20-damage floor and whose W1 exit line 52 stands at x=1024; the
                 player starts at (12,0) facing east, dies on the floor and slides across the line
+  attack.wad    the stale-attacker item (owner's ruling of 2026-11-22): E1M1 is a corridor along +x with the player
+                start at (0,0) facing east, a ledge north of it (floor 64, a step no thing climbs and no monster walks
+                off, p_map.c P_TryMove) where a zombieman stands facing south, above the player's path, and a W1 exit
+                line 52 at x=896; its hitscan hurts the player (P_DamageMobj writes players[0].attacker,
+                p_inter.c:874) and the player exits alive, so the next load carries a pointer into the freed level;
+                E1M2 is a plain corridor
   m6a_gfx.wad   our own pictures for the 77 intermission names wi_stuff.c caches that the M5b set lacks (WI_loadData,
                 wi_stuff.c:1538-1704; the other two, STFST01 and STFDEAD0, are the M5b status bar faces, which this
                 PWAD must not replace, since they appear in every level frame), FLOOR4_8 (a 4,096-byte flat read
@@ -229,6 +235,28 @@ def e1m9():
 
 MAPS = {'E1M1': e1m1, 'E1M2': e1m2, 'E1M3': e1m3, 'E1M4': e1m4, 'E1M5': e1m5, 'E1M6': e1m6, 'E1M7': e1m7, 'E1M8': e1m8,
         'E1M9': e1m9}
+
+
+def attack_e1m1():
+    """The stale-attacker item's first map (module text)."""
+    p = Room('attack1', wall='M5WALLA')
+    hall(p, 'START', -64, 128)
+    h = hall(p, 'HALL', 128, 896)
+    z = hall(p, 'EXITZ', 896, 1024, fpic='M5FLAT5')
+    p.sector('LEDGE', [(256, 64, 512, 192)], floor=64, ceil=192, light=176, fpic='M5FLAT3', cpic='M5FLAT2')
+    p.special(h, z, (896, 0), W1_EXIT)
+    p.thing(0, 0, EAST, PLAYER1)
+    p.thing(384, 128, SOUTH, ZOMBIE)
+    return p
+
+
+def attack_e1m2():
+    """The stale-attacker item's second map: a plain corridor."""
+    p = Room('attack2', wall='M5WALLB')
+    hall(p, 'START', -64, 128)
+    hall(p, 'HALL', 128, 768)
+    p.thing(0, 0, EAST, PLAYER1)
+    return p
 
 
 def rbx(x0=12, line_x=1024):
@@ -451,6 +479,7 @@ WADSETS = {
     'nointer': ['episode.wad', GFX_M5B, SFX_M5C, 'm6a_gfx.wad', 'm6a_music_nointer.wad'],
     'novictor': ['episode.wad', GFX_M5B, SFX_M5C, 'm6a_gfx.wad', 'm6a_music_novictor.wad'],
     'noe1m2': ['episode.wad', GFX_M5B, SFX_M5C, 'm6a_gfx.wad', 'm6a_music_noe1m2.wad'],
+    'attack': ['attack.wad', GFX_M5B, SFX_M5C, 'm6a_gfx.wad', 'm6a_music.wad'],
 }
 
 # Script items: (item name, lump, game mode, WAD set, what, lines). The level-chain items (owner's order of work,
@@ -591,6 +620,12 @@ SCRIPTS = [
      ["map E1M7", "cmd 56 25 0 0 0", "cmdx 1 100 -128 64 0x4c", "cmdx 4 -127 127 200 0x78", "cmdx 1 0 0 0 0x43",
       "cmdx 2 50 -128 0 0x41", "cmdx 1 0 0 0 0x3c", "cmdx 70 100 0 128 0x48", "cmdx 1 -1 -128 1 0x49",
       "cmdx 20 127 127 255 0x7c", "cmdx 1 0 0 0 0x7e", "cmdx 10 100 -128 64 0x7c", "cmd 1 0 0 0 0", "idle 20"]),
+    # The owner's ruling of 2026-11-22 on the stale attacker: a monster hurts the player, the player exits, the next
+    # level loads with players[0].attacker pointing into the freed level (tools/reference/m6a_state.py's rule).
+    ("ATTACK", "ATTACK", "registered", "attack",
+     "the stale attacker: on E1M1 the zombieman on the ledge wakes and shoots the player (15 damage on tic 92, so players[0].attacker is its thinker); the player walks on and exits by the W1 line on tic 216 with the attacker still set; the intermission skipped by presses; E1M2 loads carried on tic 235 with the attacker pointing into the freed E1M1 (p_inter.c:874; never read before it is overwritten or wiped, note section 1.2), then 37 tics of E1M2",
+     ["map E1M1", "cmd 50 25 0 0 0", "idle 100", "cmd 70 25 0 0 0", "cmd 1 0 0 0 USE", "idle 1", "cmd 1 0 0 0 USE",
+      "idle 1", "cmd 1 0 0 0 USE", "idle 1", "cmd 1 0 0 0 USE", "idle 10", "idle 35"]),
 ]
 
 
@@ -606,7 +641,8 @@ def files():
             (f'{WAD_DIR}/m6a_gfx_nohelp2.wad', wad(b'PWAD', drop(gfx, 'HELP2'))),
             (f'{WAD_DIR}/m6a_music_nointer.wad', wad(b'PWAD', drop(mus, 'D_INTER'))),
             (f'{WAD_DIR}/m6a_music_novictor.wad', wad(b'PWAD', drop(mus, 'D_VICTOR'))),
-            (f'{WAD_DIR}/m6a_music_noe1m2.wad', wad(b'PWAD', drop(mus, 'D_E1M2')))]
+            (f'{WAD_DIR}/m6a_music_noe1m2.wad', wad(b'PWAD', drop(mus, 'D_E1M2'))),
+            (f'{WAD_DIR}/attack.wad', iwad([('E1M1', attack_e1m1()), ('E1M2', attack_e1m2())]))]
 
 
 def script_text(lump, what, lines):
