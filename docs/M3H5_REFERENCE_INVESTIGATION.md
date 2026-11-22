@@ -66,7 +66,7 @@ witness, and the evidence. It adds no mover, collision, traversal or scheduler c
   - a point in front with `0 < cross < 1` reads front or back depending on the
     fractional parts (the "sliver", perpendicular width `1/L` units, at most 0.71 for
     a `(1,1)` wall and 0.00065 for a 1,536-unit wall).
-- **`P_BoxOnLineSide`** ([p_maputl.c:110](../linuxdoom-1.10/p_maputl.c)): horizontal and
+- **`P_BoxOnLineSide`** ([p_maputl.c:110–152](../linuxdoom-1.10/p_maputl.c)): horizontal and
   vertical lines compare the box edges exactly (119–137): a box touching an axis wall
   is on one side. `ST_POSITIVE` tests the corners (left, top) and (right, bottom),
   `ST_NEGATIVE` (right, top) and (left, bottom) (139–147): the two corners extreme along
@@ -90,7 +90,7 @@ witness, and the evidence. It adds no mover, collision, traversal or scheduler c
 
 ### 2.3 Sliding
 
-- **`P_XYMovement`** ([p_mobj.c:114](../linuxdoom-1.10/p_mobj.c)): clamp to `±MAXMOVE`
+- **`P_XYMovement`** ([p_mobj.c:114–191](../linuxdoom-1.10/p_mobj.c)): clamp to `±MAXMOVE`
   (137–146); `xmove > MAXMOVE/2 || ymove > MAXMOVE/2` halves the attempt (152–161, only
   positive components); `P_TryMove` (166); a blocked player calls `P_SlideMove(mo)`
   (171) with the **full clamped momentum**, not the halved attempt; the loop then
@@ -148,10 +148,12 @@ witness, and the evidence. It adds no mover, collision, traversal or scheduler c
   `path`/`intercept` reproduce this.
 - **`P_PathTraverse`** ([p_maputl.c:743](../linuxdoom-1.10/p_maputl.c)): the `FRACUNIT`
   nudge off cell boundaries (777–781), the DDA that steps one axis per iteration
-  (866–875) and the 64-iteration cap (846). A diagonal trace that passes exactly through
-  a cell corner visits only two of the four cells (one step per iteration): a line
-  listed only in a skipped cell is not found. This is the source's behavior with its
-  own BLOCKMAP and is kept (`movement::path`, `combat_trace.rs:160`).
+  (866–875) and the 64-iteration cap (846). A line listed only in a skipped
+  cell is missed. The exact-corner probes on 2026-11-22 corrected the earlier
+  two-cell account. Travel direction and the fixed-point intercepts govern the
+  next step. If neither axis test holds, the loop revisits the same cell to the
+  cap and processes the intercepts already collected.
+  [Genuine-engine corner evidence](validation/BLOCKMAP_CORNER.md#direct-traces).
 - **`PIT_AddThingIntercepts`** ([p_maputl.c:616](../linuxdoom-1.10/p_maputl.c)) and
   **`P_TraverseIntercepts`** ([p_maputl.c:683](../linuxdoom-1.10/p_maputl.c)) do not read
   line angles. `PTR_AimTraverse` ([p_map.c:816](../linuxdoom-1.10/p_map.c)) and

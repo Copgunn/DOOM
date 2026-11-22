@@ -158,7 +158,7 @@ special (p_map.c:1113–1122). `P_CrossSpecialLine` has no case 48 (p_spec.c:503
 `PTR_ShootTraverse` ignores specials other than through `P_ShootSpecialLine`
 (p_map.c:919–920, p_spec.c:966–999, no case 48), and sight, noise and `P_LineOpening`
 never read `special`. A two-sided 48 with `ML_BLOCKING` blocks every non-missile like
-any blocking line and never enters its `spechit` (PIT_CheckLine returns before the
+any blocking line and never enters that mover's `spechit` (PIT_CheckLine returns before the
 special test). *Corrected in the independent review:* a missile skips the `ML_BLOCKING`
 and `ML_BLOCKMONSTERS` tests (p_map.c:214–221), so a blocking 48 enters a fireball's
 `spechit` (240–244) and the crossing loop calls `P_CrossSpecialLine`, which returns at

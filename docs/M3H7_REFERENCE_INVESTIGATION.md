@@ -88,7 +88,7 @@ sky sector, and every per-map figure beyond these counts are not committed (§5.
 - **The savegame is not an ordering authority**: `P_ArchiveThinkers` writes mobjs only
   ([p_saveg.c:232](../linuxdoom-1.10/p_saveg.c)) and `P_ArchiveSpecials` writes the
   sector thinkers afterwards (355–467), so a loaded game runs every special after every
-  mobj, and `specials_e` has no fire-flicker kind (331–338). DSIM must keep the
+  mobj, and `specials_e` has no fire-flicker kind (329–340). DSIM must keep the
   interleaved creation order instead.
 
 ### 2.2 Specials at load: `P_SpawnSpecials`

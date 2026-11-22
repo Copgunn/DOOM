@@ -22,6 +22,18 @@ Loading a WAD, recognizing MT_SERGEANT or matching an isolated hash does not
 establish the last level. [Reference notes](README.md) describe each admitted
 slice and the [validation guide](VALIDATION.md) distinguishes evidence families.
 
+**What the exactness is for.** Most source ports (modern rewrites of a game's released source code) aim to be
+playable first and accurate second; this project works the other way round. It only accepts behavior checked
+against the original Linux DOOM 1.10 C code (id Software's 1997 source release), comparing the entire game state
+after every tic, the 1/35-second step in which DOOM updates its world. Anything not yet proven identical is
+refused: the engine stops with an error instead of approximating. That makes it fit for exact-behavior work once
+the ground is covered: replaying recorded demos (files of a player's inputs, which stay in sync only if every tic
+matches), speedrun and tool-assisted (TAS) research, and studying the original engine. Vanilla behavior (the
+original unmodified game, quirks included) is the default, and game math stays in Doom's whole-number arithmetic,
+with no decimals except the one division where the original used them (`FixedDiv2`, m_fixed.c:69-87, divides as
+`double`). Once a behavior is admitted, nothing quietly rounds it differently. (Moved here from the root README on
+2026-11-22, when the README was shortened.)
+
 ## Stepping and diagnostics
 
 `Simulation::advance([TicCommand; 4]) -> Result<(), SimError>` completes one tic
@@ -1049,6 +1061,11 @@ range is2048. Both use the same source BLOCKMAP/intercept service. Original
 P_PathTraverse processes collected intercepts after its bounded64-cell loop even
 when the endpoint was not reached; this newly observed pistol domain admits that
 finite result. Historical trace APIs retain their stricter endpoint rejection.
+For example, the direct aim and attack APIs of historical combat profile 5
+return `Combat(TraversalLimit)` if the traversal exhausts its budget before
+reaching the endpoint. The call preserves canonical state. Historical profile 6
+uses the same collector for its direct aim and attack APIs. See the
+[corner test](validation/BLOCKMAP_CORNER.md#historical-endpoint-policy).
 Puff37 and Blood38 are real allocated thinkers with source RNG and same-tic
 thinker insertion, not presentation placeholders. Walls and misses cannot
 fabricate Demon damage.
@@ -1545,9 +1562,14 @@ carried. The source's reading quirks are reproduced, never corrected: a box whos
 lies exactly on a diagonal wall is blocked from the wall's front side but not from its
 back, a box approaching from the back may stop up to `1/L` units past the line, a slide
 trace starting in that sliver can pick a wall it runs parallel to with fraction 0, a
-player running straight into a convex 45°/45° tip slides in place, and a diagonal trace
-through a BLOCKMAP cell corner visits two of the four cells. The proof is in the
-[investigation](M3H5_REFERENCE_INVESTIGATION.md#4-the-admitted-domain-and-the-proof).
+player running straight into a convex 45°/45° tip slides in place, and the BLOCKMAP trace makes at most one axis step per iteration. Fixed-point
+rounding and the direction of travel determine which cells it visits at a corner.
+If neither step test succeeds, the trace revisits the cell until the 64-iteration
+cap and then processes the intercepts it collected. This applies to the slide
+and use walk and to the in-game weapon traces covered by the source-budget
+collector. The [corner evidence](validation/BLOCKMAP_CORNER.md) records exact
+crossings and near misses. The [investigation](M3H5_REFERENCE_INVESTIGATION.md#4-the-admitted-domain-and-the-proof)
+gives the geometry bounds.
 
 | Admitted at load | Value | Why |
 | --- | ---: | --- |
@@ -3384,7 +3406,8 @@ player's volume and mute, and the device itself. Of these the app's code is Rust
   the same face. Demos recorded by M5b builds stay valid; replayed here they give the same game and the genuine
   glance of this contract.
 - **The device.** The first audio backend that opens plays the stream (Linux: PulseAudio, then ALSA, which need the
-  system's `libpulse.so.0` or `libasound.so.2`; Windows: WASAPI, DirectSound, then WinMM; macOS: Core Audio); nothing
+  system's `libpulse.so.0` or `libasound.so.2`, so under Linux or WSLg install the PulseAudio client library once
+  with `sudo apt install libpulse0`, while Windows needs nothing installed; Windows: WASAPI, DirectSound, then WinMM; macOS: Core Audio); nothing
   falls back to a silent device. If none opens, **one line on standard error** says so and names every backend tried, and
   the game runs exactly the same without sound output. The queue (512-frame buffers; the device takes nothing until **two
   buffers, 1,024 frames, 92.9 ms at 11,025 Hz, are queued**, and again after every underrun and every pause; at most four

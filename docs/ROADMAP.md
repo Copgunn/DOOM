@@ -3,6 +3,7 @@
 This is the authoritative development summary and plan. The [documentation index](README.md#documentation-authority)
 identifies the other information owners. Exact review state, commits, CI and merge
 history belong to GitHub; supported behavior and limits belong to [COMPATIBILITY](COMPATIBILITY.md).
+Progress is measured in proven features, not weeks.
 
 ## Done
 
@@ -1003,10 +1004,12 @@ owner's standing rule of 2026-11-21 it is not optional (apart from the items he 
 here so that the README can summarize them in one place; the README's "Where it's (maybe)
 going" list changes only with the owner's approval. They fall into three tracks.
 
-The README's "Which kind of Doom?" section places the project among the four ways classic
-Doom is played today, and the tracks below map onto it: **vanilla** (the original's
-behavior, limits and quirks) is what the per-milestone policies implement and what Track
-1 keeps exact; **limit-removing** is Track 1's separate profile; **Boom, MBF21 and ID24**
+**Which kind of Doom?** (This list lived in the README until 2026-11-22.) There are four
+broad ways classic Doom is played today, and the tracks below map onto them: **vanilla**
+(the original 1993 game's behavior, limits and quirks: what this project builds) is what
+the per-milestone policies implement and what Track 1 keeps exact; **limit-removing** (the
+same game with the original's hard limits on map size lifted) is Track 1's separate
+profile; **Boom, MBF21 and ID24**
 (the successive extensions of the original map format that most new community maps
 target, ID24 being id Software's 2024 extension) is a possible later profile under Track
 3, not a promise; and **advanced, ZDoom-style** engines are what Track 3 would build its
@@ -1029,9 +1032,10 @@ Vanilla behavior stays exact forever; everything here either proves it or builds
   per-milestone policies into one complete vanilla profile. A separate limit-removing
   profile would lift the original's hard limits (visplanes, intercepts, things and the
   like) without otherwise changing gameplay. The per-milestone policies stay reproducible.
-- **An optional "fixed" mode.** A separate opt-in mode would correct known original bugs.
-  The fidelity gaps and quirks documented in [compatibility](COMPATIBILITY.md) become its
-  to-do list, much like the compatibility levels of other source ports.
+- **An optional "fixed" mode.** A separate opt-in mode, off unless chosen, would correct known
+  original bugs. The [quirk register](QUIRKS.md) and the fidelity gaps and quirks documented in
+  [compatibility](COMPATIBILITY.md) become its to-do list, much like the compatibility levels of
+  other source ports. The README summarizes this idea in its section on the original's quirks.
 - **The full original game and Doom II.** After Episode 1, the remaining episodes and then
   Doom II, each with the same source-first evidence and exactness. Not optional: they are what
   the original does; no milestone is named for them yet.
