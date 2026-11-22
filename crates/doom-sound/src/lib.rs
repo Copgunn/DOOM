@@ -24,15 +24,22 @@
 //! - [`session`]: [`session::Sound`], one per session, running each tic's records, the update
 //!   and the due buffer transactionally.
 //! - [`state`]: the saved state `DSND` version 1, its checks and restore.
+//! - [`music`] (M6a): the music lumps of the Episode 1 path as presence checks (ruling U10 (i)).
+//! - [`chain`] (M6a): [`chain::ChainSound`], one sound session across the levels, intermissions
+//!   and finale of a single-player session, with `gametic` continuous (ruling U3 (i)).
+//! - [`chain_state`] (M6a): its saved state, `DSND` version 2.
 //!
 //! Every place where the C ends in `I_Error` or reads memory it does not own is a typed refusal
 //! made before any state changes (M5c decision T11). Every audible quirk of the source is
 //! reproduced as it is (decision T13).
 
+pub mod chain;
+pub mod chain_state;
 pub mod detector;
 pub mod logic;
 pub mod lumps;
 pub mod mixer;
+pub mod music;
 pub mod schedule;
 pub mod session;
 pub mod sounds;

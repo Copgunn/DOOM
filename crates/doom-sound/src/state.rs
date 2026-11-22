@@ -169,13 +169,14 @@ pub enum StateError {
     },
 }
 
-struct Reader<'a> {
-    bytes: &'a [u8],
-    at: usize,
+/// A bounded reader of saved-state bytes (shared with `DSND` version 2, [`crate::chain_state`]).
+pub(crate) struct Reader<'a> {
+    pub(crate) bytes: &'a [u8],
+    pub(crate) at: usize,
 }
 
 impl Reader<'_> {
-    fn take<const N: usize>(&mut self) -> Result<[u8; N], StateError> {
+    pub(crate) fn take<const N: usize>(&mut self) -> Result<[u8; N], StateError> {
         let end = self.at.checked_add(N).ok_or(StateError::Truncated)?;
         let s = self.bytes.get(self.at..end).ok_or(StateError::Truncated)?;
         self.at = end;
@@ -183,29 +184,29 @@ impl Reader<'_> {
         out.copy_from_slice(s);
         Ok(out)
     }
-    fn u8(&mut self) -> Result<u8, StateError> {
+    pub(crate) fn u8(&mut self) -> Result<u8, StateError> {
         Ok(self.take::<1>()?[0])
     }
-    fn u16(&mut self) -> Result<u16, StateError> {
+    pub(crate) fn u16(&mut self) -> Result<u16, StateError> {
         Ok(u16::from_le_bytes(self.take()?))
     }
-    fn u32(&mut self) -> Result<u32, StateError> {
+    pub(crate) fn u32(&mut self) -> Result<u32, StateError> {
         Ok(u32::from_le_bytes(self.take()?))
     }
-    fn i32(&mut self) -> Result<i32, StateError> {
+    pub(crate) fn i32(&mut self) -> Result<i32, StateError> {
         Ok(i32::from_le_bytes(self.take()?))
     }
-    fn u64(&mut self) -> Result<u64, StateError> {
+    pub(crate) fn u64(&mut self) -> Result<u64, StateError> {
         Ok(u64::from_le_bytes(self.take()?))
     }
-    fn tag(&mut self) -> Result<bool, StateError> {
+    pub(crate) fn tag(&mut self) -> Result<bool, StateError> {
         match self.u8()? {
             0 => Ok(false),
             1 => Ok(true),
             _ => Err(StateError::Tag),
         }
     }
-    fn sfx(&mut self) -> Result<SfxId, StateError> {
+    pub(crate) fn sfx(&mut self) -> Result<SfxId, StateError> {
         let n = self.u8()?;
         SfxId::new(i64::from(n)).ok_or(StateError::Sfx { sfx: n })
     }
@@ -237,52 +238,13 @@ impl SoundState {
         out.push(u8::from(first.is_some()));
         out.extend_from_slice(&first.unwrap_or(0).to_le_bytes());
         out.extend_from_slice(&self.detector.firings().to_le_bytes());
-        let mut bits = [0u8; 14];
-        for (n, _) in self.looked_up.iter().enumerate().filter(|(_, b)| **b) {
-            bits[n / 8] |= 1 << (n % 8);
-        }
-        out.extend_from_slice(&bits);
-        for c in &self.channels {
-            let Some(e) = c else {
-                out.push(0);
-                continue;
-            };
-            out.push(1);
-            out.push(e.sfx.get() as u8);
-            match e.origin {
-                SoundOrigin::None => out.push(0),
-                SoundOrigin::Actor(a) => {
-                    out.push(1);
-                    out.extend_from_slice(&a.slot().to_le_bytes());
-                    out.extend_from_slice(&a.generation().to_le_bytes());
-                }
-                SoundOrigin::Sector(s) => {
-                    out.push(2);
-                    out.extend_from_slice(&s.to_le_bytes());
-                }
-                SoundOrigin::Button(b) => {
-                    out.push(3);
-                    out.push(b);
-                }
-            }
-            out.extend_from_slice(&e.handle.to_le_bytes());
-        }
-        out.extend_from_slice(&self.handlenums.to_le_bytes());
-        for c in &self.mixer {
-            let Some(m) = c else {
-                out.push(0);
-                continue;
-            };
-            out.push(1);
-            out.push(m.sfx.get() as u8);
-            for v in [m.pos, m.end, m.step, m.frac] {
-                out.extend_from_slice(&v.to_le_bytes());
-            }
-            out.extend_from_slice(&m.start.to_le_bytes());
-            out.extend_from_slice(&m.handle.to_le_bytes());
-            out.push(m.left);
-            out.push(m.right);
-        }
+        write_tail(
+            &mut out,
+            &self.looked_up,
+            &self.channels,
+            self.handlenums,
+            &self.mixer,
+        );
         out
     }
 
@@ -325,84 +287,12 @@ impl SoundState {
             .map_err(|e| match e {
                 DetectorError::Textures | DetectorError::Label => StateError::Detector,
             })?;
-        let bits = r.take::<14>()?;
-        let mut looked_up = [false; NUMSFX];
-        for n in 0..112 {
-            let set = bits[n / 8] & (1 << (n % 8)) != 0;
-            if set && (n == 0 || n >= NUMSFX) {
-                return Err(StateError::LookedUp { sfx: n as u16 });
-            }
-            if set {
-                looked_up[n] = true;
-            }
-        }
-        let mut table = Vec::with_capacity(channels);
-        for cnum in 0..channels {
-            if !r.tag()? {
-                table.push(None);
-                continue;
-            }
-            let sfx = r.sfx()?;
-            let origin = match r.u8()? {
-                0 => SoundOrigin::None,
-                1 => {
-                    let slot = r.u32()?;
-                    SoundOrigin::Actor(ActorId::from_parts(slot, r.u64()?))
-                }
-                2 => SoundOrigin::Sector(r.u16()?),
-                3 => {
-                    let slot = r.u8()?;
-                    if slot >= MAXBUTTONS - 1 {
-                        return Err(StateError::Button { slot });
-                    }
-                    SoundOrigin::Button(slot)
-                }
-                kind => return Err(StateError::OriginKind { kind }),
-            };
-            let handle = r.i32()?;
-            if !(100..=65535).contains(&handle) {
-                return Err(StateError::Handle { cnum });
-            }
-            if table
-                .iter()
-                .flatten()
-                .any(|e: &ChannelEntry| e.origin == origin)
-            {
-                return Err(StateError::DuplicateOrigin { cnum });
-            }
-            table.push(Some(ChannelEntry {
-                sfx,
-                origin,
-                handle,
-            }));
-        }
-        let handlenums = r.u16()?;
-        if (1..100).contains(&handlenums) {
-            return Err(StateError::Mixer(MixStateError::Counter));
-        }
-        let mut mixer = [None; NUM_CHANNELS];
-        for (slot, m) in mixer.iter_mut().enumerate() {
-            if !r.tag()? {
-                continue;
-            }
-            let sfx = r.sfx()?;
-            let c = MixChannelState {
-                sfx,
-                pos: r.u32()?,
-                end: r.u32()?,
-                step: r.u32()?,
-                frac: r.u32()?,
-                start: r.i32()?,
-                handle: r.i32()?,
-                left: r.u8()?,
-                right: r.u8()?,
-            };
-            c.check(slot).map_err(StateError::Mixer)?;
-            if u64::try_from(c.start).map_or(true, |start| start >= tic) {
-                return Err(StateError::StartTic { slot });
-            }
-            *m = Some(c);
-        }
+        let Tail {
+            looked_up,
+            channels: table,
+            handlenums,
+            mixer,
+        } = read_tail(&mut r, channels, tic)?;
         if r.at != bytes.len() {
             return Err(StateError::Trailing);
         }
@@ -419,6 +309,161 @@ impl SoundState {
             mixer,
         })
     }
+}
+
+/// The rows of a saved state from the "lump looked up" flags to the last mixer channel, written
+/// alike by `DSND` versions 1 and 2 (moved here unchanged from [`SoundState::encode`]).
+pub(crate) fn write_tail(
+    out: &mut Vec<u8>,
+    looked_up: &[bool; NUMSFX],
+    channels: &[Option<ChannelEntry>],
+    handlenums: u16,
+    mixer: &[Option<MixChannelState>; NUM_CHANNELS],
+) {
+    let mut bits = [0u8; 14];
+    for (n, _) in looked_up.iter().enumerate().filter(|(_, b)| **b) {
+        bits[n / 8] |= 1 << (n % 8);
+    }
+    out.extend_from_slice(&bits);
+    for c in channels {
+        let Some(e) = c else {
+            out.push(0);
+            continue;
+        };
+        out.push(1);
+        out.push(e.sfx.get() as u8);
+        match e.origin {
+            SoundOrigin::None => out.push(0),
+            SoundOrigin::Actor(a) => {
+                out.push(1);
+                out.extend_from_slice(&a.slot().to_le_bytes());
+                out.extend_from_slice(&a.generation().to_le_bytes());
+            }
+            SoundOrigin::Sector(s) => {
+                out.push(2);
+                out.extend_from_slice(&s.to_le_bytes());
+            }
+            SoundOrigin::Button(b) => {
+                out.push(3);
+                out.push(b);
+            }
+        }
+        out.extend_from_slice(&e.handle.to_le_bytes());
+    }
+    out.extend_from_slice(&handlenums.to_le_bytes());
+    for c in mixer {
+        let Some(m) = c else {
+            out.push(0);
+            continue;
+        };
+        out.push(1);
+        out.push(m.sfx.get() as u8);
+        for v in [m.pos, m.end, m.step, m.frac] {
+            out.extend_from_slice(&v.to_le_bytes());
+        }
+        out.extend_from_slice(&m.start.to_le_bytes());
+        out.extend_from_slice(&m.handle.to_le_bytes());
+        out.push(m.left);
+        out.push(m.right);
+    }
+}
+
+/// What [`read_tail`] reads.
+pub(crate) struct Tail {
+    pub(crate) looked_up: [bool; NUMSFX],
+    pub(crate) channels: Vec<Option<ChannelEntry>>,
+    pub(crate) handlenums: u16,
+    pub(crate) mixer: [Option<MixChannelState>; NUM_CHANNELS],
+}
+
+/// Reads the rows [`write_tail`] writes, for `channels` sound-logic channels and a state that has
+/// run `tic` tics, with every check of version 1 in its order (moved here unchanged from
+/// [`SoundState::decode`]).
+pub(crate) fn read_tail(r: &mut Reader<'_>, channels: usize, tic: u64) -> Result<Tail, StateError> {
+    let bits = r.take::<14>()?;
+    let mut looked_up = [false; NUMSFX];
+    for n in 0..112 {
+        let set = bits[n / 8] & (1 << (n % 8)) != 0;
+        if set && (n == 0 || n >= NUMSFX) {
+            return Err(StateError::LookedUp { sfx: n as u16 });
+        }
+        if set {
+            looked_up[n] = true;
+        }
+    }
+    let mut table = Vec::with_capacity(channels);
+    for cnum in 0..channels {
+        if !r.tag()? {
+            table.push(None);
+            continue;
+        }
+        let sfx = r.sfx()?;
+        let origin = match r.u8()? {
+            0 => SoundOrigin::None,
+            1 => {
+                let slot = r.u32()?;
+                SoundOrigin::Actor(ActorId::from_parts(slot, r.u64()?))
+            }
+            2 => SoundOrigin::Sector(r.u16()?),
+            3 => {
+                let slot = r.u8()?;
+                if slot >= MAXBUTTONS - 1 {
+                    return Err(StateError::Button { slot });
+                }
+                SoundOrigin::Button(slot)
+            }
+            kind => return Err(StateError::OriginKind { kind }),
+        };
+        let handle = r.i32()?;
+        if !(100..=65535).contains(&handle) {
+            return Err(StateError::Handle { cnum });
+        }
+        if table
+            .iter()
+            .flatten()
+            .any(|e: &ChannelEntry| e.origin == origin)
+        {
+            return Err(StateError::DuplicateOrigin { cnum });
+        }
+        table.push(Some(ChannelEntry {
+            sfx,
+            origin,
+            handle,
+        }));
+    }
+    let handlenums = r.u16()?;
+    if (1..100).contains(&handlenums) {
+        return Err(StateError::Mixer(MixStateError::Counter));
+    }
+    let mut mixer = [None; NUM_CHANNELS];
+    for (slot, m) in mixer.iter_mut().enumerate() {
+        if !r.tag()? {
+            continue;
+        }
+        let sfx = r.sfx()?;
+        let c = MixChannelState {
+            sfx,
+            pos: r.u32()?,
+            end: r.u32()?,
+            step: r.u32()?,
+            frac: r.u32()?,
+            start: r.i32()?,
+            handle: r.i32()?,
+            left: r.u8()?,
+            right: r.u8()?,
+        };
+        c.check(slot).map_err(StateError::Mixer)?;
+        if u64::try_from(c.start).map_or(true, |start| start >= tic) {
+            return Err(StateError::StartTic { slot });
+        }
+        *m = Some(c);
+    }
+    Ok(Tail {
+        looked_up,
+        channels: table,
+        handlenums,
+        mixer,
+    })
 }
 
 impl Sound {
