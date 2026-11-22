@@ -713,3 +713,7 @@ pub(crate) fn validate_start_group<'a>(
     }
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "wire26_tests.rs"]
+mod tests;
