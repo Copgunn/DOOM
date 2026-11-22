@@ -467,6 +467,12 @@ impl SoundLogic {
         Self::stop_channel(channels, cnum, reason, gametic)
     }
 
+    /// The map number after a level load of an M6a session (`gamemap = wminfo.next+1`,
+    /// g_game.c:1176; a reborn reloads the same map). The channel table is not touched.
+    pub(crate) fn set_gamemap(&mut self, gamemap: i32) {
+        self.config.gamemap = gamemap;
+    }
+
     /// `S_StopSound(origin)` as the game calls it (only `P_RemoveMobj`, p_mobj.c:565-566).
     pub fn stop(&mut self, origin: SoundOrigin, gametic: i32) -> Option<ChannelStop> {
         Self::stop_first(&mut self.channels, origin, StopReason::Remove, gametic)

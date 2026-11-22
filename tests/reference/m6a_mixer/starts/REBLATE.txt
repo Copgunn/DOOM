@@ -1,0 +1,15 @@
+# Start list of REBLATE.sound (sha256 2b81cfa5d7e8c67a11882b5b6c6269e6341df7390cb729d34c276abd8d1531de), written by tools/reference/m5c_starts.py:
+# the 9 S rows with outcome started, in stream order; 9 S rows in all; 346 R rows.
+# handle convention: integrated (stated by the stream).
+schema DOOM-M5C-STARTS-v1
+config integrated
+tics 346
+s 35 1 35 25 8 128 124 64 100
+s 67 2 67 25 8 128 139 64 101
+s 99 3 99 25 8 128 137 64 102
+s 131 4 131 25 8 128 142 64 103
+s 166 5 166 57 8 128 139 64 104
+s 236 6 236 25 8 128 135 64 105
+s 309 8 309 33 8 128 113 64 106
+s 321 9 321 82 8 128 128 64 107
+s 323 10 323 3 8 128 126 64 108

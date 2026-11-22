@@ -2980,12 +2980,64 @@ Notes:
 - The genuine engine forms an out-of-bounds pointer (`&ammo[5]` into `int ammo[4]`, st_stuff.c:1288-1294) at every
   level start with the fist or the chainsaw ready, which a carried player can do; it is replaced before any read
   (st_stuff.c:926-935). UBSan's bounds check stops the address build there, so the address build is compared through
-  the last tic before that one report, and `address_bounds` (the address build with only the bounds check
-  recoverable, declared in `m6a_goldens.py`) runs every item to its end; every report it prints must be that one.
+  the last tic before that one report, and `address_bounds` runs every item to its end.
+- **The fourth build, `address_bounds`, declared.** It is the address build (AddressSanitizer and UBSan, the address
+  build's flags) plus `-fsanitize-recover=bounds`, added to the flag table in memory by `m6a_goldens.py`, nothing on
+  disk. **The allowance is one site only, by file and line: `st_stuff.c:1292`**, the report
+  `st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'` (with its stack frames, an optional
+  `SUMMARY` line naming the same site and one blank line). Everything else the build writes to stderr must be exactly
+  the strict build's stderr of the same run, so any other report (another file or line, any AddressSanitizer report,
+  any other sanitizer output) fails the run (`bounds_check` in `m6a_goldens.py`). `--selftest` proves it: the genuine
+  CHAIN run passes; a scratch build of `address_bounds` with a second, real bounds error planted at another line of
+  `st_stuff.c` (the inner index of a `[2][2]` array, in the build's copy only) fails; and a copy of the passing stderr
+  with an AddressSanitizer report appended fails. **The build adds no sanitizer coverage beyond what it reports**: it
+  is the address build continuing past the one declared report, and leak detection is disabled
+  (`ASAN_OPTIONS=detect_leaks=0`), so it is not LeakSanitizer coverage.
+- **Melt step counts over the committed goldens** (Python only, reads committed files, builds nothing):
+  `python3 tools/reference/m6a_melt_steps.py --check` recomputes every melt's step count from `rndtable`
+  (m_random.c) and `wipe_initMelt`/`wipe_doMelt` (f_wipe.c:158-166, 184-222, one call with `ticks = 1` per step) and the
+  `M_Random` index before the melt (the session golden's `rndindex` minus 320), compares it with the melt golden's `V`
+  rows and requires the last two pictures to equal the end screen: 113 of 113 melts of the 26 items. `--selftest`
+  plants a dropped step, a moved index and an extra step in memory copies; each must be caught.
 - `--selftest` plants a started sound's volume, an extra `P_Random` draw and a flipped level pixel in the runner, and a
-  changed session value and whole-frame digest in copies of the goldens; each must be caught at its place.
+  changed session value and whole-frame digest in copies of the goldens; each must be caught at its place; and it runs
+  the `address_bounds` allowance's three cases above.
 - `ASAN_OPTIONS=detect_leaks=0`: the address runs are not LeakSanitizer coverage. `--work` must lie outside the
   repository. The default is one runner process at a time (`--jobs 1`).
+
+### The sound session across levels and the genuine mixer (Phase 2 step 6)
+
+`tools/reference/m6a_mixer.py` runs the M5c mixer harness, unchanged and imported read-only, on the M6a sound
+goldens: each `tests/reference/m6a_sound/<ITEM>.sound` is converted by `m5c_starts.py` (its `gametic` runs on across
+loads, intermissions and the finale) and run through the genuine mixer driver (strict, overflow and address builds of
+`m5c_mixer_build.py`) and the independent model under both schedules; the rows must be identical, with no sanitizer
+report and every handle equal to the sound-logic run's. It writes `tests/reference/m6a_mixer/starts/`, `goldens/`
+(the strict rows under `ticbuffers`), `melts/` (`DOOM-M6A-MIXER-MELTS-v1`: one `w TIC STEPS K` row per melt, from
+`tests/reference/m6a_melt/`: the melt started by the display of session tic TIC has STEPS steps and falls between
+buffer K-1 and buffer K, `K = ceil(315 * TIC / 512)`; the tool requires the genuine golden to have mixed exactly K
+buffers after tics before TIC) and `tests/reference/m6a_mixer_results.json` (`DOOM-M6A-MIXER-RESULTS-v1`). The genuine
+mixer knows nothing of melts: that no buffer is produced during a melt is read in d_main.c:331-344 and declared (M6a
+note §1.16.4); the `w` rows place each melt in the buffer sequence the genuine mixer produced.
+
+```sh
+python3 tools/reference/m6a_mixer.py --work DIR --check [--selftest]   # compare (writes nothing)
+python3 tools/reference/m6a_mixer.py --work DIR                        # no --check: rewrite the files
+python3 tools/reference/m6a_mixer.py --work DIR --selftest             # the planted faults alone
+cargo test -p doom-sound --test m6a_chain                              # the Rust side (and --release)
+```
+
+- `--selftest` plants a flipped stream bit (only that buffer's row and the stream digest differ), a start moved by a
+  tic (the first difference is that start's echo row) and a `w` row with K off by one (refused); address runs use
+  `ASAN_OPTIONS=detect_leaks=0` (not LeakSanitizer coverage).
+- `crates/doom-sound/tests/m6a_chain.rs` compares `doom_sound::chain::ChainSound` with the genuine sound goldens: the
+  first level of each item driven by the wire-25 simulation (a map with the W1 exit 52, which wire 25 refuses, as a
+  carrier with that special cleared, its exit tic projected from the genuine session rows), the intermission and finale
+  tics against the finished level's simulation with the intermission's starts **projected** from the genuine S rows
+  and the `M_Random` index **projected** from the genuine R rows (fixture projections until the game layer exists),
+  the load tic when its only record is the carried chainsaw's start (projected), and the three music refusals; it
+  replays every M6a start list through the Rust mixer against the genuine mixer goldens and checks every melt row's
+  place; and it tests `DSND` version 2 (round trip, restore-and-continue at every kind of point, forgeries, refusals
+  leaving the session unchanged, planted faults).
 
 ## Mutation testing
 

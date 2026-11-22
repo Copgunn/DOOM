@@ -1,0 +1,19 @@
+# Start list of FINREG.sound (sha256 4e51aa9d9e998260718d65a053abc855bcae1442246495d2cd617e45bbe9ee69), written by tools/reference/m5c_starts.py:
+# the 13 S rows with outcome started, in stream order; 16 S rows in all; 1951 R rows.
+# handle convention: integrated (stated by the stream).
+schema DOOM-M5C-STARTS-v1
+config integrated
+tics 1951
+s 24 1 24 35 10 128 122 64 100
+s 24 2 24 35 8 129 141 64 101
+s 30 3 30 67 8 128 133 64 102
+s 96 9 96 22 9 129 127 64 103
+s 104 10 104 22 9 129 144 64 104
+s 112 11 112 22 9 129 130 64 105
+s 120 12 120 22 9 129 113 64 106
+s 128 13 128 22 9 129 138 64 107
+s 134 14 134 19 9 129 137 64 108
+s 195 15 195 25 8 128 125 64 109
+s 227 16 227 25 8 128 138 64 110
+s 259 17 259 25 8 128 119 64 111
+s 291 18 291 25 8 128 126 64 112

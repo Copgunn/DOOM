@@ -34,7 +34,10 @@ Goldens (written without --check, compared byte for byte with --check, which wri
                                                    the variant and melt facts, and the U8 witnesses observed
 --selftest proves the comparisons can fail: faults planted in the runner (a started sound's volume, an extra P_Random
 draw, a flipped level pixel) must each make the matching golden comparison differ at its place, and a changed session
-value and a changed whole-frame digest (planted in memory in a copy of the golden text) must be caught.
+value and a changed whole-frame digest (planted in memory in a copy of the golden text) must be caught; and the
+address_bounds allowance (only the report at st_stuff.c:1292, see bounds_check) must pass the genuine run and fail a
+scratch build with a second, real bounds error planted at another line and a copy of the stderr with an
+AddressSanitizer report injected.
 
     m6a_goldens.py [--check] [--selftest] [--only ITEM[,ITEM]] [--work DIR] [--jobs N] [--cc CC]
 """
@@ -65,10 +68,48 @@ VARIANTS = ['strict', 'overflow', 'address', 'address_bounds']
 # address build is compared through the last tic before that report (which must be exactly DECLARED_UB), and a fourth
 # build, address_bounds, is the address build with only the bounds check recoverable (-fsanitize-recover=bounds,
 # declared here, built through m6a_build with the frozen flag table extended in memory, not on disk): it must run to
-# the strict end with identical streams, and every report it prints must be DECLARED_UB.
+# the strict end with identical streams, and its stderr must be the strict stderr plus DECLARED_UB reports only
+# (bounds_check below).
 DECLARED_UB_AT = 'st_stuff.c:1292:16'
 DECLARED_UB = DECLARED_UB_AT + ": runtime error: index 5 out of bounds for type 'int [4]'"
 ADDRESS_BOUNDS_FLAGS = ['-fsanitize-recover=bounds']
+# The owner's condition on address_bounds (2026-11-21): the allowance is that one site only, by file and line. A report
+# is allowed only when its header is exactly DECLARED_UB (any directory before st_stuff.c); its stack frames, an optional
+# SUMMARY line naming the same site and one blank line belong to it. Everything else the build writes to stderr must be
+# exactly the strict build's stderr of the same run: any other line (a report at another file or line, any
+# AddressSanitizer or other sanitizer output) fails the run. The build adds no sanitizer coverage beyond what it reports.
+UB_HEADER = re.compile(r'^(?:\S*/)?(?P<site>[\w.]+:\d+:\d+): runtime error: (?P<msg>.*)$')
+UB_FRAME = re.compile(r'^\s+#\d+ 0x[0-9a-f]+ ')
+UB_SUMMARY = re.compile(r'^SUMMARY: UndefinedBehaviorSanitizer: \S+ (?:\S*/)?(?P<site>[\w.]+:\d+:\d+)\b')
+# The planted fault of --selftest: a second bounds error at another line of st_stuff.c (the inner index of a [2][2]
+# array, so the access stays inside the object and only UBSan's bounds check reports it), appended to the line of
+# `st_clock++;` (st_stuff.c:991) so that no later line moves and the declared report stays at st_stuff.c:1292; built into
+# a scratch copy of the address_bounds build only; nothing on disk in the repository changes.
+PLANT_ANCHOR = '    st_clock++;\n'
+PLANT_LINE = '    st_clock++; { static int selftest_planted[2][2]; volatile int k = 2; selftest_planted[0][k] = st_clock; }\n'
+
+
+def bounds_check(stderr, strict_stderr):
+    """(remainder, allowed reports, problems) for an address_bounds run's stderr against the strict run's."""
+    lines, rest, allowed, i = stderr.splitlines(keepends=True), [], 0, 0
+    while i < len(lines):
+        m = UB_HEADER.match(lines[i].rstrip('\n'))
+        if m and f"{m['site']}: runtime error: {m['msg']}" == DECLARED_UB:
+            allowed += 1; i += 1
+            while i < len(lines) and UB_FRAME.match(lines[i]): i += 1
+            s = UB_SUMMARY.match(lines[i]) if i < len(lines) else None
+            if s and s['site'] == DECLARED_UB_AT: i += 1
+            if i < len(lines) and not lines[i].strip(): i += 1
+            continue
+        rest.append(lines[i]); i += 1
+    remainder = ''.join(rest)
+    problems = []
+    if remainder != strict_stderr:
+        a, b = remainder.splitlines(), strict_stderr.splitlines()
+        k = next((j for j, (x, y) in enumerate(zip(a, b)) if x != y), min(len(a), len(b)))
+        problems.append(f'stderr beyond the allowed {DECLARED_UB_AT} reports differs from strict at line {k + 1}: '
+                        f'{a[k] if k < len(a) else "<end>"!r}')
+    return remainder, allowed, problems
 ENV = dict(os.environ, ASAN_OPTIONS='detect_leaks=0', UBSAN_OPTIONS='print_stacktrace=1')
 MODE_CHECK = 'CHAIN'
 TOOLS = ['m6a_goldens.py', 'm6a_wad.py', 'm6a_build.py', 'm6a_session.c', 'm6a_wi_access.c']
@@ -384,9 +425,10 @@ def item_record(item, bins, runs, other_mode=False):
             note = dict(stopped_by=DECLARED_UB, compared_through_tic=last)
         if v == 'address_bounds':
             note = dict(bounds_reports=ubs(r))
-            if any(u != DECLARED_UB for u in ubs(r)): fails.append(f'{N}: address_bounds reports {ubs(r)}')
+            remainder, _allowed, problems = bounds_check(r['stderr'], s10['stderr'])
+            if problems: fails += [f'{N}: address_bounds: {p}' for p in problems]
             else:                                                       # the run's end without the declared report
-                r['end'] = M5C.end_of(dict(r, stderr='\n'.join(l for l in r['stderr'].splitlines() if DECLARED_UB_AT not in l)))
+                r['end'] = M5C.end_of(dict(r, stderr=remainder))
         keys = ('frames', 'sound', 'session', 'view', 'snapshots') + (('end',) if not note.get('stopped_by') else ())
         diff = [k for k in keys if got[k] != ref[k]]
         if diff: fails.append(f'{N}: {v} differs from strict ({diff})')
@@ -494,6 +536,46 @@ def selftest(bins, work):
     f = lines[k].split(','); f[3] = f[3][::-1]; planted = ''.join(lines[:k] + [','.join(f)] + lines[k + 1:])
     d = first_diff(gold['frames'], planted)
     out.append(('whole-frame digest', f'G,130 digest reversed in a copy: first difference at line {d and d[0]}', bool(d and d[0] == k)))
+    out += bounds_selftest(bins, work, item)
+    return out
+
+
+def bounds_selftest(bins, work, item):
+    """The address_bounds allowance: the genuine run passes with only the st_stuff.c:1292 report; a scratch build of
+    address_bounds with a second, real bounds error planted at another line (PLANT_LINE, st_stuff.c in the build's copy
+    only) fails; an AddressSanitizer report injected into a copy of the passing stderr fails."""
+    out = []
+    strict = run(bins['strict'], item, work / 'self_ab_strict', 10)
+    good = run(bins['address_bounds'], item, work / 'self_ab_good', 10)
+    _rem, n, p = bounds_check(good['stderr'], strict['stderr'])
+    out.append(('address_bounds allowance, genuine run', f'{n} allowed report(s), problems {p}', n >= 1 and not p))
+    orig = m6a_build.adapted_sources
+
+    def planted(variant):
+        s = orig(variant)
+        if s['st_stuff.c'].count(PLANT_ANCHOR) != 1: sys.exit('selftest: the plant anchor is not unique in st_stuff.c')
+        s['st_stuff.c'] = s['st_stuff.c'].replace(PLANT_ANCHOR, PLANT_LINE)
+        return s
+    m6a_build.adapted_sources = planted
+    try:
+        with open(os.devnull, 'w') as q:
+            so, sys.stdout = sys.stdout, q
+            try: pbin = m6a_build.build('address_bounds', work / 'selftest_build', 'cc')
+            finally: sys.stdout = so
+    finally:
+        m6a_build.adapted_sources = orig
+    bad = run(pbin, item, work / 'self_ab_planted', 10)
+    _rem, n, p = bounds_check(bad['stderr'], strict['stderr'])
+    site = re.search(r'st_stuff\.c:(\d+):\d+: runtime error', ''.join(l for l in bad['stderr'].splitlines(keepends=True)
+                                                                     if DECLARED_UB_AT not in l))
+    out.append(('address_bounds allowance, a second real report planted', f'planted report at st_stuff.c:{site and site[1]}; '
+                f'{n} allowed; problems {p}', n >= 1 and bool(p) and bool(site) and site[1] == '991'
+                and f'st_stuff.c:{site[1]}:' in p[0]))
+    asan = good['stderr'] + ('=================================================================\n'
+                             '==12345==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x602000000014\n'
+                             'SUMMARY: AddressSanitizer: heap-buffer-overflow st_stuff.c:1292:16 in ST_createWidgets\n')
+    _rem, n, p = bounds_check(asan, strict['stderr'])
+    out.append(('address_bounds allowance, an AddressSanitizer report injected', f'problems {p}', bool(p)))
     return out
 
 

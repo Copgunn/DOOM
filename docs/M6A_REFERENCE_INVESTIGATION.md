@@ -6,7 +6,7 @@ The behavioural authority is the original id Software Linux DOOM 1.10 at `a77dfb
 
 Each statement is labelled: **(read)** read in the source; **(observed)** seen by running a scratch prototype, with the command in [§1.15](#115-what-was-run-and-what-was-not) or [§3](#3-harness-design-evidence-first); **(inferred)** reasoned from cited lines and not run. The facts come from two Phase 1 research reports (C facts; the Rust code and harness), kept with their prototypes under `~/scratch/m6a/` until the milestone ends; the writer of this note re-read a sample of their citations against the source ([§1.15](#115-what-was-run-and-what-was-not)).
 
-**Status / next step (2026-11-21 18:55 PST).** **The owner's rulings on U1–U15 were received on 2026-11-21 and are recorded under each decision in [§5](#5-owner-decisions-u1u15-with-recommendations); Phase 2 is in progress.** U4 and U9 were ruled differently from the recommendations. **Steps 1 and 2 are done.** Step 1: the genuine `m6a` runner (`tools/reference/m6a_build.py`, `m6a_session.c`, `m6a_wi_access.c`, `m6a_reference.py`; [TESTING](TESTING.md#the-genuine-m6a-runner-phase-2-step-1)). Step 2: the synthetic multi-map WADs (`m6a_wad.py`) and 26 items with goldens from the genuine engine only (`m6a_goldens.py`; [TESTING](TESTING.md#the-synthetic-session-items-and-their-goldens-phase-2-step-2)); its open points are in [§6.6](#66-open-items-from-step-2-and-what-keeps-them-open). **Step 3 is partly done**: the `HELP2` stop is observed in registered mode and `CREDIT` in retail ([§1.5](#15-game-modes-and-how-the-owners-doomwad-is-identified)); the retail comparison of the 61 runs is **running** (first tool 61 of 61, second tool not finished; nothing relies on retail until all 61 are compared). The melt is settled in [§1.16](#116-the-melt-settled-for-u9) and the map-by-skill load report is in [§1.17](#117-maps-and-skills-the-load-report). **Step 4 (wire 26) is in progress** on a side worktree. **Next:** steps 5 to 9 for the level chain, then the windows-artifact label on the draft PR and the stop for the owner's hand test; after it the finale, the melt pictures, the easy skills and E1M7 on skill 3. The order of work is the owner's ([§6.5](#65-order-of-work-owners-ruling-2026-11-21)). Nothing here has changed Rust source, `Cargo.toml`, a frozen tool, a golden or an existing file under `tests/reference`; steps 1 and 2 added new `m6a_*` files only. This branch starts at master `d637f7d` and has since merged master.
+**Status / next step (2026-11-21 19:25 PST).** **The owner's rulings on U1–U15 were received on 2026-11-21 and are recorded under each decision in [§5](#5-owner-decisions-u1u15-with-recommendations); Phase 2 is in progress.** U4 and U9 were ruled differently from the recommendations. **Steps 1 and 2 are done.** Step 1: the genuine `m6a` runner (`tools/reference/m6a_build.py`, `m6a_session.c`, `m6a_wi_access.c`, `m6a_reference.py`; [TESTING](TESTING.md#the-genuine-m6a-runner-phase-2-step-1)). Step 2: the synthetic multi-map WADs (`m6a_wad.py`) and 26 items with goldens from the genuine engine only (`m6a_goldens.py`; [TESTING](TESTING.md#the-synthetic-session-items-and-their-goldens-phase-2-step-2)); its open points are in [§6.6](#66-open-items-from-step-2-and-what-keeps-them-open). **Step 3 is partly done**: the `HELP2` stop is observed in registered mode and `CREDIT` in retail ([§1.5](#15-game-modes-and-how-the-owners-doomwad-is-identified)); the retail comparison of the 61 runs is **running** (first tool 61 of 61, second tool not finished; nothing relies on retail until all 61 are compared). The melt is settled in [§1.16](#116-the-melt-settled-for-u9) and the map-by-skill load report is in [§1.17](#117-maps-and-skills-the-load-report). **Step 4 (wire 26) is in progress** on a side worktree. **Step 5's level-chain part (`doom-render`) is done (2026-11-21 19:25 PST)**: the single-player intermission drawer (`wi_stuff`), the session display with level starts that keep the `M_Random` index and every wipe of the session, and `DDSP` version 3 (layout pending in [STATE_FORMAT](STATE_FORMAT.md)); 5,774 of 5,774 genuine intermission frames and the index on 9,724 of 9,724 tics of 23 items compared equal (`crates/doom-render/tests/m6a_display.rs`); the finale drawer and the melt pictures are typed "not yet" refusals. Found there: wire 25 refuses at load every synthetic map with the walk exit 52 (E1M2, E1M4, E1M7 and both rbx maps). **Next:** steps 6 to 9 for the level chain, then the windows-artifact label on the draft PR and the stop for the owner's hand test; after it the finale, the melt pictures, the easy skills and E1M7 on skill 3. The order of work is the owner's ([§6.5](#65-order-of-work-owners-ruling-2026-11-21)). No frozen tool, golden, `Cargo.toml` or existing file under `tests/reference` has changed; steps 1 and 2 added new `m6a_*` files only, and step 5 added new `doom-render` modules and tests and touched `d_display.rs` and `lib.rs` (no existing test). This branch starts at master `d637f7d` and has since merged master.
 
 ## Summary
 
@@ -203,7 +203,9 @@ Runs used (observed; commands at the end of the step-3 report): **SPAN** (the Ph
 floor hit, an exit with a clip's bonus flash, a death on a damage floor with use held and a reborn on a safe start;
 702 tics, 4 loads, 6 melts); and on the owner's IWAD, counts only, **M8WALK and M8WALK3 extended with idle tics** (E1M8
 to the sector-11 exit, then the finale) in both game modes (3 melts each in retail, 2 in registered before the `HELP2`
-stop). 24 melts in all.
+stop). 26 melts in all: SPAN 10, MELTPAL 6 and the four IWAD runs 2 + 3 + 2 + 3 = 10 (registered and retail, two
+scripts). The step counts and the last two pictures are also checked over the 113 melts of the committed step-2 goldens
+by a committed tool (1.16.7).
 
 #### 1.16.1 The clock: one melt step per tic
 
@@ -229,16 +231,20 @@ stop). 24 melts in all.
   calls, a function of the `M_Random` index at the melt's start only. (observed, recomputed here from `rndtable`,
   m_random.c) Over the 256 starting indices N is 34 to 43 (34:3, 35:46, 36:4, 37:10, 38:63, 39:17, 40:16, 41:20,
   42:15, 43:62 indices), as M5c §1.4.3 item 11 found; about 0.97 to 1.23 s at 35 a second.
-- (observed) In **24 of 24 melts** the number of steps under `--melt-clock unit` equals N predicted from `rndtable`
-  and the index before the wipe (the session row's `rndindex` minus 320); `done` is returned on the last step only.
+- (observed) In **26 of 26 melts** of these runs the number of steps under `--melt-clock unit` equals N predicted from
+  `rndtable` and the index before the wipe (the session row's `rndindex` minus 320); `done` is returned on the last step
+  only. The committed check `tools/reference/m6a_melt_steps.py` does the same over the committed goldens of step 2
+  (`tests/reference/m6a_melt/*.melt` against the `rndindex` of `tests/reference/m6a_session/*.session`): **113 of 113
+  melts** of the 26 items (1.16.7).
 - **The picture after step k** (read, f_wipe.c:192-216): column pair i (pixels 2i and 2i+1, moved as one `short`)
   shows end-screen rows 0..y_k[i]-1 at the top and start-screen rows 0..199-y_k[i] pushed down below them, where
-  y_k[i] is the column's position after k tics; a column still waiting shows the start screen. (observed) In all 24
-  melts the **last two pictures are identical and equal the end screen**, which is the composed frame of that tic
+  y_k[i] is the column's position after k tics; a column still waiting shows the start screen. (observed) In all 26
+  melts of these runs, and in 113 of 113 committed melts, the **last two pictures are identical and equal the end screen**, which is the composed frame of that tic
   (the `Y` row's end digest; for level frames also equal to the frame's whole digest). The first picture equals the
-  start screen when no column starts at 0 (36 of the 256 indices); observed once (MELTPAL tic 218, index 120: every
+  start screen when no column starts at 0 (36 of the 256 indices); observed twice (MELTPAL tic 218, index 120: every
   column waits at least 6 tics, so pictures 1 to 6 equal the start screen and the melt shows 37 distinct pictures in
-  43 steps).
+  43 steps; and the retail M8WALK3 run's finale text-to-art melt at tic 7,075, index 102, 41 distinct pictures in 43
+  steps).
 - **Why the step-1 "unit" clock gives one more step than the "counter" clock** (read): the M5c runner's clock is a stub
   that returns a counter incremented on every call (tools/reference/m5c_stubs.c:104-105). Line 329 then reads c+1 and
   sets `wipestart = c`; the first read in the busy wait returns c+2, so the first call gets `ticks = 2`, and every
@@ -431,15 +437,21 @@ stop). 24 melts in all.
 
 #### 1.16.7 Evidence and commands
 
-Observed: step counts, **24 of 24** melts: the number of steps under `--melt-clock unit` equals N = 28 + max(-y0[i])
+Observed: step counts, **26 of 26** melts: the number of steps under `--melt-clock unit` equals N = 28 + max(-y0[i])
 predicted from `rndtable` and the `M_Random` index before the wipe (the session row's `rndindex` minus 320), across SPAN
-(10 melts), MELTPAL (6) and the owner's IWAD runs (the rest). The scripts below are scratch tools
+(10 melts), MELTPAL (6) and the owner's IWAD runs (10: registered and retail, M8WALK 2 + 3 and M8WALK3 2 + 3),
+re-derived on 2026-11-21 from the six runs' result files. The same check over the committed goldens is reproducible
+from the repository alone: `python3 tools/reference/m6a_melt_steps.py --check` recomputes each melt's step count from
+`rndtable` (m_random.c) and f_wipe.c:158-166, 184-222, compares it with the `V` rows and requires the last two pictures
+to equal the end screen: **113 of 113 melts** of the 26 step-2 items (`--selftest`: a dropped step, a moved index and an
+extra step are each caught). The scripts below are scratch tools
 (`~/scratch/m6a/s3`, not committed, about 280 lines); the pictures were compared as digests, not pixels. Commands:
 
 ```sh
 python3 s3/mp.py s3/data && s3/runs.sh c_meltpal strict MELTPAL registered --melt-clock unit   # MELTPAL, 6 melts
 python3 s3/melt_facts.py RUN/frames.txt [COUNTER_RUN/frames.txt]   # steps per melt, last-two-equal, start source, palette
-python3 s3/steps_check.py RUN...                                   # predicted against observed steps (24 of 24), 256-index histogram
+python3 s3/steps_check.py RUN...                                   # predicted against observed steps (26 of 26), 256-index histogram
+python3 tools/reference/m6a_melt_steps.py --check                  # committed: 113 of 113 melts of the step-2 goldens
 python3 s3/cmpf.py A/frames.txt B/frames.txt [UPTO]                # frame stream differences, flagged-frame check
 m5c_mixer --wad tests/reference/m5c_sfx.wad --starts starts.txt --schedule ticbuffers --out mixer.txt   # 432 buffers for 702 tics
 ```
@@ -829,6 +841,7 @@ The cap of 22,000 lines applies to all of it ([§6.4](#64-cap-and-fallback)).
 None is dropped; each says what it waits for.
 
 - **Percentages above 100** in the intermission need nightmare's respawns: **M6b** (U13).
-- **"Sucks" (above 61:59, at least 125,966 level tics)** has no golden yet, because a stream that long is too big for the repository. **Open: a golden format for it.** Proposal: digests of the long prefix plus the full rows of the tail; the owner has not chosen it.
+- **"Sucks" (above 61:59, at least 126,000 level tics: `WI_drawTime` draws it when `t > 61*59`, wi_stuff.c:700, and
+  `t` is `cnt_time = stime / TICRATE`, wi_stuff.c:1341, 1397-1398, so `stime / 35 >= 3600`)** has no golden yet, because a stream that long is too big for the repository. **Open: a golden format for it.** Proposal: digests of the long prefix plus the full rows of the tail; the owner has not chosen it.
 - **Quirk 9's audible part** (level sounds heard into the intermission) waits for the mixer comparison; the sound rows are compared, the mixer buffers across that boundary are not yet.
-- **The `address_bounds` build** (the address build with only the bounds check recoverable) is a declared evidence-tooling choice: the genuine engine forms `&ammo[5]` into `int ammo[4]` (st_stuff.c:1288-1294) at every level start with the fist or chainsaw ready, and UBSan's bounds check stops the plain address build there. The choice is declared in [TESTING](TESTING.md#the-synthetic-session-items-and-their-goldens-phase-2-step-2) and in `m6a_goldens.py`.
+- **The `address_bounds` build** (the address build with only the bounds check recoverable) is a declared evidence-tooling choice: the genuine engine forms `&ammo[5]` into `int ammo[4]` (st_stuff.c:1288-1294) at every level start with the fist or chainsaw ready, and UBSan's bounds check stops the plain address build there. The choice is declared in [TESTING](TESTING.md#the-synthetic-session-items-and-their-goldens-phase-2-step-2) and in `m6a_goldens.py`. **The owner's condition (2026-11-21), implemented:** the allowance is that one site only, `st_stuff.c:1292` by file and line; any other report from that build (another file or line, any AddressSanitizer report) fails the run, and `--selftest` proves it with a second, real bounds error planted at another line in a scratch build and an injected AddressSanitizer report. The build adds no sanitizer coverage beyond what it reports (leak detection disabled: not LeakSanitizer coverage).

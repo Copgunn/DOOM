@@ -1,0 +1,1118 @@
+{
+ "schema": "DOOM-M6A-MIXER-RESULTS-v1",
+ "mixer_contract_sha256": "2c46cc5a1502786251b0db4c09da8373ca7bad8fde8f64229485329105a7ac0e",
+ "source": "tests/reference/m6a_sound/*.sound (the genuine M6a runner, tools/reference/m6a_goldens.py), converted by tools/reference/m5c_starts.py; the genuine mixer of tools/reference/m5c_mixer_build.py",
+ "switches": {
+  "configuration": "integrated",
+  "schedule": "ticbuffers",
+  "frames_per_buffer": 512,
+  "frames_per_tic": 315,
+  "rule": "Recommended reading of decision T5 (open): after the starts of tic t (counted from the first tic of the session), mix every buffer k not yet mixed with 512*k < 315*(t+1), each by one genuine I_UpdateSound and I_SubmitSound; buffer k is mixed after tic floor(512k/315), none or one per tic, 315 buffers per 512 tics, the first after tic 0. A start takes effect in the next buffer mixed (the original mixes after all tics of a loop pass, d_main.c:389-405). The compared signal is the sequence of mixed buffers, not the device output.",
+  "also_recorded": "pertic (digests only)",
+  "melts": "no buffer during a melt; the buffer of the melt's tic after it (declared, d_main.c:331-405)"
+ },
+ "wad": "tests/reference/m5c_sfx.wad",
+ "variants": [
+  "strict",
+  "overflow",
+  "address"
+ ],
+ "asan_options": "detect_leaks=0 (leak detection disabled; not LeakSanitizer coverage)",
+ "tools_sha256": {
+  "tools/reference/m6a_mixer.py": "f4c3078c20329ee96c441006ad1ed5db52ccdc3b59faa3164eda1f7c65e38380",
+  "tools/reference/m5c_starts.py": "757cfcda4392220aaa3e0da111c5162fe8a2e1aa3d74692ff7c759d6f8460235",
+  "tools/reference/m5c_mixer_driver.c": "8712383a896c7ff4a9be330e1457c7e321262180f215568ea211ee78b2b15af3"
+ },
+ "items": 26,
+ "starts": 791,
+ "tics": 15282,
+ "buffers": 9413,
+ "melts": 113,
+ "goldens_sha256": "73daf9703759662296900d63cf24f252d064a59384afceb3fb7a0e739eec0565",
+ "per_item": {
+  "CHAIN": {
+   "sound_sha256": "57baef4d34d72cd1f4603ee159e680429af6814524280c9ec0f032cb120cab72",
+   "starts": 88,
+   "tics": 831,
+   "starts_sha256": "094b7ea8559e3f873026b841054d6c0c5c6c7b156de63b0d1f718cdf27bf37af",
+   "buffers": 512,
+   "stream_sha256": "e057bd198424426589b9c5b4a76aed2636191b18caad4e69e8b765a75fdc2fb3",
+   "golden_sha256": "adb3b99b1c60511b31b4c8bf10d1708f7da5f4162c9a78b0792a69899a313acb",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     126,
+     39,
+     78
+    ],
+    [
+     142,
+     38,
+     88
+    ],
+    [
+     260,
+     35,
+     160
+    ],
+    [
+     276,
+     38,
+     170
+    ],
+    [
+     360,
+     37,
+     222
+    ],
+    [
+     376,
+     38,
+     232
+    ],
+    [
+     478,
+     43,
+     295
+    ],
+    [
+     494,
+     39,
+     304
+    ],
+    [
+     595,
+     35,
+     367
+    ],
+    [
+     611,
+     39,
+     376
+    ],
+    [
+     708,
+     35,
+     436
+    ],
+    [
+     724,
+     43,
+     446
+    ],
+    [
+     780,
+     41,
+     480
+    ],
+    [
+     796,
+     42,
+     490
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 831,
+    "stream_sha256": "2b9d28047d472aa60a436fe008689738fa68da38863f068d20f4d34bcd2674d7",
+    "rows_sha256": "a132a75706b04f6e47c8f0246bf87cd450e4b50bdf5fd56871c7d8e7cdf88b5c"
+   }
+  },
+  "FINREG": {
+   "sound_sha256": "4e51aa9d9e998260718d65a053abc855bcae1442246495d2cd617e45bbe9ee69",
+   "starts": 13,
+   "tics": 1951,
+   "starts_sha256": "5223bb6186dd35c4835949783999a33d988f43aa38b0bde5b1025c04a24d5fa8",
+   "buffers": 1201,
+   "stream_sha256": "125d3c651dea1caf7636940ea8ba6feb14afa12e67fce2ae9b027a81ed0ae0e3",
+   "golden_sha256": "54580de24dc79f5f2e6041c2e67dcdf76a98211f7730524052c2398eaf35098b",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     321,
+     38,
+     198
+    ],
+    [
+     1891,
+     38,
+     1164
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 1951,
+    "stream_sha256": "a76c5956630abdf0f354d49909dbd3dfbfbc04758d25e854c54fce2f618e4edb",
+    "rows_sha256": "de4185ca23cd68d08977acd65dfdfd08d4650f64c2fcb1b124db6cf8e3018a55"
+   }
+  },
+  "FINRET": {
+   "sound_sha256": "0f74963b5acc63c35d6aca9957dd657761ecec89f5abffb47f4bd84ae315b4af",
+   "starts": 13,
+   "tics": 1951,
+   "starts_sha256": "9ac6015767e35d90cf900eb4a6b9605db24ad9e720fa097108e20def996dece8",
+   "buffers": 1201,
+   "stream_sha256": "125d3c651dea1caf7636940ea8ba6feb14afa12e67fce2ae9b027a81ed0ae0e3",
+   "golden_sha256": "54580de24dc79f5f2e6041c2e67dcdf76a98211f7730524052c2398eaf35098b",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     321,
+     38,
+     198
+    ],
+    [
+     1891,
+     38,
+     1164
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 1951,
+    "stream_sha256": "a76c5956630abdf0f354d49909dbd3dfbfbc04758d25e854c54fce2f618e4edb",
+    "rows_sha256": "de4185ca23cd68d08977acd65dfdfd08d4650f64c2fcb1b124db6cf8e3018a55"
+   }
+  },
+  "INTFAST": {
+   "sound_sha256": "c2abc73c1512e77f996142c4c23f9c05dfa33f4f81ebe422f2ff614e69600f47",
+   "starts": 2,
+   "tics": 79,
+   "starts_sha256": "fa7842d47def6d9c3d54680d9ceb781b9469d51a3b1cc71f7e942c41359d105b",
+   "buffers": 49,
+   "stream_sha256": "21108a24e98efb3f775190eeec3b7e3e0ad7be72a0a9f8c8d80fb315a15b5720",
+   "golden_sha256": "63078d57baaf815cd84d132a3897440f95a23da321866287a632391744bf5bf2",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     56,
+     41,
+     35
+    ],
+    [
+     69,
+     43,
+     43
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 79,
+    "stream_sha256": "93902433b97199984d2c74b9d3f77f10c09adfba16040e1f58c5c57f8aede238",
+    "rows_sha256": "4177e0e13fbfe86b59f03cd6db6e986aa232e0124844da2d20f6ba89ae40b2c1"
+   }
+  },
+  "INTHELD": {
+   "sound_sha256": "bb977471069ba07025b7095690af79e57789c1b1cd0a7916f351ec3cc301e0a5",
+   "starts": 58,
+   "tics": 446,
+   "starts_sha256": "71230177e71d9898b1012736f09ea5be6c552133d70ec2a46073bcd282060ae1",
+   "buffers": 275,
+   "stream_sha256": "a89aab57caaaf68a7cec9e8a0bf74382acf8ac28145f13cdee1459981e38628e",
+   "golden_sha256": "8d3ab6ca959248e906669709ec21274a9f328d6c72362ed5643ee3f10f2031ec",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     126,
+     39,
+     78
+    ],
+    [
+     222,
+     39,
+     137
+    ],
+    [
+     340,
+     37,
+     210
+    ],
+    [
+     436,
+     38,
+     269
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 446,
+    "stream_sha256": "28a172fad4c01ba6de5da301249f801c64a2a1e0c606040f7c4e745a35c3c18b",
+    "rows_sha256": "a6d276d0231631570c753154d77ef8dd40ebf8c77a7122e561f25fb1a8b83124"
+   }
+  },
+  "INTIDLE": {
+   "sound_sha256": "1d9eb34c1fcc2e1f12c53fea81e81494ca13bec53d4f8b9700b81c15fe270563",
+   "starts": 23,
+   "tics": 456,
+   "starts_sha256": "f0d8735658ab177e0272b3db4fc96dcf6b2f46f9483329c9df2cf154032b1135",
+   "buffers": 281,
+   "stream_sha256": "f88888db895b71d739a8ea80f22e8917816939fe504872c00f8ccf389d508ab7",
+   "golden_sha256": "91c461402ff93d0354c866c8f0373ff831aef3962199b313cfe3b652cb5a5c74",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     56,
+     38,
+     35
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 456,
+    "stream_sha256": "e4e00ce0fae899e05367f81dfef18a900f3e6b89e601456299888aa42d14218d",
+    "rows_sha256": "31b0f37a00fb55a8fa9d9c1815447a75d801320d345e83772b9e6f5d6a70e637"
+   }
+  },
+  "INTSTA": {
+   "sound_sha256": "4f67bf60e314718703b982a4613c3ce375e0d74979b91278981e0ecd7e7f82dd",
+   "starts": 159,
+   "tics": 1328,
+   "starts_sha256": "da7ab1672280a4d6eee4d685082b4280d5eaf01c00953bf987016bad09ceb0a8",
+   "buffers": 818,
+   "stream_sha256": "ae8023a5d63e38a278591c3c9d1e517625d310d303579a1a55bba1ae5cc06122",
+   "golden_sha256": "e2b52558ef27aeaa4e92977a0920d78effe60d329bd09b45199b72e5d874850b",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     126,
+     35,
+     78
+    ],
+    [
+     141,
+     38,
+     87
+    ],
+    [
+     259,
+     35,
+     160
+    ],
+    [
+     309,
+     38,
+     191
+    ],
+    [
+     393,
+     37,
+     242
+    ],
+    [
+     444,
+     43,
+     274
+    ],
+    [
+     546,
+     43,
+     336
+    ],
+    [
+     632,
+     38,
+     389
+    ],
+    [
+     733,
+     41,
+     451
+    ],
+    [
+     870,
+     38,
+     536
+    ],
+    [
+     967,
+     35,
+     595
+    ],
+    [
+     1139,
+     43,
+     701
+    ],
+    [
+     1195,
+     35,
+     736
+    ],
+    [
+     1318,
+     43,
+     811
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 1328,
+    "stream_sha256": "c844459fcc5e345bc999156e8cc2d72bf269a3addb032a23fb329e38e3cd3211",
+    "rows_sha256": "3fb15b240d05a43dd40fb1ddac9b01d425d81ef742c09c92a476cdac2c5c861e"
+   }
+  },
+  "INTSTB": {
+   "sound_sha256": "ffcce6d110b3d58e5172344b6cf344037fe3ea465f655b3d2eae8482e44f0710",
+   "starts": 75,
+   "tics": 1432,
+   "starts_sha256": "cf9f4d3895ff62697ccb502418f4bf0434f59be95c5c7b42ae3e288dd9b7ece6",
+   "buffers": 882,
+   "stream_sha256": "904c4963db1c99ebc62530dfd134bea763819a1ba669e2c1ff25caf81d7f2b56",
+   "golden_sha256": "65029e3caf1403e1c22da4b6b93cf20b4249caa8642b6dfbde8d051f5af93d2e",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     118,
+     43,
+     73
+    ],
+    [
+     276,
+     41,
+     170
+    ],
+    [
+     360,
+     43,
+     222
+    ],
+    [
+     609,
+     43,
+     375
+    ],
+    [
+     711,
+     35,
+     438
+    ],
+    [
+     982,
+     40,
+     605
+    ],
+    [
+     1083,
+     35,
+     667
+    ],
+    [
+     1237,
+     40,
+     762
+    ],
+    [
+     1334,
+     43,
+     821
+    ],
+    [
+     1350,
+     37,
+     831
+    ],
+    [
+     1406,
+     43,
+     866
+    ],
+    [
+     1422,
+     35,
+     875
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 1432,
+    "stream_sha256": "4c3bf3b972993c79fd6c4ba6a66e296a33ba36c9b07d591e58b27639f42a1d45",
+    "rows_sha256": "f5eb24c06c21cd62a4eb9071497842f05d890ed88be2ea795d208cfa336de3d6"
+   }
+  },
+  "NOE1M2": {
+   "sound_sha256": "9417b0db8c8880e9e788eba06b118fc32b9c61b3dc5dd51fd535acc441db2fe1",
+   "starts": 23,
+   "tics": 142,
+   "starts_sha256": "b3c291b146224588d401934ffa3abc605c4eb746e9aab119fc2aff9af9d1684a",
+   "buffers": 88,
+   "stream_sha256": "31a40e1b494352fd99d82722e25296aad6d01a3e846a47fac65bebf0dd9fdce4",
+   "golden_sha256": "86fa9b09ca7481f8b26fade672679afb70d1624143c57f28225dfaa2099e9eb3",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     126,
+     39,
+     78
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "# the session ended in I_Error: E,141,W_GetNumForName: d_e1m2 not found!",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 142,
+    "stream_sha256": "c0146c7b46973e5977497404a3ea05efe5d8c2ca18a939f505137396b3fac318",
+    "rows_sha256": "20f696e6135778ce1c333ae2e16e03ce3c12e6c1abdd9763dac003d5917ef4e6"
+   }
+  },
+  "NOE1M2AT": {
+   "sound_sha256": "9e32a298304cd2558f58ba8235e1a8c4eb80686b86be56d9c1b51b9dcf8060e9",
+   "starts": 0,
+   "tics": 0,
+   "starts_sha256": "f76c35e02cdbe1badf4e1b15fa9cc9c9400b39b6fdd5d6f21bdfc21bcf69092e",
+   "buffers": 0,
+   "stream_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "golden_sha256": "4cbc1d7c4c1c4f0c81019e7c4b98bf91ccbc0b9128aa26dd91d081175e60a7bf",
+   "melts": [],
+   "end": "drained",
+   "sound_stream_end": "# the session ended in I_Error: E,-1,W_GetNumForName: d_e1m2 not found!",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 0,
+    "stream_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "rows_sha256": "76a59c0bdc1de9726ab11d3e360d89df2dc7223db51b0817876e39fe099f6618"
+   }
+  },
+  "NOHELP2": {
+   "sound_sha256": "1df69306ba7299ac691e8e6ddf451d06dc300f2e7e1e1373d94b3da20af484cb",
+   "starts": 13,
+   "tics": 1891,
+   "starts_sha256": "af513b785bd891bc8d46081549a657d46e0b8df79d2cea4b2cf50805c49b7d98",
+   "buffers": 1164,
+   "stream_sha256": "2a34f0babc9f24fade7bbc5892109892483b068f5398006a47499cad8bfe772a",
+   "golden_sha256": "fd98483ea406594e0552ad9991a312139a59bff6132b0d07d5f45e006444ec6d",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     321,
+     38,
+     198
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "# the session ended in I_Error: E,1891,W_GetNumForName: HELP2 not found!",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 1891,
+    "stream_sha256": "cea8fc8736abd221aa4cc640f62c648152dbc6a59738e7de5ab4d7ab7e523676",
+    "rows_sha256": "d8456983d60ee428dc7900227dacafa40979a48f54bdd25c4a50c4921634bf6b"
+   }
+  },
+  "NOINTER": {
+   "sound_sha256": "2fab01ea4f755a9ff5f344637b47ea25c6e3bb7cbb73d49b89fb42842e397eb2",
+   "starts": 0,
+   "tics": 56,
+   "starts_sha256": "73b8404f721aad3cee81bf7548801153f747fe04dee757c604d25b65d19335b5",
+   "buffers": 35,
+   "stream_sha256": "69d03b1809e87b2b41cf3a4e8af1771305bca1534249119f5a1a7cb2e90a1b9a",
+   "golden_sha256": "71cb71c8956447272550605dc92de24cdd511ea6ec2d5f68e49d07880a39e879",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "# the session ended in I_Error: E,55,W_GetNumForName: d_inter not found!",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 56,
+    "stream_sha256": "96c94d0826105fe47c587fd79e8869ce5edbfbacdddab9f4f30c5fecba2ca6a3",
+    "rows_sha256": "1b91626166b32076eb9e64facd7a482f7c9a2d8b78970d844067e7ed79b150eb"
+   }
+  },
+  "NOVICTOR": {
+   "sound_sha256": "80dc27b7e00348c048283742f88686ce8d36e10792e776e61255182325416bc6",
+   "starts": 13,
+   "tics": 321,
+   "starts_sha256": "5bba5e61a4a34b94e8684accef8246531e186da0d589a52cbe9b2e62454b2347",
+   "buffers": 198,
+   "stream_sha256": "67dc4555c5ff4ad39e1091746a6f67ef30767267c9af7c1bd70cfceb26f28687",
+   "golden_sha256": "1126c27529cd26ea095e451f4e1bc00302287e2ebe07bf385c69e43b5f1adfad",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "# the session ended in I_Error: E,320,W_GetNumForName: d_victor not found!",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 321,
+    "stream_sha256": "16acea5fe3ad7b60bbea72243eb5d6654fa024fe89acb4496214e2551614fe4b",
+    "rows_sha256": "b16fa25a9ff0b4f27b9873804a0ffad9cfa4073e93290cb787a52eb6bbf066ed"
+   }
+  },
+  "PROBE": {
+   "sound_sha256": "d95c6493544c2eaa398905b2b61ce18a6235b24b9ed881b1dea9493d4089614b",
+   "starts": 14,
+   "tics": 300,
+   "starts_sha256": "ea2a91e7f1af5c16b387606258f5592d727679e726629fdb1ac81399036cb7e3",
+   "buffers": 185,
+   "stream_sha256": "cc95bbc89ae3c829256136d23e227eafcce9424342efbee48051b029a1732b5d",
+   "golden_sha256": "89c9cd7741b8ef42fbbdefbed40e246abca85217212f93deda55f5df6bbe091c",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     132,
+     35,
+     82
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 300,
+    "stream_sha256": "6a6e3b0e85866b7700e18ddadf05cf6d1adc6e43632e4424bd0359ca648e7fa0",
+    "rows_sha256": "2fe31e046107c08c810859f809074514e3e352f78602b3e1f62098e07c3d4b2f"
+   }
+  },
+  "RBXDEAD": {
+   "sound_sha256": "245bf64cb55644ffda9ee7d6775ad14207f15c36adf8f33802da8bffde76ad15",
+   "starts": 8,
+   "tics": 188,
+   "starts_sha256": "a239918dec80447e60a5ab325d1f8aa42e4cb326f302737cfd5117fecb0e2ed9",
+   "buffers": 116,
+   "stream_sha256": "7b61a85ea8638610e774236f573c1ac20985a9683693437fae975dbd4056cf81",
+   "golden_sha256": "56ee1582079d8b1c3a6fec0abd8e2c918682ae63052138127bcfd86ffadfec29",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     132,
+     35,
+     82
+    ],
+    [
+     148,
+     37,
+     92
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 188,
+    "stream_sha256": "77284c205475778c2e2084cdfd60da04475b82a91d1447d31e111336dc920a45",
+    "rows_sha256": "a46cddb21876e6afeca700964c35ea0b1080b8c33e13b9cc8daf3be31db81e34"
+   }
+  },
+  "REBHELD": {
+   "sound_sha256": "40633cfad1f4f17cadf15be38d1236cacff62ee3393b2365e72ec40f178a92a5",
+   "starts": 8,
+   "tics": 307,
+   "starts_sha256": "6a2cedbd7968783963bcc4cb2dc537dc290db5506ac1cb52fe78263749851878",
+   "buffers": 189,
+   "stream_sha256": "ef72ceef38a82e5b5b4d99be82219c0b258105329b7538776705bc75da7a09f2",
+   "golden_sha256": "7b324df1d3bf0b06d5031e1f954eefaa3625d16fe4ee5b53cca3834ef636aeee",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     162,
+     35,
+     100
+    ],
+    [
+     281,
+     43,
+     173
+    ],
+    [
+     297,
+     35,
+     183
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 307,
+    "stream_sha256": "1493d7a56ce9498ba0254b6cbd254c6d99f2e49e3a1b7a4ad110b10e05d0800b",
+    "rows_sha256": "97db88a02799a9cfc6d55455b8db6718eec36b3862bb549ef5c63a0caf8147c6"
+   }
+  },
+  "REBLATE": {
+   "sound_sha256": "2b81cfa5d7e8c67a11882b5b6c6269e6341df7390cb729d34c276abd8d1531de",
+   "starts": 9,
+   "tics": 346,
+   "starts_sha256": "d7942c83cf91362ac34409a73f6c92dcf14f53e6394a03dd209aa88f33716728",
+   "buffers": 213,
+   "stream_sha256": "cbacb5a9f4380d6fbae32346b71d9e304615dcef797c5dd3a752cef5ae748133",
+   "golden_sha256": "c811876c8e9ac8b6c8dc1954cc0a174eb2b83fd7b617ba7bd4d58d9d7cf7a605",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     201,
+     35,
+     124
+    ],
+    [
+     320,
+     38,
+     197
+    ],
+    [
+     336,
+     36,
+     207
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 346,
+    "stream_sha256": "605342574f696ec5ef82a68f9811bc946077d5f5e1fbcec1c78c3d4f13af7790",
+    "rows_sha256": "f1aed8bd345c70887cd996759eb231ee08e3aff06c1f10ad74437560ed1c18e6"
+   }
+  },
+  "REBSECRT": {
+   "sound_sha256": "3939e88685238044660891a5b088020527a4cdadf02b8efddd82c167250f4c83",
+   "starts": 17,
+   "tics": 655,
+   "starts_sha256": "bc3d9fab1b3217ce0fff9e0a62a40242ac3030e08b67344e5e7361ade73d0bd0",
+   "buffers": 403,
+   "stream_sha256": "0f8bcda624bbd64acf66740f1e870658e213517314178f8674ce6f00253dd6d2",
+   "golden_sha256": "b08daf892a558c7bcc87b9cdd1ce374d68065a5f7d99e2d3e9a1ac8c853fe70e",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     97,
+     43,
+     60
+    ],
+    [
+     142,
+     41,
+     88
+    ],
+    [
+     239,
+     41,
+     148
+    ],
+    [
+     284,
+     38,
+     175
+    ],
+    [
+     497,
+     35,
+     306
+    ],
+    [
+     600,
+     35,
+     370
+    ],
+    [
+     645,
+     35,
+     397
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 655,
+    "stream_sha256": "cf89c12e017ee481c86f3b1945151e1218802e381c8953b6f5aef27599a9a90d",
+    "rows_sha256": "ef896e8df397b116b6968524e7fd33ca8b9e83abc26db3a48a16c432c5b0ff31"
+   }
+  },
+  "SECRET": {
+   "sound_sha256": "d61e32d09cd91a968813da93bd6c4376a83efecc7672fbd36c8486e7ed036830",
+   "starts": 14,
+   "tics": 570,
+   "starts_sha256": "c63b5d751c9bee2698b65a472d9acfe61484c733c08476a34bf68e37251bca10",
+   "buffers": 351,
+   "stream_sha256": "9dae71e8d5b518c0e13f7697a977b6e40d2cea63d660dacc8432b36ec6fcaa34",
+   "golden_sha256": "4da7250a1ac9b86a0695d715a6ddf18ba2eba6c6c168a3d39a87367613095e18",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     97,
+     43,
+     60
+    ],
+    [
+     142,
+     41,
+     88
+    ],
+    [
+     226,
+     41,
+     140
+    ],
+    [
+     271,
+     42,
+     167
+    ],
+    [
+     368,
+     38,
+     227
+    ],
+    [
+     413,
+     41,
+     255
+    ],
+    [
+     515,
+     43,
+     317
+    ],
+    [
+     560,
+     35,
+     345
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 570,
+    "stream_sha256": "ac5909d7985478a1056906b18f7127aa35ce4fde721d680f0f8db291a650223b",
+    "rows_sha256": "82b262f9ec8cd19a3d56e36a7b1e34b4eb05006748cca683da5e29479643f2fb"
+   }
+  },
+  "SKILL0": {
+   "sound_sha256": "b9330aa8b474bc13f75cf63a88a80f3ce63539d9a23a818d946563284a482f75",
+   "starts": 56,
+   "tics": 364,
+   "starts_sha256": "07918dc8fa0d53b05884de549652f9527e35709b1bac81aec704251acb3b3109",
+   "buffers": 224,
+   "stream_sha256": "98fb871d17420c94429ef48a0844a88f7b9613400115ffd063e8f88fadc3424e",
+   "golden_sha256": "15e7318c4306e51151e27b7b8877f0a00abe0ec34b46c6d4ec626a62a1791ac0",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     126,
+     39,
+     78
+    ],
+    [
+     142,
+     38,
+     88
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 364,
+    "stream_sha256": "0bbcc74450c0bcf721c741b9230728754f6fe818ce17205fc4d6fdacfc9aebb0",
+    "rows_sha256": "3b2a1243054613ac42ec7d2965f4448fc253f644ae058a481f39fc12b8093c79"
+   }
+  },
+  "SKILL1": {
+   "sound_sha256": "1c2cd7eb74c65edf31d3c33c195b547568b6d39c3234608894bc39e58d88b5b6",
+   "starts": 56,
+   "tics": 364,
+   "starts_sha256": "9124de032ab8fff676582e1e690e091006cf38e8ee3850379aae3eef8a9b273e",
+   "buffers": 224,
+   "stream_sha256": "98fb871d17420c94429ef48a0844a88f7b9613400115ffd063e8f88fadc3424e",
+   "golden_sha256": "15e7318c4306e51151e27b7b8877f0a00abe0ec34b46c6d4ec626a62a1791ac0",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     126,
+     39,
+     78
+    ],
+    [
+     142,
+     38,
+     88
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 364,
+    "stream_sha256": "0bbcc74450c0bcf721c741b9230728754f6fe818ce17205fc4d6fdacfc9aebb0",
+    "rows_sha256": "3b2a1243054613ac42ec7d2965f4448fc253f644ae058a481f39fc12b8093c79"
+   }
+  },
+  "SKILL2": {
+   "sound_sha256": "427c724cab6e99063dd9701e1c355eaf08e69e8394d5e3f134cf5d57f689d977",
+   "starts": 56,
+   "tics": 364,
+   "starts_sha256": "50b3e3744fd7db371f4270056df3af92703d6fd0b6134e00c4ff83601dfc0715",
+   "buffers": 224,
+   "stream_sha256": "98fb871d17420c94429ef48a0844a88f7b9613400115ffd063e8f88fadc3424e",
+   "golden_sha256": "15e7318c4306e51151e27b7b8877f0a00abe0ec34b46c6d4ec626a62a1791ac0",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     126,
+     39,
+     78
+    ],
+    [
+     142,
+     38,
+     88
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 364,
+    "stream_sha256": "0bbcc74450c0bcf721c741b9230728754f6fe818ce17205fc4d6fdacfc9aebb0",
+    "rows_sha256": "3b2a1243054613ac42ec7d2965f4448fc253f644ae058a481f39fc12b8093c79"
+   }
+  },
+  "SKILL3": {
+   "sound_sha256": "2269c6d49f18b6632c314fcd61bef80e9ef715a302885bd1af48af0f7449a1da",
+   "starts": 56,
+   "tics": 364,
+   "starts_sha256": "b760ade22e1cd33a66098af95f8d44a7d848e56306edbdd035b57be10b071282",
+   "buffers": 224,
+   "stream_sha256": "98fb871d17420c94429ef48a0844a88f7b9613400115ffd063e8f88fadc3424e",
+   "golden_sha256": "15e7318c4306e51151e27b7b8877f0a00abe0ec34b46c6d4ec626a62a1791ac0",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     126,
+     39,
+     78
+    ],
+    [
+     142,
+     38,
+     88
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 364,
+    "stream_sha256": "0bbcc74450c0bcf721c741b9230728754f6fe818ce17205fc4d6fdacfc9aebb0",
+    "rows_sha256": "3b2a1243054613ac42ec7d2965f4448fc253f644ae058a481f39fc12b8093c79"
+   }
+  },
+  "USEAT130": {
+   "sound_sha256": "4b14a9e28fd8657a6cb2ead4ecc4713c57dc87ad2d8af245a0af4dfa2faeea64",
+   "starts": 6,
+   "tics": 191,
+   "starts_sha256": "95ef82484cacb2c47cb9abc8781e472e041f5ab576eac26a442484e05cbb5d69",
+   "buffers": 118,
+   "stream_sha256": "0b53de06b344969dbe6a234ec19b1b7f5e48ce0c3211330f342690a23c91059c",
+   "golden_sha256": "fa681586459e745b7a866e68c626b789b2a3b134d85cf5ca62e7d97a68f98615",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     131,
+     35,
+     81
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 191,
+    "stream_sha256": "1e6350e8c63f1d97514fb11e950337f3fd08ba883c217764c898f8952f7b68cf",
+    "rows_sha256": "c2f092b72a500a5462a202c6aaacadb7e5e0d66b58cb9348f5558f41e6e08924"
+   }
+  },
+  "USEAT131": {
+   "sound_sha256": "4239db99a93033e12a6066aaabe855edb9a99e9817e5a7c07fbbb732c0fcccac",
+   "starts": 6,
+   "tics": 192,
+   "starts_sha256": "1c01730cc02d8c4759fc41affff83892a0cfd36fc1a34977d93189fae4fb4b8b",
+   "buffers": 119,
+   "stream_sha256": "b0271d75279db94f0b71fbfa4ae335721696a6579a3992a945344fb418263ad3",
+   "golden_sha256": "d995619a90e0a7a8e6d7a444fd21eaa7ce57f98f5bf760ff1f161596cadc104c",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     132,
+     43,
+     82
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 192,
+    "stream_sha256": "3fe1621d09d94a11f57562ed20d349322e77f93c3ed0c196391f85209c228cd0",
+    "rows_sha256": "22ad24842eaa9b58d55e1ac21ae0b202ce54bde507dfc77c870233804edb58e9"
+   }
+  },
+  "USEAT132": {
+   "sound_sha256": "d95ea9370250967600667acff8a2cbf07a089280a8ac7efe8aa0bd1339e9ef70",
+   "starts": 5,
+   "tics": 193,
+   "starts_sha256": "1b2fadfd085b6dddad5674e4a6ae640485a86afb4345ed5b11b5568de4a6ba26",
+   "buffers": 119,
+   "stream_sha256": "7cca3b7a8b70741c0a07acca1bb5cbddfc60073b6113cd65f9139546537e8eb3",
+   "golden_sha256": "aa502dab514f178a1a25cc421b5da398e7530078d1e482a3ef4dfcbdb4ba22dc",
+   "melts": [
+    [
+     0,
+     42,
+     0
+    ],
+    [
+     132,
+     35,
+     82
+    ]
+   ],
+   "end": "drained",
+   "sound_stream_end": "marker",
+   "model": "identical",
+   "variants": "identical",
+   "pertic": {
+    "buffers": 193,
+    "stream_sha256": "b9ee00643d5066750b7201a4eddd319279488b085b82064b6e2b4564a6f0e2f0",
+    "rows_sha256": "d7f88efbf268ed9554f81d509acbfc208e52f89aea38b09a95b45a280727a26c"
+   }
+  }
+ }
+}
