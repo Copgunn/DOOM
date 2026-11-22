@@ -2938,6 +2938,52 @@ Notes:
 - Local only (reads an IWAD): run the genuine engine on a scratch copy named for the mode, `doom.wad` for
   `--game-mode registered` or `doomu.wad` for `--game-mode retail`; never rename, move or write the original file.
 
+### The synthetic session items and their goldens (Phase 2 step 2)
+
+`tools/reference/m6a_wad.py` writes the synthetic inputs of the session items (owner's ruling U11), all our own
+drawings and text, nothing from an IWAD: `tests/reference/m6a_wads/episode.wad` (nine small maps E1M1-E1M9 laid out
+for the paths: exits by walk line, switch and sector special 11, the secret route, a Baron for `A_BossDeath`, damage
+floors, keys, powers, the chainsaw, things flagged per skill), `rbx.wad` (the reborn-beats-a-same-tic-exit corridor),
+`m6a_gfx.wad` (the intermission pictures, `FLOOR4_8`, `HELP2`, `CREDIT`), `m6a_music.wad` (the eleven music
+placeholders) and four variants each missing one lump for the refusal witnesses; the scripts under
+`tests/reference/m6a_scripts/` and the manifest `tests/reference/m6a_manifest.json` (`DOOM-M6A-MANIFEST-v1`), which
+gives every item its WAD set and declared game mode. `tools/reference/m6a_goldens.py` runs every item through the
+genuine `m6a` runner and writes the goldens.
+
+```sh
+# the WADs, scripts and manifest (Python only)
+python3 tools/reference/m6a_wad.py --check            # regenerate in memory and compare (writes nothing)
+python3 tools/reference/m6a_wad.py                    # rewrite them
+python3 tools/reference/m6a_wad.py --list             # files, digests, items
+
+# the goldens from the genuine engine (C; Linux)
+python3 tools/reference/m6a_goldens.py --work DIR --check [--selftest]   # compare every golden (writes nothing)
+python3 tools/reference/m6a_goldens.py --work DIR                        # no --check: rewrite the goldens
+python3 tools/reference/m6a_goldens.py --work DIR --only NAME[,NAME]     # a subset; writes nothing
+python3 tools/reference/m6a_goldens.py --work DIR --selftest             # the planted faults alone
+```
+
+Notes:
+
+- Per item: strict at screenblocks 10 (dumps, frames, sound, session, view) and 11 (frames, sound); the overflow,
+  address and `address_bounds` builds at screenblocks 10, every stream and the dump set identical to strict; a strict
+  run with `--melt-clock unit` whose melt rows (frame `V` and `Y`, sound `W`, which the goldens leave out) go to
+  `tests/reference/m6a_melt/<ITEM>.melt`, a file labelled as making no claim (the declared melt schedule is settled by
+  a later section of the note); every other row of that run must equal the default run's; and CHAIN once more in the
+  other game mode, identical apart from the lines that print the mode. Goldens: `tests/reference/m6a_session/`,
+  `m6a_sound/`, `m6a_frames/` (screenblocks 10 and 11, without the melt rows) and `tests/reference/m6a_results.json`
+  (`DOOM-M6A-RESULTS-v1`: inputs and tools by digest, counts, the dump-set digest per level load, the golden digests,
+  the variant and melt facts and the U8 witnesses observed).
+- The genuine engine forms an out-of-bounds pointer (`&ammo[5]` into `int ammo[4]`, st_stuff.c:1288-1294) at every
+  level start with the fist or the chainsaw ready, which a carried player can do; it is replaced before any read
+  (st_stuff.c:926-935). UBSan's bounds check stops the address build there, so the address build is compared through
+  the last tic before that one report, and `address_bounds` (the address build with only the bounds check
+  recoverable, declared in `m6a_goldens.py`) runs every item to its end; every report it prints must be that one.
+- `--selftest` plants a started sound's volume, an extra `P_Random` draw and a flipped level pixel in the runner, and a
+  changed session value and whole-frame digest in copies of the goldens; each must be caught at its place.
+- `ASAN_OPTIONS=detect_leaks=0`: the address runs are not LeakSanitizer coverage. `--work` must lie outside the
+  repository. The default is one runner process at a time (`--jobs 1`).
+
 ## Mutation testing
 
 M4a used cargo-mutants 27.1.0 with cargo-nextest 0.9.151. These are separate
