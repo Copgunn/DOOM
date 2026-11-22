@@ -29,8 +29,10 @@
 //! psprite's tics and coordinates, which a carried start also holds; they are built
 //! as 0 here. No compared column reads them: `P_CalcHeight` recomputes `bob` before
 //! any reader (p_user.c), and the psprite coordinates and a null flash's count are
-//! read only by the drawing (p_pspr.c:331-334, 851-883). Levels whose map wire 26
-//! refuses at load (wire 25's refusal, the same error) are counted, not replayed.
+//! read only by the drawing (p_pspr.c:331-334, 851-883). Every map of the items loads
+//! under wire 26 (asserted): the walk exits 52 and 124 that wire 25 refuses are wire
+//! 26's (p_spec.c:677-680, 760-763), so the levels ending by a walk exit, the rbx
+//! dead-body crossings included, are replayed like the others.
 //!
 //! Genuine evidence for the carried start, from committed genuine rows; not a
 //! comparison of whole DSIM captures (the genuine dumps of later levels are not
@@ -590,11 +592,15 @@ fn every_carried_start_replays_the_genuine_rows() {
         "{} differences",
         counts.differences.len()
     );
+    assert_eq!(
+        counts.refused_maps, 0,
+        "every map of the items loads under wire 26"
+    );
 }
 
 /// The comparison can fail: each planted fault in CHAIN's carried starts is reported,
-/// first at the first replayed carried load (load 2, E1M3, whose carried ready
-/// weapon is the chainsaw), and nowhere in the new game's level.
+/// first at the first carried load (load 1, E1M2, whose carried ready weapon is
+/// the chainsaw), and nowhere in the new game's level.
 #[test]
 fn planted_faults_in_the_carried_start_are_caught() {
     for fault in [
@@ -610,7 +616,7 @@ fn planted_faults_in_the_carried_start_are_caught() {
             "{fault:?}: {} differences, first: {first}",
             counts.differences.len()
         );
-        assert!(first.starts_with("CHAIN load 2:"), "{fault:?}: {first}");
+        assert!(first.starts_with("CHAIN load 1:"), "{fault:?}: {first}");
         assert!(
             !counts
                 .differences
@@ -618,4 +624,127 @@ fn planted_faults_in_the_carried_start_are_caught() {
                 .any(|d| d.starts_with("CHAIN load 0:"))
         );
     }
+}
+
+/// `rbx.wad` with every line special 52 of `E1M1` made 124 (the W1 secret exit),
+/// patched in memory: the LINEDEFS record is 14 bytes, the special at offset 6.
+fn rbx_with_124() -> Vec<u8> {
+    let mut bytes = std::fs::read(root().join("tests/reference/m6a_wads/rbx.wad")).expect("wad");
+    let at = |b: &[u8], o: usize| u32::from_le_bytes([b[o], b[o + 1], b[o + 2], b[o + 3]]) as usize;
+    let (count, dir) = (at(&bytes, 4), at(&bytes, 8));
+    let name = |b: &[u8], k: usize| b[dir + 16 * k + 8..dir + 16 * k + 16].to_vec();
+    let map = (0..count)
+        .find(|&k| name(&bytes, k).starts_with(b"E1M1"))
+        .expect("E1M1");
+    assert!(name(&bytes, map + 2).starts_with(b"LINEDEFS"));
+    let (pos, size) = (
+        at(&bytes, dir + 16 * (map + 2)),
+        at(&bytes, dir + 16 * (map + 2) + 4),
+    );
+    let mut patched = 0;
+    for r in (pos..pos + size).step_by(14) {
+        if i16::from_le_bytes([bytes[r + 6], bytes[r + 7]]) == 52 {
+            bytes[r + 6..r + 8].copy_from_slice(&124_i16.to_le_bytes());
+            patched += 1;
+        }
+    }
+    assert!(patched > 0);
+    bytes
+}
+
+/// Line special 124 is 52 with `G_SecretExitLevel` (p_spec.c:677-680, 760-763;
+/// g_game.c:1002-1018, a non-commercial game takes the secret exit): on the PROBE
+/// demo, whose dead player's body slides across the walk exit (the genuine rows put
+/// the exit at session tic 131, compared by the test above), the patched map exits
+/// on the same tic as the committed one, with the secret flag, every other state
+/// field equal, and neither special ever cleared. Wire 25 refuses both maps at load.
+#[test]
+fn walk_secret_exit_124_is_52_with_the_secret_flag() {
+    let reference = root().join("tests/reference");
+    let plain = std::fs::read(reference.join("m6a_wads/rbx.wad")).expect("wad");
+    let secret = rbx_with_124();
+    let demo = std::fs::read(reference.join("m6a_scripts/PROBE.lmp")).expect("demo");
+    let (_, demo) = parse_demo_episode1_v2(&demo, 1).expect("demo parse");
+    let load = |bytes: &[u8]| {
+        let wad = doom_wad::Wad::parse(bytes, doom_wad::Limits::default()).expect("wad parse");
+        doom_map::Map::from_wad(&wad, "E1M1", doom_map::MapLimits::default()).expect("map")
+    };
+    type Tic = (
+        Option<LevelExit>,
+        bool,
+        Vec<(String, Vec<u8>)>,
+        Vec<Vec<u8>>,
+    );
+    let mut runs: Vec<Vec<Tic>> = Vec::new();
+    for bytes in [&plain, &secret] {
+        let refused = Simulation::original_player_episode1_v3_map(
+            load(bytes),
+            1,
+            Skill::Medium,
+            MapContextOptions::default(),
+        );
+        assert_eq!(
+            refused.err(),
+            Some(OriginalRegistryError::Runtime(SimError::Pursuit(
+                PursuitError::Specials
+            )))
+        );
+        let mut sim = Simulation::original_player_episode1_v4_level(
+            load(bytes),
+            1,
+            Skill::Medium,
+            MapContextOptions::default(),
+            LevelStart::NewGame,
+        )
+        .expect("wire 26 loads a walk exit");
+        let mut trace = Vec::new();
+        for c in &demo.commands {
+            let cmd = [
+                *c,
+                TicCommand::default(),
+                TicCommand::default(),
+                TicCommand::default(),
+            ];
+            if sim.advance(cmd).is_err() {
+                break;
+            }
+            let f = sim.level_finish().expect("finish");
+            let snapshot = sim.snapshot();
+            let fields = snapshot
+                .fields()
+                .filter(|f| {
+                    let p = f.path();
+                    !p.starts_with("map.")
+                        && !p.starts_with("line.")
+                        && !p.starts_with("events.")
+                        && p != "level.secret_exit"
+                })
+                .map(|f| (f.path().to_owned(), f.value().to_vec()))
+                .collect();
+            let specials = snapshot
+                .fields()
+                .filter(|f| f.path().starts_with("line.") && f.path().ends_with(".special"))
+                .map(|f| f.value().to_vec())
+                .collect();
+            trace.push((f.exit, f.player_dead, fields, specials));
+        }
+        runs.push(trace);
+    }
+    let (a, b) = (&runs[0], &runs[1]);
+    assert_eq!(a.len(), b.len());
+    let exit = a.iter().position(|t| t.0.is_some()).expect("the walk exit");
+    assert_eq!(exit, 131, "session tic 131, as the genuine PROBE rows");
+    assert!(a[exit].1, "a dead player's body takes the exit");
+    for (k, (x, y)) in a.iter().zip(b).enumerate() {
+        assert_eq!(x.2, y.2, "tic {k}");
+        assert_eq!(x.0.is_some(), y.0.is_some(), "tic {k}");
+        assert!(x.3.iter().all(|v| v == &52_i16.to_le_bytes()), "tic {k}");
+        assert!(y.3.iter().all(|v| v == &124_i16.to_le_bytes()), "tic {k}");
+    }
+    assert_eq!(a[exit].0, Some(LevelExit::Normal));
+    assert_eq!(b[exit].0, Some(LevelExit::Secret));
+    println!(
+        "PROBE: exit on tic {exit} with 52 (normal) and 124 (secret), {} tics",
+        a.len()
+    );
 }

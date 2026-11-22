@@ -20,6 +20,9 @@ pub struct Outcome {
     pub refused: Option<(usize, String)>,
     /// The load refusal, the same under both wires (no capture then).
     pub load_refused: Option<String>,
+    /// Wire 25's load refusal of a map wire 26 loads: only a map holding the walk
+    /// exits 52 or 124, which wire 26 alone admits (no capture compared then).
+    pub wire25_only_refused: Option<String>,
 }
 
 /// DSIM framing (STATE_FORMAT "Framing and field order"): `DSIM`, u32 version,
@@ -166,6 +169,13 @@ pub fn run_pair(
                 return Err(format!("load: wire 25 {x}, wire 26 {y}"));
             }
             out.load_refused = Some(x);
+            return Ok(out);
+        }
+        (Err(x), Ok(_))
+            if map.linedefs().iter().any(|l| matches!(l.special, 52 | 124))
+                && x.contains("Pursuit(Specials)") =>
+        {
+            out.wire25_only_refused = Some(x);
             return Ok(out);
         }
         (x, y) => {

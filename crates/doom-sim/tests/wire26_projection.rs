@@ -2,7 +2,9 @@
 //! 25 (DSIM41), Rust against Rust (M6a step 4, the M5c method of M6a note §4.3): on
 //! every committed synthetic item wire 25 runs (the 64 items of
 //! tests/reference/m5c_sound, `wire25::ITEMS`, and the T4 truncation map), and on the
-//! first level of every committed M6a chain item, every wire-26 capture with its start
+//! first level of every committed M6a chain item whose map wire 25 loads (a map holding
+//! the walk exits 52 or 124, which wire 26 alone admits, is counted), every wire-26
+//! capture with its start
 //! group removed and its names set back to wire 25's has the wire-25 capture's bytes
 //! and FNV-1a digest, the sound records are equal, both wires refuse at the same tic
 //! with the same error, every DSIM42 capture is read by `decode_episode1_v4` and
@@ -66,6 +68,7 @@ fn wire26_new_game_projects_to_wire25_on_every_m5c_item() {
     for (lump, wad, lmp) in wire25::ITEMS {
         let out = run(wad, lmp);
         assert_eq!(out.load_refused, None, "{lump}");
+        assert_eq!(out.wire25_only_refused, None, "{lump}");
         captures += out.captures;
         refused += usize::from(out.refused.is_some());
         println!(
@@ -101,20 +104,22 @@ fn the_m6a_item_table_is_the_session_golden_set() {
 /// wires refuse the tic after the exit or the reborn with the same error).
 #[test]
 fn wire26_new_game_projects_to_wire25_on_every_m6a_first_level() {
-    let (mut captures, mut refused, mut loads) = (0, 0, 0);
+    let (mut captures, mut refused, mut loads, mut walk) = (0, 0, 0, 0);
     for (lump, wad) in M6A_ITEMS {
         let out = run(wad, &format!("m6a_scripts/{lump}.lmp"));
         captures += out.captures;
         refused += usize::from(out.refused.is_some());
         loads += usize::from(out.load_refused.is_some());
+        walk += usize::from(out.wire25_only_refused.is_some());
         println!(
-            "{lump}: {} captures, refused {:?}, load refused {:?}",
-            out.captures, out.refused, out.load_refused
+            "{lump}: {} captures, refused {:?}, load refused {:?}, wire 25 alone refused {:?}",
+            out.captures, out.refused, out.load_refused, out.wire25_only_refused
         );
     }
     println!(
         "wire26_projection (M6a first levels): {} items, {captures} captures equal, {refused} \
-         runs end in a refusal, {loads} loads refused alike by both wires",
+         runs end in a refusal, {loads} loads refused alike by both wires, {walk} maps with a \
+         walk exit refused by wire 25 alone",
         M6A_ITEMS.len()
     );
 }
