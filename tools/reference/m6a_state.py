@@ -79,7 +79,10 @@ memory (the first carried level's previous level ends with the player's own body
 in every dump of the carried level the rule fires on that load only and the level's captures equal NULL's; refused
 with "a dangling reference": a -2 appearing at level tic 10 (mid-level), a -2 sector soundtarget at the load (a),
 no attacker at the previous level's end (c), a threshold of 100 on players[0].mo at level tic 10 with
-damagecount 0 and a live attacker at level tic 10 that is -2 again at 11 (d), and the same -2 attacker on REBHELD's reborn reload (b).
+damagecount 0 and a live attacker at level tic 10 that is -2 again at 11 (d), and the same -2 attacker on REBHELD's reborn reload (b); on the carried load dump itself, condition (d) fails with a
+threshold on another body of player 0, a dead player or an MT_VILE present; and with P[0].attacker the player's own
+body at CHAIN's carried load (a live thinker: the rule does not fire) the load capture differs from the committed
+D row, which the unchanged projection equals (the gate compares the field).
 
     m6a_state.py [--check] [--selftest] [--only ITEM[,ITEM]] [--work DIR] [--jobs N] [--cc CC]
 """
@@ -425,6 +428,45 @@ def attacker_selftest(binary, items_by_name, work, base, lv):
                  planter(extra=hit), 10)
     refused_case('(d) changed since the load: a live attacker at level tic 10, dangling again at 11', base, it,
                  planter(extra=write), 11)
+    # (d) on one genuine dump directly (the carried load's, with attacker -2 and the previous level's end live), where
+    # a projection would object to the change before the rule is reached: each change must stop the rule firing
+    T = lv[K]['tic']
+
+    def rule_case(what, change):
+        d = L.Dump(str(base['dumps'] / f'loads/load_{T:05}.txt'))
+        p_row(d)['attacker'] = -2
+        held = untouched(d)
+        s = StaleAttacker('carried', p_row(d)['mo'])
+        change(d); s.apply(d)
+        out.append((what, f'(d) held on the unchanged dump: {held}; fired after the change: {s.fired}',
+                    held and not s.fired and p_row(d)['attacker'] == -2))
+
+    def second_body(d):
+        # a second player-1 start leaves the earlier body with player 0; a hit on it writes players[0].attacker
+        # (p_inter.c:798, 874) and sets that body's threshold (904-911), not players[0].mo's
+        r = next(r for x, r in d.thinkers if x == 'M' and r['player'] < 0)
+        r['player'], r['threshold'] = 0, 100
+    def dead(d): p_row(d)['playerstate'] = PST_LIVE + 1                     # PST_DEAD (d_player.h:56-58)
+    def vile(d): next(r for x, r in d.thinkers if x == 'M' and r['player'] < 0)['type'] = MT_VILE
+    rule_case('(d) threshold 100 on another body of player 0 (an earlier player-1 start)', second_body)
+    rule_case('(d) player 0 dead (a killing hit returns before p_inter.c:904)', dead)
+    rule_case('(d) an MT_VILE present (exempt from the threshold at p_inter.c:904-906)', vile)
+
+    # the gate compares the field: CHAIN's carried load with P[0].attacker the player's own body (a live thinker, so
+    # the rule must not fire) from the load to the first genuine write; the load capture must differ from the
+    # committed D row, which the unchanged projection (and Rust) equals
+    committed = {(f[1], int(f[2]), int(f[4])): f[6] for f in (l.split(',') for l in RESULTS.read_text().splitlines())
+                 if f[0] == 'D'}
+    want = committed[('CHAIN', KL, 1)]
+    try:
+        got = levels(base, it, plant=planter(body=True)); fired = [v['load'] for v in got if v['stale_attacker']]
+        planted, plain = got[K]['captures'][0][2].hex(), lv[K]['captures'][0][2].hex()
+        out.append(('genuine-side fault: attacker = the player\'s own body at CHAIN\'s carried load',
+                    f'fired on {fired}; load capture {"differs from" if planted != want else "EQUALS"} the committed row; '
+                    f'unchanged projection equals it: {plain == want}', not fired and planted != want and plain == want))
+    except L.ProjectionError as e:
+        out.append(('genuine-side fault: attacker = the player\'s own body at CHAIN\'s carried load',
+                    f'refused: {e.kind} at tic {e.tic}: {e.text}', False))
     reb = items_by_name['REBHELD']
     r = run(binary, reb, work / 'self_rebheld')
     rl = levels(r, reb)
