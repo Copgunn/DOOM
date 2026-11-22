@@ -52,6 +52,11 @@ pub use player_monsters::{
     PLAYER_MAP_SCALE_CONTEXT_SCHEMA, PLAYER_MONSTERS_CONTEXT_SCHEMA, PLAYER_MOVERS_CONTEXT_SCHEMA,
     PLAYER_REAL_MAP_CONTEXT_SCHEMA, PLAYER_SPECIALS_CONTEXT_SCHEMA,
 };
+mod carried_start;
+pub use carried_start::{
+    CarriedField, CarriedStart, LevelExit, LevelFinish, LevelStart, LevelStartError,
+    PLAYER_EPISODE1_V4_CONTEXT_SCHEMA, StartKind,
+};
 mod player_commands;
 mod player_pistol;
 mod player_roster;
@@ -649,6 +654,11 @@ pub struct Simulation {
     /// last tic, published first with the next tic's (DSIM41
     /// `events.sounds.pending`), as `pending` is for events.
     pub(crate) pending_sounds: Vec<sound::SoundRecord>,
+    /// Under wire 26 alone, how the level began (DSIM42 `level.start.*`): the
+    /// start kind, the `P_Random` index of the load, the player the load set up
+    /// and the sound records the load made. Constant for the run; `None` under
+    /// every other policy.
+    pub(crate) level_start: Option<carried_start::StartRecord>,
 }
 /// Static-geometry table bounds a construction prepares against: the M3f2/M3h3
 /// constants for every historical profile, the WAD format's own bounds (M3h6 note
@@ -839,6 +849,7 @@ impl Simulation {
             buttons: [None; mover_rules::MAX_BUTTONS],
             sounds: Vec::new(),
             pending_sounds: Vec::new(),
+            level_start: None,
         })
     }
     /// The sectors a type's dimensions are admitted against: the heights policy's

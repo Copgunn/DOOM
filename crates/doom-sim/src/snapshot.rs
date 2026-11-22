@@ -810,7 +810,11 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     };
     // DSIM41 (wire 25, M5c decision T3) is the DSIM40 layout, field for field,
     // plus the `events.sounds` group after `events.pending`.
-    let schema = if sim.player_policy().has_sound_records() {
+    // DSIM42 (wire 26, M6a ruling U2 = B1) is DSIM41 plus the start group after
+    // `events.sounds.pending`.
+    let schema = if sim.player_policy().has_carried_start() {
+        42
+    } else if sim.player_policy().has_sound_records() {
         41
     } else {
         version
@@ -1292,7 +1296,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             field(&mut fields, format!("{prefix}.{i}"), event_bytes(event));
         }
     }
-    if schema == 41 {
+    if matches!(schema, 41 | 42) {
         for (prefix, records) in [
             ("events.sounds.last", &sim.sounds),
             ("events.sounds.pending", &sim.pending_sounds),
@@ -1304,6 +1308,13 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
                     format!("{prefix}.{i}"),
                     crate::sound::record_bytes(record),
                 );
+            }
+        }
+    }
+    if schema == 42 {
+        if let Some(start) = &sim.level_start {
+            for (path, value) in crate::carried_start::start_fields(start) {
+                field(&mut fields, path, value);
             }
         }
     }
