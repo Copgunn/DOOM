@@ -11,7 +11,8 @@
 use crate::{
     ActorId, Event, MapScaleError, MoverEvent, SimError, StaticWorld,
     mover_rules::{
-        LINE_DOOR_BLAZE, LINE_FLOOR_LOWEST, LINE_FLOOR_TURBO, LINE_LIFT, MAX_SPECIAL_CROSS,
+        LINE_DOOR_BLAZE, LINE_FLOOR_LOWEST, LINE_FLOOR_TURBO, LINE_LIFT, LINE_WALK_EXIT,
+        LINE_WALK_SECRET_EXIT, MAX_SPECIAL_CROSS,
     },
     movers::{DoorKind, FloorKind, MoverAccess, PlatType, Starter},
     multisector::SectorMoveAttempt,
@@ -210,6 +211,16 @@ pub(crate) fn cross<M: MoverAccess + ?Sized>(
         }
         (Crosser::Player, 35) => {
             starter.light_turn_on(line, 35)?;
+        }
+        // Wire 26 (only its load rules admit these lines): the walk exits, for any
+        // thing whose `player` is set, alive or dead (p_spec.c:502-503 tests
+        // `thing->player` only), on either side (no side test), never cleared
+        // (p_spec.c:677-680, 760-763): `G_ExitLevel` / `G_SecretExitLevel`
+        // (g_game.c:1002-1018; a non-commercial game always takes the secret exit).
+        (Crosser::Player, s @ (LINE_WALK_EXIT | LINE_WALK_SECRET_EXIT)) => {
+            starter.events.push(Event::Mover(MoverEvent::Exit {
+                secret: s == LINE_WALK_SECRET_EXIT,
+            }));
         }
         (Crosser::Player, _) => {}
     }

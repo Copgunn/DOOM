@@ -1662,6 +1662,7 @@ impl Simulation {
                 e1m1: policy.has_e1m1(),
                 episode1,
                 teleport: policy.has_teleport(),
+                walk_exits: policy.has_carried_start(),
             },
         )?;
         sim.boundary = boundary;
