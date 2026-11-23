@@ -2503,7 +2503,7 @@ there, not by the reader.
 [M6a investigation](M6A_REFERENCE_INVESTIGATION.md#5-owner-decisions-u1u15-with-recommendations)), the unchanged registry schema,
 layout selector 17 and context `PLAYER-MONSTERS-EPISODE1-4-v1` (29 bytes). **Frozen-reader rule:** every earlier reader,
 the v41 reader included, rejects 42, and the v42 reader (`Diagnostic::decode_episode1_v4`) reads 42 only. DSIM1-41 bytes,
-encoders, fixtures and meanings are unchanged; older readers were not changed to refuse a frame that holds `level.start.*` fields (as step 4 left them). What wire 26 does is in
+encoders, fixtures and meanings are unchanged; older readers were not changed to refuse a frame that holds `level.start.*` fields (as step 4 left them). **One constructor:** a wire-26 simulation is built only by `Simulation::original_player_episode1_v4_level` (or `_at`), which records the start; the general constructor `with_original_registry` refuses the wire-26 profile, and the writer does not write a version-42 capture without the start group (it stops instead of skipping the group). What wire 26 does is in
 [COMPATIBILITY](COMPATIBILITY.md#episode-1-as-one-session-m6a). The Rust writer is checked against the independent encoder
 `tools/reference/level_snapshot_m6a.py`, which builds the group from the genuine session and sound goldens
 ([TESTING](TESTING.md#the-playable-level-chain-steps-4-to-9)).

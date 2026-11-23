@@ -5,7 +5,8 @@ playable level chain (exits, intermission, carried start, reborn, secret route) 
 owner's hand test. Not built yet, each a typed refusal or a declared gap: the finale after E1M8, the melt pictures (the wipe's
 draws are made and compared, the picture changes at once), the easy skills 0 and 1, and E1M7 on skill 3. Steps 10 to 17 follow
 the hand test and will extend this record. The gates run at the final code head are in [§4](#4-gates-at-the-final-code-head);
-what was not run is in [Not run](#not-run-and-limits).
+what was not run is in [Not run](#not-run-and-limits). **After the gate (2026-11-22 evening):** the owner's first hand test, the
+rebuilt chain CH2 and the wire-26 constructor fix are in [§5](#5-after-the-hand-test-gate-2026-11-22-evening).
 
 Observations only. [TESTING](../TESTING.md#the-playable-level-chain-steps-4-to-9) owns the commands,
 [COMPATIBILITY](../COMPATIBILITY.md#episode-1-as-one-session-m6a) the support statement, the
@@ -55,9 +56,10 @@ in retail and in registered: the runs with a carried start (CH1, CH3, CH4, CH5, 
 **What the chains reached.** The forward-100 walks after a load (the E1M4, E1M6 and E1M7 walks use a forward move of 100,
 spliced as committed; the turbo message follows the session's gametic, ruling 1 of 2026-11-22) ran in CH3, CH5, CH6 and CH9 and
 passed in both modes. CH8 ended at the E1M8 victory cut: compared up to the tic before the finale (5,813 session tics), as the
-session stops there with `NotYet(Victory)`. **CH2 crosses no level boundary:** the tool reported "no load after tic 3863; the
-chain stops there" in both modes; its three loads are reborn reloads (the reason the next map's load was not reached was not
-investigated).
+session stops there with `NotYet(Victory)`. **CH2 as built for these sets crossed no level boundary:** the tool reported "no load
+after tic 3863; the chain stops there" in both modes; its three loads were the start and two reborn reloads. So in the two chain
+sets of the table **eight of the nine chains cross a boundary**, not nine. The cause was found and CH2 rebuilt afterwards
+([§5.2](#52-chain-ch2-rebuilt)); the table's sets were not regenerated.
 
 ## 2. Synthetic checks that belong with the gate
 
@@ -75,7 +77,8 @@ The Windows artifact is built only from the `windows-artifact` label, from the P
 `.github/workflows/windows-artifact.yml`) tells the owner how to run the session, the options, where the demos go and which
 stops are expected: E1M8's exit (finale not built) and, on skill 3, the load of E1M7. The owner sends the `.lmp` files back; each
 is checked against the genuine engine with `tools/local/m6a_play_check.py` ([TESTING](../TESTING.md#the-playable-level-chain-steps-4-to-9)).
-No session has yet been played on the owner's IWAD with the real binary; his hand test and its results are not part of this record.
+When this section was written no session had been played on the owner's IWAD with the real binary; his first hand test is in
+[§5.1](#51-the-owners-first-hand-test).
 
 ## 4. Gates at the final code head
 
@@ -97,11 +100,88 @@ The re-run did **not** regenerate the genuine side: the genuine engine's result 
 record; the real sets were not regenerated with the changed tools. A later push does not rebuild the artifact (it is built on
 the label event only), and CI on any later head is GitHub's to show, not this record's.
 
+## 5. After the hand-test gate (2026-11-22 evening)
+
+### 5.1 The owner's first hand test
+
+The owner played four sessions on the Windows artifact built from `9ab8c3b3` (retail mode, skill 2), each ended by his quit,
+and reported nothing wrong by eye and 0 audio underruns and 0 failed writes in every log (his observation, not measured here).
+His four demo files were copied to scratch (never committed) and checked with `tools/local/m6a_play_check.py` and the Rust
+`real_maps` gates, 18:24 to 18:42 PST (the genuine runs with the tools of `f0dc8a02`, the Rust gates at code head `0101b9e1`). The genuine engine replayed each file to its end marker.
+
+| Session (start map; route) | Session tics compared | Loads (start included) | Level tics / other tics | Session rows | Frames, screenblocks 10 and 11 | Sound and mixer | Whole state (levels / captures) | First difference |
+| --- | ---: | ---: | --- | --- | --- | --- | --- | --- |
+| E1M1; to E1M2 | 1,405 | 2 | 980 / 425 | equal | equal (1 and 1 masked) | equal (1,667 rows, 885 buffers) | equal (2 / 980) | none |
+| E1M3; a death and reborn (reload at session tic 938), then to E1M9 by the secret exit | 9,025 | 3 | 8,808 / 217 | equal | equal (32 and 34 masked) | equal (11,080 rows, 5,576 buffers) | equal (3 / 8,808) | none |
+| E1M9; to E1M4 | 14,352 | 2 | 14,256 / 96 | equal | equal (30 and 36 masked) | equal (17,408 rows, 8,840 buffers) | equal (2 / 14,256) | none |
+| E1M1; to E1M2, a death and reborn (reload at session tic 1,791), then E1M3 | 3,734 | 4 | 3,576 / 158 | equal | equal (32 and 33 masked) | equal (4,599 rows, 2,298 buffers) | equal (4 / 3,576) | none |
+
+Sums: 28,516 session tics, 11 loads (4 starts, 5 carried, 2 reborn), 27,620 state captures (804 digest points), 199 masked
+frames over both sizes, 0 uncomparable frames; the rows and buffers are the gate's counts. A masked frame is one where the original reads undefined memory in some columns; it is compared with
+those columns blanked (decision R4), every other frame by its whole digest. Sound and mixer rows are compared at screenblocks
+10; the genuine screenblocks-11 sound stream must equal the screenblocks-10 one. The stale-attacker rule fired on 3 loads (one
+each in the first, second and fourth sessions). Planted faults: carried health caught in 4 of 4 sessions and carried bob in 4
+of 4, each at the session's first carried load. Result digest (as in §1): `f6f3f0165859edf64234905cd22bfef580ab47c73a1c0d74c2f397791554baed` (19 MB,
+scratch). The fourth session covers by hand the route CH2 was meant to cover (a reborn, then a level change); the second holds a reborn
+as well.
+
+The demo file names carry UTC times ([COMPATIBILITY](../COMPATIBILITY.md#episode-1-as-one-session-m6a)), so these four read
+`20261123-02…` for sessions played on the evening of 2026-11-22 in America/Los_Angeles.
+
+### 5.2 Chain CH2 rebuilt
+
+**Cause.** CH2 is E1M2's death script (999 tics), the reborn reload, E1M2's walk, then E1M3's walk. The reload at tic 999 was
+reached; the "3863" of the message is 999 plus the walk's 2,864 tics. The committed walk is a new game's: after the reborn the
+`P_Random` index is not reset (207 after that load, where a new game has 64), the monsters act differently, and the player
+died at session tics 1,838 and 4,008 (reborn once more at 2,183 by one of the walk's own use presses) without reaching the
+exit. Idle tics before the walk did not help (0 to 59 tried, none reached another map).
+
+**Fix** (`tools/local/m6a_session_real.py`, `build_chain`): the script's reborn press is moved later, one idle tic at a time, to
+the first reload that begins with `P_Random` index 0 and from which the walk reaches another map, each candidate a genuine
+run. Observed in both modes: press moved 886 tics, reload at session tic 1,885, E1M3 loaded at 4,768 (and a reborn on E1M3 at
+5,737, as other chains have after their boundary); the built demo is the same bytes in both modes.
+
+| Set (CH2 alone) | Session tics | Loads | State: levels / captures / points | Session gate | State gate | Planted faults | Stale-attacker rule | Result digest (size) |
+| --- | ---: | ---: | --- | --- | --- | --- | --- | --- |
+| retail | 10,765 | 4 | 4 / 10,746 / 312 | pass | pass | caught, 1 of 1 each | 1 load | `af75e1b9a342bce2b6604cd5d872ad8f6282b42fe90bc45c1138c94d63d2c29e` (6.9 MB) |
+| registered | 10,765 | 4 | 4 / 10,746 / 312 | pass | pass | caught, 1 of 1 each | 1 load | `0f06dd9d7c78431f810cdad8dcc04cae47cf84da5ab0c594c44fa729d20e6ac4` (6.9 MB) |
+
+With it all nine chains cross a boundary, but that is a statement about two result sets: CH1 and CH3 to CH9 in the sets of §1
+(tools at `1229b0ce`) and CH2 here (tools at `c69c8783`). **The nine were not run again as one set.** The chain totals of §1
+(90,816 tics, 6 stale-attacker loads, planted faults caught in 7 runs) are the first build's and count the old CH2 (4,067 tics).
+
+### 5.3 Wire 26 has one constructor
+
+An independent review found, and a reading of the code confirmed, that the general constructor
+(`Simulation::with_original_registry`) accepted the wire-26 profile and returned a simulation with no level start, which the
+snapshot writer labelled DSIM42 and wrote without the start group its reader requires (the group was written under an
+`if let`). No test or session path built one: `carried_start.rs` was the only caller for wire 26. Fixed at `0101b9e1`: the
+general constructor refuses wire 26 before anything is built, and the writer takes the start group without a skip, so a
+wire-26 simulation with no start is not written at all. Two tests in `crates/doom-sim/src/wire26_tests.rs`
+(`the_general_constructor_refuses_wire_26`, `a_wire_26_simulation_without_its_start_is_not_written`). Wires 1 to 25 take the
+same construction path as before; their fixtures and DSIM41 expectations are unchanged and pass (the gates below).
+
+### 5.4 Gates at `c69c8783`
+
+Local, 2026-11-22 19:05 to 19:29 PST, one command at a time, no uncommitted code. Docs commits follow this head.
+
+| Gate | Observed |
+| --- | --- |
+| Build, `cargo fmt --check` (workspace and fuzz workspace), Clippy with warnings denied, rustdoc with warnings denied | clean |
+| Workspace tests (debug) | 2,089 passed, 0 failed, 10 ignored (149 targets): the 2,087 of §4 and the two new tests |
+| Release simulation and type tests | 1,414 passed, 0 failed, 2 ignored (87 targets) |
+| Rust 1.85.0 workspace tests | 2,089 passed, 0 failed, 10 ignored |
+| The Rust real-map gates | on the four hand-test sessions (at `0101b9e1`) and on CH2 in both modes (the crates of `0101b9e1`, the tool change of `c69c8783` not yet committed): pass, with the planted-fault gates. **Not run again** on the five sets of §1 |
+
+No existing test, fixture or expectation was changed by either commit: every DSIM1-41 expectation passes as committed. CI on
+this head and later ones is GitHub's to show.
+
 ## Not run, and limits
 
 - **Local only.** Every real-map figure is from the owner's IWAD on his WSL2 machine on 2026-11-22; it cannot run in CI and nobody
   else can repeat it without the same file. Nothing here was measured for time.
-- **Not regenerated after `1229b0ce`:** the genuine side of the real-map sets (see [§4](#4-gates-at-the-final-code-head)).
+- **Not regenerated after `1229b0ce`:** the genuine side of the real-map sets (see [§4](#4-gates-at-the-final-code-head)), except
+  CH2 and the hand-test sessions of [§5](#5-after-the-hand-test-gate-2026-11-22-evening).
 - **Not run:** any fuzz build, fuzz target or sanitizer campaign for the new formats (`DSES`, `DDSP` v3, `DSND` v2, DSIM42);
   the original-C generators' `--check` locally other than the M6a ones (CI runs them); `tools/local/m5d_lost_display.py` after
   step 9 changed `doom-play`. No CI job runs the genuine M6a engine yet (ruling U15, a later step).

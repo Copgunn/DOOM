@@ -653,8 +653,10 @@ The entries marked merged below are done; they keep their place here because thi
 - **M6a (Episode 1 from start to finish, in one session).** Phase 1 is written (2026-11-20, branch
   `feat/m6a-episode1-continuous`); rulings received 2026-11-21 on decisions U1–U15 of the
   [investigation note](M6A_REFERENCE_INVESTIGATION.md#5-owner-decisions-u1u15-with-recommendations); Phase 2 in progress
-  (status 2026-11-22: **at the hand-test gate**; the playable level chain is built and compared, see the
-  [evidence record](validation/M6A.md); the finale, the melt pictures, the easy skills and E1M7 on skill 3 follow the hand test).
+  (status 2026-11-22: **the owner's first hand test is done and its four sessions compare equal with the genuine engine**
+  ([evidence record §5](validation/M6A.md#5-after-the-hand-test-gate-2026-11-22-evening)); the playable level chain is built
+  and compared; the finale, the melt pictures, the easy skills and E1M7 on skill 3 are not started and wait for the owner's
+  ruling on the line cap).
 - **Simulation follow-up (decided: the THING-loading truncation is closed under wire 25 only).** `P_LoadThings` ends the
   whole THINGS loop at the first Doom II type (doomednums 64-69, 71, 84, 88, 89) when `gamemode != commercial`
   (p_setup.c:317-337). Wire 25 (decision T4, confirmed 2026-11-18) stops loading there, with a synthetic map and

@@ -3096,7 +3096,10 @@ cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_s
   registered|retail --out DIR [--work DIR] [--only NAME,..] [--jobs N]` runs the genuine engine on a scratch copy of the IWAD
   named for the mode and writes goldens in the layout of `tests/reference`. The gates then read them:
   `M6A_REFERENCE_DIR=DIR cargo test --release -p doom-game --test m6a_session --test m6a_state -- --ignored real_maps`.
-  `M6A_REAL_ONLY=NAME,..` runs only the named runs, to split a gate. The `*_catches_a_planted_fault` tests (carried health,
+  `M6A_REAL_ONLY=NAME,..` runs only the named runs, to split a gate. Building chain CH2 takes about 7 minutes longer than the
+  others: its reborn press is moved, one idle tic at a time and one genuine run each, to the first reload that begins with
+  `P_Random` index 0, so that E1M2's committed walk plays as in a new game and reaches the exit
+  ([record §5.2](validation/M6A.md#52-chain-ch2-rebuilt)). The `*_catches_a_planted_fault` tests (carried health,
   carried bob) must catch the fault on every run that has a carried start. `--out` and `--work` must not exist.
 - **The played session** (`m6a_play`): `GameData::load_session` driven by key presses through the headless `App`; its demo
   is compared byte for byte or by prefix with the committed genuine demos, every tic's picture and `G` columns against the
