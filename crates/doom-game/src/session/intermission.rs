@@ -425,7 +425,7 @@ impl Intermission {
     /// `WI_Ticker` keep (wi_stuff.c:730-770, 1318-1434, 1503-1536):
     ///
     /// - `firstrefresh` 1 and `bcnt` at least 1; every animation's `nexttic` after `bcnt` and at
-    ///   most [`ANIM_PERIOD`] after it (wi_stuff.c:514-528, 547-563);
+    ///   most 11 tics (`TICRATE / 3`) after it (wi_stuff.c:514-528, 547-563);
     /// - the tally (`state` 0): `cnt` 0, `acceleratestage` 0 (each tic consumes a press),
     ///   `sp_state` 1..=10; a counter before its stage is -1, after it its target, and in its
     ///   stage below the target on the steps the stage takes (2 from -1; 3 for the two times);
