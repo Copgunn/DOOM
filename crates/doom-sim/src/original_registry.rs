@@ -1534,7 +1534,29 @@ pub(crate) fn death_phase(
 impl Simulation {
     /// Opt-in original-ID policy using shared services. The selected registry policy
     /// determines Demon-only or bounded genuine-player execution.
+    ///
+    /// Wire 26 (`PlayerMonstersEpisode1V4`) is refused here with
+    /// [`PlayerBodyError::Unsupported`], before anything is built: its level start
+    /// (DSIM42's start group) is taken only by
+    /// [`Self::original_player_episode1_v4_level_at`], and this constructor has none
+    /// to record. Wires 1 to 25 are unchanged.
     pub fn with_original_registry(
+        map: Map,
+        limit: u32,
+        registry: OriginalExecutionRegistry,
+        options: ActorOptions,
+        context: MapContextOptions,
+    ) -> Result<Self, SimError> {
+        if registry.profile.has_carried_start() {
+            return Err(PlayerBodyError::Unsupported.into());
+        }
+        Self::with_original_registry_start(map, limit, registry, options, context)
+    }
+    /// [`Self::with_original_registry`]'s construction for every wire, wire 26
+    /// included. A wire-26 caller must set `level_start` before the simulation
+    /// leaves the crate (`carried_start.rs` is the one such caller): the snapshot
+    /// writer cannot emit DSIM42 without it.
+    pub(crate) fn with_original_registry_start(
         map: Map,
         limit: u32,
         registry: OriginalExecutionRegistry,

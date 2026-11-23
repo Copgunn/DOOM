@@ -366,7 +366,7 @@ impl Simulation {
         if !EPISODE1_MAP_NUMBERS.contains(&map_number) {
             return Err(SimError::from(PlayerBodyError::Unsupported).into());
         }
-        let mut sim = Self::with_original_registry(
+        let mut sim = Self::with_original_registry_start(
             map,
             crate::player_map_scale::actor_slots(policy),
             OriginalExecutionRegistry::new(policy)?,

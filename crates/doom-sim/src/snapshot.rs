@@ -1312,10 +1312,16 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
         }
     }
     if schema == 42 {
-        if let Some(start) = &sim.level_start {
-            for (path, value) in crate::carried_start::start_fields(start) {
-                field(&mut fields, path, value);
-            }
+        // DSIM42's reader requires the start group, so a wire-26 simulation with
+        // no recorded start is never written: no public constructor builds one
+        // (`with_original_registry` refuses wire 26), and one built inside the
+        // crate stops here instead of emitting a snapshot its reader rejects.
+        let start = sim
+            .level_start
+            .as_ref()
+            .expect("wire 26 (DSIM42) is constructed only with its level start");
+        for (path, value) in crate::carried_start::start_fields(start) {
+            field(&mut fields, path, value);
         }
     }
     Snapshot {

@@ -448,3 +448,51 @@ fn the_turbo_test_reads_the_start_gametic() {
         Some(0)
     );
 }
+
+/// The general constructor's arguments for [`base`]'s map under `policy`.
+fn general(policy: OriginalExecutionProfile, start: bool) -> Result<Simulation, SimError> {
+    let build = if start {
+        Simulation::with_original_registry_start
+    } else {
+        Simulation::with_original_registry
+    };
+    build(
+        base().map(),
+        crate::player_map_scale::actor_slots(policy),
+        OriginalExecutionRegistry::new(policy).unwrap(),
+        ActorOptions::default(),
+        MapContextOptions::default(),
+    )
+}
+
+/// Wire 26 has one way in, the level-start constructor: the general constructor
+/// refuses its profile, so no simulation labelled DSIM42 exists without a recorded
+/// start (the start group DSIM42's reader requires). The same map and arguments are
+/// accepted under wire 25, and by the level-start constructor under wire 26: the
+/// refusal is the wire's, not the map's.
+#[test]
+fn the_general_constructor_refuses_wire_26() {
+    let v4 = OriginalExecutionProfile::PlayerMonstersEpisode1V4;
+    assert!(matches!(
+        general(v4, false).err(),
+        Some(SimError::PlayerBody(PlayerBodyError::Unsupported))
+    ));
+    let v3 = general(OriginalExecutionProfile::PlayerMonstersEpisode1V3, false).unwrap();
+    assert_eq!(v3.snapshot().version(), 41);
+    assert!(v3.level_start_kind().is_none());
+    let s = level(LevelStart::NewGame).unwrap();
+    assert_eq!(s.snapshot().version(), 42);
+    assert_eq!(s.level_start_kind(), Some(StartKind::NewGame));
+}
+
+/// The writer does not skip the start group: a wire-26 simulation with no recorded
+/// start (only the crate's own construction step can hold one, before
+/// `carried_start.rs` records the start) is not written at all, where it used to be
+/// written as a DSIM42 snapshot `decode_episode1_v4` refuses.
+#[test]
+#[should_panic(expected = "wire 26 (DSIM42) is constructed only with its level start")]
+fn a_wire_26_simulation_without_its_start_is_not_written() {
+    let s = general(OriginalExecutionProfile::PlayerMonstersEpisode1V4, true).unwrap();
+    assert!(s.level_start_kind().is_none());
+    let _ = s.snapshot();
+}
