@@ -3100,6 +3100,15 @@ cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_s
   intermission arithmetic test in `session/intermission.rs`. Locally, on a real-map set:
   `M6A_REFERENCE_DIR=DIR cargo test --release -p doom-game --test m6a_dses_reader -- --ignored real_maps` decodes the saved
   state at every tic and restores every 35th.
+- **Fuzzing the four readers** (`m6a_dses`, `m6a_ddsp3`, `m6a_dsnd2`, `m6a_dsim42`; decoders only, restore is not driven):
+  `M6A_FUZZ_SEEDS=DIR cargo test --release -p doom-game --test m6a_dses_reader -- --ignored write_fuzz_seeds` writes three
+  seeds per target under `DIR` (outside the repository), then per target
+  `cargo +nightly fuzz run TARGET DIR/TARGET --sanitizer address -- -runs=0` (seed replay) or
+  `-- -max_total_time=240 -max_len=120000 -seed=1 -timeout=20 -rss_limit_mb=2048` (a campaign; 2048 and 131072 suit the two
+  small formats).
+- **CI job `M6a genuine session`** (ruling U15): `m6a_wad.py`, `m6a_build.py` and `m6a_melt_steps.py` with `--check`, then
+  `m6a_reference.py`, `m6a_goldens.py`, `m6a_mixer.py` and `m6a_state.py` with `--check --selftest`: the genuine engine on
+  the synthetic items against the committed goldens. Linux only; leak detection is disabled in its address variants.
 - **Real maps, local only** (reads the owner's IWAD, never in CI): `tools/local/m6a_session_real.py --set single|chains --mode
   registered|retail --out DIR [--work DIR] [--only NAME,..] [--jobs N]` runs the genuine engine on a scratch copy of the IWAD
   named for the mode and writes goldens in the layout of `tests/reference`. The gates then read them:

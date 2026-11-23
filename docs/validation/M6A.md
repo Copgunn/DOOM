@@ -232,15 +232,65 @@ differs from `572ed88f` in one doc comment):
 are not on those gates' path (they compare rows, frames, sound and capture digests and do not decode a saved state), but that
 is an argument from the code, not an observation.
 
+### 5.6 Before the owner's review: part 1 (2026-11-22, night)
+
+By the owner's ruling PR #65 is M6a part 1 (the level chain); the finale, the melt pictures, the easy skills and E1M7 on
+skill 3 are part 2. No feature was added after the ruling. Code head `6689bb47` (fuzz targets, a seed writer in a test, the
+CI job; no file under `crates/*/src` differs from `7490f5e2`).
+
+**The owner's second hand test** (three more sessions on the artifact of `9ab8c3b3`; genuine engine and Rust gates as §5.1,
+at `6689bb47`'s crates): all equal, no first difference.
+
+| Session | Mode | Session tics | Loads (start included) | State: levels / captures | Masked frames, sizes 10 and 11 |
+| --- | --- | ---: | ---: | --- | --- |
+| E1M1 to E1M2, ended by a new game | registered | 3,145 | 2 | 2 / 2,767 | 8 and 9 |
+| E1M1, the new game after it, ended by quit | registered | 198 | 1 | 1 / 198 | 0 and 0 |
+| E1M4 to E1M6, a death and reborn there, ended by quit while dead | retail | 15,286 | 4 | 4 / 14,842 | 47 and 50 |
+
+Sums: 18,629 session tics, 7 loads; planted faults caught in the 2 sessions that have a carried start; every saved state
+decoded (18,632) and every 35th restored; result digest `b1cb290601e6972a638057b5fa0d7f38f4973d6f2bbecbec0a82c48bd14d2f02`
+(13 MB, scratch). These are the first registered-mode sessions played by hand.
+
+**Fuzzing the four readers** (2026-11-22, cargo-fuzz 0.13.2, nightly, AddressSanitizer build, **leak detection on**: the
+default, `detect_leaks` not set; decoders only, restore is not driven; seeds and corpora in scratch, not committed):
+
+| Target (reader) | Seed replay under the sanitizer | Coverage-guided campaign under the sanitizer, 240 s, `-seed=1` | Findings |
+| --- | --- | --- | --- |
+| `m6a_dses` (`DSES` v1) | 3 seeds, 4 runs | 614,099 runs, `-max_len=120000` | none |
+| `m6a_ddsp3` (`DDSP` v3) | 3 seeds, 4 runs | 319,783 runs, `-max_len=100000` | none |
+| `m6a_dsnd2` (`DSND` v2) | 3 seeds, 4 runs | 25,980,575 runs, `-max_len=2048` | none |
+| `m6a_dsim42` (`DSIM` 42 with its start group) | 3 seeds, 4 runs | 2,812,003 runs, `-max_len=131072` | none |
+
+One sanitizer only (address, with its leak check); no memory or thread sanitizer run, and no campaign longer than four
+minutes. The targets were built one at a time; the whole fuzz workspace was not rebuilt.
+
+**The CI job `M6a genuine session`** (ruling U15) fits under the cap and is in. Its seven commands passed locally with
+`--jobs 2` before the push (exit 0; the state step: 21 items, 63 levels, 6,205 captures, both golden files matching).
+
+**The Rust real-map gates again on the final code head** (`6689bb47`, release build, 2026-11-22 21:50 to 2026-11-23 01:20
+PST, no uncommitted code; the genuine result sets are the kept ones of §1, §5.1 and §5.2, not regenerated): **26 gate runs,
+0 failures.**
+
+| Set | Session gate | State gate | Planted-fault gates |
+| --- | --- | --- | --- |
+| retail singles, batches 1 and 2 (15 and 46 runs) | pass | pass (19 and 84 levels; 37,961 and 158,872 captures) | not run on singles |
+| registered singles (61 runs) | pass | pass (103 levels, 196,833 captures) | not run on singles |
+| retail chains and registered chains (9 runs each, CH2 as first built) | pass | pass (37 levels, 90,683 captures each) | caught in 7 of 7 runs, both faults, both modes |
+| CH2 rebuilt, retail and registered | pass | pass (4 levels, 10,746 captures each) | caught in 1 of 1, both faults, both modes |
+| the four sessions of hand test 1 | pass | pass (11 levels, 27,620 captures) | caught in 4 of 4, both faults |
+
+The three sessions of hand test 2 were gated at the same crates earlier that evening (above). CI on `6689bb47`: all ten
+jobs green, the new `M6a genuine session` among them.
+
 ## Not run, and limits
 
 - **Local only.** Every real-map figure is from the owner's IWAD on his WSL2 machine on 2026-11-22; it cannot run in CI and nobody
   else can repeat it without the same file. Nothing here was measured for time.
 - **Not regenerated after `1229b0ce`:** the genuine side of the real-map sets (see [§4](#4-gates-at-the-final-code-head)), except
   CH2 and the hand-test sessions of [§5](#5-after-the-hand-test-gate-2026-11-22-evening).
-- **Not run:** any fuzz build, fuzz target or sanitizer campaign for the new formats (`DSES`, `DDSP` v3, `DSND` v2, DSIM42);
-  the original-C generators' `--check` locally other than the M6a ones (CI runs them); `tools/local/m5d_lost_display.py` after
-  step 9 changed `doom-play`. No CI job runs the genuine M6a engine yet (ruling U15, a later step).
+- **Not run:** the original-C generators' `--check` locally other than the M6a ones (CI runs them);
+  `tools/local/m5d_lost_display.py` after step 9 changed `doom-play`; a fuzz campaign that drives restore. (When this list was
+  first written no fuzz target existed for the new formats and no CI job ran the genuine M6a engine: see §5.6.)
 - **Not covered by any run:** the finale, the melt pictures, the easy skills and E1M7 on skill 3 (not built); a quirk-6 witness
   (no golden for percentages above 100 or "sucks"); a genuine run of the reborn-beats-exit case on the owner's IWAD.
 - **Sanitizers.** The genuine runs used the strict build; the address-sanitizer variants and the `address_bounds` build belong

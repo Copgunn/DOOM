@@ -412,7 +412,8 @@ milestones before it, all merged.
 The next milestone is **M6a: Episode 1 from start to finish, in one session** (the intermission, the next map and
 the finale of Episode 1). Its Phase 1, the investigation, is written on the branch `feat/m6a-episode1-continuous`
 ([draft PR #65](https://github.com/Copgunn/DOOM/pull/65)); rulings received 2026-11-21, Phase 2 in progress, at the owner's
-hand-test gate of the level chain (2026-11-22); nothing of it is on master. The items of the
+hand-test gate of the level chain (2026-11-22); by the owner's ruling of that day PR #65 is **part 1** (the level chain)
+and the finale, melt pictures, easy skills and E1M7 on skill 3 are **part 2**, a later pull request; nothing of it is on master. The items of the
 [vanilla completeness checklist](#vanilla-completeness-checklist) that waited for a ruling were ruled on on
 2026-11-21 (declined, or in M6b, or in a later milestone the owner will name). Exact review
 state belongs to GitHub.
@@ -653,10 +654,15 @@ The entries marked merged below are done; they keep their place here because thi
 - **M6a (Episode 1 from start to finish, in one session).** Phase 1 is written (2026-11-20, branch
   `feat/m6a-episode1-continuous`); rulings received 2026-11-21 on decisions U1–U15 of the
   [investigation note](M6A_REFERENCE_INVESTIGATION.md#5-owner-decisions-u1u15-with-recommendations); Phase 2 in progress
-  (status 2026-11-22: **the owner's first hand test is done and its four sessions compare equal with the genuine engine**
-  ([evidence record §5](validation/M6A.md#5-after-the-hand-test-gate-2026-11-22-evening)); the playable level chain is built
-  and compared; the finale, the melt pictures, the easy skills and E1M7 on skill 3 are not started and wait for the owner's
-  ruling on the line cap).
+  The owner ruled on 2026-11-22 that the 22,000-line cap holds and M6a lands in two parts; nothing is dropped.
+  - **Part 1 (PR #65, awaiting the owner's review, not merged):** the level chain under wire 26. One session plays any
+    Episode 1 map on skills 2 and 3 through both exits, the intermission, the next map with the carried player, the reborn
+    reload and the secret route; it stops with a plain screen at E1M8's exit and at a load of E1M7 on skill 3. The wipe's
+    draws are made and compared, its pictures are not shown. Compared with the genuine engine on synthetic maps in CI and on
+    the owner's IWAD locally, his hand-test sessions included ([evidence record](validation/M6A.md)).
+  - **Part 2 (a separate pull request after part 1 merges, not started), under wire 27 and new format versions:** the
+    finale, the melt pictures, the easy skills 0 and 1, and E1M7 on skill 3 (the spawn margin dropped for monsters under
+    wire 27, where the earlier ruling said wire 26).
 - **Simulation follow-up (decided: the THING-loading truncation is closed under wire 25 only).** `P_LoadThings` ends the
   whole THINGS loop at the first Doom II type (doomednums 64-69, 71, 84, 88, 89) when `gamemode != commercial`
   (p_setup.c:317-337). Wire 25 (decision T4, confirmed 2026-11-18) stops loading there, with a synthetic map and

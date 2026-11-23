@@ -3660,7 +3660,8 @@ summary of raw button downs and ups on quit. A test shows it changes neither the
 
 ## Episode 1 as one session (M6a)
 
-**Status: the playable level chain, up to the owner's hand test (written 2026-11-22; the milestone is not finished).** One
+**Status: M6a part 1, the playable level chain (PR #65; the owner's ruling of 2026-11-22 moves the finale, the melt
+pictures, the easy skills and E1M7 on skill 3 to part 2, a separate pull request under wire 27 and new format versions).** One
 `doom-play` run now plays Episode 1 as the original does between levels: both exits, the intermission, the next map with the
 carried player, the reborn reload and the secret route. What is built, compared and still missing is below; the
 observations are in the [evidence record](validation/M6A.md) and the design in the
@@ -3702,7 +3703,7 @@ At launch (before any window, exit 1 unless noted): a start map not admitted at 
 first-map music lump (the original stops at that load too); a map or skill outside the domain; `--skill 0` or `1`
 (exit 2, "the easy skills (0, 1) are not built yet"). Not built yet, each a typed refusal or a declared gap: the **finale** after
 E1M8, the **melt pictures**, the **easy skills 0 and 1**, **E1M7 on skill 3** (the owner ruled option 1 for it: the margin clause
-dropped for monsters under wire 26 only, after the hand test; until then the refusal above stands, and
+dropped for monsters, under wire 27 in part 2 by the ruling of 2026-11-22, where it first said wire 26; until then the refusal above stands, and
 [the load table](#skills-and-maps-load-table) lists every map and skill).
 
 ### The game mode is a declared setting (ruling U4)
