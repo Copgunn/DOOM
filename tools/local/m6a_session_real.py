@@ -12,7 +12,8 @@ registered, doomu.wad retail; the owner's file is only read, by the copy):
   chains   sessions started at maps 1-9 (U14) that cross a boundary: the map's committed walk to its exit (a new
            game, so the exit is reached), an intermission skipped by use presses, then the next map's committed walk
            from the tic its load runs (found by a first genuine run) and idle tics; E1M2 starts with its death script,
-           so the chain goes through the reborn reload first; E1M9 returns to E1M4 (the secret level's next map,
+           so the chain goes through the reborn reload first (the reborn press is moved to a tic whose reload begins
+           with P_Random index 0, so that the walk is a new game's: build_chain); E1M9 returns to E1M4 (the secret level's next map,
            g_game.c:1089-1096); E1M8 goes on into the finale. Spliced demos desynchronise after the first boundary
            (the carried player and P_Random index, note section 3.3) and stay valid comparison input. The walks are
            spliced as committed: their forward moves above TURBOTHRESHOLD (the E1M4, E1M6 and E1M7 walks use 100)
@@ -64,6 +65,7 @@ NOTHING = b'\0\0\0\0'
 USE = b'\0\0\0\2'
 INTERMISSION = NOTHING * 4 + (USE + NOTHING) * 30          # presses on every other tic until the next load
 TAIL = NOTHING * 140
+REBORN_SEARCH = 4000                                       # idle tics tried before a chain's reborn press
 
 
 def commands(lmp):
@@ -95,19 +97,48 @@ def plain_run(binary, item, work):
 
 
 def build_chain(binary, spec, mode, iwad, demos, work):
-    """The spliced demo of a chain (module text), built by genuine runs that find each load's tic."""
+    """The spliced demo of a chain (module text), built by genuine runs that find each load's tic.
+
+    The reborn step (a walk of the map the chain is on: CH2) needs more than the load's tic. A committed walk is a
+    new game's: replayed after a reborn it meets other P_Random values (the index is not reset by the reload,
+    g_game.c:445-497), and E1M2's walk then dies twice more and reaches no exit, which is why CH2 crossed no boundary
+    as first built. The step therefore moves the script's reborn press later, one idle tic at a time, to the first
+    reload that begins with P_Random index 0 (a new game's, M_ClearRandom) and from which the walk reaches another
+    map; each candidate is a genuine run. The chain stops and says so when REBORN_SEARCH tics hold none."""
     name, map_number, skill, first, follow = spec
     header, body = commands(ROOT / 'tests/reference' / first)
     path = demos / f'{name}.lmp'
+
+    def loads_of(b):
+        path.write_bytes(demo(header, map_number, skill, b + INTERMISSION + TAIL))
+        return plain_run(binary, item_for(name, path, mode, iwad, skill, map_number), work / 'plain')[0]
+
+    def reborn_at_index_0(walk):
+        """(commands up to the reload, idle tics added before the press) or None."""
+        reloads = [l['tic'] for l in loads_of(body) if l['tic'] > 0]
+        if not reloads: return None
+        press = reloads[0] - 1                                  # the reload runs in the G_Ticker after the press
+        for idle in range(REBORN_SEARCH):
+            pre = body[:4 * press] + NOTHING * idle + USE
+            load = [l for l in loads_of(pre) if l['tic'] > 0][:1]
+            if not load or load[0]['tic'] != press + idle + 1 or load[0]['prndindex_before'] != 0: continue
+            if any(l['map'] != current for l in loads_of(pre + walk)): return pre, idle
+        return None
+    current = map_number
     for m in follow:
-        path.write_bytes(demo(header, map_number, skill, body + INTERMISSION + TAIL))
-        loads, _g = plain_run(binary, item_for(name, path, mode, iwad, skill, map_number), work / 'plain')
-        later = [l['tic'] for l in loads if l['tic'] >= len(body) // 4]
+        _h, walk = commands(ROOT / 'tests/reference' / WALKS[m])
+        if m == current:
+            found = reborn_at_index_0(walk)
+            if not found:
+                print(f"{name}: no reborn reload with P_Random index 0 from which E1M{m}'s walk leaves the map in "
+                      f'{REBORN_SEARCH} tics; the chain stops there'); break
+            body = found[0] + walk
+            print(f"{name}: reborn press moved {found[1]} tics later (reload at tic {len(found[0]) // 4}, P_Random index 0)")
+            continue
+        later = [l['tic'] for l in loads_of(body) if l['tic'] >= len(body) // 4]
         if not later:
             print(f'{name}: no load after tic {len(body) // 4}; the chain stops there'); break
-        cut = later[0]
-        _h, walk = commands(ROOT / 'tests/reference' / WALKS[m])
-        body = (body + INTERMISSION + TAIL)[:4 * cut] + walk
+        body, current = (body + INTERMISSION + TAIL)[:4 * later[0]] + walk, m
     path.write_bytes(demo(header, map_number, skill, body + INTERMISSION + TAIL))
     return path
 
