@@ -87,6 +87,7 @@ dependencies = [
  "doom-render",
  "doom-sim",
  "doom-sound",
+ "doom-types",
  "doom-wad",
 ]
 

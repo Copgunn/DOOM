@@ -384,3 +384,27 @@ fn the_saved_secretexit_is_the_last_completed_exits() {
     }
     assert!(seen, "SECRET takes a secret exit");
 }
+
+/// Seeds for the four M6a fuzz targets (`fuzz/fuzz_targets/m6a_*.rs`): the three states of
+/// [`points`] and their embedded states, written under the directory `M6A_FUZZ_SEEDS` names
+/// (outside the repository), one folder per target. Local only.
+#[test]
+#[ignore = "local only: writes fuzz seeds under M6A_FUZZ_SEEDS"]
+fn write_fuzz_seeds_local() {
+    let Some(dir) = std::env::var_os("M6A_FUZZ_SEEDS") else {
+        return;
+    };
+    let p = points();
+    for (name, (s, _)) in [("level", &p.level), ("tally", &p.tally), ("done", &p.done)] {
+        for (target, bytes) in [
+            ("m6a_dses", s.encode()),
+            ("m6a_ddsp3", s.display.encode()),
+            ("m6a_dsnd2", s.sound.encode()),
+            ("m6a_dsim42", s.level.clone()),
+        ] {
+            let folder = std::path::Path::new(&dir).join(target);
+            std::fs::create_dir_all(&folder).expect("folder");
+            std::fs::write(folder.join(name), bytes).expect("seed");
+        }
+    }
+}
