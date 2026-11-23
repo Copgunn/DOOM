@@ -171,8 +171,11 @@ impl Scene {
 }
 
 /// A melt in progress (M6a note §1.16): `step` melt steps of `ticks = 1` shown of the wipe that
-/// the last frame started. Never produced yet (the melt pictures are [`NotYet::MeltPictures`]);
-/// the layout is fixed now so that they need no new version.
+/// the last frame started. No display produces one yet ([`Display::session_state`] always gives
+/// `None`; the melt pictures are [`NotYet::MeltPictures`]); the layout is fixed now so that they
+/// need no new version. The format itself carries one: [`SessionDisplayState::encode`] writes tag
+/// 1 for a state built by hand with `Some`, [`SessionDisplayState::decode`] keeps it, and
+/// [`SessionDisplayState::check`] and every restore refuse it.
 ///
 /// Stored, not reconstructible: the start screen (`wipe_StartScreen`, f_wipe.c:237-245, the
 /// previous frame, which may belong to a level no longer loaded) and the step count. Not stored,
@@ -765,7 +768,11 @@ impl SessionDisplayState {
     ///   screen size change since, d_main.c:215-220);
     /// - outside a level, the carried screen and taint 64,000 entries, `fuzzpos` below 50, and
     ///   with no wipe due no tainted pixel (a frame outside a level overwrites every pixel:
-    ///   `WI_slamBackground`, wi_stuff.c:406-410).
+    ///   `WI_slamBackground`, wi_stuff.c:406-410);
+    /// - outside a level, `st_oldhealth` 0 to 200: the finished level's last `ST_Ticker` wrote
+    ///   the player's health (st_stuff.c:994), at most 200 (p_inter.c:385-386, 402-403, 412),
+    ///   and nothing writes it until the next `ST_Start` (in a level
+    ///   [`Display::restore_session`] checks it against the simulation).
     pub fn check(&self) -> Result<(), SessionRestoreError> {
         let d = SessionRestoreError::Display;
         if let Some(v) = value_error(&self.status, &self.hud) {
@@ -809,6 +816,9 @@ impl SessionDisplayState {
                 }
                 if !self.wipe && c.taint.iter().any(|t| *t != 0) {
                     return bad("carried taint");
+                }
+                if !(0..=200).contains(&self.status.oldhealth) {
+                    return bad("oldhealth");
                 }
                 Ok(())
             }
@@ -1015,7 +1025,9 @@ impl<'a> Reader<'a> {
         for _ in 0..n {
             let count = self.u32()? as usize;
             let v = self.u32()?;
-            if count == 0 || taint.len() + count > PIXELS {
+            // `taint.len() <= PIXELS` here, so the subtraction cannot wrap; adding the file's
+            // count to the length first could, where `usize` is 32 bits.
+            if count == 0 || count > PIXELS - taint.len() {
                 return Err(StateDecodeError::Invalid("taint runs"));
             }
             taint.resize(taint.len() + count, v);
@@ -1026,3 +1038,7 @@ impl<'a> Reader<'a> {
         Ok(taint)
     }
 }
+
+#[cfg(test)]
+#[path = "session_reader_tests.rs"]
+mod reader_tests;

@@ -21,7 +21,7 @@
 //! | `gamestate` | u8: 0 level, 1 intermission, 2 finale | doomdef.h:127-133; 2 is refused (not built yet) |
 //! | `gamemap` | u8, 1..=9 | the current or finished level's map |
 //! | `gameaction` | u8: 0, 6 or 8 | after the last tic (d_event.h:54-63): 6 only in a level that requested an exit, 8 only in the intermission after `G_WorldDone` |
-//! | `secretexit`, `didsecret` | u8, u8 (0 or 1) | g_game.c:1000; the console player's (d_player.h:164) |
+//! | `secretexit`, `didsecret` | u8, u8 (0 or 1) | `secretexit` as the last completed level left it (g_game.c:1000; on an exit tic the pending exit is in the level capture and [`Session::secretexit`] reports it, this byte follows at the completion); the console player's `didsecret` (d_player.h:164) |
 //! | `wminfo` | i32 `epsd`, u8 `didsecret`, 10 x i32 (`last`, `next`, `maxkills`, `maxitems`, `maxsecret`, `partime`, `skills`, `sitems`, `ssecret`, `stime`) | d_player.h:173-211 |
 //! | wi_stuff.c statics | 12 x i32 (`state`, `acceleratestage`, `cnt`, `bcnt`, `firstrefresh`, `sp_state`, the five counts, `cnt_pause`), u8 `snl_pointeron`, 10 x (i32 `ctr`, i32 `nexttic`) | wi_stuff.c:140-175, 301-336, 749, 1316 |
 //! | carried player | u8: 0 none (in a level), 1 alive, 2 dead at the exit | |
@@ -32,7 +32,12 @@
 //! | display | u32 length n, n bytes | `DDSP` version 3 |
 //! | sound | u8 kind = 2, u32 length n, n bytes | `DSND` version 2 (the kind names the embedded format; 2 is the only one) |
 //!
-//! Nothing follows. A melt in progress is the display's and the sound's (`DDSP` v3 and `DSND` v2
+//! Nothing follows. [`SessionState::check`] lists what a decoded state must keep, and
+//! [`Session::restore`] what it must share with the level. Two things cannot be tied exactly and
+//! are declared limits (docs/STATE_FORMAT.md): the carried view heights (outside a level neither
+//! embedded state holds the finished player's view; `viewheight` is only bounded above) and the
+//! latches after the first intermission tic (rewritten from commands the state does not hold).
+//! A melt in progress is the display's and the sound's (`DDSP` v3 and `DSND` v2
 //! each have its field, refused there until the melt pictures exist); input held during a melt
 //! belongs to the app's event layer (M5b S4, S5), not to the session.
 use super::intermission::{
@@ -64,6 +69,8 @@ pub const VERSION: u16 = 1;
 pub const SOUND_DSND2: u8 = 2;
 /// The largest encoding read (bounds the whole before an embedded reader runs).
 pub const MAX_BYTES: usize = 64 << 20;
+/// `VIEWHEIGHT` (p_local.h:45), 41 units.
+const VIEWHEIGHT: i32 = 41 << 16;
 
 /// Why a `DSES` state was refused. Nothing is built or changed.
 #[derive(Debug)]
@@ -98,7 +105,8 @@ pub enum DsesError {
     LevelMismatch,
     /// Restore: the map could not be loaded.
     Map(MapLoadError),
-    /// Restore: the display refused its state.
+    /// Decode or restore: the display refused its state (decode applies the display's own
+    /// `check`; restore also checks it against the level).
     DisplayRestore(SessionRestoreError),
     /// Restore: the sound refused its state.
     SoundRestore(ChainStateError),
@@ -494,8 +502,6 @@ impl SessionState {
             _ => return Err(DsesError::Value("finale")),
         }
         let level = r.blob()?.to_vec();
-        Diagnostic::decode_episode1_v4(&level, DiagnosticLimits::default())
-            .map_err(|e| DsesError::Level(format!("{e:?}")))?;
         let display = SessionDisplayState::decode(r.blob()?).map_err(DsesError::Display)?;
         let kind = r.u8()?;
         if kind != SOUND_DSND2 {
@@ -525,7 +531,14 @@ impl SessionState {
         Ok(state)
     }
 
-    /// The rules a state keeps without its session data (each error names its rule).
+    /// The rules a state keeps without its session data (each error names its rule): the field
+    /// domains; the embedded level capture's map, tic and start `gametic` against the outer
+    /// state; the display's own `check`, no wipe due after a whole tic, and its entry tic against
+    /// the sound's level tics; outside a level `wminfo` as `G_DoCompleted` wrote it, the
+    /// wi_stuff.c statics as an intermission in progress keeps them
+    /// ([`Intermission::reachable`]), `bcnt` against the session tics, `gameaction` 8 exactly at
+    /// the intermission's end, and the carried player against the status bar's last health; in a
+    /// level the statics of a fresh process or of a finished intermission.
     pub fn check(&self) -> Result<(), DsesError> {
         let value = |ok: bool, name| {
             if ok {
@@ -554,6 +567,47 @@ impl SessionState {
         }
         self.wi.check().map_err(DsesError::Value)?;
         let in_level = self.gamestate == GameState::Level;
+        // The embedded level capture, read by its own reader and tied to the outer state: its
+        // map, its tic count and the `gametic` of its load are the session's.
+        let level = Diagnostic::decode_episode1_v4(&self.level, DiagnosticLimits::default())
+            .map_err(|e| DsesError::Level(format!("{e:?}")))?;
+        let level_u64 = |path: &str| {
+            level
+                .field(path)
+                .and_then(|v| <[u8; 8]>::try_from(v).ok())
+                .map(u64::from_le_bytes)
+        };
+        rule(
+            level.field("level.map") == Some(&[self.map][..]),
+            "the level capture's map",
+        )?;
+        rule(
+            level_u64("tic") == Some(self.sound.level_tics()),
+            "the level capture's tic",
+        )?;
+        rule(
+            level_u64("level.start.gametic") == Some(self.sound.level_start),
+            "the level's start gametic and levelstarttic",
+        )?;
+        // The display's own rules (a melt in progress, the wipe flag, a level scene's tic, carried
+        // taint, `st_oldhealth`), which a restore applies, hold for a decoded state as well.
+        self.display.check().map_err(DsesError::DisplayRestore)?;
+        // A session state is saved after a whole tic: its frame is drawn, so no wipe is due
+        // (d_main.c:300), except before the first tic of all.
+        rule(
+            self.display.wipe == (self.gametic == 0),
+            "display wipe after a whole tic",
+        )?;
+        // The display entered its state, and the sound its level or its end, in the same tic.
+        rule(
+            self.display.entered
+                == if in_level {
+                    self.sound.level_start
+                } else {
+                    self.sound.level_end
+                },
+            "display entered and the sound's level tics",
+        )?;
         rule(
             self.display.scene.game_state() == self.gamestate,
             "display game state",
@@ -588,7 +642,12 @@ impl SessionState {
             // What G_DoCompleted and WI_initVariables wrote for the finished map
             // (g_game.c:1039-1131, wi_stuff.c:1824-1831).
             let m = &self.wminfo;
-            let last = u8::try_from(m.last + 1).unwrap_or(0);
+            // `last` is the file's value: `+ 1` only where it cannot leave `int`.
+            let last = m
+                .last
+                .checked_add(1)
+                .and_then(|v| u8::try_from(v).ok())
+                .unwrap_or(0);
             rule(m.epsd == 0 && last == self.map, "wminfo map")?;
             rule((1..=9).contains(&last) && last != 8, "wminfo last")?;
             rule(m.next == next_map(last, self.secretexit), "wminfo next")?;
@@ -607,6 +666,43 @@ impl SessionState {
                 "wminfo counts",
             )?;
             rule(self.map != 9 || m.didsecret, "didsecret after map 9")?;
+            // The wi_stuff.c statics are an intermission's in progress over this `wminfo`
+            // (counts the tally can multiply, counters on its steps, animation tics ahead).
+            self.wi.reachable(m).map_err(DsesError::Inconsistent)?;
+            // `bcnt` counts this intermission's tics (wi_stuff.c:1506), the session tics since
+            // the level ended.
+            rule(
+                u64::try_from(self.wi.bcnt).ok() == self.gametic.checked_sub(self.sound.level_end),
+                "bcnt and the intermission's tics",
+            )?;
+            // `G_WorldDone` runs exactly when the last count reaches 0 (wi_stuff.c:737-747).
+            rule(
+                (self.gameaction == 8) == (self.wi.state == -1 && self.wi.cnt == 0),
+                "gameaction 8 and the intermission's end",
+            )?;
+            let carried = self.carried.as_ref();
+            // `st_oldhealth` is the finished level's last health (st_stuff.c:994): the carried
+            // player's, or a dead player's 0.
+            rule(
+                carried.is_some_and(|c| {
+                    self.display.status.oldhealth == c.start.map_or(0, |s| s.health)
+                }),
+                "carried health and st_oldhealth",
+            )?;
+            // `viewheight` never exceeds VIEWHEIGHT (p_user.c:112-116, 190-195; a step up only
+            // lowers it, p_mobj.c:310-315). Nothing outside a level holds the finished player's
+            // view heights, so their exact values cannot be checked (module documentation).
+            rule(
+                carried.is_some_and(|c| c.viewheight <= VIEWHEIGHT),
+                "carried viewheight",
+            )?;
+        } else {
+            // In a level the statics are a fresh process's, or the last intermission's as its
+            // final tic left them (never read again before `WI_Start` rewrites them).
+            rule(
+                self.wi == Intermission::default() || (self.wi.state == -1 && self.wi.cnt == 0),
+                "the last intermission's statics",
+            )?;
         }
         Ok(())
     }
@@ -646,9 +742,11 @@ impl Session {
     /// state's tic (in the intermission the finished level's after its last tic), whose capture
     /// must be the embedded one. Checked besides [`SessionState::check`]: the declared mode
     /// against the data's, the capture, the map, `gameaction` and `secretexit` against the
-    /// level's exit request, the carried player against the level's, the display's and the
-    /// sound's own restores against the level, and the level's start `gametic` (`DSIM` 42
-    /// `level.start.gametic`) against the sound's `levelstarttic`. On an error nothing is built.
+    /// level's exit request, outside a level the carried player field for field and `wminfo`'s
+    /// maxima, counts and time against the finished level's ([`Simulation::level_finish`]), the
+    /// display's and the sound's own restores against the level, and the level's start `gametic`
+    /// (`DSIM` 42 `level.start.gametic`) against the sound's `levelstarttic`. On an error nothing
+    /// is built.
     pub fn restore(
         data: Arc<SessionData>,
         state: &SessionState,
@@ -692,6 +790,24 @@ impl Session {
                     .as_ref()
                     .is_some_and(|c| c.start.is_none() == dead),
                 "carried player and the level's",
+            )?;
+            // What `G_PlayerFinishLevel` left and `G_DoCompleted` counted is the finished
+            // level's: the carried player field for field (the saved one has no `P_Random`
+            // index; its latches are the exit tic's, the intermission rewrites its own copy),
+            // and `wminfo`'s totals, counts and time (g_game.c:1113-1131).
+            let finish = level
+                .level_finish()
+                .map_err(|_| DsesError::Inconsistent("the finished level's player"))?;
+            let left = finish.carried.map(|c| CarriedStart { p_random: 0, ..c });
+            let saved = state.carried.and_then(|c| c.start);
+            rule(left == saved, "carried player and the finished level's")?;
+            let one = |v: i32| if v == 0 { 1 } else { v };
+            let m = &state.wminfo;
+            rule(
+                [m.maxkills, m.maxitems, m.maxsecret] == finish.totals.map(one)
+                    && [m.plyr.skills, m.plyr.sitems, m.plyr.ssecret] == finish.counts
+                    && m.plyr.stime == i32::try_from(finish.level_time).unwrap_or(i32::MAX),
+                "wminfo and the finished level's counts",
             )?;
         }
         let cfg = DisplayConfig {

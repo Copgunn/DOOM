@@ -720,6 +720,32 @@ impl<'a> Diagnostic<'a> {
     }
     /// DSIM41: the two record lists of `events.sounds` (see
     /// [`Self::decode_episode1_v3`]).
+    /// DSIM42 only: the start group against the level it started, where the capture
+    /// still shows it. At level tic 0 (the load capture) the live player's health
+    /// is the start's (`mobj->health = p->health`, p_mobj.c:673; a new or reborn
+    /// player's 100, g_game.c:824). A carried chainsaw's `sfx_sawup`, the group's
+    /// one record, is first in `events.sounds.pending` at the load capture and
+    /// first in `events.sounds.last` after tic 0 (STATE_FORMAT "DSIM v42"); later
+    /// captures no longer hold it.
+    fn validate_start_against_level(&self) -> Result<(), DiagnosticError> {
+        let tic = u64::from_le_bytes(number(self.required("tic")?)?);
+        if tic == 0
+            && self.required("original_player.0.health")? != self.required("level.start.health")?
+        {
+            return Err(DiagnosticError::Schema);
+        }
+        if let Some(saw) = self.field("level.start.sounds.0") {
+            let list = match tic {
+                0 => Some("events.sounds.pending.0"),
+                1 => Some("events.sounds.last.0"),
+                _ => None,
+            };
+            if list.is_some_and(|path| self.field(path) != Some(saw)) {
+                return Err(DiagnosticError::Schema);
+            }
+        }
+        Ok(())
+    }
     fn validate_sound_records(&self) -> Result<(), DiagnosticError> {
         let sectors = u32::from_le_bytes(number(self.required("sectors.count")?)?);
         let mo = self.required("original_player.0.mo")?;
@@ -964,6 +990,7 @@ impl<'a> Diagnostic<'a> {
                     .filter(|f| f.path.starts_with("level.start."))
                     .count(),
             )?;
+            self.validate_start_against_level()?;
         }
         if self.sounds {
             self.validate_sound_records()?;

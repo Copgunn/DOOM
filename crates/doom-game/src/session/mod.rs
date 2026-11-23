@@ -662,7 +662,10 @@ impl Session {
         self.map
     }
 
-    /// `secretexit`: in a level with an exit requested, that exit's; otherwise the last exit's.
+    /// `secretexit` as the C holds it: in a level with an exit requested, that exit's (the exit
+    /// tic has written it, g_game.c:1000-1012); otherwise the last exit's. `DSES` saves the last
+    /// completed exit's flag instead (`session::state`): on an exit tic the two differ and the
+    /// pending exit is in the level capture.
     pub fn secretexit(&self) -> bool {
         match (self.gamestate(), self.level.level_exit_request()) {
             (GameState::Level, Some(e)) => e == LevelExit::Secret,

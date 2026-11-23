@@ -496,3 +496,79 @@ fn a_wire_26_simulation_without_its_start_is_not_written() {
     assert!(s.level_start_kind().is_none());
     let _ = s.snapshot();
 }
+
+/// The DSIM42 reader ties the start group to the level while the capture still
+/// shows the start (review item 11). At level tic 0 the live player's health is
+/// the start's (`mobj->health = p->health`, p_mobj.c:673); a carried chainsaw's
+/// `sfx_sawup` is first in `events.sounds.pending` at the load capture and first in
+/// `events.sounds.last` after tic 0. Each forged capture has a start group that is
+/// valid alone, and every capture the writer makes on the way is read.
+#[test]
+fn dsim42_start_group_is_tied_to_the_level() {
+    let limits = DiagnosticLimits::default();
+    let read =
+        |f: &[(String, Vec<u8>)]| Diagnostic::decode_episode1_v4(&encode(42, f), limits).err();
+    let mut s = level(LevelStart::Carried(carried())).unwrap();
+    let load = fields(&s);
+    assert_eq!(read(&load), None);
+    let saw = load
+        .iter()
+        .find(|(p, _)| p == "level.start.sounds.0")
+        .unwrap()
+        .1
+        .clone();
+    let value = |f: &[(String, Vec<u8>)], path: &str| {
+        f.iter().find(|(p, _)| p == path).map(|(_, v)| v.clone())
+    };
+    assert_eq!(value(&load, "events.sounds.pending.0"), Some(saw.clone()));
+    // A carried health the group may hold alone (1..=200), not the live player's.
+    let mut x = load.clone();
+    set(&mut x, "level.start.health", 149_i32.to_le_bytes().to_vec());
+    assert_eq!(read(&x), Some(DiagnosticError::Schema));
+    // The load's sound in the group and no longer pending: refused at the load
+    // capture (before this rule by the cross-check with `events.pending`).
+    let dropped = |f: &[(String, Vec<u8>)], prefix: &str| {
+        let mut x = f.to_vec();
+        x.retain(|(p, _)| *p != format!("{prefix}.0"));
+        set(
+            &mut x,
+            &format!("{prefix}.count"),
+            0_u64.to_le_bytes().to_vec(),
+        );
+        x
+    };
+    assert_eq!(
+        value(&load, "events.sounds.pending.count"),
+        Some(1_u64.to_le_bytes().to_vec())
+    );
+    assert!(read(&dropped(&load, "events.sounds.pending")).is_some());
+    // After tic 0 the record is the first published one (it alone here), and a
+    // capture without it was read before this rule; the health is free.
+    step(&mut s).unwrap();
+    let one = fields(&s);
+    assert_eq!(read(&one), None);
+    assert_eq!(value(&one, "events.sounds.last.0"), Some(saw));
+    assert_eq!(
+        value(&one, "events.sounds.last.count"),
+        Some(1_u64.to_le_bytes().to_vec())
+    );
+    assert_eq!(
+        read(&dropped(&one, "events.sounds.last")),
+        Some(DiagnosticError::Schema)
+    );
+    let mut x = one;
+    set(&mut x, "level.start.health", 149_i32.to_le_bytes().to_vec());
+    assert_eq!(read(&x), None, "after tic 0 the health has moved on");
+    // Later captures, and the other two kinds of start at their load, are read.
+    for _ in 0..3 {
+        step(&mut s).unwrap();
+        assert_eq!(read(&fields(&s)), None);
+    }
+    for start in [LevelStart::NewGame, LevelStart::Reborn { p_random: 9 }] {
+        let mut s = level(start).unwrap();
+        for _ in 0..3 {
+            assert_eq!(read(&fields(&s)), None);
+            step(&mut s).unwrap();
+        }
+    }
+}

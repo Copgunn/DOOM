@@ -1173,6 +1173,9 @@ fn refusals_leave_the_session_unchanged() {
     assert_eq!(c.music_playing(), Music::Victor);
     // The tic limit: a state at the last session tic `gametic` can count.
     let mut st = lvl.chain.save();
+    // No channel is still occupied that late: every handle (at most 65,535) is below the tics
+    // run, and the reader refuses an occupied channel with such a handle.
+    st.channels.iter_mut().for_each(|c| *c = None);
     st.tics = Schedule::buffers_before(0) + doom_sound::schedule::MAX_TIC + 1;
     st.buffers = Schedule::buffers_before(st.tics);
     st.level_start = st.tics - lvl.sim.tic();

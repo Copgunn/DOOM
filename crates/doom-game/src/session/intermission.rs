@@ -37,6 +37,9 @@ const ANIM_FRAMES: i32 = 3;
 
 /// The par times of episode 1 in seconds (`pars[1][1..=9]`, g_game.c:978-984).
 pub const PARS_E1: [i32; 9] = [30, 75, 120, 90, 165, 180, 180, 30, 165];
+/// The largest kill, item or secret count a saved `wminfo` may hold: the tally multiplies it by
+/// 100 in an `int` (wi_stuff.c:1338-1340) and steps a counter 2 past it at most.
+pub const MAX_TALLY: i32 = i32::MAX / 100;
 
 /// `wbplayerstruct_t` of the console player (d_player.h:173-185), as `G_DoCompleted` fills it
 /// (g_game.c:1122-1131). `in` is 1, `frags` and `score` 0 in a single-player session.
@@ -185,7 +188,12 @@ impl Intermission {
     fn init_animated_back(&mut self, rng: &mut DoomRng) -> u16 {
         for a in &mut self.anims {
             a.ctr = -1;
-            a.nexttic = self.bcnt + 1 + i32::from(rng.m_random()) % ANIM_PERIOD;
+            // `bcnt` is a restored value: no `+` on it (a saved `bcnt` is the intermission's
+            // tic count, far from `i32::MAX`, by `DSES`'s rules; this keeps debug and release equal).
+            a.nexttic = self
+                .bcnt
+                .wrapping_add(1)
+                .wrapping_add(i32::from(rng.m_random()) % ANIM_PERIOD);
         }
         NUM_ANIMS as u16
     }
@@ -198,7 +206,7 @@ impl Intermission {
                 if a.ctr >= ANIM_FRAMES {
                     a.ctr = 0;
                 }
-                a.nexttic = self.bcnt + ANIM_PERIOD;
+                a.nexttic = self.bcnt.wrapping_add(ANIM_PERIOD);
             }
         }
     }
@@ -388,9 +396,123 @@ impl Intermission {
         }
     }
 
+    /// What the tally counts up to (wi_stuff.c:1338-1343, 1392, 1400): the three percentages,
+    /// the time and the par time in seconds. `None` for a `wminfo` the tally cannot divide or
+    /// multiply without leaving `int`: a maximum below 1 (`WI_initVariables` makes it 1) or a
+    /// count outside 0..=[`MAX_TALLY`].
+    pub fn targets(wbs: &WbStart) -> Option<[i32; 5]> {
+        let p = wbs.plyr;
+        let counts = [p.skills, p.sitems, p.ssecret];
+        let maxima = [wbs.maxkills, wbs.maxitems, wbs.maxsecret];
+        if counts.iter().any(|c| !(0..=MAX_TALLY).contains(c))
+            || maxima.iter().any(|m| *m < 1)
+            || p.stime < 0
+            || wbs.partime < 0
+        {
+            return None;
+        }
+        Some([
+            counts[0] * 100 / maxima[0],
+            counts[1] * 100 / maxima[1],
+            counts[2] * 100 / maxima[2],
+            p.stime / TICRATE,
+            wbs.partime / TICRATE,
+        ])
+    }
+
+    /// Whether the statics are those of an intermission in progress over `wbs`, after one of
+    /// its tics (`DSES` v1 outside a level; the error names the rule). What `WI_Start` and
+    /// `WI_Ticker` keep (wi_stuff.c:730-770, 1318-1434, 1503-1536):
+    ///
+    /// - `firstrefresh` 1 and `bcnt` at least 1; every animation's `nexttic` after `bcnt` and at
+    ///   most [`ANIM_PERIOD`] after it (wi_stuff.c:514-528, 547-563);
+    /// - the tally (`state` 0): `cnt` 0, `acceleratestage` 0 (each tic consumes a press),
+    ///   `sp_state` 1..=10; a counter before its stage is -1, after it its target, and in its
+    ///   stage below the target on the steps the stage takes (2 from -1; 3 for the two times);
+    ///   `cnt_pause` 35 in a counting stage and 1..=35 in a pause or at stage 10;
+    /// - the next-location screen (`state` 1): `cnt` 1..=140, `acceleratestage` 0, the tally
+    ///   finished (`sp_state` 10, every counter its target);
+    /// - the last ten tics (`state` -1): `cnt` 0..=10, the tally finished.
+    pub fn reachable(&self, wbs: &WbStart) -> Result<(), &'static str> {
+        self.check()?;
+        let t = Self::targets(wbs).ok_or("wminfo tally")?;
+        let rule = |ok: bool, name: &'static str| if ok { Ok(()) } else { Err(name) };
+        rule(
+            self.firstrefresh == 1 && self.bcnt >= 1,
+            "firstrefresh or bcnt",
+        )?;
+        rule(
+            self.anims.iter().all(|a| {
+                let ahead = i64::from(a.nexttic) - i64::from(self.bcnt);
+                (1..=i64::from(ANIM_PERIOD)).contains(&ahead)
+            }),
+            "anim nexttic",
+        )?;
+        let counters = [
+            self.cnt_kills,
+            self.cnt_items,
+            self.cnt_secret,
+            self.cnt_time,
+            self.cnt_par,
+        ];
+        if self.state != 0 {
+            rule(self.sp_state == 10 && counters == t, "a finished tally")?;
+            return if self.state == 1 {
+                rule(
+                    (1..=SHOWNEXTLOCDELAY * TICRATE).contains(&self.cnt)
+                        && self.acceleratestage == 0,
+                    "next location",
+                )
+            } else {
+                rule((0..=10).contains(&self.cnt), "no state")
+            };
+        }
+        rule(
+            self.cnt == 0 && self.acceleratestage == 0 && (1..=10).contains(&self.sp_state),
+            "tally",
+        )?;
+        let s = self.sp_state;
+        rule(
+            if s & 1 == 1 || s == 10 {
+                (1..=TICRATE).contains(&self.cnt_pause)
+            } else {
+                self.cnt_pause == TICRATE
+            },
+            "cnt_pause",
+        )?;
+        // A counter stepping by `step` from -1, not yet at its target.
+        let counting =
+            |c: i32, target: i32, step: i32| c >= -1 && c < target && (c + 1) % step == 0;
+        for (k, stage) in [2, 4, 6].into_iter().enumerate() {
+            let c = counters[k];
+            rule(
+                match s.cmp(&stage) {
+                    std::cmp::Ordering::Less => c == -1,
+                    std::cmp::Ordering::Equal => counting(c, t[k], 2),
+                    std::cmp::Ordering::Greater => c == t[k],
+                },
+                "tally counter",
+            )?;
+        }
+        let (time, par) = (counters[3], counters[4]);
+        rule(
+            match s.cmp(&8) {
+                std::cmp::Ordering::Less => time == -1 && par == -1,
+                std::cmp::Ordering::Equal => {
+                    (time == t[3] || counting(time, t[3], 3))
+                        && (par == t[4] || counting(par, t[4], 3))
+                        && !(time == t[3] && par == t[4])
+                }
+                std::cmp::Ordering::Greater => time == t[3] && par == t[4],
+            },
+            "time counters",
+        )
+    }
+
     /// The bounds a saved intermission must keep (`DSES` v1): `state` -1..=1, `acceleratestage`
     /// 0 or 1, `sp_state` 0..=10, `cnt` 0..=140, `cnt_pause` 1..=35 (0 in a fresh process), every
-    /// animation `ctr` -1..=2. Counts are not bounded beyond `i32` (they are the C's ints).
+    /// animation `ctr` -1..=2. Counts are not bounded here beyond `i32` (they are the C's ints);
+    /// outside a level [`Self::reachable`] ties them to `wminfo`.
     pub fn check(&self) -> Result<(), &'static str> {
         let ok = [
             ((-1..=1).contains(&self.state), "state"),
@@ -502,6 +624,51 @@ mod tests {
             (wi.sp_state, t.starts.clone()),
             (10, vec![IntermissionSound::Barexp])
         );
+    }
+
+    /// Review item 2: the animation arithmetic on a `bcnt` at the top of `int` neither panics
+    /// in a debug build nor differs from a release build (the two sums wrapped or panicked
+    /// before; `DSES` now refuses such a state, so no session reaches this), and
+    /// [`Intermission::reachable`] accepts every tic of a real tally and refuses its forgeries.
+    #[test]
+    fn restored_counts_at_the_top_of_int_do_not_overflow() {
+        let mut w = wbs(1, 2, 45 * 35);
+        let mut wi = Intermission::default();
+        let mut rng = DoomRng::default();
+        wi.start(&mut w, &mut rng);
+        let mut latches = Latches::default();
+        for tic in 0..400 {
+            let buttons = if tic == 320 || tic == 330 { BT_USE } else { 0 };
+            let t = wi.ticker(&w, buttons, &mut latches, &mut rng);
+            assert_eq!(wi.reachable(&w), Ok(()), "tic {tic}: {wi:?}");
+            if t.world_done {
+                break;
+            }
+        }
+        assert_eq!((wi.state, wi.cnt), (-1, 0), "the intermission ended");
+        // `bcnt == nexttic` at the top of `int`: `nexttic = bcnt + 11` (wi_stuff.c:563).
+        let mut top = wi;
+        top.state = 0;
+        top.bcnt = i32::MAX - 1;
+        top.anims[0].nexttic = i32::MAX;
+        top.ticker(&w, 0, &mut latches, &mut rng);
+        assert_eq!(top.anims[0].nexttic, i32::MAX.wrapping_add(ANIM_PERIOD));
+        // `WI_initAnimatedBack` there: `nexttic = bcnt + 1 + M_Random() % 11` (wi_stuff.c:519).
+        top.bcnt = i32::MAX;
+        top.init_animated_back(&mut rng);
+        assert!(top.anims.iter().all(|a| a.nexttic < 0));
+        assert_eq!(top.reachable(&w), Err("anim nexttic"));
+        // Counts the tally cannot multiply by 100, and a maximum it cannot divide by.
+        let mut big = w;
+        big.plyr.skills = MAX_TALLY + 1;
+        assert_eq!(Intermission::targets(&big), None);
+        big.plyr.skills = MAX_TALLY;
+        assert_eq!(
+            Intermission::targets(&big).map(|t| t[0]),
+            Some(MAX_TALLY * 100 / 2)
+        );
+        big.maxkills = 0;
+        assert_eq!(Intermission::targets(&big), None);
     }
 
     #[test]

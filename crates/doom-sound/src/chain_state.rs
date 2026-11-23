@@ -89,6 +89,12 @@ pub enum ChainStateError {
     },
     /// Restore: not yet ([`NotYet::MeltInProgress`]).
     NotYet(NotYet),
+    /// A state no session reaches, by the named rule (checked by version 2's reader only;
+    /// version 1's reader is frozen): an actor origin of generation 0 (no actor has it), a
+    /// labelled detector with no texture (it has no candidate to fire on), an occupied channel
+    /// whose handle the last `S_UpdateSounds` would have freed (`gametic >= handle`,
+    /// s_sound.c:560), or a channel playing a sound whose lump was never looked up.
+    Unreachable(&'static str),
 }
 
 impl From<StateError> for ChainStateError {
@@ -132,7 +138,10 @@ pub struct ChainSoundState {
 impl ChainSoundState {
     /// The `DSND` version 2 bytes. A state no session holds encodes to bytes that
     /// [`Self::decode`] refuses, never to another state (out-of-range values are written as the
-    /// largest value of their field, which is out of range).
+    /// largest value of their field, which is out of range). The struct names the channel count
+    /// twice (`config.channels` and the table's length) and the texture count twice
+    /// (`config.textures` and the detector's); a hand-built state in which the two disagree is
+    /// such a state, and its count is written as the largest value.
     pub fn encode(&self) -> Vec<u8> {
         let mut out = Vec::with_capacity(MAX_BYTES);
         out.extend_from_slice(&MAGIC);
@@ -144,10 +153,15 @@ impl ChainSoundState {
             .filter(|v| *v <= 127);
         let channels = u8::try_from(self.channels.len())
             .ok()
-            .filter(|n| usize::from(*n) <= MAX_CHANNELS);
+            .filter(|n| usize::from(*n) <= MAX_CHANNELS && usize::from(*n) == self.config.channels);
+        let textures = if self.detector.textures() == self.config.textures {
+            self.config.textures
+        } else {
+            u32::MAX
+        };
         out.push(volume.unwrap_or(u8::MAX));
         out.push(channels.unwrap_or(u8::MAX));
-        out.extend_from_slice(&self.config.textures.to_le_bytes());
+        out.extend_from_slice(&textures.to_le_bytes());
         out.push(self.state.byte());
         out.extend_from_slice(&self.gamemap.to_le_bytes());
         out.extend_from_slice(&self.level_start.to_le_bytes());
@@ -237,6 +251,37 @@ impl ChainSoundState {
         }
         if tic == 0 && (table.iter().any(Option::is_some) || mixer.iter().any(Option::is_some)) {
             return Err(StateError::BusyAtStart.into());
+        }
+        // Version 2 only (version 1's reader is frozen): states no session reaches.
+        if labelled && textures == 0 {
+            return Err(ChainStateError::Unreachable(
+                "a labelled detector with no texture",
+            ));
+        }
+        for e in table.iter().flatten() {
+            if matches!(e.origin, SoundOrigin::Actor(a) if a.generation() == 0) {
+                return Err(ChainStateError::Unreachable(
+                    "an actor origin of generation 0",
+                ));
+            }
+            // The last tic's `S_UpdateSounds` ran with `gametic` = the tics run and freed every
+            // channel with `gametic >= handle` (s_sound.c:560, i_sound.c:517-521).
+            if u64::try_from(e.handle).map_or(true, |h| h <= tic) {
+                return Err(ChainStateError::Unreachable(
+                    "a channel with an expired handle",
+                ));
+            }
+            // `S_StartSound` sets the flag of every sound it starts (s_sound.c:363-365).
+            if !looked_up[e.sfx.index()] {
+                return Err(ChainStateError::Unreachable(
+                    "a channel whose sound was never looked up",
+                ));
+            }
+        }
+        if mixer.iter().flatten().any(|m| !looked_up[m.sfx.index()]) {
+            return Err(ChainStateError::Unreachable(
+                "a mixer channel whose sound was never looked up",
+            ));
         }
         Ok(Self {
             config: ChainConfig {
