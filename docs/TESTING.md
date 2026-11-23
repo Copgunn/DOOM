@@ -3092,6 +3092,14 @@ cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_s
   frames at screenblocks 10 and 11, sound and mixer through the session), `m6a_session_rules` (`DSES` restore, forgeries,
   refusals, the game mode), `m6a_state` (the session's level state equals the genuine engine's on every level tic, the
   stale-attacker record), `m6a_play` (the app played by keys; see below). Planted-fault tests: `wire26_chain`, `m6a_session`, `m6a_state` and `m6a_play`.
+- **The four format readers on states no session produces** (reader review of 2026-11-22; Rust-only tests of the formats' own
+  rules): `m6a_dses_reader` in `doom-game` (`DSES`: forged states refused by rule name; every committed item saved, decoded
+  and restored at every tic, so the rules refuse nothing a session saves; the saved `secretexit` byte), `dsnd2_reader` in
+  `doom-sound` (`DSND` version 2 on hand-built states), `d_display/session_reader_tests.rs` in `doom-render` (`DDSP` version 3:
+  run counts, the melt tag, `check`), `wire26_tests.rs` in `doom-sim` (`DSIM` 42's start group against the level) and the
+  intermission arithmetic test in `session/intermission.rs`. Locally, on a real-map set:
+  `M6A_REFERENCE_DIR=DIR cargo test --release -p doom-game --test m6a_dses_reader -- --ignored real_maps` decodes the saved
+  state at every tic and restores every 35th.
 - **Real maps, local only** (reads the owner's IWAD, never in CI): `tools/local/m6a_session_real.py --set single|chains --mode
   registered|retail --out DIR [--work DIR] [--only NAME,..] [--jobs N]` runs the genuine engine on a scratch copy of the IWAD
   named for the mode and writes goldens in the layout of `tests/reference`. The gates then read them:

@@ -176,6 +176,62 @@ Local, 2026-11-22 19:05 to 19:29 PST, one command at a time, no uncommitted code
 No existing test, fixture or expectation was changed by either commit: every DSIM1-41 expectation passes as committed. CI on
 this head and later ones is GitHub's to show.
 
+### 5.5 The reader review (2026-11-22, late evening)
+
+An independent read-only review of the four new format readers at `af64d1aa` listed eleven items. Each was checked against the
+code first. **All eleven had something real; three were narrower than stated**: of item 9's four states, three (a cleared wipe
+at the entry, a level scene's tic, carried taint with no wipe due) were already refused by the display's `check` and by every
+restore, and were accepted only by decoding alone; of item 11's second state, the load capture (level tic 0) was already
+refused through the cross-check with `events.pending`, and the hole was at level tic 1; and item 10's generation-0 origin was
+already refused at restore (it resolves to no actor) and accepted only by decoding. The rules as they now stand are in
+[STATE_FORMAT](../STATE_FORMAT.md#session-state-dses-version-1-m6a).
+
+| Item | Found | Change |
+| --- | --- | --- |
+| 1. `DSES`: `wminfo.last + 1` on the file's value | real: overflow panic in a debug build, wrap in a release build | checked addition; refused as `wminfo map` |
+| 2. Intermission: `bcnt + ...` on restored values; wrapping tally arithmetic | real for the two sums; the wrapping operations were already equal in both builds, but reachable with any value | the two sums wrap like the rest; the reader now refuses what made them matter: `bcnt` is the intermission's tic count, `nexttic` 1 to 11 ahead, counts at most `i32::MAX / 100`, every tally counter on its stage's steps |
+| 3. `DDSP` v3: run count added before the bound | real on a 32-bit `usize` only | compared with the room left; the same sum in the older `DRST` v2 reader is documented as a limit and not patched |
+| 4. `DSES` `secretexit` against `Session::secretexit()` | real disagreement on an exit tic | **documents changed, code and bytes kept**: the byte is the last completed exit's flag, the accessor the C's variable; the pending exit is in the level capture |
+| 5. `DDSP` v3 melt tag "never written" | real: `encode` writes it for a hand-built state | **document changed** (and the type's comment): no display produces it; the format carries it; `check` refuses it |
+| 6. `DSND` v2: two channel counts and two texture counts in the in-memory state | real: a disagreeing state encoded to another, valid state | **code changed**: a disagreeing state is written with the field's largest value, which the reader refuses; bytes of consistent states unchanged |
+| 7. `DSES`: `gameaction` 8 in the tally, any view heights, any counts, a carried player unlike the finished one | real | 8 exactly when the last count is 0; counts, maxima, time and the carried player equal the finished level's at restore, the carried health equals `st_oldhealth` at decode; **view heights cannot be tied** (no embedded state holds them outside a level): `viewheight` bounded above, the rest a declared limit |
+| 8. `DSES`: embedded `DSIM` map, tic, start tic; `DDSP` `entered` against `DSND` level end | real at decode (tic and start tic were tied at restore; the map and `entered` were not) | the capture's map, tic and start `gametic` and the display's `entered` are checked when decoding |
+| 9. `DDSP` v3: four states | one real (`st_oldhealth` above 200 outside a level); three accepted by decoding alone | `st_oldhealth` 0 to 200 outside a level; `DSES` runs the display's `check` when decoding |
+| 10. `DSND` v2: four states | real at decode | refused by version 2's reader (`Unreachable`); version 1's reader untouched |
+| 11. `DSIM` 42 start group against the level | real at level tic 0 (health) and tic 1 (the chainsaw record) | checked by the version 42 reader at those tics |
+
+**No saved byte and no golden changed.** No file under `tests/reference` is touched; every state a session saves encodes as
+before (only hand-built `DSND` states with disagreeing counts encode differently). One existing M6a test was edited, none on
+master: `refusals_leave_the_session_unchanged` in `crates/doom-sound/tests/m6a_chain.rs` forged a state at the last countable
+tic with channels still occupied, which the new handle rule refuses; the forgery now clears its channels (one line).
+
+**That the rules refuse nothing a session saves** (Rust against Rust): `every_saved_state_decodes_and_restores` saves, decodes
+and restores the state before every tic and after the last of every committed item the session starts: 26 items, 11,367
+tics, 11,399 states, none refused (NOE1M2AT, SKILL0 and SKILL1 do not start). Locally on the real-map sets, decoding every
+state and restoring every 35th: the four hand-test sessions (28,516 tics,
+28,520 states) and CH2 retail (10,765 tics, 10,766 states), none refused. The other real-map sets were not run through it.
+
+**Tests added** (12 that CI runs and 1 local): `doom-game` `m6a_dses_reader` (5, and the local real-map one) and 1 in
+`session/intermission.rs`; `doom-sound` `dsnd2_reader` (2); `doom-render` `d_display/session_reader_tests.rs` (3); `doom-sim`
+`wire26_tests.rs` (1). For items 1, 2, 7, 8 and 11 the forged state was accepted (or, for 1 and 2, overflowed) before the
+change: read from the code for all, and run for item 11 with the new check switched off.
+
+**Gates at `7490f5e2`** (local, 2026-11-22 20:22 to 20:47 PST, one command at a time, no uncommitted code; `7490f5e2`
+differs from `572ed88f` in one doc comment):
+
+| Gate | Head | Observed |
+| --- | --- | --- |
+| Build, `cargo fmt --check` (workspace and fuzz workspace), Clippy with warnings denied | `572ed88f` | clean |
+| Workspace tests (debug) | `572ed88f` | 2,101 passed, 0 failed, 11 ignored (151 targets): the 2,089 of §5.4 and the 12 new tests |
+| Release simulation and type tests | `572ed88f` | 1,415 passed, 0 failed, 2 ignored (87 targets) |
+| Rustdoc with warnings denied | `572ed88f`: **failed** (a link from a public comment to a private constant); `7490f5e2`: clean | fixed in the comment |
+| Rust 1.85.0 workspace tests | `7490f5e2` | 2,101 passed, 0 failed, 11 ignored |
+| The local real-map saved-state check | the code of `572ed88f` before its commit | the counts above |
+
+**Not run again after the reader changes:** the Rust real-map session and state gates (§1, §5.1, §5.2). The readers changed
+are not on those gates' path (they compare rows, frames, sound and capture digests and do not decode a saved state), but that
+is an argument from the code, not an observation.
+
 ## Not run, and limits
 
 - **Local only.** Every real-map figure is from the owner's IWAD on his WSL2 machine on 2026-11-22; it cannot run in CI and nobody

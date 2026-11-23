@@ -2538,8 +2538,12 @@ in `events.sounds.pending` at the load capture and first in tic 0's `events.soun
 fresh player with index 0 and `gametic` within bounds, a reborn start the fresh player, a carried start the bounds of
 `CarriedStart::validate` (health 1-200, armour 0-200 with type matching points, weapons, ammunition within maxima = table doubled
 with the backpack, cheats 0, bob in range, psprite domain, flash tics 0-7); the sound list as above; no other `level.start.`
-field. Under v42 a null flash psprite may hold 1-7 tics (wire 26 only). It does not replay the load. The `secretexit` flag is a
-session global, not level state: the encoder counts it only with the exit request.
+field. Under v42 a null flash psprite may hold 1-7 tics (wire 26 only). It does not replay the load, but it ties the group to
+the level where the capture still shows the start: **at level tic 0** `original_player.0.health` equals `level.start.health`
+(p_mobj.c:673), and a carried chainsaw's record is `events.sounds.pending.0` **at level tic 0** and `events.sounds.last.0`
+**at level tic 1**; later captures no longer hold either, and nothing ties the rest of the start to the live player (a
+limit: the reader does not rebuild the load). The `secretexit` flag is a session global, not level state: the encoder counts
+it only with the exit request.
 
 ## Sound session state (`DSND` version 1, M5c)
 
@@ -2735,7 +2739,7 @@ version 3 (`Version(3)`), and `SessionDisplayState::decode` reads version 3 only
 | old game state | u8: 0 to 2, or 255 for -1 | `D_Display`'s `oldgamestate` (d_main.c:196, 215-220, 300) |
 | scene, level | u32 length n, n bytes | a complete `DRST` version 2 |
 | scene, intermission or finale | u32 `fuzzpos` (0 to 49), 4 x i32 wall steps, 64,000 bytes, taint runs | `screens[0]` and the renderer globals that outlive a level |
-| melt | u8: 0 none, 1 in progress; 1 is followed by u8 steps shown (1 to 42), the 64,000-byte start screen and its taint runs | the writer never writes 1 yet |
+| melt | u8: 0 none, 1 in progress; 1 is followed by u8 steps shown (1 to 42), the 64,000-byte start screen and its taint runs | no display produces 1 yet (`Display::session_state` always gives none); `encode` writes 1 for a state built by hand with a melt, `decode` keeps it, and `check` and every restore refuse it |
 | status bar and HUD | exactly version 1's rows from `screenblocks` to the message line | as version 1 |
 
 Taint runs are as in `DRST`: u32 run count n, then n x (u32 count > 0, u32 origin), the counts summing to 64,000. A melt in
@@ -2745,7 +2749,16 @@ truncation, trailing bytes, a game state above 2, an old game state other than 0
 embedded `DRST`, `fuzzpos` at or above 50, runs that do not cover the screen, a melt byte above 1, melt steps outside 1 to 42,
 and version 1's checks on its rows. **`check`** and `Display::restore_session` additionally refuse a melt in progress
 (`NotYet(MeltPictures)`), a wipe flag that disagrees with the session tics since `entered` (clear at 0, set from 2, either
-at 1), a level scene whose `DRST` tic is not those tics, and a tainted carried pixel with no wipe due.
+at 1), a level scene whose `DRST` tic is not those tics, a tainted carried pixel with no wipe due, and outside a level an
+`st_oldhealth` outside 0 to 200 (the finished level's last health, st_stuff.c:994). `DSES` applies `check` when it decodes.
+
+**Run counts and 32-bit targets.** A taint run's count is a u32 from the file. Version 3's own reader compares it with the room
+left before adding it. The older `DRST` version 2 reader (`RenderState::decode`, which also reads the level scene embedded
+here, and through it `DDSP` versions 1 and 2) adds the count to the length first (`crates/doom-render/src/state.rs`, the taint
+run loop). On a 64-bit target the sum cannot overflow and the run is refused as "taint runs". On a 32-bit target a count near
+2^32 overflows `usize`: a panic in a debug build, and in a release build a wrapped sum that passes the bound, after which the
+resize panics or exhausts memory. That reader is frozen with its format and is not patched; every supported build is 64-bit
+(the CI targets), so this is a declared limit of the older reader on a target nobody builds, not a behaviour change.
 
 ## Sound session state (`DSND` version 2, M6a)
 
@@ -2774,6 +2787,15 @@ and 8 busy mixer channels of 28 bytes).
 | 59 | 8 | the number of firings (0 exactly without a label) |
 | 67 | | the "lump looked up" flags, the N sound-logic channels, the mixer's `handlenums` and the 8 mixer channels, exactly as version 1 from its offset 49 |
 
+**What version 2's reader refuses beyond version 1's shared checks** (`ChainStateError::Unreachable`; version 1's reader is
+frozen and unchanged): an actor origin of generation 0 (no actor has it); a detector label with a texture count of 0 (it has no
+candidate to fire on); an occupied sound-logic channel whose handle is at most the tics run (the last `S_UpdateSounds` frees
+every channel with `gametic >= handle`, s_sound.c:560, i_sound.c:517-521); and an occupied logic or busy mixer channel whose
+sound has no "lump looked up" flag (`S_StartSound` sets it for every sound it starts). **The encoder**: the in-memory state
+names the channel count twice (the configuration's and the table's length) and the texture count twice (the configuration's
+and the detector's); a hand-built state in which they disagree is written with the largest value in that field, which the
+reader refuses, so it never encodes to another state. A session's own states are unaffected.
+
 A melt in progress decodes, and restoring it is `NotYet::MeltInProgress` until the melt steps exist. Restoring checks the state
 against the caller's configuration and music lumps, the loaded sound set and the level simulation (in a level) or the finished
 level's, held read-only (outside one): consistency checks, not proof that a run reaches the state.
@@ -2795,7 +2817,7 @@ restore takes the level's simulation (in the intermission the finished level's, 
 | `gamestate` | u8: 0 level, 1 intermission, 2 finale | 2 is refused (not built yet) |
 | `gamemap` | u8, 1 to 9 | the current or finished level's map |
 | `gameaction` | u8: 0, 6 or 8 | 6 only in a level that requested an exit; 8 only in the intermission after `G_WorldDone` |
-| `secretexit`, `didsecret` | u8, u8 (0 or 1) | g_game.c:1000; the console player's |
+| `secretexit`, `didsecret` | u8, u8 (0 or 1) | `secretexit` as the last completed level left it (g_game.c:1000, read by `G_DoCompleted`); the console player's `didsecret`. **On an exit tic** (`gameaction` 6) the C has already rewritten `secretexit` for the pending exit (g_game.c:1000-1012) and this byte has not: the pending exit is in the level capture (its exit request), `Session::secretexit()` reports it, and the completion tic writes the byte |
 | `wminfo` | i32 `epsd`, u8 `didsecret`, then 10 x i32: `last`, `next`, `maxkills`, `maxitems`, `maxsecret`, `partime`, `skills`, `sitems`, `ssecret`, `stime` | d_player.h:173-211 |
 | wi_stuff.c statics | 12 x i32 (`state`, `acceleratestage`, `cnt`, `bcnt`, `firstrefresh`, `sp_state`, the five counts, `cnt_pause`), u8 `snl_pointeron`, 10 x (i32 `ctr`, i32 `nexttic`) | process statics, kept across levels |
 | carried player | u8: 0 none (in a level), 1 alive, 2 dead at the exit | |
@@ -2807,12 +2829,38 @@ restore takes the level's simulation (in the intermission the finished level's, 
 | sound | u8 kind = 2, u32 length n, n bytes | `DSND` version 2 (the kind names the embedded format; 2 is the only one) |
 
 **The decoder** rejects a wrong magic or version, more than 64 MiB, truncation, trailing bytes, a byte outside its values, a
-finale (state or slot), an embedded state its own reader refuses, and then checks the settings, `gamemap`, `gameaction` against
-the game state, the wi_stuff.c bounds, the display's and the sound's game state, tics and map, a carried player exactly outside a
-level, and outside a level `wminfo` as `G_DoCompleted` and `WI_initVariables` write it. **Restore** also checks the declared
-mode, the capture, `gameaction` 6 against the level's exit request, the level's start `gametic` against the sound's level start,
-and the display's and sound's own restores. A melt in progress is the display's and sound's (each refuses it, not built yet);
-input held during a melt belongs to the app's event layer, not to the session.
+finale (state or slot), an embedded state its own reader refuses, and then checks (`SessionState::check`, each rule named in
+the error):
+
+- the settings, `gamemap`, `gameaction` against the game state, the wi_stuff.c bounds, a carried player exactly outside a level;
+- **the embedded level capture against the outer state**: its `level.map` is `gamemap`, its `tic` the level tics the sound
+  state gives, its `level.start.gametic` the sound's level start;
+- **the display**: its own `check` (above), its game state, tics and `screenblocks`, no wipe due (a state is saved after a whole
+  tic, whose frame clears the flag; the exception is the state before the first tic), and its `entered` equal to the sound's
+  level start in a level and to its level end outside one;
+- the sound's game state, tics and map;
+- **outside a level**, `wminfo` as `G_DoCompleted` and `WI_initVariables` write it (`last + 1` is computed only where it
+  cannot overflow), kill, item and secret counts of 0 to `i32::MAX / 100` (the tally multiplies by 100), and the wi_stuff.c
+  statics as an intermission in progress over that `wminfo` keeps them: `bcnt` equal to the session tics since the level
+  ended, every animation's `nexttic` 1 to 11 after `bcnt`, each tally counter at -1 before its stage, on its steps below the
+  target during it and at the target after it, `cnt` and `acceleratestage` as the state allows; `gameaction` 8 exactly when
+  the last count has reached 0; the carried health equal to the status bar's `st_oldhealth` (0 for a dead player); the
+  carried `viewheight` at most 41 units;
+- **in a level**, the wi_stuff.c statics either a fresh process's or a finished intermission's (`state` -1, `cnt` 0).
+
+**Restore** also checks the declared mode, the capture byte for byte, `gameaction` 6 against the level's exit request, and
+outside a level against the finished level's simulation: the exit and its kind, the carried player field for field (dead or
+alive, health, armour, weapons, ammunition, latches as at the exit, bob, psprite values), and `wminfo`'s maxima, counts and
+time; then the display's and sound's own restores. A melt in progress is the display's and sound's (each refuses it, not
+built yet); input held during a melt belongs to the app's event layer, not to the session.
+
+**Limits.** These are consistency rules, not proof that a run reaches the state. Two things cannot be tied exactly: the
+carried `viewheight` and `deltaviewheight` (outside a level no embedded state holds the finished player's view: the
+simulation does not model it and the display keeps only the screen; `viewheight` is bounded above, and is rewritten by
+`P_SpawnPlayer` anyway, while a forged `deltaviewheight` would move the next level's view for a few tics), and the saved
+`attackdown` and `usedown` latches after the first intermission tic (the intermission rewrites them from the commands,
+which the state does not hold). The arithmetic on restored intermission values uses wrapping operations throughout, so a
+debug and a release build cannot differ on them.
 
 ## M6a golden files that hold state digests
 

@@ -3739,6 +3739,15 @@ today). The owner's rulings for when they are built, declared now:
 2. **Intermission and finale accept every command the C accepts.** A level or load tic keeps wire 24's command domain; the
    completion tic and every later intermission tic take any command except `BT_SPECIAL`, of which `WI_Ticker` reads bits 0 and 1.
 
+### Saved states: what the readers refuse, and two limits
+
+The four formats a session saves (`DSES` version 1 with its embedded `DSIM` 42, `DDSP` version 3 and `DSND` version 2) refuse
+states no session produces, by rules listed in [STATE_FORMAT](STATE_FORMAT.md#session-state-dses-version-1-m6a); the rules are
+consistency checks, not proof that a run reaches a state. Declared limits: the carried view heights cannot be tied to
+anything outside a level (only an upper bound on `viewheight`), and the older `DRST` version 2 reader adds a run count
+before checking it, which can overflow only on a 32-bit target (none is built or supported). The saved `secretexit` byte is
+the last completed exit's flag; on an exit tic the pending exit is in the level capture.
+
 ### The stale attacker: a representation difference
 
 After an exit the original's `players[0].attacker` can point into the freed level; the session's carried start holds NULL.
