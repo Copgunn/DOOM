@@ -356,17 +356,24 @@ fn wire_27_identity_and_constructor() {
     assert_eq!(s.level_start_kind(), Some(StartKind::NewGame));
 }
 
-/// Ruling 6: the four callers with a genuine wrapping item wrap, and only under
-/// wire 27: the same vector ("a wrong intercept" above) is refused through a
-/// wire-26 world. The shoot trace against a thing has none
-/// (tests/reference/wire27_results.json) and stays checked under wire 27: the
-/// vector is refused there under both wires.
+/// Ruling 6 and the owner's corrections of 2026-11-24: the four callers with a
+/// genuine wrapping item wrap, and only under wire 27, each in the classes its
+/// items take. "Wraps that cancel" above is admitted for all four through a
+/// wire-27 world and refused through a wire-26 one; "a wrong intercept" (a wrong
+/// den) only for the aim and shoot traces (AIMSHOT): the slide and use traces
+/// have no such item and refuse it. The shoot trace against a thing has none
+/// (tests/reference/wire27_results.json) and stays checked under wire 27: both
+/// vectors are refused there under both wires.
 #[test]
 fn every_caller_wraps_under_wire_27_alone() {
     let l = base();
     let (v4, v5) = (level(&l, false), level(&l, true));
-    let v = fx([0, 0]);
-    let (d2, s1, d1) = (fx([1 << 30, 0]), fx([1 << 24, 0]), fx([0x7fff_0000; 2]));
+    let (big, a) = (0x7fff_0000, 1 << 30);
+    let cancel = ([0, 0], [a, a - 65536], [1 << 24, 0], [big, big]);
+    let wrong = ([0, 0], [a, 0], [1 << 24, 0], [big, big]);
+    let at = |w: &StaticWorld, c, v: (V, V, V, V)| {
+        policy_intercept(w, c, fx(v.0), fx(v.1), fx(v.2), fx(v.3)).map(Fixed::bits)
+    };
     for caller in [
         InterceptCaller::Aim,
         InterceptCaller::ShootLine,
@@ -374,16 +381,21 @@ fn every_caller_wraps_under_wire_27_alone() {
         InterceptCaller::Use,
     ] {
         assert!(wire27_wraps(caller));
-        assert_eq!(policy_intercept(&v4.world, caller, v, d2, s1, d1), None);
-        assert_eq!(
-            policy_intercept(&v5.world, caller, v, d2, s1, d1),
-            Some(Fixed::from_bits(-33_553_408))
-        );
+        let den_wrong = matches!(caller, InterceptCaller::Aim | InterceptCaller::ShootLine);
+        for (v, expected) in [
+            (cancel, Some(256 << 16)),
+            (wrong, den_wrong.then_some(-33_553_408)),
+        ] {
+            assert_eq!(at(&v4.world, caller, v), None);
+            assert_eq!(at(&v5.world, caller, v), expected, "{caller:?}");
+        }
     }
     let thing = InterceptCaller::ShootThing;
     assert!(!wire27_wraps(thing));
     for world in [&v4.world, &v5.world] {
-        assert_eq!(policy_intercept(world, thing, v, d2, s1, d1), None);
+        for v in [cancel, wrong] {
+            assert_eq!(at(world, thing, v), None);
+        }
     }
 }
 

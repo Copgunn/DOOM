@@ -86,8 +86,8 @@ ITEMS = {
                '1,000 units out on the line of fire is not hit (exact: the barrel at 0.49 before the wall at 0.73)'),
     'SATUR': (5, 2097, (0, 0), [(997, 74)], TURNED, ['shoot_line'], ['den_wrong.num_wrong.max'],
               'the same shot with the east wall one unit steeper: the int den is 38,768, the num sum leaves int, and '
-              'FixedDiv saturates (m_fixed.c:62-63): MAXINT, an intercept never traversed; the barrel is hit. Wire 27 '
-              'refuses that tic (FixedDivRefusal::Saturation)'),
+              'FixedDiv saturates (m_fixed.c:62-63): MAXINT, an intercept that P_TraverseIntercepts never reaches '
+              '(p_maputl.c:698-709); the barrel is hit'),
     'NUMWRAP': (6, 2098, (0, -2150), [], ['cmd 4 0 0 1 ATTACK', 'cmd 16 0 0 0 ATTACK', 'idle 15'], ['shoot_line'],
                 ['den_wrong.num_wrong.div2'],
                 'one pistol shot at fine angle 128 from 1,007 units or more west of the east wall: the num sum and the den '

@@ -312,10 +312,13 @@ BRANCHES = ('div2', 'max', 'min', 'range', 'absmin')
 CLASSES = ([f'nowrap.den_exact.num_exact.{b}' for b in BRANCHES] + ['nowrap.den_zero_exact']
            + [f'wrap.den_{d}.num_{n}.{b}' for d in ('exact', 'wrong') for n in ('exact', 'wrong') for b in BRANCHES]
            + ['wrap.den_zero', 'wrap.den_zero_exact'])
-# The wrap classes wire 27 admits per caller (crate::intercept_vector::wire27_admits; every other wrap class is refused).
+# The wrap classes wire 27 admits per caller, each because an item takes it (crate::intercept_vector::wire27_admits;
+# every other wrap class is refused).
 WRAPPING = ('aim', 'shoot_line', 'slide', 'use')
-ADMITTED = {c: {f'den_{d}.num_{n}.div2' for d in ('exact', 'wrong') for n in ('exact', 'wrong')} | {'den_zero', 'den_zero_exact'}
-            for c in WRAPPING}
+CANCEL = 'den_exact.num_exact.div2'
+ADMITTED = {'aim': {CANCEL, 'den_wrong.num_exact.div2'}, 'slide': {CANCEL}, 'use': {CANCEL},
+            'shoot_line': {CANCEL, 'den_wrong.num_exact.div2', 'den_zero', 'den_wrong.num_wrong.div2',
+                           'den_wrong.num_wrong.max', 'den_wrong.num_wrong.min'}}
 
 
 def wire27(caller, cls):
