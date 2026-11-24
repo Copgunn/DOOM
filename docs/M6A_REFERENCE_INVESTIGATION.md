@@ -958,6 +958,8 @@ wire-26 one; the wire-26 session keeps every refusal, for its tests and tools, a
 T15 and U6 did with earlier ones); (ii) lift the refusals in place, which changes frozen behaviour and existing tests.
 **Recommendation: (i).**
 
+**Ruled (owner, 2026-11-23):** (i): a second session configuration beside the wire-26 one, which keeps every refusal.
+
 **V2. What wire 27 is.** Options: (i) one wire 27 holding everything new: the finale and melt session, the easy skills
 and rule S″ (DSIM43); it needs all of part 2 in one pull request, because a wire is frozen once merged; (ii) wire 27 is
 the finale and melt session with `doom-sim`'s rules equal to wire 26 (DSIM43 differs from DSIM42 in the version only,
@@ -966,11 +968,15 @@ proven on every existing item), and the easy skills and E1M7 are wire 28 (DSIM44
 behaviour runs on a wire-26 simulation, against the letter of "all new behaviour is wire 27". **Recommendation: (ii) if
 the split of V7 is taken, (i) if it is not.**
 
+**Ruled (owner, 2026-11-23):** **(iii), not as recommended.** No new `doom-sim` wire for the finale and the melt: the new session embeds DSIM42 unchanged. A wire means the simulation's rules changed; session behaviour is versioned by its configuration and its format version. This replaces "all new behaviour is wire 27" in the part 2 brief. Wire 27 stays what the ruling of 2026-11-22 said: the easy skills and E1M7 on skill 3, in the next pull request. If step 4 or anything later finds that the finale or the melt needs any change in `doom-sim`, work stops and reports before writing it.
+
 **V3. New format versions.** `DDSP` v3, `DSND` v2 and `DSES` v1 were laid out with room for a finale and a melt in
 progress, and their readers refuse both today. Options: (i) new versions for all (`DSES` v2, `DDSP` v4, `DSND` v3,
 DSIM43), even where the bytes could stay; the old readers keep refusing; (ii) keep the versions and only lift the
 refusals: about 600 lines fewer, but a frozen reader would admit what it refused. **Recommendation: (i).** A display
 state saved in mid-melt holds both screens (128,000 bytes, bounded) and the 160 column positions.
+
+**Ruled (owner, 2026-11-23):** (i) for `DSES` v2, `DDSP` v4 and `DSND` v3. No DSIM43 in this pull request.
 
 **V4. What "the pixels" of a melt step means in a golden.** The runner writes one SHA-256 per step over the picture's
 64,000 palette indices, and the palette number per melt. Options: (i) the claim is equality of every step's digest and
@@ -978,13 +984,19 @@ of the palette, as for every frame since M5c; a runner switch dumps one step's b
 and the self-tests plant a column off by one and a dropped step; (ii) commit the raw pictures of the synthetic melts
 (more than 300 MB of generated data). **Recommendation: (i).**
 
+**Ruled (owner, 2026-11-23):** (i): a digest per melt step and the palette, with the planted faults named.
+
 **V5. Real-map evidence for the easy skills.** No recorded run on skill 0 or 1 exists. **Recommendation:** replay the
 commands of the 61 existing runs on skills 0 and 1 through both engines, locally (valid inputs even where they stop
 reaching their exits, §3.3), with E1M8 into the finale on each skill, and the owner's own sessions on top. Counts and
 digests only.
 
+**Ruled (owner, 2026-11-23):** as recommended, in the next pull request, with the easy skills.
+
 **V6. Timings.** Step 15 and the E1M7 per-move check need an idle machine. **Recommendation:** they are run only when
 the owner says the machine is idle; until then the record says "not measured" and nothing is gated on them.
+
+**Ruled (owner, 2026-11-23):** as recommended: timings only when the owner says the machine is idle.
 
 **V7. Where to split.** Options: (i) **this pull request is the finale, the melt and item 6** (steps 1 to 5, and step 8
 for them), about 8,000 lines, ending at the hand test and the owner's review; **the easy skills and E1M7 on skill 3 are
@@ -994,11 +1006,61 @@ about 700 lines more in all (a second wire) and a second round of gates. (ii) On
 about 16,000. Under both, the order of work up to the hand test is the same. **Recommendation: (i).** Nothing is dropped
 under either.
 
+**Ruled (owner, 2026-11-23):** (i): this pull request is the finale, the melt and item 6, ending at the hand test; the easy skills and E1M7 on skill 3 are the next one.
+
 **V8. The "sucks" golden (open since [§6.6](#66-open-items-from-step-2-and-what-keeps-them-open)).** It is not in the
 part 2 scope as written, and its format is still unchosen. **Recommendation:** it moves with percentages above 100 to
 M6b, on the checklist, with the format proposed there; not built in part 2.
 
-### 7.5 What proceeds before the rulings
+**Ruled (owner, 2026-11-23):** as recommended: it moves to M6b with percentages above 100 and stays on the checklist.
+
+### 7.5 Size after the rulings (2026-11-23)
+
+With V2 (iii) and V7 (i) this pull request has no `doom-sim` wire, no DSIM43, no easy skills and no E1M7. Projected,
+hand-written lines, same method as 7.3 (inferred):
+
+| Part | Lines |
+| --- | ---: |
+| The finale: logic, drawer, refusals, app, tests | 1,300 |
+| The melt pictures | 1,225 |
+| `DSES` v2, `DDSP` v4, `DSND` v3: readers, writers, tests | 1,100 |
+| The second session configuration and the proof that the frozen one, the frozen formats and DSIM42 are unchanged | 300 |
+| Restore-and-continue tests and fuzz targets | 800 |
+| Item 6 | 100 |
+| Harness, goldens, CI | 400 |
+| Mutation-survivor tests | 450 |
+| Timing and GIF scripts | 300 |
+| Docs | 1,800 |
+| **Central** | **7,775** |
+
+Range at ±30%: about 5,400 to 10,100, under 12,000 at both ends. The 7.3 table and its 11,600 are left as written.
+The next pull request (wire 27 with DSIM43, the easy skills, E1M7 on skill 3, their evidence and docs) is projected
+at about 4,400 lines. Running count after step 2, before this section was written: 1,471 lines.
+
+### 7.6 Step 2, done (2026-11-23)
+
+The finale and the melt step exist as pure functions that nothing calls
+(`crates/doom-game/src/session/finale.rs`, `crates/doom-render/src/f_finale.rs`, `crates/doom-render/src/f_wipe.rs`),
+tested by `cargo test -p doom-game --test m6a_finale_melt` against the committed genuine goldens (observed, re-run by
+the main session):
+
+- **Finale:** stage and count equal on every finale tic of `FINRET`, `FINREG` and `NOHELP2`; 9,660 of 9,660 finale
+  frames equal at both screen sizes; the `HELP2` stop at the genuine tic with the genuine text.
+- **Melt:** 119 of 125 melts and 4,708 of 4,946 steps equal, every step count equal and the last two pictures equal to
+  the end screen. Not covered: the 6 melts (238 steps) of `SKILL0` and `SKILL1`, whose demos the session refuses until
+  the easy skills exist (the next pull request).
+- **Planted faults, each caught:** the stage threshold off by one, one character too many in the crawl, the other
+  mode's art picture, a melt column's offset off by one, a dropped melt step, the starting `M_Random` index off by one.
+- **A limit found (inferred from the glyph widths, consistent with the equal frames):** with the committed synthetic
+  font the second line of the finale text does not fit in 320 pixels, and a character that does not fit ends the whole
+  crawl (f_finale.c:321, quirk Q-f_finale-321). So the synthetic frames show the first line and part of the second and
+  never the rest of the text. **Open, for the owner (V9):** the full crawl needs a synthetic item with a narrower font.
+  Appending an item to the committed index changes counts pinned in existing tests (as `ATTACK` did in part 1), which
+  this pull request may not do. **Recommendation:** a separate new golden set for part 2 items, read only by new
+  tests, generated from the genuine engine by a new `--check` tool; until ruled, the full text is covered only by the
+  local run on the owner's IWAD and the record says so.
+
+### 7.7 What proceeded before the rulings (kept as written)
 
 Steps 1 and 2 only. Item 6 is ruled already. Step 2 adds pure functions in new modules that no configuration reaches,
 compared with goldens that are already committed, so no answer to V1–V8 can invalidate it. Step 3 and everything after
