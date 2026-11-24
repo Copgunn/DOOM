@@ -1135,6 +1135,52 @@ anything not compared named. (5) Before the hand test the `m6a_ddsp4` fuzz targe
 coverage-guided campaign reported separately, with the sanitizer and the leak-detection setting. (6) The melt GIF has
 three panels: the genuine engine, the Rust engine and their difference.
 
+### 7.10 The session, the app and the fuzz runs; at the hand-test gate (2026-11-24)
+
+All observed, each test re-run by the main session; commands in [TESTING](TESTING.md). `doom-sim` is unchanged in this
+pull request (`git diff origin/master...HEAD -- crates/doom-sim` is empty).
+
+- **The session** (`Session::new_finale_and_melt`, `DSES` version 2 embedding DSIM42, `DDSP` version 4 and `DSND`
+  version 3; `cargo test -p doom-game --test m6a2_session --test m6a2_session_rules`). **The owner's coverage gate**, the
+  whole of every drivable item through the new session at both screen sizes, compared with the genuine goldens:
+  16,197 of 16,925 tics, 21,178 of 22,548 sound rows, 9,977 of 10,425 mixer buffers, 119 of 119 melts at screenblocks 10
+  (4,708 of 4,946 steps) and 125 of 131 at 11. **Everything not compared is `SKILL0` and `SKILL1`** (728 tics, 1,370
+  sound rows, 448 buffers, 6 melts and 238 steps per size), whose demos stay refused until the next pull request.
+  `FULLREG` and `FULLRET` are compared in full. The finale, skill and full-crawl items have no whole-state digests
+  ([record](validation/M6A.md#not-run-and-limits)). `DSES` version 2 restored at 690 points. Planted faults caught: the
+  finale one tic late, a game tic during a melt, a demo command consumed in a melt step, the stage-1 wipe missing, a
+  buffer mixed before the melt ends.
+- **The app and `doom-play`** (`cargo test -p doom-game --test m6a2_play`, `cargo test -p doom-play`): `doom-play` plays
+  the new configuration only. The app played by keys equals the genuine goldens on 4,555 tics, 15 melts and 583 melt
+  steps, every presented picture included, and its demos equal the committed ones. Keys and buttons during a melt are
+  held and delivered in order after it; mouse motion is ignored and logged; both tested. Planted faults caught: a key
+  dropped in a melt, motion accumulated across a melt, a command built in a melt step, a melt step skipped, a catch-up
+  burst after a melt. Differences from the original are declared in [COMPATIBILITY](COMPATIBILITY.md).
+- **Old-version saves** (rulings of 2026-11-24): the session's saves and the checked calls of the sound chain and the
+  display refuse by type. The plain part 1 calls keep their signatures; a new test pins what they do on a
+  new-configuration object: `Display::session_state()` returns nothing; `ChainSound::save()` writes a version 2 state
+  that version 2's restore refuses while a display is pending and otherwise accepts, giving a frozen-configuration
+  chain that continues equal to the frozen one and refuses melt steps (the finale included).
+- **Fuzzing the three new readers** (decoders only; restore is not driven), AddressSanitizer, each run alone, leak
+  detection left at its default (on; not confirmed with a planted leak). Seed replay: 37 seeds per target, exit 0 for
+  `m6a2_dses2`, `m6a_ddsp4` and `m6a_dsnd3`. Coverage-guided, 240 s each, `-max_len=300000`: 251,048, 105,388 and
+  28,431,845 executions; no crash, timeout, out-of-memory or leak report.
+- **Existing tests changed, by the owner's named rulings only:** one expectation in each of
+  `a_failure_found_only_at_the_end_is_retried_at_restart_and_at_exit` and
+  `a_first_failure_after_the_restart_is_rewritten_at_the_next_claim` (`crates/doom-play/src/closing_tests.rs`, ruling of
+  2026-11-23), and two expected strings of `the_game_mode_flag_and_the_session_in_the_help`
+  (`crates/doom-play/src/main.rs`, ruling of 2026-11-24).
+- **Windows line endings:** two CI failures on Windows came from new goldens and new tests that assumed LF; fixed by
+  marking `tests/reference/m6a2_*/` as not text and by normalising line endings in the new tests' readers. The byte pins
+  were not affected.
+- **Size:** the owner accepted 15,071 hand-written lines on 2026-11-24 and set a ceiling of 17,500; counted after each
+  step since.
+- **Still owed before the pull request can be marked ready** (owner, 2026-11-24): the owner's hand test; a test map (each
+  new test file, what it compares, against which goldens, which planted faults, and where two files compare the same
+  thing on purpose); an independent read of the source, arranged by the owner, with its result in the record; mutation
+  testing with its survivor tests; the remaining steps 13 to 17 of [§6.1](#61-steps). Timings wait for the owner's word
+  that the machine is idle.
+
 ### 7.7 What proceeded before the rulings (kept as written)
 
 Steps 1 and 2 only. Item 6 is ruled already. Step 2 adds pure functions in new modules that no configuration reaches,
