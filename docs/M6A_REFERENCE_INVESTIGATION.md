@@ -1092,6 +1092,49 @@ refusals and `DDSP` version 3.
   committed digest pins the version 3 bytes themselves.
 - Fuzz target `m6a_ddsp4`: compiled, with the address sanitizer too; no seed replay and no campaign run yet.
 
+### 7.9 The sound part, the byte pins and the part 2 golden set, done (2026-11-23 to 2026-11-24)
+
+All observed, each test re-run by the main session; commands in [TESTING](TESTING.md).
+
+- **Sound** (`ChainMode::FinaleAndMelt`, `DSND` version 3; `cargo test -p doom-sound --test m6a_chain_finale_melt`): a
+  melt step mixes nothing and runs no sound update; the buffer owed is mixed after the melt's last picture. Compared
+  with the genuine goldens: 26 of 29 items, 10,064 of 16,925 tics, 14,083 of 22,548 sound rows, 6,204 of 10,425 mixer
+  buffers, 65 of 125 melts, 2,608 of 4,946 melt steps. **The rest is not yet compared through this configuration:** the
+  driver stops at each item's first load, because later levels need the carried start of the session layer; the
+  session step must close it (the owner's coverage gate, below). `NOVICTOR` refuses at genuine tic 321. `DSND`
+  version 3 restored at 462 points, every step of 11 melts of all six kinds among them. Planted faults caught: a
+  buffer mixed during a melt step, a sound update during a melt step, the `D_VICTOR` refusal one tic late.
+- **Byte pins for the four frozen formats** (owner's instruction of 2026-11-23). Before, no committed digest pinned
+  the full saved bytes of `DDSP` version 3, `DSND` version 2 or `DSES` version 1, and DSIM42 had only the genuine
+  capture digest without its map and event fields. Now `tests/reference/m6a_frozen_bytes.txt` holds 1,920 digests (480
+  points of 10 items at both screen sizes, four formats each) and 20 sequence digests, **generated on master at
+  `25cdb3ba`** in a scratch worktree and equal on this branch in debug and release; the committed fixture is
+  byte-identical to that output (the committed test file differs from the copy run on master by formatting only). CI on
+  `c90e0a69` passed it on Linux, Windows and macOS. A changed digest fails naming the item, screen size, tic and format.
+- **The part 2 golden set** (V9 and its addition): new files `tests/reference/m6a2_*`, tools
+  `tools/reference/m6a2_wad.py` and `m6a2_goldens.py`, from the genuine engine only (strict, overflow, address and
+  `address_bounds` builds agreeing; leak detection disabled, so not LeakSanitizer coverage). `FULLREG` and `FULLRET`
+  show **all 15 lines (2 empty) and all 440 characters** of the text: 356 glyphs, 69 spaces drawn as 4-pixel gaps and
+  15 newlines; the last glyph appears on finale tic 1,327, the frame then stays for 244 tics, and the art screen
+  follows on tic 1,571. With the part 1 font the crawl breaks at character 70 (computed by `m6a2_wad.py --selftest`;
+  7.6 called it inferred). Melt goldens at screenblocks 11: 131 melts and 5,182 steps over 31 items, all six kinds.
+  Rust against them: both full-crawl items at both sizes (7,804 tics, 6,520 finale frames, 12 of 12 melts, 472 of 472
+  steps); every part 1 item at screenblocks 11 (119 of 125 melts, 4,708 of 4,946 steps; `SKILL0` and `SKILL1` not
+  driven). Planted faults caught: a newline treated as a space, the line step off by one, the crawl one character short
+  on tic 1,327 (not caught on `FINRET`, which is why the set exists), a melt column off by one at 11.
+- **Found and fixed in CI:** `m6a_melt_steps.py --check --selftest` ran only the self-test; the job now runs both.
+
+**Owner's rulings of 2026-11-23 on what follows.** (1) Input during a melt: keys and buttons are held and delivered in
+order on the first tic after it; mouse motion is ignored and logged as paused motion (the ruling of 2026-11-21
+stands); both halves tested. (2) `DDSP` version 4 keeps the game mode and refuses a restore under another; a screen-size
+change during a melt is refused at the display. (3) A session of the new configuration can be saved only in the new
+versions: an old-version save from it is a typed refusal; the frozen writers keep their bytes. (4) Coverage gate before
+the hand test: every tic, sound row, mixer buffer and melt step of the driven items compared across the sound and
+session steps together, reported against 16,925 tics, 22,548 sound rows, 10,425 mixer buffers and 119 melts, with
+anything not compared named. (5) Before the hand test the `m6a_ddsp4` fuzz target is run: seed replay and a
+coverage-guided campaign reported separately, with the sanitizer and the leak-detection setting. (6) The melt GIF has
+three panels: the genuine engine, the Rust engine and their difference.
+
 ### 7.7 What proceeded before the rulings (kept as written)
 
 Steps 1 and 2 only. Item 6 is ruled already. Step 2 adds pure functions in new modules that no configuration reaches,
