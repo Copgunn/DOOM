@@ -2981,7 +2981,12 @@ and keeps the genuine path from there on (decision S4).
   operating system repeats it (or it is pressed again)**; how soon that is depends on the system's repeat delay and is
   unmeasured. Under always-run the layer posts the run key again at the load; a physical run key held through the load (walking) therefore runs until its own repeat arrives (read from the code, not tested). A held left mouse button fires again at
   the next mouse event (any motion), as in the original (read from the code; the tests cover keys only). Every one of these events goes through the normal path, so the
-  input log and the demo hold it.
+  input log and the demo hold it. **The path of a repeat:** the window (`doom-play`'s `key_event`) passes an auto-repeated
+  keydown to the app only while it is playing and only for a key other than Esc and Pause; the layer then drops it as the
+  repeat of a key it holds, except after a load. On the pause and end screens a repeat is dropped, so a held Esc, R or Q
+  acts once; the mute key acts on its first down only. One side effect: an R still held after it restarted a session
+  reaches the new session's event stream as a keydown of `r` (bound to nothing in either preset, so no command changes).
+  Whether the window library reports repeats alike on every platform is unmeasured.
 - **Never forwarded** (decision S5): Esc and Pause (the app's own pause), Enter, Tab, `-`, `=`, `q` and F1-F12.
   The genuine effects of these (menus, automap, screen size, gamma, message refresh, ending a recording) are out
   of scope, and a withheld key cannot be bound. The cheat matcher is not ported: the letters of a cheat code
