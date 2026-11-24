@@ -788,7 +788,9 @@ impl Session {
         self.fault = Some(fault);
     }
 
-    /// Runs one session tic with `cmd` (module documentation).
+    /// Runs one session tic with `cmd` (module documentation). A session of the finale-and-melt
+    /// configuration runs its tics through [`Self::tic_finale_and_melt`] and refuses this call
+    /// ([`SessionWitness::Configuration`], nothing changed).
     pub fn tic(&mut self, cmd: TicCommand) -> Result<TicReport, Refusal> {
         let tic = self.gametic;
         let refuse = |witness| Refusal { tic, witness };
