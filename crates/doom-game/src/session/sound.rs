@@ -102,6 +102,18 @@ pub fn level_tic(
     )?)
 }
 
+/// One finale tic ([`ChainSound::finale_tic`]): on the first (from a level) the `D_VICTOR` lookup
+/// of `F_StartFinale` (f_finale.c:114); no start (the Episode 1 finale starts no sound), heard
+/// against the finished level `frozen`'s listener and origins. Transactional.
+pub fn finale_tic(
+    sound: &mut ChainSound,
+    rndindex: u8,
+    frozen: &Simulation,
+) -> Result<ChainTic, SoundWitness> {
+    let listener = simulation_listener(frozen).ok_or(SoundWitness::NoListener)?;
+    Ok(sound.finale_tic(rndindex, &listener, &SimulationPositions(frozen))?)
+}
+
 /// One intermission tic: the starts in call order with the index before the first, and the
 /// finished level `frozen` for the listener and the origins. Transactional.
 pub fn intermission_tic(

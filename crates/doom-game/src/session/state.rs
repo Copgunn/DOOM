@@ -70,7 +70,7 @@ pub const SOUND_DSND2: u8 = 2;
 /// The largest encoding read (bounds the whole before an embedded reader runs).
 pub const MAX_BYTES: usize = 64 << 20;
 /// `VIEWHEIGHT` (p_local.h:45), 41 units.
-const VIEWHEIGHT: i32 = 41 << 16;
+pub(super) const VIEWHEIGHT: i32 = 41 << 16;
 
 /// Why a `DSES` state was refused. Nothing is built or changed.
 #[derive(Debug)]
@@ -112,6 +112,14 @@ pub enum DsesError {
     SoundRestore(ChainStateError),
     /// Save: the session ended through a rule-2 refusal, or holds a planted fault.
     NotSaveable,
+    /// Save: the session's configuration saves only the other version (owner's ruling 3 of
+    /// 2026-11-23: a [`super::finale_melt::Configuration::FinaleAndMelt`] session saves as `DSES`
+    /// version 2 only, a frozen one as version 1 only). Nothing is written.
+    Configuration(super::finale_melt::Configuration),
+    /// `DSES` version 2: the embedded display's melt in progress and the embedded sound's pending
+    /// display disagree (a session mixes the owed buffer exactly when its melt ends, so a saved
+    /// state has a pending display exactly when it has a melt in progress).
+    MeltAndPendingDisplay,
 }
 
 impl fmt::Display for DsesError {
@@ -155,35 +163,35 @@ pub struct SessionState {
     pub sound: ChainSoundState,
 }
 
-struct Writer(Vec<u8>);
+pub(super) struct Writer(pub(super) Vec<u8>);
 
 impl Writer {
-    fn u8(&mut self, v: u8) {
+    pub(super) fn u8(&mut self, v: u8) {
         self.0.push(v);
     }
-    fn b(&mut self, v: bool) {
+    pub(super) fn b(&mut self, v: bool) {
         self.0.push(u8::from(v));
     }
-    fn u16(&mut self, v: u16) {
+    pub(super) fn u16(&mut self, v: u16) {
         self.0.extend_from_slice(&v.to_le_bytes());
     }
-    fn i32(&mut self, v: i32) {
+    pub(super) fn i32(&mut self, v: i32) {
         self.0.extend_from_slice(&v.to_le_bytes());
     }
-    fn u64(&mut self, v: u64) {
+    pub(super) fn u64(&mut self, v: u64) {
         self.0.extend_from_slice(&v.to_le_bytes());
     }
-    fn blob(&mut self, v: &[u8]) {
+    pub(super) fn blob(&mut self, v: &[u8]) {
         let n = u32::try_from(v.len()).expect("an embedded state below 4 GiB");
         self.0.extend_from_slice(&n.to_le_bytes());
         self.0.extend_from_slice(v);
     }
 }
 
-struct Reader<'a>(&'a [u8]);
+pub(super) struct Reader<'a>(pub(super) &'a [u8]);
 
 impl<'a> Reader<'a> {
-    fn take(&mut self, n: usize) -> Result<&'a [u8], DsesError> {
+    pub(super) fn take(&mut self, n: usize) -> Result<&'a [u8], DsesError> {
         if self.0.len() < n {
             return Err(DsesError::Truncated);
         }
@@ -191,10 +199,10 @@ impl<'a> Reader<'a> {
         self.0 = b;
         Ok(a)
     }
-    fn u8(&mut self) -> Result<u8, DsesError> {
+    pub(super) fn u8(&mut self) -> Result<u8, DsesError> {
         Ok(self.take(1)?[0])
     }
-    fn b(&mut self, name: &'static str) -> Result<bool, DsesError> {
+    pub(super) fn b(&mut self, name: &'static str) -> Result<bool, DsesError> {
         match self.u8()? {
             0 => Ok(false),
             1 => Ok(true),
@@ -204,19 +212,19 @@ impl<'a> Reader<'a> {
     fn arr<const N: usize>(&mut self) -> Result<[u8; N], DsesError> {
         Ok(self.take(N)?.try_into().expect("N bytes"))
     }
-    fn u16(&mut self) -> Result<u16, DsesError> {
+    pub(super) fn u16(&mut self) -> Result<u16, DsesError> {
         Ok(u16::from_le_bytes(self.arr()?))
     }
-    fn i32(&mut self) -> Result<i32, DsesError> {
+    pub(super) fn i32(&mut self) -> Result<i32, DsesError> {
         Ok(i32::from_le_bytes(self.arr()?))
     }
     fn fixed(&mut self) -> Result<Fixed, DsesError> {
         Ok(Fixed::from_bits(self.i32()?))
     }
-    fn u64(&mut self) -> Result<u64, DsesError> {
+    pub(super) fn u64(&mut self) -> Result<u64, DsesError> {
         Ok(u64::from_le_bytes(self.arr()?))
     }
-    fn blob(&mut self) -> Result<&'a [u8], DsesError> {
+    pub(super) fn blob(&mut self) -> Result<&'a [u8], DsesError> {
         let n = u32::from_le_bytes(self.arr()?) as usize;
         self.take(n)
     }
@@ -247,7 +255,7 @@ fn armor_of(v: u8) -> Result<ArmorType, DsesError> {
     })
 }
 
-fn game_state_byte(g: GameState) -> u8 {
+pub(super) fn game_state_byte(g: GameState) -> u8 {
     match g {
         GameState::Level => 0,
         GameState::Intermission => 1,
@@ -255,7 +263,7 @@ fn game_state_byte(g: GameState) -> u8 {
     }
 }
 
-fn wminfo_fields(m: &WbStart) -> [i32; 10] {
+pub(super) fn wminfo_fields(m: &WbStart) -> [i32; 10] {
     [
         m.last,
         m.next,
@@ -270,7 +278,7 @@ fn wminfo_fields(m: &WbStart) -> [i32; 10] {
     ]
 }
 
-fn wi_fields(i: &Intermission) -> [i32; 12] {
+pub(super) fn wi_fields(i: &Intermission) -> [i32; 12] {
     [
         i.state,
         i.acceleratestage,
@@ -287,7 +295,7 @@ fn wi_fields(i: &Intermission) -> [i32; 12] {
     ]
 }
 
-fn write_start(w: &mut Writer, s: &CarriedStart) {
+pub(super) fn write_start(w: &mut Writer, s: &CarriedStart) {
     w.i32(s.health);
     w.u8(s.armor.kind.wire_id());
     w.i32(s.armor.points);
@@ -307,7 +315,7 @@ fn write_start(w: &mut Writer, s: &CarriedStart) {
     }
 }
 
-fn read_start(r: &mut Reader<'_>) -> Result<CarriedStart, DsesError> {
+pub(super) fn read_start(r: &mut Reader<'_>) -> Result<CarriedStart, DsesError> {
     let health = r.i32()?;
     let kind = armor_of(r.u8()?)?;
     let points = r.i32()?;
@@ -712,6 +720,9 @@ impl Session {
     /// The saved state (`DSES` version 1) after the last tic. A session that ended through a
     /// rule-2 refusal, or holds a planted fault, cannot be saved.
     pub fn save(&self) -> Result<SessionState, DsesError> {
+        if self.config != super::finale_melt::Configuration::RefusesFinaleAndMelt {
+            return Err(DsesError::Configuration(self.config));
+        }
         if self.ended.is_some() || self.fault.is_some() {
             return Err(DsesError::NotSaveable);
         }
@@ -856,6 +867,8 @@ impl Session {
             frame: Frame::new(),
             ended: None,
             fault: None,
+            config: super::finale_melt::Configuration::RefusesFinaleAndMelt,
+            finale: None,
             data,
         })
     }
