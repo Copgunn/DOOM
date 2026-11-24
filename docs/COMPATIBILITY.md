@@ -3778,7 +3778,11 @@ the synthetic items against the genuine goldens) and `m6a2_play` (the app played
 - **`HELP2` in registered mode** (f_finale.c:714-720; quirk rows Q-f_finale-714a and 714b). Registered mode draws `HELP2`, retail `CREDIT`
   (the game mode is the declared setting above). With WADs that have no `HELP2`, such as the owner's IWAD forced to
   registered, the genuine engine stops on the first art-screen frame with `W_GetNumForName: HELP2 not found!`; the session
-  ends there with the refusal screen of the table above, its demo saved whole, which replays to the same refusal. The
+  ends there with the refusal screen of the table above, its demo saved whole, which replays to the same refusal.
+  **A declared difference in a count, not in behaviour:** the original increments `gametic` (d_net.c:746 in `TryRunTics`; d_main.c:384 in the
+  `singletics` branch) before `D_Display` runs (d_main.c:395), so its `gametic` at the failing display is one higher than the
+  session's tic count. Here the exit line names the refused tic itself; the session has ended and cannot be saved, so nothing
+  else shows the count. Part 1's rule (the finale is not built there) is unchanged. The
   original's text crawl is drawn as `F_TextWrite` draws it, including the quirk that a character that does not fit on its line
   ends the crawl (Q-f_finale-321a).
 - **The melt schedule** (d_main.c:329-344; f_wipe.c:184-222; [note §1.16.1](M6A_REFERENCE_INVESTIGATION.md#1161-the-clock-one-melt-step-per-tic)).

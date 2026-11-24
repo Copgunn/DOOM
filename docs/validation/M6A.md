@@ -344,6 +344,12 @@ whole workspace was not run again locally after `abe95455` (only `doom-play` cha
   first written no fuzz target existed for the new formats and no CI job ran the genuine M6a engine: see §5.6.)
 - **Not covered by any run:** the finale, the melt pictures, the easy skills and E1M7 on skill 3 (not built); a quirk-6 witness
   (no golden for percentages above 100 or "sucks"); a genuine run of the reborn-beats-exit case on the owner's IWAD.
+- **Part 2, not covered by any run (2026-11-24, America/Los_Angeles; the bullet above is part 1's text and is left as written).**
+  `tests/reference/m6a_state.txt` holds whole-state digests for 19 of the manifest's 29 items. It does not hold NOE1M2AT, FINREG,
+  FINRET, NOHELP2, NOVICTOR, SKILL0, SKILL1, SKILL2 and SKILL3, nor FULLREG and FULLRET (the part 2 full-crawl items of
+  `tests/reference/m6a2_manifest.json`; the file holds neither). So the finale, skill and full-crawl
+  items have no whole-state digests; their evidence is the rows, frames, sound and buffers of the other goldens. `doom-sim` is
+  unchanged in the part 2 pull request: `git diff --stat origin/master...HEAD -- crates/doom-sim` prints nothing.
 - **Sanitizers.** The genuine runs used the strict build; the address-sanitizer variants and the `address_bounds` build belong
   to the synthetic goldens ([TESTING](../TESTING.md)); leak detection is disabled there (`detect_leaks=0`), so it is not
   LeakSanitizer coverage.
