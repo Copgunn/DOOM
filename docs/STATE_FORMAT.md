@@ -13,7 +13,8 @@ reader decodes it. The same holds for the display state `DDSP` ([version 1](#dis
 [version 4](#display-state-ddsp-version-4-m6a-part-2)) and for the sound session's
 saved state `DSND` ([version 1](#sound-session-state-dsnd-version-1-m5c), [version 2](#sound-session-state-dsnd-version-2-m6a),
 [version 3](#sound-session-state-dsnd-version-3-m6a-part-2)).
-The M6a session's own saved state `DSES` is [version 1](#session-state-dses-version-1-m6a).
+The M6a session's own saved state `DSES` is [version 1](#session-state-dses-version-1-m6a) (the frozen session) and
+[version 2](#session-state-dses-version-2-m6a-part-2) (the finale-and-melt session).
 
 M3f8's execution-scope brands and derived target availability are API observations,
 not persistent fields. V20/v21, profile/registry/context schema identifiers, stored
@@ -2926,6 +2927,60 @@ simulation does not model it and the display keeps only the screen; `viewheight`
 `attackdown` and `usedown` latches after the first intermission tic (the intermission rewrites them from the commands,
 which the state does not hold). The arithmetic on restored intermission values uses wrapping operations throughout, so a
 debug and a release build cannot differ on them.
+
+## Session state (`DSES` version 2, M6a part 2)
+
+Written by `Session::save_v2`, read by `SessionStateV2::decode`, restored by `Session::restore_v2(data, state, level)`, for
+a session of the finale-and-melt configuration only (`Session::new_finale_and_melt`, owner's rulings V1 and V3 of
+2026-11-23), at any point between two calls: in a level, on a load tic, in the intermission, in both finale stages and in the
+middle of a melt. **Version 1 keeps its bytes and rules**: `SessionState::decode` refuses version 2 (`Version(2)`),
+`SessionStateV2::decode` refuses version 1 (`Version(1)`), and each configuration saves only its own version: `Session::save`
+on a finale-and-melt session and `Session::save_v2` on a frozen one are refused as `DsesError::Configuration` (the
+embedded formats likewise: `ChainSound::save_v2_checked` and `Display::session_state_v3_checked` refuse the new configuration
+by type). The frozen writers' bytes are pinned by `tests/reference/m6a_frozen_bytes.txt`.
+
+**Layout: version 1's, field for field**, with three differences: the version is 2; the game state may be 2 (the finale),
+with the finale field set; and the embedded states are `DDSP` version 4 and `DSND` version 3. Little endian, at most 64 MiB;
+nothing follows the last field.
+
+| Field | Encoding | Meaning |
+| --- | --- | --- |
+| magic, version | 4 bytes `DSES`, u16 = 2 | |
+| mode, mode source, start map, skill, screenblocks, `gametic` | as version 1 | skill 2 or 3 (the easy skills come with wire 27) |
+| `gamestate` | u8: 0 level, 1 intermission, 2 finale | |
+| `gamemap`, `gameaction`, `secretexit`, `didsecret` | as version 1 | in the finale map 8 and `gameaction` 0 |
+| `wminfo`, wi_stuff.c statics | as version 1 | in a level and in the finale, the last intermission's or a fresh process's |
+| carried player | as version 1 | present in the intermission and in the finale (`G_PlayerFinishLevel` runs on map 8 too, g_game.c:1026-1028) |
+| finale | u8: 0 none, 1 followed by i32 `finalestage`, i32 `finalecount` | set exactly in the finale (f_finale.c:52-54) |
+| level | u32 length n, n bytes | `DSIM` version 42 (wire 26, unchanged: ruling V2) |
+| display | u32 length n, n bytes | `DDSP` version 4 (a melt in progress included) |
+| sound | u8 kind = 3, u32 length n, n bytes | `DSND` version 3 (a pending display included) |
+
+**The decoder** rejects what version 1's rejects (the finale and a melt aside), a finale byte other than 0 or 1, a sound kind
+other than 3, an embedded state its own reader refuses, and then checks (`SessionStateV2::check`, each rule named in the
+error) version 1's rules where they apply (the settings, the level capture's map, tic and start `gametic`, the display's own
+`check` and its game state, tics, screen size and wipe flag, the sound's game state, tics and map, and in the intermission
+`wminfo`, the wi_stuff.c statics, `bcnt`, `gameaction` 8 and the carried player), and:
+
+- **the melt**: the display's melt in progress and the sound's pending display agree (`DsesError::MeltAndPendingDisplay`:
+  the session mixes the owed buffer exactly when the melt ends, so it never saves one without the other), and the display's
+  game mode is the declared one;
+- **the display's entry tic**: the level's start in a level, the intermission's first tic in the intermission, and in the
+  finale the victory tic in stage 0 and finale tic 1,571's in stage 1 (`wipegamestate = -1`, f_finale.c:245);
+- **the finale**: present exactly in the finale, map 8, `gameaction` 0, the carried player with the status bar's last health
+  and a `viewheight` of at most 41 units, `finalestage` 0 or 1, and `finalecount` that of the session tics since the victory
+  tic (f_finale.c:230, 241-248): in stage 0 equal to them, 1 to 1,570; in stage 1 equal to them less 1,571;
+- **outside the intermission** (a level, the finale): the wi_stuff.c statics a fresh process's with a fresh `wminfo`, or a
+  finished intermission's (`state` -1, `cnt` 0) whose `next` led to the current map (`G_DoWorldDone` loads `wminfo.next + 1`,
+  g_game.c:1176; a reborn keeps the map).
+
+**Restore** checks as version 1 does (the declared mode, the capture byte for byte, `gameaction` 6 against the level's exit
+request, and outside a level the exit, its kind and the carried player against the finished level's), with `wminfo` against
+the finished level's counts in the intermission only (map 8 writes none, g_game.c:1033-1038); then the display's version 4
+restore (its melt rebuilt by replay, its game mode required) and the sound's version 3 restore (its pending display and owed
+buffer). A restored session continues call for call as the uninterrupted one (`tests/m6a2_session_rules.rs`). **Limits**:
+version 1's (the carried view heights and the latches after the first intermission tic cannot be tied exactly), and the
+finale adds none.
 
 ## M6a golden files that hold state digests
 

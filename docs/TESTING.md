@@ -3151,7 +3151,18 @@ cargo check --manifest-path fuzz/Cargo.toml --bin m6a_ddsp4   # the DDSP version
 cargo test -p doom-sound --test m6a_chain_finale_melt    # the finale-and-melt sound: rows, buffers, melts, DSND v3 restore, faults
 cargo test -p doom-sound --test dsnd3_reader             # the DSND version 3 reader on hand-built states
 cargo check --manifest-path fuzz/Cargo.toml --bin m6a_dsnd3   # the DSND version 3 reader's fuzz target compiles
+cargo test -p doom-game --test m6a2_session -- --nocapture         # the finale-and-melt session against every golden, both sizes
+cargo test -p doom-game --test m6a2_session_rules -- --nocapture   # DSES v2 restore, refusals with their state, the v2 reader
+cargo check --manifest-path fuzz/Cargo.toml --bin m6a2_dses2       # the DSES version 2 reader's fuzz target compiles
 ```
+
+`m6a2_session` drives every drivable item of both golden sets (the 29 part 1 items, FULLREG and FULLRET) through
+`Session::new_finale_and_melt` at screenblocks 10 and 11 and compares every session row (G, C, I, J, F), frame, melt step,
+sound row and mixer buffer, and at screenblocks 10 every level tic's whole state where `m6a_state.txt` has the item; it
+asserts the totals against the goldens' own and names what is not driven (SKILL0 and SKILL1, whose demos the session refuses
+until the easy skills exist). FULLREG's and FULLRET's buffers are compared with FINREG's and FINRET's genuine mixer goldens,
+which the test may do because their genuine sound streams are byte-identical (asserted) and the font WAD holds no sound. Both
+targets also run with `--release`.
 
 The frozen part 1 formats (`DSIM` 42, `DDSP` v3, `DSND` v2, `DSES` v1) are pinned byte for byte by
 one test and one fixture:
