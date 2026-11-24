@@ -9,7 +9,8 @@ encoded. Shared immutable map storage uses Arc internally; reference counts and
 addresses are excluded. The M5a renderer's own, separate `DRST` format is at the
 [end of this page](#render-state-drst-version-2-m5a); it is not a DSIM version and no DSIM
 reader decodes it. The same holds for the display state `DDSP` ([version 1](#display-state-ddsp-version-1-m5b),
-[version 2](#display-state-ddsp-version-2-m5c), [version 3](#display-state-ddsp-version-3-m6a)) and for the sound session's
+[version 2](#display-state-ddsp-version-2-m5c), [version 3](#display-state-ddsp-version-3-m6a),
+[version 4](#display-state-ddsp-version-4-m6a-part-2)) and for the sound session's
 saved state `DSND` ([version 1](#sound-session-state-dsnd-version-1-m5c), [version 2](#sound-session-state-dsnd-version-2-m6a)).
 The M6a session's own saved state `DSES` is [version 1](#session-state-dses-version-1-m6a).
 
@@ -2759,6 +2760,40 @@ run loop). On a 64-bit target the sum cannot overflow and the run is refused as 
 2^32 overflows `usize`: a panic in a debug build, and in a release build a wrapped sum that passes the bound, after which the
 resize panics or exhausts memory. That reader is frozen with its format and is not patched; every supported build is 64-bit
 (the CI targets), so this is a declared limit of the older reader on a target nobody builds, not a behaviour change.
+
+## Display state (`DDSP` version 4, M6a part 2)
+
+Written only by a session display in the finale-and-melt configuration (`Display::new_session_with` with
+`SessionConfig::FinaleAndMelt`, owner's rulings V1 and V3 of 2026-11-23), which draws the Episode 1 finale and every melt
+(one `wipe_doMelt` step with `ticks = 1` per `Display::melt_step`,
+[M6a note §1.16](M6A_REFERENCE_INVESTIGATION.md#116-the-melt-settled-for-u9)). **Versions 1 to 3 keep their bytes and
+rules**: `DisplayState::decode`, `decode_any` and `SessionDisplayState::decode` refuse version 4 (`Version(4)`), and
+`SessionDisplayStateV4::decode` reads version 4 only (`Version(3)` for a version-3 state). The frozen session display
+(`Display::new_session`) still writes version 3 and restores no version 4; the finale-and-melt display writes version 4
+and restores no version 3 (`WrongConfig`). Little endian.
+
+| Field | Encoding | Meaning |
+| --- | --- | --- |
+| magic, version | 4 bytes `DDSP`, u32 = 4 | |
+| game mode | u8: 0 shareware, 1 registered, 2 retail | the session's declared mode (U4); it picks the finale's art screen (f_finale.c:714-720), and a restore requires the display's own |
+| session tic, entered | as version 3 | |
+| game state, old game state | as version 3 | |
+| scene | as version 3 (a level's `DRST` version 2, or outside a level `fuzzpos`, the wall steps, `screens[0]` and its taint runs) | in the finale, the last finale frame drawn |
+| melt | u8: 0 none, 1 in progress; 1 is followed by u8 steps shown (0 to 42), u8 palette (0 to 13), 160 x i16 column positions (-15 to 200), the 64,000-byte start screen, its taint runs, and the 64,000-byte end screen | the melt the last frame started (`wipe_StartScreen`, `wipe_EndScreen`, `y[]`; f_wipe.c:138, 237-258) |
+| status bar and HUD | exactly version 1's rows from `screenblocks` to the message line | as version 1 |
+
+Without a melt, a version-4 encoding is the version-3 encoding of the same fields with the game-mode byte inserted after the
+version. With one it holds at most three 64,000-byte screens (the scene's, the start and the end screen) besides the
+`DRST` of a level scene. **The decoder** rejects everything version 3's rejects, and a game mode above 2, a melt byte above 1,
+melt steps above 42 (a melt has at most 43 steps, and the step that returns `done` ends it), a melt palette above 13 and a
+column position outside -15 to 200. **`check`** and `Display::restore_session_v4` apply version 3's rules (and refuse a
+version-3 melt field in the in-memory state), then for a melt in progress require: the tic one after `entered` with the wipe
+flag clear and the old game state the scene's (a melt starts only in the frame of the first tic in a new state, d_main.c:
+223-227, 300, and no tic runs during it); the end screen equal to the scene's composed frame (the melt ends on it); the palette
+the end frame's (a level's `st_palette`, else 0, note §1.16.3); and the steps shown and the column positions those of
+`wipe_initMelt` at the state's `M_Random` index minus 320 followed by that many `wipe_doMelt` steps of which none returned
+`done` (f_wipe.c:156-166, 184-222). The start screen and its taint are accepted on trust, as in version 3. A restore rebuilds
+the melt by that replay, so a restored display continues picture for picture as the uninterrupted one.
 
 ## Sound session state (`DSND` version 2, M6a)
 
