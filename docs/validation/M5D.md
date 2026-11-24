@@ -26,6 +26,26 @@ Scope, by the owner's brief: app and presentation work only. Nothing in `doom-si
 `doom-sound` changes, and no wire, schema, golden or existing test changes. *(Note, 2026-11-20: the second round added one public
 method to `doom-game`, `App::settle_save`, with its own new test file; no existing test of any crate changed. See [A7](#a7-the-owners-windows-session-of-2026-11-20-and-the-second-round).)*
 
+## Hand-played checks
+
+An index added on 2026-11-23 (America/Los_Angeles). It holds no new observation: every figure is from the section linked.
+These are the owner's own sessions, played by hand on Windows with `doom-play` on real Episode 1 maps, each file then
+replayed through the genuine engine by `tools/local/m5c_session_real.py`, local only.
+
+| Check | Where | Sessions | Tics | Verdict |
+| --- | --- | ---: | ---: | --- |
+| The 17 files of his Windows session of 2026-11-20 | [A7, The session](#the-session) | 17 | 29,187 | 17 of 17 `VERDICT: PASS` |
+| The 10 files of his retest the same day | [A9, The session check of his files](#the-session-check-of-his-files) | 10 | 17,969 | 10 of 10 `VERDICT: PASS` |
+| The retest's 3 sound-run demos | [the same section](#the-session-check-of-his-files) | 3 | 7,584 | 3 of 3 `VERDICT: PASS` |
+| The 14 hand-played demos of 2026-11-21 (3 from the final head, 11 on maps E1M2 to E1M9) | [A10, The check](#the-check) | 14 | 60,659 | 14 of 14 `VERDICT: PASS` |
+| **Counted once** | | **44** | **115,399** | **44 pass, 0 fail** |
+
+Not counted above, all in the gate tables ([the second round's](#gates-of-the-second-round),
+[the close's](#gates-and-ci-of-the-close)): the 13 files of the [M5c record](M5C.md#hand-played-checks), run again here
+(27,146 tics, counted there); the retest's 10 files run again at the close; and 4 more files (7,875 tics, all passing) that
+appeared in a `lag` folder after the owner's report and are not recorded as played by hand. The kill tests' files are
+scripted, not hand-played. A verdict shows that a file replays equal to the genuine engine, not what the owner saw or heard.
+
 ## A1. Stuck fire on Windows: the DPI request
 
 **The change** (commit `0958257`): `crates/doom-play/src/window.rs` sets miniquad's `Conf::high_dpi` to true
