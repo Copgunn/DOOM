@@ -25,13 +25,21 @@ pub(crate) enum InterceptCaller {
 }
 
 /// Wire 27's per-caller switch (ruling 6): `true` takes [`wrapping_intercept`],
-/// `false` keeps [`crate::sight::checked_intercept`] under wire 27. Each entry
-/// is one revertible line.
+/// `false` keeps [`crate::sight::checked_intercept`] under wire 27, with its
+/// [`FixedDivRefusal::AbsMin`] refusal. Each entry is one revertible line; a
+/// caller wraps only when a genuine-compared item takes its wrapping path
+/// (tests/reference/wire27_results.json).
 pub(crate) const fn wire27_wraps(caller: InterceptCaller) -> bool {
     match caller {
         InterceptCaller::Aim => true,
         InterceptCaller::ShootLine => true,
-        InterceptCaller::ShootThing => true,
+        // No item can wrap here, so none is genuine-compared: the divline of
+        // PIT_AddThingIntercepts (p_maputl.c:616-674) is a thing's diagonal,
+        // |dx|, |dy| = 2·radius, and a thing in a cell of a 2,048-unit trace is
+        // within 2,048 + 128·√2 + radius units, so every product of p_maputl.c:240
+        // and 246-248 and both sums stay under 2^29 for any mobjinfo radius (at
+        // most 128 units, info.c).
+        InterceptCaller::ShootThing => false,
         InterceptCaller::Slide => true,
         InterceptCaller::Use => true,
     }
@@ -125,9 +133,10 @@ pub(crate) fn wrapping_intercept(
 }
 
 /// `P_InterceptVector` for a caller under the Episode 1 policy's checked
-/// arithmetic: [`wrapping_intercept`] under wire 27 for a caller of
-/// [`wire27_wraps`], [`crate::sight::checked_intercept`] otherwise (every wire
-/// before 27 unchanged). `None` refuses the tic.
+/// arithmetic: under wire 27, [`wrapping_intercept`] for a caller of
+/// [`wire27_wraps`] and [`checked_abs_min`] for the others;
+/// [`crate::sight::checked_intercept`] under every wire before 27 (unchanged).
+/// `None` refuses the tic.
 pub(crate) fn policy_intercept(
     world: &StaticWorld,
     caller: InterceptCaller,
@@ -136,11 +145,35 @@ pub(crate) fn policy_intercept(
     v1_start: [Fixed; 2],
     v1_delta: [Fixed; 2],
 ) -> Option<Fixed> {
-    if world.wrapping_intercept && wire27_wraps(caller) {
+    if !world.wrapping_intercept {
+        crate::sight::checked_intercept(v2_start, v2_delta, v1_start, v1_delta)
+    } else if wire27_wraps(caller) {
         wrapping_intercept(v2_start, v2_delta, v1_start, v1_delta).ok()
     } else {
-        crate::sight::checked_intercept(v2_start, v2_delta, v1_start, v1_delta)
+        checked_abs_min(v2_start, v2_delta, v1_start, v1_delta).and_then(Result::ok)
     }
+}
+
+/// [`crate::sight::checked_intercept`] with wire 27's
+/// [`FixedDivRefusal::AbsMin`]: `None` where the source would overflow, and
+/// `Some(Err(AbsMin))` where `FixedDiv(num, den)` (p_maputl.c:250, p_sight.c:125)
+/// has `num` or `den` exactly `INT_MIN` (m_fixed.c:62). A `den` of 0 returns 0
+/// before `num` is computed or `FixedDiv` is reached (p_maputl.c:242-243,
+/// p_sight.c:119-120), so it is never refused here.
+fn checked_abs_min(
+    v2_start: [Fixed; 2],
+    v2_delta: [Fixed; 2],
+    v1_start: [Fixed; 2],
+    v1_delta: [Fixed; 2],
+) -> Option<Result<Fixed, FixedDivRefusal>> {
+    let exact = crate::sight::checked_intercept(v2_start, v2_delta, v1_start, v1_delta)?;
+    // Nothing wrapped (`exact` is Some), so these are the exact operands.
+    if let Some((num, den)) = wrapping_operands(v2_start, v2_delta, v1_start, v1_delta) {
+        if let Err(refusal) = abs_min(num, den) {
+            return Some(Err(refusal));
+        }
+    }
+    Some(Ok(exact))
 }
 
 /// Sight's `P_InterceptVector2` (p_sight.c:109-128) under the Episode 1 policy's
@@ -160,14 +193,9 @@ pub(crate) fn sight_intercept(
     v1_start: [Fixed; 2],
     v1_delta: [Fixed; 2],
 ) -> Option<Result<Fixed, FixedDivRefusal>> {
-    let exact = crate::sight::checked_intercept(v2_start, v2_delta, v1_start, v1_delta)?;
     if wire27 {
-        // Nothing wrapped (`exact` is Some), so these are the exact operands.
-        if let Some((num, den)) = wrapping_operands(v2_start, v2_delta, v1_start, v1_delta) {
-            if let Err(refusal) = abs_min(num, den) {
-                return Some(Err(refusal));
-            }
-        }
+        checked_abs_min(v2_start, v2_delta, v1_start, v1_delta)
+    } else {
+        crate::sight::checked_intercept(v2_start, v2_delta, v1_start, v1_delta).map(Ok)
     }
-    Some(Ok(exact))
 }

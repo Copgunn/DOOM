@@ -356,8 +356,11 @@ fn wire_27_identity_and_constructor() {
     assert_eq!(s.level_start_kind(), Some(StartKind::NewGame));
 }
 
-/// Ruling 6: all five callers wrap in this step, and only under wire 27: the
-/// same vector ("a wrong intercept" above) is refused through a wire-26 world.
+/// Ruling 6: the four callers with a genuine wrapping item wrap, and only under
+/// wire 27: the same vector ("a wrong intercept" above) is refused through a
+/// wire-26 world. The shoot trace against a thing has none
+/// (tests/reference/wire27_results.json) and stays checked under wire 27: the
+/// vector is refused there under both wires.
 #[test]
 fn every_caller_wraps_under_wire_27_alone() {
     let l = base();
@@ -367,7 +370,6 @@ fn every_caller_wraps_under_wire_27_alone() {
     for caller in [
         InterceptCaller::Aim,
         InterceptCaller::ShootLine,
-        InterceptCaller::ShootThing,
         InterceptCaller::Slide,
         InterceptCaller::Use,
     ] {
@@ -377,6 +379,11 @@ fn every_caller_wraps_under_wire_27_alone() {
             policy_intercept(&v5.world, caller, v, d2, s1, d1),
             Some(Fixed::from_bits(-33_553_408))
         );
+    }
+    let thing = InterceptCaller::ShootThing;
+    assert!(!wire27_wraps(thing));
+    for world in [&v4.world, &v5.world] {
+        assert_eq!(policy_intercept(world, thing, v, d2, s1, d1), None);
     }
 }
 
@@ -584,3 +591,4 @@ fn ordinary_sight_values_are_unchanged_under_wire_27() {
     }
     assert!(seen.iter().all(|n| *n > 1000), "{seen:?}");
 }
+
