@@ -6,7 +6,9 @@ The behavioural authority is the original id Software Linux DOOM 1.10 at `a77dfb
 
 Each statement is labelled: **(read)** read in the source; **(observed)** seen by running a scratch prototype, with the command in [§1.15](#115-what-was-run-and-what-was-not) or [§3](#3-harness-design-evidence-first); **(inferred)** reasoned from cited lines and not run. The facts come from two Phase 1 research reports (C facts; the Rust code and harness), kept with their prototypes under `~/scratch/m6a/` until the milestone ends; the writer of this note re-read a sample of their citations against the source ([§1.15](#115-what-was-run-and-what-was-not)).
 
-**Status (2026-11-23 01:25 PST; this paragraph is current, the paragraphs below are earlier status lines, superseded where they differ).** By the owner's ruling of 2026-11-22 the cap holds at 22,000 lines and PR #65 is **M6a part 1**, the level chain as built and hardened; the finale, the melt pictures, the easy skills and E1M7 on skill 3 are **part 2**, a separate pull request after this one merges, under wire 27 and new format versions (so "under wire 26" in the E1M7 ruling below reads "under wire 27"). Since then, with no new feature: the four readers fuzzed under the address sanitizer, the CI job that runs the genuine M6a engine (U15), a second hand test compared equal, and the real-map gates run again on the final code head ([evidence record §5.6](validation/M6A.md#56-before-the-owners-review-part-1-2026-11-22-night)). The PR waits for the owner's review.
+**Status (2026-11-23 21:55 PST; this paragraph is current, the paragraphs below are earlier status lines, superseded where they differ).** Part 1 is merged (PR #65). **Part 2** is started on the branch `feat/m6a-part2` from master `63030239`: its plan, size projection and the decisions V1–V8 that need the owner are in [§7](#7-part-2-plan-size-and-decisions-for-the-owner-2026-11-23). Nothing of part 2 is built; only its steps 1 and 2 proceed before the rulings.
+
+**Status (2026-11-23 01:25 PST; earlier status, superseded by the paragraph above where they differ).** By the owner's ruling of 2026-11-22 the cap holds at 22,000 lines and PR #65 is **M6a part 1**, the level chain as built and hardened; the finale, the melt pictures, the easy skills and E1M7 on skill 3 are **part 2**, a separate pull request after this one merges, under wire 27 and new format versions (so "under wire 26" in the E1M7 ruling below reads "under wire 27"). Since then, with no new feature: the four readers fuzzed under the address sanitizer, the CI job that runs the genuine M6a engine (U15), a second hand test compared equal, and the real-map gates run again on the final code head ([evidence record §5.6](validation/M6A.md#56-before-the-owners-review-part-1-2026-11-22-night)). The PR waits for the owner's review.
 
 **Status (2026-11-22 20:55 PST; earlier status, superseded by the paragraph above where they differ).** A reader review of the four new formats (`DSES`, `DDSP` version 3, `DSND` version 2, `DSIM` 42) is settled before merge: eleven items, each checked first, all with something real and three narrower than stated; overflow on file values fixed, states no session produces refused, two disagreements between code and STATE_FORMAT resolved on the document side and one on the code side, no saved byte or golden changed ([evidence record §5.5](validation/M6A.md#55-the-reader-review-2026-11-22-late-evening), [STATE_FORMAT](STATE_FORMAT.md#session-state-dses-version-1-m6a)). The rest is as the next paragraph says: stopped for the owner's ruling on the cap; the finale, the melt pictures, the easy skills and E1M7 on skill 3 are not started.
 
@@ -886,3 +888,118 @@ None is dropped; each says what it waits for.
   `t` is `cnt_time = stime / TICRATE`, wi_stuff.c:1341, 1397-1398, so `stime / 35 >= 3600`)** has no golden yet, because a stream that long is too big for the repository. **Open: a golden format for it.** Proposal: digests of the long prefix plus the full rows of the tail; the owner has not chosen it.
 - **Quirk 9's audible part** (level sounds heard into the intermission) waits for the mixer comparison; the sound rows are compared, the mixer buffers across that boundary are not yet.
 - **The `address_bounds` build** (the address build with only the bounds check recoverable) is a declared evidence-tooling choice: the genuine engine forms `&ammo[5]` into `int ammo[4]` (st_stuff.c:1288-1294) at every level start with the fist or chainsaw ready, and UBSan's bounds check stops the plain address build there. The choice is declared in [TESTING](TESTING.md#the-synthetic-session-items-and-their-goldens-phase-2-step-2) and in `m6a_goldens.py`. **The owner's condition (2026-11-21), implemented:** the allowance is that one site only, `st_stuff.c:1292` by file and line; any other report from that build (another file or line, any AddressSanitizer report) fails the run, and `--selftest` proves it with a second, real bounds error planted at another line in a scratch build and an injected AddressSanitizer report. The build adds no sanitizer coverage beyond what it reports (leak detection disabled: not LeakSanitizer coverage).
+
+## 7. Part 2: plan, size and decisions for the owner (2026-11-23)
+
+Part 1 ([PR #65](https://github.com/Copgunn/DOOM/pull/65)) is merged; part 2 starts from master `63030239` on the branch
+`feat/m6a-part2`. This section is the plan the owner asked for before any large code. Nothing in it is built yet. The
+rulings U1–U15, the melt rulings of [§1.16](#116-the-melt-settled-for-u9) and the E1M7 ruling of
+[§1.17](#117-maps-and-skills-the-load-report) stand; what follows only adds to them.
+
+### 7.1 What part 1 left, as found on master (read)
+
+- **The genuine side already exists.** The committed goldens of step 2 hold the finale in both modes (`FINREG`, `FINRET`),
+  the two finale refusals (`NOHELP2`, `NOVICTOR`), the four skill items (`SKILL0`–`SKILL3`) and one digest per melt step
+  (`tests/reference/m6a_melt`, the `V` rows). They come from the genuine engine only. Part 2 builds the Rust side against
+  them and adds items where a path has none.
+- **The Rust side refuses, by type, in seven places:** the session (`NotYet::Victory`, `Finale`, `EasySkill`,
+  crates/doom-game/src/session/mod.rs:319), the display (`FinaleDrawer`, `MeltPictures`,
+  crates/doom-render/src/d_display/session.rs:92) and the sound chain (`MeltSteps`, `MeltInProgress`,
+  crates/doom-sound/src/chain.rs:107). E1M7 on skill 3 is refused at load by spawn rule S′.
+- **Existing tests pin those refusals** (in `m6a_session_rules.rs`, `m6a_session.rs`, `m6a_play.rs`, `m6a_display.rs`,
+  `m6a_chain.rs` and `session_reader_tests.rs`). Since no existing test may change, the refusals cannot be lifted in
+  place: the new behaviour needs its own configuration beside the frozen one (decision V1).
+
+### 7.2 Steps
+
+One writer on the tree at a time; each step a fresh named agent; pushed after each step. Steps 1 to 5 come before the
+hand-test gate, as the brief orders.
+
+| Step | What | Agent | Waits for |
+| --- | --- | --- | --- |
+| 1 | Item 6: every session of a run listed at exit (the saved patch, with the two named tests' one expectation changed openly); the "comes after the hand test" wording removed from what `doom-play` prints | tester | nothing |
+| 2 | The finale and the melt as pure functions in new modules, reached by no configuration: `F_Ticker` and `F_Drawer` for Episode 1 against the committed `FINRET` and `FINREG` frames; the melt step (`wipe_initMelt`, `wipe_doMelt`) against every committed `V` row; planted faults | c-evidence | nothing |
+| 3 | The new configuration and the new format versions (V1–V3), with the proof that wires 1 to 26 and the four frozen formats keep their bytes, admission and refusals | c-evidence | V1, V2, V3 |
+| 4 | The finale and the melt wired in: session, display, sound (no buffer during melt steps), the app loop (one melt step per tic, no command built, motion ignored, keys kept), the `HELP2` refusal in registered mode, the exit line naming the art screen's tic; every synthetic item compared on every stream | c-evidence | step 3, V4 |
+| 5 | The hand-test gate: Windows artifact, the windows-artifact label, a stop and a report. GIFs of the melt and of the finale from the synthetic maps, by a committed script | docs-tools | step 4 |
+| 6 | The easy skills 0 and 1 (step 10 of §6.1) | c-evidence | the hand test, V2, V5 |
+| 7 | E1M7 on skill 3 (step 10a): rule S″, the escape witness, the arithmetic of what can trigger it | c-evidence | the hand test, V2 |
+| 8 | Steps 11 to 17 of [§6.1](#61-steps) as written there: restore-and-continue across every boundary and fuzz targets for every new reader (seed replay, coverage-guided and sanitizer runs reported separately, with leak detection stated); the "M6a genuine session" CI job extended, not renamed; docs; mutation testing; timings; independent review; full gates | as §6.1 | steps 3 to 7, V6 |
+
+### 7.3 Size
+
+Hand-written lines, projected, counted as in part 1 (`git diff --numstat` from the merge base, added lines, without
+`tests/reference` and `Cargo.lock`). Inferred from the estimates of §1.16.6, §1.17 and U12 and from part 1's outcome.
+
+| Part | Lines |
+| --- | ---: |
+| The new configuration in `doom-sim`, DSIM43, its independent encoder and the frozen-wire proof | 1,250 |
+| The finale: logic, drawer, refusals, app, tests | 1,300 |
+| The melt pictures (§1.16.6) | 1,225 |
+| New versions of the session, display and sound states: readers, writers, tests | 1,100 |
+| Easy skills (U12) | 700 |
+| E1M7 on skill 3 (§1.17) | 775 |
+| Restore-and-continue tests and fuzz targets | 900 |
+| Item 6 | 100 |
+| Harness, goldens, local tools, CI | 600 |
+| Mutation-survivor tests | 700 |
+| Timing and GIF scripts | 350 |
+| Docs | 2,600 |
+| **Central** | **11,600** |
+
+**Range at ±30%: about 8,100 to 15,100. The projection passes 12,000.** The central figure is 400 under it, but part 1
+landed at about 1.25 times its central figure, which here gives about 14,500. So a split is proposed now (decision V7),
+not when the count gets there.
+
+### 7.4 Decisions for the owner (V1–V8), each with a recommendation
+
+**V1. How the new behaviour is selected.** Facts: 7.1, third item. Options: (i) a second session configuration beside the
+wire-26 one; the wire-26 session keeps every refusal, for its tests and tools, and `doom-play` no longer offers it (as
+T15 and U6 did with earlier ones); (ii) lift the refusals in place, which changes frozen behaviour and existing tests.
+**Recommendation: (i).**
+
+**V2. What wire 27 is.** Options: (i) one wire 27 holding everything new: the finale and melt session, the easy skills
+and rule S″ (DSIM43); it needs all of part 2 in one pull request, because a wire is frozen once merged; (ii) wire 27 is
+the finale and melt session with `doom-sim`'s rules equal to wire 26 (DSIM43 differs from DSIM42 in the version only,
+proven on every existing item), and the easy skills and E1M7 are wire 28 (DSIM44); (iii) as (ii) but with no new
+`doom-sim` wire for the finale and melt, the session embedding DSIM42 unchanged: about 400 lines fewer, but then new
+behaviour runs on a wire-26 simulation, against the letter of "all new behaviour is wire 27". **Recommendation: (ii) if
+the split of V7 is taken, (i) if it is not.**
+
+**V3. New format versions.** `DDSP` v3, `DSND` v2 and `DSES` v1 were laid out with room for a finale and a melt in
+progress, and their readers refuse both today. Options: (i) new versions for all (`DSES` v2, `DDSP` v4, `DSND` v3,
+DSIM43), even where the bytes could stay; the old readers keep refusing; (ii) keep the versions and only lift the
+refusals: about 600 lines fewer, but a frozen reader would admit what it refused. **Recommendation: (i).** A display
+state saved in mid-melt holds both screens (128,000 bytes, bounded) and the 160 column positions.
+
+**V4. What "the pixels" of a melt step means in a golden.** The runner writes one SHA-256 per step over the picture's
+64,000 palette indices, and the palette number per melt. Options: (i) the claim is equality of every step's digest and
+of the palette, as for every frame since M5c; a runner switch dumps one step's bytes in scratch to locate a difference,
+and the self-tests plant a column off by one and a dropped step; (ii) commit the raw pictures of the synthetic melts
+(more than 300 MB of generated data). **Recommendation: (i).**
+
+**V5. Real-map evidence for the easy skills.** No recorded run on skill 0 or 1 exists. **Recommendation:** replay the
+commands of the 61 existing runs on skills 0 and 1 through both engines, locally (valid inputs even where they stop
+reaching their exits, §3.3), with E1M8 into the finale on each skill, and the owner's own sessions on top. Counts and
+digests only.
+
+**V6. Timings.** Step 15 and the E1M7 per-move check need an idle machine. **Recommendation:** they are run only when
+the owner says the machine is idle; until then the record says "not measured" and nothing is gated on them.
+
+**V7. Where to split.** Options: (i) **this pull request is the finale, the melt and item 6** (steps 1 to 5, and step 8
+for them), about 8,000 lines, ending at the hand test and the owner's review; **the easy skills and E1M7 on skill 3 are
+the next pull request** (steps 6 and 7, and step 8 for them), about 4,300 lines, under wire 28. The cut is the
+`doom-sim` boundary: this part touches the session, display, sound and app; the next touches the simulation. It costs
+about 700 lines more in all (a second wire) and a second round of gates. (ii) One pull request with the limit raised to
+about 16,000. Under both, the order of work up to the hand test is the same. **Recommendation: (i).** Nothing is dropped
+under either.
+
+**V8. The "sucks" golden (open since [§6.6](#66-open-items-from-step-2-and-what-keeps-them-open)).** It is not in the
+part 2 scope as written, and its format is still unchosen. **Recommendation:** it moves with percentages above 100 to
+M6b, on the checklist, with the format proposed there; not built in part 2.
+
+### 7.5 What proceeds before the rulings
+
+Steps 1 and 2 only. Item 6 is ruled already. Step 2 adds pure functions in new modules that no configuration reaches,
+compared with goldens that are already committed, so no answer to V1–V8 can invalidate it. Step 3 and everything after
+it waits.

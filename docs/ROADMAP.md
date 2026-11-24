@@ -655,12 +655,12 @@ The entries marked merged below are done; they keep their place here because thi
   `feat/m6a-episode1-continuous`); rulings received 2026-11-21 on decisions U1–U15 of the
   [investigation note](M6A_REFERENCE_INVESTIGATION.md#5-owner-decisions-u1u15-with-recommendations); Phase 2 in progress
   The owner ruled on 2026-11-22 that the 22,000-line cap holds and M6a lands in two parts; nothing is dropped.
-  - **Part 1 (PR #65, awaiting the owner's review, not merged):** the level chain under wire 26. One session plays any
+  - **Part 1 (PR #65, merged 2026-11-23):** the level chain under wire 26. One session plays any
     Episode 1 map on skills 2 and 3 through both exits, the intermission, the next map with the carried player, the reborn
     reload and the secret route; it stops with a plain screen at E1M8's exit and at a load of E1M7 on skill 3. The wipe's
     draws are made and compared, its pictures are not shown. Compared with the genuine engine on synthetic maps in CI and on
     the owner's IWAD locally, his hand-test sessions included ([evidence record](validation/M6A.md)).
-  - **Part 2 (a separate pull request after part 1 merges, not started), under wire 27 and new format versions:** the
+  - **Part 2 (branch `feat/m6a-part2`, started 2026-11-23: the plan is written, nothing is built; [plan and open decisions](M6A_REFERENCE_INVESTIGATION.md#7-part-2-plan-size-and-decisions-for-the-owner-2026-11-23)), under wire 27 and new format versions:** the
     finale, the melt pictures, the easy skills 0 and 1, and E1M7 on skill 3 (the spawn margin dropped for monsters under
     wire 27, where the earlier ruling said wire 26). Two known gaps of part 1 are recorded for part 2 (owner's
     rulings of 2026-11-23; neither changes a tic): **a session ended by restart and saved cleanly is not listed at exit**
