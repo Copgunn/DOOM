@@ -1329,3 +1329,80 @@ fn the_comparisons_can_fail() {
         Some("W_GetNumForName: d_victor not found! (tic 321)")
     );
 }
+
+/// Pins what the plain part 1 call `ChainSound::save` does on a `ChainMode::FinaleAndMelt` chain
+/// (owner's ruling of 2026-11-24: the plain calls keep their signatures; the checked calls
+/// refuse by type). It gives a `DSND` version 2 blob, and version 2's `restore` refuses that blob
+/// only while a display is pending (`NotYet::MeltInProgress`, the chain_state.rs `state.melt`
+/// test); outside a pending display `restore` ACCEPTS it and yields a chain of the frozen
+/// configuration (`ChainMode::RefusesMelt`), which the checked saves show. The public API reaches
+/// everything here; no guard below it is pinned.
+#[test]
+fn plain_save_on_a_finale_and_melt_chain_is_version_2() {
+    // Outside a pending display: in a level, in the intermission and in the finale.
+    let mut accepted = 0;
+    for (name, before, want) in [
+        ("CHAIN", Some(60), doom_sound::chain::ChainState::Level),
+        (
+            "CHAIN",
+            Some(130),
+            doom_sound::chain::ChainState::Intermission,
+        ),
+        ("FINRET", None, doom_sound::chain::ChainState::Finale),
+    ] {
+        let mut d = drive(name, ChainMode::FinaleAndMelt);
+        if let Some(t) = before {
+            d.states.retain(|k, _| *k < t);
+        }
+        d.run();
+        let c = d.chain.clone();
+        assert_eq!(c.state(), want, "{name}");
+        assert!(!c.display_pending(), "{name}");
+        let v2 = c.save().encode();
+        assert_eq!(&v2[..6], b"DSND\x02\0", "{name}: version 2");
+        let st = ChainSoundState::decode(&v2).expect("decode v2");
+        assert!(!st.melt, "{name}");
+        assert_eq!(
+            ChainSoundStateV3::decode(&v2),
+            Err(ChainStateError::State(StateError::Version(2)))
+        );
+        assert_eq!(
+            c.save_v2_checked(),
+            Err(doom_sound::chain_melt::ChainSaveRefusal::FinaleAndMeltSavesVersion3)
+        );
+        let back = ChainSound::restore(d.set.clone(), d.music, &st, &d.sim, d.config)
+            .unwrap_or_else(|e| panic!("{name}: v2 restore: {e:?}"));
+        // The restored chain is the frozen configuration: its checked saves say so.
+        assert_eq!(back.save(), c.save(), "{name}");
+        assert!(back.save_v2_checked().is_ok(), "{name}");
+        assert_eq!(
+            back.save_v3_checked(),
+            Err(doom_sound::chain_melt::ChainSaveRefusal::RefusesMeltSavesVersion2),
+            "{name}"
+        );
+        accepted += 1;
+    }
+    assert_eq!(accepted, 3);
+    // Mid-display (a tic called, its display pending): the blob is version 2 with the melt flag,
+    // and version 2's restore refuses it.
+    let mut d = drive("CHAIN", ChainMode::FinaleAndMelt);
+    d.states.retain(|t, _| *t < 130);
+    d.run();
+    let (sim, l) = (d.sim.clone(), listener_of(&d.sim));
+    let p = SimulationPositions(&sim);
+    let mut c = d.chain.clone();
+    c.intermission_tic(&[], 0, &l, &p).expect("tic");
+    assert!(c.display_pending());
+    let v2 = c.save().encode();
+    assert_eq!(&v2[..6], b"DSND\x02\0");
+    let st = ChainSoundState::decode(&v2).expect("decode v2");
+    assert!(st.melt);
+    assert_eq!(
+        ChainSound::restore(d.set.clone(), d.music, &st, &sim, d.config),
+        Err(ChainStateError::NotYet(NotYet::MeltInProgress))
+    );
+    assert_eq!(
+        c.save_v2_checked(),
+        Err(doom_sound::chain_melt::ChainSaveRefusal::FinaleAndMeltSavesVersion3)
+    );
+}

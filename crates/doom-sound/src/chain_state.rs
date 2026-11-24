@@ -343,6 +343,12 @@ impl ChainSound {
     /// pending display as a melt in progress, its owed buffer not counted), which restore as
     /// version 2 rules say. A save that must refuse an old version for the new configuration by
     /// type is [`Self::save_v2_checked`] (owner's ruling 3 of 2026-11-23).
+    ///
+    /// On a finale-and-melt session this plain call still gives a `DSND` version 2 state and does
+    /// not refuse. [`Self::restore`] refuses it while a display is pending
+    /// ([`NotYet::MeltInProgress`]) but, outside a pending display, accepts it and rebuilds a
+    /// session of the frozen configuration ([`crate::chain_melt::ChainMode::RefusesMelt`]). Use
+    /// [`Self::save_v2_checked`] or [`Self::save_v3_checked`] to have the configuration enforced.
     pub fn save(&self) -> ChainSoundState {
         let s: SoundState = self.sound.state();
         ChainSoundState {

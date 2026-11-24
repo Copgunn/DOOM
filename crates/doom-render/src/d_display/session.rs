@@ -645,6 +645,11 @@ impl Display {
     /// The saveable state of a session display (`DDSP` version 3); None for another display, for
     /// the finale-and-melt configuration (whose state is [`Self::session_state_v4`]) or before
     /// [`Self::begin_level`]. [`Self::session_state_v3_checked`] names which of these refused.
+    ///
+    /// On a [`SessionConfig::FinaleAndMelt`] display this plain call always gives `None`, in a
+    /// level, a melt, the intermission and the finale alike; the state is
+    /// [`Self::session_state_v4`], and [`Self::session_state_v3_checked`] returns the typed
+    /// refusal [`SessionStateRefusal::FinaleAndMeltSavesVersion4`](crate::SessionStateRefusal::FinaleAndMeltSavesVersion4).
     pub fn session_state(&self) -> Option<SessionDisplayState> {
         let s = self.session.as_deref()?;
         if s.config != SessionConfig::RefusesFinaleAndMelt {

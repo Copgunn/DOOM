@@ -1022,3 +1022,47 @@ fn a_melt_in_progress_refuses_every_other_call() {
         assert!(!d.melt_in_progress());
     }
 }
+
+/// Pins what the plain part 1 call `Display::session_state` does on a
+/// `SessionConfig::FinaleAndMelt` display (owner's ruling of 2026-11-24: the plain calls keep
+/// their signatures; the checked calls name the refusal): it returns `None` in a level, in a melt,
+/// in the intermission and in the finale, while `session_state_v4` holds the state at each point
+/// and the frozen display beside it still gives version 3 in a level. The public API reaches
+/// everything here.
+#[test]
+fn plain_session_state_is_none_on_a_finale_and_melt_display() {
+    let refused = Err(doom_render::SessionStateRefusal::FinaleAndMeltSavesVersion4);
+    let check = |l: &Lockstep, what: &str| {
+        assert!(l.display.session_state().is_none(), "{what}");
+        assert_eq!(l.display.session_state_v3_checked(), refused, "{what}");
+        assert!(l.display.session_state_v4().is_some(), "{what}");
+    };
+    // In a level (CHAIN tic 5), with the frozen display's version 3 beside it.
+    let mut l = Lockstep::new(&m6a::item("CHAIN"), 10).expect("drive");
+    to_tic(&mut l, 5);
+    assert_eq!(l.session.gamestate(), GameState::Level);
+    check(&l, "level");
+    assert!(l.session.display().session_state().is_some());
+    // In a melt: the session start's, before any step.
+    let mut m = Lockstep::new(&m6a::item("CHAIN"), 10).expect("drive");
+    m.tic_to_display().expect("tic");
+    assert!(m.display.melt_in_progress());
+    check(&m, "melt");
+    // In the intermission, after the level-to-intermission melt.
+    let into_intermission = *golden_melts("CHAIN").keys().nth(1).expect("second melt");
+    let mut i = Lockstep::new(&m6a::item("CHAIN"), 10).expect("drive");
+    to_tic(&mut i, into_intermission as usize);
+    i.step().expect("tic and its melt");
+    assert_eq!(i.session.gamestate(), GameState::Intermission);
+    assert!(!i.display.melt_in_progress());
+    check(&i, "intermission");
+    // In the finale, past the level-to-finale melt.
+    let to_finale = *golden_melts("FINRET").keys().nth(1).expect("second melt");
+    let mut f = Lockstep::new(&m6a::item("FINRET"), 10).expect("drive");
+    to_tic(&mut f, to_finale as usize);
+    f.step().expect("tic and its melt");
+    to_tic(&mut f, to_finale as usize + 3);
+    assert!(f.finale.is_some());
+    assert!(!f.display.melt_in_progress());
+    check(&f, "finale");
+}
