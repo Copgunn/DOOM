@@ -2903,10 +2903,11 @@ would share one target directory and a mutant could be tested with another mutan
 test harness. The mutants in the window's event handlers and in `audio::probe` cannot be caught without a display or a real audio device;
 the dispositions are in the [M5d record](validation/M5D.md#the-local-mutation-run-on-doom-play).
 
-## M6a Episode 1 in one session (in progress)
+## M6a Episode 1 in one session (part 1 merged, part 2 in progress)
 
-The M6a [reference investigation](M6A_REFERENCE_INVESTIGATION.md) (the owner's rulings on U1-U15 of 2026-11-21) is
-under way on the branch `feat/m6a-episode1-continuous`. This section lists the commands of the pieces done so far.
+The M6a [reference investigation](M6A_REFERENCE_INVESTIGATION.md) (the owner's rulings on U1-U15 of 2026-11-21) has two
+parts: part 1 is on master (pull request #65, merged 2026-11-23) and part 2 is under way on the branch `feat/m6a-part2`.
+This section lists the commands of the pieces done so far.
 
 ### The genuine M6a runner (Phase 2 step 1)
 
@@ -3138,6 +3139,18 @@ cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_s
 
   `--wad` takes the files `doom-play` was given in its order (the IWAD first, copied under the mode's name in `--work`; never
   written). The mode is the demo file name's token. Sessions that reach E1M8's exit are compared up to the finale's first tic.
+
+### Part 2: the finale and the melt (in progress)
+
+```sh
+cargo test -p doom-game --test m6a_finale_melt           # the pure finale and melt step against the genuine goldens
+cargo test -p doom-game --test m6a_finale_melt_display   # the finale-and-melt display, DDSP version 4 restore, planted faults
+cargo check --manifest-path fuzz/Cargo.toml --bin m6a_ddsp4   # the DDSP version 4 reader's fuzz target compiles
+```
+
+Both tests print their counts with `-- --nocapture`. What they compared is in the
+[investigation note](M6A_REFERENCE_INVESTIGATION.md#7-part-2-plan-size-and-decisions-for-the-owner-2026-11-23)
+until the part 2 evidence record is written. No fuzz campaign has been run for `m6a_ddsp4`.
 
 ## Mutation testing
 

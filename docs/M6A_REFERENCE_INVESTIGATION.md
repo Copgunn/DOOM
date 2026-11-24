@@ -1060,6 +1060,38 @@ the main session):
   tests, generated from the genuine engine by a new `--check` tool; until ruled, the full text is covered only by the
   local run on the owner's IWAD and the record says so.
 
+**Ruled (owner, 2026-11-23): V9 as recommended.** A separate part 2 golden set, read only by new tests. (1) New files
+only: the existing finale goldens (`FINRET`, `FINREG`, `NOHELP2`, `NOVICTOR`) and the existing synthetic WADs stay byte
+for byte, and the Rust is still compared with them. (2) The new font and any new pictures are drawn by a committed tool
+with a `--check` mode; nothing from any IWAD. (3) The new goldens come from the genuine engine only. (4) The new items
+run the text crawl to its end: every line, each begun by its newline character; the tic the last character appears and
+the idle tics after it; and the tic the art screen follows (finale tic 1,571) with its melt. The record states how many
+lines and characters the set covers. (5) The "M6a genuine session" CI job is extended to regenerate and check the new
+set, and is not renamed. The ruling first also named "the wrap"; the owner struck it the same day: the original has no
+wrap (a new line starts only at a newline character, and a character past the right edge breaks the loop for that
+frame, f_finale.c:321). **The existing goldens cover that edge-break case; the new set covers the full crawl.**
+
+### 7.8 The display part of steps 3 and 4, done (2026-11-23)
+
+Steps 3 and 4 of 7.2 are built layer by layer, as part 1 was: the display, then the sound, then the session, then the
+app. The display is done (observed, `cargo test -p doom-game --test m6a_finale_melt_display`, re-run by the main
+session): a second configuration of the session display (`SessionConfig::FinaleAndMelt`) draws the finale and steps
+every melt, and saves as `DDSP` version 4 ([STATE_FORMAT](STATE_FORMAT.md)); the part 1 configuration keeps its
+refusals and `DDSP` version 3.
+
+- At screenblocks 10 and at 11: 16,197 frames (8,185 level, 3,182 intermission, 4,830 finale) and the `M_Random`
+  index on 16,197 tics equal to the genuine goldens. At 10: 119 of 125 melts and 4,708 of 4,946 melt steps equal
+  (start and end screens, palette, step count, every picture). No melt golden exists at 11. Not driven: `SKILL0` and
+  `SKILL1` (6 melts, 238 steps; the next pull request).
+- `DDSP` version 4 restored at every step of 17 melts of all six kinds (663 points) and in both finale stages, each
+  continuing equal to the uninterrupted run.
+- Planted faults, each caught: a melt column's offset off by one, a dropped step, a wrong melt palette, the finale
+  stage shown one tic early.
+- The proof for the frozen configuration: its existing tests pass unmodified; on 1,459 tics the two configurations give
+  equal frames and indices; without a melt the version 4 bytes are the version 3 bytes with one mode byte inserted. No
+  committed digest pins the version 3 bytes themselves.
+- Fuzz target `m6a_ddsp4`: compiled, with the address sanitizer too; no seed replay and no campaign run yet.
+
 ### 7.7 What proceeded before the rulings (kept as written)
 
 Steps 1 and 2 only. Item 6 is ruled already. Step 2 adds pure functions in new modules that no configuration reaches,

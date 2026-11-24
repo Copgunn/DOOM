@@ -3087,8 +3087,8 @@ fault ([evidence](validation/M5B.md#step-7b-full-resolution-unrecorded-turning))
   **A dead player gets no hint.** After a death the game keeps running with the view on the floor until the
   player presses use; nothing on screen says so, and the owner took it for a freeze (his report of 2026-11-21). The
   original shows no prompt there either (`P_DeathThink` only tests the use button, p_user.c:227-228), so nothing
-  is changed; what use does after a death is taken up by milestone M6a (decision U6 of its investigation note, which
-  is on pull request #65 and not yet on master).
+  is changed; what use does after a death is taken up by milestone M6a (decision U6 of its investigation note): the faithful
+  reborn reload is on master since part 1 (pull request #65, merged 2026-11-23).
 - **Restart is a new game** (decision S11): a fresh simulation at tic 0, both random indices 0, every status bar,
   HUD and input variable as at process start, a new demo file; the old session is saved first. This differs from
   vanilla's reload after death, which keeps process state and is not modelled.
