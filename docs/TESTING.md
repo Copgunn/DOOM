@@ -3139,6 +3139,50 @@ cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_s
   `--wad` takes the files `doom-play` was given in its order (the IWAD first, copied under the mode's name in `--work`; never
   written). The mode is the demo file name's token. Sessions that reach E1M8's exit are compared up to the finale's first tic.
 
+### Wire 27: the wrapping `P_InterceptVector`
+
+Commands for the synthetic items, the independent encoder and the Rust side. The rule is in
+[COMPATIBILITY](COMPATIBILITY.md#wire-27-the-wrapping-p_interceptvector), the format in
+[STATE_FORMAT](STATE_FORMAT.md#dsim-v43--wire-27-the-wrapping-p_interceptvector), observations in the
+[wire 27 record](validation/WIRE27.md).
+
+```sh
+# the synthetic WAD (eight map slots, one room layout) and the eight demo scripts
+python3 tools/reference/wire27_wad.py --check
+# genuine engine (C; Linux; --work outside the repository): strict, overflow, address, witness and nowrap builds
+python3 tools/reference/wire27_goldens.py --work DIR --check --selftest
+# the Rust side (also with --release)
+cargo test -p doom-sim --test wire27_intercept
+cargo test -p doom-sim wire27_tests
+# local only (read the owner's IWAD in place, never in CI)
+python3 tools/local/e1_blockmap_listings.py --iwad IWAD --check docs/validation/wire27_e1_blockmap.json
+python3 tools/local/e1_blockmap_listings.py --selftest
+python3 tools/local/wire27_session_real.py --iwad IWAD --work DIR --recording FILE [--construction FILE] [--idle N] --selftest
+```
+
+- **Genuine items (CI).** `wire27_goldens.py` writes or `--check`s `wire27_state.txt` and `wire27_results.json`; its
+  `--selftest` plants an extra `P_Random` draw, a witness row with a `FixedMul` result one off and a witness row with an
+  unknown traverser, and each must be detected. The address build runs with `detect_leaks=0`: leak detection is disabled,
+  not LeakSanitizer coverage. The CI step is in `.github/workflows/rust.yml`.
+- **`wire27_intercept` (4 tests).** Wire 27 equals the genuine engine at every tic of the eight items
+  (`wire_27_equals_the_genuine_engine_on_every_item`); wire 26 refuses each at its first wrap; the witness covers every
+  wrapping caller; planted faults are detected at their capture.
+- **`wire27_tests` in `doom-sim` (13 Rust-only unit tests, and the only evidence for the refusals).** The wrapping function
+  equals the checked value where that exists (the 131 genuine C rows of `m3d3a_fractions.csv` and a sweep, with a 128-bit
+  reference); hand vectors of each wrap class; each refusal named; each caller's wrapping or checking; the DSIM43 identity; sight's `INT_MIN` refusal; the admitted classes against the `T` rows; the four sign pairs of a
+  wrapped saturation.
+- **Local real-map checks.** `e1_blockmap_listings.py` writes counts and PASS/FAIL only (`--verbose` prints bound magnitudes
+  to the terminal for local review and never to a file); `wire27_session_real.py` compares recordings and constructions
+  with the genuine strict build after every tic (its `--selftest` flips a ticcmd and adds a `P_Random` draw).
+- **Fuzzing the DSIM43 reader (a fifth target beside the four above, `wire27_dsim43`).** Decoder only. Build
+  `cargo +nightly fuzz build --sanitizer address`; seed replay `cargo +nightly fuzz run wire27_dsim43 DIR -- -runs=0`; a
+  campaign adds `-runs=N -max_len=120000 -seed=1 -timeout=20 -rss_limit_mb=2048`. Run with `ASAN_OPTIONS=detect_leaks=0`
+  (leak detection disabled). The seeds were three captures at tics 0, 35 and 70 made in scratch; none is committed.
+- **Mutation testing** (cargo-mutants 27.1.0 with nextest, `-j 1`, as the pattern above): all of `intercept_vector.rs` with
+  the filter `test(wire27) | test(wire_27) | test(intercept)`, and the lines this PR changed elsewhere in `doom-sim` with
+  `--in-diff`, excluding `intercept_vector.rs` and the tests, over the full `doom-sim` suite. Counts and survivors are in
+  [the record](validation/WIRE27.md#9-mutation-testing-cargo-mutants-2710-nextest--j-1).
+
 ## Mutation testing
 
 M4a used cargo-mutants 27.1.0 with cargo-nextest 0.9.151. These are separate
