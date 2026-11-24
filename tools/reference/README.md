@@ -824,3 +824,18 @@ Local only (they read a scratch copy of an IWAD; never in CI; counts and digests
 [tools/local/m5c_mixer_real.py](../local/m5c_mixer_real.py) with
 [m5c_mixer_real_results.json](../../tests/reference/m5c_mixer_real_results.json) (the mixer on DOOM.WAD and
 DOOM2.WAD).
+
+## Wire 27: the wrapping `P_InterceptVector` against the genuine engine
+
+- [wire27_wad.py](wire27_wad.py) draws [wire27.wad](../../tests/reference/wire27_wads) (five one-room maps whose long
+  slanted east wall makes `P_InterceptVector`, p_maputl.c:231-251, leave `int`) and the five demo scripts under
+  [wire27_scripts](../../tests/reference/wire27_scripts); `--check` compares them.
+- [wire27_goldens.py](wire27_goldens.py) builds the M6a runner (imported read-only) in five builds: strict (the claim),
+  overflow and address (with the two declared sanitizer adapters of p_maputl.c:240 and 246-248, applied by this tool
+  only; address runs use `detect_leaks=0`, so not LeakSanitizer coverage), witness (observers in
+  [wire27_witness.c](wire27_witness.c) that log every `P_InterceptVector` call) and nowrap (the overflow build without
+  the adapters, which must stop at the witness's first `int` overflow). It writes or `--check`s
+  [wire27_state.txt](../../tests/reference/wire27_state.txt) (DSIM43 state digests per tic through the independent
+  encoder [level_snapshot_wire27.py](level_snapshot_wire27.py), and the witness counts per caller and case) and
+  [wire27_results.json](../../tests/reference/wire27_results.json). The Rust side is
+  `cargo test -p doom-sim --test wire27_intercept`.
