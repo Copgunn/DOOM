@@ -592,3 +592,38 @@ fn ordinary_sight_values_are_unchanged_under_wire_27() {
     assert!(seen.iter().all(|n| *n > 1000), "{seen:?}");
 }
 
+/// Ruling 6: a caller that wire 27 keeps checked (the shoot trace against a
+/// thing) still refuses an exactly-`INT_MIN` `FixedDiv` operand (m_fixed.c:62)
+/// under wire 27, as the wrapping callers do, while wire 26 keeps its value; an
+/// ordinary vector (the hand-computed sight vectors of p_sight.c:117-124, the
+/// same expression as p_maputl.c:240-250, here through `P_InterceptVector`'s
+/// callers) gives wire 26's value under both. `num = INT_MIN` and `den = INT_MIN`
+/// are the vectors of [`sight_refuses_an_int_min_operand_under_wire_27_alone`],
+/// neither of which wraps.
+#[test]
+fn a_checked_caller_refuses_an_int_min_operand_under_wire_27() {
+    let l = base();
+    let (v4, v5) = (level(&l, false), level(&l, true));
+    let o = [0, 0];
+    let num = ([1 << 27, 0], [65536, 0], o, [0, 1 << 28]);
+    let den = (o, [1 << 27, 0], [1 << 20, 0], [0, -(1 << 28)]);
+    let ordinary = (o, [1 << 27, 0], [1 << 20, -(1 << 20)], [0, 1 << 21]);
+    let (thing, line) = (InterceptCaller::ShootThing, InterceptCaller::ShootLine);
+    for (v, wire26) in [(num, -(1 << 27)), (den, 512)] {
+        let at = |w: &StaticWorld, c| policy_intercept(w, c, fx(v.0), fx(v.1), fx(v.2), fx(v.3));
+        assert_eq!(checked(v.0, v.1, v.2, v.3), Some(wire26));
+        assert_eq!(at(&v4.world, thing), Some(Fixed::from_bits(wire26)));
+        assert_eq!(at(&v5.world, thing), None);
+        assert_eq!(at(&v5.world, line), None);
+        assert_eq!(wrapping(v.0, v.1, v.2, v.3), Err(AbsMin));
+    }
+    let v = ordinary;
+    let exact = checked(v.0, v.1, v.2, v.3).unwrap();
+    for world in [&v4.world, &v5.world] {
+        assert_eq!(
+            policy_intercept(world, thing, fx(v.0), fx(v.1), fx(v.2), fx(v.3)),
+            Some(Fixed::from_bits(exact))
+        );
+    }
+    assert_eq!(reference(v.0, v.1, v.2, v.3), (Ok(exact), false));
+}
