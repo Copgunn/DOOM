@@ -31,8 +31,8 @@ use std::{error::Error, fmt};
 /// a carried level start; older contexts stay frozen.
 pub const PLAYER_EPISODE1_V4_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-4-v1";
 /// Explicit Episode 1 part 5 context (wire 27, DSIM43): wire 26's world with the
-/// wrapping `P_InterceptVector`. Its own string, as every profile has; reusing
-/// wire 26's is this one line.
+/// wrapping `P_InterceptVector` and sight's `INT_MIN` `FixedDiv` refusal. Its own
+/// string, as every profile has; reusing wire 26's is this one line.
 pub const PLAYER_EPISODE1_V5_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-5-v1";
 
 /// The largest tic count a flash psprite can hold with a null state at a carried
@@ -432,7 +432,9 @@ impl Simulation {
     }
     /// Wire 27 (`PlayerMonstersEpisode1V5`, owner's ruling of 2026-11-24):
     /// [`Self::original_player_episode1_v4_level`] under wire 27, which is wire 26
-    /// except for the traces' wrapping `P_InterceptVector` (`crate::intercept_vector`).
+    /// except for the traces' wrapping `P_InterceptVector` and the refusal of an
+    /// `INT_MIN` `FixedDiv` operand in sight's checked `P_InterceptVector2`
+    /// (`crate::intercept_vector`).
     /// Captures are DSIM43, read by [`crate::Diagnostic::decode_episode1_v5`]:
     /// the DSIM42 layout under policy 27 and [`PLAYER_EPISODE1_V5_CONTEXT_SCHEMA`].
     pub fn original_player_episode1_v5_level(

@@ -471,9 +471,19 @@ fn query_prepared(
                         out.visible = false;
                         break 'walk;
                     }
+                    // Under wire 27 alone (`wrapping_intercept`) an INT_MIN
+                    // FixedDiv operand is refused too (owner's ruling of
+                    // 2026-11-24); sight never wraps.
                     let frac = if world.checked_arithmetic {
-                        checked_intercept(ray.start, ray.delta, div.start, div.delta)
-                            .ok_or(crate::MapScaleError::Arithmetic)?
+                        crate::intercept_vector::sight_intercept(
+                            world.wrapping_intercept,
+                            ray.start,
+                            ray.delta,
+                            div.start,
+                            div.delta,
+                        )
+                        .and_then(Result::ok)
+                        .ok_or(crate::MapScaleError::Arithmetic)?
                     } else {
                         fraction(ray, div)
                     };

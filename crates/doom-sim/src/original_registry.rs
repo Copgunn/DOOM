@@ -128,7 +128,9 @@ pub enum OriginalExecutionProfile {
     /// Episode 1, part 5 (wire 27, owner's ruling of 2026-11-24): wire 26 in
     /// every respect, level start included, except that the traces' checked
     /// `P_InterceptVector` (p_maputl.c:231-251) wraps as the genuine engine does
-    /// (`has_wrapping_intercept`). Captures are DSIM43, read by
+    /// (`has_wrapping_intercept`), and sight's checked `P_InterceptVector2`
+    /// (p_sight.c:109-128), which does not wrap, also refuses the tic on an
+    /// `INT_MIN` `FixedDiv` operand. Captures are DSIM43, read by
     /// `Diagnostic::decode_episode1_v5`: the DSIM42 layout field for field.
     PlayerMonstersEpisode1V5,
 }
@@ -595,7 +597,8 @@ impl OriginalExecutionProfile {
         )
     }
     /// Wire 27 alone (owner's ruling of 2026-11-24): the traces' `P_InterceptVector`
-    /// wraps (`crate::intercept_vector`), DSIM43 and the
+    /// wraps and sight's `P_InterceptVector2` refuses an `INT_MIN` `FixedDiv`
+    /// operand (`crate::intercept_vector`), DSIM43 and the
     /// `PLAYER-MONSTERS-EPISODE1-5-v1` context; a site that selects a schema tests
     /// this before [`Self::has_carried_start`]. Every older policy keeps its
     /// checked intercept, schema and refusals byte for byte.
@@ -1739,8 +1742,9 @@ impl Simulation {
             },
         )?;
         sim.boundary = boundary;
-        // Wire 27 alone: the traces' wrapping `P_InterceptVector`, read only where
-        // `checked_arithmetic` (the Episode 1 policy's) is set.
+        // Wire 27 alone: the traces' wrapping `P_InterceptVector` and sight's
+        // INT_MIN refusal, read only where `checked_arithmetic` (the Episode 1
+        // policy's) is set.
         sim.world.wrapping_intercept = policy.has_wrapping_intercept();
         sim.world.sector_lines = sector_lines;
         if policy.has_player_body() {
