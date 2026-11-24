@@ -23,6 +23,15 @@
 //! same typed refusal path as every other ([`Witness::Sound`]). [`GameData::load`] keeps M5b's
 //! configuration exactly (wire 24, no sound, the sound-free, wipe-free contract) for the frozen
 //! M5b tests, examples and tools.
+//!
+//! The M6a session (owner's rulings U2, U4–U7): game data loaded with [`GameData::load_session`]
+//! makes every session of the app (and every restart, a new game) a [`crate::session::Session`]
+//! started at the data's map and skill in the declared game mode: exits, intermissions, carried
+//! starts and reborns run as the compared session runs them, and only the player's quit, a
+//! refusal or the tic cap ends it. The recorder is the same: one demo per session, a command every
+//! tic in every game state, under the file name [`crate::session::demo::session_mode_name`] with
+//! the mode's token. A session refusal ends the session through the same typed path
+//! ([`Witness::Session`]), the end screen saying plainly what is not built yet.
 
 mod audio;
 mod frames;
@@ -45,6 +54,10 @@ pub use screens::{
 };
 
 use crate::input::{Event, EventLayer, Input, InputError, MouseButton, Preset, RecordedTic, keys};
+use crate::session::{
+    ModeSetting, ModeSource, NotYet, Session, SessionData, SessionMode, SessionSettings,
+    SessionWitness, StartError,
+};
 use doom_render::hu_stuff::Message;
 use doom_render::{
     DisplayFrame, Frame, GameMode, LumpDirectory, ResourceError, Resources, SCREENHEIGHT,
@@ -140,6 +153,23 @@ pub trait Host {
     fn audio(&mut self) -> Option<&mut dyn AudioSink> {
         None
     }
+    /// Called after every committed session tic of game data loaded with
+    /// [`GameData::load_session`] (M6a), instead of [`Host::tic`]: for headless verification and
+    /// doom-play's input log.
+    fn session_tic(&mut self, _report: &SessionTicReport<'_>) {}
+}
+
+/// One committed session tic, as [`Host::session_tic`] receives it (M6a).
+#[derive(Clone, Copy, Debug)]
+pub struct SessionTicReport<'a> {
+    /// The events posted before the tic's command was built.
+    pub events: &'a [Event],
+    /// The executed command: the demo's re-read copy.
+    pub executed: TicCommand,
+    /// The session after the tic.
+    pub session: &'a Session,
+    /// What the session tic did.
+    pub report: &'a crate::session::TicReport,
 }
 
 /// What the sound session did in a committed tic (M5c).
@@ -329,6 +359,10 @@ pub enum LoadError {
     Registry(doom_sim::OriginalRegistryError),
     /// The simulation refused the map's set-up.
     Admission(SimError),
+    /// [`GameData::load_session`]: the session data could not be loaded.
+    Session(crate::session::DataError),
+    /// [`GameData::load_session`]: the session cannot start (before tic 0; nothing ran).
+    SessionStart(StartError),
     /// [`GameData::load_with_sound`]: the sound data could not be loaded (`I_InitSound`'s
     /// fatal case, or a resource bound).
     SoundData(SoundLoadError),
@@ -354,6 +388,8 @@ impl fmt::Display for LoadError {
             Self::Admission(e) => write!(f, "the simulation does not admit this map: {e:?}"),
             Self::SoundData(e) => write!(f, "the sound data could not be loaded: {e:?}"),
             Self::SoundSession(e) => write!(f, "the sound session refused the data: {e:?}"),
+            Self::Session(e) => write!(f, "the game data could not be loaded: {e:?}"),
+            Self::SessionStart(e) => f.write_str(&start_message(e)),
         }
     }
 }
@@ -369,9 +405,52 @@ pub struct GameData {
     start: Simulation,
     map: u8,
     skill: u8,
+    /// With [`Self::load_session`]: the M6a session data every session starts from.
+    session: Option<Arc<SessionData>>,
 }
 
 impl GameData {
+    /// The M6a session (owner's rulings U2, U4, U6; M6a note §4.10): `wads` (the IWAD first) in
+    /// the game mode `setting` (the declared probe by default, ruling U4), every session a new
+    /// game on `E1M<map>` at `skill`. A start the session refuses (a map outside 1..=9, the easy
+    /// skills not built yet, a map wire 26 does not admit, the first map's music missing) is
+    /// refused here, before any window, as the genuine engine's first load stops. The frame assets
+    /// are the start map's level tables and the 14 palettes (the picture's palette lookup); the
+    /// start simulation is the session's new game, which [`App`] never advances.
+    pub fn load_session(
+        wads: &[&[u8]],
+        setting: ModeSetting,
+        map: u8,
+        skill: u8,
+    ) -> Result<Self, LoadError> {
+        let data = Arc::new(SessionData::load(wads, setting).map_err(LoadError::Session)?);
+        let settings = SessionSettings {
+            map,
+            skill,
+            screenblocks: 10,
+        };
+        let first = Session::new(data.clone(), settings).map_err(LoadError::SessionStart)?;
+        let level = data
+            .map(map)
+            .map_err(|e| LoadError::SessionStart(StartError::Map(e)))?
+            .1
+            .clone();
+        let playpal = first.display().playpal().to_vec();
+        Ok(Self {
+            assets: FrameAssets::from_parts(data.resources().clone(), level, playpal),
+            sound: None,
+            start: first.level().clone(),
+            map,
+            skill,
+            session: Some(data),
+        })
+    }
+
+    /// The declared game mode, for data loaded with [`Self::load_session`].
+    pub fn session_mode(&self) -> Option<crate::session::DeclaredMode> {
+        self.session.as_ref().map(|d| d.mode())
+    }
+
     /// Loads `E1M<map>` at `skill` from `wads` (the IWAD first, then extra WADs; later files
     /// take precedence, as `W_AddFile` order does) in game `mode`, in M5b's configuration: wire
     /// 24, no sound, doom-render's sound-free, wipe-free contract (decision S15). Kept exactly for
@@ -475,6 +554,7 @@ impl GameData {
             start,
             map,
             skill,
+            session: None,
         })
     }
 
@@ -545,6 +625,11 @@ pub enum Witness {
     /// The sound session refused the tic (M5c, decision T11: where the C aborts or reads memory
     /// it does not own, at the exact start; and the T12 slot-15 release).
     Sound(SessionRefusal),
+    /// The M6a session refused the tic ([`crate::session::Session::tic`]), a typed "not yet"
+    /// refusal included.
+    Session(Box<SessionWitness>),
+    /// A restart's new M6a session could not start.
+    SessionStart(StartError),
 }
 
 impl fmt::Display for Witness {
@@ -555,7 +640,69 @@ impl fmt::Display for Witness {
             Self::Simulation(e) => write!(f, "{e}"),
             Self::Frame(e) => write!(f, "{e}"),
             Self::Sound(e) => write!(f, "sound: {e}"),
+            Self::Session(w) => f.write_str(&session_message(w)),
+            Self::SessionStart(e) => f.write_str(&start_message(e)),
         }
+    }
+}
+
+/// A plain sentence for a refused M6a session start (no apostrophe or semicolon: the screens'
+/// font has neither).
+fn start_message(e: &StartError) -> String {
+    match e {
+        StartError::Domain => {
+            "the session plays E1M1 to E1M9 at skill 2 or 3, screenblocks 10 or 11".into()
+        }
+        StartError::NotYet(n) => not_yet_message(*n),
+        StartError::Map(e) => format!("the start map could not be loaded: {e:?}"),
+        StartError::Admission(e) => format!(
+            "the simulation does not admit the start map at this skill yet ({e:?}). The game \
+             stops here instead of playing it differently from the original."
+        ),
+        StartError::Sound(w) => {
+            format!("a music lump is missing ({w}): the original stops at this load too")
+        }
+        StartError::Display(e) => format!("the display could not be built: {e}"),
+    }
+}
+
+/// A plain sentence for original behaviour the session does not build yet.
+fn not_yet_message(n: NotYet) -> String {
+    match n {
+        NotYet::Victory => "E1M8 is complete. The finale that follows it (the text screen and \
+                            the picture) is not built yet: it comes after the hand test. The \
+                            session stops here, nothing was played differently from the original."
+            .into(),
+        NotYet::Finale => "the finale is not built yet: it comes after the hand test".into(),
+        NotYet::EasySkill => "the easy skills (0 and 1) are not built yet: they come after the \
+                              hand test (M6a step 10)"
+            .into(),
+    }
+}
+
+/// A plain sentence for a refused M6a session tic.
+fn session_message(w: &SessionWitness) -> String {
+    use crate::session::sound::SoundWitness;
+    use doom_sound::chain::ChainRefusal;
+    match w {
+        SessionWitness::NotYet(n) => not_yet_message(*n),
+        SessionWitness::Admission { map, error } => format!(
+            "E1M{map} is not admitted at this skill yet ({error:?}). The game stops at its load \
+             instead of playing it differently from the original."
+        ),
+        SessionWitness::Map { map, error } => format!("E1M{map} could not be loaded: {error:?}"),
+        SessionWitness::Sound(SoundWitness::Chain(ChainRefusal::MusicMissing {
+            music, ..
+        })) => {
+            format!(
+                "the music lump {} is missing: the original stops here too",
+                music.lump_name().to_ascii_uppercase()
+            )
+        }
+        SessionWitness::Special => "a pause or save command (BT_SPECIAL): the original pause \
+                                    comes with M6b, saving later"
+            .into(),
+        other => other.to_string(),
     }
 }
 
@@ -669,6 +816,9 @@ pub struct App {
     /// Earlier sessions of this run (before a restart) that the layout detector of decision T12
     /// labelled layout-dependent.
     layout_earlier: u64,
+    /// With [`GameData::load_session`]: the current M6a session (none only when its start was
+    /// refused); `sim` and `frames` are then unused.
+    session: Option<Box<Session>>,
 }
 
 /// The one plain line that says a run held a session labelled layout-dependent by the detector of
@@ -729,6 +879,7 @@ impl App {
             quit: false,
             audio_notes: Vec::new(),
             layout_earlier: 0,
+            session: None,
             data,
             cfg,
         };
@@ -765,6 +916,24 @@ impl App {
         self.started = host.timestamp();
         // the file is created at once (an empty demo), so an unwritable directory shows at
         // the first pause, not at the session's end
+        if let Some(data) = self.data.session.clone() {
+            let settings = SessionSettings {
+                map: self.data.map,
+                skill: self.data.skill,
+                screenblocks: self.cfg.screenblocks,
+            };
+            self.save(host);
+            // a new game: a fresh session, both random indices 0 (U6: S11's restart)
+            match Session::new(data, settings) {
+                Ok(s) => self.session = Some(Box::new(s)),
+                Err(e) => {
+                    self.session = None;
+                    let witness = Witness::SessionStart(e);
+                    self.end(Ending::Refused { tic: 0, witness }, host);
+                }
+            }
+            return self.flush_audio(host);
+        }
         self.save(host);
         match FrameSource::start(&self.data, self.cfg.screenblocks, &self.sim) {
             Ok(f) => self.frames = Some(f),
@@ -796,7 +965,50 @@ impl App {
     /// The sound session, when the data was loaded with sound (M5c): its channel table, mixer,
     /// schedule and the layout detector of decision T12.
     pub fn sound(&self) -> Option<&Sound> {
-        self.frames.as_ref().and_then(FrameSource::sound)
+        match &self.session {
+            Some(s) => Some(s.sound().sound()),
+            None => self.frames.as_ref().and_then(FrameSource::sound),
+        }
+    }
+
+    /// The current M6a session, for data loaded with [`GameData::load_session`].
+    pub fn session(&self) -> Option<&Session> {
+        self.session.as_deref()
+    }
+
+    /// The exit line of an M6a session (U4, U5; M6a note §4.10): the declared game mode and how
+    /// it was chosen, the start, where the session was when it ended (the map, or the
+    /// intermission after it) and its tics, and the refusal or the cap that ended it, if any;
+    /// `None` for single-level data.
+    pub fn session_summary(&self) -> Option<String> {
+        let mode = self.data.session_mode()?;
+        let source = match (mode.source, mode.mode) {
+            (ModeSource::Forced, _) => "forced by --game-mode",
+            (ModeSource::Probed, SessionMode::Retail) => "the IWAD has a fourth episode",
+            (ModeSource::Probed, SessionMode::Registered) => "the IWAD has no fourth episode",
+        };
+        let at = match self.session() {
+            Some(s) if s.gamestate() == doom_render::GameState::Intermission => {
+                format!("in the intermission after E1M{}", s.map())
+            }
+            Some(s) => format!("in E1M{}", s.map()),
+            None => "before its first tic".into(),
+        };
+        let how = match &self.mode {
+            Mode::Ended(Ending::Refused { tic, witness }) => {
+                format!("; refused at session tic {tic}: {witness}")
+            }
+            Mode::Ended(Ending::TicCap) => "; at the session length cap".into(),
+            _ => String::new(),
+        };
+        Some(format!(
+            "session: game mode {} ({source}), started at E1M{} skill {}, ended {at} after {} \
+             tics{how}",
+            mode.mode.word(),
+            self.data.map,
+            self.data.skill,
+            self.played()
+        ))
     }
 
     /// The run's layout-dependence line ([`layout_dependent_line`]) for the current session and
@@ -811,7 +1023,15 @@ impl App {
     /// file is ever replaced; when every name is taken, nothing is written and the save fails
     /// visibly.
     fn claim(&mut self, bytes: &[u8], host: &mut dyn Host) -> Result<(), String> {
-        let base = session_name(self.data.map, self.data.skill, self.started);
+        let base = match self.data.session_mode() {
+            Some(m) => crate::session::demo::session_mode_name(
+                self.data.map,
+                self.data.skill,
+                m.mode,
+                self.started,
+            ),
+            None => session_name(self.data.map, self.data.skill, self.started),
+        };
         let stem = base.trim_end_matches(".lmp");
         for n in 1..=MAX_NAME_SUFFIX {
             let name = match n {
@@ -836,12 +1056,15 @@ impl App {
 
     /// The simulation's tic count (committed tics this session).
     pub fn tic(&self) -> u64 {
-        self.sim.tic()
+        self.session
+            .as_ref()
+            .map_or(self.sim.tic(), |s| s.gametic())
     }
 
-    /// The simulation.
+    /// The simulation (in an M6a session the current level's, or outside a level the finished
+    /// one's).
     pub fn simulation(&self) -> &Simulation {
-        &self.sim
+        self.session.as_ref().map_or(&self.sim, |s| s.level())
     }
 
     /// The recorder.
@@ -861,7 +1084,7 @@ impl App {
         if self.recorded() {
             self.recorder.len() as u64
         } else {
-            self.sim.tic()
+            self.tic()
         }
     }
 
@@ -918,7 +1141,14 @@ impl App {
     /// The last drawn game frame (64,000 indices) and its palette number; `None` before the
     /// first tic.
     pub fn frame(&self) -> Option<(&[u8], u8)> {
-        self.drawn.then(|| (self.frame.pixels(), self.palette))
+        self.drawn.then(|| (self.pixels(), self.palette))
+    }
+
+    /// The last drawn frame's indices: the session's frame in an M6a session.
+    fn pixels(&self) -> &[u8] {
+        self.session
+            .as_ref()
+            .map_or(self.frame.pixels(), |s| s.frame().pixels())
     }
 
     /// The monotonic time at which the next tic falls due, once the clock is running.
@@ -1057,37 +1287,78 @@ impl App {
             return self.end(refuse(witness), host);
         };
         let none = TicCommand::default();
-        if let Err(e) = self.sim.advance([executed, none, none, none]) {
-            self.recorder.drop_last();
-            return self.end(ending_of(&self.sim, e, tic), host);
-        }
-        let Some(frames) = self.frames.as_mut() else {
-            return;
-        };
-        match frames.tic(&self.data, &self.sim, &executed, &mut self.frame) {
-            Ok(presented) => {
-                self.palette = presented.display.palette;
-                self.drawn = true;
-                report(
-                    host,
-                    frames,
-                    &self.sim,
-                    &self.frame,
-                    tic,
-                    &self.events,
-                    executed,
-                    &presented,
-                );
+        if self.data.session.is_some() {
+            if let Err(ending) = self.session_tic(executed, host) {
+                return self.end(ending, host);
             }
-            // The simulation committed the tic, so its command stays in the demo (only a
-            // simulation refusal drops it): the demo replays to this same frame or sound
-            // refusal. With sound, the sound session and the display are as before the tic.
-            Err(witness) => return self.end(refuse(witness), host),
+        } else {
+            if let Err(e) = self.sim.advance([executed, none, none, none]) {
+                self.recorder.drop_last();
+                return self.end(ending_of(&self.sim, e, tic), host);
+            }
+            let Some(frames) = self.frames.as_mut() else {
+                return;
+            };
+            match frames.tic(&self.data, &self.sim, &executed, &mut self.frame) {
+                Ok(presented) => {
+                    self.palette = presented.display.palette;
+                    self.drawn = true;
+                    report(
+                        host,
+                        frames,
+                        &self.sim,
+                        &self.frame,
+                        tic,
+                        &self.events,
+                        executed,
+                        &presented,
+                    );
+                }
+                // The simulation committed the tic, so its command stays in the demo (only a
+                // simulation refusal drops it): the demo replays to this same frame or sound
+                // refusal. With sound, the sound session and the display are as before the tic.
+                Err(witness) => return self.end(refuse(witness), host),
+            }
         }
         if self.recorder.len() % SAVE_INTERVAL == 0 {
             self.save(host);
         } else if self.recorded() && host.appends() {
             self.append(host);
+        }
+    }
+
+    /// One M6a session tic with the executed command: the frame, the buffer to the host's sink and
+    /// [`Host::session_tic`]. A refusal made before anything changed drops the recorded command,
+    /// as a simulation refusal does; a refusal after the level's simulation committed its tic
+    /// (the session's rule 2, `Session::ended`) keeps it, so the demo replays to the same refusal.
+    fn session_tic(&mut self, executed: TicCommand, host: &mut dyn Host) -> Result<(), Ending> {
+        let Some(s) = self.session.as_deref_mut() else {
+            return Ok(());
+        };
+        match s.tic(executed) {
+            Ok(r) => {
+                self.palette = r.palette;
+                self.drawn = true;
+                if let (Some(b), Some(sink)) = (r.sound.sound.buffer.as_ref(), host.audio()) {
+                    sink.buffer(b);
+                }
+                host.session_tic(&SessionTicReport {
+                    events: &self.events,
+                    executed,
+                    session: s,
+                    report: &r,
+                });
+                Ok(())
+            }
+            Err(refusal) => {
+                if s.ended().is_none() {
+                    self.recorder.drop_last();
+                }
+                Err(Ending::Refused {
+                    tic: refusal.tic,
+                    witness: Witness::Session(Box::new(refusal.witness)),
+                })
+            }
         }
     }
 
@@ -1172,6 +1443,20 @@ impl App {
             }
             Ending::Died => lines.push(("YOU DIED".into(), YELLOW)),
             Ending::TicCap => lines.push(("SESSION LENGTH CAP REACHED".into(), YELLOW)),
+            Ending::Refused { tic, witness } if self.data.session.is_some() => {
+                let not_yet = matches!(witness, Witness::Session(w) if matches!(**w, SessionWitness::NotYet(_)))
+                    || matches!(witness, Witness::SessionStart(StartError::NotYet(_)));
+                let head = if not_yet {
+                    "NOT BUILT YET"
+                } else {
+                    "TIC REFUSED"
+                };
+                lines.push((head.into(), if not_yet { YELLOW } else { RED }));
+                lines.push((format!("SESSION TIC {tic}:"), WHITE));
+                for l in screens::wrap(&witness.to_string()).into_iter().take(9) {
+                    lines.push((l, WHITE));
+                }
+            }
             Ending::Refused { tic, witness } => {
                 lines.push(("TIC REFUSED".into(), RED));
                 lines.push((format!("TIC {tic}, WITNESS:"), WHITE));
@@ -1181,10 +1466,14 @@ impl App {
             }
         }
         lines.push((String::new(), WHITE));
+        let (map, mode) = match (self.session(), self.data.session_mode()) {
+            (Some(s), Some(m)) => (s.map(), format!("  {}", m.mode.word())),
+            (None, Some(m)) => (self.data.map, format!("  {}", m.mode.word())),
+            _ => (self.data.map, String::new()),
+        };
         lines.push((
             format!(
-                "E1M{} SKILL {}  {} TICS",
-                self.data.map,
+                "E1M{map} SKILL {}  {} TICS{mode}",
                 self.data.skill,
                 self.played()
             ),
@@ -1230,17 +1519,18 @@ impl App {
                 Some(labelled_pause_overlay(SAVE_FAILED_LABEL))
             }
             (Mode::Paused, true, _) => Some(pause_overlay()),
-            (Mode::Playing, false, _) if self.sim.tic() <= UNRECORDED_LABEL_TICS => {
+            (Mode::Playing, false, _) if self.tic() <= UNRECORDED_LABEL_TICS => {
                 Some(label_band(UNRECORDED_LABEL))
             }
             _ => None,
         };
+        let game = self.pixels();
         let pixels = out.chunks_exact_mut(4).take(SCREENWIDTH * SCREENHEIGHT);
         for (i, px) in pixels.enumerate() {
             let rgb = match (&overlay, palette) {
                 (Some(o), _) if o.pixels()[i] != CLEAR => app(o.pixels()[i]),
                 (_, Some(pal)) => {
-                    let at = usize::from(self.frame.pixels()[i]) * 3;
+                    let at = usize::from(game[i]) * 3;
                     let c = [0, 1, 2].map(|k| ramp[usize::from(pal[at + k])]);
                     if paused { c.map(|v| v / 2) } else { c }
                 }

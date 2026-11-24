@@ -411,8 +411,9 @@ milestones before it, all merged.
 
 The next milestone is **M6a: Episode 1 from start to finish, in one session** (the intermission, the next map and
 the finale of Episode 1). Its Phase 1, the investigation, is written on the branch `feat/m6a-episode1-continuous`
-([draft PR #65](https://github.com/Copgunn/DOOM/pull/65)) and waits for the owner's rulings on its decisions U1 to
-U15; nothing of it is on master. The items of the
+([draft PR #65](https://github.com/Copgunn/DOOM/pull/65)); rulings received 2026-11-21, Phase 2 in progress, at the owner's
+hand-test gate of the level chain (2026-11-22); by the owner's ruling of that day PR #65 is **part 1** (the level chain)
+and the finale, melt pictures, easy skills and E1M7 on skill 3 are **part 2**, a later pull request; nothing of it is on master. The items of the
 [vanilla completeness checklist](#vanilla-completeness-checklist) that waited for a ruling were ruled on on
 2026-11-21 (declined, or in M6b, or in a later milestone the owner will name). Exact review
 state belongs to GitHub.
@@ -650,6 +651,26 @@ The entries marked merged below are done; they keep their place here because thi
     pause box can still be wrong until exit, and a panic inside the rewrite at exit has no test). (3) **Code signing of the Windows build, for the first
     release:** Windows Smart App Control refused to start the unsigned build on the owner's machine
     ([limit](COMPATIBILITY.md#windows-smart-app-control-blocks-the-unsigned-build)).
+- **M6a (Episode 1 from start to finish, in one session).** Phase 1 is written (2026-11-20, branch
+  `feat/m6a-episode1-continuous`); rulings received 2026-11-21 on decisions U1–U15 of the
+  [investigation note](M6A_REFERENCE_INVESTIGATION.md#5-owner-decisions-u1u15-with-recommendations); Phase 2 in progress
+  The owner ruled on 2026-11-22 that the 22,000-line cap holds and M6a lands in two parts; nothing is dropped.
+  - **Part 1 (PR #65, awaiting the owner's review, not merged):** the level chain under wire 26. One session plays any
+    Episode 1 map on skills 2 and 3 through both exits, the intermission, the next map with the carried player, the reborn
+    reload and the secret route; it stops with a plain screen at E1M8's exit and at a load of E1M7 on skill 3. The wipe's
+    draws are made and compared, its pictures are not shown. Compared with the genuine engine on synthetic maps in CI and on
+    the owner's IWAD locally, his hand-test sessions included ([evidence record](validation/M6A.md)).
+  - **Part 2 (a separate pull request after part 1 merges, not started), under wire 27 and new format versions:** the
+    finale, the melt pictures, the easy skills 0 and 1, and E1M7 on skill 3 (the spawn margin dropped for monsters under
+    wire 27, where the earlier ruling said wire 26). Two known gaps of part 1 are recorded for part 2 as well (owner's
+    rulings of 2026-11-23; neither changes a tic): **a session ended by restart and saved cleanly is not listed at exit**
+    (`doom-play`'s closing lines name the last session only, though every session's file is written), and the screen at
+    E1M8's exit still says the finale "comes after the hand test", where it now comes with part 2.
+  - **Known gap of part 1, fixed in its own pull request straight after part 1 merges (owner's ruling of 2026-11-23,
+    not started):** a key held across a level load stays held, where the original clears the held keys at every load
+    (g_game.c:490-496) and a repeating keyboard sets them again; the event layer filters repeats, so the fix belongs
+    there. Planned design: at a session load the layer forgets which keys it reported down and posts the run key again
+    when always-run is on.
 - **Simulation follow-up (decided: the THING-loading truncation is closed under wire 25 only).** `P_LoadThings` ends the
   whole THINGS loop at the first Doom II type (doomednums 64-69, 71, 84, 88, 89) when `gamemode != commercial`
   (p_setup.c:317-337). Wire 25 (decision T4, confirmed 2026-11-18) stops loading there, with a synthetic map and

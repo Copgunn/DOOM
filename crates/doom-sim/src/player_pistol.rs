@@ -370,6 +370,7 @@ pub(crate) fn run<A: ActorAccess>(
     }
     let id = player.mo.ok_or(PlayerBodyError::Binding)?;
     let episode1 = player.policy.has_episode1();
+    let policy = player.policy;
     let actor = host.access.get(id).ok_or(WeaponError::Reference)?;
     if actor.life().is_none_or(|l| {
         l.actor_type.0 != OriginalActorType::MT_PLAYER.ordinal() || player.health != l.health.max(0)
@@ -386,7 +387,7 @@ pub(crate) fn run<A: ActorAccess>(
         }
         None => {
             let state = player.weapon.ok_or(WeaponError::Player)?;
-            state.validate_for(player.policy.has_episode1())?;
+            state.validate_for_policy(player.policy)?;
             state
         }
     };
@@ -427,7 +428,7 @@ pub(crate) fn run<A: ActorAccess>(
         return Err(PlayerBodyError::Invariant.into());
     }
     let result = state.with_adapter_result(result, id, episode1)?;
-    result.validate_for(episode1)?;
+    result.validate_for_policy(policy)?;
     host.player
         .as_deref_mut()
         .ok_or(PlayerBodyError::Profile)?

@@ -1,0 +1,716 @@
+{
+ "schema": "DOOM-M6A-MANIFEST-v1",
+ "generator": "tools/reference/m6a_wad.py",
+ "files": [
+  {
+   "file": "tests/reference/m6a_wads/episode.wad",
+   "bytes": 97857,
+   "sha256": "23c052fda9dfbf4b23cd5c2f6af75ea1d27c4a5b1a1096f6c313b766950ef94b"
+  },
+  {
+   "file": "tests/reference/m6a_wads/rbx.wad",
+   "bytes": 87502,
+   "sha256": "93fbb1398f93b559f573e25f4655f9e82f56bce6effe9cce50759b1080a5bdc0"
+  },
+  {
+   "file": "tests/reference/m6a_wads/m6a_gfx.wad",
+   "bytes": 244574,
+   "sha256": "ec4826c3881919eb09108018aa3efb357c9891c4ae4256dbc9502749cade1d37"
+  },
+  {
+   "file": "tests/reference/m6a_wads/m6a_music.wad",
+   "bytes": 1148,
+   "sha256": "7e5bcf6fa1837e6af4d996ae16d914669921ccc9ed5b6e924ea5a8dc826a47ea"
+  },
+  {
+   "file": "tests/reference/m6a_wads/m6a_gfx_nohelp2.wad",
+   "bytes": 177670,
+   "sha256": "af90f39c4837e5845328f77117ed5a2684d559662003c0304acb24cd91e7f03c"
+  },
+  {
+   "file": "tests/reference/m6a_wads/m6a_music_nointer.wad",
+   "bytes": 1044,
+   "sha256": "e1c07985512adbb0bd1df944e66889a1b6a2734d40a06e5d2be6ad089f177798"
+  },
+  {
+   "file": "tests/reference/m6a_wads/m6a_music_novictor.wad",
+   "bytes": 1043,
+   "sha256": "ad892baad780c3d7650e1c5ec99cd429c5a6700371bb00c261ecf237f74d94c7"
+  },
+  {
+   "file": "tests/reference/m6a_wads/m6a_music_noe1m2.wad",
+   "bytes": 1045,
+   "sha256": "ba20e56ed007f8babeb83cbcb34616b52deb0a3fc64342d3c3258e8e1db0d558"
+  },
+  {
+   "file": "tests/reference/m6a_wads/attack.wad",
+   "bytes": 88133,
+   "sha256": "40ee27889e1735e7f3b6d8bec33573f4436c40338a11fe4ccbb001ab474f6b16"
+  }
+ ],
+ "episode_maps": [
+  {
+   "slot": "E1M1",
+   "sectors": 4,
+   "lines": 13,
+   "things": {
+    "0": {
+     "1": 1,
+     "5": 1,
+     "8": 1,
+     "2005": 1,
+     "2014": 3,
+     "2018": 1,
+     "2025": 1
+    },
+    "1": {
+     "1": 1,
+     "5": 1,
+     "8": 1,
+     "2005": 1,
+     "2014": 3,
+     "2018": 1,
+     "2025": 1
+    },
+    "2": {
+     "1": 1,
+     "5": 1,
+     "8": 1,
+     "2005": 1,
+     "2011": 1,
+     "2014": 2,
+     "2018": 1,
+     "2025": 1
+    },
+    "3": {
+     "1": 1,
+     "5": 1,
+     "8": 1,
+     "2005": 1,
+     "2014": 2,
+     "2015": 1,
+     "2018": 1,
+     "2025": 1
+    }
+   }
+  },
+  {
+   "slot": "E1M2",
+   "sectors": 4,
+   "lines": 13,
+   "things": {
+    "0": {
+     "1": 1,
+     "2001": 1
+    },
+    "1": {
+     "1": 1,
+     "2001": 1
+    },
+    "2": {
+     "1": 1,
+     "2001": 1
+    },
+    "3": {
+     "1": 1,
+     "2001": 1
+    }
+   }
+  },
+  {
+   "slot": "E1M3",
+   "sectors": 3,
+   "lines": 12,
+   "things": {
+    "0": {
+     "1": 1,
+     "2014": 1
+    },
+    "1": {
+     "1": 1,
+     "2014": 1
+    },
+    "2": {
+     "1": 1,
+     "2014": 1
+    },
+    "3": {
+     "1": 1,
+     "2014": 1
+    }
+   }
+  },
+  {
+   "slot": "E1M4",
+   "sectors": 5,
+   "lines": 16,
+   "things": {
+    "0": {
+     "1": 1
+    },
+    "1": {
+     "1": 1
+    },
+    "2": {
+     "1": 1
+    },
+    "3": {
+     "1": 1
+    }
+   }
+  },
+  {
+   "slot": "E1M5",
+   "sectors": 3,
+   "lines": 11,
+   "things": {
+    "0": {
+     "1": 1,
+     "14": 1,
+     "3004": 1
+    },
+    "1": {
+     "1": 1,
+     "14": 1,
+     "3004": 1
+    },
+    "2": {
+     "1": 1,
+     "14": 1,
+     "3004": 1
+    },
+    "3": {
+     "1": 1,
+     "14": 1,
+     "3004": 1
+    }
+   }
+  },
+  {
+   "slot": "E1M6",
+   "sectors": 2,
+   "lines": 7,
+   "things": {
+    "0": {
+     "1": 1,
+     "6": 1,
+     "2024": 1,
+     "2045": 1
+    },
+    "1": {
+     "1": 1,
+     "6": 1,
+     "2024": 1,
+     "2045": 1
+    },
+    "2": {
+     "1": 1,
+     "6": 1,
+     "2024": 1,
+     "2045": 1
+    },
+    "3": {
+     "1": 1,
+     "6": 1,
+     "2024": 1,
+     "2045": 1
+    }
+   }
+  },
+  {
+   "slot": "E1M7",
+   "sectors": 3,
+   "lines": 10,
+   "things": {
+    "0": {
+     "1": 1
+    },
+    "1": {
+     "1": 1
+    },
+    "2": {
+     "1": 1
+    },
+    "3": {
+     "1": 1
+    }
+   }
+  },
+  {
+   "slot": "E1M8",
+   "sectors": 4,
+   "lines": 16,
+   "things": {
+    "0": {
+     "1": 1,
+     "14": 1,
+     "3003": 1
+    },
+    "1": {
+     "1": 1,
+     "14": 1,
+     "3003": 1
+    },
+    "2": {
+     "1": 1,
+     "14": 1,
+     "3003": 1
+    },
+    "3": {
+     "1": 1,
+     "14": 1,
+     "3003": 1
+    }
+   }
+  },
+  {
+   "slot": "E1M9",
+   "sectors": 3,
+   "lines": 12,
+   "things": {
+    "0": {
+     "1": 1
+    },
+    "1": {
+     "1": 1
+    },
+    "2": {
+     "1": 1
+    },
+    "3": {
+     "1": 1
+    }
+   }
+  }
+ ],
+ "wadsets": {
+  "episode": [
+   "tests/reference/m6a_wads/episode.wad",
+   "tests/reference/m5b_gfx.wad",
+   "tests/reference/m5c_sfx.wad",
+   "tests/reference/m6a_wads/m6a_gfx.wad",
+   "tests/reference/m6a_wads/m6a_music.wad"
+  ],
+  "rbx": [
+   "tests/reference/m6a_wads/rbx.wad",
+   "tests/reference/m5b_gfx.wad",
+   "tests/reference/m5c_sfx.wad",
+   "tests/reference/m6a_wads/m6a_gfx.wad",
+   "tests/reference/m6a_wads/m6a_music.wad"
+  ],
+  "nohelp2": [
+   "tests/reference/m6a_wads/episode.wad",
+   "tests/reference/m5b_gfx.wad",
+   "tests/reference/m5c_sfx.wad",
+   "tests/reference/m6a_wads/m6a_gfx_nohelp2.wad",
+   "tests/reference/m6a_wads/m6a_music.wad"
+  ],
+  "nointer": [
+   "tests/reference/m6a_wads/episode.wad",
+   "tests/reference/m5b_gfx.wad",
+   "tests/reference/m5c_sfx.wad",
+   "tests/reference/m6a_wads/m6a_gfx.wad",
+   "tests/reference/m6a_wads/m6a_music_nointer.wad"
+  ],
+  "novictor": [
+   "tests/reference/m6a_wads/episode.wad",
+   "tests/reference/m5b_gfx.wad",
+   "tests/reference/m5c_sfx.wad",
+   "tests/reference/m6a_wads/m6a_gfx.wad",
+   "tests/reference/m6a_wads/m6a_music_novictor.wad"
+  ],
+  "noe1m2": [
+   "tests/reference/m6a_wads/episode.wad",
+   "tests/reference/m5b_gfx.wad",
+   "tests/reference/m5c_sfx.wad",
+   "tests/reference/m6a_wads/m6a_gfx.wad",
+   "tests/reference/m6a_wads/m6a_music_noe1m2.wad"
+  ],
+  "attack": [
+   "tests/reference/m6a_wads/attack.wad",
+   "tests/reference/m5b_gfx.wad",
+   "tests/reference/m5c_sfx.wad",
+   "tests/reference/m6a_wads/m6a_gfx.wad",
+   "tests/reference/m6a_wads/m6a_music.wad"
+  ]
+ },
+ "items": [
+  {
+   "name": "CHAIN",
+   "lump": "CHAIN",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "E1M1 to E1M8 with the carried player: the chainsaw ready at the E1M1 to E1M4 exits (sfx_sawup at the next four loads), keys and the radiation suit dropped, armor, health and the backpack carried, the shotgun change pending at the E1M2 exit (cancelled), a landing just before the E1M4 exit (the squat at the E1M5 start), a weapon change at the E1M5 load tic, partial invisibility and the light amplification visor dropped; each intermission skipped by three presses",
+   "map": 1,
+   "skill": 2,
+   "tics": 831,
+   "txt": "tests/reference/m6a_scripts/CHAIN.txt",
+   "lmp": "tests/reference/m6a_scripts/CHAIN.lmp",
+   "lmp_sha256": "e388019fedfa96dc7601f565b40c32946f60002cd9e6b304ed3c28ac12a628c3"
+  },
+  {
+   "name": "INTSTA",
+   "lump": "INTSTA",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "E1M1 to E1M8; the first press of each intermission in tally state 1 (fire on the first intermission tic), 2, 3, 4, 5, 6 and 7",
+   "map": 1,
+   "skill": 2,
+   "tics": 1328,
+   "txt": "tests/reference/m6a_scripts/INTSTA.txt",
+   "lmp": "tests/reference/m6a_scripts/INTSTA.lmp",
+   "lmp_sha256": "ef8c9ed43cda4e133f3d5412d15804b911a2d328a8a86a354c3ea5c0a29a20f4"
+  },
+  {
+   "name": "INTSTB",
+   "lump": "INTSTB",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "E1M2 to E1M8 (a session started at map 2); the first press in tally state 8, then 9; state 10 reached with no press and held 20 tics; a press in ShowNextLoc; ShowNextLoc left to time out (140 tics); a press in NoState, which does nothing",
+   "map": 2,
+   "skill": 2,
+   "tics": 1432,
+   "txt": "tests/reference/m6a_scripts/INTSTB.txt",
+   "lmp": "tests/reference/m6a_scripts/INTSTB.lmp",
+   "lmp_sha256": "9c0e954751ffc7683433e3f6d206d820840422ca953cfb6ef8e74e3363fac176"
+  },
+  {
+   "name": "INTIDLE",
+   "lump": "INTIDLE",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "E1M7 (a session started at map 7), then 400 intermission tics with no press: the tally counts to state 10 and waits",
+   "map": 7,
+   "skill": 2,
+   "tics": 456,
+   "txt": "tests/reference/m6a_scripts/INTIDLE.txt",
+   "lmp": "tests/reference/m6a_scripts/INTIDLE.lmp",
+   "lmp_sha256": "22c89e4a0581b98826847ba7eed4b0966ee7676bc379aed188e7da8877bda0c5"
+  },
+  {
+   "name": "INTHELD",
+   "lump": "INTHELD",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "use held from the E1M1 exit switch 80 tics into the intermission, then released and pressed; fire held from the level through the E1M2 exit 80 tics into the intermission, then released and pressed",
+   "map": 1,
+   "skill": 2,
+   "tics": 446,
+   "txt": "tests/reference/m6a_scripts/INTHELD.txt",
+   "lmp": "tests/reference/m6a_scripts/INTHELD.lmp",
+   "lmp_sha256": "24944374d87749aced025f321a251bdc7c30d4f4ec39b92bb4aae2d95499c1e5"
+  },
+  {
+   "name": "INTFAST",
+   "lump": "INTFAST",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "the shortest intermission: E1M7 left by its W1 line with no button held, then use, fire and use on the first three intermission tics; E1M8 loads on the 14th",
+   "map": 7,
+   "skill": 2,
+   "tics": 79,
+   "txt": "tests/reference/m6a_scripts/INTFAST.txt",
+   "lmp": "tests/reference/m6a_scripts/INTFAST.lmp",
+   "lmp_sha256": "4c0e6e48dcee29a21fef5ba555db0c878f543e0296b6f2a8d4faef4ae83a6b12"
+  },
+  {
+   "name": "REBHELD",
+   "lump": "REBHELD",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "E1M2: use held while dying on the 20-damage floor, so the reborn comes on the first tic of P_DeathThink; the reloaded map, its exit and an intermission",
+   "map": 2,
+   "skill": 2,
+   "tics": 307,
+   "txt": "tests/reference/m6a_scripts/REBHELD.txt",
+   "lmp": "tests/reference/m6a_scripts/REBHELD.lmp",
+   "lmp_sha256": "7c02ed317de8450e154473a1d17432fd15c12513b2809a44d9813964a63ef319"
+  },
+  {
+   "name": "REBLATE",
+   "lump": "REBLATE",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "E1M2: death on the 20-damage floor, use pressed 40 tics later; the reloaded map, its exit and an intermission",
+   "map": 2,
+   "skill": 2,
+   "tics": 346,
+   "txt": "tests/reference/m6a_scripts/REBLATE.txt",
+   "lmp": "tests/reference/m6a_scripts/REBLATE.lmp",
+   "lmp_sha256": "e068286847a9f2a3ee854c0572553abbf64918f87945f938a97f5dbfdaf9099b"
+  },
+  {
+   "name": "SECRET",
+   "lump": "SECRET",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "E1M3 secret exit to E1M9, the secret exit on E1M9 itself (E1M9 again), the E1M9 exit back to E1M4, the E1M4 exit; ShowNextLoc shown 30 tics each time (the E1M9 splat)",
+   "map": 3,
+   "skill": 2,
+   "tics": 570,
+   "txt": "tests/reference/m6a_scripts/SECRET.txt",
+   "lmp": "tests/reference/m6a_scripts/SECRET.lmp",
+   "lmp_sha256": "b31db7d2b85100931e98e4a02cbb193c3b5b54f5b048a961dbdf28e9f3e5cd06"
+  },
+  {
+   "name": "REBSECRT",
+   "lump": "REBSECRT",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "E1M3 secret exit, E1M9, back to E1M4, death and a reborn there (didsecret cleared), then the E1M4 exit: the intermission without the E1M9 splat",
+   "map": 3,
+   "skill": 2,
+   "tics": 655,
+   "txt": "tests/reference/m6a_scripts/REBSECRT.txt",
+   "lmp": "tests/reference/m6a_scripts/REBSECRT.lmp",
+   "lmp_sha256": "33c20544f8a032dc1c56c1d364758d26f358e8c94defd0a0b861ec761040b222"
+  },
+  {
+   "name": "PROBE",
+   "lump": "PROBE",
+   "mode": "registered",
+   "wadset": "rbx",
+   "what": "U8 item 12 probe: forward every tic; the player dies on the floor and the sliding body crosses the W1 exit on tic 131 (the exit taken by a dead player)",
+   "map": 1,
+   "skill": 2,
+   "tics": 300,
+   "txt": "tests/reference/m6a_scripts/PROBE.txt",
+   "lmp": "tests/reference/m6a_scripts/PROBE.lmp",
+   "lmp_sha256": "d74af15acd4329827f4be79beab0c9e90ab8ddeedadc9d3b610d239db4087945"
+  },
+  {
+   "name": "USEAT130",
+   "lump": "USEAT130",
+   "mode": "registered",
+   "wadset": "rbx",
+   "what": "U8 item 12 control: use on tic 130, before the crossing: the reborn reloads the map",
+   "map": 1,
+   "skill": 2,
+   "tics": 191,
+   "txt": "tests/reference/m6a_scripts/USEAT130.txt",
+   "lmp": "tests/reference/m6a_scripts/USEAT130.lmp",
+   "lmp_sha256": "05606352c4c283e9d13b8fd7753e417b3d6cef7c42909f2d43d31aed1edf0868"
+  },
+  {
+   "name": "USEAT131",
+   "lump": "USEAT131",
+   "mode": "registered",
+   "wadset": "rbx",
+   "what": "U8 item 12 witness: use on tic 131, the tic the dead body crosses the exit: the reborn wins and the map reloads",
+   "map": 1,
+   "skill": 2,
+   "tics": 192,
+   "txt": "tests/reference/m6a_scripts/USEAT131.txt",
+   "lmp": "tests/reference/m6a_scripts/USEAT131.lmp",
+   "lmp_sha256": "c2bd0d8b70a01fe7c0f1c82f93a4189e87ac18a2e6fcd69adaa477a9e5976e54"
+  },
+  {
+   "name": "USEAT132",
+   "lump": "USEAT132",
+   "mode": "registered",
+   "wadset": "rbx",
+   "what": "U8 item 12 control: use on tic 132, after the crossing: the exit stands and the use is a tally press",
+   "map": 1,
+   "skill": 2,
+   "tics": 193,
+   "txt": "tests/reference/m6a_scripts/USEAT132.txt",
+   "lmp": "tests/reference/m6a_scripts/USEAT132.lmp",
+   "lmp_sha256": "db7e23df7f62dc7de08d5761d2eb9f5b7153878822c0cfc4f77a25538e72eb1e"
+  },
+  {
+   "name": "RBXDEAD",
+   "lump": "RBXDEAD",
+   "mode": "registered",
+   "wadset": "rbx",
+   "what": "a player dead at the exit (the probe's crossing), the intermission, and the next map started with a pistol (PST_DEAD made PST_REBORN at the load)",
+   "map": 1,
+   "skill": 2,
+   "tics": 188,
+   "txt": "tests/reference/m6a_scripts/RBXDEAD.txt",
+   "lmp": "tests/reference/m6a_scripts/RBXDEAD.lmp",
+   "lmp_sha256": "d77192c2b055aae2e1c2326c987eda7c880c5283a90f70b2d5dbf22916fbabde"
+  },
+  {
+   "name": "NOINTER",
+   "lump": "NOINTER",
+   "mode": "registered",
+   "wadset": "nointer",
+   "what": "refusal witness: D_INTER missing; the genuine engine stops on the intermission's first tic",
+   "map": 7,
+   "skill": 2,
+   "tics": 76,
+   "txt": "tests/reference/m6a_scripts/NOINTER.txt",
+   "lmp": "tests/reference/m6a_scripts/NOINTER.lmp",
+   "lmp_sha256": "8173a2a6ffa853c3ea27e51d9ce7c04c439942eedaadc0536fb55353b20786fb"
+  },
+  {
+   "name": "NOE1M2",
+   "lump": "NOE1M2",
+   "mode": "registered",
+   "wadset": "noe1m2",
+   "what": "refusal witness: D_E1M2 missing; the genuine engine stops at the E1M2 load tic after the E1M1 intermission",
+   "map": 1,
+   "skill": 2,
+   "tics": 162,
+   "txt": "tests/reference/m6a_scripts/NOE1M2.txt",
+   "lmp": "tests/reference/m6a_scripts/NOE1M2.lmp",
+   "lmp_sha256": "65c57f1b3f1a2199e46f38ddc4404e07b427254db5b505fed830293a5e2b67a0"
+  },
+  {
+   "name": "NOE1M2AT",
+   "lump": "NOE1M2AT",
+   "mode": "registered",
+   "wadset": "noe1m2",
+   "what": "refusal witness: D_E1M2 missing and the session starts at E1M2; the genuine engine stops at the first load, before tic 0",
+   "map": 2,
+   "skill": 2,
+   "tics": 10,
+   "txt": "tests/reference/m6a_scripts/NOE1M2AT.txt",
+   "lmp": "tests/reference/m6a_scripts/NOE1M2AT.lmp",
+   "lmp_sha256": "ad1eb8d45dc23b2f83836ccbdac9129f14df90ac6316d481ff56f3951f9065d5"
+  },
+  {
+   "name": "FINREG",
+   "lump": "FINALE",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "E1M8 (a session started at map 8) into the finale in registered mode: the telefragged Baron, A_BossDeath lowering the sector-11 floor, the exit at health 10 or less, the text stage with a use and a fire press that do nothing, the stage-1 wipe on finale tic 1571 and 60 tics of HELP2",
+   "map": 8,
+   "skill": 2,
+   "tics": 1951,
+   "txt": "tests/reference/m6a_scripts/FINALE.txt",
+   "lmp": "tests/reference/m6a_scripts/FINALE.lmp",
+   "lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c"
+  },
+  {
+   "name": "FINRET",
+   "lump": "FINALE",
+   "mode": "retail",
+   "wadset": "episode",
+   "what": "the same commands in retail mode: the art screen is CREDIT",
+   "map": 8,
+   "skill": 2,
+   "tics": 1951,
+   "txt": "tests/reference/m6a_scripts/FINALE.txt",
+   "lmp": "tests/reference/m6a_scripts/FINALE.lmp",
+   "lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c"
+  },
+  {
+   "name": "NOHELP2",
+   "lump": "FINALE",
+   "mode": "registered",
+   "wadset": "nohelp2",
+   "what": "refusal witness: HELP2 missing in registered mode; the genuine engine stops at the first stage-1 frame",
+   "map": 8,
+   "skill": 2,
+   "tics": 1951,
+   "txt": "tests/reference/m6a_scripts/FINALE.txt",
+   "lmp": "tests/reference/m6a_scripts/FINALE.lmp",
+   "lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c"
+  },
+  {
+   "name": "NOVICTOR",
+   "lump": "FINALE",
+   "mode": "registered",
+   "wadset": "novictor",
+   "what": "refusal witness: D_VICTOR missing; the genuine engine stops on the finale's first tic",
+   "map": 8,
+   "skill": 2,
+   "tics": 1951,
+   "txt": "tests/reference/m6a_scripts/FINALE.txt",
+   "lmp": "tests/reference/m6a_scripts/FINALE.lmp",
+   "lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c"
+  },
+  {
+   "name": "SKILL0",
+   "lump": "SKILL0",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "skill 0 (sk_baby): E1M1 (the easy-only thing spawned; double ammunition from the backpack; half damage from the floor), its exit, then E1M2's 20-damage floor for 200 tics",
+   "map": 1,
+   "skill": 0,
+   "tics": 364,
+   "txt": "tests/reference/m6a_scripts/SKILL0.txt",
+   "lmp": "tests/reference/m6a_scripts/SKILL0.lmp",
+   "lmp_sha256": "06ce870c45df7eb08acdc7b40aa96c22d217d0e877ac3e62339eb07dd88f63eb"
+  },
+  {
+   "name": "SKILL1",
+   "lump": "SKILL1",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "skill 1 (sk_easy): the same commands; the easy-only thing spawned, ammunition and damage as medium",
+   "map": 1,
+   "skill": 1,
+   "tics": 364,
+   "txt": "tests/reference/m6a_scripts/SKILL1.txt",
+   "lmp": "tests/reference/m6a_scripts/SKILL1.lmp",
+   "lmp_sha256": "6ad71715b82f77ec70133ea6217f6845650468ad65118c462b4c86b96e814f29"
+  },
+  {
+   "name": "SKILL2",
+   "lump": "SKILL2",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "skill 2 (sk_medium): the same commands; the medium-only thing spawned",
+   "map": 1,
+   "skill": 2,
+   "tics": 364,
+   "txt": "tests/reference/m6a_scripts/SKILL2.txt",
+   "lmp": "tests/reference/m6a_scripts/SKILL2.lmp",
+   "lmp_sha256": "a94d77a1188165f8a3032a2b81104618189769120467be2741f24332b41ad0e6"
+  },
+  {
+   "name": "SKILL3",
+   "lump": "SKILL3",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "skill 3 (sk_hard): the same commands; the hard-only thing spawned",
+   "map": 1,
+   "skill": 3,
+   "tics": 364,
+   "txt": "tests/reference/m6a_scripts/SKILL3.txt",
+   "lmp": "tests/reference/m6a_scripts/SKILL3.lmp",
+   "lmp_sha256": "d627a2dbd2da349d1f4f83619a14ed0618688385efd684697f9ad58e29ffd10b"
+  },
+  {
+   "name": "TURBO",
+   "lump": "TURBO",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "the turbo message across loads (G_Ticker tests gametic, g_game.c:671-679): E1M1 as CHAIN with the intermission held in tally state 10 so that E1M2 loads on tic 192 (gametic mod 128 = 64); a forward move of 100, facing north, on its load tic (no message), around leveltime 128 (gametic mod 128 = 64: no message) and around gametic 384 (the message); death on the 20-damage floor and a reborn reload on tic 672 (gametic mod 128 = 32) with a forward of 100 on the reload tic (no message), around leveltime 128 (none) and around gametic 896 (the message); the E1M2 exit and E1M3 loaded on tic 1152 with a forward of 100 on its load tic (the message, set after P_SpawnPlayer's clear in the load's own G_Ticker)",
+   "map": 1,
+   "skill": 2,
+   "tics": 1183,
+   "txt": "tests/reference/m6a_scripts/TURBO.txt",
+   "lmp": "tests/reference/m6a_scripts/TURBO.lmp",
+   "lmp_sha256": "fefe393600f3058d1fdacd127f55d17c2621dc3191eaeb78fcbc854f21f4a9e7"
+  },
+  {
+   "name": "INTCMD",
+   "lump": "INTCMD",
+   "mode": "registered",
+   "wadset": "episode",
+   "what": "commands outside wire 24's level domain on every tic of the intermission after the E1M7 exit (WI_checkForAccelerate reads bits 0 and 1 only, wi_stuff.c:1470-1498): sides of -128, turns, forward moves up to 127 (100 across gametic 128: the turbo message set outside a level, cleared by P_SpawnPlayer at the next load, p_mobj.c:676, never shown), buttons with bit 0x40 and weapon bits without BT_CHANGE; the presses are 0x43 (accelerates), 0x41 held (no new press), 0x49 in tally state 10 and 0x7e in ShowNextLoc; E1M8 loads on tic 167 with a command in the level domain",
+   "map": 7,
+   "skill": 2,
+   "tics": 188,
+   "txt": "tests/reference/m6a_scripts/INTCMD.txt",
+   "lmp": "tests/reference/m6a_scripts/INTCMD.lmp",
+   "lmp_sha256": "ebaf08f6211426fa2344b3c1cf922182ffe52dee8585e4ec1b13c9d563146da8"
+  },
+  {
+   "name": "ATTACK",
+   "lump": "ATTACK",
+   "mode": "registered",
+   "wadset": "attack",
+   "what": "the stale attacker: on E1M1 the zombieman on the ledge wakes and shoots the player (15 damage on tic 92, so players[0].attacker is its thinker); the player walks on and exits by the W1 line on tic 216 with the attacker still set; the intermission skipped by presses; E1M2 loads carried on tic 235 with the attacker pointing into the freed E1M1 (p_inter.c:874; never read before it is overwritten or wiped, note section 1.2), then 37 tics of E1M2",
+   "map": 1,
+   "skill": 2,
+   "tics": 272,
+   "txt": "tests/reference/m6a_scripts/ATTACK.txt",
+   "lmp": "tests/reference/m6a_scripts/ATTACK.lmp",
+   "lmp_sha256": "e79945a3359617988ab921a701b8429503563a6c34c704fb3c096b41aa97dad5"
+  }
+ ]
+}

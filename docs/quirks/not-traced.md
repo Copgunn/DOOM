@@ -9,7 +9,8 @@ the dying barrel (`info.c:944-948`, `p_inter.c:675`, `p_enemy.c:1588`), the
 last motion event of a tic counts" (`g_game.c:576-580`), "fire can stick"
 (`i_video.c:218-247`), the stale `attacker` pointer (the absent clear in
 `P_SpawnPlayer` and `G_PlayerFinishLevel`, the writer `p_inter.c:874` and the
-reader `p_user.c:200-205`), the sector sound-origin overflow
+reader `p_user.c:200-205`; now the row Q-g_game-779 on the
+[g_game.c page](g_game.c.md)), the sector sound-origin overflow
 (`p_setup.c:556-557`), the diagonal-wall "sliver" reading quirks
 (`p_maputl.c:91-99`, `139-152`), the inverting door (`p_doors.c:497-498`), the
 shared `M_Random` index (`s_sound.c:330`), the unpadded masked-midtexture read

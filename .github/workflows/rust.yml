@@ -619,3 +619,42 @@ jobs:
       - name: Documentation-only fast path
         if: env.DOCS_ONLY == 'true'
         run: echo "documentation-only change, so the instruction counts were skipped"
+
+  m6a-genuine-session:
+    # M6a (ruling U15): the genuine linuxdoom-1.10 engine across levels (the M6a runner, with
+    # wi_stuff.c, the level change and the reborn reload compiled whole), against the committed
+    # synthetic goldens, Linux only. No IWAD is read: tools/local is never used here. The Rust
+    # side of every comparison runs in the Stable and Minimum Rust jobs as part of `--workspace`.
+    # The address variants run with leak detection DISABLED (detect_leaks=0, set by the tools).
+    name: M6a genuine session
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: changes
+    if: ${{ !cancelled() }}
+    env:
+      DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: M6a synthetic WADs, runner contract and melt step counts
+        if: env.DOCS_ONLY != 'true'
+        run: |
+          python3 tools/reference/m6a_wad.py --check
+          python3 tools/reference/m6a_build.py --check
+          python3 tools/reference/m6a_melt_steps.py --check --selftest
+      - name: Genuine session runs of the prototype items (strict and sanitizer variants), self-check and self-test
+        if: env.DOCS_ONLY != 'true'
+        run: python3 tools/reference/m6a_reference.py --work "$RUNNER_TEMP/m6a_reference" --check --selftest --jobs 4
+      - name: Genuine session, frame and sound goldens of every item at both screen sizes, and self-test
+        if: env.DOCS_ONLY != 'true'
+        run: python3 tools/reference/m6a_goldens.py --work "$RUNNER_TEMP/m6a_goldens" --check --selftest --jobs 4
+      - name: Genuine mixer across level boundaries, goldens and self-test
+        if: env.DOCS_ONLY != 'true'
+        run: python3 tools/reference/m6a_mixer.py --work "$RUNNER_TEMP/m6a_mixer" --check --selftest --jobs 4
+      - name: Genuine level dumps through the independent DSIM42 encoder, state goldens and self-test
+        if: env.DOCS_ONLY != 'true'
+        run: python3 tools/reference/m6a_state.py --work "$RUNNER_TEMP/m6a_state" --check --selftest --jobs 4
+      - name: Documentation-only fast path
+        if: env.DOCS_ONLY == 'true'
+        run: echo "documentation-only change, so the genuine M6a runs were skipped"

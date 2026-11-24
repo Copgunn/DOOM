@@ -45,7 +45,12 @@ mod tables;
 mod test_support;
 pub mod v_video;
 pub mod view;
+pub mod wi_stuff;
 
+pub use d_display::session::{
+    Carried, FinaleView, GameState, LevelChange, MeltState, NonLevelFrame, NotYet, Scene,
+    SessionDisplayState, SessionError, SessionRestoreError,
+};
 pub use d_display::{
     Display, DisplayConfig, DisplayFrame, DisplayObserveError, DisplayRefusal, DisplayState,
     RandomContract, WIPE_DRAWS,
@@ -53,6 +58,7 @@ pub use d_display::{
 pub use r_data::{GameMode, LumpDirectory, ResourceError, Resources};
 pub use r_main::{SCREENHEIGHT, SCREENWIDTH};
 pub use state::{RenderState, RestoreError, StateDecodeError, WallSteps};
+pub use wi_stuff::{IntermissionGraphics, IntermissionView, WiState};
 
 use doom_sim::{PlayerSlot, Simulation};
 

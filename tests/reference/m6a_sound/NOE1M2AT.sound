@@ -1,0 +1,12 @@
+#config-m6a,game_mode,registered,level_row,LV,tic,episode,map
+#schema,DOOM-M5C-SOUND-v1
+#columns,S,tic,seq,sfx,okind,oid,outcome,draws,rnd,vol,sep,pitch,priority,cnum,handle,samexy,gametic,ox,oy,lx,ly,langle
+#columns,T,tic,seq,okind,oid,stopped
+#columns,K,tic,seq,cnum,sfx,okind,oid,handle,reason,playing
+#columns,C,tic,cnum,sfx,okind,oid,handle,uvol,usep,upitch
+#columns,L,tic,sfx
+#columns,R,tic,rnd_after_p_ticker,rnd_after_st_ticker,rnd_after_display,snd_draws,st_draws,wipe_draws,updated,occupied
+#columns,E,tic,message
+#columns,Z,totals
+#config,schedule,tic,sound,on,handle,integrated,wipe,genuine,sfx_volume,8,channels,3,sfx_data,load
+E,-1,W_GetNumForName: d_e1m2 not found!

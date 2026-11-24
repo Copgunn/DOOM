@@ -31,14 +31,19 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
 - **Picture.** Renderer, status bar, messages and palette flashes: frames equal the original's wherever compared ([what is and is not](docs/COMPATIBILITY.md#playable-build-m5b)).
 - **Sound.** Effects, no music: sounds started and samples mixed equal the original's own sound code on the runs
   checked ([which build, which runs](docs/COMPATIBILITY.md#sound-effects-m5c)).
-- **Playable, in a limited way.** One Episode 1 map at a time, at 35 tics a second.
+- **Playable, in a limited way.** One Episode 1 session at 35 tics a second, from any start map: both exits, the
+  intermission, the next map with what the player carries, dying and coming back, the secret route
+  ([what it supports](docs/COMPATIBILITY.md#episode-1-as-one-session-m6a)). The chain is compared with the original's
+  own engine tic by tic, on synthetic maps and locally on real ones ([evidence](docs/validation/M6A.md)).
 
-Not yet: the automap, music, menus, the intermission, a next level, general demo playback, other episodes, easy or
-nightmare skill, or any claim of a match beyond the scripted runs recorded so far ([what is missing](docs/ROADMAP.md#vanilla-completeness-checklist)).
+Not yet, and next (M6a part 2, a separate pull request): the finale after E1M8 (the session stops there), the screen melt
+(the new picture appears at once), the two easy skills and E1M7 on `uv`. Not yet, later: the automap, music, menus, general
+demo playback, other episodes, nightmare skill, or any claim of a match beyond the runs recorded so far ([what is missing](docs/ROADMAP.md#vanilla-completeness-checklist)).
 
 ## Play it
 
-`doom-play` opens one Episode 1 map (E1M1 to E1M9, skill `hmp` or `uv`) with your own `DOOM.WAD`. To really play
+`doom-play` plays Episode 1 from the map you pick (E1M1 to E1M9, skill `hmp` or `uv`) with your own `DOOM.WAD`: each exit
+leads to the tally screen and the next map, and it stops at the exit of E1M8 (the ending is not built yet). To really play
 Doom, use an established source port such as [Chocolate Doom](https://www.chocolate-doom.org/). From the cloned top folder:
 
 ```sh
@@ -47,7 +52,7 @@ cargo run --release -p doom-play -- --iwad /path/to/DOOM.WAD --map 1 --skill hmp
 
 - **Controls.** The original's defaults: arrows move and turn, right Ctrl fires, Space uses, right Shift runs, `1`-`8`
   pick weapons, mouse left fires (`--bindings modern` gives WASD). Esc pauses (R restarts, Q quits), End mutes.
-- **Limits.** Needs an OpenGL 2.1 driver; no menus, saving or cheat codes; E1M7 on `uv` is refused
+- **Limits.** Needs an OpenGL 2.1 driver; no menus, saving or cheat codes; no screen melt between pictures yet; E1M7 on `uv` is refused
   ([every limit, and what has been tried](docs/COMPATIBILITY.md#playable-build-m5b)).
 
 ## How it's verified

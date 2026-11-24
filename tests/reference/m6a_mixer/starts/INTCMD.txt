@@ -1,0 +1,8 @@
+# Start list of INTCMD.sound (sha256 916fd4c5cbb34ff1fa3d61a8c0e390f51137c0faf1f2cf13fc3ae77297c640d1), written by tools/reference/m5c_starts.py:
+# the 2 S rows with outcome started, in stream order; 2 S rows in all; 188 R rows.
+# handle convention: integrated (stated by the stream).
+schema DOOM-M5C-STARTS-v1
+config integrated
+tics 188
+s 61 1 61 82 8 128 113 64 100
+s 135 2 135 3 8 128 116 64 101

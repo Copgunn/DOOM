@@ -71,9 +71,44 @@ jobs:
             echo "No game data is included. You need your own DOOM IWAD (Episode 1)."
             echo "Run from a command prompt:"
             echo
-            echo "  doom-play.exe --iwad C:\\path\\to\\DOOM.WAD --map 1 --skill 2"
+            echo "  doom-play.exe --iwad C:\\path\\to\\DOOM.WAD"
             echo
-            echo "Run doom-play.exe --help for every option."
+            echo "Run doom-play.exe --help for every option. Useful ones:"
+            echo "  --map N              the map to start at, 1 to 9 (E1M1 to E1M9; default 1)"
+            echo "  --skill 3            Ultra-Violence (the default, 2, is Hurt Me Plenty)"
+            echo "  --game-mode MODE     retail or registered (see below)"
+            echo
+            echo "This build plays Episode 1 as ONE session (milestone M6a, up to the hand"
+            echo "test): when you finish a map (either exit) you see the intermission, press"
+            echo "fire or use to go on, and the next map starts with what you carry. When"
+            echo "you die, a press of use starts the map again, as in the original."
+            echo "Esc pauses; then R starts a new game at the start map, Q quits and saves,"
+            echo "Esc resumes. The session ends only when you quit, or at a stop below."
+            echo
+            echo "Game mode: the original decides retail or registered from the file name"
+            echo "only. This build uses a declared rule instead: retail if your IWAD has a"
+            echo "fourth episode, otherwise registered, unless you force it with"
+            echo "--game-mode. The launch line on the command prompt says which was used."
+            echo
+            echo "Demos: every session is written to a .lmp file in the folder"
+            echo "doom-sessions beside where you run doom-play.exe (change it with"
+            echo "--sessions DIR). The file name carries the map, the skill and the game"
+            echo "mode. The last lines on the command prompt name the mode and where the"
+            echo "session ended."
+            echo
+            echo "Expected stops (not built yet; the screen says NOT BUILT YET or TIC"
+            echo "REFUSED and the session ends; R starts a new game, Q quits):"
+            echo "  - the exit of E1M8: the finale is not built yet"
+            echo "  - on skill 3, the start of E1M7 (reached from E1M6): not admitted yet"
+            echo "  - skills 0 and 1 are refused at launch"
+            echo "A music file that is missing from your IWAD also stops a session, as it"
+            echo "stops the original. Not a stop: the screen melt between screens is not"
+            echo "shown yet, so the new picture appears at once."
+            echo
+            echo "Please send back the .lmp files from doom-sessions (and the last lines"
+            echo "of the command prompt) after each session, whatever happened; they are"
+            echo "checked against the original engine, and a stop or a difference is a"
+            echo "finding, not your fault."
             echo
             echo "Sound: sound effects (no music) play through WASAPI, DirectSound or"
             echo "WinMM, whichever opens first; nothing needs to be installed. Check the"

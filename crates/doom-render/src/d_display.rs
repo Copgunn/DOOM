@@ -33,6 +33,12 @@
 //! column 0 and once for each of columns 1..319, f_wipe.c:159-166). The melt's pictures are not
 //! drawn (decisions T5 and T6: no melt); the frame shown is the composed frame, which is the
 //! melt's final picture. Its saved state is `DDSP` version 2 ([`DisplayState::encode`]).
+//!
+//! M6a adds the session display ([`Display::new_session`], module [`session`]): the same
+//! accounting across a whole single-player session (level starts that keep the index, the
+//! intermission, every wipe of the session), saved as `DDSP` version 3. Every M5b and M5c display,
+//! method and state above is unchanged; a session display refuses the calls that do not fit its
+//! game state.
 use crate::hu_stuff::{self, HudState, Message};
 use crate::st_stuff::{self, Attacker, StatusBarState, StatusGraphics, StatusInputs};
 use crate::v_video::{BG_ROWS, Canvas, DrawError, Patch};
@@ -43,6 +49,8 @@ use crate::{
 use doom_sim::{PickupMessage, PlayerSlot, Simulation, TicCommand};
 use std::fmt;
 use std::sync::Arc;
+
+pub mod session;
 
 /// How the display accounts for the `M_Random` index (M5c note §4.3.4; decisions S15, T6, T16).
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -102,6 +110,10 @@ pub enum DisplayObserveError {
     /// other than the table or its double, a weapon number of 9 or more, a damage count outside
     /// 0..=100, a negative bonus count or power); the input is named.
     AdjustedInputOutOfRange(&'static str),
+    /// M6a session display ([`Display::new_session`]) only: the call does not fit the session's
+    /// game state (a level tic observed outside a level, or [`Display::begin_level`] after the
+    /// session's first tic).
+    WrongGameState,
 }
 
 /// A refused frame. The display state is unchanged.
@@ -114,6 +126,8 @@ pub enum DisplayRefusal {
     /// No tic has been observed since the level start: `D_Display` draws neither the status
     /// bar, the view nor the HUD at `gametic` 0 (d_main.c:237-238, 267, 270).
     BeforeFirstTic,
+    /// M6a session display only: a level frame asked for outside a level.
+    WrongGameState,
 }
 impl From<RenderRefusal> for DisplayRefusal {
     fn from(e: RenderRefusal) -> Self {
@@ -216,6 +230,8 @@ pub struct Display {
     inputs: Option<StatusInputs>,
     bg: Vec<u8>,
     bg_defined: Vec<bool>,
+    /// The M6a session part (None for every M5b and M5c display).
+    session: Option<Box<session::Session>>,
 }
 
 /// `maxammo` (p_inter.c:58), doubled by the backpack (p_inter.c:589-595).
@@ -303,6 +319,7 @@ impl Display {
             inputs: None,
             bg: vec![0; SCREENWIDTH * BG_ROWS],
             bg_defined: vec![false; SCREENWIDTH * BG_ROWS],
+            session: None,
         })
     }
 
@@ -322,7 +339,15 @@ impl Display {
     /// (M5b's restart is a new game, §1.6 item 8): `M_ClearRandom` (g_game.c:1414), `ST_Start`
     /// and `HU_Start` (p_mobj.c:693-698), a forced wipe (g_game.c:472-473) and the renderer's
     /// level start (decision R8).
+    ///
+    /// On an M6a session display ([`Self::new_session`]) it is the session's first level only
+    /// (a new game: `G_InitNew` at the session start, before the first tic); later it is refused
+    /// with [`DisplayObserveError::WrongGameState`], and a level change or a reborn uses
+    /// [`Self::begin_next_level`], which keeps the index.
     pub fn begin_level(&mut self, sim: &Simulation) -> Result<(), DisplayObserveError> {
+        if self.session.as_ref().is_some_and(|s| s.tic != 0) {
+            return Err(DisplayObserveError::WrongGameState);
+        }
         let inputs = status_inputs(sim)?;
         let stored = stored_message(sim)?;
         self.renderer
@@ -335,6 +360,9 @@ impl Display {
         self.inputs = Some(inputs);
         self.bg.fill(0);
         self.bg_defined.fill(false);
+        if let Some(s) = &mut self.session {
+            **s = session::Session::fresh();
+        }
         Ok(())
     }
 
@@ -348,6 +376,10 @@ impl Display {
     /// later it is refused with [`DisplayObserveError::Contract`] and nothing changes, since a
     /// change mid-level would mix two accountings of one index.
     pub fn set_contract(&mut self, contract: RandomContract) -> Result<(), DisplayObserveError> {
+        // A session display keeps the M5c accounting (DDSP version 3) throughout.
+        if self.session.is_some() && contract != RandomContract::WithSound {
+            return Err(DisplayObserveError::Contract);
+        }
         if self.renderer.state().is_some_and(|s| s.tic != 0) {
             return Err(DisplayObserveError::Contract);
         }
@@ -425,9 +457,18 @@ impl Display {
         draws: u16,
         adjust: impl FnOnce(&mut StatusInputs, &mut Option<Message>),
     ) -> Result<Option<Message>, DisplayObserveError> {
+        if self
+            .session
+            .as_ref()
+            .is_some_and(|s| s.gamestate != session::GameState::Level)
+        {
+            return Err(DisplayObserveError::WrongGameState);
+        }
         let mut inputs = status_inputs(sim)?;
         let stored = stored_message(sim)?;
-        let gametic = sim.tic().wrapping_sub(1);
+        // The tic's `gametic` (the turbo test's, g_game.c:671-679): the tic count before the
+        // tic, plus the load's `gametic` under wire 26 (owner's ruling 1 of 2026-11-22).
+        let gametic = sim.gametic().wrapping_sub(1);
         let mut message =
             hu_stuff::derive_message(sim.events(), gametic, fed.forward, self.hud.stored, stored)
                 .map_err(DisplayObserveError::MessageUnderivable)?
@@ -460,6 +501,9 @@ impl Display {
         self.status = status;
         self.hud = hud;
         self.inputs = Some(inputs);
+        if let Some(s) = &mut self.session {
+            s.tic = s.tic.saturating_add(1);
+        }
         Ok(message)
     }
 
@@ -483,6 +527,13 @@ impl Display {
         sim: &Simulation,
         out: &mut Frame,
     ) -> Result<DisplayFrame, DisplayRefusal> {
+        if self
+            .session
+            .as_ref()
+            .is_some_and(|s| s.gamestate != session::GameState::Level)
+        {
+            return Err(DisplayRefusal::WrongGameState);
+        }
         let Some(inputs) = self.inputs.filter(|_| sim.tic() != 0) else {
             return Err(DisplayRefusal::BeforeFirstTic);
         };
@@ -539,6 +590,10 @@ impl Display {
         self.bg_defined = bg_defined;
         self.fullscreen = full;
         self.wipe = false;
+        if let Some(s) = &mut self.session {
+            // `oldgamestate = wipegamestate = gamestate` (d_main.c:300).
+            s.old_gamestate = Some(session::GameState::Level);
+        }
         Ok(DisplayFrame {
             palette: st.palette,
             palette_set: st.palette_set,
@@ -560,6 +615,11 @@ impl Display {
             r.restore(s.clone()).expect("same level");
         }
         self.renderer = r;
+        if let Some(s) = &mut self.session {
+            // `R_SetViewSize` sets `setsizeneeded`, and the next `D_Display` sets `oldgamestate =
+            // -1` (d_main.c:215-220); only a session display models `oldgamestate`.
+            s.old_gamestate = None;
+        }
         Ok(())
     }
 
@@ -567,8 +627,12 @@ impl Display {
         self.renderer.level.clone()
     }
 
-    /// The saveable state (None before [`Self::begin_level`]).
+    /// The saveable state (None before [`Self::begin_level`], and always None on an M6a session
+    /// display, whose state is [`Self::session_state`], `DDSP` version 3).
     pub fn state(&self) -> Option<DisplayState> {
+        if self.session.is_some() {
+            return None;
+        }
         Some(DisplayState {
             screenblocks: self.renderer.config().screenblocks,
             render: self.renderer.state()?.clone(),
@@ -587,6 +651,10 @@ impl Display {
         state: DisplayState,
         sim: &Simulation,
     ) -> Result<(), DisplayRestoreError> {
+        if self.session.is_some() {
+            // A session display restores only `DDSP` version 3 ([`Self::restore_session`]).
+            return Err(DisplayRestoreError::Inconsistent("session display"));
+        }
         let inputs = state.check(sim)?;
         let mut next = self.clone();
         next.set_screenblocks(state.screenblocks)
@@ -854,45 +922,14 @@ impl DisplayState {
         }
         o.extend((drst.len() as u32).to_le_bytes());
         o.extend(drst);
-        let s = &self.status;
-        let flags = |b: &[bool]| {
-            b.iter()
-                .enumerate()
-                .fold(0u16, |a, (i, v)| a | u16::from(*v) << i)
-        };
-        o.push(self.screenblocks);
-        o.push(flags(&[self.fullscreen, self.wipe]) as u8);
-        o.push(s.rndindex);
-        o.extend(flags(&s.oldweaponsowned).to_le_bytes());
-        for v in [
-            s.oldhealth,
-            s.facecount,
-            s.faceindex,
-            s.priority,
-            s.lastattackdown,
-            s.palette,
-        ] {
-            o.extend(v.to_le_bytes());
-        }
-        for v in s
-            .keyboxes
-            .iter()
-            .chain(&s.arms_old)
-            .chain([&s.face_old])
-            .chain(&s.keys_old)
-        {
-            o.push(*v as i8 as u8);
-        }
-        o.push(s.ready_ammo.unwrap_or(0xff));
-        o.push(flags(&[s.firsttime, s.bg_drawn, s.armsbg_old]) as u8);
-        let h = &self.hud;
-        o.push(flags(&[h.message_on, h.protected, h.must_show, h.laston]) as u8);
-        for v in [h.message_counter, h.show_messages, h.line.needsupdate] {
-            o.extend(v.to_le_bytes());
-        }
-        o.push(h.stored as u8);
-        o.push(h.line.text.len() as u8);
-        o.extend(&h.line.text);
+        write_tail(
+            &mut o,
+            self.screenblocks,
+            self.fullscreen,
+            self.wipe,
+            &self.status,
+            &self.hud,
+        );
         o
     }
 
@@ -951,80 +988,158 @@ impl DisplayState {
         }
         let n = u32_of(take(4)?) as usize;
         let render = RenderState::decode(take(n)?)?;
-        let head = take(5)?;
-        let (screenblocks, dflags, rndindex) = (head[0], head[1], head[2]);
-        let owned = u16::from_le_bytes([head[3], head[4]]);
-        let flag = |f: u8, i: u8| f >> i & 1 == 1;
-        let mut ints = [0i32; 6];
-        for v in &mut ints {
-            *v = i32::from_le_bytes(take(4)?.try_into().expect("4"));
-        }
-        let small: Vec<i32> = take(13)?.iter().map(|b| i32::from(*b as i8)).collect();
-        let tail = take(3)?;
-        let (ready, sflags, hflags) = (tail[0], tail[1], tail[2]);
-        let mut hints = [0i32; 3];
-        for v in &mut hints {
-            *v = i32::from_le_bytes(take(4)?.try_into().expect("4"));
-        }
-        let lens = take(2)?;
-        let stored = hu_stuff::ALL_MESSAGES
-            .iter()
-            .copied()
-            .find(|m| *m as u8 == lens[0])
-            .ok_or(StateDecodeError::Invalid("stored"))?;
-        let text = take(usize::from(lens[1]))?.to_vec();
-        if at != bytes.len() {
-            return Err(StateDecodeError::Trailing);
-        }
-        let bad = |name| StateDecodeError::Invalid(name);
-        if !(10..=11).contains(&screenblocks) || dflags >> 2 != 0 || owned >> 9 != 0 {
-            return Err(bad("display flags"));
-        }
-        if (ready > 3 && ready != 0xff) || sflags >> 3 != 0 || hflags >> 4 != 0 {
-            return Err(bad("status flags"));
-        }
-        let status = StatusBarState {
-            rndindex,
-            oldhealth: ints[0],
-            oldweaponsowned: std::array::from_fn(|i| owned >> i & 1 == 1),
-            facecount: ints[1],
-            faceindex: ints[2],
-            priority: ints[3],
-            lastattackdown: ints[4],
-            keyboxes: [small[0], small[1], small[2]],
-            ready_ammo: (ready != 0xff).then_some(ready),
-            palette: ints[5],
-            firsttime: flag(sflags, 0),
-            bg_drawn: flag(sflags, 1),
-            arms_old: std::array::from_fn(|i| small[3 + i]),
-            face_old: small[9],
-            keys_old: [small[10], small[11], small[12]],
-            armsbg_old: flag(sflags, 2),
-        };
-        let hud = HudState {
-            message_on: flag(hflags, 0),
-            message_counter: hints[0],
-            protected: flag(hflags, 1),
-            must_show: flag(hflags, 2),
-            show_messages: hints[1],
-            line: crate::hu_lib::TextLine {
-                text,
-                needsupdate: hints[2],
-            },
-            laston: flag(hflags, 3),
-            stored,
-        };
-        if let Some(v) = value_error(&status, &hud) {
-            return Err(bad(v));
-        }
+        let tail = read_tail(&bytes[at..])?;
         Ok(Self {
-            screenblocks,
+            screenblocks: tail.screenblocks,
             render,
-            status,
-            hud,
-            fullscreen: flag(dflags, 0),
-            wipe: flag(dflags, 1),
+            status: tail.status,
+            hud: tail.hud,
+            fullscreen: tail.fullscreen,
+            wipe: tail.wipe,
             contract: RandomContract::SoundFreeWipeFree,
         })
     }
+}
+
+/// The rows of `DDSP` version 1 from `screenblocks` to the message line (docs/STATE_FORMAT.md,
+/// "Display state"), shared by versions 1 and 2 (after the embedded `DRST`) and version 3 (after
+/// its session group, `session` module).
+fn write_tail(
+    o: &mut Vec<u8>,
+    screenblocks: u8,
+    fullscreen: bool,
+    wipe: bool,
+    s: &StatusBarState,
+    h: &HudState,
+) {
+    let flags = |b: &[bool]| {
+        b.iter()
+            .enumerate()
+            .fold(0u16, |a, (i, v)| a | u16::from(*v) << i)
+    };
+    o.push(screenblocks);
+    o.push(flags(&[fullscreen, wipe]) as u8);
+    o.push(s.rndindex);
+    o.extend(flags(&s.oldweaponsowned).to_le_bytes());
+    for v in [
+        s.oldhealth,
+        s.facecount,
+        s.faceindex,
+        s.priority,
+        s.lastattackdown,
+        s.palette,
+    ] {
+        o.extend(v.to_le_bytes());
+    }
+    for v in s
+        .keyboxes
+        .iter()
+        .chain(&s.arms_old)
+        .chain([&s.face_old])
+        .chain(&s.keys_old)
+    {
+        o.push(*v as i8 as u8);
+    }
+    o.push(s.ready_ammo.unwrap_or(0xff));
+    o.push(flags(&[s.firsttime, s.bg_drawn, s.armsbg_old]) as u8);
+    o.push(flags(&[h.message_on, h.protected, h.must_show, h.laston]) as u8);
+    for v in [h.message_counter, h.show_messages, h.line.needsupdate] {
+        o.extend(v.to_le_bytes());
+    }
+    o.push(h.stored as u8);
+    o.push(h.line.text.len() as u8);
+    o.extend(&h.line.text);
+}
+
+/// The decoded rows of [`write_tail`].
+pub(crate) struct Tail {
+    pub screenblocks: u8,
+    pub fullscreen: bool,
+    pub wipe: bool,
+    pub status: StatusBarState,
+    pub hud: HudState,
+}
+
+/// Decodes [`write_tail`]'s rows, which must end `bytes`, with version 1's bounds (and its
+/// order of checks).
+fn read_tail(bytes: &[u8]) -> Result<Tail, StateDecodeError> {
+    let mut at = 0usize;
+    let mut take = |n: usize| -> Result<&[u8], StateDecodeError> {
+        let b = bytes.get(at..at + n).ok_or(StateDecodeError::Truncated)?;
+        at += n;
+        Ok(b)
+    };
+    let head = take(5)?;
+    let (screenblocks, dflags, rndindex) = (head[0], head[1], head[2]);
+    let owned = u16::from_le_bytes([head[3], head[4]]);
+    let flag = |f: u8, i: u8| f >> i & 1 == 1;
+    let mut ints = [0i32; 6];
+    for v in &mut ints {
+        *v = i32::from_le_bytes(take(4)?.try_into().expect("4"));
+    }
+    let small: Vec<i32> = take(13)?.iter().map(|b| i32::from(*b as i8)).collect();
+    let tail = take(3)?;
+    let (ready, sflags, hflags) = (tail[0], tail[1], tail[2]);
+    let mut hints = [0i32; 3];
+    for v in &mut hints {
+        *v = i32::from_le_bytes(take(4)?.try_into().expect("4"));
+    }
+    let lens = take(2)?;
+    let stored = hu_stuff::ALL_MESSAGES
+        .iter()
+        .copied()
+        .find(|m| *m as u8 == lens[0])
+        .ok_or(StateDecodeError::Invalid("stored"))?;
+    let text = take(usize::from(lens[1]))?.to_vec();
+    if at != bytes.len() {
+        return Err(StateDecodeError::Trailing);
+    }
+    let bad = |name| StateDecodeError::Invalid(name);
+    if !(10..=11).contains(&screenblocks) || dflags >> 2 != 0 || owned >> 9 != 0 {
+        return Err(bad("display flags"));
+    }
+    if (ready > 3 && ready != 0xff) || sflags >> 3 != 0 || hflags >> 4 != 0 {
+        return Err(bad("status flags"));
+    }
+    let status = StatusBarState {
+        rndindex,
+        oldhealth: ints[0],
+        oldweaponsowned: std::array::from_fn(|i| owned >> i & 1 == 1),
+        facecount: ints[1],
+        faceindex: ints[2],
+        priority: ints[3],
+        lastattackdown: ints[4],
+        keyboxes: [small[0], small[1], small[2]],
+        ready_ammo: (ready != 0xff).then_some(ready),
+        palette: ints[5],
+        firsttime: flag(sflags, 0),
+        bg_drawn: flag(sflags, 1),
+        arms_old: std::array::from_fn(|i| small[3 + i]),
+        face_old: small[9],
+        keys_old: [small[10], small[11], small[12]],
+        armsbg_old: flag(sflags, 2),
+    };
+    let hud = HudState {
+        message_on: flag(hflags, 0),
+        message_counter: hints[0],
+        protected: flag(hflags, 1),
+        must_show: flag(hflags, 2),
+        show_messages: hints[1],
+        line: crate::hu_lib::TextLine {
+            text,
+            needsupdate: hints[2],
+        },
+        laston: flag(hflags, 3),
+        stored,
+    };
+    if let Some(v) = value_error(&status, &hud) {
+        return Err(bad(v));
+    }
+    Ok(Tail {
+        screenblocks,
+        fullscreen: flag(dflags, 0),
+        wipe: flag(dflags, 1),
+        status,
+        hud,
+    })
 }

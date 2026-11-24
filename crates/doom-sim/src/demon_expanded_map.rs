@@ -26,6 +26,9 @@ pub(crate) struct ExpandedSelection {
     /// Line special 97 and the landing (wire 24, a superset of the Episode 1
     /// policy: `episode1` is set too); false under every other policy.
     pub teleport: bool,
+    /// The walk exits 52 and 124 (wire 26 alone, a superset of wire 24's rules:
+    /// `teleport` is set too); false under every other policy.
+    pub walk_exits: bool,
 }
 impl Simulation {
     /// Profile 20: larger static maps with the exact map-context Demon registry.
@@ -54,6 +57,7 @@ impl Simulation {
                 e1m1: false,
                 episode1: None,
                 teleport: false,
+                walk_exits: false,
             },
         )
     }
@@ -75,6 +79,7 @@ impl Simulation {
             e1m1,
             episode1,
             teleport,
+            walk_exits,
         } = selection;
         if context.respawn_monsters {
             return Err(MapSpawnError::Respawn.into());
@@ -90,7 +95,9 @@ impl Simulation {
         if !real_map && map.things().len() > MAX_DEMON_MAP_THINGS {
             return Err(MapSpawnError::WorkLimit.into());
         }
-        let movers = if episode1.is_some() && teleport {
+        let movers = if episode1.is_some() && walk_exits {
+            Some(mover_rules::validate_episode1_walk_exits(&map)?)
+        } else if episode1.is_some() && teleport {
             Some(mover_rules::validate_episode1_teleport(&map)?)
         } else if episode1.is_some() {
             Some(mover_rules::validate_episode1(&map)?)
@@ -811,10 +818,12 @@ impl Simulation {
             plan.events.push(Event::Phase(Phase::Players));
             // G_Ticker, before P_Ticker (g_game.c:671–679): the turbo message on
             // every 128th gametic when the read command's forward exceeds 50.
-            // Only the Episode 1 domain admits such a command.
+            // Only the Episode 1 domain admits such a command. `gametic` is the
+            // tic count under wires 22 to 25 (a level loaded at gametic 0) and the
+            // load's `gametic` plus the level tic under wire 26.
             if self.player_policy().has_episode1()
                 && player_commands::turbo_message(
-                    self.tic,
+                    self.gametic(),
                     commands[usize::from(PlayerSlot::One.ordinal())],
                 )
             {
@@ -1009,6 +1018,21 @@ impl Simulation {
         );
         if let Some(error) = control.failure.get() {
             return Err(self.policy_error(error));
+        }
+        // Wire 26: every exit call of the tic in call order, the walk exits of
+        // `P_CrossSpecialLine` included (during the player's move or a thinker's,
+        // a dead player's sliding body too): `gameaction = ga_completed`, and
+        // `secretexit` is the last call's (g_game.c:1002-1018). For the exits wire
+        // 25 has, this is its result (sector 11 precedes the use lines in
+        // `P_PlayerThink`, p_user.c:274-275, 322-328).
+        if self.player_policy().has_carried_start() {
+            if let Some(secret) = plan.events.iter().rev().find_map(|e| match e {
+                Event::Mover(MoverEvent::Exit { secret }) => Some(*secret),
+                _ => None,
+            }) {
+                plan.exit = true;
+                plan.secret_exit = secret;
+            }
         }
         if command_policy {
             player_commands::validate_result(&plan.actors, plan.player.as_ref())?;

@@ -410,6 +410,7 @@ pub(crate) fn exit_lines_before_session(
     }
     lines.extend(host.audio.device_exit_lines());
     lines.extend(app.layout_dependent_line());
+    lines.extend(app.session_summary());
     lines
 }
 
