@@ -62,10 +62,11 @@ fn start(tic_cap: usize) -> (App, TestHost) {
     (app, host)
 }
 
-/// Runs the next tic, if the app is playing; the clock is the count of updates.
+/// Runs the next tic, if the app is playing; the clock is the count of updates, each a little
+/// over a tic's 28,571.4 microseconds, so exactly one tic is due whenever the clock was started.
 fn tic(app: &mut App, host: &mut TestHost, clock: &mut u64) -> u64 {
     *clock += 1;
-    app.update((*clock * 1_000_000).div_ceil(35), host).ran
+    app.update(*clock * 28_572, host).ran
 }
 
 /// CHAIN's first exit by keys (as doom-game's `m6a_load_input`), every key through `key_event`:
@@ -95,6 +96,54 @@ fn a_repeat_through_key_event_sets_a_held_key_again_after_a_load() {
     let last = host.tics.split_off(host.tics.len() - 3);
     assert_eq!(last, [(true, 25), (false, 0), (false, 25)]);
     assert!(host.tics[..125].iter().all(|t| *t == (false, 25)));
+}
+
+/// Runs updates until one tic has run (the first update after a resume only starts the clock).
+fn next_tic(app: &mut App, host: &mut TestHost, clock: &mut u64) -> (bool, i8) {
+    let ran = (0..3).map(|_| tic(app, host, clock)).find(|ran| *ran != 0);
+    assert_eq!(ran, Some(1));
+    host.tics[host.tics.len() - 1]
+}
+
+/// The up arrow is held through a pause (`focus`: by a focus loss, else by Esc) and the resume
+/// by Esc, with the keyboard repeating it throughout. Every pause releases the held keys through
+/// the event layer; a repeat during the pause is dropped; the first repeat after the resume is a
+/// keydown again. Returns the forward moves of the tic before the pause, the first tic after
+/// the resume (no repeat yet) and the tic after the next repeat.
+fn held_through_a_pause(focus: bool) -> [i8; 3] {
+    let (mut app, mut host) = start(100_000);
+    let mut clock = 0;
+    key_event(&mut app, &mut host, KeyCode::Up, true, false);
+    let before = next_tic(&mut app, &mut host, &mut clock).1;
+    if focus {
+        app.focus_lost();
+    } else {
+        key_event(&mut app, &mut host, KeyCode::Escape, true, false);
+        key_event(&mut app, &mut host, KeyCode::Escape, false, false);
+    }
+    assert_eq!(app.mode(), &Mode::Paused);
+    key_event(&mut app, &mut host, KeyCode::Up, true, true);
+    assert_eq!(tic(&mut app, &mut host, &mut clock), 0);
+    key_event(&mut app, &mut host, KeyCode::Escape, true, false);
+    key_event(&mut app, &mut host, KeyCode::Escape, false, false);
+    assert_eq!(app.mode(), &Mode::Playing);
+    let released = next_tic(&mut app, &mut host, &mut clock).1;
+    key_event(&mut app, &mut host, KeyCode::Up, true, true);
+    [
+        before,
+        released,
+        next_tic(&mut app, &mut host, &mut clock).1,
+    ]
+}
+
+#[test]
+fn a_key_held_through_a_pause_is_down_again_at_its_next_repeat() {
+    assert_eq!(held_through_a_pause(false), [25, 0, 25]);
+}
+
+#[test]
+fn a_key_held_through_a_focus_loss_is_down_again_at_its_next_repeat() {
+    assert_eq!(held_through_a_pause(true), [25, 0, 25]);
 }
 
 fn repeats(app: &mut App, host: &mut TestHost, key: KeyCode) {
