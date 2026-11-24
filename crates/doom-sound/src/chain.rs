@@ -35,6 +35,8 @@
 //! on the melt. Until the melt pictures exist, a session runs the M5c schedule (a melt takes no
 //! time, decision T6 as extended in step 5) and [`ChainSound::melt_step`] is a typed "not yet"
 //! refusal; the saved state can represent a melt in progress ([`crate::chain_state`]).
+//! (M6a part 2: that is the frozen configuration, [`ChainMode::RefusesMelt`]; the configuration
+//! that runs the melt steps is [`ChainMode::FinaleAndMelt`], [`crate::chain_melt`].)
 //!
 //! Every tic is transactional: it runs on a copy of the session (a few hundred bytes; no
 //! simulation is cloned) and a refusal leaves everything, the caller's random index included,
@@ -43,6 +45,7 @@
 
 use std::sync::Arc;
 
+use crate::chain_melt::{ChainFault, ChainMode};
 use crate::logic::{ChannelStop, Listener, OriginPositions, SoundOrigin, SoundRecord};
 use crate::lumps::SoundSet;
 use crate::music::{Music, MusicLumps};
@@ -177,6 +180,18 @@ pub enum ChainRefusal {
     Config,
     /// Not yet ([`NotYet`]).
     NotYet(NotYet),
+    /// [`ChainMode::FinaleAndMelt`]: a tic called while the previous tic's display is still
+    /// pending (its melt steps, if any, and [`ChainSound::mix_after_display`] not yet done): the C
+    /// mixes the buffer of a pass before the next pass runs its tics (d_main.c:374-405).
+    DisplayPending {
+        /// The call refused.
+        call: ChainCall,
+    },
+    /// A melt step or [`ChainSound::mix_after_display`] with no tic's display pending: before
+    /// the first tic, after the display's mix, or in [`ChainMode::RefusesMelt`] (which mixes in
+    /// the tic) for the mix. A melt runs only inside the display of a tic (d_main.c:223-229,
+    /// 320-344, 395).
+    NoDisplayPending,
 }
 
 impl std::fmt::Display for ChainRefusal {
@@ -211,6 +226,11 @@ impl std::fmt::Display for ChainRefusal {
             }
             Self::Config => write!(f, "the sound configuration is out of range"),
             Self::NotYet(n) => write!(f, "not yet: {n:?}"),
+            Self::DisplayPending { call } => write!(
+                f,
+                "the sound session cannot run {call:?} before the previous tic's display is mixed"
+            ),
+            Self::NoDisplayPending => write!(f, "no tic's display is pending in the sound session"),
         }
     }
 }
@@ -290,6 +310,18 @@ pub struct ChainSound {
     pub(crate) level_start: u64,
     /// Outside a level, the session tic of the first tic outside it; 0 in a level.
     pub(crate) level_end: u64,
+    /// The configuration (M6a part 2, ruling V1).
+    pub(crate) mode: ChainMode,
+    /// [`ChainMode::FinaleAndMelt`]: the last tic's display is pending (its buffer not yet mixed;
+    /// a melt may be in progress). Always false in [`ChainMode::RefusesMelt`].
+    pub(crate) pending: bool,
+    /// While `pending`: the last tic had a buffer due, still owed (the schedule counts it).
+    pub(crate) owed: bool,
+    /// The `S_UpdateSounds` calls made (one per tic, d_main.c:392); the genuine runner counts
+    /// them (`updates` in its Z row). Not saved: a reachable session has made one per tic run.
+    pub(crate) updates: u64,
+    /// A fault planted by the evidence self-tests ([`ChainFault`]); never set by the game.
+    pub(crate) fault: Option<ChainFault>,
 }
 
 impl ChainSound {
@@ -318,6 +350,11 @@ impl ChainSound {
             state: ChainState::Level,
             level_start: 0,
             level_end: 0,
+            mode: ChainMode::RefusesMelt,
+            pending: false,
+            owed: false,
+            updates: 0,
+            fault: None,
         })
     }
 
@@ -346,7 +383,9 @@ impl ChainSound {
         self.sound.config.logic.gamemap
     }
 
-    /// The schedule: the next session tic (`gametic`) and the buffers mixed.
+    /// The schedule: the next session tic (`gametic`) and the buffers mixed. In
+    /// [`ChainMode::FinaleAndMelt`], while a display is pending, it counts the last tic's due
+    /// buffer although that buffer is still owed ([`Self::buffer_owed`], [`Self::buffers_mixed`]).
     pub fn schedule(&self) -> Schedule {
         self.sound.schedule
     }
@@ -388,6 +427,41 @@ impl ChainSound {
         Ok(Some(target))
     }
 
+    /// [`ChainRefusal::DisplayPending`] while a display is pending (never in
+    /// [`ChainMode::RefusesMelt`]).
+    fn check_no_display(&self, call: ChainCall) -> Result<(), ChainRefusal> {
+        if self.pending {
+            return Err(ChainRefusal::DisplayPending { call });
+        }
+        Ok(())
+    }
+
+    /// Runs `sound`'s tic as the configuration does: [`ChainMode::RefusesMelt`] mixes the due
+    /// buffer in the tic; [`ChainMode::FinaleAndMelt`] leaves it owed until the display is done
+    /// ([`Self::mix_after_display`]).
+    fn run_tic(
+        &self,
+        sound: &mut Sound,
+        records: &[SoundRecord],
+        rndindex: u8,
+        listener: &Listener,
+        positions: &dyn OriginPositions,
+    ) -> Result<(TicSound, bool), ChainRefusal> {
+        let mixes = self.mode == ChainMode::RefusesMelt;
+        let owed = !mixes && sound.schedule.due() == 1;
+        let t = sound.tic_mixing(records, rndindex, listener, positions, mixes)?;
+        Ok((t, owed))
+    }
+
+    /// Commits a tic's sound session: the display of the tic becomes pending under
+    /// [`ChainMode::FinaleAndMelt`], and one more `S_UpdateSounds` was made.
+    fn commit(&mut self, sound: Sound, owed: bool) {
+        self.sound = sound;
+        self.pending = self.mode == ChainMode::FinaleAndMelt;
+        self.owed = owed;
+        self.updates += 1;
+    }
+
     /// The next session tic, or the tic limit.
     fn next_tic(&self) -> Result<u64, ChainRefusal> {
         self.sound
@@ -421,11 +495,12 @@ impl ChainSound {
             (ChainState::Level, _) | (ChainState::Intermission, true) => {}
             _ => return Err(wrong()),
         }
+        self.check_no_display(call)?;
         let tic = self.next_tic()?;
         let Some(load) = load else {
             let mut sound = self.sound.clone();
-            let t = sound.tic(records, rndindex, listener, positions)?;
-            self.sound = sound;
+            let (t, owed) = self.run_tic(&mut sound, records, rndindex, listener, positions)?;
+            self.commit(sound, owed);
             return Ok(ChainTic {
                 sound: t,
                 level_start: Vec::new(),
@@ -462,8 +537,8 @@ impl ChainSound {
         let mut all = Vec::with_capacity(load.records.len() + records.len());
         all.extend_from_slice(load.records);
         all.extend_from_slice(records);
-        let t = sound.tic(&all, rndindex, listener, positions)?;
-        self.sound = sound;
+        let (t, owed) = self.run_tic(&mut sound, &all, rndindex, listener, positions)?;
+        self.commit(sound, owed);
         self.state = ChainState::Level;
         self.level_start = tic;
         self.level_end = 0;
@@ -492,6 +567,7 @@ impl ChainSound {
                 call: ChainCall::Intermission,
             });
         }
+        self.check_no_display(ChainCall::Intermission)?;
         let tic = self.next_tic()?;
         let entering = self.state == ChainState::Level;
         let music = if entering {
@@ -508,8 +584,8 @@ impl ChainSound {
             })
             .collect();
         let mut sound = self.sound.clone();
-        let t = sound.tic(&records, rndindex, listener, positions)?;
-        self.sound = sound;
+        let (t, owed) = self.run_tic(&mut sound, &records, rndindex, listener, positions)?;
+        self.commit(sound, owed);
         if entering {
             self.state = ChainState::Intermission;
             self.level_end = tic;
@@ -536,6 +612,7 @@ impl ChainSound {
                 call: ChainCall::Finale,
             });
         }
+        self.check_no_display(ChainCall::Finale)?;
         let tic = self.next_tic()?;
         let entering = self.state == ChainState::Level;
         if entering && self.gamemap() != 8 {
@@ -543,14 +620,27 @@ impl ChainSound {
                 map: self.gamemap(),
             });
         }
-        let music = if entering {
-            self.change_music(Music::Victor, tic)?
+        // The planted fault `VictorLate` moves the lookup to the finale's second tic.
+        let late = self.fault == Some(ChainFault::VictorLate);
+        let looks_up = if late {
+            !entering && self.level_end.checked_add(1) == Some(tic)
         } else {
-            None
+            entering
+        };
+        let music = match (looks_up, late) {
+            (false, _) => None,
+            (true, false) => self.change_music(Music::Victor, tic)?,
+            (true, true) if !self.music.present(Music::Victor) => {
+                return Err(ChainRefusal::MusicMissing {
+                    music: Music::Victor,
+                    tic: Some(tic),
+                });
+            }
+            (true, true) => Some(Music::Victor),
         };
         let mut sound = self.sound.clone();
-        let t = sound.tic(&[], rndindex, listener, positions)?;
-        self.sound = sound;
+        let (t, owed) = self.run_tic(&mut sound, &[], rndindex, listener, positions)?;
+        self.commit(sound, owed);
         if entering {
             self.state = ChainState::Finale;
             self.level_end = tic;
@@ -564,9 +654,15 @@ impl ChainSound {
     }
 
     /// A melt step (note §1.16.4): in the reference build nothing of the sound code runs during a
-    /// melt step, and the buffer due after the melt's tic is mixed after its last step. Not built
-    /// yet: always [`NotYet::MeltSteps`], with nothing changed, never a silent no-op.
+    /// melt step, and the buffer due after the melt's tic is mixed after its last step. In
+    /// [`ChainMode::RefusesMelt`] (part 1): always [`NotYet::MeltSteps`], with nothing changed,
+    /// never a silent no-op. In [`ChainMode::FinaleAndMelt`] it is accepted while a tic's display
+    /// is pending and changes nothing ([`crate::chain_melt`]); otherwise
+    /// [`ChainRefusal::NoDisplayPending`].
     pub fn melt_step(&mut self) -> Result<(), ChainRefusal> {
-        Err(ChainRefusal::NotYet(NotYet::MeltSteps))
+        match self.mode {
+            ChainMode::RefusesMelt => Err(ChainRefusal::NotYet(NotYet::MeltSteps)),
+            ChainMode::FinaleAndMelt => self.melt_step_finale_and_melt(),
+        }
     }
 }

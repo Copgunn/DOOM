@@ -44,6 +44,7 @@ use std::sync::Arc;
 use doom_sim::Simulation;
 
 use crate::chain::{ChainConfig, ChainSound, ChainState, NotYet};
+use crate::chain_melt::ChainMode;
 use crate::detector::{LayoutDetector, MAX_TEXTURES};
 use crate::logic::{ChannelEntry, MAX_CHANNELS, SoundOrigin};
 use crate::lumps::SoundSet;
@@ -143,9 +144,15 @@ impl ChainSoundState {
     /// (`config.textures` and the detector's); a hand-built state in which the two disagree is
     /// such a state, and its count is written as the largest value.
     pub fn encode(&self) -> Vec<u8> {
+        self.encode_version(VERSION)
+    }
+
+    /// The bytes of version `version`: 2 here, 3 for [`crate::chain_melt::ChainSoundStateV3`]
+    /// (the same layout).
+    pub(crate) fn encode_version(&self, version: u16) -> Vec<u8> {
         let mut out = Vec::with_capacity(MAX_BYTES);
         out.extend_from_slice(&MAGIC);
-        out.extend_from_slice(&VERSION.to_le_bytes());
+        out.extend_from_slice(&version.to_le_bytes());
         out.extend_from_slice(&self.tics.to_le_bytes());
         out.extend_from_slice(&self.buffers.to_le_bytes());
         let volume = u8::try_from(self.config.sfx_volume)
@@ -184,6 +191,13 @@ impl ChainSoundState {
     /// Reads `DSND` version 2 bytes, checking everything that needs neither the sound set, the
     /// music lumps nor the simulation ([`ChainStateError`]). Never panics.
     pub fn decode(bytes: &[u8]) -> Result<Self, ChainStateError> {
+        Self::decode_version(bytes, VERSION)
+    }
+
+    /// Reads bytes of version `want` only (2 here, 3 for
+    /// [`crate::chain_melt::ChainSoundStateV3`]), with every rule of version 2; another version is
+    /// [`StateError::Version`].
+    pub(crate) fn decode_version(bytes: &[u8], want: u16) -> Result<Self, ChainStateError> {
         if bytes.len() > MAX_BYTES {
             return Err(StateError::TooLong.into());
         }
@@ -192,7 +206,7 @@ impl ChainSoundState {
             return Err(StateError::Magic.into());
         }
         let version = r.u16()?;
-        if version != VERSION {
+        if version != want {
             return Err(StateError::Version(version).into());
         }
         let tic = r.u64()?;
@@ -324,18 +338,21 @@ impl ChainSoundState {
 }
 
 impl ChainSound {
-    /// The session's saved state.
+    /// The session's saved state. A session of [`crate::chain_melt::ChainMode::FinaleAndMelt`]
+    /// saves as version 3 ([`Self::save_v3`]); called on one, this gives the same contents (a
+    /// pending display as a melt in progress, its owed buffer not counted), which restore as
+    /// version 2 rules say.
     pub fn save(&self) -> ChainSoundState {
         let s: SoundState = self.sound.state();
         ChainSoundState {
             config: self.config,
             tics: s.schedule.tic(),
-            buffers: s.schedule.buffers(),
+            buffers: s.schedule.buffers() - u64::from(self.owed),
             state: self.state,
             gamemap: self.gamemap(),
             level_start: self.level_start,
             level_end: self.level_end,
-            melt: false,
+            melt: self.pending,
             detector: s.detector,
             looked_up: s.looked_up,
             channels: s.channels,
@@ -361,6 +378,19 @@ impl ChainSound {
         if state.melt {
             return Err(ChainStateError::NotYet(NotYet::MeltInProgress));
         }
+        Self::restore_mode(set, music, state, sim, expected, ChainMode::RefusesMelt)
+    }
+
+    /// [`Self::restore`]'s checks and rebuild in configuration `mode`; `state.melt` is a pending
+    /// display (only [`ChainMode::FinaleAndMelt`] reaches here with one).
+    pub(crate) fn restore_mode(
+        set: Arc<SoundSet>,
+        music: MusicLumps,
+        state: &ChainSoundState,
+        sim: &Simulation,
+        expected: ChainConfig,
+        mode: ChainMode,
+    ) -> Result<Self, ChainStateError> {
         if state.config != expected {
             return Err(StateError::ConfigMismatch {
                 saved: state.config.sound(state.gamemap),
@@ -389,7 +419,18 @@ impl ChainSound {
                 _ => {}
             }
         }
-        let schedule = Schedule::at(state.tics, state.buffers).map_err(StateError::Schedule)?;
+        // The buffers mixed are those of the tics run, or with a pending display those of the tics
+        // before the last; the last tic's buffer, if one was due, is then owed and the session's
+        // schedule counts it (as a tic of `ChainMode::FinaleAndMelt` leaves it).
+        let ran = if state.melt {
+            state.tics.checked_sub(1).ok_or(ChainStateError::Melt(1))?
+        } else {
+            state.tics
+        };
+        Schedule::at(ran, state.buffers).map_err(StateError::Schedule)?;
+        let schedule = Schedule::at(state.tics, Schedule::buffers_before(state.tics))
+            .map_err(StateError::Schedule)?;
+        let owed = schedule.buffers() != state.buffers;
         let v1 = SoundState {
             config: state.config.sound(state.gamemap),
             schedule,
@@ -407,6 +448,11 @@ impl ChainSound {
             state: state.state,
             level_start: state.level_start,
             level_end: state.level_end,
+            mode,
+            pending: state.melt,
+            owed,
+            updates: state.tics,
+            fault: None,
         })
     }
 }

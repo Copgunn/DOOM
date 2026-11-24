@@ -252,6 +252,22 @@ impl Sound {
         listener: &Listener,
         positions: &dyn OriginPositions,
     ) -> Result<TicSound, SessionRefusal> {
+        self.tic_mixing(records, rndindex, listener, positions, true)
+    }
+
+    /// [`Self::tic`], with the due buffer mixed in the call (`mix`) or left owed (not `mix`): the
+    /// schedule then counts it as if mixed, the mixer stands where the update left it and
+    /// [`TicSound::buffer`] is `None`; the caller mixes it later with [`Self::mix_owed`] (M6a
+    /// part 2, [`crate::chain_melt`]: the buffer of a tic whose display melts is mixed after the
+    /// melt, d_main.c:392-405). The logic, the update and the detector are the same either way.
+    pub(crate) fn tic_mixing(
+        &mut self,
+        records: &[SoundRecord],
+        rndindex: u8,
+        listener: &Listener,
+        positions: &dyn OriginPositions,
+        mix: bool,
+    ) -> Result<TicSound, SessionRefusal> {
         let tic = self.schedule.tic();
         let (gametic, after) = self
             .schedule
@@ -339,7 +355,7 @@ impl Sound {
                 }
             }
         }
-        let buffer = (self.schedule.due() == 1).then(|| {
+        let buffer = (mix && self.schedule.due() == 1).then(|| {
             let mut out: Buffer = [[0; 2]; crate::lumps::SAMPLECOUNT];
             mixer.mix_buffer(&mut out);
             out
@@ -357,6 +373,15 @@ impl Sound {
             rndindex: rng.indices()[1],
             buffer,
         })
+    }
+
+    /// The buffer a [`Self::tic_mixing`] call without `mix` left owed, mixed now (`I_UpdateSound`,
+    /// i_sound.c:539-654): nothing touches the mixer between, so it is the buffer the tic would
+    /// have mixed. The caller tracks whether one is owed.
+    pub(crate) fn mix_owed(&mut self) -> Buffer {
+        let mut out: Buffer = [[0; 2]; crate::lumps::SAMPLECOUNT];
+        self.mixer.mix_buffer(&mut out);
+        out
     }
 
     /// [`Self::tic`] with the records, the listener and the positions read from a wire-25
