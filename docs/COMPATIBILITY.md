@@ -2979,7 +2979,7 @@ and keeps the genuine path from there on (decision S4).
   same, and the layer forgets which keys it has reported down, so the keyboard's next repeat of a key still held passes
   as a keydown, as on the original's repeating keyboard. **A held key therefore does nothing after a load until the
   operating system repeats it (or it is pressed again)**; how soon that is depends on the system's repeat delay and is
-  unmeasured. Under always-run the layer posts the run key again at the load. A held left mouse button fires again at
+  unmeasured. Under always-run the layer posts the run key again at the load; a physical run key held through the load (walking) therefore runs until its own repeat arrives (read from the code, not tested). A held left mouse button fires again at
   the next mouse event (any motion), as in the original (read from the code; the tests cover keys only). Every one of these events goes through the normal path, so the
   input log and the demo hold it.
 - **Never forwarded** (decision S5): Esc and Pause (the app's own pause), Enter, Tab, `-`, `=`, `q` and F1-F12.
