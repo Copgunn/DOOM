@@ -655,6 +655,11 @@ jobs:
       - name: Genuine level dumps through the independent DSIM42 encoder, state goldens and self-test
         if: env.DOCS_ONLY != 'true'
         run: python3 tools/reference/m6a_state.py --work "$RUNNER_TEMP/m6a_state" --check --selftest --jobs 4
+      - name: Part 2 golden set (the full finale crawl, every melt at screenblocks 11) and self-tests
+        if: env.DOCS_ONLY != 'true'
+        run: |
+          python3 tools/reference/m6a2_wad.py --check --selftest
+          python3 tools/reference/m6a2_goldens.py --work "$RUNNER_TEMP/m6a2_goldens" --check --selftest --jobs 4
       - name: Documentation-only fast path
         if: env.DOCS_ONLY == 'true'
         run: echo "documentation-only change, so the genuine M6a runs were skipped"
