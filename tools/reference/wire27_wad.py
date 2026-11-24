@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synthetic map and demo scripts of the wire 27 genuine-engine items (owner's rulings of 2026-11-24, R6-R8).
+"""Synthetic map slots (one room layout) and demo scripts of the wire 27 genuine-engine items (owner's rulings of 2026-11-24, R6-R8).
 
 Everything here is drawn by this tool: nothing comes from any IWAD. One IWAD, tests/reference/wire27_wads/wire27.wad,
 holds eight map slots E1M1-E1M8 sharing one room layout (the M5a texture and flat directory and framing, m5a_wad and
