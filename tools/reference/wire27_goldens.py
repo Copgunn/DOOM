@@ -26,15 +26,17 @@ dumps, sound and session streams and a clean exit; the strict dumps are projecte
 (level_snapshot_wire27.py; also by the DSIM42 one, and every capture must differ in profile and context.schema only).
 
 The witness classification (module text) of each P_InterceptVector call, from its logged operands: a call WRAPS when a
-FixedMul's 64-bit product >> 16 leaves int, or the den subtraction or the num sum of the narrowed products does; cases:
-cancel (wrapped, the int num and den equal the exact ones), den_zero (int den 0, exact den not), num_overflow (int num
-not the exact num), wrong (wrapped and the int intercept differs from the exact one, trunc(65536 num/den)), saturation
-(wrapped operands reach FixedDiv's saturation branch, m_fixed.c:62-63), absmin (an INT_MIN operand). Callers: aim
-(PTR_AimTraverse), shoot_line and shoot_thing (PTR_ShootTraverse, by PIT_Add*Intercepts), slide, use. Every logged
-FixedMul and FixedDiv result is checked against m_fixed.c's formulas, the den's operand order against FixedDiv's den.
-Derived: the expected wire-26 refusal (the first tic with a wrapping call; wires 23-26 refuse every wrap), and the
-expected wire-27 end (the first tic with a wrapping saturation, an absmin or a wrap in a caller wire 27 does not wrap,
-else complete).
+FixedMul's 64-bit product >> 16 leaves int, or the den subtraction or the num sum of the narrowed products does. Its
+class (CLASSES) is wrap or nowrap, then the den (exact or wrong: the int value against the exact one; den_zero when the
+int den is 0 and P_InterceptVector returns 0, den_zero_exact when the exact den is 0 too), the num (exact or wrong) and
+FixedDiv's branch: div2 (FixedDiv2, m_fixed.c:69-87), max or min (the saturation, 62-63), range (FixedDiv2's I_Error,
+84-85) or absmin (an INT_MIN operand, whose abs at 62 is undefined in C). So a wrong numerator divided by FixedDiv2
+(wrap.den_wrong.num_wrong.div2) and one that saturates (wrap.den_wrong.num_wrong.max or .min) are distinct classes.
+Callers: aim (PTR_AimTraverse), shoot_line and shoot_thing (PTR_ShootTraverse, by PIT_Add*Intercepts), slide, use.
+Every logged FixedMul and FixedDiv result is checked against m_fixed.c's formulas, the den's operand order against
+FixedDiv's den. Derived: the expected wire-26 refusal (the first tic with a wrapping call; wires 23-26 refuse every
+wrap), and the expected wire-27 end: the first tic with a call whose class wire27() refuses for its caller (ADMITTED:
+the wrap classes wire 27 admits per caller, crate::intercept_vector::wire27_admits), else complete.
 
 Tic convention (owner): a session tic is the 0-based index of a G_Ticker, equal to the number of tics completed
 before it; a refusal at session tic N leaves the state after N tics; capture j is the state after j tics.
@@ -43,10 +45,13 @@ Outputs (written without --check; --check regenerates and compares, writing noth
   tests/reference/wire27_state.txt    DOOM-WIRE27-STATE-v1: per item an I row (map, tics, the expected ends, the map
                                       digest, the sequence digest), a C row per capture (state digest: the DSIM43
                                       capture without map.* and events.* in level_compare.stripped framing, then its
-                                      events.sounds.* fields, as tests/reference/m6a_state.txt) and W rows (the wrapping
-                                      calls per caller and case), then T rows (the totals over every item)
+                                      events.sounds.* fields, as tests/reference/m6a_state.txt) and W rows (the
+                                      intercept calls per caller and class), then T rows (every caller and class: the
+                                      calls over every item and wire 27's decision)
   tests/reference/wire27_results.json DOOM-WIRE27-RESULTS-v1: revision, builds and flags, the adapters with digests,
-                                      tool and input digests, the witness method, per item every wrapping call, the
+                                      tool and input digests, the witness method, the in-process overrides of
+                                      wire27_wad.py (declared), the class table (every caller and class: wire 27's
+                                      decision, the witnessing items and calls), per item every wrapping call, the
                                       nowrap stop, the barrel and puff facts; `generated_with` (the compiler) is
                                       informational and left out of the --check comparison (it is printed instead)
 
@@ -284,24 +289,43 @@ def classify(row, sites, lines):
         else int(Fraction(65536 * num_exact, den_exact))
     out = dict(tic=tic, caller=caller, line=line, wrapped=wrapped, den_int=den_int, den_exact=den_exact,
                num_int=num_int, num_exact=num_exact if (div or line is not None) else None, frac=div[2] if div else 0,
-               frac_exact=exact if (div or line is not None) else None, branch=None, cases=[],
+               frac_exact=exact if (div or line is not None) else None, branch=None,
                addsub_overflow=not fits(sub) or bool(div and not fits(r[2] + r[3])))
     if div:
         a, b, res = div
-        out['branch'] = 'absmin' if INT_MIN in (a, b) else 'saturation' if (abs(a) >> 14) >= abs(b) else 'div2'
+        out['branch'] = 'absmin' if INT_MIN in (a, b) else ('min' if (a ^ b) < 0 else 'max') \
+            if (abs(a) >> 14) >= abs(b) else 'div2'
         if out['branch'] != 'absmin' and res != fixeddiv(a, b): raise ValueError(f'a FixedDiv result: {row}')
-    cases = out['cases']
-    if wrapped:
-        if den_int == den_exact and (not div or num_int == num_exact): cases.append('cancel')
-        if den_int == 0 and den_exact != 0: cases.append('den_zero')
-        if div and num_int != num_exact: cases.append('num_overflow')
-        if out['frac_exact'] is not None and out['frac'] != out['frac_exact']: cases.append('wrong')
-        if out['branch'] == 'saturation': cases.append('saturation')
-    if out['branch'] == 'absmin': cases.append('absmin')
+        out['cls'] = (f"{'wrap' if wrapped else 'nowrap'}.den_{'exact' if den_int == den_exact else 'wrong'}"
+                      f".num_{'exact' if num_int == num_exact else 'wrong'}.{out['branch']}")
+    else:
+        out['cls'] = f"{'wrap' if wrapped else 'nowrap'}.den_zero{'_exact' if den_exact == 0 else ''}"
     return out
 
 
-NOT_WRAPPED = ('shoot_thing',)   # ruling R6: a caller with no genuine wrapping item stays checked under wire 27
+# Every class of a P_InterceptVector call (module text), per caller; `wrap` when any product, the den difference or
+# the num sum leaves int; den/num `exact` when the int value equals the exact one, `wrong` otherwise; den_zero: the int
+# den is 0 and P_InterceptVector returns 0 (p_maputl.c:242-243), den_zero_exact when the exact den is 0 too; the branch
+# of FixedDiv (m_fixed.c:57-87): div2 (FixedDiv2), max and min (the saturation MAXINT and MININT, 62-63), range
+# (FixedDiv2's I_Error, 84-85; the run would stop) and absmin (an INT_MIN operand, whose abs at 62 is undefined).
+BRANCHES = ('div2', 'max', 'min', 'range', 'absmin')
+CLASSES = ([f'nowrap.den_exact.num_exact.{b}' for b in BRANCHES] + ['nowrap.den_zero_exact']
+           + [f'wrap.den_{d}.num_{n}.{b}' for d in ('exact', 'wrong') for n in ('exact', 'wrong') for b in BRANCHES]
+           + ['wrap.den_zero', 'wrap.den_zero_exact'])
+# The wrap classes wire 27 admits per caller (crate::intercept_vector::wire27_admits; every other wrap class is refused).
+WRAPPING = ('aim', 'shoot_line', 'slide', 'use')
+ADMITTED = {c: {f'den_{d}.num_{n}.div2' for d in ('exact', 'wrong') for n in ('exact', 'wrong')} | {'den_zero', 'den_zero_exact'}
+            for c in WRAPPING}
+
+
+def wire27(caller, cls):
+    """Wire 27's decision for one class of call: 'admit' or 'refuse:<kind>' (module text)."""
+    if cls.endswith('.absmin'): return 'refuse:AbsMin'
+    if cls.endswith('.range'): return 'refuse:Div2Range'
+    if cls.startswith('nowrap.'): return 'admit'
+    if caller not in WRAPPING: return 'refuse:Checked'
+    if cls[len('wrap.'):] in ADMITTED[caller]: return 'admit'
+    return 'refuse:Saturation' if cls.endswith(('.max', '.min')) else 'refuse:Unevidenced'
 
 
 def witness_facts(item, text):
@@ -309,20 +333,16 @@ def witness_facts(item, text):
     sites, lines = {}, map_lines(item)
     calls = [classify(l, sites, lines) for l in text.splitlines() if l.startswith('V ')]
     if not calls or len(calls) != len(text.splitlines()): raise ValueError(f"{item['name']}: an empty or foreign witness")
-    wraps = [c for c in calls if c['wrapped'] or c['cases']]
-    stop = next((c for c in calls if 'absmin' in c['cases'] or c['wrapped'] and (
-        'saturation' in c['cases'] or c['caller'] in NOT_WRAPPED)), None)
-    reason = None if stop is None else 'AbsMin' if 'absmin' in stop['cases'] else \
-        'Saturation' if 'saturation' in stop['cases'] else 'checked'
+    wraps = [c for c in calls if c['wrapped'] or c['branch'] == 'absmin']
+    stop = next((c for c in calls if wire27(c['caller'], c['cls']) != 'admit'), None)
     counts = {}
-    for c in wraps:
-        for case in c['cases']: counts[(c['caller'], case)] = counts.get((c['caller'], case), 0) + 1
+    for c in calls: counts[(c['caller'], c['cls'])] = counts.get((c['caller'], c['cls']), 0) + 1
     return dict(calls=len(calls), callers={k: sum(c['caller'] == k for c in calls) for k in WAD.CALLERS},
                 first_wrap=min((c['tic'] for c in calls if c['wrapped']), default=None),
-                end27='complete' if stop is None else f"refused:{stop['tic']}:{reason}",
+                end27='complete' if stop is None else f"refused:{stop['tic']}:{wire27(stop['caller'], stop['cls'])[7:]}",
                 first_addsub=min((c['tic'] for c in calls if c['addsub_overflow']), default=None), counts=counts,
-                wraps=[[c[k] for k in ('tic', 'caller', 'line', 'cases', 'den_int', 'den_exact', 'num_int', 'num_exact',
-                                       'frac', 'frac_exact', 'branch')] for c in wraps])
+                wraps=[[c[k] for k in ('tic', 'caller', 'line', 'cls', 'den_int', 'den_exact', 'num_int', 'num_exact',
+                                       'frac', 'frac_exact')] for c in wraps])
 
 
 def item_record(item, bins, work):
@@ -349,9 +369,10 @@ def item_record(item, bins, work):
     elif trap['site'] not in ('p_maputl.c:240', 'p_maputl.c:246-248') or trap['tic'] != w['first_addsub'] \
             or n['snapshots'] != s['snapshots'][:len(n['snapshots'])]:
         fails.append(f'{name}: nowrap stop {trap} is not the witness\'s first int overflow at tic {w["first_addsub"]}')
-    _m, _dx, _p, _b, script, callers, cases, _what = WAD.ITEMS[name]
-    missing = [c for c in callers if not any(cc == c for cc, _ in w['counts'])] + \
-              [k for k in cases if not any(kk == k for _, kk in w['counts'])]
+    _m, _dx, _p, _b, script, callers, classes, _what = WAD.ITEMS[name]
+    wrapped = [(c, k) for c, k in w['counts'] if k.startswith('wrap.')]
+    missing = [c for c in callers if not any(cc == c for cc, _ in wrapped)] + \
+              [k for k in classes if not any(cc in callers and kk == f'wrap.{k}' for cc, kk in wrapped)]
     if missing: fails.append(f'{name}: no witnessed wrapping call for {missing}')
     facts = mobj_facts(s)
     shutil.rmtree(work / 'runs', ignore_errors=True)
@@ -367,10 +388,13 @@ def state_text(recs):
             'capture j is the state after j tics; a refusal at session tic N keeps capture N',
             '#state,SHA-256 of the DSIM43 capture without map.* and events.* (level_compare.stripped framing) followed by its '
             'events.sounds.* fields (per-field framing); map: SHA-256 of the map.* fields of capture 0',
+            f'#items,{len(recs)} map slots of tests/reference/wire27_wads/wire27.wad, one room layout',
+            '#classes,wrap|nowrap.den_exact|den_wrong.num_exact|num_wrong.div2|max|min|range|absmin, or '
+            'wrap|nowrap.den_zero[_exact] (tools/reference/wire27_goldens.py CLASSES)',
             '#columns,I,item,map,tics,captures,wire26_refusal_tic,wire27_end,map_sha256,sequence_sha256',
             '#columns,C,item,capture,state_sha256',
-            '#columns,W,item,caller,case,wrapping_calls',
-            '#columns,T,caller,case,wrapping_calls (every item)']
+            '#columns,W,item,caller,class,intercept_calls',
+            '#columns,T,caller,class,intercept_calls (every item),wire27 (admit or refuse:kind)']
     rows, total = [], {}
     for r in recs:
         w = r['witness']
@@ -379,8 +403,21 @@ def state_text(recs):
         rows += [f"C,{r['name']},{j},{d}" for j, _t, d in r['captures']]
         for (c, k), v in sorted(w['counts'].items()):
             rows.append(f"W,{r['name']},{c},{k},{v}"); total[(c, k)] = total.get((c, k), 0) + v
-    rows += [f'T,{c},{k},{total.get((c, k), 0)}' for c in WAD.CALLERS for k in WAD.CASES + ('absmin',)]
+    rows += [f'T,{c},{k},{total.get((c, k), 0)},{wire27(c, k)}' for c in WAD.CALLERS for k in CLASSES]
     return '\n'.join(head + rows) + '\n'
+
+
+def class_table(recs):
+    """Wire 27's decision for each caller and class that an item witnesses or that wire 27 admits after a wrap, with
+    the witnessing items and calls (module text); the T rows of the state file list every caller and class."""
+    out = []
+    for c in WAD.CALLERS:
+        for k in CLASSES:
+            items = {r['name']: r['witness']['counts'][(c, k)] for r in recs if (c, k) in r['witness']['counts']}
+            if items or k.startswith('wrap.') and wire27(c, k) == 'admit':
+                out.append(f"{c} {k}: {wire27(c, k)}; {sum(items.values())} calls"
+                           + ''.join(f'; {n} {v}' for n, v in items.items()) + ('' if items else '; NO ITEM'))
+    return out
 
 
 def results(recs, cc):
@@ -399,7 +436,8 @@ def results(recs, cc):
         witness_method='the witness build (module text): -finstrument-functions on p_maputl.c and -Wl,--wrap of FixedMul, '
                        'FixedDiv and P_PathTraverse (tools/reference/wire27_witness.c); one row per P_InterceptVector call, '
                        'classified by wire27_goldens.classify; cross-checked by the nowrap build\'s UBSan stop',
-        not_wrapped_callers=list(NOT_WRAPPED),
+        wrapping_callers=list(WRAPPING), admitted_wrap_classes={c: sorted(v) for c, v in ADMITTED.items()},
+        class_table=class_table(recs), in_process_overrides=WAD.OVERRIDES,
         tools_sha256={t: digest(f'tools/reference/{t}') for t in TOOLS},
         inputs_sha256={p: digest(p) for p in WAD.WADSET + [f'{WAD.SCRIPT_DIR}/{n}.lmp' for n in WAD.ITEMS]},
         generated_with=dict(compiler=subprocess.run([cc, '--version'], capture_output=True, text=True).stdout.split('\n')[0]),
@@ -408,8 +446,8 @@ def results(recs, cc):
                                intercept_calls=r['witness']['calls'], calls_by_caller=r['witness']['callers'],
                                wire26_refusal_tic=r['witness']['first_wrap'], wire27_end=r['witness']['end27'],
                                nowrap_stop=r['nowrap'], genuine_facts=r['facts'],
-                               wrapping_calls_columns='tic caller line cases den_int den_exact num_int num_exact frac '
-                                                      'frac_exact branch',
+                               wrapping_calls_columns='tic caller line class den_int den_exact num_int num_exact frac '
+                                                      'frac_exact',
                                wrapping_calls=r['witness']['wraps']) for r in recs})
 
 

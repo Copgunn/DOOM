@@ -133,17 +133,98 @@
  "asan_options": "detect_leaks=0 (leak detection disabled in the address build; not LeakSanitizer coverage)",
  "ubsan_options": "print_stacktrace=1",
  "witness_method": "the witness build (module text): -finstrument-functions on p_maputl.c and -Wl,--wrap of FixedMul, FixedDiv and P_PathTraverse (tools/reference/wire27_witness.c); one row per P_InterceptVector call, classified by wire27_goldens.classify; cross-checked by the nowrap build's UBSan stop",
- "not_wrapped_callers": [
-  "shoot_thing"
+ "wrapping_callers": [
+  "aim",
+  "shoot_line",
+  "slide",
+  "use"
+ ],
+ "admitted_wrap_classes": {
+  "aim": [
+   "den_exact.num_exact.div2",
+   "den_exact.num_wrong.div2",
+   "den_wrong.num_exact.div2",
+   "den_wrong.num_wrong.div2",
+   "den_zero",
+   "den_zero_exact"
+  ],
+  "shoot_line": [
+   "den_exact.num_exact.div2",
+   "den_exact.num_wrong.div2",
+   "den_wrong.num_exact.div2",
+   "den_wrong.num_wrong.div2",
+   "den_zero",
+   "den_zero_exact"
+  ],
+  "slide": [
+   "den_exact.num_exact.div2",
+   "den_exact.num_wrong.div2",
+   "den_wrong.num_exact.div2",
+   "den_wrong.num_wrong.div2",
+   "den_zero",
+   "den_zero_exact"
+  ],
+  "use": [
+   "den_exact.num_exact.div2",
+   "den_exact.num_wrong.div2",
+   "den_wrong.num_exact.div2",
+   "den_wrong.num_wrong.div2",
+   "den_zero",
+   "den_zero_exact"
+  ]
+ },
+ "class_table": [
+  "aim nowrap.den_exact.num_exact.div2: admit; 18 calls; AIMSHOT 3; SHOOTZ 2; SATUR 2; NUMWRAP 3; SATNEG 3; SHOOTC 5",
+  "aim wrap.den_exact.num_exact.div2: admit; 4 calls; AIMSHOT 2; SHOOTC 2",
+  "aim wrap.den_exact.num_wrong.div2: admit; 0 calls; NO ITEM",
+  "aim wrap.den_wrong.num_exact.div2: admit; 1 calls; AIMSHOT 1",
+  "aim wrap.den_wrong.num_wrong.div2: admit; 0 calls; NO ITEM",
+  "aim wrap.den_zero: admit; 0 calls; NO ITEM",
+  "aim wrap.den_zero_exact: admit; 0 calls; NO ITEM",
+  "shoot_line nowrap.den_exact.num_exact.div2: admit; 1 calls; SHOOTC 1",
+  "shoot_line wrap.den_exact.num_exact.div2: admit; 1 calls; SHOOTC 1",
+  "shoot_line wrap.den_exact.num_wrong.div2: admit; 0 calls; NO ITEM",
+  "shoot_line wrap.den_wrong.num_exact.div2: admit; 1 calls; AIMSHOT 1",
+  "shoot_line wrap.den_wrong.num_wrong.div2: admit; 1 calls; NUMWRAP 1",
+  "shoot_line wrap.den_wrong.num_wrong.max: refuse:Saturation; 1 calls; SATUR 1",
+  "shoot_line wrap.den_wrong.num_wrong.min: refuse:Saturation; 1 calls; SATNEG 1",
+  "shoot_line wrap.den_zero: admit; 1 calls; SHOOTZ 1",
+  "shoot_line wrap.den_zero_exact: admit; 0 calls; NO ITEM",
+  "shoot_thing nowrap.den_exact.num_exact.div2: admit; 8 calls; AIMSHOT 1; SHOOTZ 2; SATUR 2; NUMWRAP 1; SATNEG 1; SHOOTC 1",
+  "slide nowrap.den_exact.num_exact.div2: admit; 7 calls; SLIDE 7",
+  "slide wrap.den_exact.num_exact.div2: admit; 15 calls; SLIDE 15",
+  "slide wrap.den_exact.num_wrong.div2: admit; 0 calls; NO ITEM",
+  "slide wrap.den_wrong.num_exact.div2: admit; 0 calls; NO ITEM",
+  "slide wrap.den_wrong.num_wrong.div2: admit; 0 calls; NO ITEM",
+  "slide wrap.den_zero: admit; 0 calls; NO ITEM",
+  "slide wrap.den_zero_exact: admit; 0 calls; NO ITEM",
+  "use wrap.den_exact.num_exact.div2: admit; 1 calls; USE 1",
+  "use wrap.den_exact.num_wrong.div2: admit; 0 calls; NO ITEM",
+  "use wrap.den_wrong.num_exact.div2: admit; 0 calls; NO ITEM",
+  "use wrap.den_wrong.num_wrong.div2: admit; 0 calls; NO ITEM",
+  "use wrap.den_zero: admit; 0 calls; NO ITEM",
+  "use wrap.den_zero_exact: admit; 0 calls; NO ITEM"
+ ],
+ "in_process_overrides": [
+  {
+   "what": "m3h6_geometry.MAX_NORM raised to LONG_NORM (16,382) around the m3h9b_geometry.room call of map_lumps",
+   "why": "the builder chain asserts a line norm under its historical bound; the east wall (DX x 8,059 units) is longer, and it must stay one unsplit linedef for the traces to meet it in one P_InterceptVector call",
+   "scope": "in-process only, while map_lumps runs: no file is edited, and the original is restored"
+  },
+  {
+   "what": "m5a_wad.seg_angle replaced by a rounded atan2 around the m5a_wad.apply_styles call of map_lumps",
+   "why": "m5a_wad knows the axis and diagonal seg directions only; the slanted wall's SEGS angle (BAM >> 16) is read by the renderer alone (p_setup.c:181), and no renderer runs on these maps",
+   "scope": "in-process only, while map_lumps runs: no file is edited, and the original is restored"
+  }
  ],
  "tools_sha256": {
-  "wire27_goldens.py": "c3dae0c165a2857251123008138e890b9a640f15b1e7bb751d1182b2243d30ba",
-  "wire27_wad.py": "364149c2eb26dc518921bbcfea55f840b03f64a2663bc3c5273504dae05dfeee",
+  "wire27_goldens.py": "bc580d018963c96d47b0e0c1fb26a5f51c182130d9eca6deffd02dc80db78021",
+  "wire27_wad.py": "159e0c06251948044585f1b00e9a8a70d9a59d85401bb1413c0c575310b676f3",
   "wire27_witness.c": "875ef11352c60388b23fe1ff27bf22646a8993a5092d0f7424f3639746fb4def",
   "level_snapshot_wire27.py": "b8dd635922033ed36282419a7f53ff6bc0c98958ee5797cc6a0f14e600e8fa96"
  },
  "inputs_sha256": {
-  "tests/reference/wire27_wads/wire27.wad": "fb79239bf2cd8168824bd5608810098fbac2b138ac16beb9e3cf3c6b616c9f1d",
+  "tests/reference/wire27_wads/wire27.wad": "8cba7043347c73ef2961c7b6e7cd8a7544665a93c0ba3171053354c7d75ddd67",
   "tests/reference/m5b_gfx.wad": "50d0f0f881e2347a3527405b97a8f5abd949cff923a7078d03ec8c20a40ca032",
   "tests/reference/m5c_sfx.wad": "c228e186aceb05529187755be20f24321b7a46d2ba59a2a18e39b587e31d9699",
   "tests/reference/m6a_wads/m6a_gfx.wad": "ec4826c3881919eb09108018aa3efb357c9891c4ae4256dbc9502749cade1d37",
@@ -152,7 +233,10 @@
   "tests/reference/wire27_scripts/SLIDE.lmp": "8a22d08838c9d21ef6b39fe0e2efcf04b0f9e9983d967d126daadf12aac8d854",
   "tests/reference/wire27_scripts/AIMSHOT.lmp": "49f2fd0e81393e7dbb064833795d841245941c7f8843dfe9c4d09f1624200d68",
   "tests/reference/wire27_scripts/SHOOTZ.lmp": "41f736ecd85331703f57a5961d698fa2c52c882daf19da7cf24681579ee6d02a",
-  "tests/reference/wire27_scripts/SATUR.lmp": "18fa8fb48ba4d6e782355ce4a11dbebed5844dc175aa98bc5dc67e3585b35348"
+  "tests/reference/wire27_scripts/SATUR.lmp": "18fa8fb48ba4d6e782355ce4a11dbebed5844dc175aa98bc5dc67e3585b35348",
+  "tests/reference/wire27_scripts/NUMWRAP.lmp": "eb0dc415bced826a3face6411976394b422102873b9053f64793e3e522859c02",
+  "tests/reference/wire27_scripts/SATNEG.lmp": "9f95807a01868f4f165fa3c71a9468178f0287a23b1f4a1e619ba491a9e963f5",
+  "tests/reference/wire27_scripts/SHOOTC.lmp": "fe37047dfec3b55fa4bd40e6dcca3e2a332427693e48e9dddeb1b02a7c6b426a"
  },
  "generated_with": {
   "compiler": "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
@@ -167,7 +251,7 @@
     "use"
    ],
    "designed_cases": [
-    "cancel"
+    "den_exact.num_exact.div2"
    ],
    "intercept_calls": 1,
    "calls_by_caller": {
@@ -188,22 +272,19 @@
     "barrel_health_end": [],
     "puffs": []
    },
-   "wrapping_calls_columns": "tic caller line cases den_int den_exact num_int num_exact frac frac_exact branch",
+   "wrapping_calls_columns": "tic caller line class den_int den_exact num_int num_exact frac frac_exact",
    "wrapping_calls": [
     [
      5,
      "use",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -132049754,
      -132049754,
      -72869376,
      -72869376,
      36164,
-     36164,
-     "div2"
+     36164
     ]
    ]
   },
@@ -216,7 +297,7 @@
     "slide"
    ],
    "designed_cases": [
-    "cancel"
+    "den_exact.num_exact.div2"
    ],
    "intercept_calls": 22,
    "calls_by_caller": {
@@ -237,232 +318,187 @@
     "barrel_health_end": [],
     "puffs": []
    },
-   "wrapping_calls_columns": "tic caller line cases den_int den_exact num_int num_exact frac frac_exact branch",
+   "wrapping_calls_columns": "tic caller line class den_int den_exact num_int num_exact frac frac_exact",
    "wrapping_calls": [
     [
      20,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3221239,
      -3221239,
      -108161,
      -108161,
      2200,
-     2200,
-     "div2"
+     2200
     ],
     [
      21,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3221045,
      -3221045,
      -100265,
      -100265,
      2040,
-     2040,
-     "div2"
+     2040
     ],
     [
      22,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3220793,
      -3220793,
      -102226,
      -102226,
      2080,
-     2080,
-     "div2"
+     2080
     ],
     [
      23,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3220578,
      -3220578,
      -102122,
      -102122,
      2078,
-     2078,
-     "div2"
+     2078
     ],
     [
      24,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3220317,
      -3220317,
      -106247,
      -106247,
      2162,
-     2162,
-     "div2"
+     2162
     ],
     [
      25,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3220064,
      -3220064,
      -106542,
      -106542,
      2168,
-     2168,
-     "div2"
+     2168
     ],
     [
      26,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3219843,
      -3219843,
      -103007,
      -103007,
      2096,
-     2096,
-     "div2"
+     2096
     ],
     [
      27,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3219564,
      -3219564,
      -103701,
      -103701,
      2110,
-     2110,
-     "div2"
+     2110
     ],
     [
      28,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3219354,
      -3219354,
      -112820,
      -112820,
      2296,
-     2296,
-     "div2"
+     2296
     ],
     [
      29,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3219080,
      -3219080,
      -99893,
      -99893,
      2033,
-     2033,
-     "div2"
+     2033
     ],
     [
      30,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3218835,
      -3218835,
      -111176,
      -111176,
      2263,
-     2263,
-     "div2"
+     2263
     ],
     [
      31,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3218623,
      -3218623,
      -104609,
      -104609,
      2129,
-     2129,
-     "div2"
+     2129
     ],
     [
      32,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3218380,
      -3218380,
      -107899,
      -107899,
      2197,
-     2197,
-     "div2"
+     2197
     ],
     [
      33,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3218158,
      -3218158,
      -101065,
      -101065,
      2058,
-     2058,
-     "div2"
+     2058
     ],
     [
      34,
      "slide",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -3217897,
      -3217897,
      -112147,
      -112147,
      2283,
-     2283,
-     "div2"
+     2283
     ]
    ]
   },
@@ -476,8 +512,8 @@
     "shoot_line"
    ],
    "designed_cases": [
-    "cancel",
-    "wrong"
+    "den_exact.num_exact.div2",
+    "den_wrong.num_exact.div2"
    ],
    "intercept_calls": 8,
    "calls_by_caller": {
@@ -498,67 +534,55 @@
     "barrel_health_end": [],
     "puffs": []
    },
-   "wrapping_calls_columns": "tic caller line cases den_int den_exact num_int num_exact frac frac_exact branch",
+   "wrapping_calls_columns": "tic caller line class den_int den_exact num_int num_exact frac frac_exact",
    "wrapping_calls": [
     [
      18,
      "aim",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -2112796060,
      -2112796060,
      -1702721536,
      -1702721536,
      52816,
-     52816,
-     "div2"
+     52816
     ],
     [
      18,
      "aim",
      1,
-     [
-      "wrong"
-     ],
+     "wrap.den_wrong.num_exact.div2",
      2138520468,
      -2156446828,
      -1702721536,
      -1702721536,
      -52180,
-     51746,
-     "div2"
+     51746
     ],
     [
      18,
      "aim",
      1,
-     [
-      "cancel"
-     ],
+     "wrap.den_exact.num_exact.div2",
      -2048804376,
      -2048804376,
      -1702721536,
      -1702721536,
      54465,
-     54465,
-     "div2"
+     54465
     ],
     [
      18,
      "shoot_line",
      1,
-     [
-      "wrong"
-     ],
+     "wrap.den_wrong.num_exact.div2",
      69375176,
      -4225592120,
      -1702721536,
      -1702721536,
      -1608494,
-     26408,
-     "div2"
+     26408
     ]
    ]
   },
@@ -571,8 +595,7 @@
     "shoot_line"
    ],
    "designed_cases": [
-    "den_zero",
-    "wrong"
+    "den_zero"
    ],
    "intercept_calls": 5,
    "calls_by_caller": {
@@ -601,23 +624,19 @@
      ]
     ]
    },
-   "wrapping_calls_columns": "tic caller line cases den_int den_exact num_int num_exact frac frac_exact branch",
+   "wrapping_calls_columns": "tic caller line class den_int den_exact num_int num_exact frac frac_exact",
    "wrapping_calls": [
     [
      18,
      "shoot_line",
      1,
-     [
-      "den_zero",
-      "wrong"
-     ],
+     "wrap.den_zero",
      0,
      -4294967296,
      null,
      -3146894336,
      0,
-     48017,
-     null
+     48017
     ]
    ]
   },
@@ -630,8 +649,7 @@
     "shoot_line"
    ],
    "designed_cases": [
-    "saturation",
-    "num_overflow"
+    "den_wrong.num_wrong.max"
    ],
    "intercept_calls": 5,
    "calls_by_caller": {
@@ -660,24 +678,194 @@
      ]
     ]
    },
-   "wrapping_calls_columns": "tic caller line cases den_int den_exact num_int num_exact frac frac_exact branch",
+   "wrapping_calls_columns": "tic caller line class den_int den_exact num_int num_exact frac frac_exact",
    "wrapping_calls": [
     [
      18,
      "shoot_line",
      1,
-     [
-      "num_overflow",
-      "wrong",
-      "saturation"
-     ],
+     "wrap.den_wrong.num_wrong.max",
      38768,
      -4294928528,
      1149096960,
      -3145870336,
      2147483647,
-     48002,
-     "saturation"
+     48002
+    ]
+   ]
+  },
+  "NUMWRAP": {
+   "map": 6,
+   "tics": 35,
+   "captures": 36,
+   "what": "one pistol shot at fine angle 128 from 1,007 units or more west of the east wall: the num sum and the den leave int and FixedDiv2 (m_fixed.c:69-87) divides the wrapped -6,666,240 by -17,926,360: the wall at 0.37, a puff in the open room 757 units out (exact: a puff at the wall at 0.997)",
+   "designed_callers": [
+    "shoot_line"
+   ],
+   "designed_cases": [
+    "den_wrong.num_wrong.div2"
+   ],
+   "intercept_calls": 5,
+   "calls_by_caller": {
+    "aim": 3,
+    "shoot_line": 1,
+    "shoot_thing": 1,
+    "slide": 0,
+    "use": 0
+   },
+   "wire26_refusal_tic": 18,
+   "wire27_end": "complete",
+   "nowrap_stop": {
+    "exit": 0,
+    "site": null,
+    "tic": null
+   },
+   "genuine_facts": {
+    "barrel_health_end": [],
+    "puffs": [
+     [
+      18,
+      753.8750152587891,
+      -2075.4644317626953
+     ]
+    ]
+   },
+   "wrapping_calls_columns": "tic caller line class den_int den_exact num_int num_exact frac frac_exact",
+   "wrapping_calls": [
+    [
+     18,
+     "shoot_line",
+     1,
+     "wrap.den_wrong.num_wrong.div2",
+     -17926360,
+     -4312893656,
+     -6666240,
+     -4301633536,
+     24370,
+     65364
+    ]
+   ]
+  },
+  "SATNEG": {
+   "map": 7,
+   "tics": 35,
+   "captures": 36,
+   "what": "the SATUR shot with the east wall one unit shallower and no barrel: the int den is -38,768 and the num sum leaves int, so FixedDiv saturates to MININT (m_fixed.c:62-63), the wall is \"behind source\" (p_maputl.c:591-592) and the shot hits nothing: no puff (exact: a puff at the wall at 0.73)",
+   "designed_callers": [
+    "shoot_line"
+   ],
+   "designed_cases": [
+    "den_wrong.num_wrong.min"
+   ],
+   "intercept_calls": 5,
+   "calls_by_caller": {
+    "aim": 3,
+    "shoot_line": 1,
+    "shoot_thing": 1,
+    "slide": 0,
+    "use": 0
+   },
+   "wire26_refusal_tic": 18,
+   "wire27_end": "refused:18:Saturation",
+   "nowrap_stop": {
+    "exit": 0,
+    "site": null,
+    "tic": null
+   },
+   "genuine_facts": {
+    "barrel_health_end": [],
+    "puffs": []
+   },
+   "wrapping_calls_columns": "tic caller line class den_int den_exact num_int num_exact frac frac_exact",
+   "wrapping_calls": [
+    [
+     18,
+     "shoot_line",
+     1,
+     "wrap.den_wrong.num_wrong.min",
+     -38768,
+     -4295006064,
+     1147048960,
+     -3147918336,
+     -2147483648,
+     48032
+    ]
+   ]
+  },
+  "SHOOTC": {
+   "map": 8,
+   "tics": 35,
+   "captures": 36,
+   "what": "one pistol shot at fine angle -1,600, 130 units from the east wall: the den and num products leave int and cancel; the exact intercept, a puff at the wall",
+   "designed_callers": [
+    "shoot_line",
+    "aim"
+   ],
+   "designed_cases": [
+    "den_exact.num_exact.div2"
+   ],
+   "intercept_calls": 10,
+   "calls_by_caller": {
+    "aim": 7,
+    "shoot_line": 2,
+    "shoot_thing": 1,
+    "slide": 0,
+    "use": 0
+   },
+   "wire26_refusal_tic": 18,
+   "wire27_end": "complete",
+   "nowrap_stop": {
+    "exit": 1,
+    "site": "p_maputl.c:246-248",
+    "tic": 18
+   },
+   "genuine_facts": {
+    "barrel_health_end": [],
+    "puffs": [
+     [
+      18,
+      1781.7932434082031,
+      -986.603759765625
+     ]
+    ]
+   },
+   "wrapping_calls_columns": "tic caller line class den_int den_exact num_int num_exact frac frac_exact",
+   "wrapping_calls": [
+    [
+     18,
+     "aim",
+     1,
+     "wrap.den_exact.num_exact.div2",
+     -194727240,
+     -194727240,
+     -159655936,
+     -159655936,
+     53732,
+     53732
+    ],
+    [
+     18,
+     "aim",
+     1,
+     "wrap.den_exact.num_exact.div2",
+     -406878576,
+     -406878576,
+     -159655936,
+     -159655936,
+     25715,
+     25715
+    ],
+    [
+     18,
+     "shoot_line",
+     1,
+     "wrap.den_exact.num_exact.div2",
+     -389454480,
+     -389454480,
+     -159655936,
+     -159655936,
+     26866,
+     26866
     ]
    ]
   }

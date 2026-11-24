@@ -1,5 +1,6 @@
 //! Wire 27 (`PlayerMonstersEpisode1V5`, DSIM43) against the genuine engine on the
-//! synthetic wrap items (owner's rulings of 2026-11-24, R6-R8).
+//! synthetic wrap items, eight map slots of one room layout (owner's rulings of
+//! 2026-11-24, R6-R8).
 //!
 //! The goldens, `tests/reference/wire27_state.txt`, come from
 //! `tools/reference/wire27_goldens.py`: the genuine linuxdoom-1.10 runner (strict
@@ -17,17 +18,18 @@
 //! - **State digest** (as `tests/reference/m6a_state.txt`): SHA-256 of the DSIM43
 //!   capture without `map.*` and `events.*` in the canonical framing, then its
 //!   `events.sounds.*` fields in the same per-field framing.
-//! - **Wire 27**: every capture equals the genuine one; an item whose genuine run
-//!   reaches FixedDiv's saturation branch with wrapped operands (m_fixed.c:62-63)
-//!   equals it up to that tic, which wire 27 refuses with `MapScale(Arithmetic)`
-//!   (the owner's ruling R7 keeps that refusal; the genuine run went on).
+//! - **Wire 27**: every capture equals the genuine one; an item with a call whose
+//!   class wire 27 refuses for its caller (the golden's `T` rows) equals it up to
+//!   that tic, which wire 27 refuses with `MapScale(Arithmetic)` (the genuine run
+//!   went on).
 //! - **Wire 26** (R8, the known gap pinned): the same demo refuses at the first tic
 //!   with a wrapping call, with `MapScale(Arithmetic)` and the state before it kept;
 //!   every earlier capture, renamed to DSIM43 (version, `profile`, context), equals
 //!   the genuine one.
-//! - **Coverage**: the witness rows (`W`, `T`) give each wrapping caller and each
-//!   evidence case at least one genuine wrapping call; the shoot trace against a
-//!   thing has none and is not wrapped by wire 27.
+//! - **Coverage**: the witness rows (`W`, `T`, per caller and class) give each
+//!   wrapping caller at least one genuine wrapping call; the shoot trace against a
+//!   thing has none and is not wrapped by wire 27. The items are eight map slots of
+//!   one room layout.
 //! - **Self-tests**: an altered golden digest and a demo without its wrapping use
 //!   press are each detected at their capture.
 use doom_sim::{demo::parse_demo_episode1_v2, *};
@@ -47,16 +49,17 @@ struct Item {
     map: u8,
     tics: usize,
     wire26_refusal: usize,
-    /// The session tic wire 27 refuses, if any (`refused:N:Saturation`).
+    /// The session tic wire 27 refuses, if any (`refused:N:kind`).
     wire27_refusal: Option<usize>,
     captures: Vec<String>,
 }
 
-/// The golden: items in file order, the per-item witness rows and the totals.
+/// The golden: items in file order, the per-item witness rows and the totals
+/// with wire 27's decision (`admit` or `refuse:kind`) per caller and class.
 struct Golden {
     items: Vec<(String, Item)>,
     witness: BTreeMap<(String, String, String), u64>,
-    totals: BTreeMap<(String, String), u64>,
+    totals: BTreeMap<(String, String), (u64, String)>,
 }
 
 fn golden() -> Golden {
@@ -76,7 +79,7 @@ fn golden() -> Golden {
                 let end: Vec<&str> = f[6].split(':').collect();
                 let wire27_refusal = match end[..] {
                     ["complete"] => None,
-                    ["refused", tic, "Saturation"] => Some(tic.parse().expect(line)),
+                    ["refused", tic, _kind] => Some(tic.parse().expect(line)),
                     _ => panic!("end {line}"),
                 };
                 let item = Item {
@@ -99,7 +102,8 @@ fn golden() -> Golden {
             }
             "T" => {
                 let key = (f[1].to_owned(), f[2].to_owned());
-                g.totals.insert(key, f[3].parse().expect(line));
+                g.totals
+                    .insert(key, (f[3].parse().expect(line), f[4].to_owned()));
             }
             _ => panic!("row {line}"),
         }
@@ -214,7 +218,7 @@ fn play(
 #[test]
 fn wire_27_equals_the_genuine_engine_on_every_item() {
     let g = golden();
-    assert_eq!(g.items.len(), 5);
+    assert_eq!(g.items.len(), 8);
     for (name, item) in &g.items {
         let commands = demo(name);
         assert_eq!(commands.len(), item.tics, "{name}");
@@ -249,45 +253,33 @@ fn wire_26_refuses_every_item_at_its_first_wrap() {
     }
 }
 
-/// The witness coverage (R6, the four cases, R7): each wrapping caller and each
-/// evidence case has a genuine wrapping call, the saturation item exists, the
-/// totals are the sums of the items' rows, and the only caller without a wrapping
-/// call is the shoot trace against a thing, which wire 27 keeps checked
-/// (`wire27_tests::every_caller_wraps_under_wire_27_alone`).
+/// The witness coverage (R6, R7): each wrapping caller has a genuine wrapping
+/// call, the totals are the sums of the items' rows, the only caller without a
+/// wrapping call is the shoot trace against a thing, which wire 27 keeps checked
+/// (`wire27_tests::every_caller_wraps_under_wire_27_alone`), and an item refuses
+/// under wire 27 exactly when one of its classes is refused for its caller.
 #[test]
-fn the_witness_covers_every_wrapping_caller_and_case() {
+fn the_witness_covers_every_wrapping_caller() {
     let g = golden();
-    let total = |caller: &str, case: &str| g.totals[&(caller.to_owned(), case.to_owned())];
     let callers = ["aim", "shoot_line", "shoot_thing", "slide", "use"];
-    let cases = [
-        "cancel",
-        "wrong",
-        "den_zero",
-        "num_overflow",
-        "saturation",
-        "absmin",
-    ];
-    assert_eq!(g.totals.len(), callers.len() * cases.len());
+    assert_eq!(g.totals.len(), callers.len() * 28);
     for caller in callers {
-        let any = cases.iter().any(|case| total(caller, case) > 0);
-        assert_eq!(any, caller != "shoot_thing", "{caller}");
+        let wraps = (g.totals.iter())
+            .any(|((c, k), (n, _))| c == caller && k.starts_with("wrap.") && *n > 0);
+        assert_eq!(wraps, caller != "shoot_thing", "{caller}");
     }
-    for case in ["cancel", "wrong", "den_zero", "num_overflow", "saturation"] {
-        assert!(callers.iter().any(|c| total(c, case) > 0), "{case}");
-    }
-    for ((caller, case), n) in &g.totals {
+    for ((caller, class), (n, _)) in &g.totals {
         let sum: u64 = (g.witness.iter())
-            .filter(|((_, c, k), _)| c == caller && k == case)
+            .filter(|((_, c, k), _)| c == caller && k == class)
             .map(|(_, v)| v)
             .sum();
-        assert_eq!(sum, *n, "{caller} {case}");
+        assert_eq!(sum, *n, "{caller} {class}");
     }
     for (name, item) in &g.items {
-        assert!(g.witness.keys().any(|(i, _, _)| i == name), "{name}");
-        let saturates =
-            g.witness
-                .contains_key(&(name.clone(), "shoot_line".into(), "saturation".into()));
-        assert_eq!(saturates, item.wire27_refusal.is_some(), "{name}");
+        let refused = (g.witness.keys())
+            .filter(|(i, _, _)| i == name)
+            .any(|(_, c, k)| g.totals[&(c.clone(), k.clone())].1 != "admit");
+        assert_eq!(refused, item.wire27_refusal.is_some(), "{name}");
     }
 }
 

@@ -14,7 +14,7 @@ Per demo:
             finale (gamestate 2) is the level's end.
   witness   the same demo in the witness build: every P_InterceptVector call classified by wire27_goldens.classify
             (rows that more than one linedef matches are classified against each candidate and must agree); counts per
-            caller and case, split at the recording's length (--split), and the wire-27 end the witness predicts.
+            caller and class, split at the recording's length (--split), and the wire-27 end the witness predicts.
   rust      a scratch crate under --work (doom-sim by path, the repository unchanged) runs the demo under wire 26
             (original_player_episode1_v4_level) and wire 27 (..._v5_level), NewGame, and prints the digest of every
             capture as tests wire27_intercept.rs computes it (a DSIM42 capture renamed to DSIM43).
@@ -174,12 +174,10 @@ def classify_all(item, path, split):
                 c = each[0]
             part = 'recorded' if c['tic'] < split else 'extension'
             calls[(part, c['caller'])] += 1
-            for case in c['cases']: counts[(part, c['caller'], case)] += 1
+            counts[(part, c['caller'], c['cls'])] += 1
             if c['wrapped']: counts[(part, c['caller'], 'wrapped')] += 1; wraps.append((c['tic'], c['caller']))
-            if c['branch'] == 'saturation': counts[(part, c['caller'], 'saturation_branch_any')] += 1
-            if 'absmin' in c['cases'] or c['wrapped'] and ('saturation' in c['cases'] or c['caller'] in W.NOT_WRAPPED):
-                ends.append((c['tic'], 'AbsMin' if 'absmin' in c['cases'] else 'Saturation' if 'saturation' in c['cases']
-                             else 'checked caller ' + c['caller']))
+            if W.wire27(c['caller'], c['cls']) != 'admit':
+                ends.append((c['tic'], f"{W.wire27(c['caller'], c['cls'])[7:]} ({c['caller']} {c['cls']})"))
     return dict(calls=calls, counts=counts, end27=ends[0] if ends else None, bad=bad, wraps=wraps)
 
 
