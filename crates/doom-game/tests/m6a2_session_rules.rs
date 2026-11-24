@@ -109,7 +109,7 @@ impl Drive {
     }
 
     /// Runs whole tics (each with its melt) until session tic `t` is next.
-    fn to_tic(&mut self, t: u64) {
+    fn run_to_tic(&mut self, t: u64) {
         while self.s.gametic() < t || self.s.melt_in_progress() {
             self.call().expect("a call");
         }
@@ -231,7 +231,7 @@ fn dses_v2_restore_and_continue() {
     ] {
         let mut d = Drive::new(name);
         for t in tics {
-            d.to_tic(t);
+            d.run_to_tic(t);
             let gs = d.s.gamestate();
             assert!(
                 gs != GameState::Level,
@@ -258,7 +258,7 @@ fn the_genuine_stops_keep_their_state() {
     let novictor = m6a::item("NOVICTOR");
     assert_eq!(novictor.session_tics, 321);
     let mut d = Drive::new("NOVICTOR");
-    d.to_tic(321);
+    d.run_to_tic(321);
     let before = d.bytes();
     for _ in 0..2 {
         let e = d.s.tic_finale_and_melt(d.cmds[321]).expect_err("refused");
@@ -276,7 +276,7 @@ fn the_genuine_stops_keep_their_state() {
     let nohelp2 = m6a::item("NOHELP2");
     assert_eq!(nohelp2.session_tics, 1891);
     let mut d = Drive::new("NOHELP2");
-    d.to_tic(1891);
+    d.run_to_tic(1891);
     assert_eq!(
         d.s.finale(),
         Some(FinaleView {
@@ -320,7 +320,7 @@ fn the_genuine_stops_keep_their_state() {
     assert!(matches!(d.s.save_v2(), Err(DsesError::NotSaveable)));
     // Retail on the same WADs draws CREDIT there (FINRET runs on through tic 1,950).
     let mut d = Drive::new("FINRET");
-    d.to_tic(1891);
+    d.run_to_tic(1891);
     d.call().expect("tic 1891");
     assert_eq!(d.s.finale(), Some(FinaleView { stage: 1, count: 0 }));
     assert!(d.s.melt_in_progress(), "the stage-1 wipe melts");
@@ -364,7 +364,7 @@ fn the_session_refusals_change_nothing() {
         );
         assert_eq!(d.bytes(), before, "the refused calls");
     }
-    d.to_tic(1);
+    d.run_to_tic(1);
     let before = d.bytes();
     let e = d.s.melt_step(&mut Frame::new()).expect_err("no melt");
     assert_eq!((e.tic, e.witness), (1, SessionWitness::NoMelt));
@@ -521,7 +521,7 @@ fn the_version_2_reader() {
     let mut states: Vec<(String, SessionStateV2)> = Vec::new();
     let mut d = Drive::new("FINRET");
     for t in [0u64, 5, 321, 1000, 1891, 1900] {
-        d.to_tic(t);
+        d.run_to_tic(t);
         d.call().expect("call");
         states.push((
             format!("FINRET after tic {t}"),
@@ -529,7 +529,7 @@ fn the_version_2_reader() {
         ));
     }
     let mut c = Drive::new("CHAIN");
-    c.to_tic(60);
+    c.run_to_tic(60);
     states.push(("CHAIN tic 60".into(), c.s.save_v2().expect("state")));
     for (what, st) in &states {
         let bytes = st.encode();
