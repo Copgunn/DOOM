@@ -1,0 +1,685 @@
+{
+ "schema": "DOOM-WIRE27-RESULTS-v1",
+ "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+ "claim": "every state digest is the genuine engine's strict build (-fwrapv, the genuine p_maputl.c text) projected by the independent DSIM43 encoder; the overflow, address and witness builds gave identical dumps, sound and session streams",
+ "runner": "tools/reference/m6a_build.py (generated driver and stubs, sources, units and link list), built by wire27_goldens.build; m6a_runner_contract.json unchanged",
+ "builds": {
+  "strict": {
+   "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fwrapv",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char",
+    "-DNORMALUNIX",
+    "-DLINUX"
+   ],
+   "adapters": [],
+   "witness": null
+  },
+  "overflow": {
+   "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char",
+    "-DNORMALUNIX",
+    "-DLINUX",
+    "-fno-wrapv",
+    "-fsanitize=signed-integer-overflow,integer-divide-by-zero,float-cast-overflow",
+    "-fno-sanitize-recover=all"
+   ],
+   "adapters": [
+    "p_maputl.c:240",
+    "p_maputl.c:246-248"
+   ],
+   "witness": null
+  },
+  "address": {
+   "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char",
+    "-DNORMALUNIX",
+    "-DLINUX",
+    "-fno-wrapv",
+    "-fsanitize=address,undefined",
+    "-fno-sanitize-recover=all",
+    "-fno-sanitize=alignment"
+   ],
+   "adapters": [
+    "p_maputl.c:240",
+    "p_maputl.c:246-248"
+   ],
+   "witness": null
+  },
+  "witness": {
+   "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fwrapv",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char",
+    "-DNORMALUNIX",
+    "-DLINUX"
+   ],
+   "adapters": [],
+   "witness": {
+    "file_flags": {
+     "p_maputl.c": [
+      "-finstrument-functions"
+     ]
+    },
+    "link": [
+     "-Wl,--wrap=FixedMul,--wrap=FixedDiv,--wrap=P_PathTraverse"
+    ]
+   }
+  },
+  "nowrap": {
+   "flags": [
+    "-std=gnu89",
+    "-O0",
+    "-fno-strict-aliasing",
+    "-ffp-contract=off",
+    "-fexcess-precision=standard",
+    "-fsigned-char",
+    "-DNORMALUNIX",
+    "-DLINUX",
+    "-fno-wrapv",
+    "-fsanitize=signed-integer-overflow,integer-divide-by-zero,float-cast-overflow",
+    "-fno-sanitize-recover=all"
+   ],
+   "adapters": [],
+   "witness": null
+  }
+ },
+ "sanitizer_adapters": [
+  {
+   "file": "p_maputl.c",
+   "lines": "240",
+   "original": "    den = FixedMul (v1->dy>>8,v2->dx) - FixedMul(v1->dx>>8,v2->dy);",
+   "adapted": "    den = (fixed_t)((unsigned)FixedMul (v1->dy>>8,v2->dx) - (unsigned)FixedMul(v1->dx>>8,v2->dy));",
+   "reason": "P_InterceptVector: the int difference of the den products leaves int on the long-wall traces of the wire 27 items; the original targets and the strict -fwrapv build wrap it modulo 2^32, as the unsigned difference does (the form of the frozen sanitizer adapters, m3h9c_build.SANITIZER_ADAPTERS). Sanitizer builds only (owner's ruling R3); the strict build compiles the genuine text and is the claim.",
+   "original_sha256": "2c382690249acaf44fd72845371225916c97a6d4e3acbe5f2c61d94ff200b29d",
+   "adapted_sha256": "a079053827cd4154740eead7e00ab71b8bf1e004d3da49ea968a6630f05312ee",
+   "builds": [
+    "overflow",
+    "address"
+   ]
+  },
+  {
+   "file": "p_maputl.c",
+   "lines": "246-248",
+   "original": "    num =\n\tFixedMul ( (v1->x - v2->x)>>8 ,v1->dy )\n\t+FixedMul ( (v2->y - v1->y)>>8, v1->dx );",
+   "adapted": "    num = (fixed_t)((unsigned)\n\tFixedMul ( (v1->x - v2->x)>>8 ,v1->dy )\n\t+(unsigned)FixedMul ( (v2->y - v1->y)>>8, v1->dx ));",
+   "reason": "P_InterceptVector: the int sum of the num products leaves int on the long-wall traces of the wire 27 items; the original targets and the strict -fwrapv build wrap it modulo 2^32, as the unsigned sum does (the form of the frozen sanitizer adapters, m3h9c_build.SANITIZER_ADAPTERS). Sanitizer builds only (owner's ruling R3); the strict build compiles the genuine text and is the claim. The coordinate differences stay signed: the Episode 1 spans (under 8,192) keep them inside int.",
+   "original_sha256": "c8608d0454573a306d2212d2618bb159fcfe792b2f61e768bc798f6b81ae962a",
+   "adapted_sha256": "55034f8b2a2f5cef3088e4d8a6093dd04fd4e5db6e7277e6cd4c0ad51d507074",
+   "builds": [
+    "overflow",
+    "address"
+   ]
+  }
+ ],
+ "asan_options": "detect_leaks=0 (leak detection disabled in the address build; not LeakSanitizer coverage)",
+ "ubsan_options": "print_stacktrace=1",
+ "witness_method": "the witness build (module text): -finstrument-functions on p_maputl.c and -Wl,--wrap of FixedMul, FixedDiv and P_PathTraverse (tools/reference/wire27_witness.c); one row per P_InterceptVector call, classified by wire27_goldens.classify; cross-checked by the nowrap build's UBSan stop",
+ "not_wrapped_callers": [
+  "shoot_thing"
+ ],
+ "tools_sha256": {
+  "wire27_goldens.py": "c3dae0c165a2857251123008138e890b9a640f15b1e7bb751d1182b2243d30ba",
+  "wire27_wad.py": "364149c2eb26dc518921bbcfea55f840b03f64a2663bc3c5273504dae05dfeee",
+  "wire27_witness.c": "875ef11352c60388b23fe1ff27bf22646a8993a5092d0f7424f3639746fb4def",
+  "level_snapshot_wire27.py": "b8dd635922033ed36282419a7f53ff6bc0c98958ee5797cc6a0f14e600e8fa96"
+ },
+ "inputs_sha256": {
+  "tests/reference/wire27_wads/wire27.wad": "fb79239bf2cd8168824bd5608810098fbac2b138ac16beb9e3cf3c6b616c9f1d",
+  "tests/reference/m5b_gfx.wad": "50d0f0f881e2347a3527405b97a8f5abd949cff923a7078d03ec8c20a40ca032",
+  "tests/reference/m5c_sfx.wad": "c228e186aceb05529187755be20f24321b7a46d2ba59a2a18e39b587e31d9699",
+  "tests/reference/m6a_wads/m6a_gfx.wad": "ec4826c3881919eb09108018aa3efb357c9891c4ae4256dbc9502749cade1d37",
+  "tests/reference/m6a_wads/m6a_music.wad": "7e5bcf6fa1837e6af4d996ae16d914669921ccc9ed5b6e924ea5a8dc826a47ea",
+  "tests/reference/wire27_scripts/USE.lmp": "8229d57ecfb6273adfc8c4bb0548a4e43cb62db070448f8317168938f5424539",
+  "tests/reference/wire27_scripts/SLIDE.lmp": "8a22d08838c9d21ef6b39fe0e2efcf04b0f9e9983d967d126daadf12aac8d854",
+  "tests/reference/wire27_scripts/AIMSHOT.lmp": "49f2fd0e81393e7dbb064833795d841245941c7f8843dfe9c4d09f1624200d68",
+  "tests/reference/wire27_scripts/SHOOTZ.lmp": "41f736ecd85331703f57a5961d698fa2c52c882daf19da7cf24681579ee6d02a",
+  "tests/reference/wire27_scripts/SATUR.lmp": "18fa8fb48ba4d6e782355ce4a11dbebed5844dc175aa98bc5dc67e3585b35348"
+ },
+ "generated_with": {
+  "compiler": "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
+ },
+ "items": {
+  "USE": {
+   "map": 1,
+   "tics": 16,
+   "captures": 17,
+   "what": "a use press 34 units from the east wall: both num products and their sum leave int and cancel; the exact intercept, the wall stops the use with sfx_noway (p_map.c:1095-1120)",
+   "designed_callers": [
+    "use"
+   ],
+   "designed_cases": [
+    "cancel"
+   ],
+   "intercept_calls": 1,
+   "calls_by_caller": {
+    "aim": 0,
+    "shoot_line": 0,
+    "shoot_thing": 0,
+    "slide": 0,
+    "use": 1
+   },
+   "wire26_refusal_tic": 5,
+   "wire27_end": "complete",
+   "nowrap_stop": {
+    "exit": 1,
+    "site": "p_maputl.c:246-248",
+    "tic": 5
+   },
+   "genuine_facts": {
+    "barrel_health_end": [],
+    "puffs": []
+   },
+   "wrapping_calls_columns": "tic caller line cases den_int den_exact num_int num_exact frac frac_exact branch",
+   "wrapping_calls": [
+    [
+     5,
+     "use",
+     1,
+     [
+      "cancel"
+     ],
+     -132049754,
+     -132049754,
+     -72869376,
+     -72869376,
+     36164,
+     36164,
+     "div2"
+    ]
+   ]
+  },
+  "SLIDE": {
+   "map": 2,
+   "tics": 35,
+   "captures": 36,
+   "what": "running east into the slanted east wall: every slide trace (p_map.c:731-743) meets it with wraps that cancel, and the player slides south along it",
+   "designed_callers": [
+    "slide"
+   ],
+   "designed_cases": [
+    "cancel"
+   ],
+   "intercept_calls": 22,
+   "calls_by_caller": {
+    "aim": 0,
+    "shoot_line": 0,
+    "shoot_thing": 0,
+    "slide": 22,
+    "use": 0
+   },
+   "wire26_refusal_tic": 20,
+   "wire27_end": "complete",
+   "nowrap_stop": {
+    "exit": 0,
+    "site": null,
+    "tic": null
+   },
+   "genuine_facts": {
+    "barrel_health_end": [],
+    "puffs": []
+   },
+   "wrapping_calls_columns": "tic caller line cases den_int den_exact num_int num_exact frac frac_exact branch",
+   "wrapping_calls": [
+    [
+     20,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3221239,
+     -3221239,
+     -108161,
+     -108161,
+     2200,
+     2200,
+     "div2"
+    ],
+    [
+     21,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3221045,
+     -3221045,
+     -100265,
+     -100265,
+     2040,
+     2040,
+     "div2"
+    ],
+    [
+     22,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3220793,
+     -3220793,
+     -102226,
+     -102226,
+     2080,
+     2080,
+     "div2"
+    ],
+    [
+     23,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3220578,
+     -3220578,
+     -102122,
+     -102122,
+     2078,
+     2078,
+     "div2"
+    ],
+    [
+     24,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3220317,
+     -3220317,
+     -106247,
+     -106247,
+     2162,
+     2162,
+     "div2"
+    ],
+    [
+     25,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3220064,
+     -3220064,
+     -106542,
+     -106542,
+     2168,
+     2168,
+     "div2"
+    ],
+    [
+     26,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3219843,
+     -3219843,
+     -103007,
+     -103007,
+     2096,
+     2096,
+     "div2"
+    ],
+    [
+     27,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3219564,
+     -3219564,
+     -103701,
+     -103701,
+     2110,
+     2110,
+     "div2"
+    ],
+    [
+     28,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3219354,
+     -3219354,
+     -112820,
+     -112820,
+     2296,
+     2296,
+     "div2"
+    ],
+    [
+     29,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3219080,
+     -3219080,
+     -99893,
+     -99893,
+     2033,
+     2033,
+     "div2"
+    ],
+    [
+     30,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3218835,
+     -3218835,
+     -111176,
+     -111176,
+     2263,
+     2263,
+     "div2"
+    ],
+    [
+     31,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3218623,
+     -3218623,
+     -104609,
+     -104609,
+     2129,
+     2129,
+     "div2"
+    ],
+    [
+     32,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3218380,
+     -3218380,
+     -107899,
+     -107899,
+     2197,
+     2197,
+     "div2"
+    ],
+    [
+     33,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3218158,
+     -3218158,
+     -101065,
+     -101065,
+     2058,
+     2058,
+     "div2"
+    ],
+    [
+     34,
+     "slide",
+     1,
+     [
+      "cancel"
+     ],
+     -3217897,
+     -3217897,
+     -112147,
+     -112147,
+     2283,
+     2283,
+     "div2"
+    ]
+   ]
+  },
+  "AIMSHOT": {
+   "map": 3,
+   "tics": 35,
+   "captures": 36,
+   "what": "one pistol shot east 825 units from the east wall: the aim traces (1,024 units, P_BulletSlope) meet it with wraps that cancel and stop there; the 2,048-unit shot's den wraps to a positive value, so the intercept is negative and the wall is not hit: no puff (exact: a puff at the wall)",
+   "designed_callers": [
+    "aim",
+    "shoot_line"
+   ],
+   "designed_cases": [
+    "cancel",
+    "wrong"
+   ],
+   "intercept_calls": 8,
+   "calls_by_caller": {
+    "aim": 6,
+    "shoot_line": 1,
+    "shoot_thing": 1,
+    "slide": 0,
+    "use": 0
+   },
+   "wire26_refusal_tic": 18,
+   "wire27_end": "complete",
+   "nowrap_stop": {
+    "exit": 1,
+    "site": "p_maputl.c:246-248",
+    "tic": 18
+   },
+   "genuine_facts": {
+    "barrel_health_end": [],
+    "puffs": []
+   },
+   "wrapping_calls_columns": "tic caller line cases den_int den_exact num_int num_exact frac frac_exact branch",
+   "wrapping_calls": [
+    [
+     18,
+     "aim",
+     1,
+     [
+      "cancel"
+     ],
+     -2112796060,
+     -2112796060,
+     -1702721536,
+     -1702721536,
+     52816,
+     52816,
+     "div2"
+    ],
+    [
+     18,
+     "aim",
+     1,
+     [
+      "wrong"
+     ],
+     2138520468,
+     -2156446828,
+     -1702721536,
+     -1702721536,
+     -52180,
+     51746,
+     "div2"
+    ],
+    [
+     18,
+     "aim",
+     1,
+     [
+      "cancel"
+     ],
+     -2048804376,
+     -2048804376,
+     -1702721536,
+     -1702721536,
+     54465,
+     54465,
+     "div2"
+    ],
+    [
+     18,
+     "shoot_line",
+     1,
+     [
+      "wrong"
+     ],
+     69375176,
+     -4225592120,
+     -1702721536,
+     -1702721536,
+     -1608494,
+     26408,
+     "div2"
+    ]
+   ]
+  },
+  "SHOOTZ": {
+   "map": 4,
+   "tics": 35,
+   "captures": 36,
+   "what": "one pistol shot at fine angle 96: the exact den is -2^32, the int den 0, so P_InterceptVector returns 0 (p_maputl.c:242-243) and the wall is hit at the shooter (a puff 4 units behind the player); the barrel 1,000 units out on the line of fire is not hit (exact: the barrel at 0.49 before the wall at 0.73)",
+   "designed_callers": [
+    "shoot_line"
+   ],
+   "designed_cases": [
+    "den_zero",
+    "wrong"
+   ],
+   "intercept_calls": 5,
+   "calls_by_caller": {
+    "aim": 2,
+    "shoot_line": 1,
+    "shoot_thing": 2,
+    "slide": 0,
+    "use": 0
+   },
+   "wire26_refusal_tic": 18,
+   "wire27_end": "complete",
+   "nowrap_stop": {
+    "exit": 0,
+    "site": null,
+    "tic": null
+   },
+   "genuine_facts": {
+    "barrel_health_end": [
+     20
+    ],
+    "puffs": [
+     [
+      18,
+      -3.989013671875,
+      -0.2957763671875
+     ]
+    ]
+   },
+   "wrapping_calls_columns": "tic caller line cases den_int den_exact num_int num_exact frac frac_exact branch",
+   "wrapping_calls": [
+    [
+     18,
+     "shoot_line",
+     1,
+     [
+      "den_zero",
+      "wrong"
+     ],
+     0,
+     -4294967296,
+     null,
+     -3146894336,
+     0,
+     48017,
+     null
+    ]
+   ]
+  },
+  "SATUR": {
+   "map": 5,
+   "tics": 35,
+   "captures": 36,
+   "what": "the same shot with the east wall one unit steeper: the int den is 38,768, the num sum leaves int, and FixedDiv saturates (m_fixed.c:62-63): MAXINT, an intercept never traversed; the barrel is hit. Wire 27 refuses that tic (FixedDivRefusal::Saturation)",
+   "designed_callers": [
+    "shoot_line"
+   ],
+   "designed_cases": [
+    "saturation",
+    "num_overflow"
+   ],
+   "intercept_calls": 5,
+   "calls_by_caller": {
+    "aim": 2,
+    "shoot_line": 1,
+    "shoot_thing": 2,
+    "slide": 0,
+    "use": 0
+   },
+   "wire26_refusal_tic": 18,
+   "wire27_end": "refused:18:Saturation",
+   "nowrap_stop": {
+    "exit": 1,
+    "site": "p_maputl.c:246-248",
+    "tic": 18
+   },
+   "genuine_facts": {
+    "barrel_health_end": [
+     15
+    ],
+    "puffs": [
+     [
+      18,
+      987.0938873291016,
+      73.19078063964844
+     ]
+    ]
+   },
+   "wrapping_calls_columns": "tic caller line cases den_int den_exact num_int num_exact frac frac_exact branch",
+   "wrapping_calls": [
+    [
+     18,
+     "shoot_line",
+     1,
+     [
+      "num_overflow",
+      "wrong",
+      "saturation"
+     ],
+     38768,
+     -4294928528,
+     1149096960,
+     -3145870336,
+     2147483647,
+     48002,
+     "saturation"
+    ]
+   ]
+  }
+ }
+}
