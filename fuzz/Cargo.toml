@@ -460,6 +460,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "m6a_ddsp4"
+path = "fuzz_targets/m6a_ddsp4.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "m6a_dsnd2"
 path = "fuzz_targets/m6a_dsnd2.rs"
 test = false
