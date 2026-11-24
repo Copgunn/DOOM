@@ -3722,7 +3722,7 @@ The refusals keep the complete state and end the session with a plain screen: **
 
 | Where | Message shown and printed on the exit line |
 | --- | --- |
-| E1M8's exit (the tic `F_StartFinale` would run) | "E1M8 is complete. The finale that follows it (the text screen and the picture) is not built yet: it comes after the hand test. The session stops here, nothing was played differently from the original." |
+| E1M8's exit (the tic `F_StartFinale` would run) | "E1M8 is complete. The finale that follows it (the text screen and the picture) is not built yet. The session stops here, nothing was played differently from the original." |
 | A load wire 26 refuses (E1M7 on skill 3, `Admission(Monster(Arithmetic))`, reached from E1M6 on skill 3) | "E1M<n> is not admitted at this skill yet (<error>). The game stops at its load instead of playing it differently from the original." |
 | A map that does not load | "E1M<n> could not be loaded: <error>" |
 | A missing music lump at a load, `D_INTER` or a later map | "the music lump D_E1M2 is missing: the original stops here too" |

@@ -170,7 +170,7 @@ tics). On exit, a line starting \"session:\" names the game mode, the start and 
 session was.
 
 Limits: an OpenGL 2.1 (or OpenGL ES 2) driver is required. There is no music, menu,
-automap or saving. Not built yet (after the hand test of the level chain): the finale
+automap or saving. Not built yet: the finale
 after E1M8, the screen melt (the new picture appears at once; the melt's random draws are
 made), the easy skills, and E1M7 on skill 3, which the simulation does not admit yet.
 Where the game reaches one of them it stops with a screen saying so (NOT BUILT YET or TIC

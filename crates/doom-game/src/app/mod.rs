@@ -670,13 +670,11 @@ fn start_message(e: &StartError) -> String {
 fn not_yet_message(n: NotYet) -> String {
     match n {
         NotYet::Victory => "E1M8 is complete. The finale that follows it (the text screen and \
-                            the picture) is not built yet: it comes after the hand test. The \
+                            the picture) is not built yet. The \
                             session stops here, nothing was played differently from the original."
             .into(),
-        NotYet::Finale => "the finale is not built yet: it comes after the hand test".into(),
-        NotYet::EasySkill => "the easy skills (0 and 1) are not built yet: they come after the \
-                              hand test (M6a step 10)"
-            .into(),
+        NotYet::Finale => "the finale is not built yet".into(),
+        NotYet::EasySkill => "the easy skills (0 and 1) are not built yet".into(),
     }
 }
 
