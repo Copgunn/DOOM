@@ -303,7 +303,7 @@ decoded (20,512) and every 35th restored. Result digest (as in §1): `1601c966e7
 ### 5.8 Held keys at a level load (2026-11-23, after part 1 merged)
 
 The known gap recorded with part 1, fixed in its own pull request (branch `fix/load-input`, from master `e531879b`; code
-heads `d56c7ceb` and, for the window's key path after a review finding, `abe95455`). Rust-only tests of the app's event layer, with the C fact cited (g_game.c:490-496); the genuine engine was
+heads `d56c7ceb` and, for the window's key path after a review finding, `abe95455` and `0f6cb853`). Rust-only tests of the app's event layer, with the C fact cited (g_game.c:490-496); the genuine engine was
 not run for this change, and no golden, fixture or expected value changed. The rule is in
 [COMPATIBILITY](../COMPATIBILITY.md#input) and the commands in [TESTING](../TESTING.md#the-playable-level-chain-steps-4-to-9).
 
@@ -316,6 +316,8 @@ not run for this change, and no golden, fixture or expected value changed. The r
 | `key_repeat_tests` in `doom-play` (3 new tests through `key_event`), debug and release | 3 passed each |
 | The same 3 with the old filter restored, and with no filter at all (planted faults, not committed) | old filter: the load test fails; no filter: the pause-screen test fails. The end-screen test passes under both, so it records the behaviour and no planted fault catches it |
 | `cargo test -p doom-play`, debug and release, at `abe95455` | 161 passed, 0 failed, 2 ignored each |
+| Second review finding: with repeats passed, a key held through a pause or a focus loss is down again at its next repeat after the resume (before, it stayed released). 2 new tests through `key_event` at `0f6cb853`: forward moves before the pause, on the first tic after the resume and after the next repeat | 25, 0, 25 in both, as the owner described; kept by his ruling of 2026-11-23 |
+| `cargo test -p doom-play`, debug and release, at `0f6cb853` | 163 passed, 0 failed, 2 ignored each |
 | `cargo test --release -p doom-game` | 185 passed, 0 failed, 6 ignored |
 | Format (fuzz workspace included), Clippy with warnings denied, warnings-denied rustdoc, at both heads | clean |
 

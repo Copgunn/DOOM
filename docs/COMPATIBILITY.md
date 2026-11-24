@@ -3000,7 +3000,11 @@ and keeps the genuine path from there on (decision S4).
   motion, no middle or right button action; the other keys as vanilla.
 - **Pause and focus.** Esc or Pause pauses the app (below). The window library (miniquad 0.4.11) reports the
   window being minimised or losing focus through its minimise event, and `doom-play` turns that event into a pause.
-  Every pause releases every held key and button through the event layer. Observed on 2026-11-17 under WSLg: when a
+  Every pause releases every held key and button through the event layer. **A key still physically held is down again
+  after the resume at its next keyboard repeat** (kept by the owner's ruling of 2026-11-23): since the load-input fix the
+  window passes repeats to the app while it plays (see "Held keys at a level load" above), where before a held key stayed
+  released until pressed again. A repeat that arrives during the pause is dropped. Tested through `key_event` for a pause
+  by Esc and for a focus loss; when the first repeat arrives depends on the system and is unmeasured. Observed on 2026-11-17 under WSLg: when a
   second window took the focus, the running game paused, on X11 and on Wayland. **Not checked:** Alt-Tab,
   minimising by hand, Windows, macOS, and whether the keys are seen released on screen. From the library's source,
   not observed: on X11 any focus-out pauses (including one caused by another program's keyboard grab), and on macOS

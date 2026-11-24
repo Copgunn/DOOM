@@ -92,7 +92,8 @@
   [policy table](docs/COMPATIBILITY.md#policies) (it lives in COMPATIBILITY; the README
   links to it once), and never appends prose history (history lives in
   [COMPATIBILITY.md](docs/COMPATIBILITY.md) and [ROADMAP.md](docs/ROADMAP.md)). Caveat
-  counts are links to the evidence, never repeated figures, and no claim may get
+  counts are links to the evidence, never repeated figures (rounded "more than" figures are allowed
+  in "Where it stands"; exact counts stay behind links), and no claim may get
   stronger by being shortened. "Where it's (maybe) going" changes only with the owner's
   approval.
 - Keep the prominent machine-maintained/human-directed disclosure accurate. Do not

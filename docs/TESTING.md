@@ -3095,9 +3095,10 @@ cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_s
   stale-attacker record), `m6a_play` (the app played by keys; see below), `m6a_load_input` (Rust-only, 4
   tests of the app's event layer at an exit load and a reborn load: a held key is dropped after the load tic until a keydown
   arrives, the keyboard's repeat is that keydown, and always-run and its keydown in the input log survive the load; the
-  C fact is g_game.c:490-496; the same through the window's key path is `cargo test -p doom-play key_repeat`, 3 Rust-only
-  tests in `key_repeat_tests.rs`: a repeat through `key_event` sets a held key again after a load, and a held Esc, Pause, R
-  or Q acts once on the pause and end screens). Planted-fault tests: `wire26_chain`, `m6a_session`, `m6a_state` and `m6a_play`.
+  C fact is g_game.c:490-496; the same through the window's key path is `cargo test -p doom-play key_repeat`, 5 Rust-only
+  tests in `key_repeat_tests.rs`: a repeat through `key_event` sets a held key again after a load, a key held through a pause
+  or a focus loss is released and is down again at its next repeat after the resume, and a held Esc, Pause, R or Q acts once
+  on the pause and end screens). Planted-fault tests: `wire26_chain`, `m6a_session`, `m6a_state` and `m6a_play`.
 - **The four format readers on states no session produces** (reader review of 2026-11-22; Rust-only tests of the formats' own
   rules): `m6a_dses_reader` in `doom-game` (`DSES`: forged states refused by rule name; every committed item saved, decoded
   and restored at every tic, so the rules refuse nothing a session saves; the saved `secretexit` byte), `dsnd2_reader` in
