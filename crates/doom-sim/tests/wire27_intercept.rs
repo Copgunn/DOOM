@@ -256,8 +256,11 @@ fn wire_26_refuses_every_item_at_its_first_wrap() {
 /// The witness coverage (R6, R7): each wrapping caller has a genuine wrapping
 /// call, the totals are the sums of the items' rows, the only caller without a
 /// wrapping call is the shoot trace against a thing, which wire 27 keeps checked
-/// (`wire27_tests::every_caller_wraps_under_wire_27_alone`), and an item refuses
-/// under wire 27 exactly when one of its classes is refused for its caller.
+/// (`wire27_tests::every_caller_wraps_under_wire_27_alone`), an item refuses
+/// under wire 27 exactly when one of its classes is refused for its caller, and
+/// every wrap class wire 27 admits for a caller has a genuine call (the owner's
+/// corrections of 2026-11-24; `wire27_tests::wire27_admits_exactly_the_witnessed_classes`
+/// ties the table to `wire27_admits`).
 #[test]
 fn the_witness_covers_every_wrapping_caller() {
     let g = golden();
@@ -274,6 +277,13 @@ fn the_witness_covers_every_wrapping_caller() {
             .map(|(_, v)| v)
             .sum();
         assert_eq!(sum, *n, "{caller} {class}");
+    }
+    for ((caller, class), (n, wire27)) in &g.totals {
+        let admitted_wrap = class.starts_with("wrap.") && wire27 == "admit";
+        assert!(
+            !admitted_wrap || *n > 0,
+            "{caller} {class}: admitted without an item"
+        );
     }
     for (name, item) in &g.items {
         let refused = (g.witness.keys())

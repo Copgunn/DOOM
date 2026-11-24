@@ -11,8 +11,8 @@
 use crate::barrels_replay::{cases, room};
 use crate::diagonal_room::Lumps;
 use crate::intercept_vector::{
-    FixedDivRefusal, InterceptCaller, policy_intercept, sight_intercept, wire27_wraps,
-    wrapping_intercept,
+    FixedDivRefusal, InterceptCaller, Operand, Wire27Refusal, WrapClass, policy_intercept,
+    sight_intercept, wire27_admits, wire27_intercept, wire27_wraps, wrapping_intercept,
 };
 use crate::*;
 use FixedDivRefusal::{AbsMin, Div2Range, Saturation};
@@ -638,4 +638,155 @@ fn a_checked_caller_refuses_an_int_min_operand_under_wire_27() {
         );
     }
     assert_eq!(reference(v.0, v.1, v.2, v.3), (Ok(exact), false));
+}
+
+/// The owner's corrections of 2026-11-24: [`wire27_admits`] is the goldens'
+/// table. Every `T` row of tests/reference/wire27_state.txt (each caller and
+/// class, the genuine witness calls over every item and wire 27's decision,
+/// tools/reference/wire27_goldens.py) agrees with it, and every wrap class it
+/// admits has at least one genuine witnessed call. `INT_MIN` operands and
+/// `FixedDiv2`'s range are refused and calls that do not wrap admitted
+/// (`each_fixeddiv_refusal_is_named` and the sweeps above).
+#[test]
+fn wire27_admits_exactly_the_witnessed_classes() {
+    let caller = |name: &str| match name {
+        "aim" => InterceptCaller::Aim,
+        "shoot_line" => InterceptCaller::ShootLine,
+        "shoot_thing" => InterceptCaller::ShootThing,
+        "slide" => InterceptCaller::Slide,
+        "use" => InterceptCaller::Use,
+        _ => panic!("{name}"),
+    };
+    let operand = |part: &str| match part.rsplit('_').next() {
+        Some("exact") => Operand::Exact,
+        Some("wrong") => Operand::Wrong,
+        _ => panic!("{part}"),
+    };
+    let (mut rows, mut admitted) = (0, 0);
+    let text = include_str!("../../../tests/reference/wire27_state.txt");
+    for row in text.lines().filter(|l| l.starts_with("T,")) {
+        let f: Vec<&str> = row.split(',').collect();
+        let (who, parts, calls) = (caller(f[1]), f[2].split('.').collect::<Vec<_>>(), f[3]);
+        let class = match parts[..] {
+            [_, _, _, "absmin" | "range"] | ["nowrap", ..] => None,
+            ["wrap", "den_zero"] => Some(WrapClass::DenZero { exact: false }),
+            ["wrap", "den_zero_exact"] => Some(WrapClass::DenZero { exact: true }),
+            ["wrap", den, num, "div2"] => Some(WrapClass::Div2 {
+                den: operand(den),
+                num: operand(num),
+            }),
+            ["wrap", den, num, branch @ ("max" | "min")] => Some(WrapClass::Saturation {
+                den: operand(den),
+                num: operand(num),
+                max: branch == "max",
+            }),
+            _ => panic!("{row}"),
+        };
+        let expected = match class {
+            Some(class) => wire27_wraps(who) && wire27_admits(who, class),
+            None => !f[2].ends_with(".absmin") && !f[2].ends_with(".range"),
+        };
+        assert_eq!(f[4] == "admit", expected, "{row}");
+        if class.is_some() && expected {
+            assert_ne!(
+                calls, "0",
+                "an admitted wrap class without a genuine call: {row}"
+            );
+            admitted += 1;
+        }
+        rows += 1;
+    }
+    assert_eq!((rows, admitted), (5 * 28, 10));
+}
+
+/// The trace and east wall of the genuine shoot items (tests/reference/
+/// wire27_results.json): the player's 2,048-unit trace from `start` at fine
+/// angle `fine` (P_LineAttack, p_map.c; FINE_SINE is tables.c's) against the
+/// wall from (484, 4000) running `dx` units east and 8,059 south.
+fn shot(start: V, fine: usize, dx: i64) -> (V, V, V, V) {
+    let delta = [
+        2048 * i64::from(FINE_SINE[fine + 2048]),
+        2048 * i64::from(FINE_SINE[fine]),
+    ];
+    (
+        start,
+        delta,
+        [484 << 16, 4000 << 16],
+        [dx << 16, -8059 << 16],
+    )
+}
+
+/// The owner's corrections of 2026-11-24 (A and B), on the genuine operands of
+/// the witness rows of tests/reference/wire27_results.json: wire 27 reproduces
+/// `FixedDiv` (m_fixed.c:57-87) of a wrong num and den for the shoot trace
+/// against a line alone (NUMWRAP: FixedDiv2, -6,666,240 / -17,926,360 gives
+/// 24,370; SATUR: 1,149,096,960 over 38,768 saturates to MAXINT; SATNEG:
+/// 1,147,048,960 over -38,768 to MININT, m_fixed.c:62-63); the aim, slide and
+/// use traces refuse these classes (no item), the shoot trace against a thing
+/// keeps the checked computation, and wire 26 refuses them all. A saturation
+/// whose num is exact ("Saturation of wrapped operands" above) has no item and
+/// is refused for every caller.
+#[test]
+fn a_wrong_num_follows_fixeddiv_for_the_shoot_line_alone() {
+    let l = base();
+    let (v4, v5) = (level(&l, false), level(&l, true));
+    let wrong = |max| WrapClass::Saturation {
+        den: Operand::Wrong,
+        num: Operand::Wrong,
+        max,
+    };
+    for (v, frac, class) in [
+        (
+            shot([0, -2150 << 16], 128, 2098),
+            24370,
+            WrapClass::Div2 {
+                den: Operand::Wrong,
+                num: Operand::Wrong,
+            },
+        ),
+        (shot([0, 0], 96, 2097), i32::MAX, wrong(true)),
+        (shot([0, 0], 96, 2099), i32::MIN, wrong(false)),
+    ] {
+        let at = |c| wire27_intercept(c, fx(v.0), fx(v.1), fx(v.2), fx(v.3)).map(Fixed::bits);
+        assert_eq!(at(InterceptCaller::ShootLine), Ok(frac));
+        for c in [
+            InterceptCaller::Aim,
+            InterceptCaller::Slide,
+            InterceptCaller::Use,
+        ] {
+            let refusal = if frac == 24370 {
+                Wire27Refusal::Unevidenced(class)
+            } else {
+                Wire27Refusal::FixedDiv(Saturation)
+            };
+            assert_eq!(at(c), Err(refusal), "{c:?}");
+        }
+        assert!(at(InterceptCaller::ShootThing).is_err());
+        assert_eq!(checked(v.0, v.1, v.2, v.3), None);
+        let line = InterceptCaller::ShootLine;
+        assert_eq!(
+            policy_intercept(&v4.world, line, fx(v.0), fx(v.1), fx(v.2), fx(v.3)),
+            None
+        );
+        assert_eq!(
+            policy_intercept(&v5.world, line, fx(v.0), fx(v.1), fx(v.2), fx(v.3)),
+            Some(Fixed::from_bits(frac))
+        );
+        // The independent transcription: the same value, or the saturation it names.
+        let expected = if frac == 24370 {
+            Ok(frac)
+        } else {
+            Err(Saturation)
+        };
+        assert_eq!(reference(v.0, v.1, v.2, v.3), (expected, true));
+    }
+    let v = ([0, 0], [(1 << 26) + 1, 0], [1 << 14, 0], [0, 1 << 30]);
+    for c in [
+        InterceptCaller::Aim,
+        InterceptCaller::ShootLine,
+        InterceptCaller::Slide,
+    ] {
+        let got = wire27_intercept(c, fx(v.0), fx(v.1), fx(v.2), fx(v.3));
+        assert_eq!(got, Err(Wire27Refusal::FixedDiv(Saturation)));
+    }
 }
