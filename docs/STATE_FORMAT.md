@@ -11,7 +11,8 @@ addresses are excluded. The M5a renderer's own, separate `DRST` format is at the
 reader decodes it. The same holds for the display state `DDSP` ([version 1](#display-state-ddsp-version-1-m5b),
 [version 2](#display-state-ddsp-version-2-m5c), [version 3](#display-state-ddsp-version-3-m6a),
 [version 4](#display-state-ddsp-version-4-m6a-part-2)) and for the sound session's
-saved state `DSND` ([version 1](#sound-session-state-dsnd-version-1-m5c), [version 2](#sound-session-state-dsnd-version-2-m6a)).
+saved state `DSND` ([version 1](#sound-session-state-dsnd-version-1-m5c), [version 2](#sound-session-state-dsnd-version-2-m6a),
+[version 3](#sound-session-state-dsnd-version-3-m6a-part-2)).
 The M6a session's own saved state `DSES` is [version 1](#session-state-dses-version-1-m6a).
 
 M3f8's execution-scope brands and derived target availability are API observations,
@@ -2834,6 +2835,35 @@ reader refuses, so it never encodes to another state. A session's own states are
 A melt in progress decodes, and restoring it is `NotYet::MeltInProgress` until the melt steps exist. Restoring checks the state
 against the caller's configuration and music lumps, the loaded sound set and the level simulation (in a level) or the finished
 level's, held read-only (outside one): consistency checks, not proof that a run reaches the state.
+
+## Sound session state (`DSND` version 3, M6a part 2)
+
+Written only by a sound session across levels in the finale-and-melt configuration (`ChainSound::new_with` with
+`ChainMode::FinaleAndMelt`, owner's rulings V1 and V3 of 2026-11-23), by `ChainSound::save_v3`; read by
+`ChainSoundStateV3::decode`; restored by `ChainSound::restore_v3`. In that configuration a tic leaves its due buffer owed,
+each melt step changes nothing, and `ChainSound::mix_after_display` mixes the owed buffer after the display (the melt loop
+calls no sound function, d_main.c:320-344, and `I_UpdateSound` and `I_SubmitSound` follow `D_Display`, d_main.c:392-405;
+[M6a note §1.16.4](M6A_REFERENCE_INVESTIGATION.md#1164-sound-and-the-mixer-while-a-melt-runs)). **Versions 1 and 2 keep
+their bytes and rules**: `SoundState::decode` refuses version 3, `ChainSoundState::decode` refuses version 3 (`Version(3)`),
+and `ChainSoundStateV3::decode` reads version 3 only (`Version(2)` for a version-2 state). The frozen configuration
+(`ChainSound::new`, `ChainMode::RefusesMelt`) still writes version 2, refuses every melt step (`NotYet::MeltSteps`) and
+restores no melt in progress; `save_v3` gives nothing for it.
+
+**Layout and rules: exactly version 2's**, with 3 in the version field, so a state's version 3 bytes are its version 2 bytes
+with that field changed. A melt in progress adds no sound state but the pending display: its pictures, columns and steps are
+the display's (`DDSP` version 4), and nothing of the sound code runs during it. The one byte version 2 laid out for it is read
+here as follows:
+
+| Offset | Size | Field (as version 2) | Version 3 |
+| --- | --- | --- | --- |
+| 14 | 8 | buffers mixed | with a pending display, the buffers of the tics before the last: `ceil(315 * (tics - 1) / 512)` |
+| 49 | 1 | melt: 0 none, 1 in progress | 1: the last tic's display is pending (its records and `S_UpdateSounds` done, its buffer, if one was due, not yet mixed; a melt possibly in progress); accepted on restore |
+
+The reader's checks are version 2's, shared and version-2-only alike (a melt byte other than 0 or 1, a pending display before
+any tic, the buffer count, an occupied channel whose handle the last `S_UpdateSounds` freed: that update ran with `gametic`
+equal to the tics run, pending display or not). The restore applies version 2's checks against the caller's configuration,
+music lumps, sound set and simulation, then rebuilds a pending display as pending, its buffer owed exactly when
+`ceil(315 * tics / 512)` exceeds the stored count, so the session continues with the display's melt steps and its mix.
 
 ## Session state (`DSES` version 1, M6a)
 

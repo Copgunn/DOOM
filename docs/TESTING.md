@@ -3146,11 +3146,16 @@ cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_s
 cargo test -p doom-game --test m6a_finale_melt           # the pure finale and melt step against the genuine goldens
 cargo test -p doom-game --test m6a_finale_melt_display   # the finale-and-melt display, DDSP version 4 restore, planted faults
 cargo check --manifest-path fuzz/Cargo.toml --bin m6a_ddsp4   # the DDSP version 4 reader's fuzz target compiles
+cargo test -p doom-sound --test m6a_chain_finale_melt    # the finale-and-melt sound: rows, buffers, melts, DSND v3 restore, faults
+cargo test -p doom-sound --test dsnd3_reader             # the DSND version 3 reader on hand-built states
+cargo check --manifest-path fuzz/Cargo.toml --bin m6a_dsnd3   # the DSND version 3 reader's fuzz target compiles
 ```
 
-Both tests print their counts with `-- --nocapture`. What they compared is in the
+The tests print their counts with `-- --nocapture`. What they compared is in the
 [investigation note](M6A_REFERENCE_INVESTIGATION.md#7-part-2-plan-size-and-decisions-for-the-owner-2026-11-23)
-until the part 2 evidence record is written. No fuzz campaign has been run for `m6a_ddsp4`.
+until the part 2 evidence record is written. The sound test drives each item as far as part 1's `m6a_chain` does (the
+first level, the intermission or finale after it and the next load tic; later levels need the session, in `doom-game`).
+No fuzz campaign has been run for `m6a_ddsp4` or `m6a_dsnd3`.
 
 ## Mutation testing
 
