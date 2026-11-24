@@ -90,6 +90,22 @@ totals equal the note's section 3.4.2, the mixer's `--strict32` (its last run wa
 `tools/local/m5c_wire25_real.py --check`. The documentation pass that wrote the sections for step 3 onward re-ran no
 command: every figure is the step agent's. The second documentation pass (steps 5 to 7 and the CI record) also re-ran no command and took each figure from the step agents' reports or from the committed results files `m5c_real_full_results.json` and `m5c_session_results.json`. **The third pass (steps 10, 11 part 2, 12 and 13) re-ran no command either:** each figure is from a reviewer's or fixing agent's report, a commit message or a committed file. Step 12's section was written by its own agent and only read, not rewritten, in this pass. **The sixth pass (the final mutation figures, the second survivor round and the CI record to `937cf9d`) re-ran no command either and built nothing:** each figure is from the lists and reports it names in [step 10](#step-10-mutation-testing), counted from the files, or from the orchestrator's observation of CI. **The fourth pass (the survivors of step 10, the instruction-count check, the session verifier and the CI record) re-ran no command either:** each figure is from `step10`, `review-mut`, `sessreal` and `fix-ir`'s reports, a commit message or a committed file; the commit hashes and the layout of the committed files were read from the repository.
 
+## Hand-played checks
+
+An index added on 2026-11-23 (America/Los_Angeles). It holds no new observation: every figure is from the section linked.
+These are the owner's own sessions, played by hand (his statement) on real Episode 1 maps with `doom-play`, each file then
+replayed through the genuine engine by `tools/local/m5c_session_real.py`, local only.
+
+| Check | Where | Sessions | Tics | Verdict |
+| --- | --- | ---: | ---: | --- |
+| The owner's first 12 files (2026-11-18) | [The check of the owner's 12 session files](#the-check-of-the-owners-12-session-files) | 11, and one file of 0 tics | 25,309 | 12 of 12 pass |
+| All 13 files at the final gates: the same 12 again and one more from the Windows retest | [Phase 7, gate 7g](#phase-7-real-maps-local-only) | 12, and the file of 0 tics | 27,146 | 13 of 13 `VERDICT: PASS` |
+
+Counted once: **12 sessions, 27,146 tics**. The second row holds the first row's files again (25,309 of its tics), and the
+file of 0 tics passes with nothing to compare, so it is not counted as a session. What a verdict shows and does not show is
+said [under the first check](#the-check-of-the-owners-12-session-files). The M5d gates ran these 13 files again; they are
+not counted a second time in [that record's index](M5D.md#hand-played-checks).
+
 ## Step 1: the synthetic sound lumps, the rooms and the genuine sound-logic runner
 
 What was built, all new files (hand-written lines by `wc -l`; generated data separately):
