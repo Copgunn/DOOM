@@ -662,15 +662,10 @@ The entries marked merged below are done; they keep their place here because thi
     the owner's IWAD locally, his hand-test sessions included ([evidence record](validation/M6A.md)).
   - **Part 2 (a separate pull request after part 1 merges, not started), under wire 27 and new format versions:** the
     finale, the melt pictures, the easy skills 0 and 1, and E1M7 on skill 3 (the spawn margin dropped for monsters under
-    wire 27, where the earlier ruling said wire 26). Two known gaps of part 1 are recorded for part 2 as well (owner's
+    wire 27, where the earlier ruling said wire 26). Two known gaps of part 1 are recorded for part 2 (owner's
     rulings of 2026-11-23; neither changes a tic): **a session ended by restart and saved cleanly is not listed at exit**
     (`doom-play`'s closing lines name the last session only, though every session's file is written), and the screen at
     E1M8's exit still says the finale "comes after the hand test", where it now comes with part 2.
-  - **Known gap of part 1, fixed in its own pull request straight after part 1 merges (owner's ruling of 2026-11-23,
-    not started):** a key held across a level load stays held, where the original clears the held keys at every load
-    (g_game.c:490-496) and a repeating keyboard sets them again; the event layer filters repeats, so the fix belongs
-    there. Planned design: at a session load the layer forgets which keys it reported down and posts the run key again
-    when always-run is on.
 - **Simulation follow-up (decided: the THING-loading truncation is closed under wire 25 only).** `P_LoadThings` ends the
   whole THINGS loop at the first Doom II type (doomednums 64-69, 71, 84, 88, 89) when `gamemode != commercial`
   (p_setup.c:317-337). Wire 25 (decision T4, confirmed 2026-11-18) stops loading there, with a synthetic map and

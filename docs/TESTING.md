@@ -3073,7 +3073,8 @@ python3 tools/reference/m6a_state.py --work DIR [--jobs N]                      
 cargo test -p doom-sim --test wire26_projection --test wire26_chain
 cargo test -p doom-render --test m6a_display
 cargo test -p doom-sound --test m6a_chain
-cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_state --test m6a_play
+cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_state --test m6a_play \
+  --test m6a_load_input
 ```
 
 - **Generators.** `m6a_wad.py`, `m6a_goldens.py`, `m6a_mixer.py` and `m6a_reference.py` take `--check` (and `--selftest`) as
@@ -3091,7 +3092,10 @@ cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_s
   `M_Random` index through the chain), `m6a_chain` (sound across levels, `DSND` v2), `m6a_session` (every item's rows,
   frames at screenblocks 10 and 11, sound and mixer through the session), `m6a_session_rules` (`DSES` restore, forgeries,
   refusals, the game mode), `m6a_state` (the session's level state equals the genuine engine's on every level tic, the
-  stale-attacker record), `m6a_play` (the app played by keys; see below). Planted-fault tests: `wire26_chain`, `m6a_session`, `m6a_state` and `m6a_play`.
+  stale-attacker record), `m6a_play` (the app played by keys; see below), `m6a_load_input` (Rust-only, 4
+  tests of the app's event layer at an exit load and a reborn load: a held key is dropped after the load tic until a keydown
+  arrives, the keyboard's repeat is that keydown, and always-run and its keydown in the input log survive the load; the
+  C fact is g_game.c:490-496). Planted-fault tests: `wire26_chain`, `m6a_session`, `m6a_state` and `m6a_play`.
 - **The four format readers on states no session produces** (reader review of 2026-11-22; Rust-only tests of the formats' own
   rules): `m6a_dses_reader` in `doom-game` (`DSES`: forged states refused by rule name; every committed item saved, decoded
   and restored at every tic, so the rules refuse nothing a session saves; the saved `secretexit` byte), `dsnd2_reader` in

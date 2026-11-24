@@ -2973,6 +2973,15 @@ and keeps the genuine path from there on (decision S4).
   it is not the Windows [stuck-fire report](#stuck-fire-on-windows-accepted-as-fixed-in-m5d-the-cause-was-never-reproduced)). Every stream it makes is one the genuine `G_Responder` could have
   received. Sensitivity arithmetic, turning, strafing, forward movement, double-click use and the clamps are the
   genuine code ported.
+- **Held keys at a level load.** At every load of a session after its first (an exit's and a reborn's alike) the
+  original clears its held keys, the mouse motion and the left mouse button (`G_DoLoadLevel`, g_game.c:490-496), after
+  the load tic's command was built: that command executes, and the next is built from the cleared state. The app does the
+  same, and the layer forgets which keys it has reported down, so the keyboard's next repeat of a key still held passes
+  as a keydown, as on the original's repeating keyboard. **A held key therefore does nothing after a load until the
+  operating system repeats it (or it is pressed again)**; how soon that is depends on the system's repeat delay and is
+  unmeasured. Under always-run the layer posts the run key again at the load. A held left mouse button fires again at
+  the next mouse event (any motion), as in the original (read from the code; the tests cover keys only). Every one of these events goes through the normal path, so the
+  input log and the demo hold it.
 - **Never forwarded** (decision S5): Esc and Pause (the app's own pause), Enter, Tab, `-`, `=`, `q` and F1-F12.
   The genuine effects of these (menus, automap, screen size, gamma, message refresh, ending a recording) are out
   of scope, and a withheld key cannot be bound. The cheat matcher is not ported: the letters of a cheat code

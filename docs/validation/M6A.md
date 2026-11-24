@@ -300,6 +300,27 @@ health and carried bob each caught in the 1 session that has a carried start, at
 decoded (20,512) and every 35th restored. Result digest (as in §1): `1601c966e7477e4ad00564f62a558dd33cd0cc392377cbc2c813f90fb69e2a32`
 (14 MB, scratch). Nothing after the last recorded tic of the second file is compared: the finale is not built.
 
+### 5.8 Held keys at a level load (2026-11-23, after part 1 merged)
+
+The known gap recorded with part 1, fixed in its own pull request (branch `fix/load-input`, from master `e531879b`; code
+head `d56c7ceb`). Rust-only tests of the app's event layer, with the C fact cited (g_game.c:490-496); the genuine engine was
+not run for this change, and no golden, fixture or expected value changed. The rule is in
+[COMPATIBILITY](../COMPATIBILITY.md#input) and the commands in [TESTING](../TESTING.md#the-playable-level-chain-steps-4-to-9).
+
+| Check (local, 2026-11-23 evening, PST) | Result |
+| --- | --- |
+| `m6a_load_input` (4 new tests: an exit load and a reborn load, each under the vanilla and the modern preset), debug and release | 4 passed each |
+| The same 4 with the layer's call removed (a planted fault, not committed) | 4 failed: no forward move after the repeat, no run key in the log |
+| `cargo test --workspace` (debug) | 2,105 passed, 0 failed, 12 ignored |
+| `cargo test --release -p doom-game` | 185 passed, 0 failed, 6 ignored |
+| Format (fuzz workspace included), Clippy with warnings denied, warnings-denied rustdoc | clean |
+
+One existing test file is touched, by the owner's ruling of 2026-11-23: the `Driver` helper of `m6a_play.rs` presses its
+held keys again after a load, as a repeating keyboard would. No assertion or expected value in it changed, and its demos
+still equal the committed ones byte for byte. **Not run for this change:** the original-C generators, the fuzz builds, a
+sanitizer campaign, the real-map sets and a hand test on a real keyboard (how long a held key stays dead after a load
+depends on the system's repeat delay, which is unmeasured). The mouse-button side of the clear is read from the code, not tested.
+
 ## Not run, and limits
 
 - **Local only.** Every real-map figure is from the owner's IWAD on his WSL2 machine on 2026-11-22 and 2026-11-23; it cannot run in CI and nobody
