@@ -150,7 +150,9 @@ type Keys = (bool, bool, bool);
 /// The keys a script holds in each tic, up to its first command no key gives.
 fn script_keys(item: &Item) -> Vec<Keys> {
     let txt = item.lmp.replace(".lmp", ".txt");
-    let text = std::fs::read_to_string(m6a::root(&txt)).unwrap();
+    let text = std::fs::read_to_string(m6a::root(&txt))
+        .unwrap()
+        .replace("\r\n", "\n");
     let mut out = Vec::new();
     for l in text.lines().filter(|l| !l.starts_with('#')) {
         let f: Vec<&str> = l.split_whitespace().collect();

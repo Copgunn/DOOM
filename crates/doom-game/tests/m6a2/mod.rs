@@ -114,7 +114,8 @@ impl Golden {
             error,
             session: Rows::parse(
                 &std::fs::read_to_string(reference(&format!("m6a2_session/{name}.session")))
-                    .expect("session"),
+                    .expect("session")
+                    .replace("\r\n", "\n"),
             ),
             melts: Some(melts(&format!("m6a2_melt/{name}.sb{sb}.melt"))),
         }
@@ -129,7 +130,8 @@ impl Golden {
             error,
             session: Rows::parse(
                 &std::fs::read_to_string(reference(&format!("m6a_session/{name}.session")))
-                    .expect("session"),
+                    .expect("session")
+                    .replace("\r\n", "\n"),
             ),
             melts: Some(melts(&format!("m6a2_melt/{name}.sb11.melt"))),
         }
@@ -139,7 +141,9 @@ impl Golden {
 /// Reads a frames golden (`tests/reference/<path>`, the synthetic set: no flagged column): the
 /// frames by tic (F and P rows of a level frame, the G row of any other) and the E row.
 pub fn read_frames(path: &str) -> (BTreeMap<i64, GoldenFrame>, Option<String>) {
-    let text = std::fs::read_to_string(reference(path)).expect(path);
+    let text = std::fs::read_to_string(reference(path))
+        .expect(path)
+        .replace("\r\n", "\n");
     let mut out: BTreeMap<i64, GoldenFrame> = BTreeMap::new();
     let mut error = None;
     for l in text.lines() {
@@ -196,7 +200,9 @@ pub struct GoldenMelt {
 
 /// Reads a part 2 melt golden (`DOOM-M6A2-MELT-v1`, the runner's `--melt-clock unit`).
 pub fn melts(path: &str) -> BTreeMap<i64, GoldenMelt> {
-    let text = std::fs::read_to_string(reference(path)).expect(path);
+    let text = std::fs::read_to_string(reference(path))
+        .expect(path)
+        .replace("\r\n", "\n");
     assert!(
         text.starts_with("#schema,DOOM-M6A2-MELT-v1\n"),
         "{path}: schema"

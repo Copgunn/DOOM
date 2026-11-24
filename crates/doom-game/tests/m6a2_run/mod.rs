@@ -92,7 +92,10 @@ fn reference(path: &str) -> std::path::PathBuf {
 }
 
 fn read(path: &str) -> String {
-    std::fs::read_to_string(reference(path)).unwrap_or_else(|e| panic!("{path}: {e}"))
+    // a Windows checkout gives the part 1 goldens CRLF line endings
+    std::fs::read_to_string(reference(path))
+        .unwrap_or_else(|e| panic!("{path}: {e}"))
+        .replace("\r\n", "\n")
 }
 
 fn json(path: &str) -> serde_json::Value {
