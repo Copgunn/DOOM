@@ -349,6 +349,10 @@ impl ChainSound {
     /// ([`NotYet::MeltInProgress`]) but, outside a pending display, accepts it and rebuilds a
     /// session of the frozen configuration ([`crate::chain_melt::ChainMode::RefusesMelt`]). Use
     /// [`Self::save_v2_checked`] or [`Self::save_v3_checked`] to have the configuration enforced.
+    ///
+    /// Taken in the finale outside a pending display, the version 2 restore gives a frozen-configuration
+    /// chain in the finale: its `finale_tic` mixes inside the call, `melt_step` is refused
+    /// ([`NotYet::MeltSteps`]), and it gives the sound rows and buffers the frozen configuration gives.
     pub fn save(&self) -> ChainSoundState {
         let s: SoundState = self.sound.state();
         ChainSoundState {

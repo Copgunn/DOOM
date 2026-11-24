@@ -1406,3 +1406,53 @@ fn plain_save_on_a_finale_and_melt_chain_is_version_2() {
         Err(doom_sound::chain_melt::ChainSaveRefusal::FinaleAndMeltSavesVersion3)
     );
 }
+
+/// Pins `ChainSound::save()` taken DURING THE FINALE on a `FinaleAndMelt` chain, and what the
+/// version 2 restore of it then does (owner's ruling of 2026-11-24; the public API reaches all of
+/// it). Outside a pending display the restore is accepted and gives a `RefusesMelt` chain in the
+/// finale: its next `finale_tic` runs and mixes inside the call, `melt_step` is refused
+/// (`NotYet::MeltSteps`), and it gives the sound rows and buffer the frozen configuration gives
+/// at that point, and the buffer the original chain gives after `mix_after_display`. With a finale
+/// display pending the blob carries the melt flag and the restore is refused.
+#[test]
+fn plain_save_during_the_finale_restores_as_the_frozen_configuration_and_continues_equal() {
+    let mut d = drive("FINRET", ChainMode::FinaleAndMelt);
+    d.run();
+    let mut f = drive("FINRET", ChainMode::RefusesMelt);
+    f.run();
+    let (l, p) = (listener_of(&d.sim), SimulationPositions(&d.sim));
+    let st = ChainSoundState::decode(&d.chain.save().encode()).expect("decode v2");
+    let mut back = ChainSound::restore(d.set.clone(), d.music, &st, &d.sim, d.config)
+        .expect("v2 restore outside a display");
+    assert_eq!(back.mode(), ChainMode::RefusesMelt);
+    assert_eq!(back.state(), doom_sound::chain::ChainState::Finale);
+    assert_eq!(
+        back.melt_step(),
+        Err(ChainRefusal::NotYet(NotYet::MeltSteps))
+    );
+    let b = back.finale_tic(0, &l, &p).expect("restored finale tic");
+    let mut fc = f.chain.clone();
+    let fr = fc.finale_tic(0, &l, &SimulationPositions(&f.sim)).unwrap();
+    assert_eq!(
+        (&b.sound.records, &b.sound.update),
+        (&fr.sound.records, &fr.sound.update)
+    );
+    assert_eq!(
+        b.sound.buffer, fr.sound.buffer,
+        "buffer in the call, as frozen"
+    );
+    assert!(!back.display_pending());
+    assert_eq!(back.save(), fc.save(), "state equal after the tic");
+    // The original chain, display pending after the same tic: restore refused, then equal buffer.
+    let mut c = d.chain.clone();
+    let r = c.finale_tic(0, &l, &p).expect("finale tic");
+    assert!(c.display_pending() && r.sound.buffer.is_none());
+    let st = ChainSoundState::decode(&c.save().encode()).expect("decode v2");
+    assert!(st.melt);
+    assert_eq!(
+        ChainSound::restore(d.set.clone(), d.music, &st, &d.sim, d.config),
+        Err(ChainStateError::NotYet(NotYet::MeltInProgress))
+    );
+    assert_eq!(c.mix_after_display().expect("mix"), fr.sound.buffer);
+    assert_eq!(c.save(), fc.save());
+}

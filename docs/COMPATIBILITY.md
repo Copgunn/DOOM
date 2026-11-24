@@ -3819,6 +3819,11 @@ the synthetic items against the genuine goldens) and `m6a2_play` (the app played
   withheld from the game as always (the screen size is fixed for the run). Closing the window always quits at once, a melt
   included; the demo then holds every tic before it. At most 1,024 inputs are held in one melt; past that the held inputs are
   dropped and every key is released when the melt ends, as the event layer does at its own bound.
+  **Difference from the original, accepted by the owner on 2026-11-24:** a key tapped (pressed and released) inside one melt
+  acts for one tic after the melt, because the same-pump rule above holds the release back one command; in the original the
+  key never shows in a command, since both events are handled before the first command after the melt is built
+  (g_game.c:566-578). The test `keys_and_buttons_during_a_melt_reach_the_first_tic_after_it_in_order`
+  (crates/doom-game/tests/m6a2_play.rs) shows it with the space bar.
 
 ### Rulings of 2026-11-22 on commands
 
