@@ -10,6 +10,8 @@ mod audio;
 mod closing;
 mod cursor_leave;
 mod input_log;
+#[cfg(test)]
+mod key_repeat_tests;
 mod keys;
 #[cfg(all(test, unix))]
 mod kill_tests;
