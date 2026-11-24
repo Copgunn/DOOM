@@ -2,7 +2,8 @@
 //! M5b, decisions S2, S13, S14, S19–S21), with sound (milestone M5c, decisions T7–T9, T15).
 //! This crate is the only one that depends on the window library (miniquad) and the audio
 //! library (maudio); it reads the files, keeps the monotonic clock, translates input, presents
-//! the picture and hands the mixed sound stream to the device. Nothing here reaches the
+//! the picture and hands the mixed sound stream to the device. Every session is the M6a
+//! session in its finale-and-melt configuration (M6a part 2, owner's ruling V1). Nothing here reaches the
 //! simulation except through [`doom_game::app::App`]'s input calls. No `unsafe` (forbidden by
 //! the workspace lints).
 
@@ -69,7 +70,8 @@ usage: doom-play --iwad PATH [options]
                        (taken from the loop's monotonic clock) to stderr; no other effect.
                        Pauses and the end screen between sessions are not intervals: the
                        line gives their number and their time separately (a stall
-                       right at a pause is inside that time)
+                       right at a pause is inside that time); nor is the time from the
+                       tic before a screen melt to the tic after it, given separately too
   --input-log FILE     diagnostic: write to FILE (replaced if it exists) one line for every
                        raw input the window library delivers (mouse buttons, motion and
                        cursor position, keys, focus) and for every event sent to the game,
@@ -117,7 +119,8 @@ the mixer, the picture or the demo. They do nothing without an audio device (or 
   On exit, the lines starting \"audio\" echo a setting that is not at its default.
 
 Keys: Esc or Pause pauses (then Esc or Pause resumes, R restarts, Q quits); on a refusal
-screen R restarts and Q or Esc quits. R starts a new game at the start map, as a new
+screen R restarts and Q or Esc quits. During a screen melt every key and mouse button is
+kept and acts when the melt ends (a pause then too); closing the window always quits. R starts a new game at the start map, as a new
 session with its own demo. End mutes and unmutes the sound (the player's own key, never
 seen by the game); pausing also silences it. When the window library reports that the window
 was minimised or lost focus, the game pauses and every held key is released. Under WSLg the
@@ -142,6 +145,8 @@ starting [INFO]: the backend, the device, its sample rate, and the period and bu
 granted) is printed on standard error. On exit, lines starting \"audio\" give the device's
 name and native sample rates, the settings asked for, the sizes of the device's callbacks,
 how full the sound queue was when they came, and the gaps (underruns) and overruns counted.
+The silence while a screen melt runs (no sound is mixed then) is counted on a line of its
+own, starting \"audio during melts\", and never as a gap.
 When a gap was counted, one more line lists each (the first 32): the session of this
 launch, its tics at the loop's last update before the gap, the frames of silence in that
 callback, and how many mixer buffers had been queued since the queue last began to fill
@@ -165,16 +170,26 @@ that are more than an hour old are removed, and their count is printed.
 The session: an exit shows the intermission (presses of fire or use move it on), then the
 next map starts with what the player carries; when the dead player presses use, the map
 starts again (the original's reborn); the secret exit of E1M3 leads to E1M9, which returns
-to E1M4. The session ends only when the player quits (or at a refusal, or after 1,048,576
-tics). On exit, a line starting \"session:\" names the game mode, the start and where the
-session was.
+to E1M4. After E1M8 comes the finale: the text, then the art screen (CREDIT in retail
+mode, HELP2 in registered mode), which stays until the player quits, as in the original,
+where only the menu leads out. In registered mode with WADs that have no HELP2, the session
+stops at the art screen's first tic with a screen saying so, as the original stops there;
+the demo is kept. Every change of screen melts, one melt step per tic (about one second):
+no game tic runs and nothing is recorded during it, keys and mouse buttons pressed during
+it reach the game right after it, mouse motion during it is ignored, and no sound is mixed
+(a short silence, as in linuxdoom-1.10 built with its in-process sound code; DOS DOOM and
+the Linux sound server played on). The session ends only when the player quits (or at a
+refusal, or after 1,048,576 tics). On exit, a line starting \"session:\" names the game
+mode, the start and where the session was, and after E1M8 the tics at which the finale and
+its art screen began.
 
 Limits: an OpenGL 2.1 (or OpenGL ES 2) driver is required. There is no music, menu,
-automap or saving. Not built yet: the finale
-after E1M8, the screen melt (the new picture appears at once; the melt's random draws are
-made), the easy skills, and E1M7 on skill 3, which the simulation does not admit yet.
-Where the game reaches one of them it stops with a screen saying so (NOT BUILT YET or TIC
-REFUSED) rather than play differently from the original; the demo is kept. Cheat codes
+automap or saving. Built now, as the original has them: the finale
+after E1M8, the screen melt (see The session above); earlier versions stopped at E1M8's
+exit with a NOT BUILT YET screen, and no longer do. Not built yet: the easy skills (0 and
+1), refused at launch, and E1M7 on skill 3, which the simulation does not admit yet: where
+the session reaches it, it stops with a plain screen (TIC REFUSED) rather than play
+differently from the original; the demo is kept. Cheat codes
 have no effect: their keys reach the game as ordinary keys. The status bar face's idle glance follows the sound's random draws as the genuine
 engine replaying the session's demo does, under the declared schedule and build; a vanilla
 player's menu keys (Esc, -, =, F1-F10), which start menu sounds, are not part of a demo and
@@ -478,9 +493,10 @@ fn run(o: Options) -> Result<(), String> {
         files.push(std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?);
     }
     let refs: Vec<&[u8]> = files.iter().map(Vec::as_slice).collect();
-    // the M6a session (wire 26 with sound across levels; rulings U2, U4, U6)
-    let data =
-        GameData::load_session(&refs, o.game_mode, o.map, o.skill).map_err(|e| e.to_string())?;
+    // the M6a session (wire 26 with sound across levels; rulings U2, U4, U6) in its finale-and-
+    // melt configuration (M6a part 2, ruling V1: the frozen configuration is no longer offered)
+    let data = GameData::load_finale_and_melt_session(&refs, o.game_mode, o.map, o.skill)
+        .map_err(|e| e.to_string())?;
     drop(files);
     if let Some(line) = data.session_mode().map(|m| mode_line(m, &o.iwad)) {
         eprintln!("doom-play: {line}");

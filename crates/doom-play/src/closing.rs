@@ -124,6 +124,11 @@ impl Play {
                 s.clock_stopped();
             }
             s.record(now_us, u.ran, u.dropped);
+            if u.melt_steps > 0 {
+                // M6a part 2: the interval that spans a melt (one melt step per tic, no game
+                // tic) is not an interval between tics; it is reported apart.
+                s.melt();
+            }
         }
         u
     }
@@ -176,6 +181,7 @@ impl Play {
     /// The end of an `update` call: the log's pump line; after the run's end, the exit report
     /// ([`Play::conclude`]), whose lines are returned (once).
     pub(crate) fn pump_end(&mut self, u: Update, captured: bool) -> Vec<String> {
+        self.host.log.melt_steps(u.melt_steps);
         self.host
             .log
             .pump_end(&self.app, u.ran, u.dropped, captured);

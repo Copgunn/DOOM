@@ -481,6 +481,24 @@ pub enum Fill {
     Resume,
     /// An underrun before this one.
     Underrun,
+    /// The queue ran dry during a melt ([`Queue::melt_start`]), which is no underrun.
+    Melt,
+}
+
+/// What the queue saw during melts (M6a part 2; diagnostics only, printed in the exit lines when a
+/// melt was seen). While a melt runs the app hands over no buffer for about a second, as the
+/// reference build mixes and submits nothing then (M6a note §1.16.4), so the queue runs dry and
+/// plays silence: that silence is counted here, never as an underrun.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct MeltCounters {
+    /// Melts begun ([`Queue::melt_start`]).
+    pub melts: u64,
+    /// Pulls during a melt that found the queue dry after output had started (each ends the
+    /// output; it starts again at the start threshold after the melt).
+    pub ran_dry: u64,
+    /// Frames of silence the pulls played while a melt ran (the queue dry, or waiting for its
+    /// start threshold).
+    pub silence_frames: u64,
 }
 
 /// Where the game was at one underrun (diagnostics only, printed in the exit lines; added
@@ -586,6 +604,10 @@ pub struct Queue {
     fill_buffers: u64,
     /// The first [`UNDERRUNS_LISTED`] underruns, in order.
     underruns: Vec<Underrun>,
+    /// A melt is running ([`Queue::melt_start`] to [`Queue::melt_end`]).
+    melting: bool,
+    /// What the queue saw during melts.
+    melt: MeltCounters,
 }
 
 impl Queue {
@@ -607,6 +629,8 @@ impl Queue {
             fill: Fill::SessionStart,
             fill_buffers: 0,
             underruns: Vec::with_capacity(UNDERRUNS_LISTED),
+            melting: false,
+            melt: MeltCounters::default(),
         }
     }
 
@@ -639,7 +663,9 @@ impl Queue {
     /// volume and mute applied. Silence while paused or before the queue first holds its start
     /// threshold ([`START_FRAMES`] unless [`Queue::with_start_frames`] set another); when
     /// frames run out after the start, the rest is silence, the underrun is counted and the
-    /// start threshold applies again. Every pull is counted in [`Queue::pull_stats`].
+    /// start threshold applies again. Every pull is counted in [`Queue::pull_stats`]. During a
+    /// melt ([`Queue::melt_start`]) the silence is the same (never a repeated buffer), but it is
+    /// counted in [`Queue::melt_counters`] and not as an underrun.
     pub fn pull(&mut self, out: &mut [i16]) {
         out.fill(0);
         let depth = (!self.paused).then_some(self.frames.len() as u64);
@@ -649,6 +675,9 @@ impl Queue {
         }
         if !self.started {
             if self.frames.len() < self.start_frames {
+                if self.melting {
+                    self.melt.silence_frames += (out.len() / 2) as u64;
+                }
                 return;
             }
             self.started = true;
@@ -664,7 +693,12 @@ impl Queue {
                 None => missing += 1,
             }
         }
-        if missing > 0 {
+        if missing > 0 && self.melting {
+            self.started = false;
+            self.melt.ran_dry += 1;
+            self.melt.silence_frames += missing;
+            (self.fill, self.fill_buffers) = (Fill::Melt, 0);
+        } else if missing > 0 {
             self.counters.underruns += 1;
             self.counters.underrun_frames += missing;
             self.started = false;
@@ -696,10 +730,29 @@ impl Queue {
         (self.fill, self.fill_buffers) = (Fill::Resume, 0);
     }
 
+    /// A melt began: until [`Queue::melt_end`] no buffer arrives, and running dry is counted in
+    /// [`Queue::melt_counters`], not as an underrun.
+    pub fn melt_start(&mut self) {
+        self.melting = true;
+        self.melt.melts += 1;
+    }
+
+    /// The melt ended; the next buffers start the output again at the start threshold if it ran
+    /// dry.
+    pub fn melt_end(&mut self) {
+        self.melting = false;
+    }
+
+    /// What the queue saw during melts so far.
+    pub fn melt_counters(&self) -> MeltCounters {
+        self.melt
+    }
+
     /// A new session: queued frames of the previous one are dropped.
     pub fn session_start(&mut self) {
         self.frames.clear();
         self.started = false;
+        self.melting = false;
         self.session += 1;
         self.tic = 0;
         self.playing = true;
@@ -846,6 +899,11 @@ impl DeviceSink {
         (q.pull_stats(), q.counters(), q.underruns().to_vec())
     }
 
+    /// What the queue saw during melts.
+    pub fn melt_counters(&self) -> MeltCounters {
+        lock(&self.queue).melt_counters()
+    }
+
     /// What the device's pulls saw so far.
     #[cfg(test)]
     pub fn pull_stats(&self) -> PullStats {
@@ -874,6 +932,7 @@ impl DeviceSink {
         let (pulls, counters, underruns) = self.snapshot();
         let mut lines = device_lines(self.backend(), &self.facts, self.trial, &pulls, &counters);
         lines.extend(underrun_line(&underruns, counters.underruns));
+        lines.extend(melt_line(self.melt_counters()));
         lines
     }
 }
@@ -892,6 +951,7 @@ pub fn underrun_line(listed: &[Underrun], total: u64) -> Option<String> {
                 Fill::SessionStart => "the session's start",
                 Fill::Resume => "a resume",
                 Fill::Underrun => "the underrun before",
+                Fill::Melt => "a melt",
             };
             format!(
                 "session {} tic {}, {} frames, {} buffer{} after {why}{}",
@@ -918,6 +978,23 @@ pub fn underrun_line(listed: &[Underrun], total: u64) -> Option<String> {
          buffers queued since the queue last began to fill and why: {}{more}",
         each.join("; ")
     ))
+}
+
+/// The exit line of the melts (M6a part 2), `None` when no melt was seen: the silence they caused
+/// is the reference build's behaviour, so it is reported here and never as an underrun.
+pub fn melt_line(m: MeltCounters) -> Option<String> {
+    (m.melts > 0).then(|| {
+        format!(
+            "audio during melts: {} melt{}; {} frames of silence played while a melt ran (the queue \
+             ran dry {} time{}); linuxdoom-1.10 built with its in-process sound code mixes and \
+             submits nothing during a melt, so this is no underrun and is not counted as one",
+            m.melts,
+            if m.melts == 1 { "" } else { "s" },
+            m.silence_frames,
+            m.ran_dry,
+            if m.ran_dry == 1 { "" } else { "s" },
+        )
+    })
 }
 
 /// The native sample rates as the exit lines and the probe give them.
@@ -1003,6 +1080,12 @@ impl AudioSink for DeviceSink {
     }
     fn session_start(&mut self) {
         lock(&self.queue).session_start();
+    }
+    fn melt_start(&mut self) {
+        lock(&self.queue).melt_start();
+    }
+    fn melt_end(&mut self) {
+        lock(&self.queue).melt_end();
     }
 }
 
@@ -1124,6 +1207,12 @@ impl AudioSink for Output {
     }
     fn session_start(&mut self) {
         self.sink().session_start();
+    }
+    fn melt_start(&mut self) {
+        self.sink().melt_start();
+    }
+    fn melt_end(&mut self) {
+        self.sink().melt_end();
     }
 }
 

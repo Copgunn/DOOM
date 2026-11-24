@@ -23,6 +23,10 @@ pub struct TicStats {
     /// The tic clock stopped since the last recorded tic: the next tic begins a stretch.
     stopped: bool,
     dropped: u64,
+    /// The index in `times` of the first tic after every melt (M6a part 2).
+    melt_ends: Vec<usize>,
+    /// A melt was shown since the last recorded tic.
+    after_melt: bool,
 }
 
 impl TicStats {
@@ -30,6 +34,9 @@ impl TicStats {
     pub fn record(&mut self, now_us: u64, ran: u64, dropped: u64) {
         if ran > 0 && std::mem::take(&mut self.stopped) && !self.times.is_empty() {
             self.starts.push(self.times.len());
+        }
+        if ran > 0 && std::mem::take(&mut self.after_melt) && !self.times.is_empty() {
+            self.melt_ends.push(self.times.len());
         }
         self.times.extend((0..ran).map(|_| now_us));
         self.dropped += dropped;
@@ -42,7 +49,17 @@ impl TicStats {
         self.stopped = true;
     }
 
+    /// Notes that the update showed melt steps after its tics (M6a part 2): the interval from the
+    /// last tic to the next spans a melt, one melt step per tic of wall time with no game tic, so
+    /// it is left out of the intervals and reported apart.
+    pub fn melt(&mut self) {
+        self.after_melt = true;
+    }
+
     pub fn summary(&self) -> String {
+        if !self.melt_ends.is_empty() {
+            return summarize_with_melts(&self.times, &self.starts, &self.melt_ends, self.dropped);
+        }
         if self.starts.is_empty() {
             summarize(&self.times, self.dropped)
         } else {
@@ -64,15 +81,40 @@ pub fn summarize(times: &[u64], dropped: u64) -> String {
 /// pause or an end screen), which is left out of the intervals and of the wall time and is
 /// reported separately. Without a break the text is as it was before breaks were told apart.
 pub fn summarize_stretches(times: &[u64], starts: &[usize], dropped: u64) -> String {
+    summarize_with_melts(times, starts, &[], dropped)
+}
+
+/// [`summarize_stretches`] that also leaves out the intervals that end at `melt_ends` (the first
+/// tic after each melt, M6a part 2) and reports them apart; with no melt the text is that of
+/// [`summarize_stretches`].
+pub fn summarize_with_melts(
+    times: &[u64],
+    starts: &[usize],
+    melt_ends: &[usize],
+    dropped: u64,
+) -> String {
     let n = times.len();
     let (mut d, mut breaks) = (Vec::with_capacity(n), 0u64);
+    let (mut melts, mut melt_time) = (0u64, 0u64);
     for (i, w) in times.windows(2).enumerate() {
         if starts.contains(&(i + 1)) {
             breaks += w[1] - w[0];
+        } else if melt_ends.contains(&(i + 1)) {
+            melts += 1;
+            melt_time += w[1] - w[0];
         } else {
             d.push(w[1] - w[0]);
         }
     }
+    let melt_text = match melts {
+        0 => String::new(),
+        m => format!(
+            "; the {m} interval{} across a melt (one melt step per tic of wall time, no game \
+             tic), {:.3} s, not counted",
+            if m == 1 { "" } else { "s" },
+            melt_time as f64 / 1e6
+        ),
+    };
     if d.is_empty() {
         return format!("tic-stats: executed {n}, dropped {dropped}, too few tics for intervals");
     }
@@ -95,7 +137,7 @@ pub fn summarize_stretches(times: &[u64], starts: &[usize], dropped: u64) -> Str
         ),
     };
     format!(
-        "tic-stats: executed {n}, dropped {dropped}, wall {wall:.3} s ({span}) against {expected:.3} s expected; \
+        "tic-stats: executed {n}, dropped {dropped}, wall {wall:.3} s ({span}{melt_text}) against {expected:.3} s expected; \
          intervals us: mean {mean:.1}, sd {sd:.1}, min {}, median {}, p95 {}, p99 {}, max {}; \
          more than 1 ms from 1/35 s: {}, more than 5 ms: {}",
         d[0],
