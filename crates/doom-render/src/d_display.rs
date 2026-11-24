@@ -38,7 +38,9 @@
 //! accounting across a whole single-player session (level starts that keep the index, the
 //! intermission, every wipe of the session), saved as `DDSP` version 3. Every M5b and M5c display,
 //! method and state above is unchanged; a session display refuses the calls that do not fit its
-//! game state.
+//! game state. M6a part 2 adds a second session configuration beside it
+//! ([`Display::new_session_with`], [`session::SessionConfig::FinaleAndMelt`]) that draws the
+//! finale and every melt, saved as `DDSP` version 4 ([`session::finale_melt`]).
 use crate::hu_stuff::{self, HudState, Message};
 use crate::st_stuff::{self, Attacker, StatusBarState, StatusGraphics, StatusInputs};
 use crate::v_video::{BG_ROWS, Canvas, DrawError, Patch};
@@ -114,6 +116,9 @@ pub enum DisplayObserveError {
     /// game state (a level tic observed outside a level, or [`Display::begin_level`] after the
     /// session's first tic).
     WrongGameState,
+    /// M6a session display in [`session::SessionConfig::FinaleAndMelt`] only: a melt is in
+    /// progress, during which no tic runs (d_main.c:329-344; M6a note §1.16.1).
+    MeltInProgress,
 }
 
 /// A refused frame. The display state is unchanged.
@@ -128,6 +133,9 @@ pub enum DisplayRefusal {
     BeforeFirstTic,
     /// M6a session display only: a level frame asked for outside a level.
     WrongGameState,
+    /// M6a session display in [`session::SessionConfig::FinaleAndMelt`] only: a melt is in
+    /// progress, during which `D_Display` draws no other frame (d_main.c:329-344).
+    MeltInProgress,
 }
 impl From<RenderRefusal> for DisplayRefusal {
     fn from(e: RenderRefusal) -> Self {
@@ -361,7 +369,7 @@ impl Display {
         self.bg.fill(0);
         self.bg_defined.fill(false);
         if let Some(s) = &mut self.session {
-            **s = session::Session::fresh();
+            **s = session::Session::fresh(s.config);
         }
         Ok(())
     }
@@ -457,6 +465,9 @@ impl Display {
         draws: u16,
         adjust: impl FnOnce(&mut StatusInputs, &mut Option<Message>),
     ) -> Result<Option<Message>, DisplayObserveError> {
+        if self.session.as_ref().is_some_and(|s| s.melt.is_some()) {
+            return Err(DisplayObserveError::MeltInProgress);
+        }
         if self
             .session
             .as_ref()
@@ -527,6 +538,9 @@ impl Display {
         sim: &Simulation,
         out: &mut Frame,
     ) -> Result<DisplayFrame, DisplayRefusal> {
+        if self.session.as_ref().is_some_and(|s| s.melt.is_some()) {
+            return Err(DisplayRefusal::MeltInProgress);
+        }
         if self
             .session
             .as_ref()
@@ -537,6 +551,9 @@ impl Display {
         let Some(inputs) = self.inputs.filter(|_| sim.tic() != 0) else {
             return Err(DisplayRefusal::BeforeFirstTic);
         };
+        // wipe_StartScreen before anything of the frame is drawn (d_main.c:226; f_wipe.c:237-245):
+        // the persistent `screens[0]`, which a level start carried over (FinaleAndMelt only).
+        let melt_start = self.melt_start();
         let full = self.renderer.config().screenblocks == 11;
         let redrawsbar = self.wipe || (!full && self.fullscreen);
         let mut status = self.status;
@@ -579,6 +596,7 @@ impl Display {
             },
         )?;
         let st = st.expect("drawn");
+        let melt_index = status.rndindex;
         if self.wipe && self.contract == RandomContract::WithSound {
             // wipe_EndScreen and the melt loop after the composed frame (d_main.c:327-340): the
             // first wipe_ScreenWipe call runs wipe_initMelt's draws (f_wipe.c:280-286, 159-166).
@@ -594,6 +612,11 @@ impl Display {
             // `oldgamestate = wipegamestate = gamestate` (d_main.c:300).
             s.old_gamestate = Some(session::GameState::Level);
         }
+        if let Some((screen, taint)) = melt_start {
+            // The palette ST_doPaletteStuff set for this frame (st_stuff.c:1045-1050), in force
+            // through the whole melt (M6a note §1.16.3).
+            self.begin_melt(screen, taint, st.palette, melt_index);
+        }
         Ok(DisplayFrame {
             palette: st.palette,
             palette_set: st.palette_set,
@@ -606,6 +629,11 @@ impl Display {
     /// Switches between screenblocks 10 and 11 (`R_SetViewSize`); the next frame follows
     /// `D_Display`'s `fullscreen` rule (d_main.c:242-243).
     pub fn set_screenblocks(&mut self, screenblocks: u8) -> Result<(), ConfigError> {
+        if self.session.as_ref().is_some_and(|s| s.melt.is_some()) {
+            // The melt loop reads no input (d_main.c:329-344), so `R_SetViewSize` cannot run
+            // during a melt (M6a note §1.16.5).
+            return Err(ConfigError::MeltInProgress);
+        }
         let mut r = Renderer::new(
             self.res.clone(),
             self.renderer_level(),

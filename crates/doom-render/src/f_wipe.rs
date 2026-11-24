@@ -2,9 +2,9 @@
 //! `wipe_doMelt` call with `ticks = 1` (f_wipe.c:171-224), the declared schedule of §1.16.1 (one
 //! melt step per tic).
 //!
-//! **Reached by no configuration.** The session display still refuses a melt in progress
-//! (`NotYet::MeltPictures`); this module is the pure step that a later configuration will call,
-//! proven against the genuine engine's per-step picture digests.
+//! **Reached only by the finale-and-melt session display** (`SessionConfig::FinaleAndMelt`,
+//! `Display::melt_step`); the frozen session display still refuses a melt in progress
+//! (`NotYet::MeltPictures`). Proven against the genuine engine's per-step picture digests.
 //!
 //! The genuine melt works on three buffers: the start screen (`wipe_scr_start`, `screens[2]`,
 //! f_wipe.c:243-244), the end screen (`wipe_scr_end`, `screens[3]`, f_wipe.c:255-256) and the
@@ -175,6 +175,16 @@ impl Melt {
     /// The 160 column positions (`y[]`, f_wipe.c:138): negative while waiting, then 0..=200.
     pub fn columns(&self) -> &[i32; MELT_COLUMNS] {
         &self.y
+    }
+
+    /// The start screen (`wipe_scr_start`, f_wipe.c:243-244), row-major.
+    pub fn start(&self) -> &[u8] {
+        &self.start
+    }
+
+    /// The end screen (`wipe_scr_end`, f_wipe.c:255-256), row-major.
+    pub fn end(&self) -> &[u8] {
+        &self.end
     }
 }
 

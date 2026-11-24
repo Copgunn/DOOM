@@ -2,9 +2,9 @@
 //! (f_finale.c:700-736) for stage 0, the text crawl (`F_TextWrite`, f_finale.c:261-327), and
 //! stage 1, the art screen (f_finale.c:712-721).
 //!
-//! **Reached by no configuration.** The session display still refuses the finale
-//! (`Display::draw_finale` gives `NotYet::FinaleDrawer`); this module is the pure drawer that a
-//! later configuration will call, proven against the genuine engine's committed frames. It reads
+//! **Reached only by the finale-and-melt session display** (`SessionConfig::FinaleAndMelt`,
+//! `Display::draw_finale`); the frozen session display still refuses the finale
+//! (`NotYet::FinaleDrawer`). Proven against the genuine engine's committed frames. It reads
 //! only the explicit [`FinaleView`] (`finalestage` and `finalecount`, which the game layer's
 //! finale logic owns) and the game mode, draws no random number (no `M_Random` or `P_Random`
 //! call in f_finale.c's Doom 1 path) and writes nothing but `screens[0]`.
