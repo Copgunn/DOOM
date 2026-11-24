@@ -1,0 +1,1653 @@
+{
+ "schema": "DOOM-M6A2-RESULTS-v1",
+ "runner_contract_sha256": "77184f1bec516862d789c61b9935c96e34ef5727e93b406d1d330e4526d42cd1",
+ "tools_sha256": {
+  "tools/reference/m6a2_goldens.py": "72a213a93d0a97315c1d0e1e4d234be635db31b05f1f390ab79baa21e6536bc9",
+  "tools/reference/m6a2_wad.py": "4ebb8b89c3769d5e627d5a83c516ba917e702c1c293c315b6a66267758427acc",
+  "tools/reference/m6a_goldens.py": "8283cbcb18c806ce029b147c473d53032cc3e686630c5fe8a8eb7990b238830c",
+  "tools/reference/m6a_build.py": "db8a4c558b6aa0039e1aaff87de67e054c3e6bffbdc5315b78bf4d8b27e2c7cb",
+  "tools/reference/m6a_melt_steps.py": "19e36dd8b76115edb05f18f4ca94e12b9bb09f6deb197ceb1b922a36d904f2bc",
+  "tools/reference/m6a_session.c": "22057830b73b3b31a5e48b0077b05b55a6cab657ebdff8fecc6451c0ff3d8bdc",
+  "tools/reference/m6a_wi_access.c": "2195c82be97d008fb2162e11ab86256bd86bc9c19dfde1e306406bd2b41358dd"
+ },
+ "manifest_sha256": "913e1a88c4b8f801fb3892b6161efb8a62e4a2bb25af09f1c8a62e052b7ba821",
+ "inputs_sha256": {
+  "tests/reference/m5b_gfx.wad": "50d0f0f881e2347a3527405b97a8f5abd949cff923a7078d03ec8c20a40ca032",
+  "tests/reference/m5c_sfx.wad": "c228e186aceb05529187755be20f24321b7a46d2ba59a2a18e39b587e31d9699",
+  "tests/reference/m6a2_wads/m6a2_font.wad": "db734402925384b04591de8f716b008b5a91ef9e2d3c9038385eb6f6885f5a01",
+  "tests/reference/m6a_scripts/FINALE.lmp": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c",
+  "tests/reference/m6a_wads/episode.wad": "23c052fda9dfbf4b23cd5c2f6af75ea1d27c4a5b1a1096f6c313b766950ef94b",
+  "tests/reference/m6a_wads/m6a_gfx.wad": "ec4826c3881919eb09108018aa3efb357c9891c4ae4256dbc9502749cade1d37",
+  "tests/reference/m6a_wads/m6a_music.wad": "7e5bcf6fa1837e6af4d996ae16d914669921ccc9ed5b6e924ea5a8dc826a47ea"
+ },
+ "switches": {
+  "--handle": "integrated",
+  "--update-schedule": "tic",
+  "--wipe": "genuine",
+  "--sound": "on",
+  "--render": "every",
+  "--melt-clock": "counter (melt files: unit)"
+ },
+ "views": [
+  10,
+  11
+ ],
+ "variants": [
+  "strict",
+  "overflow",
+  "address",
+  "address_bounds"
+ ],
+ "asan_options": "detect_leaks=0 (leak detection disabled; not LeakSanitizer coverage)",
+ "claim": "every golden is the genuine engine's stream (strict build), identical in the overflow, address and address_bounds builds; the melt files claim one SHA-256 per melt step and the palette per melt under the declared schedule (ruling V4)",
+ "crawl": {
+  "text_source": "linuxdoom-1.10/d_englsh.h:359-374 (E1TEXT)",
+  "characters": 440,
+  "text_sha256": "0fa66f94c444309badc14cd9f8107a2cd8be218d31dbe17eee545cf72db30ef5",
+  "lines": 15,
+  "empty_lines": 2,
+  "newlines": 15,
+  "glyphs_drawn": 356,
+  "gaps_4px": 69,
+  "gap_characters": [
+   " "
+  ],
+  "longest_line_characters": 39,
+  "largest_right_edge": 228,
+  "lowest_glyph_bottom": 171,
+  "every_glyph_fits": true,
+  "last_glyph_index": 438,
+  "last_glyph_finale_tic": 1327,
+  "last_character_finale_tic": 1330,
+  "stage1_finale_tic": 1571,
+  "idle_tics_after_last_glyph": 243
+ },
+ "full_crawl": {
+  "FULLREG": {
+   "mode": "registered",
+   "wadset": "fullcrawl",
+   "lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c",
+   "end": "marker",
+   "session_tics": 1951,
+   "loads": 1,
+   "wipes": 3,
+   "level_frames": 321,
+   "other_frames": 1630,
+   "sound_starts": 16,
+   "dumps": 322,
+   "variants": {
+    "overflow": {
+     "identical_to_strict": true
+    },
+    "address": {
+     "identical_to_strict": true
+    },
+    "address_bounds": {
+     "identical_to_strict": true,
+     "bounds_reports": []
+    }
+   },
+   "melt": {
+    "claim": "none",
+    "melts": 3,
+    "steps": [
+     42,
+     38,
+     38
+    ],
+    "start_differs_from_end": 3,
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "level to finale": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "finale text to art screen": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     }
+    },
+    "other_rows_equal_to_counter_clock": true,
+    "predicted_steps_equal": 3
+   },
+   "whole_frames_2d_undefined": 0,
+   "flagged_level_frames": 0,
+   "other_draws": 0,
+   "dump_set_sha256": "f2571fe82a585faf0f179b4b37e0a8a924a90e8b3971bdd804af8d17ee53e374",
+   "dumps_per_load": [
+    {
+     "load": 0,
+     "snapshots": 322,
+     "sha256": "f2571fe82a585faf0f179b4b37e0a8a924a90e8b3971bdd804af8d17ee53e374"
+    }
+   ],
+   "goldens": {
+    "tests/reference/m6a2_session/FULLREG.session": "0f8103a624f28a26517dce4a831ed02310f06d357393e38da2b499abcc185fc5",
+    "tests/reference/m6a2_sound/FULLREG.sound": "4e51aa9d9e998260718d65a053abc855bcae1442246495d2cd617e45bbe9ee69",
+    "tests/reference/m6a2_frames/FULLREG.sb10.frames": "9ef0c3552ee35f3ad8b32773ea848f5bd18dadfd7d1196f709cf4c5d7e45c462",
+    "tests/reference/m6a2_frames/FULLREG.sb11.frames": "636d3331b6d8385461d9b96e82ba1f1672ac4c9a111797698453c8c52f1c148b",
+    "tests/reference/m6a2_melt/FULLREG.sb10.melt": "532c770e0cfd04bbfaf370c2779c88f9dfd71e92230012436e31e46e73720928"
+   },
+   "witnesses": {
+    "1": [
+     "E1M8 exit on tic 320; tic 321 is the finale (gamestate 2): no intermission, no intermission draws"
+    ],
+    "11": [
+     "finale tics 321-1950: stage 1 from tic 1891 (finale tic 1571), still stage 1 with no game action at the last tic; presses on tics [421, 521, 1891] changed nothing; no finale M_Random draw"
+    ]
+   },
+   "crawl": {
+    "sb10": {
+     "finale_tics": 1630,
+     "finale_frames_equal_to_model": 1630,
+     "text_frame_changes": 357,
+     "last_glyph_finale_tic": 1327,
+     "frames_equal_from_last_glyph_to_stage1": 244,
+     "stage1_finale_tic": 1571,
+     "lines_with_glyphs": 13,
+     "lines": 15,
+     "characters_counted_by_stage1": 440,
+     "glyphs_drawn": 356,
+     "gaps_4px": 69,
+     "newlines": 15
+    },
+    "sb11": {
+     "finale_tics": 1630,
+     "finale_frames_equal_to_model": 1630,
+     "text_frame_changes": 357,
+     "last_glyph_finale_tic": 1327,
+     "frames_equal_from_last_glyph_to_stage1": 244,
+     "stage1_finale_tic": 1571,
+     "lines_with_glyphs": 13,
+     "lines": 15,
+     "characters_counted_by_stage1": 440,
+     "glyphs_drawn": 356,
+     "gaps_4px": 69,
+     "newlines": 15
+    }
+   },
+   "finale_session_tics": [
+    321,
+    1950
+   ]
+  },
+  "FULLRET": {
+   "mode": "retail",
+   "wadset": "fullcrawl",
+   "lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c",
+   "end": "marker",
+   "session_tics": 1951,
+   "loads": 1,
+   "wipes": 3,
+   "level_frames": 321,
+   "other_frames": 1630,
+   "sound_starts": 16,
+   "dumps": 322,
+   "variants": {
+    "overflow": {
+     "identical_to_strict": true
+    },
+    "address": {
+     "identical_to_strict": true
+    },
+    "address_bounds": {
+     "identical_to_strict": true,
+     "bounds_reports": []
+    }
+   },
+   "melt": {
+    "claim": "none",
+    "melts": 3,
+    "steps": [
+     42,
+     38,
+     38
+    ],
+    "start_differs_from_end": 3,
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "level to finale": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     },
+     "finale text to art screen": {
+      "melts": 1,
+      "start_differs_from_end": 1
+     }
+    },
+    "other_rows_equal_to_counter_clock": true,
+    "predicted_steps_equal": 3
+   },
+   "whole_frames_2d_undefined": 0,
+   "flagged_level_frames": 0,
+   "other_draws": 0,
+   "dump_set_sha256": "f2571fe82a585faf0f179b4b37e0a8a924a90e8b3971bdd804af8d17ee53e374",
+   "dumps_per_load": [
+    {
+     "load": 0,
+     "snapshots": 322,
+     "sha256": "f2571fe82a585faf0f179b4b37e0a8a924a90e8b3971bdd804af8d17ee53e374"
+    }
+   ],
+   "goldens": {
+    "tests/reference/m6a2_session/FULLRET.session": "62a673b2cbf93d76748e2422f734d1fa18a935e63f8afb3616f8fabce9a2a503",
+    "tests/reference/m6a2_sound/FULLRET.sound": "0f74963b5acc63c35d6aca9957dd657761ecec89f5abffb47f4bd84ae315b4af",
+    "tests/reference/m6a2_frames/FULLRET.sb10.frames": "108849216a257f1fd695a9e4390ed4fc554d91bb810c0b30095bcad3d7b91c1a",
+    "tests/reference/m6a2_frames/FULLRET.sb11.frames": "10beb4a2bc58145c31d85140d71c734f145ab2816c24159e354a3856d3373022",
+    "tests/reference/m6a2_melt/FULLRET.sb10.melt": "b45efc2a53be1e65b6870640e27479b56453ef2464d25d8ca51e6748da9d6e02"
+   },
+   "witnesses": {
+    "1": [
+     "E1M8 exit on tic 320; tic 321 is the finale (gamestate 2): no intermission, no intermission draws"
+    ],
+    "11": [
+     "finale tics 321-1950: stage 1 from tic 1891 (finale tic 1571), still stage 1 with no game action at the last tic; presses on tics [421, 521, 1891] changed nothing; no finale M_Random draw"
+    ]
+   },
+   "crawl": {
+    "sb10": {
+     "finale_tics": 1630,
+     "finale_frames_equal_to_model": 1630,
+     "text_frame_changes": 357,
+     "last_glyph_finale_tic": 1327,
+     "frames_equal_from_last_glyph_to_stage1": 244,
+     "stage1_finale_tic": 1571,
+     "lines_with_glyphs": 13,
+     "lines": 15,
+     "characters_counted_by_stage1": 440,
+     "glyphs_drawn": 356,
+     "gaps_4px": 69,
+     "newlines": 15
+    },
+    "sb11": {
+     "finale_tics": 1630,
+     "finale_frames_equal_to_model": 1630,
+     "text_frame_changes": 357,
+     "last_glyph_finale_tic": 1327,
+     "frames_equal_from_last_glyph_to_stage1": 244,
+     "stage1_finale_tic": 1571,
+     "lines_with_glyphs": 13,
+     "lines": 15,
+     "characters_counted_by_stage1": 440,
+     "glyphs_drawn": 356,
+     "gaps_4px": 69,
+     "newlines": 15
+    }
+   },
+   "finale_session_tics": [
+    321,
+    1950
+   ]
+  }
+ },
+ "melt_sb11": {
+  "items": 31,
+  "melts": 131,
+  "steps": 5182,
+  "predicted_steps_equal": 131,
+  "kinds": {
+   "finale text to art screen": {
+    "melts": 4,
+    "steps": 152
+   },
+   "intermission to level": {
+    "melts": 41,
+    "steps": 1614
+   },
+   "level to finale": {
+    "melts": 5,
+    "steps": 190
+   },
+   "level to intermission": {
+    "melts": 45,
+    "steps": 1743
+   },
+   "reborn reload": {
+    "melts": 6,
+    "steps": 223
+   },
+   "session start": {
+    "melts": 30,
+    "steps": 1260
+   }
+  },
+  "per_item": {
+   "CHAIN": {
+    "end": "marker",
+    "melts": 15,
+    "steps": [
+     42,
+     39,
+     38,
+     35,
+     38,
+     37,
+     38,
+     43,
+     39,
+     35,
+     39,
+     35,
+     43,
+     41,
+     42
+    ],
+    "predicted_steps_equal": 15,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 7,
+      "steps": 265
+     },
+     "intermission to level": {
+      "melts": 7,
+      "steps": 277
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true,
+      "stopped_by": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+      "compared_through_tic": 141
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": [
+       "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'"
+      ]
+     }
+    },
+    "golden": "fa5ab948c027cecf41fedb2bb459120c55470958b13c7d2574790df1c055664b"
+   },
+   "INTSTA": {
+    "end": "marker",
+    "melts": 15,
+    "steps": [
+     42,
+     35,
+     38,
+     35,
+     38,
+     37,
+     43,
+     43,
+     38,
+     41,
+     38,
+     35,
+     43,
+     35,
+     43
+    ],
+    "predicted_steps_equal": 15,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 7,
+      "steps": 261
+     },
+     "intermission to level": {
+      "melts": 7,
+      "steps": 281
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true,
+      "stopped_by": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+      "compared_through_tic": 140
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": [
+       "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'"
+      ]
+     }
+    },
+    "golden": "7c4e701ec06a5cc1ab5fe09b90499e58451168b1ae18ae8a0b8f803852b44c07"
+   },
+   "INTSTB": {
+    "end": "marker",
+    "melts": 13,
+    "steps": [
+     42,
+     43,
+     41,
+     43,
+     43,
+     35,
+     40,
+     35,
+     40,
+     43,
+     37,
+     43,
+     35
+    ],
+    "predicted_steps_equal": 13,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 6,
+      "steps": 242
+     },
+     "intermission to level": {
+      "melts": 6,
+      "steps": 236
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "4098d6fddd08172a4597c3db288c0aac273fd6186b85f7f908efe044953c0423"
+   },
+   "INTIDLE": {
+    "end": "marker",
+    "melts": 2,
+    "steps": [
+     42,
+     38
+    ],
+    "predicted_steps_equal": 2,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 38
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "901dce261e69b52862d8b23c26fcc9e6e74afd2ad7e0ed4d09001a9097d63cc2"
+   },
+   "INTHELD": {
+    "end": "marker",
+    "melts": 5,
+    "steps": [
+     42,
+     39,
+     39,
+     37,
+     38
+    ],
+    "predicted_steps_equal": 5,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 2,
+      "steps": 76
+     },
+     "intermission to level": {
+      "melts": 2,
+      "steps": 77
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true,
+      "stopped_by": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+      "compared_through_tic": 221
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": [
+       "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'"
+      ]
+     }
+    },
+    "golden": "8c730ccf07c802f638cf3c99dd87d21969d5710181afeed2eac2593b6999ad01"
+   },
+   "INTFAST": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     41,
+     43
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 41
+     },
+     "intermission to level": {
+      "melts": 1,
+      "steps": 43
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "27b70569c99ee31ec8e5f951cf457e478cd48b9065598e868661f7d2e5057019"
+   },
+   "REBHELD": {
+    "end": "marker",
+    "melts": 4,
+    "steps": [
+     42,
+     35,
+     43,
+     35
+    ],
+    "predicted_steps_equal": 4,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "reborn reload": {
+      "melts": 1,
+      "steps": 35
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 43
+     },
+     "intermission to level": {
+      "melts": 1,
+      "steps": 35
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "285689b3201909d8892dc8adc3ad9d7081dfd20c263cef7203f0ef51bf39fc7d"
+   },
+   "REBLATE": {
+    "end": "marker",
+    "melts": 4,
+    "steps": [
+     42,
+     35,
+     38,
+     36
+    ],
+    "predicted_steps_equal": 4,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "reborn reload": {
+      "melts": 1,
+      "steps": 35
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 38
+     },
+     "intermission to level": {
+      "melts": 1,
+      "steps": 36
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "6afe0f4842c8d1078f32de05c7965739d1b58802cebe64c2818b3ed91db6f43d"
+   },
+   "SECRET": {
+    "end": "marker",
+    "melts": 9,
+    "steps": [
+     42,
+     43,
+     41,
+     41,
+     42,
+     38,
+     41,
+     43,
+     35
+    ],
+    "predicted_steps_equal": 9,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 4,
+      "steps": 165
+     },
+     "intermission to level": {
+      "melts": 4,
+      "steps": 159
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "f35ad98b4d9ce9b61197b53dfc45aeba9f20912fb45579be50342c13efd40e2d"
+   },
+   "REBSECRT": {
+    "end": "marker",
+    "melts": 8,
+    "steps": [
+     42,
+     43,
+     41,
+     41,
+     38,
+     35,
+     35,
+     35
+    ],
+    "predicted_steps_equal": 8,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 3,
+      "steps": 119
+     },
+     "intermission to level": {
+      "melts": 3,
+      "steps": 114
+     },
+     "reborn reload": {
+      "melts": 1,
+      "steps": 35
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "f32152f504231fd5251488456303f885a6b948cf87fea12f0dbd7874c89c9198"
+   },
+   "PROBE": {
+    "end": "marker",
+    "melts": 2,
+    "steps": [
+     42,
+     35
+    ],
+    "predicted_steps_equal": 2,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 35
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "c9283e71d547641a2f57e3ec645b3e43316ad4df2c1877bec243e606f00d36f3"
+   },
+   "USEAT130": {
+    "end": "marker",
+    "melts": 2,
+    "steps": [
+     42,
+     35
+    ],
+    "predicted_steps_equal": 2,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "reborn reload": {
+      "melts": 1,
+      "steps": 35
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "62f483bb8b65a9a707ff33d51a09ccfbf8c1bfef7d681c7c911653670de872c1"
+   },
+   "USEAT131": {
+    "end": "marker",
+    "melts": 2,
+    "steps": [
+     42,
+     43
+    ],
+    "predicted_steps_equal": 2,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "reborn reload": {
+      "melts": 1,
+      "steps": 43
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "619d66690f8acd97f69dfc1498b0d6eacb202454015d9699bf89b1deb2848487"
+   },
+   "USEAT132": {
+    "end": "marker",
+    "melts": 2,
+    "steps": [
+     42,
+     35
+    ],
+    "predicted_steps_equal": 2,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 35
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "159eaf6a810033ac8ef2e3ce1402eeaeef6e45a71ef90ce6ce3085bbd836eb44"
+   },
+   "RBXDEAD": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     35,
+     37
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 35
+     },
+     "intermission to level": {
+      "melts": 1,
+      "steps": 37
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "7c1c16c3f36d4e887c4667951842d74d44cb2ed5058ee6712e6746e2d0efa489"
+   },
+   "NOINTER": {
+    "end": "error:W_GetNumForName: d_inter not found!",
+    "melts": 1,
+    "steps": [
+     42
+    ],
+    "predicted_steps_equal": 1,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "050cdf9e120a747305cd4ab5d3ac778e680f9cc942fb47eaa0019c58a7f0f1b3"
+   },
+   "NOE1M2": {
+    "end": "error:W_GetNumForName: d_e1m2 not found!",
+    "melts": 2,
+    "steps": [
+     42,
+     39
+    ],
+    "predicted_steps_equal": 2,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 39
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "e66c6b959aeb6db5d2b4863631eb476e6df718659ec5d6363785f0924eddfc79"
+   },
+   "NOE1M2AT": {
+    "end": "error:W_GetNumForName: d_e1m2 not found!",
+    "melts": 0,
+    "steps": [],
+    "predicted_steps_equal": 0,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {},
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "3a65616f0497e3399424966add73b4c7baa6ed7791a99b00cb1460937a3a5493"
+   },
+   "FINREG": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     38,
+     38
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to finale": {
+      "melts": 1,
+      "steps": 38
+     },
+     "finale text to art screen": {
+      "melts": 1,
+      "steps": 38
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "bd604d31b35d8c474bd4f3d96c7f3faf36ea5808d5b1a99306bd9c19ce8bfb6a"
+   },
+   "FINRET": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     38,
+     38
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to finale": {
+      "melts": 1,
+      "steps": 38
+     },
+     "finale text to art screen": {
+      "melts": 1,
+      "steps": 38
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "73f39bc821856db52f93c527214dfde55d2e0a1db503e27c8cf275135adc814f"
+   },
+   "NOHELP2": {
+    "end": "error:W_GetNumForName: HELP2 not found!",
+    "melts": 2,
+    "steps": [
+     42,
+     38
+    ],
+    "predicted_steps_equal": 2,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to finale": {
+      "melts": 1,
+      "steps": 38
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "124d3e62950525669da38066fba01fe4d98529e509796a0ce3263dbe0890553d"
+   },
+   "NOVICTOR": {
+    "end": "error:W_GetNumForName: d_victor not found!",
+    "melts": 1,
+    "steps": [
+     42
+    ],
+    "predicted_steps_equal": 1,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "406039cc0cd32eed8bf5f164454d2d8c14cb820359909ac6fa7045f6d6d74df2"
+   },
+   "SKILL0": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     39,
+     38
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 39
+     },
+     "intermission to level": {
+      "melts": 1,
+      "steps": 38
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true,
+      "stopped_by": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+      "compared_through_tic": 141
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": [
+       "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'"
+      ]
+     }
+    },
+    "golden": "914aba99907b3411952ce589edbbcd36ef8397c4e53f6e9c4c69884c207238bc"
+   },
+   "SKILL1": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     39,
+     38
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 39
+     },
+     "intermission to level": {
+      "melts": 1,
+      "steps": 38
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true,
+      "stopped_by": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+      "compared_through_tic": 141
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": [
+       "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'"
+      ]
+     }
+    },
+    "golden": "914aba99907b3411952ce589edbbcd36ef8397c4e53f6e9c4c69884c207238bc"
+   },
+   "SKILL2": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     39,
+     38
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 39
+     },
+     "intermission to level": {
+      "melts": 1,
+      "steps": 38
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true,
+      "stopped_by": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+      "compared_through_tic": 141
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": [
+       "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'"
+      ]
+     }
+    },
+    "golden": "74c962f33f8c53892bcaa5d0ec578096a7ee3b94dfa6816c55143bf80868c8f0"
+   },
+   "SKILL3": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     39,
+     38
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 39
+     },
+     "intermission to level": {
+      "melts": 1,
+      "steps": 38
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true,
+      "stopped_by": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+      "compared_through_tic": 141
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": [
+       "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'"
+      ]
+     }
+    },
+    "golden": "9f6311ccc245e03da4bb97d9d355edd74209b7c3b13f99e3e9ea9dbf5aef940a"
+   },
+   "TURBO": {
+    "end": "marker",
+    "melts": 6,
+    "steps": [
+     42,
+     39,
+     38,
+     40,
+     38,
+     43
+    ],
+    "predicted_steps_equal": 6,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 2,
+      "steps": 77
+     },
+     "intermission to level": {
+      "melts": 2,
+      "steps": 81
+     },
+     "reborn reload": {
+      "melts": 1,
+      "steps": 40
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true,
+      "stopped_by": "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'",
+      "compared_through_tic": 191
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": [
+       "st_stuff.c:1292:16: runtime error: index 5 out of bounds for type 'int [4]'"
+      ]
+     }
+    },
+    "golden": "b9c91ad35195f9f38b55fc94f9c423e1be60c9d21bd2c91c63b2cd598d9690fc"
+   },
+   "INTCMD": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     38,
+     43
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 38
+     },
+     "intermission to level": {
+      "melts": 1,
+      "steps": 43
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "1fe6629bf682ee7e0e29b8a34033a63b68bfe5074374748c146685b42f927d21"
+   },
+   "ATTACK": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     40,
+     43
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to intermission": {
+      "melts": 1,
+      "steps": 40
+     },
+     "intermission to level": {
+      "melts": 1,
+      "steps": 43
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "488b0f7b2f37c4c7279d13fe251969394cc83c69fb8ededf3f5c575e60a9770f"
+   },
+   "FULLREG": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     38,
+     38
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to finale": {
+      "melts": 1,
+      "steps": 38
+     },
+     "finale text to art screen": {
+      "melts": 1,
+      "steps": 38
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "c049f1b327d89c1fcd8de0383cff4677fc95eab030d583cd674d0c2dd76819eb"
+   },
+   "FULLRET": {
+    "end": "marker",
+    "melts": 3,
+    "steps": [
+     42,
+     38,
+     38
+    ],
+    "predicted_steps_equal": 3,
+    "other_rows_equal_to_golden": {
+     "frames": true,
+     "sound": true,
+     "session": true
+    },
+    "kinds": {
+     "session start": {
+      "melts": 1,
+      "steps": 42
+     },
+     "level to finale": {
+      "melts": 1,
+      "steps": 38
+     },
+     "finale text to art screen": {
+      "melts": 1,
+      "steps": 38
+     }
+    },
+    "variants": {
+     "overflow": {
+      "identical_to_strict": true
+     },
+     "address": {
+      "identical_to_strict": true
+     },
+     "address_bounds": {
+      "identical_to_strict": true,
+      "bounds_reports": []
+     }
+    },
+    "golden": "c90ebba204b6d3851ba419b3392c99d73ca0e32ca9531f4e4ed77fee0d4414cd"
+   }
+  }
+ }
+}

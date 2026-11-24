@@ -1,0 +1,106 @@
+{
+ "schema": "DOOM-M6A2-MANIFEST-v1",
+ "generator": "tools/reference/m6a2_wad.py",
+ "files": [
+  {
+   "file": "tests/reference/m6a2_wads/m6a2_font.wad",
+   "bytes": 5794,
+   "sha256": "db734402925384b04591de8f716b008b5a91ef9e2d3c9038385eb6f6885f5a01"
+  }
+ ],
+ "wadsets": {
+  "fullcrawl": [
+   "tests/reference/m6a_wads/episode.wad",
+   "tests/reference/m5b_gfx.wad",
+   "tests/reference/m5c_sfx.wad",
+   "tests/reference/m6a_wads/m6a_gfx.wad",
+   "tests/reference/m6a2_wads/m6a2_font.wad",
+   "tests/reference/m6a_wads/m6a_music.wad"
+  ]
+ },
+ "items": [
+  {
+   "name": "FULLREG",
+   "lump": "FINALE",
+   "mode": "registered",
+   "wadset": "fullcrawl",
+   "what": "the commands of FINREG (E1M8 into the finale) with the narrow font: the whole of E1TEXT crawls, every line begun by its newline, the last character on finale tic 1327, 243 idle tics, the stage-1 wipe on finale tic 1571 to HELP2",
+   "map": 8,
+   "skill": 2,
+   "tics": 1951,
+   "lmp": "tests/reference/m6a_scripts/FINALE.lmp",
+   "lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c"
+  },
+  {
+   "name": "FULLRET",
+   "lump": "FINALE",
+   "mode": "retail",
+   "wadset": "fullcrawl",
+   "what": "the same commands in retail mode: the whole crawl, then the stage-1 wipe to CREDIT",
+   "map": 8,
+   "skill": 2,
+   "tics": 1951,
+   "lmp": "tests/reference/m6a_scripts/FINALE.lmp",
+   "lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c"
+  }
+ ],
+ "melt_sb11": {
+  "manifest": "tests/reference/m6a_manifest.json",
+  "manifest_sha256": "f96e486db6e5a3cfaae049aa5cc64b34aa2721ee5df5cd7ac064e75c570e472a",
+  "items": [
+   "CHAIN",
+   "INTSTA",
+   "INTSTB",
+   "INTIDLE",
+   "INTHELD",
+   "INTFAST",
+   "REBHELD",
+   "REBLATE",
+   "SECRET",
+   "REBSECRT",
+   "PROBE",
+   "USEAT130",
+   "USEAT131",
+   "USEAT132",
+   "RBXDEAD",
+   "NOINTER",
+   "NOE1M2",
+   "NOE1M2AT",
+   "FINREG",
+   "FINRET",
+   "NOHELP2",
+   "NOVICTOR",
+   "SKILL0",
+   "SKILL1",
+   "SKILL2",
+   "SKILL3",
+   "TURBO",
+   "INTCMD",
+   "ATTACK",
+   "FULLREG",
+   "FULLRET"
+  ]
+ },
+ "crawl": {
+  "text_source": "linuxdoom-1.10/d_englsh.h:359-374 (E1TEXT)",
+  "characters": 440,
+  "text_sha256": "0fa66f94c444309badc14cd9f8107a2cd8be218d31dbe17eee545cf72db30ef5",
+  "lines": 15,
+  "empty_lines": 2,
+  "newlines": 15,
+  "glyphs_drawn": 356,
+  "gaps_4px": 69,
+  "gap_characters": [
+   " "
+  ],
+  "longest_line_characters": 39,
+  "largest_right_edge": 228,
+  "lowest_glyph_bottom": 171,
+  "every_glyph_fits": true,
+  "last_glyph_index": 438,
+  "last_glyph_finale_tic": 1327,
+  "last_character_finale_tic": 1330,
+  "stage1_finale_tic": 1571,
+  "idle_tics_after_last_glyph": 243
+ }
+}

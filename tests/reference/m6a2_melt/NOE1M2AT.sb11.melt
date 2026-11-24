@@ -1,0 +1,6 @@
+#schema,DOOM-M6A2-MELT-v1
+#claim,one SHA-256 per melt step over the picture's 64000 palette indices and the palette per melt (owner's ruling V4 of 2026-11-23) under the declared schedule: one wipe_ScreenWipe call with ticks = 1 per step (docs/M6A_REFERENCE_INVESTIGATION.md section 1.16.1; the runner's --melt-clock unit)
+#melt_steps,-
+#columns,V,tic,step,tics,done,sha256
+#columns,Y,tic,wipe,gamestate,start_sha256,end_sha256,palette,palette_set,clock
+#columns,W,tic,draws,steps
