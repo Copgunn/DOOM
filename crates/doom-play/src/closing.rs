@@ -194,7 +194,13 @@ impl Play {
         let current = current_session(report, self.app.session_name());
         let stats = self.stats.as_ref();
         let mut lines = match after_panic(report, &self.app, current, &fs.dir) {
-            Current::App => crate::window::exit_lines(&self.app, fs, stats),
+            Current::App => {
+                // the earlier sessions go before the last line, the current session's
+                let mut lines = crate::window::exit_lines(&self.app, fs, stats);
+                let at = lines.len() - 1;
+                lines.splice(at..at, saved_earlier_lines(report, current, &fs.dir));
+                lines
+            }
             Current::Saved(line) => {
                 let mut lines = crate::window::exit_lines_before_session(&self.app, fs, stats);
                 lines.push(line);
@@ -251,6 +257,19 @@ fn current_session<'a>(w: &'a Report, app_name: &'a str) -> &'a str {
         (Some(name), "") if w.panicked => name,
         (_, name) => name,
     }
+}
+
+/// One exit line per earlier session of the run whose file holds its whole demo (a session ended
+/// by a new game), in the order played and in the words of the current session's line, which
+/// follows them: "saved PATH (N tics)". An earlier session whose last write failed has its own
+/// line ([`earlier_lines`]) and none here, also when the rewrite at exit saved it.
+pub(crate) fn saved_earlier_lines(report: &Report, current: &str, dir: &Path) -> Vec<String> {
+    report
+        .saved
+        .iter()
+        .filter(|(name, _)| name != current && report.earlier.iter().all(|e| &e.name != name))
+        .map(|(name, tics)| format!("saved {} ({tics} tics)", dir.join(name).display()))
+        .collect()
 }
 
 /// One exit line per earlier session the writer left behind ([`Earlier`]): saved by the rewrite

@@ -215,6 +215,11 @@ pub(crate) struct Report {
     pub(crate) times: WriteTimes,
     /// Failures the app never heard of: (file name, error).
     pub(crate) unreported: Vec<(String, String)>,
+    /// Every session handed over whose file holds every tic the app recorded in it, in the order
+    /// of their claims, with that count (the run's sessions for the exit lines; a session ended
+    /// by a new game is saved like one ended by quitting). Empty when the writer panicked
+    /// ([`Self::whole`] then).
+    pub(crate) saved: Vec<(String, u64)>,
     /// The earlier sessions whose files the writer left behind, in order.
     pub(crate) earlier: Vec<Earlier>,
     /// The writer thread panicked.
@@ -525,7 +530,14 @@ impl WriterHost {
                 }
             }
         }
+        let held = |(name, recorded): &&(String, u64)| matches!(st.files.get(name), Some(OnDisk::Holds(t)) if t >= recorded);
+        let saved = if panicked {
+            Vec::new()
+        } else {
+            self.handed.iter().filter(held).cloned().collect()
+        };
         Report {
+            saved,
             counts: st.counts.clone(),
             times: st.times.clone(),
             unreported,
