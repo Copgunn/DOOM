@@ -1,6 +1,6 @@
 # Contributing
 
-Rust DOOM is an early independent Rust-native engine rewrite. Start with the
+Mutara is an early independent Rust-native engine rewrite. Start with the
 [README](README.md), [compatibility boundaries](docs/COMPATIBILITY.md) and
 [roadmap](docs/ROADMAP.md) before proposing a feature.
 

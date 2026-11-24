@@ -1,6 +1,6 @@
 # Architecture
 
-Rust DOOM separates validated input, owned authoritative simulation and eventual
+Mutara separates validated input, owned authoritative simulation and eventual
 presentation. Compatibility comes from original-source investigation and independent
 comparisons within explicitly selected simulation configurations, rather than
 mechanically copying C globals. The [glossary](README.md#short-glossary) explains

@@ -1,8 +1,10 @@
-# Rust DOOM
+# Mutara
+
+Pronounced *mew-TAR-uh* (/mjuːˈtɑːrə/).
 
 This is a Rust rewrite of the DOOM engine that accepts only behavior checked against id Software's Linux DOOM 1.10
 source, tic by tic (a tic is the game's 1/35-second step). Anything not proven identical to the original is refused.
-Most ports go for playable first and exact second; this one goes the other way round. (Rust DOOM is a working title.)
+Most ports go for playable first and exact second; this one goes the other way round. (Mutara is the engine; its vanilla core, in this repository, is mutara-doom.)
 
 It is meant for exact-behavior work: recorded demos (files of a player's inputs) stay in sync only if every tic
 matches, which is what speedrun and tool-assisted (TAS) research need.
