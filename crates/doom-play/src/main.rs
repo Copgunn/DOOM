@@ -186,12 +186,10 @@ mode, the start and where the session was, and after E1M8 the tics at which the 
 its art screen began.
 
 Limits: an OpenGL 2.1 (or OpenGL ES 2) driver is required. There is no music, menu,
-automap or saving. Built now, as the original has them: the finale
-after E1M8, the screen melt (see The session above); earlier versions stopped at E1M8's
-exit with a NOT BUILT YET screen, and no longer do. Not built yet: the easy skills (0 and
-1), refused at launch, and E1M7 on skill 3, which the simulation does not admit yet: where
-the session reaches it, it stops with a plain screen (TIC REFUSED) rather than play
-differently from the original; the demo is kept. Cheat codes
+automap or saving. Built: every change of screen melts; after E1M8 come the finale text and
+then the art screen, which stays until you quit. Not built yet: the easy skills (0 and 1),
+which are refused at launch, and E1M7 on skill 3, where the session stops with a TIC REFUSED
+screen; the demo is kept. Cheat codes
 have no effect: their keys reach the game as ordinary keys. The status bar face's idle glance follows the sound's random draws as the genuine
 engine replaying the session's demo does, under the declared schedule and build; a vanilla
 player's menu keys (Esc, -, =, F1-F10), which start menu sounds, are not part of a demo and
@@ -1020,9 +1018,12 @@ mod tests {
             "E1M<map>-skill<n>-<retail|registered>-<yyyymmdd-hhmmss>.lmp",
             "when the dead player presses use, the map\nstarts again",
             "line starting \"session:\"",
-            "the finale\nafter E1M8, the screen melt",
+            // Changed for M6a part 2 (owner's ruling of 2026-11-24): the help no longer
+            // mentions earlier versions, so "the finale\nafter E1M8, the screen melt" and
+            // "NOT BUILT YET" became the strings below.
+            "every change of screen melts; after E1M8 come the finale text and\nthen the art screen",
             "E1M7 on skill 3",
-            "NOT BUILT YET",
+            "TIC REFUSED",
             "R starts a new game at the start map",
         ] {
             assert!(HELP.contains(want), "{want}");
