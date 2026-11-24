@@ -447,6 +447,7 @@ pub(crate) fn use_lines<M: MoverAccess + ?Sized>(
         end,
         limit,
         starter.world.checked_arithmetic,
+        crate::intercept_vector::InterceptCaller::Use,
     )
     .map_err(|e| match e {
         crate::movement::PathError::Overflow => crate::MapScaleError::Intercepts,

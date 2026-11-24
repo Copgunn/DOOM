@@ -1,4 +1,5 @@
 //! Explicit unbound-actor combat services on the accepted state/lifecycle host.
+use crate::combat_trace::TraceKind;
 use crate::{
     lifecycle::{ActorAccess, Demand, LifeHost},
     *,
@@ -980,7 +981,13 @@ impl Simulation {
         if !(0..=1000).contains(&attack.damage) {
             return Err(CombatError::Damage.into());
         }
-        let trace = crate::combat_trace::collect(self, shooter, attack.angle, attack.range)?;
+        let trace = crate::combat_trace::collect(
+            self,
+            shooter,
+            attack.angle,
+            attack.range,
+            TraceKind::Shoot,
+        )?;
         let (hit, position, traversed) = match lookup {
             Some(f) => crate::combat_trace::hit_with(
                 self,

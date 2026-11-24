@@ -1,5 +1,6 @@
 //! Original missile launch, flight, contact and explosion. One algorithm serves the
 //! frozen plasma profile (M3d2b) and the checked player world (`PlayerMonstersImpV1`).
+use crate::combat_trace::TraceKind;
 use crate::{
     lifecycle::{ActorAccess as _, LifeHost},
     *,
@@ -653,8 +654,15 @@ pub(crate) fn launch_player_missile(
         base.wrapping_sub(PLAYER_MISSILE_AIM_OFFSET),
     ] {
         let lookup = |id| h.access.get(id).copied();
-        let trace =
-            crate::combat_trace::collect_in(h.world, h.spatial, &lookup, source, an, range)?;
+        let trace = crate::combat_trace::collect_in(
+            h.world,
+            h.spatial,
+            &lookup,
+            source,
+            an,
+            range,
+            TraceKind::Aim,
+        )?;
         let aim =
             crate::combat_trace::aim_trace(h.world, h.sectors, source, trace, range, &lookup)?;
         if aim.target.is_some() {

@@ -204,6 +204,11 @@ pub struct StaticWorld {
     /// would overflow (decision H3). False under every other policy, whose
     /// certificate proves the wrapping arithmetic never wraps.
     pub(crate) checked_arithmetic: bool,
+    /// Wire 27 alone: where `checked_arithmetic` is set, the callers of
+    /// `crate::intercept_vector::WIRE27_WRAPS` compute `P_InterceptVector` with
+    /// the genuine engine's wrapping (`crate::intercept_vector`). False under
+    /// every other policy.
+    pub(crate) wrapping_intercept: bool,
     floor: Fixed,
     ceiling: Fixed,
 }
@@ -282,6 +287,7 @@ impl StaticWorld {
             sound_origins: None,
             sight_query_limit: 64,
             checked_arithmetic: false,
+            wrapping_intercept: false,
             floor,
             ceiling,
         })
