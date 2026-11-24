@@ -25,6 +25,7 @@ use std::sync::Arc;
 
 pub mod d_display;
 pub mod f_finale;
+pub mod f_wipe;
 pub mod gif;
 pub mod hu_lib;
 pub mod hu_stuff;
