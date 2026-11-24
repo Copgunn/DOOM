@@ -282,9 +282,27 @@ PST, no uncommitted code; the genuine result sets are the kept ones of §1, §5.
 The three sessions of hand test 2 were gated at the same crates earlier that evening (above). CI on `6689bb47`: all ten
 jobs green, the new `M6a genuine session` among them.
 
+### 5.7 The owner's third hand test (2026-11-23)
+
+Two more sessions the owner played on the artifact of `9ab8c3b3` (retail mode, skill 2, about 17:41 to 17:52 PST; the file
+names read `20261124-01…` in UTC). Checked as in §5.1, 17:55 to 18:10 PST, with the tools and crates of `43157152` (no
+uncommitted change; no file under `crates`, `fuzz` or `tools` differs from `6689bb47`). The genuine engine replayed each file
+to its end marker with 0 failures: both equal, no first difference.
+
+| Session | Session tics compared | Loads (start included) | Level tics / other tics | Session rows | Frames, screenblocks 10 and 11 | Sound and mixer | Whole state (levels / captures) | First difference |
+| --- | ---: | ---: | --- | --- | --- | --- | --- | --- |
+| E1M7 to E1M8, ended by quit | 15,522 | 2 | 14,906 / 616 | equal | equal (29 and 30 masked) | equal (19,225 rows, 9,589 buffers) | equal (2 / 14,906) | none |
+| E1M8, to the end of the file (by the owner's account it ends at the finale refusal at E1M8's exit) | 4,988 | 1 | 4,988 / 0 | equal | equal (16 and 17 masked) | equal (7,746 rows, 3,100 buffers) | equal (1 / 4,988) | none |
+
+Sums: 20,510 session tics, 3 loads (2 starts, 1 carried), 19,894 state captures (573 digest points), 92 masked frames over
+both sizes, 0 uncomparable frames. The stale-attacker rule fired on 1 load (the first session's). Planted faults: carried
+health and carried bob each caught in the 1 session that has a carried start, at session tic 15,234. Every saved state
+decoded (20,512) and every 35th restored. Result digest (as in §1): `1601c966e7477e4ad00564f62a558dd33cd0cc392377cbc2c813f90fb69e2a32`
+(14 MB, scratch). Nothing after the last recorded tic of the second file is compared: the finale is not built.
+
 ## Not run, and limits
 
-- **Local only.** Every real-map figure is from the owner's IWAD on his WSL2 machine on 2026-11-22; it cannot run in CI and nobody
+- **Local only.** Every real-map figure is from the owner's IWAD on his WSL2 machine on 2026-11-22 and 2026-11-23; it cannot run in CI and nobody
   else can repeat it without the same file. Nothing here was measured for time.
 - **Not regenerated after `1229b0ce`:** the genuine side of the real-map sets (see [§4](#4-gates-at-the-final-code-head)), except
   CH2 and the hand-test sessions of [§5](#5-after-the-hand-test-gate-2026-11-22-evening).
