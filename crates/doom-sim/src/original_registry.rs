@@ -128,7 +128,9 @@ pub enum OriginalExecutionProfile {
     /// Episode 1, part 5 (wire 27, owner's ruling of 2026-11-24): wire 26 in
     /// every respect, level start included, except that the traces' checked
     /// `P_InterceptVector` (p_maputl.c:231-251) wraps as the genuine engine does
-    /// (`has_wrapping_intercept`), and sight's checked `P_InterceptVector2`
+    /// (`has_wrapping_intercept`) for the wrap classes a genuine item evidences
+    /// for the calling trace, every other wrap class still refusing the tic,
+    /// and sight's checked `P_InterceptVector2`
     /// (p_sight.c:109-128), which does not wrap, also refuses the tic on an
     /// `INT_MIN` `FixedDiv` operand. Captures are DSIM43, read by
     /// `Diagnostic::decode_episode1_v5`: the DSIM42 layout field for field.
