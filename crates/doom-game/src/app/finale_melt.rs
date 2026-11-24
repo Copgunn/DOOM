@@ -153,8 +153,16 @@ impl App {
         self.data.finale_and_melt()
     }
 
-    /// Whether a melt is in progress: inputs are held, motion ignored and the next slot is a
-    /// melt step (always false in the frozen configuration).
+    /// Whether a melt is in progress (always false in the frozen configuration). The
+    /// finale-and-melt configuration in short (M6a note §1.16; the owner's rulings of 2026-11-21
+    /// and 2026-11-23): each tic of wall time runs one game tic or, while a melt is in progress,
+    /// one melt step, whose picture [`App::frame`] and [`App::picture`] present under the melt's
+    /// palette; the tic whose display wipes shows its melt's first step in the same update; no
+    /// command is built, nothing is recorded and no buffer reaches the sink during melt steps;
+    /// keys, mouse buttons and a focus loss that arrive during a melt are held
+    /// ([`App::held_inputs`]) and handled in order when it ends, before the next tic, and mouse
+    /// motion is ignored; the next tic runs one tic of wall time after the last step, with no
+    /// burst.
     pub fn melt_in_progress(&self) -> bool {
         self.mode == Mode::Playing
             && self
