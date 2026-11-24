@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The M6a part 2 golden set's inputs: a narrow heads-up font of our own and the manifest of the part 2 items
-(docs/M6A_REFERENCE_INVESTIGATION.md section 7.6, the owner's ruling V9 of 2026-11-23 and its addition of 2026-11-24).
+(docs/M6A_REFERENCE_INVESTIGATION.md section 7.6, the owner's ruling V9 of 2026-11-23 and its addition of 2026-11-23).
 
 Why a new font. With the M5b synthetic font (tests/reference/m5b_gfx.wad) the second line of the Episode 1 finale text
 does not fit in 320 pixels, and F_TextWrite ends the whole crawl for that frame at the first character that would pass

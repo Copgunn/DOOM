@@ -642,7 +642,8 @@ jobs:
         run: |
           python3 tools/reference/m6a_wad.py --check
           python3 tools/reference/m6a_build.py --check
-          python3 tools/reference/m6a_melt_steps.py --check --selftest
+          python3 tools/reference/m6a_melt_steps.py --check
+          python3 tools/reference/m6a_melt_steps.py --selftest
       - name: Genuine session runs of the prototype items (strict and sanitizer variants), self-check and self-test
         if: env.DOCS_ONLY != 'true'
         run: python3 tools/reference/m6a_reference.py --work "$RUNNER_TEMP/m6a_reference" --check --selftest --jobs 4

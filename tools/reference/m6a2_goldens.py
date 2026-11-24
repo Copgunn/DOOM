@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The M6a part 2 golden set from the genuine engine only (docs/M6A_REFERENCE_INVESTIGATION.md section 7.6, the
-owner's ruling V9 of 2026-11-23 and its addition of 2026-11-24). Never from Rust output.
+owner's ruling V9 of 2026-11-23 and its addition of 2026-11-23). Never from Rust output.
 
 A separate set, read only by new tests: it writes new files under new paths and leaves every part 1 golden, WAD,
 script and manifest byte for byte as it is. It imports the part 1 tools read-only (tools/reference/m6a_goldens.py:

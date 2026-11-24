@@ -1,5 +1,5 @@
 //! Shared support for the tests of the M6a part 2 golden set (owner's ruling V9 of 2026-11-23 and
-//! its addition of 2026-11-24): `tests/reference/m6a2_manifest.json` (`tools/reference/m6a2_wad.py`)
+//! its addition of 2026-11-23): `tests/reference/m6a2_manifest.json` (`tools/reference/m6a2_wad.py`)
 //! and the goldens `tools/reference/m6a2_goldens.py` writes from the genuine linuxdoom-1.10
 //! engine only (`m6a2_session`, `m6a2_frames`, `m6a2_melt`, `m6a2_results.json`); no Rust output
 //! feeds an expectation. The part 1 goldens are read through `m6a` as they are.

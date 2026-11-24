@@ -1,4 +1,4 @@
-//! M6a part 2, the part 2 golden set (owner's addition of 2026-11-24 to ruling V9): every melt
+//! M6a part 2, the part 2 golden set (owner's addition of 2026-11-23 to ruling V9): every melt
 //! at screenblocks 11. The finale-and-melt display (`SessionConfig::FinaleAndMelt`) against the
 //! genuine linuxdoom-1.10 engine's melt goldens at screenblocks 11
 //! (`tests/reference/m6a2_melt/<ITEM>.sb11.melt`, written by `tools/reference/m6a2_goldens.py`

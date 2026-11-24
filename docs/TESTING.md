@@ -3178,7 +3178,7 @@ branch is a change of a frozen format, never a reason to regenerate. If a test b
 the scratch worktree into a shared target directory, touch the test file before running it in the
 repository (`CARGO_MANIFEST_DIR` is fixed at compile time).
 
-**The part 2 golden set** (owner's ruling V9 of 2026-11-23 and its addition of 2026-11-24). New files only, read only by
+**The part 2 golden set** (owner's ruling V9 of 2026-11-23 and its addition of 2026-11-23). New files only, read only by
 new tests: the part 1 goldens, WADs, scripts and manifest stay byte for byte and are still compared by the part 1 tests.
 `tools/reference/m6a2_wad.py` draws a narrow heads-up font of our own (`tests/reference/m6a2_wads/m6a2_font.wad`, the 63
 `STCFN` patches; nothing from an IWAD) in which every line of the Episode 1 text fits in 320 pixels, and writes

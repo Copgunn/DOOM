@@ -2,8 +2,8 @@
  "schema": "DOOM-M6A2-RESULTS-v1",
  "runner_contract_sha256": "77184f1bec516862d789c61b9935c96e34ef5727e93b406d1d330e4526d42cd1",
  "tools_sha256": {
-  "tools/reference/m6a2_goldens.py": "72a213a93d0a97315c1d0e1e4d234be635db31b05f1f390ab79baa21e6536bc9",
-  "tools/reference/m6a2_wad.py": "4ebb8b89c3769d5e627d5a83c516ba917e702c1c293c315b6a66267758427acc",
+  "tools/reference/m6a2_goldens.py": "ff354fd529076285596983bfb87c0da91de36b1a8c422551331d9ec5c7faf4f2",
+  "tools/reference/m6a2_wad.py": "1bac38e6e0f641713e91bb1b5492639b9779122173b6a409ad6c328215677a29",
   "tools/reference/m6a_goldens.py": "8283cbcb18c806ce029b147c473d53032cc3e686630c5fe8a8eb7990b238830c",
   "tools/reference/m6a_build.py": "db8a4c558b6aa0039e1aaff87de67e054c3e6bffbdc5315b78bf4d8b27e2c7cb",
   "tools/reference/m6a_melt_steps.py": "19e36dd8b76115edb05f18f4ca94e12b9bb09f6deb197ceb1b922a36d904f2bc",

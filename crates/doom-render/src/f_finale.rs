@@ -35,7 +35,7 @@ pub use crate::d_display::session::FinaleView;
 
 /// `E1TEXT` (d_englsh.h:359-374; dstrings.h:37 includes the English strings, the French build
 /// was declined), which `F_StartFinale` makes `finaletext` for Episode 1 (f_finale.c:118-121):
-/// 440 characters, 69 of them outside the font (the spaces) and 14 line breaks.
+/// 440 characters, 69 of them outside the font (the spaces) and 15 newline characters (the text ends with one).
 pub const E1TEXT: &[u8] = b"Once you beat the big badasses and\n\
 clean out the moon base you're supposed\n\
 to win, aren't you? Aren't you? Where's\n\
