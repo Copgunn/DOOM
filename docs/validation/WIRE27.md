@@ -244,15 +244,16 @@ overshoots ([dated note](../M3H6_REFERENCE_INVESTIGATION.md), after the bound on
 code or certificate was changed; the seven maps still pass under the map-extent bound of section 6, **which rests on the
 vertex-rectangle premise (step 7), a Rust admission rule marked for the independent read.**
 
-## 8. Fuzzing, by type (re-run only)
+## 8. Fuzzing, by type (the run from the repository's seeds only)
 
 Target `fuzz/fuzz_targets/wire27_dsim43.rs` (the decoder `Diagnostic::decode_episode1_v5` only; Rust-only safety).
 
 - **Compiled:** `cargo +nightly fuzz build --sanitizer address` built all 65 targets.
-- **Seed replay:** 3 `DSIM` 43 seeds (captures at tics 0, 35 and 70; in scratch, not committed; no committed script
-  generates them), `-runs=0`: no crash.
-- **Coverage-guided campaign:** from the seeds alone into a fresh corpus, `-runs=2000000 -max_len=120000 -seed=1
-  -timeout=20 -rss_limit_mb=2048`: 2,000,000 runs, 0 crashes, 0 artifacts, 551 corpus files.
+- **Seeds:** written from the repository by `crates/doom-sim/tests/wire27_fuzz_seeds.rs` (wire-27 captures of the item
+  AIMSHOT at session tics 0, 35 and 70; [command](../TESTING.md)). An earlier run from scratch-made seeds is not reported.
+- **Seed replay:** the 3 seeds, `-runs=0`: no crash.
+- **Coverage-guided campaign:** from those seeds alone into a fresh corpus, `-runs=2000000 -max_len=120000 -seed=1
+  -timeout=20 -rss_limit_mb=2048`: 2,000,000 runs, 0 crashes, 0 artifacts, 419 corpus files.
 - **Sanitizer:** AddressSanitizer through cargo-fuzz with `ASAN_OPTIONS=detect_leaks=0`: **leak detection disabled; not
   LeakSanitizer coverage.** nightly 1.101.0, cargo-fuzz 0.13.2.
 
@@ -269,7 +270,9 @@ Target `fuzz/fuzz_targets/wire27_dsim43.rs` (the decoder `Diagnostic::decode_epi
   `let checked = self.world.checked_arithmetic && limit.is_some();`, swept into the scope by neighbouring changed lines. No
   test was written: the line is not changed by this PR, and distinguishing inputs need a wrapping slide with a checked world
   and a no-limit access (or the reverse), a pin of pre-existing behaviour that needs its own C citation. **Not proven
-  equivalent**; the owner's decision on sending it to C evidence is pending.
+  equivalent.** It is an **open survivor**: the owner accepted the stated reason for this pull request (2026-11-24), and it
+  is a named item of the later certificate-audit pull request, to be closed there by a test or by a proof with a C
+  citation.
 
 ## 10. CI note
 

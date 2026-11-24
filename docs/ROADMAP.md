@@ -673,7 +673,9 @@ The entries marked merged below are done; they keep their place here because thi
   - **A later pull request audits what the old certificate argument covers** (not started). Its first item: a full-engine
     synthetic case where a short slide or use trace overshoots its block walk, compared tic for tic against Rust under wires
     26 and 27, and whether any Rust path substitutes a reach-bounded set of lines or things for the C's actual block walk
-    ([the gap](COMPATIBILITY.md#known-gap-the-block-walk-can-overshoot-its-end-cell)).
+    ([the gap](COMPATIBILITY.md#known-gap-the-block-walk-can-overshoot-its-end-cell)). A named item of that audit: the
+    open mutation survivor at `movement.rs:869` (`&&` replaced with `||` in the slide's `checked` flag), not proven
+    equivalent, to be closed by a test or by a proof with a C citation ([record](validation/WIRE27.md)).
   - **The independent read** of the bound derivation and of its premise (every actor's centre stays inside the map's vertex
     rectangle) is outstanding.
   - **A `doom-play` wall-clock test** (`a_stalled_disk_keeps_the_queue_bounded_and_loses_no_tic`) failed once on macOS

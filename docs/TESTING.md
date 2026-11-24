@@ -3175,9 +3175,12 @@ python3 tools/local/wire27_session_real.py --iwad IWAD --work DIR --recording FI
   to the terminal for local review and never to a file); `wire27_session_real.py` compares recordings and constructions
   with the genuine strict build after every tic (its `--selftest` flips a ticcmd and adds a `P_Random` draw).
 - **Fuzzing the DSIM43 reader (a fifth target beside the four above, `wire27_dsim43`).** Decoder only. Build
-  `cargo +nightly fuzz build --sanitizer address`; seed replay `cargo +nightly fuzz run wire27_dsim43 DIR -- -runs=0`; a
+  `cargo +nightly fuzz build --sanitizer address`. Seeds are regenerated from the repository:
+  `WIRE27_FUZZ_SEEDS=DIR cargo test --release -p doom-sim --test wire27_fuzz_seeds -- --ignored write_fuzz_seeds` writes
+  three wire-27 captures of the item AIMSHOT (session tics 0, 35 and 70) under `DIR/wire27_dsim43` (outside the
+  repository). Seed replay: `cargo +nightly fuzz run wire27_dsim43 DIR/wire27_dsim43 --sanitizer address -- -runs=0`; a
   campaign adds `-runs=N -max_len=120000 -seed=1 -timeout=20 -rss_limit_mb=2048`. Run with `ASAN_OPTIONS=detect_leaks=0`
-  (leak detection disabled). The seeds were three captures at tics 0, 35 and 70 made in scratch; none is committed.
+  (leak detection disabled; not LeakSanitizer coverage).
 - **Mutation testing** (cargo-mutants 27.1.0 with nextest, `-j 1`, as the pattern above): all of `intercept_vector.rs` with
   the filter `test(wire27) | test(wire_27) | test(intercept)`, and the lines this PR changed elsewhere in `doom-sim` with
   `--in-diff`, excluding `intercept_vector.rs` and the tests, over the full `doom-sim` suite. Counts and survivors are in
