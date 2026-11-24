@@ -56,7 +56,7 @@ pub use screens::{
 use crate::input::{Event, EventLayer, Input, InputError, MouseButton, Preset, RecordedTic, keys};
 use crate::session::{
     ModeSetting, ModeSource, NotYet, Session, SessionData, SessionMode, SessionSettings,
-    SessionWitness, StartError,
+    SessionWitness, StartError, TicKind,
 };
 use doom_render::hu_stuff::Message;
 use doom_render::{
@@ -1339,6 +1339,14 @@ impl App {
             Ok(r) => {
                 self.palette = r.palette;
                 self.drawn = true;
+                // `G_DoLoadLevel` clears the command-building state (g_game.c:490-496) inside
+                // `G_Ticker` (617-623), after this tic's command was built (d_net.c:408): the
+                // command executed, and the next one is built from the cleared state. The layer
+                // forgets its held keys with it, so a repeat passes and always-run is posted again.
+                if matches!(r.kind, TicKind::Load { .. }) {
+                    self.input.load_level();
+                    self.layer.load_level();
+                }
                 if let (Some(b), Some(sink)) = (r.sound.sound.buffer.as_ref(), host.audio()) {
                     sink.buffer(b);
                 }

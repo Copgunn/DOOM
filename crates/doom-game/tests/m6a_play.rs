@@ -190,6 +190,11 @@ impl Driver {
             if ran == 1 {
                 let (px, palette) = self.app.frame().unwrap();
                 self.shown.push((sha256(px), palette));
+                // a load clears the engine's held keys (g_game.c:490-496): press them again
+                if matches!(self.host.seen.last(), Some(s) if matches!(s.kind, TicKind::Load { .. }))
+                {
+                    self.set((false, false));
+                }
             }
         }
         self.set((false, false));
