@@ -790,3 +790,77 @@ fn a_wrong_num_follows_fixeddiv_for_the_shoot_line_alone() {
         assert_eq!(got, Err(Wire27Refusal::FixedDiv(Saturation)));
     }
 }
+
+/// Mutation survivor `intercept_vector.rs:232:24` (`^` to `|` in the saturation
+/// branch's sign): `FixedDiv` (m_fixed.c:62-63) returns
+/// `(a ^ b) < 0 ? MININT : MAXINT`, so the result is MAXINT when num and den
+/// have the same sign and MININT when they differ. Four hand-built wrapped
+/// operand sets (found by a transcription of p_maputl.c:240-250 in 64-bit
+/// integers; each has `|num| >> 14 >= |den|`, an int `den` and `num` that differ
+/// from the exact sums, and neither is `INT_MIN`), one per sign pair. The shoot
+/// trace against a line admits only the wrong-den, wrong-num saturation
+/// (`wire27_admits`), so `Ok` also pins the class the classifier assigned; the
+/// aim trace refuses every one of them. Genuine items cover SATUR (max) and
+/// SATNEG (min) only; the sign pairs (num -, den -) and (num -, den +) rest on
+/// these unit tests alone. Rust-only.
+#[test]
+fn a_wrapped_saturation_follows_the_sign_of_num_xor_den() {
+    // (operands, num, den, expected): the int num and den are the C values.
+    let cases: [([V; 4], i64, i64, i32); 4] = [
+        (
+            [
+                [-571796130, 2877759],
+                [-319878240, 442018225],
+                [22672059, -153729900],
+                [-291317630, -498512367],
+            ],
+            1091703789,
+            38567,
+            i32::MAX, // num +, den +
+        ),
+        (
+            [
+                [1852928260, -642718635],
+                [-2031647816, 28164226],
+                [513163277, -880315396],
+                [19826816, 460803817],
+            ],
+            2137441017,
+            -16443,
+            i32::MIN, // num +, den -
+        ),
+        (
+            [
+                [1291374679, 29445886],
+                [399572670, -989149075],
+                [-483358055, -19847005],
+                [165225401, 492665558],
+            ],
+            -90251811,
+            376,
+            i32::MIN, // num -, den +
+        ),
+        (
+            [
+                [1726930188, 32846029],
+                [1696862486, 11252231],
+                [78367699, -781942984],
+                [-22306394, -339869832],
+            ],
+            -2046765681,
+            -48923,
+            i32::MAX, // num -, den -
+        ),
+    ];
+    for (v, num, den, expected) in cases {
+        assert!((num.abs() >> 14) >= den.abs(), "{num} {den}");
+        let at = |c| wire27_intercept(c, fx(v[0]), fx(v[1]), fx(v[2]), fx(v[3])).map(Fixed::bits);
+        assert_eq!(at(InterceptCaller::ShootLine), Ok(expected), "{num} {den}");
+        assert_eq!(
+            at(InterceptCaller::Aim),
+            Err(Wire27Refusal::FixedDiv(Saturation))
+        );
+        assert_eq!(wrapping(v[0], v[1], v[2], v[3]), Err(Saturation));
+        assert_eq!(checked(v[0], v[1], v[2], v[3]), None);
+    }
+}
