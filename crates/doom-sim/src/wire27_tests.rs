@@ -1,13 +1,18 @@
 //! Wire 27 (`PlayerMonstersEpisode1V5`, DSIM43), step A: unit tests of the
 //! wrapping `P_InterceptVector` (p_maputl.c:231-251) and of DSIM43. Expected
 //! values come from the genuine C rows (`tests/reference/m3d3a_fractions.csv`,
-//! the source body of `P_InterceptVector`), from hand computation, or from
+//! the source body of `P_InterceptVector2`, p_sight.c:109-128, whose expression
+//! `P_InterceptVector` shares), from hand computation, or from
 //! [`reference`], an independent transcription of the C text in 128-bit
-//! integers; never from the function under test. Rust-only otherwise.
+//! integers; never from the function under test. Rust-only otherwise. Step B:
+//! sight's `P_InterceptVector2` (p_sight.c:109-128) refused on an `INT_MIN`
+//! `FixedDiv` operand under wire 27 alone (owner's ruling of 2026-11-24), its
+//! vectors computed by hand from p_sight.c:117-125.
 use crate::barrels_replay::{cases, room};
 use crate::diagonal_room::Lumps;
 use crate::intercept_vector::{
-    FixedDivRefusal, InterceptCaller, policy_intercept, wire27_wraps, wrapping_intercept,
+    FixedDivRefusal, InterceptCaller, policy_intercept, sight_intercept, wire27_wraps,
+    wrapping_intercept,
 };
 use crate::*;
 use FixedDivRefusal::{AbsMin, Div2Range, Saturation};
@@ -129,14 +134,15 @@ fn equals_checked_where_some_over_the_c_rows_and_a_sweep() {
 }
 
 /// One hand-computed vector per class (p_maputl.c:240-250, m_fixed.c:43-87),
-/// with `a = 0x7FFF00 = 8,388,352`. Each is refused by `checked_intercept`.
+/// with `big >> 8 = 0x7FFF00 = 8,388,352` written `b` below. Each is refused
+/// by `checked_intercept`.
 #[test]
 fn hand_vectors_of_each_wrap_class() {
     let (o, big, a) = ([0, 0], 0x7fff_0000, 1 << 30);
-    // Wraps that cancel: both den products are a·2^14 (minus a) past `int`;
+    // Wraps that cancel: both den products are b·2^14 (minus b) past `int`;
     // den = a exactly, num = 0x7FFF0000, frac = 256.0, the exact value.
     let cancel = (o, [a, a - 65536], [1 << 24, 0], [big, big]);
-    // A wrong intercept: one product, a·2^14 = 137,434,759,168, wraps to
+    // A wrong intercept: one product, b·2^14 = 137,434,759,168, wraps to
     // -4,194,304; the exact frac 1024 (1/64) becomes -511.984375·65536.
     let wrong = (o, [a, 0], [1 << 24, 0], [big, big]);
     // den = FixedMul(2^22, 2^26) = 2^32 wraps to exactly 0: 0 (p_maputl.c:242-243),
@@ -442,4 +448,139 @@ fn a_wrapping_shot_completes_under_wire_27_where_wire_26_refuses() {
         [0, -8000 << 16],
     );
     assert!(wrapped && result.is_ok_and(|f| f < 0), "{result:?}");
+}
+
+fn sight(wire27: bool, v2s: V, v2d: V, v1s: V, v1d: V) -> Option<Result<i32, FixedDivRefusal>> {
+    sight_intercept(wire27, fx(v2s), fx(v2d), fx(v1s), fx(v1d)).map(|r| r.map(Fixed::bits))
+}
+
+/// The owner's ruling of 2026-11-24: under wire 27 alone sight's
+/// `P_InterceptVector2` refuses `FixedDiv(num, den)` (p_sight.c:125) when `num`
+/// or `den` is exactly `INT_MIN` (m_fixed.c:62); wire 26 keeps its value. Each
+/// vector is computed by hand from p_sight.c:117-124 and none wraps, so
+/// `checked_intercept` is `Some` (wire 26's value).
+#[test]
+fn sight_refuses_an_int_min_operand_under_wire_27_alone() {
+    let o = [0, 0];
+    // num = INT_MIN: a vertical line of 4,096 units (v1->dy = 2^28) at x = 0 and
+    // a one-unit trace from x = 2,048 (v2->x = 2^27, v2->dx = 2^16).
+    // den = FixedMul(2^28>>8, 2^16) - FixedMul(0>>8, 0) = 2^36>>16 = 2^20;
+    // num = FixedMul((0 - 2^27)>>8, 2^28) + FixedMul((0 - 0)>>8, 0)
+    //     = (-2^19 · 2^28)>>16 = -2^31.
+    // Wire 26: (2^31>>14) = 2^17 < 2^20, so FixedDiv2: -2^31/2^20·65536 = -2^27.
+    let num = ([1 << 27, 0], [65536, 0], o, [0, 1 << 28]);
+    // den = INT_MIN: the line at x = 16 (v1->x = 2^20) running 4,096 units south
+    // (v1->dy = -2^28), the trace 2,048 units east from the origin (v2->dx = 2^27).
+    // den = FixedMul(-2^28>>8, 2^27) - FixedMul(0>>8, 0) = (-2^20 · 2^27)>>16 = -2^31;
+    // num = FixedMul((2^20 - 0)>>8, -2^28) + FixedMul((0 - 0)>>8, 0)
+    //     = (2^12 · -2^28)>>16 = -2^24.
+    // Wire 26: FixedDiv2: -2^24/-2^31·65536 = 512, the fraction 16/2048.
+    let den = (o, [1 << 27, 0], [1 << 20, 0], [0, -(1 << 28)]);
+    for (v, wire26, operand) in [(num, -(1 << 27), "num"), (den, 512, "den")] {
+        assert_eq!(checked(v.0, v.1, v.2, v.3), Some(wire26), "{operand}");
+        assert_eq!(
+            sight(false, v.0, v.1, v.2, v.3),
+            Some(Ok(wire26)),
+            "{operand}"
+        );
+        assert_eq!(
+            sight(true, v.0, v.1, v.2, v.3),
+            Some(Err(AbsMin)),
+            "{operand}"
+        );
+        // The same expression as P_InterceptVector (p_maputl.c:240-250): the
+        // independent transcription agrees that it is AbsMin without a wrap.
+        assert_eq!(reference(v.0, v.1, v.2, v.3), (Err(AbsMin), false));
+    }
+    // The same vectors through the worlds the sight call site reads
+    // (`checked_arithmetic`, and `wrapping_intercept` set by wire 27 alone).
+    let l = base();
+    let (v4, v5) = (level(&l, false), level(&l, true));
+    assert!(v4.world.checked_arithmetic && v5.world.checked_arithmetic);
+    for (v, wire26) in [(num, -(1 << 27)), (den, 512)] {
+        assert_eq!(
+            sight(v4.world.wrapping_intercept, v.0, v.1, v.2, v.3),
+            Some(Ok(wire26))
+        );
+        assert_eq!(
+            sight(v5.world.wrapping_intercept, v.0, v.1, v.2, v.3),
+            Some(Err(AbsMin))
+        );
+    }
+    // den == 0 with the num above (INT_MIN): p_sight.c:119-120 returns 0 before
+    // num is computed or FixedDiv is reached, so nothing is refused, under
+    // either wire, and P_InterceptVector (p_maputl.c:242-243) agrees.
+    // den = FixedMul(2^28>>8, 0) - FixedMul(0>>8, 2^16) = 0.
+    let parallel = ([1 << 27, 0], [0, 65536], o, [0, 1 << 28]);
+    let v = parallel;
+    for wire27 in [false, true] {
+        assert_eq!(sight(wire27, v.0, v.1, v.2, v.3), Some(Ok(0)));
+    }
+    assert_eq!(wrapping(v.0, v.1, v.2, v.3), Ok(0));
+    assert_eq!(reference(v.0, v.1, v.2, v.3), (Ok(0), false));
+    // Overflow is refused as before under both wires (`None`, the existing
+    // `Arithmetic` refusal): "a wrong intercept" above, whose den product wraps.
+    let wrong = (o, [1 << 30, 0], [1 << 24, 0], [0x7fff_0000; 2]);
+    let v = wrong;
+    assert_eq!(checked(v.0, v.1, v.2, v.3), None);
+    for wire27 in [false, true] {
+        assert_eq!(sight(wire27, v.0, v.1, v.2, v.3), None);
+    }
+}
+
+/// Sight's ordinary values are unchanged under wire 27: the 131 genuine C rows of
+/// `P_InterceptVector2` (`tests/reference/m3d3a_fractions.csv`, generated by
+/// tools/reference/generate_m3d3a.py from the p_sight.c body) under both wires,
+/// and a deterministic sweep in which wire 26 always equals `checked_intercept`
+/// and wire 27 differs from it only where [`reference`] finds an `INT_MIN`
+/// operand without a wrap.
+#[test]
+fn ordinary_sight_values_are_unchanged_under_wire_27() {
+    let mut rows = 0;
+    for line in include_str!("../../../tests/reference/m3d3a_fractions.csv")
+        .lines()
+        .skip(1)
+    {
+        let n: Vec<i64> = line.split(',').map(|s| s.parse().unwrap()).collect();
+        let a = ([n[0], n[1]], [n[2], n[3]], [n[4], n[5]], [n[6], n[7]]);
+        for wire27 in [false, true] {
+            assert_eq!(
+                sight(wire27, a.0, a.1, a.2, a.3),
+                Some(Ok(n[8] as i32)),
+                "C row {rows}"
+            );
+        }
+        rows += 1;
+    }
+    assert_eq!(rows, 131);
+    let mut seed = 0x9e37_79b9_7f4a_7c15_u64;
+    let mut next = || {
+        seed ^= seed << 13;
+        seed ^= seed >> 7;
+        seed ^= seed << 17;
+        // A value of 0 to 31 significant bits, either sign.
+        (seed as i32 >> (seed >> 59)) as i64
+    };
+    let mut seen = [0_u32; 2];
+    for _ in 0..200_000 {
+        let a = (
+            [next(), next()],
+            [next(), next()],
+            [next(), next()],
+            [next(), next()],
+        );
+        let exact = checked(a.0, a.1, a.2, a.3);
+        assert_eq!(sight(false, a.0, a.1, a.2, a.3), exact.map(Ok), "{a:?}");
+        let expected = match (exact, reference(a.0, a.1, a.2, a.3)) {
+            (None, (_, wrapped)) => {
+                assert!(wrapped, "{a:?}");
+                None
+            }
+            (Some(_), (Err(AbsMin), false)) => Some(Err(AbsMin)),
+            (Some(v), _) => Some(Ok(v)),
+        };
+        assert_eq!(sight(true, a.0, a.1, a.2, a.3), expected, "{a:?}");
+        seen[usize::from(expected.is_some())] += 1;
+    }
+    assert!(seen.iter().all(|n| *n > 1000), "{seen:?}");
 }
