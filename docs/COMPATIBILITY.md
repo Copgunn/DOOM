@@ -91,7 +91,7 @@ number in brackets is the policy's identifier in saved test snapshots; the earli
 | `PlayerMonstersEpisode1V1` (23) | Episode 1, part 1: every door, floor, lift, stair, donut, light and exit special, keys, powerups, chainsaw, rocket launcher and Spectre: the real E1M2-E1M4, E1M6 and E1M7 runs | [Episode 1, part 1](#original-episode-1-part-1-every-door-floor-plat-stair-donut-light-and-exit-special-keys-items-powers-chainsaw-rocket-launcher-and-spectre-wire-23) |
 | `PlayerMonstersEpisode1V2` (24) | Episode 1, part 2: teleporters, the Baron of Hell and the E1M8 boss floor, hard skill: the real E1M5, E1M8, E1M9 and `DEMO1` runs | [Episode 1, part 2](#original-episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill-wire-24) |
 | `PlayerMonstersEpisode1V3` (25) | Episode 1, part 3: wire 24 plus canonical sound records, the sound origins, the corrected hard-death scream and the original's THING-loading stop; it makes no sound itself, and `doom-play` runs on it | [Wire 25](#original-episode-1-part-3-canonical-sound-records-wire-25) |
-| `PlayerMonstersEpisode1V4` (26) | Episode 1, part 4 (M6a): wire 25 plus a level start (new game, carried player or reborn), the walk exits 52 and 124 and the session's `gametic` for the turbo test; the level chain, played by `doom-play`; skills 2 and 3 only | [One session](#episode-1-as-one-session-m6a) |
+| `PlayerMonstersEpisode1V4` (26) | Episode 1, part 4 (M6a): wire 25 plus a level start (new game, carried player or reborn), the walk exits 52 and 124 and the session's `gametic` for the turbo test; the level chain, played by `doom-play`; skills 2 and 3 only. Part 2 (no new wire, ruling V2): the finale and the melt in the session's finale-and-melt configuration, which `doom-play` plays (pull request #80, not merged) | [One session](#episode-1-as-one-session-m6a) |
 
 ## Versioned gameplay profiles
 
@@ -3691,7 +3691,10 @@ summary of raw button downs and ups on quit. A test shows it changes neither the
 ## Episode 1 as one session (M6a)
 
 **Status: M6a part 1, the playable level chain (PR #65; the owner's ruling of 2026-11-22 moves the finale, the melt
-pictures, the easy skills and E1M7 on skill 3 to part 2, a separate pull request under wire 27 and new format versions).** One
+pictures, the easy skills and E1M7 on skill 3 to part 2, a separate pull request under wire 27 and new format versions).
+Part 2 (pull request #80, draft, not merged; the owner's hand test pending) builds the finale and the melt in a second
+session configuration on wire 26 (rulings V1 and V2 of 2026-11-23), which `doom-play` now plays; the easy skills and E1M7 on
+skill 3 are the next pull request (wire 27).** One
 `doom-play` run now plays Episode 1 as the original does between levels: both exits, the intermission, the next map with the
 carried player, the reborn reload and the secret route. What is built, compared and still missing is below; the
 observations are in the [evidence record](validation/M6A.md) and the design in the
@@ -3707,22 +3710,30 @@ observations are in the [evidence record](validation/M6A.md) and the design in t
 | Intermission | `G_DoCompleted`, `WI_Start` to `WI_Ticker`, `G_WorldDone`; E1M3's secret exit leads to E1M9, which returns to E1M4 | rows, frames, sound and mixer buffers, every tic |
 | Next map | carried start: health, armour, weapons, ammunition, backpack, bob and weapon sprite position as the exit left them; keys and powers dropped | whole state (DSIM42) on every level tic of the compared runs |
 | Reborn | a dead player's use press reloads the map, both random indices kept | as above |
-| Demo | one version-110 demo per session, a command every tic in every game state | replay through the session reaches the same state |
+| Demo | one version-110 demo per session, a command every tic in every game state (none during a melt) | replay through the session reaches the same state |
+| Finale (part 2) | the E1M8 victory, the Episode 1 text crawl and the art screen (`CREDIT` in retail, `HELP2` in registered mode), which stays until the player quits | rows, frames, sound and buffers of every finale tic of the synthetic items; the app by keys (`m6a2_play`) |
+| Melt (part 2) | every wipe's melt, one step per tic of wall time, below | every melt step's picture and palette of the synthetic items, at both screen sizes |
 | End | only the player's quit, a refusal or the 1,048,576-tic cap | |
 
 `doom-play` plays this session and nothing else: the single-level M5b/M5c play is no longer a launch option. The
 single-level configurations stay in the libraries for the frozen tests and tools and keep identifying the game mode by file
-name, unchanged. **Quit ends the session; R on the pause or refusal screen starts a new game** (a new session, a new demo
+name, unchanged. In part 2 `doom-play` plays the session's finale-and-melt configuration
+(`GameData::load_finale_and_melt_session`) and no longer offers part 1's, which stays in the libraries, with its refusals,
+for its tests and tools (`GameData::load_session`), as T15 and U6 did for the earlier configurations. **Quit ends the session; R on the pause or refusal screen starts a new game** (a new session, a new demo
 file), the owner's rulings U5 and U6. `BT_SPECIAL` is never recorded and is refused in every game state (the original's pause is M6b).
 
 ### What is refused or not built yet
 
 The refusals keep the complete state and end the session with a plain screen: **NOT BUILT YET** (yellow) or **TIC REFUSED**
-(red), the session tic and the message below, and the demo kept so it replays to the same refusal.
+(red), the session tic and the message below, and the demo kept so it replays to the same refusal. In the finale-and-melt
+configuration that `doom-play` plays, no refusal says NOT BUILT YET any more: the E1M8 row below is part 1's configuration
+only, and the `HELP2` row is new.
 
 | Where | Message shown and printed on the exit line |
 | --- | --- |
-| E1M8's exit (the tic `F_StartFinale` would run) | "E1M8 is complete. The finale that follows it (the text screen and the picture) is not built yet. The session stops here, nothing was played differently from the original." |
+| E1M8's exit (the tic `F_StartFinale` would run), part 1's configuration only (the library; not reachable from `doom-play`) | "E1M8 is complete. The finale that follows it (the text screen and the picture) is not built yet. The session stops here, nothing was played differently from the original." |
+| The finale's first art-screen tic in registered mode without `HELP2` (part 2; the genuine engine stops there, ruling U4 (3)) | "the finale art screen cannot be drawn (W_GetNumForName: HELP2 not found!). The original stops here too. In registered mode its art screen is HELP2, in retail mode CREDIT." The finale tic is committed and its command kept in the demo, as the genuine engine ran its `F_Ticker` before the display stopped; the picture stays at the last good frame |
+| A missing `D_VICTOR` on the victory tic (part 2) | "the music lump D_VICTOR is missing: the original stops here too" (refused before anything changes) |
 | A load wire 26 refuses (E1M7 on skill 3, `Admission(Monster(Arithmetic))`, reached from E1M6 on skill 3) | "E1M<n> is not admitted at this skill yet (<error>). The game stops at its load instead of playing it differently from the original." |
 | A map that does not load | "E1M<n> could not be loaded: <error>" |
 | A missing music lump at a load, `D_INTER` or a later map | "the music lump D_E1M2 is missing: the original stops here too" |
@@ -3731,10 +3742,12 @@ The refusals keep the complete state and end the session with a plain screen: **
 
 At launch (before any window, exit 1 unless noted): a start map not admitted at the skill (E1M7 with `--skill 3`); a missing
 first-map music lump (the original stops at that load too); a map or skill outside the domain; `--skill 0` or `1`
-(exit 2, "the easy skills (0, 1) are not built yet"). Not built yet, each a typed refusal or a declared gap: the **finale** after
-E1M8, the **melt pictures**, the **easy skills 0 and 1**, **E1M7 on skill 3** (the owner ruled option 1 for it: the margin clause
-dropped for monsters, under wire 27 in part 2 by the ruling of 2026-11-22, where it first said wire 26; until then the refusal above stands, and
-[the load table](#skills-and-maps-load-table) lists every map and skill).
+(exit 2, "the easy skills (0, 1) are not built yet"). Not built yet, each a typed refusal or a declared gap: the **easy skills
+0 and 1**, refused at launch, and **E1M7 on skill 3** (the owner ruled option 1 for it: the margin clause dropped for monsters,
+under wire 27 in the pull request after part 2 by the rulings of 2026-11-22 and V7 of 2026-11-23, where it first said wire 26;
+until then the refusal above stands, a plain TIC REFUSED screen, and [the load table](#skills-and-maps-load-table) lists every
+map and skill). The **finale** after E1M8 and the **melt pictures** were in this list until part 2, which builds them in the
+finale-and-melt configuration ([below](#the-finale-and-the-melt-m6a-part-2)); part 1's configuration still refuses them.
 
 ### The game mode is a declared setting (ruling U4)
 
@@ -3745,24 +3758,63 @@ the `DSES` state (mode and source bytes), in the demo file's name (`E1M<map>-ski
 replay or check uses the same mode), on the launch line (with what the original would do by file name), on the exit line and on
 the refusal screen. The genuine engine is run on a scratch copy named for the mode; the owner's file is never renamed or written.
 The registered finale's art screen needs a lump (`HELP2`) that the owner's IWAD lacks: the genuine engine stops there in
-registered mode and goes on through `CREDIT` in retail (both observed, [note §1.5](M6A_REFERENCE_INVESTIGATION.md#15-game-modes-and-how-the-owners-doomwad-is-identified)); the finale is not built, so the session stops earlier. The 61 real runs were
+registered mode and goes on through `CREDIT` in retail (both observed, [note §1.5](M6A_REFERENCE_INVESTIGATION.md#15-game-modes-and-how-the-owners-doomwad-is-identified)). In part 1's configuration the finale is not built, so the session stops earlier; in part 2's, which `doom-play` plays, a registered session without `HELP2` ends at that tic with the refusal above, and a retail one shows `CREDIT`. The 61 real runs were
 compared in retail as well as registered ([record](validation/M6A.md)).
 
-### The melt: declared, pictures not shown yet
+### The finale and the melt (M6a part 2)
 
-The wipe's 320 `M_Random` draws and its place in the frame order are made and compared on every transition. **The melt
-pictures are not shown yet: the new picture appears at once**, and no melt time passes (so nothing below changes a tic
-today). The owner's rulings for when they are built, declared now:
+Built in pull request #80 (draft, not merged; the owner's hand test pending) in the session's finale-and-melt configuration,
+on wire 26 unchanged (`doom-sim` is not touched, ruling V2), and played by `doom-play`. Part 1's configuration keeps the
+declared accounting below (the 320 draws, no picture, no time). Evidence: `m6a2_session` (every finale tic and melt step of
+the synthetic items against the genuine goldens) and `m6a2_play` (the app played by keys); commands in
+[TESTING](TESTING.md#part-2-the-finale-and-the-melt-in-progress).
 
-- **Clock.** One melt step per tic; each step's picture compared with the genuine `f_wipe.c` output. The original's in-between
-  pictures depended on the machine's speed, so the claim is identity under this declared schedule, not what a 1997 machine showed.
-  The first melt of a session melts from an all-zero screen; every picture is under the palette in force when the display
-  reaches the melt ([note §1.16](M6A_REFERENCE_INVESTIGATION.md#116-the-melt-settled-for-u9)).
-- **Sound during a melt.** Nothing is mixed or submitted while the melt runs; sound resumes after it, nothing skipped, as the
-  in-process build does. The sound-server and DOS builds played on through the wipe: this port does not. A continuous-sound
-  option would be a later presentation toggle outside the proof; the owner will judge by ear.
-- **Input during a melt.** Mouse motion is ignored, as while the app is paused, and not accumulated; key and button changes are
-  kept and applied on the first tic after. Ignored motion is logged in the input log as paused motion is.
+- **The finale never ends by itself** (f_finale.c:207-249; quirk rows Q-f_finale-207a and 207b). After E1M8's exit the next tic runs
+  `G_DoCompleted`, `F_StartFinale` and the first `F_Ticker`; the text crawls (one character every 3 tics, f_finale.c:261-327);
+  on the finale's 1,571st tic the art screen follows with a forced wipe (f_finale.c:241-248) and then stays, unchanged, until
+  the player quits: the Doom 1 finale reads no command, and its only way out in the original is the menu, which is not
+  built (a later milestone). The pause screen and R (a new game) work in the finale; the 1,048,576-tic cap still applies.
+  The exit line names the tic the finale began and the tic its art screen began, or was refused.
+- **`HELP2` in registered mode** (f_finale.c:714-720; quirk rows Q-f_finale-714a and 714b). Registered mode draws `HELP2`, retail `CREDIT`
+  (the game mode is the declared setting above). With WADs that have no `HELP2`, such as the owner's IWAD forced to
+  registered, the genuine engine stops on the first art-screen frame with `W_GetNumForName: HELP2 not found!`; the session
+  ends there with the refusal screen of the table above, its demo saved whole, which replays to the same refusal. The
+  original's text crawl is drawn as `F_TextWrite` draws it, including the quirk that a character that does not fit on its line
+  ends the crawl (Q-f_finale-321a).
+- **The melt schedule** (d_main.c:329-344; f_wipe.c:184-222; [note §1.16.1](M6A_REFERENCE_INVESTIGATION.md#1161-the-clock-one-melt-step-per-tic)).
+  Every wipe is shown as the original's melt, one `wipe_ScreenWipe` step with `ticks = 1` per tic of wall time (1/35 s). The
+  tic whose display wipes is followed in the same tic of wall time by the melt's first step (the C's first melt call comes at
+  once), so its own frame is never shown alone; each later step takes one tic of wall time; the melt's last two pictures are
+  that tic's frame; then the next tic runs at the normal pace, with no burst of tics to catch up the melt's time (the
+  original's real-time loop would run up to five at once, d_net.c:404-405; the declared schedule is the `-timedemo` case).
+  **The original's in-between pictures depended on the speed of the machine** (a slower machine showed only some of them):
+  the claim is identity of every picture under this declared schedule, not what any particular 1997 machine showed. The first
+  melt of a session melts from an all-zero screen (the original with a fresh shared-memory segment, note §1.16.2); every
+  picture of a melt is under the palette of the frame that ends it (note §1.16.3). A melt takes 34 to 43 steps, about one
+  second. When the window's loop is late, the app drops the late tics of wall time rather than skip a melt picture, so the
+  melt then takes longer, never fewer pictures. No game tic runs during a melt, no command is built and nothing is written to
+  the demo.
+- **Sound during a melt: as the in-process build** (d_main.c:392-405; [note §1.16.4](M6A_REFERENCE_INVESTIGATION.md#1164-sound-and-the-mixer-while-a-melt-runs);
+  quirk rows Q-d_main-331-2a and 331-2b). Nothing is mixed or handed to the device while the melt runs; the buffer the melting tic owed is
+  mixed after the melt's last picture, and sound resumes from where the channels stood, nothing skipped. The device plays
+  what it holds and is then starved: `doom-play`'s sound queue plays silence (never a repeated buffer), counts that silence
+  on an exit line of its own ("audio during melts"), never as an underrun, and starts again at its usual two-buffer threshold
+  after the melt. So there is about a second of silence at every change of screen. **The builds the owner declined played on
+  through the wipe**: the shipped Linux build's separate sound server and DOS DOOM kept mixing during the melt; this port does
+  not. A continuous-sound option would be a later presentation toggle outside the proof; the owner will judge by ear.
+- **Input during a melt** (the owner's rulings of 2026-11-21 and 2026-11-23; [note §1.16.5](M6A_REFERENCE_INVESTIGATION.md#1165-input-during-a-melt-kept-or-lost)).
+  The original's melt loop reads no input, and the events wait. Here **key and mouse button events during a melt are held and
+  delivered in order on the first tic after it**, never dropped: the app handles each as if it arrived when the melt ended,
+  under its existing rules (M5b S4 to S6). A key pressed and released within one melt reaches the event layer as a press and
+  a release in the same pump, so the same-pump rule holds the release back one command: the press is in the first command
+  after the melt and the release in the second (in the original both are handled before the first command and the key never
+  shows; the app's rule already differs the same way for any tap shorter than a tic). **Mouse motion during a melt is
+  ignored**, not accumulated, as while the app is paused, and the input log writes it as `ignored (melt)`; the log also writes
+  each input held for the melt's end. **The app's own keys** are held like any key: Esc, Pause or a focus loss during a melt
+  pauses when the melt ends (before the next tic), and R or Q after it then act on the pause screen; the screen-size keys are
+  withheld from the game as always (the screen size is fixed for the run). Closing the window always quits at once, a melt
+  included; the demo then holds every tic before it. At most 1,024 inputs are held in one melt; past that the held inputs are
+  dropped and every key is released when the melt ends, as the event layer does at its own bound.
 
 ### Rulings of 2026-11-22 on commands
 
@@ -3793,7 +3845,7 @@ None is fixed. "Reproduced" means the session does what the C does and the genui
 
 | # | Quirk (C) | Status |
 | --- | --- | --- |
-| 1 | No intermission after E1M8 (g_game.c:1033-1038) | not built: typed refusal at the finale's first tic, state preserved; compared up to that tic |
+| 1 | No intermission after E1M8 (g_game.c:1033-1038) | part 1's configuration: typed refusal at the finale's first tic, state preserved, compared up to that tic. Part 2's (pull request #80, not merged, hand test pending): reproduced, the victory tic goes straight to the finale, compared with the genuine goldens |
 | 2 | The tally waits for a press, counted as a rising edge (wi_stuff.c:1413-1424, 1470-1498) | reproduced |
 | 3 | The background animation is never drawn, its 20 draws happen (wi_stuff.c:588, 523) | reproduced (draws compared, nothing drawn) |
 | 4 | The "you are here" pointer is hidden on a session's first ShowNextLoc frame (wi_stuff.c:749, 768, 814) | reproduced |
@@ -3803,7 +3855,7 @@ None is fixed. "Reproduced" means the session does what the C does and the genui
 | 8 | A carried chainsaw makes its raise sound at load (p_pspr.c:145-146) | reproduced |
 | 9 | Level sounds play on into the intermission (s_sound.c:209-211) | reproduced |
 | 10 | The reborn comes on the first use press, with both random indices kept (p_user.c:227-228) | reproduced |
-| 11 | The finale never ends (f_finale.c:207-249) | not built (with 1) |
+| 11 | The finale never ends (f_finale.c:207-249) | part 1's configuration: not built (with 1). Part 2's (pull request #80, not merged, hand test pending): reproduced, the art screen stays until the quit |
 | 12 | A reborn and an exit in the same tic reload the map (g_game.c:611-623, 929-931) | ruled inferred, then observed in a genuine run of the synthetic items `USEAT131` and its controls; the Rust session equals those goldens. Not observed on the owner's IWAD |
 | (13) | The carried status-bar face `STFST00` after a level change (st_stuff.c:384, 757-758) | reproduced; found by the display work, not among the twelve |
 

@@ -45,8 +45,8 @@ original updates its row in the register (this index and the pages under
 
 Updated on 2026-11-24 (America/Los_Angeles).
 
-- **Rows: 489**, of which 480 are on the 54 C-file pages and 9 are on the [64-bit build only](quirks/64-bit-only.md) page.
-- How the number came about: the sweep wrote 890 raw entries; the merge made 443 rows; the first assembly (commit 2c2ee84) joined 23 pairs into 420 rows; the revision after the independent review and the owner's rulings joined 10 more (listed below), split 10 of the 11 mixed-status rows into 23 rows by status (one row per status; the 11th, Q-p_setup-536, became a row of the 64-bit page), moved 3 rows to the 64-bit page and added 6 rows there: 420 - 10 + 13 + 6 = 429. The later 2026-11-22 splits and additions raised it to 474, the M6a pull request to 486 and M6a part 2 to 489 (below).
+- **Rows: 496**, of which 487 are on the 54 C-file pages and 9 are on the [64-bit build only](quirks/64-bit-only.md) page.
+- How the number came about: the sweep wrote 890 raw entries; the merge made 443 rows; the first assembly (commit 2c2ee84) joined 23 pairs into 420 rows; the revision after the independent review and the owner's rulings joined 10 more (listed below), split 10 of the 11 mixed-status rows into 23 rows by status (one row per status; the 11th, Q-p_setup-536, became a row of the 64-bit page), moved 3 rows to the 64-bit page and added 6 rows there: 420 - 10 + 13 + 6 = 429. The later 2026-11-22 splits and additions raised it to 474, the M6a pull request to 486 and M6a part 2 to 489 and then, by splitting seven rows by status, to 496 (below).
 - Added on 2026-11-22 (America/Los_Angeles) at the owner's ruling: one row, Q-g_game-779 (the stale `attacker` pointer across a level exit; status not reproduced (declared)), one more row on the C-file pages (included in the counts here).
 - Added on 2026-11-22 (America/Los_Angeles) by the M6a pull request (#65, the "U8" quirk list of the playable level chain): 11 new rows on the C-file pages (Q-g_game-611, Q-g_game-779-2, Q-g_game-1033, Q-g_game-1039, Q-wi_stuff-749, Q-wi_stuff-1338, Q-wi_stuff-1413, Q-p_pspr-145, Q-s_sound-209, Q-p_user-227 and Q-f_finale-207, which opens the f_finale.c page) and one row split by status (Q-g_game-472, below): 12 more rows, 474 + 12 = 486. Four existing rows changed status because the session now runs what they describe: Q-wi_stuff-588, Q-wi_stuff-1482 and Q-g_game-660 (from not yet ported to reproduced) and, by the split, Q-g_game-472 (reproduced in the session, still refused in the single-level configurations). The carried status-bar face of the session (U8's extra item 13) is already covered by Q-st_stuff-384a and Q-st_stuff-384b, whose statuses were not re-examined here. The twelve U8 quirks, each with its status, are listed in [COMPATIBILITY](COMPATIBILITY.md#episode-1-as-one-session-m6a).
 - Added on 2026-11-23 (America/Los_Angeles) by M6a part 2 (step 2, the pure Episode 1 finale drawer, which no configuration reaches yet): three rows on the f_finale.c page (Q-f_finale-314, Q-f_finale-321 and Q-f_finale-714), each not yet ported: 486 + 3 = 489.
@@ -54,22 +54,23 @@ Updated on 2026-11-24 (America/Los_Angeles).
 - Updated on 2026-11-23 (America/Los_Angeles) by M6a part 2 (steps 3 and 4, the sound): Q-d_main-331-2 now names the finale-and-melt sound configuration, which mixes nothing during melt steps; no row is added and no status changes, since the session does not use that configuration yet.
 - Updated on 2026-11-24 (America/Los_Angeles) by M6a part 2 (the part 2 golden set, ruling V9): Q-f_finale-321's evidence now names the full-crawl items FULLREG and FULLRET (a narrow font that fits every line, so the whole text is drawn) beside the edge-break items, and the computed break point of the M5b font; no row is added and no status changes.
 - Updated on 2026-11-24 (America/Los_Angeles) by M6a part 2 (steps 3 and 4, the session): Q-f_finale-207, Q-f_finale-314, Q-f_finale-321, Q-f_finale-714, Q-g_game-1033, Q-f_wipe-210, Q-d_main-331 and Q-d_main-331-2 now name the finale-and-melt session configuration (`Session::new_finale_and_melt`), which reaches the finale and every melt and is compared with the genuine goldens; no row is added and no status changes, since the app and `doom-play` do not use that configuration yet.
+- Updated on 2026-11-24 (America/Los_Angeles) by M6a part 2 (step 4, the app; pull request #80, not merged, the owner's hand test pending): `doom-play` now plays the finale-and-melt configuration, which reaches the finale and every melt, while part 1's configuration stays in the libraries with its refusals, so seven rows are split by status (below): Q-f_finale-207 and Q-g_game-1033 (reproduced; refused in part 1's configuration), Q-f_finale-321, Q-f_wipe-210 and Q-d_main-331-2 (reproduced; not yet ported or not reproduced (declared) there), and Q-f_finale-314 and Q-f_finale-714 (refused; not yet ported there): 489 + 7 = 496. Q-d_main-331 keeps its status, not reproduced (declared), and now says what the played configuration does.
 - The separate lists: [recorded in only one place and in no note](quirks/only-one-place.md) (12 whole or partial rows and a list of readings); [not traced to a C line](quirks/not-traced.md) (none left); [dropped, and why](quirks/dropped.md) (54 entries); [where the documents disagree](quirks/disagreements.md) (75 entries, 7 marked policy claim); [the 64-bit build only](quirks/64-bit-only.md) (9 rows).
 
 The 2026-11-22 follow-up split 24 more rows into 48 and classified 48 rows from the Rust code and existing tests. A separate refusal row records the historical endpoint policy for a stalled trace. A further audit split 19 remaining mixed-status rows into 38, distinguished the R4 flagged-column contract from a refusal, and settled the two 64-bit harness-exposure unknowns by reading the builders. The status counts below describe the current register.
 
-### Status of the 480 rows on the C-file pages
+### Status of the 487 rows on the C-file pages
 
 Each row carries one status. The 64-bit page records whether the reference harness is affected.
 
 | Status | Rows |
 | --- | ---: |
-| reproduced | 281 |
-| refused | 92 |
+| reproduced | 286 |
+| refused | 94 |
 | not yet ported | 49 |
 | not reproduced (declared …) | 57 |
 | comment only | 1 |
-| Total | 480 |
+| Total | 487 |
 
 ## Rows by C file
 
@@ -77,12 +78,12 @@ One page per C file (a header counts as its own file); each page carries its own
 
 | C file | Rows |
 | --- | --- |
-| [d_main.c](quirks/d_main.c.md) | 11 |
+| [d_main.c](quirks/d_main.c.md) | 12 |
 | [d_net.c](quirks/d_net.c.md) | 5 |
 | [doomdef.h](quirks/doomdef.h.md) | 1 |
-| [f_finale.c](quirks/f_finale.c.md) | 4 |
-| [f_wipe.c](quirks/f_wipe.c.md) | 3 |
-| [g_game.c](quirks/g_game.c.md) | 41 |
+| [f_finale.c](quirks/f_finale.c.md) | 8 |
+| [f_wipe.c](quirks/f_wipe.c.md) | 4 |
+| [g_game.c](quirks/g_game.c.md) | 42 |
 | [hu_lib.c](quirks/hu_lib.c.md) | 3 |
 | [hu_stuff.c](quirks/hu_stuff.c.md) | 7 |
 | [i_sound.c](quirks/i_sound.c.md) | 21 |
@@ -238,6 +239,18 @@ The corner follow-up also split Q-p_maputl-871 into Q-p_maputl-871a and Q-p_mapu
 | Original id | Now the rows |
 | --- | --- |
 | Q-g_game-472 | Q-g_game-472a, Q-g_game-472b |
+
+#### Ids split by status by M6a part 2 on 2026-11-24 (7 rows into 14)
+
+| Original id | Now the rows |
+| --- | --- |
+| Q-d_main-331-2 | Q-d_main-331-2a, Q-d_main-331-2b |
+| Q-f_finale-207 | Q-f_finale-207a, Q-f_finale-207b |
+| Q-f_finale-314 | Q-f_finale-314a, Q-f_finale-314b |
+| Q-f_finale-321 | Q-f_finale-321a, Q-f_finale-321b |
+| Q-f_finale-714 | Q-f_finale-714a, Q-f_finale-714b |
+| Q-f_wipe-210 | Q-f_wipe-210a, Q-f_wipe-210b |
+| Q-g_game-1033 | Q-g_game-1033a, Q-g_game-1033b |
 
 #### Ids moved to the 64-bit page (3)
 

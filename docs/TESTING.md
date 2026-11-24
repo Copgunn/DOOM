@@ -3164,6 +3164,26 @@ until the easy skills exist). FULLREG's and FULLRET's buffers are compared with 
 which the test may do because their genuine sound streams are byte-identical (asserted) and the font WAD holds no sound. Both
 targets also run with `--release`.
 
+The app in the finale-and-melt configuration (what `doom-play` plays) and doom-play's side of the melt:
+
+```sh
+cargo test -p doom-game --test m6a2_play -- --nocapture   # the app played by keys against the goldens; input held in a melt; faults
+cargo test -p doom-play melt_tests -- --nocapture         # the sound queue, the exit lines, the input log and --tic-stats in a melt
+```
+
+`m6a2_play` drives `GameData::load_finale_and_melt_session` through the headless `App` by key presses made from the
+committed scripts (the up arrow, the space bar and Ctrl), one update per tic of wall time: CHAIN (to its first turn) and
+FINRET at screenblocks 10, REBHELD, FULLREG and NOHELP2 at 11. It compares the recorded demo with the committed one, every tic's
+frame, palette and G row and every melt step's picture, `done` flag and palette with the genuine goldens, the picture
+presented after every update with the genuine sequence under the declared schedule, and the demo's replay through a fresh
+session (`DSES` version 2 bytes, or the same refusal). It also checks the pacing (one slot per update, the melt's first step
+in its tic's slot), that the sink gets no buffer during a melt, the finale staying until the quit with the pause and R,
+the `HELP2` stop with the demo saved, the tic cap in the finale, keys and buttons held during a melt and delivered in
+order, motion ignored, the app's own keys held, and five planted faults (a key dropped in a melt, motion accumulated
+across one, a command built in a melt step, a melt step skipped by the pacing, a burst after a melt). `melt_tests` are
+Rust-only checks of doom-play's presentation (no genuine counterpart: the device side is outside every claim). Both also
+run with `--release`.
+
 The frozen part 1 formats (`DSIM` 42, `DDSP` v3, `DSND` v2, `DSES` v1) are pinned byte for byte by
 one test and one fixture:
 
