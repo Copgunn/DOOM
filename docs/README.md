@@ -27,6 +27,7 @@ status tables, test-count lists, commit histories or schema definitions.
 | Exact review commits, CI, reviews and merge history | [GitHub PRs](https://github.com/Copgunn/DOOM/pulls) and [Actions](https://github.com/Copgunn/DOOM/actions) |
 | Standing agent engineering rules | [AGENTS](../AGENTS.md) |
 | Human contributor workflow | [CONTRIBUTING](../CONTRIBUTING.md) |
+| Who writes, who decides, and how much work so far (a summary) | [HOW_ITS_BUILT](HOW_ITS_BUILT.md) |
 | Historical observations | [Frozen records](validation/archive/README.md) |
 
 The [documentation checklist](DOC_REVIEW_CHECKLIST.md) applies this ownership model.

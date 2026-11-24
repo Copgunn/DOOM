@@ -1,5 +1,10 @@
 # M6a evidence record: the level chain, up to the owner's hand test
 
+**Status (2026-11-23, America/Los_Angeles): M6a part 1 is merged** ([PR #65](https://github.com/Copgunn/DOOM/pull/65), 2026-11-23), and
+so is the held-keys fix of [§5.8](#58-held-keys-at-a-level-load-2026-11-23-after-part-1-merged)
+([PR #79](https://github.com/Copgunn/DOOM/pull/79), the same day). Part 2 is in progress on the branch `feat/m6a-part2`; nothing
+of it is in this record yet. The paragraph below is the status as written on 2026-11-22, before the merge, and is left as it was.
+
 **Status (2026-11-22, America/Los_Angeles): this is the record up to the hand-test gate, not the finished milestone.** The
 playable level chain (exits, intermission, carried start, reborn, secret route) is built and compared; the PR stops next for the
 owner's hand test. Not built yet, each a typed refusal or a declared gap: the finale after E1M8, the melt pictures (the wipe's

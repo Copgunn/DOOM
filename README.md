@@ -28,8 +28,8 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
   ([what is admitted](docs/COMPATIBILITY.md#policies)).
 - **Real maps.** All nine Episode 1 maps and the original's own `DEMO1`: every scripted run stays in sync with the
   original C code, tic for tic, and so do the more than 60 hand-played sessions checked so far (over 200,000 tics)
-  ([scripted runs](docs/validation/M4B.md#real-maps-and-demo1); by hand: [M5c](docs/validation/M5C.md),
-  [M5d](docs/validation/M5D.md), [M6a](docs/validation/M6A.md#5-after-the-hand-test-gate-2026-11-22-evening)).
+  ([scripted runs](docs/validation/M4B.md#real-maps-and-demo1); by hand: [M5c](docs/validation/M5C.md#hand-played-checks),
+  [M5d](docs/validation/M5D.md#hand-played-checks), [M6a](docs/validation/M6A.md#5-after-the-hand-test-gate-2026-11-22-evening)).
 - **Picture.** Renderer, status bar, messages and palette flashes: frames equal the original's wherever compared ([what is and is not](docs/COMPATIBILITY.md#playable-build-m5b)).
 - **Sound.** Effects, no music: sounds started and samples mixed equal the original's own sound code on the runs
   checked ([which build, which runs](docs/COMPATIBILITY.md#sound-effects-m5c)).
@@ -46,7 +46,10 @@ demo playback, other episodes, nightmare skill, or any claim of a match beyond t
 
 `doom-play` plays Episode 1 from the map you pick (E1M1 to E1M9, skill `hmp` or `uv`) with your own `DOOM.WAD`: each exit
 leads to the tally screen and the next map, and it stops at the exit of E1M8 (the ending is not built yet). To really play
-Doom, use an established source port such as [Chocolate Doom](https://www.chocolate-doom.org/). From the cloned top folder:
+Doom, use an established source port such as [Chocolate Doom](https://www.chocolate-doom.org/).
+
+There is no download yet: playing and the tests below both build from source. You need Rust 1.85.0 or later
+([rustup](https://rustup.rs/)) and a C compiler (on Windows, the Visual Studio build tools). From the cloned top folder:
 
 ```sh
 cargo run --release -p doom-play -- --iwad /path/to/DOOM.WAD --map 1 --skill hmp --sessions /path/for/sessions
@@ -61,6 +64,16 @@ cargo run --release -p doom-play -- --iwad /path/to/DOOM.WAD --map 1 --skill hmp
 The original C source is the ground truth. Each behavior runs in both the original and the Rust code, and the whole game state is
 compared after every tic. Expected results come from a separate program written from the C output alone, so Rust is never checked
 against itself; sanitizers, fuzzing and mutation testing back that up. Anything not proven identical is refused, not guessed.
+
+Who writes the code, who decides and how each change is reviewed: [how it's built](docs/HOW_ITS_BUILT.md).
+
+## Run the tests (no game files needed)
+Built with the same Rust and C compiler as above; no game files, graphics, audio or network:
+
+```sh
+cargo test --workspace --locked
+cargo run -p doom-sim --example player_barrels --locked  # exploding barrels, chain reactions, monsters
+```
 
 ## The original's quirks
 
@@ -90,15 +103,6 @@ Everything the original does is planned, bar a few DOS-era and X11 pieces. The r
 - **[Track 1: Faithful](docs/ROADMAP.md#track-1-faithful).** Planned: original demo playback, the other episodes and Doom II, just as exact.
 - **[Track 2: Presentation](docs/ROADMAP.md#track-2-presentation).** Ideas: a modern renderer, smooth high frame rates, VR; none can change gameplay.
 - **[Track 3: Beyond vanilla](docs/ROADMAP.md#track-3-beyond-vanilla).** Ideas: scripting, a live editor with rewind, TAS tools, all as separate optional modes.
-
-## Try it
-You need Rust 1.85.0 or later ([rustup](https://rustup.rs/)) and a C compiler (on Windows, the Visual Studio build
-tools); no game files, graphics, audio or network:
-
-```sh
-cargo test --workspace --locked
-cargo run -p doom-sim --example player_barrels --locked  # exploding barrels, chain reactions, monsters
-```
 
 ## For developers, contributing and license
 
