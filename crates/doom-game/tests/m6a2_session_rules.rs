@@ -684,3 +684,65 @@ fn the_version_2_reader() {
         Err(DsesError::LevelMismatch)
     ));
 }
+
+/// Pins: seeds for the three part 2 fuzz targets (`m6a2_dses2`, `m6a_ddsp4`, `m6a_dsnd3`), the
+/// whole `DSES` version 2 state and its embedded `DDSP` version 4 and `DSND` version 3 blobs (the
+/// `display.encode()` and `sound.encode()` of the public [`SessionStateV2`] fields, the very values
+/// `DSES` embeds), written under the directory `M6A2_FUZZ_SEEDS` names (outside the repository),
+/// one folder per target. The states are saved from `Session::new_finale_and_melt` on the committed
+/// items FINRET (a level, the intermission, melts of several kinds, both finale stages) and CHAIN,
+/// at the first states of each (gamestate, finale stage) and of each melt kind, a few steps into
+/// each melt, and every 300th call. Local only; it asserts only the seed counts. It lives at test
+/// level because a fuzz seed is a file outside the repository that no public check can read.
+#[test]
+#[ignore = "local only: writes fuzz seeds under M6A2_FUZZ_SEEDS"]
+fn write_fuzz_seeds_part2_local() {
+    let Some(dir) = std::env::var_os("M6A2_FUZZ_SEEDS") else {
+        return;
+    };
+    let mut seen: BTreeMap<String, u32> = BTreeMap::new();
+    let mut written = 0usize;
+    for item in ["FINRET", "CHAIN"] {
+        let mut d = Drive::new(item);
+        let mut kind = String::from("none");
+        let mut calls = 0u32;
+        while let Some(c) = d.call() {
+            calls += 1;
+            if let Some(k) = melt_kind(&c) {
+                kind = k.replace(' ', "_");
+            }
+            let melting = d.s.melt_in_progress();
+            let key = if melting {
+                format!("melt_{kind}")
+            } else {
+                match d.s.finale() {
+                    Some(f) => format!("finale{}", f.stage),
+                    None => format!("{:?}", d.s.gamestate()).to_lowercase(),
+                }
+            };
+            let n = seen.entry(format!("{item}_{key}")).or_insert(0);
+            let take = if melting {
+                matches!(*n, 0 | 3 | 9)
+            } else {
+                *n < 2 || calls % 300 == 0
+            };
+            *n += 1;
+            if !take {
+                continue;
+            }
+            let Ok(state) = d.s.save_v2() else { continue };
+            let name = format!("{item}_{key}_{calls}");
+            for (target, bytes) in [
+                ("m6a2_dses2", state.encode()),
+                ("m6a_ddsp4", state.display.encode()),
+                ("m6a_dsnd3", state.sound.encode()),
+            ] {
+                let folder = std::path::Path::new(&dir).join(target);
+                std::fs::create_dir_all(&folder).expect("folder");
+                std::fs::write(folder.join(&name), bytes).expect("seed");
+            }
+            written += 1;
+        }
+    }
+    assert!(written >= 6, "only {written} seeds");
+}

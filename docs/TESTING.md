@@ -3154,6 +3154,9 @@ cargo check --manifest-path fuzz/Cargo.toml --bin m6a_dsnd3   # the DSND version
 cargo test -p doom-game --test m6a2_session -- --nocapture         # the finale-and-melt session against every golden, both sizes
 cargo test -p doom-game --test m6a2_session_rules -- --nocapture   # DSES v2 restore, refusals with their state, the v2 reader
 cargo check --manifest-path fuzz/Cargo.toml --bin m6a2_dses2       # the DSES version 2 reader's fuzz target compiles
+M6A2_FUZZ_SEEDS=DIR cargo test --release -p doom-game --test m6a2_session_rules -- --ignored write_fuzz_seeds_part2_local   # seeds for the three part 2 targets under DIR (outside the repository)
+cargo +nightly fuzz run TARGET DIR/TARGET --sanitizer address -- -runs=0   # seed replay, per TARGET: m6a2_dses2, m6a_ddsp4, m6a_dsnd3
+cargo +nightly fuzz run TARGET CORPUS --sanitizer address -- -max_total_time=240 -max_len=300000 -seed=1 -timeout=20 -rss_limit_mb=2048   # a campaign on a copy of the seeds (-max_len above the largest seed, about 213 KB)
 ```
 
 `m6a2_session` drives every drivable item of both golden sets (the 29 part 1 items, FULLREG and FULLRET) through
