@@ -27,7 +27,9 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
 - **Game logic.** One player, six weapons, seven kinds of monster and Episode 1's map features
   ([what is admitted](docs/COMPATIBILITY.md#policies)).
 - **Real maps.** All nine Episode 1 maps and the original's own `DEMO1`: every scripted run stays in sync with the
-  original C code, tic for tic ([which runs](docs/validation/M4B.md#real-maps-and-demo1)).
+  original C code, tic for tic, and so do the more than 60 hand-played sessions checked so far (over 200,000 tics)
+  ([scripted runs](docs/validation/M4B.md#real-maps-and-demo1); by hand: [M5c](docs/validation/M5C.md),
+  [M5d](docs/validation/M5D.md), [M6a](docs/validation/M6A.md#5-after-the-hand-test-gate-2026-11-22-evening)).
 - **Picture.** Renderer, status bar, messages and palette flashes: frames equal the original's wherever compared ([what is and is not](docs/COMPATIBILITY.md#playable-build-m5b)).
 - **Sound.** Effects, no music: sounds started and samples mixed equal the original's own sound code on the runs
   checked ([which build, which runs](docs/COMPATIBILITY.md#sound-effects-m5c)).

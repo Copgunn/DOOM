@@ -300,6 +300,34 @@ health and carried bob each caught in the 1 session that has a carried start, at
 decoded (20,512) and every 35th restored. Result digest (as in §1): `1601c966e7477e4ad00564f62a558dd33cd0cc392377cbc2c813f90fb69e2a32`
 (14 MB, scratch). Nothing after the last recorded tic of the second file is compared: the finale is not built.
 
+### 5.8 Held keys at a level load (2026-11-23, after part 1 merged)
+
+The known gap recorded with part 1, fixed in its own pull request (branch `fix/load-input`, from master `e531879b`; code
+heads `d56c7ceb` and, for the window's key path after a review finding, `abe95455` and `0f6cb853`). Rust-only tests of the app's event layer, with the C fact cited (g_game.c:490-496); the genuine engine was
+not run for this change, and no golden, fixture or expected value changed. The rule is in
+[COMPATIBILITY](../COMPATIBILITY.md#input) and the commands in [TESTING](../TESTING.md#the-playable-level-chain-steps-4-to-9).
+
+| Check (local, 2026-11-23 evening, PST) | Result |
+| --- | --- |
+| `m6a_load_input` (4 new tests: an exit load and a reborn load, each under the vanilla and the modern preset), debug and release | 4 passed each |
+| The same 4 with the layer's call removed (a planted fault, not committed) | 4 failed: no forward move after the repeat, no run key in the log |
+| `cargo test --workspace` (debug), at `d56c7ceb` | 2,105 passed, 0 failed, 12 ignored |
+| Review finding: `doom-play`'s `key_event` dropped every auto-repeated keydown, so in the real window the repeat never reached the layer; the tests above call the app directly and could not see it | fixed at `abe95455`: a repeat passes while playing, Esc and Pause excepted |
+| `key_repeat_tests` in `doom-play` (3 new tests through `key_event`), debug and release | 3 passed each |
+| The same 3 with the old filter restored, and with no filter at all (planted faults, not committed) | old filter: the load test fails; no filter: the pause-screen test fails. The end-screen test passes under both, so it records the behaviour and no planted fault catches it |
+| `cargo test -p doom-play`, debug and release, at `abe95455` | 161 passed, 0 failed, 2 ignored each |
+| Second review finding: with repeats passed, a key held through a pause or a focus loss is down again at its next repeat after the resume (before, it stayed released). 2 new tests through `key_event` at `0f6cb853`: forward moves before the pause, on the first tic after the resume and after the next repeat | 25, 0, 25 in both, as the owner described; kept by his ruling of 2026-11-23 |
+| `cargo test -p doom-play`, debug and release, at `0f6cb853` | 163 passed, 0 failed, 2 ignored each |
+| `cargo test --release -p doom-game` | 185 passed, 0 failed, 6 ignored |
+| Format (fuzz workspace included), Clippy with warnings denied, warnings-denied rustdoc, at both heads | clean |
+
+One existing test file is touched, by the owner's ruling of 2026-11-23: the `Driver` helper of `m6a_play.rs` presses its
+held keys again after a load, as a repeating keyboard would. No assertion or expected value in it changed, and its demos
+still equal the committed ones byte for byte. **Not run for this change:** the original-C generators, the fuzz builds, a
+sanitizer campaign, the real-map sets and a hand test on a real keyboard (how long a held key stays dead after a load
+depends on the system's repeat delay, which is unmeasured). The mouse-button side of the clear is read from the code, not tested. The
+whole workspace was not run again locally after `abe95455` (only `doom-play` changed; CI runs it).
+
 ## Not run, and limits
 
 - **Local only.** Every real-map figure is from the owner's IWAD on his WSL2 machine on 2026-11-22 and 2026-11-23; it cannot run in CI and nobody

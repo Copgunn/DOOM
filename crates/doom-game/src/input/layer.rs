@@ -223,6 +223,19 @@ impl EventLayer {
         self.force_mouse = true;
     }
 
+    /// At a level load after a session's first: `G_DoLoadLevel` clears the game's held keys
+    /// (g_game.c:490-496), so the layer forgets which keys it has reported down and the next
+    /// operating-system repeat of a key still held passes as a keydown, as it does on a
+    /// repeating keyboard in the original. With always-run the next drain posts the keydown of
+    /// `key_speed` again. Inputs not yet posted, the mouse buttons and the motion stay.
+    pub fn load_level(&mut self) {
+        self.held = [false; NUMKEYS];
+        if self.options.always_run {
+            self.ready.push_back(Event::KeyDown(self.speed_key));
+            self.held[usize::from(self.speed_key)] = true;
+        }
+    }
+
     /// The events to post before the next command build, appended to `out` in order.
     pub fn drain(&mut self, out: &mut Vec<Event>) {
         // one slot stays free for the mouse event

@@ -2973,6 +2973,32 @@ and keeps the genuine path from there on (decision S4).
   it is not the Windows [stuck-fire report](#stuck-fire-on-windows-accepted-as-fixed-in-m5d-the-cause-was-never-reproduced)). Every stream it makes is one the genuine `G_Responder` could have
   received. Sensitivity arithmetic, turning, strafing, forward movement, double-click use and the clamps are the
   genuine code ported.
+- **Held keys at a level load.** At every load of a session after its first (an exit's and a reborn's alike) the
+  original clears its held keys, the mouse motion and the left mouse button (`G_DoLoadLevel`, g_game.c:490-496), after
+  the load tic's command was built: that command executes, and the next is built from the cleared state. The app does the
+  same, and the layer forgets which keys it has reported down, so the keyboard's next repeat of a key still held passes
+  as a keydown, as on the original's repeating keyboard. **A held key therefore does nothing after a load until the
+  operating system repeats it (or it is pressed again)**; how soon that is depends on the system's repeat delay and is
+  unmeasured. Under always-run the layer posts the run key again at the load; a physical run key held through the load (walking) therefore runs until its own repeat arrives (read from the code, not tested). A held left mouse button fires again at
+  the next mouse event (any motion), as in the original (read from the code; the tests cover keys only). Every one of these events goes through the normal path, so the
+  input log and the demo hold it. **The path of a repeat:** the window (`doom-play`'s `key_event`) passes an auto-repeated
+  keydown to the app only while it is playing and only for a key other than Esc and Pause; the layer then drops it as the
+  repeat of a key it holds, except after a load. On the pause and end screens a repeat is dropped, so a held Esc, R or Q
+  acts once; the mute key acts on its first down only. One side effect: an R still held after it restarted a session
+  reaches the new session's event stream as a keydown of `r` (bound to nothing in either preset, so no command changes).
+  Whether the window library reports repeats alike on every platform is unmeasured.
+  **In ordinary play, by the owner's hand test** (Windows artifact of `0f6cb853`, 2026-11-23, about 20:58 to 21:00 PST,
+  retail, skill 2, modern bindings, E1M1 into E1M2, two runs; observed by hand, not measured, and not on other platforms):
+  - Run 1: W held from launch, E pressed on the exit switch and on the tally. In E1M2 there was one small lurch, then no
+    movement until W was pressed again. Run 2: the same, but W released and pressed again on the tally, and the tally
+    advanced with the left mouse button. In E1M2 the player moved forward with nothing touched.
+  - A keyboard repeats only the key pressed last. Pressing another key (use on an exit switch, Esc to pause) stops the
+    repeats of a key already held, and they do not start again when the other key is released.
+  - So a movement key held through an exit that needed the use key stays up after the load until it is pressed again,
+    as on the original with a real keyboard. The lurch is the load tic's command, built before the clear.
+  - The same applies to a pause by Esc: the held key gets no repeat after the resume. The resume at the next repeat
+    ("Pause and focus" below) is reached after a focus loss, or when the held key was the last one pressed. The two
+    runs did not include a pause or a focus loss; this follows from the keyboard behaviour above.
 - **Never forwarded** (decision S5): Esc and Pause (the app's own pause), Enter, Tab, `-`, `=`, `q` and F1-F12.
   The genuine effects of these (menus, automap, screen size, gamma, message refresh, ending a recording) are out
   of scope, and a withheld key cannot be bound. The cheat matcher is not ported: the letters of a cheat code
@@ -2986,7 +3012,11 @@ and keeps the genuine path from there on (decision S4).
   motion, no middle or right button action; the other keys as vanilla.
 - **Pause and focus.** Esc or Pause pauses the app (below). The window library (miniquad 0.4.11) reports the
   window being minimised or losing focus through its minimise event, and `doom-play` turns that event into a pause.
-  Every pause releases every held key and button through the event layer. Observed on 2026-11-17 under WSLg: when a
+  Every pause releases every held key and button through the event layer. **A key still physically held is down again
+  after the resume at its next keyboard repeat** (kept by the owner's ruling of 2026-11-23): since the load-input fix the
+  window passes repeats to the app while it plays (see "Held keys at a level load" above), where before a held key stayed
+  released until pressed again (after a pause by Esc usually no repeat comes: see the hand test there). A repeat that arrives during the pause is dropped. Tested through `key_event` for a pause
+  by Esc and for a focus loss; when the first repeat arrives depends on the system and is unmeasured. Observed on 2026-11-17 under WSLg: when a
   second window took the focus, the running game paused, on X11 and on Wayland. **Not checked:** Alt-Tab,
   minimising by hand, Windows, macOS, and whether the keys are seen released on screen. From the library's source,
   not observed: on X11 any focus-out pauses (including one caused by another program's keyboard grab), and on macOS
