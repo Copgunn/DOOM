@@ -474,6 +474,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "m6a_dsnd3"
+path = "fuzz_targets/m6a_dsnd3.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "m6a_dsim42"
 path = "fuzz_targets/m6a_dsim42.rs"
 test = false
