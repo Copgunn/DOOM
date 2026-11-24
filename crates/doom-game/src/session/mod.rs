@@ -68,6 +68,7 @@
 //! in a level only, g_game.c:729-733, d_main.c:270-271) and which the next load's `P_SpawnPlayer`
 //! clears before any `HU_Ticker`; the session therefore keeps no message outside a level.
 pub mod demo;
+pub mod finale;
 pub mod intermission;
 pub mod sound;
 pub mod state;
