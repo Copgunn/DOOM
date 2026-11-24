@@ -644,7 +644,7 @@ impl Display {
 
     /// The saveable state of a session display (`DDSP` version 3); None for another display, for
     /// the finale-and-melt configuration (whose state is [`Self::session_state_v4`]) or before
-    /// [`Self::begin_level`].
+    /// [`Self::begin_level`]. [`Self::session_state_v3_checked`] names which of these refused.
     pub fn session_state(&self) -> Option<SessionDisplayState> {
         let s = self.session.as_deref()?;
         if s.config != SessionConfig::RefusesFinaleAndMelt {

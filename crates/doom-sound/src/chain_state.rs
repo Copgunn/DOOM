@@ -341,7 +341,8 @@ impl ChainSound {
     /// The session's saved state. A session of [`crate::chain_melt::ChainMode::FinaleAndMelt`]
     /// saves as version 3 ([`Self::save_v3`]); called on one, this gives the same contents (a
     /// pending display as a melt in progress, its owed buffer not counted), which restore as
-    /// version 2 rules say.
+    /// version 2 rules say. A save that must refuse an old version for the new configuration by
+    /// type is [`Self::save_v2_checked`] (owner's ruling 3 of 2026-11-23).
     pub fn save(&self) -> ChainSoundState {
         let s: SoundState = self.sound.state();
         ChainSoundState {

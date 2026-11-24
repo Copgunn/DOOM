@@ -94,6 +94,30 @@ pub struct MeltStep {
     pub palette: u8,
 }
 
+/// Why a checked session display state was refused ([`Display::session_state_v3_checked`],
+/// [`Display::session_state_v4_checked`]). Nothing is changed.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SessionStateRefusal {
+    /// The display is not a session display.
+    NotSession,
+    /// No level has been started ([`Display::begin_level`]).
+    NotStarted,
+    /// A [`SessionConfig::FinaleAndMelt`] display is saved as `DDSP` version 4 only.
+    FinaleAndMeltSavesVersion4,
+    /// A [`SessionConfig::RefusesFinaleAndMelt`] display is saved as `DDSP` version 3 only.
+    RefusesFinaleAndMeltSavesVersion3,
+    /// The display holds a planted fault (evidence self-tests only).
+    PlantedFault,
+}
+
+impl std::fmt::Display for SessionStateRefusal {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "session display state refused: {self:?}")
+    }
+}
+
+impl std::error::Error for SessionStateRefusal {}
+
 /// A melt in progress in a saved state (`DDSP` version 4).
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MeltProgress {
@@ -355,6 +379,41 @@ impl Display {
             session,
             melt,
         })
+    }
+
+    /// The `DDSP` version 3 state with the reason for a refusal named (owner's ruling 3 of
+    /// 2026-11-23: a session display of [`SessionConfig::FinaleAndMelt`] is saved only as version
+    /// 4, and an old-version save from it is a typed refusal). For the frozen configuration it is
+    /// exactly [`Self::session_state`], whose `None` is kept as it was for its existing callers.
+    pub fn session_state_v3_checked(&self) -> Result<SessionDisplayState, SessionStateRefusal> {
+        let s = self
+            .session
+            .as_deref()
+            .ok_or(SessionStateRefusal::NotSession)?;
+        if s.config != SessionConfig::RefusesFinaleAndMelt {
+            return Err(SessionStateRefusal::FinaleAndMeltSavesVersion4);
+        }
+        self.session_state_any()
+            .ok_or(SessionStateRefusal::NotStarted)
+    }
+
+    /// [`Self::session_state_v4`] with the reason for a refusal named.
+    pub fn session_state_v4_checked(&self) -> Result<SessionDisplayStateV4, SessionStateRefusal> {
+        let s = self
+            .session
+            .as_deref()
+            .ok_or(SessionStateRefusal::NotSession)?;
+        match s.config {
+            SessionConfig::RefusesFinaleAndMelt => {
+                Err(SessionStateRefusal::RefusesFinaleAndMeltSavesVersion3)
+            }
+            SessionConfig::FinaleAndMelt { .. } if s.fault.is_some() => {
+                Err(SessionStateRefusal::PlantedFault)
+            }
+            SessionConfig::FinaleAndMelt { .. } => self
+                .session_state_v4()
+                .ok_or(SessionStateRefusal::NotStarted),
+        }
     }
 
     /// Restores a `DDSP` version 4 state after [`SessionDisplayStateV4::check`], as

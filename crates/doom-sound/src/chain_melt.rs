@@ -90,6 +90,26 @@ pub enum ChainFault {
     VictorLate,
 }
 
+/// Why a checked save of a sound session across levels was refused (owner's ruling 3 of
+/// 2026-11-23: each configuration saves only in its own version). Nothing is changed.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+pub enum ChainSaveRefusal {
+    /// A [`ChainMode::FinaleAndMelt`] session is saved as `DSND` version 3 only.
+    FinaleAndMeltSavesVersion3,
+    /// A [`ChainMode::RefusesMelt`] session is saved as `DSND` version 2 only.
+    RefusesMeltSavesVersion2,
+    /// The session holds a planted fault (evidence self-tests only).
+    PlantedFault,
+}
+
+impl std::fmt::Display for ChainSaveRefusal {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "sound save refused: {self:?}")
+    }
+}
+
+impl std::error::Error for ChainSaveRefusal {}
+
 /// The saved state of a finale-and-melt sound session, `DSND` version 3 (docs/STATE_FORMAT.md):
 /// the layout, meaning and rules of version 2 ([`ChainSoundState`]) with the version 3, read by
 /// its own reader. `state.melt` is a pending display: the logic and the `S_UpdateSounds` of the
@@ -209,6 +229,28 @@ impl ChainSound {
     pub fn save_v3(&self) -> Option<ChainSoundStateV3> {
         (self.mode == ChainMode::FinaleAndMelt && self.fault.is_none())
             .then(|| ChainSoundStateV3 { state: self.save() })
+    }
+
+    /// The `DSND` version 2 state, refused by type for a session of
+    /// [`ChainMode::FinaleAndMelt`] (owner's ruling 3 of 2026-11-23: a session of the new
+    /// configuration is saved only in the new versions; an old-version save from it is a typed
+    /// refusal). For a [`ChainMode::RefusesMelt`] session it is exactly [`Self::save`].
+    /// [`Self::save`] itself keeps its behaviour for every configuration: existing tests pin
+    /// what it gives on a finale-and-melt session (a pending display seen through version 2).
+    pub fn save_v2_checked(&self) -> Result<ChainSoundState, ChainSaveRefusal> {
+        match self.mode {
+            ChainMode::RefusesMelt => Ok(self.save()),
+            ChainMode::FinaleAndMelt => Err(ChainSaveRefusal::FinaleAndMeltSavesVersion3),
+        }
+    }
+
+    /// [`Self::save_v3`] with the reason for a refusal named.
+    pub fn save_v3_checked(&self) -> Result<ChainSoundStateV3, ChainSaveRefusal> {
+        match (self.mode, self.fault) {
+            (ChainMode::RefusesMelt, _) => Err(ChainSaveRefusal::RefusesMeltSavesVersion2),
+            (ChainMode::FinaleAndMelt, Some(_)) => Err(ChainSaveRefusal::PlantedFault),
+            (ChainMode::FinaleAndMelt, None) => Ok(ChainSoundStateV3 { state: self.save() }),
+        }
     }
 
     /// A [`ChainMode::FinaleAndMelt`] session rebuilt from a version 3 state, with every check of
