@@ -22,6 +22,14 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
 
 *The original engine, the Rust engine and their difference, one scripted session: the difference panel stays black ([how](docs/TESTING.md#readme-animations)).*
 
+![The genuine engine, the Rust session and their per-pixel difference playing one screen wipe from a synthetic level to the intermission screen, one step a frame.](docs/media/m6a2-melt-side-by-side.gif)
+
+*A screen melt, step by step: the difference panel stays black ([how](docs/TESTING.md#readme-animations)).*
+
+![The genuine engine, the Rust session and their per-pixel difference playing a sampled text crawl on a synthetic finale and the melt to its art screen.](docs/media/m6a2-finale-side-by-side.gif)
+
+*The end-of-episode text crawl (sampled) and its melt: the difference stays black ([how](docs/TESTING.md#readme-animations)).*
+
 ## Where it stands
 
 - **Game logic.** One player, six weapons, seven kinds of monster and Episode 1's map features
