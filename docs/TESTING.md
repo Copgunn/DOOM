@@ -3151,6 +3151,31 @@ cargo test -p doom-sound --test dsnd3_reader             # the DSND version 3 re
 cargo check --manifest-path fuzz/Cargo.toml --bin m6a_dsnd3   # the DSND version 3 reader's fuzz target compiles
 ```
 
+The frozen part 1 formats (`DSIM` 42, `DDSP` v3, `DSND` v2, `DSES` v1) are pinned byte for byte by
+one test and one fixture:
+
+```sh
+cargo test -p doom-game --test m6a_frozen_bytes -- --nocapture   # also with --release
+```
+
+It compares SHA-256 digests of the full encoded bytes with `tests/reference/m6a_frozen_bytes.txt`
+(schema in [STATE_FORMAT](STATE_FORMAT.md)). The fixture is a regression pin, generated once by
+the same test file run on master at 25cdb3ba (part 1, before the finale and melt) in a scratch
+worktree, never on the part 2 branch:
+
+```sh
+git worktree add ~/scratch/m6a2/master-pins 25cdb3ba
+cp crates/doom-game/tests/m6a_frozen_bytes.rs ~/scratch/m6a2/master-pins/crates/doom-game/tests/
+cd ~/scratch/m6a2/master-pins
+CARGO_TARGET_DIR=<the repository's target> M6A_FROZEN_BYTES_WRITE=$HOME/scratch/m6a2/m6a_frozen_bytes.txt \
+  cargo test --release -p doom-game --test m6a_frozen_bytes the_frozen -- --nocapture
+```
+
+Copy the written file to `tests/reference/` only to add a pin; a digest that differs on a later
+branch is a change of a frozen format, never a reason to regenerate. If a test binary was built in
+the scratch worktree into a shared target directory, touch the test file before running it in the
+repository (`CARGO_MANIFEST_DIR` is fixed at compile time).
+
 The tests print their counts with `-- --nocapture`. What they compared is in the
 [investigation note](M6A_REFERENCE_INVESTIGATION.md#7-part-2-plan-size-and-decisions-for-the-owner-2026-11-23)
 until the part 2 evidence record is written. The sound test drives each item as far as part 1's `m6a_chain` does (the

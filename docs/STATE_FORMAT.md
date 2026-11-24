@@ -2932,6 +2932,7 @@ debug and a release build cannot differ on them.
 | File | Schema | Rows |
 | --- | --- | --- |
 | `tests/reference/m6a_state.txt` | `DOOM-M6A-STATE-v1` | `L,item,load,tic,map,kind,captures,map_sha256,sequence_sha256`: one per level (SHA-256 of the 32-byte digests of every capture after the load); `D,item,load,tic,leveltime,why,state_sha256`: the DSIM42 capture digest at the load, every 35th level tic and the last. `tic` is the session tic; `why` is `load`, `stride` or `last` |
+| `tests/reference/m6a_frozen_bytes.txt` | `DOOM-M6A-FROZEN-BYTES-v1` | `R,item,screenblocks,gametic,why,format,len,sha256`: length and SHA-256 of the full encoded bytes of `DSES` v1 (`Session::save().encode()`) and of the `DDSP` v3, `DSND` v2 and `DSIM` 42 blobs it embeds, at the start, each load, each change of `gamestate`, `map` or `gameaction`, every 35th `gametic` and the last tic, for 10 part 1 items at screenblocks 10 and 11; `Q,item,screenblocks,rows,bytes,sequence_sha256`: one per item run (SHA-256 of its `R` lines). Generated on master at 25cdb3ba, before part 2; a regression pin, not an original-C expectation |
 | `tests/reference/m6a_stale_attacker.txt` | `DOOM-M6A-STALE-ATTACKER-v1` | `A,item,load,tic`: a load on which the stale-attacker rule projected `players[0].attacker` as NULL; `T,total`: their number |
 | `tests/reference/m6a_dsim42_starts.txt` | `DOOM-M6A-DSIM42-STARTS-v1` | the encoder's start group per load, in hex |
 
