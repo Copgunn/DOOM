@@ -43,7 +43,7 @@ original updates its row in the register (this index and the pages under
 
 ## Totals
 
-Updated on 2026-11-23 (America/Los_Angeles).
+Updated on 2026-11-24 (America/Los_Angeles).
 
 - **Rows: 489**, of which 480 are on the 54 C-file pages and 9 are on the [64-bit build only](quirks/64-bit-only.md) page.
 - How the number came about: the sweep wrote 890 raw entries; the merge made 443 rows; the first assembly (commit 2c2ee84) joined 23 pairs into 420 rows; the revision after the independent review and the owner's rulings joined 10 more (listed below), split 10 of the 11 mixed-status rows into 23 rows by status (one row per status; the 11th, Q-p_setup-536, became a row of the 64-bit page), moved 3 rows to the 64-bit page and added 6 rows there: 420 - 10 + 13 + 6 = 429. The later 2026-11-22 splits and additions raised it to 474, the M6a pull request to 486 and M6a part 2 to 489 (below).
@@ -52,6 +52,7 @@ Updated on 2026-11-23 (America/Los_Angeles).
 - Added on 2026-11-23 (America/Los_Angeles) by M6a part 2 (step 2, the pure Episode 1 finale drawer, which no configuration reaches yet): three rows on the f_finale.c page (Q-f_finale-314, Q-f_finale-321 and Q-f_finale-714), each not yet ported: 486 + 3 = 489.
 - Updated on 2026-11-23 (America/Los_Angeles) by M6a part 2 (steps 3 and 4, the display): Q-f_finale-314, Q-f_finale-321, Q-f_finale-714 and Q-f_wipe-210 now name the finale-and-melt session display configuration that reaches the finale drawer and the melt step; no row is added and no status changes, since the session does not use that configuration yet.
 - Updated on 2026-11-23 (America/Los_Angeles) by M6a part 2 (steps 3 and 4, the sound): Q-d_main-331-2 now names the finale-and-melt sound configuration, which mixes nothing during melt steps; no row is added and no status changes, since the session does not use that configuration yet.
+- Updated on 2026-11-24 (America/Los_Angeles) by M6a part 2 (the part 2 golden set, ruling V9): Q-f_finale-321's evidence now names the full-crawl items FULLREG and FULLRET (a narrow font that fits every line, so the whole text is drawn) beside the edge-break items, and the computed break point of the M5b font; no row is added and no status changes.
 - The separate lists: [recorded in only one place and in no note](quirks/only-one-place.md) (12 whole or partial rows and a list of readings); [not traced to a C line](quirks/not-traced.md) (none left); [dropped, and why](quirks/dropped.md) (54 entries); [where the documents disagree](quirks/disagreements.md) (75 entries, 7 marked policy claim); [the 64-bit build only](quirks/64-bit-only.md) (9 rows).
 
 The 2026-11-22 follow-up split 24 more rows into 48 and classified 48 rows from the Rust code and existing tests. A separate refusal row records the historical endpoint policy for a stalled trace. A further audit split 19 remaining mixed-status rows into 38, distinguished the R4 flagged-column contract from a refusal, and settled the two 64-bit harness-exposure unknowns by reading the builders. The status counts below describe the current register.

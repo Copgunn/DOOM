@@ -3116,7 +3116,9 @@ cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_s
   small formats).
 - **CI job `M6a genuine session`** (ruling U15): `m6a_wad.py`, `m6a_build.py` and `m6a_melt_steps.py` with `--check`, then
   `m6a_reference.py`, `m6a_goldens.py`, `m6a_mixer.py` and `m6a_state.py` with `--check --selftest`: the genuine engine on
-  the synthetic items against the committed goldens. Linux only; leak detection is disabled in its address variants.
+  the synthetic items against the committed goldens; then the part 2 golden set (`m6a2_wad.py` and `m6a2_goldens.py`
+  with `--check --selftest`, [below](#part-2-the-finale-and-the-melt-in-progress)). Linux only; leak detection is
+  disabled in its address variants.
 - **Real maps, local only** (reads the owner's IWAD, never in CI): `tools/local/m6a_session_real.py --set single|chains --mode
   registered|retail --out DIR [--work DIR] [--only NAME,..] [--jobs N]` runs the genuine engine on a scratch copy of the IWAD
   named for the mode and writes goldens in the layout of `tests/reference`. The gates then read them:
@@ -3175,6 +3177,60 @@ Copy the written file to `tests/reference/` only to add a pin; a digest that dif
 branch is a change of a frozen format, never a reason to regenerate. If a test binary was built in
 the scratch worktree into a shared target directory, touch the test file before running it in the
 repository (`CARGO_MANIFEST_DIR` is fixed at compile time).
+
+**The part 2 golden set** (owner's ruling V9 of 2026-11-23 and its addition of 2026-11-24). New files only, read only by
+new tests: the part 1 goldens, WADs, scripts and manifest stay byte for byte and are still compared by the part 1 tests.
+`tools/reference/m6a2_wad.py` draws a narrow heads-up font of our own (`tests/reference/m6a2_wads/m6a2_font.wad`, the 63
+`STCFN` patches; nothing from an IWAD) in which every line of the Episode 1 text fits in 320 pixels, and writes
+`tests/reference/m6a2_manifest.json` (`DOOM-M6A2-MANIFEST-v1`): the items `FULLREG` and `FULLRET` (the part 1 `FINALE`
+demo with the narrow font, registered and retail), the list of items re-run at screenblocks 11 for the melt goldens
+(every part 1 item and the two new ones), and the crawl facts computed from the glyph widths.
+`tools/reference/m6a2_goldens.py` runs them through the genuine M6a runner, importing the part 1 tools read-only.
+
+```sh
+# Python only (no compiler)
+python3 tools/reference/m6a2_wad.py --check [--selftest]   # the font WAD and the manifest; --selftest plants three faults
+python3 tools/reference/m6a2_wad.py --facts                # lines, characters, glyphs, gaps, the right edge, the tics
+python3 tools/reference/m6a2_wad.py                        # rewrite both
+
+# the genuine engine (C; Linux; --work outside the repository)
+python3 tools/reference/m6a2_goldens.py --work DIR --check [--selftest] [--jobs N]   # compare every golden (writes nothing)
+python3 tools/reference/m6a2_goldens.py --work DIR [--jobs N]                        # no --check: rewrite the goldens
+python3 tools/reference/m6a2_goldens.py --work DIR --only NAME[,NAME]               # a subset; writes nothing
+python3 tools/reference/m6a2_goldens.py --work DIR --selftest                       # the planted faults alone
+
+# the Rust side (each also with --release)
+cargo test -p doom-game --test m6a2_full_crawl --test m6a2_melt_sb11 -- --nocapture
+```
+
+- **Full crawl.** Each new item gets exactly the part 1 record (`m6a_goldens.item_record`: strict at screenblocks 10
+  with dumps and at 11; overflow, address and `address_bounds` at 10 identical to strict; a `--melt-clock unit` run;
+  the witnesses, among them stage 1 from finale tic 1,571 and no finale `M_Random` draw). The crawl is then checked at
+  both sizes: the genuine finale frame changes exactly on finale tic 1 and on the tic each drawn character is first
+  counted, so the last change is finale tic 1,327 and the frame holds until stage 1; and every finale frame's SHA-256
+  equals an independent Python model of `F_TextWrite` and the stage-1 picture (an independent-consistency check of what
+  the genuine frames show, not a source of goldens).
+- **Melts at screenblocks 11.** Every item of the list is run at screenblocks 11 with `--melt-clock unit` by the strict,
+  overflow, address and `address_bounds` builds (identical streams; the address build compared through its last tic
+  where the declared report at `st_stuff.c:1292` stops it, as in part 1). Every row but the melt rows must equal the
+  item's committed golden; each melt's step count must equal `m6a_melt_steps.py`'s prediction from `rndtable`, with the
+  last two pictures equal to the end screen.
+- Goldens: `tests/reference/m6a2_session/`, `m6a2_sound/`, `m6a2_frames/` (the two items at 10 and 11),
+  `m6a2_melt/<ITEM>.sb10.melt` (the two items) and `<ITEM>.sb11.melt` (every listed item; `DOOM-M6A2-MELT-v1`: one
+  SHA-256 per melt step and the palette per melt, ruling V4) and `tests/reference/m6a2_results.json`
+  (`DOOM-M6A2-RESULTS-v1`). Schemas are in [STATE_FORMAT](STATE_FORMAT.md#m6a-golden-files-that-hold-state-digests).
+- `m6a2_goldens.py --selftest` plants a flipped pixel in the runner on CHAIN's first frame at screenblocks 11 (caught at
+  that melt's `Y` row), a changed first glyph in a scratch copy of the font WAD (caught at the finale tic that glyph is
+  first drawn), three faults in the crawl model (a newline as a space, the line step 12, one character too few; each
+  caught at its tic) and a dropped step and a moved `M_Random` index in copies of `CHAIN.sb11.melt`.
+  `ASAN_OPTIONS=detect_leaks=0`: the address runs are not LeakSanitizer coverage.
+- `m6a2_full_crawl` compares the two items at screenblocks 10 and 11 (frames, palettes, the index, the finale's stage and
+  count on every finale tic, every melt) and plants a newline treated as a space and the line step off by one (in a
+  test-side copy of `F_TextWrite` first shown equal to the drawer on every text frame), the crawl one character short on
+  the tic of the last character, and a melt column off by one at screenblocks 11. `m6a2_melt_sb11` compares every part 1
+  item at screenblocks 11 with its melts and plants a column off by one, a dropped step and a wrong palette there.
+- **CI**: the job `M6a genuine session` runs `m6a2_wad.py --check --selftest` and `m6a2_goldens.py --check --selftest`
+  in one added step after its part 1 steps (Linux only; leak detection disabled in its address variants).
 
 The tests print their counts with `-- --nocapture`. What they compared is in the
 [investigation note](M6A_REFERENCE_INVESTIGATION.md#7-part-2-plan-size-and-decisions-for-the-owner-2026-11-23)
