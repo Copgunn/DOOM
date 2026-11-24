@@ -1,6 +1,6 @@
 [package]
 name = "doom-types"
-description = "Foundational types for the independent Rust DOOM rewrite"
+description = "Foundational types for Mutara's independent Rust rewrite of DOOM"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
