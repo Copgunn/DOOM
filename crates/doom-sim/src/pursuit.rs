@@ -213,6 +213,22 @@ pub(crate) fn move_actor<A: ActorAccess>(h: &mut LifeHost<'_, A>, id: ActorId) -
         let a = h.access.get_mut(id).unwrap();
         a.z = a.floor;
         a.life.as_mut().unwrap().flags &= !2097152;
+        // Wire 28: the monster escape witness after the accepted `P_TryMove` and
+        // its crossings (a teleport included), the barrel's parity test; even
+        // parity refuses the whole staged tic.
+        if let Some(boundary) = h.world.escape_witness.as_deref() {
+            use crate::movement::MotionAccess as _;
+            let a = *h.access.get(id).unwrap();
+            let mut witness = crate::barrels::BarrelMotion {
+                get: |_| None,
+                boundary,
+            };
+            if let Err(error) = witness.after_move(&a) {
+                h.fail_sight(error);
+                end(h, id, PursuitOperation::Move, false);
+                return false;
+            }
+        }
     }
     // p_enemy.c:310–324 (no admitted floater): a failed move with special lines in
     // spechit resets movedir and uses each of them, in reverse, from side 0.

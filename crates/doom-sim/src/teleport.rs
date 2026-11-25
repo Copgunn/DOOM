@@ -358,7 +358,9 @@ pub(crate) enum Mover {
     /// `barrels::BarrelMotion`.
     Barrel,
     /// Any other non-missile thing with momentum (a monster, a corpse, a barrel on a
-    /// map without boundary): no witness, as the plain closure access.
+    /// map without boundary): no witness, as the plain closure access, except
+    /// under wire 28, where the monster escape witness tests every accepted move
+    /// (`StaticWorld::escape_witness`).
     Other,
 }
 
@@ -431,6 +433,16 @@ impl crate::movement::MotionAccess for Motion<'_, '_, '_> {
                 boundary,
             }
             .after_move(actor),
+            // Wire 28: the monster escape witness, the barrel's parity test, for
+            // every other non-player mover (a monster or corpse thrust or sliding).
+            (Mover::Other, _) => match self.world.escape_witness.as_deref() {
+                Some(boundary) => crate::barrels::BarrelMotion {
+                    get: |_| None,
+                    boundary,
+                }
+                .after_move(actor),
+                None => Ok(()),
+            },
             _ => Ok(()),
         }
     }
