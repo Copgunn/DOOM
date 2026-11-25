@@ -770,6 +770,15 @@ fn session_message(w: &SessionWitness) -> String {
             "the finale art screen cannot be drawn ({e}). The original stops here too. In \
              registered mode its art screen is HELP2, in retail mode CREDIT."
         ),
+        SessionWitness::FinaleText(e) => format!(
+            "the finale text screen cannot be drawn ({e}). {}",
+            match e {
+                doom_render::f_finale::DrawRefusal::Lump(ResourceError::LumpNotFound(_)) => {
+                    "The original stops here too."
+                }
+                _ => "The session stops here instead of drawing it differently from the original.",
+            }
+        ),
         other => other.to_string(),
     }
 }

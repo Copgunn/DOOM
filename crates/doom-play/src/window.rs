@@ -6,7 +6,7 @@
 
 use crate::FsHost;
 use crate::closing::Play;
-use crate::input_log::{InputLog, LoggedHost, logged_key_event};
+use crate::input_log::{InputLog, LoggedHost, raw_focus_lost, raw_key};
 use crate::mouse_forward::Forward;
 use crate::session_writer::WriterHost;
 use crate::tic_stats::TicStats;
@@ -300,21 +300,11 @@ impl EventHandler for Stage {
     }
 
     fn key_down_event(&mut self, key: KeyCode, _mods: KeyMods, repeat: bool) {
-        let play = &mut self.play;
-        play.host.log.line(
-            "raw",
-            play.app.tic(),
-            format_args!("key-down {key:?} repeat={repeat}"),
-        );
-        logged_key_event(&mut play.app, &mut play.host, key, true, repeat);
+        raw_key(&mut self.play.app, &mut self.play.host, key, true, repeat);
     }
 
     fn key_up_event(&mut self, key: KeyCode, _mods: KeyMods) {
-        let play = &mut self.play;
-        play.host
-            .log
-            .line("raw", play.app.tic(), format_args!("key-up {key:?}"));
-        logged_key_event(&mut play.app, &mut play.host, key, false, false);
+        raw_key(&mut self.play.app, &mut self.play.host, key, false, false);
     }
 
     /// Whole units go to the app; the fraction waits for the next motion ([`Forward`]).
@@ -348,19 +338,7 @@ impl EventHandler for Stage {
     /// FocusOut, Wayland keyboard leave, Windows `WM_ACTIVATE` inactive, macOS resign-key and
     /// window move): the app pauses and releases every held key.
     fn window_minimized_event(&mut self) {
-        let play = &mut self.play;
-        play.host
-            .log
-            .line("raw", play.app.tic(), format_args!("focus-lost"));
-        let held = play.app.held_inputs();
-        play.app.focus_lost();
-        if play.app.held_inputs() > held {
-            play.host.log.line(
-                "app",
-                play.app.tic(),
-                format_args!("held for the melt's end: focus-lost"),
-            );
-        }
+        raw_focus_lost(&mut self.play.app, &mut self.play.host);
     }
 
     /// Logged (`--input-log`), and a reason to ask for the cursor grab again on Windows if it is

@@ -420,6 +420,7 @@ impl Session {
         }
         let mut display = self.display.clone();
         display.begin_finale().map_err(SessionWitness::Display)?;
+        let entered = display.clone();
         // `gameepisode` is 1 in every session (Episode 1).
         let mut view = finale::start(1).map_err(SessionWitness::Finale)?;
         if self.fault != Some(PlantedFault::FinaleLate) {
@@ -429,10 +430,17 @@ impl Session {
         let mut sound = self.sound.clone();
         let ts = session_sound::finale_tic(&mut sound, display.random_index(), &self.level)
             .map_err(SessionWitness::Sound)?;
-        let r = self.present_finale(display, sound, view, ts, FinaleMeltTicKind::Victory)?;
+        let r = self.present_finale(display, sound, view, ts, FinaleMeltTicKind::Victory);
+        if self.ended.is_some() {
+            // Rule 2 here (only a refused frame ends the session, and this tic began not ended):
+            // G_DoCompleted and F_StartFinale ran (g_game.c:636-641, f_finale.c:99).
+            self.display = entered;
+        } else if r.is_err() {
+            return r;
+        }
         self.secretexit = exit == LevelExit::Secret;
         self.carried = Some(carried);
-        Ok(r)
+        r
     }
 
     /// A finale tic after the first: one `F_Ticker` (f_finale.c:207-249), its forced wipe at
@@ -461,9 +469,9 @@ impl Session {
     }
 
     /// The display of a finale tic (`F_Drawer`, d_main.c:254-256) and its commit. A frame
-    /// refused by the display is, on a later finale tic, rule 2 (the finale's state committed,
-    /// the sound and the display at the last good tic, the session ended: ruling U4 (3)); on the
-    /// victory tic nothing changes.
+    /// refused by the display is rule 2 (the finale's state committed, the sound and the display
+    /// at the last good tic, the session ended: ruling U4 (3)), the crawl's (stage 0) witnessed as
+    /// [`SessionWitness::FinaleText`]; [`Self::victory_tic`] also commits `F_StartFinale`'s.
     #[allow(
         clippy::too_many_arguments,
         reason = "the staged parts of one tic, all moved once"
@@ -495,15 +503,16 @@ impl Session {
         let f = match drawn {
             Ok(f) => f,
             Err(e) => {
-                let w = SessionWitness::Display(e);
-                if kind == FinaleMeltTicKind::Finale {
-                    // Rule 2: F_Ticker ran in the C before D_Display stopped (d_main.c:383-395).
-                    self.finale = Some(view);
-                    self.ended = Some(Refusal {
-                        tic: self.gametic,
-                        witness: w.clone(),
-                    });
-                }
+                let w = match e {
+                    SessionError::Finale(r) if view.stage == 0 => SessionWitness::FinaleText(r),
+                    e => SessionWitness::Display(e),
+                };
+                // Rule 2: F_Ticker ran in the C before D_Display stopped (d_main.c:383-395).
+                self.finale = Some(view);
+                self.ended = Some(Refusal {
+                    tic: self.gametic,
+                    witness: w.clone(),
+                });
                 return Err(w);
             }
         };

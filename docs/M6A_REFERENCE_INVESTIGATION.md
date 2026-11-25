@@ -1236,6 +1236,8 @@ SKILL1's, as 7.10 says. The line is left as written.
 
 **Size:** 17,436 hand-written lines with the survivor tests and these records, by the method of 7.3, under the ceiling of 17,500.
 
+**Size after the follow-up (pull request #84, 2026-11-25):** 17,930 hand-written lines for part 2 and its follow-up together, by the same method from the same merge base, under the ceiling of 18,000 (the owner's ruling of 2026-11-25).
+
 The fuzz runs from new seeds, the test map, mutation testing and the independent read are in sections 8 to 12 of the
 record. The stale line under 7.11 above is answered by the record's section 10.
 

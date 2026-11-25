@@ -2,8 +2,8 @@
 
 **Status (2026-11-23, America/Los_Angeles): M6a part 1 is merged** ([PR #65](https://github.com/Copgunn/DOOM/pull/65), 2026-11-23), and
 so is the held-keys fix of [§5.8](#58-held-keys-at-a-level-load-2026-11-23-after-part-1-merged)
-([PR #79](https://github.com/Copgunn/DOOM/pull/79), the same day). Part 2 (the finale and the melt pictures, pull request #80, not merged) is
-recorded in sections 6 to 12; it passed the owner's hand test on 2026-11-24 ([§9](#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24)).
+([PR #79](https://github.com/Copgunn/DOOM/pull/79), the same day). Part 2 (the finale and the melt pictures, pull request #80, merged 2026-11-25) is
+recorded in sections 6 to 12, its follow-up (pull request #84) in [§13](#13-the-follow-up-pull-request-84-2026-11-25); it passed the owner's hand test on 2026-11-24 ([§9](#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24)).
 The paragraph below is the status as written on 2026-11-22, before the merge, and is left as it was.
 
 **Status (2026-11-22, America/Los_Angeles): this is the record up to the hand-test gate, not the finished milestone.** The
@@ -429,6 +429,14 @@ Helpers, not test targets: `m6a2/mod.rs` is used by `m6a2_full_crawl` and `m6a2_
 Added after this map was read: four files of mutation-survivor tests (`melt_mutant_tests.rs`, `m6a2_mutants.rs`,
 `finale_melt_mutant_tests.rs`, `m6a_chain_mutants.rs`), Rust-only, each test naming the mutants it kills ([§11](#11-mutation-testing-of-part-2s-changed-lines-cargo-mutants-2710)).
 
+Added on 2026-11-25 by the follow-up ([§13](#13-the-follow-up-pull-request-84-2026-11-25)), read from the files at `15722ee7`:
+
+| Test file (tests, ignored) | Compares (layer) | Against | Planted faults |
+| --- | --- | --- | --- |
+| `m6a2_victory_stops.rs` (2, 0) | App by keys on FINREG's demo with `FLOOR4_8` hidden: the ended mode, witness, message, exit line, saved demo, its replay tic by tic, R and Q; the two font sets refused at the load | Genuine: `m6a2_victory_stops/stops.json` (stop text, stop tic, WAD digests), FINREG's rows in `m6a_session` and `m6a_frames` (sb10) | The tool's self-tests; six source faults planted by hand, each failing a test (not kept in the file) |
+| `doom-play/src/window_handler_tests.rs` (2, 0) | `input_log::raw_key` and `raw_focus_lost`: the `raw` and `app` log lines and the app's state, inside and outside a melt | Rust-only | None |
+| `finale_melt_palette_tests.rs` (1, 0) | `DDSP` v4 reader: melt palette 13 decodes, 14 is refused | Hand-built bytes (Rust-only) | None |
+
 ### Compared twice on purpose
 
 - Melt steps at sb10 through the pure function, display, session and app (the sound chain counts steps only): "layer by layer, as
@@ -606,6 +614,33 @@ cargo-mutants was not run again over the new tests.
 The six new tests are in the new file `crates/doom-play/src/melt_mutant_tests.rs`. Each kill was observed by applying
 the mutation by hand, seeing the named test fail, and restoring the line; **cargo-mutants was not run again** on them.
 
+### 11.1 Run again on the final code (2026-11-25, pull request #84)
+
+cargo-mutants 27.1.0 over every line part 2 and its follow-up changed (the diff from the merge base `6cdbf593`), local, a
+scratch worktree on the Linux disk, `-j 2`, one run at a time; commands in
+[TESTING](../TESTING.md#local-mutation-run-on-doom-play-cis-workflow-does-not-mutate-it). `doom-sim` has no changed line.
+`doom-render`, `doom-sound` and `doom-game` were run at `4fb4d55e`, `doom-play` at `15722ee7`.
+
+| Crate (tests used) | Mutants | Caught | Missed | Timed out | Unviable |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `doom-play` (its own) | 116 | 111 | 4 | 0 | 1 |
+| `doom-render` (its own, `doom-sound`'s, `doom-game`'s part 2 targets) | 295 | 254 | 9 | 6 | 26 |
+| `doom-sound` (the same) | 79 | 54 | 3 | 0 | 22 |
+| `doom-game` (its own) | 336 | 298 | 3 | 0 | 35 |
+
+**Two of the 19 missed were answered, 17 remain** (the six timeouts are the endless `Melt::step` loops named above):
+
+| Survivor | Answer |
+| --- | --- |
+| `d_display/finale_melt.rs:701:28` `>` to `>=` (`palette > 13`) | **a wrong line in the table above, corrected here:** `decode_takes_the_largest_step_and_refuses_the_next` covers the steps-shown bound on line 697, which was never a survivor; the hand-applied mutation of 2026-11-24 was made on that line. Killed now by `decode_takes_palette_13_and_refuses_14` (new file); run again at `15722ee7`: the three mutants of 701:28 are caught |
+| `doom-game` `session/finale_melt.rs:434:23` `&&` to `\|\|` in `victory_tic` (the follow-up's own line) | the `&&` is removed: the session can only have ended there by the refused frame. Run again over that file at `15722ee7`: 47 mutants, 32 caught, 1 missed (66:34), 14 unviable |
+| `window.rs:303:9`, `307:9`, `341:9` (`key_down_event`, `key_up_event`, `window_minimized_event` to `()`) | **open:** the handlers' logic moved to `input_log::raw_key` and `raw_focus_lost`, where every mutant is caught (the three `>` mutants of 357:35 among them); what remains in `window.rs` is the one-line call of each, in a type that cannot be built without a graphics context |
+| `tic_stats.rs:38:16`; `f_wipe.rs:50:14`, `151:36`, `153:33`; `doom-game` `session/finale_melt.rs:66:34` | unchanged: argued equivalent, as above |
+| `d_display/finale_melt.rs:222:34`, `223:24`, `223:41`, `223:48`, `226:27`; `chain.rs:626:23`, `633:29`; `chain_melt.rs:197:44` | unchanged: planted-fault code |
+| `doom-game` `app/finale_melt.rs:423:9` `end_melt_for_sink` to `()` | unchanged: argued unreachable (the victory-tic stop ends a session too, but no melt is shown on that tic) |
+
+`app/finale_melt.rs:339:21` (`&&` to `||`), argued unreachable above, is now reached by the victory-tic stop and caught.
+
 ## 12. The independent read (2026-11-24)
 
 A fresh reader that had not seen the authors' session read the diff at `9e3734ae` against the C: the finale, the melt,
@@ -624,6 +659,8 @@ A fresh reader that had not seen the authors' session read the diff at `9e3734ae
 | Q-d_main-331 keeps one status though the new configuration reproduces the stall and not the burst | note | left: the row's status text already describes both configurations |
 | The frozen app's refusal strings changed; no test pinned them | note | recorded here |
 
+**2026-11-25:** the victory-tic finding is fixed in pull request #84 ([§13](#13-the-follow-up-pull-request-84-2026-11-25)).
+
 **The wire 26 name projection, as the reader found it** (read and run): `wire26_fields` rewrites exactly two values, each
 asserted first (`profile` 27 to 26, `context.schema` from wire 27's to wire 26's), and the digest writes the version 42
 header; every other field is framed byte for byte, so a field that differed could not be hidden. It is an explicit
@@ -637,6 +674,48 @@ declared exceptions (one test is appended to `closing_tests.rs`); the melt's `M_
 digests, golden loading and state comparison; `m6a2/mod.rs`; the bodies of `m6a2_play.rs`, `m6a2_session_rules.rs` and
 `finale_melt_reader_tests.rs`; the part 2 tools. **Not run by it:** the ignored real-map tests, `m6a_finale_melt`,
 `m6a_finale_melt_display`, `m6a2_full_crawl`, `m6a2_melt_sb11`, the C generators, release builds.
+
+## 13. The follow-up, pull request #84 (2026-11-25)
+
+Pull request #80 was merged on 2026-11-25; this work is on the branch `feat/m6a-part2-followup`.
+
+**The victory-tic display stop.** `tools/reference/m6a2_victory_stops.py` runs the genuine M6a runner (strict and address
+builds, identical; leak detection disabled) on FINREG's demo over three synthetic WAD sets made by renaming lumps, and
+`--check` compares with `tests/reference/m6a2_victory_stops/stops.json`:
+
+| Set | The genuine engine | Rust |
+| --- | --- | --- |
+| NOFLAT (`FLOOR4_8` hidden) | stops on the victory tic's display with `W_GetNumForName: FLOOR4_8 not found!` (f_finale.c:274) after 321 session tics; its rows, frames and sound equal FINREG's up to there | the session ends at tic 321 with `SessionWitness::FinaleText` and that text; the demo keeps the tic's command (322) and replays to the same stop; R and Q work |
+| NOGLYPH (`STCFN079` hidden), NOFONT (the font hidden) | stop in `HU_Init` (hu_stuff.c:404-410) before tic 0: `STCFN079` / `STCFN033 not found!` | the load is refused with the same text |
+
+Seen with gdb on the genuine binary, local only and not committed: in NOFLAT `F_StartFinale`, `S_ChangeMusic(mus_victor)`
+and `F_Ticker` ran before the stop, and `gametic` was 322 at `I_Error`, one above the session's tic as at the `HELP2`
+stop. The runner writes no row for the stop tic, so the committed record alone does not show those three calls.
+**Not covered:** a short flat or glyph (the genuine engine reads memory it does not own; Rust refuses, no golden).
+
+**The window handlers.** The logic of the key-down, key-up and focus-lost handlers moved to `input_log.rs`; the six
+recorded survivors are killed there (each seen by applying the mutation to the moved code), and [§11.1](#111-run-again-on-the-final-code-2026-11-25-pull-request-84)
+has what cargo-mutants still lists. CI's Minimum Rust job failed once on this change (`4fb4d55e`, E0716) and was fixed in `6d0552de`.
+
+**Gates from a fresh clone of `15722ee7`** (`git clone` of the pushed branch into scratch on the Linux disk, 2026-11-25):
+
+| Gate | Exit | Observed |
+| --- | --- | --- |
+| The `run:` steps of CI's Stable, Minimum Rust, M5a, M5b, M5c and M6a jobs, in order, one at a time (`--jobs 2` for 4, `python3` for `python`) | 0, all 96 | no step exited nonzero |
+| `cargo test --workspace --locked` (stable, debug) | 0 | 2,229 passed, 0 failed, 16 ignored |
+| `cargo test -p doom-sim -p doom-types --release --locked` | 0 | 1,433 passed, 0 failed, 3 ignored |
+| `cargo +1.85.0 test --workspace --locked` | 0 | 2,229 passed, 0 failed, 16 ignored |
+| Build, both format checks, Clippy with warnings denied, rustdoc with warnings denied | 0 | clean |
+| Every original-C generator and DSIM encoder `--check`, with the asserted examples in debug and release | 0 | `m6a2_victory_stops.py --check --selftest` among them: NOFLAT, NOGLYPH and NOFONT stop as recorded, and its self-test catches a changed stop text |
+| `cargo +nightly fuzz build --sanitizer address` | 0 | target compiled: all 68 |
+| Seed replay (`-runs=0`) of `m6a2_dses2`, `m6a_ddsp4` and `m6a_dsnd3` | 0 | 37 seeds each, no finding |
+| Coverage-guided campaign under AddressSanitizer on the same three (`-max_total_time=120 -seed=1`) | 0 | 112,230, 84,267 and 15,587,911 runs, no finding |
+| `python3 tools/check_docs.py` | 0 | 212 Markdown files, links and anchors resolved |
+
+Not run in that clone: anything that needs an IWAD or the owner's demos (the ignored tests above), the Callgrind job, the Windows and macOS
+jobs (CI runs those), and campaigns on the other 65 fuzz targets, which were only compiled. The C address builds ran with
+`ASAN_OPTIONS=detect_leaks=0` as in CI, which is not LeakSanitizer coverage; the fuzz runs left `ASAN_OPTIONS` unset and nothing confirmed that
+leak detection was active there, so no leak coverage is claimed for them either.
 
 ## Not run, and limits
 

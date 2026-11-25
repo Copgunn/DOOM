@@ -27,6 +27,8 @@ mod session_tests;
 mod session_writer;
 mod tic_stats;
 mod window;
+#[cfg(test)]
+mod window_handler_tests;
 mod write_stats;
 
 use audio::{Output, Trial, Volume};

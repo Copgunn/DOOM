@@ -3693,7 +3693,7 @@ summary of raw button downs and ups on quit. A test shows it changes neither the
 
 **Status: M6a part 1, the playable level chain (PR #65; the owner's ruling of 2026-11-22 moves the finale, the melt
 pictures, the easy skills and E1M7 on skill 3 to part 2, a separate pull request; it was to take wire 27, which is now the [intercept wrap](#wire-27-the-wrapping-p_interceptvector), and the easy skills and E1M7 move to wire 28 by the owner's ruling of 2026-11-24).
-Part 2 (pull request #80, draft, not merged; the owner's hand test pending) builds the finale and the melt in a second
+Part 2 (pull request #80, merged 2026-11-25 after the owner's hand test) builds the finale and the melt in a second
 session configuration on wire 27 (ruling V1 of 2026-11-23 and the ruling of 2026-11-24, which replaced V2's wire 26), which `doom-play` now plays; the easy skills and E1M7 on
 skill 3 are a later pull request (wire 28).** One
 `doom-play` run now plays Episode 1 as the original does between levels: both exits, the intermission, the next map with the
@@ -3734,6 +3734,7 @@ only, and the `HELP2` row is new.
 | --- | --- |
 | E1M8's exit (the tic `F_StartFinale` would run), part 1's configuration only (the library; not reachable from `doom-play`) | "E1M8 is complete. The finale that follows it (the text screen and the picture) is not built yet. The session stops here, nothing was played differently from the original." |
 | The finale's first art-screen tic in registered mode without `HELP2` (part 2; the genuine engine stops there, ruling U4 (3)) | "the finale art screen cannot be drawn (W_GetNumForName: HELP2 not found!). The original stops here too. In registered mode its art screen is HELP2, in retail mode CREDIT." The finale tic is committed and its command kept in the demo, as the genuine engine ran its `F_Ticker` before the display stopped; the picture stays at the last good frame |
+| The victory tic's text crawl without its flat `FLOOR4_8` (part 2; the genuine engine stops there, f_finale.c:274) | "the finale text screen cannot be drawn (W_GetNumForName: FLOOR4_8 not found!). The original stops here too." The session ends as at the `HELP2` stop: `F_StartFinale` and the first `F_Ticker` committed, the tic's command kept in the demo, the picture at the last level frame. Any other refused crawl frame (a short flat or glyph, which the original draws from memory it does not own) ends with "The session stops here instead of drawing it differently from the original." |
 | A missing `D_VICTOR` on the victory tic (part 2) | "the music lump D_VICTOR is missing: the original stops here too" (refused before anything changes) |
 | A load wire 26 refuses (E1M7 on skill 3, `Admission(Monster(Arithmetic))`, reached from E1M6 on skill 3) | "E1M<n> is not admitted at this skill yet (<error>). The game stops at its load instead of playing it differently from the original." |
 | A map that does not load | "E1M<n> could not be loaded: <error>" |
@@ -3742,7 +3743,7 @@ only, and the `HELP2` row is new.
 | Sound or display seams, simulation witnesses | the witness's own text |
 
 At launch (before any window, exit 1 unless noted): a start map not admitted at the skill (E1M7 with `--skill 3`); a missing
-first-map music lump (the original stops at that load too); a map or skill outside the domain; `--skill 0` or `1`
+first-map music lump (the original stops at that load too); a missing font patch, "the display could not be built: W_GetNumForName: STCFN079 not found!" (the original's `HU_Init` stops at its start too, hu_stuff.c:404-410); a map or skill outside the domain; `--skill 0` or `1`
 (exit 2, "the easy skills (0, 1) are not built yet"). Not built yet, each a typed refusal or a declared gap: the **easy skills
 0 and 1**, refused at launch, and **E1M7 on skill 3** (the owner ruled option 1 for it: the margin clause dropped for monsters,
 under wire 28 in a later pull request by the rulings of 2026-11-22, V7 of 2026-11-23 and 2026-11-24, where it first said wire 26
@@ -3765,7 +3766,7 @@ compared in retail as well as registered ([record](validation/M6A.md)).
 
 ### The finale and the melt (M6a part 2)
 
-Built in pull request #80 (not merged; the owner's hand test passed on 2026-11-24, [record](validation/M6A.md#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24)) in the session's finale-and-melt configuration,
+Built in pull request #80 (merged 2026-11-25; the owner's hand test passed on 2026-11-24, [record](validation/M6A.md#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24)) in the session's finale-and-melt configuration,
 on [wire 27](#wire-27-the-wrapping-p_interceptvector) (the owner's ruling of 2026-11-24: the real E1M8 reaches its exit only with the wrapping
 `P_InterceptVector`, so the configuration moved from wire 26 before it was frozen; this pull request adds no wire and does not
 change `doom-sim`), and played by `doom-play`. Part 1's configuration stays on wire 26 and keeps the
@@ -3788,11 +3789,11 @@ genuine engine past the tic wire 26 refuses) and `m6a2_play` (the app played by 
   `singletics` branch) before `D_Display` runs (d_main.c:395), so its `gametic` at the failing display is one higher than the
   session's tic count. Here the exit line names the refused tic itself; the session has ended and cannot be saved, so nothing
   else shows the count. Part 1's rule (the finale is not built there) is unchanged.
-  **A second declared difference, not reachable with a real IWAD** (found by the independent read, 2026-11-24; open
-  for the owner's ruling): if the crawl's own picture cannot be drawn on the victory tic (a WAD set whose `FLOOR4_8` flat
-  or font is missing or short, f_finale.c:274), the genuine engine stops with that tic's command in its demo; the
-  session refuses the tic without ending and the app does not record its command, and the refusal screen's text names
-  the art screen (`HELP2`, `CREDIT`) although the crawl failed. The
+  **The crawl's own first frame** (changed on 2026-11-25, America/Los_Angeles; not reachable with a real IWAD). Without
+  `FLOOR4_8` the genuine engine runs the victory tic's `G_Ticker` (`F_StartFinale`, the victory music, the first `F_Ticker`,
+  the demo command) and stops in its first `F_TextWrite`; the session now ends at that tic as at the `HELP2` stop, with the
+  same `gametic` count difference. Without a font patch the genuine `HU_Init` stops before tic 0, and the session does not
+  start either (both observed: `tools/reference/m6a2_victory_stops.py`, `m6a2_victory_stops`). The
   original's text crawl is drawn as `F_TextWrite` draws it, including the quirk that a character that does not fit on its line
   ends the crawl (Q-f_finale-321a).
 - **The melt schedule** (d_main.c:329-344; f_wipe.c:184-222; [note §1.16.1](M6A_REFERENCE_INVESTIGATION.md#1161-the-clock-one-melt-step-per-tic)).
@@ -3864,7 +3865,7 @@ None is fixed. "Reproduced" means the session does what the C does and the genui
 
 | # | Quirk (C) | Status |
 | --- | --- | --- |
-| 1 | No intermission after E1M8 (g_game.c:1033-1038) | part 1's configuration: typed refusal at the finale's first tic, state preserved, compared up to that tic. Part 2's (pull request #80, not merged, hand test pending): reproduced, the victory tic goes straight to the finale, compared with the genuine goldens |
+| 1 | No intermission after E1M8 (g_game.c:1033-1038) | part 1's configuration: typed refusal at the finale's first tic, state preserved, compared up to that tic. Part 2's (pull request #80, merged 2026-11-25): reproduced, the victory tic goes straight to the finale, compared with the genuine goldens |
 | 2 | The tally waits for a press, counted as a rising edge (wi_stuff.c:1413-1424, 1470-1498) | reproduced |
 | 3 | The background animation is never drawn, its 20 draws happen (wi_stuff.c:588, 523) | reproduced (draws compared, nothing drawn) |
 | 4 | The "you are here" pointer is hidden on a session's first ShowNextLoc frame (wi_stuff.c:749, 768, 814) | reproduced |
@@ -3874,7 +3875,7 @@ None is fixed. "Reproduced" means the session does what the C does and the genui
 | 8 | A carried chainsaw makes its raise sound at load (p_pspr.c:145-146) | reproduced |
 | 9 | Level sounds play on into the intermission (s_sound.c:209-211) | reproduced |
 | 10 | The reborn comes on the first use press, with both random indices kept (p_user.c:227-228) | reproduced |
-| 11 | The finale never ends (f_finale.c:207-249) | part 1's configuration: not built (with 1). Part 2's (pull request #80, not merged, hand test pending): reproduced, the art screen stays until the quit |
+| 11 | The finale never ends (f_finale.c:207-249) | part 1's configuration: not built (with 1). Part 2's (pull request #80, merged 2026-11-25): reproduced, the art screen stays until the quit |
 | 12 | A reborn and an exit in the same tic reload the map (g_game.c:611-623, 929-931) | ruled inferred, then observed in a genuine run of the synthetic items `USEAT131` and its controls; the Rust session equals those goldens. Not observed on the owner's IWAD |
 | (13) | The carried status-bar face `STFST00` after a level change (st_stuff.c:384, 757-758) | reproduced; found by the display work, not among the twelve |
 
