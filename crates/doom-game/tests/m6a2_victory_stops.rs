@@ -1,6 +1,5 @@
-//! The victory-tic display stops against the genuine record `m6a2_victory_stops/stops.json`
-//! (`tools/reference/m6a2_victory_stops.py`: the genuine runner on FINREG's demo with lumps
-//! renamed). The WAD is changed here as the tool changes it; its digest must be the record's.
+//! The victory-tic display stops against the genuine record of
+//! `tools/reference/m6a2_victory_stops.py` (FINREG's demo with lumps renamed, as here).
 #![allow(clippy::unwrap_used, reason = "test code")]
 
 mod m6a;
@@ -72,20 +71,16 @@ fn without_the_flat_the_victory_tic_ends_the_session_as_the_genuine_engine() {
         k += 1;
         app.update((k * 1_000_000u64).div_ceil(35), &mut h);
     }
-    let tic = rec["tics_run"].as_u64().unwrap();
+    let tic = rec["stop_tic"].as_u64().unwrap();
     let w = SessionWitness::FinaleText(DrawRefusal::Lump(LumpNotFound("FLOOR4_8".into())));
     let witness = Witness::Session(Box::new(w.clone()));
-    assert_eq!(rec["stop_tic"].as_u64(), Some(tic));
     assert_eq!(app.mode(), &Mode::Ended(Ending::Refused { tic, witness }));
     let stop = rec["stop"].as_str().unwrap();
     let text =
         format!("the finale text screen cannot be drawn ({stop}). The original stops here too.");
     let s = app.session().unwrap();
-    let (state, view) = (
-        (s.gamestate(), s.finale(), s.gametic()),
-        FinaleView { stage: 0, count: 1 },
-    );
-    assert_eq!(state, (GameState::Finale, Some(view), tic));
+    assert_eq!(s.finale(), Some(FinaleView { stage: 0, count: 1 }));
+    assert_eq!((s.gamestate(), s.gametic()), (GameState::Finale, tic));
     assert_eq!(app.finale_began(), Some(tic));
     assert_eq!(app.art_screen_began().or(app.art_screen_refused()), None);
     let summary = format!(
@@ -113,6 +108,7 @@ fn without_the_flat_the_victory_tic_ends_the_session_as_the_genuine_engine() {
     };
     let end = replay_finale_and_melt(&mut fresh, &demo.commands, on_tic, |_, _, _| {});
     assert_eq!((end, n), (Some(Refusal { tic, witness: w }), tic));
+    assert_eq!(rec["tics_run"], tic);
     app.key(b'q', true, &mut h);
     assert!(app.quit_requested() && h.0.len() == 1);
     app.key(b'r', true, &mut h);
@@ -125,14 +121,13 @@ fn without_the_flat_the_victory_tic_ends_the_session_as_the_genuine_engine() {
 fn without_a_font_glyph_both_stop_before_tic_0() {
     for (name, renamed) in [("NOGLYPH", "STCFN079"), ("NOFONT", "STCFN")] {
         let (rec, data) = load(name, renamed);
-        let ran = (rec["stop_tic"].as_i64(), rec["tics_run"].as_u64());
-        assert_eq!(ran, (Some(-1), Some(0)));
+        assert!(rec["stop_tic"] == -1 && rec["tics_run"] == 0);
         let e = data.err().unwrap();
         assert!(matches!(e, LoadError::SessionStart(StartError::Display(_))));
-        let stop = rec["stop"].as_str().unwrap();
-        assert_eq!(
-            e.to_string(),
-            format!("the display could not be built: {stop}")
+        let want = format!(
+            "the display could not be built: {}",
+            rec["stop"].as_str().unwrap()
         );
+        assert_eq!(e.to_string(), want);
     }
 }

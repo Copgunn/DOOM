@@ -469,9 +469,8 @@ impl Session {
 
     /// The display of a finale tic (`F_Drawer`, d_main.c:254-256) and its commit. A frame
     /// refused by the display is rule 2 (the finale's state committed, the sound and the display
-    /// at the last good tic, the session ended: ruling U4 (3)); on the victory tic
-    /// [`Self::victory_tic`] also commits `F_StartFinale`'s state. A refused text crawl (stage 0)
-    /// is [`SessionWitness::FinaleText`].
+    /// at the last good tic, the session ended: ruling U4 (3)), the crawl's (stage 0) witnessed as
+    /// [`SessionWitness::FinaleText`]; [`Self::victory_tic`] also commits `F_StartFinale`'s.
     #[allow(
         clippy::too_many_arguments,
         reason = "the staged parts of one tic, all moved once"
