@@ -130,6 +130,17 @@ impl Forward {
             );
             return;
         }
+        if app.melt_in_progress() {
+            // The owner's ruling of 2026-11-21: motion during a melt is ignored, as while
+            // paused, and logged the way paused motion is. The fraction is not kept either.
+            log.line(
+                "raw",
+                app.tic(),
+                format_args!("motion dx={dx} dy={dy} ignored (melt)"),
+            );
+            self.leave.motion(dx, dy);
+            return;
+        }
         log.line("raw", app.tic(), format_args!("motion dx={dx} dy={dy}"));
         self.leave.motion(dx, dy);
         self.motion = (self.motion.0 + dx, self.motion.1 + dy);
@@ -169,7 +180,18 @@ impl Forward {
                 app.tic(),
                 format_args!("mouse-button {} {what}", BUTTONS[index]),
             );
+            let held = app.held_inputs();
             app.mouse_button(b, down);
+            if app.held_inputs() > held {
+                log.line(
+                    "app",
+                    app.tic(),
+                    format_args!(
+                        "held for the melt's end: mouse-button {} {what}",
+                        BUTTONS[index]
+                    ),
+                );
+            }
         }
     }
 

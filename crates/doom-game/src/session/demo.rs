@@ -18,8 +18,10 @@
 //! single-level [`crate::app::session_name`]. A replay or check tool takes the mode from the token
 //! ([`mode_of_session_name`]); an explicit flag, when given, must agree with it
 //! ([`replay_mode`]), or the check refuses.
+use super::finale_melt::{FinaleMeltTicReport, MeltStepReport};
 use super::{Refusal, Session, SessionMode, TicReport};
 use crate::app::Timestamp;
+use doom_render::Frame;
 use doom_sim::TicCommand;
 use doom_sim::demo::{
     DEMO_HEADER, DEMO_MAP_INDEX, DemoError, EPISODE1_DEMO_MAPS, parse_demo_episode1_v2,
@@ -125,6 +127,34 @@ pub fn replay_mode(name: &str, flag: Option<SessionMode>) -> Result<SessionMode,
         (None, Some(flag)) => Ok(flag),
         (None, None) => Err(ModeTokenError::Missing),
     }
+}
+
+/// Replays `commands` through a finale-and-melt `session` (a fresh one of the demo's start map
+/// and skill, [`Session::new_finale_and_melt`]): one command per session tic in every game state,
+/// the finale's included (g_game.c:656-670), and after each tic every step of the melt its
+/// display started, which reads no command (the melt loop runs no `G_Ticker`, d_main.c:329-344;
+/// M6a note §1.16.5). Each committed tic goes to `on_tic` and each melt step, with its picture,
+/// to `on_melt_step`. Ends at the demo's end (`None`) or the first refusal.
+pub fn replay_finale_and_melt(
+    session: &mut Session,
+    commands: &[TicCommand],
+    mut on_tic: impl FnMut(&Session, &FinaleMeltTicReport),
+    mut on_melt_step: impl FnMut(&Session, &MeltStepReport, &Frame),
+) -> Option<Refusal> {
+    let mut picture = Frame::new();
+    for &cmd in commands {
+        match session.tic_finale_and_melt(cmd) {
+            Ok(r) => on_tic(session, &r),
+            Err(e) => return Some(e),
+        }
+        while session.melt_in_progress() {
+            match session.melt_step(&mut picture) {
+                Ok(m) => on_melt_step(session, &m, &picture),
+                Err(e) => return Some(e),
+            }
+        }
+    }
+    None
 }
 
 /// Replays `commands` through `session` (a fresh session of the demo's start map and skill),

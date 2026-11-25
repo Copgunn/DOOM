@@ -27,10 +27,13 @@
 //!   `fuzzpos` and the r_segs.c wall steps, globals never reset (r_draw.c:274, r_segs.c:81-84), run
 //!   on from level to level.
 //!
-//! **Not yet** (after the owner's hand test; typed refusals, never a silent no-op): the finale
-//! drawer ([`Display::draw_finale`] refuses [`NotYet::FinaleDrawer`]) and the melt pictures
-//! (a saved melt in progress is refused on restore as [`NotYet::MeltPictures`]). `DDSP` version 3
-//! already has room for both, so neither needs another version.
+//! **Two configurations** ([`SessionConfig`], owner ruling V1 of 2026-11-23). The display of
+//! [`Display::new_session`] is [`SessionConfig::RefusesFinaleAndMelt`], frozen as part 1 left it:
+//! the finale drawer ([`Display::draw_finale`] refuses [`NotYet::FinaleDrawer`]) and the melt
+//! pictures (a saved melt in progress is refused on restore as [`NotYet::MeltPictures`]) are
+//! typed refusals, and its saved state is `DDSP` version 3. The display of
+//! [`Display::new_session_with`] and [`SessionConfig::FinaleAndMelt`] draws the finale and every
+//! melt, and saves `DDSP` version 4 (module [`finale_melt`]).
 use super::{
     Display, DisplayObserveError, DisplayRestoreError, HudState, RandomContract, StatusBarState,
     WIPE_DRAWS, advanced, read_tail, render_config, status_inputs, stored_message, value_error,
@@ -74,6 +77,23 @@ impl GameState {
             .get(usize::from(c))
             .copied()
     }
+}
+
+/// Which session display (owner ruling V1 of 2026-11-23: the new behaviour is a second
+/// configuration beside the frozen one, which keeps every refusal).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SessionConfig {
+    /// M6a part 1, frozen ([`Display::new_session`]): the finale drawer and the melt pictures are
+    /// typed refusals ([`NotYet`]); the saved state is `DDSP` version 3 ([`SessionDisplayState`]).
+    RefusesFinaleAndMelt,
+    /// M6a part 2 ([`Display::new_session_with`]): `F_Drawer` for Episode 1 in game mode `mode`
+    /// (the art screen is `CREDIT` in retail, `HELP2` otherwise, f_finale.c:714-720), and every
+    /// wipe's melt, one `wipe_doMelt` step with `ticks = 1` per [`Display::melt_step`] (M6a note
+    /// §1.16); the saved state is `DDSP` version 4 ([`finale_melt::SessionDisplayStateV4`]).
+    FinaleAndMelt {
+        /// The declared game mode of the session (owner ruling U4).
+        mode: crate::GameMode,
+    },
 }
 
 /// How a level starts inside a session without a new game (both keep the `M_Random` index).
@@ -232,12 +252,18 @@ pub(crate) struct Session {
     carried: Option<Carried>,
     /// The intermission graphics, in the intermission.
     wi: Option<Arc<IntermissionGraphics>>,
+    /// The configuration chosen at construction (M6a part 2, owner ruling V1).
+    pub(crate) config: SessionConfig,
+    /// The melt in progress ([`SessionConfig::FinaleAndMelt`] only).
+    pub(crate) melt: Option<Box<finale_melt::MeltRun>>,
+    /// A planted fault (evidence self-tests only, [`finale_melt::MeltFault`]).
+    pub(crate) fault: Option<finale_melt::MeltFault>,
 }
 
 impl Session {
     /// A fresh process at the session start: no tic, `oldgamestate` -1 (d_main.c:196), the level
     /// state, whose start wipes (`wipegamestate` is `GS_DEMOSCREEN`, d_main.c:187).
-    pub(crate) fn fresh() -> Self {
+    pub(crate) fn fresh(config: SessionConfig) -> Self {
         Self {
             gamestate: GameState::Level,
             old_gamestate: None,
@@ -245,6 +271,9 @@ impl Session {
             entered: 0,
             carried: None,
             wi: None,
+            config,
+            melt: None,
+            fault: None,
         }
     }
 }
@@ -264,6 +293,16 @@ pub enum SessionError {
     Intermission(IntermissionRefusal),
     /// Not built yet.
     NotYet(NotYet),
+    /// [`SessionConfig::FinaleAndMelt`] only: a melt is in progress, so no tic is observed and
+    /// no frame drawn until its last step (the melt loop runs no `G_Ticker` and no other
+    /// drawer, d_main.c:329-344; M6a note §1.16.1).
+    MeltInProgress,
+    /// [`SessionConfig::FinaleAndMelt`] only: a melt step asked for with no melt in progress.
+    NoMelt,
+    /// [`SessionConfig::FinaleAndMelt`] only: `F_Drawer` refused the frame (the genuine engine
+    /// would stop: a missing art lump such as `HELP2` in registered mode, M6a note §1.8 and U4;
+    /// or memory the C does not own). The display and the last good frame are unchanged.
+    Finale(crate::f_finale::DrawRefusal),
 }
 
 /// A session state that cannot be restored. The display keeps its state.
@@ -281,6 +320,10 @@ pub enum SessionRestoreError {
     Load(IntermissionLoadError),
     /// Not built yet: a melt in progress.
     NotYet(NotYet),
+    /// The state's version does not belong to the display's configuration: `DDSP` version 3 to
+    /// [`SessionConfig::RefusesFinaleAndMelt`] only, version 4 to
+    /// [`SessionConfig::FinaleAndMelt`] only, with the display's own game mode.
+    WrongConfig,
 }
 
 macro_rules! session_error {
@@ -307,7 +350,9 @@ impl Display {
     ) -> Result<Self, crate::ResourceError> {
         let mut d = Self::new(res, level, cfg)?;
         d.contract = RandomContract::WithSound;
-        d.session = Some(Box::new(Session::fresh()));
+        d.session = Some(Box::new(Session::fresh(
+            SessionConfig::RefusesFinaleAndMelt,
+        )));
         Ok(d)
     }
 
@@ -383,6 +428,9 @@ impl Display {
         deltaviewheight: i32,
     ) -> Result<(), SessionError> {
         let s = self.session.as_deref().ok_or(SessionError::NotSession)?;
+        if s.melt.is_some() {
+            return Err(SessionError::MeltInProgress);
+        }
         let from = match change {
             LevelChange::WorldDone => GameState::Intermission,
             LevelChange::Reborn => GameState::Level,
@@ -460,8 +508,8 @@ impl Display {
 
     /// `F_StartFinale`'s `gamestate = GS_FINALE` (f_finale.c:96-191), entered from the level in the
     /// `G_Ticker` that completed E1M8 (g_game.c:639-641, 1033-1038): keeps `screens[0]` and the
-    /// renderer globals and makes a wipe due. Its frames are not drawn yet
-    /// ([`Self::draw_finale`]).
+    /// renderer globals and makes a wipe due. The frozen configuration draws no finale frame
+    /// ([`Self::draw_finale`]); the finale-and-melt one does.
     pub fn begin_finale(&mut self) -> Result<(), SessionError> {
         let carried = self.leave_level()?;
         self.enter(GameState::Finale, carried, None);
@@ -475,6 +523,9 @@ impl Display {
             .session
             .as_deref_mut()
             .ok_or(SessionError::NotSession)?;
+        if s.melt.is_some() {
+            return Err(SessionError::MeltInProgress);
+        }
         if s.gamestate != GameState::Finale {
             return Err(SessionError::WrongGameState(s.gamestate));
         }
@@ -485,6 +536,9 @@ impl Display {
 
     fn leave_level(&self) -> Result<Carried, SessionError> {
         let s = self.session.as_deref().ok_or(SessionError::NotSession)?;
+        if s.melt.is_some() {
+            return Err(SessionError::MeltInProgress);
+        }
         if s.gamestate != GameState::Level {
             return Err(SessionError::WrongGameState(s.gamestate));
         }
@@ -513,6 +567,9 @@ impl Display {
             .session
             .as_deref_mut()
             .ok_or(SessionError::NotSession)?;
+        if s.melt.is_some() {
+            return Err(SessionError::MeltInProgress);
+        }
         if s.gamestate == GameState::Level {
             return Err(SessionError::WrongGameState(s.gamestate));
         }
@@ -523,8 +580,8 @@ impl Display {
 
     /// `D_Display` in the intermission (d_main.c:250-252, 274-275, 300, 320-344): `WI_Drawer` from
     /// `view` into `out` ([`crate::wi_stuff::draw`]), palette 0, then, when a wipe is due, its
-    /// [`WIPE_DRAWS`] after the frame (the melt's pictures are not drawn: the frame shown is the
-    /// composed frame, the melt's last picture). Whole-frame and independent of screenblocks. On
+    /// [`WIPE_DRAWS`] after the frame (in the frozen configuration the melt's pictures are not
+    /// drawn: the frame shown is the composed frame, the melt's last picture). Whole-frame and independent of screenblocks. On
     /// an error nothing changes and `out` is unspecified.
     pub fn draw_intermission(
         &mut self,
@@ -532,6 +589,9 @@ impl Display {
         out: &mut Frame,
     ) -> Result<NonLevelFrame, SessionError> {
         let s = self.session.as_deref().ok_or(SessionError::NotSession)?;
+        if s.melt.is_some() {
+            return Err(SessionError::MeltInProgress);
+        }
         let g = match (&s.wi, s.gamestate) {
             (Some(g), GameState::Intermission) => g,
             _ => return Err(SessionError::WrongGameState(s.gamestate)),
@@ -539,6 +599,9 @@ impl Display {
         let f = wi_stuff::draw(&self.res, g, view, out.pixels_mut())
             .map_err(SessionError::Intermission)?;
         let palette_set = (s.old_gamestate != Some(GameState::Intermission)).then_some(0);
+        // wipe_StartScreen before the frame (d_main.c:226): the carried `screens[0]`.
+        let start = self.melt_start();
+        let before = self.status.rndindex;
         if self.wipe {
             self.status.rndindex = advanced(self.status.rndindex, WIPE_DRAWS);
         }
@@ -548,6 +611,10 @@ impl Display {
         c.screen.copy_from_slice(out.pixels());
         c.taint.fill(0);
         s.old_gamestate = Some(GameState::Intermission);
+        if let Some((screen, taint)) = start {
+            // I_SetPalette(PLAYPAL) in this display (d_main.c:274-275): palette 0 (§1.16.3).
+            self.begin_melt(screen, taint, 0, before);
+        }
         Ok(NonLevelFrame {
             palette: 0,
             palette_set,
@@ -562,17 +629,38 @@ impl Display {
         view: &FinaleView,
         out: &mut Frame,
     ) -> Result<NonLevelFrame, SessionError> {
-        let _ = (view, out);
         let s = self.session.as_deref().ok_or(SessionError::NotSession)?;
+        if s.melt.is_some() {
+            return Err(SessionError::MeltInProgress);
+        }
         if s.gamestate != GameState::Finale {
             return Err(SessionError::WrongGameState(s.gamestate));
         }
-        Err(SessionError::NotYet(NotYet::FinaleDrawer))
+        match s.config {
+            SessionConfig::RefusesFinaleAndMelt => Err(SessionError::NotYet(NotYet::FinaleDrawer)),
+            SessionConfig::FinaleAndMelt { mode } => self.draw_finale_frame(mode, view, out),
+        }
     }
 
-    /// The saveable state of a session display (`DDSP` version 3); None for another display or
-    /// before [`Self::begin_level`].
+    /// The saveable state of a session display (`DDSP` version 3); None for another display, for
+    /// the finale-and-melt configuration (whose state is [`Self::session_state_v4`]) or before
+    /// [`Self::begin_level`]. [`Self::session_state_v3_checked`] names which of these refused.
+    ///
+    /// On a [`SessionConfig::FinaleAndMelt`] display this plain call always gives `None`, in a
+    /// level, a melt, the intermission and the finale alike; the state is
+    /// [`Self::session_state_v4`], and [`Self::session_state_v3_checked`] returns the typed
+    /// refusal [`SessionStateRefusal::FinaleAndMeltSavesVersion4`](crate::SessionStateRefusal::FinaleAndMeltSavesVersion4).
     pub fn session_state(&self) -> Option<SessionDisplayState> {
+        let s = self.session.as_deref()?;
+        if s.config != SessionConfig::RefusesFinaleAndMelt {
+            // Its state is `DDSP` version 4 ([`Self::session_state_v4`]).
+            return None;
+        }
+        self.session_state_any()
+    }
+
+    /// The state of a session display in either configuration, the melt aside.
+    pub(crate) fn session_state_any(&self) -> Option<SessionDisplayState> {
         let s = self.session.as_deref()?;
         let scene = match s.gamestate {
             GameState::Level => Scene::Level(Box::new(self.renderer.state()?.clone())),
@@ -593,7 +681,9 @@ impl Display {
         })
     }
 
-    /// Restores a session state after [`SessionDisplayState::check`]: a level scene with `level`
+    /// Restores a session state after [`SessionDisplayState::check`] (the frozen configuration
+    /// only; the finale-and-melt one refuses it as [`SessionRestoreError::WrongConfig`] and
+    /// restores version 4 with [`Self::restore_session_v4`]): a level scene with `level`
     /// = its level and the simulation at the scene's tic (the status bar inputs are read from it
     /// and the face and HUD checked against it), a scene outside a level with `level` None (the
     /// intermission graphics are loaded again). On an error the display keeps its state.
@@ -602,10 +692,29 @@ impl Display {
         state: SessionDisplayState,
         level: Option<(Arc<Level>, &Simulation)>,
     ) -> Result<(), SessionRestoreError> {
-        if self.session.is_none() {
+        let Some(s) = self.session.as_deref() else {
             return Err(SessionRestoreError::NotSession);
+        };
+        if s.config != SessionConfig::RefusesFinaleAndMelt {
+            return Err(SessionRestoreError::WrongConfig);
         }
         state.check()?;
+        self.restore_session_checked(state, level)
+    }
+
+    /// The common part of [`Self::restore_session`] and [`Self::restore_session_v4`], after the
+    /// state's own checks: the display keeps its configuration and has no melt in progress
+    /// afterwards. On an error the display keeps its state.
+    pub(crate) fn restore_session_checked(
+        &mut self,
+        state: SessionDisplayState,
+        level: Option<(Arc<Level>, &Simulation)>,
+    ) -> Result<(), SessionRestoreError> {
+        let config = self
+            .session
+            .as_deref()
+            .ok_or(SessionRestoreError::NotSession)?
+            .config;
         let d = SessionRestoreError::Display;
         let cfg = render_config(state.screenblocks).map_err(|_| {
             d(DisplayRestoreError::Config(
@@ -620,6 +729,9 @@ impl Display {
             entered: state.entered,
             carried: None,
             wi: None,
+            config,
+            melt: None,
+            fault: None,
         };
         match (&state.scene, level) {
             (Scene::Level(render), Some((lvl, sim))) => {
@@ -1042,3 +1154,6 @@ impl<'a> Reader<'a> {
 #[cfg(test)]
 #[path = "session_reader_tests.rs"]
 mod reader_tests;
+
+#[path = "finale_melt.rs"]
+pub mod finale_melt;

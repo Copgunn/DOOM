@@ -6,8 +6,7 @@
 
 use crate::FsHost;
 use crate::closing::Play;
-use crate::input_log::{InputLog, LoggedHost};
-use crate::keys::key_event;
+use crate::input_log::{InputLog, LoggedHost, logged_key_event};
 use crate::mouse_forward::Forward;
 use crate::session_writer::WriterHost;
 use crate::tic_stats::TicStats;
@@ -307,7 +306,7 @@ impl EventHandler for Stage {
             play.app.tic(),
             format_args!("key-down {key:?} repeat={repeat}"),
         );
-        key_event(&mut play.app, &mut play.host, key, true, repeat);
+        logged_key_event(&mut play.app, &mut play.host, key, true, repeat);
     }
 
     fn key_up_event(&mut self, key: KeyCode, _mods: KeyMods) {
@@ -315,7 +314,7 @@ impl EventHandler for Stage {
         play.host
             .log
             .line("raw", play.app.tic(), format_args!("key-up {key:?}"));
-        key_event(&mut play.app, &mut play.host, key, false, false);
+        logged_key_event(&mut play.app, &mut play.host, key, false, false);
     }
 
     /// Whole units go to the app; the fraction waits for the next motion ([`Forward`]).
@@ -353,7 +352,15 @@ impl EventHandler for Stage {
         play.host
             .log
             .line("raw", play.app.tic(), format_args!("focus-lost"));
+        let held = play.app.held_inputs();
         play.app.focus_lost();
+        if play.app.held_inputs() > held {
+            play.host.log.line(
+                "app",
+                play.app.tic(),
+                format_args!("held for the melt's end: focus-lost"),
+            );
+        }
     }
 
     /// Logged (`--input-log`), and a reason to ask for the cursor grab again on Windows if it is

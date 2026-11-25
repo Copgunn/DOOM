@@ -22,6 +22,13 @@ pub trait AudioSink {
     /// audio from the previous session. A restart from the pause is preceded by
     /// [`AudioSink::resume`].
     fn session_start(&mut self) {}
+    /// A melt began (M6a part 2, the finale-and-melt configuration): no buffer comes until
+    /// [`AudioSink::melt_end`], about one second later (M6a note §1.16.4: the reference build
+    /// mixes and submits nothing while a melt runs, so its device is starved). A sink that is
+    /// starved meanwhile plays silence; it is no fault of the stream.
+    fn melt_start(&mut self) {}
+    /// The melt ended; the buffer the melting tic owed, if any, follows at once.
+    fn melt_end(&mut self) {}
 }
 
 /// One notification a [`RecordingSink`] received.
@@ -35,6 +42,10 @@ pub enum SinkCall {
     Resume,
     /// [`AudioSink::session_start`].
     SessionStart,
+    /// [`AudioSink::melt_start`].
+    MeltStart,
+    /// [`AudioSink::melt_end`].
+    MeltEnd,
 }
 
 /// A sink that keeps everything it receives, for headless tests: the buffers and the order of
@@ -68,5 +79,11 @@ impl AudioSink for RecordingSink {
     }
     fn session_start(&mut self) {
         self.calls.push(SinkCall::SessionStart);
+    }
+    fn melt_start(&mut self) {
+        self.calls.push(SinkCall::MeltStart);
+    }
+    fn melt_end(&mut self) {
+        self.calls.push(SinkCall::MeltEnd);
     }
 }

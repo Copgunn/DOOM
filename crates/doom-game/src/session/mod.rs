@@ -3,6 +3,12 @@
 //! tics in which no level runs, the loads and the reborns, over wire 26 (doom-sim's carried
 //! level start), the session display (doom-render, `DDSP` version 3) and the session's sound.
 //!
+//! **Two configurations** (owner's ruling V1 of 2026-11-23, [`finale_melt::Configuration`]):
+//! what this documentation describes is the frozen one of part 1 ([`Session::new`],
+//! [`Session::tic`], `DSES` version 1), which keeps every refusal below. The second,
+//! [`Session::new_finale_and_melt`], runs the same tics and adds the victory, the Episode 1
+//! finale and every wipe's melt ([`finale_melt`], `DSES` version 2 in [`state_v2`]).
+//!
 //! **One session tic** ([`Session::tic`]), in the C's order:
 //!
 //! 1. **The reborn first** (g_game.c:611-614): when the level's dead player pressed use
@@ -68,22 +74,26 @@
 //! in a level only, g_game.c:729-733, d_main.c:270-271) and which the next load's `P_SpawnPlayer`
 //! clears before any `HU_Ticker`; the session therefore keeps no message outside a level.
 pub mod demo;
+pub mod finale;
+pub mod finale_melt;
 pub mod intermission;
 pub mod sound;
 pub mod state;
+pub mod state_v2;
 
 use doom_map::Map;
 use doom_render::{
-    Display, DisplayConfig, DisplayFrame, DisplayRefusal, Frame, GameMode, GameState, Level,
-    LevelChange, LumpDirectory, ResourceError, Resources, SessionError,
+    Display, DisplayConfig, DisplayFrame, DisplayRefusal, FinaleView, Frame, GameMode, GameState,
+    Level, LevelChange, LumpDirectory, ResourceError, Resources, SessionError,
 };
 use doom_sim::{
-    CarriedStart, LevelExit, LevelStart, LevelStartError, MapContextOptions, SimError, Simulation,
-    Skill, StartKind, TicCommand,
+    CarriedStart, LevelExit, LevelStart, LevelStartError, SimError, Simulation, Skill, StartKind,
+    TicCommand,
 };
 use doom_sound::chain::{ChainConfig, ChainRefusal, ChainSound, ChainTic, IntermissionSound};
 use doom_sound::lumps::{SoundCaps, SoundLoadError, SoundSet};
 use doom_types::{DoomRng, Fixed};
+use finale_melt::Configuration;
 use intermission::{Intermission, Latches, PARS_E1, WbPlayer, WbStart, next_map};
 use sound::{Music, MusicLumps, SoundWitness};
 use std::fmt;
@@ -389,6 +399,19 @@ pub enum SessionWitness {
     },
     /// The session already refused a tic after committing the simulation's (rule 2).
     Ended,
+    /// The call belongs to the other configuration ([`Configuration`]): a frozen session has no
+    /// melt step and no finale-and-melt tic, and a finale-and-melt session runs its tics through
+    /// [`Session::tic_finale_and_melt`] only. Nothing changed.
+    Configuration(Configuration),
+    /// [`Configuration::FinaleAndMelt`]: a tic asked for while a melt is in progress (the melt
+    /// loop runs no `G_Ticker`, d_main.c:329-344; M6a note §1.16.1). Nothing changed.
+    MeltInProgress,
+    /// [`Configuration::FinaleAndMelt`]: a melt step asked for with no melt in progress. Nothing
+    /// changed.
+    NoMelt,
+    /// [`Configuration::FinaleAndMelt`]: `F_Ticker` refused the finale tic
+    /// ([`finale::FinaleRefusal`]). Nothing changed.
+    Finale(finale::FinaleRefusal),
 }
 
 impl fmt::Display for SessionWitness {
@@ -501,6 +524,19 @@ pub enum PlantedFault {
     TurboLeveltime,
     /// Wire 24's command domain applied in every game state (step 7's rule).
     IntermissionDomain,
+    /// [`Configuration::FinaleAndMelt`]: the victory tic runs `F_StartFinale` but not the first
+    /// `F_Ticker` (as if the finale began one tic late; g_game.c:740-742 runs it in the same
+    /// `G_Ticker`).
+    FinaleLate,
+    /// [`Configuration::FinaleAndMelt`]: `F_Ticker`'s forced wipe at stage 1 (f_finale.c:245) not
+    /// made.
+    NoArtWipe,
+    /// [`Configuration::FinaleAndMelt`]: a tic asked for during a melt runs, the melt finished
+    /// unseen first (the melt loop runs no tic, d_main.c:329-344).
+    TicInMelt,
+    /// [`Configuration::FinaleAndMelt`]: the first melt step of a display mixes the owed buffer
+    /// (doom-sound's `ChainFault::MixInMelt`; d_main.c:397-405 mix after the display).
+    MixInMelt,
 }
 
 /// Which domain judges a command, by the part of `G_Ticker` that reads it (module
@@ -556,6 +592,10 @@ pub struct Session {
     ended: Option<Refusal>,
     /// A planted fault (self-tests only).
     fault: Option<PlantedFault>,
+    /// The configuration chosen at construction (owner's ruling V1 of 2026-11-23).
+    config: Configuration,
+    /// `finalestage` and `finalecount` in the finale ([`Configuration::FinaleAndMelt`] only).
+    finale: Option<FinaleView>,
 }
 
 fn skill_of(byte: u8) -> Result<Skill, StartError> {
@@ -572,31 +612,42 @@ impl Session {
     /// map's music looked up, wire 26's new-game start, a fresh session display (`DDSP` version
     /// 3) and sound. Nothing runs yet: [`Self::tic`] runs tic 0.
     pub fn new(data: Arc<SessionData>, settings: SessionSettings) -> Result<Self, StartError> {
+        Self::new_in(data, settings, Configuration::RefusesFinaleAndMelt)
+    }
+
+    /// [`Self::new`] in configuration `config`: the display and the sound are built in the
+    /// matching configuration (doom-render's `SessionConfig`, doom-sound's `ChainMode`).
+    pub(crate) fn new_in(
+        data: Arc<SessionData>,
+        settings: SessionSettings,
+        config: Configuration,
+    ) -> Result<Self, StartError> {
         if !(1..=9).contains(&settings.map) || !(10..=11).contains(&settings.screenblocks) {
             return Err(StartError::Domain);
         }
         let skill = skill_of(settings.skill)?;
-        let sound = ChainSound::new(
+        let sound = ChainSound::new_with(
             data.sound_set.clone(),
             data.music,
             ChainConfig::fresh(data.textures),
             i32::from(settings.map),
+            config.chain_mode(),
         )
         .map_err(|e| StartError::Sound(SoundWitness::Chain(e)))?;
         let (map, level) = data.map(settings.map).map_err(StartError::Map)?;
-        let sim = Simulation::original_player_episode1_v4_level(
-            map.clone(),
-            settings.map,
-            skill,
-            MapContextOptions::default(),
-            LevelStart::NewGame,
-        )
-        .map_err(StartError::Admission)?;
+        let sim = config
+            .level_at(map.clone(), settings.map, skill, LevelStart::NewGame, 0)
+            .map_err(StartError::Admission)?;
         let cfg = DisplayConfig {
             screenblocks: settings.screenblocks,
         };
-        let mut display = Display::new_session(data.res.clone(), level.clone(), cfg)
-            .map_err(|e| StartError::Display(format!("{e:?}")))?;
+        let mut display = Display::new_session_with(
+            data.res.clone(),
+            level.clone(),
+            cfg,
+            config.display_config(data.mode.mode.game_mode()),
+        )
+        .map_err(|e| StartError::Display(format!("{e:?}")))?;
         display
             .begin_level(&sim)
             .map_err(|e| StartError::Display(format!("{e:?}")))?;
@@ -617,6 +668,8 @@ impl Session {
             frame: Frame::new(),
             ended: None,
             fault: None,
+            config,
+            finale: None,
             data,
         })
     }
@@ -726,13 +779,19 @@ impl Session {
     /// Plants a fault (self-tests only, [`PlantedFault`]).
     #[doc(hidden)]
     pub fn plant_fault(&mut self, fault: PlantedFault) {
+        self.plant_sound_fault(fault);
         self.fault = Some(fault);
     }
 
-    /// Runs one session tic with `cmd` (module documentation).
+    /// Runs one session tic with `cmd` (module documentation). A session of the finale-and-melt
+    /// configuration runs its tics through [`Self::tic_finale_and_melt`] and refuses this call
+    /// ([`SessionWitness::Configuration`], nothing changed).
     pub fn tic(&mut self, cmd: TicCommand) -> Result<TicReport, Refusal> {
         let tic = self.gametic;
         let refuse = |witness| Refusal { tic, witness };
+        if self.config != Configuration::RefusesFinaleAndMelt {
+            return Err(refuse(SessionWitness::Configuration(self.config)));
+        }
         if self.ended.is_some() {
             return Err(refuse(SessionWitness::Ended));
         }
@@ -829,6 +888,8 @@ impl Session {
         if display.playpal().len() / 768 <= usize::from(f.palette) {
             return Err(SessionWitness::Palette(f.palette));
         }
+        let mut ts = ts;
+        self.mix_unless_melting(&display, &mut sound, &mut ts)?;
         self.display = display;
         self.sound = sound;
         self.gametic += 1;
@@ -870,15 +931,10 @@ impl Session {
         } else {
             self.gametic
         };
-        let mut sim = Simulation::original_player_episode1_v4_level_at(
-            m.clone(),
-            map,
-            self.skill,
-            MapContextOptions::default(),
-            start,
-            gametic,
-        )
-        .map_err(|error| SessionWitness::Admission { map, error })?;
+        let mut sim = self
+            .config
+            .level_at(m.clone(), map, self.skill, start, gametic)
+            .map_err(|error| SessionWitness::Admission { map, error })?;
         let mut display = self.display.clone();
         display
             .begin_next_level_carried(level.clone(), &sim, change, deltaviewheight)
@@ -955,6 +1011,8 @@ impl Session {
                 display: display.random_index(),
             });
         }
+        let (mut sound, mut ts) = (sound, ts);
+        self.mix_unless_melting(&display, &mut sound, &mut ts)?;
         self.display = display;
         self.sound = sound;
         self.gametic += 1;

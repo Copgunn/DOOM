@@ -24,6 +24,8 @@ use std::fmt;
 use std::sync::Arc;
 
 pub mod d_display;
+pub mod f_finale;
+pub mod f_wipe;
 pub mod gif;
 pub mod hu_lib;
 pub mod hu_stuff;
@@ -47,9 +49,12 @@ pub mod v_video;
 pub mod view;
 pub mod wi_stuff;
 
+pub use d_display::session::finale_melt::{
+    MeltFault, MeltProgress, MeltStep, SessionDisplayStateV4, SessionStateRefusal,
+};
 pub use d_display::session::{
     Carried, FinaleView, GameState, LevelChange, MeltState, NonLevelFrame, NotYet, Scene,
-    SessionDisplayState, SessionError, SessionRestoreError,
+    SessionConfig, SessionDisplayState, SessionError, SessionRestoreError,
 };
 pub use d_display::{
     Display, DisplayConfig, DisplayFrame, DisplayObserveError, DisplayRefusal, DisplayState,
@@ -87,6 +92,9 @@ pub enum ConfigError {
     ScreenBlocks(u8),
     /// Low detail is refused.
     LowDetail,
+    /// M6a session display in its finale-and-melt configuration: a screen size change asked for
+    /// during a melt, which reads no input (d_main.c:329-344), so `R_SetViewSize` cannot run.
+    MeltInProgress,
 }
 impl fmt::Display for ConfigError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

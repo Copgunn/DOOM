@@ -45,7 +45,15 @@
 //!   fire bit (`BT_ATTACK`) as `fire=0` or `fire=1`, so a game that was told of a release and
 //!   kept firing shows in the log itself.
 //! - `pump`: the end of an `update` call in which something was logged or a tic ran: the tics
-//!   run and dropped, the app's mode and whether the mouse is captured. The pump's lines are
+//!   run and dropped, the app's mode and whether the mouse is captured; in an update that showed
+//!   melt steps (M6a part 2), also `melt-steps=N` (no tic runs and no command is built in a melt
+//!   step; an update that ran none prints no such field, so a run without a melt has the bytes it
+//!   had before).
+//! - during a melt (M6a part 2; the owner's rulings of 2026-11-21 and 2026-11-23): raw motion is
+//!   `motion dx=X dy=Y ignored (melt)`, as paused motion is logged `ignored`, and reaches nothing;
+//!   a key or mouse button the app holds for the melt's end is an `app` line `held for the melt's
+//!   end: key-down CODE` (`key-up`, `mouse-button NAME down|up`, `focus-lost`). The held inputs
+//!   reach the game in order after the melt, in the `game` lines of the first tic after it. The pump's lines are
 //!   handed to the log's writer thread here (M5d, the owner's ruling of 2026-11-20 that no file
 //!   write may block the tic loop), which writes and flushes each pump's lines in order; so a
 //!   crash loses the current pump and the pumps the thread had not written yet. The lines are
@@ -64,7 +72,10 @@
 use crate::FsHost;
 use crate::keys::Mute;
 use crate::write_stats::{Kind, Timed, WriteTimes};
-use doom_game::app::{App, AudioSink, Host, Mode, SessionTicReport, TicReport, Timestamp};
+use doom_game::app::{
+    App, AudioSink, FinaleMeltSessionTicReport, Host, MeltStepShown, Mode, SessionTicReport,
+    TicReport, Timestamp,
+};
 use doom_game::input::Event;
 use doom_game::input::TicCommand;
 use std::fmt;
@@ -86,6 +97,8 @@ pub(crate) struct InputLog {
     busy: bool,
     downs: [u64; 3],
     ups: [u64; 3],
+    /// Melt steps shown in the current pump (M6a part 2).
+    melt_steps: u64,
 }
 
 /// Where the lines go: a writer written on the loop's thread (`InputLog::to_writer`, for
@@ -262,6 +275,7 @@ impl InputLog {
             busy: false,
             downs: [0; 3],
             ups: [0; 3],
+            melt_steps: 0,
         }
     }
 
@@ -416,22 +430,33 @@ impl InputLog {
     /// The end of an `update` call: a `pump` line when anything happened, a flush, and the
     /// next pump number.
     pub(crate) fn pump_end(&mut self, app: &App, ran: u64, dropped: u64, captured: bool) {
-        if self.is_on() && (self.busy || ran > 0) {
+        let steps = std::mem::take(&mut self.melt_steps);
+        if self.is_on() && (self.busy || ran > 0 || steps > 0) {
             let mode = match app.mode() {
                 Mode::Playing => "playing",
                 Mode::Paused => "paused",
                 Mode::Ended(_) => "ended",
             };
             let capture = if captured { "on" } else { "off" };
+            let melt = if steps > 0 {
+                format!(" melt-steps={steps}")
+            } else {
+                String::new()
+            };
             self.write(
                 "pump",
                 app.tic(),
-                format_args!("ran={ran} dropped={dropped} mode={mode} capture={capture}"),
+                format_args!("ran={ran} dropped={dropped} mode={mode} capture={capture}{melt}"),
             );
             self.flush(app.tic());
         }
         self.busy = false;
         self.pump += 1;
+    }
+
+    /// The melt steps the current pump's update showed (M6a part 2): its `pump` line names them.
+    pub(crate) fn melt_steps(&mut self, steps: u64) {
+        self.melt_steps = steps;
     }
 
     /// The `summary` line and a flush. From here on the log's thread is waited for rather than a
@@ -518,6 +543,38 @@ impl<H: Host> Host for LoggedHost<H> {
         self.log.game_events_at(tic, r.events);
         self.log.executed_at(tic, r.executed);
         self.host.session_tic(r);
+    }
+    /// The same lines for a tic of the finale-and-melt configuration (M6a part 2).
+    fn finale_melt_tic(&mut self, r: &FinaleMeltSessionTicReport<'_>) {
+        let tic = r.report.tic;
+        self.log.game_events_at(tic, r.events);
+        self.log.executed_at(tic, r.executed);
+        self.host.finale_melt_tic(r);
+    }
+    fn melt_step(&mut self, r: &MeltStepShown<'_>) {
+        self.host.melt_step(r);
+    }
+}
+
+/// A key from the window through [`crate::keys::key_event`], with the `app` line `held for the
+/// melt's end: key-down KEY` (or `key-up`) when the app held it for the end of a melt (M6a part
+/// 2: its count of held inputs grew).
+pub(crate) fn logged_key_event<H: Host + Mute>(
+    app: &mut App,
+    host: &mut LoggedHost<H>,
+    key: miniquad::KeyCode,
+    down: bool,
+    repeat: bool,
+) {
+    let before = app.held_inputs();
+    crate::keys::key_event(app, host, key, down, repeat);
+    if app.held_inputs() > before {
+        let what = if down { "key-down" } else { "key-up" };
+        host.log.line(
+            "app",
+            app.tic(),
+            format_args!("held for the melt's end: {what} {key:?}"),
+        );
     }
 }
 

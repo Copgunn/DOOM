@@ -642,7 +642,8 @@ jobs:
         run: |
           python3 tools/reference/m6a_wad.py --check
           python3 tools/reference/m6a_build.py --check
-          python3 tools/reference/m6a_melt_steps.py --check --selftest
+          python3 tools/reference/m6a_melt_steps.py --check
+          python3 tools/reference/m6a_melt_steps.py --selftest
       - name: Genuine session runs of the prototype items (strict and sanitizer variants), self-check and self-test
         if: env.DOCS_ONLY != 'true'
         run: python3 tools/reference/m6a_reference.py --work "$RUNNER_TEMP/m6a_reference" --check --selftest --jobs 4
@@ -655,6 +656,11 @@ jobs:
       - name: Genuine level dumps through the independent DSIM42 encoder, state goldens and self-test
         if: env.DOCS_ONLY != 'true'
         run: python3 tools/reference/m6a_state.py --work "$RUNNER_TEMP/m6a_state" --check --selftest --jobs 4
+      - name: Part 2 golden set (the full finale crawl, every melt at screenblocks 11) and self-tests
+        if: env.DOCS_ONLY != 'true'
+        run: |
+          python3 tools/reference/m6a2_wad.py --check --selftest
+          python3 tools/reference/m6a2_goldens.py --work "$RUNNER_TEMP/m6a2_goldens" --check --selftest --jobs 4
       - name: Wire 27 synthetic map slots (one room layout), wrap witness and DSIM43 state goldens (strict, overflow, address, witness and nowrap builds; address with leak detection DISABLED, detect_leaks=0), and self-test
         if: env.DOCS_ONLY != 'true'
         run: |

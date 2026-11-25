@@ -1,7 +1,5 @@
 # Mutara
 
-Pronounced *mew-TAR-uh* (/mjuːˈtɑːrə/).
-
 This is a Rust rewrite of the DOOM engine that accepts only behavior checked against id Software's Linux DOOM 1.10
 source, tic by tic (a tic is the game's 1/35-second step). Anything not proven identical to the original is refused.
 Most ports go for playable first and exact second; this one goes the other way round. (Mutara is the engine; its vanilla core, in this repository, is mutara-doom.)
@@ -24,6 +22,14 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
 
 *The original engine, the Rust engine and their difference, one scripted session: the difference panel stays black ([how](docs/TESTING.md#readme-animations)).*
 
+![The genuine engine, the Rust session and their per-pixel difference playing one screen wipe from a synthetic level to the intermission screen, one step a frame.](docs/media/m6a2-melt-side-by-side.gif)
+
+*A screen melt, step by step: the difference panel stays black ([how](docs/TESTING.md#readme-animations)).*
+
+![The genuine engine, the Rust session and their per-pixel difference playing a sampled text crawl on a synthetic finale and the melt to its art screen.](docs/media/m6a2-finale-side-by-side.gif)
+
+*The end-of-episode text crawl (sampled) and its melt: the difference stays black ([how](docs/TESTING.md#readme-animations)).*
+
 ## Where it stands
 
 - **Game logic.** One player, six weapons, seven kinds of monster and Episode 1's map features
@@ -36,18 +42,20 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
 - **Sound.** Effects, no music: sounds started and samples mixed equal the original's own sound code on the runs
   checked ([which build, which runs](docs/COMPATIBILITY.md#sound-effects-m5c)).
 - **Playable, in a limited way.** One Episode 1 session at 35 tics a second, from any start map: both exits, the
-  intermission, the next map with what the player carries, dying and coming back, the secret route
-  ([what it supports](docs/COMPATIBILITY.md#episode-1-as-one-session-m6a)). The chain is compared with the original's
-  own engine tic by tic, on synthetic maps and locally on real ones ([evidence](docs/validation/M6A.md)).
+  intermission, the next map with what the player carries, dying and coming back, the secret route, the screen melt
+  between screens and, after E1M8, the finale's text and picture
+  ([what it supports](docs/COMPATIBILITY.md#episode-1-as-one-session-m6a)). The session is compared with the original's
+  own engine tic by tic, on synthetic maps and locally on real ones, and the owner has played it through E1M8 to the
+  finale on Windows ([evidence](docs/validation/M6A.md)).
 
-Not yet, and next (M6a part 2, a separate pull request): the finale after E1M8 (the session stops there), the screen melt
-(the new picture appears at once), the two easy skills and E1M7 on `uv`. Not yet, later: the automap, music, menus, general
-demo playback, other episodes, nightmare skill, or any claim of a match beyond the runs recorded so far ([what is missing](docs/ROADMAP.md#vanilla-completeness-checklist)).
+Not yet, and next (a later pull request): the two easy skills and E1M7 on `uv`. Not yet, later: the automap, music, menus,
+general demo playback, other episodes, nightmare skill, or any claim of a match beyond the runs recorded so far
+([what is missing](docs/ROADMAP.md#vanilla-completeness-checklist)).
 
 ## Play it
 
 `doom-play` plays Episode 1 from the map you pick (E1M1 to E1M9, skill `hmp` or `uv`) with your own `DOOM.WAD`: each exit
-leads to the tally screen and the next map, and it stops at the exit of E1M8 (the ending is not built yet). To really play
+leads to the tally screen and the next map, and E1M8's exit leads to the episode's ending text and picture. To really play
 Doom, use an established source port such as [Chocolate Doom](https://www.chocolate-doom.org/).
 
 There is no download yet: playing and the tests below both build from source. You need Rust 1.85.0 or later
@@ -59,7 +67,7 @@ cargo run --release -p doom-play -- --iwad /path/to/DOOM.WAD --map 1 --skill hmp
 
 - **Controls.** The original's defaults: arrows move and turn, right Ctrl fires, Space uses, right Shift runs, `1`-`8`
   pick weapons, mouse left fires (`--bindings modern` gives WASD). Esc pauses (R restarts, Q quits), End mutes.
-- **Limits.** Needs an OpenGL 2.1 driver; no menus, saving or cheat codes; no screen melt between pictures yet; E1M7 on `uv` is refused
+- **Limits.** Needs an OpenGL 2.1 driver; no menus, saving or cheat codes; E1M7 on `uv` is refused
   ([every limit, and what has been tried](docs/COMPATIBILITY.md#playable-build-m5b)).
 
 ## How it's verified

@@ -227,7 +227,13 @@ fn a_failure_found_only_at_the_end_is_retried_at_restart_and_at_exit() {
             .filter(|l| l.contains(path.to_str().unwrap()))
             .collect();
         match case {
-            "restart" => assert!(about.is_empty(), "{lines:#?}"),
+            // Changed for M6a part 2 item 6 (owner's ruling of 2026-11-23): a cleanly saved
+            // earlier session is now listed at exit, where this asserted it was not mentioned.
+            "restart" => assert_eq!(
+                about,
+                [&format!("saved {} (30 tics)", path.display())],
+                "{lines:#?}"
+            ),
             "exit" => {
                 assert_eq!(about.len(), 1, "{lines:#?}");
                 assert!(
@@ -392,7 +398,13 @@ fn a_first_failure_after_the_restart_is_rewritten_at_the_next_claim() {
         let lines = p.conclude();
         let about: Vec<&String> = lines.iter().filter(|l| l.contains(&name)).collect();
         if case == "claim" {
-            assert!(about.is_empty(), "{lines:#?}");
+            // Changed for M6a part 2 item 6 (owner's ruling of 2026-11-23): a cleanly saved
+            // earlier session is now listed at exit, where this asserted it was not mentioned.
+            assert_eq!(
+                about,
+                [&format!("saved {} (260 tics)", path.display())],
+                "{lines:#?}"
+            );
         } else {
             assert_eq!(
                 about,
@@ -1679,5 +1691,53 @@ fn an_unseen_pause_and_an_end_screen_are_breaks_in_the_tic_statistics() {
         assert!(s.contains(want), "{want} not in {s}");
     }
     p.quit();
+    std::fs::remove_dir_all(&dir).unwrap();
+}
+
+/// M6a part 2 item 6: every session of a run is listed at exit, in the order played, each with
+/// its tics, including the ones ended by a restart whose files were saved cleanly (no write
+/// failed). Two sessions run to the cap and are restarted; the third is quit.
+#[test]
+fn every_cleanly_saved_session_of_a_run_is_listed_at_exit_in_order() {
+    let dir = scratch("close-every-session");
+    let disk = Disk::default();
+    let mut p = play(&dir, &disk, 30);
+    let mut now = 0;
+    let mut paths = Vec::new();
+    for _ in 0..2 {
+        while !matches!(p.app.mode(), Mode::Ended(_)) {
+            now += 1;
+            assert!(step(&mut p, now).is_empty());
+            p.host.host.wait_idle();
+        }
+        paths.push(session(&p, &dir).0);
+        p.app.key(b'r', true, &mut p.host);
+        p.host.host.wait_idle();
+    }
+    now += 1;
+    step(&mut p, now);
+    p.host.host.wait_idle();
+    paths.push(session(&p, &dir).0);
+    assert_eq!(
+        paths
+            .iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .len(),
+        3
+    );
+    p.quit();
+    let lines = p.conclude();
+    let saved: Vec<&String> = lines.iter().filter(|l| l.starts_with("saved ")).collect();
+    let want: Vec<String> = paths
+        .iter()
+        .map(|f| format!("saved {} ({} tics)", f.display(), tics_on_disk(f)))
+        .collect();
+    assert_eq!(saved, want.iter().collect::<Vec<_>>(), "{lines:#?}");
+    assert_eq!(tics_on_disk(&paths[0]), 30);
+    assert_eq!(tics_on_disk(&paths[1]), 30);
+    assert!(
+        !lines.iter().any(|l| l.contains("earlier session")),
+        "{lines:#?}"
+    );
     std::fs::remove_dir_all(&dir).unwrap();
 }

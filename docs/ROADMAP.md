@@ -408,8 +408,9 @@ commits and CI belong to GitHub. See
 The current milestone is **M6a: Episode 1 from start to finish, in one session** (the intermission, the next map and
 the finale of Episode 1), which lands in two parts by the owner's ruling of 2026-11-22. **Part 1** (the level chain) is
 merged: [PR #65](https://github.com/Copgunn/DOOM/pull/65), 2026-11-23, with the held-keys fix
-([PR #79](https://github.com/Copgunn/DOOM/pull/79)) merged the same day. **Part 2** (the finale, melt pictures, easy
-skills and E1M7 on skill 3) is in progress on the branch `feat/m6a-part2`; nothing of part 2 is on master. Both are
+([PR #79](https://github.com/Copgunn/DOOM/pull/79)) merged the same day. **Part 2** (the finale and the melt
+pictures) is built on the branch `feat/m6a-part2` (pull request #80) and passed the owner's hand test on 2026-11-24
+([record](validation/M6A.md#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24)); it is not merged, and nothing of it is on master. The easy skills and E1M7 on skill 3 are a later pull request. Both are
 described under [Later](#later), with the merged M4b to M5d milestones before them. The items of the
 [vanilla completeness checklist](#vanilla-completeness-checklist) that waited for a ruling were ruled on on
 2026-11-21 (declined, or in M6b, or in a later milestone the owner will name). Exact review
@@ -657,8 +658,8 @@ The entries marked merged below are done; they keep their place here because thi
     reload and the secret route; it stops with a plain screen at E1M8's exit and at a load of E1M7 on skill 3. The wipe's
     draws are made and compared, its pictures are not shown. Compared with the genuine engine on synthetic maps in CI and on
     the owner's IWAD locally, his hand-test sessions included ([evidence record](validation/M6A.md)).
-  - **Part 2 (a separate pull request, in progress on the branch `feat/m6a-part2` since 2026-11-23, not merged), under new format versions:** the
-    finale, the melt pictures, the easy skills 0 and 1, and E1M7 on skill 3 (the spawn margin dropped for monsters; the
+  - **Part 2 (a separate pull request, #80, on the branch `feat/m6a-part2` since 2026-11-23: built, hand-tested by the owner on 2026-11-24, not merged; [plan and rulings](M6A_REFERENCE_INVESTIGATION.md#7-part-2-plan-size-and-decisions-for-the-owner-2026-11-23)), under new format versions and, for its session, wire 27:** the
+    finale and the melt pictures. Not in it, and a later pull request: the easy skills 0 and 1, and E1M7 on skill 3 (the spawn margin dropped for monsters; the
     earlier rulings said wire 26, then wire 27, and by the owner's ruling of 2026-11-24 the easy skills and E1M7 take wire 28,
     wire 27 being the intercept wrap below). Two known gaps of part 1 are recorded for part 2 (owner's
     rulings of 2026-11-23; neither changes a tic): **a session ended by restart and saved cleanly is not listed at exit**
@@ -669,7 +670,8 @@ The entries marked merged below are done; they keep their place here because thi
   sessions that wire 26 refuses ([rule](COMPATIBILITY.md#wire-27-the-wrapping-p_interceptvector),
   [evidence](validation/WIRE27.md)). Not done, by the owner's rulings:
   - **Refused caller and wrap-class pairs are known gaps for a later wire**; the E1M8 finale is expected, not guaranteed.
-  - **Wire 28:** the easy skills and E1M7 on skill 3. PR #80 (M6a part 2) adopts wire 27 later by merging master.
+  - **Wire 28:** the easy skills and E1M7 on skill 3, a later pull request. PR #80 (M6a part 2, not merged) merged master on
+    2026-11-24 and runs its finale-and-melt session on wire 27.
   - **A later pull request audits what the old certificate argument covers** (not started). Its first item: a full-engine
     synthetic case where a short slide or use trace overshoots its block walk, compared tic for tic against Rust under wires
     26 and 27, and whether any Rust path substitutes a reach-bounded set of lines or things for the C's actual block walk

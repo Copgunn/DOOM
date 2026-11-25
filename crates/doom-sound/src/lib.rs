@@ -28,12 +28,15 @@
 //! - [`chain`] (M6a): [`chain::ChainSound`], one sound session across the levels, intermissions
 //!   and finale of a single-player session, with `gametic` continuous (ruling U3 (i)).
 //! - [`chain_state`] (M6a): its saved state, `DSND` version 2.
+//! - [`chain_melt`] (M6a part 2): its finale-and-melt configuration, which runs the melt steps,
+//!   and that configuration's saved state, `DSND` version 3.
 //!
 //! Every place where the C ends in `I_Error` or reads memory it does not own is a typed refusal
 //! made before any state changes (M5c decision T11). Every audible quirk of the source is
 //! reproduced as it is (decision T13).
 
 pub mod chain;
+pub mod chain_melt;
 pub mod chain_state;
 pub mod detector;
 pub mod logic;

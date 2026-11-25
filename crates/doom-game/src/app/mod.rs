@@ -32,14 +32,26 @@
 //! tic in every game state, under the file name [`crate::session::demo::session_mode_name`] with
 //! the mode's token. A session refusal ends the session through the same typed path
 //! ([`Witness::Session`]), the end screen saying plainly what is not built yet.
+//!
+//! The M6a part 2 app (owner's ruling V1 of 2026-11-23): game data loaded with
+//! [`GameData::load_finale_and_melt_session`] runs every session in the session's finale-and-melt
+//! configuration (the victory, the Episode 1 finale and every wipe's melt, one melt step per tic of
+//! wall time; the schedule, the input held during a melt and the sound are in the documentation of
+//! the private module `finale_melt`, summarised at [`App::melt_in_progress`]). Data loaded with
+//! [`GameData::load_session`] keeps the frozen app exactly, its "not built yet" stop at E1M8's
+//! exit included, for the frozen tests and tools; doom-play plays only the new one.
 
 mod audio;
+mod finale_melt;
 mod frames;
 mod gamma;
 mod recorder;
 mod screens;
 
 pub use audio::{AudioSink, RecordingSink, SinkCall};
+#[doc(hidden)]
+pub use finale_melt::AppFault;
+pub use finale_melt::{FinaleMeltSessionTicReport, MAX_HELD_IN_MELT, MeltStepShown};
 pub use frames::{
     FrameAssets, FrameRefusal, FrameSource, PALETTE_BYTES, PresentationRestoreError, Presented,
     SavedPresentation, SoundAssets, StatusAdjustment,
@@ -54,6 +66,7 @@ pub use screens::{
 };
 
 use crate::input::{Event, EventLayer, Input, InputError, MouseButton, Preset, RecordedTic, keys};
+use crate::session::finale_melt::Configuration;
 use crate::session::{
     ModeSetting, ModeSource, NotYet, Session, SessionData, SessionMode, SessionSettings,
     SessionWitness, StartError, TicKind,
@@ -157,6 +170,13 @@ pub trait Host {
     /// [`GameData::load_session`] (M6a), instead of [`Host::tic`]: for headless verification and
     /// doom-play's input log.
     fn session_tic(&mut self, _report: &SessionTicReport<'_>) {}
+    /// Called after every committed session tic of game data loaded with
+    /// [`GameData::load_finale_and_melt_session`] (M6a part 2), instead of
+    /// [`Host::session_tic`]: for headless verification and doom-play's input log.
+    fn finale_melt_tic(&mut self, _report: &FinaleMeltSessionTicReport<'_>) {}
+    /// Called after every melt step the app showed (game data loaded with
+    /// [`GameData::load_finale_and_melt_session`]); no tic ran and no command was built.
+    fn melt_step(&mut self, _report: &MeltStepShown<'_>) {}
 }
 
 /// One committed session tic, as [`Host::session_tic`] receives it (M6a).
@@ -407,6 +427,9 @@ pub struct GameData {
     skill: u8,
     /// With [`Self::load_session`]: the M6a session data every session starts from.
     session: Option<Arc<SessionData>>,
+    /// The session's configuration ([`Self::load_session`]: the frozen one;
+    /// [`Self::load_finale_and_melt_session`]: the finale and the melt).
+    config: Configuration,
 }
 
 impl GameData {
@@ -423,13 +446,43 @@ impl GameData {
         map: u8,
         skill: u8,
     ) -> Result<Self, LoadError> {
+        Self::load_session_in(
+            wads,
+            setting,
+            map,
+            skill,
+            Configuration::RefusesFinaleAndMelt,
+        )
+    }
+
+    /// [`Self::load_session`] in the session's finale-and-melt configuration (owner's ruling V1
+    /// of 2026-11-23; M6a part 2): every session of the app a
+    /// [`crate::session::Session::new_finale_and_melt`], with the victory, the Episode 1 finale and
+    /// every wipe's melt shown one step per tic of wall time. What doom-play plays. The same starts
+    /// are refused (the easy skills stay refused: the next pull request).
+    pub fn load_finale_and_melt_session(
+        wads: &[&[u8]],
+        setting: ModeSetting,
+        map: u8,
+        skill: u8,
+    ) -> Result<Self, LoadError> {
+        Self::load_session_in(wads, setting, map, skill, Configuration::FinaleAndMelt)
+    }
+
+    fn load_session_in(
+        wads: &[&[u8]],
+        setting: ModeSetting,
+        map: u8,
+        skill: u8,
+        config: Configuration,
+    ) -> Result<Self, LoadError> {
         let data = Arc::new(SessionData::load(wads, setting).map_err(LoadError::Session)?);
         let settings = SessionSettings {
             map,
             skill,
             screenblocks: 10,
         };
-        let first = Session::new(data.clone(), settings).map_err(LoadError::SessionStart)?;
+        let first = new_session(config, data.clone(), settings).map_err(LoadError::SessionStart)?;
         let level = data
             .map(map)
             .map_err(|e| LoadError::SessionStart(StartError::Map(e)))?
@@ -443,7 +496,19 @@ impl GameData {
             map,
             skill,
             session: Some(data),
+            config,
         })
+    }
+
+    /// The session's configuration (meaningful for data loaded with [`Self::load_session`] or
+    /// [`Self::load_finale_and_melt_session`]).
+    pub fn session_configuration(&self) -> Configuration {
+        self.config
+    }
+
+    /// Whether every session runs the finale-and-melt configuration.
+    fn finale_and_melt(&self) -> bool {
+        self.session.is_some() && self.config == Configuration::FinaleAndMelt
     }
 
     /// The declared game mode, for data loaded with [`Self::load_session`].
@@ -555,6 +620,7 @@ impl GameData {
             map,
             skill,
             session: None,
+            config: Configuration::RefusesFinaleAndMelt,
         })
     }
 
@@ -670,13 +736,11 @@ fn start_message(e: &StartError) -> String {
 fn not_yet_message(n: NotYet) -> String {
     match n {
         NotYet::Victory => "E1M8 is complete. The finale that follows it (the text screen and \
-                            the picture) is not built yet: it comes after the hand test. The \
+                            the picture) is not built yet. The \
                             session stops here, nothing was played differently from the original."
             .into(),
-        NotYet::Finale => "the finale is not built yet: it comes after the hand test".into(),
-        NotYet::EasySkill => "the easy skills (0 and 1) are not built yet: they come after the \
-                              hand test (M6a step 10)"
-            .into(),
+        NotYet::Finale => "the finale is not built yet".into(),
+        NotYet::EasySkill => "the easy skills (0 and 1) are not built yet".into(),
     }
 }
 
@@ -702,6 +766,10 @@ fn session_message(w: &SessionWitness) -> String {
         SessionWitness::Special => "a pause or save command (BT_SPECIAL): the original pause \
                                     comes with M6b, saving later"
             .into(),
+        SessionWitness::Display(doom_render::SessionError::Finale(e)) => format!(
+            "the finale art screen cannot be drawn ({e}). The original stops here too. In \
+             registered mode its art screen is HELP2, in retail mode CREDIT."
+        ),
         other => other.to_string(),
     }
 }
@@ -756,8 +824,11 @@ pub enum SaveStatus {
 pub struct Update {
     /// Tics run.
     pub ran: u64,
-    /// Due tics dropped beyond [`MAX_TICS_PER_UPDATE`] (or after the session ended).
+    /// Due tics dropped beyond [`MAX_TICS_PER_UPDATE`] (or after the session ended). In the
+    /// finale-and-melt configuration, the due slots not run because a melt step ended the update.
     pub dropped: u64,
+    /// Melt steps shown (the finale-and-melt configuration; always 0 otherwise).
+    pub melt_steps: u64,
 }
 
 /// The tic clock: 35 tics a second from a monotonic microsecond count, computed from an
@@ -819,6 +890,8 @@ pub struct App {
     /// With [`GameData::load_session`]: the current M6a session (none only when its start was
     /// refused); `sim` and `frames` are then unused.
     session: Option<Box<Session>>,
+    /// The finale-and-melt configuration's state (unused by the frozen app).
+    melt: finale_melt::AppMelt,
 }
 
 /// The one plain line that says a run held a session labelled layout-dependent by the detector of
@@ -852,6 +925,20 @@ enum AudioNote {
     Pause,
     Resume,
     SessionStart,
+    MeltStart,
+    MeltEnd,
+}
+
+/// A new session of `config`.
+fn new_session(
+    config: Configuration,
+    data: Arc<SessionData>,
+    settings: SessionSettings,
+) -> Result<Session, StartError> {
+    match config {
+        Configuration::RefusesFinaleAndMelt => Session::new(data, settings),
+        Configuration::FinaleAndMelt => Session::new_finale_and_melt(data, settings),
+    }
 }
 
 impl App {
@@ -880,6 +967,7 @@ impl App {
             audio_notes: Vec::new(),
             layout_earlier: 0,
             session: None,
+            melt: finale_melt::AppMelt::default(),
             data,
             cfg,
         };
@@ -913,6 +1001,7 @@ impl App {
         self.mode = Mode::Playing;
         self.name = String::new();
         self.claimed = false;
+        self.melt = self.melt.fresh();
         self.started = host.timestamp();
         // the file is created at once (an empty demo), so an unwritable directory shows at
         // the first pause, not at the session's end
@@ -924,7 +1013,7 @@ impl App {
             };
             self.save(host);
             // a new game: a fresh session, both random indices 0 (U6: S11's restart)
-            match Session::new(data, settings) {
+            match new_session(self.data.config, data, settings) {
                 Ok(s) => self.session = Some(Box::new(s)),
                 Err(e) => {
                     self.session = None;
@@ -957,6 +1046,8 @@ impl App {
                     AudioNote::Pause => sink.pause(),
                     AudioNote::Resume => sink.resume(),
                     AudioNote::SessionStart => sink.session_start(),
+                    AudioNote::MeltStart => sink.melt_start(),
+                    AudioNote::MeltEnd => sink.melt_end(),
                 }
             }
         }
@@ -991,6 +1082,9 @@ impl App {
             Some(s) if s.gamestate() == doom_render::GameState::Intermission => {
                 format!("in the intermission after E1M{}", s.map())
             }
+            Some(s) if s.gamestate() == doom_render::GameState::Finale => {
+                format!("in the finale (after E1M{})", s.map())
+            }
             Some(s) => format!("in E1M{}", s.map()),
             None => "before its first tic".into(),
         };
@@ -1001,9 +1095,14 @@ impl App {
             Mode::Ended(Ending::TicCap) => "; at the session length cap".into(),
             _ => String::new(),
         };
+        let finale = if self.finale_and_melt() {
+            self.finale_summary(mode.mode)
+        } else {
+            String::new()
+        };
         Some(format!(
             "session: game mode {} ({source}), started at E1M{} skill {}, ended {at} after {} \
-             tics{how}",
+             tics{finale}{how}",
             mode.mode.word(),
             self.data.map,
             self.data.skill,
@@ -1133,19 +1232,27 @@ impl App {
         self.quit
     }
 
-    /// Whether the platform should capture the mouse: only while playing.
+    /// Whether the platform should capture the mouse: only while playing (a melt included).
     pub fn wants_mouse_capture(&self) -> bool {
         self.mode == Mode::Playing
     }
 
     /// The last drawn game frame (64,000 indices) and its palette number; `None` before the
-    /// first tic.
+    /// first tic. In the finale-and-melt configuration, while a melt is shown, the last melt
+    /// step's picture and the melt's palette (the picture the window presents).
     pub fn frame(&self) -> Option<(&[u8], u8)> {
+        if let Some(m) = self.melt_picture() {
+            return Some(m);
+        }
         self.drawn.then(|| (self.pixels(), self.palette))
     }
 
-    /// The last drawn frame's indices: the session's frame in an M6a session.
+    /// The last drawn frame's indices: the session's frame in an M6a session (the melt step's
+    /// picture while a melt is shown).
     fn pixels(&self) -> &[u8] {
+        if let Some((m, _)) = self.melt_picture() {
+            return m;
+        }
         self.session
             .as_ref()
             .map_or(self.frame.pixels(), |s| s.frame().pixels())
@@ -1161,8 +1268,12 @@ impl App {
     /// A DOOM key code went down or up. While playing, Esc and Pause pause and every other
     /// key goes to the event layer (which withholds the keys of decision S5); while paused,
     /// Esc or Pause resumes, `r` restarts and `q` quits; on an end screen `r` restarts and
-    /// `q` or Esc quits.
+    /// `q` or Esc quits. In the finale-and-melt configuration a key that arrives during a melt
+    /// is held and handled when the melt ends ([`App::melt_in_progress`]).
     pub fn key(&mut self, code: u8, down: bool, host: &mut dyn Host) {
+        if self.hold_key(code, down) {
+            return;
+        }
         let pause_key = code == keys::KEY_ESCAPE || code == keys::KEY_PAUSE;
         match self.mode {
             Mode::Playing if down && pause_key => self.pause(),
@@ -1182,15 +1293,19 @@ impl App {
     }
 
     /// Relative mouse motion in the platform's raw device units (doom-play passes miniquad's raw
-    /// mouse motion, which is not in pixels), `dy` positive downward; ignored unless playing.
+    /// mouse motion, which is not in pixels), `dy` positive downward; ignored unless playing,
+    /// and ignored during a melt (the owner's ruling of 2026-11-21: as while paused).
     pub fn mouse_motion(&mut self, dx: i32, dy: i32) {
-        if self.mode == Mode::Playing {
+        if self.mode == Mode::Playing && !self.motion_ignored_in_melt() {
             self.layer.mouse_motion(dx, dy);
         }
     }
 
-    /// A mouse button went down or up; ignored unless playing.
+    /// A mouse button went down or up; ignored unless playing; held during a melt.
     pub fn mouse_button(&mut self, button: MouseButton, down: bool) {
+        if self.hold_button(button, down) {
+            return;
+        }
         if self.mode == Mode::Playing {
             self.layer.mouse_button(button, down);
         }
@@ -1201,7 +1316,11 @@ impl App {
     /// `window_minimized_event`, which that library's source sends on focus loss as well as on
     /// minimising (X11 FocusOut, Wayland keyboard leave, Windows `WM_ACTIVATE` inactive, macOS
     /// resign-key and window move).
+    /// During a melt the pause is held and taken when the melt ends.
     pub fn focus_lost(&mut self) {
+        if self.hold_focus_lost() {
+            return;
+        }
         if self.mode == Mode::Playing {
             self.pause();
         }
@@ -1247,6 +1366,9 @@ impl App {
             return Update::default();
         }
         let due = self.clock.due(now_us);
+        if self.finale_and_melt() {
+            return self.update_finale_and_melt(due, host);
+        }
         let mut ran = 0;
         while ran < due.min(MAX_TICS_PER_UPDATE) && self.mode == Mode::Playing {
             self.run_tic(host);
@@ -1255,6 +1377,7 @@ impl App {
         Update {
             ran,
             dropped: due - ran,
+            melt_steps: 0,
         }
     }
 
@@ -1288,7 +1411,12 @@ impl App {
         };
         let none = TicCommand::default();
         if self.data.session.is_some() {
-            if let Err(ending) = self.session_tic(executed, host) {
+            let committed = if self.finale_and_melt() {
+                self.finale_melt_tic(executed, host)
+            } else {
+                self.session_tic(executed, host)
+            };
+            if let Err(ending) = committed {
                 return self.end(ending, host);
             }
         } else {
@@ -1432,6 +1560,7 @@ impl App {
     }
 
     fn end(&mut self, ending: Ending, host: &mut dyn Host) {
+        self.end_melt_for_sink();
         self.save(host);
         self.screen = Some(self.end_screen(&ending));
         self.mode = Mode::Ended(ending);

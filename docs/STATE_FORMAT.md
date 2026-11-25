@@ -9,9 +9,12 @@ encoded. Shared immutable map storage uses Arc internally; reference counts and
 addresses are excluded. The M5a renderer's own, separate `DRST` format is at the
 [end of this page](#render-state-drst-version-2-m5a); it is not a DSIM version and no DSIM
 reader decodes it. The same holds for the display state `DDSP` ([version 1](#display-state-ddsp-version-1-m5b),
-[version 2](#display-state-ddsp-version-2-m5c), [version 3](#display-state-ddsp-version-3-m6a)) and for the sound session's
-saved state `DSND` ([version 1](#sound-session-state-dsnd-version-1-m5c), [version 2](#sound-session-state-dsnd-version-2-m6a)).
-The M6a session's own saved state `DSES` is [version 1](#session-state-dses-version-1-m6a).
+[version 2](#display-state-ddsp-version-2-m5c), [version 3](#display-state-ddsp-version-3-m6a),
+[version 4](#display-state-ddsp-version-4-m6a-part-2)) and for the sound session's
+saved state `DSND` ([version 1](#sound-session-state-dsnd-version-1-m5c), [version 2](#sound-session-state-dsnd-version-2-m6a),
+[version 3](#sound-session-state-dsnd-version-3-m6a-part-2)).
+The M6a session's own saved state `DSES` is [version 1](#session-state-dses-version-1-m6a) (the frozen session) and
+[version 2](#session-state-dses-version-2-m6a-part-2) (the finale-and-melt session).
 
 M3f8's execution-scope brands and derived target availability are API observations,
 not persistent fields. V20/v21, profile/registry/context schema identifiers, stored
@@ -2780,6 +2783,44 @@ run loop). On a 64-bit target the sum cannot overflow and the run is refused as 
 resize panics or exhausts memory. That reader is frozen with its format and is not patched; every supported build is 64-bit
 (the CI targets), so this is a declared limit of the older reader on a target nobody builds, not a behaviour change.
 
+## Display state (`DDSP` version 4, M6a part 2)
+
+Written only by a session display in the finale-and-melt configuration (`Display::new_session_with` with
+`SessionConfig::FinaleAndMelt`, owner's rulings V1 and V3 of 2026-11-23), which draws the Episode 1 finale and every melt
+(one `wipe_doMelt` step with `ticks = 1` per `Display::melt_step`,
+[M6a note §1.16](M6A_REFERENCE_INVESTIGATION.md#116-the-melt-settled-for-u9)). **Versions 1 to 3 keep their bytes and
+rules**: `DisplayState::decode`, `decode_any` and `SessionDisplayState::decode` refuse version 4 (`Version(4)`), and
+`SessionDisplayStateV4::decode` reads version 4 only (`Version(3)` for a version-3 state). The frozen session display
+(`Display::new_session`) still writes version 3 and restores no version 4; the finale-and-melt display writes version 4
+and restores no version 3 (`WrongConfig`). Little endian.
+
+**Not canonical on input** (found by the independent read, 2026-11-24): the taint-run reader, shared with version 3 and
+`DRST` version 2, accepts adjacent runs of one origin, so more than one byte string decodes to the same state; the writer
+always merges them. `DSES` version 2 inherits this through its embedded display state; `DSND` version 3 is canonical.
+
+| Field | Encoding | Meaning |
+| --- | --- | --- |
+| magic, version | 4 bytes `DDSP`, u32 = 4 | |
+| game mode | u8: 0 shareware, 1 registered, 2 retail | the session's declared mode (U4); it picks the finale's art screen (f_finale.c:714-720), and a restore requires the display's own |
+| session tic, entered | as version 3 | |
+| game state, old game state | as version 3 | |
+| scene | as version 3 (a level's `DRST` version 2, or outside a level `fuzzpos`, the wall steps, `screens[0]` and its taint runs) | in the finale, the last finale frame drawn |
+| melt | u8: 0 none, 1 in progress; 1 is followed by u8 steps shown (0 to 42), u8 palette (0 to 13), 160 x i16 column positions (-15 to 200), the 64,000-byte start screen, its taint runs, and the 64,000-byte end screen | the melt the last frame started (`wipe_StartScreen`, `wipe_EndScreen`, `y[]`; f_wipe.c:138, 237-258) |
+| status bar and HUD | exactly version 1's rows from `screenblocks` to the message line | as version 1 |
+
+Without a melt, a version-4 encoding is the version-3 encoding of the same fields with the game-mode byte inserted after the
+version. With one it holds at most three 64,000-byte screens (the scene's, the start and the end screen) besides the
+`DRST` of a level scene. **The decoder** rejects everything version 3's rejects, and a game mode above 2, a melt byte above 1,
+melt steps above 42 (a melt has at most 43 steps, and the step that returns `done` ends it), a melt palette above 13 and a
+column position outside -15 to 200. **`check`** and `Display::restore_session_v4` apply version 3's rules (and refuse a
+version-3 melt field in the in-memory state), then for a melt in progress require: the tic one after `entered` with the wipe
+flag clear and the old game state the scene's (a melt starts only in the frame of the first tic in a new state, d_main.c:
+223-227, 300, and no tic runs during it); the end screen equal to the scene's composed frame (the melt ends on it); the palette
+the end frame's (a level's `st_palette`, else 0, note §1.16.3); and the steps shown and the column positions those of
+`wipe_initMelt` at the state's `M_Random` index minus 320 followed by that many `wipe_doMelt` steps of which none returned
+`done` (f_wipe.c:156-166, 184-222). The start screen and its taint are accepted on trust, as in version 3. A restore rebuilds
+the melt by that replay, so a restored display continues picture for picture as the uninterrupted one.
+
 ## Sound session state (`DSND` version 2, M6a)
 
 The saved state of a session across levels, for restore-and-continue at any session tic (owner's ruling U3 (i)). **Version 1
@@ -2819,6 +2860,35 @@ reader refuses, so it never encodes to another state. A session's own states are
 A melt in progress decodes, and restoring it is `NotYet::MeltInProgress` until the melt steps exist. Restoring checks the state
 against the caller's configuration and music lumps, the loaded sound set and the level simulation (in a level) or the finished
 level's, held read-only (outside one): consistency checks, not proof that a run reaches the state.
+
+## Sound session state (`DSND` version 3, M6a part 2)
+
+Written only by a sound session across levels in the finale-and-melt configuration (`ChainSound::new_with` with
+`ChainMode::FinaleAndMelt`, owner's rulings V1 and V3 of 2026-11-23), by `ChainSound::save_v3`; read by
+`ChainSoundStateV3::decode`; restored by `ChainSound::restore_v3`. In that configuration a tic leaves its due buffer owed,
+each melt step changes nothing, and `ChainSound::mix_after_display` mixes the owed buffer after the display (the melt loop
+calls no sound function, d_main.c:320-344, and `I_UpdateSound` and `I_SubmitSound` follow `D_Display`, d_main.c:392-405;
+[M6a note §1.16.4](M6A_REFERENCE_INVESTIGATION.md#1164-sound-and-the-mixer-while-a-melt-runs)). **Versions 1 and 2 keep
+their bytes and rules**: `SoundState::decode` refuses version 3, `ChainSoundState::decode` refuses version 3 (`Version(3)`),
+and `ChainSoundStateV3::decode` reads version 3 only (`Version(2)` for a version-2 state). The frozen configuration
+(`ChainSound::new`, `ChainMode::RefusesMelt`) still writes version 2, refuses every melt step (`NotYet::MeltSteps`) and
+restores no melt in progress; `save_v3` gives nothing for it.
+
+**Layout and rules: exactly version 2's**, with 3 in the version field, so a state's version 3 bytes are its version 2 bytes
+with that field changed. A melt in progress adds no sound state but the pending display: its pictures, columns and steps are
+the display's (`DDSP` version 4), and nothing of the sound code runs during it. The one byte version 2 laid out for it is read
+here as follows:
+
+| Offset | Size | Field (as version 2) | Version 3 |
+| --- | --- | --- | --- |
+| 14 | 8 | buffers mixed | with a pending display, the buffers of the tics before the last: `ceil(315 * (tics - 1) / 512)` |
+| 49 | 1 | melt: 0 none, 1 in progress | 1: the last tic's display is pending (its records and `S_UpdateSounds` done, its buffer, if one was due, not yet mixed; a melt possibly in progress); accepted on restore |
+
+The reader's checks are version 2's, shared and version-2-only alike (a melt byte other than 0 or 1, a pending display before
+any tic, the buffer count, an occupied channel whose handle the last `S_UpdateSounds` freed: that update ran with `gametic`
+equal to the tics run, pending display or not). The restore applies version 2's checks against the caller's configuration,
+music lumps, sound set and simulation, then rebuilds a pending display as pending, its buffer owed exactly when
+`ceil(315 * tics / 512)` exceeds the stored count, so the session continues with the display's melt steps and its mix.
 
 ## Session state (`DSES` version 1, M6a)
 
@@ -2882,13 +2952,74 @@ simulation does not model it and the display keeps only the screen; `viewheight`
 which the state does not hold). The arithmetic on restored intermission values uses wrapping operations throughout, so a
 debug and a release build cannot differ on them.
 
+## Session state (`DSES` version 2, M6a part 2)
+
+Written by `Session::save_v2`, read by `SessionStateV2::decode`, restored by `Session::restore_v2(data, state, level)`, for
+a session of the finale-and-melt configuration only (`Session::new_finale_and_melt`, owner's rulings V1 and V3 of
+2026-11-23), at any point between two calls: in a level, on a load tic, in the intermission, in both finale stages and in the
+middle of a melt. **Version 1 keeps its bytes and rules**: `SessionState::decode` refuses version 2 (`Version(2)`),
+`SessionStateV2::decode` refuses version 1 (`Version(1)`), and each configuration saves only its own version: `Session::save`
+on a finale-and-melt session and `Session::save_v2` on a frozen one are refused as `DsesError::Configuration` (the
+embedded formats likewise: `ChainSound::save_v2_checked` and `Display::session_state_v3_checked` refuse the new configuration
+by type). The frozen writers' bytes are pinned by `tests/reference/m6a_frozen_bytes.txt`.
+
+**Layout: version 1's, field for field**, with three differences: the version is 2; the game state may be 2 (the finale),
+with the finale field set; and the embedded states are [`DSIM` version 43](#dsim-v43--wire-27-the-wrapping-p_interceptvector)
+(wire 27, where version 1 embeds version 42), `DDSP` version 4 and `DSND` version 3. **Redefined on 2026-11-24, before
+version 2 was frozen** (the owner's ruling): as first written in this pull request it embedded `DSIM` version 42; there is
+no version 3, and a version 2 state holding a `DSIM` version 42 capture is refused (`DsesError::Level`). Little endian, at most 64 MiB;
+nothing follows the last field.
+
+| Field | Encoding | Meaning |
+| --- | --- | --- |
+| magic, version | 4 bytes `DSES`, u16 = 2 | |
+| mode, mode source, start map, skill, screenblocks, `gametic` | as version 1 | skill 2 or 3 (the easy skills come with wire 28) |
+| `gamestate` | u8: 0 level, 1 intermission, 2 finale | |
+| `gamemap`, `gameaction`, `secretexit`, `didsecret` | as version 1 | in the finale map 8 and `gameaction` 0 |
+| `wminfo`, wi_stuff.c statics | as version 1 | in a level and in the finale, the last intermission's or a fresh process's |
+| carried player | as version 1 | present in the intermission and in the finale (`G_PlayerFinishLevel` runs on map 8 too, g_game.c:1026-1028) |
+| finale | u8: 0 none, 1 followed by i32 `finalestage`, i32 `finalecount` | set exactly in the finale (f_finale.c:52-54) |
+| level | u32 length n, n bytes | `DSIM` version 43 (wire 27) |
+| display | u32 length n, n bytes | `DDSP` version 4 (a melt in progress included) |
+| sound | u8 kind = 3, u32 length n, n bytes | `DSND` version 3 (a pending display included) |
+
+**The decoder** rejects what version 1's rejects (the finale and a melt aside), a finale byte other than 0 or 1, a sound kind
+other than 3, an embedded state its own reader refuses, and then checks (`SessionStateV2::check`, each rule named in the
+error) version 1's rules where they apply (the settings, the level capture's map, tic and start `gametic`, the display's own
+`check` and its game state, tics, screen size and wipe flag, the sound's game state, tics and map, and in the intermission
+`wminfo`, the wi_stuff.c statics, `bcnt`, `gameaction` 8 and the carried player), and:
+
+- **the melt**: the display's melt in progress and the sound's pending display agree (`DsesError::MeltAndPendingDisplay`:
+  the session mixes the owed buffer exactly when the melt ends, so it never saves one without the other), and the display's
+  game mode is the declared one;
+- **the display's entry tic**: the level's start in a level, the intermission's first tic in the intermission, and in the
+  finale the victory tic in stage 0 and finale tic 1,571's in stage 1 (`wipegamestate = -1`, f_finale.c:245);
+- **the finale**: present exactly in the finale, map 8, `gameaction` 0, the carried player with the status bar's last health
+  and a `viewheight` of at most 41 units, `finalestage` 0 or 1, and `finalecount` that of the session tics since the victory
+  tic (f_finale.c:230, 241-248): in stage 0 equal to them, 1 to 1,570; in stage 1 equal to them less 1,571;
+- **outside the intermission** (a level, the finale): the wi_stuff.c statics a fresh process's with a fresh `wminfo`, or a
+  finished intermission's (`state` -1, `cnt` 0) whose `next` led to the current map (`G_DoWorldDone` loads `wminfo.next + 1`,
+  g_game.c:1176; a reborn keeps the map).
+
+**Restore** checks as version 1 does (the declared mode, the capture byte for byte, `gameaction` 6 against the level's exit
+request, and outside a level the exit, its kind and the carried player against the finished level's), with `wminfo` against
+the finished level's counts in the intermission only (map 8 writes none, g_game.c:1033-1038); then the display's version 4
+restore (its melt rebuilt by replay, its game mode required) and the sound's version 3 restore (its pending display and owed
+buffer). A restored session continues call for call as the uninterrupted one (`tests/m6a2_session_rules.rs`). **Limits**:
+version 1's (the carried view heights and the latches after the first intermission tic cannot be tied exactly), and the
+finale adds none.
+
 ## M6a golden files that hold state digests
 
 | File | Schema | Rows |
 | --- | --- | --- |
 | `tests/reference/m6a_state.txt` | `DOOM-M6A-STATE-v1` | `L,item,load,tic,map,kind,captures,map_sha256,sequence_sha256`: one per level (SHA-256 of the 32-byte digests of every capture after the load); `D,item,load,tic,leveltime,why,state_sha256`: the DSIM42 capture digest at the load, every 35th level tic and the last. `tic` is the session tic; `why` is `load`, `stride` or `last` |
+| `tests/reference/m6a_frozen_bytes.txt` | `DOOM-M6A-FROZEN-BYTES-v1` | `R,item,screenblocks,gametic,why,format,len,sha256`: length and SHA-256 of the full encoded bytes of `DSES` v1 (`Session::save().encode()`) and of the `DDSP` v3, `DSND` v2 and `DSIM` 42 blobs it embeds, at the start, each load, each change of `gamestate`, `map` or `gameaction`, every 35th `gametic` and the last tic, for 10 part 1 items at screenblocks 10 and 11; `Q,item,screenblocks,rows,bytes,sequence_sha256`: one per item run (SHA-256 of its `R` lines). Generated on master at 25cdb3ba, before part 2; a regression pin, not an original-C expectation |
 | `tests/reference/m6a_stale_attacker.txt` | `DOOM-M6A-STALE-ATTACKER-v1` | `A,item,load,tic`: a load on which the stale-attacker rule projected `players[0].attacker` as NULL; `T,total`: their number |
 | `tests/reference/m6a_dsim42_starts.txt` | `DOOM-M6A-DSIM42-STARTS-v1` | the encoder's start group per load, in hex |
+| `tests/reference/m6a2_manifest.json` | `DOOM-M6A2-MANIFEST-v1` | JSON (part 2 golden set, `tools/reference/m6a2_wad.py`): `files` (the narrow font WAD by size and SHA-256), `wadsets`, `items` (the full-crawl items: name, demo lump, game mode, WAD set, map, skill, tics, demo path and SHA-256), `melt_sb11` (the part 1 manifest's SHA-256 and the names re-run at screenblocks 11), `crawl` (E1TEXT's characters, lines, glyphs, gaps and newlines, the largest right edge, the finale tics of the last glyph, the last character and stage 1) |
+| `tests/reference/m6a2_melt/<ITEM>.sb<N>.melt` | `DOOM-M6A2-MELT-v1` | picture digests, not state: the `#schema` and `#claim` lines, `#melt_steps,TOTAL`, then the genuine runner's rows under `--melt-clock unit` at screenblocks N: `Y,tic,wipe,gamestate,start_sha256,end_sha256,palette,palette_set,clock` per melt, `V,tic,step,tics,done,sha256` per step (SHA-256 of the picture's 64,000 palette indices), `W,tic,draws,steps` per melt (the rows of part 1's `DOOM-M6A-MELT-v1`; only the header differs: this file makes the ruling V4 claim) |
+| `tests/reference/m6a2_results.json` | `DOOM-M6A2-RESULTS-v1` | JSON (`tools/reference/m6a2_goldens.py`): the runner contract, tools, manifest and inputs by SHA-256, the switches, views and build variants, `crawl` (as the manifest), `full_crawl` (per item: part 1's per-item record, the golden digests, the crawl facts observed at each screen size, the finale's session tics), `melt_sb11` (totals, melts and steps by kind, per item: end, melts, steps per melt, predicted counts equal, other rows equal to the golden, variants, melt file digest) |
 
 Both digests come from the genuine runner's dumps through the independent encoder, never from Rust output. The state file's
 schema is unchanged by the stale-attacker rule; the fired loads have their own file so that the Rust tests can require them.

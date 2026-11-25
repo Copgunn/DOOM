@@ -7,7 +7,7 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
 license = "GPL-2.0-only"
-repository = "https://github.com/Copgunn/DOOM"
+repository = "https://github.com/Copgunn/mutara"
 publish = false
 
 [workspace.dependencies]
