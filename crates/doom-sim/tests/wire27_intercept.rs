@@ -254,9 +254,9 @@ fn wire_26_refuses_every_item_at_its_first_wrap() {
 }
 
 /// The witness coverage (R6, R7): each wrapping caller has a genuine wrapping
-/// call, the totals are the sums of the items' rows, the only caller without a
-/// wrapping call is the shoot trace against a thing, which wire 27 keeps checked
-/// (`wire27_tests::every_caller_wraps_under_wire_27_alone`), an item refuses
+/// call, the totals are the sums of the items' rows, the only callers without a
+/// wrapping call are the aim and shoot traces against a thing, which wire 27 keeps
+/// checked (`wire27_tests::every_caller_wraps_under_wire_27_alone`), an item refuses
 /// under wire 27 exactly when one of its classes is refused for its caller, and
 /// every wrap class wire 27 admits for a caller has a genuine call (the owner's
 /// corrections of 2026-11-24; `wire27_tests::wire27_admits_exactly_the_witnessed_classes`
@@ -264,12 +264,19 @@ fn wire_26_refuses_every_item_at_its_first_wrap() {
 #[test]
 fn the_witness_covers_every_wrapping_caller() {
     let g = golden();
-    let callers = ["aim", "shoot_line", "shoot_thing", "slide", "use"];
+    let callers = [
+        "aim_line",
+        "aim_thing",
+        "shoot_line",
+        "shoot_thing",
+        "slide",
+        "use",
+    ];
     assert_eq!(g.totals.len(), callers.len() * 28);
     for caller in callers {
         let wraps = (g.totals.iter())
             .any(|((c, k), (n, _))| c == caller && k.starts_with("wrap.") && *n > 0);
-        assert_eq!(wraps, caller != "shoot_thing", "{caller}");
+        assert_eq!(wraps, !caller.ends_with("_thing"), "{caller}");
     }
     for ((caller, class), (n, _)) in &g.totals {
         let sum: u64 = (g.witness.iter())

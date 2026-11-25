@@ -1,19 +1,23 @@
 //! Wire 27 (owner's ruling of 2026-11-24): the traces' `P_InterceptVector`
-//! (p_maputl.c:231-251) computed with the genuine engine's wrapping `int`
-//! arithmetic, where wires 23 to 26 refuse the tic ([`crate::sight::checked_intercept`],
-//! decision H3). Sight's `P_InterceptVector2` (p_sight.c:109-128) never wraps:
+//! (p_maputl.c:231-251) computed as the genuine engine built with GCC and
+//! `-fwrapv` computes it: `FixedMul` narrows its `long long` product to `fixed_t`
+//! (m_fixed.c:48, modulo 2^32 with or without `-fwrapv`) and the `int` sums wrap
+//! (`-fwrapv`), where wires 23 to 26 refuse the tic
+//! ([`crate::sight::checked_intercept`], decision H3). Sight's `P_InterceptVector2` (p_sight.c:109-128) never wraps:
 //! it stays checked under every wire, and under wire 27 alone it is also refused
 //! on an `INT_MIN` `FixedDiv` operand ([`sight_intercept`], owner's ruling of
 //! 2026-11-24).
 use crate::{Fixed, StaticWorld};
 
-/// The five source callers of `P_InterceptVector`, each through
+/// The six source callers of `P_InterceptVector`, each through
 /// `PIT_AddLineIntercepts` (p_maputl.c:589) or `PIT_AddThingIntercepts`
 /// (p_maputl.c:663) of one `P_PathTraverse`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum InterceptCaller {
-    /// The aim trace (`P_AimLineAttack`, `PTR_AimTraverse`): lines and things.
-    Aim,
+    /// The aim trace (`P_AimLineAttack`, `PTR_AimTraverse`) against a line.
+    AimLine,
+    /// The aim trace against a thing.
+    AimThing,
     /// The shoot trace (`P_LineAttack`, `PTR_ShootTraverse`) against a line.
     ShootLine,
     /// The shoot trace against a thing.
@@ -31,15 +35,16 @@ pub(crate) enum InterceptCaller {
 /// item takes its wrapping path (tests/reference/wire27_results.json).
 pub(crate) const fn wire27_wraps(caller: InterceptCaller) -> bool {
     match caller {
-        InterceptCaller::Aim => true,
+        InterceptCaller::AimLine => true,
         InterceptCaller::ShootLine => true,
         // No item can wrap here, so none is genuine-compared: the divline of
         // PIT_AddThingIntercepts (p_maputl.c:616-674) is a thing's diagonal,
-        // |dx|, |dy| = 2·radius, and a thing in a cell of a 2,048-unit trace is
-        // within 2,048 + 128·√2 + radius units, so every product of p_maputl.c:240
-        // and 246-248 and both sums stay under 2^29 for any mobjinfo radius (at
-        // most 128 units, info.c).
-        InterceptCaller::ShootThing => false,
+        // |dx|, |dy| = 2·radius (at most 256 units, info.c). The block walk takes
+        // at most 64 unit steps (p_maputl.c:846-876), so even when it overshoots
+        // (Q-p_maputl-846c) a thing listed in a visited cell is within 8,320
+        // units per axis of the trace start: every product of p_maputl.c:240 and
+        // 246-248 stays under 2^30 and both sums under 2^31.
+        InterceptCaller::AimThing | InterceptCaller::ShootThing => false,
         InterceptCaller::Slide => true,
         InterceptCaller::Use => true,
     }
@@ -79,19 +84,19 @@ pub(crate) enum WrapClass {
 /// `wire27_tests::wire27_admits_exactly_the_witnessed_classes` checks this
 /// against). Every other wrap class refuses the tic.
 pub(crate) const fn wire27_admits(caller: InterceptCaller, class: WrapClass) -> bool {
-    use InterceptCaller::{Aim, ShootLine, Slide, Use};
+    use InterceptCaller::{AimLine, ShootLine, Slide, Use};
     use Operand::{Exact, Wrong};
     match class {
         // The wraps cancel: USE, SLIDE, AIMSHOT (aim) and SHOOTC.
         WrapClass::Div2 {
             den: Exact,
             num: Exact,
-        } => matches!(caller, Aim | ShootLine | Slide | Use),
+        } => matches!(caller, AimLine | ShootLine | Slide | Use),
         // A wrong den, FixedDiv2: AIMSHOT.
         WrapClass::Div2 {
             den: Wrong,
             num: Exact,
-        } => matches!(caller, Aim | ShootLine),
+        } => matches!(caller, AimLine | ShootLine),
         // A wrong num and den: FixedDiv2 in NUMWRAP, MAXINT in SATUR, MININT in
         // SATNEG.
         WrapClass::Div2 {

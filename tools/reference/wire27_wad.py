@@ -23,8 +23,8 @@ v1 = (484, 4000) and delta (DX, -8059):
 
     num/256 = (484 - x)(-8059) + (y - 4000) DX       den/256 = -8059 tdx - DX tdy   (trace delta in units)
 
-The second num product is below INT_MIN for DX >= 2,098, so it narrows; the den products leave `int` for the 2,048-unit
-pistol trace. With the trace at fine angle 96 (three turns of 32 from east: finecosine 65356, finesine 4846, tables.c)
+The second num product is below INT_MIN for DX >= 2,098, so FixedMul narrows it (m_fixed.c:48; no int overflow, not
+governed by -fwrapv); the den products leave `int` for the 2,048-unit pistol trace and narrow the same way. With the trace at fine angle 96 (three turns of 32 from east: finecosine 65356, finesine 4846, tables.c)
 and DX 2,098 the exact den is -2^32 (8059*65356 + 2098*4846 = 2^29), which the int arithmetic makes 0.
 
 ITEMS: name, map slot, what it shows, the callers and the wrap classes (tools/reference/wire27_goldens.py CLASSES,
@@ -55,7 +55,7 @@ WADSET = [WAD, 'tests/reference/m5b_gfx.wad', 'tests/reference/m5c_sfx.wad', 'te
 EAST, PLAYER1, BARREL = 0, 1, 2035
 TOP, BOTTOM, WEST, V1X = 4000, -4059, -300, 484
 LONG_NORM = 16382                 # line components under 8,192 (derive_episode1 clause iv)
-CALLERS = ('aim', 'shoot_line', 'shoot_thing', 'slide', 'use')
+CALLERS = ('aim_line', 'aim_thing', 'shoot_line', 'shoot_thing', 'slide', 'use')
 OVERRIDES = [
     dict(what='m3h6_geometry.MAX_NORM raised to LONG_NORM (16,382) around the m3h9b_geometry.room call of map_lumps',
          why='the builder chain asserts a line norm under its historical bound; the east wall (DX x 8,059 units) is '
@@ -70,37 +70,39 @@ TURNED = ['cmd 3 0 0 1 ATTACK', 'cmd 17 0 0 0 ATTACK', 'idle 15']   # the same a
 # name: (map, east wall DX, player (x, y), barrels, script, callers, cases, what)
 ITEMS = {
     'USE': (1, 2098, (1490, 0), [], ['idle 5', 'cmd 1 0 0 0 USE', 'idle 10'], ['use'], ['den_exact.num_exact.div2'],
-            'a use press 34 units from the east wall: both num products and their sum leave int and cancel; the exact '
-            'intercept, the wall stops the use with sfx_noway (p_map.c:1095-1120)'),
+            'a use press 34 units from the east wall: FixedMul narrows a num product and the num sum overflows int, and '
+            'the two cancel; the exact intercept, the wall stops the use with sfx_noway (p_map.c:1095-1120)'),
     'SLIDE': (2, 2098, (1400, 0), [], ['cmd 35 50 0 0 0'], ['slide'], ['den_exact.num_exact.div2'],
-              'running east into the slanted east wall: every slide trace (p_map.c:731-743) meets it with wraps that '
-              'cancel, and the player slides south along it'),
-    'AIMSHOT': (3, 2098, (700, 0), [], SHOT, ['aim', 'shoot_line'],
+              'running east into the slanted east wall: 15 slide intercepts (p_map.c:731-743) narrow a num product in '
+              'FixedMul and no int sum overflows; the int num is the exact one, and the player slides south along it'),
+    'AIMSHOT': (3, 2098, (700, 0), [], SHOT, ['aim_line', 'shoot_line'],
                 ['den_exact.num_exact.div2', 'den_wrong.num_exact.div2'],
-                'one pistol shot east 825 units from the east wall: the aim traces (1,024 units, P_BulletSlope) meet it '
-                'with wraps that cancel and stop there; the 2,048-unit shot\'s den wraps to a positive value, so the '
-                'intercept is negative and the wall is not hit: no puff (exact: a puff at the wall)'),
+                'one pistol shot east 825 units from the east wall: every wrapping call narrows a num product and '
+                'overflows the num sum, which cancel; two aim traces (1,024 units, P_BulletSlope) stop at the wall, the '
+                'third\'s den subtraction overflows to a positive value (behind the source); the 2,048-unit shot\'s den, '
+                'from a narrowed product, is positive too, so the wall is not hit: no puff (exact: a puff at the wall)'),
     'SHOOTZ': (4, 2098, (0, 0), [(997, 74)], TURNED, ['shoot_line'], ['den_zero'],
-               'one pistol shot at fine angle 96: the exact den is -2^32, the int den 0, so P_InterceptVector returns 0 '
-               '(p_maputl.c:242-243) and the wall is hit at the shooter (a puff 4 units behind the player); the barrel '
-               '1,000 units out on the line of fire is not hit (exact: the barrel at 0.49 before the wall at 0.73)'),
+               'one pistol shot at fine angle 96: the exact den is -2^32, the int den of FixedMul\'s narrowed products 0 '
+               '(no int sum overflows), so P_InterceptVector returns 0 (p_maputl.c:242-243) and the wall is hit at the '
+               'shooter (a puff 4 units behind the player); the barrel 1,000 units out on the line of fire is not hit '
+               '(exact: the barrel at 0.49 before the wall at 0.73)'),
     'SATUR': (5, 2097, (0, 0), [(997, 74)], TURNED, ['shoot_line'], ['den_wrong.num_wrong.max'],
-              'the same shot with the east wall one unit steeper: the int den is 38,768, the num sum leaves int, and '
-              'FixedDiv saturates (m_fixed.c:62-63): MAXINT, an intercept that P_TraverseIntercepts never reaches '
-              '(p_maputl.c:698-709); the barrel is hit'),
+              'the same shot with the east wall one unit steeper: the int den of a narrowed product is 38,768, the num '
+              'sum of two unnarrowed products overflows int, and FixedDiv saturates (m_fixed.c:62-63): MAXINT, an '
+              'intercept that P_TraverseIntercepts never reaches (p_maputl.c:698-709); the barrel is hit'),
     'NUMWRAP': (6, 2098, (0, -2150), [], ['cmd 4 0 0 1 ATTACK', 'cmd 16 0 0 0 ATTACK', 'idle 15'], ['shoot_line'],
                 ['den_wrong.num_wrong.div2'],
-                'one pistol shot at fine angle 128 from 1,007 units or more west of the east wall: the num sum and the den '
-                'leave int and FixedDiv2 (m_fixed.c:69-87) divides the wrapped -6,666,240 by -17,926,360: the wall at '
-                '0.37, a puff in the open room 757 units out (exact: a puff at the wall at 0.997)'),
+                'one pistol shot at fine angle 128 from 1,007 units or more west of the east wall: FixedMul narrows a den '
+                'and a num product (no int sum overflows) and FixedDiv2 (m_fixed.c:69-87) divides -6,666,240 by '
+                '-17,926,360: the wall at 0.37, a puff in the open room 757 units out (exact: a puff at the wall at 0.997)'),
     'SATNEG': (7, 2099, (0, 0), [], TURNED, ['shoot_line'], ['den_wrong.num_wrong.min'],
-               'the SATUR shot with the east wall one unit shallower and no barrel: the int den is -38,768 and the num '
-               'sum leaves int, so FixedDiv saturates to MININT (m_fixed.c:62-63), the wall is "behind source" '
-               '(p_maputl.c:591-592) and the shot hits nothing: no puff (exact: a puff at the wall at 0.73)'),
+               'the SATUR shot with the east wall one unit shallower and no barrel: the int den is -38,768 and FixedMul '
+               'narrows a num product (no int sum overflows), so FixedDiv saturates to MININT (m_fixed.c:62-63), the wall '
+               'is "behind source" (p_maputl.c:591-592) and the shot hits nothing: no puff (exact: a puff at the wall at 0.73)'),
     'SHOOTC': (8, 2098, (1500, -200), [], ['cmd 1 0 0 -50 ATTACK', 'cmd 19 0 0 0 ATTACK', 'idle 15'],
-               ['shoot_line', 'aim'], ['den_exact.num_exact.div2'],
-               'one pistol shot at fine angle -1,600, 130 units from the east wall: the den and num products leave int '
-               'and cancel; the exact intercept, a puff at the wall'),
+               ['shoot_line', 'aim_line'], ['den_exact.num_exact.div2'],
+               'one pistol shot at fine angle -1,600, 130 units from the east wall: FixedMul narrows a num product and '
+               'the num sum overflows int, and the two cancel; the exact intercept, a puff at the wall'),
 }
 
 

@@ -361,8 +361,8 @@ fn wire_27_identity_and_constructor() {
 /// items take. "Wraps that cancel" above is admitted for all four through a
 /// wire-27 world and refused through a wire-26 one; "a wrong intercept" (a wrong
 /// den) only for the aim and shoot traces (AIMSHOT): the slide and use traces
-/// have no such item and refuse it. The shoot trace against a thing has none
-/// (tests/reference/wire27_results.json) and stays checked under wire 27: both
+/// have no such item and refuse it. The aim and shoot traces against a thing have
+/// none (tests/reference/wire27_results.json) and stay checked under wire 27: both
 /// vectors are refused there under both wires.
 #[test]
 fn every_caller_wraps_under_wire_27_alone() {
@@ -375,13 +375,16 @@ fn every_caller_wraps_under_wire_27_alone() {
         policy_intercept(w, c, fx(v.0), fx(v.1), fx(v.2), fx(v.3)).map(Fixed::bits)
     };
     for caller in [
-        InterceptCaller::Aim,
+        InterceptCaller::AimLine,
         InterceptCaller::ShootLine,
         InterceptCaller::Slide,
         InterceptCaller::Use,
     ] {
         assert!(wire27_wraps(caller));
-        let den_wrong = matches!(caller, InterceptCaller::Aim | InterceptCaller::ShootLine);
+        let den_wrong = matches!(
+            caller,
+            InterceptCaller::AimLine | InterceptCaller::ShootLine
+        );
         for (v, expected) in [
             (cancel, Some(256 << 16)),
             (wrong, den_wrong.then_some(-33_553_408)),
@@ -390,13 +393,41 @@ fn every_caller_wraps_under_wire_27_alone() {
             assert_eq!(at(&v5.world, caller, v), expected, "{caller:?}");
         }
     }
-    let thing = InterceptCaller::ShootThing;
-    assert!(!wire27_wraps(thing));
-    for world in [&v4.world, &v5.world] {
-        for v in [cancel, wrong] {
-            assert_eq!(at(world, thing, v), None);
+    for thing in [InterceptCaller::AimThing, InterceptCaller::ShootThing] {
+        assert!(!wire27_wraps(thing));
+        for world in [&v4.world, &v5.world] {
+            for v in [cancel, wrong] {
+                assert_eq!(at(world, thing, v), None);
+            }
         }
     }
+}
+
+/// Owner's ruling S1 of 2026-11-24: every witnessed aim wrap is against a line,
+/// so the aim trace against a thing is its own caller, kept on
+/// `checked_intercept` under wire 27 like the shoot trace against a thing, with
+/// the `INT_MIN` refusal. The collector gives each trace kind and object its
+/// caller, and an aim-line wrap class is refused for the thing.
+#[test]
+fn the_aim_trace_against_a_thing_stays_checked_under_wire_27() {
+    use crate::combat_trace::TraceKind::{Aim, Shoot};
+    use InterceptCaller::{AimLine, AimThing, ShootLine, ShootThing};
+    assert_eq!(
+        [(Aim, false), (Aim, true), (Shoot, false), (Shoot, true)].map(|(k, t)| k.caller(t)),
+        [AimLine, AimThing, ShootLine, ShootThing]
+    );
+    let (big, a) = (0x7fff_0000, 1 << 30);
+    let wrong = ([0, 0], [a, 0], [1 << 24, 0], [big, big]);
+    let min = ([1 << 27, 0], [65536, 0], [0, 0], [0, 1 << 28]);
+    let at = |c, v: (V, V, V, V)| wire27_intercept(c, fx(v.0), fx(v.1), fx(v.2), fx(v.3));
+    assert_eq!(at(AimLine, wrong).map(Fixed::bits), Ok(-33_553_408));
+    let class = WrapClass::Div2 {
+        den: Operand::Wrong,
+        num: Operand::Exact,
+    };
+    assert_eq!(at(AimThing, wrong), Err(Wire27Refusal::Unevidenced(class)));
+    assert_eq!(checked(min.0, min.1, min.2, min.3), Some(-(1 << 27)));
+    assert_eq!(at(AimThing, min), Err(Wire27Refusal::FixedDiv(AbsMin)));
 }
 
 /// The room with its east wall (line 1) stretched to (512, 7872) → (512, -128),
@@ -625,7 +656,12 @@ fn a_checked_caller_refuses_an_int_min_operand_under_wire_27() {
         let at = |w: &StaticWorld, c| policy_intercept(w, c, fx(v.0), fx(v.1), fx(v.2), fx(v.3));
         assert_eq!(checked(v.0, v.1, v.2, v.3), Some(wire26));
         assert_eq!(at(&v4.world, thing), Some(Fixed::from_bits(wire26)));
+        assert_eq!(
+            at(&v4.world, InterceptCaller::AimThing),
+            at(&v4.world, thing)
+        );
         assert_eq!(at(&v5.world, thing), None);
+        assert_eq!(at(&v5.world, InterceptCaller::AimThing), None);
         assert_eq!(at(&v5.world, line), None);
         assert_eq!(wrapping(v.0, v.1, v.2, v.3), Err(AbsMin));
     }
@@ -650,7 +686,8 @@ fn a_checked_caller_refuses_an_int_min_operand_under_wire_27() {
 #[test]
 fn wire27_admits_exactly_the_witnessed_classes() {
     let caller = |name: &str| match name {
-        "aim" => InterceptCaller::Aim,
+        "aim_line" => InterceptCaller::AimLine,
+        "aim_thing" => InterceptCaller::AimThing,
         "shoot_line" => InterceptCaller::ShootLine,
         "shoot_thing" => InterceptCaller::ShootThing,
         "slide" => InterceptCaller::Slide,
@@ -696,7 +733,7 @@ fn wire27_admits_exactly_the_witnessed_classes() {
         }
         rows += 1;
     }
-    assert_eq!((rows, admitted), (5 * 28, 10));
+    assert_eq!((rows, admitted), (6 * 28, 10));
 }
 
 /// The trace and east wall of the genuine shoot items (tests/reference/
@@ -750,7 +787,7 @@ fn a_wrong_num_follows_fixeddiv_for_the_shoot_line_alone() {
         let at = |c| wire27_intercept(c, fx(v.0), fx(v.1), fx(v.2), fx(v.3)).map(Fixed::bits);
         assert_eq!(at(InterceptCaller::ShootLine), Ok(frac));
         for c in [
-            InterceptCaller::Aim,
+            InterceptCaller::AimLine,
             InterceptCaller::Slide,
             InterceptCaller::Use,
         ] {
@@ -782,7 +819,7 @@ fn a_wrong_num_follows_fixeddiv_for_the_shoot_line_alone() {
     }
     let v = ([0, 0], [(1 << 26) + 1, 0], [1 << 14, 0], [0, 1 << 30]);
     for c in [
-        InterceptCaller::Aim,
+        InterceptCaller::AimLine,
         InterceptCaller::ShootLine,
         InterceptCaller::Slide,
     ] {
@@ -857,7 +894,7 @@ fn a_wrapped_saturation_follows_the_sign_of_num_xor_den() {
         let at = |c| wire27_intercept(c, fx(v[0]), fx(v[1]), fx(v[2]), fx(v[3])).map(Fixed::bits);
         assert_eq!(at(InterceptCaller::ShootLine), Ok(expected), "{num} {den}");
         assert_eq!(
-            at(InterceptCaller::Aim),
+            at(InterceptCaller::AimLine),
             Err(Wire27Refusal::FixedDiv(Saturation))
         );
         assert_eq!(wrapping(v[0], v[1], v[2], v[3]), Err(Saturation));

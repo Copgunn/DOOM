@@ -98,9 +98,10 @@ pub(crate) enum TraceKind {
     Shoot,
 }
 impl TraceKind {
-    fn caller(self, thing: bool) -> InterceptCaller {
+    pub(crate) fn caller(self, thing: bool) -> InterceptCaller {
         match (self, thing) {
-            (Self::Aim, _) => InterceptCaller::Aim,
+            (Self::Aim, false) => InterceptCaller::AimLine,
+            (Self::Aim, true) => InterceptCaller::AimThing,
             (Self::Shoot, false) => InterceptCaller::ShootLine,
             (Self::Shoot, true) => InterceptCaller::ShootThing,
         }

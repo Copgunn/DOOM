@@ -32,7 +32,11 @@ int den is 0 and P_InterceptVector returns 0, den_zero_exact when the exact den 
 FixedDiv's branch: div2 (FixedDiv2, m_fixed.c:69-87), max or min (the saturation, 62-63), range (FixedDiv2's I_Error,
 84-85) or absmin (an INT_MIN operand, whose abs at 62 is undefined in C). So a wrong numerator divided by FixedDiv2
 (wrap.den_wrong.num_wrong.div2) and one that saturates (wrap.den_wrong.num_wrong.max or .min) are distinct classes.
-Callers: aim (PTR_AimTraverse), shoot_line and shoot_thing (PTR_ShootTraverse, by PIT_Add*Intercepts), slide, use.
+Callers: aim_line and aim_thing (PTR_AimTraverse), shoot_line and shoot_thing (PTR_ShootTraverse), each by
+PIT_AddLineIntercepts or PIT_AddThingIntercepts; slide, use. A wrapping call's mechanism lists `den_mul` or `num_mul`
+(a FixedMul of p_maputl.c:240 or 246-248 whose 64-bit product >> 16 leaves int and is narrowed to fixed_t,
+m_fixed.c:48: no UB, not governed by -fwrapv) and `den_sub` or `num_sum` (the subtraction of p_maputl.c:240 or the
+sum of 246-248 of the narrowed products overflows int: what -fwrapv wraps), joined by `+`.
 Every logged FixedMul and FixedDiv result is checked against m_fixed.c's formulas, the den's operand order against
 FixedDiv's den. Derived: the expected wire-26 refusal (the first tic with a wrapping call; wires 23-26 refuse every
 wrap), and the expected wire-27 end: the first tic with a call whose class wire27() refuses for its caller (ADMITTED:
@@ -272,7 +276,7 @@ def classify(row, sites, lines):
     r = [m[3] for m in muls]
     den_exact, den_int, sub = wide[0] - wide[1], wrap32(r[0] - r[1]), r[0] - r[1]
     if (den_int == 0) != (div is None) or (n == 4) != (div is not None): raise ValueError(f'den 0 and FixedDiv: {row}')
-    caller = {'aim': 'aim', 'slide': 'slide', 'use': 'use'}.get(trav, f'shoot_{who}' if trav == 'shoot' else '?')
+    caller = {'slide': 'slide', 'use': 'use'}.get(trav, f'{trav}_{who}' if trav in ('aim', 'shoot') else '?')
     if who not in ('line', 'thing') or caller == '?': raise ValueError(f'unknown traverser or caller: {row}')
     line = None
     if who == 'line':      # the den operands are (v1->dy>>8, v1->dx>>8), the num ones exact differences (spans < 8,192)
@@ -291,6 +295,8 @@ def classify(row, sites, lines):
                num_int=num_int, num_exact=num_exact if (div or line is not None) else None, frac=div[2] if div else 0,
                frac_exact=exact if (div or line is not None) else None, branch=None,
                addsub_overflow=not fits(sub) or bool(div and not fits(r[2] + r[3])))
+    out['mech'] = '+'.join(m for m, on in (('den_mul', not all(map(fits, wide[:2]))), ('num_mul', not all(map(fits, wide[2:]))),
+                                           ('den_sub', not fits(sub)), ('num_sum', bool(div and not fits(r[2] + r[3])))) if on)
     if div:
         a, b, res = div
         out['branch'] = 'absmin' if INT_MIN in (a, b) else ('min' if (a ^ b) < 0 else 'max') \
@@ -314,9 +320,9 @@ CLASSES = ([f'nowrap.den_exact.num_exact.{b}' for b in BRANCHES] + ['nowrap.den_
            + ['wrap.den_zero', 'wrap.den_zero_exact'])
 # The wrap classes wire 27 admits per caller, each because an item takes it (crate::intercept_vector::wire27_admits;
 # every other wrap class is refused).
-WRAPPING = ('aim', 'shoot_line', 'slide', 'use')
+WRAPPING = ('aim_line', 'shoot_line', 'slide', 'use')
 CANCEL = 'den_exact.num_exact.div2'
-ADMITTED = {'aim': {CANCEL, 'den_wrong.num_exact.div2'}, 'slide': {CANCEL}, 'use': {CANCEL},
+ADMITTED = {'aim_line': {CANCEL, 'den_wrong.num_exact.div2'}, 'slide': {CANCEL}, 'use': {CANCEL},
             'shoot_line': {CANCEL, 'den_wrong.num_exact.div2', 'den_zero', 'den_wrong.num_wrong.div2',
                            'den_wrong.num_wrong.max', 'den_wrong.num_wrong.min'}}
 
@@ -345,7 +351,7 @@ def witness_facts(item, text):
                 end27='complete' if stop is None else f"refused:{stop['tic']}:{wire27(stop['caller'], stop['cls'])[7:]}",
                 first_addsub=min((c['tic'] for c in calls if c['addsub_overflow']), default=None), counts=counts,
                 wraps=[[c[k] for k in ('tic', 'caller', 'line', 'cls', 'den_int', 'den_exact', 'num_int', 'num_exact',
-                                       'frac', 'frac_exact')] for c in wraps])
+                                       'frac', 'frac_exact', 'mech')] for c in wraps])
 
 
 def item_record(item, bins, work):
@@ -427,9 +433,12 @@ def results(recs, cc):
     digest = lambda p: sha((ROOT / p).read_bytes())
     return dict(
         schema=SCHEMA, revision=base.REVISION,
-        claim='every state digest is the genuine engine\'s strict build (-fwrapv, the genuine p_maputl.c text) projected by '
-              'the independent DSIM43 encoder; the overflow, address and witness builds gave identical dumps, sound and '
-              'session streams',
+        claim='every state digest is the genuine engine\'s strict build (GCC with -fwrapv, the genuine p_maputl.c and '
+              'm_fixed.c text) projected by the independent DSIM43 encoder; the overflow, address and witness builds gave '
+              'identical dumps, sound and session streams. Two mechanisms make P_InterceptVector leave exact arithmetic: '
+              'FixedMul narrows its long long product to fixed_t (m_fixed.c:48), which GCC defines as reduction modulo 2^32 '
+              'and -fwrapv does not govern; and the int sums of p_maputl.c:240 and 246-248 overflow, which -fwrapv makes '
+              'wrap. Each wrapping call names its mechanism',
         runner='tools/reference/m6a_build.py (generated driver and stubs, sources, units and link list), built by '
                'wire27_goldens.build; m6a_runner_contract.json unchanged',
         builds={b: dict(flags=base.VARIANTS[f], adapters=['p_maputl.c:240', 'p_maputl.c:246-248'] if a else [],
@@ -450,7 +459,7 @@ def results(recs, cc):
                                wire26_refusal_tic=r['witness']['first_wrap'], wire27_end=r['witness']['end27'],
                                nowrap_stop=r['nowrap'], genuine_facts=r['facts'],
                                wrapping_calls_columns='tic caller line class den_int den_exact num_int num_exact frac '
-                                                      'frac_exact',
+                                                      'frac_exact mechanism',
                                wrapping_calls=r['witness']['wraps']) for r in recs})
 
 
