@@ -232,14 +232,14 @@ fn text_write(
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::LumpDirectory;
     use std::path::Path;
 
     /// The committed synthetic finale set (`tests/reference/m6a_wads`, the manifest's `episode`
     /// WAD set; `m6a_gfx_nohelp2.wad` for `nohelp2`), with extra lumps appended.
-    fn res(gfx: &str, extra: &[(&str, Vec<u8>)]) -> Resources {
+    pub(crate) fn res(gfx: &str, extra: &[(&str, Vec<u8>)]) -> Resources {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/reference");
         let mut dir = LumpDirectory::new();
         for w in [
@@ -365,3 +365,7 @@ mod tests {
         assert_eq!(run(&long, 1000).expect("drawn").0, fits);
     }
 }
+
+#[cfg(test)]
+#[path = "d_display/finale_melt_mutant_tests.rs"]
+mod mutant_tests;

@@ -753,4 +753,4 @@ fn mode_code(mode: GameMode) -> u8 {
 
 #[cfg(test)]
 #[path = "finale_melt_reader_tests.rs"]
-mod reader_tests;
+pub(crate) mod reader_tests;

@@ -1234,6 +1234,8 @@ His rulings of the same day:
 compared (4,708 of 4,946 steps), and with FULLREG and FULLRET 125 of 131. The six not compared are SKILL0's and
 SKILL1's, as 7.10 says. The line is left as written.
 
+**Size:** 17,436 hand-written lines with the survivor tests and these records, by the method of 7.3, under the ceiling of 17,500.
+
 The fuzz runs from new seeds, the test map, mutation testing and the independent read are in sections 8 to 12 of the
 record. The stale line under 7.11 above is answered by the record's section 10.
 

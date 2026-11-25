@@ -426,6 +426,9 @@ Paths are under `tests/reference/`. Tests/ignored counts are `#[test]` and `#[ig
 Helpers, not test targets: `m6a2/mod.rs` is used by `m6a2_full_crawl` and `m6a2_melt_sb11`; `m6a2_run/mod.rs` by
 `m6a2_session` and `m6a2_play`; `m6a2_session_rules` and `m6a2_wire27` use neither (the first uses `m6a`, the second its own loader).
 
+Added after this map was read: four files of mutation-survivor tests (`melt_mutant_tests.rs`, `m6a2_mutants.rs`,
+`finale_melt_mutant_tests.rs`, `m6a_chain_mutants.rs`), Rust-only, each test naming the mutants it kills ([§11](#11-mutation-testing-of-part-2s-changed-lines-cargo-mutants-2710)).
+
 ### Compared twice on purpose
 
 - Melt steps at sb10 through the pure function, display, session and app (the sound chain counts steps only): "layer by layer, as
@@ -556,8 +559,33 @@ SHA-256). Decoders only; restore is not driven. Commands in [TESTING](../TESTING
 | `app/finale_melt.rs:420:9` `end_melt_for_sink` to `()` | **no test; argued unreachable:** it matters only if a session ends while a melt is shown, and no path ends one there |
 | `session/finale_melt.rs:66:34` `%` to `+` | **equivalent:** `(320 + 256) as u8` and `(320 % 256) as u8` are both 64 |
 
-**`doom-render` and `doom-sound`:** the 93 missed mutants are being run again locally with `doom-game`'s tests
-included, because the tests of the finale and the melt live there; the result is added to this section when it is done.
+**`doom-render` and `doom-sound`: 93 missed in CI; 68 are caught once `doom-game`'s tests run, 25 remain.** The tests
+of the finale and the melt live in `doom-game`, which CI's per-crate run does not use for these crates. The 93 were run
+again locally (a scratch worktree of `9e3734ae`, `-j 2`, `--test-package doom-render,doom-sound,doom-game`, limited to
+those crates' tests and `doom-game`'s part 2 targets; cargo-mutants matched 4 struct-field deletions besides, all
+caught): 72 caught, 25 missed, 0 timed out. The 25:
+
+| Survivor | Answer |
+| --- | --- |
+| `f_finale.rs:130:31` `\|\|` to `&&` in `draw` | killed by `draw_refuses_exactly_one_wrong_slice` |
+| `f_finale.rs:225:19` `>` to `>=` in `text_write` | killed by `a_glyph_ending_at_320_is_drawn` (f_finale.c:321) |
+| `f_wipe.rs:86:9` `Display for MeltError`; `d_display/finale_melt.rs:115:9` `Display for SessionStateRefusal` | killed by `the_refusals_have_their_text` |
+| `d_display/finale_melt.rs:341:9` `melt_taint` to `None`, `Some(vec![])`, `Some(vec![0])`, `Some(vec![1])` | killed by `melt_taint_is_the_taint_of_the_pixel_shown`; **no test had checked the melt picture's taint before** |
+| `d_display/finale_melt.rs:410:52` guard `s.fault.is_some()` to `false` | killed by `a_faulted_display_is_refused_as_planted_fault` (the existing test checked only that nothing was saved, not the typed refusal) |
+| `d_display/finale_melt.rs:701:28` `>` to `>=` in `decode` | killed by `decode_takes_the_largest_step_and_refuses_the_next` |
+| `chain_melt.rs:107:9` `Display for ChainSaveRefusal` | killed by `the_save_refusal_displays_its_name` |
+| `chain_melt.rs:143:9` `level_tics` to 0, 1; `176:9` `buffer_owed` to `true` | killed by `level_tics_and_the_owed_buffer_follow_the_tics_run` |
+| `f_wipe.rs:50:14` `>` to `>=` in `melt_offsets` | **equivalent:** a value of 0 is set to 0 |
+| `f_wipe.rs:151:36` `<` to `<=`; `153:33` `-` to `/` in `Melt::step` | **equivalent on every accepted input:** offsets are -15 to 0, so a column's row runs 0, 1, 3, 6, 10, 15, 31, 39 … 199: it is never 16, and the clamp is met only at 199, where 200 - 199 = 200 / 199 |
+| `d_display/finale_melt.rs:222:34`, `223:24`, `223:41`, `223:48`, `226:27` in `begin_melt`; `chain.rs:626:23`, `633:29` in `finale_tic`; `chain_melt.rs:197:44` | **no test: planted-fault code** (the branches of `MeltFault::ColumnOffByOne` and `WrongPalette`, `ChainFault::VictorLate` and `MixInMelt`), which only the self-tests reach; a mutant there plants a different fault, which the self-tests still catch |
+
+The new tests are in the new files `crates/doom-render/src/d_display/finale_melt_mutant_tests.rs` (six) and
+`crates/doom-sound/tests/m6a_chain_mutants.rs` (two). **The six `doom-render` timeouts** are all in `Melt::step`
+(`f_wipe.rs:145:9`, `148:20` twice, `150:26`, `151:46`, `159:20`): each stops a column's row from advancing or the melt
+from ever reporting its end, so the melt loop of the tests never ends. Read, not run again.
+
+**For all four crates:** each kill was observed by applying the mutation by hand and seeing the named test fail;
+cargo-mutants was not run again over the new tests.
 
 **`doom-play`, local** (CI's workflow does not mutate it; the command of
 [TESTING](../TESTING.md#local-mutation-run-on-doom-play-cis-workflow-does-not-mutate-it), `-j 2`, a scratch worktree of

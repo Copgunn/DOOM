@@ -11,7 +11,7 @@ use crate::st_stuff::StatusBarState;
 use doom_sim::PickupMessage;
 
 /// A scene screen with some structure, so that a melt's pictures differ from step to step.
-fn pattern(seed: u32) -> Vec<u8> {
+pub(crate) fn pattern(seed: u32) -> Vec<u8> {
     (0..PIXELS as u32)
         .map(|i| (i.wrapping_mul(seed) >> 7) as u8)
         .collect()
@@ -48,7 +48,7 @@ fn intermission() -> SessionDisplayStateV4 {
 /// The intermission's first frame, its melt in progress after `step` steps: the display that
 /// started it ran one tic after the state was entered, and the index is the one after the wipe's
 /// 320 draws.
-fn melting(step: u8) -> SessionDisplayStateV4 {
+pub(crate) fn melting(step: u8) -> SessionDisplayStateV4 {
     let mut s = intermission();
     s.session.tic = 41;
     let Scene::Intermission(c) = &s.session.scene else {
@@ -83,7 +83,7 @@ fn inconsistent(s: &SessionDisplayStateV4) -> Option<&'static str> {
 /// Offsets in the encoding of [`melting`] (one taint run in each screen).
 const MODE: usize = 8;
 const SCENE: usize = 27;
-const MELT: usize = SCENE + 4 + 16 + PIXELS + 12;
+pub(crate) const MELT: usize = SCENE + 4 + 16 + PIXELS + 12;
 const COLUMNS: usize = MELT + 3;
 const START: usize = COLUMNS + 2 * MELT_COLUMNS;
 const END: usize = START + PIXELS + 12;
