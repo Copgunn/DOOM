@@ -121,10 +121,3 @@ Everything the original does is planned, bar a few DOS-era and X11 pieces. The r
 Docs start at the [index](docs/README.md); contributors read [CONTRIBUTING.md](CONTRIBUTING.md), AI agents
 [AGENTS.md](AGENTS.md). id Software's source, history and attribution are preserved; the Rust workspace is GPL-2.0-only
 ([license](LICENSE.TXT), [original README](README.TXT)); game data is never distributed ([assets](docs/ASSETS.md)).
-
-## Credits
-
-- id Software, for the original engine and for releasing its source under the GPL. This is a rewrite of linuxdoom-1.10.
-- DOOM is a trademark of id Software LLC. Mutara is not affiliated with or endorsed by id Software, ZeniMax or Bethesda.
-- The playable build stands on miniquad (window and input) and miniaudio through maudio (sound).
-- The proving is done with cargo-mutants and cargo-fuzz.
