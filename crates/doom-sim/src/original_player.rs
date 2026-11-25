@@ -144,6 +144,27 @@ pub(crate) struct PlayerRuntime {
     /// requests its `P_DropWeapon` here instead of running a second machine; the
     /// running machine applies it after the fire action (M4a step 6).
     pub weapon_stage: WeaponStage,
+    /// Wire 28 at `sk_baby` (`gameskill == sk_baby`): every `P_GiveAmmo` amount
+    /// doubled (p_inter.c:95-101) and every damage to the player halved
+    /// (p_inter.c:799-800). Fixed at admission from the policy and the skill
+    /// (DSIM `actors.options`); false under every other policy and skill.
+    pub baby: bool,
+}
+impl PlayerRuntime {
+    /// `P_DamageMobj`'s `if (player && gameskill == sk_baby) damage >>= 1;`
+    /// (p_inter.c:799-800), on the request before the thrust (806-832), the
+    /// sector-11 cap (837-842) and armour (855-869), so all of them read the
+    /// halved value; the shift floors a non-negative `int` (1 becomes 0).
+    pub(crate) fn player_damage(&self, request: crate::DamageRequest) -> crate::DamageRequest {
+        if self.baby && self.mo == Some(request.target) {
+            crate::DamageRequest {
+                amount: request.amount >> 1,
+                ..request
+            }
+        } else {
+            request
+        }
+    }
 }
 /// See [`PlayerRuntime::weapon_stage`].
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]

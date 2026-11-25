@@ -663,17 +663,6 @@ impl OriginalExecutionProfile {
     pub(crate) const fn has_monster_escape_witness(self) -> bool {
         matches!(self, Self::PlayerMonstersEpisode1V6)
     }
-    /// `P_DamageMobj`'s `sk_baby` halving for the player (p_inter.c:799-800),
-    /// applied before the thrust, the sector-11 cap and armour: `damage >>= 1`
-    /// on a non-negative `int`. Identity under every policy but wire 28 and at
-    /// every skill but baby.
-    pub(crate) const fn player_damage(self, skill: Skill, amount: i32) -> i32 {
-        if self.has_easy_skills() && matches!(skill, Skill::Baby) {
-            amount >> 1
-        } else {
-            amount
-        }
-    }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
             self,
@@ -1859,6 +1848,7 @@ impl Simulation {
                     .then_some(original_player::PlayerPowers::default()),
                 episode1,
                 weapon_stage: original_player::WeaponStage::Idle,
+                baby: policy.has_easy_skills() && options.skill == Skill::Baby,
             });
         }
         Ok(sim)

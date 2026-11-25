@@ -137,22 +137,35 @@ fn strike_player<A: ActorAccess>(host: &mut LifeHost<'_, A>, id: ActorId) -> Res
     let amount =
         (i32::from(crate::monsters::draw(host, id, SARG_DAMAGE_DRAW)) % SARG_DAMAGE_CHOICES + 1)
             * SARG_DAMAGE_UNIT;
+    let request = DamageRequest {
+        target,
+        inflictor: Some(id),
+        source: Some(id),
+        amount,
+    };
+    // Wire 28: `sk_baby` halves the bite before the thrust (p_inter.c:799-800),
+    // and the sector-11 cap (837-842) applies to it as to every other source.
+    let player = host.player.as_deref().ok_or(PlayerBodyError::Binding)?;
+    let wire28 = player.policy.has_easy_skills();
+    let request = player.player_damage(request);
     let body = host.access.get(target).ok_or(CombatError::Reference)?;
     let owner = host.access.get(id).ok_or(CombatError::Reference)?;
     let current = body.life().ok_or(PlayerBodyError::Invariant)?;
-    if current.health > 0 && current.flags & original_player::MF_SHOOTABLE != 0 {
+    let live = current.health > 0 && current.flags & original_player::MF_SHOOTABLE != 0;
+    if live {
         let room = host.player.as_deref().and_then(|p| p.room);
-        original_player::preflight_player_impulse(room, heights, body, owner, amount)?;
+        original_player::preflight_player_impulse(room, heights, body, owner, request.amount)?;
     }
-    let damage = crate::combat::DamagePlan::current_armored_body(
+    let capped = if wire28 && live {
+        crate::combat::hell_cap(host, body, request.amount, None)?
+    } else {
+        request.amount
+    };
+    let damage = crate::combat::DamagePlan::current_armored_body_capped(
         host.registry,
         *body,
-        DamageRequest {
-            target,
-            inflictor: Some(id),
-            source: Some(id),
-            amount,
-        },
+        request,
+        capped,
         host.player.as_deref().and_then(|p| p.armor),
         host.player
             .as_deref()
