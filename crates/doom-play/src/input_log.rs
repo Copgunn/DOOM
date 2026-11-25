@@ -578,6 +578,38 @@ pub(crate) fn logged_key_event<H: Host + Mute>(
     }
 }
 
+/// The window's key handlers (M6a part 2 follow-up: moved here from `window.rs` so that they
+/// are tested without a graphics context): the `raw` line `key-down KEY repeat=BOOL` or
+/// `key-up KEY`, then [`logged_key_event`].
+pub(crate) fn raw_key<H: Host + Mute>(
+    app: &mut App,
+    host: &mut LoggedHost<H>,
+    key: miniquad::KeyCode,
+    down: bool,
+    repeat: bool,
+) {
+    if down {
+        let text = format_args!("key-down {key:?} repeat={repeat}");
+        host.log.line("raw", app.tic(), text);
+    } else {
+        host.log
+            .line("raw", app.tic(), format_args!("key-up {key:?}"));
+    }
+    logged_key_event(app, host, key, down, repeat);
+}
+
+/// The window's focus-lost handler (moved with [`raw_key`]): the `raw` line `focus-lost`, the
+/// app's [`App::focus_lost`], and the `app` line when the app held it for the end of a melt.
+pub(crate) fn raw_focus_lost<H>(app: &mut App, host: &mut LoggedHost<H>) {
+    host.log.line("raw", app.tic(), format_args!("focus-lost"));
+    let held = app.held_inputs();
+    app.focus_lost();
+    if app.held_inputs() > held {
+        let text = format_args!("held for the melt's end: focus-lost");
+        host.log.line("app", app.tic(), text);
+    }
+}
+
 impl<H: Mute> Mute for LoggedHost<H> {
     fn toggle_mute(&mut self) {
         self.host.toggle_mute();
