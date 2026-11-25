@@ -754,3 +754,8 @@ fn mode_code(mode: GameMode) -> u8 {
 #[cfg(test)]
 #[path = "finale_melt_reader_tests.rs"]
 pub(crate) mod reader_tests;
+
+/// M6a part 2 follow-up: the survivor at 701:28 that the mutation run of 2026-11-25 found.
+#[cfg(test)]
+#[path = "finale_melt_palette_tests.rs"]
+mod palette_tests;

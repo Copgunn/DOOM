@@ -431,8 +431,9 @@ impl Session {
         let ts = session_sound::finale_tic(&mut sound, display.random_index(), &self.level)
             .map_err(SessionWitness::Sound)?;
         let r = self.present_finale(display, sound, view, ts, FinaleMeltTicKind::Victory);
-        if r.is_err() && self.ended.is_some() {
-            // Rule 2 here: G_DoCompleted and F_StartFinale ran (g_game.c:636-641, f_finale.c:99).
+        if self.ended.is_some() {
+            // Rule 2 here (only a refused frame ends the session, and this tic began not ended):
+            // G_DoCompleted and F_StartFinale ran (g_game.c:636-641, f_finale.c:99).
             self.display = entered;
         } else if r.is_err() {
             return r;
