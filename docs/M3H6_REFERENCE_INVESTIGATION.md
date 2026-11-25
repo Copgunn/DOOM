@@ -154,6 +154,13 @@ form of each product:
   `2,048 + 128 + 1` units per axis of the trace start (trace length, one cell, the nudge).
   So for hitscans `|num| ≤ 256 · 2,177 · L + L + 2` and `|den| ≤ 256 · L · 2,049`,
   **independent of the map's extent**.
+
+  > **Note of 2026-11-24: the block walk can overshoot.** The premise above, that every point of a visited cell is within `2,048 + 128 + 1` units per axis of the trace start,
+  > does not hold when `P_PathTraverse`'s block walk overshoots its end cell: the walk is bounded by a count of 64, not by
+  > the trace's length (p_maputl.c:846), and round-off can carry a short trace past its end cell. This was shown in a stub
+  > harness only, not in a full-engine run ([quirk row Q-p_maputl-846c](QUIRKS.md);
+  > [evidence](validation/WIRE27.md#7-the-block-walk-overshoot-a-stub-harness-not-a-full-engine-run)). The certificate and
+  > the code are unchanged; a later pull request audits what the argument covers. The text above is left as written.
 - `P_InterceptVector2(v1 = strace, v2 = line)` ([p_sight.c:109](../linuxdoom-1.10/p_sight.c))
   has the roles swapped: `num = 256 · (Δ × s)` with `s` the sight delta and `Δ` from the
   observer to a vertex of a linedef whose endpoints straddle the sight line (`P_DivlineSide`

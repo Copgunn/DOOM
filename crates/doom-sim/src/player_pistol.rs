@@ -1,4 +1,5 @@
 //! Canonical player weapon state, using the shared psprite/trace/damage services.
+use crate::combat_trace::TraceKind;
 use crate::{
     identity::*,
     lifecycle::{ActorAccess, LifeHost},
@@ -594,8 +595,15 @@ fn line_current(
         damage,
     };
     let lookup = |id| host.access.get(id).copied();
-    let trace =
-        combat_trace::collect_in(host.world, host.spatial, &lookup, id, angle, attack.range)?;
+    let trace = combat_trace::collect_in(
+        host.world,
+        host.spatial,
+        &lookup,
+        id,
+        angle,
+        attack.range,
+        TraceKind::Shoot,
+    )?;
     let ((hit, position, traversed), sky) = combat_trace::hit_trace_sky(
         host.world,
         host.sectors,
@@ -703,7 +711,15 @@ fn saw(
     };
     let (angle, damage) = weapons::punch_shot(angle, &mut random);
     let lookup = |id| host.access.get(id).copied();
-    let trace = combat_trace::collect_in(host.world, host.spatial, &lookup, id, angle, SAW_RANGE)?;
+    let trace = combat_trace::collect_in(
+        host.world,
+        host.spatial,
+        &lookup,
+        id,
+        angle,
+        SAW_RANGE,
+        TraceKind::Aim,
+    )?;
     let aim = combat_trace::aim_trace(host.world, host.sectors, id, trace, SAW_RANGE, &lookup)?;
     line_current(
         host,
@@ -764,7 +780,15 @@ fn aim_current(
     ] {
         let range = Fixed::from_map_units(units);
         let lookup = |id| host.access.get(id).copied();
-        let trace = combat_trace::collect_in(host.world, host.spatial, &lookup, id, query, range)?;
+        let trace = combat_trace::collect_in(
+            host.world,
+            host.spatial,
+            &lookup,
+            id,
+            query,
+            range,
+            TraceKind::Aim,
+        )?;
         let aim = combat_trace::aim_trace(host.world, host.sectors, id, trace, range, &lookup)?;
         #[cfg(test)]
         AIM_OBSERVATIONS.with(|capture| {

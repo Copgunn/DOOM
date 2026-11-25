@@ -1,6 +1,7 @@
 //! Original former humans and bounded multi-monster encounters in the shared
 //! player world. Every service (actors, thinkers, sight, pursuit, attacks,
 //! damage, pickups, statistics and transactions) is the existing owner.
+use crate::combat_trace::TraceKind;
 use crate::*;
 
 /// Explicit original multi-monster execution context; historical contexts stay frozen.
@@ -455,7 +456,15 @@ fn attack_checked<A: ActorAccess>(
     let angle = h.access.get(id).ok_or(CombatError::Reference)?.angle();
     let aim = {
         let lookup = |i| h.access.get(i).copied();
-        let trace = combat_trace::collect_in(h.world, h.spatial, &lookup, id, angle, range)?;
+        let trace = combat_trace::collect_in(
+            h.world,
+            h.spatial,
+            &lookup,
+            id,
+            angle,
+            range,
+            TraceKind::Aim,
+        )?;
         combat_trace::aim_trace(h.world, h.sectors, id, trace, range, &lookup)?
     };
     let slope = aim.slope;
@@ -524,7 +533,15 @@ fn bullet<A: ActorAccess>(
     };
     let (trace, ((hit, position, traversed), sky)) = {
         let lookup = |i| h.access.get(i).copied();
-        let trace = combat_trace::collect_in(h.world, h.spatial, &lookup, id, angle, attack.range)?;
+        let trace = combat_trace::collect_in(
+            h.world,
+            h.spatial,
+            &lookup,
+            id,
+            angle,
+            attack.range,
+            TraceKind::Shoot,
+        )?;
         let hit = combat_trace::hit_trace_sky(
             h.world,
             h.sectors,

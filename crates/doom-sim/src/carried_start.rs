@@ -30,6 +30,10 @@ use std::{error::Error, fmt};
 /// Explicit Episode 1 part 4 context (M6a, wire 26, DSIM42): wire 25's world with
 /// a carried level start; older contexts stay frozen.
 pub const PLAYER_EPISODE1_V4_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-4-v1";
+/// Explicit Episode 1 part 5 context (wire 27, DSIM43): wire 26's world with the
+/// wrapping `P_InterceptVector` and sight's `INT_MIN` `FixedDiv` refusal. Its own
+/// string, as every profile has; reusing wire 26's is this one line.
+pub const PLAYER_EPISODE1_V5_CONTEXT_SCHEMA: &[u8] = b"PLAYER-MONSTERS-EPISODE1-5-v1";
 
 /// The largest tic count a flash psprite can hold with a null state at a carried
 /// start: `P_SetupPsprites` nulls the state and keeps the count (p_pspr.c:836-837),
@@ -416,6 +420,61 @@ impl Simulation {
         start: LevelStart,
         gametic: u64,
     ) -> Result<Self, LevelStartError> {
+        Self::episode1_level_at(
+            OriginalExecutionProfile::PlayerMonstersEpisode1V4,
+            map,
+            map_number,
+            skill,
+            context,
+            start,
+            gametic,
+        )
+    }
+    /// Wire 27 (`PlayerMonstersEpisode1V5`, owner's ruling of 2026-11-24):
+    /// [`Self::original_player_episode1_v4_level`] under wire 27, which is wire 26
+    /// except for the traces' wrapping `P_InterceptVector` and the refusal of an
+    /// `INT_MIN` `FixedDiv` operand in sight's checked `P_InterceptVector2`
+    /// (`crate::intercept_vector`).
+    /// Captures are DSIM43, read by [`crate::Diagnostic::decode_episode1_v5`]:
+    /// the DSIM42 layout under policy 27 and [`PLAYER_EPISODE1_V5_CONTEXT_SCHEMA`].
+    pub fn original_player_episode1_v5_level(
+        map: Map,
+        map_number: u8,
+        skill: Skill,
+        context: MapContextOptions,
+        start: LevelStart,
+    ) -> Result<Self, LevelStartError> {
+        Self::original_player_episode1_v5_level_at(map, map_number, skill, context, start, 0)
+    }
+    /// [`Self::original_player_episode1_v4_level_at`] under wire 27.
+    pub fn original_player_episode1_v5_level_at(
+        map: Map,
+        map_number: u8,
+        skill: Skill,
+        context: MapContextOptions,
+        start: LevelStart,
+        gametic: u64,
+    ) -> Result<Self, LevelStartError> {
+        Self::episode1_level_at(
+            OriginalExecutionProfile::PlayerMonstersEpisode1V5,
+            map,
+            map_number,
+            skill,
+            context,
+            start,
+            gametic,
+        )
+    }
+    /// The level load of wires 26 and 27 (`policy`).
+    fn episode1_level_at(
+        policy: OriginalExecutionProfile,
+        map: Map,
+        map_number: u8,
+        skill: Skill,
+        context: MapContextOptions,
+        start: LevelStart,
+        gametic: u64,
+    ) -> Result<Self, LevelStartError> {
         if context.initial_rng != DoomRng::default() {
             return Err(LevelStartError::Context);
         }
@@ -434,14 +493,8 @@ impl Simulation {
             initial_rng: DoomRng::from_indices(player.p_random, 0),
             ..context
         };
-        let mut sim = Self::episode1_v2_with(
-            OriginalExecutionProfile::PlayerMonstersEpisode1V4,
-            map,
-            map_number,
-            skill,
-            context,
-        )
-        .map_err(LevelStartError::Registry)?;
+        let mut sim = Self::episode1_v2_with(policy, map, map_number, skill, context)
+            .map_err(LevelStartError::Registry)?;
         let setup = |e: SimError| LevelStartError::Setup(e);
         if let LevelStart::Carried(carried) = start {
             let p = sim

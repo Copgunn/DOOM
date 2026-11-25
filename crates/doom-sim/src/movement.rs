@@ -411,7 +411,8 @@ pub(crate) enum PathError {
     /// which it writes past `intercepts[]`; refused by the real-map policy.
     Overflow,
     /// Under the Episode 1 policy's checked arithmetic (`checked` set), a
-    /// `P_InterceptVector` the source would overflow (decision H3).
+    /// `P_InterceptVector` the source would overflow (decision H3), or under
+    /// wire 27 a wrapping one it refuses (`crate::intercept_vector`).
     Arithmetic,
 }
 /// P_PathTraverse with PT_ADDLINES for a slide trace: every line listed in a
@@ -419,13 +420,15 @@ pub(crate) enum PathError {
 /// non-negative fraction, in fraction order. `limit` is the policy's intercept
 /// witness (`Some(128)` under the real-map policy): the intercept that would be
 /// the `limit + 1`th is an overflow. Historical policies pass `None` and collect
-/// without bound, exactly as before.
+/// without bound, exactly as before. `caller` (slide or use) selects wire 27's
+/// wrapping intercept for a checked trace (`crate::intercept_vector`).
 pub(crate) fn path(
     world: &StaticWorld,
     mut start: [Fixed; 2],
     end: [Fixed; 2],
     limit: Option<usize>,
     checked: bool,
+    caller: crate::intercept_vector::InterceptCaller,
 ) -> Result<Vec<(Fixed, usize)>, PathError> {
     let o = world.map().blockmap().origin();
     let origin = [Fixed::from_map_units(o.x), Fixed::from_map_units(o.y)];
@@ -494,7 +497,9 @@ pub(crate) fn path(
                 };
                 if sides[0] != sides[1] {
                     let frac = if checked {
-                        crate::sight::checked_intercept(
+                        crate::intercept_vector::policy_intercept(
+                            world,
+                            caller,
                             trace.start,
                             trace.delta,
                             line.start,
@@ -862,7 +867,8 @@ impl<F: MotionAccess> Mover<'_, F> {
                 // policies) can carry the Episode 1 policy's checked arithmetic.
                 let limit = self.access.intercept_limit();
                 let checked = self.world.checked_arithmetic && limit.is_some();
-                let hits = match path(self.world, start, end, limit, checked) {
+                let slide = crate::intercept_vector::InterceptCaller::Slide;
+                let hits = match path(self.world, start, end, limit, checked, slide) {
                     Ok(hits) => hits,
                     Err(PathError::Overflow) => return Err(self.access.intercept_overflow()),
                     Err(PathError::Arithmetic) => return Err(self.access.intercept_arithmetic()),

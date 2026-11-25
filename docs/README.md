@@ -198,3 +198,6 @@ original evidence and former guide contents with exact-byte copies and digests.
   reborn, demos across levels and the wipes; what the Rust code does today; the genuine-engine prototype run across
   levels; the Rust design; decisions U1–U15 with recommendations and the owner's rulings; and the plan), with
   [observations up to the hand-test gate](validation/M6A.md) and [support](COMPATIBILITY.md#episode-1-as-one-session-m6a).
+- Wire 27, the wrapping `P_InterceptVector`: [observations](validation/WIRE27.md),
+  [support](COMPATIBILITY.md#wire-27-the-wrapping-p_interceptvector) and
+  [DSIM43](STATE_FORMAT.md#dsim-v43--wire-27-the-wrapping-p_interceptvector).

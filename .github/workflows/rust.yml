@@ -655,6 +655,11 @@ jobs:
       - name: Genuine level dumps through the independent DSIM42 encoder, state goldens and self-test
         if: env.DOCS_ONLY != 'true'
         run: python3 tools/reference/m6a_state.py --work "$RUNNER_TEMP/m6a_state" --check --selftest --jobs 4
+      - name: Wire 27 synthetic map slots (one room layout), wrap witness and DSIM43 state goldens (strict, overflow, address, witness and nowrap builds; address with leak detection DISABLED, detect_leaks=0), and self-test
+        if: env.DOCS_ONLY != 'true'
+        run: |
+          python3 tools/reference/wire27_wad.py --check
+          python3 tools/reference/wire27_goldens.py --work "$RUNNER_TEMP/wire27" --check --selftest
       - name: Documentation-only fast path
         if: env.DOCS_ONLY == 'true'
         run: echo "documentation-only change, so the genuine M6a runs were skipped"

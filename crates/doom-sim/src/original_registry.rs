@@ -125,6 +125,16 @@ pub enum OriginalExecutionProfile {
     /// `P_Random` index the load begins with). Captures are DSIM42, read by
     /// `Diagnostic::decode_episode1_v4`: DSIM41 plus the start group.
     PlayerMonstersEpisode1V4,
+    /// Episode 1, part 5 (wire 27, owner's ruling of 2026-11-24): wire 26 in
+    /// every respect, level start included, except that the traces' checked
+    /// `P_InterceptVector` (p_maputl.c:231-251) wraps as the genuine engine does
+    /// (`has_wrapping_intercept`) for the wrap classes a genuine item evidences
+    /// for the calling trace, every other wrap class still refusing the tic,
+    /// and sight's checked `P_InterceptVector2`
+    /// (p_sight.c:109-128), which does not wrap, also refuses the tic on an
+    /// `INT_MIN` `FixedDiv` operand. Captures are DSIM43, read by
+    /// `Diagnostic::decode_episode1_v5`: the DSIM42 layout field for field.
+    PlayerMonstersEpisode1V5,
 }
 impl OriginalExecutionProfile {
     /// Stable wire policy ID; not the Rust Profile discriminant or DSIM version.
@@ -156,6 +166,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersEpisode1V2 => 24,
             Self::PlayerMonstersEpisode1V3 => 25,
             Self::PlayerMonstersEpisode1V4 => 26,
+            Self::PlayerMonstersEpisode1V5 => 27,
         }
     }
     /// Exact immutable execution-context schema; not an actor-instance identity.
@@ -187,6 +198,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersEpisode1V2 => PLAYER_EPISODE1_V2_CONTEXT_SCHEMA,
             Self::PlayerMonstersEpisode1V3 => PLAYER_EPISODE1_V3_CONTEXT_SCHEMA,
             Self::PlayerMonstersEpisode1V4 => PLAYER_EPISODE1_V4_CONTEXT_SCHEMA,
+            Self::PlayerMonstersEpisode1V5 => PLAYER_EPISODE1_V5_CONTEXT_SCHEMA,
         }
     }
     pub(crate) const fn has_player_armor(self) -> bool {
@@ -209,6 +221,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     pub(crate) const fn has_player_bonuses(self) -> bool {
@@ -230,6 +243,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// Original former humans, a bounded mixed roster, infighting and drops.
@@ -251,6 +265,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// The original Imp and its fireball in the mixed roster.
@@ -271,6 +286,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// Wall-derived travel bounds, 320 slots and 208 live fireballs inside a walled
@@ -291,6 +307,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// Two-sided lines, static floor/ceiling heights, vertical movement, the
@@ -311,6 +328,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// Linedefs of any direction inside a closed one-sided boundary, the parity
@@ -329,6 +347,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// The real-map policy: format-sized static geometry, the arithmetic and
@@ -346,6 +365,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// The specials policy (M3h7 Stage A) and its supersets: sky ceilings, the
@@ -363,6 +383,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// The movers policy (M3h8 Stage B) and its E1M1 superset: doors, lifts,
@@ -380,6 +401,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// The E1M1 policy (M3h9 note §5.1): two-sided scrolling walls (48) and the
@@ -395,6 +417,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// The barrels policy (M3h9b note §5.1): exploding barrels, up to 64 pickups,
@@ -410,6 +433,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// The level policy (M3h9c, decision G4, wire 22 only): the barrels world with
@@ -427,6 +451,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// The Episode 1 policy (M4a, wire 23 only, decisions H2–H4): the level world
@@ -445,6 +470,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// Episode 1, part 2 (M4b, wire 24 only, decision I2): the identity of the
@@ -460,6 +486,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// Line special 97 (`EV_Teleport`, p_telept.c:47–131), the landing
@@ -472,6 +499,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// The Baron of Hell (`MT_BRUISER`, doomednum 3003), `A_BruisAttack`
@@ -484,6 +512,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// `A_BossDeath` (p_enemy.c:1609–1757, decision I9): wire 24 only, admitted in
@@ -494,6 +523,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// Skill 3 (hard, THING option bit 4; decision I4): wire 24 only, admitted in
@@ -506,6 +536,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// A Demon or Spectre bite (`A_SargAttack`, p_enemy.c:935–948) on a body that
@@ -527,6 +558,7 @@ impl OriginalExecutionProfile {
             Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// Episode 1, part 3 (M5c, wire 25 only, decisions T3, T4 and T12): the
@@ -546,7 +578,9 @@ impl OriginalExecutionProfile {
     pub(crate) const fn has_sound_records(self) -> bool {
         matches!(
             self,
-            Self::PlayerMonstersEpisode1V3 | Self::PlayerMonstersEpisode1V4
+            Self::PlayerMonstersEpisode1V3
+                | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// Episode 1, part 4 (M6a, wire 26 only, ruling U2 = B1): the level start
@@ -556,9 +590,22 @@ impl OriginalExecutionProfile {
     /// value a carried start can hold that no wire-25 level reaches: a flash
     /// psprite with a null state and a nonzero tic count (`P_SetupPsprites`
     /// clears the state and not the count, p_pspr.c:836-837). Every older policy
-    /// keeps its constructor, schema and domains byte for byte.
+    /// keeps its constructor, schema and domains byte for byte. Wire 27 inherits
+    /// all of it, with the DSIM43 version and its own context.
     pub(crate) const fn has_carried_start(self) -> bool {
-        matches!(self, Self::PlayerMonstersEpisode1V4)
+        matches!(
+            self,
+            Self::PlayerMonstersEpisode1V4 | Self::PlayerMonstersEpisode1V5
+        )
+    }
+    /// Wire 27 alone (owner's ruling of 2026-11-24): the traces' `P_InterceptVector`
+    /// wraps and sight's `P_InterceptVector2` refuses an `INT_MIN` `FixedDiv`
+    /// operand (`crate::intercept_vector`), DSIM43 and the
+    /// `PLAYER-MONSTERS-EPISODE1-5-v1` context; a site that selects a schema tests
+    /// this before [`Self::has_carried_start`]. Every older policy keeps its
+    /// checked intercept, schema and refusals byte for byte.
+    pub(crate) const fn has_wrapping_intercept(self) -> bool {
+        matches!(self, Self::PlayerMonstersEpisode1V5)
     }
     pub(crate) const fn has_world_pickups(self) -> bool {
         matches!(
@@ -581,6 +628,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     pub(crate) const fn has_player_body(self) -> bool {
@@ -611,6 +659,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     pub(crate) const fn has_physical_player(self) -> bool {
@@ -640,6 +689,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     pub(crate) const fn has_player_weapons(self) -> bool {
@@ -665,6 +715,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
     /// The four-weapon pack (fists, shotgun, chaingun, manual switching): every
@@ -698,6 +749,7 @@ impl OriginalExecutionProfile {
                 | Self::PlayerMonstersEpisode1V2
                 | Self::PlayerMonstersEpisode1V3
                 | Self::PlayerMonstersEpisode1V4
+                | Self::PlayerMonstersEpisode1V5
         )
     }
 }
@@ -1192,7 +1244,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersEpisode1V1
             | OriginalExecutionProfile::PlayerMonstersEpisode1V2
             | OriginalExecutionProfile::PlayerMonstersEpisode1V3
-            | OriginalExecutionProfile::PlayerMonstersEpisode1V4 => {
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V4
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V5 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -1255,7 +1308,8 @@ impl OriginalExecutionRegistry {
             | OriginalExecutionProfile::PlayerMonstersEpisode1V1
             | OriginalExecutionProfile::PlayerMonstersEpisode1V2
             | OriginalExecutionProfile::PlayerMonstersEpisode1V3
-            | OriginalExecutionProfile::PlayerMonstersEpisode1V4 => {
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V4
+            | OriginalExecutionProfile::PlayerMonstersEpisode1V5 => {
                 demon_policy()?;
                 player_policy()?;
                 if profile.has_monsters() {
@@ -1539,7 +1593,9 @@ impl Simulation {
     /// [`PlayerBodyError::Unsupported`], before anything is built: its level start
     /// (DSIM42's start group) is taken only by
     /// [`Self::original_player_episode1_v4_level_at`], and this constructor has none
-    /// to record. Wires 1 to 25 are unchanged.
+    /// to record. Wire 27 (`PlayerMonstersEpisode1V5`, DSIM43) is refused the same
+    /// way, for [`Self::original_player_episode1_v5_level_at`]. Wires 1 to 25 are
+    /// unchanged.
     pub fn with_original_registry(
         map: Map,
         limit: u32,
@@ -1688,6 +1744,10 @@ impl Simulation {
             },
         )?;
         sim.boundary = boundary;
+        // Wire 27 alone: the traces' wrapping `P_InterceptVector` and sight's
+        // INT_MIN refusal, read only where `checked_arithmetic` (the Episode 1
+        // policy's) is set.
+        sim.world.wrapping_intercept = policy.has_wrapping_intercept();
         sim.world.sector_lines = sector_lines;
         if policy.has_player_body() {
             sim.original_player = Some(original_player::PlayerRuntime {

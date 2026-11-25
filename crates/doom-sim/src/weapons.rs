@@ -1,4 +1,5 @@
 //! Source player weapon/psprite interpreter and conservative preflight.
+use crate::combat_trace::TraceKind;
 use crate::*;
 use std::{collections::BTreeMap, error::Error, fmt};
 // p_inter.c maxammo and p_user.c/p_pspr.c MAXBOB; immutable source policy data.
@@ -840,7 +841,8 @@ impl Host for Preview<'_> {
                 })?
                 .slope;
             }
-            let trace = crate::combat_trace::collect(self.sim, self.id, an, range)?;
+            let trace =
+                crate::combat_trace::collect(self.sim, self.id, an, range, TraceKind::Shoot)?;
             let (hit, _, _) =
                 crate::combat_trace::hit_with(self.sim, self.id, &trace, range, slope, &|id| {
                     self.lookup(id)

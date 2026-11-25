@@ -1,0 +1,465 @@
+{
+  "definition": "A cell is the closed square [ox+128x, ox+128x+128] x [oy+128y, oy+128y+128] from the BLOCKMAP origin; a line meets it when its closed segment meets the closed square (inclusive bounding-box overlap, and the supporting line does not leave all four corners strictly on one side), in exact integers. Reading (a): the leading 0 word is the format's marker, not a listing. Reading (b): it is a listing of linedef 0, as P_BlockLinesIterator iterates it (p_maputl.c:493-504). Miss class: \"0\" when every listing meets its cell, \"1\" when every missing listing's line meets a cell within Chebyshev distance 1 of the listed cell, \"more than 1\" otherwise.",
+  "iwad_sha256": "6fdf361847b46228cfebd9f3af09cd844282ac75f3edbb61ca4cb27103ce2e7f",
+  "iwad_size_bytes": 12408292,
+  "kinds": [
+    "aim_1024",
+    "attack_2048",
+    "sight",
+    "slide",
+    "use_melee_64"
+  ],
+  "maps": {
+    "E1M1": {
+      "blockmap": {
+        "cells": 828,
+        "cells_without_leading_zero": 0,
+        "invalid_line_refs": 0,
+        "listings_a": 986,
+        "listings_b": 1814,
+        "meet_a": 982,
+        "meet_b": 983,
+        "miss_a": 4,
+        "miss_b": 831,
+        "miss_class_a": "1",
+        "miss_class_b": "more than 1"
+      },
+      "intercepts": {
+        "aim_1024": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "attack_2048": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "sight": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "slide": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "use_melee_64": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        }
+      },
+      "linedef0_numerator": {
+        "aim_1024": "PASS",
+        "attack_2048": "PASS",
+        "sight": "PASS",
+        "slide": "PASS",
+        "use_melee_64": "PASS"
+      }
+    },
+    "E1M2": {
+      "blockmap": {
+        "cells": 1302,
+        "cells_without_leading_zero": 0,
+        "invalid_line_refs": 0,
+        "listings_a": 2025,
+        "listings_b": 3327,
+        "meet_a": 2022,
+        "meet_b": 2025,
+        "miss_a": 3,
+        "miss_b": 1302,
+        "miss_class_a": "1",
+        "miss_class_b": "more than 1"
+      },
+      "intercepts": {
+        "aim_1024": {
+          "line_denominator": "PASS",
+          "line_numerator": "FAIL",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "attack_2048": {
+          "line_denominator": "PASS",
+          "line_numerator": "FAIL",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "sight": {
+          "line_denominator": "FAIL",
+          "line_numerator": "FAIL"
+        },
+        "slide": {
+          "line_denominator": "PASS",
+          "line_numerator": "FAIL"
+        },
+        "use_melee_64": {
+          "line_denominator": "PASS",
+          "line_numerator": "FAIL",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        }
+      },
+      "linedef0_numerator": {
+        "aim_1024": "PASS",
+        "attack_2048": "PASS",
+        "sight": "PASS",
+        "slide": "PASS",
+        "use_melee_64": "PASS"
+      }
+    },
+    "E1M3": {
+      "blockmap": {
+        "cells": 850,
+        "cells_without_leading_zero": 0,
+        "invalid_line_refs": 0,
+        "listings_a": 1893,
+        "listings_b": 2743,
+        "meet_a": 1885,
+        "meet_b": 1887,
+        "miss_a": 8,
+        "miss_b": 856,
+        "miss_class_a": "1",
+        "miss_class_b": "more than 1"
+      },
+      "intercepts": {
+        "aim_1024": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "attack_2048": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "sight": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "slide": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "use_melee_64": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        }
+      },
+      "linedef0_numerator": {
+        "aim_1024": "PASS",
+        "attack_2048": "PASS",
+        "sight": "PASS",
+        "slide": "PASS",
+        "use_melee_64": "PASS"
+      }
+    },
+    "E1M4": {
+      "blockmap": {
+        "cells": 660,
+        "cells_without_leading_zero": 0,
+        "invalid_line_refs": 0,
+        "listings_a": 1625,
+        "listings_b": 2285,
+        "meet_a": 1623,
+        "meet_b": 1624,
+        "miss_a": 2,
+        "miss_b": 661,
+        "miss_class_a": "1",
+        "miss_class_b": "more than 1"
+      },
+      "intercepts": {
+        "aim_1024": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "attack_2048": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "sight": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "slide": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "use_melee_64": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        }
+      },
+      "linedef0_numerator": {
+        "aim_1024": "PASS",
+        "attack_2048": "PASS",
+        "sight": "PASS",
+        "slide": "PASS",
+        "use_melee_64": "PASS"
+      }
+    },
+    "E1M5": {
+      "blockmap": {
+        "cells": 832,
+        "cells_without_leading_zero": 0,
+        "invalid_line_refs": 0,
+        "listings_a": 1516,
+        "listings_b": 2348,
+        "meet_a": 1512,
+        "meet_b": 1514,
+        "miss_a": 4,
+        "miss_b": 834,
+        "miss_class_a": "1",
+        "miss_class_b": "more than 1"
+      },
+      "intercepts": {
+        "aim_1024": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "attack_2048": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "sight": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "slide": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "use_melee_64": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        }
+      },
+      "linedef0_numerator": {
+        "aim_1024": "PASS",
+        "attack_2048": "PASS",
+        "sight": "PASS",
+        "slide": "PASS",
+        "use_melee_64": "PASS"
+      }
+    },
+    "E1M6": {
+      "blockmap": {
+        "cells": 1748,
+        "cells_without_leading_zero": 0,
+        "invalid_line_refs": 0,
+        "listings_a": 2654,
+        "listings_b": 4402,
+        "meet_a": 2653,
+        "meet_b": 2656,
+        "miss_a": 1,
+        "miss_b": 1746,
+        "miss_class_a": "1",
+        "miss_class_b": "more than 1"
+      },
+      "intercepts": {
+        "aim_1024": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "attack_2048": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "sight": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "slide": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "use_melee_64": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        }
+      },
+      "linedef0_numerator": {
+        "aim_1024": "PASS",
+        "attack_2048": "PASS",
+        "sight": "PASS",
+        "slide": "PASS",
+        "use_melee_64": "PASS"
+      }
+    },
+    "E1M7": {
+      "blockmap": {
+        "cells": 864,
+        "cells_without_leading_zero": 0,
+        "invalid_line_refs": 0,
+        "listings_a": 1827,
+        "listings_b": 2691,
+        "meet_a": 1822,
+        "meet_b": 1824,
+        "miss_a": 5,
+        "miss_b": 867,
+        "miss_class_a": "1",
+        "miss_class_b": "more than 1"
+      },
+      "intercepts": {
+        "aim_1024": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "attack_2048": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "sight": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "slide": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "use_melee_64": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        }
+      },
+      "linedef0_numerator": {
+        "aim_1024": "PASS",
+        "attack_2048": "PASS",
+        "sight": "PASS",
+        "slide": "PASS",
+        "use_melee_64": "PASS"
+      }
+    },
+    "E1M8": {
+      "blockmap": {
+        "cells": 2912,
+        "cells_without_leading_zero": 0,
+        "invalid_line_refs": 0,
+        "listings_a": 960,
+        "listings_b": 3872,
+        "meet_a": 953,
+        "meet_b": 954,
+        "miss_a": 7,
+        "miss_b": 2918,
+        "miss_class_a": "1",
+        "miss_class_b": "more than 1"
+      },
+      "intercepts": {
+        "aim_1024": {
+          "line_denominator": "PASS",
+          "line_numerator": "FAIL",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "attack_2048": {
+          "line_denominator": "FAIL",
+          "line_numerator": "FAIL",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "sight": {
+          "line_denominator": "FAIL",
+          "line_numerator": "FAIL"
+        },
+        "slide": {
+          "line_denominator": "PASS",
+          "line_numerator": "FAIL"
+        },
+        "use_melee_64": {
+          "line_denominator": "PASS",
+          "line_numerator": "FAIL",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        }
+      },
+      "linedef0_numerator": {
+        "aim_1024": "PASS",
+        "attack_2048": "PASS",
+        "sight": "PASS",
+        "slide": "PASS",
+        "use_melee_64": "PASS"
+      }
+    },
+    "E1M9": {
+      "blockmap": {
+        "cells": 702,
+        "cells_without_leading_zero": 0,
+        "invalid_line_refs": 0,
+        "listings_a": 1280,
+        "listings_b": 1982,
+        "meet_a": 1279,
+        "meet_b": 1283,
+        "miss_a": 1,
+        "miss_b": 699,
+        "miss_class_a": "1",
+        "miss_class_b": "more than 1"
+      },
+      "intercepts": {
+        "aim_1024": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "attack_2048": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        },
+        "sight": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "slide": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS"
+        },
+        "use_melee_64": {
+          "line_denominator": "PASS",
+          "line_numerator": "PASS",
+          "thing_denominator": "PASS",
+          "thing_numerator": "PASS"
+        }
+      },
+      "linedef0_numerator": {
+        "aim_1024": "PASS",
+        "attack_2048": "PASS",
+        "sight": "PASS",
+        "slide": "PASS",
+        "use_melee_64": "PASS"
+      }
+    }
+  },
+  "script_sha256": "91c12673ef3b6143a900888a157c2abb36cd3641d3ff66840898362c6f3d001b"
+}

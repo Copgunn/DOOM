@@ -1,4 +1,5 @@
 //! Bounded source BLOCKMAP/intercept tracing; no gameplay mutation.
+use crate::intercept_vector::InterceptCaller;
 use crate::{Actor, ActorId, CombatError, Fixed, Simulation};
 /// A stable line or generation-aware actor identity in a trace.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -87,13 +88,45 @@ fn fraction(trace: Div, line: Div) -> Fixed {
         + shift(trace.start[1] - line.start[1], 8) * dx;
     num / den
 }
+/// Which traverser a collected trace serves: `P_AimLineAttack` or
+/// `P_LineAttack` (wire 27's per-caller switch, `crate::intercept_vector`).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum TraceKind {
+    /// `PTR_AimTraverse`.
+    Aim,
+    /// `PTR_ShootTraverse`.
+    Shoot,
+}
+impl TraceKind {
+    pub(crate) fn caller(self, thing: bool) -> InterceptCaller {
+        match (self, thing) {
+            (Self::Aim, false) => InterceptCaller::AimLine,
+            (Self::Aim, true) => InterceptCaller::AimThing,
+            (Self::Shoot, false) => InterceptCaller::ShootLine,
+            (Self::Shoot, true) => InterceptCaller::ShootThing,
+        }
+    }
+}
 /// [`fraction`], computed checked under the Episode 1 policy (decision H3,
 /// `StaticWorld::checked_arithmetic`): `CombatError::Arithmetic` where the
-/// source's `P_InterceptVector` would overflow.
-fn fraction_in(world: &crate::StaticWorld, trace: Div, line: Div) -> Result<Fixed, CombatError> {
+/// source's `P_InterceptVector` would overflow, or under wire 27 where its
+/// wrapping value is refused (`crate::intercept_vector::policy_intercept`).
+fn fraction_in(
+    world: &crate::StaticWorld,
+    caller: InterceptCaller,
+    trace: Div,
+    line: Div,
+) -> Result<Fixed, CombatError> {
     if world.checked_arithmetic {
-        crate::sight::checked_intercept(trace.start, trace.delta, line.start, line.delta)
-            .ok_or(CombatError::Arithmetic)
+        crate::intercept_vector::policy_intercept(
+            world,
+            caller,
+            trace.start,
+            trace.delta,
+            line.start,
+            line.delta,
+        )
+        .ok_or(CombatError::Arithmetic)
     } else {
         Ok(fraction(trace, line))
     }
@@ -137,6 +170,7 @@ pub(crate) fn collect(
     shooter: ActorId,
     angle: u32,
     range: Fixed,
+    kind: TraceKind,
 ) -> Result<HitscanTrace, CombatError> {
     collect_limited(
         &sim.world,
@@ -146,6 +180,7 @@ pub(crate) fn collect(
         angle,
         range,
         true,
+        kind,
     )
 }
 /// Same collector over the current transaction projection; no alternate trace engine.
@@ -156,13 +191,15 @@ pub(crate) fn collect_in(
     shooter: ActorId,
     angle: u32,
     range: Fixed,
+    kind: TraceKind,
 ) -> Result<HitscanTrace, CombatError> {
-    collect_limited(world, spatial, lookup, shooter, angle, range, false)
+    collect_limited(world, spatial, lookup, shooter, angle, range, false, kind)
 }
 // Original P_PathTraverse traverses collected intercepts after its finite64-cell
 // loop even if the endpoint was not reached. Historical profiles retain their
 // stricter endpoint-rejection policy; only the explicit canonical pistol uses
 // this independently observed source-budget behavior.
+#[allow(clippy::too_many_arguments)]
 fn collect_limited(
     world: &crate::StaticWorld,
     spatial: &crate::movement::SpatialIndex,
@@ -171,6 +208,7 @@ fn collect_limited(
     angle: u32,
     range: Fixed,
     require_endpoint: bool,
+    kind: TraceKind,
 ) -> Result<HitscanTrace, CombatError> {
     validate_range(range)?;
     let actor = lookup(shooter).ok_or(CombatError::Reference)?;
@@ -276,6 +314,7 @@ fn collect_limited(
                         &mut out,
                         fraction_in(
                             world,
+                            kind.caller(false),
                             trace,
                             Div {
                                 start: line.start,
@@ -317,6 +356,7 @@ fn collect_limited(
                         &mut out,
                         fraction_in(
                             world,
+                            kind.caller(true),
                             trace,
                             Div {
                                 start: p,
@@ -375,7 +415,7 @@ pub(crate) fn aim_with(
     range: Fixed,
     lookup: &impl Fn(ActorId) -> Option<Actor>,
 ) -> Result<AimResult, CombatError> {
-    let trace = collect(sim, shooter, angle, range)?;
+    let trace = collect(sim, shooter, angle, range, TraceKind::Aim)?;
     aim_trace(&sim.world, sim.sector_view(), shooter, trace, range, lookup)
 }
 pub(crate) fn aim_trace(

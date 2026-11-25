@@ -80,6 +80,8 @@ pub struct Diagnostic<'a> {
     sounds: bool,
     /// DSIM42 (wire 26): DSIM41 plus the start group `level.start.*`.
     start: bool,
+    /// DSIM43 (wire 27): the DSIM42 layout under policy 27 (`start` is set too).
+    wrap: bool,
     fields: Vec<Field<'a>>,
     sorted: Vec<usize>,
 }
@@ -379,6 +381,18 @@ impl<'a> Diagnostic<'a> {
     ) -> Result<Self, DiagnosticError> {
         Self::decode_selected(bytes, limits, Some(42))
     }
+    /// Explicit DSIM43 Episode 1 part 5 reader (wire 27, owner's ruling of
+    /// 2026-11-24); every earlier reader, `decode_episode1_v4` included, rejects
+    /// 43 and this reader rejects every earlier version. DSIM43 is DSIM42 field
+    /// for field, with every DSIM42 rule, under policy 27 and the
+    /// `PLAYER-MONSTERS-EPISODE1-5-v1` context: the version, `profile` and
+    /// `context.schema` values are the only bytes that name the wire.
+    pub fn decode_episode1_v5(
+        bytes: &'a [u8],
+        limits: DiagnosticLimits,
+    ) -> Result<Self, DiagnosticError> {
+        Self::decode_selected(bytes, limits, Some(43))
+    }
     /// Explicit DSIM30 real-map-scale reader; every earlier reader rejects 30 and
     /// this reader rejects every earlier version.
     pub fn decode_map_scale(
@@ -457,13 +471,15 @@ impl<'a> Diagnostic<'a> {
         {
             return Err(DiagnosticError::Structure);
         }
-        let sounds = matches!(version, 41 | 42);
-        let start = version == 42;
+        let sounds = matches!(version, 41..=43);
+        let start = matches!(version, 42 | 43);
+        let wrap = version == 43;
         let result = Self {
             bytes,
             version: if sounds { 40 } else { version },
             sounds,
             start,
+            wrap,
             fields,
             sorted,
         };
@@ -480,7 +496,9 @@ impl<'a> Diagnostic<'a> {
     }
     /// Explicit format version, separate from the execution profile field.
     pub const fn version(&self) -> u32 {
-        if self.start {
+        if self.wrap {
+            43
+        } else if self.start {
             42
         } else if self.sounds {
             41
@@ -612,6 +630,9 @@ impl<'a> Diagnostic<'a> {
                 || crate::barrels::is_barrel(self.policy(), actor))
     }
     fn policy(&self) -> OriginalExecutionProfile {
+        if self.wrap {
+            return OriginalExecutionProfile::PlayerMonstersEpisode1V5;
+        }
         if self.start {
             return OriginalExecutionProfile::PlayerMonstersEpisode1V4;
         }
@@ -2727,7 +2748,7 @@ impl<'a> Diagnostic<'a> {
             psprites,
         };
         if self.start {
-            state.validate_for_policy(OriginalExecutionProfile::PlayerMonstersEpisode1V4)
+            state.validate_for_policy(self.policy())
         } else {
             state.validate_for(matches!(self.version, 39 | 40))
         }
