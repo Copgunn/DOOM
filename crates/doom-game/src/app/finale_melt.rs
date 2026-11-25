@@ -340,6 +340,9 @@ impl App {
                 {
                     // Ruling U4 (3): the first stage-1 frame refused (HELP2 missing).
                     self.melt.art_refused = Some(refusal.tic);
+                } else if s.gamestate() == GameState::Finale {
+                    // The victory tic's crawl refused: F_StartFinale ran (g_game.c:639-641).
+                    self.melt.finale_began.get_or_insert(refusal.tic);
                 }
                 Err(Ending::Refused {
                     tic: refusal.tic,

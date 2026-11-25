@@ -412,6 +412,9 @@ pub enum SessionWitness {
     /// [`Configuration::FinaleAndMelt`]: `F_Ticker` refused the finale tic
     /// ([`finale::FinaleRefusal`]). Nothing changed.
     Finale(finale::FinaleRefusal),
+    /// [`Configuration::FinaleAndMelt`]: the text crawl's frame (`F_TextWrite`, f_finale.c:261-327)
+    /// was refused (rule 2); a missing `FLOOR4_8` stops the genuine engine there too.
+    FinaleText(doom_render::f_finale::DrawRefusal),
 }
 
 impl fmt::Display for SessionWitness {
@@ -647,7 +650,13 @@ impl Session {
             cfg,
             config.display_config(data.mode.mode.game_mode()),
         )
-        .map_err(|e| StartError::Display(format!("{e:?}")))?;
+        .map_err(|e| {
+            StartError::Display(match e {
+                // The genuine text (w_wad.c:399-409), as at HU_Init's stop (hu_stuff.c:404-410).
+                ResourceError::LumpNotFound(n) => format!("W_GetNumForName: {n} not found!"),
+                e => format!("{e:?}"),
+            })
+        })?;
         display
             .begin_level(&sim)
             .map_err(|e| StartError::Display(format!("{e:?}")))?;
