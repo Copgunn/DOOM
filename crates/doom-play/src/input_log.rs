@@ -589,8 +589,9 @@ pub(crate) fn raw_key<H: Host + Mute>(
     repeat: bool,
 ) {
     if down {
-        let text = format_args!("key-down {key:?} repeat={repeat}");
-        host.log.line("raw", app.tic(), text);
+        let tic = app.tic();
+        host.log
+            .line("raw", tic, format_args!("key-down {key:?} repeat={repeat}"));
     } else {
         host.log
             .line("raw", app.tic(), format_args!("key-up {key:?}"));
@@ -605,8 +606,12 @@ pub(crate) fn raw_focus_lost<H>(app: &mut App, host: &mut LoggedHost<H>) {
     let held = app.held_inputs();
     app.focus_lost();
     if app.held_inputs() > held {
-        let text = format_args!("held for the melt's end: focus-lost");
-        host.log.line("app", app.tic(), text);
+        let tic = app.tic();
+        host.log.line(
+            "app",
+            tic,
+            format_args!("held for the melt's end: focus-lost"),
+        );
     }
 }
 
