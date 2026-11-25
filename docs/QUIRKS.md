@@ -57,6 +57,7 @@ Updated on 2026-11-25 (America/Los_Angeles).
 - Updated on 2026-11-24 (America/Los_Angeles) by M6a part 2 (step 4, the app; pull request #80, not merged, the owner's hand test pending): `doom-play` now plays the finale-and-melt configuration, which reaches the finale and every melt, while part 1's configuration stays in the libraries with its refusals, so seven rows are split by status (below): Q-f_finale-207 and Q-g_game-1033 (reproduced; refused in part 1's configuration), Q-f_finale-321, Q-f_wipe-210 and Q-d_main-331-2 (reproduced; not yet ported or not reproduced (declared) there), and Q-f_finale-314 and Q-f_finale-714 (refused; not yet ported there): 489 + 7 = 496. Q-d_main-331 keeps its status, not reproduced (declared), and now says what the played configuration does.
 - Added on 2026-11-24 (America/Los_Angeles) by wire 27 (PR #82): 4 new rows on the C-file pages, all counted above: Q-p_maputl-240a and Q-p_maputl-240b (one quirk split by status), Q-p_maputl-846c (the block-walk overshoot; the one row whose status is "not determined") and Q-m_fixed-62-4 (FixedDiv's `abs(INT_MIN)`, the row that Q-p_sight-125 pointed to as `fixeddiv-abs-intmin`); Q-p_sight-117, Q-p_sight-125, Q-m_fixed-62 and Q-m_fixed-69 were corrected. With M6a part 2's rows: 496 + 4 = 500.
 - Added on 2026-11-25 (America/Los_Angeles) by the M6a part 2 follow-up (the victory-tic display stop): Q-f_finale-274a (refused) and Q-f_finale-274b (not yet ported), one quirk split by status: 500 + 2 = 502.
+- Corrected on 2026-11-25 (America/Los_Angeles) by the M6a part 2 closeout, with no row added or removed: the status table below said 287 reproduced and 50 not yet ported where the rows give 288 and 49. The row is Q-i_video-641a: commit `77a0b6b9` (2026-11-24) changed its status from not yet ported to reproduced (the fresh-segment case) and left the table as it was, and the follow-up's Q-f_finale-274b then raised the stale 49 to 50. The rows were right and the index wrong. The total under the per-file table said 491 where its lines sum to 493 (the follow-up's two f_finale.c rows had not been added to it). The nine rows that still called pull request #80 unmerged with the hand test pending now say it merged on 2026-11-25 after the hand test of 2026-11-24; no status changed.
 - The separate lists: [recorded in only one place and in no note](quirks/only-one-place.md) (12 whole or partial rows and a list of readings); [not traced to a C line](quirks/not-traced.md) (none left); [dropped, and why](quirks/dropped.md) (54 entries); [where the documents disagree](quirks/disagreements.md) (75 entries, 7 marked policy claim); [the 64-bit build only](quirks/64-bit-only.md) (9 rows).
 
 The 2026-11-22 follow-up split 24 more rows into 48 and classified 48 rows from the Rust code and existing tests. A separate refusal row records the historical endpoint policy for a stalled trace. A further audit split 19 remaining mixed-status rows into 38, distinguished the R4 flagged-column contract from a refusal, and settled the two 64-bit harness-exposure unknowns by reading the builders. The status counts below describe the current register.
@@ -67,9 +68,9 @@ Each row carries one status. The 64-bit page records whether the reference harne
 
 | Status | Rows |
 | --- | ---: |
-| reproduced | 287 |
+| reproduced | 288 |
 | refused | 97 |
-| not yet ported | 50 |
+| not yet ported | 49 |
 | not reproduced (declared …) | 57 |
 | comment only | 1 |
 | not determined (the row says what is observed) | 1 |
@@ -136,7 +137,7 @@ One page per C file (a header counts as its own file); each page carries its own
 | [w_wad.c](quirks/w_wad.c.md) | 2 |
 | [wi_stuff.c](quirks/wi_stuff.c.md) | 5 |
 
-| **Total** | **491** |
+| **Total** | **493** |
 
 No page: p_local.h (its two rows were joined into rows of p_map.c and p_maputl.c; see the lists below).
 

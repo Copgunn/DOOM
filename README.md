@@ -35,8 +35,10 @@ matches, which is what speedrun and tool-assisted (TAS) research need.
 - **Game logic.** One player, six weapons, seven kinds of monster and Episode 1's map features
   ([what is admitted](docs/COMPATIBILITY.md#policies)).
 - **Real maps.** All nine Episode 1 maps and the original's own `DEMO1`: every scripted run stays in sync with the
-  original C code, tic for tic, and so do the more than 60 hand-played sessions checked so far (over 200,000 tics)
-  ([scripted runs](docs/validation/M4B.md#real-maps-and-demo1); by hand: [M5c](docs/validation/M5C.md#hand-played-checks),
+  original C code, tic for tic, and so do the more than 70 hand-played sessions checked so far (over 238,000 tics).
+  In all, more than 500,000 distinct real-map tics have been compared with the original, every one equal
+  ([the sum, and what it leaves out](docs/validation/M6A.md#142-the-readmes-evidence-figures-summed-from-the-records);
+  [scripted runs](docs/validation/M4B.md#real-maps-and-demo1); by hand: [M5c](docs/validation/M5C.md#hand-played-checks),
   [M5d](docs/validation/M5D.md#hand-played-checks), [M6a](docs/validation/M6A.md#5-after-the-hand-test-gate-2026-11-22-evening)).
 - **Picture.** Renderer, status bar, messages and palette flashes: frames equal the original's wherever compared ([what is and is not](docs/COMPATIBILITY.md#playable-build-m5b)).
 - **Sound.** Effects, no music: sounds started and samples mixed equal the original's own sound code on the runs
@@ -87,8 +89,8 @@ cargo run -p doom-sim --example player_barrels --locked  # exploding barrels, ch
 
 ## The original's quirks
 
-The [quirk register](docs/QUIRKS.md) lists hundreds of bugs, accidents and surprises in the original source, one row
-each: the C file and line that causes it, what a player sees, and where this engine stands on it. None is fixed, on
+The [quirk register](docs/QUIRKS.md) lists more than 400 bugs, accidents and surprises in the original source, each
+with the C file and line that causes it, what a player sees, and where this engine stands on it. None is fixed, on
 purpose: vanilla means quirks included. Planned, not promised: an optional "fixed" mode, off unless chosen, with the
 register as its list of bugs to correct.
 

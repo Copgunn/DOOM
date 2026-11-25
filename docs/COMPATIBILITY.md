@@ -3773,7 +3773,7 @@ change `doom-sim`), and played by `doom-play`. Part 1's configuration stays on w
 declared accounting below (the 320 draws, no picture, no time). Evidence: `m6a2_session` (every finale tic and melt step of
 the synthetic items against the genuine goldens), `m6a2_wire27` (the eight wire 27 items through this session, equal to the
 genuine engine past the tic wire 26 refuses) and `m6a2_play` (the app played by keys); commands in
-[TESTING](TESTING.md#part-2-the-finale-and-the-melt-in-progress).
+[TESTING](TESTING.md#part-2-the-finale-and-the-melt).
 
 - **The finale never ends by itself** (f_finale.c:207-249; quirk rows Q-f_finale-207a and 207b). After E1M8's exit the next tic runs
   `G_DoCompleted`, `F_StartFinale` and the first `F_Ticker`; the text crawls (one character every 3 tics, f_finale.c:261-327);
@@ -3883,7 +3883,7 @@ The rows are in the [quirk register](QUIRKS.md).
 
 ## Wire 27: the wrapping `P_InterceptVector`
 
-**Status: implemented ([PR #82](https://github.com/Copgunn/DOOM/pull/82), draft).** `PlayerMonstersEpisode1V5` (27, `DSIM` 43,
+**Status: implemented ([PR #82](https://github.com/Copgunn/DOOM/pull/82), merged 2026-11-24).** `PlayerMonstersEpisode1V5` (27, `DSIM` 43,
 constructors `original_player_episode1_v5_level` and `_at`) is wire 26 in every respect except the rule below. Wires 1-26 and
 `DSIM` 42 are unchanged byte for byte. It exists because two real E1M8 skill 2 sessions that the owner recorded are refused
 by wire 26 (`MapScale(Arithmetic)`) where the genuine engine's `P_InterceptVector` (p_maputl.c:231-251) leaves exact

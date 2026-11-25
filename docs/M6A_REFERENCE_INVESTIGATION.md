@@ -6,6 +6,8 @@ The behavioural authority is the original id Software Linux DOOM 1.10 at `a77dfb
 
 Each statement is labelled: **(read)** read in the source; **(observed)** seen by running a scratch prototype, with the command in [§1.15](#115-what-was-run-and-what-was-not) or [§3](#3-harness-design-evidence-first); **(inferred)** reasoned from cited lines and not run. The facts come from two Phase 1 research reports (C facts; the Rust code and harness), kept with their prototypes under `~/scratch/m6a/` until the milestone ends; the writer of this note re-read a sample of their citations against the source ([§1.15](#115-what-was-run-and-what-was-not)).
 
+**Status (2026-11-25, America/Los_Angeles; this paragraph is the current one and supersedes those below, the next one's "current" included).** Parts 1 and 2 are merged: part 2 is pull request #80 with its follow-up #84, both merged on 2026-11-25 after the owner's hand tests. Not built, and a later pull request under wire 28: the easy skills and E1M7 on skill 3. The observations are in the [evidence record](validation/M6A.md).
+
 **Status (2026-11-23 21:52 PST; this paragraph is current, the paragraphs below are earlier status lines, superseded where they differ).** Part 1 is merged ([PR #65](https://github.com/Copgunn/DOOM/pull/65), 2026-11-23), and so is the held-keys fix ([PR #79](https://github.com/Copgunn/DOOM/pull/79), the same day). Part 2 is in progress on the branch `feat/m6a-part2`. Its plan, size projection and the decisions V1–V9 with the owner's rulings are in [§7](#7-part-2-plan-size-and-decisions-for-the-owner-2026-11-23).
 
 **Status (2026-11-23 01:25 PST; earlier status, superseded by the paragraph above where they differ).** By the owner's ruling of 2026-11-22 the cap holds at 22,000 lines and PR #65 is **M6a part 1**, the level chain as built and hardened; the finale, the melt pictures, the easy skills and E1M7 on skill 3 are **part 2**, a separate pull request after this one merges, under wire 27 and new format versions (so "under wire 26" in the E1M7 ruling below reads "under wire 27"). Since then, with no new feature: the four readers fuzzed under the address sanitizer, the CI job that runs the genuine M6a engine (U15), a second hand test compared equal, and the real-map gates run again on the final code head ([evidence record §5.6](validation/M6A.md#56-before-the-owners-review-part-1-2026-11-22-night)). The PR waits for the owner's review.
@@ -1228,6 +1230,8 @@ His rulings of the same day:
   The pull request text states it with the flagged-column counts.
 - **Ruling 11.** The visible hitches he counted are recorded as an open finding and are neither fixed nor investigated
   in this pull request. No cause is claimed; a later pull request measures presentation intervals.
+  *(2026-11-25: closed, not an engine defect, after the owner's test on a freshly restarted machine; the measurement is
+  an optional diagnostic and no longer planned work. See the [record's addendum](validation/M6A.md#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24).)*
 
 **Correction to 7.10 (found by the independent read, 2026-11-24).** Its line "119 of 119 melts at screenblocks 10 (4,708 of
 4,946 steps) and 125 of 131 at 11" miscounts: at each size the part 1 items have 125 golden melts of which 119 are
