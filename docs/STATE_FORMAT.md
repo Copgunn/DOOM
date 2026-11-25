@@ -2960,19 +2960,22 @@ embedded formats likewise: `ChainSound::save_v2_checked` and `Display::session_s
 by type). The frozen writers' bytes are pinned by `tests/reference/m6a_frozen_bytes.txt`.
 
 **Layout: version 1's, field for field**, with three differences: the version is 2; the game state may be 2 (the finale),
-with the finale field set; and the embedded states are `DDSP` version 4 and `DSND` version 3. Little endian, at most 64 MiB;
+with the finale field set; and the embedded states are [`DSIM` version 43](#dsim-v43--wire-27-the-wrapping-p_interceptvector)
+(wire 27, where version 1 embeds version 42), `DDSP` version 4 and `DSND` version 3. **Redefined on 2026-11-24, before
+version 2 was frozen** (the owner's ruling): as first written in this pull request it embedded `DSIM` version 42; there is
+no version 3, and a version 2 state holding a `DSIM` version 42 capture is refused (`DsesError::Level`). Little endian, at most 64 MiB;
 nothing follows the last field.
 
 | Field | Encoding | Meaning |
 | --- | --- | --- |
 | magic, version | 4 bytes `DSES`, u16 = 2 | |
-| mode, mode source, start map, skill, screenblocks, `gametic` | as version 1 | skill 2 or 3 (the easy skills come with wire 27) |
+| mode, mode source, start map, skill, screenblocks, `gametic` | as version 1 | skill 2 or 3 (the easy skills come with wire 28) |
 | `gamestate` | u8: 0 level, 1 intermission, 2 finale | |
 | `gamemap`, `gameaction`, `secretexit`, `didsecret` | as version 1 | in the finale map 8 and `gameaction` 0 |
 | `wminfo`, wi_stuff.c statics | as version 1 | in a level and in the finale, the last intermission's or a fresh process's |
 | carried player | as version 1 | present in the intermission and in the finale (`G_PlayerFinishLevel` runs on map 8 too, g_game.c:1026-1028) |
 | finale | u8: 0 none, 1 followed by i32 `finalestage`, i32 `finalecount` | set exactly in the finale (f_finale.c:52-54) |
-| level | u32 length n, n bytes | `DSIM` version 42 (wire 26, unchanged: ruling V2) |
+| level | u32 length n, n bytes | `DSIM` version 43 (wire 27) |
 | display | u32 length n, n bytes | `DDSP` version 4 (a melt in progress included) |
 | sound | u8 kind = 3, u32 length n, n bytes | `DSND` version 3 (a pending display included) |
 

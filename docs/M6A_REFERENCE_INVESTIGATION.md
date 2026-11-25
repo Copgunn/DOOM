@@ -1181,6 +1181,43 @@ pull request (`git diff origin/master...HEAD -- crates/doom-sim` is empty).
   testing with its survivor tests; the remaining steps 13 to 17 of [§6.1](#61-steps). Timings wait for the owner's word
   that the machine is idle.
 
+### 7.11 The session moves to wire 27 (2026-11-24, evening)
+
+**The hand test failed.** Both of the owner's E1M8 sessions on skill 2 were refused before the finale, by wire 26's
+checked `P_InterceptVector` (`MapScale(Arithmetic)`), which [wire 27](COMPATIBILITY.md#wire-27-the-wrapping-p_interceptvector)
+(pull request #82, merged on 2026-11-24) admits.
+
+**Ruled (owner, 2026-11-24), replacing ruling V2 (iii)'s "the new session embeds DSIM42 unchanged" and V3 (i)'s "no
+DSIM43 in PR #80"; sections 7.4 to 7.10 above are kept as written and are read with this:**
+
+- The finale-and-melt configuration runs on **wire 27 and DSIM43**. No new wire in this pull request; `doom-sim` is still
+  not changed by it (`git diff origin/master...HEAD -- crates/doom-sim` is empty after the merge of master `6cdbf593`).
+- **`DSES` version 2**, new in this pull request and not frozen, **is redefined to embed DSIM43**. No version 3. `DSES`
+  version 1, wires 1 to 27 and DSIM42, DSIM43, `DDSP` version 3 and `DSND` version 2 are frozen.
+- The easy skills and E1M7 on skill 3 are **wire 28**, a later pull request (V7 said wire 27).
+- The hand-written line ceiling for the whole pull request stays 17,500.
+
+**Done.** `Configuration::level_at` picks the wire (26 for the frozen configuration, 27 for the finale and the melt);
+`SessionStateV2` reads its level with `decode_episode1_v5` and refuses a DSIM42 capture. Part 1's configuration, its
+tests and the byte pins of `m6a_frozen_bytes.txt` are untouched and pass. Tests of this pull request changed:
+`m6a2_run/mod.rs` and `m6a2_session.rs` read the session's DSIM43 captures under wire 26's names for the comparison with
+the genuine DSIM42 goldens (an explicit fixture projection). New: `m6a2_wire27.rs`, the eight wire 27 items through both
+sessions against wire 27's genuine DSIM43 goldens, unprojected: 261 tics equal past the tic wire 26 refuses, the frozen
+session still refusing there, a `DSES` version 2 round trip after the wrap and its refusal of DSIM42, an altered digest
+detected.
+
+**The owner's two E1M8 sessions through the whole session** (local, against the genuine engine, the finale and every melt
+included): both recordings and our idle-extended copies of them pass at both screen sizes, and the copies run past the
+tics wire 26 refused (3894 and 3064) to the victory (3905 and 3093) and through the finale. Counts and limits are in the
+[record](validation/M6A.md#7-part-2-on-wire-27-the-owners-e1m8-sessions-through-the-whole-session-2026-11-24-evening).
+For this the part 2 gate helper reads local goldens and compares real-map frames by part 1's rules (flagged columns), and
+`tools/local/m6a2_play_check.py` is new.
+
+**Size:** 16,375 hand-written lines with this step, by the method of [§7.3](#73-size) against the merge base with master `6cdbf593` (tests 9,711, source 4,570, tools 1,126, docs 868, fuzz 83, CI and manifests 17), under the ceiling of 17,500.
+
+**Stale since the redefinition:** the `m6a2_dses2` fuzz run of section 7.10 read `DSES` version 2 states that embedded
+DSIM42. It is to be run again from new seeds with the other fuzz results, after the hand test.
+
 ### 7.7 What proceeded before the rulings (kept as written)
 
 Steps 1 and 2 only. Item 6 is ruled already. Step 2 adds pure functions in new modules that no configuration reaches,

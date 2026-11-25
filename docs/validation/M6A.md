@@ -358,6 +358,48 @@ synthetic maps and our own art only; no IWAD is read.
 - Limits: the crawl panel samples 54 of its 1,570 tics (the frames compared digest for digest in the whole-run gate
   are all of them); the pictures are palette-index pictures shown through palette 0 of the synthetic PLAYPAL.
 
+## 7. Part 2 on wire 27: the owner's E1M8 sessions through the whole session (2026-11-24, evening)
+
+The owner's hand test of part 2 failed on 2026-11-24: both of his E1M8 sessions on skill 2 were refused before the
+finale by wire 26's checked `P_InterceptVector`. By his ruling of the same day the finale-and-melt session moved to
+[wire 27](../COMPATIBILITY.md#wire-27-the-wrapping-p_interceptvector) and `DSES` version 2 embeds `DSIM` 43
+([note §7.11](../M6A_REFERENCE_INVESTIGATION.md#711-the-session-moves-to-wire-27-2026-11-24-evening)). Observed after the
+change, local only, on the owner's IWAD (retail mode); only counts, tics and pass/fail are recorded, and the two
+recordings are not committed.
+
+**Each recording ends one tic before the tic that was refused** (`doom-play` does not record a refused tic's command), so
+a recording alone cannot show that tic running. The rows marked "ours" are **our constructions**: the recording followed
+by 2,400 idle tics, as the [wire 27 record](WIRE27.md#4-real-maps-local-only-passfail-and-tic-counts) did with 700.
+
+`tools/local/m6a2_play_check.py` ran the genuine engine (the strict build of the genuine text, `-fwrapv`) on each demo at
+screenblocks 10 and 11, with the unit melt clock for the melt rows, and the genuine mixer; the ignored test
+`real_maps_finale_and_melt_local` of `m6a2_session` drove `Session::new_finale_and_melt` against those goldens at both
+sizes (commands in [TESTING](../TESTING.md#part-2-the-finale-and-the-melt-in-progress)). Session tics are 0-based.
+
+| Demo | Session tics compared | Reaches | Old refusal (wire 26) | Result |
+| --- | ---: | --- | --- | --- |
+| recording 115101 (the owner's) | 3,894 of 3,894 | the recording's end, in the level | session tic 3894, not in the recording | pass, both sizes |
+| 115101 + 2,400 idle tics (ours) | 6,294 of 6,294 | the victory at session tic 3905, then 2,389 finale tics: the whole crawl and the art screen | passed: tic 3894 runs | pass, both sizes |
+| recording 115513 (the owner's) | 3,064 of 3,064 | the recording's end, in the level | session tic 3064, not in the recording | pass, both sizes |
+| 115513 + 2,400 idle tics (ours) | 5,464 of 5,464 | the victory at session tic 3093, then 2,371 finale tics: the whole crawl and the art screen | passed: tic 3064 runs | pass, both sizes |
+
+- **Compared on every tic, at both sizes:** the session rows (G, C and, in the finale, F), every frame, every sound row
+  and mixer buffer, and every melt step (1 melt in each recording, 3 in each construction: the level start, the victory
+  and the art screen; 42 steps in each recording, 120 and 115 in the constructions). At screenblocks 10 also the level's
+  whole state after every level tic (3,894, 3,905, 3,064 and 3,093 captures), through the independent `DSIM` 42 encoder
+  with the session's `DSIM` 43 captures read under wire 26's names. No tic was refused by the Rust session.
+- **Level frames compared by their masked digest** (flagged columns of undefined reads, decision R4, as part 1's real-map
+  gate): 20 to 22 per run; none excluded whole. The 142 to 217 `S` rows per run whose listener is not checked are the
+  gate's existing rule.
+- **The victory tics equal the wire 27 record's** level ends (3905 and 3093), found there by `doom-sim` alone.
+- **The gate can fail** (`real_maps_finale_and_melt_local_catches_planted_faults`): a buffer mixed during a melt was
+  reported at tic 0 on all four demos; a finale one tic late at the victory tic and a missing art-screen wipe at its tic on
+  both constructions.
+- **Not shown here:** wire 26's refusal at tics 3894 and 3064 through the session (it is the
+  [wire 27 record's](WIRE27.md#4-real-maps-local-only-passfail-and-tic-counts), on `doom-sim`); the app and `doom-play`
+  themselves on these demos (the session was driven directly); any play with input after the old refusal, which only the
+  owner's next hand test gives. Nothing was measured for time.
+
 ## Not run, and limits
 
 - **Local only.** Every real-map figure is from the owner's IWAD on his WSL2 machine on 2026-11-22 and 2026-11-23; it cannot run in CI and nobody

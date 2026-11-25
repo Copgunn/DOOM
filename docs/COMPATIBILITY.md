@@ -91,8 +91,8 @@ number in brackets is the policy's identifier in saved test snapshots; the earli
 | `PlayerMonstersEpisode1V1` (23) | Episode 1, part 1: every door, floor, lift, stair, donut, light and exit special, keys, powerups, chainsaw, rocket launcher and Spectre: the real E1M2-E1M4, E1M6 and E1M7 runs | [Episode 1, part 1](#original-episode-1-part-1-every-door-floor-plat-stair-donut-light-and-exit-special-keys-items-powers-chainsaw-rocket-launcher-and-spectre-wire-23) |
 | `PlayerMonstersEpisode1V2` (24) | Episode 1, part 2: teleporters, the Baron of Hell and the E1M8 boss floor, hard skill: the real E1M5, E1M8, E1M9 and `DEMO1` runs | [Episode 1, part 2](#original-episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill-wire-24) |
 | `PlayerMonstersEpisode1V3` (25) | Episode 1, part 3: wire 24 plus canonical sound records, the sound origins, the corrected hard-death scream and the original's THING-loading stop; it makes no sound itself, and `doom-play` runs on it | [Wire 25](#original-episode-1-part-3-canonical-sound-records-wire-25) |
-| `PlayerMonstersEpisode1V4` (26) | Episode 1, part 4 (M6a): wire 25 plus a level start (new game, carried player or reborn), the walk exits 52 and 124 and the session's `gametic` for the turbo test; the level chain, played by `doom-play`; skills 2 and 3 only. Part 2 (no new wire, ruling V2): the finale and the melt in the session's finale-and-melt configuration, which `doom-play` plays (pull request #80, not merged) | [One session](#episode-1-as-one-session-m6a) |
-| `PlayerMonstersEpisode1V5` (27) | Episode 1, part 5: wire 26 with `P_InterceptVector`'s `int` wrap reproduced for the caller and wrap-class pairs a genuine item takes, and refused for every other; sight stays checked; the real E1M8 skill 2 sessions that wire 26 refuses | [Wire 27](#wire-27-the-wrapping-p_interceptvector) |
+| `PlayerMonstersEpisode1V4` (26) | Episode 1, part 4 (M6a): wire 25 plus a level start (new game, carried player or reborn), the walk exits 52 and 124 and the session's `gametic` for the turbo test; the level chain, played by `doom-play`; skills 2 and 3 only. It stays the wire of part 1's session configuration, which the libraries keep | [One session](#episode-1-as-one-session-m6a) |
+| `PlayerMonstersEpisode1V5` (27) | Episode 1, part 5: wire 26 with `P_InterceptVector`'s `int` wrap reproduced for the caller and wrap-class pairs a genuine item takes, and refused for every other; sight stays checked; the real E1M8 skill 2 sessions that wire 26 refuses. M6a part 2's finale-and-melt session, which `doom-play` plays, runs on this wire (no new wire for the finale and the melt; pull request #80, not merged) | [Wire 27](#wire-27-the-wrapping-p_interceptvector) |
 
 ## Versioned gameplay profiles
 
@@ -3694,7 +3694,7 @@ summary of raw button downs and ups on quit. A test shows it changes neither the
 **Status: M6a part 1, the playable level chain (PR #65; the owner's ruling of 2026-11-22 moves the finale, the melt
 pictures, the easy skills and E1M7 on skill 3 to part 2, a separate pull request; it was to take wire 27, which is now the [intercept wrap](#wire-27-the-wrapping-p_interceptvector), and the easy skills and E1M7 move to wire 28 by the owner's ruling of 2026-11-24).
 Part 2 (pull request #80, draft, not merged; the owner's hand test pending) builds the finale and the melt in a second
-session configuration on wire 26 (rulings V1 and V2 of 2026-11-23), which `doom-play` now plays; the easy skills and E1M7 on
+session configuration on wire 27 (ruling V1 of 2026-11-23 and the ruling of 2026-11-24, which replaced V2's wire 26), which `doom-play` now plays; the easy skills and E1M7 on
 skill 3 are a later pull request (wire 28).** One
 `doom-play` run now plays Episode 1 as the original does between levels: both exits, the intermission, the next map with the
 carried player, the reborn reload and the secret route. What is built, compared and still missing is below; the
@@ -3766,9 +3766,12 @@ compared in retail as well as registered ([record](validation/M6A.md)).
 ### The finale and the melt (M6a part 2)
 
 Built in pull request #80 (draft, not merged; the owner's hand test pending) in the session's finale-and-melt configuration,
-on wire 26 unchanged (`doom-sim` is not touched, ruling V2), and played by `doom-play`. Part 1's configuration keeps the
+on [wire 27](#wire-27-the-wrapping-p_interceptvector) (the owner's ruling of 2026-11-24: the real E1M8 reaches its exit only with the wrapping
+`P_InterceptVector`, so the configuration moved from wire 26 before it was frozen; this pull request adds no wire and does not
+change `doom-sim`), and played by `doom-play`. Part 1's configuration stays on wire 26 and keeps the
 declared accounting below (the 320 draws, no picture, no time). Evidence: `m6a2_session` (every finale tic and melt step of
-the synthetic items against the genuine goldens) and `m6a2_play` (the app played by keys); commands in
+the synthetic items against the genuine goldens), `m6a2_wire27` (the eight wire 27 items through this session, equal to the
+genuine engine past the tic wire 26 refuses) and `m6a2_play` (the app played by keys); commands in
 [TESTING](TESTING.md#part-2-the-finale-and-the-melt-in-progress).
 
 - **The finale never ends by itself** (f_finale.c:207-249; quirk rows Q-f_finale-207a and 207b). After E1M8's exit the next tic runs

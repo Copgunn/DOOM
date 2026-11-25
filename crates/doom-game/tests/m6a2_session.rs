@@ -507,3 +507,72 @@ fn a_demo_recorded_across_the_finale_and_the_melts_replays_to_the_same_state() {
         );
     }
 }
+
+/// Local only (never in CI: it reads the owner's IWAD): the sessions `doom-play` recorded and
+/// our idle-extended copies of them, driven through the finale-and-melt session against the
+/// goldens `tools/local/m6a2_play_check.py` wrote from the genuine engine, at both screen sizes:
+/// everything [`run`] compares, the finale and every melt included. Prints, per item, the session
+/// tics compared and how the run ended. Run with `M6A_REFERENCE_DIR=<its --out> cargo test
+/// --release -p doom-game --test m6a2_session -- --ignored real_maps --nocapture`; without the
+/// variable it does nothing.
+#[test]
+#[ignore = "local only: needs M6A_REFERENCE_DIR from tools/local/m6a2_play_check.py"]
+fn real_maps_finale_and_melt_local() {
+    if !m6a::real_maps() {
+        eprintln!("skip: M6A_REFERENCE_DIR is not set");
+        return;
+    }
+    let mut failures = Vec::new();
+    for item in m6a::items() {
+        let spec = m6a2_run::Spec {
+            item,
+            source: Source::Part1,
+        };
+        for sb in [10, 11] {
+            let o = run(&spec, Options::at(sb));
+            eprintln!(
+                "{} sb{sb}: genuine {} tics, end {}; compared {:?}; Rust end {:?}",
+                spec.item.name,
+                spec.item.session_tics,
+                spec.item.end,
+                o.counts,
+                o.end.as_ref().map(ToString::to_string),
+            );
+            assert!(o.not_driven.is_none(), "{}", spec.item.name);
+            failures.extend(o.first_difference);
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+/// The local gate can fail: on every item of `M6A_REFERENCE_DIR`, a buffer mixed during a melt
+/// is reported, and on every item that reaches the finale so are a finale that starts a tic late
+/// and a missing wipe before the art screen. Prints each first difference.
+#[test]
+#[ignore = "local only: needs M6A_REFERENCE_DIR from tools/local/m6a2_play_check.py"]
+fn real_maps_finale_and_melt_local_catches_planted_faults() {
+    if !m6a::real_maps() {
+        eprintln!("skip: M6A_REFERENCE_DIR is not set");
+        return;
+    }
+    for item in m6a::items() {
+        let spec = m6a2_run::Spec {
+            item,
+            source: Source::Part1,
+        };
+        let finale = run(&spec, Options::at(10)).counts.finale_tics > 0;
+        let mut faults = vec![PlantedFault::MixInMelt];
+        if finale {
+            faults.extend([PlantedFault::FinaleLate, PlantedFault::NoArtWipe]);
+        }
+        for fault in faults {
+            let options = Options {
+                session_fault: Some(fault),
+                ..Options::at(10)
+            };
+            let d = run(&spec, options).first_difference;
+            eprintln!("{} {fault:?}: {d:?}", spec.item.name);
+            assert!(d.is_some(), "{} {fault:?} not caught", spec.item.name);
+        }
+    }
+}

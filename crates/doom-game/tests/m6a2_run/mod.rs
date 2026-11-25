@@ -87,8 +87,16 @@ pub fn spec(name: &str) -> Spec {
         .unwrap_or_else(|| panic!("item {name}"))
 }
 
+/// A golden file: `tests/reference/<path>`, or, for the local real-map gate
+/// (`real_maps_finale_and_melt_local`, never in CI), the same path under the directory
+/// `M6A_REFERENCE_DIR` names, which `tools/local/m6a2_play_check.py` writes. The part 2 manifest
+/// and results (FULLREG, FULLRET) are always the repository's.
 fn reference(path: &str) -> std::path::PathBuf {
-    m6a::root("tests/reference").join(path)
+    if m6a::real_maps() && !path.starts_with("m6a2_manifest") && !path.starts_with("m6a2_results") {
+        m6a::reference(path)
+    } else {
+        m6a::root("tests/reference").join(path)
+    }
 }
 
 fn read(path: &str) -> String {
@@ -133,7 +141,8 @@ fn full_items() -> Vec<Item> {
         .collect()
 }
 
-/// One frame of a frames golden (the synthetic sets: no flagged column or exclusion, asserted).
+/// One frame of a frames golden (the synthetic sets: no flagged column or exclusion, asserted;
+/// the local real-map goldens may hold both, compared as part 1's `m6a_session.rs` does).
 #[derive(Clone, Debug, Default)]
 pub struct GoldenFrame {
     /// `gamestate` (0 for a level frame).
@@ -150,6 +159,12 @@ pub struct GoldenFrame {
     pub noface: String,
     /// Q row numbers.
     pub q: [i64; 6],
+    /// Real maps only: the flagged columns of undefined reads (U rows).
+    pub flagged: Vec<u16>,
+    /// Real maps only: the digest with the flagged columns zeroed.
+    pub masked: String,
+    /// Real maps only: a frame the genuine runner excludes as a whole (F `whole` = 1).
+    pub whole_excluded: bool,
 }
 
 /// Reads a frames golden (`tests/reference/<path>`): frames by tic and the E row.
@@ -157,6 +172,9 @@ pub fn read_frames(path: &str) -> (BTreeMap<i64, GoldenFrame>, Option<String>) {
     let text = read(path);
     let mut out: BTreeMap<i64, GoldenFrame> = BTreeMap::new();
     let mut error = None;
+    let real = m6a::real_maps();
+    // Real maps: each F row's flagged-column count, checked against its U rows below.
+    let mut columns: BTreeMap<i64, i64> = BTreeMap::new();
     for l in text.lines() {
         let c: Vec<&str> = l.split(',').collect();
         if c[0].starts_with('#') {
@@ -168,10 +186,16 @@ pub fn read_frames(path: &str) -> (BTreeMap<i64, GoldenFrame>, Option<String>) {
         };
         match c[0] {
             "F" => {
-                assert_eq!(c[6], "0", "{path}: no flagged column: {l}");
-                assert_eq!(c[14], "0", "{path}: no whole-frame exclusion: {l}");
+                if real {
+                    columns.insert(n(1), n(6));
+                } else {
+                    assert_eq!(c[6], "0", "{path}: no flagged column: {l}");
+                    assert_eq!(c[14], "0", "{path}: no whole-frame exclusion: {l}");
+                }
                 let g = GoldenFrame {
                     sha256: c[2].into(),
+                    masked: c[3].into(),
+                    whole_excluded: c[14] == "1",
                     f: [4, 5, 7, 8, 9, 10, 11, 12]
                         .into_iter()
                         .map(n)
@@ -201,9 +225,21 @@ pub fn read_frames(path: &str) -> (BTreeMap<i64, GoldenFrame>, Option<String>) {
                 assert!(out.insert(n(1), g).is_none(), "{path}: {l}");
             }
             "E" => error = Some(c[2..].join(",")),
+            "U" if real => out
+                .get_mut(&n(1))
+                .expect("U after F")
+                .flagged
+                .push(c[2].parse().expect("column")),
             "U" | "O" | "D" | "W" | "V" | "Y" => panic!("{path}: unexpected row {l}"),
             _ => {}
         }
+    }
+    for (tic, count) in columns {
+        assert_eq!(
+            out[&tic].flagged.len() as i64,
+            count,
+            "{path}: U rows at {tic}"
+        );
     }
     (out, error)
 }
@@ -482,6 +518,10 @@ impl Golden {
 /// What one run compared.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Counts {
+    /// Real maps only: level frames compared by their masked digest (flagged columns).
+    pub masked_frames: usize,
+    /// Real maps only: level frames counted and not compared by digest.
+    pub uncomparable_frames: usize,
     /// Session tics.
     pub tics: usize,
     /// Level tics (a load included).
@@ -531,6 +571,8 @@ pub struct Counts {
 impl Counts {
     /// Adds `o`.
     pub fn add(&mut self, o: &Counts) {
+        self.masked_frames += o.masked_frames;
+        self.uncomparable_frames += o.uncomparable_frames;
         self.tics += o.tics;
         self.level_tics += o.level_tics;
         self.intermission_tics += o.intermission_tics;
@@ -939,18 +981,40 @@ impl Run<'_> {
                 if g.gamestate != 0 || g.f.is_empty() {
                     return Err(self.diff(tic, "a level frame where the genuine one is not"));
                 }
-                if sha256(px) != g.sha256 {
-                    return Err(self.diff(tic, "level frame differs"));
-                }
                 let q = g.q;
-                let mut nf = px.to_vec();
-                for y in q[3] as usize..(q[5] as usize).min(SCREENHEIGHT) {
-                    for x in q[2] as usize..(q[4] as usize).min(SCREENWIDTH) {
-                        nf[y * SCREENWIDTH + x] = 0;
+                // Real maps only, as `m6a_session.rs` (decision R4): a frame whose switch parity
+                // is unknown or that the genuine runner excludes whole is counted, not compared
+                // by digest; a frame with flagged columns is compared by its masked digest.
+                let real = m6a::real_maps();
+                if real && (f.view.switch_parity_unknown || g.whole_excluded) {
+                    self.counts.uncomparable_frames += 1;
+                } else if real && (!g.flagged.is_empty() || !f.view.flagged_columns.is_empty()) {
+                    let mut m = px.to_vec();
+                    for x in &f.view.flagged_columns {
+                        for y in 0..SCREENHEIGHT {
+                            m[y * SCREENWIDTH + usize::from(*x)] = 0;
+                        }
+                    }
+                    if g.sha256 != "undefined" || sha256(&m) != g.masked {
+                        return Err(self.diff(tic, "masked digest or flag differs"));
+                    }
+                    self.counts.masked_frames += 1;
+                } else {
+                    if sha256(px) != g.sha256 {
+                        return Err(self.diff(tic, "level frame differs"));
+                    }
+                    let mut nf = px.to_vec();
+                    for y in q[3] as usize..(q[5] as usize).min(SCREENHEIGHT) {
+                        for x in q[2] as usize..(q[4] as usize).min(SCREENWIDTH) {
+                            nf[y * SCREENWIDTH + x] = 0;
+                        }
+                    }
+                    if sha256(&nf) != g.noface {
+                        return Err(self.diff(tic, "face-zeroed digest differs"));
                     }
                 }
-                if sha256(&nf) != g.noface {
-                    return Err(self.diff(tic, "face-zeroed digest differs"));
+                if real && f.view.flagged_columns != g.flagged {
+                    return Err(self.diff(tic, "flagged columns differ"));
                 }
                 if [q[0], q[1]] != [self.snd_draws, self.wipe_draws] {
                     return Err(self.diff(tic, "Q draws differ"));
@@ -967,11 +1031,9 @@ impl Run<'_> {
                     i64::from(c.drawseg_drops),
                     i64::from(c.vissprite_drop),
                 ];
-                if got != g.f
-                    || f.view.newly_mapped != g.mapped
-                    || f.view.switch_parity_unknown
-                    || !f.view.flagged_columns.is_empty()
-                {
+                let unexpected =
+                    !real && (f.view.switch_parity_unknown || !f.view.flagged_columns.is_empty());
+                if got != g.f || f.view.newly_mapped != g.mapped || unexpected {
                     return Err(self.diff(tic, format!("F {got:?} genuine {:?}", g.f)));
                 }
                 let status = vec![

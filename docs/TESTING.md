@@ -3171,17 +3171,32 @@ cargo test -p doom-sound --test dsnd3_reader             # the DSND version 3 re
 cargo check --manifest-path fuzz/Cargo.toml --bin m6a_dsnd3   # the DSND version 3 reader's fuzz target compiles
 cargo test -p doom-game --test m6a2_session -- --nocapture         # the finale-and-melt session against every golden, both sizes
 cargo test -p doom-game --test m6a2_session_rules -- --nocapture   # DSES v2 restore, refusals with their state, the v2 reader
+cargo test -p doom-game --test m6a2_wire27 -- --nocapture          # the eight wire 27 items through both sessions, DSES v2 embeds DSIM43
 cargo check --manifest-path fuzz/Cargo.toml --bin m6a2_dses2       # the DSES version 2 reader's fuzz target compiles
 M6A2_FUZZ_SEEDS=DIR cargo test --release -p doom-game --test m6a2_session_rules -- --ignored write_fuzz_seeds_part2_local   # seeds for the three part 2 targets under DIR (outside the repository)
 cargo +nightly fuzz run TARGET DIR/TARGET --sanitizer address -- -runs=0   # seed replay, per TARGET: m6a2_dses2, m6a_ddsp4, m6a_dsnd3
 cargo +nightly fuzz run TARGET CORPUS --sanitizer address -- -max_total_time=240 -max_len=300000 -seed=1 -timeout=20 -rss_limit_mb=2048   # a campaign on a copy of the seeds (-max_len above the largest seed, about 213 KB)
 ```
 
+Local only, on the owner's IWAD (never in CI): sessions `doom-play` recorded, and the same with idle tics added, against
+the genuine engine through the finale and every melt, which `m6a_play_check.py` cuts off:
+
+```sh
+python3 tools/local/m6a2_play_check.py --wad IWAD --recording FILE [--recording FILE ..] [--idle N] --out DIR [--work DIR]
+M6A_REFERENCE_DIR=DIR cargo test --release -p doom-game --test m6a2_session -- --ignored real_maps --nocapture
+```
+
+The second command runs the comparison and its planted-fault self-test; results are in the
+[record](validation/M6A.md#7-part-2-on-wire-27-the-owners-e1m8-sessions-through-the-whole-session-2026-11-24-evening).
+
 `m6a2_session` drives every drivable item of both golden sets (the 29 part 1 items, FULLREG and FULLRET) through
 `Session::new_finale_and_melt` at screenblocks 10 and 11 and compares every session row (G, C, I, J, F), frame, melt step,
 sound row and mixer buffer, and at screenblocks 10 every level tic's whole state where `m6a_state.txt` has the item; it
 asserts the totals against the goldens' own and names what is not driven (SKILL0 and SKILL1, whose demos the session refuses
-until the easy skills exist). FULLREG's and FULLRET's buffers are compared with FINREG's and FINRET's genuine mixer goldens,
+until the easy skills exist). The session runs on wire 27, so its level captures are `DSIM` 43; they are compared with the
+`DSIM` 42 goldens of `m6a_state.txt` under wire 26's names (the version, `profile` and `context.schema` are the only values
+that name the wire: an explicit fixture projection), and `m6a2_wire27` compares them unprojected with wire 27's genuine
+`DSIM` 43 goldens. FULLREG's and FULLRET's buffers are compared with FINREG's and FINRET's genuine mixer goldens,
 which the test may do because their genuine sound streams are byte-identical (asserted) and the font WAD holds no sound. Both
 targets also run with `--release`.
 
