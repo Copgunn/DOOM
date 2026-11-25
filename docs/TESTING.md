@@ -2932,11 +2932,11 @@ CARGO_PROFILE_DEV_OPT_LEVEL=1 cargo mutants -p doom-render -p doom-sound --test-
   -E 'package(doom-render) | package(doom-sound) | binary(~m6a_finale_melt) | binary(~m6a2_) | binary(m6a_chain_finale_melt)'
 ```
 
-## M6a Episode 1 in one session (part 1 merged, part 2 in progress)
+## M6a Episode 1 in one session (parts 1 and 2)
 
 The M6a [reference investigation](M6A_REFERENCE_INVESTIGATION.md) (the owner's rulings on U1-U15 of 2026-11-21) has two
-parts: part 1 is on master (pull request #65, merged 2026-11-23) and part 2 is under way on the branch `feat/m6a-part2`.
-This section lists the commands of the pieces done so far.
+parts, both on master: part 1 (pull request #65, merged 2026-11-23) and part 2 (pull request #80 and its follow-up #84,
+merged 2026-11-25). The easy skills and E1M7 on skill 3 are not built. This section lists the commands of both parts.
 
 ### The genuine M6a runner (Phase 2 step 1)
 
@@ -3146,7 +3146,7 @@ cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_s
 - **CI job `M6a genuine session`** (ruling U15): `m6a_wad.py`, `m6a_build.py` and `m6a_melt_steps.py` with `--check`, then
   `m6a_reference.py`, `m6a_goldens.py`, `m6a_mixer.py` and `m6a_state.py` with `--check --selftest`: the genuine engine on
   the synthetic items against the committed goldens; then the part 2 golden set (`m6a2_wad.py` and `m6a2_goldens.py`
-  with `--check --selftest`, [below](#part-2-the-finale-and-the-melt-in-progress)). Linux only; leak detection is
+  with `--check --selftest`, [below](#part-2-the-finale-and-the-melt)). Linux only; leak detection is
   disabled in its address variants.
 - **Real maps, local only** (reads the owner's IWAD, never in CI): `tools/local/m6a_session_real.py --set single|chains --mode
   registered|retail --out DIR [--work DIR] [--only NAME,..] [--jobs N]` runs the genuine engine on a scratch copy of the IWAD
@@ -3171,7 +3171,7 @@ cargo test -p doom-game --test m6a_session --test m6a_session_rules --test m6a_s
   `--wad` takes the files `doom-play` was given in its order (the IWAD first, copied under the mode's name in `--work`; never
   written). The mode is the demo file name's token. Sessions that reach E1M8's exit are compared up to the finale's first tic.
 
-### Part 2: the finale and the melt (in progress)
+### Part 2: the finale and the melt
 
 ```sh
 cargo test -p doom-game --test m6a_finale_melt           # the pure finale and melt step against the genuine goldens
@@ -3319,6 +3319,14 @@ and, for the test map, the owner's hand-test sessions, the fuzz runs, mutation t
 the [record](validation/M6A.md#8-the-part-2-test-map). The sound test drives each item as far as part 1's `m6a_chain` does (the
 first level, the intermission or finale after it and the next load tic; later levels need the session, in `doom-game`).
 The fuzz runs of the three part 2 readers are in the [record](validation/M6A.md#10-fuzzing-the-three-part-2-readers-again-from-new-seeds-2026-11-24).
+
+**Leak detection in those fuzz runs: confirmed active, by a planted leak, on 2026-11-25.** With `ASAN_OPTIONS` and
+`LSAN_OPTIONS` unset, as the two fuzz commands above are written, LeakSanitizer is on in `m6a2_dses2`, `m6a_ddsp4` and
+`m6a_dsnd3`: a forgotten allocation planted in a scratch copy of each target stopped its seed replay with a
+LeakSanitizer report, and `ASAN_OPTIONS=detect_leaks=0` let the same binary pass
+([record](validation/M6A.md#143-leak-detection-in-the-fuzz-runs-of-the-three-part-2-readers-a-planted-leak)). To repeat
+it, plant a leak in a scratch copy, never in the repository. The C address builds are a separate matter and unchanged:
+they run with `ASAN_OPTIONS=detect_leaks=0`, which is not LeakSanitizer coverage.
 
 ### Wire 27: the wrapping `P_InterceptVector`
 

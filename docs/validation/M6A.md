@@ -1,5 +1,11 @@
 # M6a evidence record: the level chain, up to the owner's hand test
 
+**Status (2026-11-25, America/Los_Angeles): M6a parts 1 and 2 are merged and closed out.** Part 2 is pull request #80 and its
+follow-up #84, both merged on 2026-11-25. The hitching finding of §9 is closed as not an engine defect, and the closeout's
+other notes (the README's evidence sum, the leak-detection check, the quirk index correction) are in
+[§14](#14-the-closeout-2026-11-25). Not built: the easy skills and E1M7 on skill 3, a later pull request under wire 28.
+The paragraphs below are earlier status lines, left as written.
+
 **Status (2026-11-23, America/Los_Angeles): M6a part 1 is merged** ([PR #65](https://github.com/Copgunn/DOOM/pull/65), 2026-11-23), and
 so is the held-keys fix of [§5.8](#58-held-keys-at-a-level-load-2026-11-23-after-part-1-merged)
 ([PR #79](https://github.com/Copgunn/DOOM/pull/79), the same day). Part 2 (the finale and the melt pictures, pull request #80, merged 2026-11-25) is
@@ -375,7 +381,7 @@ by 2,400 idle tics, as the [wire 27 record](WIRE27.md#4-real-maps-local-only-pas
 `tools/local/m6a2_play_check.py` ran the genuine engine (the strict build of the genuine text, `-fwrapv`) on each demo at
 screenblocks 10 and 11, with the unit melt clock for the melt rows, and the genuine mixer; the ignored test
 `real_maps_finale_and_melt_local` of `m6a2_session` drove `Session::new_finale_and_melt` against those goldens at both
-sizes (commands in [TESTING](../TESTING.md#part-2-the-finale-and-the-melt-in-progress)). Session tics are 0-based.
+sizes (commands in [TESTING](../TESTING.md#part-2-the-finale-and-the-melt)). Session tics are 0-based.
 
 | Demo | Session tics compared | Reaches | Old refusal (wire 26) | Result |
 | --- | ---: | --- | --- | --- |
@@ -523,12 +529,35 @@ claimed; the finding is open.** Added by the owner and his reviewer on 2026-11-2
 
 A later pull request is to measure swap-to-swap intervals. Nothing was fixed or measured for this in pull request #80.
 
+**Addendum, 2026-11-25 (America/Los_Angeles): closed, not an engine defect.** The text above is left as written. The
+owner tested again on 2026-11-25 with the Windows build of `61891f6f`, after a fresh restart of the machine and with
+nothing else running. These are his observations and his `--tic-stats` figures, not a test of this repository:
+
+| Run (after the restart) | Level tics | Visible hitches | Tic intervals more than 1 ms off | More than 5 ms off |
+| --- | ---: | ---: | ---: | ---: |
+| E1M8, laptop speakers | 3,722 | 0 | 14 | 0 |
+| E1M8, Bluetooth headphones | 3,171 | 0 | 57 | 0 |
+
+A browser refresh-rate test page ran steady after the restart; before the restart the same page stuttered now and
+then with no `doom-play` running. What follows from that:
+
+1. **Not reproduced** on a freshly started machine.
+2. **The prediction of item 3 above is contradicted.** A beat of 35 tics against 60.022 refreshes a second would not
+   depend on a restart.
+3. **Bluetooth audio (item 4 above) is ruled out:** the Bluetooth run had no visible hitch.
+4. **The cause is the machine's state, not the engine:** the stutter was there outside `doom-play` before the
+   restart. What on the machine causes it is not identified.
+
+**Status: closed, not an engine defect.** A swap-interval measurement stays an optional diagnostic and is not planned
+work, so the sentence above about a later pull request no longer stands. Items 1 and 2 above (the measured refresh rate
+and the reading of the code) are unchanged. Nothing in the engine was changed for this finding, and nothing was timed here.
+
 ## 10. Fuzzing the three part 2 readers again, from new seeds (2026-11-24)
 
 The `m6a2_dses2` run of [note §7.10](../M6A_REFERENCE_INVESTIGATION.md#710-the-session-the-app-and-the-fuzz-runs-at-the-hand-test-gate-2026-11-24) read
 `DSES` version 2 states that embedded `DSIM` 42 and is stale. All three targets were run again at `9e3734ae` from seeds
 written by `write_fuzz_seeds_part2_local` at that head (none of the 37 new `m6a2_dses2` seeds equals an old one by
-SHA-256). Decoders only; restore is not driven. Commands in [TESTING](../TESTING.md#part-2-the-finale-and-the-melt-in-progress).
+SHA-256). Decoders only; restore is not driven. Commands in [TESTING](../TESTING.md#part-2-the-finale-and-the-melt).
 
 | Target | Seed replay (`-runs=0`) | Coverage-guided campaign (240 s, `-max_len=300000`, `-seed=1`) |
 | --- | --- | --- |
@@ -540,6 +569,7 @@ SHA-256). Decoders only; restore is not driven. Commands in [TESTING](../TESTING
   separate sanitizer campaign beyond these. No crash, timeout, out-of-memory or leak report; no artifact file written.
 - **Leak detection** was not disabled (`ASAN_OPTIONS` and `LSAN_OPTIONS` unset, so LeakSanitizer ran at its default);
   that it would report a leak was not confirmed with a planted one.
+  *(2026-11-25: checked with a planted leak, [§14.3](#143-leak-detection-in-the-fuzz-runs-of-the-three-part-2-readers-a-planted-leak).)*
 - **Not alone on the machine:** the real-map comparison of §9 ran at the same time, so the execution counts are not rates.
 
 ## 11. Mutation testing of part 2's changed lines (cargo-mutants 27.1.0)
@@ -641,6 +671,11 @@ scratch worktree on the Linux disk, `-j 2`, one run at a time; commands in
 
 `app/finale_melt.rs:339:21` (`&&` to `||`), argued unreachable above, is now reached by the victory-tic stop and caught.
 
+**Note, 2026-11-25 (after the merge).** The three `window.rs` one-line handler calls (`303:9`, `307:9`, `341:9`) stay
+listed as open survivors: no test builds the window's handler type. They are covered by the owner's hand test of
+2026-11-25 on the Windows build of `61891f6f`: keys held and released, focus lost and restored (his observation, not a
+test of this repository).
+
 ## 12. The independent read (2026-11-24)
 
 A fresh reader that had not seen the authors' session read the diff at `9e3734ae` against the C: the finale, the melt,
@@ -678,6 +713,7 @@ digests, golden loading and state comparison; `m6a2/mod.rs`; the bodies of `m6a2
 ## 13. The follow-up, pull request #84 (2026-11-25)
 
 Pull request #80 was merged on 2026-11-25; this work is on the branch `feat/m6a-part2-followup`.
+*(2026-11-25, later: pull request #84 was merged the same day, master `e292d45f`. The section below is as written before the merge.)*
 
 **The victory-tic display stop.** `tools/reference/m6a2_victory_stops.py` runs the genuine M6a runner (strict and address
 builds, identical; leak detection disabled) on FINREG's demo over three synthetic WAD sets made by renaming lumps, and
@@ -716,6 +752,83 @@ Not run in that clone: anything that needs an IWAD or the owner's demos (the ign
 jobs (CI runs those), and campaigns on the other 65 fuzz targets, which were only compiled. The C address builds ran with
 `ASAN_OPTIONS=detect_leaks=0` as in CI, which is not LeakSanitizer coverage; the fuzz runs left `ASAN_OPTIONS` unset and nothing confirmed that
 leak detection was active there, so no leak coverage is claimed for them either.
+*(2026-11-25: checked since with a planted leak, [§14.3](#143-leak-detection-in-the-fuzz-runs-of-the-three-part-2-readers-a-planted-leak).)*
+
+## 14. The closeout (2026-11-25)
+
+After pull requests #80 and #84 merged (master `e292d45f`): documents and records only. No file under any crate's
+`src` or `tests` changed, and no test, fixture, golden, trace, wire or format.
+
+### 14.1 What was closed or corrected
+
+| Item | Result | Where |
+| --- | --- | --- |
+| The visible hitches (the owner's ruling 11) | closed, not an engine defect: not reproduced after a restart of the owner's machine | the addendum in [§9](#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24) |
+| The three `window.rs` one-line handler calls | still open survivors; covered by the owner's hand test of 2026-11-25 | the note in [§11.1](#111-run-again-on-the-final-code-2026-11-25-pull-request-84) |
+| The quirk index's status counts | the index was wrong, the rows right: 288 reproduced and 49 not yet ported (it said 287 and 50). The row was Q-i_video-641a, whose status changed in `77a0b6b9` without the table | [QUIRKS](../QUIRKS.md#totals) |
+| Leak detection in the fuzz runs of the three part 2 readers | confirmed active, by a planted leak, on 2026-11-25 | [§14.3](#143-leak-detection-in-the-fuzz-runs-of-the-three-part-2-readers-a-planted-leak) |
+
+### 14.2 The README's evidence figures, summed from the records
+
+An index written on 2026-11-25. It holds no new observation: every figure is from the section linked, and nothing was
+run again for it. **What is counted:** tics of real Episode 1 maps that a record reports as compared with the genuine
+linuxdoom-1.10 engine and equal, local only, each distinct tic once. A recording counts once however often it was
+compared: at screenblocks 10 and 11, in retail and in registered mode, at a later milestone, or through the session and
+again through the app. A tic is whatever the record counts as compared: in the M6a sessions that includes the
+intermission and finale tics, which are compared by rows, frames and sound and have no whole-state capture.
+
+| Set | Record | Recordings | Tics counted | Left out as a duplicate, and why |
+| --- | --- | ---: | ---: | --- |
+| The 61 scripted runs (the E1M1 to E1M9 scripts and `DEMO1`), as sessions | [§1](#1-the-real-map-comparison-step-8-local-only), the retail singles (37,961 + 158,872) | 61 | 196,833 | the registered singles (196,833: the same 61 demos in the other game mode); the same 61 demos at M4b, M5b and M5c ([158,966 tics](M4B.md#real-maps-and-demo1) each time, fewer, as read from the counts and not run again: those runs end at the first reborn, where the session plays on, 103 levels in the 61 runs); the gates run again in §4 and §5.6 |
+| The nine chains as first built | [§1](#1-the-real-map-comparison-step-8-local-only), 90,816 | 9 | 42,874 | 47,942 tics: by §1's description each chain's first leg is a scripted run above (not checked byte for byte here), so everything up to the first carried load is left out (785, 5,812, 3,463, 9,475, 7,858, 7,755 and 5,982 for CH1, CH3 to CH7 and CH9), all 5,813 of CH8, which loads no second level, and the 999-tic death script of CH2. The registered chains (90,816) are the same demos in the other mode |
+| Chain CH2 rebuilt | [§5.2](#52-chain-ch2-rebuilt), 10,765 | 1 | 9,766 | its 999-tic death script, as above; the registered run of the same demo |
+| **Scripted, subtotal** | | **71** | **249,473** | |
+| The owner's sessions of M5c | [M5C](M5C.md#hand-played-checks) | 12 | 27,146 | the first check of 12 of these files (25,309) and M5d's runs of them again |
+| The owner's sessions of M5d | [M5D](M5D.md#hand-played-checks) | 44 | 115,399 | the retest's 10 files run again at the close |
+| Hand test 1 of M6a | [§5.1](#51-the-owners-first-hand-test) | 4 | 28,516 | the gates run again in §5.6 |
+| Hand test 2 | [§5.6](#56-before-the-owners-review-part-1-2026-11-22-night) | 3 | 18,629 | |
+| Hand test 3 | [§5.7](#57-the-owners-third-hand-test-2026-11-23) | 2 | 20,510 | |
+| The two E1M8 sessions of 2026-11-24 that wire 26 refused | [§7](#7-part-2-on-wire-27-the-owners-e1m8-sessions-through-the-whole-session-2026-11-24-evening): 3,894 + 3,064 | 2 | 6,958 | the same two recordings under wires 26 and 27 in the [wire 27 record](WIRE27.md#4-real-maps-local-only-passfail-and-tic-counts) |
+| The five sessions of the part 2 hand test | [§9](#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24): 8,227 + 5,470 + 173 + 4,842 + 2,985 | 5 | 21,697 | the 4,843rd tic of the registered session, where both engines stop |
+| **Played by hand, subtotal** | | **72** | **238,855** | |
+| Four files of the owner's sessions folder not recorded as played by hand | [M5D](M5D.md#hand-played-checks) | 4 | 7,875 | |
+| Our 2,400 idle tics added to each of the two E1M8 recordings | [§7](#7-part-2-on-wire-27-the-owners-e1m8-sessions-through-the-whole-session-2026-11-24-evening): 6,294 - 3,894 and 5,464 - 3,064 | 0 (two constructions) | 4,800 | the recorded part, counted above; the wire 27 record's 700 idle tics, which are the start of these |
+| **Total** | | **147** | **501,003** | |
+
+- **The README's three figures:** "more than 70 hand-played sessions" is the 72; "over 238,000 tics" is the 238,855;
+  "more than 500,000 distinct real-map tics" is the 501,003.
+- **How thin the last one is.** It clears 500,000 by 1,003 tics. Without the four files that are not recorded as
+  played by hand it is 493,128. In the other direction: the chains' left-out part is an upper bound (it includes the
+  first intermission, which no scripted run has), and a count that took the two game modes as different comparisons
+  would add the registered sets.
+- **Not counted at all:** the three idle sessions of [M5b's first play check](M5B.md#step-8-the-first-play-check)
+  (1,050 tics, the agent's, two of them the start of a scripted run); M5c's check of two committed demos that are among
+  the 61; M5d's kill-test files (scripted); the owner's two E1M8 runs of 2026-11-25 in the §9 addendum (no comparison of
+  them with the genuine engine is recorded); and every tic on a synthetic map. The synthetic comparisons are the CI
+  evidence, but the same items are compared again at each milestone and no record sums them once, so no total is claimed.
+- **The quirk figure** ("more than 400") is the register's 502 rows less the rows that repeat a quirk under a second
+  status: 434 distinct ids when a row id's status letter is dropped (counted from the pages on 2026-11-25).
+
+### 14.3 Leak detection in the fuzz runs of the three part 2 readers: a planted leak
+
+**Confirmed active, by a planted leak, on 2026-11-25.** In a scratch clone of master `e292d45f` on the Linux disk
+(never committed, and deleted afterwards), one line was added at the top of each of the three fuzz targets' bodies:
+a 4,096-byte allocation that is forgotten. Seeds from `write_fuzz_seeds_part2_local` at that head (37 per target), the
+seed-replay command of [TESTING](../TESTING.md#part-2-the-finale-and-the-melt) (`cargo +nightly fuzz run TARGET SEEDS
+--sanitizer address -- -runs=0`), cargo-fuzz 0.13.2, `rustc 1.101.0-nightly (1c3a65069 2026-11-02)`:
+
+| Target | Unchanged, `ASAN_OPTIONS` unset | Planted leak, `ASAN_OPTIONS` unset | Planted leak, `ASAN_OPTIONS=detect_leaks=0` |
+| --- | --- | --- | --- |
+| `m6a2_dses2` | exit 0, 37 seeds | **exit 1**: `ERROR: LeakSanitizer: detected memory leaks`, two direct leaks of 4,096 bytes, "a leak has been found in the initial corpus" | exit 0 |
+| `m6a_ddsp4` | exit 0, 37 seeds | **exit 1**, the same report | exit 0 |
+| `m6a_dsnd3` | exit 0, 37 seeds | **exit 1**, the same report | exit 0 |
+
+So with `ASAN_OPTIONS` and `LSAN_OPTIONS` unset, as in the runs of [§10](#10-fuzzing-the-three-part-2-readers-again-from-new-seeds-2026-11-24)
+and [§13](#13-the-follow-up-pull-request-84-2026-11-25), LeakSanitizer is on in these three targets and stops a run that
+leaks, and `detect_leaks=0` turns it off. **Limits:** this shows the build and settings report a leak; the runs of §10
+and §13 were not repeated, so that leak detection was on in them rests on their having the same settings, tools and
+machine. The planted runs were seed replays; no planted campaign was run. The other 65 fuzz targets were not checked.
+**Unchanged, and still not leak coverage:** the C address builds run with `ASAN_OPTIONS=detect_leaks=0`, as before.
 
 ## Not run, and limits
 
@@ -737,3 +850,5 @@ leak detection was active there, so no leak coverage is claimed for them either.
 - **Sanitizers.** The genuine runs used the strict build; the address-sanitizer variants and the `address_bounds` build belong
   to the synthetic goldens ([TESTING](../TESTING.md)); leak detection is disabled there (`detect_leaks=0`), so it is not
   LeakSanitizer coverage.
+- **Leak detection, as it stands on 2026-11-25.** The C address builds: disabled (`detect_leaks=0`), unchanged. The
+  cargo-fuzz runs of the three part 2 readers: confirmed active, by a planted leak, on 2026-11-25 ([§14.3](#143-leak-detection-in-the-fuzz-runs-of-the-three-part-2-readers-a-planted-leak)).
