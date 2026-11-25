@@ -711,7 +711,7 @@ const CLIP_AMMO: [u16; 4] = [10, 4, 20, 1];
 /// the loads or the half clip, before the cap); capped at `maxammo` (doubled
 /// once by the backpack); and from zero the weapon preference switch. Only the
 /// Episode 1 policy reaches cells and rockets.
-fn ammo(
+pub(crate) fn ammo(
     p: &mut PlayerWeaponState,
     ammo: usize,
     loads: u16,
@@ -955,9 +955,13 @@ impl<A: ActorAccess> movement::MotionAccess for Contacts<'_, A> {
                         );
                         accepted
                     }
-                    PickupKind::Clip => {
-                        ammo(w, 0, if l.flags & MF_DROPPED != 0 { 0 } else { 1 }, baby, events)?
-                    }
+                    PickupKind::Clip => ammo(
+                        w,
+                        0,
+                        if l.flags & MF_DROPPED != 0 { 0 } else { 1 },
+                        baby,
+                        events,
+                    )?,
                     PickupKind::BulletBox => ammo(w, 0, 5, baby, events)?,
                     PickupKind::Shells => ammo(w, 1, 1, baby, events)?,
                     PickupKind::ShellBox => ammo(w, 1, 5, baby, events)?,
