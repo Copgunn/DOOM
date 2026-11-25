@@ -17,6 +17,8 @@ mod keys;
 #[cfg(all(test, unix))]
 mod kill_tests;
 #[cfg(test)]
+mod melt_mutant_tests;
+#[cfg(test)]
 mod melt_tests;
 mod mouse_forward;
 mod session_file;

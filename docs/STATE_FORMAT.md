@@ -2794,6 +2794,10 @@ rules**: `DisplayState::decode`, `decode_any` and `SessionDisplayState::decode` 
 (`Display::new_session`) still writes version 3 and restores no version 4; the finale-and-melt display writes version 4
 and restores no version 3 (`WrongConfig`). Little endian.
 
+**Not canonical on input** (found by the independent read, 2026-11-24): the taint-run reader, shared with version 3 and
+`DRST` version 2, accepts adjacent runs of one origin, so more than one byte string decodes to the same state; the writer
+always merges them. `DSES` version 2 inherits this through its embedded display state; `DSND` version 3 is canonical.
+
 | Field | Encoding | Meaning |
 | --- | --- | --- |
 | magic, version | 4 bytes `DDSP`, u32 = 4 | |

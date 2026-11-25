@@ -508,8 +508,8 @@ impl Display {
 
     /// `F_StartFinale`'s `gamestate = GS_FINALE` (f_finale.c:96-191), entered from the level in the
     /// `G_Ticker` that completed E1M8 (g_game.c:639-641, 1033-1038): keeps `screens[0]` and the
-    /// renderer globals and makes a wipe due. Its frames are not drawn yet
-    /// ([`Self::draw_finale`]).
+    /// renderer globals and makes a wipe due. The frozen configuration draws no finale frame
+    /// ([`Self::draw_finale`]); the finale-and-melt one does.
     pub fn begin_finale(&mut self) -> Result<(), SessionError> {
         let carried = self.leave_level()?;
         self.enter(GameState::Finale, carried, None);
@@ -580,8 +580,8 @@ impl Display {
 
     /// `D_Display` in the intermission (d_main.c:250-252, 274-275, 300, 320-344): `WI_Drawer` from
     /// `view` into `out` ([`crate::wi_stuff::draw`]), palette 0, then, when a wipe is due, its
-    /// [`WIPE_DRAWS`] after the frame (the melt's pictures are not drawn: the frame shown is the
-    /// composed frame, the melt's last picture). Whole-frame and independent of screenblocks. On
+    /// [`WIPE_DRAWS`] after the frame (in the frozen configuration the melt's pictures are not
+    /// drawn: the frame shown is the composed frame, the melt's last picture). Whole-frame and independent of screenblocks. On
     /// an error nothing changes and `out` is unspecified.
     pub fn draw_intermission(
         &mut self,

@@ -1229,6 +1229,11 @@ His rulings of the same day:
 - **Ruling 11.** The visible hitches he counted are recorded as an open finding and are neither fixed nor investigated
   in this pull request. No cause is claimed; a later pull request measures presentation intervals.
 
+**Correction to 7.10 (found by the independent read, 2026-11-24).** Its line "119 of 119 melts at screenblocks 10 (4,708 of
+4,946 steps) and 125 of 131 at 11" miscounts: at each size the part 1 items have 125 golden melts of which 119 are
+compared (4,708 of 4,946 steps), and with FULLREG and FULLRET 125 of 131. The six not compared are SKILL0's and
+SKILL1's, as 7.10 says. The line is left as written.
+
 The fuzz runs from new seeds, the test map, mutation testing and the independent read are in sections 8 to 12 of the
 record. The stale line under 7.11 above is answered by the record's section 10.
 

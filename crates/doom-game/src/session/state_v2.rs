@@ -19,7 +19,7 @@
 //! | start map, skill, screenblocks | u8, u8, u8 | 1..=9, 2..=3, 10..=11 |
 //! | `gametic` | u64 | session tics run |
 //! | `gamestate` | u8: 0 level, 1 intermission, 2 finale | doomdef.h:127-133 |
-//! | `gamemap`, `gameaction` | u8 1..=9, u8 0, 6 or 8 | as version 1; 8 in the finale |
+//! | `gamemap`, `gameaction` | u8 1..=9, u8 0, 6 or 8 | as version 1; 0 in the finale |
 //! | `secretexit`, `didsecret` | u8, u8 | as version 1 |
 //! | `wminfo`, wi_stuff.c statics | as version 1 | in a level and in the finale, the last intermission's (or a fresh process's) |
 //! | carried player | as version 1: 0 none (in a level), 1 alive, 2 dead at the exit | present in the intermission and in the finale |

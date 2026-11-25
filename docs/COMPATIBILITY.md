@@ -3787,7 +3787,12 @@ genuine engine past the tic wire 26 refuses) and `m6a2_play` (the app played by 
   **A declared difference in a count, not in behaviour:** the original increments `gametic` (d_net.c:746 in `TryRunTics`; d_main.c:384 in the
   `singletics` branch) before `D_Display` runs (d_main.c:395), so its `gametic` at the failing display is one higher than the
   session's tic count. Here the exit line names the refused tic itself; the session has ended and cannot be saved, so nothing
-  else shows the count. Part 1's rule (the finale is not built there) is unchanged. The
+  else shows the count. Part 1's rule (the finale is not built there) is unchanged.
+  **A second declared difference, not reachable with a real IWAD** (found by the independent read, 2026-11-24; open
+  for the owner's ruling): if the crawl's own picture cannot be drawn on the victory tic (a WAD set whose `FLOOR4_8` flat
+  or font is missing or short, f_finale.c:274), the genuine engine stops with that tic's command in its demo; the
+  session refuses the tic without ending and the app does not record its command, and the refusal screen's text names
+  the art screen (`HELP2`, `CREDIT`) although the crawl failed. The
   original's text crawl is drawn as `F_TextWrite` draws it, including the quirk that a character that does not fit on its line
   ends the crawl (Q-f_finale-321a).
 - **The melt schedule** (d_main.c:329-344; f_wipe.c:184-222; [note §1.16.1](M6A_REFERENCE_INVESTIGATION.md#1161-the-clock-one-melt-step-per-tic)).

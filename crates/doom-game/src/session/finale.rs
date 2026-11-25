@@ -2,10 +2,10 @@
 //! (f_finale.c:96-191) and `F_Ticker` (f_finale.c:207-249) do to `finalestage` and
 //! `finalecount`.
 //!
-//! **Reached by no configuration.** The session still refuses the victory tic
-//! ([`super::NotYet::Victory`]); these pure functions are what a later configuration will call,
+//! **Reached by the finale-and-melt configuration only** (`super::finale_melt`); the frozen
+//! session still refuses the victory tic ([`super::NotYet::Victory`]). These pure functions are
 //! proven against the genuine engine's committed session rows. The rest of `F_StartFinale`
-//! belongs to the session when it is wired: `gameaction = ga_nothing`, `gamestate = GS_FINALE`,
+//! belongs to the session: `gameaction = ga_nothing`, `gamestate = GS_FINALE`,
 //! `viewactive` and `automapactive` false (f_finale.c:98-101) and `S_ChangeMusic(mus_victor)`
 //! (f_finale.c:114, a refusal when `D_VICTOR` is missing). `finaleflat` and `finaletext` are fixed
 //! for Episode 1 (`FLOOR4_8` and `E1TEXT`, f_finale.c:118-121) and are the drawer's constants

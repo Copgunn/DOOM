@@ -496,7 +496,21 @@ committed). Session tics are 0-based. No mismatch on any tic.
 | hard drive, without `--tic-stats` | not measured | not measured | not measured | not measured | 7 in 3,272 level tics |
 
 Tic pacing and disk writes do not explain the visible hitches. Picture presentation is unmeasured. **No cause is
-claimed**; a later pull request is to measure presentation intervals.
+claimed; the finding is open.** Added by the owner and his reviewer on 2026-11-24, each item marked by its kind:
+
+1. **Measured (the owner):** his display refreshes at 60.022 Hz (a refresh-rate test page, three decimals); Windows
+   Settings reports 60.02 Hz. Not 60.
+2. **Read from the code** (at `9e3734ae`, checked again for this record): `crates/doom-play/src/window.rs` never sets
+   `Conf.platform.swap_interval`, and miniquad 0.4.11 on Windows passes `swap_interval.unwrap_or(1)` when it makes the
+   context (its `src/native/windows.rs:1215`), which asks for vertical sync (its documentation calls the value a hint to
+   the driver). Its loop calls `update` (which sleeps to the tic and runs it), `draw`, then `SwapBuffers`
+   (`windows.rs:1284-1287`), so `--tic-stats` times the tic and not the swap. Not observed on a running system.
+3. **Predicted, not measured (the reviewer's arithmetic):** 35 tics against 60.022 refreshes a second shifts the picture
+   pattern about every 6.5 seconds. The owner counted about one hitch every 12 seconds: the same order, not a match.
+4. **Untested, not ruled out:** Bluetooth audio. The hand-test runs used Bluetooth headphones. One run on the laptop
+   speakers also hitched, but mutation testing was running on the machine, so it does not count.
+
+A later pull request is to measure swap-to-swap intervals. Nothing was fixed or measured for this in pull request #80.
 
 ## 10. Fuzzing the three part 2 readers again, from new seeds (2026-11-24)
 
@@ -516,6 +530,61 @@ SHA-256). Decoders only; restore is not driven. Commands in [TESTING](../TESTING
 - **Leak detection** was not disabled (`ASAN_OPTIONS` and `LSAN_OPTIONS` unset, so LeakSanitizer ran at its default);
   that it would report a leak was not confirmed with a planted one.
 - **Not alone on the machine:** the real-map comparison of §9 ran at the same time, so the execution counts are not rates.
+
+## 11. Mutation testing of part 2's changed lines (cargo-mutants 27.1.0)
+
+@@CI@@
+
+**`doom-play`, local** (CI's workflow does not mutate it; the command of
+[TESTING](../TESTING.md#local-mutation-run-on-doom-play-cis-workflow-does-not-mutate-it), `-j 2`, a scratch worktree of
+`9e3734ae` on the Linux disk, 2026-11-24): 114 mutants, **94 caught, 19 missed, 0 timed out, 1 unviable**
+(`input_log.rs:272:9`, `InputLog::off` replaced by `Default::default()`, does not compile).
+
+| Survivor | Answer |
+| --- | --- |
+| `audio.rs:696:20` `>` to `>=` in `Queue::pull` | killed by `a_pull_that_empties_the_queue_exactly_during_a_melt_does_not_run_dry` |
+| `audio.rs:1088:9` `DeviceSink::melt_end` to `()`; `audio.rs:1215:9` `Output::melt_end` to `()` | killed by `melt_end_reaches_the_queue_through_the_device_sink_and_the_output` |
+| `closing.rs:127:29` `>` to `<` in `Play::update` | killed by `play_update_tells_the_statistics_of_each_melt` |
+| `input_log.rs:434:25` `&&` to `\|\|`; `434:46` `>` to `>=`; `434:59` `>` to `==`, `<`, `>=`; `441:33` `>` to `>=` in `InputLog::pump_end` | killed by `pump_lines_are_written_only_when_something_happened_and_name_melt_steps_only_if_any` |
+| `input_log.rs:555:9` `LoggedHost::melt_step` to `()` | killed by `the_logging_host_passes_every_melt_step_on` |
+| `input_log.rs:571:26` `>` to `>=` in `logged_key_event` | killed by `a_key_taken_at_once_is_not_logged_as_held` |
+| `tic_stats.rs:38:16` `>` to `>=` in `TicStats::record` | **no test; argued equivalent, not proven by a run:** `times` grows only when tics ran, so a call with no tic pushes the index the next tic would push, and no reader distinguishes a repeated or trailing index |
+| `window.rs:303:9` `key_down_event` to `()`; `313:9` `key_up_event` to `()`; `351:9` `window_minimized_event` to `()`; `357:35` `>` to `==`, `<`, `>=` | **no test; open survivors:** these are methods of the window's event handler, which cannot be built without a graphics context. What they call is tested (`logged_key_event`, `App::focus_lost`); the calls themselves are covered only by the owner's hand test |
+
+The six new tests are in the new file `crates/doom-play/src/melt_mutant_tests.rs`. Each kill was observed by applying
+the mutation by hand, seeing the named test fail, and restoring the line; **cargo-mutants was not run again** on them.
+
+## 12. The independent read (2026-11-24)
+
+A fresh reader that had not seen the authors' session read the diff at `9e3734ae` against the C: the finale, the melt,
+`DSES` version 2 with the display and sound states it embeds, the `DSIM` 43 switch and the wire 26 name projection.
+**It found no code defect** that changes behaviour against linuxdoom-1.10 on a reachable input. Its findings:
+
+| Finding | Kind | What was done |
+| --- | --- | --- |
+| README said the finale and the melt were not built | must-fix | fixed (README "Where it stands" and "Play it") |
+| Quirk row Q-i_video-641a still said "not yet ported" and "palette undefined" | must-fix | row updated: reproduced for the fresh-segment case; the palette clause corrected by note §1.16.3 |
+| A display refusal on the victory tic (a WAD set without the crawl's flat or font) does not end the session as the `HELP2` stop does, and its message names the art screen | should-fix | **not changed; declared** in [COMPATIBILITY](../COMPATIBILITY.md#the-finale-and-the-melt-m6a-part-2), open for the owner's ruling. Not reachable with a real IWAD |
+| Four stale doc comments in new source (`finale.rs`, `d_display/session.rs` twice, `state_v2.rs`) | should-fix | corrected (comments only) |
+| Note §7.10's melt count ("119 of 119") | should-fix | dated correction in note §7.12; the line is left as written |
+| TESTING said no fuzz campaign had run | should-fix | fixed |
+| `DDSP` version 4 (and so `DSES` version 2) is not canonical on input: adjacent taint runs of one origin are accepted | note | documented in [STATE_FORMAT](../STATE_FORMAT.md#display-state-ddsp-version-4-m6a-part-2); the reader is not changed |
+| Q-d_main-331 keeps one status though the new configuration reproduces the stall and not the burst | note | left: the row's status text already describes both configurations |
+| The frozen app's refusal strings changed; no test pinned them | note | recorded here |
+
+**The wire 26 name projection, as the reader found it** (read and run): `wire26_fields` rewrites exactly two values, each
+asserted first (`profile` 27 to 26, `context.schema` from wire 27's to wire 26's), and the digest writes the version 42
+header; every other field is framed byte for byte, so a field that differed could not be hidden. It is an explicit
+fixture projection, not source equivalence. The reader also confirmed: `crates/doom-sim` unchanged against master; two
+`DSIM` decode calls in the product crates, one per configuration; no existing test or fixture modified beyond the two
+declared exceptions (one test is appended to `closing_tests.rs`); the melt's `M_Random` order equal to the C's.
+
+**What the reader ran** (debug, all passed): the `f_wipe`, `f_finale` and display unit tests (13), `m6a_frozen_bytes`,
+`m6a2_wire27`, `m6a2_session`, `m6a2_session_rules`, `m6a2_play`, `m6a_session`, `m6a_dses_reader`, doom-play's
+`melt_tests`, `dsnd3_reader` and `m6a_chain_finale_melt`. **Not read in full:** `m6a2_run/mod.rs` beyond the projection,
+digests, golden loading and state comparison; `m6a2/mod.rs`; the bodies of `m6a2_play.rs`, `m6a2_session_rules.rs` and
+`finale_melt_reader_tests.rs`; the part 2 tools. **Not run by it:** the ignored real-map tests, `m6a_finale_melt`,
+`m6a_finale_melt_display`, `m6a2_full_crawl`, `m6a2_melt_sb11`, the C generators, release builds.
 
 ## Not run, and limits
 

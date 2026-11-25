@@ -17,7 +17,7 @@ use miniquad::KeyCode;
 use std::io::Write;
 use std::path::Path;
 
-fn buffer(base: i16) -> [[i16; 2]; BUFFER_FRAMES] {
+pub(crate) fn buffer(base: i16) -> [[i16; 2]; BUFFER_FRAMES] {
     std::array::from_fn(|i| {
         let v = base.wrapping_add(i as i16);
         [v, v.wrapping_neg()]
@@ -116,8 +116,8 @@ fn the_melt_line_says_the_silence_is_no_underrun() {
 }
 
 /// A host with a headless device sink.
-struct SinkHost {
-    out: Output,
+pub(crate) struct SinkHost {
+    pub(crate) out: Output,
 }
 
 impl Host for SinkHost {
@@ -140,7 +140,7 @@ impl Mute for SinkHost {
 }
 
 /// The finale-and-melt app (doom-play's) on CHAIN's synthetic WADs.
-fn app<H: Host>(host: &mut H) -> App {
+pub(crate) fn app<H: Host>(host: &mut H) -> App {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/reference");
     let wads = [
         "m6a_wads/episode.wad",
@@ -161,7 +161,7 @@ fn app<H: Host>(host: &mut H) -> App {
     app
 }
 
-fn at(k: u64) -> u64 {
+pub(crate) fn at(k: u64) -> u64 {
     (k * 1_000_000).div_ceil(35)
 }
 
@@ -243,7 +243,7 @@ fn melts_through_the_app_are_no_underrun_in_the_exit_lines() {
 }
 
 #[derive(Clone, Default)]
-struct Shared(std::rc::Rc<std::cell::RefCell<Vec<u8>>>);
+pub(crate) struct Shared(std::rc::Rc<std::cell::RefCell<Vec<u8>>>);
 
 impl Write for Shared {
     fn write(&mut self, b: &[u8]) -> std::io::Result<usize> {
@@ -256,7 +256,7 @@ impl Write for Shared {
 }
 
 impl Shared {
-    fn text(&self) -> String {
+    pub(crate) fn text(&self) -> String {
         String::from_utf8(self.0.borrow().clone()).expect("UTF-8")
     }
 }
