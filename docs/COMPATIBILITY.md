@@ -3693,7 +3693,7 @@ summary of raw button downs and ups on quit. A test shows it changes neither the
 
 **Status: M6a part 1, the playable level chain (PR #65; the owner's ruling of 2026-11-22 moves the finale, the melt
 pictures, the easy skills and E1M7 on skill 3 to part 2, a separate pull request; it was to take wire 27, which is now the [intercept wrap](#wire-27-the-wrapping-p_interceptvector), and the easy skills and E1M7 move to wire 28 by the owner's ruling of 2026-11-24).
-Part 2 (pull request #80, draft, not merged; the owner's hand test pending) builds the finale and the melt in a second
+Part 2 (pull request #80, merged 2026-11-25 after the owner's hand test) builds the finale and the melt in a second
 session configuration on wire 27 (ruling V1 of 2026-11-23 and the ruling of 2026-11-24, which replaced V2's wire 26), which `doom-play` now plays; the easy skills and E1M7 on
 skill 3 are a later pull request (wire 28).** One
 `doom-play` run now plays Episode 1 as the original does between levels: both exits, the intermission, the next map with the
@@ -3766,7 +3766,7 @@ compared in retail as well as registered ([record](validation/M6A.md)).
 
 ### The finale and the melt (M6a part 2)
 
-Built in pull request #80 (not merged; the owner's hand test passed on 2026-11-24, [record](validation/M6A.md#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24)) in the session's finale-and-melt configuration,
+Built in pull request #80 (merged 2026-11-25; the owner's hand test passed on 2026-11-24, [record](validation/M6A.md#9-the-owners-hand-test-of-9e3734ae-and-his-five-sessions-against-the-genuine-engine-2026-11-24)) in the session's finale-and-melt configuration,
 on [wire 27](#wire-27-the-wrapping-p_interceptvector) (the owner's ruling of 2026-11-24: the real E1M8 reaches its exit only with the wrapping
 `P_InterceptVector`, so the configuration moved from wire 26 before it was frozen; this pull request adds no wire and does not
 change `doom-sim`), and played by `doom-play`. Part 1's configuration stays on wire 26 and keeps the
@@ -3865,7 +3865,7 @@ None is fixed. "Reproduced" means the session does what the C does and the genui
 
 | # | Quirk (C) | Status |
 | --- | --- | --- |
-| 1 | No intermission after E1M8 (g_game.c:1033-1038) | part 1's configuration: typed refusal at the finale's first tic, state preserved, compared up to that tic. Part 2's (pull request #80, not merged, hand test pending): reproduced, the victory tic goes straight to the finale, compared with the genuine goldens |
+| 1 | No intermission after E1M8 (g_game.c:1033-1038) | part 1's configuration: typed refusal at the finale's first tic, state preserved, compared up to that tic. Part 2's (pull request #80, merged 2026-11-25): reproduced, the victory tic goes straight to the finale, compared with the genuine goldens |
 | 2 | The tally waits for a press, counted as a rising edge (wi_stuff.c:1413-1424, 1470-1498) | reproduced |
 | 3 | The background animation is never drawn, its 20 draws happen (wi_stuff.c:588, 523) | reproduced (draws compared, nothing drawn) |
 | 4 | The "you are here" pointer is hidden on a session's first ShowNextLoc frame (wi_stuff.c:749, 768, 814) | reproduced |
@@ -3875,7 +3875,7 @@ None is fixed. "Reproduced" means the session does what the C does and the genui
 | 8 | A carried chainsaw makes its raise sound at load (p_pspr.c:145-146) | reproduced |
 | 9 | Level sounds play on into the intermission (s_sound.c:209-211) | reproduced |
 | 10 | The reborn comes on the first use press, with both random indices kept (p_user.c:227-228) | reproduced |
-| 11 | The finale never ends (f_finale.c:207-249) | part 1's configuration: not built (with 1). Part 2's (pull request #80, not merged, hand test pending): reproduced, the art screen stays until the quit |
+| 11 | The finale never ends (f_finale.c:207-249) | part 1's configuration: not built (with 1). Part 2's (pull request #80, merged 2026-11-25): reproduced, the art screen stays until the quit |
 | 12 | A reborn and an exit in the same tic reload the map (g_game.c:611-623, 929-931) | ruled inferred, then observed in a genuine run of the synthetic items `USEAT131` and its controls; the Rust session equals those goldens. Not observed on the owner's IWAD |
 | (13) | The carried status-bar face `STFST00` after a level change (st_stuff.c:384, 757-758) | reproduced; found by the display work, not among the twelve |
 

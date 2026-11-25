@@ -2921,6 +2921,17 @@ would share one target directory and a mutant could be tested with another mutan
 test harness. The mutants in the window's event handlers and in `audio::probe` cannot be caught without a display or a real audio device;
 the dispositions are in the [M5d record](validation/M5D.md#the-local-mutation-run-on-doom-play).
 
+Since 2026-11-25 the key-down, key-up and focus-lost handlers' logic is in `input_log.rs` and is tested
+(`window_handler_tests.rs`); only their one-line calls in `window.rs` remain out of reach. **`doom-render` and `doom-sound`
+with `doom-game`'s tests** (CI tests each crate with its own tests only; `cross.patch` is the same diff for those two crates):
+
+```sh
+CARGO_PROFILE_DEV_OPT_LEVEL=1 cargo mutants -p doom-render -p doom-sound --test-package doom-render \
+  --test-package doom-sound --test-package doom-game --test-tool nextest -j 2 --timeout 600 --build-timeout 900 \
+  --in-diff ~/scratch/mutants/cross.patch -o ~/scratch/mutants/cross-out -- \
+  -E 'package(doom-render) | package(doom-sound) | binary(~m6a_finale_melt) | binary(~m6a2_) | binary(m6a_chain_finale_melt)'
+```
+
 ## M6a Episode 1 in one session (part 1 merged, part 2 in progress)
 
 The M6a [reference investigation](M6A_REFERENCE_INVESTIGATION.md) (the owner's rulings on U1-U15 of 2026-11-21) has two
@@ -3298,6 +3309,9 @@ cargo test -p doom-game --test m6a2_full_crawl --test m6a2_melt_sb11 -- --nocapt
   item at screenblocks 11 with its melts and plants a column off by one, a dropped step and a wrong palette there.
 - **CI**: the job `M6a genuine session` runs `m6a2_wad.py --check --selftest` and `m6a2_goldens.py --check --selftest`
   in one added step after its part 1 steps (Linux only; leak detection disabled in its address variants).
+- **The victory-tic display stop** (2026-11-25): `python3 tools/reference/m6a2_victory_stops.py --work DIR --check --selftest`
+  runs the genuine engine on the three sets without the crawl's flat or font and compares with the committed record (a
+  further step of the same CI job); `cargo test -p doom-game --test m6a2_victory_stops` compares Rust with that record.
 
 The tests print their counts with `-- --nocapture`. What they compared is in the
 [investigation note](M6A_REFERENCE_INVESTIGATION.md#7-part-2-plan-size-and-decisions-for-the-owner-2026-11-23)
