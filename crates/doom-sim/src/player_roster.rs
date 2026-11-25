@@ -57,6 +57,7 @@ impl Simulation {
                 | OriginalExecutionProfile::PlayerMonstersEpisode1V3
                 | OriginalExecutionProfile::PlayerMonstersEpisode1V4
                 | OriginalExecutionProfile::PlayerMonstersEpisode1V5
+                | OriginalExecutionProfile::PlayerMonstersEpisode1V6
         )
     }
 
@@ -155,6 +156,7 @@ impl PerceptionRoster<'_> {
                     | OriginalExecutionProfile::PlayerMonstersEpisode1V3
                     | OriginalExecutionProfile::PlayerMonstersEpisode1V4
                     | OriginalExecutionProfile::PlayerMonstersEpisode1V5
+                    | OriginalExecutionProfile::PlayerMonstersEpisode1V6
             )
         )
     }

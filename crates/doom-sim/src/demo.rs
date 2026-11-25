@@ -35,6 +35,10 @@ pub const DEMO_SKILL_INDEX: usize = 1;
 /// (M4b decision I4): 2 (`sk_medium`) and 3 (`sk_hard`). The wire-24 constructor
 /// decides which of them it executes.
 pub const EPISODE1_V2_DEMO_SKILLS: RangeInclusive<u8> = 2..=3;
+/// The skills [`parse_demo_episode1_v3`] and [`write_demo_episode1_v3`] admit
+/// (wire 28, ruling U12 (iii)): 0 (`sk_baby`) to 3 (`sk_hard`); nightmare (4)
+/// stays refused.
+pub const EPISODE1_V3_DEMO_SKILLS: RangeInclusive<u8> = 0..=3;
 
 /// The varying part of an Episode 1 demo header (decision H10): every other
 /// byte equals [`DEMO_HEADER`]'s.
@@ -177,13 +181,28 @@ pub fn parse_demo_episode1(bytes: &[u8], map: u8) -> Result<(DemoHeader, Demo), 
 /// [`DemoError::Header`] at [`DEMO_SKILL_INDEX`]). [`parse_demo_episode1`] keeps
 /// admitting skill 2 alone.
 pub fn parse_demo_episode1_v2(bytes: &[u8], map: u8) -> Result<(DemoHeaderV2, Demo), DemoError> {
+    parse_skilled(bytes, map, EPISODE1_V2_DEMO_SKILLS)
+}
+
+/// Read a version-110 demo for wire 28: as [`parse_demo_episode1_v2`], except
+/// that the skill byte may be any of [`EPISODE1_V3_DEMO_SKILLS`] (0 to 3; any
+/// other value is [`DemoError::Header`] at [`DEMO_SKILL_INDEX`]).
+pub fn parse_demo_episode1_v3(bytes: &[u8], map: u8) -> Result<(DemoHeaderV2, Demo), DemoError> {
+    parse_skilled(bytes, map, EPISODE1_V3_DEMO_SKILLS)
+}
+
+fn parse_skilled(
+    bytes: &[u8],
+    map: u8,
+    skills: RangeInclusive<u8>,
+) -> Result<(DemoHeaderV2, Demo), DemoError> {
     if !EPISODE1_DEMO_MAPS.contains(&map) {
         return Err(DemoError::MapArgument { map });
     }
     let header = bytes.get(..DEMO_HEADER.len()).ok_or(DemoError::Truncated)?;
     if let Some((index, &value)) = header.iter().enumerate().find(|(i, b)| match *i {
         DEMO_MAP_INDEX => !EPISODE1_DEMO_MAPS.contains(b),
-        DEMO_SKILL_INDEX => !EPISODE1_V2_DEMO_SKILLS.contains(b),
+        DEMO_SKILL_INDEX => !skills.contains(b),
         _ => **b != DEMO_HEADER[*i],
     }) {
         return Err(DemoError::Header { index, value });
@@ -262,10 +281,30 @@ pub fn write_demo_episode1_v2(
     skill: u8,
     commands: &[TicCommand],
 ) -> Result<Vec<u8>, DemoError> {
+    write_skilled(map, skill, commands, EPISODE1_V2_DEMO_SKILLS)
+}
+
+/// Write `commands` as a version-110 wire-28 demo: as
+/// [`write_demo_episode1_v2`] with `skill` in [`EPISODE1_V3_DEMO_SKILLS`]. For
+/// skills 2 and 3 the bytes equal [`write_demo_episode1_v2`]'s.
+pub fn write_demo_episode1_v3(
+    map: u8,
+    skill: u8,
+    commands: &[TicCommand],
+) -> Result<Vec<u8>, DemoError> {
+    write_skilled(map, skill, commands, EPISODE1_V3_DEMO_SKILLS)
+}
+
+fn write_skilled(
+    map: u8,
+    skill: u8,
+    commands: &[TicCommand],
+    skills: RangeInclusive<u8>,
+) -> Result<Vec<u8>, DemoError> {
     if !EPISODE1_DEMO_MAPS.contains(&map) {
         return Err(DemoError::MapArgument { map });
     }
-    if !EPISODE1_V2_DEMO_SKILLS.contains(&skill) {
+    if !skills.contains(&skill) {
         return Err(DemoError::Header {
             index: DEMO_SKILL_INDEX,
             value: skill,

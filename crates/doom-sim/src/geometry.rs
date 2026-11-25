@@ -213,6 +213,11 @@ pub struct StaticWorld {
     /// operand (`crate::intercept_vector::sight_intercept`). False under every
     /// other policy.
     pub(crate) wrapping_intercept: bool,
+    /// Wire 28 alone: the one-sided boundary the monster escape witness tests
+    /// after every accepted XY move of a non-player, non-missile mover
+    /// (`OriginalExecutionProfile::has_monster_escape_witness`); `None` under
+    /// every other policy and on a map without a boundary. Never canonical.
+    pub(crate) escape_witness: Option<std::sync::Arc<crate::player_map_scale::Boundary>>,
     floor: Fixed,
     ceiling: Fixed,
 }
@@ -292,6 +297,7 @@ impl StaticWorld {
             sight_query_limit: 64,
             checked_arithmetic: false,
             wrapping_intercept: false,
+            escape_witness: None,
             floor,
             ceiling,
         })
