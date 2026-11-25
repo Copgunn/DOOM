@@ -30,3 +30,5 @@
 /tools/reference/*.h linguist-language=C
 # The M6a part 2 goldens are compared byte for byte and must survive checkout unchanged.
 /tests/reference/m6a2_*/* -text
+# The victory-tic stops record is compared byte for byte (tools/reference/m6a2_victory_stops.py --check).
+/tests/reference/m6a2_victory_stops/* -text

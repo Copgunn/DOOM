@@ -1,0 +1,48 @@
+{
+ "schema": "DOOM-M6A2-VICTORY-STOPS-v1",
+ "generator": "tools/reference/m6a2_victory_stops.py",
+ "base_item": "FINREG",
+ "base_lmp_sha256": "79cdda646e2739bdadb968d62d35468a4b50ef5ac12e03eef13201f2b3727e1c",
+ "items": {
+  "NOFLAT": {
+   "wad": "tests/reference/m6a_wads/m6a_gfx.wad",
+   "renamed": [
+    "FLOOR4_8"
+   ],
+   "wad_sha256": "96fa5d4647c9460a2d64618e793c74f2b901c1d1e0f4ae86eb2fc8636577daa5",
+   "end": "error:W_GetNumForName: FLOOR4_8 not found!",
+   "session_lines_equal_to_finreg": 652,
+   "frames_lines_equal_to_finreg": 983,
+   "sound_lines_equal_to_finreg": 588,
+   "stop_tic": 321,
+   "stop": "W_GetNumForName: FLOOR4_8 not found!",
+   "tics_run": 321
+  },
+  "NOGLYPH": {
+   "wad": "tests/reference/m5b_gfx.wad",
+   "renamed": [
+    "STCFN079"
+   ],
+   "wad_sha256": "a23a2c18e6f73426ddcf6e31a0ea382cc9dfa090900b140d4a2e074e05839b2d",
+   "end": "error:W_GetNumForName: STCFN079 not found!",
+   "session_lines_equal_to_finreg": 0,
+   "frames_lines_equal_to_finreg": 18,
+   "sound_lines_equal_to_finreg": 11,
+   "stop_tic": -1,
+   "stop": "W_GetNumForName: STCFN079 not found!",
+   "tics_run": 0
+  },
+  "NOFONT": {
+   "wad": "tests/reference/m5b_gfx.wad",
+   "renamed": "STCFN033..STCFN095",
+   "wad_sha256": "61cc0b6f81514cf850fb0e20048d09a5f37033e7ad80f163ebce9145e1d8bfa0",
+   "end": "error:W_GetNumForName: STCFN033 not found!",
+   "session_lines_equal_to_finreg": 0,
+   "frames_lines_equal_to_finreg": 18,
+   "sound_lines_equal_to_finreg": 11,
+   "stop_tic": -1,
+   "stop": "W_GetNumForName: STCFN033 not found!",
+   "tics_run": 0
+  }
+ }
+}
