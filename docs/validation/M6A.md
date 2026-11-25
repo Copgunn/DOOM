@@ -533,7 +533,31 @@ SHA-256). Decoders only; restore is not driven. Commands in [TESTING](../TESTING
 
 ## 11. Mutation testing of part 2's changed lines (cargo-mutants 27.1.0)
 
-@@CI@@
+**`doom-sim`, `doom-render`, `doom-sound`, `doom-game`, in CI** (the `Mutants` workflow, label `run-mutants`, run
+45552261285 on `9e3734ae`, 24 shards, each mutant tested with its own crate's tests only): 706 mutants, **496 caught,
+119 missed, 8 timed out, 83 unviable**. By crate, missed and timed out: `doom-game` 26 and 2, `doom-render` 86 and 6,
+`doom-sound` 7 and 0; `doom-sim` has no changed line.
+
+**`doom-game`: 26 missed and 2 timed out; 25 answered by new tests, 3 justified.** The nine tests are in the new file
+`crates/doom-game/tests/m6a2_mutants.rs`; each kill was observed by applying the mutation by hand.
+
+| Survivor | Answer |
+| --- | --- |
+| `app/finale_melt.rs:143:9` `AppMelt::fresh` to `Default::default()`; `144:13` field `fault` deleted | killed by `a_restart_keeps_the_planted_fault` |
+| `app/finale_melt.rs:276:87` `%` to `/`; `276:91` `==` to `!=`; `279:23` `+=` to `*=`, `-=` | killed by `the_skip_fault_runs_the_second_step_of_an_odd_one_and_counts_it` |
+| `app/finale_melt.rs:409:34` `==` to `!=`; `53:39` `*` to `+` | killed by `the_held_bound_and_the_release_all_at_the_melts_end` |
+| `session/finale.rs:46:9` `Display for FinaleRefusal` to `Ok(Default::default())` | killed by `a_finale_refusal_displays` |
+| `session/state_v2.rs:228:24` `>` to `==`, `>=` in `decode` | killed by `the_reader_size_bound_is_exact` |
+| `state_v2.rs:415:17`, `416:17` match arms 6 and 8 deleted; `484:9` `check_outside_intermission` to `Ok(())`; `485:44`, `489:22` `&&` to `\|\|` | killed by `forged_states_outside_the_intermission` |
+| `state_v2.rs:500:9` `check_intermission` to `Ok(())`; `513:26`, `514:38`, `521:29`, `521:48` `&&` to `\|\|` | killed by `forged_intermissions` |
+| `state_v2.rs:646:25`, `647:25` `&&` to `\|\|` in `restore_v2` | killed by `restore_refuses_wminfo_counts_of_another_level` |
+| timeouts `app/finale_melt.rs:260:19` `+=` to `*=` (the slot counter stays 0, so the update loop never ends) and `356:9` `App::melt_step` to `()` (the melt never ends) | endless loops, explained; also failed, bounded, by `a_melt_step_is_shown_and_one_slot_runs_one_tic` |
+| `app/finale_melt.rs:339:21` `&&` to `\|\|` in `finale_melt_tic` | **no test; argued unreachable:** it differs only for a session ended in a finale stage other than 1, and the only finale refusal that ends a session is the art screen's (stage 1) |
+| `app/finale_melt.rs:420:9` `end_melt_for_sink` to `()` | **no test; argued unreachable:** it matters only if a session ends while a melt is shown, and no path ends one there |
+| `session/finale_melt.rs:66:34` `%` to `+` | **equivalent:** `(320 + 256) as u8` and `(320 % 256) as u8` are both 64 |
+
+**`doom-render` and `doom-sound`:** the 93 missed mutants are being run again locally with `doom-game`'s tests
+included, because the tests of the finale and the melt live there; the result is added to this section when it is done.
 
 **`doom-play`, local** (CI's workflow does not mutate it; the command of
 [TESTING](../TESTING.md#local-mutation-run-on-doom-play-cis-workflow-does-not-mutate-it), `-j 2`, a scratch worktree of
