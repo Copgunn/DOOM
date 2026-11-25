@@ -15,13 +15,17 @@ tics completed before it: the number `doom-play` prints. A refusal at session ti
 
 Two real E1M8 sessions at skill 2, recorded by the owner, are refused by wire 26 with `MapScale(Arithmetic)`: at session
 tic 3894 and at session tic 3064, the first tic after each recording's end (shown on our copies extended with idle tics,
-section 4). The cause is `P_InterceptVector` (p_maputl.c:231-251): its `int` sums overflow there, and the genuine engine,
-built with `-fwrapv`, wraps. Wires 23 to 26 refuse such a tic (decision H3). **Wire 27 reproduces the wrap only for the
+section 4). The cause is `P_InterceptVector` (p_maputl.c:231-251): its value leaves exact arithmetic there, by the two
+mechanisms below. Wires 23 to 26 refuse such a tic (decision H3). **Wire 27 reproduces the wrap only for the
 caller and wrap-class pairs that a genuine-compared item takes (section 3); it does not wrap "whole" or "for every
 caller".** Wire 26's refusal on E1M8 is a known gap, documented and not patched.
 
-**The claim names the genuine build:** linuxdoom-1.10 compiled with `-fwrapv` (the "strict" build) compiles the genuine
-text and is the claim. Every state digest below is that build's, projected by the independent `DSIM` 43 encoder
+**The claim names the genuine build and both mechanisms:** linuxdoom-1.10's genuine text compiled by GCC with `-fwrapv`
+(the "strict" build). (1) **Narrowing:** `FixedMul` returns its `long long` product as `fixed_t` (m_fixed.c:48); a product
+outside `int` is reduced modulo 2^32 by GCC's implementation-defined conversion. It is not undefined behaviour, no
+sanitizer here reports it, and **`-fwrapv` does not govern it**. (2) **Signed overflow:** the `int` subtraction of
+p_maputl.c:240 and the `int` sum of 246-248 overflow; that is undefined in C, and **`-fwrapv` makes it wrap**. Every state
+digest below is the strict build's, projected by the independent `DSIM` 43 encoder
 (`tools/reference/level_snapshot_wire27.py`), never Rust output.
 
 ## 2. The eight genuine items (CI)
@@ -32,16 +36,21 @@ that makes the traces' intercept leave `int`), one demo script per slot. Item da
 [wire27_state.txt](../../tests/reference/wire27_state.txt). Wire 27 equals the genuine strict build at every tic of every
 item; wire 26 refuses each item at the tic shown (session tic).
 
-| Item | Slot | Tics | Wrapping calls the genuine engine made | Wire 26 refuses at | Nowrap build stops at |
-| --- | --- | ---: | --- | ---: | --- |
-| USE | E1M1 | 16 | use, cancel x1 | 5 | p_maputl.c:246-248, tic 5 |
-| SLIDE | E1M2 | 35 | slide, cancel x15 | 20 | no stop |
-| AIMSHOT | E1M3 | 35 | aim cancel x2; aim and shoot_line "den wrong, num exact" x1 each | 18 | 246-248, tic 18 |
-| SHOOTZ | E1M4 | 35 | shoot_line, den wraps to zero x1 | 18 | no stop |
-| SATUR | E1M5 | 35 | shoot_line, wrong/wrong, saturation MAXINT x1 | 18 | 246-248, tic 18 |
-| NUMWRAP | E1M6 | 35 | shoot_line, wrong/wrong, FixedDiv2 x1 | 18 | no stop |
-| SATNEG | E1M7 | 35 | shoot_line, wrong/wrong, saturation MININT x1 | 18 | no stop |
-| SHOOTC | E1M8 | 35 | aim cancel x2; shoot_line cancel x1 | 18 | 246-248, tic 18 |
+| Item | Slot | Tics | Wrapping calls the genuine engine made | Mechanism of those calls (witness rows) | Wire 26 refuses at | Nowrap build stops at |
+| --- | --- | ---: | --- | --- | ---: | --- |
+| USE | E1M1 | 16 | use, cancel x1 | a num product narrows and the num sum overflows | 5 | p_maputl.c:246-248, tic 5 |
+| SLIDE | E1M2 | 35 | slide, cancel x15 | a num product narrows; **no overflow** | 20 | no stop |
+| AIMSHOT | E1M3 | 35 | aim_line cancel x2; aim_line and shoot_line "den wrong, num exact" x1 each | every call: a num product narrows and the num sum overflows; the wrong-den aim_line call also overflows the den subtraction; the shoot_line call also narrows a den product | 18 | 246-248, tic 18 |
+| SHOOTZ | E1M4 | 35 | shoot_line, den wraps to zero x1 | a den product narrows; **no overflow** | 18 | no stop |
+| SATUR | E1M5 | 35 | shoot_line, wrong/wrong, saturation MAXINT x1 | a den product narrows and the num sum (of two products that fit) overflows | 18 | 246-248, tic 18 |
+| NUMWRAP | E1M6 | 35 | shoot_line, wrong/wrong, FixedDiv2 x1 | a den and a num product narrow; **no overflow** | 18 | no stop |
+| SATNEG | E1M7 | 35 | shoot_line, wrong/wrong, saturation MININT x1 | a den and a num product narrow; **no overflow** | 18 | no stop |
+| SHOOTC | E1M8 | 35 | aim_line cancel x2; shoot_line cancel x1 | a num product narrows and the num sum overflows | 18 | 246-248, tic 18 |
+
+**Four of the eight items (SLIDE, SHOOTZ, NUMWRAP, SATNEG) never stop the build without adapters:** their wraps are
+narrowings only, so there is no signed overflow for the sanitizer to report, and `-fwrapv` plays no part in them. **No
+witnessed call overflows a sum without also narrowing a product**, so the `-fwrapv` wrap is never witnessed alone. The
+mechanism of every wrapping call is the last column of `wrapping_calls` in the results file.
 
 What the wrap does in each: SHOOTZ, intercept 0, a puff behind the shooter, the barrel not hit; SATUR, a wall added with
 fraction MAXINT that is never traversed, the shot hits the barrel behind it; SATNEG, a negative fraction is "behind
@@ -50,9 +59,9 @@ arithmetic puts it at the wall; AIMSHOT, the wall is not hit, no puff.
 
 How the item data was produced. The **witness build** (strict flags, `-finstrument-functions` on p_maputl.c and
 `--wrap` of `FixedMul`, `FixedDiv` and `P_PathTraverse`, [wire27_witness.c](../../tools/reference/wire27_witness.c)) logs
-every `P_InterceptVector` call with its caller and operands; the **nowrap build** (the overflow build without the two
-adapters) must stop at the first `int` add or subtract overflow the witness shows and otherwise run to the end identical
-to strict (the "Nowrap build stops at" column). The **overflow** (UBSan, `-fno-wrapv`) and **address** (ASan + UBSan)
+every `P_InterceptVector` call with its caller (aim and shoot each split into line and thing) and operands; the **nowrap
+build** (the overflow build without the two adapters) must stop at the first `int` add or subtract overflow the witness
+shows and otherwise run to the end identical to strict (the "Nowrap build stops at" column). The **overflow** (UBSan, `-fno-wrapv`) and **address** (ASan + UBSan)
 builds compile p_maputl.c with two declared sanitizer adapters, applied by `tools/reference/wire27_goldens.py` to its own
 copy: p_maputl.c:240 and p_maputl.c:246-248, unsigned casts around the two sums (original and adapted text and their
 SHA-256 are in the results file). Those two builds, the witness build and the strict build gave identical dumps, sound
@@ -75,7 +84,7 @@ takes the pair and the genuine calls it witnessed; "refused" means the tic is re
 kept, and **no genuine item reaches any refusal: refusals are shown by unit tests only**
 (`wire27_admits_exactly_the_witnessed_classes` checks the table against the `T` rows).
 
-| Wrap class | aim | shoot_line | slide | use |
+| Wrap class | aim_line | shoot_line | slide | use |
 | --- | --- | --- | --- | --- |
 | wraps cancel (den and num exact, FixedDiv2) | AIMSHOT 2, SHOOTC 2 | SHOOTC 1 | SLIDE 15 | USE 1 |
 | den wrong, num exact, FixedDiv2 | AIMSHOT 1 | AIMSHOT 1 | refused | refused |
@@ -85,21 +94,26 @@ kept, and **no genuine item reaches any refusal: refusals are shown by unit test
 | den wraps to zero | refused | SHOOTZ 1 | refused | refused |
 
 - **Each admitted pair rests on one or two witnessed calls, with two exceptions: `slide`'s cancel pair has 15 (all in
-  SLIDE) and `aim`'s cancel pair has 4 (two in each of two items).** Every other admitted pair has exactly one.
-- **shoot_thing** stays on the checked computation: a thing's intercept line is its diagonal, 2 x radius, so the products
-  cannot wrap on an admitted map. There is no item for it, and every wrap class refuses.
+  SLIDE) and `aim_line`'s cancel pair has 4 (two in each of two items).** Every other admitted pair has exactly one.
+- **aim_thing and shoot_thing** (the aim and shoot traces against a thing) stay on the checked computation: a thing's
+  intercept line is its diagonal, 2 x radius, so the products cannot wrap on an admitted map. There is no item for
+  either, and every wrap class refuses. Every witnessed aim wrap is against a line (owner's ruling S1, 2026-11-24).
 - **No-wrap classes** are admitted for every caller and equal wire 26's checked value. Ordinary division has genuine calls
-  for every caller except use (aim 18, shoot_line 1, shoot_thing 8, slide 7); no item reaches an unwrapped saturation or
-  an exactly-zero unwrapped denominator.
+  for every caller except use (aim_line 2, aim_thing 16, shoot_line 1, shoot_thing 8, slide 7); no item reaches an
+  unwrapped saturation or an exactly-zero unwrapped denominator.
 - **Refused for every caller:** a numerator or denominator exactly `INT_MIN`, wrapped or not (`AbsMin`; `abs(INT_MIN)` is
   undefined even under `-fwrapv`, so **refused, not reproduced**); FixedDiv2's `I_Error` range (`Div2Range`); every wrap
-  class not in the table, including saturation for aim, slide and use and saturation with an exact numerator.
-- **A monster's aim trace is as long as its shot, so the aim row limits monster fire:** aim admits only "cancel" and "den
-  wrong, num exact"; a monster shot whose aim trace falls in any other wrap class refuses the tic.
+  class not in the table, including saturation for aim_line, slide and use and saturation with an exact numerator.
+- **A monster's aim trace is as long as its shot, so the aim_line column limits monster fire:** it admits only "cancel"
+  and "den wrong, num exact"; a monster shot whose aim trace falls in any other wrap class refuses the tic.
 - **Saturation signs.** Genuine items cover two of the four sign combinations: SATUR (numerator and denominator both
   positive, MAXINT) and SATNEG (numerator positive, denominator negative, MININT). The other two (numerator negative with
   denominator positive; both negative) rest on unit tests only
   (`a_wrapped_saturation_follows_the_sign_of_num_xor_den`, m_fixed.c:62-63).
+- **Witnessed only where the result has no effect or one effect** (owner's ruling S2, 2026-11-24; no new item): "den
+  wrong, num exact" is witnessed only where the result was negative and discarded as behind the source (-52,180 for
+  aim_line, -1,608,494 for shoot_line); a call of that class whose result lies in [0, 1] is admitted with no item in
+  which the engine acts on it. "Den wraps to zero" is witnessed only against a one-sided wall.
 - **Sight** (`P_InterceptVector2`, p_sight.c:109-128) does not wrap under wire 27: it stays checked and additionally
   refuses an exactly-`INT_MIN` numerator or denominator.
 - **After wire 27** the code reading is: no `FixedDiv` site is neither refused on an `INT_MIN` operand nor proven unable to
@@ -114,7 +128,7 @@ can still meet one.
 `tools/local/wire27_session_real.py` reads the IWAD in place through a symlink, never a copy. The "+700 idle" rows are
 **our constructions** (each recording extended by 700 idle tics so that it passes the point where wire 26 refuses); the
 two recordings are **the owner's**. Compared with the genuine strict build after every tic through the independent
-encoder. Final code, rerun:
+encoder. Final code (with the aim_thing caller of ruling S1), rerun on 2026-11-24:
 
 | Session | Wire | Tics compared | Result | Level ended |
 | --- | --- | ---: | --- | --- |
@@ -128,8 +142,8 @@ encoder. Final code, rerun:
 | 115513 + 700 idle tics (our construction) | 27 | 3093 | pass | yes |
 
 Self-test: a flipped ticcmd and an extra `P_Random` draw are each detected at the next capture. No wrap occurred in the
-recorded parts; the extensions logged three wrapping calls (one aim, two shoot_line), all in the cancel class;
-shoot_thing never wrapped.
+recorded parts; the extensions logged three wrapping calls (one aim_line, two shoot_line), all in the cancel class;
+aim_thing and shoot_thing never wrapped.
 
 **Saturation in E1M8: not observed in these sessions, not ruled out.** Ruled out, by an in-memory check of 43,646,976
 line, direction, trace-length and nudge combinations: a wrapped denominator small enough to saturate, or equal to
@@ -142,8 +156,13 @@ One scratch driver built against each tree, master (25cdb3ba) and the branch (ca
 families under wires 23 to 26, the eight items under wires 23 to 26, and admission of 92 maps by 38 constructors) and 273
 on real maps (nine Episode 1 maps, wires 23 to 26, including the two recordings and the two extended copies).
 **Limits:** wires 1 to 22 got the admission comparison and their existing tests only; the driver is not committed (kept in
-scratch during the PR). No existing test, fixture, golden or manifest is modified or deleted; the test list grew by 17
-(13 unit, 4 integration; one doctest only shifted a line), and every existing generator's `--check` matched.
+scratch during the PR). No existing test, fixture, golden or manifest is modified or deleted; the test list grew by 18
+(14 unit, 4 integration; one doctest only shifted a line), and every existing generator's `--check` matched.
+
+**After that comparison (cac2ae37) the source changed once more** (ruling S1: the aim_thing caller). It cannot affect
+wires 1 to 26: the caller is read only by `wire27_intercept`, which `policy_intercept` reaches only when
+`wrapping_intercept` is set (wire 27 alone); under every other wire `policy_intercept` returns `checked_intercept`
+whatever the caller. The 3,585-line comparison was not rerun on the new head.
 
 ## 6. The BLOCKMAP census and the bound on the intercept operands
 
@@ -178,7 +197,7 @@ passes on all nine maps.
 
 > **Marked for the independent read: (a) the derivation below, and (b) its premise 7**, that every actor's centre stays
 > inside the map's vertex rectangle. That premise is a Rust admission rule, not a C fact; "proven on seven maps" rests on
-> it. Neither has had the independent read yet.
+> it. Both were read on 2026-11-24 by an independent reader (section 11).
 
 **The derivation** (transcribed from the docstring of `tools/local/e1_blockmap_listings.py`; R is the map's closed vertex
 rectangle, in map units):
@@ -229,7 +248,8 @@ rectangle, in map units):
    passes through the centre c, so d is at most |c - t|, at most span + 2 x margin, with L1 = 4r, r at most 128 (info.c:1619).
 10. *Lines tested:* every word of every list (reading (b)) for traces, every linedef for sight.
 
-Step 8 is where the overshoot of section 7 matters: the "64 + 1 + 1" cells assume the walk stays near the trace.
+Step 8 is where the overshoot of section 7 matters: the "63 + 1 + 1" cells count the walk's 64 cells, not the trace's
+length, so the bound of step 8 holds when the walk overshoots.
 
 ## 7. The block-walk overshoot (a stub harness, not a full-engine run)
 
@@ -242,7 +262,7 @@ say only that a very long trace is cut short; the overshoot is the new row Q-p_m
 certificate that a visited cell lies within 2,048 + 128 + 1 units of the trace start does not hold when the walk
 overshoots ([dated note](../M3H6_REFERENCE_INVESTIGATION.md), after the bound on `P_InterceptVector`). Nothing in
 code or certificate was changed; the seven maps still pass under the map-extent bound of section 6, **which rests on the
-vertex-rectangle premise (step 7), a Rust admission rule marked for the independent read.**
+vertex-rectangle premise (step 7), a Rust admission rule (section 11).**
 
 ## 8. Fuzzing, by type (the run from the repository's seeds only)
 
@@ -273,9 +293,26 @@ Target `fuzz/fuzz_targets/wire27_dsim43.rs` (the decoder `Diagnostic::decode_epi
   equivalent.** It is an **open survivor**: the owner accepted the stated reason for this pull request (2026-11-24), and it
   is a named item of the later certificate-audit pull request, to be closed there by a test or by a proof with a C
   citation.
+- **Scope 3**, the source lines of ruling S1 (`--in-diff` of `intercept_vector.rs` and `combat_trace.rs`, efc70018 against
+  ed527aaf), full `doom-sim` suite: 7 generated, 6 caught, 0 missed, 1 unviable (`TraceKind::caller` replaced by
+  `Default::default()` does not compile). Scopes 1 and 2 were not rerun.
 
 ## 10. CI note
 
 On one earlier head the macOS job failed once in an existing `doom-play` wall-clock test
 (`a_stalled_disk_keeps_the_queue_bounded_and_loses_no_tic`: 747 ms against 500 ms), unrelated to this PR, and passed on
 rerun. The fix is for a later PR ([ROADMAP](../ROADMAP.md)).
+
+## 11. The independent read (2026-11-24)
+
+An independent reader read the code, the C and this record at head ed527aaf and found no must-fix; the owner's rulings S1
+to S3 on its findings are the split aim caller, the limits and the two mechanisms above. On section 6 it found that the
+derivation follows from its premises, and it read the enforcement of premise 7 at the pre-tic, post-tic and teleport
+checks, **not for every actor kind and not for actors spawned during a tic**.
+
+**The reader's local, uncommitted results** (a scratch harness outside the repository, not rerunnable from it; committing
+it is a named item of the later audit pull request): the repository's `intercept_vector.rs`, included unmodified, against
+the genuine text of m_fixed.c:43-87 and p_maputl.c:231-251 built with the strict flags (`-fwrapv`), over 1,500,000 operand
+sets: **0 mismatches** in value, in admit or refuse per caller and class, and in the `INT_MIN` refusal. In the same run,
+of 33,155 operand sets with an `INT_MIN` operand and no wrap, **the wire 26 value differed from the C's in 9,008**: the
+silent divergence of wires 23 to 26 is real where it is reached. That run was made before ruling S1 (five callers).

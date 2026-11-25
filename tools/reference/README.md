@@ -828,7 +828,7 @@ DOOM2.WAD).
 ## Wire 27: the wrapping `P_InterceptVector` against the genuine engine
 
 - [wire27_wad.py](wire27_wad.py) draws [wire27.wad](../../tests/reference/wire27_wads) (eight map slots, one room
-  layout whose long slanted east wall makes `P_InterceptVector`, p_maputl.c:231-251, leave `int`) and the eight demo
+  layout whose long slanted east wall makes `P_InterceptVector`, p_maputl.c:231-251, leave exact arithmetic) and the eight demo
   scripts under [wire27_scripts](../../tests/reference/wire27_scripts); `--check` compares them. It overrides two
   values in-process while it builds the maps, declared in its `OVERRIDES` and in the results file: the builder's
   line-norm bound `m3h6_geometry.MAX_NORM` is raised to 16,382 so that the east wall stays one unsplit linedef, and
@@ -838,7 +838,8 @@ DOOM2.WAD).
   overflow and address (with the two declared sanitizer adapters of p_maputl.c:240 and 246-248, applied by this tool
   only; address runs use `detect_leaks=0`, so not LeakSanitizer coverage), witness (observers in
   [wire27_witness.c](wire27_witness.c) that log every `P_InterceptVector` call) and nowrap (the overflow build without
-  the adapters, which must stop at the witness's first `int` overflow). It writes or `--check`s
+  the adapters, which must stop at the witness's first `int` overflow; four items have none, their wraps being `FixedMul`
+  narrowings, which `-fwrapv` does not govern). It writes or `--check`s
   [wire27_state.txt](../../tests/reference/wire27_state.txt) (DSIM43 state digests per tic through the independent
   encoder [level_snapshot_wire27.py](level_snapshot_wire27.py), the witness counts per caller and class, and wire 27's
   decision for every caller and class) and [wire27_results.json](../../tests/reference/wire27_results.json). The Rust

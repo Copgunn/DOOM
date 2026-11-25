@@ -675,9 +675,10 @@ The entries marked merged below are done; they keep their place here because thi
     26 and 27, and whether any Rust path substitutes a reach-bounded set of lines or things for the C's actual block walk
     ([the gap](COMPATIBILITY.md#known-gap-the-block-walk-can-overshoot-its-end-cell)). A named item of that audit: the
     open mutation survivor at `movement.rs:869` (`&&` replaced with `||` in the slide's `checked` flag), not proven
-    equivalent, to be closed by a test or by a proof with a C citation ([record](validation/WIRE27.md)).
+    equivalent, to be closed by a test or by a proof with a C citation ([record](validation/WIRE27.md)). Another named
+    item: committing the independent reader's Rust-against-C harness ([record](validation/WIRE27.md#11-the-independent-read-2026-11-24)).
   - **The independent read** of the bound derivation and of its premise (every actor's centre stays inside the map's vertex
-    rectangle) is outstanding.
+    rectangle) was done on 2026-11-24; what it did not cover is in the record.
   - **A `doom-play` wall-clock test** (`a_stalled_disk_keeps_the_queue_bounded_and_loses_no_tic`) failed once on macOS
     in an unrelated run; its fix is a later pull request.
 - **Simulation follow-up (decided: the THING-loading truncation is closed under wire 25 only).** `P_LoadThings` ends the

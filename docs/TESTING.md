@@ -3167,9 +3167,9 @@ python3 tools/local/wire27_session_real.py --iwad IWAD --work DIR --recording FI
 - **`wire27_intercept` (4 tests).** Wire 27 equals the genuine engine at every tic of the eight items
   (`wire_27_equals_the_genuine_engine_on_every_item`); wire 26 refuses each at its first wrap; the witness covers every
   wrapping caller; planted faults are detected at their capture.
-- **`wire27_tests` in `doom-sim` (13 Rust-only unit tests, and the only evidence for the refusals).** The wrapping function
+- **`wire27_tests` in `doom-sim` (14 Rust-only unit tests, and the only evidence for the refusals).** The wrapping function
   equals the checked value where that exists (the 131 genuine C rows of `m3d3a_fractions.csv` and a sweep, with a 128-bit
-  reference); hand vectors of each wrap class; each refusal named; each caller's wrapping or checking; the DSIM43 identity; sight's `INT_MIN` refusal; the admitted classes against the `T` rows; the four sign pairs of a
+  reference); hand vectors of each wrap class; each refusal named; each caller's wrapping or checking (aim and shoot against a thing stay checked); the DSIM43 identity; sight's `INT_MIN` refusal; the admitted classes against the `T` rows; the four sign pairs of a
   wrapped saturation.
 - **Local real-map checks.** `e1_blockmap_listings.py` writes counts and PASS/FAIL only (`--verbose` prints bound magnitudes
   to the terminal for local review and never to a file); `wire27_session_real.py` compares recordings and constructions
