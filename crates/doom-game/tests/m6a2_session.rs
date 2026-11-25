@@ -198,7 +198,7 @@ fn full_crawl_items_at_both_sizes_against_the_genuine_goldens() {
 /// The frozen session (part 1, `Session::tic`) and the new one give the same reports, frames,
 /// `M_Random` index, sound (the new session's buffer of a melting tic taken from the melt's last
 /// step) and saved contents (`DSES` version 1 against version 2, field for field, the embedded
-/// level capture byte for byte, `DDSP` version 3 against version 4's version-3 part and `DSND`
+/// level capture field for field under wire 26's names (DSIM42 against DSIM43), `DDSP` version 3 against version 4's version-3 part and `DSND`
 /// version 2 against version 3's contents), on every tic both run: every drivable part 1 item up
 /// to the frozen session's first refusal (the victory, `NotYet::Victory`), at screenblocks 10.
 #[test]
@@ -307,7 +307,19 @@ fn the_frozen_and_new_sessions_agree_wherever_both_run() {
                     "{}",
                     w("saved session group")
                 );
-                assert_eq!(v1.level, v2.level, "{}", w("saved level"));
+                // Wire 26 (DSIM42) under the frozen session, wire 27 (DSIM43) under the new one:
+                // equal field for field once the three values that name the wire (the version,
+                // `profile`, `context.schema`) are read under wire 26's names (`wire26_fields`).
+                let (l1, l2) = (frozen.level().snapshot(), new.level().snapshot());
+                assert_eq!((l1.version(), l2.version()), (42, 43), "{}", w("wires"));
+                assert_eq!(v1.level, l1.canonical_bytes(), "{}", w("saved level 1"));
+                assert_eq!(v2.level, l2.canonical_bytes(), "{}", w("saved level 2"));
+                assert_eq!(
+                    m6a2_run::wire26_fields(&l1),
+                    m6a2_run::wire26_fields(&l2),
+                    "{}",
+                    w("saved level")
+                );
                 assert!(v2.display.melt.is_none() && !v2.sound.state.melt);
                 assert_eq!(v1.display, v2.display.session, "{}", w("saved display"));
                 assert_eq!(v1.sound, v2.sound.state, "{}", w("saved sound"));

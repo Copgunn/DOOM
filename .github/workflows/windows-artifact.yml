@@ -96,14 +96,16 @@ jobs:
             echo "mode. The last lines on the command prompt name the mode and where the"
             echo "session ended."
             echo
-            echo "Expected stops (not built yet; the screen says NOT BUILT YET or TIC"
-            echo "REFUSED and the session ends; R starts a new game, Q quits):"
-            echo "  - the exit of E1M8: the finale is not built yet"
+            echo "After E1M8 the finale plays: the text screen, then the picture, which"
+            echo "stays until you quit. The screen melt between screens is shown."
+            echo
+            echo "Expected stops (not built yet; the screen says TIC REFUSED and the"
+            echo "session ends; R starts a new game, Q quits):"
             echo "  - on skill 3, the start of E1M7 (reached from E1M6): not admitted yet"
             echo "  - skills 0 and 1 are refused at launch"
             echo "A music file that is missing from your IWAD also stops a session, as it"
-            echo "stops the original. Not a stop: the screen melt between screens is not"
-            echo "shown yet, so the new picture appears at once."
+            echo "stops the original. So does the finale picture in registered mode if"
+            echo "your IWAD has no HELP2 picture."
             echo
             echo "Please send back the .lmp files from doom-sessions (and the last lines"
             echo "of the command prompt) after each session, whatever happened; they are"

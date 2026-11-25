@@ -87,8 +87,8 @@ use doom_render::{
     Level, LevelChange, LumpDirectory, ResourceError, Resources, SessionError,
 };
 use doom_sim::{
-    CarriedStart, LevelExit, LevelStart, LevelStartError, MapContextOptions, SimError, Simulation,
-    Skill, StartKind, TicCommand,
+    CarriedStart, LevelExit, LevelStart, LevelStartError, SimError, Simulation, Skill, StartKind,
+    TicCommand,
 };
 use doom_sound::chain::{ChainConfig, ChainRefusal, ChainSound, ChainTic, IntermissionSound};
 use doom_sound::lumps::{SoundCaps, SoundLoadError, SoundSet};
@@ -635,14 +635,9 @@ impl Session {
         )
         .map_err(|e| StartError::Sound(SoundWitness::Chain(e)))?;
         let (map, level) = data.map(settings.map).map_err(StartError::Map)?;
-        let sim = Simulation::original_player_episode1_v4_level(
-            map.clone(),
-            settings.map,
-            skill,
-            MapContextOptions::default(),
-            LevelStart::NewGame,
-        )
-        .map_err(StartError::Admission)?;
+        let sim = config
+            .level_at(map.clone(), settings.map, skill, LevelStart::NewGame, 0)
+            .map_err(StartError::Admission)?;
         let cfg = DisplayConfig {
             screenblocks: settings.screenblocks,
         };
@@ -936,15 +931,10 @@ impl Session {
         } else {
             self.gametic
         };
-        let mut sim = Simulation::original_player_episode1_v4_level_at(
-            m.clone(),
-            map,
-            self.skill,
-            MapContextOptions::default(),
-            start,
-            gametic,
-        )
-        .map_err(|error| SessionWitness::Admission { map, error })?;
+        let mut sim = self
+            .config
+            .level_at(m.clone(), map, self.skill, start, gametic)
+            .map_err(|error| SessionWitness::Admission { map, error })?;
         let mut display = self.display.clone();
         display
             .begin_next_level_carried(level.clone(), &sim, change, deltaviewheight)

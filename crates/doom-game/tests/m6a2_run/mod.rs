@@ -333,25 +333,54 @@ fn framed(out: &mut Vec<u8>, path: &str, value: &[u8]) {
     out.extend(value);
 }
 
-/// The state digest and the map digest of a capture (`m6a_state.rs`'s, unchanged).
+/// A capture's fields under wire 26's names. The finale-and-melt session runs on wire 27, whose
+/// capture (DSIM43) is DSIM42 field for field: the version, `profile` (27) and `context.schema`
+/// are the only bytes that name the wire (doom-sim's `decode_episode1_v5`). A DSIM43 capture is
+/// read back as DSIM42 here (`profile` 26, wire 26's context) so that it can be compared with the
+/// genuine DSIM42 goldens of `m6a_state.txt` and with the frozen session's capture: an explicit
+/// fixture projection, the mirror of `wire27_intercept.rs`'s. A DSIM42 capture is returned as it is.
+pub fn wire26_fields(s: &Snapshot) -> Vec<(String, Vec<u8>)> {
+    let rename = s.version() == 43;
+    assert!(rename || s.version() == 42, "a wire 26 or 27 capture");
+    s.fields()
+        .map(|f| {
+            let value = match (rename, f.path()) {
+                (true, "profile") => {
+                    assert_eq!(f.value(), 27_u32.to_le_bytes(), "wire 27's profile");
+                    26_u32.to_le_bytes().to_vec()
+                }
+                (true, "context.schema") => {
+                    assert_eq!(f.value(), doom_sim::PLAYER_EPISODE1_V5_CONTEXT_SCHEMA);
+                    doom_sim::PLAYER_EPISODE1_V4_CONTEXT_SCHEMA.to_vec()
+                }
+                _ => f.value().to_vec(),
+            };
+            (f.path().to_owned(), value)
+        })
+        .collect()
+}
+
+/// The state digest and the map digest of a finale-and-melt session's capture (`m6a_state.rs`'s
+/// digests, taken over [`wire26_fields`]: the session's captures are DSIM43, the goldens DSIM42).
 fn digests(s: &Snapshot) -> (String, String) {
-    assert_eq!(s.version(), 42, "wire 26 captures are DSIM 42");
-    let kept: Vec<_> = s
-        .fields()
-        .filter(|f| !f.path().starts_with("map.") && !f.path().starts_with("events."))
+    assert_eq!(s.version(), 43, "wire 27 captures are DSIM 43");
+    let fields = wire26_fields(s);
+    let kept: Vec<_> = fields
+        .iter()
+        .filter(|(p, _)| !p.starts_with("map.") && !p.starts_with("events."))
         .collect();
     let mut body = b"DSIM".to_vec();
     body.extend(42_u32.to_le_bytes());
     body.extend((kept.len() as u64).to_le_bytes());
-    for f in &kept {
-        framed(&mut body, f.path(), f.value());
+    for (path, value) in &kept {
+        framed(&mut body, path, value);
     }
     let mut map = Vec::new();
-    for f in s.fields() {
-        if f.path().starts_with("events.sounds.") {
-            framed(&mut body, f.path(), f.value());
-        } else if f.path().starts_with("map.") {
-            framed(&mut map, f.path(), f.value());
+    for (path, value) in &fields {
+        if path.starts_with("events.sounds.") {
+            framed(&mut body, path, value);
+        } else if path.starts_with("map.") {
+            framed(&mut map, path, value);
         }
     }
     (sha256(&body), sha256(&map))

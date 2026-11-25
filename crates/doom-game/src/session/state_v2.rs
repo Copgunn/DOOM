@@ -8,7 +8,9 @@
 //! version 1 and a finale-and-melt session only version 2 ([`DsesError::Configuration`] for the
 //! other). Version 2 has version 1's layout field for field, with three differences: the version
 //! is 2; the game state may be the finale, with the finale field set; and the embedded states are
-//! `DDSP` version 4 and `DSND` version 3 (sound kind 3). Little endian:
+//! `DSIM` version 43 (wire 27, where version 1 embeds version 42 of wire 26; redefined on
+//! 2026-11-24 before version 2 was frozen, by the owner's ruling), `DDSP` version 4 and `DSND`
+//! version 3 (sound kind 3). Little endian:
 //!
 //! | Field | Encoding | Meaning |
 //! | --- | --- | --- |
@@ -22,7 +24,7 @@
 //! | `wminfo`, wi_stuff.c statics | as version 1 | in a level and in the finale, the last intermission's (or a fresh process's) |
 //! | carried player | as version 1: 0 none (in a level), 1 alive, 2 dead at the exit | present in the intermission and in the finale |
 //! | finale | u8: 0 none, 1 followed by i32 `finalestage`, i32 `finalecount` | set exactly in the finale (f_finale.c:52-54) |
-//! | level | u32 length n, n bytes | `DSIM` version 42 (wire 26, unchanged) |
+//! | level | u32 length n, n bytes | `DSIM` version 43 (wire 27; a version 42 capture is refused) |
 //! | display | u32 length n, n bytes | `DDSP` version 4 (a melt in progress included) |
 //! | sound | u8 kind = 3, u32 length n, n bytes | `DSND` version 3 (a pending display included) |
 //!
@@ -81,7 +83,7 @@ pub struct SessionStateV2 {
     pub carried: Option<CarriedPlayer>,
     /// `finalestage` and `finalecount` (the finale only).
     pub finale: Option<FinaleView>,
-    /// The level's `DSIM` version 42 capture.
+    /// The level's `DSIM` version 43 capture (wire 27).
     pub level: Vec<u8>,
     /// `DDSP` version 4.
     pub display: SessionDisplayStateV4,
@@ -358,7 +360,7 @@ impl SessionStateV2 {
         self.wi.check().map_err(DsesError::Value)?;
         let in_level = self.gamestate == GameState::Level;
         let sound = &self.sound.state;
-        let level = Diagnostic::decode_episode1_v4(&self.level, DiagnosticLimits::default())
+        let level = Diagnostic::decode_episode1_v5(&self.level, DiagnosticLimits::default())
             .map_err(|e| DsesError::Level(format!("{e:?}")))?;
         let level_u64 = |path: &str| {
             level

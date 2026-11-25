@@ -493,7 +493,7 @@ fn run(o: Options) -> Result<(), String> {
         files.push(std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?);
     }
     let refs: Vec<&[u8]> = files.iter().map(Vec::as_slice).collect();
-    // the M6a session (wire 26 with sound across levels; rulings U2, U4, U6) in its finale-and-
+    // the M6a session (wire 27 with sound across levels; rulings U2, U4, U6) in its finale-and-
     // melt configuration (M6a part 2, ruling V1: the frozen configuration is no longer offered)
     let data = GameData::load_finale_and_melt_session(&refs, o.game_mode, o.map, o.skill)
         .map_err(|e| e.to_string())?;

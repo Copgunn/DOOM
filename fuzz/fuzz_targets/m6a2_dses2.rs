@@ -1,6 +1,6 @@
 #![no_main]
 //! `DSES` version 2 (M6a part 2, the saved state of a finale-and-melt session with its embedded
-//! `DSIM` 42, `DDSP` version 4 and `DSND` version 3): `SessionStateV2::decode` on arbitrary
+//! `DSIM` 43 (wire 27), `DDSP` version 4 and `DSND` version 3): `SessionStateV2::decode` on arbitrary
 //! bytes. Never a panic; an accepted state passes `check`, and its encoding decodes to an equal
 //! state and encodes to itself. Rust-only safety and consistency; restore is not driven here (it
 //! needs a level). A synthetic state saved in mid-melt is about 206 KB (three screens and the

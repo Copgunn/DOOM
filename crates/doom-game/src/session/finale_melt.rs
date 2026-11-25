@@ -4,8 +4,10 @@
 //!
 //! The frozen configuration ([`Configuration::RefusesFinaleAndMelt`], [`Session::new`],
 //! [`Session::tic`], `DSES` version 1) keeps every refusal of part 1. This one runs the same
-//! session layer, over the same wire 26 (doom-sim's DSIM42, unchanged: owner's ruling V2), with
-//! doom-render's `SessionConfig::FinaleAndMelt` display (`DDSP` version 4) and doom-sound's
+//! session layer over wire 27 (doom-sim's `PlayerMonstersEpisode1V5`, captures DSIM43: wire 26 with
+//! the traces' wrapping `P_InterceptVector`, which the real E1M8 needs to reach the victory; the
+//! owner's ruling of 2026-11-24, which replaces the "wire 26, DSIM42" of ruling V2; the frozen
+//! configuration stays on wire 26 and DSIM42), with doom-render's `SessionConfig::FinaleAndMelt` display (`DDSP` version 4) and doom-sound's
 //! `ChainMode::FinaleAndMelt` sound (`DSND` version 3), and adds:
 //!
 //! - **The victory and the finale** (M6a note §1.8). On the tic after E1M8's exit, `G_Ticker`'s
@@ -49,8 +51,12 @@ use super::{
     CarriedPlayer, PlantedFault, Reader, Refusal, Session, SessionData, SessionSettings,
     SessionWitness, StartError, TicKind, TicReport, command_domain, dead_latches,
 };
+use doom_map::Map;
 use doom_render::{Display, FinaleView, Frame, GameMode, GameState, SessionError};
-use doom_sim::{LevelExit, StartKind, TicCommand};
+use doom_sim::{
+    LevelExit, LevelStart, LevelStartError, MapContextOptions, Simulation, Skill, StartKind,
+    TicCommand,
+};
 use doom_sound::chain::{ChainSound, ChainTic, IntermissionSound};
 use doom_sound::chain_melt::{ChainFault, ChainMode};
 use doom_sound::mixer::Buffer;
@@ -69,8 +75,8 @@ pub enum Configuration {
     RefusesFinaleAndMelt,
     /// M6a part 2 ([`Session::new_finale_and_melt`], [`Session::tic_finale_and_melt`],
     /// [`Session::melt_step`], `DSES` version 2): the victory and the Episode 1 finale, and every
-    /// wipe's melt one step per tic (module documentation). The easy skills stay refused (the
-    /// next pull request, wire 27).
+    /// wipe's melt one step per tic (module documentation), over wire 27 (DSIM43). The easy
+    /// skills stay refused (a later pull request, wire 28).
     FinaleAndMelt,
 }
 
@@ -81,6 +87,31 @@ impl Configuration {
             Self::RefusesFinaleAndMelt => ChainMode::RefusesMelt,
             Self::FinaleAndMelt => ChainMode::FinaleAndMelt,
         }
+    }
+
+    /// The level of this configuration loaded in the `G_Ticker` whose `gametic` is `gametic`:
+    /// wire 26 (`PlayerMonstersEpisode1V4`, DSIM42) for the frozen configuration, wire 27
+    /// (`PlayerMonstersEpisode1V5`, DSIM43) for the finale and the melt.
+    pub(crate) fn level_at(
+        self,
+        map: Map,
+        map_number: u8,
+        skill: Skill,
+        start: LevelStart,
+        gametic: u64,
+    ) -> Result<Simulation, LevelStartError> {
+        let build = match self {
+            Self::RefusesFinaleAndMelt => Simulation::original_player_episode1_v4_level_at,
+            Self::FinaleAndMelt => Simulation::original_player_episode1_v5_level_at,
+        };
+        build(
+            map,
+            map_number,
+            skill,
+            MapContextOptions::default(),
+            start,
+            gametic,
+        )
     }
 
     /// doom-render's configuration of the session display in game mode `mode`.
