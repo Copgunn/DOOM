@@ -2548,6 +2548,26 @@ the level where the capture still shows the start: **at level tic 0** `original_
 limit: the reader does not rebuild the load). The `secretexit` flag is a session global, not level state: the encoder counts
 it only with the exit request.
 
+## DSIM v43 — wire 27: the wrapping `P_InterceptVector`
+
+`PlayerMonstersEpisode1V5` captures are version 43 (wire 27, [rule](COMPATIBILITY.md#wire-27-the-wrapping-p_interceptvector),
+[evidence](validation/WIRE27.md)). **The layout is the DSIM42 layout field for field, including the `level.start.*` group;
+exactly three values differ:**
+
+| Value | Where | DSIM42 | DSIM43 |
+| --- | --- | --- | --- |
+| version word | byte offset 4 | 42 | 43 |
+| `profile` | byte offset 82 | 26 | 27 |
+| `context.schema` string | byte offset 181, the digit of the part | `PLAYER-MONSTERS-EPISODE1-4-v1` | `PLAYER-MONSTERS-EPISODE1-5-v1` (same length, 29 bytes) |
+
+The unit test `dsim43_is_dsim42_but_for_the_three_values_naming_the_wire` checks, tic by tic on a level run under both
+wires, that the two snapshots differ at those offsets and nowhere else. **Frozen-reader rule:** the v42 reader refuses 43,
+and the v43 reader (`Diagnostic::decode_episode1_v5`) reads 43 only; a blob whose version names one wire and whose profile or
+context names the other is refused (`Schema`). A DSIM43 writer is built only by the level-start constructors
+`original_player_episode1_v5_level` and `_at`. The independent encoder is `tools/reference/level_snapshot_wire27.py`. The
+reader is fuzzed ([TESTING](TESTING.md#wire-27-the-wrapping-p_interceptvector)). DSIM1-42 bytes, encoders and fixtures are
+unchanged.
+
 ## Sound session state (`DSND` version 1, M5c)
 
 Not a DSIM version and not a change to `DRST` or `DDSP`. `DSND` is the saved state of one sound session
@@ -2996,3 +3016,13 @@ finale adds none.
 
 Both digests come from the genuine runner's dumps through the independent encoder, never from Rust output. The state file's
 schema is unchanged by the stale-attacker rule; the fired loads have their own file so that the Rust tests can require them.
+
+## Wire 27 golden files
+
+| File | Schema | Rows |
+| --- | --- | --- |
+| `tests/reference/wire27_state.txt` | `DOOM-WIRE27-STATE-v1` | `I,item,map,tics,captures,wire26_refusal_tic,wire27_end,map_sha256,sequence_sha256`: one per item; `C,item,capture,state_sha256`: the genuine strict build's DSIM43 state after each tic, through the independent encoder; `W,item,caller,class,intercept_calls`: the witness build's call counts; `T,caller,class,intercept_calls,wire27`: wire 27's decision (`admit` or `refuse:<kind>`) for every caller and class |
+| `tests/reference/wire27_results.json` | `DOOM-WIRE27-RESULTS-v1` | the five builds' flags, the two declared sanitizer adapters, the declared in-process overrides, per-item data and the class table (what [the record](validation/WIRE27.md) quotes) |
+
+A session tic is the 0-based index of a tic; a refusal at session tic N keeps capture N. Digests come from the genuine runner's
+dumps, never from Rust output.

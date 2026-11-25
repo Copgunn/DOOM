@@ -3,6 +3,8 @@
 /tests/reference/*.txt text eol=lf
 /tests/reference/*.json text eol=lf
 /tests/reference/*.bin -text
+# Wire 27's generated WAD, scripts and demo lumps are compared byte for byte (tools/reference/wire27_wad.py --check).
+/tests/reference/wire27_*/** -text
 /tools/reference/*.py text eol=lf
 /tools/reference/*.h text eol=lf
 /crates/doom-sim/src/fine_sine.rs text eol=lf

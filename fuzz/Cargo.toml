@@ -493,3 +493,10 @@ path = "fuzz_targets/m6a_dsim42.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "wire27_dsim43"
+path = "fuzz_targets/wire27_dsim43.rs"
+test = false
+doc = false
+bench = false

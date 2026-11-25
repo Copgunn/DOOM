@@ -92,6 +92,7 @@ number in brackets is the policy's identifier in saved test snapshots; the earli
 | `PlayerMonstersEpisode1V2` (24) | Episode 1, part 2: teleporters, the Baron of Hell and the E1M8 boss floor, hard skill: the real E1M5, E1M8, E1M9 and `DEMO1` runs | [Episode 1, part 2](#original-episode-1-part-2-teleporters-the-baron-of-hell-a_bossdeath-and-hard-skill-wire-24) |
 | `PlayerMonstersEpisode1V3` (25) | Episode 1, part 3: wire 24 plus canonical sound records, the sound origins, the corrected hard-death scream and the original's THING-loading stop; it makes no sound itself, and `doom-play` runs on it | [Wire 25](#original-episode-1-part-3-canonical-sound-records-wire-25) |
 | `PlayerMonstersEpisode1V4` (26) | Episode 1, part 4 (M6a): wire 25 plus a level start (new game, carried player or reborn), the walk exits 52 and 124 and the session's `gametic` for the turbo test; the level chain, played by `doom-play`; skills 2 and 3 only. Part 2 (no new wire, ruling V2): the finale and the melt in the session's finale-and-melt configuration, which `doom-play` plays (pull request #80, not merged) | [One session](#episode-1-as-one-session-m6a) |
+| `PlayerMonstersEpisode1V5` (27) | Episode 1, part 5: wire 26 with `P_InterceptVector`'s `int` wrap reproduced for the caller and wrap-class pairs a genuine item takes, and refused for every other; sight stays checked; the real E1M8 skill 2 sessions that wire 26 refuses | [Wire 27](#wire-27-the-wrapping-p_interceptvector) |
 
 ## Versioned gameplay profiles
 
@@ -2470,7 +2471,7 @@ of earlier wires); the next tic can be attempted. All but the store-full one are
 | `StairBlocked` | a stair step's first `P_ChangeSector` is blocked: the source reads the uninitialised `crush` of the `EV_BuildStairs` thinker (decision H7) |
 | `PlatBlocked` | a `raiseToNearestAndChange` plat is blocked: it never initialised `low` (H7) |
 | `DonutBusy` | `EV_DoDonut`'s outer sector already holds a live mover (H8) |
-| `Arithmetic` | a checked `i64` recomputation of the source's `P_InterceptVector`/`P_InterceptVector2` sums, `FixedMul` narrowing, sight slope differences and trace heights would overflow or leave `fixed_t`; or a mover would write a sector height beyond +-1,024 units (a repeatable turbo floor or door can ratchet heights past any bound; C runs on until `fixed_t` overflows), or its `T_MovePlane` step or `EV_*` destination offset would overflow `fixed_t`. Replaces the certificate clauses and the +-512 checks (the same `Arithmetic` variant, now raised at the tic) |
+| `Arithmetic` | a checked `i64` recomputation of the source's `P_InterceptVector`/`P_InterceptVector2` sums, `FixedMul` narrowing, sight slope differences and trace heights would overflow or leave `fixed_t`; or a mover would write a sector height beyond +-1,024 units (a repeatable turbo floor or door can ratchet heights past any bound; C runs on until `fixed_t` overflows), or its `T_MovePlane` step or `EV_*` destination offset would overflow `fixed_t`. Replaces the certificate clauses and the +-512 checks (the same `Arithmetic` variant, now raised at the tic). It does **not** catch an `INT_MIN` numerator or denominator of the final `FixedDiv` under wires 23-26: that is a [silent divergence](#silent-divergence-in-wires-23-to-26-an-int_min-operand), and wire 27 alone refuses it |
 | `SpecialCross` | a `P_CheckPosition` would store a ninth `spechit`; it replaces the 2 x 2 window load rule that E1M5 and E1M9 fail (neither map is admitted) |
 | `StoreError::Capacity` | a spawn finds the 1,024-slot store full; nothing is spawned |
 | `Escape`, `Intercepts`, `Position`, `Vertical` | the wire-22 witnesses, unchanged |
@@ -3691,10 +3692,10 @@ summary of raw button downs and ups on quit. A test shows it changes neither the
 ## Episode 1 as one session (M6a)
 
 **Status: M6a part 1, the playable level chain (PR #65; the owner's ruling of 2026-11-22 moves the finale, the melt
-pictures, the easy skills and E1M7 on skill 3 to part 2, a separate pull request under wire 27 and new format versions).
+pictures, the easy skills and E1M7 on skill 3 to part 2, a separate pull request; it was to take wire 27, which is now the [intercept wrap](#wire-27-the-wrapping-p_interceptvector), and the easy skills and E1M7 move to wire 28 by the owner's ruling of 2026-11-24).
 Part 2 (pull request #80, draft, not merged; the owner's hand test pending) builds the finale and the melt in a second
 session configuration on wire 26 (rulings V1 and V2 of 2026-11-23), which `doom-play` now plays; the easy skills and E1M7 on
-skill 3 are the next pull request (wire 27).** One
+skill 3 are a later pull request (wire 28).** One
 `doom-play` run now plays Episode 1 as the original does between levels: both exits, the intermission, the next map with the
 carried player, the reborn reload and the secret route. What is built, compared and still missing is below; the
 observations are in the [evidence record](validation/M6A.md) and the design in the
@@ -3744,7 +3745,8 @@ At launch (before any window, exit 1 unless noted): a start map not admitted at 
 first-map music lump (the original stops at that load too); a map or skill outside the domain; `--skill 0` or `1`
 (exit 2, "the easy skills (0, 1) are not built yet"). Not built yet, each a typed refusal or a declared gap: the **easy skills
 0 and 1**, refused at launch, and **E1M7 on skill 3** (the owner ruled option 1 for it: the margin clause dropped for monsters,
-under wire 27 in the pull request after part 2 by the rulings of 2026-11-22 and V7 of 2026-11-23, where it first said wire 26;
+under wire 28 in a later pull request by the rulings of 2026-11-22, V7 of 2026-11-23 and 2026-11-24, where it first said wire 26
+and then wire 27;
 until then the refusal above stands, a plain TIC REFUSED screen, and [the load table](#skills-and-maps-load-table) lists every
 map and skill). The **finale** after E1M8 and the **melt pictures** were in this list until part 2, which builds them in the
 finale-and-melt configuration ([below](#the-finale-and-the-melt-m6a-part-2)); part 1's configuration still refuses them.
@@ -3869,6 +3871,76 @@ None is fixed. "Reproduced" means the session does what the C does and the genui
 | (13) | The carried status-bar face `STFST00` after a level change (st_stuff.c:384, 757-758) | reproduced; found by the display work, not among the twelve |
 
 The rows are in the [quirk register](QUIRKS.md).
+
+## Wire 27: the wrapping `P_InterceptVector`
+
+**Status: implemented ([PR #82](https://github.com/Copgunn/DOOM/pull/82), draft).** `PlayerMonstersEpisode1V5` (27, `DSIM` 43,
+constructors `original_player_episode1_v5_level` and `_at`) is wire 26 in every respect except the rule below. Wires 1-26 and
+`DSIM` 42 are unchanged byte for byte. It exists because two real E1M8 skill 2 sessions that the owner recorded are refused
+by wire 26 (`MapScale(Arithmetic)`) where the genuine engine's `P_InterceptVector` (p_maputl.c:231-251) leaves exact
+arithmetic: `FixedMul` narrows a `long long` product to `fixed_t` (m_fixed.c:48; GCC reduces it modulo 2^32, and `-fwrapv`
+does not govern it), and the `int` sums overflow (they wrap because the build uses `-fwrapv`). Wire 26's refusal on E1M8 is a **known gap**, documented and not patched. Evidence:
+[the wire 27 record](validation/WIRE27.md).
+
+**The rule: per caller, per wrap class.** The six source callers of `P_InterceptVector` are aim_line and aim_thing (the aim
+trace against a line or a thing), shoot_line and shoot_thing (hitscan against a line or a thing), slide and use. A wrap class is admitted for a caller **only where a
+genuine-compared item takes it**; every other wrap class refuses the tic with `MapScale(Arithmetic)` and the state kept.
+Wire 27 does not wrap "whole" and does not wrap "for every caller".
+
+| Caller | Wrap classes admitted (reproduced as the genuine engine computes them) |
+| --- | --- |
+| aim_line | wraps cancel; denominator wrong with numerator exact |
+| shoot_line | wraps cancel; den wrong, num exact; den wrong, num wrong (FixedDiv2); den wrong, num wrong with saturation MAXINT; the same with MININT; den wraps to zero |
+| slide, use | wraps cancel |
+| aim_thing, shoot_thing | none: both stay on the checked computation (a thing's intercept line is its diagonal, so the products cannot wrap on an admitted map; no item exists for either) |
+
+- **Unwrapped values** are admitted for every caller and equal wire 26's checked value.
+- **Refused:** every wrap class not in the table (saturation for aim_line, slide and use, and saturation with an exact numerator
+  included); FixedDiv2's `I_Error` range; and **`INT_MIN`** (below).
+- **Which item takes which pair, and how many genuine calls each rests on** (one or two, except the 15 of slide's class and
+  the 4 of aim_line's): [the table](validation/WIRE27.md#3-admitted-and-refused-caller-by-wrap-class). The refusals are shown by
+  unit tests only; no genuine item reaches one.
+- **A monster's aim trace is as long as its shot, so the aim_line row limits monster fire:** a monster shot whose aim trace
+  falls in a class aim_line does not admit refuses the tic.
+- **The E1M8 finale is expected, not guaranteed.** The refused pairs are **known gaps for a later wire**; a real session can
+  meet one.
+- **Saturation:** genuine items cover two of the four sign combinations (numerator and denominator both positive;
+  numerator positive with denominator negative); the other two rest on unit tests.
+- **Witnessed only where the result has no effect or one effect:** "den wrong, num exact" is witnessed only where the
+  result was discarded as behind the source; "den wraps to zero" is witnessed only against a one-sided wall.
+- **Sight** (`P_InterceptVector2`, p_sight.c:109-128) does not wrap under any wire; under wire 27 it also refuses an
+  exactly-`INT_MIN` numerator or denominator.
+- **`INT_MIN`: refused, not reproduced.** A numerator or denominator that is exactly `INT_MIN` (wrapped or not) makes the
+  engine's `abs(INT_MIN)` (m_fixed.c:62) undefined even under `-fwrapv`, so wire 27 refuses the tic (`AbsMin`).
+- **Evidence limits:** eight map slots, one room layout (not one synthetic map and not all four saturation cases); the
+  genuine build is linuxdoom-1.10 compiled by GCC with `-fwrapv` (four of the eight items wrap by `FixedMul` narrowing
+  alone and never overflow a sum), with two declared sanitizer adapters in the overflow and address builds
+  (address: leak detection disabled, not LeakSanitizer coverage); the block-walk overshoot (below) has **no genuine-compared
+  item**.
+
+### Silent divergence in wires 23 to 26: an `INT_MIN` operand
+
+In the traces' `checked_intercept` (sight.rs) the final division is Rust `Fixed::fixed_div` (crates/doom-types/src/fixed.rs),
+which takes `unsigned_abs` where m_fixed.c:57-87 takes `abs`. When the intercept's numerator or denominator is exactly
+`INT_MIN` (reachable without an `i32` overflow in the checked sums), the genuine engine's `abs(INT_MIN)` makes the
+saturation guard and FixedDiv2 behave differently from the Rust: wires 23-26 **return a value; they do not refuse**. This
+is a **silent divergence**, not a refusal; the same holds for sight's `P_InterceptVector2`. Wire 27 refuses these tics.
+It is left unpatched in wires 23-26 (frozen).
+
+**Reachability, as far as it is known:** proven unreachable on seven Episode 1 maps; not proven on E1M2 and E1M8. The
+proof is a bound on the operands (E1M1, E1M3-E1M7, E1M9; the derivation and the per-map verdicts are in
+[the record](validation/WIRE27.md#6-the-blockmap-census-and-the-bound-on-the-intercept-operands)). **It rests on a premise:
+every actor's centre stays inside the map's vertex rectangle, a Rust admission rule, not a C fact.** Both were
+read on 2026-11-24 by an independent reader ([outcome](validation/WIRE27.md#11-the-independent-read-2026-11-24)). A later pull request audits what the argument covers
+([ROADMAP](ROADMAP.md)).
+
+### Known gap: the block walk can overshoot its end cell
+
+`P_PathTraverse`'s block walk is bounded by a count of 64, not by the trace's length (p_maputl.c:846): round-off can make a
+short trace skip its end cell and run on. This is **shown in a stub harness only, not in a full-engine run**; there is no
+genuine-compared item for it, and the old certificate's premise that a visited cell lies within 2,048 + 128 + 1 units of
+the trace start does not hold when the walk overshoots. No code or certificate changed. See quirk row Q-p_maputl-846c and
+[the record](validation/WIRE27.md#7-the-block-walk-overshoot-a-stub-harness-not-a-full-engine-run).
 
 ## Known gap: THING loading stops at the first Doom II type outside commercial mode
 

@@ -812,7 +812,10 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
     // plus the `events.sounds` group after `events.pending`.
     // DSIM42 (wire 26, M6a ruling U2 = B1) is DSIM41 plus the start group after
     // `events.sounds.pending`.
-    let schema = if sim.player_policy().has_carried_start() {
+    // DSIM43 (wire 27) is the DSIM42 layout, field for field, under policy 27.
+    let schema = if sim.player_policy().has_wrapping_intercept() {
+        43
+    } else if sim.player_policy().has_carried_start() {
         42
     } else if sim.player_policy().has_sound_records() {
         41
@@ -1296,7 +1299,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             field(&mut fields, format!("{prefix}.{i}"), event_bytes(event));
         }
     }
-    if matches!(schema, 41 | 42) {
+    if matches!(schema, 41..=43) {
         for (prefix, records) in [
             ("events.sounds.last", &sim.sounds),
             ("events.sounds.pending", &sim.pending_sounds),
@@ -1311,7 +1314,7 @@ pub(crate) fn capture(sim: &Simulation) -> Snapshot {
             }
         }
     }
-    if schema == 42 {
+    if matches!(schema, 42 | 43) {
         // DSIM42's reader requires the start group, so a wire-26 simulation with
         // no recorded start is never written: no public constructor builds one
         // (`with_original_registry` refuses wire 26), and one built inside the
